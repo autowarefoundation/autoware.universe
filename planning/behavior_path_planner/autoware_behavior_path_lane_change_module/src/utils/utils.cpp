@@ -183,83 +183,95 @@ bool path_footprint_exceeds_target_lane_bound(
   return false;
 }
 
-ShiftedPath get_frenet_shifted_path(
-  const PathWithLaneId & target_lane_reference_path, const LaneChangeInfo & lane_change_info)
+LaneChangePaths get_frenet_paths(
+  const PathWithLaneId & target_lane, const PathWithLaneId & prepare_segment,
+  const sampler_common::transform::Spline2D & reference_path,
+  const frenet_planner::FrenetState & initial_state,
+  const frenet_planner::SamplingParameters & sampling_parameters)
 {
-  const auto longitudinal_acceleration = lane_change_info.longitudinal_acceleration;
-  const auto lane_change_velocity = lane_change_info.velocity;
-  ShiftedPath shifted_path;
-  std::vector<double> xs;
-  std::vector<double> ys;
-  xs.reserve(target_lane_reference_path.points.size());
-  ys.reserve(target_lane_reference_path.points.size());
-  for (const auto & p : target_lane_reference_path.points) {
-    xs.push_back(p.point.pose.position.x);
-    ys.push_back(p.point.pose.position.y);
-  }
-  sampler_common::transform::Spline2D reference_spline(xs, ys);
-  
-  frenet_planner::FrenetState initial_state;
-  const auto & initial_position = lane_change_info.lane_changing_start.position;
-  initial_state.position = reference_spline.frenet({initial_position.x, initial_position.y});
-  initial_state.longitudinal_velocity = lane_change_velocity.prepare;
-  initial_state.longitudinal_acceleration = longitudinal_acceleration.prepare;
-  const auto initial_yaw = tf2::getYaw(lane_change_info.lane_changing_start.orientation);
-  const auto initial_s = initial_state.position.s + 0.001;  // add epsilon to avoid s=0
-  initial_state.lateral_velocity = 0.0;
-  initial_state.lateral_acceleration = 0.0;
-  
-  frenet_planner::SamplingParameters sampling_parameters;
-  sampling_parameters.parameters.emplace_back();
-  sampling_parameters.resolution = 0.2;
-  sampling_parameters.parameters.back().target_duration = lane_change_info.duration.lane_changing;
-  
-  auto & target_state = sampling_parameters.parameters.back().target_state;
-  target_state.position = reference_spline.frenet(
-    {lane_change_info.lane_changing_end.position.x, lane_change_info.lane_changing_end.position.y});
-  target_state.position.d = 0.0;
-  target_state.longitudinal_velocity = lane_change_velocity.lane_changing;
-  target_state.longitudinal_acceleration = 0.0;  // it is OK to not use longitudinal_acceleration
-  // target lateral velocity is based on the initial lateral velocity relative to the target point
-  // TODO(Maxime): not sure if we should use curvature at initial or target s
-  target_state.lateral_velocity =
-    (1 - reference_spline.curvature(initial_s) * initial_state.position.d) *
-    std::tan(initial_yaw - reference_spline.yaw(target_state.position.s));
-  target_state.lateral_acceleration = 0.0;
-  
+  LaneChangePaths candidate_paths;
   const auto candidates =
-    frenet_planner::generateTrajectories(reference_spline, initial_state, sampling_parameters);
-  const auto & candidate = candidates.front();
-  
-  PathPointWithLaneId pp;
-  auto ref_s = 0.0;
-  auto ref_i = 0UL;
-  for (auto i = 0UL; i < candidate.poses.size(); ++i) {
-    const auto s = candidate.frenet_points[i].s;
-    pp.point.pose = candidate.poses[i];
-    pp.point.longitudinal_velocity_mps = static_cast<float>(candidate.longitudinal_velocities[i]);
-    pp.point.lateral_velocity_mps = static_cast<float>(candidate.lateral_velocities[i]);
-    // copy from original reference path
-    while (ref_s < s && ref_i + 1 < target_lane_reference_path.points.size()) {
-      ++ref_i;
-      ref_s += universe_utils::calcDistance2d(
-        target_lane_reference_path.points[ref_i - 1], target_lane_reference_path.points[ref_i]);
-    }
-    pp.point.pose.position.z = target_lane_reference_path.points[ref_i].point.pose.position.z;
-    pp.lane_ids = target_lane_reference_path.points[ref_i].lane_ids;
+    frenet_planner::generateTrajectories(reference_path, initial_state, sampling_parameters);
+  for (const auto & candidate : candidates) {
+    ShiftedPath shifted_path;
+    PathPointWithLaneId pp;
+    auto ref_s = 0.0;
+    auto ref_i = 0UL;
+    for (auto i = 0UL; i < candidate.poses.size(); ++i) {
+      const auto s = candidate.frenet_points[i].s;
+      pp.point.pose = candidate.poses[i];
+      pp.point.longitudinal_velocity_mps = static_cast<float>(candidate.longitudinal_velocities[i]);
+      pp.point.lateral_velocity_mps = static_cast<float>(candidate.lateral_velocities[i]);
+      // copy from original reference path
+      while (ref_s < s && ref_i + 1 < target_lane.points.size()) {
+        ++ref_i;
+        ref_s +=
+          universe_utils::calcDistance2d(target_lane.points[ref_i - 1], target_lane.points[ref_i]);
+      }
+      pp.point.pose.position.z = target_lane.points[ref_i].point.pose.position.z;
+      pp.lane_ids = target_lane.points[ref_i].lane_ids;
 
-    shifted_path.shift_length.push_back(candidate.frenet_points[i].d);
-    shifted_path.path.points.push_back(pp);
-  }
-  if (!shifted_path.path.points.empty()) {
+      shifted_path.shift_length.push_back(candidate.frenet_points[i].d);
+      shifted_path.path.points.push_back(pp);
+    }
+    if (shifted_path.path.points.empty()) {
+      continue;
+    }
     const auto nearest_segment_idx = autoware::motion_utils::findNearestSegmentIndex(
-      target_lane_reference_path.points, shifted_path.path.points.back().point.pose.position);
-    for (auto i = nearest_segment_idx + 2; i < target_lane_reference_path.points.size(); ++i) {
-      shifted_path.path.points.push_back(target_lane_reference_path.points[i]);
+      target_lane.points, shifted_path.path.points.back().point.pose.position);
+    for (auto i = nearest_segment_idx + 2; i < target_lane.points.size(); ++i) {
+      shifted_path.path.points.push_back(target_lane.points[i]);
       shifted_path.shift_length.push_back(0.0);
     }
+    const auto lane_change_end_idx = autoware::motion_utils::findNearestIndex(
+      shifted_path.path.points, shifted_path.path.points.back().point.pose);
+    for (size_t i = 0; i < *lane_change_end_idx; ++i) {
+      auto & point = shifted_path.path.points.at(i);
+      if (i < *lane_change_end_idx) {
+        point.point.longitudinal_velocity_mps = std::min(
+          point.point.longitudinal_velocity_mps,
+          static_cast<float>(shifted_path.path.points.back().point.longitudinal_velocity_mps));
+      }
+    }
+
+    if (prepare_segment.points.size() > 1 && shifted_path.path.points.size() > 1) {
+      const auto & prepare_segment_second_last_point =
+        std::prev(prepare_segment.points.end() - 1)->point.pose;
+      const auto & lane_change_start_from_shifted =
+        std::next(shifted_path.path.points.begin())->point.pose;
+      const auto yaw_diff2 = std::abs(autoware::universe_utils::normalizeRadian(
+        tf2::getYaw(prepare_segment_second_last_point.orientation) -
+        tf2::getYaw(lane_change_start_from_shifted.orientation)));
+      if (yaw_diff2 > autoware::universe_utils::deg2rad(5.0)) {
+        RCLCPP_DEBUG(
+          get_logger(), "Excessive yaw difference %.3f which exceeds the 5 degrees threshold.",
+          autoware::universe_utils::rad2deg(yaw_diff2));
+        continue;
+      }
+    }
+    LaneChangePath candidate_path;
+    candidate_path.path = utils::combinePath(prepare_segment, shifted_path.path);
+    candidate_path.shifted_path = shifted_path;
+    candidate_path.info.duration.lane_changing = candidate.sampling_parameter.target_duration;
+    candidate_path.info.lane_changing_end = candidate.poses.back();
+    candidate_path.info.terminal_lane_changing_velocity = candidate.longitudinal_velocities.back();
+    candidate_path.info.velocity.lane_changing = initial_state.longitudinal_velocity;
+    candidate_path.info.length.lane_changing = candidate.lengths.back();
+    candidate_path.info.longitudinal_acceleration.lane_changing =
+      candidate.longitudinal_accelerations.front();
+    candidate_path.info.lateral_acceleration = candidate.lateral_accelerations.front();
+    candidate_path.info.shift_line.start_shift_length = 0.0;
+    candidate_path.info.shift_line.end_shift_length = initial_state.position.d;
+    candidate_path.info.shift_line.start =
+      prepare_segment.points.back()
+        .point.pose;  // TODO(Maxime): should it be 1st point of candidate ?
+    candidate_path.info.shift_line.end = candidate.poses.back();
+    candidate_path.info.shift_line.start_idx = 0UL;
+    candidate_path.info.shift_line.end_idx = shifted_path.shift_length.size() - 1;
+    candidate_paths.push_back(candidate_path);
   }
-  return shifted_path;
+
+  return candidate_paths;
 }
 
 ShiftedPath get_shifted_path(
@@ -290,22 +302,17 @@ ShiftedPath get_shifted_path(
 }
 
 std::optional<LaneChangePath> construct_candidate_path(
-  const CommonDataPtr & common_data_ptr, const LaneChangeInfo & lane_change_info,
-  const PathWithLaneId & prepare_segment, const PathWithLaneId & target_lane_reference_path,
+  const LaneChangeInfo & lane_change_info, const PathWithLaneId & prepare_segment,
+  const PathWithLaneId & target_lane_reference_path,
   const std::vector<std::vector<int64_t>> & sorted_lane_ids)
 {
   const auto & shift_line = lane_change_info.shift_line;
   const auto terminal_lane_changing_velocity = lane_change_info.terminal_lane_changing_velocity;
 
-  ShiftedPath shifted_path;
-  if (common_data_ptr->transient_data.is_ego_near_current_terminal_start) {
-    shifted_path = get_frenet_shifted_path(target_lane_reference_path, lane_change_info);
-  } else {
-    shifted_path = get_shifted_path(target_lane_reference_path, lane_change_info);
-    if (shifted_path.path.points.size() < shift_line.end_idx + 1) {
-      RCLCPP_DEBUG(get_logger(), "Path points are removed by PathShifter.");
-      return std::nullopt;
-    }
+  ShiftedPath shifted_path = get_shifted_path(target_lane_reference_path, lane_change_info);
+  if (shifted_path.path.points.size() < shift_line.end_idx + 1) {
+    RCLCPP_DEBUG(get_logger(), "Path points are removed by PathShifter.");
+    return std::nullopt;
   }
 
   LaneChangePath candidate_path;
@@ -330,18 +337,6 @@ std::optional<LaneChangePath> construct_candidate_path(
     const auto nearest_idx =
       autoware::motion_utils::findNearestIndex(target_lane_reference_path.points, point.point.pose);
     point.lane_ids = target_lane_reference_path.points.at(*nearest_idx).lane_ids;
-  }
-
-  // TODO(Yutaka Shimizu): remove this flag after make the isPathInLanelets faster
-  const bool enable_path_check_in_lanelet = false;
-
-  // check candidate path is in lanelet
-  const auto & current_lanes = common_data_ptr->lanes_ptr->current;
-  const auto & target_lanes = common_data_ptr->lanes_ptr->target;
-  if (
-    enable_path_check_in_lanelet &&
-    !isPathInLanelets(shifted_path.path, current_lanes, target_lanes)) {
-    return std::nullopt;
   }
 
   if (prepare_segment.points.size() > 1 && shifted_path.path.points.size() > 1) {

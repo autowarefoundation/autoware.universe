@@ -24,6 +24,8 @@
 
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
+#include <autoware_frenet_planner/structures.hpp>
+#include <autoware_sampler_common/transform/spline_transform.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -86,9 +88,15 @@ bool path_footprint_exceeds_target_lane_bound(
   const CommonDataPtr & common_data_ptr, const PathWithLaneId & path, const VehicleInfo & ego_info,
   const double margin = 0.1);
 
+LaneChangePaths get_frenet_paths(
+  const PathWithLaneId & target_lane, const PathWithLaneId & prepare_segment,
+  const sampler_common::transform::Spline2D & reference_path,
+  const frenet_planner::FrenetState & initial_state,
+  const frenet_planner::SamplingParameters & sampling_parameters);
+
 std::optional<LaneChangePath> construct_candidate_path(
-  const CommonDataPtr & common_data_ptr, const LaneChangeInfo & lane_change_info,
-  const PathWithLaneId & prepare_segment, const PathWithLaneId & target_lane_reference_path,
+  const LaneChangeInfo & lane_change_info, const PathWithLaneId & prepare_segment,
+  const PathWithLaneId & target_lane_reference_path,
   const std::vector<std::vector<int64_t>> & sorted_lane_ids);
 
 ShiftLine get_lane_changing_shift_line(
