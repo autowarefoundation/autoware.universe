@@ -204,6 +204,7 @@ void RouteSelector::on_set_waypoint_route_main(
 
   // Forward the request if not in MRM.
   res->status = service_utils::sync_call(cli_set_waypoint_route_, req);
+  publish_processing_time(stop_watch);
 }
 
 void RouteSelector::on_set_lanelet_route_main(
@@ -225,6 +226,7 @@ void RouteSelector::on_set_lanelet_route_main(
 
   // Forward the request if not in MRM.
   res->status = service_utils::sync_call(cli_set_lanelet_route_, req);
+  publish_processing_time(stop_watch);
 }
 
 void RouteSelector::on_clear_route_mrm(
