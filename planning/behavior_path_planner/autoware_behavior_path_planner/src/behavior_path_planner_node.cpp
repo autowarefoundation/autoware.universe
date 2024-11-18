@@ -351,9 +351,9 @@ void BehaviorPathPlannerNode::run()
     if (!is_first_time && !has_same_route_id) {
       RCLCPP_INFO(get_logger(), "New uuid route is received. Resetting modules.");
       planner_manager_->reset();
+      planner_manager_->resetCurrentRouteLanelet(planner_data_);
       planner_data_->prev_modified_goal.reset();
     }
-    planner_manager_->resetCurrentRouteLanelet(planner_data_);
   }
   const auto controlled_by_autoware_autonomously =
     planner_data_->operation_mode->mode == OperationModeState::AUTONOMOUS &&

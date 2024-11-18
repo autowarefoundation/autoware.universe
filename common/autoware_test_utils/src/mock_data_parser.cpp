@@ -16,13 +16,6 @@
 
 #include <rclcpp/logging.hpp>
 
-#include <autoware_planning_msgs/msg/lanelet_primitive.hpp>
-#include <autoware_planning_msgs/msg/lanelet_route.hpp>
-#include <autoware_planning_msgs/msg/lanelet_segment.hpp>
-#include <geometry_msgs/msg/pose.hpp>
-
-#include <yaml-cpp/yaml.h>
-
 #include <algorithm>
 #include <string>
 #include <vector>
@@ -40,6 +33,24 @@ Header parse(const YAML::Node & node)
   header.frame_id = node["frame_id"].as<std::string>();
 
   return header;
+}
+
+template <>
+Duration parse(const YAML::Node & node)
+{
+  Duration msg;
+  msg.sec = node["sec"].as<int>();
+  msg.nanosec = node["nanosec"].as<int>();
+  return msg;
+}
+
+template <>
+Time parse(const YAML::Node & node)
+{
+  Time msg;
+  msg.sec = node["sec"].as<int>();
+  msg.nanosec = node["nanosec"].as<int>();
+  return msg;
 }
 
 template <>
@@ -226,6 +237,145 @@ std::vector<PathPointWithLaneId> parse<std::vector<PathPointWithLaneId>>(const Y
     });
 
   return path_points;
+}
+
+template <>
+UUID parse(const YAML::Node & node)
+{
+  UUID msg;
+  const auto uuid = node["uuid"].as<std::vector<uint8_t>>();
+  for (unsigned i = 0; i < 16; ++i) {
+    msg.uuid.at(i) = uuid.at(i);
+  }
+  return msg;
+}
+
+template <>
+ObjectClassification parse(const YAML::Node & node)
+{
+  ObjectClassification msg;
+  msg.label = node["label"].as<uint8_t>();
+  msg.probability = node["probability"].as<float>();
+  return msg;
+}
+
+template <>
+Shape parse(const YAML::Node & node)
+{
+  Shape msg;
+  msg.type = node["type"].as<uint8_t>();
+  for (const auto & footprint_point_node : node["footprint"]["points"]) {
+    geometry_msgs::msg::Point32 point;
+    point.x = footprint_point_node["x"].as<float>();
+    point.y = footprint_point_node["y"].as<float>();
+    point.z = footprint_point_node["z"].as<float>();
+    msg.footprint.points.push_back(point);
+  }
+  msg.dimensions.x = node["dimensions"]["x"].as<double>();
+  msg.dimensions.y = node["dimensions"]["y"].as<double>();
+  msg.dimensions.z = node["dimensions"]["z"].as<double>();
+  return msg;
+}
+
+template <>
+PredictedPath parse(const YAML::Node & node)
+{
+  PredictedPath path;
+  for (const auto & path_pose_node : node["path"]) {
+    path.path.push_back(parse<Pose>(path_pose_node));
+  }
+  path.time_step = parse<Duration>(node["time_step"]);
+  path.confidence = node["confidence"].as<float>();
+  return path;
+}
+
+template <>
+PredictedObjectKinematics parse(const YAML::Node & node)
+{
+  PredictedObjectKinematics msg;
+  msg.initial_pose_with_covariance =
+    parse<PoseWithCovariance>(node["initial_pose_with_covariance"]);
+  msg.initial_twist_with_covariance =
+    parse<TwistWithCovariance>(node["initial_twist_with_covariance"]);
+  msg.initial_acceleration_with_covariance =
+    parse<AccelWithCovariance>(node["initial_acceleration_with_covariance"]);
+  for (const auto & predicted_path_node : node["predicted_paths"]) {
+    msg.predicted_paths.push_back(parse<PredictedPath>(predicted_path_node));
+  }
+  return msg;
+}
+
+template <>
+PredictedObject parse(const YAML::Node & node)
+{
+  PredictedObject msg;
+  msg.object_id = parse<UUID>(node["object_id"]);
+  msg.existence_probability = node["existence_probability"].as<float>();
+  for (const auto & classification_node : node["classification"]) {
+    msg.classification.push_back(parse<ObjectClassification>(classification_node));
+  }
+  msg.kinematics = parse<PredictedObjectKinematics>(node["kinematics"]);
+  msg.shape = parse<Shape>(node["shape"]);
+  return msg;
+}
+
+template <>
+PredictedObjects parse(const YAML::Node & node)
+{
+  PredictedObjects msg;
+  msg.header = parse<Header>(node["header"]);
+  for (const auto & object_node : node["objects"]) {
+    msg.objects.push_back(parse<PredictedObject>(object_node));
+  }
+  return msg;
+}
+
+template <>
+TrafficLightElement parse(const YAML::Node & node)
+{
+  TrafficLightElement msg;
+  msg.color = node["color"].as<uint8_t>();
+  msg.shape = node["shape"].as<uint8_t>();
+  msg.status = node["status"].as<uint8_t>();
+  msg.confidence = node["confidence"].as<float>();
+  return msg;
+}
+
+template <>
+TrafficLightGroup parse(const YAML::Node & node)
+{
+  TrafficLightGroup msg;
+  msg.traffic_light_group_id = node["traffic_light_group_id"].as<int>();
+  for (const auto & element_node : node["elements"]) {
+    msg.elements.push_back(parse<TrafficLightElement>(element_node));
+  }
+  return msg;
+}
+
+template <>
+TrafficLightGroupArray parse(const YAML::Node & node)
+{
+  TrafficLightGroupArray msg;
+  msg.stamp = parse<Time>(node["stamp"]);
+  for (const auto & traffic_light_group_node : node["traffic_light_groups"]) {
+    msg.traffic_light_groups.push_back(parse<TrafficLightGroup>(traffic_light_group_node));
+  }
+  return msg;
+}
+
+template <>
+OperationModeState parse(const YAML::Node & node)
+{
+  OperationModeState msg;
+  msg.stamp = parse<Time>(node["stamp"]);
+  msg.mode = node["mode"].as<uint8_t>();
+  msg.is_autoware_control_enabled = node["is_autoware_control_enabled"].as<bool>();
+  msg.is_in_transition = node["is_in_transition"].as<bool>();
+  msg.is_stop_mode_available = node["is_stop_mode_available"].as<bool>();
+  msg.is_autonomous_mode_available = node["is_autonomous_mode_available"].as<bool>();
+  msg.is_local_mode_available = node["is_local_mode_available"].as<bool>();
+  msg.is_remote_mode_available = node["is_remote_mode_available"].as<bool>();
+  return msg;
 }
 
 template <>
