@@ -54,7 +54,7 @@ double calcShiftLength(
   const bool & is_object_on_right, const double & overhang_dist, const double & avoid_margin);
 
 bool isWithinLanes(
-  const bool has_closest_lanelet, const lanelet::ConstLanelet & closest_lanelet,
+  const std::optional<lanelet::ConstLanelet> & closest_lanelet,
   const std::shared_ptr<const PlannerData> & planner_data);
 
 /**

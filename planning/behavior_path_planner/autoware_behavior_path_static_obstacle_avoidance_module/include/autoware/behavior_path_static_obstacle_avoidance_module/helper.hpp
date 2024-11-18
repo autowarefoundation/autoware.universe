@@ -213,7 +213,7 @@ public:
   }
 
   double getForwardDetectionRange(
-    const bool has_closest_lanelet, const lanelet::ConstLanelet & closest_lane) const
+    const std::optional<lanelet::ConstLanelet> & closest_lanelet) const
   {
     if (parameters_->use_static_detection_area) {
       return parameters_->object_check_max_forward_distance;
@@ -221,11 +221,11 @@ public:
 
     const auto & route_handler = data_->route_handler;
 
-    if (!has_closest_lanelet) {
+    if (!closest_lanelet.has_value()) {
       return parameters_->object_check_max_forward_distance;
     }
 
-    const auto limit = route_handler->getTrafficRulesPtr()->speedLimit(closest_lane);
+    const auto limit = route_handler->getTrafficRulesPtr()->speedLimit(closest_lanelet.value());
     const auto speed = isShifted() ? limit.speedLimit.value() : getEgoSpeed();
 
     const auto max_shift_length = std::max(

@@ -1162,7 +1162,7 @@ double calcShiftLength(
 }
 
 bool isWithinLanes(
-  const bool has_closest_lanelet, const lanelet::ConstLanelet & closest_lanelet,
+  const std::optional<lanelet::ConstLanelet> & closest_lanelet,
   const std::shared_ptr<const PlannerData> & planner_data)
 {
   const auto & rh = planner_data->route_handler;
@@ -1171,7 +1171,7 @@ bool isWithinLanes(
   const auto footprint = autoware::universe_utils::transformVector(
     planner_data->parameters.vehicle_info.createFootprint(), transform);
 
-  if (!has_closest_lanelet) {
+  if (!closest_lanelet.has_value()) {
     return true;
   }
 
@@ -1179,18 +1179,18 @@ bool isWithinLanes(
 
   // push previous lanelet
   lanelet::ConstLanelets prev_lanelet;
-  if (rh->getPreviousLaneletsWithinRoute(closest_lanelet, &prev_lanelet)) {
+  if (rh->getPreviousLaneletsWithinRoute(closest_lanelet.value(), &prev_lanelet)) {
     concat_lanelets.push_back(prev_lanelet.front());
   }
 
   // push nearest lanelet
   {
-    concat_lanelets.push_back(closest_lanelet);
+    concat_lanelets.push_back(closest_lanelet.value());
   }
 
   // push next lanelet
   lanelet::ConstLanelet next_lanelet;
-  if (rh->getNextLaneletWithinRoute(closest_lanelet, &next_lanelet)) {
+  if (rh->getNextLaneletWithinRoute(closest_lanelet.value(), &next_lanelet)) {
     concat_lanelets.push_back(next_lanelet);
   }
 
