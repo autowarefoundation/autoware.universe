@@ -95,7 +95,7 @@ size_t getIndexWithLongitudinalOffset(
 }
 
 VelocityFactorArray makeVelocityFactorArray(
-  const rclcpp::Time & time, const std::string behavior = PlanningBehavior::ROUTE_OBSTACLE,
+  const rclcpp::Time & time, const std::string & behavior = PlanningBehavior::ROUTE_OBSTACLE,
   const std::optional<geometry_msgs::msg::Pose> pose = std::nullopt);
 }  // namespace obstacle_cruise_utils
 

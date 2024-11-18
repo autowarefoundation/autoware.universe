@@ -115,7 +115,7 @@ std::vector<StopObstacle> getClosestStopObstacles(const std::vector<StopObstacle
 }
 
 VelocityFactorArray makeVelocityFactorArray(
-  const rclcpp::Time & time, const std::string behavior,
+  const rclcpp::Time & time, const std::string & behavior,
   const std::optional<geometry_msgs::msg::Pose> pose)
 {
   VelocityFactorArray velocity_factor_array;
