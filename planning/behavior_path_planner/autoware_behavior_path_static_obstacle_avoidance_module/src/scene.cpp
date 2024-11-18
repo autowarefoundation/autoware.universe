@@ -769,8 +769,6 @@ void StaticObstacleAvoidanceModule::updateEgoBehavior(
 
   insertReturnDeadLine(isBestEffort(parameters_->policy_deceleration), path);
 
-  setStopReason(StopReason::AVOIDANCE, path.path);
-
   setVelocityFactor(path.path);
 }
 
