@@ -178,6 +178,7 @@ BehaviorModuleOutput PlannerManager::run(const std::shared_ptr<PlannerData> & da
     m->updateObserver();
     m->publishRTCStatus();
     m->publishSteeringFactor();
+    m->publishVelocityFactor();
   });
 
   generateCombinedDrivableArea(result_output.valid_output, data);
