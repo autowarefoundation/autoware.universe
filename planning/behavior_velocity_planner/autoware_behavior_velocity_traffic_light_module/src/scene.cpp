@@ -18,7 +18,7 @@
 
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
-#include <traffic_light_utils/traffic_light_utils.hpp>
+#include <autoware/traffic_light_utils/traffic_light_utils.hpp>
 
 #include <boost/geometry/algorithms/distance.hpp>
 #include <boost/geometry/algorithms/intersection.hpp>
@@ -177,7 +177,7 @@ bool TrafficLightModule::isStopSignal()
   }
 
   // Check if the current traffic signal state requires stopping
-  return traffic_light_utils::isTrafficSignalStop(lane_, looking_tl_state_);
+  return autoware::traffic_light_utils::isTrafficSignalStop(lane_, looking_tl_state_);
 }
 
 void TrafficLightModule::updateTrafficSignal()
