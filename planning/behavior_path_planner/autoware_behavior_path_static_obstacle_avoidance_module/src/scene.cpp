@@ -210,8 +210,8 @@ void StaticObstacleAvoidanceModule::fillFundamentalData(
   data.extend_lanelets = utils::static_obstacle_avoidance::getExtendLanes(
     data.current_lanelets, getEgoPose(), planner_data_);
 
-  data.has_closest_lanelet = lanelet::utils::query::getClosestLanelet(
-    data.current_lanelets, planner_data_->self_odometry->pose.pose, &data.closest_lanelet);
+  data.has_closest_lanelet =
+    planner_data_->route_handler->getClosestLaneletWithinRoute(getEgoPose(), &data.closest_lanelet);
 
   // expand drivable lanes
   const auto is_within_current_lane = utils::static_obstacle_avoidance::isWithinLanes(
