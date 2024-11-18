@@ -22,6 +22,7 @@
 #include <autoware_vehicle_info_utils/vehicle_info.hpp>
 
 #include <autoware_perception_msgs/msg/detail/shape__struct.hpp>
+#include <geometry_msgs/msg/detail/pose__struct.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <tier4_planning_msgs/msg/detail/path_with_lane_id__struct.hpp>
 
@@ -37,9 +38,11 @@
 constexpr double epsilon = 1e-6;
 
 using autoware::behavior_path_planner::utils::path_safety_checker::CollisionCheckDebug;
+using autoware::behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObject;
 using autoware::behavior_path_planner::utils::path_safety_checker::
   PoseWithVelocityAndPolygonStamped;
 using autoware::behavior_path_planner::utils::path_safety_checker::PoseWithVelocityStamped;
+using autoware::behavior_path_planner::utils::path_safety_checker::PredictedPathWithPolygon;
 using autoware::behavior_path_planner::utils::path_safety_checker::RSSparams;
 using autoware::test_utils::createPose;
 using autoware::test_utils::generateTrajectory;
@@ -72,6 +75,52 @@ RSSparams create_rss_parameters(
   params.extended_polygon_policy = "rectangle";
 
   return params;
+}
+
+std::vector<PoseWithVelocityAndPolygonStamped> create_path_with_velocity_and_polygon(
+  const Pose initial_pose, const Shape & shape, size_t point_num, double interval, double velocity)
+{
+  std::vector<PoseWithVelocityAndPolygonStamped> predicted_path;
+  predicted_path.reserve(point_num);
+  Pose pose = initial_pose;
+
+  for (size_t i = 0; i < point_num; i++) {
+    double time = static_cast<double>(i) * interval;
+    pose.position.x = time * velocity;
+    PoseWithVelocityAndPolygonStamped obj_pose_with_poly(
+      time, pose, velocity, autoware::universe_utils::toPolygon2d(pose, shape));
+    predicted_path.push_back(obj_pose_with_poly);
+  }
+
+  return predicted_path;
+}
+
+PredictedPathWithPolygon create_predicted_path_with_polygon(Pose pose, float confidence)
+{
+  PredictedPathWithPolygon path;
+  Shape shape;
+  shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
+  shape.dimensions.x = 1.0;
+  shape.dimensions.y = 1.0;
+  path.path = create_path_with_velocity_and_polygon(pose, shape, 10, 1.0, 1.0);
+  path.confidence = confidence;
+
+  return path;
+}
+
+ExtendedPredictedObject create_extended_predicted_object(Pose pose, float confidence)
+{
+  ExtendedPredictedObject object;
+  Shape shape;
+  shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
+  shape.dimensions.x = 1.0;
+  shape.dimensions.y = 1.0;
+  object.initial_pose = pose;
+  object.shape = shape;
+  object.initial_polygon = autoware::universe_utils::toPolygon2d(pose, shape);
+  object.predicted_paths.push_back(create_predicted_path_with_polygon(pose, confidence));
+
+  return object;
 }
 
 TEST(BehaviorPathPlanningSafetyUtilsTest, isTargetObjectOncoming)
@@ -407,6 +456,26 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, checkSafetyWithIntegralPredictedPolygo
 {
   using autoware::behavior_path_planner::utils::path_safety_checker::
     checkSafetyWithIntegralPredictedPolygon;
+
+  auto ego_predicted_path = createTestPath();
+  autoware::vehicle_info_utils::VehicleInfo vehicle_info{};
+  vehicle_info.max_longitudinal_offset_m = 1.0;
+  vehicle_info.rear_overhang_m = 1.0;
+  vehicle_info.vehicle_width_m = 2.0;
+  auto object_near =
+    create_extended_predicted_object(createPose(0.0, 1.0, 0.0, 0.0, 0.0, 0.0), 0.6);
+  auto object_far =
+    create_extended_predicted_object(createPose(10.0, 8.0, 0.0, 0.0, 0.0, 0.0), 0.5);
+  autoware::behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObjects objects;
+  objects.push_back(object_near);
+  objects.push_back(object_far);
+
+  autoware::behavior_path_planner::utils::path_safety_checker::IntegralPredictedPolygonParams
+    params{1.0, 1.0, 1.0, 2.0};
+  autoware::behavior_path_planner::utils::path_safety_checker::CollisionCheckDebugMap debug_map;
+
+  EXPECT_TRUE(checkSafetyWithIntegralPredictedPolygon(
+    ego_predicted_path, vehicle_info, objects, true, params, debug_map));
 }
 
 TEST(BehaviorPathPlanningSafetyUtilsTest, checkCollision)
@@ -417,30 +486,14 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, checkCollision)
   auto planned_path = autoware::test_utils::generateTrajectory<PathWithLaneId>(3, 1.0);
   auto predicted_ego_path = createTestPath();
 
-  autoware::behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObject
-    target_object;
+  ExtendedPredictedObject target_object;
   target_object.initial_pose = createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-  Pose obj_pose = createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
   Shape shape;
   shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
   shape.dimensions.x = 2.0;
   shape.dimensions.y = 2.0;
-  std::vector<PoseWithVelocityAndPolygonStamped> object_path;
-  object_path.reserve(5);
-
-  for (size_t i = 0; i < 5; i++) {
-    obj_pose.position.x = static_cast<double>(i);
-    auto time = static_cast<double>(i);
-
-    PoseWithVelocityAndPolygonStamped obj_pose_with_poly(
-      time, obj_pose, 1.0, autoware::universe_utils::toPolygon2d(obj_pose, shape));
-    object_path.push_back(obj_pose_with_poly);
-  }
-
-  autoware::behavior_path_planner::utils::path_safety_checker::PredictedPathWithPolygon
-    target_object_path;
-  target_object_path.path = object_path;
-  target_object_path.confidence = 1.0;
+  auto object_path =
+    create_predicted_path_with_polygon(createPose(0.0, 1.0, 0.0, 0.0, 0.0, 0.0), 1.0);
 
   autoware::vehicle_info_utils::VehicleInfo vehicle_info;
   vehicle_info.max_longitudinal_offset_m = 4.0;
@@ -455,28 +508,22 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, checkCollision)
   const double yaw_difference_th = M_PI_2;
   CollisionCheckDebug debug;
 
-  ASSERT_FALSE(checkCollision(
-    planned_path, predicted_ego_path, target_object, target_object_path, common_parameters,
-    rss_parameters, hysteresis_factor, yaw_difference_th, debug));
+  EXPECT_FALSE(checkCollision(
+    planned_path, predicted_ego_path, target_object, object_path, common_parameters, rss_parameters,
+    hysteresis_factor, yaw_difference_th, debug));
   auto collide_polygon = get_collided_polygons(
-    planned_path, predicted_ego_path, target_object, target_object_path, vehicle_info,
-    rss_parameters, hysteresis_factor, max_velocity_limit, yaw_difference_th, debug);
+    planned_path, predicted_ego_path, target_object, object_path, vehicle_info, rss_parameters,
+    hysteresis_factor, max_velocity_limit, yaw_difference_th, debug);
   EXPECT_EQ(collide_polygon.size(), 3);
 
-  object_path.clear();
-  for (size_t i = 0; i < 5; i++) {
-    obj_pose.position.x = static_cast<double>(i);
-    obj_pose.position.y = 4.0;
-    auto time = static_cast<double>(i);
-
-    PoseWithVelocityAndPolygonStamped obj_pose_with_poly(
-      time, obj_pose, 1.0, autoware::universe_utils::toPolygon2d(obj_pose, shape));
-    object_path.push_back(obj_pose_with_poly);
-  }
-  target_object_path.path = object_path;
+  target_object.initial_pose = createPose(0.0, 4.0, 0.0, 0.0, 0.0, 0.0);
+  object_path = create_predicted_path_with_polygon(createPose(0.0, 4.0, 0.0, 0.0, 0.0, 0.0), 1.0);
   collide_polygon = get_collided_polygons(
-    planned_path, predicted_ego_path, target_object, target_object_path, vehicle_info,
-    rss_parameters, hysteresis_factor, max_velocity_limit, yaw_difference_th, debug);
+    planned_path, predicted_ego_path, target_object, object_path, vehicle_info, rss_parameters,
+    hysteresis_factor, max_velocity_limit, yaw_difference_th, debug);
+  EXPECT_TRUE(checkCollision(
+    planned_path, predicted_ego_path, target_object, object_path, common_parameters, rss_parameters,
+    hysteresis_factor, yaw_difference_th, debug));
   EXPECT_TRUE(collide_polygon.empty());
 }
 
