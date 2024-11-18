@@ -11,7 +11,7 @@ find_package(CUDAToolkit)
 find_package(CUDNN)
 find_package(TENSORRT)
 
-if(NOT (CUDAToolkit_FOUND AND CUDNN_FOUND AND TENSORRT_FOUND))
+if(NOT (CUDAToolkit_FOUND AND CUDNN_FOUND AND TENSORRT_FOUND AND SOME_MISSING_LIBRARY))
   message(WARNING "cuda, cudnn, tensorrt libraries are not found")
   if(FORCE_CUDA)
     message(ERROR "FORCE_CUDA is set, continue to build the target...")
