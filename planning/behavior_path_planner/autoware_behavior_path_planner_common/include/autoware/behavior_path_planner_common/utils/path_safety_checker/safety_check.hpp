@@ -159,16 +159,14 @@ bool checkSafetyWithRSS(
  *        perform safety check for each of the iterated points.
  * @param planned_path The predicted path of the ego vehicle.
  * @param predicted_ego_path Ego vehicle's predicted path
- * @param ego_current_velocity Current velocity of the ego vehicle.
  * @param target_object The predicted object to check collision with.
  * @param target_object_path The predicted path of the target object.
- * @param common_parameters The common parameters used in behavior path planner.
- * @param front_object_deceleration The deceleration of the object in the front.(used in RSS)
- * @param rear_object_deceleration The deceleration of the object in the rear.(used in RSS)
- * @param yaw_difference_th maximum yaw difference between any given ego path pose and object
- * predicted path pose.
+ * @param common_parameters Common parameters used for behavior path planning.
+ * @param rss_parameters The parameters used in RSS.
+ * @param hysteresis_factor Hysteresis factor.
+ * @param yaw_difference_th Threshold of yaw difference.
  * @param debug The debug information for collision checking.
- * @return true if distance is safe.
+ * @return True if there is no collision.
  */
 bool checkCollision(
   const PathWithLaneId & planned_path,
@@ -203,6 +201,7 @@ std::vector<Polygon2d> get_collided_polygons(
 
 bool checkPolygonsIntersects(
   const std::vector<Polygon2d> & polys_1, const std::vector<Polygon2d> & polys_2);
+
 bool checkSafetyWithIntegralPredictedPolygon(
   const std::vector<PoseWithVelocityStamped> & ego_predicted_path, const VehicleInfo & vehicle_info,
   const ExtendedPredictedObjects & objects, const bool check_all_predicted_path,
