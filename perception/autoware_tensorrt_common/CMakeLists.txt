@@ -13,7 +13,11 @@ find_package(TENSORRT)
 
 if(NOT (CUDAToolkit_FOUND AND CUDNN_FOUND AND TENSORRT_FOUND))
   message(WARNING "cuda, cudnn, tensorrt libraries are not found")
-  return()
+  if(FORCE_CUDA)
+    message(ERROR "FORCE_CUDA is set, continue to build the target...")
+  else()
+    return()
+  endif()
 endif()
 
 add_library(${PROJECT_NAME} SHARED
