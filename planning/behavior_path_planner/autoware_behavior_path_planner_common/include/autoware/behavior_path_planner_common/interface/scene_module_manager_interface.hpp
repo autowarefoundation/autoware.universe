@@ -106,7 +106,7 @@ public:
 
   void publishSteeringFactor()
   {
-    autoware_adapi_v1_msgs::msg::SteeringFactorArray steering_factor_array;
+    SteeringFactorArray steering_factor_array;
     steering_factor_array.header.frame_id = "map";
     steering_factor_array.header.stamp = node_->now();
 
