@@ -206,9 +206,6 @@ std::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
   shifted_path.path.points = autoware::motion_utils::removeOverlapPoints(shifted_path.path.points);
   autoware::motion_utils::insertOrientation(shifted_path.path.points, true);
 
-  // set same orientation, because the reference center line orientation is not same to the
-  shifted_path.path.points.back().point.pose.orientation = shift_end_pose.orientation;
-
   // for debug. result of shift is not equal to the target
   const Pose actual_shift_end_pose = shifted_path.path.points.back().point.pose;
 
