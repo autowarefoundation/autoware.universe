@@ -76,7 +76,6 @@ rcl_interfaces::msg::SetParametersResult MrmComfortableStopOperator::onParameter
 {
   using autoware::universe_utils::updateParam;
   updateParam<double>(parameters, "min_acceleration", params_.min_acceleration);
-  params_.min_acceleration = std::abs(params_.min_acceleration);
   updateParam<double>(parameters, "max_jerk", params_.max_jerk);
   updateParam<double>(parameters, "min_jerk", params_.min_jerk);
 
