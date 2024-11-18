@@ -347,7 +347,8 @@ TrackedObjectKinematics parse(const YAML::Node & node)
   TrackedObjectKinematics msg;
   msg.pose_with_covariance = parse<PoseWithCovariance>(node["pose_with_covariance"]);
   msg.twist_with_covariance = parse<TwistWithCovariance>(node["twist_with_covariance"]);
-  msg.acceleration_with_covariance = parse<AccelWithCovariance>(node["accel_with_covariance"]);
+  msg.acceleration_with_covariance =
+    parse<AccelWithCovariance>(node["acceleration_with_covariance"]);
   msg.orientation_availability = node["orientation_availability"].as<uint8_t>();
   msg.is_stationary = node["is_stationary"].as<bool>();
   return msg;
