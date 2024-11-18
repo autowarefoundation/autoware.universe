@@ -294,7 +294,6 @@ void MissionPlanner::on_set_waypoint_route(
   const SetWaypointRoute::Request::SharedPtr req, const SetWaypointRoute::Response::SharedPtr res)
 {
   using ResponseCode = autoware_adapi_v1_msgs::srv::SetRoutePoints::Response;
-
   autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   const auto is_reroute = state_.state == RouteState::SET;
 
