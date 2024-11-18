@@ -234,28 +234,7 @@ public:
         continue;
       }
 
-      // check the next cell
-      {
-        bool is_next_found = false;
-        int next_cell_idx = cell.next_grid_idx_;
-        while (next_cell_idx >= 0) {
-          auto & next_cell = cells_[next_cell_idx];
-          if (next_cell.isEmpty()) {
-            // check next of the next cell
-            next_cell_idx = next_cell.next_grid_idx_;
-          } else {
-            // not empty, set the next cell
-            cell.next_grid_idx_ = next_cell_idx;
-            is_next_found = true;
-            break;
-          }
-        }
-        if (!is_next_found) {
-          cell.next_grid_idx_ = -1;
-        }
-      }
-
-      // check the previous cell
+      // find and link the scan-grid root cell
       {
         bool is_prev_found = false;
         int scan_grid_root_idx = cell.prev_grid_idx_;

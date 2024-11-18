@@ -484,10 +484,10 @@ void GridGroundFilter::process(
   // reset grid cells
   grid_ptr_->resetCells();
 
-  // 1. convert
+  // 1. assign points to grid cells
   convert();
 
-  // 2. preprocess
+  // 2. cell preprocess
   preprocess();
 
   // 3. initialize ground

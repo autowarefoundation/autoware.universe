@@ -126,7 +126,6 @@ ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions &
       time_keeper_ = std::make_shared<autoware::universe_utils::TimeKeeper>(time_keeper);
 
       // set time keeper to grid
-      // grid_ptr_->setTimeKeeper(time_keeper_);
       grid_ground_filter_ptr_->setTimeKeeper(time_keeper_);
     }
   }
