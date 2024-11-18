@@ -359,7 +359,7 @@ std::optional<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>> check_c
 }
 
 Rtree make_ego_footprint_rtree(
-  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory,
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory,
   const VehicleInfo & vehicle_info)
 {
   autoware::universe_utils::MultiPolygon2d trajectory_footprints;
