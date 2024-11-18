@@ -597,6 +597,9 @@ struct AvoidancePlanningData
 
   std::optional<double> distance_to_red_traffic_light{std::nullopt};
 
+  bool has_closest_lanelet{false};
+  lanelet::ConstLanelet closest_lanelet{};
+
   bool is_allowed_goal_modification{false};
 
   bool request_operator{false};

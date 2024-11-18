@@ -54,7 +54,8 @@ double calcShiftLength(
   const bool & is_object_on_right, const double & overhang_dist, const double & avoid_margin);
 
 bool isWithinLanes(
-  const lanelet::ConstLanelets & lanelets, const std::shared_ptr<const PlannerData> & planner_data);
+  const bool has_closest_lanelet, const lanelet::ConstLanelet & closest_lanelet,
+  const std::shared_ptr<const PlannerData> & planner_data);
 
 /**
  * @brief check if the ego has to shift driving position.

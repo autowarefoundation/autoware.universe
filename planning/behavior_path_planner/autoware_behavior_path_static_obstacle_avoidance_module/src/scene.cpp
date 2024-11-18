@@ -210,9 +210,12 @@ void StaticObstacleAvoidanceModule::fillFundamentalData(
   data.extend_lanelets = utils::static_obstacle_avoidance::getExtendLanes(
     data.current_lanelets, getEgoPose(), planner_data_);
 
+  data.has_closest_lanelet = lanelet::utils::query::getClosestLanelet(
+    data.current_lanelets, planner_data_->self_odometry->pose.pose, &data.closest_lanelet);
+
   // expand drivable lanes
-  const auto is_within_current_lane =
-    utils::static_obstacle_avoidance::isWithinLanes(data.current_lanelets, planner_data_);
+  const auto is_within_current_lane = utils::static_obstacle_avoidance::isWithinLanes(
+    data.has_closest_lanelet, data.closest_lanelet, planner_data_);
   const auto red_signal_lane_itr = std::find_if(
     data.current_lanelets.begin(), data.current_lanelets.end(), [&](const auto & lanelet) {
       if (utils::traffic_light::isTrafficSignalStop({lanelet}, planner_data_)) {
@@ -334,10 +337,11 @@ void StaticObstacleAvoidanceModule::fillAvoidanceTargetObjects(
   constexpr double MARGIN = 10.0;
   const auto forward_detection_range = [&]() {
     if (!data.distance_to_red_traffic_light.has_value()) {
-      return helper_->getForwardDetectionRange();
+      return helper_->getForwardDetectionRange(data.has_closest_lanelet, data.closest_lanelet);
     }
     return std::min(
-      helper_->getForwardDetectionRange(), data.distance_to_red_traffic_light.value());
+      helper_->getForwardDetectionRange(data.has_closest_lanelet, data.closest_lanelet),
+      data.distance_to_red_traffic_light.value());
   }();
 
   const auto [object_within_target_lane, object_outside_target_lane] = separateObjectsByPath(

@@ -212,7 +212,8 @@ public:
                        : std::max(shift_length, getRightShiftBound());
   }
 
-  double getForwardDetectionRange() const
+  double getForwardDetectionRange(
+    const bool has_closest_lanelet, const lanelet::ConstLanelet & closest_lane) const
   {
     if (parameters_->use_static_detection_area) {
       return parameters_->object_check_max_forward_distance;
@@ -220,8 +221,7 @@ public:
 
     const auto & route_handler = data_->route_handler;
 
-    lanelet::ConstLanelet closest_lane;
-    if (!route_handler->getClosestLaneletWithinRoute(getEgoPose(), &closest_lane)) {
+    if (!has_closest_lanelet) {
       return parameters_->object_check_max_forward_distance;
     }
 

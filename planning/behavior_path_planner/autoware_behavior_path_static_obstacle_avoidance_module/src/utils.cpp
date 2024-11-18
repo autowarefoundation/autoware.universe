@@ -1162,7 +1162,8 @@ double calcShiftLength(
 }
 
 bool isWithinLanes(
-  const lanelet::ConstLanelets & lanelets, const std::shared_ptr<const PlannerData> & planner_data)
+  const bool has_closest_lanelet, const lanelet::ConstLanelet & closest_lanelet,
+  const std::shared_ptr<const PlannerData> & planner_data)
 {
   const auto & rh = planner_data->route_handler;
   const auto & ego_pose = planner_data->self_odometry->pose.pose;
@@ -1170,8 +1171,7 @@ bool isWithinLanes(
   const auto footprint = autoware::universe_utils::transformVector(
     planner_data->parameters.vehicle_info.createFootprint(), transform);
 
-  lanelet::ConstLanelet closest_lanelet{};
-  if (!lanelet::utils::query::getClosestLanelet(lanelets, ego_pose, &closest_lanelet)) {
+  if (!has_closest_lanelet) {
     return true;
   }
 
