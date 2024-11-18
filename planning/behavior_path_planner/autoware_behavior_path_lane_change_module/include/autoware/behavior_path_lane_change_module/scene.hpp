@@ -128,8 +128,7 @@ protected:
 
   void filterOncomingObjects(PredictedObjects & objects) const;
 
-  FilteredByLanesObjects filterObjectsByLanelets(
-    const PredictedObjects & objects, const PathWithLaneId & current_lanes_ref_path) const;
+  FilteredByLanesExtendedObjects filterObjectsByLanelets(const PredictedObjects & objects) const;
 
   bool get_prepare_segment(
     PathWithLaneId & prepare_segment, const double prepare_length) const override;

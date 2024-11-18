@@ -262,23 +262,21 @@ struct Info
   }
 };
 
-template <typename Object>
+struct TargetLaneLeadingObjects
+{
+  ExtendedPredictedObjects moving;
+  ExtendedPredictedObjects stopped;
+  ExtendedPredictedObjects expanded;
+
+  [[nodiscard]] size_t size() const { return moving.size() + stopped.size() + expanded.size(); }
+};
+
 struct LanesObjects
 {
-  Object current_lane{};
-  Object target_lane_leading{};
-  Object target_lane_trailing{};
-  Object other_lane{};
-
-  LanesObjects() = default;
-  LanesObjects(
-    Object current_lane, Object target_lane_leading, Object target_lane_trailing, Object other_lane)
-  : current_lane(std::move(current_lane)),
-    target_lane_leading(std::move(target_lane_leading)),
-    target_lane_trailing(std::move(target_lane_trailing)),
-    other_lane(std::move(other_lane))
-  {
-  }
+  ExtendedPredictedObjects others;
+  ExtendedPredictedObjects current_lane;
+  ExtendedPredictedObjects target_lane_trailing;
+  TargetLaneLeadingObjects target_lane_leading;
 };
 
 struct TargetObjects
@@ -418,8 +416,7 @@ using LaneChangeStates = lane_change::States;
 using LaneChangePhaseInfo = lane_change::PhaseInfo;
 using LaneChangePhaseMetrics = lane_change::PhaseMetrics;
 using LaneChangeInfo = lane_change::Info;
-using FilteredByLanesObjects = lane_change::LanesObjects<std::vector<PredictedObject>>;
-using FilteredByLanesExtendedObjects = lane_change::LanesObjects<ExtendedPredictedObjects>;
+using FilteredByLanesExtendedObjects = lane_change::LanesObjects;
 using LateralAccelerationMap = lane_change::LateralAccelerationMap;
 }  // namespace autoware::behavior_path_planner
 

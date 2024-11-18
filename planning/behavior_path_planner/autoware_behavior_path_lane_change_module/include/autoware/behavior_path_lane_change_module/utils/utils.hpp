@@ -54,6 +54,7 @@ using behavior_path_planner::lane_change::CommonDataPtr;
 using behavior_path_planner::lane_change::LanesPolygon;
 using behavior_path_planner::lane_change::ModuleType;
 using behavior_path_planner::lane_change::PathSafetyStatus;
+using behavior_path_planner::lane_change::TargetLaneLeadingObjects;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
@@ -144,8 +145,7 @@ lanelet::BasicPolygon2d create_polygon(
   const lanelet::ConstLanelets & lanes, const double start_dist, const double end_dist);
 
 ExtendedPredictedObject transform(
-  const PredictedObject & object, const BehaviorPathPlannerParameters & common_parameters,
-  const LaneChangeParameters & lane_change_parameters);
+  const PredictedObject & object, const LaneChangeParameters & lane_change_parameters);
 
 bool is_collided_polygons_in_lanelet(
   const std::vector<Polygon2d> & collided_polygons, const lanelet::BasicPolygon2d & lanes_polygon);
@@ -240,16 +240,13 @@ bool is_same_lane_with_prev_iteration(
 
 bool is_ahead_of_ego(
   const CommonDataPtr & common_data_ptr, const PathWithLaneId & path,
-  const PredictedObject & object);
+  const ExtendedPredictedObject & object);
 
 bool is_before_terminal(
   const CommonDataPtr & common_data_ptr, const PathWithLaneId & path,
-  const PredictedObject & object);
+  const ExtendedPredictedObject & object);
 
 double calc_angle_to_lanelet_segment(const lanelet::ConstLanelets & lanelets, const Pose & pose);
-
-ExtendedPredictedObjects transform_to_extended_objects(
-  const CommonDataPtr & common_data_ptr, const std::vector<PredictedObject> & objects);
 
 double get_distance_to_next_regulatory_element(
   const CommonDataPtr & common_data_ptr, const bool ignore_crosswalk = false,
@@ -294,8 +291,8 @@ double get_min_dist_to_current_lanes_obj(
  * otherwise, false.
  */
 bool has_blocking_target_object(
-  const CommonDataPtr & common_data_ptr, const FilteredByLanesExtendedObjects & filtered_objects,
-  const double stop_arc_length, const PathWithLaneId & path);
+  const TargetLaneLeadingObjects & target_leading_objects, const double stop_arc_length,
+  const PathWithLaneId & path);
 
 /**
  * @brief Checks if the ego vehicle has passed any turn direction within an intersection.
@@ -342,5 +339,11 @@ std::vector<LineString2d> get_line_string_paths(const ExtendedPredictedObject & 
  */
 bool has_overtaking_turn_lane_object(
   const CommonDataPtr & common_data_ptr, const ExtendedPredictedObjects & trailing_objects);
+
+void filter_target_lane_objects(
+  const CommonDataPtr & common_data_ptr, const ExtendedPredictedObject & object,
+  const double dist_ego_to_current_lanes_center, const bool ahead_of_ego,
+  const bool before_terminal, TargetLaneLeadingObjects & leading_objects,
+  ExtendedPredictedObjects & trailing_objects);
 }  // namespace autoware::behavior_path_planner::utils::lane_change
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__UTILS_HPP_
