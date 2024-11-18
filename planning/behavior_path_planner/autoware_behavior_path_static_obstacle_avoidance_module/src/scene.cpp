@@ -84,6 +84,7 @@ StaticObstacleAvoidanceModule::StaticObstacleAvoidanceModule(
   generator_{parameters}
 {
   steering_factor_interface_.init(PlanningBehavior::AVOIDANCE);
+  velocity_factor_interface_.init(PlanningBehavior::AVOIDANCE);
 }
 
 bool StaticObstacleAvoidanceModule::isExecutionRequested() const
@@ -769,6 +770,8 @@ void StaticObstacleAvoidanceModule::updateEgoBehavior(
   insertReturnDeadLine(isBestEffort(parameters_->policy_deceleration), path);
 
   setStopReason(StopReason::AVOIDANCE, path.path);
+
+  setVelocityFactor(path.path);
 }
 
 bool StaticObstacleAvoidanceModule::isSafePath(
