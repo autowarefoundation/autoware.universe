@@ -386,11 +386,6 @@ void GridGroundFilter::classify(pcl::PointIndices & out_no_ground_indices)
       const int search_count = param_.gnd_grid_buffer_size;
       const int check_cell_idx = cell.scan_grid_root_idx_;
       recursiveSearch(check_cell_idx, search_count, grid_idcs);
-      // calculate the gradient and intercept by least square method
-      float a, b;
-      fitLineFromGndGrid(grid_idcs, a, b);
-      cell.gradient_ = a;
-      cell.intercept_ = b;
     }
 
     // segment the ground and non-ground points
@@ -413,12 +408,14 @@ void GridGroundFilter::classify(pcl::PointIndices & out_no_ground_indices)
     }
 
     {
-      std::unique_ptr<ScopedTimeTrack> sub_st_ptr;
-      if (time_keeper_)
-        sub_st_ptr = std::make_unique<ScopedTimeTrack>("segmentation", *time_keeper_);
-
       PointsCentroid ground_bin;
       if (mode == SegmentationMode::CONTINUOUS) {
+        // calculate the gradient and intercept by least square method
+        float a, b;
+        fitLineFromGndGrid(grid_idcs, a, b);
+        cell.gradient_ = a;
+        cell.intercept_ = b;
+
         SegmentContinuousCell(cell, ground_bin, out_no_ground_indices);
       } else if (mode == SegmentationMode::DISCONTINUOUS) {
         SegmentDiscontinuousCell(cell, ground_bin, out_no_ground_indices);

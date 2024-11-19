@@ -93,6 +93,7 @@ float pseudoTan(const float theta)
   return std::copysign(M_PI_4f / (M_PI_2f - std::abs(normalized_theta)), normalized_theta);
 }
 }  // namespace
+
 namespace autoware::ground_segmentation
 {
 using autoware::universe_utils::ScopedTimeTrack;
@@ -324,15 +325,12 @@ private:
       for (int i = 0; i < grid_linearity_switch_num_; i++) {
         grid_radial_boundaries_.push_back(i * grid_dist_size_);
       }
-      // at the switch radius
-      grid_radial_boundaries_.push_back(grid_linearity_switch_radius_);
       // constant angle
       grid_linearity_switch_angle_ = pseudoArcTan2(grid_linearity_switch_radius_, origin_z_);
       float angle = grid_linearity_switch_angle_;
       const float grid_angle_interval =
         pseudoArcTan2(grid_linearity_switch_radius_ + grid_dist_size_, origin_z_) - angle;
       grid_size_rad_inv_ = 1.0f / grid_angle_interval;
-      angle += grid_angle_interval;
       while (angle < M_PI_2) {
         const float dist = pseudoTan(angle) * origin_z_;
         grid_radial_boundaries_.push_back(dist);
@@ -355,18 +353,14 @@ private:
       azimuth_grids_per_radial_.resize(radial_grid_num);
       azimuth_interval_per_radial_.resize(radial_grid_num);
       azimuth_grids_per_radial_[0] = 1;
-      azimuth_interval_per_radial_[0] = 2.0f * M_PI;
+      azimuth_interval_per_radial_[0] = 2.0f * M_PIf;
 
-      constexpr float dist_to_saturate = 20.0f;
+      const int max_azimuth_grid_num = static_cast<int>(2.0 * M_PIf / grid_azimuth_size_);
+      const int grid_num = static_cast<int>(max_azimuth_grid_num);
+      const int azimuth_grid_num = std::max(std::min(grid_num, max_azimuth_grid_num), 1);
+      const float azimuth_interval_evened = 2.0f * M_PIf / azimuth_grid_num;
 
       for (size_t i = 1; i < radial_grid_num; ++i) {
-        const int max_azimuth_grid_num = static_cast<int>(2.0 * M_PI / grid_azimuth_size_);
-        const float dist = grid_radial_boundaries_[i];
-        const float decay = std::min(dist / dist_to_saturate, 1.0f);
-        const int grid_num = static_cast<int>(max_azimuth_grid_num * decay);
-
-        const int azimuth_grid_num = std::max(std::min(grid_num, max_azimuth_grid_num), 1);
-        const float azimuth_interval_evened = 2.0f * M_PI / azimuth_grid_num;
         azimuth_grids_per_radial_[i] = azimuth_grid_num;
         azimuth_interval_per_radial_[i] = azimuth_interval_evened;
       }
