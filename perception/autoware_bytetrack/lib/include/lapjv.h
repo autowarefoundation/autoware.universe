@@ -105,6 +105,6 @@ typedef double cost_t;
 typedef char boolean;
 typedef enum fp_t { FP_1 = 1, FP_2 = 2, FP_DYNAMIC = 3 } fp_t;
 
-extern int_t lapjv_internal(const uint_t n, const cost_t * cost[], int_t * x, int_t * y);
+extern int_t lapjv_internal(const uint_t n, cost_t * cost[], int_t * x, int_t * y);
 
 #endif  // LAPJV_H_

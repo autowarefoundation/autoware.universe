@@ -340,7 +340,7 @@ int_t _ca_dense(
 
 /** Solve dense sparse LAP.
  */
-int lapjv_internal(const uint_t n, const cost_t * cost[], int_t * x, int_t * y)
+int lapjv_internal(const uint_t n, cost_t * cost[], int_t * x, int_t * y)
 {
   int ret;
   int_t * free_rows;
