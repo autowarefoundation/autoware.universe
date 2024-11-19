@@ -14,7 +14,7 @@
 
 #include "include/pose_covariance_modifier.hpp"
 
-#include <interpolation/linear_interpolation.hpp>
+#include <autoware/interpolation/linear_interpolation.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
@@ -179,7 +179,7 @@ std::array<double, 36> PoseCovarianceModifierNode::update_ndt_covariances_from_g
     const double input_normalized = (x - x_min) / (x_max - x_min);
 
     // Interpolate to the output range
-    return interpolation::lerp(y_min, y_max, input_normalized);
+    return autoware::interpolation::lerp(y_min, y_max, input_normalized);
   };
 
   auto ndt_variance_from_gnss_variance = [&](double ndt_variance, double gnss_variance) {

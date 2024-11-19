@@ -20,6 +20,7 @@
 #include "autoware/mpc_lateral_controller/qp_solver/qp_solver_interface.hpp"
 #include "autoware/mpc_lateral_controller/steering_predictor.hpp"
 #include "autoware/mpc_lateral_controller/vehicle_model/vehicle_model_interface.hpp"
+#include "autoware/trajectory_follower_base/control_horizon.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include "autoware_control_msgs/msg/lateral.hpp"
@@ -38,6 +39,7 @@
 namespace autoware::motion::control::mpc_lateral_controller
 {
 
+using autoware::motion::control::trajectory_follower::LateralHorizon;
 using autoware_control_msgs::msg::Lateral;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_vehicle_msgs::msg::SteeringReport;
@@ -222,6 +224,7 @@ private:
   double m_min_prediction_length = 5.0;  // Minimum prediction distance.
 
   rclcpp::Publisher<Trajectory>::SharedPtr m_debug_frenet_predicted_trajectory_pub;
+  rclcpp::Publisher<Trajectory>::SharedPtr m_debug_resampled_reference_trajectory_pub;
   /**
    * @brief Get variables for MPC calculation.
    * @param trajectory The reference trajectory.
@@ -341,11 +344,14 @@ private:
    * @param Uex optimized input.
    * @param mpc_resampled_ref_traj reference trajectory resampled in the mpc time-step
    * @param dt delta time used in the mpc problem.
+   * @param coordinate String specifying the coordinate system ("world" or "frenet", default is
+   * "world")
    * @return predicted path
    */
   Trajectory calculatePredictedTrajectory(
     const MPCMatrix & mpc_matrix, const Eigen::MatrixXd & x0, const Eigen::MatrixXd & Uex,
-    const MPCTrajectory & mpc_resampled_ref_traj, const double dt) const;
+    const MPCTrajectory & reference_trajectory, const double dt,
+    const std::string & coordinate = "world") const;
 
   /**
    * @brief Check if the MPC matrix has any invalid values.
@@ -426,7 +432,11 @@ public:
   double ego_nearest_dist_threshold = 3.0;  // Threshold for nearest index search based on distance.
   double ego_nearest_yaw_threshold = M_PI_2;  // Threshold for nearest index search based on yaw.
 
-  bool m_debug_publish_predicted_trajectory = false;  // Flag to publish debug predicted trajectory
+  bool m_use_delayed_initial_state =
+    true;  // Flag to use x0_delayed as initial state for predicted trajectory
+
+  bool m_publish_debug_trajectories = false;  // Flag to publish predicted trajectory and
+                                              // resampled reference trajectory for debug purpose
 
   //!< Constructor.
   explicit MPC(rclcpp::Node & node);
@@ -442,7 +452,8 @@ public:
    */
   bool calculateMPC(
     const SteeringReport & current_steer, const Odometry & current_kinematics, Lateral & ctrl_cmd,
-    Trajectory & predicted_trajectory, Float32MultiArrayStamped & diagnostic);
+    Trajectory & predicted_trajectory, Float32MultiArrayStamped & diagnostic,
+    LateralHorizon & ctrl_cmd_horizon);
 
   /**
    * @brief Set the reference trajectory to be followed.

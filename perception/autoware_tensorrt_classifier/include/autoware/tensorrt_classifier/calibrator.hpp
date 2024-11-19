@@ -36,8 +36,8 @@
 
 #ifndef AUTOWARE__TENSORRT_CLASSIFIER__CALIBRATOR_HPP_
 #define AUTOWARE__TENSORRT_CLASSIFIER__CALIBRATOR_HPP_
-#include "cuda_utils/cuda_check_error.hpp"
-#include "cuda_utils/cuda_unique_ptr.hpp"
+#include "autoware/cuda_utils/cuda_check_error.hpp"
+#include "autoware/cuda_utils/cuda_unique_ptr.hpp"
 
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>

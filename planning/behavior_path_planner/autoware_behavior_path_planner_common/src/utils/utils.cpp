@@ -15,7 +15,6 @@
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 
 #include "autoware/motion_utils/trajectory/path_with_lane_id.hpp"
-#include "object_recognition_utils/predicted_path_utils.hpp"
 
 #include <autoware/motion_utils/resample/resample.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
@@ -99,53 +98,6 @@ double l2Norm(const Vector3 vector)
   return std::sqrt(std::pow(vector.x, 2) + std::pow(vector.y, 2) + std::pow(vector.z, 2));
 }
 
-double getDistanceBetweenPredictedPaths(
-  const PredictedPath & object_path, const PredictedPath & ego_path, const double start_time,
-  const double end_time, const double resolution)
-{
-  double min_distance = std::numeric_limits<double>::max();
-  for (double t = start_time; t < end_time; t += resolution) {
-    const auto object_pose = object_recognition_utils::calcInterpolatedPose(object_path, t);
-    if (!object_pose) {
-      continue;
-    }
-    const auto ego_pose = object_recognition_utils::calcInterpolatedPose(ego_path, t);
-    if (!ego_pose) {
-      continue;
-    }
-    double distance = autoware::universe_utils::calcDistance3d(*object_pose, *ego_pose);
-    if (distance < min_distance) {
-      min_distance = distance;
-    }
-  }
-  return min_distance;
-}
-
-double getDistanceBetweenPredictedPathAndObject(
-  const PredictedObject & object, const PredictedPath & ego_path, const double start_time,
-  const double end_time, const double resolution)
-{
-  auto clock{rclcpp::Clock{RCL_ROS_TIME}};
-  auto t_delta{rclcpp::Duration::from_seconds(resolution)};
-  double min_distance = std::numeric_limits<double>::max();
-  rclcpp::Time ros_start_time = clock.now() + rclcpp::Duration::from_seconds(start_time);
-  rclcpp::Time ros_end_time = clock.now() + rclcpp::Duration::from_seconds(end_time);
-  const auto obj_polygon = autoware::universe_utils::toPolygon2d(object);
-  for (double t = start_time; t < end_time; t += resolution) {
-    const auto ego_pose = object_recognition_utils::calcInterpolatedPose(ego_path, t);
-    if (!ego_pose) {
-      continue;
-    }
-    Point2d ego_point{ego_pose->position.x, ego_pose->position.y};
-
-    double distance = boost::geometry::distance(obj_polygon, ego_point);
-    if (distance < min_distance) {
-      min_distance = distance;
-    }
-  }
-  return min_distance;
-}
-
 bool checkCollisionBetweenPathFootprintsAndObjects(
   const autoware::universe_utils::LinearRing2d & local_vehicle_footprint,
   const PathWithLaneId & ego_path, const PredictedObjects & dynamic_objects, const double margin)
@@ -203,7 +155,7 @@ double calcLateralDistanceFromEgoToObject(
   return min_distance;
 }
 
-double calcLongitudinalDistanceFromEgoToObject(
+double calc_longitudinal_distance_from_ego_to_object(
   const Pose & ego_pose, const double base_link2front, const double base_link2rear,
   const PredictedObject & dynamic_object)
 {
@@ -243,34 +195,10 @@ double calcLongitudinalDistanceFromEgoToObjects(
   double min_distance = std::numeric_limits<double>::max();
   for (const auto & object : dynamic_objects.objects) {
     min_distance = std::min(
-      min_distance,
-      calcLongitudinalDistanceFromEgoToObject(ego_pose, base_link2front, base_link2rear, object));
+      min_distance, calc_longitudinal_distance_from_ego_to_object(
+                      ego_pose, base_link2front, base_link2rear, object));
   }
   return min_distance;
-}
-
-std::vector<double> calcObjectsDistanceToPath(
-  const PredictedObjects & objects, const PathWithLaneId & ego_path)
-{
-  std::vector<double> distance_array;
-  for (const auto & obj : objects.objects) {
-    const auto obj_polygon = autoware::universe_utils::toPolygon2d(obj);
-    LineString2d ego_path_line;
-    ego_path_line.reserve(ego_path.points.size());
-    for (const auto & p : ego_path.points) {
-      boost::geometry::append(
-        ego_path_line, Point2d(p.point.pose.position.x, p.point.pose.position.y));
-    }
-    const double distance = boost::geometry::distance(obj_polygon, ego_path_line);
-    distance_array.push_back(distance);
-  }
-  return distance_array;
-}
-
-template <typename T>
-bool exists(std::vector<T> vec, T element)
-{
-  return std::find(vec.begin(), vec.end(), element) != vec.end();
 }
 
 std::optional<size_t> findIndexOutOfGoalSearchRange(
@@ -318,7 +246,7 @@ std::optional<size_t> findIndexOutOfGoalSearchRange(
 }
 
 // goal does not have z
-bool setGoal(
+bool set_goal(
   const double search_radius_range, [[maybe_unused]] const double search_rad_range,
   const PathWithLaneId & input, const Pose & goal, const int64_t goal_lane_id,
   PathWithLaneId * output_ptr)
@@ -448,23 +376,13 @@ PathWithLaneId refinePathForGoal(
     filtered_path.points.back().point.longitudinal_velocity_mps = 0.0;
   }
 
-  if (setGoal(
+  if (set_goal(
         search_radius_range, search_rad_range, filtered_path, goal, goal_lane_id,
         &path_with_goal)) {
     return path_with_goal;
   } else {
     return filtered_path;
   }
-}
-
-bool containsGoal(const lanelet::ConstLanelets & lanes, const lanelet::Id & goal_id)
-{
-  for (const auto & lane : lanes) {
-    if (lane.id() == goal_id) {
-      return true;
-    }
-  }
-  return false;
 }
 
 bool isInLanelets(const Pose & pose, const lanelet::ConstLanelets & lanes)
@@ -771,16 +689,6 @@ double getSignedDistance(
   return arc_goal.length - arc_current.length;
 }
 
-std::vector<lanelet::Id> getIds(const lanelet::ConstLanelets & lanelets)
-{
-  std::vector<lanelet::Id> ids;
-  ids.reserve(lanelets.size());
-  for (const auto & llt : lanelets) {
-    ids.push_back(llt.id());
-  }
-  return ids;
-}
-
 PathPointWithLaneId insertStopPoint(const double length, PathWithLaneId & path)
 {
   const size_t original_size = path.points.size();
@@ -981,25 +889,8 @@ double getArcLengthToTargetLanelet(
 
   const auto target_center_line = target_lane.centerline().basicLineString();
 
-  Pose front_pose, back_pose;
-
-  {
-    const auto front_point = lanelet::utils::conversion::toGeomMsgPt(target_center_line.front());
-    const double front_yaw = lanelet::utils::getLaneletAngle(target_lane, front_point);
-    front_pose.position = front_point;
-    tf2::Quaternion tf_quat;
-    tf_quat.setRPY(0, 0, front_yaw);
-    front_pose.orientation = tf2::toMsg(tf_quat);
-  }
-
-  {
-    const auto back_point = lanelet::utils::conversion::toGeomMsgPt(target_center_line.back());
-    const double back_yaw = lanelet::utils::getLaneletAngle(target_lane, back_point);
-    back_pose.position = back_point;
-    tf2::Quaternion tf_quat;
-    tf_quat.setRPY(0, 0, back_yaw);
-    back_pose.orientation = tf2::toMsg(tf_quat);
-  }
+  const auto front_pose = to_geom_msg_pose(target_center_line.front(), target_lane);
+  const auto back_pose = to_geom_msg_pose(target_center_line.back(), target_lane);
 
   const auto arc_front = lanelet::utils::getArcCoordinates(lanelet_sequence, front_pose);
   const auto arc_back = lanelet::utils::getArcCoordinates(lanelet_sequence, back_pose);
@@ -1032,50 +923,6 @@ Polygon2d toPolygon2d(const lanelet::BasicPolygon2d & polygon)
   return autoware::universe_utils::isClockwise(ret)
            ? ret
            : autoware::universe_utils::inverseClockwise(ret);
-}
-
-std::vector<Polygon2d> getTargetLaneletPolygons(
-  const lanelet::PolygonLayer & map_polygons, lanelet::ConstLanelets & lanelets, const Pose & pose,
-  const double check_length, const std::string & target_type)
-{
-  std::vector<Polygon2d> polygons;
-
-  // create lanelet polygon
-  const auto arclength = lanelet::utils::getArcCoordinates(lanelets, pose);
-  const auto llt_polygon = lanelet::utils::getPolygonFromArcLength(
-    lanelets, arclength.length, arclength.length + check_length);
-  const auto llt_polygon_2d = lanelet::utils::to2D(llt_polygon).basicPolygon();
-
-  // If the number of vertices is not enough to create polygon, return empty polygon container
-  if (llt_polygon_2d.size() < 3) {
-    return polygons;
-  }
-
-  Polygon2d llt_polygon_bg;
-  llt_polygon_bg.outer().reserve(llt_polygon_2d.size() + 1);
-  for (const auto & llt_pt : llt_polygon_2d) {
-    llt_polygon_bg.outer().emplace_back(llt_pt.x(), llt_pt.y());
-  }
-  llt_polygon_bg.outer().push_back(llt_polygon_bg.outer().front());
-
-  for (const auto & map_polygon : map_polygons) {
-    const std::string type = map_polygon.attributeOr(lanelet::AttributeName::Type, "");
-    // If the target_type is different
-    // or the number of vertices is not enough to create polygon, skip the loop
-    if (type == target_type && map_polygon.size() > 2) {
-      // create map polygon
-      Polygon2d map_polygon_bg;
-      map_polygon_bg.outer().reserve(map_polygon.size() + 1);
-      for (const auto & pt : map_polygon) {
-        map_polygon_bg.outer().emplace_back(pt.x(), pt.y());
-      }
-      map_polygon_bg.outer().push_back(map_polygon_bg.outer().front());
-      if (boost::geometry::intersects(llt_polygon_bg, map_polygon_bg)) {
-        polygons.push_back(map_polygon_bg);
-      }
-    }
-  }
-  return polygons;
 }
 
 // TODO(Horibe) There is a similar function in route_handler.
@@ -1172,61 +1019,6 @@ PathWithLaneId getCenterLinePath(
   return resampled_path_with_lane_id;
 }
 
-// for lane following
-PathWithLaneId setDecelerationVelocity(
-  const RouteHandler & route_handler, const PathWithLaneId & input,
-  const lanelet::ConstLanelets & lanelet_sequence, const double lane_change_prepare_duration,
-  const double lane_change_buffer)
-{
-  auto reference_path = input;
-  if (
-    route_handler.isDeadEndLanelet(lanelet_sequence.back()) &&
-    lane_change_prepare_duration > std::numeric_limits<double>::epsilon()) {
-    for (auto & point : reference_path.points) {
-      const double lane_length = lanelet::utils::getLaneletLength2d(lanelet_sequence);
-      const auto arclength = lanelet::utils::getArcCoordinates(lanelet_sequence, point.point.pose);
-      const double distance_to_end =
-        std::max(0.0, lane_length - std::abs(lane_change_buffer) - arclength.length);
-      point.point.longitudinal_velocity_mps = std::min(
-        point.point.longitudinal_velocity_mps,
-        static_cast<float>(distance_to_end / lane_change_prepare_duration));
-    }
-  }
-  return reference_path;
-}
-
-// TODO(murooka) remove calcSignedArcLength using findNearestSegmentIndex inside the
-// function
-PathWithLaneId setDecelerationVelocity(
-  const PathWithLaneId & input, const double target_velocity, const Pose target_pose,
-  const double buffer, const double deceleration_interval)
-{
-  auto reference_path = input;
-
-  for (auto & point : reference_path.points) {
-    const auto arclength_to_target = std::max(
-      0.0, autoware::motion_utils::calcSignedArcLength(
-             reference_path.points, point.point.pose.position, target_pose.position) +
-             buffer);
-    if (arclength_to_target > deceleration_interval) continue;
-    point.point.longitudinal_velocity_mps = std::min(
-      point.point.longitudinal_velocity_mps,
-      static_cast<float>(
-        (arclength_to_target / deceleration_interval) *
-          (point.point.longitudinal_velocity_mps - target_velocity) +
-        target_velocity));
-  }
-
-  const auto stop_point_length =
-    autoware::motion_utils::calcSignedArcLength(reference_path.points, 0, target_pose.position) +
-    buffer;
-  if (std::abs(target_velocity) < eps && stop_point_length > 0.0) {
-    const auto stop_point = utils::insertStopPoint(stop_point_length, reference_path);
-  }
-
-  return reference_path;
-}
-
 std::uint8_t getHighestProbLabel(const std::vector<ObjectClassification> & classification)
 {
   std::uint8_t label = ObjectClassification::UNKNOWN;
@@ -1271,8 +1063,19 @@ lanelet::ConstLanelets getCurrentLanes(const std::shared_ptr<const PlannerData> 
 lanelet::ConstLanelets getCurrentLanesFromPath(
   const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data)
 {
+  if (path.points.empty() || !planner_data) {
+    return {};
+  }
+
   const auto & route_handler = planner_data->route_handler;
-  const auto & current_pose = planner_data->self_odometry->pose.pose;
+  const auto & self_odometry = planner_data->self_odometry;
+
+  if (!route_handler || !self_odometry) {
+    return {};
+  }
+
+  const auto & current_pose = self_odometry->pose.pose;
+
   const auto & p = planner_data->parameters;
 
   std::set<lanelet::Id> lane_ids;

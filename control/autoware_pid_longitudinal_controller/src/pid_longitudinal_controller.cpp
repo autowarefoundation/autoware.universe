@@ -433,6 +433,8 @@ trajectory_follower::LongitudinalOutput PidLongitudinalController::run(
     publishDebugData(raw_ctrl_cmd, control_data);                       // publish debug data
     trajectory_follower::LongitudinalOutput output;
     output.control_cmd = cmd_msg;
+    output.control_cmd_horizon.controls.push_back(cmd_msg);
+    output.control_cmd_horizon.time_step_ms = 0.0;
     return output;
   }
 
@@ -442,10 +444,14 @@ trajectory_follower::LongitudinalOutput PidLongitudinalController::run(
   // calculate control command
   const Motion ctrl_cmd = calcCtrlCmd(control_data);
 
-  // publish control command
+  // create control command
   const auto cmd_msg = createCtrlCmdMsg(ctrl_cmd, control_data.current_motion.vel);
   trajectory_follower::LongitudinalOutput output;
   output.control_cmd = cmd_msg;
+
+  // create control command horizon
+  output.control_cmd_horizon.controls.push_back(cmd_msg);
+  output.control_cmd_horizon.time_step_ms = 0.0;
 
   // publish debug data
   publishDebugData(ctrl_cmd, control_data);
@@ -507,6 +513,8 @@ PidLongitudinalController::ControlData PidLongitudinalController::getControlData
   // calculate the target motion for delay compensation
   constexpr double min_running_dist = 0.01;
   if (control_data.state_after_delay.running_distance > min_running_dist) {
+    control_data.interpolated_traj.points =
+      autoware::motion_utils::removeOverlapPoints(control_data.interpolated_traj.points);
     const auto target_pose = longitudinal_utils::findTrajectoryPoseAfterDistance(
       control_data.nearest_idx, control_data.state_after_delay.running_distance,
       control_data.interpolated_traj);

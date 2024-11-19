@@ -25,11 +25,15 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <diagnostic_msgs/msg/diagnostic_array.hpp>
+#include <tier4_metric_msgs/msg/metric.hpp>
+#include <tier4_metric_msgs/msg/metric_array.hpp>
 
 #include <optional>
 #include <string>
 #include <vector>
+
+using Metric = tier4_metric_msgs::msg::Metric;
+using MetricArray = tier4_metric_msgs::msg::MetricArray;
 
 struct PlannerData
 {
@@ -58,10 +62,13 @@ struct Obstacle
   Obstacle(
     const rclcpp::Time & arg_stamp, const PredictedObject & object,
     const geometry_msgs::msg::Pose & arg_pose, const double ego_to_obstacle_distance,
-    const double lat_dist_from_obstacle_to_traj)
+    const double lat_dist_from_obstacle_to_traj, const double longitudinal_velocity,
+    const double approach_velocity)
   : stamp(arg_stamp),
     ego_to_obstacle_distance(ego_to_obstacle_distance),
     lat_dist_from_obstacle_to_traj(lat_dist_from_obstacle_to_traj),
+    longitudinal_velocity(longitudinal_velocity),
+    approach_velocity(approach_velocity),
     pose(arg_pose),
     orientation_reliable(true),
     twist(object.kinematics.initial_twist_with_covariance.twist),
@@ -94,6 +101,8 @@ struct Obstacle
   rclcpp::Time stamp;  // This is not the current stamp, but when the object was observed.
   double ego_to_obstacle_distance;
   double lat_dist_from_obstacle_to_traj;
+  double longitudinal_velocity;
+  double approach_velocity;
 
   // for PredictedObject
   geometry_msgs::msg::Pose pose;  // interpolated with the current stamp
@@ -288,9 +297,9 @@ struct DebugData
   MarkerArray cruise_wall_marker;
   MarkerArray slow_down_wall_marker;
   std::vector<autoware::universe_utils::Polygon2d> detection_polygons;
-  std::optional<diagnostic_msgs::msg::DiagnosticStatus> stop_reason_diag{std::nullopt};
-  std::optional<diagnostic_msgs::msg::DiagnosticStatus> slow_down_reason_diag{std::nullopt};
-  std::optional<diagnostic_msgs::msg::DiagnosticStatus> cruise_reason_diag{std::nullopt};
+  std::optional<std::vector<Metric>> stop_metrics{std::nullopt};
+  std::optional<std::vector<Metric>> slow_down_metrics{std::nullopt};
+  std::optional<std::vector<Metric>> cruise_metrics{std::nullopt};
 };
 
 struct EgoNearestParam

@@ -125,8 +125,8 @@ private:
     const Header & header, const std::vector<LaneletSegment> & segments, const Pose & goal_pose,
     const UUID & uuid, const bool allow_goal_modification);
   LaneletRoute create_route(
-    const Header & header, const std::vector<Pose> & waypoints, const Pose & goal_pose,
-    const UUID & uuid, const bool allow_goal_modification);
+    const Header & header, const std::vector<Pose> & waypoints, const Pose & start_pose,
+    const Pose & goal_pose, const UUID & uuid, const bool allow_goal_modification);
 
   void publish_pose_log(const Pose & pose, const std::string & pose_type);
 
@@ -135,6 +135,9 @@ private:
 
   double reroute_time_threshold_;
   double minimum_reroute_length_;
+  // flag to allow reroute in autonomous driving mode.
+  // if false, reroute fails. if true, only safe reroute is allowed.
+  bool allow_reroute_in_autonomous_mode_;
   bool check_reroute_safety(const LaneletRoute & original_route, const LaneletRoute & target_route);
 
   std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;

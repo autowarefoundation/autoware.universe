@@ -2,15 +2,16 @@
   ros__parameters:
     # Ego path calculation
     use_predicted_trajectory: true
-    use_imu_path: false
+    use_imu_path: true
     use_pointcloud_data: true
-    use_predicted_object_data: true
+    use_predicted_object_data: false
     use_object_velocity_calculation: true
     check_autoware_state: true
-    min_generated_path_length: 0.5
+    min_generated_imu_path_length: 0.5
+    max_generated_imu_path_length: 10.0
     imu_prediction_time_horizon: 1.5
     imu_prediction_time_interval: 0.1
-    mpc_prediction_time_horizon: 1.5
+    mpc_prediction_time_horizon: 4.5
     mpc_prediction_time_interval: 0.1
 
     # Debug
@@ -27,10 +28,11 @@
     # Point cloud cropping
     expand_width: 0.1
     path_footprint_extra_margin: 4.0
+    speed_calculation_expansion_margin: 0.5
 
     # Point cloud clustering
-    cluster_tolerance: 0.1 #[m]
-    cluster_minimum_height: 0.0
+    cluster_tolerance: 0.15 #[m]
+    cluster_minimum_height: 0.1
     minimum_cluster_size: 10
     maximum_cluster_size: 10000
 

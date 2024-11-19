@@ -58,24 +58,16 @@ Adding a new metric `M` requires the following steps:
 
 Each metric is published on a topic named after the metric name.
 
-| Name        | Type                                    | Description                                             |
-| ----------- | --------------------------------------- | ------------------------------------------------------- |
-| `~/metrics` | `diagnostic_msgs::msg::DiagnosticArray` | DiagnosticArray with a DiagnosticStatus for each metric |
+| Name        | Type                                  | Description                                                       |
+| ----------- | ------------------------------------- | ----------------------------------------------------------------- |
+| `~/metrics` | `tier4_metric_msgs::msg::MetricArray` | MetricArray with many metrics of `tier4_metric_msgs::msg::Metric` |
 
 When shut down, the evaluation node writes the values of the metrics measured during its lifetime
 to a file as specified by the `output_file` parameter.
 
 ## Parameters
 
-| Name                              | Type     | Description                                                                 |
-| :-------------------------------- | :------- | :-------------------------------------------------------------------------- |
-| `output_file`                     | `string` | file used to write metrics                                                  |
-| `ego_frame`                       | `string` | frame used for the ego pose                                                 |
-| `selected_metrics`                | List     | metrics to measure and publish                                              |
-| `trajectory.min_point_dist_m`     | `double` | minimum distance between two successive points to use for angle calculation |
-| `trajectory.lookahead.max_dist_m` | `double` | maximum distance from ego along the trajectory to use for calculation       |
-| `trajectory.lookahead.max_time_m` | `double` | maximum time ahead of ego along the trajectory to use for calculation       |
-| `obstacle.dist_thr_m`             | `double` | distance between ego and the obstacle below which a collision is considered |
+{{ json_to_markdown("evaluator/autoware_planning_evaluator/schema/autoware_planning_evaluator.schema.json") }}
 
 ## Assumptions / Known limits
 

@@ -117,7 +117,7 @@ void SceneModuleManagerInterface::modifyPathVelocity(
   tier4_v2x_msgs::msg::InfrastructureCommandArray infrastructure_command_array;
   infrastructure_command_array.stamp = clock_->now();
 
-  first_stop_path_point_index_ = static_cast<int>(path->points.size()) - 1;
+  first_stop_path_point_distance_ = autoware::motion_utils::calcArcLength(path->points);
   for (const auto & scene_module : scene_modules_) {
     tier4_planning_msgs::msg::StopReason stop_reason;
     scene_module->resetVelocityFactor();
@@ -137,8 +137,8 @@ void SceneModuleManagerInterface::modifyPathVelocity(
       infrastructure_command_array.commands.push_back(*command);
     }
 
-    if (scene_module->getFirstStopPathPointIndex() < first_stop_path_point_index_) {
-      first_stop_path_point_index_ = scene_module->getFirstStopPathPointIndex();
+    if (scene_module->getFirstStopPathPointDistance() < first_stop_path_point_distance_) {
+      first_stop_path_point_distance_ = scene_module->getFirstStopPathPointDistance();
     }
 
     for (const auto & marker : scene_module->createDebugMarkerArray().markers) {
@@ -170,13 +170,12 @@ void SceneModuleManagerInterface::deleteExpiredModules(
 {
   const auto isModuleExpired = getModuleExpiredFunction(path);
 
-  // Copy container to avoid iterator corruption
-  // due to scene_modules_.erase() in unregisterModule()
-  const auto copied_scene_modules = scene_modules_;
-
-  for (const auto & scene_module : copied_scene_modules) {
-    if (isModuleExpired(scene_module)) {
-      unregisterModule(scene_module);
+  auto itr = scene_modules_.begin();
+  while (itr != scene_modules_.end()) {
+    if (isModuleExpired(*itr)) {
+      itr = scene_modules_.erase(itr);
+    } else {
+      itr++;
     }
   }
 }
@@ -189,16 +188,6 @@ void SceneModuleManagerInterface::registerModule(
   registered_module_id_set_.emplace(scene_module->getModuleId());
   scene_module->setTimeKeeper(time_keeper_);
   scene_modules_.insert(scene_module);
-}
-
-void SceneModuleManagerInterface::unregisterModule(
-  const std::shared_ptr<SceneModuleInterface> & scene_module)
-{
-  RCLCPP_DEBUG(
-    logger_, "unregister task: module = %s, id = %lu", getModuleName(),
-    scene_module->getModuleId());
-  registered_module_id_set_.erase(scene_module->getModuleId());
-  scene_modules_.erase(scene_module);
 }
 
 SceneModuleManagerInterfaceWithRTC::SceneModuleManagerInterfaceWithRTC(
@@ -221,7 +210,9 @@ void SceneModuleManagerInterfaceWithRTC::sendRTC(const Time & stamp)
 {
   for (const auto & scene_module : scene_modules_) {
     const UUID uuid = getUUID(scene_module->getModuleId());
-    const auto state = scene_module->isActivated() ? State::RUNNING : State::WAITING_FOR_EXECUTION;
+    const auto state = !scene_module->isActivated() && scene_module->isSafe()
+                         ? State::WAITING_FOR_EXECUTION
+                         : State::RUNNING;
     updateRTCStatus(uuid, scene_module->isSafe(), state, scene_module->getDistance(), stamp);
   }
   publishRTCStatus(stamp);
@@ -276,18 +267,18 @@ void SceneModuleManagerInterfaceWithRTC::deleteExpiredModules(
 {
   const auto isModuleExpired = getModuleExpiredFunction(path);
 
-  // Copy container to avoid iterator corruption
-  // due to scene_modules_.erase() in unregisterModule()
-  const auto copied_scene_modules = scene_modules_;
-
-  for (const auto & scene_module : copied_scene_modules) {
-    if (isModuleExpired(scene_module)) {
-      const UUID uuid = getUUID(scene_module->getModuleId());
+  auto itr = scene_modules_.begin();
+  while (itr != scene_modules_.end()) {
+    if (isModuleExpired(*itr)) {
+      const UUID uuid = getUUID((*itr)->getModuleId());
       updateRTCStatus(
-        uuid, scene_module->isSafe(), State::SUCCEEDED, std::numeric_limits<double>::lowest(),
+        uuid, (*itr)->isSafe(), State::SUCCEEDED, std::numeric_limits<double>::lowest(),
         clock_->now());
-      removeUUID(scene_module->getModuleId());
-      unregisterModule(scene_module);
+      removeUUID((*itr)->getModuleId());
+      registered_module_id_set_.erase((*itr)->getModuleId());
+      itr = scene_modules_.erase(itr);
+    } else {
+      itr++;
     }
   }
 }

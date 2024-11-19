@@ -47,7 +47,6 @@ struct PlannerParam
   bool skip_if_already_overlapping;  // if true, do not run the module when ego already overlaps
                                      // another lane
   double max_arc_length;  // [m] maximum arc length along the trajectory to check for collision
-  bool ignore_lane_changeable_lanelets;  // if true, ignore overlaps on lane changeable lanelets
 
   double time_threshold;  // [s](mode="threshold") objects time threshold
   double ttc_threshold;  // [s](mode="ttc") threshold on time to collision between ego and an object
@@ -89,30 +88,38 @@ using StopLineNode = std::pair<universe_utils::Box2d, StopLine>;
 using StopLinesRtree = bgi::rtree<StopLineNode, bgi::rstar<16>>;
 using OutAreaNode = std::pair<universe_utils::Box2d, size_t>;
 using OutAreaRtree = bgi::rtree<OutAreaNode, bgi::rstar<16>>;
+using LaneletNode = std::pair<universe_utils::Box2d, size_t>;
+using OutLaneletRtree = bgi::rtree<LaneletNode, bgi::rstar<16>>;
 
 /// @brief data related to the ego vehicle
 struct EgoData
 {
-  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> trajectory_points;
+  std::vector<autoware_planning_msgs::msg::TrajectoryPoint>
+    trajectory_points;  // filtered trajectory starting from the 1st point behind ego
   geometry_msgs::msg::Pose pose;
-  size_t first_trajectory_idx{};
-  double longitudinal_offset_to_first_trajectory_index{};
+  size_t first_trajectory_idx{};  // segment index closest to ego on the original trajectory
+  double
+    longitudinal_offset_to_first_trajectory_index{};  // longitudinal offset of ego along the
+                                                      // closest segment on the original trajectory
   double min_stop_distance{};
-  double min_slowdown_distance{};
-  double min_stop_arc_length{};
+  double min_stop_arc_length{};  // [m] minimum arc length along the filtered trajectory where ego
+                                 // can stop
 
-  Polygons drivable_lane_polygons;
+  lanelet::ConstLanelets out_lanelets;  // lanelets where ego would be considered "out of lane"
+  OutLaneletRtree out_lanelets_rtree;
 
   lanelet::BasicPolygon2d current_footprint;
-  std::vector<lanelet::BasicPolygon2d> trajectory_footprints;
+  std::vector<lanelet::BasicPolygon2d>
+    trajectory_footprints;  // ego footprints along the filtered trajectory
 
   StopLinesRtree stop_lines_rtree;
 };
 
+/// @brief data related to an out of lane trajectory point
 struct OutOfLanePoint
 {
   size_t trajectory_index;
-  lanelet::BasicPolygon2d outside_ring;
+  universe_utils::MultiPolygon2d out_overlaps;
   std::set<double> collision_times;
   std::optional<double> min_object_arrival_time;
   std::optional<double> max_object_arrival_time;
@@ -120,6 +127,8 @@ struct OutOfLanePoint
   lanelet::ConstLanelets overlapped_lanelets;
   bool to_avoid = false;
 };
+
+/// @brief data related to the out of lane points
 struct OutOfLaneData
 {
   std::vector<OutOfLanePoint> outside_points;

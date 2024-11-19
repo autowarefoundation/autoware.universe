@@ -14,6 +14,10 @@
 
 #include "static_centerline_generator_node.hpp"
 
+#include "autoware/interpolation/spline_interpolation_points_2d.hpp"
+#include "autoware/map_loader/lanelet2_map_loader_node.hpp"
+#include "autoware/map_projection_loader/load_info_from_lanelet2_map.hpp"
+#include "autoware/map_projection_loader/map_projection_loader.hpp"
 #include "autoware/motion_utils/resample/resample.hpp"
 #include "autoware/motion_utils/trajectory/conversion.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
@@ -23,10 +27,6 @@
 #include "autoware_lanelet2_extension/utility/utilities.hpp"
 #include "autoware_static_centerline_generator/msg/points_with_lane_id.hpp"
 #include "centerline_source/bag_ego_trajectory_based_centerline.hpp"
-#include "interpolation/spline_interpolation_points_2d.hpp"
-#include "map_loader/lanelet2_map_loader_node.hpp"
-#include "map_projection_loader/load_info_from_lanelet2_map.hpp"
-#include "map_projection_loader/map_projection_loader.hpp"
 #include "type_alias.hpp"
 #include "utils.hpp"
 
@@ -356,26 +356,26 @@ void StaticCenterlineGeneratorNode::load_map(const std::string & lanelet2_input_
   // load map by the map_loader package
   map_bin_ptr_ = [&]() -> LaneletMapBin::ConstSharedPtr {
     // load map
-    map_projector_info_ =
-      std::make_unique<MapProjectorInfo>(load_info_from_lanelet2_map(lanelet2_input_file_path));
-    const auto map_ptr =
-      Lanelet2MapLoaderNode::load_map(lanelet2_input_file_path, *map_projector_info_);
+    map_projector_info_ = std::make_unique<MapProjectorInfo>(
+      autoware::map_projection_loader::load_info_from_lanelet2_map(lanelet2_input_file_path));
+    const auto map_ptr = autoware::map_loader::Lanelet2MapLoaderNode::load_map(
+      lanelet2_input_file_path, *map_projector_info_);
     if (!map_ptr) {
       return nullptr;
     }
 
     // NOTE: The original map is stored here since the centerline will be added to all the
     //       lanelet when lanelet::utils::overwriteLaneletCenterline is called.
-    original_map_ptr_ =
-      Lanelet2MapLoaderNode::load_map(lanelet2_input_file_path, *map_projector_info_);
+    original_map_ptr_ = autoware::map_loader::Lanelet2MapLoaderNode::load_map(
+      lanelet2_input_file_path, *map_projector_info_);
 
     // overwrite more dense centerline
     // NOTE: overwriteLaneletsCenterlineWithWaypoints is used only in real time calculation.
     lanelet::utils::overwriteLaneletsCenterline(map_ptr, 5.0, false);
 
     // create map bin msg
-    const auto map_bin_msg =
-      Lanelet2MapLoaderNode::create_map_bin_msg(map_ptr, lanelet2_input_file_path, now());
+    const auto map_bin_msg = autoware::map_loader::Lanelet2MapLoaderNode::create_map_bin_msg(
+      map_ptr, lanelet2_input_file_path, now());
 
     return std::make_shared<LaneletMapBin>(map_bin_msg);
   }();
@@ -625,7 +625,7 @@ void StaticCenterlineGeneratorNode::validate()
   }
 
   // calculate curvature
-  SplineInterpolationPoints2d centerline_spline(centerline);
+  autoware::interpolation::SplineInterpolationPoints2d centerline_spline(centerline);
   const auto curvature_vec = centerline_spline.getSplineInterpolatedCurvatures();
   const double curvature_threshold = vehicle_info_.calcCurvatureFromSteerAngle(
     vehicle_info_.max_steer_angle_rad - max_steer_angle_margin);
