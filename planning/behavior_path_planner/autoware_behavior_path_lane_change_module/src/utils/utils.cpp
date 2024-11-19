@@ -1164,10 +1164,6 @@ bool has_overtaking_turn_lane_object(
     return false;
   }
 
-  const auto is_path_overlap_with_target = [&](const LineString2d & path) {
-    return !boost::geometry::disjoint(path, common_data_ptr->lanes_polygon_ptr->target);
-  };
-
   const auto is_object_overlap_with_target = [&](const auto & object) {
     // to compensate for perception issue, or if object is from behind ego, and tries to overtake,
     // but stop all of sudden
@@ -1176,8 +1172,7 @@ bool has_overtaking_turn_lane_object(
       return true;
     }
 
-    const auto paths = get_line_string_paths(object);
-    return std::any_of(paths.begin(), paths.end(), is_path_overlap_with_target);
+    return has_path_overlapped_target_lanes(object, common_data_ptr->lanes_polygon_ptr->target);
   };
 
   return std::any_of(
@@ -1206,9 +1201,15 @@ bool filter_target_lane_objects(
   const auto is_stopped = velocity_filter(
     object.initial_twist, -std::numeric_limits<double>::epsilon(), stopped_obj_vel_th);
   if (is_lateral_far && before_terminal) {
-    const auto in_target_lanes =
-      !boost::geometry::disjoint(object.initial_polygon, lanes_polygon.target);
-    if (in_target_lanes) {
+    const auto overlapped_target_lanes = std::invoke([&]() {
+      if (!boost::geometry::disjoint(object.initial_polygon, lanes_polygon.target)) {
+        return true;
+      }
+
+      return !is_stopped && has_path_overlapped_target_lanes(object, lanes_polygon.target);
+    });
+
+    if (overlapped_target_lanes) {
       if (!ahead_of_ego && !is_stopped) {
         trailing_objects.push_back(object);
         return true;
@@ -1246,5 +1247,14 @@ bool filter_target_lane_objects(
   }
 
   return false;
+}
+
+bool has_path_overlapped_target_lanes(
+  const ExtendedPredictedObject & object, const lanelet::BasicPolygon2d & lanes_polygon)
+{
+  const auto paths = get_line_string_paths(object);
+  return ranges::any_of(paths, [&](const LineString2d & path) {
+    return !boost::geometry::disjoint(path, lanes_polygon);
+  });
 }
 }  // namespace autoware::behavior_path_planner::utils::lane_change
