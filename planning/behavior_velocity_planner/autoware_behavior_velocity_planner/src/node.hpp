@@ -65,8 +65,6 @@ private:
   // subscriber
   rclcpp::Subscription<tier4_planning_msgs::msg::PathWithLaneId>::SharedPtr
     trigger_sub_path_with_lane_id_;
-  rclcpp::Subscription<autoware_map_msgs::msg::LaneletMapBin>::SharedPtr sub_lanelet_map_;
-  rclcpp::Subscription<VelocityLimit>::SharedPtr sub_external_velocity_limit_;
 
   // polling subscribers
   autoware::universe_utils::InterProcessPollingSubscriber<
@@ -95,11 +93,17 @@ private:
   autoware::universe_utils::InterProcessPollingSubscriber<nav_msgs::msg::OccupancyGrid>
     sub_occupancy_grid_{this, "~/input/occupancy_grid"};
 
+  autoware::universe_utils::InterProcessPollingSubscriber<
+    LaneletMapBin, universe_utils::polling_policy::Newest>
+    sub_lanelet_map_{this, "~/input/vector_map", rclcpp::QoS{1}.transient_local()};
+
+  autoware::universe_utils::InterProcessPollingSubscriber<VelocityLimit>
+    sub_external_velocity_limit_{
+      this, "~/input/external_velocity_limit_mps", rclcpp::QoS{1}.transient_local()};
+
   void onTrigger(const tier4_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg);
 
   void onParam();
-  void onLaneletMap(const autoware_map_msgs::msg::LaneletMapBin::ConstSharedPtr msg);
-  void onExternalVelocityLimit(const VelocityLimit::ConstSharedPtr msg);
 
   void processNoGroundPointCloud(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg);
   void processOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
@@ -123,8 +127,6 @@ private:
   PlannerData planner_data_;
   BehaviorVelocityPlannerManager planner_manager_;
   bool is_driving_forward_{true};
-  LaneletMapBin::ConstSharedPtr map_ptr_{nullptr};
-  bool has_received_map_;
 
   rclcpp::Service<LoadPlugin>::SharedPtr srv_load_plugin_;
   rclcpp::Service<UnloadPlugin>::SharedPtr srv_unload_plugin_;
