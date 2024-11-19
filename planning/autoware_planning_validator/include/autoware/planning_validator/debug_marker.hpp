@@ -15,6 +15,8 @@
 #ifndef AUTOWARE__PLANNING_VALIDATOR__DEBUG_MARKER_HPP_
 #define AUTOWARE__PLANNING_VALIDATOR__DEBUG_MARKER_HPP_
 
+#include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_planning_msgs/msg/trajectory.hpp>
@@ -34,6 +36,9 @@ public:
   void pushPoseMarker(
     const autoware_planning_msgs::msg::TrajectoryPoint & p, const std::string & ns, int id = 0);
   void pushPoseMarker(const geometry_msgs::msg::Pose & pose, const std::string & ns, int id = 0);
+  void pushFootprintMarker(
+    const geometry_msgs::msg::Pose & pose,
+    const autoware::vehicle_info_utils::VehicleInfo & vehicle_info, const std::string & ns);
   void pushVirtualWall(const geometry_msgs::msg::Pose & pose);
   void pushWarningMsg(const geometry_msgs::msg::Pose & pose, const std::string & msg);
   void publish();

@@ -80,7 +80,7 @@ std::optional<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>> check_c
   const double ego_to_object_distance_threshold, const double time_tolerance_threshold);
 
 Rtree make_ego_footprint_rtree(
-  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory,
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory,
   const VehicleInfo & vehicle_info);
 
 std::optional<PredictedObjects> filter_objects(
