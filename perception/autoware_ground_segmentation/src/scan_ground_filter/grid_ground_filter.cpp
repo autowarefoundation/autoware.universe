@@ -34,7 +34,7 @@ void GridGroundFilter::convert()
     // Get Point
     pcl::PointXYZ input_point;
     data_accessor_.getPoint(in_cloud_, data_index, input_point);
-    grid_ptr_->addPoint(input_point.x, input_point.y, data_index);
+    grid_ptr_->addPoint(input_point.x, input_point.y, input_point.z, data_index);
   }
 }
 
@@ -131,22 +131,19 @@ void GridGroundFilter::initializeGround(pcl::PointIndices & out_no_ground_indice
     bool is_ground_found = false;
     PointsCentroid ground_bin;
 
-    for (const size_t pt_idx : cell.point_indices_) {
-      pcl::PointXYZ point;
-      data_accessor_.getPoint(in_cloud_, pt_idx, point);
-      const float x_fixed = point.x - param_.virtual_lidar_x;
-      const float y_fixed = point.y - param_.virtual_lidar_y;
-      const float radius = std::sqrt(x_fixed * x_fixed + y_fixed * y_fixed);
+    for (const auto & pt : cell.point_list_) {
+      const size_t & pt_idx = pt.index;
+      const float & radius = pt.distance;
+      const float & height = pt.height;
 
       const float global_slope_threshold = param_.global_slope_max_ratio * radius;
-      if (point.z >= global_slope_threshold && point.z > param_.non_ground_height_threshold) {
+      if (height >= global_slope_threshold && height > param_.non_ground_height_threshold) {
         // this point is obstacle
         out_no_ground_indices.indices.push_back(pt_idx);
       } else if (
-        abs(point.z) < global_slope_threshold &&
-        abs(point.z) < param_.non_ground_height_threshold) {
+        abs(height) < global_slope_threshold && abs(height) < param_.non_ground_height_threshold) {
         // this point is ground
-        ground_bin.addPoint(radius, point.z, pt_idx);
+        ground_bin.addPoint(radius, height, pt_idx);
         is_ground_found = true;
       }
     }
@@ -176,22 +173,20 @@ void GridGroundFilter::SegmentContinuousCell(
   const float local_thresh_angle_ratio = std::tan(DEG2RAD(5.0));
 
   // loop over points in the cell
-  for (const size_t pt_idx : cell.point_indices_) {
-    pcl::PointXYZ point;
-    data_accessor_.getPoint(in_cloud_, pt_idx, point);
+  for (const auto & pt : cell.point_list_) {
+    const size_t & pt_idx = pt.index;
+    const float & radius = pt.distance;
+    const float & height = pt.height;
 
     // 1. height is out-of-range
-    const float delta_z = point.z - prev_cell.avg_height_;
+    const float delta_z = height - prev_cell.avg_height_;
     if (delta_z > param_.detection_range_z_max) {
       // this point is out-of-range
       continue;
     }
 
     // 2. the angle is exceed the global slope threshold
-    const float x_fixed = point.x - param_.virtual_lidar_x;
-    const float y_fixed = point.y - param_.virtual_lidar_y;
-    const float radius = std::sqrt(x_fixed * x_fixed + y_fixed * y_fixed);
-    if (point.z > param_.global_slope_max_ratio * radius) {
+    if (height > param_.global_slope_max_ratio * radius) {
       // this point is obstacle
       out_no_ground_indices.indices.push_back(pt_idx);
       // go to the next point
@@ -202,7 +197,7 @@ void GridGroundFilter::SegmentContinuousCell(
     const float delta_radius = radius - prev_cell.avg_radius_;
     if (abs(delta_z) < param_.global_slope_max_ratio * delta_radius) {
       // this point is ground
-      ground_bin.addPoint(radius, point.z, pt_idx);
+      ground_bin.addPoint(radius, height, pt_idx);
       // go to the next point
       continue;
     }
@@ -210,7 +205,7 @@ void GridGroundFilter::SegmentContinuousCell(
     // 3. height from the estimated ground
     const float next_gnd_z = cell.gradient_ * radius + cell.intercept_;
     const float gnd_z_local_thresh = local_thresh_angle_ratio * delta_radius;
-    const float delta_gnd_z = point.z - next_gnd_z;
+    const float delta_gnd_z = height - next_gnd_z;
     const float gnd_z_threshold = param_.non_ground_height_threshold + gnd_z_local_thresh;
     if (delta_gnd_z > gnd_z_threshold) {
       // this point is obstacle
@@ -220,7 +215,7 @@ void GridGroundFilter::SegmentContinuousCell(
     }
     if (abs(delta_gnd_z) <= gnd_z_threshold) {
       // this point is ground
-      ground_bin.addPoint(radius, point.z, pt_idx);
+      ground_bin.addPoint(radius, height, pt_idx);
       // go to the next point
       continue;
     }
@@ -233,22 +228,20 @@ void GridGroundFilter::SegmentDiscontinuousCell(
   const Cell & prev_cell = grid_ptr_->getCell(cell.scan_grid_root_idx_);
 
   // loop over points in the cell
-  for (const size_t pt_idx : cell.point_indices_) {
-    pcl::PointXYZ point;
-    data_accessor_.getPoint(in_cloud_, pt_idx, point);
+  for (const auto & pt : cell.point_list_) {
+    const size_t & pt_idx = pt.index;
+    const float & radius = pt.distance;
+    const float & height = pt.height;
 
     // 1. height is out-of-range
-    const float delta_avg_z = point.z - prev_cell.avg_height_;
+    const float delta_avg_z = height - prev_cell.avg_height_;
     if (delta_avg_z > param_.detection_range_z_max) {
       // this point is out-of-range
       continue;
     }
 
     // 2. the angle is exceed the global slope threshold
-    const float x_fixed = point.x - param_.virtual_lidar_x;
-    const float y_fixed = point.y - param_.virtual_lidar_y;
-    const float radius = std::sqrt(x_fixed * x_fixed + y_fixed * y_fixed);
-    if (point.z > param_.global_slope_max_ratio * radius) {
+    if (height > param_.global_slope_max_ratio * radius) {
       // this point is obstacle
       out_no_ground_indices.indices.push_back(pt_idx);
       // go to the next point
@@ -259,21 +252,21 @@ void GridGroundFilter::SegmentDiscontinuousCell(
     const float global_slope_threshold = param_.global_slope_max_ratio * delta_radius;
     if (abs(delta_avg_z) < global_slope_threshold) {
       // this point is ground
-      ground_bin.addPoint(radius, point.z, pt_idx);
+      ground_bin.addPoint(radius, height, pt_idx);
       // go to the next point
       continue;
     }
     // 4. height from the estimated ground
     if (abs(delta_avg_z) < param_.non_ground_height_threshold) {
       // this point is ground
-      ground_bin.addPoint(radius, point.z, pt_idx);
+      ground_bin.addPoint(radius, height, pt_idx);
       // go to the next point
       continue;
     }
-    const float delta_max_z = point.z - prev_cell.max_height_;
+    const float delta_max_z = height - prev_cell.max_height_;
     if (abs(delta_max_z) < param_.non_ground_height_threshold) {
       // this point is ground
-      ground_bin.addPoint(radius, point.z, pt_idx);
+      ground_bin.addPoint(radius, height, pt_idx);
       // go to the next point
       continue;
     }
@@ -293,22 +286,20 @@ void GridGroundFilter::SegmentBreakCell(
   const Cell & prev_cell = grid_ptr_->getCell(cell.scan_grid_root_idx_);
 
   // loop over points in the cell
-  for (const size_t pt_idx : cell.point_indices_) {
-    pcl::PointXYZ point;
-    data_accessor_.getPoint(in_cloud_, pt_idx, point);
+  for (const auto & pt : cell.point_list_) {
+    const size_t & pt_idx = pt.index;
+    const float & radius = pt.distance;
+    const float & height = pt.height;
 
     // 1. height is out-of-range
-    const float delta_z = point.z - prev_cell.avg_height_;
+    const float delta_z = height - prev_cell.avg_height_;
     if (delta_z > param_.detection_range_z_max) {
       // this point is out-of-range
       continue;
     }
 
     // 2. the angle is exceed the global slope threshold
-    const float x_fixed = point.x - param_.virtual_lidar_x;
-    const float y_fixed = point.y - param_.virtual_lidar_y;
-    const float radius = std::sqrt(x_fixed * x_fixed + y_fixed * y_fixed);
-    if (point.z > param_.global_slope_max_ratio * radius) {
+    if (height > param_.global_slope_max_ratio * radius) {
       // this point is obstacle
       out_no_ground_indices.indices.push_back(pt_idx);
       // go to the next point
@@ -320,7 +311,7 @@ void GridGroundFilter::SegmentBreakCell(
     const float global_slope_threshold = param_.global_slope_max_ratio * delta_radius;
     if (abs(delta_z) < global_slope_threshold) {
       // this point is ground
-      ground_bin.addPoint(radius, point.z, pt_idx);
+      ground_bin.addPoint(radius, height, pt_idx);
       // go to the next point
       continue;
     }

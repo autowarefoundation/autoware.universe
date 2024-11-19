@@ -98,16 +98,23 @@ namespace autoware::ground_segmentation
 {
 using autoware::universe_utils::ScopedTimeTrack;
 
+struct Point
+{
+  size_t index;
+  float distance;
+  float height;
+};
+
 // Concentric Zone Model (CZM) based polar grid
 class Cell
 {
 public:
   // list of point indices
-  std::vector<size_t> point_indices_;
+  std::vector<Point> point_list_;  // point index and distance
 
   // method to check if the cell is empty
-  bool isEmpty() const { return point_indices_.empty(); }
-  int getPointNum() const { return point_indices_.size(); }
+  bool isEmpty() const { return point_list_.empty(); }
+  int getPointNum() const { return point_list_.size(); }
 
   // index of the cell
   int grid_idx_;
@@ -191,10 +198,15 @@ public:
   }
 
   // method to add a point to the grid
-  void addPoint(const float x, const float y, const size_t point_idx)
+  void addPoint(const float x, const float y, const float z, const size_t point_idx)
   {
+    const float x_fixed = x - origin_x_;
+    const float y_fixed = y - origin_y_;
+    const float radius = std::sqrt(x_fixed * x_fixed + y_fixed * y_fixed);
+    const float azimuth = pseudoArcTan2(y_fixed, x_fixed);
+
     // calculate the grid id
-    const int grid_idx = getGridIdx(x, y);
+    const int grid_idx = getGridIdx(radius, azimuth);
 
     // check if the point is within the grid
     if (grid_idx < 0) {
@@ -208,7 +220,7 @@ public:
     }
 
     // add the point to the cell
-    cells_[grid_idx_idx].point_indices_.emplace_back(point_idx);
+    cells_[grid_idx_idx].point_list_.emplace_back(Point{point_idx, radius, z});
   }
 
   size_t getGridSize() const { return cells_.size(); }
@@ -230,7 +242,7 @@ public:
     if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
     for (auto & cell : cells_) {
-      cell.point_indices_.clear();
+      cell.point_list_.clear();
       cell.is_processed_ = false;
       cell.is_ground_initialized_ = false;
       cell.scan_grid_root_idx_ = -1;
@@ -427,14 +439,8 @@ private:
   // method to determine the grid id of a point
   // -1 means out of range
   // range limit is horizon angle
-  int getGridIdx(const float & x, const float & y) const
+  int getGridIdx(const float & radius, const float & azimuth) const
   {
-    const float x_fixed = x - origin_x_;
-    const float y_fixed = y - origin_y_;
-
-    const float radius = std::sqrt(x_fixed * x_fixed + y_fixed * y_fixed);
-    const float azimuth = pseudoArcTan2(y_fixed, x_fixed);
-
     const int grid_rad_idx = getRadialIdx(radius);
     if (grid_rad_idx < 0) {
       return -1;
