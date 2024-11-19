@@ -12,12 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// cspell:ignore BEVDET, thre, TRTBEV, bevdet, caminfo, intrin, Ncams, bevfeat, dlongterm, RGBHWC,
-// BGRCHW
+// cspell:ignore BEVDET, thre, TRTBEV, bevdet, caminfo, intrin, Ncams, bevfeat, dlongterm
 
 #include "autoware/tensorrt_bevdet/bevdet_node.hpp"
-
-#include <preprocess.h>
 
 namespace autoware
 {
@@ -142,21 +139,6 @@ void TRTBEVDetNode::startCameraInfoSubscription()
   sub_br_caminfo_ = this->create_subscription<sensor_msgs::msg::CameraInfo>(
     "~/input/topic_img_br/camera_info", rclcpp::QoS{1},
     [this](const sensor_msgs::msg::CameraInfo::SharedPtr msg) { cameraInfoCallback(5, msg); });
-}
-
-void imageTransport(std::vector<cv::Mat> imgs, uchar * out_imgs, size_t width, size_t height)
-{
-  uchar * temp = new uchar[width * height * 3];
-  uchar * temp_gpu = nullptr;
-  CHECK_CUDA(cudaMalloc(&temp_gpu, width * height * 3));
-
-  for (size_t i = 0; i < imgs.size(); i++) {
-    cv::cvtColor(imgs[i], imgs[i], cv::COLOR_BGR2RGB);
-    CHECK_CUDA(cudaMemcpy(temp_gpu, imgs[i].data, width * height * 3, cudaMemcpyHostToDevice));
-    convert_RGBHWC_to_BGRCHW(temp_gpu, out_imgs + i * width * height * 3, 3, height, width);
-  }
-  delete[] temp;
-  CHECK_CUDA(cudaFree(temp_gpu));
 }
 
 void TRTBEVDetNode::callback(

@@ -12,11 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// cspell:ignore bevdet, RGBHWC, BGRCHW
+
 #include "autoware/tensorrt_bevdet/ros_utils.hpp"
 
 #include <autoware_perception_msgs/msg/detected_object_kinematics.hpp>
 #include <autoware_perception_msgs/msg/object_classification.hpp>
 #include <autoware_perception_msgs/msg/shape.hpp>
+#include <preprocess.h>
 
 namespace autoware::tensorrt_bevdet
 {
@@ -114,4 +117,20 @@ void getCameraIntrinsics(
   intrinsics << msg->k[0], msg->k[1], msg->k[2], msg->k[3], msg->k[4], msg->k[5], msg->k[6],
     msg->k[7], msg->k[8];
 }
+
+void imageTransport(std::vector<cv::Mat> imgs, uchar * out_imgs, size_t width, size_t height)
+{
+  uchar * temp = new uchar[width * height * 3];
+  uchar * temp_gpu = nullptr;
+  CHECK_CUDA(cudaMalloc(&temp_gpu, width * height * 3));
+
+  for (size_t i = 0; i < imgs.size(); i++) {
+    cv::cvtColor(imgs[i], imgs[i], cv::COLOR_BGR2RGB);
+    CHECK_CUDA(cudaMemcpy(temp_gpu, imgs[i].data, width * height * 3, cudaMemcpyHostToDevice));
+    convert_RGBHWC_to_BGRCHW(temp_gpu, out_imgs + i * width * height * 3, 3, height, width);
+  }
+  delete[] temp;
+  CHECK_CUDA(cudaFree(temp_gpu));
+}
+
 }  // namespace autoware::tensorrt_bevdet

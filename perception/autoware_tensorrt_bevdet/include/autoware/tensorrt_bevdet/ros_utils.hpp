@@ -12,6 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+// cspell:ignore BEVDET, bevdet
+
 #ifndef AUTOWARE__TENSORRT_BEVDET__ROS_UTILS_HPP_
 #define AUTOWARE__TENSORRT_BEVDET__ROS_UTILS_HPP_
 
@@ -21,7 +23,7 @@
 #include <geometry_msgs/msg/vector3.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-
+#include <opencv2/opencv.hpp>
 #include <bevdet.h>
 
 #include <string>
@@ -42,6 +44,9 @@ void getTransform(
 // Get the camera intrinsics from a sensor_msgs::msg::CameraInfo
 void getCameraIntrinsics(
   const sensor_msgs::msg::CameraInfo::SharedPtr msg, Eigen::Matrix3f & intrinsics);
+
+// Convert images from OpenCV's cv:: Mat format to a specific format
+void imageTransport(std::vector<cv::Mat> imgs, uchar * out_imgs, size_t width, size_t height);
 
 }  // namespace autoware::tensorrt_bevdet
 #endif  // AUTOWARE__TENSORRT_BEVDET__ROS_UTILS_HPP_

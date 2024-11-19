@@ -22,7 +22,6 @@
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
-#include <opencv2/opencv.hpp>
 
 #include <sensor_msgs/msg/image.hpp>
 
@@ -159,7 +158,7 @@ public:
    * @brief Constructor for TRTBEVDetNode.
    * @param options The options for the node.
    */
-  TRTBEVDetNode(const rclcpp::NodeOptions & options);
+  explicit TRTBEVDetNode(const rclcpp::NodeOptions & options);
 
   /**
    * @brief Destructor for TRTBEVDetNode.
