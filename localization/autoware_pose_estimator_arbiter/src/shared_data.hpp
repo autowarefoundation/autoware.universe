@@ -24,7 +24,6 @@
 #include <memory>
 #include <optional>
 #include <vector>
-#include <functional>
 
 namespace autoware::pose_estimator_arbiter
 {
