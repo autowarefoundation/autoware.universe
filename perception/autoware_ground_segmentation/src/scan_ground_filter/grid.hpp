@@ -87,8 +87,7 @@ float pseudoTan(const float theta)
   // avoid divide-by-zero
   if (normalized_theta == 0.0f) return 0.0f;
 
-  if (std::abs(normalized_theta) <= 1.0f)
-  {
+  if (std::abs(normalized_theta) <= 1.0f) {
     return normalized_theta / M_PI_4f;
   }
   return std::copysign(M_PI_4f / (M_PI_2f - std::abs(normalized_theta)), normalized_theta);
