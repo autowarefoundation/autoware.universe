@@ -511,7 +511,6 @@ MPCMatrix MPC::generateMPCMatrix(
 
     // update mpc matrix
     int idx_x_i = i * DIM_X;
-    int idx_x_i_prev = (i - 1) * DIM_X;
     int idx_u_i = i * DIM_U;
     int idx_y_i = i * DIM_Y;
     if (i == 0) {
@@ -519,6 +518,7 @@ MPCMatrix MPC::generateMPCMatrix(
       m.Bex.block(0, 0, DIM_X, DIM_U) = Bd;
       m.Wex.block(0, 0, DIM_X, 1) = Wd;
     } else {
+      int idx_x_i_prev = (i - 1) * DIM_X;
       m.Aex.block(idx_x_i, 0, DIM_X, DIM_X) = Ad * m.Aex.block(idx_x_i_prev, 0, DIM_X, DIM_X);
       for (int j = 0; j < i; ++j) {
         int idx_u_j = j * DIM_U;
