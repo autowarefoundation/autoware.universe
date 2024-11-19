@@ -3,12 +3,13 @@
     # Ego path calculation
     use_predicted_trajectory: true
     use_imu_path: true
-    limit_steering_for_imu_path: false
+    limit_imu_path_lat_dev: false
+    limit_imu_path_length: true
     use_pointcloud_data: true
     use_predicted_object_data: false
     use_object_velocity_calculation: true
     check_autoware_state: true
-    imu_path_steering_limit: 0.1745 # 10 deg
+    imu_path_lat_dev_threshold: 1.75
     min_generated_imu_path_length: 0.5
     max_generated_imu_path_length: 10.0
     imu_prediction_time_horizon: 1.5
@@ -39,7 +40,7 @@
     maximum_cluster_size: 10000
 
     # RSS distance collision check
-    longitudinal_offset: 2.0
+    longitudinal_offset_margin: 1.0
     t_response: 1.0
     a_ego_min: -3.0
     a_obj_min: -1.0
