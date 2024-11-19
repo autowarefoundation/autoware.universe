@@ -131,6 +131,11 @@ bool isParkedObject(
   const ExtendedPredictedObject & object, const double buffer_to_bound,
   const double ratio_threshold);
 
+bool is_delay_lane_change(
+  const CommonDataPtr & common_data_ptr, const LaneChangePath & lane_change_path,
+  const std::vector<ExtendedPredictedObject> & target_lane_static_objects,
+  CollisionCheckDebugMap & object_debug);
+
 bool passed_parked_objects(
   const CommonDataPtr & common_data_ptr, const LaneChangePath & lane_change_path,
   const std::vector<ExtendedPredictedObject> & objects, CollisionCheckDebugMap & object_debug);
