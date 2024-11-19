@@ -156,6 +156,7 @@ public:
     grid_linearity_switch_radius_ = 20.0f;
     grid_radial_limit_ = 200.0f;  // meters
     grid_dist_size_rad_ = 0.0f;
+    grid_dist_size_inv_ = 0.0f;
     grid_linearity_switch_num_ = 0;
     grid_linearity_switch_angle_ = 0.0f;
     grid_size_rad_inv_ = 0.0f;
@@ -182,6 +183,7 @@ public:
     grid_dist_size_rad_ =
       pseudoArcTan2(grid_linearity_switch_radius_ + grid_dist_size_, origin_z_) -
       pseudoArcTan2(grid_linearity_switch_radius_, origin_z_);
+    grid_dist_size_inv_ = 1.0f / grid_dist_size_;
 
     // generate grid geometry
     setGridBoundaries();
@@ -214,11 +216,6 @@ public:
     }
     const size_t grid_idx_idx = static_cast<size_t>(grid_idx);
 
-    // check cell index is valid
-    if (grid_idx_idx >= cells_.size()) {
-      throw std::runtime_error("Invalid grid id when trying to add a point.");
-    }
-
     // add the point to the cell
     cells_[grid_idx_idx].point_list_.emplace_back(Point{point_idx, radius, z});
   }
@@ -226,14 +223,9 @@ public:
   size_t getGridSize() const { return cells_.size(); }
 
   // method to get the cell
-  Cell & getCell(const int grid_idx)
+  inline Cell & getCell(const int grid_idx)
   {
-    const size_t idx = static_cast<size_t>(grid_idx);
-    if (grid_idx < 0 || idx >= cells_.size()) {
-      throw std::runtime_error("Invalid grid cell index to get.");
-    }
-
-    return cells_[idx];
+    return cells_[static_cast<size_t>(grid_idx)];
   }
 
   void resetCells()
@@ -254,11 +246,6 @@ public:
   {
     std::unique_ptr<ScopedTimeTrack> st_ptr;
     if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
-
-    // check if initialized
-    if (!is_initialized_) {
-      throw std::runtime_error("Grid is not initialized.");
-    }
 
     // iterate over grid cells
     for (size_t i = 0; i < cells_.size(); ++i) {
@@ -304,6 +291,7 @@ private:
   // calculated parameters
   float grid_radial_limit_;            // meters
   float grid_dist_size_rad_;           // radians
+  float grid_dist_size_inv_;           // inverse of the grid size in meters
   int grid_linearity_switch_num_;      // number of grids within the switch radius
   float grid_linearity_switch_angle_;  // angle at the switch radius
   float grid_size_rad_inv_;            // inverse of the grid size in radians
@@ -415,17 +403,11 @@ private:
 
     // constant distance
     if (radius < grid_linearity_switch_radius_) {
-      grid_rad_idx = static_cast<int>(radius / grid_dist_size_);
+      grid_rad_idx = static_cast<int>(radius * grid_dist_size_inv_);
     } else if (radius < grid_radial_limit_) {
       const float angle = pseudoArcTan2(radius, origin_z_);
       grid_rad_idx = grid_linearity_switch_num_ +
                      static_cast<int>((angle - grid_linearity_switch_angle_) * grid_size_rad_inv_);
-    }
-
-    // check if the grid id is valid
-    if (grid_rad_idx >= static_cast<int>(grid_radial_boundaries_.size())) {
-      // throw error
-      throw std::runtime_error("Invalid radial grid index.");
     }
 
     return grid_rad_idx;
