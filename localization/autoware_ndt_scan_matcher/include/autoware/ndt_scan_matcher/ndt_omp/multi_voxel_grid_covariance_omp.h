@@ -340,6 +340,16 @@ protected:
     }
   }
 
+  // A wrapper of the real apply_filter
+  // cppcheck-suppress unusedFunction
+  inline bool apply_filter_thread(int tid, GridNodeType & node)
+  {
+    apply_filter(processing_inputs_[tid], node);
+    processing_inputs_[tid].reset();
+
+    return true;
+  }
+
   /** \brief Filter cloud and initializes voxel structure.
    * \param[out] output cloud containing centroids of voxels containing a sufficient number of
    * points
