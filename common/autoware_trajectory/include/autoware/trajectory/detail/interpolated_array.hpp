@@ -119,7 +119,7 @@ public:
     }
 
   public:
-    auto & operator=(const T & value)
+    void set(const T & value)
     {
       std::vector<double> & bases = parent_.bases_;
       std::vector<T> & values = parent_.values_;
@@ -154,7 +154,7 @@ public:
 
       parent_.interpolator_->build(bases, values);
 
-      return *this;
+      // return *this;
     }
   };
 
@@ -164,7 +164,7 @@ public:
    * @param end End of the range.
    * @return RangeSetter object.
    */
-  Segment operator()(double start, double end)
+  Segment range(double start, double end)
   {
     if (start < this->start() || end > this->end()) {
       RCLCPP_WARN(
@@ -194,13 +194,16 @@ public:
    * @param x The position to compute the value at.
    * @return The interpolated value.
    */
-  T compute(const double & x) const { return interpolator_->compute(x); }
+  [[nodiscard]] T compute(const double & x) const { return interpolator_->compute(x); }
 
   /**
    * @brief Get the underlying data of the array.
    * @return A pair containing the axis and values.
    */
-  std::pair<std::vector<double>, std::vector<T>> get_data() const { return {bases_, values_}; }
+  [[nodiscard]] std::pair<std::vector<double>, std::vector<T>> get_data() const
+  {
+    return {bases_, values_};
+  }
 };
 
 }  // namespace autoware::trajectory::detail

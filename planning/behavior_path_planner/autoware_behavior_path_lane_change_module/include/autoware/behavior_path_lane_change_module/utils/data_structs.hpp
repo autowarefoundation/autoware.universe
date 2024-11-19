@@ -311,9 +311,9 @@ struct PathSafetyStatus
 
 struct LanesPolygon
 {
-  std::optional<lanelet::BasicPolygon2d> current;
-  std::optional<lanelet::BasicPolygon2d> target;
-  std::optional<lanelet::BasicPolygon2d> expanded_target;
+  lanelet::BasicPolygon2d current;
+  lanelet::BasicPolygon2d target;
+  lanelet::BasicPolygon2d expanded_target;
   lanelet::BasicPolygon2d target_neighbor;
   std::vector<lanelet::BasicPolygon2d> preceding_target;
 };

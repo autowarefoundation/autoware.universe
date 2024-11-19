@@ -140,16 +140,15 @@ std::optional<size_t> getLeadingStaticObjectIdx(
   const std::vector<ExtendedPredictedObject> & objects,
   const double object_check_min_road_shoulder_width, const double object_shiftable_ratio_threshold);
 
-std::optional<lanelet::BasicPolygon2d> createPolygon(
+lanelet::BasicPolygon2d create_polygon(
   const lanelet::ConstLanelets & lanes, const double start_dist, const double end_dist);
 
 ExtendedPredictedObject transform(
   const PredictedObject & object, const BehaviorPathPlannerParameters & common_parameters,
-  const LaneChangeParameters & lane_change_parameters, const bool check_at_prepare_phase);
+  const LaneChangeParameters & lane_change_parameters);
 
-bool isCollidedPolygonsInLanelet(
-  const std::vector<Polygon2d> & collided_polygons,
-  const std::optional<lanelet::BasicPolygon2d> & lanes_polygon);
+bool is_collided_polygons_in_lanelet(
+  const std::vector<Polygon2d> & collided_polygons, const lanelet::BasicPolygon2d & lanes_polygon);
 
 /**
  * @brief Generates expanded lanelets based on the given direction and offsets.
@@ -250,8 +249,7 @@ bool is_before_terminal(
 double calc_angle_to_lanelet_segment(const lanelet::ConstLanelets & lanelets, const Pose & pose);
 
 ExtendedPredictedObjects transform_to_extended_objects(
-  const CommonDataPtr & common_data_ptr, const std::vector<PredictedObject> & objects,
-  const bool check_prepare_phase);
+  const CommonDataPtr & common_data_ptr, const std::vector<PredictedObject> & objects);
 
 double get_distance_to_next_regulatory_element(
   const CommonDataPtr & common_data_ptr, const bool ignore_crosswalk = false,

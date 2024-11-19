@@ -69,8 +69,8 @@ TEST_F(TrajectoryTest, compute)
 {
   double length = trajectory->length();
 
-  trajectory->longitudinal_velocity_mps(trajectory->length() / 3.0, trajectory->length()) = 10.0;
-
+  trajectory->longitudinal_velocity_mps.range(trajectory->length() / 3.0, trajectory->length())
+    .set(10.0);
   auto point = trajectory->compute(length / 2.0);
 
   EXPECT_LT(0, point.point.pose.position.x);
@@ -85,8 +85,9 @@ TEST_F(TrajectoryTest, compute)
 TEST_F(TrajectoryTest, manipulate_velocity)
 {
   trajectory->longitudinal_velocity_mps = 10.0;
-  trajectory->longitudinal_velocity_mps(trajectory->length() / 3, 2.0 * trajectory->length() / 3) =
-    5.0;
+  trajectory->longitudinal_velocity_mps
+    .range(trajectory->length() / 3, 2.0 * trajectory->length() / 3)
+    .set(5.0);
   auto point1 = trajectory->compute(0.0);
   auto point2 = trajectory->compute(trajectory->length() / 2.0);
   auto point3 = trajectory->compute(trajectory->length());
@@ -112,9 +113,8 @@ TEST_F(TrajectoryTest, curvature)
 
 TEST_F(TrajectoryTest, restore)
 {
-  using autoware::trajectory::Trajectory;  // NOLINT
-  trajectory->longitudinal_velocity_mps(4.0, trajectory->length()) = 5.0;
-
+  using autoware::trajectory::Trajectory;
+  trajectory->longitudinal_velocity_mps.range(4.0, trajectory->length()).set(5.0);
   {
     auto points = static_cast<Trajectory<geometry_msgs::msg::Point> &>(*trajectory).restore(0);
     EXPECT_EQ(10, points.size());

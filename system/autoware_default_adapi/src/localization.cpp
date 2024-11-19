@@ -30,8 +30,8 @@ LocalizationNode::LocalizationNode(const rclcpp::NodeOptions & options)
 }
 
 void LocalizationNode::on_initialize(
-  const autoware_ad_api::localization::Initialize::Service::Request::SharedPtr req,
-  const autoware_ad_api::localization::Initialize::Service::Response::SharedPtr res)
+  const autoware::adapi_specs::localization::Initialize::Service::Request::SharedPtr req,
+  const autoware::adapi_specs::localization::Initialize::Service::Response::SharedPtr res)
 {
   res->status = localization_conversion::convert_call(cli_initialize_, req);
 }

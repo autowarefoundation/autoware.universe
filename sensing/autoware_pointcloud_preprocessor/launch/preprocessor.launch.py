@@ -211,7 +211,7 @@ def generate_launch_description():
         os.path.join(
             autoware_pointcloud_preprocessor_share_dir,
             "config",
-            "crop_box_filter.param.yaml",
+            "crop_box_filter_node.param.yaml",
         ),
         description="path to parameter file of crop box filter node",
     )

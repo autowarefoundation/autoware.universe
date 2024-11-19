@@ -23,7 +23,7 @@ HeartbeatNode::HeartbeatNode(const rclcpp::NodeOptions & options) : Node("heartb
 {
   // Move this function so that the timer no longer holds it as a reference.
   const auto on_timer = [this]() {
-    autoware_ad_api::system::Heartbeat::Message heartbeat;
+    autoware::adapi_specs::system::Heartbeat::Message heartbeat;
     heartbeat.stamp = now();
     heartbeat.seq = ++sequence_;  // Wraps at 65535.
     pub_->publish(heartbeat);
