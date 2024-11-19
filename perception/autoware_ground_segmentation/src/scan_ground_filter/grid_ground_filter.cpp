@@ -96,6 +96,8 @@ void GridGroundFilter::fitLineFromGndGrid(const std::vector<int> & idx, float & 
   }
   const float n = static_cast<float>(idx.size());
   a = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x);
+  // limit gradient
+  a = std::clamp(a, -param_.global_slope_max_ratio, param_.global_slope_max_ratio);
   b = (sum_y - a * sum_x) / n;
 }
 
@@ -328,7 +330,7 @@ void GridGroundFilter::SegmentBreakCell(
       continue;
     }
 
-    // 3. the point is break the previous grid
+    // 3. the point is over discontinuous grid
     const float delta_radius = radius - prev_cell.avg_radius_;
     const float local_slope_ratio = delta_z / delta_radius;
     if (abs(local_slope_ratio) < param_.global_slope_max_ratio) {
