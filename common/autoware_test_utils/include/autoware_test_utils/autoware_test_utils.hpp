@@ -15,6 +15,7 @@
 #ifndef AUTOWARE_TEST_UTILS__AUTOWARE_TEST_UTILS_HPP_
 #define AUTOWARE_TEST_UTILS__AUTOWARE_TEST_UTILS_HPP_
 
+#include <ament_index_cpp/get_package_share_directory.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
@@ -35,9 +36,11 @@
 
 #include <lanelet2_io/Io.h>
 
+#include <filesystem>
 #include <limits>
 #include <memory>
 #include <optional>
+#include <regex>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -326,6 +329,19 @@ void updateNodeOptions(
  * @return A PathWithLaneId message containing the loaded data.
  */
 PathWithLaneId loadPathWithLaneIdInYaml();
+
+/**
+ * @brief create a straight lanelet from 2 segments defined by 4 points
+ * @param [in] left0 start of the left segment
+ * @param [in] left1 end of the left segment
+ * @param [in] right0 start of the right segment
+ * @param [in] right1 end of the right segment
+ * @return a ConstLanelet with the given left and right bounds and a unique lanelet id
+ *
+ */
+lanelet::ConstLanelet make_lanelet(
+  const lanelet::BasicPoint2d & left0, const lanelet::BasicPoint2d & left1,
+  const lanelet::BasicPoint2d & right0, const lanelet::BasicPoint2d & right1);
 
 /**
  * @brief Generates a trajectory with specified parameters.
@@ -621,6 +637,8 @@ protected:
   // Node
   rclcpp::Node::SharedPtr test_node_;
 };  // class AutowareTestManager
+
+std::optional<std::string> resolve_pkg_share_uri(const std::string & uri_path);
 
 }  // namespace autoware::test_utils
 

@@ -177,6 +177,8 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
     getOrDeclareParameter<double>(*node, parameter("backward_length_buffer_for_end_of_lane"));
   p.backward_length_buffer_for_blocking_object =
     getOrDeclareParameter<double>(*node, parameter("backward_length_buffer_for_blocking_object"));
+  p.backward_length_from_intersection =
+    getOrDeclareParameter<double>(*node, parameter("backward_length_from_intersection"));
   p.lane_changing_lateral_jerk =
     getOrDeclareParameter<double>(*node, parameter("lane_changing_lateral_jerk"));
   p.lane_change_prepare_duration =
@@ -308,7 +310,7 @@ std::unique_ptr<SceneModuleInterface> LaneChangeModuleManager::createNewSceneMod
 {
   return std::make_unique<LaneChangeInterface>(
     name_, *node_, parameters_, rtc_interface_ptr_map_,
-    objects_of_interest_marker_interface_ptr_map_, steering_factor_interface_ptr_,
+    objects_of_interest_marker_interface_ptr_map_,
     std::make_unique<NormalLaneChange>(parameters_, LaneChangeModuleType::NORMAL, direction_));
 }
 

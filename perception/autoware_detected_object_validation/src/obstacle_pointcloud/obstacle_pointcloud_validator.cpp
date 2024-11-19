@@ -30,6 +30,8 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
+#include <cmath>
+
 namespace autoware::detected_object_validation
 {
 namespace obstacle_pointcloud
@@ -54,10 +56,9 @@ size_t Validator::getThresholdPointCloud(
     object.kinematics.pose_with_covariance.pose.position.x,
     object.kinematics.pose_with_covariance.pose.position.y);
   size_t threshold_pc = std::clamp(
-    static_cast<size_t>(
+    static_cast<size_t>(std::lround(
       points_num_threshold_param_.min_points_and_distance_ratio.at(object_label_id) /
-        object_distance +
-      0.5f),
+      object_distance)),
     static_cast<size_t>(points_num_threshold_param_.min_points_num.at(object_label_id)),
     static_cast<size_t>(points_num_threshold_param_.max_points_num.at(object_label_id)));
   return threshold_pc;
