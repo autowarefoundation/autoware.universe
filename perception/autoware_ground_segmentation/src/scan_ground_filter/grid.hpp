@@ -223,10 +223,7 @@ public:
   size_t getGridSize() const { return cells_.size(); }
 
   // method to get the cell
-  inline Cell & getCell(const int grid_idx)
-  {
-    return cells_[static_cast<size_t>(grid_idx)];
-  }
+  inline Cell & getCell(const int grid_idx) { return cells_[static_cast<size_t>(grid_idx)]; }
 
   void resetCells()
   {
