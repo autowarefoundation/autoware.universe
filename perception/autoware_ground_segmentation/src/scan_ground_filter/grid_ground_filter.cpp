@@ -110,13 +110,9 @@ void GridGroundFilter::initializeGround(pcl::PointIndices & out_no_ground_indice
   // loop over grid cells
   for (size_t idx = 0; idx < grid_size; idx++) {
     auto & cell = grid_ptr_->getCell(idx);
+    if (cell.is_ground_initialized_) continue;
     // if the cell is empty, skip
-    if (cell.getPointNum() == 0) {
-      continue;
-    }
-    if (cell.is_ground_initialized_) {
-      continue;
-    }
+    if (cell.isEmpty()) continue;
 
     // check scan root grid
     if (cell.scan_grid_root_idx_ >= 0) {
@@ -334,27 +330,14 @@ void GridGroundFilter::classify(pcl::PointIndices & out_no_ground_indices)
   for (size_t idx = 0; idx < grid_size; idx++) {
     auto & cell = grid_ptr_->getCell(idx);
     // if the cell is empty, skip
-    if (cell.getPointNum() == 0) {
-      continue;
-    }
-    if (cell.is_processed_) {
-      continue;
-    }
+    if (cell.isEmpty()) continue;
+    if (cell.is_processed_) continue;
 
-    bool is_previous_initialized = false;
     // set a cell pointer for the previous cell
-    const Cell * prev_cell_ptr;
     // check scan root grid
-    if (cell.scan_grid_root_idx_ >= 0) {
-      prev_cell_ptr = &(grid_ptr_->getCell(cell.scan_grid_root_idx_));
-      if (prev_cell_ptr->is_ground_initialized_) {
-        is_previous_initialized = true;
-      }
-    }
-
-    if (!is_previous_initialized) {
-      continue;
-    }
+    if (cell.scan_grid_root_idx_ < 0) continue;
+    const Cell & prev_cell = grid_ptr_->getCell(cell.scan_grid_root_idx_);
+    if (!(prev_cell.is_ground_initialized_)) continue;
 
     // get current cell gradient and intercept
     std::vector<int> grid_idcs;
@@ -370,7 +353,7 @@ void GridGroundFilter::classify(pcl::PointIndices & out_no_ground_indices)
     {
       const int front_radial_id =
         grid_ptr_->getCell(grid_idcs.back()).radial_idx_ + grid_idcs.size();
-      const float radial_diff_between_cells = cell.center_radius_ - prev_cell_ptr->center_radius_;
+      const float radial_diff_between_cells = cell.center_radius_ - prev_cell.center_radius_;
 
       if (radial_diff_between_cells < param_.gnd_grid_continual_thresh * cell.radial_size_) {
         if (cell.radial_idx_ - front_radial_id < param_.gnd_grid_continual_thresh) {
@@ -434,10 +417,10 @@ void GridGroundFilter::classify(pcl::PointIndices & out_no_ground_indices)
         cell.has_ground_ = true;
       } else {
         // copy previous cell
-        cell.avg_radius_ = prev_cell_ptr->avg_radius_;
-        cell.avg_height_ = prev_cell_ptr->avg_height_;
-        cell.max_height_ = prev_cell_ptr->max_height_;
-        cell.min_height_ = prev_cell_ptr->min_height_;
+        cell.avg_radius_ = prev_cell.avg_radius_;
+        cell.avg_height_ = prev_cell.avg_height_;
+        cell.max_height_ = prev_cell.max_height_;
+        cell.min_height_ = prev_cell.min_height_;
         cell.has_ground_ = false;
       }
 

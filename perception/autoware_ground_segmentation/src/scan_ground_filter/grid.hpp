@@ -113,8 +113,8 @@ public:
   std::vector<Point> point_list_;  // point index and distance
 
   // method to check if the cell is empty
-  bool isEmpty() const { return point_list_.empty(); }
-  int getPointNum() const { return point_list_.size(); }
+  inline bool isEmpty() const { return point_list_.empty(); }
+  inline int getPointNum() const { return point_list_.size(); }
 
   // index of the cell
   int grid_idx_;
