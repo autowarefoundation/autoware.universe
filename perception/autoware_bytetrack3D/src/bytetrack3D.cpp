@@ -44,7 +44,7 @@ bool ByteTrack3D::do_inference(ObjectArray & objects)
 {
   // Re-format data
   std::vector<ByteTrackObject> bytetrack_objects;
-  for (auto & obj : objects) {
+  for (const auto & obj : objects) {
     ByteTrackObject bytetrack_obj;
     bytetrack_obj.x = obj.x;
     bytetrack_obj.y = obj.y;

@@ -72,7 +72,7 @@ void ByteTrack3DNode::on_rect(
 
   // Unpack detection results
   bytetrack3D::ObjectArray object_array;
-  for (auto & feat_obj : msg->objects) {
+  for (const auto & feat_obj : msg->objects) {
     Object obj;
     obj.x = feat_obj.kinematics.pose_with_covariance.pose.position.x;
     obj.y = feat_obj.kinematics.pose_with_covariance.pose.position.y;
