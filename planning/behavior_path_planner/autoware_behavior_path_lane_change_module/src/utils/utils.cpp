@@ -666,9 +666,6 @@ bool isParkedObject(
   // +: object position
   // o: nearest point on centerline
 
-  using lanelet::geometry::distance2d;
-  using lanelet::geometry::toArcCoordinates;
-
   const double object_vel_norm =
     std::hypot(object.initial_twist.linear.x, object.initial_twist.linear.y);
   if (object_vel_norm > static_object_velocity_threshold) {
@@ -687,49 +684,15 @@ bool isParkedObject(
 
   const double lat_dist =
     autoware::motion_utils::calcLateralOffset(path.points, object_pose.position);
-  lanelet::BasicLineString2d bound;
-  double center_to_bound_buffer = 0.0;
-  if (lat_dist > 0.0) {
-    // left side vehicle
-    const auto most_left_road_lanelet = route_handler.getMostLeftLanelet(closest_lanelet);
-    const auto most_left_lanelet_candidates =
-      route_handler.getLaneletMapPtr()->laneletLayer.findUsages(most_left_road_lanelet.leftBound());
-    lanelet::ConstLanelet most_left_lanelet = most_left_road_lanelet;
-    const lanelet::Attribute most_left_sub_type =
-      most_left_lanelet.attribute(lanelet::AttributeName::Subtype);
-
-    for (const auto & ll : most_left_lanelet_candidates) {
-      const auto & sub_type = ll.attribute(lanelet::AttributeName::Subtype);
-      if (sub_type.value() == "road_shoulder") {
-        most_left_lanelet = ll;
-      }
-    }
-    bound = most_left_lanelet.leftBound2d().basicLineString();
-    if (most_left_sub_type.value() != "road_shoulder") {
-      center_to_bound_buffer = object_check_min_road_shoulder_width;
-    }
-  } else {
-    // right side vehicle
-    const auto most_right_road_lanelet = route_handler.getMostRightLanelet(closest_lanelet);
-    const auto most_right_lanelet_candidates =
-      route_handler.getLaneletMapPtr()->laneletLayer.findUsages(
-        most_right_road_lanelet.rightBound());
-
-    lanelet::ConstLanelet most_right_lanelet = most_right_road_lanelet;
-    const lanelet::Attribute most_right_sub_type =
-      most_right_lanelet.attribute(lanelet::AttributeName::Subtype);
-
-    for (const auto & ll : most_right_lanelet_candidates) {
-      const auto & sub_type = ll.attribute(lanelet::AttributeName::Subtype);
-      if (sub_type.value() == "road_shoulder") {
-        most_right_lanelet = ll;
-      }
-    }
-    bound = most_right_lanelet.rightBound2d().basicLineString();
-    if (most_right_sub_type.value() != "road_shoulder") {
-      center_to_bound_buffer = object_check_min_road_shoulder_width;
-    }
-  }
+  const auto most_side_lanelet =
+    lat_dist > 0.0 ? route_handler.getMostLeftLanelet(closest_lanelet, false, true)
+                   : route_handler.getMostRightLanelet(closest_lanelet, false, true);
+  const auto bound = lat_dist > 0.0 ? most_side_lanelet.leftBound2d().basicLineString()
+                                    : most_side_lanelet.rightBound2d().basicLineString();
+  const lanelet::Attribute lanelet_sub_type =
+    most_side_lanelet.attribute(lanelet::AttributeName::Subtype);
+  const auto center_to_bound_buffer =
+    lanelet_sub_type.value() == "road_shoulder" ? 0.0 : object_check_min_road_shoulder_width;
 
   return isParkedObject(
     closest_lanelet, bound, object, center_to_bound_buffer, object_shiftable_ratio_threshold);
