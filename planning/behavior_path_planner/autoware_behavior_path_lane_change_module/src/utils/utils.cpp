@@ -1176,7 +1176,7 @@ double get_distance_to_next_regulatory_element(
 }
 
 double get_min_dist_to_current_lanes_obj(
-  const CommonDataPtr & common_data_ptr, const FilteredByLanesExtendedObjects & filtered_objects,
+  const CommonDataPtr & common_data_ptr, const FilteredLanesObjects & filtered_objects,
   const double dist_to_target_lane_start, const PathWithLaneId & path)
 {
   const auto & path_points = path.points;

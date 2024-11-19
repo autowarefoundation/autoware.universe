@@ -101,7 +101,7 @@ MarkerArray createLaneChangingVirtualWallMarker(
 }
 
 MarkerArray showFilteredObjects(
-  const FilteredByLanesExtendedObjects & filtered_objects, const std::string & ns)
+  const FilteredLanesObjects & filtered_objects, const std::string & ns)
 {
   int32_t update_id = 0;
   MarkerArray marker_array;

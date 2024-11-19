@@ -271,7 +271,7 @@ struct TargetLaneLeadingObjects
   [[nodiscard]] size_t size() const { return moving.size() + stopped.size() + expanded.size(); }
 };
 
-struct LanesObjects
+struct FilteredLanesObjects
 {
   ExtendedPredictedObjects others;
   ExtendedPredictedObjects current_lane;
@@ -416,7 +416,7 @@ using LaneChangeStates = lane_change::States;
 using LaneChangePhaseInfo = lane_change::PhaseInfo;
 using LaneChangePhaseMetrics = lane_change::PhaseMetrics;
 using LaneChangeInfo = lane_change::Info;
-using FilteredByLanesExtendedObjects = lane_change::LanesObjects;
+using FilteredLanesObjects = lane_change::FilteredLanesObjects;
 using LateralAccelerationMap = lane_change::LateralAccelerationMap;
 }  // namespace autoware::behavior_path_planner
 

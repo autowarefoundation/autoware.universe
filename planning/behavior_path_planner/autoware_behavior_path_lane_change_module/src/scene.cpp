@@ -209,7 +209,7 @@ void NormalLaneChange::update_transient_data()
 
 void NormalLaneChange::update_filtered_objects()
 {
-  filtered_objects_ = filterObjects();
+  filtered_objects_ = filter_objects();
 }
 
 void NormalLaneChange::updateLaneChangeStatus()
@@ -942,7 +942,7 @@ bool NormalLaneChange::get_prepare_segment(
 }
 
 lane_change::TargetObjects NormalLaneChange::get_target_objects(
-  const FilteredByLanesExtendedObjects & filtered_objects,
+  const FilteredLanesObjects & filtered_objects,
   [[maybe_unused]] const lanelet::ConstLanelets & current_lanes) const
 {
   ExtendedPredictedObjects leading_objects = filtered_objects.target_lane_leading.moving;
@@ -965,7 +965,7 @@ lane_change::TargetObjects NormalLaneChange::get_target_objects(
   return {leading_objects, filtered_objects.target_lane_trailing};
 }
 
-FilteredByLanesExtendedObjects NormalLaneChange::filterObjects() const
+FilteredLanesObjects NormalLaneChange::filter_objects() const
 {
   auto objects = *planner_data_->dynamic_object;
   utils::path_safety_checker::filterObjectsByClass(
@@ -994,7 +994,7 @@ FilteredByLanesExtendedObjects NormalLaneChange::filterObjects() const
   const auto dist_ego_to_current_lanes_center =
     lanelet::utils::getLateralDistanceToClosestLanelet(current_lanes, current_pose);
 
-  FilteredByLanesExtendedObjects filtered_objects;
+  FilteredLanesObjects filtered_objects;
   const auto reserve_size = objects.objects.size();
   filtered_objects.current_lane.reserve(reserve_size);
   auto & target_lane_leading = filtered_objects.target_lane_leading;
