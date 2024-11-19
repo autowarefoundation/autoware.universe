@@ -1306,18 +1306,18 @@ bool filter_target_lane_objects(
     return std::abs(lateral) > (vehicle_width / 2);
   });
 
-  if (is_lateral_far) {
-    const auto is_stopped = velocity_filter(
-      object.initial_twist, -std::numeric_limits<double>::epsilon(), stopped_obj_vel_th);
+  const auto is_stopped = velocity_filter(
+    object.initial_twist, -std::numeric_limits<double>::epsilon(), stopped_obj_vel_th);
+  if (is_lateral_far && before_terminal) {
     const auto in_target_lanes =
       !boost::geometry::disjoint(object.initial_polygon, lanes_polygon.target);
     if (in_target_lanes) {
-      if (!ahead_of_ego) {
+      if (!ahead_of_ego && !is_stopped) {
         trailing_objects.push_back(object);
         return true;
       }
 
-      if (before_terminal) {
+      if (ahead_of_ego) {
         if (is_stopped) {
           leading_objects.stopped.push_back(object);
         } else {
@@ -1343,7 +1343,7 @@ bool filter_target_lane_objects(
     });
 
   // check if the object intersects with target backward lanes
-  if (is_overlap_target_backward) {
+  if (is_overlap_target_backward && !is_stopped) {
     trailing_objects.push_back(object);
     return true;
   }
