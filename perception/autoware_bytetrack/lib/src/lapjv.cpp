@@ -45,7 +45,7 @@
 /** Column-reduction and reduction transfer for a dense cost matrix.
  */
 int_t _ccrrt_dense(
-  const uint_t n, cost_t * cost[], int_t * free_rows, int_t * x, int_t * y, cost_t * v)
+  const uint_t n, const cost_t * cost[], int_t * free_rows, int_t * x, int_t * y, cost_t * v)
 {
   int_t n_free_rows;
   boolean * unique;
@@ -109,7 +109,7 @@ int_t _ccrrt_dense(
 /** Augmenting row reduction for a dense cost matrix.
  */
 int_t _carr_dense(
-  const uint_t n, cost_t * cost[], const uint_t n_free_rows, int_t * free_rows, int_t * x,
+  const uint_t n, const cost_t * cost[], const uint_t n_free_rows, int_t * free_rows, int_t * x,
   int_t * y, cost_t * v)
 {
   uint_t current = 0;
@@ -203,7 +203,7 @@ uint_t _find_dense(
 // Scan all columns in TODO starting from arbitrary column in SCAN
 // and try to decrease d of the TODO columns using the SCAN column.
 int_t _scan_dense(
-  const uint_t n, cost_t * cost[], uint_t * plo, uint_t * phi, cost_t * d, int_t * cols,
+  const uint_t n, const cost_t * cost[], uint_t * plo, uint_t * phi, cost_t * d, int_t * cols,
   int_t * pred, const int_t * y, const cost_t * v)
 {
   uint_t lo = *plo;
@@ -245,7 +245,7 @@ int_t _scan_dense(
  * \return The closest free column index.
  */
 int_t find_path_dense(
-  const uint_t n, cost_t * cost[], const int_t start_i, int_t * y, cost_t * v, int_t * pred)
+  const uint_t n, const cost_t * cost[], const int_t start_i, int_t * y, cost_t * v, int_t * pred)
 {
   uint_t lo = 0, hi = 0;
   int_t final_j = -1;
@@ -305,7 +305,7 @@ int_t find_path_dense(
 /** Augment for a dense cost matrix.
  */
 int_t _ca_dense(
-  const uint_t n, cost_t * cost[], const uint_t n_free_rows, int_t * free_rows, int_t * x,
+  const uint_t n, const cost_t * cost[], const uint_t n_free_rows, int_t * free_rows, int_t * x,
   int_t * y, cost_t * v)
 {
   int_t * pred;
@@ -340,7 +340,7 @@ int_t _ca_dense(
 
 /** Solve dense sparse LAP.
  */
-int lapjv_internal(const uint_t n, cost_t * cost[], int_t * x, int_t * y)
+int lapjv_internal(const uint_t n, const cost_t * cost[], int_t * x, int_t * y)
 {
   int ret;
   int_t * free_rows;
