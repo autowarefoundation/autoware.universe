@@ -16,8 +16,9 @@
 #ifndef AUTOWARE__TENSORRT_BEVDET__BEVDET_NODE_HPP_
 #define AUTOWARE__TENSORRT_BEVDET__BEVDET_NODE_HPP_
 
-#include "bevdet.hpp"
-#include "cpu_jpegdecoder.hpp"
+#include "autoware/tensorrt_bevdet/ros_utils.hpp"
+#include <cpu_jpegdecoder.h>
+
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
 
@@ -25,27 +26,12 @@
 #include <Eigen/Geometry>
 #include <opencv2/opencv.hpp>
 
-#include <autoware_perception_msgs/msg/detected_object_kinematics.hpp>
-#include <autoware_perception_msgs/msg/detected_objects.hpp>
-#include <autoware_perception_msgs/msg/object_classification.hpp>
-#include <autoware_perception_msgs/msg/shape.hpp>
-#include <geometry_msgs/msg/point32.hpp>
-#include <geometry_msgs/msg/quaternion.hpp>
-#include <geometry_msgs/msg/vector3.hpp>
-#include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/image.hpp>
-#include <sensor_msgs/msg/point_cloud2.hpp>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <cv_bridge/cv_bridge.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/synchronizer.h>
-#include <pcl/common/transforms.h>
-#include <pcl/io/pcd_io.h>
-#include <pcl/point_types.h>
-#include <pcl_conversions/pcl_conversions.h>  // msg2pcl
-#include <yaml-cpp/yaml.h>
 
 #include <cassert>
 #include <chrono>
@@ -58,21 +44,10 @@
 #include <thread>
 #include <vector>
 
-uint8_t getSemanticType(const std::string & class_name);
-
-void box3DToDetectedObjects(
-  const std::vector<Box> & boxes, autoware_perception_msgs::msg::DetectedObjects & objects,
-  const std::vector<std::string> & class_names, float score_thre, const bool has_twist);
-
-// Get the rotation and translation from a geometry_msgs::msg::TransformStamped
-void getTransform(
-  const geometry_msgs::msg::TransformStamped & transform, Eigen::Quaternion<float> & rot,
-  Eigen::Translation3f & translation);
-
-// Get the camera intrinsics from a sensor_msgs::msg::CameraInfo
-void getCameraIntrinsics(
-  const sensor_msgs::msg::CameraInfo::SharedPtr msg, Eigen::Matrix3f & intrinsics);
-
+namespace autoware
+{
+namespace tensorrt_bevdet
+{
 class TRTBEVDetNode : public rclcpp::Node
 {
   /**
@@ -94,11 +69,11 @@ private:
   std::vector<std::string> class_names_;  ///< Names of the object classes
 
   camsData sampleData_;  ///< Sample data for camera parameters
-  std::shared_ptr<autoware::tensorrt_bevdet::BEVDet>
-    bevdet_;  ///< Object for performing object detection
+  std::shared_ptr<BEVDet> bevdet_;  ///< Object for performing object detection
 
   uchar * imgs_dev_ = nullptr;  ///< Device pointer for storing the images
   float score_thre_;            ///< Score threshold for object detection
+  bool has_twist_ = true;  /// wether set twist for objects
 
   rclcpp::Publisher<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr
     pub_boxes_;  ///< Publisher for publishing the detected objects
@@ -116,10 +91,9 @@ private:
     sub_bl_caminfo_;  ///< Subscriber for back-left camera info
   rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr
     sub_br_caminfo_;  ///< Subscriber for back-right camera info
-  std::vector<bool>
-    caminfo_received_;  ///< Flag indicating if camera info has been received for each camera
-  bool camera_info_received_flag_ =
-    false;                    ///< Flag indicating if camera info has been received for all cameras
+
+  std::vector<bool> caminfo_received_;  ///< Flag indicating if camera info has been received for each camera
+  bool camera_info_received_flag_ = false;  ///< Flag indicating if camera info has been received for all cameras
   bool initialized_ = false;  /// Flag indicating if img_w_ and img_h_ has been initialized
 
   // tf listener
@@ -128,11 +102,11 @@ private:
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_;  ///< Buffer for storing TF transforms
 
   // Camera parameters;
-  std::vector<Eigen::Matrix3f> cams_intrin;  ///< Intrinsic camera parameters for each camera
+  std::vector<Eigen::Matrix3f> cams_intrin_;  ///< Intrinsic camera parameters for each camera
   std::vector<Eigen::Quaternion<float>>
-    cams2ego_rot;  ///< Rotation from camera frame to ego frame for each camera
+    cams2ego_rot_;  ///< Rotation from camera frame to ego frame for each camera
   std::vector<Eigen::Translation3f>
-    cams2ego_trans;  ///< Translation from camera frame to ego frame for each camera
+    cams2ego_trans_;  ///< Translation from camera frame to ego frame for each camera
 
   // Subscribers of images for each camera, synchronized
   message_filters::Subscriber<sensor_msgs::msg::Image>
@@ -182,10 +156,9 @@ private:
 public:
   /**
    * @brief Constructor for TRTBEVDetNode.
-   * @param node_name The name of the node.
    * @param options The options for the node.
    */
-  TRTBEVDetNode(const std::string & node_name, const rclcpp::NodeOptions & options);
+  TRTBEVDetNode(const rclcpp::NodeOptions & options);
 
   /**
    * @brief Destructor for TRTBEVDetNode.
@@ -215,7 +188,8 @@ public:
    * @param idx The index of the camera.
    * @param msg The camera info message.
    */
-  void camera_info_callback(int idx, const sensor_msgs::msg::CameraInfo::SharedPtr msg);
+  void cameraInfoCallback(int idx, const sensor_msgs::msg::CameraInfo::SharedPtr msg);
 };
-
+}  // namespace tensorrt_bevdet
+}  // namespace autoware
 #endif  // AUTOWARE__TENSORRT_BEVDET__BEVDET_NODE_HPP_

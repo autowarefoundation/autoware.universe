@@ -14,119 +14,23 @@
 
 // cspell:ignore BEVDET, thre, TRTBEV, bevdet, caminfo, intrin, Ncams, bevfeat, dlongterm, RGBHWC,
 // BGRCHW
+
 #include "autoware/tensorrt_bevdet/bevdet_node.hpp"
+#include <preprocess.h>
 
-#include "autoware/tensorrt_bevdet/preprocess.hpp"
-
-using Label = autoware_perception_msgs::msg::ObjectClassification;
-std::map<int, std::vector<int>> colormap{
-  {0, {0, 0, 255}},  // dodger blue
-  {1, {0, 201, 87}}, {2, {0, 201, 87}}, {3, {160, 32, 240}}, {4, {3, 168, 158}}, {5, {255, 0, 0}},
-  {6, {255, 97, 0}}, {7, {30, 0, 255}}, {8, {255, 0, 0}},    {9, {0, 0, 255}},   {10, {0, 0, 0}}};
-
-uint8_t getSemanticType(const std::string & class_name)
+namespace autoware
 {
-  if (class_name == "car") {
-    return Label::CAR;
-  } else if (class_name == "truck") {
-    return Label::TRUCK;
-  } else if (class_name == "bus") {
-    return Label::BUS;
-  } else if (class_name == "trailer") {
-    return Label::TRAILER;
-  } else if (class_name == "bicycle") {
-    return Label::BICYCLE;
-  } else if (class_name == "motorcycle") {
-    return Label::MOTORCYCLE;
-  } else if (class_name == "pedestrian") {
-    return Label::PEDESTRIAN;
-  } else {
-    return Label::UNKNOWN;
-  }
-}
-
-void box3DToDetectedObjects(
-  const std::vector<Box> & boxes, autoware_perception_msgs::msg::DetectedObjects & bevdet_objects,
-  const std::vector<std::string> & class_names, float score_thre, const bool has_twist = true)
+namespace tensorrt_bevdet
 {
-  for (auto b : boxes) {
-    if (b.score < score_thre) continue;
-    autoware_perception_msgs::msg::DetectedObject obj;
-
-    Eigen::Vector3f center(b.x, b.y, b.z + b.h / 2.);
-
-    obj.existence_probability = b.score;
-    // classification
-    autoware_perception_msgs::msg::ObjectClassification classification;
-    classification.probability = 1.0f;
-    if (b.label >= 0 && static_cast<size_t>(b.label) < class_names.size()) {
-      classification.label = getSemanticType(class_names[b.label]);
-    } else {
-      classification.label = Label::UNKNOWN;
-    }
-    obj.classification.emplace_back(classification);
-
-    // pose and shape
-    geometry_msgs::msg::Point p;
-    p.x = center.x();
-    p.y = center.y();
-    p.z = center.z();
-    obj.kinematics.pose_with_covariance.pose.position = p;
-
-    tf2::Quaternion q;
-    q.setRPY(0, 0, b.r);
-    obj.kinematics.pose_with_covariance.pose.orientation = tf2::toMsg(q);
-
-    obj.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
-
-    geometry_msgs::msg::Vector3 v;
-    v.x = b.l;
-    v.y = b.w;
-    v.z = b.h;
-    obj.shape.dimensions = v;
-    if (has_twist) {
-      float vel_x = b.vx;
-      float vel_y = b.vy;
-      geometry_msgs::msg::Twist twist;
-      twist.linear.x = std::sqrt(std::pow(vel_x, 2) + std::pow(vel_y, 2));
-      twist.angular.z = 2 * (std::atan2(vel_y, vel_x) - b.r);
-      obj.kinematics.twist_with_covariance.twist = twist;
-      obj.kinematics.has_twist = has_twist;
-    }
-
-    bevdet_objects.objects.emplace_back(obj);
-  }
-}
-
-void getTransform(
-  const geometry_msgs::msg::TransformStamped & transform, Eigen::Quaternion<float> & rot,
-  Eigen::Translation3f & translation)
-{
-  rot = Eigen::Quaternion<float>(
-    transform.transform.rotation.w, transform.transform.rotation.x, transform.transform.rotation.y,
-    transform.transform.rotation.z);
-  translation = Eigen::Translation3f(
-    transform.transform.translation.x, transform.transform.translation.y,
-    transform.transform.translation.z);
-}
-
-void getCameraIntrinsics(
-  const sensor_msgs::msg::CameraInfo::SharedPtr msg, Eigen::Matrix3f & intrinsics)
-{
-  intrinsics << msg->k[0], msg->k[1], msg->k[2], msg->k[3], msg->k[4], msg->k[5], msg->k[6],
-    msg->k[7], msg->k[8];
-}
-
-TRTBEVDetNode::TRTBEVDetNode(
-  const std::string & node_name, const rclcpp::NodeOptions & node_options)
-: rclcpp::Node(node_name, node_options)
+TRTBEVDetNode::TRTBEVDetNode(const rclcpp::NodeOptions & node_options)
+: rclcpp::Node("tensorrt_bevdet_node", node_options)
 {  // Only start camera info subscription and tf listener at the beginning
-  img_N_ = this->declare_parameter<int>("data_params.N", 6);  // camera num 6
+  img_N_ = this->declare_parameter<int>("data_params.CAM_NUM", 6);  // camera num 6
 
   caminfo_received_ = std::vector<bool>(img_N_, false);
-  cams_intrin = std::vector<Eigen::Matrix3f>(img_N_);
-  cams2ego_rot = std::vector<Eigen::Quaternion<float>>(img_N_);
-  cams2ego_trans = std::vector<Eigen::Translation3f>(img_N_);
+  cams_intrin_ = std::vector<Eigen::Matrix3f>(img_N_);
+  cams2ego_rot_ = std::vector<Eigen::Quaternion<float>>(img_N_);
+  cams2ego_trans_ = std::vector<Eigen::Translation3f>(img_N_);
 
   tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
@@ -148,16 +52,15 @@ void TRTBEVDetNode::initModel()
   engine_file_ = this->declare_parameter<std::string>("engine_path", "bevdet_one_lt_d.engine");
 
   imgs_name_ = this->declare_parameter<std::vector<std::string>>("data_params.cams");
-  class_names_ =
-    this->declare_parameter<std::vector<std::string>>("post_process_params.class_names");
+  class_names_ = this->declare_parameter<std::vector<std::string>>("post_process_params.class_names");
 
   RCLCPP_INFO_STREAM(this->get_logger(), "Successful load config!");
 
-  sampleData_.param = camParams(cams_intrin, cams2ego_rot, cams2ego_trans);
+  sampleData_.param = camParams(cams_intrin_, cams2ego_rot_, cams2ego_trans_);
 
   RCLCPP_INFO_STREAM(this->get_logger(), "Successful load image params!");
 
-  bevdet_ = std::make_shared<autoware::tensorrt_bevdet::BEVDet>(
+  bevdet_ = std::make_shared<BEVDet>(
     model_config_, img_N_, sampleData_.param.cams_intrin, sampleData_.param.cams2ego_rot,
     sampleData_.param.cams2ego_trans, onnx_file_, engine_file_);
 
@@ -195,9 +98,7 @@ void TRTBEVDetNode::startImageSubscription()
   using std::placeholders::_5;
   using std::placeholders::_6;
 
-  sub_f_img_.subscribe(
-    this, "~/input/topic_img_f",
-    rclcpp::QoS{1}.get_rmw_qos_profile());  // rmw_qos_profile_sensor_data
+  sub_f_img_.subscribe(this, "~/input/topic_img_f", rclcpp::QoS{1}.get_rmw_qos_profile());
   sub_b_img_.subscribe(this, "~/input/topic_img_b", rclcpp::QoS{1}.get_rmw_qos_profile());
 
   sub_fl_img_.subscribe(this, "~/input/topic_img_fl", rclcpp::QoS{1}.get_rmw_qos_profile());
@@ -218,30 +119,30 @@ void TRTBEVDetNode::startCameraInfoSubscription()
   // "CAM_BACK_RIGHT"]
   sub_fl_caminfo_ = this->create_subscription<sensor_msgs::msg::CameraInfo>(
     "~/input/topic_img_fl/camera_info", rclcpp::QoS{1},
-    [this](const sensor_msgs::msg::CameraInfo::SharedPtr msg) { camera_info_callback(0, msg); });
+    [this](const sensor_msgs::msg::CameraInfo::SharedPtr msg) { cameraInfoCallback(0, msg); });
 
   sub_f_caminfo_ = this->create_subscription<sensor_msgs::msg::CameraInfo>(
     "~/input/topic_img_f/camera_info", rclcpp::QoS{1},
-    [this](const sensor_msgs::msg::CameraInfo::SharedPtr msg) { camera_info_callback(1, msg); });
+    [this](const sensor_msgs::msg::CameraInfo::SharedPtr msg) { cameraInfoCallback(1, msg); });
 
   sub_fr_caminfo_ = this->create_subscription<sensor_msgs::msg::CameraInfo>(
     "~/input/topic_img_fr/camera_info", rclcpp::QoS{1},
-    [this](const sensor_msgs::msg::CameraInfo::SharedPtr msg) { camera_info_callback(2, msg); });
+    [this](const sensor_msgs::msg::CameraInfo::SharedPtr msg) { cameraInfoCallback(2, msg); });
 
   sub_bl_caminfo_ = this->create_subscription<sensor_msgs::msg::CameraInfo>(
     "~/input/topic_img_bl/camera_info", rclcpp::QoS{1},
-    [this](const sensor_msgs::msg::CameraInfo::SharedPtr msg) { camera_info_callback(3, msg); });
+    [this](const sensor_msgs::msg::CameraInfo::SharedPtr msg) { cameraInfoCallback(3, msg); });
 
   sub_b_caminfo_ = this->create_subscription<sensor_msgs::msg::CameraInfo>(
     "~/input/topic_img_b/camera_info", rclcpp::QoS{1},
-    [this](const sensor_msgs::msg::CameraInfo::SharedPtr msg) { camera_info_callback(4, msg); });
+    [this](const sensor_msgs::msg::CameraInfo::SharedPtr msg) { cameraInfoCallback(4, msg); });
 
   sub_br_caminfo_ = this->create_subscription<sensor_msgs::msg::CameraInfo>(
     "~/input/topic_img_br/camera_info", rclcpp::QoS{1},
-    [this](const sensor_msgs::msg::CameraInfo::SharedPtr msg) { camera_info_callback(5, msg); });
+    [this](const sensor_msgs::msg::CameraInfo::SharedPtr msg) { cameraInfoCallback(5, msg); });
 }
 
-void image_transport(std::vector<cv::Mat> imgs, uchar * out_imgs, size_t width, size_t height)
+void imageTransport(std::vector<cv::Mat> imgs, uchar * out_imgs, size_t width, size_t height)
 {
   uchar * temp = new uchar[width * height * 3];
   uchar * temp_gpu = nullptr;
@@ -280,7 +181,7 @@ void TRTBEVDetNode::callback(
   imgs.emplace_back(img_b);
   imgs.emplace_back(img_br);
 
-  image_transport(imgs, imgs_dev_, img_w_, img_h_);
+  imageTransport(imgs, imgs_dev_, img_w_, img_h_);
 
   // uchar *imgs_dev
   sampleData_.imgs_dev = imgs_dev_;
@@ -289,18 +190,18 @@ void TRTBEVDetNode::callback(
   ego_boxes.clear();
   float time = 0.f;
 
-  bevdet_->doInfer(sampleData_, ego_boxes, time);
+  bevdet_->DoInfer(sampleData_, ego_boxes, time);
 
   autoware_perception_msgs::msg::DetectedObjects bevdet_objects;
   bevdet_objects.header.frame_id = "base_link";
   bevdet_objects.header.stamp = msg_f_img->header.stamp;
 
-  box3DToDetectedObjects(ego_boxes, bevdet_objects, class_names_, score_thre_);
+  box3DToDetectedObjects(ego_boxes, bevdet_objects, class_names_, score_thre_, has_twist_);
 
   pub_boxes_->publish(bevdet_objects);
 }
 
-void TRTBEVDetNode::camera_info_callback(int idx, const sensor_msgs::msg::CameraInfo::SharedPtr msg)
+void TRTBEVDetNode::cameraInfoCallback(int idx, const sensor_msgs::msg::CameraInfo::SharedPtr msg)
 {
   if (caminfo_received_[idx])
     return;  // already received;  not expected to modify because of we init the model only once
@@ -312,15 +213,15 @@ void TRTBEVDetNode::camera_info_callback(int idx, const sensor_msgs::msg::Camera
   }
   Eigen::Matrix3f intrinsics;
   getCameraIntrinsics(msg, intrinsics);
-  cams_intrin[idx] = intrinsics;
+  cams_intrin_[idx] = intrinsics;
 
   Eigen::Quaternion<float> rot;
   Eigen::Translation3f translation;
   getTransform(
     tf_buffer_->lookupTransform("base_link", msg->header.frame_id, rclcpp::Time(0)), rot,
     translation);
-  cams2ego_rot[idx] = rot;
-  cams2ego_trans[idx] = translation;
+  cams2ego_rot_[idx] = rot;
+  cams2ego_trans_[idx] = translation;
 
   caminfo_received_[idx] = true;
   camera_info_received_flag_ =
@@ -331,12 +232,8 @@ TRTBEVDetNode::~TRTBEVDetNode()
 {
   delete imgs_dev_;
 }
-
-int main(int argc, char ** argv)
-{
-  rclcpp::init(argc, argv);
-  rclcpp::NodeOptions node_options;
-  auto bevdet_node = std::make_shared<TRTBEVDetNode>("tensorrt_bevdet_node", node_options);
-  rclcpp::spin(bevdet_node);
-  return 0;
-}
+}  // namespace tensorrt_bevdet
+}  // namespace autoware
+#include <rclcpp_components/register_node_macro.hpp>
+RCLCPP_COMPONENTS_REGISTER_NODE(
+  autoware::tensorrt_bevdet::TRTBEVDetNode)

@@ -2,11 +2,15 @@
 
 ## Purpose
 
-tensorrt_bevdet is a dynamic 3D bev object detection package based on 6 surround view cameras.
+The core algorithm, named `BEVDet`, it unifies multi-view images into the perspective of BEV for 3D object detection task.
 
 ## Inner-workings / Algorithms
 
-BEVDet is a BEV perception algorithm based on panoramic cameras. It unifies multi-view images into the perspective of BEV for 3D object detection task. In this implementation, BEVDet network to inference with TensorRT.
+### Cite
+<!-- cspell: ignore Junjie Huang, Guan Huang -->
+- Junjie Huang, Guan Huang, "BEVPoolv2: A Cutting-edge Implementation of BEVDet Toward Deployment", [[ref](https://arxiv.org/pdf/2211.17111)]
+- [bevdet_vendor]() package are copied from the [original codes](https://github.com/LCH1238/bevdet-tensorrt-cpp/tree/one) (The TensorRT, C++ implementation by LCH1238) and modified.
+- This package is ported version toward Autoware from [bevdet_vendor](). 
 
 ## Inputs / Outputs
 
@@ -44,7 +48,7 @@ BEVDet is a BEV perception algorithm based on panoramic cameras. It unifies mult
 
 2. play ros2 bag of nuScenes data
 
-   Please refer to open source repository [ros2_dataset_bridge](https://github.com/Owen-Liuyuxuan/ros2_dataset_bridge) to publish the ROS 2 topics.
+   Please refer to open source repository [ros2_dataset_bridge](https://github.com/Owen-Liuyuxuan/ros2_dataset_bridge) to publish the ROS 2 topics for NuScenes dataset.
 
 ## Limitation
 

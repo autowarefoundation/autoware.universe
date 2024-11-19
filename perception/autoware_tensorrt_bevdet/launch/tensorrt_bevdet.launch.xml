@@ -25,7 +25,7 @@
   <arg name="param_file" default="$(find-pkg-share autoware_tensorrt_bevdet)/config/bevdet.param.yaml"/>
 
   <!-- bevdet node -->
-  <node pkg="autoware_tensorrt_bevdet" exec="autoware_tensorrt_bevdet_node" name="tensorrt_bevdet_node" output="screen">
+  <node pkg="autoware_tensorrt_bevdet" exec="autoware_tensorrt_bevdet_node" name="tensorrt_bevdet" output="screen">
     <!-- ros topic name -->
     <remap from="~/input/topic_img_fl" to="$(var input/img_fl)"/>
     <remap from="~/input/topic_img_f" to="$(var input/img_f)"/>
