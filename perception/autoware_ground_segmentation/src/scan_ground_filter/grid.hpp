@@ -70,6 +70,29 @@ float pseudoArcTan2(const float y, const float x)
     }
   }
 }
+
+float pseudoTan(const float theta)
+{
+  // lightweight tangent
+
+  // normalize the angle, range of [-pi/2, pi/2]
+  float normalized_theta = theta;
+  while (normalized_theta > M_PI_2f) {
+    normalized_theta -= M_PIf;
+  }
+  while (normalized_theta < -M_PI_2f) {
+    normalized_theta += M_PIf;
+  }
+
+  // avoid divide-by-zero
+  if (normalized_theta == 0.0f) return 0.0f;
+
+  if (std::abs(normalized_theta) <= 1.0f)
+  {
+    return normalized_theta / M_PI_4f;
+  }
+  return std::copysign(M_PI_4f / (M_PI_2f - std::abs(normalized_theta)), normalized_theta);
+}
 }  // namespace
 namespace autoware::ground_segmentation
 {
@@ -312,7 +335,7 @@ private:
       grid_size_rad_inv_ = 1.0f / grid_angle_interval;
       angle += grid_angle_interval;
       while (angle < M_PI_2) {
-        const float dist = tan(angle) * origin_z_;
+        const float dist = pseudoTan(angle) * origin_z_;
         grid_radial_boundaries_.push_back(dist);
         if (dist > grid_radial_limit_) {
           break;
