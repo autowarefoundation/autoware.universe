@@ -142,7 +142,8 @@ bool Controller::processData(rclcpp::Clock & clock)
   bool is_ready = true;
 
   const auto & logData = [&clock, this](const std::string & data_type) {
-    RCLCPP_INFO_THROTTLE(get_logger(), clock, logger_throttle_interval, "Waiting for %s data", data_type.c_str());
+    RCLCPP_INFO_THROTTLE(
+      get_logger(), clock, logger_throttle_interval, "Waiting for %s data", data_type.c_str());
   };
 
   const auto & getData = [&logData](auto & dest, auto & sub, const std::string & data_type = "") {
