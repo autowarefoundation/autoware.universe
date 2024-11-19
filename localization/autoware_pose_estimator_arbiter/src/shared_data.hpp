@@ -21,10 +21,10 @@
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 
+#include <functional>
 #include <memory>
 #include <optional>
 #include <vector>
-#include <functional>
 
 namespace autoware::pose_estimator_arbiter
 {
