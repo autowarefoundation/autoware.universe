@@ -76,9 +76,22 @@ Polygon2d createExtendedPolygon(
   const PoseWithVelocityAndPolygonStamped & obj_pose_with_poly, const double lon_length,
   const double lat_margin, const bool is_stopped_obj, CollisionCheckDebug & debug);
 
+/**
+ * @brief Converts path (path with velocity stamped) to predicted path.
+ * @param path Path.
+ * @param time_resolution Time resolution.
+ * @return Predicted path.
+ */
 PredictedPath convertToPredictedPath(
   const std::vector<PoseWithVelocityStamped> & path, const double time_resolution);
 
+/**
+ * @brief Calculates RSS related distance.
+ * @param front_object_velocity Velocity of front object.
+ * @param rear_object_velocity Velocity of rear object.
+ * @param rss_params RSS parameters.
+ * @return Longitudinal distance.
+ */
 double calcRssDistance(
   const double front_object_velocity, const double rear_object_velocity,
   const RSSparams & rss_params);
@@ -128,6 +141,12 @@ ExtendedPredictedObjects filterObjectPredictedPathByTimeHorizon(
   const ExtendedPredictedObjects & objects, const double time_horizon,
   const bool check_all_predicted_path);
 
+/**
+ * @brief Filters the path by obtaining points after target pose.
+ * @param path Path to filter.
+ * @param target_pose Target pose.
+ * @return Filtered path.
+ */
 std::vector<PoseWithVelocityStamped> filterPredictedPathAfterTargetPose(
   const std::vector<PoseWithVelocityStamped> & path, const Pose & target_pose);
 
@@ -138,13 +157,12 @@ std::vector<PoseWithVelocityStamped> filterPredictedPathAfterTargetPose(
  * @param ego_predicted_path Ego vehicle's predicted path
  * @param objects Detected objects.
  * @param debug_map Map for collision check debug.
- * @param target_object_path The predicted path of the target object.
  * @param parameters The common parameters used in behavior path planner.
- * @param rss_params The parameters used in RSS
+ * @param rss_params The parameters used in RSSs
  * @param check_all_predicted_path If true, uses all predicted path
  * @param hysteresis_factor Hysteresis factor
  * @param yaw_difference_th Threshold for yaw difference
- * @return True if distance is safe.
+ * @return True if planned path is safe.
  */
 bool checkSafetyWithRSS(
   const PathWithLaneId & planned_path,
@@ -202,6 +220,16 @@ std::vector<Polygon2d> get_collided_polygons(
 bool checkPolygonsIntersects(
   const std::vector<Polygon2d> & polys_1, const std::vector<Polygon2d> & polys_2);
 
+/**
+ * @brief Checks for safety using integral predicted polygons.
+ * @param ego_predicted_path The predicted path of ego vehicle.
+ * @param vehicle_info Information (parameters) about ego vehicle.
+ * @param objects Surrounding objects.
+ * @param check_all_predicted_path Whether to check all predicted paths of objects.
+ * @param params Parameters for integral predicted polygon.
+ * @param debug_map Map to store debug information.
+ * @return True if the ego vehicle's path is safe, and false otherwise.
+ */
 bool checkSafetyWithIntegralPredictedPolygon(
   const std::vector<PoseWithVelocityStamped> & ego_predicted_path, const VehicleInfo & vehicle_info,
   const ExtendedPredictedObjects & objects, const bool check_all_predicted_path,

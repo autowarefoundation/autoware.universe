@@ -12,7 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/behavior_path_planner_common/parameters.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
 
@@ -38,6 +37,7 @@
 constexpr double epsilon = 1e-6;
 
 using autoware::behavior_path_planner::utils::path_safety_checker::CollisionCheckDebug;
+using autoware::behavior_path_planner::utils::path_safety_checker::CollisionCheckDebugMap;
 using autoware::behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObject;
 using autoware::behavior_path_planner::utils::path_safety_checker::
   PoseWithVelocityAndPolygonStamped;
@@ -51,7 +51,7 @@ using autoware_perception_msgs::msg::Shape;
 using geometry_msgs::msg::Pose;
 using tier4_planning_msgs::msg::PathWithLaneId;
 
-std::vector<PoseWithVelocityStamped> createTestPath()
+std::vector<PoseWithVelocityStamped> create_test_path()
 {
   std::vector<PoseWithVelocityStamped> path;
   path.emplace_back(0.0, createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0), 1.0);
@@ -86,7 +86,7 @@ std::vector<PoseWithVelocityAndPolygonStamped> create_path_with_velocity_and_pol
 
   for (size_t i = 0; i < point_num; i++) {
     double time = static_cast<double>(i) * interval;
-    pose.position.x = time * velocity;
+    pose.position.x = initial_pose.position.x + time * velocity;
     PoseWithVelocityAndPolygonStamped obj_pose_with_poly(
       time, pose, velocity, autoware::universe_utils::toPolygon2d(pose, shape));
     predicted_path.push_back(obj_pose_with_poly);
@@ -319,6 +319,18 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, createExtendedObjPolygon)
   }
 }
 
+TEST(BehaviorPathPlanningSafetyUtilsTest, convertToPredictedPath)
+{
+  using autoware::behavior_path_planner::utils::path_safety_checker::convertToPredictedPath;
+
+  auto path = create_test_path();
+  double time_resolution = 1.0;
+  auto predicted_path = convertToPredictedPath(path, time_resolution);
+  EXPECT_EQ(predicted_path.path.size(), 3);
+  EXPECT_DOUBLE_EQ(predicted_path.time_step.sec, 1.0);
+  EXPECT_DOUBLE_EQ(predicted_path.time_step.nanosec, 0.0);
+}
+
 TEST(BehaviorPathPlanningSafetyUtilsTest, calcRssDistance)
 {
   using autoware::behavior_path_planner::utils::path_safety_checker::calcRssDistance;
@@ -352,7 +364,7 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, calc_minimum_longitudinal_length)
 // Basic interpolation test
 TEST(CalcInterpolatedPoseWithVelocityTest, BasicInterpolation)
 {
-  auto path = createTestPath();
+  auto path = create_test_path();
   auto result = calc_interpolated_pose_with_velocity(path, 0.5);
 
   ASSERT_TRUE(result.has_value());
@@ -364,7 +376,7 @@ TEST(CalcInterpolatedPoseWithVelocityTest, BasicInterpolation)
 // Boundary conditions test
 TEST(CalcInterpolatedPoseWithVelocityTest, BoundaryConditions)
 {
-  auto path = createTestPath();
+  auto path = create_test_path();
 
   // First point of the path
   auto start_result = calc_interpolated_pose_with_velocity(path, 0.0);
@@ -387,7 +399,7 @@ TEST(CalcInterpolatedPoseWithVelocityTest, InvalidInput)
   using autoware::behavior_path_planner::utils::path_safety_checker::
     calc_interpolated_pose_with_velocity;
 
-  auto path = createTestPath();
+  auto path = create_test_path();
 
   // Empty path
   EXPECT_FALSE(calc_interpolated_pose_with_velocity({}, 1.0).has_value());
@@ -441,15 +453,57 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, get_interpolated_pose_with_velocity_an
       .has_value());
 
   // Condition: with path
-  pred_path = createTestPath();
+  pred_path = create_test_path();
   auto interpolation_result =
     get_interpolated_pose_with_velocity_and_polygon_stamped(pred_path, current_time, vehicle_info);
   EXPECT_TRUE(interpolation_result.has_value());
 }
 
+TEST(BehaviorPathPlanningSafetyUtilsTest, filterPredictedPathAfterTargetPose)
+{
+  using autoware::behavior_path_planner::utils::path_safety_checker::
+    filterPredictedPathAfterTargetPose;
+
+  auto path = create_test_path();
+  Pose pose = createPose(1.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+  auto filtered_path = filterPredictedPathAfterTargetPose(path, pose);
+  EXPECT_EQ(filtered_path.size(), 2);
+  double x_target = 1.0;
+  for (const auto & pose_with_velocity : filtered_path) {
+    EXPECT_DOUBLE_EQ(pose_with_velocity.pose.position.x, x_target);
+    x_target += 1.0;
+  }
+}
+
 TEST(BehaviorPathPlanningSafetyUtilsTest, checkSafetyWithRSS)
 {
   using autoware::behavior_path_planner::utils::path_safety_checker::checkSafetyWithRSS;
+
+  auto planned_path = generateTrajectory<PathWithLaneId>(3, 1.0);
+  auto ego_predicted_path = create_test_path();
+  autoware::vehicle_info_utils::VehicleInfo vehicle_info{};
+  vehicle_info.max_longitudinal_offset_m = 1.0;
+  vehicle_info.rear_overhang_m = 1.0;
+  vehicle_info.vehicle_width_m = 2.0;
+  std::vector<ExtendedPredictedObject> objects;
+  objects.push_back(
+    create_extended_predicted_object(createPose(10.0, 8.0, 0.0, 0.0, 0.0, 0.0), 0.5));
+  objects.push_back(
+    create_extended_predicted_object(createPose(0.0, 1.0, 0.0, 0.0, 0.0, 0.0), 0.6));
+  CollisionCheckDebugMap debug_map;
+  BehaviorPathPlannerParameters parameters;
+  parameters.vehicle_info = vehicle_info;
+  auto rss_params = create_rss_parameters();
+  double hysteresis_factor = 1.0;
+  const double yaw_difference_th = M_PI_2;
+
+  EXPECT_FALSE(checkSafetyWithRSS(
+    planned_path, ego_predicted_path, objects, debug_map, parameters, rss_params, true,
+    hysteresis_factor, yaw_difference_th));
+  objects.pop_back();
+  EXPECT_TRUE(checkSafetyWithRSS(
+    planned_path, ego_predicted_path, objects, debug_map, parameters, rss_params, true,
+    hysteresis_factor, yaw_difference_th));
 }
 
 TEST(BehaviorPathPlanningSafetyUtilsTest, checkSafetyWithIntegralPredictedPolygon)
@@ -457,23 +511,25 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, checkSafetyWithIntegralPredictedPolygo
   using autoware::behavior_path_planner::utils::path_safety_checker::
     checkSafetyWithIntegralPredictedPolygon;
 
-  auto ego_predicted_path = createTestPath();
+  auto ego_predicted_path = create_test_path();
   autoware::vehicle_info_utils::VehicleInfo vehicle_info{};
   vehicle_info.max_longitudinal_offset_m = 1.0;
   vehicle_info.rear_overhang_m = 1.0;
   vehicle_info.vehicle_width_m = 2.0;
-  auto object_near =
-    create_extended_predicted_object(createPose(0.0, 1.0, 0.0, 0.0, 0.0, 0.0), 0.6);
-  auto object_far =
-    create_extended_predicted_object(createPose(10.0, 8.0, 0.0, 0.0, 0.0, 0.0), 0.5);
   autoware::behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObjects objects;
-  objects.push_back(object_near);
-  objects.push_back(object_far);
+  objects.push_back(
+    create_extended_predicted_object(createPose(10.0, 8.0, 0.0, 0.0, 0.0, 0.0), 0.5));
+  objects.push_back(
+    create_extended_predicted_object(createPose(0.0, 1.0, 0.0, 0.0, 0.0, 0.0), 0.6));
 
   autoware::behavior_path_planner::utils::path_safety_checker::IntegralPredictedPolygonParams
     params{1.0, 1.0, 1.0, 2.0};
-  autoware::behavior_path_planner::utils::path_safety_checker::CollisionCheckDebugMap debug_map;
+  CollisionCheckDebugMap debug_map;
 
+  EXPECT_FALSE(checkSafetyWithIntegralPredictedPolygon(
+    ego_predicted_path, vehicle_info, objects, true, params, debug_map));
+
+  objects.pop_back();
   EXPECT_TRUE(checkSafetyWithIntegralPredictedPolygon(
     ego_predicted_path, vehicle_info, objects, true, params, debug_map));
 }
@@ -484,7 +540,7 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, checkCollision)
   using autoware::behavior_path_planner::utils::path_safety_checker::get_collided_polygons;
 
   auto planned_path = autoware::test_utils::generateTrajectory<PathWithLaneId>(3, 1.0);
-  auto predicted_ego_path = createTestPath();
+  auto predicted_ego_path = create_test_path();
 
   ExtendedPredictedObject target_object;
   target_object.initial_pose = createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
@@ -508,23 +564,51 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, checkCollision)
   const double yaw_difference_th = M_PI_2;
   CollisionCheckDebug debug;
 
-  EXPECT_FALSE(checkCollision(
-    planned_path, predicted_ego_path, target_object, object_path, common_parameters, rss_parameters,
-    hysteresis_factor, yaw_difference_th, debug));
-  auto collide_polygon = get_collided_polygons(
-    planned_path, predicted_ego_path, target_object, object_path, vehicle_info, rss_parameters,
-    hysteresis_factor, max_velocity_limit, yaw_difference_th, debug);
-  EXPECT_EQ(collide_polygon.size(), 3);
-
-  target_object.initial_pose = createPose(0.0, 4.0, 0.0, 0.0, 0.0, 0.0);
-  object_path = create_predicted_path_with_polygon(createPose(0.0, 4.0, 0.0, 0.0, 0.0, 0.0), 1.0);
-  collide_polygon = get_collided_polygons(
-    planned_path, predicted_ego_path, target_object, object_path, vehicle_info, rss_parameters,
-    hysteresis_factor, max_velocity_limit, yaw_difference_th, debug);
-  EXPECT_TRUE(checkCollision(
-    planned_path, predicted_ego_path, target_object, object_path, common_parameters, rss_parameters,
-    hysteresis_factor, yaw_difference_th, debug));
-  EXPECT_TRUE(collide_polygon.empty());
+  {
+    EXPECT_FALSE(checkCollision(
+      planned_path, predicted_ego_path, target_object, object_path, common_parameters,
+      rss_parameters, hysteresis_factor, yaw_difference_th, debug));
+    auto collide_polygon = get_collided_polygons(
+      planned_path, predicted_ego_path, target_object, object_path, vehicle_info, rss_parameters,
+      hysteresis_factor, max_velocity_limit, yaw_difference_th, debug);
+    EXPECT_EQ(collide_polygon.size(), 3);
+  }
+  {
+    target_object.initial_pose = createPose(0.0, 4.0, 0.0, 0.0, 0.0, 0.0);
+    object_path = create_predicted_path_with_polygon(createPose(0.0, 4.0, 0.0, 0.0, 0.0, 0.0), 1.0);
+    auto collide_polygon = get_collided_polygons(
+      planned_path, predicted_ego_path, target_object, object_path, vehicle_info, rss_parameters,
+      hysteresis_factor, max_velocity_limit, yaw_difference_th, debug);
+    EXPECT_TRUE(checkCollision(
+      planned_path, predicted_ego_path, target_object, object_path, common_parameters,
+      rss_parameters, hysteresis_factor, yaw_difference_th, debug));
+    EXPECT_TRUE(collide_polygon.empty());
+  }
+  {
+    target_object.initial_pose = createPose(10.0, 4.0, 0.0, 0.0, 0.0, 0.0);
+    object_path =
+      create_predicted_path_with_polygon(createPose(10.0, 4.0, 0.0, 0.0, 0.0, 0.0), 1.0);
+    EXPECT_TRUE(checkCollision(
+      planned_path, predicted_ego_path, target_object, object_path, common_parameters,
+      rss_parameters, hysteresis_factor, yaw_difference_th, debug));
+    auto collide_polygon = get_collided_polygons(
+      planned_path, predicted_ego_path, target_object, object_path, vehicle_info, rss_parameters,
+      hysteresis_factor, max_velocity_limit, yaw_difference_th, debug);
+    EXPECT_TRUE(collide_polygon.empty());
+  }
+  {
+    rss_parameters.extended_polygon_policy = "along_path";
+    target_object.initial_pose = createPose(10.0, 4.0, 0.0, 0.0, 0.0, 0.0);
+    object_path =
+      create_predicted_path_with_polygon(createPose(10.0, 4.0, 0.0, 0.0, 0.0, 0.0), 1.0);
+    EXPECT_TRUE(checkCollision(
+      planned_path, predicted_ego_path, target_object, object_path, common_parameters,
+      rss_parameters, hysteresis_factor, yaw_difference_th, debug));
+    auto collide_polygon = get_collided_polygons(
+      planned_path, predicted_ego_path, target_object, object_path, vehicle_info, rss_parameters,
+      hysteresis_factor, max_velocity_limit, yaw_difference_th, debug);
+    EXPECT_TRUE(collide_polygon.empty());
+  }
 }
 
 TEST(BehaviorPathPlanningSafetyUtilsTest, checkPolygonsIntersects)

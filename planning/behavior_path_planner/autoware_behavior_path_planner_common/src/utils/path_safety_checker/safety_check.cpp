@@ -29,6 +29,7 @@
 #include <tf2/utils.h>
 
 #include <cmath>
+#include <iostream>
 #include <limits>
 
 namespace autoware::behavior_path_planner::utils::path_safety_checker
@@ -637,6 +638,7 @@ std::vector<Polygon2d> get_collided_polygons(
     // compute which one is at the front of the other
     const bool is_object_front =
       isTargetObjectFront(ego_pose, obj_polygon, ego_vehicle_info.max_longitudinal_offset_m);
+
     const auto & [front_object_velocity, rear_object_velocity] =
       is_object_front ? std::make_pair(object_velocity, ego_velocity)
                       : std::make_pair(ego_velocity, object_velocity);
