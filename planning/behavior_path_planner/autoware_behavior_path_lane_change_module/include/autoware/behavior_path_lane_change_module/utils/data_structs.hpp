@@ -100,6 +100,14 @@ struct CancelParameters
   int deceleration_sampling_num{5};
 };
 
+struct DelayParameters
+{
+  bool enable{true};
+  bool check_only_parked_vehicle{false};
+  double min_road_shoulder_width{0.5};
+  double th_parked_vehicle_shift_ratio{0.6};
+};
+
 struct Parameters
 {
   // trajectory generation
@@ -116,10 +124,6 @@ struct Parameters
   double minimum_lane_changing_velocity{5.6};
   double lane_change_prepare_duration{4.0};
   LateralAccelerationMap lane_change_lat_acc_map;
-
-  // parked vehicle
-  double object_check_min_road_shoulder_width{0.5};
-  double object_shiftable_ratio_threshold{0.6};
 
   // turn signal
   double min_length_for_turn_signal_activation{10.0};
@@ -166,6 +170,9 @@ struct Parameters
 
   // abort
   CancelParameters cancel{};
+
+  // delay
+  DelayParameters delay{};
 
   // finish judge parameter
   double lane_change_finish_judge_buffer{3.0};

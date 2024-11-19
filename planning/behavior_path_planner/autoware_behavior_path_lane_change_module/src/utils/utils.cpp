@@ -809,9 +809,9 @@ bool passed_parked_objects(
   const auto route_handler = *common_data_ptr->route_handler_ptr;
   const auto lane_change_parameters = *common_data_ptr->lc_param_ptr;
   const auto & object_check_min_road_shoulder_width =
-    lane_change_parameters.object_check_min_road_shoulder_width;
+    lane_change_parameters.delay.min_road_shoulder_width;
   const auto & object_shiftable_ratio_threshold =
-    lane_change_parameters.object_shiftable_ratio_threshold;
+    lane_change_parameters.delay.th_parked_vehicle_shift_ratio;
   const auto & current_lane_path = common_data_ptr->current_lanes_path;
 
   if (objects.empty() || lane_change_path.path.points.empty() || current_lane_path.points.empty()) {

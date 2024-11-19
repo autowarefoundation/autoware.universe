@@ -51,12 +51,6 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
   p.lateral_acc_sampling_num =
     getOrDeclareParameter<int>(*node, parameter("lateral_acceleration_sampling_num"));
 
-  // parked vehicle detection
-  p.object_check_min_road_shoulder_width =
-    getOrDeclareParameter<double>(*node, parameter("object_check_min_road_shoulder_width"));
-  p.object_shiftable_ratio_threshold =
-    getOrDeclareParameter<double>(*node, parameter("object_shiftable_ratio_threshold"));
-
   // turn signal
   p.min_length_for_turn_signal_activation =
     getOrDeclareParameter<double>(*node, parameter("min_length_for_turn_signal_activation"));
@@ -228,6 +222,15 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
     p.object_types_to_check.check_pedestrian =
       getOrDeclareParameter<bool>(*node, ns + "pedestrian");
   }
+
+  // lane change delay
+  p.delay.enable = getOrDeclareParameter<bool>(*node, parameter("delay.enable"));
+  p.delay.check_only_parked_vehicle =
+    getOrDeclareParameter<bool>(*node, parameter("delay.check_only_parked_vehicle"));
+  p.delay.min_road_shoulder_width =
+    getOrDeclareParameter<double>(*node, parameter("delay.min_road_shoulder_width"));
+  p.delay.th_parked_vehicle_shift_ratio =
+    getOrDeclareParameter<double>(*node, parameter("delay.th_parked_vehicle_shift_ratio"));
 
   // lane change cancel
   p.cancel.enable_on_prepare_phase =
