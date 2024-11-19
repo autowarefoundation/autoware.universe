@@ -17,8 +17,6 @@
 #define AUTOWARE__TENSORRT_BEVDET__BEVDET_NODE_HPP_
 
 #include "autoware/tensorrt_bevdet/ros_utils.hpp"
-#include <cpu_jpegdecoder.h>
-
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
 
@@ -28,6 +26,7 @@
 
 #include <sensor_msgs/msg/image.hpp>
 
+#include <cpu_jpegdecoder.h>
 #include <cv_bridge/cv_bridge.h>
 #include <message_filters/subscriber.h>
 #include <message_filters/sync_policies/approximate_time.h>
@@ -68,12 +67,12 @@ private:
   std::vector<std::string> imgs_name_;    ///< Names of the images
   std::vector<std::string> class_names_;  ///< Names of the object classes
 
-  camsData sampleData_;  ///< Sample data for camera parameters
+  camsData sampleData_;             ///< Sample data for camera parameters
   std::shared_ptr<BEVDet> bevdet_;  ///< Object for performing object detection
 
   uchar * imgs_dev_ = nullptr;  ///< Device pointer for storing the images
   float score_thre_;            ///< Score threshold for object detection
-  bool has_twist_ = true;  /// wether set twist for objects
+  bool has_twist_ = true;       /// wether set twist for objects
 
   rclcpp::Publisher<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr
     pub_boxes_;  ///< Publisher for publishing the detected objects
@@ -92,8 +91,10 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr
     sub_br_caminfo_;  ///< Subscriber for back-right camera info
 
-  std::vector<bool> caminfo_received_;  ///< Flag indicating if camera info has been received for each camera
-  bool camera_info_received_flag_ = false;  ///< Flag indicating if camera info has been received for all cameras
+  std::vector<bool>
+    caminfo_received_;  ///< Flag indicating if camera info has been received for each camera
+  bool camera_info_received_flag_ =
+    false;                    ///< Flag indicating if camera info has been received for all cameras
   bool initialized_ = false;  /// Flag indicating if img_w_ and img_h_ has been initialized
 
   // tf listener

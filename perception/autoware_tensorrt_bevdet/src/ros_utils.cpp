@@ -13,8 +13,8 @@
 // limitations under the License.
 
 #include "autoware/tensorrt_bevdet/ros_utils.hpp"
-#include <autoware_perception_msgs/msg/detected_object_kinematics.hpp>
 
+#include <autoware_perception_msgs/msg/detected_object_kinematics.hpp>
 #include <autoware_perception_msgs/msg/object_classification.hpp>
 #include <autoware_perception_msgs/msg/shape.hpp>
 
@@ -114,4 +114,4 @@ void getCameraIntrinsics(
   intrinsics << msg->k[0], msg->k[1], msg->k[2], msg->k[3], msg->k[4], msg->k[5], msg->k[6],
     msg->k[7], msg->k[8];
 }
-} // namespace autoware::tensorrt_bevdet
+}  // namespace autoware::tensorrt_bevdet

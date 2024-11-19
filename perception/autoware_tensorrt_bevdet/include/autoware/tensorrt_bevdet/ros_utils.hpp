@@ -16,14 +16,16 @@
 #define AUTOWARE__TENSORRT_BEVDET__ROS_UTILS_HPP_
 
 #include <autoware_perception_msgs/msg/detected_objects.hpp>
-#include <sensor_msgs/msg/camera_info.hpp>
 #include <geometry_msgs/msg/point32.hpp>
 #include <geometry_msgs/msg/quaternion.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
+#include <sensor_msgs/msg/camera_info.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+
+#include <bevdet.h>
+
 #include <string>
 #include <vector>
-#include <bevdet.h>
 namespace autoware::tensorrt_bevdet
 {
 uint8_t getSemanticType(const std::string & class_name);
@@ -41,6 +43,5 @@ void getTransform(
 void getCameraIntrinsics(
   const sensor_msgs::msg::CameraInfo::SharedPtr msg, Eigen::Matrix3f & intrinsics);
 
-
-} // namespace autoware::tensorrt_bevdet
+}  // namespace autoware::tensorrt_bevdet
 #endif  // AUTOWARE__TENSORRT_BEVDET__ROS_UTILS_HPP_

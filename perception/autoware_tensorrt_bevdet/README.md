@@ -7,10 +7,12 @@ The core algorithm, named `BEVDet`, it unifies multi-view images into the perspe
 ## Inner-workings / Algorithms
 
 ### Cite
+
 <!-- cspell: ignore Junjie Huang, Guan Huang -->
+
 - Junjie Huang, Guan Huang, "BEVPoolv2: A Cutting-edge Implementation of BEVDet Toward Deployment", [[ref](https://arxiv.org/pdf/2211.17111)]
 - [bevdet_vendor]() package are copied from the [original codes](https://github.com/LCH1238/bevdet-tensorrt-cpp/tree/one) (The TensorRT, C++ implementation by LCH1238) and modified.
-- This package is ported version toward Autoware from [bevdet_vendor](). 
+- This package is ported version toward Autoware from [bevdet_vendor]().
 
 ## Inputs / Outputs
 

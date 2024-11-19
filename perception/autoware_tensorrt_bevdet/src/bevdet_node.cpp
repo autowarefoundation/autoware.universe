@@ -16,6 +16,7 @@
 // BGRCHW
 
 #include "autoware/tensorrt_bevdet/bevdet_node.hpp"
+
 #include <preprocess.h>
 
 namespace autoware
@@ -52,7 +53,8 @@ void TRTBEVDetNode::initModel()
   engine_file_ = this->declare_parameter<std::string>("engine_path", "bevdet_one_lt_d.engine");
 
   imgs_name_ = this->declare_parameter<std::vector<std::string>>("data_params.cams");
-  class_names_ = this->declare_parameter<std::vector<std::string>>("post_process_params.class_names");
+  class_names_ =
+    this->declare_parameter<std::vector<std::string>>("post_process_params.class_names");
 
   RCLCPP_INFO_STREAM(this->get_logger(), "Successful load config!");
 
@@ -235,5 +237,4 @@ TRTBEVDetNode::~TRTBEVDetNode()
 }  // namespace tensorrt_bevdet
 }  // namespace autoware
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(
-  autoware::tensorrt_bevdet::TRTBEVDetNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::tensorrt_bevdet::TRTBEVDetNode)
