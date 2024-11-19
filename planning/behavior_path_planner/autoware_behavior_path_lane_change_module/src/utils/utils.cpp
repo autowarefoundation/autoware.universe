@@ -202,6 +202,8 @@ LaneChangePaths get_frenet_paths(
       pp.point.pose = candidate.poses[i];
       pp.point.longitudinal_velocity_mps = static_cast<float>(candidate.longitudinal_velocities[i]);
       pp.point.lateral_velocity_mps = static_cast<float>(candidate.lateral_velocities[i]);
+      pp.point.heading_rate_rps = static_cast<float>(
+        candidate.curvatures[i]);  // TODO(Maxime): dirty way to attach the curvature at each point
       // copy from original reference path
       while (ref_s < s && ref_i + 1 < target_lane.points.size()) {
         ++ref_i;
@@ -262,15 +264,14 @@ LaneChangePaths get_frenet_paths(
     candidate_path.info.lateral_acceleration = candidate.lateral_accelerations.front();
     candidate_path.info.shift_line.start_shift_length = 0.0;
     candidate_path.info.shift_line.end_shift_length = initial_state.position.d;
-    candidate_path.info.shift_line.start =
-      prepare_segment.points.back()
-        .point.pose;  // TODO(Maxime): should it be 1st point of candidate ?
+    candidate_path.info.shift_line.start = candidate.poses.front();
+    // prepare_segment.points.back() .point.pose;  // TODO(Maxime): should it be 1st point of
+    // candidate ?
     candidate_path.info.shift_line.end = candidate.poses.back();
     candidate_path.info.shift_line.start_idx = 0UL;
     candidate_path.info.shift_line.end_idx = shifted_path.shift_length.size() - 1;
     candidate_paths.push_back(candidate_path);
   }
-
   return candidate_paths;
 }
 
