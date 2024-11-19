@@ -460,9 +460,12 @@ void GridGroundFilter::classify(pcl::PointIndices & out_no_ground_indices)
         cell.min_height_ = ground_bin.getMinHeight();
         cell.has_ground_ = true;
       } else {
-        // estimate the ground by the line
-        cell.avg_radius_ = cell.center_radius_;
-        cell.avg_height_ = cell.center_radius_ * cell.gradient_ + cell.intercept_;
+        // copy previous cell
+        cell.avg_radius_ = prev_cell_ptr->avg_radius_;
+        cell.avg_height_ = prev_cell_ptr->avg_height_;
+        cell.max_height_ = prev_cell_ptr->max_height_;
+        cell.min_height_ = prev_cell_ptr->min_height_;
+
         cell.has_ground_ = false;
       }
 
