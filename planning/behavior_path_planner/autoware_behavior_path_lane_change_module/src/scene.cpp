@@ -32,6 +32,7 @@
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <range/v3/action/insert.hpp>
 #include <range/v3/algorithm/any_of.hpp>
+#include <range/v3/algorithm/for_each.hpp>
 #include <range/v3/algorithm/sort.hpp>
 
 #include <lanelet2_core/geometry/Point.h>
@@ -113,6 +114,18 @@ void NormalLaneChange::update_lanes(const bool is_approved)
   common_data_ptr_->lanes_ptr->preceding_target = utils::getPrecedingLanelets(
     *route_handler_ptr, get_target_lanes(), common_data_ptr_->get_ego_pose(),
     common_data_ptr_->lc_param_ptr->backward_lane_length);
+
+  lane_change_debug_.current_lanes = common_data_ptr_->lanes_ptr->current;
+  lane_change_debug_.target_lanes = common_data_ptr_->lanes_ptr->target;
+
+  lane_change_debug_.target_backward_lanes.clear();
+  ranges::for_each(
+    common_data_ptr_->lanes_ptr->preceding_target,
+    [&](const lanelet::ConstLanelets & preceeding_lanes) {
+      ranges::insert(
+        lane_change_debug_.target_backward_lanes, lane_change_debug_.target_backward_lanes.end(),
+        preceeding_lanes);
+    });
 
   *common_data_ptr_->lanes_polygon_ptr = create_lanes_polygon(common_data_ptr_);
 }
@@ -1049,9 +1062,11 @@ FilteredByLanesExtendedObjects NormalLaneChange::filterObjectsByLanelets(
     const auto ahead_of_ego =
       utils::lane_change::is_ahead_of_ego(common_data_ptr_, current_lanes_ref_path, ext_object);
 
-    utils::lane_change::filter_target_lane_objects(
-      common_data_ptr_, ext_object, dist_ego_to_current_lanes_center, ahead_of_ego,
-      is_before_terminal, target_lane_leading, ext_objects.target_lane_trailing);
+    if (utils::lane_change::filter_target_lane_objects(
+          common_data_ptr_, ext_object, dist_ego_to_current_lanes_center, ahead_of_ego,
+          is_before_terminal, target_lane_leading, ext_objects.target_lane_trailing)) {
+      continue;
+    }
 
     // TODO(Azu): We have to think about how to remove is_within_vel_th without breaking AW behavior
     const auto is_moving = velocity_filter(

@@ -111,6 +111,10 @@ MarkerArray showFilteredObjects(
   marker_array.markers.reserve(2 * reserve_size);
   auto add_objects_to_marker =
     [&](const ExtendedPredictedObjects & objects, const ColorRGBA & color) {
+      if (objects.empty()) {
+        return;
+      }
+
       auto marker = marker_utils::showFilteredObjects(objects, ns, color, update_id);
       update_id += static_cast<int32_t>(marker.markers.size());
       std::move(
@@ -123,29 +127,6 @@ MarkerArray showFilteredObjects(
   add_objects_to_marker(filtered_objects.target_lane_trailing, colors::blue());
   add_objects_to_marker(filtered_objects.target_lane_leading.expanded, colors::light_pink());
   add_objects_to_marker(filtered_objects.others, colors::medium_orchid());
-
-  auto add_text = [&](const ExtendedPredictedObjects & objects) {
-    for (const auto & target_lead_obj : objects) {
-      auto obj_text = createDefaultMarker(
-        "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, ++update_id, Marker::TEXT_VIEW_FACING,
-        createMarkerScale(0.5, 0.5, 0.5), colors::green());
-      obj_text.pose = target_lead_obj.initial_pose;
-
-      std::ostringstream ss;
-
-      ss << "D: " << target_lead_obj.dist_from_ego;
-      ;
-
-      obj_text.text = ss.str();
-      marker_array.markers.push_back(obj_text);
-    }
-  };
-
-  add_text(filtered_objects.current_lane);
-  add_text(filtered_objects.target_lane_leading.moving);
-  add_text(filtered_objects.target_lane_leading.expanded);
-  add_text(filtered_objects.target_lane_leading.stopped);
-  add_text(filtered_objects.target_lane_trailing);
 
   return marker_array;
 }

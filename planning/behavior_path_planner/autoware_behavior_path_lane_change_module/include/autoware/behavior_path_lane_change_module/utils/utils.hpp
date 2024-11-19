@@ -340,7 +340,7 @@ std::vector<LineString2d> get_line_string_paths(const ExtendedPredictedObject & 
 bool has_overtaking_turn_lane_object(
   const CommonDataPtr & common_data_ptr, const ExtendedPredictedObjects & trailing_objects);
 
-void filter_target_lane_objects(
+bool filter_target_lane_objects(
   const CommonDataPtr & common_data_ptr, const ExtendedPredictedObject & object,
   const double dist_ego_to_current_lanes_center, const bool ahead_of_ego,
   const bool before_terminal, TargetLaneLeadingObjects & leading_objects,

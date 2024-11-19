@@ -1287,7 +1287,7 @@ bool has_overtaking_turn_lane_object(
     trailing_objects.begin(), trailing_objects.end(), is_object_overlap_with_target);
 }
 
-void filter_target_lane_objects(
+bool filter_target_lane_objects(
   const CommonDataPtr & common_data_ptr, const ExtendedPredictedObject & object,
   const double dist_ego_to_current_lanes_center, const bool ahead_of_ego,
   const bool before_terminal, TargetLaneLeadingObjects & leading_objects,
@@ -1314,7 +1314,7 @@ void filter_target_lane_objects(
     if (in_target_lanes) {
       if (!ahead_of_ego) {
         trailing_objects.push_back(object);
-        return;
+        return true;
       }
 
       if (before_terminal) {
@@ -1323,7 +1323,7 @@ void filter_target_lane_objects(
         } else {
           leading_objects.moving.push_back(object);
         }
-        return;
+        return true;
       }
     }
 
@@ -1333,7 +1333,7 @@ void filter_target_lane_objects(
 
     if (in_expanded_target_lanes && is_stopped && ahead_of_ego) {
       leading_objects.expanded.push_back(object);
-      return;
+      return true;
     }
   }
 
@@ -1345,7 +1345,9 @@ void filter_target_lane_objects(
   // check if the object intersects with target backward lanes
   if (is_overlap_target_backward) {
     trailing_objects.push_back(object);
-    return;
+    return true;
   }
+
+  return false;
 }
 }  // namespace autoware::behavior_path_planner::utils::lane_change
