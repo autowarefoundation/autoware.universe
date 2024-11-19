@@ -20,6 +20,8 @@
 #include "autoware/universe_utils/math/unit_conversion.hpp"
 #include "rclcpp/rclcpp.hpp"
 
+#include <Eigen/Sparse>
+
 #include <algorithm>
 #include <limits>
 
@@ -590,22 +592,47 @@ std::pair<bool, VectorXd> MPC::executeOptimization(
 
   const int DIM_U_N = m_param.prediction_horizon * m_vehicle_model_ptr->getDimU();
 
+  Eigen::SparseMatrix<double> Cex_sparse = m.Cex.sparseView();
+  Eigen::SparseMatrix<double> Bex_sparse = m.Bex.sparseView();
+  Eigen::SparseMatrix<double> Qex_sparse = m.Qex.sparseView();
+  Eigen::SparseMatrix<double> R1ex_sparse = m.R1ex.sparseView();
+  Eigen::SparseMatrix<double> R2ex_sparse = m.R2ex.sparseView();
+
   // cost function: 1/2 * Uex' * H * Uex + f' * Uex,  H = B' * C' * Q * C * B + R
-  const MatrixXd CB = m.Cex * m.Bex;
-  const MatrixXd QCB = m.Qex * CB;
-  // MatrixXd H = CB.transpose() * QCB + m.R1ex + m.R2ex; // This calculation is heavy. looking for
-  // a good way.  //NOLINT
-  MatrixXd H = MatrixXd::Zero(DIM_U_N, DIM_U_N);
-  H.triangularView<Eigen::Upper>() = CB.transpose() * QCB;
-  H.triangularView<Eigen::Upper>() += m.R1ex + m.R2ex;
-  H.triangularView<Eigen::Lower>() = H.transpose();
-  MatrixXd f = (m.Cex * (m.Aex * x0 + m.Wex)).transpose() * QCB - m.Uref_ex.transpose() * m.R1ex;
+  Eigen::SparseMatrix<double> CB_sparse(DIM_U_N, DIM_U_N);
+  CB_sparse = Cex_sparse * Bex_sparse;
+
+  Eigen::SparseMatrix<double> QCB_sparse(DIM_U_N, DIM_U_N);
+  QCB_sparse = Qex_sparse * CB_sparse;
+
+  Eigen::SparseMatrix<double> H_sparse(DIM_U_N, DIM_U_N);
+  {
+    Eigen::SparseMatrix<double> temp_sparse(DIM_U_N, DIM_U_N);
+    temp_sparse = CB_sparse.transpose() * QCB_sparse;
+
+    H_sparse = temp_sparse + R1ex_sparse + R2ex_sparse;
+  }
+
+  VectorXd f = VectorXd::Zero(DIM_U_N);
+  {
+    VectorXd CAW = VectorXd::Zero(Cex_sparse.rows());
+    CAW = Cex_sparse * (m.Aex * x0 + m.Wex);
+
+    f = QCB_sparse.transpose() * CAW;
+    f -= m.Uref_ex.transpose() * R1ex_sparse;
+  }
+
   addSteerWeightF(prediction_dt, f);
 
-  MatrixXd A = MatrixXd::Identity(DIM_U_N, DIM_U_N);
-  for (int i = 1; i < DIM_U_N; i++) {
-    A(i, i - 1) = -1.0;
+  Eigen::SparseMatrix<double> A_sparse(DIM_U_N, DIM_U_N);
+  std::vector<Eigen::Triplet<double>> triplets;
+  for (int i = 0; i < DIM_U_N; ++i) {
+    triplets.emplace_back(i, i, 1.0);
+    if (i > 0) {
+      triplets.emplace_back(i, i - 1, -1.0);
+    }
   }
+  A_sparse.setFromTriplets(triplets.begin(), triplets.end());
 
   // steering angle limit
   VectorXd lb = VectorXd::Constant(DIM_U_N, -m_steer_lim);  // min steering angle
@@ -619,7 +646,8 @@ std::pair<bool, VectorXd> MPC::executeOptimization(
   lbA(0) = m_raw_steer_cmd_prev - steer_rate_limits(0) * m_ctrl_period;
 
   auto t_start = std::chrono::system_clock::now();
-  bool solve_result = m_qpsolver_ptr->solve(H, f.transpose(), A, lb, ub, lbA, ubA, Uex);
+  bool solve_result =
+    m_qpsolver_ptr->solve(H_sparse, f.transpose(), A_sparse, lb, ub, lbA, ubA, Uex);
   auto t_end = std::chrono::system_clock::now();
   if (!solve_result) {
     warn_throttle("qp solver error");
@@ -681,16 +709,16 @@ void MPC::addSteerWeightR(const double prediction_dt, MatrixXd & R) const
   }
 }
 
-void MPC::addSteerWeightF(const double prediction_dt, MatrixXd & f) const
+void MPC::addSteerWeightF(const double prediction_dt, VectorXd & f) const
 {
-  if (f.rows() < 2) {
+  if (f.size() < 2) {
     return;
   }
 
   const double DT = prediction_dt;
 
   // steer rate for i = 0
-  f(0, 0) += -2.0 * m_param.nominal_weight.steer_rate / (std::pow(DT, 2)) * 0.5;
+  f(0) += -2.0 * m_param.nominal_weight.steer_rate / (std::pow(DT, 2)) * 0.5;
 
   // const double steer_acc_r = m_param.weight_steer_acc / std::pow(DT, 4);
   const double steer_acc_r_cp1 =
@@ -700,11 +728,11 @@ void MPC::addSteerWeightF(const double prediction_dt, MatrixXd & f) const
   const double steer_acc_r_cp4 = m_param.nominal_weight.steer_acc / std::pow(m_ctrl_period, 4);
 
   // steer acc  i = 0
-  f(0, 0) += ((-2.0 * m_raw_steer_cmd_prev + m_raw_steer_cmd_pprev) * steer_acc_r_cp4) * 0.5;
+  f(0) += ((-2.0 * m_raw_steer_cmd_prev + m_raw_steer_cmd_pprev) * steer_acc_r_cp4) * 0.5;
 
   // steer acc for i = 1
-  f(0, 0) += (-2.0 * m_raw_steer_cmd_prev * (steer_acc_r_cp1 + steer_acc_r_cp2)) * 0.5;
-  f(0, 1) += (2.0 * m_raw_steer_cmd_prev * steer_acc_r_cp1) * 0.5;
+  f(0) += (-2.0 * m_raw_steer_cmd_prev * (steer_acc_r_cp1 + steer_acc_r_cp2)) * 0.5;
+  f(1) += (2.0 * m_raw_steer_cmd_prev * steer_acc_r_cp1) * 0.5;
 }
 
 double MPC::getPredictionDeltaTime(
