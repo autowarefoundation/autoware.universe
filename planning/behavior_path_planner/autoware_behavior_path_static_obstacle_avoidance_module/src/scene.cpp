@@ -212,7 +212,8 @@ void StaticObstacleAvoidanceModule::fillFundamentalData(
     data.current_lanelets, getEgoPose(), planner_data_);
 
   lanelet::ConstLanelet closest_lanelet{};
-  if (planner_data_->route_handler->getClosestLaneletWithinRoute(getEgoPose(), &closest_lanelet))
+  if (lanelet::utils::query::getClosestLanelet(
+        data.current_lanelets, getEgoPose(), &closest_lanelet))
     data.closest_lanelet = closest_lanelet;
 
   // expand drivable lanes
