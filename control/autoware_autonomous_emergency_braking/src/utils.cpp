@@ -41,8 +41,9 @@ std::optional<ObjectData> getObjectOnPathData(
     autoware::motion_utils::calcSignedArcLength(ego_path, current_p, obj_position);
   if (
     std::isnan(obj_arc_length) || obj_arc_length < 0.0 ||
-    obj_arc_length > path_length + longitudinal_offset)
+    obj_arc_length > path_length + longitudinal_offset) {
     return {};
+  }
 
   // calculate the lateral offset between the ego vehicle and the object
   const double lateral_offset =

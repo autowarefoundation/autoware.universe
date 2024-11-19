@@ -217,7 +217,7 @@ TEST_F(TestAEB, checkImuPathGeneration)
   pcl::PointCloud<pcl::PointXYZ>::Ptr obstacle_points_ptr =
     pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
   {
-    const double x_start{0.0};
+    const double x_start{0.5};
     const double y_start{0.0};
 
     for (size_t i = 0; i < 15; ++i) {
