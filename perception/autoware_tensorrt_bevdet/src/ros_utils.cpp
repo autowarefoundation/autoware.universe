@@ -19,6 +19,7 @@
 #include <autoware_perception_msgs/msg/detected_object_kinematics.hpp>
 #include <autoware_perception_msgs/msg/object_classification.hpp>
 #include <autoware_perception_msgs/msg/shape.hpp>
+
 #include <preprocess.h>
 
 namespace autoware::tensorrt_bevdet

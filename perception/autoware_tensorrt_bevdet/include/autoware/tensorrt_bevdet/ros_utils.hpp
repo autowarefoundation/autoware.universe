@@ -17,13 +17,15 @@
 #ifndef AUTOWARE__TENSORRT_BEVDET__ROS_UTILS_HPP_
 #define AUTOWARE__TENSORRT_BEVDET__ROS_UTILS_HPP_
 
+#include <opencv2/opencv.hpp>
+
 #include <autoware_perception_msgs/msg/detected_objects.hpp>
 #include <geometry_msgs/msg/point32.hpp>
 #include <geometry_msgs/msg/quaternion.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-#include <opencv2/opencv.hpp>
+
 #include <bevdet.h>
 
 #include <string>
