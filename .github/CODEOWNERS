@@ -25,6 +25,7 @@ common/autoware_test_utils/** kyoichi.sugahara@tier4.jp mamoru.sobue@tier4.jp ta
 common/autoware_testing/** adam.dabrowski@robotec.ai satoshi.ota@tier4.jp shumpei.wakabayashi@tier4.jp tomoya.kimura@tier4.jp
 common/autoware_time_utils/** christopherj.ho@gmail.com shumpei.wakabayashi@tier4.jp tomoya.kimura@tier4.jp
 common/autoware_trajectory/** mamoru.sobue@tier4.jp takayuki.murooka@tier4.jp yukinari.hisaki.2@tier4.jp
+common/autoware_traffic_light_utils/** kotaro.uetake@tier4.jp satoshi.ota@tier4.jp shunsuke.miura@tier4.jp
 common/autoware_universe_utils/** mamoru.sobue@tier4.jp takamasa.horibe@tier4.jp takayuki.murooka@tier4.jp
 common/autoware_vehicle_info_utils/** mamoru.sobue@tier4.jp shumpei.wakabayashi@tier4.jp taiki.tanaka@tier4.jp tomoya.kimura@tier4.jp
 common/bag_time_manager_rviz_plugin/** taiki.tanaka@tier4.jp
@@ -41,7 +42,6 @@ common/tier4_system_rviz_plugin/** koji.minoda@tier4.jp
 common/tier4_traffic_light_rviz_plugin/** satoshi.ota@tier4.jp
 common/tier4_vehicle_rviz_plugin/** yukihiro.saito@tier4.jp
 common/traffic_light_recognition_marker_publisher/** shumpei.wakabayashi@tier4.jp takeshi.miura@tier4.jp tomoya.kimura@tier4.jp
-common/traffic_light_utils/** kotaro.uetake@tier4.jp satoshi.ota@tier4.jp shunsuke.miura@tier4.jp
 control/autoware_autonomous_emergency_braking/** daniel.sanchez@tier4.jp kyoichi.sugahara@tier4.jp mamoru.sobue@tier4.jp takamasa.horibe@tier4.jp tomoya.kimura@tier4.jp
 control/autoware_collision_detector/** go.sakayori@tier4.jp kyoichi.sugahara@tier4.jp tomohito.ando@tier4.jp
 control/autoware_control_validator/** kyoichi.sugahara@tier4.jp makoto.kurihara@tier4.jp mamoru.sobue@tier4.jp takamasa.horibe@tier4.jp takayuki.murooka@tier4.jp
@@ -97,6 +97,7 @@ localization/yabloc/yabloc_image_processing/** anh.nguyen.2@tier4.jp kento.yabuu
 localization/yabloc/yabloc_monitor/** anh.nguyen.2@tier4.jp kento.yabuuchi.2@tier4.jp masahiro.sakamoto@tier4.jp ryu.yamamoto@tier4.jp shintaro.sakoda@tier4.jp taiki.yamada@tier4.jp yamato.ando@tier4.jp
 localization/yabloc/yabloc_particle_filter/** anh.nguyen.2@tier4.jp kento.yabuuchi.2@tier4.jp masahiro.sakamoto@tier4.jp ryu.yamamoto@tier4.jp shintaro.sakoda@tier4.jp taiki.yamada@tier4.jp yamato.ando@tier4.jp
 localization/yabloc/yabloc_pose_initializer/** anh.nguyen.2@tier4.jp kento.yabuuchi.2@tier4.jp masahiro.sakamoto@tier4.jp ryu.yamamoto@tier4.jp shintaro.sakoda@tier4.jp taiki.yamada@tier4.jp yamato.ando@tier4.jp
+map/autoware_lanelet2_map_visualizer/** anh.nguyen.2@tier4.jp kento.yabuuchi.2@tier4.jp masahiro.sakamoto@tier4.jp ryu.yamamoto@tier4.jp shintaro.sakoda@tier4.jp taiki.yamada@tier4.jp yamato.ando@tier4.jp
 map/autoware_map_height_fitter/** anh.nguyen.2@tier4.jp isamu.takagi@tier4.jp kento.yabuuchi.2@tier4.jp masahiro.sakamoto@tier4.jp ryu.yamamoto@tier4.jp shintaro.sakoda@tier4.jp taiki.yamada@tier4.jp yamato.ando@tier4.jp
 map/autoware_map_projection_loader/** anh.nguyen.2@tier4.jp kento.yabuuchi.2@tier4.jp masahiro.sakamoto@tier4.jp ryu.yamamoto@tier4.jp shintaro.sakoda@tier4.jp taiki.yamada@tier4.jp yamato.ando@tier4.jp
 map/autoware_map_tf_generator/** anh.nguyen.2@tier4.jp kento.yabuuchi.2@tier4.jp masahiro.sakamoto@tier4.jp ryu.yamamoto@tier4.jp shintaro.sakoda@tier4.jp taiki.yamada@tier4.jp yamato.ando@tier4.jp

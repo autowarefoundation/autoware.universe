@@ -22,8 +22,8 @@ nav:
     - 'Signal Processing':
       - 'Introduction': common/autoware_signal_processing
       - 'Butterworth Filter': common/autoware_signal_processing/documentation/ButterworthFilter
+    - 'autoware_traffic_light_utils': common/autoware_traffic_light_utils
     - 'autoware_universe_utils': common/autoware_universe_utils
-    - 'traffic_light_utils': common/traffic_light_utils
   - 'RVIZ2 Plugins':
     - 'autoware_perception_rviz_plugin': common/autoware_perception_rviz_plugin
     - 'autoware_overlay_rviz_plugin': common/autoware_overlay_rviz_plugin/autoware_overlay_rviz_plugin
