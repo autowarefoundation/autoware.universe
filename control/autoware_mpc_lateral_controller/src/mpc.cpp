@@ -306,20 +306,12 @@ std::pair<ResultWithReason, MPCData> MPC::getData(
   // check error limit
   const double dist_err = calcDistance2d(current_pose, data.nearest_pose);
   if (dist_err > m_admissible_position_error) {
-    return {
-      ResultWithReason{
-        false,
-        fmt::format("Too large position error: {}m > {}m", dist_err, m_admissible_position_error)},
-      MPCData{}};
+    return {ResultWithReason{false, "too large position error"}, MPCData{}};
   }
 
   // check yaw error limit
   if (std::fabs(data.yaw_err) > m_admissible_yaw_error_rad) {
-    return {
-      ResultWithReason{
-        false,
-        fmt::format("Too large yaw error: {} > {}", data.yaw_err, m_admissible_yaw_error_rad)},
-      MPCData{}};
+    return {ResultWithReason{false, "too large yaw error"}, MPCData{}};
   }
 
   // check trajectory time length

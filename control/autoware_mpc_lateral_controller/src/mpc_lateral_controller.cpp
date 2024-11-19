@@ -278,6 +278,11 @@ trajectory_follower::LateralOutput MpcLateralController::run(
     m_current_steering, m_current_kinematic_state, ctrl_cmd, predicted_traj, debug_values,
     ctrl_cmd_horizon);
 
+  if (
+    (m_mpc_solved_status.result == true && mpc_solved_status.result == false) ||
+    (!mpc_solved_status.result && mpc_solved_status.reason != m_mpc_solved_status.reason)) {
+    RCLCPP_ERROR(logger_, "MPC failed due to %s", mpc_solved_status.reason.c_str());
+  }
   m_mpc_solved_status = mpc_solved_status;  // for diagnostic updater
 
   diag_updater_->force_update();
