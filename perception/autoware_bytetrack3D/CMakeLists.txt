@@ -51,10 +51,6 @@ target_include_directories(${PROJECT_NAME}
   $<INSTALL_INTERFACE:include>
 )
 
-target_compile_definitions(${PROJECT_NAME} PRIVATE
-  TENSORRT_VERSION_MAJOR=${TENSORRT_VERSION_MAJOR}
-)
-
 ament_auto_add_library(${PROJECT_NAME}_node SHARED
   src/bytetrack3D_node.cpp
 )
@@ -65,10 +61,6 @@ ament_target_dependencies(${PROJECT_NAME}_node
 
 target_link_libraries(${PROJECT_NAME}_node
   ${PROJECT_NAME}
-)
-
-target_compile_definitions(${PROJECT_NAME}_node PRIVATE
-  TENSORRT_VERSION_MAJOR=${TENSORRT_VERSION_MAJOR}
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}_node
