@@ -94,6 +94,7 @@ protected:
   rviz_common::properties::FloatProperty * property_value_scale_;
   rviz_common::properties::IntProperty * property_font_size_;
   rviz_common::properties::IntProperty * property_max_letter_num_;
+  rviz_common::properties::IntProperty * property_max_line_text_num_;
   // QImage hud_;
 
 private:
