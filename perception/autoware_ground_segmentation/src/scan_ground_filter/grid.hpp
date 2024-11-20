@@ -151,15 +151,6 @@ public:
   Grid(const float origin_x, const float origin_y, const float origin_z)
   : origin_x_(origin_x), origin_y_(origin_y), origin_z_(origin_z)
   {
-    grid_dist_size_ = 1.0f;
-    grid_azimuth_size_ = 0.1f;
-    grid_linearity_switch_radius_ = 20.0f;
-    grid_radial_limit_ = 200.0f;  // meters
-    grid_dist_size_rad_ = 0.0f;
-    grid_dist_size_inv_ = 0.0f;
-    grid_linearity_switch_num_ = 0;
-    grid_linearity_switch_angle_ = 0.0f;
-    grid_size_rad_inv_ = 0.0f;
   }
   ~Grid() = default;
 
@@ -281,18 +272,20 @@ private:
   float origin_x_;
   float origin_y_;
   float origin_z_;
-  float grid_dist_size_;                // meters
-  float grid_azimuth_size_;             // radians
-  float grid_linearity_switch_radius_;  // meters
+  float grid_dist_size_ = 1.0f;                 // meters
+  float grid_azimuth_size_ = 0.01f;             // radians
+  float grid_linearity_switch_radius_ = 20.0f;  // meters
 
   // calculated parameters
-  float grid_radial_limit_;            // meters
-  float grid_dist_size_rad_;           // radians
-  float grid_dist_size_inv_;           // inverse of the grid size in meters
-  int grid_linearity_switch_num_;      // number of grids within the switch radius
-  float grid_linearity_switch_angle_;  // angle at the switch radius
-  float grid_size_rad_inv_;            // inverse of the grid size in radians
+  float grid_dist_size_rad_ = 0.0f;           // radians
+  float grid_dist_size_inv_ = 0.0f;           // inverse of the grid size in meters
+  int grid_linearity_switch_num_ = 0;         // number of grids within the switch radius
+  float grid_linearity_switch_angle_ = 0.0f;  // angle at the switch radius
+  float grid_size_rad_inv_ = 0.0f;            // inverse of the grid size in radians
   bool is_initialized_ = false;
+
+  // configured parameters
+  float grid_radial_limit_ = 200.0f;  // meters
 
   // array of grid boundaries
   std::vector<float> grid_radial_boundaries_;
