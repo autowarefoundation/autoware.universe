@@ -203,7 +203,8 @@ private:
 
   void convert();
   void preprocess();
-  void initializeGround(pcl::PointIndices & out_no_ground_indices);
+
+  bool SegmentInitialGroundCell(Cell & cell, pcl::PointIndices & out_no_ground_indices);
 
   void SegmentContinuousCell(
     const Cell & cell, PointsCentroid & ground_bin, pcl::PointIndices & out_no_ground_indices);

@@ -140,7 +140,6 @@ public:
   float intercept_;
 
   // process flags
-  bool is_processed_ = false;
   bool is_ground_initialized_ = false;
   bool has_ground_ = false;
 };
@@ -223,7 +222,6 @@ public:
 
     for (auto & cell : cells_) {
       cell.point_list_.clear();
-      cell.is_processed_ = false;
       cell.is_ground_initialized_ = false;
       cell.scan_grid_root_idx_ = -1;
       cell.has_ground_ = false;
