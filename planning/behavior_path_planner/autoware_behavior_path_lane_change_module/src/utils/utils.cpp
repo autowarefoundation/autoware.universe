@@ -1031,7 +1031,7 @@ LanesPolygon create_lanes_polygon(const CommonDataPtr & common_data_ptr)
   lanes_polygon.target =
     utils::lane_change::create_polygon(lanes->target, 0.0, std::numeric_limits<double>::max());
 
-  const auto & params = common_data_ptr->lc_param_ptr->safety.collision_check;
+  const auto & params = common_data_ptr->lc_param_ptr->safety;
   const auto expanded_target_lanes = utils::lane_change::generateExpandedLanelets(
     lanes->target, common_data_ptr->direction, params.lane_expansion_left_offset,
     params.lane_expansion_right_offset);

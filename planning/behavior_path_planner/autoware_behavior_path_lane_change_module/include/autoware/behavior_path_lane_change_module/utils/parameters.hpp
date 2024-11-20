@@ -94,8 +94,6 @@ struct CollisionCheckParameters
   bool check_current_lane{true};
   bool check_other_lanes{true};
   bool use_all_predicted_paths{false};
-  double lane_expansion_left_offset{0.0};
-  double lane_expansion_right_offset{0.0};
   double th_yaw_diff{3.1416};
 };
 
@@ -104,6 +102,8 @@ struct SafetyParameters
   bool enable_loose_check_for_cancel{true};
   bool enable_target_lane_bound_check{true};
   double th_stopped_object_velocity{0.1};
+  double lane_expansion_left_offset{0.0};
+  double lane_expansion_right_offset{0.0};
   RSSparams rss_params{};
   RSSparams rss_params_for_parked{};
   RSSparams rss_params_for_abort{};
@@ -120,11 +120,11 @@ struct TrajectoryParameters
   double lateral_jerk{0.5};
   double min_longitudinal_acc{-1.0};
   double max_longitudinal_acc{1.0};
-  double prepare_length_diff_th{0.5};
-  double lane_changing_length_diff_th{0.5};
+  double th_prepare_length_diff{0.5};
+  double th_lane_changing_length_diff{0.5};
   double min_lane_changing_velocity{5.6};
-  int longitudinal_acc_sampling_num{10};
-  int lateral_acc_sampling_num{10};
+  int lon_acc_sampling_num{10};
+  int lat_acc_sampling_num{10};
   LateralAccelerationMap lat_acc_map{};
 };
 

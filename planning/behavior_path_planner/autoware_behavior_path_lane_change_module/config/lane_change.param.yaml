@@ -1,19 +1,9 @@
 /**:
   ros__parameters:
     lane_change:
-      backward_lane_length: 200.0 #[m]
-      prepare_duration: 4.0         # [s]
-
       backward_length_buffer_for_end_of_lane: 3.0 # [m]
       backward_length_buffer_for_blocking_object: 3.0 # [m]
       backward_length_from_intersection: 5.0 # [m]
-
-      lane_changing_lateral_jerk: 0.5              # [m/s3]
-
-      minimum_lane_changing_velocity: 2.78        # [m/s]
-      prediction_time_resolution: 0.5           # [s]
-      longitudinal_acceleration_sampling_num: 5
-      lateral_acceleration_sampling_num: 3
 
       # side walk parked vehicle
       object_check_min_road_shoulder_width: 0.5  # [m]
@@ -22,14 +12,19 @@
       # turn signal
       min_length_for_turn_signal_activation: 10.0 # [m]
 
-      # longitudinal acceleration
-      min_longitudinal_acc: -1.0
-      max_longitudinal_acc: 1.0
-
-      skip_process:
-        longitudinal_distance_diff_threshold:
-          prepare: 1.0
-          lane_changing: 1.0
+      # trajectory generation
+      trajectory:
+        backward_lane_length: 200.0
+        prediction_time_resolution: 0.5
+        prepare_duration: 4.0
+        lateral_jerk: 0.5
+        min_longitudinal_acc: -1.0
+        max_longitudinal_acc: 1.0
+        prepare_length_diff_th: 1.0
+        lane_changing_length_diff_th: 1.0
+        min_lane_changing_velocity: 2.78
+        lon_acc_sampling_num: 5
+        lat_acc_sampling_num: 3
 
       # safety check
       safety_check:

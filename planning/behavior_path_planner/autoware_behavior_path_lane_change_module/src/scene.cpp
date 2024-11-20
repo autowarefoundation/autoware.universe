@@ -1270,7 +1270,7 @@ bool NormalLaneChange::get_lane_change_paths(LaneChangePaths & candidate_paths) 
   const auto prepare_phase_metrics = get_prepare_metrics();
 
   candidate_paths.reserve(
-    prepare_phase_metrics.size() * lane_change_parameters_->trajectory.lateral_acc_sampling_num);
+    prepare_phase_metrics.size() * lane_change_parameters_->trajectory.lat_acc_sampling_num);
 
   const bool only_tl = getStopTime() >= lane_change_parameters_->th_stop_time;
   const auto dist_to_next_regulatory_element =
@@ -1281,12 +1281,12 @@ bool NormalLaneChange::get_lane_change_paths(LaneChangePaths & candidate_paths) 
       if (candidate_paths.empty()) return true;
 
       const auto prep_diff = std::abs(candidate_paths.back().info.length.prepare - prep_length);
-      if (prep_diff > lane_change_parameters_->trajectory.prepare_length_diff_th) return true;
+      if (prep_diff > lane_change_parameters_->trajectory.th_prepare_length_diff) return true;
 
       if (!check_lc) return false;
 
       const auto lc_diff = std::abs(candidate_paths.back().info.length.lane_changing - lc_length);
-      return lc_diff > lane_change_parameters_->trajectory.lane_changing_length_diff_th;
+      return lc_diff > lane_change_parameters_->trajectory.th_lane_changing_length_diff;
     };
 
   for (const auto & prep_metric : prepare_phase_metrics) {

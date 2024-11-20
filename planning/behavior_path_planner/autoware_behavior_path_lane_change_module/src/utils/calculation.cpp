@@ -353,7 +353,7 @@ std::vector<double> calc_lon_acceleration_samples(
   const auto & current_pose = common_data_ptr->get_ego_pose();
   const auto & target_lanes = common_data_ptr->lanes_ptr->target;
   const auto goal_pose = common_data_ptr->route_handler_ptr->getGoalPose();
-  const auto sampling_num = common_data_ptr->lc_param_ptr->trajectory.longitudinal_acc_sampling_num;
+  const auto sampling_num = common_data_ptr->lc_param_ptr->trajectory.lon_acc_sampling_num;
 
   const auto [min_accel, max_accel] =
     calc_min_max_acceleration(common_data_ptr, max_path_velocity, prepare_duration);
@@ -474,7 +474,7 @@ std::vector<PhaseMetrics> calc_shift_phase_metrics(
     common_data_ptr->lc_param_ptr->trajectory.lat_acc_map.find(initial_velocity);
   const auto lateral_acc_resolution =
     std::abs(max_lateral_acc - min_lateral_acc) /
-    common_data_ptr->lc_param_ptr->trajectory.lateral_acc_sampling_num;
+    common_data_ptr->lc_param_ptr->trajectory.lat_acc_sampling_num;
 
   std::vector<PhaseMetrics> metrics;
 

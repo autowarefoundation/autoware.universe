@@ -45,40 +45,39 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
   // trajectory generation
   {
     p.trajectory.backward_lane_length =
-      getOrDeclareParameter<double>(*node, parameter("backward_lane_length"));
+      getOrDeclareParameter<double>(*node, parameter("trajectory.backward_lane_length"));
     p.trajectory.prediction_time_resolution =
-      getOrDeclareParameter<double>(*node, parameter("prediction_time_resolution"));
+      getOrDeclareParameter<double>(*node, parameter("trajectory.prediction_time_resolution"));
     p.trajectory.prepare_duration =
-      getOrDeclareParameter<double>(*node, parameter("prepare_duration"));
+      getOrDeclareParameter<double>(*node, parameter("trajectory.prepare_duration"));
     p.trajectory.lateral_jerk =
-      getOrDeclareParameter<double>(*node, parameter("lane_changing_lateral_jerk"));
+      getOrDeclareParameter<double>(*node, parameter("trajectory.lateral_jerk"));
     p.trajectory.min_longitudinal_acc =
-      getOrDeclareParameter<double>(*node, parameter("min_longitudinal_acc"));
+      getOrDeclareParameter<double>(*node, parameter("trajectory.min_longitudinal_acc"));
     p.trajectory.max_longitudinal_acc =
-      getOrDeclareParameter<double>(*node, parameter("max_longitudinal_acc"));
-    p.trajectory.prepare_length_diff_th = getOrDeclareParameter<double>(
-      *node, parameter("skip_process.longitudinal_distance_diff_threshold.prepare"));
-    p.trajectory.lane_changing_length_diff_th = getOrDeclareParameter<double>(
-      *node, parameter("skip_process.longitudinal_distance_diff_threshold.lane_changing"));
+      getOrDeclareParameter<double>(*node, parameter("trajectory.max_longitudinal_acc"));
+    p.trajectory.th_prepare_length_diff =
+      getOrDeclareParameter<double>(*node, parameter("trajectory.th_prepare_length_diff"));
+    p.trajectory.th_lane_changing_length_diff =
+      getOrDeclareParameter<double>(*node, parameter("trajectory.th_lane_changing_length_diff"));
     p.trajectory.min_lane_changing_velocity =
-      getOrDeclareParameter<double>(*node, parameter("minimum_lane_changing_velocity"));
-    p.trajectory.longitudinal_acc_sampling_num =
-      getOrDeclareParameter<int>(*node, parameter("longitudinal_acceleration_sampling_num"));
-    p.trajectory.lateral_acc_sampling_num =
-      getOrDeclareParameter<int>(*node, parameter("lateral_acceleration_sampling_num"));
+      getOrDeclareParameter<double>(*node, parameter("trajectory.min_lane_changing_velocity"));
+    p.trajectory.lon_acc_sampling_num =
+      getOrDeclareParameter<int>(*node, parameter("trajectory.lon_acc_sampling_num"));
+    p.trajectory.lat_acc_sampling_num =
+      getOrDeclareParameter<int>(*node, parameter("trajectory.lat_acc_sampling_num"));
 
     const auto max_acc = getOrDeclareParameter<double>(*node, "normal.max_acc");
     p.trajectory.min_lane_changing_velocity =
       std::min(p.trajectory.min_lane_changing_velocity, max_acc * p.trajectory.prepare_duration);
 
     // validation of trajectory parameters
-    if (
-      p.trajectory.longitudinal_acc_sampling_num < 1 || p.trajectory.lateral_acc_sampling_num < 1) {
+    if (p.trajectory.lon_acc_sampling_num < 1 || p.trajectory.lat_acc_sampling_num < 1) {
       RCLCPP_FATAL_STREAM(
         node->get_logger().get_child(node_name),
         "lane_change_sampling_num must be positive integer. Given longitudinal parameter: "
-          << p.trajectory.longitudinal_acc_sampling_num
-          << "Given lateral parameter: " << p.trajectory.lateral_acc_sampling_num << std::endl
+          << p.trajectory.lon_acc_sampling_num
+          << "Given lateral parameter: " << p.trajectory.lat_acc_sampling_num << std::endl
           << "Terminating the program...");
       exit(EXIT_FAILURE);
     }
@@ -133,6 +132,10 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
       getOrDeclareParameter<bool>(*node, parameter("safety_check.enable_target_lane_bound_check"));
     p.safety.th_stopped_object_velocity =
       getOrDeclareParameter<double>(*node, parameter("stopped_object_velocity_threshold"));
+    p.safety.lane_expansion_left_offset =
+      getOrDeclareParameter<double>(*node, parameter("safety_check.lane_expansion.left_offset"));
+    p.safety.lane_expansion_right_offset =
+      getOrDeclareParameter<double>(*node, parameter("safety_check.lane_expansion.right_offset"));
 
     // collision check
     p.safety.collision_check.enable_for_prepare_phase_in_general_lanes =
@@ -148,10 +151,6 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
       getOrDeclareParameter<bool>(*node, parameter("check_objects_on_other_lanes"));
     p.safety.collision_check.use_all_predicted_paths =
       getOrDeclareParameter<bool>(*node, parameter("use_all_predicted_path"));
-    p.safety.collision_check.lane_expansion_left_offset =
-      getOrDeclareParameter<double>(*node, parameter("safety_check.lane_expansion.left_offset"));
-    p.safety.collision_check.lane_expansion_right_offset =
-      getOrDeclareParameter<double>(*node, parameter("safety_check.lane_expansion.right_offset"));
     p.safety.collision_check.th_yaw_diff = getOrDeclareParameter<double>(
       *node, parameter("safety_check.collision_check_yaw_diff_threshold"));
 
@@ -291,33 +290,6 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
   {
     const std::string ns = "lane_change.";
     updateParam<double>(
-      parameters, ns + "backward_lane_length", p->trajectory.backward_lane_length);
-    updateParam<double>(parameters, ns + "prepare_duration", p->trajectory.prepare_duration);
-    updateParam<double>(parameters, ns + "lane_changing_lateral_jerk", p->trajectory.lateral_jerk);
-    updateParam<double>(
-      parameters, ns + "minimum_lane_changing_velocity", p->trajectory.min_lane_changing_velocity);
-    updateParam<double>(
-      parameters, ns + "prediction_time_resolution", p->trajectory.prediction_time_resolution);
-    // longitudinal acceleration
-    updateParam<double>(
-      parameters, ns + "min_longitudinal_acc", p->trajectory.min_longitudinal_acc);
-    updateParam<double>(
-      parameters, ns + "max_longitudinal_acc", p->trajectory.max_longitudinal_acc);
-    int longitudinal_acc_sampling_num = 0;
-    updateParam<int>(
-      parameters, ns + "longitudinal_acceleration_sampling_num", longitudinal_acc_sampling_num);
-    if (longitudinal_acc_sampling_num > 0) {
-      p->trajectory.longitudinal_acc_sampling_num = longitudinal_acc_sampling_num;
-    }
-
-    int lateral_acc_sampling_num = 0;
-    updateParam<int>(
-      parameters, ns + "lateral_acceleration_sampling_num", lateral_acc_sampling_num);
-    if (lateral_acc_sampling_num > 0) {
-      p->trajectory.lateral_acc_sampling_num = lateral_acc_sampling_num;
-    }
-
-    updateParam<double>(
       parameters, ns + "backward_length_buffer_for_end_of_lane",
       p->backward_length_buffer_for_end_of_lane);
     updateParam<double>(
@@ -332,18 +304,42 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
   }
 
   {
-    const std::string ns = "lane_change.skip_process.longitudinal_distance_diff_threshold.";
-    updateParam<double>(parameters, ns + "prepare", p->trajectory.prepare_length_diff_th);
+    const std::string ns = "lane_change.trajectory.";
     updateParam<double>(
-      parameters, ns + "lane_changing", p->trajectory.lane_changing_length_diff_th);
+      parameters, ns + "backward_lane_length", p->trajectory.backward_lane_length);
+    updateParam<double>(parameters, ns + "prepare_duration", p->trajectory.prepare_duration);
+    updateParam<double>(parameters, ns + "lateral_jerk", p->trajectory.lateral_jerk);
+    updateParam<double>(
+      parameters, ns + ".min_lane_changing_velocity", p->trajectory.min_lane_changing_velocity);
+    updateParam<double>(
+      parameters, ns + "prediction_time_resolution", p->trajectory.prediction_time_resolution);
+    // longitudinal acceleration
+    updateParam<double>(
+      parameters, ns + "min_longitudinal_acc", p->trajectory.min_longitudinal_acc);
+    updateParam<double>(
+      parameters, ns + "max_longitudinal_acc", p->trajectory.max_longitudinal_acc);
+    int longitudinal_acc_sampling_num = 0;
+    updateParam<int>(parameters, ns + "lon_acc_sampling_num", longitudinal_acc_sampling_num);
+    if (longitudinal_acc_sampling_num > 0) {
+      p->trajectory.lon_acc_sampling_num = longitudinal_acc_sampling_num;
+    }
+
+    int lateral_acc_sampling_num = 0;
+    updateParam<int>(parameters, ns + "lat_acc_sampling_num", lateral_acc_sampling_num);
+    if (lateral_acc_sampling_num > 0) {
+      p->trajectory.lat_acc_sampling_num = lateral_acc_sampling_num;
+    }
+
+    updateParam<double>(
+      parameters, ns + "th_prepare_length_diff", p->trajectory.th_prepare_length_diff);
+    updateParam<double>(
+      parameters, ns + "th_lane_changing_length_diff", p->trajectory.th_lane_changing_length_diff);
   }
 
   {
     const std::string ns = "lane_change.safety_check.lane_expansion.";
-    updateParam<double>(
-      parameters, ns + "left_offset", p->safety.collision_check.lane_expansion_left_offset);
-    updateParam<double>(
-      parameters, ns + "right_offset", p->safety.collision_check.lane_expansion_right_offset);
+    updateParam<double>(parameters, ns + "left_offset", p->safety.lane_expansion_left_offset);
+    updateParam<double>(parameters, ns + "right_offset", p->safety.lane_expansion_right_offset);
   }
 
   {
