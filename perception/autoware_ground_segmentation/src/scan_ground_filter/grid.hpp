@@ -48,6 +48,8 @@ float pseudoArcTan2(const float y, const float x)
   const float y_abs = std::abs(y);
 
   // divide to 8 zones
+  constexpr float M_2PIf = 2.0f * M_PIf;
+  constexpr float M_3PI_2f = 3.0f * M_PI_2f;
   if (x_abs > y_abs) {
     const float ratio = y_abs / x_abs;
     const float angle = ratio * M_PI_4f;
@@ -55,8 +57,8 @@ float pseudoArcTan2(const float y, const float x)
       if (x >= 0.0f) return angle;  // 1st zone
       return M_PIf - angle;         // 2nd zone
     } else {
-      if (x >= 0.0f) return -angle;  // 4th zone
-      return -M_PIf + angle;         // 3rd zone
+      if (x >= 0.0f) return M_2PIf -angle;  // 4th zone
+      return M_PIf + angle;         // 3rd zone
     }
   } else {
     const float ratio = x_abs / y_abs;
@@ -65,8 +67,8 @@ float pseudoArcTan2(const float y, const float x)
       if (x >= 0.0f) return M_PI_2f - angle;  // 1st zone
       return M_PI_2f + angle;                 // 2nd zone
     } else {
-      if (x >= 0.0f) return -M_PI_2f + angle;  // 4th zone
-      return -M_PI_2f - angle;                 // 3rd zone
+      if (x >= 0.0f) return M_3PI_2f + angle;  // 4th zone
+      return M_3PI_2f - angle;                 // 3rd zone
     }
   }
 }
@@ -410,11 +412,8 @@ private:
       return -1;
     }
 
-    // normalize azimuth, make sure it is within [0, 2pi)
-    const float azimuth_norm = universe_utils::normalizeRadian(azimuth, 0.0f);
-
     // azimuth grid id
-    const int grid_az_idx = getAzimuthGridIdx(grid_rad_idx, azimuth_norm);
+    const int grid_az_idx = getAzimuthGridIdx(grid_rad_idx, azimuth);
     if (grid_az_idx < 0) {
       return -1;
     }
