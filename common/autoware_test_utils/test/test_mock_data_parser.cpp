@@ -788,7 +788,7 @@ TEST(ParseFunction, CompleteFromFilename)
   const auto parser_test_route =
     autoware_test_utils_dir + "/test_data/lanelet_route_parser_test.yaml";
 
-  const auto lanelet_route = parse<LaneletRoute>(parser_test_route);
+  const auto lanelet_route = *parse<std::optional<LaneletRoute>>(parser_test_route);
   EXPECT_DOUBLE_EQ(lanelet_route.start_pose.position.x, 1.0);
   EXPECT_DOUBLE_EQ(lanelet_route.start_pose.position.y, 2.0);
   EXPECT_DOUBLE_EQ(lanelet_route.start_pose.position.z, 3.0);
@@ -829,7 +829,7 @@ TEST(ParseFunction, ParsePathWithLaneID)
   const auto parser_test_path =
     autoware_test_utils_dir + "/test_data/path_with_lane_id_parser_test.yaml";
 
-  const auto path = parse<PathWithLaneId>(parser_test_path);
+  const auto path = *parse<std::optional<PathWithLaneId>>(parser_test_path);
   EXPECT_EQ(path.header.stamp.sec, 20);
   EXPECT_EQ(path.header.stamp.nanosec, 5);
 

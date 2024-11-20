@@ -68,7 +68,8 @@ public:
   {
     const auto rh_test_route =
       get_absolute_path_to_route(autoware_route_handler_dir, route_filename);
-    route_handler_->setRoute(autoware::test_utils::parse<LaneletRoute>(rh_test_route));
+    route_handler_->setRoute(
+      *autoware::test_utils::parse<std::optional<LaneletRoute>>(rh_test_route));
   }
 
   lanelet::ConstLanelets get_current_lanes()

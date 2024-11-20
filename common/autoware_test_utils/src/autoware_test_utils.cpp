@@ -310,7 +310,7 @@ PathWithLaneId loadPathWithLaneIdInYaml()
   const auto yaml_path =
     get_absolute_path_to_config("autoware_test_utils", "path_with_lane_id_data.yaml");
 
-  return parse<PathWithLaneId>(yaml_path);
+  return *parse<std::optional<PathWithLaneId>>(yaml_path);
 }
 
 lanelet::ConstLanelet make_lanelet(
