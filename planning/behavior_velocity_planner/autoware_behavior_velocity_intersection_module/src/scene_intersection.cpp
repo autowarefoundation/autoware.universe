@@ -490,8 +490,10 @@ VisitorSwitch(Ts...) -> VisitorSwitch<Ts...>;
 
 template <typename T>
 void prepareRTCByDecisionResult(
-  const T & result, const tier4_planning_msgs::msg::PathWithLaneId & path, bool * default_safety,
-  double * default_distance, bool * occlusion_safety, double * occlusion_distance)
+  [[maybe_unused]] const T & result,
+  [[maybe_unused]] const tier4_planning_msgs::msg::PathWithLaneId & path,
+  [[maybe_unused]] bool * default_safety, [[maybe_unused]] double * default_distance,
+  [[maybe_unused]] bool * occlusion_safety, [[maybe_unused]] double * occlusion_distance)
 {
   static_assert("Unsupported type passed to prepareRTCByDecisionResult");
   return;
@@ -704,10 +706,14 @@ void IntersectionModule::prepareRTCStatus(
 
 template <typename T>
 void reactRTCApprovalByDecisionResult(
-  const bool rtc_default_approved, const bool rtc_occlusion_approved, const T & decision_result,
-  const IntersectionModule::PlannerParam & planner_param, const double baselink2front,
-  tier4_planning_msgs::msg::PathWithLaneId * path, StopReason * stop_reason,
-  VelocityFactorInterface * velocity_factor, IntersectionModule::DebugData * debug_data)
+  [[maybe_unused]] const bool rtc_default_approved,
+  [[maybe_unused]] const bool rtc_occlusion_approved, [[maybe_unused]] const T & decision_result,
+  [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
+  [[maybe_unused]] const double baselink2front,
+  [[maybe_unused]] tier4_planning_msgs::msg::PathWithLaneId * path,
+  [[maybe_unused]] StopReason * stop_reason,
+  [[maybe_unused]] VelocityFactorInterface * velocity_factor,
+  [[maybe_unused]] IntersectionModule::DebugData * debug_data)
 {
   static_assert("Unsupported type passed to reactRTCByDecisionResult");
   return;
