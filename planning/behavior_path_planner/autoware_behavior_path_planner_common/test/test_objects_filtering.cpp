@@ -14,12 +14,20 @@
 
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
+#include "autoware/behavior_path_planner_common/utils/utils.hpp"
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware_test_utils/autoware_test_utils.hpp>
+
+#include <geometry_msgs/msg/detail/pose__struct.hpp>
 
 #include <gmock/gmock.h>
 #include <gtest/gtest.h>
+#include <lanelet2_core/Forward.h>
+
+#include <cmath>
+#include <memory>
 
 using PredictedObject = autoware_perception_msgs::msg::PredictedObject;
 using PredictedObjects = autoware_perception_msgs::msg::PredictedObjects;
@@ -32,9 +40,14 @@ using tier4_planning_msgs::msg::PathPointWithLaneId;
 
 using autoware::test_utils::createPose;
 using autoware::test_utils::generateTrajectory;
+using autoware::test_utils::make_lanelet;
 using autoware::universe_utils::createPoint;
 
 constexpr double epsilon = 1e-6;
+
+const auto intersection_map =
+  autoware::test_utils::make_map_bin_msg(autoware::test_utils::get_absolute_path_to_lanelet_map(
+    "autoware_test_utils", "intersection/lanelet2_map.osm"));
 
 std::vector<PathPointWithLaneId> trajectory_to_path_with_lane_id(const Trajectory & trajectory)
 {
@@ -129,6 +142,108 @@ TEST(BehaviorPathPlanningObjectsFiltering, is_within_circle)
   EXPECT_TRUE(is_within_circle(object_pos, ref_point, search_radius));
 }
 
+TEST(BehaviorPathPlanningObjectsFiltering, isCentroidWithinLanelet)
+{
+  using autoware::behavior_path_planner::utils::path_safety_checker::isCentroidWithinLanelet;
+  using autoware::behavior_path_planner::utils::path_safety_checker::isCentroidWithinLanelets;
+
+  PredictedObject object;
+  object.kinematics.initial_pose_with_covariance.pose = createPose(0.5, 0.0, 0.0, 0.0, 0.0, 0.0);
+  auto lanelet = make_lanelet({0.0, 1.0}, {5.0, 1.0}, {0.0, -1.0}, {5.0, -1.0});
+  double yaw_threshold = M_PI_2;
+
+  EXPECT_TRUE(isCentroidWithinLanelet(object, lanelet, yaw_threshold));
+
+  object.kinematics.initial_pose_with_covariance.pose.position.x = 8.0;
+  EXPECT_FALSE(isCentroidWithinLanelet(object, lanelet, yaw_threshold));
+
+  lanelet::ConstLanelets target_lanelets;
+  target_lanelets.push_back(lanelet);
+  target_lanelets.push_back(make_lanelet({5.0, 1.0}, {10.0, 1.0}, {5.0, -1.0}, {10.0, -1.0}));
+  EXPECT_TRUE(isCentroidWithinLanelets(object, target_lanelets));
+}
+
+TEST(BehaviorPathPlanningObjectsFiltering, isPolygonOverlapLanelet)
+{
+  using autoware::behavior_path_planner::utils::toPolygon2d;
+  using autoware::behavior_path_planner::utils::path_safety_checker::isPolygonOverlapLanelet;
+
+  PredictedObject object;
+  object.kinematics.initial_pose_with_covariance.pose = createPose(0.5, 0.0, 0.0, 0.0, 0.0, 0.0);
+  object.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
+  object.shape.dimensions.x = 1.0;
+  object.shape.dimensions.y = 1.0;
+
+  auto lanelet = make_lanelet({0.0, 1.0}, {5.0, 1.0}, {0.0, -1.0}, {5.0, -1.0});
+  double yaw_threshold = M_PI_2;
+
+  EXPECT_TRUE(isPolygonOverlapLanelet(object, lanelet.polygon2d().basicPolygon()));
+  EXPECT_TRUE(isPolygonOverlapLanelet(object, toPolygon2d(lanelet)));
+  EXPECT_TRUE(isPolygonOverlapLanelet(object, lanelet, yaw_threshold));
+
+  object.kinematics.initial_pose_with_covariance.pose = createPose(10.0, 10.0, 0.0, 0.0, 0.0, 0.0);
+  EXPECT_FALSE(isPolygonOverlapLanelet(object, lanelet.polygon2d().basicPolygon()));
+  EXPECT_FALSE(isPolygonOverlapLanelet(object, toPolygon2d(lanelet)));
+  EXPECT_FALSE(isPolygonOverlapLanelet(object, lanelet, yaw_threshold));
+}
+
+TEST(BehaviorPathPlanningObjectsFiltering, filterObjects)
+{
+  using autoware::behavior_path_planner::utils::path_safety_checker::filterObjects;
+  using autoware::behavior_path_planner::utils::path_safety_checker::ObjectsFilteringParams;
+  using autoware::universe_utils::createVector3;
+
+  std::shared_ptr<PredictedObjects> objects = std::make_shared<PredictedObjects>();
+  std::shared_ptr<autoware::route_handler::RouteHandler> route_handler =
+    std::make_shared<autoware::route_handler::RouteHandler>();
+  std::shared_ptr<ObjectsFilteringParams> params = std::make_shared<ObjectsFilteringParams>();
+  params->ignore_object_velocity_threshold = false;
+  params->object_check_forward_distance = 20.0;
+  params->object_check_backward_distance = 10.0;
+  params->object_types_to_check.check_car = true;
+  route_handler->setMap(intersection_map);
+  lanelet::ConstLanelets current_lanes;
+
+  current_lanes.push_back(route_handler->getLaneletsFromId(1000));
+  current_lanes.push_back(route_handler->getLaneletsFromId(1010));
+  auto current_pose = createPoint(360.22, 600.51, 0.0);
+
+  EXPECT_TRUE(
+    filterObjects(objects, route_handler, current_lanes, current_pose, params).objects.empty());
+
+  ObjectClassification classification;
+  classification.label = ObjectClassification::Type::CAR;
+  classification.probability = 1.0;
+
+  PredictedObject target_object;
+  target_object.object_id = autoware::universe_utils::generateUUID();
+  target_object.kinematics.initial_pose_with_covariance.pose =
+    createPose(360.22, 605.51, 0.0, 0.0, 0.0, 0.0);
+  target_object.kinematics.initial_twist_with_covariance.twist.linear =
+    createVector3(1.0, 1.0, 0.0);
+  target_object.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
+  target_object.shape.dimensions.x = 1.0;
+  target_object.shape.dimensions.y = 1.0;
+  target_object.classification.push_back(classification);
+
+  PredictedObject other_object;
+  other_object.object_id = autoware::universe_utils::generateUUID();
+  other_object.kinematics.initial_pose_with_covariance.pose =
+    createPose(370.22, 600.51, 0.0, 0.0, 0.0, 0.0);
+  other_object.kinematics.initial_twist_with_covariance.twist.linear = createVector3(1.0, 1.0, 0.0);
+  other_object.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
+  other_object.shape.dimensions.x = 1.0;
+  other_object.shape.dimensions.y = 1.0;
+  other_object.classification.push_back(classification);
+
+  objects->objects.push_back(target_object);
+  objects->objects.push_back(other_object);
+
+  auto filtered_object = filterObjects(objects, route_handler, current_lanes, current_pose, params);
+  EXPECT_FALSE(filtered_object.objects.empty());
+  EXPECT_EQ(filtered_object.objects.front().object_id, target_object.object_id);
+}
+
 TEST(BehaviorPathPlanningObjectsFiltering, filterObjectsByVelocity)
 {
   using autoware::behavior_path_planner::utils::path_safety_checker::filterObjectsByVelocity;
@@ -200,6 +315,121 @@ TEST(BehaviorPathPlanningObjectsFiltering, filterObjectsByPosition)
   filterObjectsWithinRadius(objects, current_pos, search_radius);
   ASSERT_FALSE(objects.objects.empty());
   EXPECT_EQ(objects.objects.front().object_id, target_uuid);
+}
+
+TEST(BehaviorPathPlanningObjectsFiltering, separateObjectsByLanelets)
+{
+  using autoware::behavior_path_planner::utils::path_safety_checker::isPolygonOverlapLanelet;
+  using autoware::behavior_path_planner::utils::path_safety_checker::
+    separateObjectIndicesByLanelets;
+  using autoware::behavior_path_planner::utils::path_safety_checker::separateObjectsByLanelets;
+
+  double yaw_threshold = M_PI_2;
+
+  PredictedObject target_object;
+  target_object.object_id = autoware::universe_utils::generateUUID();
+  target_object.kinematics.initial_pose_with_covariance.pose =
+    createPose(0.5, 0.0, 0.0, 0.0, 0.0, 0.0);
+  target_object.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
+  target_object.shape.dimensions.x = 1.0;
+  target_object.shape.dimensions.y = 1.0;
+
+  PredictedObject other_object;
+  other_object.object_id = autoware::universe_utils::generateUUID();
+  other_object.kinematics.initial_pose_with_covariance.pose =
+    createPose(-1.5, 0.0, 0.0, 0.0, 0.0, 0.0);
+  other_object.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
+  other_object.shape.dimensions.x = 1.0;
+  other_object.shape.dimensions.y = 1.0;
+
+  PredictedObjects objects;
+  objects.objects.push_back(target_object);
+  objects.objects.push_back(other_object);
+
+  lanelet::ConstLanelets target_lanelets;
+  {
+    auto object_indices = separateObjectIndicesByLanelets(
+      objects, target_lanelets,
+      [](const auto & obj, const auto & lane, const auto & yaw_threshold) {
+        return isPolygonOverlapLanelet(obj, lane, yaw_threshold);
+      },
+      yaw_threshold);
+    EXPECT_TRUE(object_indices.first.empty());
+    EXPECT_TRUE(object_indices.second.empty());
+  }
+  {
+    target_lanelets.push_back(make_lanelet({0.0, 1.0}, {5.0, 1.0}, {0.0, -1.0}, {5.0, -1.0}));
+    target_lanelets.push_back(make_lanelet({5.0, 1.0}, {10.0, 1.0}, {5.0, -1.0}, {10.0, -1.0}));
+    auto object_indices = separateObjectIndicesByLanelets(
+      objects, target_lanelets,
+      [](const auto & obj, const auto & lane, const auto & yaw_threshold) {
+        return isPolygonOverlapLanelet(obj, lane, yaw_threshold);
+      },
+      yaw_threshold);
+    EXPECT_FALSE(object_indices.first.empty());
+    EXPECT_FALSE(object_indices.second.empty());
+    EXPECT_EQ(object_indices.first.front(), 0);
+    EXPECT_EQ(object_indices.second.front(), 1);
+
+    auto filtered_object = separateObjectsByLanelets(
+      objects, target_lanelets,
+      [](const auto & obj, const auto & lane, const auto & yaw_threshold) {
+        return isPolygonOverlapLanelet(obj, lane, yaw_threshold);
+      },
+      yaw_threshold);
+    EXPECT_FALSE(filtered_object.first.objects.empty());
+    EXPECT_FALSE(filtered_object.second.objects.empty());
+    EXPECT_EQ(filtered_object.first.objects.front().object_id, target_object.object_id);
+    EXPECT_EQ(filtered_object.second.objects.front().object_id, other_object.object_id);
+  }
+}
+
+TEST(BehaviorPathPlanningObjectsFiltering, getPredictedPathFromObj)
+{
+  using autoware::behavior_path_planner::utils::path_safety_checker::getPredictedPathFromObj;
+  using autoware::behavior_path_planner::utils::path_safety_checker::
+    PoseWithVelocityAndPolygonStamped;
+  using autoware::behavior_path_planner::utils::path_safety_checker::PredictedPathWithPolygon;
+
+  autoware::behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObject object;
+  std::vector<PredictedPathWithPolygon> predicted_paths;
+  PredictedPathWithPolygon predicted_path;
+
+  autoware_perception_msgs::msg::Shape shape;
+  shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
+  shape.dimensions.x = 1.0;
+  shape.dimensions.y = 1.0;
+
+  double velocity = 1.0;
+
+  const auto path = [&](geometry_msgs::msg::Pose initial_pose) {
+    std::vector<PoseWithVelocityAndPolygonStamped> path;
+    geometry_msgs::msg::Pose pose;
+    for (size_t i = 0; i < 10; i++) {
+      auto time = static_cast<double>(i);
+      pose.position.x = initial_pose.position.x + time * velocity;
+      pose.position.y = initial_pose.position.y;
+      PoseWithVelocityAndPolygonStamped obj_pose_with_poly(
+        time, pose, velocity, autoware::universe_utils::toPolygon2d(pose, shape));
+      path.push_back(obj_pose_with_poly);
+    }
+    return path;
+  };
+
+  for (size_t i = 0; i < 2; i++) {
+    predicted_path.path = path(createPose(0.0, static_cast<double>(i), 0.0, 0.0, 0.0, 0.0));
+    predicted_path.confidence = 0.1f * (static_cast<float>(i) + 1.0f);
+    predicted_paths.push_back(predicted_path);
+  }
+  object.predicted_paths = predicted_paths;
+
+  bool use_all_predicted_path = true;
+  EXPECT_EQ(getPredictedPathFromObj(object, use_all_predicted_path).size(), 2);
+
+  use_all_predicted_path = false;
+  auto extracted_path = getPredictedPathFromObj(object, use_all_predicted_path);
+  EXPECT_EQ(extracted_path.size(), 1);
+  EXPECT_DOUBLE_EQ(extracted_path.front().path.front().pose.position.y, 1.0);
 }
 
 TEST(BehaviorPathPlanningObjectsFiltering, createPredictedPath)
@@ -354,6 +584,55 @@ TEST(BehaviorPathPlanningObjectsFiltering, filterObjectsByClass)
   types_to_check.check_truck = false;
   filterObjectsByClass(objects, types_to_check);
   EXPECT_TRUE(objects.objects.empty());
+}
+
+TEST(BehaviorPathPlanningObjectsFiltering, createTargetObjectsOnLane)
+{
+  using autoware::behavior_path_planner::utils::path_safety_checker::createTargetObjectsOnLane;
+  using autoware::behavior_path_planner::utils::path_safety_checker::ObjectsFilteringParams;
+  using autoware::universe_utils::createVector3;
+
+  PredictedObjects objects;
+  std::shared_ptr<autoware::route_handler::RouteHandler> route_handler =
+    std::make_shared<autoware::route_handler::RouteHandler>();
+  std::shared_ptr<ObjectsFilteringParams> params = std::make_shared<ObjectsFilteringParams>();
+  params->object_lane_configuration = {true, true, true, true, true};
+  params->include_opposite_lane = true;
+  params->invert_opposite_lane = false;
+  params->safety_check_time_horizon = 10.0;
+  params->safety_check_time_resolution = 1.0;
+  route_handler->setMap(intersection_map);
+  lanelet::ConstLanelets current_lanes;
+
+  current_lanes.push_back(route_handler->getLaneletsFromId(1001));
+  current_lanes.push_back(route_handler->getLaneletsFromId(1011));
+
+  ObjectClassification classification;
+  classification.label = ObjectClassification::Type::CAR;
+  classification.probability = 1.0;
+
+  PredictedObject current_lane_object;
+  current_lane_object.object_id = autoware::universe_utils::generateUUID();
+  current_lane_object.kinematics.initial_pose_with_covariance.pose =
+    createPose(363.64, 565.03, 0.0, 0.0, 0.0, 0.0);
+
+  PredictedObject right_lane_object;
+  right_lane_object.object_id = autoware::universe_utils::generateUUID();
+  right_lane_object.kinematics.initial_pose_with_covariance.pose =
+    createPose(366.91, 523.47, 0.0, 0.0, 0.0, 0.0);
+
+  objects.objects.push_back(current_lane_object);
+  objects.objects.push_back(right_lane_object);
+
+  auto target_objects_on_lane =
+    createTargetObjectsOnLane(current_lanes, route_handler, objects, params);
+  EXPECT_FALSE(target_objects_on_lane.on_current_lane.empty());
+  EXPECT_FALSE(target_objects_on_lane.on_right_lane.empty());
+  EXPECT_TRUE(target_objects_on_lane.on_left_lane.empty());
+  EXPECT_TRUE(target_objects_on_lane.on_other_lane.empty());
+
+  EXPECT_EQ(target_objects_on_lane.on_current_lane.front().uuid, current_lane_object.object_id);
+  EXPECT_EQ(target_objects_on_lane.on_right_lane.front().uuid, right_lane_object.object_id);
 }
 
 TEST(BehaviorPathPlanningObjectsFiltering, isTargetObjectType)
