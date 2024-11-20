@@ -62,6 +62,9 @@ public:
 
   std::pair<bool, bool> getSafePath(LaneChangePath & safe_path) const override;
 
+  /// @brief generate lane change candidate paths using the Frenet planner
+  LaneChangePaths generate_frenet_candidates(
+    const std::vector<LaneChangePhaseMetrics> & metrics) const;
   LaneChangePath getLaneChangePath() const override;
 
   BehaviorModuleOutput getTerminalLaneChangePath() const override;
