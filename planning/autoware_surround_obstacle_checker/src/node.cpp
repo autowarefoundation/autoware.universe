@@ -126,9 +126,9 @@ SurroundObstacleCheckerNode::SurroundObstacleCheckerNode(const rclcpp::NodeOptio
     const auto param = param_listener_->get_params();
     const auto check_distances = getCheckDistances(param.debug_footprint_label);
     debug_ptr_ = std::make_shared<SurroundObstacleCheckerDebugNode>(
-      vehicle_info_, param.debug_footprint_label, check_distances.at(0), check_distances.at(1),
-      check_distances.at(2), param.surround_check_hysteresis_distance, odometry_ptr_->pose.pose,
-      this->get_clock(), *this);
+      vehicle_info_, param.debug_footprint_label,
+      check_distances.at(0), check_distances.at(1), check_distances.at(2),
+      param.surround_check_hysteresis_distance, odometry_ptr_->pose.pose, this->get_clock(), *this);
   }
 }
 
@@ -411,8 +411,8 @@ std::optional<geometry_msgs::msg::TransformStamped> SurroundObstacleCheckerNode:
 
 auto SurroundObstacleCheckerNode::isStopRequired(
   const bool is_obstacle_found, const bool is_vehicle_stopped, const State & state,
-  const std::optional<rclcpp::Time> & last_obstacle_found_time, const double time_threshold) const
-  -> std::pair<bool, std::optional<rclcpp::Time>>
+  const std::optional<rclcpp::Time> & last_obstacle_found_time,
+  const double time_threshold) const -> std::pair<bool, std::optional<rclcpp::Time>>
 {
   if (!is_vehicle_stopped) {
     return std::make_pair(false, std::nullopt);
