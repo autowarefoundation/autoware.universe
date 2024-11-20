@@ -234,31 +234,16 @@ public:
 
     // iterate over grid cells
     for (Cell & cell : cells_) {
-      // check if the cell is empty
-      if (cell.isEmpty()) {
-        continue;
-      }
-
       // find and link the scan-grid root cell
-      {
-        bool is_prev_found = false;
-        int scan_grid_root_idx = cell.prev_grid_idx_;
-        while (scan_grid_root_idx >= 0) {
-          auto & prev_cell = cells_[scan_grid_root_idx];
-          if (prev_cell.isEmpty()) {
-            // check previous of the previous cell
-            scan_grid_root_idx = prev_cell.prev_grid_idx_;
-          } else {
-            // not empty, then set the previous cell
-            cell.scan_grid_root_idx_ = scan_grid_root_idx;
-            is_prev_found = true;
-            break;
-          }
-        }
-        if (!is_prev_found) {
-          cell.scan_grid_root_idx_ = -1;
-        }
+      cell.scan_grid_root_idx_ = cell.prev_grid_idx_;
+      while (cell.scan_grid_root_idx_ >= 0) {
+        const auto & prev_cell = cells_[cell.scan_grid_root_idx_];
+        // if the previous cell has point, set the previous cell as the root cell
+        if (!prev_cell.isEmpty()) break;
+        // keep searching the previous cell
+        cell.scan_grid_root_idx_ = prev_cell.scan_grid_root_idx_;
       }
+      // if the grid root idx reaches -1, finish the search
     }
   }
 
