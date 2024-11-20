@@ -66,8 +66,6 @@ public:
       node.declare_parameter<double>("slow_down.moving_object_hysteresis_range");
   }
 
-  PlannerInterface() = default;
-
   void setParam(
     const bool enable_debug_info, const bool enable_calculation_time_info,
     const bool use_pointcloud, const double min_behavior_stop_margin,
