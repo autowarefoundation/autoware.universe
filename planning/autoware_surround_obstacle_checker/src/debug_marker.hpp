@@ -77,7 +77,6 @@ private:
   rclcpp::Publisher<PolygonStamped>::SharedPtr vehicle_footprint_recover_offset_pub_;
 
   autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
-  double base_link2front_;
   std::string object_label_;
   double surround_check_front_distance_;
   double surround_check_side_distance_;
