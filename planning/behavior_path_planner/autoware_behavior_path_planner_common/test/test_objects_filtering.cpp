@@ -28,6 +28,7 @@
 
 #include <cmath>
 #include <memory>
+#include <vector>
 
 using PredictedObject = autoware_perception_msgs::msg::PredictedObject;
 using PredictedObjects = autoware_perception_msgs::msg::PredictedObjects;
@@ -42,12 +43,31 @@ using autoware::test_utils::createPose;
 using autoware::test_utils::generateTrajectory;
 using autoware::test_utils::make_lanelet;
 using autoware::universe_utils::createPoint;
+using autoware::universe_utils::createVector3;
 
 constexpr double epsilon = 1e-6;
 
 const auto intersection_map =
   autoware::test_utils::make_map_bin_msg(autoware::test_utils::get_absolute_path_to_lanelet_map(
     "autoware_test_utils", "intersection/lanelet2_map.osm"));
+
+PredictedObject create_bounding_box_object(
+  const geometry_msgs::msg::Pose pose,
+  const geometry_msgs::msg::Vector3 velocity = geometry_msgs::msg::Vector3(),
+  const double x_dimension = 1.0, const double y_dimension = 1.0,
+  const std::vector<ObjectClassification> & classification = std::vector<ObjectClassification>())
+{
+  PredictedObject object;
+  object.object_id = autoware::universe_utils::generateUUID();
+  object.kinematics.initial_pose_with_covariance.pose = pose;
+  object.kinematics.initial_twist_with_covariance.twist.linear = velocity;
+  object.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
+  object.shape.dimensions.x = x_dimension;
+  object.shape.dimensions.y = y_dimension;
+  object.classification = classification;
+
+  return object;
+}
 
 std::vector<PathPointWithLaneId> trajectory_to_path_with_lane_id(const Trajectory & trajectory)
 {
@@ -94,8 +114,7 @@ TEST(BehaviorPathPlanningObjectsFiltering, position_filter)
   using autoware::behavior_path_planner::utils::path_safety_checker::filter::position_filter;
 
   auto current_pos = createPoint(0.0, 0.0, 0.0);
-  PredictedObject object;
-  object.kinematics.initial_pose_with_covariance.pose = createPose(10.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+  PredictedObject object = create_bounding_box_object(createPose(10.0, 0.0, 0.0, 0.0, 0.0, 0.0));
   auto straight_trajectory = generateTrajectory<Trajectory>(20, 1.0);
   double forward_distance = 20.0;
   double backward_distance = 1.0;
@@ -147,8 +166,7 @@ TEST(BehaviorPathPlanningObjectsFiltering, isCentroidWithinLanelet)
   using autoware::behavior_path_planner::utils::path_safety_checker::isCentroidWithinLanelet;
   using autoware::behavior_path_planner::utils::path_safety_checker::isCentroidWithinLanelets;
 
-  PredictedObject object;
-  object.kinematics.initial_pose_with_covariance.pose = createPose(0.5, 0.0, 0.0, 0.0, 0.0, 0.0);
+  auto object = create_bounding_box_object(createPose(0.5, 0.0, 0.0, 0.0, 0.0, 0.0));
   auto lanelet = make_lanelet({0.0, 1.0}, {5.0, 1.0}, {0.0, -1.0}, {5.0, -1.0});
   double yaw_threshold = M_PI_2;
 
@@ -168,11 +186,7 @@ TEST(BehaviorPathPlanningObjectsFiltering, isPolygonOverlapLanelet)
   using autoware::behavior_path_planner::utils::toPolygon2d;
   using autoware::behavior_path_planner::utils::path_safety_checker::isPolygonOverlapLanelet;
 
-  PredictedObject object;
-  object.kinematics.initial_pose_with_covariance.pose = createPose(0.5, 0.0, 0.0, 0.0, 0.0, 0.0);
-  object.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
-  object.shape.dimensions.x = 1.0;
-  object.shape.dimensions.y = 1.0;
+  PredictedObject object = create_bounding_box_object(createPose(0.5, 0.0, 0.0, 0.0, 0.0, 0.0));
 
   auto lanelet = make_lanelet({0.0, 1.0}, {5.0, 1.0}, {0.0, -1.0}, {5.0, -1.0});
   double yaw_threshold = M_PI_2;
@@ -215,25 +229,11 @@ TEST(BehaviorPathPlanningObjectsFiltering, filterObjects)
   classification.label = ObjectClassification::Type::CAR;
   classification.probability = 1.0;
 
-  PredictedObject target_object;
-  target_object.object_id = autoware::universe_utils::generateUUID();
-  target_object.kinematics.initial_pose_with_covariance.pose =
-    createPose(360.22, 605.51, 0.0, 0.0, 0.0, 0.0);
-  target_object.kinematics.initial_twist_with_covariance.twist.linear =
-    createVector3(1.0, 1.0, 0.0);
-  target_object.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
-  target_object.shape.dimensions.x = 1.0;
-  target_object.shape.dimensions.y = 1.0;
+  auto target_object = create_bounding_box_object(
+    createPose(360.22, 605.51, 0.0, 0.0, 0.0, 0.0), createVector3(1.0, 1.0, 0.0));
   target_object.classification.push_back(classification);
-
-  PredictedObject other_object;
-  other_object.object_id = autoware::universe_utils::generateUUID();
-  other_object.kinematics.initial_pose_with_covariance.pose =
-    createPose(370.22, 600.51, 0.0, 0.0, 0.0, 0.0);
-  other_object.kinematics.initial_twist_with_covariance.twist.linear = createVector3(1.0, 1.0, 0.0);
-  other_object.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
-  other_object.shape.dimensions.x = 1.0;
-  other_object.shape.dimensions.y = 1.0;
+  auto other_object = create_bounding_box_object(
+    createPose(370.22, 600.51, 0.0, 0.0, 0.0, 0.0), createVector3(1.0, 1.0, 0.0));
   other_object.classification.push_back(classification);
 
   objects->objects.push_back(target_object);
@@ -249,18 +249,13 @@ TEST(BehaviorPathPlanningObjectsFiltering, filterObjectsByVelocity)
   using autoware::behavior_path_planner::utils::path_safety_checker::filterObjectsByVelocity;
 
   PredictedObjects objects;
-  PredictedObject slow_obj;
-  PredictedObject fast_obj;
+  auto slow_obj = create_bounding_box_object(
+    createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0), createVector3(2.0, 0.0, 0.0));
+  auto fast_obj = create_bounding_box_object(
+    createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0), createVector3(10.0, 0.0, 0.0));
   double vel_thr = 5.0;
 
-  slow_obj.object_id = autoware::universe_utils::generateUUID();
-  slow_obj.kinematics.initial_twist_with_covariance.twist.linear.x = 2.0;
-  slow_obj.kinematics.initial_twist_with_covariance.twist.linear.y = 0.0;
   objects.objects.push_back(slow_obj);
-
-  fast_obj.object_id = autoware::universe_utils::generateUUID();
-  fast_obj.kinematics.initial_twist_with_covariance.twist.linear.x = 10.0;
-  fast_obj.kinematics.initial_twist_with_covariance.twist.linear.y = 0.0;
   objects.objects.push_back(fast_obj);
 
   auto filtered_obj = filterObjectsByVelocity(objects, vel_thr, false);
@@ -291,17 +286,12 @@ TEST(BehaviorPathPlanningObjectsFiltering, filterObjectsByPosition)
   double search_radius = 10.0;
 
   PredictedObjects objects;
-  PredictedObject far_obj;
-  PredictedObject near_obj;
+  auto far_obj = create_bounding_box_object(createPose(50.0, 0.0, 0.0, 0.0, 0.0, 0.0));
+  auto near_obj = create_bounding_box_object(createPose(5.0, 0.0, 0.0, 0.0, 0.0, 0.0));
 
-  near_obj.object_id = autoware::universe_utils::generateUUID();
-  near_obj.kinematics.initial_pose_with_covariance.pose = createPose(5.0, 0.0, 0.0, 0.0, 0.0, 0.0);
   objects.objects.push_back(near_obj);
-  auto target_uuid = near_obj.object_id;
-
-  far_obj.object_id = autoware::universe_utils::generateUUID();
-  far_obj.kinematics.initial_pose_with_covariance.pose = createPose(50.0, 0.0, 0.0, 0.0, 0.0, 0.0);
   objects.objects.push_back(far_obj);
+  auto target_uuid = near_obj.object_id;
 
   filterObjectsByPosition(objects, straight_path, current_pos, forward_distance, backward_distance);
 
@@ -326,21 +316,8 @@ TEST(BehaviorPathPlanningObjectsFiltering, separateObjectsByLanelets)
 
   double yaw_threshold = M_PI_2;
 
-  PredictedObject target_object;
-  target_object.object_id = autoware::universe_utils::generateUUID();
-  target_object.kinematics.initial_pose_with_covariance.pose =
-    createPose(0.5, 0.0, 0.0, 0.0, 0.0, 0.0);
-  target_object.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
-  target_object.shape.dimensions.x = 1.0;
-  target_object.shape.dimensions.y = 1.0;
-
-  PredictedObject other_object;
-  other_object.object_id = autoware::universe_utils::generateUUID();
-  other_object.kinematics.initial_pose_with_covariance.pose =
-    createPose(-1.5, 0.0, 0.0, 0.0, 0.0, 0.0);
-  other_object.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
-  other_object.shape.dimensions.x = 1.0;
-  other_object.shape.dimensions.y = 1.0;
+  auto target_object = create_bounding_box_object(createPose(0.5, 0.0, 0.0, 0.0, 0.0, 0.0));
+  auto other_object = create_bounding_box_object(createPose(-1.5, 0.0, 0.0, 0.0, 0.0, 0.0));
 
   PredictedObjects objects;
   objects.objects.push_back(target_object);
@@ -487,22 +464,14 @@ TEST(BehaviorPathPlanningObjectsFiltering, transform)
 {
   using autoware::behavior_path_planner::utils::path_safety_checker::transform;
   auto velocity = autoware::universe_utils::createVector3(2.0, 0.0, 0.0);
-  auto angular = autoware::universe_utils::createVector3(0.0, 0.0, 0.0);
 
-  PredictedObject obj;
-  obj.object_id = autoware::universe_utils::generateUUID();
-  obj.kinematics.initial_pose_with_covariance.pose = createPose(2.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-  obj.kinematics.initial_twist_with_covariance.twist =
-    autoware::universe_utils::createTwist(velocity, angular);
+  auto obj = create_bounding_box_object(
+    createPose(2.0, 0.0, 0.0, 0.0, 0.0, 0.0), createVector3(2.0, 0.0, 0.0), 2.0, 1.0);
   autoware_perception_msgs::msg::PredictedPath predicted_path;
   auto straight_path = trajectory_to_predicted_path(generateTrajectory<Trajectory>(5, 1.0));
   straight_path.confidence = 0.6;
   straight_path.time_step.sec = 1.0;
   obj.kinematics.predicted_paths.push_back(straight_path);
-  obj.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
-  obj.shape.dimensions.x = 2.0;
-  obj.shape.dimensions.y = 1.0;
-  obj.shape.dimensions.z = 1.0;
 
   double safety_check_time_horizon = 2.0;
   double safety_check_time_resolution = 0.5;
@@ -611,15 +580,10 @@ TEST(BehaviorPathPlanningObjectsFiltering, createTargetObjectsOnLane)
   classification.label = ObjectClassification::Type::CAR;
   classification.probability = 1.0;
 
-  PredictedObject current_lane_object;
-  current_lane_object.object_id = autoware::universe_utils::generateUUID();
-  current_lane_object.kinematics.initial_pose_with_covariance.pose =
-    createPose(363.64, 565.03, 0.0, 0.0, 0.0, 0.0);
-
-  PredictedObject right_lane_object;
-  right_lane_object.object_id = autoware::universe_utils::generateUUID();
-  right_lane_object.kinematics.initial_pose_with_covariance.pose =
-    createPose(366.91, 523.47, 0.0, 0.0, 0.0, 0.0);
+  PredictedObject current_lane_object =
+    create_bounding_box_object(createPose(363.64, 565.03, 0.0, 0.0, 0.0, 0.0));
+  PredictedObject right_lane_object =
+    create_bounding_box_object(createPose(366.91, 523.47, 0.0, 0.0, 0.0, 0.0));
 
   objects.objects.push_back(current_lane_object);
   objects.objects.push_back(right_lane_object);
