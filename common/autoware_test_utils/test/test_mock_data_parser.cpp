@@ -459,6 +459,188 @@ operation_mode:
   is_autonomous_mode_available: true
   is_local_mode_available: true
   is_remote_mode_available: true
+tracked_object:
+  header:
+    stamp:
+      sec: 288
+      nanosec: 743249865
+    frame_id: map
+  objects:
+    - object_id:
+        uuid:
+          - 35
+          - 106
+          - 130
+          - 18
+          - 249
+          - 15
+          - 247
+          - 148
+          - 31
+          - 235
+          - 198
+          - 121
+          - 150
+          - 136
+          - 225
+          - 99
+      existence_probability: 0.00000
+      classification:
+        - label: 1
+          probability: 1.00000
+      kinematics:
+        pose_with_covariance:
+          pose:
+            position:
+              x: 269.944
+              y: 376.116
+              z: 101.346
+            orientation:
+              x: 0.00000
+              y: 0.00000
+              z: -0.715560
+              w: 0.698551
+          covariance:
+            - 0.0267953
+            - 0.00119480
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00119480
+            - 0.0831472
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.0100000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.0100000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.0100000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00551386
+        twist_with_covariance:
+          twist:
+            linear:
+              x: 2.99743
+              y: -0.0100529
+              z: 0.00000
+            angular:
+              x: 0.00000
+              y: 0.00000
+              z: -0.00913898
+          covariance:
+            - 0.609089
+            - -0.00201817
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - -0.00183470
+            - -0.00201817
+            - 0.000777658
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.000706962
+            - 0.00000
+            - 0.00000
+            - 0.0100000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.0100000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.0100000
+            - 0.00000
+            - -0.00183470
+            - 0.000706962
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.000642693
+        acceleration_with_covariance:
+          accel:
+            linear:
+              x: 0.00000
+              y: 0.00000
+              z: 0.00000
+            angular:
+              x: 0.00000
+              y: 0.00000
+              z: 0.00000
+          covariance:
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+            - 0.00000
+        orientation_availability: 1
+        is_stationary: false
+      shape:
+        type: 0
+        footprint:
+          points: []
+        dimensions:
+          x: 4.40000
+          y: 1.73071
+          z: 1.00000
 )";
 
 TEST(ParseFunctions, CompleteYAMLTest)
@@ -572,6 +754,31 @@ TEST(ParseFunctions, CompleteYAMLTest)
   EXPECT_EQ(operation_mode.is_autonomous_mode_available, true);
   EXPECT_EQ(operation_mode.is_local_mode_available, true);
   EXPECT_EQ(operation_mode.is_remote_mode_available, true);
+
+  const auto tracked_objects = parse<TrackedObjects>(config["tracked_object"]);
+  EXPECT_EQ(tracked_objects.header.stamp.sec, 288);
+  EXPECT_EQ(tracked_objects.header.stamp.nanosec, 743249865);
+  EXPECT_EQ(tracked_objects.header.frame_id, "map");
+  EXPECT_EQ(tracked_objects.objects.at(0).object_id.uuid.at(0), 35);
+  EXPECT_FLOAT_EQ(tracked_objects.objects.at(0).existence_probability, 0.0);
+  EXPECT_EQ(tracked_objects.objects.at(0).classification.at(0).label, 1);
+  EXPECT_FLOAT_EQ(tracked_objects.objects.at(0).classification.at(0).probability, 1.0);
+  EXPECT_FLOAT_EQ(
+    tracked_objects.objects.at(0).kinematics.pose_with_covariance.pose.position.x, 269.944);
+  EXPECT_FLOAT_EQ(
+    tracked_objects.objects.at(0).kinematics.pose_with_covariance.covariance.at(0), 0.0267953);
+  EXPECT_FLOAT_EQ(
+    tracked_objects.objects.at(0).kinematics.twist_with_covariance.twist.linear.x, 2.99743);
+  EXPECT_FLOAT_EQ(
+    tracked_objects.objects.at(0).kinematics.twist_with_covariance.twist.angular.z, -0.00913898);
+  EXPECT_FLOAT_EQ(
+    tracked_objects.objects.at(0).kinematics.twist_with_covariance.covariance.at(0), 0.609089);
+  EXPECT_EQ(tracked_objects.objects.at(0).kinematics.orientation_availability, 1);
+  EXPECT_EQ(tracked_objects.objects.at(0).kinematics.is_stationary, false);
+  EXPECT_EQ(tracked_objects.objects.at(0).shape.type, 0);
+  EXPECT_EQ(tracked_objects.objects.at(0).shape.dimensions.x, 4.40000);
+  EXPECT_EQ(tracked_objects.objects.at(0).shape.dimensions.y, 1.73071);
+  EXPECT_EQ(tracked_objects.objects.at(0).shape.dimensions.z, 1.0);
 }
 
 TEST(ParseFunction, CompleteFromFilename)
