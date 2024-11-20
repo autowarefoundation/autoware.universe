@@ -354,8 +354,10 @@ std::vector<double> calc_lon_acceleration_samples(
   const auto goal_pose = common_data_ptr->route_handler_ptr->getGoalPose();
   const auto sampling_num = common_data_ptr->lc_param_ptr->longitudinal_acc_sampling_num;
 
-  const auto [min_accel, max_accel] =
+  const auto min_max_accel =
     calc_min_max_acceleration(common_data_ptr, max_path_velocity, prepare_duration);
+  const auto &min_accel = min_max_accel.first;
+  const auto &max_accel = min_max_accel.second;
 
   const auto is_sampling_required = std::invoke([&]() -> bool {
     if (max_accel < 0.0 || transient_data.is_ego_stuck) return true;
