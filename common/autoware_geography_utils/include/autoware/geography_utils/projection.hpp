@@ -17,11 +17,11 @@
 
 #include <geographic_msgs/msg/geo_point.hpp>
 #include <geometry_msgs/msg/point.hpp>
-#include <tier4_map_msgs/msg/map_projector_info.hpp>
+#include <autoware_map_msgs/msg/map_projector_info.hpp>
 
 namespace autoware::geography_utils
 {
-using MapProjectorInfo = tier4_map_msgs::msg::MapProjectorInfo;
+using MapProjectorInfo = autoware_map_msgs::msg::MapProjectorInfo;
 using GeoPoint = geographic_msgs::msg::GeoPoint;
 using LocalPoint = geometry_msgs::msg::Point;
 

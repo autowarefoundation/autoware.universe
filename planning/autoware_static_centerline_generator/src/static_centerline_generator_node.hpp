@@ -27,7 +27,7 @@
 #include "std_msgs/msg/empty.hpp"
 #include "std_msgs/msg/float32.hpp"
 #include "std_msgs/msg/int32.hpp"
-#include "tier4_map_msgs/msg/map_projector_info.hpp"
+#include "autoware_map_msgs/msg/map_projector_info.hpp"
 
 #include <memory>
 #include <string>
@@ -39,7 +39,7 @@ namespace autoware::static_centerline_generator
 using autoware_static_centerline_generator::srv::LoadMap;
 using autoware_static_centerline_generator::srv::PlanPath;
 using autoware_static_centerline_generator::srv::PlanRoute;
-using tier4_map_msgs::msg::MapProjectorInfo;
+using autoware_map_msgs::msg::MapProjectorInfo;
 
 struct CenterlineWithRoute
 {

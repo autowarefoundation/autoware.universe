@@ -28,7 +28,7 @@ import rclpy
 from rclpy.qos import QoSDurabilityPolicy
 from rclpy.qos import QoSHistoryPolicy
 from rclpy.qos import QoSProfile
-from tier4_map_msgs.msg import MapProjectorInfo
+from autoware_map_msgs.msg import MapProjectorInfo
 import yaml
 
 logger = get_logger(__name__)
