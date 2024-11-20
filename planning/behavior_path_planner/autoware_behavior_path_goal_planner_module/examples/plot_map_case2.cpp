@@ -45,17 +45,9 @@
 #include <pybind11/pytypes.h>
 #include <yaml-cpp/yaml.h>
 
-#include <algorithm>
 #include <chrono>
 #include <cmath>
-#include <functional>
 #include <iostream>
-#include <map>
-#include <memory>
-#include <string>
-#include <tuple>
-#include <unordered_map>
-#include <vector>
 
 using namespace std::chrono_literals;  // NOLINT
 
@@ -564,7 +556,7 @@ int main(int argc, char ** argv)
     ament_index_cpp::get_package_share_directory("autoware_test_utils") +
       "/test_map/road_shoulder/lanelet2_map.osm",
     ament_index_cpp::get_package_share_directory("autoware_behavior_path_goal_planner_module") +
-      "/config/sample_planner_data_case1.yaml");
+      "/config/sample_planner_data_case2.yaml");
 
   lanelet::ConstLanelet current_route_lanelet;
   planner_data->route_handler->getClosestLaneletWithinRoute(
@@ -600,15 +592,7 @@ int main(int argc, char ** argv)
   auto & ax1 = axes[0];
   auto & ax2 = axes[1];
   // auto & ax3 = axes[2];
-  const std::vector<lanelet::Id> ids{/*15213, 15214, */ 15225,
-                                     15226,
-                                     15224,
-                                     15227,
-                                     15228,
-                                     15229,
-                                     15230,
-                                     15231,
-                                     15232};
+  const std::vector<lanelet::Id> ids{759, 675, 676, 1303, 677, 678};
   for (const auto & id : ids) {
     const auto lanelet = planner_data->route_handler->getLaneletMapPtr()->laneletLayer.get(id);
     plot_lanelet(ax1, lanelet);
