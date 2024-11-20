@@ -833,7 +833,6 @@ The following parameters are configurable in [lane_change.param.yaml](https://gi
 | `object_check_min_road_shoulder_width`       | [m]    | double | Width considered as a road shoulder if the lane does not have a road shoulder                                          | 0.5                |
 | `object_shiftable_ratio_threshold`           | [-]    | double | Vehicles around the center line within this distance ratio will be excluded from parking objects                       | 0.6                |
 | `min_length_for_turn_signal_activation`      | [m]    | double | Turn signal will be activated if the ego vehicle approaches to this length from minimum lane change length             | 10.0               |
-| `length_ratio_for_turn_signal_deactivation`  | [-]    | double | Turn signal will be deactivated if the ego vehicle approaches to this length ratio for lane change finish point        | 0.8                |
 | `max_longitudinal_acc`                       | [-]    | double | maximum longitudinal acceleration for lane change                                                                      | 1.0                |
 | `min_longitudinal_acc`                       | [-]    | double | maximum longitudinal deceleration for lane change                                                                      | -1.0               |
 | `lateral_acceleration.velocity`              | [m/s]  | double | Reference velocity for lateral acceleration calculation (look up table)                                                | [0.0, 4.0, 10.0]   |
