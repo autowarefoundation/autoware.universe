@@ -42,6 +42,7 @@ using MetricArray = tier4_metric_msgs::msg::MetricArray;
 class PlannerInterface
 {
 public:
+  virtual ~PlannerInterface() = default;
   PlannerInterface(
     rclcpp::Node & node, const LongitudinalInfo & longitudinal_info,
     const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
