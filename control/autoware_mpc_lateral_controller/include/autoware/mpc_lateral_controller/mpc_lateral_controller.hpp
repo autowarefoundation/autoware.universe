@@ -96,7 +96,7 @@ private:
   bool m_keep_steer_control_until_converged;
 
   // MPC solver checker.
-  bool m_is_mpc_solved{true};
+  ResultWithReason m_mpc_solved_status{true};
 
   // trajectory buffer for detecting new trajectory
   std::deque<Trajectory> m_trajectory_buffer;
