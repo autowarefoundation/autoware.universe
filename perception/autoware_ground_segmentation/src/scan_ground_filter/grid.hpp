@@ -328,11 +328,21 @@ private:
       azimuth_interval_per_radial_[0] = 2.0f * M_PIf;
 
       const int max_azimuth_grid_num = static_cast<int>(2.0 * M_PIf / grid_azimuth_size_);
-      const int grid_num = static_cast<int>(max_azimuth_grid_num);
-      const int azimuth_grid_num = std::max(std::min(grid_num, max_azimuth_grid_num), 1);
-      const float azimuth_interval_evened = 2.0f * M_PIf / azimuth_grid_num;
 
-      for (size_t i = 1; i < radial_grid_num; ++i) {
+      int divider = 1;
+      for (size_t i = radial_grid_num - 1; i > 0; --i) {
+        // set divider
+        const float radius = grid_radial_boundaries_[i];
+        const int divider_next = std::ceil(grid_linearity_switch_radius_ / radius);
+        if (divider_next % divider == 0 
+            && max_azimuth_grid_num % divider_next == 0) {
+          divider = divider_next;
+        }
+        // set azimuth grid number
+        const int grid_num = static_cast<int>(max_azimuth_grid_num / divider);
+        const int azimuth_grid_num = std::max(std::min(grid_num, max_azimuth_grid_num), 1);
+        const float azimuth_interval_evened = 2.0f * M_PIf / azimuth_grid_num;
+
         azimuth_grids_per_radial_[i] = azimuth_grid_num;
         azimuth_interval_per_radial_[i] = azimuth_interval_evened;
       }
