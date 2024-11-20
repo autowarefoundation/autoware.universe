@@ -57,8 +57,8 @@ float pseudoArcTan2(const float y, const float x)
       if (x >= 0.0f) return angle;  // 1st zone
       return M_PIf - angle;         // 2nd zone
     } else {
-      if (x >= 0.0f) return M_2PIf -angle;  // 4th zone
-      return M_PIf + angle;         // 3rd zone
+      if (x >= 0.0f) return M_2PIf - angle;  // 4th zone
+      return M_PIf + angle;                  // 3rd zone
     }
   } else {
     const float ratio = x_abs / y_abs;
@@ -336,8 +336,7 @@ private:
         // set divider
         const float radius = grid_radial_boundaries_[i];
         const int divider_next = std::ceil(grid_linearity_switch_radius_ / radius);
-        if (divider_next % divider == 0 
-            && max_azimuth_grid_num % divider_next == 0) {
+        if (divider_next % divider == 0 && max_azimuth_grid_num % divider_next == 0) {
           divider = divider_next;
         }
         // set azimuth grid number
