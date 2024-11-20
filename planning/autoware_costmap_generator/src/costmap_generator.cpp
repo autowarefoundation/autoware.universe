@@ -51,6 +51,7 @@
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <autoware_lanelet2_extension/visualization/visualization.hpp>
 #include <pcl_ros/transforms.hpp>
+#include <rclcpp/logging.hpp>
 #include <tf2_eigen/tf2_eigen.hpp>
 
 #include <lanelet2_core/Forward.h>
@@ -303,7 +304,7 @@ void CostmapGenerator::onTimer()
 
   if (param_->use_points && points_) {
     autoware::universe_utils::ScopedTimeTrack st("generatePointsCostmap()", *time_keeper_);
-    costmap_[LayerName::points] = generatePointsCostmap(points_);
+    costmap_[LayerName::points] = generatePointsCostmap(points_, tf.transform.translation.z);
   }
 
   {
@@ -346,21 +347,24 @@ void CostmapGenerator::initGridmap()
 }
 
 grid_map::Matrix CostmapGenerator::generatePointsCostmap(
-  const sensor_msgs::msg::PointCloud2::ConstSharedPtr & in_points)
+  const sensor_msgs::msg::PointCloud2::ConstSharedPtr & in_points, const double vehicle_to_map_z)
 {
   geometry_msgs::msg::TransformStamped points2costmap;
   try {
     points2costmap = tf_buffer_.lookupTransform(
       param_->costmap_frame, in_points->header.frame_id, tf2::TimePointZero);
   } catch (const tf2::TransformException & ex) {
-    RCLCPP_ERROR(rclcpp::get_logger("costmap_generator"), "%s", ex.what());
+    RCLCPP_ERROR_THROTTLE(
+      rclcpp::get_logger("costmap_generator"), *get_clock(), 1000, "%s", ex.what());
   }
 
   const auto transformed_points = getTransformedPointCloud(*in_points, points2costmap.transform);
 
+  const auto maximum_height_thres = param_->maximum_lidar_height_thres + vehicle_to_map_z;
+  const auto minimum_height_thres = param_->minimum_lidar_height_thres + vehicle_to_map_z;
   grid_map::Matrix points_costmap = points2costmap_.makeCostmapFromPoints(
-    param_->maximum_lidar_height_thres, param_->minimum_lidar_height_thres, param_->grid_min_value,
-    param_->grid_max_value, costmap_, LayerName::points, transformed_points);
+    maximum_height_thres, minimum_height_thres, param_->grid_min_value, param_->grid_max_value,
+    costmap_, LayerName::points, transformed_points);
 
   return points_costmap;
 }
