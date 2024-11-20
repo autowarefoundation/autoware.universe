@@ -49,7 +49,7 @@ namespace autoware::tensorrt_yolox
 // cspell: ignore Semseg
 using LabelMap = std::map<int, std::string>;
 using Label = tier4_perception_msgs::msg::Semantic;
-using ImageContainer = autoware::type_adaptation::type_adapters::ImageContainer;
+using autoware::type_adaptation::type_adapters::ImageContainer;
 class TrtYoloXNode : public rclcpp::Node
 {
   struct RoiOverlaySemsegLabel

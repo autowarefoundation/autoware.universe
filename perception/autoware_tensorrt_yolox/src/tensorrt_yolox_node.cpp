@@ -134,13 +134,7 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
 
 bool TrtYoloXNode::checkInputBlocked()
 {
-  bool result;
-  if (type_adaptation_activated_) {
-    result = (gpu_image_sub_ == nullptr);
-  } else {
-    result = !image_sub_;
-  }
-  return result;
+  return type_adaptation_activated_ ? gpu_image_sub_ == nullptr : !image_sub_;
 }
 
 void TrtYoloXNode::setUpImageSubscriber()

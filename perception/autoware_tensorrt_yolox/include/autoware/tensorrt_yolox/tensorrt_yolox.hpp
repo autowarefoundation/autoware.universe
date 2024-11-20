@@ -33,7 +33,7 @@ using autoware::cuda_utils::CudaUniquePtr;
 using autoware::cuda_utils::CudaUniquePtrHost;
 using autoware::cuda_utils::makeCudaStream;
 using autoware::cuda_utils::StreamUniquePtr;
-using ImageContainer = autoware::type_adaptation::type_adapters::ImageContainer;
+using autoware::type_adaptation::type_adapters::ImageContainer;
 
 struct Object
 {

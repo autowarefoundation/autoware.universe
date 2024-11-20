@@ -29,11 +29,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace autoware
-{
-namespace type_adaptation
-{
-namespace type_adapters
+namespace autoware::type_adaptation::type_adapters
 {
 
 CUDAStreamWrapper::CUDAStreamWrapper()
@@ -110,6 +106,4 @@ CUDAEventWrapper::~CUDAEventWrapper()
   cudaEventDestroy(event_);
 }
 
-}  //  namespace type_adapters
-}  // namespace type_adaptation
-}  //  namespace autoware
+}  //  namespace autoware::type_adaptation::type_adapters

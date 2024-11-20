@@ -31,11 +31,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace autoware
-{
-namespace type_adaptation
-{
-namespace type_adapters
+namespace autoware::type_adaptation::type_adapters
 {
 
 ImageContainer::ImageContainer()
@@ -160,6 +156,4 @@ size_t ImageContainer::size_in_bytes() const
   return height_ * step_;
 }
 
-}  //  namespace type_adapters
-}  // namespace type_adaptation
-}  //  namespace autoware
+}  //  namespace autoware::type_adaptation::type_adapters

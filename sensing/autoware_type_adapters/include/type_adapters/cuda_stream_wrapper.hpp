@@ -26,13 +26,7 @@
 #include <memory>
 #include <string>
 
-namespace autoware
-{
-namespace type_adaptation
-{
-namespace type_adapters
-{
-namespace
+namespace autoware::type_adaptation::type_adapters
 {
 template <typename T>
 struct NotNull
@@ -46,7 +40,6 @@ struct NotNull
 
   const T * pointer;
 };
-}  // namespace
 /**
  * @brief Wrapper class for CUDA stream management
  *
@@ -118,8 +111,6 @@ private:
   cudaEvent_t event_;  ///< CUDA event handle
 };
 
-}  // namespace type_adapters
-}  // namespace type_adaptation
-}  // namespace autoware
+}  // namespace autoware::type_adaptation::type_adapters
 
 #endif  // TYPE_ADAPTERS__CUDA_STREAM_WRAPPER_HPP_

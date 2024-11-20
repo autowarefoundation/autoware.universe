@@ -27,11 +27,7 @@
 #include <memory>
 #include <string>
 
-namespace autoware
-{
-namespace type_adaptation
-{
-namespace type_adapters
+namespace autoware::type_adaptation::type_adapters
 {
 
 /**
@@ -97,9 +93,7 @@ private:
 
 using CompressedImageContainerUniquePtr = std::unique_ptr<CompressedImageContainer>;
 
-}  // namespace type_adapters
-}  // namespace type_adaptation
-}  // namespace autoware
+}  // namespace autoware::type_adaptation::type_adapters
 
 /**
  * @brief ROS Type Adapter specialization for CompressedImageContainer

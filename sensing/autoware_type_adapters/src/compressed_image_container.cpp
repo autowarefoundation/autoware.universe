@@ -29,11 +29,7 @@
 #include <stdexcept>
 #include <string>
 
-namespace autoware
-{
-namespace type_adaptation
-{
-namespace type_adapters
+namespace autoware::type_adaptation::type_adapters
 {
 
 CompressedImageContainer::CompressedImageContainer()
@@ -152,6 +148,4 @@ size_t CompressedImageContainer::size_in_bytes() const
   return size_in_bytes_;
 }
 
-}  //  namespace type_adapters
-}  // namespace type_adaptation
-}  //  namespace autoware
+}  //  namespace autoware::type_adaptation::type_adapters
