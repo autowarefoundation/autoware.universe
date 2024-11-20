@@ -446,7 +446,7 @@ std::optional<PathWithLaneId> parse(const std::string & filename)
 
   if (
     !yaml_node["header"] || !yaml_node["points"] || !yaml_node["left_bound"] ||
-    !yaml_node["left_bound"] || !yaml_node["right_bound"]) {
+    !yaml_node["right_bound"]) {
     return std::nullopt;
   }
 
