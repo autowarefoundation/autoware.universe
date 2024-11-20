@@ -119,12 +119,10 @@ public:
    * @param[out] objects results for object detection
    * @param[in] images batched images
    */
+  template <typename ImageType>
   bool doInference(
-    const std::vector<cv::Mat> & images, ObjectArrays & objects, std::vector<cv::Mat> & masks,
+    const std::vector<ImageType> & images, ObjectArrays & objects, std::vector<cv::Mat> & masks,
     std::vector<cv::Mat> & color_masks);
-  bool doInference(
-    const std::vector<std::shared_ptr<ImageContainer>> & images, ObjectArrays & objects,
-    std::vector<cv::Mat> & masks, std::vector<cv::Mat> & color_masks);
 
   /**
    * @brief run inference including pre-process and post-process
@@ -185,8 +183,8 @@ private:
    * @brief run preprocess on GPU
    * @param[in] images batching images
    */
-  void preprocessGpu(const std::vector<cv::Mat> & images);
-  void preprocessGpu(const std::vector<std::shared_ptr<ImageContainer>> & images);
+  template <typename ImageType>
+  void preprocessGpu(const std::vector<ImageType> & images);
 
   /**
    * @brief run preprocess including resizing, letterbox, NHWC2NCHW and toFloat on CPU
@@ -221,16 +219,13 @@ private:
   bool multiScaleFeedforwardAndDecode(
     const cv::Mat & images, int batch_size, ObjectArrays & objects);
 
-  bool feedforward(const std::vector<cv::Mat> & images, ObjectArrays & objects);
-  bool feedforward(
-    const std::vector<std::shared_ptr<ImageContainer>> & images, ObjectArrays & objects);
+  template <typename ImageType>
+  bool feedforward(const std::vector<ImageType> & images, ObjectArrays & objects);
 
+  template <typename ImageType>
   bool feedforwardAndDecode(
-    const std::vector<cv::Mat> & images, ObjectArrays & objects, std::vector<cv::Mat> & masks,
+    const std::vector<ImageType> & images, ObjectArrays & objects, std::vector<cv::Mat> & masks,
     std::vector<cv::Mat> & color_masks);
-  bool feedforwardAndDecode(
-    const std::vector<std::shared_ptr<ImageContainer>> & images, ObjectArrays & objects,
-    std::vector<cv::Mat> & masks, std::vector<cv::Mat> & color_masks);
 
   void decodeOutputs(float * prob, ObjectArray & objects, float scale, cv::Size & img_size) const;
   void generateGridsAndStride(
