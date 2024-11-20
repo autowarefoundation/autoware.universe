@@ -223,7 +223,6 @@ public:
     for (auto & cell : cells_) {
       cell.point_list_.clear();
       cell.is_ground_initialized_ = false;
-      cell.scan_grid_root_idx_ = -1;
       cell.has_ground_ = false;
     }
   }
@@ -234,9 +233,7 @@ public:
     if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
     // iterate over grid cells
-    for (size_t i = 0; i < cells_.size(); ++i) {
-      Cell & cell = cells_[i];
-
+    for (Cell & cell : cells_) {
       // check if the cell is empty
       if (cell.isEmpty()) {
         continue;
