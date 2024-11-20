@@ -65,8 +65,8 @@ float pseudoArcTan2(const float y, const float x)
       if (x >= 0.0f) return M_PI_2f - angle;  // 1st zone
       return M_PI_2f + angle;                 // 2nd zone
     } else {
-      if (x >= 0.0f) return -M_PI_2f - angle;  // 4th zone
-      return -M_PI_2f + angle;                 // 3rd zone
+      if (x >= 0.0f) return -M_PI_2f + angle;  // 4th zone
+      return -M_PI_2f - angle;                 // 3rd zone
     }
   }
 }
