@@ -3,7 +3,7 @@
     # Ego path calculation
     use_predicted_trajectory: true
     use_imu_path: true
-    limit_imu_path_lat_dev: true
+    limit_imu_path_lat_dev: false
     use_pointcloud_data: true
     use_predicted_object_data: false
     use_object_velocity_calculation: true
