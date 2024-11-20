@@ -60,11 +60,11 @@ using autoware::universe_utils::createMarkerScale;
 using autoware::universe_utils::createPoint;
 
 SurroundObstacleCheckerDebugNode::SurroundObstacleCheckerDebugNode(
-  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
-  const std::string & object_label, const double & surround_check_front_distance,
-  const double & surround_check_side_distance, const double & surround_check_back_distance,
-  const double & surround_check_hysteresis_distance, const geometry_msgs::msg::Pose & self_pose,
-  const rclcpp::Clock::SharedPtr clock, rclcpp::Node & node)
+  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info, const std::string & object_label,
+  const double & surround_check_front_distance, const double & surround_check_side_distance,
+  const double & surround_check_back_distance, const double & surround_check_hysteresis_distance,
+  const geometry_msgs::msg::Pose & self_pose, const rclcpp::Clock::SharedPtr clock,
+  rclcpp::Node & node)
 : vehicle_info_(vehicle_info),
   object_label_(object_label),
   surround_check_front_distance_(surround_check_front_distance),
