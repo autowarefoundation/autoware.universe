@@ -87,6 +87,15 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
     this->create_publisher<tier4_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
 }
 
+void MissionPlanner::publish_processing_time(
+  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch)
+{
+  tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
+  processing_time_msg.stamp = get_clock()->now();
+  processing_time_msg.data = stop_watch.toc();
+  pub_processing_time_->publish(processing_time_msg);
+}
+
 void MissionPlanner::publish_pose_log(const Pose & pose, const std::string & pose_type)
 {
   const auto & p = pose.position;
@@ -220,7 +229,6 @@ void MissionPlanner::on_set_lanelet_route(
   const SetLaneletRoute::Request::SharedPtr req, const SetLaneletRoute::Response::SharedPtr res)
 {
   using ResponseCode = autoware_adapi_v1_msgs::srv::SetRoute::Response;
-  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   const auto is_reroute = state_.state == RouteState::SET;
 
   if (state_.state != RouteState::UNSET && state_.state != RouteState::SET) {
@@ -282,19 +290,12 @@ void MissionPlanner::on_set_lanelet_route(
 
   publish_pose_log(odometry_->pose.pose, "initial");
   publish_pose_log(req->goal_pose, "goal");
-
-  // ProcessingTime
-  tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
-  processing_time_msg.stamp = get_clock()->now();
-  processing_time_msg.data = stop_watch.toc();
-  pub_processing_time_->publish(processing_time_msg);
 }
 
 void MissionPlanner::on_set_waypoint_route(
   const SetWaypointRoute::Request::SharedPtr req, const SetWaypointRoute::Response::SharedPtr res)
 {
   using ResponseCode = autoware_adapi_v1_msgs::srv::SetRoutePoints::Response;
-  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   const auto is_reroute = state_.state == RouteState::SET;
 
   if (state_.state != RouteState::UNSET && state_.state != RouteState::SET) {
@@ -351,12 +352,6 @@ void MissionPlanner::on_set_waypoint_route(
 
   publish_pose_log(odometry_->pose.pose, "initial");
   publish_pose_log(req->goal_pose, "goal");
-
-  // ProcessingTime
-  tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
-  processing_time_msg.stamp = get_clock()->now();
-  processing_time_msg.data = stop_watch.toc();
-  pub_processing_time_->publish(processing_time_msg);
 }
 
 void MissionPlanner::change_route()
