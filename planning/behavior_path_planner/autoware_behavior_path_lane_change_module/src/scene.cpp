@@ -949,7 +949,6 @@ lane_change::TargetObjects NormalLaneChange::get_target_objects(
 
 FilteredByLanesExtendedObjects NormalLaneChange::filterObjects() const
 {
-  const auto & route_handler = getRouteHandler();
   auto objects = *planner_data_->dynamic_object;
   utils::path_safety_checker::filterObjectsByClass(
     objects, lane_change_parameters_->object_types_to_check);
@@ -1062,7 +1061,6 @@ FilteredByLanesObjects NormalLaneChange::filterObjectsByLanelets(
   const auto & current_pose = getEgoPose();
   const auto & current_lanes = common_data_ptr_->lanes_ptr->current;
   const auto & target_lanes = common_data_ptr_->lanes_ptr->target;
-  const auto & route_handler = getRouteHandler();
   const auto & common_parameters = planner_data_->parameters;
   const auto check_optional_polygon = [](const auto & object, const auto & polygon) {
     return !polygon.empty() && isPolygonOverlapLanelet(object, polygon);
@@ -1221,7 +1219,6 @@ std::vector<LaneChangePhaseMetrics> NormalLaneChange::get_lane_changing_metrics(
   const PathWithLaneId & prep_segment, const LaneChangePhaseMetrics & prep_metric,
   const double shift_length, const double dist_to_reg_element) const
 {
-  const auto & route_handler = getRouteHandler();
   const auto & transient_data = common_data_ptr_->transient_data;
   const auto dist_lc_start_to_end_of_lanes = calculation::calc_dist_from_pose_to_terminal_end(
     common_data_ptr_, common_data_ptr_->lanes_ptr->target_neighbor,
