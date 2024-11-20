@@ -450,7 +450,7 @@ public:
    * @param objects Vector to store the created object data
    * @param obstacle_points_ptr Pointer to the point cloud of obstacles
    */
-  void getObjectsOnPath(
+  void getClosestObjectsOnPath(
     const Path & ego_path, const rclcpp::Time & stamp,
     const PointCloud::Ptr points_belonging_to_cluster_hulls, std::vector<ObjectData> & objects);
 
@@ -571,7 +571,7 @@ public:
   double min_generated_imu_path_length_;
   double max_generated_imu_path_length_;
   double expand_width_;
-  double longitudinal_offset_margin_;
+  double longitudinal_offset_;
   double t_response_;
   double a_ego_min_;
   double a_obj_min_;

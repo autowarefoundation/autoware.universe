@@ -22,7 +22,6 @@
 #include <autoware/universe_utils/ros/marker_helper.hpp>
 #include <autoware/universe_utils/ros/update_param.hpp>
 #include <autoware_utils/autoware_utils.hpp>
-#include <autoware_utils/math/normalization.hpp>
 #include <pcl_ros/transforms.hpp>
 #include <rclcpp/node.hpp>
 
@@ -46,7 +45,6 @@
 
 #include <cmath>
 #include <functional>
-#include <iostream>
 #include <limits>
 #include <optional>
 #include <vector>
@@ -175,7 +173,7 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   min_generated_imu_path_length_ = declare_parameter<double>("min_generated_imu_path_length");
   max_generated_imu_path_length_ = declare_parameter<double>("max_generated_imu_path_length");
   expand_width_ = declare_parameter<double>("expand_width");
-  longitudinal_offset_margin_ = declare_parameter<double>("longitudinal_offset_margin");
+  longitudinal_offset_ = declare_parameter<double>("longitudinal_offset");
   t_response_ = declare_parameter<double>("t_response");
   a_ego_min_ = declare_parameter<double>("a_ego_min");
   a_obj_min_ = declare_parameter<double>("a_obj_min");
@@ -227,6 +225,7 @@ rcl_interfaces::msg::SetParametersResult AEB::onParameter(
   updateParam<bool>(
     parameters, "use_object_velocity_calculation", use_object_velocity_calculation_);
   updateParam<bool>(parameters, "check_autoware_state", check_autoware_state_);
+  updateParam<double>(parameters, "path_footprint_extra_margin", path_footprint_extra_margin_);
   updateParam<double>(parameters, "imu_path_lat_dev_threshold", imu_path_lat_dev_threshold_);
   updateParam<double>(
     parameters, "speed_calculation_expansion_margin", speed_calculation_expansion_margin_);
@@ -239,7 +238,7 @@ rcl_interfaces::msg::SetParametersResult AEB::onParameter(
   updateParam<double>(parameters, "min_generated_imu_path_length", min_generated_imu_path_length_);
   updateParam<double>(parameters, "max_generated_imu_path_length", max_generated_imu_path_length_);
   updateParam<double>(parameters, "expand_width", expand_width_);
-  updateParam<double>(parameters, "longitudinal_offset_margin", longitudinal_offset_margin_);
+  updateParam<double>(parameters, "longitudinal_offset", longitudinal_offset_);
   updateParam<double>(parameters, "t_response", t_response_);
   updateParam<double>(parameters, "a_ego_min", a_ego_min_);
   updateParam<double>(parameters, "a_obj_min", a_obj_min_);
@@ -487,7 +486,7 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
       use_pointcloud_data_ && points_belonging_to_cluster_hulls &&
       !points_belonging_to_cluster_hulls->empty()) {
       const auto current_time = obstacle_ros_pointcloud_ptr_->header.stamp;
-      getObjectsOnPath(path, current_time, points_belonging_to_cluster_hulls, objects);
+      getClosestObjectsOnPath(path, current_time, points_belonging_to_cluster_hulls, objects);
     }
     if (use_predicted_object_data_) {
       createObjectDataUsingPredictedObjects(path, ego_polys, objects);
@@ -633,7 +632,7 @@ bool AEB::hasCollision(const double current_v, const ObjectData & closest_object
     const double obj_braking_distance = (obj_v > 0.0)
                                           ? -(obj_v * obj_v) / (2 * std::fabs(a_obj_min_))
                                           : (obj_v * obj_v) / (2 * std::fabs(a_obj_min_));
-    return ego_stopping_distance + obj_braking_distance + longitudinal_offset_margin_;
+    return ego_stopping_distance + obj_braking_distance + longitudinal_offset_;
   });
 
   tier4_debug_msgs::msg::Float32Stamped rss_distance_msg;
@@ -660,6 +659,7 @@ Path AEB::generateEgoPath(const double curr_v, const double curr_w)
   geometry_msgs::msg::Pose ini_pose;
   ini_pose.position = autoware::universe_utils::createPoint(curr_x, curr_y, 0.0);
   ini_pose.orientation = autoware::universe_utils::createQuaternionFromYaw(curr_yaw);
+  path.push_back(ini_pose);
   const double & dt = imu_prediction_time_interval_;
   const double distance_between_points = std::abs(curr_v) * dt;
   constexpr double minimum_distance_between_points{1e-2};
@@ -667,7 +667,7 @@ Path AEB::generateEgoPath(const double curr_v, const double curr_w)
   // if distance between points is too small, arc length calculation is unreliable, so we skip
   // creating the path
   if (std::abs(curr_v) < 0.1 || distance_between_points < minimum_distance_between_points) {
-    return {ini_pose};
+    return path;
   }
 
   const double horizon = imu_prediction_time_horizon_;
@@ -805,13 +805,6 @@ void AEB::createObjectDataUsingPredictedObjects(
   const auto transform_stamped_opt =
     utils::getTransform("base_link", predicted_objects_ptr_->header.frame_id, tf_buffer_, logger);
   if (!transform_stamped_opt.has_value()) return;
-
-  const auto longitudinal_offset_opt = utils::getLongitudinalOffset(
-    ego_path, vehicle_info_.max_longitudinal_offset_m, vehicle_info_.rear_overhang_m);
-
-  if (!longitudinal_offset_opt.has_value()) return;
-  const auto longitudinal_offset = longitudinal_offset_opt.value();
-
   // Check which objects collide with the ego footprints
   std::for_each(objects.begin(), objects.end(), [&](const auto & predicted_object) {
     // get objects in base_link frame
@@ -839,7 +832,10 @@ void AEB::createObjectDataUsingPredictedObjects(
 
         // If the object is behind the ego, we need to use the backward long offset. The
         // distance should be a positive number in any case
-        const double dist_ego_to_object = obj_arc_length - longitudinal_offset;
+        const bool is_object_in_front_of_ego = obj_arc_length > 0.0;
+        const double dist_ego_to_object =
+          (is_object_in_front_of_ego) ? obj_arc_length - vehicle_info_.max_longitudinal_offset_m
+                                      : obj_arc_length + vehicle_info_.min_longitudinal_offset_m;
 
         ObjectData obj;
         obj.stamp = stamp;
@@ -912,7 +908,7 @@ void AEB::getPointsBelongingToClusterHulls(
   }
 }
 
-void AEB::getObjectsOnPath(
+void AEB::getClosestObjectsOnPath(
   const Path & ego_path, const rclcpp::Time & stamp,
   const PointCloud::Ptr points_belonging_to_cluster_hulls, std::vector<ObjectData> & objects)
 {
@@ -921,21 +917,53 @@ void AEB::getObjectsOnPath(
   if (ego_path.size() < 2 || points_belonging_to_cluster_hulls->empty()) {
     return;
   }
-
-  const auto longitudinal_offset_opt = utils::getLongitudinalOffset(
-    ego_path, vehicle_info_.front_overhang_m, vehicle_info_.rear_overhang_m);
-
-  if (!longitudinal_offset_opt.has_value()) return;
-  const auto longitudinal_offset = longitudinal_offset_opt.value();
-  const auto path_length = autoware::motion_utils::calcArcLength(ego_path);
-  const auto path_width = vehicle_info_.vehicle_width_m / 2.0 + expand_width_;
+  const auto ego_is_driving_forward_opt = autoware::motion_utils::isDrivingForward(ego_path);
+  if (!ego_is_driving_forward_opt.has_value()) {
+    return;
+  }
+  const bool ego_is_driving_forward = ego_is_driving_forward_opt.value();
   // select points inside the ego footprint path
+  const auto current_p = [&]() {
+    const auto & first_point_of_path = ego_path.front();
+    const auto & p = first_point_of_path.position;
+    return autoware::universe_utils::createPoint(p.x, p.y, p.z);
+  }();
+
+  const auto path_length = autoware::motion_utils::calcArcLength(ego_path);
   for (const auto & p : *points_belonging_to_cluster_hulls) {
     const auto obj_position = autoware::universe_utils::createPoint(p.x, p.y, p.z);
-    auto obj_data_opt = utils::getObjectOnPathData(
-      ego_path, obj_position, stamp, path_length, path_width, speed_calculation_expansion_margin_,
-      longitudinal_offset, 0.0);
-    if (obj_data_opt.has_value()) objects.push_back(obj_data_opt.value());
+    const double obj_arc_length =
+      autoware::motion_utils::calcSignedArcLength(ego_path, current_p, obj_position);
+    if (
+      std::isnan(obj_arc_length) ||
+      obj_arc_length > path_length + vehicle_info_.max_longitudinal_offset_m)
+      continue;
+
+    // calculate the lateral offset between the ego vehicle and the object
+    const double lateral_offset =
+      std::abs(autoware::motion_utils::calcLateralOffset(ego_path, obj_position));
+
+    if (std::isnan(lateral_offset)) continue;
+
+    // object is outside region of interest
+    if (
+      lateral_offset >
+      vehicle_info_.vehicle_width_m / 2.0 + expand_width_ + speed_calculation_expansion_margin_) {
+      continue;
+    }
+
+    // If the object is behind the ego, we need to use the backward long offset. The distance should
+    // be a positive number in any case
+    const double dist_ego_to_object = (ego_is_driving_forward)
+                                        ? obj_arc_length - vehicle_info_.max_longitudinal_offset_m
+                                        : obj_arc_length + vehicle_info_.min_longitudinal_offset_m;
+    ObjectData obj;
+    obj.stamp = stamp;
+    obj.position = obj_position;
+    obj.velocity = 0.0;
+    obj.distance_to_object = std::abs(dist_ego_to_object);
+    obj.is_target = (lateral_offset < vehicle_info_.vehicle_width_m / 2.0 + expand_width_);
+    objects.push_back(obj);
   }
 }
 
@@ -1062,9 +1090,9 @@ void AEB::addVirtualStopWallMarker(MarkerArray & markers)
   });
 
   if (ego_map_pose.has_value()) {
-    const double base_link_to_front_offset = vehicle_info_.max_longitudinal_offset_m;
+    const double base_to_front_offset = vehicle_info_.max_longitudinal_offset_m;
     const auto ego_front_pose = autoware::universe_utils::calcOffsetPose(
-      ego_map_pose.value(), base_link_to_front_offset, 0.0, 0.0, 0.0);
+      ego_map_pose.value(), base_to_front_offset, 0.0, 0.0, 0.0);
     const auto virtual_stop_wall = autoware::motion_utils::createStopVirtualWallMarker(
       ego_front_pose, "autonomous_emergency_braking", this->now(), 0);
     autoware::universe_utils::appendMarkerArray(virtual_stop_wall, &markers);
