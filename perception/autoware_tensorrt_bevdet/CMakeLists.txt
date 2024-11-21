@@ -3,14 +3,9 @@ project(autoware_tensorrt_bevdet)
 
 add_compile_options(-std=c++17)
 
-find_package(bevdet_vendor)
-if(NOT ${bevdet_vendor_FOUND})
-  message(WARNING "The bevdet_vendor package is not found. Please check its dependencies.")
-  return()
-endif()
-
 find_package(autoware_cmake REQUIRED)
 autoware_package()
+find_package(bevdet_vendor REQUIRED)
 find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(Eigen3 REQUIRED)
