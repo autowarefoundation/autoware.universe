@@ -10,7 +10,7 @@
     check_autoware_state: true
     imu_path_lat_dev_threshold: 1.75
     min_generated_imu_path_length: 0.5
-    max_generated_imu_path_length: 20.0
+    max_generated_imu_path_length: 10.0
     imu_prediction_time_horizon: 1.5
     imu_prediction_time_interval: 0.1
     mpc_prediction_time_horizon: 4.5
