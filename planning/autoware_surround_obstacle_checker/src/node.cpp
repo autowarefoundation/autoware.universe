@@ -126,9 +126,9 @@ SurroundObstacleCheckerNode::SurroundObstacleCheckerNode(const rclcpp::NodeOptio
     const auto param = param_listener_->get_params();
     const auto check_distances = getCheckDistances(param.debug_footprint_label);
     debug_ptr_ = std::make_shared<SurroundObstacleCheckerDebugNode>(
-      vehicle_info_, vehicle_info_.max_longitudinal_offset_m, param.debug_footprint_label,
-      check_distances.at(0), check_distances.at(1), check_distances.at(2),
-      param.surround_check_hysteresis_distance, odometry_ptr_->pose.pose, this->get_clock(), *this);
+      vehicle_info_, param.debug_footprint_label, check_distances.at(0), check_distances.at(1),
+      check_distances.at(2), param.surround_check_hysteresis_distance, odometry_ptr_->pose.pose,
+      this->get_clock(), *this);
   }
 }
 

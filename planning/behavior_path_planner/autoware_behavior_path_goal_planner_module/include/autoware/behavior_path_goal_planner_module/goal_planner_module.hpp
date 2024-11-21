@@ -73,6 +73,7 @@ struct GoalPlannerDebugData
   std::vector<Polygon2d> ego_polygons_expanded{};
   lanelet::ConstLanelet expanded_pull_over_lane_between_ego{};
   Polygon2d objects_extraction_polygon{};
+  utils::path_safety_checker::CollisionCheckDebugMap collision_check{};
 };
 
 struct LastApprovalData
@@ -326,7 +327,6 @@ private:
   autoware::universe_utils::LinearRing2d vehicle_footprint_;
 
   std::recursive_mutex mutex_;
-  // TODO(Mamoru Sobue): isSafePath() modifies ThreadSafeData::check_collision, avoid this mutable
   mutable ThreadSafeData thread_safe_data_;
 
   // TODO(soblin): organize part of thread_safe_data and previous data to PullOverContextData
@@ -414,7 +414,8 @@ private:
   bool planFreespacePath(
     std::shared_ptr<const PlannerData> planner_data,
     const std::shared_ptr<GoalSearcherBase> goal_searcher, const GoalCandidates & goal_candidates,
-    const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map);
+    const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
+    const PredictedObjects & static_target_objects);
   bool canReturnToLaneParking(const PullOverContextData & context_data);
 
   // plan pull over path
@@ -477,7 +478,7 @@ private:
    * @brief Checks if the current path is safe.
    * @return If the path is safe in the current state, true.
    */
-  bool isSafePath(
+  std::pair<bool, utils::path_safety_checker::CollisionCheckDebugMap> isSafePath(
     const std::shared_ptr<const PlannerData> planner_data, const bool found_pull_over_path,
     const std::optional<PullOverPath> & pull_over_path_opt, const PathDecisionState & prev_data,
     const GoalPlannerParameters & parameters,
