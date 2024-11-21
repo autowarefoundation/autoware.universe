@@ -50,7 +50,7 @@ RunOutModule::RunOutModule(
   debug_ptr_(debug_ptr),
   state_machine_(std::make_unique<run_out_utils::StateMachine>(planner_param.approaching.state))
 {
-  velocity_factor_.init(PlanningBehavior::ROUTE_OBSTACLE);
+  velocity_factor_.init(PlanningBehavior::RUN_OUT);
 
   if (planner_param.run_out.use_partition_lanelet) {
     const lanelet::LaneletMapConstPtr & ll = planner_data->route_handler_->getLaneletMapPtr();
