@@ -95,6 +95,7 @@ struct CollisionCheckParameters
   bool check_other_lanes{true};
   bool use_all_predicted_paths{false};
   double th_yaw_diff{3.1416};
+  double prediction_time_resolution{0.5};
 };
 
 struct SafetyParameters
@@ -114,8 +115,6 @@ struct SafetyParameters
 
 struct TrajectoryParameters
 {
-  double backward_lane_length{200.0};
-  double prediction_time_resolution{0.5};
   double prepare_duration{4.0};
   double lateral_jerk{0.5};
   double min_longitudinal_acc{-1.0};
@@ -135,6 +134,7 @@ struct Parameters
   CancelParameters cancel{};
 
   // lane change parameters
+  double backward_lane_length{200.0};
   double backward_length_buffer_for_end_of_lane{0.0};
   double backward_length_buffer_for_blocking_object{0.0};
   double backward_length_from_intersection{5.0};

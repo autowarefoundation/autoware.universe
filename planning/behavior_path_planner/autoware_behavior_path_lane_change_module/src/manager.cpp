@@ -44,10 +44,6 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
 
   // trajectory generation
   {
-    p.trajectory.backward_lane_length =
-      getOrDeclareParameter<double>(*node, parameter("trajectory.backward_lane_length"));
-    p.trajectory.prediction_time_resolution =
-      getOrDeclareParameter<double>(*node, parameter("trajectory.prediction_time_resolution"));
     p.trajectory.prepare_duration =
       getOrDeclareParameter<double>(*node, parameter("trajectory.prepare_duration"));
     p.trajectory.lateral_jerk =
@@ -130,8 +126,8 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
       getOrDeclareParameter<bool>(*node, parameter("safety_check.allow_loose_check_for_cancel"));
     p.safety.enable_target_lane_bound_check =
       getOrDeclareParameter<bool>(*node, parameter("safety_check.enable_target_lane_bound_check"));
-    p.safety.th_stopped_object_velocity =
-      getOrDeclareParameter<double>(*node, parameter("stopped_object_velocity_threshold"));
+    p.safety.th_stopped_object_velocity = getOrDeclareParameter<double>(
+      *node, parameter("safety_check.stopped_object_velocity_threshold"));
     p.safety.lane_expansion_left_offset =
       getOrDeclareParameter<double>(*node, parameter("safety_check.lane_expansion.left_offset"));
     p.safety.lane_expansion_right_offset =
@@ -140,19 +136,21 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
     // collision check
     p.safety.collision_check.enable_for_prepare_phase_in_general_lanes =
       getOrDeclareParameter<bool>(
-        *node, parameter("enable_collision_check_for_prepare_phase.general_lanes"));
+        *node, parameter("collision_check.enable_for_prepare_phase.general_lanes"));
     p.safety.collision_check.enable_for_prepare_phase_in_intersection = getOrDeclareParameter<bool>(
-      *node, parameter("enable_collision_check_for_prepare_phase.intersection"));
+      *node, parameter("collision_check.enable_for_prepare_phase.intersection"));
     p.safety.collision_check.enable_for_prepare_phase_in_turns = getOrDeclareParameter<bool>(
-      *node, parameter("enable_collision_check_for_prepare_phase.turns"));
+      *node, parameter("collision_check.enable_for_prepare_phase.turns"));
     p.safety.collision_check.check_current_lane =
-      getOrDeclareParameter<bool>(*node, parameter("check_objects_on_current_lanes"));
+      getOrDeclareParameter<bool>(*node, parameter("collision_check.check_current_lanes"));
     p.safety.collision_check.check_other_lanes =
-      getOrDeclareParameter<bool>(*node, parameter("check_objects_on_other_lanes"));
+      getOrDeclareParameter<bool>(*node, parameter("collision_check.check_other_lanes"));
     p.safety.collision_check.use_all_predicted_paths =
-      getOrDeclareParameter<bool>(*node, parameter("use_all_predicted_path"));
-    p.safety.collision_check.th_yaw_diff = getOrDeclareParameter<double>(
-      *node, parameter("safety_check.collision_check_yaw_diff_threshold"));
+      getOrDeclareParameter<bool>(*node, parameter("collision_check.use_all_predicted_paths"));
+    p.safety.collision_check.prediction_time_resolution =
+      getOrDeclareParameter<double>(*node, parameter("collision_check.prediction_time_resolution"));
+    p.safety.collision_check.th_yaw_diff =
+      getOrDeclareParameter<double>(*node, parameter("collision_check.yaw_diff_threshold"));
 
     // rss check
     auto set_rss_params = [&](auto & params, const std::string & prefix) {
@@ -191,6 +189,7 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
   }
 
   // lane change parameters
+  p.backward_lane_length = getOrDeclareParameter<double>(*node, parameter("backward_lane_length"));
   p.backward_length_buffer_for_end_of_lane =
     getOrDeclareParameter<double>(*node, parameter("backward_length_buffer_for_end_of_lane"));
   p.backward_length_buffer_for_blocking_object =
@@ -289,6 +288,7 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
 
   {
     const std::string ns = "lane_change.";
+    updateParam<double>(parameters, ns + "backward_lane_length", p->backward_lane_length);
     updateParam<double>(
       parameters, ns + "backward_length_buffer_for_end_of_lane",
       p->backward_length_buffer_for_end_of_lane);
@@ -305,14 +305,10 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
 
   {
     const std::string ns = "lane_change.trajectory.";
-    updateParam<double>(
-      parameters, ns + "backward_lane_length", p->trajectory.backward_lane_length);
     updateParam<double>(parameters, ns + "prepare_duration", p->trajectory.prepare_duration);
     updateParam<double>(parameters, ns + "lateral_jerk", p->trajectory.lateral_jerk);
     updateParam<double>(
       parameters, ns + ".min_lane_changing_velocity", p->trajectory.min_lane_changing_velocity);
-    updateParam<double>(
-      parameters, ns + "prediction_time_resolution", p->trajectory.prediction_time_resolution);
     // longitudinal acceleration
     updateParam<double>(
       parameters, ns + "min_longitudinal_acc", p->trajectory.min_longitudinal_acc);

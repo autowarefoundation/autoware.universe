@@ -109,7 +109,7 @@ void NormalLaneChange::update_lanes(const bool is_approved)
 
   common_data_ptr_->lanes_ptr->preceding_target = utils::getPrecedingLanelets(
     *route_handler_ptr, get_target_lanes(), common_data_ptr_->get_ego_pose(),
-    common_data_ptr_->lc_param_ptr->trajectory.backward_lane_length);
+    common_data_ptr_->lc_param_ptr->backward_lane_length);
 
   *common_data_ptr_->lanes_polygon_ptr = create_lanes_polygon(common_data_ptr_);
 }
@@ -700,7 +700,7 @@ lanelet::ConstLanelets NormalLaneChange::get_lane_change_lanes(
     return forward_path_length + std::max(signed_distance, 0.0);
   });
 
-  const auto backward_length = lane_change_parameters_->trajectory.backward_lane_length;
+  const auto backward_length = lane_change_parameters_->backward_lane_length;
 
   return route_handler->getLaneletSequence(
     lane_change_lane.value(), getEgoPose(), backward_length, forward_length);
@@ -1911,7 +1911,8 @@ bool NormalLaneChange::has_collision_with_decel_patterns(
     acceleration_values.begin(), acceleration_values.end(), acceleration_values.begin(),
     [&](double n) { return lane_changing_acc + n * acc_resolution; });
 
-  const auto time_resolution = lane_change_parameters_->trajectory.prediction_time_resolution;
+  const auto time_resolution =
+    lane_change_parameters_->safety.collision_check.prediction_time_resolution;
 
   const auto stopped_obj_vel_th = lane_change_parameters_->safety.th_stopped_object_velocity;
   const auto all_collided = std::all_of(

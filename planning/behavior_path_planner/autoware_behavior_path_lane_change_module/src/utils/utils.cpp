@@ -917,7 +917,8 @@ ExtendedPredictedObject transform(
 {
   ExtendedPredictedObject extended_object(object);
 
-  const auto & time_resolution = lane_change_parameters.trajectory.prediction_time_resolution;
+  const auto & time_resolution =
+    lane_change_parameters.safety.collision_check.prediction_time_resolution;
   const double obj_vel_norm =
     std::hypot(extended_object.initial_twist.linear.x, extended_object.initial_twist.linear.y);
 
