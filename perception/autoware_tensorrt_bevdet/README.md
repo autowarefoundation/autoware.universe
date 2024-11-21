@@ -52,19 +52,21 @@ The core algorithm, named `BEVDet`, it unifies multi-view images into the perspe
 
    Please refer to open source repository [ros2_dataset_bridge](https://github.com/Owen-Liuyuxuan/ros2_dataset_bridge) to publish the ROS 2 topics for NuScenes dataset.
 
-## Limitation
-
-The model is trained on open-source dataset `NuScenes` and has poor generalization on its own dataset, If you want to use this model to infer your data, you need to retrain it.
-
 ## Trained Models
 
 You can download the onnx format of trained models by clicking on the links below.
 
 - BEVDet: [bevdet_one_lt_d.onnx](https://drive.google.com/file/d/1eMGJfdCVlDPBphBTjMcnIh3wdW7Q7WZB/view?usp=sharing)
 
-The model was trained in NuScenes database for 20 epochs.
+The `BEVDet` model was trained in `NuScenes` dataset for 20 epochs.
 
-If you want to train model using the [TIER IV's internal database(~2600 key frames)](https://drive.google.com/file/d/1UaarK88HZu09sf7Ix-bEVl9zGNGFwTVL/view?usp=sharing), please refer to the following repositories:[BEVDet adapted to TIER IV dataset](https://github.com/cyn-liu/BEVDet/tree/train_export)
+## Limitation
+
+The model is trained on open-source dataset `NuScenes` and has poor generalization on its own dataset, If you want to use this model to infer your data, you need to retrain it.
+
+## Training BEVDet Model
+
+If you want to train model using the [TIER IV's internal database(~2600 key frames)](https://drive.google.com/file/d/1UaarK88HZu09sf7Ix-bEVl9zGNGFwTVL/view?usp=sharing), please refer to the following repositories:[BEVDet adapted to TIER IV dataset](https://github.com/cyn-liu/BEVDet/tree/train_export).
 
 ## References/External links
 
