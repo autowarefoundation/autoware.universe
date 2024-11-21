@@ -340,6 +340,29 @@ std::vector<LineString2d> get_line_string_paths(const ExtendedPredictedObject & 
 bool has_overtaking_turn_lane_object(
   const CommonDataPtr & common_data_ptr, const ExtendedPredictedObjects & trailing_objects);
 
+/**
+ * @brief Filters objects based on their positions and velocities relative to the ego vehicle and
+ * the target lane.
+ *
+ * This function evaluates whether an object should be classified as a leading or trailing object
+ * in the context of a lane change. Objects are filtered based on their lateral distance from
+ * the ego vehicle, velocity, and whether they are within the target lane or its expanded
+ * boundaries.
+ *
+ * @param common_data_ptr Shared pointer to CommonData containing information about current lanes,
+ *                        vehicle dimensions, lane polygons, and behavior parameters.
+ * @param object An extended predicted object representing a potential obstacle in the environment.
+ * @param dist_ego_to_current_lanes_center Distance from the ego vehicle to the center of the
+ * current lanes.
+ * @param ahead_of_ego Boolean flag indicating if the object is ahead of the ego vehicle.
+ * @param before_terminal Boolean flag indicating if the ego vehicle is before the terminal point of
+ * the lane.
+ * @param leading_objects Reference to a structure for storing leading objects (stopped, moving, or
+ * outside boundaries).
+ * @param trailing_objects Reference to a collection for storing trailing objects.
+ *
+ * @return true if the object is classified as either leading or trailing, false otherwise.
+ */
 bool filter_target_lane_objects(
   const CommonDataPtr & common_data_ptr, const ExtendedPredictedObject & object,
   const double dist_ego_to_current_lanes_center, const bool ahead_of_ego,
