@@ -19,6 +19,8 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include "tier4_debug_msgs/msg/string_stamped.hpp"
+
 #include <sstream>
 #include <string>
 
@@ -35,6 +37,7 @@ private:
   void on_timer();
   void dump_unit(DiagUnit * unit, int depth, const std::string & indent);
   DiagGraphSubscription sub_graph_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::StringStamped>::SharedPtr pub_error_graph_;
   rclcpp::TimerBase::SharedPtr timer_;
 
   DiagUnit * root_unit_;
