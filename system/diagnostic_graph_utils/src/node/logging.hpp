@@ -44,6 +44,7 @@ private:
   int max_depth_;
   std::string root_path_;
   std::ostringstream dump_text_;
+  bool enable_terminal_log_;
 };
 
 }  // namespace diagnostic_graph_utils

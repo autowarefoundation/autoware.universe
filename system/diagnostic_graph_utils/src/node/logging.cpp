@@ -38,6 +38,8 @@ LoggingNode::LoggingNode(const rclcpp::NodeOptions & options) : Node("logging", 
 
   const auto period = rclcpp::Rate(declare_parameter<double>("show_rate")).period();
   timer_ = rclcpp::create_timer(this, get_clock(), period, [this]() { on_timer(); });
+
+  enable_terminal_log_ = declare_parameter<bool>("enable_terminal_log");
 }
 
 void LoggingNode::on_create(DiagGraph::ConstSharedPtr graph)
@@ -55,14 +57,23 @@ void LoggingNode::on_create(DiagGraph::ConstSharedPtr graph)
 
 void LoggingNode::on_timer()
 {
+  static const auto message = "The target mode is not available for the following reasons:";
   if (root_unit_ && root_unit_->level() != DiagUnit::DiagnosticStatus::OK) {
     dump_text_.str("");
     dump_text_.clear(std::stringstream::goodbit);
     dump_unit(root_unit_, 0, "    ");
 
+    if (enable_terminal_log_) {
+      RCLCPP_WARN_STREAM(get_logger(), message << std::endl << dump_text_.str());
+    }
+
     tier4_debug_msgs::msg::StringStamped message;
     message.stamp = now();
     message.data = dump_text_.str();
+    pub_error_graph_->publish(message);
+  } else {
+    tier4_debug_msgs::msg::StringStamped message;
+    message.stamp = now();
     pub_error_graph_->publish(message);
   }
 }
