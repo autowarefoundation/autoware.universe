@@ -27,21 +27,20 @@ import pytest
 
 @pytest.mark.launch_test
 def generate_test_description():
-    lanelet2_map_path = os.path.join(
-        get_package_share_directory("autoware_static_centerline_generator"),
-        "test/data/lanelet2_map.osm",
-    )
-
     static_centerline_generator_node = Node(
         package="autoware_static_centerline_generator",
         executable="main",
         output="screen",
         parameters=[
-            {"lanelet2_map_path": lanelet2_map_path},
             {"mode": "AUTO"},
             {"rviz": False},
             {"centerline_source": "optimization_trajectory_base"},
-            {"lanelet2_input_file_path": lanelet2_map_path},
+            {
+                "lanelet2_input_file_path": os.path.join(
+                    get_package_share_directory("autoware_static_centerline_generator"),
+                    "test/data/lanelet2_map.osm",
+                )
+            },
             {"lanelet2_output_file_path": "/tmp/lanelet2_map.osm"},
             {"start_lanelet_id": 215},
             {"end_lanelet_id": 216},

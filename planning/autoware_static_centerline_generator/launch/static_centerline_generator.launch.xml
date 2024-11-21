@@ -1,6 +1,6 @@
 <launch>
   <!-- mandatory arguments for planning-->
-  <arg name="vehicle_model"/>
+  <arg name="vehicle_model" default="bus"/>
 
   <!-- flag -->
   <arg name="mode" default="AUTO" description="select from AUTO, GUI, and VMB"/>
