@@ -24,7 +24,7 @@
         margin_from_boundary: 0.75
         high_curvature_threshold: 0.1
         bus_stop_area:
-          use_bus_stop_area: true
+          use_bus_stop_area: false
           goal_search_interval: 0.5
           lateral_offset_interval: 0.25
 
@@ -59,7 +59,7 @@
         maximum_jerk: 1.0
         path_priority: "efficient_path" # "efficient_path" or "close_goal"
         efficient_path_order: ["SHIFT", "ARC_FORWARD", "ARC_BACKWARD"] # only lane based pull over(exclude freespace parking)
-        lane_departure_check_expansion_margin: 0.2
+        lane_departure_check_expansion_margin: 0.0
 
         # shift parking
         shift_parking:

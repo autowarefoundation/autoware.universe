@@ -604,12 +604,13 @@ int main(int argc, char ** argv)
 
   // plot_path_with_lane_id(ax2, reference_path.path, "green", "reference_path");
 
+  const auto start = std::chrono::steady_clock::now();
   std::vector<PullOverPath> candidates;
   for (auto i = 0; i < goal_candidates.size(); ++i) {
     const auto & goal_candidate = goal_candidates.at(i);
     auto shift_pull_over_planner = autoware::behavior_path_planner::BezierPullOver(
       *node, goal_planner_parameter, lane_departure_checker);
-    const auto pull_over_paths =
+    auto pull_over_paths =
       shift_pull_over_planner.plans(goal_candidate, 0, planner_data, reference_path);
     if (!pull_over_paths.empty()) {
       std::copy(
@@ -621,6 +622,14 @@ int main(int argc, char ** argv)
   const auto filtered_paths = selectPullOverPaths(
     candidates, goal_candidates, planner_data, goal_planner_parameter, reference_path);
   std::cout << filtered_paths.size() << std::endl;
+  const auto end = std::chrono::steady_clock::now();
+  std::cout << "computed candidate bezier paths in "
+            << std::chrono::duration_cast<std::chrono::nanoseconds>(end - start).count() * 1.0 /
+                 1000000
+            << "msecs" << std::endl;
+  std::cout << "filtered " << filtered_paths.size() << "/" << candidates.size() << " paths"
+            << std::endl;
+
   /*
   for (auto i = 0; i < filtered_paths.size(); ++i) {
     const auto & filtered_path = filtered_paths.at(i);
@@ -666,7 +675,7 @@ int main(int argc, char ** argv)
           footprint, autoware::universe_utils::pose2transform(path_point.point.pose));
         plot_footprint(ax2, pose_footprint, "blue");
       }
-    } else if (i % 500 == 0) {
+    } else if (i % 50 == 0) {
       std::cout << "plotting " << i << "-th filtered path" << std::endl;
       plot_goal_candidate(ax1, filtered_path.modified_goal(), prio, footprint, color);
       plot_path_with_lane_id(ax1, filtered_path.full_path(), color, "", 2.0);
