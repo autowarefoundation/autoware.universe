@@ -42,6 +42,7 @@ using MetricArray = tier4_metric_msgs::msg::MetricArray;
 class PlannerInterface
 {
 public:
+  virtual ~PlannerInterface() = default;
   PlannerInterface(
     rclcpp::Node & node, const LongitudinalInfo & longitudinal_info,
     const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
@@ -65,8 +66,6 @@ public:
     moving_object_hysteresis_range =
       node.declare_parameter<double>("slow_down.moving_object_hysteresis_range");
   }
-
-  PlannerInterface() = default;
 
   void setParam(
     const bool enable_debug_info, const bool enable_calculation_time_info,
