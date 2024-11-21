@@ -266,9 +266,14 @@ struct TargetLaneLeadingObjects
 {
   ExtendedPredictedObjects moving;
   ExtendedPredictedObjects stopped;
-  ExtendedPredictedObjects expanded;
 
-  [[nodiscard]] size_t size() const { return moving.size() + stopped.size() + expanded.size(); }
+  // for objects outside of target lanes, but close to its boundaries
+  ExtendedPredictedObjects stopped_outside_boundary;
+
+  [[nodiscard]] size_t size() const
+  {
+    return moving.size() + stopped.size() + stopped_outside_boundary.size();
+  }
 };
 
 struct FilteredLanesObjects

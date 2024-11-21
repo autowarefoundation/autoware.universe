@@ -951,7 +951,7 @@ lane_change::TargetObjects NormalLaneChange::get_target_objects(
   };
 
   insert_leading_objects(filtered_objects.target_lane_leading.stopped);
-  insert_leading_objects(filtered_objects.target_lane_leading.expanded);
+  insert_leading_objects(filtered_objects.target_lane_leading.stopped_outside_boundary);
   const auto chk_obj_in_curr_lanes = lane_change_parameters_->check_objects_on_current_lanes;
   if (chk_obj_in_curr_lanes || common_data_ptr_->transient_data.is_ego_stuck) {
     insert_leading_objects(filtered_objects.current_lane);
@@ -1000,7 +1000,7 @@ FilteredLanesObjects NormalLaneChange::filter_objects() const
   auto & target_lane_leading = filtered_objects.target_lane_leading;
   target_lane_leading.stopped.reserve(reserve_size);
   target_lane_leading.moving.reserve(reserve_size);
-  target_lane_leading.expanded.reserve(reserve_size);
+  target_lane_leading.stopped_outside_boundary.reserve(reserve_size);
   filtered_objects.target_lane_trailing.reserve(reserve_size);
   filtered_objects.others.reserve(reserve_size);
 
@@ -1046,7 +1046,7 @@ FilteredLanesObjects NormalLaneChange::filter_objects() const
   // There are no use cases for other lane objects yet, so to save some computation time, we dont
   // have to sort them.
   ranges::sort(filtered_objects.current_lane, dist_comparator);
-  ranges::sort(target_lane_leading.expanded, dist_comparator);
+  ranges::sort(target_lane_leading.stopped_outside_boundary, dist_comparator);
   ranges::sort(target_lane_leading.stopped, dist_comparator);
   ranges::sort(target_lane_leading.moving, dist_comparator);
   ranges::sort(filtered_objects.target_lane_trailing, [&](const auto & obj1, const auto & obj2) {

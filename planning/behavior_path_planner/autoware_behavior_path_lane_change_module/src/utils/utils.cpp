@@ -1332,7 +1332,7 @@ bool filter_target_lane_objects(
       !boost::geometry::disjoint(object.initial_polygon, lanes_polygon.expanded_target);
 
     if (in_expanded_target_lanes && is_stopped && ahead_of_ego) {
-      leading_objects.expanded.push_back(object);
+      leading_objects.stopped_outside_boundary.push_back(object);
       return true;
     }
   }
