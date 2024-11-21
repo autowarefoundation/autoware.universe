@@ -15,8 +15,8 @@
   <maintainer email="david.wong@tier4.jp">David Wong</maintainer>
   <maintainer email="melike@leodrive.ai">Melike Tanrikulu</maintainer>
   <license>Apache License 2.0</license>
-  <license>LGPLv3</license>
   <!-- For polygon_remover, vector_map_filter -->
+  <license>LGPLv3</license>
 
   <!-- Original authors -->
   <author>Open Perception</author>
