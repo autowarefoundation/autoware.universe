@@ -42,7 +42,7 @@ using tier4_planning_msgs::msg::PathPointWithLaneId;
  * @param max_velocity Upper bound
  * @return Returns true when the object is within a certain velocity range.
  */
-bool velocity_filter(const Twist & object, double velocity_threshold, double max_velocity);
+bool velocity_filter(const Twist & object_twist, double velocity_threshold, double max_velocity);
 
 /**
  * @brief Filters object based on position.
