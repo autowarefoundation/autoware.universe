@@ -84,6 +84,7 @@ private:
   double latest_concatenate_cloud_timestamp_{0.0};
   bool drop_previous_but_late_pointcloud_{false};
   bool publish_pointcloud_{false};
+  bool is_concatenated_cloud_empty_{false};
   double diagnostic_reference_timestamp_min_{0.0};
   double diagnostic_reference_timestamp_max_{0.0};
   std::unordered_map<std::string, double> diagnostic_topic_to_original_stamp_map_;

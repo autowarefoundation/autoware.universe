@@ -212,7 +212,6 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
   if (input_ptr->data.empty()) {
     RCLCPP_WARN_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), 1000, "Empty sensor points!");
-    return;
   }
 
   // protect cloud collectors list
@@ -275,6 +274,11 @@ void PointCloudConcatenateDataSynchronizerComponent::publish_clouds(
     RCLCPP_ERROR(this->get_logger(), "Concatenate cloud is a nullptr.");
     return;
   }
+  if (concatenated_cloud_result.concatenate_cloud_ptr == nullptr) {
+    RCLCPP_WARN(this->get_logger(), "Concatenate cloud is an empty pointcloud.");
+    is_concatenated_cloud_empty_ = true;
+  }
+
   current_concatenate_cloud_timestamp_ =
     rclcpp::Time(concatenated_cloud_result.concatenate_cloud_ptr->header.stamp).seconds();
 
@@ -403,17 +407,24 @@ void PointCloudConcatenateDataSynchronizerComponent::check_concat_status(
     int8_t level = diagnostic_msgs::msg::DiagnosticStatus::OK;
     std::string message = "Concatenated pointcloud is published and include all topics";
 
-    if (topic_miss && drop_previous_but_late_pointcloud_) {
-      level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
-      message =
-        "Concatenated pointcloud is missing some topics and is not published because it arrived "
-        "too late.";
-    } else if (drop_previous_but_late_pointcloud_) {
-      level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
-      message = "Concatenated pointcloud is not published as it is too late";
-    } else if (topic_miss) {
-      level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
-      message = "Concatenated pointcloud is published but miss some topics";
+    if (drop_previous_but_late_pointcloud_) {
+      if (topic_miss) {
+        level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+        message =
+          "Concatenated pointcloud is missing some topics and is not published because it arrived "
+          "too late";
+      } else {
+        level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+        message = "Concatenated pointcloud is not published as it is too late";
+      }
+    } else {
+      if (is_concatenated_cloud_empty_) {
+        level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+        message = "Concatenated pointcloud is empty";
+      } else if (topic_miss) {
+        level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+        message = "Concatenated pointcloud is published but miss some topics";
+      }
     }
 
     stat.summary(level, message);

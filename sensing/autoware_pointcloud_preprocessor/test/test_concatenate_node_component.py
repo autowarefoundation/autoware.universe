@@ -556,7 +556,7 @@ class TestConcatenateNode(unittest.TestCase):
         """Test the abnormal situation when a pointcloud is empty and other pointclouds are dropped.
 
         This can test that
-        1. The concatenate node ignore empty pointcloud and do not publish any pointcloud.
+        1. The concatenate node publish an empty pointcloud.
         """
         time.sleep(1)
         global GLOBAL_SECONDS
@@ -585,7 +585,7 @@ class TestConcatenateNode(unittest.TestCase):
 
         self.assertEqual(
             len(self.msg_buffer),
-            0,
+            1,
             "The number of concatenate pointcloud has different number as expected.",
         )
 
