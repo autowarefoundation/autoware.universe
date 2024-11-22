@@ -74,6 +74,8 @@ private:
 class DiagNode : public DiagUnit
 {
 public:
+  virtual ~DiagNode() = default;
+
   using DiagNodeStruct = tier4_system_msgs::msg::DiagNodeStruct;
   using DiagNodeStatus = tier4_system_msgs::msg::DiagNodeStatus;
   explicit DiagNode(const DiagNodeStruct & msg) : struct_(msg) {}
@@ -95,6 +97,8 @@ private:
 class DiagLeaf : public DiagUnit
 {
 public:
+  virtual ~DiagLeaf() = default;
+
   using DiagLeafStruct = tier4_system_msgs::msg::DiagLeafStruct;
   using DiagLeafStatus = tier4_system_msgs::msg::DiagLeafStatus;
   explicit DiagLeaf(const DiagLeafStruct & msg) : struct_(msg) {}
