@@ -76,8 +76,11 @@ ObjectLaneletFilterNode::ObjectLaneletFilterNode(const rclcpp::NodeOptions & nod
     std::make_unique<autoware::universe_utils::DebugPublisher>(this, "object_lanelet_filter");
   published_time_publisher_ =
     std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
-  viz_pub_ =
-    this->create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/marker", rclcpp::QoS{1});
+
+  if (filter_settings_.debug) {
+    viz_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>(
+      "~/debug/marker", rclcpp::QoS{1});
+  }
 }
 
 bool isInPolygon(

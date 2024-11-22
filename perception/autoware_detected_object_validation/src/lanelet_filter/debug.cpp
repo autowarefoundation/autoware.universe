@@ -24,6 +24,8 @@
 #include <lanelet2_core/geometry/LaneletMap.h>
 #include <lanelet2_core/geometry/Polygon.h>
 
+#include <optional>
+
 namespace autoware::detected_object_validation
 {
 namespace lanelet_filter
@@ -33,10 +35,13 @@ using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 
 template <typename T>
-visualization_msgs::msg::Marker createPolygonMarker(
+std::optional<visualization_msgs::msg::Marker> createPolygonMarker(
   T polygon, rclcpp::Time stamp, std::string_view ns, size_t marker_id,
   std_msgs::msg::ColorRGBA color)
 {
+  if (polygon.empty()) {
+    return std::nullopt;
+  }
   const constexpr std::string_view FRAME_ID = "map";
 
   auto create_marker = [&](auto marker_type) {
@@ -103,15 +108,17 @@ void ObjectLaneletFilterNode::publishDebugMarkers(
   color.r = 0.3f;
   color.g = 1.0f;
   color.b = 0.2f;
-  auto marker = createPolygonMarker(hull, stamp, lanelet_range, ++marker_id, color);
-  marker_array.markers.push_back(std::move(marker));
+  if (auto marker = createPolygonMarker(hull, stamp, lanelet_range, ++marker_id, color); marker) {
+    marker_array.markers.push_back(std::move(*marker));
+  }
   for (auto & box_and_lanelet : lanelets) {
     color.r = 0.2;
     color.g = 0.5;
     color.b = 1.0;
     auto p = box_and_lanelet.second.polygon;
-    auto marker = createPolygonMarker(p, stamp, roi, ++marker_id, color);
-    marker_array.markers.push_back(std::move(marker));
+    if (auto marker = createPolygonMarker(p, stamp, roi, ++marker_id, color); marker) {
+      marker_array.markers.push_back(std::move(*marker));
+    }
   }
   viz_pub_->publish(marker_array);
 }
