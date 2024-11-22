@@ -66,13 +66,14 @@ TEST(BehaviorPathPlanningObjectsFiltering, velocity_filter)
   using autoware::behavior_path_planner::utils::path_safety_checker::filter::velocity_filter;
 
   PredictedObject predicted_obj;
-  predicted_obj.kinematics.initial_twist_with_covariance.twist.linear.x = 4.0;
-  predicted_obj.kinematics.initial_twist_with_covariance.twist.linear.y = 3.0;
+  auto & twist = predicted_obj.kinematics.initial_twist_with_covariance.twist;
+  twist.linear.x = 4.0;
+  twist.linear.y = 3.0;
 
-  EXPECT_TRUE(velocity_filter(predicted_obj, 4.0, 10.0));
-  EXPECT_FALSE(velocity_filter(predicted_obj, 6.0, 10.0));
-  EXPECT_FALSE(velocity_filter(predicted_obj, 2.0, 4.9));
-  EXPECT_FALSE(velocity_filter(predicted_obj, 6.0, 2.0));
+  EXPECT_TRUE(velocity_filter(twist, 4.0, 10.0));
+  EXPECT_FALSE(velocity_filter(twist, 6.0, 10.0));
+  EXPECT_FALSE(velocity_filter(twist, 2.0, 4.9));
+  EXPECT_FALSE(velocity_filter(twist, 6.0, 2.0));
 }
 
 TEST(BehaviorPathPlanningObjectsFiltering, position_filter)
