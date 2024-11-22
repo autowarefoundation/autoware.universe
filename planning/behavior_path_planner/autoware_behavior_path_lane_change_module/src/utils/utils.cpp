@@ -741,22 +741,16 @@ bool isParkedObject(
 
 bool is_delay_lane_change(
   const CommonDataPtr & common_data_ptr, const LaneChangePath & lane_change_path,
-  const std::vector<ExtendedPredictedObject> & target_lane_objects,
+  const std::vector<ExtendedPredictedObject> & target_objects,
   CollisionCheckDebugMap & object_debug)
 {
   const auto & current_lane_path = common_data_ptr->current_lanes_path;
 
   if (
-    target_lane_objects.empty() || lane_change_path.path.points.empty() ||
+    target_objects.empty() || lane_change_path.path.points.empty() ||
     current_lane_path.points.empty()) {
     return false;
   }
-
-  const auto vel_threshold = common_data_ptr->lc_param_ptr->stopped_object_velocity_threshold;
-  auto is_static = [&vel_threshold](const ExtendedPredictedObject & obj) {
-    const auto obj_vel_norm = std::hypot(obj.initial_twist.linear.x, obj.initial_twist.linear.y);
-    return obj_vel_norm < vel_threshold;
-  };
 
   const auto dist_to_end = common_data_ptr->transient_data.dist_to_terminal_end;
   const auto dist_buffer = common_data_ptr->transient_data.current_dist_buffer.min;
@@ -765,24 +759,26 @@ bool is_delay_lane_change(
     return dist_obj_to_end <= dist_buffer;
   };
 
-  const auto lc_length = lane_change_path.info.length.lane_changing;
-  auto is_sufficient_gap = [&lc_length](
+  const auto ego_vel = common_data_ptr->get_ego_speed();
+  const auto min_lon_acc = common_data_ptr->lc_param_ptr->min_longitudinal_acc;
+  const auto gap_threshold = std::abs((ego_vel * ego_vel) / (2 * min_lon_acc));
+  auto is_sufficient_gap = [&gap_threshold](
                              const ExtendedPredictedObject & current_obj,
                              const ExtendedPredictedObject & next_obj) {
     const auto curr_obj_half_length = current_obj.shape.dimensions.x;
     const auto next_obj_half_length = next_obj.shape.dimensions.x;
     const auto dist_current_to_next = next_obj.dist_from_ego - current_obj.dist_from_ego;
     const auto gap_length = dist_current_to_next - curr_obj_half_length - next_obj_half_length;
-    return gap_length > lc_length;
+    return gap_length > gap_threshold;
   };
 
   const auto & delay_lc_param = common_data_ptr->lc_param_ptr->delay;
 
-  auto it = target_lane_objects.begin();
-  for (; it < target_lane_objects.end(); ++it) {
+  auto it = target_objects.begin();
+  for (; it < target_objects.end(); ++it) {
     if (is_near_end(*it)) break;
 
-    if (!is_static(*it) || it->dist_from_ego < lc_length) continue;
+    if (it->dist_from_ego < lane_change_path.info.length.lane_changing) continue;
 
     if (
       delay_lc_param.check_only_parked_vehicle &&
@@ -793,7 +789,7 @@ bool is_delay_lane_change(
     }
 
     auto next_it = std::next(it);
-    if (next_it == target_lane_objects.end() || is_sufficient_gap(*it, *next_it)) {
+    if (next_it == target_objects.end() || is_sufficient_gap(*it, *next_it)) {
       auto debug = utils::path_safety_checker::createObjectDebug(*it);
       debug.second.unsafe_reason = "delay lane change";
       utils::path_safety_checker::updateCollisionCheckDebugMap(object_debug, debug, false);

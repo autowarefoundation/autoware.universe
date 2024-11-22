@@ -132,9 +132,28 @@ bool isParkedObject(
   const ExtendedPredictedObject & object, const double buffer_to_bound,
   const double ratio_threshold);
 
+/**
+ * @brief Checks if delaying of lane change maneuver is necessary
+ *
+ * @details Scans through the provided target objects (assumed to be ordered from closest to
+ * furthest), and returns true if any of the objects satisfy the following conditions:
+ *  - Not near the end of current lanes
+ *  - There is sufficient distance from object to next one to do lane change
+ * If the parameter delay_lc_param.check_only_parked_vehicle is set to True, only objects
+ * which pass isParkedObject() check will be considered.
+ *
+ * @param common_data_ptr Shared pointer to CommonData that holds necessary lanes info, parameters,
+ *                        and transient data.
+ * @param lane_change_path Cadidate lane change path to apply checks on.
+ * @param target_objects Relevant objects to consider for delay LC checks (assumed to only include
+ *                       target lane leading static objects).
+ * @param object_debug Collision check debug struct to be updated if any of the traget objects
+ *                     satisfy the conditions.
+ * @return bool True if conditions to delay lane change are met
+ */
 bool is_delay_lane_change(
   const CommonDataPtr & common_data_ptr, const LaneChangePath & lane_change_path,
-  const std::vector<ExtendedPredictedObject> & target_lane_static_objects,
+  const std::vector<ExtendedPredictedObject> & target_objects,
   CollisionCheckDebugMap & object_debug);
 
 bool passed_parked_objects(

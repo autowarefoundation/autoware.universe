@@ -224,13 +224,13 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
   }
 
   // lane change delay
-  p.delay.enable = getOrDeclareParameter<bool>(*node, parameter("delay.enable"));
+  p.delay.enable = getOrDeclareParameter<bool>(*node, parameter("delay_lane_change.enable"));
   p.delay.check_only_parked_vehicle =
-    getOrDeclareParameter<bool>(*node, parameter("delay.check_only_parked_vehicle"));
+    getOrDeclareParameter<bool>(*node, parameter("delay_lane_change.check_only_parked_vehicle"));
   p.delay.min_road_shoulder_width =
-    getOrDeclareParameter<double>(*node, parameter("delay.min_road_shoulder_width"));
-  p.delay.th_parked_vehicle_shift_ratio =
-    getOrDeclareParameter<double>(*node, parameter("delay.th_parked_vehicle_shift_ratio"));
+    getOrDeclareParameter<double>(*node, parameter("delay_lane_change.min_road_shoulder_width"));
+  p.delay.th_parked_vehicle_shift_ratio = getOrDeclareParameter<double>(
+    *node, parameter("delay_lane_change.th_parked_vehicle_shift_ratio"));
 
   // lane change cancel
   p.cancel.enable_on_prepare_phase =

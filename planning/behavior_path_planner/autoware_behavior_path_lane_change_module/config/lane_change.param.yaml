@@ -27,7 +27,7 @@
         longitudinal_distance_diff_threshold:
           prepare: 1.0
           lane_changing: 1.0
-      
+
       # delay lane change
       delay_lane_change:
         enable: true
