@@ -220,7 +220,6 @@ void MissionPlanner::on_set_lanelet_route(
   const SetLaneletRoute::Request::SharedPtr req, const SetLaneletRoute::Response::SharedPtr res)
 {
   using ResponseCode = autoware_adapi_v1_msgs::srv::SetRoute::Response;
-  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   const auto is_reroute = state_.state == RouteState::SET;
 
   if (state_.state != RouteState::UNSET && state_.state != RouteState::SET) {
@@ -276,6 +275,7 @@ void MissionPlanner::on_set_lanelet_route(
       ResponseCode::ERROR_REROUTE_FAILED, "New route is not safe. Reroute failed.");
   }
 
+  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   change_route(route);
   change_state(RouteState::SET);
   res->status.success = true;
@@ -294,7 +294,6 @@ void MissionPlanner::on_set_waypoint_route(
   const SetWaypointRoute::Request::SharedPtr req, const SetWaypointRoute::Response::SharedPtr res)
 {
   using ResponseCode = autoware_adapi_v1_msgs::srv::SetRoutePoints::Response;
-  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   const auto is_reroute = state_.state == RouteState::SET;
 
   if (state_.state != RouteState::UNSET && state_.state != RouteState::SET) {
@@ -345,6 +344,7 @@ void MissionPlanner::on_set_waypoint_route(
       ResponseCode::ERROR_REROUTE_FAILED, "New route is not safe. Reroute failed.");
   }
 
+  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   change_route(route);
   change_state(RouteState::SET);
   res->status.success = true;
