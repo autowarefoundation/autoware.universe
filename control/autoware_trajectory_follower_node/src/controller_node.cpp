@@ -62,6 +62,8 @@ Controller::Controller(const rclcpp::NodeOptions & node_options) : Node("control
   enable_control_cmd_horizon_pub_ =
     declare_parameter<bool>("enable_control_cmd_horizon_pub", false);
 
+  diag_updater_->setHardwareID("trajectory_follower_node");
+
   const auto lateral_controller_mode =
     getLateralControllerMode(declare_parameter<std::string>("lateral_controller_mode"));
   switch (lateral_controller_mode) {
@@ -142,8 +144,8 @@ bool Controller::processData(rclcpp::Clock & clock)
   bool is_ready = true;
 
   const auto & logData = [&clock, this](const std::string & data_type) {
-    std::string msg = "Waiting for " + data_type + " data";
-    RCLCPP_INFO_THROTTLE(get_logger(), clock, logger_throttle_interval, msg.c_str());
+    RCLCPP_INFO_THROTTLE(
+      get_logger(), clock, logger_throttle_interval, "Waiting for %s data", data_type.c_str());
   };
 
   const auto & getData = [&logData](auto & dest, auto & sub, const std::string & data_type = "") {
