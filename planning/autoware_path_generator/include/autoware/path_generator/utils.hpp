@@ -30,15 +30,15 @@ using tier4_planning_msgs::msg::PathWithLaneId;
 
 namespace utils
 {
-std::optional<lanelet::ConstLanelets> get_lanelet_sequence(
+std::optional<lanelet::LaneletSequence> get_lanelet_sequence(
   const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data,
   const geometry_msgs::msg::Pose & current_pose, const double forward_distance,
   const double backward_distance);
 
-std::optional<lanelet::ConstLanelets> get_lanelet_sequence_after(
+std::optional<lanelet::ConstLanelets> get_lanelets_after(
   const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data, const double distance);
 
-std::optional<lanelet::ConstLanelets> get_lanelet_sequence_up_to(
+std::optional<lanelet::ConstLanelets> get_lanelets_up_to(
   const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data, const double distance);
 
 std::optional<lanelet::ConstLanelet> get_next_lanelet_within_route(
@@ -48,9 +48,10 @@ std::optional<lanelet::ConstLanelet> get_previous_lanelet_within_route(
   const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data);
 
 std::vector<std::pair<lanelet::ConstPoints3d, std::pair<double, double>>> get_waypoint_groups(
-  const lanelet::ConstLanelets & lanelet_sequence, const lanelet::LaneletMap & lanelet_map);
+  const lanelet::LaneletSequence & lanelet_sequence, const lanelet::LaneletMap & lanelet_map,
+  const double group_separation_threshold, const double interval_margin_ratio);
 
-void remove_overlapping_points(PathWithLaneId & path);
+void remove_overlapping_points(std::vector<PathPointWithLaneId> & path_points);
 }  // namespace utils
 }  // namespace autoware::path_generator
 

@@ -32,7 +32,7 @@ bool exists(const std::vector<T> & vec, const T & item)
 }
 }  // namespace
 
-std::optional<lanelet::ConstLanelets> get_lanelet_sequence(
+std::optional<lanelet::LaneletSequence> get_lanelet_sequence(
   const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data,
   const geometry_msgs::msg::Pose & current_pose, const double forward_distance,
   const double backward_distance)
@@ -44,35 +44,33 @@ std::optional<lanelet::ConstLanelets> get_lanelet_sequence(
   const auto arc_coordinates = lanelet::utils::getArcCoordinates({lanelet}, current_pose);
   const auto lanelet_length = lanelet::utils::getLaneletLength2d(lanelet);
 
-  const auto lanelet_sequence_backward =
-    get_lanelet_sequence_up_to(lanelet, planner_data, backward_distance - arc_coordinates.length);
-  if (!lanelet_sequence_backward) {
+  const auto backward_lanelets =
+    get_lanelets_up_to(lanelet, planner_data, backward_distance - arc_coordinates.length);
+  if (!backward_lanelets) {
     return std::nullopt;
   }
 
-  const auto lanelet_sequence_forward = get_lanelet_sequence_after(
+  const auto forward_lanelets = get_lanelets_after(
     lanelet, planner_data, forward_distance - (lanelet_length - arc_coordinates.length));
-  if (!lanelet_sequence_forward) {
+  if (!forward_lanelets) {
     return std::nullopt;
   }
 
-  lanelet::ConstLanelets lanelet_sequence(std::move(*lanelet_sequence_backward));
-  lanelet_sequence.push_back(lanelet);
-  std::move(
-    lanelet_sequence_forward->begin(), lanelet_sequence_forward->end(),
-    std::back_inserter(lanelet_sequence));
+  lanelet::ConstLanelets lanelets(std::move(*backward_lanelets));
+  lanelets.push_back(lanelet);
+  std::move(forward_lanelets->begin(), forward_lanelets->end(), std::back_inserter(lanelets));
 
-  return lanelet_sequence;
+  return lanelets;
 }
 
-std::optional<lanelet::ConstLanelets> get_lanelet_sequence_after(
+std::optional<lanelet::ConstLanelets> get_lanelets_after(
   const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data, const double distance)
 {
   if (!exists(planner_data.route_lanelets, lanelet)) {
     return std::nullopt;
   }
 
-  lanelet::ConstLanelets lanelet_sequence{};
+  lanelet::ConstLanelets lanelets{};
   auto current_lanelet = lanelet;
   auto length = 0.;
 
@@ -82,22 +80,22 @@ std::optional<lanelet::ConstLanelets> get_lanelet_sequence_after(
       break;
     }
 
-    lanelet_sequence.push_back(*next_lanelet);
+    lanelets.push_back(*next_lanelet);
     current_lanelet = *next_lanelet;
     length += lanelet::utils::getLaneletLength2d(*next_lanelet);
   }
 
-  return lanelet_sequence;
+  return lanelets;
 }
 
-std::optional<lanelet::ConstLanelets> get_lanelet_sequence_up_to(
+std::optional<lanelet::ConstLanelets> get_lanelets_up_to(
   const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data, const double distance)
 {
   if (!exists(planner_data.route_lanelets, lanelet)) {
     return std::nullopt;
   }
 
-  lanelet::ConstLanelets lanelet_sequence{};
+  lanelet::ConstLanelets lanelets{};
   auto current_lanelet = lanelet;
   auto length = 0.;
 
@@ -107,13 +105,13 @@ std::optional<lanelet::ConstLanelets> get_lanelet_sequence_up_to(
       break;
     }
 
-    lanelet_sequence.push_back(*prev_lanelet);
+    lanelets.push_back(*prev_lanelet);
     current_lanelet = *prev_lanelet;
     length += lanelet::utils::getLaneletLength2d(*prev_lanelet);
   }
 
-  std::reverse(lanelet_sequence.begin(), lanelet_sequence.end());
-  return lanelet_sequence;
+  std::reverse(lanelets.begin(), lanelets.end());
+  return lanelets;
 }
 
 std::optional<lanelet::ConstLanelet> get_next_lanelet_within_route(
@@ -155,53 +153,47 @@ std::optional<lanelet::ConstLanelet> get_previous_lanelet_within_route(
 }
 
 std::vector<std::pair<lanelet::ConstPoints3d, std::pair<double, double>>> get_waypoint_groups(
-  const lanelet::ConstLanelets & lanelet_sequence, const lanelet::LaneletMap & lanelet_map)
+  const lanelet::LaneletSequence & lanelet_sequence, const lanelet::LaneletMap & lanelet_map,
+  const double group_separation_threshold, const double interval_margin_ratio)
 {
-  std::vector<std::pair<lanelet::ConstPoints3d, std::pair<double, double>>> waypoint_groups;
+  std::vector<std::pair<lanelet::ConstPoints3d, std::pair<double, double>>> waypoint_groups{};
 
-  double arc_length_offset = 0.;
+  const auto get_interval_bound =
+    [&](const lanelet::ConstPoint3d & point, const double lateral_distance_factor) {
+      const auto arc_coordinates = lanelet::geometry::toArcCoordinates(
+        lanelet_sequence.centerline2d(), lanelet::utils::to2D(point));
+      return arc_coordinates.length + lateral_distance_factor * std::abs(arc_coordinates.distance);
+    };
+
   for (const auto & lanelet : lanelet_sequence) {
     if (!lanelet.hasAttribute("waypoints")) {
-      arc_length_offset += lanelet::utils::getLaneletLength2d(lanelet);
       continue;
     }
 
     const auto waypoints_id = lanelet.attribute("waypoints").asId().value();
     const auto & waypoints = lanelet_map.lineStringLayer.get(waypoints_id);
-    const auto get_interval_bound =
-      [&](const lanelet::ConstPoint3d & point, const double lateral_distance_factor) {
-        const auto arc_coordinates =
-          lanelet::geometry::toArcCoordinates(lanelet.centerline2d(), lanelet::utils::to2D(point));
-        return arc_length_offset + arc_coordinates.length +
-               lateral_distance_factor * std::abs(arc_coordinates.distance);
-      };
 
-    constexpr auto new_group_threshold = 1.0;
-    constexpr auto lateral_distance_factor = 10.0;
     if (
       waypoint_groups.empty() ||
       lanelet::geometry::distance2d(waypoint_groups.back().first.back(), waypoints.front()) >
-        new_group_threshold) {
+        group_separation_threshold) {
       waypoint_groups.emplace_back().second.first =
-        get_interval_bound(waypoints.front(), -lateral_distance_factor);
+        get_interval_bound(waypoints.front(), -interval_margin_ratio);
     }
     waypoint_groups.back().second.second =
-      get_interval_bound(waypoints.back(), lateral_distance_factor);
+      get_interval_bound(waypoints.back(), interval_margin_ratio);
 
-    for (const auto & waypoint : waypoints) {
-      waypoint_groups.back().first.push_back(waypoint);
-    }
-
-    arc_length_offset += lanelet::utils::getLaneletLength2d(lanelet);
+    waypoint_groups.back().first.insert(
+      waypoint_groups.back().first.end(), waypoints.begin(), waypoints.end());
   }
 
   return waypoint_groups;
 }
 
-void remove_overlapping_points(PathWithLaneId & path)
+void remove_overlapping_points(std::vector<PathPointWithLaneId> & path_points)
 {
-  auto filtered_path_end_it = path.points.begin();
-  for (auto it = std::next(path.points.begin()); it != path.points.end();) {
+  auto filtered_path_end_it = path_points.begin();
+  for (auto it = std::next(path_points.begin()); it != path_points.end();) {
     constexpr auto min_interval = 0.001;
     if (
       autoware::universe_utils::calcDistance3d(filtered_path_end_it->point, it->point) <
@@ -209,7 +201,7 @@ void remove_overlapping_points(PathWithLaneId & path)
       filtered_path_end_it->lane_ids.push_back(it->lane_ids.front());
       filtered_path_end_it->point.longitudinal_velocity_mps = std::min(
         filtered_path_end_it->point.longitudinal_velocity_mps, it->point.longitudinal_velocity_mps);
-      it = path.points.erase(it);
+      it = path_points.erase(it);
     } else {
       filtered_path_end_it = it;
       ++it;
