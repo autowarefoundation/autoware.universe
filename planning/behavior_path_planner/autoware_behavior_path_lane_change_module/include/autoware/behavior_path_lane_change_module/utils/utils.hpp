@@ -54,6 +54,7 @@ using behavior_path_planner::lane_change::CommonDataPtr;
 using behavior_path_planner::lane_change::LanesPolygon;
 using behavior_path_planner::lane_change::ModuleType;
 using behavior_path_planner::lane_change::PathSafetyStatus;
+using behavior_path_planner::lane_change::TargetLaneLeadingObjects;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
@@ -149,8 +150,7 @@ lanelet::BasicPolygon2d create_polygon(
   const lanelet::ConstLanelets & lanes, const double start_dist, const double end_dist);
 
 ExtendedPredictedObject transform(
-  const PredictedObject & object, const BehaviorPathPlannerParameters & common_parameters,
-  const LaneChangeParameters & lane_change_parameters);
+  const PredictedObject & object, const LaneChangeParameters & lane_change_parameters);
 
 bool is_collided_polygons_in_lanelet(
   const std::vector<Polygon2d> & collided_polygons, const lanelet::BasicPolygon2d & lanes_polygon);
@@ -245,16 +245,13 @@ bool is_same_lane_with_prev_iteration(
 
 bool is_ahead_of_ego(
   const CommonDataPtr & common_data_ptr, const PathWithLaneId & path,
-  const PredictedObject & object);
+  const ExtendedPredictedObject & object);
 
 bool is_before_terminal(
   const CommonDataPtr & common_data_ptr, const PathWithLaneId & path,
-  const PredictedObject & object);
+  const ExtendedPredictedObject & object);
 
 double calc_angle_to_lanelet_segment(const lanelet::ConstLanelets & lanelets, const Pose & pose);
-
-ExtendedPredictedObjects transform_to_extended_objects(
-  const CommonDataPtr & common_data_ptr, const std::vector<PredictedObject> & objects);
 
 double get_distance_to_next_regulatory_element(
   const CommonDataPtr & common_data_ptr, const bool ignore_crosswalk = false,
@@ -279,7 +276,7 @@ double get_distance_to_next_regulatory_element(
  * found, returns the maximum possible double value.
  */
 double get_min_dist_to_current_lanes_obj(
-  const CommonDataPtr & common_data_ptr, const FilteredByLanesExtendedObjects & filtered_objects,
+  const CommonDataPtr & common_data_ptr, const FilteredLanesObjects & filtered_objects,
   const double dist_to_target_lane_start, const PathWithLaneId & path);
 
 /**
@@ -299,8 +296,8 @@ double get_min_dist_to_current_lanes_obj(
  * otherwise, false.
  */
 bool has_blocking_target_object(
-  const CommonDataPtr & common_data_ptr, const FilteredByLanesExtendedObjects & filtered_objects,
-  const double stop_arc_length, const PathWithLaneId & path);
+  const TargetLaneLeadingObjects & target_leading_objects, const double stop_arc_length,
+  const PathWithLaneId & path);
 
 /**
  * @brief Checks if the ego vehicle has passed any turn direction within an intersection.
@@ -347,5 +344,34 @@ std::vector<LineString2d> get_line_string_paths(const ExtendedPredictedObject & 
  */
 bool has_overtaking_turn_lane_object(
   const CommonDataPtr & common_data_ptr, const ExtendedPredictedObjects & trailing_objects);
+
+/**
+ * @brief Filters objects based on their positions and velocities relative to the ego vehicle and
+ * the target lane.
+ *
+ * This function evaluates whether an object should be classified as a leading or trailing object
+ * in the context of a lane change. Objects are filtered based on their lateral distance from
+ * the ego vehicle, velocity, and whether they are within the target lane or its expanded
+ * boundaries.
+ *
+ * @param common_data_ptr Shared pointer to CommonData containing information about current lanes,
+ *                        vehicle dimensions, lane polygons, and behavior parameters.
+ * @param object An extended predicted object representing a potential obstacle in the environment.
+ * @param dist_ego_to_current_lanes_center Distance from the ego vehicle to the center of the
+ * current lanes.
+ * @param ahead_of_ego Boolean flag indicating if the object is ahead of the ego vehicle.
+ * @param before_terminal Boolean flag indicating if the ego vehicle is before the terminal point of
+ * the lane.
+ * @param leading_objects Reference to a structure for storing leading objects (stopped, moving, or
+ * outside boundaries).
+ * @param trailing_objects Reference to a collection for storing trailing objects.
+ *
+ * @return true if the object is classified as either leading or trailing, false otherwise.
+ */
+bool filter_target_lane_objects(
+  const CommonDataPtr & common_data_ptr, const ExtendedPredictedObject & object,
+  const double dist_ego_to_current_lanes_center, const bool ahead_of_ego,
+  const bool before_terminal, TargetLaneLeadingObjects & leading_objects,
+  ExtendedPredictedObjects & trailing_objects);
 }  // namespace autoware::behavior_path_planner::utils::lane_change
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__UTILS_HPP_

@@ -68,8 +68,6 @@ private:
 
   // algorithm specific param
   const RRTStarParam rrtstar_param_;
-
-  const VehicleShape original_vehicle_shape_;
 };
 
 }  // namespace autoware::freespace_planning_algorithms
