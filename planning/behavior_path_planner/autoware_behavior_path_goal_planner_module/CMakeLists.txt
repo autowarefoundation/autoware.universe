@@ -27,7 +27,7 @@ if(BUILD_EXAMPLES)
   FetchContent_Declare(
     matplotlibcpp17
     GIT_REPOSITORY https://github.com/soblin/matplotlibcpp17.git
-    GIT_TAG main
+    GIT_TAG master
   )
   FetchContent_MakeAvailable(matplotlibcpp17)
 

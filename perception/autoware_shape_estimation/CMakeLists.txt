@@ -34,6 +34,7 @@ set(${PROJECT_NAME}_SOURCES
   lib/corrector/utils.cpp
   lib/corrector/no_corrector.cpp
   lib/corrector/vehicle_corrector.cpp
+  lib/corrector/reference_object_based_corrector.cpp
   lib/corrector/reference_shape_size_corrector.cpp
 )
 

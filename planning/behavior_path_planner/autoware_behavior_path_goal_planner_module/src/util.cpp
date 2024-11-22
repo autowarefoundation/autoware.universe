@@ -740,4 +740,86 @@ lanelet::Lanelet createDepartureCheckLanelet(
     left_side_parking ? inner_linestring : outer_linestring);
 }
 
+std::optional<Pose> calcRefinedGoal(
+  const Pose & goal_pose, const std::shared_ptr<RouteHandler> route_handler,
+  const bool left_side_parking, const double vehicle_width, const double base_link2front,
+  const double base_link2rear, const GoalPlannerParameters & parameters)
+{
+  const lanelet::ConstLanelets pull_over_lanes = goal_planner_utils::getPullOverLanes(
+    *route_handler, left_side_parking, parameters.backward_goal_search_length,
+    parameters.forward_goal_search_length);
+
+  lanelet::Lanelet closest_pull_over_lanelet{};
+  lanelet::utils::query::getClosestLanelet(pull_over_lanes, goal_pose, &closest_pull_over_lanelet);
+
+  // calc closest center line pose
+  Pose center_pose{};
+  {
+    // find position
+    const auto lanelet_point = lanelet::utils::conversion::toLaneletPoint(goal_pose.position);
+    const auto segment = lanelet::utils::getClosestSegment(
+      lanelet::utils::to2D(lanelet_point), closest_pull_over_lanelet.centerline());
+    const auto p1 = segment.front().basicPoint();
+    const auto p2 = segment.back().basicPoint();
+    const auto direction_vector = (p2 - p1).normalized();
+    const auto p1_to_goal = lanelet_point.basicPoint() - p1;
+    const double s = direction_vector.dot(p1_to_goal);
+    const auto refined_point = p1 + direction_vector * s;
+
+    center_pose.position.x = refined_point.x();
+    center_pose.position.y = refined_point.y();
+    center_pose.position.z = refined_point.z();
+
+    // find orientation
+    const double yaw = std::atan2(direction_vector.y(), direction_vector.x());
+    tf2::Quaternion tf_quat;
+    tf_quat.setRPY(0, 0, yaw);
+    center_pose.orientation = tf2::toMsg(tf_quat);
+  }
+
+  const auto distance_from_bound = utils::getSignedDistanceFromBoundary(
+    pull_over_lanes, vehicle_width, base_link2front, base_link2rear, center_pose,
+    left_side_parking);
+  if (!distance_from_bound) {
+    return std::nullopt;
+  }
+
+  const double sign = left_side_parking ? -1.0 : 1.0;
+  const double offset_from_center_line =
+    sign * (distance_from_bound.value() + parameters.margin_from_boundary);
+
+  const auto refined_goal_pose = calcOffsetPose(center_pose, 0, -offset_from_center_line, 0);
+
+  return refined_goal_pose;
+}
+
+std::optional<Pose> calcClosestPose(
+  const lanelet::ConstLineString3d line, const Point & query_point)
+{
+  const auto segment =
+    lanelet::utils::getClosestSegment(lanelet::BasicPoint2d{query_point.x, query_point.y}, line);
+  if (segment.empty()) {
+    return std::nullopt;
+  }
+
+  const Eigen::Vector2d direction(
+    (segment.back().basicPoint2d() - segment.front().basicPoint2d()).normalized());
+  const Eigen::Vector2d xf(segment.front().basicPoint2d());
+  const Eigen::Vector2d x(query_point.x, query_point.y);
+  const Eigen::Vector2d p = xf + (x - xf).dot(direction) * direction;
+
+  geometry_msgs::msg::Pose closest_pose;
+  closest_pose.position.x = p.x();
+  closest_pose.position.y = p.y();
+  closest_pose.position.z = query_point.z;
+
+  const double lane_yaw =
+    std::atan2(segment.back().y() - segment.front().y(), segment.back().x() - segment.front().x());
+  tf2::Quaternion q;
+  q.setRPY(0, 0, lane_yaw);
+  closest_pose.orientation = tf2::toMsg(q);
+
+  return closest_pose;
+}
+
 }  // namespace autoware::behavior_path_planner::goal_planner_utils

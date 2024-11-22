@@ -39,6 +39,7 @@ using geometry_msgs::msg::Twist;
 using nav_msgs::msg::Odometry;
 using route_handler::Direction;
 using route_handler::RouteHandler;
+using universe_utils::Polygon2d;
 using utils::path_safety_checker::ExtendedPredictedObjects;
 
 struct LateralAccelerationMap
@@ -110,6 +111,7 @@ struct Parameters
   // lane change parameters
   double backward_length_buffer_for_end_of_lane{0.0};
   double backward_length_buffer_for_blocking_object{0.0};
+  double backward_length_from_intersection{5.0};
   double lane_changing_lateral_jerk{0.5};
   double minimum_lane_changing_velocity{5.6};
   double lane_change_prepare_duration{4.0};
@@ -220,6 +222,7 @@ struct Lanes
 {
   bool current_lane_in_goal_section{false};
   bool target_lane_in_goal_section{false};
+  lanelet::ConstLanelet ego_lane;
   lanelet::ConstLanelets current;
   lanelet::ConstLanelets target_neighbor;
   lanelet::ConstLanelets target;
@@ -308,9 +311,9 @@ struct PathSafetyStatus
 
 struct LanesPolygon
 {
-  std::optional<lanelet::BasicPolygon2d> current;
-  std::optional<lanelet::BasicPolygon2d> target;
-  std::optional<lanelet::BasicPolygon2d> expanded_target;
+  lanelet::BasicPolygon2d current;
+  lanelet::BasicPolygon2d target;
+  lanelet::BasicPolygon2d expanded_target;
   lanelet::BasicPolygon2d target_neighbor;
   std::vector<lanelet::BasicPolygon2d> preceding_target;
 };
@@ -323,6 +326,8 @@ struct MinMaxValue
 
 struct TransientData
 {
+  Polygon2d current_footprint;  // ego's polygon at current pose
+
   MinMaxValue lane_changing_length;  // lane changing length for a single lane change
   MinMaxValue
     current_dist_buffer;  // distance buffer computed backward from current lanes' terminal end
@@ -331,6 +336,8 @@ struct TransientData
   double dist_to_terminal_end{
     std::numeric_limits<double>::min()};  // distance from ego base link to the current lanes'
                                           // terminal end
+  double dist_from_prev_intersection{std::numeric_limits<double>::max()};
+  // terminal end
   double dist_to_terminal_start{
     std::numeric_limits<double>::min()};  // distance from ego base link to the current lanes'
                                           // terminal start
@@ -347,6 +354,9 @@ struct TransientData
 
   bool is_ego_near_current_terminal_start{false};
   bool is_ego_stuck{false};
+
+  bool in_turn_direction_lane{false};
+  bool in_intersection{false};
 };
 
 using RouteHandlerPtr = std::shared_ptr<RouteHandler>;

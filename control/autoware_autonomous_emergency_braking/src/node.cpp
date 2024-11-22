@@ -142,6 +142,7 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
     virtual_wall_publisher_ = this->create_publisher<MarkerArray>("~/virtual_wall", 1);
     debug_rss_distance_publisher_ =
       this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("~/debug/rss_distance", 1);
+    metrics_pub_ = this->create_publisher<MetricArray>("~/metrics", 1);
   }
   // Diagnostics
   {
@@ -400,6 +401,7 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
 {
   MarkerArray debug_markers;
   MarkerArray virtual_wall_marker;
+  auto metrics = MetricArray();
   checkCollision(debug_markers);
 
   if (!collision_data_keeper_.checkCollisionExpired()) {
@@ -416,6 +418,14 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
       }
     }
     addVirtualStopWallMarker(virtual_wall_marker);
+
+    {
+      auto metric = Metric();
+      metric.name = "decision";
+      metric.value = "brake";
+      metrics.metric_array.push_back(metric);
+    }
+
   } else {
     const std::string error_msg = "[AEB]: No Collision";
     const auto diag_level = DiagnosticStatus::OK;
@@ -425,6 +435,9 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
   // publish debug markers
   debug_marker_publisher_->publish(debug_markers);
   virtual_wall_publisher_->publish(virtual_wall_marker);
+  // publish metrics
+  metrics.stamp = get_clock()->now();
+  metrics_pub_->publish(metrics);
 }
 
 bool AEB::checkCollision(MarkerArray & debug_markers)
@@ -900,11 +913,15 @@ void AEB::getClosestObjectsOnPath(
     return autoware::universe_utils::createPoint(p.x, p.y, p.z);
   }();
 
+  const auto path_length = autoware::motion_utils::calcArcLength(ego_path);
   for (const auto & p : *points_belonging_to_cluster_hulls) {
     const auto obj_position = autoware::universe_utils::createPoint(p.x, p.y, p.z);
     const double obj_arc_length =
       autoware::motion_utils::calcSignedArcLength(ego_path, current_p, obj_position);
-    if (std::isnan(obj_arc_length)) continue;
+    if (
+      std::isnan(obj_arc_length) ||
+      obj_arc_length > path_length + vehicle_info_.max_longitudinal_offset_m)
+      continue;
 
     // calculate the lateral offset between the ego vehicle and the object
     const double lateral_offset =

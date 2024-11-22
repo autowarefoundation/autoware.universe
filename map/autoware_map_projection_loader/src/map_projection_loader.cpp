@@ -91,7 +91,7 @@ MapProjectionLoader::MapProjectionLoader(const rclcpp::NodeOptions & options)
     load_map_projector_info(yaml_filename, lanelet2_map_filename);
 
   // Publish the message
-  const auto adaptor = component_interface_utils::NodeAdaptor(this);
+  const auto adaptor = autoware::component_interface_utils::NodeAdaptor(this);
   adaptor.init_pub(publisher_);
   publisher_->publish(msg);
 }

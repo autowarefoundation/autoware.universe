@@ -14,16 +14,16 @@
 
 #include "localization_module.hpp"
 
-#include <component_interface_specs/localization.hpp>
-#include <component_interface_utils/rclcpp/exceptions.hpp>
+#include <autoware/component_interface_specs/localization.hpp>
+#include <autoware/component_interface_utils/rclcpp/exceptions.hpp>
 
 #include <memory>
 #include <string>
 
 namespace autoware::pose_initializer
 {
-using ServiceException = component_interface_utils::ServiceException;
-using Initialize = localization_interface::Initialize;
+using ServiceException = autoware::component_interface_utils::ServiceException;
+using Initialize = autoware::component_interface_specs::localization::Initialize;
 using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
 
 LocalizationModule::LocalizationModule(rclcpp::Node * node, const std::string & service_name)
@@ -39,7 +39,7 @@ std::tuple<PoseWithCovarianceStamped, bool> LocalizationModule::align_pose(
   req->pose_with_covariance = pose;
 
   if (!cli_align_->service_is_ready()) {
-    throw component_interface_utils::ServiceUnready("align server is not ready.");
+    throw autoware::component_interface_utils::ServiceUnready("align server is not ready.");
   }
 
   RCLCPP_INFO(logger_, "Call align server.");

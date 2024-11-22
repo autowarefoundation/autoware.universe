@@ -1898,17 +1898,34 @@ bool RouteHandler::planPathLaneletsBetweenCheckpoints(
     std::remove_if(
       candidates.begin(), candidates.end(), [&](const auto & l) { return !isRoadLanelet(l); }),
     candidates.end());
-  if (!lanelet::utils::query::getClosestLanelet(candidates, goal_checkpoint, &goal_lanelet)) {
-    RCLCPP_WARN_STREAM(
-      logger_, "Failed to find closest lanelet."
-                 << std::endl
-                 << " - start checkpoint: " << toString(start_checkpoint) << std::endl
-                 << " - goal checkpoint: " << toString(goal_checkpoint) << std::endl);
-    return false;
+  // if there is a lanelet in candidates that is included in previous preferred lanelets,
+  // set it as goal_lanelet.
+  // this is to select the same lane as much as possible when rerouting with waypoints.
+  const auto findGoalClosestPreferredLanelet = [&]() -> std::optional<lanelet::ConstLanelet> {
+    lanelet::ConstLanelet closest_lanelet;
+    if (getClosestPreferredLaneletWithinRoute(goal_checkpoint, &closest_lanelet)) {
+      if (std::find(candidates.begin(), candidates.end(), closest_lanelet) != candidates.end()) {
+        if (lanelet::utils::isInLanelet(goal_checkpoint, closest_lanelet)) {
+          return closest_lanelet;
+        }
+      }
+    }
+    return std::nullopt;
+  };
+  if (auto closest_lanelet = findGoalClosestPreferredLanelet()) {
+    goal_lanelet = closest_lanelet.value();
+  } else {
+    if (!lanelet::utils::query::getClosestLanelet(candidates, goal_checkpoint, &goal_lanelet)) {
+      RCLCPP_WARN_STREAM(
+        logger_, "Failed to find closest lanelet."
+                   << std::endl
+                   << " - start checkpoint: " << toString(start_checkpoint) << std::endl
+                   << " - goal checkpoint: " << toString(goal_checkpoint) << std::endl);
+      return false;
+    }
   }
 
   lanelet::Optional<lanelet::routing::Route> optional_route;
-  std::vector<lanelet::ConstLanelets> candidate_paths;
   lanelet::routing::LaneletPath shortest_path;
   bool is_route_found = false;
 

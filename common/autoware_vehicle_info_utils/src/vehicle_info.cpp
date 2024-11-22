@@ -14,6 +14,8 @@
 
 #include "autoware_vehicle_info_utils/vehicle_info.hpp"
 
+#include <rclcpp/rclcpp.hpp>
+
 namespace autoware::vehicle_info_utils
 {
 autoware::universe_utils::LinearRing2d VehicleInfo::createFootprint(const double margin) const
@@ -46,11 +48,36 @@ autoware::universe_utils::LinearRing2d VehicleInfo::createFootprint(
 }
 
 VehicleInfo createVehicleInfo(
-  const double wheel_radius_m, const double wheel_width_m, const double wheel_base_m,
+  const double wheel_radius_m, const double wheel_width_m, const double wheel_base_m_arg,
   const double wheel_tread_m, const double front_overhang_m, const double rear_overhang_m,
   const double left_overhang_m, const double right_overhang_m, const double vehicle_height_m,
-  const double max_steer_angle_rad)
+  const double max_steer_angle_rad_arg)
 {
+  double wheel_base_m = wheel_base_m_arg;
+  static constexpr double MIN_WHEEL_BASE_M = 1e-6;
+  if (std::abs(wheel_base_m) < MIN_WHEEL_BASE_M) {
+    RCLCPP_ERROR(
+      rclcpp::get_logger("vehicle_info"), "wheel_base_m %f is almost 0.0, clamping to %f",
+      wheel_base_m, MIN_WHEEL_BASE_M);
+    wheel_base_m = MIN_WHEEL_BASE_M;
+  }
+  double max_steer_angle_rad = max_steer_angle_rad_arg;
+  static constexpr double MAX_STEER_ANGLE_RAD = 1e-6;
+  if (std::abs(max_steer_angle_rad) < MAX_STEER_ANGLE_RAD) {
+    RCLCPP_ERROR(
+      rclcpp::get_logger("vehicle_info"), "max_steer_angle_rad %f is almost 0.0, clamping to %f",
+      max_steer_angle_rad, MAX_STEER_ANGLE_RAD);
+    max_steer_angle_rad = MAX_STEER_ANGLE_RAD;
+  }
+
+  if (
+    wheel_radius_m <= 0 || wheel_width_m <= 0 || wheel_base_m <= 0 || wheel_tread_m <= 0 ||
+    front_overhang_m <= 0 || rear_overhang_m <= 0 || left_overhang_m <= 0 ||
+    right_overhang_m <= 0 || vehicle_height_m <= 0 || max_steer_angle_rad <= 0) {
+    RCLCPP_ERROR(
+      rclcpp::get_logger("vehicle_info"), "given parameters contain non positive values");
+  }
+
   // Calculate derived parameters
   const double vehicle_length_m_ = front_overhang_m + wheel_base_m + rear_overhang_m;
   const double vehicle_width_m_ = wheel_tread_m + left_overhang_m + right_overhang_m;
@@ -87,26 +114,15 @@ VehicleInfo createVehicleInfo(
 
 double VehicleInfo::calcMaxCurvature() const
 {
-  if (std::abs(wheel_base_m) < 1e-6) {
-    throw std::invalid_argument("wheel_base_m is 0.");
-  }
-  if (std::abs(max_steer_angle_rad) < 1e-6) {
-    return std::numeric_limits<double>::max();
-  }
-
   const double radius = wheel_base_m / std::tan(max_steer_angle_rad);
   const double curvature = 1.0 / radius;
   return curvature;
 }
 double VehicleInfo::calcCurvatureFromSteerAngle(const double steer_angle) const
 {
-  if (std::abs(wheel_base_m) < 1e-6) {
-    throw std::invalid_argument("wheel_base_m is 0.");
-  }
   if (std::abs(steer_angle) < 1e-6) {
     return std::numeric_limits<double>::max();
   }
-
   const double radius = wheel_base_m / std::tan(steer_angle);
   const double curvature = 1.0 / radius;
   return curvature;

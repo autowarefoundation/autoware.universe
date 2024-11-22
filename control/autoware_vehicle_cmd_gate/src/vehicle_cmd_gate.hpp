@@ -271,9 +271,6 @@ private:
   std::unique_ptr<VehicleStopChecker> vehicle_stop_checker_;
   double stop_check_duration_;
 
-  // processing time
-  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
-
   // debug
   MarkerArray createMarkerArray(const IsFilterActivated & filter_activated);
   void publishMarkers(const IsFilterActivated & filter_activated);

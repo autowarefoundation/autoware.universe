@@ -32,8 +32,6 @@ void DistanceBasedStaticMapLoader::onMapCallback(
   pcl::PointCloud<pcl::PointXYZ> map_pcl;
   pcl::fromROSMsg<pcl::PointXYZ>(*map, map_pcl);
   const auto map_pcl_ptr = pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>(map_pcl);
-
-  (*mutex_ptr_).lock();
   map_ptr_ = map_pcl_ptr;
   *tf_map_input_frame_ = map_ptr_->header.frame_id;
   if (!tree_) {
@@ -44,17 +42,19 @@ void DistanceBasedStaticMapLoader::onMapCallback(
     }
   }
   tree_->setInputCloud(map_ptr_);
-
-  (*mutex_ptr_).unlock();
+  is_initialized_.store(true, std::memory_order_release);
 }
 
 bool DistanceBasedStaticMapLoader::is_close_to_map(
   const pcl::PointXYZ & point, const double distance_threshold)
 {
-  if (map_ptr_ == NULL) {
+  if (!is_initialized_.load(std::memory_order_acquire)) {
     return false;
   }
-  if (tree_ == NULL) {
+  if (map_ptr_ == nullptr) {
+    return false;
+  }
+  if (tree_ == nullptr) {
     return false;
   }
 
@@ -89,8 +89,8 @@ bool DistanceBasedDynamicMapLoader::is_close_to_map(
   if (static_cast<size_t>(map_grid_index) >= current_voxel_grid_array_.size()) {
     return false;
   }
-  if (current_voxel_grid_array_.at(map_grid_index) != NULL) {
-    if (current_voxel_grid_array_.at(map_grid_index)->map_cell_kdtree == NULL) {
+  if (current_voxel_grid_array_.at(map_grid_index) != nullptr) {
+    if (current_voxel_grid_array_.at(map_grid_index)->map_cell_kdtree == nullptr) {
       return false;
     }
     std::vector<int> nn_indices(1);
@@ -126,10 +126,10 @@ DistanceBasedCompareMapFilterComponent::DistanceBasedCompareMapFilterComponent(
     rclcpp::CallbackGroup::SharedPtr main_callback_group;
     main_callback_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
     distance_based_map_loader_ = std::make_unique<DistanceBasedDynamicMapLoader>(
-      this, distance_threshold_, &tf_input_frame_, &mutex_, main_callback_group);
+      this, distance_threshold_, &tf_input_frame_, main_callback_group);
   } else {
-    distance_based_map_loader_ = std::make_unique<DistanceBasedStaticMapLoader>(
-      this, distance_threshold_, &tf_input_frame_, &mutex_);
+    distance_based_map_loader_ =
+      std::make_unique<DistanceBasedStaticMapLoader>(this, distance_threshold_, &tf_input_frame_);
   }
 }
 

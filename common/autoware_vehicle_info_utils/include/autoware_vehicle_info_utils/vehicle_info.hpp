@@ -24,30 +24,48 @@ struct VehicleInfo
 {
   // Base parameters. These describe the vehicle's bounding box and the
   // position and radius of the wheels.
-  double wheel_radius_m;
-  double wheel_width_m;
-  double wheel_base_m;
-  double wheel_tread_m;
-  double front_overhang_m;
-  double rear_overhang_m;
-  double left_overhang_m;
-  double right_overhang_m;
-  double vehicle_height_m;
-  double max_steer_angle_rad;
+  double wheel_radius_m{};       //<! should be positive
+  double wheel_width_m{};        //<! should be positive
+  double wheel_base_m{};         //<! should be positive
+  double wheel_tread_m{};        //<! should be positive
+  double front_overhang_m{};     //<! should be positive
+  double rear_overhang_m{};      //<! should be positive
+  double left_overhang_m{};      //<! should be positive
+  double right_overhang_m{};     //<! should be positive
+  double vehicle_height_m{};     //<! should be positive
+  double max_steer_angle_rad{};  //<! should be positive
 
   // Derived parameters, i.e. calculated from base parameters
   // The offset values are relative to the base frame origin, which is located
   // on the ground below the middle of the rear axle, and can be negative.
-  double vehicle_length_m;
-  double vehicle_width_m;
-  double min_longitudinal_offset_m;
-  double max_longitudinal_offset_m;
-  double min_lateral_offset_m;
-  double max_lateral_offset_m;
-  double min_height_offset_m;
-  double max_height_offset_m;
+  double vehicle_length_m{};
+  double vehicle_width_m{};
+  double min_longitudinal_offset_m{};
+  double max_longitudinal_offset_m{};
+  double min_lateral_offset_m{};
+  double max_lateral_offset_m{};
+  double min_height_offset_m{};
+  double max_height_offset_m{};
 
+  static constexpr size_t FrontLeftIndex = 0;   //<! the point index of front-left edge == 0
+  static constexpr size_t FrontRightIndex = 1;  //<! the point index of front-right > front-left
+  static constexpr size_t RearRightIndex = 3;   //<! the point index of rear-right > front-right
+  static constexpr size_t RearLeftIndex = 4;    //<! the point index of rear-left > rear-right
+
+  /**
+   * @brief calculate the vehicle footprint in clockwise manner starting from the front-left edge,
+   * through front-right edge, center-right point, to front-left edge again to form a enclosed
+   * polygon
+   * @param margin the longitudinal and lateral inflation margin
+   */
   autoware::universe_utils::LinearRing2d createFootprint(const double margin = 0.0) const;
+
+  /**
+   * @brief calculate the vehicle footprint in clockwise manner starting from the front-left edge,
+   * through front-right edge, center-right point, to front-left edge again to form a enclosed
+   * polygon
+   * @param margin the longitudinal and lateral inflation margin
+   */
   autoware::universe_utils::LinearRing2d createFootprint(
     const double lat_margin, const double lon_margin) const;
 

@@ -22,15 +22,14 @@
 #include <pcl/search/pcl_search.h>
 
 #include <memory>
-#include <vector>
 
 namespace autoware::compare_map_segmentation
 {
 class VoxelBasedCompareMapFilterComponent : public autoware::pointcloud_preprocessor::Filter
 {
 protected:
-  virtual void filter(
-    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output);
+  void filter(
+    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output) override;
 
 private:
   // pcl::SegmentDifferences<pcl::PointXYZ> impl_;
@@ -38,8 +37,6 @@ private:
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_map_;
   double distance_threshold_;
   bool set_map_in_voxel_grid_;
-
-  bool dynamic_map_load_enable_;
 
 public:
   PCL_MAKE_ALIGNED_OPERATOR_NEW

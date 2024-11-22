@@ -40,24 +40,23 @@ namespace autoware::vehicle_info_utils
 {
 VehicleInfoUtils::VehicleInfoUtils(rclcpp::Node & node)
 {
-  vehicle_info_.wheel_radius_m = getParameter<double>(node, "wheel_radius");
-  vehicle_info_.wheel_width_m = getParameter<double>(node, "wheel_width");
-  vehicle_info_.wheel_base_m = getParameter<double>(node, "wheel_base");
-  vehicle_info_.wheel_tread_m = getParameter<double>(node, "wheel_tread");
-  vehicle_info_.front_overhang_m = getParameter<double>(node, "front_overhang");
-  vehicle_info_.rear_overhang_m = getParameter<double>(node, "rear_overhang");
-  vehicle_info_.left_overhang_m = getParameter<double>(node, "left_overhang");
-  vehicle_info_.right_overhang_m = getParameter<double>(node, "right_overhang");
-  vehicle_info_.vehicle_height_m = getParameter<double>(node, "vehicle_height");
-  vehicle_info_.max_steer_angle_rad = getParameter<double>(node, "max_steer_angle");
+  const auto wheel_radius_m = getParameter<double>(node, "wheel_radius");
+  const auto wheel_width_m = getParameter<double>(node, "wheel_width");
+  const auto wheel_base_m = getParameter<double>(node, "wheel_base");
+  const auto wheel_tread_m = getParameter<double>(node, "wheel_tread");
+  const auto front_overhang_m = getParameter<double>(node, "front_overhang");
+  const auto rear_overhang_m = getParameter<double>(node, "rear_overhang");
+  const auto left_overhang_m = getParameter<double>(node, "left_overhang");
+  const auto right_overhang_m = getParameter<double>(node, "right_overhang");
+  const auto vehicle_height_m = getParameter<double>(node, "vehicle_height");
+  const auto max_steer_angle_rad = getParameter<double>(node, "max_steer_angle");
+  vehicle_info_ = createVehicleInfo(
+    wheel_radius_m, wheel_width_m, wheel_base_m, wheel_tread_m, front_overhang_m, rear_overhang_m,
+    left_overhang_m, right_overhang_m, vehicle_height_m, max_steer_angle_rad);
 }
 
-VehicleInfo VehicleInfoUtils::getVehicleInfo()
+VehicleInfo VehicleInfoUtils::getVehicleInfo() const
 {
-  return createVehicleInfo(
-    vehicle_info_.wheel_radius_m, vehicle_info_.wheel_width_m, vehicle_info_.wheel_base_m,
-    vehicle_info_.wheel_tread_m, vehicle_info_.front_overhang_m, vehicle_info_.rear_overhang_m,
-    vehicle_info_.left_overhang_m, vehicle_info_.right_overhang_m, vehicle_info_.vehicle_height_m,
-    vehicle_info_.max_steer_angle_rad);
+  return vehicle_info_;
 }
 }  // namespace autoware::vehicle_info_utils

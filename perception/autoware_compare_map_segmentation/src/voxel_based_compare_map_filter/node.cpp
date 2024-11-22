@@ -22,11 +22,9 @@
 #include <pcl/segmentation/segment_differences.h>
 
 #include <string>
-#include <vector>
 
 namespace autoware::compare_map_segmentation
 {
-using autoware::pointcloud_preprocessor::get_param;
 
 VoxelBasedCompareMapFilterComponent::VoxelBasedCompareMapFilterComponent(
   const rclcpp::NodeOptions & options)
@@ -54,11 +52,10 @@ VoxelBasedCompareMapFilterComponent::VoxelBasedCompareMapFilterComponent(
     rclcpp::CallbackGroup::SharedPtr main_callback_group;
     main_callback_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
     voxel_grid_map_loader_ = std::make_unique<VoxelGridDynamicMapLoader>(
-      this, distance_threshold_, downsize_ratio_z_axis, &tf_input_frame_, &mutex_,
-      main_callback_group);
+      this, distance_threshold_, downsize_ratio_z_axis, &tf_input_frame_, main_callback_group);
   } else {
     voxel_grid_map_loader_ = std::make_unique<VoxelGridStaticMapLoader>(
-      this, distance_threshold_, downsize_ratio_z_axis, &tf_input_frame_, &mutex_);
+      this, distance_threshold_, downsize_ratio_z_axis, &tf_input_frame_);
   }
   tf_input_frame_ = *(voxel_grid_map_loader_->tf_map_input_frame_);
   RCLCPP_INFO(this->get_logger(), "tf_map_input_frame: %s", tf_input_frame_.c_str());

@@ -7,7 +7,7 @@ package_name = "autoware_carla_interface"
 
 setup(
     name=package_name,
-    version="0.0.0",
+    version="0.38.0",
     packages=[package_name],
     data_files=[
         ("share/" + package_name, glob("config/*")),

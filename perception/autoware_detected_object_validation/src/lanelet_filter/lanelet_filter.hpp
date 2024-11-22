@@ -44,7 +44,6 @@ namespace lanelet_filter
 {
 using autoware::universe_utils::LinearRing2d;
 using autoware::universe_utils::MultiPoint2d;
-using autoware::universe_utils::Point2d;
 using autoware::universe_utils::Polygon2d;
 
 namespace bg = boost::geometry;

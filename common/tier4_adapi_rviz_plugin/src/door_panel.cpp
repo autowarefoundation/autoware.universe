@@ -94,7 +94,7 @@ void DoorPanel::onInitialize()
   auto lock = getDisplayContext()->getRosNodeAbstraction().lock();
   auto node = lock->get_raw_node();
 
-  const auto adaptor = component_interface_utils::NodeAdaptor(node.get());
+  const auto adaptor = autoware::component_interface_utils::NodeAdaptor(node.get());
   adaptor.init_cli(cli_command_);
   adaptor.init_cli(cli_layout_);
   adaptor.init_sub(sub_status_, on_status);

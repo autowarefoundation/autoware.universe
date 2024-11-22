@@ -132,7 +132,7 @@ std::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
   const GoalCandidate & goal_candidate, const size_t id,
   const std::shared_ptr<const PlannerData> planner_data,
   const BehaviorModuleOutput & previous_module_output, const lanelet::ConstLanelets & road_lanes,
-  const lanelet::ConstLanelets & shoulder_lanes, const double lateral_jerk) const
+  const lanelet::ConstLanelets & pull_over_lanes, const double lateral_jerk) const
 {
   const double pull_over_velocity = parameters_.pull_over_velocity;
   const double after_shift_straight_distance = parameters_.after_shift_straight_distance;
@@ -206,9 +206,6 @@ std::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
   shifted_path.path.points = autoware::motion_utils::removeOverlapPoints(shifted_path.path.points);
   autoware::motion_utils::insertOrientation(shifted_path.path.points, true);
 
-  // set same orientation, because the reference center line orientation is not same to the
-  shifted_path.path.points.back().point.pose.orientation = shift_end_pose.orientation;
-
   // for debug. result of shift is not equal to the target
   const Pose actual_shift_end_pose = shifted_path.path.points.back().point.pose;
 
@@ -227,7 +224,7 @@ std::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
     p.point.longitudinal_velocity_mps = 0.0;
     p.point.pose = goal_pose;
     p.lane_ids = shifted_path.path.points.back().lane_ids;
-    for (const auto & lane : shoulder_lanes) {
+    for (const auto & lane : pull_over_lanes) {
       p.lane_ids.push_back(lane.id());
     }
     shifted_path.path.points.push_back(p);
@@ -249,7 +246,7 @@ std::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
       }
     }
     // add shoulder lane_id if not found
-    for (const auto & lane : shoulder_lanes) {
+    for (const auto & lane : pull_over_lanes) {
       if (
         std::find(point.lane_ids.begin(), point.lane_ids.end(), lane.id()) ==
         point.lane_ids.end()) {
@@ -297,7 +294,7 @@ std::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
   });
   const bool is_in_lanes = std::invoke([&]() -> bool {
     const auto drivable_lanes =
-      utils::generateDrivableLanesWithShoulderLanes(road_lanes, shoulder_lanes);
+      utils::generateDrivableLanesWithShoulderLanes(road_lanes, pull_over_lanes);
     const auto & dp = planner_data->drivable_area_expansion_parameters;
     const auto expanded_lanes = utils::expandLanelets(
       drivable_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,

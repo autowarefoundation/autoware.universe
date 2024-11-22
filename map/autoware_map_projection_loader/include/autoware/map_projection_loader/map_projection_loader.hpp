@@ -17,8 +17,8 @@
 
 #include "rclcpp/rclcpp.hpp"
 
-#include <component_interface_specs/map.hpp>
-#include <component_interface_utils/rclcpp.hpp>
+#include <autoware/component_interface_specs/map.hpp>
+#include <autoware/component_interface_utils/rclcpp.hpp>
 
 #include <string>
 
@@ -34,8 +34,8 @@ public:
   explicit MapProjectionLoader(const rclcpp::NodeOptions & options);
 
 private:
-  using MapProjectorInfo = map_interface::MapProjectorInfo;
-  component_interface_utils::Publisher<MapProjectorInfo>::SharedPtr publisher_;
+  using MapProjectorInfo = autoware::component_interface_specs::map::MapProjectorInfo;
+  autoware::component_interface_utils::Publisher<MapProjectorInfo>::SharedPtr publisher_;
 };
 }  // namespace autoware::map_projection_loader
 

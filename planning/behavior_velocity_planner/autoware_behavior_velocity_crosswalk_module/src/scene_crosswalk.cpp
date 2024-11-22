@@ -199,8 +199,6 @@ CrosswalkModule::CrosswalkModule(
 
   collision_info_pub_ =
     node.create_publisher<tier4_debug_msgs::msg::StringStamped>("~/debug/collision_info", 1);
-
-  vehicle_stop_checker_ = std::make_unique<autoware::motion_utils::VehicleStopChecker>(&node);
 }
 
 bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
@@ -422,9 +420,7 @@ std::optional<geometry_msgs::msg::Pose> CrosswalkModule::calcStopPose(
     if (!ped_stop_pref_opt.has_value()) {
       RCLCPP_INFO(logger_, "Failure to calculate pref_stop.");
       return std::nullopt;
-    } else if (
-      default_stop_opt.has_value() && ped_stop_pref_opt->dist > default_stop_opt->dist &&
-      ped_stop_pref_opt->dist < default_stop_opt->dist + planner_param_.far_object_threshold) {
+    } else if (default_stop_opt.has_value() && ped_stop_pref_opt->dist > default_stop_opt->dist) {
       return default_stop_opt;
     } else {
       return ped_stop_pref_opt;
@@ -1389,8 +1385,7 @@ void CrosswalkModule::planStop(
 bool CrosswalkModule::checkRestartSuppression(
   const PathWithLaneId & ego_path, const std::optional<StopFactor> & stop_factor) const
 {
-  const auto is_vehicle_stopped = vehicle_stop_checker_->isVehicleStopped();
-  if (!is_vehicle_stopped) {
+  if (!planner_data_->isVehicleStopped()) {
     return false;
   }
 

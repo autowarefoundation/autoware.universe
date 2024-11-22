@@ -56,7 +56,7 @@ class SurroundObstacleCheckerDebugNode
 {
 public:
   explicit SurroundObstacleCheckerDebugNode(
-    const autoware::vehicle_info_utils::VehicleInfo & vehicle_info, const double base_link2front,
+    const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
     const std::string & object_label, const double & surround_check_front_distance,
     const double & surround_check_side_distance, const double & surround_check_back_distance,
     const double & surround_check_hysteresis_distance, const geometry_msgs::msg::Pose & self_pose,
@@ -77,7 +77,6 @@ private:
   rclcpp::Publisher<PolygonStamped>::SharedPtr vehicle_footprint_recover_offset_pub_;
 
   autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
-  double base_link2front_;
   std::string object_label_;
   double surround_check_front_distance_;
   double surround_check_side_distance_;

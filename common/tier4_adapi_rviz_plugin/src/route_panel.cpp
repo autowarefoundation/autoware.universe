@@ -107,7 +107,7 @@ void RoutePanel::onInitialize()
     "/rviz/routing/pose", rclcpp::QoS(1),
     std::bind(&RoutePanel::onPose, this, std::placeholders::_1));
 
-  const auto adaptor = component_interface_utils::NodeAdaptor(node.get());
+  const auto adaptor = autoware::component_interface_utils::NodeAdaptor(node.get());
   adaptor.init_cli(cli_clear_);
   adaptor.init_cli(cli_set_);
   adaptor.init_cli(cli_change_);

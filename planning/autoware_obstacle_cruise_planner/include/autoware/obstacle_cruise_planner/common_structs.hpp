@@ -25,11 +25,15 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <diagnostic_msgs/msg/diagnostic_array.hpp>
+#include <tier4_metric_msgs/msg/metric.hpp>
+#include <tier4_metric_msgs/msg/metric_array.hpp>
 
 #include <optional>
 #include <string>
 #include <vector>
+
+using Metric = tier4_metric_msgs::msg::Metric;
+using MetricArray = tier4_metric_msgs::msg::MetricArray;
 
 struct PlannerData
 {
@@ -293,9 +297,9 @@ struct DebugData
   MarkerArray cruise_wall_marker;
   MarkerArray slow_down_wall_marker;
   std::vector<autoware::universe_utils::Polygon2d> detection_polygons;
-  std::optional<diagnostic_msgs::msg::DiagnosticStatus> stop_reason_diag{std::nullopt};
-  std::optional<diagnostic_msgs::msg::DiagnosticStatus> slow_down_reason_diag{std::nullopt};
-  std::optional<diagnostic_msgs::msg::DiagnosticStatus> cruise_reason_diag{std::nullopt};
+  std::optional<std::vector<Metric>> stop_metrics{std::nullopt};
+  std::optional<std::vector<Metric>> slow_down_metrics{std::nullopt};
+  std::optional<std::vector<Metric>> cruise_metrics{std::nullopt};
 };
 
 struct EgoNearestParam

@@ -21,8 +21,6 @@
 #include <memory>
 #include <vector>
 
-constexpr double DOUBLE_EPSILON = 1e-6;
-
 namespace autoware::behavior_velocity_planner
 {
 bool splineInterpolate(
