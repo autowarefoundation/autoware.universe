@@ -8,6 +8,12 @@ path_generator:
   backward_path_length:
     type: double
 
+  waypoint_group_separation_threshold:
+    type: double
+
+  waypoint_group_interval_margin_ratio:
+    type: double
+
   input_path_interval:
     type: double
 
