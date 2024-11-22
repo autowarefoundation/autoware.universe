@@ -54,6 +54,8 @@ PointCloudConcatenationComponent::PointCloudConcatenationComponent(
       RCLCPP_ERROR(get_logger(), "Need an 'output_frame' parameter to be set before continuing!");
       return;
     }
+    has_static_tf_only_ = declare_parameter<bool>(
+      "has_static_tf_only", false);  // TODO(amadeuszsz): remove default value
     declare_parameter<std::vector<std::string>>("input_topics");
     input_topics_ = get_parameter("input_topics").as_string_array();
     if (input_topics_.empty()) {
@@ -93,7 +95,8 @@ PointCloudConcatenationComponent::PointCloudConcatenationComponent(
 
   // tf2 listener
   {
-    static_tf_buffer_ = std::make_unique<autoware::universe_utils::StaticTransformBuffer>();
+    managed_tf_buffer_ =
+      std::make_unique<autoware::universe_utils::ManagedTransformBuffer>(this, has_static_tf_only_);
   }
 
   // Output Publishers
@@ -237,8 +240,7 @@ void PointCloudConcatenationComponent::combineClouds(
       // transform to output frame
       sensor_msgs::msg::PointCloud2::SharedPtr transformed_cloud_ptr(
         new sensor_msgs::msg::PointCloud2());
-      static_tf_buffer_->transformPointcloud(
-        this, output_frame_, *e.second, *transformed_cloud_ptr);
+      managed_tf_buffer_->transformPointcloud(output_frame_, *e.second, *transformed_cloud_ptr);
 
       // concatenate
       if (concat_cloud_ptr == nullptr) {
@@ -309,7 +311,7 @@ void PointCloudConcatenationComponent::convertToXYZIRCCloud(
 {
   output_ptr->header = input_ptr->header;
 
-  PointCloud2Modifier<PointXYZIRC, autoware_point_types::PointXYZIRCGenerator> output_modifier{
+  PointCloud2Modifier<PointXYZIRC, autoware::point_types::PointXYZIRCGenerator> output_modifier{
     *output_ptr, input_ptr->header.frame_id};
   output_modifier.reserve(input_ptr->width);
 

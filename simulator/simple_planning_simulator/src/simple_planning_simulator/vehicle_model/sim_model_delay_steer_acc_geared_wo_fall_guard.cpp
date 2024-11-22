@@ -69,7 +69,6 @@ double SimModelDelaySteerAccGearedWoFallGuard::getAx()
 double SimModelDelaySteerAccGearedWoFallGuard::getWz()
 {
   return state_(IDX::VX) * std::tan(state_(IDX::STEER)) / wheelbase_;
-  ;
 }
 double SimModelDelaySteerAccGearedWoFallGuard::getSteer()
 {
@@ -166,10 +165,9 @@ Eigen::VectorXd SimModelDelaySteerAccGearedWoFallGuard::calcModel(
         return pedal_acc + input(IDX_U::SLOPE_ACCX);
       }
     } else {
-      constexpr double brake_dead_band = 1e-3;
-      if (vel > brake_dead_band) {
+      if (vel > 0.0) {
         return pedal_acc + input(IDX_U::SLOPE_ACCX);
-      } else if (vel < -brake_dead_band) {
+      } else if (vel < 0.0) {
         return -pedal_acc + input(IDX_U::SLOPE_ACCX);
       } else if (-pedal_acc >= std::abs(input(IDX_U::SLOPE_ACCX))) {
         return 0.0;

@@ -15,40 +15,32 @@
 #ifndef AUTOWARE_TEST_UTILS__AUTOWARE_TEST_UTILS_HPP_
 #define AUTOWARE_TEST_UTILS__AUTOWARE_TEST_UTILS_HPP_
 
-#include <autoware/universe_utils/geometry/geometry.hpp>
-#include <autoware_lanelet2_extension/io/autoware_osm_parser.hpp>
-#include <autoware_lanelet2_extension/projection/mgrs_projector.hpp>
-#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
-#include <autoware_lanelet2_extension/utility/utilities.hpp>
-#include <component_interface_specs/planning.hpp>
+#include <ament_index_cpp/get_package_share_directory.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_planning_msgs/msg/lanelet_primitive.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <autoware_planning_msgs/msg/lanelet_segment.hpp>
+#include <autoware_planning_msgs/msg/path.hpp>
 #include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <rosgraph_msgs/msg/clock.hpp>
-#include <sensor_msgs/msg/point_cloud2.hpp>
-#include <std_msgs/msg/bool.hpp>
 #include <tf2_msgs/msg/tf_message.hpp>
 #include <tier4_planning_msgs/msg/path_point_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/scenario.hpp>
-#include <unique_identifier_msgs/msg/uuid.hpp>
 
-#include <cxxabi.h>
 #include <lanelet2_io/Io.h>
-#include <tf2/utils.h>
-#include <tf2_ros/buffer.h>
-#include <yaml-cpp/yaml.h>
 
+#include <filesystem>
 #include <limits>
 #include <memory>
 #include <optional>
+#include <regex>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -65,18 +57,13 @@ using autoware_planning_msgs::msg::Trajectory;
 using tier4_planning_msgs::msg::PathPointWithLaneId;
 using tier4_planning_msgs::msg::PathWithLaneId;
 using RouteSections = std::vector<autoware_planning_msgs::msg::LaneletSegment>;
-using autoware::universe_utils::createPoint;
-using autoware::universe_utils::createQuaternionFromRPY;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;
-using geometry_msgs::msg::TransformStamped;
 using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
-using sensor_msgs::msg::PointCloud2;
 using tf2_msgs::msg::TFMessage;
 using tier4_planning_msgs::msg::Scenario;
-using unique_identifier_msgs::msg::UUID;
 
 /**
  * @brief Creates a Pose message with the specified position and orientation.
@@ -344,6 +331,19 @@ void updateNodeOptions(
 PathWithLaneId loadPathWithLaneIdInYaml();
 
 /**
+ * @brief create a straight lanelet from 2 segments defined by 4 points
+ * @param [in] left0 start of the left segment
+ * @param [in] left1 end of the left segment
+ * @param [in] right0 start of the right segment
+ * @param [in] right1 end of the right segment
+ * @return a ConstLanelet with the given left and right bounds and a unique lanelet id
+ *
+ */
+lanelet::ConstLanelet make_lanelet(
+  const lanelet::BasicPoint2d & left0, const lanelet::BasicPoint2d & left1,
+  const lanelet::BasicPoint2d & right0, const lanelet::BasicPoint2d & right1);
+
+/**
  * @brief Generates a trajectory with specified parameters.
  *
  * This function generates a trajectory of type T with a given number of points,
@@ -369,9 +369,9 @@ T generateTrajectory(
 
   T traj;
   for (size_t i = 0; i < num_points; ++i) {
-    const double theta = init_theta + i * delta_theta;
-    const double x = i * point_interval * std::cos(theta);
-    const double y = i * point_interval * std::sin(theta);
+    const double theta = init_theta + static_cast<double>(i) * delta_theta;
+    const double x = static_cast<double>(i) * point_interval * std::cos(theta);
+    const double y = static_cast<double>(i) * point_interval * std::sin(theta);
 
     Point p;
     p.pose = createPose(x, y, 0.0, 0.0, 0.0, theta);
@@ -384,6 +384,33 @@ T generateTrajectory(
     }
   }
 
+  return traj;
+}
+
+template <>
+inline PathWithLaneId generateTrajectory<PathWithLaneId>(
+  const size_t num_points, const double point_interval, const double velocity,
+  const double init_theta, const double delta_theta, const size_t overlapping_point_index)
+{
+  PathWithLaneId traj;
+
+  for (size_t i = 0; i < num_points; i++) {
+    const double theta = init_theta + static_cast<double>(i) * delta_theta;
+    const double x = static_cast<double>(i) * point_interval * std::cos(theta);
+    const double y = static_cast<double>(i) * point_interval * std::sin(theta);
+
+    PathPointWithLaneId p;
+    p.point.pose = createPose(x, y, 0.0, 0.0, 0.0, theta);
+    p.point.longitudinal_velocity_mps = static_cast<float>(velocity);
+    p.lane_ids.push_back(static_cast<int64_t>(i));
+    traj.points.push_back(p);
+
+    if (i == overlapping_point_index) {
+      auto value_to_insert = traj.points.at(overlapping_point_index);
+      traj.points.insert(
+        traj.points.begin() + static_cast<int64_t>(overlapping_point_index) + 1, value_to_insert);
+    }
+  }
   return traj;
 }
 
@@ -610,6 +637,8 @@ protected:
   // Node
   rclcpp::Node::SharedPtr test_node_;
 };  // class AutowareTestManager
+
+std::optional<std::string> resolve_pkg_share_uri(const std::string & uri_path);
 
 }  // namespace autoware::test_utils
 

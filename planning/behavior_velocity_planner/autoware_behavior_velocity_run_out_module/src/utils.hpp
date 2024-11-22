@@ -224,10 +224,6 @@ std::vector<geometry_msgs::msg::Point> findLateralSameSidePoints(
 
 bool isSamePoint(const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2);
 
-// if path points have the same point as target_point, return the index
-std::optional<size_t> haveSamePoint(
-  const PathPointsWithLaneId & path_points, const geometry_msgs::msg::Point & target_point);
-
 // insert path velocity which doesn't exceed original velocity
 void insertPathVelocityFromIndexLimited(
   const size_t & start_idx, const float velocity_mps, PathPointsWithLaneId & path_points);
@@ -259,7 +255,8 @@ std::optional<std::vector<geometry_msgs::msg::Point>> createDetectionAreaPolygon
 
 // extend path to the pose of goal
 PathWithLaneId extendPath(const PathWithLaneId & input, const double extend_distance);
-PathPoint createExtendPathPoint(const double extend_distance, const PathPoint & goal_point);
+PathPointWithLaneId createExtendPathPoint(
+  const double extend_distance, const PathPointWithLaneId & goal_point);
 
 DetectionMethod toEnum(const std::string & detection_method);
 

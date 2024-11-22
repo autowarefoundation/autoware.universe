@@ -145,13 +145,16 @@ void RoiPointCloudFusionNode::fuseOnSingleImage(
       continue;
     }
     Eigen::Vector2d projected_point = calcRawImageProjectedPoint(
-      pinhole_camera_model, cv::Point3d(transformed_x, transformed_y, transformed_z));
+      pinhole_camera_model, cv::Point3d(transformed_x, transformed_y, transformed_z),
+      point_project_to_unrectified_image_);
     for (std::size_t i = 0; i < output_objs.size(); ++i) {
       auto & feature_obj = output_objs.at(i);
       const auto & check_roi = feature_obj.feature.roi;
       auto & cluster = clusters.at(i);
 
-      if (clusters_data_size.at(i) >= static_cast<size_t>(max_cluster_size_ * point_step)) {
+      if (
+        clusters_data_size.at(i) >=
+        static_cast<size_t>(max_cluster_size_) * static_cast<size_t>(point_step)) {
         continue;
       }
       if (

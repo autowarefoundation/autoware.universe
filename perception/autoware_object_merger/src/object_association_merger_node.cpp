@@ -16,8 +16,8 @@
 
 #include "autoware/object_merger/object_association_merger_node.hpp"
 
+#include "autoware/object_recognition_utils/object_recognition_utils.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
-#include "object_recognition_utils/object_recognition_utils.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -40,18 +40,19 @@ bool isUnknownObjectOverlapped(
   const std::map<int, double> & generalized_iou_threshold_map)
 {
   const double generalized_iou_threshold = generalized_iou_threshold_map.at(
-    object_recognition_utils::getHighestProbLabel(known_object.classification));
+    autoware::object_recognition_utils::getHighestProbLabel(known_object.classification));
   const double distance_threshold = distance_threshold_map.at(
-    object_recognition_utils::getHighestProbLabel(known_object.classification));
+    autoware::object_recognition_utils::getHighestProbLabel(known_object.classification));
   const double sq_distance_threshold = std::pow(distance_threshold, 2.0);
   const double sq_distance = autoware::universe_utils::calcSquaredDistance2d(
     unknown_object.kinematics.pose_with_covariance.pose,
     known_object.kinematics.pose_with_covariance.pose);
   if (sq_distance_threshold < sq_distance) return false;
-  const auto precision = object_recognition_utils::get2dPrecision(unknown_object, known_object);
-  const auto recall = object_recognition_utils::get2dRecall(unknown_object, known_object);
+  const auto precision =
+    autoware::object_recognition_utils::get2dPrecision(unknown_object, known_object);
+  const auto recall = autoware::object_recognition_utils::get2dRecall(unknown_object, known_object);
   const auto generalized_iou =
-    object_recognition_utils::get2dGeneralizedIoU(unknown_object, known_object);
+    autoware::object_recognition_utils::get2dGeneralizedIoU(unknown_object, known_object);
   return precision > precision_threshold || recall > recall_threshold ||
          generalized_iou > generalized_iou_threshold;
 }
@@ -142,9 +143,9 @@ void ObjectAssociationMergerNode::objectsCallback(
   /* transform to base_link coordinate */
   autoware_perception_msgs::msg::DetectedObjects transformed_objects0, transformed_objects1;
   if (
-    !object_recognition_utils::transformObjects(
+    !autoware::object_recognition_utils::transformObjects(
       *input_objects0_msg, base_link_frame_id_, tf_buffer_, transformed_objects0) ||
-    !object_recognition_utils::transformObjects(
+    !autoware::object_recognition_utils::transformObjects(
       *input_objects1_msg, base_link_frame_id_, tf_buffer_, transformed_objects1)) {
     return;
   }
@@ -152,6 +153,7 @@ void ObjectAssociationMergerNode::objectsCallback(
   // build output msg
   autoware_perception_msgs::msg::DetectedObjects output_msg;
   output_msg.header = input_objects0_msg->header;
+  output_msg.header.frame_id = base_link_frame_id_;
 
   /* global nearest neighbor */
   std::unordered_map<int, int> direct_assignment, reverse_assignment;
@@ -197,7 +199,9 @@ void ObjectAssociationMergerNode::objectsCallback(
     unknown_objects.reserve(output_msg.objects.size());
     known_objects.reserve(output_msg.objects.size());
     for (const auto & object : output_msg.objects) {
-      if (object_recognition_utils::getHighestProbLabel(object.classification) == Label::UNKNOWN) {
+      if (
+        autoware::object_recognition_utils::getHighestProbLabel(object.classification) ==
+        Label::UNKNOWN) {
         unknown_objects.push_back(object);
       } else {
         known_objects.push_back(object);

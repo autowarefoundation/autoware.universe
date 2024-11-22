@@ -17,17 +17,16 @@
 #include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 
+#include <autoware/interpolation/spline_interpolation.hpp>
 #include <autoware/motion_utils/resample/resample.hpp>
 #include <autoware/motion_utils/trajectory/interpolation.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
-#include <interpolation/spline_interpolation.hpp>
 
 #include <tf2/utils.h>
 
 #include <algorithm>
-#include <limits>
 #include <optional>
 #include <utility>
 #include <vector>
@@ -102,6 +101,7 @@ PathWithLaneId resamplePathWithSpline(
     transformed_path, 0, transformed_path.size());
   for (size_t i = 0; i < path.points.size(); ++i) {
     const double s = s_vec.at(i);
+
     for (const auto & lane_id : path.points.at(i).lane_ids) {
       if (!keep_input_points && (unique_lane_ids.find(lane_id) != unique_lane_ids.end())) {
         continue;
@@ -200,13 +200,6 @@ void clipPathLength(
     path.points.begin() + start_idx, path.points.begin() + end_idx + 1};
 
   path.points = clipped_points;
-}
-
-// TODO(murooka) This function should be replaced with autoware::motion_utils::cropPoints
-void clipPathLength(
-  PathWithLaneId & path, const size_t target_idx, const BehaviorPathPlannerParameters & params)
-{
-  clipPathLength(path, target_idx, params.forward_path_length, params.backward_path_length);
 }
 
 PathWithLaneId convertWayPointsToPathWithLaneId(
@@ -311,7 +304,7 @@ void correctDividedPathVelocity(std::vector<PathWithLaneId> & divided_paths)
 }
 
 // only two points is supported
-std::vector<double> splineTwoPoints(
+std::vector<double> spline_two_points(
   const std::vector<double> & base_s, const std::vector<double> & base_x, const double begin_diff,
   const double end_diff, const std::vector<double> & new_s)
 {
@@ -336,6 +329,8 @@ std::vector<double> splineTwoPoints(
 std::vector<Pose> interpolatePose(
   const Pose & start_pose, const Pose & end_pose, const double resample_interval)
 {
+  using autoware::universe_utils::calcAzimuthAngle;
+
   std::vector<Pose> interpolated_poses{};  // output
 
   const double distance =
@@ -350,20 +345,27 @@ std::vector<Pose> interpolatePose(
     new_s.push_back(s);
   }
 
-  const std::vector<double> interpolated_x = splineTwoPoints(
+  const std::vector<double> interpolated_x = spline_two_points(
     base_s, base_x, std::cos(tf2::getYaw(start_pose.orientation)),
     std::cos(tf2::getYaw(end_pose.orientation)), new_s);
-  const std::vector<double> interpolated_y = splineTwoPoints(
+  const std::vector<double> interpolated_y = spline_two_points(
     base_s, base_y, std::sin(tf2::getYaw(start_pose.orientation)),
     std::sin(tf2::getYaw(end_pose.orientation)), new_s);
   for (size_t i = 0; i < interpolated_x.size(); ++i) {
     Pose pose{};
-    pose = autoware::universe_utils::calcInterpolatedPose(
-      end_pose, start_pose, (distance - new_s.at(i)) / distance);
     pose.position.x = interpolated_x.at(i);
     pose.position.y = interpolated_y.at(i);
     pose.position.z = end_pose.position.z;
     interpolated_poses.push_back(pose);
+  }
+
+  // insert orientation
+  for (size_t i = 0; i < interpolated_poses.size(); ++i) {
+    const double yaw = calcAzimuthAngle(
+      interpolated_poses.at(i).position, i < interpolated_poses.size() - 1
+                                           ? interpolated_poses.at(i + 1).position
+                                           : end_pose.position);
+    interpolated_poses.at(i).orientation = autoware::universe_utils::createQuaternionFromYaw(yaw);
   }
 
   return interpolated_poses;

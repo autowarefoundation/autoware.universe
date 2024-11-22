@@ -29,7 +29,8 @@ DummyDoors::DummyDoors() : Node("dummy_doors")
   srv_layout_ = create_service<GetDoorLayout>(
     "~/doors/layout", std::bind(&DummyDoors::on_layout, this, _1, _2));
 
-  pub_status_ = create_publisher<DoorStatusArray>("~/doors/status", rclcpp::QoS(1));
+  pub_status_ =
+    create_publisher<DoorStatusArray>("~/doors/status", rclcpp::QoS(1).transient_local());
 
   const auto period = rclcpp::Rate(5.0).period();
   timer_ = rclcpp::create_timer(this, get_clock(), period, [this]() { on_timer(); });

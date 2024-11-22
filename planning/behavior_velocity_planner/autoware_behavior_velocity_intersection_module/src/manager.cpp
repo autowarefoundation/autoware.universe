@@ -327,7 +327,6 @@ void IntersectionModuleManager::launchNewModules(
       continue;
     }
 
-    const std::string location = ll.attributeOr("location", "else");
     const auto associative_ids =
       planning_utils::getAssociativeIntersectionLanelets(ll, lanelet_map, routing_graph);
     bool has_traffic_light = false;
@@ -345,10 +344,10 @@ void IntersectionModuleManager::launchNewModules(
     const UUID uuid = getUUID(new_module->getModuleId());
     const auto occlusion_uuid = new_module->getOcclusionUUID();
     rtc_interface_.updateCooperateStatus(
-      uuid, true, State::RUNNING, std::numeric_limits<double>::lowest(),
+      uuid, true, State::WAITING_FOR_EXECUTION, std::numeric_limits<double>::lowest(),
       std::numeric_limits<double>::lowest(), clock_->now());
     occlusion_rtc_interface_.updateCooperateStatus(
-      occlusion_uuid, true, State::RUNNING, std::numeric_limits<double>::lowest(),
+      occlusion_uuid, true, State::WAITING_FOR_EXECUTION, std::numeric_limits<double>::lowest(),
       std::numeric_limits<double>::lowest(), clock_->now());
     registerModule(std::move(new_module));
   }
@@ -361,7 +360,7 @@ IntersectionModuleManager::getModuleExpiredFunction(
   const auto lane_set = planning_utils::getLaneletsOnPath(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
-  return [this, lane_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
+  return [lane_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
     const auto intersection_module = std::dynamic_pointer_cast<IntersectionModule>(scene_module);
     const auto & associative_ids = intersection_module->getAssociativeIds();
     for (const auto & lane : lane_set) {
@@ -442,6 +441,7 @@ void IntersectionModuleManager::setActivation()
     scene_module->setActivation(rtc_interface_.isActivated(getUUID(scene_module->getModuleId())));
     intersection_module->setOcclusionActivation(
       occlusion_rtc_interface_.isActivated(occlusion_uuid));
+    scene_module->setRTCEnabled(rtc_interface_.isRTCEnabled(getUUID(scene_module->getModuleId())));
   }
 }
 
@@ -450,20 +450,20 @@ void IntersectionModuleManager::deleteExpiredModules(
 {
   const auto isModuleExpired = getModuleExpiredFunction(path);
 
-  // Copy container to avoid iterator corruption
-  // due to scene_modules_.erase() in unregisterModule()
-  const auto copied_scene_modules = scene_modules_;
-
-  for (const auto & scene_module : copied_scene_modules) {
-    if (isModuleExpired(scene_module)) {
+  auto itr = scene_modules_.begin();
+  while (itr != scene_modules_.end()) {
+    if (isModuleExpired(*itr)) {
       // default
-      removeRTCStatus(getUUID(scene_module->getModuleId()));
-      removeUUID(scene_module->getModuleId());
+      removeRTCStatus(getUUID((*itr)->getModuleId()));
+      removeUUID((*itr)->getModuleId());
       // occlusion
-      const auto intersection_module = std::dynamic_pointer_cast<IntersectionModule>(scene_module);
+      const auto intersection_module = std::dynamic_pointer_cast<IntersectionModule>(*itr);
       const auto occlusion_uuid = intersection_module->getOcclusionUUID();
       occlusion_rtc_interface_.removeCooperateStatus(occlusion_uuid);
-      unregisterModule(scene_module);
+      registered_module_id_set_.erase((*itr)->getModuleId());
+      itr = scene_modules_.erase(itr);
+    } else {
+      itr++;
     }
   }
 }
@@ -471,7 +471,7 @@ void IntersectionModuleManager::deleteExpiredModules(
 MergeFromPrivateModuleManager::MergeFromPrivateModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterface(node, getModuleName())
 {
-  const std::string ns(getModuleName());
+  const std::string ns(MergeFromPrivateModuleManager::getModuleName());
   auto & mp = merge_from_private_area_param_;
   mp.stop_duration_sec = getOrDeclareParameter<double>(node, ns + ".stop_duration_sec");
   mp.attention_area_length =
@@ -555,7 +555,7 @@ MergeFromPrivateModuleManager::getModuleExpiredFunction(
   const auto lane_set = planning_utils::getLaneletsOnPath(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
-  return [this, lane_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
+  return [lane_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
     const auto merge_from_private_module =
       std::dynamic_pointer_cast<MergeFromPrivateRoadModule>(scene_module);
     const auto & associative_ids = merge_from_private_module->getAssociativeIds();

@@ -96,6 +96,9 @@ StartPlannerModule::StartPlannerModule(
       std::bind(&StartPlannerModule::onFreespacePlannerTimer, this),
       freespace_planner_timer_cb_group_);
   }
+
+  steering_factor_interface_.init(PlanningBehavior::START_PLANNER);
+  velocity_factor_interface_.init(PlanningBehavior::START_PLANNER);
 }
 
 void StartPlannerModule::onFreespacePlannerTimer()
@@ -300,8 +303,24 @@ bool StartPlannerModule::receivedNewRoute() const
 
 bool StartPlannerModule::requiresDynamicObjectsCollisionDetection() const
 {
-  return parameters_->safety_check_params.enable_safety_check && status_.driving_forward &&
-         !isPreventingRearVehicleFromPassingThrough();
+  const auto & safety_params = parameters_->safety_check_params;
+  const auto & skip_rear_vehicle_check = parameters_->skip_rear_vehicle_check;
+
+  // Return false and do not perform collision detection if any of the following conditions are
+  // true:
+  // - Safety check is disabled.
+  // - The vehicle is not driving forward.
+  if (!safety_params.enable_safety_check || !status_.driving_forward) {
+    return false;
+  }
+
+  // Return true and always perform collision detection if the following condition is true:
+  // - Rear vehicle check is set to be skipped.
+  if (skip_rear_vehicle_check) {
+    return true;
+  }
+
+  return !isPreventingRearVehicleFromPassingThrough();
 }
 
 bool StartPlannerModule::noMovingObjectsAround() const
@@ -312,7 +331,7 @@ bool StartPlannerModule::noMovingObjectsAround() const
   utils::path_safety_checker::filterObjectsByClass(
     dynamic_objects, parameters_->surround_moving_obstacles_type_to_check);
   const auto filtered_objects = utils::path_safety_checker::filterObjectsByVelocity(
-    dynamic_objects, parameters_->th_moving_obstacle_velocity, false);
+    dynamic_objects, parameters_->th_moving_obstacle_velocity, true);
   if (!filtered_objects.objects.empty()) {
     DEBUG_PRINT("Moving objects exist in the safety check area");
   }
@@ -439,7 +458,6 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough(const Pose & 
   if (std::isnan(starting_pose_lateral_offset)) return false;
 
   RCLCPP_DEBUG(getLogger(), "starting pose lateral offset: %f", starting_pose_lateral_offset);
-  const bool ego_is_merging_from_the_left = (starting_pose_lateral_offset > 0.0);
 
   // Get the ego's overhang point closest to the centerline path and the gap between said point and
   // the lane's border.
@@ -490,6 +508,7 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough(const Pose & 
   };
 
   geometry_msgs::msg::Pose ego_overhang_point_as_pose;
+  const bool ego_is_merging_from_the_left = (starting_pose_lateral_offset > 0.0);
   const auto gaps_with_lane_borders_pair =
     get_gap_between_ego_and_lane_border(ego_overhang_point_as_pose, ego_is_merging_from_the_left);
 
@@ -542,7 +561,7 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough(const Pose & 
       target_objects_on_lane.on_current_lane.begin(), target_objects_on_lane.on_current_lane.end(),
       [&](const auto & o) {
         const auto arc_length = autoware::motion_utils::calcSignedArcLength(
-          centerline_path.points, ego_pose.position, o.initial_pose.pose.position);
+          centerline_path.points, ego_pose.position, o.initial_pose.position);
         if (arc_length > 0.0) return;
         if (std::abs(arc_length) >= std::abs(arc_length_to_closet_object)) return;
         arc_length_to_closet_object = arc_length;
@@ -720,6 +739,8 @@ BehaviorModuleOutput StartPlannerModule::plan()
 
   setDrivableAreaInfo(output);
 
+  setVelocityFactor(output.path);
+
   const auto steering_factor_direction = getSteeringFactorDirection(output);
 
   if (status_.driving_forward) {
@@ -730,10 +751,9 @@ BehaviorModuleOutput StartPlannerModule::plan()
       path.points, planner_data_->self_odometry->pose.pose.position,
       status_.pull_out_path.end_pose.position);
     updateRTCStatus(start_distance, finish_distance);
-    steering_factor_interface_ptr_->updateSteeringFactor(
+    steering_factor_interface_.set(
       {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose},
-      {start_distance, finish_distance}, PlanningBehavior::START_PLANNER, steering_factor_direction,
-      SteeringFactor::TURNING, "");
+      {start_distance, finish_distance}, steering_factor_direction, SteeringFactor::TURNING, "");
     setDebugData();
     return output;
   }
@@ -741,9 +761,9 @@ BehaviorModuleOutput StartPlannerModule::plan()
     path.points, planner_data_->self_odometry->pose.pose.position,
     status_.pull_out_path.start_pose.position);
   updateRTCStatus(0.0, distance);
-  steering_factor_interface_ptr_->updateSteeringFactor(
+  steering_factor_interface_.set(
     {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose}, {0.0, distance},
-    PlanningBehavior::START_PLANNER, steering_factor_direction, SteeringFactor::TURNING, "");
+    steering_factor_direction, SteeringFactor::TURNING, "");
 
   setDebugData();
 
@@ -836,10 +856,10 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
       stop_path.points, planner_data_->self_odometry->pose.pose.position,
       status_.pull_out_path.end_pose.position);
     updateRTCStatus(start_distance, finish_distance);
-    steering_factor_interface_ptr_->updateSteeringFactor(
+    steering_factor_interface_.set(
       {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose},
-      {start_distance, finish_distance}, PlanningBehavior::START_PLANNER, steering_factor_direction,
-      SteeringFactor::APPROACHING, "");
+      {start_distance, finish_distance}, steering_factor_direction, SteeringFactor::APPROACHING,
+      "");
     setDebugData();
 
     return output;
@@ -848,9 +868,9 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
     stop_path.points, planner_data_->self_odometry->pose.pose.position,
     status_.pull_out_path.start_pose.position);
   updateRTCStatus(0.0, distance);
-  steering_factor_interface_ptr_->updateSteeringFactor(
+  steering_factor_interface_.set(
     {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose}, {0.0, distance},
-    PlanningBehavior::START_PLANNER, steering_factor_direction, SteeringFactor::APPROACHING, "");
+    steering_factor_direction, SteeringFactor::APPROACHING, "");
 
   setDebugData();
 

@@ -61,6 +61,10 @@ using tier4_planning_msgs::msg::PathWithLaneId;
 
 namespace
 {
+/**
+ * @param x_vec Strictly monotone increasing is required.
+ * @param y_vec The same number of elements as x_vec is required.
+ */
 double interpolateEgoPassMargin(
   const std::vector<double> & x_vec, const std::vector<double> & y_vec, const double target_x)
 {
@@ -76,6 +80,10 @@ double interpolateEgoPassMargin(
   return y_vec.back();
 }
 
+/**
+ * @param key_map Strictly monotone increasing should be satisfied.
+ * @param value_map The same number of elements as key_map is required.
+ */
 double InterpolateMap(
   const std::vector<double> & key_map, const std::vector<double> & value_map, const double query)
 {
@@ -111,10 +119,15 @@ public:
   {
     bool show_processing_time;
     // param for stop position
-    double stop_distance_from_object;
+    double stop_distance_from_object_preferred;
+    double stop_distance_from_object_limit;
     double stop_distance_from_crosswalk;
-    double far_object_threshold;
     double stop_position_threshold;
+    double min_acc_preferred;
+    double min_jerk_preferred;
+    // param for restart suppression
+    double min_dist_to_stop_for_restart_suppression;
+    double max_dist_to_stop_for_restart_suppression;
     // param for ego velocity
     float min_slow_down_velocity;
     double max_slow_down_jerk;
@@ -136,10 +149,9 @@ public:
     std::vector<double> ego_pass_later_margin_y;
     double ego_pass_later_additional_margin;
     double ego_min_assumed_speed;
-    double max_offset_to_crosswalk_for_yield;
     double min_acc_for_no_stop_decision;
-    double max_jerk_for_no_stop_decision;
     double min_jerk_for_no_stop_decision;
+    double overrun_threshold_length_for_no_stop_decision;
     double stop_object_velocity;
     double min_object_velocity;
     bool disable_yield_for_new_stopped_object;
@@ -348,6 +360,10 @@ private:
     const PathWithLaneId & ego_path,
     const geometry_msgs::msg::Point & first_path_point_on_crosswalk) const;
 
+  std::optional<geometry_msgs::msg::Pose> calcStopPose(
+    const PathWithLaneId & ego_path, double dist_nearest_cp,
+    const std::optional<geometry_msgs::msg::Pose> & default_stop_pose_opt);
+
   std::optional<StopFactor> checkStopForCrosswalkUsers(
     const PathWithLaneId & ego_path, const PathWithLaneId & sparse_resample_path,
     const geometry_msgs::msg::Point & first_path_point_on_crosswalk,
@@ -427,6 +443,9 @@ private:
 
   static geometry_msgs::msg::Polygon createVehiclePolygon(
     const autoware::vehicle_info_utils::VehicleInfo & vehicle_info);
+
+  bool checkRestartSuppression(
+    const PathWithLaneId & ego_path, const std::optional<StopFactor> & stop_factor) const;
 
   void recordTime(const int step_num)
   {

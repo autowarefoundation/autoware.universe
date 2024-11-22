@@ -14,7 +14,7 @@
 
 #include <autoware/behavior_path_planner_common/utils/traffic_light_utils.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
-#include <traffic_light_utils/traffic_light_utils.hpp>
+#include <autoware/traffic_light_utils/traffic_light_utils.hpp>
 
 namespace autoware::behavior_path_planner::utils::traffic_light
 {
@@ -34,11 +34,13 @@ double getDistanceToNextTrafficLight(
     lanelet::utils::to2D(lanelet_point).basicPoint());
 
   for (const auto & element : current_lanelet.regulatoryElementsAs<lanelet::TrafficLight>()) {
-    lanelet::ConstLineString3d lanelet_stop_lines = element->stopLine().value();
+    const auto lanelet_stop_lines = element->stopLine();
+
+    if (!lanelet_stop_lines.has_value()) continue;
 
     const auto to_stop_line = lanelet::geometry::toArcCoordinates(
       lanelet::utils::to2D(current_lanelet.centerline()),
-      lanelet::utils::to2D(lanelet_stop_lines).front().basicPoint());
+      lanelet::utils::to2D(lanelet_stop_lines.value()).front().basicPoint());
 
     const auto distance_object_to_stop_line = to_stop_line.length - to_object.length;
 
@@ -61,11 +63,13 @@ double getDistanceToNextTrafficLight(
     }
 
     for (const auto & element : llt.regulatoryElementsAs<lanelet::TrafficLight>()) {
-      lanelet::ConstLineString3d lanelet_stop_lines = element->stopLine().value();
+      const auto lanelet_stop_lines = element->stopLine();
+
+      if (!lanelet_stop_lines.has_value()) continue;
 
       const auto to_stop_line = lanelet::geometry::toArcCoordinates(
         lanelet::utils::to2D(llt.centerline()),
-        lanelet::utils::to2D(lanelet_stop_lines).front().basicPoint());
+        lanelet::utils::to2D(lanelet_stop_lines.value()).front().basicPoint());
 
       return distance + to_stop_line.length - to_object.length;
     }
@@ -87,17 +91,18 @@ std::optional<double> calcDistanceToRedTrafficLight(
         continue;
       }
 
-      if (!traffic_light_utils::isTrafficSignalStop(
+      if (!autoware::traffic_light_utils::isTrafficSignalStop(
             lanelet, traffic_signal_stamped.value().signal)) {
         continue;
       }
 
       const auto & ego_pos = planner_data->self_odometry->pose.pose.position;
-      lanelet::ConstLineString3d stop_line = *(element->stopLine());
-      const auto x = 0.5 * (stop_line.front().x() + stop_line.back().x());
-      const auto y = 0.5 * (stop_line.front().y() + stop_line.back().y());
-      const auto z = 0.5 * (stop_line.front().z() + stop_line.back().z());
+      const auto & stop_line = element->stopLine();
+      if (!stop_line || stop_line->empty()) return std::nullopt;
 
+      const auto x = 0.5 * (stop_line->front().x() + stop_line->back().x());
+      const auto y = 0.5 * (stop_line->front().y() + stop_line->back().y());
+      const auto z = 0.5 * (stop_line->front().z() + stop_line->back().z());
       return calcSignedArcLength(
         path.points, ego_pos, autoware::universe_utils::createPoint(x, y, z));
     }
@@ -138,7 +143,7 @@ bool isTrafficSignalStop(
         continue;
       }
 
-      if (traffic_light_utils::isTrafficSignalStop(
+      if (autoware::traffic_light_utils::isTrafficSignalStop(
             lanelet, traffic_signal_stamped.value().signal)) {
         return true;
       }
