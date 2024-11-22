@@ -652,14 +652,6 @@ bool AEB::hasCollision(const double current_v, const ObjectData & closest_object
 Path AEB::generateEgoPath(const double curr_v, const double curr_w)
 {
   autoware::universe_utils::ScopedTimeTrack st(std::string(__func__) + "(IMU)", *time_keeper_);
-  Path path;
-  double curr_x = 0.0;
-  double curr_y = 0.0;
-  double curr_yaw = 0.0;
-  geometry_msgs::msg::Pose ini_pose;
-  ini_pose.position = autoware::universe_utils::createPoint(curr_x, curr_y, 0.0);
-  ini_pose.orientation = autoware::universe_utils::createQuaternionFromYaw(curr_yaw);
-  path.push_back(ini_pose);
   const double & dt = imu_prediction_time_interval_;
   const double distance_between_points = std::abs(curr_v) * dt;
   constexpr double minimum_distance_between_points{1e-2};
@@ -667,39 +659,60 @@ Path AEB::generateEgoPath(const double curr_v, const double curr_w)
   // if distance between points is too small, arc length calculation is unreliable, so we skip
   // creating the path
   if (std::abs(curr_v) < 0.1 || distance_between_points < minimum_distance_between_points) {
-    return path;
+    return {};
   }
+
+  // The initial pose is always aligned with the local reference frame.
+  geometry_msgs::msg::Pose initial_pose;
+  initial_pose.position = autoware::universe_utils::createPoint(0.0, 0.0, 0.0);
+  initial_pose.orientation = autoware::universe_utils::createQuaternionFromYaw(0.0);
 
   const double horizon = imu_prediction_time_horizon_;
   const double base_link_to_front_offset = vehicle_info_.max_longitudinal_offset_m;
   const double rear_overhang = vehicle_info_.rear_overhang_m;
   const double vehicle_half_width = expand_width_ + vehicle_info_.vehicle_width_m / 2.0;
 
-  double path_arc_length = 0.0;
-  double t = 0.0;
-  bool finished_creating_path = false;
+  // Choose the coordinates of the ego footprint vertex that will used to check for lateral
+  // deviation
   const auto longitudinal_offset = (curr_v > 0.0) ? base_link_to_front_offset : -rear_overhang;
   const auto lateral_offset = (curr_v * curr_w > 0.0) ? vehicle_half_width : -vehicle_half_width;
 
-  while (!finished_creating_path) {
+  Path path{initial_pose};
+  path.reserve(static_cast<int>(horizon / dt));
+  double curr_x = 0.0;
+  double curr_y = 0.0;
+  double curr_yaw = 0.0;
+  double path_arc_length = 0.0;
+  double t = 0.0;
+
+  bool basic_path_conditions_satisfied = false;
+  bool path_length_threshold_surpassed = false;
+  bool lat_dev_threshold_surpassed = false;
+  while (true) {
     curr_x = curr_x + curr_v * std::cos(curr_yaw) * dt;
     curr_y = curr_y + curr_v * std::sin(curr_yaw) * dt;
     curr_yaw = curr_yaw + curr_w * dt;
     geometry_msgs::msg::Pose current_pose =
-      autoware::universe_utils::calcOffsetPose(ini_pose, curr_x, curr_y, 0.0, curr_yaw);
+      autoware::universe_utils::calcOffsetPose(initial_pose, curr_x, curr_y, 0.0, curr_yaw);
 
+    t += dt;
+    path_arc_length += distance_between_points;
     const auto edge_of_ego_vehicle = autoware::universe_utils::calcOffsetPose(
                                        current_pose, longitudinal_offset, lateral_offset, 0.0)
                                        .position;
 
-    t += dt;
-    path_arc_length += distance_between_points;
-    const bool path_length_threshold_surpassed = path_arc_length > max_generated_imu_path_length_;
-    const bool lat_dev_threshold_surpassed =
+    basic_path_conditions_satisfied =
+      (t > horizon) && (path_arc_length > min_generated_imu_path_length_);
+    path_length_threshold_surpassed = path_arc_length > max_generated_imu_path_length_;
+    lat_dev_threshold_surpassed =
       limit_imu_path_lat_dev_ && std::abs(edge_of_ego_vehicle.y) > imu_path_lat_dev_threshold_;
-    finished_creating_path = (t > horizon) && (path_arc_length > min_generated_imu_path_length_);
-    finished_creating_path =
-      finished_creating_path || path_length_threshold_surpassed || lat_dev_threshold_surpassed;
+
+    if (
+      basic_path_conditions_satisfied || path_length_threshold_surpassed ||
+      lat_dev_threshold_surpassed) {
+      break;
+    }
+
     path.push_back(current_pose);
   }
   return path;
