@@ -44,6 +44,7 @@ using autoware::behavior_path_planner::utils::path_safety_checker::
 using autoware::behavior_path_planner::utils::path_safety_checker::PoseWithVelocityStamped;
 using autoware::behavior_path_planner::utils::path_safety_checker::PredictedPathWithPolygon;
 using autoware::route_handler::Direction;
+using autoware::universe_utils::LineString2d;
 using autoware::universe_utils::Polygon2d;
 using autoware::vehicle_info_utils::VehicleInfo;
 using autoware_perception_msgs::msg::PredictedObject;
@@ -139,16 +140,15 @@ std::optional<size_t> getLeadingStaticObjectIdx(
   const std::vector<ExtendedPredictedObject> & objects,
   const double object_check_min_road_shoulder_width, const double object_shiftable_ratio_threshold);
 
-std::optional<lanelet::BasicPolygon2d> createPolygon(
+lanelet::BasicPolygon2d create_polygon(
   const lanelet::ConstLanelets & lanes, const double start_dist, const double end_dist);
 
 ExtendedPredictedObject transform(
   const PredictedObject & object, const BehaviorPathPlannerParameters & common_parameters,
   const LaneChangeParameters & lane_change_parameters, const bool check_at_prepare_phase);
 
-bool isCollidedPolygonsInLanelet(
-  const std::vector<Polygon2d> & collided_polygons,
-  const std::optional<lanelet::BasicPolygon2d> & lanes_polygon);
+bool is_collided_polygons_in_lanelet(
+  const std::vector<Polygon2d> & collided_polygons, const lanelet::BasicPolygon2d & lanes_polygon);
 
 /**
  * @brief Generates expanded lanelets based on the given direction and offsets.
@@ -188,13 +188,12 @@ rclcpp::Logger getLogger(const std::string & type);
  * The footprint is determined by the vehicle's pose and its dimensions, including the distance
  * from the base to the front and rear ends of the vehicle, as well as its width.
  *
- * @param ego_pose The current pose of the ego vehicle.
- * @param ego_info The structural information of the ego vehicle, such as its maximum longitudinal
- *                 offset, rear overhang, and width.
+ * @param common_data_ptr Shared pointer to CommonData that holds necessary ego vehicle's dimensions
+ *                        and pose information.
  *
  * @return Polygon2d A polygon representing the current 2D footprint of the ego vehicle.
  */
-Polygon2d getEgoCurrentFootprint(const Pose & ego_pose, const VehicleInfo & ego_info);
+Polygon2d get_ego_footprint(const Pose & ego_pose, const VehicleInfo & ego_info);
 
 Point getEgoFrontVertex(const Pose & ego_pose, const VehicleInfo & ego_info, bool left);
 
@@ -213,7 +212,7 @@ Point getEgoFrontVertex(const Pose & ego_pose, const VehicleInfo & ego_info, boo
  *
  * @return bool True if the polygon is within the intersection area, false otherwise.
  */
-bool isWithinIntersection(
+bool is_within_intersection(
   const std::shared_ptr<RouteHandler> & route_handler, const lanelet::ConstLanelet & lanelet,
   const Polygon2d & polygon);
 
@@ -230,7 +229,8 @@ bool isWithinIntersection(
  * @return bool True if the polygon is within a lane designated for turning, false if it is within a
  *              straight lane or no turn direction is specified.
  */
-bool isWithinTurnDirectionLanes(const lanelet::ConstLanelet & lanelet, const Polygon2d & polygon);
+bool is_within_turn_direction_lanes(
+  const lanelet::ConstLanelet & lanelet, const Polygon2d & polygon);
 
 LanesPolygon create_lanes_polygon(const CommonDataPtr & common_data_ptr);
 
@@ -297,6 +297,51 @@ double get_min_dist_to_current_lanes_obj(
 bool has_blocking_target_object(
   const CommonDataPtr & common_data_ptr, const FilteredByLanesExtendedObjects & filtered_objects,
   const double stop_arc_length, const PathWithLaneId & path);
-}  // namespace autoware::behavior_path_planner::utils::lane_change
 
+/**
+ * @brief Checks if the ego vehicle has passed any turn direction within an intersection.
+ *
+ * This function determines whether the ego vehicle has exited the intersection and
+ * turn lane area based on its distance from the previous intersection. It considers
+ * whether the ego vehicle is currently in an intersection and a turn lane.
+ *
+ * @param common_data_ptr Shared pointer to CommonData containing the transient data and
+ *                        lane-change parameters required for the distance's comparison.
+ *
+ * @return true if the ego vehicle has passed the intersection turn direction, false otherwise.
+ */
+bool has_passed_intersection_turn_direction(const CommonDataPtr & common_data_ptr);
+
+/**
+ * @brief Retrieves the predicted paths of an object as 2D line strings.
+ *
+ * This function transforms each predicted path of an object into a LineString2d, representing
+ * a 2D sequence of points. Each point in the path is extracted from the predicted path's
+ * position and converted to a 2D point.
+ *
+ * @param object The predicted object whose paths will be converted into 2D line strings.
+ *
+ * @return std::vector<LineString2d> A vector of 2D line strings representing the predicted paths
+ *                                   of the object.
+ */
+std::vector<LineString2d> get_line_string_paths(const ExtendedPredictedObject & object);
+
+/**
+ * @brief Determines if there is an object in the turn lane that could overtake the ego vehicle.
+ *
+ * This function checks for any trailing objects in the turn lane that may attempt to overtake
+ * the ego vehicle. The check is only applicable if the ego vehicle is still within a certain
+ * distance from the previous intersection's turn lane. It evaluates whether any of the predicted
+ * paths or the initial polygon of trailing objects overlap with the target lane polygon.
+ *
+ * @param common_data_ptr Shared pointer to CommonData containing lane and polygon information
+ *                        for the ego vehicle.
+ * @param trailing_objects A collection of predicted objects trailing the ego vehicle.
+ *
+ * @return true if there is an object in the turn lane with a potential to overtake, false
+ * otherwise.
+ */
+bool has_overtaking_turn_lane_object(
+  const CommonDataPtr & common_data_ptr, const ExtendedPredictedObjects & trailing_objects);
+}  // namespace autoware::behavior_path_planner::utils::lane_change
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__UTILS_HPP_

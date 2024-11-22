@@ -99,8 +99,6 @@ private:
   //!< @brief trigger_node service
   rclcpp::Service<std_srvs::srv::SetBool>::SharedPtr service_trigger_node_;
 
-  //!< @brief timer to send transform
-  rclcpp::TimerBase::SharedPtr timer_tf_;
   //!< @brief tf broadcaster
   std::shared_ptr<tf2_ros::TransformBroadcaster> tf_br_;
   //!< @brief tf buffer
@@ -130,11 +128,6 @@ private:
    * @brief computes update & prediction of EKF for each ekf_dt_[s] time
    */
   void timer_callback();
-
-  /**
-   * @brief publish tf for tf_rate [Hz]
-   */
-  void timer_tf_callback();
 
   /**
    * @brief set pose with covariance measurement
