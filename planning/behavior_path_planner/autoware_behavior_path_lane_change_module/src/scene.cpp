@@ -121,10 +121,10 @@ void NormalLaneChange::update_lanes(const bool is_approved)
   lane_change_debug_.target_backward_lanes.clear();
   ranges::for_each(
     common_data_ptr_->lanes_ptr->preceding_target,
-    [&](const lanelet::ConstLanelets & preceeding_lanes) {
+    [&](const lanelet::ConstLanelets & preceding_lanes) {
       ranges::insert(
         lane_change_debug_.target_backward_lanes, lane_change_debug_.target_backward_lanes.end(),
-        preceeding_lanes);
+        preceding_lanes);
     });
 
   *common_data_ptr_->lanes_polygon_ptr = create_lanes_polygon(common_data_ptr_);
