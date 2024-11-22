@@ -35,6 +35,7 @@
 #include <algorithm>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -1161,7 +1162,8 @@ double calcShiftLength(
 }
 
 bool isWithinLanes(
-  const lanelet::ConstLanelets & lanelets, const std::shared_ptr<const PlannerData> & planner_data)
+  const std::optional<lanelet::ConstLanelet> & closest_lanelet,
+  const std::shared_ptr<const PlannerData> & planner_data)
 {
   const auto & rh = planner_data->route_handler;
   const auto & ego_pose = planner_data->self_odometry->pose.pose;
@@ -1169,8 +1171,7 @@ bool isWithinLanes(
   const auto footprint = autoware::universe_utils::transformVector(
     planner_data->parameters.vehicle_info.createFootprint(), transform);
 
-  lanelet::ConstLanelet closest_lanelet{};
-  if (!lanelet::utils::query::getClosestLanelet(lanelets, ego_pose, &closest_lanelet)) {
+  if (!closest_lanelet.has_value()) {
     return true;
   }
 
@@ -1178,18 +1179,18 @@ bool isWithinLanes(
 
   // push previous lanelet
   lanelet::ConstLanelets prev_lanelet;
-  if (rh->getPreviousLaneletsWithinRoute(closest_lanelet, &prev_lanelet)) {
+  if (rh->getPreviousLaneletsWithinRoute(closest_lanelet.value(), &prev_lanelet)) {
     concat_lanelets.push_back(prev_lanelet.front());
   }
 
   // push nearest lanelet
   {
-    concat_lanelets.push_back(closest_lanelet);
+    concat_lanelets.push_back(closest_lanelet.value());
   }
 
   // push next lanelet
   lanelet::ConstLanelet next_lanelet;
-  if (rh->getNextLaneletWithinRoute(closest_lanelet, &next_lanelet)) {
+  if (rh->getNextLaneletWithinRoute(closest_lanelet.value(), &next_lanelet)) {
     concat_lanelets.push_back(next_lanelet);
   }
 
@@ -1950,13 +1951,11 @@ void filterTargetObjects(
       ? autoware::motion_utils::calcSignedArcLength(
           data.reference_path_rough.points, ego_idx, data.reference_path_rough.points.size() - 1)
       : std::numeric_limits<double>::max();
-  const auto & is_allowed_goal_modification =
-    utils::isAllowedGoalModification(planner_data->route_handler);
 
   for (auto & o : objects) {
     if (!filtering_utils::isSatisfiedWithCommonCondition(
           o, data.reference_path_rough, forward_detection_range, to_goal_distance,
-          planner_data->self_odometry->pose.pose.position, is_allowed_goal_modification,
+          planner_data->self_odometry->pose.pose.position, data.is_allowed_goal_modification,
           parameters)) {
       data.other_objects.push_back(o);
       continue;
@@ -2556,9 +2555,8 @@ DrivableLanes generateExpandedDrivableLanes(
 }
 
 double calcDistanceToAvoidStartLine(
-  const lanelet::ConstLanelets & lanelets, const PathWithLaneId & path,
-  const std::shared_ptr<const PlannerData> & planner_data,
-  const std::shared_ptr<AvoidanceParameters> & parameters)
+  const lanelet::ConstLanelets & lanelets, const std::shared_ptr<AvoidanceParameters> & parameters,
+  const std::optional<double> distance_to_red_traffic)
 {
   if (lanelets.empty()) {
     return std::numeric_limits<double>::lowest();
@@ -2568,11 +2566,10 @@ double calcDistanceToAvoidStartLine(
 
   // dead line stop factor(traffic light)
   if (parameters->enable_dead_line_for_traffic_light) {
-    const auto to_traffic_light = calcDistanceToRedTrafficLight(lanelets, path, planner_data);
-    if (to_traffic_light.has_value()) {
+    if (distance_to_red_traffic.has_value()) {
       distance_to_return_dead_line = std::max(
         distance_to_return_dead_line,
-        to_traffic_light.value() + parameters->dead_line_buffer_for_traffic_light);
+        distance_to_red_traffic.value() + parameters->dead_line_buffer_for_traffic_light);
     }
   }
 
@@ -2582,7 +2579,8 @@ double calcDistanceToAvoidStartLine(
 double calcDistanceToReturnDeadLine(
   const lanelet::ConstLanelets & lanelets, const PathWithLaneId & path,
   const std::shared_ptr<const PlannerData> & planner_data,
-  const std::shared_ptr<AvoidanceParameters> & parameters)
+  const std::shared_ptr<AvoidanceParameters> & parameters,
+  const std::optional<double> distance_to_red_traffic, const bool is_allowed_goal_modification)
 {
   if (lanelets.empty()) {
     return std::numeric_limits<double>::max();
@@ -2592,18 +2590,15 @@ double calcDistanceToReturnDeadLine(
 
   // dead line stop factor(traffic light)
   if (parameters->enable_dead_line_for_traffic_light) {
-    const auto to_traffic_light = calcDistanceToRedTrafficLight(lanelets, path, planner_data);
-    if (to_traffic_light.has_value()) {
+    if (distance_to_red_traffic.has_value()) {
       distance_to_return_dead_line = std::min(
         distance_to_return_dead_line,
-        to_traffic_light.value() - parameters->dead_line_buffer_for_traffic_light);
+        distance_to_red_traffic.value() - parameters->dead_line_buffer_for_traffic_light);
     }
   }
 
   // dead line for goal
-  if (
-    !utils::isAllowedGoalModification(planner_data->route_handler) &&
-    parameters->enable_dead_line_for_goal) {
+  if (!is_allowed_goal_modification && parameters->enable_dead_line_for_goal) {
     if (planner_data->route_handler->isInGoalRouteSection(lanelets.back())) {
       const auto & ego_pos = planner_data->self_odometry->pose.pose.position;
       const auto to_goal_distance =

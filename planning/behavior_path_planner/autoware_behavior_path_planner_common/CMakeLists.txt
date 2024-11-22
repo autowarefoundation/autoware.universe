@@ -8,7 +8,6 @@ find_package(magic_enum CONFIG REQUIRED)
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/turn_signal_decider.cpp
-  src/interface/steering_factor_interface.cpp
   src/interface/scene_module_visitor.cpp
   src/interface/scene_module_interface.cpp
   src/interface/scene_module_manager_interface.cpp

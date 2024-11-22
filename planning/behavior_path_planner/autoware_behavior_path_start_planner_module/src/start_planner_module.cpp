@@ -98,6 +98,7 @@ StartPlannerModule::StartPlannerModule(
   }
 
   steering_factor_interface_.init(PlanningBehavior::START_PLANNER);
+  velocity_factor_interface_.init(PlanningBehavior::START_PLANNER);
 }
 
 void StartPlannerModule::onFreespacePlannerTimer()
@@ -737,6 +738,8 @@ BehaviorModuleOutput StartPlannerModule::plan()
   path_reference_ = std::make_shared<PathWithLaneId>(getPreviousModuleOutput().reference_path);
 
   setDrivableAreaInfo(output);
+
+  setVelocityFactor(output.path);
 
   const auto steering_factor_direction = getSteeringFactorDirection(output);
 

@@ -87,26 +87,6 @@ StopReasonArray makeEmptyStopReasonArray(const rclcpp::Time & current_time)
   return stop_reason_array;
 }
 
-VelocityFactorArray makeVelocityFactorArray(
-  const rclcpp::Time & time, const std::optional<geometry_msgs::msg::Pose> pose = std::nullopt)
-{
-  VelocityFactorArray velocity_factor_array;
-  velocity_factor_array.header.frame_id = "map";
-  velocity_factor_array.header.stamp = time;
-
-  if (pose) {
-    using distance_type = VelocityFactor::_distance_type;
-    VelocityFactor velocity_factor;
-    velocity_factor.behavior = PlanningBehavior::ROUTE_OBSTACLE;
-    velocity_factor.pose = pose.value();
-    velocity_factor.distance = std::numeric_limits<distance_type>::quiet_NaN();
-    velocity_factor.status = VelocityFactor::UNKNOWN;
-    velocity_factor.detail = std::string();
-    velocity_factor_array.factors.push_back(velocity_factor);
-  }
-  return velocity_factor_array;
-}
-
 double calcMinimumDistanceToStop(
   const double initial_vel, const double max_acc, const double min_acc)
 {
@@ -247,7 +227,8 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
 
   if (stop_obstacles.empty()) {
     stop_reasons_pub_->publish(makeEmptyStopReasonArray(planner_data.current_time));
-    velocity_factors_pub_->publish(makeVelocityFactorArray(planner_data.current_time));
+    velocity_factors_pub_->publish(
+      obstacle_cruise_utils::makeVelocityFactorArray(planner_data.current_time));
     // delete marker
     const auto markers =
       autoware::motion_utils::createDeletedStopVirtualWallMarker(planner_data.current_time, 0);
@@ -403,7 +384,8 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
     const auto stop_reasons_msg =
       makeStopReasonArray(planner_data, stop_pose, *determined_stop_obstacle);
     stop_reasons_pub_->publish(stop_reasons_msg);
-    velocity_factors_pub_->publish(makeVelocityFactorArray(planner_data.current_time, stop_pose));
+    velocity_factors_pub_->publish(obstacle_cruise_utils::makeVelocityFactorArray(
+      planner_data.current_time, PlanningBehavior::ROUTE_OBSTACLE, stop_pose));
     // Store stop reason debug data
     debug_data_ptr_->stop_metrics =
       makeMetrics("PlannerInterface", "stop", planner_data, stop_pose, *determined_stop_obstacle);
@@ -656,6 +638,9 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
       const auto markers = autoware::motion_utils::createSlowDownVirtualWallMarker(
         slow_down_traj_points.at(slow_down_wall_idx).pose, "obstacle slow down",
         planner_data.current_time, i, abs_ego_offset, "", planner_data.is_driving_forward);
+      velocity_factors_pub_->publish(obstacle_cruise_utils::makeVelocityFactorArray(
+        planner_data.current_time, PlanningBehavior::ROUTE_OBSTACLE,
+        slow_down_traj_points.at(slow_down_wall_idx).pose));
       autoware::universe_utils::appendMarkerArray(markers, &debug_data_ptr_->slow_down_wall_marker);
     }
 

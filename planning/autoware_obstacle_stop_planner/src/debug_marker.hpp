@@ -77,7 +77,7 @@ public:
    * @brief get all the debug values as an std::array
    * @return array of all debug values
    */
-  std::array<double, static_cast<int>(TYPE::SIZE)> getValues() const { return values_; }
+  const std::array<double, static_cast<int>(TYPE::SIZE)> & getValues() const { return values_; }
   /**
    * @brief set the given type to the given value
    * @param [in] type TYPE of the value

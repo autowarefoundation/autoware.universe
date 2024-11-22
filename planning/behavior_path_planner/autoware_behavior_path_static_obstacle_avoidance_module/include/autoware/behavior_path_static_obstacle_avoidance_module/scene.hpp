@@ -65,6 +65,8 @@ public:
   std::shared_ptr<AvoidanceDebugMsgArray> get_debug_msg_array() const;
 
 private:
+  ModuleStatus setInitState() const override { return ModuleStatus::WAITING_APPROVAL; };
+
   /**
    * @brief return the result whether the module can stop path generation process.
    * @param avoidance data.
