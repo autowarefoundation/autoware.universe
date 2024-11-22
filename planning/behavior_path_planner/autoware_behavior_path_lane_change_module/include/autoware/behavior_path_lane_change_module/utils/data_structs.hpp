@@ -268,11 +268,11 @@ struct TargetLaneLeadingObjects
   ExtendedPredictedObjects stopped;
 
   // for objects outside of target lanes, but close to its boundaries
-  ExtendedPredictedObjects stopped_outside_boundary;
+  ExtendedPredictedObjects stopped_at_bound;
 
   [[nodiscard]] size_t size() const
   {
-    return moving.size() + stopped.size() + stopped_outside_boundary.size();
+    return moving.size() + stopped.size() + stopped_at_bound.size();
   }
 };
 

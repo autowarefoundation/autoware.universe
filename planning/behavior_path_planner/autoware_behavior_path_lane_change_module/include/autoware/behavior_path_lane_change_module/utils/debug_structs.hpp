@@ -58,7 +58,7 @@ struct Debug
     filtered_objects.target_lane_trailing.clear();
     filtered_objects.target_lane_leading.moving.clear();
     filtered_objects.target_lane_leading.stopped.clear();
-    filtered_objects.target_lane_leading.stopped_outside_boundary.clear();
+    filtered_objects.target_lane_leading.stopped_at_bound.clear();
     filtered_objects.others.clear();
     execution_area.points.clear();
     current_lanes.clear();

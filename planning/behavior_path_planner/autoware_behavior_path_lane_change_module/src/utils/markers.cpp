@@ -126,7 +126,7 @@ MarkerArray showFilteredObjects(
   add_objects_to_marker(filtered_objects.target_lane_leading.stopped, colors::light_steel_blue());
   add_objects_to_marker(filtered_objects.target_lane_trailing, colors::blue());
   add_objects_to_marker(
-    filtered_objects.target_lane_leading.stopped_outside_boundary, colors::light_pink());
+    filtered_objects.target_lane_leading.stopped_at_bound, colors::light_pink());
   add_objects_to_marker(filtered_objects.others, colors::medium_orchid());
 
   return marker_array;
