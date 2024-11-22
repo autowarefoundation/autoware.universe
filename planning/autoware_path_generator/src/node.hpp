@@ -32,6 +32,7 @@ using autoware_map_msgs::msg::LaneletMapBin;
 using autoware_planning_msgs::msg::LaneletRoute;
 using nav_msgs::msg::Odometry;
 using ::path_generator::Params;
+using tier4_planning_msgs::msg::PathPointWithLaneId;
 using tier4_planning_msgs::msg::PathWithLaneId;
 
 class PathGenerator : public rclcpp::Node
@@ -78,16 +79,20 @@ private:
 
   std::optional<PathWithLaneId> plan_path(const InputData & input_data);
 
-  std::optional<PathWithLaneId> generate_centerline_path(
+  std::optional<PathWithLaneId> generate_path(
     const geometry_msgs::msg::Pose & current_pose, const Params & params) const;
 
-  std::optional<PathWithLaneId> get_centerline_path(
-    const lanelet::ConstLanelets & lanelet_sequence, const geometry_msgs::msg::Pose & current_pose,
+  std::optional<PathWithLaneId> generate_path(
+    const lanelet::LaneletSequence & lanelet_sequence,
+    const geometry_msgs::msg::Pose & current_pose, const Params & params) const;
+
+  std::optional<PathWithLaneId> generate_path(
+    const lanelet::LaneletSequence & lanelet_sequence, const double s_start, const double s_end,
     const Params & params) const;
 
-  std::optional<PathWithLaneId> get_centerline_path(
-    const lanelet::ConstLanelets & lanelet_sequence, const double s_start,
-    const double s_end) const;
+  std::vector<PathPointWithLaneId> generate_path_points(
+    const lanelet::LaneletSequence & lanelet_sequence, const double s_start, const double s_end,
+    const Params & params) const;
 };
 }  // namespace autoware::path_generator
 
