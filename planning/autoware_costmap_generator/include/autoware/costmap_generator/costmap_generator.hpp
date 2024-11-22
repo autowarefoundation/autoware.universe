@@ -166,8 +166,9 @@ private:
 
   /// \brief calculate cost from pointcloud data
   /// \param[in] in_points: subscribed pointcloud data
+  /// \param[in] vehicle_to_map_z: z value of the ego vehicle in the costmap frame
   grid_map::Matrix generatePointsCostmap(
-    const sensor_msgs::msg::PointCloud2::ConstSharedPtr & in_points);
+    const sensor_msgs::msg::PointCloud2::ConstSharedPtr & in_points, const double vehicle_to_map_z);
 
   /// \brief calculate cost from DynamicObjectArray
   /// \param[in] in_objects: subscribed DynamicObjectArray

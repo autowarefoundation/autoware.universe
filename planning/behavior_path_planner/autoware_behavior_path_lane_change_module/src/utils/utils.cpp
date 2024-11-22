@@ -912,16 +912,11 @@ lanelet::BasicPolygon2d create_polygon(
 }
 
 ExtendedPredictedObject transform(
-  const PredictedObject & object, const CommonDataPtr & common_data_ptr,
-  const bool check_at_prepare_phase)
+  const PredictedObject & object, const LaneChangeParameters & lane_change_parameters)
 {
   ExtendedPredictedObject extended_object(object);
 
-  const auto & lc_param_ptr = common_data_ptr->lc_param_ptr;
-  const auto time_resolution = lc_param_ptr->prediction_time_resolution;
-  const auto velocity_threshold = lc_param_ptr->stopped_object_velocity_threshold;
-  const auto prepare_duration = common_data_ptr->transient_data.lane_change_prepare_duration;
-  const auto start_time = check_at_prepare_phase ? 0.0 : prepare_duration;
+  const auto & time_resolution = lane_change_parameters.prediction_time_resolution;
   const double obj_vel_norm =
     std::hypot(extended_object.initial_twist.linear.x, extended_object.initial_twist.linear.y);
 
@@ -933,11 +928,8 @@ ExtendedPredictedObject transform(
     extended_object.predicted_paths.at(i).confidence = path.confidence;
 
     // create path
-    for (double t = start_time; t < end_time + std::numeric_limits<double>::epsilon();
+    for (double t = 0.0; t < end_time + std::numeric_limits<double>::epsilon();
          t += time_resolution) {
-      if (t < prepare_duration && obj_vel_norm < velocity_threshold) {
-        continue;
-      }
       const auto obj_pose = autoware::object_recognition_utils::calcInterpolatedPose(path, t);
       if (obj_pose) {
         const auto obj_polygon = autoware::universe_utils::toPolygon2d(*obj_pose, object.shape);
@@ -1163,15 +1155,15 @@ double calc_angle_to_lanelet_segment(const lanelet::ConstLanelets & lanelets, co
 }
 
 ExtendedPredictedObjects transform_to_extended_objects(
-  const CommonDataPtr & common_data_ptr, const std::vector<PredictedObject> & objects,
-  const bool check_prepare_phase)
+  const CommonDataPtr & common_data_ptr, const std::vector<PredictedObject> & objects)
 {
   ExtendedPredictedObjects extended_objects;
   extended_objects.reserve(objects.size());
 
+  const auto & lc_param = *common_data_ptr->lc_param_ptr;
   std::transform(
     objects.begin(), objects.end(), std::back_inserter(extended_objects), [&](const auto & object) {
-      return utils::lane_change::transform(object, common_data_ptr, check_prepare_phase);
+      return utils::lane_change::transform(object, lc_param);
     });
 
   return extended_objects;
