@@ -685,9 +685,6 @@ Path AEB::generateEgoPath(const double curr_v, const double curr_w)
   double path_arc_length = 0.0;
   double t = 0.0;
 
-  bool basic_path_conditions_satisfied = false;
-  bool path_length_threshold_surpassed = false;
-  bool lat_dev_threshold_surpassed = false;
   while (true) {
     curr_x = curr_x + curr_v * std::cos(curr_yaw) * dt;
     curr_y = curr_y + curr_v * std::sin(curr_yaw) * dt;
@@ -701,10 +698,10 @@ Path AEB::generateEgoPath(const double curr_v, const double curr_w)
                                        current_pose, longitudinal_offset, lateral_offset, 0.0)
                                        .position;
 
-    basic_path_conditions_satisfied =
+    const bool basic_path_conditions_satisfied =
       (t > horizon) && (path_arc_length > min_generated_imu_path_length_);
-    path_length_threshold_surpassed = path_arc_length > max_generated_imu_path_length_;
-    lat_dev_threshold_surpassed =
+    const bool path_length_threshold_surpassed = path_arc_length > max_generated_imu_path_length_;
+    const bool lat_dev_threshold_surpassed =
       limit_imu_path_lat_dev_ && std::abs(edge_of_ego_vehicle.y) > imu_path_lat_dev_threshold_;
 
     if (
