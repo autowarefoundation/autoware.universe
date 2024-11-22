@@ -15,8 +15,8 @@
 #ifndef VEHICLE_DOOR_HPP_
 #define VEHICLE_DOOR_HPP_
 
+#include <autoware/adapi_specs/vehicle.hpp>
 #include <autoware/component_interface_specs/vehicle.hpp>
-#include <autoware_ad_api_specs/vehicle.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <optional>
@@ -36,9 +36,9 @@ private:
   void on_status(
     autoware::component_interface_specs::vehicle::DoorStatus::Message::ConstSharedPtr msg);
   rclcpp::CallbackGroup::SharedPtr group_cli_;
-  Srv<autoware_ad_api::vehicle::DoorCommand> srv_command_;
-  Srv<autoware_ad_api::vehicle::DoorLayout> srv_layout_;
-  Pub<autoware_ad_api::vehicle::DoorStatus> pub_status_;
+  Srv<autoware::adapi_specs::vehicle::DoorCommand> srv_command_;
+  Srv<autoware::adapi_specs::vehicle::DoorLayout> srv_layout_;
+  Pub<autoware::adapi_specs::vehicle::DoorStatus> pub_status_;
   Cli<autoware::component_interface_specs::vehicle::DoorCommand> cli_command_;
   Cli<autoware::component_interface_specs::vehicle::DoorLayout> cli_layout_;
   Sub<autoware::component_interface_specs::vehicle::DoorStatus> sub_status_;
