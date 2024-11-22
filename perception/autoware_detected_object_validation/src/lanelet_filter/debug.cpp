@@ -111,7 +111,7 @@ void ObjectLaneletFilterNode::publishDebugMarkers(
   if (auto marker = createPolygonMarker(hull, stamp, lanelet_range, ++marker_id, color); marker) {
     marker_array.markers.push_back(std::move(*marker));
   }
-  for (auto & box_and_lanelet : lanelets) {
+  for (const auto & box_and_lanelet : lanelets) {
     color.r = 0.2;
     color.g = 0.5;
     color.b = 1.0;
