@@ -25,10 +25,10 @@
 
 namespace autoware::pyplot
 {
-class DECL_VISIBILITY PyPlot
+struct DECL_VISIBILITY PyPlot
 {
 public:
-  explicit PyPlot(pybind11::module && mod_) : mod(mod_) { load_attrs(); }
+  explicit PyPlot(const pybind11::module & mod_);
 
   axes::Axes axes(const pybind11::dict & kwargs = pybind11::dict());
 

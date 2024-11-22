@@ -17,6 +17,11 @@
 
 namespace autoware::pyplot
 {
+PyPlot::PyPlot(const pybind11::module & mod_) : mod(mod_)
+{
+  load_attrs();
+}
+
 void PyPlot::load_attrs()
 {
   LOAD_FUNC_ATTR(axes, mod);
@@ -193,7 +198,8 @@ PyObjectWrapper PyPlot::ylim(const pybind11::tuple & args, const pybind11::dict 
 PyPlot import()
 {
   auto mod = pybind11::module::import("matplotlib.pyplot");
-  auto g_pyplot = PyPlot(std::move(mod));
+  auto g_pyplot = PyPlot(mod);
   return g_pyplot;
 }
+
 }  // namespace autoware::pyplot
