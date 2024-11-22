@@ -35,6 +35,8 @@
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info.hpp>
 #include <range/v3/algorithm/any_of.hpp>
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/transform.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/detail/pose__struct.hpp>
@@ -1149,11 +1151,8 @@ std::vector<LineString2d> get_line_string_paths(const ExtendedPredictedObject & 
     return line_string;
   };
 
-  const auto paths = object.predicted_paths;
-  std::vector<LineString2d> line_strings;
-  std::transform(paths.begin(), paths.end(), std::back_inserter(line_strings), to_linestring_2d);
-
-  return line_strings;
+  return object.predicted_paths | ranges::views::transform(to_linestring_2d) |
+         ranges::to<std::vector>();
 }
 
 bool has_overtaking_turn_lane_object(
@@ -1252,8 +1251,7 @@ bool filter_target_lane_objects(
 bool has_path_overlapped_target_lanes(
   const ExtendedPredictedObject & object, const lanelet::BasicPolygon2d & lanes_polygon)
 {
-  const auto paths = get_line_string_paths(object);
-  return ranges::any_of(paths, [&](const LineString2d & path) {
+  return ranges::any_of(get_line_string_paths(object), [&](const auto & path) {
     return !boost::geometry::disjoint(path, lanes_polygon);
   });
 }
