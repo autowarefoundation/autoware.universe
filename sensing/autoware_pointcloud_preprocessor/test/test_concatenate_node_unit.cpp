@@ -61,12 +61,13 @@ protected:
     concatenate_node_ = std::make_shared<
       autoware::pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent>(
       node_options);
-    combine_cloud_handler_ =
-      std::make_shared<autoware::pointcloud_preprocessor::CombineCloudHandler>(
-        *concatenate_node_, std::vector<std::string>{"lidar_top", "lidar_left", "lidar_right"},
-        "base_link", true, true, true, false);
+    combine_cloud_handler_ = std::make_shared<
+      autoware::pointcloud_preprocessor::CombineCloudHandler<sensor_msgs::msg::PointCloud2>>(
+      *concatenate_node_, std::vector<std::string>{"lidar_top", "lidar_left", "lidar_right"},
+      "base_link", true, true, true, false);
 
-    collector_ = std::make_shared<autoware::pointcloud_preprocessor::CloudCollector>(
+    collector_ = std::make_shared<
+      autoware::pointcloud_preprocessor::CloudCollector<sensor_msgs::msg::PointCloud2>>(
       std::dynamic_pointer_cast<
         autoware::pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent>(
         concatenate_node_->shared_from_this()),
@@ -168,8 +169,11 @@ protected:
 
   std::shared_ptr<autoware::pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent>
     concatenate_node_;
-  std::shared_ptr<autoware::pointcloud_preprocessor::CombineCloudHandler> combine_cloud_handler_;
-  std::shared_ptr<autoware::pointcloud_preprocessor::CloudCollector> collector_;
+  std::shared_ptr<
+    autoware::pointcloud_preprocessor::CombineCloudHandler<sensor_msgs::msg::PointCloud2>>
+    combine_cloud_handler_;
+  std::shared_ptr<autoware::pointcloud_preprocessor::CloudCollector<sensor_msgs::msg::PointCloud2>>
+    collector_;
   std::shared_ptr<tf2_ros::StaticTransformBroadcaster> tf_broadcaster_;
 
   static constexpr int32_t timestamp_seconds{10};
@@ -316,7 +320,7 @@ TEST_F(ConcatenateCloudTest, TestConcatenateClouds)
   sensor_msgs::msg::PointCloud2::SharedPtr right_pointcloud_ptr =
     std::make_shared<sensor_msgs::msg::PointCloud2>(right_pointcloud);
 
-  std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr> topic_to_cloud_map;
+  std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::ConstSharedPtr> topic_to_cloud_map;
   topic_to_cloud_map["lidar_top"] = top_pointcloud_ptr;
   topic_to_cloud_map["lidar_left"] = left_pointcloud_ptr;
   topic_to_cloud_map["lidar_right"] = right_pointcloud_ptr;
@@ -448,7 +452,7 @@ TEST_F(ConcatenateCloudTest, TestDeleteCollector)
 {
   concatenate_node_->add_cloud_collector(collector_);
   concatenate_node_->delete_collector(*collector_);
-  EXPECT_TRUE(concatenate_node_->get_cloud_collectors().empty());
+  EXPECT_TRUE(concatenate_node_->get_cloud_collectors<sensor_msgs::msg::PointCloud2>().empty());
 }
 
 TEST_F(ConcatenateCloudTest, TestProcessSingleCloud)
@@ -464,14 +468,14 @@ TEST_F(ConcatenateCloudTest, TestProcessSingleCloud)
 
   auto topic_to_cloud_map = collector_->get_topic_to_cloud_map();
   EXPECT_EQ(topic_to_cloud_map["lidar_top"], top_pointcloud_ptr);
-  EXPECT_FALSE(concatenate_node_->get_cloud_collectors().empty());
+  EXPECT_FALSE(concatenate_node_->get_cloud_collectors<sensor_msgs::msg::PointCloud2>().empty());
 
   // Sleep for timeout seconds (200 ms)
   std::this_thread::sleep_for(std::chrono::milliseconds(200));
   rclcpp::spin_some(concatenate_node_);
 
   // Collector should concatenate and publish the pointcloud, also delete itself.
-  EXPECT_TRUE(concatenate_node_->get_cloud_collectors().empty());
+  EXPECT_TRUE(concatenate_node_->get_cloud_collectors<sensor_msgs::msg::PointCloud2>().empty());
 }
 
 TEST_F(ConcatenateCloudTest, TestProcessMultipleCloud)
@@ -499,7 +503,7 @@ TEST_F(ConcatenateCloudTest, TestProcessMultipleCloud)
   collector_->process_pointcloud("lidar_left", left_pointcloud_ptr);
   collector_->process_pointcloud("lidar_right", right_pointcloud_ptr);
 
-  EXPECT_TRUE(concatenate_node_->get_cloud_collectors().empty());
+  EXPECT_TRUE(concatenate_node_->get_cloud_collectors<sensor_msgs::msg::PointCloud2>().empty());
 }
 
 int main(int argc, char ** argv)

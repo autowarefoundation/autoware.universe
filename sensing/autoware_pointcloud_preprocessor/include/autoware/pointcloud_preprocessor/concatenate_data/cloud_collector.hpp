@@ -25,33 +25,36 @@ namespace autoware::pointcloud_preprocessor
 {
 
 class PointCloudConcatenateDataSynchronizerComponent;
+
+template <typename PointCloudMessage>
 class CombineCloudHandler;
 
+template <typename PointCloudMessage>
 class CloudCollector
 {
 public:
   CloudCollector(
     std::shared_ptr<PointCloudConcatenateDataSynchronizerComponent> && ros2_parent_node,
-    std::shared_ptr<CombineCloudHandler> & combine_cloud_handler, int num_of_clouds,
-    double timeout_sec, bool debug_mode);
+    std::shared_ptr<CombineCloudHandler<PointCloudMessage>> & combine_cloud_handler,
+    int num_of_clouds, double timeout_sec, bool debug_mode);
 
   void set_reference_timestamp(double timestamp, double noise_window);
   std::tuple<double, double> get_reference_timestamp_boundary();
   void process_pointcloud(
-    const std::string & topic_name, sensor_msgs::msg::PointCloud2::SharedPtr cloud);
+    const std::string & topic_name, typename PointCloudMessage::ConstSharedPtr cloud);
   void concatenate_callback();
 
-  ConcatenatedCloudResult concatenate_pointclouds(
-    std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr> topic_to_cloud_map);
+  ConcatenatedCloudResult<PointCloudMessage> concatenate_pointclouds(
+    std::unordered_map<std::string, typename PointCloudMessage::ConstSharedPtr> topic_to_cloud_map);
 
-  std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr>
+  std::unordered_map<std::string, typename PointCloudMessage::ConstSharedPtr>
   get_topic_to_cloud_map();
 
 private:
   std::shared_ptr<PointCloudConcatenateDataSynchronizerComponent> ros2_parent_node_;
-  std::shared_ptr<CombineCloudHandler> combine_cloud_handler_;
+  std::shared_ptr<CombineCloudHandler<PointCloudMessage>> combine_cloud_handler_;
   rclcpp::TimerBase::SharedPtr timer_;
-  std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr> topic_to_cloud_map_;
+  std::unordered_map<std::string, typename PointCloudMessage::ConstSharedPtr> topic_to_cloud_map_;
   uint64_t num_of_clouds_;
   double timeout_sec_;
   double reference_timestamp_min_{0.0};
