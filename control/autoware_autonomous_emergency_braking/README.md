@@ -96,7 +96,7 @@ The AEB module can filter the input pointcloud to find target obstacles with whi
 
 ##### Rough filtering
 
-In rough filtering step, we select target obstacle with simple filter. Create a search area up to a certain distance (default is half of the ego vehicle width plus the `path_footprint_extra_margin` parameter) away from the predicted path of the ego vehicle and ignore the point cloud that are not within it. The rough filtering step is illustrated below.
+In rough filtering step, we select target obstacle with simple filter. Create a search area up to a certain distance (default is half of the ego vehicle width plus the `path_footprint_extra_margin` parameter plus the `expand_width` parameter) away from the predicted path of the ego vehicle and ignore the point cloud that are not within it. The rough filtering step is illustrated below.
 
 ![rough_filtering](./image/obstacle_filtering_1.drawio.svg)
 
@@ -120,14 +120,14 @@ If the `use_predicted_object_data` parameter is set to true, the AEB can use pre
 
 ### Finding the closest target obstacle
 
-Once all target obstacles have been identified, the AEB module chooses the point that is closest to the ego vehicle as the candidate for collision checking. Only the closest point is considered because RSS distance is used to judge if a collision will happen or not, and if the closest vertex to the ego is deemed to be safe from collision, the rest of the target obstacles will also be safe.
+Once all target obstacles have been identified, the AEB module chooses the point that is closest to the ego vehicle as the candidate for collision checking. Also, the object will be considered as a "target" for collision check only if it is located withing the ego footprint defined by the ego vehicles's width and the `expand_width` parameter. Only the closest point is considered because RSS distance is used to judge if a collision will happen or not, and if the closest vertex to the ego is deemed to be safe from collision, the rest of the target obstacles will also be safe.
 
 ![closest_object](./image/closest-point.drawio.svg)
 
 ### 4. Obstacle velocity estimation
 
 To begin calculating the target point's velocity, the point must enter the speed calculation area,
-which is defined by the `speed_calculation_expansion_margin` parameter.
+which is defined by the `speed_calculation_expansion_margin` parameter plus the ego vehicles width and the `expand_width` parameter.
 Depending on the operational environment,
 this margin can reduce unnecessary autonomous emergency braking
 caused by velocity miscalculations during the initial calculation steps.
@@ -162,19 +162,19 @@ $$
 
 where $yaw_{diff}$ is the difference in yaw between the ego path and the displacement vector $$v_{pos} = o_{pos} - prev_{pos} $$ and $v_{ego}$ is the ego's current speed, which accounts for the movement of points caused by the ego moving and not the object. All these equations are performed disregarding the z axis (in 2D).
 
-Note that, the object velocity is calculated against the ego's current movement direction. If the object moves in the opposite direction to the ego's movement, the object velocity will be negative, which will reduce the rss distance on the next step.
+Note that the object velocity is calculated against the ego's current movement direction. If the object moves in the opposite direction to the ego's movement, the object velocity will be negative, which will reduce the rss distance on the next step.
 
 The resulting estimated object speed is added to a queue of speeds with timestamps. The AEB then checks for expiration of past speed estimations and eliminates expired speed measurements from the queue, the object expiration is determined by checking if the time elapsed since the speed was first added to the queue is larger than the parameter `previous_obstacle_keep_time`. Finally, the median speed of the queue is calculated. The median speed will be used to calculate the RSS distance used for collision checking.
 
 ### 5. Collision check with target obstacles using RSS distance
 
-In the fourth step, it checks the collision with the closest obstacle point using RSS distance. RSS distance is formulated as:
+In the fifth step, it checks the collision with the closest obstacle point using RSS distance. RSS distance is formulated as:
 
 $$
 d = v_{ego}*t_{response} + v_{ego}^2/(2*a_{min}) -(sign(v_{obj})) * v_{obj}^2/(2*a_{obj_{min}}) + offset
 $$
 
-where $v_{ego}$ and $v_{obj}$ is current ego and obstacle velocity, $a_{min}$ and $a_{obj_{min}}$ is ego and object minimum acceleration (maximum deceleration), $t_{response}$ is response time of the ego vehicle to start deceleration. Therefore the distance from the ego vehicle to the obstacle is smaller than this RSS distance $d$, the ego vehicle send emergency stop signals. This is illustrated in the following picture.
+where $v_{ego}$ and $v_{obj}$ is current ego and obstacle velocity, $a_{min}$ and $a_{obj_{min}}$ is ego and object minimum acceleration (maximum deceleration), $t_{response}$ is response time of the ego vehicle to start deceleration. Therefore the distance from the ego vehicle to the obstacle is smaller than this RSS distance $d$, the ego vehicle send emergency stop signals. Note that only "target" obstacles, as defined on step #3 are considered for RSS distance calculation. If the closest obstacle is not a "target" (its not inside the predicted ego path defined by the ego vehicle width and the expand margin), this step is skipped, and not emergency stop diagnostic message is sent. This process is illustrated in the following picture.
 
 ![rss_check](./image/rss_check.drawio.svg)
 
