@@ -2,8 +2,6 @@ cmake_minimum_required(VERSION 3.14)
 
 project(autoware_pyplot)
 
-option(BUILD_EXAMPLES "Build examples" OFF)
-
 find_package(autoware_cmake REQUIRED)
 
 find_package(

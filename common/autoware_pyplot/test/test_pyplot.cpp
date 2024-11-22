@@ -24,36 +24,6 @@
 
 #include <vector>
 
-std::vector<double> linspace(const double start, const double end, const size_t N)
-{
-  if (N < 2) {
-    return {};
-  }
-  if (N == 2) {
-    return {start, end};
-  }
-
-  std::vector<double> array(N, 0.0);
-  double x = start;
-  const double diff = (end - start) / (N - 1);
-  for (unsigned i = 0; i < N - 1; ++i) {
-    array.at(i) = x;
-    x += diff;
-  }
-  array.at(N - 1) = end;
-  return array;
-}
-
-template <typename F>
-std::vector<double> apply(const std::vector<double> & in, F && f)
-{
-  std::vector<double> out(in.size(), 0.0);
-  for (unsigned i = 0; i < in.size(); ++i) {
-    out.at(i) = f(in.at(i));
-  }
-  return out;
-}
-
 TEST(PyPlot, single_plot)
 {
   py::scoped_interpreter guard{};
