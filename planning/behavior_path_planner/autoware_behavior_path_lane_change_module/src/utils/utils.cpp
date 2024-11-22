@@ -1184,6 +1184,7 @@ bool filter_target_lane_objects(
   const bool before_terminal, TargetLaneLeadingObjects & leading_objects,
   ExtendedPredictedObjects & trailing_objects)
 {
+  using behavior_path_planner::utils::path_safety_checker::filter::is_vehicle;
   using behavior_path_planner::utils::path_safety_checker::filter::velocity_filter;
   const auto & current_lanes = common_data_ptr->lanes_ptr->current;
   const auto & vehicle_width = common_data_ptr->bpp_param_ptr->vehicle_info.vehicle_width_m;
@@ -1205,7 +1206,8 @@ bool filter_target_lane_objects(
         return true;
       }
 
-      return !is_stopped && has_path_overlapped_target_lanes(object, lanes_polygon.target);
+      return !is_stopped && is_vehicle(object.classification) &&
+             has_path_overlapped_target_lanes(object, lanes_polygon.target);
     });
 
     if (overlapped_target_lanes) {
