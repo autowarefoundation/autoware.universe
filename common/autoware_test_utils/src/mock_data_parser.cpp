@@ -427,34 +427,28 @@ OperationModeState parse(const YAML::Node & node)
 template <>
 std::optional<LaneletRoute> parse(const std::string & filename)
 {
-  YAML::Node config = YAML::LoadFile(filename);
-  if (!config["start_pose"] || !config["goal_pose"] || !config["segments"]) {
+  YAML::Node node = YAML::LoadFile(filename);
+  if (!node["start_pose"] || !node["goal_pose"] || !node["segments"]) {
     return std::nullopt;
   }
 
-  LaneletRoute lanelet_route;
-  lanelet_route.start_pose = parse<Pose>(config["start_pose"]);
-  lanelet_route.goal_pose = parse<Pose>(config["goal_pose"]);
-  lanelet_route.segments = parse<std::vector<LaneletSegment>>(config["segments"]);
-  return lanelet_route;
+  return parse<LaneletRoute>(node);
 }
 
 template <>
 std::optional<PathWithLaneId> parse(const std::string & filename)
 {
-  YAML::Node yaml_node = YAML::LoadFile(filename);
+  YAML::Node node = YAML::LoadFile(filename);
 
-  if (
-    !yaml_node["header"] || !yaml_node["points"] || !yaml_node["left_bound"] ||
-    !yaml_node["right_bound"]) {
+  if (!node["header"] || !node["points"] || !node["left_bound"] || !node["right_bound"]) {
     return std::nullopt;
   }
 
   PathWithLaneId path;
-  path.header = parse<Header>(yaml_node["header"]);
-  path.points = parse<std::vector<PathPointWithLaneId>>(yaml_node["points"]);
-  path.left_bound = parse<std::vector<Point>>(yaml_node["left_bound"]);
-  path.right_bound = parse<std::vector<Point>>(yaml_node["right_bound"]);
+  path.header = parse<Header>(node["header"]);
+  path.points = parse<std::vector<PathPointWithLaneId>>(node["points"]);
+  path.left_bound = parse<std::vector<Point>>(node["left_bound"]);
+  path.right_bound = parse<std::vector<Point>>(node["right_bound"]);
   return path;
 }
 }  // namespace autoware::test_utils
