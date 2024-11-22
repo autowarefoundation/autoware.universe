@@ -37,7 +37,7 @@ using tier4_planning_msgs::msg::PathPointWithLaneId;
 /**
  * @brief Filters object based on velocity.
  *
- * @param twist The predicted object to filter.
+ * @param twist The twist of predicted object to filter.
  * @param velocity_threshold Lower bound
  * @param max_velocity Upper bound
  * @return Returns true when the object is within a certain velocity range.
