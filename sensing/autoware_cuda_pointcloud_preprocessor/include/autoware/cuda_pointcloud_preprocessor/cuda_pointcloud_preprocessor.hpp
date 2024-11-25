@@ -43,23 +43,15 @@ struct TwistStruct2D
   float cum_sin_theta;
   uint32_t last_stamp_nsec;  // relative to the start of the pointcloud
   uint32_t stamp_nsec;       // relative to the start of the pointcloud
-  float vx;
-  float vtheta;
+  float v_x;
+  float v_theta;
 };
 
 struct TwistStruct3D
 {
-  // Eigen::Affine3f cum_transform;
   float cum_transform_buffer[16];
-  /* float cum_x;
-  float cum_y;
-  float cum_theta; */
-  /* float cum_cos_theta;
-  float cum_sin_theta; */
   uint32_t last_stamp_nsec;  // relative to the start of the pointcloud
   uint32_t stamp_nsec;       // relative to the start of the pointcloud
-  /* float vx;
-  float vtheta; */
   float v[3];
   float w[3];
 };

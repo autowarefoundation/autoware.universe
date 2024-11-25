@@ -32,7 +32,7 @@ include_directories(
     ${CUDA_INCLUDE_DIRS}
 )
 
-list(APPEND CUDA_NVCC_FLAGS "--expt-relaxed-constexpr -diag-suppress 20012")
+list(APPEND CUDA_NVCC_FLAGS "--expt-relaxed-constexpr -diag-suppress 20012") # cSpell: ignore expt
 
 cuda_add_library(cuda_pointcloud_preprocessor_lib SHARED
   src/cuda_pointcloud_preprocessor/cuda_pointcloud_preprocessor.cu

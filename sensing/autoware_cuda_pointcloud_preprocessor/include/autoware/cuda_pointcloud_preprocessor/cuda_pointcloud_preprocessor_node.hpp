@@ -91,7 +91,6 @@ private:
   tf2_ros::TransformListener tf2_listener_;
 
   std::string base_frame_;
-  bool imu_tranform_valid_{false};
   std::deque<geometry_msgs::msg::TwistWithCovarianceStamped> twist_queue_;
   std::deque<geometry_msgs::msg::Vector3Stamped> angular_velocity_queue_;
 

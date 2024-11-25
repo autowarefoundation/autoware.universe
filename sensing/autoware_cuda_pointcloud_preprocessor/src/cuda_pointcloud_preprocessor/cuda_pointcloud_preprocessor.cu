@@ -176,8 +176,8 @@ __global__ void undistort2dKernel(
       point.time_stamp > twist.last_stamp_nsec ? point.time_stamp - twist.last_stamp_nsec : 0;
     double dt = 1e-9 * (dt_nsec);
 
-    theta += twist.vtheta * dt;
-    float d = twist.vx * dt;
+    theta += twist.v_theta * dt;
+    float d = twist.v_x * dt;
     x += d * cos(theta);
     y += d * sin(theta);
 
@@ -400,16 +400,16 @@ void CudaPointcloudPreprocessor::setupTwist2DStructs(
   for (; twist_index < twist_queue.size() ||
          angular_velocity_index < angular_velocity_queue.size();) {
     uint64_t twist_stamp, input_twist_global_stamp_nsec, angular_velocity_global_stamp_nsec;
-    float vx, vtheta;
+    float v_x, v_theta;
 
     if (twist_index < twist_queue.size()) {
       input_twist_global_stamp_nsec =
         1'000'000'000 * static_cast<uint64_t>(twist_queue[twist_index].header.stamp.sec) +
         static_cast<uint64_t>(twist_queue[twist_index].header.stamp.nanosec);
-      vx = twist_queue[twist_index].twist.twist.linear.x;
+      v_x = twist_queue[twist_index].twist.twist.linear.x;
     } else {
       input_twist_global_stamp_nsec = std::numeric_limits<uint64_t>::max();
-      vx = 0.0;
+      v_x = 0.0;
     }
 
     if (angular_velocity_index < angular_velocity_queue.size()) {
@@ -417,10 +417,10 @@ void CudaPointcloudPreprocessor::setupTwist2DStructs(
         1'000'000'000 *
           static_cast<uint64_t>(angular_velocity_queue[angular_velocity_index].header.stamp.sec) +
         static_cast<uint64_t>(angular_velocity_queue[angular_velocity_index].header.stamp.nanosec);
-      vtheta = angular_velocity_queue[angular_velocity_index].vector.z;
+      v_theta = angular_velocity_queue[angular_velocity_index].vector.z;
     } else {
       angular_velocity_global_stamp_nsec = std::numeric_limits<uint64_t>::max();
-      vtheta = 0.0;
+      v_theta = 0.0;
     }
 
     if (input_twist_global_stamp_nsec < angular_velocity_global_stamp_nsec) {
@@ -444,15 +444,15 @@ void CudaPointcloudPreprocessor::setupTwist2DStructs(
     uint32_t twist_from_pointcloud_start_nsec = twist_global_stamp_nsec - pointcloud_stamp_nsec;
 
     twist.stamp_nsec = twist_from_pointcloud_start_nsec;
-    twist.vx = vx;
-    twist.vtheta = vtheta;
+    twist.v_x = v_x;
+    twist.v_theta = v_theta;
     twist.last_stamp_nsec = last_stamp_nsec;
     host_twist_structs.push_back(twist);
 
     double dt_seconds = 1e-9 * (twist.stamp_nsec - last_stamp_nsec);
     last_stamp_nsec = twist.stamp_nsec;
-    cum_theta += vtheta * dt_seconds;
-    float d = twist.vx * dt_seconds;
+    cum_theta += v_theta * dt_seconds;
+    float d = twist.v_x * dt_seconds;
     cum_x += d * cos(cum_theta);
     cum_y += d * sin(cum_theta);
   }
