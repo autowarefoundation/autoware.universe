@@ -334,9 +334,7 @@ TurnSignalInfo NormalLaneChange::get_current_turn_signal_info() const
     return get_terminal_turn_signal_info();
   }
 
-  if (!signal_activation_time_) {
-    signal_activation_time_ = clock_.now();
-  }
+  set_signal_activation_time();
 
   return get_turn_signal(getEgoPose(), getLaneChangePath().info.lane_changing_end);
 }
@@ -370,11 +368,8 @@ TurnSignalInfo NormalLaneChange::get_terminal_turn_signal_info() const
     path, current_pose, current_nearest_seg_idx, original_turn_signal_info,
     terminal_turn_signal_info, nearest_dist_threshold, nearest_yaw_threshold);
 
-  if (turn_signal_info.turn_signal.command != terminal_turn_signal_info.turn_signal.command) {
-    signal_activation_time_ = std::nullopt;
-  } else if (!signal_activation_time_) {
-    signal_activation_time_ = clock_.now();
-  }
+  set_signal_activation_time(
+    turn_signal_info.turn_signal.command != terminal_turn_signal_info.turn_signal.command);
 
   return turn_signal_info;
 }
@@ -470,11 +465,8 @@ BehaviorModuleOutput NormalLaneChange::generateOutput()
     turn_signal_info, planner_data_->parameters.ego_nearest_dist_threshold,
     planner_data_->parameters.ego_nearest_yaw_threshold);
 
-  if (output.turn_signal_info.turn_signal.command != turn_signal_info.turn_signal.command) {
-    signal_activation_time_ = std::nullopt;
-  } else if (!signal_activation_time_) {
-    signal_activation_time_ = clock_.now();
-  }
+  set_signal_activation_time(
+    output.turn_signal_info.turn_signal.command != turn_signal_info.turn_signal.command);
 
   return output;
 }

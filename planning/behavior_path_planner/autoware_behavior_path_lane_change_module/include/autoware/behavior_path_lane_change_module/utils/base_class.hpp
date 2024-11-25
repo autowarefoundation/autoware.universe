@@ -267,6 +267,15 @@ protected:
     return turn_signal;
   }
 
+  void set_signal_activation_time(const bool reset = false) const
+  {
+    if (reset) {
+      signal_activation_time_ = std::nullopt;
+    } else if (!signal_activation_time_) {
+      signal_activation_time_ = clock_.now();
+    }
+  }
+
   LaneChangeStatus status_{};
   PathShifter path_shifter_{};
 

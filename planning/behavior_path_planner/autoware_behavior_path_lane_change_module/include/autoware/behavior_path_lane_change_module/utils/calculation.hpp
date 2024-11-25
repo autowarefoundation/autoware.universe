@@ -130,6 +130,20 @@ std::vector<double> calc_lon_acceleration_samples(
   const CommonDataPtr & common_data_ptr, const double max_path_velocity,
   const double prepare_duration);
 
+/**
+ * @brief calculates the actual prepare duration that will be used for path generation
+ *
+ * @details computes the required prepare duration to be used for candidate path
+ * generation based on the elapsed time of turn signal activation, the minimum
+ * and maximum parameterized values for the prepare duration,
+ * and the minimum lane changing velocity.
+ *
+ * @param common_data_ptr Shared pointer to a CommonData structure, which includes
+ * lane change parameters and bpp common parameters.
+ * @param current_velocity current ego vehicle velocity.
+ * @param active_signal_duration elapsed time since turn signal activation.
+ * @return The calculated prepare duration value in seconds (s)
+ */
 double calc_actual_prepare_duration(
   const CommonDataPtr & common_data_ptr, const double current_velocity,
   const double active_signal_duration);
