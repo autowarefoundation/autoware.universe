@@ -160,6 +160,7 @@ void GridGroundFilter::initializeGround(pcl::PointIndices & out_no_ground_indice
         ground_bin.addPoint(radius, height, pt_idx);
         is_ground_found = true;
       }
+      // else, this point is not classified, not ground nor obstacle
     }
     cell.is_processed_ = true;
     cell.has_ground_ = is_ground_found;
@@ -233,6 +234,7 @@ void GridGroundFilter::SegmentContinuousCell(
       // go to the next point
       continue;
     }
+    // else, this point is not classified, not ground nor obstacle
   }
 }
 
@@ -291,6 +293,7 @@ void GridGroundFilter::SegmentDiscontinuousCell(
       // go to the next point
       continue;
     }
+    // else, this point is not classified, not ground nor obstacle
   }
 }
 
@@ -335,6 +338,7 @@ void GridGroundFilter::SegmentBreakCell(
       // go to the next point
       continue;
     }
+    // else, this point is not classified, not ground nor obstacle
   }
 }
 
