@@ -174,7 +174,7 @@ $$
 d = v_{ego}*t_{response} + v_{ego}^2/(2*a_{min}) -(sign(v_{obj})) * v_{obj}^2/(2*a_{obj_{min}}) + offset
 $$
 
-where $v_{ego}$ and $v_{obj}$ is current ego and obstacle velocity, $a_{min}$ and $a_{obj_{min}}$ is ego and object minimum acceleration (maximum deceleration), $t_{response}$ is response time of the ego vehicle to start deceleration. Therefore the distance from the ego vehicle to the obstacle is smaller than this RSS distance $d$, the ego vehicle send emergency stop signals. Note that only "target" obstacles, as defined on step #3 are considered for RSS distance calculation. If the closest obstacle is not a "target" (its not inside the predicted ego path defined by the ego vehicle width and the expand margin), this step is skipped, and not emergency stop diagnostic message is sent. This process is illustrated in the following picture.
+where $v_{ego}$ and $v_{obj}$ is current ego and obstacle velocity, $a_{min}$ and $a_{obj_{min}}$ is ego and object minimum acceleration (maximum deceleration), $t_{response}$ is response time of the ego vehicle to start deceleration. Therefore the distance from the ego vehicle to the obstacle is smaller than this RSS distance $d$, the ego vehicle send emergency stop signals. Note that only "target" obstacles, as defined on step #3 are considered for RSS distance calculation. If the closest obstacle is not a "target" (its not inside the predicted ego path defined by the ego vehicle width and the expand margin), this step is skipped, and no emergency stop diagnostic message is sent. This process is illustrated in the following picture.
 
 ![rss_check](./image/rss_check.drawio.svg)
 
