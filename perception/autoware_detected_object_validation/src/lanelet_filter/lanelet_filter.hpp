@@ -49,6 +49,7 @@ using autoware::universe_utils::Polygon2d;
 
 namespace bg = boost::geometry;
 namespace bgi = boost::geometry::index;
+using Point2d = bg::model::point<double, 2, bg::cs::cartesian>;
 using Box = boost::geometry::model::box<Point2d>;
 
 struct PolygonAndLanelet
