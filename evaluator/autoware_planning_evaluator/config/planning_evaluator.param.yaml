@@ -1,6 +1,6 @@
 /**:
   ros__parameters:
-    output_file: "" # if empty, metrics are not written to file
+    output_metrics: false # if true, metrics are written to `<ros2_logging_directory>/autoware_metrics/<node_name>-<time_stamp>.json`.
     ego_frame: base_link # reference frame of ego
 
     selected_metrics:

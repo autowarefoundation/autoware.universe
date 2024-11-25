@@ -20,6 +20,7 @@
 #include <diagnostic_msgs/msg/detail/diagnostic_status__struct.hpp>
 
 #include "boost/lexical_cast.hpp"
+#include <nlohmann/json.hpp>
 
 #include <fstream>
 #include <iostream>
