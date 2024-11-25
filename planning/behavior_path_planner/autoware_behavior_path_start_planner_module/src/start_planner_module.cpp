@@ -456,7 +456,6 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough(const Pose & 
   if (std::isnan(starting_pose_lateral_offset)) return false;
 
   RCLCPP_DEBUG(getLogger(), "starting pose lateral offset: %f", starting_pose_lateral_offset);
-  const bool ego_is_merging_from_the_left = (starting_pose_lateral_offset > 0.0);
 
   // Get the ego's overhang point closest to the centerline path and the gap between said point and
   // the lane's border.
@@ -507,6 +506,7 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough(const Pose & 
   };
 
   geometry_msgs::msg::Pose ego_overhang_point_as_pose;
+  const bool ego_is_merging_from_the_left = (starting_pose_lateral_offset > 0.0);
   const auto gaps_with_lane_borders_pair =
     get_gap_between_ego_and_lane_border(ego_overhang_point_as_pose, ego_is_merging_from_the_left);
 

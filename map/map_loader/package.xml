@@ -20,10 +20,10 @@
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
   <depend>autoware_component_interface_specs</depend>
+  <depend>autoware_component_interface_utils</depend>
   <depend>autoware_geography_utils</depend>
   <depend>autoware_lanelet2_extension</depend>
   <depend>autoware_map_msgs</depend>
-  <depend>component_interface_utils</depend>
   <depend>fmt</depend>
   <depend>geometry_msgs</depend>
   <depend>libpcl-all-dev</depend>

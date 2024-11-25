@@ -83,15 +83,6 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
       "~/input/path_with_lane_id", 1, std::bind(&BehaviorVelocityPlannerNode::onTrigger, this, _1),
       createSubscriptionOptions(this));
 
-  // Subscribers
-  sub_lanelet_map_ = this->create_subscription<autoware_map_msgs::msg::LaneletMapBin>(
-    "~/input/vector_map", rclcpp::QoS(10).transient_local(),
-    std::bind(&BehaviorVelocityPlannerNode::onLaneletMap, this, _1),
-    createSubscriptionOptions(this));
-  sub_external_velocity_limit_ = this->create_subscription<VelocityLimit>(
-    "~/input/external_velocity_limit_mps", rclcpp::QoS{1}.transient_local(),
-    std::bind(&BehaviorVelocityPlannerNode::onExternalVelocityLimit, this, _1));
-
   srv_load_plugin_ = create_service<LoadPlugin>(
     "~/service/load_plugin", std::bind(&BehaviorVelocityPlannerNode::onLoadPlugin, this, _1, _2));
   srv_unload_plugin_ = create_service<UnloadPlugin>(
@@ -159,21 +150,6 @@ void BehaviorVelocityPlannerNode::onParam()
   planner_data_.velocity_smoother_ =
     std::make_unique<autoware::velocity_smoother::AnalyticalJerkConstrainedSmoother>(*this);
   planner_data_.velocity_smoother_->setWheelBase(planner_data_.vehicle_info_.wheel_base_m);
-}
-
-void BehaviorVelocityPlannerNode::onLaneletMap(
-  const autoware_map_msgs::msg::LaneletMapBin::ConstSharedPtr msg)
-{
-  std::lock_guard<std::mutex> lock(mutex_);
-
-  map_ptr_ = msg;
-  has_received_map_ = true;
-}
-
-void BehaviorVelocityPlannerNode::onExternalVelocityLimit(const VelocityLimit::ConstSharedPtr msg)
-{
-  std::lock_guard<std::mutex> lock(mutex_);
-  planner_data_.external_velocity_limit = *msg;
 }
 
 void BehaviorVelocityPlannerNode::processNoGroundPointCloud(
@@ -305,8 +281,19 @@ bool BehaviorVelocityPlannerNode::processData(rclcpp::Clock clock)
     is_ready = false;
   }
 
+  const auto map_data = sub_lanelet_map_.takeData();
+  if (map_data) {
+    planner_data_.route_handler_ = std::make_shared<route_handler::RouteHandler>(*map_data);
+  }
+
   // optional data
   getData(planner_data_.virtual_traffic_light_states, sub_virtual_traffic_light_states_);
+
+  // planner_data_.external_velocity_limit is std::optional type variable.
+  const auto external_velocity_limit = sub_external_velocity_limit_.takeData();
+  if (external_velocity_limit) {
+    planner_data_.external_velocity_limit = *external_velocity_limit;
+  }
 
   const auto traffic_signals = sub_traffic_signals_.takeData();
   if (traffic_signals) processTrafficSignals(traffic_signals);
@@ -324,12 +311,6 @@ bool BehaviorVelocityPlannerNode::isDataReady(rclcpp::Clock clock)
     return false;
   }
 
-  if (!map_ptr_) {
-    RCLCPP_INFO_THROTTLE(
-      get_logger(), clock, logger_throttle_interval, "Waiting for lanelet_map data");
-    return false;
-  }
-
   return processData(clock);
 }
 
@@ -343,10 +324,6 @@ void BehaviorVelocityPlannerNode::onTrigger(
   }
 
   // Load map and check route handler
-  if (has_received_map_) {
-    planner_data_.route_handler_ = std::make_shared<route_handler::RouteHandler>(*map_ptr_);
-    has_received_map_ = false;
-  }
   if (!planner_data_.route_handler_) {
     RCLCPP_INFO_THROTTLE(
       get_logger(), *get_clock(), logger_throttle_interval,
