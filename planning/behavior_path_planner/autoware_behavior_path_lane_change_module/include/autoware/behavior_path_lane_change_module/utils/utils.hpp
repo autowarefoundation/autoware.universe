@@ -156,15 +156,6 @@ bool is_delay_lane_change(
   const std::vector<ExtendedPredictedObject> & target_objects,
   CollisionCheckDebugMap & object_debug);
 
-bool passed_parked_objects(
-  const CommonDataPtr & common_data_ptr, const LaneChangePath & lane_change_path,
-  const std::vector<ExtendedPredictedObject> & objects, CollisionCheckDebugMap & object_debug);
-
-std::optional<size_t> getLeadingStaticObjectIdx(
-  const RouteHandler & route_handler, const LaneChangePath & lane_change_path,
-  const std::vector<ExtendedPredictedObject> & objects,
-  const double object_check_min_road_shoulder_width, const double object_shiftable_ratio_threshold);
-
 lanelet::BasicPolygon2d create_polygon(
   const lanelet::ConstLanelets & lanes, const double start_dist, const double end_dist);
 
