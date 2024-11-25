@@ -130,7 +130,7 @@ bool isStoppedAtRedTrafficLightWithinDistance(
     return false;
   }
 
-  return (distance_to_red_traffic_light < distance_threshold);
+  return (distance_to_red_traffic_light.value() < distance_threshold);
 }
 
 bool isTrafficSignalStop(
