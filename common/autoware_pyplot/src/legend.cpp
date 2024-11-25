@@ -12,20 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
+#include <autoware/pyplot/legend.hpp>
 
-namespace autoware::behavior_path_planner
+namespace autoware::pyplot
 {
-void SceneModuleInterface::setDrivableLanes(const std::vector<DrivableLanes> & drivable_lanes)
+inline namespace legend
 {
-  drivable_lanes_marker_ =
-    marker_utils::createDrivableLanesMarkerArray(drivable_lanes, "drivable_lanes");
+Legend::Legend(const pybind11::object & object) : PyObjectWrapper(object)
+{
 }
-
-void SceneModuleInterface::onEntry()
+Legend::Legend(pybind11::object && object) : PyObjectWrapper(object)
 {
-  RCLCPP_DEBUG(getLogger(), "%s %s", name_.c_str(), __func__);
-
-  processOnEntry();
 }
-}  // namespace autoware::behavior_path_planner
+}  // namespace legend
+}  // namespace autoware::pyplot
