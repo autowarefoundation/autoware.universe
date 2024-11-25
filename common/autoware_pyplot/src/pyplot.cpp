@@ -163,8 +163,8 @@ std::tuple<figure::Figure, std::vector<axes::Axes>> PyPlot::subplots(
     // python returns [][]Axes
     pybind11::list axs = ret[1];
     for (pybind11::size_t i = 0; i < axs.size(); ++i) {
-      pybind11::list axsi = axs[i];
-      for (unsigned j = 0; j < axsi.size(); ++j) axes.emplace_back(axsi[j]);
+      pybind11::list ax_i = axs[i];
+      for (unsigned j = 0; j < ax_i.size(); ++j) axes.emplace_back(ax_i[j]);
     }
   }
   return {figure, axes};
