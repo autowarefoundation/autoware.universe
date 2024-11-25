@@ -214,7 +214,14 @@ public:
   size_t getGridSize() const { return cells_.size(); }
 
   // method to get the cell
-  inline Cell & getCell(const int grid_idx) { return cells_[static_cast<size_t>(grid_idx)]; }
+  inline Cell & getCell(const int grid_idx)
+  {
+    const size_t idx = static_cast<size_t>(grid_idx);
+    if (idx >= cells_.size()) {
+      throw std::out_of_range("Invalid grid index");
+    }
+    return cells_[idx];
+  }
 
   void resetCells()
   {
