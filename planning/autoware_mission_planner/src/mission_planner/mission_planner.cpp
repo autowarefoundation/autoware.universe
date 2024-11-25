@@ -81,6 +81,7 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   // otherwise the mission planner rejects the request for the API.
   const auto period = rclcpp::Rate(10).period();
   data_check_timer_ = create_wall_timer(period, [this] { check_initialization(); });
+  is_mission_planner_ready_ = false;
 
   logger_configure_ = std::make_unique<autoware::universe_utils::LoggerLevelConfigure>(this);
 }
@@ -111,6 +112,7 @@ void MissionPlanner::check_initialization()
   }
 
   // All data is ready. Now API is available.
+  is_mission_planner_ready_ = true;
   RCLCPP_DEBUG(logger, "Route API is ready.");
   change_state(RouteState::UNSET);
 
@@ -174,12 +176,8 @@ void MissionPlanner::on_modified_goal(const PoseWithUuidStamped::ConstSharedPtr 
     RCLCPP_ERROR(get_logger(), "The route hasn't set yet. Cannot reroute.");
     return;
   }
-  if (!planner_->ready()) {
-    RCLCPP_ERROR(get_logger(), "The planner is not ready.");
-    return;
-  }
-  if (!odometry_) {
-    RCLCPP_ERROR(get_logger(), "The vehicle pose is not received.");
+  if (!is_mission_planner_ready_) {
+    RCLCPP_ERROR(get_logger(), "The mission planner is not ready.");
     return;
   }
   if (!current_route_) {
@@ -209,6 +207,12 @@ void MissionPlanner::on_modified_goal(const PoseWithUuidStamped::ConstSharedPtr 
 void MissionPlanner::on_clear_route(
   const ClearRoute::Request::SharedPtr, const ClearRoute::Response::SharedPtr res)
 {
+  if (!is_mission_planner_ready_) {
+    using ResponseCode = autoware_adapi_v1_msgs::msg::ResponseStatus;
+    throw service_utils::ServiceException(
+      ResponseCode::NO_EFFECT, "The mission planner is not ready.", true);
+  }
+
   change_route();
   change_state(RouteState::UNSET);
   res->status.success = true;
@@ -224,13 +228,9 @@ void MissionPlanner::on_set_lanelet_route(
     throw service_utils::ServiceException(
       ResponseCode::ERROR_INVALID_STATE, "The route cannot be set in the current state.");
   }
-  if (!planner_->ready()) {
+  if (!is_mission_planner_ready_) {
     throw service_utils::ServiceException(
-      ResponseCode::ERROR_PLANNER_UNREADY, "The planner is not ready.");
-  }
-  if (!odometry_) {
-    throw service_utils::ServiceException(
-      ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
+      ResponseCode::ERROR_PLANNER_UNREADY, "The mission planner is not ready.");
   }
   if (is_reroute && !operation_mode_state_) {
     throw service_utils::ServiceException(
@@ -291,13 +291,9 @@ void MissionPlanner::on_set_waypoint_route(
     throw service_utils::ServiceException(
       ResponseCode::ERROR_INVALID_STATE, "The route cannot be set in the current state.");
   }
-  if (!planner_->ready()) {
+  if (!is_mission_planner_ready_) {
     throw service_utils::ServiceException(
-      ResponseCode::ERROR_PLANNER_UNREADY, "The planner is not ready.");
-  }
-  if (!odometry_) {
-    throw service_utils::ServiceException(
-      ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
+      ResponseCode::ERROR_PLANNER_UNREADY, "The mission planner is not ready.");
   }
   if (is_reroute && !operation_mode_state_) {
     throw service_utils::ServiceException(

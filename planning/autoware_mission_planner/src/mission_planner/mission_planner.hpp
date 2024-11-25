@@ -132,6 +132,7 @@ private:
 
   rclcpp::TimerBase::SharedPtr data_check_timer_;
   void check_initialization();
+  bool is_mission_planner_ready_;
 
   double reroute_time_threshold_;
   double minimum_reroute_length_;
