@@ -19,10 +19,11 @@
 #include "autoware/lidar_centerpoint/network/network_trt.hpp"
 #include "autoware/lidar_centerpoint/postprocess/postprocess_kernel.hpp"
 #include "autoware/lidar_centerpoint/preprocess/voxel_generator.hpp"
-#include "pcl/point_cloud.h"
-#include "pcl/point_types.h"
 
-#include "sensor_msgs/msg/point_cloud2.hpp"
+#include <cuda_blackboard/cuda_pointcloud2.hpp>
+
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
 
 #include <memory>
 #include <string>
@@ -61,14 +62,15 @@ public:
   virtual ~CenterPointTRT();
 
   bool detect(
-    const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer,
-    std::vector<Box3D> & det_boxes3d);
+    const std::shared_ptr<const cuda_blackboard::CudaPointCloud2> & input_pointcloud_msg_ptr,
+    const tf2_ros::Buffer & tf_buffer, std::vector<Box3D> & det_boxes3d);
 
 protected:
   void initPtr();
 
   virtual bool preprocess(
-    const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer);
+    const std::shared_ptr<const cuda_blackboard::CudaPointCloud2> & input_pointcloud_msg_ptr,
+    const tf2_ros::Buffer & tf_buffer);
 
   void inference();
 
