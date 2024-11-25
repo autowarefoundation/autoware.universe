@@ -21,14 +21,13 @@
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 
-#include "autoware_planning_msgs/msg/lanelet_route.hpp"
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 
 #include <gtest/gtest.h>
 
 #include <memory>
 
-using autoware::behavior_path_planner::FilteredByLanesExtendedObjects;
+using autoware::behavior_path_planner::FilteredLanesObjects;
 using autoware::behavior_path_planner::LaneChangeModuleManager;
 using autoware::behavior_path_planner::LaneChangeModuleType;
 using autoware::behavior_path_planner::NormalLaneChange;
@@ -139,7 +138,7 @@ public:
     return std::make_shared<nav_msgs::msg::Odometry>(odom);
   }
 
-  [[nodiscard]] FilteredByLanesExtendedObjects & get_filtered_objects() const
+  [[nodiscard]] FilteredLanesObjects & get_filtered_objects() const
   {
     return normal_lane_change_->filtered_objects_;
   }
@@ -238,7 +237,7 @@ TEST_F(TestNormalLaneChange, testFilteredObjects)
   ASSERT_EQ(filtered_objects.current_lane.size(), 0);
   ASSERT_EQ(filtered_objects.target_lane_leading.size(), 2);
   ASSERT_EQ(filtered_objects.target_lane_trailing.size(), 0);
-  ASSERT_EQ(filtered_objects.other_lane.size(), 1);
+  ASSERT_EQ(filtered_objects.others.size(), 1);
 }
 
 TEST_F(TestNormalLaneChange, testGetPathWhenValid)
