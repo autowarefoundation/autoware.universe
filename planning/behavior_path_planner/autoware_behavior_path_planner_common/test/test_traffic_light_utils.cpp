@@ -32,6 +32,7 @@
 
 #include <limits>
 #include <memory>
+#include <string>
 
 using autoware::behavior_path_planner::PlannerData;
 using autoware::behavior_path_planner::TrafficSignalStamped;
@@ -67,9 +68,10 @@ protected:
   void set_route_handler(YAML::Node config)
   {
     const auto route = autoware::test_utils::parse<LaneletRoute>(config["route"]);
-    const auto intersection_map =
-      autoware::test_utils::make_map_bin_msg(autoware::test_utils::get_absolute_path_to_lanelet_map(
-        "autoware_test_utils", "intersection/lanelet2_map.osm"));
+    const auto map_path =
+      autoware::test_utils::resolve_pkg_share_uri(config["map_path_uri"].as<std::string>());
+    if (!map_path.has_value()) return;
+    const auto intersection_map = autoware::test_utils::make_map_bin_msg(map_path.value());
     planner_data_->route_handler->setMap(intersection_map);
     planner_data_->route_handler->setRoute(route);
 
