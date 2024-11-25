@@ -19,8 +19,6 @@
 #include <autoware/universe_utils/math/normalization.hpp>
 #include <autoware/universe_utils/system/time_keeper.hpp>
 
-#include <glob.h>
-
 #include <algorithm>
 #include <cmath>
 #include <memory>
