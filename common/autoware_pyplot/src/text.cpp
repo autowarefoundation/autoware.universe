@@ -12,20 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
+#include <autoware/pyplot/loader.hpp>
+#include <autoware/pyplot/text.hpp>
 
-namespace autoware::behavior_path_planner
+namespace autoware::pyplot
 {
-void SceneModuleInterface::setDrivableLanes(const std::vector<DrivableLanes> & drivable_lanes)
+inline namespace text
 {
-  drivable_lanes_marker_ =
-    marker_utils::createDrivableLanesMarkerArray(drivable_lanes, "drivable_lanes");
+Text::Text(const pybind11::object & object) : PyObjectWrapper(object)
+{
 }
 
-void SceneModuleInterface::onEntry()
+Text::Text(pybind11::object && object) : PyObjectWrapper(object)
 {
-  RCLCPP_DEBUG(getLogger(), "%s %s", name_.c_str(), __func__);
-
-  processOnEntry();
 }
-}  // namespace autoware::behavior_path_planner
+
+void Text::load_attrs()
+{
+  LOAD_FUNC_ATTR(set_rotation, self_);
+}
+}  // namespace text
+}  // namespace autoware::pyplot

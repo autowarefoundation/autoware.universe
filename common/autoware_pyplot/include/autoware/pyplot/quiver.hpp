@@ -12,20 +12,21 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
+#ifndef AUTOWARE__PYPLOT__QUIVER_HPP_
+#define AUTOWARE__PYPLOT__QUIVER_HPP_
 
-namespace autoware::behavior_path_planner
-{
-void SceneModuleInterface::setDrivableLanes(const std::vector<DrivableLanes> & drivable_lanes)
-{
-  drivable_lanes_marker_ =
-    marker_utils::createDrivableLanesMarkerArray(drivable_lanes, "drivable_lanes");
-}
+#include <autoware/pyplot/common.hpp>
 
-void SceneModuleInterface::onEntry()
+namespace autoware::pyplot
 {
-  RCLCPP_DEBUG(getLogger(), "%s %s", name_.c_str(), __func__);
-
-  processOnEntry();
-}
-}  // namespace autoware::behavior_path_planner
+inline namespace quiver
+{
+class DECL_VISIBILITY Quiver : public PyObjectWrapper
+{
+public:
+  explicit Quiver(const pybind11::object & object);
+  explicit Quiver(pybind11::object && object);
+};
+}  // namespace quiver
+}  // namespace autoware::pyplot
+#endif  // AUTOWARE__PYPLOT__QUIVER_HPP_
