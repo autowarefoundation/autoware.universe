@@ -68,6 +68,9 @@ std::optional<Polygon2d> Polygon2d::create(
   std::vector<PointList2d> inners;
   for (const auto & inner : polygon.inners()) {
     PointList2d _inner;
+    if (inner.empty()) {
+      continue;
+    }
     for (const auto & point : inner) {
       _inner.push_back(Point2d(point));
     }

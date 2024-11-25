@@ -15,6 +15,7 @@
 #ifndef AUTOWARE_TEST_UTILS__AUTOWARE_TEST_UTILS_HPP_
 #define AUTOWARE_TEST_UTILS__AUTOWARE_TEST_UTILS_HPP_
 
+#include <ament_index_cpp/get_package_share_directory.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
@@ -35,9 +36,11 @@
 
 #include <lanelet2_io/Io.h>
 
+#include <filesystem>
 #include <limits>
 #include <memory>
 #include <optional>
+#include <regex>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -621,6 +624,8 @@ protected:
   // Node
   rclcpp::Node::SharedPtr test_node_;
 };  // class AutowareTestManager
+
+std::optional<std::string> resolve_pkg_share_uri(const std::string & uri_path);
 
 }  // namespace autoware::test_utils
 

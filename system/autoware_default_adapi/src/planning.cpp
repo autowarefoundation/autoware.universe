@@ -89,8 +89,13 @@ PlanningNode::PlanningNode(const rclcpp::NodeOptions & options) : Node("planning
     "/planning/velocity_factors/motion_velocity_planner"};
 
   std::vector<std::string> steering_factor_topics = {
-    "/planning/steering_factor/avoidance", "/planning/steering_factor/intersection",
-    "/planning/steering_factor/lane_change", "/planning/steering_factor/start_planner",
+    "/planning/steering_factor/static_obstacle_avoidance",
+    "/planning/steering_factor/dynamic_obstacle_avoidance",
+    "/planning/steering_factor/avoidance_by_lane_change",
+    "/planning/steering_factor/intersection",
+    "/planning/steering_factor/lane_change_left",
+    "/planning/steering_factor/lane_change_right",
+    "/planning/steering_factor/start_planner",
     "/planning/steering_factor/goal_planner"};
 
   sub_velocity_factors_ =
@@ -98,7 +103,7 @@ PlanningNode::PlanningNode(const rclcpp::NodeOptions & options) : Node("planning
   sub_steering_factors_ =
     init_factors<SteeringFactorArray>(this, steering_factors_, steering_factor_topics);
 
-  const auto adaptor = component_interface_utils::NodeAdaptor(this);
+  const auto adaptor = autoware::component_interface_utils::NodeAdaptor(this);
   adaptor.init_pub(pub_velocity_factors_);
   adaptor.init_pub(pub_steering_factors_);
   adaptor.init_sub(sub_kinematic_state_, this, &PlanningNode::on_kinematic_state);
