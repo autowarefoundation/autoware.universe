@@ -60,7 +60,7 @@ We do not activate AEB module if it satisfies the following conditions.
 
 ### 2. Generate a predicted path of the ego vehicle
 
-#### IMU path generation
+#### 2.1 Overview of IMU Path Generation
 
 AEB generates a predicted footprint path based on current velocity and current angular velocity obtained from attached sensors. Note that if `use_imu_path` is `false`, it skips this step. This predicted path is generated as:
 
@@ -72,15 +72,80 @@ $$
 
 where $v$ and $\omega$ are current longitudinal velocity and angular velocity respectively. $dt$ is time interval that users can define in advance with the `imu_prediction_time_interval` parameter. The IMU path is generated considering a time horizon, defined by the `imu_prediction_time_horizon` parameter.
 
-Since the IMU path generation only uses the ego vehicle's current angular velocity, disregarding the MPC's planner steering, the shape of the IMU path tends to get distorted quite easily and protrude out of the ego vehicle's current lane, possibly causing unwanted emergency stops. That is why it is not recommended to use a big `imu_prediction_time_horizon`. To fix this issue, the IMU path's length can be cut short by tuning the `max_generated_imu_path_length` parameter, the IMU path generation will be cut short once its length surpasses this parameter's value.
+#### 2.2 Constraints and Countermeasures in IMU Path Generation
 
-It is also possible to limit the IMU path length based on the predicted lateral deviation of the vehicle by setting the `limit_imu_path_lat_dev` parameter flag to "true", and setting a threshold lateral deviation with the `imu_path_lat_dev_threshold` parameter. That way, the AEB will generate a predicted IMU path until a given predicted ego pose surpasses the lateral deviation threshold, and the IMU path will be cut short when the ego vehicle is turning relatively fast.
+Since the IMU path generation only uses the ego vehicle's current angular velocity, disregarding the MPC's planner steering, the shape of the IMU path tends to get distorted quite easily and protrude out of the ego vehicle's current lane, possibly causing unwanted emergency stops. There are two countermeasures for this issue:
 
-The advantage of setting a lateral deviation limit with the `limit_imu_path_lat_dev` parameter is that the `imu_prediction_time_horizon` and the `max_generated_imu_path_length` can be increased without worries about the IMU predicted path deforming beyond a certain threshold. The downside is that the IMU path will be cut short when the ego has a high angular velocity, in said cases, the AEB module would mostly rely on the MPC path to prevent or mitigate collisions. If it is assumed the ego vehicle will mostly travel along the centerline of its lanelets, it can be useful to set the lateral deviation threshold parameter `imu_path_lat_dev_threshold` to be equal to or smaller than the average lanelet width divided by 2, that way, the chance of the IMU predicted path leaving the current ego lanelet is smaller, and it is possible to increase the `imu_prediction_time_horizon` to prevent frontal collisions when the ego is mostly traveling in a straight line.
+1. Control using the `max_generated_imu_path_length` parameter
+
+   - Generation stops when path length exceeds the set value
+   - Avoid using a large `imu_prediction_time_horizon`
+
+2. Control based on lateral deviation
+   - Set the `limit_imu_path_lat_dev` parameter to "true"
+   - Set deviation threshold using `imu_path_lat_dev_threshold`
+   - Path generation stops when lateral deviation exceeds the threshold
+
+#### 2.3 Advantages and Limitations of Lateral Deviation Control
+
+The advantage of setting a lateral deviation limit with the `limit_imu_path_lat_dev` parameter is that the `imu_prediction_time_horizon` and the `max_generated_imu_path_length` can be increased without worries about the IMU predicted path deforming beyond a certain threshold. The downside is that the IMU path will be cut short when the ego has a high angular velocity, in said cases, the AEB module would mostly rely on the MPC path to prevent or mitigate collisions.
+
+If it is assumed the ego vehicle will mostly travel along the centerline of its lanelets, it can be useful to set the lateral deviation threshold parameter `imu_path_lat_dev_threshold` to be equal to or smaller than the average lanelet width divided by 2, that way, the chance of the IMU predicted path leaving the current ego lanelet is smaller, and it is possible to increase the `imu_prediction_time_horizon` to prevent frontal collisions when the ego is mostly traveling in a straight line.
 
 The lateral deviation is measured using the ego vehicle's current position as a reference, and it measures the distance of the furthermost vertex of the predicted ego footprint to the predicted path. The following image illustrates how the lateral deviation of a given ego pose is measured.
 
 ![measuring_lat_dev](./image/measuring-lat-dev-on-imu-path.drawio.svg)
+
+#### 2.4 IMU Path Generation Algorithm
+
+##### 2.4.1 Selection of Lateral Deviation Check Points
+
+Select vehicle vertices for lateral deviation checks based on the following conditions:
+
+- Forward motion ($v > 0$)
+  - Right turn ($\omega > 0$): Right front vertex
+  - Left turn ($\omega < 0$): Left front vertex
+- Reverse motion ($v < 0$)
+  - Right turn ($\omega > 0$): Right rear vertex
+  - Left turn ($\omega < 0$): Left rear vertex
+- Straight motion ($\omega = 0$): Check both front/rear vertices depending on forward/reverse motion
+
+##### 2.4.2 Path Generation Process
+
+Execute the following steps at each time step:
+
+1. State Update
+
+   - Calculate next position $(x_{k+1}, y_{k+1})$ and yaw angle $\theta_{k+1}$ based on current velocity $v$ and angular velocity $\omega$
+   - Time interval $dt$ is based on the `imu_prediction_time_interval` parameter
+
+2. Vehicle Footprint Generation
+
+   - Place vehicle footprint at calculated position
+   - Calculate check point coordinates
+
+3. Lateral Deviation Calculation
+
+   - Calculate lateral deviation from selected vertex to path
+   - Update path length and elapsed time
+
+4. Evaluation of Termination Conditions
+
+##### 2.4.3 Termination Conditions
+
+Path generation terminates when any of the following conditions are met:
+
+1. Basic Termination Conditions (both must be satisfied)
+
+   - Predicted time exceeds `imu_prediction_time_horizon`
+   - AND path length exceeds `min_generated_imu_path_length`
+
+2. Path Length Termination Condition
+
+   - Path length exceeds `max_generated_imu_path_length`
+
+3. Lateral Deviation Termination Condition (when `limit_imu_path_lat_dev = true`)
+   - Lateral deviation of selected vertex exceeds `imu_path_lat_dev_threshold`
 
 #### MPC path generation
 
