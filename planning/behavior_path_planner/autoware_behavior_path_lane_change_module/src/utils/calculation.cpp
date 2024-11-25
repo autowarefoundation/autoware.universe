@@ -201,8 +201,10 @@ std::vector<double> calc_max_lane_change_lengths(
   const auto current_velocity = common_data_ptr->get_ego_speed();
   const auto path_velocity = common_data_ptr->transient_data.current_path_velocity;
 
-  const auto max_acc = calc_maximum_acceleration(
-    t_prepare, current_velocity, path_velocity, lc_param_ptr->max_longitudinal_acc);
+  const auto max_acc_th =
+    std::min(common_data_ptr->bpp_param_ptr->max_acc, lc_param_ptr->max_longitudinal_acc);
+  const auto max_acc =
+    calc_maximum_acceleration(t_prepare, current_velocity, path_velocity, max_acc_th);
 
   // TODO(Quda, Azu): should probably limit upper bound of velocity as well, but
   // disabled due failing evaluation tests.
@@ -395,15 +397,20 @@ double calc_actual_prepare_duration(
   const CommonDataPtr & common_data_ptr, const double current_velocity,
   const double active_signal_duration)
 {
-  const auto max_prepare_duration = common_data_ptr->lc_param_ptr->maximum_prepare_duration;
-  const auto min_lc_velocity = common_data_ptr->lc_param_ptr->minimum_lane_changing_velocity;
+  const auto & lc_param_ptr = common_data_ptr->lc_param_ptr;
+  const auto max_prepare_duration = lc_param_ptr->maximum_prepare_duration;
+  const auto min_lc_velocity = lc_param_ptr->minimum_lane_changing_velocity;
 
   // need to ensure min prep duration is sufficient to reach minimum lane changing velocity
   const auto min_prepare_duration = std::invoke([&]() -> double {
     if (current_velocity >= min_lc_velocity) {
-      return common_data_ptr->lc_param_ptr->minimum_prepare_duration;
+      return lc_param_ptr->minimum_prepare_duration;
     }
-    const auto max_acc = common_data_ptr->bpp_param_ptr->max_acc;
+    const auto max_acc =
+      std::min(common_data_ptr->bpp_param_ptr->max_acc, lc_param_ptr->max_longitudinal_acc);
+    if (max_acc < eps) {
+      return lc_param_ptr->maximum_prepare_duration;
+    }
     return (min_lc_velocity - current_velocity) / max_acc;
   });
 
