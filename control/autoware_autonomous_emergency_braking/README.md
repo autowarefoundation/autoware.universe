@@ -108,19 +108,27 @@ Furthermore, a 2D convex hull is created around each detected cluster, the verti
 
 ##### Rigorous filtering
 
-After Noise filtering, the module performs a geometric collision check to determine whether the filtered obstacles/hull vertices actually have possibility to collide with the ego vehicle. In this check, the ego vehicle is represented as a rectangle, and the point cloud obstacles are represented as points. Only the vertices with a possibility of collision are kept.
+After Noise filtering, the module performs a geometric collision check to determine whether the filtered obstacles/hull vertices actually have possibility to collide with the ego vehicle. In this check, the ego vehicle is represented as a rectangle, and the point cloud obstacles are represented as points. Only the vertices with a possibility of collision are labeled as target obstacles.
 
 ![rigorous_filtering](./image/obstacle_filtering_2.drawio.svg)
 
+##### Obstacle labeling
+
+After rigorous filtering, the remaining obstacles are labeled. An obstacle is given a "target" label for collision checking only if it falls within the ego vehicle's defined footprint (made using the ego vehicle's width and the `expand_width` parameter). For an emergency stop to occur, at least one obstacle needs to be labeled as a target.
+
+![labeling](./image/labeling.drawio.svg)
+
 #### Using predicted objects to get target obstacles
 
-If the `use_predicted_object_data` parameter is set to true, the AEB can use predicted object data coming from the perception modules, to get target obstacle points. This is done by obtaining the 2D intersection points between the ego's predicted footprint path and each of the predicted objects enveloping polygon or bounding box.
+If the `use_predicted_object_data` parameter is set to true, the AEB can use predicted object data coming from the perception modules, to get target obstacle points. This is done by obtaining the 2D intersection points between the ego's predicted footprint path (made using the ego vehicle's width and the `expand_width` parameter) and each of the predicted objects enveloping polygon or bounding box. if there is no intersection, all points are discarded.
 
 ![predicted_object_and_path_intersection](./image/using-predicted-objects.drawio.svg)
 
 ### Finding the closest target obstacle
 
-Once all target obstacles have been identified, the AEB module chooses the point that is closest to the ego vehicle as the candidate for collision checking. Also, the object will be considered as a "target" for collision check only if it is located withing the ego footprint defined by the ego vehicles's width and the `expand_width` parameter. Only the closest point is considered because RSS distance is used to judge if a collision will happen or not, and if the closest vertex to the ego is deemed to be safe from collision, the rest of the target obstacles will also be safe.
+After identifying all possible obstacles using pointcloud data and/or predicted object data, the AEB module selects the closest point to the ego vehicle as the candidate for collision checking. The "closest object" is defined as an obstacle within the ego vehicle's footprint, determined by its width and the `expand_width` parameter, that is closest to the ego vehicle along the longitudinal axis, using the IMU or MPC path as a reference. Target obstacles are prioritized over those outside the ego path, even if the latter are longitudinally closer. This prioritization ensures that the collision check focuses on objects that pose the highest risk based on the vehicle's trajectory.
+
+If no target obstacles are found, the AEB module considers other nearby obstacles outside the path. In such cases, it skips the collision check but records the position of the closest obstacle to calculate its speed (Step #4). Note that, obstacles obtained with predicted object data are all target obstacles since they are within the ego footprint path and it is not necessary to calculate their speed (it is already calculated by the perception module). Such obstacles are excluded from step #4.
 
 ![closest_object](./image/closest-point.drawio.svg)
 
@@ -168,7 +176,10 @@ The resulting estimated object speed is added to a queue of speeds with timestam
 
 ### 5. Collision check with target obstacles using RSS distance
 
-In the fifth step, it checks the collision with the closest obstacle point using RSS distance. RSS distance is formulated as:
+In the fifth step, the AEB module checks for collision with the closest target obstacle using RSS distance.
+Only the closest target object is evaluated because RSS distance is used to determine collision risk. If the nearest target point is deemed safe, all other potential obstacles within the path are also assumed to be safe.
+
+RSS distance is formulated as:
 
 $$
 d = v_{ego}*t_{response} + v_{ego}^2/(2*a_{min}) -(sign(v_{obj})) * v_{obj}^2/(2*a_{obj_{min}}) + offset
