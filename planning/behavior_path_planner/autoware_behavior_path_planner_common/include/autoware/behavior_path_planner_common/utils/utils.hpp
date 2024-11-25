@@ -346,6 +346,11 @@ bool checkPathRelativeAngle(const PathWithLaneId & path, const double angle_thre
 lanelet::ConstLanelets getLaneletsFromPath(
   const PathWithLaneId & path, const std::shared_ptr<RouteHandler> & route_handler);
 
+/**
+ * @brief Converts camel case string to snake case string.
+ * @param input_str Input string.
+ * return String
+ */
 std::string convertToSnakeCase(const std::string & input_str);
 
 std::optional<lanelet::Polygon3d> getPolygonByPoint(

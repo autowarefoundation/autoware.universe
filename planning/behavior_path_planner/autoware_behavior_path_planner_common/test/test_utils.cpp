@@ -15,6 +15,7 @@
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 
 #include <autoware_test_utils/autoware_test_utils.hpp>
+#include <autoware_test_utils/mock_data_parser.hpp>
 
 #include <gtest/gtest.h>
 
@@ -25,11 +26,48 @@ using autoware_planning_msgs::msg::Trajectory;
 using tier4_planning_msgs::msg::PathPointWithLaneId;
 using tier4_planning_msgs::msg::PathWithLaneId;
 using ObjectClassification = autoware_perception_msgs::msg::ObjectClassification;
+using autoware::behavior_path_planner::PlannerData;
+using autoware_planning_msgs::msg::LaneletRoute;
 
 using autoware::test_utils::createPose;
 using autoware::test_utils::generateTrajectory;
 
-TEST(BehaviorPathPlanningUtilTest, l2Norm)
+class BehaviorPathPlanningUtilTest : public ::testing::Test
+{
+protected:
+  void SetUp() override
+  {
+    planner_data_ = std::make_shared<PlannerData>();
+    const auto test_data_file =
+      ament_index_cpp::get_package_share_directory("autoware_behavior_path_planner_common") +
+      "/test_data/test_traffic_light.yaml";
+    YAML::Node config = YAML::LoadFile(test_data_file);
+
+    set_current_pose(config);
+    set_route_handler(config);
+  }
+
+  void set_current_pose(YAML::Node config)
+  {
+    const auto self_odometry =
+      autoware::test_utils::parse<nav_msgs::msg::Odometry>(config["self_odometry"]);
+    planner_data_->self_odometry = std::make_shared<const nav_msgs::msg::Odometry>(self_odometry);
+  }
+
+  void set_route_handler(YAML::Node config)
+  {
+    const auto route = autoware::test_utils::parse<LaneletRoute>(config["route"]);
+    const auto intersection_map =
+      autoware::test_utils::make_map_bin_msg(autoware::test_utils::get_absolute_path_to_lanelet_map(
+        "autoware_test_utils", "intersection/lanelet2_map.osm"));
+    planner_data_->route_handler->setMap(intersection_map);
+    planner_data_->route_handler->setRoute(route);
+  }
+
+  std::shared_ptr<PlannerData> planner_data_;
+};
+
+TEST_F(BehaviorPathPlanningUtilTest, l2Norm)
 {
   using autoware::behavior_path_planner::utils::l2Norm;
 
@@ -42,7 +80,7 @@ TEST(BehaviorPathPlanningUtilTest, l2Norm)
   EXPECT_DOUBLE_EQ(norm, 3.0);
 }
 
-TEST(BehaviorPathPlanningUtilTest, checkCollisionBetweenPathFootprintsAndObjects)
+TEST_F(BehaviorPathPlanningUtilTest, checkCollisionBetweenPathFootprintsAndObjects)
 {
   using autoware::behavior_path_planner::utils::checkCollisionBetweenPathFootprintsAndObjects;
 
@@ -75,7 +113,7 @@ TEST(BehaviorPathPlanningUtilTest, checkCollisionBetweenPathFootprintsAndObjects
     checkCollisionBetweenPathFootprintsAndObjects(base_footprint, ego_path, objs, margin));
 }
 
-TEST(BehaviorPathPlanningUtilTest, checkCollisionBetweenFootprintAndObjects)
+TEST_F(BehaviorPathPlanningUtilTest, checkCollisionBetweenFootprintAndObjects)
 {
   using autoware::behavior_path_planner::utils::checkCollisionBetweenFootprintAndObjects;
 
@@ -105,7 +143,7 @@ TEST(BehaviorPathPlanningUtilTest, checkCollisionBetweenFootprintAndObjects)
   EXPECT_TRUE(checkCollisionBetweenFootprintAndObjects(base_footprint, ego_pose, objs, margin));
 }
 
-TEST(BehaviorPathPlanningUtilTest, calcLateralDistanceFromEgoToObject)
+TEST_F(BehaviorPathPlanningUtilTest, calcLateralDistanceFromEgoToObject)
 {
   using autoware::behavior_path_planner::utils::calcLateralDistanceFromEgoToObject;
 
@@ -130,7 +168,7 @@ TEST(BehaviorPathPlanningUtilTest, calcLateralDistanceFromEgoToObject)
   EXPECT_DOUBLE_EQ(calcLateralDistanceFromEgoToObject(ego_pose, vehicle_width, obj), 3.0);
 }
 
-TEST(BehaviorPathPlanningUtilTest, calc_longitudinal_distance_from_ego_to_object)
+TEST_F(BehaviorPathPlanningUtilTest, calc_longitudinal_distance_from_ego_to_object)
 {
   using autoware::behavior_path_planner::utils::calc_longitudinal_distance_from_ego_to_object;
 
@@ -164,7 +202,7 @@ TEST(BehaviorPathPlanningUtilTest, calc_longitudinal_distance_from_ego_to_object
     2.0);
 }
 
-TEST(BehaviorPathPlanningUtilTest, calcLongitudinalDistanceFromEgoToObjects)
+TEST_F(BehaviorPathPlanningUtilTest, calcLongitudinalDistanceFromEgoToObjects)
 {
   using autoware::behavior_path_planner::utils::calcLongitudinalDistanceFromEgoToObjects;
 
@@ -198,7 +236,7 @@ TEST(BehaviorPathPlanningUtilTest, calcLongitudinalDistanceFromEgoToObjects)
     calcLongitudinalDistanceFromEgoToObjects(ego_pose, base_link2front, base_link2rear, objs), 3.0);
 }
 
-TEST(BehaviorPathPlanningUtilTest, getHighestProbLabel)
+TEST_F(BehaviorPathPlanningUtilTest, getHighestProbLabel)
 {
   using autoware::behavior_path_planner::utils::getHighestProbLabel;
 
@@ -216,4 +254,42 @@ TEST(BehaviorPathPlanningUtilTest, getHighestProbLabel)
                                     .label(ObjectClassification::TRUCK)
                                     .probability(0.6));
   EXPECT_EQ(getHighestProbLabel(obj.classification), ObjectClassification::Type::TRUCK);
+}
+
+TEST_F(BehaviorPathPlanningUtilTest, calcLaneAroundPose)
+{
+  using autoware::behavior_path_planner::utils::calcLaneAroundPose;
+
+  {
+    const auto pose = createPose(0.0,0.0,0.0,0.0,0.0,0.0);
+    const auto lane = calcLaneAroundPose(planner_data_->route_handler, pose, 10.0, 10.0);
+    EXPECT_TRUE(lane.empty());
+  }
+  {
+    const auto lane = calcLaneAroundPose(planner_data_->route_handler, planner_data_->self_odometry->pose.pose, 10.0, 0.0);
+    EXPECT_EQ(lane.size(),2);
+  }
+}
+
+TEST_F(BehaviorPathPlanningUtilTest, checkPathRelativeAngle)
+{
+  using autoware::behavior_path_planner::utils::checkPathRelativeAngle;
+
+  {
+    auto path = generateTrajectory<PathWithLaneId>(2, 1.0);
+    EXPECT_TRUE(checkPathRelativeAngle(path, 0.0));
+  }
+  {
+    auto path = generateTrajectory<PathWithLaneId>(10, 1.0);
+    EXPECT_TRUE(checkPathRelativeAngle(path,M_PI_2));
+  }
+}
+
+TEST_F(BehaviorPathPlanningUtilTest, convertToSnakeCase)
+{
+  using autoware::behavior_path_planner::utils::convertToSnakeCase;
+
+  std::string input_string = "testString";
+  auto converted_string = convertToSnakeCase(input_string);
+  EXPECT_EQ(converted_string, "test_string");
 }
