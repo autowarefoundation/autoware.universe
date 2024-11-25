@@ -30,7 +30,8 @@ namespace metrics
 using autoware::universe_utils::calcDistance2d;
 using autoware_planning_msgs::msg::TrajectoryPoint;
 
-Accumulator<double> calcDistanceToObstacle(const PredictedObjects & obstacles, const Trajectory & traj)
+Accumulator<double> calcDistanceToObstacle(
+  const PredictedObjects & obstacles, const Trajectory & traj)
 {
   Accumulator<double> stat;
   for (const TrajectoryPoint & p : traj.points) {

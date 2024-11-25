@@ -32,7 +32,8 @@ Accumulator<double> calcTrajectoryInterval(const Trajectory & traj)
   return stat;
 }
 
-Accumulator<double> calcTrajectoryRelativeAngle(const Trajectory & traj, const double min_dist_threshold)
+Accumulator<double> calcTrajectoryRelativeAngle(
+  const Trajectory & traj, const double min_dist_threshold)
 {
   Accumulator<double> stat;
   // We need at least three points to compute relative angle

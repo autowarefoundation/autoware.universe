@@ -34,7 +34,8 @@ using autoware_planning_msgs::msg::TrajectoryPoint;
  * @param [in] min_dist_threshold minimum distance between successive points
  * @return calculated statistics
  */
-Accumulator<double> calcTrajectoryRelativeAngle(const Trajectory & traj, const double min_dist_threshold);
+Accumulator<double> calcTrajectoryRelativeAngle(
+  const Trajectory & traj, const double min_dist_threshold);
 
 /**
  * @brief calculate metric for the distance between trajectory points

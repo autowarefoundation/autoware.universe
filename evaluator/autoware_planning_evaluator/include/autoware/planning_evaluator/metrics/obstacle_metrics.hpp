@@ -34,7 +34,8 @@ using autoware_planning_msgs::msg::Trajectory;
  * @param [in] traj trajectory
  * @return calculated statistics
  */
-Accumulator<double> calcDistanceToObstacle(const PredictedObjects & obstacles, const Trajectory & traj);
+Accumulator<double> calcDistanceToObstacle(
+  const PredictedObjects & obstacles, const Trajectory & traj);
 
 /**
  * @brief calculate the time to collision of the trajectory with the given obstacles

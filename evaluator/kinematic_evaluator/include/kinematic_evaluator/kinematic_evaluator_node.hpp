@@ -15,8 +15,8 @@
 #ifndef KINEMATIC_EVALUATOR__KINEMATIC_EVALUATOR_NODE_HPP_
 #define KINEMATIC_EVALUATOR__KINEMATIC_EVALUATOR_NODE_HPP_
 
-#include "kinematic_evaluator/metrics_calculator.hpp"
 #include "autoware/universe_utils/math/accumulator.hpp"
+#include "kinematic_evaluator/metrics_calculator.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"

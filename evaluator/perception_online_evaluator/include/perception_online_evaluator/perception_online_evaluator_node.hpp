@@ -15,13 +15,13 @@
 #ifndef PERCEPTION_ONLINE_EVALUATOR__PERCEPTION_ONLINE_EVALUATOR_NODE_HPP_
 #define PERCEPTION_ONLINE_EVALUATOR__PERCEPTION_ONLINE_EVALUATOR_NODE_HPP_
 
+#include "autoware/universe_utils/math/accumulator.hpp"
 #include "perception_online_evaluator/metrics_calculator.hpp"
 #include "perception_online_evaluator/parameters.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
 
-#include "autoware/universe_utils/math/accumulator.hpp"
 #include "autoware_perception_msgs/msg/predicted_objects.hpp"
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
 #include "nav_msgs/msg/odometry.hpp"
@@ -35,9 +35,9 @@
 
 namespace perception_diagnostics
 {
+using autoware::universe_utils::Accumulator;
 using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::PredictedObjects;
-using autoware::universe_utils::Accumulator;
 using diagnostic_msgs::msg::DiagnosticArray;
 using diagnostic_msgs::msg::DiagnosticStatus;
 using nav_msgs::msg::Odometry;
