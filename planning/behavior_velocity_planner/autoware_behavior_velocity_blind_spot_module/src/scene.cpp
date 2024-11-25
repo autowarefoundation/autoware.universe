@@ -64,8 +64,7 @@ void BlindSpotModule::initializeRTCStatus()
   setDistance(std::numeric_limits<double>::lowest());
 }
 
-BlindSpotDecision BlindSpotModule::modifyPathVelocityDetail(
-  PathWithLaneId * path, [[maybe_unused]] StopReason * stop_reason)
+BlindSpotDecision BlindSpotModule::modifyPathVelocityDetail(PathWithLaneId * path)
 {
   if (planner_param_.use_pass_judge_line && is_over_pass_judge_line_) {
     return OverPassJudge{"already over the pass judge line. no plan needed."};
@@ -160,26 +159,23 @@ void BlindSpotModule::setRTCStatus(
     decision);
 }
 
-void BlindSpotModule::reactRTCApproval(
-  const BlindSpotDecision & decision, PathWithLaneId * path, StopReason * stop_reason)
+void BlindSpotModule::reactRTCApproval(const BlindSpotDecision & decision, PathWithLaneId * path)
 {
   std::visit(
-    VisitorSwitch{[&](const auto & sub_decision) {
-      reactRTCApprovalByDecision(sub_decision, path, stop_reason);
-    }},
+    VisitorSwitch{
+      [&](const auto & sub_decision) { reactRTCApprovalByDecision(sub_decision, path); }},
     decision);
 }
 
-bool BlindSpotModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
+bool BlindSpotModule::modifyPathVelocity(PathWithLaneId * path)
 {
   debug_data_ = DebugData();
-  *stop_reason = planning_utils::initializeStopReason(StopReason::BLIND_SPOT);
 
   initializeRTCStatus();
-  const auto decision = modifyPathVelocityDetail(path, stop_reason);
+  const auto decision = modifyPathVelocityDetail(path);
   const auto & input_path = *path;
   setRTCStatus(decision, input_path);
-  reactRTCApproval(decision, path, stop_reason);
+  reactRTCApproval(decision, path);
 
   return true;
 }

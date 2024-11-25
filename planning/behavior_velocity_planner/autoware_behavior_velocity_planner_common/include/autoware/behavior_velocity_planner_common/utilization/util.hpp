@@ -21,7 +21,6 @@
 #include <autoware_perception_msgs/msg/traffic_light_group.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
-#include <tier4_planning_msgs/msg/stop_reason.hpp>
 
 #include <lanelet2_core/Forward.h>
 #include <lanelet2_core/LaneletMap.h>
@@ -65,8 +64,6 @@ using Polygons2d = std::vector<Polygon2d>;
 using autoware_perception_msgs::msg::PredictedObjects;
 using tier4_planning_msgs::msg::PathPointWithLaneId;
 using tier4_planning_msgs::msg::PathWithLaneId;
-using tier4_planning_msgs::msg::StopFactor;
-using tier4_planning_msgs::msg::StopReason;
 
 namespace planning_utils
 {
@@ -113,10 +110,6 @@ double calcDecelerationVelocityFromDistanceToTarget(
 double findReachTime(
   const double jerk, const double accel, const double velocity, const double distance,
   const double t_min, const double t_max);
-
-StopReason initializeStopReason(const std::string & stop_reason);
-
-void appendStopReason(const StopFactor stop_factor, StopReason * stop_reason);
 
 std::vector<geometry_msgs::msg::Point> toRosPoints(const PredictedObjects & object);
 

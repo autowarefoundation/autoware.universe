@@ -70,7 +70,7 @@ public:
     const PlannerParam & planner_param, const rclcpp::Logger & logger,
     const rclcpp::Clock::SharedPtr clock);
 
-  bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
+  bool modifyPathVelocity(PathWithLaneId * path) override;
 
   /**
    * @brief Calculate ego position and stop point.
@@ -98,8 +98,6 @@ public:
   static void updateVelocityFactor(
     autoware::motion_utils::VelocityFactorInterface * velocity_factor, const State & state,
     const double & distance_to_stop_point);
-
-  void updateStopReason(StopReason * stop_reason, const geometry_msgs::msg::Pose & stop_pose) const;
 
   void updateDebugData(
     DebugData * debug_data, const geometry_msgs::msg::Pose & stop_pose, const State & state) const;

@@ -114,7 +114,7 @@ public:
    * @brief plan go-stop velocity at traffic crossing with collision check between reference path
    * and object predicted path
    */
-  bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
+  bool modifyPathVelocity(PathWithLaneId * path) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
   std::vector<autoware::motion_utils::VirtualWall> createVirtualWalls() override;
@@ -133,7 +133,7 @@ private:
   // Parameter
 
   void initializeRTCStatus();
-  BlindSpotDecision modifyPathVelocityDetail(PathWithLaneId * path, StopReason * stop_reason);
+  BlindSpotDecision modifyPathVelocityDetail(PathWithLaneId * path);
   // setSafe(), setDistance()
   void setRTCStatus(
     const BlindSpotDecision & decision, const tier4_planning_msgs::msg::PathWithLaneId & path);
@@ -141,12 +141,10 @@ private:
   void setRTCStatusByDecision(
     const Decision & decision, const tier4_planning_msgs::msg::PathWithLaneId & path);
   // stop/GO
-  void reactRTCApproval(
-    const BlindSpotDecision & decision, PathWithLaneId * path, StopReason * stop_reason);
+  void reactRTCApproval(const BlindSpotDecision & decision, PathWithLaneId * path);
   template <typename Decision>
   void reactRTCApprovalByDecision(
-    const Decision & decision, tier4_planning_msgs::msg::PathWithLaneId * path,
-    StopReason * stop_reason);
+    const Decision & decision, tier4_planning_msgs::msg::PathWithLaneId * path);
 
   std::optional<InterpolatedPathInfo> generateInterpolatedPathInfo(
     const tier4_planning_msgs::msg::PathWithLaneId & input_path) const;
