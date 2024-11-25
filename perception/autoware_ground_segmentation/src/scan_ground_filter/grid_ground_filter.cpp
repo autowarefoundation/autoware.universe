@@ -95,10 +95,16 @@ void GridGroundFilter::fitLineFromGndGrid(const std::vector<int> & idx, float & 
     sum_x2 += cell.avg_radius_ * cell.avg_radius_;
   }
   const float n = static_cast<float>(idx.size());
-  a = (n * sum_xy - sum_x * sum_y) / (n * sum_x2 - sum_x * sum_x);
-  // limit gradient
-  a = std::clamp(a, -param_.global_slope_max_ratio, param_.global_slope_max_ratio);
-  b = (sum_y - a * sum_x) / n;
+  const float denominator = n * sum_x2 - sum_x * sum_x;
+  if (denominator != 0.0f) {
+    a = (n * sum_xy - sum_x * sum_y) / denominator;
+    a = std::clamp(a, -param_.global_slope_max_ratio, param_.global_slope_max_ratio);
+    b = (sum_y - a * sum_x) / n;
+  } else {
+    const auto & cell = grid_ptr_->getCell(idx.front());
+    a = cell.avg_height_ / cell.avg_radius_;
+    b = 0.0f;
+  }
 }
 
 void GridGroundFilter::initializeGround(pcl::PointIndices & out_no_ground_indices)
