@@ -234,10 +234,16 @@ TEST_F(TestNormalLaneChange, testFilteredObjects)
   normal_lane_change_->update_filtered_objects();
 
   const auto & filtered_objects = get_filtered_objects();
+
+  // Note: There's 1 stopping object in current lanes, however, it was filtered out.
+  const auto filtered_size =
+    filtered_objects.current_lane.size() + filtered_objects.target_lane_leading.size() +
+    filtered_objects.target_lane_trailing.size() + filtered_objects.others.size();
+  ASSERT_EQ(filtered_size, planner_data_->dynamic_object->objects.size());
   ASSERT_EQ(filtered_objects.current_lane.size(), 0);
   ASSERT_EQ(filtered_objects.target_lane_leading.size(), 2);
   ASSERT_EQ(filtered_objects.target_lane_trailing.size(), 0);
-  ASSERT_EQ(filtered_objects.others.size(), 1);
+  ASSERT_EQ(filtered_objects.others.size(), 2);
 }
 
 TEST_F(TestNormalLaneChange, testGetPathWhenValid)
