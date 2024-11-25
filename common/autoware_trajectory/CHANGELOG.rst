@@ -2,8 +2,8 @@
 Changelog for package autoware_trajectory
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.39.0 (2024-11-25)
+-------------------
 * add changelog
 * Merge commit '6a1ddbd08bd' into release-0.39.0
 * feat(autoware_trajectory): change default value of min_points (`#9315 <https://github.com/youtalk/autoware.universe/issues/9315>`_)

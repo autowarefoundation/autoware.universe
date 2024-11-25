@@ -2,8 +2,8 @@
 Changelog for package tier4_dummy_object_rviz_plugin
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.39.0 (2024-11-25)
+-------------------
 * Merge commit '6a1ddbd08bd' into release-0.39.0
 * fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/youtalk/autoware.universe/issues/9304>`_)
 * fix(tier4_dummy_object_rviz_plugin): fix missing dependency (`#9306 <https://github.com/youtalk/autoware.universe/issues/9306>`_)

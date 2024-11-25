@@ -2,8 +2,8 @@
 Changelog for package autoware_behavior_path_start_planner_module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.39.0 (2024-11-25)
+-------------------
 * Merge commit '6a1ddbd08bd' into release-0.39.0
 * fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/youtalk/autoware.universe/issues/9304>`_)
 * feat(start_planner, lane_departure_checker): speed up by updating polygons (`#9309 <https://github.com/youtalk/autoware.universe/issues/9309>`_)

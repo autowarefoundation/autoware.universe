@@ -2,8 +2,8 @@
 Changelog for package diagnostic_converter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.39.0 (2024-11-25)
+-------------------
 * Merge commit '6a1ddbd08bd' into release-0.39.0
 * fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/youtalk/autoware.universe/issues/9304>`_)
 * feat(tier4_metric_msgs): apply tier4_metric_msgs for scenario_simulator_v2_adapter, control_evaluator, planning_evaluator, autonomous_emergency_braking, obstacle_cruise_planner, motion_velocity_planner, processing_time_checker (`#9180 <https://github.com/youtalk/autoware.universe/issues/9180>`_)

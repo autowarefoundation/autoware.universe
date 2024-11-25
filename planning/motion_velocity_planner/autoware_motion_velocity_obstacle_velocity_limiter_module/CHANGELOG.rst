@@ -2,8 +2,8 @@
 Changelog for package autoware_motion_velocity_obstacle_velocity_limiter_module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.39.0 (2024-11-25)
+-------------------
 * fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/youtalk/autoware.universe/issues/9304>`_)
 * fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/youtalk/autoware.universe/issues/9304>`_)
 * chore(package.xml): bump version to 0.38.0 (`#9266 <https://github.com/youtalk/autoware.universe/issues/9266>`_) (`#9284 <https://github.com/youtalk/autoware.universe/issues/9284>`_)

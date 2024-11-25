@@ -2,8 +2,8 @@
 Changelog for package autoware_control_evaluator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.39.0 (2024-11-25)
+-------------------
 * Merge commit '6a1ddbd08bd' into release-0.39.0
 * fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/youtalk/autoware.universe/issues/9304>`_)
 * test(autoware_control_evaluator): add unit test for utils autoware_control_evaluator (`#9307 <https://github.com/youtalk/autoware.universe/issues/9307>`_)

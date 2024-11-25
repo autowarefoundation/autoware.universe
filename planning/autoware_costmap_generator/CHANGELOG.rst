@@ -2,8 +2,8 @@
 Changelog for package autoware_costmap_generator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.39.0 (2024-11-25)
+-------------------
 * Merge commit '6a1ddbd08bd' into release-0.39.0
 * fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/youtalk/autoware.universe/issues/9304>`_)
 * fix(costmap_generator): use vehicle frame for lidar height thresholds (`#9311 <https://github.com/youtalk/autoware.universe/issues/9311>`_)

@@ -2,8 +2,8 @@
 Changelog for package autoware_ndt_scan_matcher
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.39.0 (2024-11-25)
+-------------------
 * Merge commit '6a1ddbd08bd' into release-0.39.0
 * fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/youtalk/autoware.universe/issues/9304>`_)
 * perf(autoware_ndt_scan_matcher): remove evecs\_, evals\_ of Leaf for memory efficiency (`#9281 <https://github.com/youtalk/autoware.universe/issues/9281>`_)
