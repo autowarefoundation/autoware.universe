@@ -11,7 +11,7 @@ In particular, this node implements:
 
 ## Inner-workings / Algorithms
 
-As this node reimplements the functionalities of the CPU-version algorithms, please have a look at the documentations of [crop-box](../../autoware_pointcloud_preprocessor/docs/crop-box-filter.md), [distortion correction](../../sensing/autoware_pointcloud_preprocessor/docs/distortion-corrector.md), and [ring-based outlier filter](../../sensing/autoware_pointcloud_preprocessor/docs/ring-outlier-filter.md) for more information about these algorithms.
+As this node reimplements the functionalities of the CPU-version algorithms, please have a look at the documentations of [crop-box](../../autoware_pointcloud_preprocessor/docs/crop-box-filter.md), [distortion correction](../../autoware_pointcloud_preprocessor/docs/distortion-corrector.md), and [ring-based outlier filter](../../autoware_pointcloud_preprocessor/docs/ring-outlier-filter.md) for more information about these algorithms.
 
 In addition to the individual algorithms previously mentioned, this node uses the `cuda_blackboard`, a cuda transport layer that enables a zero-copy mechanism between GPU and GPU memory for both input and output.
 
