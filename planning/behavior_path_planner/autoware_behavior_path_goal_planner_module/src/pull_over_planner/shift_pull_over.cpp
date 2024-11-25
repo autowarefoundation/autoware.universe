@@ -292,18 +292,12 @@ std::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
         return is_footprint_in_any_polygon(footprint);
       });
   });
-  const bool is_in_lanes = std::invoke([&]() -> bool {
-    const auto drivable_lanes =
-      utils::generateDrivableLanesWithShoulderLanes(road_lanes, pull_over_lanes);
-    const auto & dp = planner_data->drivable_area_expansion_parameters;
-    const auto expanded_lanes = utils::expandLanelets(
-      drivable_lanes, dp.drivable_area_left_bound_offset, dp.drivable_area_right_bound_offset,
-      dp.drivable_area_types_to_skip);
-    const auto combined_drivable = utils::combineDrivableLanes(
-      expanded_lanes, previous_module_output.drivable_area_info.drivable_lanes);
-    return !lane_departure_checker_.checkPathWillLeaveLane(
-      utils::transformToLanelets(combined_drivable), pull_over_path.parking_path());
-  });
+
+  const auto departure_check_lane = goal_planner_utils::createDepartureCheckLanelet(
+    pull_over_lanes, *planner_data->route_handler, left_side_parking_);
+  const bool is_in_lanes = !lane_departure_checker_.checkPathWillLeaveLane(
+    {departure_check_lane}, pull_over_path.parking_path());
+
   if (!is_in_parking_lots && !is_in_lanes) {
     return {};
   }
