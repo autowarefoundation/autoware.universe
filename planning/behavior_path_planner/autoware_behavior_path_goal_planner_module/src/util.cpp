@@ -723,8 +723,17 @@ lanelet::Lanelet createDepartureCheckLanelet(
   };
 
   const auto getMostInnerLane = [&](const lanelet::ConstLanelet & lane) -> lanelet::ConstLanelet {
-    return left_side_parking ? route_handler.getMostRightLanelet(lane, false, true)
-                             : route_handler.getMostLeftLanelet(lane, false, true);
+    if (left_side_parking) {
+      const auto most_right_lane = route_handler.getMostRightLanelet(lane, true, true);
+      const auto most_right_opposite_lanes =
+        route_handler.getRightOppositeLanelets(most_right_lane);
+      return most_right_opposite_lanes.empty() ? most_right_lane
+                                               : most_right_opposite_lanes.front();
+    } else {
+      const auto most_left_lane = route_handler.getMostLeftLanelet(lane, true, true);
+      const auto most_left_opposite_lanes = route_handler.getLeftOppositeLanelets(most_left_lane);
+      return most_left_opposite_lanes.empty() ? most_left_lane : most_left_opposite_lanes.front();
+    }
   };
 
   lanelet::Points3d outer_bound_points{};
