@@ -46,6 +46,7 @@ public:
   void launchScenePlugin(rclcpp::Node & node, const std::string & name);
   void removeScenePlugin(rclcpp::Node & node, const std::string & name);
 
+  // cppcheck-suppress functionConst
   tier4_planning_msgs::msg::PathWithLaneId planPathVelocity(
     const std::shared_ptr<const PlannerData> & planner_data,
     const tier4_planning_msgs::msg::PathWithLaneId & input_path_msg);
