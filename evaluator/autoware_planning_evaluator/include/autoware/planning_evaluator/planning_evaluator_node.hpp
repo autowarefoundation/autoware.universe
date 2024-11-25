@@ -155,15 +155,14 @@ private:
   MetricArrayMsg metrics_msg_;
 
   // Parameters
-  std::string output_file_str_;
+  bool output_metrics_;
   std::string ego_frame_str_;
 
   // Calculator
   MetricsCalculator metrics_calculator_;
   // Metrics
   std::vector<Metric> metrics_;
-  std::deque<rclcpp::Time> stamps_;
-  std::array<std::deque<Accumulator<double>>, static_cast<size_t>(Metric::SIZE)> metric_stats_;
+  std::array<std::array<Accumulator<double>, 3>, static_cast<size_t>(Metric::SIZE)> metric_accumulators_; // 3(min, max, mean) * metric_size
 
   rclcpp::TimerBase::SharedPtr timer_;
   std::optional<AccelWithCovarianceStamped> prev_acc_stamped_{std::nullopt};

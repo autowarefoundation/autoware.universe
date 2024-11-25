@@ -6,7 +6,7 @@
     "autoware_planning_evaluator": {
       "type": "object",
       "properties": {
-        "output_file": {
+        "output_metrics": {
           "description": "If true, the evaluation node writes the metrics' statics to `<ros2_logging_directory>/autoware_metrics/<node_name>-<time_stamp>.json` when the node shut down,",
           "type": "boolean",
           "default": "false"
