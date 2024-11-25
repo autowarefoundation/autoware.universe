@@ -40,7 +40,7 @@ PointPaintingTRT::PointPaintingTRT(
 
 bool PointPaintingTRT::detect(
   const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer,
-  std::vector<centerpoint::Box3D> & det_boxes3d)
+  std::vector<autoware::lidar_centerpoint::Box3D> & det_boxes3d)
 {
   CHECK_CUDA_ERROR(cudaMemsetAsync(
     encoder_in_features_d_.get(), 0, encoder_in_feature_size_ * sizeof(float), stream_));

@@ -37,7 +37,7 @@ public:
 
   bool detect(
     const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer,
-    std::vector<centerpoint::Box3D> & det_boxes3d);
+    std::vector<autoware::lidar_centerpoint::Box3D> & det_boxes3d);
 
 protected:
   bool preprocess(
