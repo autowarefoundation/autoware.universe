@@ -73,6 +73,7 @@ struct GoalPlannerDebugData
   std::vector<Polygon2d> ego_polygons_expanded{};
   lanelet::ConstLanelet expanded_pull_over_lane_between_ego{};
   Polygon2d objects_extraction_polygon{};
+  utils::path_safety_checker::CollisionCheckDebugMap collision_check{};
 };
 
 struct LastApprovalData
@@ -142,8 +143,7 @@ public:
     const std::shared_ptr<GoalPlannerParameters> & parameters,
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
     std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
-      objects_of_interest_marker_interface_ptr_map,
-    std::shared_ptr<SteeringFactorInterface> & steering_factor_interface_ptr);
+      objects_of_interest_marker_interface_ptr_map);
 
   ~GoalPlannerModule()
   {
@@ -234,6 +234,8 @@ private:
     ModuleStatus current_status;
     BehaviorModuleOutput previous_module_output;
     BehaviorModuleOutput last_previous_module_output;  //<! previous "previous_module_output"
+    GoalCandidates goal_candidates;  //<! only the positional information of goal_candidates
+
     // collision detector
     // need to be shared_ptr to be used in planner and goal searcher
     std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map;
@@ -245,7 +247,8 @@ private:
     void update(
       const GoalPlannerParameters & parameters, const PlannerData & planner_data,
       const ModuleStatus & current_status, const BehaviorModuleOutput & previous_module_output,
-      const autoware::universe_utils::LinearRing2d & vehicle_footprint);
+      const autoware::universe_utils::LinearRing2d & vehicle_footprint,
+      const GoalCandidates & goal_candidates);
 
   private:
     void initializeOccupancyGridMap(
@@ -310,6 +313,7 @@ private:
 
   // goal searcher
   std::shared_ptr<GoalSearcherBase> goal_searcher_;
+  GoalCandidates goal_candidates_{};
 
   // NOTE: this is latest occupancy_grid_map pointer which the local planner_data on
   // onFreespaceParkingTimer thread storage may point to while calculation.
@@ -323,7 +327,6 @@ private:
   autoware::universe_utils::LinearRing2d vehicle_footprint_;
 
   std::recursive_mutex mutex_;
-  // TODO(Mamoru Sobue): isSafePath() modifies ThreadSafeData::check_collision, avoid this mutable
   mutable ThreadSafeData thread_safe_data_;
 
   // TODO(soblin): organize part of thread_safe_data and previous data to PullOverContextData
@@ -410,8 +413,9 @@ private:
   // freespace parking
   bool planFreespacePath(
     std::shared_ptr<const PlannerData> planner_data,
-    const std::shared_ptr<GoalSearcherBase> goal_searcher,
-    const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map);
+    const std::shared_ptr<GoalSearcherBase> goal_searcher, const GoalCandidates & goal_candidates,
+    const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
+    const PredictedObjects & static_target_objects);
   bool canReturnToLaneParking(const PullOverContextData & context_data);
 
   // plan pull over path
@@ -474,7 +478,7 @@ private:
    * @brief Checks if the current path is safe.
    * @return If the path is safe in the current state, true.
    */
-  bool isSafePath(
+  std::pair<bool, utils::path_safety_checker::CollisionCheckDebugMap> isSafePath(
     const std::shared_ptr<const PlannerData> planner_data, const bool found_pull_over_path,
     const std::optional<PullOverPath> & pull_over_path_opt, const PathDecisionState & prev_data,
     const GoalPlannerParameters & parameters,
