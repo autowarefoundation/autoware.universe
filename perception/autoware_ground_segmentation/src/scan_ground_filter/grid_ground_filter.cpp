@@ -21,6 +21,7 @@
 namespace autoware::ground_segmentation
 {
 
+// assign the pointcloud data to the grid
 void GridGroundFilter::convert()
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
@@ -38,6 +39,7 @@ void GridGroundFilter::convert()
   }
 }
 
+// preprocess the grid data, set the grid connections
 void GridGroundFilter::preprocess()
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
@@ -47,6 +49,7 @@ void GridGroundFilter::preprocess()
   grid_ptr_->setGridConnections();
 }
 
+// recursive search for the ground grid cell close to the grid origin
 bool GridGroundFilter::recursiveSearch(
   const int check_idx, const int search_cnt, std::vector<int> & idx) const
 {
@@ -79,6 +82,7 @@ bool GridGroundFilter::recursiveSearch(
   return recursiveSearch(check_cell.scan_grid_root_idx_, search_cnt, idx, count);
 }
 
+// fit the line from the ground grid cells
 void GridGroundFilter::fitLineFromGndGrid(const std::vector<int> & idx, float & a, float & b) const
 {
   // if the idx is empty, the line is not defined
@@ -119,6 +123,7 @@ void GridGroundFilter::fitLineFromGndGrid(const std::vector<int> & idx, float & 
   }
 }
 
+// process the grid data to initialize the ground cells prior to the ground segmentation
 void GridGroundFilter::initializeGround(pcl::PointIndices & out_no_ground_indices)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
@@ -181,6 +186,7 @@ void GridGroundFilter::initializeGround(pcl::PointIndices & out_no_ground_indice
   }
 }
 
+// segment the point in the cell, logic for the continuous cell
 void GridGroundFilter::SegmentContinuousCell(
   const Cell & cell, PointsCentroid & ground_bin, pcl::PointIndices & out_no_ground_indices)
 {
@@ -238,6 +244,7 @@ void GridGroundFilter::SegmentContinuousCell(
   }
 }
 
+// segment the point in the cell, logic for the discontinuous cell
 void GridGroundFilter::SegmentDiscontinuousCell(
   const Cell & cell, PointsCentroid & ground_bin, pcl::PointIndices & out_no_ground_indices)
 {
@@ -297,6 +304,7 @@ void GridGroundFilter::SegmentDiscontinuousCell(
   }
 }
 
+// segment the point in the cell, logic for the break cell
 void GridGroundFilter::SegmentBreakCell(
   const Cell & cell, PointsCentroid & ground_bin, pcl::PointIndices & out_no_ground_indices)
 {
@@ -342,6 +350,7 @@ void GridGroundFilter::SegmentBreakCell(
   }
 }
 
+// classify the point cloud into ground and non-ground points
 void GridGroundFilter::classify(pcl::PointIndices & out_no_ground_indices)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
@@ -451,6 +460,7 @@ void GridGroundFilter::classify(pcl::PointIndices & out_no_ground_indices)
   }
 }
 
+// process the point cloud to segment the ground points
 void GridGroundFilter::process(
   const PointCloud2ConstPtr & in_cloud, pcl::PointIndices & out_no_ground_indices)
 {
