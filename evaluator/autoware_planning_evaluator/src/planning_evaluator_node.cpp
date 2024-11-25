@@ -198,7 +198,7 @@ void PlanningEvaluatorNode::AddKinematicStateMetricMsg(
   return;
 }
 
-void PlanningEvaluatorNode::AddMetricMsg(const Metric & metric, const Stat<double> & metric_stat)
+void PlanningEvaluatorNode::AddMetricMsg(const Metric & metric, const Accumulator<double> & metric_stat)
 {
   const std::string base_name = metric_to_str.at(metric) + "/";
   MetricMsg metric_msg;

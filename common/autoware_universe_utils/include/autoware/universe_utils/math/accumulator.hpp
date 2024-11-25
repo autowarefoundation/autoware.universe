@@ -15,8 +15,8 @@
 #include <iostream>
 #include <limits>
 
-#ifndef AUTOWARE__UNIVERSE_UTILS__MATH__CONSTANTS_HPP_
-#define AUTOWARE__UNIVERSE_UTILS__MATH__CONSTANTS_HPP_
+#ifndef AUTOWARE__UNIVERSE_UTILS__MATH__ACCUMULATOR_HPP_
+#define AUTOWARE__UNIVERSE_UTILS__MATH__ACCUMULATOR_HPP_
 
 namespace autoware::universe_utils
 {
@@ -90,4 +90,4 @@ std::ostream & operator<<(std::ostream & os, const Accumulator<T> & accumulator)
 
 }  // namespace autoware::universe_utils
 
-#endif  // AUTOWARE__UNIVERSE_UTILS__MATH__CONSTANTS_HPP_
+#endif  // AUTOWARE__UNIVERSE_UTILS__MATH__ACCUMULATOR_HPP_

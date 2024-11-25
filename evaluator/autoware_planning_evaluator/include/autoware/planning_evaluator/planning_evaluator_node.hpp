@@ -16,7 +16,7 @@
 #define AUTOWARE__PLANNING_EVALUATOR__PLANNING_EVALUATOR_NODE_HPP_
 
 #include "autoware/planning_evaluator/metrics_calculator.hpp"
-#include "autoware/planning_evaluator/stat.hpp"
+#include "autoware/universe_utils/math/accumulator.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
@@ -43,6 +43,7 @@
 #include <vector>
 namespace planning_diagnostics
 {
+using autoware::universe_utils::Accumulator;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_planning_msgs::msg::PoseWithUuidStamped;
 using autoware_planning_msgs::msg::Trajectory;
@@ -98,7 +99,7 @@ public:
   /**
    * @brief publish the given metric statistic
    */
-  void AddMetricMsg(const Metric & metric, const Stat<double> & metric_stat);
+  void AddMetricMsg(const Metric & metric, const Accumulator<double> & metric_stat);
 
   /**
    * @brief publish current ego lane info
@@ -162,7 +163,7 @@ private:
   // Metrics
   std::vector<Metric> metrics_;
   std::deque<rclcpp::Time> stamps_;
-  std::array<std::deque<Stat<double>>, static_cast<size_t>(Metric::SIZE)> metric_stats_;
+  std::array<std::deque<Accumulator<double>>, static_cast<size_t>(Metric::SIZE)> metric_stats_;
 
   rclcpp::TimerBase::SharedPtr timer_;
   std::optional<AccelWithCovarianceStamped> prev_acc_stamped_{std::nullopt};
