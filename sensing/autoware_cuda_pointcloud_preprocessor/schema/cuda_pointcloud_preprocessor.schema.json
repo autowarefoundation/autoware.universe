@@ -1,0 +1,140 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parameters for the cuda_pointcloud_preprocessor",
+  "type": "object",
+  "definitions": {
+    "crop_box_filter": {
+      "type": "object",
+      "properties": {
+        "base_frame": {
+          "type": "string",
+          "description": "The undistortion algorithm is based on a base frame, which must be the same as the twist frame.",
+          "default": "base_link"
+        },
+        "use_imu": {
+          "type": "boolean",
+          "description": "Use IMU angular velocity, otherwise, use twist angular velocity.",
+          "default": "true"
+        },
+        "use_3d_distortion_correction": {
+          "type": "boolean",
+          "description": "Use 3d distortion correction algorithm, otherwise, use 2d distortion correction algorithm.",
+          "default": "false"
+        },
+        "distance_ratio": {
+          "type": "number",
+          "description": "distance_ratio",
+          "default": "1.03",
+          "minimum": 0.0
+        },
+        "object_length_threshold": {
+          "type": "number",
+          "description": "object_length_threshold",
+          "default": "0.1",
+          "minimum": 0.0
+        },
+        "num_points_threshold": {
+          "type": "integer",
+          "description": "num_points_threshold",
+          "default": "4",
+          "minimum": 0
+        },
+        "self_crop.min_x": {
+          "type": "number",
+          "description": "minimum x-coordinate value for self cropping in meters",
+          "default": "-1.0"
+        },
+        "self_crop.min_y": {
+          "type": "number",
+          "description": "minimum y-coordinate value for self cropping in meters",
+          "default": "-1.0"
+        },
+        "self_crop.min_z": {
+          "type": "number",
+          "description": "minimum z-coordinate value for self cropping in meters",
+          "default": "-1.0"
+        },
+        "self_crop.max_x": {
+          "type": "number",
+          "description": "maximum x-coordinate value for self cropping in meters",
+          "default": "1.0"
+        },
+        "self_crop.max_y": {
+          "type": "number",
+          "description": "maximum y-coordinate value for self cropping in meters",
+          "default": "1.0"
+        },
+        "self_crop.max_z": {
+          "type": "number",
+          "description": "maximum z-coordinate value for self cropping in meters",
+          "default": "1.0"
+        },
+        "mirror_crop.min_x": {
+          "type": "number",
+          "description": "minimum x-coordinate value for mirror cropping in meters",
+          "default": "-1.0"
+        },
+        "mirror_crop.min_y": {
+          "type": "number",
+          "description": "minimum y-coordinate value for mirror cropping in meters",
+          "default": "-1.0"
+        },
+        "mirror_crop.min_z": {
+          "type": "number",
+          "description": "minimum z-coordinate value for mirror cropping in meters",
+          "default": "-1.0"
+        },
+        "mirror_crop.max_x": {
+          "type": "number",
+          "description": "maximum x-coordinate value for mirror cropping in meters",
+          "default": "1.0"
+        },
+        "mirror_crop.max_y": {
+          "type": "number",
+          "description": "maximum y-coordinate value for mirror cropping in meters",
+          "default": "1.0"
+        },
+        "mirror_crop.max_z": {
+          "type": "number",
+          "description": "maximum z-coordinate value for mirror cropping in meters",
+          "default": "1.0"
+        }
+      },
+      "required": [
+        "base_frame",
+        "use_imu",
+        "use_3d_distortion_correction",
+        "distance_ratio",
+        "object_length_threshold",
+        "num_points_threshold",
+        "self_crop.min_x",
+        "self_crop.min_y",
+        "self_crop.min_z",
+        "self_crop.max_x",
+        "self_crop.max_y",
+        "self_crop.max_z",
+        "mirror_crop.min_x",
+        "mirror_crop.min_y",
+        "mirror_crop.min_z",
+        "mirror_crop.max_x",
+        "mirror_crop.max_y",
+        "mirror_crop.max_z"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/cuda_pointcloud_preprocessor"
+        }
+      },
+      "required": ["ros__parameters"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["/**"],
+  "additionalProperties": false
+}
