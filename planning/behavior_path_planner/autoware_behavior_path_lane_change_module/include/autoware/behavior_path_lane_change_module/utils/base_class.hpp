@@ -276,7 +276,7 @@ protected:
   std::shared_ptr<LaneChangePath> abort_path_{};
   std::shared_ptr<const PlannerData> planner_data_{};
   lane_change::CommonDataPtr common_data_ptr_{};
-  FilteredByLanesExtendedObjects filtered_objects_{};
+  FilteredLanesObjects filtered_objects_{};
   BehaviorModuleOutput prev_module_output_{};
   std::optional<Pose> lane_change_stop_pose_{std::nullopt};
 
