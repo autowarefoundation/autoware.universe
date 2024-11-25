@@ -17,10 +17,13 @@
 #include "autoware/behavior_path_planner_common/utils/traffic_light_utils.hpp"
 #include "autoware_test_utils/autoware_test_utils.hpp"
 #include "autoware_test_utils/mock_data_parser.hpp"
+#include <autoware/universe_utils/geometry/geometry.hpp>
 
 #include <autoware_perception_msgs/msg/detail/traffic_light_group__struct.hpp>
 #include <autoware_planning_msgs/msg/detail/lanelet_route__struct.hpp>
 #include <geometry_msgs/msg/detail/pose__struct.hpp>
+#include <geometry_msgs/msg/detail/twist__struct.hpp>
+#include <tier4_planning_msgs/msg/detail/path_with_lane_id__struct.hpp>
 
 #include <gtest/gtest.h>
 #include <lanelet2_core/Forward.h>
@@ -35,7 +38,9 @@ using autoware_perception_msgs::msg::TrafficLightGroupArray;
 using autoware_planning_msgs::msg::LaneletRoute;
 using geometry_msgs::msg::Pose;
 
-class BehaviorPathPlanningTrafficLightTest : public ::testing::Test
+const double epsilon = 1e-06;
+
+class TrafficLightTest : public ::testing::Test
 {
 protected:
   void SetUp() override
@@ -66,6 +71,10 @@ protected:
         "autoware_test_utils", "intersection/lanelet2_map.osm"));
     planner_data_->route_handler->setMap(intersection_map);
     planner_data_->route_handler->setRoute(route);
+
+    for(const auto & segment : route.segments) {
+      lanelets.push_back(planner_data_->route_handler->getLaneletsFromId(segment.preferred_primitive.id));
+    }
   }
 
   void set_traffic_signal(YAML::Node config)
@@ -74,30 +83,83 @@ protected:
       autoware::test_utils::parse<TrafficLightGroupArray>(config["traffic_signal"]);
     for (const auto & signal : traffic_light.traffic_light_groups) {
       TrafficSignalStamped traffic_signal;
-      traffic_signal.stamp = traffic_light.stamp;
+      traffic_signal.stamp = rclcpp::Clock{RCL_ROS_TIME}.now();
       traffic_signal.signal = signal;
       planner_data_->traffic_light_id_map[signal.traffic_light_group_id] = traffic_signal;
     }
   }
 
-  lanelet::ConstLanelets lanelets_;
+  void set_zero_velocity()
+  {
+    nav_msgs::msg::Odometry odometry;
+    odometry.pose.pose = planner_data_->self_odometry->pose.pose;
+    odometry.twist.twist.linear = autoware::universe_utils::createVector3(0.0, 0.0, 0.0);
+    planner_data_->self_odometry = std::make_shared<const nav_msgs::msg::Odometry>(odometry);
+  }
+
+  lanelet::ConstLanelets lanelets;
   std::shared_ptr<PlannerData> planner_data_;
 };
 
-TEST_F(BehaviorPathPlanningTrafficLightTest, getDistanceToNextTrafficLight)
+TEST_F(TrafficLightTest, getDistanceToNextTrafficLight)
 {
   using autoware::behavior_path_planner::utils::traffic_light::getDistanceToNextTrafficLight;
 
   {
-    Pose pose = autoware::test_utils::createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-    lanelet::ConstLanelets lanelets;
+    const Pose pose = autoware::test_utils::createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    const lanelet::ConstLanelets empty_lanelets;
     EXPECT_DOUBLE_EQ(
-      getDistanceToNextTrafficLight(pose, lanelets), std::numeric_limits<double>::infinity());
+      getDistanceToNextTrafficLight(pose, empty_lanelets), std::numeric_limits<double>::infinity());
   }
   {
+    EXPECT_NEAR(getDistanceToNextTrafficLight(planner_data_->self_odometry->pose.pose, lanelets),117.1599371,epsilon);
   }
 }
 
-TEST_F(BehaviorPathPlanningTrafficLightTest, calcDistanceToRedTrafficLight)
+TEST_F(TrafficLightTest, calcDistanceToRedTrafficLight)
 {
+  using autoware::behavior_path_planner::utils::traffic_light::calcDistanceToRedTrafficLight;
+  
+  {
+    const tier4_planning_msgs::msg::PathWithLaneId path;
+    const lanelet::ConstLanelets empty_lanelets;
+    EXPECT_FALSE(calcDistanceToRedTrafficLight(empty_lanelets, path, planner_data_).has_value());
+  }
+  {
+    const auto path = planner_data_->route_handler->getCenterLinePath(lanelets, 0.0, 300.0);
+    const auto distance = calcDistanceToRedTrafficLight(lanelets, path, planner_data_);
+    ASSERT_TRUE(distance.has_value());
+    EXPECT_NEAR(distance.value(),117.1096960,epsilon);
+  }
+}
+
+TEST_F(TrafficLightTest, isStoppedAtRedTrafficLightWithinDistance)
+{
+  using autoware::behavior_path_planner::utils::traffic_light::isStoppedAtRedTrafficLightWithinDistance;
+  const auto distance_threshold = 10.0;
+  const auto path = planner_data_->route_handler->getCenterLinePath(lanelets, 0.0, 300.0);
+  {
+    EXPECT_FALSE(isStoppedAtRedTrafficLightWithinDistance(lanelets, path, planner_data_,distance_threshold));
+  }
+  {
+    set_zero_velocity();
+    EXPECT_FALSE(isStoppedAtRedTrafficLightWithinDistance(lanelets, path, planner_data_,distance_threshold));
+  }
+  {
+    set_zero_velocity();
+    EXPECT_TRUE(isStoppedAtRedTrafficLightWithinDistance(lanelets, path, planner_data_));
+  }
+}
+
+TEST_F(TrafficLightTest, isTrafficSignalStop)
+{
+  using autoware::behavior_path_planner::utils::traffic_light::isTrafficSignalStop;
+
+  {
+    const lanelet::ConstLanelets empty_lanelets;
+    EXPECT_FALSE(isTrafficSignalStop(empty_lanelets, planner_data_));
+  }
+  {
+    EXPECT_TRUE(isTrafficSignalStop(lanelets, planner_data_));
+  }
 }
