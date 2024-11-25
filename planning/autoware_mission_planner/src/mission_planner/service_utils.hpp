@@ -19,6 +19,7 @@
 
 #include <stdexcept>
 #include <string>
+#include <functional>
 
 namespace service_utils
 {
