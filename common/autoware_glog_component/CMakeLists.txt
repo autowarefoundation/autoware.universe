@@ -11,7 +11,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 target_link_libraries(${PROJECT_NAME} glog::glog)
 
 rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN "GlogComponent"
+  PLUGIN "autoware::glog_component::GlogComponent"
   EXECUTABLE ${PROJECT_NAME}_node
 )
 
