@@ -19,6 +19,7 @@
 #include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware/universe_utils/ros/debug_publisher.hpp"
 #include "autoware/universe_utils/ros/published_time_publisher.hpp"
+#include "autoware/universe_utils/system/stop_watch.hpp"
 #include "autoware_lanelet2_extension/utility/utilities.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -76,7 +77,9 @@ private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr viz_pub_;
   rclcpp::Subscription<autoware_map_msgs::msg::LaneletMapBin>::SharedPtr map_sub_;
   rclcpp::Subscription<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr object_sub_;
+
   std::unique_ptr<autoware::universe_utils::DebugPublisher> debug_publisher_{nullptr};
+  std::unique_ptr<autoware::universe_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
 
   lanelet::LaneletMapPtr lanelet_map_ptr_;
   std::string lanelet_frame_id_;

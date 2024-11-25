@@ -76,7 +76,8 @@ ObjectLaneletFilterNode::ObjectLaneletFilterNode(const rclcpp::NodeOptions & nod
     std::make_unique<autoware::universe_utils::DebugPublisher>(this, "object_lanelet_filter");
   published_time_publisher_ =
     std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
-
+  stop_watch_ptr_ =
+    std::make_unique<autoware::universe_utils::StopWatch<std::chrono::milliseconds>>();
   if (filter_settings_.debug) {
     viz_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>(
       "~/debug/marker", rclcpp::QoS{1});
@@ -123,6 +124,8 @@ void ObjectLaneletFilterNode::mapCallback(
 void ObjectLaneletFilterNode::objectCallback(
   const autoware_perception_msgs::msg::DetectedObjects::ConstSharedPtr input_msg)
 {
+  stop_watch_ptr_->tic("processing_time");
+
   // Guard
   if (object_pub_->get_subscription_count() < 1) return;
 
@@ -175,6 +178,8 @@ void ObjectLaneletFilterNode::objectCallback(
       .count();
   debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
     "debug/pipeline_latency_ms", pipeline_latency);
+  debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    "debug/processing_time_ms", stop_watch_ptr_->toc("processing_time", true));
 }
 
 bool ObjectLaneletFilterNode::filterObject(
