@@ -87,6 +87,15 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
     this->create_publisher<tier4_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
 }
 
+void MissionPlanner::publish_processing_time(
+  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch)
+{
+  tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
+  processing_time_msg.stamp = get_clock()->now();
+  processing_time_msg.data = stop_watch.toc();
+  pub_processing_time_->publish(processing_time_msg);
+}
+
 void MissionPlanner::publish_pose_log(const Pose & pose, const std::string & pose_type)
 {
   const auto & p = pose.position;
@@ -275,19 +284,12 @@ void MissionPlanner::on_set_lanelet_route(
       ResponseCode::ERROR_REROUTE_FAILED, "New route is not safe. Reroute failed.");
   }
 
-  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   change_route(route);
   change_state(RouteState::SET);
   res->status.success = true;
 
   publish_pose_log(odometry_->pose.pose, "initial");
   publish_pose_log(req->goal_pose, "goal");
-
-  // ProcessingTime
-  tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
-  processing_time_msg.stamp = get_clock()->now();
-  processing_time_msg.data = stop_watch.toc();
-  pub_processing_time_->publish(processing_time_msg);
 }
 
 void MissionPlanner::on_set_waypoint_route(
@@ -344,19 +346,12 @@ void MissionPlanner::on_set_waypoint_route(
       ResponseCode::ERROR_REROUTE_FAILED, "New route is not safe. Reroute failed.");
   }
 
-  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   change_route(route);
   change_state(RouteState::SET);
   res->status.success = true;
 
   publish_pose_log(odometry_->pose.pose, "initial");
   publish_pose_log(req->goal_pose, "goal");
-
-  // ProcessingTime
-  tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
-  processing_time_msg.stamp = get_clock()->now();
-  processing_time_msg.data = stop_watch.toc();
-  pub_processing_time_->publish(processing_time_msg);
 }
 
 void MissionPlanner::change_route()
