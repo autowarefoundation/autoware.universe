@@ -48,11 +48,6 @@ using nav_msgs::msg::OccupancyGrid;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 
-using autoware::freespace_planning_algorithms::AbstractPlanningAlgorithm;
-using autoware::freespace_planning_algorithms::AstarParam;
-using autoware::freespace_planning_algorithms::AstarSearch;
-using autoware::freespace_planning_algorithms::PlannerCommonParam;
-
 using autoware::behavior_path_planner::utils::path_safety_checker::EgoPredictedPathParams;
 using autoware::behavior_path_planner::utils::path_safety_checker::ObjectsFilteringParams;
 using autoware::behavior_path_planner::utils::path_safety_checker::PoseWithVelocityStamped;
@@ -60,16 +55,8 @@ using autoware::behavior_path_planner::utils::path_safety_checker::SafetyCheckPa
 using autoware::behavior_path_planner::utils::path_safety_checker::TargetObjectsOnLane;
 using autoware::universe_utils::Polygon2d;
 
-struct FreespacePlannerDebugData
-{
-  bool is_planning{false};
-  size_t current_goal_idx{0};
-  size_t num_goal_candidates{0};
-};
-
 struct GoalPlannerDebugData
 {
-  FreespacePlannerDebugData freespace_planner{};
   std::vector<Polygon2d> ego_polygons_expanded{};
   lanelet::ConstLanelet expanded_pull_over_lane_between_ego{};
   Polygon2d objects_extraction_polygon{};
@@ -150,15 +137,9 @@ public:
     if (lane_parking_timer_) {
       lane_parking_timer_->cancel();
     }
-    if (freespace_parking_timer_) {
-      freespace_parking_timer_->cancel();
-    }
 
-    while (is_lane_parking_cb_running_.load() || is_freespace_parking_cb_running_.load()) {
+    while (is_lane_parking_cb_running_.load()) {
       const std::string running_callbacks = std::invoke([&]() {
-        if (is_lane_parking_cb_running_ && is_freespace_parking_cb_running_) {
-          return "lane parking and freespace parking";
-        }
         if (is_lane_parking_cb_running_) {
           return "lane parking";
         }
@@ -308,7 +289,6 @@ private:
 
   // planner
   std::vector<std::shared_ptr<PullOverPlannerBase>> pull_over_planners_;
-  std::unique_ptr<PullOverPlannerBase> freespace_planner_;
   std::unique_ptr<FixedGoalPlannerBase> fixed_goal_planner_;
 
   // goal searcher
@@ -350,11 +330,6 @@ private:
   rclcpp::CallbackGroup::SharedPtr lane_parking_timer_cb_group_;
   std::atomic<bool> is_lane_parking_cb_running_;
 
-  // generate freespace parking paths in a separate thread
-  rclcpp::TimerBase::SharedPtr freespace_parking_timer_;
-  rclcpp::CallbackGroup::SharedPtr freespace_parking_timer_cb_group_;
-  std::atomic<bool> is_freespace_parking_cb_running_;
-
   // debug
   mutable GoalPlannerDebugData debug_data_;
   mutable PoseWithString debug_stop_pose_with_info_;
@@ -392,11 +367,6 @@ private:
     const Pose & current_pose, const double path_update_duration,
     const std::optional<GoalCandidate> & modified_goal_opt,
     const GoalPlannerParameters & parameters) const;
-  bool isStuck(
-    const PredictedObjects & static_target_objects, const PredictedObjects & dynamic_target_objects,
-    const std::shared_ptr<const PlannerData> planner_data,
-    const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
-    const GoalPlannerParameters & parameters);
   void decideVelocity();
   void updateStatus(const BehaviorModuleOutput & output);
 
@@ -410,14 +380,6 @@ private:
   bool isCrossingPossible(const PullOverPath & pull_over_path) const;
   bool hasEnoughTimePassedSincePathUpdate(const double duration) const;
 
-  // freespace parking
-  bool planFreespacePath(
-    std::shared_ptr<const PlannerData> planner_data,
-    const std::shared_ptr<GoalSearcherBase> goal_searcher, const GoalCandidates & goal_candidates,
-    const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
-    const PredictedObjects & static_target_objects);
-  bool canReturnToLaneParking(const PullOverContextData & context_data);
-
   // plan pull over path
   BehaviorModuleOutput planPullOver(const PullOverContextData & context_data);
   BehaviorModuleOutput planPullOverAsOutput(const PullOverContextData & context_data);
@@ -429,8 +391,7 @@ private:
 
   // lanes and drivable area
   std::vector<DrivableLanes> generateDrivableLanes() const;
-  void setDrivableAreaInfo(
-    const PullOverContextData & context_data, BehaviorModuleOutput & output) const;
+  void setDrivableAreaInfo(BehaviorModuleOutput & output) const;
 
   // output setter
   void setOutput(const PullOverContextData & context_data, BehaviorModuleOutput & output);
@@ -455,7 +416,6 @@ private:
 
   // timer for generating pull over path candidates in a separate thread
   void onTimer();
-  void onFreespaceParkingTimer();
 
   // steering factor
   void updateSteeringFactor(
