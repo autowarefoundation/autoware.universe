@@ -199,6 +199,8 @@ private:
   std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper_;
 
   bool recursiveSearch(const int check_idx, const int search_cnt, std::vector<int> & idx) const;
+  bool recursiveSearch(
+    const int check_idx, const int search_cnt, std::vector<int> & idx, size_t count) const;
   void fitLineFromGndGrid(const std::vector<int> & idx, float & a, float & b) const;
 
   void convert();

@@ -50,6 +50,18 @@ void GridGroundFilter::preprocess()
 bool GridGroundFilter::recursiveSearch(
   const int check_idx, const int search_cnt, std::vector<int> & idx) const
 {
+  // set the maximum search count
+  constexpr size_t count_limit = 1023;
+  return recursiveSearch(check_idx, search_cnt, idx, count_limit);
+}
+
+bool GridGroundFilter::recursiveSearch(
+  const int check_idx, const int search_cnt, std::vector<int> & idx, size_t count) const
+{
+  if (count == 0) {
+    return false;
+  }
+  count -= 1;
   // recursive search
   if (check_idx < 0) {
     return false;
@@ -61,10 +73,10 @@ bool GridGroundFilter::recursiveSearch(
   if (check_cell.has_ground_) {
     // the cell has ground, add the index to the list, and search previous cell
     idx.push_back(check_idx);
-    return recursiveSearch(check_cell.scan_grid_root_idx_, search_cnt - 1, idx);
+    return recursiveSearch(check_cell.scan_grid_root_idx_, search_cnt - 1, idx, count);
   }
   // if the cell does not have ground, search previous cell
-  return recursiveSearch(check_cell.scan_grid_root_idx_, search_cnt, idx);
+  return recursiveSearch(check_cell.scan_grid_root_idx_, search_cnt, idx, count);
 }
 
 void GridGroundFilter::fitLineFromGndGrid(const std::vector<int> & idx, float & a, float & b) const
