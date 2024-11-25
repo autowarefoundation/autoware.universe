@@ -3,7 +3,7 @@
   "title": "Parameters for the cuda_pointcloud_preprocessor",
   "type": "object",
   "definitions": {
-    "crop_box_filter": {
+    "cuda_pointcloud_preprocessor": {
       "type": "object",
       "properties": {
         "base_frame": {
@@ -23,19 +23,19 @@
         },
         "distance_ratio": {
           "type": "number",
-          "description": "distance_ratio",
+          "description": "distance ratio between consecutive points to determine is they belong to the same walk",
           "default": "1.03",
           "minimum": 0.0
         },
         "object_length_threshold": {
           "type": "number",
-          "description": "object_length_threshold",
+          "description": "minimum object length to be considered a valid cluster in meters",
           "default": "0.1",
           "minimum": 0.0
         },
         "num_points_threshold": {
           "type": "integer",
-          "description": "num_points_threshold",
+          "description": "threshold on the number of points in a walk to determine if it corresponds to a cluster",
           "default": "4",
           "minimum": 0
         },
