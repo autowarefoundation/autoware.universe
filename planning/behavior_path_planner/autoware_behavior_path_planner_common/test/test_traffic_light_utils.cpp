@@ -17,6 +17,7 @@
 #include "autoware/behavior_path_planner_common/utils/traffic_light_utils.hpp"
 #include "autoware_test_utils/autoware_test_utils.hpp"
 #include "autoware_test_utils/mock_data_parser.hpp"
+
 #include <autoware/universe_utils/geometry/geometry.hpp>
 
 #include <autoware_perception_msgs/msg/detail/traffic_light_group__struct.hpp>
@@ -72,8 +73,9 @@ protected:
     planner_data_->route_handler->setMap(intersection_map);
     planner_data_->route_handler->setRoute(route);
 
-    for(const auto & segment : route.segments) {
-      lanelets.push_back(planner_data_->route_handler->getLaneletsFromId(segment.preferred_primitive.id));
+    for (const auto & segment : route.segments) {
+      lanelets.push_back(
+        planner_data_->route_handler->getLaneletsFromId(segment.preferred_primitive.id));
     }
   }
 
@@ -112,14 +114,16 @@ TEST_F(TrafficLightTest, getDistanceToNextTrafficLight)
       getDistanceToNextTrafficLight(pose, empty_lanelets), std::numeric_limits<double>::infinity());
   }
   {
-    EXPECT_NEAR(getDistanceToNextTrafficLight(planner_data_->self_odometry->pose.pose, lanelets),117.1599371,epsilon);
+    EXPECT_NEAR(
+      getDistanceToNextTrafficLight(planner_data_->self_odometry->pose.pose, lanelets), 117.1599371,
+      epsilon);
   }
 }
 
 TEST_F(TrafficLightTest, calcDistanceToRedTrafficLight)
 {
   using autoware::behavior_path_planner::utils::traffic_light::calcDistanceToRedTrafficLight;
-  
+
   {
     const tier4_planning_msgs::msg::PathWithLaneId path;
     const lanelet::ConstLanelets empty_lanelets;
@@ -129,21 +133,24 @@ TEST_F(TrafficLightTest, calcDistanceToRedTrafficLight)
     const auto path = planner_data_->route_handler->getCenterLinePath(lanelets, 0.0, 300.0);
     const auto distance = calcDistanceToRedTrafficLight(lanelets, path, planner_data_);
     ASSERT_TRUE(distance.has_value());
-    EXPECT_NEAR(distance.value(),117.1096960,epsilon);
+    EXPECT_NEAR(distance.value(), 117.1096960, epsilon);
   }
 }
 
 TEST_F(TrafficLightTest, isStoppedAtRedTrafficLightWithinDistance)
 {
-  using autoware::behavior_path_planner::utils::traffic_light::isStoppedAtRedTrafficLightWithinDistance;
+  using autoware::behavior_path_planner::utils::traffic_light::
+    isStoppedAtRedTrafficLightWithinDistance;
   const auto distance_threshold = 10.0;
   const auto path = planner_data_->route_handler->getCenterLinePath(lanelets, 0.0, 300.0);
   {
-    EXPECT_FALSE(isStoppedAtRedTrafficLightWithinDistance(lanelets, path, planner_data_,distance_threshold));
+    EXPECT_FALSE(
+      isStoppedAtRedTrafficLightWithinDistance(lanelets, path, planner_data_, distance_threshold));
   }
   {
     set_zero_velocity();
-    EXPECT_FALSE(isStoppedAtRedTrafficLightWithinDistance(lanelets, path, planner_data_,distance_threshold));
+    EXPECT_FALSE(
+      isStoppedAtRedTrafficLightWithinDistance(lanelets, path, planner_data_, distance_threshold));
   }
   {
     set_zero_velocity();
