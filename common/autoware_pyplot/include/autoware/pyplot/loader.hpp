@@ -12,20 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
+#ifndef AUTOWARE__PYPLOT__LOADER_HPP_
+#define AUTOWARE__PYPLOT__LOADER_HPP_
 
-namespace autoware::behavior_path_planner
+namespace autoware::pyplot
 {
-void SceneModuleInterface::setDrivableLanes(const std::vector<DrivableLanes> & drivable_lanes)
-{
-  drivable_lanes_marker_ =
-    marker_utils::createDrivableLanesMarkerArray(drivable_lanes, "drivable_lanes");
-}
 
-void SceneModuleInterface::onEntry()
-{
-  RCLCPP_DEBUG(getLogger(), "%s %s", name_.c_str(), __func__);
+#define LOAD_FUNC_ATTR(obj, mod) \
+  do {                           \
+    obj##_attr = mod.attr(#obj); \
+  } while (0)
 
-  processOnEntry();
-}
-}  // namespace autoware::behavior_path_planner
+}  // namespace autoware::pyplot
+
+#endif  // AUTOWARE__PYPLOT__LOADER_HPP_
