@@ -86,16 +86,8 @@ void CudaOrganizedPointcloudAdapterNode::estimatePointcloudRingInfo(
   std::fill(next_ring_index_.begin(), next_ring_index_.end(), 0);
   buffer_.resize(num_rings_ * max_points_per_ring_);
 
-  /* if (device_buffer_ != nullptr) {
-    cudaFree(device_buffer_);
-  } */
-
   device_buffer_ = cuda_blackboard::make_unique<std::uint8_t[]>(
     num_rings_ * max_points_per_ring_ * sizeof(autoware::point_types::PointXYZIRCAEDT));
-
-  /* cudaMalloc(
-    device_buffer_,
-    num_rings_ * max_points_per_ring_ * sizeof(autoware::point_types::PointXYZIRCAEDT)); */
 
   RCLCPP_INFO_STREAM(
     get_logger(), "Estimated rings: " << num_rings_
@@ -158,6 +150,7 @@ void CudaOrganizedPointcloudAdapterNode::pointcloudCallback(
     cudaMemcpyHostToDevice);
 
   auto cuda_pointcloud_msg_ptr = std::make_unique<cuda_blackboard::CudaPointCloud2>();
+  cuda_pointcloud_msg_ptr->fields = input_pointcloud_msg_ptr->fields;
   cuda_pointcloud_msg_ptr->width = max_points_per_ring_;
   cuda_pointcloud_msg_ptr->height = num_rings_;
   cuda_pointcloud_msg_ptr->point_step = sizeof(autoware::point_types::PointXYZIRCAEDT);
@@ -186,9 +179,7 @@ void CudaOrganizedPointcloudAdapterNode::pointcloudCallback(
   // Allocate cuda memory
   device_buffer_ = cuda_blackboard::make_unique<std::uint8_t[]>(
     num_rings_ * max_points_per_ring_ * sizeof(autoware::point_types::PointXYZIRCAEDT));
-  /* cudaMalloc(
-    &device_buffer_,
-    num_rings_ * max_points_per_ring_ * sizeof(autoware::point_types::PointXYZIRCAEDT)); */
+
   // Clear indexes
   std::fill(next_ring_index_.begin(), next_ring_index_.end(), 0);
 
