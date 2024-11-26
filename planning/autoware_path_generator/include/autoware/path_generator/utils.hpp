@@ -30,15 +30,15 @@ using tier4_planning_msgs::msg::PathWithLaneId;
 
 namespace utils
 {
-std::optional<lanelet::LaneletSequence> get_lanelet_sequence(
+std::optional<lanelet::LaneletSequence> get_lanelet_sequence_within_route(
   const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data,
   const geometry_msgs::msg::Pose & current_pose, const double forward_distance,
   const double backward_distance);
 
-std::optional<lanelet::ConstLanelets> get_lanelets_after(
+std::optional<lanelet::ConstLanelets> get_lanelets_after_within_route(
   const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data, const double distance);
 
-std::optional<lanelet::ConstLanelets> get_lanelets_up_to(
+std::optional<lanelet::ConstLanelets> get_lanelets_up_to_within_route(
   const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data, const double distance);
 
 std::optional<lanelet::ConstLanelet> get_next_lanelet_within_route(
