@@ -119,7 +119,7 @@ bool CudaOrganizedPointcloudAdapterNode::orderPointcloud(
     point_overflow |= raw_index >= max_points_per_ring_;
 
     buffer_[ring * max_points_per_ring_ + index] = point;
-    next_ring_index_[ring] = (index + 1) % max_points_per_ring_;
+    next_ring_index_[ring] = raw_index + 1;
   }
 
   return !ring_overflow && !point_overflow;
