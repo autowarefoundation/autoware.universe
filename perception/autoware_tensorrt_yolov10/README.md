@@ -14,10 +14,10 @@ This package detects target objects e.g., cars, trucks, bicycles, pedestrians,et
 
 ### Output
 
-| Name             | Type                                               | Description                                                         |
-| ---------------- | -------------------------------------------------- | ------------------------------------------------------------------- |
-| `out/objects`    | `tier4_perception_msgs/DetectedObjectsWithFeature` | The detected objects with 2D bounding boxes                         |
-| `out/image`      | `sensor_msgs/Image`                                | The image with 2D bounding boxes for visualization                  |
+| Name          | Type                                               | Description                                        |
+| ------------- | -------------------------------------------------- | -------------------------------------------------- |
+| `out/objects` | `tier4_perception_msgs/DetectedObjectsWithFeature` | The detected objects with 2D bounding boxes        |
+| `out/image`   | `sensor_msgs/Image`                                | The image with 2D bounding boxes for visualization |
 
 ## Assumptions / Known limits
 
@@ -34,14 +34,17 @@ If other labels (case insensitive) are contained in the file specified via the `
 those are labeled as `UNKNOWN`, while detected rectangles are drawn in the visualization result (`out/image`).
 
 ## Onnx model
+
 you can download yolov10m.onnx from [releases](https://github.com/THU-MIG/yolov10/releases)
 
 ## Label file
+
 This file represents the correspondence between class index (integer outputted from YOLOV10 network) and
 class label (strings making understanding easier). This package maps class IDs (incremented from 0)
 with labels according to the order in this file.
 
 currently, this file is actually a coco label which contains the following labels:
+
 ```
 person
 bicycle
