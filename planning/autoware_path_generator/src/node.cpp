@@ -219,7 +219,7 @@ std::optional<PathWithLaneId> PathGenerator::generate_path(
     return std::nullopt;
   }
 
-  const auto lanelet_sequence = utils::get_lanelet_sequence(
+  const auto lanelet_sequence = utils::get_lanelet_sequence_within_route(
     current_lane, planner_data_, current_pose, params.forward_path_length,
     params.backward_path_length);
   if (!lanelet_sequence) {

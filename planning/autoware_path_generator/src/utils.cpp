@@ -32,7 +32,7 @@ bool exists(const std::vector<T> & vec, const T & item)
 }
 }  // namespace
 
-std::optional<lanelet::LaneletSequence> get_lanelet_sequence(
+std::optional<lanelet::LaneletSequence> get_lanelet_sequence_within_route(
   const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data,
   const geometry_msgs::msg::Pose & current_pose, const double forward_distance,
   const double backward_distance)
@@ -44,13 +44,13 @@ std::optional<lanelet::LaneletSequence> get_lanelet_sequence(
   const auto arc_coordinates = lanelet::utils::getArcCoordinates({lanelet}, current_pose);
   const auto lanelet_length = lanelet::utils::getLaneletLength2d(lanelet);
 
-  const auto backward_lanelets =
-    get_lanelets_up_to(lanelet, planner_data, backward_distance - arc_coordinates.length);
+  const auto backward_lanelets = get_lanelets_up_to_within_route(
+    lanelet, planner_data, backward_distance - arc_coordinates.length);
   if (!backward_lanelets) {
     return std::nullopt;
   }
 
-  const auto forward_lanelets = get_lanelets_after(
+  const auto forward_lanelets = get_lanelets_after_within_route(
     lanelet, planner_data, forward_distance - (lanelet_length - arc_coordinates.length));
   if (!forward_lanelets) {
     return std::nullopt;
@@ -63,7 +63,7 @@ std::optional<lanelet::LaneletSequence> get_lanelet_sequence(
   return lanelets;
 }
 
-std::optional<lanelet::ConstLanelets> get_lanelets_after(
+std::optional<lanelet::ConstLanelets> get_lanelets_after_within_route(
   const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data, const double distance)
 {
   if (!exists(planner_data.route_lanelets, lanelet)) {
@@ -88,7 +88,7 @@ std::optional<lanelet::ConstLanelets> get_lanelets_after(
   return lanelets;
 }
 
-std::optional<lanelet::ConstLanelets> get_lanelets_up_to(
+std::optional<lanelet::ConstLanelets> get_lanelets_up_to_within_route(
   const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data, const double distance)
 {
   if (!exists(planner_data.route_lanelets, lanelet)) {
