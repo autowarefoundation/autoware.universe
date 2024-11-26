@@ -127,3 +127,7 @@ hair drier
 ## Reference repositories
 
 - <https://github.com/THU-MIG/yolov10>
+
+
+## Legal Notice
+The inference code is licensed under Apache 2.0. The model and training code are licensed under AGPL-3.0. you can check details from https://github.com/THU-MIG/yolov10?tab=AGPL-3.0-1-ov-file.  To inquire about a commercial license when using trained model weights please contact yolov10 author.
