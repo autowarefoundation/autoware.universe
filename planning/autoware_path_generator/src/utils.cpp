@@ -125,15 +125,21 @@ std::optional<lanelet::ConstLanelet> get_next_lanelet_within_route(
     return std::nullopt;
   }
 
-  for (const auto & lanelet : planner_data.routing_graph_ptr->following(lanelet)) {
-    if (
-      planner_data.preferred_lanelets.front().id() != lanelet.id() &&
-      exists(planner_data.route_lanelets, lanelet)) {
-      return lanelet;
-    }
+  const auto next_lanelets = planner_data.routing_graph_ptr->following(lanelet);
+  if (next_lanelets.size() > 1) {
+    RCLCPP_WARN(
+      rclcpp::get_logger("path_generator").get_child("utils"),
+      "The multiple next lanelets in a route are found not as expected. Internal calculation might "
+      "have failed.");
   }
 
-  return std::nullopt;
+  if (
+    planner_data.preferred_lanelets.front().id() == lanelet.id() ||
+    !exists(planner_data.route_lanelets, lanelet)) {
+    return std::nullopt;
+  }
+
+  return next_lanelets.front();
 }
 
 std::optional<lanelet::ConstLanelet> get_previous_lanelet_within_route(
