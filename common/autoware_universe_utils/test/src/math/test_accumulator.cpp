@@ -26,7 +26,6 @@ TEST(accumulator, empty)
   EXPECT_EQ(acc.count(), 0);
 }
 
-
 TEST(accumulator, addValues)
 {
   autoware::universe_utils::Accumulator<double> acc;
@@ -63,4 +62,3 @@ TEST(accumulator, negativeValues)
   EXPECT_DOUBLE_EQ(acc.max(), -10.0);
   EXPECT_EQ(acc.count(), 3);
 }
-
