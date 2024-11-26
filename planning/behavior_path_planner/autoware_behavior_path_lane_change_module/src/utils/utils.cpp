@@ -613,7 +613,7 @@ std::vector<PoseWithVelocityStamped> convertToPredictedPath(
   const auto duration = lane_change_path.info.duration.sum();
   const auto prepare_time = lane_change_path.info.duration.prepare;
   const auto & minimum_lane_changing_velocity =
-    lane_change_parameters.minimum_lane_changing_velocity;
+    lane_change_parameters.trajectory.min_lane_changing_velocity;
 
   const auto nearest_seg_idx =
     autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
@@ -760,7 +760,7 @@ bool is_delay_lane_change(
   };
 
   const auto ego_vel = common_data_ptr->get_ego_speed();
-  const auto min_lon_acc = common_data_ptr->lc_param_ptr->min_longitudinal_acc;
+  const auto min_lon_acc = common_data_ptr->lc_param_ptr->trajectory.min_longitudinal_acc;
   const auto gap_threshold = std::abs((ego_vel * ego_vel) / (2 * min_lon_acc));
   auto is_sufficient_gap = [&gap_threshold](
                              const ExtendedPredictedObject & current_obj,
@@ -816,7 +816,8 @@ ExtendedPredictedObject transform(
 {
   ExtendedPredictedObject extended_object(object);
 
-  const auto & time_resolution = lane_change_parameters.prediction_time_resolution;
+  const auto & time_resolution =
+    lane_change_parameters.safety.collision_check.prediction_time_resolution;
   const double obj_vel_norm =
     std::hypot(extended_object.initial_twist.linear.x, extended_object.initial_twist.linear.y);
 
@@ -930,10 +931,10 @@ LanesPolygon create_lanes_polygon(const CommonDataPtr & common_data_ptr)
   lanes_polygon.target =
     utils::lane_change::create_polygon(lanes->target, 0.0, std::numeric_limits<double>::max());
 
-  const auto & lc_param_ptr = common_data_ptr->lc_param_ptr;
+  const auto & params = common_data_ptr->lc_param_ptr->safety;
   const auto expanded_target_lanes = utils::lane_change::generateExpandedLanelets(
-    lanes->target, common_data_ptr->direction, lc_param_ptr->lane_expansion_left_offset,
-    lc_param_ptr->lane_expansion_right_offset);
+    lanes->target, common_data_ptr->direction, params.lane_expansion_left_offset,
+    params.lane_expansion_right_offset);
   lanes_polygon.expanded_target = utils::lane_change::create_polygon(
     expanded_target_lanes, 0.0, std::numeric_limits<double>::max());
 
@@ -1082,7 +1083,7 @@ double get_min_dist_to_current_lanes_obj(
   for (const auto & object : filtered_objects.current_lane) {
     // check if stationary
     const auto obj_v = std::abs(object.initial_twist.linear.x);
-    if (obj_v > common_data_ptr->lc_param_ptr->stop_velocity_threshold) {
+    if (obj_v > common_data_ptr->lc_param_ptr->th_stop_velocity) {
       continue;
     }
 
@@ -1195,7 +1196,7 @@ bool filter_target_lane_objects(
   const auto & current_lanes = common_data_ptr->lanes_ptr->current;
   const auto & vehicle_width = common_data_ptr->bpp_param_ptr->vehicle_info.vehicle_width_m;
   const auto & lanes_polygon = *common_data_ptr->lanes_polygon_ptr;
-  const auto stopped_obj_vel_th = common_data_ptr->lc_param_ptr->stopped_object_velocity_threshold;
+  const auto stopped_obj_vel_th = common_data_ptr->lc_param_ptr->safety.th_stopped_object_velocity;
 
   const auto is_lateral_far = std::invoke([&]() -> bool {
     const auto dist_object_to_current_lanes_center =
