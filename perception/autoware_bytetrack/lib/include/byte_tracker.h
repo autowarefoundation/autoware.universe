@@ -41,6 +41,7 @@
 #include "strack.h"
 
 #include <vector>
+#include <limits>
 
 struct ByteTrackObject
 {
@@ -83,7 +84,7 @@ private:
 
   double lapjv(
     const std::vector<std::vector<float>> & cost, std::vector<int> & rowsol,
-    std::vector<int> & colsol, bool extend_cost = false, float cost_limit = LONG_MAX,
+    std::vector<int> & colsol, bool extend_cost = false, float cost_limit = std::numeric_limits<float>::max(),
     bool return_cost = true);
 
 private:
