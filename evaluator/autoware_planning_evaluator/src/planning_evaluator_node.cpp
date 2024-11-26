@@ -16,11 +16,11 @@
 
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
+#include <nlohmann/json.hpp>
 
 #include <diagnostic_msgs/msg/detail/diagnostic_status__struct.hpp>
 
 #include "boost/lexical_cast.hpp"
-#include <nlohmann/json.hpp>
 
 #include <chrono>
 #include <filesystem>
@@ -69,7 +69,7 @@ PlanningEvaluatorNode::PlanningEvaluatorNode(const rclcpp::NodeOptions & node_op
 
 PlanningEvaluatorNode::~PlanningEvaluatorNode()
 {
-  if (!output_metrics_){
+  if (!output_metrics_) {
     return;
   }
 
@@ -86,23 +86,26 @@ PlanningEvaluatorNode::~PlanningEvaluatorNode()
   }
 
   // get output folder
-  const std::string output_folder_str = rclcpp::get_logging_directory().string() + "/autoware_metrics";
+  const std::string output_folder_str =
+    rclcpp::get_logging_directory().string() + "/autoware_metrics";
   if (!std::filesystem::exists(output_folder_str)) {
     if (!std::filesystem::create_directories(output_folder_str)) {
-      RCLCPP_ERROR(this->get_logger(), "Failed to create directories: %s", output_folder_str.c_str());
+      RCLCPP_ERROR(
+        this->get_logger(), "Failed to create directories: %s", output_folder_str.c_str());
       return;
     }
   }
 
   // get time stamp
   std::time_t now_time_t = std::chrono::system_clock::to_time_t(std::chrono::system_clock::now());
-  std::tm* local_time = std::localtime(&now_time_t);
+  std::tm * local_time = std::localtime(&now_time_t);
   std::ostringstream oss;
   oss << std::put_time(local_time, "%Y-%m-%d-%H-%M-%S");
   std::string cur_time_str = oss.str();
 
   // Write metrics .json to file
-  const std::string output_file_str = output_folder_str + "/autoware_planning_evaluator-"+cur_time_str+".json";
+  const std::string output_file_str =
+    output_folder_str + "/autoware_planning_evaluator-" + cur_time_str + ".json";
   std::ofstream f(output_file_str);
   if (f.is_open()) {
     f << j.dump(4);
@@ -290,7 +293,7 @@ void PlanningEvaluatorNode::onTrajectory(
       continue;
     }
 
-    if (output_metrics_){
+    if (output_metrics_) {
       metric_accumulators_[static_cast<size_t>(metric)][0].add(metric_stat->min());
       metric_accumulators_[static_cast<size_t>(metric)][1].add(metric_stat->max());
       metric_accumulators_[static_cast<size_t>(metric)][2].add(metric_stat->mean());
@@ -321,7 +324,7 @@ void PlanningEvaluatorNode::onModifiedGoal(
     if (!metric_stat) {
       continue;
     }
-    if (output_metrics_){
+    if (output_metrics_) {
       metric_accumulators_[static_cast<size_t>(metric)][0].add(metric_stat->min());
       metric_accumulators_[static_cast<size_t>(metric)][1].add(metric_stat->max());
       metric_accumulators_[static_cast<size_t>(metric)][2].add(metric_stat->mean());

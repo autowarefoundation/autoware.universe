@@ -162,7 +162,8 @@ private:
   MetricsCalculator metrics_calculator_;
   // Metrics
   std::vector<Metric> metrics_;
-  std::array<std::array<Accumulator<double>, 3>, static_cast<size_t>(Metric::SIZE)> metric_accumulators_; // 3(min, max, mean) * metric_size
+  std::array<std::array<Accumulator<double>, 3>, static_cast<size_t>(Metric::SIZE)>
+    metric_accumulators_;  // 3(min, max, mean) * metric_size
 
   rclcpp::TimerBase::SharedPtr timer_;
   std::optional<AccelWithCovarianceStamped> prev_acc_stamped_{std::nullopt};
