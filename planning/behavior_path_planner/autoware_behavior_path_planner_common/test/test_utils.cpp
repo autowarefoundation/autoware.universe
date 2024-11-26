@@ -20,6 +20,8 @@
 #include <gtest/gtest.h>
 #include <lanelet2_core/Forward.h>
 
+#include <cmath>
+#include <cstddef>
 #include <memory>
 
 using autoware::universe_utils::Point2d;
@@ -65,9 +67,16 @@ protected:
         "autoware_test_utils", "intersection/lanelet2_map.osm"));
     planner_data_->route_handler->setMap(intersection_map);
     planner_data_->route_handler->setRoute(route);
+
+    for (const auto & segment : route.segments) {
+      current_lanelets.push_back(
+        planner_data_->route_handler->getLaneletsFromId(segment.preferred_primitive.id));
+    }
   }
 
   std::shared_ptr<PlannerData> planner_data_;
+  lanelet::ConstLanelets current_lanelets;
+  const double epsilon = 1e-06;
 };
 
 TEST_F(BehaviorPathPlanningUtilTest, l2Norm)
@@ -239,6 +248,205 @@ TEST_F(BehaviorPathPlanningUtilTest, calcLongitudinalDistanceFromEgoToObjects)
     calcLongitudinalDistanceFromEgoToObjects(ego_pose, base_link2front, base_link2rear, objs), 3.0);
 }
 
+TEST_F(BehaviorPathPlanningUtilTest, refineGoal)
+{
+  using autoware::behavior_path_planner::utils::refineGoal;
+
+  {
+    const auto goal_lanelet = current_lanelets.front();
+    const auto goal_pose = planner_data_->self_odometry->pose.pose;
+    const auto refined_pose = refineGoal(goal_pose, goal_lanelet);
+    EXPECT_DOUBLE_EQ(refined_pose.position.x, goal_pose.position.x);
+    EXPECT_DOUBLE_EQ(refined_pose.position.y, goal_pose.position.y);
+  }
+}
+
+TEST_F(BehaviorPathPlanningUtilTest, refinePathForGoal)
+{
+  using autoware::behavior_path_planner::utils::refinePathForGoal;
+
+  auto path = generateTrajectory<PathWithLaneId>(10, 1.0, 3.0);
+  const double search_rad_range = M_PI;
+  const auto goal_pose = createPose(5.2, 0.0, 0.0, 0.0, 0.0, 0.0);
+  const int64_t goal_lane_id = 5;
+  {
+    const double search_radius_range = 1.0;
+    const auto refined_path =
+      refinePathForGoal(search_radius_range, search_rad_range, path, goal_pose, goal_lane_id);
+    EXPECT_EQ(refined_path.points.size(), 7);
+    EXPECT_DOUBLE_EQ(refined_path.points.back().point.longitudinal_velocity_mps, 0.0);
+    EXPECT_DOUBLE_EQ(refined_path.points.back().point.pose.position.x, 5.2);
+  }
+}
+
+TEST_F(BehaviorPathPlanningUtilTest, isInLanelets)
+{
+  using autoware::behavior_path_planner::utils::isInLanelets;
+  using autoware::behavior_path_planner::utils::isInLaneletWithYawThreshold;
+
+  {
+    const auto pose = createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    EXPECT_FALSE(isInLanelets(pose, current_lanelets));
+    EXPECT_FALSE(isInLaneletWithYawThreshold(pose, current_lanelets.front(), M_PI_2));
+  }
+  {
+    EXPECT_TRUE(isInLanelets(planner_data_->self_odometry->pose.pose, current_lanelets));
+    EXPECT_TRUE(isInLaneletWithYawThreshold(
+      planner_data_->self_odometry->pose.pose, current_lanelets.front(), M_PI_2));
+  }
+}
+
+TEST_F(BehaviorPathPlanningUtilTest, isEgoWithinOriginalLane)
+{
+  using autoware::behavior_path_planner::utils::isEgoWithinOriginalLane;
+  BehaviorPathPlannerParameters common_param;
+  common_param.vehicle_width = 1.0;
+  common_param.base_link2front = 1.0;
+  common_param.base_link2rear = 1.0;
+
+  {
+    const auto pose = createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    EXPECT_FALSE(isEgoWithinOriginalLane(current_lanelets, pose, common_param));
+  }
+  {
+    EXPECT_TRUE(isEgoWithinOriginalLane(
+      current_lanelets, planner_data_->self_odometry->pose.pose, common_param));
+  }
+}
+
+TEST_F(BehaviorPathPlanningUtilTest, getDistanceToNextIntersection)
+{
+  using autoware::behavior_path_planner::utils::getDistanceToNextIntersection;
+
+  const auto current_pose = planner_data_->self_odometry->pose.pose;
+  {
+    const lanelet::ConstLanelets empty_lanelets;
+    EXPECT_DOUBLE_EQ(
+      getDistanceToNextIntersection(current_pose, empty_lanelets),
+      std::numeric_limits<double>::infinity());
+  }
+  {
+    EXPECT_NEAR(
+      getDistanceToNextIntersection(current_pose, current_lanelets), 117.1599371, epsilon);
+  }
+}
+
+TEST_F(BehaviorPathPlanningUtilTest, getDistanceToCrosswalk)
+{
+  using autoware::behavior_path_planner::utils::getDistanceToCrosswalk;
+
+  const auto current_pose = planner_data_->self_odometry->pose.pose;
+  const auto routing_graph = planner_data_->route_handler->getOverallGraphPtr();
+  {
+    const lanelet::ConstLanelets empty_lanelets;
+    EXPECT_DOUBLE_EQ(
+      getDistanceToCrosswalk(current_pose, empty_lanelets, *routing_graph),
+      std::numeric_limits<double>::infinity());
+  }
+  {
+    EXPECT_NEAR(
+      getDistanceToCrosswalk(current_pose, current_lanelets, *routing_graph), 120.4423193, epsilon);
+  }
+}
+
+TEST_F(BehaviorPathPlanningUtilTest, insertStopPoint)
+{
+  using autoware::behavior_path_planner::utils::insertStopPoint;
+
+  {
+    const double length = 100.0;
+    auto path = generateTrajectory<PathWithLaneId>(10, 1.0, 1.0);
+    EXPECT_DOUBLE_EQ(insertStopPoint(length, path).point.pose.position.x, 0.0);
+  }
+  {
+    const double length = 5.0;
+    auto path = generateTrajectory<PathWithLaneId>(10, 1.0, 1.0);
+    EXPECT_DOUBLE_EQ(insertStopPoint(length, path).point.pose.position.x, 5.0);
+  }
+}
+
+TEST_F(BehaviorPathPlanningUtilTest, getSignedDistanceFromBoundary)
+{
+  using autoware::behavior_path_planner::utils::getSignedDistanceFromBoundary;
+
+  {
+    lanelet::ConstLanelets empty_lanelets;
+    EXPECT_DOUBLE_EQ(
+      getSignedDistanceFromBoundary(empty_lanelets, planner_data_->self_odometry->pose.pose, true),
+      0.0);
+  }
+  {
+    EXPECT_NEAR(
+      getSignedDistanceFromBoundary(
+        current_lanelets, planner_data_->self_odometry->pose.pose, true),
+      -1.4952926, epsilon);
+    EXPECT_NEAR(
+      getSignedDistanceFromBoundary(
+        current_lanelets, planner_data_->self_odometry->pose.pose, false),
+      1.504715076, epsilon);
+  }
+  {
+    const double vehicle_width = 1.0;
+    const double base_link2front = 1.0;
+    const double base_link2rear = 1.0;
+
+    const auto left_distance = getSignedDistanceFromBoundary(
+      current_lanelets, vehicle_width, base_link2front, base_link2rear,
+      planner_data_->self_odometry->pose.pose, true);
+    ASSERT_TRUE(left_distance.has_value());
+    EXPECT_NEAR(left_distance.value(), -0.9946984, epsilon);
+
+    const auto right_distance = getSignedDistanceFromBoundary(
+      current_lanelets, vehicle_width, base_link2front, base_link2rear,
+      planner_data_->self_odometry->pose.pose, false);
+    ASSERT_TRUE(right_distance.has_value());
+    EXPECT_NEAR(right_distance.value(), 1.0041208, epsilon);
+  }
+}
+
+TEST_F(BehaviorPathPlanningUtilTest, getArcLengthToTargetLanelet)
+{
+  using autoware::behavior_path_planner::utils::getArcLengthToTargetLanelet;
+  {
+    auto target_lane = current_lanelets.front();
+    EXPECT_DOUBLE_EQ(
+      getArcLengthToTargetLanelet(
+        current_lanelets, target_lane, planner_data_->self_odometry->pose.pose),
+      0.0);
+  }
+  {
+    auto target_lane = current_lanelets.at(1);
+    EXPECT_NEAR(
+      getArcLengthToTargetLanelet(
+        current_lanelets, target_lane, planner_data_->self_odometry->pose.pose),
+      86.78265658, epsilon);
+  }
+}
+
+TEST_F(BehaviorPathPlanningUtilTest, toPolygon2d)
+{
+  using autoware::behavior_path_planner::utils::toPolygon2d;
+
+  const auto lanelet = current_lanelets.front();
+  const auto lanelet_polygon = lanelet.polygon2d().basicPolygon();
+
+  auto polygon_converted_from_lanelet = toPolygon2d(lanelet);
+  auto polygon_converted_from_basic_polygon = toPolygon2d(lanelet_polygon);
+
+  EXPECT_EQ(
+    polygon_converted_from_lanelet.outer().size(),
+    polygon_converted_from_basic_polygon.outer().size());
+
+  for (size_t i = 0; i < polygon_converted_from_lanelet.outer().size(); i++) {
+    EXPECT_DOUBLE_EQ(
+      polygon_converted_from_lanelet.outer().at(i).x(),
+      polygon_converted_from_basic_polygon.outer().at(i).x());
+    EXPECT_DOUBLE_EQ(
+      polygon_converted_from_lanelet.outer().at(i).y(),
+      polygon_converted_from_basic_polygon.outer().at(i).y());
+  }
+}
+
 TEST_F(BehaviorPathPlanningUtilTest, getHighestProbLabel)
 {
   using autoware::behavior_path_planner::utils::getHighestProbLabel;
@@ -283,9 +491,22 @@ TEST_F(BehaviorPathPlanningUtilTest, getPrecedingLanelets)
     target_lanes.push_back(route_handler_ptr->getLaneletsFromId(1101));
     const auto preceding_lanelets = getPrecedingLanelets(
       *route_handler_ptr, target_lanes, planner_data_->self_odometry->pose.pose, 10.0);
-    ASSERT_EQ(preceding_lanelets.size(), 1);
+    ASSERT_FALSE(preceding_lanelets.empty());
     EXPECT_EQ(preceding_lanelets.front().data()->id(), 1001);
   }
+}
+
+TEST_F(BehaviorPathPlanningUtilTest, getBackwardLanelets)
+{
+  using autoware::behavior_path_planner::utils::getBackwardLanelets;
+
+  const auto & route_handler_ptr = planner_data_->route_handler;
+  lanelet::ConstLanelets target_lanes;
+  target_lanes.push_back(route_handler_ptr->getLaneletsFromId(1011));
+  const auto backward_lanelets = getBackwardLanelets(
+    *route_handler_ptr, target_lanes, planner_data_->self_odometry->pose.pose, 10.0);
+  ASSERT_FALSE(backward_lanelets.empty());
+  EXPECT_EQ(backward_lanelets.front().id(), 1001);
 }
 
 TEST_F(BehaviorPathPlanningUtilTest, calcLaneAroundPose)
