@@ -81,6 +81,8 @@ PlanningEvaluatorNode::~PlanningEvaluatorNode()
     j[base_name + "min"] = metric_accumulators_[static_cast<size_t>(metric)][0].min();
     j[base_name + "max"] = metric_accumulators_[static_cast<size_t>(metric)][1].max();
     j[base_name + "mean"] = metric_accumulators_[static_cast<size_t>(metric)][2].mean();
+    j[base_name + "count"] = metric_accumulators_[static_cast<size_t>(metric)][2].count();
+    j[base_name + "description"] = metric_descriptions.at(metric);
   }
 
   // get output folder

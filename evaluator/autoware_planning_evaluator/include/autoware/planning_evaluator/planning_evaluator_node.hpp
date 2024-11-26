@@ -61,7 +61,7 @@ class PlanningEvaluatorNode : public rclcpp::Node
 {
 public:
   explicit PlanningEvaluatorNode(const rclcpp::NodeOptions & node_options);
-  ~PlanningEvaluatorNode();
+  ~PlanningEvaluatorNode() override;
 
   /**
    * @brief callback on receiving an odometry
@@ -97,17 +97,17 @@ public:
     const Odometry::ConstSharedPtr ego_state_ptr);
 
   /**
-   * @brief publish the given metric statistic
+   * @brief add the given metric statistic
    */
   void AddMetricMsg(const Metric & metric, const Accumulator<double> & metric_stat);
 
   /**
-   * @brief publish current ego lane info
+   * @brief add current ego lane info
    */
   void AddLaneletMetricMsg(const Odometry::ConstSharedPtr ego_state_ptr);
 
   /**
-   * @brief publish current ego kinematic state
+   * @brief add current ego kinematic state
    */
   void AddKinematicStateMetricMsg(
     const AccelWithCovarianceStamped & accel_stamped, const Odometry::ConstSharedPtr ego_state_ptr);
