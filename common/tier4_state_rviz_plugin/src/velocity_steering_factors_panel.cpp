@@ -56,47 +56,29 @@ QGroupBox * VelocitySteeringFactorsPanel::makeVelocityFactorsGroup()
   velocity_factors_table_->setHorizontalHeaderLabels(header_labels);
   velocity_factors_table_->setVerticalHeader(vertical_header);
   velocity_factors_table_->setHorizontalHeader(horizontal_header);
-  grid->addWidget(velocity_factors_table_, 0, 0, 1, 3);
+  grid->addWidget(velocity_factors_table_, 0, 0, 4, 1);
 
-  auto * max_jerk_slider_label = new QLabel("Max jerk");
-  grid->addWidget(max_jerk_slider_label, 1, 0);
+  auto * jerk_label = new QLabel("Jerk");
+  grid->addWidget(jerk_label, 0, 1);
 
-  max_jerk_slider_ = new QSlider(Qt::Horizontal);
-  max_jerk_slider_->setMinimum(0);
-  max_jerk_slider_->setMaximum(100);
-  grid->addWidget(max_jerk_slider_, 1, 1);
+  jerk_input_ = new QDoubleSpinBox;
+  jerk_input_->setMinimum(JERK_MIN);
+  jerk_input_->setMaximum(JERK_MAX);
+  jerk_input_->setValue(JERK_DEFAULT);
+  jerk_input_->setSingleStep(0.1);
+  jerk_input_->setSuffix(" [m/s\u00B3]");
+  grid->addWidget(jerk_input_, 1, 1);
 
-  max_jerk_label_ = new QLabel;
-  grid->addWidget(max_jerk_label_, 1, 2);
+  auto * decel_limit_label = new QLabel("Decel limit");
+  grid->addWidget(decel_limit_label, 2, 1);
 
-  auto * max_deceleration_slider_label = new QLabel("Max deceleration");
-  grid->addWidget(max_deceleration_slider_label, 2, 0);
-
-  max_deceleration_slider_ = new QSlider(Qt::Horizontal);
-  max_deceleration_slider_->setMinimum(0);
-  max_deceleration_slider_->setMaximum(100);
-  grid->addWidget(max_deceleration_slider_, 2, 1);
-
-  max_deceleration_label_ = new QLabel;
-  grid->addWidget(max_deceleration_label_, 2, 2);
-
-  connect(max_jerk_slider_, &QSlider::valueChanged, this, [this](int) {
-    max_jerk_label_->setText(QString("%1 [m/s<sup>3</sup>]").arg(getMaxJerk(), 4, 'f', 2));
-  });
-  connect(max_deceleration_slider_, &QSlider::valueChanged, this, [this](int) {
-    max_deceleration_label_->setText(
-      QString("%1 [m/s<sup>2</sup>]").arg(getMaxDeceleration(), 4, 'f', 2));
-  });
-
-  max_jerk_slider_->setValue(
-    max_jerk_slider_->minimum() + (max_jerk_slider_->maximum() - max_jerk_slider_->minimum()) *
-                                    (MAX_JERK_DEFAULT - MAX_JERK_MIN) /
-                                    (MAX_JERK_MAX - MAX_JERK_MIN));
-  max_deceleration_slider_->setValue(
-    max_deceleration_slider_->minimum() +
-    (max_deceleration_slider_->maximum() - max_deceleration_slider_->minimum()) *
-      (MAX_DECELERATION_DEFAULT - MAX_DECELERATION_MIN) /
-      (MAX_DECELERATION_MAX - MAX_DECELERATION_MIN));
+  decel_limit_input_ = new QDoubleSpinBox;
+  decel_limit_input_->setMinimum(DECEL_LIMIT_MIN);
+  decel_limit_input_->setMaximum(DECEL_LIMIT_MAX);
+  decel_limit_input_->setValue(DECEL_LIMIT_DEFAULT);
+  decel_limit_input_->setSingleStep(0.1);
+  decel_limit_input_->setSuffix(" [m/s\u00B2]");
+  grid->addWidget(decel_limit_input_, 3, 1);
 
   group->setLayout(grid);
   return group;
@@ -215,8 +197,8 @@ void VelocitySteeringFactorsPanel::onVelocityFactors(const VelocityFactorArray::
       }
       const auto & current_vel = kinematic_state_->twist.twist.linear.x;
       const auto & current_acc = acceleration_->accel.accel.linear.x;
-      const auto acc_min = -getMaxDeceleration();
-      const auto jerk_acc = getMaxJerk();
+      const auto acc_min = -decel_limit_input_->value();
+      const auto jerk_acc = jerk_input_->value();
       const auto decel_dist = autoware::motion_utils::calcDecelDistWithJerkAndAccConstraints(
         current_vel, 0., current_acc, acc_min, jerk_acc, -jerk_acc);
       if (decel_dist > e.distance && e.distance >= 0 && e.status == VelocityFactor::APPROACHING) {
@@ -321,21 +303,6 @@ void VelocitySteeringFactorsPanel::onSteeringFactors(const SteeringFactorArray::
     }
   }
   steering_factors_table_->update();
-}
-
-double VelocitySteeringFactorsPanel::getMaxJerk() const
-{
-  return MAX_JERK_MIN + (MAX_JERK_MAX - MAX_JERK_MIN) *
-                          (max_jerk_slider_->value() - max_jerk_slider_->minimum()) /
-                          (max_jerk_slider_->maximum() - max_jerk_slider_->minimum());
-}
-
-double VelocitySteeringFactorsPanel::getMaxDeceleration() const
-{
-  return MAX_DECELERATION_MIN +
-         (MAX_DECELERATION_MAX - MAX_DECELERATION_MIN) *
-           (max_deceleration_slider_->value() - max_deceleration_slider_->minimum()) /
-           (max_deceleration_slider_->maximum() - max_deceleration_slider_->minimum());
 }
 }  // namespace rviz_plugins
 

@@ -17,11 +17,10 @@
 #ifndef VELOCITY_STEERING_FACTORS_PANEL_HPP_
 #define VELOCITY_STEERING_FACTORS_PANEL_HPP_
 
+#include <QDoubleSpinBox>
 #include <QGroupBox>
 #include <QLabel>
 #include <QLayout>
-#include <QPushButton>
-#include <QSpinBox>
 #include <QTableWidget>
 #include <rclcpp/rclcpp.hpp>
 #include <rviz_common/panel.hpp>
@@ -51,13 +50,13 @@ public:
   void onInitialize() override;
 
 protected:
-  static constexpr double MAX_JERK_MIN = 0.0;
-  static constexpr double MAX_JERK_DEFAULT = 1.0;
-  static constexpr double MAX_JERK_MAX = 2.0;
+  static constexpr double JERK_MIN = 0.0;
+  static constexpr double JERK_DEFAULT = 1.0;
+  static constexpr double JERK_MAX = 2.0;
 
-  static constexpr double MAX_DECELERATION_MIN = 0.0;
-  static constexpr double MAX_DECELERATION_DEFAULT = 1.0;
-  static constexpr double MAX_DECELERATION_MAX = 2.0;
+  static constexpr double DECEL_LIMIT_MIN = 0.0;
+  static constexpr double DECEL_LIMIT_DEFAULT = 1.0;
+  static constexpr double DECEL_LIMIT_MAX = 2.0;
 
   // Layout
   QGroupBox * makeVelocityFactorsGroup();
@@ -68,10 +67,8 @@ protected:
   // Planning
   QTableWidget * velocity_factors_table_{nullptr};
   QTableWidget * steering_factors_table_{nullptr};
-  QSlider * max_jerk_slider_{nullptr};
-  QLabel * max_jerk_label_{nullptr};
-  QSlider * max_deceleration_slider_{nullptr};
-  QLabel * max_deceleration_label_{nullptr};
+  QDoubleSpinBox * jerk_input_{nullptr};
+  QDoubleSpinBox * decel_limit_input_{nullptr};
 
   nav_msgs::msg::Odometry::ConstSharedPtr kinematic_state_;
   geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr acceleration_;
@@ -83,9 +80,6 @@ protected:
 
   void onVelocityFactors(const VelocityFactorArray::ConstSharedPtr msg);
   void onSteeringFactors(const SteeringFactorArray::ConstSharedPtr msg);
-
-  double getMaxJerk() const;
-  double getMaxDeceleration() const;
 };
 }  // namespace rviz_plugins
 
