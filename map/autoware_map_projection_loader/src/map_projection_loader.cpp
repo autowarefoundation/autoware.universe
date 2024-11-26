@@ -48,18 +48,16 @@ autoware_map_msgs::msg::MapProjectorInfo load_info_from_yaml(const std::string &
 
   } else if (msg.projector_type == "local") {
     RCLCPP_WARN_STREAM(
-        rclcpp::get_logger("MapProjectionLoader"),
-            "Load " << filename << std::endl
-            << "DEPRECATED WARNING: projector type \"local\" is deprecated."
-              "Please use \"Local\" instead. For more info, visit "
-              "https://github.com/autowarefoundation/autoware.universe/blob/main/map/"
-              "map_projection_loader/"
-              "README.md"
-            << std::endl;
-        );
+      rclcpp::get_logger("MapProjectionLoader"),
+      "Load " << filename << std::endl
+              << "DEPRECATED WARNING: projector type \"local\" is deprecated."
+                 "Please use \"Local\" instead. For more info, visit "
+                 "https://github.com/autowarefoundation/autoware.universe/blob/main/map/"
+                 "map_projection_loader/"
+                 "README.md"
+              << std::endl;);
     msg.projector_type = autoware_map_msgs::msg::MapProjectorInfo::LOCAL;
-  }
-  else {
+  } else {
     throw std::runtime_error(
       "Invalid map projector type. Currently supported types: MGRS, LocalCartesianUTM, "
       "TransverseMercator, and Local");

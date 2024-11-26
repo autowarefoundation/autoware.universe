@@ -15,9 +15,9 @@
 #ifndef AUTOWARE__GEOGRAPHY_UTILS__PROJECTION_HPP_
 #define AUTOWARE__GEOGRAPHY_UTILS__PROJECTION_HPP_
 
+#include <autoware_map_msgs/msg/map_projector_info.hpp>
 #include <geographic_msgs/msg/geo_point.hpp>
 #include <geometry_msgs/msg/point.hpp>
-#include <autoware_map_msgs/msg/map_projector_info.hpp>
 
 namespace autoware::geography_utils
 {
