@@ -18,6 +18,9 @@
 #include <autoware_test_utils/mock_data_parser.hpp>
 
 #include <gtest/gtest.h>
+#include <lanelet2_core/Forward.h>
+
+#include <memory>
 
 using autoware::universe_utils::Point2d;
 using autoware_perception_msgs::msg::PredictedObject;
@@ -256,18 +259,51 @@ TEST_F(BehaviorPathPlanningUtilTest, getHighestProbLabel)
   EXPECT_EQ(getHighestProbLabel(obj.classification), ObjectClassification::Type::TRUCK);
 }
 
+TEST_F(BehaviorPathPlanningUtilTest, getPrecedingLanelets)
+{
+  using autoware::behavior_path_planner::utils::getPrecedingLanelets;
+  const auto & route_handler_ptr = planner_data_->route_handler;
+
+  {
+    const lanelet::ConstLanelets target_lanes;
+    EXPECT_TRUE(getPrecedingLanelets(
+                  *route_handler_ptr, target_lanes, planner_data_->self_odometry->pose.pose, 10.0)
+                  .empty());
+  }
+  {
+    lanelet::ConstLanelets target_lanes;
+    target_lanes.push_back(route_handler_ptr->getLaneletsFromId(1001));
+    EXPECT_TRUE(getPrecedingLanelets(
+                  *route_handler_ptr, target_lanes, planner_data_->self_odometry->pose.pose, 0.0)
+                  .empty());
+  }
+  {
+    lanelet::ConstLanelets target_lanes;
+    target_lanes.push_back(route_handler_ptr->getLaneletsFromId(1011));
+    target_lanes.push_back(route_handler_ptr->getLaneletsFromId(1101));
+    const auto preceding_lanelets = getPrecedingLanelets(
+      *route_handler_ptr, target_lanes, planner_data_->self_odometry->pose.pose, 10.0);
+    ASSERT_EQ(preceding_lanelets.size(), 1);
+    EXPECT_EQ(preceding_lanelets.front().data()->id(), 1001);
+  }
+}
+
 TEST_F(BehaviorPathPlanningUtilTest, calcLaneAroundPose)
 {
   using autoware::behavior_path_planner::utils::calcLaneAroundPose;
 
   {
-    const auto pose = createPose(0.0,0.0,0.0,0.0,0.0,0.0);
-    const auto lane = calcLaneAroundPose(planner_data_->route_handler, pose, 10.0, 10.0);
+    const auto pose = createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
+    std::shared_ptr<autoware::behavior_path_planner::RouteHandler> route_handler_null =
+      std::make_shared<autoware::behavior_path_planner::RouteHandler>();
+    const auto lane = calcLaneAroundPose(route_handler_null, pose, 10.0, 0.0);
     EXPECT_TRUE(lane.empty());
   }
   {
-    const auto lane = calcLaneAroundPose(planner_data_->route_handler, planner_data_->self_odometry->pose.pose, 10.0, 0.0);
-    EXPECT_EQ(lane.size(),2);
+    const auto lane = calcLaneAroundPose(
+      planner_data_->route_handler, planner_data_->self_odometry->pose.pose, 10.0, 0.0);
+    EXPECT_EQ(lane.size(), 1);
+    EXPECT_EQ(lane.front().id(), 1001);
   }
 }
 
@@ -281,7 +317,7 @@ TEST_F(BehaviorPathPlanningUtilTest, checkPathRelativeAngle)
   }
   {
     auto path = generateTrajectory<PathWithLaneId>(10, 1.0);
-    EXPECT_TRUE(checkPathRelativeAngle(path,M_PI_2));
+    EXPECT_TRUE(checkPathRelativeAngle(path, M_PI_2));
   }
 }
 

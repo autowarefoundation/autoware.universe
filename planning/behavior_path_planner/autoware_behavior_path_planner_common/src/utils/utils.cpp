@@ -1359,8 +1359,9 @@ lanelet::ConstLanelets getBackwardLanelets(
 }
 
 lanelet::ConstLanelets calcLaneAroundPose(
-  const std::shared_ptr<RouteHandler> route_handler, const Pose & pose, const double forward_length,
-  const double backward_length, const double dist_threshold, const double yaw_threshold)
+  const std::shared_ptr<RouteHandler> & route_handler, const Pose & pose,
+  const double forward_length, const double backward_length, const double dist_threshold,
+  const double yaw_threshold)
 {
   lanelet::ConstLanelet current_lane;
   if (!route_handler->getClosestLaneletWithConstrainsWithinRoute(

@@ -336,7 +336,7 @@ lanelet::ConstLanelets getExtendedCurrentLanesFromPath(
   const double backward_length, const double forward_length, const bool forward_only_in_route);
 
 lanelet::ConstLanelets calcLaneAroundPose(
-  const std::shared_ptr<RouteHandler> route_handler, const geometry_msgs::msg::Pose & pose,
+  const std::shared_ptr<RouteHandler> & route_handler, const geometry_msgs::msg::Pose & pose,
   const double forward_length, const double backward_length,
   const double dist_threshold = std::numeric_limits<double>::max(),
   const double yaw_threshold = std::numeric_limits<double>::max());
