@@ -1,5 +1,6 @@
 /**:
   ros__parameters:
+    output_metrics: false # if true, metrics are written to `<ros2_logging_directory>/autoware_metrics/<node_name>-<time_stamp>.json`.
     update_rate: 10.0
     processing_time_topic_name_list:
       - /control/control_evaluator/debug/processing_time_ms
