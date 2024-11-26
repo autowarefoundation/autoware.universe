@@ -16,14 +16,51 @@
 
 #include <gtest/gtest.h>
 
-TEST(accumulator, statistic)
+TEST(accumulator, empty)
 {
   autoware::universe_utils::Accumulator<double> acc;
-  acc.add(1.0);
-  acc.add(2.0);
-  acc.add(3.0);
 
-  EXPECT_DOUBLE_EQ(acc.mean(), 2.0);
-  EXPECT_DOUBLE_EQ(acc.min(), 1.0);
-  EXPECT_DOUBLE_EQ(acc.max(), 3.0);
+  EXPECT_DOUBLE_EQ(acc.mean(), 0.0);
+  EXPECT_DOUBLE_EQ(acc.min(), std::numeric_limits<double>::max());
+  EXPECT_DOUBLE_EQ(acc.max(), std::numeric_limits<double>::lowest());
+  EXPECT_EQ(acc.count(), 0);
 }
+
+
+TEST(accumulator, addValues)
+{
+  autoware::universe_utils::Accumulator<double> acc;
+  acc.add(100.0);
+
+  EXPECT_DOUBLE_EQ(acc.mean(), 100.0);
+  EXPECT_DOUBLE_EQ(acc.min(), 100.0);
+  EXPECT_DOUBLE_EQ(acc.max(), 100.0);
+  EXPECT_EQ(acc.count(), 1);
+}
+
+TEST(accumulator, positiveValues)
+{
+  autoware::universe_utils::Accumulator<double> acc;
+  acc.add(10.0);
+  acc.add(40.0);
+  acc.add(10.0);
+
+  EXPECT_DOUBLE_EQ(acc.mean(), 20.0);
+  EXPECT_DOUBLE_EQ(acc.min(), 10.0);
+  EXPECT_DOUBLE_EQ(acc.max(), 40.0);
+  EXPECT_EQ(acc.count(), 3);
+}
+
+TEST(accumulator, negativeValues)
+{
+  autoware::universe_utils::Accumulator<double> acc;
+  acc.add(-10.0);
+  acc.add(-40.0);
+  acc.add(-10.0);
+
+  EXPECT_DOUBLE_EQ(acc.mean(), -20.0);
+  EXPECT_DOUBLE_EQ(acc.min(), -40.0);
+  EXPECT_DOUBLE_EQ(acc.max(), -10.0);
+  EXPECT_EQ(acc.count(), 3);
+}
+

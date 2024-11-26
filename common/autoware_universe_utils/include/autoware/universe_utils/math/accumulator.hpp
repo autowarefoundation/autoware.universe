@@ -69,7 +69,7 @@ public:
 
 private:
   T min_ = std::numeric_limits<T>::max();
-  T max_ = std::numeric_limits<T>::min();
+  T max_ = std::numeric_limits<T>::lowest();
   long double mean_ = 0.0;
   unsigned int count_ = 0;
 };
