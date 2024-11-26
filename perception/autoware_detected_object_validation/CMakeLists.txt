@@ -78,9 +78,13 @@ rclcpp_components_register_node(occupancy_grid_based_validator
 )
 
 if(BUILD_TESTING)
-  ament_auto_add_gtest(detection_object_validation_tests
+  ament_auto_add_gtest(object_position_filter_node_tests
     test/test_utils.cpp
     test/object_position_filter/test_object_position_filter.cpp
+  )
+  ament_auto_add_gtest(object_lanelet_filter_node_tests
+    test/test_utils.cpp
+    test/object_lanelet_filter/test_object_lanelet_filter.cpp
   )
 endif()
 
