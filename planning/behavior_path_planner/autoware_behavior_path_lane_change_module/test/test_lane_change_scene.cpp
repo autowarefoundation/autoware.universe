@@ -142,6 +142,7 @@ public:
   {
     return normal_lane_change_->filtered_objects_;
   }
+
   void set_previous_approved_path()
   {
     normal_lane_change_->prev_module_output_.path = create_previous_approved_path();
