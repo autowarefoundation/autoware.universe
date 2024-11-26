@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__CONTROL_EVALUATOR__METRICS_METRIC_HPP_
-#define AUTOWARE__CONTROL_EVALUATOR__METRICS_METRIC_HPP_
+#ifndef AUTOWARE__CONTROL_EVALUATOR__METRICS__METRIC_HPP_
+#define AUTOWARE__CONTROL_EVALUATOR__METRICS__METRIC_HPP_
 
 #include <iostream>
 #include <string>
@@ -56,8 +56,7 @@ static const std::unordered_map<Metric, std::string> metric_descriptions = {
   {Metric::yaw_deviation, "Yaw deviation from the reference trajectory[rad]"},
   {Metric::goal_longitudinal_deviation, "Longitudinal deviation from the goal point[m]"},
   {Metric::goal_lateral_deviation, "Lateral deviation from the goal point[m]"},
-  {Metric::goal_yaw_deviation, "Yaw deviation from the goal point[rad]"}
-};
+  {Metric::goal_yaw_deviation, "Yaw deviation from the goal point[rad]"}};
 
 namespace details
 {

@@ -93,10 +93,16 @@ private:
 
   // Parameters
   bool output_metrics_;
-  
+
   // Metric
-  std::vector<Metric> metrics_;
-  std::array<Accumulator<double>, static_cast<size_t>(Metric::SIZE)> metric_accumulators_; // 3(min, max, mean) * metric_size
+  std::vector<Metric> metrics_ = {
+    // collect all metrics
+    Metric::lateral_deviation,      Metric::yaw_deviation,      Metric::goal_longitudinal_deviation,
+    Metric::goal_lateral_deviation, Metric::goal_yaw_deviation,
+  };
+
+  std::array<Accumulator<double>, static_cast<size_t>(Metric::SIZE)>
+    metric_accumulators_;  // 3(min, max, mean) * metric_size
 
   MetricArrayMsg metrics_msg_;
   autoware::route_handler::RouteHandler route_handler_;
