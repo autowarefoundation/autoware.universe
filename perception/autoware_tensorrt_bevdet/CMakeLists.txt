@@ -43,7 +43,7 @@ target_link_libraries(${PROJECT_NAME}_component
 rclcpp_components_register_node(${PROJECT_NAME}_component
     PLUGIN "autoware::tensorrt_bevdet::TRTBEVDetNode"
     EXECUTABLE ${PROJECT_NAME}_node
-  )
+)
 
 ament_auto_package(
   INSTALL_TO_SHARE
