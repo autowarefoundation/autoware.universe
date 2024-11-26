@@ -29,6 +29,8 @@
 #include <autoware_adapi_v1_msgs/msg/planning_behavior.hpp>
 #include <autoware_adapi_v1_msgs/msg/steering_factor_array.hpp>
 #include <autoware_adapi_v1_msgs/msg/velocity_factor_array.hpp>
+#include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 
 #include <memory>
 
@@ -49,6 +51,14 @@ public:
   void onInitialize() override;
 
 protected:
+  static constexpr double MAX_JERK_MIN = 0.0;
+  static constexpr double MAX_JERK_DEFAULT = 1.0;
+  static constexpr double MAX_JERK_MAX = 2.0;
+
+  static constexpr double MAX_DECELERATION_MIN = 0.0;
+  static constexpr double MAX_DECELERATION_DEFAULT = 1.0;
+  static constexpr double MAX_DECELERATION_MAX = 2.0;
+
   // Layout
   QGroupBox * makeVelocityFactorsGroup();
   QGroupBox * makeSteeringFactorsGroup();
@@ -58,12 +68,24 @@ protected:
   // Planning
   QTableWidget * velocity_factors_table_{nullptr};
   QTableWidget * steering_factors_table_{nullptr};
+  QSlider * max_jerk_slider_{nullptr};
+  QLabel * max_jerk_label_{nullptr};
+  QSlider * max_deceleration_slider_{nullptr};
+  QLabel * max_deceleration_label_{nullptr};
 
+  nav_msgs::msg::Odometry::ConstSharedPtr kinematic_state_;
+  geometry_msgs::msg::AccelWithCovarianceStamped::ConstSharedPtr acceleration_;
+
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_kinematic_state_;
+  rclcpp::Subscription<geometry_msgs::msg::AccelWithCovarianceStamped>::SharedPtr sub_acceleration_;
   rclcpp::Subscription<VelocityFactorArray>::SharedPtr sub_velocity_factors_;
   rclcpp::Subscription<SteeringFactorArray>::SharedPtr sub_steering_factors_;
 
   void onVelocityFactors(const VelocityFactorArray::ConstSharedPtr msg);
   void onSteeringFactors(const SteeringFactorArray::ConstSharedPtr msg);
+
+  double getMaxJerk() const;
+  double getMaxDeceleration() const;
 };
 }  // namespace rviz_plugins
 
