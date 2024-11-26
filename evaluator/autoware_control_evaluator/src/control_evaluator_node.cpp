@@ -60,6 +60,8 @@ ControlEvaluatorNode::~ControlEvaluatorNode()
     j[base_name + "min"] = metric_accumulators_[static_cast<size_t>(metric)].min();
     j[base_name + "max"] = metric_accumulators_[static_cast<size_t>(metric)].max();
     j[base_name + "mean"] = metric_accumulators_[static_cast<size_t>(metric)].mean();
+    j[base_name + "count"] = metric_accumulators_[static_cast<size_t>(metric)].count();
+    j[base_name + "description"] = metric_descriptions.at(metric);
   }
 
   // get output folder
