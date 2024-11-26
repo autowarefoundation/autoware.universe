@@ -239,11 +239,11 @@ TEST_F(TestNormalLaneChange, testFilteredObjects)
   const auto filtered_size =
     filtered_objects.current_lane.size() + filtered_objects.target_lane_leading.size() +
     filtered_objects.target_lane_trailing.size() + filtered_objects.others.size();
-  ASSERT_EQ(filtered_size, planner_data_->dynamic_object->objects.size());
-  ASSERT_EQ(filtered_objects.current_lane.size(), 0);
-  ASSERT_EQ(filtered_objects.target_lane_leading.size(), 2);
-  ASSERT_EQ(filtered_objects.target_lane_trailing.size(), 0);
-  ASSERT_EQ(filtered_objects.others.size(), 2);
+  EXPECT_EQ(filtered_size, planner_data_->dynamic_object->objects.size());
+  EXPECT_EQ(filtered_objects.current_lane.size(), 0);
+  EXPECT_EQ(filtered_objects.target_lane_leading.size(), 2);
+  EXPECT_EQ(filtered_objects.target_lane_trailing.size(), 0);
+  EXPECT_EQ(filtered_objects.others.size(), 2);
 }
 
 TEST_F(TestNormalLaneChange, testGetPathWhenValid)
