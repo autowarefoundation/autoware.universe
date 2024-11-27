@@ -144,6 +144,19 @@ bool CenterPointTRT::detect(
 
   postProcess(det_boxes3d);
 
+  // Check the actual number of pillars after inference to avoid unnecessary synchronization.
+  unsigned int num_pillars = 0;
+  CHECK_CUDA_ERROR(
+    cudaMemcpy(&num_pillars, num_voxels_d_.get(), sizeof(unsigned int), cudaMemcpyDeviceToHost));
+
+  if (num_pillars >= config_.max_voxel_size_) {
+    RCLCPP_WARN(
+      rclcpp::get_logger("lidar_centerpoint"),
+      "The actual number of pillars exceeds (%u) its maximum value (%zu). "
+      "Please considering increasing it since it may limit the detection performance.",
+      num_pillars, config_.max_voxel_size_);
+  }
+
   return true;
 }
 
