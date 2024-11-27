@@ -37,7 +37,7 @@ class MaskClusterFusionNode
 {
 public:
   explicit MaskClusterFusionNode(const rclcpp::NodeOptions & options);
-  
+
 protected:
   void preprocess(DetectedObjectsWithFeature & output_msg) override;
 

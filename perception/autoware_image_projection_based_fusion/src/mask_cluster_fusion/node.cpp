@@ -133,8 +133,7 @@ void MaskClusterFusionNode::fuseOnSingleImage(
     int32_t max_y(0);
 
     double total_projected_points = 0;
-    std::vector<uint32_t> point_counter_each_class(
-      input_mask_msg.classification.size(), 0.0);
+    std::vector<uint32_t> point_counter_each_class(input_mask_msg.classification.size(), 0.0);
 
     for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(transformed_cluster, "x"),
          iter_y(transformed_cluster, "y"), iter_z(transformed_cluster, "z");
