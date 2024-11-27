@@ -95,7 +95,7 @@ private:
   bool output_metrics_;
 
   // Metric
-  std::vector<Metric> metrics_ = {
+  const std::vector<Metric> metrics_ = {
     // collect all metrics
     Metric::lateral_deviation,      Metric::yaw_deviation,      Metric::goal_longitudinal_deviation,
     Metric::goal_lateral_deviation, Metric::goal_yaw_deviation,
