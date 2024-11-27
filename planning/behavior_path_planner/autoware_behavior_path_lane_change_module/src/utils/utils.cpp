@@ -774,8 +774,7 @@ bool is_delay_lane_change(
 
   const auto & delay_lc_param = common_data_ptr->lc_param_ptr->delay;
 
-  auto it = target_objects.begin();
-  for (; it < target_objects.end(); ++it) {
+  for (auto it = target_objects.begin(); it < target_objects.end(); ++it) {
     if (is_near_end(*it)) break;
 
     if (it->dist_from_ego < lane_change_path.info.length.lane_changing) continue;
