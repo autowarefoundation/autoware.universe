@@ -6,11 +6,6 @@
     "autoware_processing_time_checker": {
       "type": "object",
       "properties": {
-        "output_metrics": {
-          "description": "If `output_metrics = true`, the node writes the statics of the processing_time measured during its lifetime to `<ros2_logging_directory>/autoware_metrics/<node_name>-<time_stamp>.json` when shut down.",
-          "type": "boolean",
-          "default": "false"
-        },
         "update_rate": {
           "type": "number",
           "default": 10,
@@ -25,7 +20,7 @@
           "description": "The topic name list of the processing time."
         }
       },
-      "required": ["output_metrics", "update_rate", "processing_time_topic_name_list"]
+      "required": ["update_rate", "processing_time_topic_name_list"]
     }
   },
   "properties": {
