@@ -134,7 +134,7 @@ void MaskClusterFusionNode::fuseOnSingleImage(
 
     double total_projected_points = 0;
     std::vector<uint32_t> point_counter_each_class(
-      input_mask_msg.config.classification.size(), 0.0);
+      input_mask_msg.classification.size(), 0.0);
 
     for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(transformed_cluster, "x"),
          iter_y(transformed_cluster, "y"), iter_z(transformed_cluster, "z");
@@ -230,7 +230,7 @@ void MaskClusterFusionNode::fuseOnSingleImage(
     std::vector<autoware_perception_msgs::msg::ObjectClassification> classification;
     autoware_perception_msgs::msg::ObjectClassification object_classification;
     object_classification.label =
-      static_cast<uint8_t>(input_mask_msg.config.classification[matched_cluster.mask_index].label);
+      static_cast<uint8_t>(input_mask_msg.classification[matched_cluster.mask_index].label);
     object_classification.probability = 1.0;
     classification.push_back(object_classification);
     output_object_msg.feature_objects.at(matched_cluster.cluster_index).object.classification =

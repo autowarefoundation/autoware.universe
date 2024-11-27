@@ -37,10 +37,7 @@ class MaskClusterFusionNode
 {
 public:
   explicit MaskClusterFusionNode(const rclcpp::NodeOptions & options);
-
-private:
-  rclcpp::Publisher<DetectedObjects>::SharedPtr detected_objects_pub_;
-
+  
 protected:
   void preprocess(DetectedObjectsWithFeature & output_msg) override;
 
