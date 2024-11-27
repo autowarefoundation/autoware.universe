@@ -741,7 +741,7 @@ bool isParkedObject(
 
 bool is_delay_lane_change(
   const CommonDataPtr & common_data_ptr, const LaneChangePath & lane_change_path,
-  const std::vector<ExtendedPredictedObject> & target_objects,
+  const ExtendedPredictedObjects & target_objects,
   CollisionCheckDebugMap & object_debug)
 {
   const auto & current_lane_path = common_data_ptr->current_lanes_path;
