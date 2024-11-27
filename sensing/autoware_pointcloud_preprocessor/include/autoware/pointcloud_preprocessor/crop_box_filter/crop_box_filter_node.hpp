@@ -67,8 +67,8 @@ namespace autoware::pointcloud_preprocessor
 class CropBoxFilterComponent : public autoware::pointcloud_preprocessor::Filter
 {
 protected:
-  virtual void filter(
-    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output);
+  void filter(
+    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output) override;
 
   // TODO(sykwer): Temporary Implementation: Remove this interface when all the filter nodes conform
   // to new API
