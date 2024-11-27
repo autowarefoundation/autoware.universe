@@ -9,7 +9,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN "TrafficLightRecognitionMarkerPublisher"
+  PLUGIN "autoware::traffic_light_recognition_marker_publisher::TrafficLightRecognitionMarkerPublisher"
   EXECUTABLE ${PROJECT_NAME}_node
 )
 
