@@ -741,8 +741,7 @@ bool isParkedObject(
 
 bool is_delay_lane_change(
   const CommonDataPtr & common_data_ptr, const LaneChangePath & lane_change_path,
-  const ExtendedPredictedObjects & target_objects,
-  CollisionCheckDebugMap & object_debug)
+  const ExtendedPredictedObjects & target_objects, CollisionCheckDebugMap & object_debug)
 {
   const auto & current_lane_path = common_data_ptr->current_lanes_path;
 
@@ -762,9 +761,7 @@ bool is_delay_lane_change(
   const auto ego_vel = common_data_ptr->get_ego_speed();
   const auto min_lon_acc = common_data_ptr->lc_param_ptr->trajectory.min_longitudinal_acc;
   const auto gap_threshold = std::abs((ego_vel * ego_vel) / (2 * min_lon_acc));
-  auto is_sufficient_gap = [&gap_threshold](
-                             const auto & current_obj,
-                             const auto & next_obj) {
+  auto is_sufficient_gap = [&gap_threshold](const auto & current_obj, const auto & next_obj) {
     const auto curr_obj_half_length = current_obj.shape.dimensions.x;
     const auto next_obj_half_length = next_obj.shape.dimensions.x;
     const auto dist_current_to_next = next_obj.dist_from_ego - current_obj.dist_from_ego;
