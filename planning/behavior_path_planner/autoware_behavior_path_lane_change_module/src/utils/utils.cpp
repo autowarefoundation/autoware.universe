@@ -763,8 +763,8 @@ bool is_delay_lane_change(
   const auto min_lon_acc = common_data_ptr->lc_param_ptr->trajectory.min_longitudinal_acc;
   const auto gap_threshold = std::abs((ego_vel * ego_vel) / (2 * min_lon_acc));
   auto is_sufficient_gap = [&gap_threshold](
-                             const ExtendedPredictedObject & current_obj,
-                             const ExtendedPredictedObject & next_obj) {
+                             const auto & current_obj,
+                             const auto & next_obj) {
     const auto curr_obj_half_length = current_obj.shape.dimensions.x;
     const auto next_obj_half_length = next_obj.shape.dimensions.x;
     const auto dist_current_to_next = next_obj.dist_from_ego - current_obj.dist_from_ego;
