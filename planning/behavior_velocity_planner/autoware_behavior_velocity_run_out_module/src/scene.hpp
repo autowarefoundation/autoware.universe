@@ -113,9 +113,7 @@ private:
     std::vector<geometry_msgs::msg::Point> & collision_points) const;
 
   bool checkCollisionWithPolygon(
-    const Polygon2d & vehicle_polygon,
-    const PoseWithRange pose_with_range,
-    const Shape & shape,
+    const Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range, const Shape & shape,
     std::vector<geometry_msgs::msg::Point> & collision_points) const;
 
   std::vector<geometry_msgs::msg::Point> createBoundingBoxForRangedPoints(
