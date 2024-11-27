@@ -152,7 +152,7 @@ bool CenterPointTRT::detect(
   if (num_pillars >= config_.max_voxel_size_) {
     RCLCPP_WARN(
       rclcpp::get_logger("lidar_centerpoint"),
-      "The actual number of pillars exceeds (%u) its maximum value (%zu). "
+      "The actual number of pillars (%u) exceeds its maximum value (%zu). "
       "Please considering increasing it since it may limit the detection performance.",
       num_pillars, config_.max_voxel_size_);
   }
