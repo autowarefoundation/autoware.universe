@@ -351,6 +351,71 @@ stop
 @enduml
 ```
 
+#### Delay Lane Change Check
+
+In certain situations, when there are stopped vehicles along the target lane ahead of Ego vehicle, to avoid getting stuck, it is desired to perform the lane change maneuver after the stopped vehicle.
+To do so, all static objects ahead of ego along the target lane are checked in order from closest to furthest, if any object satisfies the following conditions, lane change will be delayed and candidate path will be rejected.
+
+1. The distance from object to terminal end is sufficient to perform lane change
+2. The distance to object is less than the lane changing length
+3. The distance from object to next object is sufficient to perform lane change
+
+If the parameter `check_only_parked_vehicle` is set to `true`, the check will only consider objects which are determined as parked.
+
+The following flow chart illustrates the delay lane change check.
+
+```plantuml
+@startuml
+skinparam defaultTextAlignment center
+skinparam backgroundColor #White
+
+start
+if (Is target objects, candidate path, OR current lane path empty?) then (yes)
+  #LightPink:Return false;
+  stop
+else (no)
+endif
+
+:Start checking objects from closest to furthest;
+repeat
+  if (Is distance from object to terminal sufficient) then (yes)
+  else (no)
+    #LightPink:Return false;
+    stop
+  endif
+
+  if (Is distance to object less than lane changing length) then (yes)
+  else (no)
+    if (Is only check parked vehicles and vehicle is not parked) then (yes)
+    else (no)
+      if(Is last object OR distance to next object is sufficient) then (yes)
+        #LightGreen: Return true;
+        stop
+      else (no)
+      endif
+    endif
+  endif
+  repeat while (Is finished checking all objects) is (FALSE)
+
+#LightPink: Return false;
+stop
+
+@enduml
+```
+
+The following figures demonstrate different situations under which will or will not be triggered:
+
+1. Delay lane change will be triggered as there is sufficient distance ahead.
+   ![delay lane change 1](./images/delay_lane_change_1.drawio.svg)
+2. Delay lane change will NOT be triggered as there is no sufficient distance ahead
+   ![delay lane change 2](./images/delay_lane_change_2.drawio.svg)
+3. Delay lane change will be triggered by fist NPC as there is sufficient distance ahead.
+   ![delay lane change 3](./images/delay_lane_change_3.drawio.svg)
+4. Delay lane change will be triggered by second NPC as there is sufficient distance ahead
+   ![delay lane change 4](./images/delay_lane_change_4.drawio.svg)
+5. Delay lane change will NOT be triggered as there is no sufficient distance ahead.
+   ![delay lane change 5](./images/delay_lane_change_5.drawio.svg)
+
 #### Candidate Path's Safety check
 
 See [safety check utils explanation](../autoware_behavior_path_planner_common/docs/behavior_path_planner_safety_check.md)
