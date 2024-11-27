@@ -175,8 +175,9 @@ bool TransfusionTRT::preprocess(
   }
 
   if (params_input > config_.max_voxels_) {
-    RCLCPP_WARN(
-      rclcpp::get_logger("lidar_transfusion"),
+    rclcpp::Clock clock{RCL_ROS_TIME};
+    RCLCPP_WARN_THROTTLE(
+      rclcpp::get_logger("lidar_transfusion"), clock, 1000,
       "The actual number of voxels (%u) exceeds its maximum value (%zu). "
       "Please considering increasing it since it may limit the detection performance.",
       params_input, config_.max_voxels_);
