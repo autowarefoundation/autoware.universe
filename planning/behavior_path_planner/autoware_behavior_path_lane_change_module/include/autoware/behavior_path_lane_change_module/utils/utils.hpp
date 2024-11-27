@@ -144,10 +144,10 @@ bool isParkedObject(
  *
  * @param common_data_ptr Shared pointer to CommonData that holds necessary lanes info, parameters,
  *                        and transient data.
- * @param lane_change_path Cadidate lane change path to apply checks on.
+ * @param lane_change_path Candidate lane change path to apply checks on.
  * @param target_objects Relevant objects to consider for delay LC checks (assumed to only include
  *                       target lane leading static objects).
- * @param object_debug Collision check debug struct to be updated if any of the traget objects
+ * @param object_debug Collision check debug struct to be updated if any of the target objects
  *                     satisfy the conditions.
  * @return bool True if conditions to delay lane change are met
  */
