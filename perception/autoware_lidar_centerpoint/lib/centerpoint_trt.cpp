@@ -135,8 +135,7 @@ bool CenterPointTRT::detect(
     cudaMemsetAsync(spatial_features_d_.get(), 0, spatial_features_size_ * sizeof(float), stream_));
 
   if (!preprocess(input_pointcloud_msg, tf_buffer)) {
-    RCLCPP_WARN_STREAM(
-      rclcpp::get_logger("lidar_centerpoint"), "Fail to preprocess and skip to detect.");
+    RCLCPP_WARN(rclcpp::get_logger("lidar_centerpoint"), "Fail to preprocess and skip to detect.");
     return false;
   }
 
@@ -150,8 +149,9 @@ bool CenterPointTRT::detect(
     cudaMemcpy(&num_pillars, num_voxels_d_.get(), sizeof(unsigned int), cudaMemcpyDeviceToHost));
 
   if (num_pillars >= config_.max_voxel_size_) {
-    RCLCPP_WARN(
-      rclcpp::get_logger("lidar_centerpoint"),
+    rclcpp::Clock clock{RCL_ROS_TIME};
+    RCLCPP_WARN_THROTTLE(
+      rclcpp::get_logger("lidar_centerpoint"), clock, 1000,
       "The actual number of pillars (%u) exceeds its maximum value (%zu). "
       "Please considering increasing it since it may limit the detection performance.",
       num_pillars, config_.max_voxel_size_);
