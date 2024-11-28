@@ -283,7 +283,7 @@ TEST_F(TestAEB, checkEmptyPathAtZeroSpeed)
   const double velocity = 0.0;
   constexpr double yaw_rate = 0.0;
   const auto imu_path = aeb_node_->generateEgoPath(velocity, yaw_rate);
-  ASSERT_EQ(imu_path.size(), 1);
+  ASSERT_EQ(imu_path.size(), 0);
 }
 
 TEST_F(TestAEB, checkParamUpdate)
