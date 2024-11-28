@@ -16,14 +16,20 @@
 #define SCENE_HPP_
 
 #include "autoware/behavior_velocity_planner_common/scene_module_interface.hpp"
-#include "autoware/behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp"
 #include "autoware/behavior_velocity_planner_common/utilization/util.hpp"
 
-#include <memory>
+#include <autoware/motion_utils/factor/velocity_factor_interface.hpp>
+#include <rclcpp/time.hpp>
+
+#include <geometry_msgs/msg/detail/point__struct.hpp>
+#include <geometry_msgs/msg/detail/pose__struct.hpp>
+
+#include <optional>
 #include <utility>
-#include <vector>
 
 #define EIGEN_MPL2_ONLY
+#include "autoware/trajectory/path_point_with_lane_id.hpp"
+
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <rclcpp/rclcpp.hpp>
@@ -34,17 +40,16 @@ namespace autoware::behavior_velocity_planner
 {
 class StopLineModule : public SceneModuleInterface
 {
-  using StopLineWithLaneId = std::pair<lanelet::ConstLineString3d, int64_t>;
-
 public:
+  using StopLineWithLaneId = std::pair<lanelet::ConstLineString3d, int64_t>;
+  using Trajectory =
+    autoware::trajectory::Trajectory<tier4_planning_msgs::msg::PathPointWithLaneId>;
   enum class State { APPROACH, STOPPED, START };
 
   struct DebugData
   {
     double base_link2front;
-    boost::optional<geometry_msgs::msg::Pose> stop_pose;
-    std::vector<LineString2d> search_segments;
-    LineString2d search_stopline;
+    std::optional<geometry_msgs::msg::Pose> stop_pose;
   };
 
   struct PlannerParam
@@ -53,33 +58,47 @@ public:
     double stop_duration_sec;
     double hold_stop_margin_distance;
     bool use_initialization_stop_line_state;
-    bool show_stop_line_collision_check;
   };
 
   StopLineModule(
-    const int64_t module_id, const size_t lane_id, lanelet::ConstLineString3d stop_line,
+    const int64_t module_id, lanelet::ConstLineString3d stop_line,
     const PlannerParam & planner_param, const rclcpp::Logger & logger,
     const rclcpp::Clock::SharedPtr clock);
 
   bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
 
-  visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
+  std::pair<double, std::optional<double>> getEgoAndStopPoint(
+    const Trajectory & trajectory, const geometry_msgs::msg::Pose & ego_pose,
+    const State & state) const;
+
+  void updateStateAndStoppedTime(
+    State * state, std::optional<rclcpp::Time> * stopped_time, const rclcpp::Time & now,
+    const double & distance_to_stop_point, const bool & is_vehicle_stopped) const;
+
+  static void updateVelocityFactor(
+    autoware::motion_utils::VelocityFactorInterface * velocity_factor, const State & state,
+    const double & distance_to_stop_point);
+
+  void updateStopReason(StopReason * stop_reason, const geometry_msgs::msg::Pose & stop_pose) const;
+
+  void updateDebugData(
+    DebugData * debug_data, const geometry_msgs::msg::Pose & stop_pose, const State & state) const;
+
+  visualization_msgs::msg::MarkerArray createDebugMarkerArray() override
+  {
+    return visualization_msgs::msg::MarkerArray{};
+  }
   autoware::motion_utils::VirtualWalls createVirtualWalls() override;
 
 private:
-  std::shared_ptr<const rclcpp::Time> stopped_time_;
-
-  geometry_msgs::msg::Point getCenterOfStopLine(const lanelet::ConstLineString3d & stop_line);
-
-  int64_t lane_id_;
-
-  lanelet::ConstLineString3d stop_line_;
+  const lanelet::ConstLineString3d stop_line_;
+  // Parameter
+  const PlannerParam planner_param_;
 
   // State machine
   State state_;
 
-  // Parameter
-  PlannerParam planner_param_;
+  std::optional<rclcpp::Time> stopped_time_;
 
   // Debug
   DebugData debug_data_;
