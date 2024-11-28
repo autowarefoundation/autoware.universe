@@ -29,6 +29,8 @@
 #include <map>
 #include <string>
 
+namespace autoware::traffic_light_recognition_marker_publisher
+{
 class TrafficLightRecognitionMarkerPublisher : public rclcpp::Node
 {
 public:
@@ -58,5 +60,6 @@ private:
   bool is_map_ready_ = false;
   int32_t marker_id = 0;
 };
+}  // namespace autoware::traffic_light_recognition_marker_publisher
 
 #endif  // TRAFFIC_LIGHT_RECOGNITION_MARKER_PUBLISHER_HPP_

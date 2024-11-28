@@ -75,7 +75,7 @@ jobs:
 
   clang-tidy-differential:
     needs: build-and-test-differential
-    runs-on: ubuntu-22.04
+    runs-on: codebuild-autoware-us-east-1-${{ github.run_id }}-${{ github.run_attempt }}-ubuntu-7.0-large
     container: ghcr.io/autowarefoundation/autoware:universe-devel-cuda
     steps:
       - name: Set PR fetch depth

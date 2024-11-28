@@ -16,13 +16,14 @@
 #define AUTOWARE__PLANNING_EVALUATOR__PLANNING_EVALUATOR_NODE_HPP_
 
 #include "autoware/planning_evaluator/metrics_calculator.hpp"
-#include "autoware/planning_evaluator/stat.hpp"
+#include "autoware/universe_utils/math/accumulator.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
 
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware/universe_utils/ros/polling_subscriber.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 
 #include "autoware_perception_msgs/msg/predicted_objects.hpp"
 #include "autoware_planning_msgs/msg/pose_with_uuid_stamped.hpp"
@@ -31,6 +32,7 @@
 #include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
+#include <tier4_debug_msgs/msg/float64_stamped.hpp>
 #include <tier4_metric_msgs/msg/metric.hpp>
 #include <tier4_metric_msgs/msg/metric_array.hpp>
 
@@ -41,6 +43,7 @@
 #include <vector>
 namespace planning_diagnostics
 {
+using autoware::universe_utils::Accumulator;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_planning_msgs::msg::PoseWithUuidStamped;
 using autoware_planning_msgs::msg::Trajectory;
@@ -96,7 +99,7 @@ public:
   /**
    * @brief publish the given metric statistic
    */
-  void AddMetricMsg(const Metric & metric, const Stat<double> & metric_stat);
+  void AddMetricMsg(const Metric & metric, const Accumulator<double> & metric_stat);
 
   /**
    * @brief publish current ego lane info
@@ -142,6 +145,7 @@ private:
   autoware::universe_utils::InterProcessPollingSubscriber<AccelWithCovarianceStamped> accel_sub_{
     this, "~/input/acceleration"};
 
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr processing_time_pub_;
   rclcpp::Publisher<MetricArrayMsg>::SharedPtr metrics_pub_;
   std::shared_ptr<tf2_ros::TransformListener> transform_listener_{nullptr};
   std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
@@ -159,7 +163,7 @@ private:
   // Metrics
   std::vector<Metric> metrics_;
   std::deque<rclcpp::Time> stamps_;
-  std::array<std::deque<Stat<double>>, static_cast<size_t>(Metric::SIZE)> metric_stats_;
+  std::array<std::deque<Accumulator<double>>, static_cast<size_t>(Metric::SIZE)> metric_stats_;
 
   rclcpp::TimerBase::SharedPtr timer_;
   std::optional<AccelWithCovarianceStamped> prev_acc_stamped_{std::nullopt};
