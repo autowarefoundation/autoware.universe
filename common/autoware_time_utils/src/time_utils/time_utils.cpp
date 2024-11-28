@@ -17,7 +17,6 @@
 #include <limits>
 #include <stdexcept>
 
-// change
 
 namespace autoware::time_utils
 {
