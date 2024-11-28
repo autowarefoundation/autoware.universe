@@ -283,7 +283,6 @@ void PlanningInterfaceTestManager::publishNominalPathWithLaneId(
     const auto path = autoware::test_utils::loadPathWithLaneIdInYaml();
     autoware::test_utils::publishToTargetNode(
       test_node_, target_node, topic_name, normal_path_with_lane_id_pub_, path, 5);
-
   } catch (const std::exception & e) {
     std::cerr << e.what() << '\n';
   }

@@ -126,8 +126,11 @@ public:
     auto route_handler_ptr = std::make_shared<RouteHandler>(map_bin_msg);
     const auto rh_test_route =
       get_absolute_path_to_route(autoware_route_handler_dir, lane_change_right_test_route_filename);
-    route_handler_ptr->setRoute(
-      *autoware::test_utils::parse<std::optional<LaneletRoute>>(rh_test_route));
+    if (
+      const auto route_opt =
+        autoware::test_utils::parse<std::optional<LaneletRoute>>(rh_test_route)) {
+      route_handler_ptr->setRoute(*route_opt);
+    }
 
     return route_handler_ptr;
   }

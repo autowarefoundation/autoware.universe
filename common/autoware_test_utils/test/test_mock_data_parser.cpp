@@ -822,7 +822,9 @@ TEST(ParseFunction, CompleteFromFilename)
     EXPECT_EQ(segment1.primitives[3].id, 88);
     EXPECT_EQ(segment1.primitives[3].primitive_type, "lane");
   } else {
-    FAIL() << "Yaml file might've corrupted.";
+    const std::string fail_reason =
+      "Failed to parse YAML file: " + parser_test_route + ". The file might be corrupted.";
+    FAIL() << fail_reason;
   }
 }
 
