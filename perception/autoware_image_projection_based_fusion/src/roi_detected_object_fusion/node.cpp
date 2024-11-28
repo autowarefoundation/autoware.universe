@@ -141,8 +141,7 @@ RoiDetectedObjectFusionNode::generateDetectedObjectRoIs(
       transformPoints(vertices, object2camera_affine, vertices_camera_coord);
     }
 
-    double min_x(std::numeric_limits<double>::max()), min_y(std::numeric_limits<double>::max()),
-      max_x(std::numeric_limits<double>::min()), max_y(std::numeric_limits<double>::min());
+    double min_x(image_width), min_y(image_height), max_x(0.0), max_y(0.0);
     std::size_t point_on_image_cnt = 0;
     for (const auto & point : vertices_camera_coord) {
       if (point.z() <= 0.0) {
@@ -159,8 +158,8 @@ RoiDetectedObjectFusionNode::generateDetectedObjectRoIs(
       max_y = std::max(proj_point.y(), max_y);
 
       if (
-        proj_point.x() >= 0 && proj_point.x() <= image_width - 1 && proj_point.y() >= 0 &&
-        proj_point.y() <= image_height - 1) {
+        proj_point.x() >= 0 && proj_point.x() <= image_width && proj_point.y() >= 0 &&
+        proj_point.y() <= image_height) {
         point_on_image_cnt++;
 
         if (debugger_) {
@@ -174,8 +173,8 @@ RoiDetectedObjectFusionNode::generateDetectedObjectRoIs(
 
     min_x = std::max(min_x, 0.0);
     min_y = std::max(min_y, 0.0);
-    max_x = std::min(max_x, image_width - 1);
-    max_y = std::min(max_y, image_height - 1);
+    max_x = std::min(max_x, image_width);
+    max_y = std::min(max_y, image_height);
 
     DetectedObjectWithFeature object_roi;
     object_roi.feature.roi.x_offset = static_cast<std::uint32_t>(min_x);
