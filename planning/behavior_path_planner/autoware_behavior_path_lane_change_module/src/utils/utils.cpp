@@ -744,9 +744,10 @@ bool is_delay_lane_change(
   const ExtendedPredictedObjects & target_objects, CollisionCheckDebugMap & object_debug)
 {
   const auto & current_lane_path = common_data_ptr->current_lanes_path;
+  const auto & delay_lc_param = common_data_ptr->lc_param_ptr->delay;
 
   if (
-    target_objects.empty() || lane_change_path.path.points.empty() ||
+    !delay_lc_param.enable || target_objects.empty() || lane_change_path.path.points.empty() ||
     current_lane_path.points.empty()) {
     return false;
   }
@@ -768,8 +769,6 @@ bool is_delay_lane_change(
     const auto gap_length = dist_current_to_next - curr_obj_half_length - next_obj_half_length;
     return gap_length > gap_threshold;
   };
-
-  const auto & delay_lc_param = common_data_ptr->lc_param_ptr->delay;
 
   for (auto it = target_objects.begin(); it < target_objects.end(); ++it) {
     if (is_near_end(*it)) break;
