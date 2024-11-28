@@ -383,7 +383,21 @@ bool filter_target_lane_objects(
   const bool before_terminal, TargetLaneLeadingObjects & leading_objects,
   ExtendedPredictedObjects & trailing_objects);
 
-bool has_path_overlapped_target_lanes(
+/**
+ * @brief Determines if the object's predicted path overlaps with the given lane polygon.
+ *
+ * This function checks whether any of the line string paths derived from the object's predicted
+ * trajectories intersect or overlap with the specified polygon representing lanes.
+ *
+ * @param object The extended predicted object containing predicted trajectories and initial
+ * polygon.
+ * @param lanes_polygon A polygon representing the lanes to check for overlaps with the object's
+ * paths.
+ *
+ * @return true if any of the object's predicted paths overlap with the lanes polygon, false
+ * otherwise.
+ */
+bool is_object_path_overlapped_lanes(
   const ExtendedPredictedObject & object, const lanelet::BasicPolygon2d & lanes_polygon);
 }  // namespace autoware::behavior_path_planner::utils::lane_change
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__UTILS_HPP_
