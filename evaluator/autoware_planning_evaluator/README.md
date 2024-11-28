@@ -20,7 +20,7 @@ which is also responsible for calculating metrics.
 
 ### Stat
 
-Each metric is calculated using a `Stat` instance which contains
+Each metric is calculated using a `autoware::universe_utils::Accumulator` instance which contains
 the minimum, maximum, and mean values calculated for the metric
 as well as the number of values measured.
 
@@ -35,7 +35,7 @@ The `MetricsCalculator` is responsible for calculating metric statistics
 through calls to function:
 
 ```C++
-Stat<double> MetricsCalculator::calculate(const Metric metric, const Trajectory & traj) const;
+Accumulator<double> MetricsCalculator::calculate(const Metric metric, const Trajectory & traj) const;
 ```
 
 Adding a new metric `M` requires the following steps:

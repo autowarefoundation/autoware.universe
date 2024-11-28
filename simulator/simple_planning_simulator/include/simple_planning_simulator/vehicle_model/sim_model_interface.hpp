@@ -50,7 +50,7 @@ public:
   /**
    * @brief destructor
    */
-  ~SimModelInterface() = default;
+  virtual ~SimModelInterface() = default;
 
   /**
    * @brief get state vector of model

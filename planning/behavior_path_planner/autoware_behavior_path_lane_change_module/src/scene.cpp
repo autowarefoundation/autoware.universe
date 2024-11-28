@@ -1130,7 +1130,6 @@ std::vector<LaneChangePhaseMetrics> NormalLaneChange::get_lane_changing_metrics(
   const PathWithLaneId & prep_segment, const LaneChangePhaseMetrics & prep_metric,
   const double shift_length, const double dist_to_reg_element) const
 {
-  const auto & route_handler = getRouteHandler();
   const auto & transient_data = common_data_ptr_->transient_data;
   const auto dist_lc_start_to_end_of_lanes = calculation::calc_dist_from_pose_to_terminal_end(
     common_data_ptr_, common_data_ptr_->lanes_ptr->target_neighbor,
@@ -1328,7 +1327,7 @@ bool NormalLaneChange::check_candidate_path_safety(
   }
 
   if (
-    !is_stuck && !utils::lane_change::passed_parked_objects(
+    !is_stuck && utils::lane_change::is_delay_lane_change(
                    common_data_ptr_, candidate_path, filtered_objects_.target_lane_leading.stopped,
                    lane_change_debug_.collision_check_objects)) {
     throw std::logic_error(
@@ -1461,10 +1460,8 @@ PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const
     return {false, true};
   }
 
-  const auto has_passed_parked_objects = utils::lane_change::passed_parked_objects(
-    common_data_ptr_, path, filtered_objects_.target_lane_leading.stopped, debug_data);
-
-  if (!has_passed_parked_objects) {
+  if (utils::lane_change::is_delay_lane_change(
+        common_data_ptr_, path, filtered_objects_.target_lane_leading.stopped, debug_data)) {
     RCLCPP_DEBUG(logger_, "Lane change has been delayed.");
     return {false, false};
   }
