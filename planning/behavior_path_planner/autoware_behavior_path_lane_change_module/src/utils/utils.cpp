@@ -623,15 +623,13 @@ std::vector<PoseWithVelocityStamped> convert_to_predicted_path(
   const auto duration = lane_change_path.info.duration.sum();
   const auto prepare_time = lane_change_path.info.duration.prepare;
   const auto & lc_param_ptr = common_data_ptr->lc_param_ptr;
-  const auto minimum_lane_changing_velocity = lc_param_ptr->trajectory.min_lane_changing_velocity;
   const auto resolution = lc_param_ptr->safety.collision_check.prediction_time_resolution;
   std::vector<PoseWithVelocityStamped> predicted_path;
 
   // prepare segment
   for (double t = 0.0; t < prepare_time; t += resolution) {
-    const auto velocity = std::min(
-      std::max(initial_velocity + prepare_acc * t, minimum_lane_changing_velocity),
-      lane_change_path.info.velocity.prepare);
+    const auto velocity =
+      std::clamp(initial_velocity + prepare_acc * t, 0.0, lane_change_path.info.velocity.prepare);
     const auto length = initial_velocity * t + 0.5 * prepare_acc * t * t;
     const auto pose = autoware::motion_utils::calcInterpolatedPose(
       path.points, vehicle_pose_frenet.length + length);
@@ -639,15 +637,14 @@ std::vector<PoseWithVelocityStamped> convert_to_predicted_path(
   }
 
   // lane changing segment
-  const auto lane_changing_velocity = std::min(
-    std::max(initial_velocity + prepare_acc * prepare_time, minimum_lane_changing_velocity),
-    lane_change_path.info.velocity.prepare);
+  const auto lane_changing_velocity = std::clamp(
+    initial_velocity + prepare_acc * prepare_time, 0.0, lane_change_path.info.velocity.prepare);
   const auto offset =
     initial_velocity * prepare_time + 0.5 * prepare_acc * prepare_time * prepare_time;
   for (double t = prepare_time; t < duration; t += resolution) {
     const auto delta_t = t - prepare_time;
-    const auto velocity = std::min(
-      lane_changing_velocity + lane_changing_acceleration * delta_t,
+    const auto velocity = std::clamp(
+      lane_changing_velocity + lane_changing_acceleration * delta_t, 0.0,
       lane_change_path.info.velocity.lane_changing);
     const auto length = lane_changing_velocity * delta_t +
                         0.5 * lane_changing_acceleration * delta_t * delta_t + offset;
