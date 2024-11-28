@@ -934,7 +934,7 @@ void AEB::getClosestObjectsOnPath(
   }
 
   const auto longitudinal_offset_opt = utils::getLongitudinalOffset(
-    ego_path, vehicle_info_.front_overhang_m, vehicle_info_.rear_overhang_m);
+    ego_path, vehicle_info_.max_longitudinal_offset_m, vehicle_info_.rear_overhang_m);
 
   if (!longitudinal_offset_opt.has_value()) return;
   const auto longitudinal_offset = longitudinal_offset_opt.value();
