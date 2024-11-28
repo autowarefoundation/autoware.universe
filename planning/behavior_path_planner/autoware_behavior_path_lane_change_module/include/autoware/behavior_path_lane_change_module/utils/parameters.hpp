@@ -128,11 +128,20 @@ struct TrajectoryParameters
   LateralAccelerationMap lat_acc_map{};
 };
 
+struct DelayParameters
+{
+  bool enable{true};
+  bool check_only_parked_vehicle{false};
+  double min_road_shoulder_width{0.5};
+  double th_parked_vehicle_shift_ratio{0.6};
+};
+
 struct Parameters
 {
   TrajectoryParameters trajectory{};
   SafetyParameters safety{};
   CancelParameters cancel{};
+  DelayParameters delay{};
 
   // lane change parameters
   double backward_lane_length{200.0};

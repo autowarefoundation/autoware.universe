@@ -88,7 +88,6 @@ private:
 
   // bool is_time_initialized_{false};
   int initial_count_{0};
-  double expected_interval_{};
   double latency_mean_{};
   double latency_var_{};
   double interval_mean_{};
@@ -130,8 +129,6 @@ private:
   double target_stream_latency_std_{0.04};   // [s]
   double target_stream_interval_{0.1};       // [s]
   double target_stream_interval_std_{0.02};  // [s]
-  double target_latency_{0.2};               // [s]
-  double target_latency_band_{1.0};          // [s]
 
 private:
   void getObjectTimeInterval(

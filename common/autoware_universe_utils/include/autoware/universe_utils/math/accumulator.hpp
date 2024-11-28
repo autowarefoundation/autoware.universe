@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2021-2024 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,17 +15,17 @@
 #include <iostream>
 #include <limits>
 
-#ifndef KINEMATIC_EVALUATOR__STAT_HPP_
-#define KINEMATIC_EVALUATOR__STAT_HPP_
+#ifndef AUTOWARE__UNIVERSE_UTILS__MATH__ACCUMULATOR_HPP_
+#define AUTOWARE__UNIVERSE_UTILS__MATH__ACCUMULATOR_HPP_
 
-namespace kinematic_diagnostics
+namespace autoware::universe_utils
 {
 /**
- * @brief class to incrementally build statistics
+ * @brief class to accumulate statistical data, supporting min, max and mean.
  * @typedef T type of the values (default to double)
  */
 template <typename T = double>
-class Stat
+class Accumulator
 {
 public:
   /**
@@ -65,11 +65,11 @@ public:
   unsigned int count() const { return count_; }
 
   template <typename U>
-  friend std::ostream & operator<<(std::ostream & os, const Stat<U> & stat);
+  friend std::ostream & operator<<(std::ostream & os, const Accumulator<U> & accumulator);
 
 private:
   T min_ = std::numeric_limits<T>::max();
-  T max_ = std::numeric_limits<T>::min();
+  T max_ = std::numeric_limits<T>::lowest();
   long double mean_ = 0.0;
   unsigned int count_ = 0;
 };
@@ -78,16 +78,16 @@ private:
  * @brief overload << operator for easy print to output stream
  */
 template <typename T>
-std::ostream & operator<<(std::ostream & os, const Stat<T> & stat)
+std::ostream & operator<<(std::ostream & os, const Accumulator<T> & accumulator)
 {
-  if (stat.count() == 0) {
+  if (accumulator.count() == 0) {
     os << "None None None";
   } else {
-    os << stat.min() << " " << stat.max() << " " << stat.mean();
+    os << accumulator.min() << " " << accumulator.max() << " " << accumulator.mean();
   }
   return os;
 }
 
-}  // namespace kinematic_diagnostics
+}  // namespace autoware::universe_utils
 
-#endif  // KINEMATIC_EVALUATOR__STAT_HPP_
+#endif  // AUTOWARE__UNIVERSE_UTILS__MATH__ACCUMULATOR_HPP_

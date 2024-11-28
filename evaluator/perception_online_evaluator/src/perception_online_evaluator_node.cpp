@@ -99,7 +99,7 @@ void PerceptionOnlineEvaluatorNode::publishMetrics()
 }
 
 DiagnosticStatus PerceptionOnlineEvaluatorNode::generateDiagnosticStatus(
-  const std::string metric, const Stat<double> & metric_stat) const
+  const std::string metric, const Accumulator<double> & metric_stat) const
 {
   DiagnosticStatus status;
 

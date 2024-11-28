@@ -1358,7 +1358,7 @@ bool NormalLaneChange::check_candidate_path_safety(
   }
 
   if (
-    !is_stuck && !utils::lane_change::passed_parked_objects(
+    !is_stuck && utils::lane_change::is_delay_lane_change(
                    common_data_ptr_, candidate_path, filtered_objects_.target_lane_leading.stopped,
                    lane_change_debug_.collision_check_objects)) {
     throw std::logic_error(
@@ -1539,10 +1539,8 @@ PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const
     return {false, true};
   }
 
-  const auto has_passed_parked_objects = utils::lane_change::passed_parked_objects(
-    common_data_ptr_, path, filtered_objects_.target_lane_leading.stopped, debug_data);
-
-  if (!has_passed_parked_objects) {
+  if (utils::lane_change::is_delay_lane_change(
+        common_data_ptr_, path, filtered_objects_.target_lane_leading.stopped, debug_data)) {
     RCLCPP_DEBUG(logger_, "Lane change has been delayed.");
     return {false, false};
   }
