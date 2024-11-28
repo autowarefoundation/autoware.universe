@@ -45,18 +45,26 @@ public:
 
   struct DebugData
   {
-    double base_link2front;
-    std::optional<geometry_msgs::msg::Pose> stop_pose;
+    double base_link2front;  ///< Distance from the base link to the vehicle front.
+    std::optional<geometry_msgs::msg::Pose> stop_pose;  ///< Pose of the stop position.
   };
 
   struct PlannerParam
   {
-    double stop_margin;
-    double stop_duration_sec;
-    double hold_stop_margin_distance;
-    bool use_initialization_stop_line_state;
+    double stop_margin;        ///< Margin to the stop line.
+    double stop_duration_sec;  ///< Required stop duration at the stop line.
+    double
+      hold_stop_margin_distance;  ///< Distance threshold for transitioning to the STOPPED state
   };
 
+  /**
+   * @brief Constructor for StopLineModule.
+   * @param module_id Unique ID for the module.
+   * @param stop_line Stop line data.
+   * @param planner_param Planning parameters.
+   * @param logger Logger for output messages.
+   * @param clock Shared clock instance.
+   */
   StopLineModule(
     const int64_t module_id, lanelet::ConstLineString3d stop_line,
     const PlannerParam & planner_param, const rclcpp::Logger & logger,
@@ -64,10 +72,25 @@ public:
 
   bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
 
+  /**
+   * @brief Calculate ego position and stop point.
+   * @param trajectory Current trajectory.
+   * @param ego_pose Current pose of the vehicle.
+   * @param state Current state of the stop line module.
+   * @return Pair of ego position and optional stop point.
+   */
   std::pair<double, std::optional<double>> getEgoAndStopPoint(
     const Trajectory & trajectory, const geometry_msgs::msg::Pose & ego_pose,
     const State & state) const;
 
+  /**
+   * @brief Update the state and stopped time of the module.
+   * @param state Pointer to the current state.
+   * @param stopped_time Pointer to the stopped time.
+   * @param now Current time.
+   * @param distance_to_stop_point Distance to the stop point.
+   * @param is_vehicle_stopped Flag indicating if the vehicle is stopped.
+   */
   void updateStateAndStoppedTime(
     State * state, std::optional<rclcpp::Time> * stopped_time, const rclcpp::Time & now,
     const double & distance_to_stop_point, const bool & is_vehicle_stopped) const;
@@ -88,17 +111,11 @@ public:
   autoware::motion_utils::VirtualWalls createVirtualWalls() override;
 
 private:
-  const lanelet::ConstLineString3d stop_line_;
-  // Parameter
-  const PlannerParam planner_param_;
-
-  // State machine
-  State state_;
-
-  std::optional<rclcpp::Time> stopped_time_;
-
-  // Debug
-  DebugData debug_data_;
+  const lanelet::ConstLineString3d stop_line_;  ///< Stop line geometry.
+  const PlannerParam planner_param_;            ///< Parameters for the planner.
+  State state_;                                 ///< Current state of the module.
+  std::optional<rclcpp::Time> stopped_time_;    ///< Time when the vehicle stopped.
+  DebugData debug_data_;                        ///< Debug information.
 };
 }  // namespace autoware::behavior_velocity_planner
 

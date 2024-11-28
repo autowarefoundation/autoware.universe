@@ -57,7 +57,6 @@ protected:
     planner_param_.stop_margin = 0.5;
     planner_param_.stop_duration_sec = 2.0;
     planner_param_.hold_stop_margin_distance = 0.5;
-    planner_param_.use_initialization_stop_line_state = true;
 
     planner_data_ = std::make_shared<autoware::behavior_velocity_planner::PlannerData>(*node_);
     planner_data_->stop_line_extend_length = 5.0;
