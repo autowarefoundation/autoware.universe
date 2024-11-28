@@ -55,7 +55,7 @@ autoware_map_msgs::msg::MapProjectorInfo load_info_from_yaml(const std::string &
                  "https://github.com/autowarefoundation/autoware.universe/blob/main/map/"
                  "map_projection_loader/"
                  "README.md"
-              << std::endl;);
+              << std::endl);
     msg.projector_type = autoware_map_msgs::msg::MapProjectorInfo::LOCAL;
   } else {
     throw std::runtime_error(
