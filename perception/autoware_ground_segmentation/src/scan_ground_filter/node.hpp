@@ -148,7 +148,7 @@ private:
   // conform to new API
   virtual void faster_filter(
     const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output,
-    const autoware::pointcloud_preprocessor::TransformInfo & transform_info);
+    const autoware::pointcloud_preprocessor::TransformInfo & transform_info) override;
 
   tf2_ros::Buffer tf_buffer_{get_clock()};
   tf2_ros::TransformListener tf_listener_{tf_buffer_};
