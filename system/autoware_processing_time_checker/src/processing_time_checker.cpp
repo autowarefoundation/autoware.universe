@@ -52,7 +52,7 @@ ProcessingTimeChecker::ProcessingTimeChecker(const rclcpp::NodeOptions & node_op
 
     // extract module name from topic name
     auto tmp_topic_name = processing_time_topic_name;
-    for (size_t i = 0; i < 4; ++i) {  // 4 is enouh for the search depth
+    for (size_t i = 0; i < 4; ++i) {  // 4 is enough for the search depth
       tmp_topic_name = remove_last_name(tmp_topic_name);
       const auto module_name_candidate = get_last_name(tmp_topic_name);
       // clang-format off
