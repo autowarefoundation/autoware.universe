@@ -46,8 +46,8 @@ protected:
     rclcpp::NodeOptions options;
     options.arguments(
       {"--ros-args", "--params-file",
-       ament_index_cpp::get_package_share_directory("autoware_behavior_velocity_planner") +
-         "/config/behavior_velocity_planner.param.yaml",
+       ament_index_cpp::get_package_share_directory("autoware_test_utils") +
+         "/config/test_behavior_velocity_planner.param.yaml",
        "--params-file",
        ament_index_cpp::get_package_share_directory("autoware_test_utils") +
          "/config/test_vehicle_info.param.yaml"});
