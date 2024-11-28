@@ -1825,6 +1825,7 @@ bool NormalLaneChange::has_collision_with_decel_patterns(
     acceleration_values.begin(), acceleration_values.end(), acceleration_values.begin(),
     [&](double n) { return lane_changing_acc + n * acc_resolution; });
 
+  const auto stopped_obj_vel_th = lane_change_parameters_->safety.th_stopped_object_velocity;
   const auto all_collided = std::all_of(
     acceleration_values.begin(), acceleration_values.end(), [&](const auto acceleration) {
       const auto ego_predicted_path = utils::lane_change::convert_to_predicted_path(
