@@ -14,27 +14,24 @@
 
 #ifndef SCENE_HPP_
 #define SCENE_HPP_
+#define EIGEN_MPL2_ONLY
 
 #include "autoware/behavior_velocity_planner_common/scene_module_interface.hpp"
 #include "autoware/behavior_velocity_planner_common/utilization/util.hpp"
-
-#include <autoware/motion_utils/factor/velocity_factor_interface.hpp>
-#include <rclcpp/time.hpp>
-
-#include <geometry_msgs/msg/detail/point__struct.hpp>
-#include <geometry_msgs/msg/detail/pose__struct.hpp>
-
-#include <optional>
-#include <utility>
-
-#define EIGEN_MPL2_ONLY
+#include "autoware/motion_utils/factor/velocity_factor_interface.hpp"
 #include "autoware/trajectory/path_point_with_lane_id.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <rclcpp/rclcpp.hpp>
+#include <rclcpp/time.hpp>
+
+#include <geometry_msgs/msg/pose.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
+
+#include <optional>
+#include <utility>
 
 namespace autoware::behavior_velocity_planner
 {

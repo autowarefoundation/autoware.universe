@@ -1,4 +1,4 @@
-// Copyright 2024 Tier IV, Inc.
+// Copyright 2024 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -83,7 +83,7 @@ protected:
   void TearDown() override { rclcpp::shutdown(); }
 
   StopLineModule::Trajectory trajectory_;
-  StopLineModule::PlannerParam planner_param_;
+  StopLineModule::PlannerParam planner_param_{};
   lanelet::ConstLineString3d stop_line_;
   rclcpp::Clock::SharedPtr clock_;
   std::shared_ptr<StopLineModule> module_;
