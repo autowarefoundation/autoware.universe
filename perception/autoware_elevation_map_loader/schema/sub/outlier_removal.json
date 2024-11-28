@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Elevation Map Loader Params",
+  "definitions": {
+    "outlier_removal": {
+      "type": "object",
+      "properties": {
+        "is_remove_outliers": {
+          "type": "boolean",
+          "description": "Whether to perform statistical outlier removal",
+          "default": false,
+          "$comment": "If true, statistical outlier removal is performed"
+        },
+        "mean_K": {
+          "type": "number",
+          "description": "Number of neighbors to analyze for estimating statistics of a point",
+          "default": 10,
+          "minimum": 1
+        },
+        "stddev_threshold": {
+          "type": "number",
+          "description": "Number of standard deviations under which points are considered to be inliers",
+          "default": 1.0
+        }
+      },
+      "required": ["is_remove_outliers", "mean_K", "stddev_threshold"],
+      "additionalProperties": false
+    }
+  }
+}

@@ -1,0 +1,36 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Elevation Map Loader Params",
+  "definitions": {
+    "rotation": {
+      "type": "object",
+      "properties": {
+        "r": {
+          "type": "number",
+          "description": "Rotation (intrinsic rotation, convention X-Y'-Z'') that is applied to the input point cloud before computing elevation.",
+          "default": 0.0,
+          "$comment": "This is the rotation around the X-axis",
+          "minimum": -360.0,
+          "maximum": 360.0
+        },
+        "p": {
+          "type": "number",
+          "description": "Rotation (intrinsic rotation, convention X-Y'-Z'') that is applied to the input point cloud before computing elevation.",
+          "default": 0.0,
+          "$comment": "This is the rotation around the Y-axis",
+          "minimum": -360.0,
+          "maximum": 360.0
+        },
+        "y": {
+          "type": "number",
+          "description": "Rotation (intrinsic rotation, convention X-Y'-Z'') that is applied to the input point cloud before computing elevation.",
+          "default": 0.0,
+          "minimum": -360.0,
+          "maximum": 360.0
+        }
+      },
+      "required": ["r", "p", "y"],
+      "additionalProperties": false
+    }
+  }
+}
