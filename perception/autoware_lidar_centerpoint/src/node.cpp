@@ -111,9 +111,10 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
   detector_ptr_ =
     std::make_unique<CenterPointTRT>(encoder_param, head_param, densification_param, config);
 
-  pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
-    "~/input/pointcloud", rclcpp::SensorDataQoS{}.keep_last(1),
-    std::bind(&LidarCenterPointNode::pointCloudCallback, this, std::placeholders::_1));
+  pointcloud_sub_ =
+    std::make_unique<cuda_blackboard::CudaBlackboardSubscriber<cuda_blackboard::CudaPointCloud2>>(
+      *this, "~/input/pointcloud", false,
+      std::bind(&LidarCenterPointNode::pointCloudCallback, this, std::placeholders::_1));
   objects_pub_ = this->create_publisher<autoware_perception_msgs::msg::DetectedObjects>(
     "~/output/objects", rclcpp::QoS{1});
 
@@ -136,7 +137,7 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
 }
 
 void LidarCenterPointNode::pointCloudCallback(
-  const sensor_msgs::msg::PointCloud2::ConstSharedPtr input_pointcloud_msg)
+  const std::shared_ptr<const cuda_blackboard::CudaPointCloud2> & input_pointcloud_msg)
 {
   const auto objects_sub_count =
     objects_pub_->get_subscription_count() + objects_pub_->get_intra_process_subscription_count();
@@ -149,7 +150,7 @@ void LidarCenterPointNode::pointCloudCallback(
   }
 
   std::vector<Box3D> det_boxes3d;
-  bool is_success = detector_ptr_->detect(*input_pointcloud_msg, tf_buffer_, det_boxes3d);
+  bool is_success = detector_ptr_->detect(input_pointcloud_msg, tf_buffer_, det_boxes3d);
   if (!is_success) {
     return;
   }

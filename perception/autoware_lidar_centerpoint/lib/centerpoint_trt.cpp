@@ -126,15 +126,15 @@ void CenterPointTRT::initPtr()
 }
 
 bool CenterPointTRT::detect(
-  const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer,
-  std::vector<Box3D> & det_boxes3d)
+  const std::shared_ptr<const cuda_blackboard::CudaPointCloud2> & input_pointcloud_msg_ptr,
+  const tf2_ros::Buffer & tf_buffer, std::vector<Box3D> & det_boxes3d)
 {
   CHECK_CUDA_ERROR(cudaMemsetAsync(
     encoder_in_features_d_.get(), 0, encoder_in_feature_size_ * sizeof(float), stream_));
   CHECK_CUDA_ERROR(
     cudaMemsetAsync(spatial_features_d_.get(), 0, spatial_features_size_ * sizeof(float), stream_));
 
-  if (!preprocess(input_pointcloud_msg, tf_buffer)) {
+  if (!preprocess(input_pointcloud_msg_ptr, tf_buffer)) {
     RCLCPP_WARN_STREAM(
       rclcpp::get_logger("lidar_centerpoint"), "Fail to preprocess and skip to detect.");
     return false;
@@ -148,9 +148,10 @@ bool CenterPointTRT::detect(
 }
 
 bool CenterPointTRT::preprocess(
-  const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer)
+  const std::shared_ptr<const cuda_blackboard::CudaPointCloud2> & input_pointcloud_msg_ptr,
+  const tf2_ros::Buffer & tf_buffer)
 {
-  bool is_success = vg_ptr_->enqueuePointCloud(input_pointcloud_msg, tf_buffer, stream_);
+  bool is_success = vg_ptr_->enqueuePointCloud(input_pointcloud_msg_ptr, tf_buffer);
   if (!is_success) {
     return false;
   }
