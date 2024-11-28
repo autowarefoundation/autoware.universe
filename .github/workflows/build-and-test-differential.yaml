@@ -27,9 +27,24 @@ jobs:
     with:
       label: tag:require-cuda-build-and-test
 
-  build-and-test-differential:
+  determine-container-suffix:
     needs: [make-sure-label-is-present, make-sure-require-cuda-label-is-present]
     if: ${{ needs.make-sure-label-is-present.outputs.result == 'true' }}
+    runs-on: ubuntu-latest
+    outputs:
+      suffix-list: ${{ steps.set-suffix-list.outputs.suffix-list }}
+    steps:
+      - name: Determine suffix list
+        id: set-suffix-list
+        run: |
+          suffix_list='""'
+          if [ "${{ needs.make-sure-require-cuda-label-is-present.outputs.result }}" == "true" ]; then
+            suffix_list='"" "-cuda"'
+          fi
+          echo "suffix-list=${suffix_list}" >> $GITHUB_OUTPUT
+
+  build-and-test-differential:
+    needs: [determine-container-suffix]
     runs-on: ${{ matrix.runner }}
     container: ${{ matrix.container }}${{ matrix.container-suffix }}
     strategy:
@@ -37,9 +52,7 @@ jobs:
       matrix:
         rosdistro:
           - humble
-        container-suffix:
-          - ""
-          - -cuda
+        container-suffix: ${{ needs.determine-container-suffix.outputs.suffix-list }}
         include:
           - rosdistro: humble
             container: ghcr.io/autowarefoundation/autoware:universe-devel
@@ -62,7 +75,6 @@ jobs:
           fetch-depth: ${{ env.PR_FETCH_DEPTH }}
 
       - name: Run build-and-test-differential action
-        if: ${{ !(matrix.container-suffix == '-cuda') || needs.make-sure-require-cuda-label-is-present.outputs.result == 'true' }}
         uses: ./.github/actions/build-and-test-differential
         with:
           rosdistro: ${{ matrix.rosdistro }}
