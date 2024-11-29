@@ -134,7 +134,7 @@ protected:
   {
     metric_sub_ = rclcpp::create_subscription<tier4_metric_msgs::msg::MetricArray>(
       eval_node, "/perception_online_evaluator/metrics", 1,
-      [this, &metric_str](const tier4_metric_msgs::msg::MetricArray::ConstSharedPtr msg) {
+      [this, metric_str](const tier4_metric_msgs::msg::MetricArray::ConstSharedPtr msg) {
         // extract a metric whose name includes metrics_str
         const auto it = std::find_if(
           msg->metric_array.begin(), msg->metric_array.end(), [&metric_str](const auto & metric) {
