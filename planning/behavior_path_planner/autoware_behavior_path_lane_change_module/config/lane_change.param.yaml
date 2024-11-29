@@ -20,6 +20,7 @@
         min_lane_changing_velocity: 2.78
         lon_acc_sampling_num: 5
         lat_acc_sampling_num: 3
+        lane_changing_decel_factor: 0.5
 
       # delay lane change
       delay_lane_change:
