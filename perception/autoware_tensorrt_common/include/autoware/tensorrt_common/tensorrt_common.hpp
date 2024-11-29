@@ -222,6 +222,7 @@ private:
   TrtUniquePtr<nvinfer1::IExecutionContext> context_;
   std::unique_ptr<nvinfer1::IInt8Calibrator> calibrator_;
 
+  // TODO
   nvinfer1::Dims input_dims_;
   nvinfer1::Dims output_dims_;
   std::string precision_;
