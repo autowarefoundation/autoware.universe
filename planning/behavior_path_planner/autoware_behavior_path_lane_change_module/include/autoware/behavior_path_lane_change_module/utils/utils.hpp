@@ -384,6 +384,22 @@ bool filter_target_lane_objects(
   ExtendedPredictedObjects & trailing_objects);
 
 /**
+ * @brief Retrieves the preceding lanes for the target lanes while removing overlapping and
+ * disconnected lanes.
+ *
+ * This function identifies all lanes that precede the target lanes based on the ego vehicle's
+ * current position and a specified backward search length. The resulting preceding lanes are
+ * filtered to remove lanes that overlap with the current lanes or are not connected to the route.
+ *
+ * @param common_data_ptr Shared pointer to commonly used data in lane change module, which contains
+ * route handler information, lane details, ego vehicle pose, and behavior parameters.
+ *
+ * @return A vector of preceding lanelet groups, with each group containing only the connected and
+ * non-overlapping preceding lanes.
+ */
+std::vector<lanelet::ConstLanelets> get_preceding_lanes(const CommonDataPtr & common_data_ptr);
+
+/**
  * @brief Determines if the object's predicted path overlaps with the given lane polygon.
  *
  * This function checks whether any of the line string paths derived from the object's predicted
