@@ -105,19 +105,19 @@ void PerceptionOnlineEvaluatorNode::toMetricMsg(
 {
   // min value
   metrics_msg.metric_array.emplace_back(tier4_metric_msgs::build<tier4_metric_msgs::msg::Metric>()
-                                          .name(metric + "min")
+                                          .name(metric + "/min")
                                           .unit("m")
                                           .value(std::to_string(metric_stat.min())));
 
   // max value
   metrics_msg.metric_array.emplace_back(tier4_metric_msgs::build<tier4_metric_msgs::msg::Metric>()
-                                          .name(metric + "max")
+                                          .name(metric + "/max")
                                           .unit("m")
                                           .value(std::to_string(metric_stat.max())));
 
   // mean value
   metrics_msg.metric_array.emplace_back(tier4_metric_msgs::build<tier4_metric_msgs::msg::Metric>()
-                                          .name(metric + "mean")
+                                          .name(metric + "/mean")
                                           .unit("m")
                                           .value(std::to_string(metric_stat.mean())));
 }
