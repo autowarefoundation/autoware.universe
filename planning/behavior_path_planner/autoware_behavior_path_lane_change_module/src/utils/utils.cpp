@@ -1171,7 +1171,7 @@ bool has_overtaking_turn_lane_object(
       return true;
     }
 
-    return is_object_path_overlapped_lanes(object, common_data_ptr->lanes_polygon_ptr->target);
+    return object_path_overlaps_lanes(object, common_data_ptr->lanes_polygon_ptr->target);
   };
 
   return std::any_of(
@@ -1207,7 +1207,7 @@ bool filter_target_lane_objects(
       }
 
       return !is_stopped && is_vehicle(object.classification) &&
-             is_object_path_overlapped_lanes(object, lanes_polygon.target);
+             object_path_overlaps_lanes(object, lanes_polygon.target);
     });
 
     if (overlapped_target_lanes) {
@@ -1250,7 +1250,7 @@ bool filter_target_lane_objects(
   return false;
 }
 
-bool is_object_path_overlapped_lanes(
+bool object_path_overlaps_lanes(
   const ExtendedPredictedObject & object, const lanelet::BasicPolygon2d & lanes_polygon)
 {
   return ranges::any_of(get_line_string_paths(object), [&](const auto & path) {

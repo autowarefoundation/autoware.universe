@@ -397,7 +397,7 @@ bool filter_target_lane_objects(
  * @return true if any of the object's predicted paths overlap with the lanes polygon, false
  * otherwise.
  */
-bool is_object_path_overlapped_lanes(
+bool object_path_overlaps_lanes(
   const ExtendedPredictedObject & object, const lanelet::BasicPolygon2d & lanes_polygon);
 }  // namespace autoware::behavior_path_planner::utils::lane_change
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__UTILS_HPP_
