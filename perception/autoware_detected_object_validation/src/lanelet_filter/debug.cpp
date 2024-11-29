@@ -66,14 +66,14 @@ std::optional<visualization_msgs::msg::Marker> createPolygonMarker(
 
   std::vector<geometry_msgs::msg::Point> points;
   points.reserve(polygon.size() * 2);
-  
+
   for (auto it = polygon.begin(); it != std::prev(polygon.end()); ++it) {
     geometry_msgs::msg::Point point;
-    
+
     point.x = it->x();
     point.y = it->y();
     points.push_back(point);
-    
+
     const auto next = std::next(it);
     point.x = next->x();
     point.y = next->y();
