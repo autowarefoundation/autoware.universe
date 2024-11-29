@@ -200,7 +200,7 @@ void VelocitySteeringFactorsPanel::onVelocityFactors(const VelocityFactorArray::
       const auto decel_dist = autoware::motion_utils::calcDecelDistWithJerkAndAccConstraints(
         current_vel, 0., current_acc, acc_min, jerk_acc, -jerk_acc);
       if (decel_dist > e.distance && e.distance >= 0 && e.status == VelocityFactor::APPROACHING) {
-        return QColor{255, 0, 0, 127};
+        return COLOR_FREAK_PINK;
       }
       return {};
     }();

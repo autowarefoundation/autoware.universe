@@ -53,6 +53,8 @@ protected:
   static constexpr double JERK_DEFAULT = 1.0;
   static constexpr double DECEL_LIMIT_DEFAULT = 1.0;
 
+  static constexpr QColor COLOR_FREAK_PINK = {255, 0, 108};
+
   // Layout
   QGroupBox * makeVelocityFactorsGroup();
   QGroupBox * makeSteeringFactorsGroup();
