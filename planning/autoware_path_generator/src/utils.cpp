@@ -32,10 +32,10 @@ bool exists(const std::vector<T> & vec, const T & item)
 }
 }  // namespace
 
-std::optional<lanelet::LaneletSequence> get_lanelet_sequence_within_route(
+std::optional<lanelet::ConstLanelets> get_lanelets_within_route(
   const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data,
-  const geometry_msgs::msg::Pose & current_pose, const double forward_distance,
-  const double backward_distance)
+  const geometry_msgs::msg::Pose & current_pose, const double backward_distance,
+  const double forward_distance)
 {
   if (!exists(planner_data.route_lanelets, lanelet)) {
     return std::nullopt;
@@ -44,13 +44,13 @@ std::optional<lanelet::LaneletSequence> get_lanelet_sequence_within_route(
   const auto arc_coordinates = lanelet::utils::getArcCoordinates({lanelet}, current_pose);
   const auto lanelet_length = lanelet::utils::getLaneletLength2d(lanelet);
 
-  const auto backward_lanelets = get_lanelets_up_to_within_route(
+  const auto backward_lanelets = get_lanelets_within_route_up_to(
     lanelet, planner_data, backward_distance - arc_coordinates.length);
   if (!backward_lanelets) {
     return std::nullopt;
   }
 
-  const auto forward_lanelets = get_lanelets_after_within_route(
+  const auto forward_lanelets = get_lanelets_within_route_after(
     lanelet, planner_data, forward_distance - (lanelet_length - arc_coordinates.length));
   if (!forward_lanelets) {
     return std::nullopt;
@@ -63,32 +63,7 @@ std::optional<lanelet::LaneletSequence> get_lanelet_sequence_within_route(
   return lanelets;
 }
 
-std::optional<lanelet::ConstLanelets> get_lanelets_after_within_route(
-  const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data, const double distance)
-{
-  if (!exists(planner_data.route_lanelets, lanelet)) {
-    return std::nullopt;
-  }
-
-  lanelet::ConstLanelets lanelets{};
-  auto current_lanelet = lanelet;
-  auto length = 0.;
-
-  while (rclcpp::ok() && length < distance) {
-    const auto next_lanelet = get_next_lanelet_within_route(current_lanelet, planner_data);
-    if (!next_lanelet) {
-      break;
-    }
-
-    lanelets.push_back(*next_lanelet);
-    current_lanelet = *next_lanelet;
-    length += lanelet::utils::getLaneletLength2d(*next_lanelet);
-  }
-
-  return lanelets;
-}
-
-std::optional<lanelet::ConstLanelets> get_lanelets_up_to_within_route(
+std::optional<lanelet::ConstLanelets> get_lanelets_within_route_up_to(
   const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data, const double distance)
 {
   if (!exists(planner_data.route_lanelets, lanelet)) {
@@ -114,6 +89,53 @@ std::optional<lanelet::ConstLanelets> get_lanelets_up_to_within_route(
   return lanelets;
 }
 
+std::optional<lanelet::ConstLanelets> get_lanelets_within_route_after(
+  const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data, const double distance)
+{
+  if (!exists(planner_data.route_lanelets, lanelet)) {
+    return std::nullopt;
+  }
+
+  lanelet::ConstLanelets lanelets{};
+  auto current_lanelet = lanelet;
+  auto length = 0.;
+
+  while (rclcpp::ok() && length < distance) {
+    const auto next_lanelet = get_next_lanelet_within_route(current_lanelet, planner_data);
+    if (!next_lanelet) {
+      break;
+    }
+
+    lanelets.push_back(*next_lanelet);
+    current_lanelet = *next_lanelet;
+    length += lanelet::utils::getLaneletLength2d(*next_lanelet);
+  }
+
+  return lanelets;
+}
+
+std::optional<lanelet::ConstLanelet> get_previous_lanelet_within_route(
+  const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data)
+{
+  if (exists(planner_data.start_lanelets, lanelet)) {
+    return std::nullopt;
+  }
+
+  const auto prev_lanelets = planner_data.routing_graph_ptr->previous(lanelet);
+  if (prev_lanelets.size() > 1) {
+    RCLCPP_WARN(
+      rclcpp::get_logger("path_generator").get_child("utils"),
+      "The multiple previous lanelets in a route are found not as expected. Internal calculation "
+      "might have failed.");
+  }
+
+  if (prev_lanelets.empty() || !exists(planner_data.route_lanelets, prev_lanelets.front())) {
+    return std::nullopt;
+  }
+
+  return prev_lanelets.front();
+}
+
 std::optional<lanelet::ConstLanelet> get_next_lanelet_within_route(
   const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data)
 {
@@ -134,35 +156,21 @@ std::optional<lanelet::ConstLanelet> get_next_lanelet_within_route(
   }
 
   if (
-    planner_data.preferred_lanelets.front().id() == lanelet.id() ||
-    !exists(planner_data.route_lanelets, lanelet)) {
+    next_lanelets.empty() ||
+    next_lanelets.front().id() == planner_data.preferred_lanelets.front().id() ||
+    !exists(planner_data.route_lanelets, next_lanelets.front())) {
     return std::nullopt;
   }
 
   return next_lanelets.front();
 }
 
-std::optional<lanelet::ConstLanelet> get_previous_lanelet_within_route(
-  const lanelet::ConstLanelet & lanelet, const PlannerData & planner_data)
-{
-  if (exists(planner_data.start_lanelets, lanelet)) {
-    return std::nullopt;
-  }
-
-  for (const auto & lanelet : planner_data.routing_graph_ptr->previous(lanelet)) {
-    if (exists(planner_data.route_lanelets, lanelet)) {
-      return lanelet;
-    }
-  }
-
-  return std::nullopt;
-}
-
 std::vector<std::pair<lanelet::ConstPoints3d, std::pair<double, double>>> get_waypoint_groups(
-  const lanelet::LaneletSequence & lanelet_sequence, const lanelet::LaneletMap & lanelet_map,
+  const lanelet::ConstLanelets & lanelets, const lanelet::LaneletMap & lanelet_map,
   const double group_separation_threshold, const double interval_margin_ratio)
 {
   std::vector<std::pair<lanelet::ConstPoints3d, std::pair<double, double>>> waypoint_groups{};
+  const lanelet::LaneletSequence lanelet_sequence(lanelets);
 
   const auto get_interval_bound =
     [&](const lanelet::ConstPoint3d & point, const double lateral_distance_factor) {
@@ -171,7 +179,7 @@ std::vector<std::pair<lanelet::ConstPoints3d, std::pair<double, double>>> get_wa
       return arc_coordinates.length + lateral_distance_factor * std::abs(arc_coordinates.distance);
     };
 
-  for (const auto & lanelet : lanelet_sequence) {
+  for (const auto & lanelet : lanelets) {
     if (!lanelet.hasAttribute("waypoints")) {
       continue;
     }
