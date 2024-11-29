@@ -382,11 +382,16 @@ std::vector<double> calc_lon_acceleration_samples(
 }
 
 double calc_lane_changing_acceleration(
-  const double initial_lane_changing_velocity, const double max_path_velocity,
-  const double lane_changing_time, const double prepare_longitudinal_acc)
+  const CommonDataPtr & common_data_ptr, const double initial_lane_changing_velocity,
+  const double max_path_velocity, const double lane_changing_time,
+  const double prepare_longitudinal_acc)
 {
   if (prepare_longitudinal_acc <= 0.0) {
-    return 0.0;
+    const auto & params = common_data_ptr->lc_param_ptr->trajectory;
+    const auto lane_chaging_acc = common_data_ptr->transient_data.is_ego_near_current_terminal_start
+                                    ? prepare_longitudinal_acc * params.lane_changing_decel_factor
+                                    : 0.0;
+    return lane_chaging_acc;
   }
 
   return std::clamp(
@@ -520,7 +525,7 @@ std::vector<PhaseMetrics> calc_shift_phase_metrics(
       shift_length, common_data_ptr->lc_param_ptr->trajectory.lateral_jerk, lat_acc);
 
     const double lane_changing_accel = calc_lane_changing_acceleration(
-      initial_velocity, max_path_velocity, lane_changing_duration, lon_accel);
+      common_data_ptr, initial_velocity, max_path_velocity, lane_changing_duration, lon_accel);
 
     const auto lane_changing_length = calculation::calc_phase_length(
       initial_velocity, max_vel, lane_changing_accel, lane_changing_duration);

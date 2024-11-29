@@ -106,8 +106,9 @@ double calc_ego_dist_to_lanes_start(
   const lanelet::ConstLanelets & target_lanes);
 
 double calc_lane_changing_acceleration(
-  const double initial_lane_changing_velocity, const double max_path_velocity,
-  const double lane_changing_time, const double prepare_longitudinal_acc);
+  const CommonDataPtr & common_data_ptr, const double initial_lane_changing_velocity,
+  const double max_path_velocity, const double lane_changing_time,
+  const double prepare_longitudinal_acc);
 
 /**
  * @brief Calculates the distance required during a lane change operation.
