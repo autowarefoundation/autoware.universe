@@ -65,16 +65,18 @@ std::optional<visualization_msgs::msg::Marker> createPolygonMarker(
   marker.color.b = color.b;
 
   std::vector<geometry_msgs::msg::Point> points;
-  points.reserve(polygon.size());
-
-  for (size_t i = 0; i < polygon.size() - 1; ++i) {
+  points.reserve(polygon.size() * 2);
+  
+  for (auto it = polygon.begin(); it != std::prev(polygon.end()); ++it) {
     geometry_msgs::msg::Point point;
-    point.x = polygon[i].x();
-    point.y = polygon[i].y();
+    
+    point.x = it->x();
+    point.y = it->y();
     points.push_back(point);
-
-    point.x = polygon[i + 1].x();
-    point.y = polygon[i + 1].y();
+    
+    const auto next = std::next(it);
+    point.x = next->x();
+    point.y = next->y();
     points.push_back(point);
   }
   geometry_msgs::msg::Point point;
