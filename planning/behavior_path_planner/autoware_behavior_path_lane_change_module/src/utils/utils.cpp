@@ -1262,15 +1262,11 @@ std::vector<lanelet::ConstLanelets> get_preceding_lanes(const CommonDataPtr & co
   const auto & current_lanes = common_data_ptr->lanes_ptr->current;
   std::unordered_set<lanelet::Id> current_lanes_id;
   for (const auto & lane : current_lanes) {
-    if (current_lanes_id.find(lane.id()) == current_lanes_id.end()) {
-      current_lanes_id.insert(lane.id());
-    }
+    current_lanes_id.insert(lane.id());
 
     const auto prev_lanes = route_handler_ptr->getPreviousLanelets(lane);
     for (const auto & prev_lane : prev_lanes) {
-      if (current_lanes_id.find(prev_lane.id()) == current_lanes_id.end()) {
-        current_lanes_id.insert(prev_lane.id());
-      }
+      current_lanes_id.insert(prev_lane.id());
     }
   }
 
@@ -1283,15 +1279,12 @@ std::vector<lanelet::ConstLanelets> get_preceding_lanes(const CommonDataPtr & co
 
     // Step 2: Identify disconnected lanes
     std::unordered_set<lanelet::Id> not_connected_ids;
-    for (const auto & pair : ranges::views::zip(
+    for (const auto [current_lane, next_lane] : ranges::views::zip(
            non_overlapping_lanes, non_overlapping_lanes | ranges::views::drop(1))) {
-      const auto & current_lane = pair.first;
-      const auto & next_lane = pair.second;
-
       const auto next_lanes = route_handler_ptr->getNextLanelets(current_lane);
 
-      const auto is_connected =
-        ranges::any_of(next_lanes, [&](const auto & lane) { return lane.id() == next_lane.id(); });
+      const auto is_connected = ranges::any_of(
+        next_lanes, [next_id = next_lane.id()](const auto & lane) { return lane.id() == next_id; });
 
       if (!is_connected) {
         not_connected_ids.insert(current_lane.id());
