@@ -14,8 +14,9 @@
 
 #include "autoware/external_velocity_limit_selector/external_velocity_limit_selector_node.hpp"
 
-#include <algorithm>
+#include <cstddef>
 #include <memory>
+#include <ostream>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -40,11 +41,11 @@ VelocityLimit getHardestLimit(
 
   double hardest_max_velocity = node_param.max_vel;
   double hardest_max_jerk = 0.0;
-  double hardest_max_accelertion = 0.0;
+  double hardest_max_acceleration = 0.0;
+  std::string hardest_max_acceleration_key;
+  size_t constraint_num = 0;
+  size_t acceleration_constraint_num = 0;
 
-  const auto acceleration_only = std::all_of(velocity_limits.begin(), velocity_limits.end(), [&normal_constraints](const auto & velocity_limit) {
-    return velocity_limit.second.use_constraints && velocity_limit.second.constraints.max_acceleration > normal_constraints.max_acceleration;
-  });
 
   for (const auto & limit : velocity_limits) {
     // guard nan, inf
@@ -59,23 +60,38 @@ VelocityLimit getHardestLimit(
       hardest_max_velocity = max_velocity;
     }
 
-    if (acceleration_only && hardest_max_accelertion < limit.second.constraints.max_acceleration) {
-      hardest_limit.constraints = limit.second.constraints;
-      hardest_limit.use_constraints = true;
-      hardest_max_accelertion = limit.second.constraints.max_acceleration;
-      continue;
-    }
-
     const auto constraints =
       limit.second.use_constraints && std::isfinite(limit.second.constraints.max_jerk)
         ? limit.second.constraints
         : normal_constraints;
+
+    if(limit.second.use_constraints) {
+      constraint_num++;
+      if(limit.second.constraints.max_acceleration > normal_constraints.max_acceleration) {
+        acceleration_constraint_num++;
+        hardest_max_acceleration_key = limit.first;
+      }
+    }
+
+    if (hardest_max_acceleration < limit.second.constraints.max_acceleration) {
+      hardest_max_acceleration_key = limit.first;
+      hardest_max_acceleration = limit.second.constraints.max_acceleration;
+    }
 
     // find hardest jerk
     if (hardest_max_jerk < constraints.max_jerk) {
       hardest_limit.constraints = constraints;
       hardest_limit.use_constraints = true;
       hardest_max_jerk = constraints.max_jerk;
+    }
+  }
+
+  if(constraint_num > 0 && constraint_num == acceleration_constraint_num) {
+    if(velocity_limits.find(hardest_max_acceleration_key) != velocity_limits.end()) // Just in case guard
+    {
+      const auto constraints = velocity_limits.at(hardest_max_acceleration_key).constraints;
+      hardest_limit.constraints = constraints;
+      hardest_limit.use_constraints = true;
     }
   }
 
