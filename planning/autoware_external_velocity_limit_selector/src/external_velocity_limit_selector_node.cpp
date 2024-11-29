@@ -14,12 +14,11 @@
 
 #include "autoware/external_velocity_limit_selector/external_velocity_limit_selector_node.hpp"
 
-#include <deque>
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <utility>
-#include <vector>
 
 namespace autoware::external_velocity_limit_selector
 {
@@ -34,12 +33,18 @@ VelocityLimit getHardestLimit(
   hardest_limit.max_velocity = node_param.max_vel;
 
   VelocityLimitConstraints normal_constraints{};
+  normal_constraints.max_acceleration = node_param.normal.max_acc;
   normal_constraints.min_acceleration = node_param.normal.min_acc;
   normal_constraints.min_jerk = node_param.normal.min_jerk;
   normal_constraints.max_jerk = node_param.normal.max_jerk;
 
   double hardest_max_velocity = node_param.max_vel;
   double hardest_max_jerk = 0.0;
+  double hardest_max_accelertion = 0.0;
+
+  const auto acceleration_only = std::all_of(velocity_limits.begin(), velocity_limits.end(), [&normal_constraints](const auto & velocity_limit) {
+    return velocity_limit.second.use_constraints && velocity_limit.second.constraints.max_acceleration > normal_constraints.max_acceleration;
+  });
 
   for (const auto & limit : velocity_limits) {
     // guard nan, inf
@@ -52,6 +57,13 @@ VelocityLimit getHardestLimit(
       hardest_limit.sender = limit.first;
       hardest_limit.max_velocity = max_velocity;
       hardest_max_velocity = max_velocity;
+    }
+
+    if (acceleration_only && hardest_max_accelertion < limit.second.constraints.max_acceleration) {
+      hardest_limit.constraints = limit.second.constraints;
+      hardest_limit.use_constraints = true;
+      hardest_max_accelertion = limit.second.constraints.max_acceleration;
+      continue;
     }
 
     const auto constraints =
