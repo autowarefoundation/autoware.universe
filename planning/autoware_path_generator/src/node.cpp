@@ -37,22 +37,6 @@ double get_arc_length_along_centerline(const T & lanelet, const U & point)
   return lanelet::geometry::toArcCoordinates(lanelet.centerline2d(), lanelet::utils::to2D(point))
     .length;
 }
-
-template <typename T, typename U>
-lanelet::BasicPoint3d get_interpolated_point(const T & start, const U & end, const double distance)
-{
-  lanelet::Point3d start_point, end_point;
-  start_point.x() = start.x();
-  start_point.y() = start.y();
-  start_point.z() = start.z();
-  end_point.x() = end.x();
-  end_point.y() = end.y();
-  end_point.z() = end.z();
-
-  return lanelet::geometry::interpolatedPointAtDistance(
-    lanelet::ConstLineString3d(lanelet::InvalId, lanelet::Points3d{start_point, end_point}),
-    distance);
-}
 }  // namespace
 
 namespace autoware::path_generator

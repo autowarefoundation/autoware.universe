@@ -50,8 +50,6 @@ std::optional<lanelet::ConstLanelet> get_next_lanelet_within_route(
 std::vector<std::pair<lanelet::ConstPoints3d, std::pair<double, double>>> get_waypoint_groups(
   const lanelet::ConstLanelets & lanelets, const lanelet::LaneletMap & lanelet_map,
   const double group_separation_threshold, const double interval_margin_ratio);
-
-void remove_overlapping_points(std::vector<PathPointWithLaneId> & path_points);
 }  // namespace utils
 }  // namespace autoware::path_generator
 
