@@ -137,7 +137,7 @@ void TimeKeeper::start_track(const std::string & func_name)
   } else {
     if (root_node_thread_id_ != std::this_thread::get_id()) {
       const auto warning_msg = fmt::format(
-        "TimeKeeper::start_track({}) is called from a different thread. Ignoring the call",
+        "TimeKeeper::start_track({}) is called from a different thread. Ignoring the call.",
         func_name);
       RCLCPP_WARN(rclcpp::get_logger("TimeKeeper"), "%s", warning_msg.c_str());
       return;
