@@ -232,8 +232,8 @@ std::unique_ptr<fpa::AbstractPlanningAlgorithm> configure_astar(bool use_multi)
     goal_lat_distance_weight};
 
   auto clock_ptr = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME);
-  auto algo = std::make_unique<fpa::AstarSearch>(
-    planner_common_param, vehicle_shape, astar_param, clock_ptr);
+  auto algo =
+    std::make_unique<fpa::AstarSearch>(planner_common_param, vehicle_shape, astar_param, clock_ptr);
   return algo;
 }
 
@@ -248,8 +248,8 @@ std::unique_ptr<fpa::AbstractPlanningAlgorithm> configure_rrtstar(bool informed,
   const auto rrtstar_param = fpa::RRTStarParam{update, informed, max_planning_time, mu, margin};
 
   auto clock_ptr = std::make_shared<rclcpp::Clock>(RCL_ROS_TIME);
-  auto algo = std::make_unique<fpa::RRTStar>(
-    planner_common_param, vehicle_shape, rrtstar_param, clock_ptr);
+  auto algo =
+    std::make_unique<fpa::RRTStar>(planner_common_param, vehicle_shape, rrtstar_param, clock_ptr);
   return algo;
 }
 
