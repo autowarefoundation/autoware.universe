@@ -46,7 +46,6 @@ VelocityLimit getHardestLimit(
   size_t constraint_num = 0;
   size_t acceleration_constraint_num = 0;
 
-
   for (const auto & limit : velocity_limits) {
     // guard nan, inf
     const auto max_velocity =
@@ -65,9 +64,9 @@ VelocityLimit getHardestLimit(
         ? limit.second.constraints
         : normal_constraints;
 
-    if(limit.second.use_constraints) {
+    if (limit.second.use_constraints) {
       constraint_num++;
-      if(limit.second.constraints.max_acceleration > normal_constraints.max_acceleration) {
+      if (limit.second.constraints.max_acceleration > normal_constraints.max_acceleration) {
         acceleration_constraint_num++;
         hardest_max_acceleration_key = limit.first;
       }
@@ -86,9 +85,8 @@ VelocityLimit getHardestLimit(
     }
   }
 
-  if(constraint_num > 0 && constraint_num == acceleration_constraint_num) {
-    if(velocity_limits.find(hardest_max_acceleration_key) != velocity_limits.end()) // Just in case guard
-    {
+  if (constraint_num > 0 && constraint_num == acceleration_constraint_num) {
+    if (velocity_limits.find(hardest_max_acceleration_key) != velocity_limits.end()) {
       const auto constraints = velocity_limits.at(hardest_max_acceleration_key).constraints;
       hardest_limit.constraints = constraints;
       hardest_limit.use_constraints = true;
