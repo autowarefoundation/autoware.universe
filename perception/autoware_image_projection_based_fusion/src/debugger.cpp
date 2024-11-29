@@ -41,7 +41,7 @@ namespace autoware::image_projection_based_fusion
 Debugger::Debugger(
   rclcpp::Node * node_ptr, const std::size_t image_num, const std::size_t image_buffer_size,
   std::vector<std::string> input_camera_topics)
-: node_ptr_(node_ptr), input_camera_topics_{input_camera_topics}
+: input_camera_topics_{input_camera_topics}
 {
   image_buffers_.resize(image_num);
   image_buffer_size_ = image_buffer_size;
