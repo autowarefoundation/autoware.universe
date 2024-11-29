@@ -112,9 +112,8 @@ void NormalLaneChange::update_lanes(const bool is_approved)
   common_data_ptr_->lanes_ptr->target_lane_in_goal_section =
     route_handler_ptr->isInGoalRouteSection(target_lanes.back());
 
-  common_data_ptr_->lanes_ptr->preceding_target = utils::getPrecedingLanelets(
-    *route_handler_ptr, get_target_lanes(), common_data_ptr_->get_ego_pose(),
-    common_data_ptr_->lc_param_ptr->backward_lane_length);
+  common_data_ptr_->lanes_ptr->preceding_target =
+    utils::lane_change::get_preceding_lanes(common_data_ptr_);
 
   lane_change_debug_.current_lanes = common_data_ptr_->lanes_ptr->current;
   lane_change_debug_.target_lanes = common_data_ptr_->lanes_ptr->target;
