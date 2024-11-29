@@ -62,8 +62,7 @@ QGroupBox * VelocitySteeringFactorsPanel::makeVelocityFactorsGroup()
   grid->addWidget(jerk_label, 0, 1);
 
   jerk_input_ = new QDoubleSpinBox;
-  jerk_input_->setMinimum(JERK_MIN);
-  jerk_input_->setMaximum(JERK_MAX);
+  jerk_input_->setMinimum(0.0);
   jerk_input_->setValue(JERK_DEFAULT);
   jerk_input_->setSingleStep(0.1);
   jerk_input_->setSuffix(" [m/s\u00B3]");
@@ -73,8 +72,7 @@ QGroupBox * VelocitySteeringFactorsPanel::makeVelocityFactorsGroup()
   grid->addWidget(decel_limit_label, 2, 1);
 
   decel_limit_input_ = new QDoubleSpinBox;
-  decel_limit_input_->setMinimum(DECEL_LIMIT_MIN);
-  decel_limit_input_->setMaximum(DECEL_LIMIT_MAX);
+  decel_limit_input_->setMinimum(0.0);
   decel_limit_input_->setValue(DECEL_LIMIT_DEFAULT);
   decel_limit_input_->setSingleStep(0.1);
   decel_limit_input_->setSuffix(" [m/s\u00B2]");

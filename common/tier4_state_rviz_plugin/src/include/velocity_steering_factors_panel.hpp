@@ -50,13 +50,8 @@ public:
   void onInitialize() override;
 
 protected:
-  static constexpr double JERK_MIN = 0.0;
   static constexpr double JERK_DEFAULT = 1.0;
-  static constexpr double JERK_MAX = 2.0;
-
-  static constexpr double DECEL_LIMIT_MIN = 0.0;
   static constexpr double DECEL_LIMIT_DEFAULT = 1.0;
-  static constexpr double DECEL_LIMIT_MAX = 2.0;
 
   // Layout
   QGroupBox * makeVelocityFactorsGroup();
