@@ -14,12 +14,10 @@
 
 #include "autoware/external_velocity_limit_selector/external_velocity_limit_selector_node.hpp"
 
-#include <deque>
 #include <memory>
 #include <string>
 #include <unordered_map>
 #include <utility>
-#include <vector>
 
 namespace autoware::external_velocity_limit_selector
 {
