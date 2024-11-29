@@ -203,24 +203,5 @@ std::vector<std::pair<lanelet::ConstPoints3d, std::pair<double, double>>> get_wa
 
   return waypoint_groups;
 }
-
-void remove_overlapping_points(std::vector<PathPointWithLaneId> & path_points)
-{
-  auto filtered_path_end_it = path_points.begin();
-  for (auto it = std::next(path_points.begin()); it != path_points.end();) {
-    constexpr auto min_interval = 0.001;
-    if (
-      autoware::universe_utils::calcDistance3d(filtered_path_end_it->point, it->point) <
-      min_interval) {
-      filtered_path_end_it->lane_ids.push_back(it->lane_ids.front());
-      filtered_path_end_it->point.longitudinal_velocity_mps = std::min(
-        filtered_path_end_it->point.longitudinal_velocity_mps, it->point.longitudinal_velocity_mps);
-      it = path_points.erase(it);
-    } else {
-      filtered_path_end_it = it;
-      ++it;
-    }
-  }
-}
 }  // namespace utils
 }  // namespace autoware::path_generator
