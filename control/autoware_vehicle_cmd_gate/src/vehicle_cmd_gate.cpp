@@ -556,14 +556,14 @@ void VehicleCmdGate::publishControlCommands(const Commands & commands)
 
   // Check engage
   if (!is_engaged_) {
-    filtered_commands.control.longitudinal = createLongitudinalStopControlCmd();
+    filtered_commands.control = createStopControlCmd();
   }
 
   // Check pause. Place this check after all other checks as it needs the final output.
   adapi_pause_->update(filtered_commands.control);
   if (adapi_pause_->is_paused()) {
     if (is_engaged_) {
-      filtered_commands.control.longitudinal = createLongitudinalStopControlCmd();
+      filtered_commands.control = createStopControlCmd();
     } else {
       filtered_commands.control = createStopControlCmd();
     }
