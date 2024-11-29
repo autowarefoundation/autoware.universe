@@ -2,26 +2,14 @@ path_generator:
   planning_hz:
     type: double
 
-  forward_path_length:
+  backward_path_length:
     type: double
 
-  backward_path_length:
+  forward_path_length:
     type: double
 
   waypoint_group_separation_threshold:
     type: double
 
   waypoint_group_interval_margin_ratio:
-    type: double
-
-  input_path_interval:
-    type: double
-
-  enable_akima_spline_first:
-    type: bool
-
-  ego_nearest_dist_threshold:
-    type: double
-
-  ego_nearest_yaw_threshold:
     type: double
