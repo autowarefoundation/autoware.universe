@@ -86,7 +86,11 @@ TEST_F(TimeKeeperTest, MultiThreadWarning)
   t.join();
 
   std::string err = testing::internal::GetCapturedStderr();
-  EXPECT_TRUE(
-    err.find("TimeKeeper::start_track() is called from a different thread. Ignoring the call.") !=
-    std::string::npos);
+  const bool error_found = err.find(
+                             "TimeKeeper::start_track(MainFunction) is called from a different "
+                             "thread. Ignoring the call.") != std::string::npos ||
+                           err.find(
+                             "TimeKeeper::start_track(ThreadFunction) is called from a different "
+                             "thread. Ignoring the call.") != std::string::npos;
+  EXPECT_TRUE(error_found);
 }

@@ -26,8 +26,6 @@ void SceneModuleInterface::onEntry()
 {
   RCLCPP_DEBUG(getLogger(), "%s %s", name_.c_str(), __func__);
 
-  stop_reason_ = StopReason();
-
   processOnEntry();
 }
 }  // namespace autoware::behavior_path_planner
