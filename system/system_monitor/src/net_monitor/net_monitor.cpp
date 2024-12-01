@@ -50,7 +50,13 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
   reassembles_failed_check_duration_(
     declare_parameter<int>("reassembles_failed_check_duration", 1)),
   reassembles_failed_check_count_(declare_parameter<int>("reassembles_failed_check_count", 1)),
-  reassembles_failed_index_(0, 0)
+  reassembles_failed_index_(0, 0),
+  udp_buf_errors_check_duration_(declare_parameter<int>("udp_buf_errors_check_duration", 1)),
+  udp_buf_errors_check_count_(declare_parameter<int>("udp_buf_errors_check_count", 1)),
+  last_udp_rcvbuf_errors_(0),
+  udp_rcvbuf_errors_index_(0, 0),
+  last_udp_sndbuf_errors_(0),
+  udp_sndbuf_errors_index_(0, 0)
 {
   if (monitor_program_.empty()) {
     monitor_program_ = "*";
@@ -63,6 +69,7 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
   updater_.add("Network Traffic", this, &NetMonitor::monitor_traffic);
   updater_.add("Network CRC Error", this, &NetMonitor::check_crc_error);
   updater_.add("IP Packet Reassembles Failed", this, &NetMonitor::check_reassembles_failed);
+  updater_.add("UDP Buf Errors", this, &NetMonitor::check_udp_buf_errors);
 
   nl80211_.init();
 
@@ -80,6 +87,8 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
 
   // Get index for `/proc/net/snmp`
   reassembles_failed_index_ = get_index_for_net_snmp("Ip:", "ReasmFails");
+  udp_rcvbuf_errors_index_ = get_index_for_net_snmp("Udp:", "RcvbufErrors");
+  udp_sndbuf_errors_index_ = get_index_for_net_snmp("Udp:", "SndbufErrors");
 
   // Send request to start nethogs
   if (enable_traffic_monitor_) {
@@ -315,6 +324,70 @@ void NetMonitor::check_reassembles_failed(diagnostic_updater::DiagnosticStatusWr
     reassembles_failed_queue_.push_back(0);
     whole_level = std::max(whole_level, static_cast<int>(DiagStatus::ERROR));
     error_message = "failed to read /proc/net/snmp";
+  }
+
+  if (!error_message.empty()) {
+    status.summary(whole_level, error_message);
+  } else {
+    status.summary(whole_level, "OK");
+  }
+
+  // Measure elapsed time since start time and report
+  SystemMonitorUtility::stopMeasurement(t_start, status);
+}
+
+void NetMonitor::check_udp_buf_errors(diagnostic_updater::DiagnosticStatusWrapper & status)
+{
+  // Remember start time to measure elapsed time
+  const auto t_start = SystemMonitorUtility::startMeasurement();
+
+  int whole_level = DiagStatus::OK;
+  std::string error_message;
+
+  uint64_t total_udp_rcvbuf_errors = 0;
+  if (get_value_from_net_snmp(udp_rcvbuf_errors_index_, total_udp_rcvbuf_errors)) {
+    udp_rcvbuf_errors_queue_.push_back(total_udp_rcvbuf_errors - last_udp_rcvbuf_errors_);
+    last_udp_rcvbuf_errors_ = total_udp_rcvbuf_errors;
+    while (udp_rcvbuf_errors_queue_.size() > udp_buf_errors_check_duration_) {
+      udp_rcvbuf_errors_queue_.pop_front();
+    }
+    uint64_t unit_udp_rcvbuf_errors = 0;
+    for (auto udp_rcvbuf_errors : udp_rcvbuf_errors_queue_) {
+      unit_udp_rcvbuf_errors += udp_rcvbuf_errors;
+    }
+    status.add(fmt::format("total UDP rcv buf errors"), total_udp_rcvbuf_errors);
+    status.add(fmt::format("UDP rcv buf errors per unit time"), unit_udp_rcvbuf_errors);
+    if (unit_udp_rcvbuf_errors >= udp_buf_errors_check_count_) {
+      whole_level = std::max(whole_level, static_cast<int>(DiagStatus::WARN));
+      error_message += "UDP buf errors";
+    }
+  } else {
+    udp_rcvbuf_errors_queue_.push_back(0);
+    whole_level = std::max(whole_level, static_cast<int>(DiagStatus::ERROR));
+    error_message += "failed to read RcvbufErrors from /proc/net/snmp";
+  }
+
+  uint64_t total_udp_sndbuf_errors = 0;
+  if (get_value_from_net_snmp(udp_sndbuf_errors_index_, total_udp_sndbuf_errors)) {
+    udp_sndbuf_errors_queue_.push_back(total_udp_sndbuf_errors - last_udp_sndbuf_errors_);
+    last_udp_sndbuf_errors_ = total_udp_sndbuf_errors;
+    while (udp_sndbuf_errors_queue_.size() > udp_buf_errors_check_duration_) {
+      udp_sndbuf_errors_queue_.pop_front();
+    }
+    uint64_t unit_udp_sndbuf_errors = 0;
+    for (auto udp_sndbuf_errors : udp_sndbuf_errors_queue_) {
+      unit_udp_sndbuf_errors += udp_sndbuf_errors;
+    }
+    status.add(fmt::format("total UDP snd buf errors"), total_udp_sndbuf_errors);
+    status.add(fmt::format("UDP snd buf errors per unit time"), unit_udp_sndbuf_errors);
+    if (unit_udp_sndbuf_errors >= udp_buf_errors_check_count_) {
+      whole_level = std::max(whole_level, static_cast<int>(DiagStatus::WARN));
+      error_message += "UDP buf errors";
+    }
+  } else {
+    udp_sndbuf_errors_queue_.push_back(0);
+    whole_level = std::max(whole_level, static_cast<int>(DiagStatus::ERROR));
+    error_message += "failed to read SndbufErrors from /proc/net/snmp";
   }
 
   if (!error_message.empty()) {

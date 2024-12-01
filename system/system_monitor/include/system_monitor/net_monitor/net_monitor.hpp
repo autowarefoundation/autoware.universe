@@ -156,6 +156,12 @@ protected:
   void check_reassembles_failed(diagnostic_updater::DiagnosticStatusWrapper & status);
 
   /**
+   * @brief Check UDP buf errors
+   * @param [out] status diagnostic message passed directly to diagnostic publish calls
+   */
+  void check_udp_buf_errors(diagnostic_updater::DiagnosticStatusWrapper & status);
+
+  /**
    * @brief Timer callback
    */
   void on_timer();
@@ -327,6 +333,17 @@ protected:
   unsigned int
     reassembles_failed_check_count_;  //!< @brief IP packet reassembles failed check count threshold
   NetSnmpIndex reassembles_failed_index_;  //!< @brief index of IP Reassembles failed in /proc/net/snmp
+
+  unsigned int udp_buf_errors_check_duration_;  //!< @brief UDP errors check duration
+  unsigned int udp_buf_errors_check_count_;  //!< @brief UDP errors check count threshold
+  std::deque<unsigned int>
+    udp_rcvbuf_errors_queue_;  //!< @brief queue that holds count of UDP errors
+  std::deque<unsigned int>
+    udp_sndbuf_errors_queue_;  //!< @brief queue that holds count of UDP errors
+  uint64_t last_udp_rcvbuf_errors_;  //!< @brief UDP buf errors at the time of the last monitoring
+  uint64_t last_udp_sndbuf_errors_;  //!< @brief UDP buf errors at the time of the last monitoring
+  NetSnmpIndex udp_rcvbuf_errors_index_;  //!< @brief index of UDP errors in /proc/net/snmp
+  NetSnmpIndex udp_sndbuf_errors_index_;  //!< @brief index of UDP errors in /proc/net/snmp
 
   /**
    * @brief Network connection status messages
