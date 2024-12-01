@@ -50,7 +50,7 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
   reassembles_failed_check_duration_(
     declare_parameter<int>("reassembles_failed_check_duration", 1)),
   reassembles_failed_check_count_(declare_parameter<int>("reassembles_failed_check_count", 1)),
-  reassembles_failed_column_index_(0)
+  reassembles_failed_index_(0, 0)
 {
   if (monitor_program_.empty()) {
     monitor_program_ = "*";
@@ -78,8 +78,8 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
   using namespace std::literals::chrono_literals;
   timer_ = rclcpp::create_timer(this, get_clock(), 1s, std::bind(&NetMonitor::on_timer, this));
 
-  // Get column index of IP packet reassembles failed from `/proc/net/snmp`
-  get_reassembles_failed_column_index();
+  // Get index for `/proc/net/snmp`
+  reassembles_failed_index_ = get_index_for_net_snmp("Ip:", "ReasmFails");
 
   // Send request to start nethogs
   if (enable_traffic_monitor_) {
@@ -291,7 +291,7 @@ void NetMonitor::check_reassembles_failed(diagnostic_updater::DiagnosticStatusWr
   std::string error_message;
   uint64_t total_reassembles_failed = 0;
 
-  if (get_reassembles_failed(total_reassembles_failed)) {
+  if (get_value_from_net_snmp(reassembles_failed_index_, total_reassembles_failed)) {
     reassembles_failed_queue_.push_back(total_reassembles_failed - last_reassembles_failed_);
     while (reassembles_failed_queue_.size() > reassembles_failed_check_duration_) {
       reassembles_failed_queue_.pop_front();
@@ -539,52 +539,50 @@ void NetMonitor::update_crc_error(NetworkInfomation & network, const struct rtnl
   crc_errors.last_rx_crc_errors = stats->rx_crc_errors;
 }
 
-void NetMonitor::get_reassembles_failed_column_index()
+NetSnmpIndex NetMonitor::get_index_for_net_snmp(const std::string & protocol_name, const std::string & metrics_name)
 {
-  std::ifstream ifs("/proc/net/snmp");
-  if (!ifs) {
-    RCLCPP_WARN(get_logger(), "Failed to open /proc/net/snmp.");
-    return;
-  }
-
-  // Find column index of 'ReasmFails'
-  std::string line;
-  if (!std::getline(ifs, line)) {
-    RCLCPP_WARN(get_logger(), "Failed to get header of /proc/net/snmp.");
-    return;
-  }
-
+  NetSnmpIndex index(0, 0);
+  const NetSnmpIndex error_index(-1, -1);
   // /proc/net/snmp
   // Ip: Forwarding DefaultTTL InReceives ... ReasmTimeout ReasmReqds ReasmOKs ReasmFails ...
   // Ip: 2          64         5636471397 ... 135          2303339    216166   270        ..
-  std::vector<std::string> header_list;
-  boost::split(header_list, line, boost::is_space());
-
-  if (header_list.empty()) {
-    RCLCPP_WARN(get_logger(), "Failed to get header list of /proc/net/snmp.");
-    return;
-  }
-  if (header_list[0] != "Ip:") {
-    RCLCPP_WARN(
-      get_logger(), "Header column is invalid in /proc/net/snmp. %s", header_list[0].c_str());
-    return;
+  std::ifstream ifs("/proc/net/snmp");
+  if (!ifs) {
+    RCLCPP_WARN(get_logger(), "Failed to open /proc/net/snmp.");
+    return error_index;
   }
 
-  int index = 0;
-  for (const auto & header : header_list) {
-    if (header == "ReasmFails") {
-      reassembles_failed_column_index_ = index;
+  std::vector<std::string> target_header_list;
+  std::string line;
+  while (std::getline(ifs, line)) {
+    std::vector<std::string> header_list;
+    boost::split(header_list, line, boost::is_space());
+    if (header_list.empty()) continue;
+    if (header_list[0] == protocol_name) {
+      target_header_list = header_list;
       break;
     }
-    ++index;
+    ++index.first;
   }
+
+  ++index.first;  // The values are placed in the row following the header
+
+  for (const auto & header : target_header_list) {
+    if (header == metrics_name) {
+      return index;
+    }
+    ++index.second;
+  }
+
+  RCLCPP_WARN(get_logger(), "Failed to get header of /proc/net/snmp.");
+  return error_index;
 }
 
-bool NetMonitor::get_reassembles_failed(uint64_t & reassembles_failed)
+bool NetMonitor::get_value_from_net_snmp(const NetSnmpIndex & index, uint64_t & output_value)
 {
-  if (reassembles_failed_column_index_ == 0) {
-    RCLCPP_WARN(get_logger(), "Column index is invalid. : %d", reassembles_failed_column_index_);
-    return false;
+  if (index.first < 0 || index.second < 0) {
+    RCLCPP_WARN(get_logger(), "index is invalid. : %d, %d", index.first, index.second);
+    return 0;
   }
 
   std::ifstream ifs("/proc/net/snmp");
@@ -593,34 +591,44 @@ bool NetMonitor::get_reassembles_failed(uint64_t & reassembles_failed)
     return false;
   }
 
+  std::string target_line;
   std::string line;
-
-  // Skip header row
-  if (!std::getline(ifs, line)) {
-    RCLCPP_WARN(get_logger(), "Failed to get header of /proc/net/snmp.");
-    return false;
+  for (int32_t row_index = 0; std::getline(ifs, line); ++row_index) {
+    if (row_index == index.first) {
+      target_line = line;
+      break;
+    }
   }
 
-  // Find a value of 'ReasmFails'
-  if (!std::getline(ifs, line)) {
+  if (target_line.empty()) {
     RCLCPP_WARN(get_logger(), "Failed to get a line of /proc/net/snmp.");
     return false;
   }
 
   std::vector<std::string> value_list;
-  boost::split(value_list, line, boost::is_space());
-
-  if (reassembles_failed_column_index_ >= value_list.size()) {
+  boost::split(value_list, target_line, boost::is_space());
+  if (index.second >= value_list.size()) {
     RCLCPP_WARN(
       get_logger(),
-      "There are not enough columns for reassembles failed column index. : columns=%d index=%d",
-      static_cast<int>(value_list.size()), reassembles_failed_column_index_);
+      "There are not enough columns for the column index. : column size=%d index=%d, %d",
+      static_cast<int>(value_list.size()), index.first, index.second);
     return false;
   }
 
-  reassembles_failed = std::stoull(value_list[reassembles_failed_column_index_]);
+  std::string value_str = value_list[index.second];
+  if (value_str.empty()) {
+    RCLCPP_WARN(get_logger(), "The value is empty. : index=%d, %d", index.first, index.second);
+    return false;
+  }
 
-  return true;
+  if (value_str[0] == '-') {
+    // In case the value is negative, store 0 and do not make it error to avoid too many error logs
+    output_value = 0;
+    return true;
+  } else {
+    output_value = std::stoull(value_str);
+    return true;
+  }
 }
 
 void NetMonitor::send_start_nethogs_request()
