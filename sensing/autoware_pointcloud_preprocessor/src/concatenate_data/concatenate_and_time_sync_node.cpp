@@ -280,8 +280,6 @@ void PointCloudConcatenateDataSynchronizerComponent::publish_clouds(
     is_concatenated_cloud_empty_ = true;
   }
 
-  std::cout << "is_concatenated_cloud_empty_: " << is_concatenated_cloud_empty_ << std::endl;
-
   current_concatenate_cloud_timestamp_ =
     rclcpp::Time(concatenated_cloud_result.concatenate_cloud_ptr->header.stamp).seconds();
 
