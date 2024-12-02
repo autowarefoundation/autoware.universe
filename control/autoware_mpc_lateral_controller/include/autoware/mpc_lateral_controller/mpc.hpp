@@ -227,8 +227,6 @@ private:
 
   bool m_is_forward_shift = true;  // Flag indicating if the shift is in the forward direction.
 
-  double m_min_prediction_length = 5.0;  // Minimum prediction distance.
-
   rclcpp::Publisher<Trajectory>::SharedPtr m_debug_frenet_predicted_trajectory_pub;
   rclcpp::Publisher<Trajectory>::SharedPtr m_debug_resampled_reference_trajectory_pub;
   /**
@@ -405,7 +403,7 @@ private:
   template <typename... Args>
   inline bool fail_warn_throttle(Args &&... args) const
   {
-    RCLCPP_WARN_THROTTLE(m_logger, *m_clock, 3000, args...);
+    RCLCPP_WARN_THROTTLE(m_logger, *m_clock, 3000, "%s", args...);
     return false;
   }
 
@@ -413,7 +411,7 @@ private:
   template <typename... Args>
   inline void warn_throttle(Args &&... args) const
   {
-    RCLCPP_WARN_THROTTLE(m_logger, *m_clock, 3000, args...);
+    RCLCPP_WARN_THROTTLE(m_logger, *m_clock, 3000, "%s", args...);
   }
 
 public:

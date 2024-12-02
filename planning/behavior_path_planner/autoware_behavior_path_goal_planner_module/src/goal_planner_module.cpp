@@ -1489,8 +1489,6 @@ void GoalPlannerModule::postProcess()
     {distance_to_path_change.first, distance_to_path_change.second},
     has_decided_path ? SteeringFactor::TURNING : SteeringFactor::APPROACHING);
 
-  setStopReason(StopReason::GOAL_PLANNER, pull_over_path.full_path());
-
   setVelocityFactor(pull_over_path.full_path());
 
   context_data_ = std::nullopt;
