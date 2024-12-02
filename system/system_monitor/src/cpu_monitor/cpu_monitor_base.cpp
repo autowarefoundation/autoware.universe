@@ -61,11 +61,12 @@ CPUMonitorBase::CPUMonitorBase(const std::string & node_name, const rclcpp::Node
   mpstat_exists_ = (p.empty()) ? false : true;
 
   updater_.setHardwareID(hostname_);
-  updater_.add("CPU Temperature", this, &CPUMonitorBase::checkTemp);
-  updater_.add("CPU Usage", this, &CPUMonitorBase::checkUsage);
-  updater_.add("CPU Load Average", this, &CPUMonitorBase::checkLoad);
-  updater_.add("CPU Thermal Throttling", this, &CPUMonitorBase::checkThrottling);
-  updater_.add("CPU Frequency", this, &CPUMonitorBase::checkFrequency);
+  updater_.add(std::string(hostname_) + ": CPU Temperature", this, &CPUMonitorBase::checkTemp);
+  updater_.add(std::string(hostname_) + ": CPU Usage", this, &CPUMonitorBase::checkUsage);
+  updater_.add(std::string(hostname_) + ": CPU Load Average", this, &CPUMonitorBase::checkLoad);
+  updater_.add(
+    std::string(hostname_) + ": CPU Thermal Throttling", this, &CPUMonitorBase::checkThrottling);
+  updater_.add(std::string(hostname_) + ": CPU Frequency", this, &CPUMonitorBase::checkFrequency);
 
   // Publisher
   rclcpp::QoS durable_qos{1};

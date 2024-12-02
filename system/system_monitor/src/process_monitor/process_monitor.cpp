@@ -44,15 +44,17 @@ ProcessMonitor::ProcessMonitor(const rclcpp::NodeOptions & options)
   gethostname(hostname_, sizeof(hostname_));
 
   updater_.setHardwareID(hostname_);
-  updater_.add("Tasks Summary", this, &ProcessMonitor::monitorProcesses);
+  updater_.add(std::string(hostname_) + ": Tasks Summary", this, &ProcessMonitor::monitorProcesses);
 
   for (index = 0; index < num_of_procs_; ++index) {
-    auto task = std::make_shared<DiagTask>(fmt::format("High-load Proc[{}]", index));
+    auto task = std::make_shared<DiagTask>(
+      fmt::format(std::string(hostname_) + ": High-load Proc[{}]", index));
     load_tasks_.push_back(task);
     updater_.add(*task);
   }
   for (index = 0; index < num_of_procs_; ++index) {
-    auto task = std::make_shared<DiagTask>(fmt::format("High-mem Proc[{}]", index));
+    auto task = std::make_shared<DiagTask>(
+      fmt::format(std::string(hostname_) + ": High-mem Proc[{}]", index));
     memory_tasks_.push_back(task);
     updater_.add(*task);
   }
