@@ -21,12 +21,14 @@
 #include <rclcpp/time.hpp>
 
 #include <autoware_perception_msgs/msg/detail/shape__struct.hpp>
+#include <geometry_msgs/msg/detail/point__struct.hpp>
 #include <geometry_msgs/msg/detail/pose__struct.hpp>
 
 #include <gtest/gtest.h>
 #include <pcl/memory.h>
 #include <tf2/LinearMath/Transform.h>
 
+#include <limits>
 #include <memory>
 #include <thread>
 
@@ -126,6 +128,76 @@ TEST_F(TestAEB, checkCollision)
   ASSERT_FALSE(aeb_node_->hasCollision(longitudinal_velocity, object_no_collision));
 }
 
+TEST_F(TestAEB, getObjectOnPathData)
+{
+  constexpr double longitudinal_velocity = 3.0;
+  constexpr double yaw_rate = 0.0;
+  const auto imu_path = aeb_node_->generateEgoPath(longitudinal_velocity, yaw_rate);
+  ASSERT_FALSE(imu_path.empty());
+
+  const double path_width = 2.0;
+  const auto path_length = autoware::motion_utils::calcArcLength(imu_path);
+  ASSERT_TRUE(
+    path_length < aeb_node_->max_generated_imu_path_length_ +
+                    aeb_node_->imu_prediction_time_interval_ * longitudinal_velocity +
+                    std::numeric_limits<double>::epsilon());
+
+  const auto stamp = rclcpp::Time();
+
+  const auto longitudinal_offset_opt = utils::getLongitudinalOffset(imu_path, 1.0, -1.0);
+  ASSERT_TRUE(longitudinal_offset_opt.has_value());
+  const auto longitudinal_offset = longitudinal_offset_opt.value();
+  ASSERT_DOUBLE_EQ(longitudinal_offset, 1.0);
+
+  // Object in path if longitudinal_offset is considered
+  Point obj_position;
+  double path_expansion;
+
+  {
+    obj_position.x = path_length + std::numeric_limits<double>::epsilon();
+    obj_position.y = 1.0;
+    path_expansion = 0.0;
+    auto obj_data_opt = utils::getObjectOnPathData(
+      imu_path, obj_position, stamp, path_length, path_width, path_expansion, longitudinal_offset,
+      0.0);
+    ASSERT_TRUE(obj_data_opt.has_value());
+    ASSERT_TRUE(obj_data_opt.value().is_target);
+  }
+
+  // Object outside of path
+  {
+    obj_position.x = path_length + std::numeric_limits<double>::epsilon();
+    obj_position.y = 3.0;
+    path_expansion = 0.0;
+    auto obj_data_opt = utils::getObjectOnPathData(
+      imu_path, obj_position, stamp, path_length, path_width, path_expansion, longitudinal_offset,
+      0.0);
+    ASSERT_FALSE(obj_data_opt.has_value());
+  }
+
+  // Object outside of path
+  {
+    obj_position.x = -1.0;
+    obj_position.y = 0.0;
+    path_expansion = 0.0;
+    auto obj_data_opt = utils::getObjectOnPathData(
+      imu_path, obj_position, stamp, path_length, path_width, path_expansion, longitudinal_offset,
+      0.0);
+    ASSERT_FALSE(obj_data_opt.has_value());
+  }
+
+  // Object is covered by path expansion
+  {
+    obj_position.x = path_length + std::numeric_limits<double>::epsilon();
+    obj_position.y = 3.0;
+    path_expansion = 2.0;
+    auto obj_data_opt = utils::getObjectOnPathData(
+      imu_path, obj_position, stamp, path_length, path_width, 2.0, longitudinal_offset, 0.0);
+    ASSERT_TRUE(obj_data_opt.has_value());
+    ASSERT_FALSE(obj_data_opt.value().is_target);
+  }
+}
+
 TEST_F(TestAEB, checkImuPathGeneration)
 {
   constexpr double longitudinal_velocity = 3.0;
@@ -145,7 +217,7 @@ TEST_F(TestAEB, checkImuPathGeneration)
   pcl::PointCloud<pcl::PointXYZ>::Ptr obstacle_points_ptr =
     pcl::make_shared<pcl::PointCloud<pcl::PointXYZ>>();
   {
-    const double x_start{0.0};
+    const double x_start{0.5};
     const double y_start{0.0};
 
     for (size_t i = 0; i < 15; ++i) {
@@ -162,6 +234,7 @@ TEST_F(TestAEB, checkImuPathGeneration)
   MarkerArray debug_markers;
   aeb_node_->getPointsBelongingToClusterHulls(
     obstacle_points_ptr, points_belonging_to_cluster_hulls, debug_markers);
+  ASSERT_FALSE(points_belonging_to_cluster_hulls->empty());
   std::vector<ObjectData> objects;
   aeb_node_->getClosestObjectsOnPath(imu_path, stamp, points_belonging_to_cluster_hulls, objects);
   ASSERT_FALSE(objects.empty());
@@ -171,7 +244,7 @@ TEST_F(TestAEB, checkIncompleteImuPathGeneration)
 {
   const double dt = aeb_node_->imu_prediction_time_interval_;
   const double horizon = aeb_node_->imu_prediction_time_horizon_;
-  const double min_generated_path_length = aeb_node_->min_generated_path_length_;
+  const double min_generated_path_length = aeb_node_->min_generated_imu_path_length_;
   const double slow_velocity = min_generated_path_length / (2.0 * horizon);
   constexpr double yaw_rate = 0.05;
   const auto imu_path = aeb_node_->generateEgoPath(slow_velocity, yaw_rate);
@@ -185,12 +258,32 @@ TEST_F(TestAEB, checkIncompleteImuPathGeneration)
   ASSERT_TRUE(footprint.size() == imu_path.size() - 1);
 }
 
+TEST_F(TestAEB, checkImuPathGenerationIsCut)
+{
+  const double dt = aeb_node_->imu_prediction_time_interval_;
+  const double horizon = aeb_node_->imu_prediction_time_horizon_;
+  const double max_generated_path_length = aeb_node_->max_generated_imu_path_length_;
+  const double fast_velocity = 2.0 * max_generated_path_length / (horizon);
+  constexpr double yaw_rate = 0.05;
+  const auto imu_path = aeb_node_->generateEgoPath(fast_velocity, yaw_rate);
+
+  ASSERT_FALSE(imu_path.empty());
+  constexpr double epsilon{1e-3};
+  ASSERT_TRUE(
+    autoware::motion_utils::calcArcLength(imu_path) <=
+    max_generated_path_length + dt * fast_velocity + epsilon);
+
+  const auto footprint = aeb_node_->generatePathFootprint(imu_path, 0.0);
+  ASSERT_FALSE(footprint.empty());
+  ASSERT_TRUE(footprint.size() == imu_path.size() - 1);
+}
+
 TEST_F(TestAEB, checkEmptyPathAtZeroSpeed)
 {
   const double velocity = 0.0;
   constexpr double yaw_rate = 0.0;
   const auto imu_path = aeb_node_->generateEgoPath(velocity, yaw_rate);
-  ASSERT_EQ(imu_path.size(), 1);
+  ASSERT_EQ(imu_path.size(), 0);
 }
 
 TEST_F(TestAEB, checkParamUpdate)
