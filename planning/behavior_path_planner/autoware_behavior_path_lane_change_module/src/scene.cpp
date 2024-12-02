@@ -1748,8 +1748,6 @@ bool NormalLaneChange::has_collision_with_decel_patterns(
     return false;
   }
 
-  const auto current_pose = common_data_ptr_->get_ego_pose();
-  const auto current_twist = common_data_ptr_->get_ego_twist();
   const auto bpp_param = *common_data_ptr_->bpp_param_ptr;
   const auto global_min_acc = bpp_param.min_acc;
   const auto lane_changing_acc = lane_change_path.info.longitudinal_acceleration.lane_changing;
@@ -1766,17 +1764,11 @@ bool NormalLaneChange::has_collision_with_decel_patterns(
     acceleration_values.begin(), acceleration_values.end(), acceleration_values.begin(),
     [&](double n) { return lane_changing_acc + n * acc_resolution; });
 
-  const auto time_resolution =
-    lane_change_parameters_->safety.collision_check.prediction_time_resolution;
-
   const auto stopped_obj_vel_th = lane_change_parameters_->safety.th_stopped_object_velocity;
   const auto all_collided = std::all_of(
     acceleration_values.begin(), acceleration_values.end(), [&](const auto acceleration) {
-      const auto ego_predicted_path = utils::lane_change::convertToPredictedPath(
-        lane_change_path, current_twist, current_pose, acceleration, bpp_param,
-        *lane_change_parameters_, time_resolution);
-      const auto debug_predicted_path =
-        utils::path_safety_checker::convertToPredictedPath(ego_predicted_path, time_resolution);
+      const auto ego_predicted_path = utils::lane_change::convert_to_predicted_path(
+        common_data_ptr_, lane_change_path, acceleration);
 
       return std::any_of(objects.begin(), objects.end(), [&](const auto & obj) {
         const auto selected_rss_param = (obj.initial_twist.linear.x <= stopped_obj_vel_th)

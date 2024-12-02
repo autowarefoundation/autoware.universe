@@ -116,10 +116,9 @@ CandidateOutput assignToCandidate(
 std::optional<lanelet::ConstLanelet> get_lane_change_target_lane(
   const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & current_lanes);
 
-std::vector<PoseWithVelocityStamped> convertToPredictedPath(
-  const LaneChangePath & lane_change_path, const Twist & vehicle_twist, const Pose & pose,
-  const double lane_changing_acceleration, const BehaviorPathPlannerParameters & common_parameters,
-  const LaneChangeParameters & lane_change_parameters, const double resolution);
+std::vector<PoseWithVelocityStamped> convert_to_predicted_path(
+  const CommonDataPtr & common_data_ptr, const LaneChangePath & lane_change_path,
+  const double lane_changing_acceleration);
 
 bool isParkedObject(
   const PathWithLaneId & path, const RouteHandler & route_handler,
