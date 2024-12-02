@@ -346,6 +346,9 @@ void NetMonitor::check_udp_buf_errors(diagnostic_updater::DiagnosticStatusWrappe
 
   uint64_t total_udp_rcvbuf_errors = 0;
   if (get_value_from_net_snmp(udp_rcvbuf_errors_index_, total_udp_rcvbuf_errors)) {
+    if (udp_rcvbuf_errors_queue_.empty()) {
+      last_udp_rcvbuf_errors_ = total_udp_rcvbuf_errors;
+    }
     udp_rcvbuf_errors_queue_.push_back(total_udp_rcvbuf_errors - last_udp_rcvbuf_errors_);
     last_udp_rcvbuf_errors_ = total_udp_rcvbuf_errors;
     while (udp_rcvbuf_errors_queue_.size() > udp_buf_errors_check_duration_) {
@@ -369,6 +372,9 @@ void NetMonitor::check_udp_buf_errors(diagnostic_updater::DiagnosticStatusWrappe
 
   uint64_t total_udp_sndbuf_errors = 0;
   if (get_value_from_net_snmp(udp_sndbuf_errors_index_, total_udp_sndbuf_errors)) {
+    if (udp_sndbuf_errors_queue_.empty()) {
+      last_udp_sndbuf_errors_ = total_udp_sndbuf_errors;
+    }
     udp_sndbuf_errors_queue_.push_back(total_udp_sndbuf_errors - last_udp_sndbuf_errors_);
     last_udp_sndbuf_errors_ = total_udp_sndbuf_errors;
     while (udp_sndbuf_errors_queue_.size() > udp_buf_errors_check_duration_) {
