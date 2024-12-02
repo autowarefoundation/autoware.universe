@@ -291,8 +291,7 @@ protected:
    * @return index (row, col)
    */
   NetSnmpIndex get_index_for_net_snmp(
-    const std::string & protocol_name,
-    const std::string & metrics_name);
+    const std::string & protocol_name, const std::string & metrics_name);
 
   /**
    * @brief Get value from `/proc/net/snmp`
@@ -332,14 +331,15 @@ protected:
     reassembles_failed_check_duration_;  //!< @brief IP packet reassembles failed check duration
   unsigned int
     reassembles_failed_check_count_;  //!< @brief IP packet reassembles failed check count threshold
-  NetSnmpIndex reassembles_failed_index_;  //!< @brief index of IP Reassembles failed in /proc/net/snmp
+  NetSnmpIndex
+    reassembles_failed_index_;  //!< @brief index of IP Reassembles failed in /proc/net/snmp
 
   unsigned int udp_buf_errors_check_duration_;  //!< @brief UDP errors check duration
-  unsigned int udp_buf_errors_check_count_;  //!< @brief UDP errors check count threshold
+  unsigned int udp_buf_errors_check_count_;     //!< @brief UDP errors check count threshold
   std::deque<unsigned int>
     udp_rcvbuf_errors_queue_;  //!< @brief queue that holds count of UDP errors
   std::deque<unsigned int>
-    udp_sndbuf_errors_queue_;  //!< @brief queue that holds count of UDP errors
+    udp_sndbuf_errors_queue_;        //!< @brief queue that holds count of UDP errors
   uint64_t last_udp_rcvbuf_errors_;  //!< @brief UDP buf errors at the time of the last monitoring
   uint64_t last_udp_sndbuf_errors_;  //!< @brief UDP buf errors at the time of the last monitoring
   NetSnmpIndex udp_rcvbuf_errors_index_;  //!< @brief index of UDP errors in /proc/net/snmp

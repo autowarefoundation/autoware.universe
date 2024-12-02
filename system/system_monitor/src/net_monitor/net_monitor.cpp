@@ -618,7 +618,8 @@ void NetMonitor::update_crc_error(NetworkInfomation & network, const struct rtnl
   crc_errors.last_rx_crc_errors = stats->rx_crc_errors;
 }
 
-NetSnmpIndex NetMonitor::get_index_for_net_snmp(const std::string & protocol_name, const std::string & metrics_name)
+NetSnmpIndex NetMonitor::get_index_for_net_snmp(
+  const std::string & protocol_name, const std::string & metrics_name)
 {
   NetSnmpIndex index(0, 0);
   const NetSnmpIndex error_index(-1, -1);
