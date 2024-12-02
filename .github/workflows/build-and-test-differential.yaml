@@ -45,7 +45,7 @@ jobs:
           fi
         shell: bash
       - name: Fail if build is not required
-        if: ${{ needs.make-sure-label-is-present.outputs.result == 'false' }}
+        if: ${{ needs.make-sure-label-is-present.outputs.result != 'true' }}
         run: exit 1
 
   build-and-test-differential:
