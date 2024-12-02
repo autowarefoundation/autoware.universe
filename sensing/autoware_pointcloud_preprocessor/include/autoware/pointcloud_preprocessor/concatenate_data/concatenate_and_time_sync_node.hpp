@@ -64,7 +64,6 @@ private:
   {
     bool debug_mode;
     bool has_static_tf_only;
-    bool rosbag_replay;
     double rosbag_length;
     int maximum_queue_size;
     double timeout_sec;

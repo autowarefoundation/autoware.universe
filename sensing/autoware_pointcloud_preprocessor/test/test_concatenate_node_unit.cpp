@@ -43,7 +43,6 @@ protected:
     node_options.parameter_overrides(
       {{"debug_mode", false},
        {"has_static_tf_only", false},
-       {"rosbag_replay", false},
        {"rosbag_length", 0.0},
        {"maximum_queue_size", 5},
        {"timeout_sec", 0.2},

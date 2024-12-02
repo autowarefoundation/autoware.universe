@@ -16,16 +16,11 @@
           "default": false,
           "description": "Flag to indicate if only static TF is used."
         },
-        "rosbag_replay": {
-          "type": "boolean",
-          "default": false,
-          "description": "Flag to indicate whether the user is replaying the rosbag in loops without relaunching the node."
-        },
         "rosbag_length": {
           "type": "number",
-          "default": 20.0,
+          "default": 10.0,
           "minimum": 0.0,
-          "description": "If rosbag_replay is enabled, this value helps the node determine if the rosbag has started from the beginning again. The value should be set slightly smaller (by 2-3 seconds) than the actual length of the bag."
+          "description": " This value determine if the rosbag has started from the beginning again. The value should be set smaller than the actual length of the bag."
         },
         "maximum_queue_size": {
           "type": "integer",
@@ -110,7 +105,6 @@
       "required": [
         "debug_mode",
         "has_static_tf_only",
-        "rosbag_replay",
         "rosbag_length",
         "maximum_queue_size",
         "timeout_sec",
