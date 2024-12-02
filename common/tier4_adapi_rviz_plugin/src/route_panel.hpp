@@ -20,8 +20,8 @@
 #include <QGroupBox>
 #include <QLabel>
 #include <QPushButton>
+#include <autoware/adapi_specs/routing.hpp>
 #include <autoware/component_interface_utils/rclcpp.hpp>
-#include <autoware_ad_api_specs/routing.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rviz_common/panel.hpp>
 
@@ -35,9 +35,9 @@ namespace tier4_adapi_rviz_plugins
 class RoutePanel : public rviz_common::Panel
 {
   Q_OBJECT
-  using ClearRoute = autoware_ad_api::routing::ClearRoute;
-  using SetRoutePoints = autoware_ad_api::routing::SetRoutePoints;
-  using ChangeRoutePoints = autoware_ad_api::routing::ChangeRoutePoints;
+  using ClearRoute = autoware::adapi_specs::routing::ClearRoute;
+  using SetRoutePoints = autoware::adapi_specs::routing::SetRoutePoints;
+  using ChangeRoutePoints = autoware::adapi_specs::routing::ChangeRoutePoints;
   using PoseStamped = geometry_msgs::msg::PoseStamped;
 
 public:

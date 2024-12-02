@@ -78,9 +78,11 @@ The goal of the [Autoware Planning Test Manager](https://autowarefoundation.gith
 As presented in this [PR description](https://github.com/autowarefoundation/autoware.universe/pull/9207), the user can save a snapshot of the scene to a yaml file while running Planning Simulation on the test map.
 
 ```bash
-ros2 launch autoware_test_utils psim_road_shoulder.launch.xml vehicle_model:=<vehicle-model> sensor_model:=<sensor-model>
-ros2 launch autoware_test_utils psim_intersection.launch.xml vehicle_model:=<vehicle-model> sensor_model:=<sensor-model>
+ros2 launch autoware_test_utils psim_road_shoulder.launch.xml
+ros2 launch autoware_test_utils psim_intersection.launch.xml
 ```
+
+It uses the autoware `sample_vehicle_description` and `sample_sensor_kit` by default, and `autoware_test_utils/config/test_vehicle_info.param.yaml` is exactly the same as that of `sample_vehicle_description`. If specified, `vehicle_model`/`sensor_model` argument is available.
 
 ```bash
 ros2 service call /autoware_test_utils/topic_snapshot_saver std_srvs/srv/Empty \{\}
