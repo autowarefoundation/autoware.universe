@@ -1,7 +1,3 @@
-# This file is automatically synced from:
-# https://github.com/autowarefoundation/sync-file-templates
-# To make changes, update the source repository and follow the guidelines in its README.
-
 ci:
   autofix_commit_msg: "style(pre-commit): autofix"
 
@@ -38,7 +34,7 @@ repos:
       - id: yamllint
 
   - repo: https://github.com/tier4/pre-commit-hooks-ros
-    rev: v0.10.0
+    rev: v0.8.0
     hooks:
       - id: flake8-ros
       - id: prettier-xacro
@@ -53,7 +49,7 @@ repos:
       - id: shellcheck
 
   - repo: https://github.com/scop/pre-commit-shfmt
-    rev: v3.9.0-1
+    rev: v3.8.0-1
     hooks:
       - id: shfmt
         args: [-w, -s, -i=4]
@@ -64,13 +60,13 @@ repos:
       - id: isort
 
   - repo: https://github.com/psf/black
-    rev: 24.8.0
+    rev: 24.4.2
     hooks:
       - id: black
         args: [--line-length=100]
 
   - repo: https://github.com/pre-commit/mirrors-clang-format
-    rev: v18.1.8
+    rev: v18.1.6
     hooks:
       - id: clang-format
         types_or: [c++, c, cuda]
@@ -83,7 +79,7 @@ repos:
         exclude: .cu
 
   - repo: https://github.com/python-jsonschema/check-jsonschema
-    rev: 0.29.2
+    rev: 0.28.5
     hooks:
       - id: check-metaschema
         files: ^.+/schema/.*schema\.json$
@@ -97,9 +93,3 @@ repos:
         language: node
         files: .svg$
         additional_dependencies: [prettier@2.7.1, "@prettier/plugin-xml@2.2.0"]
-
-  - repo: https://github.com/AleksaC/hadolint-py
-    rev: v2.12.1b3
-    hooks:
-      - id: hadolint
-        exclude: .svg$
