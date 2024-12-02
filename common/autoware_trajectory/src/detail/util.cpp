@@ -20,11 +20,6 @@
 namespace autoware::trajectory::detail
 {
 
-geometry_msgs::msg::Point to_point(const geometry_msgs::msg::Point & p)
-{
-  return p;
-}
-
 geometry_msgs::msg::Point to_point(const geometry_msgs::msg::Pose & p)
 {
   return p.position;

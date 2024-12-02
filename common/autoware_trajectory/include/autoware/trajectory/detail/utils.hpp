@@ -34,7 +34,6 @@ namespace autoware::trajectory::detail
  * @param p The input point to be converted.
  * @return geometry_msgs::msg::Point The converted point.
  */
-geometry_msgs::msg::Point to_point(const geometry_msgs::msg::Point & p);
 geometry_msgs::msg::Point to_point(const geometry_msgs::msg::Pose & p);
 geometry_msgs::msg::Point to_point(const Eigen::Vector2d & p);
 geometry_msgs::msg::Point to_point(const autoware_planning_msgs::msg::PathPoint & p);
