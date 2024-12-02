@@ -22,7 +22,7 @@ namespace autoware::default_adapi
 VehicleDoorNode::VehicleDoorNode(const rclcpp::NodeOptions & options)
 : Node("vehicle_door", options)
 {
-  const auto adaptor = component_interface_utils::NodeAdaptor(this);
+  const auto adaptor = autoware::component_interface_utils::NodeAdaptor(this);
   group_cli_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   adaptor.relay_service(cli_command_, srv_command_, group_cli_, 3.0);
   adaptor.relay_service(cli_layout_, srv_layout_, group_cli_, 3.0);

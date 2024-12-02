@@ -15,9 +15,9 @@
 #ifndef PERCEPTION_ONLINE_EVALUATOR__PERCEPTION_ONLINE_EVALUATOR_NODE_HPP_
 #define PERCEPTION_ONLINE_EVALUATOR__PERCEPTION_ONLINE_EVALUATOR_NODE_HPP_
 
+#include "autoware/universe_utils/math/accumulator.hpp"
 #include "perception_online_evaluator/metrics_calculator.hpp"
 #include "perception_online_evaluator/parameters.hpp"
-#include "perception_online_evaluator/stat.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
@@ -35,6 +35,7 @@
 
 namespace perception_diagnostics
 {
+using autoware::universe_utils::Accumulator;
 using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::PredictedObjects;
 using diagnostic_msgs::msg::DiagnosticArray;
@@ -60,7 +61,7 @@ public:
   void onObjects(const PredictedObjects::ConstSharedPtr objects_msg);
 
   DiagnosticStatus generateDiagnosticStatus(
-    const std::string metric, const Stat<double> & metric_stat) const;
+    const std::string metric, const Accumulator<double> & metric_stat) const;
   DiagnosticStatus generateDiagnosticStatus(
     const std::string & metric, const double metric_value) const;
 

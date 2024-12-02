@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene.hpp"
+#include "autoware/behavior_velocity_blind_spot_module/scene.hpp"
 
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 
@@ -24,7 +24,7 @@ namespace autoware::behavior_velocity_planner
  */
 template <typename T>
 void BlindSpotModule::setRTCStatusByDecision(
-  const T &, const tier4_planning_msgs::msg::PathWithLaneId & path)
+  const T &, [[maybe_unused]] const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   static_assert("Unsupported type passed to setRTCStatus");
   return;
