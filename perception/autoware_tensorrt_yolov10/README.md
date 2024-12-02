@@ -45,7 +45,7 @@ with labels according to the order in this file.
 
 currently, this file is actually a coco label which contains the following labels:
 
-```
+```text
 person
 bicycle
 car
