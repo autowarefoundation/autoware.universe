@@ -214,11 +214,9 @@ void MultiObjectTracker::onTrigger()
   const bool is_objects_ready = input_manager_->getObjects(current_time, objects_list);
   if (!is_objects_ready) return;
 
-  const rclcpp::Time current_time = this->now();
-  const rclcpp::Time latest_time(objects_list.back().second.header.stamp);
-  last_updated_time_ = current_time;
-
   // process start
+  last_updated_time_ = current_time;
+  const rclcpp::Time latest_time(objects_list.back().second.header.stamp);
   debugger_->startMeasurementTime(this->now(), latest_time);
   // run process for each DetectedObjects
   for (const auto & objects_data : objects_list) {
