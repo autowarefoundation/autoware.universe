@@ -23,8 +23,6 @@
 #include <utility>
 #include <vector>
 
-// change
-
 namespace autoware::bytetrack
 {
 ByteTrackNode::ByteTrackNode(const rclcpp::NodeOptions & node_options)
