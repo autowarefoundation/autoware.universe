@@ -269,21 +269,11 @@
           </composable_node>
         </load_composable_node>
       </group>
+    </group>
 
-      <!-- control evaluator -->
-      <group if="$(var launch_control_evaluator)">
-        <load_composable_node target="/control/control_check_container">
-          <composable_node pkg="autoware_control_evaluator" plugin="control_diagnostics::ControlEvaluatorNode" name="control_evaluator">
-            <remap from="~/input/diagnostics" to="/diagnostics"/>
-            <remap from="~/input/odometry" to="/localization/kinematic_state"/>
-            <remap from="~/input/acceleration" to="/localization/acceleration"/>
-            <remap from="~/input/trajectory" to="/planning/scenario_planning/trajectory"/>
-            <remap from="~/metrics" to="/control/control_evaluator/metrics"/>
-            <remap from="~/input/vector_map" to="/map/vector_map"/>
-            <remap from="~/input/route" to="/planning/mission_planning/route"/>
-          </composable_node>
-        </load_composable_node>
-      </group>
+    <!-- control evaluator -->
+    <group if="$(var launch_control_evaluator)">
+      <include file="$(find-pkg-share autoware_control_evaluator)/launch/control_evaluator.launch.xml"/>
     </group>
   </group>
 </launch>

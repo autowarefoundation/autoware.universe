@@ -49,8 +49,8 @@ double calc_dist_from_pose_to_terminal_end(
 double calc_stopping_distance(const LCParamPtr & lc_param_ptr)
 {
   // v^2 = u^2 + 2ad
-  const auto min_lc_vel = lc_param_ptr->minimum_lane_changing_velocity;
-  const auto min_lon_acc = lc_param_ptr->min_longitudinal_acc;
+  const auto min_lc_vel = lc_param_ptr->trajectory.min_lane_changing_velocity;
+  const auto min_lon_acc = lc_param_ptr->trajectory.min_longitudinal_acc;
   const auto min_back_dist = std::abs((min_lc_vel * min_lc_vel) / (2 * min_lon_acc));
 
   const auto param_back_dist = lc_param_ptr->backward_length_buffer_for_end_of_lane;
@@ -104,7 +104,7 @@ double calc_dist_to_last_fit_width(
 
 double calc_maximum_prepare_length(const CommonDataPtr & common_data_ptr)
 {
-  const auto max_prepare_duration = common_data_ptr->lc_param_ptr->lane_change_prepare_duration;
+  const auto max_prepare_duration = common_data_ptr->lc_param_ptr->trajectory.prepare_duration;
   const auto ego_max_speed = common_data_ptr->bpp_param_ptr->max_vel;
 
   return max_prepare_duration * ego_max_speed;
@@ -146,7 +146,7 @@ double calc_minimum_acceleration(
   const double min_acc_threshold, const double prepare_duration)
 {
   if (prepare_duration < eps) return -std::abs(min_acc_threshold);
-  const double min_lc_velocity = lane_change_parameters.minimum_lane_changing_velocity;
+  const double min_lc_velocity = lane_change_parameters.trajectory.min_lane_changing_velocity;
   const double acc = (min_lc_velocity - current_velocity) / prepare_duration;
   return std::clamp(acc, -std::abs(min_acc_threshold), -eps);
 }
@@ -167,10 +167,10 @@ std::vector<double> calc_min_lane_change_lengths(
     return {};
   }
 
-  const auto min_vel = lc_param_ptr->minimum_lane_changing_velocity;
-  const auto min_max_lat_acc = lc_param_ptr->lane_change_lat_acc_map.find(min_vel);
+  const auto min_vel = lc_param_ptr->trajectory.min_lane_changing_velocity;
+  const auto min_max_lat_acc = lc_param_ptr->trajectory.lat_acc_map.find(min_vel);
   const auto max_lat_acc = std::get<1>(min_max_lat_acc);
-  const auto lat_jerk = lc_param_ptr->lane_changing_lateral_jerk;
+  const auto lat_jerk = lc_param_ptr->trajectory.lateral_jerk;
 
   std::vector<double> min_lc_lengths{};
   min_lc_lengths.reserve(shift_intervals.size());
@@ -195,24 +195,23 @@ std::vector<double> calc_max_lane_change_lengths(
     return {};
   }
 
-  const auto & lc_param_ptr = common_data_ptr->lc_param_ptr;
-  const auto lat_jerk = lc_param_ptr->lane_changing_lateral_jerk;
-  const auto t_prepare = lc_param_ptr->lane_change_prepare_duration;
+  const auto & params = common_data_ptr->lc_param_ptr->trajectory;
+  const auto lat_jerk = params.lateral_jerk;
+  const auto t_prepare = params.prepare_duration;
   const auto current_velocity = common_data_ptr->get_ego_speed();
   const auto path_velocity = common_data_ptr->transient_data.current_path_velocity;
 
   const auto max_acc = calc_maximum_acceleration(
-    t_prepare, current_velocity, path_velocity, lc_param_ptr->max_longitudinal_acc);
+    t_prepare, current_velocity, path_velocity, params.max_longitudinal_acc);
 
   // TODO(Quda, Azu): should probably limit upper bound of velocity as well, but
   // disabled due failing evaluation tests.
   // const auto limit_vel = [&](const auto vel) {
   //   const auto max_global_vel = common_data_ptr->bpp_param_ptr->max_vel;
-  //   return std::clamp(vel, lc_param_ptr->minimum_lane_changing_velocity, max_global_vel);
+  //   return std::clamp(vel, params.min_lane_changing_velocity, max_global_vel);
   // };
 
-  auto vel =
-    std::max(common_data_ptr->get_ego_speed(), lc_param_ptr->minimum_lane_changing_velocity);
+  auto vel = std::max(common_data_ptr->get_ego_speed(), params.min_lane_changing_velocity);
 
   std::vector<double> max_lc_lengths{};
 
@@ -222,7 +221,7 @@ std::vector<double> calc_max_lane_change_lengths(
     vel = vel + max_acc * t_prepare;
 
     // lane changing section
-    const auto [min_lat_acc, max_lat_acc] = lc_param_ptr->lane_change_lat_acc_map.find(vel);
+    const auto [min_lat_acc, max_lat_acc] = params.lat_acc_map.find(vel);
     const auto t_lane_changing =
       autoware::motion_utils::calc_shift_time_from_jerk(shift_interval, lat_jerk, max_lat_acc);
     const auto lane_changing_length =
@@ -307,8 +306,10 @@ std::pair<double, double> calc_min_max_acceleration(
   const auto & bpp_params = *common_data_ptr->bpp_param_ptr;
   const auto current_ego_velocity = common_data_ptr->get_ego_speed();
 
-  const auto min_accel_threshold = std::max(bpp_params.min_acc, lc_params.min_longitudinal_acc);
-  const auto max_accel_threshold = std::min(bpp_params.max_acc, lc_params.max_longitudinal_acc);
+  const auto min_accel_threshold =
+    std::max(bpp_params.min_acc, lc_params.trajectory.min_longitudinal_acc);
+  const auto max_accel_threshold =
+    std::min(bpp_params.max_acc, lc_params.trajectory.max_longitudinal_acc);
 
   // calculate minimum and maximum acceleration
   const auto min_acc = calc_minimum_acceleration(
@@ -352,10 +353,12 @@ std::vector<double> calc_lon_acceleration_samples(
   const auto & current_pose = common_data_ptr->get_ego_pose();
   const auto & target_lanes = common_data_ptr->lanes_ptr->target;
   const auto goal_pose = common_data_ptr->route_handler_ptr->getGoalPose();
-  const auto sampling_num = common_data_ptr->lc_param_ptr->longitudinal_acc_sampling_num;
+  const auto sampling_num = common_data_ptr->lc_param_ptr->trajectory.lon_acc_sampling_num;
 
-  const auto [min_accel, max_accel] =
+  const auto min_max_accel =
     calc_min_max_acceleration(common_data_ptr, max_path_velocity, prepare_duration);
+  const auto & min_accel = min_max_accel.first;
+  const auto & max_accel = min_max_accel.second;
 
   const auto is_sampling_required = std::invoke([&]() -> bool {
     if (max_accel < 0.0 || transient_data.is_ego_stuck) return true;
@@ -396,7 +399,7 @@ std::vector<double> calc_prepare_durations(const CommonDataPtr & common_data_ptr
   const auto & lc_param_ptr = common_data_ptr->lc_param_ptr;
   const auto threshold = common_data_ptr->bpp_param_ptr->base_link2front +
                          lc_param_ptr->min_length_for_turn_signal_activation;
-  const auto max_prepare_duration = lc_param_ptr->lane_change_prepare_duration;
+  const auto max_prepare_duration = lc_param_ptr->trajectory.prepare_duration;
 
   // TODO(Azu) this check seems to cause scenario failures.
   if (common_data_ptr->transient_data.dist_to_terminal_start >= threshold) {
@@ -418,7 +421,7 @@ std::vector<PhaseMetrics> calc_prepare_phase_metrics(
   const double max_path_velocity, const double min_length_threshold,
   const double max_length_threshold)
 {
-  const auto & min_lc_vel = common_data_ptr->lc_param_ptr->minimum_lane_changing_velocity;
+  const auto & min_lc_vel = common_data_ptr->lc_param_ptr->trajectory.min_lane_changing_velocity;
   const auto & max_vel = common_data_ptr->bpp_param_ptr->max_vel;
 
   std::vector<PhaseMetrics> metrics;
@@ -465,14 +468,15 @@ std::vector<PhaseMetrics> calc_shift_phase_metrics(
   const CommonDataPtr & common_data_ptr, const double shift_length, const double initial_velocity,
   const double max_path_velocity, const double lon_accel, const double max_length_threshold)
 {
-  const auto & min_lc_vel = common_data_ptr->lc_param_ptr->minimum_lane_changing_velocity;
+  const auto & min_lc_vel = common_data_ptr->lc_param_ptr->trajectory.min_lane_changing_velocity;
   const auto & max_vel = common_data_ptr->bpp_param_ptr->max_vel;
 
   // get lateral acceleration range
   const auto [min_lateral_acc, max_lateral_acc] =
-    common_data_ptr->lc_param_ptr->lane_change_lat_acc_map.find(initial_velocity);
-  const auto lateral_acc_resolution = std::abs(max_lateral_acc - min_lateral_acc) /
-                                      common_data_ptr->lc_param_ptr->lateral_acc_sampling_num;
+    common_data_ptr->lc_param_ptr->trajectory.lat_acc_map.find(initial_velocity);
+  const auto lateral_acc_resolution =
+    std::abs(max_lateral_acc - min_lateral_acc) /
+    common_data_ptr->lc_param_ptr->trajectory.lat_acc_sampling_num;
 
   std::vector<PhaseMetrics> metrics;
 
@@ -490,7 +494,7 @@ std::vector<PhaseMetrics> calc_shift_phase_metrics(
   for (double lat_acc = min_lateral_acc; lat_acc < max_lateral_acc + eps;
        lat_acc += lateral_acc_resolution) {
     const auto lane_changing_duration = autoware::motion_utils::calc_shift_time_from_jerk(
-      shift_length, common_data_ptr->lc_param_ptr->lane_changing_lateral_jerk, lat_acc);
+      shift_length, common_data_ptr->lc_param_ptr->trajectory.lateral_jerk, lat_acc);
 
     const double lane_changing_accel = calc_lane_changing_acceleration(
       initial_velocity, max_path_velocity, lane_changing_duration, lon_accel);
