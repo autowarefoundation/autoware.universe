@@ -269,10 +269,18 @@ void PointCloudConcatenateDataSynchronizerComponent::publish_clouds(
   ConcatenatedCloudResult && concatenated_cloud_result, double reference_timestamp_min,
   double reference_timestamp_max)
 {
+  // should never come to this state.
   if (concatenated_cloud_result.concatenate_cloud_ptr == nullptr) {
+    RCLCPP_ERROR(this->get_logger(), "Concatenated cloud is a nullptr.");
+    return;
+  }
+
+  if (concatenated_cloud_result.concatenate_cloud_ptr->data.empty()) {
     RCLCPP_ERROR(this->get_logger(), "Concatenated cloud is an empty pointcloud.");
     is_concatenated_cloud_empty_ = true;
   }
+
+  std::cout << "is_concatenated_cloud_empty_: " << is_concatenated_cloud_empty_ << std::endl;
 
   current_concatenate_cloud_timestamp_ =
     rclcpp::Time(concatenated_cloud_result.concatenate_cloud_ptr->header.stamp).seconds();
@@ -426,6 +434,7 @@ void PointCloudConcatenateDataSynchronizerComponent::check_concat_status(
 
     publish_pointcloud_ = false;
     drop_previous_but_late_pointcloud_ = false;
+    is_concatenated_cloud_empty_ = false;
   } else {
     const int8_t level = diagnostic_msgs::msg::DiagnosticStatus::OK;
     const std::string message =
