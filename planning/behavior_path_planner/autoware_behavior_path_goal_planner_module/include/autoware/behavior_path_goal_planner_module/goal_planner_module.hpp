@@ -105,13 +105,6 @@ struct PoseWithString
   }
 };
 
-struct SelectedPullOverPath
-{
-  PullOverPath path;
-  rclcpp::Time selected_time;
-  std::optional<rclcpp::Time> last_path_idx_increment_time;
-};
-
 struct PullOverContextData
 {
   PullOverContextData() = delete;
@@ -136,8 +129,11 @@ struct PullOverContextData
   const bool is_stopped;
   const LaneParkingResponse lane_parking_response;
   const FreespaceParkingResponse freespace_parking_response;
-  // TODO(soblin): due to deceleratePath(), this cannot be const member(velocity is modified by it)
-  std::optional<SelectedPullOverPath> selected_pull_over_path_opt;
+  // TODO(soblin): due to deceleratePath(), this cannot be const member(velocity is modified by it),
+  // and bind following three member, rename as "SelectedPullOverPath"
+  std::optional<PullOverPath> pull_over_path_opt;
+  std::optional<rclcpp::Time> last_path_update_time;
+  std::optional<rclcpp::Time> last_path_idx_increment_time;
 };
 
 bool isOnModifiedGoal(
