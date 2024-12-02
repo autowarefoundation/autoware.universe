@@ -324,8 +324,8 @@ bool CostmapGenerator::isActive()
   if (param_->activate_by_scenario) {
     if (!scenario_) return false;
     const auto & s = scenario_->activating_scenarios;
-    return std::any_of(s.begin(), s.end(), [](const auto scen) {
-      return scen == tier4_planning_msgs::msg::Scenario::PARKING;
+    return std::any_of(s.begin(), s.end(), [](const auto scenario) {
+      return scenario == tier4_planning_msgs::msg::Scenario::PARKING;
     });
   }
 
