@@ -938,7 +938,7 @@ std::vector<lanelet::ConstLineString3d> IntersectionModule::generateDetectionLan
   if (detection_lanelets.empty()) {
     // NOTE(soblin): due to the above filtering detection_lanelets may be empty or do not contain
     // conflicting_detection_lanelets
-    // OK to return empty detction_divsions
+    // OK to return empty detection_divisions
     return detection_divisions;
   }
 

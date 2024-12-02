@@ -232,7 +232,7 @@ void ControlEvaluatorNode::AddGoalLongitudinalDeviationMetricMsg(const Pose & eg
 
 void ControlEvaluatorNode::AddGoalLateralDeviationMetricMsg(const Pose & ego_pose)
 {
-  const Metric metric = Metric::lateral_deviation;
+  const Metric metric = Metric::goal_lateral_deviation;
   const double metric_value =
     metrics::calcLateralDeviation(route_handler_.getGoalPose(), ego_pose.position);
 
