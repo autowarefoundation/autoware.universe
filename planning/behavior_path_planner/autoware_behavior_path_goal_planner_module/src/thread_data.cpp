@@ -20,15 +20,14 @@ namespace autoware::behavior_path_planner
 void LaneParkingRequest::update(
   const PlannerData & planner_data, const ModuleStatus & current_status,
   const BehaviorModuleOutput & previous_module_output,
-  const std::optional<std::pair<PullOverPath, rclcpp::Time>> & selected_pull_over_path,
-  const PathDecisionState & prev_data)
+  const std::optional<PullOverPath> & pull_over_path, const PathDecisionState & prev_data)
 {
   planner_data_ = std::make_shared<PlannerData>(planner_data);
   planner_data_->route_handler = std::make_shared<RouteHandler>(*(planner_data.route_handler));
   current_status_ = current_status;
   last_previous_module_output_ = previous_module_output_;
   previous_module_output_ = previous_module_output;
-  selected_pull_over_path_ = selected_pull_over_path;
+  pull_over_path_ = pull_over_path;
   prev_data_ = prev_data;
 }
 
@@ -37,7 +36,7 @@ LaneParkingRequest LaneParkingRequest::clone() const
   LaneParkingRequest request(
     parameters_, vehicle_footprint_, goal_candidates_, previous_module_output_);
   request.update(
-    *planner_data_, current_status_, previous_module_output_, selected_pull_over_path_, prev_data_);
+    *planner_data_, current_status_, previous_module_output_, pull_over_path_, prev_data_);
   return request;
 }
 
@@ -59,14 +58,15 @@ void FreespaceParkingRequest::initializeOccupancyGridMap(
 
 void FreespaceParkingRequest::update(
   const PlannerData & planner_data, const ModuleStatus & current_status,
-  const std::optional<std::pair<PullOverPath, rclcpp::Time>> & selected_pull_over_path,
-  const bool is_stopped)
+  const std::optional<PullOverPath> & pull_over_path,
+  const std::optional<rclcpp::Time> & last_path_update_time, const bool is_stopped)
 {
   planner_data_ = std::make_shared<PlannerData>(planner_data);
   planner_data_->route_handler = std::make_shared<RouteHandler>(*(planner_data.route_handler));
   current_status_ = current_status;
   occupancy_grid_map_->setMap(*(planner_data_->occupancy_grid));
-  selected_pull_over_path_ = selected_pull_over_path;
+  pull_over_path_ = pull_over_path;
+  last_path_update_time_ = last_path_update_time;
   is_stopped_ = is_stopped;
 }
 
@@ -74,7 +74,8 @@ FreespaceParkingRequest FreespaceParkingRequest::clone() const
 {
   FreespaceParkingRequest request(
     parameters_, vehicle_footprint_, goal_candidates_, *planner_data_);
-  request.update(*planner_data_, current_status_, selected_pull_over_path_, is_stopped_);
+  request.update(
+    *planner_data_, current_status_, pull_over_path_, last_path_update_time_, is_stopped_);
   return request;
 }
 

@@ -82,36 +82,6 @@ struct LastApprovalData
   Pose pose{};
 };
 
-// store stop_pose_ pointer with reason string
-struct PoseWithString
-{
-  std::optional<Pose> * pose;
-  std::string string;
-
-  explicit PoseWithString(std::optional<Pose> * shared_pose) : pose(shared_pose), string("") {}
-
-  void set(const Pose & new_pose, const std::string & new_string)
-  {
-    *pose = new_pose;
-    string = new_string;
-  }
-
-  void set(const std::string & new_string) { string = new_string; }
-
-  void clear()
-  {
-    pose->reset();
-    string = "";
-  }
-};
-
-struct SelectedPullOverPath
-{
-  PullOverPath path;
-  rclcpp::Time selected_time;
-  std::optional<rclcpp::Time> last_path_idx_increment_time;
-};
-
 struct PullOverContextData
 {
   PullOverContextData() = delete;
@@ -136,8 +106,11 @@ struct PullOverContextData
   const bool is_stopped;
   const LaneParkingResponse lane_parking_response;
   const FreespaceParkingResponse freespace_parking_response;
-  // TODO(soblin): due to deceleratePath(), this cannot be const member(velocity is modified by it)
-  std::optional<SelectedPullOverPath> selected_pull_over_path_opt;
+  // TODO(soblin): due to deceleratePath(), this cannot be const member(velocity is modified by it),
+  // and bind following three member, rename as "SelectedPullOverPath"
+  std::optional<PullOverPath> pull_over_path_opt;
+  std::optional<rclcpp::Time> last_path_update_time;
+  std::optional<rclcpp::Time> last_path_idx_increment_time;
 };
 
 bool isOnModifiedGoal(
@@ -307,6 +280,7 @@ public:
 private:
   std::pair<LaneParkingResponse, FreespaceParkingResponse> syncWithThreads();
 
+  // NOTE: never access to following variables except in updateData()!!!
   std::mutex lane_parking_mutex_;
   std::optional<LaneParkingRequest> lane_parking_request_;
   LaneParkingResponse lane_parking_response_;
@@ -346,9 +320,9 @@ private:
 
   std::shared_ptr<GoalPlannerParameters> parameters_;
 
-  std::shared_ptr<EgoPredictedPathParams> ego_predicted_path_params_;
-  std::shared_ptr<ObjectsFilteringParams> objects_filtering_params_;
-  std::shared_ptr<SafetyCheckParams> safety_check_params_;
+  mutable std::shared_ptr<EgoPredictedPathParams> ego_predicted_path_params_;
+  mutable std::shared_ptr<ObjectsFilteringParams> objects_filtering_params_;
+  mutable std::shared_ptr<SafetyCheckParams> safety_check_params_;
 
   autoware::vehicle_info_utils::VehicleInfo vehicle_info_{};
 
@@ -414,7 +388,7 @@ private:
   double calcSignedArcLengthFromEgo(const PathWithLaneId & path, const Pose & pose) const;
 
   // status
-  bool hasFinishedCurrentPath(const PullOverContextData & ctx_data) const;
+  bool hasFinishedCurrentPath(const PullOverContextData & ctx_data);
   double calcModuleRequestLength() const;
   void decideVelocity(PullOverPath & pull_over_path);
   void updateStatus(const BehaviorModuleOutput & output);
@@ -427,7 +401,6 @@ private:
   bool isCrossingPossible(
     const Pose & start_pose, const Pose & end_pose, const lanelet::ConstLanelets lanes) const;
   bool isCrossingPossible(const PullOverPath & pull_over_path) const;
-
   bool canReturnToLaneParking(const PullOverContextData & context_data);
 
   // plan pull over path

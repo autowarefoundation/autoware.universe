@@ -46,8 +46,7 @@ public:
   void update(
     const PlannerData & planner_data, const ModuleStatus & current_status,
     const BehaviorModuleOutput & previous_module_output,
-    const std::optional<std::pair<PullOverPath, rclcpp::Time>> & selected_pull_over_path,
-    const PathDecisionState & prev_data);
+    const std::optional<PullOverPath> & pull_over_path, const PathDecisionState & prev_data);
 
   const GoalPlannerParameters parameters_;
   const autoware::universe_utils::LinearRing2d vehicle_footprint_;
@@ -63,10 +62,7 @@ public:
   {
     return last_previous_module_output_;
   }
-  const std::optional<std::pair<PullOverPath, rclcpp::Time>> & get_selected_pull_over_path() const
-  {
-    return selected_pull_over_path_;
-  }
+  const std::optional<PullOverPath> & get_pull_over_path() const { return pull_over_path_; }
   const PathDecisionState & get_prev_data() const { return prev_data_; }
   LaneParkingRequest clone() const;
 
@@ -75,8 +71,7 @@ private:
   ModuleStatus current_status_;
   BehaviorModuleOutput previous_module_output_;
   BehaviorModuleOutput last_previous_module_output_;
-  std::optional<std::pair<PullOverPath, rclcpp::Time>>
-    selected_pull_over_path_;  //<! pull over path selected by main thread
+  std::optional<PullOverPath> pull_over_path_;  //<! pull over path selected by main thread
   PathDecisionState prev_data_;
 };
 
@@ -103,8 +98,8 @@ public:
   const ModuleStatus & getCurrentStatus() const { return current_status_; }
   void update(
     const PlannerData & planner_data, const ModuleStatus & current_status,
-    const std::optional<std::pair<PullOverPath, rclcpp::Time>> & selected_pull_over_path,
-    const bool is_stopped);
+    const std::optional<PullOverPath> & pull_over_path,
+    const std::optional<rclcpp::Time> & last_path_update_time, const bool is_stopped);
 
   const GoalPlannerParameters parameters_;
   const autoware::universe_utils::LinearRing2d vehicle_footprint_;
@@ -116,9 +111,10 @@ public:
   {
     return occupancy_grid_map_;
   }
-  const std::optional<std::pair<PullOverPath, rclcpp::Time>> & get_selected_pull_over_path() const
+  const std::optional<PullOverPath> & get_pull_over_path() const { return pull_over_path_; }
+  const std::optional<rclcpp::Time> & get_last_path_update_time() const
   {
-    return selected_pull_over_path_;
+    return last_path_update_time_;
   }
   bool is_stopped() const { return is_stopped_; }
 
@@ -128,7 +124,8 @@ private:
   std::shared_ptr<PlannerData> planner_data_;
   ModuleStatus current_status_;
   std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map_;
-  std::optional<std::pair<PullOverPath, rclcpp::Time>> selected_pull_over_path_;
+  std::optional<PullOverPath> pull_over_path_;
+  std::optional<rclcpp::Time> last_path_update_time_;
   bool is_stopped_;
 
   void initializeOccupancyGridMap(
