@@ -269,13 +269,8 @@ void PointCloudConcatenateDataSynchronizerComponent::publish_clouds(
   ConcatenatedCloudResult && concatenated_cloud_result, double reference_timestamp_min,
   double reference_timestamp_max)
 {
-  // should never come to this state.
   if (concatenated_cloud_result.concatenate_cloud_ptr == nullptr) {
-    RCLCPP_ERROR(this->get_logger(), "Concatenate cloud is a nullptr.");
-    return;
-  }
-  if (concatenated_cloud_result.concatenate_cloud_ptr == nullptr) {
-    RCLCPP_WARN(this->get_logger(), "Concatenate cloud is an empty pointcloud.");
+    RCLCPP_ERROR(this->get_logger(), "Concatenated cloud is an empty pointcloud.");
     is_concatenated_cloud_empty_ = true;
   }
 
