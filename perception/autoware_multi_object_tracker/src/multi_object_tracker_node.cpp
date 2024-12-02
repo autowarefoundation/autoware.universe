@@ -213,7 +213,19 @@ void MultiObjectTracker::onTrigger()
   ObjectsList objects_list;
   const bool is_objects_ready = input_manager_->getObjects(current_time, objects_list);
   if (!is_objects_ready) return;
-  onMessage(objects_list);
+
+  const rclcpp::Time current_time = this->now();
+  const rclcpp::Time latest_time(objects_list.back().second.header.stamp);
+  last_updated_time_ = current_time;
+
+  // process start
+  debugger_->startMeasurementTime(this->now(), latest_time);
+  // run process for each DetectedObjects
+  for (const auto & objects_data : objects_list) {
+    runProcess(objects_data.second, objects_data.first);
+  }
+  // process end
+  debugger_->endMeasurementTime(this->now());
 
   // Publish without delay compensation
   if (!publish_timer_) {
@@ -243,22 +255,6 @@ void MultiObjectTracker::onTimer()
 
   // Publish with delay compensation to the current time
   if (should_publish) checkAndPublish(current_time);
-}
-
-void MultiObjectTracker::onMessage(const ObjectsList & objects_list)
-{
-  const rclcpp::Time current_time = this->now();
-  const rclcpp::Time oldest_time(objects_list.front().second.header.stamp);
-  last_updated_time_ = current_time;
-
-  // process start
-  debugger_->startMeasurementTime(this->now(), oldest_time);
-  // run process for each DetectedObjects
-  for (const auto & objects_data : objects_list) {
-    runProcess(objects_data.second, objects_data.first);
-  }
-  // process end
-  debugger_->endMeasurementTime(this->now());
 }
 
 void MultiObjectTracker::runProcess(
