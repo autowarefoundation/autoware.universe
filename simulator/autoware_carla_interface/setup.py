@@ -7,13 +7,14 @@ package_name = "autoware_carla_interface"
 
 setup(
     name=package_name,
-    version="0.0.0",
+    version="0.38.0",
     packages=[package_name],
     data_files=[
         ("share/" + package_name, glob("config/*")),
         ("share/" + package_name, glob("calibration_maps/*.csv")),
         ("share/" + package_name, ["package.xml"]),
         (os.path.join("share", package_name), glob("launch/autoware_carla_interface.launch.xml")),
+        ("share/ament_index/resource_index/packages", ["resource/autoware_carla_interface"]),
     ],
     install_requires=["setuptools"],
     zip_safe=True,

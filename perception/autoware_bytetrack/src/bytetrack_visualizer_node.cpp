@@ -34,7 +34,7 @@ ByteTrackVisualizerNode::ByteTrackVisualizerNode(const rclcpp::NodeOptions & nod
 {
   using std::chrono_literals::operator""ms;
 
-  use_raw_ = declare_parameter("use_raw", false);
+  use_raw_ = declare_parameter<bool>("use_raw");
 
   // Create timer to find proper settings for subscribed topics
   timer_ = rclcpp::create_timer(

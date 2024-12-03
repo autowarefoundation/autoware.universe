@@ -18,7 +18,6 @@
 #include "autoware/behavior_velocity_crosswalk_module/util.hpp"
 
 #include <autoware/behavior_velocity_planner_common/scene_module_interface.hpp>
-#include <autoware/motion_utils/vehicle/vehicle_state_checker.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
 #include <autoware_lanelet2_extension/regulatory_elements/crosswalk.hpp>
@@ -62,6 +61,10 @@ using tier4_planning_msgs::msg::PathWithLaneId;
 
 namespace
 {
+/**
+ * @param x_vec Strictly monotone increasing is required.
+ * @param y_vec The same number of elements as x_vec is required.
+ */
 double interpolateEgoPassMargin(
   const std::vector<double> & x_vec, const std::vector<double> & y_vec, const double target_x)
 {
@@ -77,6 +80,10 @@ double interpolateEgoPassMargin(
   return y_vec.back();
 }
 
+/**
+ * @param key_map Strictly monotone increasing should be satisfied.
+ * @param value_map The same number of elements as key_map is required.
+ */
 double InterpolateMap(
   const std::vector<double> & key_map, const std::vector<double> & value_map, const double query)
 {
@@ -115,7 +122,6 @@ public:
     double stop_distance_from_object_preferred;
     double stop_distance_from_object_limit;
     double stop_distance_from_crosswalk;
-    double far_object_threshold;
     double stop_position_threshold;
     double min_acc_preferred;
     double min_jerk_preferred;
@@ -330,7 +336,7 @@ public:
     const PlannerParam & planner_param, const rclcpp::Logger & logger,
     const rclcpp::Clock::SharedPtr clock);
 
-  bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
+  bool modifyPathVelocity(PathWithLaneId * path) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
   autoware::motion_utils::VirtualWalls createVirtualWalls() override;
@@ -393,7 +399,7 @@ private:
 
   void planStop(
     PathWithLaneId & ego_path, const std::optional<StopFactor> & nearest_stop_factor,
-    const std::optional<geometry_msgs::msg::Pose> & default_stop_pose, StopReason * stop_reason);
+    const std::optional<geometry_msgs::msg::Pose> & default_stop_pose);
 
   // minor functions
   std::pair<double, double> getAttentionRange(
@@ -465,8 +471,6 @@ private:
 
   // Debug
   mutable DebugData debug_data_;
-
-  std::unique_ptr<autoware::motion_utils::VehicleStopChecker> vehicle_stop_checker_{nullptr};
 
   // Stop watch
   StopWatch<std::chrono::milliseconds> stop_watch_;

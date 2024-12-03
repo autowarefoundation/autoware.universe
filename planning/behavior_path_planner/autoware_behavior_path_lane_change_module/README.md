@@ -195,7 +195,7 @@ if (max_lane_change_length >  ego's distance to the end of the current lanes.) t
   stop
 endif
 
-if (isVehicleStuck(current_lanes)) then (yes)
+if (ego is stuck in the current lanes) then (yes)
   :Return **sampled acceleration values**;
   stop
 else (no)
@@ -350,6 +350,71 @@ stop
 
 @enduml
 ```
+
+#### Delay Lane Change Check
+
+In certain situations, when there are stopped vehicles along the target lane ahead of Ego vehicle, to avoid getting stuck, it is desired to perform the lane change maneuver after the stopped vehicle.
+To do so, all static objects ahead of ego along the target lane are checked in order from closest to furthest, if any object satisfies the following conditions, lane change will be delayed and candidate path will be rejected.
+
+1. The distance from object to terminal end is sufficient to perform lane change
+2. The distance to object is less than the lane changing length
+3. The distance from object to next object is sufficient to perform lane change
+
+If the parameter `check_only_parked_vehicle` is set to `true`, the check will only consider objects which are determined as parked.
+
+The following flow chart illustrates the delay lane change check.
+
+```plantuml
+@startuml
+skinparam defaultTextAlignment center
+skinparam backgroundColor #White
+
+start
+if (Is target objects, candidate path, OR current lane path empty?) then (yes)
+  #LightPink:Return false;
+  stop
+else (no)
+endif
+
+:Start checking objects from closest to furthest;
+repeat
+  if (Is distance from object to terminal sufficient) then (yes)
+  else (no)
+    #LightPink:Return false;
+    stop
+  endif
+
+  if (Is distance to object less than lane changing length) then (yes)
+  else (no)
+    if (Is only check parked vehicles and vehicle is not parked) then (yes)
+    else (no)
+      if(Is last object OR distance to next object is sufficient) then (yes)
+        #LightGreen: Return true;
+        stop
+      else (no)
+      endif
+    endif
+  endif
+  repeat while (Is finished checking all objects) is (FALSE)
+
+#LightPink: Return false;
+stop
+
+@enduml
+```
+
+The following figures demonstrate different situations under which will or will not be triggered:
+
+1. Delay lane change will be triggered as there is sufficient distance ahead.
+   ![delay lane change 1](./images/delay_lane_change_1.drawio.svg)
+2. Delay lane change will NOT be triggered as there is no sufficient distance ahead
+   ![delay lane change 2](./images/delay_lane_change_2.drawio.svg)
+3. Delay lane change will be triggered by fist NPC as there is sufficient distance ahead.
+   ![delay lane change 3](./images/delay_lane_change_3.drawio.svg)
+4. Delay lane change will be triggered by second NPC as there is sufficient distance ahead
+   ![delay lane change 4](./images/delay_lane_change_4.drawio.svg)
+5. Delay lane change will NOT be triggered as there is no sufficient distance ahead.
+   ![delay lane change 5](./images/delay_lane_change_5.drawio.svg)
 
 #### Candidate Path's Safety check
 
@@ -525,8 +590,6 @@ The ego vehicle may need to secure ample inter-vehicle distance ahead of the tar
 
 ![enable collision check at prepare phase](./images/lane_change-enable_collision_check_at_prepare_phase.png)
 
-The parameter `prepare_phase_ignore_target_speed_thresh` can be configured to ignore the prepare phase collision check for targets whose speeds are less than a specific threshold, such as stationary or very slow-moving objects.
-
 #### If the lane is blocked and multiple lane changes
 
 When driving on the public road with other vehicles, there exist scenarios where lane changes cannot be executed. Suppose the candidate path is evaluated as unsafe, for example, due to incoming vehicles in the adjacent lane. In that case, the ego vehicle can't change lanes, and it is impossible to reach the goal. Therefore, the ego vehicle must stop earlier at a certain distance and wait for the adjacent lane to be evaluated as safe. The minimum stopping distance can be computed from shift length and minimum lane changing velocity.
@@ -540,14 +603,65 @@ The following figure illustrates when the lane is blocked in multiple lane chang
 
 ![multiple-lane-changes](./images/lane_change-when_cannot_change_lanes.png)
 
-#### Stopping position when an object exists ahead
+### Stopping behavior
 
-When an obstacle is in front of the ego vehicle, stop with keeping a distance for lane change.
-The position to be stopped depends on the situation, such as when the lane change is blocked by the target lane obstacle, or when the lane change is not needed immediately.The following shows the division in that case.
+The stopping behavior of the ego vehicle is determined based on various factors, such as the number of lane changes required, the presence of obstacles, and the position of blocking objects in relation to the lane change plan. The objective is to choose a suitable stopping point that allows for a safe and effective lane change while adapting to different traffic scenarios.
 
-##### When the ego vehicle is near the end of the lane change
+The following flowchart and subsections explain the conditions for deciding where to insert a stop point when an obstacle is ahead.
 
-Regardless of the presence or absence of objects in the lane change target lane, stop by keeping the distance necessary for lane change to the object ahead.
+```plantuml
+@startuml
+skinparam defaultTextAlignment center
+skinparam backgroundColor #WHITE
+
+title Inserting Stop Point
+
+start
+if (number of lane changes is zero?) then (<color:green><b>YES</b></color>)
+stop
+else (<color:red><b>NO</b></color>)
+endif
+
+if (do we want to insert stop point in current lanes?) then (<color:red><b>NO</b></color>)
+#LightPink:Insert stop point at next lane change terminal start.;
+stop
+else (<color:green><b>YES</b></color>)
+endif
+
+if (Is there leading object in the current lanes that blocks ego's path?) then (<color:red><b>NO</b></color>)
+#LightPink:Insert stop point at terminal stop.;
+stop
+else (<color:green><b>YES</b></color>)
+endif
+
+if (Blocking object's position is after target lane's start position?) then (<color:red><b>NO</b></color>)
+#LightPink:Insert stop at the target lane's start position.;
+stop
+else (<color:green><b>YES</b></color>)
+endif
+
+if (Blocking object's position is before terminal stop position?) then (<color:red><b>NO</b></color>)
+#LightPink:Insert stop at the terminal stop position;
+stop
+else (<color:green><b>YES</b></color>)
+endif
+
+if (Are there target lane objects between the ego and the blocking object?) then (<color:red><b>NO</b></color>)
+#LightGreen:Insert stop behind the blocking object;
+stop
+else (<color:green><b>YES</b></color>)
+#LightPink:Insert stop at terminal stop;
+stop
+@enduml
+```
+
+#### Ego vehicle's stopping position when an object exists ahead
+
+When the ego vehicle encounters an obstacle ahead, it stops while maintaining a safe distance to prepare for a possible lane change. The exact stopping position depends on factors like whether the target lane is clear or if the lane change needs to be delayed. The following explains how different stopping scenarios are handled:
+
+##### When the near the end of the lane change
+
+Whether the target lane has obstacles or is clear, the ego vehicle stops while keeping a safe distance from the obstacle ahead, ensuring there is enough room for the lane change.
 
 ![stop_at_terminal_no_block](./images/lane_change-stop_at_terminal_no_block.drawio.svg)
 
@@ -555,19 +669,39 @@ Regardless of the presence or absence of objects in the lane change target lane,
 
 ##### When the ego vehicle is not near the end of the lane change
 
-If there are NO objects in the lane change section of the target lane, stop by keeping the distance necessary for lane change to the object ahead.
+The ego vehicle stops while maintaining a safe distance from the obstacle ahead, ensuring there is enough space for a lane change.
 
 ![stop_not_at_terminal_no_blocking_object](./images/lane_change-stop_not_at_terminal_no_blocking_object.drawio.svg)
 
-If there are objects in the lane change section of the target lane, stop WITHOUT keeping the distance necessary for lane change to the object ahead.
+#### Ego vehicle's stopping position when an object exists in the lane changing section
+
+If there are objects within the lane change section of the target lane, the ego vehicle stops closer to the obstacle ahead, without maintaining the usual distance for a lane change.
+
+##### When near the end of the lane change
+
+Regardless of whether there are obstacles in the target lane, the ego vehicle stops while keeping a safe distance from the obstacle ahead, allowing for the lane change.
+
+![stop_at_terminal_no_block](./images/lane_change-stop_at_terminal_no_block.drawio.svg)
+
+![stop_at_terminal](./images/lane_change-stop_at_terminal.drawio.svg)
+
+##### When not near the end of the lane change
+
+If there are no obstacles in the lane change section of the target lane, the ego vehicle stops while keeping a safe distance from the obstacle ahead to accommodate the lane change.
+
+![stop_not_at_terminal_no_blocking_object](./images/lane_change-stop_not_at_terminal_no_blocking_object.drawio.svg)
+
+If there are obstacles within the lane change section of the target lane, the ego vehicle stops closer to the obstacle ahead, without keeping the usual distance needed for a lane change.
 
 ![stop_not_at_terminal](./images/lane_change-stop_not_at_terminal.drawio.svg)
 
-##### When the target lane is far away
+#### When the target lane is far away
 
-When the target lane for lane change is far away and not next to the current lane, do not keep the distance necessary for lane change to the object ahead.
+If the target lane for the lane change is far away and not next to the current lane, the ego vehicle stops closer to the obstacle ahead, as maintaining the usual distance for a lane change is not necessary.
 
 ![stop_far_from_target_lane](./images/lane_change-stop_far_from_target_lane.drawio.svg)
+
+![stop_not_at_terminal](./images/lane_change-stop_not_at_terminal.drawio.svg)
 
 ### Lane Change When Stuck
 
@@ -749,24 +883,20 @@ The following parameters are configurable in [lane_change.param.yaml](https://gi
 | Name                                         | Unit   | Type   | Description                                                                                                            | Default value      |
 | :------------------------------------------- | ------ | ------ | ---------------------------------------------------------------------------------------------------------------------- | ------------------ |
 | `backward_lane_length`                       | [m]    | double | The backward length to check incoming objects in lane change target lane.                                              | 200.0              |
-| `prepare_duration`                           | [m]    | double | The preparation time for the ego vehicle to be ready to perform lane change.                                           | 4.0                |
 | `backward_length_buffer_for_end_of_lane`     | [m]    | double | The end of lane buffer to ensure ego vehicle has enough distance to start lane change                                  | 3.0                |
 | `backward_length_buffer_for_blocking_object` | [m]    | double | The end of lane buffer to ensure ego vehicle has enough distance to start lane change when there is an object in front | 3.0                |
-| `lane_change_finish_judge_buffer`            | [m]    | double | The additional buffer used to confirm lane change process completion                                                   | 2.0                |
-| `lane_changing_lateral_jerk`                 | [m/s3] | double | Lateral jerk value for lane change path generation                                                                     | 0.5                |
-| `minimum_lane_changing_velocity`             | [m/s]  | double | Minimum speed during lane changing process.                                                                            | 2.78               |
-| `prediction_time_resolution`                 | [s]    | double | Time resolution for object's path interpolation and collision check.                                                   | 0.5                |
-| `longitudinal_acceleration_sampling_num`     | [-]    | int    | Number of possible lane-changing trajectories that are being influenced by longitudinal acceleration                   | 3                  |
-| `lateral_acceleration_sampling_num`          | [-]    | int    | Number of possible lane-changing trajectories that are being influenced by lateral acceleration                        | 3                  |
-| `object_check_min_road_shoulder_width`       | [m]    | double | Width considered as a road shoulder if the lane does not have a road shoulder                                          | 0.5                |
-| `object_shiftable_ratio_threshold`           | [-]    | double | Vehicles around the center line within this distance ratio will be excluded from parking objects                       | 0.6                |
+| `backward_length_from_intersection`          | [m]    | double | Distance threshold from the last intersection to invalidate or cancel the lane change path                             | 5.0                |
+| `trajectory.prepare_duration`                | [m]    | double | The preparation time for the ego vehicle to be ready to perform lane change.                                           | 4.0                |
+| `trajectory.lateral_jerk`                    | [m/s3] | double | Lateral jerk value for lane change path generation                                                                     | 0.5                |
+| `trajectory.minimum_lane_changing_velocity`  | [m/s]  | double | Minimum speed during lane changing process.                                                                            | 2.78               |
+| `trajectory.lon_acc_sampling_num`            | [-]    | int    | Number of possible lane-changing trajectories that are being influenced by longitudinal acceleration                   | 3                  |
+| `trajectory.lat_acc_sampling_num`            | [-]    | int    | Number of possible lane-changing trajectories that are being influenced by lateral acceleration                        | 3                  |
+| `trajectory.max_longitudinal_acc`            | [m/s2] | double | maximum longitudinal acceleration for lane change                                                                      | 1.0                |
+| `trajectory.min_longitudinal_acc`            | [m/s2] | double | maximum longitudinal deceleration for lane change                                                                      | -1.0               |
 | `min_length_for_turn_signal_activation`      | [m]    | double | Turn signal will be activated if the ego vehicle approaches to this length from minimum lane change length             | 10.0               |
-| `length_ratio_for_turn_signal_deactivation`  | [-]    | double | Turn signal will be deactivated if the ego vehicle approaches to this length ratio for lane change finish point        | 0.8                |
-| `max_longitudinal_acc`                       | [-]    | double | maximum longitudinal acceleration for lane change                                                                      | 1.0                |
-| `min_longitudinal_acc`                       | [-]    | double | maximum longitudinal deceleration for lane change                                                                      | -1.0               |
 | `lateral_acceleration.velocity`              | [m/s]  | double | Reference velocity for lateral acceleration calculation (look up table)                                                | [0.0, 4.0, 10.0]   |
-| `lateral_acceleration.min_values`            | [m/ss] | double | Min lateral acceleration values corresponding to velocity (look up table)                                              | [0.4, 0.4, 0.4]    |
-| `lateral_acceleration.max_values`            | [m/ss] | double | Max lateral acceleration values corresponding to velocity (look up table)                                              | [0.65, 0.65, 0.65] |
+| `lateral_acceleration.min_values`            | [m/s2] | double | Min lateral acceleration values corresponding to velocity (look up table)                                              | [0.4, 0.4, 0.4]    |
+| `lateral_acceleration.max_values`            | [m/s2] | double | Max lateral acceleration values corresponding to velocity (look up table)                                              | [0.65, 0.65, 0.65] |
 
 ### Parameter to judge if lane change is completed
 
@@ -792,6 +922,15 @@ The following parameters are used to judge lane change completion.
 | :-------------------------- | ----- | ------ | --------------------------------------------------- | ------------- |
 | `stuck_detection.velocity`  | [m/s] | double | Velocity threshold for ego vehicle stuck detection  | 0.1           |
 | `stuck_detection.stop_time` | [s]   | double | Stop time threshold for ego vehicle stuck detection | 3.0           |
+
+### Delay Lane Change
+
+| Name                                              | Unit | Type   | Description                                                                                           | Default value |
+| :------------------------------------------------ | ---- | ------ | ----------------------------------------------------------------------------------------------------- | ------------- |
+| `delay_lane_change.enable`                        | [-]  | bool   | Flag to enable/disable lane change delay feature                                                      | true          |
+| `delay_lane_change.check_only_parked_vehicle`     | [-]  | bool   | Flag to limit delay feature for only parked vehicles                                                  | false         |
+| `delay_lane_change.min_road_shoulder_width`       | [m]  | double | Width considered as road shoulder if lane doesn't have road shoulder when checking for parked vehicle | 0.5           |
+| `delay_lane_change.th_parked_vehicle_shift_ratio` | [-]  | double | Stopped vehicles beyond this distance ratio from center line will be considered as parked             | 0.6           |
 
 ### Collision checks
 
@@ -819,14 +958,14 @@ The following parameters are used to judge lane change completion.
 
 | Name                                                     | Unit  | Type    | Description                                                                                                                                                                                                | Default value |
 | :------------------------------------------------------- | ----- | ------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
-| `enable_collision_check_for_prepare_phase.general_lanes` | [-]   | boolean | Perform collision check starting from the prepare phase for situations not explicitly covered by other settings (e.g., intersections). If `false`, collision check only evaluated for lane changing phase. | false         |
-| `enable_collision_check_for_prepare_phase.intersection`  | [-]   | boolean | Perform collision check starting from prepare phase when ego is in intersection. If `false`, collision check only evaluated for lane changing phase.                                                       | true          |
-| `enable_collision_check_for_prepare_phase.turns`         | [-]   | boolean | Perform collision check starting from prepare phase when ego is in lanelet with turn direction tags. If `false`, collision check only evaluated for lane changing phase.                                   | true          |
-| `prepare_phase_ignore_target_speed_thresh`               | [m/s] | double  | Ignore collision check in prepare phase of object speed that is lesser that the configured value. `enable_collision_check_at_prepare_phase` must be `true`                                                 | 0.1           |
-| `check_objects_on_current_lanes`                         | [-]   | boolean | If true, the lane change module check objects on current lanes when performing collision assessment.                                                                                                       | false         |
-| `check_objects_on_other_lanes`                           | [-]   | boolean | If true, the lane change module include objects on other lanes. when performing collision assessment                                                                                                       | false         |
-| `use_all_predicted_path`                                 | [-]   | boolean | If false, use only the predicted path that has the maximum confidence.                                                                                                                                     | true          |
-| `safety_check.collision_check_yaw_diff_threshold`        | [rad] | double  | Maximum yaw difference between ego and object when executing rss-based collision checking                                                                                                                  | 3.1416        |
+| `collision_check.enable_for_prepare_phase.general_lanes` | [-]   | boolean | Perform collision check starting from the prepare phase for situations not explicitly covered by other settings (e.g., intersections). If `false`, collision check only evaluated for lane changing phase. | false         |
+| `collision_check.enable_for_prepare_phase.intersection`  | [-]   | boolean | Perform collision check starting from prepare phase when ego is in intersection. If `false`, collision check only evaluated for lane changing phase.                                                       | true          |
+| `collision_check.enable_for_prepare_phase.turns`         | [-]   | boolean | Perform collision check starting from prepare phase when ego is in lanelet with turn direction tags. If `false`, collision check only evaluated for lane changing phase.                                   | true          |
+| `collision_check.check_current_lanes`                    | [-]   | boolean | If true, the lane change module always checks objects in the current lanes for collision assessment. If false, it only checks objects in the current lanes when the ego vehicle is stuck.                  | false         |
+| `collision_check.check_other_lanes`                      | [-]   | boolean | If true, the lane change module includes objects in other lanes when performing collision assessment.                                                                                                      | false         |
+| `collision_check.use_all_predicted_paths`                | [-]   | boolean | If false, use only the predicted path that has the maximum confidence.                                                                                                                                     | true          |
+| `collision_check.prediction_time_resolution`             | [s]   | double  | Time resolution for object's path interpolation and collision check.                                                                                                                                       | 0.5           |
+| `collision_check.yaw_diff_threshold`                     | [rad] | double  | Maximum yaw difference between ego and object when executing rss-based collision checking                                                                                                                  | 3.1416        |
 
 #### safety constraints during lane change path is computed
 
@@ -838,7 +977,7 @@ The following parameters are used to judge lane change completion.
 | `safety_check.execution.rear_vehicle_safety_time_margin`     | [s]     | double | The time buffer for the rear vehicle to come into complete stop when its driver perform sudden braking.                                                        | 1.0           |
 | `safety_check.execution.lateral_distance_max_threshold`      | [m]     | double | The lateral distance threshold that is used to determine whether lateral distance between two object is enough and whether lane change is safe.                | 2.0           |
 | `safety_check.execution.longitudinal_distance_min_threshold` | [m]     | double | The longitudinal distance threshold that is used to determine whether longitudinal distance between two object is enough and whether lane change is safe.      | 3.0           |
-| `safety_check.cancel.longitudinal_velocity_delta_time`       | [m]     | double | The time multiplier that is used to compute the actual gap between vehicle at each predicted points (not RSS distance)                                         | 0.8           |
+| `safety_check.execution.longitudinal_velocity_delta_time`    | [m]     | double | The time multiplier that is used to compute the actual gap between vehicle at each predicted points (not RSS distance)                                         | 0.8           |
 
 #### safety constraints specifically for stopped or parked vehicles
 

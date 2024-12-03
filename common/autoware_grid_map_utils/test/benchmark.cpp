@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware_grid_map_utils/polygon_iterator.hpp"
+#include "autoware/grid_map_utils/polygon_iterator.hpp"
 #include "grid_map_core/TypeDefs.hpp"
 #include "grid_map_cv/GridMapCvConverter.hpp"
 #include "grid_map_cv/GridMapCvProcessing.hpp"
