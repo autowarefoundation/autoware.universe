@@ -39,6 +39,7 @@
 #include <set>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 // Debug
@@ -69,9 +70,9 @@ struct ObjectOfInterest
   autoware_perception_msgs::msg::Shape shape;
   ColorName color;
   ObjectOfInterest(
-    const geometry_msgs::msg::Pose & pose, const autoware_perception_msgs::msg::Shape & shape,
+    const geometry_msgs::msg::Pose & pose, autoware_perception_msgs::msg::Shape shape,
     const ColorName & color_name)
-  : pose(pose), shape(shape), color(color_name)
+  : pose(pose), shape(std::move(shape)), color(color_name)
   {
   }
 };
@@ -89,6 +90,7 @@ public:
   virtual std::vector<autoware::motion_utils::VirtualWall> createVirtualWalls() = 0;
 
   int64_t getModuleId() const { return module_id_; }
+
   void setPlannerData(const std::shared_ptr<const PlannerData> & planner_data)
   {
     planner_data_ = planner_data;

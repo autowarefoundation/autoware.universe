@@ -156,12 +156,12 @@ autoware_planning_msgs::msg::Path filterStopPathPoint(
 {
   autoware_planning_msgs::msg::Path filtered_path = path;
   bool found_stop = false;
-  for (size_t i = 0; i < filtered_path.points.size(); ++i) {
-    if (std::fabs(filtered_path.points.at(i).longitudinal_velocity_mps) < 0.01) {
+  for (auto & point : filtered_path.points) {
+    if (std::fabs(point.longitudinal_velocity_mps) < 0.01) {
       found_stop = true;
     }
     if (found_stop) {
-      filtered_path.points.at(i).longitudinal_velocity_mps = 0.0;
+      point.longitudinal_velocity_mps = 0.0;
     }
   }
   return filtered_path;
