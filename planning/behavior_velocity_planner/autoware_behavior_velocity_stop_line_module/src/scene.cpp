@@ -46,7 +46,7 @@ StopLineModule::StopLineModule(
   velocity_factor_.init(PlanningBehavior::STOP_SIGN);
 }
 
-bool StopLineModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
+bool StopLineModule::modifyPathVelocity(PathWithLaneId * path)
 {
   auto trajectory =
     trajectory::Trajectory<tier4_planning_msgs::msg::PathPointWithLaneId>::Builder{}.build(
@@ -73,8 +73,6 @@ bool StopLineModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop
     &state_, &stopped_time_, clock_->now(), *stop_point - ego_s, planner_data_->isVehicleStopped());
 
   geometry_msgs::msg::Pose stop_pose = trajectory->compute(*stop_point).point.pose;
-
-  updateStopReason(stop_reason, stop_pose);
 
   updateDebugData(&debug_data_, stop_pose, state_);
 
@@ -175,15 +173,6 @@ void StopLineModule::updateVelocityFactor(
     case State::START:
       break;
   }
-}
-
-void StopLineModule::updateStopReason(
-  StopReason * stop_reason, const geometry_msgs::msg::Pose & stop_pose) const
-{
-  tier4_planning_msgs::msg::StopFactor stop_factor;
-  stop_factor.stop_pose = stop_pose;
-  stop_factor.stop_factor_points.push_back(getCenterOfStopLine(stop_line_));
-  planning_utils::appendStopReason(stop_factor, stop_reason);
 }
 
 void StopLineModule::updateDebugData(

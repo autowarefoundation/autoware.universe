@@ -16,7 +16,6 @@
 
 #include "autoware/lane_departure_checker/utils.hpp"
 
-#include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/math/normalization.hpp>
 #include <autoware/universe_utils/math/unit_conversion.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
@@ -29,7 +28,6 @@
 #include <algorithm>
 #include <vector>
 
-using autoware::motion_utils::calcArcLength;
 using autoware::universe_utils::LinearRing2d;
 using autoware::universe_utils::LineString2d;
 using autoware::universe_utils::MultiPoint2d;
@@ -103,7 +101,7 @@ Output LaneDepartureChecker::update(const Input & input)
 
   autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
 
-  output.trajectory_deviation = calcTrajectoryDeviation(
+  output.trajectory_deviation = utils::calcTrajectoryDeviation(
     *input.reference_trajectory, input.current_odom->pose.pose, param_.ego_nearest_dist_threshold,
     param_.ego_nearest_yaw_threshold);
   output.processing_time_map["calcTrajectoryDeviation"] = stop_watch.toc(true);
@@ -148,7 +146,7 @@ Output LaneDepartureChecker::update(const Input & input)
   output.processing_time_map["isOutOfLane"] = stop_watch.toc(true);
 
   const double max_search_length_for_boundaries =
-    calcMaxSearchLengthForBoundaries(*input.predicted_trajectory);
+    utils::calcMaxSearchLengthForBoundaries(*input.predicted_trajectory, *vehicle_info_ptr_);
   const auto uncrossable_boundaries = extractUncrossableBoundaries(
     *input.lanelet_map, input.predicted_trajectory->points.front().pose.position,
     max_search_length_for_boundaries, input.boundary_types_to_detect);
@@ -167,15 +165,6 @@ bool LaneDepartureChecker::checkPathWillLeaveLane(
     utils::createVehicleFootprints(path, *vehicle_info_ptr_, param_.footprint_extra_margin);
   lanelet::ConstLanelets candidate_lanelets = getCandidateLanelets(lanelets, vehicle_footprints);
   return willLeaveLane(candidate_lanelets, vehicle_footprints);
-}
-
-PoseDeviation LaneDepartureChecker::calcTrajectoryDeviation(
-  const Trajectory & trajectory, const geometry_msgs::msg::Pose & pose, const double dist_threshold,
-  const double yaw_threshold)
-{
-  const auto nearest_idx = autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
-    trajectory.points, pose, dist_threshold, yaw_threshold);
-  return autoware::universe_utils::calcPoseDeviation(trajectory.points.at(nearest_idx).pose, pose);
 }
 
 std::vector<LinearRing2d> LaneDepartureChecker::createVehiclePassingAreas(
@@ -386,18 +375,6 @@ bool LaneDepartureChecker::isOutOfLane(
   }
 
   return false;
-}
-
-double LaneDepartureChecker::calcMaxSearchLengthForBoundaries(const Trajectory & trajectory) const
-{
-  const double max_ego_lon_length = std::max(
-    std::abs(vehicle_info_ptr_->max_longitudinal_offset_m),
-    std::abs(vehicle_info_ptr_->min_longitudinal_offset_m));
-  const double max_ego_lat_length = std::max(
-    std::abs(vehicle_info_ptr_->max_lateral_offset_m),
-    std::abs(vehicle_info_ptr_->min_lateral_offset_m));
-  const double max_ego_search_length = std::hypot(max_ego_lon_length, max_ego_lat_length);
-  return calcArcLength(trajectory.points) + max_ego_search_length;
 }
 
 SegmentRtree LaneDepartureChecker::extractUncrossableBoundaries(

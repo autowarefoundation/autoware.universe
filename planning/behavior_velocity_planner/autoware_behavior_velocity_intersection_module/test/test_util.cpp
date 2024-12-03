@@ -89,7 +89,7 @@ TEST(TestUtil, retrievePathsBackward)
 }
 
 /*
-  TOOD(Mamoru Sobue): instantiating intersection_module and PlannerData is a messy
+  TODO(Mamoru Sobue): instantiating intersection_module and PlannerData is a messy
 class TestWithMap : public ::testing::Test
 {
 protected:
