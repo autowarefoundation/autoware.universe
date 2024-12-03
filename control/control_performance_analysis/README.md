@@ -66,7 +66,7 @@ Error acceleration calculations are made based on the velocity calculations abov
 | `heading_error`                            | float | $[ \mathrm{rad} ]$                                                                                                                              |
 | `heading_error_velocity`                   | float | $[ \mathrm{rad/s} ]$                                                                                                                            |
 | `control_effort_energy`                    | float | $[ \mathbf{u}^\top \mathbf{R} \mathbf{u} ]$                                                                                                     |
-| `error_energy`                             | float | $\mathrm{lateral\_error}^2 + \mathrm{heading\_error}^2$                                                                                               |
+| `error_energy`                             | float | $\mathrm{lateral_error}^2 + \mathrm{heading_error}^2$                                                                                               |
 | `value_approximation`                      | float | $V = \mathbf{x}^\top \mathbf{P} \mathbf{x}$; Value function from DARE Lyapunov matrix $\mathbf{P}$                                              |
 | `curvature_estimate`                       | float | $[ \mathrm{1/m} ]$                                                                                                                              |
 | `curvature_estimate_pp`                    | float | $[ \mathrm{1/m} ]$                                                                                                                              |
