@@ -30,7 +30,6 @@
   <depend>pcl_conversions</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
-  <depend>tier4_map_msgs</depend>
   <depend>visualization_msgs</depend>
   <depend>yaml-cpp</depend>
 
