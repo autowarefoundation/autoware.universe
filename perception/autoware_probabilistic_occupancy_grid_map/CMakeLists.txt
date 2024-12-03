@@ -4,27 +4,49 @@ project(autoware_probabilistic_occupancy_grid_map)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
+find_package(CUDA REQUIRED)
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(PCL REQUIRED)
 
 include_directories(
+  include
   SYSTEM
+    ${CUDA_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIR}
+    ${grid_map_ros_INCLUDE_DIRS}
+)
+
+if(NOT ${CUDA_FOUND})
+  message(WARNING "cuda was not found, so the autoware_probabilistic_occupancy_grid_map package will not be built.")
+  return()
+endif()
+
+list(APPEND CUDA_NVCC_FLAGS --expt-relaxed-constexpr -diag-suppress 20012 --compiler-options -fPIC)
+set(CUDA_SEPARABLE_COMPILATION ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE ON)
+
+cuda_add_library(${PROJECT_NAME}_cuda SHARED
+  lib/costmap_2d/occupancy_grid_map_fixed_kernel.cu
+  lib/costmap_2d/occupancy_grid_map_projective_kernel.cu
+  lib/updater/binary_bayes_filter_updater_kernel.cu
+  lib/updater/log_odds_bayes_filter_updater_kernel.cu
+  lib/utils/utils_kernel.cu
 )
 
 ament_auto_add_library(${PROJECT_NAME}_common SHARED
+  lib/costmap_2d/occupancy_grid_map_base.cpp
   lib/updater/binary_bayes_filter_updater.cpp
   lib/utils/utils.cpp
 )
 target_link_libraries(${PROJECT_NAME}_common
   ${PCL_LIBRARIES}
+  ${PROJECT_NAME}_cuda
 )
 
 # PointcloudBasedOccupancyGridMap
 ament_auto_add_library(pointcloud_based_occupancy_grid_map SHARED
   src/pointcloud_based_occupancy_grid_map/pointcloud_based_occupancy_grid_map_node.cpp
-  lib/costmap_2d/occupancy_grid_map_base.cpp
   lib/costmap_2d/occupancy_grid_map_fixed.cpp
   lib/costmap_2d/occupancy_grid_map_projective.cpp
 )
@@ -32,6 +54,7 @@ ament_auto_add_library(pointcloud_based_occupancy_grid_map SHARED
 target_link_libraries(pointcloud_based_occupancy_grid_map
   ${PCL_LIBRARIES}
   ${PROJECT_NAME}_common
+  ${PROJECT_NAME}_cuda
 )
 
 rclcpp_components_register_node(pointcloud_based_occupancy_grid_map

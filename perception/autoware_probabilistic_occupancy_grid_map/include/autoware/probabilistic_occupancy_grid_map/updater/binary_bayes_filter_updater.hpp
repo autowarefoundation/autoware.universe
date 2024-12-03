@@ -15,6 +15,7 @@
 #ifndef AUTOWARE__PROBABILISTIC_OCCUPANCY_GRID_MAP__UPDATER__BINARY_BAYES_FILTER_UPDATER_HPP_
 #define AUTOWARE__PROBABILISTIC_OCCUPANCY_GRID_MAP__UPDATER__BINARY_BAYES_FILTER_UPDATER_HPP_
 
+#include "autoware/cuda_utils/cuda_unique_ptr.hpp"
 #include "autoware/probabilistic_occupancy_grid_map/updater/ogm_updater_interface.hpp"
 
 #include <Eigen/Core>
@@ -27,16 +28,19 @@ namespace costmap_2d
 class OccupancyGridMapBBFUpdater : public OccupancyGridMapUpdaterInterface
 {
 public:
-  enum Index : size_t { OCCUPIED = 0U, FREE = 1U };
+  enum Index : size_t { OCCUPIED = 0U, FREE = 1U, NUM_STATES = 2U };
   OccupancyGridMapBBFUpdater(
-    const unsigned int cells_size_x, const unsigned int cells_size_y, const float resolution);
-  bool update(const Costmap2D & single_frame_occupancy_grid_map) override;
+    const bool use_cuda, const unsigned int cells_size_x, const unsigned int cells_size_y,
+    const float resolution);
+  bool update(const OccupancyGridMapInterface & single_frame_occupancy_grid_map) override;
   void initRosParam(rclcpp::Node & node) override;
 
 private:
   inline unsigned char applyBBF(const unsigned char & z, const unsigned char & o);
   Eigen::Matrix2f probability_matrix_;
   double v_ratio_;
+
+  autoware::cuda_utils::CudaUniquePtr<float[]> device_probability_matrix_;
 };
 
 }  // namespace costmap_2d

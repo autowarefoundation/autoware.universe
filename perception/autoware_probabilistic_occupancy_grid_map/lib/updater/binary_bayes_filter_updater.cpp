@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2024 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
 #include "autoware/probabilistic_occupancy_grid_map/updater/binary_bayes_filter_updater.hpp"
 
 #include "autoware/probabilistic_occupancy_grid_map/cost_value/cost_value.hpp"
+#include "autoware/probabilistic_occupancy_grid_map/updater/binary_bayes_filter_updater_kernel.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -25,8 +26,9 @@ namespace costmap_2d
 {
 
 OccupancyGridMapBBFUpdater::OccupancyGridMapBBFUpdater(
-  const unsigned int cells_size_x, const unsigned int cells_size_y, const float resolution)
-: OccupancyGridMapUpdaterInterface(cells_size_x, cells_size_y, resolution)
+  const bool use_cuda, const unsigned int cells_size_x, const unsigned int cells_size_y,
+  const float resolution)
+: OccupancyGridMapUpdaterInterface(use_cuda, cells_size_x, cells_size_y, resolution)
 {
 }
 
@@ -41,6 +43,22 @@ void OccupancyGridMapBBFUpdater::initRosParam(rclcpp::Node & node)
   probability_matrix_(Index::OCCUPIED, Index::FREE) =
     node.declare_parameter<double>("probability_matrix.free_to_occupied");
   v_ratio_ = node.declare_parameter<double>("v_ratio");
+
+  device_probability_matrix_ =
+    autoware::cuda_utils::make_unique<float[]>(Index::NUM_STATES * Index::NUM_STATES);
+
+  std::vector<float> probability_matrix_vector;
+  probability_matrix_vector.resize(Index::NUM_STATES * Index::NUM_STATES);
+
+  for (size_t j = 0; j < Index::NUM_STATES; j++) {
+    for (size_t i = 0; i < Index::NUM_STATES; i++) {
+      probability_matrix_vector[j * Index::NUM_STATES + i] = probability_matrix_(j, i);
+    }
+  }
+
+  cudaMemcpy(
+    device_probability_matrix_.get(), probability_matrix_vector.data(),
+    sizeof(float) * Index::NUM_STATES * Index::NUM_STATES, cudaMemcpyHostToDevice);
 }
 
 inline unsigned char OccupancyGridMapBBFUpdater::applyBBF(
@@ -69,16 +87,37 @@ inline unsigned char OccupancyGridMapBBFUpdater::applyBBF(
     static_cast<unsigned char>(254));
 }
 
-bool OccupancyGridMapBBFUpdater::update(const Costmap2D & single_frame_occupancy_grid_map)
+bool OccupancyGridMapBBFUpdater::update(
+  const OccupancyGridMapInterface & single_frame_occupancy_grid_map)
 {
   updateOrigin(
     single_frame_occupancy_grid_map.getOriginX(), single_frame_occupancy_grid_map.getOriginY());
-  for (unsigned int x = 0; x < getSizeInCellsX(); x++) {
-    for (unsigned int y = 0; y < getSizeInCellsY(); y++) {
-      unsigned int index = getIndex(x, y);
-      costmap_[index] = applyBBF(single_frame_occupancy_grid_map.getCost(x, y), costmap_[index]);
+
+  if (use_cuda_ != single_frame_occupancy_grid_map.isCudaEnabled()) {
+    throw std::runtime_error("The CUDA setting of the updater and the map do not match.");
+  }
+
+  if (use_cuda_) {
+    applyBBFLaunch(
+      single_frame_occupancy_grid_map.getDeviceCostmap().get(), device_probability_matrix_.get(),
+      Index::NUM_STATES, Index::FREE, Index::OCCUPIED, cost_value::FREE_SPACE,
+      cost_value::LETHAL_OBSTACLE, cost_value::NO_INFORMATION, v_ratio_,
+      getSizeInCellsX() * getSizeInCellsY(), device_costmap_.get(), stream_);
+
+    cudaMemcpy(
+      costmap_, device_costmap_.get(), getSizeInCellsX() * getSizeInCellsY() * sizeof(std::uint8_t),
+      cudaMemcpyDeviceToHost);
+
+    cudaStreamSynchronize(stream_);
+  } else {
+    for (unsigned int x = 0; x < getSizeInCellsX(); x++) {
+      for (unsigned int y = 0; y < getSizeInCellsY(); y++) {
+        unsigned int index = getIndex(x, y);
+        costmap_[index] = applyBBF(single_frame_occupancy_grid_map.getCost(x, y), costmap_[index]);
+      }
     }
   }
+
   return true;
 }
 

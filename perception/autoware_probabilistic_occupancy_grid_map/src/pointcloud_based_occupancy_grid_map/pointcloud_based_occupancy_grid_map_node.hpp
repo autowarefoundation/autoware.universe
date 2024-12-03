@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2024 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,7 @@
 #include "autoware/probabilistic_occupancy_grid_map/costmap_2d/occupancy_grid_map_base.hpp"
 #include "autoware/probabilistic_occupancy_grid_map/updater/binary_bayes_filter_updater.hpp"
 #include "autoware/probabilistic_occupancy_grid_map/updater/ogm_updater_interface.hpp"
+#include "autoware/probabilistic_occupancy_grid_map/utils/cuda_pointcloud.hpp"
 
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
@@ -81,6 +82,9 @@ private:
 
   std::unique_ptr<OccupancyGridMapInterface> occupancy_grid_map_ptr_;
   std::unique_ptr<OccupancyGridMapUpdaterInterface> occupancy_grid_map_updater_ptr_;
+
+  CudaPointCloud2 raw_pointcloud_;
+  CudaPointCloud2 obstacle_pointcloud_;
 
   // ROS Parameters
   std::string map_frame_;
