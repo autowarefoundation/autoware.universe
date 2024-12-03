@@ -22,7 +22,7 @@
 __global__ void applyBBFKernel(
   const std::uint8_t * z_costmap, const float * probability_matrix, const int num_states,
   const int free_index, const int occupied_index, const std::uint8_t free_space_value,
-  const std::uint8_t lethal_ostacle_value, const std::uint8_t no_information_value,
+  const std::uint8_t lethal_obstacle_value, const std::uint8_t no_information_value,
   const double v_ratio_, const int num_elements, std::uint8_t * o_costmap)
 {
   const int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -38,7 +38,7 @@ __global__ void applyBBFKernel(
   float pz{};
   float not_pz{};
   float po_hat{};
-  if (z == lethal_ostacle_value) {
+  if (z == lethal_obstacle_value) {
     pz = probability_matrix[occupied_index * num_states + occupied_index];
     not_pz = probability_matrix[free_index * num_states + occupied_index];
     po_hat = ((po * pz) / ((po * pz) + ((1.f - po) * not_pz)));
@@ -65,14 +65,14 @@ namespace costmap_2d
 void applyBBFLaunch(
   const std::uint8_t * z_costmap, const float * probability_matrix, const int num_states,
   const int free_index, const int occupied_index, const std::uint8_t free_space_value,
-  const std::uint8_t lethal_ostacle_value, const std::uint8_t no_information_value,
+  const std::uint8_t lethal_obstacle_value, const std::uint8_t no_information_value,
   const double v_ratio_, const int num_elements, std::uint8_t * o_costmap, cudaStream_t stream)
 {
   const int num_threads = 256;
   const int num_blocks = (num_elements + num_threads - 1) / num_threads;
   applyBBFKernel<<<num_blocks, num_threads, 0, stream>>>(
     z_costmap, probability_matrix, num_states, free_index, occupied_index, free_space_value,
-    lethal_ostacle_value, no_information_value, v_ratio_, num_elements, o_costmap);
+    lethal_obstacle_value, no_information_value, v_ratio_, num_elements, o_costmap);
 }
 
 }  // namespace costmap_2d

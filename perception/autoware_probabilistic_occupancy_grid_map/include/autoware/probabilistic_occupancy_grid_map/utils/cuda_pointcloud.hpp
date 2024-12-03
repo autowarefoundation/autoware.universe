@@ -26,6 +26,7 @@ class CudaPointCloud2 : public sensor_msgs::msg::PointCloud2
 public:
   void fromROSMsg(const sensor_msgs::msg::PointCloud2 & msg)
   {
+    // cSpell: knzo25
     // NOTE(knzo25): replace this with the cuda blackboard later
     header = msg.header;
     fields = msg.fields;

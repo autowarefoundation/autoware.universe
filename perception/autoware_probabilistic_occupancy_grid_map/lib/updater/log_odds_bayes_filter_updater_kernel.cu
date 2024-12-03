@@ -49,6 +49,7 @@ __host__ __device__ __forceinline__ double logOddsFusion(const double p1, const 
   return 1.0 / (1.0 + std::exp(-log_odds));
 }
 
+// cspell: ignore LOBF
 __global__ void applyLOBFKernel(
   const std::uint8_t * z_costmap, const std::uint8_t unknown_value, const int num_elements,
   std::uint8_t * o_costmap)
