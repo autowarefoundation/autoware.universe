@@ -29,7 +29,7 @@ namespace costmap_2d
 void applyBBFLaunch(
   const std::uint8_t * z_costmap, const float * probability_matrix, const int num_states,
   const int free_index, const int occupied_index, const std::uint8_t free_space_value,
-  const std::uint8_t lethal_ostacle_value, const std::uint8_t no_information_value,
+  const std::uint8_t lethal_obstacle_value, const std::uint8_t no_information_value,
   const double v_ratio_, const int num_elements, std::uint8_t * o_costmap, cudaStream_t stream);
 
 }  // namespace costmap_2d

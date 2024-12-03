@@ -22,6 +22,7 @@ if(NOT ${CUDA_FOUND})
   return()
 endif()
 
+# cSpell: ignore expt
 list(APPEND CUDA_NVCC_FLAGS --expt-relaxed-constexpr -diag-suppress 20012 --compiler-options -fPIC)
 set(CUDA_SEPARABLE_COMPILATION ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)

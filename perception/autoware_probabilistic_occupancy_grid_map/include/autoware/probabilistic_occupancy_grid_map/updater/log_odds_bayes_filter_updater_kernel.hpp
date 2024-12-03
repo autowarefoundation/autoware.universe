@@ -26,6 +26,7 @@ namespace autoware::occupancy_grid_map
 namespace costmap_2d
 {
 
+// cspell: ignore LOBF
 void applyLOBFLaunch(
   const std::uint8_t * z_costmap, const std::uint8_t no_information_value, const int num_elements,
   std::uint8_t * o_costmap, cudaStream_t stream);
