@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TENSORRT_MTR__POLYLINE_HPP_
-#define TENSORRT_MTR__POLYLINE_HPP_
+#ifndef AUTOWARE__MTR__POLYLINE_HPP_
+#define AUTOWARE__MTR__POLYLINE_HPP_
 
 #include <lanelet2_core/geometry/LineString.h>
 #include <lanelet2_core/geometry/Polygon.h>
@@ -24,7 +24,7 @@
 #include <tuple>
 #include <vector>
 
-namespace trt_mtr
+namespace autoware::mtr
 {
 constexpr size_t PointStateDim = 7;
 
@@ -301,5 +301,5 @@ std::vector<LanePoint> getLanePointFromPolygon(
   return points;
 }
 
-}  // namespace trt_mtr
-#endif  // TENSORRT_MTR__POLYLINE_HPP_
+}  // namespace autoware::mtr
+#endif  // AUTOWARE__MTR__POLYLINE_HPP_

@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TENSORRT_MTR__TRAJECTORY_HPP_
-#define TENSORRT_MTR__TRAJECTORY_HPP_
+#ifndef AUTOWARE__MTR__TRAJECTORY_HPP_
+#define AUTOWARE__MTR__TRAJECTORY_HPP_
 
 #include <algorithm>
 #include <array>
 #include <cstddef>
 #include <vector>
 
-namespace trt_mtr
+namespace autoware::mtr
 {
 
 constexpr size_t PredictedStateDim = 7;
@@ -165,5 +165,5 @@ private:
   size_t num_future_;
   std::vector<PredictedMode> modes_;
 };  // struct PredictedTrajectory
-}  // namespace trt_mtr
-#endif  // TENSORRT_MTR__TRAJECTORY_HPP_
+}  // namespace autoware::mtr
+#endif  // AUTOWARE__MTR__TRAJECTORY_HPP_

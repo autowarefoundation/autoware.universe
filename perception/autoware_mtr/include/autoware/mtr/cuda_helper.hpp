@@ -18,11 +18,12 @@
  * https://creativecommons.org/publicdomain/zero/1.0/deed.en
  */
 
-#ifndef TENSORRT_MTR__CUDA_HELPER_HPP_
-#define TENSORRT_MTR__CUDA_HELPER_HPP_
+#ifndef AUTOWARE__MTR__CUDA_HELPER_HPP_
+#define AUTOWARE__MTR__CUDA_HELPER_HPP_
 
 #include <cuda_runtime_api.h>
 
+#include <iostream>
 #include <memory>
 #include <sstream>
 #include <stdexcept>
@@ -135,4 +136,4 @@ private:
 
 }  // namespace cuda
 
-#endif  // TENSORRT_MTR__CUDA_HELPER_HPP_
+#endif  // AUTOWARE__MTR__CUDA_HELPER_HPP_
