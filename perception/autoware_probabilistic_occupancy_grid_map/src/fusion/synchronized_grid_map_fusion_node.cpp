@@ -367,9 +367,6 @@ const OccupancyGridMapFixedBlindSpot & GridMapFusionNode::SingleFrameOccupancyFu
     if (time_keeper_)
       inner_st_ptr = std::make_unique<ScopedTimeTrack>("create_fused_map", *time_keeper_);
 
-    // init fused map with calculated origin
-    fused_map_->resetMaps();
-
     if (
       !fused_map_ || fused_map_->getSizeInCellsX() != occupancy_grid_maps[0].getSizeInCellsX() ||
       fused_map_->getSizeInCellsY() != occupancy_grid_maps[0].getSizeInCellsY() ||
@@ -378,6 +375,9 @@ const OccupancyGridMapFixedBlindSpot & GridMapFusionNode::SingleFrameOccupancyFu
         false, occupancy_grid_maps[0].getSizeInCellsX(), occupancy_grid_maps[0].getSizeInCellsY(),
         occupancy_grid_maps[0].getResolution());
     }
+
+    // init fused map with calculated origin
+    fused_map_->resetMaps();
 
     fused_map_->updateOrigin(
       gridmap_origin.position.x - fused_map_->getSizeInMetersX() / 2,
