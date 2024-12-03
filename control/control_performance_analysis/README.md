@@ -55,22 +55,22 @@ Error acceleration calculations are made based on the velocity calculations abov
 
 #### control_performance_analysis::msg::ErrorStamped
 
-| Name                                       | Type  | Description                                                                                                                                       |
-| ------------------------------------------ | ----- |---------------------------------------------------------------------------------------------------------------------------------------------------|
-| `lateral_error`                            | float | $[ \mathrm{m} ]$                                                                                                                                  |
-| `lateral_error_velocity`                   | float | $[ \mathrm{m/s} ]$                                                                                                                                |
-| `lateral_error_acceleration`               | float | $[ \mathrm{m/s^2} ]$                                                                                                                              |
-| `longitudinal_error`                       | float | $[ \mathrm{m} ]$                                                                                                                                  |
-| `longitudinal_error_velocity`              | float | $[ \mathrm{m/s} ]$                                                                                                                                |
-| `longitudinal_error_acceleration`          | float | $[ \mathrm{m/s^2} ]$                                                                                                                              |
-| `heading_error`                            | float | $[ \mathrm{rad} ]$                                                                                                                                |
-| `heading_error_velocity`                   | float | $[ \mathrm{rad/s} ]$                                                                                                                              |
-| `control_effort_energy`                    | float | $[ \mathbf{u}^\top \mathbf{R} \mathbf{u} ]$                                                                                                       |
-| `error_energy`                             | float | $e_{\text{lat}}^2 + e_\theta^2$ (squared lateral error + squared heading error)                                                                   |
-| `value_approximation`                      | float | $V = \mathbf{x}^\top \mathbf{P} \mathbf{x}$; Value function from DARE Lyapunov matrix $\mathbf{P}$                                                |
-| `curvature_estimate`                       | float | $[ \mathrm{1/m} ]$                                                                                                                                |
-| `curvature_estimate_pp`                    | float | $[ \mathrm{1/m} ]$                                                                                                                                |
-| `vehicle_velocity_error`                   | float | $[ \mathrm{m/s} ]$                                                                                                                                |
+| Name                                       | Type  | Description                                                                                                                               |
+| ------------------------------------------ | ----- |-------------------------------------------------------------------------------------------------------------------------------------------|
+| `lateral_error`                            | float | $[ \mathrm{m} ]$                                                                                                                          |
+| `lateral_error_velocity`                   | float | $[ \mathrm{m/s} ]$                                                                                                                        |
+| `lateral_error_acceleration`               | float | $[ \mathrm{m/s^2} ]$                                                                                                                      |
+| `longitudinal_error`                       | float | $[ \mathrm{m} ]$                                                                                                                          |
+| `longitudinal_error_velocity`              | float | $[ \mathrm{m/s} ]$                                                                                                                        |
+| `longitudinal_error_acceleration`          | float | $[ \mathrm{m/s^2} ]$                                                                                                                      |
+| `heading_error`                            | float | $[ \mathrm{rad} ]$                                                                                                                        |
+| `heading_error_velocity`                   | float | $[ \mathrm{rad/s} ]$                                                                                                                      |
+| `control_effort_energy`                    | float | $[ \mathbf{u}^\top \mathbf{R} \mathbf{u} ]$ simplfied to $[ R \cdot u^2 ]$                                                                                 |
+| `error_energy`                             | float | $e_{\text{lat}}^2 + e_\theta^2$ (squared lateral error + squared heading error)                                                           |
+| `value_approximation`                      | float | $V = \mathbf{x}^\top \mathbf{P} \mathbf{x}$; Value function from DARE Lyapunov matrix $\mathbf{P}$                                        |
+| `curvature_estimate`                       | float | $[ \mathrm{1/m} ]$                                                                                                                        |
+| `curvature_estimate_pp`                    | float | $[ \mathrm{1/m} ]$                                                                                                                        |
+| `vehicle_velocity_error`                   | float | $[ \mathrm{m/s} ]$                                                                                                                        |
 | `tracking_curvature_discontinuity_ability` | float | Measures the ability to track curvature changes $\frac{\lvert \Delta(\text{curvature}) \rvert}{1 + \lvert \Delta(e_{\text{lat}}) \rvert}$ |
 
 ## Parameters
