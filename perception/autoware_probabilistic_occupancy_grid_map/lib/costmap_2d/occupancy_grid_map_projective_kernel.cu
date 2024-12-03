@@ -459,10 +459,10 @@ void prepareRawTensorLaunch(
   const Eigen::Vector3f * translation_map, const Eigen::Matrix3f * rotation_scan,
   const Eigen::Vector3f * translation_scan, std::uint64_t * points_tensor, cudaStream_t stream)
 {
-  const int threadsPerBlock = 256;
-  const int blocksPerGrid = (num_points + threadsPerBlock - 1) / threadsPerBlock;
+  const int threads_per_block = 256;
+  const int num_blocks = (num_points + threads_per_block - 1) / threads_per_block;
 
-  prepareRawTensorKernel<<<blocksPerGrid, threadsPerBlock, 0, stream>>>(
+  prepareRawTensorKernel<<<num_blocks, threads_per_block, 0, stream>>>(
     input_pointcloud, num_points, points_step, angle_bins, range_bins, min_height, max_height,
     min_angle, angle_increment_inv, range_resolution_inv, rotation_map, translation_map,
     rotation_scan, translation_scan, points_tensor);
@@ -477,10 +477,10 @@ void prepareObstacleTensorLaunch(
   const Eigen::Vector3f * translation_map, const Eigen::Matrix3f * rotation_scan,
   const Eigen::Vector3f * translation_scan, std::uint64_t * points_tensor, cudaStream_t stream)
 {
-  const int threadsPerBlock = 256;
-  const int blocksPerGrid = (num_points + threadsPerBlock - 1) / threadsPerBlock;
+  const int threads_per_block = 256;
+  const int num_blocks = (num_points + threads_per_block - 1) / threads_per_block;
 
-  prepareObstacleTensorKernel<<<blocksPerGrid, threadsPerBlock, 0, stream>>>(
+  prepareObstacleTensorKernel<<<num_blocks, threads_per_block, 0, stream>>>(
     input_pointcloud, num_points, points_step, angle_bins, range_bins, min_height, max_height,
     min_angle, angle_increment_inv, range_resolution_inv, projection_dz_threshold,
     translation_scan_origin, rotation_map, translation_map, rotation_scan, translation_scan,
@@ -493,10 +493,10 @@ void fillEmptySpaceLaunch(
   const float map_origin_x, const float map_origin_y, const int num_cells_x, const int num_cells_y,
   std::uint8_t empty_value, std::uint8_t * costmap_tensor, cudaStream_t stream)
 {
-  const int threadsPerBlock = 256;
-  const int blocksPerGrid = (angle_bins * range_bins + threadsPerBlock - 1) / threadsPerBlock;
+  const int threads_per_block = 256;
+  const int num_blocks = (angle_bins * range_bins + threads_per_block - 1) / threads_per_block;
 
-  fillEmptySpaceKernel<<<blocksPerGrid, threadsPerBlock, 0, stream>>>(
+  fillEmptySpaceKernel<<<num_blocks, threads_per_block, 0, stream>>>(
     points_tensor, angle_bins, range_bins, map_resolution_inv, scan_origin_x, scan_origin_y,
     map_origin_x, map_origin_y, num_cells_x, num_cells_y, empty_value, costmap_tensor);
 }
@@ -510,10 +510,10 @@ void fillUnknownSpaceLaunch(
   std::uint8_t free_space_value, std::uint8_t no_information_value, std::uint8_t * costmap_tensor,
   cudaStream_t stream)
 {
-  const int threadsPerBlock = 256;
-  const int blocksPerGrid = (angle_bins * range_bins + threadsPerBlock - 1) / threadsPerBlock;
+  const int threads_per_block = 256;
+  const int num_blocks = (angle_bins * range_bins + threads_per_block - 1) / threads_per_block;
 
-  fillUnknownSpaceKernel<<<blocksPerGrid, threadsPerBlock, 0, stream>>>(
+  fillUnknownSpaceKernel<<<num_blocks, threads_per_block, 0, stream>>>(
     raw_points_tensor, obstacle_points_tensor, obstacle_separation_threshold, angle_bins,
     range_bins, map_resolution_inv, scan_origin_x, scan_origin_y, scan_origin_z, map_origin_x,
     map_origin_y, robot_pose_z, num_cells_x, num_cells_y, free_space_value, no_information_value,
@@ -526,10 +526,10 @@ void fillObstaclesLaunch(
   const float map_origin_x, const float map_origin_y, const int num_cells_x, const int num_cells_y,
   std::uint8_t obstacle_value, std::uint8_t * costmap_tensor, cudaStream_t stream)
 {
-  const int threadsPerBlock = 256;
-  const int blocksPerGrid = (angle_bins * range_bins + threadsPerBlock - 1) / threadsPerBlock;
+  const int threads_per_block = 256;
+  const int num_blocks = (angle_bins * range_bins + threads_per_block - 1) / threads_per_block;
 
-  fillObstaclesKernel<<<blocksPerGrid, threadsPerBlock, 0, stream>>>(
+  fillObstaclesKernel<<<num_blocks, threads_per_block, 0, stream>>>(
     obstacle_points_tensor, distance_margin, angle_bins, range_bins, map_resolution_inv,
     map_origin_x, map_origin_y, num_cells_x, num_cells_y, obstacle_value, costmap_tensor);
 }

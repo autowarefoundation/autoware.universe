@@ -68,9 +68,9 @@ void applyBBFLaunch(
   const std::uint8_t lethal_obstacle_value, const std::uint8_t no_information_value,
   const double v_ratio_, const int num_elements, std::uint8_t * o_costmap, cudaStream_t stream)
 {
-  const int num_threads = 256;
-  const int num_blocks = (num_elements + num_threads - 1) / num_threads;
-  applyBBFKernel<<<num_blocks, num_threads, 0, stream>>>(
+  const int threads_per_block = 256;
+  const int num_blocks = (num_elements + threads_per_block - 1) / threads_per_block;
+  applyBBFKernel<<<num_blocks, threads_per_block, 0, stream>>>(
     z_costmap, probability_matrix, num_states, free_index, occupied_index, free_space_value,
     lethal_obstacle_value, no_information_value, v_ratio_, num_elements, o_costmap);
 }

@@ -82,9 +82,9 @@ void applyLOBFLaunch(
   const std::uint8_t * z_costmap, const std::uint8_t no_information_value, const int num_elements,
   std::uint8_t * o_costmap, cudaStream_t stream)
 {
-  const int num_threads = 256;
-  const int num_blocks = (num_elements + num_threads - 1) / num_threads;
-  applyLOBFKernel<<<num_blocks, num_threads, 0, stream>>>(
+  const int threads_per_block = 256;
+  const int num_blocks = (num_elements + threads_per_block - 1) / threads_per_block;
+  applyLOBFKernel<<<num_blocks, threads_per_block, 0, stream>>>(
     z_costmap, no_information_value, num_elements, o_costmap);
 }
 
