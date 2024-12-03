@@ -341,6 +341,7 @@ BehaviorModuleOutput SideShiftModule::planWaitingApproval()
   return output;
 }
 
+// can be moved to utils
 ShiftLine SideShiftModule::calcShiftLine() const
 {
   const auto & p = parameters_;
