@@ -309,7 +309,9 @@ protected:
    * @param [in] current_value the current value
    * @param [in] duration the max size of the queue
    */
-  void update_delta_queue(std::deque<unsigned int> & queue, uint64_t & last_value, uint64_t current_value, unsigned int duration);
+  void update_delta_queue(
+    std::deque<unsigned int> & queue, uint64_t & last_value, uint64_t current_value,
+    unsigned int duration);
 
   diagnostic_updater::Updater updater_;  //!< @brief Updater class which advertises to /diagnostics
   rclcpp::TimerBase::SharedPtr timer_;   //!< @brief timer to get Network information
