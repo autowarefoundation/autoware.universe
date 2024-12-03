@@ -20,18 +20,18 @@
 #include "tensorrt_mtr/trajectory.hpp"
 #include "tensorrt_mtr/trt_mtr.hpp"
 
-#include <object_recognition_utils/object_classification.hpp>
+#include <autoware/object_recognition_utils/object_classification.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/ros/transform_listener.hpp>
+#include <autoware/universe_utils/ros/uuid_helper.hpp>
 #include <rclcpp/rclcpp.hpp>
-#include <tier4_autoware_utils/geometry/geometry.hpp>
-#include <tier4_autoware_utils/ros/transform_listener.hpp>
-#include <tier4_autoware_utils/ros/uuid_helper.hpp>
 
-#include <autoware_auto_mapping_msgs/msg/had_map_bin.hpp>
-#include <autoware_auto_perception_msgs/msg/object_classification.hpp>
-#include <autoware_auto_perception_msgs/msg/predicted_object_kinematics.hpp>
-#include <autoware_auto_perception_msgs/msg/predicted_objects.hpp>
-#include <autoware_auto_perception_msgs/msg/predicted_path.hpp>
-#include <autoware_auto_perception_msgs/msg/tracked_objects.hpp>
+#include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
+#include <autoware_perception_msgs/msg/object_classification.hpp>
+#include <autoware_perception_msgs/msg/predicted_object_kinematics.hpp>
+#include <autoware_perception_msgs/msg/predicted_objects.hpp>
+#include <autoware_perception_msgs/msg/predicted_path.hpp>
+#include <autoware_perception_msgs/msg/tracked_objects.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
@@ -47,14 +47,14 @@
 
 namespace trt_mtr
 {
-using autoware_auto_mapping_msgs::msg::HADMapBin;
-using autoware_auto_perception_msgs::msg::ObjectClassification;
-using autoware_auto_perception_msgs::msg::PredictedObject;
-using autoware_auto_perception_msgs::msg::PredictedObjectKinematics;
-using autoware_auto_perception_msgs::msg::PredictedObjects;
-using autoware_auto_perception_msgs::msg::PredictedPath;
-using autoware_auto_perception_msgs::msg::TrackedObject;
-using autoware_auto_perception_msgs::msg::TrackedObjects;
+using autoware_map_msgs::msg::LaneletMapBin;
+using autoware_perception_msgs::msg::ObjectClassification;
+using autoware_perception_msgs::msg::PredictedObject;
+using autoware_perception_msgs::msg::PredictedObjectKinematics;
+using autoware_perception_msgs::msg::PredictedObjects;
+using autoware_perception_msgs::msg::PredictedPath;
+using autoware_perception_msgs::msg::TrackedObject;
+using autoware_perception_msgs::msg::TrackedObjects;
 using nav_msgs::msg::Odometry;
 
 // TODO(ktro2828): use received ego size topic
@@ -112,7 +112,7 @@ private:
   void callback(const TrackedObjects::ConstSharedPtr object_msg);
 
   // Callback being invoked when the HD map topic is subscribed.
-  void onMap(const HADMapBin::ConstSharedPtr map_msg);
+  void onMap(const LaneletMapBin::ConstSharedPtr map_msg);
 
   // Callback being invoked when the Ego's odometry topic is subscribed.
   void onEgo(const Odometry::ConstSharedPtr ego_msg);
@@ -147,7 +147,7 @@ private:
   // TODO(ktro2828): add debug publisher
   rclcpp::Publisher<PredictedObjects>::SharedPtr pub_objects_;
   rclcpp::Subscription<TrackedObjects>::SharedPtr sub_objects_;
-  rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;
+  rclcpp::Subscription<LaneletMapBin>::SharedPtr sub_map_;
   rclcpp::Subscription<Odometry>::SharedPtr sub_ego_;
 
   // Lanelet map pointers
@@ -160,7 +160,7 @@ private:
   std::map<std::string, TrackedObject> object_msg_map_;
 
   // Pose transform listener
-  tier4_autoware_utils::TransformListener transform_listener_;
+  autoware::universe_utils::TransformListener transform_listener_;
 
   // MTR parameters
   std::unique_ptr<MTRConfig> config_ptr_;

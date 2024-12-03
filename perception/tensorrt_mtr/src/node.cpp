@@ -14,6 +14,7 @@
 
 #include "tensorrt_mtr/node.hpp"
 
+#include <autoware_utils/ros/uuid_helper.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
 
 #include <geometry_msgs/msg/pose.hpp>
@@ -110,8 +111,9 @@ AgentState trackedObjectToAgentState(const TrackedObject & object, const bool is
 // in AgentLabel returns `-1`.
 int getLabelIndex(const TrackedObject & object)
 {
-  const auto classification = object_recognition_utils::getHighestProbLabel(object.classification);
-  if (object_recognition_utils::isCarLikeVehicle(classification)) {
+  const auto classification =
+    autoware::object_recognition_utils::getHighestProbLabel(object.classification);
+  if (autoware::object_recognition_utils::isCarLikeVehicle(classification)) {
     return AgentLabel::VEHICLE;
   } else if (classification == ObjectClassification::PEDESTRIAN) {
     return AgentLabel::PEDESTRIAN;
@@ -193,7 +195,7 @@ MTRNode::MTRNode(const rclcpp::NodeOptions & node_options)
 
   sub_objects_ = create_subscription<TrackedObjects>(
     "~/input/objects", rclcpp::QoS{1}, std::bind(&MTRNode::callback, this, std::placeholders::_1));
-  sub_map_ = create_subscription<HADMapBin>(
+  sub_map_ = create_subscription<LaneletMapBin>(
     "~/input/vector_map", rclcpp::QoS{1}.transient_local(),
     std::bind(&MTRNode::onMap, this, std::placeholders::_1));
   sub_ego_ = create_subscription<Odometry>(
@@ -281,7 +283,7 @@ void MTRNode::callback(const TrackedObjects::ConstSharedPtr object_msg)
   pub_objects_->publish(output);
 }
 
-void MTRNode::onMap(const HADMapBin::ConstSharedPtr map_msg)
+void MTRNode::onMap(const LaneletMapBin::ConstSharedPtr map_msg)
 {
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(
@@ -397,7 +399,7 @@ void MTRNode::removeAncientAgentHistory(
 {
   constexpr float time_threshold = 1.0f;  // TODO(ktro2828): use parameter
   for (const auto & object : objects_msg->objects) {
-    const auto & object_id = tier4_autoware_utils::toHexString(object.object_id);
+    const auto & object_id = autoware_utils::to_hex_string(object.object_id);
     if (agent_history_map_.count(object_id) == 0) {
       continue;
     }
@@ -426,7 +428,7 @@ void MTRNode::updateAgentHistory(
       continue;
     }
 
-    const auto & object_id = tier4_autoware_utils::toHexString(object.object_id);
+    const auto & object_id = autoware_utils::to_hex_string(object.object_id);
     observed_ids.emplace_back(object_id);
     object_msg_map_.emplace(object_id, object);
     auto state = trackedObjectToAgentState(object, true);
@@ -489,7 +491,7 @@ std::vector<size_t> MTRNode::extractTargetAgent(const std::vector<AgentHistory> 
       pose_in_map.pose.position.x = state.x();
       pose_in_map.pose.position.y = state.y();
       pose_in_map.pose.position.z = state.z();
-      pose_in_map.pose.orientation = tier4_autoware_utils::createQuaternionFromYaw(state.yaw());
+      pose_in_map.pose.orientation = autoware::universe_utils::createQuaternionFromYaw(state.yaw());
 
       geometry_msgs::msg::PoseStamped pose_in_ego;
       tf2::doTransform(pose_in_map, pose_in_ego, *map2ego);
