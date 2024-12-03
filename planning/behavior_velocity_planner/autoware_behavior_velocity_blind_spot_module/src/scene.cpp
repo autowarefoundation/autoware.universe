@@ -50,7 +50,7 @@ BlindSpotModule::BlindSpotModule(
   velocity_factor_.init(PlanningBehavior::REAR_CHECK);
   sibling_straight_lanelet_ = getSiblingStraightLanelet(
     planner_data->route_handler_->getLaneletMapPtr()->laneletLayer.get(lane_id_),
-    planner_data_->route_handler_->getRoutingGraphPtr());
+    planner_data->route_handler_->getRoutingGraphPtr());
 }
 
 void BlindSpotModule::initializeRTCStatus()
@@ -102,8 +102,9 @@ BlindSpotDecision BlindSpotModule::modifyPathVelocityDetail(PathWithLaneId * pat
 
   if (!blind_spot_lanelets_) {
     const auto blind_spot_lanelets = generateBlindSpotLanelets(
-      planner_data_->route_handler_, input_path, planner_param_.ignore_width_from_center_line,
-      planner_param_.adjacent_extend_width, planner_param_.opposite_adjacent_extend_width);
+      planner_data_->route_handler_, turn_direction_, lane_id_, input_path,
+      planner_param_.ignore_width_from_center_line, planner_param_.adjacent_extend_width,
+      planner_param_.opposite_adjacent_extend_width);
     if (!blind_spot_lanelets.empty()) {
       blind_spot_lanelets_ = blind_spot_lanelets;
     }

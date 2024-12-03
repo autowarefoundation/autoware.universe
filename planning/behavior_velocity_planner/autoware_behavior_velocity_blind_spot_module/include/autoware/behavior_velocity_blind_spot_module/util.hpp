@@ -72,6 +72,7 @@ lanelet::ConstLanelet generateExtendedOppositeAdjacentLanelet(
 
 lanelet::ConstLanelets generateBlindSpotLanelets(
   const std::shared_ptr<autoware::route_handler::RouteHandler> route_handler,
+  const TurnDirection turn_direction, const lanelet::Id lane_id,
   const tier4_planning_msgs::msg::PathWithLaneId & path, const double ignore_width_from_centerline,
   const double adjacent_extend_width, const double opposite_adjacent_extend_width);
 
