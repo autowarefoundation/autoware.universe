@@ -106,9 +106,9 @@ TEST_F(TrajectoryTest, direction)
 
 TEST_F(TrajectoryTest, curvature)
 {
-  double curv = trajectory->curvature(0.0);
-  EXPECT_LT(-1.0, curv);
-  EXPECT_LT(curv, 1.0);
+  double curvature_val = trajectory->curvature(0.0);
+  EXPECT_LT(-1.0, curvature_val);
+  EXPECT_LT(curvature_val, 1.0);
 }
 
 TEST_F(TrajectoryTest, restore)

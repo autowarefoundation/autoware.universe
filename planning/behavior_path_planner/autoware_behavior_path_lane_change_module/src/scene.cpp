@@ -1143,7 +1143,6 @@ std::vector<LaneChangePhaseMetrics> NormalLaneChange::get_lane_changing_metrics(
   const PathWithLaneId & prep_segment, const LaneChangePhaseMetrics & prep_metric,
   const double shift_length, const double dist_to_reg_element) const
 {
-  const auto & route_handler = getRouteHandler();
   const auto & transient_data = common_data_ptr_->transient_data;
   const auto dist_lc_start_to_end_of_lanes = calculation::calc_dist_from_pose_to_terminal_end(
     common_data_ptr_, common_data_ptr_->lanes_ptr->target_neighbor,
@@ -1341,7 +1340,7 @@ bool NormalLaneChange::check_candidate_path_safety(
   }
 
   if (
-    !is_stuck && !utils::lane_change::passed_parked_objects(
+    !is_stuck && utils::lane_change::is_delay_lane_change(
                    common_data_ptr_, candidate_path, filtered_objects_.target_lane_leading.stopped,
                    lane_change_debug_.collision_check_objects)) {
     throw std::logic_error(
@@ -1522,10 +1521,8 @@ PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const
     return {false, true};
   }
 
-  const auto has_passed_parked_objects = utils::lane_change::passed_parked_objects(
-    common_data_ptr_, path, filtered_objects_.target_lane_leading.stopped, debug_data);
-
-  if (!has_passed_parked_objects) {
+  if (utils::lane_change::is_delay_lane_change(
+        common_data_ptr_, path, filtered_objects_.target_lane_leading.stopped, debug_data)) {
     RCLCPP_DEBUG(logger_, "Lane change has been delayed.");
     return {false, false};
   }
@@ -1812,8 +1809,6 @@ bool NormalLaneChange::has_collision_with_decel_patterns(
     return false;
   }
 
-  const auto current_pose = common_data_ptr_->get_ego_pose();
-  const auto current_twist = common_data_ptr_->get_ego_twist();
   const auto bpp_param = *common_data_ptr_->bpp_param_ptr;
   const auto global_min_acc = bpp_param.min_acc;
   const auto lane_changing_acc = lane_change_path.info.longitudinal_acceleration.lane_changing;
@@ -1830,17 +1825,11 @@ bool NormalLaneChange::has_collision_with_decel_patterns(
     acceleration_values.begin(), acceleration_values.end(), acceleration_values.begin(),
     [&](double n) { return lane_changing_acc + n * acc_resolution; });
 
-  const auto time_resolution =
-    lane_change_parameters_->safety.collision_check.prediction_time_resolution;
-
   const auto stopped_obj_vel_th = lane_change_parameters_->safety.th_stopped_object_velocity;
   const auto all_collided = std::all_of(
     acceleration_values.begin(), acceleration_values.end(), [&](const auto acceleration) {
-      const auto ego_predicted_path = utils::lane_change::convertToPredictedPath(
-        lane_change_path, current_twist, current_pose, acceleration, bpp_param,
-        *lane_change_parameters_, time_resolution);
-      const auto debug_predicted_path =
-        utils::path_safety_checker::convertToPredictedPath(ego_predicted_path, time_resolution);
+      const auto ego_predicted_path = utils::lane_change::convert_to_predicted_path(
+        common_data_ptr_, lane_change_path, acceleration);
 
       return std::any_of(objects.begin(), objects.end(), [&](const auto & obj) {
         const auto selected_rss_param = (obj.initial_twist.linear.x <= stopped_obj_vel_th)
