@@ -316,11 +316,7 @@ __global__ void fillUnknownSpaceKernel(
   const float next_obs_world_px = __uint_as_float(next_obs_range_and_px & 0xFFFFFFFF);
   const float next_obs_world_py = __uint_as_float(next_obs_range_and_py & 0xFFFFFFFF);
 
-  float next_obs_range =
-    next_obs_range_int *
-    RANGE_DISCRETIZATION_RESOLUTION;  // TODO(knzo25): replace all RANGE_DISCRETIZATION_RESOLUTION
-                                      // (1mm) instances with a constant or parameter. handle the
-                                      // unlikely overflow
+  float next_obs_range = next_obs_range_int * RANGE_DISCRETIZATION_RESOLUTION;
   float obs_to_obs_distance = next_obs_range - obs_range;
 
   const std::uint64_t next_raw_range_and_x =
