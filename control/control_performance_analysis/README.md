@@ -66,12 +66,12 @@ Error acceleration calculations are made based on the velocity calculations abov
 | `heading_error`                            | float | $[ \mathrm{rad} ]$                                                                                                                              |
 | `heading_error_velocity`                   | float | $[ \mathrm{rad/s} ]$                                                                                                                            |
 | `control_effort_energy`                    | float | $[ \mathbf{u}^\top \mathbf{R} \mathbf{u} ]$                                                                                                     |
-| `error_energy`                             | float | $\text{lateral_error}^2 + \text{heading_error}^2$                                                                                               |
+| `error_energy`                             | float | $\text{lateral\_error}^2 + \text{heading\_error}^2$                                                                                               |
 | `value_approximation`                      | float | $V = \mathbf{x}^\top \mathbf{P} \mathbf{x}$; Value function from DARE Lyapunov matrix $\mathbf{P}$                                              |
 | `curvature_estimate`                       | float | $[ \mathrm{1/m} ]$                                                                                                                              |
 | `curvature_estimate_pp`                    | float | $[ \mathrm{1/m} ]$                                                                                                                              |
 | `vehicle_velocity_error`                   | float | $[ \mathrm{m/s} ]$                                                                                                                              |
-| `tracking_curvature_discontinuity_ability` | float | Measures the ability to track curvature changes $\frac{\lvert \Delta(\text{curvature}) \rvert}{1 + \lvert \Delta(\text{lateral_error}) \rvert}$ |
+| `tracking_curvature_discontinuity_ability` | float | Measures the ability to track curvature changes $\frac{\lvert \Delta(\text{curvature}) \rvert}{1 + \lvert \Delta(\text{lateral\_error}) \rvert}$ |
 
 ## Parameters
 
