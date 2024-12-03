@@ -97,6 +97,11 @@ rclcpp_components_register_node(synchronized_grid_map_fusion
   EXECUTABLE synchronized_grid_map_fusion_node
 )
 
+install(
+  TARGETS ${PROJECT_NAME}_cuda
+  DESTINATION lib
+)
+
 ament_auto_package(
   INSTALL_TO_SHARE
     launch
@@ -124,6 +129,7 @@ if(BUILD_TESTING)
   target_link_libraries(test_utils
     ${PCL_LIBRARIES}
     ${PROJECT_NAME}_common
+    ${PROJECT_NAME}_cuda
   )
   target_include_directories(costmap_unit_tests PRIVATE "include")
   target_include_directories(fusion_policy_unit_tests PRIVATE "include")
