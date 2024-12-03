@@ -32,6 +32,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 template <typename T>
@@ -300,6 +301,15 @@ protected:
    * @return execution result
    */
   bool get_value_from_net_snmp(const NetSnmpIndex & index, uint64_t & output_value);
+
+  /**
+   * @brief Update the queue containing the delta value (current_value - last_value)
+   * @param [inout] queue queue containing the delta
+   * @param [inout] last_value the last value
+   * @param [in] current_value the current value
+   * @param [in] duration the max size of the queue
+   */
+  void update_delta_queue(std::deque<unsigned int> & queue, uint64_t & last_value, uint64_t current_value, unsigned int duration);
 
   diagnostic_updater::Updater updater_;  //!< @brief Updater class which advertises to /diagnostics
   rclcpp::TimerBase::SharedPtr timer_;   //!< @brief timer to get Network information

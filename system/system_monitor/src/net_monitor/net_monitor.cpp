@@ -22,6 +22,8 @@
 #include "system_monitor/system_monitor_utility.hpp"
 #include "system_monitor/traffic_reader/traffic_reader_common.hpp"
 
+#include <numeric>
+
 #include <boost/algorithm/string.hpp>
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
@@ -346,18 +348,8 @@ void NetMonitor::check_udp_buf_errors(diagnostic_updater::DiagnosticStatusWrappe
 
   uint64_t total_udp_rcvbuf_errors = 0;
   if (get_value_from_net_snmp(udp_rcvbuf_errors_index_, total_udp_rcvbuf_errors)) {
-    if (udp_rcvbuf_errors_queue_.empty()) {
-      last_udp_rcvbuf_errors_ = total_udp_rcvbuf_errors;
-    }
-    udp_rcvbuf_errors_queue_.push_back(total_udp_rcvbuf_errors - last_udp_rcvbuf_errors_);
-    last_udp_rcvbuf_errors_ = total_udp_rcvbuf_errors;
-    while (udp_rcvbuf_errors_queue_.size() > udp_buf_errors_check_duration_) {
-      udp_rcvbuf_errors_queue_.pop_front();
-    }
-    uint64_t unit_udp_rcvbuf_errors = 0;
-    for (auto udp_rcvbuf_errors : udp_rcvbuf_errors_queue_) {
-      unit_udp_rcvbuf_errors += udp_rcvbuf_errors;
-    }
+    update_delta_queue(udp_rcvbuf_errors_queue_, last_udp_rcvbuf_errors_, total_udp_rcvbuf_errors, udp_buf_errors_check_duration_);
+    uint64_t unit_udp_rcvbuf_errors = std::accumulate(udp_rcvbuf_errors_queue_.begin(), udp_rcvbuf_errors_queue_.end(), 0);
     status.add(fmt::format("total UDP rcv buf errors"), total_udp_rcvbuf_errors);
     status.add(fmt::format("UDP rcv buf errors per unit time"), unit_udp_rcvbuf_errors);
     if (unit_udp_rcvbuf_errors >= udp_buf_errors_check_count_) {
@@ -372,18 +364,8 @@ void NetMonitor::check_udp_buf_errors(diagnostic_updater::DiagnosticStatusWrappe
 
   uint64_t total_udp_sndbuf_errors = 0;
   if (get_value_from_net_snmp(udp_sndbuf_errors_index_, total_udp_sndbuf_errors)) {
-    if (udp_sndbuf_errors_queue_.empty()) {
-      last_udp_sndbuf_errors_ = total_udp_sndbuf_errors;
-    }
-    udp_sndbuf_errors_queue_.push_back(total_udp_sndbuf_errors - last_udp_sndbuf_errors_);
-    last_udp_sndbuf_errors_ = total_udp_sndbuf_errors;
-    while (udp_sndbuf_errors_queue_.size() > udp_buf_errors_check_duration_) {
-      udp_sndbuf_errors_queue_.pop_front();
-    }
-    uint64_t unit_udp_sndbuf_errors = 0;
-    for (auto udp_sndbuf_errors : udp_sndbuf_errors_queue_) {
-      unit_udp_sndbuf_errors += udp_sndbuf_errors;
-    }
+    update_delta_queue(udp_sndbuf_errors_queue_, last_udp_sndbuf_errors_, total_udp_sndbuf_errors, udp_buf_errors_check_duration_);
+    uint64_t unit_udp_sndbuf_errors = std::accumulate(udp_sndbuf_errors_queue_.begin(), udp_sndbuf_errors_queue_.end(), 0);
     status.add(fmt::format("total UDP snd buf errors"), total_udp_sndbuf_errors);
     status.add(fmt::format("UDP snd buf errors per unit time"), unit_udp_sndbuf_errors);
     if (unit_udp_sndbuf_errors >= udp_buf_errors_check_count_) {
@@ -708,6 +690,18 @@ bool NetMonitor::get_value_from_net_snmp(const NetSnmpIndex & index, uint64_t & 
   } else {
     output_value = std::stoull(value_str);
     return true;
+  }
+}
+
+void NetMonitor::update_delta_queue(std::deque<unsigned int> & queue, uint64_t & last_value, uint64_t current_value, unsigned int duration)
+{
+  if (queue.empty()) {
+    last_value = current_value;
+  }
+  queue.push_back(current_value - last_value);
+  last_value = current_value;
+  while (queue.size() > duration) {
+    queue.pop_front();
   }
 }
 
