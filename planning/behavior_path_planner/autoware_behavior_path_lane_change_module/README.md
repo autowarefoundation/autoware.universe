@@ -893,7 +893,7 @@ The following parameters are configurable in [lane_change.param.yaml](https://gi
 | `trajectory.lat_acc_sampling_num`            | [-]    | int    | Number of possible lane-changing trajectories that are being influenced by lateral acceleration                        | 3                  |
 | `trajectory.max_longitudinal_acc`            | [m/s2] | double | maximum longitudinal acceleration for lane change                                                                      | 1.0                |
 | `trajectory.min_longitudinal_acc`            | [m/s2] | double | maximum longitudinal deceleration for lane change                                                                      | -1.0               |
-| `trajectory.lane_changing_decel_factor`      | [m/s2] | double | longitudinal deceleration factor during lane changing phase                                                            | 0.5                |
+| `trajectory.lane_changing_decel_factor`      | [-] | double | longitudinal deceleration factor during lane changing phase                                                            | 0.5                |
 | `min_length_for_turn_signal_activation`      | [m]    | double | Turn signal will be activated if the ego vehicle approaches to this length from minimum lane change length             | 10.0               |
 | `lateral_acceleration.velocity`              | [m/s]  | double | Reference velocity for lateral acceleration calculation (look up table)                                                | [0.0, 4.0, 10.0]   |
 | `lateral_acceleration.min_values`            | [m/s2] | double | Min lateral acceleration values corresponding to velocity (look up table)                                              | [0.4, 0.4, 0.4]    |
