@@ -42,8 +42,7 @@ void visit(
   }
 }
 
-void visit(
-  std::vector<LinkedVertex> & vertices, std::size_t index)
+void visit(std::vector<LinkedVertex> & vertices, std::size_t index)
 {
   LinkedVertex & vertex = vertices[index];
   vertex.visited = true;
@@ -56,7 +55,6 @@ void visit(
       }
     }
   }
-
 }
 
 bool is_inside(const LinkedVertex & v, const ExtendedPolygon & poly)
@@ -283,7 +281,8 @@ void mark_self_intersections(ExtendedPolygon & source)
     std::size_t next_vertex_index = source.vertices[source_vertex_index].next.value();
     std::size_t compare_vertex_index = source_vertex_index;
     do {
-      if (compare_vertex_index == source_vertex_index || compare_vertex_index == next_vertex_index) {
+      if (
+        compare_vertex_index == source_vertex_index || compare_vertex_index == next_vertex_index) {
         compare_vertex_index = source.vertices[compare_vertex_index].next.value();
         continue;
       }
@@ -291,27 +290,28 @@ void mark_self_intersections(ExtendedPolygon & source)
       std::size_t compare_next_vertex_index = source.vertices[compare_vertex_index].next.value();
 
       Intersection i = intersection(
-        source.vertices, source_vertex_index, next_vertex_index,
-        source.vertices, compare_vertex_index, compare_next_vertex_index);
+        source.vertices, source_vertex_index, next_vertex_index, source.vertices,
+        compare_vertex_index, compare_next_vertex_index);
 
       if (!valid(i)) {
         compare_vertex_index = source.vertices[compare_vertex_index].next.value();
         continue;
       }
 
-      LinkedVertex intersection_vertex_1{i.x, i.y, std::nullopt, std::nullopt, std::nullopt, i.distance_to_source, false, true, false};
+      LinkedVertex intersection_vertex_1{i.x,          i.y,          std::nullopt,
+                                         std::nullopt, std::nullopt, i.distance_to_source,
+                                         false,        true,         false};
       source.vertices.push_back(intersection_vertex_1);
       std::size_t index1 = source.vertices.size() - 1;
       source.vertices[index1].corresponding = compare_next_vertex_index;
       insert_vertex(source.vertices, index1, source_vertex_index, next_vertex_index);
       compare_vertex_index = source.vertices[compare_vertex_index].next.value();
 
-    } while (compare_vertex_index != source.first); 
+    } while (compare_vertex_index != source.first);
 
     source_vertex_index = source.vertices[source_vertex_index].next.value();
-  } while (source_vertex_index != source.first);  
+  } while (source_vertex_index != source.first);
 }
-
 
 void mark_intersections(ExtendedPolygon & source, ExtendedPolygon & clip, bool & intersection_exist)
 {
@@ -373,7 +373,6 @@ void mark_intersections(ExtendedPolygon & source, ExtendedPolygon & clip, bool &
   } while (source_vertex_index != source.first);
 }
 
-
 void identify_entry_exit(
   ExtendedPolygon & source, ExtendedPolygon & clip, bool source_forwards, bool clip_forwards)
 {
@@ -414,8 +413,8 @@ void identify_entry_exit(
 //       visit(polygon.vertices, currentIndex);
 //       do {
 //         currentIndex = polygon.vertices[currentIndex].next.value();
-//         autoware::universe_utils::Point2d point(polygon.vertices[currentIndex].x, polygon.vertices[currentIndex].y);
-//         polygon_vector.outer().push_back(point);
+//         autoware::universe_utils::Point2d point(polygon.vertices[currentIndex].x,
+//         polygon.vertices[currentIndex].y); polygon_vector.outer().push_back(point);
 //       } while (!polygon.vertices[currentIndex].is_intersection);
 //       currentIndex = polygon.vertices[currentIndex].corresponding.value();
 //     } while (!polygon.vertices[currentIndex].visited);
@@ -424,8 +423,7 @@ void identify_entry_exit(
 //   return polygon_vector;
 // }
 
-autoware::universe_utils::Polygon2d construct_self_intersecting_polygons(
-  ExtendedPolygon & polygon)
+autoware::universe_utils::Polygon2d construct_self_intersecting_polygons(ExtendedPolygon & polygon)
 {
   std::vector<autoware::universe_utils::Polygon2d> polygon_vector;
 
@@ -445,12 +443,11 @@ autoware::universe_utils::Polygon2d construct_self_intersecting_polygons(
     } while (!polygon.vertices[currentIndex].visited);
 
     auto points = get_points(clipped);
-    polygon_vector.push_back(points); 
+    polygon_vector.push_back(points);
   }
-  
+
   return polygon_vector[0];
 }
-
 
 std::vector<autoware::universe_utils::Polygon2d> construct_clipped_polygons(
   ExtendedPolygon & source, ExtendedPolygon & clip, const bool is_union)

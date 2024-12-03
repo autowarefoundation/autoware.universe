@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__UNIVERSE_UTILS__GEOMETRY__POLYGON_CLIP_HPP_
-#define AUTOWARE__UNIVERSE_UTILS__GEOMETRY__POLYGON_CLIP_HPP_
+#ifndef AUTOWARE__UNIVERSE_UTILS__GEOMETRY__TEMP_POLYGON_CLIP_HPP_
+#define AUTOWARE__UNIVERSE_UTILS__GEOMETRY__TEMP_POLYGON_CLIP_HPP_
 
 #include "autoware/universe_utils/geometry/geometry.hpp"
 
@@ -242,4 +242,4 @@ std::vector<autoware::universe_utils::Point2d> intersection(
 
 }  // namespace autoware::universe_utils
 
-#endif  // AUTOWARE__UNIVERSE_UTILS__GEOMETRY__POLYGON_CLIP_HPP_
+#endif  // AUTOWARE__UNIVERSE_UTILS__GEOMETRY__TEMP_POLYGON_CLIP_HPP_

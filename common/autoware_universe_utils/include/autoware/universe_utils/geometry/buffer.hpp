@@ -45,7 +45,9 @@ namespace offset_buffer
  */
 autoware::universe_utils::Polygon2d create_arc(
   autoware::universe_utils::Polygon2d & vertices, const autoware::universe_utils::Point2d & center,
-  double radius, const autoware::universe_utils::Point2d & offset_v1, const autoware::universe_utils::Point2d & offset_v2next, const autoware::universe_utils::Point2d & end_vertex,
+  double radius, const autoware::universe_utils::Point2d & offset_v1,
+  const autoware::universe_utils::Point2d & offset_v2next,
+  const autoware::universe_utils::Point2d & end_vertex,
   const autoware::universe_utils::Point2d & start_vertex_next, double segments);
 
 /**
@@ -59,7 +61,8 @@ autoware::universe_utils::Polygon2d create_arc(
  */
 void offset_segment(
   const autoware::universe_utils::Point2d & v1, const autoware::universe_utils::Point2d & v2,
-  const autoware::universe_utils::Point2d & next_vertex, double dist, double segments, autoware::universe_utils::Polygon2d & vertices);
+  const autoware::universe_utils::Point2d & next_vertex, double dist, double segments,
+  autoware::universe_utils::Polygon2d & vertices);
 }  // namespace offset_buffer
 
 /**
