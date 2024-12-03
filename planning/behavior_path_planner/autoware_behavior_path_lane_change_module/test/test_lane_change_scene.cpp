@@ -25,7 +25,9 @@
 
 #include <gtest/gtest.h>
 
+#include <limits>
 #include <memory>
+#include <string>
 
 using autoware::behavior_path_planner::FilteredLanesObjects;
 using autoware::behavior_path_planner::LaneChangeModuleManager;

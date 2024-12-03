@@ -15,6 +15,9 @@
 #include <autoware/pyplot/loader.hpp>
 #include <autoware/pyplot/pyplot.hpp>
 
+#include <tuple>
+#include <vector>
+
 namespace autoware::pyplot
 {
 PyPlot::PyPlot(const pybind11::module & mod_) : mod(mod_)

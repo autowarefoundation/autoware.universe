@@ -33,7 +33,11 @@
 #include <tf2_ros/transform_listener.h>
 
 #include <algorithm>
+#include <map>
+#include <memory>
 #include <string>
+#include <unordered_set>
+#include <utility>
 #include <vector>
 
 namespace autoware::behavior_path_planner::goal_planner_utils

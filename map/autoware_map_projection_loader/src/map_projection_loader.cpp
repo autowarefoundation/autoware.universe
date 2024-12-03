@@ -22,6 +22,8 @@
 
 #include <filesystem>
 #include <fstream>
+#include <iostream>
+#include <string>
 
 namespace autoware::map_projection_loader
 {

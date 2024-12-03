@@ -20,6 +20,9 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <iostream>
+#include <utility>
+
 namespace autoware::behavior_velocity_planner
 {
 using autoware::motion_utils::calcSignedArcLength;

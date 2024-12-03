@@ -24,8 +24,10 @@
 #include <autoware/universe_utils/system/time_keeper.hpp>
 
 #include <algorithm>
+#include <limits>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 
 namespace autoware::behavior_path_planner

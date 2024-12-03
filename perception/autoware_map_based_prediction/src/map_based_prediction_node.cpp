@@ -46,8 +46,13 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <deque>
 #include <functional>
 #include <limits>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace autoware::map_based_prediction
 {
