@@ -73,10 +73,6 @@ MTRBuilder::MTRBuilder(
   runtime_ = TrtUniquePtr<nvinfer1::IRuntime>(nvinfer1::createInferRuntime(logger_));
 }
 
-MTRBuilder::~MTRBuilder()
-{
-}
-
 void MTRBuilder::setup()
 {
   if (!fs::exists(model_filepath_)) {

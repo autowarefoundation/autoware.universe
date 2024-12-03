@@ -190,7 +190,7 @@ MTRNode::MTRNode(const rclcpp::NodeOptions & node_options)
     const auto precision = getPrecisionType(precision_str);
     const auto calibration = getCalibrationType(calibration_str);
     build_config_ptr_ = std::make_unique<BuildConfig>(is_dynamic, precision, calibration);
-    model_ptr_ = std::make_unique<TrtMTR>(model_path, *config_ptr_.get(), *build_config_ptr_.get());
+    model_ptr_ = std::make_unique<TrtMTR>(model_path, *config_ptr_, *build_config_ptr_);
   }
 
   sub_objects_ = create_subscription<TrackedObjects>(
@@ -262,7 +262,7 @@ void MTRNode::callback(const TrackedObjects::ConstSharedPtr object_msg)
     histories, static_cast<size_t>(sdc_index), target_indices, label_indices, relative_timestamps);
 
   std::vector<PredictedTrajectory> trajectories;
-  if (!model_ptr_->doInference(agent_data, *polyline_ptr_.get(), trajectories)) {
+  if (!model_ptr_->doInference(agent_data, *polyline_ptr_, trajectories)) {
     RCLCPP_WARN(get_logger(), "Inference failed");
     return;
   }
@@ -312,12 +312,12 @@ void MTRNode::onEgo(const Odometry::ConstSharedPtr ego_msg)
   }
 
   // TODO(ktro2828): use received ego size topic
-  ego_states_.emplace_back(std::make_pair(
+  ego_states_.emplace_back(
     current_time,
     AgentState(
       static_cast<float>(position.x), static_cast<float>(position.y),
       static_cast<float>(position.z), EGO_LENGTH, EGO_WIDTH, EGO_HEIGHT, yaw,
-      static_cast<float>(twist.linear.x), static_cast<float>(twist.linear.y), ax, ay, true)));
+      static_cast<float>(twist.linear.x), static_cast<float>(twist.linear.y), ax, ay, true));
 
   constexpr size_t max_buffer_size = 100;
   if (max_buffer_size < ego_states_.size()) {
@@ -476,7 +476,7 @@ std::vector<size_t> MTRNode::extractTargetAgent(const std::vector<AgentHistory> 
   for (size_t i = 0; i < histories.size(); ++i) {
     const auto & history = histories.at(i);
     if (!history.is_valid_latest() || history.object_id() == EGO_ID) {
-      distances.emplace_back(std::make_pair(i, INFINITY));
+      distances.emplace_back(i, INFINITY);
     } else {
       auto map2ego = transform_listener_.getTransform(
         "base_link",  // target
@@ -498,7 +498,7 @@ std::vector<size_t> MTRNode::extractTargetAgent(const std::vector<AgentHistory> 
 
       const auto dist = std::hypot(
         pose_in_ego.pose.position.x, pose_in_ego.pose.position.y, pose_in_ego.pose.position.z);
-      distances.emplace_back(std::make_pair(i, dist));
+      distances.emplace_back(i, dist);
     }
   }
 

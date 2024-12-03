@@ -145,11 +145,6 @@ public:
     const size_t max_workspace_size = (1ULL << 63));
 
   /**
-   * @brief Destroy the instance.
-   */
-  ~MTRBuilder();
-
-  /**
    * @brief Setup engine for inference. After finishing setup successfully, `isInitialized` must
    * return `true`.
    */
