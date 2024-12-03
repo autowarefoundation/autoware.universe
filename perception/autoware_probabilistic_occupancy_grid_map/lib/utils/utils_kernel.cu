@@ -271,9 +271,9 @@ void transformPointCloudLaunch(
   const Eigen::Matrix3f & rotation, const Eigen::Vector3f & translation)
 {
   // Launch kernel
-  int block_size = 256;
-  int num_blocks = (num_points + block_size - 1) / block_size;
-  transformPointCloudKernel<<<num_blocks, block_size>>>(
+  int threads_per_block = 256;
+  int num_blocks = (num_points + threads_per_block - 1) / threads_per_block;
+  transformPointCloudKernel<<<num_blocks, threads_per_block>>>(
     points, num_points, points_step, rotation, translation);
 }
 
@@ -283,10 +283,11 @@ void copyMapRegionLaunch(
   unsigned int dm_lower_left_y, unsigned int dm_size_x, unsigned int region_size_x,
   unsigned int region_size_y, cudaStream_t stream)
 {
-  const int threadsPerBlock = 256;
-  const int blocksPerGrid = (region_size_x * region_size_y + threadsPerBlock - 1) / threadsPerBlock;
+  const int threads_per_block = 256;
+  const int num_blocks =
+    (region_size_x * region_size_y + threads_per_block - 1) / threads_per_block;
 
-  copyMapRegionKernel<<<blocksPerGrid, threadsPerBlock, 0, stream>>>(
+  copyMapRegionKernel<<<num_blocks, threads_per_block, 0, stream>>>(
     source_map, sm_lower_left_x, sm_lower_left_y, sm_size_x, dest_map, dm_lower_left_x,
     dm_lower_left_y, dm_size_x, region_size_x, region_size_y);
 }

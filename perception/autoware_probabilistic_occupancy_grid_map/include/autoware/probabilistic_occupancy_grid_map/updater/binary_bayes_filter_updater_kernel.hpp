@@ -15,8 +15,6 @@
 #ifndef AUTOWARE__PROBABILISTIC_OCCUPANCY_GRID_MAP__UPDATER__BINARY_BAYES_FILTER_UPDATER_KERNEL_HPP_
 #define AUTOWARE__PROBABILISTIC_OCCUPANCY_GRID_MAP__UPDATER__BINARY_BAYES_FILTER_UPDATER_KERNEL_HPP_
 
-#include "autoware/cuda_utils/cuda_unique_ptr.hpp"
-
 #include <cuda_runtime.h>
 
 #include <cstdint>
