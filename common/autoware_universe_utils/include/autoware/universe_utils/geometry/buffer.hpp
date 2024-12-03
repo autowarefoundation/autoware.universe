@@ -30,7 +30,7 @@
 namespace autoware::universe_utils
 {
 
-namespace
+namespace offset_buffer
 {
 /**
  * @brief create an arc between two vertices with a given radius and center
@@ -41,14 +41,12 @@ namespace
  * @param end_vertex the end vertex of the arc
  * @param start_vertex_next the next vertex after the start vertex
  * @param segments the number of segments to divide the arc into
- * @param skip a flag to skip adding the start vertex
  * @return the updated Polygon2d with the arc
  */
-Polygon2d create_arc(
+autoware::universe_utils::Polygon2d create_arc(
   autoware::universe_utils::Polygon2d & vertices, const autoware::universe_utils::Point2d & center,
-  double radius, const autoware::universe_utils::Point2d & start_vertex,
-  const autoware::universe_utils::Point2d & end_vertex,
-  const autoware::universe_utils::Point2d & start_vertex_next, double segments, bool skip);
+  double radius, const autoware::universe_utils::Point2d & offset_v1, const autoware::universe_utils::Point2d & offset_v2next, const autoware::universe_utils::Point2d & end_vertex,
+  const autoware::universe_utils::Point2d & start_vertex_next, double segments);
 
 /**
  * @brief offset a polygon segment between two vertices with a specified distance
@@ -57,13 +55,12 @@ Polygon2d create_arc(
  * @param next_vertex the next vertex in the polygon
  * @param dist the offset distance
  * @param segments the number of segments to divide the arc into
- * @param skip a flag to skip adding the first segment
  * @return the offset polygon segment
  */
-autoware::universe_utils::Polygon2d _offset_segment(
+void offset_segment(
   const autoware::universe_utils::Point2d & v1, const autoware::universe_utils::Point2d & v2,
-  const autoware::universe_utils::Point2d & next_vertex, double dist, double segments, bool skip);
-}  // namespace
+  const autoware::universe_utils::Point2d & next_vertex, double dist, double segments, autoware::universe_utils::Polygon2d & vertices);
+}  // namespace offset_buffer
 
 /**
  * @brief buffer a polygon by a specified distance and number of segments

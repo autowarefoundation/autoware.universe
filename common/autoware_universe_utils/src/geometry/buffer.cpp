@@ -13,52 +13,76 @@
 // // limitations under the License.
 
 #include "autoware/universe_utils/geometry/buffer.hpp"
+#include "autoware/universe_utils/geometry/temp_polygon_clip.hpp"
+#include "autoware/universe_utils/system/stop_watch.hpp"
+
+#include <iostream>
+#include <vector>
 
 namespace autoware::universe_utils
 {
 
-namespace
+namespace offset_buffer
 {
+
+autoware::universe_utils::Polygon2d dissolve(autoware::universe_utils::Polygon2d const &polygon)
+{
+    autoware::universe_utils::StopWatch<std::chrono::nanoseconds, std::chrono::nanoseconds> sw;
+    auto extended_poly = autoware::universe_utils::polygon_clip::create_extended_polygon(polygon);
+    sw.tic();
+    double loop_1 = 0.0;
+    double loop_2 = 0.0;
+    autoware::universe_utils::polygon_clip::mark_self_intersections(extended_poly);
+    loop_1 += sw.toc();
+    sw.tic();
+
+    auto polygon_vector = autoware::universe_utils::polygon_clip::construct_self_intersecting_polygons(extended_poly);
+    std::cout << polygon_vector.outer().size() << "\n";
+    loop_2 += sw.toc();
+
+    std::cout << "time loop_1: " << loop_1 << "time loop_2: " << loop_2 << "\n";
+    return polygon_vector;
+}
+
 autoware::universe_utils::Polygon2d create_arc(
   autoware::universe_utils::Polygon2d & vertices, const autoware::universe_utils::Point2d & center,
-  double radius, const autoware::universe_utils::Point2d & start_vertex,
-  const autoware::universe_utils::Point2d & end_vertex,
-  const autoware::universe_utils::Point2d & start_vertex_next, double segments, bool skip)
+  double radius , const autoware::universe_utils::Point2d & end_vertex,
+  const autoware::universe_utils::Point2d & start_vertex_next, double segments)
 {
   const double PI2 = M_PI * 2;
-  double startAngle = atan2(start_vertex_next.y() - center.y(), start_vertex_next.x() - center.x());
-  double endAngle = atan2(end_vertex.y() - center.y(), end_vertex.x() - center.x());
+  double start_angle = atan2(start_vertex_next.y() - center.y(), start_vertex_next.x() - center.x());
+  double end_angle = atan2(end_vertex.y() - center.y(), end_vertex.x() - center.x());
 
-  if (skip) {
-    vertices.outer().push_back(start_vertex);
-    skip = false;
-  }
+  if (start_angle < 0) start_angle += PI2;
+  if (end_angle < 0) end_angle += PI2;
 
-  if (startAngle < 0) startAngle += PI2;
-  if (endAngle < 0) endAngle += PI2;
+  double angle_diff =
+    ((start_angle > end_angle) ? (start_angle - end_angle) : (start_angle + PI2 - end_angle));
+  if (angle_diff < 0) angle_diff += PI2;
 
-  double angleDiff =
-    ((startAngle > endAngle) ? (startAngle - endAngle) : (startAngle + PI2 - endAngle));
-  if (angleDiff < 0) angleDiff += PI2;
+  int dynamic_segments = static_cast<int>(segments * (angle_diff / PI2));
+  if (dynamic_segments < 1) dynamic_segments = 1; 
 
-  double segmentAngle = angleDiff / segments;
+  double segment_angle = angle_diff / dynamic_segments;
 
-  for (int i = 0; i <= segments; ++i) {
-    double angle = endAngle + i * segmentAngle;
+  for (int i = 0; i <= dynamic_segments; ++i) {
+    double angle = end_angle + i * segment_angle;
     double x = center.x() + radius * cos(angle);
     double y = center.y() + radius * sin(angle);
 
-    vertices.outer().push_back(Point2d(x, y));
+    vertices.outer().push_back(autoware::universe_utils::Point2d(x, y));
   }
+
+
   return vertices;
 }
 
-autoware::universe_utils::Polygon2d _offset_segment(
-  const autoware::universe_utils::Point2d & v1, const autoware::universe_utils::Point2d & v2,
-  const autoware::universe_utils::Point2d & next_vertex, double dist, double segments, bool skip)
+void offset_segment(
+  const autoware::universe_utils::Point2d &v1, const autoware::universe_utils::Point2d &v2,
+  const autoware::universe_utils::Point2d &next_vertex, double dist, double segments, 
+  autoware::universe_utils::Polygon2d &vertices)
 {
-  autoware::universe_utils::Polygon2d vertices;
-
+  // Calculate direction and normals
   double dx = v2.x() - v1.x();
   double dy = v2.y() - v1.y();
 
@@ -68,6 +92,7 @@ autoware::universe_utils::Polygon2d _offset_segment(
 
   autoware::universe_utils::Point2d offset_v1(v1.x() - normal_x * dist, v1.y() - normal_y * dist);
   autoware::universe_utils::Point2d offset_v2(v2.x() - normal_x * dist, v2.y() - normal_y * dist);
+
 
   double next_dx = next_vertex.x() - v2.x();
   double next_dy = next_vertex.y() - v2.y();
@@ -79,82 +104,72 @@ autoware::universe_utils::Polygon2d _offset_segment(
   autoware::universe_utils::Point2d offset_v2next(
     next_vertex.x() - normal_x_next * dist, next_vertex.y() - normal_y_next * dist);
 
-  double currAngle = atan2(dy, dx);
-  double nextAngle = atan2(next_dy, next_dx);
+  double current_angle = atan2(dy, dx);
+  double next_angle = atan2(next_dy, next_dx);
 
-  double angle_current_next = nextAngle - currAngle;
+  if (current_angle < 0) current_angle += M_PI * 2;
+  if (next_angle < 0) next_angle += M_PI * 2;
+
+  double angle_current_next = ((next_angle > current_angle) ? 
+    (next_angle - current_angle) : 
+    (next_angle + M_PI * 2 - current_angle));
+
   if (angle_current_next < 0) {
     angle_current_next += M_PI * 2;
   }
-  std::cout << "angleBetween " << angle_current_next << "\n";
 
-  if (2 * M_PI - angle_current_next > M_PI) {
-    create_arc(vertices, v2, dist, offset_v1, offset_v2, offset_v1next, segments, skip);
-  } else if (2 * M_PI - angle_current_next < M_PI) {
-    auto intersection_point =
-      autoware::universe_utils::intersection(offset_v1, offset_v2, offset_v1next, offset_v2next);
+  if (angle_current_next < M_PI) {
     vertices.outer().push_back(offset_v1);
-    vertices.outer().push_back(intersection_point[0]);
-    vertices.outer().push_back(offset_v2next);
-    skip = true;
+    create_arc(vertices, v2, dist,offset_v2, offset_v1next, segments);
   } else {
     vertices.outer().push_back(offset_v1);
     vertices.outer().push_back(offset_v2);
-  }
-
-  return vertices;
+  } 
 }
 
-}  // namespace
+
+}
 
 autoware::universe_utils::Polygon2d buffer(
   const autoware::universe_utils::Polygon2d & input_polygon, double dist, double segments)
 {
   autoware::universe_utils::Polygon2d offset_polygon;
-  size_t verticesCount = input_polygon.outer().size();
+  autoware::universe_utils::Polygon2d final_polygon;
+  size_t vertices_count = input_polygon.outer().size();
 
-  if (verticesCount < 2) {
+  if (vertices_count < 2) {
     std::cerr << "Polygon needs at least 2 vertices!" << std::endl;
     return offset_polygon;
   }
 
-  bool skip = false;
+  std::vector<autoware::universe_utils::Point2d> new_ring(input_polygon.outer().begin(), input_polygon.outer().end() - 1);
+  size_t modified_vertices_count = new_ring.size();
+  
+    for (size_t i = modified_vertices_count; i > 0; --i) {
+      const auto &v1 = new_ring[(i - 1) % modified_vertices_count];
+      const auto &v2 = new_ring[(i - 2 + modified_vertices_count) % modified_vertices_count];
+      const auto &next_vertex = new_ring[(i - 3 + modified_vertices_count) % modified_vertices_count];
 
-  for (size_t i = 0; i < verticesCount; ++i) {
-    const auto & v1 = input_polygon.outer()[i];
-    const auto & v2 = input_polygon.outer()[(i + 1) % verticesCount];
-
-    const auto & next_vertex = input_polygon.outer()[(i + 2) % verticesCount];
-
-    autoware::universe_utils::Polygon2d offset_segment =
-      _offset_segment(v1, v2, next_vertex, dist, segments, skip);
-
-    for (const auto & point : offset_segment.outer()) {
-      offset_polygon.outer().push_back(point);
+      autoware::universe_utils::offset_buffer::offset_segment(v1, v2, next_vertex, dist, segments, offset_polygon);
     }
-  }
-
-  if (!offset_polygon.outer().empty()) {
-    offset_polygon.outer().push_back(offset_polygon.outer().front());
-  }
   boost::geometry::correct(offset_polygon);
-
-  return offset_polygon;
+  auto result = autoware::universe_utils::offset_buffer::dissolve(offset_polygon);
+  return result;
 }
 
 autoware::universe_utils::Polygon2d buffer(
   const autoware::universe_utils::Point2d & point, double distance, double segments)
 {
-  autoware::universe_utils::Polygon2d offsetPolygon;
+  autoware::universe_utils::Polygon2d offset_polygon;
 
   for (int i = 0; i < segments; ++i) {
     double angle = 2 * M_PI * i / segments;
     autoware::universe_utils::Point2d buffer_point(
       point.x() + distance * cos(angle), point.y() + distance * sin(angle));
-    offsetPolygon.outer().push_back(buffer_point);
+    offset_polygon.outer().push_back(buffer_point);
   }
-  boost::geometry::correct(offsetPolygon);
-  return offsetPolygon;
+  boost::geometry::correct(offset_polygon);
+  return offset_polygon;
 }
 
 autoware::universe_utils::Polygon2d buffer(
