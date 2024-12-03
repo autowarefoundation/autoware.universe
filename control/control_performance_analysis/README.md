@@ -44,19 +44,19 @@ Error acceleration calculations are made based on the velocity calculations abov
 
 #### control_performance_analysis::msg::DrivingMonitorStamped
 
-| Name                         | Type  | Description                                              |
-| ---------------------------- | ----- | -------------------------------------------------------- |
-| `longitudinal_acceleration`  | float | $[ \mathrm{m/s^2} ]$                          |
-| `longitudinal_jerk`          | float | $[ \mathrm{m/s^3} ]$                          |
-| `lateral_acceleration`       | float | $[ \mathrm{m/s^2} ]$                          |
-| `lateral_jerk`               | float | $[ \mathrm{m/s^3} ]$                          |
-| `desired_steering_angle`     | float | $[ \mathrm{rad} ]$                            |
+| Name                         | Type  | Description                                                           |
+| ---------------------------- | ----- | --------------------------------------------------------------------- |
+| `longitudinal_acceleration`  | float | $[ \mathrm{m/s^2} ]$                                                  |
+| `longitudinal_jerk`          | float | $[ \mathrm{m/s^3} ]$                                                  |
+| `lateral_acceleration`       | float | $[ \mathrm{m/s^2} ]$                                                  |
+| `lateral_jerk`               | float | $[ \mathrm{m/s^3} ]$                                                  |
+| `desired_steering_angle`     | float | $[ \mathrm{rad} ]$                                                    |
 | `controller_processing_time` | float | Timestamp between last two control command messages $[ \mathrm{ms} ]$ |
 
 #### control_performance_analysis::msg::ErrorStamped
 
 | Name                                       | Type  | Description                                                                                                                                     |
-| ------------------------------------------ | ----- |-------------------------------------------------------------------------------------------------------------------------------------------------|
+| ------------------------------------------ | ----- | ----------------------------------------------------------------------------------------------------------------------------------------------- |
 | `lateral_error`                            | float | $[ \mathrm{m} ]$                                                                                                                                |
 | `lateral_error_velocity`                   | float | $[ \mathrm{m/s} ]$                                                                                                                              |
 | `lateral_error_acceleration`               | float | $[ \mathrm{m/s^2} ]$                                                                                                                            |
