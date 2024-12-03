@@ -65,7 +65,7 @@ bool TrtMTR::doInference(
   }
 
   if (!postProcess(agent_data, trajectories)) {
-    std::cerr << "Fail to preprocess" << std::endl;
+    std::cerr << "Fail to postprocess" << std::endl;
     return false;
   }
 
