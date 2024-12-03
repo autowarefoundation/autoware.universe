@@ -56,7 +56,7 @@ Error acceleration calculations are made based on the velocity calculations abov
 #### control_performance_analysis::msg::ErrorStamped
 
 | Name                                       | Type  | Description                                                                                                                               |
-| ------------------------------------------ | ----- |-------------------------------------------------------------------------------------------------------------------------------------------|
+| ------------------------------------------ | ----- | ----------------------------------------------------------------------------------------------------------------------------------------- |
 | `lateral_error`                            | float | $[ \mathrm{m} ]$                                                                                                                          |
 | `lateral_error_velocity`                   | float | $[ \mathrm{m/s} ]$                                                                                                                        |
 | `lateral_error_acceleration`               | float | $[ \mathrm{m/s^2} ]$                                                                                                                      |
