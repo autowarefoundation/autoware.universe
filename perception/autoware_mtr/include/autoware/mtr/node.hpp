@@ -88,9 +88,9 @@ public:
     }
   }
 
-  // Return the ID of the corresponding label type. If specified type is not contained in map,
+  // Return the ID corresponding to the label type. If specified type is not contained in map,
   // return `-1`.
-  int getTypeID(const std::string & type) const
+  int type_to_id(const std::string & type) const
   {
     return label_map_.count(type) == 0 ? -1 : label_map_.at(type);
   }
@@ -112,35 +112,34 @@ private:
   void callback(const TrackedObjects::ConstSharedPtr object_msg);
 
   // Callback being invoked when the HD map topic is subscribed.
-  void onMap(const LaneletMapBin::ConstSharedPtr map_msg);
+  void on_map(const LaneletMapBin::ConstSharedPtr map_msg);
 
   // Callback being invoked when the Ego's odometry topic is subscribed.
-  void onEgo(const Odometry::ConstSharedPtr ego_msg);
+  void on_ego(const Odometry::ConstSharedPtr ego_msg);
 
   // Convert Lanelet to `PolylineData`.
-  bool convertLaneletToPolyline();
+  bool lanelet_to_polyline();
 
   // Remove ancient agent histories.
-  void removeAncientAgentHistory(
+  void remove_ancient_history(
     const float current_time, const TrackedObjects::ConstSharedPtr objects_msg);
 
   // Appends new states to history.
-  void updateAgentHistory(
-    const float current_time, const TrackedObjects::ConstSharedPtr objects_msg);
+  void update_history(const float current_time, const TrackedObjects::ConstSharedPtr objects_msg);
 
   // Extract ego state stored in the buffer which has the nearest timestamp from current timestamp.
-  AgentState extractNearestEgo(const float current_time) const;
+  AgentState lookup_ego_state(const float current_time) const;
 
   // Extract target agents and return corresponding indices.
   // NOTE: Extract targets in order of proximity, closest first.
-  std::vector<size_t> extractTargetAgent(const std::vector<AgentHistory> & histories);
+  std::vector<size_t> extract_target_agents(const std::vector<AgentHistory> & histories);
 
   // Return the timestamps relative from the first element.Return the timestamps relative from the
   // first element.
-  std::vector<float> getRelativeTimestamps() const;
+  std::vector<float> get_relative_timestamps() const;
 
   // Generate `PredictedObject` from `PredictedTrajectory`.
-  PredictedObject generatePredictedObject(
+  PredictedObject to_predicted_object(
     const TrackedObject & object, const PredictedTrajectory & trajectory);
 
   // ROS Publisher and Subscriber

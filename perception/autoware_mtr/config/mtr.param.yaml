@@ -12,6 +12,9 @@
       intention_point_filepath: "$(var data_path)/intention_point.csv"
       num_intention_point_cluster: 64
       polyline_label_path: "$(var data_path)/polyline_label.txt"
+      static_inference:
+        num_target: 2
+        num_agent: 7
     build_params:
       is_dynamic: false
       precision: "FP32"
