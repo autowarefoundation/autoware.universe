@@ -12,26 +12,26 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TENSORRT_MTR__TRT_MTR_HPP_
-#define TENSORRT_MTR__TRT_MTR_HPP_
+#ifndef AUTOWARE__MTR__TRT_MTR_HPP_
+#define AUTOWARE__MTR__TRT_MTR_HPP_
 
 #include "attention/trt_attn_value_computation.hpp"
 #include "attention/trt_attn_weight_computation.hpp"
+#include "autoware/mtr/agent.hpp"
+#include "autoware/mtr/builder.hpp"
+#include "autoware/mtr/cuda_helper.hpp"
+#include "autoware/mtr/intention_point.hpp"
+#include "autoware/mtr/polyline.hpp"
+#include "autoware/mtr/trajectory.hpp"
 #include "knn/trt_knn_batch.hpp"
 #include "knn/trt_knn_batch_mlogk_kernel.hpp"
-#include "tensorrt_mtr/agent.hpp"
-#include "tensorrt_mtr/builder.hpp"
-#include "tensorrt_mtr/cuda_helper.hpp"
-#include "tensorrt_mtr/intention_point.hpp"
-#include "tensorrt_mtr/polyline.hpp"
-#include "tensorrt_mtr/trajectory.hpp"
 
 #include <array>
 #include <memory>
 #include <string>
 #include <vector>
 
-namespace trt_mtr
+namespace autoware::mtr
 {
 /**
  * @brief A configuration of MTR.
@@ -190,5 +190,5 @@ private:
   std::vector<float> h_out_score_;
   std::vector<float> h_out_trajectory_;
 };  // class TrtMTR
-}  // namespace trt_mtr
-#endif  // TENSORRT_MTR__TRT_MTR_HPP_
+}  // namespace autoware::mtr
+#endif  // AUTOWARE__MTR__TRT_MTR_HPP_

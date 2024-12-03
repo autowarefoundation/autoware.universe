@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(tensorrt_mtr)
+project(autoware_mtr)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
   add_compile_options(-Wall -Wextra -Wpedantic)
@@ -83,7 +83,7 @@ target_link_libraries(${PROJECT_NAME}_node
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}_node
-  PLUGIN "trt_mtr::MTRNode"
+  PLUGIN "autoware::mtr::MTRNode"
   EXECUTABLE ${PROJECT_NAME}
 )
 

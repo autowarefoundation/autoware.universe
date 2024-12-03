@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TENSORRT_MTR__AGENT_HPP_
-#define TENSORRT_MTR__AGENT_HPP_
+#ifndef AUTOWARE__MTR__AGENT_HPP_
+#define AUTOWARE__MTR__AGENT_HPP_
 
 #include <algorithm>
 #include <array>
@@ -23,7 +23,7 @@
 #include <tuple>
 #include <vector>
 
-namespace trt_mtr
+namespace autoware::mtr
 {
 constexpr size_t AgentStateDim = 12;
 
@@ -417,5 +417,5 @@ std::vector<std::string> getLabelNames(const std::vector<size_t> & label_index)
   return label_names;
 }
 
-}  // namespace trt_mtr
-#endif  // TENSORRT_MTR__AGENT_HPP_
+}  // namespace autoware::mtr
+#endif  // AUTOWARE__MTR__AGENT_HPP_

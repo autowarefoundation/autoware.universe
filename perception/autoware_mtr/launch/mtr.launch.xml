@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <launch>
-  <arg name="param_path" default="$(find-pkg-share tensorrt_mtr)/config/tensorrt_mtr.param.yaml"/>
-  <arg name="data_path" default="$(find-pkg-share tensorrt_mtr)/data"/>
+  <arg name="param_path" default="$(find-pkg-share autoware_mtr)/config/mtr.param.yaml"/>
+  <arg name="data_path" default="$(find-pkg-share autoware_mtr)/data"/>
 
   <arg name="input/objects" default="/perception/object_recognition/tracking/objects"/>
   <arg name="input/vector_map" default="/map/vector_map"/>
@@ -9,7 +9,7 @@
   <arg name="output/objects" default="objects"/>
   <arg name="build_only" default="false"/>
 
-  <node pkg="tensorrt_mtr" exec="tensorrt_mtr" name="tensorrt_mtr" output="screen">
+  <node pkg="autoware_mtr" exec="autoware_mtr" name="mtr" output="screen">
     <param from="$(var param_path)" allow_substs="true"/>
     <remap from="~/input/objects" to="$(var input/objects)"/>
     <remap from="~/input/vector_map" to="$(var input/vector_map)"/>

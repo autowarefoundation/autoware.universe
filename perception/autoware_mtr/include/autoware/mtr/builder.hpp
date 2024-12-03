@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TENSORRT_MTR__BUILDER_HPP_
-#define TENSORRT_MTR__BUILDER_HPP_
+#ifndef AUTOWARE__MTR__BUILDER_HPP_
+#define AUTOWARE__MTR__BUILDER_HPP_
 
 #include <NvInfer.h>
 #include <NvOnnxParser.h>
@@ -30,7 +30,7 @@ namespace fs = ::std::filesystem;
 #include <sstream>
 #include <string>
 
-namespace trt_mtr
+namespace autoware::mtr
 {
 
 template <typename T>
@@ -212,5 +212,5 @@ private:
 
   bool is_initialized_{false};
 };  // class MTRBuilder
-}  // namespace trt_mtr
-#endif  // TENSORRT_MTR__BUILDER_HPP_
+}  // namespace autoware::mtr
+#endif  // AUTOWARE__MTR__BUILDER_HPP_

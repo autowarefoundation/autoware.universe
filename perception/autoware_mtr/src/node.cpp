@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "tensorrt_mtr/node.hpp"
+#include "autoware/mtr/node.hpp"
 
 #include <autoware_utils/ros/uuid_helper.hpp>
 #include <lanelet2_extension/utility/message_conversion.hpp>
@@ -25,7 +25,7 @@
 #include <algorithm>
 #include <cmath>
 
-namespace trt_mtr
+namespace autoware::mtr
 {
 namespace
 {
@@ -158,7 +158,7 @@ CalibrationType getCalibrationType(const std::string & name)
 }  // namespace
 
 MTRNode::MTRNode(const rclcpp::NodeOptions & node_options)
-: rclcpp::Node("tensorrt_mtr", node_options), transform_listener_(this), polyline_type_map_(this)
+: rclcpp::Node("mtr", node_options), transform_listener_(this), polyline_type_map_(this)
 {
   // TODO(ktro2828)
   {
@@ -569,7 +569,7 @@ PredictedObject MTRNode::generatePredictedObject(
 
   return predicted_object;
 }
-}  // namespace trt_mtr
+}  // namespace autoware::mtr
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(trt_mtr::MTRNode);
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::mtr::MTRNode);
