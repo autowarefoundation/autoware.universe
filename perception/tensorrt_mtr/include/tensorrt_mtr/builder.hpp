@@ -21,7 +21,7 @@
 #include <filesystem>
 namespace fs = ::std::filesystem;
 
-#include <tensorrt_common/logger.hpp>
+#include <autoware/tensorrt_common/logger.hpp>
 
 #include <algorithm>
 #include <array>
@@ -201,7 +201,7 @@ private:
   bool buildEngineFromOnnx(
     const std::string & filepath, const std::string & output_engine_filepath);
 
-  tensorrt_common::Logger logger_;
+  autoware::tensorrt_common::Logger logger_;
   TrtUniquePtr<nvinfer1::IRuntime> runtime_;
   TrtUniquePtr<nvinfer1::ICudaEngine> engine_;
   TrtUniquePtr<nvinfer1::IExecutionContext> context_;
