@@ -44,7 +44,7 @@ jobs:
             echo "cuda_build=false" >> $GITHUB_OUTPUT
           fi
         shell: bash
-      - name: Fail if build is not required
+      - name: Fail if the tag:run-build-and-test-differential is missing
         if: ${{ needs.make-sure-label-is-present.outputs.result != 'true' }}
         run: exit 1
 
