@@ -59,6 +59,8 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
       getOrDeclareParameter<double>(*node, parameter("trajectory.th_lane_changing_length_diff"));
     p.trajectory.min_lane_changing_velocity =
       getOrDeclareParameter<double>(*node, parameter("trajectory.min_lane_changing_velocity"));
+    p.trajectory.lane_changing_decel_factor =
+      getOrDeclareParameter<double>(*node, parameter("trajectory.lane_changing_decel_factor"));
     p.trajectory.lon_acc_sampling_num =
       getOrDeclareParameter<int>(*node, parameter("trajectory.lon_acc_sampling_num"));
     p.trajectory.lat_acc_sampling_num =
@@ -318,6 +320,8 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
       parameters, ns + "min_longitudinal_acc", p->trajectory.min_longitudinal_acc);
     updateParam<double>(
       parameters, ns + "max_longitudinal_acc", p->trajectory.max_longitudinal_acc);
+    updateParam<double>(
+      parameters, ns + "lane_changing_decel_factor", p->trajectory.lane_changing_decel_factor);
     int longitudinal_acc_sampling_num = 0;
     updateParam<int>(parameters, ns + "lon_acc_sampling_num", longitudinal_acc_sampling_num);
     if (longitudinal_acc_sampling_num > 0) {
