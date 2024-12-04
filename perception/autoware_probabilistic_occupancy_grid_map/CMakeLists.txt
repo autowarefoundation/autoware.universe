@@ -9,6 +9,11 @@ find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(PCL REQUIRED)
 
+if(NOT ${CUDA_FOUND})
+  message(WARNING "cuda was not found, so the autoware_probabilistic_occupancy_grid_map package will not be built.")
+  return()
+endif()
+
 include_directories(
   include
   SYSTEM
@@ -16,11 +21,6 @@ include_directories(
     ${EIGEN3_INCLUDE_DIR}
     ${grid_map_ros_INCLUDE_DIRS}
 )
-
-if(NOT ${CUDA_FOUND})
-  message(WARNING "cuda was not found, so the autoware_probabilistic_occupancy_grid_map package will not be built.")
-  return()
-endif()
 
 # cSpell: ignore expt
 list(APPEND CUDA_NVCC_FLAGS --expt-relaxed-constexpr -diag-suppress 20012 --compiler-options -fPIC)
