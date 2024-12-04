@@ -211,7 +211,7 @@ std::vector<LinearRing2d> createVehiclePassingAreas(
   if (vehicle_footprints.size() == 1) {
     return {vehicle_footprints.front()};
   }
-  
+
   std::vector<LinearRing2d> areas;
   areas.reserve(vehicle_footprints.size() - 1);
 
