@@ -205,7 +205,7 @@ std::vector<LinearRing2d> createVehiclePassingAreas(
   const std::vector<LinearRing2d> & vehicle_footprints)
 {
   if (vehicle_footprints.empty()) {
-    return std::vector<LinearRing2d>();
+    return {};
   }
 
   if (vehicle_footprints.size() == 1) {
