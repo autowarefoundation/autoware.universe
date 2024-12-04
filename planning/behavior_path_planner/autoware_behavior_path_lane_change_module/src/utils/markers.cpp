@@ -26,6 +26,7 @@
 #include <visualization_msgs/msg/detail/marker__struct.hpp>
 #include <visualization_msgs/msg/detail/marker_array__struct.hpp>
 
+#include <algorithm>
 #include <cstdint>
 #include <cstdlib>
 #include <sstream>

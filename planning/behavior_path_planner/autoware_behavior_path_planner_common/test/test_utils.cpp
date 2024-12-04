@@ -22,7 +22,9 @@
 
 #include <cmath>
 #include <cstddef>
+#include <limits>
 #include <memory>
+#include <string>
 
 using autoware::universe_utils::Point2d;
 using autoware_perception_msgs::msg::PredictedObject;

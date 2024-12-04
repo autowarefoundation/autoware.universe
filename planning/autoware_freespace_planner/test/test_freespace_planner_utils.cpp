@@ -19,6 +19,7 @@
 #include <gtest/gtest.h>
 
 #include <deque>
+#include <memory>
 #include <vector>
 
 using autoware::freespace_planner::utils::Odometry;

@@ -20,6 +20,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <algorithm>
 #include <memory>
 #include <string>
 #include <vector>

@@ -26,6 +26,7 @@
 #include <gtest/gtest.h>
 #include <lanelet2_core/Forward.h>
 
+#include <algorithm>
 #include <cmath>
 #include <memory>
 #include <vector>

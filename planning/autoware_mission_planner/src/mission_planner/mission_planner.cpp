@@ -27,7 +27,10 @@
 #include <lanelet2_core/geometry/LineString.h>
 
 #include <algorithm>
+#include <memory>
+#include <string>
 #include <utility>
+#include <vector>
 
 namespace autoware::mission_planner
 {

@@ -19,6 +19,8 @@
 #include <boost/geometry/algorithms/distance.hpp>
 #include <boost/geometry/algorithms/intersection.hpp>
 
+#include <vector>
+
 namespace autoware::behavior_velocity_planner
 {
 namespace bg = boost::geometry;
