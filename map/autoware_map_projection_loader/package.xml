@@ -19,9 +19,9 @@
   <depend>autoware_component_interface_specs</depend>
   <depend>autoware_component_interface_utils</depend>
   <depend>autoware_lanelet2_extension</depend>
+  <depend>autoware_map_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
-  <depend>tier4_map_msgs</depend>
   <depend>yaml-cpp</depend>
 
   <test_depend>ament_cmake_gmock</test_depend>

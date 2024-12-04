@@ -490,18 +490,6 @@ double calcDecelerationVelocityFromDistanceToTarget(
   return current_velocity;
 }
 
-StopReason initializeStopReason(const std::string & stop_reason)
-{
-  StopReason stop_reason_msg;
-  stop_reason_msg.reason = stop_reason;
-  return stop_reason_msg;
-}
-
-void appendStopReason(const StopFactor stop_factor, StopReason * stop_reason)
-{
-  stop_reason->stop_factors.emplace_back(stop_factor);
-}
-
 std::vector<geometry_msgs::msg::Point> toRosPoints(const PredictedObjects & object)
 {
   std::vector<geometry_msgs::msg::Point> points;
