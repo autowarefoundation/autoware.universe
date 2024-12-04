@@ -388,9 +388,10 @@ double calc_lane_changing_acceleration(
 {
   if (prepare_longitudinal_acc <= 0.0) {
     const auto & params = common_data_ptr->lc_param_ptr->trajectory;
-    const auto lane_changing_acc = common_data_ptr->transient_data.is_ego_near_current_terminal_start
-                                    ? prepare_longitudinal_acc * params.lane_changing_decel_factor
-                                    : 0.0;
+    const auto lane_changing_acc =
+      common_data_ptr->transient_data.is_ego_near_current_terminal_start
+        ? prepare_longitudinal_acc * params.lane_changing_decel_factor
+        : 0.0;
     return lane_changing_acc;
   }
 
