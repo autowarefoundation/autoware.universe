@@ -66,8 +66,6 @@
 
 #if 0
 #include <assert.h>
-
-#include <cstdio>
 #define ASSERT(cond) assert(cond)
 #define PRINTF(fmt, ...) printf(fmt, ##__VA_ARGS__)
 #define PRINT_COST_ARRAY(a, n)         \
