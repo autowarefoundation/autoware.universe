@@ -19,6 +19,9 @@
 
 #include <lanelet2_projection/UTM.h>
 
+#include <memory>
+#include <string>
+
 namespace autoware::geography_utils
 {
 
