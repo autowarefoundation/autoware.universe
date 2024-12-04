@@ -17,6 +17,10 @@
 #include <boost/lexical_cast.hpp>
 #include <boost/uuid/uuid_io.hpp>
 
+#include <algorithm>
+#include <memory>
+#include <vector>
+
 #if __has_include(<cv_bridge/cv_bridge.hpp>)
 #include <cv_bridge/cv_bridge.hpp>
 #else

@@ -14,6 +14,10 @@
 
 #include "autoware/image_projection_based_fusion/debugger.hpp"
 
+#include <algorithm>
+#include <string>
+#include <vector>
+
 #if __has_include(<cv_bridge/cv_bridge.hpp>)
 #include <cv_bridge/cv_bridge.hpp>
 #else
