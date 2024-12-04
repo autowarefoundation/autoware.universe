@@ -17,6 +17,10 @@
 #include "autoware/object_recognition_utils/predicted_path_utils.hpp"
 #include "autoware/universe_utils/ros/marker_helper.hpp"
 
+#include <limits>
+#include <string>
+#include <vector>
+
 namespace obstacle_cruise_utils
 {
 namespace

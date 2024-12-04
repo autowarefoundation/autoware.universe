@@ -19,6 +19,11 @@
 #include <autoware_planning_test_manager/autoware_planning_test_manager_utils.hpp>
 #include <autoware_test_utils/autoware_test_utils.hpp>
 
+#include <iostream>
+#include <memory>
+#include <string>
+#include <vector>
+
 namespace autoware::planning_test_manager
 {
 

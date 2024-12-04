@@ -19,6 +19,8 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/utils.h>
 
+#include <vector>
+
 namespace autoware::behavior_path_planner
 {
 

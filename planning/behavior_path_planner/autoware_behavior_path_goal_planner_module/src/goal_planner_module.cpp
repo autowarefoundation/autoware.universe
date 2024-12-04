@@ -37,10 +37,15 @@
 
 #include <algorithm>
 #include <cstddef>
+#include <deque>
+#include <functional>
 #include <limits>
+#include <map>
 #include <memory>
 #include <optional>
 #include <string>
+#include <tuple>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 

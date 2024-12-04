@@ -21,6 +21,8 @@
 
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 
+#include <algorithm>
+#include <limits>
 #include <memory>
 #include <vector>
 

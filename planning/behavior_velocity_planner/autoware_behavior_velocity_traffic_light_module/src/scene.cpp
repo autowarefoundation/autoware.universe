@@ -25,6 +25,8 @@
 
 #include <tf2/utils.h>
 
+#include <memory>
+
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
 #else
