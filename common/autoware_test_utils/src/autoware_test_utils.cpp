@@ -26,7 +26,9 @@
 #include <tf2/utils.h>
 #include <yaml-cpp/yaml.h>
 
+#include <string>
 #include <utility>
+#include <vector>
 
 namespace autoware::test_utils
 {

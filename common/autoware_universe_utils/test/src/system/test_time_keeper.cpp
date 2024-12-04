@@ -19,7 +19,9 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <memory>
 #include <sstream>
+#include <string>
 #include <thread>
 
 class TimeKeeperTest : public ::testing::Test
