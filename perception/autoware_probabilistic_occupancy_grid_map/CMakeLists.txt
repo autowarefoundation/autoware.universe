@@ -4,7 +4,7 @@ project(autoware_probabilistic_occupancy_grid_map)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-find_package(CUDA REQUIRED)
+find_package(CUDA)
 find_package(eigen3_cmake_module REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(PCL REQUIRED)
