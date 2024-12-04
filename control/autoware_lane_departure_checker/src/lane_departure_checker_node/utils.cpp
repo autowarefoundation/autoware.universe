@@ -22,7 +22,6 @@
 #include <lanelet2_core/geometry/Polygon.h>
 
 #include <vector>
-#include <lanelet2_core/geometry/Polygon.h>
 
 namespace
 {
