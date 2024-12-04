@@ -22,6 +22,12 @@
 
 #include <lanelet2_core/geometry/Polygon.h>
 
+#include <algorithm>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
 namespace autoware::behavior_velocity_planner
 {
 
