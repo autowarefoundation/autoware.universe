@@ -26,6 +26,7 @@
 #include <tf2/utils.h>
 
 #include <algorithm>
+#include <string>
 #include <vector>
 
 using autoware::universe_utils::LinearRing2d;
