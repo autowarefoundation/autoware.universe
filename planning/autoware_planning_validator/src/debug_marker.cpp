@@ -14,6 +14,8 @@
 
 #include "autoware/planning_validator/debug_marker.hpp"
 
+#include "autoware/universe_utils/geometry/geometry.hpp"
+
 #include <autoware/motion_utils/marker/marker_helper.hpp>
 #include <autoware/universe_utils/ros/marker_helper.hpp>
 
@@ -70,6 +72,32 @@ void PlanningValidatorDebugMarkerPublisher::pushPoseMarker(
   marker.lifetime = rclcpp::Duration::from_seconds(0.2);
   marker.pose = pose;
 
+  marker_array_.markers.push_back(marker);
+}
+
+void PlanningValidatorDebugMarkerPublisher::pushFootprintMarker(
+  const geometry_msgs::msg::Pose & pose,
+  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info, const std::string & ns)
+{
+  using autoware::universe_utils::createMarkerColor;
+  Marker marker = autoware::universe_utils::createDefaultMarker(
+    "map", node_->get_clock()->now(), ns, getMarkerId(ns), Marker::LINE_STRIP,
+    autoware::universe_utils::createMarkerScale(0.1, 0.1, 0.1),
+    createMarkerColor(1.0, 0.0, 0.0, 0.999));
+  const double half_width = vehicle_info.vehicle_width_m / 2.0;
+  const double base_to_front = vehicle_info.vehicle_length_m - vehicle_info.rear_overhang_m;
+  const double base_to_rear = vehicle_info.rear_overhang_m;
+
+  marker.points.push_back(
+    autoware::universe_utils::calcOffsetPose(pose, base_to_front, -half_width, 0.0).position);
+  marker.points.push_back(
+    autoware::universe_utils::calcOffsetPose(pose, base_to_front, half_width, 0.0).position);
+  marker.points.push_back(
+    autoware::universe_utils::calcOffsetPose(pose, -base_to_rear, half_width, 0.0).position);
+  marker.points.push_back(
+    autoware::universe_utils::calcOffsetPose(pose, -base_to_rear, -half_width, 0.0).position);
+  marker.points.push_back(marker.points.front());
+  marker.lifetime = rclcpp::Duration::from_seconds(0.2);
   marker_array_.markers.push_back(marker);
 }
 

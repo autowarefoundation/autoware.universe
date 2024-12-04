@@ -15,6 +15,7 @@ bool is_valid_velocity_deviation
 bool is_valid_distance_deviation
 bool is_valid_longitudinal_distance_deviation
 bool is_valid_forward_trajectory_length
+bool is_valid_no_collision
 
 # values
 int64 trajectory_size

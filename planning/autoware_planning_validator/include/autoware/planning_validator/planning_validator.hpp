@@ -16,6 +16,7 @@
 #define AUTOWARE__PLANNING_VALIDATOR__PLANNING_VALIDATOR_HPP_
 
 #include "autoware/planning_validator/debug_marker.hpp"
+#include "autoware/universe_utils/geometry/boost_geometry.hpp"
 #include "autoware/universe_utils/ros/logger_level_configure.hpp"
 #include "autoware/universe_utils/ros/polling_subscriber.hpp"
 #include "autoware/universe_utils/system/stop_watch.hpp"
@@ -26,6 +27,7 @@
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <nav_msgs/msg/odometry.hpp>
@@ -37,6 +39,8 @@
 namespace autoware::planning_validator
 {
 using autoware::universe_utils::StopWatch;
+using autoware::vehicle_info_utils::VehicleInfo;
+using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
 using autoware_planning_validator::msg::PlanningValidatorStatus;
@@ -59,6 +63,9 @@ struct ValidationParams
   double velocity_deviation_threshold;
   double distance_deviation_threshold;
   double longitudinal_distance_deviation_threshold;
+  double trajectory_to_object_distance_threshold;
+  double ego_to_object_distance_threshold;
+  double time_tolerance_threshold;
 
   // parameters
   double forward_trajectory_length_acceleration;
@@ -86,6 +93,7 @@ public:
   bool checkValidDistanceDeviation(const Trajectory & trajectory);
   bool checkValidLongitudinalDistanceDeviation(const Trajectory & trajectory);
   bool checkValidForwardTrajectoryLength(const Trajectory & trajectory);
+  bool checkValidTrajectoryCollision(const Trajectory & trajectory);
 
 private:
   void setupDiag();
@@ -105,6 +113,8 @@ private:
 
   autoware::universe_utils::InterProcessPollingSubscriber<Odometry> sub_kinematics_{
     this, "~/input/kinematics"};
+  autoware::universe_utils::InterProcessPollingSubscriber<PredictedObjects> sub_obj_{
+    this, "~/input/objects"};
   rclcpp::Subscription<Trajectory>::SharedPtr sub_traj_;
   rclcpp::Publisher<Trajectory>::SharedPtr pub_traj_;
   rclcpp::Publisher<PlanningValidatorStatus>::SharedPtr pub_status_;
@@ -126,7 +136,7 @@ private:
   PlanningValidatorStatus validation_status_;
   ValidationParams validation_params_;  // for thresholds
 
-  autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
+  VehicleInfo vehicle_info_;
 
   bool isAllValid(const PlanningValidatorStatus & status) const;
 
@@ -134,6 +144,7 @@ private:
   Trajectory::ConstSharedPtr previous_published_trajectory_;
 
   Odometry::ConstSharedPtr current_kinematics_;
+  PredictedObjects::ConstSharedPtr current_objects_;
 
   std::shared_ptr<PlanningValidatorDebugMarkerPublisher> debug_pose_publisher_;
 

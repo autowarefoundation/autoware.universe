@@ -37,3 +37,18 @@
       # Setting it to 0 means an error will occur if even slightly exceeding the end of the path,
       # therefore, a certain margin is necessary.
       forward_trajectory_length_margin: 2.0
+
+      # Threshold to filter out objects that are far from the trajectory.
+      # Only objects within this distance [m] from their nearest point on the trajectory
+      # are considered for collision checking to improve computational efficiency.
+      trajectory_to_object_distance_threshold: 30.0
+
+      # Threshold to filter out objects that are far from the ego vehicle.
+      # Only objects within this distance [m] from the current ego position
+      # are considered for collision checking to improve computational efficiency.
+      ego_to_object_distance_threshold: 50.0
+
+      # Time tolerance threshold [s] for collision detection between ego and object trajectories.
+      # Collision check is performed only when the time difference between ego and object
+      # predicted positions is within this threshold to detect temporal-spatial intersections.
+      time_tolerance_threshold: 0.1

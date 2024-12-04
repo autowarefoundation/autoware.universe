@@ -14,8 +14,12 @@
 
 #include "autoware/planning_validator/utils.hpp"
 
+#include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
+
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
+
+#include <boost/geometry/algorithms/intersects.hpp>
 
 #include <memory>
 #include <string>
@@ -287,6 +291,181 @@ std::pair<double, size_t> calcMaxSteeringRates(
   }
 
   return {max_steering_rate, max_index};
+}
+
+std::optional<std::vector<autoware_planning_msgs::msg::TrajectoryPoint>> check_collision(
+  const PredictedObjects & predicted_objects, const Trajectory & trajectory,
+  const geometry_msgs::msg::Point & current_ego_position, const VehicleInfo & vehicle_info,
+  const double trajectory_to_object_distance_threshold,
+  const double ego_to_object_distance_threshold, const double time_tolerance_threshold)
+{
+  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> filtered_trajectory;
+
+  filtered_trajectory.reserve(trajectory.points.size());
+
+  for (size_t i = 0; i < trajectory.points.size(); ++i) {
+    const auto & point = trajectory.points[i];
+    const double dist_to_point = autoware::motion_utils::calcSignedArcLength(
+      trajectory.points, current_ego_position, size_t(i));
+
+    // Only include points that are ahead of current position (positive distance)
+    if (dist_to_point > 0.0) {
+      filtered_trajectory.push_back(point);
+    }
+  }
+  if (filtered_trajectory.size() == 0) {
+    return std::nullopt;
+  }
+  // Calculate timestamps for each trajectory point
+  motion_utils::calculate_time_from_start(filtered_trajectory, current_ego_position);
+
+  const auto & ego_rtree = make_ego_footprint_rtree(filtered_trajectory, vehicle_info);
+
+  const auto filtered_objects = filter_objects(
+    predicted_objects, filtered_trajectory, trajectory_to_object_distance_threshold,
+    ego_to_object_distance_threshold);
+  if (!filtered_objects) {
+    return std::nullopt;
+  }
+
+  std::vector<BoxTimeIndexPair> predicted_object_rtree_nodes;
+
+  // Check each predicted object for potential collisions
+  for (const auto & object : filtered_objects.value().objects) {
+    const auto & highest_confidence_path = find_highest_confidence_path(object);
+    if (!highest_confidence_path) {
+      continue;
+    }
+
+    const double predicted_time_step = highest_confidence_path.value().time_step.sec +
+                                       highest_confidence_path.value().time_step.nanosec * 1e-9;
+
+    make_predicted_object_rtree(
+      highest_confidence_path.value(), object.shape, predicted_time_step,
+      predicted_object_rtree_nodes);
+  }
+
+  Rtree predicted_object_rtree(
+    predicted_object_rtree_nodes.begin(), predicted_object_rtree_nodes.end());
+
+  const auto & collision_index_set =
+    detect_collisions(ego_rtree, predicted_object_rtree, time_tolerance_threshold);
+  std::vector<autoware_planning_msgs::msg::TrajectoryPoint> collision_points;
+  for (const auto & [ego_index, obj_index] : collision_index_set) {
+    collision_points.push_back(filtered_trajectory[ego_index]);
+  }
+
+  return collision_points.empty() ? std::nullopt : std::make_optional(collision_points);
+}
+
+Rtree make_ego_footprint_rtree(
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory,
+  const VehicleInfo & vehicle_info)
+{
+  autoware::universe_utils::MultiPolygon2d trajectory_footprints;
+  const double base_to_front = vehicle_info.wheel_base_m + vehicle_info.front_overhang_m;
+  const double base_to_rear = vehicle_info.rear_overhang_m;
+
+  for (const auto & p : trajectory)
+    trajectory_footprints.push_back(autoware::universe_utils::toFootprint(
+      p.pose, base_to_front, base_to_rear, vehicle_info.vehicle_width_m));
+  std::vector<BoxTimeIndexPair> rtree_nodes;
+
+  rtree_nodes.reserve(trajectory_footprints.size());
+  for (auto i = 0UL; i < trajectory_footprints.size(); ++i) {
+    const auto box =
+      boost::geometry::return_envelope<autoware::universe_utils::Box2d>(trajectory_footprints[i]);
+    const double time =
+      trajectory[i].time_from_start.sec + trajectory[i].time_from_start.nanosec * 1e-9;
+    rtree_nodes.emplace_back(box, std::make_pair(time, i));
+  }
+  return Rtree(rtree_nodes);
+}
+
+std::optional<PredictedObjects> filter_objects(
+  const PredictedObjects & objects,
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory,
+  const double trajectory_to_object_distance_threshold,
+  const double ego_to_object_distance_threshold)
+{
+  PredictedObjects filtered_objects;
+
+  for (const auto & object : objects.objects) {
+    const auto & object_position = object.kinematics.initial_pose_with_covariance.pose.position;
+    const size_t nearest_index =
+      autoware::motion_utils::findNearestIndex(trajectory, object_position);
+    const double trajectory_to_object_distance =
+      autoware::universe_utils::calcDistance2d(trajectory[nearest_index], object_position);
+    const double ego_to_object_distance =
+      autoware::universe_utils::calcDistance2d(trajectory.front().pose.position, object_position);
+
+    if (
+      trajectory_to_object_distance < trajectory_to_object_distance_threshold &&
+      ego_to_object_distance < ego_to_object_distance_threshold) {
+      filtered_objects.objects.push_back(object);
+    }
+  }
+
+  return filtered_objects.objects.empty() ? std::nullopt : std::make_optional(filtered_objects);
+}
+
+std::optional<PredictedPath> find_highest_confidence_path(const PredictedObject & object)
+{
+  const auto & paths = object.kinematics.predicted_paths;
+
+  if (paths.empty()) {
+    return std::nullopt;
+  }
+
+  const auto max_confidence_it = std::max_element(
+    paths.begin(), paths.end(),
+    [](const PredictedPath & a, const PredictedPath & b) { return a.confidence < b.confidence; });
+
+  return *max_confidence_it;
+}
+
+void make_predicted_object_rtree(
+  const PredictedPath & highest_confidence_path, const Shape & object_shape,
+  const double predicted_time_step, std::vector<BoxTimeIndexPair> & predicted_object_rtree_nodes)
+{
+  for (size_t j = 0; j < highest_confidence_path.path.size(); ++j) {
+    const auto & pose = highest_confidence_path.path[j];
+    const double predicted_time = j * predicted_time_step;
+
+    const auto predicted_polygon = autoware::universe_utils::toPolygon2d(pose, object_shape);
+
+    const auto box =
+      boost::geometry::return_envelope<autoware::universe_utils::Box2d>(predicted_polygon);
+
+    predicted_object_rtree_nodes.emplace_back(box, std::make_pair(predicted_time, j));
+  }
+}
+
+std::vector<std::pair<size_t, size_t>> detect_collisions(
+  const Rtree & ego_rtree, const Rtree & predicted_object_rtree, double time_tolerance)
+{
+  std::vector<std::pair<size_t, size_t>> collision_sets;
+
+  for (const auto & ego_value : ego_rtree) {
+    const auto & ego_box = ego_value.first;
+    const double ego_time = ego_value.second.first;
+
+    std::vector<BoxTimeIndexPair> potential_collisions;
+    predicted_object_rtree.query(
+      boost::geometry::index::intersects(ego_box) &&
+        boost::geometry::index::satisfies([&](const BoxTimeIndexPair & obj_value) {
+          return std::fabs(obj_value.second.first - ego_time) <= time_tolerance;
+        }),
+      std::back_inserter(potential_collisions));
+
+    for (const auto & obj_value : potential_collisions) {
+      if (boost::geometry::intersects(ego_box, obj_value.first)) {
+        collision_sets.emplace_back(ego_value.second.second, obj_value.second.second);
+      }
+    }
+  }
+
+  return collision_sets;
 }
 
 bool checkFinite(const TrajectoryPoint & point)

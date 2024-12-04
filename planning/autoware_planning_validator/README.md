@@ -20,6 +20,7 @@ The following features are supported for trajectory validation and can have thre
 - **Distance deviation** : invalid if the ego is too far from the trajectory
 - **Longitudinal distance deviation** : invalid if the trajectory is too far from ego in longitudinal direction
 - **Forward trajectory length** : invalid if the trajectory length is not enough to stop within a given deceleration
+- **Potential collision** : invalid if the planned trajectory is too close to the obstacle in the time horizon
 
 The following features are to be implemented.
 
@@ -31,10 +32,11 @@ The following features are to be implemented.
 
 The `autoware_planning_validator` takes in the following inputs:
 
-| Name                 | Type                              | Description                                    |
-| -------------------- | --------------------------------- | ---------------------------------------------- |
-| `~/input/kinematics` | nav_msgs/Odometry                 | ego pose and twist                             |
-| `~/input/trajectory` | autoware_planning_msgs/Trajectory | target trajectory to be validated in this node |
+| Name                 | Type                                      | Description                                    |
+| -------------------- | ----------------------------------------- | ---------------------------------------------- |
+| `~/input/kinematics` | nav_msgs/Odometry                         | ego pose and twist                             |
+| `~/input/trajectory` | autoware_planning_msgs/Trajectory         | target trajectory to be validated in this node |
+| `~/input/objects`    | autoware_perception_msgs/PredictedObjects | obstacles in the environment                   |
 
 ### Outputs
 
@@ -83,5 +85,10 @@ The input trajectory is detected as invalid if the index exceeds the following t
 
 For parameters used e.g. to calculate threshold.
 
-| `parameters.forward_trajectory_length_acceleration` | double | This value is used to calculate required trajectory length. | -5.0 |
-| `parameters.forward_trajectory_length_margin` | double | A margin of the required trajectory length not to raise an error when the ego slightly exceeds the trajectory end point. | 2.0 |
+| Parameter Name                                       | Type   | Description                                                                                                                                                                                                                                                        | Default Value |
+| ---------------------------------------------------- | ------ | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ------------- |
+| `parameters.forward_trajectory_length_acceleration`  | double | This value is used to calculate required trajectory length.                                                                                                                                                                                                        | -5.0          |
+| `parameters.forward_trajectory_length_margin`        | double | A margin of the required trajectory length not to raise an error when the ego slightly exceeds the trajectory end point.                                                                                                                                           | 2.0           |
+| `parameters.trajectory_to_object_distance_threshold` | double | A threshold for filtering objects to improve computational efficiency of collision checking. Only objects within this distance [m] from their nearest point on the trajectory are considered for collision checking.                                               | 30.0          |
+| `parameters.ego_to_object_distance_threshold`        | double | A threshold for filtering objects to improve computational efficiency of collision checking. Only objects within this distance [m] from the current ego position are considered for collision checking.                                                            | 50.0          |
+| `parameters.time_tolerance_threshold`                | double | Time tolerance threshold [s] for collision detection between ego and object trajectories. Collision check is performed only when the time difference between ego and object predicted positions is within this threshold to detect temporal-spatial intersections. | 0.1           |

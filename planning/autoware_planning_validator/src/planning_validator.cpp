@@ -87,6 +87,11 @@ void PlanningValidator::setupParameters()
       declare_parameter<double>(ps + "forward_trajectory_length_acceleration");
     p.forward_trajectory_length_margin =
       declare_parameter<double>(ps + "forward_trajectory_length_margin");
+    p.trajectory_to_object_distance_threshold =
+      declare_parameter<double>(ps + "trajectory_to_object_distance_threshold");
+    p.ego_to_object_distance_threshold =
+      declare_parameter<double>(ps + "ego_to_object_distance_threshold");
+    p.time_tolerance_threshold = declare_parameter<double>(ps + "time_tolerance_threshold");
   }
 
   try {
@@ -169,6 +174,9 @@ void PlanningValidator::setupDiag()
       stat, validation_status_.is_valid_forward_trajectory_length,
       "trajectory length is too short");
   });
+  d->add(ns + "trajectory_collision", [&](auto & stat) {
+    setStatus(stat, validation_status_.is_valid_no_collision, "collision is detected");
+  });
 }
 
 bool PlanningValidator::isDataReady()
@@ -180,6 +188,9 @@ bool PlanningValidator::isDataReady()
 
   if (!current_kinematics_) {
     return waiting("current_kinematics_");
+  }
+  if (!current_objects_) {
+    return waiting("current_objects_");
   }
   if (!current_trajectory_) {
     return waiting("current_trajectory_");
@@ -195,6 +206,7 @@ void PlanningValidator::onTrajectory(const Trajectory::ConstSharedPtr msg)
 
   // receive data
   current_kinematics_ = sub_kinematics_.takeData();
+  current_objects_ = sub_obj_.takeData();
 
   if (!isDataReady()) return;
 
@@ -320,6 +332,7 @@ void PlanningValidator::validate(const Trajectory & trajectory)
   s.is_valid_lateral_acc = checkValidLateralAcceleration(resampled);
   s.is_valid_steering = checkValidSteering(resampled);
   s.is_valid_steering_rate = checkValidSteeringRate(resampled);
+  s.is_valid_no_collision = checkValidTrajectoryCollision(resampled);
 
   s.invalid_count = isAllValid(s) ? 0 : s.invalid_count + 1;
 }
@@ -545,8 +558,36 @@ bool PlanningValidator::checkValidForwardTrajectoryLength(const Trajectory & tra
   return forward_length > forward_length_required;
 }
 
+bool PlanningValidator::checkValidTrajectoryCollision(const Trajectory & trajectory)
+{
+  const auto ego_speed = std::abs(current_kinematics_->twist.twist.linear.x);
+  if (ego_speed < 1.0 / 3.6) {
+    return true;  // Ego is almost stopped.
+  }
+
+  const auto & collided_points = check_collision(
+    *current_objects_, trajectory, current_kinematics_->pose.pose.position, vehicle_info_,
+    validation_params_.trajectory_to_object_distance_threshold,
+    validation_params_.ego_to_object_distance_threshold,
+    validation_params_.time_tolerance_threshold);
+
+  if (collided_points) {
+    for (const auto & p : *collided_points) {
+      debug_pose_publisher_->pushPoseMarker(p.pose, "collision", 0);
+      debug_pose_publisher_->pushFootprintMarker(p.pose, vehicle_info_, "collision");
+    }
+  }
+  return !collided_points;
+}
+
 bool PlanningValidator::isAllValid(const PlanningValidatorStatus & s) const
 {
+  // TODO(Sugahara): Add s.is_valid_no_collision after verifying that:
+  // 1. The value of is_valid_no_collision correctly identifies path problems
+  // 2. Adding this check won't incorrectly invalidate otherwise valid paths
+  //
+  // want to avoid false negatives where good paths are marked invalid just because
+  // isAllValid becomes false
   return s.is_valid_size && s.is_valid_finite_value && s.is_valid_interval &&
          s.is_valid_relative_angle && s.is_valid_curvature && s.is_valid_lateral_acc &&
          s.is_valid_longitudinal_max_acc && s.is_valid_longitudinal_min_acc &&
@@ -583,6 +624,10 @@ void PlanningValidator::displayStatus()
     s.is_valid_longitudinal_distance_deviation,
     "planning trajectory is too far from ego in longitudinal direction!!");
   warn(s.is_valid_forward_trajectory_length, "planning trajectory forward length is not enough!!");
+  // warn(
+  //   s.is_valid_no_collision,
+  //   "planning trajectory has collision!! but this validation is not utilized for trajectory "
+  //   "validation.");
 }
 
 }  // namespace autoware::planning_validator
