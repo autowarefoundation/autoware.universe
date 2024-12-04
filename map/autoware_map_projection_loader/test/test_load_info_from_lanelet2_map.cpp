@@ -20,6 +20,8 @@
 #include <gmock/gmock.h>
 
 #include <fstream>
+#include <iostream>
+#include <string>
 
 void save_dummy_mgrs_lanelet2_map(const std::string & mgrs_coord, const std::string & output_path)
 {
