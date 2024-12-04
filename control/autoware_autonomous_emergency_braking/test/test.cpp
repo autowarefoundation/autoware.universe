@@ -31,6 +31,7 @@
 #include <limits>
 #include <memory>
 #include <thread>
+#include <vector>
 
 namespace autoware::motion::control::autonomous_emergency_braking::test
 {
