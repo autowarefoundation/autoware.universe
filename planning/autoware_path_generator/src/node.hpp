@@ -17,6 +17,7 @@
 
 #include "autoware/path_generator/common_structs.hpp"
 
+#include <autoware/trajectory/path_point_with_lane_id.hpp>
 #include <autoware/universe_utils/ros/polling_subscriber.hpp>
 #include <path_generator_parameters.hpp>
 
@@ -34,6 +35,7 @@ using nav_msgs::msg::Odometry;
 using ::path_generator::Params;
 using tier4_planning_msgs::msg::PathPointWithLaneId;
 using tier4_planning_msgs::msg::PathWithLaneId;
+using Trajectory = autoware::trajectory::Trajectory<PathPointWithLaneId>;
 
 class PathGenerator : public rclcpp::Node
 {
@@ -83,15 +85,11 @@ private:
     const geometry_msgs::msg::Pose & current_pose, const Params & params) const;
 
   std::optional<PathWithLaneId> generate_path(
-    const lanelet::LaneletSequence & lanelet_sequence,
-    const geometry_msgs::msg::Pose & current_pose, const Params & params) const;
-
-  std::optional<PathWithLaneId> generate_path(
-    const lanelet::LaneletSequence & lanelet_sequence, const double s_start, const double s_end,
+    const lanelet::ConstLanelets & lanelets, const geometry_msgs::msg::Pose & current_pose,
     const Params & params) const;
 
-  std::vector<PathPointWithLaneId> generate_path_points(
-    const lanelet::LaneletSequence & lanelet_sequence, const double s_start, const double s_end,
+  std::optional<PathWithLaneId> generate_path(
+    const lanelet::ConstLanelets & lanelets, const double s_start, const double s_end,
     const Params & params) const;
 };
 }  // namespace autoware::path_generator
