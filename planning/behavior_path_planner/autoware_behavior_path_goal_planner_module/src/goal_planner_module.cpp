@@ -98,7 +98,10 @@ GoalPlannerModule::GoalPlannerModule(
   }
 
   if (pull_over_planners_.empty()) {
-    RCLCPP_ERROR(getLogger(), "Not found enabled planner");
+    RCLCPP_WARN(
+      getLogger(),
+      "No enabled planner found. The vehicle will stop in the road lane without pull over. Please "
+      "check the parameters if this is the intended behavior.");
   }
 
   // set selected goal searcher
@@ -291,8 +294,8 @@ void GoalPlannerModule::onTimer()
     !local_planner_data || !current_status_opt || !previous_module_output_opt ||
     !last_previous_module_output_opt || !occupancy_grid_map || !parameters_opt ||
     !goal_candidates_opt) {
-    RCLCPP_ERROR(
-      getLogger(),
+    RCLCPP_INFO_THROTTLE(
+      getLogger(), *clock_, 5000,
       "failed to get valid "
       "local_planner_data/current_status/previous_module_output/occupancy_grid_map/parameters_opt "
       "in onTimer");
@@ -457,8 +460,8 @@ void GoalPlannerModule::onFreespaceParkingTimer()
   if (
     !local_planner_data || !current_status_opt || !occupancy_grid_map || !parameters_opt ||
     !vehicle_footprint_opt || !goal_candidates_opt) {
-    RCLCPP_ERROR(
-      getLogger(),
+    RCLCPP_WARN_THROTTLE(
+      getLogger(), *clock_, 5000,
       "failed to get valid planner_data/current_status/parameters in "
       "onFreespaceParkingTimer");
     return;
@@ -796,7 +799,9 @@ bool GoalPlannerModule::isExecutionReady() const
   // path_decision_controller.get_current_state() is valid
   if (parameters_->safety_check_params.enable_safety_check && isWaitingApproval()) {
     if (!path_decision_controller_.get_current_state().is_stable_safe) {
-      RCLCPP_ERROR_THROTTLE(getLogger(), *clock_, 5000, "Path is not safe against dynamic objects");
+      RCLCPP_INFO_THROTTLE(
+        getLogger(), *clock_, 5000,
+        "Path is not safe against dynamic objects, so the candidate path is not approved.");
       return false;
     }
   }
@@ -940,7 +945,8 @@ BehaviorModuleOutput GoalPlannerModule::plan()
 
   if (utils::isAllowedGoalModification(planner_data_->route_handler)) {
     if (!context_data_) {
-      RCLCPP_ERROR(getLogger(), " [pull_over] plan() is called without valid context_data");
+      RCLCPP_WARN_THROTTLE(
+        getLogger(), *clock_, 5000, " [pull_over] plan() is called without valid context_data");
     } else {
       const auto & context_data = context_data_.value();
       return planPullOver(context_data);
@@ -1225,7 +1231,7 @@ void GoalPlannerModule::setOutput(
   if (!context_data.pull_over_path_opt) {
     // situation : not safe against static objects use stop_path
     output.path = generateStopPath(context_data);
-    RCLCPP_WARN_THROTTLE(
+    RCLCPP_INFO_THROTTLE(
       getLogger(), *clock_, 5000, "Not found safe pull_over path, generate stop path");
     setDrivableAreaInfo(context_data, output);
     return;
@@ -1239,7 +1245,7 @@ void GoalPlannerModule::setOutput(
     // insert stop point in current path if ego is able to stop with acceleration and jerk
     // constraints
     output.path = generateFeasibleStopPath(pull_over_path.getCurrentPath());
-    RCLCPP_WARN_THROTTLE(
+    RCLCPP_INFO_THROTTLE(
       getLogger(), *clock_, 5000, "Not safe against dynamic objects, generate stop path");
     debug_stop_pose_with_info_.set(std::string("feasible stop after approval"));
   } else {
@@ -1501,7 +1507,9 @@ void GoalPlannerModule::postProcess()
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   if (!context_data_) {
-    RCLCPP_ERROR(getLogger(), " [pull_over] postProcess() is called without valid context_data");
+    RCLCPP_WARN_THROTTLE(
+      getLogger(), *clock_, 5000,
+      " [pull_over] postProcess() is called without valid context_data. use dummy context data.");
   }
   const auto context_data_dummy =
     PullOverContextData(true, PredictedObjects{}, PredictedObjects{}, std::nullopt, {}, {});
@@ -1539,8 +1547,10 @@ BehaviorModuleOutput GoalPlannerModule::planWaitingApproval()
 
   if (utils::isAllowedGoalModification(planner_data_->route_handler)) {
     if (!context_data_) {
-      RCLCPP_ERROR(
-        getLogger(), " [pull_over] planWaitingApproval() is called without valid context_data");
+      RCLCPP_WARN_THROTTLE(
+        getLogger(), *clock_, 5000,
+        " [pull_over] planWaitingApproval() is called without valid context_data. use fixed goal "
+        "planner");
     } else {
       const auto & context_data = context_data_.value();
       return planPullOverAsCandidate(context_data);
