@@ -35,6 +35,10 @@ cuda_add_library(${PROJECT_NAME}_cuda SHARED
   lib/utils/utils_kernel.cu
 )
 
+target_link_libraries(${PROJECT_NAME}_cuda
+  ${CUDA_LIBRARIES}
+)
+
 ament_auto_add_library(${PROJECT_NAME}_common SHARED
   lib/costmap_2d/occupancy_grid_map_base.cpp
   lib/updater/binary_bayes_filter_updater.cpp
@@ -127,6 +131,7 @@ if(BUILD_TESTING)
     lib/fusion_policy/fusion_policy.cpp
   )
   target_link_libraries(test_utils
+    ${CUDA_LIBRARIES}
     ${PCL_LIBRARIES}
     ${PROJECT_NAME}_common
     ${PROJECT_NAME}_cuda
