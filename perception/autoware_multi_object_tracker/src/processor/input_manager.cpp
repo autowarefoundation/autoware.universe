@@ -17,6 +17,8 @@
 #include <autoware/multi_object_tracker/uncertainty/uncertainty_processor.hpp>
 
 #include <cassert>
+#include <utility>
+#include <vector>
 
 namespace autoware::multi_object_tracker
 {

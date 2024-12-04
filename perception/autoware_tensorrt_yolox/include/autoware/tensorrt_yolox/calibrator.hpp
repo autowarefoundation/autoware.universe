@@ -48,7 +48,9 @@
 #include <assert.h>
 
 #include <algorithm>
+#include <cstdio>
 #include <fstream>
+#include <iostream>
 #include <iterator>
 #include <string>
 #include <vector>

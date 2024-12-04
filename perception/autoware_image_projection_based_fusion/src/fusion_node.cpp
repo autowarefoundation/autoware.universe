@@ -24,6 +24,9 @@
 #include <boost/optional.hpp>
 
 #include <cmath>
+#include <list>
+#include <memory>
+#include <string>
 
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>

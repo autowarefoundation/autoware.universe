@@ -26,6 +26,7 @@
 #include <memory>
 #include <random>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace autoware::lidar_transfusion

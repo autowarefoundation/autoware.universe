@@ -30,6 +30,10 @@
 #include <lanelet2_core/geometry/LaneletMap.h>
 #include <lanelet2_core/geometry/Polygon.h>
 
+#include <memory>
+#include <utility>
+#include <vector>
+
 namespace autoware::detected_object_validation
 {
 namespace lanelet_filter
