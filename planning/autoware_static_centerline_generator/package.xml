@@ -36,7 +36,6 @@
   <depend>geometry_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
-  <depend>tier4_map_msgs</depend>
 
   <exec_depend>python3-flask-cors</exec_depend>
   <exec_depend>rosidl_default_runtime</exec_depend>

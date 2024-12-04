@@ -326,6 +326,10 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::planCruise(
       // cruise obstacle
       debug_data_ptr_->obstacles_to_cruise.push_back(cruise_obstacle_info->obstacle);
       debug_data_ptr_->cruise_metrics = makeMetrics("PIDBasedPlanner", "cruise", planner_data);
+
+      velocity_factors_pub_->publish(obstacle_cruise_utils::makeVelocityFactorArray(
+        planner_data.current_time, PlanningBehavior::ADAPTIVE_CRUISE,
+        stop_traj_points.at(wall_idx).pose));
     }
 
     // do cruise planning

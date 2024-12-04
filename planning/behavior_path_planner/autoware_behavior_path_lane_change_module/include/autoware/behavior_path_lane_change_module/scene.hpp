@@ -121,15 +121,12 @@ protected:
   TurnSignalInfo get_terminal_turn_signal_info() const final;
 
   lane_change::TargetObjects get_target_objects(
-    const FilteredByLanesExtendedObjects & filtered_objects,
+    const FilteredLanesObjects & filtered_objects,
     const lanelet::ConstLanelets & current_lanes) const;
 
-  FilteredByLanesExtendedObjects filterObjects() const;
+  FilteredLanesObjects filter_objects() const;
 
   void filterOncomingObjects(PredictedObjects & objects) const;
-
-  FilteredByLanesObjects filterObjectsByLanelets(
-    const PredictedObjects & objects, const PathWithLaneId & current_lanes_ref_path) const;
 
   bool get_prepare_segment(
     PathWithLaneId & prepare_segment, const double prepare_length) const override;

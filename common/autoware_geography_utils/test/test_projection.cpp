@@ -34,10 +34,10 @@ TEST(GeographyUtilsProjection, ProjectForwardToMGRS)
   local_point.z = 10.0;
 
   // projector info
-  tier4_map_msgs::msg::MapProjectorInfo projector_info;
-  projector_info.projector_type = tier4_map_msgs::msg::MapProjectorInfo::MGRS;
+  autoware_map_msgs::msg::MapProjectorInfo projector_info;
+  projector_info.projector_type = autoware_map_msgs::msg::MapProjectorInfo::MGRS;
   projector_info.mgrs_grid = "54SUE";
-  projector_info.vertical_datum = tier4_map_msgs::msg::MapProjectorInfo::WGS84;
+  projector_info.vertical_datum = autoware_map_msgs::msg::MapProjectorInfo::WGS84;
 
   // conversion
   const geometry_msgs::msg::Point converted_point =
@@ -63,10 +63,10 @@ TEST(GeographyUtilsProjection, ProjectReverseFromMGRS)
   geo_point.altitude = 10.0;
 
   // projector info
-  tier4_map_msgs::msg::MapProjectorInfo projector_info;
-  projector_info.projector_type = tier4_map_msgs::msg::MapProjectorInfo::MGRS;
+  autoware_map_msgs::msg::MapProjectorInfo projector_info;
+  projector_info.projector_type = autoware_map_msgs::msg::MapProjectorInfo::MGRS;
   projector_info.mgrs_grid = "54SUE";
-  projector_info.vertical_datum = tier4_map_msgs::msg::MapProjectorInfo::WGS84;
+  projector_info.vertical_datum = autoware_map_msgs::msg::MapProjectorInfo::WGS84;
 
   // conversion
   const geographic_msgs::msg::GeoPoint converted_point =
@@ -86,10 +86,10 @@ TEST(GeographyUtilsProjection, ProjectForwardAndReverseMGRS)
   geo_point.altitude = 10.0;
 
   // projector info
-  tier4_map_msgs::msg::MapProjectorInfo projector_info;
-  projector_info.projector_type = tier4_map_msgs::msg::MapProjectorInfo::MGRS;
+  autoware_map_msgs::msg::MapProjectorInfo projector_info;
+  projector_info.projector_type = autoware_map_msgs::msg::MapProjectorInfo::MGRS;
   projector_info.mgrs_grid = "54SUE";
-  projector_info.vertical_datum = tier4_map_msgs::msg::MapProjectorInfo::WGS84;
+  projector_info.vertical_datum = autoware_map_msgs::msg::MapProjectorInfo::WGS84;
 
   // conversion
   const geometry_msgs::msg::Point converted_local_point =
@@ -117,9 +117,9 @@ TEST(GeographyUtilsProjection, ProjectForwardToLocalCartesianUTMOrigin)
   local_point.z = 20.0;
 
   // projector info
-  tier4_map_msgs::msg::MapProjectorInfo projector_info;
-  projector_info.projector_type = tier4_map_msgs::msg::MapProjectorInfo::LOCAL_CARTESIAN_UTM;
-  projector_info.vertical_datum = tier4_map_msgs::msg::MapProjectorInfo::WGS84;
+  autoware_map_msgs::msg::MapProjectorInfo projector_info;
+  projector_info.projector_type = autoware_map_msgs::msg::MapProjectorInfo::LOCAL_CARTESIAN_UTM;
+  projector_info.vertical_datum = autoware_map_msgs::msg::MapProjectorInfo::WGS84;
   projector_info.map_origin.latitude = 35.62426;
   projector_info.map_origin.longitude = 139.74252;
   projector_info.map_origin.altitude = -10.0;
@@ -142,9 +142,9 @@ TEST(GeographyUtilsProjection, ProjectForwardAndReverseLocalCartesianUTMOrigin)
   geo_point.altitude = 10.0;
 
   // projector info
-  tier4_map_msgs::msg::MapProjectorInfo projector_info;
-  projector_info.projector_type = tier4_map_msgs::msg::MapProjectorInfo::LOCAL_CARTESIAN_UTM;
-  projector_info.vertical_datum = tier4_map_msgs::msg::MapProjectorInfo::WGS84;
+  autoware_map_msgs::msg::MapProjectorInfo projector_info;
+  projector_info.projector_type = autoware_map_msgs::msg::MapProjectorInfo::LOCAL_CARTESIAN_UTM;
+  projector_info.vertical_datum = autoware_map_msgs::msg::MapProjectorInfo::WGS84;
   projector_info.map_origin.latitude = 35.0;
   projector_info.map_origin.longitude = 139.0;
   projector_info.map_origin.altitude = 0.0;

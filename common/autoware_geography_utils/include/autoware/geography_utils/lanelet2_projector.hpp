@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__GEOGRAPHY_UTILS__LANELET2_PROJECTOR_HPP_
 #define AUTOWARE__GEOGRAPHY_UTILS__LANELET2_PROJECTOR_HPP_
 
-#include <tier4_map_msgs/msg/map_projector_info.hpp>
+#include <autoware_map_msgs/msg/map_projector_info.hpp>
 
 #include <lanelet2_io/Projection.h>
 
@@ -23,7 +23,7 @@
 
 namespace autoware::geography_utils
 {
-using MapProjectorInfo = tier4_map_msgs::msg::MapProjectorInfo;
+using MapProjectorInfo = autoware_map_msgs::msg::MapProjectorInfo;
 
 std::unique_ptr<lanelet::Projector> get_lanelet2_projector(const MapProjectorInfo & projector_info);
 
