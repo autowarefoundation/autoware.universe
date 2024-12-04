@@ -70,8 +70,7 @@ SpeedBumpModule::SpeedBumpModule(
   }
 }
 
-bool SpeedBumpModule::modifyPathVelocity(
-  PathWithLaneId * path, [[maybe_unused]] StopReason * stop_reason)
+bool SpeedBumpModule::modifyPathVelocity(PathWithLaneId * path)
 {
   if (path->points.empty()) {
     return false;
