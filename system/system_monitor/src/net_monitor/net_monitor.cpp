@@ -56,8 +56,8 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
   udp_buf_errors_check_duration_(declare_parameter<int>("udp_buf_errors_check_duration", 1)),
   udp_buf_errors_check_count_(declare_parameter<int>("udp_buf_errors_check_count", 1)),
   last_udp_rcvbuf_errors_(0),
-  udp_rcvbuf_errors_index_(0, 0),
   last_udp_sndbuf_errors_(0),
+  udp_rcvbuf_errors_index_(0, 0),
   udp_sndbuf_errors_index_(0, 0)
 {
   if (monitor_program_.empty()) {
@@ -610,7 +610,7 @@ NetSnmpIndex NetMonitor::get_index_for_net_snmp(
   const std::string & protocol_name, const std::string & metrics_name)
 {
   NetSnmpIndex index(0, 0);
-  const NetSnmpIndex error_index(-1, -1);
+  const NetSnmpIndex error_index(0, 0);
   // /proc/net/snmp
   // Ip: Forwarding DefaultTTL InReceives ... ReasmTimeout ReasmReqds ReasmOKs ReasmFails ...
   // Ip: 2          64         5636471397 ... 135          2303339    216166   270        ..
@@ -648,7 +648,7 @@ NetSnmpIndex NetMonitor::get_index_for_net_snmp(
 
 bool NetMonitor::get_value_from_net_snmp(const NetSnmpIndex & index, uint64_t & output_value)
 {
-  if (index.first < 0 || index.second < 0) {
+  if (index.first == 0 && index.second == 0) {
     RCLCPP_WARN(get_logger(), "index is invalid. : %d, %d", index.first, index.second);
     return 0;
   }
@@ -661,7 +661,7 @@ bool NetMonitor::get_value_from_net_snmp(const NetSnmpIndex & index, uint64_t & 
 
   std::string target_line;
   std::string line;
-  for (int32_t row_index = 0; std::getline(ifs, line); ++row_index) {
+  for (unsigned int row_index = 0; std::getline(ifs, line); ++row_index) {
     if (row_index == index.first) {
       target_line = line;
       break;
@@ -678,14 +678,14 @@ bool NetMonitor::get_value_from_net_snmp(const NetSnmpIndex & index, uint64_t & 
   if (index.second >= value_list.size()) {
     RCLCPP_WARN(
       get_logger(),
-      "There are not enough columns for the column index. : column size=%d index=%d, %d",
-      static_cast<int>(value_list.size()), index.first, index.second);
+      "There are not enough columns for the column index. : column size=%lu index=%u, %u",
+      value_list.size(), index.first, index.second);
     return false;
   }
 
   std::string value_str = value_list[index.second];
   if (value_str.empty()) {
-    RCLCPP_WARN(get_logger(), "The value is empty. : index=%d, %d", index.first, index.second);
+    RCLCPP_WARN(get_logger(), "The value is empty. : index=%u, %u", index.first, index.second);
     return false;
   }
 

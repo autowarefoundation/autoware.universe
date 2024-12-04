@@ -85,7 +85,7 @@ struct CrcErrors
 /**
  * @brief Row/Column of `/proc/net/snmp`
  */
-typedef std::pair<int, int> NetSnmpIndex;
+typedef std::pair<unsigned int, unsigned int> NetSnmpIndex;
 
 namespace local = boost::asio::local;
 
