@@ -14,6 +14,10 @@
 
 #include "voxel_grid_map_loader.hpp"
 
+#include <memory>
+#include <string>
+#include <vector>
+
 namespace autoware::compare_map_segmentation
 {
 VoxelGridMapLoader::VoxelGridMapLoader(

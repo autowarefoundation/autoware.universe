@@ -14,6 +14,8 @@
 
 #include <autoware/pyplot/common.hpp>
 
+#include <utility>
+
 namespace autoware::pyplot
 {
 inline namespace common

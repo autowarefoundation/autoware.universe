@@ -12,16 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "glog_component/glog_component.hpp"
+#ifndef AUTOWARE__GLOG_COMPONENT__GLOG_COMPONENT_HPP_
+#define AUTOWARE__GLOG_COMPONENT__GLOG_COMPONENT_HPP_
 
-GlogComponent::GlogComponent(const rclcpp::NodeOptions & node_options)
-: Node("glog_component", node_options)
+#include <rclcpp/rclcpp.hpp>
+
+#include <glog/logging.h>
+
+namespace autoware::glog_component
 {
-  if (!google::IsGoogleLoggingInitialized()) {
-    google::InitGoogleLogging("glog_component");
-    google::InstallFailureSignalHandler();
-  }
-}
 
-#include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(GlogComponent)
+class GlogComponent : public rclcpp::Node
+{
+public:
+  explicit GlogComponent(const rclcpp::NodeOptions & node_options);
+};
+
+}  // namespace autoware::glog_component
+
+#endif  // AUTOWARE__GLOG_COMPONENT__GLOG_COMPONENT_HPP_

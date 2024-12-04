@@ -39,8 +39,12 @@
 #include "byte_tracker.h"
 #include "lapjv.h"
 
+#include <algorithm>
 #include <cstddef>
+#include <iostream>
 #include <limits>
+#include <map>
+#include <vector>
 
 std::vector<STrack *> ByteTracker::joint_stracks(
   std::vector<STrack *> & tlista, std::vector<STrack> & tlistb)

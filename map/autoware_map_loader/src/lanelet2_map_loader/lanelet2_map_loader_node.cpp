@@ -49,6 +49,7 @@
 #include <lanelet2_io/Io.h>
 #include <lanelet2_projection/UTM.h>
 
+#include <memory>
 #include <stdexcept>
 #include <string>
 

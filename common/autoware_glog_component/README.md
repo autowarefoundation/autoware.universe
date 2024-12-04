@@ -10,8 +10,8 @@ When you load the `glog_component` in container, the launch file can be like bel
 
 ```py
 glog_component = ComposableNode(
-    package="glog_component",
-    plugin="GlogComponent",
+    package="autoware_glog_component",
+    plugin="autoware::glog_component::GlogComponent",
     name="glog_component",
 )
 

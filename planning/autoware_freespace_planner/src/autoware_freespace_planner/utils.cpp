@@ -16,6 +16,9 @@
 
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 
+#include <deque>
+#include <vector>
+
 namespace autoware::freespace_planner::utils
 {
 

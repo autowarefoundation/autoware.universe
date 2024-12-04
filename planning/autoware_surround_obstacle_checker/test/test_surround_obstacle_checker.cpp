@@ -20,6 +20,9 @@
 
 #include <gtest/gtest.h>
 
+#include <memory>
+#include <utility>
+
 namespace autoware::surround_obstacle_checker
 {
 auto generateTestTargetNode() -> std::shared_ptr<SurroundObstacleCheckerNode>

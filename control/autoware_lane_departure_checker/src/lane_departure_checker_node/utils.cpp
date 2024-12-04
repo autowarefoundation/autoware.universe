@@ -19,6 +19,8 @@
 
 #include <boost/geometry.hpp>
 
+#include <vector>
+
 namespace
 {
 struct FootprintMargin

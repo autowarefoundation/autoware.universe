@@ -24,6 +24,7 @@
 #include <autoware/motion_utils/distance/distance.hpp>
 #include <rviz_common/display_context.hpp>
 
+#include <algorithm>
 #include <memory>
 #include <string>
 

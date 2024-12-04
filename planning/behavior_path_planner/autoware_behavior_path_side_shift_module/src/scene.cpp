@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 namespace autoware::behavior_path_planner
 {
