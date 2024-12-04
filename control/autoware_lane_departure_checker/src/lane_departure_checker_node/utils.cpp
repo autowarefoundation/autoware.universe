@@ -14,6 +14,7 @@
 
 #include "autoware/lane_departure_checker/utils.hpp"
 
+#include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 
 #include <boost/geometry.hpp>
@@ -160,5 +161,26 @@ std::vector<LinearRing2d> createVehicleFootprints(
   }
 
   return vehicle_footprints;
+}
+
+PoseDeviation calcTrajectoryDeviation(
+  const Trajectory & trajectory, const geometry_msgs::msg::Pose & pose, const double dist_threshold,
+  const double yaw_threshold)
+{
+  const auto nearest_idx = autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
+    trajectory.points, pose, dist_threshold, yaw_threshold);
+  return autoware::universe_utils::calcPoseDeviation(trajectory.points.at(nearest_idx).pose, pose);
+}
+
+double calcMaxSearchLengthForBoundaries(
+  const Trajectory & trajectory, const autoware::vehicle_info_utils::VehicleInfo & vehicle_info)
+{
+  const double max_ego_lon_length = std::max(
+    std::abs(vehicle_info.max_longitudinal_offset_m),
+    std::abs(vehicle_info.min_longitudinal_offset_m));
+  const double max_ego_lat_length = std::max(
+    std::abs(vehicle_info.max_lateral_offset_m), std::abs(vehicle_info.min_lateral_offset_m));
+  const double max_ego_search_length = std::hypot(max_ego_lon_length, max_ego_lat_length);
+  return autoware::motion_utils::calcArcLength(trajectory.points) + max_ego_search_length;
 }
 }  // namespace autoware::lane_departure_checker::utils
