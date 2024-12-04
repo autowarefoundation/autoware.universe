@@ -49,10 +49,35 @@ protected:
     return boost::geometry::within(point, hull) || boost::geometry::covered_by(point, hull);
   }
 
+  /**
+   * @brief Validates that all points in the given footprints are contained within the hull
+   *
+   * For each footprint in the input vector, checks whether all its points (except the last one
+   * which is identical to the first point in a LinearRing2d) are contained within the given hull.
+   * This validation ensures the correctness of the convex hull generation for vehicle passing
+   * areas.
+   *
+   * @param footprints Vector of LinearRing2d representing vehicle footprints to validate
+   *                   Must not be empty and must not contain empty LinearRing2d
+   * @param hull LinearRing2d representing the convex hull that should contain all footprints
+   * @note The last point of each footprint is not checked as LinearRing2d is a closed ring
+   *       where the last point is identical to the first point
+   * @pre footprints must not be empty
+   * @pre each LinearRing2d in footprints must not be empty, as it represents a closed ring
+   */
   void validateFootprintsInHull(
     const std::vector<LinearRing2d> & footprints, const LinearRing2d & hull)
   {
     for (const auto & footprint : footprints) {
+      // An empty footprint would be invalid and should fail the test
+      EXPECT_FALSE(footprint.empty()) << "Footprint must not be empty";
+      if (footprint.empty()) {
+        continue;
+      }
+
+      // Iterate up to size()-1 since LinearRing2d is a closed ring where
+      // the last point is the same as the first point, so we don't need
+      // to check it again
       for (size_t i = 0; i < footprint.size() - 1; ++i) {
         const auto & point = footprint[i];
         EXPECT_TRUE(isPointInsideHull(point, hull))
