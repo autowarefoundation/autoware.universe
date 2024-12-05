@@ -23,6 +23,8 @@
 
 #include <gtest/gtest.h>
 
+#include <memory>
+
 TEST(smoothPath, nominal)
 {
   using autoware::behavior_velocity_planner::smoothPath;

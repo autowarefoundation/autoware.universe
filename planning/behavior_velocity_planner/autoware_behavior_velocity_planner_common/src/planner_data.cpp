@@ -16,6 +16,8 @@
 
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 
+#include <vector>
+
 namespace autoware::behavior_velocity_planner
 {
 PlannerData::PlannerData(rclcpp::Node & node)
