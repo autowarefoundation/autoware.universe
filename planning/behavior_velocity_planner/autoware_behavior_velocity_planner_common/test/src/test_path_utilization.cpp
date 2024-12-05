@@ -176,3 +176,70 @@ TEST(specialInterpolation, specialInterpolation)
     EXPECT_DOUBLE_EQ(calcInterpolatedStopDist(px, vx), expected);
   }
 }
+
+TEST(filterLitterPathPoint, nominal)
+{
+  using autoware::behavior_velocity_planner::filterLitterPathPoint;
+  using autoware_planning_msgs::msg::Path;
+  using autoware_planning_msgs::msg::PathPoint;
+
+  const auto genPath = [](const std::vector<double> & px, const std::vector<double> & vx) {
+    Path path;
+    for (size_t i = 0; i < px.size(); ++i) {
+      PathPoint point;
+      point.pose.position.x = px[i];
+      point.pose.position.y = 0.0;
+      point.longitudinal_velocity_mps = static_cast<float>(vx[i]);
+      path.points.push_back(point);
+    }
+    return path;
+  };
+
+  const std::vector<double> px{0.0, 1.0, 1.001, 2.0, 3.0};
+  const std::vector<double> vx{5.0, 3.5, 3.5, 3.0, 2.5};
+
+  const auto path = genPath(px, vx);
+  const auto filtered_path = filterLitterPathPoint(path);
+
+  ASSERT_EQ(filtered_path.points.size(), 4U);  // Expected: Points at x = {0.0, 1.0, 2.0, 3.0}
+  EXPECT_DOUBLE_EQ(filtered_path.points[0].pose.position.x, 0.0);
+  EXPECT_DOUBLE_EQ(filtered_path.points[1].pose.position.x, 1.0);
+  EXPECT_DOUBLE_EQ(filtered_path.points[2].pose.position.x, 2.0);
+  EXPECT_DOUBLE_EQ(filtered_path.points[3].pose.position.x, 3.0);
+
+  EXPECT_DOUBLE_EQ(filtered_path.points[0].longitudinal_velocity_mps, 5.0);
+  EXPECT_DOUBLE_EQ(filtered_path.points[1].longitudinal_velocity_mps, 3.5);
+  EXPECT_DOUBLE_EQ(filtered_path.points[2].longitudinal_velocity_mps, 3.0);
+  EXPECT_DOUBLE_EQ(filtered_path.points[3].longitudinal_velocity_mps, 2.5);
+}
+
+TEST(filterStopPathPoint, nominal)
+{
+  using autoware::behavior_velocity_planner::filterStopPathPoint;
+  using autoware_planning_msgs::msg::Path;
+  using autoware_planning_msgs::msg::PathPoint;
+
+  const auto genPath = [](const std::vector<double> & px, const std::vector<double> & vx) {
+    Path path;
+    for (size_t i = 0; i < px.size(); ++i) {
+      PathPoint point;
+      point.pose.position.x = px[i];
+      point.longitudinal_velocity_mps = static_cast<float>(vx[i]);
+      path.points.push_back(point);
+    }
+    return path;
+  };
+
+  const std::vector<double> px{0.0, 1.0, 2.0, 3.0, 4.0};
+  const std::vector<double> vx{5.0, 4.0, 0.0, 2.0, 3.0};
+
+  const auto path = genPath(px, vx);
+  const auto filtered_path = filterStopPathPoint(path);
+
+  ASSERT_EQ(filtered_path.points.size(), 5U);
+  EXPECT_DOUBLE_EQ(filtered_path.points[0].longitudinal_velocity_mps, 5.0);
+  EXPECT_DOUBLE_EQ(filtered_path.points[1].longitudinal_velocity_mps, 4.0);
+  EXPECT_DOUBLE_EQ(filtered_path.points[2].longitudinal_velocity_mps, 0.0);
+  EXPECT_DOUBLE_EQ(filtered_path.points[3].longitudinal_velocity_mps, 0.0);
+  EXPECT_DOUBLE_EQ(filtered_path.points[4].longitudinal_velocity_mps, 0.0);
+}
