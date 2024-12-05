@@ -25,7 +25,9 @@
 
 #include <gtest/gtest.h>
 
+#include <limits>
 #include <memory>
+#include <string>
 
 using autoware::behavior_path_planner::FilteredLanesObjects;
 using autoware::behavior_path_planner::LaneChangeModuleManager;
@@ -126,7 +128,11 @@ public:
     auto route_handler_ptr = std::make_shared<RouteHandler>(map_bin_msg);
     const auto rh_test_route =
       get_absolute_path_to_route(autoware_route_handler_dir, lane_change_right_test_route_filename);
-    route_handler_ptr->setRoute(autoware::test_utils::parse<LaneletRoute>(rh_test_route));
+    if (
+      const auto route_opt =
+        autoware::test_utils::parse<std::optional<LaneletRoute>>(rh_test_route)) {
+      route_handler_ptr->setRoute(*route_opt);
+    }
 
     return route_handler_ptr;
   }
@@ -217,7 +223,7 @@ TEST_F(TestNormalLaneChange, testGetPathWhenInvalid)
   constexpr auto is_approved = true;
   normal_lane_change_->update_lanes(!is_approved);
   normal_lane_change_->update_filtered_objects();
-  normal_lane_change_->update_transient_data();
+  normal_lane_change_->update_transient_data(!is_approved);
   normal_lane_change_->updateLaneChangeStatus();
   const auto & lc_status = normal_lane_change_->getLaneChangeStatus();
 
@@ -255,7 +261,7 @@ TEST_F(TestNormalLaneChange, testGetPathWhenValid)
   set_previous_approved_path();
   normal_lane_change_->update_lanes(!is_approved);
   normal_lane_change_->update_filtered_objects();
-  normal_lane_change_->update_transient_data();
+  normal_lane_change_->update_transient_data(!is_approved);
   const auto lane_change_required = normal_lane_change_->isLaneChangeRequired();
 
   ASSERT_TRUE(lane_change_required);

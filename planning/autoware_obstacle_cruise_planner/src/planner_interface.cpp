@@ -25,8 +25,12 @@
 #include <boost/geometry/algorithms/distance.hpp>
 #include <boost/geometry/strategies/strategies.hpp>
 
+#include <algorithm>
+#include <iostream>
 #include <optional>
 #include <string>
+#include <utility>
+#include <vector>
 
 namespace
 {

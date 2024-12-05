@@ -22,6 +22,7 @@
 #include <gtest/gtest.h>
 
 #include <iostream>
+#include <vector>
 
 #define DEBUG_PRINT_PATH(path)                                                        \
   {                                                                                   \

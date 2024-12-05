@@ -23,6 +23,11 @@
 
 #include "tier4_planning_msgs/msg/velocity_limit.hpp"
 
+#include <algorithm>
+#include <memory>
+#include <string>
+#include <vector>
+
 using autoware::signal_processing::LowpassFilter1d;
 
 namespace
