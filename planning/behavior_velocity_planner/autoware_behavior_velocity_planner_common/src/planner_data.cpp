@@ -14,6 +14,8 @@
 
 #include "autoware/behavior_velocity_planner_common/planner_data.hpp"
 
+#include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
+
 namespace autoware::behavior_velocity_planner
 {
 PlannerData::PlannerData(rclcpp::Node & node)
@@ -24,9 +26,6 @@ PlannerData::PlannerData(rclcpp::Node & node)
   max_stop_jerk_threshold = node.declare_parameter<double>("max_jerk");
   system_delay = node.declare_parameter<double>("system_delay");
   delay_response_time = node.declare_parameter<double>("delay_response_time");
-  // ego_nearest_dist_threshold = node.declare_parameter<double>("ego_nearest_dist_threshold");
-  // ego_nearest_yaw_threshold = node.declare_parameter<double>("ego_nearest_yaw_threshold");
-  // stop_line_extend_length = node.declare_parameter<double>("stop_line_extend_length");
 }
 
 bool PlannerData::isVehicleStopped(const double stop_duration) const
