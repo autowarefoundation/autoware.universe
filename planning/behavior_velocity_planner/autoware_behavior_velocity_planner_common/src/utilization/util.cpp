@@ -25,6 +25,9 @@
 #include <lanelet2_routing/RoutingGraph.h>
 #include <tf2/utils.h>
 
+#include <iostream>
+#include <set>
+
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #else
@@ -488,18 +491,6 @@ double calcDecelerationVelocityFromDistanceToTarget(
     return vt(t_acc, 0.0, a_max, v1);
   }
   return current_velocity;
-}
-
-StopReason initializeStopReason(const std::string & stop_reason)
-{
-  StopReason stop_reason_msg;
-  stop_reason_msg.reason = stop_reason;
-  return stop_reason_msg;
-}
-
-void appendStopReason(const StopFactor stop_factor, StopReason * stop_reason)
-{
-  stop_reason->stop_factors.emplace_back(stop_factor);
 }
 
 std::vector<geometry_msgs::msg::Point> toRosPoints(const PredictedObjects & object)

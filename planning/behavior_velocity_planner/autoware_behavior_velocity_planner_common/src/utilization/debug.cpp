@@ -15,6 +15,9 @@
 #include <autoware/behavior_velocity_planner_common/utilization/debug.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
 #include <autoware/universe_utils/ros/marker_helper.hpp>
+
+#include <string>
+#include <vector>
 namespace autoware::behavior_velocity_planner
 {
 namespace debug

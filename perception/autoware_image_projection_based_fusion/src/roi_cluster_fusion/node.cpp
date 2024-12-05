@@ -20,6 +20,12 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
+#include <algorithm>
+#include <map>
+#include <string>
+#include <utility>
+#include <vector>
+
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_sensor_msgs/tf2_sensor_msgs.h>
@@ -133,8 +139,9 @@ void RoiClusterFusionNode::fuseOnSingleImage(
         continue;
       }
 
-      Eigen::Vector2d projected_point =
-        calcRawImageProjectedPoint(pinhole_camera_model, cv::Point3d(*iter_x, *iter_y, *iter_z));
+      Eigen::Vector2d projected_point = calcRawImageProjectedPoint(
+        pinhole_camera_model, cv::Point3d(*iter_x, *iter_y, *iter_z),
+        point_project_to_unrectified_image_);
       if (
         0 <= static_cast<int>(projected_point.x()) &&
         static_cast<int>(projected_point.x()) <= static_cast<int>(camera_info.width) - 1 &&

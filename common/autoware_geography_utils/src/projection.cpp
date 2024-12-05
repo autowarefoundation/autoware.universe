@@ -17,6 +17,8 @@
 #include <autoware/geography_utils/projection.hpp>
 #include <autoware_lanelet2_extension/projection/mgrs_projector.hpp>
 
+#include <memory>
+
 namespace autoware::geography_utils
 {
 

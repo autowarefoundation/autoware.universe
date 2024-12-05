@@ -19,6 +19,11 @@
 #include <autoware/image_projection_based_fusion/utils/geometry.hpp>
 #include <autoware/image_projection_based_fusion/utils/utils.hpp>
 
+#include <algorithm>
+#include <map>
+#include <utility>
+#include <vector>
+
 namespace autoware::image_projection_based_fusion
 {
 
@@ -150,7 +155,8 @@ RoiDetectedObjectFusionNode::generateDetectedObjectRoIs(
       }
 
       Eigen::Vector2d proj_point = calcRawImageProjectedPoint(
-        pinhole_camera_model, cv::Point3d(point.x(), point.y(), point.z()));
+        pinhole_camera_model, cv::Point3d(point.x(), point.y(), point.z()),
+        point_project_to_unrectified_image_);
 
       min_x = std::min(proj_point.x(), min_x);
       min_y = std::min(proj_point.y(), min_y);

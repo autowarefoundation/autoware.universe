@@ -14,15 +14,17 @@
 
 #include "autoware/pointcloud_preprocessor/outlier_filter/ring_outlier_filter_node.hpp"
 
-#include "autoware_point_types/types.hpp"
+#include "autoware/point_types/types.hpp"
 
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
 #include <algorithm>
+#include <memory>
+#include <utility>
 #include <vector>
 namespace autoware::pointcloud_preprocessor
 {
-using autoware_point_types::PointXYZIRADRT;
+using autoware::point_types::PointXYZIRADRT;
 
 RingOutlierFilterComponent::RingOutlierFilterComponent(const rclcpp::NodeOptions & options)
 : Filter("RingOutlierFilter", options)
