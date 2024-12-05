@@ -61,7 +61,7 @@ Note that these parameters are associated with ONNX file, predefined during the 
 | `post_process_params.has_twist`                  | boolean      | false                     | Indicates whether the model outputs twist value.              |
 | `densification_params.world_frame_id`            | string       | `map`                     | the world frame id to fuse multi-frame pointcloud             |
 | `densification_params.num_past_frames`           | int          | `1`                       | the number of past frames to fuse with the current frame      |
-| `max_voxel_size`          | int          | `40000`                                          | maximum number of voxels                                              |
+| `max_voxel_size`                                 | int          | `40000`                   | maximum number of voxels                                      |
 
 ### The `build_only` option
 
