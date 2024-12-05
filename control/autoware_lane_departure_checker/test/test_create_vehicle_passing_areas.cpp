@@ -24,6 +24,8 @@
 
 #include <gtest/gtest.h>
 
+#include <vector>
+
 using autoware::lane_departure_checker::utils::createVehiclePassingAreas;
 using autoware::universe_utils::LinearRing2d;
 using autoware::universe_utils::Point2d;

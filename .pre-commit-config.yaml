@@ -76,7 +76,7 @@ repos:
         types_or: [c++, c, cuda]
 
   - repo: https://github.com/cpplint/cpplint
-    rev: 1.6.1
+    rev: 2.0.0
     hooks:
       - id: cpplint
         args: [--quiet]
