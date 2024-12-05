@@ -116,10 +116,9 @@ CandidateOutput assignToCandidate(
 std::optional<lanelet::ConstLanelet> get_lane_change_target_lane(
   const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & current_lanes);
 
-std::vector<PoseWithVelocityStamped> convertToPredictedPath(
-  const LaneChangePath & lane_change_path, const Twist & vehicle_twist, const Pose & pose,
-  const double lane_changing_acceleration, const BehaviorPathPlannerParameters & common_parameters,
-  const LaneChangeParameters & lane_change_parameters, const double resolution);
+std::vector<PoseWithVelocityStamped> convert_to_predicted_path(
+  const CommonDataPtr & common_data_ptr, const LaneChangePath & lane_change_path,
+  const double lane_changing_acceleration);
 
 bool isParkedObject(
   const PathWithLaneId & path, const RouteHandler & route_handler,
@@ -132,14 +131,29 @@ bool isParkedObject(
   const ExtendedPredictedObject & object, const double buffer_to_bound,
   const double ratio_threshold);
 
-bool passed_parked_objects(
+/**
+ * @brief Checks if delaying of lane change maneuver is necessary
+ *
+ * @details Scans through the provided target objects (assumed to be ordered from closest to
+ * furthest), and returns true if any of the objects satisfy the following conditions:
+ *  - Not near the end of current lanes
+ *  - There is sufficient distance from object to next one to do lane change
+ * If the parameter delay_lc_param.check_only_parked_vehicle is set to True, only objects
+ * which pass isParkedObject() check will be considered.
+ *
+ * @param common_data_ptr Shared pointer to CommonData that holds necessary lanes info, parameters,
+ *                        and transient data.
+ * @param lane_change_path Candidate lane change path to apply checks on.
+ * @param target_objects Relevant objects to consider for delay LC checks (assumed to only include
+ *                       target lane leading static objects).
+ * @param object_debug Collision check debug struct to be updated if any of the target objects
+ *                     satisfy the conditions.
+ * @return bool True if conditions to delay lane change are met
+ */
+bool is_delay_lane_change(
   const CommonDataPtr & common_data_ptr, const LaneChangePath & lane_change_path,
-  const std::vector<ExtendedPredictedObject> & objects, CollisionCheckDebugMap & object_debug);
-
-std::optional<size_t> getLeadingStaticObjectIdx(
-  const RouteHandler & route_handler, const LaneChangePath & lane_change_path,
-  const std::vector<ExtendedPredictedObject> & objects,
-  const double object_check_min_road_shoulder_width, const double object_shiftable_ratio_threshold);
+  const std::vector<ExtendedPredictedObject> & target_objects,
+  CollisionCheckDebugMap & object_debug);
 
 lanelet::BasicPolygon2d create_polygon(
   const lanelet::ConstLanelets & lanes, const double start_dist, const double end_dist);

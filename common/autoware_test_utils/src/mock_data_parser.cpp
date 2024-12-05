@@ -17,6 +17,7 @@
 #include <rclcpp/logging.hpp>
 
 #include <algorithm>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -220,11 +221,7 @@ std::vector<PathPointWithLaneId> parse<std::vector<PathPointWithLaneId>>(const Y
 {
   std::vector<PathPointWithLaneId> path_points;
 
-  if (!node["points"]) {
-    return path_points;
-  }
-
-  const auto & points = node["points"];
+  const auto & points = node;
   path_points.reserve(points.size());
   std::transform(
     points.begin(), points.end(), std::back_inserter(path_points), [&](const YAML::Node & input) {
@@ -428,36 +425,30 @@ OperationModeState parse(const YAML::Node & node)
 }
 
 template <>
-LaneletRoute parse(const std::string & filename)
+std::optional<LaneletRoute> parse(const std::string & filename)
 {
-  LaneletRoute lanelet_route;
-  try {
-    YAML::Node config = YAML::LoadFile(filename);
-
-    lanelet_route.start_pose = (config["start_pose"]) ? parse<Pose>(config["start_pose"]) : Pose();
-    lanelet_route.goal_pose = (config["goal_pose"]) ? parse<Pose>(config["goal_pose"]) : Pose();
-    lanelet_route.segments = parse<std::vector<LaneletSegment>>(config["segments"]);
-  } catch (const std::exception & e) {
-    RCLCPP_DEBUG(rclcpp::get_logger("autoware_test_utils"), "Exception caught: %s", e.what());
+  YAML::Node node = YAML::LoadFile(filename);
+  if (!node["start_pose"] || !node["goal_pose"] || !node["segments"]) {
+    return std::nullopt;
   }
-  return lanelet_route;
+
+  return parse<LaneletRoute>(node);
 }
 
 template <>
-PathWithLaneId parse(const std::string & filename)
+std::optional<PathWithLaneId> parse(const std::string & filename)
 {
-  PathWithLaneId path;
-  YAML::Node yaml_node = YAML::LoadFile(filename);
+  YAML::Node node = YAML::LoadFile(filename);
 
-  try {
-    path.header = parse<Header>(yaml_node["header"]);
-    path.points = parse<std::vector<PathPointWithLaneId>>(yaml_node);
-    path.left_bound = parse<std::vector<Point>>(yaml_node["left_bound"]);
-    path.right_bound = parse<std::vector<Point>>(yaml_node["right_bound"]);
-  } catch (const std::exception & e) {
-    RCLCPP_DEBUG(rclcpp::get_logger("autoware_test_utils"), "Exception caught: %s", e.what());
+  if (!node["header"] || !node["points"] || !node["left_bound"] || !node["right_bound"]) {
+    return std::nullopt;
   }
 
+  PathWithLaneId path;
+  path.header = parse<Header>(node["header"]);
+  path.points = parse<std::vector<PathPointWithLaneId>>(node["points"]);
+  path.left_bound = parse<std::vector<Point>>(node["left_bound"]);
+  path.right_bound = parse<std::vector<Point>>(node["right_bound"]);
   return path;
 }
 }  // namespace autoware::test_utils

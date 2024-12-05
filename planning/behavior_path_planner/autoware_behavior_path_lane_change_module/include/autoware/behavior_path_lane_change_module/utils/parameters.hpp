@@ -115,16 +115,26 @@ struct SafetyParameters
 
 struct TrajectoryParameters
 {
-  double prepare_duration{4.0};
+  double max_prepare_duration{4.0};
+  double min_prepare_duration{1.0};
   double lateral_jerk{0.5};
   double min_longitudinal_acc{-1.0};
   double max_longitudinal_acc{1.0};
   double th_prepare_length_diff{0.5};
   double th_lane_changing_length_diff{0.5};
   double min_lane_changing_velocity{5.6};
+  double lane_changing_decel_factor{0.5};
   int lon_acc_sampling_num{10};
   int lat_acc_sampling_num{10};
   LateralAccelerationMap lat_acc_map{};
+};
+
+struct DelayParameters
+{
+  bool enable{true};
+  bool check_only_parked_vehicle{false};
+  double min_road_shoulder_width{0.5};
+  double th_parked_vehicle_shift_ratio{0.6};
 };
 
 struct Parameters
@@ -132,6 +142,7 @@ struct Parameters
   TrajectoryParameters trajectory{};
   SafetyParameters safety{};
   CancelParameters cancel{};
+  DelayParameters delay{};
 
   // lane change parameters
   double backward_lane_length{200.0};

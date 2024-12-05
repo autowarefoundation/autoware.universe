@@ -556,6 +556,7 @@ public:
   bool use_predicted_trajectory_;
   bool use_imu_path_;
   bool limit_imu_path_lat_dev_;
+  bool limit_imu_path_length_;
   bool use_pointcloud_data_;
   bool use_predicted_object_data_;
   bool use_object_velocity_calculation_;
@@ -571,7 +572,7 @@ public:
   double min_generated_imu_path_length_;
   double max_generated_imu_path_length_;
   double expand_width_;
-  double longitudinal_offset_;
+  double longitudinal_offset_margin_;
   double t_response_;
   double a_ego_min_;
   double a_obj_min_;
