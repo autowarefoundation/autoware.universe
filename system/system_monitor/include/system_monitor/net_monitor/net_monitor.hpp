@@ -149,16 +149,17 @@ private:
    * @param [out] output_value retrieved value
    * @return execution result
    */
-  bool read_value_from_proc(unsigned int index_row, unsigned int index_col, uint64_t & output_value);
+  bool read_value_from_proc(
+    unsigned int index_row, unsigned int index_col, uint64_t & output_value);
 
-  rclcpp::Logger logger_;  //!< @brief logger gotten from user node
-  unsigned int check_duration_;  //!< @brief check duration
-  unsigned int check_count_;  //!< @brief check count threshold
-  unsigned int index_row_;  //!< @brief index for the target metrics in /proc/net/snmp
-  unsigned int index_col_;  //!< @brief index for the target metrics in /proc/net/snmp
-  uint64_t current_value_;  //!< @brief the value read from snmp
-  uint64_t last_value_;  //!< @brief the value read from snmp at the last monitoring
-  uint64_t value_per_unit_time_;  //!< @brief the increase of the value during the duration
+  rclcpp::Logger logger_;           //!< @brief logger gotten from user node
+  unsigned int check_duration_;     //!< @brief check duration
+  unsigned int check_count_;        //!< @brief check count threshold
+  unsigned int index_row_;          //!< @brief index for the target metrics in /proc/net/snmp
+  unsigned int index_col_;          //!< @brief index for the target metrics in /proc/net/snmp
+  uint64_t current_value_;          //!< @brief the value read from snmp
+  uint64_t last_value_;             //!< @brief the value read from snmp at the last monitoring
+  uint64_t value_per_unit_time_;    //!< @brief the increase of the value during the duration
   std::deque<unsigned int> queue_;  //!< @brief queue that holds the delta of the value
 };
 
@@ -383,8 +384,8 @@ protected:
   unsigned int crc_error_count_threshold_;       //!< @brief CRC error count threshold
 
   NetSnmp reassembles_failed_info_;  //!< @brief information of IP packet reassembles failed
-  NetSnmp udp_rcvbuf_errors_info_;  //!< @brief information of UDP rcv buf errors
-  NetSnmp udp_sndbuf_errors_info_;  //!< @brief information of UDP snd buf errors
+  NetSnmp udp_rcvbuf_errors_info_;   //!< @brief information of UDP rcv buf errors
+  NetSnmp udp_sndbuf_errors_info_;   //!< @brief information of UDP snd buf errors
 
   /**
    * @brief Network connection status messages

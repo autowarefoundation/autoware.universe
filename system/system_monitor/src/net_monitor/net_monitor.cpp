@@ -52,9 +52,15 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
   socket_path_(declare_parameter("socket_path", traffic_reader_service::socket_path)),
   crc_error_check_duration_(declare_parameter<int>("crc_error_check_duration", 1)),
   crc_error_count_threshold_(declare_parameter<int>("crc_error_count_threshold", 1)),
-  reassembles_failed_info_(this, declare_parameter<int>("reassembles_failed_check_duration", 1), declare_parameter<int>("reassembles_failed_check_count", 1)),
-  udp_rcvbuf_errors_info_(this, declare_parameter<int>("udp_buf_errors_check_duration", 1), declare_parameter<int>("udp_buf_errors_check_count", 1)),
-  udp_sndbuf_errors_info_(this, declare_parameter<int>("udp_buf_errors_check_duration", 1), declare_parameter<int>("udp_buf_errors_check_count", 1))
+  reassembles_failed_info_(
+    this, declare_parameter<int>("reassembles_failed_check_duration", 1),
+    declare_parameter<int>("reassembles_failed_check_count", 1)),
+  udp_rcvbuf_errors_info_(
+    this, declare_parameter<int>("udp_buf_errors_check_duration", 1),
+    declare_parameter<int>("udp_buf_errors_check_count", 1)),
+  udp_sndbuf_errors_info_(
+    this, declare_parameter<int>("udp_buf_errors_check_duration", 1),
+    declare_parameter<int>("udp_buf_errors_check_count", 1))
 {
   if (monitor_program_.empty()) {
     monitor_program_ = "*";
@@ -296,24 +302,25 @@ void NetMonitor::check_reassembles_failed(diagnostic_updater::DiagnosticStatusWr
 
   uint64_t total_reassembles_failed = 0;
   uint64_t unit_reassembles_failed = 0;
-  NetSnmp::Result ret = reassembles_failed_info_.check_metrics(total_reassembles_failed, unit_reassembles_failed);
+  NetSnmp::Result ret =
+    reassembles_failed_info_.check_metrics(total_reassembles_failed, unit_reassembles_failed);
   status.add("total packet reassembles failed", total_reassembles_failed);
   status.add("packet reassembles failed per unit time", unit_reassembles_failed);
 
   int whole_level = DiagStatus::OK;
   std::string error_message = "OK";
-  switch(ret) {
-  case NetSnmp::Result::OK:
-  default:
-    break;
-  case NetSnmp::Result::CHECK_WARNING:
-    whole_level = DiagStatus::WARN;
-    error_message = "reassembles failed";
-    break;
-  case NetSnmp::Result::READ_ERROR:
-    whole_level = DiagStatus::ERROR;
-    error_message = "failed to read /proc/net/snmp";
-    break;
+  switch (ret) {
+    case NetSnmp::Result::OK:
+    default:
+      break;
+    case NetSnmp::Result::CHECK_WARNING:
+      whole_level = DiagStatus::WARN;
+      error_message = "reassembles failed";
+      break;
+    case NetSnmp::Result::READ_ERROR:
+      whole_level = DiagStatus::ERROR;
+      error_message = "failed to read /proc/net/snmp";
+      break;
   }
 
   status.summary(whole_level, error_message);
@@ -329,13 +336,15 @@ void NetMonitor::check_udp_buf_errors(diagnostic_updater::DiagnosticStatusWrappe
 
   uint64_t total_udp_rcvbuf_errors = 0;
   uint64_t unit_udp_rcvbuf_errors = 0;
-  NetSnmp::Result ret_rcv = udp_rcvbuf_errors_info_.check_metrics(total_udp_rcvbuf_errors, unit_udp_rcvbuf_errors);
+  NetSnmp::Result ret_rcv =
+    udp_rcvbuf_errors_info_.check_metrics(total_udp_rcvbuf_errors, unit_udp_rcvbuf_errors);
   status.add("total UDP rcv buf errors", total_udp_rcvbuf_errors);
   status.add("UDP rcv buf errors per unit time", unit_udp_rcvbuf_errors);
 
   uint64_t total_udp_sndbuf_errors = 0;
   uint64_t unit_udp_sndbuf_errors = 0;
-  NetSnmp::Result ret_snd = udp_sndbuf_errors_info_.check_metrics(total_udp_sndbuf_errors, unit_udp_sndbuf_errors);
+  NetSnmp::Result ret_snd =
+    udp_sndbuf_errors_info_.check_metrics(total_udp_sndbuf_errors, unit_udp_sndbuf_errors);
   status.add("total UDP snd buf errors", total_udp_sndbuf_errors);
   status.add("UDP snd buf errors per unit time", unit_udp_sndbuf_errors);
 
@@ -344,7 +353,8 @@ void NetMonitor::check_udp_buf_errors(diagnostic_updater::DiagnosticStatusWrappe
   if (ret_rcv == NetSnmp::Result::READ_ERROR || ret_snd == NetSnmp::Result::READ_ERROR) {
     whole_level = DiagStatus::ERROR;
     error_message = "failed to read /proc/net/snmp";
-  } else if (ret_rcv == NetSnmp::Result::CHECK_WARNING || ret_snd == NetSnmp::Result::CHECK_WARNING) {
+  } else if (
+    ret_rcv == NetSnmp::Result::CHECK_WARNING || ret_snd == NetSnmp::Result::CHECK_WARNING) {
     whole_level = DiagStatus::WARN;
     error_message = "UDP buf errors";
   }
@@ -802,7 +812,8 @@ NetSnmp::Result NetSnmp::check_metrics(uint64_t & current_value, uint64_t & valu
   }
 }
 
-bool NetSnmp::read_value_from_proc(unsigned int index_row, unsigned int index_col, uint64_t & output_value)
+bool NetSnmp::read_value_from_proc(
+  unsigned int index_row, unsigned int index_col, uint64_t & output_value)
 {
   if (index_row == 0 && index_col == 0) {
     RCLCPP_WARN(logger_, "index is invalid. : %u, %u", index_row, index_col);
@@ -833,8 +844,7 @@ bool NetSnmp::read_value_from_proc(unsigned int index_row, unsigned int index_co
   boost::split(value_list, target_line, boost::is_space());
   if (index_col >= value_list.size()) {
     RCLCPP_WARN(
-      logger_,
-      "There are not enough columns for the column index. : column size=%lu index=%u, %u",
+      logger_, "There are not enough columns for the column index. : column size=%lu index=%u, %u",
       value_list.size(), index_row, index_col);
     return false;
   }
