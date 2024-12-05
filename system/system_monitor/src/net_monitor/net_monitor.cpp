@@ -313,8 +313,8 @@ void NetMonitor::check_reassembles_failed(diagnostic_updater::DiagnosticStatusWr
       unit_reassembles_failed += reassembles_failed;
     }
 
-    status.add(fmt::format("total packet reassembles failed"), total_reassembles_failed);
-    status.add(fmt::format("packet reassembles failed per unit time"), unit_reassembles_failed);
+    status.add("total packet reassembles failed", total_reassembles_failed);
+    status.add("packet reassembles failed per unit time", unit_reassembles_failed);
 
     if (unit_reassembles_failed >= reassembles_failed_check_count_) {
       whole_level = std::max(whole_level, static_cast<int>(DiagStatus::WARN));
@@ -353,8 +353,8 @@ void NetMonitor::check_udp_buf_errors(diagnostic_updater::DiagnosticStatusWrappe
       udp_buf_errors_check_duration_);
     uint64_t unit_udp_rcvbuf_errors =
       std::accumulate(udp_rcvbuf_errors_queue_.begin(), udp_rcvbuf_errors_queue_.end(), 0);
-    status.add(fmt::format("total UDP rcv buf errors"), total_udp_rcvbuf_errors);
-    status.add(fmt::format("UDP rcv buf errors per unit time"), unit_udp_rcvbuf_errors);
+    status.add("total UDP rcv buf errors", total_udp_rcvbuf_errors);
+    status.add("UDP rcv buf errors per unit time", unit_udp_rcvbuf_errors);
     if (unit_udp_rcvbuf_errors >= udp_buf_errors_check_count_) {
       whole_level = std::max(whole_level, static_cast<int>(DiagStatus::WARN));
       error_message += "UDP buf errors";
@@ -372,8 +372,8 @@ void NetMonitor::check_udp_buf_errors(diagnostic_updater::DiagnosticStatusWrappe
       udp_buf_errors_check_duration_);
     uint64_t unit_udp_sndbuf_errors =
       std::accumulate(udp_sndbuf_errors_queue_.begin(), udp_sndbuf_errors_queue_.end(), 0);
-    status.add(fmt::format("total UDP snd buf errors"), total_udp_sndbuf_errors);
-    status.add(fmt::format("UDP snd buf errors per unit time"), unit_udp_sndbuf_errors);
+    status.add("total UDP snd buf errors", total_udp_sndbuf_errors);
+    status.add("UDP snd buf errors per unit time", unit_udp_sndbuf_errors);
     if (unit_udp_sndbuf_errors >= udp_buf_errors_check_count_) {
       whole_level = std::max(whole_level, static_cast<int>(DiagStatus::WARN));
       error_message += "UDP buf errors";
