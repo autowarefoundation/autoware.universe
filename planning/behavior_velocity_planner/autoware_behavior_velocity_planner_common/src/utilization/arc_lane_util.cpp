@@ -26,10 +26,7 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
-#include <algorithm>
-#include <memory>
 #include <utility>
-#include <vector>
 
 namespace
 {

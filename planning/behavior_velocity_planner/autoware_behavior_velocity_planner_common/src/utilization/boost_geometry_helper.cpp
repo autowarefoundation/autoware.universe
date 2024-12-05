@@ -16,8 +16,6 @@
 
 #include <boost/geometry/algorithms/correct.hpp>
 
-#include <algorithm>
-#include <vector>
 namespace autoware::behavior_velocity_planner
 {
 
