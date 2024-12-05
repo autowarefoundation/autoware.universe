@@ -33,6 +33,6 @@ The `mask_cluster_fusion` package aims to assign the label of the mask to the cl
 
 ## Parameters
 
-{{ json_to_markdown("perception/autoware_image_projection_based_fusion/schema/mask_cluster_fusion.json") }}
+{{ json_to_markdown("perception/autoware_image_projection_based_fusion/schema/mask_cluster_fusion.schema.json") }}
 
 ## Assumptions / Known limits
