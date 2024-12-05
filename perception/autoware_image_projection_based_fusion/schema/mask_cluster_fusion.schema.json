@@ -24,11 +24,7 @@
           "default": false
         }
       },
-      "required": [
-        "fusion_distance",
-        "fusion_ratio",
-        "remove_unknown"
-      ]
+      "required": ["fusion_distance", "fusion_ratio", "remove_unknown"]
     }
   },
   "properties": {
