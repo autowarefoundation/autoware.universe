@@ -134,7 +134,7 @@ jobs:
 
       - name: Run clang-tidy
         if: ${{ steps.get-changed-files.outputs.changed-files != '' }}
-        uses: autowarefoundation/autoware-github-actions/clang-tidy@v1
+        uses: yhisaki/autoware-github-actions/clang-tidy@clang-tidy-pr-comments
         with:
           rosdistro: humble
           target-packages: ${{ steps.get-modified-packages.outputs.modified-packages }}
@@ -178,7 +178,7 @@ jobs:
 
       - name: Run clang-tidy
         if: ${{ steps.get-changed-files.outputs.changed-files != '' }}
-        uses: autowarefoundation/autoware-github-actions/clang-tidy@v1
+        uses: yhisaki/autoware-github-actions/clang-tidy@clang-tidy-pr-comments
         with:
           rosdistro: humble
           target-packages: ${{ steps.get-modified-packages.outputs.modified-packages }}
