@@ -48,17 +48,9 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
   socket_path_(declare_parameter("socket_path", traffic_reader_service::socket_path)),
   crc_error_check_duration_(declare_parameter<int>("crc_error_check_duration", 1)),
   crc_error_count_threshold_(declare_parameter<int>("crc_error_count_threshold", 1)),
-  last_reassembles_failed_(0),
-  reassembles_failed_check_duration_(
-    declare_parameter<int>("reassembles_failed_check_duration", 1)),
-  reassembles_failed_check_count_(declare_parameter<int>("reassembles_failed_check_count", 1)),
-  reassembles_failed_index_(0, 0),
-  udp_buf_errors_check_duration_(declare_parameter<int>("udp_buf_errors_check_duration", 1)),
-  udp_buf_errors_check_count_(declare_parameter<int>("udp_buf_errors_check_count", 1)),
-  last_udp_rcvbuf_errors_(0),
-  last_udp_sndbuf_errors_(0),
-  udp_rcvbuf_errors_index_(0, 0),
-  udp_sndbuf_errors_index_(0, 0)
+  reassembles_failed_info_(this, declare_parameter<int>("reassembles_failed_check_duration", 1), declare_parameter<int>("reassembles_failed_check_count", 1)),
+  udp_rcvbuf_errors_info_(this, declare_parameter<int>("udp_buf_errors_check_duration", 1), declare_parameter<int>("udp_buf_errors_check_count", 1)),
+  udp_sndbuf_errors_info_(this, declare_parameter<int>("udp_buf_errors_check_duration", 1), declare_parameter<int>("udp_buf_errors_check_count", 1))
 {
   if (monitor_program_.empty()) {
     monitor_program_ = "*";
@@ -87,10 +79,10 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
   using namespace std::literals::chrono_literals;
   timer_ = rclcpp::create_timer(this, get_clock(), 1s, std::bind(&NetMonitor::on_timer, this));
 
-  // Get index for `/proc/net/snmp`
-  reassembles_failed_index_ = get_index_for_net_snmp("Ip:", "ReasmFails");
-  udp_rcvbuf_errors_index_ = get_index_for_net_snmp("Udp:", "RcvbufErrors");
-  udp_sndbuf_errors_index_ = get_index_for_net_snmp("Udp:", "SndbufErrors");
+  // Initialize information for `/proc/net/snmp`
+  reassembles_failed_info_.find_index("Ip:", "ReasmFails");
+  udp_rcvbuf_errors_info_.find_index("Udp:", "RcvbufErrors");
+  udp_sndbuf_errors_info_.find_index("Udp:", "SndbufErrors");
 
   // Send request to start nethogs
   if (enable_traffic_monitor_) {
@@ -298,41 +290,29 @@ void NetMonitor::check_reassembles_failed(diagnostic_updater::DiagnosticStatusWr
   // Remember start time to measure elapsed time
   const auto t_start = SystemMonitorUtility::startMeasurement();
 
-  int whole_level = DiagStatus::OK;
-  std::string error_message;
   uint64_t total_reassembles_failed = 0;
+  uint64_t unit_reassembles_failed = 0;
+  NetSnmp::Result ret = reassembles_failed_info_.check_metrics(total_reassembles_failed, unit_reassembles_failed);
+  status.add("total packet reassembles failed", total_reassembles_failed);
+  status.add("packet reassembles failed per unit time", unit_reassembles_failed);
 
-  if (get_value_from_net_snmp(reassembles_failed_index_, total_reassembles_failed)) {
-    reassembles_failed_queue_.push_back(total_reassembles_failed - last_reassembles_failed_);
-    while (reassembles_failed_queue_.size() > reassembles_failed_check_duration_) {
-      reassembles_failed_queue_.pop_front();
-    }
-
-    uint64_t unit_reassembles_failed = 0;
-    for (auto reassembles_failed : reassembles_failed_queue_) {
-      unit_reassembles_failed += reassembles_failed;
-    }
-
-    status.add("total packet reassembles failed", total_reassembles_failed);
-    status.add("packet reassembles failed per unit time", unit_reassembles_failed);
-
-    if (unit_reassembles_failed >= reassembles_failed_check_count_) {
-      whole_level = std::max(whole_level, static_cast<int>(DiagStatus::WARN));
-      error_message = "reassembles failed";
-    }
-
-    last_reassembles_failed_ = total_reassembles_failed;
-  } else {
-    reassembles_failed_queue_.push_back(0);
-    whole_level = std::max(whole_level, static_cast<int>(DiagStatus::ERROR));
+  int whole_level = DiagStatus::OK;
+  std::string error_message = "OK";
+  switch(ret) {
+  case NetSnmp::Result::OK:
+  default:
+    break;
+  case NetSnmp::Result::CHECK_WARNING:
+    whole_level = DiagStatus::WARN;
+    error_message = "reassembles failed";
+    break;
+  case NetSnmp::Result::READ_ERROR:
+    whole_level = DiagStatus::ERROR;
     error_message = "failed to read /proc/net/snmp";
+    break;
   }
 
-  if (!error_message.empty()) {
-    status.summary(whole_level, error_message);
-  } else {
-    status.summary(whole_level, "OK");
-  }
+  status.summary(whole_level, error_message);
 
   // Measure elapsed time since start time and report
   SystemMonitorUtility::stopMeasurement(t_start, status);
@@ -343,52 +323,29 @@ void NetMonitor::check_udp_buf_errors(diagnostic_updater::DiagnosticStatusWrappe
   // Remember start time to measure elapsed time
   const auto t_start = SystemMonitorUtility::startMeasurement();
 
-  int whole_level = DiagStatus::OK;
-  std::string error_message;
-
   uint64_t total_udp_rcvbuf_errors = 0;
-  if (get_value_from_net_snmp(udp_rcvbuf_errors_index_, total_udp_rcvbuf_errors)) {
-    update_delta_queue(
-      udp_rcvbuf_errors_queue_, last_udp_rcvbuf_errors_, total_udp_rcvbuf_errors,
-      udp_buf_errors_check_duration_);
-    uint64_t unit_udp_rcvbuf_errors =
-      std::accumulate(udp_rcvbuf_errors_queue_.begin(), udp_rcvbuf_errors_queue_.end(), 0);
-    status.add("total UDP rcv buf errors", total_udp_rcvbuf_errors);
-    status.add("UDP rcv buf errors per unit time", unit_udp_rcvbuf_errors);
-    if (unit_udp_rcvbuf_errors >= udp_buf_errors_check_count_) {
-      whole_level = std::max(whole_level, static_cast<int>(DiagStatus::WARN));
-      error_message += "UDP buf errors";
-    }
-  } else {
-    udp_rcvbuf_errors_queue_.push_back(0);
-    whole_level = std::max(whole_level, static_cast<int>(DiagStatus::ERROR));
-    error_message += "failed to read RcvbufErrors from /proc/net/snmp";
-  }
+  uint64_t unit_udp_rcvbuf_errors = 0;
+  NetSnmp::Result ret_rcv = udp_rcvbuf_errors_info_.check_metrics(total_udp_rcvbuf_errors, unit_udp_rcvbuf_errors);
+  status.add("total UDP rcv buf errors", total_udp_rcvbuf_errors);
+  status.add("UDP rcv buf errors per unit time", unit_udp_rcvbuf_errors);
 
   uint64_t total_udp_sndbuf_errors = 0;
-  if (get_value_from_net_snmp(udp_sndbuf_errors_index_, total_udp_sndbuf_errors)) {
-    update_delta_queue(
-      udp_sndbuf_errors_queue_, last_udp_sndbuf_errors_, total_udp_sndbuf_errors,
-      udp_buf_errors_check_duration_);
-    uint64_t unit_udp_sndbuf_errors =
-      std::accumulate(udp_sndbuf_errors_queue_.begin(), udp_sndbuf_errors_queue_.end(), 0);
-    status.add("total UDP snd buf errors", total_udp_sndbuf_errors);
-    status.add("UDP snd buf errors per unit time", unit_udp_sndbuf_errors);
-    if (unit_udp_sndbuf_errors >= udp_buf_errors_check_count_) {
-      whole_level = std::max(whole_level, static_cast<int>(DiagStatus::WARN));
-      error_message += "UDP buf errors";
-    }
-  } else {
-    udp_sndbuf_errors_queue_.push_back(0);
-    whole_level = std::max(whole_level, static_cast<int>(DiagStatus::ERROR));
-    error_message += "failed to read SndbufErrors from /proc/net/snmp";
+  uint64_t unit_udp_sndbuf_errors = 0;
+  NetSnmp::Result ret_snd = udp_sndbuf_errors_info_.check_metrics(total_udp_sndbuf_errors, unit_udp_sndbuf_errors);
+  status.add("total UDP snd buf errors", total_udp_sndbuf_errors);
+  status.add("UDP snd buf errors per unit time", unit_udp_sndbuf_errors);
+
+  int whole_level = DiagStatus::OK;
+  std::string error_message = "OK";
+  if (ret_rcv == NetSnmp::Result::READ_ERROR || ret_snd == NetSnmp::Result::READ_ERROR) {
+    whole_level = DiagStatus::ERROR;
+    error_message = "failed to read /proc/net/snmp";
+  } else if (ret_rcv == NetSnmp::Result::CHECK_WARNING || ret_snd == NetSnmp::Result::CHECK_WARNING) {
+    whole_level = DiagStatus::WARN;
+    error_message = "UDP buf errors";
   }
 
-  if (!error_message.empty()) {
-    status.summary(whole_level, error_message);
-  } else {
-    status.summary(whole_level, "OK");
-  }
+  status.summary(whole_level, error_message);
 
   // Measure elapsed time since start time and report
   SystemMonitorUtility::stopMeasurement(t_start, status);
@@ -606,113 +563,6 @@ void NetMonitor::update_crc_error(NetworkInfomation & network, const struct rtnl
   crc_errors.last_rx_crc_errors = stats->rx_crc_errors;
 }
 
-NetSnmpIndex NetMonitor::get_index_for_net_snmp(
-  const std::string & protocol_name, const std::string & metrics_name)
-{
-  NetSnmpIndex index(0, 0);
-  const NetSnmpIndex error_index(0, 0);
-  // /proc/net/snmp
-  // Ip: Forwarding DefaultTTL InReceives ... ReasmTimeout ReasmReqds ReasmOKs ReasmFails ...
-  // Ip: 2          64         5636471397 ... 135          2303339    216166   270        ..
-  std::ifstream ifs("/proc/net/snmp");
-  if (!ifs) {
-    RCLCPP_WARN(get_logger(), "Failed to open /proc/net/snmp.");
-    return error_index;
-  }
-
-  std::vector<std::string> target_header_list;
-  std::string line;
-  while (std::getline(ifs, line)) {
-    std::vector<std::string> header_list;
-    boost::split(header_list, line, boost::is_space());
-    if (header_list.empty()) continue;
-    if (header_list[0] == protocol_name) {
-      target_header_list = header_list;
-      break;
-    }
-    ++index.first;
-  }
-
-  ++index.first;  // The values are placed in the row following the header
-
-  for (const auto & header : target_header_list) {
-    if (header == metrics_name) {
-      return index;
-    }
-    ++index.second;
-  }
-
-  RCLCPP_WARN(get_logger(), "Failed to get header of /proc/net/snmp.");
-  return error_index;
-}
-
-bool NetMonitor::get_value_from_net_snmp(const NetSnmpIndex & index, uint64_t & output_value)
-{
-  if (index.first == 0 && index.second == 0) {
-    RCLCPP_WARN(get_logger(), "index is invalid. : %d, %d", index.first, index.second);
-    return 0;
-  }
-
-  std::ifstream ifs("/proc/net/snmp");
-  if (!ifs) {
-    RCLCPP_WARN(get_logger(), "Failed to open /proc/net/snmp.");
-    return false;
-  }
-
-  std::string target_line;
-  std::string line;
-  for (unsigned int row_index = 0; std::getline(ifs, line); ++row_index) {
-    if (row_index == index.first) {
-      target_line = line;
-      break;
-    }
-  }
-
-  if (target_line.empty()) {
-    RCLCPP_WARN(get_logger(), "Failed to get a line of /proc/net/snmp.");
-    return false;
-  }
-
-  std::vector<std::string> value_list;
-  boost::split(value_list, target_line, boost::is_space());
-  if (index.second >= value_list.size()) {
-    RCLCPP_WARN(
-      get_logger(),
-      "There are not enough columns for the column index. : column size=%lu index=%u, %u",
-      value_list.size(), index.first, index.second);
-    return false;
-  }
-
-  std::string value_str = value_list[index.second];
-  if (value_str.empty()) {
-    RCLCPP_WARN(get_logger(), "The value is empty. : index=%u, %u", index.first, index.second);
-    return false;
-  }
-
-  if (value_str[0] == '-') {
-    // In case the value is negative, store 0 and do not make it error to avoid too many error logs
-    output_value = 0;
-    return true;
-  } else {
-    output_value = std::stoull(value_str);
-    return true;
-  }
-}
-
-void NetMonitor::update_delta_queue(
-  std::deque<unsigned int> & queue, uint64_t & last_value, uint64_t current_value,
-  unsigned int duration)
-{
-  if (queue.empty()) {
-    last_value = current_value;
-  }
-  queue.push_back(current_value - last_value);
-  last_value = current_value;
-  while (queue.size() > duration) {
-    queue.pop_front();
-  }
-}
-
 void NetMonitor::send_start_nethogs_request()
 {
   // Connect to boot/shutdown service
@@ -865,6 +715,140 @@ void NetMonitor::close_connection()
 {
   // Close socket
   socket_->close();
+}
+
+NetSnmp::NetSnmp(rclcpp::Node * node, unsigned int check_duration, unsigned int check_count)
+: logger_(node->get_logger().get_child("net_snmp")),
+  check_duration_(check_duration),
+  check_count_(check_count),
+  index_row_(0),
+  index_col_(0),
+  current_value_(0),
+  last_value_(0),
+  value_per_unit_time_(0),
+  queue_()
+{
+}
+
+void NetSnmp::find_index(const std::string & protocol, const std::string & metrics)
+{
+  // /proc/net/snmp
+  // Ip: Forwarding DefaultTTL InReceives ... ReasmTimeout ReasmReqds ReasmOKs ReasmFails ...
+  // Ip: 2          64         5636471397 ... 135          2303339    216166   270        ..
+  std::ifstream ifs("/proc/net/snmp");
+  if (!ifs) {
+    RCLCPP_WARN(logger_, "Failed to open /proc/net/snmp.");
+    index_row_ = index_col_ = 0;
+    return;
+  }
+
+  std::vector<std::string> target_header_list;
+  std::string line;
+  while (std::getline(ifs, line)) {
+    std::vector<std::string> header_list;
+    boost::split(header_list, line, boost::is_space());
+    if (header_list.empty()) continue;
+    if (header_list[0] == protocol) {
+      target_header_list = header_list;
+      break;
+    }
+    ++index_row_;
+  }
+
+  ++index_row_;  // The values are placed in the row following the header
+
+  for (const auto & header : target_header_list) {
+    if (header == metrics) {
+      return;
+    }
+    ++index_col_;
+  }
+
+  RCLCPP_WARN(logger_, "Failed to get header of /proc/net/snmp.");
+  index_row_ = index_col_ = 0;
+  return;
+}
+
+NetSnmp::Result NetSnmp::check_metrics(uint64_t & current_value, uint64_t & value_per_unit_time)
+{
+  if (!read_value_from_proc(index_row_, index_col_, current_value_)) {
+    queue_.push_back(0);
+    current_value = value_per_unit_time = 0;
+    return Result::READ_ERROR;
+  }
+
+  if (queue_.empty()) {
+    last_value_ = current_value_;
+  }
+  queue_.push_back(current_value_ - last_value_);
+  last_value_ = current_value_;
+  while (queue_.size() > check_duration_) {
+    queue_.pop_front();
+  }
+
+  value_per_unit_time_ = std::accumulate(queue_.begin(), queue_.end(), 0);
+
+  current_value = current_value_;
+  value_per_unit_time = value_per_unit_time_;
+
+  if (value_per_unit_time_ >= check_count_) {
+    return Result::CHECK_WARNING;
+  } else {
+    return Result::OK;
+  }
+}
+
+bool NetSnmp::read_value_from_proc(unsigned int index_row, unsigned int index_col, uint64_t & output_value)
+{
+  if (index_row == 0 && index_col == 0) {
+    RCLCPP_WARN(logger_, "index is invalid. : %u, %u", index_row, index_col);
+    return false;
+  }
+
+  std::ifstream ifs("/proc/net/snmp");
+  if (!ifs) {
+    RCLCPP_WARN(logger_, "Failed to open /proc/net/snmp.");
+    return false;
+  }
+
+  std::string target_line;
+  std::string line;
+  for (unsigned int row_index = 0; std::getline(ifs, line); ++row_index) {
+    if (row_index == index_row) {
+      target_line = line;
+      break;
+    }
+  }
+
+  if (target_line.empty()) {
+    RCLCPP_WARN(logger_, "Failed to get a line of /proc/net/snmp.");
+    return false;
+  }
+
+  std::vector<std::string> value_list;
+  boost::split(value_list, target_line, boost::is_space());
+  if (index_col >= value_list.size()) {
+    RCLCPP_WARN(
+      logger_,
+      "There are not enough columns for the column index. : column size=%lu index=%u, %u",
+      value_list.size(), index_row, index_col);
+    return false;
+  }
+
+  std::string value_str = value_list[index_col];
+  if (value_str.empty()) {
+    RCLCPP_WARN(logger_, "The value is empty. : index=%u, %u", index_row, index_col);
+    return false;
+  }
+
+  if (value_str[0] == '-') {
+    // In case the value is negative, store 0 and do not make it error to avoid too many error logs
+    output_value = 0;
+    return true;
+  } else {
+    output_value = std::stoull(value_str);
+    return true;
+  }
 }
 
 #include <rclcpp_components/register_node_macro.hpp>

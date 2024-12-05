@@ -32,7 +32,6 @@
 #include <map>
 #include <memory>
 #include <string>
-#include <utility>
 #include <vector>
 
 template <typename T>
@@ -83,9 +82,85 @@ struct CrcErrors
 };
 
 /**
- * @brief Row/Column of `/proc/net/snmp`
+ * @brief /proc/net/snmp information
  */
-typedef std::pair<unsigned int, unsigned int> NetSnmpIndex;
+class NetSnmp
+{
+public:
+  enum class Result {
+    OK,
+    CHECK_WARNING,
+    READ_ERROR,
+  };
+
+  /**
+   * @brief Constructor
+   * @param [in] node node using this class.
+   * @param [in] check_duration the value for check_duration
+   * @param [in] check_count the value for check_count
+   */
+  explicit NetSnmp(rclcpp::Node * node, unsigned int check_duration, unsigned int check_count);
+
+  /**
+   * @brief Constructor
+   */
+  NetSnmp() = delete;
+
+  /**
+   * @brief Copy constructor
+   */
+  NetSnmp(const NetSnmp &) = delete;
+
+  /**
+   * @brief Copy assignment operator
+   */
+  NetSnmp & operator=(const NetSnmp &) = delete;
+
+  /**
+   * @brief Move constructor
+   */
+  NetSnmp(const NetSnmp &&) = delete;
+
+  /**
+   * @brief Move assignment operator
+   */
+  NetSnmp & operator=(const NetSnmp &&) = delete;
+
+  /**
+   * @brief Find index in `/proc/net/snmp`
+   * @param [in] protocol Protocol name (the first column string). e.g. "Ip:" or "Udp:"
+   * @param [in] metrics Metrics name. e.g. "ReasmFails"
+   */
+  void find_index(const std::string & protocol, const std::string & metrics);
+
+  /**
+   * @brief Check metrics
+   * @param [out] current_value the value read from snmp
+   * @param [out] value_per_unit_time the increase of the value during the duration
+   * @return the result of check
+   */
+  Result check_metrics(uint64_t & current_value, uint64_t & value_per_unit_time);
+
+private:
+  /**
+   * @brief Read value from `/proc/net/snmp`
+   * @param [in] index_row row in `/proc/net/snmp`
+   * @param [in] index_col col in `/proc/net/snmp`
+   * @param [out] output_value retrieved value
+   * @return execution result
+   */
+  bool read_value_from_proc(unsigned int index_row, unsigned int index_col, uint64_t & output_value);
+
+  rclcpp::Logger logger_;  //!< @brief logger gotten from user node
+  unsigned int check_duration_;  //!< @brief check duration
+  unsigned int check_count_;  //!< @brief check count threshold
+  unsigned int index_row_;  //!< @brief index for the target metrics in /proc/net/snmp
+  unsigned int index_col_;  //!< @brief index for the target metrics in /proc/net/snmp
+  uint64_t current_value_;  //!< @brief the value read from snmp
+  uint64_t last_value_;  //!< @brief the value read from snmp at the last monitoring
+  uint64_t value_per_unit_time_;  //!< @brief the increase of the value during the duration
+  std::deque<unsigned int> queue_;  //!< @brief queue that holds the delta of the value
+};
 
 namespace local = boost::asio::local;
 
@@ -285,34 +360,6 @@ protected:
    */
   void close_connection();
 
-  /**
-   * @brief Get index for `/proc/net/snmp`
-   * @param [in] protocol_name Protocol name (the first column string). e.g. "Ip:" or "Udp:"
-   * @param [in] metrics_name Metrics name. e.g. "ReasmFails"
-   * @return index (row, col)
-   */
-  NetSnmpIndex get_index_for_net_snmp(
-    const std::string & protocol_name, const std::string & metrics_name);
-
-  /**
-   * @brief Get value from `/proc/net/snmp`
-   * @param [in] index index (row, col)
-   * @param [out] output_value retrieved value
-   * @return execution result
-   */
-  bool get_value_from_net_snmp(const NetSnmpIndex & index, uint64_t & output_value);
-
-  /**
-   * @brief Update the queue containing the delta value (current_value - last_value)
-   * @param [inout] queue queue containing the delta
-   * @param [inout] last_value the last value
-   * @param [in] current_value the current value
-   * @param [in] duration the max size of the queue
-   */
-  void update_delta_queue(
-    std::deque<unsigned int> & queue, uint64_t & last_value, uint64_t current_value,
-    unsigned int duration);
-
   diagnostic_updater::Updater updater_;  //!< @brief Updater class which advertises to /diagnostics
   rclcpp::TimerBase::SharedPtr timer_;   //!< @brief timer to get Network information
 
@@ -335,27 +382,9 @@ protected:
   unsigned int crc_error_check_duration_;        //!< @brief CRC error check duration
   unsigned int crc_error_count_threshold_;       //!< @brief CRC error count threshold
 
-  std::deque<unsigned int>
-    reassembles_failed_queue_;  //!< @brief queue that holds count of IP packet reassembles failed
-  uint64_t last_reassembles_failed_;  //!< @brief IP packet reassembles failed at the time of the
-                                      //!< last monitoring
-  unsigned int
-    reassembles_failed_check_duration_;  //!< @brief IP packet reassembles failed check duration
-  unsigned int
-    reassembles_failed_check_count_;  //!< @brief IP packet reassembles failed check count threshold
-  NetSnmpIndex
-    reassembles_failed_index_;  //!< @brief index of IP Reassembles failed in /proc/net/snmp
-
-  unsigned int udp_buf_errors_check_duration_;  //!< @brief UDP errors check duration
-  unsigned int udp_buf_errors_check_count_;     //!< @brief UDP errors check count threshold
-  std::deque<unsigned int>
-    udp_rcvbuf_errors_queue_;  //!< @brief queue that holds count of UDP errors
-  std::deque<unsigned int>
-    udp_sndbuf_errors_queue_;        //!< @brief queue that holds count of UDP errors
-  uint64_t last_udp_rcvbuf_errors_;  //!< @brief UDP buf errors at the time of the last monitoring
-  uint64_t last_udp_sndbuf_errors_;  //!< @brief UDP buf errors at the time of the last monitoring
-  NetSnmpIndex udp_rcvbuf_errors_index_;  //!< @brief index of UDP errors in /proc/net/snmp
-  NetSnmpIndex udp_sndbuf_errors_index_;  //!< @brief index of UDP errors in /proc/net/snmp
+  NetSnmp reassembles_failed_info_;  //!< @brief information of IP packet reassembles failed
+  NetSnmp udp_rcvbuf_errors_info_;  //!< @brief information of UDP rcv buf errors
+  NetSnmp udp_sndbuf_errors_info_;  //!< @brief information of UDP snd buf errors
 
   /**
    * @brief Network connection status messages
