@@ -18,8 +18,8 @@
 #include "autoware/image_projection_based_fusion/utils/geometry.hpp"
 #include "autoware/image_projection_based_fusion/utils/utils.hpp"
 
-#include <memory>
 #include <algorithm>
+#include <memory>
 #include <vector>
 
 namespace autoware::image_projection_based_fusion
