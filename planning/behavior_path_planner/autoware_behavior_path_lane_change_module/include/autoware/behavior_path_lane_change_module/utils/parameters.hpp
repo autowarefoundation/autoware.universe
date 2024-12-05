@@ -115,7 +115,8 @@ struct SafetyParameters
 
 struct TrajectoryParameters
 {
-  double prepare_duration{4.0};
+  double max_prepare_duration{4.0};
+  double min_prepare_duration{1.0};
   double lateral_jerk{0.5};
   double min_longitudinal_acc{-1.0};
   double max_longitudinal_acc{1.0};
