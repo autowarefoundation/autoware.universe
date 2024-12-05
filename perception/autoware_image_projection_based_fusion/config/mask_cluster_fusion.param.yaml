@@ -1,5 +1,5 @@
 /**:
   ros__parameters:
-    fusion_distance: 100.0 # the distance threshold for the fusion
-    fusion_ratio: 0.4 # the ratio between the selected cluster points and the total points in the cluster
-    remove_unknown: true # remove unknown clusters
+    fusion_distance: 100.0
+    fusion_ratio: 0.4
+    remove_unknown: false

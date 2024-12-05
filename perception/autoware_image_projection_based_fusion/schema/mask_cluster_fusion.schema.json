@@ -1,0 +1,46 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parameters for Mask Cluster Fusion Node",
+  "type": "object",
+  "definitions": {
+    "mask_cluster_fusion": {
+      "type": "object",
+      "properties": {
+        "fusion_distance": {
+          "type": "number",
+          "description": "If the detected object's distance is less than its value, the fusion will be processed.",
+          "default": 100.0,
+          "minimum": 0.0
+        },
+        "fusion_ratio": {
+          "type": "number",
+          "description": "The ratio between the selected cluster points and the total points in the cluster.",
+          "default": 0.4,
+          "minimum": 0.0
+        },
+        "remove_unknown": {
+          "type": "boolean",
+          "description": "If this parameter is true, all of objects labeled UNKNOWN will be removed in post-process.",
+          "default": false
+        }
+      },
+      "required": [
+        "fusion_distance",
+        "fusion_ratio",
+        "remove_unknown"
+      ]
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/mask_cluster_fusion"
+        }
+      },
+      "required": ["ros__parameters"]
+    }
+  },
+  "required": ["/**"]
+}
