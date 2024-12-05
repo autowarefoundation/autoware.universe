@@ -18,6 +18,10 @@
 #include "autoware/image_projection_based_fusion/utils/geometry.hpp"
 #include "autoware/image_projection_based_fusion/utils/utils.hpp"
 
+#include <memory>
+#include <algorithm>
+#include <vector>
+
 namespace autoware::image_projection_based_fusion
 {
 bool is_far_enough(const DetectedObjectWithFeature & obj, const double distance_threshold)
