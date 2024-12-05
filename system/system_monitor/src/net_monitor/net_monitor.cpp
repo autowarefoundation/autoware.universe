@@ -84,13 +84,17 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
   timer_ = rclcpp::create_timer(this, get_clock(), 1s, std::bind(&NetMonitor::on_timer, this));
 
   // Initialize information for `/proc/net/snmp`
-  int reassembles_failed_check_duration = declare_parameter<int>("reassembles_failed_check_duration", 1);
+  int reassembles_failed_check_duration =
+    declare_parameter<int>("reassembles_failed_check_duration", 1);
   int reassembles_failed_check_count = declare_parameter<int>("reassembles_failed_check_count", 1);
   int udp_buf_errors_check_duration = declare_parameter<int>("udp_buf_errors_check_duration", 1);
   int udp_buf_errors_check_count = declare_parameter<int>("udp_buf_errors_check_count", 1);
-  reassembles_failed_info_.set_check_parameters(reassembles_failed_check_duration, reassembles_failed_check_count);
-  udp_rcvbuf_errors_info_.set_check_parameters(udp_buf_errors_check_duration, udp_buf_errors_check_count);
-  udp_sndbuf_errors_info_.set_check_parameters(udp_buf_errors_check_duration, udp_buf_errors_check_count);
+  reassembles_failed_info_.set_check_parameters(
+    reassembles_failed_check_duration, reassembles_failed_check_count);
+  udp_rcvbuf_errors_info_.set_check_parameters(
+    udp_buf_errors_check_duration, udp_buf_errors_check_count);
+  udp_sndbuf_errors_info_.set_check_parameters(
+    udp_buf_errors_check_duration, udp_buf_errors_check_count);
   reassembles_failed_info_.find_index("Ip:", "ReasmFails");
   udp_rcvbuf_errors_info_.find_index("Udp:", "RcvbufErrors");
   udp_sndbuf_errors_info_.find_index("Udp:", "SndbufErrors");
