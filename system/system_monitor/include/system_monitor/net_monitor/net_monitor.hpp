@@ -96,10 +96,8 @@ public:
   /**
    * @brief Constructor
    * @param [in] node node using this class.
-   * @param [in] check_duration the value for check_duration
-   * @param [in] check_count the value for check_count
    */
-  explicit NetSnmp(rclcpp::Node * node, unsigned int check_duration, unsigned int check_count);
+  explicit NetSnmp(rclcpp::Node * node);
 
   /**
    * @brief Constructor
@@ -125,6 +123,13 @@ public:
    * @brief Move assignment operator
    */
   NetSnmp & operator=(const NetSnmp &&) = delete;
+
+  /**
+   * @brief Set parameters for check
+   * @param [in] check_duration the value for check_duration
+   * @param [in] check_count the value for check_count
+   */
+  void set_check_parameters(unsigned int check_duration, unsigned int check_count);
 
   /**
    * @brief Find index in `/proc/net/snmp`

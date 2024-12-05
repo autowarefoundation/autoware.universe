@@ -52,15 +52,9 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
   socket_path_(declare_parameter("socket_path", traffic_reader_service::socket_path)),
   crc_error_check_duration_(declare_parameter<int>("crc_error_check_duration", 1)),
   crc_error_count_threshold_(declare_parameter<int>("crc_error_count_threshold", 1)),
-  reassembles_failed_info_(
-    this, declare_parameter<int>("reassembles_failed_check_duration", 1),
-    declare_parameter<int>("reassembles_failed_check_count", 1)),
-  udp_rcvbuf_errors_info_(
-    this, declare_parameter<int>("udp_buf_errors_check_duration", 1),
-    declare_parameter<int>("udp_buf_errors_check_count", 1)),
-  udp_sndbuf_errors_info_(
-    this, declare_parameter<int>("udp_buf_errors_check_duration", 1),
-    declare_parameter<int>("udp_buf_errors_check_count", 1))
+  reassembles_failed_info_(this),
+  udp_rcvbuf_errors_info_(this),
+  udp_sndbuf_errors_info_(this)
 {
   if (monitor_program_.empty()) {
     monitor_program_ = "*";
@@ -90,6 +84,13 @@ NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
   timer_ = rclcpp::create_timer(this, get_clock(), 1s, std::bind(&NetMonitor::on_timer, this));
 
   // Initialize information for `/proc/net/snmp`
+  int reassembles_failed_check_duration = declare_parameter<int>("reassembles_failed_check_duration", 1);
+  int reassembles_failed_check_count = declare_parameter<int>("reassembles_failed_check_count", 1);
+  int udp_buf_errors_check_duration = declare_parameter<int>("udp_buf_errors_check_duration", 1);
+  int udp_buf_errors_check_count = declare_parameter<int>("udp_buf_errors_check_count", 1);
+  reassembles_failed_info_.set_check_parameters(reassembles_failed_check_duration, reassembles_failed_check_count);
+  udp_rcvbuf_errors_info_.set_check_parameters(udp_buf_errors_check_duration, udp_buf_errors_check_count);
+  udp_sndbuf_errors_info_.set_check_parameters(udp_buf_errors_check_duration, udp_buf_errors_check_count);
   reassembles_failed_info_.find_index("Ip:", "ReasmFails");
   udp_rcvbuf_errors_info_.find_index("Udp:", "RcvbufErrors");
   udp_sndbuf_errors_info_.find_index("Udp:", "SndbufErrors");
@@ -731,10 +732,10 @@ void NetMonitor::close_connection()
   socket_->close();
 }
 
-NetSnmp::NetSnmp(rclcpp::Node * node, unsigned int check_duration, unsigned int check_count)
+NetSnmp::NetSnmp(rclcpp::Node * node)
 : logger_(node->get_logger().get_child("net_snmp")),
-  check_duration_(check_duration),
-  check_count_(check_count),
+  check_duration_(1),
+  check_count_(1),
   index_row_(0),
   index_col_(0),
   current_value_(0),
@@ -742,6 +743,12 @@ NetSnmp::NetSnmp(rclcpp::Node * node, unsigned int check_duration, unsigned int 
   value_per_unit_time_(0),
   queue_()
 {
+}
+
+void NetSnmp::set_check_parameters(unsigned int check_duration, unsigned int check_count)
+{
+  check_duration_ = check_duration;
+  check_count_ = check_count;
 }
 
 void NetSnmp::find_index(const std::string & protocol, const std::string & metrics)
