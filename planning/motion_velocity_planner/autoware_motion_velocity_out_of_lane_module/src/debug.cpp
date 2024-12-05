@@ -17,6 +17,7 @@
 #include "types.hpp"
 
 #include <autoware/motion_utils/marker/virtual_wall_marker_creator.hpp>
+#include <autoware/motion_velocity_planner_common/planner_data.hpp>
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/ros/marker_helper.hpp>
@@ -123,7 +124,7 @@ size_t add_stop_line_markers(
 {
   auto debug_marker = get_base_marker();
   debug_marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
-  debug_marker.ns = "stop_lines";
+  debug_marker.ns = "object_stop_lines";
   const auto & add_lanelets_markers = [&](const auto & lanelets) {
     for (const auto & ll : lanelets) {
       debug_marker.points.clear();
@@ -152,6 +153,30 @@ size_t add_stop_line_markers(
     debug_marker_array.markers.push_back(debug_marker);
   }
   return max_id;
+}
+
+void add_stop_line_markers(
+  visualization_msgs::msg::MarkerArray & debug_marker_array,
+  const std::vector<StopPoint> & map_stop_points, const double z)
+{
+  auto debug_marker = get_base_marker();
+  debug_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
+  debug_marker.ns = "ego_stop_lines";
+  debug_marker.color = universe_utils::createMarkerColor(0.5, 0.0, 0.7, 1.0);
+  geometry_msgs::msg::Point p1;
+  geometry_msgs::msg::Point p2;
+  p1.z = p2.z = z;
+  for (const auto & stop_point : map_stop_points) {
+    for (auto i = 0UL; i + 1 < stop_point.stop_line.size(); ++i) {
+      p1.x = stop_point.stop_line[i].x();
+      p1.y = stop_point.stop_line[i].y();
+      p2.x = stop_point.stop_line[i + 1].x();
+      p2.y = stop_point.stop_line[i + 1].y();
+      debug_marker.points.push_back(p1);
+      debug_marker.points.push_back(p2);
+    }
+  }
+  debug_marker_array.markers.push_back(debug_marker);
 }
 
 void add_out_lanelets(
@@ -243,6 +268,8 @@ visualization_msgs::msg::MarkerArray create_debug_marker_array(
 
   debug_data.prev_stop_line = add_stop_line_markers(
     debug_marker_array, ego_data.stop_lines_rtree, z, debug_data.prev_stop_line);
+
+  add_stop_line_markers(debug_marker_array, ego_data.map_stop_points, z);
 
   return debug_marker_array;
 }

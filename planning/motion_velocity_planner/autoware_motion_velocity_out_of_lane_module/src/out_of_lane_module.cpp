@@ -95,6 +95,7 @@ void OutOfLaneModule::init_parameters(rclcpp::Node & node)
     getOrDeclareParameter<bool>(node, ns_ + ".objects.ignore_behind_ego");
 
   pp.precision = getOrDeclareParameter<double>(node, ns_ + ".action.precision");
+  pp.use_map_stop_lines = getOrDeclareParameter<bool>(node, ns_ + ".action.use_map_stop_lines");
   pp.min_decision_duration = getOrDeclareParameter<double>(node, ns_ + ".action.min_duration");
   pp.lon_dist_buffer =
     getOrDeclareParameter<double>(node, ns_ + ".action.longitudinal_distance_buffer");
@@ -134,6 +135,7 @@ void OutOfLaneModule::update_parameters(const std::vector<rclcpp::Parameter> & p
   updateParam(parameters, ns_ + ".objects.ignore_behind_ego", pp.objects_ignore_behind_ego);
 
   updateParam(parameters, ns_ + ".action.precision", pp.precision);
+  updateParam(parameters, ns_ + ".action.use_map_stop_lines", pp.use_map_stop_lines);
   updateParam(parameters, ns_ + ".action.min_duration", pp.min_decision_duration);
   updateParam(parameters, ns_ + ".action.longitudinal_distance_buffer", pp.lon_dist_buffer);
   updateParam(parameters, ns_ + ".action.lateral_distance_buffer", pp.lat_dist_buffer);
@@ -276,6 +278,20 @@ VelocityPlanningResult OutOfLaneModule::plan(
 
   stopwatch.tic("calculate_slowdown_point");
   auto slowdown_pose = out_of_lane::calculate_slowdown_point(ego_data, out_of_lane_data, params_);
+  if (slowdown_pose && params_.use_map_stop_lines) {
+    // try to use a map stop line ahead of the stop pose
+    ego_data.map_stop_points = planner_data->calculate_map_stop_points(ego_data.trajectory_points);
+    auto stop_arc_length =
+      motion_utils::calcSignedArcLength(ego_data.trajectory_points, 0LU, slowdown_pose->position);
+    for (const auto & stop_point : ego_data.map_stop_points) {
+      if (
+        stop_point.ego_trajectory_arc_length < stop_arc_length &&
+        stop_point.ego_trajectory_arc_length >= ego_data.min_stop_arc_length) {
+        slowdown_pose = stop_point.ego_stop_pose;
+        stop_arc_length = stop_point.ego_trajectory_arc_length;
+      }
+    }
+  }
   const auto calculate_slowdown_point_us = stopwatch.toc("calculate_slowdown_point");
 
   // reuse previous stop pose if there is no new one or if its velocity is not higher than the new
