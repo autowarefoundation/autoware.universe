@@ -222,6 +222,8 @@ struct TransientData
   size_t current_path_seg_idx;   // index of nearest segment to ego along current path
   double current_path_velocity;  // velocity of the current path at the ego position along the path
 
+  double lane_change_prepare_duration{0.0};
+
   bool is_ego_near_current_terminal_start{false};
   bool is_ego_stuck{false};
 

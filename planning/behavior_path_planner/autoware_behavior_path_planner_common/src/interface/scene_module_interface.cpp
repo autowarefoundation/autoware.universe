@@ -14,6 +14,8 @@
 
 #include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
 
+#include <vector>
+
 namespace autoware::behavior_path_planner
 {
 void SceneModuleInterface::setDrivableLanes(const std::vector<DrivableLanes> & drivable_lanes)

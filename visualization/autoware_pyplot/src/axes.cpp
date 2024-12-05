@@ -15,6 +15,8 @@
 #include <autoware/pyplot/axes.hpp>
 #include <autoware/pyplot/loader.hpp>
 
+#include <tuple>
+
 namespace autoware::pyplot
 {
 inline namespace axes

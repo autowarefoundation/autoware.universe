@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MANAGER_HPP_
-#define MANAGER_HPP_
+#ifndef AUTOWARE__BEHAVIOR_VELOCITY_BLIND_SPOT_MODULE__MANAGER_HPP_
+#define AUTOWARE__BEHAVIOR_VELOCITY_BLIND_SPOT_MODULE__MANAGER_HPP_
 
-#include "scene.hpp"
+#include "autoware/behavior_velocity_blind_spot_module/scene.hpp"
 
 #include <autoware/behavior_velocity_planner_common/plugin_interface.hpp>
 #include <autoware/behavior_velocity_planner_common/plugin_wrapper.hpp>
@@ -52,4 +52,4 @@ class BlindSpotModulePlugin : public PluginWrapper<BlindSpotModuleManager>
 
 }  // namespace autoware::behavior_velocity_planner
 
-#endif  // MANAGER_HPP_
+#endif  // AUTOWARE__BEHAVIOR_VELOCITY_BLIND_SPOT_MODULE__MANAGER_HPP_

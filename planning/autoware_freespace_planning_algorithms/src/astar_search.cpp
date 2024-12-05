@@ -24,6 +24,9 @@
 #include <tf2/utils.h>
 
 #include <limits>
+#include <memory>
+#include <queue>
+#include <utility>
 
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>

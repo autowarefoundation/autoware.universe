@@ -22,7 +22,10 @@
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 
+#include <algorithm>
+#include <limits>
 #include <memory>
+#include <utility>
 #include <vector>
 
 namespace autoware::behavior_path_planner
