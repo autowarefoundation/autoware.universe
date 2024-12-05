@@ -316,9 +316,9 @@ void CostmapGenerator::set_grid_center(const geometry_msgs::msg::TransformStampe
   const auto cur_pos = costmap_.getPosition();
   const grid_map::Position ref_pos(tf.transform.translation.x, tf.transform.translation.y);
   const auto disp = ref_pos - cur_pos;
-  const auto resol = costmap_.getResolution();
+  const auto resolution = costmap_.getResolution();
   const grid_map::Position offset(
-    std::round(disp.x() / resol) * resol, std::round(disp.y() / resol) * resol);
+    std::round(disp.x() / resolution) * resolution, std::round(disp.y() / resolution) * resolution);
   costmap_.setPosition(cur_pos + offset);
 }
 
