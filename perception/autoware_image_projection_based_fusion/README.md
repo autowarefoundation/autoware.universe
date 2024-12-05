@@ -69,7 +69,7 @@ The rclcpp::TimerBase timer could not break a for loop, therefore even if time i
 ### Detail description of each fusion's algorithm is in the following links
 
 | Fusion Name                | Description                                                                                       | Detail                                       |
-| -------------------------- |---------------------------------------------------------------------------------------------------| -------------------------------------------- |
+| -------------------------- | ------------------------------------------------------------------------------------------------- | -------------------------------------------- |
 | roi_cluster_fusion         | Overwrite a classification label of clusters by that of ROIs from a 2D object detector.           | [link](./docs/roi-cluster-fusion.md)         |
 | roi_detected_object_fusion | Overwrite a classification label of detected objects by that of ROIs from a 2D object detector.   | [link](./docs/roi-detected-object-fusion.md) |
 | pointpainting_fusion       | Paint the point cloud with the ROIs from a 2D object detector and feed to a 3D object detector.   | [link](./docs/pointpainting-fusion.md)       |
