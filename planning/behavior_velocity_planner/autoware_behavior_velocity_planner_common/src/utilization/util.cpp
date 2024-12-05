@@ -26,8 +26,6 @@
 #include <lanelet2_routing/RoutingGraph.h>
 #include <tf2/utils.h>
 
-#include <cmath>
-
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #else
@@ -35,6 +33,9 @@
 #endif
 
 #include <algorithm>
+#include <cmath>
+#include <iostream>
+#include <set>
 #include <string>
 #include <vector>
 

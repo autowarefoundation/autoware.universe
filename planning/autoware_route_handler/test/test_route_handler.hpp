@@ -31,6 +31,7 @@
 
 #include <lanelet2_io/Io.h>
 
+#include <iostream>
 #include <memory>
 #include <string>
 namespace autoware::route_handler::test

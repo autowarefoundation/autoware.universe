@@ -24,6 +24,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <limits>
+#include <memory>
 #include <vector>
 
 namespace autoware::velocity_smoother

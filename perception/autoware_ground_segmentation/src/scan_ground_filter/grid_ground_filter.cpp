@@ -18,6 +18,9 @@
 
 #include <pcl/PointIndices.h>
 
+#include <memory>
+#include <vector>
+
 namespace autoware::ground_segmentation
 {
 

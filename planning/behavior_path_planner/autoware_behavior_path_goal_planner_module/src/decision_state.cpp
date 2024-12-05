@@ -17,6 +17,9 @@
 #include <autoware/behavior_path_goal_planner_module/decision_state.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 
+#include <memory>
+#include <vector>
+
 namespace autoware::behavior_path_planner
 {
 

@@ -18,6 +18,7 @@
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 
 #include <cmath>
+#include <utility>
 
 namespace autoware::behavior_velocity_planner
 {

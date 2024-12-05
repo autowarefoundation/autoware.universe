@@ -104,7 +104,7 @@ double calc_dist_to_last_fit_width(
 
 double calc_maximum_prepare_length(const CommonDataPtr & common_data_ptr)
 {
-  const auto max_prepare_duration = common_data_ptr->lc_param_ptr->trajectory.prepare_duration;
+  const auto max_prepare_duration = common_data_ptr->lc_param_ptr->trajectory.max_prepare_duration;
   const auto ego_max_speed = common_data_ptr->bpp_param_ptr->max_vel;
 
   return max_prepare_duration * ego_max_speed;
@@ -197,7 +197,7 @@ std::vector<double> calc_max_lane_change_lengths(
 
   const auto & params = common_data_ptr->lc_param_ptr->trajectory;
   const auto lat_jerk = params.lateral_jerk;
-  const auto t_prepare = params.prepare_duration;
+  const auto t_prepare = params.max_prepare_duration;
   const auto current_velocity = common_data_ptr->get_ego_speed();
   const auto path_velocity = common_data_ptr->transient_data.current_path_velocity;
 
@@ -382,11 +382,17 @@ std::vector<double> calc_lon_acceleration_samples(
 }
 
 double calc_lane_changing_acceleration(
-  const double initial_lane_changing_velocity, const double max_path_velocity,
-  const double lane_changing_time, const double prepare_longitudinal_acc)
+  const CommonDataPtr & common_data_ptr, const double initial_lane_changing_velocity,
+  const double max_path_velocity, const double lane_changing_time,
+  const double prepare_longitudinal_acc)
 {
   if (prepare_longitudinal_acc <= 0.0) {
-    return 0.0;
+    const auto & params = common_data_ptr->lc_param_ptr->trajectory;
+    const auto lane_changing_acc =
+      common_data_ptr->transient_data.is_ego_near_current_terminal_start
+        ? prepare_longitudinal_acc * params.lane_changing_decel_factor
+        : 0.0;
+    return lane_changing_acc;
   }
 
   return std::clamp(
@@ -394,18 +400,41 @@ double calc_lane_changing_acceleration(
     prepare_longitudinal_acc);
 }
 
+double calc_actual_prepare_duration(
+  const CommonDataPtr & common_data_ptr, const double current_velocity,
+  const double active_signal_duration)
+{
+  const auto & params = common_data_ptr->lc_param_ptr->trajectory;
+  const auto min_lc_velocity = params.min_lane_changing_velocity;
+
+  // need to ensure min prep duration is sufficient to reach minimum lane changing velocity
+  const auto min_prepare_duration = std::invoke([&]() -> double {
+    if (current_velocity >= min_lc_velocity) {
+      return params.min_prepare_duration;
+    }
+    const auto max_acc =
+      std::min(common_data_ptr->bpp_param_ptr->max_acc, params.max_longitudinal_acc);
+    if (max_acc < eps) {
+      return params.max_prepare_duration;
+    }
+    return (min_lc_velocity - current_velocity) / max_acc;
+  });
+
+  return std::max(params.max_prepare_duration - active_signal_duration, min_prepare_duration);
+}
+
 std::vector<double> calc_prepare_durations(const CommonDataPtr & common_data_ptr)
 {
   const auto & lc_param_ptr = common_data_ptr->lc_param_ptr;
   const auto threshold = common_data_ptr->bpp_param_ptr->base_link2front +
                          lc_param_ptr->min_length_for_turn_signal_activation;
-  const auto max_prepare_duration = lc_param_ptr->trajectory.prepare_duration;
 
   // TODO(Azu) this check seems to cause scenario failures.
   if (common_data_ptr->transient_data.dist_to_terminal_start >= threshold) {
-    return {max_prepare_duration};
+    return {common_data_ptr->transient_data.lane_change_prepare_duration};
   }
 
+  const auto max_prepare_duration = lc_param_ptr->trajectory.max_prepare_duration;
   std::vector<double> prepare_durations;
   constexpr double step = 0.5;
 
@@ -497,7 +526,7 @@ std::vector<PhaseMetrics> calc_shift_phase_metrics(
       shift_length, common_data_ptr->lc_param_ptr->trajectory.lateral_jerk, lat_acc);
 
     const double lane_changing_accel = calc_lane_changing_acceleration(
-      initial_velocity, max_path_velocity, lane_changing_duration, lon_accel);
+      common_data_ptr, initial_velocity, max_path_velocity, lane_changing_duration, lon_accel);
 
     const auto lane_changing_length = calculation::calc_phase_length(
       initial_velocity, max_vel, lane_changing_accel, lane_changing_duration);
