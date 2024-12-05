@@ -651,7 +651,7 @@ bool NetMonitor::connect_service()
   socket_->connect(endpoint, error_code);
 
   if (error_code) {
-    RCLCPP_ERROR(get_logger(), "Failed to connect socket. %s", error_code.message().c_str());
+    RCLCPP_ERROR_ONCE(get_logger(), "Failed to connect socket. %s", error_code.message().c_str());
     return false;
   }
 
@@ -823,13 +823,13 @@ bool NetSnmp::read_value_from_proc(
   unsigned int index_row, unsigned int index_col, uint64_t & output_value)
 {
   if (index_row == 0 && index_col == 0) {
-    RCLCPP_WARN(logger_, "index is invalid. : %u, %u", index_row, index_col);
+    RCLCPP_WARN_ONCE(logger_, "index is invalid. : %u, %u", index_row, index_col);
     return false;
   }
 
   std::ifstream ifs("/proc/net/snmp");
   if (!ifs) {
-    RCLCPP_WARN(logger_, "Failed to open /proc/net/snmp.");
+    RCLCPP_WARN_ONCE(logger_, "Failed to open /proc/net/snmp.");
     return false;
   }
 
@@ -843,14 +843,14 @@ bool NetSnmp::read_value_from_proc(
   }
 
   if (target_line.empty()) {
-    RCLCPP_WARN(logger_, "Failed to get a line of /proc/net/snmp.");
+    RCLCPP_WARN_ONCE(logger_, "Failed to get a line of /proc/net/snmp.");
     return false;
   }
 
   std::vector<std::string> value_list;
   boost::split(value_list, target_line, boost::is_space());
   if (index_col >= value_list.size()) {
-    RCLCPP_WARN(
+    RCLCPP_WARN_ONCE(
       logger_, "There are not enough columns for the column index. : column size=%lu index=%u, %u",
       value_list.size(), index_row, index_col);
     return false;
@@ -858,14 +858,14 @@ bool NetSnmp::read_value_from_proc(
 
   std::string value_str = value_list[index_col];
   if (value_str.empty()) {
-    RCLCPP_WARN(logger_, "The value is empty. : index=%u, %u", index_row, index_col);
+    RCLCPP_WARN_ONCE(logger_, "The value is empty. : index=%u, %u", index_row, index_col);
     return false;
   }
 
   if (value_str[0] == '-') {
-    // In case the value is negative, store 0 and do not make it error to avoid too many error logs
+    RCLCPP_WARN_ONCE(logger_, "The value is minus. : %s", value_str.c_str());
     output_value = 0;
-    return true;
+    return false;
   } else {
     output_value = std::stoull(value_str);
     return true;
