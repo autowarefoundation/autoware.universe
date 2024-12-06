@@ -75,12 +75,14 @@ void PreprocessKernelTest::SetUp()
   points_d_ = cuda::make_unique<float[]>(capacity_ * point_feature_size_);
   voxels_buffer_d_ = cuda::make_unique<float[]>(voxels_buffer_size_);
   mask_d_ = cuda::make_unique<unsigned int[]>(mask_size_);
+  priority_map_d_ = cuda::make_unique<unsigned int[]>(mask_size_);
   num_voxels_d_ = cuda::make_unique<unsigned int[]>(1);
 
   CHECK_CUDA_ERROR(cudaMemsetAsync(num_voxels_d_.get(), 0, sizeof(unsigned int), stream_));
   CHECK_CUDA_ERROR(
     cudaMemsetAsync(voxels_buffer_d_.get(), 0, voxels_buffer_size_ * sizeof(float), stream_));
   CHECK_CUDA_ERROR(cudaMemsetAsync(mask_d_.get(), 0, mask_size_ * sizeof(int), stream_));
+  CHECK_CUDA_ERROR(cudaMemsetAsync(priority_map_d_.get(), 0, mask_size_ * sizeof(int), stream_));
   CHECK_CUDA_ERROR(cudaMemsetAsync(voxels_d_.get(), 0, voxels_size_ * sizeof(float), stream_));
   CHECK_CUDA_ERROR(
     cudaMemsetAsync(coordinates_d_.get(), 0, coordinates_size_ * sizeof(int), stream_));
@@ -167,9 +169,9 @@ TEST_F(PreprocessKernelTest, BasicTest)
   EXPECT_EQ(points[3], voxel_data[3]);
 
   code = generateBaseFeatures_launch(
-    mask_d_.get(), voxels_buffer_d_.get(), grid_size_y_, grid_size_x_, max_voxel_size_,
-    num_voxels_d_.get(), voxels_d_.get(), num_points_per_voxel_d_.get(), coordinates_d_.get(),
-    stream_);
+    mask_d_.get(), priority_map_d_.get(), voxels_buffer_d_.get(), grid_size_y_, grid_size_x_,
+    max_voxel_size_, num_voxels_d_.get(), voxels_d_.get(), num_points_per_voxel_d_.get(),
+    coordinates_d_.get(), stream_);
 
   ASSERT_EQ(cudaSuccess, code);
 
@@ -309,9 +311,9 @@ TEST_F(PreprocessKernelTest, VoxelOverflowTest)
   EXPECT_EQ(0.0, voxel_data[max_point_in_voxel_size_ * point_feature_size_ + 3]);
 
   code = generateBaseFeatures_launch(
-    mask_d_.get(), voxels_buffer_d_.get(), grid_size_y_, grid_size_x_, max_voxel_size_,
-    num_voxels_d_.get(), voxels_d_.get(), num_points_per_voxel_d_.get(), coordinates_d_.get(),
-    stream_);
+    mask_d_.get(), priority_map_d_.get(), voxels_buffer_d_.get(), grid_size_y_, grid_size_x_,
+    max_voxel_size_, num_voxels_d_.get(), voxels_d_.get(), num_points_per_voxel_d_.get(),
+    coordinates_d_.get(), stream_);
 
   ASSERT_EQ(cudaSuccess, code);
 
