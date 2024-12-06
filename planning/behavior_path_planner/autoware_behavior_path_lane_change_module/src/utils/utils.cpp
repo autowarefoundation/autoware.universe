@@ -34,7 +34,12 @@
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info.hpp>
+#include <range/v3/action/insert.hpp>
 #include <range/v3/algorithm/any_of.hpp>
+#include <range/v3/algorithm/find_if.hpp>
+#include <range/v3/algorithm/for_each.hpp>
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/detail/pose__struct.hpp>
@@ -1246,5 +1251,63 @@ bool filter_target_lane_objects(
   }
 
   return false;
+}
+
+std::vector<lanelet::ConstLanelets> get_preceding_lanes(const CommonDataPtr & common_data_ptr)
+{
+  const auto & route_handler_ptr = common_data_ptr->route_handler_ptr;
+  const auto & target_lanes = common_data_ptr->lanes_ptr->target;
+  const auto & ego_pose = common_data_ptr->get_ego_pose();
+  const auto backward_lane_length = common_data_ptr->lc_param_ptr->backward_lane_length;
+
+  const auto preceding_lanes_list =
+    utils::getPrecedingLanelets(*route_handler_ptr, target_lanes, ego_pose, backward_lane_length);
+
+  const auto & current_lanes = common_data_ptr->lanes_ptr->current;
+  std::unordered_set<lanelet::Id> current_lanes_id;
+  for (const auto & lane : current_lanes) {
+    current_lanes_id.insert(lane.id());
+  }
+  const auto is_overlapping = [&](const lanelet::ConstLanelet & lane) {
+    return current_lanes_id.find(lane.id()) == current_lanes_id.end();
+  };
+
+  const auto is_connected =
+    [&](const lanelet::ConstLanelet & curr, const lanelet::ConstLanelet & prev) {
+      const auto prev_lanes = route_handler_ptr->getPreviousLanelets(curr);
+      return ranges::any_of(
+        prev_lanes, [&](const auto & prev_lane) { return prev_lane.id() == prev.id(); });
+    };
+
+  const auto trim_lanes = [&](const lanelet::ConstLanelets & overlapped_preceding) {
+    // Step 1: Remove lanes with the same ID as in `current_lanes_id`
+    auto non_overlapped = overlapped_preceding | ranges::views::filter(is_overlapping) |
+                          ranges::views::reverse | ranges::to<lanelet::ConstLanelets>;
+
+    if (non_overlapped.empty()) {
+      return ranges::yield(lanelet::ConstLanelets());  // Yield nothing
+    }
+
+    // Step 2: Removing overlapping lanes might result in disconnected lanes.
+    // We need to search for and remove these disconnected lanes.
+    auto it = non_overlapped.begin();
+    for (; std::next(it) != non_overlapped.end(); ++it) {
+      const auto & curr = *it;
+      const auto & prev = *std::next(it);
+
+      if (!is_connected(curr, prev)) {
+        break;
+      }
+    }
+
+    // The last lane is always non-connected, as there are no lanes after it.
+    // To address this, start removing lanes in the next iteration instead.
+    if (it != non_overlapped.end() && std::next(it) != non_overlapped.end()) {
+      non_overlapped.erase(std::next(it), non_overlapped.end());
+    }
+
+    return ranges::yield(non_overlapped);
+  };
+  return preceding_lanes_list | ranges::views::for_each(trim_lanes) | ranges::to<std::vector>();
 }
 }  // namespace autoware::behavior_path_planner::utils::lane_change
