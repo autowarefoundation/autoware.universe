@@ -33,9 +33,9 @@ def create_traffic_light_occlusion_predictor(namespace):
         "input/camera_info": f"/sensing/camera/{namespace}/camera_info",
         "input/cloud": LaunchConfiguration("input/cloud"),
         "input/rois": f"/perception/traffic_light_recognition/{namespace}/detection/rois",
-        "input/car/traffic_signals": "classified/car/traffic_signals",
-        "input/pedestrian/traffic_signals": "classified/pedestrian/traffic_signals",
-        "output/traffic_signals": f"/perception/traffic_light_recognition/{namespace}/classification/traffic_signals",
+        "input/car/traffic_lights": "classified/car/traffic_lights",
+        "input/pedestrian/traffic_lights": "classified/pedestrian/traffic_lights",
+        "output/traffic_lights": f"/perception/traffic_light_recognition/{namespace}/classification/traffic_lights",
     }.items()
 
     group = GroupAction(
