@@ -5,9 +5,9 @@ Changelog for package autoware_costmap_generator
 0.39.0 (2024-11-25)
 -------------------
 * Merge commit '6a1ddbd08bd' into release-0.39.0
-* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/youtalk/autoware.universe/issues/9304>`_)
-* fix(costmap_generator): use vehicle frame for lidar height thresholds (`#9311 <https://github.com/youtalk/autoware.universe/issues/9311>`_)
-* test(costmap_generator): unit test implementation for costmap generator (`#9149 <https://github.com/youtalk/autoware.universe/issues/9149>`_)
+* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/autowarefoundation/autoware.universe/issues/9304>`_)
+* fix(costmap_generator): use vehicle frame for lidar height thresholds (`#9311 <https://github.com/autowarefoundation/autoware.universe/issues/9311>`_)
+* test(costmap_generator): unit test implementation for costmap generator (`#9149 <https://github.com/autowarefoundation/autoware.universe/issues/9149>`_)
   * modify costmap generator directory structure
   * rename class CostmapGenerator to CostmapGeneratorNode
   * unit test for object_map_utils
@@ -22,8 +22,8 @@ Changelog for package autoware_costmap_generator
   Co-authored-by: Kosuke Takeuchi <kosuke.tnp@gmail.com>
   ---------
   Co-authored-by: Kosuke Takeuchi <kosuke.tnp@gmail.com>
-* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/youtalk/autoware.universe/issues/9304>`_)
-* chore(package.xml): bump version to 0.38.0 (`#9266 <https://github.com/youtalk/autoware.universe/issues/9266>`_) (`#9284 <https://github.com/youtalk/autoware.universe/issues/9284>`_)
+* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/autowarefoundation/autoware.universe/issues/9304>`_)
+* chore(package.xml): bump version to 0.38.0 (`#9266 <https://github.com/autowarefoundation/autoware.universe/issues/9266>`_) (`#9284 <https://github.com/autowarefoundation/autoware.universe/issues/9284>`_)
   * unify package.xml version to 0.37.0
   * remove system_monitor/CHANGELOG.rst
   * add changelog
