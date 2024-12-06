@@ -158,7 +158,8 @@ bool checkOccupancyGridCollision(
 
 bool isStopped(
   std::deque<nav_msgs::msg::Odometry::ConstSharedPtr> & odometry_buffer,
-  const nav_msgs::msg::Odometry::ConstSharedPtr self_odometry, const double duration_lower);
+  const nav_msgs::msg::Odometry::ConstSharedPtr self_odometry, const double duration_lower,
+  const double stopped_upper);
 
 // Flag class for managing whether a certain callback is running in multi-threading
 class ScopedFlag
