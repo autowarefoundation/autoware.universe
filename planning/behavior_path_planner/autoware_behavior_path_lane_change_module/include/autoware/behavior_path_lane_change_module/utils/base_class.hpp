@@ -290,8 +290,6 @@ protected:
   std::optional<Pose> lane_change_stop_pose_{std::nullopt};
   mutable std::optional<LaneChangePath> terminal_lane_change_path_{std::nullopt};
 
-  PathWithLaneId prev_approved_path_{};
-
   int unsafe_hysteresis_count_{0};
   bool is_abort_path_approved_{false};
   bool is_abort_approval_requested_{false};

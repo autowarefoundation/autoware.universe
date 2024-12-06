@@ -129,8 +129,6 @@ protected:
 
   mutable MarkerArray virtual_wall_marker_;
 
-  std::unique_ptr<PathWithLaneId> prev_approved_path_;
-
   void clearAbortApproval() { is_abort_path_approved_ = false; }
 
   bool is_abort_path_approved_{false};

@@ -43,8 +43,7 @@ LaneChangeInterface::LaneChangeInterface(
   std::unique_ptr<LaneChangeBase> && module_type)
 : SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map},  // NOLINT
   parameters_{std::move(parameters)},
-  module_type_{std::move(module_type)},
-  prev_approved_path_{std::make_unique<PathWithLaneId>()}
+  module_type_{std::move(module_type)}
 {
   module_type_->setTimeKeeper(getTimeKeeper());
   logger_ = utils::lane_change::getLogger(module_type_->getModuleTypeStr());
@@ -109,7 +108,6 @@ BehaviorModuleOutput LaneChangeInterface::plan()
 
   auto output = module_type_->generateOutput();
   path_reference_ = std::make_shared<PathWithLaneId>(output.reference_path);
-  *prev_approved_path_ = getPreviousModuleOutput().path;
 
   stop_pose_ = module_type_->getStopPose();
 
@@ -155,8 +153,6 @@ BehaviorModuleOutput LaneChangeInterface::plan()
 
 BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
 {
-  *prev_approved_path_ = getPreviousModuleOutput().path;
-
   BehaviorModuleOutput out = module_type_->getTerminalLaneChangePath();
 
   module_type_->insert_stop_point(module_type_->get_current_lanes(), out.path);
