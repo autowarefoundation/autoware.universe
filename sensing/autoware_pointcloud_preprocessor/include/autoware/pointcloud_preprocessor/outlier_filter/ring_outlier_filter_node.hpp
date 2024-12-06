@@ -44,8 +44,8 @@ protected:
   using InputPointType = autoware::point_types::PointXYZIRCAEDT;
   using OutputPointType = autoware::point_types::PointXYZIRC;
 
-  virtual void filter(
-    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output);
+  void filter(
+    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output) override;
 
   // TODO(sykwer): Temporary Implementation: Remove this interface when all the filter nodes conform
   // to new API
