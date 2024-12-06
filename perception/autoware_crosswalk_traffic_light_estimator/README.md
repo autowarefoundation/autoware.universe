@@ -17,10 +17,11 @@
 | `~/input/classified/traffic_lights` | `autoware_perception_msgs::msg::TrafficLightGroupArray` | classified signals |
 
 =======
-| Name | Type | Description |
+
+| Name                                | Type                                                    | Description        |
 | ----------------------------------- | ------------------------------------------------------- | ------------------ |
-| `~/input/vector_map` | `autoware_map_msgs::msg::LaneletMapBin` | vector map |
-| `~/input/route` | `autoware_planning_msgs::msg::LaneletRoute` | route (optional) |
+| `~/input/vector_map`                | `autoware_map_msgs::msg::LaneletMapBin`                 | vector map         |
+| `~/input/route`                     | `autoware_planning_msgs::msg::LaneletRoute`             | route (optional)   |
 | `~/input/classified/traffic_lights` | `autoware_perception_msgs::msg::TrafficLightGroupArray` | classified signals |
 
 > > > > > > > 200573ce766fc67663ffc721632f6520d392a775
