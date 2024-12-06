@@ -14,6 +14,8 @@
 
 #include "vehicle_velocity_converter/vehicle_velocity_converter.hpp"
 
+#include <string>
+
 VehicleVelocityConverter::VehicleVelocityConverter(const rclcpp::NodeOptions & options)
 : rclcpp::Node("vehicle_velocity_converter", options)
 {

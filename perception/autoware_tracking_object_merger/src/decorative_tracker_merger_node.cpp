@@ -28,7 +28,10 @@
 #include <glog/logging.h>
 
 #include <chrono>
+#include <memory>
+#include <string>
 #include <unordered_map>
+#include <vector>
 
 using Label = autoware_perception_msgs::msg::ObjectClassification;
 

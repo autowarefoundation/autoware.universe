@@ -17,8 +17,10 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <iostream>
 #include <random>
 #include <ratio>
+#include <vector>
 
 constexpr auto TOL = 1E-6;  // 1µm tolerance
 

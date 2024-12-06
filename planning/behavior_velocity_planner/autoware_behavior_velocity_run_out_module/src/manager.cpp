@@ -16,6 +16,7 @@
 
 #include <autoware/universe_utils/ros/parameter.hpp>
 
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>

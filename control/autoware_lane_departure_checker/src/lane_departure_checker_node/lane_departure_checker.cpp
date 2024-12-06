@@ -26,6 +26,7 @@
 #include <tf2/utils.h>
 
 #include <algorithm>
+#include <string>
 #include <vector>
 
 using autoware::universe_utils::LinearRing2d;
@@ -56,39 +57,6 @@ bool isInAnyLane(const lanelet::ConstLanelets & candidate_lanelets, const Point2
   }
 
   return false;
-}
-
-LinearRing2d createHullFromFootprints(const std::vector<LinearRing2d> & footprints)
-{
-  MultiPoint2d combined;
-  for (const auto & footprint : footprints) {
-    for (const auto & p : footprint) {
-      combined.push_back(p);
-    }
-  }
-
-  LinearRing2d hull;
-  boost::geometry::convex_hull(combined, hull);
-
-  return hull;
-}
-
-lanelet::ConstLanelets getCandidateLanelets(
-  const lanelet::ConstLanelets & route_lanelets,
-  const std::vector<LinearRing2d> & vehicle_footprints)
-{
-  lanelet::ConstLanelets candidate_lanelets;
-
-  // Find lanes within the convex hull of footprints
-  const auto footprint_hull = createHullFromFootprints(vehicle_footprints);
-  for (const auto & route_lanelet : route_lanelets) {
-    const auto poly = route_lanelet.polygon2d().basicPolygon();
-    if (!boost::geometry::disjoint(poly, footprint_hull)) {
-      candidate_lanelets.push_back(route_lanelet);
-    }
-  }
-
-  return candidate_lanelets;
 }
 
 }  // namespace
@@ -125,13 +93,13 @@ Output LaneDepartureChecker::update(const Input & input)
     param_.footprint_margin_scale);
   output.processing_time_map["createVehicleFootprints"] = stop_watch.toc(true);
 
-  output.vehicle_passing_areas = createVehiclePassingAreas(output.vehicle_footprints);
+  output.vehicle_passing_areas = utils::createVehiclePassingAreas(output.vehicle_footprints);
   output.processing_time_map["createVehiclePassingAreas"] = stop_watch.toc(true);
 
   const auto candidate_road_lanelets =
-    getCandidateLanelets(input.route_lanelets, output.vehicle_footprints);
+    utils::getCandidateLanelets(input.route_lanelets, output.vehicle_footprints);
   const auto candidate_shoulder_lanelets =
-    getCandidateLanelets(input.shoulder_lanelets, output.vehicle_footprints);
+    utils::getCandidateLanelets(input.shoulder_lanelets, output.vehicle_footprints);
   output.candidate_lanelets = candidate_road_lanelets;
   output.candidate_lanelets.insert(
     output.candidate_lanelets.end(), candidate_shoulder_lanelets.begin(),
@@ -163,22 +131,9 @@ bool LaneDepartureChecker::checkPathWillLeaveLane(
 
   std::vector<LinearRing2d> vehicle_footprints =
     utils::createVehicleFootprints(path, *vehicle_info_ptr_, param_.footprint_extra_margin);
-  lanelet::ConstLanelets candidate_lanelets = getCandidateLanelets(lanelets, vehicle_footprints);
+  lanelet::ConstLanelets candidate_lanelets =
+    utils::getCandidateLanelets(lanelets, vehicle_footprints);
   return willLeaveLane(candidate_lanelets, vehicle_footprints);
-}
-
-std::vector<LinearRing2d> LaneDepartureChecker::createVehiclePassingAreas(
-  const std::vector<LinearRing2d> & vehicle_footprints)
-{
-  // Create hull from two adjacent vehicle footprints
-  std::vector<LinearRing2d> areas;
-  for (size_t i = 0; i < vehicle_footprints.size() - 1; ++i) {
-    const auto & footprint1 = vehicle_footprints.at(i);
-    const auto & footprint2 = vehicle_footprints.at(i + 1);
-    areas.push_back(createHullFromFootprints({footprint1, footprint2}));
-  }
-
-  return areas;
 }
 
 bool LaneDepartureChecker::willLeaveLane(
@@ -204,7 +159,7 @@ std::vector<std::pair<double, lanelet::Lanelet>> LaneDepartureChecker::getLanele
   // Get Footprint Hull basic polygon
   std::vector<LinearRing2d> vehicle_footprints =
     utils::createVehicleFootprints(path, *vehicle_info_ptr_, param_.footprint_extra_margin);
-  LinearRing2d footprint_hull = createHullFromFootprints(vehicle_footprints);
+  LinearRing2d footprint_hull = utils::createHullFromFootprints(vehicle_footprints);
 
   lanelet::BasicPolygon2d footprint_hull_basic_polygon = toBasicPolygon2D(footprint_hull);
 

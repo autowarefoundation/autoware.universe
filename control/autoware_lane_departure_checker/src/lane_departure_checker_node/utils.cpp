@@ -19,6 +19,10 @@
 
 #include <boost/geometry.hpp>
 
+#include <lanelet2_core/geometry/Polygon.h>
+
+#include <vector>
+
 namespace
 {
 struct FootprintMargin
@@ -161,6 +165,63 @@ std::vector<LinearRing2d> createVehicleFootprints(
   }
 
   return vehicle_footprints;
+}
+
+lanelet::ConstLanelets getCandidateLanelets(
+  const lanelet::ConstLanelets & route_lanelets,
+  const std::vector<LinearRing2d> & vehicle_footprints)
+{
+  lanelet::ConstLanelets candidate_lanelets;
+
+  // Find lanes within the convex hull of footprints
+  const auto footprint_hull = createHullFromFootprints(vehicle_footprints);
+
+  for (const auto & route_lanelet : route_lanelets) {
+    const auto poly = route_lanelet.polygon2d().basicPolygon();
+    if (!boost::geometry::disjoint(poly, footprint_hull)) {
+      candidate_lanelets.push_back(route_lanelet);
+    }
+  }
+
+  return candidate_lanelets;
+}
+
+LinearRing2d createHullFromFootprints(const std::vector<LinearRing2d> & footprints)
+{
+  MultiPoint2d combined;
+  for (const auto & footprint : footprints) {
+    for (const auto & p : footprint) {
+      combined.push_back(p);
+    }
+  }
+
+  LinearRing2d hull;
+  boost::geometry::convex_hull(combined, hull);
+
+  return hull;
+}
+
+std::vector<LinearRing2d> createVehiclePassingAreas(
+  const std::vector<LinearRing2d> & vehicle_footprints)
+{
+  if (vehicle_footprints.empty()) {
+    return {};
+  }
+
+  if (vehicle_footprints.size() == 1) {
+    return {vehicle_footprints.front()};
+  }
+
+  std::vector<LinearRing2d> areas;
+  areas.reserve(vehicle_footprints.size() - 1);
+
+  for (size_t i = 0; i < vehicle_footprints.size() - 1; ++i) {
+    const auto & footprint1 = vehicle_footprints.at(i);
+    const auto & footprint2 = vehicle_footprints.at(i + 1);
+    areas.push_back(createHullFromFootprints({footprint1, footprint2}));
+  }
+
+  return areas;
 }
 
 PoseDeviation calcTrajectoryDeviation(

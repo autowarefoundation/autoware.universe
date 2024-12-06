@@ -30,6 +30,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <string>
 #include <vector>
 
 // turn on only when debugging.

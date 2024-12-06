@@ -21,6 +21,7 @@
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <optional>
+#include <utility>
 
 namespace autoware::behavior_velocity_planner
 {
