@@ -62,27 +62,28 @@
 
 namespace rviz_plugins
 {
-void insertNewlines(std::string & str, const size_t max_line_length)
+void insertNewlines(std::string & str, const size_t max_line_text_num)
 {
-  size_t index = max_line_length;
+  size_t index = max_line_text_num;
 
   while (index < str.size()) {
     str.insert(index, "\n");
-    index = index + max_line_length + 1;
+    index = index + max_line_text_num + 1;
   }
 }
 
-std::optional<std::string> generateMrmMessage(diagnostic_msgs::msg::DiagnosticStatus diag_status)
+std::optional<std::string> generateMrmMessage(
+  const diagnostic_msgs::msg::DiagnosticStatus & diag_status, const int max_line_text_num)
 {
   if (diag_status.hardware_id == "") {
     return std::nullopt;
   } else if (diag_status.level == diagnostic_msgs::msg::DiagnosticStatus::ERROR) {
     std::string msg = "- ERROR: " + diag_status.name + " (" + diag_status.message + ")";
-    insertNewlines(msg, 100);
+    insertNewlines(msg, max_line_text_num);
     return msg;
   } else if (diag_status.level == diagnostic_msgs::msg::DiagnosticStatus::WARN) {
     std::string msg = "- WARN: " + diag_status.name + " (" + diag_status.message + ")";
-    insertNewlines(msg, 100);
+    insertNewlines(msg, max_line_text_num);
     return msg;
   }
   return std::nullopt;
@@ -114,7 +115,11 @@ MrmSummaryOverlayDisplay::MrmSummaryOverlayDisplay()
   property_font_size_->setMin(1);
   property_max_letter_num_ = new rviz_common::properties::IntProperty(
     "Max Letter Num", 100, "Max Letter Num", this, SLOT(updateVisualization()), this);
+  property_max_line_text_num_ = new rviz_common::properties::IntProperty(
+    "Max Line Text Num", 100, "Max Line Text Num", this, SLOT(updateVisualization()), this);
+
   property_max_letter_num_->setMin(10);
+  property_max_line_text_num_->setMin(10);
 }
 
 MrmSummaryOverlayDisplay::~MrmSummaryOverlayDisplay()
@@ -159,6 +164,8 @@ void MrmSummaryOverlayDisplay::update(float wall_dt, float ros_dt)
   (void)wall_dt;
   (void)ros_dt;
 
+  const int max_line_text_num = property_max_line_text_num_->getInt();
+
   // MRM summary
   std::vector<std::string> mrm_comfortable_stop_summary_list = {};
   std::vector<std::string> mrm_emergency_stop_summary_list = {};
@@ -168,13 +175,13 @@ void MrmSummaryOverlayDisplay::update(float wall_dt, float ros_dt)
     if (last_msg_ptr_) {
       hazard_level = last_msg_ptr_->status.level;
       for (const auto & diag_status : last_msg_ptr_->status.diag_latent_fault) {
-        const std::optional<std::string> msg = generateMrmMessage(diag_status);
+        const std::optional<std::string> msg = generateMrmMessage(diag_status, max_line_text_num);
         if (msg != std::nullopt) {
           mrm_comfortable_stop_summary_list.push_back(msg.value());
         }
       }
       for (const auto & diag_status : last_msg_ptr_->status.diag_single_point_fault) {
-        const std::optional<std::string> msg = generateMrmMessage(diag_status);
+        const std::optional<std::string> msg = generateMrmMessage(diag_status, max_line_text_num);
         if (msg != std::nullopt) {
           mrm_emergency_stop_summary_list.push_back(msg.value());
         }

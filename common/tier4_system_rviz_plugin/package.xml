@@ -3,8 +3,9 @@
 <package format="3">
   <name>tier4_system_rviz_plugin</name>
   <version>0.38.0</version>
-  <description>The tier4_vehicle_rviz_plugin package</description>
+  <description>The tier4_system_rviz_plugin package</description>
   <maintainer email="koji.minoda@tier4.jp">Koji Minoda</maintainer>
+  <maintainer email="takayuki.murooka@tier4.jp">Takayuki Murooka</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
