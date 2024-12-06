@@ -123,6 +123,24 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
                 ],
             ),
             ComposableNode(
+                package="autoware_traffic_light_signals_merger",
+                plugin="autoware::traffic_light::TrafficLightSignalsMergerNode",
+                name="traffic_light_signals_merger",
+                namespace="classification",
+                remappings=[
+                    ("input/car_signals", "classified/car/traffic_signals"),
+                    ("input/pedestrian_signals", "classified/pedestrian/traffic_signals"),
+                    (
+                        "input/expect_rois",
+                        f"/perception/traffic_light_recognition/{namespace}/detection/expect/rois",
+                    ),
+                    ("output/traffic_light_signals", "traffic_signals"),
+                ],
+                extra_arguments=[
+                    {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
+                ],
+            ),
+            ComposableNode(
                 package="autoware_traffic_light_visualization",
                 plugin="autoware::traffic_light::TrafficLightRoiVisualizerNode",
                 name="traffic_light_roi_visualizer",
@@ -197,8 +215,8 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
 
     return [
         GroupAction([PushRosNamespace(namespace), container]),
-        decompressor_loader,
-        fine_detector_loader,
+        # decompressor_loader,
+        # traffic_light_selector_loader,
     ]
 
 

@@ -34,6 +34,7 @@
       <arg name="all_camera_namespaces" value="$(var all_camera_namespaces)"/>
       <arg name="enable_fine_detection" value="$(var enable_fine_detection)"/>
     </include>
+    <!-- <include file="$(find-pkg-share tier4_perception_launch)/launch/traffic_light_recognition/traffic_light_detector.launch.xml"/> -->
     <include file="$(find-pkg-share tier4_perception_launch)/launch/traffic_light_recognition/traffic_light_node_container.launch.py">
       <arg name="all_camera_namespaces" value="$(var all_camera_namespaces)"/>
       <arg name="enable_image_decompressor" value="$(var enable_image_decompressor)"/>
@@ -47,12 +48,12 @@
   </group>
 
   <!-- traffic_light_occlusion_predictor on each camera -->
-  <group>
+  <!-- <group>
     <include file="$(find-pkg-share tier4_perception_launch)/launch/traffic_light_recognition/traffic_light_occlusion_predictor.launch.py">
       <arg name="all_camera_namespaces" value="$(var all_camera_namespaces)"/>
       <arg name="input/cloud" value="$(var input/cloud)"/>
     </include>
-  </group>
+  </group> -->
 
   <!-- traffic_light_multi_camera_fusion -->
   <group>

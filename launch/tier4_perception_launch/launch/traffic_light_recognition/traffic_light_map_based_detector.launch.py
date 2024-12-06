@@ -56,6 +56,27 @@ def create_traffic_light_map_based_detector(namespace, context):
     return group
 
 
+def create_traffic_light_detector(namespace, context):
+    package = FindPackageShare("tier4_perception_launch")
+    include = PathJoinSubstitution(
+        [package, "launch/traffic_light_recognition/traffic_light_detector.launch.xml"]
+    )
+    arguments = {
+        "namespace": namespace,
+        "use_decompress": "true",
+    }.items()
+
+    group = GroupAction(
+        [
+            PushRosNamespace(namespace),
+            PushRosNamespace("detection"),
+            IncludeLaunchDescription(include, launch_arguments=arguments),
+        ]
+    )
+
+    return group
+
+
 def launch_setup(context, *args, **kwargs):
     # Load all camera namespaces
     all_camera_namespaces = LaunchConfiguration("all_camera_namespaces").perform(context)
@@ -74,6 +95,13 @@ def launch_setup(context, *args, **kwargs):
     # Create containers for all cameras
     traffic_light_recognition_containers = [
         create_traffic_light_map_based_detector(namespace, context)
+        for namespace in all_camera_namespaces
+    ]
+
+    _ = [
+        traffic_light_recognition_containers.append(
+            create_traffic_light_detector(namespace, context)
+        )
         for namespace in all_camera_namespaces
     ]
     return traffic_light_recognition_containers
