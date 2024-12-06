@@ -245,7 +245,7 @@ bool checkOccupancyGridCollision(
 bool isStopped(
   std::deque<nav_msgs::msg::Odometry::ConstSharedPtr> & odometry_buffer,
   const nav_msgs::msg::Odometry::ConstSharedPtr self_odometry, const double duration_lower,
-  const double velocity_uppper)
+  const double velocity_upper)
 {
   odometry_buffer.push_back(self_odometry);
   // Delete old data in buffer_stuck_
@@ -260,7 +260,7 @@ bool isStopped(
   bool is_stopped = true;
   for (const auto & odometry : odometry_buffer) {
     const double ego_vel = utils::l2Norm(odometry->twist.twist.linear);
-    if (ego_vel > velocity_uppper) {
+    if (ego_vel > velocity_upper) {
       is_stopped = false;
       break;
     }
