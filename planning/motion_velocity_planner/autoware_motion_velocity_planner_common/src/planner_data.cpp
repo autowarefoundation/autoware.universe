@@ -26,6 +26,8 @@
 #include <lanelet2_core/geometry/LineString.h>
 #include <lanelet2_core/primitives/BoundingBox.h>
 
+#include <vector>
+
 namespace autoware::motion_velocity_planner
 {
 std::optional<TrafficSignalStamped> PlannerData::get_traffic_signal(
