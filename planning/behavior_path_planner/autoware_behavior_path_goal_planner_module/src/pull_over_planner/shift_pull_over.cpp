@@ -22,7 +22,10 @@
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 
+#include <algorithm>
+#include <limits>
 #include <memory>
+#include <utility>
 #include <vector>
 
 namespace autoware::behavior_path_planner
@@ -218,14 +221,23 @@ std::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
     shifted_path.path.points.push_back(p);
   }
 
+  // combine road lanes and shoulder lanes to find closest lanelet id
+  const auto lanes = std::invoke([&]() -> lanelet::ConstLanelets {
+    auto lanes = road_lanes;
+    lanes.insert(lanes.end(), pull_over_lanes.begin(), pull_over_lanes.end());
+    return lanes;  // not copy the value (Return Value Optimization)
+  });
+
   // set goal pose with velocity 0
   {
     PathPointWithLaneId p{};
     p.point.longitudinal_velocity_mps = 0.0;
     p.point.pose = goal_pose;
-    p.lane_ids = shifted_path.path.points.back().lane_ids;
-    for (const auto & lane : pull_over_lanes) {
-      p.lane_ids.push_back(lane.id());
+    lanelet::Lanelet goal_lanelet{};
+    if (lanelet::utils::query::getClosestLanelet(lanes, goal_pose, &goal_lanelet)) {
+      p.lane_ids = {goal_lanelet.id()};
+    } else {
+      p.lane_ids = shifted_path.path.points.back().lane_ids;
     }
     shifted_path.path.points.push_back(p);
   }
@@ -234,24 +246,13 @@ std::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
   for (size_t i = path_shifter.getShiftLines().front().start_idx;
        i < shifted_path.path.points.size() - 1; ++i) {
     auto & point = shifted_path.path.points.at(i);
-    // set velocity
     point.point.longitudinal_velocity_mps =
       std::min(point.point.longitudinal_velocity_mps, static_cast<float>(pull_over_velocity));
-
-    // add target lanes to points after shift start
-    // add road lane_ids if not found
-    for (const auto id : shifted_path.path.points.back().lane_ids) {
-      if (std::find(point.lane_ids.begin(), point.lane_ids.end(), id) == point.lane_ids.end()) {
-        point.lane_ids.push_back(id);
-      }
-    }
-    // add shoulder lane_id if not found
-    for (const auto & lane : pull_over_lanes) {
-      if (
-        std::find(point.lane_ids.begin(), point.lane_ids.end(), lane.id()) ==
-        point.lane_ids.end()) {
-        point.lane_ids.push_back(lane.id());
-      }
+    lanelet::Lanelet lanelet{};
+    if (lanelet::utils::query::getClosestLanelet(lanes, point.point.pose, &lanelet)) {
+      point.lane_ids = {lanelet.id()};  // overwrite lane_ids
+    } else {
+      point.lane_ids = shifted_path.path.points.at(i - 1).lane_ids;
     }
   }
 
