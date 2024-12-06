@@ -47,11 +47,12 @@ public:
       declare_parameter("output_image_path", p.string() + "_detect" + ext);
 
     auto trt_yolox = std::make_unique<tensorrt_yolox::TrtYoloX>(model_path, precision);
-    auto image = cv::imread(image_path);
+    cv::Mat image = cv::imread(image_path);
     tensorrt_yolox::ObjectArrays objects;
     std::vector<cv::Mat> masks;
     std::vector<cv::Mat> color_masks;
-    trt_yolox->doInference({image}, objects, masks, color_masks);
+    std::vector<cv::Mat> input_images({image});
+    trt_yolox->doInference(input_images, objects, masks, color_masks);
     for (const auto & object : objects[0]) {
       const auto left = object.x_offset;
       const auto top = object.y_offset;
