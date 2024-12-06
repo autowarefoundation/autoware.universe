@@ -24,8 +24,10 @@
 #include <autoware/universe_utils/system/time_keeper.hpp>
 
 #include <algorithm>
+#include <limits>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 
 namespace autoware::behavior_path_planner
@@ -78,7 +80,7 @@ void LaneChangeInterface::updateData()
   module_type_->setPreviousModuleOutput(getPreviousModuleOutput());
   module_type_->update_lanes(getCurrentStatus() == ModuleStatus::RUNNING);
   module_type_->update_filtered_objects();
-  module_type_->update_transient_data();
+  module_type_->update_transient_data(getCurrentStatus() == ModuleStatus::RUNNING);
   module_type_->updateSpecialData();
 
   if (isWaitingApproval() || module_type_->isAbortState()) {

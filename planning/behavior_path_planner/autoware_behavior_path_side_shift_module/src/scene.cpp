@@ -26,6 +26,7 @@
 #include <algorithm>
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 namespace autoware::behavior_path_planner
 {
@@ -341,6 +342,7 @@ BehaviorModuleOutput SideShiftModule::planWaitingApproval()
   return output;
 }
 
+// can be moved to utils
 ShiftLine SideShiftModule::calcShiftLine() const
 {
   const auto & p = parameters_;

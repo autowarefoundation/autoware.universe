@@ -18,8 +18,13 @@
 
 #include <tf2/utils.h>
 
+#include <functional>
 #include <iostream>
+#include <limits>
+#include <memory>
 #include <random>
+#include <string>
+#include <vector>
 
 namespace autoware::shape_estimation
 {

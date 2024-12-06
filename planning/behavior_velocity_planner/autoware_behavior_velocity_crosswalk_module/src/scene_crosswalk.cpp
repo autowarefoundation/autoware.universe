@@ -35,7 +35,9 @@
 #include <functional>
 #include <limits>
 #include <set>
+#include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 namespace autoware::behavior_velocity_planner

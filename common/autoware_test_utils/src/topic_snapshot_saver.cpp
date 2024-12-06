@@ -29,10 +29,15 @@
 #include <yaml-cpp/yaml.h>
 
 #include <fstream>
+#include <iostream>
+#include <memory>
 #include <mutex>
 #include <optional>
+#include <string>
 #include <unordered_map>
+#include <utility>
 #include <variant>
+#include <vector>
 
 using MessageType = std::variant<
   nav_msgs::msg::Odometry,                                // 0

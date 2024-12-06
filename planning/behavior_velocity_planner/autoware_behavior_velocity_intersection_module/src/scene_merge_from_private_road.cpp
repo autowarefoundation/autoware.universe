@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <limits>
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 

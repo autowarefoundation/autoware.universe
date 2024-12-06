@@ -12,7 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "glog_component/glog_component.hpp"
+#include "autoware/glog_component/glog_component.hpp"
+
+namespace autoware::glog_component
+{
 
 GlogComponent::GlogComponent(const rclcpp::NodeOptions & node_options)
 : Node("glog_component", node_options)
@@ -23,5 +26,7 @@ GlogComponent::GlogComponent(const rclcpp::NodeOptions & node_options)
   }
 }
 
+}  // namespace autoware::glog_component
+
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(GlogComponent)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::glog_component::GlogComponent)

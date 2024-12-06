@@ -17,6 +17,8 @@
 
 #ifndef YOLOX_STANDALONE
 #include <rclcpp/rclcpp.hpp>
+
+#include <iostream>
 #endif
 
 #include <NvInfer.h>

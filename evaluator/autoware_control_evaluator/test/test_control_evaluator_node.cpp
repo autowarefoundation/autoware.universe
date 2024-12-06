@@ -28,6 +28,7 @@
 
 #include <tf2/LinearMath/Quaternion.h>
 
+#include <iostream>
 #include <memory>
 #include <string>
 #include <utility>

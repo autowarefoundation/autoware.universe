@@ -15,6 +15,7 @@
 
 #include <gtest/gtest.h>
 
+#include <iostream>
 #include <vector>
 
 using Trajectory = autoware::trajectory::Trajectory<tier4_planning_msgs::msg::PathPointWithLaneId>;

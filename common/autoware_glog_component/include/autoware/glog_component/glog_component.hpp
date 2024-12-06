@@ -12,21 +12,22 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__GEOGRAPHY_UTILS__LANELET2_PROJECTOR_HPP_
-#define AUTOWARE__GEOGRAPHY_UTILS__LANELET2_PROJECTOR_HPP_
+#ifndef AUTOWARE__GLOG_COMPONENT__GLOG_COMPONENT_HPP_
+#define AUTOWARE__GLOG_COMPONENT__GLOG_COMPONENT_HPP_
 
-#include <tier4_map_msgs/msg/map_projector_info.hpp>
+#include <rclcpp/rclcpp.hpp>
 
-#include <lanelet2_io/Projection.h>
+#include <glog/logging.h>
 
-#include <memory>
-
-namespace autoware::geography_utils
+namespace autoware::glog_component
 {
-using MapProjectorInfo = tier4_map_msgs::msg::MapProjectorInfo;
 
-std::unique_ptr<lanelet::Projector> get_lanelet2_projector(const MapProjectorInfo & projector_info);
+class GlogComponent : public rclcpp::Node
+{
+public:
+  explicit GlogComponent(const rclcpp::NodeOptions & node_options);
+};
 
-}  // namespace autoware::geography_utils
+}  // namespace autoware::glog_component
 
-#endif  // AUTOWARE__GEOGRAPHY_UTILS__LANELET2_PROJECTOR_HPP_
+#endif  // AUTOWARE__GLOG_COMPONENT__GLOG_COMPONENT_HPP_

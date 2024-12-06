@@ -31,6 +31,13 @@
 #include <lanelet2_core/geometry/Polygon.h>
 #include <lanelet2_core/primitives/Point.h>
 
+#include <algorithm>
+#include <list>
+#include <set>
+#include <string>
+#include <utility>
+#include <vector>
+
 namespace autoware::universe_utils
 {
 
