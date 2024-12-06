@@ -129,7 +129,7 @@ size_t add_stop_line_markers(
     for (const auto & ll : lanelets) {
       debug_marker.points.clear();
       for (const auto & p : ll.polygon2d().basicPolygon()) {
-        debug_marker.points.push_back(universe_utils::createMarkerPosition(p.x(), p.y(), z + 0.5));
+        debug_marker.points.push_back(universe_utils::createMarkerPosition(p.x(), p.y(), z));
       }
       debug_marker.points.push_back(debug_marker.points.front());
       debug_marker_array.markers.push_back(debug_marker);
@@ -140,7 +140,7 @@ size_t add_stop_line_markers(
     debug_marker.points.clear();
     debug_marker.color.r = 1.0;
     for (const auto & p : stop_line.stop_line) {
-      debug_marker.points.push_back(universe_utils::createMarkerPosition(p.x(), p.y(), z + 0.5));
+      debug_marker.points.push_back(universe_utils::createMarkerPosition(p.x(), p.y(), z));
     }
     debug_marker_array.markers.push_back(debug_marker);
     ++debug_marker.id;
@@ -162,6 +162,7 @@ void add_stop_line_markers(
   auto debug_marker = get_base_marker();
   debug_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
   debug_marker.ns = "ego_stop_lines";
+  debug_marker.scale = universe_utils::createMarkerScale(0.2, 0.2, 0.2);
   debug_marker.color = universe_utils::createMarkerColor(0.5, 0.0, 0.7, 1.0);
   geometry_msgs::msg::Point p1;
   geometry_msgs::msg::Point p2;
@@ -246,11 +247,11 @@ visualization_msgs::msg::MarkerArray create_debug_marker_array(
   const EgoData & ego_data, const OutOfLaneData & out_of_lane_data,
   const autoware_perception_msgs::msg::PredictedObjects & objects, DebugData & debug_data)
 {
-  const auto z = ego_data.pose.position.z;
+  const auto z = ego_data.pose.position.z + 0.5;
   visualization_msgs::msg::MarkerArray debug_marker_array;
 
   auto base_marker = get_base_marker();
-  base_marker.pose.position.z = z + 0.5;
+  base_marker.pose.position.z = z;
   base_marker.ns = "footprints";
   base_marker.color = universe_utils::createMarkerColor(1.0, 1.0, 1.0, 1.0);
   // TODO(Maxime): move the debug marker publishing AFTER the trajectory generation
