@@ -72,10 +72,12 @@ std::vector<StopPoint> PlannerData::calculate_map_stop_points(
           geometry_msgs::msg::Point().set__x(intersection.x()).set__y(intersection.y());
         const auto stop_line_arc_length = motion_utils::calcSignedArcLength(trajectory, 0UL, p);
         StopPoint sp;
-        sp.ego_trajectory_arc_length = stop_line_arc_length - vehicle_info_.front_overhang_m;
+        sp.ego_trajectory_arc_length =
+          stop_line_arc_length - vehicle_info_.max_longitudinal_offset_m;
         if (sp.ego_trajectory_arc_length < 0.0) {
           continue;
         }
+        sp.stop_line = stop_line_2d;
         sp.ego_stop_pose =
           motion_utils::calcInterpolatedPose(trajectory, sp.ego_trajectory_arc_length);
         stop_points.push_back(sp);

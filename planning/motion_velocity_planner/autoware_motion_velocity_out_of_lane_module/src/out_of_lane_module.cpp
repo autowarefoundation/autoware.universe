@@ -229,6 +229,7 @@ VelocityPlanningResult OutOfLaneModule::plan(
   out_of_lane::calculate_min_stop_and_slowdown_distances(
     ego_data, *planner_data, previous_slowdown_pose_);
   prepare_stop_lines_rtree(ego_data, *planner_data, params_.max_arc_length);
+  ego_data.map_stop_points = planner_data->calculate_map_stop_points(ego_data.trajectory_points);
   const auto preprocessing_us = stopwatch.toc("preprocessing");
 
   stopwatch.tic("calculate_trajectory_footprints");
@@ -278,20 +279,6 @@ VelocityPlanningResult OutOfLaneModule::plan(
 
   stopwatch.tic("calculate_slowdown_point");
   auto slowdown_pose = out_of_lane::calculate_slowdown_point(ego_data, out_of_lane_data, params_);
-  if (slowdown_pose && params_.use_map_stop_lines) {
-    // try to use a map stop line ahead of the stop pose
-    ego_data.map_stop_points = planner_data->calculate_map_stop_points(ego_data.trajectory_points);
-    auto stop_arc_length =
-      motion_utils::calcSignedArcLength(ego_data.trajectory_points, 0LU, slowdown_pose->position);
-    for (const auto & stop_point : ego_data.map_stop_points) {
-      if (
-        stop_point.ego_trajectory_arc_length < stop_arc_length &&
-        stop_point.ego_trajectory_arc_length >= ego_data.min_stop_arc_length) {
-        slowdown_pose = stop_point.ego_stop_pose;
-        stop_arc_length = stop_point.ego_trajectory_arc_length;
-      }
-    }
-  }
   const auto calculate_slowdown_point_us = stopwatch.toc("calculate_slowdown_point");
 
   // reuse previous stop pose if there is no new one or if its velocity is not higher than the new
