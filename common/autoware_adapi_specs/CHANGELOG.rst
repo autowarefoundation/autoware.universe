@@ -5,8 +5,8 @@ Changelog for package autoware_ad_api_specs
 0.39.0 (2024-11-25)
 -------------------
 * Merge commit '6a1ddbd08bd' into release-0.39.0
-* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/youtalk/autoware.universe/issues/9304>`_)
-* refactor(autoware_ad_api_specs): prefix package and namespace with autoware (`#9250 <https://github.com/youtalk/autoware.universe/issues/9250>`_)
+* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/autowarefoundation/autoware.universe/issues/9304>`_)
+* refactor(autoware_ad_api_specs): prefix package and namespace with autoware (`#9250 <https://github.com/autowarefoundation/autoware.universe/issues/9250>`_)
   * refactor(autoware_ad_api_specs): prefix package and namespace with autoware
   * style(pre-commit): autofix
   * chore(autoware_adapi_specs): rename ad_api to adapi
