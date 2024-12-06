@@ -12,17 +12,19 @@ Traffic light labels are classified by EfficientNet-b1 or MobileNet-v2.
 We trained classifiers for vehicular signals and pedestrian signals separately.
 For vehicular signals, a total of 83400 (58600 for training, 14800 for evaluation and 10000 for test) TIER IV internal images of Japanese traffic lights were used for fine-tuning.  
 The information of the models is listed here:
-| Name | Input Size | Test Accuracy |
+
+| Name            | Input Size | Test Accuracy |
 | --------------- | ---------- | ------------- |
-| EfficientNet-b1 | 128 x 128 | 99.76% |
-| MobileNet-v2 | 224 x 224 | 99.81% |
+| EfficientNet-b1 | 128 x 128  | 99.76%        |
+| MobileNet-v2    | 224 x 224  | 99.81%        |
 
 For pedestrian signals, a total of 21199 (17860 for training, 2114 for evaluation and 1225 for test) TIER IV internal images of Japanese traffic lights were used for fine-tuning.  
 The information of the models is listed here:
-| Name | Input Size | Test Accuracy |
+
+| Name            | Input Size | Test Accuracy |
 | --------------- | ---------- | ------------- |
-| EfficientNet-b1 | 128 x 128 | 97.89% |
-| MobileNet-v2 | 224 x 224 | 99.10% |
+| EfficientNet-b1 | 128 x 128  | 97.89%        |
+| MobileNet-v2    | 224 x 224  | 99.10%        |
 
 ### hsv_classifier
 
@@ -59,12 +61,12 @@ These colors and shapes are assigned to the message as follows:
 
 ### Node Parameters
 
-| Name                          | Type  | Description                                                                                                                                                                                                                                                                                                                                                |
-| ----------------------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `classifier_type`             | int   | if the value is `1`, cnn_classifier is used                                                                                                                                                                                                                                                                                                                |
-| `data_path`                   | str   | packages data and artifacts directory path                                                                                                                                                                                                                                                                                                                 |
-| `backlight_threshold`         | float | If the intensity of light is grater than this threshold, the class of the corresponding RoI will be overwritten with UNKNOWN, and the confidence of the overwritten signal will be set to `0.0`. The value should be set in the range of `[0.0, 1.0]`. If you wouldn't like to use this feature, please set it to `1.0`.                                   |
-| `classify_traffic_light_type` | int   | if the value is `0`, the classifier classifies the vehicular signals. if the value is `1`, it classifies the pedestrian signals.                                                                                                                                                                                                                           |
+| Name                          | Type  | Description                                                                                                                                                                                                                                                                                                              |
+| ----------------------------- | ----- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `classifier_type`             | int   | if the value is `1`, cnn_classifier is used                                                                                                                                                                                                                                                                              |
+| `data_path`                   | str   | packages data and artifacts directory path                                                                                                                                                                                                                                                                               |
+| `backlight_threshold`         | float | If the intensity of light is grater than this threshold, the class of the corresponding RoI will be overwritten with UNKNOWN, and the confidence of the overwritten signal will be set to `0.0`. The value should be set in the range of `[0.0, 1.0]`. If you wouldn't like to use this feature, please set it to `1.0`. |
+| `classify_traffic_light_type` | int   | if the value is `0`, the classifier classifies the vehicular signals. if the value is `1`, it classifies the pedestrian signals.                                                                                                                                                                                         |
 
 ### Core Parameters
 
