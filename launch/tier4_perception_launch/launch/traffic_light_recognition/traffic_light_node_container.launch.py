@@ -99,7 +99,7 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
                 namespace="classification",
                 parameters=[car_traffic_light_classifier_model_param],
                 remappings=[
-                    ("~/input/image",camera_arguments["input/image"]),
+                    ("~/input/image", camera_arguments["input/image"]),
                     ("~/input/rois", camera_arguments["output/rois"]),
                     ("~/output/traffic_lights", "classified/car/traffic_lights"),
                 ],
