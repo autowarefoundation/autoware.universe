@@ -36,6 +36,9 @@
 #include <algorithm>
 #include <limits>
 #include <memory>
+#include <set>
+#include <string>
+#include <utility>
 #include <vector>
 
 namespace autoware::behavior_velocity_planner
@@ -91,14 +94,13 @@ IntersectionModule::IntersectionModule(
     "~/debug/intersection/object_ttc", 1);
 }
 
-bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
+bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path)
 {
   debug_data_ = DebugData();
-  *stop_reason = planning_utils::initializeStopReason(StopReason::INTERSECTION);
 
   initializeRTCStatus();
 
-  const auto decision_result = modifyPathVelocityDetail(path, stop_reason);
+  const auto decision_result = modifyPathVelocityDetail(path);
   prev_decision_result_ = decision_result;
 
   {
@@ -110,7 +112,7 @@ bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path, StopReason * 
 
   prepareRTCStatus(decision_result, *path);
 
-  reactRTCApproval(decision_result, path, stop_reason);
+  reactRTCApproval(decision_result, path);
 
   return true;
 }
@@ -145,8 +147,7 @@ static std::string formatOcclusionType(const IntersectionModule::OcclusionType &
   return "RTCOccluded";
 }
 
-DecisionResult IntersectionModule::modifyPathVelocityDetail(
-  PathWithLaneId * path, [[maybe_unused]] StopReason * stop_reason)
+DecisionResult IntersectionModule::modifyPathVelocityDetail(PathWithLaneId * path)
 {
   const auto prepare_data = prepareIntersectionData(path);
   if (!prepare_data) {
@@ -683,7 +684,6 @@ void prepareRTCByDecisionResult(
   *occlusion_safety = true;
   *occlusion_distance =
     autoware::motion_utils::calcSignedArcLength(path.points, closest_idx, occlusion_stopline_idx);
-  return;
 }
 
 void IntersectionModule::prepareRTCStatus(
@@ -711,7 +711,6 @@ void reactRTCApprovalByDecisionResult(
   [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
   [[maybe_unused]] const double baselink2front,
   [[maybe_unused]] tier4_planning_msgs::msg::PathWithLaneId * path,
-  [[maybe_unused]] StopReason * stop_reason,
   [[maybe_unused]] VelocityFactorInterface * velocity_factor,
   [[maybe_unused]] IntersectionModule::DebugData * debug_data)
 {
@@ -727,7 +726,6 @@ void reactRTCApprovalByDecisionResult(
   [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
   [[maybe_unused]] const double baselink2front,
   [[maybe_unused]] tier4_planning_msgs::msg::PathWithLaneId * path,
-  [[maybe_unused]] StopReason * stop_reason,
   [[maybe_unused]] VelocityFactorInterface * velocity_factor,
   [[maybe_unused]] IntersectionModule::DebugData * debug_data)
 {
@@ -742,7 +740,6 @@ void reactRTCApprovalByDecisionResult(
   [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
   [[maybe_unused]] const double baselink2front,
   [[maybe_unused]] tier4_planning_msgs::msg::PathWithLaneId * path,
-  [[maybe_unused]] StopReason * stop_reason,
   [[maybe_unused]] VelocityFactorInterface * velocity_factor,
   [[maybe_unused]] IntersectionModule::DebugData * debug_data)
 {
@@ -755,8 +752,7 @@ void reactRTCApprovalByDecisionResult(
   const StuckStop & decision_result,
   [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
   const double baselink2front, tier4_planning_msgs::msg::PathWithLaneId * path,
-  StopReason * stop_reason, VelocityFactorInterface * velocity_factor,
-  IntersectionModule::DebugData * debug_data)
+  VelocityFactorInterface * velocity_factor, IntersectionModule::DebugData * debug_data)
 {
   RCLCPP_DEBUG(
     rclcpp::get_logger("reactRTCApprovalByDecisionResult"),
@@ -770,10 +766,6 @@ void reactRTCApprovalByDecisionResult(
     debug_data->collision_stop_wall_pose =
       planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
     {
-      tier4_planning_msgs::msg::StopFactor stop_factor;
-      stop_factor.stop_pose = path->points.at(stopline_idx).point.pose;
-      stop_factor.stop_factor_points = planning_utils::toRosPoints(debug_data->unsafe_targets);
-      planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(closest_idx).point.pose,
         path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
@@ -785,9 +777,6 @@ void reactRTCApprovalByDecisionResult(
     debug_data->occlusion_stop_wall_pose =
       planning_utils::getAheadPose(occlusion_stopline_idx, baselink2front, *path);
     {
-      tier4_planning_msgs::msg::StopFactor stop_factor;
-      stop_factor.stop_pose = path->points.at(occlusion_stopline_idx).point.pose;
-      planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(closest_idx).point.pose,
         path->points.at(occlusion_stopline_idx).point.pose, VelocityFactor::UNKNOWN);
@@ -802,8 +791,7 @@ void reactRTCApprovalByDecisionResult(
   const YieldStuckStop & decision_result,
   [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
   const double baselink2front, tier4_planning_msgs::msg::PathWithLaneId * path,
-  StopReason * stop_reason, VelocityFactorInterface * velocity_factor,
-  IntersectionModule::DebugData * debug_data)
+  VelocityFactorInterface * velocity_factor, IntersectionModule::DebugData * debug_data)
 {
   RCLCPP_DEBUG(
     rclcpp::get_logger("reactRTCApprovalByDecisionResult"),
@@ -817,10 +805,6 @@ void reactRTCApprovalByDecisionResult(
     debug_data->collision_stop_wall_pose =
       planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
     {
-      tier4_planning_msgs::msg::StopFactor stop_factor;
-      stop_factor.stop_pose = path->points.at(stopline_idx).point.pose;
-      stop_factor.stop_factor_points = planning_utils::toRosPoints(debug_data->unsafe_targets);
-      planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(closest_idx).point.pose,
         path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
@@ -835,8 +819,7 @@ void reactRTCApprovalByDecisionResult(
   const NonOccludedCollisionStop & decision_result,
   [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
   const double baselink2front, tier4_planning_msgs::msg::PathWithLaneId * path,
-  StopReason * stop_reason, VelocityFactorInterface * velocity_factor,
-  IntersectionModule::DebugData * debug_data)
+  VelocityFactorInterface * velocity_factor, IntersectionModule::DebugData * debug_data)
 {
   RCLCPP_DEBUG(
     rclcpp::get_logger("reactRTCApprovalByDecisionResult"),
@@ -848,9 +831,6 @@ void reactRTCApprovalByDecisionResult(
     debug_data->collision_stop_wall_pose =
       planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
     {
-      tier4_planning_msgs::msg::StopFactor stop_factor;
-      stop_factor.stop_pose = path->points.at(stopline_idx).point.pose;
-      planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
         path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
@@ -862,9 +842,6 @@ void reactRTCApprovalByDecisionResult(
     debug_data->occlusion_stop_wall_pose =
       planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
     {
-      tier4_planning_msgs::msg::StopFactor stop_factor;
-      stop_factor.stop_pose = path->points.at(stopline_idx).point.pose;
-      planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
         path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
@@ -878,8 +855,8 @@ void reactRTCApprovalByDecisionResult(
   const bool rtc_default_approved, const bool rtc_occlusion_approved,
   const FirstWaitBeforeOcclusion & decision_result,
   const IntersectionModule::PlannerParam & planner_param, const double baselink2front,
-  tier4_planning_msgs::msg::PathWithLaneId * path, StopReason * stop_reason,
-  VelocityFactorInterface * velocity_factor, IntersectionModule::DebugData * debug_data)
+  tier4_planning_msgs::msg::PathWithLaneId * path, VelocityFactorInterface * velocity_factor,
+  IntersectionModule::DebugData * debug_data)
 {
   RCLCPP_DEBUG(
     rclcpp::get_logger("reactRTCApprovalByDecisionResult"),
@@ -891,9 +868,6 @@ void reactRTCApprovalByDecisionResult(
     debug_data->occlusion_first_stop_wall_pose =
       planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
     {
-      tier4_planning_msgs::msg::StopFactor stop_factor;
-      stop_factor.stop_pose = path->points.at(stopline_idx).point.pose;
-      planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
         path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
@@ -913,9 +887,6 @@ void reactRTCApprovalByDecisionResult(
     debug_data->occlusion_stop_wall_pose =
       planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
     {
-      tier4_planning_msgs::msg::StopFactor stop_factor;
-      stop_factor.stop_pose = path->points.at(stopline_idx).point.pose;
-      planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
         path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
@@ -929,8 +900,8 @@ void reactRTCApprovalByDecisionResult(
   const bool rtc_default_approved, const bool rtc_occlusion_approved,
   const PeekingTowardOcclusion & decision_result,
   const IntersectionModule::PlannerParam & planner_param, const double baselink2front,
-  tier4_planning_msgs::msg::PathWithLaneId * path, StopReason * stop_reason,
-  VelocityFactorInterface * velocity_factor, IntersectionModule::DebugData * debug_data)
+  tier4_planning_msgs::msg::PathWithLaneId * path, VelocityFactorInterface * velocity_factor,
+  IntersectionModule::DebugData * debug_data)
 {
   RCLCPP_DEBUG(
     rclcpp::get_logger("reactRTCApprovalByDecisionResult"),
@@ -955,9 +926,6 @@ void reactRTCApprovalByDecisionResult(
     debug_data->static_occlusion_with_traffic_light_timeout =
       decision_result.static_occlusion_timeout;
     {
-      tier4_planning_msgs::msg::StopFactor stop_factor;
-      stop_factor.stop_pose = path->points.at(occlusion_peeking_stopline).point.pose;
-      planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
         path->points.at(occlusion_peeking_stopline).point.pose, VelocityFactor::UNKNOWN);
@@ -969,9 +937,6 @@ void reactRTCApprovalByDecisionResult(
     debug_data->collision_stop_wall_pose =
       planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
     {
-      tier4_planning_msgs::msg::StopFactor stop_factor;
-      stop_factor.stop_pose = path->points.at(stopline_idx).point.pose;
-      planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
         path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
@@ -986,8 +951,7 @@ void reactRTCApprovalByDecisionResult(
   const OccludedCollisionStop & decision_result,
   [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
   const double baselink2front, tier4_planning_msgs::msg::PathWithLaneId * path,
-  StopReason * stop_reason, VelocityFactorInterface * velocity_factor,
-  IntersectionModule::DebugData * debug_data)
+  VelocityFactorInterface * velocity_factor, IntersectionModule::DebugData * debug_data)
 {
   RCLCPP_DEBUG(
     rclcpp::get_logger("reactRTCApprovalByDecisionResult"),
@@ -999,9 +963,6 @@ void reactRTCApprovalByDecisionResult(
     debug_data->collision_stop_wall_pose =
       planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
     {
-      tier4_planning_msgs::msg::StopFactor stop_factor;
-      stop_factor.stop_pose = path->points.at(stopline_idx).point.pose;
-      planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
         path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
@@ -1017,9 +978,6 @@ void reactRTCApprovalByDecisionResult(
     debug_data->static_occlusion_with_traffic_light_timeout =
       decision_result.static_occlusion_timeout;
     {
-      tier4_planning_msgs::msg::StopFactor stop_factor;
-      stop_factor.stop_pose = path->points.at(stopline_idx).point.pose;
-      planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
         path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
@@ -1034,8 +992,7 @@ void reactRTCApprovalByDecisionResult(
   const OccludedAbsenceTrafficLight & decision_result,
   [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
   const double baselink2front, tier4_planning_msgs::msg::PathWithLaneId * path,
-  StopReason * stop_reason, VelocityFactorInterface * velocity_factor,
-  IntersectionModule::DebugData * debug_data)
+  VelocityFactorInterface * velocity_factor, IntersectionModule::DebugData * debug_data)
 {
   RCLCPP_DEBUG(
     rclcpp::get_logger("reactRTCApprovalByDecisionResult"),
@@ -1047,9 +1004,6 @@ void reactRTCApprovalByDecisionResult(
     debug_data->collision_stop_wall_pose =
       planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
     {
-      tier4_planning_msgs::msg::StopFactor stop_factor;
-      stop_factor.stop_pose = path->points.at(stopline_idx).point.pose;
-      planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
         path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
@@ -1061,9 +1015,6 @@ void reactRTCApprovalByDecisionResult(
     debug_data->occlusion_stop_wall_pose =
       planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
     {
-      tier4_planning_msgs::msg::StopFactor stop_factor;
-      stop_factor.stop_pose = path->points.at(stopline_idx).point.pose;
-      planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
         path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
@@ -1087,8 +1038,7 @@ void reactRTCApprovalByDecisionResult(
   const bool rtc_default_approved, const bool rtc_occlusion_approved, const Safe & decision_result,
   [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
   const double baselink2front, tier4_planning_msgs::msg::PathWithLaneId * path,
-  StopReason * stop_reason, VelocityFactorInterface * velocity_factor,
-  IntersectionModule::DebugData * debug_data)
+  VelocityFactorInterface * velocity_factor, IntersectionModule::DebugData * debug_data)
 {
   RCLCPP_DEBUG(
     rclcpp::get_logger("reactRTCApprovalByDecisionResult"),
@@ -1099,9 +1049,6 @@ void reactRTCApprovalByDecisionResult(
     debug_data->collision_stop_wall_pose =
       planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
     {
-      tier4_planning_msgs::msg::StopFactor stop_factor;
-      stop_factor.stop_pose = path->points.at(stopline_idx).point.pose;
-      planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
         path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
@@ -1113,9 +1060,6 @@ void reactRTCApprovalByDecisionResult(
     debug_data->occlusion_stop_wall_pose =
       planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
     {
-      tier4_planning_msgs::msg::StopFactor stop_factor;
-      stop_factor.stop_pose = path->points.at(stopline_idx).point.pose;
-      planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
         path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
@@ -1130,8 +1074,7 @@ void reactRTCApprovalByDecisionResult(
   const FullyPrioritized & decision_result,
   [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
   const double baselink2front, tier4_planning_msgs::msg::PathWithLaneId * path,
-  StopReason * stop_reason, VelocityFactorInterface * velocity_factor,
-  IntersectionModule::DebugData * debug_data)
+  VelocityFactorInterface * velocity_factor, IntersectionModule::DebugData * debug_data)
 {
   RCLCPP_DEBUG(
     rclcpp::get_logger("reactRTCApprovalByDecisionResult"),
@@ -1143,9 +1086,6 @@ void reactRTCApprovalByDecisionResult(
     debug_data->collision_stop_wall_pose =
       planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
     {
-      tier4_planning_msgs::msg::StopFactor stop_factor;
-      stop_factor.stop_pose = path->points.at(stopline_idx).point.pose;
-      planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
         path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
@@ -1157,9 +1097,6 @@ void reactRTCApprovalByDecisionResult(
     debug_data->occlusion_stop_wall_pose =
       planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
     {
-      tier4_planning_msgs::msg::StopFactor stop_factor;
-      stop_factor.stop_pose = path->points.at(stopline_idx).point.pose;
-      planning_utils::appendStopReason(stop_factor, stop_reason);
       velocity_factor->set(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
         path->points.at(stopline_idx).point.pose, VelocityFactor::UNKNOWN);
@@ -1169,15 +1106,14 @@ void reactRTCApprovalByDecisionResult(
 }
 
 void IntersectionModule::reactRTCApproval(
-  const DecisionResult & decision_result, tier4_planning_msgs::msg::PathWithLaneId * path,
-  StopReason * stop_reason)
+  const DecisionResult & decision_result, tier4_planning_msgs::msg::PathWithLaneId * path)
 {
   const double baselink2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   std::visit(
     VisitorSwitch{[&](const auto & decision) {
       reactRTCApprovalByDecisionResult(
         activated_, occlusion_activated_, decision, planner_param_, baselink2front, path,
-        stop_reason, &velocity_factor_, &debug_data_);
+        &velocity_factor_, &debug_data_);
     }},
     decision_result);
   return;
