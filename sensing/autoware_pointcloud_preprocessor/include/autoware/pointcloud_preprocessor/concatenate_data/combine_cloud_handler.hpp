@@ -95,8 +95,9 @@ public:
     rclcpp::Node & node, std::vector<std::string> input_topics, std::string output_frame,
     bool is_motion_compensated, bool publish_synchronized_pointcloud,
     bool keep_input_frame_in_synchronized_pointcloud, bool has_static_tf_only);
-  void process_twist(const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr & input);
-  void process_odometry(const nav_msgs::msg::Odometry::ConstSharedPtr & input);
+  void process_twist(
+    const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr & twist_msg);
+  void process_odometry(const nav_msgs::msg::Odometry::ConstSharedPtr & odometry_msg);
 
   ConcatenatedCloudResult combine_pointclouds(
     std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr> & topic_to_cloud_map);

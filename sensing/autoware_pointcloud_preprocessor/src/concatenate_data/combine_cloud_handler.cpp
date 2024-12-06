@@ -19,8 +19,12 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <algorithm>
+#include <deque>
+#include <functional>
 #include <memory>
 #include <string>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace autoware::pointcloud_preprocessor
@@ -31,8 +35,8 @@ CombineCloudHandler::CombineCloudHandler(
   bool is_motion_compensated, bool publish_synchronized_pointcloud,
   bool keep_input_frame_in_synchronized_pointcloud, bool has_static_tf_only)
 : node_(node),
-  input_topics_(input_topics),
-  output_frame_(output_frame),
+  input_topics_(std::move(input_topics)),
+  output_frame_(std::move(output_frame)),
   is_motion_compensated_(is_motion_compensated),
   publish_synchronized_pointcloud_(publish_synchronized_pointcloud),
   keep_input_frame_in_synchronized_pointcloud_(keep_input_frame_in_synchronized_pointcloud),
