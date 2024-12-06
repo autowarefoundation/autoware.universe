@@ -125,6 +125,19 @@ std::optional<geometry_msgs::msg::Pose> calculate_slowdown_point(
     slowdown_point = calculate_pose_ahead_of_collision(
       ego_data, *point_to_avoid_it, expanded_footprint, params.precision);
   }
+  if (slowdown_point && params.use_map_stop_lines) {
+    // try to use a map stop line ahead of the stop pose
+    auto stop_arc_length =
+      motion_utils::calcSignedArcLength(ego_data.trajectory_points, 0LU, slowdown_point->position);
+    for (const auto & stop_point : ego_data.map_stop_points) {
+      if (
+        stop_point.ego_trajectory_arc_length < stop_arc_length &&
+        stop_point.ego_trajectory_arc_length >= ego_data.min_stop_arc_length) {
+        slowdown_point = stop_point.ego_stop_pose;
+        stop_arc_length = stop_point.ego_trajectory_arc_length;
+      }
+    }
+  }
   return slowdown_point;
 }
 
