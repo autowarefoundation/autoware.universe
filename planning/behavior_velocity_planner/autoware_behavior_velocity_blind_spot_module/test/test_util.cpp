@@ -17,9 +17,23 @@
 #include <autoware_test_utils/autoware_test_utils.hpp>
 #include <autoware_test_utils/mock_data_parser.hpp>
 
-#include <autoware_perception_msgs/msg/detail/predicted_objects__struct.hpp>
-
 #include <gtest/gtest.h>
+
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
+
+#ifdef EXPORT_TEST_PLOT_FIGURE
+#include <autoware/pyplot/common.hpp>
+#include <autoware/pyplot/patches.hpp>
+#include <autoware/pyplot/pyplot.hpp>
+#include <autoware_test_utils/visualization.hpp>
+
+#include <pybind11/embed.h>
+#include <pybind11/stl.h>  // needed for passing std::string to Args
+
+#endif
 
 using autoware::test_utils::parse;
 
@@ -62,4 +76,76 @@ TEST_F(TestWithAdjLaneData, getSiblingStraightLanelet)
       route_handler->getRoutingGraphPtr());
   ASSERT_NO_FATAL_FAILURE({ ASSERT_TRUE(sibling_straight_lanelet_opt.has_value()); });
   EXPECT_EQ(sibling_straight_lanelet_opt.value().id(), 2100);
+
+#ifdef EXPORT_TEST_PLOT_FIGURE
+  py::gil_scoped_acquire acquire;
+  using autoware::test_utils::LaneConfig;
+  using autoware::test_utils::LineConfig;
+  auto plt = autoware::pyplot::import();
+  auto [fig, axes] = plt.subplots(1, 1);
+  auto & ax = axes[0];
+  autoware::test_utils::plot_lanelet2_object(
+    route_handler->getLaneletMapPtr()->laneletLayer.get(lane_id_), ax,
+    autoware::test_utils::LaneConfig{"original", LineConfig{"blue"}});
+
+  // for illustration
+  autoware::test_utils::plot_lanelet2_object(
+    route_handler->getLaneletMapPtr()->laneletLayer.get(3010933), ax,
+    autoware::test_utils::LaneConfig{std::nullopt, LineConfig{"green"}});
+  autoware::test_utils::plot_lanelet2_object(
+    route_handler->getLaneletMapPtr()->laneletLayer.get(2201), ax,
+    autoware::test_utils::LaneConfig{std::nullopt, LineConfig{"blue"}});
+  autoware::test_utils::plot_lanelet2_object(
+    route_handler->getLaneletMapPtr()->laneletLayer.get(2202), ax,
+    autoware::test_utils::LaneConfig{std::nullopt, LineConfig{"blue"}});
+  autoware::test_utils::plot_lanelet2_object(
+    route_handler->getLaneletMapPtr()->laneletLayer.get(2010), ax,
+    autoware::test_utils::LaneConfig{std::nullopt, LineConfig{"green"}});
+
+  autoware::test_utils::plot_lanelet2_object(
+    sibling_straight_lanelet_opt.value(), ax,
+    LaneConfig{"sibling_straight_lanelet", LineConfig{"red"}});
+  const std::string filename = std::string(
+    ament_index_cpp::get_package_share_directory("autoware_behavior_velocity_blind_spot_module") +
+    "/test_data/getSiblingStraightLaneletTest.svg");
+  ax.set_aspect(Args("equal"));
+  plt.savefig(Args(filename));
+#endif
+}
+
+TEST_F(TestWithAdjLaneData, generateHalfLanelet)
+{
+  const auto sibling_straight_lanelet_opt =
+    autoware::behavior_velocity_planner::getSiblingStraightLanelet(
+      route_handler->getLaneletMapPtr()->laneletLayer.get(lane_id_),
+      route_handler->getRoutingGraphPtr());
+  ASSERT_NO_FATAL_FAILURE({ ASSERT_TRUE(sibling_straight_lanelet_opt.has_value()); });
+  EXPECT_EQ(sibling_straight_lanelet_opt.value().id(), 2100);
+
+#ifdef EXPORT_TEST_PLOT_FIGURE
+  py::gil_scoped_acquire acquire;
+  using autoware::test_utils::LaneConfig;
+  using autoware::test_utils::LineConfig;
+  auto plt = autoware::pyplot::import();
+  auto [fig, axes] = plt.subplots(1, 1);
+  auto & ax = axes[0];
+  autoware::test_utils::plot_lanelet2_object(
+    route_handler->getLaneletMapPtr()->laneletLayer.get(lane_id_), ax,
+    autoware::test_utils::LaneConfig{"original", LineConfig{"blue"}});
+  autoware::test_utils::plot_lanelet2_object(
+    sibling_straight_lanelet_opt.value(), ax,
+    LaneConfig{"sibling_straight_lanelet", LineConfig{"red"}});
+  const std::string filename = std::string(
+    ament_index_cpp::get_package_share_directory("autoware_behavior_velocity_blind_spot_module") +
+    "/test_data/generateHalfLaneletTest.svg");
+  ax.set_aspect(Args("equal"));
+  plt.savefig(Args(filename));
+#endif
+}
+
+int main(int argc, char ** argv)
+{
+  py::scoped_interpreter guard{};
+  testing::InitGoogleTest(&argc, argv);
+  return RUN_ALL_TESTS();
 }
