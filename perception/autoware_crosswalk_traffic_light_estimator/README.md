@@ -2,32 +2,50 @@
 
 ## Purpose
 
-`crosswalk_traffic_light_estimator` is a module that estimates pedestrian traffic signals from HDMap and detected vehicle traffic signals.
+`crosswalk_traffic_light_estimator` is a module that estimates pedestrian traffic signals from HDMap and detected traffic signals.
 
 ## Inputs / Outputs
 
 ### Input
 
-| Name                                 | Type                                             | Description        |
-| ------------------------------------ | ------------------------------------------------ | ------------------ |
-| `~/input/vector_map`                 | `autoware_map_msgs::msg::LaneletMapBin`          | vector map         |
-| `~/input/route`                      | `autoware_planning_msgs::msg::LaneletRoute`      | route              |
-| `~/input/classified/traffic_signals` | `tier4_perception_msgs::msg::TrafficSignalArray` | classified signals |
+<<<<<<< HEAD
+
+| Name                                | Type                                                    | Description        |
+| ----------------------------------- | ------------------------------------------------------- | ------------------ |
+| `~/input/vector_map`                | `autoware_map_msgs::msg::LaneletMapBin`                 | vector map         |
+| `~/input/route`                     | `autoware_planning_msgs::msg::LaneletRoute`             | route (optional)   |
+| `~/input/classified/traffic_lights` | `autoware_perception_msgs::msg::TrafficLightGroupArray` | classified signals |
+
+=======
+
+| Name                                | Type                                                    | Description        |
+| ----------------------------------- | ------------------------------------------------------- | ------------------ |
+| `~/input/vector_map`                | `autoware_map_msgs::msg::LaneletMapBin`                 | vector map         |
+| `~/input/route`                     | `autoware_planning_msgs::msg::LaneletRoute`             | route (optional)   |
+| `~/input/classified/traffic_lights` | `autoware_perception_msgs::msg::TrafficLightGroupArray` | classified signals |
+
+> > > > > > > 200573ce766fc67663ffc721632f6520d392a775
 
 ### Output
 
-| Name                       | Type                                                    | Description                                               |
-| -------------------------- | ------------------------------------------------------- | --------------------------------------------------------- |
-| `~/output/traffic_signals` | `autoware_perception_msgs::msg::TrafficLightGroupArray` | output that contains estimated pedestrian traffic signals |
+| Name                      | Type                                                    | Description                                               |
+| ------------------------- | ------------------------------------------------------- | --------------------------------------------------------- |
+| `~/output/traffic_lights` | `autoware_perception_msgs::msg::TrafficLightGroupArray` | output that contains estimated pedestrian traffic signals |
 
 ## Parameters
 
 | Name                          | Type     | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        | Default value |
 | :---------------------------- | :------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :------------ |
 | `use_last_detect_color`       | `bool`   | If this parameter is `true`, this module estimates pedestrian's traffic signal as RED not only when vehicle's traffic signal is detected as GREEN/AMBER but also when detection results change GREEN/AMBER to UNKNOWN. (If detection results change RED or AMBER to UNKNOWN, this module estimates pedestrian's traffic signal as UNKNOWN.) If this parameter is `false`, this module use only latest detection results for estimation. (Only when the detection result is GREEN/AMBER, this module estimates pedestrian's traffic signal as RED.) | `true`        |
-| `last_detect_color_hold_time` | `double` | The time threshold to hold for last detect color.                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                  | `2.0`         |
+| `last_detect_color_hold_time` | `double` | The time threshold to hold for last detected vehicle traffic light color. The unit is second.                                                                                                                                                                                                                                                                                                                                                                                                                                                      | `2.0`         |
+| `last_colors_hold_time`       | `double` | The time threshold to hold for history detected pedestrian traffic light color. The unit is second.                                                                                                                                                                                                                                                                                                                                                                                                                                                |
 
 ## Inner-workings / Algorithms
+
+1. Estimate the color of pedestrian traffic light from HDMap and detected vehicle traffic signals.
+2. If pedestrian traffic light recognition is available, determine the final state based on classification result and estimation result.
+
+### Estimation
 
 ```plantuml
 
@@ -58,7 +76,7 @@ end
 
 If traffic between pedestrians and vehicles is controlled by traffic signals, the crosswalk traffic signal maybe **RED** in order to prevent pedestrian from crossing when the following conditions are satisfied.
 
-### Situation1
+#### Situation1
 
 - crosswalk conflicts **STRAIGHT** lanelet
 - the lanelet refers **GREEN** or **AMBER** traffic signal (The following pictures show only **GREEN** case)
@@ -70,13 +88,35 @@ If traffic between pedestrians and vehicles is controlled by traffic signals, th
   <img src="images/intersection1.svg" width=80%>
 </div>
 
-### Situation2
+#### Situation2
 
 - crosswalk conflicts different turn direction lanelets (STRAIGHT and LEFT, LEFT and RIGHT, RIGHT and STRAIGHT)
 - the lanelets refer **GREEN** or **AMBER** traffic signal (The following pictures show only **GREEN** case)
 
 <div align="center">
   <img src="images/intersection2.svg" width=80%>
+</div>
+
+### Final state
+
+```plantumul
+start
+if (the pedestrian traffic light classification result exists)then
+    : update the flashing flag according to the classification result(in_signal) and last_signals
+    if (the traffic light is flashing?)then(yes)
+      : update the traffic light state
+    else(no)
+      : the traffic light state is the same with the classification result
+if (the classification result not exists)
+    : the traffic light state is the same with the estimation
+ : output the current traffic light state
+end
+```
+
+#### Update flashing flag
+
+<div align="center">
+  <img src="images/flashing_state.png" width=50%>
 </div>
 
 ## Assumptions / Known limits
