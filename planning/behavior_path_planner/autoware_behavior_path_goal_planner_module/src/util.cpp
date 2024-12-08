@@ -723,8 +723,13 @@ lanelet::Lanelet createDepartureCheckLanelet(
   };
 
   const auto getMostInnerLane = [&](const lanelet::ConstLanelet & lane) -> lanelet::ConstLanelet {
-    return left_side_parking ? route_handler.getMostRightLanelet(lane, false, true)
-                             : route_handler.getMostLeftLanelet(lane, false, true);
+    const auto getInnerLane =
+      left_side_parking ? &RouteHandler::getMostRightLanelet : &RouteHandler::getMostLeftLanelet;
+    const auto getOppositeLane = left_side_parking ? &RouteHandler::getRightOppositeLanelets
+                                                   : &RouteHandler::getLeftOppositeLanelets;
+    const auto inner_lane = (route_handler.*getInnerLane)(lane, true, true);
+    const auto opposite_lanes = (route_handler.*getOppositeLane)(inner_lane);
+    return opposite_lanes.empty() ? inner_lane : opposite_lanes.front();
   };
 
   lanelet::Points3d outer_bound_points{};

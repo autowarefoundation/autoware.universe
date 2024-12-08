@@ -244,7 +244,8 @@ bool checkOccupancyGridCollision(
 
 bool isStopped(
   std::deque<nav_msgs::msg::Odometry::ConstSharedPtr> & odometry_buffer,
-  const nav_msgs::msg::Odometry::ConstSharedPtr self_odometry, const double duration_lower)
+  const nav_msgs::msg::Odometry::ConstSharedPtr self_odometry, const double duration_lower,
+  const double velocity_upper)
 {
   odometry_buffer.push_back(self_odometry);
   // Delete old data in buffer_stuck_
@@ -259,7 +260,7 @@ bool isStopped(
   bool is_stopped = true;
   for (const auto & odometry : odometry_buffer) {
     const double ego_vel = utils::l2Norm(odometry->twist.twist.linear);
-    if (ego_vel > duration_lower) {
+    if (ego_vel > velocity_upper) {
       is_stopped = false;
       break;
     }
@@ -879,7 +880,8 @@ bool GoalPlannerModule::canReturnToLaneParking(const PullOverContextData & conte
 {
   // return only before starting free space parking
   if (!isStopped(
-        odometry_buffer_stopped_, planner_data_->self_odometry, parameters_->th_stopped_time)) {
+        odometry_buffer_stopped_, planner_data_->self_odometry, parameters_->th_stopped_time,
+        parameters_->th_stopped_velocity)) {
     return false;
   }
 
@@ -1760,7 +1762,9 @@ bool GoalPlannerModule::isStuck(
   }
 
   constexpr double stuck_time = 5.0;
-  if (!isStopped(odometry_buffer_stuck_, planner_data->self_odometry, stuck_time)) {
+  if (!isStopped(
+        odometry_buffer_stuck_, planner_data->self_odometry, stuck_time,
+        parameters_->th_stopped_velocity)) {
     return false;
   }
 
@@ -1801,7 +1805,8 @@ bool GoalPlannerModule::hasFinishedCurrentPath(const PullOverContextData & ctx_d
   }
 
   if (!isStopped(
-        odometry_buffer_stopped_, planner_data_->self_odometry, parameters_->th_stopped_time)) {
+        odometry_buffer_stopped_, planner_data_->self_odometry, parameters_->th_stopped_time,
+        parameters_->th_stopped_velocity)) {
     return false;
   }
 
