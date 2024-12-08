@@ -386,6 +386,10 @@ LaneChangePath NormalLaneChange::getLaneChangePath() const
 
 BehaviorModuleOutput NormalLaneChange::getTerminalLaneChangePath() const
 {
+  if (!lane_change_parameters_->enable_terminal_path) {
+    return prev_module_output_;
+  }
+
   const auto & current_lanes = get_current_lanes();
   if (current_lanes.empty()) {
     RCLCPP_DEBUG(logger_, "Current lanes not found. Returning previous module's path as output.");
