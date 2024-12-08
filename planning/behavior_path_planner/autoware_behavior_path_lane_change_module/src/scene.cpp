@@ -479,7 +479,7 @@ void NormalLaneChange::extendOutputDrivableArea(BehaviorModuleOutput & output) c
 }
 
 void NormalLaneChange::insert_stop_point(
-  const lanelet::ConstLanelets & lanelets, PathWithLaneId & path)
+  const lanelet::ConstLanelets & lanelets, PathWithLaneId & path, const bool is_waiting_approval)
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
   if (lanelets.empty()) {
@@ -504,55 +504,53 @@ void NormalLaneChange::insert_stop_point(
     return;
   }
 
-  insert_stop_point_on_current_lanes(path);
+  insert_stop_point_on_current_lanes(path, is_waiting_approval);
 }
 
-void NormalLaneChange::insert_stop_point_on_current_lanes(PathWithLaneId & path)
+void NormalLaneChange::insert_stop_point_on_current_lanes(
+  PathWithLaneId & path, const bool is_waiting_approval)
 {
   const auto & path_front_pose = path.points.front().point.pose;
-  const auto & center_line = common_data_ptr_->current_lanes_path.points;
-  const auto get_arc_length_along_lanelet = [&](const geometry_msgs::msg::Pose & target) {
-    return motion_utils::calcSignedArcLength(
-      center_line, path_front_pose.position, target.position);
-  };
+  const auto & ego_pose = common_data_ptr_->get_ego_pose();
+  const auto dist_from_path_front =
+    motion_utils::calcSignedArcLength(path.points, path_front_pose.position, ego_pose.position);
 
   const auto & transient_data = common_data_ptr_->transient_data;
   const auto & lanes_ptr = common_data_ptr_->lanes_ptr;
   const auto & lc_param_ptr = common_data_ptr_->lc_param_ptr;
 
-  const auto dist_to_terminal = std::invoke([&]() -> double {
-    const auto target_pose = (lanes_ptr->current_lane_in_goal_section)
-                               ? common_data_ptr_->route_handler_ptr->getGoalPose()
-                               : center_line.back().point.pose;
-    return get_arc_length_along_lanelet(target_pose);
-  });
+  const auto dist_to_terminal_start =
+    transient_data.dist_to_terminal_start - calculation::calc_stopping_distance(lc_param_ptr);
 
   const auto & bpp_param_ptr = common_data_ptr_->bpp_param_ptr;
-  const auto min_dist_buffer = transient_data.current_dist_buffer.min;
-  const auto dist_to_terminal_start =
-    dist_to_terminal - min_dist_buffer - calculation::calc_stopping_distance(lc_param_ptr);
-
-  const auto distance_to_last_fit_width = std::invoke([&]() -> double {
+  const auto dist_to_terminal_stop = std::invoke([&]() -> double {
     const auto & curr_lanes_poly = common_data_ptr_->lanes_polygon_ptr->current;
-    if (utils::isEgoWithinOriginalLane(curr_lanes_poly, getEgoPose(), *bpp_param_ptr)) {
-      return utils::lane_change::calculation::calc_dist_to_last_fit_width(
-        lanes_ptr->current, path.points.front().point.pose, *bpp_param_ptr);
+    if (!utils::isEgoWithinOriginalLane(curr_lanes_poly, getEgoPose(), *bpp_param_ptr)) {
+      return dist_from_path_front + dist_to_terminal_start;
     }
-    return std::numeric_limits<double>::max();
-  });
 
-  const auto dist_to_terminal_stop = std::min(dist_to_terminal_start, distance_to_last_fit_width);
+    if (terminal_lane_change_path_ && is_waiting_approval) {
+      return calculation::calc_dist_to_last_fit_width(common_data_ptr_, path);
+    }
+
+    const auto dist_to_last_fit_width = calculation::calc_dist_to_last_fit_width(
+      lanes_ptr->current, path.points.front().point.pose, *bpp_param_ptr);
+
+    return std::min(dist_from_path_front + dist_to_terminal_start, dist_to_last_fit_width);
+  });
 
   if (filtered_objects_.current_lane.empty()) {
     set_stop_pose(dist_to_terminal_stop, path);
     return;
   }
 
+  const auto & center_line = common_data_ptr_->current_lanes_path.points;
   const auto dist_to_target_lane_start = std::invoke([&]() -> double {
     const auto & front_lane = lanes_ptr->target_neighbor.front();
     const auto target_front =
       utils::to_geom_msg_pose(front_lane.centerline2d().front(), front_lane);
-    return get_arc_length_along_lanelet(target_front);
+    return motion_utils::calcSignedArcLength(
+      center_line, path_front_pose.position, target_front.position);
   });
 
   const auto arc_length_to_current_obj = utils::lane_change::get_min_dist_to_current_lanes_obj(

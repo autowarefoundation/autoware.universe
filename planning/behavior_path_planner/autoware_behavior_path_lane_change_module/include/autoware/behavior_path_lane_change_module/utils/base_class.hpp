@@ -130,7 +130,7 @@ public:
 
   virtual void insert_stop_point(
     [[maybe_unused]] const lanelet::ConstLanelets & lanelets,
-    [[maybe_unused]] PathWithLaneId & path)
+    [[maybe_unused]] PathWithLaneId & path, [[maybe_unused]] const bool is_waiting_approval = false)
   {
   }
 
