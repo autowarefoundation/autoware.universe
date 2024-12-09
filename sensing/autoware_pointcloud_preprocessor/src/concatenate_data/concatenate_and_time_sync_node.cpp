@@ -22,6 +22,7 @@
 
 #include <algorithm>
 #include <iomanip>
+#include <list>
 #include <memory>
 #include <sstream>
 #include <string>
@@ -44,6 +45,7 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
   stop_watch_ptr_->tic("processing_time");
 
   //  initialize parameters
+  params_.use_naive_approach = declare_parameter<bool>("use_naive_approach");
   params_.debug_mode = declare_parameter<bool>("debug_mode");
   params_.has_static_tf_only = declare_parameter<bool>("has_static_tf_only");
   params_.rosbag_length = declare_parameter<double>("rosbag_length");
@@ -186,6 +188,8 @@ std::string PointCloudConcatenateDataSynchronizerComponent::replace_sync_topic_n
 void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
   const sensor_msgs::msg::PointCloud2::SharedPtr & input_ptr, const std::string & topic_name)
 {
+  double cloud_arrival_time = this->get_clock()->now().seconds();
+
   stop_watch_ptr_->toc("processing_time", true);
   if (!utils::is_data_layout_compatible_with_point_xyzirc(*input_ptr)) {
     RCLCPP_ERROR(
@@ -203,9 +207,8 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
   if (params_.debug_mode) {
     RCLCPP_INFO(
       this->get_logger(), " pointcloud %s  timestamp: %lf arrive time: %lf seconds, latency: %lf",
-      topic_name.c_str(), rclcpp::Time(input_ptr->header.stamp).seconds(),
-      this->get_clock()->now().seconds(),
-      this->get_clock()->now().seconds() - rclcpp::Time(input_ptr->header.stamp).seconds());
+      topic_name.c_str(), rclcpp::Time(input_ptr->header.stamp).seconds(), cloud_arrival_time,
+      cloud_arrival_time - rclcpp::Time(input_ptr->header.stamp).seconds());
   }
 
   if (input_ptr->data.empty()) {
@@ -220,19 +223,45 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
   bool collector_found = false;
 
   if (!cloud_collectors_.empty()) {
-    for (const auto & cloud_collector : cloud_collectors_) {
-      auto [reference_timestamp_min, reference_timestamp_max] =
-        cloud_collector->get_reference_timestamp_boundary();
+    if (params_.use_naive_approach) {
+      // Navie approach: Concatenate the pointlcouds based on the pointclouds' arrival time on the
+      // node
+      std::optional<double> smallest_time_difference = std::nullopt;
+      std::shared_ptr<CloudCollector> closest_collector = nullptr;
 
-      if (
-        rclcpp::Time(input_ptr->header.stamp).seconds() - topic_to_offset_map_[topic_name] <
-          reference_timestamp_max + topic_to_noise_window_map_[topic_name] &&
-        rclcpp::Time(input_ptr->header.stamp).seconds() - topic_to_offset_map_[topic_name] >
-          reference_timestamp_min - topic_to_noise_window_map_[topic_name]) {
+      for (const auto & cloud_collector : cloud_collectors_) {
+        if (!cloud_collector->topic_exists(topic_name)) {
+          auto collector_timestamp = cloud_collector->get_arrival_timestamp();
+          double time_difference = std::abs(cloud_arrival_time - collector_timestamp);
+
+          if (!smallest_time_difference || time_difference < smallest_time_difference) {
+            smallest_time_difference = time_difference;
+            closest_collector = cloud_collector;
+          }
+        }
+      }
+
+      if (smallest_time_difference) {
         cloud_collectors_lock.unlock();
-        cloud_collector->process_pointcloud(topic_name, input_ptr);
+        closest_collector->process_pointcloud(topic_name, input_ptr);
         collector_found = true;
-        break;
+      }
+    } else {
+      // Advanced approach: Concatenate the pointlcouds based on the pointclouds' timestamps
+      for (const auto & cloud_collector : cloud_collectors_) {
+        auto [reference_timestamp_min, reference_timestamp_max] =
+          cloud_collector->get_reference_timestamp_boundary();
+
+        if (
+          rclcpp::Time(input_ptr->header.stamp).seconds() - topic_to_offset_map_[topic_name] <
+            reference_timestamp_max + topic_to_noise_window_map_[topic_name] &&
+          rclcpp::Time(input_ptr->header.stamp).seconds() - topic_to_offset_map_[topic_name] >
+            reference_timestamp_min - topic_to_noise_window_map_[topic_name]) {
+          cloud_collectors_lock.unlock();
+          cloud_collector->process_pointcloud(topic_name, input_ptr);
+          collector_found = true;
+          break;
+        }
       }
     }
   }
@@ -245,9 +274,14 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
 
     cloud_collectors_.push_back(new_cloud_collector);
     cloud_collectors_lock.unlock();
-    new_cloud_collector->set_reference_timestamp(
-      rclcpp::Time(input_ptr->header.stamp).seconds() - topic_to_offset_map_[topic_name],
-      topic_to_noise_window_map_[topic_name]);
+
+    if (params_.use_naive_approach) {
+      new_cloud_collector->set_arrival_timestamp(cloud_arrival_time);
+    } else {
+      new_cloud_collector->set_reference_timestamp(
+        rclcpp::Time(input_ptr->header.stamp).seconds() - topic_to_offset_map_[topic_name],
+        topic_to_noise_window_map_[topic_name]);
+    }
     new_cloud_collector->process_pointcloud(topic_name, input_ptr);
   }
 }
@@ -266,7 +300,7 @@ void PointCloudConcatenateDataSynchronizerComponent::odom_callback(
 
 void PointCloudConcatenateDataSynchronizerComponent::publish_clouds(
   ConcatenatedCloudResult && concatenated_cloud_result, double reference_timestamp_min,
-  double reference_timestamp_max)
+  double reference_timestamp_max, double arrival_timestamp)
 {
   // should never come to this state.
   if (concatenated_cloud_result.concatenate_cloud_ptr == nullptr) {
@@ -328,6 +362,7 @@ void PointCloudConcatenateDataSynchronizerComponent::publish_clouds(
 
   diagnostic_reference_timestamp_min_ = reference_timestamp_min;
   diagnostic_reference_timestamp_max_ = reference_timestamp_max;
+  diagnostic_arrival_timestamp_ = arrival_timestamp;
   diagnostic_topic_to_original_stamp_map_ = concatenated_cloud_result.topic_to_original_stamp_map;
   diagnostic_updater_.force_update();
 
@@ -380,8 +415,13 @@ void PointCloudConcatenateDataSynchronizerComponent::check_concat_status(
   if (publish_pointcloud_ || drop_previous_but_late_pointcloud_) {
     stat.add(
       "concatenated cloud timestamp", format_timestamp(current_concatenate_cloud_timestamp_));
-    stat.add("reference timestamp min", format_timestamp(diagnostic_reference_timestamp_min_));
-    stat.add("reference timestamp max", format_timestamp(diagnostic_reference_timestamp_max_));
+
+    if (params_.use_naive_approach) {
+      stat.add("first cloud's arrival timestamp", format_timestamp(diagnostic_arrival_timestamp_));
+    } else {
+      stat.add("reference timestamp min", format_timestamp(diagnostic_reference_timestamp_min_));
+      stat.add("reference timestamp max", format_timestamp(diagnostic_reference_timestamp_max_));
+    }
 
     bool topic_miss = false;
 

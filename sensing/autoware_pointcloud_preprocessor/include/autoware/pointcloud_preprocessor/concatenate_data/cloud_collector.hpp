@@ -35,8 +35,13 @@ public:
     std::shared_ptr<CombineCloudHandler> & combine_cloud_handler, int num_of_clouds,
     double timeout_sec, bool debug_mode);
 
+  // Naive approach
+  void set_arrival_timestamp(double timestamp);
+  double get_arrival_timestamp() const;
+  // Advanced approach
   void set_reference_timestamp(double timestamp, double noise_window);
   std::tuple<double, double> get_reference_timestamp_boundary();
+  bool topic_exists(const std::string & topic_name);
   void process_pointcloud(
     const std::string & topic_name, sensor_msgs::msg::PointCloud2::SharedPtr cloud);
   void concatenate_callback();
@@ -56,6 +61,7 @@ private:
   double timeout_sec_;
   double reference_timestamp_min_{0.0};
   double reference_timestamp_max_{0.0};
+  double arrival_timestamp_{0.0};  // This is used for the naive approach
   bool debug_mode_;
 };
 

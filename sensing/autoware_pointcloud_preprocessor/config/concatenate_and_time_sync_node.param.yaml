@@ -1,5 +1,7 @@
 /**:
   ros__parameters:
+    # ignore the lidar_timestamp_offsets and lidar_timestamp_noise_window if 'use_naive_approach' is true
+    use_naive_approach: true
     debug_mode: false
     has_static_tf_only: false
     rosbag_length: 10.0

@@ -19,7 +19,11 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <memory>
+#include <string>
 #include <tuple>
+#include <unordered_map>
+#include <utility>
 
 namespace autoware::pointcloud_preprocessor
 {
@@ -42,6 +46,16 @@ CloudCollector::CloudCollector(
     std::bind(&CloudCollector::concatenate_callback, this));
 }
 
+void CloudCollector::set_arrival_timestamp(double timestamp)
+{
+  arrival_timestamp_ = timestamp;
+}
+
+double CloudCollector::get_arrival_timestamp() const
+{
+  return arrival_timestamp_;
+}
+
 void CloudCollector::set_reference_timestamp(double timestamp, double noise_window)
 {
   reference_timestamp_max_ = timestamp + noise_window;
@@ -51,6 +65,11 @@ void CloudCollector::set_reference_timestamp(double timestamp, double noise_wind
 std::tuple<double, double> CloudCollector::get_reference_timestamp_boundary()
 {
   return std::make_tuple(reference_timestamp_min_, reference_timestamp_max_);
+}
+
+bool CloudCollector::topic_exists(const std::string & topic_name)
+{
+  return topic_to_cloud_map_.find(topic_name) != topic_to_cloud_map_.end();
 }
 
 void CloudCollector::process_pointcloud(
@@ -105,7 +124,8 @@ void CloudCollector::concatenate_callback()
   auto concatenated_cloud_result = concatenate_pointclouds(topic_to_cloud_map_);
 
   ros2_parent_node_->publish_clouds(
-    std::move(concatenated_cloud_result), reference_timestamp_min_, reference_timestamp_max_);
+    std::move(concatenated_cloud_result), reference_timestamp_min_, reference_timestamp_max_,
+    arrival_timestamp_);
 
   ros2_parent_node_->delete_collector(*this);
 }

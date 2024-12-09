@@ -28,9 +28,13 @@
 #include <gtest/gtest.h>
 #include <tf2_ros/static_transform_broadcaster.h>
 
+#include <algorithm>
 #include <chrono>
 #include <memory>
+#include <string>
 #include <thread>
+#include <unordered_map>
+#include <vector>
 
 class ConcatenateCloudTest : public ::testing::Test
 {
@@ -41,7 +45,8 @@ protected:
     // Instead of "input_topics", other parameters are not used.
     // They just helps to setup the concatenate node
     node_options.parameter_overrides(
-      {{"debug_mode", false},
+      {{"use_naive_approach", false},
+       {"debug_mode", false},
        {"has_static_tf_only", false},
        {"rosbag_length", 0.0},
        {"maximum_queue_size", 5},

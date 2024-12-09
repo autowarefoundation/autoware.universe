@@ -54,7 +54,7 @@ public:
   ~PointCloudConcatenateDataSynchronizerComponent() override = default;
   void publish_clouds(
     ConcatenatedCloudResult && concatenated_cloud_result, double reference_timestamp_min,
-    double reference_timestamp_max);
+    double reference_timestamp_max, double arrival_timestamp);
   void delete_collector(CloudCollector & cloud_collector);
   std::list<std::shared_ptr<CloudCollector>> get_cloud_collectors();
   void add_cloud_collector(const std::shared_ptr<CloudCollector> & collector);
@@ -62,6 +62,7 @@ public:
 private:
   struct Parameters
   {
+    bool use_naive_approach;
     bool debug_mode;
     bool has_static_tf_only;
     double rosbag_length;
@@ -86,6 +87,7 @@ private:
   bool is_concatenated_cloud_empty_{false};
   double diagnostic_reference_timestamp_min_{0.0};
   double diagnostic_reference_timestamp_max_{0.0};
+  double diagnostic_arrival_timestamp_{0.0};
   std::unordered_map<std::string, double> diagnostic_topic_to_original_stamp_map_;
 
   std::shared_ptr<CombineCloudHandler> combine_cloud_handler_;
