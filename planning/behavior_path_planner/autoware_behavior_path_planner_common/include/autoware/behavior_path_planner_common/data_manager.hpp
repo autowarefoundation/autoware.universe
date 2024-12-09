@@ -147,6 +147,17 @@ struct CandidateOutput
   double finish_distance_to_path_change{std::numeric_limits<double>::lowest()};
 };
 
+/**
+ * @brief Adds detail text to stop/slow/dead_pose virtual walls.
+ */
+struct PoseWithDetail
+{
+  Pose pose;
+  std::string detail;
+  explicit PoseWithDetail(const Pose & p, const std::string & d = "") : pose(p), detail(d) {}
+};
+using PoseWithDetailOpt = std::optional<PoseWithDetail>;
+
 struct PlannerData
 {
   Odometry::ConstSharedPtr self_odometry{};

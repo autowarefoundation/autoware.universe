@@ -72,8 +72,7 @@ GoalPlannerModule::GoalPlannerModule(
   vehicle_info_{autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo()},
   thread_safe_data_{mutex_, clock_},
   is_lane_parking_cb_running_{false},
-  is_freespace_parking_cb_running_{false},
-  debug_stop_pose_with_info_{&stop_pose_}
+  is_freespace_parking_cb_running_{false}
 {
   LaneDepartureChecker lane_departure_checker{};
   lane_departure_checker.setVehicleInfo(vehicle_info_);
@@ -1237,7 +1236,8 @@ void GoalPlannerModule::setOutput(
 
   if (!context_data.pull_over_path_opt) {
     // situation : not safe against static objects use stop_path
-    output.path = generateStopPath(context_data);
+    output.path = generateStopPath(
+      context_data, (goal_candidates_.empty() ? "no goal candidate" : "no static safe path"));
     RCLCPP_INFO_THROTTLE(
       getLogger(), *clock_, 5000, "Not found safe pull_over path, generate stop path");
     setDrivableAreaInfo(context_data, output);
@@ -1251,10 +1251,10 @@ void GoalPlannerModule::setOutput(
     // situation : not safe against dynamic objects after approval
     // insert stop point in current path if ego is able to stop with acceleration and jerk
     // constraints
-    output.path = generateFeasibleStopPath(pull_over_path.getCurrentPath());
+    output.path =
+      generateFeasibleStopPath(pull_over_path.getCurrentPath(), "unsafe against dynamic objects");
     RCLCPP_INFO_THROTTLE(
       getLogger(), *clock_, 5000, "Not safe against dynamic objects, generate stop path");
-    debug_stop_pose_with_info_.set(std::string("feasible stop after approval"));
   } else {
     // situation : (safe against static and dynamic objects) or (safe against static objects and
     // before approval) don't stop
@@ -1363,17 +1363,25 @@ BehaviorModuleOutput GoalPlannerModule::planPullOver(const PullOverContextData &
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
-  if (
-    path_decision_controller_.get_current_state().state !=
-    PathDecisionState::DecisionKind::DECIDED) {
-    return planPullOverAsCandidate(context_data);
+  const auto current_state = path_decision_controller_.get_current_state();
+  if (current_state.state != PathDecisionState::DecisionKind::DECIDED) {
+    const bool is_stable_safe = current_state.is_stable_safe;
+    // clang-format off
+    const std::string detail =
+      goal_candidates_.empty()                        ? "no goal candidate"              :
+      context_data.pull_over_path_candidates.empty()  ? "no path candidate"              :
+      !thread_safe_data_.foundPullOverPath()          ? "no static safe path"            :
+      !is_stable_safe                                 ? "unsafe against dynamic objects" :
+                                                        "not decided";
+    // clang-format on
+    return planPullOverAsCandidate(context_data, detail);
   }
 
   return planPullOverAsOutput(context_data);
 }
 
 BehaviorModuleOutput GoalPlannerModule::planPullOverAsCandidate(
-  const PullOverContextData & context_data)
+  const PullOverContextData & context_data, const std::string & detail)
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
@@ -1385,7 +1393,7 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsCandidate(
   BehaviorModuleOutput output{};
   const BehaviorModuleOutput pull_over_output = planPullOverAsOutput(context_data);
   output.modified_goal = pull_over_output.modified_goal;
-  output.path = generateStopPath(context_data);
+  output.path = generateStopPath(context_data, detail);
   output.reference_path = getPreviousModuleOutput().reference_path;
 
   const auto target_drivable_lanes = utils::getNonOverlappingExpandedLanes(
@@ -1560,7 +1568,7 @@ BehaviorModuleOutput GoalPlannerModule::planWaitingApproval()
         "planner");
     } else {
       const auto & context_data = context_data_.value();
-      return planPullOverAsCandidate(context_data);
+      return planPullOverAsCandidate(context_data, "waiting approval");
     }
   }
 
@@ -1606,7 +1614,8 @@ void GoalPlannerModule::setParameters(const std::shared_ptr<GoalPlannerParameter
   parameters_ = parameters;
 }
 
-PathWithLaneId GoalPlannerModule::generateStopPath(const PullOverContextData & context_data) const
+PathWithLaneId GoalPlannerModule::generateStopPath(
+  const PullOverContextData & context_data, const std::string & detail) const
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
@@ -1656,28 +1665,20 @@ PathWithLaneId GoalPlannerModule::generateStopPath(const PullOverContextData & c
   //     (In the case of the curve lane, the position is not aligned due to the
   //     difference between the outer and inner sides)
   // 4. feasible stop
-  const auto stop_pose_with_info =
-    std::invoke([&]() -> std::optional<std::pair<Pose, std::string>> {
-      if (context_data.pull_over_path_opt) {
-        return std::make_pair(
-          context_data.pull_over_path_opt.value().start_pose(), "stop at selected start pose");
-      }
-      if (thread_safe_data_.get_closest_start_pose()) {
-        return std::make_pair(
-          thread_safe_data_.get_closest_start_pose().value(), "stop at closest start pose");
-      }
-      if (!decel_pose) {
-        return std::nullopt;
-      }
-      return std::make_pair(decel_pose.value(), "stop at search start pose");
-    });
-  if (!stop_pose_with_info) {
-    const auto feasible_stop_path = generateFeasibleStopPath(getPreviousModuleOutput().path);
-    // override stop pose info debug string
-    debug_stop_pose_with_info_.set(std::string("feasible stop: not calculate stop pose"));
+  const auto stop_pose_opt = std::invoke([&]() -> std::optional<Pose> {
+    if (context_data.pull_over_path_opt)
+      return context_data.pull_over_path_opt.value().start_pose();
+    if (thread_safe_data_.get_closest_start_pose())
+      return thread_safe_data_.get_closest_start_pose().value();
+    if (!decel_pose) return std::nullopt;
+    return decel_pose.value();
+  });
+  if (!stop_pose_opt.has_value()) {
+    const auto feasible_stop_path =
+      generateFeasibleStopPath(getPreviousModuleOutput().path, detail);
     return feasible_stop_path;
   }
-  const Pose stop_pose = stop_pose_with_info->first;
+  const Pose stop_pose = stop_pose_opt.value();
 
   // if stop pose is closer than min_stop_distance, stop as soon as possible
   const double ego_to_stop_distance = calcSignedArcLengthFromEgo(extended_prev_path, stop_pose);
@@ -1687,16 +1688,15 @@ PathWithLaneId GoalPlannerModule::generateStopPath(const PullOverContextData & c
   const bool is_stopped = std::abs(current_vel) < eps_vel;
   const double buffer = is_stopped ? stop_distance_buffer_ : 0.0;
   if (min_stop_distance && ego_to_stop_distance + buffer < *min_stop_distance) {
-    const auto feasible_stop_path = generateFeasibleStopPath(getPreviousModuleOutput().path);
-    debug_stop_pose_with_info_.set(
-      std::string("feasible stop: stop pose is closer than min_stop_distance"));
+    const auto feasible_stop_path =
+      generateFeasibleStopPath(getPreviousModuleOutput().path, detail);
     return feasible_stop_path;
   }
 
   // slow down for turn signal, insert stop point to stop_pose
   auto stop_path = extended_prev_path;
   decelerateForTurnSignal(stop_pose, stop_path);
-  debug_stop_pose_with_info_.set(stop_pose, stop_pose_with_info->second);
+  stop_pose_ = PoseWithDetail(stop_pose, detail);
 
   // slow down before the search area.
   if (decel_pose) {
@@ -1719,7 +1719,8 @@ PathWithLaneId GoalPlannerModule::generateStopPath(const PullOverContextData & c
   return stop_path;
 }
 
-PathWithLaneId GoalPlannerModule::generateFeasibleStopPath(const PathWithLaneId & path) const
+PathWithLaneId GoalPlannerModule::generateFeasibleStopPath(
+  const PathWithLaneId & path, const std::string & detail) const
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
@@ -1736,7 +1737,7 @@ PathWithLaneId GoalPlannerModule::generateFeasibleStopPath(const PathWithLaneId 
   const auto stop_idx =
     autoware::motion_utils::insertStopPoint(current_pose, *min_stop_distance, stop_path.points);
   if (stop_idx) {
-    debug_stop_pose_with_info_.set(stop_path.points.at(*stop_idx).point.pose, "feasible stop");
+    stop_pose_ = PoseWithDetail(stop_path.points.at(*stop_idx).point.pose, detail);
   }
 
   return stop_path;
@@ -2563,20 +2564,6 @@ void GoalPlannerModule::setDebugData(const PullOverContextData & context_data)
 
     planner_type_marker_array.markers.push_back(marker);
     add(planner_type_marker_array);
-  }
-
-  // Visualize stop pose info
-  if (debug_stop_pose_with_info_.pose->has_value()) {
-    visualization_msgs::msg::MarkerArray stop_pose_marker_array{};
-    const auto color = createMarkerColor(1.0, 1.0, 1.0, 0.99);
-    auto marker = createDefaultMarker(
-      header.frame_id, header.stamp, "stop_pose_info", 0,
-      visualization_msgs::msg::Marker::TEXT_VIEW_FACING, createMarkerScale(0.0, 0.0, 0.5), color);
-    marker.pose = debug_stop_pose_with_info_.pose->value();
-    marker.text = debug_stop_pose_with_info_.string;
-    stop_pose_marker_array.markers.push_back(marker);
-    add(stop_pose_marker_array);
-    add(createPoseMarkerArray(marker.pose, "stop_pose", 1.0, 1.0, 1.0, 0.9));
   }
 }
 
