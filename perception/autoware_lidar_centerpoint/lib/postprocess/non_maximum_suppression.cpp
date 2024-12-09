@@ -66,14 +66,12 @@ Eigen::MatrixXd NonMaximumSuppression::generateIoUMatrix(
         continue;
       }
 
-      if (params_.nms_type_ == NMS_TYPE::IoU_BEV) {
-        const double iou = autoware::object_recognition_utils::get2dIoU(target_obj, source_obj);
-        triangular_matrix(target_i, source_i) = iou;
-        // NOTE: If the target object has any objects with iou > iou_threshold, it
-        // will be suppressed regardless of later results.
-        if (iou > params_.iou_threshold_) {
-          break;
-        }
+      const double iou = autoware::object_recognition_utils::get2dIoU(target_obj, source_obj);
+      triangular_matrix(target_i, source_i) = iou;
+      // NOTE: If the target object has any objects with iou > iou_threshold, it
+      // will be suppressed regardless of later results.
+      if (iou > params_.iou_threshold_) {
+        break;
       }
     }
   }
@@ -90,10 +88,9 @@ std::vector<DetectedObject> NonMaximumSuppression::apply(
   output_objects.reserve(input_objects.size());
   for (std::size_t i = 0; i < input_objects.size(); ++i) {
     const auto value = iou_matrix.row(i).maxCoeff();
-    if (params_.nms_type_ == NMS_TYPE::IoU_BEV) {
-      if (value <= params_.iou_threshold_) {
-        output_objects.emplace_back(input_objects.at(i));
-      }
+
+    if (value <= params_.iou_threshold_) {
+      output_objects.emplace_back(input_objects.at(i));
     }
   }
 

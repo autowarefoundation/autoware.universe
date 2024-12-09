@@ -28,21 +28,10 @@ namespace autoware::lidar_centerpoint
 {
 using autoware_perception_msgs::msg::DetectedObject;
 
-// TODO(yukke42): now only support IoU_BEV
-enum class NMS_TYPE {
-  IoU_BEV
-  // IoU_3D
-  // Distance_2D
-  // Distance_3D
-};
-
 struct NMSParams
 {
-  NMS_TYPE nms_type_{};
-  std::vector<std::string> target_class_names_{};
   double search_distance_2d_{};
   double iou_threshold_{};
-  // double distance_threshold_{};
 };
 
 class NonMaximumSuppression
