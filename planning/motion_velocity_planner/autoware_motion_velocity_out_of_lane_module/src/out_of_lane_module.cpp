@@ -91,6 +91,7 @@ void OutOfLaneModule::init_parameters(rclcpp::Node & node)
     getOrDeclareParameter<bool>(node, ns_ + ".objects.ignore_behind_ego");
 
   pp.precision = getOrDeclareParameter<double>(node, ns_ + ".action.precision");
+  pp.use_map_stop_lines = getOrDeclareParameter<bool>(node, ns_ + ".action.use_map_stop_lines");
   pp.min_decision_duration = getOrDeclareParameter<double>(node, ns_ + ".action.min_duration");
   pp.lon_dist_buffer =
     getOrDeclareParameter<double>(node, ns_ + ".action.longitudinal_distance_buffer");
@@ -130,6 +131,7 @@ void OutOfLaneModule::update_parameters(const std::vector<rclcpp::Parameter> & p
   updateParam(parameters, ns_ + ".objects.ignore_behind_ego", pp.objects_ignore_behind_ego);
 
   updateParam(parameters, ns_ + ".action.precision", pp.precision);
+  updateParam(parameters, ns_ + ".action.use_map_stop_lines", pp.use_map_stop_lines);
   updateParam(parameters, ns_ + ".action.min_duration", pp.min_decision_duration);
   updateParam(parameters, ns_ + ".action.longitudinal_distance_buffer", pp.lon_dist_buffer);
   updateParam(parameters, ns_ + ".action.lateral_distance_buffer", pp.lat_dist_buffer);
@@ -223,6 +225,7 @@ VelocityPlanningResult OutOfLaneModule::plan(
   out_of_lane::calculate_min_stop_and_slowdown_distances(
     ego_data, *planner_data, previous_slowdown_pose_);
   prepare_stop_lines_rtree(ego_data, *planner_data, params_.max_arc_length);
+  ego_data.map_stop_points = planner_data->calculate_map_stop_points(ego_data.trajectory_points);
   const auto preprocessing_us = stopwatch.toc("preprocessing");
 
   stopwatch.tic("calculate_trajectory_footprints");
