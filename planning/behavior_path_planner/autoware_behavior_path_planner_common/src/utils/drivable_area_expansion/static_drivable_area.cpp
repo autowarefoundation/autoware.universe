@@ -809,7 +809,7 @@ void generateDrivableArea(
   PathWithLaneId & path, const std::vector<DrivableLanes> & lanes,
   const bool enable_expanding_hatched_road_markings, const bool enable_expanding_intersection_areas,
   const bool enable_expanding_freespace_areas,
-  const std::shared_ptr<const PlannerData> planner_data, const bool is_driving_forward)
+  const std::shared_ptr<const PlannerData> planner_data)
 {
   if (path.points.empty()) {
     return;
@@ -821,12 +821,10 @@ void generateDrivableArea(
   // Insert Position
   path.left_bound = calcBound(
     path, planner_data, lanes, enable_expanding_hatched_road_markings,
-    enable_expanding_intersection_areas, enable_expanding_freespace_areas, true,
-    is_driving_forward);
+    enable_expanding_intersection_areas, enable_expanding_freespace_areas, true);
   path.right_bound = calcBound(
     path, planner_data, lanes, enable_expanding_hatched_road_markings,
-    enable_expanding_intersection_areas, enable_expanding_freespace_areas, false,
-    is_driving_forward);
+    enable_expanding_intersection_areas, enable_expanding_freespace_areas, false);
 
   if (path.left_bound.empty() || path.right_bound.empty()) {
     auto clock{rclcpp::Clock{RCL_ROS_TIME}};
@@ -1479,8 +1477,7 @@ std::pair<std::vector<lanelet::ConstPoint3d>, bool> getBoundWithFreeSpaceAreas(
 std::vector<geometry_msgs::msg::Point> postProcess(
   const std::vector<geometry_msgs::msg::Point> & original_bound, const PathWithLaneId & path,
   const std::shared_ptr<const PlannerData> planner_data,
-  const std::vector<DrivableLanes> & drivable_lanes, const bool is_left,
-  const bool is_driving_forward)
+  const std::vector<DrivableLanes> & drivable_lanes, const bool is_left)
 {
   const auto lanelets = utils::transformToLanelets(drivable_lanes);
   const auto & current_pose = planner_data->self_odometry->pose.pose;
@@ -1557,10 +1554,6 @@ std::vector<geometry_msgs::msg::Point> postProcess(
     }
   }
 
-  if (!is_driving_forward) {
-    std::reverse(tmp_bound.begin(), tmp_bound.end());
-  }
-
   const auto start_idx = [&]() {
     const size_t current_seg_idx = planner_data->findEgoSegmentIndex(path.points);
     const auto cropped_path_points = autoware::motion_utils::cropPoints(
@@ -1593,14 +1586,18 @@ std::vector<geometry_msgs::msg::Point> postProcess(
       calcLongitudinalOffsetGoalPoint(tmp_bound, goal_pose, goal_start_idx, vehicle_length);
     const auto p_tmp =
       geometry_msgs::build<Pose>().position(goal_point).orientation(goal_pose.orientation);
-    const size_t goal_idx = std::max(
-      goal_start_idx, findNearestSegmentIndexFromLateralDistance(tmp_bound, p_tmp, M_PI_2));
-
+    const size_t goal_nearest_idx =
+      findNearestSegmentIndexFromLateralDistance(tmp_bound, p_tmp, M_PI_2);
+    const size_t goal_idx = ((goal_start_idx - start_idx) * (goal_start_idx - start_idx) >
+                             (goal_nearest_idx - start_idx) * (goal_nearest_idx - start_idx))
+                              ? goal_start_idx
+                              : goal_nearest_idx;
     return std::make_pair(goal_idx, goal_point);
   }();
 
   // Insert middle points
-  for (size_t i = start_idx + 1; i <= goal_idx; ++i) {
+  size_t step = (start_idx < goal_idx) ? 1 : -1;
+  for (size_t i = start_idx + step; i != goal_idx + step; i += step) {
     const auto & next_point = tmp_bound.at(i);
     const double dist =
       autoware::universe_utils::calcDistance2d(processed_bound.back(), next_point);
@@ -1624,7 +1621,7 @@ std::vector<geometry_msgs::msg::Point> calcBound(
   const PathWithLaneId & path, const std::shared_ptr<const PlannerData> planner_data,
   const std::vector<DrivableLanes> & drivable_lanes,
   const bool enable_expanding_hatched_road_markings, const bool enable_expanding_intersection_areas,
-  const bool enable_expanding_freespace_areas, const bool is_left, const bool is_driving_forward)
+  const bool enable_expanding_freespace_areas, const bool is_left)
 {
   using autoware::motion_utils::removeOverlapPoints;
 
@@ -1668,9 +1665,7 @@ std::vector<geometry_msgs::msg::Point> calcBound(
   }();
 
   const auto post_process = [&](const auto & bound, const auto skip) {
-    return skip
-             ? bound
-             : postProcess(bound, path, planner_data, drivable_lanes, is_left, is_driving_forward);
+    return skip ? bound : postProcess(bound, path, planner_data, drivable_lanes, is_left);
   };
 
   // Step2. if there is no drivable area defined by polygon, return original drivable bound.

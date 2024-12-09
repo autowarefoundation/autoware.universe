@@ -212,8 +212,7 @@ void PlannerManager::generateCombinedDrivableArea(
       output.path, data->parameters.vehicle_length, di.drivable_margin, is_driving_forward);
   } else if (di.is_already_expanded) {
     // for single side shift
-    utils::generateDrivableArea(
-      output.path, di.drivable_lanes, false, false, false, data, is_driving_forward);
+    utils::generateDrivableArea(output.path, di.drivable_lanes, false, false, false, data);
   } else {
     const auto shorten_lanes = utils::cutOverlappedLanes(output.path, di.drivable_lanes);
 
@@ -225,8 +224,7 @@ void PlannerManager::generateCombinedDrivableArea(
     // for other modules where multiple modules may be launched
     utils::generateDrivableArea(
       output.path, expanded_lanes, di.enable_expanding_hatched_road_markings,
-      di.enable_expanding_intersection_areas, di.enable_expanding_freespace_areas, data,
-      is_driving_forward);
+      di.enable_expanding_intersection_areas, di.enable_expanding_freespace_areas, data);
   }
 
   // extract obstacles from drivable area
