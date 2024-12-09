@@ -1201,14 +1201,7 @@ bool filter_target_lane_objects(
   const auto is_stopped = velocity_filter(
     object.initial_twist, -std::numeric_limits<double>::epsilon(), stopped_obj_vel_th);
   if (is_lateral_far && before_terminal) {
-    const auto overlapped_target_lanes = std::invoke([&]() {
-      if (!boost::geometry::disjoint(object.initial_polygon, lanes_polygon.target)) {
-        return true;
-      }
-
-      return !is_stopped && is_vehicle(object.classification) &&
-             object_path_overlaps_lanes(object, lanes_polygon.target);
-    });
+    const auto overlapped_target_lanes = !boost::geometry::disjoint(object.initial_polygon, lanes_polygon.target) || (!is_stopped && is_vehicle(object.classification) && object_path_overlaps_lanes(object, lanes_polygon.target));
 
     if (overlapped_target_lanes) {
       if (!ahead_of_ego && !is_stopped) {
