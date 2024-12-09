@@ -450,7 +450,7 @@ void PointCloudConcatenateDataSynchronizerComponent::check_concat_status(
       if (topic_miss) {
         level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
         message =
-          "Concatenated pointcloud is missing some topics and is not published because it arrived "
+          "Concatenated pointcloud misses some topics and is not published because it arrived "
           "too late";
       } else {
         level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
@@ -462,7 +462,7 @@ void PointCloudConcatenateDataSynchronizerComponent::check_concat_status(
         message = "Concatenated pointcloud is empty";
       } else if (topic_miss) {
         level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
-        message = "Concatenated pointcloud is published but miss some topics";
+        message = "Concatenated pointcloud is published but misses some topics";
       }
     }
 

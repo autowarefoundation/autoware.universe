@@ -6,6 +6,11 @@
     "concatenate_and_time_sync_node": {
       "type": "object",
       "properties": {
+        "use_naive_approach": {
+          "type": "boolean",
+          "default": false,
+          "description": "Flag to enable a naive approach for concatenating point clouds without considering their timestamps. Set this to `false` and adjust `lidar_timestamp_offsets` and `lidar_timestamp_noise_window` if your LiDAR sensor supports synchronization."
+        },
         "debug_mode": {
           "type": "boolean",
           "default": false,
@@ -103,6 +108,7 @@
         }
       },
       "required": [
+        "use_naive_approach",
         "debug_mode",
         "has_static_tf_only",
         "rosbag_length",

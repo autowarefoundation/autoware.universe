@@ -28,10 +28,10 @@ After concatenation, the concatenated point cloud is published, and the collecto
 
 ### Input
 
-| Name            | Type                                             | Description                                                                                                                                             |
-| --------------- | ------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `~/input/twist` | `geometry_msgs::msg::TwistWithCovarianceStamped` | Twist information adjusts the point cloud scans based on vehicle motion, allowing LiDARs with different timestamp to be synchronized for concatenation. |
-| `~/input/odom`  | `nav_msgs::msg::Odometry`                        | Vehicle odometry adjusts the point cloud scans based on vehicle motion, allowing LiDARs with different timestamp to be synchronized for concatenation.  |
+| Name            | Type                                             | Description                                                                                                                                              |
+| --------------- | ------------------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `~/input/twist` | `geometry_msgs::msg::TwistWithCovarianceStamped` | Twist information adjusts the point cloud scans based on vehicle motion, allowing LiDARs with different timestamps to be synchronized for concatenation. |
+| `~/input/odom`  | `nav_msgs::msg::Odometry`                        | Vehicle odometry adjusts the point cloud scans based on vehicle motion, allowing LiDARs with different timestamps to be synchronized for concatenation.  |
 
 By setting the `input_twist_topic_type` parameter to `twist` or `odom`, the subscriber will subscribe to either `~/input/twist` or `~/input/odom`. If the user doesn't want to use the twist information or vehicle odometry to compensate for motion, set `is_motion_compensated` to `false`.
 
@@ -47,7 +47,9 @@ By setting the `input_twist_topic_type` parameter to `twist` or `odom`, the subs
 
 ### Parameter Settings
 
-Three parameters, `timeout_sec`, `lidar_timestamp_offsets`, and `lidar_timestamp_noise_window`, are critical for collecting point clouds in the same collector and handling edge cases effectively.
+If your LiDAR sensor does not support synchronization, set `use_naive_approach` to `true` to use the naive approach, which bypasses point cloud timestamps and directly concatenates the point clouds. On the other hand, if your LiDAR sensors are synchronized, set `use_naive_approach` to `false` and adjust the `lidar_timestamp_offsets` and `lidar_timestamp_noise_window` parameters accordingly.
+
+The three parameters, `timeout_sec`, `lidar_timestamp_offsets`, and `lidar_timestamp_noise_window`, are essential for efficiently collecting point clouds in the same collector and managing edge cases effectively.
 
 #### timeout_sec
 
@@ -73,7 +75,7 @@ nanosec: 257009560
 nanosec: 355444581
 ```
 
-This pattern indicates a LiDAR timestamp is 0.05.
+This pattern indicates a LiDAR timestamp of 0.05.
 
 If there are three LiDARs (left, right, top), and the timestamps for the left, right, and top point clouds are `0.01`, `0.05`, and `0.09` seconds respectively, the parameters should be set as [0.0, 0.04, 0.08]. This reflects the timestamp differences between the current point cloud and the point cloud with the earliest timestamp. Note that the order of the `lidar_timestamp_offsets` corresponds to the order of the `input_topics`.
 
@@ -85,7 +87,7 @@ The figure below demonstrates how `lidar_timestamp_offsets` works with `concaten
 
 Additionally, due to the mechanical design of LiDARs, there may be some jitter in the timestamps of each scan, as shown in the image below. For example, if the scan frequency is set to 10 Hz (scanning every 100 ms), the timestamps between each scan might not be exactly 100 ms apart. To handle this noise, the `lidar_timestamp_noise_window` parameter is provided.
 
-User can use [this tool](https://github.com/tier4/timestamp_analyzer) to visualize the noise between each scan.
+Users can use [this tool](https://github.com/tier4/timestamp_analyzer) to visualize the noise between each scan.
 
 ![jitter](./image/jitter.png)
 
@@ -207,4 +209,4 @@ Note that the `concatenate_pointclouds` and `time_synchronizer_nodelet` are usin
 ## Assumptions / Known Limits
 
 - If `is_motion_compensated` is set to `false`, the `concatenate_and_time_sync_node` will directly concatenate the point clouds without applying for motion compensation. This can save several milliseconds depending on the number of LiDARs being concatenated. Therefore, if the timestamp differences between point clouds are negligible, the user can set `is_motion_compensated` to `false` and omit the need for twist or odometry input for the node.
-- As mentioned above, the user should clearly understand how their LiDAR's point cloud timestamps are managed to set the parameters correctly.
+- As mentioned above, the user should clearly understand how their LiDAR's point cloud timestamps are managed to set the parameters correctly. If the user does not synchronize the point clouds, please set `use_naive_approach` to `true`.
