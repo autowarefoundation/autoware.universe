@@ -17,7 +17,6 @@
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
   <depend>autoware_euclidean_cluster</depend>
-  <depend>autoware_internal_msgs</depend>
   <depend>autoware_lidar_centerpoint</depend>
   <depend>autoware_object_recognition_utils</depend>
   <depend>autoware_perception_msgs</depend>
