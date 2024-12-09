@@ -27,6 +27,7 @@
 #include <memory>
 #include <random>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace autoware::lidar_centerpoint
