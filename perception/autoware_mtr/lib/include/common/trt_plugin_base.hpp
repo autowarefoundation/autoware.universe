@@ -25,7 +25,7 @@
 #include <string>
 #include <vector>
 
-namespace trt_mtr
+namespace autoware::trt_mtr
 {
 #if NV_TENSORRT_MAJOR > 7
 #define TRT_NOEXCEPT noexcept
@@ -168,6 +168,6 @@ protected:
   std::vector<nvinfer1::PluginField> mPluginAttributes;
   std::string mNamespace;
 };
-}  // namespace trt_mtr
+}  // namespace autoware::trt_mtr
 
 #endif  // COMMON__TRT_PLUGIN_BASE_HPP_

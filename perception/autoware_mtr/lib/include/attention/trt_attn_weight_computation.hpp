@@ -19,7 +19,7 @@
 
 #include <string>
 
-namespace trt_mtr
+namespace autoware::trt_mtr
 {
 /**
  * @brief The function to compute attention weight.
@@ -97,5 +97,5 @@ public:
     const char * name, const void * serialData, size_t serialLength) TRT_NOEXCEPT override;
 };  // class AttentionWeightComputationCreator
 REGISTER_TENSORRT_PLUGIN(AttentionWeightComputationCreator);
-}  // namespace trt_mtr
+}  // namespace autoware::trt_mtr
 #endif  // ATTENTION__TRT_ATTN_WEIGHT_COMPUTATION_HPP_

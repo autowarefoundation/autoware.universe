@@ -1,1 +1,1 @@
-# Motion TRansformer (MTR)
+# autoware-mtr

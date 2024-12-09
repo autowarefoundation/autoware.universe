@@ -16,7 +16,9 @@
 
 #include "attention/trt_attn_value_computation_kernel.hpp"
 
-namespace trt_mtr
+#include <string>
+
+namespace autoware::trt_mtr
 {
 namespace
 {
@@ -202,4 +204,4 @@ nvinfer1::IPluginV2DynamicExt * AttentionValueComputationCreator::deserializePlu
   return plugin;
 }
 
-}  // namespace trt_mtr
+}  // namespace autoware::trt_mtr
