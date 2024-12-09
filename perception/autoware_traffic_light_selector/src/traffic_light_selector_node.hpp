@@ -21,10 +21,10 @@
 #include "message_filters/synchronizer.h"
 #include "rclcpp/rclcpp.hpp"
 
-#include "tier4_perception_msgs/msg/detected_objects_with_feature.hpp"
 #include "tier4_perception_msgs/msg/detected_object_with_feature.hpp"
-#include "tier4_perception_msgs/msg/traffic_light_roi_array.hpp"
+#include "tier4_perception_msgs/msg/detected_objects_with_feature.hpp"
 #include "tier4_perception_msgs/msg/traffic_light_roi.hpp"
+#include "tier4_perception_msgs/msg/traffic_light_roi_array.hpp"
 
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
@@ -38,9 +38,8 @@ namespace autoware::traffic_light
 {
 using tier4_perception_msgs::msg::DetectedObjectsWithFeature;
 using tier4_perception_msgs::msg::DetectedObjectWithFeature;
-using tier4_perception_msgs::msg::TrafficLightRoiArray;
 using tier4_perception_msgs::msg::TrafficLightRoi;
-
+using tier4_perception_msgs::msg::TrafficLightRoiArray;
 
 class TrafficLightSelectorNode : public rclcpp::Node
 {
@@ -53,19 +52,23 @@ private:
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 
-  message_filters::Subscriber<DetectedObjectsWithFeature> objects0_sub_;
-  message_filters::Subscriber<TrafficLightRoiArray> objects1_sub_;
+  message_filters::Subscriber<DetectedObjectsWithFeature> detected_rois_sub_;
+  message_filters::Subscriber<TrafficLightRoiArray> rough_rois_sub_;
+  message_filters::Subscriber<TrafficLightRoiArray> expected_rois_sub_;
   typedef message_filters::sync_policies::ApproximateTime<
-    DetectedObjectsWithFeature, TrafficLightRoiArray>
+    DetectedObjectsWithFeature, TrafficLightRoiArray, TrafficLightRoiArray>
     SyncPolicy;
   typedef message_filters::Synchronizer<SyncPolicy> Sync;
   Sync sync_;
   void objectsCallback(
-    const DetectedObjectsWithFeature::ConstSharedPtr & input_objects0_msg,
-    const TrafficLightRoiArray::ConstSharedPtr & input_objects1_msg);
+    const DetectedObjectsWithFeature::ConstSharedPtr & detected_rois_msg,
+    const TrafficLightRoiArray::ConstSharedPtr & rough_rois_msg,
+    const TrafficLightRoiArray::ConstSharedPtr & expect_rois_msg);
   // Publisher
   rclcpp::Publisher<TrafficLightRoiArray>::SharedPtr pub_traffic_light_rois_;
   bool debug_{false};
+  // declare publisher for debug image
+  // rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr pub_debug_image_;
 };
 
 }  // namespace autoware::traffic_light
