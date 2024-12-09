@@ -138,7 +138,7 @@ jobs:
         with:
           rosdistro: humble
           target-packages: ${{ steps.get-modified-packages.outputs.modified-packages }}
-          clang-tidy-config-url: https://github.com/team-emb4/autoware/blob/test_clang-tidy-ci/.clang-tidy-ci
+          clang-tidy-config-url: https://raw.githubusercontent.com/team-emb4/autoware/refs/heads/test_clang-tidy-ci/.clang-tidy-ci
           clang-tidy-ignore-path: .clang-tidy-ignore
           build-depends-repos: build_depends.repos
           cache-key-element: cuda
