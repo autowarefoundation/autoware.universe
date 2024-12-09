@@ -45,7 +45,6 @@ struct NMSParams
   // double distance_threshold_{};
 };
 
-
 class NonMaximumSuppression
 {
 public:
@@ -54,7 +53,6 @@ public:
   std::vector<DetectedObject> apply(const std::vector<DetectedObject> &);
 
 private:
-
   bool isTargetPairObject(const DetectedObject &, const DetectedObject &);
 
   Eigen::MatrixXd generateIoUMatrix(const std::vector<DetectedObject> &);
