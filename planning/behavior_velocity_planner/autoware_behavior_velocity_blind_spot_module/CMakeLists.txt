@@ -13,6 +13,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/scene.cpp
   src/decisions.cpp
   src/util.cpp
+  src/parameter.cpp
 )
 
 if(BUILD_TESTING)
