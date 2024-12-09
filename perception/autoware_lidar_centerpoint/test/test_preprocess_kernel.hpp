@@ -71,6 +71,7 @@ public:
   cuda::unique_ptr<float[]> points_d_{};
   cuda::unique_ptr<float[]> voxels_buffer_d_{};
   cuda::unique_ptr<unsigned int[]> mask_d_{};
+  cuda::unique_ptr<unsigned int[]> priority_map_d_{};
   cuda::unique_ptr<unsigned int[]> num_voxels_d_{};
 };
 
