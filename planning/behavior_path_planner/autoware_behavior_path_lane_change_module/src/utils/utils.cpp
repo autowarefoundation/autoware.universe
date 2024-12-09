@@ -1278,7 +1278,9 @@ std::vector<lanelet::ConstLanelets> get_preceding_lanes(const CommonDataPtr & co
       continue;
     }
 
-    lanelet::ConstLanelets non_overlapping_lanes(lanes_reversed.begin(), overlapped_itr);
+    // Lanes are not reversed by default. Avoid returning reversed lanes to prevent undefined
+    // behavior.
+    lanelet::ConstLanelets non_overlapping_lanes(overlapped_itr.base(), lanes.end());
     non_overlapping_lanes_vec.push_back(non_overlapping_lanes);
   }
 
