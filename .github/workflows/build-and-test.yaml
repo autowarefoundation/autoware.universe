@@ -16,7 +16,7 @@ env:
 
 jobs:
   build-and-test:
-    runs-on: codebuild-autoware-us-east-1-${{ github.run_id }}-${{ github.run_attempt }}-ubuntu-7.0-large
+    runs-on: [self-hosted, Linux, X64]
     container: ${{ matrix.container }}${{ matrix.container-suffix }}
     strategy:
       fail-fast: false
