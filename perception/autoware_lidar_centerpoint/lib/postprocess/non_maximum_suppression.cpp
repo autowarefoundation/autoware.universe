@@ -29,6 +29,7 @@ void NonMaximumSuppression::setParameters(const NMSParams & params)
   assert(params.iou_threshold_ >= 0.0 && params.iou_threshold_ <= 1.0);
 
   params_ = params;
+  search_distance_2d_sq_ = params.search_distance_2d_ * params.search_distance_2d_;
   target_class_mask_ = classNamesToBooleanMask(params.target_class_names_);
 }
 
@@ -48,15 +49,14 @@ bool NonMaximumSuppression::isTargetPairObject(
   const auto label2 =
     autoware::object_recognition_utils::getHighestProbLabel(object2.classification);
 
-  if (isTargetLabel(label1) && isTargetLabel(label2)) {
-    return true;
+  if (!isTargetLabel(label1) || !isTargetLabel(label2)) {
+    return false;
   }
 
-  const auto search_sqr_dist_2d = params_.search_distance_2d_ * params_.search_distance_2d_;
   const auto sqr_dist_2d = autoware::universe_utils::calcSquaredDistance2d(
     autoware::object_recognition_utils::getPose(object1),
     autoware::object_recognition_utils::getPose(object2));
-  return sqr_dist_2d <= search_sqr_dist_2d;
+  return sqr_dist_2d <= search_distance_2d_sq_;
 }
 
 Eigen::MatrixXd NonMaximumSuppression::generateIoUMatrix(

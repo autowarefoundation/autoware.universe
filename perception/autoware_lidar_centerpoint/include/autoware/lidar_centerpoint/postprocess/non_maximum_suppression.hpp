@@ -74,6 +74,8 @@ private:
 
   NMSParams params_{};
   std::vector<bool> target_class_mask_{};
+
+  double search_distance_2d_sq_{};
 };
 
 }  // namespace autoware::lidar_centerpoint
