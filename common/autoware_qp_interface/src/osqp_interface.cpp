@@ -116,7 +116,7 @@ void OSQPInterface::initializeCSCProblemImpl(
   data_->u = u_dyn;
 
   // Setup workspace
-  OSQPWorkspace * workspace;
+  OSQPWorkspace * workspace = nullptr;
   exitflag_ = osqp_setup(&workspace, data_.get(), settings_.get());
   work_.reset(workspace);
   work__initialized = true;

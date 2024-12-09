@@ -37,7 +37,7 @@ CSC_Matrix calCSCMatrix(const Eigen::MatrixXd & mat)
   col_idxs.reserve(elem);
 
   // Construct CSC matrix arrays
-  c_float val;
+  c_float val = 0.0;
   c_int elem_count = 0;
 
   col_idxs.push_back(0);
@@ -82,7 +82,7 @@ CSC_Matrix calCSCMatrixTrapezoidal(const Eigen::MatrixXd & mat)
   col_idxs.reserve(elem);
 
   // Construct CSC matrix arrays
-  c_float val;
+  c_float val = 0.0;
   Eigen::Index trap_last_idx = 0;
   c_int elem_count = 0;
 
