@@ -45,18 +45,6 @@ struct NMSParams
   // double distance_threshold_{};
 };
 
-std::vector<bool> classNamesToBooleanMask(const std::vector<std::string> & class_names)
-{
-  std::vector<bool> mask;
-  constexpr std::size_t num_object_classification = 8;
-  mask.resize(num_object_classification);
-  for (const auto & class_name : class_names) {
-    const auto semantic_type = getSemanticType(class_name);
-    mask.at(semantic_type) = true;
-  }
-
-  return mask;
-}
 
 class NonMaximumSuppression
 {
@@ -66,14 +54,12 @@ public:
   std::vector<DetectedObject> apply(const std::vector<DetectedObject> &);
 
 private:
-  bool isTargetLabel(const std::uint8_t);
 
   bool isTargetPairObject(const DetectedObject &, const DetectedObject &);
 
   Eigen::MatrixXd generateIoUMatrix(const std::vector<DetectedObject> &);
 
   NMSParams params_{};
-  std::vector<bool> target_class_mask_{};
 
   double search_distance_2d_sq_{};
 };

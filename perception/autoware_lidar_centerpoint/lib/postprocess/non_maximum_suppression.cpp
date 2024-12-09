@@ -22,6 +22,7 @@
 
 namespace autoware::lidar_centerpoint
 {
+using Label = autoware_perception_msgs::msg::ObjectClassification;
 
 void NonMaximumSuppression::setParameters(const NMSParams & params)
 {
@@ -30,15 +31,6 @@ void NonMaximumSuppression::setParameters(const NMSParams & params)
 
   params_ = params;
   search_distance_2d_sq_ = params.search_distance_2d_ * params.search_distance_2d_;
-  target_class_mask_ = classNamesToBooleanMask(params.target_class_names_);
-}
-
-bool NonMaximumSuppression::isTargetLabel(const uint8_t label)
-{
-  if (label >= target_class_mask_.size()) {
-    return false;
-  }
-  return target_class_mask_.at(label);
 }
 
 bool NonMaximumSuppression::isTargetPairObject(
@@ -49,7 +41,8 @@ bool NonMaximumSuppression::isTargetPairObject(
   const auto label2 =
     autoware::object_recognition_utils::getHighestProbLabel(object2.classification);
 
-  if (!isTargetLabel(label1) || !isTargetLabel(label2)) {
+  // if labels are not the same, and one of them is pedestrian, do not suppress
+  if (label1 != label2 && (label1 == Label::PEDESTRIAN || label2 == Label::PEDESTRIAN)) {
     return false;
   }
 
