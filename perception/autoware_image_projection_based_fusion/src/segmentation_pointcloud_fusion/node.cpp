@@ -19,6 +19,9 @@
 
 #include <perception_utils/run_length_encoder.hpp>
 
+#include <memory>
+#include <vector>
+
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #include <tf2_sensor_msgs/tf2_sensor_msgs.h>
@@ -137,7 +140,8 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
     }
 
     Eigen::Vector2d projected_point = calcRawImageProjectedPoint(
-      pinhole_camera_model, cv::Point3d(transformed_x, transformed_y, transformed_z));
+      pinhole_camera_model, cv::Point3d(transformed_x, transformed_y, transformed_z),
+      point_project_to_unrectified_image_);
 
     bool is_inside_image = projected_point.x() > 0 && projected_point.x() < camera_info.width &&
                            projected_point.y() > 0 && projected_point.y() < camera_info.height;

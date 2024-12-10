@@ -19,6 +19,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/util.cpp
   src/goal_planner_module.cpp
   src/manager.cpp
+  src/decision_state.cpp
 )
 
 if(BUILD_EXAMPLES)
@@ -27,7 +28,7 @@ if(BUILD_EXAMPLES)
   FetchContent_Declare(
     matplotlibcpp17
     GIT_REPOSITORY https://github.com/soblin/matplotlibcpp17.git
-    GIT_TAG main
+    GIT_TAG master
   )
   FetchContent_MakeAvailable(matplotlibcpp17)
 

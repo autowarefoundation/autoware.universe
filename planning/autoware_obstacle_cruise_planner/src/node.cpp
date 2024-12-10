@@ -32,6 +32,13 @@
 
 #include <algorithm>
 #include <chrono>
+#include <limits>
+#include <memory>
+#include <string>
+#include <tuple>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 namespace
 {
@@ -719,7 +726,7 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
 
   // 8. Publish debug data
   published_time_publisher_->publish_if_subscribed(trajectory_pub_, output_traj.header.stamp);
-  planner_ptr_->publishDiagnostics(now());
+  planner_ptr_->publishMetrics(now());
   publishDebugMarker();
   publishDebugInfo();
 
