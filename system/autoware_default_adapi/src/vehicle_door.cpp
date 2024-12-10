@@ -24,18 +24,23 @@ VehicleDoorNode::VehicleDoorNode(const rclcpp::NodeOptions & options)
 {
   const auto adaptor = autoware::component_interface_utils::NodeAdaptor(this);
   group_cli_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  adaptor.relay_service(cli_command_, srv_command_, group_cli_, 3.0);
-  adaptor.relay_service(cli_layout_, srv_layout_, group_cli_, 3.0);
+  adaptor.relay_service(cli_layout_, srv_layout_, group_cli_);
+  adaptor.init_cli(cli_command_, group_cli_);
+  adaptor.init_srv(srv_command_, this, &VehicleDoorNode::on_command);
   adaptor.init_pub(pub_status_);
   adaptor.init_sub(sub_status_, this, &VehicleDoorNode::on_status);
 }
 
-void VehicleDoorNode::on_status(
-  autoware::component_interface_specs::vehicle::DoorStatus::Message::ConstSharedPtr msg)
+void VehicleDoorNode::on_status(InternalDoorStatus::Message::ConstSharedPtr msg)
 {
-  utils::notify(
-    pub_status_, status_, *msg,
-    utils::ignore_stamp<autoware::component_interface_specs::vehicle::DoorStatus::Message>);
+  utils::notify(pub_status_, status_, *msg, utils::ignore_stamp<InternalDoorStatus::Message>);
+}
+
+void VehicleDoorNode::on_command(
+  const ExternalDoorCommand::Service::Request::SharedPtr req,
+  const ExternalDoorCommand::Service::Response::SharedPtr res)
+{
+  autoware::component_interface_utils::status::copy(cli_command_->call(req), res);
 }
 
 }  // namespace autoware::default_adapi

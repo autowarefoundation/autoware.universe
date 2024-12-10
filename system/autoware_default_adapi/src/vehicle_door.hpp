@@ -17,6 +17,7 @@
 
 #include <autoware/adapi_specs/vehicle.hpp>
 #include <autoware/component_interface_specs/vehicle.hpp>
+#include <autoware/component_interface_utils/status.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <optional>
@@ -33,16 +34,26 @@ public:
   explicit VehicleDoorNode(const rclcpp::NodeOptions & options);
 
 private:
-  void on_status(
-    autoware::component_interface_specs::vehicle::DoorStatus::Message::ConstSharedPtr msg);
+  using InternalDoorStatus = autoware::component_interface_specs::vehicle::DoorStatus;
+  using InternalDoorLayout = autoware::component_interface_specs::vehicle::DoorLayout;
+  using InternalDoorCommand = autoware::component_interface_specs::vehicle::DoorCommand;
+  using ExternalDoorStatus = autoware::adapi_specs::vehicle::DoorStatus;
+  using ExternalDoorLayout = autoware::adapi_specs::vehicle::DoorLayout;
+  using ExternalDoorCommand = autoware::adapi_specs::vehicle::DoorCommand;
+
+  void on_status(InternalDoorStatus::Message::ConstSharedPtr msg);
+  void on_command(
+    const ExternalDoorCommand::Service::Request::SharedPtr req,
+    const ExternalDoorCommand::Service::Response::SharedPtr res);
+
   rclcpp::CallbackGroup::SharedPtr group_cli_;
-  Srv<autoware::adapi_specs::vehicle::DoorCommand> srv_command_;
-  Srv<autoware::adapi_specs::vehicle::DoorLayout> srv_layout_;
-  Pub<autoware::adapi_specs::vehicle::DoorStatus> pub_status_;
-  Cli<autoware::component_interface_specs::vehicle::DoorCommand> cli_command_;
-  Cli<autoware::component_interface_specs::vehicle::DoorLayout> cli_layout_;
-  Sub<autoware::component_interface_specs::vehicle::DoorStatus> sub_status_;
-  std::optional<autoware::component_interface_specs::vehicle::DoorStatus::Message> status_;
+  Srv<ExternalDoorCommand> srv_command_;
+  Srv<ExternalDoorLayout> srv_layout_;
+  Pub<ExternalDoorStatus> pub_status_;
+  Cli<InternalDoorCommand> cli_command_;
+  Cli<InternalDoorLayout> cli_layout_;
+  Sub<InternalDoorStatus> sub_status_;
+  std::optional<InternalDoorStatus::Message> status_;
 };
 
 }  // namespace autoware::default_adapi
