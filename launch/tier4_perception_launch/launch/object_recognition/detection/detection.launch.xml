@@ -51,36 +51,36 @@
   <arg name="output/objects" default="objects"/>
 
   <!-- internal interfaces -->
-  <arg name="pointcloud_filter/output/pointcloud" default="$(var ns)/pointcloud_map_filtered/pointcloud"/>
-  <arg name="lidar_ml_detector/output/objects" default="$(var ns)/$(var lidar_detection_model_type)/objects"/>
-  <arg name="lidar_rule_detector/output/cluster_objects" default="$(var ns)/clustering/objects_with_feature"/>
-  <arg name="lidar_rule_detector/output/objects" default="$(var ns)/clustering/objects"/>
-  <arg name="camera_lidar_rule_detector/output/objects" default="$(var ns)/clustering/camera_lidar_fusion/objects"/>
-  <arg name="camera_lidar_rule_detector/output/cluster_objects" default="$(var ns)/clustering/objects_with_feature"/>
-  <arg name="tracker_based_detector/input/clusters" default="$(var ns)/clustering/objects_with_feature"/>
-  <arg name="tracker_based_detector/output/objects" default="$(var ns)/detection_by_tracker/objects"/>
-  <arg name="lidar_object_filter/output/objects" default="$(var ns)/$(var lidar_detection_model_type)/validation/objects"/>
-  <arg name="camera_lidar_object_filter/output/objects" default="$(var ns)/clustering/camera_lidar_fusion/filtered/objects"/>
-  <arg name="radar_pipeline/output/objects" default="$(var ns)/radar/far_objects"/>
-  <arg name="radar_object_filter/output/objects" default="$(var ns)/radar/far_objects"/>
+  <let name="pointcloud_filter/output/pointcloud" value="$(var ns)/pointcloud_map_filtered/pointcloud"/>
+  <let name="lidar_ml_detector/output/objects" value="$(var ns)/$(var lidar_detection_model_type)/objects"/>
+  <let name="lidar_rule_detector/output/cluster_objects" value="$(var ns)/clustering/objects_with_feature"/>
+  <let name="lidar_rule_detector/output/objects" value="$(var ns)/clustering/objects"/>
+  <let name="camera_lidar_rule_detector/output/objects" value="$(var ns)/clustering/camera_lidar_fusion/objects"/>
+  <let name="camera_lidar_rule_detector/output/cluster_objects" value="$(var ns)/clustering/objects_with_feature"/>
+  <let name="tracker_based_detector/input/clusters" value="$(var ns)/clustering/objects_with_feature"/>
+  <let name="tracker_based_detector/output/objects" value="$(var ns)/detection_by_tracker/objects"/>
+  <let name="lidar_object_filter/output/objects" value="$(var ns)/$(var lidar_detection_model_type)/validation/objects"/>
+  <let name="camera_lidar_object_filter/output/objects" value="$(var ns)/clustering/camera_lidar_fusion/filtered/objects"/>
+  <let name="radar_pipeline/output/objects" value="$(var ns)/radar/far_objects"/>
+  <let name="radar_object_filter/output/objects" value="$(var ns)/radar/far_objects"/>
 
   <!-- Module switching -->
-  <arg name="switch/detector/camera_lidar" default="false"/>
-  <arg name="switch/detector/lidar_dnn" default="false"/>
-  <arg name="switch/detector/lidar_rule" default="false"/>
-  <arg name="switch/detector/radar" default="false"/>
-  <arg name="switch/detector/radar_only" default="false"/>
-  <arg name="switch/detector/tracker_based" default="false"/>
+  <let name="switch/detector/camera_lidar" value="false"/>
+  <let name="switch/detector/lidar_dnn" value="false"/>
+  <let name="switch/detector/lidar_rule" value="false"/>
+  <let name="switch/detector/radar" value="false"/>
+  <let name="switch/detector/radar_only" value="false"/>
+  <let name="switch/detector/tracker_based" value="false"/>
   <let name="switch/detector/tracker_based" value="true" if="$(var use_detection_by_tracker)"/>
 
-  <arg name="switch/filter/pointcloud" default="false"/>
-  <arg name="switch/filter/camera_lidar_object" default="false"/>
-  <arg name="switch/filter/lidar_object" default="false"/>
+  <let name="switch/filter/pointcloud" value="false"/>
+  <let name="switch/filter/camera_lidar_object" value="false"/>
+  <let name="switch/filter/lidar_object" value="false"/>
 
-  <arg name="switch/merger/camera_lidar_radar" default="false"/>
-  <arg name="switch/merger/camera_lidar" default="false"/>
-  <arg name="switch/merger/lidar_radar" default="false"/>
-  <arg name="switch/merger/lidar" default="false"/>
+  <let name="switch/merger/camera_lidar_radar" value="false"/>
+  <let name="switch/merger/camera_lidar" value="false"/>
+  <let name="switch/merger/lidar_radar" value="false"/>
+  <let name="switch/merger/lidar" value="false"/>
 
   <group scoped="false" if="$(eval '&quot;$(var mode)&quot;==&quot;camera_lidar_radar_fusion&quot;')">
     <let name="switch/filter/pointcloud" value="true"/>

@@ -61,7 +61,7 @@
   <let name="roi_cluster_fusion/input/clusters" value="$(var ns)/clustering/clusters"/>
   <let name="roi_cluster_fusion/output/clusters" value="$(var ns)/clustering/camera_lidar_fusion/clusters"/>
   <let name="low_intensity_cluster_filter/input/clusters" value="$(var roi_cluster_fusion/output/clusters)"/>
-  <let name="low_intensity_cluster_filter/output/clusters" value="$(var ns)/clustering/filtered/clusters"/>
+  <let name="low_intensity_cluster_filter/output/clusters" value="$(var ns)/clustering/camera_lidar_fusion/filtered/clusters"/>
   <let name="shape_estimation2/input/clusters" value="$(var ns)/clustering/camera_lidar_fusion/filtered/clusters" if="$(var use_low_intensity_cluster_filter)"/>
   <let name="shape_estimation2/input/clusters" value="$(var ns)/clustering/camera_lidar_fusion/clusters" unless="$(var use_low_intensity_cluster_filter)"/>
   <let name="shape_estimation2/output/objects" value="$(var ns)/clustering/camera_lidar_fusion/objects_with_feature"/>
