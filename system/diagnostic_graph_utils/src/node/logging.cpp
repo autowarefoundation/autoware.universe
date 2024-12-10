@@ -61,7 +61,7 @@ void LoggingNode::on_timer()
   if (root_unit_ && root_unit_->level() != DiagUnit::DiagnosticStatus::OK) {
     dump_text_.str("");
     dump_text_.clear(std::stringstream::goodbit);
-    dump_unit(root_unit_, 0, "    ");
+    dump_unit(root_unit_, 0, "");
 
     if (enable_terminal_log_) {
       RCLCPP_WARN_STREAM(get_logger(), prefix_message << std::endl << dump_text_.str());
