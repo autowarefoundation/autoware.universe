@@ -124,9 +124,9 @@ private:
   std::unique_ptr<OSQPSettings> settings_;
   std::unique_ptr<OSQPData> data_;
   // store last work info since work is cleaned up at every execution to prevent memory leak.
-  OSQPInfo latest_work_info_ = {};
+  OSQPInfo latest_work_info_;
   // Number of parameters to optimize
-  int64_t param_n_ = 0;
+  int64_t param_n_;
   // Flag to check if the current work exists
   bool work__initialized = false;
   // Exitflag

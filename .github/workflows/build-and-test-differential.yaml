@@ -134,7 +134,7 @@ jobs:
 
       - name: Run clang-tidy
         if: ${{ steps.get-changed-files.outputs.changed-files != '' }}
-        uses: team-emb4/autoware-github-actions/clang-tidy@test
+        uses: team-emb4/autoware-github-actions/clang-tidy@refactor_clang-tidy_ci
         with:
           rosdistro: humble
           target-packages: ${{ steps.get-modified-packages.outputs.modified-packages }}
