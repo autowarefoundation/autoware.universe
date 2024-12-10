@@ -192,8 +192,6 @@ __global__ void generateBaseFeatures_kernel(
   if (voxel_idx_inverted >= grid_x_size || voxel_idy >= grid_y_size) return;
   unsigned int voxel_idx = grid_x_size - 1 - voxel_idx_inverted;
 
-  if (voxel_idx >= grid_x_size || voxel_idy >= grid_y_size) return;
-
   unsigned int voxel_index = voxel_idy * grid_x_size + voxel_idx;
   unsigned int count = mask[voxel_index];
   if (!(count > 0)) return;
