@@ -18,6 +18,8 @@
 #include <autoware/object_recognition_utils/object_recognition_utils.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 
+#include <autoware_perception_msgs/msg/object_classification.hpp>
+
 #include <vector>
 
 namespace autoware::lidar_centerpoint
