@@ -131,7 +131,7 @@ $$
 
 This equation is a quadratic form of $U$ (i.e. $U^{T}AU+B^{T}U$)
 
-The coefficient matrix of the quadratic term of $U$, $G^{T}C^{T}QCG+R$ , is positive definite due to the positive and semi-positive definiteness requirement for $Q$ and $R$. Therefore, the cost function is a convex quadratic function in U, which can efficiently be solved by convex optimization.
+The coefficient matrix of the quadratic term of $U$, $G^{T}H^{T}QHG+R$ , is positive definite due to the positive and semi-positive definiteness requirement for $Q$ and $R$. Therefore, the cost function is a convex quadratic function in U, which can efficiently be solved by convex optimization.
 
 ### Apply to vehicle path-following problem (nonlinear problem)
 
