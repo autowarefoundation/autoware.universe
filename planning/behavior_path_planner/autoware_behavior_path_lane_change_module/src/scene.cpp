@@ -977,6 +977,7 @@ lane_change::TargetObjects NormalLaneChange::get_target_objects(
 
 FilteredLanesObjects NormalLaneChange::filter_objects() const
 {
+  universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
   auto objects = *planner_data_->dynamic_object;
   utils::path_safety_checker::filterObjectsByClass(
     objects, lane_change_parameters_->safety.target_object_types);

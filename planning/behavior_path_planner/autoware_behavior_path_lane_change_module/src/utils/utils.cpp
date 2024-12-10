@@ -35,6 +35,8 @@
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info.hpp>
 #include <range/v3/algorithm/any_of.hpp>
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view/transform.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/detail/pose__struct.hpp>
@@ -1149,11 +1151,8 @@ std::vector<LineString2d> get_line_string_paths(const ExtendedPredictedObject & 
     return line_string;
   };
 
-  const auto paths = object.predicted_paths;
-  std::vector<LineString2d> line_strings;
-  std::transform(paths.begin(), paths.end(), std::back_inserter(line_strings), to_linestring_2d);
-
-  return line_strings;
+  return object.predicted_paths | ranges::views::transform(to_linestring_2d) |
+         ranges::to<std::vector>();
 }
 
 bool has_overtaking_turn_lane_object(
@@ -1164,10 +1163,6 @@ bool has_overtaking_turn_lane_object(
     return false;
   }
 
-  const auto is_path_overlap_with_target = [&](const LineString2d & path) {
-    return !boost::geometry::disjoint(path, common_data_ptr->lanes_polygon_ptr->target);
-  };
-
   const auto is_object_overlap_with_target = [&](const auto & object) {
     // to compensate for perception issue, or if object is from behind ego, and tries to overtake,
     // but stop all of sudden
@@ -1176,8 +1171,7 @@ bool has_overtaking_turn_lane_object(
       return true;
     }
 
-    const auto paths = get_line_string_paths(object);
-    return std::any_of(paths.begin(), paths.end(), is_path_overlap_with_target);
+    return object_path_overlaps_lanes(object, common_data_ptr->lanes_polygon_ptr->target);
   };
 
   return std::any_of(
@@ -1190,6 +1184,7 @@ bool filter_target_lane_objects(
   const bool before_terminal, TargetLaneLeadingObjects & leading_objects,
   ExtendedPredictedObjects & trailing_objects)
 {
+  using behavior_path_planner::utils::path_safety_checker::filter::is_vehicle;
   using behavior_path_planner::utils::path_safety_checker::filter::velocity_filter;
   const auto & current_lanes = common_data_ptr->lanes_ptr->current;
   const auto & vehicle_width = common_data_ptr->bpp_param_ptr->vehicle_info.vehicle_width_m;
@@ -1206,9 +1201,12 @@ bool filter_target_lane_objects(
   const auto is_stopped = velocity_filter(
     object.initial_twist, -std::numeric_limits<double>::epsilon(), stopped_obj_vel_th);
   if (is_lateral_far && before_terminal) {
-    const auto in_target_lanes =
-      !boost::geometry::disjoint(object.initial_polygon, lanes_polygon.target);
-    if (in_target_lanes) {
+    const auto overlapping_with_target_lanes =
+      !boost::geometry::disjoint(object.initial_polygon, lanes_polygon.target) ||
+      (!is_stopped && is_vehicle(object.classification) &&
+       object_path_overlaps_lanes(object, lanes_polygon.target));
+
+    if (overlapping_with_target_lanes) {
       if (!ahead_of_ego && !is_stopped) {
         trailing_objects.push_back(object);
         return true;
@@ -1246,5 +1244,13 @@ bool filter_target_lane_objects(
   }
 
   return false;
+}
+
+bool object_path_overlaps_lanes(
+  const ExtendedPredictedObject & object, const lanelet::BasicPolygon2d & lanes_polygon)
+{
+  return ranges::any_of(get_line_string_paths(object), [&](const auto & path) {
+    return !boost::geometry::disjoint(path, lanes_polygon);
+  });
 }
 }  // namespace autoware::behavior_path_planner::utils::lane_change
