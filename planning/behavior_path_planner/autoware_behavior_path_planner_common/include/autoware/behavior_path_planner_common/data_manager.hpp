@@ -23,8 +23,8 @@
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware_lanelet2_extension/regulatory_elements/Forward.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
-#include <rclcpp/rclcpp/clock.hpp>
-#include <rclcpp/rclcpp/time.hpp>
+#include <rclcpp/clock.hpp>
+#include <rclcpp/time.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
