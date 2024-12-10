@@ -1372,7 +1372,7 @@ BehaviorModuleOutput GoalPlannerModule::planPullOver(const PullOverContextData &
       context_data.pull_over_path_candidates.empty()  ? "no path candidate"              :
       !thread_safe_data_.foundPullOverPath()          ? "no static safe path"            :
       !is_stable_safe                                 ? "unsafe against dynamic objects" :
-                                                        "not decided";
+                                                        "goal is far";
     // clang-format on
     return planPullOverAsCandidate(context_data, detail);
   }
