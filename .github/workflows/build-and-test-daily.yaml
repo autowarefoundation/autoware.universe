@@ -34,6 +34,9 @@ jobs:
       - name: Show disk space before the tasks
         run: df -h
 
+      - name: Show machine specs
+        run: lscpu && free -h
+
       - name: Remove exec_depend
         uses: autowarefoundation/autoware-github-actions/remove-exec-depend@v1
 
