@@ -705,17 +705,16 @@ void StaticCenterlineGeneratorNode::validate()
     return false;
   }();
   // 2. centerline's curvature
-  const bool is_curvature_low = [&]() {
-    std::cerr << "2. Curvature:" << std::endl;
-
-    if (max_steer_angle < steer_angle_threshold) {
-      std::cerr << "  The generated centerline has no high steer angle. (estimated:"
-                << autoware::universe_utils::rad2deg(max_steer_angle)
-                << "[deg] < threshold:" << autoware::universe_utils::rad2deg(steer_angle_threshold)
-                << "[deg])" << std::endl
-                << "  Passed." << std::endl;
-      return true;
-    }
+  std::cerr << "2. Curvature:" << std::endl;
+  const bool is_curvature_low =
+    true;  // always tre for now since the curvature is just estimated and not enough precise.
+  if (max_steer_angle < steer_angle_threshold) {
+    std::cerr << "  The generated centerline has no high steer angle. (estimated:"
+              << autoware::universe_utils::rad2deg(max_steer_angle)
+              << "[deg] < threshold:" << autoware::universe_utils::rad2deg(steer_angle_threshold)
+              << "[deg])" << std::endl
+              << "  Passed." << std::endl;
+  } else {
     std::cerr << YELLOW_TEXT << "  The generated centerline has a too high steer angle. (threshold:"
               << autoware::universe_utils::rad2deg(steer_angle_threshold)
               << "[deg] <= estimated:" << autoware::universe_utils::rad2deg(max_steer_angle)
@@ -724,8 +723,7 @@ void StaticCenterlineGeneratorNode::validate()
                  "conditional pass."
               << std::endl
               << "  Conditionally Passed." << RESET_TEXT << std::endl;
-    return true;
-  }();
+  }
   // 3. result
   std::cerr << std::endl << BOLD_TEXT << "Result:" << RESET_TEXT << std::endl;
   if (are_footprints_inside_lanelets && is_curvature_low) {
