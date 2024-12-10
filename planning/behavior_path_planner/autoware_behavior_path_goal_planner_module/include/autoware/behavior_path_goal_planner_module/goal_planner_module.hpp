@@ -84,29 +84,6 @@ struct LastApprovalData
   Pose pose{};
 };
 
-// store stop_pose_ pointer with reason string
-struct PoseWithString
-{
-  std::optional<Pose> * pose;
-  std::string string;
-
-  explicit PoseWithString(std::optional<Pose> * shared_pose) : pose(shared_pose), string("") {}
-
-  void set(const Pose & new_pose, const std::string & new_string)
-  {
-    *pose = new_pose;
-    string = new_string;
-  }
-
-  void set(const std::string & new_string) { string = new_string; }
-
-  void clear()
-  {
-    pose->reset();
-    string = "";
-  }
-};
-
 struct PullOverContextData
 {
   PullOverContextData() = delete;
@@ -371,7 +348,6 @@ private:
 
   // debug
   mutable GoalPlannerDebugData debug_data_;
-  mutable PoseWithString debug_stop_pose_with_info_;
 
   // goal seach
   GoalCandidates generateGoalCandidates() const;
@@ -381,8 +357,10 @@ private:
   void decelerateForTurnSignal(const Pose & stop_pose, PathWithLaneId & path) const;
   void decelerateBeforeSearchStart(
     const Pose & search_start_offset_pose, PathWithLaneId & path) const;
-  PathWithLaneId generateStopPath(const PullOverContextData & context_data) const;
-  PathWithLaneId generateFeasibleStopPath(const PathWithLaneId & path) const;
+  PathWithLaneId generateStopPath(
+    const PullOverContextData & context_data, const std::string & detail) const;
+  PathWithLaneId generateFeasibleStopPath(
+    const PathWithLaneId & path, const std::string & detail) const;
 
   void keepStoppedWithCurrentPath(
     const PullOverContextData & ctx_data, PathWithLaneId & path) const;
@@ -420,7 +398,8 @@ private:
   // plan pull over path
   BehaviorModuleOutput planPullOver(const PullOverContextData & context_data);
   BehaviorModuleOutput planPullOverAsOutput(const PullOverContextData & context_data);
-  BehaviorModuleOutput planPullOverAsCandidate(const PullOverContextData & context_data);
+  BehaviorModuleOutput planPullOverAsCandidate(
+    const PullOverContextData & context_data, const std::string & detail);
   std::optional<PullOverPath> selectPullOverPath(
     const PullOverContextData & context_data,
     const std::vector<PullOverPath> & pull_over_path_candidates,
