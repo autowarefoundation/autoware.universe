@@ -1,4 +1,4 @@
-// Copyright 2023 Tier IV, Inc.
+// Copyright 2024 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -69,7 +69,7 @@ private:
 
   OccupancyGridMapFixedBlindSpot OccupancyGridMsgToGridMap(
     const nav_msgs::msg::OccupancyGrid & occupancy_grid_map);
-  OccupancyGridMapFixedBlindSpot SingleFrameOccupancyFusion(
+  const OccupancyGridMapFixedBlindSpot & SingleFrameOccupancyFusion(
     std::vector<OccupancyGridMapFixedBlindSpot> & occupancy_grid_maps,
     const builtin_interfaces::msg::Time latest_stamp, const std::vector<double> & weights);
 
@@ -103,6 +103,7 @@ private:
 
   // cache for fusion
   std::mutex mutex_;
+  std::unique_ptr<OccupancyGridMapFixedBlindSpot> fused_map_;
   std::shared_ptr<OccupancyGridMapUpdaterInterface>
     occupancy_grid_map_updater_ptr_;  // contains fused grid map
   std::map<std::string, nav_msgs::msg::OccupancyGrid::ConstSharedPtr>
