@@ -26,7 +26,7 @@
 
 namespace autoware::behavior_path_planner
 {
-using autoware_universe_utils::MultiPolygon2d;
+using autoware::universe_utils::MultiPolygon2d;
 using geometry_msgs::msg::Pose;
 
 struct GoalCandidate
@@ -43,23 +43,16 @@ using GoalCandidates = std::vector<GoalCandidate>;
 class GoalSearcherBase
 {
 public:
-  explicit GoalSearcherBase(const GoalPlannerParameters & parameters) { parameters_ = parameters; }
+  explicit GoalSearcherBase(const GoalPlannerParameters & parameters) : parameters_{parameters} {}
   virtual ~GoalSearcherBase() = default;
 
-  void setReferenceGoal(const Pose & reference_goal_pose)
-  {
-    reference_goal_pose_ = reference_goal_pose;
-  }
-  const Pose & getReferenceGoal() const { return reference_goal_pose_; }
-
   MultiPolygon2d getAreaPolygons() const { return area_polygons_; }
-  virtual GoalCandidates search(
-    const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
-    const std::shared_ptr<const PlannerData> & planner_data) = 0;
+  virtual GoalCandidates search(const std::shared_ptr<const PlannerData> & planner_data) = 0;
   virtual void update(
     [[maybe_unused]] GoalCandidates & goal_candidates,
     [[maybe_unused]] const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
-    [[maybe_unused]] const std::shared_ptr<const PlannerData> & planner_data) const
+    [[maybe_unused]] const std::shared_ptr<const PlannerData> & planner_data,
+    [[maybe_unused]] const PredictedObjects & objects) const
   {
     return;
   }
@@ -69,11 +62,11 @@ public:
   virtual bool isSafeGoalWithMarginScaleFactor(
     const GoalCandidate & goal_candidate, const double margin_scale_factor,
     const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
-    const std::shared_ptr<const PlannerData> & planner_data) const = 0;
+    const std::shared_ptr<const PlannerData> & planner_data,
+    const PredictedObjects & objects) const = 0;
 
 protected:
-  GoalPlannerParameters parameters_{};
-  Pose reference_goal_pose_{};
+  const GoalPlannerParameters parameters_;
   MultiPolygon2d area_polygons_{};
 };
 }  // namespace autoware::behavior_path_planner

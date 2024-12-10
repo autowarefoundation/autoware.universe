@@ -32,8 +32,8 @@ using autoware::behavior_path_planner::ObjectParameter;
 
 void AvoidanceByLaneChangeModuleManager::init(rclcpp::Node * node)
 {
+  using autoware::universe_utils::getOrDeclareParameter;
   using autoware_perception_msgs::msg::ObjectClassification;
-  using autoware_universe_utils::getOrDeclareParameter;
 
   // init manager interface
   initInterface(node, {"left", "right"});
@@ -66,7 +66,6 @@ void AvoidanceByLaneChangeModuleManager::init(rclcpp::Node * node)
   {
     const auto get_object_param = [&](std::string && ns) {
       ObjectParameter param{};
-      param.execute_num = getOrDeclareParameter<int>(*node, ns + "execute_num");
       param.moving_speed_threshold = getOrDeclareParameter<double>(*node, ns + "th_moving_speed");
       param.moving_time_threshold = getOrDeclareParameter<double>(*node, ns + "th_moving_time");
       param.max_expand_ratio = getOrDeclareParameter<double>(*node, ns + "max_expand_ratio");
@@ -137,9 +136,11 @@ void AvoidanceByLaneChangeModuleManager::init(rclcpp::Node * node)
 
   {
     const std::string ns = "avoidance.target_filtering.avoidance_for_ambiguous_vehicle.";
-    p.enable_avoidance_for_ambiguous_vehicle = getOrDeclareParameter<bool>(*node, ns + "enable");
-    p.closest_distance_to_wait_and_see_for_ambiguous_vehicle =
-      getOrDeclareParameter<double>(*node, ns + "closest_distance_to_wait_and_see");
+    p.policy_ambiguous_vehicle = getOrDeclareParameter<std::string>(*node, ns + "policy");
+    p.wait_and_see_target_behaviors =
+      getOrDeclareParameter<std::vector<std::string>>(*node, ns + "wait_and_see.target_behaviors");
+    p.wait_and_see_th_closest_distance =
+      getOrDeclareParameter<double>(*node, ns + "wait_and_see.th_closest_distance");
     p.time_threshold_for_ambiguous_vehicle =
       getOrDeclareParameter<double>(*node, ns + "condition.th_stopped_time");
     p.distance_threshold_for_ambiguous_vehicle =
@@ -185,8 +186,7 @@ void AvoidanceByLaneChangeModuleManager::init(rclcpp::Node * node)
   avoidance_parameters_ = std::make_shared<AvoidanceByLCParameters>(p);
 }
 
-std::unique_ptr<SceneModuleInterface>
-AvoidanceByLaneChangeModuleManager::createNewSceneModuleInstance()
+SMIPtr AvoidanceByLaneChangeModuleManager::createNewSceneModuleInstance()
 {
   return std::make_unique<AvoidanceByLaneChangeInterface>(
     name_, *node_, parameters_, avoidance_parameters_, rtc_interface_ptr_map_,

@@ -50,10 +50,10 @@
 
 namespace autoware::motion::control::pid_longitudinal_controller
 {
+using autoware::universe_utils::createDefaultMarker;
+using autoware::universe_utils::createMarkerColor;
+using autoware::universe_utils::createMarkerScale;
 using autoware_adapi_v1_msgs::msg::OperationModeState;
-using autoware_universe_utils::createDefaultMarker;
-using autoware_universe_utils::createMarkerColor;
-using autoware_universe_utils::createMarkerScale;
 using visualization_msgs::msg::Marker;
 
 namespace trajectory_follower = ::autoware::motion::control::trajectory_follower;
@@ -64,7 +64,8 @@ class PidLongitudinalController : public trajectory_follower::LongitudinalContro
 {
 public:
   /// \param node Reference to the node used only for the component and parameter initialization.
-  explicit PidLongitudinalController(rclcpp::Node & node);
+  explicit PidLongitudinalController(
+    rclcpp::Node & node, std::shared_ptr<diagnostic_updater::Updater> diag_updater);
 
 private:
   struct Motion
@@ -183,7 +184,6 @@ private:
   {
     double vel;
     double acc;
-    double jerk;
   };
   StoppedStateParams m_stopped_state_params;
 
@@ -196,6 +196,10 @@ private:
   };
   EmergencyStateParams m_emergency_state_params;
 
+  // acc feedback
+  double m_acc_feedback_gain;
+  std::shared_ptr<LowpassFilter1d> m_lpf_acc_error{nullptr};
+
   // acceleration limit
   double m_max_acc;
   double m_min_acc;
@@ -203,6 +207,7 @@ private:
   // jerk limit
   double m_max_jerk;
   double m_min_jerk;
+  double m_max_acc_cmd_diff;
 
   // slope compensation
   enum class SlopeSource { RAW_PITCH = 0, TRAJECTORY_PITCH, TRAJECTORY_ADAPTIVE };
@@ -233,11 +238,13 @@ private:
   // debug values
   DebugValues m_debug_values;
 
+  std::optional<bool> m_prev_keep_stopped_condition{std::nullopt};
+
   std::shared_ptr<rclcpp::Time> m_last_running_time{std::make_shared<rclcpp::Time>(clock_->now())};
 
   // Diagnostic
-
-  diagnostic_updater::Updater diagnostic_updater_;
+  std::shared_ptr<diagnostic_updater::Updater>
+    diag_updater_{};  // Diagnostic updater for publishing diagnostic data.
   struct DiagnosticData
   {
     double trans_deviation{0.0};  // translation deviation between nearest point and current_pose
@@ -246,6 +253,12 @@ private:
   DiagnosticData m_diagnostic_data;
   void setupDiagnosticUpdater();
   void checkControlState(diagnostic_updater::DiagnosticStatusWrapper & stat);
+
+  struct ResultWithReason
+  {
+    bool result{false};
+    std::string reason{""};
+  };
 
   /**
    * @brief set current and previous velocity with received message
@@ -289,7 +302,14 @@ private:
    * @brief calculate control command in emergency state
    * @param [in] dt time between previous and current one
    */
-  Motion calcEmergencyCtrlCmd(const double dt) const;
+  Motion calcEmergencyCtrlCmd(const double dt);
+
+  /**
+   * @brief change control state
+   * @param [in] new state
+   * @param [in] reason to change control state
+   */
+  void changeControlState(const ControlState & control_state, const std::string & reason = "");
 
   /**
    * @brief update control state according to the current situation

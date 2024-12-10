@@ -17,9 +17,11 @@
 #include "autoware/behavior_path_planner_common/marker_utils/utils.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 
-#include <lanelet2_extension/visualization/visualization.hpp>
+#include <autoware_lanelet2_extension/visualization/visualization.hpp>
 #include <magic_enum.hpp>
 
+#include <algorithm>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -64,7 +66,7 @@ MarkerArray createObjectsCubeMarkerArray(
     }
 
     marker.id = uuidToInt32(object.object.object_id);
-    marker.pose = object.object.kinematics.initial_pose_with_covariance.pose;
+    marker.pose = object.getPose();
     msg.markers.push_back(marker);
   }
 
@@ -80,10 +82,8 @@ MarkerArray createObjectPolygonMarkerArray(const ObjectDataArray & objects, std:
       "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, 0L, Marker::LINE_STRIP,
       createMarkerScale(0.1, 0.0, 0.0), createMarkerColor(1.0, 1.0, 1.0, 0.999));
 
-    const auto pos = object.object.kinematics.initial_pose_with_covariance.pose.position;
-
     for (const auto & p : object.envelope_poly.outer()) {
-      marker.points.push_back(createPoint(p.x(), p.y(), pos.z));
+      marker.points.push_back(createPoint(p.x(), p.y(), object.getPosition().z));
     }
 
     marker.points.push_back(marker.points.front());
@@ -142,11 +142,12 @@ MarkerArray createObjectInfoMarkerArray(
   for (const auto & object : objects) {
     if (verbose) {
       marker.id = uuidToInt32(object.object.object_id);
-      marker.pose = object.object.kinematics.initial_pose_with_covariance.pose;
+      marker.pose = object.getPose();
       std::ostringstream string_stream;
       string_stream << std::fixed << std::setprecision(2) << std::boolalpha;
       string_stream << "ratio:" << object.shiftable_ratio << " [-]\n"
                     << "lateral:" << object.to_centerline << " [m]\n"
+                    << "clip:" << object.is_clip_target << " [-]\n"
                     << "necessity:" << object.avoid_required << " [-]\n"
                     << "stoppable:" << object.is_stoppable << " [-]\n"
                     << "stop_factor:" << object.to_stop_factor_distance << " [m]\n"
@@ -161,7 +162,7 @@ MarkerArray createObjectInfoMarkerArray(
 
     {
       marker.id = uuidToInt32(object.object.object_id);
-      marker.pose = object.object.kinematics.initial_pose_with_covariance.pose;
+      marker.pose = object.getPose();
       marker.pose.position.z += 2.0;
       std::ostringstream string_stream;
       string_stream << magic_enum::enum_name(object.info) << (object.is_parked ? "(PARKED)" : "");
@@ -230,42 +231,68 @@ MarkerArray unAvoidableObjectsMarkerArray(const ObjectDataArray & objects, std::
   return msg;
 }
 
-}  // namespace
-
-MarkerArray createEgoStatusMarkerArray(
-  const AvoidancePlanningData & data, const Pose & p_ego, std::string && ns)
+MarkerArray createTurnSignalMarkerArray(const TurnSignalInfo & turn_signal_info, std::string && ns)
 {
   MarkerArray msg;
 
-  auto marker = createDefaultMarker(
-    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, 0L, Marker::TEXT_VIEW_FACING,
-    createMarkerScale(0.5, 0.5, 0.5), createMarkerColor(1.0, 1.0, 1.0, 0.999));
-  marker.pose = p_ego;
+  if (turn_signal_info.turn_signal.command == TurnIndicatorsCommand::NO_COMMAND) {
+    return msg;
+  }
 
+  const auto yaw_offset = [&turn_signal_info]() {
+    if (turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
+      return -1.0 * M_PI_2;
+    }
+
+    if (turn_signal_info.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
+      return M_PI_2;
+    }
+
+    return 0.0;
+  }();
+
+  size_t i = 0;
   {
-    std::ostringstream string_stream;
-    string_stream << std::fixed << std::setprecision(2) << std::boolalpha;
-    string_stream << "avoid_req:" << data.avoid_required << ","
-                  << "yield_req:" << data.yield_required << ","
-                  << "safe:" << data.safe;
-    marker.text = string_stream.str();
+    auto marker = createDefaultMarker(
+      "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, i++, Marker::ARROW,
+      createMarkerScale(0.6, 0.3, 0.3), createMarkerColor(0.0, 0.0, 1.0, 0.999));
+    marker.pose = turn_signal_info.desired_start_point;
+    marker.pose = calcOffsetPose(marker.pose, 0.0, 0.0, 0.0, yaw_offset);
 
     msg.markers.push_back(marker);
   }
-
   {
-    std::ostringstream string_stream;
-    string_stream << "ego_state:";
-    string_stream << magic_enum::enum_name(data.state);
-    marker.text = string_stream.str();
-    marker.pose.position.z += 2.0;
-    marker.id++;
+    auto marker = createDefaultMarker(
+      "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, i++, Marker::ARROW,
+      createMarkerScale(0.6, 0.3, 0.3), createMarkerColor(0.0, 0.0, 1.0, 0.999));
+    marker.pose = turn_signal_info.desired_end_point;
+    marker.pose = calcOffsetPose(marker.pose, 0.0, 0.0, 0.0, yaw_offset);
+
+    msg.markers.push_back(marker);
+  }
+  {
+    auto marker = createDefaultMarker(
+      "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, i++, Marker::ARROW,
+      createMarkerScale(0.8, 0.4, 0.4), createMarkerColor(1.0, 0.0, 0.0, 0.999));
+    marker.pose = turn_signal_info.required_start_point;
+    marker.pose = calcOffsetPose(marker.pose, 0.0, 0.0, 0.0, yaw_offset);
+
+    msg.markers.push_back(marker);
+  }
+  {
+    auto marker = createDefaultMarker(
+      "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, i++, Marker::ARROW,
+      createMarkerScale(0.8, 0.4, 0.4), createMarkerColor(1.0, 0.0, 0.0, 0.999));
+    marker.pose = turn_signal_info.required_end_point;
+    marker.pose = calcOffsetPose(marker.pose, 0.0, 0.0, 0.0, yaw_offset);
 
     msg.markers.push_back(marker);
   }
 
   return msg;
 }
+
+}  // namespace
 
 MarkerArray createAvoidLineMarkerArray(
   const AvoidLineArray & shift_lines, std::string && ns, const float & r, const float & g,
@@ -347,68 +374,6 @@ MarkerArray createAvoidLineMarkerArray(
   return msg;
 }
 
-MarkerArray createPredictedVehiclePositions(const PathWithLaneId & path, std::string && ns)
-{
-  const auto current_time = rclcpp::Clock{RCL_ROS_TIME}.now();
-  MarkerArray msg;
-
-  auto p_marker = createDefaultMarker(
-    "map", current_time, ns, 0L, Marker::POINTS, createMarkerScale(0.4, 0.4, 0.0),
-    createMarkerColor(1.0, 0.0, 0.0, 0.999));
-
-  const auto pushPointMarker = [&](const Pose & p, const double t) {
-    const auto r = t > 10.0 ? 1.0 : t / 10.0;
-    p_marker.points.push_back(p.position);
-    p_marker.colors.push_back(createMarkerColor(r, 1.0 - r, 0.0, 0.999));
-  };
-
-  auto t_marker = createDefaultMarker(
-    "map", current_time, ns + "_text", 0L, Marker::TEXT_VIEW_FACING,
-    createMarkerScale(0.3, 0.3, 0.3), createMarkerColor(1.0, 1.0, 0.0, 1.0));
-
-  const auto pushTextMarker = [&](const Pose & p, const double t, const double d, const double v) {
-    t_marker.id++;
-    t_marker.pose = p;
-    std::ostringstream string_stream;
-    string_stream << std::fixed << std::setprecision(2);
-    string_stream << "t[s]: " << t << "\n"
-                  << "d[m]: " << d << "\n"
-                  << "v[m/s]: " << v;
-    t_marker.text = string_stream.str();
-    msg.markers.push_back(t_marker);
-  };
-
-  constexpr double dt_save = 1.0;
-  double t_save = 0.0;
-  double t_sum = 0.0;
-  double d_sum = 0.0;
-
-  if (path.points.empty()) {
-    return msg;
-  }
-
-  for (size_t i = 1; i < path.points.size(); ++i) {
-    const auto & p1 = path.points.at(i - 1);
-    const auto & p2 = path.points.at(i);
-    const auto ds = calcDistance2d(p1, p2);
-
-    if (t_save < t_sum + 1e-3) {
-      pushPointMarker(getPose(p1), t_sum);
-      pushTextMarker(getPose(p1), t_sum, d_sum, p1.point.longitudinal_velocity_mps);
-      t_save += dt_save;
-    }
-
-    const auto v = std::max(p1.point.longitudinal_velocity_mps, float{1.0});
-
-    t_sum += ds / v;
-    d_sum += ds;
-  }
-
-  msg.markers.push_back(p_marker);
-
-  return msg;
-}
-
 MarkerArray createTargetObjectsMarkerArray(const ObjectDataArray & objects, const std::string & ns)
 {
   ObjectDataArray avoidable;
@@ -457,12 +422,100 @@ MarkerArray createOtherObjectsMarkerArray(
   appendMarkerArray(
     createObjectsCubeMarkerArray(
       filtered_objects, "others_" + ns + "_cube", createMarkerScale(3.0, 1.5, 1.5),
-      createMarkerColor(0.0, 1.0, 0.0, 0.8)),
+      createMarkerColor(0.5, 0.5, 0.5, 0.8)),
     &msg);
   appendMarkerArray(
     createObjectInfoMarkerArray(filtered_objects, "others_" + ns + "_info", verbose), &msg);
   appendMarkerArray(
     createOverhangLaneletMarkerArray(filtered_objects, "others_" + ns + "_overhang_lanelet"), &msg);
+
+  return msg;
+}
+
+MarkerArray createAmbiguousObjectsMarkerArray(
+  const ObjectDataArray & objects, const Pose & ego_pose, const std::string & policy)
+{
+  MarkerArray msg;
+
+  if (policy != "manual") {
+    return msg;
+  }
+
+  for (const auto & object : objects) {
+    if (!object.is_ambiguous || !object.is_avoidable) {
+      continue;
+    }
+
+    {
+      auto marker = createDefaultMarker(
+        "map", rclcpp::Clock{RCL_ROS_TIME}.now(), "ambiguous_target", 0L, Marker::ARROW,
+        createMarkerScale(0.5, 1.0, 1.0), createMarkerColor(1.0, 1.0, 0.0, 0.999));
+
+      Point src, dst;
+      src = object.getPosition();
+      src.z += 4.0;
+      dst = object.getPosition();
+      dst.z += 2.0;
+
+      marker.points.push_back(src);
+      marker.points.push_back(dst);
+      marker.id = uuidToInt32(object.object.object_id);
+
+      msg.markers.push_back(marker);
+    }
+
+    {
+      auto marker = createDefaultMarker(
+        "map", rclcpp::Clock{RCL_ROS_TIME}.now(), "ambiguous_target_text", 0L,
+        Marker::TEXT_VIEW_FACING, createMarkerScale(0.5, 0.5, 0.5),
+        createMarkerColor(1.0, 1.0, 0.0, 1.0));
+
+      marker.id = uuidToInt32(object.object.object_id);
+      marker.pose = object.getPose();
+      marker.pose.position.z += 4.5;
+      std::ostringstream string_stream;
+      string_stream << "SHOULD AVOID?";
+      marker.text = string_stream.str();
+      marker.color = createMarkerColor(1.0, 1.0, 0.0, 0.999);
+      marker.scale = createMarkerScale(0.8, 0.8, 0.8);
+      msg.markers.push_back(marker);
+    }
+
+    {
+      auto marker = createDefaultMarker(
+        "map", rclcpp::Clock{RCL_ROS_TIME}.now(), "request_text", 0L, Marker::TEXT_VIEW_FACING,
+        createMarkerScale(0.5, 0.5, 0.5), createMarkerColor(1.0, 1.0, 0.0, 1.0));
+
+      marker.id = uuidToInt32(object.object.object_id);
+      marker.pose = ego_pose;
+      marker.pose.position.z += 2.0;
+      std::ostringstream string_stream;
+      string_stream << "SYSTEM REQUESTS OPERATOR SUPPORT.";
+      marker.text = string_stream.str();
+      marker.color = createMarkerColor(1.0, 1.0, 0.0, 0.999);
+      marker.scale = createMarkerScale(0.8, 0.8, 0.8);
+      msg.markers.push_back(marker);
+    }
+
+    return msg;
+  }
+
+  return msg;
+}
+
+MarkerArray createStopTargetObjectMarkerArray(const AvoidancePlanningData & data)
+{
+  MarkerArray msg;
+
+  if (!data.stop_target_object.has_value()) {
+    return msg;
+  }
+
+  appendMarkerArray(
+    createObjectsCubeMarkerArray(
+      {data.stop_target_object.value()}, "stop_target", createMarkerScale(3.4, 1.9, 1.9),
+      createMarkerColor(1.0, 0.0, 0.42, 0.5)),
+    &msg);
 
   return msg;
 }
@@ -504,7 +557,8 @@ MarkerArray createDrivableBounds(
 }
 
 MarkerArray createDebugMarkerArray(
-  const AvoidancePlanningData & data, const PathShifter & shifter, const DebugData & debug,
+  const BehaviorModuleOutput & output, const AvoidancePlanningData & data,
+  const PathShifter & shifter, const DebugData & debug,
   const std::shared_ptr<AvoidanceParameters> & parameters)
 {
   using autoware::behavior_path_planner::utils::transformToLanelets;
@@ -571,6 +625,7 @@ MarkerArray createDebugMarkerArray(
     addObjects(data.other_objects, ObjectInfo::DEVIATING_FROM_EGO_LANE);
     addObjects(data.other_objects, ObjectInfo::UNSTABLE_OBJECT);
     addObjects(data.other_objects, ObjectInfo::AMBIGUOUS_STOPPED_VEHICLE);
+    addObjects(data.other_objects, ObjectInfo::INVALID_SHIFT_LINE);
   }
 
   if (parameters->enable_shift_line_marker) {
@@ -639,6 +694,7 @@ MarkerArray createDebugMarkerArray(
   // misc
   if (parameters->enable_misc_marker) {
     add(createPathMarkerArray(path, "centerline_resampled", 0, 0.0, 0.9, 0.5));
+    add(createTurnSignalMarkerArray(output.turn_signal_info, "turn_signal_info"));
   }
 
   return msg;
@@ -681,7 +737,7 @@ std::string toStrInfo(const autoware::behavior_path_planner::AvoidLineArray & ap
 }
 std::string toStrInfo(const autoware::behavior_path_planner::AvoidLine & ap)
 {
-  using autoware_universe_utils::toHexString;
+  using autoware::universe_utils::toHexString;
 
   std::stringstream pids;
   for (const auto pid : ap.parent_ids) {

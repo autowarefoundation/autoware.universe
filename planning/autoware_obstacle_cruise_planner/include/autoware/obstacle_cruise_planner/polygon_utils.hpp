@@ -30,8 +30,8 @@
 namespace polygon_utils
 {
 namespace bg = boost::geometry;
-using autoware_universe_utils::Point2d;
-using autoware_universe_utils::Polygon2d;
+using autoware::universe_utils::Point2d;
+using autoware::universe_utils::Polygon2d;
 
 Polygon2d createOneStepPolygon(
   const std::vector<geometry_msgs::msg::Pose> & last_poses,
@@ -41,6 +41,11 @@ Polygon2d createOneStepPolygon(
 std::optional<std::pair<geometry_msgs::msg::Point, double>> getCollisionPoint(
   const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polygons,
   const Obstacle & obstacle, const bool is_driving_forward,
+  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info);
+
+std::optional<std::pair<geometry_msgs::msg::Point, double>> getCollisionPoint(
+  const std::vector<TrajectoryPoint> & traj_points, const size_t collision_idx,
+  const std::vector<PointWithStamp> & collision_points, const bool is_driving_forward,
   const autoware::vehicle_info_utils::VehicleInfo & vehicle_info);
 
 std::vector<PointWithStamp> getCollisionPoints(

@@ -14,6 +14,10 @@
 
 #include "autoware/freespace_planning_algorithms/rrtstar.hpp"
 
+#include "autoware/freespace_planning_algorithms/kinematic_bicycle_model.hpp"
+
+#include <vector>
+
 namespace autoware::freespace_planning_algorithms
 {
 rrtstar_core::Pose poseMsgToPose(const geometry_msgs::msg::Pose & pose_msg)
@@ -24,21 +28,26 @@ rrtstar_core::Pose poseMsgToPose(const geometry_msgs::msg::Pose & pose_msg)
 
 RRTStar::RRTStar(
   const PlannerCommonParam & planner_common_param, const VehicleShape & original_vehicle_shape,
-  const RRTStarParam & rrtstar_param)
+  const RRTStarParam & rrtstar_param, const rclcpp::Clock::SharedPtr & clock)
 : AbstractPlanningAlgorithm(
-    planner_common_param, VehicleShape(
-                            original_vehicle_shape.length + 2 * rrtstar_param.margin,
-                            original_vehicle_shape.width + 2 * rrtstar_param.margin,
-                            original_vehicle_shape.base2back + rrtstar_param.margin)),
-  rrtstar_param_(rrtstar_param),
-  original_vehicle_shape_(original_vehicle_shape)
+    planner_common_param, clock,
+    VehicleShape(
+      original_vehicle_shape.length + 2 * rrtstar_param.margin,
+      original_vehicle_shape.width + 2 * rrtstar_param.margin, original_vehicle_shape.base_length,
+      original_vehicle_shape.max_steering,
+      original_vehicle_shape.base2back + rrtstar_param.margin)),
+  rrtstar_param_(rrtstar_param)
 {
   if (rrtstar_param_.margin <= 0) {
     throw std::invalid_argument("rrt's collision margin must be greater than 0");
   }
-  if (planner_common_param_.maximum_turning_radius != planner_common_param.minimum_turning_radius) {
-    throw std::invalid_argument("Currently supports only single radius in rrtstar.");
-  }
+}
+
+bool RRTStar::makePlan(
+  const geometry_msgs::msg::Pose & start_pose,
+  const std::vector<geometry_msgs::msg::Pose> & goal_candidates)
+{
+  return makePlan(start_pose, goal_candidates.front());
 }
 
 bool RRTStar::makePlan(
@@ -50,8 +59,8 @@ bool RRTStar::makePlan(
   goal_pose_ = global2local(costmap_, goal_pose);
 
   const auto is_obstacle_free = [&](const rrtstar_core::Pose & pose) {
-    const int index_x = pose.x / costmap_.info.resolution;
-    const int index_y = pose.y / costmap_.info.resolution;
+    const int index_x = std::round(pose.x / costmap_.info.resolution);
+    const int index_y = std::round(pose.y / costmap_.info.resolution);
     const int index_theta = discretizeAngle(pose.yaw, planner_common_param_.theta_size);
     return !detectCollision(IndexXYT{index_x, index_y, index_theta});
   };
@@ -60,7 +69,8 @@ bool RRTStar::makePlan(
   const rrtstar_core::Pose hi{
     costmap_.info.resolution * costmap_.info.width, costmap_.info.resolution * costmap_.info.height,
     M_PI};
-  const double radius = planner_common_param_.minimum_turning_radius;
+  const double radius = kinematic_bicycle_model::getTurningRadius(
+    collision_vehicle_shape_.base_length, collision_vehicle_shape_.max_steering);
   const auto cspace = rrtstar_core::CSpace(lo, hi, radius, is_obstacle_free);
   const auto x_start = poseMsgToPose(start_pose_);
   const auto x_goal = poseMsgToPose(goal_pose_);
@@ -112,9 +122,7 @@ bool RRTStar::hasObstacleOnTrajectory(const geometry_msgs::msg::PoseArray & traj
 {
   for (const auto & pose : trajectory.poses) {
     const auto pose_local = global2local(costmap_, pose);
-    const auto base_index = pose2index(costmap_, pose_local, planner_common_param_.theta_size);
-
-    if (detectCollision(base_index)) {
+    if (detectCollision(pose_local)) {
       return true;
     }
   }
@@ -124,7 +132,7 @@ bool RRTStar::hasObstacleOnTrajectory(const geometry_msgs::msg::PoseArray & traj
 void RRTStar::setRRTPath(const std::vector<rrtstar_core::Pose> & waypoints)
 {
   std_msgs::msg::Header header;
-  header.stamp = rclcpp::Clock(RCL_ROS_TIME).now();
+  header.stamp = clock_->now();
   header.frame_id = costmap_.header.frame_id;
 
   waypoints_.header = header;

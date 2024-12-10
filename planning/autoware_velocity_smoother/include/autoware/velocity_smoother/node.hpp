@@ -17,12 +17,14 @@
 
 #include "autoware/motion_utils/trajectory/conversion.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
+#include "autoware/osqp_interface/osqp_interface.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware/universe_utils/math/unit_conversion.hpp"
 #include "autoware/universe_utils/ros/logger_level_configure.hpp"
 #include "autoware/universe_utils/ros/polling_subscriber.hpp"
 #include "autoware/universe_utils/ros/self_pose_listener.hpp"
 #include "autoware/universe_utils/system/stop_watch.hpp"
+#include "autoware/universe_utils/system/time_keeper.hpp"
 #include "autoware/velocity_smoother/resample.hpp"
 #include "autoware/velocity_smoother/smoother/analytical_jerk_constrained_smoother/analytical_jerk_constrained_smoother.hpp"
 #include "autoware/velocity_smoother/smoother/jerk_filtered_smoother.hpp"
@@ -30,7 +32,6 @@
 #include "autoware/velocity_smoother/smoother/linf_pseudo_jerk_smoother.hpp"
 #include "autoware/velocity_smoother/smoother/smoother_base.hpp"
 #include "autoware/velocity_smoother/trajectory_utils.hpp"
-#include "osqp_interface/osqp_interface.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2/utils.h"
 #include "tf2_ros/transform_listener.h"
@@ -43,6 +44,7 @@
 #include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "tier4_debug_msgs/msg/float32_stamped.hpp"         // temporary
+#include "tier4_debug_msgs/msg/float64_stamped.hpp"         // temporary
 #include "tier4_planning_msgs/msg/stop_speed_exceeded.hpp"  // temporary
 #include "tier4_planning_msgs/msg/velocity_limit.hpp"       // temporary
 #include "visualization_msgs/msg/marker_array.hpp"
@@ -65,6 +67,7 @@ using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;
 using nav_msgs::msg::Odometry;
 using tier4_debug_msgs::msg::Float32Stamped;        // temporary
+using tier4_debug_msgs::msg::Float64Stamped;        // temporary
 using tier4_planning_msgs::msg::StopSpeedExceeded;  // temporary
 using tier4_planning_msgs::msg::VelocityLimit;      // temporary
 using visualization_msgs::msg::MarkerArray;
@@ -88,13 +91,14 @@ private:
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_virtual_wall_;
   rclcpp::Publisher<StopSpeedExceeded>::SharedPtr pub_over_stop_velocity_;
   rclcpp::Subscription<Trajectory>::SharedPtr sub_current_trajectory_;
-  autoware_universe_utils::InterProcessPollingSubscriber<Odometry> sub_current_odometry_{
+  autoware::universe_utils::InterProcessPollingSubscriber<Odometry> sub_current_odometry_{
     this, "/localization/kinematic_state"};
-  autoware_universe_utils::InterProcessPollingSubscriber<AccelWithCovarianceStamped>
+  autoware::universe_utils::InterProcessPollingSubscriber<AccelWithCovarianceStamped>
     sub_current_acceleration_{this, "~/input/acceleration"};
-  autoware_universe_utils::InterProcessPollingSubscriber<VelocityLimit>
+  autoware::universe_utils::InterProcessPollingSubscriber<
+    VelocityLimit, universe_utils::polling_policy::Newest>
     sub_external_velocity_limit_{this, "~/input/external_velocity_limit_mps"};
-  autoware_universe_utils::InterProcessPollingSubscriber<OperationModeState> sub_operation_mode_{
+  autoware::universe_utils::InterProcessPollingSubscriber<OperationModeState> sub_operation_mode_{
     this, "~/input/operation_mode_state"};
 
   Odometry::ConstSharedPtr current_odometry_ptr_;  // current odometry
@@ -160,10 +164,17 @@ private:
     bool plan_from_ego_speed_on_manual_mode = true;
   } node_param_{};
 
+  struct AccelerationRequest
+  {
+    bool request{false};
+    double max_acceleration{0.0};
+    double max_jerk{0.0};
+  };
   struct ExternalVelocityLimit
   {
     double velocity{0.0};  // current external_velocity_limit
     double dist{0.0};      // distance to set external velocity limit
+    AccelerationRequest acceleration_request;
     std::string sender{""};
   };
   ExternalVelocityLimit
@@ -245,7 +256,7 @@ private:
   void initCommonParam();
 
   // debug
-  autoware_universe_utils::StopWatch<std::chrono::milliseconds> stop_watch_;
+  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch_;
   std::shared_ptr<rclcpp::Time> prev_time_;
   double prev_acc_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr pub_dist_to_stopline_;
@@ -258,8 +269,10 @@ private:
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_closest_velocity_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_closest_acc_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_closest_jerk_;
-  rclcpp::Publisher<Float32Stamped>::SharedPtr debug_calculation_time_;
+  rclcpp::Publisher<Float64Stamped>::SharedPtr debug_calculation_time_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_closest_max_velocity_;
+  rclcpp::Publisher<autoware::universe_utils::ProcessingTimeDetail>::SharedPtr
+    debug_processing_time_detail_;
 
   // For Jerk Filtered Algorithm Debug
   rclcpp::Publisher<Trajectory>::SharedPtr pub_forward_filtered_trajectory_;
@@ -273,8 +286,10 @@ private:
   void flipVelocity(TrajectoryPoints & points) const;
   void publishStopWatchTime();
 
-  std::unique_ptr<autoware_universe_utils::LoggerLevelConfigure> logger_configure_;
-  std::unique_ptr<autoware_universe_utils::PublishedTimePublisher> published_time_publisher_;
+  std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;
+  std::unique_ptr<autoware::universe_utils::PublishedTimePublisher> published_time_publisher_;
+
+  mutable std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper_{nullptr};
 };
 }  // namespace autoware::velocity_smoother
 

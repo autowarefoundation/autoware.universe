@@ -21,13 +21,16 @@
 #include <autoware/mission_planner/mission_planner_plugin.hpp>
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware/universe_utils/ros/logger_level_configure.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <pluginlib/class_loader.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <autoware_adapi_v1_msgs/srv/set_route.hpp>
 #include <autoware_adapi_v1_msgs/srv/set_route_points.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
+#include <tier4_debug_msgs/msg/float64_stamped.hpp>
 #include <tier4_planning_msgs/msg/reroute_availability.hpp>
 #include <tier4_planning_msgs/msg/route_state.hpp>
 #include <tier4_planning_msgs/srv/clear_route.hpp>
@@ -45,6 +48,7 @@
 namespace autoware::mission_planner
 {
 
+using autoware_adapi_v1_msgs::msg::OperationModeState;
 using autoware_map_msgs::msg::LaneletMapBin;
 using autoware_planning_msgs::msg::LaneletPrimitive;
 using autoware_planning_msgs::msg::LaneletRoute;
@@ -66,6 +70,8 @@ class MissionPlanner : public rclcpp::Node
 {
 public:
   explicit MissionPlanner(const rclcpp::NodeOptions & options);
+  void publish_processing_time(
+    autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch);
 
 private:
   ArrivalChecker arrival_checker_;
@@ -85,18 +91,21 @@ private:
 
   rclcpp::Subscription<PoseWithUuidStamped>::SharedPtr sub_modified_goal_;
   rclcpp::Subscription<Odometry>::SharedPtr sub_odometry_;
-  autoware_universe_utils::InterProcessPollingSubscriber<RerouteAvailability>
+  rclcpp::Subscription<OperationModeState>::SharedPtr sub_operation_mode_state_;
+  autoware::universe_utils::InterProcessPollingSubscriber<RerouteAvailability>
     sub_reroute_availability_{this, "~/input/reroute_availability"};
 
   rclcpp::Subscription<LaneletMapBin>::SharedPtr sub_vector_map_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;
   Odometry::ConstSharedPtr odometry_;
+  OperationModeState::ConstSharedPtr operation_mode_state_;
   LaneletMapBin::ConstSharedPtr map_ptr_;
   RouteState state_;
   LaneletRoute::ConstSharedPtr current_route_;
   lanelet::LaneletMapPtr lanelet_map_ptr_{nullptr};
 
   void on_odometry(const Odometry::ConstSharedPtr msg);
+  void on_operation_mode_state(const OperationModeState::ConstSharedPtr msg);
   void on_map(const LaneletMapBin::ConstSharedPtr msg);
   void on_reroute_availability(const RerouteAvailability::ConstSharedPtr msg);
   void on_modified_goal(const PoseWithUuidStamped::ConstSharedPtr msg);
@@ -120,19 +129,24 @@ private:
     const Header & header, const std::vector<LaneletSegment> & segments, const Pose & goal_pose,
     const UUID & uuid, const bool allow_goal_modification);
   LaneletRoute create_route(
-    const Header & header, const std::vector<Pose> & waypoints, const Pose & goal_pose,
-    const UUID & uuid, const bool allow_goal_modification);
+    const Header & header, const std::vector<Pose> & waypoints, const Pose & start_pose,
+    const Pose & goal_pose, const UUID & uuid, const bool allow_goal_modification);
 
   void publish_pose_log(const Pose & pose, const std::string & pose_type);
 
   rclcpp::TimerBase::SharedPtr data_check_timer_;
   void check_initialization();
+  bool is_mission_planner_ready_;
 
   double reroute_time_threshold_;
   double minimum_reroute_length_;
+  // flag to allow reroute in autonomous driving mode.
+  // if false, reroute fails. if true, only safe reroute is allowed.
+  bool allow_reroute_in_autonomous_mode_;
   bool check_reroute_safety(const LaneletRoute & original_route, const LaneletRoute & target_route);
 
-  std::unique_ptr<autoware_universe_utils::LoggerLevelConfigure> logger_configure_;
+  std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr pub_processing_time_;
 };
 
 }  // namespace autoware::mission_planner

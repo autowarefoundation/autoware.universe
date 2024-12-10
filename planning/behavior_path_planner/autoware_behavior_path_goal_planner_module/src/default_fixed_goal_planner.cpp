@@ -14,18 +14,16 @@
 
 #include "autoware/behavior_path_goal_planner_module/default_fixed_goal_planner.hpp"
 
-#include "autoware/behavior_path_goal_planner_module/util.hpp"
-#include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 
 #include <memory>
 
 namespace autoware::behavior_path_planner
 {
-using Point2d = autoware_universe_utils::Point2d;
+using Point2d = autoware::universe_utils::Point2d;
 using tier4_planning_msgs::msg::PathWithLaneId;
 BehaviorModuleOutput DefaultFixedGoalPlanner::plan(
   const std::shared_ptr<const PlannerData> & planner_data) const

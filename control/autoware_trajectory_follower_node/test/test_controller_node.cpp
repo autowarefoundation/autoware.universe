@@ -13,8 +13,8 @@
 // limitations under the License.
 
 #include "ament_index_cpp/get_package_share_directory.hpp"
+#include "autoware/fake_test_node/fake_test_node.hpp"
 #include "autoware/trajectory_follower_node/controller_node.hpp"
-#include "fake_test_node/fake_test_node.hpp"
 #include "gtest/gtest.h"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/time.hpp"
@@ -30,6 +30,7 @@
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 
+#include <iostream>
 #include <memory>
 #include <vector>
 
@@ -42,7 +43,7 @@ using SteeringReport = autoware_vehicle_msgs::msg::SteeringReport;
 using autoware_adapi_v1_msgs::msg::OperationModeState;
 using geometry_msgs::msg::AccelWithCovarianceStamped;
 
-using FakeNodeFixture = autoware::tools::testing::FakeTestNode;
+using FakeNodeFixture = autoware::fake_test_node::FakeTestNode;
 
 const rclcpp::Duration one_second(1, 0);
 
@@ -64,8 +65,8 @@ rclcpp::NodeOptions makeNodeOptions(const bool enable_keep_stopped_until_steer_c
   node_options.arguments(
     {"--ros-args", "--params-file",
      lateral_share_dir + "/param/lateral_controller_defaults.param.yaml", "--params-file",
-     longitudinal_share_dir + "/param/longitudinal_controller_defaults.param.yaml", "--params-file",
-     share_dir + "/test/test_vehicle_info.param.yaml", "--params-file",
+     longitudinal_share_dir + "/config/autoware_pid_longitudinal_controller.param.yaml",
+     "--params-file", share_dir + "/test/test_vehicle_info.param.yaml", "--params-file",
      share_dir + "/test/test_nearest_search.param.yaml", "--params-file",
      share_dir + "/param/trajectory_follower_node.param.yaml"});
 
@@ -589,11 +590,28 @@ TEST_F(FakeNodeFixture, longitudinal_check_steer_converged)
   traj.points.push_back(make_traj_point(0.0, 0.0, 1.0f));
   traj.points.push_back(make_traj_point(50.0, 0.0, 1.0f));
   traj.points.push_back(make_traj_point(100.0, 0.0, 1.0f));
-  tester.traj_pub->publish(traj);
 
-  test_utils::waitForMessage(tester.node, this, tester.received_control_command);
+  {  // Check if the ego can keep stopped when the steering is not converged.
+    tester.traj_pub->publish(traj);
+    test_utils::waitForMessage(tester.node, this, tester.received_control_command);
 
-  ASSERT_TRUE(tester.received_control_command);
-  // Keep stopped state when the lateral control is not converged.
-  EXPECT_DOUBLE_EQ(tester.cmd_msg->longitudinal.velocity, 0.0f);
+    ASSERT_TRUE(tester.received_control_command);
+    // Keep stopped state when the lateral control is not converged.
+    EXPECT_DOUBLE_EQ(tester.cmd_msg->longitudinal.velocity, 0.0f);
+  }
+
+  {  // Check if the ego can keep stopped after the following sequence
+    // 1. not converged -> 2. converged -> 3. not converged
+    tester.publish_steer_angle(0.0);
+    tester.traj_pub->publish(traj);
+    test_utils::waitForMessage(tester.node, this, tester.received_control_command);
+
+    tester.publish_steer_angle(steering_tire_angle);
+    tester.traj_pub->publish(traj);
+    test_utils::waitForMessage(tester.node, this, tester.received_control_command);
+
+    ASSERT_TRUE(tester.received_control_command);
+    // Keep stopped state when the lateral control is not converged.
+    EXPECT_DOUBLE_EQ(tester.cmd_msg->longitudinal.velocity, 0.0f);
+  }
 }

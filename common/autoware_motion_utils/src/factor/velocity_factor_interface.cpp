@@ -19,7 +19,10 @@
 #include <autoware_planning_msgs/msg/trajectory_point.hpp>
 #include <tier4_planning_msgs/msg/path_point_with_lane_id.hpp>
 
-namespace autoware_motion_utils
+#include <string>
+#include <vector>
+
+namespace autoware::motion_utils
 {
 template <class PointType>
 void VelocityFactorInterface::set(
@@ -31,7 +34,16 @@ void VelocityFactorInterface::set(
   velocity_factor_.behavior = behavior_;
   velocity_factor_.pose = stop_pose;
   velocity_factor_.distance =
-    static_cast<float>(autoware_motion_utils::calcSignedArcLength(points, curr_point, stop_point));
+    static_cast<float>(autoware::motion_utils::calcSignedArcLength(points, curr_point, stop_point));
+  velocity_factor_.status = status;
+  velocity_factor_.detail = detail;
+}
+
+void VelocityFactorInterface::set(
+  const double & distance, const VelocityFactorStatus & status, const std::string & detail)
+{
+  velocity_factor_.behavior = behavior_;
+  velocity_factor_.distance = static_cast<float>(distance);
   velocity_factor_.status = status;
   velocity_factor_.detail = detail;
 }
@@ -46,4 +58,4 @@ template void VelocityFactorInterface::set<autoware_planning_msgs::msg::Trajecto
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> &, const Pose &, const Pose &,
   const VelocityFactorStatus, const std::string &);
 
-}  // namespace autoware_motion_utils
+}  // namespace autoware::motion_utils

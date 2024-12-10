@@ -76,6 +76,7 @@ void CPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
   addr.sin_family = AF_INET;
   addr.sin_port = htons(msr_reader_port_);
   addr.sin_addr.s_addr = htonl(INADDR_ANY);
+  // cppcheck-suppress cstyleCast
   ret = connect(sock, (struct sockaddr *)&addr, sizeof(addr));
   if (ret < 0) {
     stat.summary(DiagStatus::ERROR, "connect error");
@@ -129,16 +130,14 @@ void CPUMonitor::checkThrottling(diagnostic_updater::DiagnosticStatusWrapper & s
     return;
   }
 
-  int level = DiagStatus::OK;
   int whole_level = DiagStatus::OK;
   int index = 0;
 
   for (auto itr = info.pkg_thermal_status_.begin(); itr != info.pkg_thermal_status_.end();
        ++itr, ++index) {
+    int level = DiagStatus::OK;
     if (*itr) {
       level = DiagStatus::ERROR;
-    } else {
-      level = DiagStatus::OK;
     }
 
     stat.add(fmt::format("CPU {}: Pkg Thermal Status", index), thermal_dict_.at(level));

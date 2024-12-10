@@ -15,8 +15,14 @@
 #include "path_utils.hpp"
 
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
+
+#include <limits>
+#include <vector>
 namespace autoware::behavior_velocity_planner::run_out_utils
 {
+/**
+ * This function returns the point with the smallest (signed) longitudinal distance
+ */
 geometry_msgs::msg::Point findLongitudinalNearestPoint(
   const std::vector<tier4_planning_msgs::msg::PathPointWithLaneId> & points,
   const geometry_msgs::msg::Point & src_point,
@@ -26,7 +32,7 @@ geometry_msgs::msg::Point findLongitudinalNearestPoint(
   geometry_msgs::msg::Point min_dist_point{};
 
   for (const auto & p : target_points) {
-    const float dist = autoware_motion_utils::calcSignedArcLength(points, src_point, p);
+    const float dist = autoware::motion_utils::calcSignedArcLength(points, src_point, p);
     if (dist < min_dist) {
       min_dist = dist;
       min_dist_point = p;

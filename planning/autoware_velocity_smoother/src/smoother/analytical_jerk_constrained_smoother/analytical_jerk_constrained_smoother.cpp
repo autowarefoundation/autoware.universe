@@ -19,6 +19,7 @@
 #include "autoware/velocity_smoother/trajectory_utils.hpp"
 
 #include <algorithm>
+#include <memory>
 #include <string>
 #include <tuple>
 #include <utility>
@@ -66,8 +67,9 @@ bool applyMaxVelocity(
 
 namespace autoware::velocity_smoother
 {
-AnalyticalJerkConstrainedSmoother::AnalyticalJerkConstrainedSmoother(rclcpp::Node & node)
-: SmootherBase(node)
+AnalyticalJerkConstrainedSmoother::AnalyticalJerkConstrainedSmoother(
+  rclcpp::Node & node, const std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper)
+: SmootherBase(node, time_keeper)
 {
   auto & p = smoother_param_;
   p.resample.ds_resample = node.declare_parameter<double>("resample.ds_resample");
@@ -102,7 +104,8 @@ AnalyticalJerkConstrainedSmoother::Param AnalyticalJerkConstrainedSmoother::getP
 
 bool AnalyticalJerkConstrainedSmoother::apply(
   const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
-  TrajectoryPoints & output, [[maybe_unused]] std::vector<TrajectoryPoints> & debug_trajectories)
+  TrajectoryPoints & output, [[maybe_unused]] std::vector<TrajectoryPoints> & debug_trajectories,
+  [[maybe_unused]] const bool publish_debug_trajs)
 {
   RCLCPP_DEBUG(logger_, "-------------------- Start --------------------");
 
@@ -252,7 +255,7 @@ TrajectoryPoints AnalyticalJerkConstrainedSmoother::resampleTrajectory(
     const auto tp1 = input.at(i + 1);
 
     const double dist_thr = 0.001;  // 1mm
-    const double dist_tp0_tp1 = autoware_universe_utils::calcDistance2d(tp0, tp1);
+    const double dist_tp0_tp1 = autoware::universe_utils::calcDistance2d(tp0, tp1);
     if (std::fabs(dist_tp0_tp1) < dist_thr) {
       output.push_back(input.at(i));
       continue;
@@ -298,9 +301,9 @@ TrajectoryPoints AnalyticalJerkConstrainedSmoother::applyLateralAccelerationFilt
     for (double s = 0; s < in_arclength.back(); s += points_interval) {
       out_arclength.push_back(s);
     }
-    const auto output_traj = autoware_motion_utils::resampleTrajectory(
-      autoware_motion_utils::convertToTrajectory(input), out_arclength);
-    output = autoware_motion_utils::convertToTrajectoryPointArray(output_traj);
+    const auto output_traj = autoware::motion_utils::resampleTrajectory(
+      autoware::motion_utils::convertToTrajectory(input), out_arclength);
+    output = autoware::motion_utils::convertToTrajectoryPointArray(output_traj);
     output.back() = input.back();  // keep the final speed.
   } else {
     output = input;
@@ -355,7 +358,7 @@ TrajectoryPoints AnalyticalJerkConstrainedSmoother::applyLateralAccelerationFilt
     }
 
     if (
-      autoware_universe_utils::calcDistance2d(output.at(end_index), output.at(index)) <
+      autoware::universe_utils::calcDistance2d(output.at(end_index), output.at(index)) <
       dist_threshold) {
       end_index = index;
       min_latacc_velocity = std::min(
@@ -373,14 +376,14 @@ TrajectoryPoints AnalyticalJerkConstrainedSmoother::applyLateralAccelerationFilt
 
   for (size_t i = 0; i < output.size(); ++i) {
     for (const auto & lat_acc_filtered_range : latacc_filtered_ranges) {
-      const size_t start_index = std::get<0>(lat_acc_filtered_range);
-      const size_t end_index = std::get<1>(lat_acc_filtered_range);
-      const double min_latacc_velocity = std::get<2>(lat_acc_filtered_range);
+      const size_t filtered_start_index = std::get<0>(lat_acc_filtered_range);
+      const size_t filtered_end_index = std::get<1>(lat_acc_filtered_range);
+      const double filtered_min_latacc_velocity = std::get<2>(lat_acc_filtered_range);
 
       if (
-        start_index <= i && i <= end_index &&
+        filtered_start_index <= i && i <= filtered_end_index &&
         smoother_param_.latacc.enable_constant_velocity_while_turning) {
-        output.at(i).longitudinal_velocity_mps = min_latacc_velocity;
+        output.at(i).longitudinal_velocity_mps = filtered_min_latacc_velocity;
         break;
       }
     }
@@ -414,15 +417,15 @@ bool AnalyticalJerkConstrainedSmoother::searchDecelTargetIndices(
   }
 
   if (!tmp_indices.empty()) {
-    for (unsigned int i = 0; i < tmp_indices.size() - 1; ++i) {
+    for (unsigned int j = 0; j < tmp_indices.size() - 1; ++j) {
       const size_t index_err = 10;
       if (
-        (tmp_indices.at(i + 1).first - tmp_indices.at(i).first < index_err) &&
-        (tmp_indices.at(i + 1).second < tmp_indices.at(i).second)) {
+        (tmp_indices.at(j + 1).first - tmp_indices.at(j).first < index_err) &&
+        (tmp_indices.at(j + 1).second < tmp_indices.at(j).second)) {
         continue;
       }
 
-      decel_target_indices.emplace_back(tmp_indices.at(i).first, tmp_indices.at(i).second);
+      decel_target_indices.emplace_back(tmp_indices.at(j).first, tmp_indices.at(j).second);
     }
   }
   if (!tmp_indices.empty()) {
@@ -441,7 +444,7 @@ bool AnalyticalJerkConstrainedSmoother::applyForwardJerkFilter(
   for (size_t i = start_index + 1; i < base_trajectory.size(); ++i) {
     const double prev_vel = output_trajectory.at(i - 1).longitudinal_velocity_mps;
     const double ds =
-      autoware_universe_utils::calcDistance2d(base_trajectory.at(i - 1), base_trajectory.at(i));
+      autoware::universe_utils::calcDistance2d(base_trajectory.at(i - 1), base_trajectory.at(i));
     const double dt = ds / std::max(prev_vel, 1.0);
 
     const double prev_acc = output_trajectory.at(i - 1).acceleration_mps2;
@@ -487,7 +490,7 @@ bool AnalyticalJerkConstrainedSmoother::applyBackwardDecelFilter(
       }
     }
     for (size_t i = decel_target_index; i > start_index; --i) {
-      dist += autoware_universe_utils::calcDistance2d(
+      dist += autoware::universe_utils::calcDistance2d(
         output_trajectory.at(i - 1), output_trajectory.at(i));
       dist_to_target.at(i - 1) = dist;
     }
@@ -533,10 +536,10 @@ bool AnalyticalJerkConstrainedSmoother::applyBackwardDecelFilter(
 
   RCLCPP_DEBUG(logger_, "Search decel start index");
   size_t decel_start_index = output_start_index;
-  bool is_enough_dist = false;
-  double stop_dist;
   if (output_planning_jerk == params.backward.start_jerk) {
     for (size_t i = decel_target_index - 1; i >= output_start_index; --i) {
+      bool is_enough_dist = false;
+      double stop_dist;
       if (calcEnoughDistForDecel(
             output_trajectory, i, decel_target_vel, output_planning_jerk, params,
             output_dist_to_target, is_enough_dist, output_type, output_times, stop_dist)) {

@@ -32,32 +32,32 @@
 namespace autoware::motion_velocity_planner::dynamic_obstacle_stop
 {
 using TrajectoryPoints = std::vector<autoware_planning_msgs::msg::TrajectoryPoint>;
-using BoxIndexPair = std::pair<autoware_universe_utils::Box2d, size_t>;
+using BoxIndexPair = std::pair<autoware::universe_utils::Box2d, size_t>;
 using Rtree = boost::geometry::index::rtree<BoxIndexPair, boost::geometry::index::rstar<16, 4>>;
 
 /// @brief parameters for the "out of lane" module
 struct PlannerParam
 {
-  double extra_object_width;
-  double minimum_object_velocity;
-  double stop_distance_buffer;
-  double time_horizon;
-  double hysteresis;
-  double add_duration_buffer;
-  double remove_duration_buffer;
-  double ego_longitudinal_offset;
-  double ego_lateral_offset;
-  double minimum_object_distance_from_ego_trajectory;
-  bool ignore_unavoidable_collisions;
+  double extra_object_width{};
+  double minimum_object_velocity{};
+  double stop_distance_buffer{};
+  double time_horizon{};
+  double hysteresis{};
+  double add_duration_buffer{};
+  double remove_duration_buffer{};
+  double ego_longitudinal_offset{};
+  double ego_lateral_offset{};
+  double minimum_object_distance_from_ego_trajectory{};
+  bool ignore_unavoidable_collisions{};
 };
 
 struct EgoData
 {
-  TrajectoryPoints trajectory{};
+  TrajectoryPoints trajectory;
   size_t first_trajectory_idx{};
   double longitudinal_offset_to_first_trajectory_idx;  // [m]
   geometry_msgs::msg::Pose pose;
-  autoware_universe_utils::MultiPolygon2d trajectory_footprints;
+  autoware::universe_utils::MultiPolygon2d trajectory_footprints;
   Rtree rtree;
   std::optional<geometry_msgs::msg::Pose> earliest_stop_pose;
 };
@@ -65,11 +65,11 @@ struct EgoData
 /// @brief debug data
 struct DebugData
 {
-  autoware_universe_utils::MultiPolygon2d obstacle_footprints{};
+  autoware::universe_utils::MultiPolygon2d obstacle_footprints;
   size_t prev_dynamic_obstacles_nb{};
-  autoware_universe_utils::MultiPolygon2d ego_footprints{};
+  autoware::universe_utils::MultiPolygon2d ego_footprints;
   size_t prev_ego_footprints_nb{};
-  std::optional<geometry_msgs::msg::Pose> stop_pose{};
+  std::optional<geometry_msgs::msg::Pose> stop_pose;
   size_t prev_collisions_nb{};
   double z{};
   void reset_data()

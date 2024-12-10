@@ -20,7 +20,11 @@
 #include "types.hpp"
 #include "units.hpp"
 
+#include <memory>
+#include <string>
+#include <unordered_map>
 #include <utility>
+#include <vector>
 
 namespace diagnostic_graph_aggregator
 {
@@ -59,7 +63,7 @@ UnitLink * UnitLoader::child() const
 std::vector<UnitLink *> UnitLoader::children() const
 {
   std::vector<UnitLink *> result;
-  for (const auto & config : config_->list) {
+  for (auto * const config : config_->list) {
     result.push_back(links_.config_links.at(config));
   }
   return result;

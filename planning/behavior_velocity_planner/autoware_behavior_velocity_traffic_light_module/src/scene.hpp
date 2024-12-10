@@ -25,7 +25,7 @@
 #include <Eigen/Geometry>
 #include <autoware/behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
-#include <lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
@@ -71,10 +71,10 @@ public:
     lanelet::ConstLanelet lane, const PlannerParam & planner_param, const rclcpp::Logger logger,
     const rclcpp::Clock::SharedPtr clock);
 
-  bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
+  bool modifyPathVelocity(PathWithLaneId * path) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
-  autoware_motion_utils::VirtualWalls createVirtualWalls() override;
+  autoware::motion_utils::VirtualWalls createVirtualWalls() override;
 
   inline TrafficSignal getTrafficSignal() const { return looking_tl_state_; }
 
@@ -90,7 +90,7 @@ private:
 
   tier4_planning_msgs::msg::PathWithLaneId insertStopPose(
     const tier4_planning_msgs::msg::PathWithLaneId & input, const size_t & insert_target_point_idx,
-    const Eigen::Vector2d & target_point, tier4_planning_msgs::msg::StopReason * stop_reason);
+    const Eigen::Vector2d & target_point);
 
   bool isPassthrough(const double & signed_arc_length) const;
 

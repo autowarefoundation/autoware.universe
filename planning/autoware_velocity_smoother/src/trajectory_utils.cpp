@@ -14,9 +14,9 @@
 
 #include "autoware/velocity_smoother/trajectory_utils.hpp"
 
+#include "autoware/interpolation/linear_interpolation.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
-#include "interpolation/linear_interpolation.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -34,7 +34,7 @@ inline void convertEulerAngleToMonotonic(std::vector<double> & a)
 {
   for (unsigned int i = 1; i < a.size(); ++i) {
     const double da = a[i] - a[i - 1];
-    a[i] = a[i - 1] + autoware_universe_utils::normalizeRadian(da);
+    a[i] = a[i - 1] + autoware::universe_utils::normalizeRadian(da);
   }
 }
 
@@ -87,11 +87,11 @@ TrajectoryPoint calcInterpolatedTrajectoryPoint(
   {
     const auto & seg_pt = trajectory.at(seg_idx);
     const auto & next_pt = trajectory.at(seg_idx + 1);
-    traj_p.pose = autoware_universe_utils::calcInterpolatedPose(seg_pt.pose, next_pt.pose, prop);
-    traj_p.longitudinal_velocity_mps = interpolation::lerp(
+    traj_p.pose = autoware::universe_utils::calcInterpolatedPose(seg_pt.pose, next_pt.pose, prop);
+    traj_p.longitudinal_velocity_mps = autoware::interpolation::lerp(
       seg_pt.longitudinal_velocity_mps, next_pt.longitudinal_velocity_mps, prop);
     traj_p.acceleration_mps2 =
-      interpolation::lerp(seg_pt.acceleration_mps2, next_pt.acceleration_mps2, prop);
+      autoware::interpolation::lerp(seg_pt.acceleration_mps2, next_pt.acceleration_mps2, prop);
   }
 
   return traj_p;
@@ -110,7 +110,7 @@ TrajectoryPoints extractPathAroundIndex(
   {
     double dist_sum = 0.0;
     for (size_t i = index; i < trajectory.size() - 1; ++i) {
-      dist_sum += autoware_universe_utils::calcDistance2d(trajectory.at(i), trajectory.at(i + 1));
+      dist_sum += autoware::universe_utils::calcDistance2d(trajectory.at(i), trajectory.at(i + 1));
       if (dist_sum > ahead_length) {
         ahead_index = i + 1;
         break;
@@ -123,7 +123,7 @@ TrajectoryPoints extractPathAroundIndex(
   {
     double dist_sum{0.0};
     for (size_t i = index; i != 0; --i) {
-      dist_sum += autoware_universe_utils::calcDistance2d(trajectory.at(i), trajectory[i - 1]);
+      dist_sum += autoware::universe_utils::calcDistance2d(trajectory.at(i), trajectory[i - 1]);
       if (dist_sum > behind_length) {
         behind_index = i - 1;
         break;
@@ -152,7 +152,7 @@ std::vector<double> calcArclengthArray(const TrajectoryPoints & trajectory)
   for (unsigned int i = 1; i < trajectory.size(); ++i) {
     const TrajectoryPoint tp = trajectory.at(i);
     const TrajectoryPoint tp_prev = trajectory.at(i - 1);
-    dist += autoware_universe_utils::calcDistance2d(tp.pose, tp_prev.pose);
+    dist += autoware::universe_utils::calcDistance2d(tp.pose, tp_prev.pose);
     arclength.at(i) = dist;
   }
   return arclength;
@@ -164,7 +164,7 @@ std::vector<double> calcTrajectoryIntervalDistance(const TrajectoryPoints & traj
   for (unsigned int i = 1; i < trajectory.size(); ++i) {
     const TrajectoryPoint tp = trajectory.at(i);
     const TrajectoryPoint tp_prev = trajectory.at(i - 1);
-    const double dist = autoware_universe_utils::calcDistance2d(tp.pose, tp_prev.pose);
+    const double dist = autoware::universe_utils::calcDistance2d(tp.pose, tp_prev.pose);
     intervals.push_back(dist);
   }
   return intervals;
@@ -173,8 +173,8 @@ std::vector<double> calcTrajectoryIntervalDistance(const TrajectoryPoints & traj
 std::vector<double> calcTrajectoryCurvatureFrom3Points(
   const TrajectoryPoints & trajectory, size_t idx_dist)
 {
-  using autoware_universe_utils::calcCurvature;
-  using autoware_universe_utils::getPoint;
+  using autoware::universe_utils::calcCurvature;
+  using autoware::universe_utils::getPoint;
 
   if (trajectory.size() < 3) {
     const std::vector<double> k_arr(trajectory.size(), 0.0);
@@ -217,36 +217,6 @@ std::vector<double> calcTrajectoryCurvatureFrom3Points(
   k_arr.back() = k_arr.at((trajectory.size() - 2));
 
   return k_arr;
-}
-
-void setZeroVelocity(TrajectoryPoints & trajectory)
-{
-  for (auto & tp : trajectory) {
-    tp.longitudinal_velocity_mps = 0.0;
-  }
-}
-
-double getMaxVelocity(const TrajectoryPoints & trajectory)
-{
-  double max_vel = 0.0;
-  for (auto & tp : trajectory) {
-    if (tp.longitudinal_velocity_mps > max_vel) {
-      max_vel = tp.longitudinal_velocity_mps;
-    }
-  }
-  return max_vel;
-}
-
-double getMaxAbsVelocity(const TrajectoryPoints & trajectory)
-{
-  double max_vel = 0.0;
-  for (auto & tp : trajectory) {
-    double abs_vel = std::fabs(tp.longitudinal_velocity_mps);
-    if (abs_vel > max_vel) {
-      max_vel = abs_vel;
-    }
-  }
-  return max_vel;
 }
 
 void applyMaximumVelocityLimit(
@@ -428,124 +398,17 @@ bool isValidStopDist(
   return true;
 }
 
-std::optional<TrajectoryPoints> applyDecelFilterWithJerkConstraint(
-  const TrajectoryPoints & input, const size_t start_index, const double v0, const double a0,
-  const double min_acc, const double decel_target_vel,
-  const std::map<double, double> & jerk_profile)
-{
-  double t_total{0.0};
-  for (auto & it : jerk_profile) {
-    t_total += it.second;
-  }
-
-  std::vector<double> ts;
-  std::vector<double> xs;
-  std::vector<double> vs;
-  std::vector<double> as;
-  std::vector<double> js;
-  const double dt{0.1};
-  double x{0.0};
-  double v{0.0};
-  double a{0.0};
-  double j{0.0};
-
-  for (double t = 0.0; t < t_total; t += dt) {
-    // Calculate state = (x, v, a, j) at t
-    const auto state = updateStateWithJerkConstraint(v0, a0, jerk_profile, t_total);
-    if (!state) {
-      return {};
-    }
-    std::tie(x, v, a, j) = *state;
-    if (v > 0.0) {
-      a = std::max(a, min_acc);
-      ts.push_back(t);
-      xs.push_back(x);
-      vs.push_back(v);
-      as.push_back(a);
-      js.push_back(j);
-    }
-  }
-  // Calculate state = (x, v, a, j) at t_total
-  const auto state = updateStateWithJerkConstraint(v0, a0, jerk_profile, t_total);
-  if (!state) {
-    return {};
-  }
-  std::tie(x, v, a, j) = *state;
-  if (v > 0.0 && !xs.empty() && xs.back() < x) {
-    a = std::max(a, min_acc);
-    ts.push_back(t_total);
-    xs.push_back(x);
-    vs.push_back(v);
-    as.push_back(a);
-    js.push_back(j);
-  }
-
-  const double a_target{0.0};
-  const double v_margin{0.3};
-  const double a_margin{0.1};
-  if (!isValidStopDist(v, a, decel_target_vel, a_target, v_margin, a_margin)) {
-    RCLCPP_WARN_STREAM(
-      rclcpp::get_logger("autoware_velocity_smoother").get_child("trajectory_utils"),
-      "validation check error");
-    return {};
-  }
-
-  TrajectoryPoints output_trajectory{input};
-
-  if (xs.empty()) {
-    output_trajectory.at(start_index).longitudinal_velocity_mps = decel_target_vel;
-    output_trajectory.at(start_index).acceleration_mps2 = 0.0;
-    for (unsigned int i = start_index + 1; i < output_trajectory.size(); ++i) {
-      output_trajectory.at(i).longitudinal_velocity_mps = decel_target_vel;
-      output_trajectory.at(i).acceleration_mps2 = 0.0;
-    }
-    return output_trajectory;
-  }
-
-  const std::vector<double> distance_all = calcArclengthArray(output_trajectory);
-  const auto it_end = std::find_if(
-    distance_all.begin(), distance_all.end(), [&xs](double x) { return x > xs.back(); });
-  const std::vector<double> distance{distance_all.begin() + start_index, it_end};
-
-  if (
-    !interpolation_utils::isIncreasing(xs) || !interpolation_utils::isIncreasing(distance) ||
-    !interpolation_utils::isNotDecreasing(xs) || !interpolation_utils::isNotDecreasing(distance)) {
-    return {};
-  }
-
-  if (
-    xs.size() < 2 || vs.size() < 2 || as.size() < 2 || distance.empty() ||
-    distance.front() < xs.front() || xs.back() < distance.back()) {
-    return {};
-  }
-
-  const auto vel_at_wp = interpolation::lerp(xs, vs, distance);
-  const auto acc_at_wp = interpolation::lerp(xs, as, distance);
-
-  for (unsigned int i = 0; i < vel_at_wp.size(); ++i) {
-    output_trajectory.at(start_index + i).longitudinal_velocity_mps = vel_at_wp.at(i);
-    output_trajectory.at(start_index + i).acceleration_mps2 = acc_at_wp.at(i);
-  }
-  for (unsigned int i = start_index + vel_at_wp.size(); i < output_trajectory.size(); ++i) {
-    output_trajectory.at(i).longitudinal_velocity_mps = decel_target_vel;
-    output_trajectory.at(i).acceleration_mps2 = 0.0;
-  }
-
-  return output_trajectory;
-}
-
 std::optional<std::tuple<double, double, double, double>> updateStateWithJerkConstraint(
   const double v0, const double a0, const std::map<double, double> & jerk_profile, const double t)
 {
   // constexpr double eps = 1.0E-05;
-  double j{0.0};
   double a{a0};
   double v{v0};
   double x{0.0};
   double t_sum{0.0};
 
-  for (auto & it : jerk_profile) {
-    j = it.first;
+  for (const auto & it : jerk_profile) {
+    double j = it.first;
     t_sum += it.second;
     if (t > t_sum) {
       x = integ_x(x, v, a, j, it.second);
@@ -595,7 +458,7 @@ std::vector<double> calcVelocityProfileWithConstantJerkAndAccelerationLimit(
 
 double calcStopDistance(const TrajectoryPoints & trajectory, const size_t closest)
 {
-  const auto idx = autoware_motion_utils::searchZeroVelocityIndex(trajectory);
+  const auto idx = autoware::motion_utils::searchZeroVelocityIndex(trajectory);
 
   if (!idx) {
     return std::numeric_limits<double>::max();  // stop point is located far away
@@ -603,7 +466,7 @@ double calcStopDistance(const TrajectoryPoints & trajectory, const size_t closes
 
   // TODO(Horibe): use arc length distance
   const double stop_dist =
-    autoware_universe_utils::calcDistance2d(trajectory.at(*idx), trajectory.at(closest));
+    autoware::universe_utils::calcDistance2d(trajectory.at(*idx), trajectory.at(closest));
 
   return stop_dist;
 }

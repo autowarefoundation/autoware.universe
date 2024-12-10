@@ -16,7 +16,6 @@
 #define AUTOWARE__BEHAVIOR_PATH_DYNAMIC_OBSTACLE_AVOIDANCE_MODULE__SCENE_HPP_
 
 #include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
-#include "autoware/universe_utils/system/stop_watch.hpp"
 
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -29,6 +28,7 @@
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <algorithm>
+#include <iostream>
 #include <memory>
 #include <optional>
 #include <string>
@@ -57,8 +57,8 @@ std::vector<T> getAllKeys(const std::unordered_map<T, S> & map)
 
 namespace autoware::behavior_path_planner
 {
+using autoware::universe_utils::Polygon2d;
 using autoware_perception_msgs::msg::PredictedPath;
-using autoware_universe_utils::Polygon2d;
 using tier4_planning_msgs::msg::PathWithLaneId;
 
 struct MinMaxValue
@@ -96,6 +96,8 @@ struct DynamicAvoidanceParameters
   bool enable_debug_info{true};
   bool use_hatched_road_markings{true};
 
+  std::string use_lane_type{"opposite_direction_lane"};
+
   // obstacle types to avoid
   bool avoid_car{true};
   bool avoid_truck{true};
@@ -131,6 +133,7 @@ struct DynamicAvoidanceParameters
 
   // drivable area generation
   PolygonGenerationMethod polygon_generation_method{};
+  bool expand_drivable_area;
   double min_obj_path_based_lon_polygon_margin{0.0};
   double lat_offset_from_obstacle{0.0};
   double margin_distance_around_pedestrian{0.0};
@@ -170,13 +173,17 @@ struct LatFeasiblePaths
 class DynamicObstacleAvoidanceModule : public SceneModuleInterface
 {
 public:
+  static constexpr const char * logger_namespace =
+    "planning.scenario_planning.lane_driving.behavior_planning.behavior_path_planner.dynamic_"
+    "obstacle_avoidance";
+
   struct DynamicAvoidanceObject
   {
     DynamicAvoidanceObject(
       const PredictedObject & predicted_object, const double arg_vel, const double arg_lat_vel,
       const bool arg_is_object_on_ego_path,
       const std::optional<rclcpp::Time> & arg_latest_time_inside_ego_path)
-    : uuid(autoware_universe_utils::toHexString(predicted_object.object_id)),
+    : uuid(autoware::universe_utils::toHexString(predicted_object.object_id)),
       label(predicted_object.classification.front().label),
       pose(predicted_object.kinematics.initial_pose_with_covariance.pose),
       shape(predicted_object.shape),
@@ -206,20 +213,20 @@ public:
     std::optional<MinMaxValue> lat_offset_to_avoid{std::nullopt};
     bool is_collision_left{false};
     bool should_be_avoided{false};
-    std::vector<PathPointWithLaneId> ref_path_points_for_obj_poly;
+    std::vector<geometry_msgs::msg::Pose> ref_points_for_obj_poly;
     LatFeasiblePaths ego_lat_feasible_paths;
 
     // add additional information (not update to the latest data)
     void update(
       const MinMaxValue & arg_lon_offset_to_avoid, const MinMaxValue & arg_lat_offset_to_avoid,
       const bool arg_is_collision_left, const bool arg_should_be_avoided,
-      const std::vector<PathPointWithLaneId> & arg_ref_path_points_for_obj_poly)
+      const std::vector<geometry_msgs::msg::Pose> & arg_ref_points_for_obj_poly)
     {
       lon_offset_to_avoid = arg_lon_offset_to_avoid;
       lat_offset_to_avoid = arg_lat_offset_to_avoid;
       is_collision_left = arg_is_collision_left;
       should_be_avoided = arg_should_be_avoided;
-      ref_path_points_for_obj_poly = arg_ref_path_points_for_obj_poly;
+      ref_points_for_obj_poly = arg_ref_points_for_obj_poly;
     }
   };
 
@@ -317,12 +324,12 @@ public:
       const std::string & uuid, const MinMaxValue & lon_offset_to_avoid,
       const MinMaxValue & lat_offset_to_avoid, const bool is_collision_left,
       const bool should_be_avoided,
-      const std::vector<PathPointWithLaneId> & ref_path_points_for_obj_poly)
+      const std::vector<geometry_msgs::msg::Pose> & ref_points_for_obj_poly)
     {
       if (object_map_.count(uuid) != 0) {
         object_map_.at(uuid).update(
           lon_offset_to_avoid, lat_offset_to_avoid, is_collision_left, should_be_avoided,
-          ref_path_points_for_obj_poly);
+          ref_points_for_obj_poly);
       }
     }
 
@@ -374,8 +381,8 @@ private:
   };
   struct EgoPathReservePoly
   {
-    const autoware_universe_utils::Polygon2d left_avoid;
-    const autoware_universe_utils::Polygon2d right_avoid;
+    const autoware::universe_utils::Polygon2d left_avoid;
+    const autoware::universe_utils::Polygon2d right_avoid;
   };
 
   bool canTransitSuccessState() override;
@@ -409,35 +416,41 @@ private:
   std::optional<std::pair<size_t, size_t>> calcCollisionSection(
     const std::vector<PathPointWithLaneId> & ego_path, const PredictedPath & obj_path) const;
   LatLonOffset getLateralLongitudinalOffset(
-    const std::vector<PathPointWithLaneId> & ego_path, const geometry_msgs::msg::Pose & obj_pose,
+    const std::vector<geometry_msgs::msg::Pose> & ego_points,
+    const geometry_msgs::msg::Pose & obj_pose, const size_t obj_seg_idx,
     const autoware_perception_msgs::msg::Shape & obj_shape) const;
   double calcValidLengthToAvoid(
     const PredictedPath & obj_path, const geometry_msgs::msg::Pose & obj_pose,
     const autoware_perception_msgs::msg::Shape & obj_shape,
     const bool is_object_same_direction) const;
   MinMaxValue calcMinMaxLongitudinalOffsetToAvoid(
-    const std::vector<PathPointWithLaneId> & ref_path_points_for_obj_poly,
+    const std::vector<geometry_msgs::msg::Pose> & ref_points_for_obj_poly,
     const geometry_msgs::msg::Pose & obj_pose, const Polygon2d & obj_points, const double obj_vel,
     const PredictedPath & obj_path, const autoware_perception_msgs::msg::Shape & obj_shape,
     const TimeWhileCollision & time_while_collision) const;
   std::optional<MinMaxValue> calcMinMaxLateralOffsetToAvoidRegulatedObject(
-    const std::vector<PathPointWithLaneId> & ref_path_points_for_obj_poly,
+    const std::vector<geometry_msgs::msg::Pose> & ref_points_for_obj_poly,
     const Polygon2d & obj_points, const geometry_msgs::msg::Point & obj_pos, const double obj_vel,
     const bool is_collision_left, const double obj_normal_vel,
     const std::optional<DynamicAvoidanceObject> & prev_object) const;
   std::optional<MinMaxValue> calcMinMaxLateralOffsetToAvoidUnregulatedObject(
-    const std::vector<PathPointWithLaneId> & ref_path_points_for_obj_poly,
+    const std::vector<geometry_msgs::msg::Pose> & ref_points_for_obj_poly,
     const std::optional<DynamicAvoidanceObject> & prev_object,
     const DynamicAvoidanceObject & object) const;
   std::pair<lanelet::ConstLanelets, lanelet::ConstLanelets> getAdjacentLanes(
     const double forward_distance, const double backward_distance) const;
-  std::optional<autoware_universe_utils::Polygon2d> calcEgoPathBasedDynamicObstaclePolygon(
+  std::optional<autoware::universe_utils::Polygon2d> calcEgoPathBasedDynamicObstaclePolygon(
     const DynamicAvoidanceObject & object) const;
-  std::optional<autoware_universe_utils::Polygon2d> calcObjectPathBasedDynamicObstaclePolygon(
+  std::optional<autoware::universe_utils::Polygon2d> calcObjectPathBasedDynamicObstaclePolygon(
     const DynamicAvoidanceObject & object) const;
-  std::optional<autoware_universe_utils::Polygon2d> calcPredictedPathBasedDynamicObstaclePolygon(
+  std::optional<autoware::universe_utils::Polygon2d> calcPredictedPathBasedDynamicObstaclePolygon(
     const DynamicAvoidanceObject & object, const EgoPathReservePoly & ego_path_poly) const;
   EgoPathReservePoly calcEgoPathReservePoly(const PathWithLaneId & ego_path) const;
+  lanelet::ConstLanelets getCurrentLanesFromPath(
+    const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data);
+  DrivableLanes generateExpandedDrivableLanes(
+    const lanelet::ConstLanelet & lanelet, const std::shared_ptr<const PlannerData> & planner_data,
+    const std::shared_ptr<DynamicAvoidanceParameters> & parameters);
 
   void printIgnoreReason(const std::string & obj_uuid, const std::string & reason)
   {
@@ -454,10 +467,6 @@ private:
   std::shared_ptr<DynamicAvoidanceParameters> parameters_;
 
   TargetObjectsManager target_objects_manager_;
-
-  mutable autoware_universe_utils::StopWatch<
-    std::chrono::milliseconds, std::chrono::microseconds, std::chrono::steady_clock>
-    stop_watch_;
 };
 }  // namespace autoware::behavior_path_planner
 

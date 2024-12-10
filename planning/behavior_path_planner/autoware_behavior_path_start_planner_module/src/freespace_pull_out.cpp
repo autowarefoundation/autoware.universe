@@ -19,8 +19,10 @@
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "autoware/behavior_path_start_planner_module/util.hpp"
 
-#include <lanelet2_extension/utility/utilities.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 
+#include <algorithm>
+#include <limits>
 #include <memory>
 #include <vector>
 
@@ -28,20 +30,23 @@ namespace autoware::behavior_path_planner
 {
 FreespacePullOut::FreespacePullOut(
   rclcpp::Node & node, const StartPlannerParameters & parameters,
-  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info)
-: PullOutPlannerBase{node, parameters}, velocity_{parameters.freespace_planner_velocity}
+  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
+  std::shared_ptr<universe_utils::TimeKeeper> time_keeper)
+: PullOutPlannerBase{node, parameters, time_keeper},
+  velocity_{parameters.freespace_planner_velocity}
 {
   autoware::freespace_planning_algorithms::VehicleShape vehicle_shape(
     vehicle_info, parameters.vehicle_shape_margin);
   if (parameters.freespace_planner_algorithm == "astar") {
     use_back_ = parameters.astar_parameters.use_back;
     planner_ = std::make_unique<AstarSearch>(
-      parameters.freespace_planner_common_parameters, vehicle_shape, parameters.astar_parameters);
+      parameters.freespace_planner_common_parameters, vehicle_shape, parameters.astar_parameters,
+      node.get_clock());
   } else if (parameters.freespace_planner_algorithm == "rrtstar") {
     use_back_ = true;  // no option for disabling back in rrtstar
     planner_ = std::make_unique<RRTStar>(
-      parameters.freespace_planner_common_parameters, vehicle_shape,
-      parameters.rrt_star_parameters);
+      parameters.freespace_planner_common_parameters, vehicle_shape, parameters.rrt_star_parameters,
+      node.get_clock());
   }
 }
 
@@ -54,9 +59,12 @@ std::optional<PullOutPath> FreespacePullOut::plan(
 
   planner_->setMap(*planner_data_->costmap);
 
-  const bool found_path = planner_->makePlan(start_pose, end_pose);
-  if (!found_path) {
-    planner_debug_data.conditions_evaluation.emplace_back("no path found");
+  try {
+    if (!planner_->makePlan(start_pose, end_pose)) {
+      planner_debug_data.conditions_evaluation.emplace_back("no path found");
+      return {};
+    }
+  } catch (const std::exception & e) {
     return {};
   }
 
@@ -81,7 +89,7 @@ std::optional<PullOutPath> FreespacePullOut::plan(
     const size_t index = std::distance(last_path.points.begin(), it);
     if (index == 0) continue;
     const double distance =
-      autoware_universe_utils::calcDistance2d(end_pose.position, it->point.pose.position);
+      autoware::universe_utils::calcDistance2d(end_pose.position, it->point.pose.position);
     if (distance < th_end_distance) {
       last_path.points.erase(it, last_path.points.end());
       break;

@@ -15,9 +15,9 @@
 #include "remaining_distance_time_calculator_node.hpp"
 
 #include <autoware/universe_utils/geometry/geometry.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/timer.hpp>
 
@@ -143,8 +143,9 @@ void RemainingDistanceTimeCalculatorNode::calculate_remaining_distance()
 
   for (auto & llt : remaining_shortest_path) {
     if (remaining_shortest_path.size() == 1) {
-      remaining_distance_ += autoware_universe_utils::calcDistance2d(
-        current_vehicle_pose_.position, goal_pose_.position);
+      auto arc_coord_cur = lanelet::utils::getArcCoordinates({llt}, current_vehicle_pose_);
+      auto arc_coord_goal = lanelet::utils::getArcCoordinates({llt}, goal_pose_);
+      remaining_distance_ += arc_coord_goal.length - arc_coord_cur.length;
       break;
     }
 

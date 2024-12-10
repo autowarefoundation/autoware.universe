@@ -55,7 +55,6 @@ double calcArcLengthFromWayPoint(
   const size_t dst_idx);
 double calcCurvature(
   const geometry_msgs::msg::Point & target, const geometry_msgs::msg::Pose & curr_pose);
-double calcDistance2D(const geometry_msgs::msg::Point & p, const geometry_msgs::msg::Point & q);
 double calcDistSquared2D(const geometry_msgs::msg::Point & p, const geometry_msgs::msg::Point & q);
 double calcStopDistanceWithConstantJerk(const double & v_init, const double & j);
 double calcLateralError2D(
@@ -74,60 +73,7 @@ std::pair<bool, int32_t> findClosestIdxWithDistAngThr(
   const double th_yaw = M_PI_2);
 
 int8_t getLaneDirection(const std::vector<geometry_msgs::msg::Pose> & poses, double th_dist = 0.5);
-bool isDirectionForward(
-  const geometry_msgs::msg::Pose & prev, const geometry_msgs::msg::Pose & next);
-bool isDirectionForward(
-  const geometry_msgs::msg::Pose & prev, const geometry_msgs::msg::Point & next);
 
-// cspell: ignore pointinpoly
-// refer from apache's pointinpoly in http://www.visibone.com/inpoly/
-template <typename T>
-bool isInPolygon(const std::vector<T> & polygon, const T & point)
-{
-  // polygons with fewer than 3 sides are excluded
-  if (polygon.size() < 3) {
-    return false;
-  }
-
-  bool in_poly = false;
-  double x1, x2, y1, y2;
-
-  uint32_t nr_poly_points = polygon.size();
-  // start with the last point to make the check last point<->first point the first one
-  double xold = polygon.at(nr_poly_points - 1).x();
-  double yold = polygon.at(nr_poly_points - 1).y();
-  for (const auto & poly_p : polygon) {
-    double xnew = poly_p.x();
-    double ynew = poly_p.y();
-    if (xnew > xold) {
-      x1 = xold;
-      x2 = xnew;
-      y1 = yold;
-      y2 = ynew;
-    } else {
-      x1 = xnew;
-      x2 = xold;
-      y1 = ynew;
-      y2 = yold;
-    }
-
-    if (
-      (xnew < point.x()) == (point.x() <= xold) &&
-      (point.y() - y1) * (x2 - x1) < (y2 - y1) * (point.x() - x1)) {
-      in_poly = !in_poly;
-    }
-    xold = xnew;
-    yold = ynew;
-  }
-
-  return in_poly;
-}
-
-template <>
-bool isInPolygon(
-  const std::vector<geometry_msgs::msg::Point> & polygon, const geometry_msgs::msg::Point & point);
-
-double kmph2mps(const double velocity_kmph);
 double normalizeEulerAngle(const double euler);
 
 geometry_msgs::msg::Point transformToAbsoluteCoordinate2D(

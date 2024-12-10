@@ -23,14 +23,10 @@ struct ModuleConfigParameters
   bool enable_rtc{false};
   bool enable_simultaneous_execution_as_approved_module{false};
   bool enable_simultaneous_execution_as_candidate_module{false};
-  bool keep_last{false};
-  uint8_t priority{0};
-  uint8_t max_module_size{0};
 };
 
 struct BehaviorPathPlannerParameters
 {
-  size_t max_iteration_num{100};
   double traffic_light_signal_timeout{1.0};
 
   double backward_path_length;

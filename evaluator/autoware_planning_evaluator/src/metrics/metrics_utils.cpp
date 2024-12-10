@@ -20,9 +20,9 @@ namespace metrics
 {
 namespace utils
 {
+using autoware::universe_utils::calcDistance2d;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
-using autoware_universe_utils::calcDistance2d;
 
 size_t getIndexAfterDistance(const Trajectory & traj, const size_t curr_id, const double distance)
 {
@@ -30,9 +30,8 @@ size_t getIndexAfterDistance(const Trajectory & traj, const size_t curr_id, cons
   const TrajectoryPoint & curr_p = traj.points.at(curr_id);
 
   size_t target_id = curr_id;
-  double current_distance = 0.0;
   for (size_t traj_id = curr_id + 1; traj_id < traj.points.size(); ++traj_id) {
-    current_distance = calcDistance2d(traj.points.at(traj_id), curr_p);
+    double current_distance = calcDistance2d(traj.points.at(traj_id), curr_p);
     if (current_distance >= distance) {
       target_id = traj_id;
       break;

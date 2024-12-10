@@ -39,3 +39,6 @@
   - tools/**/*
 "component:vehicle":
   - vehicle/**/*
+"tag:require-cuda-build-and-test":
+  - perception/**/*
+  - sensing/**/*

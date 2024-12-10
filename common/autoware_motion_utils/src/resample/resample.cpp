@@ -14,14 +14,19 @@
 
 #include "autoware/motion_utils/resample/resample.hpp"
 
+#include "autoware/interpolation/linear_interpolation.hpp"
+#include "autoware/interpolation/spline_interpolation.hpp"
+#include "autoware/interpolation/zero_order_hold.hpp"
 #include "autoware/motion_utils/resample/resample_utils.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
-#include "interpolation/linear_interpolation.hpp"
-#include "interpolation/spline_interpolation.hpp"
-#include "interpolation/zero_order_hold.hpp"
 
-namespace autoware_motion_utils
+#include <algorithm>
+#include <cstdlib>
+#include <iostream>
+#include <vector>
+
+namespace autoware::motion_utils
 {
 std::vector<geometry_msgs::msg::Point> resamplePointVector(
   const std::vector<geometry_msgs::msg::Point> & points,
@@ -50,7 +55,7 @@ std::vector<geometry_msgs::msg::Point> resamplePointVector(
   for (size_t i = 1; i < points.size(); ++i) {
     const auto & prev_pt = points.at(i - 1);
     const auto & curr_pt = points.at(i);
-    const double ds = autoware_universe_utils::calcDistance2d(prev_pt, curr_pt);
+    const double ds = autoware::universe_utils::calcDistance2d(prev_pt, curr_pt);
     input_arclength.push_back(ds + input_arclength.back());
     x.push_back(curr_pt.x);
     y.push_back(curr_pt.y);
@@ -59,13 +64,13 @@ std::vector<geometry_msgs::msg::Point> resamplePointVector(
 
   // Interpolate
   const auto lerp = [&](const auto & input) {
-    return interpolation::lerp(input_arclength, input, resampled_arclength);
+    return autoware::interpolation::lerp(input_arclength, input, resampled_arclength);
   };
   const auto spline = [&](const auto & input) {
-    return interpolation::spline(input_arclength, input, resampled_arclength);
+    return autoware::interpolation::spline(input_arclength, input, resampled_arclength);
   };
   const auto spline_by_akima = [&](const auto & input) {
-    return interpolation::splineByAkima(input_arclength, input, resampled_arclength);
+    return autoware::interpolation::splineByAkima(input_arclength, input, resampled_arclength);
   };
 
   const auto interpolated_x = use_akima_spline_for_xy ? lerp(x) : spline_by_akima(x);
@@ -91,7 +96,7 @@ std::vector<geometry_msgs::msg::Point> resamplePointVector(
   const std::vector<geometry_msgs::msg::Point> & points, const double resample_interval,
   const bool use_akima_spline_for_xy, const bool use_lerp_for_z)
 {
-  const double input_length = autoware_motion_utils::calcArcLength(points);
+  const double input_length = autoware::motion_utils::calcArcLength(points);
 
   std::vector<double> resampling_arclength;
   for (double s = 0.0; s < input_length; s += resample_interval) {
@@ -103,7 +108,7 @@ std::vector<geometry_msgs::msg::Point> resamplePointVector(
   }
 
   // Insert terminal point
-  if (input_length - resampling_arclength.back() < autoware_motion_utils::overlap_threshold) {
+  if (input_length - resampling_arclength.back() < autoware::motion_utils::overlap_threshold) {
     resampling_arclength.back() = input_length;
   } else {
     resampling_arclength.push_back(input_length);
@@ -118,7 +123,7 @@ std::vector<geometry_msgs::msg::Pose> resamplePoseVector(
   const bool use_lerp_for_z)
 {
   // Remove overlap points for resampling
-  const auto points = autoware_motion_utils::removeOverlapPoints(points_raw);
+  const auto points = autoware::motion_utils::removeOverlapPoints(points_raw);
 
   // validate arguments
   if (!resample_utils::validate_arguments(points, resampled_arclength)) {
@@ -144,8 +149,8 @@ std::vector<geometry_msgs::msg::Pose> resamplePoseVector(
   }
 
   const bool is_driving_forward =
-    autoware_universe_utils::isDrivingForward(points.at(0), points.at(1));
-  autoware_motion_utils::insertOrientation(resampled_points, is_driving_forward);
+    autoware::universe_utils::isDrivingForward(points.at(0), points.at(1));
+  autoware::motion_utils::insertOrientation(resampled_points, is_driving_forward);
 
   // Initial orientation is depend on the initial value of the resampled_arclength
   // when backward driving
@@ -160,7 +165,7 @@ std::vector<geometry_msgs::msg::Pose> resamplePoseVector(
   const std::vector<geometry_msgs::msg::Pose> & points, const double resample_interval,
   const bool use_akima_spline_for_xy, const bool use_lerp_for_z)
 {
-  const double input_length = autoware_motion_utils::calcArcLength(points);
+  const double input_length = autoware::motion_utils::calcArcLength(points);
 
   std::vector<double> resampling_arclength;
   for (double s = 0.0; s < input_length; s += resample_interval) {
@@ -172,7 +177,7 @@ std::vector<geometry_msgs::msg::Pose> resamplePoseVector(
   }
 
   // Insert terminal point
-  if (input_length - resampling_arclength.back() < autoware_motion_utils::overlap_threshold) {
+  if (input_length - resampling_arclength.back() < autoware::motion_utils::overlap_threshold) {
     resampling_arclength.back() = input_length;
   } else {
     resampling_arclength.push_back(input_length);
@@ -203,9 +208,9 @@ tier4_planning_msgs::msg::PathWithLaneId resamplePath(
           std::fabs(distance_to_resampling_point - resampling_arclength.at(j - 1));
         const double dist_to_following_point =
           std::fabs(resampling_arclength.at(j) - distance_to_resampling_point);
-        if (dist_to_prev_point < autoware_motion_utils::overlap_threshold) {
+        if (dist_to_prev_point < autoware::motion_utils::overlap_threshold) {
           resampling_arclength.at(j - 1) = distance_to_resampling_point;
-        } else if (dist_to_following_point < autoware_motion_utils::overlap_threshold) {
+        } else if (dist_to_following_point < autoware::motion_utils::overlap_threshold) {
           resampling_arclength.at(j) = distance_to_resampling_point;
         } else {
           resampling_arclength.insert(
@@ -260,7 +265,7 @@ tier4_planning_msgs::msg::PathWithLaneId resamplePath(
     const auto & prev_pt = input_path.points.at(i - 1).point;
     const auto & curr_pt = input_path.points.at(i).point;
     const double ds =
-      autoware_universe_utils::calcDistance2d(prev_pt.pose.position, curr_pt.pose.position);
+      autoware::universe_utils::calcDistance2d(prev_pt.pose.position, curr_pt.pose.position);
     input_arclength.push_back(ds + input_arclength.back());
     input_pose.push_back(curr_pt.pose);
     v_lon.push_back(curr_pt.longitudinal_velocity_mps);
@@ -278,14 +283,15 @@ tier4_planning_msgs::msg::PathWithLaneId resamplePath(
 
   // Interpolate
   const auto lerp = [&](const auto & input) {
-    return interpolation::lerp(input_arclength, input, resampling_arclength);
+    return autoware::interpolation::lerp(input_arclength, input, resampling_arclength);
   };
 
   auto closest_segment_indices =
-    interpolation::calc_closest_segment_indices(input_arclength, resampling_arclength);
+    autoware::interpolation::calc_closest_segment_indices(input_arclength, resampling_arclength);
 
   const auto zoh = [&](const auto & input) {
-    return interpolation::zero_order_hold(input_arclength, input, closest_segment_indices);
+    return autoware::interpolation::zero_order_hold(
+      input_arclength, input, closest_segment_indices);
   };
 
   const auto interpolated_pose =
@@ -370,7 +376,7 @@ tier4_planning_msgs::msg::PathWithLaneId resamplePath(
     transformed_input_path.at(i) = input_path.points.at(i).point;
   }
   // compute path length
-  const double input_path_len = autoware_motion_utils::calcArcLength(transformed_input_path);
+  const double input_path_len = autoware::motion_utils::calcArcLength(transformed_input_path);
 
   std::vector<double> resampling_arclength;
   for (double s = 0.0; s < input_path_len; s += resample_interval) {
@@ -382,7 +388,7 @@ tier4_planning_msgs::msg::PathWithLaneId resamplePath(
   }
 
   // Insert terminal point
-  if (input_path_len - resampling_arclength.back() < autoware_motion_utils::overlap_threshold) {
+  if (input_path_len - resampling_arclength.back() < autoware::motion_utils::overlap_threshold) {
     resampling_arclength.back() = input_path_len;
   } else {
     resampling_arclength.push_back(input_path_len);
@@ -391,7 +397,7 @@ tier4_planning_msgs::msg::PathWithLaneId resamplePath(
   // Insert stop point
   if (resample_input_path_stop_point) {
     const auto distance_to_stop_point =
-      autoware_motion_utils::calcDistanceToForwardStopPoint(transformed_input_path, 0);
+      autoware::motion_utils::calcDistanceToForwardStopPoint(transformed_input_path, 0);
     if (distance_to_stop_point && !resampling_arclength.empty()) {
       for (size_t i = 1; i < resampling_arclength.size(); ++i) {
         if (
@@ -401,9 +407,9 @@ tier4_planning_msgs::msg::PathWithLaneId resamplePath(
             std::fabs(*distance_to_stop_point - resampling_arclength.at(i - 1));
           const double dist_to_following_point =
             std::fabs(resampling_arclength.at(i) - *distance_to_stop_point);
-          if (dist_to_prev_point < autoware_motion_utils::overlap_threshold) {
+          if (dist_to_prev_point < autoware::motion_utils::overlap_threshold) {
             resampling_arclength.at(i - 1) = *distance_to_stop_point;
-          } else if (dist_to_following_point < autoware_motion_utils::overlap_threshold) {
+          } else if (dist_to_following_point < autoware::motion_utils::overlap_threshold) {
             resampling_arclength.at(i) = *distance_to_stop_point;
           } else {
             resampling_arclength.insert(resampling_arclength.begin() + i, *distance_to_stop_point);
@@ -450,7 +456,7 @@ autoware_planning_msgs::msg::Path resamplePath(
     const auto & prev_pt = input_path.points.at(i - 1);
     const auto & curr_pt = input_path.points.at(i);
     const double ds =
-      autoware_universe_utils::calcDistance2d(prev_pt.pose.position, curr_pt.pose.position);
+      autoware::universe_utils::calcDistance2d(prev_pt.pose.position, curr_pt.pose.position);
     input_arclength.push_back(ds + input_arclength.back());
     input_pose.push_back(curr_pt.pose);
     v_lon.push_back(curr_pt.longitudinal_velocity_mps);
@@ -460,16 +466,17 @@ autoware_planning_msgs::msg::Path resamplePath(
 
   // Interpolate
   const auto lerp = [&](const auto & input) {
-    return interpolation::lerp(input_arclength, input, resampled_arclength);
+    return autoware::interpolation::lerp(input_arclength, input, resampled_arclength);
   };
 
   std::vector<size_t> closest_segment_indices;
   if (use_zero_order_hold_for_v) {
     closest_segment_indices =
-      interpolation::calc_closest_segment_indices(input_arclength, resampled_arclength);
+      autoware::interpolation::calc_closest_segment_indices(input_arclength, resampled_arclength);
   }
   const auto zoh = [&](const auto & input) {
-    return interpolation::zero_order_hold(input_arclength, input, closest_segment_indices);
+    return autoware::interpolation::zero_order_hold(
+      input_arclength, input, closest_segment_indices);
   };
 
   const auto interpolated_pose =
@@ -512,7 +519,7 @@ autoware_planning_msgs::msg::Path resamplePath(
     return input_path;
   }
 
-  const double input_path_len = autoware_motion_utils::calcArcLength(input_path.points);
+  const double input_path_len = autoware::motion_utils::calcArcLength(input_path.points);
 
   std::vector<double> resampling_arclength;
   for (double s = 0.0; s < input_path_len; s += resample_interval) {
@@ -524,7 +531,7 @@ autoware_planning_msgs::msg::Path resamplePath(
   }
 
   // Insert terminal point
-  if (input_path_len - resampling_arclength.back() < autoware_motion_utils::overlap_threshold) {
+  if (input_path_len - resampling_arclength.back() < autoware::motion_utils::overlap_threshold) {
     resampling_arclength.back() = input_path_len;
   } else {
     resampling_arclength.push_back(input_path_len);
@@ -533,7 +540,7 @@ autoware_planning_msgs::msg::Path resamplePath(
   // Insert stop point
   if (resample_input_path_stop_point) {
     const auto distance_to_stop_point =
-      autoware_motion_utils::calcDistanceToForwardStopPoint(input_path.points, 0);
+      autoware::motion_utils::calcDistanceToForwardStopPoint(input_path.points, 0);
     if (distance_to_stop_point && !resampling_arclength.empty()) {
       for (size_t i = 1; i < resampling_arclength.size(); ++i) {
         if (
@@ -543,9 +550,9 @@ autoware_planning_msgs::msg::Path resamplePath(
             std::fabs(*distance_to_stop_point - resampling_arclength.at(i - 1));
           const double dist_to_following_point =
             std::fabs(resampling_arclength.at(i) - *distance_to_stop_point);
-          if (dist_to_prev_point < autoware_motion_utils::overlap_threshold) {
+          if (dist_to_prev_point < autoware::motion_utils::overlap_threshold) {
             resampling_arclength.at(i - 1) = *distance_to_stop_point;
-          } else if (dist_to_following_point < autoware_motion_utils::overlap_threshold) {
+          } else if (dist_to_following_point < autoware::motion_utils::overlap_threshold) {
             resampling_arclength.at(i) = *distance_to_stop_point;
           } else {
             resampling_arclength.insert(resampling_arclength.begin() + i, *distance_to_stop_point);
@@ -601,11 +608,13 @@ autoware_planning_msgs::msg::Trajectory resampleTrajectory(
   rear_wheel_angle.push_back(input_trajectory.points.front().rear_wheel_angle_rad);
   time_from_start.push_back(
     rclcpp::Duration(input_trajectory.points.front().time_from_start).seconds());
+
   for (size_t i = 1; i < input_trajectory.points.size(); ++i) {
     const auto & prev_pt = input_trajectory.points.at(i - 1);
     const auto & curr_pt = input_trajectory.points.at(i);
     const double ds =
-      autoware_universe_utils::calcDistance2d(prev_pt.pose.position, curr_pt.pose.position);
+      autoware::universe_utils::calcDistance2d(prev_pt.pose.position, curr_pt.pose.position);
+
     input_arclength.push_back(ds + input_arclength.back());
     input_pose.push_back(curr_pt.pose);
     v_lon.push_back(curr_pt.longitudinal_velocity_mps);
@@ -617,18 +626,32 @@ autoware_planning_msgs::msg::Trajectory resampleTrajectory(
     time_from_start.push_back(rclcpp::Duration(curr_pt.time_from_start).seconds());
   }
 
+  // Set Zero Velocity After Stop Point
+  // If the longitudinal velocity is zero, set the velocity to zero after that point.
+  bool stop_point_found_in_v_lon = false;
+  constexpr double epsilon = 1e-4;
+  for (size_t i = 0; i < v_lon.size(); ++i) {
+    if (std::abs(v_lon.at(i)) < epsilon) {
+      stop_point_found_in_v_lon = true;
+    }
+    if (stop_point_found_in_v_lon) {
+      v_lon.at(i) = 0.0;
+    }
+  }
+
   // Interpolate
   const auto lerp = [&](const auto & input) {
-    return interpolation::lerp(input_arclength, input, resampled_arclength);
+    return autoware::interpolation::lerp(input_arclength, input, resampled_arclength);
   };
 
   std::vector<size_t> closest_segment_indices;
   if (use_zero_order_hold_for_twist) {
     closest_segment_indices =
-      interpolation::calc_closest_segment_indices(input_arclength, resampled_arclength);
+      autoware::interpolation::calc_closest_segment_indices(input_arclength, resampled_arclength);
   }
   const auto zoh = [&](const auto & input) {
-    return interpolation::zero_order_hold(input_arclength, input, closest_segment_indices);
+    return autoware::interpolation::zero_order_hold(
+      input_arclength, input, closest_segment_indices);
   };
 
   const auto interpolated_pose =
@@ -678,7 +701,8 @@ autoware_planning_msgs::msg::Trajectory resampleTrajectory(
     return input_trajectory;
   }
 
-  const double input_trajectory_len = autoware_motion_utils::calcArcLength(input_trajectory.points);
+  const double input_trajectory_len =
+    autoware::motion_utils::calcArcLength(input_trajectory.points);
 
   std::vector<double> resampling_arclength;
   for (double s = 0.0; s < input_trajectory_len; s += resample_interval) {
@@ -691,7 +715,8 @@ autoware_planning_msgs::msg::Trajectory resampleTrajectory(
 
   // Insert terminal point
   if (
-    input_trajectory_len - resampling_arclength.back() < autoware_motion_utils::overlap_threshold) {
+    input_trajectory_len - resampling_arclength.back() <
+    autoware::motion_utils::overlap_threshold) {
     resampling_arclength.back() = input_trajectory_len;
   } else {
     resampling_arclength.push_back(input_trajectory_len);
@@ -700,7 +725,7 @@ autoware_planning_msgs::msg::Trajectory resampleTrajectory(
   // Insert stop point
   if (resample_input_trajectory_stop_point) {
     const auto distance_to_stop_point =
-      autoware_motion_utils::calcDistanceToForwardStopPoint(input_trajectory.points, 0);
+      autoware::motion_utils::calcDistanceToForwardStopPoint(input_trajectory.points, 0);
     if (distance_to_stop_point && !resampling_arclength.empty()) {
       for (size_t i = 1; i < resampling_arclength.size(); ++i) {
         if (
@@ -710,9 +735,9 @@ autoware_planning_msgs::msg::Trajectory resampleTrajectory(
             std::fabs(*distance_to_stop_point - resampling_arclength.at(i - 1));
           const double dist_to_following_point =
             std::fabs(resampling_arclength.at(i) - *distance_to_stop_point);
-          if (dist_to_prev_point < autoware_motion_utils::overlap_threshold) {
+          if (dist_to_prev_point < autoware::motion_utils::overlap_threshold) {
             resampling_arclength.at(i - 1) = *distance_to_stop_point;
-          } else if (dist_to_following_point < autoware_motion_utils::overlap_threshold) {
+          } else if (dist_to_following_point < autoware::motion_utils::overlap_threshold) {
             resampling_arclength.at(i) = *distance_to_stop_point;
           } else {
             resampling_arclength.insert(resampling_arclength.begin() + i, *distance_to_stop_point);
@@ -728,4 +753,4 @@ autoware_planning_msgs::msg::Trajectory resampleTrajectory(
     use_zero_order_hold_for_twist);
 }
 
-}  // namespace autoware_motion_utils
+}  // namespace autoware::motion_utils

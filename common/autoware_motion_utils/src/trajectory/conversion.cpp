@@ -15,8 +15,9 @@
 #include "autoware/motion_utils/trajectory/conversion.hpp"
 
 #include <algorithm>
+#include <vector>
 
-namespace autoware_motion_utils
+namespace autoware::motion_utils
 {
 /**
  * @brief Convert std::vector<autoware_planning_msgs::msg::TrajectoryPoint> to
@@ -51,4 +52,4 @@ std::vector<autoware_planning_msgs::msg::TrajectoryPoint> convertToTrajectoryPoi
   return output;
 }
 
-}  // namespace autoware_motion_utils
+}  // namespace autoware::motion_utils

@@ -14,8 +14,6 @@
 
 #include "autoware/behavior_path_planner/behavior_path_planner_node.hpp"
 
-#include "autoware/behavior_path_planner_common/marker_utils/utils.hpp"
-#include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
 #include "autoware/motion_utils/trajectory/conversion.hpp"
 
@@ -42,8 +40,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   // data_manager
   {
     planner_data_ = std::make_shared<PlannerData>();
-    planner_data_->parameters = getCommonParam();
-    planner_data_->drivable_area_expansion_parameters.init(*this);
+    planner_data_->init_parameters(*this);
   }
 
   // publisher
@@ -54,7 +51,8 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   const auto durable_qos = rclcpp::QoS(1).transient_local();
   modified_goal_publisher_ =
     create_publisher<PoseWithUuidStamped>("~/output/modified_goal", durable_qos);
-  stop_reason_publisher_ = create_publisher<StopReasonArray>("~/output/stop_reasons", 1);
+  pub_steering_factors_ =
+    create_publisher<SteeringFactorArray>("/planning/steering_factor/intersection", 1);
   reroute_availability_publisher_ =
     create_publisher<RerouteAvailability>("~/output/is_reroute_available", 1);
   debug_avoidance_msg_array_publisher_ =
@@ -70,8 +68,18 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
 
     const std::lock_guard<std::mutex> lock(mutex_manager_);  // for planner_manager_
 
-    const auto & p = planner_data_->parameters;
-    planner_manager_ = std::make_shared<PlannerManager>(*this, p.max_iteration_num);
+    const auto slots = declare_parameter<std::vector<std::string>>("slots");
+    /* cppcheck-suppress syntaxError */
+    std::vector<std::vector<std::string>> slot_configuration{slots.size()};
+    for (size_t i = 0; i < slots.size(); ++i) {
+      const auto & slot = slots.at(i);
+      const auto modules = declare_parameter<std::vector<std::string>>(slot);
+      for (const auto & module_name : modules) {
+        slot_configuration.at(i).push_back(module_name);
+      }
+    }
+
+    planner_manager_ = std::make_shared<PlannerManager>(*this);
 
     for (const auto & name : declare_parameter<std::vector<std::string>>("launch_modules")) {
       // workaround: Since ROS 2 can't get empty list, launcher set [''] on the parameter.
@@ -80,6 +88,9 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       }
       planner_manager_->launchScenePlugin(*this, name);
     }
+
+    // NOTE: this needs to be after launchScenePlugin()
+    planner_manager_->configureModuleSlot(slot_configuration);
 
     for (const auto & manager : planner_manager_->getSceneModuleManagers()) {
       path_candidate_publishers_.emplace(
@@ -104,7 +115,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       turn_signal_search_time, turn_signal_intersection_angle_threshold_deg);
   }
 
-  steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(this, "intersection");
+  steering_factor_interface_.init(PlanningBehavior::INTERSECTION);
 
   // Start timer
   {
@@ -114,9 +125,9 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       this, get_clock(), period_ns, std::bind(&BehaviorPathPlannerNode::run, this));
   }
 
-  logger_configure_ = std::make_unique<autoware_universe_utils::LoggerLevelConfigure>(this);
+  logger_configure_ = std::make_unique<autoware::universe_utils::LoggerLevelConfigure>(this);
   published_time_publisher_ =
-    std::make_unique<autoware_universe_utils::PublishedTimePublisher>(this);
+    std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
 }
 
 std::vector<std::string> BehaviorPathPlannerNode::getWaitingApprovalModules()
@@ -143,81 +154,11 @@ std::vector<std::string> BehaviorPathPlannerNode::getRunningModules()
   return running_modules;
 }
 
-BehaviorPathPlannerParameters BehaviorPathPlannerNode::getCommonParam()
-{
-  BehaviorPathPlannerParameters p{};
-
-  p.max_iteration_num = declare_parameter<int>("max_iteration_num");
-  p.traffic_light_signal_timeout = declare_parameter<double>("traffic_light_signal_timeout");
-
-  // vehicle info
-  const auto vehicle_info = VehicleInfoUtils(*this).getVehicleInfo();
-  p.vehicle_info = vehicle_info;
-  p.vehicle_width = vehicle_info.vehicle_width_m;
-  p.vehicle_length = vehicle_info.vehicle_length_m;
-  p.wheel_tread = vehicle_info.wheel_tread_m;
-  p.wheel_base = vehicle_info.wheel_base_m;
-  p.front_overhang = vehicle_info.front_overhang_m;
-  p.rear_overhang = vehicle_info.rear_overhang_m;
-  p.left_over_hang = vehicle_info.left_overhang_m;
-  p.right_over_hang = vehicle_info.right_overhang_m;
-  p.base_link2front = vehicle_info.max_longitudinal_offset_m;
-  p.base_link2rear = p.rear_overhang;
-
-  // NOTE: backward_path_length is used not only calculating path length but also calculating the
-  // size of a drivable area.
-  //       The drivable area has to cover not the base link but the vehicle itself. Therefore
-  //       rear_overhang must be added to backward_path_length. In addition, because of the
-  //       calculation of the drivable area in the autoware_path_optimizer package, the drivable
-  //       area has to be a little longer than the backward_path_length parameter by adding
-  //       min_backward_offset.
-  constexpr double min_backward_offset = 1.0;
-  const double backward_offset = vehicle_info.rear_overhang_m + min_backward_offset;
-
-  // ROS parameters
-  p.backward_path_length = declare_parameter<double>("backward_path_length") + backward_offset;
-  p.forward_path_length = declare_parameter<double>("forward_path_length");
-
-  // acceleration parameters
-  p.min_acc = declare_parameter<double>("normal.min_acc");
-  p.max_acc = declare_parameter<double>("normal.max_acc");
-
-  p.max_vel = declare_parameter<double>("max_vel");
-  p.backward_length_buffer_for_end_of_pull_over =
-    declare_parameter<double>("backward_length_buffer_for_end_of_pull_over");
-  p.backward_length_buffer_for_end_of_pull_out =
-    declare_parameter<double>("backward_length_buffer_for_end_of_pull_out");
-
-  p.minimum_pull_over_length = declare_parameter<double>("minimum_pull_over_length");
-  p.refine_goal_search_radius_range = declare_parameter<double>("refine_goal_search_radius_range");
-  p.turn_signal_intersection_search_distance =
-    declare_parameter<double>("turn_signal_intersection_search_distance");
-  p.turn_signal_intersection_angle_threshold_deg =
-    declare_parameter<double>("turn_signal_intersection_angle_threshold_deg");
-  p.turn_signal_minimum_search_distance =
-    declare_parameter<double>("turn_signal_minimum_search_distance");
-  p.turn_signal_search_time = declare_parameter<double>("turn_signal_search_time");
-  p.turn_signal_shift_length_threshold =
-    declare_parameter<double>("turn_signal_shift_length_threshold");
-  p.turn_signal_remaining_shift_length_threshold =
-    declare_parameter<double>("turn_signal_remaining_shift_length_threshold");
-  p.turn_signal_on_swerving = declare_parameter<bool>("turn_signal_on_swerving");
-
-  p.enable_akima_spline_first = declare_parameter<bool>("enable_akima_spline_first");
-  p.enable_cog_on_centerline = declare_parameter<bool>("enable_cog_on_centerline");
-  p.input_path_interval = declare_parameter<double>("input_path_interval");
-  p.output_path_interval = declare_parameter<double>("output_path_interval");
-  p.ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
-  p.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
-
-  return p;
-}
-
 void BehaviorPathPlannerNode::takeData()
 {
   // route
   {
-    const auto msg = route_subscriber_.takeNewData();
+    const auto msg = route_subscriber_.takeData();
     if (msg) {
       if (msg->segments.empty()) {
         RCLCPP_ERROR(get_logger(), "input route is empty. ignored");
@@ -229,7 +170,7 @@ void BehaviorPathPlannerNode::takeData()
   }
   // map
   {
-    const auto msg = vector_map_subscriber_.takeNewData();
+    const auto msg = vector_map_subscriber_.takeData();
     if (msg) {
       map_ptr_ = msg;
       has_received_map_ = true;
@@ -411,16 +352,16 @@ void BehaviorPathPlannerNode::run()
     if (!is_first_time && !has_same_route_id) {
       RCLCPP_INFO(get_logger(), "New uuid route is received. Resetting modules.");
       planner_manager_->reset();
+      planner_manager_->resetCurrentRouteLanelet(planner_data_);
       planner_data_->prev_modified_goal.reset();
     }
-    planner_manager_->resetCurrentRouteLanelet(planner_data_);
   }
   const auto controlled_by_autoware_autonomously =
     planner_data_->operation_mode->mode == OperationModeState::AUTONOMOUS &&
     planner_data_->operation_mode->is_autoware_control_enabled;
   if (
     !controlled_by_autoware_autonomously &&
-    !planner_manager_->hasNonAlwaysExecutableApprovedModules())
+    !planner_manager_->hasPossibleRerouteApprovedModules(planner_data_))
     planner_manager_->resetCurrentRouteLanelet(planner_data_);
 
   // run behavior planner
@@ -445,7 +386,7 @@ void BehaviorPathPlannerNode::run()
   const auto current_pose = planner_data_->self_odometry->pose.pose;
   if (!path->points.empty()) {
     const size_t current_seg_idx = planner_data_->findEgoSegmentIndex(path->points);
-    path->points = autoware_motion_utils::cropPoints(
+    path->points = autoware::motion_utils::cropPoints(
       path->points, current_pose.position, current_seg_idx,
       planner_data_->parameters.forward_path_length,
       planner_data_->parameters.backward_path_length +
@@ -466,13 +407,12 @@ void BehaviorPathPlannerNode::run()
   publishSceneModuleDebugMsg(planner_manager_->getDebugMsg());
   publishPathCandidate(planner_manager_->getSceneModuleManagers(), planner_data_);
   publishPathReference(planner_manager_->getSceneModuleManagers(), planner_data_);
-  stop_reason_publisher_->publish(planner_manager_->getStopReasons());
 
   // publish modified goal only when it is updated
   if (
     output.modified_goal &&
     /* has changed modified goal */ (
-      !planner_data_->prev_modified_goal || autoware_universe_utils::calcDistance2d(
+      !planner_data_->prev_modified_goal || autoware::universe_utils::calcDistance2d(
                                               planner_data_->prev_modified_goal->pose.position,
                                               output.modified_goal->pose.position) > 0.01)) {
     PoseWithUuidStamped modified_goal = *(output.modified_goal);
@@ -533,13 +473,23 @@ void BehaviorPathPlannerNode::publish_steering_factor(
     const auto [intersection_pose, intersection_distance] =
       planner_data->turn_signal_decider.getIntersectionPoseAndDistance();
 
-    steering_factor_interface_ptr_->updateSteeringFactor(
+    steering_factor_interface_.set(
       {intersection_pose, intersection_pose}, {intersection_distance, intersection_distance},
-      PlanningBehavior::INTERSECTION, steering_factor_direction, SteeringFactor::TURNING, "");
+      steering_factor_direction, SteeringFactor::TURNING, "");
   } else {
-    steering_factor_interface_ptr_->clearSteeringFactors();
+    steering_factor_interface_.reset();
   }
-  steering_factor_interface_ptr_->publishSteeringFactor(get_clock()->now());
+
+  autoware_adapi_v1_msgs::msg::SteeringFactorArray steering_factor_array;
+  steering_factor_array.header.frame_id = "map";
+  steering_factor_array.header.stamp = this->now();
+
+  const auto steering_factor = steering_factor_interface_.get();
+  if (steering_factor.behavior != PlanningBehavior::UNKNOWN) {
+    steering_factor_array.factors.emplace_back(steering_factor);
+  }
+
+  pub_steering_factors_->publish(steering_factor_array);
 }
 
 void BehaviorPathPlannerNode::publish_reroute_availability() const
@@ -549,7 +499,7 @@ void BehaviorPathPlannerNode::publish_reroute_availability() const
   // always-executable module is approved and running, rerouting will not be possible.
   RerouteAvailability is_reroute_available;
   is_reroute_available.stamp = this->now();
-  if (planner_manager_->hasNonAlwaysExecutableApprovedModules()) {
+  if (planner_manager_->hasPossibleRerouteApprovedModules(planner_data_)) {
     is_reroute_available.availability = false;
   } else {
     is_reroute_available.availability = true;
@@ -566,29 +516,29 @@ void BehaviorPathPlannerNode::publish_turn_signal_debug_data(const TurnSignalDeb
   constexpr double scale_x = 1.0;
   constexpr double scale_y = 1.0;
   constexpr double scale_z = 1.0;
-  const auto scale = autoware_universe_utils::createMarkerScale(scale_x, scale_y, scale_z);
+  const auto scale = autoware::universe_utils::createMarkerScale(scale_x, scale_y, scale_z);
   const auto desired_section_color =
-    autoware_universe_utils::createMarkerColor(0.0, 1.0, 0.0, 0.999);
+    autoware::universe_utils::createMarkerColor(0.0, 1.0, 0.0, 0.999);
   const auto required_section_color =
-    autoware_universe_utils::createMarkerColor(1.0, 0.0, 1.0, 0.999);
+    autoware::universe_utils::createMarkerColor(1.0, 0.0, 1.0, 0.999);
 
   // intersection turn signal info
   {
     const auto & turn_signal_info = debug_data.intersection_turn_signal_info;
 
-    auto desired_start_marker = autoware_universe_utils::createDefaultMarker(
+    auto desired_start_marker = autoware::universe_utils::createDefaultMarker(
       "map", current_time, "intersection_turn_signal_desired_start", 0L, Marker::SPHERE, scale,
       desired_section_color);
-    auto desired_end_marker = autoware_universe_utils::createDefaultMarker(
+    auto desired_end_marker = autoware::universe_utils::createDefaultMarker(
       "map", current_time, "intersection_turn_signal_desired_end", 0L, Marker::SPHERE, scale,
       desired_section_color);
     desired_start_marker.pose = turn_signal_info.desired_start_point;
     desired_end_marker.pose = turn_signal_info.desired_end_point;
 
-    auto required_start_marker = autoware_universe_utils::createDefaultMarker(
+    auto required_start_marker = autoware::universe_utils::createDefaultMarker(
       "map", current_time, "intersection_turn_signal_required_start", 0L, Marker::SPHERE, scale,
       required_section_color);
-    auto required_end_marker = autoware_universe_utils::createDefaultMarker(
+    auto required_end_marker = autoware::universe_utils::createDefaultMarker(
       "map", current_time, "intersection_turn_signal_required_end", 0L, Marker::SPHERE, scale,
       required_section_color);
     required_start_marker.pose = turn_signal_info.required_start_point;
@@ -604,19 +554,19 @@ void BehaviorPathPlannerNode::publish_turn_signal_debug_data(const TurnSignalDeb
   {
     const auto & turn_signal_info = debug_data.behavior_turn_signal_info;
 
-    auto desired_start_marker = autoware_universe_utils::createDefaultMarker(
+    auto desired_start_marker = autoware::universe_utils::createDefaultMarker(
       "map", current_time, "behavior_turn_signal_desired_start", 0L, Marker::CUBE, scale,
       desired_section_color);
-    auto desired_end_marker = autoware_universe_utils::createDefaultMarker(
+    auto desired_end_marker = autoware::universe_utils::createDefaultMarker(
       "map", current_time, "behavior_turn_signal_desired_end", 0L, Marker::CUBE, scale,
       desired_section_color);
     desired_start_marker.pose = turn_signal_info.desired_start_point;
     desired_end_marker.pose = turn_signal_info.desired_end_point;
 
-    auto required_start_marker = autoware_universe_utils::createDefaultMarker(
+    auto required_start_marker = autoware::universe_utils::createDefaultMarker(
       "map", current_time, "behavior_turn_signal_required_start", 0L, Marker::CUBE, scale,
       required_section_color);
-    auto required_end_marker = autoware_universe_utils::createDefaultMarker(
+    auto required_end_marker = autoware::universe_utils::createDefaultMarker(
       "map", current_time, "behavior_turn_signal_required_end", 0L, Marker::CUBE, scale,
       required_section_color);
     required_start_marker.pose = turn_signal_info.required_start_point;
@@ -642,18 +592,18 @@ void BehaviorPathPlannerNode::publish_bounds(const PathWithLaneId & path)
   constexpr double color_a = 0.999;
 
   const auto current_time = path.header.stamp;
-  auto left_marker = autoware_universe_utils::createDefaultMarker(
+  auto left_marker = autoware::universe_utils::createDefaultMarker(
     "map", current_time, "left_bound", 0L, Marker::LINE_STRIP,
-    autoware_universe_utils::createMarkerScale(scale_x, scale_y, scale_z),
-    autoware_universe_utils::createMarkerColor(color_r, color_g, color_b, color_a));
+    autoware::universe_utils::createMarkerScale(scale_x, scale_y, scale_z),
+    autoware::universe_utils::createMarkerColor(color_r, color_g, color_b, color_a));
   for (const auto lb : path.left_bound) {
     left_marker.points.push_back(lb);
   }
 
-  auto right_marker = autoware_universe_utils::createDefaultMarker(
+  auto right_marker = autoware::universe_utils::createDefaultMarker(
     "map", current_time, "right_bound", 0L, Marker::LINE_STRIP,
-    autoware_universe_utils::createMarkerScale(scale_x, scale_y, scale_z),
-    autoware_universe_utils::createMarkerColor(color_r, color_g, color_b, color_a));
+    autoware::universe_utils::createMarkerScale(scale_x, scale_y, scale_z),
+    autoware::universe_utils::createMarkerColor(color_r, color_g, color_b, color_a));
   for (const auto rb : path.right_bound) {
     right_marker.points.push_back(rb);
   }
@@ -744,7 +694,7 @@ Path BehaviorPathPlannerNode::convertToPath(
     return output;
   }
 
-  output = autoware_motion_utils::convertToPath<tier4_planning_msgs::msg::PathWithLaneId>(
+  output = autoware::motion_utils::convertToPath<tier4_planning_msgs::msg::PathWithLaneId>(
     *path_candidate_ptr);
   // header is replaced by the input one, so it is substituted again
   output.header = planner_data->route_handler->getRouteHeader();
@@ -830,7 +780,7 @@ void BehaviorPathPlannerNode::onLateralOffset(const LateralOffset::ConstSharedPt
 SetParametersResult BehaviorPathPlannerNode::onSetParam(
   const std::vector<rclcpp::Parameter> & parameters)
 {
-  using autoware_universe_utils::updateParam;
+  using autoware::universe_utils::updateParam;
 
   rcl_interfaces::msg::SetParametersResult result;
 
@@ -909,6 +859,9 @@ SetParametersResult BehaviorPathPlannerNode::onSetParam(
     updateParam(
       parameters, DrivableAreaExpansionParameters::SMOOTHING_ARC_LENGTH_RANGE_PARAM,
       planner_data_->drivable_area_expansion_parameters.arc_length_range);
+    updateParam(
+      parameters, DrivableAreaExpansionParameters::MIN_BOUND_INTERVAL,
+      planner_data_->drivable_area_expansion_parameters.min_bound_interval);
     updateParam(
       parameters, DrivableAreaExpansionParameters::PRINT_RUNTIME_PARAM,
       planner_data_->drivable_area_expansion_parameters.print_runtime);

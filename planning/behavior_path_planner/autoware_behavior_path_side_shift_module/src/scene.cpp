@@ -20,19 +20,21 @@
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "autoware/behavior_path_side_shift_module/utils.hpp"
 
-#include <lanelet2_extension/utility/utilities.hpp>
+#include <autoware/motion_utils/trajectory/path_shift.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 
 #include <algorithm>
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 namespace autoware::behavior_path_planner
 {
-using autoware_motion_utils::calcSignedArcLength;
-using autoware_motion_utils::findNearestIndex;
-using autoware_motion_utils::findNearestSegmentIndex;
-using autoware_universe_utils::calcDistance2d;
-using autoware_universe_utils::getPoint;
+using autoware::motion_utils::calcSignedArcLength;
+using autoware::motion_utils::findNearestIndex;
+using autoware::motion_utils::findNearestSegmentIndex;
+using autoware::universe_utils::calcDistance2d;
+using autoware::universe_utils::getPoint;
 using geometry_msgs::msg::Point;
 
 SideShiftModule::SideShiftModule(
@@ -87,8 +89,7 @@ bool SideShiftModule::isExecutionRequested() const
   }
 
   // If the desired offset has a non-zero value, return true as we want to execute the plan.
-
-  const bool has_request = !isAlmostZero(requested_lateral_offset_);
+  const bool has_request = std::fabs(requested_lateral_offset_) >= 1.0e-4;
   RCLCPP_DEBUG_STREAM(
     getLogger(), "ESS::isExecutionRequested() : " << std::boolalpha << has_request);
 
@@ -118,6 +119,7 @@ bool SideShiftModule::canTransitSuccessState()
 {
   // Never return the FAILURE. When the desired offset is zero and the vehicle is in the original
   // drivable area,this module can stop the computation and return SUCCESS.
+  constexpr double ZERO_THRESHOLD = 1.0e-4;
 
   const auto isOffsetDiffAlmostZero = [this]() noexcept {
     const auto last_sp = path_shifter_.getLastShiftLine();
@@ -125,7 +127,7 @@ bool SideShiftModule::canTransitSuccessState()
       const auto length = std::fabs(last_sp.value().end_shift_length);
       const auto lateral_offset = std::fabs(requested_lateral_offset_);
       const auto offset_diff = lateral_offset - length;
-      if (!isAlmostZero(offset_diff)) {
+      if (std::fabs(offset_diff) >= ZERO_THRESHOLD) {
         lateral_offset_change_request_ = true;
         return false;
       }
@@ -134,7 +136,7 @@ bool SideShiftModule::canTransitSuccessState()
   }();
 
   const bool no_offset_diff = isOffsetDiffAlmostZero;
-  const bool no_request = isAlmostZero(requested_lateral_offset_);
+  const bool no_request = std::fabs(requested_lateral_offset_) < ZERO_THRESHOLD;
 
   const auto no_shifted_plan = [&]() {
     if (prev_output_.shift_length.empty()) {
@@ -196,7 +198,7 @@ void SideShiftModule::updateData()
     double max_dist = 0.0;
     for (const auto & pnt : path_shifter_.getShiftLines()) {
       max_dist =
-        std::max(max_dist, autoware_universe_utils::calcDistance2d(getEgoPose(), pnt.start));
+        std::max(max_dist, autoware::universe_utils::calcDistance2d(getEgoPose(), pnt.start));
     }
     return max_dist;
   }();
@@ -278,6 +280,11 @@ BehaviorModuleOutput SideShiftModule::plan()
   ShiftedPath shifted_path;
   path_shifter_.generate(&shifted_path);
 
+  if (shifted_path.path.points.empty()) {
+    RCLCPP_ERROR(getLogger(), "Generated shift_path has no points");
+    return {};
+  }
+
   // Reset orientation
   setOrientation(&shifted_path.path);
 
@@ -335,6 +342,7 @@ BehaviorModuleOutput SideShiftModule::planWaitingApproval()
   return output;
 }
 
+// can be moved to utils
 ShiftLine SideShiftModule::calcShiftLine() const
 {
   const auto & p = parameters_;
@@ -344,8 +352,9 @@ ShiftLine SideShiftModule::calcShiftLine() const
     std::max(p->min_distance_to_start_shifting, ego_speed * p->time_to_start_shifting);
 
   const double dist_to_end = [&]() {
-    const double shift_length = requested_lateral_offset_ - getClosestShiftLength();
-    const double jerk_shifting_distance = path_shifter_.calcLongitudinalDistFromJerk(
+    const double shift_length =
+      requested_lateral_offset_ - getClosestShiftLength(prev_output_, getEgoPose().position);
+    const double jerk_shifting_distance = autoware::motion_utils::calc_longitudinal_dist_from_jerk(
       shift_length, p->shifting_lateral_jerk, std::max(ego_speed, p->min_shifting_speed));
     const double shifting_distance = std::max(jerk_shifting_distance, p->min_shifting_distance);
     const double dist_to_end = dist_to_start + shifting_distance;
@@ -364,17 +373,6 @@ ShiftLine SideShiftModule::calcShiftLine() const
   shift_line.end = reference_path_.points.at(shift_line.end_idx).point.pose;
 
   return shift_line;
-}
-
-double SideShiftModule::getClosestShiftLength() const
-{
-  if (prev_output_.shift_length.empty()) {
-    return 0.0;
-  }
-
-  const auto ego_point = planner_data_->self_odometry->pose.pose.position;
-  const auto closest = autoware_motion_utils::findNearestIndex(prev_output_.path.points, ego_point);
-  return prev_output_.shift_length.at(closest);
 }
 
 BehaviorModuleOutput SideShiftModule::adjustDrivableArea(const ShiftedPath & path) const
@@ -396,7 +394,7 @@ BehaviorModuleOutput SideShiftModule::adjustDrivableArea(const ShiftedPath & pat
   auto output_path = path.path;
   const size_t current_seg_idx = planner_data_->findEgoSegmentIndex(output_path.points);
   const auto & current_pose = planner_data_->self_odometry->pose.pose;
-  output_path.points = autoware_motion_utils::cropPoints(
+  output_path.points = autoware::motion_utils::cropPoints(
     output_path.points, current_pose.position, current_seg_idx, p.forward_path_length,
     p.backward_path_length + p.input_path_interval);
 
@@ -468,7 +466,7 @@ void SideShiftModule::setDebugMarkersVisualization() const
   debug_marker_.markers.clear();
 
   const auto add = [this](const MarkerArray & added) {
-    autoware_universe_utils::appendMarkerArray(added, &debug_marker_);
+    autoware::universe_utils::appendMarkerArray(added, &debug_marker_);
   };
 
   const auto add_shift_line_marker = [this, add](

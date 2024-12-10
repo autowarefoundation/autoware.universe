@@ -27,6 +27,7 @@
 
 #include "boost/lexical_cast.hpp"
 
+#include <iostream>
 #include <memory>
 #include <string>
 #include <utility>
@@ -47,7 +48,7 @@ protected:
     rclcpp::NodeOptions options;
     const auto share_dir = ament_index_cpp::get_package_share_directory("localization_evaluator");
     options.arguments(
-      {"--ros-args", "--params-file", share_dir + "/param/localization_evaluator.defaults.yaml"});
+      {"--ros-args", "--params-file", share_dir + "/config/localization_evaluator.param.yaml"});
 
     dummy_node = std::make_shared<rclcpp::Node>("localization_evaluator_test_node");
     eval_node = std::make_shared<EvalNode>(options);

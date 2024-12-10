@@ -22,6 +22,7 @@
 #include <autoware/rtc_interface/rtc_interface.hpp>
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
 #include <autoware/universe_utils/ros/parameter.hpp>
+#include <autoware/universe_utils/system/time_keeper.hpp>
 #include <builtin_interfaces/msg/time.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/velocity_factor.hpp>
@@ -29,37 +30,36 @@
 #include <autoware_planning_msgs/msg/path.hpp>
 #include <tier4_debug_msgs/msg/float64_stamped.hpp>
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
-#include <tier4_planning_msgs/msg/stop_reason.hpp>
-#include <tier4_planning_msgs/msg/stop_reason_array.hpp>
 #include <tier4_rtc_msgs/msg/state.hpp>
 #include <tier4_v2x_msgs/msg/infrastructure_command_array.hpp>
 #include <unique_identifier_msgs/msg/uuid.hpp>
 
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 // Debug
+#include <rclcpp/publisher.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <visualization_msgs/msg/marker_array.hpp>
 namespace autoware::behavior_velocity_planner
 {
 
+using autoware::motion_utils::PlanningBehavior;
+using autoware::motion_utils::VelocityFactor;
 using autoware::objects_of_interest_marker_interface::ColorName;
 using autoware::objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface;
 using autoware::rtc_interface::RTCInterface;
-using autoware_motion_utils::PlanningBehavior;
-using autoware_motion_utils::VelocityFactor;
-using autoware_universe_utils::DebugPublisher;
-using autoware_universe_utils::getOrDeclareParameter;
+using autoware::universe_utils::DebugPublisher;
+using autoware::universe_utils::getOrDeclareParameter;
 using builtin_interfaces::msg::Time;
 using tier4_debug_msgs::msg::Float64Stamped;
 using tier4_planning_msgs::msg::PathWithLaneId;
-using tier4_planning_msgs::msg::StopFactor;
-using tier4_planning_msgs::msg::StopReason;
 using tier4_rtc_msgs::msg::Module;
 using tier4_rtc_msgs::msg::State;
 using unique_identifier_msgs::msg::UUID;
@@ -70,9 +70,9 @@ struct ObjectOfInterest
   autoware_perception_msgs::msg::Shape shape;
   ColorName color;
   ObjectOfInterest(
-    const geometry_msgs::msg::Pose & pose, const autoware_perception_msgs::msg::Shape & shape,
+    const geometry_msgs::msg::Pose & pose, autoware_perception_msgs::msg::Shape shape,
     const ColorName & color_name)
-  : pose(pose), shape(shape), color(color_name)
+  : pose(pose), shape(std::move(shape)), color(color_name)
   {
   }
 };
@@ -84,12 +84,13 @@ public:
     const int64_t module_id, rclcpp::Logger logger, rclcpp::Clock::SharedPtr clock);
   virtual ~SceneModuleInterface() = default;
 
-  virtual bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) = 0;
+  virtual bool modifyPathVelocity(PathWithLaneId * path) = 0;
 
   virtual visualization_msgs::msg::MarkerArray createDebugMarkerArray() = 0;
-  virtual std::vector<autoware_motion_utils::VirtualWall> createVirtualWalls() = 0;
+  virtual std::vector<autoware::motion_utils::VirtualWall> createVirtualWalls() = 0;
 
   int64_t getModuleId() const { return module_id_; }
+
   void setPlannerData(const std::shared_ptr<const PlannerData> & planner_data)
   {
     planner_data_ = planner_data;
@@ -106,7 +107,12 @@ public:
     infrastructure_command_ = command;
   }
 
-  std::optional<int> getFirstStopPathPointIndex() { return first_stop_path_point_index_; }
+  void setTimeKeeper(const std::shared_ptr<universe_utils::TimeKeeper> & time_keeper)
+  {
+    time_keeper_ = time_keeper;
+  }
+
+  std::shared_ptr<universe_utils::TimeKeeper> getTimeKeeper() { return time_keeper_; }
 
   void setActivation(const bool activated) { activated_ = activated; }
   void setRTCEnabled(const bool enable_rtc) { rtc_enabled_ = enable_rtc; }
@@ -129,9 +135,9 @@ protected:
   rclcpp::Clock::SharedPtr clock_;
   std::shared_ptr<const PlannerData> planner_data_;
   std::optional<tier4_v2x_msgs::msg::InfrastructureCommand> infrastructure_command_;
-  std::optional<int> first_stop_path_point_index_;
-  autoware_motion_utils::VelocityFactorInterface velocity_factor_;
+  autoware::motion_utils::VelocityFactorInterface velocity_factor_;
   std::vector<ObjectOfInterest> objects_of_interest_;
+  mutable std::shared_ptr<universe_utils::TimeKeeper> time_keeper_;
 
   void setSafe(const bool safe)
   {
@@ -163,8 +169,6 @@ public:
 
   virtual const char * getModuleName() = 0;
 
-  std::optional<int> getFirstStopPathPointIndex() { return first_stop_path_point_index_; }
-
   void updateSceneModuleInstances(
     const std::shared_ptr<const PlannerData> & planner_data,
     const tier4_planning_msgs::msg::PathWithLaneId & path);
@@ -188,8 +192,6 @@ protected:
 
   void registerModule(const std::shared_ptr<SceneModuleInterface> & scene_module);
 
-  void unregisterModule(const std::shared_ptr<SceneModuleInterface> & scene_module);
-
   size_t findEgoSegmentIndex(
     const std::vector<tier4_planning_msgs::msg::PathPointWithLaneId> & points) const;
 
@@ -197,9 +199,8 @@ protected:
   std::set<int64_t> registered_module_id_set_;
 
   std::shared_ptr<const PlannerData> planner_data_;
-  autoware_motion_utils::VirtualWallMarkerCreator virtual_wall_marker_creator_;
+  autoware::motion_utils::VirtualWallMarkerCreator virtual_wall_marker_creator_;
 
-  std::optional<int> first_stop_path_point_index_;
   rclcpp::Node & node_;
   rclcpp::Clock::SharedPtr clock_;
   // Debug
@@ -208,13 +209,16 @@ protected:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_virtual_wall_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_;
   rclcpp::Publisher<tier4_planning_msgs::msg::PathWithLaneId>::SharedPtr pub_debug_path_;
-  rclcpp::Publisher<tier4_planning_msgs::msg::StopReasonArray>::SharedPtr pub_stop_reason_;
   rclcpp::Publisher<autoware_adapi_v1_msgs::msg::VelocityFactorArray>::SharedPtr
     pub_velocity_factor_;
   rclcpp::Publisher<tier4_v2x_msgs::msg::InfrastructureCommandArray>::SharedPtr
     pub_infrastructure_commands_;
 
   std::shared_ptr<DebugPublisher> processing_time_publisher_;
+
+  rclcpp::Publisher<universe_utils::ProcessingTimeDetail>::SharedPtr pub_processing_time_detail_;
+
+  std::shared_ptr<universe_utils::TimeKeeper> time_keeper_;
 };
 
 class SceneModuleManagerInterfaceWithRTC : public SceneModuleManagerInterface
@@ -260,7 +264,7 @@ protected:
 
   void deleteExpiredModules(const tier4_planning_msgs::msg::PathWithLaneId & path) override;
 
-  bool getEnableRTC(rclcpp::Node & node, const std::string & param_name)
+  static bool getEnableRTC(rclcpp::Node & node, const std::string & param_name)
   {
     bool enable_rtc = true;
 

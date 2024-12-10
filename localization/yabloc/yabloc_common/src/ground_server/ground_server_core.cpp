@@ -17,7 +17,7 @@
 #include "yabloc_common/ground_server/util.hpp"
 
 #include <Eigen/Eigenvalues>
-#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <yabloc_common/color.hpp>
 #include <yabloc_common/pub_sub.hpp>
 
@@ -28,7 +28,12 @@
 #include <pcl/sample_consensus/model_types.h>
 #include <pcl/segmentation/sac_segmentation.h>
 
+#include <algorithm>
 #include <cmath>
+#include <limits>
+#include <set>
+#include <string>
+#include <vector>
 
 namespace yabloc::ground_server
 {
@@ -40,7 +45,7 @@ GroundServer::GroundServer(const rclcpp::NodeOptions & options)
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
-  const rclcpp::QoS map_qos = rclcpp::QoS(10).transient_local().reliable();
+  const rclcpp::QoS map_qos = rclcpp::QoS(1).transient_local().reliable();
 
   auto on_pose = std::bind(&GroundServer::on_pose_stamped, this, _1);
   auto on_map = std::bind(&GroundServer::on_map, this, _1);

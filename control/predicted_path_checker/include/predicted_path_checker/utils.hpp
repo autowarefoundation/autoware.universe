@@ -15,10 +15,10 @@
 #ifndef PREDICTED_PATH_CHECKER__UTILS_HPP_
 #define PREDICTED_PATH_CHECKER__UTILS_HPP_
 
+#include <autoware/interpolation/linear_interpolation.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
-#include <interpolation/linear_interpolation.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_planning_msgs/msg/trajectory.hpp>
@@ -39,12 +39,12 @@
 namespace utils
 {
 
+using autoware::universe_utils::Point2d;
+using autoware::universe_utils::Polygon2d;
 using autoware::vehicle_info_utils::VehicleInfo;
 using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_planning_msgs::msg::TrajectoryPoint;
-using autoware_universe_utils::Point2d;
-using autoware_universe_utils::Polygon2d;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::TransformStamped;
@@ -65,7 +65,7 @@ TrajectoryPoint calcInterpolatedPoint(
 
 std::pair<size_t, TrajectoryPoint> findStopPoint(
   TrajectoryPoints & predicted_trajectory_array, const size_t collision_idx,
-  const double stop_margin, autoware::vehicle_info_utils::VehicleInfo & vehicle_info);
+  const double stop_margin, const autoware::vehicle_info_utils::VehicleInfo & vehicle_info);
 
 bool isInBrakeDistance(
   const TrajectoryPoints & trajectory, const size_t stop_idx, const double relative_velocity,

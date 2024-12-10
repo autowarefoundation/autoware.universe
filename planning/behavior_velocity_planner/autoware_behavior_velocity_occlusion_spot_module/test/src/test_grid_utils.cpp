@@ -21,7 +21,9 @@
 #include <gtest/gtest.h>
 
 #include <cmath>
+#include <iostream>
 #include <unordered_set>
+#include <vector>
 
 struct indexHash
 {
@@ -85,7 +87,7 @@ TEST(compareTime, polygon_vs_line_iterator)
     }
   }
   const grid_map::Matrix & grid_data = grid["layer"];
-  autoware_universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
+  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   stop_watch.tic("processing_time");
   size_t count = 0;
   [[maybe_unused]] double time = 0;

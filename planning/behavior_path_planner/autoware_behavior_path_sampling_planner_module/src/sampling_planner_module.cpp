@@ -14,15 +14,24 @@
 
 #include "autoware/behavior_path_sampling_planner_module/sampling_planner_module.hpp"
 
+#include <algorithm>
+#include <iostream>
+#include <limits>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
 namespace autoware::behavior_path_planner
 {
-using autoware_motion_utils::calcSignedArcLength;
-using autoware_motion_utils::findNearestIndex;
-using autoware_motion_utils::findNearestSegmentIndex;
-using autoware_universe_utils::calcDistance2d;
-using autoware_universe_utils::calcOffsetPose;
-using autoware_universe_utils::getPoint;
-using autoware_universe_utils::Point2d;
+using autoware::motion_utils::calcSignedArcLength;
+using autoware::motion_utils::findNearestIndex;
+using autoware::motion_utils::findNearestSegmentIndex;
+using autoware::universe_utils::calcDistance2d;
+using autoware::universe_utils::calcOffsetPose;
+using autoware::universe_utils::getPoint;
+using autoware::universe_utils::Point2d;
 using geometry_msgs::msg::Point;
 
 namespace bg = boost::geometry;
@@ -103,7 +112,7 @@ SamplingPlannerModule::SamplingPlannerModule(
   //     [[maybe_unused]] const SoftConstraintsInputs & input_data) -> double {
   //     if (path.points.empty()) return 0.0;
   //     const auto & goal_pose_yaw =
-  //     autoware_universe_utils::getRPY(input_data.goal_pose.orientation).z; const auto &
+  //     autoware::universe_utils::getRPY(input_data.goal_pose.orientation).z; const auto &
   //     last_point_yaw = path.yaws.back(); const double angle_difference = std::abs(last_point_yaw
   //     - goal_pose_yaw); return angle_difference / (3.141519 / 4.0);
   //   });
@@ -190,7 +199,7 @@ bool SamplingPlannerModule::isExecutionRequested() const
     return false;
   }
 
-  if (!autoware_motion_utils::isDrivingForward(getPreviousModuleOutput().reference_path.points)) {
+  if (!autoware::motion_utils::isDrivingForward(getPreviousModuleOutput().reference_path.points)) {
     RCLCPP_WARN(getLogger(), "Backward path is NOT supported. Just converting path to trajectory");
     return false;
   }
@@ -246,7 +255,6 @@ bool SamplingPlannerModule::isReferencePathSafe() const
       sampling_planner_data.left_bound, sampling_planner_data.right_bound);
   }
 
-  std::vector<bool> hard_constraints_results;
   auto transform_to_sampling_path = [](const PlanResult plan) {
     autoware::sampler_common::Path path;
     for (size_t i = 0; i < plan->points.size(); ++i) {
@@ -343,7 +351,7 @@ PathWithLaneId SamplingPlannerModule::convertFrenetPathToPathWithLaneID(
       point.lane_ids = path.points.at(i - 1).lane_ids;
     }
     if (reference_path_ptr) {
-      const auto idx = autoware_motion_utils::findFirstNearestIndexWithSoftConstraints(
+      const auto idx = autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
         reference_path_ptr->points, point.point.pose);
       const auto & closest_point = reference_path_ptr->points[idx];
       point.point.longitudinal_velocity_mps = closest_point.point.longitudinal_velocity_mps;
@@ -365,9 +373,9 @@ void SamplingPlannerModule::prepareConstraints(
   size_t i = 0;
   for (const auto & o : predicted_objects->objects) {
     if (o.kinematics.initial_twist_with_covariance.twist.linear.x < 0.5) {
-      const auto polygon = autoware_universe_utils::toPolygon2d(o);
+      const auto polygon = autoware::universe_utils::toPolygon2d(o);
       constraints.obstacle_polygons.push_back(polygon);
-      const auto box = boost::geometry::return_envelope<autoware_universe_utils::Box2d>(polygon);
+      const auto box = boost::geometry::return_envelope<autoware::universe_utils::Box2d>(polygon);
       constraints.rtree.insert(std::make_pair(box, i));
     }
     i++;
@@ -553,8 +561,8 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
         prepareSamplingParameters(future_state, reference_spline, *internal_params_);
       auto extension_frenet_paths = autoware::frenet_planner::generatePaths(
         reference_spline, frenet_reuse_state, extension_sampling_parameters);
-      for (auto & p : extension_frenet_paths) {
-        if (!p.points.empty()) frenet_paths.push_back(reused_path.extend(p));
+      for (auto & path : extension_frenet_paths) {
+        if (!path.points.empty()) frenet_paths.push_back(reused_path.extend(path));
       }
     }
   } else {
@@ -591,13 +599,11 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   soft_constraints_input.closest_lanelets_to_goal = {closest_lanelet_to_goal};
 
   debug_data_.footprints.clear();
-  std::vector<std::vector<bool>> hard_constraints_results_full;
   std::vector<std::vector<double>> soft_constraints_results_full;
   for (auto & path : frenet_paths) {
     const auto footprint = autoware::sampler_common::constraints::buildFootprintPoints(
       path, internal_params_->constraints);
-    std::vector<bool> hard_constraints_results =
-      evaluateHardConstraints(path, internal_params_->constraints, footprint, hard_constraints_);
+    evaluateHardConstraints(path, internal_params_->constraints, footprint, hard_constraints_);
     path.constraint_results.valid_curvature = true;
     debug_data_.footprints.push_back(footprint);
     std::vector<double> soft_constraints_results = evaluateSoftConstraints(
@@ -955,7 +961,7 @@ autoware::frenet_planner::SamplingParameters SamplingPlannerModule::prepareSampl
     max_d -= params_.constraints.ego_width / 2.0;
     if (min_d < max_d) {
       for (auto r = 0.0; r <= 1.0; r += 1.0 / (params_.sampling.nb_target_lateral_positions - 1))
-        target_lateral_positions.push_back(interpolation::lerp(min_d, max_d, r));
+        target_lateral_positions.push_back(autoware::interpolation::lerp(min_d, max_d, r));
     }
   } else {
     target_lateral_positions = params_.sampling.target_lateral_positions;

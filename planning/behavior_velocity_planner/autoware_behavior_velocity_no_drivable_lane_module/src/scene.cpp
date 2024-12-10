@@ -23,7 +23,7 @@
 
 namespace autoware::behavior_velocity_planner
 {
-using autoware_universe_utils::createPoint;
+using autoware::universe_utils::createPoint;
 
 NoDrivableLaneModule::NoDrivableLaneModule(
   const int64_t module_id, const int64_t lane_id, const PlannerParam & planner_param,
@@ -31,18 +31,17 @@ NoDrivableLaneModule::NoDrivableLaneModule(
 : SceneModuleInterface(module_id, logger, clock),
   lane_id_(lane_id),
   planner_param_(planner_param),
+  debug_data_(),
   state_(State::INIT)
 {
   velocity_factor_.init(PlanningBehavior::NO_DRIVABLE_LANE);
 }
 
-bool NoDrivableLaneModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
+bool NoDrivableLaneModule::modifyPathVelocity(PathWithLaneId * path)
 {
   if (path->points.empty()) {
     return false;
   }
-
-  *stop_reason = planning_utils::initializeStopReason(StopReason::NO_DRIVABLE_LANE);
 
   const auto & ego_pos = planner_data_->current_odometry->pose.position;
   const auto & lanelet_map_ptr = planner_data_->route_handler_->getLaneletMapPtr();
@@ -58,7 +57,7 @@ bool NoDrivableLaneModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
   if (path_no_drivable_lane_polygon_intersection.first_intersection_point) {
     first_intersection_point =
       path_no_drivable_lane_polygon_intersection.first_intersection_point.value();
-    distance_ego_first_intersection = autoware_motion_utils::calcSignedArcLength(
+    distance_ego_first_intersection = autoware::motion_utils::calcSignedArcLength(
       path->points, planner_data_->current_odometry->pose.position, first_intersection_point);
     distance_ego_first_intersection -= planner_data_->vehicle_info_.max_longitudinal_offset_m;
   }
@@ -81,7 +80,7 @@ bool NoDrivableLaneModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
         RCLCPP_INFO(logger_, "Approaching ");
       }
 
-      handle_approaching_state(path, stop_reason);
+      handle_approaching_state(path);
 
       break;
     }
@@ -91,7 +90,7 @@ bool NoDrivableLaneModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
         RCLCPP_INFO(logger_, "INSIDE_NO_DRIVABLE_LANE");
       }
 
-      handle_inside_no_drivable_lane_state(path, stop_reason);
+      handle_inside_no_drivable_lane_state(path);
 
       break;
     }
@@ -101,7 +100,7 @@ bool NoDrivableLaneModule::modifyPathVelocity(PathWithLaneId * path, StopReason 
         RCLCPP_INFO(logger_, "STOPPED");
       }
 
-      handle_stopped_state(path, stop_reason);
+      handle_stopped_state(path);
 
       break;
     }
@@ -130,12 +129,12 @@ void NoDrivableLaneModule::handle_init_state()
   }
 }
 
-void NoDrivableLaneModule::handle_approaching_state(PathWithLaneId * path, StopReason * stop_reason)
+void NoDrivableLaneModule::handle_approaching_state(PathWithLaneId * path)
 {
   const double longitudinal_offset =
     -1.0 * (planner_param_.stop_margin + planner_data_->vehicle_info_.max_longitudinal_offset_m);
 
-  const auto op_target_point = autoware_motion_utils::calcLongitudinalOffsetPoint(
+  const auto op_target_point = autoware::motion_utils::calcLongitudinalOffsetPoint(
     path->points, first_intersection_point, longitudinal_offset);
 
   geometry_msgs::msg::Point target_point;
@@ -145,32 +144,28 @@ void NoDrivableLaneModule::handle_approaching_state(PathWithLaneId * path, StopR
   }
 
   const auto target_segment_idx =
-    autoware_motion_utils::findNearestSegmentIndex(path->points, target_point);
+    autoware::motion_utils::findNearestSegmentIndex(path->points, target_point);
 
   const auto & op_target_point_idx =
-    autoware_motion_utils::insertTargetPoint(target_segment_idx, target_point, path->points, 5e-2);
-  size_t target_point_idx;
+    autoware::motion_utils::insertTargetPoint(target_segment_idx, target_point, path->points, 5e-2);
+  size_t target_point_idx = 0;
   if (op_target_point_idx) {
     target_point_idx = op_target_point_idx.value();
   }
 
   geometry_msgs::msg::Point stop_point =
-    autoware_universe_utils::getPoint(path->points.at(target_point_idx).point);
+    autoware::universe_utils::getPoint(path->points.at(target_point_idx).point);
 
   const auto & op_stop_pose =
     planning_utils::insertStopPoint(stop_point, target_segment_idx, *path);
 
   // Get stop point and stop factor
   {
-    tier4_planning_msgs::msg::StopFactor stop_factor;
     const auto & stop_pose = op_stop_pose.value();
-    stop_factor.stop_pose = stop_pose;
-    stop_factor.stop_factor_points.push_back(stop_point);
-    planning_utils::appendStopReason(stop_factor, stop_reason);
     velocity_factor_.set(
       path->points, planner_data_->current_odometry->pose, stop_pose, VelocityFactor::APPROACHING);
 
-    const auto virtual_wall_pose = autoware_motion_utils::calcLongitudinalOffsetPose(
+    const auto virtual_wall_pose = autoware::motion_utils::calcLongitudinalOffsetPose(
       path->points, stop_pose.position, debug_data_.base_link2front);
 
     debug_data_.stop_pose = virtual_wall_pose.value();
@@ -178,9 +173,9 @@ void NoDrivableLaneModule::handle_approaching_state(PathWithLaneId * path, StopR
 
   const size_t current_seg_idx = findEgoSegmentIndex(path->points);
   const auto intersection_segment_idx =
-    autoware_motion_utils::findNearestSegmentIndex(path->points, first_intersection_point);
+    autoware::motion_utils::findNearestSegmentIndex(path->points, first_intersection_point);
   const double signed_arc_dist_to_intersection_point =
-    autoware_motion_utils::calcSignedArcLength(
+    autoware::motion_utils::calcSignedArcLength(
       path->points, planner_data_->current_odometry->pose.position, current_seg_idx,
       first_intersection_point, intersection_segment_idx) -
     planner_data_->vehicle_info_.max_longitudinal_offset_m;
@@ -204,8 +199,7 @@ void NoDrivableLaneModule::handle_approaching_state(PathWithLaneId * path, StopR
   }
 }
 
-void NoDrivableLaneModule::handle_inside_no_drivable_lane_state(
-  PathWithLaneId * path, StopReason * stop_reason)
+void NoDrivableLaneModule::handle_inside_no_drivable_lane_state(PathWithLaneId * path)
 {
   const auto & current_point = planner_data_->current_odometry->pose.position;
   const size_t current_seg_idx = findEgoSegmentIndex(path->points);
@@ -215,15 +209,11 @@ void NoDrivableLaneModule::handle_inside_no_drivable_lane_state(
 
   // Get stop point and stop factor
   {
-    tier4_planning_msgs::msg::StopFactor stop_factor;
-    const auto & stop_pose = autoware_universe_utils::getPose(path->points.at(0));
-    stop_factor.stop_pose = stop_pose;
-    stop_factor.stop_factor_points.push_back(current_point);
-    planning_utils::appendStopReason(stop_factor, stop_reason);
+    const auto & stop_pose = autoware::universe_utils::getPose(path->points.at(0));
     velocity_factor_.set(
       path->points, planner_data_->current_odometry->pose, stop_pose, VelocityFactor::APPROACHING);
 
-    const auto & virtual_wall_pose = autoware_motion_utils::calcLongitudinalOffsetPose(
+    const auto & virtual_wall_pose = autoware::motion_utils::calcLongitudinalOffsetPose(
       path->points, stop_pose.position, debug_data_.base_link2front);
 
     debug_data_.stop_pose = virtual_wall_pose.value();
@@ -238,9 +228,9 @@ void NoDrivableLaneModule::handle_inside_no_drivable_lane_state(
   }
 }
 
-void NoDrivableLaneModule::handle_stopped_state(PathWithLaneId * path, StopReason * stop_reason)
+void NoDrivableLaneModule::handle_stopped_state(PathWithLaneId * path)
 {
-  const auto & stopped_pose = autoware_motion_utils::calcLongitudinalOffsetPose(
+  const auto & stopped_pose = autoware::motion_utils::calcLongitudinalOffsetPose(
     path->points, planner_data_->current_odometry->pose.position, 0.0);
 
   if (!stopped_pose) {
@@ -257,15 +247,11 @@ void NoDrivableLaneModule::handle_stopped_state(PathWithLaneId * path, StopReaso
 
   // Get stop point and stop factor
   {
-    tier4_planning_msgs::msg::StopFactor stop_factor;
     const auto & stop_pose = ego_pos_on_path.pose;
-    stop_factor.stop_pose = stop_pose;
-    stop_factor.stop_factor_points.push_back(stop_pose.position);
-    planning_utils::appendStopReason(stop_factor, stop_reason);
     velocity_factor_.set(
       path->points, planner_data_->current_odometry->pose, stop_pose, VelocityFactor::STOPPED);
 
-    const auto virtual_wall_pose = autoware_motion_utils::calcLongitudinalOffsetPose(
+    const auto virtual_wall_pose = autoware::motion_utils::calcLongitudinalOffsetPose(
       path->points, stop_pose.position, debug_data_.base_link2front);
 
     debug_data_.stop_pose = virtual_wall_pose.value();

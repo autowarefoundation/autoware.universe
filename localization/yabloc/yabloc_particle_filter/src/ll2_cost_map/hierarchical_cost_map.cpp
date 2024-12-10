@@ -22,6 +22,8 @@
 
 #include <boost/geometry/geometry.hpp>
 
+#include <vector>
+
 namespace yabloc
 {
 float Area::unit_length = -1;
@@ -172,7 +174,7 @@ HierarchicalCostMap::MarkerArray HierarchicalCostMap::show_map_range() const
     marker.header.frame_id = "map";
     marker.id = id++;
     marker.type = Marker::LINE_STRIP;
-    marker.color = autoware_universe_utils::createMarkerColor(0, 0, 1.0f, 1.0f);
+    marker.color = autoware::universe_utils::createMarkerColor(0, 0, 1.0f, 1.0f);
     marker.scale.x = 0.1;
     Eigen::Vector2f xy = area.real_scale();
     marker.points.push_back(point_msg(xy.x(), xy.y()));

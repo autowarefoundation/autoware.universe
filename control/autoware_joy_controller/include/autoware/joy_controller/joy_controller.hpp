@@ -33,7 +33,6 @@
 #include <tier4_external_api_msgs/srv/engage.hpp>
 #include <tier4_external_api_msgs/srv/set_emergency.hpp>
 
-#include <algorithm>
 #include <memory>
 #include <string>
 
@@ -70,9 +69,9 @@ private:
   rclcpp::CallbackGroup::SharedPtr callback_group_services_;
 
   // Subscriber
-  autoware_universe_utils::InterProcessPollingSubscriber<sensor_msgs::msg::Joy> sub_joy_{
+  autoware::universe_utils::InterProcessPollingSubscriber<sensor_msgs::msg::Joy> sub_joy_{
     this, "input/joy"};
-  autoware_universe_utils::InterProcessPollingSubscriber<nav_msgs::msg::Odometry> sub_odom_{
+  autoware::universe_utils::InterProcessPollingSubscriber<nav_msgs::msg::Odometry> sub_odom_{
     this, "input/odometry"};
 
   rclcpp::Time last_joy_received_time_;
@@ -110,7 +109,6 @@ private:
   autoware_control_msgs::msg::Control prev_control_command_;
   tier4_external_api_msgs::msg::ControlCommand prev_external_control_command_;
   GearShiftType prev_shift_ = tier4_external_api_msgs::msg::GearShift::NONE;
-  TurnSignalType prev_turn_signal_ = tier4_external_api_msgs::msg::TurnSignal::NONE;
   GateModeType prev_gate_mode_ = tier4_control_msgs::msg::GateMode::AUTO;
 
   // Timer

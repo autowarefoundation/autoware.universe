@@ -19,8 +19,8 @@
 #include <autoware/behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
-#include <lanelet2_extension/regulatory_elements/road_marking.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
+#include <autoware_lanelet2_extension/regulatory_elements/road_marking.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 
 #include <lanelet2_core/geometry/Polygon.h>
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
@@ -29,6 +29,7 @@
 #include <algorithm>
 #include <limits>
 #include <memory>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -53,7 +54,7 @@ MergeFromPrivateRoadModule::MergeFromPrivateRoadModule(
 static std::optional<lanelet::ConstLanelet> getFirstConflictingLanelet(
   const lanelet::ConstLanelets & conflicting_lanelets,
   const InterpolatedPathInfo & interpolated_path_info,
-  const autoware_universe_utils::LinearRing2d & footprint, const double vehicle_length)
+  const autoware::universe_utils::LinearRing2d & footprint, const double vehicle_length)
 {
   const auto & path_ip = interpolated_path_info.path;
   const auto [lane_start, end] = interpolated_path_info.lane_id_interval.value();
@@ -63,8 +64,8 @@ static std::optional<lanelet::ConstLanelet> getFirstConflictingLanelet(
 
   for (size_t i = start; i <= end; ++i) {
     const auto & pose = path_ip.points.at(i).point.pose;
-    const auto path_footprint = autoware_universe_utils::transformVector(
-      footprint, autoware_universe_utils::pose2transform(pose));
+    const auto path_footprint = autoware::universe_utils::transformVector(
+      footprint, autoware::universe_utils::pose2transform(pose));
     for (const auto & conflicting_lanelet : conflicting_lanelets) {
       const auto polygon_2d = conflicting_lanelet.polygon2d().basicPolygon();
       const bool intersects = bg::intersects(polygon_2d, path_footprint);
@@ -76,10 +77,9 @@ static std::optional<lanelet::ConstLanelet> getFirstConflictingLanelet(
   return std::nullopt;
 }
 
-bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
+bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path)
 {
   debug_data_ = DebugData();
-  *stop_reason = planning_utils::initializeStopReason(StopReason::MERGE_FROM_PRIVATE_ROAD);
 
   const auto input_path = *path;
 
@@ -152,14 +152,11 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path, StopR
     planning_utils::setVelocityFromIndex(stopline_idx, v, path);
 
     /* get stop point and stop factor */
-    tier4_planning_msgs::msg::StopFactor stop_factor;
-    stop_factor.stop_pose = debug_data_.stop_point_pose;
-    planning_utils::appendStopReason(stop_factor, stop_reason);
     const auto & stop_pose = path->points.at(stopline_idx).point.pose;
     velocity_factor_.set(
       path->points, planner_data_->current_odometry->pose, stop_pose, VelocityFactor::UNKNOWN);
 
-    const double signed_arc_dist_to_stop_point = autoware_motion_utils::calcSignedArcLength(
+    const double signed_arc_dist_to_stop_point = autoware::motion_utils::calcSignedArcLength(
       path->points, current_pose.position, path->points.at(stopline_idx).point.pose.position);
 
     if (

@@ -20,7 +20,7 @@
 #include <autoware/behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 
 #include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/algorithms/intersects.hpp>
@@ -35,9 +35,11 @@
 #include <limits>
 #include <map>
 #include <memory>
+#include <queue>
 #include <set>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace autoware::behavior_velocity_planner::util
@@ -51,7 +53,7 @@ static std::optional<size_t> getDuplicatedPointIdx(
     const auto & p = path.points.at(i).point.pose.position;
 
     constexpr double min_dist = 0.001;
-    if (autoware_universe_utils::calcDistance2d(p, point) < min_dist) {
+    if (autoware::universe_utils::calcDistance2d(p, point) < min_dist) {
       return i;
     }
   }
@@ -68,7 +70,7 @@ std::optional<size_t> insertPointIndex(
     return duplicate_idx_opt.value();
   }
 
-  const size_t closest_idx = autoware_motion_utils::findFirstNearestIndexWithSoftConstraints(
+  const size_t closest_idx = autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
     inout_path->points, in_pose, ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
   // vector.insert(i) inserts element on the left side of v[i]
   // the velocity need to be zero order hold(from prior point)
@@ -130,7 +132,7 @@ std::optional<std::pair<size_t, size_t>> findLaneIdsInterval(
 
 std::optional<size_t> getFirstPointInsidePolygonByFootprint(
   const lanelet::CompoundPolygon3d & polygon, const InterpolatedPathInfo & interpolated_path_info,
-  const autoware_universe_utils::LinearRing2d & footprint, const double vehicle_length)
+  const autoware::universe_utils::LinearRing2d & footprint, const double vehicle_length)
 {
   const auto & path_ip = interpolated_path_info.path;
   const auto [lane_start, lane_end] = interpolated_path_info.lane_id_interval.value();
@@ -140,8 +142,8 @@ std::optional<size_t> getFirstPointInsidePolygonByFootprint(
   const auto area_2d = lanelet::utils::to2D(polygon).basicPolygon();
   for (auto i = start; i <= lane_end; ++i) {
     const auto & base_pose = path_ip.points.at(i).point.pose;
-    const auto path_footprint = autoware_universe_utils::transformVector(
-      footprint, autoware_universe_utils::pose2transform(base_pose));
+    const auto path_footprint = autoware::universe_utils::transformVector(
+      footprint, autoware::universe_utils::pose2transform(base_pose));
     if (bg::intersects(path_footprint, area_2d)) {
       return std::make_optional<size_t>(i);
     }
@@ -154,7 +156,7 @@ std::optional<std::pair<
 getFirstPointInsidePolygonsByFootprint(
   const std::vector<lanelet::CompoundPolygon3d> & polygons,
   const InterpolatedPathInfo & interpolated_path_info,
-  const autoware_universe_utils::LinearRing2d & footprint, const double vehicle_length)
+  const autoware::universe_utils::LinearRing2d & footprint, const double vehicle_length)
 {
   const auto & path_ip = interpolated_path_info.path;
   const auto [lane_start, lane_end] = interpolated_path_info.lane_id_interval.value();
@@ -164,8 +166,8 @@ getFirstPointInsidePolygonsByFootprint(
 
   for (size_t i = start; i <= lane_end; ++i) {
     const auto & pose = path_ip.points.at(i).point.pose;
-    const auto path_footprint = autoware_universe_utils::transformVector(
-      footprint, autoware_universe_utils::pose2transform(pose));
+    const auto path_footprint = autoware::universe_utils::transformVector(
+      footprint, autoware::universe_utils::pose2transform(pose));
     for (size_t j = 0; j < polygons.size(); ++j) {
       const auto area_2d = lanelet::utils::to2D(polygons.at(j)).basicPolygon();
       const bool is_in_polygon = bg::intersects(area_2d, path_footprint);
@@ -215,97 +217,112 @@ std::optional<size_t> getFirstPointInsidePolygon(
   return std::nullopt;
 }
 
+void retrievePathsBackward(
+  const std::vector<std::vector<bool>> & adjacency, const size_t src_index,
+  const std::vector<size_t> & visited_indices, std::vector<std::vector<size_t>> & paths)
+{
+  const auto & next_indices = adjacency.at(src_index);
+  const bool is_terminal =
+    (std::find(next_indices.begin(), next_indices.end(), true) == next_indices.end());
+  if (is_terminal) {
+    std::vector<size_t> path(visited_indices.begin(), visited_indices.end());
+    path.push_back(src_index);
+    paths.emplace_back(std::move(path));
+    return;
+  }
+  for (size_t next = 0; next < next_indices.size(); next++) {
+    if (!next_indices.at(next)) {
+      continue;
+    }
+    if (std::find(visited_indices.begin(), visited_indices.end(), next) != visited_indices.end()) {
+      // loop detected
+      std::vector<size_t> path(visited_indices.begin(), visited_indices.end());
+      path.push_back(src_index);
+      paths.emplace_back(std::move(path));
+      continue;
+    }
+    auto new_visited_indices = visited_indices;
+    new_visited_indices.push_back(src_index);
+    retrievePathsBackward(adjacency, next, new_visited_indices, paths);
+  }
+  return;
+}
+
 std::pair<lanelet::ConstLanelets, std::vector<lanelet::ConstLanelets>>
 mergeLaneletsByTopologicalSort(
-  const lanelet::ConstLanelets & lanelets,
+  const lanelet::ConstLanelets & lanelets, const lanelet::ConstLanelets & terminal_lanelets,
   const lanelet::routing::RoutingGraphPtr routing_graph_ptr)
 {
-  const int n_node = lanelets.size();
-  std::vector<std::vector<int>> adjacency(n_node);
-  for (int dst = 0; dst < n_node; ++dst) {
+  std::set<lanelet::Id> lanelet_Ids;
+  std::unordered_map<lanelet::Id, size_t> Id2ind;
+  std::unordered_map<size_t, lanelet::Id> ind2Id;
+  std::unordered_map<lanelet::Id, lanelet::ConstLanelet> Id2lanelet;
+  for (const auto & lanelet : lanelets) {
+    size_t ind = ind2Id.size();
+    const auto Id = lanelet.id();
+    lanelet_Ids.insert(Id);
+    Id2ind[Id] = ind;
+    ind2Id[ind] = Id;
+    Id2lanelet[Id] = lanelet;
+  }
+  std::set<size_t> terminal_indices;
+  for (const auto & terminal_lanelet : terminal_lanelets) {
+    if (Id2ind.count(terminal_lanelet.id()) > 0) {
+      terminal_indices.insert(Id2ind[terminal_lanelet.id()]);
+    }
+  }
+
+  // create adjacency matrix
+  const auto n_node = lanelets.size();
+  std::vector<std::vector<bool>> adjacency(n_node);
+  for (size_t dst = 0; dst < n_node; ++dst) {
     adjacency[dst].resize(n_node);
-    for (int src = 0; src < n_node; ++src) {
+    for (size_t src = 0; src < n_node; ++src) {
       adjacency[dst][src] = false;
     }
   }
-  std::set<lanelet::Id> lanelet_ids;
-  std::unordered_map<lanelet::Id, int> id2ind;
-  std::unordered_map<int, lanelet::Id> ind2id;
-  std::unordered_map<lanelet::Id, lanelet::ConstLanelet> id2lanelet;
-  int ind = 0;
-  for (const auto & lanelet : lanelets) {
-    lanelet_ids.insert(lanelet.id());
-    const auto id = lanelet.id();
-    id2ind[id] = ind;
-    ind2id[ind] = id;
-    id2lanelet[id] = lanelet;
-    ind++;
-  }
-  // NOTE: this function aims to traverse the detection lanelet backward from ego side to farthest
-  // side, so if lane B follows lane A on the routing_graph, adj[B][A] = true
+  // NOTE: this function aims to traverse the detection lanelet in the lane direction, so if lane B
+  // follows lane A on the routing_graph, adj[A][B] = true
   for (const auto & lanelet : lanelets) {
     const auto & followings = routing_graph_ptr->following(lanelet);
-    const int dst = lanelet.id();
+    const auto src = lanelet.id();
     for (const auto & following : followings) {
-      if (const int src = following.id(); lanelet_ids.find(src) != lanelet_ids.end()) {
-        adjacency[(id2ind[src])][(id2ind[dst])] = true;
+      if (const auto dst = following.id(); lanelet_Ids.find(dst) != lanelet_Ids.end()) {
+        adjacency[(Id2ind[dst])][(Id2ind[src])] = true;
       }
     }
   }
-  // terminal node
-  std::map<lanelet::Id, std::vector<lanelet::Id>> branches;
-  auto has_no_previous = [&](const int node) {
-    for (int dst = 0; dst < n_node; dst++) {
-      if (adjacency[dst][node]) {
-        return false;
-      }
-    }
-    return true;
-  };
-  for (int src = 0; src < n_node; src++) {
-    if (!has_no_previous(src)) {
-      continue;
-    }
-    // So `src` has no previous lanelets
-    branches[(ind2id[src])] = std::vector<lanelet::Id>{};
-    auto & branch = branches[(ind2id[src])];
-    lanelet::Id node_iter = ind2id[src];
-    std::set<lanelet::Id> visited_ids;
-    while (true) {
-      const auto & destinations = adjacency[(id2ind[node_iter])];
-      // NOTE: assuming detection lanelets have only one "previous"(on the routing_graph) lanelet
-      const auto next = std::find(destinations.begin(), destinations.end(), true);
-      if (next == destinations.end()) {
-        branch.push_back(node_iter);
-        break;
-      }
-      if (visited_ids.find(node_iter) != visited_ids.end()) {
-        // loop detected
-        break;
-      }
-      branch.push_back(node_iter);
-      visited_ids.insert(node_iter);
-      node_iter = ind2id[std::distance(destinations.begin(), next)];
-    }
+
+  std::unordered_map<size_t, std::vector<std::vector<size_t>>> branches;
+  for (const auto & terminal_ind : terminal_indices) {
+    std::vector<std::vector<size_t>> paths;
+    std::vector<size_t> visited;
+    retrievePathsBackward(adjacency, terminal_ind, visited, paths);
+    branches[terminal_ind] = std::move(paths);
   }
-  for (decltype(branches)::iterator it = branches.begin(); it != branches.end(); it++) {
-    auto & branch = it->second;
-    std::reverse(branch.begin(), branch.end());
+
+  for (auto it = branches.begin(); it != branches.end(); it++) {
+    auto & paths = it->second;
+    for (auto & path : paths) {
+      std::reverse(path.begin(), path.end());
+    }
   }
   lanelet::ConstLanelets merged;
   std::vector<lanelet::ConstLanelets> originals;
-  for (const auto & [id, sub_ids] : branches) {
-    if (sub_ids.size() == 0) {
+  for (const auto & [ind, sub_branches] : branches) {
+    if (sub_branches.size() == 0) {
       continue;
     }
-    lanelet::ConstLanelets merge;
-    originals.push_back(lanelet::ConstLanelets({}));
-    auto & original = originals.back();
-    for (const auto sub_id : sub_ids) {
-      merge.push_back(id2lanelet[sub_id]);
-      original.push_back(id2lanelet[sub_id]);
+    for (const auto & sub_indices : sub_branches) {
+      lanelet::ConstLanelets to_be_merged;
+      originals.push_back(lanelet::ConstLanelets({}));
+      auto & original = originals.back();
+      for (const auto & sub_ind : sub_indices) {
+        to_be_merged.push_back(Id2lanelet[ind2Id[sub_ind]]);
+        original.push_back(Id2lanelet[ind2Id[sub_ind]]);
+      }
+      merged.push_back(lanelet::utils::combineLaneletsShape(to_be_merged));
     }
-    merged.push_back(lanelet::utils::combineLaneletsShape(merge));
   }
   return {merged, originals};
 }
@@ -321,38 +338,21 @@ bool isOverTargetIndex(
   return static_cast<bool>(closest_idx > target_idx);
 }
 
-bool isBeforeTargetIndex(
-  const tier4_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx,
-  const geometry_msgs::msg::Pose & current_pose, const size_t target_idx)
-{
-  if (closest_idx == target_idx) {
-    const geometry_msgs::msg::Pose target_pose = path.points.at(target_idx).point.pose;
-    return planning_utils::isAheadOf(target_pose, current_pose);
-  }
-  return static_cast<bool>(target_idx > closest_idx);
-}
-
-std::optional<autoware_universe_utils::Polygon2d> getIntersectionArea(
+std::optional<autoware::universe_utils::Polygon2d> getIntersectionArea(
   lanelet::ConstLanelet assigned_lane, lanelet::LaneletMapConstPtr lanelet_map_ptr)
 {
   const std::string area_id_str = assigned_lane.attributeOr("intersection_area", "else");
   if (area_id_str == "else") return std::nullopt;
+  if (!std::atoi(area_id_str.c_str())) return std::nullopt;
 
   const lanelet::Id area_id = std::atoi(area_id_str.c_str());
+  const auto polygon_opt = lanelet_map_ptr->polygonLayer.find(area_id);
+  if (polygon_opt == lanelet_map_ptr->polygonLayer.end()) return std::nullopt;
+
   const auto poly_3d = lanelet_map_ptr->polygonLayer.get(area_id);
   Polygon2d poly{};
   for (const auto & p : poly_3d) poly.outer().emplace_back(p.x(), p.y());
   return std::make_optional(poly);
-}
-
-bool hasAssociatedTrafficLight(lanelet::ConstLanelet lane)
-{
-  std::optional<int> tl_id = std::nullopt;
-  for (auto && tl_reg_elem : lane.regulatoryElementsAs<lanelet::TrafficLight>()) {
-    tl_id = tl_reg_elem->id();
-    break;
-  }
-  return tl_id.has_value();
 }
 
 std::optional<InterpolatedPathInfo> generateInterpolatedPath(

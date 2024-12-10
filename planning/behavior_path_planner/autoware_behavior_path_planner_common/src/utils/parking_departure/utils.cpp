@@ -17,12 +17,17 @@
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 
 #include <autoware/motion_utils/distance/distance.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
+
+#include <algorithm>
+#include <memory>
+#include <utility>
+#include <vector>
 
 namespace autoware::behavior_path_planner::utils::parking_departure
 {
 
-using autoware_motion_utils::calcDecelDistWithJerkAndAccConstraints;
+using autoware::motion_utils::calcDecelDistWithJerkAndAccConstraints;
 
 std::optional<double> calcFeasibleDecelDistance(
   std::shared_ptr<const PlannerData> planner_data, const double acc_lim, const double jerk_lim,
@@ -58,7 +63,7 @@ void modifyVelocityByDirection(
   auto pair_itr = std::begin(terminal_vel_acc_pairs);
 
   for (; path_itr != std::end(paths); ++path_itr, ++pair_itr) {
-    const auto is_driving_forward = autoware_motion_utils::isDrivingForward(path_itr->points);
+    const auto is_driving_forward = autoware::motion_utils::isDrivingForward(path_itr->points);
 
     // If the number of points in the path is less than 2, don't insert stop velocity and
     // set pairs_terminal_velocity_and_accel to 0
@@ -86,7 +91,7 @@ void modifyVelocityByDirection(
 }
 
 void updatePathProperty(
-  std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
+  const std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
   const std::pair<double, double> & pairs_terminal_velocity_and_accel)
 {
   // If acceleration is close to 0, the ego predicted path will be too short, so a minimum value is
@@ -102,16 +107,6 @@ void updatePathProperty(
 void initializeCollisionCheckDebugMap(CollisionCheckDebugMap & collision_check_debug_map)
 {
   collision_check_debug_map.clear();
-}
-
-void updateSafetyCheckTargetObjectsData(
-  StartGoalPlannerData & data, const PredictedObjects & filtered_objects,
-  const TargetObjectsOnLane & target_objects_on_lane,
-  const std::vector<PoseWithVelocityStamped> & ego_predicted_path)
-{
-  data.filtered_objects = filtered_objects;
-  data.target_objects_on_lane = target_objects_on_lane;
-  data.ego_predicted_path = ego_predicted_path;
 }
 
 std::pair<double, double> getPairsTerminalVelocityAndAccel(
@@ -144,7 +139,7 @@ std::optional<PathWithLaneId> generateFeasibleStopPath(
   }
 
   // set stop point
-  const auto stop_idx = autoware_motion_utils::insertStopPoint(
+  const auto stop_idx = autoware::motion_utils::insertStopPoint(
     planner_data->self_odometry->pose.pose, *min_stop_distance, current_path.points);
 
   if (!stop_idx) {

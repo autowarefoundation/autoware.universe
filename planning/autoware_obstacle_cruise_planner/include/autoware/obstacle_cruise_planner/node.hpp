@@ -19,13 +19,16 @@
 #include "autoware/obstacle_cruise_planner/optimization_based_planner/optimization_based_planner.hpp"
 #include "autoware/obstacle_cruise_planner/pid_based_planner/pid_based_planner.hpp"
 #include "autoware/obstacle_cruise_planner/type_alias.hpp"
+#include "autoware/signal_processing/lowpass_filter_1d.hpp"
 #include "autoware/universe_utils/ros/logger_level_configure.hpp"
 #include "autoware/universe_utils/ros/polling_subscriber.hpp"
 #include "autoware/universe_utils/system/stop_watch.hpp"
-#include "signal_processing/lowpass_filter_1d.hpp"
 
 #include <autoware/universe_utils/ros/published_time_publisher.hpp>
 #include <rclcpp/rclcpp.hpp>
+
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
 
 #include <algorithm>
 #include <memory>
@@ -34,6 +37,7 @@
 #include <string>
 #include <tuple>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace autoware::motion_planning
@@ -58,31 +62,47 @@ private:
   std::vector<Obstacle> convertToObstacles(
     const Odometry & odometry, const PredictedObjects & objects,
     const std::vector<TrajectoryPoint> & traj_points) const;
+  std::vector<Obstacle> convertToObstacles(
+    const Odometry & odometry, const PointCloud2 & pointcloud,
+    const std::vector<TrajectoryPoint> & traj_points,
+    const std_msgs::msg::Header & traj_header) const;
   std::tuple<std::vector<StopObstacle>, std::vector<CruiseObstacle>, std::vector<SlowDownObstacle>>
-  determineEgoBehaviorAgainstObstacles(
+  determineEgoBehaviorAgainstPredictedObjectObstacles(
     const Odometry & odometry, const PredictedObjects & objects,
     const std::vector<TrajectoryPoint> & traj_points, const std::vector<Obstacle> & obstacles);
+  std::tuple<std::vector<StopObstacle>, std::vector<CruiseObstacle>, std::vector<SlowDownObstacle>>
+  determineEgoBehaviorAgainstPointCloudObstacles(
+    const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
+    const std::vector<Obstacle> & obstacles);
   std::vector<TrajectoryPoint> decimateTrajectoryPoints(
     const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points) const;
-  std::optional<StopObstacle> createStopObstacle(
+  std::optional<StopObstacle> createStopObstacleForPredictedObject(
     const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
     const std::vector<Polygon2d> & traj_polys, const Obstacle & obstacle,
     const double precise_lateral_dist) const;
+  std::optional<std::pair<geometry_msgs::msg::Point, double>>
+  createCollisionPointForOutsideStopObstacle(
+    const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
+    const std::vector<Polygon2d> & traj_polys, const Obstacle & obstacle,
+    const PredictedPath & resampled_predicted_path, double max_lat_margin_for_stop) const;
+  std::optional<StopObstacle> createStopObstacleForPointCloud(
+    const std::vector<TrajectoryPoint> & traj_points, const Obstacle & obstacle,
+    const double precise_lateral_dist) const;
+  bool isInsideStopObstacle(const uint8_t label) const;
+  bool isOutsideStopObstacle(const uint8_t label) const;
   bool isStopObstacle(const uint8_t label) const;
   bool isInsideCruiseObstacle(const uint8_t label) const;
   bool isOutsideCruiseObstacle(const uint8_t label) const;
   bool isCruiseObstacle(const uint8_t label) const;
   bool isSlowDownObstacle(const uint8_t label) const;
-  std::optional<geometry_msgs::msg::Point> createCollisionPointForStopObstacle(
-    const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
-    const Obstacle & obstacle) const;
   std::optional<CruiseObstacle> createYieldCruiseObstacle(
     const Obstacle & obstacle, const std::vector<TrajectoryPoint> & traj_points);
   std::optional<std::vector<CruiseObstacle>> findYieldCruiseObstacles(
     const std::vector<Obstacle> & obstacles, const std::vector<TrajectoryPoint> & traj_points);
   std::optional<CruiseObstacle> createCruiseObstacle(
-    const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
-    const Obstacle & obstacle, const double precise_lat_dist);
+    const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
+    const std::vector<Polygon2d> & traj_polys, const Obstacle & obstacle,
+    const double precise_lat_dist);
   std::optional<std::vector<PointWithStamp>> createCollisionPointsForInsideCruiseObstacle(
     const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
     const Obstacle & obstacle) const;
@@ -94,8 +114,10 @@ private:
   double calcCollisionTimeMargin(
     const Odometry & odometry, const std::vector<PointWithStamp> & collision_points,
     const std::vector<TrajectoryPoint> & traj_points, const bool is_driving_forward) const;
-  std::optional<SlowDownObstacle> createSlowDownObstacle(
+  std::optional<SlowDownObstacle> createSlowDownObstacleForPredictedObject(
     const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
+    const Obstacle & obstacle, const double precise_lat_dist);
+  std::optional<SlowDownObstacle> createSlowDownObstacleForPointCloud(
     const Obstacle & obstacle, const double precise_lat_dist);
   PlannerData createPlannerData(
     const Odometry & odometry, const AccelWithCovarianceStamped & acc,
@@ -113,16 +135,21 @@ private:
   bool isFrontCollideObstacle(
     const std::vector<TrajectoryPoint> & traj_points, const Obstacle & obstacle,
     const size_t first_collision_idx) const;
-
+  double calcTimeToReachCollisionPoint(
+    const Odometry & odometry, const geometry_msgs::msg::Point & collision_point,
+    const std::vector<TrajectoryPoint> & traj_points, const double abs_ego_offset) const;
   bool enable_debug_info_;
   bool enable_calculation_time_info_;
+  bool use_pointcloud_for_stop_;
+  bool use_pointcloud_for_slow_down_;
   double min_behavior_stop_margin_;
   bool enable_approaching_on_curve_;
   double additional_safe_distance_margin_on_curve_;
   double min_safe_distance_margin_on_curve_;
   bool suppress_sudden_obstacle_stop_;
 
-  std::vector<int> stop_obstacle_types_;
+  std::vector<int> inside_stop_obstacle_types_;
+  std::vector<int> outside_stop_obstacle_types_;
   std::vector<int> inside_cruise_obstacle_types_;
   std::vector<int> outside_cruise_obstacle_types_;
   std::vector<int> slow_down_obstacle_types_;
@@ -141,16 +168,21 @@ private:
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr debug_stop_planning_info_pub_;
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr debug_cruise_planning_info_pub_;
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr debug_slow_down_planning_info_pub_;
-  rclcpp::Publisher<Float32Stamped>::SharedPtr debug_calculation_time_pub_;
+  rclcpp::Publisher<Float64Stamped>::SharedPtr debug_calculation_time_pub_;
 
   // subscriber
   rclcpp::Subscription<Trajectory>::SharedPtr traj_sub_;
-  autoware_universe_utils::InterProcessPollingSubscriber<Odometry> ego_odom_sub_{
+  autoware::universe_utils::InterProcessPollingSubscriber<Odometry> ego_odom_sub_{
     this, "~/input/odometry"};
-  autoware_universe_utils::InterProcessPollingSubscriber<PredictedObjects> objects_sub_{
+  autoware::universe_utils::InterProcessPollingSubscriber<PredictedObjects> objects_sub_{
     this, "~/input/objects"};
-  autoware_universe_utils::InterProcessPollingSubscriber<AccelWithCovarianceStamped> acc_sub_{
+  autoware::universe_utils::InterProcessPollingSubscriber<PointCloud2> pointcloud_sub_{
+    this, "~/input/pointcloud"};
+  autoware::universe_utils::InterProcessPollingSubscriber<AccelWithCovarianceStamped> acc_sub_{
     this, "~/input/acceleration"};
+
+  std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
+  std::shared_ptr<tf2_ros::TransformListener> tf_listener_{nullptr};
 
   // Vehicle Parameters
   VehicleInfo vehicle_info_;
@@ -161,7 +193,7 @@ private:
   PlanningAlgorithm planning_algorithm_;
 
   // stop watch
-  mutable autoware_universe_utils::StopWatch<
+  mutable autoware::universe_utils::StopWatch<
     std::chrono::milliseconds, std::chrono::microseconds, std::chrono::steady_clock>
     stop_watch_;
   mutable std::shared_ptr<DebugData> debug_data_ptr_{nullptr};
@@ -169,10 +201,13 @@ private:
   // planner
   std::unique_ptr<PlannerInterface> planner_ptr_{nullptr};
 
-  // previous obstacles
-  std::vector<StopObstacle> prev_stop_obstacles_;
-  std::vector<CruiseObstacle> prev_cruise_obstacles_;
-  std::vector<SlowDownObstacle> prev_slow_down_obstacles_;
+  // previous PredictedObject-based obstacles
+  std::vector<StopObstacle> prev_stop_object_obstacles_;
+  std::vector<CruiseObstacle> prev_cruise_object_obstacles_;
+  std::vector<SlowDownObstacle> prev_slow_down_object_obstacles_;
+
+  // PointCloud-based stop obstacle history
+  std::vector<StopObstacle> stop_pc_obstacle_history_;
 
   // behavior determination parameter
   struct BehaviorDeterminationParam
@@ -182,6 +217,13 @@ private:
     void onParam(const std::vector<rclcpp::Parameter> & parameters);
 
     double decimate_trajectory_step_length;
+    double pointcloud_search_radius;
+    double pointcloud_voxel_grid_x;
+    double pointcloud_voxel_grid_y;
+    double pointcloud_voxel_grid_z;
+    double pointcloud_cluster_tolerance;
+    int pointcloud_min_cluster_size;
+    int pointcloud_max_cluster_size;
     // hysteresis for stop and cruise
     double obstacle_velocity_threshold_from_cruise_to_stop;
     double obstacle_velocity_threshold_from_stop_to_cruise;
@@ -193,11 +235,20 @@ private:
     double ego_obstacle_overlap_time_threshold;
     double max_prediction_time_for_collision_check;
     double crossing_obstacle_traj_angle_threshold;
+    int num_of_predicted_paths_for_outside_cruise_obstacle;
+    int num_of_predicted_paths_for_outside_stop_obstacle;
+    double pedestrian_deceleration_rate;
+    double bicycle_deceleration_rate;
     // obstacle hold
     double stop_obstacle_hold_time_threshold;
+    // reach collision point
+    double min_velocity_to_reach_collision_point;
     // prediction resampling
     double prediction_resampling_time_interval;
     double prediction_resampling_time_horizon;
+    // max lateral time margin
+    double max_lat_time_margin_for_stop;
+    double max_lat_time_margin_for_cruise;
     // max lateral margin
     double max_lat_margin_for_stop;
     double max_lat_margin_for_stop_against_unknown;
@@ -271,12 +322,13 @@ private:
 
   bool is_driving_forward_{true};
   bool enable_slow_down_planning_{false};
+  bool use_pointcloud_{false};
 
-  std::vector<StopObstacle> prev_closest_stop_obstacles_{};
+  std::vector<StopObstacle> prev_closest_stop_object_obstacles_{};
 
-  std::unique_ptr<autoware_universe_utils::LoggerLevelConfigure> logger_configure_;
+  std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;
 
-  std::unique_ptr<autoware_universe_utils::PublishedTimePublisher> published_time_publisher_;
+  std::unique_ptr<autoware::universe_utils::PublishedTimePublisher> published_time_publisher_;
 };
 }  // namespace autoware::motion_planning
 

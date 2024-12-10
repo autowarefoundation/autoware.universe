@@ -21,15 +21,18 @@
 #include "autoware/behavior_path_planner_common/marker_utils/utils.hpp"
 
 #include <autoware/universe_utils/ros/marker_helper.hpp>
+#include <autoware/universe_utils/system/time_keeper.hpp>
 
 #include <algorithm>
+#include <limits>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 
 namespace autoware::behavior_path_planner
 {
-using autoware_universe_utils::appendMarkerArray;
+using autoware::universe_utils::appendMarkerArray;
 using utils::lane_change::assignToCandidate;
 
 LaneChangeInterface::LaneChangeInterface(
@@ -43,8 +46,10 @@ LaneChangeInterface::LaneChangeInterface(
   module_type_{std::move(module_type)},
   prev_approved_path_{std::make_unique<PathWithLaneId>()}
 {
-  steering_factor_interface_ptr_ = std::make_unique<SteeringFactorInterface>(&node, name);
+  module_type_->setTimeKeeper(getTimeKeeper());
   logger_ = utils::lane_change::getLogger(module_type_->getModuleTypeStr());
+  steering_factor_interface_.init(PlanningBehavior::LANE_CHANGE);
+  velocity_factor_interface_.init(PlanningBehavior::LANE_CHANGE);
 }
 
 void LaneChangeInterface::processOnExit()
@@ -71,7 +76,11 @@ bool LaneChangeInterface::isExecutionReady() const
 
 void LaneChangeInterface::updateData()
 {
+  universe_utils::ScopedTimeTrack st(__func__, *getTimeKeeper());
   module_type_->setPreviousModuleOutput(getPreviousModuleOutput());
+  module_type_->update_lanes(getCurrentStatus() == ModuleStatus::RUNNING);
+  module_type_->update_filtered_objects();
+  module_type_->update_transient_data(getCurrentStatus() == ModuleStatus::RUNNING);
   module_type_->updateSpecialData();
 
   if (isWaitingApproval() || module_type_->isAbortState()) {
@@ -94,6 +103,7 @@ void LaneChangeInterface::postProcess()
 
 BehaviorModuleOutput LaneChangeInterface::plan()
 {
+  universe_utils::ScopedTimeTrack st(__func__, *getTimeKeeper());
   resetPathCandidate();
   resetPathReference();
 
@@ -119,20 +129,37 @@ BehaviorModuleOutput LaneChangeInterface::plan()
   } else {
     const auto path =
       assignToCandidate(module_type_->getLaneChangePath(), module_type_->getEgoPosition());
-    updateRTCStatus(
-      path.start_distance_to_path_change, path.finish_distance_to_path_change, true,
-      State::RUNNING);
+    const auto is_registered = std::any_of(
+      rtc_interface_ptr_map_.begin(), rtc_interface_ptr_map_.end(),
+      [&](const auto & rtc) { return rtc.second->isRegistered(uuid_map_.at(rtc.first)); });
+
+    if (!is_registered) {
+      updateRTCStatus(
+        path.start_distance_to_path_change, path.finish_distance_to_path_change, true,
+        State::WAITING_FOR_EXECUTION);
+    } else {
+      const auto force_activated = std::any_of(
+        rtc_interface_ptr_map_.begin(), rtc_interface_ptr_map_.end(),
+        [&](const auto & rtc) { return rtc.second->isForceActivated(uuid_map_.at(rtc.first)); });
+      const bool safe = force_activated ? false : true;
+      updateRTCStatus(
+        path.start_distance_to_path_change, path.finish_distance_to_path_change, safe,
+        State::RUNNING);
+    }
   }
+
+  setVelocityFactor(output.path);
 
   return output;
 }
 
 BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
 {
-  *prev_approved_path_ = getPreviousModuleOutput().path;
-
   BehaviorModuleOutput out = getPreviousModuleOutput();
-  module_type_->insertStopPoint(module_type_->getLaneChangeStatus().current_lanes, out.path);
+
+  *prev_approved_path_ = out.path;
+
+  module_type_->insert_stop_point(module_type_->get_current_lanes(), out.path);
   out.turn_signal_info = module_type_->get_current_turn_signal_info();
 
   const auto & lane_change_debug = module_type_->getDebugData();
@@ -141,13 +168,10 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
     setObjectsOfInterestData(data.current_obj_pose, data.obj_shape, color);
   }
 
-  path_reference_ = std::make_shared<PathWithLaneId>(getPreviousModuleOutput().reference_path);
+  path_reference_ = std::make_shared<PathWithLaneId>(out.reference_path);
   stop_pose_ = module_type_->getStopPose();
 
   if (!module_type_->isValidPath()) {
-    updateRTCStatus(
-      std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(), false,
-      State::FAILED);
     path_candidate_ = std::make_shared<PathWithLaneId>();
     return out;
   }
@@ -160,11 +184,14 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
     isExecutionReady(), State::WAITING_FOR_EXECUTION);
   is_abort_path_approved_ = false;
 
+  setVelocityFactor(out.path);
+
   return out;
 }
 
 CandidateOutput LaneChangeInterface::planCandidate() const
 {
+  universe_utils::ScopedTimeTrack st(__func__, *getTimeKeeper());
   const auto selected_path = module_type_->getLaneChangePath();
 
   if (selected_path.path.points.empty()) {
@@ -221,29 +248,73 @@ bool LaneChangeInterface::canTransitFailureState()
   updateDebugMarker();
   log_debug_throttled(__func__);
 
+  const auto force_activated = std::any_of(
+    rtc_interface_ptr_map_.begin(), rtc_interface_ptr_map_.end(),
+    [&](const auto & rtc) { return rtc.second->isForceActivated(uuid_map_.at(rtc.first)); });
+
+  if (force_activated) {
+    RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 5000, "unsafe but force executed");
+    return false;
+  }
+
   if (module_type_->isAbortState() && !module_type_->hasFinishedAbort()) {
     log_debug_throttled("Abort process has on going.");
     return false;
   }
 
   if (isWaitingApproval()) {
+    if (module_type_->is_near_regulatory_element()) {
+      log_debug_throttled("Ego is close to regulatory element. Cancel lane change");
+      updateRTCStatus(
+        std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(), true,
+        State::FAILED);
+      return true;
+    }
     log_debug_throttled("Can't transit to failure state. Module is WAITING_FOR_APPROVAL");
     return false;
   }
 
   if (!module_type_->isValidPath()) {
     log_debug_throttled("Transit to failure state due not to find valid path");
+    updateRTCStatus(
+      std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(), true,
+      State::FAILED);
     return true;
   }
 
   if (module_type_->isAbortState() && module_type_->hasFinishedAbort()) {
     log_debug_throttled("Abort process has completed.");
+    updateRTCStatus(
+      std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(), true,
+      State::FAILED);
     return true;
+  }
+
+  if (module_type_->is_near_terminal()) {
+    log_debug_throttled("Unsafe, but ego is approaching terminal. Continue lane change");
+
+    if (module_type_->isRequiredStop(post_process_safety_status_.is_trailing_object)) {
+      log_debug_throttled("Module require stopping");
+    }
+    return false;
   }
 
   if (module_type_->isCancelEnabled() && module_type_->isEgoOnPreparePhase()) {
     if (module_type_->isStoppedAtRedTrafficLight()) {
       log_debug_throttled("Stopping at traffic light while in prepare phase. Cancel lane change");
+      module_type_->toCancelState();
+      updateRTCStatus(
+        std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(), true,
+        State::FAILED);
+      return true;
+    }
+
+    const auto force_deactivated = std::any_of(
+      rtc_interface_ptr_map_.begin(), rtc_interface_ptr_map_.end(),
+      [&](const auto & rtc) { return rtc.second->isForceDeactivated(uuid_map_.at(rtc.first)); });
+
+    if (force_deactivated && module_type_->isAbleToReturnCurrentLane()) {
+      log_debug_throttled("Cancel lane change due to force deactivation");
       module_type_->toCancelState();
       updateRTCStatus(
         std::numeric_limits<double>::lowest(), std::numeric_limits<double>::lowest(), true,
@@ -270,7 +341,7 @@ bool LaneChangeInterface::canTransitFailureState()
     return false;
   }
 
-  if (module_type_->isRequiredStop(post_process_safety_status_.is_object_coming_from_rear)) {
+  if (module_type_->isRequiredStop(post_process_safety_status_.is_trailing_object)) {
     log_debug_throttled("Module require stopping");
   }
 
@@ -340,6 +411,7 @@ MarkerArray LaneChangeInterface::getModuleVirtualWall()
 
 void LaneChangeInterface::updateSteeringFactorPtr(const BehaviorModuleOutput & output)
 {
+  universe_utils::ScopedTimeTrack st(__func__, *getTimeKeeper());
   const auto steering_factor_direction = std::invoke([&]() {
     if (module_type_->getDirection() == Direction::LEFT) {
       return SteeringFactor::LEFT;
@@ -352,15 +424,14 @@ void LaneChangeInterface::updateSteeringFactorPtr(const BehaviorModuleOutput & o
 
   const auto current_position = module_type_->getEgoPosition();
   const auto status = module_type_->getLaneChangeStatus();
-  const auto start_distance = autoware_motion_utils::calcSignedArcLength(
+  const auto start_distance = autoware::motion_utils::calcSignedArcLength(
     output.path.points, current_position, status.lane_change_path.info.shift_line.start.position);
-  const auto finish_distance = autoware_motion_utils::calcSignedArcLength(
+  const auto finish_distance = autoware::motion_utils::calcSignedArcLength(
     output.path.points, current_position, status.lane_change_path.info.shift_line.end.position);
 
-  steering_factor_interface_ptr_->updateSteeringFactor(
+  steering_factor_interface_.set(
     {status.lane_change_path.info.shift_line.start, status.lane_change_path.info.shift_line.end},
-    {start_distance, finish_distance}, PlanningBehavior::LANE_CHANGE, steering_factor_direction,
-    SteeringFactor::TURNING, "");
+    {start_distance, finish_distance}, steering_factor_direction, SteeringFactor::TURNING, "");
 }
 
 void LaneChangeInterface::updateSteeringFactorPtr(
@@ -373,9 +444,9 @@ void LaneChangeInterface::updateSteeringFactorPtr(
     return SteeringFactor::RIGHT;
   });
 
-  steering_factor_interface_ptr_->updateSteeringFactor(
+  steering_factor_interface_.set(
     {selected_path.info.shift_line.start, selected_path.info.shift_line.end},
     {output.start_distance_to_path_change, output.finish_distance_to_path_change},
-    PlanningBehavior::LANE_CHANGE, steering_factor_direction, SteeringFactor::APPROACHING, "");
+    steering_factor_direction, SteeringFactor::APPROACHING, "");
 }
 }  // namespace autoware::behavior_path_planner

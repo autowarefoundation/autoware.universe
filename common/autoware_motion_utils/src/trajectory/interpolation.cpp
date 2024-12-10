@@ -14,15 +14,15 @@
 
 #include "autoware/motion_utils/trajectory/interpolation.hpp"
 
+#include "autoware/interpolation/linear_interpolation.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
-#include "interpolation/linear_interpolation.hpp"
 
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
 using tier4_planning_msgs::msg::PathPointWithLaneId;
 using tier4_planning_msgs::msg::PathWithLaneId;
 
-namespace autoware_motion_utils
+namespace autoware::motion_utils
 {
 TrajectoryPoint calcInterpolatedPoint(
   const Trajectory & trajectory, const geometry_msgs::msg::Pose & target_pose,
@@ -37,14 +37,15 @@ TrajectoryPoint calcInterpolatedPoint(
     return trajectory.points.front();
   }
 
-  const size_t segment_idx = autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-    trajectory.points, target_pose, dist_threshold, yaw_threshold);
+  const size_t segment_idx =
+    autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      trajectory.points, target_pose, dist_threshold, yaw_threshold);
 
   // Calculate interpolation ratio
   const auto & curr_pt = trajectory.points.at(segment_idx);
   const auto & next_pt = trajectory.points.at(segment_idx + 1);
-  const auto v1 = autoware_universe_utils::point2tfVector(curr_pt, next_pt);
-  const auto v2 = autoware_universe_utils::point2tfVector(curr_pt, target_pose);
+  const auto v1 = autoware::universe_utils::point2tfVector(curr_pt, next_pt);
+  const auto v2 = autoware::universe_utils::point2tfVector(curr_pt, target_pose);
   if (v1.length2() < 1e-3) {
     return curr_pt;
   }
@@ -57,7 +58,7 @@ TrajectoryPoint calcInterpolatedPoint(
 
   // pose interpolation
   interpolated_point.pose =
-    autoware_universe_utils::calcInterpolatedPose(curr_pt, next_pt, clamped_ratio);
+    autoware::universe_utils::calcInterpolatedPose(curr_pt, next_pt, clamped_ratio);
 
   // twist interpolation
   if (use_zero_order_hold_for_twist) {
@@ -65,26 +66,26 @@ TrajectoryPoint calcInterpolatedPoint(
     interpolated_point.lateral_velocity_mps = curr_pt.lateral_velocity_mps;
     interpolated_point.acceleration_mps2 = curr_pt.acceleration_mps2;
   } else {
-    interpolated_point.longitudinal_velocity_mps = interpolation::lerp(
+    interpolated_point.longitudinal_velocity_mps = autoware::interpolation::lerp(
       curr_pt.longitudinal_velocity_mps, next_pt.longitudinal_velocity_mps, clamped_ratio);
-    interpolated_point.lateral_velocity_mps = interpolation::lerp(
+    interpolated_point.lateral_velocity_mps = autoware::interpolation::lerp(
       curr_pt.lateral_velocity_mps, next_pt.lateral_velocity_mps, clamped_ratio);
-    interpolated_point.acceleration_mps2 =
-      interpolation::lerp(curr_pt.acceleration_mps2, next_pt.acceleration_mps2, clamped_ratio);
+    interpolated_point.acceleration_mps2 = autoware::interpolation::lerp(
+      curr_pt.acceleration_mps2, next_pt.acceleration_mps2, clamped_ratio);
   }
 
   // heading rate interpolation
-  interpolated_point.heading_rate_rps =
-    interpolation::lerp(curr_pt.heading_rate_rps, next_pt.heading_rate_rps, clamped_ratio);
+  interpolated_point.heading_rate_rps = autoware::interpolation::lerp(
+    curr_pt.heading_rate_rps, next_pt.heading_rate_rps, clamped_ratio);
 
   // wheel interpolation
-  interpolated_point.front_wheel_angle_rad = interpolation::lerp(
+  interpolated_point.front_wheel_angle_rad = autoware::interpolation::lerp(
     curr_pt.front_wheel_angle_rad, next_pt.front_wheel_angle_rad, clamped_ratio);
-  interpolated_point.rear_wheel_angle_rad =
-    interpolation::lerp(curr_pt.rear_wheel_angle_rad, next_pt.rear_wheel_angle_rad, clamped_ratio);
+  interpolated_point.rear_wheel_angle_rad = autoware::interpolation::lerp(
+    curr_pt.rear_wheel_angle_rad, next_pt.rear_wheel_angle_rad, clamped_ratio);
 
   // time interpolation
-  const double interpolated_time = interpolation::lerp(
+  const double interpolated_time = autoware::interpolation::lerp(
     rclcpp::Duration(curr_pt.time_from_start).seconds(),
     rclcpp::Duration(next_pt.time_from_start).seconds(), clamped_ratio);
   interpolated_point.time_from_start = rclcpp::Duration::from_seconds(interpolated_time);
@@ -105,14 +106,15 @@ PathPointWithLaneId calcInterpolatedPoint(
     return path.points.front();
   }
 
-  const size_t segment_idx = autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-    path.points, target_pose, dist_threshold, yaw_threshold);
+  const size_t segment_idx =
+    autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      path.points, target_pose, dist_threshold, yaw_threshold);
 
   // Calculate interpolation ratio
   const auto & curr_pt = path.points.at(segment_idx);
   const auto & next_pt = path.points.at(segment_idx + 1);
-  const auto v1 = autoware_universe_utils::point2tfVector(curr_pt.point, next_pt.point);
-  const auto v2 = autoware_universe_utils::point2tfVector(curr_pt.point, target_pose);
+  const auto v1 = autoware::universe_utils::point2tfVector(curr_pt.point, next_pt.point);
+  const auto v2 = autoware::universe_utils::point2tfVector(curr_pt.point, target_pose);
   if (v1.length2() < 1e-3) {
     return curr_pt;
   }
@@ -125,24 +127,24 @@ PathPointWithLaneId calcInterpolatedPoint(
 
   // pose interpolation
   interpolated_point.point.pose =
-    autoware_universe_utils::calcInterpolatedPose(curr_pt.point, next_pt.point, clamped_ratio);
+    autoware::universe_utils::calcInterpolatedPose(curr_pt.point, next_pt.point, clamped_ratio);
 
   // twist interpolation
   if (use_zero_order_hold_for_twist) {
     interpolated_point.point.longitudinal_velocity_mps = curr_pt.point.longitudinal_velocity_mps;
     interpolated_point.point.lateral_velocity_mps = curr_pt.point.lateral_velocity_mps;
   } else {
-    interpolated_point.point.longitudinal_velocity_mps = interpolation::lerp(
+    interpolated_point.point.longitudinal_velocity_mps = autoware::interpolation::lerp(
       curr_pt.point.longitudinal_velocity_mps, next_pt.point.longitudinal_velocity_mps,
       clamped_ratio);
-    interpolated_point.point.lateral_velocity_mps = interpolation::lerp(
+    interpolated_point.point.lateral_velocity_mps = autoware::interpolation::lerp(
       curr_pt.point.lateral_velocity_mps, next_pt.point.lateral_velocity_mps, clamped_ratio);
   }
 
   // heading rate interpolation
-  interpolated_point.point.heading_rate_rps = interpolation::lerp(
+  interpolated_point.point.heading_rate_rps = autoware::interpolation::lerp(
     curr_pt.point.heading_rate_rps, next_pt.point.heading_rate_rps, clamped_ratio);
 
   return interpolated_point;
 }
-}  // namespace autoware_motion_utils
+}  // namespace autoware::motion_utils
