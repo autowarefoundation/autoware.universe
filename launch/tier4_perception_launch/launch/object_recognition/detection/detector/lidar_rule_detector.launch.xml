@@ -4,6 +4,7 @@
   <arg name="node/pointcloud_container"/>
   <arg name="input/pointcloud_map/pointcloud"/>
   <arg name="input/obstacle_segmentation/pointcloud"/>
+  <arg name="output/cluster_objects"/>
   <arg name="output/objects"/>
 
   <!-- Clustering -->
@@ -23,14 +24,14 @@
     <group>
       <include file="$(find-pkg-share autoware_shape_estimation)/launch/shape_estimation.launch.xml">
         <arg name="input/objects" value="clusters"/>
-        <arg name="output/objects" value="objects_with_feature"/>
+        <arg name="output/objects" value="$(var output/cluster_objects)"/>
       </include>
     </group>
 
     <!-- convert DynamicObjectsWithFeatureArray to DynamicObjects -->
     <group>
       <include file="$(find-pkg-share autoware_detected_object_feature_remover)/launch/detected_object_feature_remover.launch.xml">
-        <arg name="input" value="objects_with_feature"/>
+        <arg name="input" value="$(var output/cluster_objects)"/>
         <arg name="output" value="$(var output/objects)"/>
       </include>
     </group>
