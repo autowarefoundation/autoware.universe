@@ -176,6 +176,7 @@ struct Parameters
 
   // terminal lane change path
   bool enable_terminal_path{false};
+  bool stop_at_boundary_for_terminal_path{false};
 };
 
 }  // namespace autoware::behavior_path_planner::lane_change

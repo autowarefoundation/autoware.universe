@@ -533,7 +533,9 @@ void NormalLaneChange::insert_stop_point_on_current_lanes(
       return dist_from_path_front + dist_to_terminal_start;
     }
 
-    if (terminal_lane_change_path_ && is_waiting_approval) {
+    if (
+      terminal_lane_change_path_ && is_waiting_approval &&
+      lc_param_ptr->stop_at_boundary_for_terminal_path) {
       return calculation::calc_dist_to_last_fit_width(common_data_ptr_, path);
     }
 
