@@ -67,6 +67,8 @@ public:
 protected:
   void initPtr();
 
+  void initPriorityMap();
+
   virtual bool preprocess(
     const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer);
 
@@ -89,6 +91,8 @@ protected:
   std::size_t voxels_size_{0};
   std::size_t coordinates_size_{0};
   std::vector<float> points_;
+  std::vector<unsigned int> priority_map_;
+
   cuda::unique_ptr<float[]> voxels_d_{nullptr};
   cuda::unique_ptr<int[]> coordinates_d_{nullptr};
   cuda::unique_ptr<float[]> num_points_per_voxel_d_{nullptr};
@@ -106,6 +110,7 @@ protected:
   cuda::unique_ptr<float[]> voxels_buffer_d_{nullptr};
   cuda::unique_ptr<unsigned int[]> mask_d_{nullptr};
   cuda::unique_ptr<unsigned int[]> num_voxels_d_{nullptr};
+  cuda::unique_ptr<unsigned int[]> priority_map_d_{nullptr};
   cuda::unique_ptr<unsigned int[]> shuffle_indices_d_{nullptr};
 };
 

@@ -166,8 +166,9 @@ cudaError_t generateVoxels_random_launch(
   float pillar_y_size, float pillar_z_size, int grid_y_size, int grid_x_size, unsigned int * mask,
   float * voxels, cudaStream_t stream)
 {
-  dim3 blocks((points_size + 256 - 1) / 256);
-  dim3 threads(256);
+  const size_t threads_per_block = 256;
+  dim3 threads(threads_per_block);
+  dim3 blocks(divup(points_size, threads_per_block));
 
   if (blocks.x == 0) {
     return cudaGetLastError();
@@ -182,15 +183,17 @@ cudaError_t generateVoxels_random_launch(
 }
 
 __global__ void generateBaseFeatures_kernel(
-  unsigned int * mask, float * voxels, int grid_y_size, int grid_x_size, int max_voxel_size,
-  unsigned int * pillar_num, float * voxel_features, float * voxel_num, int * voxel_idxs)
+  unsigned int * mask, const unsigned int * priority_map, float * voxels, int grid_y_size,
+  int grid_x_size, int max_voxel_size, unsigned int * pillar_num, float * voxel_features,
+  float * voxel_num, int * voxel_idxs)
 {
-  unsigned int voxel_idx = blockIdx.x * blockDim.x + threadIdx.x;
-  unsigned int voxel_idy = blockIdx.y * blockDim.y + threadIdx.y;
+  const unsigned voxel_key = blockIdx.x * blockDim.x + threadIdx.x;
+  const unsigned voxel_index = priority_map[voxel_key];
+  unsigned int voxel_idx = voxel_index % grid_x_size;
+  unsigned int voxel_idy = voxel_index / grid_x_size;
 
   if (voxel_idx >= grid_x_size || voxel_idy >= grid_y_size) return;
 
-  unsigned int voxel_index = voxel_idy * grid_x_size + voxel_idx;
   unsigned int count = mask[voxel_index];
   if (!(count > 0)) return;
   count = count < MAX_POINT_IN_VOXEL_SIZE ? count : MAX_POINT_IN_VOXEL_SIZE;
@@ -215,18 +218,20 @@ __global__ void generateBaseFeatures_kernel(
 }
 
 // create 4 channels
+// cspell: ignore divup
 cudaError_t generateBaseFeatures_launch(
-  unsigned int * mask, float * voxels, int grid_y_size, int grid_x_size, int max_voxel_size,
-  unsigned int * pillar_num, float * voxel_features, float * voxel_num, int * voxel_idxs,
-  cudaStream_t stream)
+  unsigned int * mask, unsigned int * priority_map, float * voxels, int grid_y_size,
+  int grid_x_size, int max_voxel_size, unsigned int * pillar_num, float * voxel_features,
+  float * voxel_num, int * voxel_idxs, cudaStream_t stream)
 {
-  dim3 threads = {32, 32};
-  dim3 blocks = {
-    (grid_x_size + threads.x - 1) / threads.x, (grid_y_size + threads.y - 1) / threads.y};
+  const size_t threads_per_block = 256;
+  const int grid_size = grid_x_size * grid_y_size;
+  dim3 threads(threads_per_block);
+  dim3 blocks(divup(grid_size, threads_per_block));
 
   generateBaseFeatures_kernel<<<blocks, threads, 0, stream>>>(
-    mask, voxels, grid_y_size, grid_x_size, max_voxel_size, pillar_num, voxel_features, voxel_num,
-    voxel_idxs);
+    mask, priority_map, voxels, grid_y_size, grid_x_size, max_voxel_size, pillar_num,
+    voxel_features, voxel_num, voxel_idxs);
   cudaError_t err = cudaGetLastError();
   return err;
 }
