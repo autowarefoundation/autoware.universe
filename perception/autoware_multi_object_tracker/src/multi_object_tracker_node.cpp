@@ -185,7 +185,8 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
 
     // Declare parameters
     config.tracker_lifetime = declare_parameter<double>("tracker_lifetime", 1.0);
-    config.min_known_object_removal_iou = declare_parameter<double>("min_known_object_removal_iou", 0.1);
+    config.min_known_object_removal_iou =
+      declare_parameter<double>("min_known_object_removal_iou", 0.1);
     config.min_unknown_object_removal_iou =
       declare_parameter<double>("min_unknown_object_removal_iou", 0.05);
     config.distance_threshold = declare_parameter<double>("distance_threshold", 5.0);

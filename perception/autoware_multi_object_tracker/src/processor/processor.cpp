@@ -84,7 +84,8 @@ std::shared_ptr<Tracker> TrackerProcessor::createNewTracker(
   const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
   const geometry_msgs::msg::Transform & self_transform, const uint & channel_index) const
 {
-  const LabelType label = autoware::object_recognition_utils::getHighestProbLabel(object.classification);
+  const LabelType label =
+    autoware::object_recognition_utils::getHighestProbLabel(object.classification);
   if (config_.tracker_map.count(label) != 0) {
     const auto tracker = config_.tracker_map.at(label);
     if (tracker == "bicycle_tracker")
@@ -162,7 +163,8 @@ void TrackerProcessor::removeOverlappedTracker(const rclcpp::Time & time)
 
       // Check the Intersection over Union (IoU) between the two objects
       const double min_union_iou_area = 1e-2;
-      const auto iou = autoware::object_recognition_utils::get2dIoU(object1, object2, min_union_iou_area);
+      const auto iou =
+        autoware::object_recognition_utils::get2dIoU(object1, object2, min_union_iou_area);
       const auto & label1 = (*itr1)->getHighestProbLabel();
       const auto & label2 = (*itr2)->getHighestProbLabel();
       bool should_delete_tracker1 = false;
