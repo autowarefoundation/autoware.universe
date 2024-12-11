@@ -148,7 +148,7 @@ __global__ void generateVoxels_random_kernel(
 
   int voxel_idx = floorf((point.x - min_x_range) / pillar_x_size);
   int voxel_idy = floorf((point.y - min_y_range) / pillar_y_size);
-  unsigned int voxel_index = voxel_idy * grid_x_size + voxel_idx;
+  unsigned int voxel_index = (grid_x_size - 1 - voxel_idx) * grid_y_size + voxel_idy;
 
   unsigned int point_id = atomicAdd(&(mask[voxel_index]), 1);
 
@@ -192,7 +192,7 @@ __global__ void generateBaseFeatures_kernel(
   if (voxel_idx_inverted >= grid_x_size || voxel_idy >= grid_y_size) return;
   unsigned int voxel_idx = grid_x_size - 1 - voxel_idx_inverted;
 
-  unsigned int voxel_index = voxel_idy * grid_x_size + voxel_idx;
+  unsigned int voxel_index = voxel_idx_inverted * grid_y_size + voxel_idy;
   unsigned int count = mask[voxel_index];
   if (!(count > 0)) return;
   count = count < MAX_POINT_IN_VOXEL_SIZE ? count : MAX_POINT_IN_VOXEL_SIZE;
