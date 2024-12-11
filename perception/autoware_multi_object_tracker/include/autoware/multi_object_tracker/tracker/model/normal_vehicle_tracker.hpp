@@ -30,13 +30,12 @@ namespace autoware::multi_object_tracker
 class NormalVehicleTracker : public Tracker
 {
 private:
-  autoware_perception_msgs::msg::DetectedObject object_;
+  object_model::ObjectModel object_model_;
   rclcpp::Logger logger_;
-
-  object_model::ObjectModel object_model_ = object_model::normal_vehicle;
 
   double velocity_deviation_threshold_;
 
+  autoware_perception_msgs::msg::DetectedObject object_;
   double z_;
 
   struct BoundingBox
@@ -53,7 +52,8 @@ private:
 
 public:
   NormalVehicleTracker(
-    const rclcpp::Time & time, const autoware_perception_msgs::msg::DetectedObject & object,
+    const object_model::ObjectModel & object_model, const rclcpp::Time & time,
+    const autoware_perception_msgs::msg::DetectedObject & object,
     const geometry_msgs::msg::Transform & self_transform, const size_t channel_size,
     const uint & channel_index);
 

@@ -14,6 +14,7 @@
 
 #include "processor.hpp"
 
+#include "autoware/multi_object_tracker/object_model/object_model.hpp"
 #include "autoware/multi_object_tracker/tracker/tracker.hpp"
 #include "autoware/object_recognition_utils/object_recognition_utils.hpp"
 
@@ -109,7 +110,7 @@ std::shared_ptr<Tracker> TrackerProcessor::createNewTracker(
         time, object, self_transform, channel_size_, channel_index);
     if (tracker == "normal_vehicle_tracker")
       return std::make_shared<NormalVehicleTracker>(
-        time, object, self_transform, channel_size_, channel_index);
+        object_model::normal_vehicle, time, object, self_transform, channel_size_, channel_index);
     if (tracker == "pass_through_tracker")
       return std::make_shared<PassThroughTracker>(
         time, object, self_transform, channel_size_, channel_index);

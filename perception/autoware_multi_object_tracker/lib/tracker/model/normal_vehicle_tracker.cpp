@@ -46,10 +46,12 @@ namespace autoware::multi_object_tracker
 using Label = autoware_perception_msgs::msg::ObjectClassification;
 
 NormalVehicleTracker::NormalVehicleTracker(
-  const rclcpp::Time & time, const autoware_perception_msgs::msg::DetectedObject & object,
+  const object_model::ObjectModel & object_model, const rclcpp::Time & time,
+  const autoware_perception_msgs::msg::DetectedObject & object,
   const geometry_msgs::msg::Transform & /*self_transform*/, const size_t channel_size,
   const uint & channel_index)
 : Tracker(time, object.classification, channel_size),
+  object_model_(object_model),
   logger_(rclcpp::get_logger("NormalVehicleTracker")),
   z_(object.kinematics.pose_with_covariance.pose.position.z),
   tracking_offset_(Eigen::Vector2d::Zero())
