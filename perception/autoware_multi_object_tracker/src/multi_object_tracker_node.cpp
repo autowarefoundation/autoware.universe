@@ -64,12 +64,12 @@ boost::optional<geometry_msgs::msg::Transform> getTransformAnonymous(
     return boost::none;
   }
 }
-
 }  // namespace
 
 namespace autoware::multi_object_tracker
 {
 using Label = autoware_perception_msgs::msg::ObjectClassification;
+using LabelType = autoware_perception_msgs::msg::ObjectClassification::_label_type;
 
 MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
 : rclcpp::Node("multi_object_tracker", node_options),
@@ -166,23 +166,45 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
 
   // Initialize processor
   {
-    std::map<std::uint8_t, std::string> tracker_map;
-    tracker_map.insert(
+    TrackerProcessorConfig config;
+    config.tracker_map.insert(
       std::make_pair(Label::CAR, this->declare_parameter<std::string>("car_tracker")));
-    tracker_map.insert(
+    config.tracker_map.insert(
       std::make_pair(Label::TRUCK, this->declare_parameter<std::string>("truck_tracker")));
-    tracker_map.insert(
+    config.tracker_map.insert(
       std::make_pair(Label::BUS, this->declare_parameter<std::string>("bus_tracker")));
-    tracker_map.insert(
+    config.tracker_map.insert(
       std::make_pair(Label::TRAILER, this->declare_parameter<std::string>("trailer_tracker")));
-    tracker_map.insert(std::make_pair(
+    config.tracker_map.insert(std::make_pair(
       Label::PEDESTRIAN, this->declare_parameter<std::string>("pedestrian_tracker")));
-    tracker_map.insert(
+    config.tracker_map.insert(
       std::make_pair(Label::BICYCLE, this->declare_parameter<std::string>("bicycle_tracker")));
-    tracker_map.insert(std::make_pair(
+    config.tracker_map.insert(std::make_pair(
       Label::MOTORCYCLE, this->declare_parameter<std::string>("motorcycle_tracker")));
+    config.channel_size = input_channel_size_;
 
-    processor_ = std::make_unique<TrackerProcessor>(tracker_map, input_channel_size_);
+    // Declare parameters
+    config.tracker_lifetime = declare_parameter<double>("tracker_lifetime", 1.0);
+    config.min_known_object_removal_iou = declare_parameter<double>("min_known_object_removal_iou", 0.1);
+    config.min_unknown_object_removal_iou =
+      declare_parameter<double>("min_unknown_object_removal_iou", 0.05);
+    config.distance_threshold = declare_parameter<double>("distance_threshold", 5.0);
+
+    // Map from class name to label
+    std::map<std::string, LabelType> class_name_to_label = {
+      {"UNKNOWN", Label::UNKNOWN}, {"CAR", Label::CAR},
+      {"TRUCK", Label::TRUCK},     {"BUS", Label::BUS},
+      {"TRAILER", Label::TRAILER}, {"MOTORBIKE", Label::MOTORCYCLE},
+      {"BICYCLE", Label::BICYCLE}, {"PEDESTRIAN", Label::PEDESTRIAN}};
+
+    // Declare parameters and initialize confident_count_threshold_map
+    for (const auto & [class_name, class_label] : class_name_to_label) {
+      int64_t value = declare_parameter<int64_t>("confident_count_threshold." + class_name, 3);
+      config.confident_count_threshold[class_label] = static_cast<int>(value);
+    }
+
+    // Initialize processor with parameters
+    processor_ = std::make_unique<TrackerProcessor>(config);
   }
 
   // Data association initialization
