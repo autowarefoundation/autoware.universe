@@ -14,7 +14,6 @@
   <depend>autoware_universe_utils</depend>
   <depend>geometry_msgs</depend>
   <depend>message_filters</depend>
-  <depend>object_recognition_utils</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
