@@ -1,0 +1,111 @@
+// Copyright 2024 TIER IV, Inc.
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
+#include <autoware/pointcloud_preprocessor/concatenate_data/collector_matching_strategy.hpp>
+#include <rclcpp/rclcpp.hpp>
+
+#include <cmath>
+#include <list>
+#include <memory>
+#include <string>
+#include <vector>
+
+namespace autoware::pointcloud_preprocessor
+{
+
+NaiveMatchingStrategy::NaiveMatchingStrategy(rclcpp::Node & node)
+{
+  RCLCPP_INFO(node.get_logger(), "Utilize naive matching strategy");
+}
+
+std::optional<std::shared_ptr<CloudCollector>> NaiveMatchingStrategy::match_cloud_to_collector(
+  const std::list<std::shared_ptr<CloudCollector>> & cloud_collectors,
+  const MatchingParams & params) const
+{
+  std::optional<double> smallest_time_difference = std::nullopt;
+  std::shared_ptr<CloudCollector> closest_collector = nullptr;
+
+  for (const auto & cloud_collector : cloud_collectors) {
+    if (!cloud_collector->topic_exists(params.topic_name)) {
+      double time_difference =
+        std::abs(params.cloud_arrival_time - cloud_collector->get_arrival_timestamp());
+      if (!smallest_time_difference || time_difference < smallest_time_difference) {
+        smallest_time_difference = time_difference;
+        closest_collector = cloud_collector;
+      }
+    }
+  }
+
+  return closest_collector;
+}
+
+void NaiveMatchingStrategy::set_collector_timestamp(
+  std::shared_ptr<CloudCollector> & collector, const MatchingParams & matching_params)
+{
+  collector->set_arrival_timestamp(matching_params.cloud_arrival_time);
+}
+
+AdvancedMatchingStrategy::AdvancedMatchingStrategy(
+  rclcpp::Node & node, std::vector<std::string> input_topics)
+{
+  auto lidar_timestamp_offsets =
+    node.declare_parameter<std::vector<double>>("matching_strategy.lidar_timestamp_offsets");
+  auto lidar_timestamp_noise_window =
+    node.declare_parameter<std::vector<double>>("matching_strategy.lidar_timestamp_noise_window");
+
+  if (lidar_timestamp_offsets.size() != input_topics.size()) {
+    throw std::runtime_error(
+      "The number of topics does not match the number of timestamp offsets.");
+  }
+  if (lidar_timestamp_noise_window.size() != input_topics.size()) {
+    throw std::runtime_error(
+      "The number of topics does not match the number of timestamp noise window.");
+  }
+
+  for (size_t i = 0; i < input_topics.size(); i++) {
+    topic_to_offset_map_[input_topics[i]] = lidar_timestamp_offsets[i];
+    topic_to_noise_window_map_[input_topics[i]] = lidar_timestamp_noise_window[i];
+  }
+
+  input_topics_ = input_topics;
+
+  RCLCPP_INFO(node.get_logger(), "Utilize advanced matching strategy");
+}
+
+std::optional<std::shared_ptr<CloudCollector>> AdvancedMatchingStrategy::match_cloud_to_collector(
+  const std::list<std::shared_ptr<CloudCollector>> & cloud_collectors,
+  const MatchingParams & params) const
+{
+  for (const auto & cloud_collector : cloud_collectors) {
+    auto [reference_timestamp_min, reference_timestamp_max] =
+      cloud_collector->get_reference_timestamp_boundary();
+    double time = params.cloud_timestamp - topic_to_offset_map_.at(params.topic_name);
+    if (
+      time < reference_timestamp_max + topic_to_noise_window_map_.at(params.topic_name) &&
+      time > reference_timestamp_min - topic_to_noise_window_map_.at(params.topic_name)) {
+      return cloud_collector;
+    }
+  }
+  return std::nullopt;
+}
+
+void AdvancedMatchingStrategy::set_collector_timestamp(
+  std::shared_ptr<CloudCollector> & collector, const MatchingParams & matching_params)
+{
+  collector->set_reference_timestamp(
+    matching_params.cloud_timestamp - topic_to_offset_map_[matching_params.topic_name],
+    topic_to_noise_window_map_[matching_params.topic_name]);
+}
+
+}  // namespace autoware::pointcloud_preprocessor

@@ -23,6 +23,7 @@
 
 // ROS includes
 #include "cloud_collector.hpp"
+#include "collector_matching_strategy.hpp"
 #include "combine_cloud_handler.hpp"
 
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
@@ -55,7 +56,7 @@ public:
   void publish_clouds(
     ConcatenatedCloudResult && concatenated_cloud_result, double reference_timestamp_min,
     double reference_timestamp_max, double arrival_timestamp);
-  void delete_collector(CloudCollector & cloud_collector);
+  void manage_collector_list();
   std::list<std::shared_ptr<CloudCollector>> get_cloud_collectors();
   void add_cloud_collector(const std::shared_ptr<CloudCollector> & collector);
 
@@ -76,8 +77,6 @@ private:
     std::string input_twist_topic_type;
     std::vector<std::string> input_topics;
     std::string output_frame;
-    std::vector<double> lidar_timestamp_offsets;
-    std::vector<double> lidar_timestamp_noise_window;
   } params_;
 
   double current_concatenate_cloud_timestamp_{0.0};
@@ -92,9 +91,8 @@ private:
 
   std::shared_ptr<CombineCloudHandler> combine_cloud_handler_;
   std::list<std::shared_ptr<CloudCollector>> cloud_collectors_;
+  std::unique_ptr<CollectorMatchingStrategy> collector_matching_strategy_;
   std::mutex cloud_collectors_mutex_;
-  std::unordered_map<std::string, double> topic_to_offset_map_;
-  std::unordered_map<std::string, double> topic_to_noise_window_map_;
 
   // default postfix name for synchronized pointcloud
   static constexpr const char * default_sync_topic_postfix = "_synchronized";

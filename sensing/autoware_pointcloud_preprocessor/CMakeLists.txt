@@ -67,6 +67,7 @@ ament_auto_add_library(pointcloud_preprocessor_filter SHARED
   src/concatenate_data/concatenate_and_time_sync_node.cpp
   src/concatenate_data/combine_cloud_handler.cpp
   src/concatenate_data/cloud_collector.cpp
+  src/concatenate_data/collector_matching_strategy.cpp
   src/concatenate_data/concatenate_pointclouds.cpp
   src/crop_box_filter/crop_box_filter_node.cpp
   src/time_synchronizer/time_synchronizer_node.cpp

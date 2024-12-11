@@ -86,7 +86,6 @@ def generate_test_description():
             ],
             parameters=[
                 {
-                    "use_naive_approach": False,
                     "debug_mode": False,
                     "has_static_tf_only": False,
                     "rosbag_length": 0.0,
@@ -100,8 +99,9 @@ def generate_test_description():
                     "input_twist_topic_type": "twist",
                     "input_topics": INPUT_LIDAR_TOPICS,
                     "output_frame": "base_link",
-                    "lidar_timestamp_offsets": TIMESTAMP_OFFSET,
-                    "lidar_timestamp_noise_window": [
+                    "matching_strategy.type": "advanced",
+                    "matching_strategy.lidar_timestamp_offsets": TIMESTAMP_OFFSET,
+                    "matching_strategy.lidar_timestamp_noise_window": [
                         TIMESTAMP_NOISE,
                         TIMESTAMP_NOISE,
                         TIMESTAMP_NOISE,

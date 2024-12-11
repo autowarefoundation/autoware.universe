@@ -14,16 +14,17 @@
 
 #include "autoware/pointcloud_preprocessor/concatenate_data/concatenate_and_time_sync_node.hpp"
 
+#include "autoware/pointcloud_preprocessor/concatenate_data/cloud_collector.hpp"
 #include "autoware/pointcloud_preprocessor/utility/memory.hpp"
 
 #include <pcl_ros/transforms.hpp>
 
 #include <pcl_conversions/pcl_conversions.h>
 
-#include <algorithm>
 #include <iomanip>
 #include <list>
 #include <memory>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -45,7 +46,6 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
   stop_watch_ptr_->tic("processing_time");
 
   //  initialize parameters
-  params_.use_naive_approach = declare_parameter<bool>("use_naive_approach");
   params_.debug_mode = declare_parameter<bool>("debug_mode");
   params_.has_static_tf_only = declare_parameter<bool>("has_static_tf_only");
   params_.rosbag_length = declare_parameter<double>("rosbag_length");
@@ -63,10 +63,6 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
   params_.input_twist_topic_type = declare_parameter<std::string>("input_twist_topic_type");
   params_.input_topics = declare_parameter<std::vector<std::string>>("input_topics");
   params_.output_frame = declare_parameter<std::string>("output_frame");
-  params_.lidar_timestamp_offsets =
-    declare_parameter<std::vector<double>>("lidar_timestamp_offsets");
-  params_.lidar_timestamp_noise_window =
-    declare_parameter<std::vector<double>>("lidar_timestamp_noise_window");
 
   if (params_.input_topics.empty()) {
     throw std::runtime_error("Need a 'input_topics' parameter to be set before continuing.");
@@ -78,18 +74,15 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
   if (params_.output_frame.empty()) {
     throw std::runtime_error("Need an 'output_frame' parameter to be set before continuing.");
   }
-  if (params_.lidar_timestamp_offsets.size() != params_.input_topics.size()) {
-    throw std::runtime_error(
-      "The number of topics does not match the number of timestamp offsets.");
-  }
-  if (params_.lidar_timestamp_noise_window.size() != params_.input_topics.size()) {
-    throw std::runtime_error(
-      "The number of topics does not match the number of timestamp noise window.");
-  }
 
-  for (size_t i = 0; i < params_.input_topics.size(); i++) {
-    topic_to_offset_map_[params_.input_topics[i]] = params_.lidar_timestamp_offsets[i];
-    topic_to_noise_window_map_[params_.input_topics[i]] = params_.lidar_timestamp_noise_window[i];
+  auto matching_strategy = declare_parameter<std::string>("matching_strategy.type");
+  if (matching_strategy == "naive") {
+    collector_matching_strategy_ = std::make_unique<NaiveMatchingStrategy>(*this);
+  } else if (matching_strategy == "advanced") {
+    collector_matching_strategy_ =
+      std::make_unique<AdvancedMatchingStrategy>(*this, params_.input_topics);
+  } else {
+    throw std::runtime_error("Matching strategy must be 'advanced' or 'naive'");
   }
 
   // Publishers
@@ -188,9 +181,10 @@ std::string PointCloudConcatenateDataSynchronizerComponent::replace_sync_topic_n
 void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
   const sensor_msgs::msg::PointCloud2::SharedPtr & input_ptr, const std::string & topic_name)
 {
-  double cloud_arrival_time = this->get_clock()->now().seconds();
-
   stop_watch_ptr_->toc("processing_time", true);
+  double cloud_arrival_time = this->get_clock()->now().seconds();
+  manage_collector_list();
+
   if (!utils::is_data_layout_compatible_with_point_xyzirc(*input_ptr)) {
     RCLCPP_ERROR(
       get_logger(), "The pointcloud layout is not compatible with PointXYZIRC. Aborting");
@@ -220,54 +214,27 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
   std::unique_lock<std::mutex> cloud_collectors_lock(cloud_collectors_mutex_);
 
   // For each callback, check whether there is a exist collector that matches this cloud
-  bool collector_found = false;
+  std::optional<std::shared_ptr<CloudCollector>> cloud_collector = std::nullopt;
+  MatchingParams matching_params;
+  matching_params.topic_name = topic_name;
+  matching_params.cloud_arrival_time = cloud_arrival_time;
+  matching_params.cloud_timestamp = rclcpp::Time(input_ptr->header.stamp).seconds();
 
   if (!cloud_collectors_.empty()) {
-    if (params_.use_naive_approach) {
-      // Navie approach: Concatenate the pointlcouds based on the pointclouds' arrival time on the
-      // node
-      std::optional<double> smallest_time_difference = std::nullopt;
-      std::shared_ptr<CloudCollector> closest_collector = nullptr;
+    cloud_collector =
+      collector_matching_strategy_->match_cloud_to_collector(cloud_collectors_, matching_params);
+  }
 
-      for (const auto & cloud_collector : cloud_collectors_) {
-        if (!cloud_collector->topic_exists(topic_name)) {
-          auto collector_timestamp = cloud_collector->get_arrival_timestamp();
-          double time_difference = std::abs(cloud_arrival_time - collector_timestamp);
-
-          if (!smallest_time_difference || time_difference < smallest_time_difference) {
-            smallest_time_difference = time_difference;
-            closest_collector = cloud_collector;
-          }
-        }
-      }
-
-      if (smallest_time_difference) {
-        cloud_collectors_lock.unlock();
-        closest_collector->process_pointcloud(topic_name, input_ptr);
-        collector_found = true;
-      }
-    } else {
-      // Advanced approach: Concatenate the pointlcouds based on the pointclouds' timestamps
-      for (const auto & cloud_collector : cloud_collectors_) {
-        auto [reference_timestamp_min, reference_timestamp_max] =
-          cloud_collector->get_reference_timestamp_boundary();
-
-        if (
-          rclcpp::Time(input_ptr->header.stamp).seconds() - topic_to_offset_map_[topic_name] <
-            reference_timestamp_max + topic_to_noise_window_map_[topic_name] &&
-          rclcpp::Time(input_ptr->header.stamp).seconds() - topic_to_offset_map_[topic_name] >
-            reference_timestamp_min - topic_to_noise_window_map_[topic_name]) {
-          cloud_collectors_lock.unlock();
-          cloud_collector->process_pointcloud(topic_name, input_ptr);
-          collector_found = true;
-          break;
-        }
-      }
+  bool process_success = false;
+  if (cloud_collector.has_value()) {
+    auto collector = cloud_collector.value();
+    if (collector) {
+      cloud_collectors_lock.unlock();
+      process_success = cloud_collector.value()->process_pointcloud(topic_name, input_ptr);
     }
   }
 
-  // if point cloud didn't find matched collector, create a new collector.
-  if (!collector_found) {
+  if (!process_success) {
     auto new_cloud_collector = std::make_shared<CloudCollector>(
       std::dynamic_pointer_cast<PointCloudConcatenateDataSynchronizerComponent>(shared_from_this()),
       combine_cloud_handler_, params_.input_topics.size(), params_.timeout_sec, params_.debug_mode);
@@ -275,14 +242,8 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
     cloud_collectors_.push_back(new_cloud_collector);
     cloud_collectors_lock.unlock();
 
-    if (params_.use_naive_approach) {
-      new_cloud_collector->set_arrival_timestamp(cloud_arrival_time);
-    } else {
-      new_cloud_collector->set_reference_timestamp(
-        rclcpp::Time(input_ptr->header.stamp).seconds() - topic_to_offset_map_[topic_name],
-        topic_to_noise_window_map_[topic_name]);
-    }
-    new_cloud_collector->process_pointcloud(topic_name, input_ptr);
+    collector_matching_strategy_->set_collector_timestamp(new_cloud_collector, matching_params);
+    (void)new_cloud_collector->process_pointcloud(topic_name, input_ptr);
   }
 }
 
@@ -383,22 +344,16 @@ void PointCloudConcatenateDataSynchronizerComponent::publish_clouds(
   }
 }
 
-void PointCloudConcatenateDataSynchronizerComponent::delete_collector(
-  CloudCollector & cloud_collector)
+void PointCloudConcatenateDataSynchronizerComponent::manage_collector_list()
 {
-  // protect cloud collectors list
   std::lock_guard<std::mutex> cloud_collectors_lock(cloud_collectors_mutex_);
 
-  // change this to something else
-  auto it = std::find_if(
-    cloud_collectors_.begin(), cloud_collectors_.end(),
-    [&cloud_collector](const std::shared_ptr<CloudCollector> & collector) {
-      return collector.get() == &cloud_collector;
-    });
-  if (it != cloud_collectors_.end()) {
-    cloud_collectors_.erase(it);
-  } else {
-    throw std::runtime_error("Try to delete a cloud_collector that is not in the cloud_collectors");
+  for (auto it = cloud_collectors_.begin(); it != cloud_collectors_.end();) {
+    if ((*it)->concatenate_finished()) {
+      it = cloud_collectors_.erase(it);  // Erase and move the iterator to the next element
+    } else {
+      ++it;  // Move to the next element
+    }
   }
 }
 

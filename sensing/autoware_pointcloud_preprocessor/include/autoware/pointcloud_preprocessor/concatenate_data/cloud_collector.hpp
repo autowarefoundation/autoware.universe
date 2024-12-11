@@ -42,7 +42,7 @@ public:
   void set_reference_timestamp(double timestamp, double noise_window);
   std::tuple<double, double> get_reference_timestamp_boundary();
   bool topic_exists(const std::string & topic_name);
-  void process_pointcloud(
+  bool process_pointcloud(
     const std::string & topic_name, sensor_msgs::msg::PointCloud2::SharedPtr cloud);
   void concatenate_callback();
 
@@ -51,6 +51,8 @@ public:
 
   std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr>
   get_topic_to_cloud_map();
+
+  bool concatenate_finished() const;
 
 private:
   std::shared_ptr<PointCloudConcatenateDataSynchronizerComponent> ros2_parent_node_;
@@ -63,6 +65,8 @@ private:
   double reference_timestamp_max_{0.0};
   double arrival_timestamp_{0.0};  // This is used for the naive approach
   bool debug_mode_;
+  bool concatenate_finished_{false};
+  std::mutex concatenate_mutex_;
 };
 
 }  // namespace autoware::pointcloud_preprocessor

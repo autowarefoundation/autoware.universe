@@ -45,8 +45,7 @@ protected:
     // Instead of "input_topics", other parameters are not used.
     // They just helps to setup the concatenate node
     node_options.parameter_overrides(
-      {{"use_naive_approach", false},
-       {"debug_mode", false},
+      {{"debug_mode", false},
        {"has_static_tf_only", false},
        {"rosbag_length", 0.0},
        {"maximum_queue_size", 5},
@@ -59,8 +58,9 @@ protected:
        {"input_twist_topic_type", "twist"},
        {"input_topics", std::vector<std::string>{"lidar_top", "lidar_left", "lidar_right"}},
        {"output_frame", "base_link"},
-       {"lidar_timestamp_offsets", std::vector<double>{0.0, 0.04, 0.08}},
-       {"lidar_timestamp_noise_window", std::vector<double>{0.01, 0.01, 0.01}}});
+       {"matching_strategy.type", "advanced"},
+       {"matching_strategy.lidar_timestamp_offsets", std::vector<double>{0.0, 0.04, 0.08}},
+       {"matching_strategy.lidar_timestamp_noise_window", std::vector<double>{0.01, 0.01, 0.01}}});
 
     concatenate_node_ = std::make_shared<
       autoware::pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent>(
@@ -448,13 +448,6 @@ TEST_F(ConcatenateCloudTest, TestConcatenateClouds)
   EXPECT_FLOAT_EQ(right_timestamp.seconds(), topic_to_original_stamp_map["lidar_right"]);
 }
 
-TEST_F(ConcatenateCloudTest, TestDeleteCollector)
-{
-  concatenate_node_->add_cloud_collector(collector_);
-  concatenate_node_->delete_collector(*collector_);
-  EXPECT_TRUE(concatenate_node_->get_cloud_collectors().empty());
-}
-
 TEST_F(ConcatenateCloudTest, TestProcessSingleCloud)
 {
   concatenate_node_->add_cloud_collector(collector_);
@@ -468,6 +461,8 @@ TEST_F(ConcatenateCloudTest, TestProcessSingleCloud)
 
   auto topic_to_cloud_map = collector_->get_topic_to_cloud_map();
   EXPECT_EQ(topic_to_cloud_map["lidar_top"], top_pointcloud_ptr);
+  EXPECT_FALSE(collector_->concatenate_finished());
+  concatenate_node_->manage_collector_list();
   EXPECT_FALSE(concatenate_node_->get_cloud_collectors().empty());
 
   // Sleep for timeout seconds (200 ms)
@@ -475,6 +470,8 @@ TEST_F(ConcatenateCloudTest, TestProcessSingleCloud)
   rclcpp::spin_some(concatenate_node_);
 
   // Collector should concatenate and publish the pointcloud, also delete itself.
+  EXPECT_TRUE(collector_->concatenate_finished());
+  concatenate_node_->manage_collector_list();
   EXPECT_TRUE(concatenate_node_->get_cloud_collectors().empty());
 }
 
@@ -503,6 +500,8 @@ TEST_F(ConcatenateCloudTest, TestProcessMultipleCloud)
   collector_->process_pointcloud("lidar_left", left_pointcloud_ptr);
   collector_->process_pointcloud("lidar_right", right_pointcloud_ptr);
 
+  EXPECT_TRUE(collector_->concatenate_finished());
+  concatenate_node_->manage_collector_list();
   EXPECT_TRUE(concatenate_node_->get_cloud_collectors().empty());
 }
 

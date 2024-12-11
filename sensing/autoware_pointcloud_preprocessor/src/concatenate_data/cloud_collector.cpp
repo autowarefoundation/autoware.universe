@@ -41,9 +41,12 @@ CloudCollector::CloudCollector(
   const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
     std::chrono::duration<double>(timeout_sec_));
 
-  timer_ = rclcpp::create_timer(
-    ros2_parent_node_, ros2_parent_node_->get_clock(), period_ns,
-    std::bind(&CloudCollector::concatenate_callback, this));
+  timer_ =
+    rclcpp::create_timer(ros2_parent_node_, ros2_parent_node_->get_clock(), period_ns, [this]() {
+      std::lock_guard<std::mutex> concatenate_lock(concatenate_mutex_);
+      if (concatenate_finished_) return;
+      concatenate_callback();
+    });
 }
 
 void CloudCollector::set_arrival_timestamp(double timestamp)
@@ -72,9 +75,12 @@ bool CloudCollector::topic_exists(const std::string & topic_name)
   return topic_to_cloud_map_.find(topic_name) != topic_to_cloud_map_.end();
 }
 
-void CloudCollector::process_pointcloud(
+bool CloudCollector::process_pointcloud(
   const std::string & topic_name, sensor_msgs::msg::PointCloud2::SharedPtr cloud)
 {
+  std::lock_guard<std::mutex> concatenate_lock(concatenate_mutex_);
+  if (concatenate_finished_) return false;
+
   // Check if the map already contains an entry for the same topic. This shouldn't happen if the
   // parameter 'lidar_timestamp_noise_window' is set correctly.
   if (topic_to_cloud_map_.find(topic_name) != topic_to_cloud_map_.end()) {
@@ -88,6 +94,13 @@ void CloudCollector::process_pointcloud(
   if (topic_to_cloud_map_.size() == num_of_clouds_) {
     concatenate_callback();
   }
+
+  return true;
+}
+
+bool CloudCollector::concatenate_finished() const
+{
+  return concatenate_finished_;
 }
 
 void CloudCollector::concatenate_callback()
@@ -127,7 +140,7 @@ void CloudCollector::concatenate_callback()
     std::move(concatenated_cloud_result), reference_timestamp_min_, reference_timestamp_max_,
     arrival_timestamp_);
 
-  ros2_parent_node_->delete_collector(*this);
+  concatenate_finished_ = true;
 }
 
 ConcatenatedCloudResult CloudCollector::concatenate_pointclouds(

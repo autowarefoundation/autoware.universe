@@ -2,7 +2,32 @@
 
 ## Purpose
 
-The `concatenate_and_time_synchronize_node` is a ros2 node that combines and synchronizes multiple point clouds into a single concatenated point cloud. This enhances the sensing range for autonomous driving vehicles by integrating data from multiple LiDARs.
+The `concatenate_and_time_synchronize_node` is a ROS2 node designed to combine and synchronize multiple point clouds into a single, unified point cloud. By integrating data from multiple LiDARs, this node significantly enhances the sensing range and coverage of autonomous vehicles, enabling more accurate perception of the surrounding environment. Synchronization ensures that point clouds are aligned temporally, reducing errors caused by mismatched timestamps.
+
+For example, consider a vehicle equipped with three LiDAR sensors mounted on the left, right, and top positions. Each LiDAR captures data from its respective field of view, as shown below:
+
+<div align="center">
+  <table>
+    <tr>
+      <td><img src="./image/concatenate_left.png" alt="Concatenate Left" width="300"></td>
+      <td><img src="./image/concatenate_top.png" alt="Concatenate Top" width="300"></td>
+      <td><img src="./image/concatenate_right.png" alt="Concatenate Right" width="300"></td>
+    </tr>
+    <tr>
+      <td align="center">Left</td>
+      <td align="center">Right</td>
+      <td align="center">Top</td>
+    </tr>
+  </table>
+</div>
+
+After processing the data through the `concatenate_and_time_synchronize_node`, the outputs from all LiDARs are combined into a single comprehensive point cloud that provides a complete view of the environment:
+
+<div align="center">
+  <img src="./image/concatenate_all.png" alt="Full Scene View" width="500">
+</div>
+
+This resulting point cloud allows autonomous systems to detect obstacles, map the environment, and navigate more effectively, leveraging the complementary fields of view from multiple LiDAR sensors.
 
 ## Inner Workings / Algorithms
 
@@ -47,9 +72,9 @@ By setting the `input_twist_topic_type` parameter to `twist` or `odom`, the subs
 
 ### Parameter Settings
 
-If your LiDAR sensor does not support synchronization, set `use_naive_approach` to `true` to use the naive approach, which bypasses point cloud timestamps and directly concatenates the point clouds. On the other hand, if your LiDAR sensors are synchronized, set `use_naive_approach` to `false` and adjust the `lidar_timestamp_offsets` and `lidar_timestamp_noise_window` parameters accordingly.
+If you didn't synchronize your LiDAR sensors, set the `type` parameter of `matching_strategy` to `naive` to concatenate the point clouds directly. However, if your LiDAR sensors are synchronized, set type to `advanced` and adjust the `lidar_timestamp_offsets` and `lidar_timestamp_noise_window` parameters accordingly.
 
-The three parameters, `timeout_sec`, `lidar_timestamp_offsets`, and `lidar_timestamp_noise_window`, are essential for efficiently collecting point clouds in the same collector and managing edge cases effectively.
+The three parameters, `timeout_sec`, `lidar_timestamp_offsets`, and `lidar_timestamp_noise_window`, are essential for efficiently collecting point clouds in the same collector and managing edge cases (point cloud drops or delays) effectively.
 
 #### timeout_sec
 
@@ -209,4 +234,4 @@ Note that the `concatenate_pointclouds` and `time_synchronizer_nodelet` are usin
 ## Assumptions / Known Limits
 
 - If `is_motion_compensated` is set to `false`, the `concatenate_and_time_sync_node` will directly concatenate the point clouds without applying for motion compensation. This can save several milliseconds depending on the number of LiDARs being concatenated. Therefore, if the timestamp differences between point clouds are negligible, the user can set `is_motion_compensated` to `false` and omit the need for twist or odometry input for the node.
-- As mentioned above, the user should clearly understand how their LiDAR's point cloud timestamps are managed to set the parameters correctly. If the user does not synchronize the point clouds, please set `use_naive_approach` to `true`.
+- As mentioned above, the user should clearly understand how their LiDAR's point cloud timestamps are managed to set the parameters correctly. If the user does not synchronize the point clouds, please set `matching_strategy.type` to `naive`.
