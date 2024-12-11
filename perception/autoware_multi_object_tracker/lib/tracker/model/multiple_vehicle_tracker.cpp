@@ -32,7 +32,8 @@ MultipleVehicleTracker::MultipleVehicleTracker(
 : Tracker(time, object.classification, channel_size),
   normal_vehicle_tracker_(
     object_model::normal_vehicle, time, object, self_transform, channel_size, channel_index),
-  big_vehicle_tracker_(time, object, self_transform, channel_size, channel_index)
+  big_vehicle_tracker_(
+    object_model::big_vehicle, time, object, self_transform, channel_size, channel_index)
 {
   // initialize existence probability
   initializeExistenceProbabilities(channel_index, object.existence_probability);
