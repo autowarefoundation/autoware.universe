@@ -14,8 +14,6 @@
 
 #include "traffic_light_selector_node.hpp"
 
-#include "object_recognition_utils/object_recognition_utils.hpp"
-
 #include "sensor_msgs/msg/region_of_interest.hpp"
 
 #include <memory>
