@@ -187,6 +187,7 @@
   <group if="$(var switch/detector/lidar_rule)">
     <!-- Lidar rule-based detectors-->
     <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/detector/lidar_rule_detector.launch.xml">
+      <arg name="ns" value="$(var ns)"/>
       <arg name="node/pointcloud_container" value="$(var node/pointcloud_container)"/>
       <arg name="input/pointcloud_map/pointcloud" value="$(var pointcloud_filter/output/pointcloud)"/>
       <arg name="input/obstacle_segmentation/pointcloud" value="$(var input/obstacle_segmentation/pointcloud)"/>
