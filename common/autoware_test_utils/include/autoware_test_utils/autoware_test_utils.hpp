@@ -226,7 +226,8 @@ LaneletMapBin make_map_bin_msg(
  * @return A LaneletMapBin message containing the map data.
  */
 LaneletMapBin makeMapBinMsg(
-  const std::string & package_name = "", const std::string & map_filename = "lanelet2_map.osm");
+  const std::string & package_name = "autoware_test_utils",
+  const std::string & map_filename = "lanelet2_map.osm");
 
 /**
  * @brief Creates an Odometry message with a specified shift.

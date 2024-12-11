@@ -182,11 +182,7 @@ LaneletMapBin make_map_bin_msg(
 
 LaneletMapBin makeMapBinMsg(const std::string & package_name, const std::string & map_filename)
 {
-  if (package_name.empty()) {
-    return make_map_bin_msg(get_absolute_path_to_lanelet_map("autoware_test_utils", map_filename));
-  } else {
-    return make_map_bin_msg(get_absolute_path_to_lanelet_map(package_name, map_filename));
-  }
+  return make_map_bin_msg(get_absolute_path_to_lanelet_map(package_name, map_filename));
 }
 
 Odometry makeOdometry(const double shift)
