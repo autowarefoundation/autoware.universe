@@ -760,6 +760,7 @@ void GoalPlannerModule::processOnExit()
   resetPathCandidate();
   resetPathReference();
   debug_marker_.markers.clear();
+  context_data_ = std::nullopt;
   last_approval_data_.reset();
 }
 
@@ -1472,9 +1473,7 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsOutput(PullOverContextData
     // if the final path is not decided and enough time has passed since last path update,
     // select safe path from lane parking pull over path candidates
     // and set it to thread_safe_data_
-    RCLCPP_INFO(
-      getLogger(), "Update %lu pull over path candidates",
-      context_data.lane_parking_response.pull_over_path_candidates.size());
+    RCLCPP_DEBUG(getLogger(), "Update pull over path candidates");
 
     context_data.pull_over_path_opt = std::nullopt;
     context_data.last_path_update_time = std::nullopt;
@@ -1569,9 +1568,6 @@ void GoalPlannerModule::postProcess()
     path_decision_controller_.get_current_state().state == PathDecisionState::DecisionKind::DECIDED;
 
   if (!context_data.pull_over_path_opt) {
-    // TODO(soblin): now context_data has part of thread_safe_data, so must not be nullfied because
-    // this function is called in every cycle
-    context_data_ = std::nullopt;
     return;
   }
   const auto & pull_over_path = context_data.pull_over_path_opt.value();
@@ -1588,10 +1584,6 @@ void GoalPlannerModule::postProcess()
     has_decided_path ? SteeringFactor::TURNING : SteeringFactor::APPROACHING);
 
   setVelocityFactor(pull_over_path.full_path());
-
-  // TODO(soblin): now context_data has part of thread_safe_data, so must not be nullfied because
-  // this function is called in every cycle
-  context_data_ = std::nullopt;
 }
 
 BehaviorModuleOutput GoalPlannerModule::planWaitingApproval()
@@ -1852,13 +1844,12 @@ bool GoalPlannerModule::hasFinishedCurrentPath(const PullOverContextData & ctx_d
   // to prevent increment before driving
   // when the end of the current path is close to the current pose
   // this value should be `keep_stop_time` in keepStoppedWithCurrentPath
-  if (!ctx_data.last_path_idx_increment_time) {
+  if (!ctx_data.last_path_update_time) {
     return false;
   }
   constexpr double keep_current_idx_time = 4.0;
   const bool has_passed_enough_time_from_increment =
-    (clock_->now() - ctx_data.last_path_idx_increment_time.value()).seconds() >
-    keep_current_idx_time;
+    (clock_->now() - ctx_data.last_path_update_time.value()).seconds() > keep_current_idx_time;
   if (!has_passed_enough_time_from_increment) {
     return false;
   }
