@@ -85,14 +85,14 @@ TrafficLightArbiter::TrafficLightArbiter(const rclcpp::NodeOptions & options)
     std::bind(&TrafficLightArbiter::onMap, this, std::placeholders::_1));
 
   perception_tlr_sub_ = create_subscription<TrafficSignalArray>(
-    "~/sub/perception_traffic_signals", rclcpp::QoS(1),
+    "~/sub/perception_traffic_lights", rclcpp::QoS(1),
     std::bind(&TrafficLightArbiter::onPerceptionMsg, this, std::placeholders::_1));
 
   external_tlr_sub_ = create_subscription<TrafficSignalArray>(
-    "~/sub/external_traffic_signals", rclcpp::QoS(1),
+    "~/sub/external_traffic_lights", rclcpp::QoS(1),
     std::bind(&TrafficLightArbiter::onExternalMsg, this, std::placeholders::_1));
 
-  pub_ = create_publisher<TrafficSignalArray>("~/pub/traffic_signals", rclcpp::QoS(1));
+  pub_ = create_publisher<TrafficSignalArray>("~/pub/traffic_lights", rclcpp::QoS(1));
 }
 
 void TrafficLightArbiter::onMap(const LaneletMapBin::ConstSharedPtr msg)
