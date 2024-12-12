@@ -21,7 +21,8 @@
 namespace autoware::traffic_light
 {
 
-TrafficLightSignalsMergerNode::TrafficLightSignalsMergerNode(const rclcpp::NodeOptions & node_options)
+TrafficLightSignalsMergerNode::TrafficLightSignalsMergerNode(
+  const rclcpp::NodeOptions & node_options)
 : rclcpp::Node("traffic_light_signals_merger_node", node_options),
   tf_buffer_(get_clock()),
   tf_listener_(tf_buffer_),
@@ -32,7 +33,8 @@ TrafficLightSignalsMergerNode::TrafficLightSignalsMergerNode(const rclcpp::NodeO
   using std::placeholders::_1;
   using std::placeholders::_2;
   sync_.registerCallback(std::bind(&TrafficLightSignalsMergerNode::signalsCallback, this, _1, _2));
-  pub_traffic_light_signals_ = create_publisher<TrafficLightArray>("output/traffic_light_signals", rclcpp::QoS{1});
+  pub_traffic_light_signals_ =
+    create_publisher<TrafficLightArray>("output/traffic_light_signals", rclcpp::QoS{1});
 }
 
 void TrafficLightSignalsMergerNode::signalsCallback(
@@ -41,9 +43,11 @@ void TrafficLightSignalsMergerNode::signalsCallback(
 {
   TrafficLightArray output;
   output.header = car_signals_msg->header;
-  output.signals.insert(output.signals.end(), car_signals_msg->signals.begin(), car_signals_msg->signals.end());
   output.signals.insert(
-    output.signals.end(), pedestrian_signals_msg->signals.begin(), pedestrian_signals_msg->signals.end());
+    output.signals.end(), car_signals_msg->signals.begin(), car_signals_msg->signals.end());
+  output.signals.insert(
+    output.signals.end(), pedestrian_signals_msg->signals.begin(),
+    pedestrian_signals_msg->signals.end());
   pub_traffic_light_signals_->publish(output);
 }
 

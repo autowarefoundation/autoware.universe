@@ -45,8 +45,7 @@ private:
   message_filters::Subscriber<TrafficLightArray> car_signal_sub_;
   message_filters::Subscriber<TrafficLightArray> pedestrian_signal_sub_;
 
-  typedef message_filters::sync_policies::ApproximateTime<
-    TrafficLightArray, TrafficLightArray>
+  typedef message_filters::sync_policies::ApproximateTime<TrafficLightArray, TrafficLightArray>
     SyncPolicy;
   message_filters::Synchronizer<SyncPolicy> sync_;
 
@@ -54,11 +53,9 @@ private:
     const TrafficLightArray::ConstSharedPtr & car_signals_msg,
     const TrafficLightArray::ConstSharedPtr & pedestrian_signals_msg);
 
-  rclcpp::Publisher<TrafficLightArray>::SharedPtr  pub_traffic_light_signals_;
-
-
+  rclcpp::Publisher<TrafficLightArray>::SharedPtr pub_traffic_light_signals_;
 };
 
 }  // namespace autoware::traffic_light
 
-#endif  // TRAFFIC_LIGHT_SELECTOR_NODE_HPP_
+#endif  // TRAFFIC_LIGHT_SIGNALS_MERGER_NODE_HPP_
