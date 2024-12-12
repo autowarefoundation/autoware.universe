@@ -140,9 +140,9 @@ double SmoothStop::calculate(
   // when the car is running
   if (is_running) {
     // when the car will not stop in a certain time
-    if (time_to_stop && *time_to_stop > m_params.weak_stop_time + delay_time) {
-      return m_strong_acc;
-    } else if (!time_to_stop && is_fast_vel) {
+    if (
+      (time_to_stop && *time_to_stop > m_params.weak_stop_time + delay_time) ||
+      (!time_to_stop && is_fast_vel)) {
       return m_strong_acc;
     }
 
