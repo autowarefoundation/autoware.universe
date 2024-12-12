@@ -11,11 +11,11 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__DEBUG_STRUCTS_HPP_
-#define AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__DEBUG_STRUCTS_HPP_
+#ifndef AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__STRUCTS__DEBUG_HPP_
+#define AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__STRUCTS__DEBUG_HPP_
 
-#include "autoware/behavior_path_lane_change_module/utils/data_structs.hpp"
-#include "autoware/behavior_path_lane_change_module/utils/path.hpp"
+#include "autoware/behavior_path_lane_change_module/structs/data.hpp"
+#include "autoware/behavior_path_lane_change_module/structs/path.hpp"
 
 #include <autoware/behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp>
 
@@ -76,4 +76,4 @@ struct Debug
 };
 }  // namespace autoware::behavior_path_planner::lane_change
 
-#endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__DEBUG_STRUCTS_HPP_
+#endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__STRUCTS__DEBUG_HPP_

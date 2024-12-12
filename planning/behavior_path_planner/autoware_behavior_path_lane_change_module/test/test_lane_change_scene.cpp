@@ -14,7 +14,7 @@
 
 #include "autoware/behavior_path_lane_change_module/manager.hpp"
 #include "autoware/behavior_path_lane_change_module/scene.hpp"
-#include "autoware/behavior_path_lane_change_module/utils/data_structs.hpp"
+#include "autoware/behavior_path_lane_change_module/structs/data.hpp"
 #include "autoware/behavior_path_planner_common/data_manager.hpp"
 #include "autoware_test_utils/autoware_test_utils.hpp"
 #include "autoware_test_utils/mock_data_parser.hpp"

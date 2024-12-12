@@ -11,12 +11,12 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__BASE_CLASS_HPP_
-#define AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__BASE_CLASS_HPP_
+#ifndef AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__BASE_CLASS_HPP_
+#define AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__BASE_CLASS_HPP_
 
-#include "autoware/behavior_path_lane_change_module/utils/data_structs.hpp"
-#include "autoware/behavior_path_lane_change_module/utils/debug_structs.hpp"
-#include "autoware/behavior_path_lane_change_module/utils/path.hpp"
+#include "autoware/behavior_path_lane_change_module/structs/data.hpp"
+#include "autoware/behavior_path_lane_change_module/structs/debug.hpp"
+#include "autoware/behavior_path_lane_change_module/structs/path.hpp"
 #include "autoware/behavior_path_lane_change_module/utils/utils.hpp"
 #include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
 #include "autoware/behavior_path_planner_common/turn_signal_decider.hpp"
@@ -276,15 +276,15 @@ protected:
     }
   }
 
-  LaneChangeStatus status_{};
+  LaneChangeStatus status_;
   PathShifter path_shifter_{};
 
   LaneChangeStates current_lane_change_state_{};
 
-  std::shared_ptr<LaneChangeParameters> lane_change_parameters_{};
-  std::shared_ptr<LaneChangePath> abort_path_{};
-  std::shared_ptr<const PlannerData> planner_data_{};
-  lane_change::CommonDataPtr common_data_ptr_{};
+  std::shared_ptr<LaneChangeParameters> lane_change_parameters_;
+  std::shared_ptr<LaneChangePath> abort_path_;
+  std::shared_ptr<const PlannerData> planner_data_;
+  lane_change::CommonDataPtr common_data_ptr_;
   FilteredLanesObjects filtered_objects_{};
   BehaviorModuleOutput prev_module_output_{};
   std::optional<Pose> lane_change_stop_pose_{std::nullopt};
@@ -310,4 +310,4 @@ protected:
   friend class ::TestNormalLaneChange;
 };
 }  // namespace autoware::behavior_path_planner
-#endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__BASE_CLASS_HPP_
+#endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__BASE_CLASS_HPP_

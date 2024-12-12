@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__PARAMETERS_HPP_
-#define AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__PARAMETERS_HPP_
+#ifndef AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__STRUCTS__PARAMETERS_HPP_
+#define AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__STRUCTS__PARAMETERS_HPP_
 
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 
@@ -181,4 +181,4 @@ struct Parameters
 
 }  // namespace autoware::behavior_path_planner::lane_change
 
-#endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__PARAMETERS_HPP_
+#endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__STRUCTS__PARAMETERS_HPP_
