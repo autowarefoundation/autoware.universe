@@ -34,9 +34,12 @@
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info.hpp>
+#include <range/v3/action/insert.hpp>
 #include <range/v3/algorithm/any_of.hpp>
+#include <range/v3/algorithm/find_if.hpp>
+#include <range/v3/algorithm/for_each.hpp>
 #include <range/v3/range/conversion.hpp>
-#include <range/v3/view/transform.hpp>
+#include <range/v3/view.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/detail/pose__struct.hpp>
@@ -56,6 +59,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 namespace autoware::behavior_path_planner::utils::lane_change
@@ -1244,6 +1248,43 @@ bool filter_target_lane_objects(
   }
 
   return false;
+}
+
+std::vector<lanelet::ConstLanelets> get_preceding_lanes(const CommonDataPtr & common_data_ptr)
+{
+  const auto & route_handler_ptr = common_data_ptr->route_handler_ptr;
+  const auto & target_lanes = common_data_ptr->lanes_ptr->target;
+  const auto & ego_pose = common_data_ptr->get_ego_pose();
+  const auto backward_lane_length = common_data_ptr->lc_param_ptr->backward_lane_length;
+
+  const auto preceding_lanes_list =
+    utils::getPrecedingLanelets(*route_handler_ptr, target_lanes, ego_pose, backward_lane_length);
+
+  const auto & current_lanes = common_data_ptr->lanes_ptr->current;
+  std::unordered_set<lanelet::Id> current_lanes_id;
+  for (const auto & lane : current_lanes) {
+    current_lanes_id.insert(lane.id());
+  }
+  const auto is_overlapping = [&](const lanelet::ConstLanelet & lane) {
+    return current_lanes_id.find(lane.id()) != current_lanes_id.end();
+  };
+
+  std::vector<lanelet::ConstLanelets> non_overlapping_lanes_vec;
+  for (const auto & lanes : preceding_lanes_list) {
+    auto lanes_reversed = lanes | ranges::views::reverse;
+    auto overlapped_itr = ranges::find_if(lanes_reversed, is_overlapping);
+
+    if (overlapped_itr == lanes_reversed.begin()) {
+      continue;
+    }
+
+    // Lanes are not reversed by default. Avoid returning reversed lanes to prevent undefined
+    // behavior.
+    lanelet::ConstLanelets non_overlapping_lanes(overlapped_itr.base(), lanes.end());
+    non_overlapping_lanes_vec.push_back(non_overlapping_lanes);
+  }
+
+  return non_overlapping_lanes_vec;
 }
 
 bool object_path_overlaps_lanes(
