@@ -62,9 +62,11 @@ RemainingDistanceTimeCalculatorNode::RemainingDistanceTimeCalculatorNode(
     "~/output/mission_remaining_distance_time",
     rclcpp::QoS(rclcpp::KeepLast(10)).durability_volatile().reliable());
 
-  node_param_.update_rate = declare_parameter<double>("update_rate");
+  param_listener_ = std::make_shared<::remaining_distance_time_calculator::ParamListener>(
+    this->get_node_parameters_interface());
+  const auto param = param_listener_->get_params();
 
-  const auto period_ns = rclcpp::Rate(node_param_.update_rate).period();
+  const auto period_ns = rclcpp::Rate(param.update_rate).period();
   timer_ = rclcpp::create_timer(
     this, get_clock(), period_ns, std::bind(&RemainingDistanceTimeCalculatorNode::on_timer, this));
 }
