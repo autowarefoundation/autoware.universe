@@ -184,12 +184,11 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
     config.channel_size = input_channel_size_;
 
     // Declare parameters
-    config.tracker_lifetime = declare_parameter<double>("tracker_lifetime", 1.0);
-    config.min_known_object_removal_iou =
-      declare_parameter<double>("min_known_object_removal_iou", 0.1);
+    config.tracker_lifetime = declare_parameter<double>("tracker_lifetime");
+    config.min_known_object_removal_iou = declare_parameter<double>("min_known_object_removal_iou");
     config.min_unknown_object_removal_iou =
-      declare_parameter<double>("min_unknown_object_removal_iou", 0.05);
-    config.distance_threshold = declare_parameter<double>("distance_threshold", 5.0);
+      declare_parameter<double>("min_unknown_object_removal_iou");
+    config.distance_threshold = declare_parameter<double>("distance_threshold");
 
     // Map from class name to label
     std::map<std::string, LabelType> class_name_to_label = {
@@ -200,7 +199,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
 
     // Declare parameters and initialize confident_count_threshold_map
     for (const auto & [class_name, class_label] : class_name_to_label) {
-      int64_t value = declare_parameter<int64_t>("confident_count_threshold." + class_name, 3);
+      int64_t value = declare_parameter<int64_t>("confident_count_threshold." + class_name);
       config.confident_count_threshold[class_label] = static_cast<int>(value);
     }
 
