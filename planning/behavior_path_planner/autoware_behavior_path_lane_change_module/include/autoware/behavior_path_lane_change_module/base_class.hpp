@@ -235,9 +235,6 @@ public:
 protected:
   virtual int getNumToPreferredLane(const lanelet::ConstLanelet & lane) const = 0;
 
-  virtual bool get_prepare_segment(
-    PathWithLaneId & prepare_segment, const double prepare_length) const = 0;
-
   virtual bool isValidPath(const PathWithLaneId & path) const = 0;
 
   virtual bool isAbleToStopSafely() const = 0;
