@@ -329,7 +329,7 @@ void LaneParkingPlanner::onTimer()
     std::lock_guard<std::mutex> guard(mutex_);
     if (request_) {
       auto & request = request_.value();
-      local_request_opt.emplace(std::move(request));
+      local_request_opt.emplace(request);
     }
   }
   // end of critical section
@@ -467,9 +467,11 @@ void LaneParkingPlanner::onTimer()
   // set response
   {
     std::lock_guard<std::mutex> guard(mutex_);
-    response_.pull_over_path_candidates = std::move(path_candidates);
+    response_.pull_over_path_candidates = path_candidates;
     response_.closest_start_pose = closest_start_pose;
-    RCLCPP_INFO(getLogger(), "generated %lu pull over path candidates", path_candidates.size());
+    RCLCPP_INFO(
+      getLogger(), "generated %lu pull over path candidates",
+      response_.pull_over_path_candidates.size());
   }
 }
 
@@ -605,7 +607,7 @@ std::pair<LaneParkingResponse, FreespaceParkingResponse> GoalPlannerModule::sync
     // `planner_data_.is_route_handler_updated` variable is set true by behavior_path_planner
     // (although this flag is not implemented yet). In that case, gp_planner_data members except
     // for route_handler should be copied from planner_data_
-    lane_parking_response = std::move(lane_parking_response_);
+    lane_parking_response = lane_parking_response_;
   }
 
   FreespaceParkingResponse freespace_parking_response;
@@ -628,7 +630,7 @@ std::pair<LaneParkingResponse, FreespaceParkingResponse> GoalPlannerModule::sync
     // is thread-safe because gp_planner_data.occupancy_grid_map is only re-pointed here and its
     // prior resource is still owned by the onFreespaceParkingTimer thread locally.
     occupancy_grid_map_ = freespace_parking_request.get_occupancy_grid_map();
-    freespace_parking_response = std::move(freespace_parking_response_);
+    freespace_parking_response = freespace_parking_response_;
   }
   // end of critical section
   return {lane_parking_response, freespace_parking_response};
@@ -704,13 +706,23 @@ void GoalPlannerModule::updateData()
     modified_goal_pose, planner_data_, occupancy_grid_map_, is_current_safe, *parameters_,
     goal_searcher_, isActivated(), pull_over_path_recv, debug_data_.ego_polygons_expanded);
 
-  context_data_.emplace(
-    path_decision_controller_.get_current_state().is_stable_safe, static_target_objects,
-    dynamic_target_objects, prev_decision_state,
-    isStopped(
-      odometry_buffer_stopped_, planner_data_->self_odometry, parameters_->th_stopped_time,
-      parameters_->th_stopped_velocity),
-    std::move(lane_parking_response), std::move(freespace_parking_response));
+  if (context_data_) {
+    context_data_.value().update(
+      path_decision_controller_.get_current_state().is_stable_safe, static_target_objects,
+      dynamic_target_objects, prev_decision_state,
+      isStopped(
+        odometry_buffer_stopped_, planner_data_->self_odometry, parameters_->th_stopped_time,
+        parameters_->th_stopped_velocity),
+      lane_parking_response, freespace_parking_response);
+  } else {
+    context_data_.emplace(
+      path_decision_controller_.get_current_state().is_stable_safe, static_target_objects,
+      dynamic_target_objects, prev_decision_state,
+      isStopped(
+        odometry_buffer_stopped_, planner_data_->self_odometry, parameters_->th_stopped_time,
+        parameters_->th_stopped_velocity),
+      lane_parking_response, freespace_parking_response);
+  }
   auto & ctx_data = context_data_.value();
 
   if (!isActivated()) {
@@ -1259,7 +1271,7 @@ void GoalPlannerModule::setOutput(
     return;
   }
 
-  const auto & pull_over_path = context_data.pull_over_path_opt.value();
+  const auto & pull_over_path = selected_pull_over_path_with_velocity_opt.value();
   if (
     parameters_->safety_check_params.enable_safety_check && !context_data.is_stable_safe_path &&
     isActivated()) {
@@ -1460,7 +1472,9 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsOutput(PullOverContextData
     // if the final path is not decided and enough time has passed since last path update,
     // select safe path from lane parking pull over path candidates
     // and set it to thread_safe_data_
-    RCLCPP_DEBUG(getLogger(), "Update pull over path candidates");
+    RCLCPP_INFO(
+      getLogger(), "Update %lu pull over path candidates",
+      context_data.lane_parking_response.pull_over_path_candidates.size());
 
     context_data.pull_over_path_opt = std::nullopt;
     context_data.last_path_update_time = std::nullopt;
@@ -1496,6 +1510,7 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsOutput(PullOverContextData
       context_data.pull_over_path_opt = pull_over_path;
       context_data.last_path_update_time = clock_->now();
       context_data.last_path_idx_increment_time = std::nullopt;
+
       if (pull_over_path_with_velocity_opt) {
         auto & pull_over_path_with_velocity = pull_over_path_with_velocity_opt.value();
         // copy the path for later setOutput()
@@ -1554,6 +1569,8 @@ void GoalPlannerModule::postProcess()
     path_decision_controller_.get_current_state().state == PathDecisionState::DecisionKind::DECIDED;
 
   if (!context_data.pull_over_path_opt) {
+    // TODO(soblin): now context_data has part of thread_safe_data, so must not be nullfied because
+    // this function is called in every cycle
     context_data_ = std::nullopt;
     return;
   }
@@ -1572,6 +1589,8 @@ void GoalPlannerModule::postProcess()
 
   setVelocityFactor(pull_over_path.full_path());
 
+  // TODO(soblin): now context_data has part of thread_safe_data, so must not be nullfied because
+  // this function is called in every cycle
   context_data_ = std::nullopt;
 }
 

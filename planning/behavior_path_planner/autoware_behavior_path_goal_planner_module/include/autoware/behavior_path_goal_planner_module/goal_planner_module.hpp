@@ -88,8 +88,8 @@ struct PullOverContextData
   explicit PullOverContextData(
     const bool is_stable_safe_path, const PredictedObjects & static_objects,
     const PredictedObjects & dynamic_objects, const PathDecisionState & prev_state,
-    const bool is_stopped, LaneParkingResponse && lane_parking_response,
-    FreespaceParkingResponse && freespace_parking_response)
+    const bool is_stopped, const LaneParkingResponse & lane_parking_response,
+    const FreespaceParkingResponse & freespace_parking_response)
   : is_stable_safe_path(is_stable_safe_path),
     static_target_objects(static_objects),
     dynamic_target_objects(dynamic_objects),
@@ -99,18 +99,32 @@ struct PullOverContextData
     freespace_parking_response(freespace_parking_response)
   {
   }
-  const bool is_stable_safe_path;
-  const PredictedObjects static_target_objects;
-  const PredictedObjects dynamic_target_objects;
-  const PathDecisionState prev_state_for_debug;
-  const bool is_stopped;
-  const LaneParkingResponse lane_parking_response;
-  const FreespaceParkingResponse freespace_parking_response;
-  // TODO(soblin): due to deceleratePath(), this cannot be const member(velocity is modified by it),
-  // and bind following three member, rename as "SelectedPullOverPath"
+  // TODO(soblin): make following variables private
+  bool is_stable_safe_path;
+  PredictedObjects static_target_objects;
+  PredictedObjects dynamic_target_objects;
+  PathDecisionState prev_state_for_debug;
+  bool is_stopped;
+  LaneParkingResponse lane_parking_response;
+  FreespaceParkingResponse freespace_parking_response;
   std::optional<PullOverPath> pull_over_path_opt;
   std::optional<rclcpp::Time> last_path_update_time;
   std::optional<rclcpp::Time> last_path_idx_increment_time;
+
+  void update(
+    const bool is_stable_safe_path_, const PredictedObjects static_target_objects_,
+    const PredictedObjects dynamic_target_objects_, const PathDecisionState prev_state_for_debug_,
+    const bool is_stopped_, const LaneParkingResponse & lane_parking_response_,
+    const FreespaceParkingResponse & freespace_parking_response_)
+  {
+    is_stable_safe_path = is_stable_safe_path_;
+    static_target_objects = static_target_objects_;
+    dynamic_target_objects = dynamic_target_objects_;
+    prev_state_for_debug = prev_state_for_debug_;
+    is_stopped = is_stopped_;
+    lane_parking_response = lane_parking_response_;
+    freespace_parking_response = freespace_parking_response_;
+  }
 };
 
 bool isOnModifiedGoal(
