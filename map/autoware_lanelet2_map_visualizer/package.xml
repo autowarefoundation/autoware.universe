@@ -1,9 +1,9 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>autoware_lanelet2_map_visualizer</name>
-  <version>0.1.0</version>
-  <description>The autoware_lanelet2_map_visualizer package</description>
+  <name>autoware_geography_utils</name>
+  <version>0.39.0</version>
+  <description>The autoware_geography_utils package</description>
   <maintainer email="yamato.ando@tier4.jp">Yamato Ando</maintainer>
   <maintainer email="ryu.yamamoto@tier4.jp">Ryu Yamamoto</maintainer>
   <maintainer email="masahiro.sakamoto@tier4.jp">Masahiro Sakamoto</maintainer>
@@ -24,7 +24,6 @@
   <depend>autoware_map_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
-  <depend>tier4_map_msgs</depend>
   <depend>visualization_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>

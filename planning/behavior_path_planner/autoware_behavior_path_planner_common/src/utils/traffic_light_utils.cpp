@@ -14,7 +14,10 @@
 
 #include <autoware/behavior_path_planner_common/utils/traffic_light_utils.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
-#include <traffic_light_utils/traffic_light_utils.hpp>
+#include <autoware/traffic_light_utils/traffic_light_utils.hpp>
+
+#include <limits>
+#include <memory>
 
 namespace autoware::behavior_path_planner::utils::traffic_light
 {
@@ -91,7 +94,7 @@ std::optional<double> calcDistanceToRedTrafficLight(
         continue;
       }
 
-      if (!traffic_light_utils::isTrafficSignalStop(
+      if (!autoware::traffic_light_utils::isTrafficSignalStop(
             lanelet, traffic_signal_stamped.value().signal)) {
         continue;
       }
@@ -130,7 +133,7 @@ bool isStoppedAtRedTrafficLightWithinDistance(
     return false;
   }
 
-  return (distance_to_red_traffic_light < distance_threshold);
+  return (distance_to_red_traffic_light.value() < distance_threshold);
 }
 
 bool isTrafficSignalStop(
@@ -143,7 +146,7 @@ bool isTrafficSignalStop(
         continue;
       }
 
-      if (traffic_light_utils::isTrafficSignalStop(
+      if (autoware::traffic_light_utils::isTrafficSignalStop(
             lanelet, traffic_signal_stamped.value().signal)) {
         return true;
       }
