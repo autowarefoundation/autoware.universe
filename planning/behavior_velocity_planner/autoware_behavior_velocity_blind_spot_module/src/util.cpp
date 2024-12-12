@@ -220,8 +220,8 @@ lanelet::ConstLanelets generateBlindSpotLanelets(
         break;
       }
       // make lane_ids unique
-      if (std::find(lane_ids.begin(), lane_ids.end(), lane_id) == lane_ids.end()) {
-        lane_ids.push_back(lane_id);
+      if (std::find(lane_ids.begin(), lane_ids.end(), id) == lane_ids.end()) {
+        lane_ids.push_back(id);
       }
     }
     if (found_intersection_lane) break;
@@ -301,6 +301,7 @@ lanelet::ConstLanelets generateBlindSpotLanelets(
       blind_spot_lanelets.push_back(ego_half_lanelet);
     }
   }
+
   return blind_spot_lanelets;
 }
 
