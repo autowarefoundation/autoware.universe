@@ -99,6 +99,7 @@ struct EgoData
   std::vector<autoware_planning_msgs::msg::TrajectoryPoint>
     trajectory_points;  // filtered trajectory starting from the 1st point behind ego
   geometry_msgs::msg::Pose pose;
+  double velocity{};              // [m/s] current longitudinal velocity of the ego vehicle
   size_t first_trajectory_idx{};  // segment index closest to ego on the original trajectory
   double
     longitudinal_offset_to_first_trajectory_index{};  // longitudinal offset of ego along the
