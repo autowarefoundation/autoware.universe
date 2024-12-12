@@ -223,7 +223,7 @@ std::optional<geometry_msgs::msg::Pose> OutOfLaneModule::calculate_slowdown_pose
     previous_slowdown_pose_.reset();
   }
 
-  auto slowdown_pose = out_of_lane::calculate_slowdown_point(ego_data, out_of_lane_data, params_);
+  auto slowdown_pose = out_of_lane::calculate_slowdown_pose(ego_data, out_of_lane_data, params_);
 
   // reuse previous stop pose if there is no new one or if its velocity is not higher than the new
   // one and its arc length is lower
