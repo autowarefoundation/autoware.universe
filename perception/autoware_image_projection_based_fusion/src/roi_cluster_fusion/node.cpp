@@ -195,17 +195,17 @@ void RoiClusterFusionNode::fuseOnSingleImage(
       inner_st_ptr = std::make_unique<ScopedTimeTrack>("compare ROI", *time_keeper_);
 
     // sort the clusters by their x-values to search for the max IoU efficiently
-    std::sort(m_cluster_roi.begin(), m_cluster_roi.end(),
-      [](const auto &a, const auto &b) { return a.second.x_offset < b.second.x_offset; }
-    );
+    std::sort(m_cluster_roi.begin(), m_cluster_roi.end(), [](const auto & a, const auto & b) {
+      return a.second.x_offset < b.second.x_offset;
+    });
 
     for (const auto & feature_obj : input_roi_msg.feature_objects) {
       int index = -1;
       bool associated = false;
       double max_iou = 0.0;
       auto image_roi = feature_obj.feature.roi;
-      const unsigned int image_roi_right_side_x = image_roi.x_offset+image_roi.width;
-      const unsigned int image_roi_bottom_side_y = image_roi.y_offset+image_roi.height;
+      const unsigned int image_roi_right_side_x = image_roi.x_offset + image_roi.width;
+      const unsigned int image_roi_bottom_side_y = image_roi.y_offset + image_roi.height;
       const bool is_roi_label_known =
         feature_obj.object.classification.front().label != ObjectClassification::UNKNOWN;
       for (const auto & cluster_map : m_cluster_roi) {
@@ -231,7 +231,9 @@ void RoiClusterFusionNode::fuseOnSingleImage(
 
         // If the cluster ROI is to the right of the sorted ROIs and below them,
         // there is no chance of achieving a larger IoU
-        if (cluster_roi.x_offset > image_roi_right_side_x && cluster_roi.y_offset > image_roi_bottom_side_y){
+        if (
+          cluster_roi.x_offset > image_roi_right_side_x &&
+          cluster_roi.y_offset > image_roi_bottom_side_y) {
           break;
         }
       }
