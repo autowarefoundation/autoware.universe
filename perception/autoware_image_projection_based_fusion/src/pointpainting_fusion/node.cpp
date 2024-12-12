@@ -161,9 +161,7 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
 
   tan_h_.resize(rois_number_);
   for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
-    auto fx = camera_info_map_[roi_i].k.at(0);
-    auto x0 = camera_info_map_[roi_i].k.at(2);
-    tan_h_[roi_i] = x0 / fx;
+    tan_h_[roi_i] = 0;
   }
 
   detection_class_remapper_.setParameters(
@@ -272,6 +270,13 @@ void PointPaintingFusionNode::fuseOnSingleImage(
   }
 
   if (!checkCameraInfo(camera_info)) return;
+
+  // update camera fov
+  for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
+    auto fx = camera_info_map_[roi_i].k.at(0);
+    auto x0 = camera_info_map_[roi_i].k.at(2);
+    tan_h_[roi_i] = x0 / fx;
+  }
 
   std::vector<sensor_msgs::msg::RegionOfInterest> debug_image_rois;
   std::vector<Eigen::Vector2d> debug_image_points;
