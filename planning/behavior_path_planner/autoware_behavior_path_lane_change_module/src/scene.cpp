@@ -681,7 +681,7 @@ void NormalLaneChange::resetParameters()
   is_abort_approval_requested_ = false;
   current_lane_change_state_ = LaneChangeStates::Normal;
   abort_path_ = nullptr;
-  status_ = {};
+  status_ = LaneChangeStatus();
   unsafe_hysteresis_count_ = 0;
   lane_change_debug_.reset();
 

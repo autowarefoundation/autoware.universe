@@ -11,10 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__DATA_STRUCTS_HPP_
-#define AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__DATA_STRUCTS_HPP_
+#ifndef AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__STRUCTS__DATA_HPP_
+#define AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__STRUCTS__DATA_HPP_
 
-#include "autoware/behavior_path_lane_change_module/utils/parameters.hpp"
+#include "autoware/behavior_path_lane_change_module/structs/parameters.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 
@@ -72,6 +72,7 @@ struct PhaseMetrics
   double actual_lon_accel{0.0};
   double lat_accel{0.0};
 
+  PhaseMetrics() = default;
   PhaseMetrics(
     const double _duration, const double _length, const double _velocity,
     const double _sampled_lon_accel, const double _actual_lon_accel, const double _lat_accel)
@@ -103,10 +104,10 @@ struct Info
   PhaseInfo duration{0.0, 0.0};
   PhaseInfo length{0.0, 0.0};
 
-  Pose lane_changing_start{};
-  Pose lane_changing_end{};
+  Pose lane_changing_start;
+  Pose lane_changing_end;
 
-  ShiftLine shift_line{};
+  ShiftLine shift_line;
 
   double lateral_acceleration{0.0};
   double terminal_lane_changing_velocity{0.0};
@@ -294,4 +295,4 @@ using FilteredLanesObjects = lane_change::FilteredLanesObjects;
 using LateralAccelerationMap = lane_change::LateralAccelerationMap;
 }  // namespace autoware::behavior_path_planner
 
-#endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__DATA_STRUCTS_HPP_
+#endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__STRUCTS__DATA_HPP_
