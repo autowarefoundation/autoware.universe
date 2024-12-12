@@ -66,7 +66,7 @@ void CustomSegmentedButton::paintEvent(QPaintEvent *)
 
   // Draw background
   QPainterPath path;
-  path.addRoundedRect(rect(), height() / 2, height() / 2);
+  path.addRoundedRect(rect(), height() / 2.0, height() / 2.0);
 
   painter.setPen(Qt::NoPen);
   painter.setBrush(
