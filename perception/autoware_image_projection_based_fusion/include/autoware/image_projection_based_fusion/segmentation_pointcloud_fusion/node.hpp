@@ -20,6 +20,7 @@
 #include <autoware/image_projection_based_fusion/utils/utils.hpp>
 #include <image_transport/image_transport.hpp>
 
+#include <memory>
 #include <string>
 #include <unordered_set>
 #include <utility>
