@@ -20,9 +20,11 @@
   <depend>autoware_global_parameter_loader</depend>
   <depend>autoware_interpolation</depend>
   <depend>autoware_lanelet2_extension</depend>
+  <depend>autoware_lanelet2_map_visualizer</depend>
   <depend>autoware_map_loader</depend>
   <depend>autoware_map_msgs</depend>
   <depend>autoware_map_projection_loader</depend>
+  <depend>autoware_map_tf_generator</depend>
   <depend>autoware_mission_planner</depend>
   <depend>autoware_motion_utils</depend>
   <depend>autoware_osqp_interface</depend>
