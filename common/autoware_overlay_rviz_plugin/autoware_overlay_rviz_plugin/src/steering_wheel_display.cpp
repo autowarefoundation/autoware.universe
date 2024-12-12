@@ -93,7 +93,7 @@ void SteeringWheelDisplay::drawSteeringWheel(
   QImage rotatedWheel = wheel.transformed(rotationTransform, Qt::SmoothTransformation);
 
   QPointF drawPoint(
-    wheelCenterX - rotatedWheel.width() / 2, wheelCenterY - rotatedWheel.height() / 2);
+    wheelCenterX - rotatedWheel.width() / 2.0, wheelCenterY - rotatedWheel.height() / 2.0);
 
   // Draw the rotated image
   painter.drawImage(drawPoint.x(), drawPoint.y(), rotatedWheel);
