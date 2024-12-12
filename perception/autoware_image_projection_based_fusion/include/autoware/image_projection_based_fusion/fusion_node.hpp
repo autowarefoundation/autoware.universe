@@ -21,7 +21,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_perception_msgs/msg/detected_objects.hpp>
-#include <autoware_perception_msgs/msg/segmentation_mask.hpp>
+#include <autoware_internal_perception_msgs/msg/segmentation_mask.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/image.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
@@ -56,7 +56,7 @@ using tier4_perception_msgs::msg::DetectedObjectsWithFeature;
 using tier4_perception_msgs::msg::DetectedObjectWithFeature;
 using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
 using autoware_perception_msgs::msg::ObjectClassification;
-using autoware_perception_msgs::msg::SegmentationMask;
+using autoware_internal_perception_msgs::msg::SegmentationMask;
 
 template <class TargetMsg3D, class ObjType, class Msg2D>
 class FusionNode : public rclcpp::Node

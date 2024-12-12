@@ -17,17 +17,17 @@ The `mask_cluster_fusion` package aims to assign the label of the mask to the cl
 
 ### Input
 
-| Name                     | Type                                                     | Description                                               |
-| ------------------------ | -------------------------------------------------------- | --------------------------------------------------------- |
-| `input`                  | `tier4_perception_msgs::msg::DetectedObjectsWithFeature` | clustered pointcloud                                      |
-| `input/camera_info[0-7]` | `sensor_msgs::msg::CameraInfo`                           | camera information to project 3d points onto image planes |
-| `input/masks[0-7]`       | `autoware_perception_msgs::msg::SegmentationMask`        | masks from each image                                     |
-| `input/image_raw[0-7]`   | `sensor_msgs::msg::Image`                                | images for visualization                                  |
+| Name                     | Type                                                       | Description                                               |
+|--------------------------|------------------------------------------------------------|-----------------------------------------------------------|
+| `input`                  | `tier4_perception_msgs::msg::DetectedObjectsWithFeature`   | clustered pointcloud                                      |
+| `input/camera_info[0-7]` | `sensor_msgs::msg::CameraInfo`                             | camera information to project 3d points onto image planes |
+| `input/masks[0-7]`       | `autoware_internal_perception_msgs::msg::SegmentationMask` | masks from each image                                     |
+| `input/image_raw[0-7]`   | `sensor_msgs::msg::Image`                                  | images for visualization                                  |
 
 ### Output
 
 | Name                     | Type                                                     | Description                |
-| ------------------------ | -------------------------------------------------------- | -------------------------- |
+|--------------------------|----------------------------------------------------------|----------------------------|
 | `output`                 | `tier4_perception_msgs::msg::DetectedObjectsWithFeature` | labeled cluster pointcloud |
 | `~/debug/image_raw[0-7]` | `sensor_msgs::msg::Image`                                | images for visualization   |
 
