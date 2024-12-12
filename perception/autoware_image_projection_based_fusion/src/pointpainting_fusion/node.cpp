@@ -159,11 +159,11 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
   sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS().keep_last(3), sub_callback);
 
-  tan_h_left_.resize(rois_number_);
-  tan_h_right_.resize(rois_number_);
+  fov_left_.resize(rois_number_);
+  fov_right_.resize(rois_number_);
   for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
-    tan_h_left_[roi_i] = 0;
-    tan_h_right_[roi_i] = 0;
+    fov_left_[roi_i] = 0;
+    fov_right_[roi_i] = 0;
   }
 
   detection_class_remapper_.setParameters(
@@ -251,6 +251,15 @@ void PointPaintingFusionNode::preprocess(sensor_msgs::msg::PointCloud2 & painted
     painted_pointcloud_msg.point_step);
   painted_pointcloud_msg.row_step =
     static_cast<uint32_t>(painted_pointcloud_msg.data.size() / painted_pointcloud_msg.height);
+
+  // update camera fov
+  for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
+    const auto fx = camera_info_map_[roi_i].k.at(0);
+    const auto x0 = camera_info_map_[roi_i].k.at(2);
+    const auto width = camera_info_map_[roi_i].width;
+    fov_left_[roi_i] = -x0 / fx;
+    fov_right_[roi_i] = (-x0 + width) / fx;
+  }
 }
 
 void PointPaintingFusionNode::fuseOnSingleImage(
@@ -272,15 +281,6 @@ void PointPaintingFusionNode::fuseOnSingleImage(
   }
 
   if (!checkCameraInfo(camera_info)) return;
-
-  // update camera fov
-  for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
-    const auto fx = camera_info_map_[roi_i].k.at(0);
-    const auto x0 = camera_info_map_[roi_i].k.at(2);
-    const auto width = camera_info_map_[roi_i].width;
-    tan_h_left_[roi_i] = (x0-width) / fx;
-    tan_h_right_[roi_i] = x0 / fx;
-  }
 
   std::vector<sensor_msgs::msg::RegionOfInterest> debug_image_rois;
   std::vector<Eigen::Vector2d> debug_image_points;
@@ -349,8 +349,8 @@ dc   | dc dc dc  dc ||zc|
 
     /// check if the point is in the camera view
     if (p_z <= 0.0) continue;
-    if (p_x < tan_h_left_.at(image_id) * p_z) continue;
-    if ( p_x > tan_h_right_.at(image_id) * p_z)continue;
+    if (p_x < fov_left_.at(image_id) * p_z) continue;
+    if (p_x > fov_right_.at(image_id) * p_z) continue;
 
     // project
     Eigen::Vector2d projected_point = calcRawImageProjectedPoint(

@@ -61,8 +61,8 @@ protected:
   rclcpp::Publisher<DetectedObjects>::SharedPtr obj_pub_ptr_;
 
   // horizontal field of view
-  std::vector<double> tan_h_left_;
-  std::vector<double> tan_h_right_;
+  std::vector<double> fov_left_;
+  std::vector<double> fov_right_;
 
   int omp_num_threads_{1};
   float score_threshold_{0.0};
