@@ -17,7 +17,7 @@
 //
 #define EIGEN_MPL2_ONLY
 
-#include "autoware/multi_object_tracker/tracker/model/big_vehicle_tracker.hpp"
+#include "autoware/multi_object_tracker/tracker/model/vehicle_tracker.hpp"
 
 #include "autoware/multi_object_tracker/utils/utils.hpp"
 #include "autoware/object_recognition_utils/object_recognition_utils.hpp"
@@ -42,14 +42,17 @@
 
 namespace autoware::multi_object_tracker
 {
+
 using Label = autoware_perception_msgs::msg::ObjectClassification;
 
-BigVehicleTracker::BigVehicleTracker(
-  const rclcpp::Time & time, const autoware_perception_msgs::msg::DetectedObject & object,
+VehicleTracker::VehicleTracker(
+  const object_model::ObjectModel & object_model, const rclcpp::Time & time,
+  const autoware_perception_msgs::msg::DetectedObject & object,
   const geometry_msgs::msg::Transform & /*self_transform*/, const size_t channel_size,
   const uint & channel_index)
 : Tracker(time, object.classification, channel_size),
-  logger_(rclcpp::get_logger("BigVehicleTracker")),
+  object_model_(object_model),
+  logger_(rclcpp::get_logger("VehicleTracker")),
   z_(object.kinematics.pose_with_covariance.pose.position.z),
   tracking_offset_(Eigen::Vector2d::Zero())
 {
@@ -72,7 +75,8 @@ BigVehicleTracker::BigVehicleTracker(
     if (!utils::convertConvexHullToBoundingBox(object, bbox_object)) {
       RCLCPP_WARN(
         logger_,
-        "BigVehicleTracker::BigVehicleTracker: Failed to convert convex hull to bounding box.");
+        "VehicleTracker::VehicleTracker: Failed to convert convex hull to bounding "
+        "box.");
       bounding_box_ = {
         object_model_.init_size.length, object_model_.init_size.width,
         object_model_.init_size.height};  // default value
@@ -158,12 +162,12 @@ BigVehicleTracker::BigVehicleTracker(
   }
 }
 
-bool BigVehicleTracker::predict(const rclcpp::Time & time)
+bool VehicleTracker::predict(const rclcpp::Time & time)
 {
   return motion_model_.predictState(time);
 }
 
-autoware_perception_msgs::msg::DetectedObject BigVehicleTracker::getUpdatingObject(
+autoware_perception_msgs::msg::DetectedObject VehicleTracker::getUpdatingObject(
   const autoware_perception_msgs::msg::DetectedObject & object,
   const geometry_msgs::msg::Transform & self_transform)
 {
@@ -176,7 +180,7 @@ autoware_perception_msgs::msg::DetectedObject BigVehicleTracker::getUpdatingObje
     if (!utils::convertConvexHullToBoundingBox(object, bbox_object)) {
       RCLCPP_WARN(
         logger_,
-        "BigVehicleTracker::getUpdatingObject: Failed to convert convex hull to bounding box.");
+        "VehicleTracker::getUpdatingObject: Failed to convert convex hull to bounding box.");
       bbox_object = object;
     }
   }
@@ -196,8 +200,7 @@ autoware_perception_msgs::msg::DetectedObject BigVehicleTracker::getUpdatingObje
   return updating_object;
 }
 
-bool BigVehicleTracker::measureWithPose(
-  const autoware_perception_msgs::msg::DetectedObject & object)
+bool VehicleTracker::measureWithPose(const autoware_perception_msgs::msg::DetectedObject & object)
 {
   // current (predicted) state
   const double tracked_vel = motion_model_.getStateElement(IDX::VEL);
@@ -239,8 +242,7 @@ bool BigVehicleTracker::measureWithPose(
   return is_updated;
 }
 
-bool BigVehicleTracker::measureWithShape(
-  const autoware_perception_msgs::msg::DetectedObject & object)
+bool VehicleTracker::measureWithShape(const autoware_perception_msgs::msg::DetectedObject & object)
 {
   if (object.shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     // do not update shape if the input is not a bounding box
@@ -292,7 +294,7 @@ bool BigVehicleTracker::measureWithShape(
   return true;
 }
 
-bool BigVehicleTracker::measure(
+bool VehicleTracker::measure(
   const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
   const geometry_msgs::msg::Transform & self_transform)
 {
@@ -312,7 +314,7 @@ bool BigVehicleTracker::measure(
   if (0.01 /*10msec*/ < dt) {
     RCLCPP_WARN(
       logger_,
-      "BigVehicleTracker::measure There is a large gap between predicted time and measurement "
+      "VehicleTracker::measure There is a large gap between predicted time and measurement "
       "time. (%f)",
       dt);
   }
@@ -326,7 +328,7 @@ bool BigVehicleTracker::measure(
   return true;
 }
 
-bool BigVehicleTracker::getTrackedObject(
+bool VehicleTracker::getTrackedObject(
   const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObject & object) const
 {
   object = autoware::object_recognition_utils::toTrackedObject(object_);
@@ -340,7 +342,7 @@ bool BigVehicleTracker::getTrackedObject(
   if (!motion_model_.getPredictedState(
         time, pose_with_cov.pose, pose_with_cov.covariance, twist_with_cov.twist,
         twist_with_cov.covariance)) {
-    RCLCPP_WARN(logger_, "BigVehicleTracker::getTrackedObject: Failed to get predicted state.");
+    RCLCPP_WARN(logger_, "VehicleTracker::getTrackedObject: Failed to get predicted state.");
     return false;
   }
 
