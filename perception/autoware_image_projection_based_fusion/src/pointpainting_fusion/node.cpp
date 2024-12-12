@@ -332,7 +332,18 @@ dc   | dc dc dc  dc ||zc|
                      |dc|
    **/
 
-  auto objects = input_roi_msg.feature_objects;
+  std::vector<FeatureobjectAndROIInfo> feature_object_with_roi_info;
+  for (const auto & feature_object : input_roi_msg.feature_objects) {
+    feature_object_with_roi_info.push_back(
+      FeatureobjectAndROIInfo{
+        &feature_object, feature_object.feature.roi.x_offset+feature_object.feature.roi.width, feature_object.object.classification.front().label
+    });
+  }
+  // sort the ROI by their x-values to search efficiently
+  std::sort(feature_object_with_roi_info.begin(), feature_object_with_roi_info.end(),
+    [](const auto &a, const auto &b) { return a.feature_obj->feature.roi.x_offset < b.feature_obj->feature.roi.x_offset; }
+  );
+
   int iterations = painted_pointcloud_msg.data.size() / painted_pointcloud_msg.point_step;
 
   {  // iterate points and calculate camera projections
@@ -366,13 +377,29 @@ dc   | dc dc dc  dc ||zc|
       Eigen::Vector2d projected_point = calcRawImageProjectedPoint(
         pinhole_camera_model, cv::Point3d(p_x, p_y, p_z), point_project_to_unrectified_image_);
 
+#if 0
+      // Parallelizing loop don't support push_back
+      if (debugger_) {
+        debug_image_points.push_back(projected_point);
+      }
+#endif
+
+      const double px = projected_point.x();
+      const double py = projected_point.y();
+      // filter the points in the left side of most left located ROI
+      // if isInsideBbox's zc is not 1.0, this will break the logic
+      // since it is assuming on the image plane (pixel coodinate)
+      if (feature_object_with_roi_info.size() > 0 && px < feature_object_with_roi_info[0].feature_obj->feature.roi.x_offset) {
+        continue;
+      }
+
       // iterate 2d bbox
-      for (const auto & feature_object : objects) {
-        sensor_msgs::msg::RegionOfInterest roi = feature_object.feature.roi;
+      for (const auto & obj : feature_object_with_roi_info) {
+        sensor_msgs::msg::RegionOfInterest roi = obj.feature_obj->feature.roi;
         // paint current point if it is inside bbox
-        int label2d = feature_object.object.classification.front().label;
+        int label2d = obj.label;
         if (
-          !isUnknown(label2d) && isInsideBbox(projected_point.x(), projected_point.y(), roi, 1.0)) {
+          !isUnknown(label2d) && isInsideBbox(px, py, roi, 1.0)) {
           // cppcheck-suppress invalidPointerCast
           auto p_class = reinterpret_cast<float *>(&output[stride + class_offset]);
           for (const auto & cls : isClassTable_) {
@@ -380,12 +407,13 @@ dc   | dc dc dc  dc ||zc|
             *p_class = cls.second(label2d) ? (class_index_[cls.first] + *p_class) : *p_class;
           }
         }
-#if 0
-        // Parallelizing loop don't support push_back
-        if (debugger_) {
-          debug_image_points.push_back(projected_point);
+        // if the projected_point is in the right side of the ROI,
+        // we don't need to search more than this ROI bbox
+        // if isInsideBbox's zc is not 1.0, this will break the logic
+        // since it is assuming on the image plane (pixel coodinate)
+        if (px > obj.roi_right_side_x){
+          break;
         }
-#endif
       }
     }
   }

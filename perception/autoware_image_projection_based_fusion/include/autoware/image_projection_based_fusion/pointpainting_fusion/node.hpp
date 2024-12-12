@@ -33,6 +33,13 @@ namespace autoware::image_projection_based_fusion
 {
 using Label = autoware_perception_msgs::msg::ObjectClassification;
 
+struct FeatureobjectAndROIInfo
+{
+  const DetectedObjectWithFeature * feature_obj;
+  uint32_t roi_right_side_x;
+  uint8_t label;
+};
+
 inline bool isInsideBbox(
   float proj_x, float proj_y, sensor_msgs::msg::RegionOfInterest roi, float zc)
 {
