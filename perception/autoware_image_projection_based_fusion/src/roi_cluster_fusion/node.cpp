@@ -16,12 +16,14 @@
 
 #include <autoware/image_projection_based_fusion/utils/geometry.hpp>
 #include <autoware/image_projection_based_fusion/utils/utils.hpp>
+#include <autoware/universe_utils/system/time_keeper.hpp>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
 #include <algorithm>
 #include <map>
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -36,6 +38,7 @@
 
 namespace autoware::image_projection_based_fusion
 {
+using autoware::universe_utils::ScopedTimeTrack;
 
 RoiClusterFusionNode::RoiClusterFusionNode(const rclcpp::NodeOptions & options)
 : FusionNode<DetectedObjectsWithFeature, DetectedObjectWithFeature, DetectedObjectsWithFeature>(
@@ -55,6 +58,9 @@ RoiClusterFusionNode::RoiClusterFusionNode(const rclcpp::NodeOptions & options)
 
 void RoiClusterFusionNode::preprocess(DetectedObjectsWithFeature & output_cluster_msg)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   // reset cluster semantic type
   if (!use_cluster_semantic_type_) {
     for (auto & feature_object : output_cluster_msg.feature_objects) {
@@ -67,6 +73,9 @@ void RoiClusterFusionNode::preprocess(DetectedObjectsWithFeature & output_cluste
 
 void RoiClusterFusionNode::postprocess(DetectedObjectsWithFeature & output_cluster_msg)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   if (!remove_unknown_) {
     return;
   }
@@ -89,6 +98,9 @@ void RoiClusterFusionNode::fuseOnSingleImage(
   const DetectedObjectsWithFeature & input_roi_msg,
   const sensor_msgs::msg::CameraInfo & camera_info, DetectedObjectsWithFeature & output_cluster_msg)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   if (!checkCameraInfo(camera_info)) return;
 
   image_geometry::PinholeCameraModel pinhole_camera_model;
@@ -110,119 +122,137 @@ void RoiClusterFusionNode::fuseOnSingleImage(
   }
 
   std::map<std::size_t, RegionOfInterest> m_cluster_roi;
-  for (std::size_t i = 0; i < input_cluster_msg.feature_objects.size(); ++i) {
-    if (input_cluster_msg.feature_objects.at(i).feature.cluster.data.empty()) {
-      continue;
-    }
 
-    if (is_far_enough(input_cluster_msg.feature_objects.at(i), fusion_distance_)) {
-      continue;
-    }
+  {  // calculate camera projections and create ROI clusters
+    std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
+    if (time_keeper_)
+      inner_st_ptr =
+        std::make_unique<ScopedTimeTrack>("calculate camera projection", *time_keeper_);
 
-    // filter point out of scope
-    if (debugger_ && out_of_scope(input_cluster_msg.feature_objects.at(i))) {
-      continue;
-    }
-
-    sensor_msgs::msg::PointCloud2 transformed_cluster;
-    tf2::doTransform(
-      input_cluster_msg.feature_objects.at(i).feature.cluster, transformed_cluster,
-      transform_stamped);
-
-    int min_x(camera_info.width), min_y(camera_info.height), max_x(0), max_y(0);
-    std::vector<Eigen::Vector2d> projected_points;
-    projected_points.reserve(transformed_cluster.data.size());
-    for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(transformed_cluster, "x"),
-         iter_y(transformed_cluster, "y"), iter_z(transformed_cluster, "z");
-         iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z) {
-      if (*iter_z <= 0.0) {
+    for (std::size_t i = 0; i < input_cluster_msg.feature_objects.size(); ++i) {
+      if (input_cluster_msg.feature_objects.at(i).feature.cluster.data.empty()) {
         continue;
       }
 
-      Eigen::Vector2d projected_point = calcRawImageProjectedPoint(
-        pinhole_camera_model, cv::Point3d(*iter_x, *iter_y, *iter_z),
-        point_project_to_unrectified_image_);
-      if (
-        0 <= static_cast<int>(projected_point.x()) &&
-        static_cast<int>(projected_point.x()) <= static_cast<int>(camera_info.width) - 1 &&
-        0 <= static_cast<int>(projected_point.y()) &&
-        static_cast<int>(projected_point.y()) <= static_cast<int>(camera_info.height) - 1) {
-        min_x = std::min(static_cast<int>(projected_point.x()), min_x);
-        min_y = std::min(static_cast<int>(projected_point.y()), min_y);
-        max_x = std::max(static_cast<int>(projected_point.x()), max_x);
-        max_y = std::max(static_cast<int>(projected_point.y()), max_y);
-        projected_points.push_back(projected_point);
-        if (debugger_) debugger_->obstacle_points_.push_back(projected_point);
+      if (is_far_enough(input_cluster_msg.feature_objects.at(i), fusion_distance_)) {
+        continue;
       }
-    }
-    if (projected_points.empty()) {
-      continue;
-    }
 
-    sensor_msgs::msg::RegionOfInterest roi;
-    // roi.do_rectify = m_camera_info_.at(id).do_rectify;
-    roi.x_offset = min_x;
-    roi.y_offset = min_y;
-    roi.width = max_x - min_x;
-    roi.height = max_y - min_y;
-    m_cluster_roi.insert(std::make_pair(i, roi));
-    if (debugger_) debugger_->obstacle_rois_.push_back(roi);
+      // filter point out of scope
+      if (debugger_ && out_of_scope(input_cluster_msg.feature_objects.at(i))) {
+        continue;
+      }
+
+      sensor_msgs::msg::PointCloud2 transformed_cluster;
+      tf2::doTransform(
+        input_cluster_msg.feature_objects.at(i).feature.cluster, transformed_cluster,
+        transform_stamped);
+
+      int min_x(camera_info.width), min_y(camera_info.height), max_x(0), max_y(0);
+      std::vector<Eigen::Vector2d> projected_points;
+      projected_points.reserve(transformed_cluster.data.size());
+      for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(transformed_cluster, "x"),
+           iter_y(transformed_cluster, "y"), iter_z(transformed_cluster, "z");
+           iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z) {
+        if (*iter_z <= 0.0) {
+          continue;
+        }
+
+        Eigen::Vector2d projected_point = calcRawImageProjectedPoint(
+          pinhole_camera_model, cv::Point3d(*iter_x, *iter_y, *iter_z),
+          point_project_to_unrectified_image_);
+        if (
+          0 <= static_cast<int>(projected_point.x()) &&
+          static_cast<int>(projected_point.x()) <= static_cast<int>(camera_info.width) - 1 &&
+          0 <= static_cast<int>(projected_point.y()) &&
+          static_cast<int>(projected_point.y()) <= static_cast<int>(camera_info.height) - 1) {
+          min_x = std::min(static_cast<int>(projected_point.x()), min_x);
+          min_y = std::min(static_cast<int>(projected_point.y()), min_y);
+          max_x = std::max(static_cast<int>(projected_point.x()), max_x);
+          max_y = std::max(static_cast<int>(projected_point.y()), max_y);
+          projected_points.push_back(projected_point);
+          if (debugger_) debugger_->obstacle_points_.push_back(projected_point);
+        }
+      }
+      if (projected_points.empty()) {
+        continue;
+      }
+
+      sensor_msgs::msg::RegionOfInterest roi;
+      // roi.do_rectify = m_camera_info_.at(id).do_rectify;
+      roi.x_offset = min_x;
+      roi.y_offset = min_y;
+      roi.width = max_x - min_x;
+      roi.height = max_y - min_y;
+      m_cluster_roi.insert(std::make_pair(i, roi));
+      if (debugger_) debugger_->obstacle_rois_.push_back(roi);
+    }
   }
 
-  for (const auto & feature_obj : input_roi_msg.feature_objects) {
-    int index = -1;
-    bool associated = false;
-    double max_iou = 0.0;
-    const bool is_roi_label_known =
-      feature_obj.object.classification.front().label != ObjectClassification::UNKNOWN;
-    for (const auto & cluster_map : m_cluster_roi) {
-      double iou(0.0);
-      bool is_use_non_trust_object_iou_mode = is_far_enough(
-        input_cluster_msg.feature_objects.at(cluster_map.first), trust_object_distance_);
-      auto image_roi = feature_obj.feature.roi;
-      auto cluster_roi = cluster_map.second;
-      sanitizeROI(image_roi, camera_info.width, camera_info.height);
-      sanitizeROI(cluster_roi, camera_info.width, camera_info.height);
-      if (is_use_non_trust_object_iou_mode || is_roi_label_known) {
-        iou = cal_iou_by_mode(cluster_roi, image_roi, non_trust_object_iou_mode_);
-      } else {
-        iou = cal_iou_by_mode(cluster_roi, image_roi, trust_object_iou_mode_);
+  {  // search matching ROI and update label
+    std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
+    if (time_keeper_)
+      inner_st_ptr = std::make_unique<ScopedTimeTrack>("compare ROI", *time_keeper_);
+
+    for (const auto & feature_obj : input_roi_msg.feature_objects) {
+      int index = -1;
+      bool associated = false;
+      double max_iou = 0.0;
+      const bool is_roi_label_known =
+        feature_obj.object.classification.front().label != ObjectClassification::UNKNOWN;
+      for (const auto & cluster_map : m_cluster_roi) {
+        double iou(0.0);
+        bool is_use_non_trust_object_iou_mode = is_far_enough(
+          input_cluster_msg.feature_objects.at(cluster_map.first), trust_object_distance_);
+        auto image_roi = feature_obj.feature.roi;
+        auto cluster_roi = cluster_map.second;
+        sanitizeROI(image_roi, camera_info.width, camera_info.height);
+        sanitizeROI(cluster_roi, camera_info.width, camera_info.height);
+        if (is_use_non_trust_object_iou_mode || is_roi_label_known) {
+          iou = cal_iou_by_mode(cluster_roi, image_roi, non_trust_object_iou_mode_);
+        } else {
+          iou = cal_iou_by_mode(cluster_roi, image_roi, trust_object_iou_mode_);
+        }
+
+        const bool passed_inside_cluster_gate =
+          only_allow_inside_cluster_ ? is_inside(image_roi, cluster_roi, roi_scale_factor_) : true;
+        if (max_iou < iou && passed_inside_cluster_gate) {
+          index = cluster_map.first;
+          max_iou = iou;
+          associated = true;
+        }
       }
 
-      const bool passed_inside_cluster_gate =
-        only_allow_inside_cluster_ ? is_inside(image_roi, cluster_roi, roi_scale_factor_) : true;
-      if (max_iou < iou && passed_inside_cluster_gate) {
-        index = cluster_map.first;
-        max_iou = iou;
-        associated = true;
+      if (!associated) {
+        continue;
       }
-    }
 
-    if (!associated) {
-      continue;
-    }
+      if (!output_cluster_msg.feature_objects.empty()) {
+        auto & fused_object = output_cluster_msg.feature_objects.at(index).object;
+        const bool is_roi_existence_prob_higher =
+          fused_object.existence_probability <= feature_obj.object.existence_probability;
+        const bool is_roi_iou_over_threshold =
+          (is_roi_label_known && iou_threshold_ < max_iou) ||
+          (!is_roi_label_known && unknown_iou_threshold_ < max_iou);
 
-    if (!output_cluster_msg.feature_objects.empty()) {
-      auto & fused_object = output_cluster_msg.feature_objects.at(index).object;
-      const bool is_roi_existence_prob_higher =
-        fused_object.existence_probability <= feature_obj.object.existence_probability;
-      const bool is_roi_iou_over_threshold =
-        (is_roi_label_known && iou_threshold_ < max_iou) ||
-        (!is_roi_label_known && unknown_iou_threshold_ < max_iou);
-
-      if (is_roi_iou_over_threshold && is_roi_existence_prob_higher) {
-        fused_object.classification = feature_obj.object.classification;
-        // Update existence_probability for fused objects
-        fused_object.existence_probability =
-          std::clamp(feature_obj.object.existence_probability, min_roi_existence_prob_, 1.0f);
+        if (is_roi_iou_over_threshold && is_roi_existence_prob_higher) {
+          fused_object.classification = feature_obj.object.classification;
+          // Update existence_probability for fused objects
+          fused_object.existence_probability =
+            std::clamp(feature_obj.object.existence_probability, min_roi_existence_prob_, 1.0f);
+        }
       }
+      if (debugger_) debugger_->image_rois_.push_back(feature_obj.feature.roi);
+      if (debugger_) debugger_->max_iou_for_image_rois_.push_back(max_iou);
     }
-    if (debugger_) debugger_->image_rois_.push_back(feature_obj.feature.roi);
-    if (debugger_) debugger_->max_iou_for_image_rois_.push_back(max_iou);
   }
 
   // note: debug objects are safely cleared in fusion_node.cpp
   if (debugger_) {
+    std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
+    if (time_keeper_)
+      inner_st_ptr = std::make_unique<ScopedTimeTrack>("publish debug message", *time_keeper_);
+
     debugger_->publishImage(image_id, input_roi_msg.header.stamp);
   }
 }
