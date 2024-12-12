@@ -140,7 +140,7 @@ planning/autoware_obstacle_cruise_planner/** berkay@leodrive.ai kosuke.takeuchi@
 planning/autoware_obstacle_stop_planner/** berkay@leodrive.ai bnk@leodrive.ai satoshi.ota@tier4.jp shumpei.wakabayashi@tier4.jp taiki.tanaka@tier4.jp tomoya.kimura@tier4.jp
 planning/autoware_path_optimizer/** kosuke.takeuchi@tier4.jp takamasa.horibe@tier4.jp takayuki.murooka@tier4.jp
 planning/autoware_path_smoother/** maxime.clement@tier4.jp takayuki.murooka@tier4.jp
-planning/autoware_planning_test_manager/** kyoichi.sugahara@tier4.jp takamasa.horibe@tier4.jp
+planning/autoware_planning_test_manager/** kyoichi.sugahara@tier4.jp mamoru.sobue@tier4.jp takamasa.horibe@tier4.jp
 planning/autoware_planning_topic_converter/** kosuke.takeuchi@tier4.jp satoshi.ota@tier4.jp shumpei.wakabayashi@tier4.jp
 planning/autoware_planning_validator/** kosuke.takeuchi@tier4.jp takamasa.horibe@tier4.jp
 planning/autoware_remaining_distance_time_calculator/** ahmed.ebrahim@leodrive.ai
