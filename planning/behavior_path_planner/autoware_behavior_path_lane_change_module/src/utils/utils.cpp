@@ -1287,7 +1287,6 @@ std::vector<lanelet::ConstLanelets> get_preceding_lanes(const CommonDataPtr & co
   return non_overlapping_lanes_vec;
 }
 
-
 bool object_path_overlaps_lanes(
   const ExtendedPredictedObject & object, const lanelet::BasicPolygon2d & lanes_polygon)
 {
