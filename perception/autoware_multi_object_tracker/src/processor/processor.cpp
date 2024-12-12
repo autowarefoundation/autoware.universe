@@ -93,13 +93,15 @@ std::shared_ptr<Tracker> TrackerProcessor::createNewTracker(
         time, object, self_transform, config_.channel_size, channel_index);
     if (tracker == "big_vehicle_tracker")
       return std::make_shared<VehicleTracker>(
-        object_model::big_vehicle, time, object, self_transform, config_.channel_size_, channel_index);
+        object_model::big_vehicle, time, object, self_transform, config_.channel_size_,
+        channel_index);
     if (tracker == "multi_vehicle_tracker")
       return std::make_shared<MultipleVehicleTracker>(
         time, object, self_transform, config_.channel_size, channel_index);
     if (tracker == "normal_vehicle_tracker")
       return std::make_shared<VehicleTracker>(
-        object_model::normal_vehicle, time, object, self_transform, config_.channel_size_, channel_index);
+        object_model::normal_vehicle, time, object, self_transform, config_.channel_size_,
+        channel_index);
     if (tracker == "pass_through_tracker")
       return std::make_shared<PassThroughTracker>(
         time, object, self_transform, config_.channel_size, channel_index);
