@@ -22,7 +22,6 @@
 #include <string>
 #include <utility>
 
-
 namespace autoware::stop_filter
 {
 StopFilter::StopFilter(const rclcpp::NodeOptions & node_options)
