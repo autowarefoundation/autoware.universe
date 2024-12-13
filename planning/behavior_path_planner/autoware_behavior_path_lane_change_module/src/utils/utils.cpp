@@ -14,8 +14,8 @@
 
 #include "autoware/behavior_path_lane_change_module/utils/utils.hpp"
 
-#include "autoware/behavior_path_lane_change_module/utils/data_structs.hpp"
-#include "autoware/behavior_path_lane_change_module/utils/path.hpp"
+#include "autoware/behavior_path_lane_change_module/structs/data.hpp"
+#include "autoware/behavior_path_lane_change_module/structs/path.hpp"
 #include "autoware/behavior_path_planner_common/parameters.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
@@ -34,7 +34,12 @@
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info.hpp>
+#include <range/v3/action/insert.hpp>
 #include <range/v3/algorithm/any_of.hpp>
+#include <range/v3/algorithm/find_if.hpp>
+#include <range/v3/algorithm/for_each.hpp>
+#include <range/v3/range/conversion.hpp>
+#include <range/v3/view.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/detail/pose__struct.hpp>
@@ -54,6 +59,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 namespace autoware::behavior_path_planner::utils::lane_change
@@ -1149,11 +1155,8 @@ std::vector<LineString2d> get_line_string_paths(const ExtendedPredictedObject & 
     return line_string;
   };
 
-  const auto paths = object.predicted_paths;
-  std::vector<LineString2d> line_strings;
-  std::transform(paths.begin(), paths.end(), std::back_inserter(line_strings), to_linestring_2d);
-
-  return line_strings;
+  return object.predicted_paths | ranges::views::transform(to_linestring_2d) |
+         ranges::to<std::vector>();
 }
 
 bool has_overtaking_turn_lane_object(
@@ -1164,10 +1167,6 @@ bool has_overtaking_turn_lane_object(
     return false;
   }
 
-  const auto is_path_overlap_with_target = [&](const LineString2d & path) {
-    return !boost::geometry::disjoint(path, common_data_ptr->lanes_polygon_ptr->target);
-  };
-
   const auto is_object_overlap_with_target = [&](const auto & object) {
     // to compensate for perception issue, or if object is from behind ego, and tries to overtake,
     // but stop all of sudden
@@ -1176,8 +1175,7 @@ bool has_overtaking_turn_lane_object(
       return true;
     }
 
-    const auto paths = get_line_string_paths(object);
-    return std::any_of(paths.begin(), paths.end(), is_path_overlap_with_target);
+    return object_path_overlaps_lanes(object, common_data_ptr->lanes_polygon_ptr->target);
   };
 
   return std::any_of(
@@ -1190,6 +1188,7 @@ bool filter_target_lane_objects(
   const bool before_terminal, TargetLaneLeadingObjects & leading_objects,
   ExtendedPredictedObjects & trailing_objects)
 {
+  using behavior_path_planner::utils::path_safety_checker::filter::is_vehicle;
   using behavior_path_planner::utils::path_safety_checker::filter::velocity_filter;
   const auto & current_lanes = common_data_ptr->lanes_ptr->current;
   const auto & vehicle_width = common_data_ptr->bpp_param_ptr->vehicle_info.vehicle_width_m;
@@ -1206,9 +1205,12 @@ bool filter_target_lane_objects(
   const auto is_stopped = velocity_filter(
     object.initial_twist, -std::numeric_limits<double>::epsilon(), stopped_obj_vel_th);
   if (is_lateral_far && before_terminal) {
-    const auto in_target_lanes =
-      !boost::geometry::disjoint(object.initial_polygon, lanes_polygon.target);
-    if (in_target_lanes) {
+    const auto overlapping_with_target_lanes =
+      !boost::geometry::disjoint(object.initial_polygon, lanes_polygon.target) ||
+      (!is_stopped && is_vehicle(object.classification) &&
+       object_path_overlaps_lanes(object, lanes_polygon.target));
+
+    if (overlapping_with_target_lanes) {
       if (!ahead_of_ego && !is_stopped) {
         trailing_objects.push_back(object);
         return true;
@@ -1246,5 +1248,50 @@ bool filter_target_lane_objects(
   }
 
   return false;
+}
+
+std::vector<lanelet::ConstLanelets> get_preceding_lanes(const CommonDataPtr & common_data_ptr)
+{
+  const auto & route_handler_ptr = common_data_ptr->route_handler_ptr;
+  const auto & target_lanes = common_data_ptr->lanes_ptr->target;
+  const auto & ego_pose = common_data_ptr->get_ego_pose();
+  const auto backward_lane_length = common_data_ptr->lc_param_ptr->backward_lane_length;
+
+  const auto preceding_lanes_list =
+    utils::getPrecedingLanelets(*route_handler_ptr, target_lanes, ego_pose, backward_lane_length);
+
+  const auto & current_lanes = common_data_ptr->lanes_ptr->current;
+  std::unordered_set<lanelet::Id> current_lanes_id;
+  for (const auto & lane : current_lanes) {
+    current_lanes_id.insert(lane.id());
+  }
+  const auto is_overlapping = [&](const lanelet::ConstLanelet & lane) {
+    return current_lanes_id.find(lane.id()) != current_lanes_id.end();
+  };
+
+  std::vector<lanelet::ConstLanelets> non_overlapping_lanes_vec;
+  for (const auto & lanes : preceding_lanes_list) {
+    auto lanes_reversed = lanes | ranges::views::reverse;
+    auto overlapped_itr = ranges::find_if(lanes_reversed, is_overlapping);
+
+    if (overlapped_itr == lanes_reversed.begin()) {
+      continue;
+    }
+
+    // Lanes are not reversed by default. Avoid returning reversed lanes to prevent undefined
+    // behavior.
+    lanelet::ConstLanelets non_overlapping_lanes(overlapped_itr.base(), lanes.end());
+    non_overlapping_lanes_vec.push_back(non_overlapping_lanes);
+  }
+
+  return non_overlapping_lanes_vec;
+}
+
+bool object_path_overlaps_lanes(
+  const ExtendedPredictedObject & object, const lanelet::BasicPolygon2d & lanes_polygon)
+{
+  return ranges::any_of(get_line_string_paths(object), [&](const auto & path) {
+    return !boost::geometry::disjoint(path, lanes_polygon);
+  });
 }
 }  // namespace autoware::behavior_path_planner::utils::lane_change
