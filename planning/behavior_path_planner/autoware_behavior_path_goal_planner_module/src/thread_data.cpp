@@ -33,15 +33,6 @@ void LaneParkingRequest::update(
   prev_data_ = prev_data;
 }
 
-LaneParkingRequest LaneParkingRequest::clone() const
-{
-  LaneParkingRequest request(
-    parameters_, vehicle_footprint_, goal_candidates_, previous_module_output_);
-  request.update(
-    *planner_data_, current_status_, previous_module_output_, pull_over_path_, prev_data_);
-  return request;
-}
-
 void FreespaceParkingRequest::initializeOccupancyGridMap(
   const PlannerData & planner_data, const GoalPlannerParameters & parameters)
 {
@@ -70,15 +61,6 @@ void FreespaceParkingRequest::update(
   pull_over_path_ = pull_over_path;
   last_path_update_time_ = last_path_update_time;
   is_stopped_ = is_stopped;
-}
-
-FreespaceParkingRequest FreespaceParkingRequest::clone() const
-{
-  FreespaceParkingRequest request(
-    parameters_, vehicle_footprint_, goal_candidates_, *planner_data_);
-  request.update(
-    *planner_data_, current_status_, pull_over_path_, last_path_update_time_, is_stopped_);
-  return request;
 }
 
 }  // namespace autoware::behavior_path_planner

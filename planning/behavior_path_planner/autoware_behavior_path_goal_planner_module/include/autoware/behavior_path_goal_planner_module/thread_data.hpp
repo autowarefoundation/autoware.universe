@@ -64,7 +64,6 @@ public:
   }
   const std::optional<PullOverPath> & get_pull_over_path() const { return pull_over_path_; }
   const PathDecisionState & get_prev_data() const { return prev_data_; }
-  LaneParkingRequest clone() const;
 
 private:
   std::shared_ptr<PlannerData> planner_data_;
@@ -117,8 +116,6 @@ public:
     return last_path_update_time_;
   }
   bool is_stopped() const { return is_stopped_; }
-
-  FreespaceParkingRequest clone() const;
 
 private:
   std::shared_ptr<PlannerData> planner_data_;

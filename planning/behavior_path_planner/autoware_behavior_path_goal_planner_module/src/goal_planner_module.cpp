@@ -91,13 +91,12 @@ GoalPlannerModule::GoalPlannerModule(
   const auto lane_parking_period_ns = rclcpp::Rate(1.0).period();
   lane_parking_timer_cb_group_ =
     node.create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  auto lane_parking_planner = std::make_unique<LaneParkingPlanner>(
-    node, lane_parking_mutex_, lane_parking_request_, lane_parking_response_,
-    is_lane_parking_cb_running_, getLogger(), *parameters_);
   lane_parking_timer_ = rclcpp::create_timer(
     &node, clock_, lane_parking_period_ns,
-    [lane_parking_planner_bind = std::move(lane_parking_planner)]() {
-      lane_parking_planner_bind->onTimer();
+    [lane_parking_executor = std::make_unique<LaneParkingPlanner>(
+       node, lane_parking_mutex_, lane_parking_request_, lane_parking_response_,
+       is_lane_parking_cb_running_, getLogger(), *parameters_)]() {
+      lane_parking_executor->onTimer();
     },
     lane_parking_timer_cb_group_);
 
@@ -107,13 +106,12 @@ GoalPlannerModule::GoalPlannerModule(
     const auto freespace_parking_period_ns = rclcpp::Rate(1.0).period();
     freespace_parking_timer_cb_group_ =
       node.create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-    auto freespace_parking_planner = std::make_unique<FreespaceParkingPlanner>(
-      freespace_parking_mutex_, freespace_parking_request_, freespace_parking_response_,
-      is_freespace_parking_cb_running_, getLogger(), clock_, freespace_planner);
     freespace_parking_timer_ = rclcpp::create_timer(
       &node, clock_, freespace_parking_period_ns,
-      [freespace_parking_planner_bind = std::move(freespace_parking_planner)]() {
-        freespace_parking_planner_bind->onTimer();
+      [freespace_parking_executor = std::make_unique<FreespaceParkingPlanner>(
+         freespace_parking_mutex_, freespace_parking_request_, freespace_parking_response_,
+         is_freespace_parking_cb_running_, getLogger(), clock_, freespace_planner)]() {
+        freespace_parking_executor->onTimer();
       },
       freespace_parking_timer_cb_group_);
   }
@@ -567,17 +565,15 @@ std::pair<LaneParkingResponse, FreespaceParkingResponse> GoalPlannerModule::sync
   // SceneModuleInterface::setPreviousModuleOutput before module_ptr->run().
   // Then module_ptr->run() invokes GoalPlannerModule::updateData and then
   // planWaitingApproval()/plan(), so we can copy latest current_status/previous_module_output to
-  // gp_planner_data_ here
+  // lane_parking_request/freespace_parking_request
 
   std::optional<PullOverPath> pull_over_path =
     context_data_ ? context_data_.value().pull_over_path_opt : std::nullopt;
   std::optional<rclcpp::Time> last_path_update_time =
     context_data_ ? context_data_.value().last_path_update_time : std::nullopt;
 
-  // NOTE: onTimer/onFreespaceParkingTimer copies gp_planner_data_ to their local clone, so we need
-  // to lock gp_planner_data_ here to avoid data race. But the following clone process is
-  // lightweight because most of the member variables of PlannerData/RouteHandler is
-  // shared_ptrs/bool
+  // NOTE: Following clone process is rather lightweight because most of the member variables of
+  // PlannerData/RouteHandler is shared_ptrs
   // begin of critical section
   LaneParkingResponse lane_parking_response;
   {
@@ -586,14 +582,14 @@ std::pair<LaneParkingResponse, FreespaceParkingResponse> GoalPlannerModule::sync
       lane_parking_request_.emplace(
         *parameters_, vehicle_footprint_, goal_candidates_, getPreviousModuleOutput());
     }
-    auto & lane_parking_request = lane_parking_request_.value();
     // NOTE: for the above reasons, PlannerManager/behavior_path_planner_node ensure that
     // planner_data_ is not nullptr, so it is OK to copy as value
     // By copying PlannerData as value, the internal shared member variables are also copied
-    // (reference count is incremented), so `gp_planner_data_.foo` is now thread-safe from the
-    // **re-pointing** by `planner_data_->foo = msg` in behavior_path_planner::onCallbackFor(msg)
-    // and if these two coincided, only the reference count is affected
-    lane_parking_request.update(
+    // (reference count is incremented), so `lane_parking_request_local.planner_data_.foo` is now
+    // thread-safe from the **re-pointing** by `planner_data_->foo = msg` in
+    // behavior_path_planner::onCallbackFor(msg) and if these two coincided, only the reference
+    // count is affected
+    lane_parking_request_.value().update(
       *planner_data_, getCurrentStatus(), getPreviousModuleOutput(), pull_over_path,
       path_decision_controller_.get_current_state());
     // NOTE: RouteHandler holds several shared pointers in it, so just copying PlannerData as
@@ -603,10 +599,10 @@ std::pair<LaneParkingResponse, FreespaceParkingResponse> GoalPlannerModule::sync
     // to copy route_handler as value to use lanelet_map_ptr_/routing_graph_ptr_ thread-safely in
     // onTimer/onFreespaceParkingTimer
     // TODO(Mamoru Sobue): If the copy of RouteHandler.road_lanelets/shoulder_lanelets is not
-    // lightweight, we should update gp_planner_data_.route_handler only when
+    // lightweight, we should update lane_parking_request.planner_data.route_handler only when
     // `planner_data_.is_route_handler_updated` variable is set true by behavior_path_planner
-    // (although this flag is not implemented yet). In that case, gp_planner_data members except
-    // for route_handler should be copied from planner_data_
+    // (although this flag is not implemented yet). In that case, lane_parking_request members
+    // except for route_handler should be copied from planner_data_
     lane_parking_response = lane_parking_response_;
   }
 
@@ -617,19 +613,12 @@ std::pair<LaneParkingResponse, FreespaceParkingResponse> GoalPlannerModule::sync
       freespace_parking_request_.emplace(
         *parameters_, vehicle_footprint_, goal_candidates_, *planner_data_);
     }
-    auto & freespace_parking_request = freespace_parking_request_.value();
     constexpr double stuck_time = 5.0;
-    freespace_parking_request.update(
+    freespace_parking_request_.value().update(
       *planner_data_, getCurrentStatus(), pull_over_path, last_path_update_time,
       isStopped(
         odometry_buffer_stuck_, planner_data_->self_odometry, stuck_time,
         parameters_->th_stopped_velocity));
-    // GoalPlannerModule::occupancy_grid_map_ and gp_planner_data.occupancy_grid_map share the
-    // ownership, and gp_planner_data.occupancy_grid_map maybe also shared by the local
-    // planner_data on onFreespaceParkingTimer thread local memory space. So following operation
-    // is thread-safe because gp_planner_data.occupancy_grid_map is only re-pointed here and its
-    // prior resource is still owned by the onFreespaceParkingTimer thread locally.
-    occupancy_grid_map_ = freespace_parking_request.get_occupancy_grid_map();
     freespace_parking_response = freespace_parking_response_;
   }
   // end of critical section
@@ -670,6 +659,7 @@ void GoalPlannerModule::updateData()
     goal_candidates_ = generateGoalCandidates();
   }
 
+  occupancy_grid_map_->setMap(*(planner_data_->occupancy_grid));
   auto [lane_parking_response, freespace_parking_response] = syncWithThreads();
 
   if (getCurrentStatus() == ModuleStatus::IDLE && !isExecutionRequested()) {
