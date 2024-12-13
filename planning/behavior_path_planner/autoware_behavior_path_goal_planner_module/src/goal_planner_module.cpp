@@ -1480,7 +1480,7 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsOutput(PullOverContextData
     // Select a path that is as safe as possible and has a high priority.
     const auto & pull_over_path_candidates =
       context_data.lane_parking_response.pull_over_path_candidates;
-    auto lane_pull_over_path_opt =
+    const auto lane_pull_over_path_opt =
       selectPullOverPath(context_data, pull_over_path_candidates, goal_candidates);
 
     // update thread_safe_data_
