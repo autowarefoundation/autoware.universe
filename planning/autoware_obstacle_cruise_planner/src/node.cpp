@@ -1120,19 +1120,16 @@ ObstacleCruisePlannerNode::determineEgoBehaviorAgainstPredictedObjectObstacles(
       odometry, decimated_traj_points, decimated_traj_polys, obstacle, precise_lat_dist);
     if (cruise_obstacle) {
       cruise_obstacles.push_back(*cruise_obstacle);
-      continue;
     }
     const auto stop_obstacle = createStopObstacleForPredictedObject(
       odometry, decimated_traj_points, decimated_traj_polys, obstacle, precise_lat_dist);
     if (stop_obstacle) {
       stop_obstacles.push_back(*stop_obstacle);
-      continue;
     }
     const auto slow_down_obstacle = createSlowDownObstacleForPredictedObject(
       odometry, decimated_traj_points, obstacle, precise_lat_dist);
     if (slow_down_obstacle) {
       slow_down_obstacles.push_back(*slow_down_obstacle);
-      continue;
     }
   }
   const auto & p = behavior_determination_param_;
@@ -1484,6 +1481,7 @@ ObstacleCruisePlannerNode::createCollisionPointsForInsideCruiseObstacle(
     return std::nullopt;
   }
 
+  /*
   {  // consider hysteresis
     // const bool is_prev_obstacle_stop = getObstacleFromUuid(prev_stop_obstacles_,
     // obstacle.uuid).has_value();
@@ -1504,6 +1502,7 @@ ObstacleCruisePlannerNode::createCollisionPointsForInsideCruiseObstacle(
       // NOTE: else is cruise from stop
     }
   }
+  */
 
   // Get highest confidence predicted path
   const auto resampled_predicted_paths = resampleHighestConfidencePredictedPaths(
@@ -1666,6 +1665,22 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacleForPred
   if (!isStopObstacle(obstacle.classification.label)) {
     return std::nullopt;
   }
+
+  const bool is_prev_obstacle_stop =
+    getObstacleFromUuid(prev_stop_object_obstacles_, obstacle.uuid).has_value();
+
+  if (is_prev_obstacle_stop) {
+    if (p.obstacle_velocity_threshold_from_stop_to_cruise < obstacle.longitudinal_velocity) {
+      return std::nullopt;
+    }
+    // keep obstacle stop
+  } else {
+    if (p.obstacle_velocity_threshold_from_cruise_to_stop < obstacle.longitudinal_velocity) {
+      return std::nullopt;
+    }
+    // NOTE: else is stop from cruise
+  }
+
   const double max_lat_margin_for_stop =
     (obstacle.classification.label == ObjectClassification::UNKNOWN)
       ? p.max_lat_margin_for_stop_against_unknown
