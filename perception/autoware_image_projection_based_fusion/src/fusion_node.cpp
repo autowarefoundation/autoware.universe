@@ -58,8 +58,8 @@ FusionNode<TargetMsg3D, ObjType, Msg2D>::FusionNode(
   }
   if (rois_number_ > 8) {
     RCLCPP_WARN(
-      this->get_logger(), "maximum rois_number is 8. current rois_number is %zu", rois_number_);
-    rois_number_ = 8;
+      this->get_logger(),
+      "Current rois_number is %zu. Large rois number may cause performance issue.", rois_number_);
   }
 
   // Set parameters

@@ -111,7 +111,9 @@ BehaviorModuleOutput LaneChangeInterface::plan()
   path_reference_ = std::make_shared<PathWithLaneId>(output.reference_path);
   *prev_approved_path_ = getPreviousModuleOutput().path;
 
-  stop_pose_ = module_type_->getStopPose();
+  const auto stop_pose_opt = module_type_->getStopPose();
+  stop_pose_ = stop_pose_opt.has_value() ? PoseWithDetailOpt(PoseWithDetail(stop_pose_opt.value()))
+                                         : PoseWithDetailOpt();
 
   const auto & lane_change_debug = module_type_->getDebugData();
   for (const auto & [uuid, data] : lane_change_debug.collision_check_objects_after_approval) {
@@ -169,7 +171,9 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
   }
 
   path_reference_ = std::make_shared<PathWithLaneId>(out.reference_path);
-  stop_pose_ = module_type_->getStopPose();
+  const auto stop_pose_opt = module_type_->getStopPose();
+  stop_pose_ = stop_pose_opt.has_value() ? PoseWithDetailOpt(PoseWithDetail(stop_pose_opt.value()))
+                                         : PoseWithDetailOpt();
 
   if (!module_type_->isValidPath()) {
     path_candidate_ = std::make_shared<PathWithLaneId>();
