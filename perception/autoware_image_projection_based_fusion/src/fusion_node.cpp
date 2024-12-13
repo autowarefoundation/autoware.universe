@@ -232,68 +232,59 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
   int64_t timestamp_nsec =
     (*output_msg).header.stamp.sec * static_cast<int64_t>(1e9) + (*output_msg).header.stamp.nanosec;
 
-  {  // if matching rois exist, fuseOnSingle
-    std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
-    if (time_keeper_)
-      inner_st_ptr = std::make_unique<ScopedTimeTrack>("check matched rois", *time_keeper_);
+  // please ask maintainers before parallelize this loop because debugger is not thread safe
+  for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
+    if (camera_info_map_.find(roi_i) == camera_info_map_.end()) {
+      RCLCPP_WARN_THROTTLE(
+        this->get_logger(), *this->get_clock(), 5000, "no camera info. id is %zu", roi_i);
+      continue;
+    }
 
-    // please ask maintainers before parallelize this loop because debugger is not thread safe
-    for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
-      if (camera_info_map_.find(roi_i) == camera_info_map_.end()) {
-        RCLCPP_WARN_THROTTLE(
-          this->get_logger(), *this->get_clock(), 5000, "no camera info. id is %zu", roi_i);
-        continue;
+    if ((cached_roi_msgs_.at(roi_i)).size() > 0) {
+      int64_t min_interval = 1e9;
+      int64_t matched_stamp = -1;
+      std::list<int64_t> outdate_stamps;
+
+      for (const auto & [k, v] : cached_roi_msgs_.at(roi_i)) {
+        int64_t new_stamp = timestamp_nsec + input_offset_ms_.at(roi_i) * static_cast<int64_t>(1e6);
+        int64_t interval = abs(static_cast<int64_t>(k) - new_stamp);
+
+        if (
+          interval <= min_interval && interval <= match_threshold_ms_ * static_cast<int64_t>(1e6)) {
+          min_interval = interval;
+          matched_stamp = k;
+        } else if (
+          static_cast<int64_t>(k) < new_stamp &&
+          interval > match_threshold_ms_ * static_cast<int64_t>(1e6)) {
+          outdate_stamps.push_back(static_cast<int64_t>(k));
+        }
       }
 
-      if ((cached_roi_msgs_.at(roi_i)).size() > 0) {
-        int64_t min_interval = 1e9;
-        int64_t matched_stamp = -1;
-        std::list<int64_t> outdate_stamps;
+      // remove outdated stamps
+      for (auto stamp : outdate_stamps) {
+        (cached_roi_msgs_.at(roi_i)).erase(stamp);
+      }
 
-        for (const auto & [k, v] : cached_roi_msgs_.at(roi_i)) {
-          int64_t new_stamp =
-            timestamp_nsec + input_offset_ms_.at(roi_i) * static_cast<int64_t>(1e6);
-          int64_t interval = abs(static_cast<int64_t>(k) - new_stamp);
-
-          if (
-            interval <= min_interval &&
-            interval <= match_threshold_ms_ * static_cast<int64_t>(1e6)) {
-            min_interval = interval;
-            matched_stamp = k;
-          } else if (
-            static_cast<int64_t>(k) < new_stamp &&
-            interval > match_threshold_ms_ * static_cast<int64_t>(1e6)) {
-            outdate_stamps.push_back(static_cast<int64_t>(k));
-          }
+      // fuseOnSingle
+      if (matched_stamp != -1) {
+        if (debugger_) {
+          debugger_->clear();
         }
 
-        // remove outdated stamps
-        for (auto stamp : outdate_stamps) {
-          (cached_roi_msgs_.at(roi_i)).erase(stamp);
-        }
+        fuseOnSingleImage(
+          *input_msg, roi_i, *((cached_roi_msgs_.at(roi_i))[matched_stamp]),
+          camera_info_map_.at(roi_i), *output_msg);
+        (cached_roi_msgs_.at(roi_i)).erase(matched_stamp);
+        is_fused_.at(roi_i) = true;
 
-        // fuseOnSingle
-        if (matched_stamp != -1) {
-          if (debugger_) {
-            debugger_->clear();
-          }
-
-          fuseOnSingleImage(
-            *input_msg, roi_i, *((cached_roi_msgs_.at(roi_i))[matched_stamp]),
-            camera_info_map_.at(roi_i), *output_msg);
-          (cached_roi_msgs_.at(roi_i)).erase(matched_stamp);
-          is_fused_.at(roi_i) = true;
-
-          // add timestamp interval for debug
-          if (debug_publisher_) {
-            double timestamp_interval_ms = (matched_stamp - timestamp_nsec) / 1e6;
-            debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-              "debug/roi" + std::to_string(roi_i) + "/timestamp_interval_ms",
-              timestamp_interval_ms);
-            debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-              "debug/roi" + std::to_string(roi_i) + "/timestamp_interval_offset_ms",
-              timestamp_interval_ms - input_offset_ms_.at(roi_i));
-          }
+        // add timestamp interval for debug
+        if (debug_publisher_) {
+          double timestamp_interval_ms = (matched_stamp - timestamp_nsec) / 1e6;
+          debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+            "debug/roi" + std::to_string(roi_i) + "/timestamp_interval_ms", timestamp_interval_ms);
+          debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+            "debug/roi" + std::to_string(roi_i) + "/timestamp_interval_offset_ms",
+            timestamp_interval_ms - input_offset_ms_.at(roi_i));
         }
       }
     }
@@ -302,10 +293,6 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
   // if all camera fused, postprocess; else, publish the old Msg(if exists) and cache the current
   // Msg
   if (std::count(is_fused_.begin(), is_fused_.end(), true) == static_cast<int>(rois_number_)) {
-    std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
-    if (time_keeper_)
-      inner_st_ptr = std::make_unique<ScopedTimeTrack>("publish message", *time_keeper_);
-
     timer_->cancel();
     postprocess(*output_msg);
     publish(*output_msg);
@@ -470,6 +457,9 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::publish(const TargetMsg3D & output_msg
   if (pub_ptr_->get_subscription_count() < 1) {
     return;
   }
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   pub_ptr_->publish(output_msg);
 }
 

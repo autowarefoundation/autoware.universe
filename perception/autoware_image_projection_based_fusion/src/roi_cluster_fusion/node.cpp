@@ -98,10 +98,10 @@ void RoiClusterFusionNode::fuseOnSingleImage(
   const DetectedObjectsWithFeature & input_roi_msg,
   const sensor_msgs::msg::CameraInfo & camera_info, DetectedObjectsWithFeature & output_cluster_msg)
 {
+  if (!checkCameraInfo(camera_info)) return;
+
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
-
-  if (!checkCameraInfo(camera_info)) return;
 
   image_geometry::PinholeCameraModel pinhole_camera_model;
   pinhole_camera_model.fromCameraInfo(camera_info);
@@ -249,10 +249,6 @@ void RoiClusterFusionNode::fuseOnSingleImage(
 
   // note: debug objects are safely cleared in fusion_node.cpp
   if (debugger_) {
-    std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
-    if (time_keeper_)
-      inner_st_ptr = std::make_unique<ScopedTimeTrack>("publish debug message", *time_keeper_);
-
     debugger_->publishImage(image_id, input_roi_msg.header.stamp);
   }
 }
