@@ -385,7 +385,9 @@ LaneChangePath NormalLaneChange::getLaneChangePath() const
 
 BehaviorModuleOutput NormalLaneChange::getTerminalLaneChangePath() const
 {
-  if (!lane_change_parameters_->enable_terminal_path) {
+  if (
+    !lane_change_parameters_->enable_terminal_path ||
+    !common_data_ptr_->transient_data.is_ego_near_current_terminal_start) {
     return prev_module_output_;
   }
 
@@ -1401,14 +1403,21 @@ std::optional<PathWithLaneId> NormalLaneChange::compute_terminal_lane_change_pat
     return {};
   }
 
-  const auto & lane_changing_start_pose = prepare_segment.points.back().point.pose;
-
   // t = 2 * d / (v1 + v2)
   const auto duration_to_lc_start =
     2.0 * dist_to_terminal_start / (current_velocity + min_lc_velocity);
-  const auto lon_accel = (min_lc_velocity - current_velocity) / duration_to_lc_start;
+  const auto lon_accel = std::invoke([&]() -> double {
+    if (duration_to_lc_start < calculation::eps) {
+      return 0.0;
+    }
+    return std::clamp(
+      (min_lc_velocity - current_velocity) / duration_to_lc_start,
+      lane_change_parameters_->trajectory.min_longitudinal_acc,
+      lane_change_parameters_->trajectory.max_longitudinal_acc);
+  });
+  const auto vel_on_prep = current_velocity + lon_accel * duration_to_lc_start;
   const LaneChangePhaseMetrics prep_metric(
-    duration_to_lc_start, dist_to_terminal_start, min_lc_velocity, lon_accel, lon_accel, 0.0);
+    duration_to_lc_start, dist_to_terminal_start, vel_on_prep, lon_accel, lon_accel, 0.0);
 
   if (terminal_lane_change_path_) {
     terminal_lane_change_path_->info.set_prepare(prep_metric);
@@ -1422,6 +1431,7 @@ std::optional<PathWithLaneId> NormalLaneChange::compute_terminal_lane_change_pat
     return terminal_lane_change_path_->path;
   }
 
+  const auto & lane_changing_start_pose = prepare_segment.points.back().point.pose;
   const auto & target_lanes = common_data_ptr_->lanes_ptr->target;
   const auto shift_length =
     lanelet::utils::getLateralDistanceToClosestLanelet(target_lanes, lane_changing_start_pose);
