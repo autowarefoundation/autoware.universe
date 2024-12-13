@@ -327,7 +327,7 @@ dc   | dc dc dc  dc ||zc|
 
   auto objects = input_roi_msg.feature_objects;
   int iterations = painted_pointcloud_msg.data.size() / painted_pointcloud_msg.point_step;
-
+  // iterate points
   // Requires 'OMP_NUM_THREADS=N'
   omp_set_num_threads(omp_num_threads_);
 #pragma omp parallel for
