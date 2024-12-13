@@ -14,6 +14,8 @@
 
 #include <autoware/behavior_path_goal_planner_module/thread_data.hpp>
 
+#include <memory>
+
 namespace autoware::behavior_path_planner
 {
 
