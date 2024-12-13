@@ -134,11 +134,11 @@ jobs:
 
       - name: Run clang-tidy
         if: ${{ steps.get-changed-files.outputs.changed-files != '' }}
-        uses: autowarefoundation/autoware-github-actions/clang-tidy@v1
+        uses: team-emb4/autoware-github-actions/clang-tidy@refactor_clang-tidy_ci
         with:
           rosdistro: humble
           target-packages: ${{ steps.get-modified-packages.outputs.modified-packages }}
-          clang-tidy-config-url: https://raw.githubusercontent.com/autowarefoundation/autoware/main/.clang-tidy-ci
+          clang-tidy-config-url: https://raw.githubusercontent.com/team-emb4/autoware/refs/heads/test_clang-tidy-ci/.clang-tidy-ci
           clang-tidy-ignore-path: .clang-tidy-ignore
           build-depends-repos: build_depends.repos
           cache-key-element: cuda
