@@ -107,6 +107,7 @@ private:
     const auto dp_double = [&](const std::string & s) {
       return node_->declare_parameter<double>(s);
     };
+    const auto dp_bool = [&](const std::string & s) { return node_->declare_parameter<bool>(s); };
     // Load parameters required for planning
     const std::string ns = "start_planner.";
     lane_departure_check_expansion_margin_ =
@@ -115,6 +116,7 @@ private:
     pull_out_arc_path_interval_ = dp_double(ns + "arc_path_interval");
     center_line_path_interval_ = dp_double(ns + "center_line_path_interval");
     th_moving_object_velocity_ = dp_double(ns + "th_moving_object_velocity");
+    divide_pull_out_path_ = dp_bool(ns + "divide_pull_out_path");
     backward_path_length_ = dp_double("backward_path_length");
     forward_path_length_ = dp_double("forward_path_length");
   }
@@ -152,6 +154,7 @@ private:
       pull_out_arc_path_interval_;
     parameters->parallel_parking_parameters.center_line_path_interval = center_line_path_interval_;
     parameters->th_moving_object_velocity = th_moving_object_velocity_;
+    parameters->divide_pull_out_path = divide_pull_out_path_;
 
     auto time_keeper = std::make_shared<autoware::universe_utils::TimeKeeper>();
     geometric_pull_out_ =
@@ -177,6 +180,7 @@ private:
   double th_moving_object_velocity_{0.0};
   double backward_path_length_{0.0};
   double forward_path_length_{0.0};
+  bool divide_pull_out_path_{false};
 };
 
 TEST_F(TestGeometricPullOut, GenerateValidGeometricPullOutPath)
@@ -215,11 +219,11 @@ TEST_F(TestGeometricPullOut, GenerateValidGeometricPullOutPath)
   auto result = plan(start_pose, goal_pose, debug_data);
 
   // Assert that a valid geometric geometric pull out path is generated
-  ASSERT_TRUE(result.has_value()) << "Geometric pull-out path generation failed.";
-  EXPECT_FALSE(result->partial_paths.empty())
-    << "Generated pull-out path contains no partial paths.";
+  ASSERT_TRUE(result.has_value()) << "Geometric pull out path generation failed.";
+  EXPECT_EQ(result->partial_paths.size(), 2UL)
+    << "Generated geometric pull out path does not have the expected number of partial paths.";
   EXPECT_EQ(debug_data.conditions_evaluation.back(), "success")
-    << "Geometric pull-out path planning did not succeed.";
+    << "Geometric pull out path planning did not succeed.";
 }
 
 }  // namespace autoware::behavior_path_planner
