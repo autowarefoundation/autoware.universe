@@ -23,8 +23,12 @@
 #include <autoware_bezier_sampler/bezier_sampling.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
 
+#include <algorithm>
 #include <iterator>
-
+#include <limits>
+#include <memory>
+#include <utility>
+#include <vector>
 namespace autoware::behavior_path_planner
 {
 BezierPullOver::BezierPullOver(
@@ -223,7 +227,7 @@ std::vector<PullOverPath> BezierPullOver::generateBezierPath(
       tf2::getYaw(from_pose.orientation)};
     const autoware::sampler_common::State final{
       {to_pose.position.x, to_pose.position.y}, {0.0, 0.0}, 0.0, tf2::getYaw(to_pose.orientation)};
-    // setting the initial velocity to higher gives straight forwared path (the steering does not
+    // setting the initial velocity to higher gives straight forward path (the steering does not
     // change)
     const auto bezier_path =
       bezier_sampler::sample(initial, final, v_init_coeff, v_final_coeff, acc_coeff);

@@ -62,7 +62,7 @@ Bezier sample(
   const autoware::sampler_common::State & initial, const autoware::sampler_common::State & final,
   const double initial_velocity, const double final_velocity, const double acceleration)
 {
-  double distance_initial_to_final = std::sqrt(
+  const double distance_initial_to_final = std::sqrt(
     (initial.pose.x() - final.pose.x()) * (initial.pose.x() - final.pose.x()) +
     (initial.pose.y() - final.pose.y()) * (initial.pose.y() - final.pose.y()));
   // Tangent vectors
@@ -71,13 +71,13 @@ Bezier sample(
   // Unit vectors
   const Eigen::Vector2d initial_normal_unit = initial_tangent_unit.unitOrthogonal();
   const Eigen::Vector2d final_normal_unit = final_tangent_unit.unitOrthogonal();
-  double initial_tangent_length = initial_velocity * distance_initial_to_final;
-  double final_tangent_length = final_velocity * distance_initial_to_final;
-  double acceleration_length = acceleration * distance_initial_to_final;
-  Eigen::Vector2d initial_acceleration =
+  const double initial_tangent_length = initial_velocity * distance_initial_to_final;
+  const double final_tangent_length = final_velocity * distance_initial_to_final;
+  const double acceleration_length = acceleration * distance_initial_to_final;
+  const Eigen::Vector2d initial_acceleration =
     acceleration_length * initial_tangent_unit +
     initial.curvature * initial_tangent_length * initial_tangent_length * initial_normal_unit;
-  Eigen::Vector2d final_acceleration =
+  const Eigen::Vector2d final_acceleration =
     acceleration_length * final_tangent_unit +
     final.curvature * final_tangent_length * final_tangent_length * final_normal_unit;
   return generate(

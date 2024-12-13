@@ -45,10 +45,17 @@
 #include <pybind11/pytypes.h>
 #include <yaml-cpp/yaml.h>
 
+#include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <functional>
 #include <iostream>
-
+#include <map>
+#include <memory>
+#include <string>
+#include <tuple>
+#include <unordered_map>
+#include <vector>
 using namespace std::chrono_literals;  // NOLINT
 
 using autoware::behavior_path_planner::BehaviorModuleOutput;
@@ -94,7 +101,7 @@ void plot_footprint(
   axes.plot(Args(xs, ys), Kwargs("color"_a = color, "linestyle"_a = "dotted"));
 }
 
-void plot_lanelet_polyogn(matplotlibcpp17::axes::Axes & axes, const lanelet::BasicPolygon2d polygon)
+void plot_lanelet_polygon(matplotlibcpp17::axes::Axes & axes, const lanelet::BasicPolygon2d polygon)
 {
   std::vector<double> xs, ys;
   for (const auto & p : polygon) {
@@ -353,7 +360,7 @@ std::vector<PullOverPath> selectPullOverPaths(
   std::map<size_t, double> path_id_to_rough_margin_map;
   const auto & target_objects = autoware_perception_msgs::msg::PredictedObjects{};
   for (const size_t i : sorted_path_indices) {
-    const auto & path = pull_over_path_candidates[i];
+    const auto & path = pull_over_path_candidates[i];  // cppcheck-suppress containerOutOfBounds
     const double distance =
       autoware::behavior_path_planner::utils::path_safety_checker::calculateRoughDistanceToObjects(
         path.parking_path(), target_objects, planner_data->parameters, false, "max");
@@ -657,7 +664,7 @@ int main(int argc, char ** argv)
     const auto bus_stop_area_polygons =
       getBusStopAreaPolygons(planner_data, goal_planner_parameter);
     for (const auto & bus_stop_area_polygon : bus_stop_area_polygons) {
-      plot_lanelet_polyogn(ax1, bus_stop_area_polygon);
+      plot_lanelet_polygon(ax1, bus_stop_area_polygon);
     }
   }
 
