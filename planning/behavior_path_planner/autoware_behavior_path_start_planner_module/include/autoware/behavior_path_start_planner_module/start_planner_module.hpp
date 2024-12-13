@@ -70,7 +70,7 @@ struct PullOutStatus
   Pose pull_out_start_pose{};
   bool prev_is_safe_dynamic_objects{false};
   std::shared_ptr<PathWithLaneId> prev_stop_path_after_approval{nullptr};
-  std::optional<Pose> stop_pose{std::nullopt};
+  PoseWithDetailOpt stop_pose{std::nullopt};
   //! record the first time when ego started forward-driving (maybe after backward driving
   //! completion) in AUTONOMOUS operation mode
   std::optional<rclcpp::Time> first_engaged_and_driving_forward_time{std::nullopt};

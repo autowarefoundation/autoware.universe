@@ -255,7 +255,7 @@
       <extra_arg name="use_intra_process_comms" value="false"/>
     </composable_node>
 
-    <composable_node pkg="autoware_glog_component" plugin="GlogComponent" name="glog_component" namespace=""/>
+    <composable_node pkg="autoware_glog_component" plugin="autoware::glog_component::GlogComponent" name="glog_component" namespace=""/>
   </node_container>
 
   <group if="$(var launch_compare_map_pipeline)">
