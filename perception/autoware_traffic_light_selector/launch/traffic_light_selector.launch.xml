@@ -3,6 +3,7 @@
   <arg name="output/clusters" default="output/clusters"/>
   <arg name="input/detected_rois" default="input/detected_rois"/>
   <arg name="input/rough_rois" default="input/rough_rois"/>
+  <arg name="input/camera_info" default="input/camera_info"/>
   <!-- <arg name="param_path" default="$(find-pkg-share autoware_traffic_light_selector)/config/traffic_light_selector.param.yaml"/> -->
 
   <!-- Node -->
@@ -10,6 +11,7 @@
     <remap from="output/clusters" to="$(var output/clusters)"/>
     <remap from="input/detected_rois" to="$(var input/detected_rois)"/>
     <remap from="input/rough_rois" to="$(var input/rough_rois)"/>
+    <remap from"input/camera_info" to="input/camera_info"/>
     <param name="debug" value="true"/>
   </node>
 </launch>

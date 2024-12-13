@@ -21,6 +21,7 @@
 #include "message_filters/synchronizer.h"
 #include "rclcpp/rclcpp.hpp"
 
+#include "sensor_msgs/msg/camera_info.hpp"
 #include "tier4_perception_msgs/msg/detected_object_with_feature.hpp"
 #include "tier4_perception_msgs/msg/detected_objects_with_feature.hpp"
 #include "tier4_perception_msgs/msg/traffic_light_roi.hpp"
@@ -64,9 +65,16 @@ private:
     const DetectedObjectsWithFeature::ConstSharedPtr & detected_rois_msg,
     const TrafficLightRoiArray::ConstSharedPtr & rough_rois_msg,
     const TrafficLightRoiArray::ConstSharedPtr & expect_rois_msg);
+
+  void cameraInfoCallback(const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_msg);
   // Publisher
   rclcpp::Publisher<TrafficLightRoiArray>::SharedPtr pub_traffic_light_rois_;
+  // Subscribe camera_info to get width and height of image
+  rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_sub_;
   bool debug_{false};
+  bool camera_info_subscribed_;
+  int image_width_{1280};
+  int image_height_{960};
   // declare publisher for debug image
   // rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr pub_debug_image_;
 };
