@@ -619,6 +619,10 @@ std::pair<LaneParkingResponse, FreespaceParkingResponse> GoalPlannerModule::sync
       isStopped(
         odometry_buffer_stuck_, planner_data_->self_odometry, stuck_time,
         parameters_->th_stopped_velocity));
+    // TODO(soblin): currently, ogm-based-collision-detector is updated to latest in
+    // freespace_parking_request_.value().update, and it is shared with goal_planner_module. Next,
+    // goal_planner_module update it and pass it to freespace_parking_request.
+    occupancy_grid_map_ = freespace_parking_request_.value().get_occupancy_grid_map();
     freespace_parking_response = freespace_parking_response_;
   }
   // end of critical section
@@ -659,7 +663,6 @@ void GoalPlannerModule::updateData()
     goal_candidates_ = generateGoalCandidates();
   }
 
-  occupancy_grid_map_->setMap(*(planner_data_->occupancy_grid));
   auto [lane_parking_response, freespace_parking_response] = syncWithThreads();
 
   if (getCurrentStatus() == ModuleStatus::IDLE && !isExecutionRequested()) {
