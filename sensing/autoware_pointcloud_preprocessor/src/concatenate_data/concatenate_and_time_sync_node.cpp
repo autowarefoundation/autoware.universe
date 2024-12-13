@@ -75,10 +75,10 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
     throw std::runtime_error("Need an 'output_frame' parameter to be set before continuing.");
   }
 
-  auto matching_strategy = declare_parameter<std::string>("matching_strategy.type");
-  if (matching_strategy == "naive") {
+  params_.matching_strategy = declare_parameter<std::string>("matching_strategy.type");
+  if (params_.matching_strategy == "naive") {
     collector_matching_strategy_ = std::make_unique<NaiveMatchingStrategy>(*this);
-  } else if (matching_strategy == "advanced") {
+  } else if (params_.matching_strategy == "advanced") {
     collector_matching_strategy_ =
       std::make_unique<AdvancedMatchingStrategy>(*this, params_.input_topics);
   } else {
@@ -371,7 +371,7 @@ void PointCloudConcatenateDataSynchronizerComponent::check_concat_status(
     stat.add(
       "concatenated cloud timestamp", format_timestamp(current_concatenate_cloud_timestamp_));
 
-    if (params_.use_naive_approach) {
+    if (params_.matching_strategy == "naive") {
       stat.add("first cloud's arrival timestamp", format_timestamp(diagnostic_arrival_timestamp_));
     } else {
       stat.add("reference timestamp min", format_timestamp(diagnostic_reference_timestamp_min_));
