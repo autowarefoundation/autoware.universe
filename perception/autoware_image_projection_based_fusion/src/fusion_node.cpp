@@ -232,6 +232,7 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
   int64_t timestamp_nsec =
     (*output_msg).header.stamp.sec * static_cast<int64_t>(1e9) + (*output_msg).header.stamp.nanosec;
 
+  // if matching rois exist, fuseOnSingle
   // please ask maintainers before parallelize this loop because debugger is not thread safe
   for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
     if (camera_info_map_.find(roi_i) == camera_info_map_.end()) {
@@ -457,9 +458,6 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::publish(const TargetMsg3D & output_msg
   if (pub_ptr_->get_subscription_count() < 1) {
     return;
   }
-  std::unique_ptr<ScopedTimeTrack> st_ptr;
-  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
-
   pub_ptr_->publish(output_msg);
 }
 

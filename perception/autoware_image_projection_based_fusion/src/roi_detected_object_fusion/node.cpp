@@ -93,11 +93,7 @@ void RoiDetectedObjectFusionNode::fuseOnSingleImage(
   if (!checkCameraInfo(camera_info)) return;
 
   Eigen::Affine3d object2camera_affine;
-  {  // calculate affine transform
-    std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
-    if (time_keeper_)
-      inner_st_ptr = std::make_unique<ScopedTimeTrack>("calculate affine transform", *time_keeper_);
-
+  {
     const auto transform_stamped_optional = getTransformStamped(
       tf_buffer_, /*target*/ input_roi_msg.header.frame_id,
       /*source*/ input_object_msg.header.frame_id, input_roi_msg.header.stamp);
@@ -116,10 +112,6 @@ void RoiDetectedObjectFusionNode::fuseOnSingleImage(
   fuseObjectsOnImage(input_object_msg, input_roi_msg.feature_objects, object_roi_map);
 
   if (debugger_) {
-    std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
-    if (time_keeper_)
-      inner_st_ptr = std::make_unique<ScopedTimeTrack>("publish debug message", *time_keeper_);
-
     debugger_->image_rois_.reserve(input_roi_msg.feature_objects.size());
     for (std::size_t roi_i = 0; roi_i < input_roi_msg.feature_objects.size(); ++roi_i) {
       debugger_->image_rois_.push_back(input_roi_msg.feature_objects.at(roi_i).feature.roi);

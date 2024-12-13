@@ -138,46 +138,39 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
   int y_offset = input_pointcloud_msg.fields[pcl::getFieldIndex(input_pointcloud_msg, "y")].offset;
   int z_offset = input_pointcloud_msg.fields[pcl::getFieldIndex(input_pointcloud_msg, "z")].offset;
 
-  {  // calculate camera projections
-    std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
-    if (time_keeper_)
-      inner_st_ptr =
-        std::make_unique<ScopedTimeTrack>("calculate camera projection", *time_keeper_);
-
-    for (size_t global_offset = 0; global_offset < transformed_cloud.data.size();
-         global_offset += point_step) {
-      float transformed_x =
-        *reinterpret_cast<float *>(&transformed_cloud.data[global_offset + x_offset]);
-      float transformed_y =
-        *reinterpret_cast<float *>(&transformed_cloud.data[global_offset + y_offset]);
-      float transformed_z =
-        *reinterpret_cast<float *>(&transformed_cloud.data[global_offset + z_offset]);
-      // skip filtering pointcloud behind the camera or too far from camera
-      if (transformed_z <= 0.0 || transformed_z > filter_distance_threshold_) {
-        continue;
-      }
-
-      Eigen::Vector2d projected_point = calcRawImageProjectedPoint(
-        pinhole_camera_model, cv::Point3d(transformed_x, transformed_y, transformed_z),
-        point_project_to_unrectified_image_);
-
-      bool is_inside_image = projected_point.x() > 0 && projected_point.x() < camera_info.width &&
-                             projected_point.y() > 0 && projected_point.y() < camera_info.height;
-      if (!is_inside_image) {
-        continue;
-      }
-
-      // skip filtering pointcloud where semantic id out of the defined list
-      uint8_t semantic_id = mask.at<uint8_t>(
-        static_cast<uint16_t>(projected_point.y()), static_cast<uint16_t>(projected_point.x()));
-      if (
-        static_cast<size_t>(semantic_id) >= filter_semantic_label_target_list_.size() ||
-        !filter_semantic_label_target_list_.at(semantic_id).second) {
-        continue;
-      }
-
-      filter_global_offset_set_.insert(global_offset);
+  for (size_t global_offset = 0; global_offset < transformed_cloud.data.size();
+       global_offset += point_step) {
+    float transformed_x =
+      *reinterpret_cast<float *>(&transformed_cloud.data[global_offset + x_offset]);
+    float transformed_y =
+      *reinterpret_cast<float *>(&transformed_cloud.data[global_offset + y_offset]);
+    float transformed_z =
+      *reinterpret_cast<float *>(&transformed_cloud.data[global_offset + z_offset]);
+    // skip filtering pointcloud behind the camera or too far from camera
+    if (transformed_z <= 0.0 || transformed_z > filter_distance_threshold_) {
+      continue;
     }
+
+    Eigen::Vector2d projected_point = calcRawImageProjectedPoint(
+      pinhole_camera_model, cv::Point3d(transformed_x, transformed_y, transformed_z),
+      point_project_to_unrectified_image_);
+
+    bool is_inside_image = projected_point.x() > 0 && projected_point.x() < camera_info.width &&
+                           projected_point.y() > 0 && projected_point.y() < camera_info.height;
+    if (!is_inside_image) {
+      continue;
+    }
+
+    // skip filtering pointcloud where semantic id out of the defined list
+    uint8_t semantic_id = mask.at<uint8_t>(
+      static_cast<uint16_t>(projected_point.y()), static_cast<uint16_t>(projected_point.x()));
+    if (
+      static_cast<size_t>(semantic_id) >= filter_semantic_label_target_list_.size() ||
+      !filter_semantic_label_target_list_.at(semantic_id).second) {
+      continue;
+    }
+
+    filter_global_offset_set_.insert(global_offset);
   }
 }
 
