@@ -50,6 +50,34 @@ std::optional<double> PlannerData::calculate_min_deceleration_distance(
     std::abs(velocity_smoother_->getMinJerk()), velocity_smoother_->getMinJerk());
 }
 
+std::vector<StopPoint> calculate_stop_points(
+  const lanelet::Lanelet & lanelet,
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory,
+  const universe_utils::LineString2d & trajectory_ls, const double ego_longitudinal_offset)
+{
+  std::vector<StopPoint> stop_points;
+  const auto stop_lines = lanelet::utils::query::stopLinesLanelet(lanelet);
+  for (const auto & stop_line : stop_lines) {
+    const auto stop_line_2d = lanelet::utils::to2D(stop_line).basicLineString();
+    universe_utils::MultiPoint2d intersections;
+    boost::geometry::intersection(trajectory_ls, stop_line_2d, intersections);
+    for (const auto & intersection : intersections) {
+      const auto p = geometry_msgs::msg::Point().set__x(intersection.x()).set__y(intersection.y());
+      const auto stop_line_arc_length = motion_utils::calcSignedArcLength(trajectory, 0UL, p);
+      StopPoint sp;
+      sp.ego_trajectory_arc_length = stop_line_arc_length - ego_longitudinal_offset;
+      if (sp.ego_trajectory_arc_length < 0.0) {
+        continue;
+      }
+      sp.stop_line = stop_line_2d;
+      sp.ego_stop_pose =
+        motion_utils::calcInterpolatedPose(trajectory, sp.ego_trajectory_arc_length);
+      stop_points.push_back(sp);
+    }
+  }
+  return stop_points;
+}
+
 std::vector<StopPoint> PlannerData::calculate_map_stop_points(
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory) const
 {
@@ -64,27 +92,9 @@ std::vector<StopPoint> PlannerData::calculate_map_stop_points(
   const auto candidates = route_handler->getLaneletMapPtr()->laneletLayer.search(
     boost::geometry::return_envelope<lanelet::BoundingBox2d>(trajectory_ls));
   for (const auto & candidate : candidates) {
-    const auto stop_lines = lanelet::utils::query::stopLinesLanelet(candidate);
-    for (const auto & stop_line : stop_lines) {
-      const auto stop_line_2d = lanelet::utils::to2D(stop_line).basicLineString();
-      universe_utils::MultiPoint2d intersections;
-      boost::geometry::intersection(trajectory_ls, stop_line_2d, intersections);
-      for (const auto & intersection : intersections) {
-        const auto p =
-          geometry_msgs::msg::Point().set__x(intersection.x()).set__y(intersection.y());
-        const auto stop_line_arc_length = motion_utils::calcSignedArcLength(trajectory, 0UL, p);
-        StopPoint sp;
-        sp.ego_trajectory_arc_length =
-          stop_line_arc_length - vehicle_info_.max_longitudinal_offset_m;
-        if (sp.ego_trajectory_arc_length < 0.0) {
-          continue;
-        }
-        sp.stop_line = stop_line_2d;
-        sp.ego_stop_pose =
-          motion_utils::calcInterpolatedPose(trajectory, sp.ego_trajectory_arc_length);
-        stop_points.push_back(sp);
-      }
-    }
+    const auto points = calculate_stop_points(
+      candidate, trajectory, trajectory_ls, vehicle_info_.max_longitudinal_offset_m);
+    stop_points.insert(stop_points.end(), points.begin(), points.end());
   }
   return stop_points;
 }
