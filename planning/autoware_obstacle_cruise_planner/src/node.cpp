@@ -1481,7 +1481,6 @@ ObstacleCruisePlannerNode::createCollisionPointsForInsideCruiseObstacle(
     return std::nullopt;
   }
 
-  /*
   {  // consider hysteresis
     // const bool is_prev_obstacle_stop = getObstacleFromUuid(prev_stop_obstacles_,
     // obstacle.uuid).has_value();
@@ -1502,7 +1501,6 @@ ObstacleCruisePlannerNode::createCollisionPointsForInsideCruiseObstacle(
       // NOTE: else is cruise from stop
     }
   }
-  */
 
   // Get highest confidence predicted path
   const auto resampled_predicted_paths = resampleHighestConfidencePredictedPaths(
