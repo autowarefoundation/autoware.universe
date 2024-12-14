@@ -29,6 +29,7 @@
 
 namespace autoware::mission_details_overlay_rviz_plugin
 {
+// TODO(xmfcx): remove this line
 
 RemainingDistanceTimeDisplay::RemainingDistanceTimeDisplay()
 : remaining_distance_(0.0), remaining_time_(0.0)
