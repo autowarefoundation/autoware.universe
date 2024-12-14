@@ -74,6 +74,7 @@ runs:
       shell: bash
 
     - name: Build
+      id: build
       if: ${{ steps.get-modified-packages.outputs.modified-packages != '' }}
       uses: autowarefoundation/autoware-github-actions/colcon-build@v1
       with:
@@ -85,6 +86,22 @@ runs:
 
     - name: Show ccache stats after build
       run: du -sh ${CCACHE_DIR} && ccache -s
+      shell: bash
+
+    - uses: actions/upload-artifact@v4
+      id: upload-artifact-treemap
+      if: ${{ steps.build.outputs.build-time-treemap-path != '' }}
+      with:
+        name: build-time-visualization-treemap
+        path: ${{ steps.build.outputs.build-time-treemap-path }}
+
+    - name: Visualize build time treemap
+      if: ${{ steps.build.outputs.build-time-treemap-path != '' }}
+      run: |
+        echo "## Build Time Treemap Visualization" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo ${{ steps.upload-artifact-treemap.outputs.artifact-url }} >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
       shell: bash
 
     - name: Test
