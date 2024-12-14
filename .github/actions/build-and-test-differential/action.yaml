@@ -76,7 +76,7 @@ runs:
     - name: Build
       id: build
       if: ${{ steps.get-modified-packages.outputs.modified-packages != '' }}
-      uses: autowarefoundation/autoware-github-actions/colcon-build@v1
+      uses: autowarefoundation/autoware-github-actions/colcon-build@feat/build-time-vis
       with:
         rosdistro: ${{ inputs.rosdistro }}
         target-packages: ${{ steps.get-modified-packages.outputs.modified-packages }}
