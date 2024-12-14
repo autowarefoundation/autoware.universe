@@ -49,7 +49,7 @@ jobs:
         run: exit 1
 
   build-and-test-differential:
-    runs-on: ubuntu-latest
+    runs-on: [self-hosted, Linux, X64]
     container: ghcr.io/autowarefoundation/autoware:universe-devel
     needs: prepare-build-and-test-differential
     steps:
@@ -69,7 +69,6 @@ jobs:
           rosdistro: humble
           container: ghcr.io/autowarefoundation/autoware:universe-devel
           container-suffix: ""
-          runner: ovh-runner-01
           build-depends-repos: build_depends.repos
           build-pre-command: ""
           codecov-token: ${{ secrets.CODECOV_TOKEN }}

@@ -11,9 +11,6 @@ inputs:
   container-suffix:
     description: ""
     required: true
-  runner:
-    description: ""
-    required: true
   build-depends-repos:
     description: ""
     required: true
