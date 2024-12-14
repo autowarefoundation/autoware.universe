@@ -69,7 +69,7 @@ jobs:
           rosdistro: humble
           container: ghcr.io/autowarefoundation/autoware:universe-devel
           container-suffix: ""
-          runner: ubuntu-latest
+          runner: ovh-runner-01
           build-depends-repos: build_depends.repos
           build-pre-command: ""
           codecov-token: ${{ secrets.CODECOV_TOKEN }}
