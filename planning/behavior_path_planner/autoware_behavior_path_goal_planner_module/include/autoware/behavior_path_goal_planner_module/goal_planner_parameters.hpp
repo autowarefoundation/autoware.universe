@@ -119,6 +119,11 @@ struct GoalPlannerParameters
   AstarParam astar_parameters{};
   RRTStarParam rrt_star_parameters{};
 
+  struct BezierParking
+  {
+    double pull_over_azimuth_threshold;
+  } bezier_parking;
+
   // stop condition
   double maximum_deceleration_for_stop{0.0};
   double maximum_jerk_for_stop{0.0};

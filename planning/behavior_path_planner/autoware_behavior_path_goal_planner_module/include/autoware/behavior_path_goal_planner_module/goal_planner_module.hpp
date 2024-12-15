@@ -18,6 +18,7 @@
 #include "autoware/behavior_path_goal_planner_module/decision_state.hpp"
 #include "autoware/behavior_path_goal_planner_module/fixed_goal_planner_base.hpp"
 #include "autoware/behavior_path_goal_planner_module/goal_planner_parameters.hpp"
+#include "autoware/behavior_path_goal_planner_module/pull_over_planner/bezier_pull_over.hpp"
 #include "autoware/behavior_path_goal_planner_module/pull_over_planner/freespace_pull_over.hpp"
 #include "autoware/behavior_path_goal_planner_module/thread_data.hpp"
 #include "autoware/behavior_path_planner_common/utils/parking_departure/common_module_data.hpp"
@@ -196,6 +197,9 @@ private:
   rclcpp::Logger logger_;
 
   std::vector<std::shared_ptr<PullOverPlannerBase>> pull_over_planners_;
+  std::shared_ptr<BezierPullOver> bezier_pull_over_planner_;
+  const double pull_over_azimuth_threshold;
+  bool switch_bezier_{false};
 };
 
 class FreespaceParkingPlanner
@@ -432,7 +436,8 @@ private:
   std::optional<PullOverPath> selectPullOverPath(
     const PullOverContextData & context_data,
     const std::vector<PullOverPath> & pull_over_path_candidates,
-    const GoalCandidates & goal_candidates) const;
+    const GoalCandidates & goal_candidates,
+    const std::optional<std::vector<size_t>> sorted_bezier_indices_opt) const;
 
   // lanes and drivable area
   std::vector<DrivableLanes> generateDrivableLanes() const;

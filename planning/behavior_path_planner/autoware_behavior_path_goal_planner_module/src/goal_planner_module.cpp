@@ -29,6 +29,7 @@
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
 
+#include <autoware/universe_utils/math/normalization.hpp>
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
@@ -286,7 +287,8 @@ LaneParkingPlanner::LaneParkingPlanner(
   request_(request),
   response_(response),
   is_lane_parking_cb_running_(is_lane_parking_cb_running),
-  logger_(logger)
+  logger_(logger),
+  pull_over_azimuth_threshold(parameters.bezier_parking.pull_over_azimuth_threshold)
 {
   const auto vehicle_info = autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo();
   LaneDepartureChecker lane_departure_checker{};
@@ -308,6 +310,9 @@ LaneParkingPlanner::LaneParkingPlanner(
         node, parameters, lane_departure_checker, /*is_forward*/ false));
     }
   }
+
+  bezier_pull_over_planner_ =
+    std::make_shared<BezierPullOver>(node, parameters, lane_departure_checker);
 
   if (pull_over_planners_.empty()) {
     RCLCPP_ERROR(logger_, "Not found enabled planner");
@@ -409,19 +414,30 @@ void LaneParkingPlanner::onTimer()
   const auto planCandidatePaths = [&](
                                     const std::shared_ptr<PullOverPlannerBase> & planner,
                                     const GoalCandidate & goal_candidate) {
-    const auto pull_over_path = planner->plan(
-      goal_candidate, path_candidates.size(), local_planner_data, previous_module_output);
-    if (pull_over_path) {
-      // calculate absolute maximum curvature of parking path(start pose to end pose) for path
-      // priority
-      path_candidates.push_back(*pull_over_path);
-      // calculate closest pull over start pose for stop path
-      const double start_arc_length =
-        lanelet::utils::getArcCoordinates(current_lanes, pull_over_path->start_pose()).length;
-      if (start_arc_length < min_start_arc_length) {
-        min_start_arc_length = start_arc_length;
-        // closest start pose is stop point when not finding safe path
-        closest_start_pose = pull_over_path->start_pose();
+    if (switch_bezier_) {
+      auto bezier_pull_over_paths = bezier_pull_over_planner_->plans(
+        goal_candidate, 0, local_planner_data, previous_module_output);
+      // TODO(soblin):
+      // bezier生成が遅すぎる場合，shiftベースのclosest_start_poseは保存しないといけないかも
+      std::copy(
+        std::make_move_iterator(bezier_pull_over_paths.begin()),
+        std::make_move_iterator(bezier_pull_over_paths.end()), std::back_inserter(path_candidates));
+    } else {
+      // normal pull_over
+      const auto pull_over_path = planner->plan(
+        goal_candidate, path_candidates.size(), local_planner_data, previous_module_output);
+      if (pull_over_path) {
+        // calculate absolute maximum curvature of parking path(start pose to end pose) for path
+        // priority
+        path_candidates.push_back(*pull_over_path);
+        // calculate closest pull over start pose for stop path
+        const double start_arc_length =
+          lanelet::utils::getArcCoordinates(current_lanes, pull_over_path->start_pose()).length;
+        if (start_arc_length < min_start_arc_length) {
+          min_start_arc_length = start_arc_length;
+          // closest start pose is stop point when not finding safe path
+          closest_start_pose = pull_over_path->start_pose();
+        }
       }
     }
   };
@@ -435,23 +451,36 @@ void LaneParkingPlanner::onTimer()
 
   // plan candidate paths and set them to the member variable
   if (parameters.path_priority == "efficient_path") {
-    for (const auto & planner : pull_over_planners_) {
-      // todo: temporary skip NON SHIFT planner when input path is not center line
-      if (!is_center_line_input_path && planner->getPlannerType() != PullOverPlannerType::SHIFT) {
-        continue;
-      }
-      for (const auto & goal_candidate : goal_candidates) {
-        planCandidatePaths(planner, goal_candidate);
-      }
-    }
-  } else if (parameters.path_priority == "close_goal") {
-    for (const auto & goal_candidate : goal_candidates) {
+    if (!switch_bezier_) {
       for (const auto & planner : pull_over_planners_) {
         // todo: temporary skip NON SHIFT planner when input path is not center line
         if (!is_center_line_input_path && planner->getPlannerType() != PullOverPlannerType::SHIFT) {
           continue;
         }
-        planCandidatePaths(planner, goal_candidate);
+        for (const auto & goal_candidate : goal_candidates) {
+          planCandidatePaths(planner, goal_candidate);
+        }
+      }
+    } else {
+      for (const auto & goal_candidate : goal_candidates) {
+        planCandidatePaths(bezier_pull_over_planner_, goal_candidate);
+      }
+    }
+  } else if (parameters.path_priority == "close_goal") {
+    if (!switch_bezier_) {
+      for (const auto & goal_candidate : goal_candidates) {
+        for (const auto & planner : pull_over_planners_) {
+          // todo: temporary skip NON SHIFT planner when input path is not center line
+          if (
+            !is_center_line_input_path && planner->getPlannerType() != PullOverPlannerType::SHIFT) {
+            continue;
+          }
+          planCandidatePaths(planner, goal_candidate);
+        }
+      }
+    } else {
+      for (const auto & goal_candidate : goal_candidates) {
+        planCandidatePaths(bezier_pull_over_planner_, goal_candidate);
       }
     }
   } else {
@@ -461,14 +490,99 @@ void LaneParkingPlanner::onTimer()
     throw std::domain_error("[pull_over] invalid path_priority");
   }
 
+  std::vector<PullOverPath> bezier_pull_over_paths;
+  std::optional<std::vector<size_t>> sorted_indices_opt{std::nullopt};
+  if (switch_bezier_) {
+    RCLCPP_INFO(getLogger(), "there are %lu bezier paths", path_candidates.size());
+    // do sort
+    std::vector<size_t> sorted_path_indices;
+    sorted_path_indices.reserve(path_candidates.size());
+
+    std::unordered_map<int, GoalCandidate> goal_candidate_map;
+    for (const auto & goal_candidate : goal_candidates) {
+      goal_candidate_map[goal_candidate.id] = goal_candidate;
+    }
+    for (size_t i = 0; i < path_candidates.size(); ++i) {
+      const auto & path = path_candidates[i];
+      const auto goal_candidate_it = goal_candidate_map.find(path.goal_id());
+      if (goal_candidate_it != goal_candidate_map.end() && goal_candidate_it->second.is_safe) {
+        sorted_path_indices.push_back(i);
+      }
+    }
+    const double vehicle_width = local_planner_data->parameters.vehicle_width;
+    const bool left_side_parking = parameters.parking_policy == ParkingPolicy::LEFT_SIDE;
+    const auto pull_over_lanes = goal_planner_utils::getPullOverLanes(
+      *(local_planner_data->route_handler), left_side_parking,
+      parameters.backward_goal_search_length, parameters.forward_goal_search_length);
+    const auto objects_extraction_polygon = goal_planner_utils::generateObjectExtractionPolygon(
+      pull_over_lanes, left_side_parking, parameters.detection_bound_offset,
+      parameters.margin_from_boundary + parameters.max_lateral_offset + vehicle_width);
+
+    PredictedObjects dynamic_target_objects{};
+    for (const auto & object : local_planner_data->dynamic_object->objects) {
+      const auto object_polygon = universe_utils::toPolygon2d(object);
+      if (
+        objects_extraction_polygon.has_value() &&
+        boost::geometry::intersects(object_polygon, objects_extraction_polygon.value())) {
+        dynamic_target_objects.objects.push_back(object);
+      }
+    }
+    const auto static_target_objects = utils::path_safety_checker::filterObjectsByVelocity(
+      dynamic_target_objects, parameters.th_moving_object_velocity);
+    sortPullOverPaths(
+      local_planner_data, parameters, path_candidates, goal_candidates, static_target_objects,
+      getLogger(), sorted_path_indices);
+
+    // 減らす(上から100個まで)
+    const auto clip_size = std::min<size_t>(path_candidates.size(), 100);
+    sorted_path_indices.resize(clip_size);
+    for (const auto sorted : sorted_path_indices) {
+      bezier_pull_over_paths.push_back(path_candidates[sorted]);
+    }
+    for (const auto & bezier_pull_over_path : bezier_pull_over_paths) {
+      const double start_arc_length =
+        lanelet::utils::getArcCoordinates(current_lanes, bezier_pull_over_path.start_pose()).length;
+      if (start_arc_length < min_start_arc_length) {
+        min_start_arc_length = start_arc_length;
+        closest_start_pose = bezier_pull_over_path.start_pose();
+      }
+    }
+    sorted_path_indices.clear();
+    for (unsigned i = 0; i < clip_size; ++i) {
+      sorted_path_indices.push_back(i);
+    }
+    sorted_indices_opt = sorted_path_indices;
+    // TODO(soblin): save the list of static_target_objects UUID
+  }
+
+  if (closest_start_pose && !switch_bezier_) {
+    const auto original_pose = local_planner_data->route_handler->getOriginalGoalPose();
+    if (
+      std::fabs(autoware::universe_utils::normalizeRadian(
+        autoware::universe_utils::getRPY(original_pose).z -
+        autoware::universe_utils::getRPY(closest_start_pose.value()).z)) >
+      pull_over_azimuth_threshold) {
+      // reset and try bezier next time
+      switch_bezier_ = true;
+      path_candidates.clear();
+      // closest_start_pose = std::nullopt; closest_start_poseは残しておく
+      RCLCPP_INFO(getLogger(), "will generate Bezier Paths next");
+    }
+  }
+
   // set response
   {
     std::lock_guard<std::mutex> guard(mutex_);
-    response_.pull_over_path_candidates = path_candidates;
-    response_.closest_start_pose = closest_start_pose;
+    response_.pull_over_path_candidates =
+      std::move(switch_bezier_ ? bezier_pull_over_paths : path_candidates);
+    // bezier対策でclosest_start_poseは有効値が見つかるまでキープ
+    if (closest_start_pose) {
+      response_.closest_start_pose = closest_start_pose;
+    }
     RCLCPP_INFO(
       getLogger(), "generated %lu pull over path candidates",
       response_.pull_over_path_candidates.size());
+    response_.sorted_bezier_indices_opt = std::move(sorted_indices_opt);
   }
 }
 
@@ -1158,7 +1272,8 @@ void sortPullOverPaths(
 std::optional<PullOverPath> GoalPlannerModule::selectPullOverPath(
   const PullOverContextData & context_data,
   const std::vector<PullOverPath> & pull_over_path_candidates,
-  const GoalCandidates & goal_candidates) const
+  const GoalCandidates & goal_candidates,
+  const std::optional<std::vector<size_t>> sorted_bezier_indices_opt) const
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
@@ -1170,20 +1285,24 @@ std::optional<PullOverPath> GoalPlannerModule::selectPullOverPath(
   // STEP1: Filter valid paths before sorting
   // NOTE: Since copying pull over path takes time, it is handled by indices
   std::vector<size_t> sorted_path_indices;
-  sorted_path_indices.reserve(pull_over_path_candidates.size());
+  if (!sorted_bezier_indices_opt) {
+    sorted_path_indices.reserve(pull_over_path_candidates.size());
 
-  // STEP1-1: Extract paths which have safe goal
-  // Create a map of goal_id to GoalCandidate for quick access
-  std::unordered_map<int, GoalCandidate> goal_candidate_map;
-  for (const auto & goal_candidate : goal_candidates) {
-    goal_candidate_map[goal_candidate.id] = goal_candidate;
-  }
-  for (size_t i = 0; i < pull_over_path_candidates.size(); ++i) {
-    const auto & path = pull_over_path_candidates[i];
-    const auto goal_candidate_it = goal_candidate_map.find(path.goal_id());
-    if (goal_candidate_it != goal_candidate_map.end() && goal_candidate_it->second.is_safe) {
-      sorted_path_indices.push_back(i);
+    // STEP1-1: Extract paths which have safe goal
+    // Create a map of goal_id to GoalCandidate for quick access
+    std::unordered_map<int, GoalCandidate> goal_candidate_map;
+    for (const auto & goal_candidate : goal_candidates) {
+      goal_candidate_map[goal_candidate.id] = goal_candidate;
     }
+    for (size_t i = 0; i < pull_over_path_candidates.size(); ++i) {
+      const auto & path = pull_over_path_candidates[i];
+      const auto goal_candidate_it = goal_candidate_map.find(path.goal_id());
+      if (goal_candidate_it != goal_candidate_map.end() && goal_candidate_it->second.is_safe) {
+        sorted_path_indices.push_back(i);
+      }
+    }
+  } else {
+    sorted_path_indices = sorted_bezier_indices_opt.value();
   }
 
   // STEP1-2: Remove paths which do not have enough distance
@@ -1414,9 +1533,12 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsCandidate(
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   // if pull over path candidates generation is not finished, use previous module output
+  /*
+    candidateなかったら問答無用で停止
   if (context_data.lane_parking_response.pull_over_path_candidates.empty()) {
     return getPreviousModuleOutput();
   }
+  */
 
   BehaviorModuleOutput output{};
   const BehaviorModuleOutput pull_over_output = planPullOverAsOutput(context_data);
@@ -1450,7 +1572,21 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsOutput(PullOverContextData
 
   // if pull over path candidates generation is not finished, use previous module output
   if (context_data.lane_parking_response.pull_over_path_candidates.empty()) {
-    return getPreviousModuleOutput();
+    // return getPreviousModuleOutput();
+    BehaviorModuleOutput output{};
+    // const BehaviorModuleOutput pull_over_output = planPullOverAsOutput(context_data);
+    // output.modified_goal = pull_over_output.modified_goal;
+    output.path = generateStopPath(context_data, "hoge");
+    output.reference_path = getPreviousModuleOutput().reference_path;
+
+    const auto target_drivable_lanes = utils::getNonOverlappingExpandedLanes(
+      output.path, generateDrivableLanes(), planner_data_->drivable_area_expansion_parameters);
+
+    DrivableAreaInfo current_drivable_area_info{};
+    current_drivable_area_info.drivable_lanes = target_drivable_lanes;
+    output.drivable_area_info = utils::combineDrivableAreaInfo(
+      current_drivable_area_info, getPreviousModuleOutput().drivable_area_info);
+    return output;
   }
 
   /**
@@ -1490,8 +1626,9 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsOutput(PullOverContextData
     // Select a path that is as safe as possible and has a high priority.
     const auto & pull_over_path_candidates =
       context_data.lane_parking_response.pull_over_path_candidates;
-    const auto lane_pull_over_path_opt =
-      selectPullOverPath(context_data, pull_over_path_candidates, goal_candidates);
+    const auto lane_pull_over_path_opt = selectPullOverPath(
+      context_data, pull_over_path_candidates, goal_candidates,
+      context_data.lane_parking_response.sorted_bezier_indices_opt);
 
     // update thread_safe_data_
     const auto & pull_over_path_opt =

@@ -78,6 +78,7 @@ struct LaneParkingResponse
 {
   std::vector<PullOverPath> pull_over_path_candidates;
   std::optional<Pose> closest_start_pose;
+  std::optional<std::vector<size_t>> sorted_bezier_indices_opt;
 };
 
 class FreespaceParkingRequest

@@ -266,6 +266,13 @@ GoalPlannerParameters GoalPlannerModuleManager::initGoalPlannerParameters(
     p.rrt_star_parameters.margin = node->declare_parameter<double>(ns + "margin");
   }
 
+  // bezier parking
+  {
+    const std::string ns = base_ns + "pull_over.bezier_parking.";
+    p.bezier_parking.pull_over_azimuth_threshold =
+      node->declare_parameter<double>(ns + "pull_over_azimuth_threshold");
+  }
+
   // stop condition
   {
     p.maximum_deceleration_for_stop =
