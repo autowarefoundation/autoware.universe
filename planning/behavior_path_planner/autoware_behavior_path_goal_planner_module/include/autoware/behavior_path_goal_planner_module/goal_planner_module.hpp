@@ -158,6 +158,12 @@ bool isStopped(
   const nav_msgs::msg::Odometry::ConstSharedPtr self_odometry, const double duration_lower,
   const double velocity_upper);
 
+void sortPullOverPaths(
+  const std::shared_ptr<const PlannerData> planner_data, const GoalPlannerParameters & parameters,
+  const std::vector<PullOverPath> & pull_over_path_candidates,
+  const GoalCandidates & goal_candidates, const PredictedObjects & static_target_objects,
+  rclcpp::Logger logger, std::vector<size_t> & sorted_path_indices);
+
 // Flag class for managing whether a certain callback is running in multi-threading
 class ScopedFlag
 {

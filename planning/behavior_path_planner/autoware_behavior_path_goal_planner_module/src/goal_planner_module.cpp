@@ -982,6 +982,180 @@ BehaviorModuleOutput GoalPlannerModule::plan()
   return fixed_goal_planner_->plan(planner_data_);
 }
 
+void sortPullOverPaths(
+  const std::shared_ptr<const PlannerData> planner_data, const GoalPlannerParameters & parameters,
+  const std::vector<PullOverPath> & pull_over_path_candidates,
+  const GoalCandidates & goal_candidates, const PredictedObjects & static_target_objects,
+  rclcpp::Logger logger, std::vector<size_t> & sorted_path_indices)
+{
+  const auto & soft_margins = parameters.object_recognition_collision_check_soft_margins;
+  const auto & hard_margins = parameters.object_recognition_collision_check_hard_margins;
+
+  // STEP2: Sort pull over path candidates
+  // STEP2-1: Sort pull_over_path_candidates based on the order in goal_candidates
+  // Create a map of goal_id to its index in goal_candidates
+  std::map<size_t, size_t> goal_id_to_index;
+  for (size_t i = 0; i < goal_candidates.size(); ++i) {
+    goal_id_to_index[goal_candidates[i].id] = i;
+  }
+
+  // Sort pull_over_path_candidates based on the order in goal_candidates
+  std::stable_sort(
+    sorted_path_indices.begin(), sorted_path_indices.end(),
+    [&](const size_t a_i, const size_t b_i) {
+      const auto & a = pull_over_path_candidates[a_i];
+      const auto & b = pull_over_path_candidates[b_i];
+      return goal_id_to_index[a.goal_id()] < goal_id_to_index[b.goal_id()];
+    });
+
+  // Sort the path only when the number of objects to avoid is the same to minimize the
+  // num_objects_to_avoid.
+  const auto isSameNumObjectsToAvoid = [&](const PullOverPath & a, const PullOverPath & b) -> bool {
+    return goal_candidates[goal_id_to_index[a.goal_id()]].num_objects_to_avoid ==
+           goal_candidates[goal_id_to_index[b.goal_id()]].num_objects_to_avoid;
+  };
+
+  // compare to sort pull_over_path_candidates based on the order in efficient_path_order
+  const auto comparePathTypePriority = [&](const PullOverPath & a, const PullOverPath & b) -> bool {
+    const auto & order = parameters.efficient_path_order;
+    const auto a_pos = std::find(order.begin(), order.end(), magic_enum::enum_name(a.type()));
+    const auto b_pos = std::find(order.begin(), order.end(), magic_enum::enum_name(b.type()));
+    return a_pos < b_pos;
+  };
+
+  // if object recognition is enabled, sort by collision check margin
+  if (parameters.use_object_recognition) {
+    // STEP2-2: Sort by collision check margins
+    const auto [margins, margins_with_zero] =
+      std::invoke([&]() -> std::tuple<std::vector<double>, std::vector<double>> {
+        std::vector<double> margins = soft_margins;
+        margins.insert(margins.end(), hard_margins.begin(), hard_margins.end());
+        std::vector<double> margins_with_zero = margins;
+        margins_with_zero.push_back(0.0);
+        return std::make_tuple(margins, margins_with_zero);
+      });
+
+    // Create a map of PullOverPath pointer to largest collision check margin
+    std::map<size_t, double> path_id_to_rough_margin_map;
+    const auto & target_objects = static_target_objects;
+    for (const size_t i : sorted_path_indices) {
+      const auto & path = pull_over_path_candidates[i];
+      const double distance = utils::path_safety_checker::calculateRoughDistanceToObjects(
+        path.parking_path(), target_objects, planner_data->parameters, false, "max");
+      auto it = std::lower_bound(
+        margins_with_zero.begin(), margins_with_zero.end(), distance, std::greater<double>());
+      if (it == margins_with_zero.end()) {
+        path_id_to_rough_margin_map[path.id()] = margins_with_zero.back();
+      } else {
+        path_id_to_rough_margin_map[path.id()] = *it;
+      }
+    }
+
+    // sorts in descending order so the item with larger margin comes first
+    std::stable_sort(
+      sorted_path_indices.begin(), sorted_path_indices.end(),
+      [&](const size_t a_i, const size_t b_i) {
+        const auto & a = pull_over_path_candidates[a_i];
+        const auto & b = pull_over_path_candidates[b_i];
+        if (!isSameNumObjectsToAvoid(a, b)) {
+          return false;
+        }
+        if (
+          std::abs(path_id_to_rough_margin_map[a.id()] - path_id_to_rough_margin_map[b.id()]) <
+          0.01) {
+          return false;
+        }
+        return path_id_to_rough_margin_map[a.id()] > path_id_to_rough_margin_map[b.id()];
+      });
+
+    // STEP2-3: Sort by curvature
+    // If the curvature is less than the threshold, prioritize the path.
+    const auto isHighCurvature = [&](const PullOverPath & path) -> bool {
+      return path.parking_path_max_curvature() >= parameters.high_curvature_threshold;
+    };
+
+    const auto isSoftMargin = [&](const PullOverPath & path) -> bool {
+      const double margin = path_id_to_rough_margin_map[path.id()];
+      return std::any_of(
+        soft_margins.begin(), soft_margins.end(),
+        [margin](const double soft_margin) { return std::abs(margin - soft_margin) < 0.01; });
+    };
+    const auto isSameHardMargin = [&](const PullOverPath & a, const PullOverPath & b) -> bool {
+      return !isSoftMargin(a) && !isSoftMargin(b) &&
+             std::abs(path_id_to_rough_margin_map[a.id()] - path_id_to_rough_margin_map[b.id()]) <
+               0.01;
+    };
+
+    // NOTE: this is just partition sort based on curvature threshold within each sub partitions
+    std::stable_sort(
+      sorted_path_indices.begin(), sorted_path_indices.end(),
+      [&](const size_t a_i, const size_t b_i) {
+        const auto & a = pull_over_path_candidates[a_i];
+        const auto & b = pull_over_path_candidates[b_i];
+        if (!isSameNumObjectsToAvoid(a, b)) {
+          return false;
+        }
+
+        // if both are soft margin or both are same hard margin, prioritize the path with lower
+        // curvature.
+        if ((isSoftMargin(a) && isSoftMargin(b)) || isSameHardMargin(a, b)) {
+          return !isHighCurvature(a) && isHighCurvature(b);
+        }
+        // otherwise, keep the order based on the margin.
+        return false;
+      });
+
+    // STEP2-4: Sort pull_over_path_candidates based on the order in efficient_path_order keeping
+    // the collision check margin and curvature priority.
+    if (parameters.path_priority == "efficient_path") {
+      std::stable_sort(
+        sorted_path_indices.begin(), sorted_path_indices.end(),
+        [&](const size_t a_i, const size_t b_i) {
+          // if any of following conditions are met, sort by path type priority
+          // - both are soft margin
+          // - both are same hard margin
+          const auto & a = pull_over_path_candidates[a_i];
+          const auto & b = pull_over_path_candidates[b_i];
+          if (!isSameNumObjectsToAvoid(a, b)) {
+            return false;
+          }
+          if ((isSoftMargin(a) && isSoftMargin(b)) || isSameHardMargin(a, b)) {
+            return comparePathTypePriority(a, b);
+          }
+          // otherwise, keep the order.
+          return false;
+        });
+    }
+
+    // debug print path priority sorted by
+    // - efficient_path_order
+    // - collision check margin
+    // - curvature
+    const std::string path_priority_info_str = goal_planner_utils::makePathPriorityDebugMessage(
+      sorted_path_indices, pull_over_path_candidates, goal_id_to_index, goal_candidates,
+      path_id_to_rough_margin_map, isSoftMargin, isHighCurvature);
+    RCLCPP_DEBUG_STREAM(logger, path_priority_info_str);
+  } else {
+    /**
+     * NOTE: use_object_recognition=false is not recommended. This option will be deprecated in the
+     * future. sort by curvature is not implemented yet.
+     * Sort pull_over_path_candidates based on the order in efficient_path_order
+     */
+    if (parameters.path_priority == "efficient_path") {
+      std::stable_sort(
+        sorted_path_indices.begin(), sorted_path_indices.end(),
+        [&](const size_t a_i, const size_t b_i) {
+          const auto & a = pull_over_path_candidates[a_i];
+          const auto & b = pull_over_path_candidates[b_i];
+          if (!isSameNumObjectsToAvoid(a, b)) {
+            return false;
+          }
+          return comparePathTypePriority(a, b);
+        });
+    }
+  }
+}
+
 std::optional<PullOverPath> GoalPlannerModule::selectPullOverPath(
   const PullOverContextData & context_data,
   const std::vector<PullOverPath> & pull_over_path_candidates,
@@ -993,8 +1167,6 @@ std::optional<PullOverPath> GoalPlannerModule::selectPullOverPath(
   const double backward_length =
     parameters_->backward_goal_search_length + parameters_->decide_path_distance;
   const auto & prev_module_output_path = getPreviousModuleOutput().path;
-  const auto & soft_margins = parameters_->object_recognition_collision_check_soft_margins;
-  const auto & hard_margins = parameters_->object_recognition_collision_check_hard_margins;
 
   // STEP1: Filter valid paths before sorting
   // NOTE: Since copying pull over path takes time, it is handled by indices
@@ -1040,169 +1212,9 @@ std::optional<PullOverPath> GoalPlannerModule::selectPullOverPath(
       }),
     sorted_path_indices.end());
 
-  // STEP2: Sort pull over path candidates
-  // STEP2-1: Sort pull_over_path_candidates based on the order in goal_candidates
-  // Create a map of goal_id to its index in goal_candidates
-  std::map<size_t, size_t> goal_id_to_index;
-  for (size_t i = 0; i < goal_candidates.size(); ++i) {
-    goal_id_to_index[goal_candidates[i].id] = i;
-  }
-
-  // Sort pull_over_path_candidates based on the order in goal_candidates
-  std::stable_sort(
-    sorted_path_indices.begin(), sorted_path_indices.end(),
-    [&](const size_t a_i, const size_t b_i) {
-      const auto & a = pull_over_path_candidates[a_i];
-      const auto & b = pull_over_path_candidates[b_i];
-      return goal_id_to_index[a.goal_id()] < goal_id_to_index[b.goal_id()];
-    });
-
-  // Sort the path only when the number of objects to avoid is the same to minimize the
-  // num_objects_to_avoid.
-  const auto isSameNumObjectsToAvoid = [&](const PullOverPath & a, const PullOverPath & b) -> bool {
-    return goal_candidates[goal_id_to_index[a.goal_id()]].num_objects_to_avoid ==
-           goal_candidates[goal_id_to_index[b.goal_id()]].num_objects_to_avoid;
-  };
-
-  // compare to sort pull_over_path_candidates based on the order in efficient_path_order
-  const auto comparePathTypePriority = [&](const PullOverPath & a, const PullOverPath & b) -> bool {
-    const auto & order = parameters_->efficient_path_order;
-    const auto a_pos = std::find(order.begin(), order.end(), magic_enum::enum_name(a.type()));
-    const auto b_pos = std::find(order.begin(), order.end(), magic_enum::enum_name(b.type()));
-    return a_pos < b_pos;
-  };
-
-  // if object recognition is enabled, sort by collision check margin
-  if (parameters_->use_object_recognition) {
-    // STEP2-2: Sort by collision check margins
-    const auto [margins, margins_with_zero] =
-      std::invoke([&]() -> std::tuple<std::vector<double>, std::vector<double>> {
-        std::vector<double> margins = soft_margins;
-        margins.insert(margins.end(), hard_margins.begin(), hard_margins.end());
-        std::vector<double> margins_with_zero = margins;
-        margins_with_zero.push_back(0.0);
-        return std::make_tuple(margins, margins_with_zero);
-      });
-
-    // Create a map of PullOverPath pointer to largest collision check margin
-    std::map<size_t, double> path_id_to_rough_margin_map;
-    const auto & target_objects = context_data.static_target_objects;
-    for (const size_t i : sorted_path_indices) {
-      const auto & path = pull_over_path_candidates[i];
-      const double distance = utils::path_safety_checker::calculateRoughDistanceToObjects(
-        path.parking_path(), target_objects, planner_data_->parameters, false, "max");
-      auto it = std::lower_bound(
-        margins_with_zero.begin(), margins_with_zero.end(), distance, std::greater<double>());
-      if (it == margins_with_zero.end()) {
-        path_id_to_rough_margin_map[path.id()] = margins_with_zero.back();
-      } else {
-        path_id_to_rough_margin_map[path.id()] = *it;
-      }
-    }
-
-    // sorts in descending order so the item with larger margin comes first
-    std::stable_sort(
-      sorted_path_indices.begin(), sorted_path_indices.end(),
-      [&](const size_t a_i, const size_t b_i) {
-        const auto & a = pull_over_path_candidates[a_i];
-        const auto & b = pull_over_path_candidates[b_i];
-        if (!isSameNumObjectsToAvoid(a, b)) {
-          return false;
-        }
-        if (
-          std::abs(path_id_to_rough_margin_map[a.id()] - path_id_to_rough_margin_map[b.id()]) <
-          0.01) {
-          return false;
-        }
-        return path_id_to_rough_margin_map[a.id()] > path_id_to_rough_margin_map[b.id()];
-      });
-
-    // STEP2-3: Sort by curvature
-    // If the curvature is less than the threshold, prioritize the path.
-    const auto isHighCurvature = [&](const PullOverPath & path) -> bool {
-      return path.parking_path_max_curvature() >= parameters_->high_curvature_threshold;
-    };
-
-    const auto isSoftMargin = [&](const PullOverPath & path) -> bool {
-      const double margin = path_id_to_rough_margin_map[path.id()];
-      return std::any_of(
-        soft_margins.begin(), soft_margins.end(),
-        [margin](const double soft_margin) { return std::abs(margin - soft_margin) < 0.01; });
-    };
-    const auto isSameHardMargin = [&](const PullOverPath & a, const PullOverPath & b) -> bool {
-      return !isSoftMargin(a) && !isSoftMargin(b) &&
-             std::abs(path_id_to_rough_margin_map[a.id()] - path_id_to_rough_margin_map[b.id()]) <
-               0.01;
-    };
-
-    // NOTE: this is just partition sort based on curvature threshold within each sub partitions
-    std::stable_sort(
-      sorted_path_indices.begin(), sorted_path_indices.end(),
-      [&](const size_t a_i, const size_t b_i) {
-        const auto & a = pull_over_path_candidates[a_i];
-        const auto & b = pull_over_path_candidates[b_i];
-        if (!isSameNumObjectsToAvoid(a, b)) {
-          return false;
-        }
-
-        // if both are soft margin or both are same hard margin, prioritize the path with lower
-        // curvature.
-        if ((isSoftMargin(a) && isSoftMargin(b)) || isSameHardMargin(a, b)) {
-          return !isHighCurvature(a) && isHighCurvature(b);
-        }
-        // otherwise, keep the order based on the margin.
-        return false;
-      });
-
-    // STEP2-4: Sort pull_over_path_candidates based on the order in efficient_path_order keeping
-    // the collision check margin and curvature priority.
-    if (parameters_->path_priority == "efficient_path") {
-      std::stable_sort(
-        sorted_path_indices.begin(), sorted_path_indices.end(),
-        [&](const size_t a_i, const size_t b_i) {
-          // if any of following conditions are met, sort by path type priority
-          // - both are soft margin
-          // - both are same hard margin
-          const auto & a = pull_over_path_candidates[a_i];
-          const auto & b = pull_over_path_candidates[b_i];
-          if (!isSameNumObjectsToAvoid(a, b)) {
-            return false;
-          }
-          if ((isSoftMargin(a) && isSoftMargin(b)) || isSameHardMargin(a, b)) {
-            return comparePathTypePriority(a, b);
-          }
-          // otherwise, keep the order.
-          return false;
-        });
-    }
-
-    // debug print path priority sorted by
-    // - efficient_path_order
-    // - collision check margin
-    // - curvature
-    const std::string path_priority_info_str = goal_planner_utils::makePathPriorityDebugMessage(
-      sorted_path_indices, pull_over_path_candidates, goal_id_to_index, goal_candidates,
-      path_id_to_rough_margin_map, isSoftMargin, isHighCurvature);
-    RCLCPP_DEBUG_STREAM(getLogger(), path_priority_info_str);
-  } else {
-    /**
-     * NOTE: use_object_recognition=false is not recommended. This option will be deprecated in the
-     * future. sort by curvature is not implemented yet.
-     * Sort pull_over_path_candidates based on the order in efficient_path_order
-     */
-    if (parameters_->path_priority == "efficient_path") {
-      std::stable_sort(
-        sorted_path_indices.begin(), sorted_path_indices.end(),
-        [&](const size_t a_i, const size_t b_i) {
-          const auto & a = pull_over_path_candidates[a_i];
-          const auto & b = pull_over_path_candidates[b_i];
-          if (!isSameNumObjectsToAvoid(a, b)) {
-            return false;
-          }
-          return comparePathTypePriority(a, b);
-        });
-    }
-  }
+  sortPullOverPaths(
+    planner_data_, *parameters_, pull_over_path_candidates, goal_candidates,
+    context_data.static_target_objects, getLogger(), sorted_path_indices);
 
   // STEP3: Select the final pull over path by checking collision to make it as high priority as
   // possible
