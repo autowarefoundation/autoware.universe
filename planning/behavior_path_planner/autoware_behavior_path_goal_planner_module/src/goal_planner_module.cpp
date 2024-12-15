@@ -498,7 +498,6 @@ void FreespaceParkingPlanner::onTimer()
   const auto & current_status = local_request.get_current_status();
   const auto & pull_over_path_opt = local_request.get_pull_over_path();
   const auto & last_path_update_time = local_request.get_last_path_update_time();
-  const auto & occupancy_grid_map = local_request.get_occupancy_grid_map();
 
   if (current_status == ModuleStatus::IDLE) {
     return;
@@ -1690,11 +1689,10 @@ PathWithLaneId GoalPlannerModule::generateStopPath(
   // 4. feasible stop
   const auto stop_pose_opt = std::invoke([&]() -> std::optional<Pose> {
     if (context_data.pull_over_path_opt)
-      return context_data.pull_over_path_opt.value().start_pose();
+      return std::make_optional<Pose>(context_data.pull_over_path_opt.value().start_pose());
     if (context_data.lane_parking_response.closest_start_pose)
-      return context_data.lane_parking_response.closest_start_pose.value();
-    if (!decel_pose) return std::nullopt;
-    return decel_pose.value();
+      return context_data.lane_parking_response.closest_start_pose;
+    return decel_pose;
   });
   if (!stop_pose_opt.has_value()) {
     const auto feasible_stop_path =
