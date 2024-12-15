@@ -14,6 +14,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/pull_over_planner/freespace_pull_over.cpp
   src/pull_over_planner/geometric_pull_over.cpp
   src/pull_over_planner/shift_pull_over.cpp
+  src/pull_over_planner/bezier_pull_over.cpp
   src/default_fixed_goal_planner.cpp
   src/goal_searcher.cpp
   src/util.cpp
