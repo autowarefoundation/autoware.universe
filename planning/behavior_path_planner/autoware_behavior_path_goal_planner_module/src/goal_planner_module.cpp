@@ -16,7 +16,6 @@
 
 #include "autoware/behavior_path_goal_planner_module/default_fixed_goal_planner.hpp"
 #include "autoware/behavior_path_goal_planner_module/goal_searcher.hpp"
-#include "autoware/behavior_path_goal_planner_module/pull_over_planner/freespace_pull_over.hpp"
 #include "autoware/behavior_path_goal_planner_module/pull_over_planner/geometric_pull_over.hpp"
 #include "autoware/behavior_path_goal_planner_module/pull_over_planner/pull_over_planner_base.hpp"
 #include "autoware/behavior_path_goal_planner_module/pull_over_planner/shift_pull_over.hpp"
@@ -225,7 +224,7 @@ bool checkOccupancyGridCollision(
 
 std::optional<PullOverPath> planFreespacePath(
   const FreespaceParkingRequest & req, const PredictedObjects & static_target_objects,
-  std::shared_ptr<PullOverPlannerBase> freespace_planner)
+  std::shared_ptr<FreespacePullOver> freespace_planner)
 {
   auto goal_candidates = req.goal_candidates_;
   auto goal_searcher = std::make_shared<GoalSearcher>(req.parameters_, req.vehicle_footprint_);
@@ -238,8 +237,8 @@ std::optional<PullOverPath> planFreespacePath(
     if (!goal_candidate.is_safe) {
       continue;
     }
-    // TODO(soblin): this calls setMap() in freespace_planner in the for-loop, which is very
-    // inefficient
+
+    freespace_planner->setMap(*(req.get_planner_data()->costmap));
     const auto freespace_path = freespace_planner->plan(
       goal_candidate, 0, req.get_planner_data(), BehaviorModuleOutput{}
       // NOTE: not used so passing {} is OK
