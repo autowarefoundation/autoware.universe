@@ -268,32 +268,51 @@ autoware::universe_utils::Polygon2d get_points(const ExtendedPolygon & polygon)
   return poly;
 }
 
+std::size_t find_next_valid(const std::vector<LinkedVertex> & vertices, std::size_t current_index)
+{
+  std::size_t index = vertices[current_index].next.value_or(current_index + 1);
+  while (index < vertices.size() && vertices[index].is_intersection) {
+    index = vertices[index].next.value_or(index + 1);
+  }
+  return index;
+}
+
+std::size_t find_leftmost_vertex(const ExtendedPolygon & polygon)
+{
+  if (polygon.vertices.empty()) {
+    throw std::runtime_error("Polygon has no vertices.");
+  }
+
+  std::size_t leftmost_index = 0;
+
+  for (std::size_t i = 1; i < polygon.vertices.size(); ++i) {
+    const auto & current = polygon.vertices[i];
+    const auto & leftmost = polygon.vertices[leftmost_index];
+
+    if (current.x < leftmost.x || (current.x == leftmost.x && current.y < leftmost.y)) {
+      leftmost_index = i;
+    }
+  }
+
+  return leftmost_index;
+}
+
 void mark_self_intersections(ExtendedPolygon & source)
 {
-  std::size_t source_vertex_index = source.first;
+  std::size_t source_vertex_index = find_leftmost_vertex(source);
+  std::size_t temp_index = find_leftmost_vertex(source);
 
   do {
-    if (source.vertices[source_vertex_index].is_intersection) {
-      source_vertex_index = source.vertices[source_vertex_index].next.value();
-      continue;
-    }
-
     std::size_t next_vertex_index = source.vertices[source_vertex_index].next.value();
-    std::size_t compare_vertex_index = source_vertex_index;
+    std::size_t compare_vertex_index = source.vertices[next_vertex_index].next.value();
     do {
-      if (
-        compare_vertex_index == source_vertex_index || compare_vertex_index == next_vertex_index) {
-        compare_vertex_index = source.vertices[compare_vertex_index].next.value();
-        continue;
-      }
-
-      std::size_t compare_next_vertex_index = source.vertices[compare_vertex_index].next.value();
-
       Intersection i = intersection(
-        source.vertices, source_vertex_index, next_vertex_index, source.vertices,
-        compare_vertex_index, compare_next_vertex_index);
+        source.vertices, source_vertex_index,
+        get_next(source.vertices[source_vertex_index].next.value(), source.vertices),
+        source.vertices, compare_vertex_index,
+        get_next(source.vertices[compare_vertex_index].next.value(), source.vertices));
 
-      if (!valid(i)) {
+      if (!valid(i) || source.vertices[source_vertex_index].is_intersection) {
         compare_vertex_index = source.vertices[compare_vertex_index].next.value();
         continue;
       }
@@ -301,16 +320,106 @@ void mark_self_intersections(ExtendedPolygon & source)
       LinkedVertex intersection_vertex_1{i.x,          i.y,          std::nullopt,
                                          std::nullopt, std::nullopt, i.distance_to_source,
                                          false,        true,         false};
-      source.vertices.push_back(intersection_vertex_1);
-      std::size_t index1 = source.vertices.size() - 1;
-      source.vertices[index1].corresponding = compare_next_vertex_index;
-      insert_vertex(source.vertices, index1, source_vertex_index, next_vertex_index);
-      compare_vertex_index = source.vertices[compare_vertex_index].next.value();
 
-    } while (compare_vertex_index != source.first);
+      source.vertices.push_back(intersection_vertex_1);
+
+      std::size_t index1 = source.vertices.size() - 1;
+      insert_vertex(
+        source.vertices, index1, source_vertex_index,
+        get_next(source.vertices[source_vertex_index].next.value(), source.vertices));
+      source.vertices[index1].next_2 = compare_vertex_index;
+      source.vertices[index1].prev_2 =
+        get_next(source.vertices[compare_vertex_index].next.value(), source.vertices);
+      compare_vertex_index = source.vertices[compare_vertex_index].next.value();
+    } while (compare_vertex_index != temp_index);
 
     source_vertex_index = source.vertices[source_vertex_index].next.value();
-  } while (source_vertex_index != source.first);
+  } while (source_vertex_index != temp_index);
+}
+
+bool has_unvisited_intersections(const ExtendedPolygon & polygon)
+{
+  for (const auto & vertex : polygon.vertices) {
+    if (vertex.is_intersection && !vertex.visited) {
+      return true;
+    }
+  }
+  return false;
+}
+
+std::size_t get_unvisited_intersection_index(const ExtendedPolygon & polygon)
+{
+  for (std::size_t i = 0; i < polygon.vertices.size(); ++i) {
+    const auto & vertex = polygon.vertices[i];
+    if (vertex.is_intersection && !vertex.visited) {
+      return i;
+    }
+  }
+  return static_cast<std::size_t>(-1);
+}
+
+void adjust_intersection_next(ExtendedPolygon & polygon)
+{
+  std::size_t current_index = find_leftmost_vertex(polygon);
+
+  while (has_unvisited_intersections(polygon)) {
+    do {
+      polygon.vertices[current_index].visited = true;
+
+      if (!polygon.vertices[current_index].is_intersection) {
+        current_index = polygon.vertices[current_index].next.value();
+        continue;
+      }
+
+      std::size_t index1 = current_index;
+      std::size_t next_index = polygon.vertices[index1].next.value();
+      std::size_t prev_index = polygon.vertices[index1].prev.value();
+      std::size_t next_2_index = 0;
+      std::size_t prev_2_index = 0;
+
+      for (std::size_t i = index1; i < polygon.vertices.size(); ++i) {
+        if (
+          polygon.vertices[index1].next_2.value() ==
+          polygon.vertices[(i + 1) % polygon.vertices.size()].prev.value()) {
+          prev_2_index = (i + 1) % polygon.vertices.size();
+          next_2_index = polygon.vertices[index1].next_2.value();
+          break;
+        } else {
+          next_2_index = polygon.vertices[index1].next_2.value();
+          prev_2_index = polygon.vertices[index1].prev_2.value();
+        }
+      }
+
+      std::size_t best_index = next_index;
+      float best_cross_product = -std::numeric_limits<float>::max();
+
+      std::vector<std::size_t> candidates = {next_index, prev_2_index, next_2_index};
+
+      for (std::size_t candidate : candidates) {
+        if (candidate == index1) continue;
+
+        float dx1 = polygon.vertices[candidate].x - polygon.vertices[index1].x;
+        float dy1 = polygon.vertices[candidate].y - polygon.vertices[index1].y;
+
+        float dx2 = polygon.vertices[prev_index].x - polygon.vertices[index1].x;
+        float dy2 = polygon.vertices[prev_index].y - polygon.vertices[index1].y;
+
+        float cross_product = dx1 * dy2 - dy1 * dx2;
+
+        if (cross_product > best_cross_product) {
+          best_cross_product = cross_product;
+          best_index = candidate;
+        }
+      }
+
+      polygon.vertices[index1].next = best_index;
+      polygon.vertices[best_index].prev = index1;
+
+      current_index = polygon.vertices[current_index].next.value();
+    } while (!polygon.vertices[current_index].visited);
+
+    current_index = get_unvisited_intersection_index(polygon);
+  }
 }
 
 void mark_intersections(ExtendedPolygon & source, ExtendedPolygon & clip, bool & intersection_exist)
@@ -401,52 +510,23 @@ void identify_entry_exit(
   } while (clip_vertex_index != clip.first);
 }
 
-// autoware::universe_utils::Polygon2d construct_self_intersecting_polygons(
-//   ExtendedPolygon & polygon)
-// {
-//   autoware::universe_utils::Polygon2d polygon_vector;
-
-//   while (has_unprocessed(polygon)) {
-//     std::size_t currentIndex = get_first_intersect(polygon);
-
-//     do {
-//       visit(polygon.vertices, currentIndex);
-//       do {
-//         currentIndex = polygon.vertices[currentIndex].next.value();
-//         autoware::universe_utils::Point2d point(polygon.vertices[currentIndex].x,
-//         polygon.vertices[currentIndex].y); polygon_vector.outer().push_back(point);
-//       } while (!polygon.vertices[currentIndex].is_intersection);
-//       currentIndex = polygon.vertices[currentIndex].corresponding.value();
-//     } while (!polygon.vertices[currentIndex].visited);
-//   }
-//   boost::geometry::correct(polygon_vector);
-//   return polygon_vector;
-// }
-
 autoware::universe_utils::Polygon2d construct_self_intersecting_polygons(ExtendedPolygon & polygon)
 {
-  std::vector<autoware::universe_utils::Polygon2d> polygon_vector;
+  std::size_t currentIndex = find_leftmost_vertex(polygon);
+  std::size_t temp_index = currentIndex;
+  autoware::universe_utils::Polygon2d current_polygon;
 
-  while (has_unprocessed(polygon)) {
-    std::size_t currentIndex = get_first_intersect(polygon);
-    ExtendedPolygon clipped = create_extended_polygon(polygon.vertices[currentIndex]);
-    std::size_t last_idx = 0;
+  autoware::universe_utils::polygon_clip::mark_self_intersections(polygon);
+  autoware::universe_utils::polygon_clip::adjust_intersection_next(polygon);
 
-    do {
-      visit(polygon.vertices, currentIndex);
-      do {
-        currentIndex = polygon.vertices[currentIndex].next.value();
-        last_idx = add_vertex(clipped, polygon.vertices[currentIndex], last_idx);
-      } while (!polygon.vertices[currentIndex].is_intersection);
-      currentIndex = polygon.vertices[currentIndex].corresponding.value();
-
-    } while (!polygon.vertices[currentIndex].visited);
-
-    auto points = get_points(clipped);
-    polygon_vector.push_back(points);
-  }
-
-  return polygon_vector[0];
+  do {
+    currentIndex = polygon.vertices[currentIndex].next.value();
+    autoware::universe_utils::Point2d point(
+      polygon.vertices[currentIndex].x, polygon.vertices[currentIndex].y);
+    current_polygon.outer().push_back(point);
+  } while (currentIndex != temp_index);
+  boost::geometry::correct(current_polygon);
+  return current_polygon;
 }
 
 std::vector<autoware::universe_utils::Polygon2d> construct_clipped_polygons(

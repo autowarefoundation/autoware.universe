@@ -32,6 +32,8 @@ struct LinkedVertex
   double y;
   std::optional<std::size_t> next;
   std::optional<std::size_t> prev;
+  std::optional<std::size_t> next_2;
+  std::optional<std::size_t> prev_2;
   std::optional<std::size_t> corresponding;
   double distance;
   bool is_entry;
@@ -185,7 +187,8 @@ std::size_t get_first_intersect(ExtendedPolygon & polygon);
 std::vector<autoware::universe_utils::Polygon2d> clip(
   ExtendedPolygon & source, ExtendedPolygon & clip, bool source_forwards, bool clip_forwards);
 
-void mark_self_intersections(ExtendedPolygon & source);
+void mark_self_intersections(ExtendedPolygon & source, std::size_t & current_index);
+void adjust_intersection_next(ExtendedPolygon & polygon, std::size_t & current_index);
 ExtendedPolygon create_extended_polygon(const autoware::universe_utils::Polygon2d & poly2d);
 autoware::universe_utils::Polygon2d construct_self_intersecting_polygons(ExtendedPolygon & polygon);
 }  // namespace polygon_clip
