@@ -349,11 +349,12 @@ dc   | dc dc dc  dc ||zc|
 
     /// check if the point is in the camera view
     if (p_z <= 0.0) continue;
+    if (p_x < fov_left_.at(image_id) * p_z) continue;
+    if (p_x > fov_right_.at(image_id) * p_z) continue;
+
     // project
     Eigen::Vector2d projected_point = calcRawImageProjectedPoint(
       pinhole_camera_model, cv::Point3d(p_x, p_y, p_z), point_project_to_unrectified_image_);
-    if (projected_point.x() < fov_left_.at(image_id)) continue;
-    if (projected_point.x() > fov_right_.at(image_id)) continue;
 
     // iterate 2d bbox
     for (const auto & feature_object : objects) {
