@@ -209,7 +209,7 @@ bool correctWithDefaultValue(
         correction_vector.x();
     }
   }
-    // NOLINTEND(bugprone-branch-clone)
+  // NOLINTEND(bugprone-branch-clone)
   // fit length
   else if (  // NOLINT
     (param.min_length < (v_point.at(first_most_distant_index) * 2.0).norm() &&
