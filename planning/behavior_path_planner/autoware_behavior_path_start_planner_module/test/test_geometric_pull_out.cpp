@@ -59,7 +59,7 @@ protected:
     load_parameters();
     initialize_vehicle_info();
     initialize_lane_departure_checker();
-    initialize_routeHandler();
+    initialize_route_handler();
     initialize_geometric_pull_out_planner();
     initialize_planner_data();
   }
@@ -136,7 +136,7 @@ private:
     lane_departure_checker_->setParam(lane_departure_checker_params);
   }
 
-  void initialize_routeHandler()
+  void initialize_route_handler()
   {
     // Load a sample lanelet map and create a route handler
     const auto shoulder_map_path = autoware::test_utils::get_absolute_path_to_lanelet_map(
@@ -218,7 +218,7 @@ TEST_F(TestGeometricPullOut, GenerateValidGeometricPullOutPath)
   PlannerDebugData debug_data;
   auto result = plan(start_pose, goal_pose, debug_data);
 
-  // Assert that a valid geometric geometric pull out path is generated
+  // Assert that a valid geometric pull out path is generated
   ASSERT_TRUE(result.has_value()) << "Geometric pull out path generation failed.";
   EXPECT_EQ(result->partial_paths.size(), 2UL)
     << "Generated geometric pull out path does not have the expected number of partial paths.";
