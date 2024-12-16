@@ -156,6 +156,7 @@ bool correctWithDefaultValue(
       return false;
     }
   }
+  // NOLINTBEGIN(bugprone-branch-clone)
   // fit width
   else if (  // NOLINT
     (param.min_width < (v_point.at(first_most_distant_index) * 2.0).norm() &&
@@ -208,6 +209,7 @@ bool correctWithDefaultValue(
         correction_vector.x();
     }
   }
+    // NOLINTEND(bugprone-branch-clone)
   // fit length
   else if (  // NOLINT
     (param.min_length < (v_point.at(first_most_distant_index) * 2.0).norm() &&
