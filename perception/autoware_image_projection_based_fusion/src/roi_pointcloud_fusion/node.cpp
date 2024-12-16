@@ -17,6 +17,9 @@
 #include "autoware/image_projection_based_fusion/utils/geometry.hpp"
 #include "autoware/image_projection_based_fusion/utils/utils.hpp"
 
+#include <autoware/universe_utils/system/time_keeper.hpp>
+
+#include <memory>
 #include <vector>
 
 #ifdef ROS_DISTRO_GALACTIC
@@ -31,6 +34,8 @@
 
 namespace autoware::image_projection_based_fusion
 {
+using autoware::universe_utils::ScopedTimeTrack;
+
 RoiPointCloudFusionNode::RoiPointCloudFusionNode(const rclcpp::NodeOptions & options)
 : FusionNode<PointCloud2, DetectedObjectWithFeature, DetectedObjectsWithFeature>(
     "roi_pointcloud_fusion", options)
@@ -47,12 +52,18 @@ RoiPointCloudFusionNode::RoiPointCloudFusionNode(const rclcpp::NodeOptions & opt
 void RoiPointCloudFusionNode::preprocess(
   __attribute__((unused)) sensor_msgs::msg::PointCloud2 & pointcloud_msg)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   return;
 }
 
 void RoiPointCloudFusionNode::postprocess(
   __attribute__((unused)) sensor_msgs::msg::PointCloud2 & pointcloud_msg)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   const auto objects_sub_count = pub_objects_ptr_->get_subscription_count() +
                                  pub_objects_ptr_->get_intra_process_subscription_count();
   if (objects_sub_count < 1) {
@@ -81,6 +92,9 @@ void RoiPointCloudFusionNode::fuseOnSingleImage(
   const sensor_msgs::msg::CameraInfo & camera_info,
   __attribute__((unused)) sensor_msgs::msg::PointCloud2 & output_pointcloud_msg)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   if (input_pointcloud_msg.data.empty()) {
     return;
   }
@@ -133,60 +147,86 @@ void RoiPointCloudFusionNode::fuseOnSingleImage(
   std::vector<sensor_msgs::msg::PointCloud2> clusters;
   std::vector<size_t> clusters_data_size;
   clusters.resize(output_objs.size());
-  for (auto & cluster : clusters) {
-    cluster.point_step = input_pointcloud_msg.point_step;
-    cluster.height = input_pointcloud_msg.height;
-    cluster.fields = input_pointcloud_msg.fields;
-    cluster.data.resize(max_cluster_size_ * input_pointcloud_msg.point_step);
-    clusters_data_size.push_back(0);
-  }
-  for (size_t offset = 0; offset < input_pointcloud_msg.data.size(); offset += point_step) {
-    const float transformed_x =
-      *reinterpret_cast<const float *>(&transformed_cloud.data[offset + x_offset]);
-    const float transformed_y =
-      *reinterpret_cast<const float *>(&transformed_cloud.data[offset + y_offset]);
-    const float transformed_z =
-      *reinterpret_cast<const float *>(&transformed_cloud.data[offset + z_offset]);
-    if (transformed_z <= 0.0) {
-      continue;
-    }
-    Eigen::Vector2d projected_point = calcRawImageProjectedPoint(
-      pinhole_camera_model, cv::Point3d(transformed_x, transformed_y, transformed_z),
-      point_project_to_unrectified_image_);
-    for (std::size_t i = 0; i < output_objs.size(); ++i) {
-      auto & feature_obj = output_objs.at(i);
-      const auto & check_roi = feature_obj.feature.roi;
-      auto & cluster = clusters.at(i);
+  {  // copy cluster
+    std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
+    if (time_keeper_)
+      inner_st_ptr = std::make_unique<ScopedTimeTrack>("copy cluster", *time_keeper_);
 
-      if (
-        clusters_data_size.at(i) >=
-        static_cast<size_t>(max_cluster_size_) * static_cast<size_t>(point_step)) {
+    for (auto & cluster : clusters) {
+      cluster.point_step = input_pointcloud_msg.point_step;
+      cluster.height = input_pointcloud_msg.height;
+      cluster.fields = input_pointcloud_msg.fields;
+      cluster.data.resize(max_cluster_size_ * input_pointcloud_msg.point_step);
+      clusters_data_size.push_back(0);
+    }
+  }
+
+  {  // calculate camera projections
+    std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
+    if (time_keeper_)
+      inner_st_ptr =
+        std::make_unique<ScopedTimeTrack>("calculate camera projection", *time_keeper_);
+
+    for (size_t offset = 0; offset < input_pointcloud_msg.data.size(); offset += point_step) {
+      const float transformed_x =
+        *reinterpret_cast<const float *>(&transformed_cloud.data[offset + x_offset]);
+      const float transformed_y =
+        *reinterpret_cast<const float *>(&transformed_cloud.data[offset + y_offset]);
+      const float transformed_z =
+        *reinterpret_cast<const float *>(&transformed_cloud.data[offset + z_offset]);
+      if (transformed_z <= 0.0) {
         continue;
       }
-      if (
-        check_roi.x_offset <= projected_point.x() && check_roi.y_offset <= projected_point.y() &&
-        check_roi.x_offset + check_roi.width >= projected_point.x() &&
-        check_roi.y_offset + check_roi.height >= projected_point.y()) {
-        std::memcpy(
-          &cluster.data[clusters_data_size.at(i)], &input_pointcloud_msg.data[offset], point_step);
-        clusters_data_size.at(i) += point_step;
+      Eigen::Vector2d projected_point = calcRawImageProjectedPoint(
+        pinhole_camera_model, cv::Point3d(transformed_x, transformed_y, transformed_z),
+        point_project_to_unrectified_image_);
+      for (std::size_t i = 0; i < output_objs.size(); ++i) {
+        auto & feature_obj = output_objs.at(i);
+        const auto & check_roi = feature_obj.feature.roi;
+        auto & cluster = clusters.at(i);
+
+        if (
+          clusters_data_size.at(i) >=
+          static_cast<size_t>(max_cluster_size_) * static_cast<size_t>(point_step)) {
+          continue;
+        }
+        if (
+          check_roi.x_offset <= projected_point.x() && check_roi.y_offset <= projected_point.y() &&
+          check_roi.x_offset + check_roi.width >= projected_point.x() &&
+          check_roi.y_offset + check_roi.height >= projected_point.y()) {
+          std::memcpy(
+            &cluster.data[clusters_data_size.at(i)], &input_pointcloud_msg.data[offset],
+            point_step);
+          clusters_data_size.at(i) += point_step;
+        }
       }
-    }
-    if (debugger_) {
-      // add all points inside image to debug
-      if (
-        projected_point.x() > 0 && projected_point.x() < camera_info.width &&
-        projected_point.y() > 0 && projected_point.y() < camera_info.height) {
-        debug_image_points.push_back(projected_point);
+      if (debugger_) {
+        // add all points inside image to debug
+        if (
+          projected_point.x() > 0 && projected_point.x() < camera_info.width &&
+          projected_point.y() > 0 && projected_point.y() < camera_info.height) {
+          debug_image_points.push_back(projected_point);
+        }
       }
     }
   }
 
-  // refine and update output_fused_objects_
-  updateOutputFusedObjects(
-    output_objs, clusters, clusters_data_size, input_pointcloud_msg, input_roi_msg.header,
-    tf_buffer_, min_cluster_size_, max_cluster_size_, cluster_2d_tolerance_, output_fused_objects_);
+  {  // refine and update output_fused_objects_
+    std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
+    if (time_keeper_)
+      inner_st_ptr = std::make_unique<ScopedTimeTrack>("updateOutputFusedObjects", *time_keeper_);
+
+    updateOutputFusedObjects(
+      output_objs, clusters, clusters_data_size, input_pointcloud_msg, input_roi_msg.header,
+      tf_buffer_, min_cluster_size_, max_cluster_size_, cluster_2d_tolerance_,
+      output_fused_objects_);
+  }
+
   if (debugger_) {
+    std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
+    if (time_keeper_)
+      inner_st_ptr = std::make_unique<ScopedTimeTrack>("publish debug message", *time_keeper_);
+
     debugger_->image_rois_ = debug_image_rois;
     debugger_->obstacle_points_ = debug_image_points;
     debugger_->publishImage(image_id, input_roi_msg.header.stamp);

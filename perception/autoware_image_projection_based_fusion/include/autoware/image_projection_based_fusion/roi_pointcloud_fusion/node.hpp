@@ -19,8 +19,10 @@
 
 #include <autoware/image_projection_based_fusion/utils/utils.hpp>
 
+#include <memory>
 #include <string>
 #include <vector>
+
 namespace autoware::image_projection_based_fusion
 {
 class RoiPointCloudFusionNode
