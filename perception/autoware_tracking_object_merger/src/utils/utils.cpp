@@ -98,9 +98,9 @@ TrackedObject linearInterpolationForTrackedObject(
       output_shape.dimensions.x = shape1.dimensions.x * (1 - weight) + shape2.dimensions.x * weight;
       output_shape.dimensions.y = shape1.dimensions.y * (1 - weight) + shape2.dimensions.y * weight;
       output_shape.dimensions.z = shape1.dimensions.z * (1 - weight) + shape2.dimensions.z * weight;
-    } else if (shape1.type == autoware_perception_msgs::msg::Shape::CYLINDER) { // NOLINT
+    } else if (shape1.type == autoware_perception_msgs::msg::Shape::CYLINDER) {  // NOLINT
       // (TODO) implement and remove NOLINT
-    } else if (shape1.type == autoware_perception_msgs::msg::Shape::POLYGON) { // NOLINT
+    } else if (shape1.type == autoware_perception_msgs::msg::Shape::POLYGON) {  // NOLINT
       // (TODO) implement and remove NOLINT
     } else {
       // when type is unknown, print warning and do nothing
