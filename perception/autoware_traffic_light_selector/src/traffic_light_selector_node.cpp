@@ -172,6 +172,8 @@ TrafficLightSelectorNode::TrafficLightSelectorNode(const rclcpp::NodeOptions & n
   expected_rois_sub_(this, "input/expect_rois", rclcpp::QoS{1}.get_rmw_qos_profile()),
   sync_(SyncPolicy(10), detected_rois_sub_, rough_rois_sub_, expected_rois_sub_)
 {
+  max_iou_threshold_ = declare_parameter<double>("max_iou_threshold", 0.0);
+  RCLCPP_INFO(get_logger(), "max_iou_threshold: %f", max_iou_threshold_);
   debug_ = declare_parameter<bool>("debug");
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -272,7 +274,7 @@ void TrafficLightSelectorNode::objectsCallback(
         max_iou_roi = detected_roi.feature.roi;
       }
     }
-    if (max_iou > 0.0) {
+    if (max_iou > max_iou_threshold_) {
       TrafficLightRoi traffic_light_roi;
       traffic_light_roi.traffic_light_id = expect_roi.traffic_light_id;
       traffic_light_roi.roi = max_iou_roi;
