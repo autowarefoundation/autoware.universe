@@ -34,9 +34,9 @@ public:
     NEAREST_VEL = 4,
     NEAREST_ACC = 5,
     SHIFT = 6,
-    PITCH_LPF_RAD = 7,
+    PITCH_USING_RAD = 7,
     PITCH_RAW_RAD = 8,
-    PITCH_LPF_DEG = 9,
+    PITCH_USING_DEG = 9,
     PITCH_RAW_DEG = 10,
     ERROR_VEL = 11,
     ERROR_VEL_FILTERED = 12,
@@ -61,6 +61,8 @@ public:
     ERROR_ACC = 31,
     ERROR_ACC_FILTERED = 32,
     ACC_CMD_ACC_FB_APPLIED = 33,
+    PITCH_LPF_RAD = 34,
+    PITCH_LPF_DEG = 35,
 
     SIZE  // this is the number of enum elements
   };
