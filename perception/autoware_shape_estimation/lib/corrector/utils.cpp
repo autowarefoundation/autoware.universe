@@ -156,15 +156,14 @@ bool correctWithDefaultValue(
       return false;
     }
   }
-  // NOLINTBEGIN(bugprone-branch-clone)
   // fit width
-  else if (
+  else if (  // NOLINT
     (param.min_width < (v_point.at(first_most_distant_index) * 2.0).norm() &&
      (v_point.at(first_most_distant_index) * 2.0).norm() < param.max_width) &&
     (param.min_width < (v_point.at(second_most_distant_index) * 2.0).norm() &&
      (v_point.at(second_most_distant_index) * 2.0).norm() <
        param.max_width))  // both of edge is within width threshold
-  {
+  {                       // NOLINT
     correction_vector = v_point.at(first_most_distant_index);
     if (correction_vector.x() == 0.0) {
       correction_vector.y() =
@@ -177,7 +176,6 @@ bool correctWithDefaultValue(
           (correction_vector.x() < 0.0 ? -1.0 : 1.0) -
         correction_vector.x();
     }
-  // NOLINTEND(bugprone-branch-clone)
   } else if (  // NOLINT
     param.min_width < (v_point.at(first_most_distant_index) * 2.0).norm() &&
     (v_point.at(first_most_distant_index) * 2.0).norm() < param.max_width) {
