@@ -30,10 +30,23 @@ bool isInsideRoughRoi(
   const sensor_msgs::msg::RegionOfInterest & detected_roi,
   const sensor_msgs::msg::RegionOfInterest & rough_roi)
 {
-  return detected_roi.x_offset >= rough_roi.x_offset &&
-         detected_roi.y_offset >= rough_roi.y_offset &&
-         detected_roi.x_offset + detected_roi.width <= rough_roi.x_offset + rough_roi.width &&
-         detected_roi.y_offset + detected_roi.height <= rough_roi.y_offset + rough_roi.height;
+  // check if tl or br of detected roi is inside the rough roi
+  auto tl_x = detected_roi.x_offset;
+  auto tl_y = detected_roi.y_offset;
+  auto br_x = detected_roi.x_offset + detected_roi.width;
+  auto br_y = detected_roi.y_offset + detected_roi.height;
+  bool is_tl_inside = rough_roi.x_offset <= tl_x && tl_x <= rough_roi.x_offset + rough_roi.width &&
+                      rough_roi.y_offset <= tl_y && tl_y <= rough_roi.y_offset + rough_roi.height;
+  if (is_tl_inside) {
+    return true;
+  }
+
+  bool is_br_inside = rough_roi.x_offset <= br_x && br_x <= rough_roi.x_offset + rough_roi.width &&
+                      rough_roi.y_offset <= br_y && br_y <= rough_roi.y_offset + rough_roi.height;
+  if (is_br_inside) {
+    return true;
+  }
+  return false;
 }
 
 float calIou(
