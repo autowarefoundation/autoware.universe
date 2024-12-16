@@ -18,6 +18,7 @@
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include <autoware/image_projection_based_fusion/utils/utils.hpp>
 
 #include <tier4_perception_msgs/msg/detected_object_with_feature.hpp>
 
@@ -124,6 +125,29 @@ FusionNode<TargetMsg3D, ObjType, Msg2D>::FusionNode(
   timer_ = rclcpp::create_timer(
     this, get_clock(), period_ns, std::bind(&FusionNode::timer_callback, this));
 
+  // camera projection settings
+  camera_projectors_.resize(rois_number_);
+  point_project_to_unrectified_image_ =
+    declare_parameter<std::vector<bool>>("point_project_to_unrectified_image");
+  approx_camera_projection_ = declare_parameter<std::vector<bool>>("approximate_camera_projection");
+  if (rois_number_ != approx_camera_projection_.size()) {
+    const std::size_t current_size = approx_camera_projection_.size();
+    RCLCPP_WARN(
+      this->get_logger(),
+      "The number of elements in approximate_camera_projection should be the same as in "
+      "rois_number. "
+      "It has %zu elements.",
+      current_size);
+    if (current_size < rois_number_) {
+      approx_camera_projection_.resize(rois_number_);
+      for (std::size_t i = current_size; i < rois_number_; i++) {
+        approx_camera_projection_.at(i) = true;
+      }
+    }
+  }
+  approx_grid_w_size_ = declare_parameter<float>("approximation_grid_width_size");
+  approx_grid_h_size_ = declare_parameter<float>("approximation_grid_height_size");
+
   // debugger
   if (declare_parameter("debug_mode", false)) {
     std::size_t image_buffer_size =
@@ -141,9 +165,6 @@ FusionNode<TargetMsg3D, ObjType, Msg2D>::FusionNode(
     auto time_keeper = autoware::universe_utils::TimeKeeper(detailed_processing_time_publisher_);
     time_keeper_ = std::make_shared<autoware::universe_utils::TimeKeeper>(time_keeper);
   }
-
-  point_project_to_unrectified_image_ =
-    declare_parameter<bool>("point_project_to_unrectified_image");
 
   // initialize debug tool
   {
@@ -168,7 +189,18 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::cameraInfoCallback(
   const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_camera_info_msg,
   const std::size_t camera_id)
 {
-  camera_info_map_[camera_id] = *input_camera_info_msg;
+  // create the CameraProjection when the camera info arrives for the first time
+  // assuming the camera info does not change while the node is running
+  if (
+    camera_info_map_.find(camera_id) == camera_info_map_.end() &&
+    checkCameraInfo(*input_camera_info_msg)) {
+    camera_projectors_.at(camera_id) = CameraProjection(
+      *input_camera_info_msg, approx_grid_w_size_, approx_grid_h_size_,
+      point_project_to_unrectified_image_.at(camera_id), approx_camera_projection_.at(camera_id));
+    camera_projectors_.at(camera_id).initialize();
+
+    camera_info_map_[camera_id] = *input_camera_info_msg;
+  }
 }
 
 template <class TargetMsg3D, class Obj, class Msg2D>
@@ -274,7 +306,7 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
 
         fuseOnSingleImage(
           *input_msg, roi_i, *((cached_roi_msgs_.at(roi_i))[matched_stamp]),
-          camera_info_map_.at(roi_i), *output_msg);
+          *output_msg);
         (cached_roi_msgs_.at(roi_i)).erase(matched_stamp);
         is_fused_.at(roi_i) = true;
 
@@ -346,9 +378,7 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::roiCallback(
         debugger_->clear();
       }
 
-      fuseOnSingleImage(
-        *(cached_msg_.second), roi_i, *input_roi_msg, camera_info_map_.at(roi_i),
-        *(cached_msg_.second));
+      fuseOnSingleImage(*(cached_msg_.second), roi_i, *input_roi_msg, *(cached_msg_.second));
       is_fused_.at(roi_i) = true;
 
       if (debug_publisher_) {
