@@ -151,8 +151,7 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
 
     Eigen::Vector2d projected_point;
     if (!camera_projectors_[image_id].calcImageProjectedPoint(
-      cv::Point3d(transformed_x, transformed_y, transformed_z), projected_point
-    )){
+          cv::Point3d(transformed_x, transformed_y, transformed_z), projected_point)) {
       continue;
     }
 

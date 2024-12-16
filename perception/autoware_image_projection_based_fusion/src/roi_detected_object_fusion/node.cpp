@@ -100,8 +100,8 @@ void RoiDetectedObjectFusionNode::fuseOnSingleImage(
     object2camera_affine = transformToEigen(transform_stamped_optional.value().transform);
   }
 
-  const auto object_roi_map = generateDetectedObjectRoIs(
-    input_object_msg, image_id, object2camera_affine);
+  const auto object_roi_map =
+    generateDetectedObjectRoIs(input_object_msg, image_id, object2camera_affine);
   fuseObjectsOnImage(input_object_msg, input_roi_msg.feature_objects, object_roi_map);
 
   if (debugger_) {
@@ -163,8 +163,7 @@ RoiDetectedObjectFusionNode::generateDetectedObjectRoIs(
 
       Eigen::Vector2d proj_point;
       if (camera_projectors_[image_id].calcImageProjectedPoint(
-        cv::Point3d(point.x(), point.y(), point.z()), proj_point
-      )){
+            cv::Point3d(point.x(), point.y(), point.z()), proj_point)) {
         const double px = proj_point.x();
         const double py = proj_point.y();
 

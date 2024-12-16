@@ -86,8 +86,7 @@ void RoiPointCloudFusionNode::postprocess(
   }
 }
 void RoiPointCloudFusionNode::fuseOnSingleImage(
-  const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg,
-  const std::size_t image_id,
+  const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const std::size_t image_id,
   const DetectedObjectsWithFeature & input_roi_msg,
   __attribute__((unused)) sensor_msgs::msg::PointCloud2 & output_pointcloud_msg)
 {
@@ -131,9 +130,12 @@ void RoiPointCloudFusionNode::fuseOnSingleImage(
     transform_stamped = transform_stamped_optional.value();
   }
   const int point_step = input_pointcloud_msg.point_step;
-  const int x_offset = input_pointcloud_msg.fields[pcl::getFieldIndex(input_pointcloud_msg, "x")].offset;
-  const int y_offset = input_pointcloud_msg.fields[pcl::getFieldIndex(input_pointcloud_msg, "y")].offset;
-  const int z_offset = input_pointcloud_msg.fields[pcl::getFieldIndex(input_pointcloud_msg, "z")].offset;
+  const int x_offset =
+    input_pointcloud_msg.fields[pcl::getFieldIndex(input_pointcloud_msg, "x")].offset;
+  const int y_offset =
+    input_pointcloud_msg.fields[pcl::getFieldIndex(input_pointcloud_msg, "y")].offset;
+  const int z_offset =
+    input_pointcloud_msg.fields[pcl::getFieldIndex(input_pointcloud_msg, "z")].offset;
 
   sensor_msgs::msg::PointCloud2 transformed_cloud;
   tf2::doTransform(input_pointcloud_msg, transformed_cloud, transform_stamped);
@@ -161,8 +163,7 @@ void RoiPointCloudFusionNode::fuseOnSingleImage(
 
     Eigen::Vector2d projected_point;
     if (camera_projectors_[image_id].calcImageProjectedPoint(
-      cv::Point3d(transformed_x, transformed_y, transformed_z), projected_point)
-    ) {
+          cv::Point3d(transformed_x, transformed_y, transformed_z), projected_point)) {
       for (std::size_t i = 0; i < output_objs.size(); ++i) {
         auto & feature_obj = output_objs.at(i);
         const auto & check_roi = feature_obj.feature.roi;

@@ -18,12 +18,10 @@
 #define EIGEN_MPL2_ONLY
 
 #include <Eigen/Core>
-
 #include <autoware/universe_utils/system/lru_cache.hpp>
+#include <opencv2/core/core.hpp>
 
 #include <sensor_msgs/msg/camera_info.hpp>
-
-#include <opencv2/core/core.hpp>
 
 #include <image_geometry/pinhole_camera_model.h>
 
@@ -42,12 +40,9 @@ class CameraProjection
 {
 public:
   explicit CameraProjection(
-    const sensor_msgs::msg::CameraInfo & camera_info,
-    const float grid_width, const float grid_height,
-    const bool unrectify,
-    const bool use_approximation
-  );
-  CameraProjection(): grid_w_size_(1.0), grid_h_size_(1.0), unrectify_(false) {};
+    const sensor_msgs::msg::CameraInfo & camera_info, const float grid_width,
+    const float grid_height, const bool unrectify, const bool use_approximation);
+  CameraProjection() : grid_w_size_(1.0), grid_h_size_(1.0), unrectify_(false) {};
   void initialize();
   std::function<bool(const cv::Point3d &, Eigen::Vector2d &)> calcImageProjectedPoint;
   sensor_msgs::msg::CameraInfo getCameraInfo();
@@ -55,9 +50,11 @@ public:
   bool isOutsideVerticalView(const float py, const float pz);
 
 protected:
-  bool calcRectifiedImageProjectedPoint(const cv::Point3d & point3d, Eigen::Vector2d & projected_point);
+  bool calcRectifiedImageProjectedPoint(
+    const cv::Point3d & point3d, Eigen::Vector2d & projected_point);
   bool calcRawImageProjectedPoint(const cv::Point3d & point3d, Eigen::Vector2d & projected_point);
-  bool calcRawImageProjectedPointWithApproximation(const cv::Point3d & point3d, Eigen::Vector2d & projected_point);
+  bool calcRawImageProjectedPointWithApproximation(
+    const cv::Point3d & point3d, Eigen::Vector2d & projected_point);
   void initializeCache();
 
   sensor_msgs::msg::CameraInfo camera_info_;

@@ -56,8 +56,8 @@ using sensor_msgs::msg::PointCloud2;
 using tier4_perception_msgs::msg::DetectedObjectsWithFeature;
 using tier4_perception_msgs::msg::DetectedObjectWithFeature;
 using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
-using autoware_perception_msgs::msg::ObjectClassification;
 using autoware::image_projection_based_fusion::CameraProjection;
+using autoware_perception_msgs::msg::ObjectClassification;
 
 template <class TargetMsg3D, class ObjType, class Msg2D>
 class FusionNode : public rclcpp::Node

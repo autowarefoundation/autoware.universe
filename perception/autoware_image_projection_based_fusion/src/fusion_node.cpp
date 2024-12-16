@@ -305,8 +305,7 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
         }
 
         fuseOnSingleImage(
-          *input_msg, roi_i, *((cached_roi_msgs_.at(roi_i))[matched_stamp]),
-          *output_msg);
+          *input_msg, roi_i, *((cached_roi_msgs_.at(roi_i))[matched_stamp]), *output_msg);
         (cached_roi_msgs_.at(roi_i)).erase(matched_stamp);
         is_fused_.at(roi_i) = true;
 

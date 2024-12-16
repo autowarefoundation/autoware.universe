@@ -42,8 +42,7 @@ protected:
 
   void fuseOnSingleImage(
     const DetectedObjects & input_object_msg, const std::size_t image_id,
-    const DetectedObjectsWithFeature & input_roi_msg,
-    DetectedObjects & output_object_msg) override;
+    const DetectedObjectsWithFeature & input_roi_msg, DetectedObjects & output_object_msg) override;
 
   std::map<std::size_t, DetectedObjectWithFeature> generateDetectedObjectRoIs(
     const DetectedObjects & input_object_msg, const std::size_t & image_id,
