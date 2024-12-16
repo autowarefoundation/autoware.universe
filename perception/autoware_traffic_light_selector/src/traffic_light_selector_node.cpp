@@ -19,21 +19,22 @@
 
 #include "sensor_msgs/msg/region_of_interest.hpp"
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
 
 namespace
 {
-// bool isInsideRoughRoi(
-//   const sensor_msgs::msg::RegionOfInterest & detected_roi,
-//   const sensor_msgs::msg::RegionOfInterest & rough_roi)
-// {
-//   return detected_roi.x_offset >= rough_roi.x_offset &&
-//          detected_roi.y_offset >= rough_roi.y_offset &&
-//          detected_roi.x_offset + detected_roi.width <= rough_roi.x_offset + rough_roi.width &&
-//          detected_roi.y_offset + detected_roi.height <= rough_roi.y_offset + rough_roi.height;
-// }
+bool isInsideRoughRoi(
+  const sensor_msgs::msg::RegionOfInterest & detected_roi,
+  const sensor_msgs::msg::RegionOfInterest & rough_roi)
+{
+  return detected_roi.x_offset >= rough_roi.x_offset &&
+         detected_roi.y_offset >= rough_roi.y_offset &&
+         detected_roi.x_offset + detected_roi.width <= rough_roi.x_offset + rough_roi.width &&
+         detected_roi.y_offset + detected_roi.height <= rough_roi.y_offset + rough_roi.height;
+}
 
 float calIou(
   const sensor_msgs::msg::RegionOfInterest & bbox1,
@@ -189,11 +190,13 @@ void TrafficLightSelectorNode::objectsCallback(
   const TrafficLightRoiArray::ConstSharedPtr & rough_rois_msg,
   const TrafficLightRoiArray::ConstSharedPtr & expected_rois_msg)
 {
-  (void)rough_rois_msg;
   if (!camera_info_subscribed_) {
     return;
   }
-
+  std::map<int, sensor_msgs::msg::RegionOfInterest> rough_rois_map;
+  for (const auto & roi : rough_rois_msg->rois) {
+    rough_rois_map[roi.traffic_light_id] = roi.roi;
+  }
   // TODO(badai-nguyen): implement this function on CUDA or refactor the code
 
   TrafficLightRoiArray output;
@@ -212,8 +215,17 @@ void TrafficLightSelectorNode::objectsCallback(
   cv::Mat expect_roi_img =
     createBinaryImageFromRois(expect_rois, cv::Size(image_width_, image_height_));
   cv::Mat det_roi_img = createBinaryImageFromRois(det_rois, cv::Size(image_width_, image_height_));
-  for (const auto expect_roi : expect_rois) {
-    for (const auto detected_roi : det_rois) {
+  // for (const auto expect_roi : expect_rois) {
+  for (const auto & expect_traffic_roi : expected_rois_msg->rois) {
+    const auto & expect_roi = expect_traffic_roi.roi;
+    auto traffic_light_id = expect_traffic_roi.traffic_light_id;
+    const auto & rough_roi = rough_rois_map[traffic_light_id];
+
+    for (const auto & detected_roi : det_rois) {
+      // check if the detected roi is inside the rough roi
+      if (!isInsideRoughRoi(detected_roi, rough_roi)) {
+        continue;
+      }
       int dx = static_cast<int>(detected_roi.x_offset) - static_cast<int>(expect_roi.x_offset);
       int dy = static_cast<int>(detected_roi.y_offset) - static_cast<int>(expect_roi.y_offset);
       cv::Mat det_roi_shifted = shiftAndPaddingImage(det_roi_img, dx, dy);
