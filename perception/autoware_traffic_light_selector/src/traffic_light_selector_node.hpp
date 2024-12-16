@@ -30,6 +30,7 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
+#include <algorithm>
 #include <chrono>
 #include <memory>
 #include <string>
@@ -73,8 +74,8 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_sub_;
   bool debug_{false};
   bool camera_info_subscribed_;
-  int image_width_{1280};
-  int image_height_{960};
+  uint32_t image_width_{1280};
+  uint32_t image_height_{960};
   // declare publisher for debug image
   // rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr pub_debug_image_;
 };
