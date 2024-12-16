@@ -208,11 +208,8 @@ bool BicycleTracker::measureWithShape(const autoware_perception_msgs::msg::Detec
   constexpr double size_min = 0.1;   // [m]
   if (
     object.shape.dimensions.x > size_max || object.shape.dimensions.y > size_max ||
-    object.shape.dimensions.z > size_max) {
-    return false;
-  } else if (
-    object.shape.dimensions.x < size_min || object.shape.dimensions.y < size_min ||
-    object.shape.dimensions.z < size_min) {
+    object.shape.dimensions.z > size_max || object.shape.dimensions.x < size_min ||
+    object.shape.dimensions.y < size_min || object.shape.dimensions.z < size_min) {
     return false;
   }
 
