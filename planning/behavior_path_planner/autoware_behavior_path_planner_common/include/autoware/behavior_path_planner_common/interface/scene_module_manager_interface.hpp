@@ -146,6 +146,8 @@ public:
     pub_velocity_factors_->publish(velocity_factor_array);
   }
 
+  void publish_planning_factors() { planning_factor_interface_->publish(); }
+
   void publishVirtualWall() const
   {
     using autoware::universe_utils::appendMarkerArray;
@@ -317,6 +319,8 @@ protected:
   std::vector<SceneModuleObserver> observers_;
 
   std::unique_ptr<SceneModuleInterface> idle_module_ptr_;
+
+  std::shared_ptr<PlanningFactorInterface> planning_factor_interface_;
 
   std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map_;
 

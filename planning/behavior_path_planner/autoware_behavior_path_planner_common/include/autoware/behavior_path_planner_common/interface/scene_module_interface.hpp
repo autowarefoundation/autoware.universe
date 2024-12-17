@@ -21,6 +21,7 @@
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 
 #include <autoware/behavior_path_planner_common/turn_signal_decider.hpp>
+#include <autoware/motion_utils/factor/planning_factor_interface.hpp>
 #include <autoware/motion_utils/factor/steering_factor_interface.hpp>
 #include <autoware/motion_utils/factor/velocity_factor_interface.hpp>
 #include <autoware/motion_utils/marker/marker_helper.hpp>
@@ -54,6 +55,7 @@
 
 namespace autoware::behavior_path_planner
 {
+using autoware::motion_utils::PlanningFactorInterface;
 using autoware::motion_utils::SteeringFactorInterface;
 using autoware::motion_utils::VelocityFactorInterface;
 using autoware::objects_of_interest_marker_interface::ColorName;
@@ -66,6 +68,8 @@ using autoware_adapi_v1_msgs::msg::SteeringFactor;
 using autoware_adapi_v1_msgs::msg::VelocityFactor;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
 using tier4_planning_msgs::msg::PathWithLaneId;
+using tier4_planning_msgs::msg::PlanningFactor;
+using tier4_planning_msgs::msg::SafetyFactorArray;
 using tier4_rtc_msgs::msg::State;
 using unique_identifier_msgs::msg::UUID;
 using visualization_msgs::msg::MarkerArray;
@@ -86,6 +90,27 @@ public:
     const std::string & name, rclcpp::Node & node,
     std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map,
     std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>>
+      objects_of_interest_marker_interface_ptr_map,
+    const std::shared_ptr<PlanningFactorInterface> planning_factor_interface)
+  : name_{name},
+    logger_{node.get_logger().get_child(name)},
+    clock_{node.get_clock()},
+    rtc_interface_ptr_map_(std::move(rtc_interface_ptr_map)),
+    objects_of_interest_marker_interface_ptr_map_(
+      std::move(objects_of_interest_marker_interface_ptr_map)),
+    planning_factor_interface_{planning_factor_interface},
+    time_keeper_(std::make_shared<universe_utils::TimeKeeper>())
+  {
+    for (const auto & [module_name, ptr] : rtc_interface_ptr_map_) {
+      uuid_map_.emplace(module_name, generateUUID());
+    }
+  }
+
+  // TODO(satoshi-ota): remove this constructor after all planning factors have been migrated.
+  SceneModuleInterface(
+    const std::string & name, rclcpp::Node & node,
+    std::unordered_map<std::string, std::shared_ptr<RTCInterface>> rtc_interface_ptr_map,
+    std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>>
       objects_of_interest_marker_interface_ptr_map)
   : name_{name},
     logger_{node.get_logger().get_child(name)},
@@ -93,6 +118,7 @@ public:
     rtc_interface_ptr_map_(std::move(rtc_interface_ptr_map)),
     objects_of_interest_marker_interface_ptr_map_(
       std::move(objects_of_interest_marker_interface_ptr_map)),
+    planning_factor_interface_{std::make_shared<PlanningFactorInterface>(&node, "tmp")},
     time_keeper_(std::make_shared<universe_utils::TimeKeeper>())
   {
     for (const auto & [module_name, ptr] : rtc_interface_ptr_map_) {
@@ -574,6 +600,24 @@ protected:
       path.points, getEgoPose(), slow_pose_.value().pose, VelocityFactor::APPROACHING, "slow down");
   }
 
+  void set_longitudinal_planning_factor(const PathWithLaneId & path)
+  {
+    if (stop_pose_.has_value()) {
+      planning_factor_interface_->add(
+        path.points, getEgoPose(), stop_pose_.value().pose, PlanningFactor::STOP,
+        SafetyFactorArray{});
+      return;
+    }
+
+    if (!slow_pose_.has_value()) {
+      return;
+    }
+
+    planning_factor_interface_->add(
+      path.points, getEgoPose(), slow_pose_.value().pose, PlanningFactor::SLOW_DOWN,
+      SafetyFactorArray{});
+  }
+
   void setDrivableLanes(const std::vector<DrivableLanes> & drivable_lanes);
 
   BehaviorModuleOutput getPreviousModuleOutput() const { return previous_module_output_; }
@@ -626,6 +670,8 @@ protected:
 
   std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>>
     objects_of_interest_marker_interface_ptr_map_;
+
+  mutable std::shared_ptr<PlanningFactorInterface> planning_factor_interface_;
 
   mutable SteeringFactorInterface steering_factor_interface_;
 
