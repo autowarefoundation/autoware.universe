@@ -67,6 +67,11 @@ void SceneModuleManagerInterface::initInterface(
       node->create_publisher<VelocityFactorArray>("/planning/velocity_factors/" + name_, 1);
   }
 
+  // planning factor
+  {
+    planning_factor_interface_ = std::make_shared<PlanningFactorInterface>(node, name_);
+  }
+
   // misc
   {
     node_ = node;
