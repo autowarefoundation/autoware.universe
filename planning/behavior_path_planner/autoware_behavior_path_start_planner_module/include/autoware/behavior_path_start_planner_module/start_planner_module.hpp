@@ -88,7 +88,8 @@ public:
     const std::shared_ptr<StartPlannerParameters> & parameters,
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
     std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
-      objects_of_interest_marker_interface_ptr_map);
+      objects_of_interest_marker_interface_ptr_map,
+    const std::shared_ptr<PlanningFactorInterface> planning_factor_interface);
 
   ~StartPlannerModule() override
   {
@@ -205,13 +206,13 @@ private:
   {
     switch (output.turn_signal_info.turn_signal.command) {
       case TurnIndicatorsCommand::ENABLE_LEFT:
-        return SteeringFactor::LEFT;
+        return PlanningFactor::LEFT_SHIFT;
 
       case TurnIndicatorsCommand::ENABLE_RIGHT:
-        return SteeringFactor::RIGHT;
+        return PlanningFactor::RIGHT_SHIFT;
 
       default:
-        return SteeringFactor::STRAIGHT;
+        return PlanningFactor::NONE;
     }
   };
 
