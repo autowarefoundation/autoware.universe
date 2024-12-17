@@ -39,6 +39,17 @@ using geometry_msgs::msg::Pose;
 Accumulator<double> calcLateralDeviation(const Trajectory & ref, const Trajectory & traj);
 
 /**
+ * @brief calculate distance between the nearest points that target pose to previous trajectory and
+ * target pose to reference trajectory.
+ * @param [in] prev_traj previous trajectory
+ * @param [in] ref_traj reference trajectory
+ * @param [in] target_pose target pose
+ * @return calculated statistics
+ */
+Accumulator<double> calcNearestPoseDeviation(
+  const Trajectory & prev_traj, const Trajectory & ref_traj, const Pose & target_pose);
+
+/**
  * @brief calculate yaw deviation of the given trajectory from the reference trajectory
  * @param [in] ref reference trajectory
  * @param [in] traj input trajectory

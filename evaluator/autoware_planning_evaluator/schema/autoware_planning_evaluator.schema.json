@@ -33,6 +33,7 @@
             "jerk",
             "lateral_deviation",
             "yaw_deviation",
+            "nearest_pose_deviation",
             "velocity_deviation",
             "stability",
             "stability_frechet",
