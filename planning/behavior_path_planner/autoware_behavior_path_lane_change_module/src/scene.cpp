@@ -380,48 +380,6 @@ LaneChangePath NormalLaneChange::getLaneChangePath() const
   return status_.lane_change_path;
 }
 
-BehaviorModuleOutput NormalLaneChange::getTerminalLaneChangePath() const
-{
-  auto output = prev_module_output_;
-
-  if (isAbortState() && abort_path_) {
-    output.path = abort_path_->path;
-    extendOutputDrivableArea(output);
-    const auto current_seg_idx = planner_data_->findEgoSegmentIndex(output.path.points);
-    output.turn_signal_info = planner_data_->turn_signal_decider.overwrite_turn_signal(
-      output.path, getEgoPose(), current_seg_idx, prev_module_output_.turn_signal_info,
-      output.turn_signal_info, planner_data_->parameters.ego_nearest_dist_threshold,
-      planner_data_->parameters.ego_nearest_yaw_threshold);
-    return output;
-  }
-
-  const auto & current_lanes = get_current_lanes();
-  if (current_lanes.empty()) {
-    RCLCPP_DEBUG(logger_, "Current lanes not found. Returning previous module's path as output.");
-    return prev_module_output_;
-  }
-
-  const auto terminal_path =
-    utils::lane_change::calcTerminalLaneChangePath(common_data_ptr_, prev_module_output_.path);
-  if (!terminal_path) {
-    RCLCPP_DEBUG(logger_, "Terminal path not found. Returning previous module's path as output.");
-    return prev_module_output_;
-  }
-
-  output.path = terminal_path->path;
-  output.turn_signal_info = updateOutputTurnSignal();
-
-  extendOutputDrivableArea(output);
-
-  const auto current_seg_idx = planner_data_->findEgoSegmentIndex(output.path.points);
-  output.turn_signal_info = planner_data_->turn_signal_decider.overwrite_turn_signal(
-    output.path, getEgoPose(), current_seg_idx, prev_module_output_.turn_signal_info,
-    output.turn_signal_info, planner_data_->parameters.ego_nearest_dist_threshold,
-    planner_data_->parameters.ego_nearest_yaw_threshold);
-
-  return output;
-}
-
 BehaviorModuleOutput NormalLaneChange::generateOutput()
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);

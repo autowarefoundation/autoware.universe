@@ -64,8 +64,6 @@ public:
 
   LaneChangePath getLaneChangePath() const override;
 
-  BehaviorModuleOutput getTerminalLaneChangePath() const override;
-
   BehaviorModuleOutput generateOutput() override;
 
   void extendOutputDrivableArea(BehaviorModuleOutput & output) const override;

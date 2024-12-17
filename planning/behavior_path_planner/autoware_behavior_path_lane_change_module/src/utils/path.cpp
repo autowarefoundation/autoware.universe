@@ -45,7 +45,7 @@ using autoware::behavior_path_planner::LaneChangePhaseMetrics;
 using autoware::behavior_path_planner::ShiftLine;
 using geometry_msgs::msg::Pose;
 
-double calcLaneChangeResampleInterval(
+double calc_resample_interval(
   const double lane_changing_length, const double lane_changing_velocity)
 {
   constexpr auto min_resampling_points{30.0};
@@ -156,42 +156,6 @@ std::optional<double> exceed_yaw_threshold(
   }
   return std::nullopt;
 }
-
-PathWithLaneId getTargetSegment(
-  const CommonDataPtr & common_data_ptr, const lanelet::ConstLanelets & target_lanes,
-  const Pose & lane_changing_start_pose, const double target_lane_length,
-  const double lane_changing_length, const double lane_changing_velocity,
-  const double buffer_for_next_lane_change)
-{
-  const auto & route_handler = *common_data_ptr->route_handler_ptr;
-  const auto forward_path_length = common_data_ptr->bpp_param_ptr->forward_path_length;
-
-  const double s_start = std::invoke([&lane_changing_start_pose, &target_lanes,
-                                      &lane_changing_length, &target_lane_length,
-                                      &buffer_for_next_lane_change]() {
-    const auto arc_to_start_pose =
-      lanelet::utils::getArcCoordinates(target_lanes, lane_changing_start_pose);
-    const double dist_from_front_target_lanelet = arc_to_start_pose.length + lane_changing_length;
-    const double end_of_lane_dist_without_buffer = target_lane_length - buffer_for_next_lane_change;
-    return std::min(dist_from_front_target_lanelet, end_of_lane_dist_without_buffer);
-  });
-
-  const double s_end = std::invoke(
-    [&s_start, &forward_path_length, &target_lane_length, &buffer_for_next_lane_change]() {
-      const double dist_from_start = s_start + forward_path_length;
-      const double dist_from_end = target_lane_length - buffer_for_next_lane_change;
-      return std::max(
-        std::min(dist_from_start, dist_from_end), s_start + std::numeric_limits<double>::epsilon());
-    });
-
-  PathWithLaneId target_segment = route_handler.getCenterLinePath(target_lanes, s_start, s_end);
-  for (auto & point : target_segment.points) {
-    point.point.longitudinal_velocity_mps =
-      std::min(point.point.longitudinal_velocity_mps, static_cast<float>(lane_changing_velocity));
-  }
-
-  return target_segment;
-}
 };  // namespace
 
 namespace autoware::behavior_path_planner::utils::lane_change
@@ -258,8 +222,7 @@ LaneChangePath get_candidate_path(
   const auto & route_handler = *common_data_ptr->route_handler_ptr;
   const auto & target_lanes = common_data_ptr->lanes_ptr->target;
 
-  const auto resample_interval =
-    calcLaneChangeResampleInterval(lc_metric.length, prep_metric.velocity);
+  const auto resample_interval = calc_resample_interval(lc_metric.length, prep_metric.velocity);
   const auto target_lane_reference_path = get_reference_path_from_target_Lane(
     common_data_ptr, lc_start_pose, lc_metric.length, resample_interval);
 
@@ -345,133 +308,5 @@ std::optional<LaneChangePath> construct_candidate_path(
   candidate_path.shifted_path = shifted_path;
 
   return std::optional<LaneChangePath>{candidate_path};
-}
-
-std::optional<LaneChangePath> calcTerminalLaneChangePath(
-  const CommonDataPtr & common_data_ptr, const PathWithLaneId & prev_module_path)
-{
-  const auto is_empty = [&](const auto & data, const auto & s) {
-    if (!data.empty()) return false;
-    RCLCPP_WARN(get_logger(), "%s is empty. Not expected.", s);
-    return true;
-  };
-
-  const auto & current_lanes = common_data_ptr->lanes_ptr->current;
-  const auto & target_lanes = common_data_ptr->lanes_ptr->target;
-  const auto target_lane_neighbors_polygon_2d = common_data_ptr->lanes_polygon_ptr->target_neighbor;
-
-  if (
-    is_empty(current_lanes, "current_lanes") || is_empty(target_lanes, "target_lanes") ||
-    is_empty(target_lane_neighbors_polygon_2d, "target_lane_neighbors_polygon_2d")) {
-    return {};
-  }
-
-  const auto & route_handler = *common_data_ptr->route_handler_ptr;
-  const auto & lc_param_ptr = common_data_ptr->lc_param_ptr;
-
-  const auto minimum_lane_changing_velocity = lc_param_ptr->trajectory.min_lane_changing_velocity;
-
-  const auto is_goal_in_route = route_handler.isInGoalRouteSection(target_lanes.back());
-
-  const auto current_min_dist_buffer = common_data_ptr->transient_data.current_dist_buffer.min;
-  const auto next_min_dist_buffer = common_data_ptr->transient_data.next_dist_buffer.min;
-
-  const auto sorted_lane_ids = utils::lane_change::get_sorted_lane_ids(common_data_ptr);
-
-  // lane changing start getEgoPose() is at the end of prepare segment
-  const auto current_lane_terminal_point =
-    lanelet::utils::conversion::toGeomMsgPt(current_lanes.back().centerline3d().back());
-
-  double distance_to_terminal_from_goal = 0;
-  if (is_goal_in_route) {
-    distance_to_terminal_from_goal =
-      utils::getDistanceToEndOfLane(route_handler.getGoalPose(), current_lanes);
-  }
-
-  const auto lane_changing_start_pose = autoware::motion_utils::calcLongitudinalOffsetPose(
-    prev_module_path.points, current_lane_terminal_point,
-    -(current_min_dist_buffer + next_min_dist_buffer + distance_to_terminal_from_goal));
-
-  if (!lane_changing_start_pose) {
-    RCLCPP_DEBUG(get_logger(), "Reject: lane changing start pose not found!!!");
-    return {};
-  }
-
-  const auto target_length_from_lane_change_start_pose = utils::getArcLengthToTargetLanelet(
-    current_lanes, target_lanes.front(), lane_changing_start_pose.value());
-
-  // Check if the lane changing start point is not on the lanes next to target lanes,
-  if (target_length_from_lane_change_start_pose > 0.0) {
-    RCLCPP_DEBUG(get_logger(), "lane change start getEgoPose() is behind target lanelet!");
-    return {};
-  }
-
-  const auto shift_length = lanelet::utils::getLateralDistanceToClosestLanelet(
-    target_lanes, lane_changing_start_pose.value());
-
-  const auto [min_lateral_acc, max_lateral_acc] =
-    lc_param_ptr->trajectory.lat_acc_map.find(minimum_lane_changing_velocity);
-
-  const auto lane_changing_time = autoware::motion_utils::calc_shift_time_from_jerk(
-    shift_length, lc_param_ptr->trajectory.lateral_jerk, max_lateral_acc);
-
-  const auto target_lane_length = common_data_ptr->transient_data.target_lane_length;
-  const auto target_segment = getTargetSegment(
-    common_data_ptr, target_lanes, lane_changing_start_pose.value(), target_lane_length,
-    current_min_dist_buffer, minimum_lane_changing_velocity, next_min_dist_buffer);
-
-  if (target_segment.points.empty()) {
-    RCLCPP_DEBUG(get_logger(), "Reject: target segment is empty!! something wrong...");
-    return {};
-  }
-
-  LaneChangeInfo lane_change_info;
-  lane_change_info.longitudinal_acceleration = LaneChangePhaseInfo{0.0, 0.0};
-  lane_change_info.duration = LaneChangePhaseInfo{0.0, lane_changing_time};
-  lane_change_info.velocity =
-    LaneChangePhaseInfo{minimum_lane_changing_velocity, minimum_lane_changing_velocity};
-  lane_change_info.length = LaneChangePhaseInfo{0.0, current_min_dist_buffer};
-  lane_change_info.lane_changing_start = lane_changing_start_pose.value();
-  lane_change_info.lane_changing_end = target_segment.points.front().point.pose;
-  lane_change_info.lateral_acceleration = max_lateral_acc;
-  lane_change_info.terminal_lane_changing_velocity = minimum_lane_changing_velocity;
-
-  if (!utils::lane_change::is_valid_start_point(
-        common_data_ptr, lane_changing_start_pose.value())) {
-    RCLCPP_DEBUG(
-      get_logger(),
-      "Reject: lane changing points are not inside of the target preferred lanes or its "
-      "neighbors");
-    return {};
-  }
-
-  const auto resample_interval =
-    calcLaneChangeResampleInterval(current_min_dist_buffer, minimum_lane_changing_velocity);
-  const auto target_lane_reference_path = get_reference_path_from_target_Lane(
-    common_data_ptr, lane_changing_start_pose.value(), current_min_dist_buffer, resample_interval);
-
-  if (target_lane_reference_path.points.empty()) {
-    RCLCPP_DEBUG(get_logger(), "Reject: target_lane_reference_path is empty!!");
-    return {};
-  }
-
-  lane_change_info.shift_line = get_lane_changing_shift_line(
-    lane_changing_start_pose.value(), target_segment.points.front().point.pose,
-    target_lane_reference_path, shift_length);
-
-  auto reference_segment = prev_module_path;
-  const double length_to_lane_changing_start = autoware::motion_utils::calcSignedArcLength(
-    reference_segment.points, reference_segment.points.front().point.pose.position,
-    lane_changing_start_pose->position);
-  utils::clipPathLength(reference_segment, 0, length_to_lane_changing_start, 0.0);
-  // remove terminal points because utils::clipPathLength() calculates extra long path
-  reference_segment.points.pop_back();
-  reference_segment.points.back().point.longitudinal_velocity_mps =
-    static_cast<float>(minimum_lane_changing_velocity);
-
-  const auto terminal_lane_change_path = utils::lane_change::construct_candidate_path(
-    lane_change_info, reference_segment, target_lane_reference_path, sorted_lane_ids);
-
-  return terminal_lane_change_path;
 }
 }  // namespace autoware::behavior_path_planner::utils::lane_change
