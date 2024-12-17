@@ -95,7 +95,7 @@ LaneChangePath get_candidate_path(
  * @return std::optional<LaneChangePath> The constructed candidate path if valid, or std::nullopt
  *                                       if the path fails any constraints.
  */
-std::optional<LaneChangePath> construct_candidate_path(
+LaneChangePath construct_candidate_path(
   const LaneChangeInfo & lane_change_info, const PathWithLaneId & prepare_segment,
   const PathWithLaneId & target_lane_reference_path,
   const std::vector<std::vector<int64_t>> & sorted_lane_ids);

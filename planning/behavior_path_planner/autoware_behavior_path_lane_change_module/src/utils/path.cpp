@@ -127,17 +127,17 @@ ShiftedPath get_shifted_path(
   path_shifter.setLateralAccelerationLimit(std::abs(lane_change_info.lateral_acceleration));
 
   if (!path_shifter.generate(&shifted_path, offset_back)) {
-    RCLCPP_DEBUG(
-      autoware::behavior_path_planner::utils::lane_change::get_logger(),
-      "Failed to generate shifted path.");
+    std::cerr << "Failed to generate shifted path.";
   }
+
   // TODO(Zulfaqar Azmi): have to think of a more feasible solution for points being remove by
   // path shifter.
   return shifted_path;
 }
 
 std::optional<double> exceed_yaw_threshold(
-  const PathWithLaneId & prepare_segment, const PathWithLaneId & lane_changing_segment)
+  const PathWithLaneId & prepare_segment, const PathWithLaneId & lane_changing_segment,
+  const double yaw_th_rad)
 {
   const auto & prepare = prepare_segment.points;
   const auto & lane_changing = lane_changing_segment.points;
@@ -148,10 +148,10 @@ std::optional<double> exceed_yaw_threshold(
 
   const auto & p1 = std::prev(prepare.end() - 1)->point.pose;
   const auto & p2 = std::next(lane_changing.begin())->point.pose;
-  const auto yaw_diff = std::abs(autoware::universe_utils::normalizeRadian(
+  const auto yaw_diff_rad = std::abs(autoware::universe_utils::normalizeRadian(
     tf2::getYaw(p1.orientation) - tf2::getYaw(p2.orientation)));
-  if (yaw_diff > autoware::universe_utils::deg2rad(5.0)) {
-    return yaw_diff;
+  if (yaw_diff_rad > yaw_th_rad) {
+    return yaw_diff_rad;
   }
   return std::nullopt;
 }
@@ -241,24 +241,17 @@ LaneChangePath get_candidate_path(
 
   LaneChangeInfo lane_change_info{prep_metric, lc_metric, lc_start_pose, lc_end_pose, shift_line};
 
-  const auto candidate_path = utils::lane_change::construct_candidate_path(
-    lane_change_info, prep_segment, target_lane_reference_path, sorted_lane_ids);
-
-  if (!candidate_path) {
-    throw std::logic_error("failed to generate candidate path!");
-  }
-
   if (
-    candidate_path.value().info.length.sum() +
-      common_data_ptr->transient_data.next_dist_buffer.min >
+    lane_change_info.length.sum() + common_data_ptr->transient_data.next_dist_buffer.min >
     common_data_ptr->transient_data.dist_to_terminal_end) {
     throw std::logic_error("invalid candidate path length!");
   }
 
-  return *candidate_path;
+  return utils::lane_change::construct_candidate_path(
+    lane_change_info, prep_segment, target_lane_reference_path, sorted_lane_ids);
 }
 
-std::optional<LaneChangePath> construct_candidate_path(
+LaneChangePath construct_candidate_path(
   const LaneChangeInfo & lane_change_info, const PathWithLaneId & prepare_segment,
   const PathWithLaneId & target_lane_reference_path,
   const std::vector<std::vector<int64_t>> & sorted_lane_ids)
@@ -266,26 +259,21 @@ std::optional<LaneChangePath> construct_candidate_path(
   const auto & shift_line = lane_change_info.shift_line;
   const auto terminal_lane_changing_velocity = lane_change_info.terminal_lane_changing_velocity;
 
-  ShiftedPath shifted_path = get_shifted_path(target_lane_reference_path, lane_change_info);
+  auto shifted_path = get_shifted_path(target_lane_reference_path, lane_change_info);
   if (shifted_path.path.points.size() < shift_line.end_idx + 1) {
-    RCLCPP_DEBUG(get_logger(), "Path points are removed by PathShifter.");
-    return std::nullopt;
+    throw std::logic_error("Path points are removed by PathShifter.");
   }
 
-  LaneChangePath candidate_path;
-  candidate_path.info = lane_change_info;
+  const auto lc_end_idx_opt = autoware::motion_utils::findNearestIndex(
+    shifted_path.path.points, lane_change_info.lane_changing_end);
 
-  const auto lane_change_end_idx = autoware::motion_utils::findNearestIndex(
-    shifted_path.path.points, candidate_path.info.lane_changing_end);
-
-  if (!lane_change_end_idx) {
-    RCLCPP_DEBUG(get_logger(), "Lane change end idx not found on target path.");
-    return std::nullopt;
+  if (!lc_end_idx_opt) {
+    throw std::logic_error("Lane change end idx not found on target path.");
   }
 
   for (size_t i = 0; i < shifted_path.path.points.size(); ++i) {
     auto & point = shifted_path.path.points.at(i);
-    if (i < *lane_change_end_idx) {
+    if (i < *lc_end_idx_opt) {
       point.lane_ids = replaceWithSortedIds(point.lane_ids, sorted_lane_ids);
       point.point.longitudinal_velocity_mps = std::min(
         point.point.longitudinal_velocity_mps, static_cast<float>(terminal_lane_changing_velocity));
@@ -296,16 +284,21 @@ std::optional<LaneChangePath> construct_candidate_path(
     point.lane_ids = target_lane_reference_path.points.at(*nearest_idx).lane_ids;
   }
 
-  if (const auto yaw_diff_opt = exceed_yaw_threshold(prepare_segment, shifted_path.path)) {
-    RCLCPP_DEBUG(
-      get_logger(), "Excessive yaw difference %.3f which exceeds the 5 degrees threshold.",
-      autoware::universe_utils::rad2deg(yaw_diff_opt.value()));
-    return std::nullopt;
+  constexpr auto yaw_diff_th = autoware::universe_utils::deg2rad(5.0);
+  if (
+    const auto yaw_diff_opt =
+      exceed_yaw_threshold(prepare_segment, shifted_path.path, yaw_diff_th)) {
+    std::stringstream err_msg;
+    err_msg << "Excessive yaw difference " << yaw_diff_opt.value() << " which exceeds the "
+            << yaw_diff_th << " radian threshold.";
+    throw std::logic_error(err_msg.str());
   }
 
+  LaneChangePath candidate_path;
   candidate_path.path = utils::combinePath(prepare_segment, shifted_path.path);
   candidate_path.shifted_path = shifted_path;
+  candidate_path.info = lane_change_info;
 
-  return std::optional<LaneChangePath>{candidate_path};
+  return candidate_path;
 }
 }  // namespace autoware::behavior_path_planner::utils::lane_change
