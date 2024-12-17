@@ -41,8 +41,5 @@ std::optional<LaneChangePath> construct_candidate_path(
   const LaneChangeInfo & lane_change_info, const PathWithLaneId & prepare_segment,
   const PathWithLaneId & target_lane_reference_path,
   const std::vector<std::vector<int64_t>> & sorted_lane_ids);
-
-std::optional<LaneChangePath> calcTerminalLaneChangePath(
-  const CommonDataPtr & common_data_ptr, const PathWithLaneId & prev_module_path);
 }  // namespace autoware::behavior_path_planner::utils::lane_change
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__PATH_HPP_
