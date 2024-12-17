@@ -563,8 +563,8 @@ PidLongitudinalController::ControlData PidLongitudinalController::getControlData
 
   // distance to stopline
   control_data.stop_dist = longitudinal_utils::calcStopDistance(
-    control_data.interpolated_traj.points.at(control_data.nearest_idx).pose,
-    control_data.interpolated_traj, m_ego_nearest_dist_threshold, m_ego_nearest_yaw_threshold);
+    current_pose, control_data.interpolated_traj, m_ego_nearest_dist_threshold,
+    m_ego_nearest_yaw_threshold);
 
   // pitch
   // NOTE: getPitchByTraj() calculates the pitch angle as defined in
@@ -787,10 +787,12 @@ void PidLongitudinalController::updateControlState(const ControlData & control_d
         }
 
         // publish debug marker
-        const auto virtual_wall_marker = autoware::motion_utils::createStopVirtualWallMarker(
-          m_current_kinematic_state.pose.pose, "velocity control\n(steering not converged)",
-          clock_->now(), 0, m_wheel_base + m_front_overhang);
-        m_pub_virtual_wall_marker->publish(virtual_wall_marker);
+        if (is_under_control) {
+          const auto virtual_wall_marker = autoware::motion_utils::createStopVirtualWallMarker(
+            m_current_kinematic_state.pose.pose, "velocity control\n(steering not converged)",
+            clock_->now(), 0, m_wheel_base + m_front_overhang);
+          m_pub_virtual_wall_marker->publish(virtual_wall_marker);
+        }
 
         // keep STOPPED
         return;
