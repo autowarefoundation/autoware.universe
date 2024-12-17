@@ -14,6 +14,7 @@
 
 #include "traffic_light_signals_merger_node.hpp"
 
+#include <map>
 #include <memory>
 #include <string>
 #include <vector>
@@ -28,19 +29,30 @@ TrafficLightSignalsMergerNode::TrafficLightSignalsMergerNode(
   tf_listener_(tf_buffer_),
   car_signal_sub_(this, "input/car_signals", rclcpp::QoS{1}.get_rmw_qos_profile()),
   pedestrian_signal_sub_(this, "input/pedestrian_signals", rclcpp::QoS{1}.get_rmw_qos_profile()),
-  sync_(SyncPolicy(10), car_signal_sub_, pedestrian_signal_sub_)
+  expected_rois_sub_(this, "input/expect_rois", rclcpp::QoS{1}.get_rmw_qos_profile()),
+  sync_(SyncPolicy(10), car_signal_sub_, pedestrian_signal_sub_, expected_rois_sub_)
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
-  sync_.registerCallback(std::bind(&TrafficLightSignalsMergerNode::signalsCallback, this, _1, _2));
+  using std::placeholders::_3;
+  sync_.registerCallback(
+    std::bind(&TrafficLightSignalsMergerNode::signalsCallback, this, _1, _2, _3));
   pub_traffic_light_signals_ =
     create_publisher<TrafficLightArray>("output/traffic_light_signals", rclcpp::QoS{1});
 }
 
 void TrafficLightSignalsMergerNode::signalsCallback(
   const TrafficLightArray::ConstSharedPtr & car_signals_msg,
-  const TrafficLightArray::ConstSharedPtr & pedestrian_signals_msg)
+  const TrafficLightArray::ConstSharedPtr & pedestrian_signals_msg,
+  const TrafficLightRoiArray::ConstSharedPtr & expected_rois_msg)
 {
+  std::map<int, TrafficLightRoi> expected_rois_map;
+  for (const auto & roi : expected_rois_msg->rois) {
+    expected_rois_map[roi.traffic_light_id].traffic_light_id = roi.traffic_light_id;
+    expected_rois_map[roi.traffic_light_id].roi = roi.roi;
+    expected_rois_map[roi.traffic_light_id].traffic_light_type = roi.traffic_light_type;
+  }
+
   TrafficLightArray output;
   output.header = car_signals_msg->header;
   output.signals.insert(
@@ -48,6 +60,22 @@ void TrafficLightSignalsMergerNode::signalsCallback(
   output.signals.insert(
     output.signals.end(), pedestrian_signals_msg->signals.begin(),
     pedestrian_signals_msg->signals.end());
+  for (auto & signal : output.signals) {
+    // remove expected_rois which are already in signals
+    if (expected_rois_map.find(signal.traffic_light_id) != expected_rois_map.end()) {
+      expected_rois_map.erase(signal.traffic_light_id);
+    }
+  }
+  for (const auto & roi : expected_rois_map) {
+    TrafficLight signal;
+    signal.traffic_light_id = roi.first;
+    signal.traffic_light_type = roi.second.traffic_light_type;
+    signal.elements.resize(1);
+    signal.elements[0].shape = TrafficLightElement::UNKNOWN;
+    signal.elements[0].color = TrafficLightElement::UNKNOWN;
+    signal.elements[0].confidence = 1.0;
+    output.signals.push_back(signal);
+  }
   pub_traffic_light_signals_->publish(output);
 }
 
