@@ -871,7 +871,7 @@ PidLongitudinalController::Motion PidLongitudinalController::calcCtrlCmd(
       } else if (m_control_state == ControlState::STOPPING) {
         raw_ctrl_cmd.acc = m_smooth_stop.calculate(
           control_data.stop_dist, control_data.current_motion.vel, control_data.current_motion.acc,
-          m_vel_hist, m_delay_compensation_time);
+          m_vel_hist, m_delay_compensation_time, m_debug_values);
         raw_ctrl_cmd.vel = m_stopped_state_params.vel;
 
         RCLCPP_DEBUG(
