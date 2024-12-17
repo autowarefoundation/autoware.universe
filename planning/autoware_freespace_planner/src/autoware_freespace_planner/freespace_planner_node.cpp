@@ -211,7 +211,7 @@ bool isStopped(
     double x = odom->twist.twist.linear.x;
     double y = odom->twist.twist.linear.y;
     double z = odom->twist.twist.linear.z;
-    if (std::abs(x * x + y * y + z * z) > th_stopped_velocity_mps * th_stopped_velocity_mps) {
+    if (x * x + y * y + z * z > th_stopped_velocity_mps * th_stopped_velocity_mps) {
       return false;
     }
   }
