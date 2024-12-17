@@ -110,28 +110,19 @@ ShiftLine get_lane_changing_shift_line(
 ShiftedPath get_shifted_path(
   const PathWithLaneId & target_lane_reference_path, const LaneChangeInfo & lane_change_info)
 {
-  const auto & shift_line = lane_change_info.shift_line;
   const auto longitudinal_acceleration = lane_change_info.longitudinal_acceleration;
-  const auto lane_change_velocity = lane_change_info.velocity;
-  ShiftedPath shifted_path;
+
   PathShifter path_shifter;
   path_shifter.setPath(target_lane_reference_path);
-  path_shifter.addShiftLine(shift_line);
+  path_shifter.addShiftLine(lane_change_info.shift_line);
   path_shifter.setLongitudinalAcceleration(longitudinal_acceleration.lane_changing);
-
-  // offset front side
-  bool offset_back = false;
-
-  const auto initial_lane_changing_velocity = lane_change_velocity.lane_changing;
+  const auto initial_lane_changing_velocity = lane_change_info.velocity.lane_changing;
   path_shifter.setVelocity(initial_lane_changing_velocity);
   path_shifter.setLateralAccelerationLimit(std::abs(lane_change_info.lateral_acceleration));
 
-  if (!path_shifter.generate(&shifted_path, offset_back)) {
-    std::cerr << "Failed to generate shifted path.";
-  }
-
-  // TODO(Zulfaqar Azmi): have to think of a more feasible solution for points being remove by
-  // path shifter.
+  constexpr auto offset_back = false;
+  ShiftedPath shifted_path;
+  [[maybe_unused]] const auto success = path_shifter.generate(&shifted_path, offset_back);
   return shifted_path;
 }
 
@@ -260,6 +251,11 @@ LaneChangePath construct_candidate_path(
   const auto terminal_lane_changing_velocity = lane_change_info.terminal_lane_changing_velocity;
 
   auto shifted_path = get_shifted_path(target_lane_reference_path, lane_change_info);
+
+  if (shifted_path.path.points.empty()) {
+    throw std::logic_error("Failed to generate shifted path.");
+  }
+
   if (shifted_path.path.points.size() < shift_line.end_idx + 1) {
     throw std::logic_error("Path points are removed by PathShifter.");
   }
