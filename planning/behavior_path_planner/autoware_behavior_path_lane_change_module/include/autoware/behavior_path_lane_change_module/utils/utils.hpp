@@ -61,7 +61,7 @@ using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
 using path_safety_checker::CollisionCheckDebugMap;
 using tier4_planning_msgs::msg::PathWithLaneId;
-rclcpp::Logger get_logger();
+
 bool is_mandatory_lane_change(const ModuleType lc_type);
 
 std::vector<int64_t> replaceWithSortedIds(
