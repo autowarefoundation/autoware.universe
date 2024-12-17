@@ -79,10 +79,6 @@ PidLongitudinalController::PidLongitudinalController(
     // emergency
     p.emergency_state_overshoot_stop_dist =
       node.declare_parameter<double>("emergency_state_overshoot_stop_dist");  // [m]
-    p.emergency_state_traj_trans_dev =
-      node.declare_parameter<double>("emergency_state_traj_trans_dev");  // [m]
-    p.emergency_state_traj_rot_dev =
-      node.declare_parameter<double>("emergency_state_traj_rot_dev");  // [m]
   }
 
   // parameters for drive state
@@ -286,8 +282,6 @@ rcl_interfaces::msg::SetParametersResult PidLongitudinalController::paramCallbac
     update_param("stopped_state_entry_vel", p.stopped_state_entry_vel);
     update_param("stopped_state_entry_acc", p.stopped_state_entry_acc);
     update_param("emergency_state_overshoot_stop_dist", p.emergency_state_overshoot_stop_dist);
-    update_param("emergency_state_traj_trans_dev", p.emergency_state_traj_trans_dev);
-    update_param("emergency_state_traj_rot_dev", p.emergency_state_traj_rot_dev);
   }
 
   // drive state
@@ -423,24 +417,6 @@ trajectory_follower::LongitudinalOutput PidLongitudinalController::run(
 
   const auto control_data = getControlData(current_pose);
 
-  // self pose is far from trajectory
-  if (control_data.is_far_from_trajectory) {
-    if (m_enable_large_tracking_error_emergency) {
-      // update control state
-      changeControlState(ControlState::EMERGENCY, "the tracking error is too large");
-    }
-    const Motion raw_ctrl_cmd = calcEmergencyCtrlCmd(control_data.dt);  // calculate control command
-    m_prev_raw_ctrl_cmd = raw_ctrl_cmd;
-    const auto cmd_msg =
-      createCtrlCmdMsg(raw_ctrl_cmd, control_data.current_motion.vel);  // create control command
-    publishDebugData(raw_ctrl_cmd, control_data);                       // publish debug data
-    trajectory_follower::LongitudinalOutput output;
-    output.control_cmd = cmd_msg;
-    output.control_cmd_horizon.controls.push_back(cmd_msg);
-    output.control_cmd_horizon.time_step_ms = 0.0;
-    return output;
-  }
-
   // update control state
   updateControlState(control_data);
 
@@ -490,23 +466,6 @@ PidLongitudinalController::ControlData PidLongitudinalController::getControlData
   control_data.target_idx = control_data.nearest_idx;
   const auto nearest_point = current_interpolated_pose.first;
   auto target_point = current_interpolated_pose.first;
-
-  // check if the deviation is worth emergency
-  m_diagnostic_data.trans_deviation =
-    autoware::universe_utils::calcDistance2d(current_interpolated_pose.first, current_pose);
-  const bool is_dist_deviation_large =
-    m_state_transition_params.emergency_state_traj_trans_dev < m_diagnostic_data.trans_deviation;
-  m_diagnostic_data.rot_deviation = std::abs(autoware::universe_utils::normalizeRadian(
-    tf2::getYaw(current_interpolated_pose.first.pose.orientation) -
-    tf2::getYaw(current_pose.orientation)));
-  const bool is_yaw_deviation_large =
-    m_state_transition_params.emergency_state_traj_rot_dev < m_diagnostic_data.rot_deviation;
-
-  if (is_dist_deviation_large || is_yaw_deviation_large) {
-    // return here if nearest index is not found
-    control_data.is_far_from_trajectory = true;
-    return control_data;
-  }
 
   // Delay compensation - Calculate the distance we got, predicted velocity and predicted
   // acceleration after delay
@@ -1239,23 +1198,7 @@ void PidLongitudinalController::checkControlState(
     msg = "emergency occurred due to ";
   }
 
-  if (
-    m_state_transition_params.emergency_state_traj_trans_dev < m_diagnostic_data.trans_deviation) {
-    msg += "translation deviation";
-  }
-
-  if (m_state_transition_params.emergency_state_traj_rot_dev < m_diagnostic_data.rot_deviation) {
-    msg += "rotation deviation";
-  }
-
   stat.add<int32_t>("control_state", static_cast<int32_t>(m_control_state));
-  stat.addf(
-    "translation deviation threshold", "%lf",
-    m_state_transition_params.emergency_state_traj_trans_dev);
-  stat.addf("translation deviation", "%lf", m_diagnostic_data.trans_deviation);
-  stat.addf(
-    "rotation deviation threshold", "%lf", m_state_transition_params.emergency_state_traj_rot_dev);
-  stat.addf("rotation deviation", "%lf", m_diagnostic_data.rot_deviation);
   stat.summary(level, msg);
 }
 
