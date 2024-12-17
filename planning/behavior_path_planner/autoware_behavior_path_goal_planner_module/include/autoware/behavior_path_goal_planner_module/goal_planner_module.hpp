@@ -240,7 +240,8 @@ public:
     const std::shared_ptr<GoalPlannerParameters> & parameters,
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
     std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
-      objects_of_interest_marker_interface_ptr_map);
+      objects_of_interest_marker_interface_ptr_map,
+    const std::shared_ptr<PlanningFactorInterface> planning_factor_interface);
 
   ~GoalPlannerModule()
   {
@@ -455,7 +456,7 @@ private:
   // steering factor
   void updateSteeringFactor(
     const PullOverContextData & context_data, const std::array<Pose, 2> & pose,
-    const std::array<double, 2> distance, const uint16_t type);
+    const std::array<double, 2> distance);
 
   // rtc
   std::pair<double, double> calcDistanceToPathChange(
