@@ -21,7 +21,6 @@
 
 #include <autoware/motion_utils/trajectory/path_shift.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
-#include <autoware_frenet_planner/frenet_planner.hpp>
 #include <range/v3/action/insert.hpp>
 #include <range/v3/algorithm.hpp>
 #include <range/v3/numeric/accumulate.hpp>
