@@ -11,11 +11,6 @@ find_package(CUDAToolkit)
 find_package(CUDNN)
 find_package(TENSORRT)
 
-if(NOT (CUDAToolkit_FOUND AND CUDNN_FOUND AND TENSORRT_FOUND))
-  message(WARNING "cuda, cudnn, tensorrt libraries are not found")
-  return()
-endif()
-
 add_library(${PROJECT_NAME} SHARED
   src/tensorrt_common.cpp
   src/simple_profiler.cpp
