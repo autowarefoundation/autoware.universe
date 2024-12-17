@@ -63,6 +63,7 @@ public:
     ACC_CMD_ACC_FB_APPLIED = 33,
     PITCH_LPF_RAD = 34,
     PITCH_LPF_DEG = 35,
+    SMOOTH_STOP_MODE = 36,
 
     SIZE  // this is the number of enum elements
   };
@@ -78,6 +79,9 @@ public:
    * @return array of all debug values
    */
   std::array<double, static_cast<size_t>(TYPE::SIZE)> getValues() const { return m_values; }
+  double getValue(const size_t index) const { return m_values.at(index); }
+  double getValue(const TYPE type) const { return m_values.at(static_cast<size_t>(type)); }
+
   /**
    * @brief set the given type to the given value
    * @param [in] type TYPE of the value
