@@ -322,13 +322,13 @@ void CrosswalkTrafficLightEstimatorNode::setCrosswalkTrafficSignal(
   }
 }
 
-bool CrosswalkTrafficLightEstimatorNode::isInvalidDetectionStatus(const TrafficSignal & signal) const
+bool CrosswalkTrafficLightEstimatorNode::isInvalidDetectionStatus(
+  const TrafficSignal & signal) const
 {
   // check occlusion, backlight(shape is unknown) and no detection(shape is circle)
   if (
     signal.elements.front().color == TrafficSignalElement::UNKNOWN &&
-    signal.elements.front().confidence == 0.0)
-  {
+    signal.elements.front().confidence == 0.0) {
     return true;
   }
 
