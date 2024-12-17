@@ -83,7 +83,6 @@ ColorRGBA ObjectsOfInterestMarkerInterface::getColor(
     case ColorName::RED:
       return coloring::getRed(alpha);
     case ColorName::GRAY:
-      return coloring::getGray(alpha);
     default:
       return coloring::getGray(alpha);
   }
