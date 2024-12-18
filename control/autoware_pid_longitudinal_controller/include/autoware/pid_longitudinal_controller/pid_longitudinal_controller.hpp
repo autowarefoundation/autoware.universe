@@ -216,6 +216,7 @@ private:
   std::shared_ptr<LowpassFilter1d> m_lpf_pitch{nullptr};
   double m_max_pitch_rad;
   double m_min_pitch_rad;
+  std::optional<double> m_previous_slope_angle{std::nullopt};
 
   // ego nearest index search
   double m_ego_nearest_dist_threshold;
@@ -411,11 +412,14 @@ private:
 
   /**
    * @brief update variables for debugging about pitch
-   * @param [in] pitch current pitch of the vehicle (filtered)
-   * @param [in] traj_pitch current trajectory pitch
-   * @param [in] raw_pitch current raw pitch of the vehicle (unfiltered)
+   * @param [in] pitch_using
+   * @param [in] traj_pitch
+   * @param [in] localization_pitch
+   * @param [in] localization_pitch_lpf
    */
-  void updatePitchDebugValues(const double pitch, const double traj_pitch, const double raw_pitch);
+  void updatePitchDebugValues(
+    const double pitch_using, const double traj_pitch, const double localization_pitch,
+    const double localization_pitch_lpf);
 
   /**
    * @brief update variables for velocity and acceleration

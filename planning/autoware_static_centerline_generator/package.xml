@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>autoware_static_centerline_generator</name>
-  <version>0.39.0</version>
+  <version>0.40.0</version>
   <description>The autoware_static_centerline_generator package</description>
   <maintainer email="takayuki.murooka@tier4.jp">Takayuki Murooka</maintainer>
   <maintainer email="kosuke.takeuchi@tier4.jp">Kosuke Takeuchi</maintainer>
@@ -20,9 +20,11 @@
   <depend>autoware_global_parameter_loader</depend>
   <depend>autoware_interpolation</depend>
   <depend>autoware_lanelet2_extension</depend>
+  <depend>autoware_lanelet2_map_visualizer</depend>
   <depend>autoware_map_loader</depend>
   <depend>autoware_map_msgs</depend>
   <depend>autoware_map_projection_loader</depend>
+  <depend>autoware_map_tf_generator</depend>
   <depend>autoware_mission_planner</depend>
   <depend>autoware_motion_utils</depend>
   <depend>autoware_osqp_interface</depend>

@@ -12,3 +12,6 @@
     filter_scope_max_x: 100.0
     filter_scope_max_y: 100.0
     filter_scope_max_z: 100.0
+
+    # debug parameters
+    publish_processing_time_detail: false

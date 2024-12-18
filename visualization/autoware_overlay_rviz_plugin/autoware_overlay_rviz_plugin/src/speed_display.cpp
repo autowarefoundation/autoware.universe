@@ -84,7 +84,8 @@ void SpeedDisplay::drawSpeedDisplay(
   painter.setFont(referenceFont);
   QRect referenceRect = painter.fontMetrics().boundingRect("88");
   QPointF referencePos(
-    backgroundRect.width() / 2 - referenceRect.width() / 2 - 5, backgroundRect.height() / 2);
+    backgroundRect.width() / 2.0 - referenceRect.width() / 2.0 - 5.0,
+    backgroundRect.height() / 2.0);
 
   QString speedNumber = QString::number(current_speed_, 'f', 0);
   int fontSize = 40;
@@ -96,7 +97,7 @@ void SpeedDisplay::drawSpeedDisplay(
 
   // Center the speed number in the backgroundRect
   QPointF speedPos(
-    backgroundRect.center().x() - speedNumberRect.width() / 2,
+    backgroundRect.center().x() - speedNumberRect.width() / 2.0,
     backgroundRect.center().y() + speedNumberRect.bottom());
   painter.setPen(color);
   painter.drawText(speedPos, speedNumber);
@@ -106,7 +107,8 @@ void SpeedDisplay::drawSpeedDisplay(
   QString speedUnit = "km/h";
   QRect unitRect = painter.fontMetrics().boundingRect(speedUnit);
   QPointF unitPos(
-    (backgroundRect.width() / 2 - unitRect.width() / 2), referencePos.y() + unitRect.height() + 15);
+    (backgroundRect.width() / 2.0 - unitRect.width() / 2.0),
+    referencePos.y() + unitRect.height() + 15.0);
   painter.drawText(unitPos, speedUnit);
 }
 

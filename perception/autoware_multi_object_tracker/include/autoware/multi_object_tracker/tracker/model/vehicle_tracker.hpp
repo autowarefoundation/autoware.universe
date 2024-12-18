@@ -16,8 +16,8 @@
 // Author: v1.0 Yukihiro Saito
 //
 
-#ifndef AUTOWARE__MULTI_OBJECT_TRACKER__TRACKER__MODEL__NORMAL_VEHICLE_TRACKER_HPP_
-#define AUTOWARE__MULTI_OBJECT_TRACKER__TRACKER__MODEL__NORMAL_VEHICLE_TRACKER_HPP_
+#ifndef AUTOWARE__MULTI_OBJECT_TRACKER__TRACKER__MODEL__VEHICLE_TRACKER_HPP_
+#define AUTOWARE__MULTI_OBJECT_TRACKER__TRACKER__MODEL__VEHICLE_TRACKER_HPP_
 
 #include "autoware/kalman_filter/kalman_filter.hpp"
 #include "autoware/multi_object_tracker/object_model/object_model.hpp"
@@ -27,16 +27,15 @@
 namespace autoware::multi_object_tracker
 {
 
-class NormalVehicleTracker : public Tracker
+class VehicleTracker : public Tracker
 {
 private:
-  autoware_perception_msgs::msg::DetectedObject object_;
+  object_model::ObjectModel object_model_;
   rclcpp::Logger logger_;
-
-  object_model::ObjectModel object_model_ = object_model::normal_vehicle;
 
   double velocity_deviation_threshold_;
 
+  autoware_perception_msgs::msg::DetectedObject object_;
   double z_;
 
   struct BoundingBox
@@ -52,8 +51,9 @@ private:
   using IDX = BicycleMotionModel::IDX;
 
 public:
-  NormalVehicleTracker(
-    const rclcpp::Time & time, const autoware_perception_msgs::msg::DetectedObject & object,
+  VehicleTracker(
+    const object_model::ObjectModel & object_model, const rclcpp::Time & time,
+    const autoware_perception_msgs::msg::DetectedObject & object,
     const geometry_msgs::msg::Transform & self_transform, const size_t channel_size,
     const uint & channel_index);
 
@@ -75,4 +75,4 @@ private:
 
 }  // namespace autoware::multi_object_tracker
 
-#endif  // AUTOWARE__MULTI_OBJECT_TRACKER__TRACKER__MODEL__NORMAL_VEHICLE_TRACKER_HPP_
+#endif  // AUTOWARE__MULTI_OBJECT_TRACKER__TRACKER__MODEL__VEHICLE_TRACKER_HPP_

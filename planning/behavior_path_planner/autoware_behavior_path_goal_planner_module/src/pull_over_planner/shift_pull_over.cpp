@@ -67,7 +67,7 @@ std::optional<PullOverPath> ShiftPullOver::plan(
       modified_goal_pose, id, planner_data, previous_module_output, road_lanes, pull_over_lanes,
       lateral_jerk);
     if (!pull_over_path) continue;
-    return *pull_over_path;
+    return pull_over_path;
   }
 
   return {};

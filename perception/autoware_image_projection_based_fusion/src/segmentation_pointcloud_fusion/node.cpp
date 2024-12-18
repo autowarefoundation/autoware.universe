@@ -17,6 +17,7 @@
 #include "autoware/image_projection_based_fusion/utils/geometry.hpp"
 #include "autoware/image_projection_based_fusion/utils/utils.hpp"
 
+#include <autoware/universe_utils/system/time_keeper.hpp>
 #include <perception_utils/run_length_encoder.hpp>
 
 #include <memory>
@@ -32,6 +33,8 @@
 
 namespace autoware::image_projection_based_fusion
 {
+using autoware::universe_utils::ScopedTimeTrack;
+
 SegmentPointCloudFusionNode::SegmentPointCloudFusionNode(const rclcpp::NodeOptions & options)
 : FusionNode<PointCloud2, PointCloud2, Image>("segmentation_pointcloud_fusion", options)
 {
@@ -49,11 +52,17 @@ SegmentPointCloudFusionNode::SegmentPointCloudFusionNode(const rclcpp::NodeOptio
 
 void SegmentPointCloudFusionNode::preprocess(__attribute__((unused)) PointCloud2 & pointcloud_msg)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   return;
 }
 
 void SegmentPointCloudFusionNode::postprocess(PointCloud2 & pointcloud_msg)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   auto original_cloud = std::make_shared<PointCloud2>(pointcloud_msg);
 
   int point_step = original_cloud->point_step;
@@ -82,6 +91,9 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
   [[maybe_unused]] const Image & input_mask, __attribute__((unused)) const CameraInfo & camera_info,
   __attribute__((unused)) PointCloud2 & output_cloud)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   if (input_pointcloud_msg.data.empty()) {
     return;
   }
