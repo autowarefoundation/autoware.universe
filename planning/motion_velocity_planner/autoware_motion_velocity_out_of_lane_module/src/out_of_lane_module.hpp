@@ -40,6 +40,7 @@ class OutOfLaneModule : public PluginModuleInterface
 {
 public:
   void init(rclcpp::Node & node, const std::string & module_name) override;
+  void publish_planning_factor() override { planning_factor_interface_->publish(); };
   void update_parameters(const std::vector<rclcpp::Parameter> & parameters) override;
   VelocityPlanningResult plan(
     const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,

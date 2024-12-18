@@ -60,6 +60,9 @@ void OutOfLaneModule::init(rclcpp::Node & node, const std::string & module_name)
   init_parameters(node);
   velocity_factor_interface_.init(motion_utils::PlanningBehavior::ROUTE_OBSTACLE);
 
+  planning_factor_interface_ =
+    std::make_unique<autoware::motion_utils::PlanningFactorInterface>(&node, "out_of_lane");
+
   debug_publisher_ =
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/" + ns_ + "/debug_markers", 1);
   virtual_wall_publisher_ =
@@ -315,6 +318,9 @@ VelocityPlanningResult OutOfLaneModule::plan(
       planner_data->current_odometry.twist.twist.linear.x > 0.1;
     const auto status = is_approaching ? motion_utils::VelocityFactor::APPROACHING
                                        : motion_utils::VelocityFactor::STOPPED;
+    planning_factor_interface_->add(
+      ego_trajectory_points, ego_data.pose, *slowdown_pose, PlanningFactor::SLOW_DOWN,
+      SafetyFactorArray{});
     velocity_factor_interface_.set(
       ego_trajectory_points, ego_data.pose, *slowdown_pose, status, "out_of_lane");
     result.velocity_factor = velocity_factor_interface_.get();
