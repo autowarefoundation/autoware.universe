@@ -31,11 +31,23 @@
 
 namespace autoware::multi_object_tracker
 {
+using LabelType = autoware_perception_msgs::msg::ObjectClassification::_label_type;
+
+struct TrackerProcessorConfig
+{
+  std::map<LabelType, std::string> tracker_map;
+  size_t channel_size;
+  float tracker_lifetime;                              // [s]
+  float min_known_object_removal_iou;                  // ratio [0, 1]
+  float min_unknown_object_removal_iou;                // ratio [0, 1]
+  double distance_threshold;                           // [m]
+  std::map<LabelType, int> confident_count_threshold;  // [count]
+};
+
 class TrackerProcessor
 {
 public:
-  explicit TrackerProcessor(
-    const std::map<std::uint8_t, std::string> & tracker_map, const size_t & channel_size);
+  explicit TrackerProcessor(const TrackerProcessorConfig & config);
 
   const std::list<std::shared_ptr<Tracker>> & getListTracker() const { return list_tracker_; }
   // tracker processes
@@ -62,17 +74,8 @@ public:
   void getExistenceProbabilities(std::vector<std::vector<float>> & existence_vectors) const;
 
 private:
-  std::map<std::uint8_t, std::string> tracker_map_;
+  TrackerProcessorConfig config_;
   std::list<std::shared_ptr<Tracker>> list_tracker_;
-  const size_t channel_size_;
-
-  // parameters
-  float max_elapsed_time_;            // [s]
-  float min_iou_;                     // [ratio]
-  float min_iou_for_unknown_object_;  // [ratio]
-  double distance_threshold_;         // [m]
-  int confident_count_threshold_;     // [count]
-
   void removeOldTracker(const rclcpp::Time & time);
   void removeOverlappedTracker(const rclcpp::Time & time);
   std::shared_ptr<Tracker> createNewTracker(

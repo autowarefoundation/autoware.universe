@@ -17,6 +17,9 @@
 #include "autoware/image_projection_based_fusion/utils/geometry.hpp"
 #include "autoware/image_projection_based_fusion/utils/utils.hpp"
 
+#include <autoware/universe_utils/system/time_keeper.hpp>
+
+#include <memory>
 #include <vector>
 
 #ifdef ROS_DISTRO_GALACTIC
@@ -31,6 +34,8 @@
 
 namespace autoware::image_projection_based_fusion
 {
+using autoware::universe_utils::ScopedTimeTrack;
+
 RoiPointCloudFusionNode::RoiPointCloudFusionNode(const rclcpp::NodeOptions & options)
 : FusionNode<PointCloud2, DetectedObjectWithFeature, DetectedObjectsWithFeature>(
     "roi_pointcloud_fusion", options)
@@ -47,12 +52,18 @@ RoiPointCloudFusionNode::RoiPointCloudFusionNode(const rclcpp::NodeOptions & opt
 void RoiPointCloudFusionNode::preprocess(
   __attribute__((unused)) sensor_msgs::msg::PointCloud2 & pointcloud_msg)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   return;
 }
 
 void RoiPointCloudFusionNode::postprocess(
   __attribute__((unused)) sensor_msgs::msg::PointCloud2 & pointcloud_msg)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   const auto objects_sub_count = pub_objects_ptr_->get_subscription_count() +
                                  pub_objects_ptr_->get_intra_process_subscription_count();
   if (objects_sub_count < 1) {
@@ -81,6 +92,9 @@ void RoiPointCloudFusionNode::fuseOnSingleImage(
   const sensor_msgs::msg::CameraInfo & camera_info,
   __attribute__((unused)) sensor_msgs::msg::PointCloud2 & output_pointcloud_msg)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   if (input_pointcloud_msg.data.empty()) {
     return;
   }

@@ -42,6 +42,7 @@ static double processing_time_ms = 0;
 
 namespace autoware::image_projection_based_fusion
 {
+using autoware::universe_utils::ScopedTimeTrack;
 
 template <class TargetMsg3D, class ObjType, class Msg2D>
 FusionNode<TargetMsg3D, ObjType, Msg2D>::FusionNode(
@@ -130,6 +131,17 @@ FusionNode<TargetMsg3D, ObjType, Msg2D>::FusionNode(
     debugger_ =
       std::make_shared<Debugger>(this, rois_number_, image_buffer_size, input_camera_topics_);
   }
+
+  // time keeper
+  bool use_time_keeper = declare_parameter<bool>("publish_processing_time_detail");
+  if (use_time_keeper) {
+    detailed_processing_time_publisher_ =
+      this->create_publisher<autoware::universe_utils::ProcessingTimeDetail>(
+        "~/debug/processing_time_detail_ms", 1);
+    auto time_keeper = autoware::universe_utils::TimeKeeper(detailed_processing_time_publisher_);
+    time_keeper_ = std::make_shared<autoware::universe_utils::TimeKeeper>(time_keeper);
+  }
+
   point_project_to_unrectified_image_ =
     declare_parameter<bool>("point_project_to_unrectified_image");
 
@@ -170,6 +182,9 @@ template <class TargetMsg3D, class Obj, class Msg2D>
 void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
   const typename TargetMsg3D::ConstSharedPtr input_msg)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   if (cached_msg_.second != nullptr) {
     stop_watch_ptr_->toc("processing_time", true);
     timer_->cancel();
@@ -306,6 +321,9 @@ template <class TargetMsg3D, class Obj, class Msg2D>
 void FusionNode<TargetMsg3D, Obj, Msg2D>::roiCallback(
   const typename Msg2D::ConstSharedPtr input_roi_msg, const std::size_t roi_i)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   stop_watch_ptr_->toc("processing_time", true);
 
   int64_t timestamp_nsec = (*input_roi_msg).header.stamp.sec * static_cast<int64_t>(1e9) +
@@ -378,6 +396,9 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::postprocess(TargetMsg3D & output_msg
 template <class TargetMsg3D, class Obj, class Msg2D>
 void FusionNode<TargetMsg3D, Obj, Msg2D>::timer_callback()
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   using std::chrono_literals::operator""ms;
   timer_->cancel();
   if (mutex_cached_msgs_.try_lock()) {
