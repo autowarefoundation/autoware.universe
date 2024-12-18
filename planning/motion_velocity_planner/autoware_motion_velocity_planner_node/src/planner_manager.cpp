@@ -102,6 +102,8 @@ std::vector<VelocityPlanningResult> MotionVelocityPlannerManager::plan_velocitie
     VelocityPlanningResult res = plugin->plan(ego_trajectory_points, planner_data);
     results.push_back(res);
 
+    plugin->publish_planning_factor();
+
     if (res.stop_points.size() > 0) {
       const auto stop_decision_metric = make_decision_metric(plugin->get_module_name(), "stop");
       metrics_.push_back(stop_decision_metric);
