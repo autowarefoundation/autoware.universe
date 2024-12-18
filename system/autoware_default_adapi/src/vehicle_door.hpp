@@ -16,6 +16,7 @@
 #define VEHICLE_DOOR_HPP_
 
 #include <autoware/adapi_specs/vehicle.hpp>
+#include <autoware/component_interface_specs/system.hpp>
 #include <autoware/component_interface_specs/vehicle.hpp>
 #include <autoware/component_interface_utils/status.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -34,6 +35,7 @@ public:
   explicit VehicleDoorNode(const rclcpp::NodeOptions & options);
 
 private:
+  using OperationModeState = autoware::component_interface_specs::system::OperationModeState;
   using InternalDoorStatus = autoware::component_interface_specs::vehicle::DoorStatus;
   using InternalDoorLayout = autoware::component_interface_specs::vehicle::DoorLayout;
   using InternalDoorCommand = autoware::component_interface_specs::vehicle::DoorCommand;
@@ -41,6 +43,7 @@ private:
   using ExternalDoorLayout = autoware::adapi_specs::vehicle::DoorLayout;
   using ExternalDoorCommand = autoware::adapi_specs::vehicle::DoorCommand;
 
+  void on_operation_mode(const OperationModeState::Message::ConstSharedPtr msg);
   void on_status(InternalDoorStatus::Message::ConstSharedPtr msg);
   void on_command(
     const ExternalDoorCommand::Service::Request::SharedPtr req,
@@ -54,6 +57,10 @@ private:
   Cli<InternalDoorLayout> cli_layout_;
   Sub<InternalDoorStatus> sub_status_;
   std::optional<InternalDoorStatus::Message> status_;
+
+  bool is_autoware_control_;
+  bool is_stop_mode_;
+  Sub<OperationModeState> sub_operation_mode_;
 };
 
 }  // namespace autoware::default_adapi

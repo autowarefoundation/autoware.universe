@@ -29,8 +29,17 @@ VehicleDoorNode::VehicleDoorNode(const rclcpp::NodeOptions & options)
   adaptor.init_srv(srv_command_, this, &VehicleDoorNode::on_command);
   adaptor.init_pub(pub_status_);
   adaptor.init_sub(sub_status_, this, &VehicleDoorNode::on_status);
+  adaptor.init_sub(sub_operation_mode_, this, &VehicleDoorNode::on_operation_mode);
+
+  is_autoware_control_ = false;
+  is_stop_mode_ = false;
 }
 
+void VehicleDoorNode::on_operation_mode(const OperationModeState::Message::ConstSharedPtr msg)
+{
+  is_autoware_control_ = msg->is_autoware_control_enabled;
+  is_stop_mode_ = msg->mode == OperationModeState::Message::STOP;
+}
 void VehicleDoorNode::on_status(InternalDoorStatus::Message::ConstSharedPtr msg)
 {
   utils::notify(pub_status_, status_, *msg, utils::ignore_stamp<InternalDoorStatus::Message>);
@@ -40,6 +49,16 @@ void VehicleDoorNode::on_command(
   const ExternalDoorCommand::Service::Request::SharedPtr req,
   const ExternalDoorCommand::Service::Response::SharedPtr res)
 {
+  // For safety, do not open the door if the vehicle is not stopped.
+  // https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-interfaces/ad-api/list/api/vehicle/doors/command/
+  if (req->command == ExternalDoorCommand::Request::OPEN) {
+    if (!(is_stop_mode_ && is_autoware_control_)) {
+      res->status.success = false;
+      res->status.code = autoware_adapi_v1_msgs::msg::ResponseStatus::UNKNOWN;
+      res->status.message = "Doors cannot be opened if the vehicle is not stopped.";
+      return;
+    }
+  }
   autoware::component_interface_utils::status::copy(cli_command_->call(req), res);
 }
 
