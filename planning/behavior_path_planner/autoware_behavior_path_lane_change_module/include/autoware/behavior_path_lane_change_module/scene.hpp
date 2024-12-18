@@ -70,9 +70,12 @@ public:
 
   void extendOutputDrivableArea(BehaviorModuleOutput & output) const override;
 
-  void insert_stop_point(const lanelet::ConstLanelets & lanelets, PathWithLaneId & path) override;
+  void insert_stop_point(
+    const lanelet::ConstLanelets & lanelets, PathWithLaneId & path,
+    const bool is_waiting_approval = false) override;
 
-  void insert_stop_point_on_current_lanes(PathWithLaneId & path);
+  void insert_stop_point_on_current_lanes(
+    PathWithLaneId & path, const bool is_waiting_approval = false);
 
   PathWithLaneId getReferencePath() const override;
 
@@ -151,9 +154,7 @@ protected:
   bool check_candidate_path_safety(
     const LaneChangePath & candidate_path, const lane_change::TargetObjects & target_objects) const;
 
-  std::optional<LaneChangePath> calcTerminalLaneChangePath(
-    const lanelet::ConstLanelets & current_lanes,
-    const lanelet::ConstLanelets & target_lanes) const;
+  std::optional<PathWithLaneId> compute_terminal_lane_change_path() const;
 
   bool isValidPath(const PathWithLaneId & path) const override;
 
