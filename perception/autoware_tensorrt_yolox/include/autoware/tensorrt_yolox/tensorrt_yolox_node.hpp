@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__TENSORRT_YOLOX__TENSORRT_YOLOX_NODE_HPP_
 #define AUTOWARE__TENSORRT_YOLOX__TENSORRT_YOLOX_NODE_HPP_
 
-#include "object_recognition_utils/object_recognition_utils.hpp"
+#include "autoware/object_recognition_utils/object_recognition_utils.hpp"
 
 #include <autoware/tensorrt_yolox/tensorrt_yolox.hpp>
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
@@ -40,6 +40,7 @@
 #include <map>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace autoware::tensorrt_yolox
@@ -81,6 +82,7 @@ private:
   int mapRoiLabel2SegLabel(const int32_t roi_label_index);
   image_transport::Publisher image_pub_;
   image_transport::Publisher mask_pub_;
+
   image_transport::Publisher color_mask_pub_;
 
   rclcpp::Publisher<tier4_perception_msgs::msg::DetectedObjectsWithFeature>::SharedPtr objects_pub_;

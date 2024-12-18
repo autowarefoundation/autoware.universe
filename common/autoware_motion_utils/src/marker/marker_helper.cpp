@@ -20,6 +20,8 @@
 
 #include <visualization_msgs/msg/marker_array.hpp>
 
+#include <string>
+
 using autoware::universe_utils::createDefaultMarker;
 using autoware::universe_utils::createDeletedDefaultMarker;
 using autoware::universe_utils::createMarkerColor;
@@ -133,11 +135,5 @@ visualization_msgs::msg::MarkerArray createDeletedSlowDownVirtualWallMarker(
   const rclcpp::Time & now, const int32_t id)
 {
   return createDeletedVirtualWallMarkerArray("slow_down_", now, id);
-}
-
-visualization_msgs::msg::MarkerArray createDeletedDeadLineVirtualWallMarker(
-  const rclcpp::Time & now, const int32_t id)
-{
-  return createDeletedVirtualWallMarkerArray("dead_line_", now, id);
 }
 }  // namespace autoware::motion_utils

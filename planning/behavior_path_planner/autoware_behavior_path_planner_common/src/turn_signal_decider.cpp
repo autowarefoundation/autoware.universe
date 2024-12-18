@@ -26,10 +26,14 @@
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 
+#include <algorithm>
 #include <limits>
+#include <memory>
 #include <queue>
+#include <set>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace autoware::behavior_path_planner
 {
@@ -138,11 +142,12 @@ std::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo(
   const size_t current_seg_idx, const RouteHandler & route_handler,
   const double nearest_dist_threshold, const double nearest_yaw_threshold)
 {
-  const auto requires_turn_signal = [&](const auto & lane_attribute) {
+  const auto requires_turn_signal = [&current_vel](
+                                      const auto & turn_direction, const bool is_in_turn_lane) {
     constexpr double stop_velocity_threshold = 0.1;
     return (
-      lane_attribute == "right" || lane_attribute == "left" ||
-      (lane_attribute == "straight" && current_vel < stop_velocity_threshold));
+      turn_direction == "right" || turn_direction == "left" ||
+      (turn_direction == "straight" && current_vel < stop_velocity_threshold && !is_in_turn_lane));
   };
   // base search distance
   const double base_search_distance =
@@ -160,6 +165,19 @@ std::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo(
     }
   }
 
+  bool is_in_turn_lane = false;
+  for (const auto & lane_id : unique_lane_ids) {
+    const auto lanelet = route_handler.getLaneletsFromId(lane_id);
+    const std::string turn_direction = lanelet.attributeOr("turn_direction", "none");
+    if (turn_direction == "left" || turn_direction == "right") {
+      const auto & position = current_pose.position;
+      const lanelet::BasicPoint2d point(position.x, position.y);
+      if (lanelet::geometry::inside(lanelet, point)) {
+        is_in_turn_lane = true;
+        break;
+      }
+    }
+  }
   // combine consecutive lanes of the same turn direction
   // stores lanes that have already been combine
   std::set<int> processed_lanes;
@@ -175,7 +193,7 @@ std::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo(
     // Get the lane and its attribute
     const std::string lane_attribute =
       current_lane.attributeOr("turn_direction", std::string("none"));
-    if (!requires_turn_signal(lane_attribute)) continue;
+    if (!requires_turn_signal(lane_attribute, is_in_turn_lane)) continue;
 
     do {
       processed_lanes.insert(current_lane.id());
@@ -256,7 +274,7 @@ std::optional<TurnSignalInfo> TurnSignalDecider::getIntersectionTurnSignalInfo(
     } else if (search_distance <= dist_to_front_point) {
       continue;
     }
-    if (requires_turn_signal(lane_attribute)) {
+    if (requires_turn_signal(lane_attribute, is_in_turn_lane)) {
       // update map if necessary
       if (desired_start_point_map_.find(lane_id) == desired_start_point_map_.end()) {
         desired_start_point_map_.emplace(lane_id, current_pose);
@@ -652,7 +670,8 @@ std::pair<TurnSignalInfo, bool> TurnSignalDecider::getBehaviorTurnSignalInfo(
   const std::shared_ptr<RouteHandler> route_handler,
   const BehaviorPathPlannerParameters & parameters, const Odometry::ConstSharedPtr self_odometry,
   const double current_shift_length, const bool is_driving_forward, const bool egos_lane_is_shifted,
-  const bool override_ego_stopped_check, const bool is_pull_out) const
+  const bool override_ego_stopped_check, const bool is_pull_out, const bool is_lane_change,
+  const bool is_pull_over) const
 {
   using autoware::universe_utils::getPose;
 
@@ -770,15 +789,18 @@ std::pair<TurnSignalInfo, bool> TurnSignalDecider::getBehaviorTurnSignalInfo(
     right_same_direction_lane.has_value() || !right_opposite_lanes.empty();
 
   if (
-    !is_pull_out && !existShiftSideLane(
-                      start_shift_length, end_shift_length, !has_left_lane, !has_right_lane,
-                      p.turn_signal_shift_length_threshold)) {
+    (!is_pull_out && !is_lane_change && !is_pull_over) &&
+    !existShiftSideLane(
+      start_shift_length, end_shift_length, !has_left_lane, !has_right_lane,
+      p.turn_signal_shift_length_threshold)) {
     return std::make_pair(TurnSignalInfo(p_path_start, p_path_end), true);
   }
 
   // Check if the ego will cross lane bounds.
   // Note that pull out requires blinkers, even if the ego does not cross lane bounds
-  if (!is_pull_out && !straddleRoadBound(path, shift_line, current_lanelets, p.vehicle_info)) {
+  if (
+    (!is_pull_out && !is_pull_over) &&
+    !straddleRoadBound(path, shift_line, current_lanelets, p.vehicle_info)) {
     return std::make_pair(TurnSignalInfo(p_path_start, p_path_end), true);
   }
 

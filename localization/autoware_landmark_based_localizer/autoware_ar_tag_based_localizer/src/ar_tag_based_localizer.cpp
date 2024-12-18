@@ -44,12 +44,16 @@
 
 #include "ar_tag_based_localizer.hpp"
 
-#include "localization_util/util_func.hpp"
+#include "autoware/localization_util/util_func.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <opencv4/opencv2/calib3d.hpp>
 #include <opencv4/opencv2/core/quaternion.hpp>
+
+#include <memory>
+#include <string>
+#include <vector>
 
 #if __has_include(<cv_bridge/cv_bridge.hpp>)
 #include <cv_bridge/cv_bridge.hpp>  // for ROS 2 Jazzy or newer
@@ -94,7 +98,7 @@ ArTagBasedLocalizer::ArTagBasedLocalizer(const rclcpp::NodeOptions & options)
     RCLCPP_ERROR_STREAM(this->get_logger(), "Invalid detection_mode: " << detection_mode);
     return;
   }
-  ekf_pose_buffer_ = std::make_unique<SmartPoseBuffer>(
+  ekf_pose_buffer_ = std::make_unique<autoware::localization_util::SmartPoseBuffer>(
     this->get_logger(), ekf_time_tolerance_, ekf_position_tolerance_);
 
   /*
@@ -116,7 +120,7 @@ ArTagBasedLocalizer::ArTagBasedLocalizer(const rclcpp::NodeOptions & options)
   */
   using std::placeholders::_1;
   map_bin_sub_ = this->create_subscription<LaneletMapBin>(
-    "~/input/lanelet2_map", rclcpp::QoS(10).durability(rclcpp::DurabilityPolicy::TransientLocal),
+    "~/input/lanelet2_map", rclcpp::QoS(1).durability(rclcpp::DurabilityPolicy::TransientLocal),
     std::bind(&ArTagBasedLocalizer::map_bin_callback, this, _1));
 
   rclcpp::QoS qos_sub(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_default));
@@ -131,7 +135,7 @@ ArTagBasedLocalizer::ArTagBasedLocalizer(const rclcpp::NodeOptions & options)
   /*
     Publishers
   */
-  const rclcpp::QoS qos_pub_once = rclcpp::QoS(rclcpp::KeepLast(10)).transient_local().reliable();
+  const rclcpp::QoS qos_pub_once = rclcpp::QoS(rclcpp::KeepLast(1)).transient_local().reliable();
   const rclcpp::QoS qos_pub_periodic(rclcpp::QoSInitialization::from_rmw(rmw_qos_profile_default));
   pose_pub_ = this->create_publisher<PoseWithCovarianceStamped>(
     "~/output/pose_with_covariance", qos_pub_periodic);
@@ -168,8 +172,8 @@ void ArTagBasedLocalizer::image_callback(const Image::ConstSharedPtr & msg)
   const builtin_interfaces::msg::Time sensor_stamp = msg->header.stamp;
 
   // get self pose
-  const std::optional<SmartPoseBuffer::InterpolateResult> interpolate_result =
-    ekf_pose_buffer_->interpolate(sensor_stamp);
+  const std::optional<autoware::localization_util::SmartPoseBuffer::InterpolateResult>
+    interpolate_result = ekf_pose_buffer_->interpolate(sensor_stamp);
   if (!interpolate_result) {
     return;
   }

@@ -22,9 +22,13 @@
 #include "autoware/motion_utils/trajectory/path_with_lane_id.hpp"
 #include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
 
+#include <autoware/motion_utils/trajectory/path_shift.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 
+#include <algorithm>
+#include <limits>
 #include <memory>
+#include <utility>
 #include <vector>
 
 using autoware::motion_utils::findNearestIndex;
@@ -37,8 +41,9 @@ using start_planner_utils::getPullOutLanes;
 
 ShiftPullOut::ShiftPullOut(
   rclcpp::Node & node, const StartPlannerParameters & parameters,
-  std::shared_ptr<LaneDepartureChecker> & lane_departure_checker)
-: PullOutPlannerBase{node, parameters}, lane_departure_checker_{lane_departure_checker}
+  std::shared_ptr<LaneDepartureChecker> & lane_departure_checker,
+  std::shared_ptr<universe_utils::TimeKeeper> time_keeper)
+: PullOutPlannerBase{node, parameters, time_keeper}, lane_departure_checker_{lane_departure_checker}
 {
 }
 
@@ -60,8 +65,17 @@ std::optional<PullOutPath> ShiftPullOut::plan(
     return std::nullopt;
   }
 
+  const auto lanelet_map_ptr = planner_data_->route_handler->getLaneletMapPtr();
+
+  std::vector<lanelet::Id> fused_id_start_to_end{};
+  std::optional<autoware::universe_utils::Polygon2d> fused_polygon_start_to_end = std::nullopt;
+
+  std::vector<lanelet::Id> fused_id_crop_points{};
+  std::optional<autoware::universe_utils::Polygon2d> fused_polygon_crop_points = std::nullopt;
   // get safe path
   for (auto & pull_out_path : pull_out_paths) {
+    universe_utils::ScopedTimeTrack st("get safe path", *time_keeper_);
+
     // shift path is not separate but only one.
     auto & shift_path = pull_out_path.partial_paths.front();
     // check lane_departure with path between pull_out_start to pull_out_end
@@ -75,8 +89,6 @@ std::optional<PullOutPath> ShiftPullOut::plan(
         path_shift_start_to_end.points.begin(), shift_path.points.begin() + pull_out_start_idx,
         shift_path.points.begin() + pull_out_end_idx + 1);
     }
-
-    const auto lanelet_map_ptr = planner_data_->route_handler->getLaneletMapPtr();
 
     // if lane departure check override is true, and if the initial pose is not fully within a lane,
     // cancel lane departure check
@@ -96,8 +108,9 @@ std::optional<PullOutPath> ShiftPullOut::plan(
     // computational cost.
 
     if (
-      is_lane_departure_check_required &&
-      lane_departure_checker_->checkPathWillLeaveLane(lanelet_map_ptr, path_shift_start_to_end)) {
+      is_lane_departure_check_required && lane_departure_checker_->checkPathWillLeaveLane(
+                                            lanelet_map_ptr, path_shift_start_to_end,
+                                            fused_id_start_to_end, fused_polygon_start_to_end)) {
       planner_debug_data.conditions_evaluation.emplace_back("lane departure");
       continue;
     }
@@ -113,7 +126,8 @@ std::optional<PullOutPath> ShiftPullOut::plan(
         common_parameters.ego_nearest_yaw_threshold);
 
     const auto cropped_path = lane_departure_checker_->cropPointsOutsideOfLanes(
-      lanelet_map_ptr, shift_path, start_segment_idx);
+      lanelet_map_ptr, shift_path, start_segment_idx, fused_id_crop_points,
+      fused_polygon_crop_points);
     if (cropped_path.points.empty()) {
       planner_debug_data.conditions_evaluation.emplace_back("cropped path is empty");
       continue;
@@ -215,6 +229,8 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & road_lanes,
   const Pose & start_pose, const Pose & goal_pose)
 {
+  universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+
   std::vector<PullOutPath> candidate_paths{};
 
   if (road_lanes.empty()) {
@@ -264,45 +280,52 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
   });
 
   bool has_non_shifted_path = false;
+
+  // if shift length is too short, add non sifted path
+  constexpr double MINIMUM_SHIFT_LENGTH = 0.01;
+  const double shift_length = arc_position_start.distance;
+  const bool is_smaller_than_minimum = std::abs(shift_length) < MINIMUM_SHIFT_LENGTH;
+
+  if (is_smaller_than_minimum) {
+    candidate_paths.push_back(non_shifted_path);
+    has_non_shifted_path = true;
+  }
+
+  // calculate pull out distance, longitudinal acc, terminal velocity
+  const size_t shift_start_idx =
+    findNearestIndex(road_lane_reference_path.points, start_pose.position);
+  const double road_velocity =
+    road_lane_reference_path.points.at(shift_start_idx).point.longitudinal_velocity_mps;
+
+  // clip from ego pose
+  PathWithLaneId road_lane_reference_path_from_ego = road_lane_reference_path;
+  road_lane_reference_path_from_ego.points.erase(
+    road_lane_reference_path_from_ego.points.begin(),
+    road_lane_reference_path_from_ego.points.begin() + shift_start_idx);
+
+  const auto curvatures_and_segment_lengths =
+    autoware::motion_utils::calcCurvatureAndSegmentLength(road_lane_reference_path_from_ego.points);
+
   for (double lateral_acc = minimum_lateral_acc; lateral_acc <= maximum_lateral_acc;
        lateral_acc += acc_resolution) {
     PathShifter path_shifter{};
 
     path_shifter.setPath(road_lane_reference_path);
 
-    // if shift length is too short, add non sifted path
-    constexpr double MINIMUM_SHIFT_LENGTH = 0.01;
-    const double shift_length = getArcCoordinates(road_lanes, start_pose).distance;
-    if (std::abs(shift_length) < MINIMUM_SHIFT_LENGTH && !has_non_shifted_path) {
-      candidate_paths.push_back(non_shifted_path);
-      has_non_shifted_path = true;
-      continue;
-    }
-
-    // calculate pull out distance, longitudinal acc, terminal velocity
-    const size_t shift_start_idx =
-      findNearestIndex(road_lane_reference_path.points, start_pose.position);
-    const double road_velocity =
-      road_lane_reference_path.points.at(shift_start_idx).point.longitudinal_velocity_mps;
     const double shift_time =
-      PathShifter::calcShiftTimeFromJerk(shift_length, lateral_jerk, lateral_acc);
+      autoware::motion_utils::calc_shift_time_from_jerk(shift_length, lateral_jerk, lateral_acc);
     const double longitudinal_acc = std::clamp(road_velocity / shift_time, 0.0, /* max acc */ 1.0);
     const auto pull_out_distance = calcPullOutLongitudinalDistance(
       longitudinal_acc, shift_time, shift_length, maximum_curvature,
       minimum_shift_pull_out_distance);
     const double terminal_velocity = longitudinal_acc * shift_time;
 
-    // clip from ego pose
-    PathWithLaneId road_lane_reference_path_from_ego = road_lane_reference_path;
-    road_lane_reference_path_from_ego.points.erase(
-      road_lane_reference_path_from_ego.points.begin(),
-      road_lane_reference_path_from_ego.points.begin() + shift_start_idx);
     // before means distance on road lane
     // Note: the pull_out_distance is the required distance on the shifted path. Now we need to
-    // calculate the distance on the center line used for the shift path generation. However, since
-    // the calcBeforeShiftedArcLength is an approximate conversion from center line to center line
-    // (not shift path to centerline), the conversion result may too long or short. To prevent too
-    // short length, take maximum with the original distance.
+    // calculate the distance on the center line used for the shift path_shifter generation.
+    // However, since the calcBeforeShiftedArcLength is an approximate conversion from center line
+    // to center line (not shift path to centerline), the conversion result may too long or short.
+    // To prevent too short length, take maximum with the original distance.
     // TODO(kosuke55): update the conversion function and get rid of the comparison with original
     // distance.
     const double pull_out_distance_converted = std::max(
@@ -320,10 +343,6 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
       // variable to store that distance.
       double pull_out_distance = pull_out_distance_converted;
       double min_curvature_after_distance_converted = std::numeric_limits<double>::max();
-
-      const auto curvatures_and_segment_lengths =
-        autoware::motion_utils::calcCurvatureAndSegmentLength(
-          road_lane_reference_path_from_ego.points);
 
       const auto update_arc_length = [&](size_t i, const auto & segment_length) {
         arc_length += (i == curvatures_and_segment_lengths.size() - 1)
@@ -369,9 +388,7 @@ std::vector<PullOutPath> ShiftPullOut::calcPullOutPaths(
 
     // get shift end pose
     const auto shift_end_pose_ptr = std::invoke([&]() {
-      const auto arc_position_shift_start =
-        lanelet::utils::getArcCoordinates(road_lanes, start_pose);
-      const double s_start = arc_position_shift_start.length + before_shifted_pull_out_distance;
+      const double s_start = arc_position_start.length + before_shifted_pull_out_distance;
       const double s_end = s_start + std::numeric_limits<double>::epsilon();
       const auto path = route_handler.getCenterLinePath(road_lanes, s_start, s_end, true);
       return path.points.empty()

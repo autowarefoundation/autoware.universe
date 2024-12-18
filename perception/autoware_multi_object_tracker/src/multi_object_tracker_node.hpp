@@ -78,12 +78,16 @@ private:
   // publish timer
   rclcpp::TimerBase::SharedPtr publish_timer_;
   rclcpp::Time last_published_time_;
+  rclcpp::Time last_updated_time_;
   double publisher_period_;
+  static constexpr double minimum_publish_interval_ratio = 0.85;
+  static constexpr double maximum_publish_interval_ratio = 1.05;
 
   // internal states
   std::string world_frame_id_;  // tracking frame
   std::unique_ptr<DataAssociation> association_;
   std::unique_ptr<TrackerProcessor> processor_;
+  bool enable_odometry_uncertainty_;
 
   // input manager
   std::unique_ptr<InputManager> input_manager_;
@@ -94,10 +98,9 @@ private:
   // callback functions
   void onTimer();
   void onTrigger();
-  void onMessage(const ObjectsList & objects_list);
 
   // publish processes
-  void runProcess(const DetectedObjects & input_objects_msg, const uint & channel_index);
+  void runProcess(const DetectedObjects & input_objects, const uint & channel_index);
   void checkAndPublish(const rclcpp::Time & time);
   void publish(const rclcpp::Time & time) const;
   inline bool shouldTrackerPublish(const std::shared_ptr<const Tracker> tracker) const;

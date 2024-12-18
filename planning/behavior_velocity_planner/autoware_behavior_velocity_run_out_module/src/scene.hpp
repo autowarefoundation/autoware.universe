@@ -15,9 +15,9 @@
 #ifndef SCENE_HPP_
 #define SCENE_HPP_
 
+#include "autoware/object_recognition_utils/object_recognition_utils.hpp"
 #include "debug.hpp"
 #include "dynamic_obstacle.hpp"
-#include "object_recognition_utils/object_recognition_utils.hpp"
 #include "state_machine.hpp"
 #include "utils.hpp"
 
@@ -49,7 +49,7 @@ public:
     std::unique_ptr<DynamicObstacleCreator> dynamic_obstacle_creator,
     const std::shared_ptr<RunOutDebug> & debug_ptr, const rclcpp::Clock::SharedPtr clock);
 
-  bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
+  bool modifyPathVelocity(PathWithLaneId * path) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
   autoware::motion_utils::VirtualWalls createVirtualWalls() override;
@@ -87,7 +87,7 @@ private:
 
   std::vector<DynamicObstacle> checkCollisionWithObstacles(
     const std::vector<DynamicObstacle> & dynamic_obstacles,
-    std::vector<geometry_msgs::msg::Point> poly, const float travel_time,
+    const std::vector<geometry_msgs::msg::Point> & poly, const float travel_time,
     const std::vector<std::pair<int64_t, lanelet::ConstLanelet>> & crosswalk_lanelets) const;
 
   std::optional<DynamicObstacle> findNearestCollisionObstacle(
@@ -171,7 +171,7 @@ private:
     const std::vector<DynamicObstacle> & dynamic_obstacles, const PathWithLaneId & path);
 
   void publishDebugValue(
-    const PathWithLaneId & path, const std::vector<DynamicObstacle> extracted_obstacles,
+    const PathWithLaneId & path, const std::vector<DynamicObstacle> & extracted_obstacles,
     const std::optional<DynamicObstacle> & dynamic_obstacle,
     const geometry_msgs::msg::Pose & current_pose) const;
 

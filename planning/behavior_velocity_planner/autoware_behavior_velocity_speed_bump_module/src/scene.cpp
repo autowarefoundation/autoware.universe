@@ -20,6 +20,9 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+#include <iostream>
+#include <utility>
+
 namespace autoware::behavior_velocity_planner
 {
 using autoware::motion_utils::calcSignedArcLength;
@@ -35,7 +38,8 @@ SpeedBumpModule::SpeedBumpModule(
   module_id_(module_id),
   lane_id_(lane_id),
   speed_bump_reg_elem_(std::move(speed_bump_reg_elem)),
-  planner_param_(planner_param)
+  planner_param_(planner_param),
+  debug_data_()
 {
   // Read speed bump height [m] from map
   const auto speed_bump_height =
@@ -69,8 +73,7 @@ SpeedBumpModule::SpeedBumpModule(
   }
 }
 
-bool SpeedBumpModule::modifyPathVelocity(
-  PathWithLaneId * path, [[maybe_unused]] StopReason * stop_reason)
+bool SpeedBumpModule::modifyPathVelocity(PathWithLaneId * path)
 {
   if (path->points.empty()) {
     return false;

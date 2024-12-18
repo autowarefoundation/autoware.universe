@@ -23,6 +23,7 @@
 #include <autoware/motion_utils/vehicle/vehicle_state_checker.hpp>
 #include <autoware/universe_utils/ros/polling_subscriber.hpp>
 #include <autoware/universe_utils/ros/published_time_publisher.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <autoware_vehicle_cmd_gate/msg/is_filter_activated.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
@@ -41,6 +42,7 @@
 #include <std_srvs/srv/trigger.hpp>
 #include <tier4_control_msgs/msg/gate_mode.hpp>
 #include <tier4_debug_msgs/msg/bool_stamped.hpp>
+#include <tier4_debug_msgs/msg/float64_stamped.hpp>
 #include <tier4_external_api_msgs/msg/emergency.hpp>
 #include <tier4_external_api_msgs/msg/heartbeat.hpp>
 #include <tier4_external_api_msgs/srv/engage.hpp>
@@ -50,6 +52,7 @@
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace autoware::vehicle_cmd_gate
@@ -113,6 +116,7 @@ private:
   rclcpp::Publisher<MarkerArray>::SharedPtr filter_activated_marker_pub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr filter_activated_marker_raw_pub_;
   rclcpp::Publisher<BoolStamped>::SharedPtr filter_activated_flag_pub_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr processing_time_pub_;
   // Parameter callback
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
   rcl_interfaces::msg::SetParametersResult onParameter(
@@ -133,7 +137,6 @@ private:
   bool is_engaged_;
   bool is_system_emergency_ = false;
   bool is_external_emergency_stop_ = false;
-  bool is_filtered_marker_published_ = false;
   double current_steer_ = 0;
   GateMode current_gate_mode_;
   MrmState current_mrm_state_;
@@ -183,6 +186,11 @@ private:
     this, "input/emergency/gear_cmd"};
   void onEmergencyCtrlCmd(Control::ConstSharedPtr msg);
 
+  // Previous Turn Indicators, Hazard Lights and Gear
+  TurnIndicatorsCommand::SharedPtr prev_turn_indicator_;
+  HazardLightsCommand::SharedPtr prev_hazard_light_;
+  GearCommand::SharedPtr prev_gear_;
+
   // Parameter
   bool use_emergency_handling_;
   bool check_external_emergency_heartbeat_;
@@ -231,6 +239,11 @@ private:
   diagnostic_updater::Updater updater_;
 
   void checkExternalEmergencyStop(diagnostic_updater::DiagnosticStatusWrapper & stat);
+
+  template <typename T>
+  T getContinuousTopic(
+    const std::shared_ptr<T> & prev_topic, const T & current_topic,
+    const std::string & topic_name = "");
 
   // Algorithm
   Control prev_control_cmd_;

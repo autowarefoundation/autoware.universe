@@ -63,6 +63,7 @@ private:
     YAW,
     VX,
     STEER,
+    ACCX,
     PEDAL_ACCX,
   };
   enum IDX_U { PEDAL_ACCX_DES = 0, GEAR, SLOPE_ACCX, STEER_DES };

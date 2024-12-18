@@ -97,29 +97,6 @@ std::vector<ReferencePoint> sanitizePoints(const std::vector<ReferencePoint> & p
   return output;
 }
 
-void compensateLastPose(
-  const PathPoint & last_path_point, std::vector<TrajectoryPoint> & traj_points,
-  const double delta_dist_threshold, const double delta_yaw_threshold)
-{
-  if (traj_points.empty()) {
-    traj_points.push_back(convertToTrajectoryPoint(last_path_point));
-    return;
-  }
-
-  const geometry_msgs::msg::Pose last_traj_pose = traj_points.back().pose;
-
-  const double dist = autoware::universe_utils::calcDistance2d(
-    last_path_point.pose.position, last_traj_pose.position);
-  const double norm_diff_yaw = [&]() {
-    const double diff_yaw =
-      tf2::getYaw(last_path_point.pose.orientation) - tf2::getYaw(last_traj_pose.orientation);
-    return autoware::universe_utils::normalizeRadian(diff_yaw);
-  }();
-  if (dist > delta_dist_threshold || std::fabs(norm_diff_yaw) > delta_yaw_threshold) {
-    traj_points.push_back(convertToTrajectoryPoint(last_path_point));
-  }
-}
-
 geometry_msgs::msg::Point getNearestPosition(
   const std::vector<ReferencePoint> & points, const int target_idx, const double offset)
 {
@@ -204,7 +181,7 @@ std::vector<ReferencePoint> resampleReferencePoints(
     query_keys.push_back(base_keys.back() - epsilon);
   }
 
-  const auto query_values = interpolation::lerp(base_keys, base_values, query_keys);
+  const auto query_values = autoware::interpolation::lerp(base_keys, base_values, query_keys);
 
   // create output reference points by updating curvature with resampled one
   std::vector<ReferencePoint> output_ref_points;
@@ -223,7 +200,7 @@ void insertStopPoint(
   const double offset_to_segment = autoware::motion_utils::calcLongitudinalOffsetToSegment(
     traj_points, stop_seg_idx, input_stop_pose.position);
 
-  const auto traj_spline = SplineInterpolationPoints2d(traj_points);
+  const auto traj_spline = autoware::interpolation::SplineInterpolationPoints2d(traj_points);
   const auto stop_pose = traj_spline.getSplineInterpolatedPose(stop_seg_idx, offset_to_segment);
 
   if (geometry_utils::isSamePoint(traj_points.at(stop_seg_idx), stop_pose)) {

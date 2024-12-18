@@ -14,7 +14,8 @@
 
 #include "autoware/tensorrt_yolox/tensorrt_yolox_node.hpp"
 
-#include "object_recognition_utils/object_classification.hpp"
+#include "autoware/object_recognition_utils/object_classification.hpp"
+#include "perception_utils/run_length_encoder.hpp"
 
 #include <autoware_perception_msgs/msg/object_classification.hpp>
 
@@ -56,6 +57,7 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
   const bool preprocess_on_gpu = this->declare_parameter<bool>("preprocess_on_gpu");
   const std::string calibration_image_list_path =
     this->declare_parameter<std::string>("calibration_image_list_path");
+  const uint8_t gpu_id = this->declare_parameter<uint8_t>("gpu_id");
 
   std::string color_map_path = this->declare_parameter<std::string>("color_map_path");
 
@@ -81,19 +83,26 @@ TrtYoloXNode::TrtYoloXNode(const rclcpp::NodeOptions & node_options)
   roi_overlay_segment_labels_.ANIMAL = declare_parameter<bool>("roi_overlay_segment_label.ANIMAL");
   replaceLabelMap();
 
-  tensorrt_common::BuildConfig build_config(
+  autoware::tensorrt_common::BuildConfig build_config(
     calibration_algorithm, dla_core_id, quantize_first_layer, quantize_last_layer,
     profile_per_layer, clip_value);
 
   const double norm_factor = 1.0;
   const std::string cache_dir = "";
-  const tensorrt_common::BatchConfig batch_config{1, 1, 1};
+  const autoware::tensorrt_common::BatchConfig batch_config{1, 1, 1};
   const size_t max_workspace_size = (1 << 30);
 
   trt_yolox_ = std::make_unique<tensorrt_yolox::TrtYoloX>(
     model_path, precision, label_map_.size(), score_threshold, nms_threshold, build_config,
-    preprocess_on_gpu, calibration_image_list_path, norm_factor, cache_dir, batch_config,
+    preprocess_on_gpu, gpu_id, calibration_image_list_path, norm_factor, cache_dir, batch_config,
     max_workspace_size, color_map_path);
+
+  if (!trt_yolox_->isGPUInitialized()) {
+    RCLCPP_ERROR(this->get_logger(), "GPU %d does not exist or is not suitable.", gpu_id);
+    rclcpp::shutdown();
+    return;
+  }
+  RCLCPP_INFO(this->get_logger(), "GPU %d is selected for the inference!", gpu_id);
 
   timer_ =
     rclcpp::create_timer(this, get_clock(), 100ms, std::bind(&TrtYoloXNode::onConnect, this));
@@ -159,8 +168,8 @@ void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
     object.feature.roi.width = yolox_object.width;
     object.feature.roi.height = yolox_object.height;
     object.object.existence_probability = yolox_object.score;
-    object.object.classification =
-      object_recognition_utils::toObjectClassifications(label_map_[yolox_object.type], 1.0f);
+    object.object.classification = autoware::object_recognition_utils::toObjectClassifications(
+      label_map_[yolox_object.type], 1.0f);
     out_objects.feature_objects.push_back(object);
     const auto left = std::max(0, static_cast<int>(object.feature.roi.x_offset));
     const auto top = std::max(0, static_cast<int>(object.feature.roi.y_offset));
@@ -177,12 +186,19 @@ void TrtYoloXNode::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
       overlapSegmentByRoi(yolox_object, mask, width, height);
     }
   }
-  // TODO(badai-nguyen): consider to change to 4bits data transfer
   if (trt_yolox_->getMultitaskNum() > 0) {
     sensor_msgs::msg::Image::SharedPtr out_mask_msg =
       cv_bridge::CvImage(std_msgs::msg::Header(), sensor_msgs::image_encodings::MONO8, mask)
         .toImageMsg();
     out_mask_msg->header = msg->header;
+
+    std::vector<std::pair<uint8_t, int>> compressed_data = perception_utils::runLengthEncoder(mask);
+    int step = sizeof(uint8_t) + sizeof(int);
+    out_mask_msg->data.resize(static_cast<int>(compressed_data.size()) * step);
+    for (size_t i = 0; i < compressed_data.size(); ++i) {
+      std::memcpy(&out_mask_msg->data[i * step], &compressed_data.at(i).first, sizeof(uint8_t));
+      std::memcpy(&out_mask_msg->data[i * step + 1], &compressed_data.at(i).second, sizeof(int));
+    }
     mask_pub_.publish(out_mask_msg);
   }
   image_pub_.publish(in_image_ptr->toImageMsg());

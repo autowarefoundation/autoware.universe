@@ -14,14 +14,21 @@
 
 #include "autoware/obstacle_cruise_planner/pid_based_planner/pid_based_planner.hpp"
 
+#include "autoware/interpolation/spline_interpolation.hpp"
 #include "autoware/motion_utils/marker/marker_helper.hpp"
 #include "autoware/obstacle_cruise_planner/utils.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware/universe_utils/ros/marker_helper.hpp"
 #include "autoware/universe_utils/ros/update_param.hpp"
-#include "interpolation/spline_interpolation.hpp"
 
 #include "tier4_planning_msgs/msg/velocity_limit.hpp"
+
+#include <algorithm>
+#include <memory>
+#include <string>
+#include <vector>
+
+using autoware::signal_processing::LowpassFilter1d;
 
 namespace
 {
@@ -313,8 +320,11 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::planCruise(
       const size_t wall_idx = obstacle_cruise_utils::getIndexWithLongitudinalOffset(
         stop_traj_points, dist_to_rss_wall, ego_idx);
 
+      const std::string wall_reason_string = cruise_obstacle_info->obstacle.is_yield_obstacle
+                                               ? "obstacle cruise (yield)"
+                                               : "obstacle cruise";
       auto markers = autoware::motion_utils::createSlowDownVirtualWallMarker(
-        stop_traj_points.at(wall_idx).pose, "obstacle cruise", planner_data.current_time, 0);
+        stop_traj_points.at(wall_idx).pose, wall_reason_string, planner_data.current_time, 0);
       // NOTE: use a different color from slow down one to visualize cruise and slow down
       // separately.
       markers.markers.front().color =
@@ -323,7 +333,11 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::planCruise(
 
       // cruise obstacle
       debug_data_ptr_->obstacles_to_cruise.push_back(cruise_obstacle_info->obstacle);
-      debug_data_ptr_->cruise_reason_diag = makeDiagnostic("cruise", planner_data);
+      debug_data_ptr_->cruise_metrics = makeMetrics("PIDBasedPlanner", "cruise", planner_data);
+
+      velocity_factors_pub_->publish(obstacle_cruise_utils::makeVelocityFactorArray(
+        planner_data.current_time, PlanningBehavior::ADAPTIVE_CRUISE,
+        stop_traj_points.at(wall_idx).pose));
     }
 
     // do cruise planning
@@ -607,7 +621,7 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::getAccelerationLimitedTrajectory(
       if (unique_s_vec.back() < sum_dist) {
         return unique_v_vec.back();
       }
-      return interpolation::spline(unique_s_vec, unique_v_vec, {sum_dist}).front();
+      return autoware::interpolation::spline(unique_s_vec, unique_v_vec, {sum_dist}).front();
     }();
 
     acc_limited_traj_points.at(i).longitudinal_velocity_mps = std::clamp(

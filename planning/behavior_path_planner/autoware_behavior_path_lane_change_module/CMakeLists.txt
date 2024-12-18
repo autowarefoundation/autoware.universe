@@ -9,6 +9,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/interface.cpp
   src/manager.cpp
   src/scene.cpp
+  src/utils/calculation.cpp
   src/utils/markers.cpp
   src/utils/utils.cpp
 )
@@ -17,6 +18,7 @@ if(BUILD_TESTING)
   ament_add_ros_isolated_gmock(test_${PROJECT_NAME}
     test/test_behavior_path_planner_node_interface.cpp
     test/test_lane_change_utils.cpp
+    test/test_lane_change_scene.cpp
   )
 
   target_link_libraries(test_${PROJECT_NAME}
@@ -26,4 +28,7 @@ if(BUILD_TESTING)
   target_include_directories(test_${PROJECT_NAME} PRIVATE src)
 endif()
 
-ament_auto_package(INSTALL_TO_SHARE config)
+ament_auto_package(INSTALL_TO_SHARE
+  config
+  test_data
+)

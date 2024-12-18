@@ -18,16 +18,13 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <algorithm>
-#include <memory>
 #include <vector>
-
-constexpr double DOUBLE_EPSILON = 1e-6;
 
 namespace autoware::behavior_velocity_planner
 {
 bool splineInterpolate(
   const tier4_planning_msgs::msg::PathWithLaneId & input, const double interval,
-  tier4_planning_msgs::msg::PathWithLaneId & output, const rclcpp::Logger logger)
+  tier4_planning_msgs::msg::PathWithLaneId & output, const rclcpp::Logger & logger)
 {
   if (input.points.size() < 2) {
     RCLCPP_DEBUG(logger, "Do not interpolate because path size is 1.");
@@ -53,10 +50,6 @@ autoware_planning_msgs::msg::Path interpolatePath(
   const auto logger{rclcpp::get_logger("behavior_velocity_planner").get_child("path_utilization")};
 
   const double epsilon = 0.01;
-  std::vector<double> x;
-  std::vector<double> y;
-  std::vector<double> z;
-  std::vector<double> v;
   std::vector<double> s_in;
   if (2000 < path.points.size()) {
     RCLCPP_WARN(
@@ -70,6 +63,10 @@ autoware_planning_msgs::msg::Path interpolatePath(
 
   double path_len = std::min(length, autoware::motion_utils::calcArcLength(path.points));
   {
+    std::vector<double> x;
+    std::vector<double> y;
+    std::vector<double> z;
+    std::vector<double> v;
     double s = 0.0;
     for (size_t idx = 0; idx < path.points.size(); ++idx) {
       const auto path_point = path.points.at(idx);
@@ -158,12 +155,12 @@ autoware_planning_msgs::msg::Path filterStopPathPoint(
 {
   autoware_planning_msgs::msg::Path filtered_path = path;
   bool found_stop = false;
-  for (size_t i = 0; i < filtered_path.points.size(); ++i) {
-    if (std::fabs(filtered_path.points.at(i).longitudinal_velocity_mps) < 0.01) {
+  for (auto & point : filtered_path.points) {
+    if (std::fabs(point.longitudinal_velocity_mps) < 0.01) {
       found_stop = true;
     }
     if (found_stop) {
-      filtered_path.points.at(i).longitudinal_velocity_mps = 0.0;
+      point.longitudinal_velocity_mps = 0.0;
     }
   }
   return filtered_path;

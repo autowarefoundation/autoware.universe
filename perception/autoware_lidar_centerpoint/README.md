@@ -28,6 +28,22 @@ We trained the models using <https://github.com/open-mmlab/mmdetection3d>.
 
 ## Parameters
 
+### ML Model Parameters
+
+Note that these parameters are associated with ONNX file, predefined during the training phase. Be careful to change ONNX file as well when changing this parameter. Also, whenever you update the ONNX file, do NOT forget to check these values.
+
+| Name                                   | Type         | Default Value                                    | Description                                                           |
+| -------------------------------------- | ------------ | ------------------------------------------------ | --------------------------------------------------------------------- |
+| `model_params.class_names`             | list[string] | ["CAR", "TRUCK", "BUS", "BICYCLE", "PEDESTRIAN"] | list of class names for model outputs                                 |
+| `model_params.point_feature_size`      | int          | `4`                                              | number of features per point in the point cloud                       |
+| `model_params.max_voxel_size`          | int          | `40000`                                          | maximum number of voxels                                              |
+| `model_params.point_cloud_range`       | list[double] | [-76.8, -76.8, -4.0, 76.8, 76.8, 6.0]            | detection range [min_x, min_y, min_z, max_x, max_y, max_z] [m]        |
+| `model_params.voxel_size`              | list[double] | [0.32, 0.32, 10.0]                               | size of each voxel [x, y, z] [m]                                      |
+| `model_params.downsample_factor`       | int          | `1`                                              | downsample factor for coordinates                                     |
+| `model_params.encoder_in_feature_size` | int          | `9`                                              | number of input features to the encoder                               |
+| `model_params.has_variance`            | bool         | `false`                                          | true if the model outputs pose variance as well as pose for each bbox |
+| `model_params.has_twist`               | bool         | `false`                                          | true if the model outputs velocity as well as pose for each bbox      |
+
 ### Core Parameters
 
 | Name                                             | Type         | Default Value             | Description                                                   |
@@ -40,7 +56,6 @@ We trained the models using <https://github.com/open-mmlab/mmdetection3d>.
 | `trt_precision`                                  | string       | `fp16`                    | TensorRT inference precision: `fp32` or `fp16`                |
 | `post_process_params.score_threshold`            | double       | `0.4`                     | detected objects with score less than threshold are ignored   |
 | `post_process_params.yaw_norm_thresholds`        | list[double] | [0.3, 0.3, 0.3, 0.3, 0.0] | An array of distance threshold values of norm of yaw [rad].   |
-| `post_process_params.iou_nms_target_class_names` | list[string] | -                         | target classes for IoU-based Non Maximum Suppression          |
 | `post_process_params.iou_nms_search_distance_2d` | double       | -                         | If two objects are farther than the value, NMS isn't applied. |
 | `post_process_params.iou_nms_threshold`          | double       | -                         | IoU threshold for the IoU-based Non Maximum Suppression       |
 | `post_process_params.has_twist`                  | boolean      | false                     | Indicates whether the model outputs twist value.              |
@@ -251,7 +266,6 @@ point_cloud_range, point_feature_size, voxel_size, etc. according to the trainin
     encoder_in_feature_size: 9
     # post-process params
     circle_nms_dist_threshold: 0.5
-    iou_nms_target_class_names: ["CAR"]
     iou_nms_search_distance_2d: 10.0
     iou_nms_threshold: 0.1
     yaw_norm_thresholds: [0.3, 0.3, 0.3, 0.3, 0.0]

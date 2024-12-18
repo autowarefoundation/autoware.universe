@@ -22,8 +22,11 @@
 #include <NvInfer.h>
 #include <pcl_conversions/pcl_conversions.h>
 
+#include <functional>
+#include <memory>
 #include <numeric>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace autoware
@@ -47,8 +50,8 @@ LidarApolloInstanceSegmentation::LidarApolloInstanceSegmentation(rclcpp::Node * 
   z_offset_ = node_->declare_parameter<float>("z_offset", -2.0);
   const auto precision = node_->declare_parameter("precision", "fp32");
 
-  trt_common_ = std::make_unique<tensorrt_common::TrtCommon>(
-    onnx_file, precision, nullptr, tensorrt_common::BatchConfig{1, 1, 1}, 1 << 30);
+  trt_common_ = std::make_unique<autoware::tensorrt_common::TrtCommon>(
+    onnx_file, precision, nullptr, autoware::tensorrt_common::BatchConfig{1, 1, 1}, 1 << 30);
   trt_common_->setup();
 
   if (!trt_common_->isInitialized()) {
@@ -65,12 +68,12 @@ LidarApolloInstanceSegmentation::LidarApolloInstanceSegmentation(rclcpp::Node * 
   const auto input_dims = trt_common_->getBindingDimensions(0);
   const auto input_size =
     std::accumulate(input_dims.d + 1, input_dims.d + input_dims.nbDims, 1, std::multiplies<int>());
-  input_d_ = cuda_utils::make_unique<float[]>(input_size);
+  input_d_ = autoware::cuda_utils::make_unique<float[]>(input_size);
   const auto output_dims = trt_common_->getBindingDimensions(1);
   output_size_ = std::accumulate(
     output_dims.d + 1, output_dims.d + output_dims.nbDims, 1, std::multiplies<int>());
-  output_d_ = cuda_utils::make_unique<float[]>(output_size_);
-  output_h_ = cuda_utils::make_unique_host<float[]>(output_size_, cudaHostAllocPortable);
+  output_d_ = autoware::cuda_utils::make_unique<float[]>(output_size_);
+  output_h_ = autoware::cuda_utils::make_unique_host<float[]>(output_size_, cudaHostAllocPortable);
 
   // feature map generator: pre process
   feature_generator_ = std::make_shared<FeatureGenerator>(
@@ -136,7 +139,7 @@ bool LidarApolloInstanceSegmentation::detectDynamicObjects(
   pcl::PointCloud<pcl::PointXYZI>::Ptr pcl_pointcloud_raw_ptr(new pcl::PointCloud<pcl::PointXYZI>);
   // pcl::fromROSMsg(transformed_cloud, *pcl_pointcloud_raw_ptr);
 
-  auto pcl_pointcloud_raw = *pcl_pointcloud_raw_ptr;
+  auto & pcl_pointcloud_raw = *pcl_pointcloud_raw_ptr;
   pcl_pointcloud_raw.width = transformed_cloud.width;
   pcl_pointcloud_raw.height = transformed_cloud.height;
   pcl_pointcloud_raw.is_dense = transformed_cloud.is_dense == 1;

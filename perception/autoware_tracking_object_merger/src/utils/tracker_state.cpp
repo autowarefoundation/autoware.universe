@@ -16,6 +16,11 @@
 
 #include "autoware/tracking_object_merger/utils/utils.hpp"
 
+#include <algorithm>
+#include <iostream>
+#include <string>
+#include <vector>
+
 namespace autoware::tracking_object_merger
 {
 
@@ -304,7 +309,8 @@ TrackerState::~TrackerState()
 }
 
 TrackedObjects getTrackedObjectsFromTrackerStates(
-  std::vector<TrackerState> & tracker_states, const rclcpp::Time & current_time)
+  std::vector<TrackerState> & tracker_states, const rclcpp::Time & current_time,
+  const std::string & frame_id)
 {
   TrackedObjects tracked_objects;
 
@@ -325,7 +331,7 @@ TrackedObjects getTrackedObjectsFromTrackerStates(
 
   // update header
   tracked_objects.header.stamp = current_time;
-  tracked_objects.header.frame_id = "map";  // TODO(yoshiri): get frame_id from input
+  tracked_objects.header.frame_id = frame_id;
   return tracked_objects;
 }
 

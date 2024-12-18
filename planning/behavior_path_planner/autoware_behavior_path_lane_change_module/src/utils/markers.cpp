@@ -14,7 +14,6 @@
 
 #include "autoware/behavior_path_planner_common/marker_utils/colors.hpp"
 #include "autoware/behavior_path_planner_common/marker_utils/utils.hpp"
-#include "autoware/behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 
 #include <autoware/behavior_path_lane_change_module/utils/markers.hpp>
 #include <autoware/universe_utils/ros/marker_helper.hpp>
@@ -26,6 +25,7 @@
 #include <visualization_msgs/msg/detail/marker__struct.hpp>
 #include <visualization_msgs/msg/detail/marker_array__struct.hpp>
 
+#include <algorithm>
 #include <cstdint>
 #include <cstdlib>
 #include <sstream>
@@ -101,27 +101,34 @@ MarkerArray createLaneChangingVirtualWallMarker(
 }
 
 MarkerArray showFilteredObjects(
-  const ExtendedPredictedObjects & current_lane_objects,
-  const ExtendedPredictedObjects & target_lane_objects,
-  const ExtendedPredictedObjects & other_lane_objects, const std::string & ns)
+  const FilteredLanesObjects & filtered_objects, const std::string & ns)
 {
   int32_t update_id = 0;
-  auto current_marker =
-    marker_utils::showFilteredObjects(current_lane_objects, ns, colors::yellow(), update_id);
-  update_id += static_cast<int32_t>(current_marker.markers.size());
-  auto target_marker =
-    marker_utils::showFilteredObjects(target_lane_objects, ns, colors::aqua(), update_id);
-  update_id += static_cast<int32_t>(target_marker.markers.size());
-  auto other_marker =
-    marker_utils::showFilteredObjects(other_lane_objects, ns, colors::medium_orchid(), update_id);
-
   MarkerArray marker_array;
-  marker_array.markers.insert(
-    marker_array.markers.end(), current_marker.markers.begin(), current_marker.markers.end());
-  marker_array.markers.insert(
-    marker_array.markers.end(), target_marker.markers.begin(), target_marker.markers.end());
-  marker_array.markers.insert(
-    marker_array.markers.end(), other_marker.markers.begin(), other_marker.markers.end());
+  auto reserve_size = filtered_objects.current_lane.size() + filtered_objects.others.size() +
+                      filtered_objects.target_lane_leading.size() +
+                      filtered_objects.target_lane_trailing.size();
+  marker_array.markers.reserve(2 * reserve_size);
+  auto add_objects_to_marker =
+    [&](const ExtendedPredictedObjects & objects, const ColorRGBA & color) {
+      if (objects.empty()) {
+        return;
+      }
+
+      auto marker = marker_utils::showFilteredObjects(objects, ns, color, update_id);
+      update_id += static_cast<int32_t>(marker.markers.size());
+      std::move(
+        marker.markers.begin(), marker.markers.end(), std::back_inserter(marker_array.markers));
+    };
+
+  add_objects_to_marker(filtered_objects.current_lane, colors::yellow());
+  add_objects_to_marker(filtered_objects.target_lane_leading.moving, colors::aqua());
+  add_objects_to_marker(filtered_objects.target_lane_leading.stopped, colors::light_steel_blue());
+  add_objects_to_marker(filtered_objects.target_lane_trailing, colors::blue());
+  add_objects_to_marker(
+    filtered_objects.target_lane_leading.stopped_at_bound, colors::light_pink());
+  add_objects_to_marker(filtered_objects.others, colors::medium_orchid());
+
   return marker_array;
 }
 
@@ -190,9 +197,7 @@ MarkerArray createDebugMarkerArray(
     "target_backward_lanes", debug_data.target_backward_lanes, colors::blue(0.2)));
 
   add(showAllValidLaneChangePath(debug_valid_paths, "lane_change_valid_paths"));
-  add(showFilteredObjects(
-    debug_filtered_objects.current_lane, debug_filtered_objects.target_lane,
-    debug_filtered_objects.other_lane, "object_filtered"));
+  add(showFilteredObjects(debug_filtered_objects, "object_filtered"));
 
   if (!debug_collision_check_object.empty()) {
     add(showSafetyCheckInfo(debug_collision_check_object, "collision_check_object_info"));

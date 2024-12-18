@@ -13,8 +13,8 @@
 // limitations under the License.
 
 #include "ament_index_cpp/get_package_share_directory.hpp"
+#include "autoware/fake_test_node/fake_test_node.hpp"
 #include "autoware/trajectory_follower_node/controller_node.hpp"
-#include "fake_test_node/fake_test_node.hpp"
 #include "gtest/gtest.h"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/time.hpp"
@@ -30,6 +30,7 @@
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 
+#include <iostream>
 #include <memory>
 #include <vector>
 
@@ -42,7 +43,7 @@ using SteeringReport = autoware_vehicle_msgs::msg::SteeringReport;
 using autoware_adapi_v1_msgs::msg::OperationModeState;
 using geometry_msgs::msg::AccelWithCovarianceStamped;
 
-using FakeNodeFixture = autoware::tools::testing::FakeTestNode;
+using FakeNodeFixture = autoware::fake_test_node::FakeTestNode;
 
 const rclcpp::Duration one_second(1, 0);
 
@@ -64,8 +65,8 @@ rclcpp::NodeOptions makeNodeOptions(const bool enable_keep_stopped_until_steer_c
   node_options.arguments(
     {"--ros-args", "--params-file",
      lateral_share_dir + "/param/lateral_controller_defaults.param.yaml", "--params-file",
-     longitudinal_share_dir + "/param/longitudinal_controller_defaults.param.yaml", "--params-file",
-     share_dir + "/test/test_vehicle_info.param.yaml", "--params-file",
+     longitudinal_share_dir + "/config/autoware_pid_longitudinal_controller.param.yaml",
+     "--params-file", share_dir + "/test/test_vehicle_info.param.yaml", "--params-file",
      share_dir + "/test/test_nearest_search.param.yaml", "--params-file",
      share_dir + "/param/trajectory_follower_node.param.yaml"});
 

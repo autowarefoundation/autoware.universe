@@ -17,6 +17,7 @@
 
 #include "multi_object_tracker_node.hpp"
 
+#include "autoware/multi_object_tracker/uncertainty/uncertainty_processor.hpp"
 #include "autoware/multi_object_tracker/utils/utils.hpp"
 
 #include <Eigen/Core>
@@ -30,6 +31,7 @@
 
 #include <iterator>
 #include <list>
+#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -62,18 +64,19 @@ boost::optional<geometry_msgs::msg::Transform> getTransformAnonymous(
     return boost::none;
   }
 }
-
 }  // namespace
 
 namespace autoware::multi_object_tracker
 {
 using Label = autoware_perception_msgs::msg::ObjectClassification;
+using LabelType = autoware_perception_msgs::msg::ObjectClassification::_label_type;
 
 MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
 : rclcpp::Node("multi_object_tracker", node_options),
   tf_buffer_(this->get_clock()),
   tf_listener_(tf_buffer_),
-  last_published_time_(this->now())
+  last_published_time_(this->now()),
+  last_updated_time_(this->now())
 {
   // glog for debug
   if (!google::IsGoogleLoggingInitialized()) {
@@ -85,6 +88,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   double publish_rate = declare_parameter<double>("publish_rate");  // [hz]
   world_frame_id_ = declare_parameter<std::string>("world_frame_id");
   bool enable_delay_compensation{declare_parameter<bool>("enable_delay_compensation")};
+  enable_odometry_uncertainty_ = declare_parameter<bool>("consider_odometry_uncertainty");
 
   declare_parameter("selected_input_channels", std::vector<std::string>());
   std::vector<std::string> selected_input_channels =
@@ -154,7 +158,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   // time.
   if (enable_delay_compensation) {
     publisher_period_ = 1.0 / publish_rate;    // [s]
-    constexpr double timer_multiplier = 20.0;  // 20 times frequent for publish timing check
+    constexpr double timer_multiplier = 10.0;  // 10 times frequent for publish timing check
     const auto timer_period = rclcpp::Rate(publish_rate * timer_multiplier).period();
     publish_timer_ = rclcpp::create_timer(
       this, get_clock(), timer_period, std::bind(&MultiObjectTracker::onTimer, this));
@@ -162,23 +166,45 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
 
   // Initialize processor
   {
-    std::map<std::uint8_t, std::string> tracker_map;
-    tracker_map.insert(
+    TrackerProcessorConfig config;
+    config.tracker_map.insert(
       std::make_pair(Label::CAR, this->declare_parameter<std::string>("car_tracker")));
-    tracker_map.insert(
+    config.tracker_map.insert(
       std::make_pair(Label::TRUCK, this->declare_parameter<std::string>("truck_tracker")));
-    tracker_map.insert(
+    config.tracker_map.insert(
       std::make_pair(Label::BUS, this->declare_parameter<std::string>("bus_tracker")));
-    tracker_map.insert(
+    config.tracker_map.insert(
       std::make_pair(Label::TRAILER, this->declare_parameter<std::string>("trailer_tracker")));
-    tracker_map.insert(std::make_pair(
+    config.tracker_map.insert(std::make_pair(
       Label::PEDESTRIAN, this->declare_parameter<std::string>("pedestrian_tracker")));
-    tracker_map.insert(
+    config.tracker_map.insert(
       std::make_pair(Label::BICYCLE, this->declare_parameter<std::string>("bicycle_tracker")));
-    tracker_map.insert(std::make_pair(
+    config.tracker_map.insert(std::make_pair(
       Label::MOTORCYCLE, this->declare_parameter<std::string>("motorcycle_tracker")));
+    config.channel_size = input_channel_size_;
 
-    processor_ = std::make_unique<TrackerProcessor>(tracker_map, input_channel_size_);
+    // Declare parameters
+    config.tracker_lifetime = declare_parameter<double>("tracker_lifetime");
+    config.min_known_object_removal_iou = declare_parameter<double>("min_known_object_removal_iou");
+    config.min_unknown_object_removal_iou =
+      declare_parameter<double>("min_unknown_object_removal_iou");
+    config.distance_threshold = declare_parameter<double>("distance_threshold");
+
+    // Map from class name to label
+    std::map<std::string, LabelType> class_name_to_label = {
+      {"UNKNOWN", Label::UNKNOWN}, {"CAR", Label::CAR},
+      {"TRUCK", Label::TRUCK},     {"BUS", Label::BUS},
+      {"TRAILER", Label::TRAILER}, {"MOTORBIKE", Label::MOTORCYCLE},
+      {"BICYCLE", Label::BICYCLE}, {"PEDESTRIAN", Label::PEDESTRIAN}};
+
+    // Declare parameters and initialize confident_count_threshold_map
+    for (const auto & [class_name, class_label] : class_name_to_label) {
+      int64_t value = declare_parameter<int64_t>("confident_count_threshold." + class_name);
+      config.confident_count_threshold[class_label] = static_cast<int>(value);
+    }
+
+    // Initialize processor with parameters
+    processor_ = std::make_unique<TrackerProcessor>(config);
   }
 
   // Data association initialization
@@ -211,20 +237,21 @@ void MultiObjectTracker::onTrigger()
   const bool is_objects_ready = input_manager_->getObjects(current_time, objects_list);
   if (!is_objects_ready) return;
 
-  onMessage(objects_list);
+  // process start
+  last_updated_time_ = current_time;
   const rclcpp::Time latest_time(objects_list.back().second.header.stamp);
+  debugger_->startMeasurementTime(this->now(), latest_time);
+  // run process for each DetectedObjects
+  for (const auto & objects_data : objects_list) {
+    runProcess(objects_data.second, objects_data.first);
+  }
+  // process end
+  debugger_->endMeasurementTime(this->now());
 
-  // Publish objects if the timer is not enabled
-  if (publish_timer_ == nullptr) {
-    // if the delay compensation is disabled, publish the objects in the latest time
-    publish(latest_time);
-  } else {
-    // Publish if the next publish time is close
-    const double minimum_publish_interval = publisher_period_ * 0.70;  // 70% of the period
-    const rclcpp::Time publish_time = this->now();
-    if ((publish_time - last_published_time_).seconds() > minimum_publish_interval) {
-      checkAndPublish(publish_time);
-    }
+  // Publish without delay compensation
+  if (!publish_timer_) {
+    const auto latest_object_time = rclcpp::Time(objects_list.back().second.header.stamp);
+    checkAndPublish(latest_object_time);
   }
 }
 
@@ -232,45 +259,31 @@ void MultiObjectTracker::onTimer()
 {
   const rclcpp::Time current_time = this->now();
 
-  // Check the publish period
+  // ensure minimum interval: room for the next process(prediction)
+  const double minimum_publish_interval = publisher_period_ * minimum_publish_interval_ratio;
   const auto elapsed_time = (current_time - last_published_time_).seconds();
-  // If the elapsed time is over the period, publish objects with prediction
-  constexpr double maximum_latency_ratio = 1.11;  // 11% margin
-  const double maximum_publish_latency = publisher_period_ * maximum_latency_ratio;
-  if (elapsed_time < maximum_publish_latency) return;
-
-  // get objects from the input manager and run process
-  ObjectsList objects_list;
-  const bool is_objects_ready = input_manager_->getObjects(current_time, objects_list);
-  if (is_objects_ready) {
-    onMessage(objects_list);
+  if (elapsed_time < minimum_publish_interval) {
+    return;
   }
 
-  // Publish
-  checkAndPublish(current_time);
-}
+  // if there was update after publishing, publish new messages
+  bool should_publish = last_published_time_ < last_updated_time_;
 
-void MultiObjectTracker::onMessage(const ObjectsList & objects_list)
-{
-  const rclcpp::Time current_time = this->now();
-  const rclcpp::Time oldest_time(objects_list.front().second.header.stamp);
+  // if there was no update, publish if the elapsed time is longer than the maximum publish latency
+  // in this case, it will perform extrapolate/remove old objects
+  const double maximum_publish_interval = publisher_period_ * maximum_publish_interval_ratio;
+  should_publish = should_publish || elapsed_time > maximum_publish_interval;
 
-  // process start
-  debugger_->startMeasurementTime(this->now(), oldest_time);
-  // run process for each DetectedObjects
-  for (const auto & objects_data : objects_list) {
-    runProcess(objects_data.second, objects_data.first);
-  }
-  // process end
-  debugger_->endMeasurementTime(this->now());
+  // Publish with delay compensation to the current time
+  if (should_publish) checkAndPublish(current_time);
 }
 
 void MultiObjectTracker::runProcess(
-  const DetectedObjects & input_objects_msg, const uint & channel_index)
+  const DetectedObjects & input_objects, const uint & channel_index)
 {
   // Get the time of the measurement
   const rclcpp::Time measurement_time =
-    rclcpp::Time(input_objects_msg.header.stamp, this->now().get_clock_type());
+    rclcpp::Time(input_objects.header.stamp, this->now().get_clock_type());
 
   // Get the transform of the self frame
   const auto self_transform =
@@ -281,10 +294,46 @@ void MultiObjectTracker::runProcess(
 
   // Transform the objects to the world frame
   DetectedObjects transformed_objects;
-  if (!object_recognition_utils::transformObjects(
-        input_objects_msg, world_frame_id_, tf_buffer_, transformed_objects)) {
+  if (!autoware::object_recognition_utils::transformObjects(
+        input_objects, world_frame_id_, tf_buffer_, transformed_objects)) {
     return;
   }
+
+  // the object uncertainty
+  if (enable_odometry_uncertainty_) {
+    // Create a modeled odometry message
+    nav_msgs::msg::Odometry odometry;
+    odometry.header.stamp = measurement_time + rclcpp::Duration::from_seconds(0.001);
+
+    // set odometry pose from self_transform
+    auto & odom_pose = odometry.pose.pose;
+    odom_pose.position.x = self_transform->translation.x;
+    odom_pose.position.y = self_transform->translation.y;
+    odom_pose.position.z = self_transform->translation.z;
+    odom_pose.orientation = self_transform->rotation;
+
+    // set odometry twist
+    auto & odom_twist = odometry.twist.twist;
+    odom_twist.linear.x = 10.0;  // m/s
+    odom_twist.linear.y = 0.1;   // m/s
+    odom_twist.angular.z = 0.1;  // rad/s
+
+    // model the uncertainty
+    auto & odom_pose_cov = odometry.pose.covariance;
+    odom_pose_cov[0] = 0.1;      // x-x
+    odom_pose_cov[7] = 0.1;      // y-y
+    odom_pose_cov[35] = 0.0001;  // yaw-yaw
+
+    auto & odom_twist_cov = odometry.twist.covariance;
+    odom_twist_cov[0] = 2.0;     // x-x [m^2/s^2]
+    odom_twist_cov[7] = 0.2;     // y-y [m^2/s^2]
+    odom_twist_cov[35] = 0.001;  // yaw-yaw [rad^2/s^2]
+
+    // Add the odometry uncertainty to the object uncertainty
+    uncertainty::addOdometryUncertainty(odometry, transformed_objects);
+  }
+  // Normalize the object uncertainty
+  uncertainty::normalizeUncertainty(transformed_objects);
 
   /* prediction */
   processor_->predict(measurement_time);

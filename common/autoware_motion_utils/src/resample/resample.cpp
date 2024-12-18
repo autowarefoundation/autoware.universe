@@ -14,12 +14,17 @@
 
 #include "autoware/motion_utils/resample/resample.hpp"
 
+#include "autoware/interpolation/linear_interpolation.hpp"
+#include "autoware/interpolation/spline_interpolation.hpp"
+#include "autoware/interpolation/zero_order_hold.hpp"
 #include "autoware/motion_utils/resample/resample_utils.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
-#include "interpolation/linear_interpolation.hpp"
-#include "interpolation/spline_interpolation.hpp"
-#include "interpolation/zero_order_hold.hpp"
+
+#include <algorithm>
+#include <cstdlib>
+#include <iostream>
+#include <vector>
 
 namespace autoware::motion_utils
 {
@@ -59,13 +64,13 @@ std::vector<geometry_msgs::msg::Point> resamplePointVector(
 
   // Interpolate
   const auto lerp = [&](const auto & input) {
-    return interpolation::lerp(input_arclength, input, resampled_arclength);
+    return autoware::interpolation::lerp(input_arclength, input, resampled_arclength);
   };
   const auto spline = [&](const auto & input) {
-    return interpolation::spline(input_arclength, input, resampled_arclength);
+    return autoware::interpolation::spline(input_arclength, input, resampled_arclength);
   };
   const auto spline_by_akima = [&](const auto & input) {
-    return interpolation::splineByAkima(input_arclength, input, resampled_arclength);
+    return autoware::interpolation::splineByAkima(input_arclength, input, resampled_arclength);
   };
 
   const auto interpolated_x = use_akima_spline_for_xy ? lerp(x) : spline_by_akima(x);
@@ -278,14 +283,15 @@ tier4_planning_msgs::msg::PathWithLaneId resamplePath(
 
   // Interpolate
   const auto lerp = [&](const auto & input) {
-    return interpolation::lerp(input_arclength, input, resampling_arclength);
+    return autoware::interpolation::lerp(input_arclength, input, resampling_arclength);
   };
 
   auto closest_segment_indices =
-    interpolation::calc_closest_segment_indices(input_arclength, resampling_arclength);
+    autoware::interpolation::calc_closest_segment_indices(input_arclength, resampling_arclength);
 
   const auto zoh = [&](const auto & input) {
-    return interpolation::zero_order_hold(input_arclength, input, closest_segment_indices);
+    return autoware::interpolation::zero_order_hold(
+      input_arclength, input, closest_segment_indices);
   };
 
   const auto interpolated_pose =
@@ -460,16 +466,17 @@ autoware_planning_msgs::msg::Path resamplePath(
 
   // Interpolate
   const auto lerp = [&](const auto & input) {
-    return interpolation::lerp(input_arclength, input, resampled_arclength);
+    return autoware::interpolation::lerp(input_arclength, input, resampled_arclength);
   };
 
   std::vector<size_t> closest_segment_indices;
   if (use_zero_order_hold_for_v) {
     closest_segment_indices =
-      interpolation::calc_closest_segment_indices(input_arclength, resampled_arclength);
+      autoware::interpolation::calc_closest_segment_indices(input_arclength, resampled_arclength);
   }
   const auto zoh = [&](const auto & input) {
-    return interpolation::zero_order_hold(input_arclength, input, closest_segment_indices);
+    return autoware::interpolation::zero_order_hold(
+      input_arclength, input, closest_segment_indices);
   };
 
   const auto interpolated_pose =
@@ -601,11 +608,13 @@ autoware_planning_msgs::msg::Trajectory resampleTrajectory(
   rear_wheel_angle.push_back(input_trajectory.points.front().rear_wheel_angle_rad);
   time_from_start.push_back(
     rclcpp::Duration(input_trajectory.points.front().time_from_start).seconds());
+
   for (size_t i = 1; i < input_trajectory.points.size(); ++i) {
     const auto & prev_pt = input_trajectory.points.at(i - 1);
     const auto & curr_pt = input_trajectory.points.at(i);
     const double ds =
       autoware::universe_utils::calcDistance2d(prev_pt.pose.position, curr_pt.pose.position);
+
     input_arclength.push_back(ds + input_arclength.back());
     input_pose.push_back(curr_pt.pose);
     v_lon.push_back(curr_pt.longitudinal_velocity_mps);
@@ -617,18 +626,32 @@ autoware_planning_msgs::msg::Trajectory resampleTrajectory(
     time_from_start.push_back(rclcpp::Duration(curr_pt.time_from_start).seconds());
   }
 
+  // Set Zero Velocity After Stop Point
+  // If the longitudinal velocity is zero, set the velocity to zero after that point.
+  bool stop_point_found_in_v_lon = false;
+  constexpr double epsilon = 1e-4;
+  for (size_t i = 0; i < v_lon.size(); ++i) {
+    if (std::abs(v_lon.at(i)) < epsilon) {
+      stop_point_found_in_v_lon = true;
+    }
+    if (stop_point_found_in_v_lon) {
+      v_lon.at(i) = 0.0;
+    }
+  }
+
   // Interpolate
   const auto lerp = [&](const auto & input) {
-    return interpolation::lerp(input_arclength, input, resampled_arclength);
+    return autoware::interpolation::lerp(input_arclength, input, resampled_arclength);
   };
 
   std::vector<size_t> closest_segment_indices;
   if (use_zero_order_hold_for_twist) {
     closest_segment_indices =
-      interpolation::calc_closest_segment_indices(input_arclength, resampled_arclength);
+      autoware::interpolation::calc_closest_segment_indices(input_arclength, resampled_arclength);
   }
   const auto zoh = [&](const auto & input) {
-    return interpolation::zero_order_hold(input_arclength, input, closest_segment_indices);
+    return autoware::interpolation::zero_order_hold(
+      input_arclength, input, closest_segment_indices);
   };
 
   const auto interpolated_pose =

@@ -16,9 +16,9 @@
 
 #include "autoware/tracking_object_merger/decorative_tracker_merger_node.hpp"
 
+#include "autoware/object_recognition_utils/object_recognition_utils.hpp"
 #include "autoware/tracking_object_merger/association/solver/ssp.hpp"
 #include "autoware/tracking_object_merger/utils/utils.hpp"
-#include "object_recognition_utils/object_recognition_utils.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -28,7 +28,10 @@
 #include <glog/logging.h>
 
 #include <chrono>
+#include <memory>
+#include <string>
 #include <unordered_map>
+#include <vector>
 
 using Label = autoware_perception_msgs::msg::ObjectClassification;
 
@@ -57,7 +60,8 @@ Eigen::MatrixXd calcScoreMatrixForAssociation(
   const rclcpp::Time current_time = rclcpp::Time(objects0.header.stamp);
 
   // calc score matrix
-  Eigen::MatrixXd score_matrix = Eigen::MatrixXd::Zero(trackers.size(), objects0.objects.size());
+  Eigen::MatrixXd score_matrix = Eigen::MatrixXd::Zero(
+    static_cast<Eigen::Index>(trackers.size()), static_cast<Eigen::Index>(objects0.objects.size()));
   for (size_t trackers_idx = 0; trackers_idx < trackers.size(); ++trackers_idx) {
     const auto & tracker_obj = trackers.at(trackers_idx);
     const auto & object1 = tracker_obj.getObject();
@@ -77,7 +81,8 @@ Eigen::MatrixXd calcScoreMatrixForAssociation(
       } else {
         score = data_association_map.at("lidar-radar")->calcScoreBetweenObjects(object0, object1);
       }
-      score_matrix(trackers_idx, objects0_idx) = score;
+      score_matrix(
+        static_cast<Eigen::Index>(trackers_idx), static_cast<Eigen::Index>(objects0_idx)) = score;
     }
   }
   return score_matrix;
@@ -115,6 +120,7 @@ DecorativeTrackerMergerNode::DecorativeTrackerMergerNode(const rclcpp::NodeOptio
   // Parameters
   publish_interpolated_sub_objects_ = declare_parameter<bool>("publish_interpolated_sub_objects");
   base_link_frame_id_ = declare_parameter<std::string>("base_link_frame_id");
+  merge_frame_id_ = declare_parameter<std::string>("merge_frame_id", "map");
   time_sync_threshold_ = declare_parameter<double>("time_sync_threshold");
   sub_object_timeout_sec_ = declare_parameter<double>("sub_object_timeout_sec");
   // default setting parameter for tracker
@@ -196,6 +202,16 @@ void DecorativeTrackerMergerNode::mainObjectsCallback(
   const TrackedObjects::ConstSharedPtr & main_objects)
 {
   stop_watch_ptr_->toc("processing_time", true);
+
+  /* transform to target merge coordinate */
+  TrackedObjects transformed_objects;
+  if (!autoware::object_recognition_utils::transformObjects(
+        *main_objects, merge_frame_id_, tf_buffer_, transformed_objects)) {
+    return;
+  }
+  TrackedObjects::ConstSharedPtr transformed_main_objects =
+    std::make_shared<TrackedObjects>(transformed_objects);
+
   // try to merge sub object
   if (!sub_objects_buffer_.empty()) {
     // get interpolated sub objects
@@ -203,7 +219,7 @@ void DecorativeTrackerMergerNode::mainObjectsCallback(
     TrackedObjects::ConstSharedPtr closest_time_sub_objects;
     TrackedObjects::ConstSharedPtr closest_time_sub_objects_later;
     for (const auto & sub_object : sub_objects_buffer_) {
-      if (getUnixTime(sub_object->header) < getUnixTime(main_objects->header)) {
+      if (getUnixTime(sub_object->header) < getUnixTime(transformed_main_objects->header)) {
         closest_time_sub_objects = sub_object;
       } else {
         closest_time_sub_objects_later = sub_object;
@@ -212,7 +228,7 @@ void DecorativeTrackerMergerNode::mainObjectsCallback(
     }
     // get delay compensated sub objects
     const auto interpolated_sub_objects = interpolateObjectState(
-      closest_time_sub_objects, closest_time_sub_objects_later, main_objects->header);
+      closest_time_sub_objects, closest_time_sub_objects_later, transformed_main_objects->header);
     if (interpolated_sub_objects.has_value()) {
       // Merge sub objects
       const auto interp_sub_objs = interpolated_sub_objects.value();
@@ -225,9 +241,10 @@ void DecorativeTrackerMergerNode::mainObjectsCallback(
   }
 
   // try to merge main object
-  this->decorativeMerger(main_sensor_type_, main_objects);
-  const auto & tracked_objects = getTrackedObjects(main_objects->header);
+  this->decorativeMerger(main_sensor_type_, transformed_main_objects);
+  const auto & tracked_objects = getTrackedObjects(transformed_main_objects->header);
   merged_object_pub_->publish(tracked_objects);
+
   published_time_publisher_->publish_if_subscribed(
     merged_object_pub_, tracked_objects.header.stamp);
   processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
@@ -244,10 +261,19 @@ void DecorativeTrackerMergerNode::mainObjectsCallback(
  */
 void DecorativeTrackerMergerNode::subObjectsCallback(const TrackedObjects::ConstSharedPtr & msg)
 {
-  sub_objects_buffer_.push_back(msg);
+  /* transform to target merge coordinate */
+  TrackedObjects transformed_objects;
+  if (!autoware::object_recognition_utils::transformObjects(
+        *msg, merge_frame_id_, tf_buffer_, transformed_objects)) {
+    return;
+  }
+  TrackedObjects::ConstSharedPtr transformed_sub_objects =
+    std::make_shared<TrackedObjects>(transformed_objects);
+
+  sub_objects_buffer_.push_back(transformed_sub_objects);
   // remove old sub objects
   // const auto now = get_clock()->now();
-  const auto now = rclcpp::Time(msg->header.stamp);
+  const auto now = rclcpp::Time(transformed_sub_objects->header.stamp);
   const auto remove_itr = std::remove_if(
     sub_objects_buffer_.begin(), sub_objects_buffer_.end(), [now, this](const auto & sub_object) {
       return (now - rclcpp::Time(sub_object->header.stamp)).seconds() > sub_object_timeout_sec_;
@@ -295,9 +321,11 @@ bool DecorativeTrackerMergerNode::decorativeMerger(
   // look for tracker
   for (int tracker_idx = 0; tracker_idx < static_cast<int>(inner_tracker_objects_.size());
        ++tracker_idx) {
-    auto & object0_state = inner_tracker_objects_.at(tracker_idx);
+    auto & object0_state =
+      inner_tracker_objects_.at(static_cast<std::vector<int>::size_type>(tracker_idx));
     if (direct_assignment.find(tracker_idx) != direct_assignment.end()) {  // found and merge
-      const auto & object1 = objects1.at(direct_assignment.at(tracker_idx));
+      const auto & object1 =
+        objects1.at(static_cast<std::vector<int>::size_type>(direct_assignment.at(tracker_idx)));
       // merge object1 into object0_state
       object0_state.updateState(input_sensor, current_time, object1);
     } else {  // not found
@@ -307,7 +335,7 @@ bool DecorativeTrackerMergerNode::decorativeMerger(
   }
   // look for new object
   for (int object1_idx = 0; object1_idx < static_cast<int>(objects1.size()); ++object1_idx) {
-    const auto & object1 = objects1.at(object1_idx);
+    const auto & object1 = objects1.at(static_cast<std::vector<int>::size_type>(object1_idx));
     if (reverse_assignment.find(object1_idx) != reverse_assignment.end()) {  // found
     } else {                                                                 // not found
       inner_tracker_objects_.push_back(createNewTracker(input_sensor, current_time, object1));
@@ -392,7 +420,7 @@ TrackedObjects DecorativeTrackerMergerNode::getTrackedObjects(const std_msgs::ms
 {
   // get main objects
   rclcpp::Time current_time = rclcpp::Time(header.stamp);
-  return getTrackedObjectsFromTrackerStates(inner_tracker_objects_, current_time);
+  return getTrackedObjectsFromTrackerStates(inner_tracker_objects_, current_time, merge_frame_id_);
 }
 
 // create new tracker

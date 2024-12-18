@@ -56,6 +56,23 @@ ShapeEstimationNode::ShapeEstimationNode(const rclcpp::NodeOptions & node_option
   estimator_ =
     std::make_unique<ShapeEstimator>(use_corrector, use_filter, use_boost_bbox_optimizer);
 
+#ifdef USE_CUDA
+  use_ml_shape_estimation_ = declare_parameter<bool>("model_params.use_ml_shape_estimator");
+  if (use_ml_shape_estimation_) {
+    std::string model_path = declare_parameter<std::string>("model_path");
+    min_points_ = declare_parameter<int>("model_params.minimum_points");
+    std::string precision = declare_parameter<std::string>("model_params.precision");
+    int batch_size = declare_parameter<int>("model_params.batch_size");
+    autoware::tensorrt_common::BatchConfig batch_config{batch_size, batch_size, batch_size};
+    tensorrt_shape_estimator_ =
+      std::make_unique<TrtShapeEstimator>(model_path, precision, batch_config);
+    if (this->declare_parameter("model_params.build_only", false)) {
+      RCLCPP_INFO(this->get_logger(), "TensorRT engine is built and shutdown node.");
+      rclcpp::shutdown();
+    }
+  }
+#endif
+
   processing_time_publisher_ =
     std::make_unique<autoware::universe_utils::DebugPublisher>(this, "shape_estimation");
   stop_watch_ptr_ =
@@ -94,6 +111,9 @@ void ShapeEstimationNode::callback(const DetectedObjectsWithFeature::ConstShared
   DetectedObjectsWithFeature output_msg;
   output_msg.header = input_msg->header;
 
+  // Create ml model input batch
+  DetectedObjectsWithFeature input_trt_batch;
+
   // Estimate shape for each object and pack msg
   for (const auto & feature_object : input_msg->feature_objects) {
     const auto & object = feature_object.object;
@@ -109,11 +129,20 @@ void ShapeEstimationNode::callback(const DetectedObjectsWithFeature::ConstShared
       continue;
     }
 
+#ifdef USE_CUDA
+    // If ml based shape estimation is enabled, add object to input batch and continue
+    if (is_vehicle && use_ml_shape_estimation_ && cluster->size() > min_points_) {
+      input_trt_batch.feature_objects.push_back(feature_object);
+      continue;
+    }
+#endif
+
     // estimate shape and pose
     autoware_perception_msgs::msg::Shape shape;
     geometry_msgs::msg::Pose pose;
     boost::optional<ReferenceYawInfo> ref_yaw_info = boost::none;
     boost::optional<ReferenceShapeSizeInfo> ref_shape_size_info = boost::none;
+    boost::optional<geometry_msgs::msg::Pose> ref_pose = boost::none;
     if (use_vehicle_reference_yaw_ && is_vehicle) {
       ref_yaw_info = ReferenceYawInfo{
         static_cast<float>(tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation)),
@@ -123,7 +152,7 @@ void ShapeEstimationNode::callback(const DetectedObjectsWithFeature::ConstShared
       ref_shape_size_info = ReferenceShapeSizeInfo{object.shape, ReferenceShapeSizeInfo::Mode::Min};
     }
     const bool estimated_success = estimator_->estimateShapeAndPose(
-      label, *cluster, ref_yaw_info, ref_shape_size_info, shape, pose);
+      label, *cluster, ref_yaw_info, ref_shape_size_info, ref_pose, shape, pose);
 
     // If the shape estimation fails, change to Unknown object.
     if (!fix_filtered_objects_label_to_unknown_ && !estimated_success) {
@@ -137,6 +166,16 @@ void ShapeEstimationNode::callback(const DetectedObjectsWithFeature::ConstShared
     output_msg.feature_objects.back().object.shape = shape;
     output_msg.feature_objects.back().object.kinematics.pose_with_covariance.pose = pose;
   }
+
+#ifdef USE_CUDA
+  DetectedObjectsWithFeature output_model;
+  if (use_ml_shape_estimation_ && !input_trt_batch.feature_objects.empty()) {
+    tensorrt_shape_estimator_->inference(input_trt_batch, output_model);
+  }
+  for (auto & feature_object : output_model.feature_objects) {
+    output_msg.feature_objects.push_back(feature_object);
+  }
+#endif
 
   // Publish
   pub_->publish(output_msg);

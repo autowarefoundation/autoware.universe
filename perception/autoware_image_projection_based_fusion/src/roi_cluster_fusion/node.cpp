@@ -16,9 +16,17 @@
 
 #include <autoware/image_projection_based_fusion/utils/geometry.hpp>
 #include <autoware/image_projection_based_fusion/utils/utils.hpp>
+#include <autoware/universe_utils/system/time_keeper.hpp>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
+
+#include <algorithm>
+#include <map>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -30,6 +38,7 @@
 
 namespace autoware::image_projection_based_fusion
 {
+using autoware::universe_utils::ScopedTimeTrack;
 
 RoiClusterFusionNode::RoiClusterFusionNode(const rclcpp::NodeOptions & options)
 : FusionNode<DetectedObjectsWithFeature, DetectedObjectWithFeature, DetectedObjectsWithFeature>(
@@ -49,6 +58,9 @@ RoiClusterFusionNode::RoiClusterFusionNode(const rclcpp::NodeOptions & options)
 
 void RoiClusterFusionNode::preprocess(DetectedObjectsWithFeature & output_cluster_msg)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   // reset cluster semantic type
   if (!use_cluster_semantic_type_) {
     for (auto & feature_object : output_cluster_msg.feature_objects) {
@@ -61,6 +73,9 @@ void RoiClusterFusionNode::preprocess(DetectedObjectsWithFeature & output_cluste
 
 void RoiClusterFusionNode::postprocess(DetectedObjectsWithFeature & output_cluster_msg)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   if (!remove_unknown_) {
     return;
   }
@@ -83,6 +98,11 @@ void RoiClusterFusionNode::fuseOnSingleImage(
   const DetectedObjectsWithFeature & input_roi_msg,
   const sensor_msgs::msg::CameraInfo & camera_info, DetectedObjectsWithFeature & output_cluster_msg)
 {
+  if (!checkCameraInfo(camera_info)) return;
+
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   image_geometry::PinholeCameraModel pinhole_camera_model;
   pinhole_camera_model.fromCameraInfo(camera_info);
 
@@ -102,6 +122,7 @@ void RoiClusterFusionNode::fuseOnSingleImage(
   }
 
   std::map<std::size_t, RegionOfInterest> m_cluster_roi;
+
   for (std::size_t i = 0; i < input_cluster_msg.feature_objects.size(); ++i) {
     if (input_cluster_msg.feature_objects.at(i).feature.cluster.data.empty()) {
       continue;
@@ -131,8 +152,9 @@ void RoiClusterFusionNode::fuseOnSingleImage(
         continue;
       }
 
-      Eigen::Vector2d projected_point =
-        calcRawImageProjectedPoint(pinhole_camera_model, cv::Point3d(*iter_x, *iter_y, *iter_z));
+      Eigen::Vector2d projected_point = calcRawImageProjectedPoint(
+        pinhole_camera_model, cv::Point3d(*iter_x, *iter_y, *iter_z),
+        point_project_to_unrectified_image_);
       if (
         0 <= static_cast<int>(projected_point.x()) &&
         static_cast<int>(projected_point.x()) <= static_cast<int>(camera_info.width) - 1 &&
@@ -164,7 +186,7 @@ void RoiClusterFusionNode::fuseOnSingleImage(
     int index = -1;
     bool associated = false;
     double max_iou = 0.0;
-    bool is_roi_label_known =
+    const bool is_roi_label_known =
       feature_obj.object.classification.front().label != ObjectClassification::UNKNOWN;
     for (const auto & cluster_map : m_cluster_roi) {
       double iou(0.0);
@@ -194,34 +216,18 @@ void RoiClusterFusionNode::fuseOnSingleImage(
     }
 
     if (!output_cluster_msg.feature_objects.empty()) {
-      bool is_roi_existence_prob_higher =
-        output_cluster_msg.feature_objects.at(index).object.existence_probability <=
-        feature_obj.object.existence_probability;
-      if (iou_threshold_ < max_iou && is_roi_existence_prob_higher && is_roi_label_known) {
-        output_cluster_msg.feature_objects.at(index).object.classification =
-          feature_obj.object.classification;
+      auto & fused_object = output_cluster_msg.feature_objects.at(index).object;
+      const bool is_roi_existence_prob_higher =
+        fused_object.existence_probability <= feature_obj.object.existence_probability;
+      const bool is_roi_iou_over_threshold =
+        (is_roi_label_known && iou_threshold_ < max_iou) ||
+        (!is_roi_label_known && unknown_iou_threshold_ < max_iou);
 
+      if (is_roi_iou_over_threshold && is_roi_existence_prob_higher) {
+        fused_object.classification = feature_obj.object.classification;
         // Update existence_probability for fused objects
-        if (
-          output_cluster_msg.feature_objects.at(index).object.existence_probability <
-          min_roi_existence_prob_) {
-          output_cluster_msg.feature_objects.at(index).object.existence_probability =
-            min_roi_existence_prob_;
-        }
-      }
-
-      // fuse with unknown roi
-
-      if (unknown_iou_threshold_ < max_iou && is_roi_existence_prob_higher && !is_roi_label_known) {
-        output_cluster_msg.feature_objects.at(index).object.classification =
-          feature_obj.object.classification;
-        // Update existence_probability for fused objects
-        if (
-          output_cluster_msg.feature_objects.at(index).object.existence_probability <
-          min_roi_existence_prob_) {
-          output_cluster_msg.feature_objects.at(index).object.existence_probability =
-            min_roi_existence_prob_;
-        }
+        fused_object.existence_probability =
+          std::clamp(feature_obj.object.existence_probability, min_roi_existence_prob_, 1.0f);
       }
     }
     if (debugger_) debugger_->image_rois_.push_back(feature_obj.feature.roi);

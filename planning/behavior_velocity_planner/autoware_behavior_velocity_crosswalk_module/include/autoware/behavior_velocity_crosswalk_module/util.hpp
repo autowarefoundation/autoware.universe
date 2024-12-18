@@ -21,7 +21,6 @@
 #include <boost/geometry/geometries/linestring.hpp>
 #include <boost/geometry/geometries/point_xy.hpp>
 
-#include <limits>
 #include <memory>
 #include <optional>
 #include <set>
@@ -83,6 +82,10 @@ struct DebugData
   std::vector<geometry_msgs::msg::Point> crosswalk_polygon;
   std::vector<std::vector<geometry_msgs::msg::Point>> ego_polygons;
   std::vector<std::vector<geometry_msgs::msg::Point>> obj_polygons;
+
+  // occlusion data
+  std::vector<lanelet::BasicPolygon2d> occlusion_detection_areas;
+  geometry_msgs::msg::Point crosswalk_origin;
 };
 
 std::vector<std::pair<int64_t, lanelet::ConstLanelet>> getCrosswalksOnPath(
@@ -94,8 +97,6 @@ std::set<int64_t> getCrosswalkIdSetOnPath(
   const geometry_msgs::msg::Pose & current_pose,
   const tier4_planning_msgs::msg::PathWithLaneId & path, const lanelet::LaneletMapPtr lanelet_map,
   const std::shared_ptr<const lanelet::routing::RoutingGraphContainer> & overall_graphs);
-
-bool checkRegulatoryElementExistence(const lanelet::LaneletMapPtr & lanelet_map_ptr);
 
 std::optional<std::pair<geometry_msgs::msg::Point, geometry_msgs::msg::Point>>
 getPathEndPointsOnCrosswalk(

@@ -16,6 +16,8 @@
 #include "occlusion_predictor.hpp"
 
 #include <algorithm>
+#include <map>
+#include <vector>
 namespace
 {
 
@@ -148,7 +150,7 @@ void CloudOcclusionPredictor::calcRoiVector3D(
 
 void CloudOcclusionPredictor::filterCloud(
   const pcl::PointCloud<pcl::PointXYZ> & cloud_in, const std::vector<pcl::PointXYZ> & roi_tls,
-  const std::vector<pcl::PointXYZ> & roi_brs, pcl::PointCloud<pcl::PointXYZ> & cloud_out)
+  const std::vector<pcl::PointXYZ> & roi_brs, pcl::PointCloud<pcl::PointXYZ> & cloud_out) const
 {
   float min_x = 0, max_x = 0, min_y = 0, max_y = 0, min_z = 0, max_z = 0;
   for (const auto & pt : roi_tls) {

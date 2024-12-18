@@ -16,6 +16,7 @@
 #ifndef AUTOWARE__BEHAVIOR_PATH_PLANNER_COMMON__INTERFACE__SCENE_MODULE_MANAGER_INTERFACE_HPP_
 #define AUTOWARE__BEHAVIOR_PATH_PLANNER_COMMON__INTERFACE__SCENE_MODULE_MANAGER_INTERFACE_HPP_
 
+#include "autoware/behavior_path_planner_common/data_manager.hpp"
 #include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
 #include "autoware/universe_utils/ros/parameter.hpp"
 
@@ -23,6 +24,8 @@
 #include <rclcpp/parameter.hpp>
 #include <rclcpp/publisher.hpp>
 
+#include <autoware_adapi_v1_msgs/msg/steering_factor_array.hpp>
+#include <autoware_adapi_v1_msgs/msg/velocity_factor_array.hpp>
 #include <unique_identifier_msgs/msg/uuid.hpp>
 
 #include <cstddef>
@@ -32,7 +35,6 @@
 #include <unordered_map>
 #include <utility>
 #include <vector>
-
 namespace autoware::behavior_path_planner
 {
 
@@ -40,6 +42,8 @@ using autoware::motion_utils::createDeadLineVirtualWallMarker;
 using autoware::motion_utils::createSlowDownVirtualWallMarker;
 using autoware::motion_utils::createStopVirtualWallMarker;
 using autoware::universe_utils::toHexString;
+using autoware_adapi_v1_msgs::msg::SteeringFactorArray;
+using autoware_adapi_v1_msgs::msg::VelocityFactorArray;
 using unique_identifier_msgs::msg::UUID;
 using SceneModulePtr = std::shared_ptr<SceneModuleInterface>;
 using SceneModuleObserver = std::weak_ptr<SceneModuleInterface>;
@@ -57,15 +61,7 @@ public:
 
   virtual void init(rclcpp::Node * node) = 0;
 
-  void updateIdleModuleInstance()
-  {
-    if (idle_module_ptr_) {
-      idle_module_ptr_->onEntry();
-      return;
-    }
-
-    idle_module_ptr_ = createNewSceneModuleInstance();
-  }
+  void updateIdleModuleInstance();
 
   bool isExecutionRequested(const BehaviorModuleOutput & previous_module_output) const
   {
@@ -110,6 +106,46 @@ public:
     }
   }
 
+  void publishSteeringFactor()
+  {
+    SteeringFactorArray steering_factor_array;
+    steering_factor_array.header.frame_id = "map";
+    steering_factor_array.header.stamp = node_->now();
+
+    for (const auto & m : observers_) {
+      if (m.expired()) {
+        continue;
+      }
+
+      const auto steering_factor = m.lock()->get_steering_factor();
+      if (steering_factor.behavior != PlanningBehavior::UNKNOWN) {
+        steering_factor_array.factors.emplace_back(steering_factor);
+      }
+    }
+
+    pub_steering_factors_->publish(steering_factor_array);
+  }
+
+  void publishVelocityFactor()
+  {
+    VelocityFactorArray velocity_factor_array;
+    velocity_factor_array.header.frame_id = "map";
+    velocity_factor_array.header.stamp = node_->now();
+
+    for (const auto & m : observers_) {
+      if (m.expired()) {
+        continue;
+      }
+
+      const auto velocity_factor = m.lock()->get_velocity_factor();
+      if (velocity_factor.behavior != PlanningBehavior::UNKNOWN) {
+        velocity_factor_array.factors.emplace_back(velocity_factor);
+      }
+    }
+
+    pub_velocity_factors_->publish(velocity_factor_array);
+  }
+
   void publishVirtualWall() const
   {
     using autoware::universe_utils::appendMarkerArray;
@@ -124,25 +160,23 @@ public:
         continue;
       }
 
-      const auto opt_stop_pose = m.lock()->getStopPose();
-      if (!!opt_stop_pose) {
-        const auto virtual_wall = createStopVirtualWallMarker(
-          opt_stop_pose.value(), m.lock()->name(), rclcpp::Clock().now(), marker_id);
-        appendMarkerArray(virtual_wall, &markers);
-      }
+      const std::vector<std::pair<
+        PoseWithDetailOpt, std::function<MarkerArray(
+                             const geometry_msgs::msg::Pose &, const std::string &, rclcpp::Time,
+                             uint32_t, double, const std::string &, bool)>>>
+        pose_and_func_vec = {
+          {m.lock()->getStopPose(), createStopVirtualWallMarker},
+          {m.lock()->getSlowPose(), createSlowDownVirtualWallMarker},
+          {m.lock()->getDeadPose(), createDeadLineVirtualWallMarker}};
 
-      const auto opt_slow_pose = m.lock()->getSlowPose();
-      if (!!opt_slow_pose) {
-        const auto virtual_wall = createSlowDownVirtualWallMarker(
-          opt_slow_pose.value(), m.lock()->name(), rclcpp::Clock().now(), marker_id);
-        appendMarkerArray(virtual_wall, &markers);
-      }
-
-      const auto opt_dead_pose = m.lock()->getDeadPose();
-      if (!!opt_dead_pose) {
-        const auto virtual_wall = createDeadLineVirtualWallMarker(
-          opt_dead_pose.value(), m.lock()->name(), rclcpp::Clock().now(), marker_id);
-        appendMarkerArray(virtual_wall, &markers);
+      for (const auto & [opt_pose, create_virtual_wall] : pose_and_func_vec) {
+        if (!!opt_pose) {
+          const auto detail = opt_pose.value().detail;
+          const auto text = m.lock()->name() + (detail.empty() ? "" : " (" + detail + ")");
+          const auto virtual_wall = create_virtual_wall(
+            opt_pose.value().pose, text, rclcpp::Clock().now(), marker_id, 0.0, "", true);
+          appendMarkerArray(virtual_wall, &markers);
+        }
       }
 
       const auto module_specific_wall = m.lock()->getModuleVirtualWall();
@@ -217,36 +251,15 @@ public:
    */
   bool canLaunchNewModule() const { return observers_.empty(); }
 
-  /**
-   * Determine if the module is always executable, regardless of the state of other modules.
-   *
-   * When this returns true:
-   * - The module can be executed even if other modules are not marked as 'simultaneously
-   * executable'.
-   * - Conversely, the presence of this module will not prevent other modules
-   *   from executing, even if they are not marked as 'simultaneously executable'.
-   */
-  virtual bool isAlwaysExecutableModule() const { return false; }
-
   virtual bool isSimultaneousExecutableAsApprovedModule() const
   {
-    if (isAlwaysExecutableModule()) {
-      return true;
-    }
-
     return config_.enable_simultaneous_execution_as_approved_module;
   }
 
   virtual bool isSimultaneousExecutableAsCandidateModule() const
   {
-    if (isAlwaysExecutableModule()) {
-      return true;
-    }
-
     return config_.enable_simultaneous_execution_as_candidate_module;
   }
-
-  bool isKeepLast() const { return config_.keep_last; }
 
   void setData(const std::shared_ptr<PlannerData> & planner_data) { planner_data_ = planner_data; }
 
@@ -268,8 +281,6 @@ public:
     pub_debug_marker_->publish(MarkerArray{});
   }
 
-  size_t getPriority() const { return config_.priority; }
-
   std::string name() const { return name_; }
 
   std::vector<SceneModuleObserver> getSceneModuleObservers() { return observers_; }
@@ -278,57 +289,9 @@ public:
 
   virtual void updateModuleParams(const std::vector<rclcpp::Parameter> & parameters) = 0;
 
+  void initInterface(rclcpp::Node * node, const std::vector<std::string> & rtc_types);
+
 protected:
-  void initInterface(rclcpp::Node * node, const std::vector<std::string> & rtc_types)
-  {
-    using autoware::universe_utils::getOrDeclareParameter;
-
-    // init manager configuration
-    {
-      std::string ns = name_ + ".";
-      try {
-        config_.enable_rtc = getOrDeclareParameter<bool>(*node, "enable_all_modules_auto_mode")
-                               ? false
-                               : getOrDeclareParameter<bool>(*node, ns + "enable_rtc");
-      } catch (const std::exception & e) {
-        config_.enable_rtc = getOrDeclareParameter<bool>(*node, ns + "enable_rtc");
-      }
-
-      config_.enable_simultaneous_execution_as_approved_module =
-        getOrDeclareParameter<bool>(*node, ns + "enable_simultaneous_execution_as_approved_module");
-      config_.enable_simultaneous_execution_as_candidate_module = getOrDeclareParameter<bool>(
-        *node, ns + "enable_simultaneous_execution_as_candidate_module");
-      config_.keep_last = getOrDeclareParameter<bool>(*node, ns + "keep_last");
-      config_.priority = getOrDeclareParameter<int>(*node, ns + "priority");
-    }
-
-    // init rtc configuration
-    for (const auto & rtc_type : rtc_types) {
-      const auto snake_case_name = utils::convertToSnakeCase(name_);
-      const auto rtc_interface_name =
-        rtc_type.empty() ? snake_case_name : snake_case_name + "_" + rtc_type;
-      rtc_interface_ptr_map_.emplace(
-        rtc_type, std::make_shared<RTCInterface>(node, rtc_interface_name, config_.enable_rtc));
-      objects_of_interest_marker_interface_ptr_map_.emplace(
-        rtc_type, std::make_shared<ObjectsOfInterestMarkerInterface>(node, rtc_interface_name));
-    }
-
-    // init publisher
-    {
-      pub_info_marker_ = node->create_publisher<MarkerArray>("~/info/" + name_, 20);
-      pub_debug_marker_ = node->create_publisher<MarkerArray>("~/debug/" + name_, 20);
-      pub_virtual_wall_ = node->create_publisher<MarkerArray>("~/virtual_wall/" + name_, 20);
-      pub_drivable_lanes_ = node->create_publisher<MarkerArray>("~/drivable_lanes/" + name_, 20);
-      pub_processing_time_ = node->create_publisher<universe_utils::ProcessingTimeDetail>(
-        "~/processing_time/" + name_, 20);
-    }
-
-    // misc
-    {
-      node_ = node;
-    }
-  }
-
   virtual std::unique_ptr<SceneModuleInterface> createNewSceneModuleInstance() = 0;
 
   rclcpp::Node * node_ = nullptr;
@@ -340,6 +303,10 @@ protected:
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_virtual_wall_;
 
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_drivable_lanes_;
+
+  rclcpp::Publisher<SteeringFactorArray>::SharedPtr pub_steering_factors_;
+
+  rclcpp::Publisher<VelocityFactorArray>::SharedPtr pub_velocity_factors_;
 
   rclcpp::Publisher<universe_utils::ProcessingTimeDetail>::SharedPtr pub_processing_time_;
 

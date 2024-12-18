@@ -19,6 +19,11 @@
 #include <autoware/motion_utils/distance/distance.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 
+#include <algorithm>
+#include <memory>
+#include <utility>
+#include <vector>
+
 namespace autoware::behavior_path_planner::utils::parking_departure
 {
 
@@ -104,16 +109,6 @@ void initializeCollisionCheckDebugMap(CollisionCheckDebugMap & collision_check_d
   collision_check_debug_map.clear();
 }
 
-void updateSafetyCheckTargetObjectsData(
-  StartGoalPlannerData & data, const PredictedObjects & filtered_objects,
-  const TargetObjectsOnLane & target_objects_on_lane,
-  const std::vector<PoseWithVelocityStamped> & ego_predicted_path)
-{
-  data.filtered_objects = filtered_objects;
-  data.target_objects_on_lane = target_objects_on_lane;
-  data.ego_predicted_path = ego_predicted_path;
-}
-
 std::pair<double, double> getPairsTerminalVelocityAndAccel(
   const std::vector<std::pair<double, double>> & pairs_terminal_velocity_and_accel,
   const size_t current_path_idx)
@@ -126,8 +121,7 @@ std::pair<double, double> getPairsTerminalVelocityAndAccel(
 
 std::optional<PathWithLaneId> generateFeasibleStopPath(
   PathWithLaneId & current_path, std::shared_ptr<const PlannerData> planner_data,
-  std::optional<geometry_msgs::msg::Pose> & stop_pose, const double maximum_deceleration,
-  const double maximum_jerk)
+  PoseWithDetailOpt & stop_pose, const double maximum_deceleration, const double maximum_jerk)
 {
   if (current_path.points.empty()) {
     return {};
@@ -151,7 +145,7 @@ std::optional<PathWithLaneId> generateFeasibleStopPath(
     return {};
   }
 
-  stop_pose = current_path.points.at(*stop_idx).point.pose;
+  stop_pose = PoseWithDetail(current_path.points.at(*stop_idx).point.pose);
 
   return current_path;
 }

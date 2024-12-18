@@ -17,6 +17,8 @@
 #include <opencv4/opencv2/imgcodecs.hpp>
 #include <opencv4/opencv2/imgproc.hpp>
 
+#include <string>
+
 #if __has_include(<cv_bridge/cv_bridge.hpp>)
 #include <cv_bridge/cv_bridge.hpp>  // for ROS 2 Jazzy or newer
 #else
@@ -70,12 +72,4 @@ cv::Mat decompress_to_cv_mat(const sensor_msgs::msg::Image & img)
   return cv_bridge::toCvCopy(std::make_shared<sensor_msgs::msg::Image>(img), img.encoding)->image;
 }
 
-sensor_msgs::msg::Image::ConstSharedPtr decompress_to_ros_msg(
-  const sensor_msgs::msg::CompressedImage & compressed_img, const std::string & encoding)
-{
-  cv_bridge::CvImage cv_image;
-  cv_image.image = decompress_image(compressed_img);
-  cv_image.encoding = encoding;
-  return cv_image.toImageMsg();
-}
 }  // namespace yabloc::common

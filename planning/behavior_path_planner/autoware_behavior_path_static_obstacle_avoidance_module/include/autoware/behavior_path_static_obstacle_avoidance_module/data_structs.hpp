@@ -27,6 +27,7 @@
 
 #include <limits>
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -73,8 +74,6 @@ struct ObjectParameter
 
   bool is_safety_check_target{false};
 
-  size_t execute_num{1};
-
   double moving_speed_threshold{0.0};
 
   double moving_time_threshold{1.0};
@@ -90,6 +89,8 @@ struct ObjectParameter
   double lateral_hard_margin_for_parked_vehicle{1.0};
 
   double longitudinal_margin{0.0};
+
+  double th_error_eclipse_long_radius{0.0};
 };
 
 struct AvoidanceParameters
@@ -106,6 +107,8 @@ struct AvoidanceParameters
 
   // if this param is true, it reverts avoidance path when the path is no longer needed.
   bool enable_cancel_maneuver{false};
+
+  double force_deactivate_duration_time{0.0};
 
   // enable avoidance for all parking vehicle
   std::string policy_ambiguous_vehicle{"ignore"};
@@ -420,6 +423,9 @@ struct ObjectData  // avoidance target
   // to stop line distance
   double to_stop_line{std::numeric_limits<double>::infinity()};
 
+  // long radius of the covariance error ellipse
+  double error_eclipse_max{std::numeric_limits<double>::infinity()};
+
   // if lateral margin is NOT enough, the ego must avoid the object.
   bool avoid_required{false};
 
@@ -581,11 +587,21 @@ struct AvoidancePlanningData
 
   bool found_avoidance_path{false};
 
+  bool force_deactivated{false};
+
   double to_stop_line{std::numeric_limits<double>::max()};
 
   double to_start_point{std::numeric_limits<double>::lowest()};
 
   double to_return_point{std::numeric_limits<double>::max()};
+
+  std::optional<double> distance_to_red_traffic_light{std::nullopt};
+
+  std::optional<lanelet::ConstLanelet> closest_lanelet{std::nullopt};
+
+  bool is_allowed_goal_modification{false};
+
+  bool request_operator{false};
 };
 
 /*

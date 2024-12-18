@@ -27,9 +27,11 @@
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/primitives/LaneletSequence.h>
 
-#include <string>
-#include <unordered_set>
 #include <vector>
+
+namespace autoware::mission_planner::lanelet2
+{
+using RouteSections = std::vector<autoware_planning_msgs::msg::LaneletSegment>;
 
 template <typename T>
 bool exists(const std::vector<T> & vectors, const T & item)
@@ -47,17 +49,20 @@ autoware::universe_utils::Polygon2d convert_linear_ring_to_polygon(
 void insert_marker_array(
   visualization_msgs::msg::MarkerArray * a1, const visualization_msgs::msg::MarkerArray & a2);
 
-/**
- * @brief create a single merged lanelet whose left/right bounds consist of the leftmost/rightmost
- * bound of the original lanelets or the left/right bound of its adjacent road_shoulder respectively
- * @param lanelets topologically sorted sequence of lanelets
- * @param route_handler route handler to query the lanelet map
- */
-lanelet::ConstLanelet combine_lanelets_with_shoulder(
-  const lanelet::ConstLanelets & lanelets,
-  const autoware::route_handler::RouteHandler & route_handler);
-
 std::vector<geometry_msgs::msg::Point> convertCenterlineToPoints(const lanelet::Lanelet & lanelet);
 geometry_msgs::msg::Pose convertBasicPoint3dToPose(
   const lanelet::BasicPoint3d & point, const double lane_yaw);
+
+bool is_in_lane(const lanelet::ConstLanelet & lanelet, const lanelet::ConstPoint3d & point);
+bool is_in_parking_space(
+  const lanelet::ConstLineStrings3d & parking_spaces, const lanelet::ConstPoint3d & point);
+bool is_in_parking_lot(
+  const lanelet::ConstPolygons3d & parking_lots, const lanelet::ConstPoint3d & point);
+double project_goal_to_map(
+  const lanelet::ConstLanelet & lanelet_component, const lanelet::ConstPoint3d & goal_point);
+geometry_msgs::msg::Pose get_closest_centerline_pose(
+  const lanelet::ConstLanelets & road_lanelets, const geometry_msgs::msg::Pose & point,
+  autoware::vehicle_info_utils::VehicleInfo vehicle_info);
+
+}  // namespace autoware::mission_planner::lanelet2
 #endif  // LANELET2_PLUGINS__UTILITY_FUNCTIONS_HPP_

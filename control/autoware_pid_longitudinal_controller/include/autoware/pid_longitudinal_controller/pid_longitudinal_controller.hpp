@@ -196,6 +196,10 @@ private:
   };
   EmergencyStateParams m_emergency_state_params;
 
+  // acc feedback
+  double m_acc_feedback_gain;
+  std::shared_ptr<LowpassFilter1d> m_lpf_acc_error{nullptr};
+
   // acceleration limit
   double m_max_acc;
   double m_min_acc;
@@ -212,6 +216,7 @@ private:
   std::shared_ptr<LowpassFilter1d> m_lpf_pitch{nullptr};
   double m_max_pitch_rad;
   double m_min_pitch_rad;
+  std::optional<double> m_previous_slope_angle{std::nullopt};
 
   // ego nearest index search
   double m_ego_nearest_dist_threshold;
@@ -249,6 +254,12 @@ private:
   DiagnosticData m_diagnostic_data;
   void setupDiagnosticUpdater();
   void checkControlState(diagnostic_updater::DiagnosticStatusWrapper & stat);
+
+  struct ResultWithReason
+  {
+    bool result{false};
+    std::string reason{""};
+  };
 
   /**
    * @brief set current and previous velocity with received message
@@ -293,6 +304,13 @@ private:
    * @param [in] dt time between previous and current one
    */
   Motion calcEmergencyCtrlCmd(const double dt);
+
+  /**
+   * @brief change control state
+   * @param [in] new state
+   * @param [in] reason to change control state
+   */
+  void changeControlState(const ControlState & control_state, const std::string & reason = "");
 
   /**
    * @brief update control state according to the current situation
@@ -394,11 +412,14 @@ private:
 
   /**
    * @brief update variables for debugging about pitch
-   * @param [in] pitch current pitch of the vehicle (filtered)
-   * @param [in] traj_pitch current trajectory pitch
-   * @param [in] raw_pitch current raw pitch of the vehicle (unfiltered)
+   * @param [in] pitch_using
+   * @param [in] traj_pitch
+   * @param [in] localization_pitch
+   * @param [in] localization_pitch_lpf
    */
-  void updatePitchDebugValues(const double pitch, const double traj_pitch, const double raw_pitch);
+  void updatePitchDebugValues(
+    const double pitch_using, const double traj_pitch, const double localization_pitch,
+    const double localization_pitch_lpf);
 
   /**
    * @brief update variables for velocity and acceleration

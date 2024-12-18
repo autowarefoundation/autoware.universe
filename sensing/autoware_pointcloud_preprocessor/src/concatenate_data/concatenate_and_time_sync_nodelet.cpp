@@ -58,6 +58,7 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <algorithm>
+#include <map>
 #include <memory>
 #include <string>
 #include <utility>
@@ -92,6 +93,7 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
       RCLCPP_ERROR(get_logger(), "Need an 'output_frame' parameter to be set before continuing!");
       return;
     }
+    has_static_tf_only_ = declare_parameter<bool>("has_static_tf_only", false);
     declare_parameter("input_topics", std::vector<std::string>());
     input_topics_ = get_parameter("input_topics").as_string_array();
     if (input_topics_.empty()) {
@@ -137,8 +139,8 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
 
   // tf2 listener
   {
-    tf2_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
-    tf2_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf2_buffer_);
+    managed_tf_buffer_ =
+      std::make_unique<autoware::universe_utils::ManagedTransformBuffer>(this, has_static_tf_only_);
   }
 
   // Output Publishers
@@ -224,25 +226,6 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
   }
 }
 
-//////////////////////////////////////////////////////////////////////////////////////////////
-void PointCloudConcatenateDataSynchronizerComponent::transformPointCloud(
-  const PointCloud2::ConstSharedPtr & in, PointCloud2::SharedPtr & out)
-{
-  // Transform the point clouds into the specified output frame
-  if (output_frame_ != in->header.frame_id) {
-    // TODO(YamatoAndo): use TF2
-    if (!pcl_ros::transformPointCloud(output_frame_, *in, *out, *tf2_buffer_)) {
-      RCLCPP_ERROR(
-        this->get_logger(),
-        "[transformPointCloud] Error converting first input dataset from %s to %s.",
-        in->header.frame_id.c_str(), output_frame_.c_str());
-      return;
-    }
-  } else {
-    out = std::make_shared<PointCloud2>(*in);
-  }
-}
-
 std::string PointCloudConcatenateDataSynchronizerComponent::replaceSyncTopicNamePostfix(
   const std::string & original_topic_name, const std::string & postfix)
 {
@@ -293,7 +276,7 @@ PointCloudConcatenateDataSynchronizerComponent::computeTransformToAdjustForOldTi
 
   // return identity if old_stamp is newer than new_stamp
   if (old_stamp > new_stamp) {
-    RCLCPP_WARN_STREAM_THROTTLE(
+    RCLCPP_DEBUG_STREAM_THROTTLE(
       get_logger(), *get_clock(), std::chrono::milliseconds(10000).count(),
       "old_stamp is newer than new_stamp,");
     return Eigen::Matrix4f::Identity();
@@ -381,7 +364,7 @@ PointCloudConcatenateDataSynchronizerComponent::combineClouds(
       }
       sensor_msgs::msg::PointCloud2::SharedPtr transformed_cloud_ptr(
         new sensor_msgs::msg::PointCloud2());
-      transformPointCloud(e.second, transformed_cloud_ptr);
+      managed_tf_buffer_->transformPointcloud(output_frame_, *e.second, *transformed_cloud_ptr);
 
       // calculate transforms to oldest stamp
       Eigen::Matrix4f adjust_to_old_data_transform = Eigen::Matrix4f::Identity();
@@ -411,9 +394,9 @@ PointCloudConcatenateDataSynchronizerComponent::combineClouds(
       if (keep_input_frame_in_synchronized_pointcloud_ && need_transform_to_sensor_frame) {
         sensor_msgs::msg::PointCloud2::SharedPtr transformed_cloud_ptr_in_sensor_frame(
           new sensor_msgs::msg::PointCloud2());
-        pcl_ros::transformPointCloud(
-          (std::string)e.second->header.frame_id, *transformed_delay_compensated_cloud_ptr,
-          *transformed_cloud_ptr_in_sensor_frame, *tf2_buffer_);
+        managed_tf_buffer_->transformPointcloud(
+          e.second->header.frame_id, *transformed_delay_compensated_cloud_ptr,
+          *transformed_cloud_ptr_in_sensor_frame);
         transformed_cloud_ptr_in_sensor_frame->header.stamp = oldest_stamp;
         transformed_cloud_ptr_in_sensor_frame->header.frame_id = e.second->header.frame_id;
         transformed_clouds[e.first] = transformed_cloud_ptr_in_sensor_frame;
@@ -499,7 +482,7 @@ void PointCloudConcatenateDataSynchronizerComponent::convertToXYZIRCCloud(
 {
   output_ptr->header = input_ptr->header;
 
-  PointCloud2Modifier<PointXYZIRC, autoware_point_types::PointXYZIRCGenerator> output_modifier{
+  PointCloud2Modifier<PointXYZIRC, autoware::point_types::PointXYZIRCGenerator> output_modifier{
     *output_ptr, input_ptr->header.frame_id};
   output_modifier.reserve(input_ptr->width);
 

@@ -15,6 +15,8 @@
 #include "autoware/pure_pursuit/util/interpolate.hpp"
 
 #include <algorithm>
+#include <cstdio>
+#include <iostream>
 #include <vector>
 
 namespace autoware::pure_pursuit
@@ -113,9 +115,8 @@ void SplineInterpolate::generateSpline(const std::vector<double> & x)
   std::vector<double> w_;
   w_.push_back(0.0);
 
-  double tmp;
   for (int i = 1; i < N - 1; i++) {
-    tmp = 1.0 / (4.0 - w_[i - 1]);
+    const double tmp = 1.0 / (4.0 - w_[i - 1]);
     c_[i] = (c_[i] - c_[i - 1]) * tmp;
     w_.push_back(tmp);
   }

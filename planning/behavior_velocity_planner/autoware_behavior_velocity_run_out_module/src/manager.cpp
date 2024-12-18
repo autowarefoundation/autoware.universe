@@ -16,6 +16,7 @@
 
 #include <autoware/universe_utils/ros/parameter.hpp>
 
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -38,7 +39,7 @@ RunOutModuleManager::RunOutModuleManager(rclcpp::Node & node)
     p.left_overhang = vehicle_info.left_overhang_m;
   }
 
-  const std::string ns(getModuleName());
+  const std::string ns(RunOutModuleManager::getModuleName());
 
   {
     auto & p = planner_param_.smoother;
@@ -160,12 +161,12 @@ void RunOutModuleManager::launchNewModules(const tier4_planning_msgs::msg::PathW
 }
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
-RunOutModuleManager::getModuleExpiredFunction(const tier4_planning_msgs::msg::PathWithLaneId & path)
+RunOutModuleManager::getModuleExpiredFunction(
+  [[maybe_unused]] const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
-  return
-    [&path]([[maybe_unused]] const std::shared_ptr<SceneModuleInterface> & scene_module) -> bool {
-      return false;
-    };
+  return []([[maybe_unused]] const std::shared_ptr<SceneModuleInterface> & scene_module) -> bool {
+    return false;
+  };
 }
 
 void RunOutModuleManager::setDynamicObstacleCreator(

@@ -18,6 +18,8 @@
 #include <autoware/motion_utils/marker/virtual_wall_marker_creator.hpp>
 #include <autoware/universe_utils/math/constants.hpp>
 #include <autoware/universe_utils/ros/marker_helper.hpp>
+
+#include <vector>
 using autoware::motion_utils::createStopVirtualWallMarker;
 using autoware::universe_utils::appendMarkerArray;
 using autoware::universe_utils::createDefaultMarker;
@@ -30,26 +32,6 @@ using namespace std::literals::string_literals;
 
 namespace autoware::behavior_velocity_planner
 {
-namespace
-{
-[[maybe_unused]] autoware::universe_utils::LinearRing3d createCircle(
-  const autoware::universe_utils::Point3d & p, const double radius, const size_t num_points = 50)
-{
-  autoware::universe_utils::LinearRing3d ring;  // clockwise and closed
-
-  for (size_t i = 0; i < num_points; ++i) {
-    const double theta = i * (2 * autoware::universe_utils::pi / num_points);
-    const double x = p.x() + radius * std::sin(theta);
-    const double y = p.y() + radius * std::cos(theta);
-    ring.emplace_back(x, y, p.z());
-  }
-
-  // Make closed
-  ring.emplace_back(p.x(), p.y() + radius, p.z());
-
-  return ring;
-}
-}  // namespace
 
 autoware::motion_utils::VirtualWalls VirtualTrafficLightModule::createVirtualWalls()
 {

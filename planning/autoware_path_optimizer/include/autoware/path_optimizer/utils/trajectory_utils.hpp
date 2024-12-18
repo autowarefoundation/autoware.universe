@@ -15,12 +15,12 @@
 #ifndef AUTOWARE__PATH_OPTIMIZER__UTILS__TRAJECTORY_UTILS_HPP_
 #define AUTOWARE__PATH_OPTIMIZER__UTILS__TRAJECTORY_UTILS_HPP_
 
+#include "autoware/interpolation/linear_interpolation.hpp"
+#include "autoware/interpolation/spline_interpolation.hpp"
+#include "autoware/interpolation/spline_interpolation_points_2d.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/path_optimizer/common_structs.hpp"
 #include "autoware/path_optimizer/type_alias.hpp"
-#include "interpolation/linear_interpolation.hpp"
-#include "interpolation/spline_interpolation.hpp"
-#include "interpolation/spline_interpolation_points_2d.hpp"
 
 #include <Eigen/Core>
 
@@ -131,10 +131,6 @@ std::vector<ReferencePoint> convertToReferencePoints(
   const std::vector<TrajectoryPoint> & traj_points);
 
 std::vector<ReferencePoint> sanitizePoints(const std::vector<ReferencePoint> & points);
-
-void compensateLastPose(
-  const PathPoint & last_path_point, std::vector<TrajectoryPoint> & traj_points,
-  const double delta_dist_threshold, const double delta_yaw_threshold);
 
 geometry_msgs::msg::Point getNearestPosition(
   const std::vector<ReferencePoint> & points, const int target_idx, const double offset);

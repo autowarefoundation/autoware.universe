@@ -59,25 +59,34 @@ constexpr int PORT = 7635;
  */
 struct AtaPassThrough12
 {
-  uint8_t operation_code_;      //!< @brief OPERATION CODE (A1h)
-  uint8_t reserved0_ : 1;       //!< @brief Reserved
-  uint8_t protocol_ : 4;        //!< @brief PROTOCOL
+  uint8_t operation_code_;  //!< @brief OPERATION CODE (A1h)
+  // cppcheck-suppress unusedStructMember
+  uint8_t reserved0_ : 1;  //!< @brief Reserved
+  uint8_t protocol_ : 4;   //!< @brief PROTOCOL
+  // cppcheck-suppress unusedStructMember
   uint8_t multiple_count_ : 3;  //!< @brief MULTIPLE_COUNT
   uint8_t t_length_ : 2;        //!< @brief T_LENGTH
   uint8_t byt_blok_ : 1;        //!< @brief BYT_BLOK
   uint8_t t_dir_ : 1;           //!< @brief T_DIR
-  uint8_t reserved1_ : 1;       //!< @brief Reserved
-  uint8_t ck_cond_ : 1;         //!< @brief CK_COND
-  uint8_t off_line_ : 2;        //!< @brief OFF_LINE
-  uint8_t features_;            //!< @brief FEATURES (0:7)
-  uint8_t sector_count_;        //!< @brief SECTOR_COUNT (0:7)
-  uint8_t lba_low_;             //!< @brief LBA_LOW (0:7)
-  uint8_t lba_mid_;             //!< @brief LBA_MID (0:7)
-  uint8_t lbe_high_;            //!< @brief LBE_HIGH (0:7)
-  uint8_t device_;              //!< @brief DEVICE
-  uint8_t command_;             //!< @brief COMMAND
-  uint8_t reserved2_;           //!< @brief Reserved
-  uint8_t control_;             //!< @brief CONTROL
+  // cppcheck-suppress unusedStructMember
+  uint8_t reserved1_ : 1;  //!< @brief Reserved
+  // cppcheck-suppress unusedStructMember
+  uint8_t ck_cond_ : 1;  //!< @brief CK_COND
+  // cppcheck-suppress unusedStructMember
+  uint8_t off_line_ : 2;  //!< @brief OFF_LINE
+  uint8_t features_;      //!< @brief FEATURES (0:7)
+  uint8_t sector_count_;  //!< @brief SECTOR_COUNT (0:7)
+  // cppcheck-suppress unusedStructMember
+  uint8_t lba_low_;   //!< @brief LBA_LOW (0:7)
+  uint8_t lba_mid_;   //!< @brief LBA_MID (0:7)
+  uint8_t lbe_high_;  //!< @brief LBE_HIGH (0:7)
+  // cppcheck-suppress unusedStructMember
+  uint8_t device_;   //!< @brief DEVICE
+  uint8_t command_;  //!< @brief COMMAND
+  // cppcheck-suppress unusedStructMember
+  uint8_t reserved2_;  //!< @brief Reserved
+  // cppcheck-suppress unusedStructMember
+  uint8_t control_;  //!< @brief CONTROL
 };
 
 /**
@@ -321,10 +330,10 @@ int get_nvme_identify(int fd, HddInfo * info)
   char data[4096]{};  // Fixed size for Identify command
 
   // The Identify command returns a data buffer that describes information about the NVM subsystem
-  cmd.opcode = 0x06;            // Identify
-  cmd.addr = (uint64_t)data;    // memory address of data
-  cmd.data_len = sizeof(data);  // length of data
-  cmd.cdw10 = 0x01;             // Identify Controller data structure
+  cmd.opcode = 0x06;                            // Identify
+  cmd.addr = reinterpret_cast<uint64_t>(data);  // memory address of data
+  cmd.data_len = sizeof(data);                  // length of data
+  cmd.cdw10 = 0x01;                             // Identify Controller data structure
 
   // send Admin Command to device
   int ret = ioctl(fd, NVME_IOCTL_ADMIN_CMD, &cmd);
@@ -359,13 +368,13 @@ int get_nvme_smart_data(int fd, HddInfo * info)
   unsigned char data[144]{};  // 36 Dword (get byte 0 to 143)
 
   // The Get Log Page command returns a data buffer containing the log page requested
-  cmd.opcode = 0x02;            // Get Log Page
-  cmd.nsid = 0xFFFFFFFF;        // Global log page
-  cmd.addr = (uint64_t)data;    // memory address of data
-  cmd.data_len = sizeof(data);  // length of data
-  cmd.cdw10 = 0x00240002;       // Bit 27:16 Number of Dwords (NUMD) = 024h (36 Dword)
-                                // - Minimum necessary size to obtain S.M.A.R.T. informations
-                                // Bit 07:00 = 02h (SMART / Health Information)
+  cmd.opcode = 0x02;                            // Get Log Page
+  cmd.nsid = 0xFFFFFFFF;                        // Global log page
+  cmd.addr = reinterpret_cast<uint64_t>(data);  // memory address of data
+  cmd.data_len = sizeof(data);                  // length of data
+  cmd.cdw10 = 0x00240002;  // Bit 27:16 Number of Dwords (NUMD) = 024h (36 Dword)
+                           // - Minimum necessary size to obtain S.M.A.R.T. informations
+                           // Bit 07:00 = 02h (SMART / Health Information)
 
   // send Admin Command to device
   int ret = ioctl(fd, NVME_IOCTL_ADMIN_CMD, &cmd);

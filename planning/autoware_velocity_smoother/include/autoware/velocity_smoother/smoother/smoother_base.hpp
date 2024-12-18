@@ -61,7 +61,8 @@ public:
   virtual ~SmootherBase() = default;
   virtual bool apply(
     const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
-    TrajectoryPoints & output, std::vector<TrajectoryPoints> & debug_trajectories) = 0;
+    TrajectoryPoints & output, std::vector<TrajectoryPoints> & debug_trajectories,
+    const bool publish_debug_trajs) = 0;
 
   virtual TrajectoryPoints resampleTrajectory(
     const TrajectoryPoints & input, const double v0, const geometry_msgs::msg::Pose & current_pose,
@@ -82,6 +83,8 @@ public:
   double getMinJerk() const;
 
   void setWheelBase(const double wheel_base);
+  void setMaxAccel(const double max_acceleration);
+  void setMaxJerk(const double max_jerk);
 
   void setParam(const BaseParam & param);
   BaseParam getBaseParam() const;

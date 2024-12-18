@@ -25,6 +25,8 @@
 
 #include <algorithm>
 #include <limits>
+#include <string>
+#include <vector>
 
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -127,25 +129,7 @@ std::vector<geometry_msgs::msg::Point> findLateralSameSidePoints(
 
 bool isSamePoint(const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2)
 {
-  if (autoware::universe_utils::calcDistance2d(p1, p2) < std::numeric_limits<float>::epsilon()) {
-    return true;
-  }
-
-  return false;
-}
-
-// if path points have the same point as target_point, return the index
-std::optional<size_t> haveSamePoint(
-  const PathPointsWithLaneId & path_points, const geometry_msgs::msg::Point & target_point)
-{
-  for (size_t i = 0; i < path_points.size(); i++) {
-    const auto & path_point = path_points.at(i).point.pose.position;
-    if (isSamePoint(path_point, target_point)) {
-      return i;
-    }
-  }
-
-  return {};
+  return (autoware::universe_utils::calcDistance2d(p1, p2) < std::numeric_limits<float>::epsilon());
 }
 
 // insert path velocity which doesn't exceed original velocity
@@ -244,7 +228,7 @@ PathPointsWithLaneId decimatePathPoints(
   const PathPointsWithLaneId & input_path_points, const float step)
 {
   if (input_path_points.empty()) {
-    return PathPointsWithLaneId();
+    return {};
   }
 
   float dist_sum = 0.0;

@@ -38,7 +38,7 @@ namespace
 }
 
 bool isAttributeValue(
-  const lanelet::ConstPoint3d p, const std::string attr_str, const std::string value_str)
+  const lanelet::ConstPoint3d p, const std::string & attr_str, const std::string & value_str)
 {
   lanelet::Attribute attr = p.attribute(attr_str);
   if (attr.value().compare(value_str) == 0) {
@@ -49,7 +49,7 @@ bool isAttributeValue(
 
 void lightAsMarker(
   const rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr & node_logging,
-  lanelet::ConstPoint3d p, visualization_msgs::msg::Marker * marker, const std::string ns,
+  lanelet::ConstPoint3d p, visualization_msgs::msg::Marker * marker, const std::string & ns,
   const rclcpp::Time & current_time)
 {
   if (marker == nullptr) {
@@ -169,7 +169,7 @@ void TrafficLightMapVisualizerNode::trafficSignalsCallback(
               visualization_msgs::msg::Marker marker;
               if (
                 isAttributeValue(pt, "color", "red") &&
-                elem.color == autoware_perception_msgs::msg::TrafficLightElement::RED) {
+                elem.color == autoware_perception_msgs::msg::TrafficLightElement::RED) {  // NOLINT
                 lightAsMarker(
                   get_node_logging_interface(), pt, &marker, "traffic_light", current_time);
               } else if (  // NOLINT
@@ -177,7 +177,6 @@ void TrafficLightMapVisualizerNode::trafficSignalsCallback(
                 elem.color == autoware_perception_msgs::msg::TrafficLightElement::GREEN) {
                 lightAsMarker(
                   get_node_logging_interface(), pt, &marker, "traffic_light", current_time);
-
               } else if (  // NOLINT
                 isAttributeValue(pt, "color", "yellow") &&
                 elem.color == autoware_perception_msgs::msg::TrafficLightElement::AMBER) {

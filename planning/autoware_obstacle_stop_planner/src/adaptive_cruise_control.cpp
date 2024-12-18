@@ -111,16 +111,6 @@ double getDistanceFromTwoPoint(
   }
 }
 
-constexpr double sign(const double value)
-{
-  if (value > 0) {
-    return 1.0;
-  } else if (value < 0) {
-    return -1.0;
-  } else {
-    return 0.0;
-  }
-}
 }  // namespace
 
 namespace autoware::motion_planning
@@ -573,7 +563,7 @@ double AdaptiveCruiseController::calcUpperVelocity(
 }
 
 double AdaptiveCruiseController::calcThreshDistToForwardObstacle(
-  const double current_vel, const double obj_vel)
+  const double current_vel, const double obj_vel) const
 {
   const double current_vel_min = std::max(1.0, std::fabs(current_vel));
   const double obj_vel_min = std::max(0.0, obj_vel);
@@ -590,7 +580,7 @@ double AdaptiveCruiseController::calcThreshDistToForwardObstacle(
 }
 
 double AdaptiveCruiseController::calcBaseDistToForwardObstacle(
-  const double current_vel, const double obj_vel)
+  const double current_vel, const double obj_vel) const
 {
   const double obj_vel_min = std::max(0.0, obj_vel);
   const double minimum_distance = param_.min_dist_standard;
@@ -605,7 +595,7 @@ double AdaptiveCruiseController::calcBaseDistToForwardObstacle(
 }
 
 double AdaptiveCruiseController::calcTargetVelocity_P(
-  const double target_dist, const double current_dist)
+  const double target_dist, const double current_dist) const
 {
   const double diff_dist = current_dist - target_dist;
   double add_vel_p;
@@ -748,7 +738,7 @@ void AdaptiveCruiseController::registerQueToVelocity(
   est_vel_que_.emplace_back(new_vel);
 }
 
-double AdaptiveCruiseController::getMedianVel(const std::vector<nav_msgs::msg::Odometry> vel_que)
+double AdaptiveCruiseController::getMedianVel(const std::vector<nav_msgs::msg::Odometry> & vel_que)
 {
   if (vel_que.size() == 0) {
     RCLCPP_WARN_STREAM(node_->get_logger(), "size of vel que is 0. Something has wrong.");

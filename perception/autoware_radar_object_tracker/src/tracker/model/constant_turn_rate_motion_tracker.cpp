@@ -30,6 +30,9 @@
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/utils.h>
 
+#include <string>
+#include <vector>
+
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #else
@@ -280,11 +283,10 @@ bool ConstantTurnRateMotionTracker::predict(const double dt, KalmanFilter & ekf)
   // Rotate the covariance matrix according to the vehicle yaw
   // because q_cov_x and y are in the vehicle coordinate system.
   Eigen::MatrixXd Q_xy_local = Eigen::MatrixXd::Zero(2, 2);
-  Eigen::MatrixXd Q_xy_global = Eigen::MatrixXd::Zero(2, 2);
   Q_xy_local << ekf_params_.q_cov_x, 0.0, 0.0, ekf_params_.q_cov_y;
   Eigen::MatrixXd R = Eigen::MatrixXd::Zero(2, 2);
   R << cos(yaw), -sin(yaw), sin(yaw), cos(yaw);
-  Q_xy_global = R * Q_xy_local * R.transpose();
+  Eigen::MatrixXd Q_xy_global = R * Q_xy_local * R.transpose();
   Q.block<2, 2>(IDX::X, IDX::X) = Q_xy_global;
 
   Q(IDX::YAW, IDX::YAW) = ekf_params_.q_cov_yaw;
@@ -366,23 +368,21 @@ bool ConstantTurnRateMotionTracker::measureWithPose(
 
     // covariance need to be rotated since it is in the vehicle coordinate system
     Eigen::MatrixXd Rxy_local = Eigen::MatrixXd::Zero(2, 2);
-    Eigen::MatrixXd Rxy = Eigen::MatrixXd::Zero(2, 2);
     if (!object.kinematics.has_position_covariance) {
       // switch noise covariance in polar coordinate or cartesian coordinate
       const auto r_cov_y = use_polar_coordinate_in_measurement_noise_
                              ? depth * depth * ekf_params_.r_cov_x
                              : ekf_params_.r_cov_y;
       Rxy_local << ekf_params_.r_cov_x, 0, 0, r_cov_y;  // xy in base_link coordinate
-      Rxy = RotationBaseLink * Rxy_local * RotationBaseLink.transpose();
+      R_block_list.push_back(RotationBaseLink * Rxy_local * RotationBaseLink.transpose());
     } else {
       Rxy_local << object.kinematics.pose_with_covariance.covariance[XYZRPY_COV_IDX::X_X],
         object.kinematics.pose_with_covariance.covariance[XYZRPY_COV_IDX::X_Y],
         object.kinematics.pose_with_covariance.covariance[XYZRPY_COV_IDX::Y_X],
         object.kinematics.pose_with_covariance
           .covariance[XYZRPY_COV_IDX::Y_Y];  // xy in vehicle coordinate
-      Rxy = RotationYaw * Rxy_local * RotationYaw.transpose();
+      R_block_list.push_back(RotationYaw * Rxy_local * RotationYaw.transpose());
     }
-    R_block_list.push_back(Rxy);
   }
 
   // 2. add yaw measurement
@@ -500,7 +500,9 @@ bool ConstantTurnRateMotionTracker::measure(
 {
   const auto & current_classification = getClassification();
   object_ = object;
-  if (object_recognition_utils::getHighestProbLabel(object.classification) == Label::UNKNOWN) {
+  if (
+    autoware::object_recognition_utils::getHighestProbLabel(object.classification) ==
+    Label::UNKNOWN) {
     setClassification(current_classification);
   }
 
@@ -520,7 +522,7 @@ bool ConstantTurnRateMotionTracker::measure(
 bool ConstantTurnRateMotionTracker::getTrackedObject(
   const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObject & object) const
 {
-  object = object_recognition_utils::toTrackedObject(object_);
+  object = autoware::object_recognition_utils::toTrackedObject(object_);
   object.object_id = getUUID();
   object.classification = getClassification();
 

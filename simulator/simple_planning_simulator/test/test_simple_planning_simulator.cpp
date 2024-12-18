@@ -19,6 +19,11 @@
 
 #include "tier4_vehicle_msgs/msg/actuation_command_stamped.hpp"
 
+#include <iostream>
+#include <string>
+#include <tuple>
+#include <utility>
+
 #ifdef ROS_DISTRO_GALACTIC
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #else
@@ -221,6 +226,7 @@ void isOnForward(const Odometry & state, const Odometry & init)
 {
   double forward_thr = 1.0;
   double dx = state.pose.pose.position.x - init.pose.pose.position.x;
+  std::cout << "isOnForward: dx: " << dx << ", forward_thr: " << forward_thr << std::endl;
   EXPECT_GT(dx, forward_thr) << "[curr] " << toStrInfo(state) << ", [init] " << toStrInfo(init);
 }
 
@@ -228,6 +234,7 @@ void isOnBackward(const Odometry & state, const Odometry & init)
 {
   double backward_thr = -1.0;
   double dx = state.pose.pose.position.x - init.pose.pose.position.x;
+  std::cout << "isOnBackward: dx: " << dx << ", backward_thr: " << backward_thr << std::endl;
   EXPECT_LT(dx, backward_thr) << "[curr] " << toStrInfo(state) << ", [init] " << toStrInfo(init);
 }
 
@@ -237,6 +244,8 @@ void isOnForwardLeft(const Odometry & state, const Odometry & init)
   double left_thr = 0.1f;
   double dx = state.pose.pose.position.x - init.pose.pose.position.x;
   double dy = state.pose.pose.position.y - init.pose.pose.position.y;
+  std::cout << "isOnForwardLeft: dx: " << dx << ", forward_thr: " << forward_thr << ", dy: " << dy
+            << ", left_thr: " << left_thr << std::endl;
   EXPECT_GT(dx, forward_thr) << "[curr] " << toStrInfo(state) << ", [init] " << toStrInfo(init);
   EXPECT_GT(dy, left_thr) << "[curr] " << toStrInfo(state) << ", [init] " << toStrInfo(init);
 }
@@ -247,6 +256,8 @@ void isOnBackwardRight(const Odometry & state, const Odometry & init)
   double right_thr = -0.1;
   double dx = state.pose.pose.position.x - init.pose.pose.position.x;
   double dy = state.pose.pose.position.y - init.pose.pose.position.y;
+  std::cout << "isOnBackwardRight: dx: " << dx << ", backward_thr: " << backward_thr
+            << ", dy: " << dy << ", right_thr: " << right_thr << std::endl;
   EXPECT_LT(dx, backward_thr) << "[curr] " << toStrInfo(state) << ", [init] " << toStrInfo(init);
   EXPECT_LT(dy, right_thr) << "[curr] " << toStrInfo(state) << ", [init] " << toStrInfo(init);
 }
@@ -265,10 +276,23 @@ void declareVehicleInfoParams(rclcpp::NodeOptions & node_options)
   node_options.append_parameter_override("max_steer_angle", 0.7);
 }
 
+// NOTE:
+// command type and vehicle model type area common params to all vehicle models.
+// currently, no vehicle model requires additional parameters.
+using DefaultParamType = std::tuple<CommandType, std::string>;
+using ParamType = std::variant<DefaultParamType /*,AdditionalParamType*/>;
+std::pair<CommandType, std::string> get_common_params(const ParamType & params)
+{
+  return std::visit(
+    [](const auto & param) -> std::pair<CommandType, std::string> {
+      return std::make_pair(std::get<0>(param), std::get<1>(param));
+    },
+    params);
+}
+
 // Send a control command and run the simulation.
 // Then check if the vehicle is moving in the desired direction.
-class TestSimplePlanningSimulator
-: public ::testing::TestWithParam<std::tuple<CommandType, std::string>>
+class TestSimplePlanningSimulator : public ::testing::TestWithParam<ParamType>
 {
 };
 
@@ -277,10 +301,11 @@ TEST_P(TestSimplePlanningSimulator, TestIdealSteerVel)
   rclcpp::init(0, nullptr);
 
   const auto params = GetParam();
-  const auto command_type = std::get<0>(params);
-  const auto vehicle_model_type = std::get<1>(params);
-
+  const auto common_params = get_common_params(params);
+  const auto command_type = common_params.first;
+  const auto vehicle_model_type = common_params.second;
   std::cout << "\n\n vehicle model = " << vehicle_model_type << std::endl << std::endl;
+
   rclcpp::NodeOptions node_options;
   node_options.append_parameter_override("initialize_source", "INITIAL_POSE_TOPIC");
   node_options.append_parameter_override("vehicle_model_type", vehicle_model_type);
@@ -292,7 +317,6 @@ TEST_P(TestSimplePlanningSimulator, TestIdealSteerVel)
   node_options.append_parameter_override("brake_time_constant", 0.2);
   node_options.append_parameter_override("convert_accel_cmd", true);
   node_options.append_parameter_override("convert_brake_cmd", true);
-  node_options.append_parameter_override("convert_steer_cmd", true);
   const auto share_dir = ament_index_cpp::get_package_share_directory("simple_planning_simulator");
   const auto accel_map_path = share_dir + "/test/actuation_cmd_map/accel_map.csv";
   const auto brake_map_path = share_dir + "/test/actuation_cmd_map/brake_map.csv";
@@ -300,9 +324,34 @@ TEST_P(TestSimplePlanningSimulator, TestIdealSteerVel)
   node_options.append_parameter_override("accel_map_path", accel_map_path);
   node_options.append_parameter_override("brake_map_path", brake_map_path);
   node_options.append_parameter_override("steer_map_path", steer_map_path);
+  node_options.append_parameter_override("vgr_coef_a", 15.713);
+  node_options.append_parameter_override("vgr_coef_b", 0.053);
+  node_options.append_parameter_override("vgr_coef_c", 0.042);
+  // mechanical parameters
+  node_options.append_parameter_override("mechanical_params.kp", 386.915);
+  node_options.append_parameter_override("mechanical_params.ki", 5.461);
+  node_options.append_parameter_override("mechanical_params.kd", 0.036);
+  node_options.append_parameter_override("mechanical_params.ff_gain", 0.031);
+  node_options.append_parameter_override("mechanical_params.angle_limit", 10.0);
+  node_options.append_parameter_override("mechanical_params.rate_limit", 3.0);
+  node_options.append_parameter_override("mechanical_params.dead_zone_threshold", 0.007);
+  node_options.append_parameter_override("mechanical_params.poly_a", 0.153);
+  node_options.append_parameter_override("mechanical_params.poly_b", -0.173);
+  node_options.append_parameter_override("mechanical_params.poly_c", 1.590);
+  node_options.append_parameter_override("mechanical_params.poly_d", 0.002);
+  node_options.append_parameter_override("mechanical_params.poly_e", -0.042);
+  node_options.append_parameter_override("mechanical_params.poly_f", 0.184);
+  node_options.append_parameter_override("mechanical_params.poly_g", -0.063);
+  node_options.append_parameter_override("mechanical_params.poly_h", 0.187);
+  node_options.append_parameter_override("mechanical_params.inertia", 25.178);
+  node_options.append_parameter_override("mechanical_params.damping", 117.007);
+  node_options.append_parameter_override("mechanical_params.stiffness", 0.175);
+  node_options.append_parameter_override("mechanical_params.friction", 0.660);
+  node_options.append_parameter_override("mechanical_params.steering_torque_limit", 30.0);
+  node_options.append_parameter_override("mechanical_params.torque_delay_time", 0.001);
 
   declareVehicleInfoParams(node_options);
-  const auto sim_node = std::make_shared<SimplePlanningSimulator>(node_options);
+  auto sim_node = std::make_shared<SimplePlanningSimulator>(node_options);
 
   const auto pub_sub_node = std::make_shared<PubSubNode>();
 
@@ -314,7 +363,7 @@ TEST_P(TestSimplePlanningSimulator, TestIdealSteerVel)
   // acceleration or braking, and whether it turns left or right, and generate an actuation
   // command. So do not change the map. If it is necessary, you need to change this parameters as
   // well.
-  const double target_steer_actuation = 10.0f;
+  const double target_steer_actuation = 20.0f;
   const double target_accel_actuation = 0.5f;
   // const double target_brake_actuation = 0.5f;  // unused for now.
 
@@ -325,10 +374,15 @@ TEST_P(TestSimplePlanningSimulator, TestIdealSteerVel)
     const auto t = sim_node->now();
     sendCommand(command_type, sim_node, pub_sub_node, t, ackermann_cmd, actuation_cmd);
   };
+  // NOTE: Since the node has a queue, the node needs to be re-created.
+  auto _restartNode = [&]() {
+    sim_node.reset();
+    sim_node = std::make_shared<SimplePlanningSimulator>(node_options);
+  };
 
   // check pub-sub connections
   {
-    size_t expected = 1;
+    constexpr size_t expected = 1;
     // actuation or ackermann must be subscribed
     const auto sub_command_count =
       (command_type == CommandType::Actuation)
@@ -354,6 +408,7 @@ TEST_P(TestSimplePlanningSimulator, TestIdealSteerVel)
 
   // go backward
   // NOTE: positive acceleration with reverse gear drives the vehicle backward.
+  _restartNode();
   _resetInitialpose();
   _sendBwdGear();
   _sendCommand(
@@ -362,6 +417,7 @@ TEST_P(TestSimplePlanningSimulator, TestIdealSteerVel)
   isOnBackward(*(pub_sub_node->current_odom_), init_state);
 
   // go forward left
+  _restartNode();
   _resetInitialpose();
   _sendFwdGear();
   _sendCommand(
@@ -371,6 +427,7 @@ TEST_P(TestSimplePlanningSimulator, TestIdealSteerVel)
 
   // go backward right
   // NOTE: positive acceleration with reverse gear drives the vehicle backward.
+  _restartNode();
   _resetInitialpose();
   _sendBwdGear();
   _sendCommand(
@@ -393,4 +450,9 @@ INSTANTIATE_TEST_SUITE_P(
     std::make_tuple(CommandType::Ackermann, "DELAY_STEER_ACC_GEARED"),
     std::make_tuple(CommandType::Ackermann, "DELAY_STEER_ACC_GEARED_WO_FALL_GUARD"),
     /* Actuation type */
-    std::make_tuple(CommandType::Actuation, "ACTUATION_CMD")));
+    // NOTE: Just "ACTUATION_CMD" sim model converts only accel/brake actuation commands. The test
+    // is performed for models that convert all accel/brake/steer commands, so the test for
+    // accel/brake alone is skipped.
+    std::make_tuple(CommandType::Actuation, "ACTUATION_CMD_STEER_MAP"),
+    std::make_tuple(CommandType::Actuation, "ACTUATION_CMD_VGR"),
+    std::make_tuple(CommandType::Actuation, "ACTUATION_CMD_MECHANICAL")));

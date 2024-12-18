@@ -31,6 +31,9 @@
 
 #include <algorithm>
 #include <limits>
+#include <map>
+#include <string>
+#include <utility>
 
 namespace autoware::motion_planning
 {
@@ -228,7 +231,7 @@ std::string jsonDumpsPose(const Pose & pose)
   return json_dumps_pose;
 }
 
-DiagnosticStatus makeStopReasonDiag(const std::string stop_reason, const Pose & stop_pose)
+DiagnosticStatus makeStopReasonDiag(const std::string & stop_reason, const Pose & stop_pose)
 {
   DiagnosticStatus stop_reason_diag;
   KeyValue stop_reason_diag_kv;

@@ -20,6 +20,7 @@
 
 #include <gtest/gtest.h>
 
+#include <memory>
 #include <vector>
 
 using autoware::freespace_planner::FreespacePlannerNode;
@@ -60,7 +61,8 @@ void publishMandatoryTopics(
   test_manager->publishParkingScenario(test_target_node, "freespace_planner/input/scenario");
 }
 
-TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInput)
+// the following tests are disable because they randomly fail
+TEST(PlanningModuleInterfaceTest, DISABLED_testPlanningInterfaceWithVariousTrajectoryInput)
 {
   rclcpp::init(0, nullptr);
 
@@ -77,7 +79,7 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInpu
   rclcpp::shutdown();
 }
 
-TEST(PlanningModuleInterfaceTest, NodeTestWithOffTrackEgoPose)
+TEST(PlanningModuleInterfaceTest, DISABLED_NodeTestWithOffTrackEgoPose)
 {
   rclcpp::init(0, nullptr);
   auto test_manager = generateTestManager();

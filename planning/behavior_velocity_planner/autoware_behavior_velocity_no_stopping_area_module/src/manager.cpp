@@ -16,17 +16,12 @@
 
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
 #include <autoware/universe_utils/ros/parameter.hpp>
-#include <autoware_lanelet2_extension/utility/query.hpp>
-
-#include <tf2/utils.h>
 
 #include <limits>
 #include <memory>
 #include <set>
 #include <string>
-#include <unordered_map>
 #include <utility>
-#include <vector>
 
 namespace autoware::behavior_velocity_planner
 {
@@ -37,7 +32,7 @@ NoStoppingAreaModuleManager::NoStoppingAreaModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterfaceWithRTC(
     node, getModuleName(), getEnableRTC(node, std::string(getModuleName()) + ".enable_rtc"))
 {
-  const std::string ns(getModuleName());
+  const std::string ns(NoStoppingAreaModuleManager::getModuleName());
   auto & pp = planner_param_;
   const auto & vi = autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo();
   pp.state_clear_time = getOrDeclareParameter<double>(node, ns + ".state_clear_time");

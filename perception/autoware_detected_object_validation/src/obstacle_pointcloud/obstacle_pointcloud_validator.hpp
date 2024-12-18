@@ -65,7 +65,7 @@ protected:
 
 public:
   explicit Validator(const PointsNumThresholdParam & points_num_threshold_param);
-  inline pcl::PointCloud<pcl::PointXYZ>::Ptr getDebugPointCloudWithinObject()
+  inline pcl::PointCloud<pcl::PointXYZ>::Ptr getDebugPointCloudWithinObject() const
   {
     return cropped_pointcloud_;
   }
@@ -92,7 +92,7 @@ private:
 public:
   explicit Validator2D(PointsNumThresholdParam & points_num_threshold_param);
 
-  pcl::PointCloud<pcl::PointXYZ>::Ptr convertToXYZ(
+  static pcl::PointCloud<pcl::PointXYZ>::Ptr convertToXYZ(
     const pcl::PointCloud<pcl::PointXY>::Ptr & pointcloud_xy);
   inline pcl::PointCloud<pcl::PointXYZ>::Ptr getDebugNeighborPointCloud() override
   {
@@ -152,6 +152,7 @@ private:
   typedef message_filters::Synchronizer<SyncPolicy> Sync;
   Sync sync_;
   PointsNumThresholdParam points_num_threshold_param_;
+  double validate_max_distance_sq_;  // maximum object distance to validate, squared [m^2]
 
   std::shared_ptr<Debugger> debugger_;
   bool using_2d_validator_;

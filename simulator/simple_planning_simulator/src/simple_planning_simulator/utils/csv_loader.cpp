@@ -15,8 +15,10 @@
 #include "simple_planning_simulator/utils/csv_loader.hpp"
 
 #include <algorithm>
+#include <iostream>
 #include <stdexcept>
 #include <string>
+#include <utility>
 #include <vector>
 
 CSVLoader::CSVLoader(const std::string & csv_path)
@@ -119,7 +121,7 @@ Map CSVLoader::getMap(const Table & table)
   return map;
 }
 
-std::vector<double> CSVLoader::getRowIndex(const Table & table)
+std::vector<double> CSVLoader::getColumnIndex(const Table & table)
 {
   // NOTE: table[0][i] represents the element in the 0-th row and i-th column
   // This means that we are getting the index of each column in the 0-th row
@@ -130,7 +132,7 @@ std::vector<double> CSVLoader::getRowIndex(const Table & table)
   return index;
 }
 
-std::vector<double> CSVLoader::getColumnIndex(const Table & table)
+std::vector<double> CSVLoader::getRowIndex(const Table & table)
 {
   // NOTE: table[i][0] represents the element in the i-th row and 0-th column
   // This means that we are getting the index of each row in the 0-th column

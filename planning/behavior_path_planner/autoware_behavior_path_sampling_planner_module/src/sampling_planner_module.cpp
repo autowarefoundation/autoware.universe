@@ -14,6 +14,15 @@
 
 #include "autoware/behavior_path_sampling_planner_module/sampling_planner_module.hpp"
 
+#include <algorithm>
+#include <iostream>
+#include <limits>
+#include <memory>
+#include <string>
+#include <unordered_map>
+#include <utility>
+#include <vector>
+
 namespace autoware::behavior_path_planner
 {
 using autoware::motion_utils::calcSignedArcLength;
@@ -246,7 +255,6 @@ bool SamplingPlannerModule::isReferencePathSafe() const
       sampling_planner_data.left_bound, sampling_planner_data.right_bound);
   }
 
-  std::vector<bool> hard_constraints_results;
   auto transform_to_sampling_path = [](const PlanResult plan) {
     autoware::sampler_common::Path path;
     for (size_t i = 0; i < plan->points.size(); ++i) {
@@ -591,13 +599,11 @@ BehaviorModuleOutput SamplingPlannerModule::plan()
   soft_constraints_input.closest_lanelets_to_goal = {closest_lanelet_to_goal};
 
   debug_data_.footprints.clear();
-  std::vector<std::vector<bool>> hard_constraints_results_full;
   std::vector<std::vector<double>> soft_constraints_results_full;
   for (auto & path : frenet_paths) {
     const auto footprint = autoware::sampler_common::constraints::buildFootprintPoints(
       path, internal_params_->constraints);
-    std::vector<bool> hard_constraints_results =
-      evaluateHardConstraints(path, internal_params_->constraints, footprint, hard_constraints_);
+    evaluateHardConstraints(path, internal_params_->constraints, footprint, hard_constraints_);
     path.constraint_results.valid_curvature = true;
     debug_data_.footprints.push_back(footprint);
     std::vector<double> soft_constraints_results = evaluateSoftConstraints(
@@ -955,7 +961,7 @@ autoware::frenet_planner::SamplingParameters SamplingPlannerModule::prepareSampl
     max_d -= params_.constraints.ego_width / 2.0;
     if (min_d < max_d) {
       for (auto r = 0.0; r <= 1.0; r += 1.0 / (params_.sampling.nb_target_lateral_positions - 1))
-        target_lateral_positions.push_back(interpolation::lerp(min_d, max_d, r));
+        target_lateral_positions.push_back(autoware::interpolation::lerp(min_d, max_d, r));
     }
   } else {
     target_lateral_positions = params_.sampling.target_lateral_positions;

@@ -14,6 +14,12 @@
 
 #include "utils.hpp"
 
+#include <algorithm>
+#include <map>
+#include <memory>
+#include <string>
+#include <vector>
+
 namespace reaction_analyzer
 {
 SubscriberMessageType get_subscriber_message_type(const std::string & message_type)
@@ -222,9 +228,9 @@ size_t get_index_after_distance(
   const TrajectoryPoint & curr_p = traj.points.at(curr_id);
 
   size_t target_id = curr_id;
-  double current_distance = 0.0;
   for (size_t traj_id = curr_id + 1; traj_id < traj.points.size(); ++traj_id) {
-    current_distance = autoware::universe_utils::calcDistance3d(traj.points.at(traj_id), curr_p);
+    const double current_distance =
+      autoware::universe_utils::calcDistance3d(traj.points.at(traj_id), curr_p);
     if (current_distance >= distance) {
       break;
     }

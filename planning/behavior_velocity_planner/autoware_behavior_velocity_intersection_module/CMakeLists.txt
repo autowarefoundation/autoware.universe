@@ -22,11 +22,25 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/debug.cpp
 )
 
+target_include_directories(${PROJECT_NAME} SYSTEM PUBLIC
+  ${OpenCV_INCLUDE_DIRS}
+)
+
 target_link_libraries(${PROJECT_NAME}
   ${OpenCV_LIBRARIES}
 )
 
 ament_auto_package(INSTALL_TO_SHARE config)
+
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+  file(GLOB_RECURSE TEST_SOURCES test/*.cpp)
+  ament_add_ros_isolated_gtest(test_${PROJECT_NAME}
+    ${TEST_SOURCES}
+  )
+  target_link_libraries(test_${PROJECT_NAME} ${PROJECT_NAME})
+endif()
 
 install(PROGRAMS
   scripts/ttc.py

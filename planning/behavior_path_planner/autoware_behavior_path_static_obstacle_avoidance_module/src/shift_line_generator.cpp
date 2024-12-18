@@ -17,6 +17,11 @@
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/utils.hpp"
 
+#include <algorithm>
+#include <string>
+#include <utility>
+#include <vector>
+
 namespace autoware::behavior_path_planner::utils::static_obstacle_avoidance
 {
 
@@ -179,7 +184,7 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
     }
 
     // calculate lateral jerk.
-    const auto required_jerk = PathShifter::calcJerkFromLatLonDistance(
+    const auto required_jerk = autoware::motion_utils::calc_jerk_from_lat_lon_distance(
       avoiding_shift, avoidance_distance, helper_->getAvoidanceEgoSpeed());
 
     // relax lateral jerk limit. avoidable.
@@ -201,7 +206,7 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
     }
 
     // output avoidance path under lateral jerk constraints.
-    const auto feasible_relative_shift_length = PathShifter::calcLateralDistFromJerk(
+    const auto feasible_relative_shift_length = autoware::motion_utils::calc_lateral_dist_from_jerk(
       avoidance_distance, helper_->getLateralMaxJerkLimit(), helper_->getAvoidanceEgoSpeed());
 
     if (std::abs(feasible_relative_shift_length) < parameters_->lateral_execution_threshold) {
@@ -248,6 +253,11 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
     return s.start_longitudinal > 0.0 && s.start_longitudinal < s.end_longitudinal;
   };
 
+  const auto is_approved = [this](const auto & object) {
+    return (helper_->getShift(object.getPosition()) > 0.0 && isOnRight(object)) ||
+           (helper_->getShift(object.getPosition()) < 0.0 && !isOnRight(object));
+  };
+
   ObjectDataArray unavoidable_objects;
 
   // target objects are sorted by longitudinal distance.
@@ -284,6 +294,11 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
     // calculate feasible shift length based on behavior policy
     const auto feasible_shift_profile = get_shift_profile(o, desire_shift_length);
     if (!feasible_shift_profile.has_value()) {
+      if (is_approved(o)) {
+        // the avoidance path for this object has already approved
+        o.is_avoidable = true;
+        continue;
+      }
       if (o.avoid_required && is_forward_object(o) && is_on_path(o)) {
         break;
       } else {
@@ -394,7 +409,7 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
       outlines.emplace_back(al_avoid, std::nullopt);
     } else if (is_valid_shift_line(al_avoid) && is_valid_shift_line(al_return)) {
       outlines.emplace_back(al_avoid, al_return);
-    } else {
+    } else if (!is_approved(o)) {
       o.info = ObjectInfo::INVALID_SHIFT_LINE;
       continue;
     }
@@ -812,7 +827,7 @@ AvoidLineArray ShiftLineGenerator::applyFillGapProcess(
 
   // fill gap among shift lines.
   for (size_t i = 0; i < sorted.size() - 1; ++i) {
-    if (sorted.at(i + 1).start_longitudinal < sorted.at(i).end_longitudinal) {
+    if (sorted.at(i + 1).start_longitudinal < sorted.at(i).end_longitudinal + 1e-3) {
       continue;
     }
 

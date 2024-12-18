@@ -24,12 +24,13 @@
 
 ### Output topics
 
-| Name                   | Type                                 | Description                            |
-| ---------------------- | ------------------------------------ | -------------------------------------- |
-| `~output/trajectory`   | autoware_planning_msgs::Trajectory   | trajectory to be followed              |
-| `~output/stop_reasons` | tier4_planning_msgs::StopReasonArray | reasons that cause the vehicle to stop |
+| Name                 | Type                               | Description               |
+| -------------------- | ---------------------------------- | ------------------------- |
+| `~output/trajectory` | autoware_planning_msgs::Trajectory | trajectory to be followed |
 
 ### Common Parameter
+
+{{ json_to_markdown("planning/autoware_obstacle_stop_planner/schema/common.schema.json") }}
 
 | Parameter                              | Type   | Description                                                                               |
 | -------------------------------------- | ------ | ----------------------------------------------------------------------------------------- |
@@ -102,6 +103,8 @@ stopped due to other factors.
 </figure>
 
 ### Parameters
+
+{{ json_to_markdown("planning/autoware_obstacle_stop_planner/schema/obstacle_stop_planner.schema.json") }}
 
 #### Stop position
 
@@ -185,6 +188,8 @@ down section.
 </figure>
 
 ### Parameters
+
+{{ json_to_markdown("planning/autoware_obstacle_stop_planner/schema/adaptive_cruise_control.schema.json") }}
 
 #### Slow down section
 
