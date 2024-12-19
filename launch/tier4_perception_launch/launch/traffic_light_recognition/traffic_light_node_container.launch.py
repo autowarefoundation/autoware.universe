@@ -62,9 +62,9 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
     camera_arguments = {
         "input/image": f"/sensing/camera/{namespace}/image_raw",
         "output/rois": f"/perception/traffic_light_recognition/{namespace}/detection/rois",
-        "output/traffic_signals": f"/perception/traffic_light_recognition/{namespace}/classification/traffic_signals",
-        "output/car/traffic_signals": f"/perception/traffic_light_recognition/{namespace}/classification/car/traffic_signals",
-        "output/pedestrian/traffic_signals": f"/perception/traffic_light_recognition/{namespace}/classification/pedestrian/traffic_signals",
+        "output/traffic_lights": f"/perception/traffic_light_recognition/{namespace}/classification/traffic_lights",
+        "output/car/traffic_lights": f"/perception/traffic_light_recognition/{namespace}/classification/car/traffic_lights",
+        "output/pedestrian/traffic_lights": f"/perception/traffic_light_recognition/{namespace}/classification/pedestrian/traffic_lights",
     }
 
     def create_parameter_dict(*args):
@@ -101,7 +101,7 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
                 remappings=[
                     ("~/input/image", camera_arguments["input/image"]),
                     ("~/input/rois", camera_arguments["output/rois"]),
-                    ("~/output/traffic_signals", "classified/car/traffic_signals"),
+                    ("~/output/traffic_lights", "classified/car/traffic_lights"),
                 ],
                 extra_arguments=[
                     {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
@@ -116,7 +116,7 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
                 remappings=[
                     ("~/input/image", camera_arguments["input/image"]),
                     ("~/input/rois", camera_arguments["output/rois"]),
-                    ("~/output/traffic_signals", "classified/pedestrian/traffic_signals"),
+                    ("~/output/traffic_lights", "classified/pedestrian/traffic_lights"),
                 ],
                 extra_arguments=[
                     {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
@@ -132,8 +132,8 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
                     ("~/input/rois", camera_arguments["output/rois"]),
                     ("~/input/rough/rois", "detection/rough/rois"),
                     (
-                        "~/input/traffic_signals",
-                        camera_arguments["output/traffic_signals"],
+                        "~/input/traffic_lights",
+                        camera_arguments["output/traffic_lights"],
                     ),
                     ("~/output/image", "debug/rois"),
                     ("~/output/image/compressed", "debug/rois/compressed"),
