@@ -160,6 +160,8 @@ struct TargetObjects
   : leading(std::move(leading)), trailing(std::move(trailing))
   {
   }
+
+  [[nodiscard]] bool empty() const { return leading.empty() && trailing.empty(); }
 };
 
 enum class ModuleType {
