@@ -1160,8 +1160,7 @@ bool NormalLaneChange::get_lane_change_paths(LaneChangePaths & candidate_paths) 
       LaneChangePath candidate_path;
       try {
         candidate_path = utils::lane_change::get_candidate_path(
-          common_data_ptr_, prep_metric, lc_metric, prepare_segment, sorted_lane_ids,
-          lane_changing_start_pose, shift_length);
+          common_data_ptr_, prep_metric, lc_metric, prepare_segment, sorted_lane_ids, shift_length);
       } catch (const std::exception & e) {
         debug_print_lat(std::string("Reject: ") + e.what());
         continue;

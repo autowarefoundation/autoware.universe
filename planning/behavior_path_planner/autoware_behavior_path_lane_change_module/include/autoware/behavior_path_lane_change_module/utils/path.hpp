@@ -32,7 +32,7 @@ using behavior_path_planner::lane_change::CommonDataPtr;
  *
  * This function generates the "prepare segment" of the path by trimming it to the specified length,
  * adjusting longitudinal velocity for acceleration or deceleration, and ensuring the starting point
- * meets necessary constraints for a lane change. the ego vehicle for a lane change. It adjusts the
+ * meets necessary constraints for a lane change.
  *
  * @param common_data_ptr Shared pointer to CommonData containing current and target lane
  *                        information, vehicle parameters, and ego state.
@@ -75,8 +75,7 @@ bool get_prepare_segment(
 LaneChangePath get_candidate_path(
   const CommonDataPtr & common_data_ptr, const LaneChangePhaseMetrics & prep_metric,
   const LaneChangePhaseMetrics & lc_metric, const PathWithLaneId & prep_segment,
-  const std::vector<std::vector<int64_t>> & sorted_lane_ids, const Pose & lc_start_pose,
-  const double shift_length);
+  const std::vector<std::vector<int64_t>> & sorted_lane_ids, const double shift_length);
 
 /**
  * @brief Constructs a candidate path for a lane change maneuver.
