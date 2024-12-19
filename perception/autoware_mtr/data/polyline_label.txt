@@ -1,0 +1,13 @@
+road
+highway
+road_shoulder
+bicycle_lane
+pedestrian_lane
+walkway
+dashed
+solid
+dashed_dashed
+road_boarder
+crosswalk
+traffic_sign
+speed_bump
