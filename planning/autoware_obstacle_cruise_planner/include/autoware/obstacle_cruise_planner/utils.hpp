@@ -28,6 +28,30 @@
 
 namespace obstacle_cruise_utils
 {
+std::vector<Polygon2d> createOneStepPolygons(
+  const std::vector<TrajectoryPoint> & traj_points,
+  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
+  const geometry_msgs::msg::Pose & current_ego_pose, const double lat_margin,
+  const BehaviorDeterminationParam & behavior_determination_param);
+
+template <typename T>
+std::optional<T> getObstacleFromUuid(
+  const std::vector<T> & obstacles, const std::string & target_uuid)
+{
+  const auto itr = std::find_if(obstacles.begin(), obstacles.end(), [&](const auto & obstacle) {
+    return obstacle.uuid == target_uuid;
+  });
+
+  if (itr == obstacles.end()) {
+    return std::nullopt;
+  }
+  return *itr;
+}
+
+std::vector<int> getTargetObjectType(rclcpp::Node & node, const std::string & param_prefix);
+
+double calcObstacleMaxLength(const Shape & shape);
+
 Marker getObjectMarker(
   const geometry_msgs::msg::Pose & obj_pose, size_t idx, const std::string & ns, const double r,
   const double g, const double b);
