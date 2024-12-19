@@ -87,7 +87,6 @@ private:
 
   struct ControlData
   {
-    bool is_far_from_trajectory{false};
     autoware_planning_msgs::msg::Trajectory interpolated_traj{};
     size_t nearest_idx{0};  // nearest_idx = 0 when nearest_idx is not found with findNearestIdx
     size_t target_idx{0};
@@ -162,8 +161,6 @@ private:
     double stopped_state_entry_acc;
     // emergency
     double emergency_state_overshoot_stop_dist;
-    double emergency_state_traj_trans_dev;
-    double emergency_state_traj_rot_dev;
   };
   StateTransitionParams m_state_transition_params;
 
@@ -246,12 +243,6 @@ private:
   // Diagnostic
   std::shared_ptr<diagnostic_updater::Updater>
     diag_updater_{};  // Diagnostic updater for publishing diagnostic data.
-  struct DiagnosticData
-  {
-    double trans_deviation{0.0};  // translation deviation between nearest point and current_pose
-    double rot_deviation{0.0};    // rotation deviation between nearest point and current_pose
-  };
-  DiagnosticData m_diagnostic_data;
   void setupDiagnosticUpdater();
   void checkControlState(diagnostic_updater::DiagnosticStatusWrapper & stat);
 
