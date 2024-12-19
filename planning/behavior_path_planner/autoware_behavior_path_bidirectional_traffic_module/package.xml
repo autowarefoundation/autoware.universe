@@ -15,10 +15,9 @@
 
   <depend>autoware_behavior_path_planner</depend>
   <depend>autoware_behavior_path_planner_common</depend>
-  <depend>rclcpp</depend>
-  <depend>lanelet2_core</depend>
   <depend>autoware_trajectory</depend>
-
+  <depend>lanelet2_core</depend>
+  <depend>rclcpp</depend>
 
   <test_depend>ament_cmake_ros</test_depend>
   <test_depend>ament_lint_auto</test_depend>

@@ -27,7 +27,8 @@ void BidirectionalTrafficModuleManager::init(rclcpp::Node * node)
   initInterface(node, {});
 }
 
-std::unique_ptr<SceneModuleInterface> BidirectionalTrafficModuleManager::createNewSceneModuleInstance()
+std::unique_ptr<SceneModuleInterface>
+BidirectionalTrafficModuleManager::createNewSceneModuleInstance()
 {
   return std::make_unique<BidirectionalTrafficModule>(
     "bidirectional_traffic", *node_, rtc_interface_ptr_map_,

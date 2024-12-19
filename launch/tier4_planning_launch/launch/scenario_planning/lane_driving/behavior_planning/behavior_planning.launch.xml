@@ -58,7 +58,7 @@
     name="behavior_path_planner_launch_modules"
     value="$(eval &quot;'$(var behavior_path_planner_launch_modules)' + 'autoware::behavior_path_planner::BidirectionalLaneModuleManager, '&quot;)"
     if="$(var launch_bidirectional_traffic_module)"
-  />  
+  />
   <let
     name="behavior_path_planner_launch_modules"
     value="$(eval &quot;'$(var behavior_path_planner_launch_modules)' + 'autoware::behavior_path_planner::StartPlannerModuleManager, '&quot;)"
