@@ -61,7 +61,7 @@ protected:
 
   void fuseOnSingleImage(
     const PointCloud2 & input_pointcloud_msg, const std::size_t image_id, const Image & input_mask,
-    const CameraInfo & camera_info, PointCloud2 & output_pointcloud_msg) override;
+    PointCloud2 & output_pointcloud_msg) override;
 
   bool out_of_scope(const PointCloud2 & filtered_cloud) override;
   inline void copyPointCloud(
