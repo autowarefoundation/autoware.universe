@@ -454,7 +454,7 @@ bool MpcLateralController::isStoppedState() const
     m_current_trajectory.points, m_current_kinematic_state.pose.pose, m_ego_nearest_dist_threshold,
     m_ego_nearest_yaw_threshold);
 
-  const auto wheelbase_length = m_mpc->get_wheelbase_length();
+  static constexpr double distance_margin = 1.0;
   const double target_vel = std::invoke([&]() -> double {
     auto min_vel = m_current_trajectory.points.at(nearest).longitudinal_velocity_mps;
     auto covered_distance = 0.0;
@@ -462,7 +462,7 @@ bool MpcLateralController::isStoppedState() const
       min_vel = std::min(min_vel, m_current_trajectory.points.at(i).longitudinal_velocity_mps);
       covered_distance += autoware::universe_utils::calcDistance2d(
         m_current_trajectory.points.at(i - 1).pose, m_current_trajectory.points.at(i).pose);
-      if (covered_distance > wheelbase_length) break;
+      if (covered_distance > distance_margin) break;
     }
     return min_vel;
   });
