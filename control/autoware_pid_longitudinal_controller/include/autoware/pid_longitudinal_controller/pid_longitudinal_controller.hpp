@@ -50,11 +50,8 @@
 
 namespace autoware::motion::control::pid_longitudinal_controller
 {
-using autoware::universe_utils::createDefaultMarker;
-using autoware::universe_utils::createMarkerColor;
-using autoware::universe_utils::createMarkerScale;
 using autoware_adapi_v1_msgs::msg::OperationModeState;
-using visualization_msgs::msg::Marker;
+using visualization_msgs::msg::MarkerArray;
 
 namespace trajectory_follower = ::autoware::motion::control::trajectory_follower;
 
@@ -103,7 +100,7 @@ private:
   // ros variables
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr m_pub_slope;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr m_pub_debug;
-  rclcpp::Publisher<Marker>::SharedPtr m_pub_stop_reason_marker;
+  rclcpp::Publisher<MarkerArray>::SharedPtr m_pub_virtual_wall_marker;
 
   rclcpp::Node::OnSetParametersCallbackHandle::SharedPtr m_set_param_res;
   rcl_interfaces::msg::SetParametersResult paramCallback(

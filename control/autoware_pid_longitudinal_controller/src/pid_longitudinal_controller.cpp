@@ -14,6 +14,7 @@
 
 #include "autoware/pid_longitudinal_controller/pid_longitudinal_controller.hpp"
 
+#include "autoware/motion_utils/marker/marker_helper.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware/universe_utils/math/normalization.hpp"
@@ -215,7 +216,7 @@ PidLongitudinalController::PidLongitudinalController(
     "~/output/slope_angle", rclcpp::QoS{1});
   m_pub_debug = node.create_publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>(
     "~/output/longitudinal_diagnostic", rclcpp::QoS{1});
-  m_pub_stop_reason_marker = node.create_publisher<Marker>("~/output/stop_reason", rclcpp::QoS{1});
+  m_pub_virtual_wall_marker = node.create_publisher<MarkerArray>("~/virtual_wall", 1);
 
   // set parameter callback
   m_set_param_res = node.add_on_set_parameters_callback(
@@ -521,8 +522,8 @@ PidLongitudinalController::ControlData PidLongitudinalController::getControlData
 
   // distance to stopline
   control_data.stop_dist = longitudinal_utils::calcStopDistance(
-    control_data.interpolated_traj.points.at(control_data.nearest_idx).pose,
-    control_data.interpolated_traj, m_ego_nearest_dist_threshold, m_ego_nearest_yaw_threshold);
+    current_pose, control_data.interpolated_traj, m_ego_nearest_dist_threshold,
+    m_ego_nearest_yaw_threshold);
 
   // pitch
   // NOTE: getPitchByTraj() calculates the pitch angle as defined in
@@ -575,6 +576,11 @@ PidLongitudinalController::Motion PidLongitudinalController::calcEmergencyCtrlCm
   raw_ctrl_cmd.acc =
     longitudinal_utils::applyDiffLimitFilter(raw_ctrl_cmd.acc, m_prev_raw_ctrl_cmd.acc, dt, p.jerk);
   m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_JERK_LIMITED, raw_ctrl_cmd.acc);
+
+  const auto virtual_wall_marker = autoware::motion_utils::createStopVirtualWallMarker(
+    m_current_kinematic_state.pose.pose, "velocity control\n (emergency)", clock_->now(), 0,
+    m_wheel_base + m_front_overhang);
+  m_pub_virtual_wall_marker->publish(virtual_wall_marker);
 
   return raw_ctrl_cmd;
 }
@@ -740,14 +746,12 @@ void PidLongitudinalController::updateControlState(const ControlData & control_d
         }
 
         // publish debug marker
-        auto marker = createDefaultMarker(
-          "map", clock_->now(), "stop_reason", 0, Marker::TEXT_VIEW_FACING,
-          createMarkerScale(0.0, 0.0, 1.0), createMarkerColor(1.0, 1.0, 1.0, 0.999));
-        marker.pose = autoware::universe_utils::calcOffsetPose(
-          m_current_kinematic_state.pose.pose, m_wheel_base + m_front_overhang,
-          m_vehicle_width / 2 + 2.0, 1.5);
-        marker.text = "steering not\nconverged";
-        m_pub_stop_reason_marker->publish(marker);
+        if (is_under_control) {
+          const auto virtual_wall_marker = autoware::motion_utils::createStopVirtualWallMarker(
+            m_current_kinematic_state.pose.pose, "velocity control\n(steering not converged)",
+            clock_->now(), 0, m_wheel_base + m_front_overhang);
+          m_pub_virtual_wall_marker->publish(virtual_wall_marker);
+        }
 
         // keep STOPPED
         return;
