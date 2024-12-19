@@ -16,6 +16,7 @@
 #include "autoware/behavior_path_goal_planner_module/util.hpp"
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
+#include <autoware/behavior_path_goal_planner_module/goal_planner_module.hpp>
 #include <autoware/behavior_path_goal_planner_module/manager.hpp>
 #include <autoware/behavior_path_goal_planner_module/pull_over_planner/bezier_pull_over.hpp>
 #include <autoware/behavior_path_goal_planner_module/pull_over_planner/shift_pull_over.hpp>
@@ -32,6 +33,7 @@
 #include <autoware_test_utils/mock_data_parser.hpp>
 
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
+#include <autoware_perception_msgs/msg/detail/predicted_objects__struct.hpp>
 #include <autoware_planning_msgs/msg/lanelet_primitive.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <autoware_planning_msgs/msg/lanelet_segment.hpp>
@@ -151,10 +153,12 @@ void plot_goal_candidates(
 
 void plot_path_with_lane_id(
   matplotlibcpp17::axes::Axes & axes, const PathWithLaneId & path,
-  const std::string & color = "red", const std::string & label = "", const double linewidth = 1.0)
+  const std::string & color = "red", const std::string & label = "", const double linewidth = 1.0,
+  const bool point_idx = false)
 {
   std::vector<double> xs, ys;
   std::vector<double> yaw_cos, yaw_sin;
+  int cnt = 0;
   for (const auto & point : path.points) {
     xs.push_back(point.point.pose.position.x);
     ys.push_back(point.point.pose.position.y);
@@ -163,6 +167,10 @@ void plot_path_with_lane_id(
     yaw_sin.push_back(std::sin(yaw));
     axes.scatter(
       Args(xs.back(), ys.back()), Kwargs("marker"_a = "o", "color"_a = "blue", "s"_a = 10));
+    if (point_idx) {
+      axes.text(Args(xs.back(), ys.back(), std::to_string(cnt)));
+      cnt++;
+    }
   }
   axes.quiver(
     Args(xs, ys, yaw_cos, yaw_sin),
@@ -312,6 +320,11 @@ std::vector<PullOverPath> selectPullOverPaths(
     }
   }
 
+  autoware::behavior_path_planner::sortPullOverPaths(
+    planner_data, parameters, pull_over_path_candidates, goal_candidates,
+    autoware_perception_msgs::msg::PredictedObjects{}, rclcpp::get_logger("temp"),
+    sorted_path_indices);
+
   const double prev_path_front_to_goal_dist = calcSignedArcLength(
     previous_module_output.path.points,
     previous_module_output.path.points.front().point.pose.position, goal_pose.position);
@@ -336,98 +349,6 @@ std::vector<PullOverPath> selectPullOverPaths(
           pull_over_path_candidates[i], long_tail_reference_path, planner_data, parameters);
       }),
     sorted_path_indices.end());
-
-  const auto & soft_margins = parameters.object_recognition_collision_check_soft_margins;
-  const auto & hard_margins = parameters.object_recognition_collision_check_hard_margins;
-
-  const auto [margins, margins_with_zero] =
-    std::invoke([&]() -> std::tuple<std::vector<double>, std::vector<double>> {
-      std::vector<double> margins = soft_margins;
-      margins.insert(margins.end(), hard_margins.begin(), hard_margins.end());
-      std::vector<double> margins_with_zero = margins;
-      margins_with_zero.push_back(0.0);
-      return std::make_tuple(margins, margins_with_zero);
-    });
-
-  // Create a map of PullOverPath pointer to largest collision check margin
-  std::map<size_t, double> path_id_to_rough_margin_map;
-  const auto & target_objects = autoware_perception_msgs::msg::PredictedObjects{};
-  for (const size_t i : sorted_path_indices) {
-    const auto & path = pull_over_path_candidates[i];  // cppcheck-suppress containerOutOfBounds
-    const double distance =
-      autoware::behavior_path_planner::utils::path_safety_checker::calculateRoughDistanceToObjects(
-        path.parking_path(), target_objects, planner_data->parameters, false, "max");
-    auto it = std::lower_bound(
-      margins_with_zero.begin(), margins_with_zero.end(), distance, std::greater<double>());
-    if (it == margins_with_zero.end()) {
-      path_id_to_rough_margin_map[path.id()] = margins_with_zero.back();
-    } else {
-      path_id_to_rough_margin_map[path.id()] = *it;
-    }
-  }
-
-  // sorts in descending order so the item with larger margin comes first
-  std::stable_sort(
-    sorted_path_indices.begin(), sorted_path_indices.end(),
-    [&](const size_t a_i, const size_t b_i) {
-      const auto & a = pull_over_path_candidates[a_i];
-      const auto & b = pull_over_path_candidates[b_i];
-      if (
-        std::abs(path_id_to_rough_margin_map[a.id()] - path_id_to_rough_margin_map[b.id()]) <
-        0.01) {
-        return false;
-      }
-      return path_id_to_rough_margin_map[a.id()] > path_id_to_rough_margin_map[b.id()];
-    });
-
-  // STEP2-3: Sort by curvature
-  // If the curvature is less than the threshold, prioritize the path.
-  const auto isHighCurvature = [&](const PullOverPath & path) -> bool {
-    return path.parking_path_max_curvature() >= parameters.high_curvature_threshold;
-  };
-
-  const auto isSoftMargin = [&](const PullOverPath & path) -> bool {
-    const double margin = path_id_to_rough_margin_map[path.id()];
-    return std::any_of(
-      soft_margins.begin(), soft_margins.end(),
-      [margin](const double soft_margin) { return std::abs(margin - soft_margin) < 0.01; });
-  };
-  const auto isSameHardMargin = [&](const PullOverPath & a, const PullOverPath & b) -> bool {
-    return !isSoftMargin(a) && !isSoftMargin(b) &&
-           std::abs(path_id_to_rough_margin_map[a.id()] - path_id_to_rough_margin_map[b.id()]) <
-             0.01;
-  };
-
-  // NOTE: this is just partition sort based on curvature threshold within each sub partitions
-  std::stable_sort(
-    sorted_path_indices.begin(), sorted_path_indices.end(),
-    [&](const size_t a_i, const size_t b_i) {
-      const auto & a = pull_over_path_candidates[a_i];
-      const auto & b = pull_over_path_candidates[b_i];
-      // if both are soft margin or both are same hard margin, prioritize the path with lower
-      // curvature.
-      if ((isSoftMargin(a) && isSoftMargin(b)) || isSameHardMargin(a, b)) {
-        return !isHighCurvature(a) && isHighCurvature(b);
-      }
-      // otherwise, keep the order based on the margin.
-      return false;
-    });
-
-  // STEP2-4: Sort pull_over_path_candidates based on the order in efficient_path_order keeping
-  // the collision check margin and curvature priority.
-  if (parameters.path_priority == "efficient_path") {
-    std::stable_sort(
-      sorted_path_indices.begin(), sorted_path_indices.end(),
-      [&](const size_t a_i, const size_t b_i) {
-        // if any of following conditions are met, sort by path type priority
-        // - both are soft margin
-        // - both are same hard margin
-        const auto & a = pull_over_path_candidates[a_i];
-        const auto & b = pull_over_path_candidates[b_i];
-        // otherwise, keep the order.
-        return false;
-      });
-  }
 
   std::vector<PullOverPath> selected;
   for (const auto & sorted_index : sorted_path_indices) {
@@ -675,7 +596,7 @@ int main(int argc, char ** argv)
     const auto max_parking_curvature = filtered_path.parking_path_max_curvature();
     if (i == 0) {
       plot_goal_candidate(ax1, filtered_path.modified_goal(), prio, footprint, color);
-      plot_path_with_lane_id(ax2, filtered_path.full_path(), color, "most prio", 2.0);
+      plot_path_with_lane_id(ax2, filtered_path.full_path(), color, "most prio", 2.0, true);
       for (const auto & path_point : filtered_path.full_path().points) {
         const auto pose_footprint = transformVector(
           footprint, autoware::universe_utils::pose2transform(path_point.point.pose));

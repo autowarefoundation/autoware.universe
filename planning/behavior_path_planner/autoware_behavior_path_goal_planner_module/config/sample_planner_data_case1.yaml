@@ -6,7 +6,7 @@
 # map_path_uri: package://<package-name>/<resource-path>
 # fields(this is array)
 #   - name: <field-name-for-your-yaml-of-this-topic, str>
-#     type: either {Odometry | AccelWithCovarianceStamped | PredictedObjects | OperationModeState | LaneletRoute | TrafficLightGroupArray | TBD}
+#     type: either {Odometry | AccelWithCovarianceStamped | PredictedObjects | OperationModeState | LaneletRoute | TrafficLightGroupArray | TrackedObjects | TBD}
 #     topic: <topic-name, str>
 #
 format_version: 1
@@ -14,8 +14,8 @@ map_path_uri: package://autoware_test_utils/test_map/road_shoulder/lanelet2_map.
 dynamic_object:
   header:
     stamp:
-      sec: 909
-      nanosec: 742399532
+      sec: 42
+      nanosec: 459457775
     frame_id: map
   objects: []
 traffic_signal:
@@ -26,84 +26,78 @@ traffic_signal:
 route:
   header:
     stamp:
-      sec: 125
-      nanosec: 213336488
+      sec: 30
+      nanosec: 801796556
     frame_id: map
   start_pose:
     position:
-      x: 748.132
-      y: 708.703
-      z: 381.187
+      x: 266.509
+      y: 335.333
+      z: 100.000
     orientation:
       x: 0.00000
       y: 0.00000
-      z: 0.235076
-      w: 0.971977
+      z: 0.705621
+      w: 0.708589
   goal_pose:
     position:
-      x: 798.040
-      y: 689.386
-      z: 381.187
+      x: 296.939
+      y: 348.933
+      z: 100.000
     orientation:
       x: 0.00000
       y: 0.00000
-      z: -0.659713
-      w: 0.751517
+      z: 0.984630
+      w: -0.174655
   segments:
     - preferred_primitive:
-        id: 15214
+        id: 697
         primitive_type: ""
       primitives:
-        - id: 15214
-          primitive_type: lane
-        - id: 15213
+        - id: 697
           primitive_type: lane
     - preferred_primitive:
-        id: 15226
+        id: 759
         primitive_type: ""
       primitives:
-        - id: 15226
-          primitive_type: lane
-        - id: 15225
+        - id: 759
           primitive_type: lane
     - preferred_primitive:
-        id: 15228
+        id: 675
         primitive_type: ""
       primitives:
-        - id: 15228
-          primitive_type: lane
-        - id: 15229
+        - id: 675
           primitive_type: lane
     - preferred_primitive:
-        id: 15231
+        id: 676
         primitive_type: ""
       primitives:
-        - id: 15231
+        - id: 676
           primitive_type: lane
   uuid:
     uuid:
-      - 100
-      - 171
-      - 232
-      - 218
-      - 65
-      - 244
-      - 197
-      - 172
+      - 163
+      - 32
+      - 242
+      - 174
+      - 255
+      - 45
+      - 183
+      - 95
+      - 124
       - 167
-      - 40
-      - 148
-      - 169
-      - 170
-      - 48
-      - 29
-      - 68
+      - 172
+      - 137
+      - 228
+      - 24
+      - 2
+      - 220
   allow_modification: false
 operation_mode:
   stamp:
-    sec: 902
-    nanosec: 525199106
-  mode: 2
+    sec: 0
+    nanosec: 513411336
+  mode: 1
   is_autoware_control_enabled: true
   is_in_transition: false
   is_stop_mode_available: true
@@ -113,14 +107,14 @@ operation_mode:
 self_acceleration:
   header:
     stamp:
-      sec: 909
-      nanosec: 769937073
+      sec: 42
+      nanosec: 489453464
     frame_id: /base_link
   accel:
     accel:
       linear:
-        x: -0.581360
-        y: -0.290347
+        x: 0.00000
+        y: 0.00000
         z: 0.00000
       angular:
         x: 0.00000
@@ -166,21 +160,21 @@ self_acceleration:
 self_odometry:
   header:
     stamp:
-      sec: 909
-      nanosec: 769937073
+      sec: 42
+      nanosec: 489453464
     frame_id: map
   child_frame_id: base_link
   pose:
     pose:
       position:
-        x: 760.155
-        y: 713.417
-        z: 381.187
+        x: 266.509
+        y: 335.333
+        z: 100.000
       orientation:
         x: 0.00000
         y: 0.00000
-        z: 0.116943
-        w: 0.993139
+        z: 0.705621
+        w: 0.708589
     covariance:
       - 0.000100000
       - 0.00000
@@ -221,13 +215,13 @@ self_odometry:
   twist:
     twist:
       linear:
-        x: 3.83825
+        x: 0.00000
         y: 0.00000
         z: 0.00000
       angular:
         x: 0.00000
         y: 0.00000
-        z: -0.0756457
+        z: 0.00000
     covariance:
       - 0.00000
       - 0.00000
