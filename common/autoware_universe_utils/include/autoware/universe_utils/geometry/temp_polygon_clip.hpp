@@ -187,9 +187,29 @@ std::size_t get_first_intersect(ExtendedPolygon & polygon);
 std::vector<autoware::universe_utils::Polygon2d> clip(
   ExtendedPolygon & source, ExtendedPolygon & clip, bool source_forwards, bool clip_forwards);
 
+/**
+ * @brief Marks self-intersections in the given ExtendedPolygon.
+ * @details This function identifies self-intersecting segments in the polygon and creates new
+ * intersection vertices. The detected intersections are then marked and processed to update the
+ * polygon structure accordingly.
+ *
+ * @param source The ExtendedPolygon in which to detect and mark self-intersections.
+ * @param current_index The current index in the polygon being processed. This index is updated as
+ * intersections are marked.
+ */
 void mark_self_intersections(ExtendedPolygon & source, std::size_t & current_index);
+
+/**
+ * @brief Adjusts the `next` pointer of the intersection vertex in the polygon to point to the
+ * appropriate succeeding vertex.
+ * @details Ensures that the polygon to always go left, so no self-intersection occurs.
+ *
+ * @param polygon The ExtendedPolygon containing the vertices.
+ * @param current_index The index of the intersection vertex to adjust. This is updated within the
+ * function if necessary.
+ */
 void adjust_intersection_next(ExtendedPolygon & polygon, std::size_t & current_index);
-ExtendedPolygon create_extended_polygon(const autoware::universe_utils::Polygon2d & poly2d);
+
 autoware::universe_utils::Polygon2d construct_self_intersecting_polygons(ExtendedPolygon & polygon);
 }  // namespace polygon_clip
 

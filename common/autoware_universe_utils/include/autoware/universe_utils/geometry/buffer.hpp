@@ -95,6 +95,13 @@ autoware::universe_utils::Polygon2d buffer(
 autoware::universe_utils::Polygon2d buffer(
   const autoware::universe_utils::MultiPoint2d & multi_point, double distance, double segments);
 
+/**
+ * @brief Dissolves the input polygon to eliminate self-intersections or redundant structures.
+ * @param polygon The input polygon of type autoware::universe_utils::Polygon2d.
+ * @return A simplified polygon with self-intersections dissolved and redundant structures removed.
+ */
+autoware::universe_utils::Polygon2d dissolve(autoware::universe_utils::Polygon2d const & polygon);
+
 }  // namespace autoware::universe_utils
 
 #endif  // AUTOWARE__UNIVERSE_UTILS__GEOMETRY__BUFFER_HPP_

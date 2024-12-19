@@ -29,6 +29,7 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <random>
 #include <string>
 
 constexpr double epsilon = 1e-6;
@@ -2421,6 +2422,115 @@ TEST(geometry, intersectConcavePolygonRand)
   }
 }
 
+bool polygon_equal(
+  const autoware::universe_utils::Polygon2d & A, const autoware::universe_utils::Polygon2d & B,
+  double max_difference_threshold, bool area = false)
+{
+  const auto & outer_A = A.outer();
+  const auto & outer_B = B.outer();
+
+  int n = outer_A.size() - 1;
+  int m = outer_B.size() - 1;
+  std::cout << n << ", " << m << "\n";
+
+  if (n != m || area) {
+    std::vector<autoware::universe_utils::Polygon2d> diff;
+    boost::geometry::difference(A, B, diff);
+    double area_diff = 0.0;
+    for (const auto & poly : diff) {
+      area_diff += boost::geometry::area(poly);
+    }
+    if (area_diff < 1e-6) {
+      return true;
+    } else {
+      std::printf("Area Difference: %2.8f%% \n", area_diff / boost::geometry::area(A) * 100);
+      return false;
+    }
+  }
+
+  int start_index_B = -1;
+  double min_distance = std::numeric_limits<double>::max();
+
+  for (int i = 0; i < m; ++i) {
+    double dist = boost::geometry::distance(outer_A[0], outer_B[i]) +
+                  boost::geometry::distance(outer_A[1], outer_B[i + 1]);
+    if (dist < min_distance) {
+      min_distance = dist;
+      start_index_B = i;
+    }
+  }
+
+  if (start_index_B == -1) {
+    std::cout << "No common starting point found\n";
+    return false;
+  }
+
+  std::vector<autoware::universe_utils::Point2d> rotated_B(outer_B.begin(), outer_B.end() - 1);
+  std::rotate(rotated_B.begin(), rotated_B.begin() + start_index_B, rotated_B.end());
+
+  for (int i = 0; i < n - 1; ++i) {
+    double x_diff = std::abs(outer_A[i].x() - rotated_B[i].x());
+    double y_diff = std::abs(outer_A[i].y() - rotated_B[i].y());
+
+    if (x_diff >= max_difference_threshold || y_diff >= max_difference_threshold) {
+      std::cout << outer_A[i].x() << ", " << outer_A[i].y() << ": A\n";
+      std::cout << rotated_B[i].x() << ", " << rotated_B[i].y() << ": B\n";
+      std::cout << std::abs(rotated_B[i].x() - outer_A[i].x()) << ", "
+                << std::abs(rotated_B[i].y() - outer_A[i].y()) << ": Difference\n";
+      return false;
+    }
+  }
+
+  return true;
+}
+
+bool polygon_equal_vector(
+  std::vector<autoware::universe_utils::Polygon2d> & customPolygons,
+  std::vector<autoware::universe_utils::Polygon2d> & boostPolygons, double max_difference_threshold)
+{
+  std::sort(
+    customPolygons.begin(), customPolygons.end(),
+    [](
+      const autoware::universe_utils::Polygon2d & a,
+      const autoware::universe_utils::Polygon2d & b) {
+      return std::abs(boost::geometry::area(a)) < std::abs(boost::geometry::area(b));
+    });
+
+  std::sort(
+    boostPolygons.begin(), boostPolygons.end(),
+    [](
+      const autoware::universe_utils::Polygon2d & a,
+      const autoware::universe_utils::Polygon2d & b) {
+      return std::abs(boost::geometry::area(a)) < std::abs(boost::geometry::area(b));
+    });
+
+  if (customPolygons.size() != boostPolygons.size()) {
+    double customArea = 0.0;
+    double boostArea = 0.0;
+
+    for (const auto & polygon : customPolygons) {
+      customArea += boost::geometry::area(polygon);
+    }
+
+    for (const auto & polygon : boostPolygons) {
+      boostArea += boost::geometry::area(polygon);
+    }
+
+    if (std::abs(customArea - boostArea) < 1) {
+      return true;
+    } else {
+      return false;
+    }
+  }
+
+  for (size_t i = 0; i < customPolygons.size(); ++i) {
+    if (!polygon_equal(customPolygons[i], boostPolygons[i], max_difference_threshold)) {
+      return false;
+    }
+  }
+  return true;
+}
+
 TEST(geometry, BufferPolygonAndPointComparisonWithStrategies)
 {
   std::vector<autoware::universe_utils::Polygon2d> polygons;
@@ -2432,6 +2542,9 @@ TEST(geometry, BufferPolygonAndPointComparisonWithStrategies)
   constexpr auto max_values = 1000;
   constexpr double offsetDistance = 100.0;
   constexpr double segment = 32.0;
+  std::random_device rd;
+  std::mt19937 gen(rd());
+  std::uniform_real_distribution<> dis(0.0, max_values);
 
   autoware::universe_utils::StopWatch<std::chrono::nanoseconds, std::chrono::nanoseconds> sw;
 
@@ -2457,7 +2570,7 @@ TEST(geometry, BufferPolygonAndPointComparisonWithStrategies)
     }
 
     for (auto i = 0; i < points_nb; ++i) {
-      points.push_back(autoware::universe_utils::Point2d(rand() % max_values, rand() % max_values));
+      points.push_back(autoware::universe_utils::Point2d(dis(gen), dis(gen)));
     }
 
     boost::geometry::strategy::buffer::distance_symmetric<double> distance_strategy(offsetDistance);
