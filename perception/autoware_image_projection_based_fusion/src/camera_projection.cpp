@@ -63,15 +63,16 @@ CameraProjection::CameraProjection(
   const double ocy = static_cast<double>(camera_info.k.at(5));
   // for checking pincushion shape case
   const cv::Point3d ray_top_left = camera_model_.projectPixelTo3dRay(cv::Point(0, 0));
-  const cv::Point3d ray_top_right = camera_model_.projectPixelTo3dRay(cv::Point(image_w_-1, 0));
-  const cv::Point3d ray_bottom_left = camera_model_.projectPixelTo3dRay(cv::Point(0, image_h_-1));
+  const cv::Point3d ray_top_right = camera_model_.projectPixelTo3dRay(cv::Point(image_w_ - 1, 0));
+  const cv::Point3d ray_bottom_left = camera_model_.projectPixelTo3dRay(cv::Point(0, image_h_ - 1));
   const cv::Point3d ray_bottom_right =
-    camera_model_.projectPixelTo3dRay(cv::Point(image_w_-1, image_h_-1));
+    camera_model_.projectPixelTo3dRay(cv::Point(image_w_ - 1, image_h_ - 1));
   // for checking barrel shape case
   const cv::Point3d ray_mid_top = camera_model_.projectPixelTo3dRay(cv::Point(ocx, 0));
   const cv::Point3d ray_mid_left = camera_model_.projectPixelTo3dRay(cv::Point(0, ocy));
-  const cv::Point3d ray_mid_right = camera_model_.projectPixelTo3dRay(cv::Point(image_w_-1, ocy));
-  const cv::Point3d ray_mid_bottom = camera_model_.projectPixelTo3dRay(cv::Point(ocx, image_h_-1));
+  const cv::Point3d ray_mid_right = camera_model_.projectPixelTo3dRay(cv::Point(image_w_ - 1, ocy));
+  const cv::Point3d ray_mid_bottom =
+    camera_model_.projectPixelTo3dRay(cv::Point(ocx, image_h_ - 1));
 
   cv::Point3d x_left = ray_top_left;
   cv::Point3d x_right = ray_top_right;
@@ -92,10 +93,10 @@ CameraProjection::CameraProjection(
   if (ray_mid_bottom.y < y_bottom.y) y_bottom = ray_mid_bottom;
 
   // set FOV at z = 1.0
-  fov_left_ = x_left.x/x_left.z;
-  fov_right_ = x_right.x/x_right.z;
-  fov_top_ = y_top.y/y_top.z;
-  fov_bottom_ = y_bottom.y/y_bottom.z;
+  fov_left_ = x_left.x / x_left.z;
+  fov_right_ = x_right.x / x_right.z;
+  fov_top_ = y_top.y / y_top.z;
+  fov_bottom_ = y_bottom.y / y_bottom.z;
 }
 
 void CameraProjection::initialize()
@@ -162,7 +163,6 @@ void CameraProjection::initializeCache()
     }
   }
 }
-
 
 /**
  * @brief Calculate a projection of 3D point to rectified image plane 2D point.
