@@ -454,6 +454,9 @@ bool MpcLateralController::isStoppedState() const
     m_current_trajectory.points, m_current_kinematic_state.pose.pose, m_ego_nearest_dist_threshold,
     m_ego_nearest_yaw_threshold);
 
+  // It is possible that stop is executed earlier than stop point, and velocity controller
+  // will not start when the distance from ego to stop point is less than 0.5 meter.
+  // So we use a distance margin to ensure we can detect stopped state.
   static constexpr double distance_margin = 1.0;
   const double target_vel = std::invoke([&]() -> double {
     auto min_vel = m_current_trajectory.points.at(nearest).longitudinal_velocity_mps;
