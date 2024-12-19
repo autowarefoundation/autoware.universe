@@ -45,25 +45,19 @@ Accumulator<double> calcLateralDeviation(const Trajectory & ref, const Trajector
   return stat;
 }
 
-Accumulator<double> calcNearestPoseDeviation(
-  const Trajectory & prev_traj, const Trajectory & ref_traj, const Pose & ego_pose)
+Accumulator<double> calcLateralTrajectoryDisplacement(
+  const Trajectory & prev, const Trajectory & traj, const Pose & ego_pose)
 {
   Accumulator<double> stat;
 
-  if (prev_traj.points.empty() || prev_traj.points.empty()) {
+  if (prev.points.empty() || traj.points.empty()) {
     return stat;
   }
 
-  const auto prev_idx =
-    autoware::motion_utils::findNearestIndex(prev_traj.points, ego_pose.position);
-  const auto prev_p = prev_traj.points[prev_idx];
-  const auto ref_idx = autoware::motion_utils::findNearestIndex(ref_traj.points, ego_pose.position);
-  const auto ref_p = ref_traj.points[ref_idx];
-
-  const double nearest_dist = autoware::universe_utils::calcDistance2d(prev_p, ref_p);
-
-  stat.add(nearest_dist);
-
+  const auto prev_dist = autoware::motion_utils::calcLateralOffset(prev.points, ego_pose.position);
+  const auto traj_dist = autoware::motion_utils::calcLateralOffset(traj.points, ego_pose.position);
+  const auto lateral_traj_displacement = traj_dist - prev_dist;
+  stat.add(lateral_traj_displacement);
   return stat;
 }
 

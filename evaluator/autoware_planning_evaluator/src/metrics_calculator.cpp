@@ -47,11 +47,10 @@ std::optional<Accumulator<double>> MetricsCalculator::calculate(
       return metrics::calcLateralDeviation(reference_trajectory_, traj);
     case Metric::yaw_deviation:
       return metrics::calcYawDeviation(reference_trajectory_, traj);
-    case Metric::nearest_pose_deviation:
-      return metrics::calcNearestPoseDeviation(
-        previous_trajectory_, reference_trajectory_, ego_pose_);
     case Metric::velocity_deviation:
       return metrics::calcVelocityDeviation(reference_trajectory_, traj);
+    case Metric::lateral_trajectory_displacement:
+      return metrics::calcLateralTrajectoryDisplacement(previous_trajectory_, traj, ego_pose_);
     case Metric::stability_frechet:
       return metrics::calcFrechetDistance(
         getLookaheadTrajectory(

@@ -13,7 +13,7 @@
       - jerk
       - lateral_deviation
       - yaw_deviation
-      - nearest_pose_deviation
+      - lateral_trajectory_displacement
       - velocity_deviation
       - stability
       - stability_frechet
