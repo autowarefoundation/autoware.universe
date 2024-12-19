@@ -434,9 +434,16 @@ Lateral MpcLateralController::getInitialControlCommand() const
 
 bool MpcLateralController::isStoppedState() const
 {
+  const double current_vel = m_current_kinematic_state.twist.twist.linear.x;
   // If the nearest index is not found, return false
-  if (m_current_trajectory.points.empty()) {
+  if (
+    m_current_trajectory.points.empty() || std::fabs(current_vel) > m_stop_state_entry_ego_speed) {
     return false;
+  }
+
+  const auto latest_published_cmd = m_ctrl_cmd_prev;  // use prev_cmd as a latest published command
+  if (m_keep_steer_control_until_converged && !isSteerConverged(latest_published_cmd)) {
+    return false;  // not stopState: keep control
   }
 
   // Note: This function used to take into account the distance to the stop line
@@ -447,21 +454,20 @@ bool MpcLateralController::isStoppedState() const
     m_current_trajectory.points, m_current_kinematic_state.pose.pose, m_ego_nearest_dist_threshold,
     m_ego_nearest_yaw_threshold);
 
-  const double current_vel = m_current_kinematic_state.twist.twist.linear.x;
-  const double target_vel = m_current_trajectory.points.at(nearest).longitudinal_velocity_mps;
+  const auto wheelbase_length = m_mpc->get_wheelbase_length();
+  const double target_vel = std::invoke([&]() -> double {
+    auto min_vel = m_current_trajectory.points.at(nearest).longitudinal_velocity_mps;
+    auto covered_distance = 0.0;
+    for (auto i = nearest + 1; i < m_current_trajectory.points.size(); ++i) {
+      min_vel = std::min(min_vel, m_current_trajectory.points.at(i).longitudinal_velocity_mps);
+      covered_distance += autoware::universe_utils::calcDistance2d(
+        m_current_trajectory.points.at(i - 1).pose, m_current_trajectory.points.at(i).pose);
+      if (covered_distance > wheelbase_length) break;
+    }
+    return min_vel;
+  });
 
-  const auto latest_published_cmd = m_ctrl_cmd_prev;  // use prev_cmd as a latest published command
-  if (m_keep_steer_control_until_converged && !isSteerConverged(latest_published_cmd)) {
-    return false;  // not stopState: keep control
-  }
-
-  if (
-    std::fabs(current_vel) < m_stop_state_entry_ego_speed &&
-    std::fabs(target_vel) < m_stop_state_entry_target_speed) {
-    return true;
-  } else {
-    return false;
-  }
+  return std::fabs(target_vel) < m_stop_state_entry_target_speed;
 }
 
 Lateral MpcLateralController::createCtrlCmdMsg(const Lateral & ctrl_cmd)

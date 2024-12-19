@@ -537,6 +537,8 @@ public:
    * @param clock The shared pointer to the RCLCPP clock.
    */
   inline void setClock(rclcpp::Clock::SharedPtr clock) { m_clock = clock; }
+
+  inline double get_wheelbase_length() { return m_vehicle_model_ptr->getWheelbase(); }
 };  // class MPC
 }  // namespace autoware::motion::control::mpc_lateral_controller
 
