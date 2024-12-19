@@ -56,11 +56,46 @@ CameraProjection::CameraProjection(
   grid_y_num_ = static_cast<uint32_t>(std::ceil(image_h_ / grid_h_size_));
   cache_size_ = grid_x_num_ * grid_y_num_;
 
-  // for checking the views
-  // cx/fx
-  tan_h_x_ = camera_info.k.at(2) / camera_info.k.at(0);
-  // cy/fy
-  tan_h_y_ = camera_info.k.at(5) / camera_info.k.at(4);
+  // compute 3D rays for the image corners and pixels related to optical center
+  // to find the actual FOV size
+  // optical centers
+  const double ocx = static_cast<double>(camera_info.k.at(2));
+  const double ocy = static_cast<double>(camera_info.k.at(5));
+  // for checking pincushion shape case
+  const cv::Point3d ray_top_left = camera_model_.projectPixelTo3dRay(cv::Point(0, 0));
+  const cv::Point3d ray_top_right = camera_model_.projectPixelTo3dRay(cv::Point(image_w_-1, 0));
+  const cv::Point3d ray_bottom_left = camera_model_.projectPixelTo3dRay(cv::Point(0, image_h_-1));
+  const cv::Point3d ray_bottom_right =
+    camera_model_.projectPixelTo3dRay(cv::Point(image_w_-1, image_h_-1));
+  // for checking barrel shape case
+  const cv::Point3d ray_mid_top = camera_model_.projectPixelTo3dRay(cv::Point(ocx, 0));
+  const cv::Point3d ray_mid_left = camera_model_.projectPixelTo3dRay(cv::Point(0, ocy));
+  const cv::Point3d ray_mid_right = camera_model_.projectPixelTo3dRay(cv::Point(image_w_-1, ocy));
+  const cv::Point3d ray_mid_bottom = camera_model_.projectPixelTo3dRay(cv::Point(ocx, image_h_-1));
+
+  cv::Point3d x_left = ray_top_left;
+  cv::Point3d x_right = ray_top_right;
+  cv::Point3d y_top = ray_top_left;
+  cv::Point3d y_bottom = ray_bottom_left;
+
+  // check each side of the view
+  if (ray_bottom_left.x < x_left.x) x_left = ray_bottom_left;
+  if (ray_mid_left.x < x_left.x) x_left = ray_mid_left;
+
+  if (x_right.x < ray_bottom_right.x) x_right = ray_bottom_right;
+  if (x_right.x < ray_mid_right.x) x_right = ray_mid_right;
+
+  if (y_top.y < ray_top_right.y) y_top = ray_top_right;
+  if (y_top.y < ray_mid_top.y) y_top = ray_mid_top;
+
+  if (ray_bottom_left.y < y_bottom.y) y_bottom = ray_bottom_left;
+  if (ray_mid_bottom.y < y_bottom.y) y_bottom = ray_mid_bottom;
+
+  // set FOV at z = 1.0
+  fov_left_ = x_left.x/x_left.z;
+  fov_right_ = x_right.x/x_right.z;
+  fov_top_ = y_top.y/y_top.z;
+  fov_bottom_ = y_bottom.y/y_bottom.z;
 }
 
 void CameraProjection::initialize()
@@ -127,6 +162,7 @@ void CameraProjection::initializeCache()
     }
   }
 }
+
 
 /**
  * @brief Calculate a projection of 3D point to rectified image plane 2D point.
@@ -207,13 +243,33 @@ sensor_msgs::msg::CameraInfo CameraProjection::getCameraInfo()
 bool CameraProjection::isOutsideHorizontalView(const float px, const float pz)
 {
   // assuming the points' origin is centered on the camera
-  return pz <= 0.0 || px > tan_h_x_ * pz || px < -tan_h_x_ * pz;
+  if (pz <= 0.0) return true;
+  if (px < fov_left_ * pz) return true;
+  if (px > fov_right_ * pz) return true;
+
+  // inside of the horizontal view
+  return false;
 }
 
 bool CameraProjection::isOutsideVerticalView(const float py, const float pz)
 {
   // assuming the points' origin is centered on the camera
-  return pz <= 0.0 || py > tan_h_y_ * pz || py < -tan_h_y_ * pz;
+  if (pz <= 0.0) return true;
+  // up in the camera coordinate is negative
+  if (py < fov_top_ * pz) return true;
+  if (py > fov_bottom_ * pz) return true;
+
+  // inside of the vertical view
+  return false;
+}
+
+bool CameraProjection::isOutsideFOV(const float px, const float py, const float pz)
+{
+  if (isOutsideHorizontalView(px, pz)) return true;
+  if (isOutsideVerticalView(py, pz)) return true;
+
+  // inside of the FOV
+  return false;
 }
 
 }  // namespace autoware::image_projection_based_fusion

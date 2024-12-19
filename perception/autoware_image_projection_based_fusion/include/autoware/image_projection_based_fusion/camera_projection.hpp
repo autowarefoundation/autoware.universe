@@ -48,6 +48,7 @@ public:
   sensor_msgs::msg::CameraInfo getCameraInfo();
   bool isOutsideHorizontalView(const float px, const float pz);
   bool isOutsideVerticalView(const float py, const float pz);
+  bool isOutsideFOV(const float px, const float py, const float pz);
 
 protected:
   bool calcRectifiedImageProjectedPoint(
@@ -60,6 +61,7 @@ protected:
   sensor_msgs::msg::CameraInfo camera_info_;
   uint32_t image_h_, image_w_;
   double tan_h_x_, tan_h_y_;
+  double fov_left_, fov_right_, fov_top_, fov_bottom_;
 
   uint32_t cache_size_;
   float grid_w_size_;
