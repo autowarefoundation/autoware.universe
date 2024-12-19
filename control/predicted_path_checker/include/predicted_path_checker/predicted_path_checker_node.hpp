@@ -15,7 +15,7 @@
 #ifndef PREDICTED_PATH_CHECKER__PREDICTED_PATH_CHECKER_NODE_HPP_
 #define PREDICTED_PATH_CHECKER__PREDICTED_PATH_CHECKER_NODE_HPP_
 
-#include <autoware/component_interface_specs/control.hpp>
+#include <autoware/component_interface_specs_universe/control.hpp>
 #include <autoware/component_interface_utils/rclcpp.hpp>
 #include <autoware/motion_utils/trajectory/conversion.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
@@ -97,11 +97,11 @@ private:
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
   rclcpp::Subscription<geometry_msgs::msg::AccelWithCovarianceStamped>::SharedPtr sub_accel_;
   autoware::component_interface_utils::Subscription<
-    autoware::component_interface_specs::control::IsStopped>::SharedPtr sub_stop_state_;
+    autoware::component_interface_specs_universe::control::IsStopped>::SharedPtr sub_stop_state_;
 
   // Client
   autoware::component_interface_utils::Client<
-    autoware::component_interface_specs::control::SetStop>::SharedPtr cli_set_stop_;
+    autoware::component_interface_specs_universe::control::SetStop>::SharedPtr cli_set_stop_;
 
   // Data Buffer
   geometry_msgs::msg::PoseStamped::ConstSharedPtr current_pose_;
@@ -110,7 +110,7 @@ private:
   PredictedObjects::ConstSharedPtr object_ptr_{nullptr};
   autoware_planning_msgs::msg::Trajectory::ConstSharedPtr reference_trajectory_;
   autoware_planning_msgs::msg::Trajectory::ConstSharedPtr predicted_trajectory_;
-  autoware::component_interface_specs::control::IsStopped::Message::ConstSharedPtr is_stopped_ptr_{
+  autoware::component_interface_specs_universe::control::IsStopped::Message::ConstSharedPtr is_stopped_ptr_{
     nullptr};
 
   // Core
@@ -130,7 +130,7 @@ private:
   void onOdom(const nav_msgs::msg::Odometry::SharedPtr msg);
   void onAccel(const geometry_msgs::msg::AccelWithCovarianceStamped::SharedPtr msg);
   void onIsStopped(
-    const autoware::component_interface_specs::control::IsStopped::Message::ConstSharedPtr msg);
+    const autoware::component_interface_specs_universe::control::IsStopped::Message::ConstSharedPtr msg);
 
   // Timer
   rclcpp::TimerBase::SharedPtr timer_;

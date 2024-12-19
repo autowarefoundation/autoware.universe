@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/component_interface_specs/planning.hpp"
+#include "autoware/component_interface_specs_universe/planning.hpp"
 #include "gtest/gtest.h"
 
 TEST(planning, interface)
 {
   {
-    using autoware::component_interface_specs::planning::RouteState;
+    using autoware::component_interface_specs_universe::planning::RouteState;
     RouteState state;
     size_t depth = 1;
     EXPECT_EQ(state.depth, depth);
@@ -27,7 +27,7 @@ TEST(planning, interface)
   }
 
   {
-    using autoware::component_interface_specs::planning::LaneletRoute;
+    using autoware::component_interface_specs_universe::planning::LaneletRoute;
     LaneletRoute route;
     size_t depth = 1;
     EXPECT_EQ(route.depth, depth);
@@ -36,7 +36,7 @@ TEST(planning, interface)
   }
 
   {
-    using autoware::component_interface_specs::planning::Trajectory;
+    using autoware::component_interface_specs_universe::planning::Trajectory;
     Trajectory trajectory;
     size_t depth = 1;
     EXPECT_EQ(trajectory.depth, depth);
