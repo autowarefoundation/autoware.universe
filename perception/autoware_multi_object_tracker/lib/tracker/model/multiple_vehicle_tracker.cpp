@@ -18,6 +18,8 @@
 
 #include "autoware/multi_object_tracker/tracker/model/multiple_vehicle_tracker.hpp"
 
+#include "autoware/multi_object_tracker/object_model/object_model.hpp"
+
 namespace autoware::multi_object_tracker
 {
 
@@ -28,8 +30,10 @@ MultipleVehicleTracker::MultipleVehicleTracker(
   const geometry_msgs::msg::Transform & self_transform, const size_t channel_size,
   const uint & channel_index)
 : Tracker(time, object.classification, channel_size),
-  normal_vehicle_tracker_(time, object, self_transform, channel_size, channel_index),
-  big_vehicle_tracker_(time, object, self_transform, channel_size, channel_index)
+  normal_vehicle_tracker_(
+    object_model::normal_vehicle, time, object, self_transform, channel_size, channel_index),
+  big_vehicle_tracker_(
+    object_model::big_vehicle, time, object, self_transform, channel_size, channel_index)
 {
   // initialize existence probability
   initializeExistenceProbabilities(channel_index, object.existence_probability);
