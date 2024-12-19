@@ -206,18 +206,23 @@ bool get_prepare_segment(
 LaneChangePath get_candidate_path(
   const CommonDataPtr & common_data_ptr, const LaneChangePhaseMetrics & prep_metric,
   const LaneChangePhaseMetrics & lc_metric, const PathWithLaneId & prep_segment,
-  const std::vector<std::vector<int64_t>> & sorted_lane_ids, const Pose & lc_start_pose,
-  const double shift_length)
+  const std::vector<std::vector<int64_t>> & sorted_lane_ids, const double shift_length)
 {
   const auto & route_handler = *common_data_ptr->route_handler_ptr;
   const auto & target_lanes = common_data_ptr->lanes_ptr->target;
 
   const auto resample_interval = calc_resample_interval(lc_metric.length, prep_metric.velocity);
+
+  if (prep_segment.points.empty()) {
+    throw std::logic_error("Empty prepare segment!");
+  }
+
+  const auto & lc_start_pose = prep_segment.points.back().point.pose;
   const auto target_lane_reference_path = get_reference_path_from_target_Lane(
     common_data_ptr, lc_start_pose, lc_metric.length, resample_interval);
 
   if (target_lane_reference_path.points.empty()) {
-    throw std::logic_error("target_lane_reference_path is empty!");
+    throw std::logic_error("Empty target reference!");
   }
 
   const auto lc_end_pose = std::invoke([&]() {
