@@ -31,8 +31,6 @@
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
-#include <tier4_api_msgs/msg/crosswalk_status.hpp>
-#include <tier4_api_msgs/msg/intersection_status.hpp>
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
