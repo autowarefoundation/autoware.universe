@@ -57,8 +57,6 @@ MpcLateralController::MpcLateralController(
   p_filt.traj_resample_dist = dp_double("traj_resample_dist");
   p_filt.extend_trajectory_for_end_yaw_control = dp_bool("extend_trajectory_for_end_yaw_control");
 
-  m_mpc->m_admissible_position_error = dp_double("admissible_position_error");
-  m_mpc->m_admissible_yaw_error_rad = dp_double("admissible_yaw_error_rad");
   m_mpc->m_use_steer_prediction = dp_bool("use_steer_prediction");
   m_mpc->m_param.steer_tau = dp_double("vehicle_model_steer_tau");
 
