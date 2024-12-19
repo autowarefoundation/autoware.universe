@@ -185,9 +185,6 @@ bool MotionVelocityPlannerNode::update_planner_data(
   // optional data
   const auto traffic_signals_ptr = sub_traffic_signals_.takeData();
   if (traffic_signals_ptr) process_traffic_signals(traffic_signals_ptr);
-  const auto virtual_traffic_light_states_ptr = sub_virtual_traffic_light_states_.takeData();
-  if (virtual_traffic_light_states_ptr)
-    planner_data_.virtual_traffic_light_states = *virtual_traffic_light_states_ptr;
   processing_times["update_planner_data.traffic_lights"] = sw.toc(true);
 
   return is_ready;
