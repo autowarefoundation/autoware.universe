@@ -18,14 +18,12 @@
 #define EIGEN_MPL2_ONLY
 
 #include <Eigen/Core>
-#include <autoware/universe_utils/system/lru_cache.hpp>
 #include <opencv2/core/core.hpp>
 
 #include <sensor_msgs/msg/camera_info.hpp>
 
 #include <image_geometry/pinhole_camera_model.h>
 
-#include <map>
 #include <memory>
 
 namespace autoware::image_projection_based_fusion
