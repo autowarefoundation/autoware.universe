@@ -61,7 +61,7 @@ protected:
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr ground_blockage_ratio_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr sky_blockage_ratio_pub_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr ground_dust_ratio_pub_;
-  rclcpp::Publisher<tier4_debug_msgs::msg::StringStamped>::SharedPtr blockage_type_pub_;
+  rclcpp::Publisher<autoware_internal_debug_msgs::msg::StringStamped>::SharedPtr blockage_type_pub_;
 
 private:
   void onBlockageChecker(DiagnosticStatusWrapper & stat);
