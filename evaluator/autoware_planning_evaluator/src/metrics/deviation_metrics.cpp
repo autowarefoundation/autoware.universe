@@ -56,8 +56,8 @@ Accumulator<double> calcLateralTrajectoryDisplacement(
 
   const auto prev_dist = autoware::motion_utils::calcLateralOffset(prev.points, ego_pose.position);
   const auto traj_dist = autoware::motion_utils::calcLateralOffset(traj.points, ego_pose.position);
-  const auto lateral_traj_displacement = traj_dist - prev_dist;
-  stat.add(lateral_traj_displacement);
+  const auto lateral_trajectory_displacement = traj_dist - prev_dist;
+  stat.add(lateral_trajectory_displacement);
   return stat;
 }
 
