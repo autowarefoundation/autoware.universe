@@ -14,7 +14,7 @@
 //
 //
 // Author: v1.0 Yukihiro Saito
-//
+
 #define EIGEN_MPL2_ONLY
 
 #include "autoware/multi_object_tracker/tracker/model/vehicle_tracker.hpp"
@@ -60,11 +60,6 @@ VehicleTracker::VehicleTracker(
 
   // initialize existence probability
   initializeExistenceProbabilities(channel_index, object.existence_probability);
-
-  // velocity deviation threshold
-  //   if the predicted velocity is close to the observed velocity,
-  //   the observed velocity is used as the measurement.
-  velocity_deviation_threshold_ = autoware::universe_utils::kmph2mps(10);  // [m/s]
 
   // OBJECT SHAPE MODEL
   if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
@@ -202,19 +197,7 @@ autoware_perception_msgs::msg::DetectedObject VehicleTracker::getUpdatingObject(
 
 bool VehicleTracker::measureWithPose(const autoware_perception_msgs::msg::DetectedObject & object)
 {
-  // current (predicted) state
-  const double tracked_vel = motion_model_.getStateElement(IDX::VEL);
-
-  // velocity capability is checked only when the object has velocity measurement
-  // and the predicted velocity is close to the observed velocity
-  bool is_velocity_available = false;
-  if (object.kinematics.has_twist) {
-    const double & observed_vel = object.kinematics.twist_with_covariance.twist.linear.x;
-    if (std::fabs(tracked_vel - observed_vel) < velocity_deviation_threshold_) {
-      // Velocity deviation is small
-      is_velocity_available = true;
-    }
-  }
+  const bool is_velocity_available = object.kinematics.has_twist;
 
   // update
   bool is_updated = false;
@@ -222,11 +205,12 @@ bool VehicleTracker::measureWithPose(const autoware_perception_msgs::msg::Detect
     const double x = object.kinematics.pose_with_covariance.pose.position.x;
     const double y = object.kinematics.pose_with_covariance.pose.position.y;
     const double yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
-    const double vel = object.kinematics.twist_with_covariance.twist.linear.x;
+    const double vel_x = object.kinematics.twist_with_covariance.twist.linear.x;
+    const double vel_y = object.kinematics.twist_with_covariance.twist.linear.y;
 
     if (is_velocity_available) {
       is_updated = motion_model_.updateStatePoseHeadVel(
-        x, y, yaw, object.kinematics.pose_with_covariance.covariance, vel,
+        x, y, yaw, object.kinematics.pose_with_covariance.covariance, vel_x, vel_y,
         object.kinematics.twist_with_covariance.covariance);
     } else {
       is_updated = motion_model_.updateStatePoseHead(

@@ -179,11 +179,18 @@ bool BicycleMotionModel::updateStatePoseHeadVel(
   const double & x, const double & y, const double & yaw, const std::array<double, 36> & pose_cov,
   const double & vel, const std::array<double, 36> & twist_cov)
 {
+  return updateStatePoseHeadVel(x, y, yaw, pose_cov, vel, 0.0, twist_cov);
+}
+
+bool BicycleMotionModel::updateStatePoseHeadVel(
+  const double & x, const double & y, const double & yaw, const std::array<double, 36> & pose_cov,
+  const double & vel_x, const double & vel_y, const std::array<double, 36> & twist_cov)
+{
   // check if the state is initialized
   if (!checkInitialized()) return false;
 
-  // update state, with velocity
-  constexpr int DIM_Y = 4;
+  // update state, with velocity, slip
+  constexpr int DIM_Y = 5;
 
   // fix yaw
   double estimated_yaw = getStateElement(IDX::YAW);
@@ -196,16 +203,19 @@ bool BicycleMotionModel::updateStatePoseHeadVel(
       fixed_yaw -= 2 * limiting_delta_yaw;
     }
   }
+  const double vel = std::hypot(vel_x, vel_y);
+  const double slip = std::atan2(vel_y, vel_x);
 
   // update state
   Eigen::MatrixXd Y(DIM_Y, 1);
-  Y << x, y, fixed_yaw, vel;
+  Y << x, y, fixed_yaw, vel, slip;
 
   Eigen::MatrixXd C = Eigen::MatrixXd::Zero(DIM_Y, DIM);
   C(0, IDX::X) = 1.0;
   C(1, IDX::Y) = 1.0;
   C(2, IDX::YAW) = 1.0;
   C(3, IDX::VEL) = 1.0;
+  C(4, IDX::SLIP) = 1.0;
 
   Eigen::MatrixXd R = Eigen::MatrixXd::Zero(DIM_Y, DIM_Y);
   R(0, 0) = pose_cov[XYZRPY_COV_IDX::X_X];
@@ -217,7 +227,18 @@ bool BicycleMotionModel::updateStatePoseHeadVel(
   R(2, 0) = pose_cov[XYZRPY_COV_IDX::YAW_X];
   R(2, 1) = pose_cov[XYZRPY_COV_IDX::YAW_Y];
   R(2, 2) = pose_cov[XYZRPY_COV_IDX::YAW_YAW];
-  R(3, 3) = twist_cov[XYZRPY_COV_IDX::X_X];
+
+  // velocity and slip angle covariance
+  Eigen::MatrixXd cov_jacob(2, 2);
+  cov_jacob << vel_x / vel, vel_y / vel, -M_PI_4 * slip / vel_x, M_PI_4 / vel_x;
+  Eigen::MatrixXd cov_twist(2, 2);
+  cov_twist << twist_cov[XYZRPY_COV_IDX::X_X], twist_cov[XYZRPY_COV_IDX::X_Y],
+    twist_cov[XYZRPY_COV_IDX::Y_X], twist_cov[XYZRPY_COV_IDX::Y_Y];
+  Eigen::MatrixXd twist_cov_mat = cov_jacob * cov_twist * cov_jacob.transpose();
+  R(3, 3) = twist_cov_mat(0, 0);  // vel-vel
+  R(3, 4) = twist_cov_mat(0, 1);  // vel-slip
+  R(4, 3) = twist_cov_mat(1, 0);  // slip-vel
+  R(4, 4) = twist_cov_mat(1, 1);  // slip-slip
 
   return ekf_.update(Y, C, R);
 }
