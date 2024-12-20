@@ -15,6 +15,7 @@
 #ifndef AUTOWARE__OBSTACLE_CRUISE_PLANNER__PLANNER_INTERFACE_HPP_
 #define AUTOWARE__OBSTACLE_CRUISE_PLANNER__PLANNER_INTERFACE_HPP_
 
+#include "autoware/motion_utils/factor/planning_factor_interface.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/obstacle_cruise_planner/common_structs.hpp"
 #include "autoware/obstacle_cruise_planner/stop_planning_debug_info.hpp"
@@ -47,7 +48,9 @@ public:
     rclcpp::Node & node, const LongitudinalInfo & longitudinal_info,
     const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
     const EgoNearestParam & ego_nearest_param, const std::shared_ptr<DebugData> debug_data_ptr)
-  : longitudinal_info_(longitudinal_info),
+  : planning_factor_interface_{std::make_unique<autoware::motion_utils::PlanningFactorInterface>(
+      &node, "obstacle_cruise_planner")},
+    longitudinal_info_(longitudinal_info),
     vehicle_info_(vehicle_info),
     ego_nearest_param_(ego_nearest_param),
     debug_data_ptr_(debug_data_ptr),
@@ -101,6 +104,7 @@ public:
     const std::optional<geometry_msgs::msg::Pose> & stop_pose = std::nullopt,
     const std::optional<StopObstacle> & stop_obstacle = std::nullopt);
   void publishMetrics(const rclcpp::Time & current_time);
+  void publishPlanningFactors() { planning_factor_interface_->publish(); }
   void clearMetrics();
 
   void onParam(const std::vector<rclcpp::Parameter> & parameters)
@@ -128,6 +132,8 @@ public:
   double getSafeDistanceMargin() const { return longitudinal_info_.safe_distance_margin; }
 
 protected:
+  std::unique_ptr<autoware::motion_utils::PlanningFactorInterface> planning_factor_interface_;
+
   // Parameters
   bool enable_debug_info_{false};
   bool enable_calculation_time_info_{false};
