@@ -1,0 +1,7 @@
+/**:
+  ros__parameters:
+    planning_hz: 10.0
+    backward_path_length: 5.0
+    forward_path_length: 300.0
+    waypoint_group_separation_threshold: 1.0
+    waypoint_group_interval_margin_ratio: 10.0
