@@ -182,6 +182,8 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
                                   : std::abs(vehicle_info_.min_longitudinal_offset_m);
 
   if (stop_obstacles.empty()) {
+    velocity_factors_pub_->publish(
+      obstacle_cruise_utils::makeVelocityFactorArray(planner_data.current_time));
     // delete marker
     const auto markers =
       autoware::motion_utils::createDeletedStopVirtualWallMarker(planner_data.current_time, 0);
@@ -334,6 +336,8 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
 
     // Publish Stop Reason
     const auto stop_pose = output_traj_points.at(*zero_vel_idx).pose;
+    velocity_factors_pub_->publish(obstacle_cruise_utils::makeVelocityFactorArray(
+      planner_data.current_time, PlanningBehavior::ROUTE_OBSTACLE, stop_pose));
     planning_factor_interface_->add(
       output_traj_points, planner_data.ego_pose, stop_pose,
       tier4_planning_msgs::msg::PlanningFactor::STOP,
@@ -590,8 +594,10 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
       const auto markers = autoware::motion_utils::createSlowDownVirtualWallMarker(
         slow_down_traj_points.at(slow_down_wall_idx).pose, "obstacle slow down",
         planner_data.current_time, i, abs_ego_offset, "", planner_data.is_driving_forward);
+      velocity_factors_pub_->publish(obstacle_cruise_utils::makeVelocityFactorArray(
+        planner_data.current_time, PlanningBehavior::ROUTE_OBSTACLE,
+        slow_down_traj_points.at(slow_down_wall_idx).pose));
       autoware::universe_utils::appendMarkerArray(markers, &debug_data_ptr_->slow_down_wall_marker);
-
       planning_factor_interface_->add(
         slow_down_traj_points, planner_data.ego_pose,
         slow_down_traj_points.at(*slow_down_start_idx).pose,

@@ -339,6 +339,9 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::planCruise(
         stop_traj_points, planner_data.ego_pose, stop_traj_points.at(wall_idx).pose,
         tier4_planning_msgs::msg::PlanningFactor::NONE,
         tier4_planning_msgs::msg::SafetyFactorArray{});
+      velocity_factors_pub_->publish(obstacle_cruise_utils::makeVelocityFactorArray(
+        planner_data.current_time, PlanningBehavior::ADAPTIVE_CRUISE,
+        stop_traj_points.at(wall_idx).pose));
     }
 
     // do cruise planning

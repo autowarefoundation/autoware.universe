@@ -57,6 +57,8 @@ public:
     slow_down_param_(SlowDownParam(node)),
     stop_param_(StopParam(node, longitudinal_info))
   {
+    velocity_factors_pub_ =
+      node.create_publisher<VelocityFactorArray>("/planning/velocity_factors/obstacle_cruise", 1);
     stop_speed_exceeded_pub_ =
       node.create_publisher<StopSpeedExceeded>("~/output/stop_speed_exceeded", 1);
     metrics_pub_ = node.create_publisher<MetricArray>("~/metrics", 10);
@@ -149,6 +151,7 @@ protected:
     stop_watch_;
 
   // Publishers
+  rclcpp::Publisher<VelocityFactorArray>::SharedPtr velocity_factors_pub_;
   rclcpp::Publisher<StopSpeedExceeded>::SharedPtr stop_speed_exceeded_pub_;
   rclcpp::Publisher<MetricArray>::SharedPtr metrics_pub_;
 
