@@ -22,6 +22,8 @@
 #include <boost/geometry/algorithms/is_valid.hpp>
 #include <boost/geometry/strategies/agnostic/hull_graham_andrew.hpp>
 
+#include <random>
+
 namespace autoware::universe_utils
 {
 namespace
