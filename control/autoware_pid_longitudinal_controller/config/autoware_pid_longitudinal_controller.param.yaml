@@ -74,7 +74,7 @@
 
     # slope compensation
     lpf_pitch_gain: 0.95
-    slope_source: "raw_pitch" # raw_pitch, trajectory_pitch or trajectory_adaptive
+    slope_source: "trajectory_goal_adaptive" # raw_pitch, trajectory_pitch, trajectory_adaptive or trajectory_goal_adaptive
     adaptive_trajectory_velocity_th: 1.0
     max_pitch_rad: 0.1
     min_pitch_rad: -0.1
