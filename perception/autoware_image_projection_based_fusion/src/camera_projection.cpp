@@ -43,8 +43,8 @@ CameraProjection::CameraProjection(
   half_grid_h_size_ = grid_h_size_ / 2.0;
   inv_grid_w_size_ = 1 / grid_w_size_;
   inv_grid_h_size_ = 1 / grid_h_size_;
-  grid_x_num_ = static_cast<uint32_t>(std::ceil(image_w_ / grid_w_size_));
-  grid_y_num_ = static_cast<uint32_t>(std::ceil(image_h_ / grid_h_size_));
+  grid_x_num_ = static_cast<int>(std::ceil(image_w_ / grid_w_size_));
+  grid_y_num_ = static_cast<int>(std::ceil(image_h_ / grid_h_size_));
   cache_size_ = grid_x_num_ * grid_y_num_;
 
   // compute 3D rays for the image corners and pixels related to optical center
@@ -136,16 +136,12 @@ void CameraProjection::initializeCache()
   // each pixel will be rounded in this grid center
   // edge pixels in the image will be assign to centers that is the outside of the image
 
-  for (float y = half_grid_h_size_; y < image_h_; y += grid_h_size_) {
-    for (float x = half_grid_w_size_; x < image_w_; x += grid_w_size_) {
-      const float qx =
-        std::round((x - half_grid_w_size_) * inv_grid_w_size_) * grid_w_size_ + half_grid_w_size_;
-      const float qy =
-        std::round((y - half_grid_h_size_) * inv_grid_h_size_) * grid_h_size_ + half_grid_h_size_;
-
-      const int grid_x = static_cast<int>(std::floor(qx / grid_w_size_));
-      const int grid_y = static_cast<int>(std::floor(qy / grid_h_size_));
-      const int index = (grid_y)*grid_x_num_ + grid_x;
+  for (int grid_y = 0; grid_y < grid_y_num_; grid_y++) {
+    for (int grid_x = 0; grid_x < grid_x_num_; grid_x++) {
+      // grid_x * grid_w_size_ + half_grid_w_size_
+      const float qx = (grid_x + 0.5f) * grid_w_size_;
+      const float qy = (grid_y + 0.5f) * grid_h_size_;
+      const uint32_t index = grid_y*grid_x_num_ + grid_x;
 
       // precompute projected point
       cv::Point2d raw_image_point = camera_model_.unrectifyPoint(cv::Point2d(qx, qy));
@@ -204,23 +200,13 @@ bool CameraProjection::calcRawImageProjectedPointWithApproximation(
   const cv::Point2d rectified_image_point = camera_model_.project3dToPixel(point3d);
 
   // round to a near grid center
-  const float qx =
-    std::round((rectified_image_point.x - half_grid_w_size_) * inv_grid_w_size_) * grid_w_size_ +
-    half_grid_w_size_;
-  if (qx < 0.0 || qx >= image_w_) {
-    return false;
-  }
-  const float qy =
-    std::round((rectified_image_point.y - half_grid_h_size_) * inv_grid_h_size_) * grid_h_size_ +
-    half_grid_h_size_;
-  if (qy < 0.0 || qy >= image_h_) {
-    return false;
-  }
+  const int grid_x = static_cast<int>(std::floor(rectified_image_point.x * inv_grid_w_size_));
+  const int grid_y = static_cast<int>(std::floor(rectified_image_point.y * inv_grid_h_size_));
 
-  const int grid_x = static_cast<int>(std::floor(qx / grid_w_size_));
-  const int grid_y = static_cast<int>(std::floor(qy / grid_h_size_));
-  const int index = grid_y * grid_x_num_ + grid_x;
+  if (grid_x < 0.0 || grid_x>= grid_x_num_) return false;
+  if (grid_y < 0.0 || grid_y>= grid_y_num_) return false;
 
+  const uint32_t index = grid_y * grid_x_num_ + grid_x;
   projected_point << projection_cache_[index].x, projection_cache_[index].y;
 
   return true;

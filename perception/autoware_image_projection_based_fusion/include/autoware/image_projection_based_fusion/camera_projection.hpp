@@ -68,8 +68,8 @@ protected:
   float half_grid_h_size_;
   float inv_grid_w_size_;
   float inv_grid_h_size_;
-  uint32_t grid_x_num_;
-  uint32_t grid_y_num_;
+  int grid_x_num_;
+  int grid_y_num_;
   float index_grid_out_h_;
   float index_grid_out_w_;
 
