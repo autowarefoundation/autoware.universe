@@ -41,7 +41,6 @@
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>
   <depend>sensor_msgs</depend>
-  <depend>tier4_api_msgs</depend>
   <depend>tier4_debug_msgs</depend>
   <depend>visualization_msgs</depend>
 

@@ -57,7 +57,6 @@ using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::TrafficLightElement;
 using lanelet::autoware::Crosswalk;
-using tier4_api_msgs::msg::CrosswalkStatus;
 using tier4_planning_msgs::msg::PathWithLaneId;
 
 namespace
