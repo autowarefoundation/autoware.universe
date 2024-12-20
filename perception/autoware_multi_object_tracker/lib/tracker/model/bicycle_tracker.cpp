@@ -46,7 +46,7 @@ namespace autoware::multi_object_tracker
 using Label = autoware_perception_msgs::msg::ObjectClassification;
 
 BicycleTracker::BicycleTracker(
-  const rclcpp::Time & time, const autoware_perception_msgs::msg::DetectedObject & object,
+  const rclcpp::Time & time, const types::DynamicObject & object,
   const geometry_msgs::msg::Transform & /*self_transform*/, const size_t channel_size,
   const uint & channel_index)
 : Tracker(time, object.classification, channel_size),
@@ -59,7 +59,7 @@ BicycleTracker::BicycleTracker(
   initializeExistenceProbabilities(channel_index, object.existence_probability);
 
   // OBJECT SHAPE MODEL
-  if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  if (object.shape.type == types::ShapeType::BOUNDING_BOX) {
     bounding_box_ = {
       object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
   } else {
@@ -148,15 +148,15 @@ bool BicycleTracker::predict(const rclcpp::Time & time)
   return motion_model_.predictState(time);
 }
 
-autoware_perception_msgs::msg::DetectedObject BicycleTracker::getUpdatingObject(
-  const autoware_perception_msgs::msg::DetectedObject & object,
+types::DynamicObject BicycleTracker::getUpdatingObject(
+  const types::DynamicObject & object,
   const geometry_msgs::msg::Transform & /*self_transform*/) const
 {
-  autoware_perception_msgs::msg::DetectedObject updating_object = object;
+  types::DynamicObject updating_object = object;
 
   // OBJECT SHAPE MODEL
   // convert to bounding box if input is convex shape
-  if (object.shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  if (object.shape.type != types::ShapeType::BOUNDING_BOX) {
     if (!utils::convertConvexHullToBoundingBox(object, updating_object)) {
       updating_object = object;
     }
@@ -165,7 +165,7 @@ autoware_perception_msgs::msg::DetectedObject BicycleTracker::getUpdatingObject(
   return updating_object;
 }
 
-bool BicycleTracker::measureWithPose(const autoware_perception_msgs::msg::DetectedObject & object)
+bool BicycleTracker::measureWithPose(const types::DynamicObject & object)
 {
   // get measurement yaw angle to update
   const double tracked_yaw = motion_model_.getStateElement(IDX::YAW);
@@ -196,9 +196,9 @@ bool BicycleTracker::measureWithPose(const autoware_perception_msgs::msg::Detect
   return is_updated;
 }
 
-bool BicycleTracker::measureWithShape(const autoware_perception_msgs::msg::DetectedObject & object)
+bool BicycleTracker::measureWithShape(const types::DynamicObject & object)
 {
-  if (object.shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  if (object.shape.type != types::ShapeType::BOUNDING_BOX) {
     // do not update shape if the input is not a bounding box
     return false;
   }
@@ -235,7 +235,7 @@ bool BicycleTracker::measureWithShape(const autoware_perception_msgs::msg::Detec
 }
 
 bool BicycleTracker::measure(
-  const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+  const types::DynamicObject & object, const rclcpp::Time & time,
   const geometry_msgs::msg::Transform & self_transform)
 {
   // keep the latest input object
@@ -260,8 +260,7 @@ bool BicycleTracker::measure(
   }
 
   // update object
-  const autoware_perception_msgs::msg::DetectedObject updating_object =
-    getUpdatingObject(object, self_transform);
+  const types::DynamicObject updating_object = getUpdatingObject(object, self_transform);
   measureWithPose(updating_object);
   measureWithShape(updating_object);
 
@@ -271,7 +270,7 @@ bool BicycleTracker::measure(
 bool BicycleTracker::getTrackedObject(
   const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObject & object) const
 {
-  object = autoware::object_recognition_utils::toTrackedObject(object_);
+  object = types::getTrackedObject(object_);
   object.object_id = getUUID();
   object.classification = getClassification();
 

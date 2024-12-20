@@ -26,7 +26,7 @@ namespace autoware::multi_object_tracker
 using Label = autoware_perception_msgs::msg::ObjectClassification;
 
 MultipleVehicleTracker::MultipleVehicleTracker(
-  const rclcpp::Time & time, const autoware_perception_msgs::msg::DetectedObject & object,
+  const rclcpp::Time & time, const types::DynamicObject & object,
   const geometry_msgs::msg::Transform & self_transform, const size_t channel_size,
   const uint & channel_index)
 : Tracker(time, object.classification, channel_size),
@@ -47,7 +47,7 @@ bool MultipleVehicleTracker::predict(const rclcpp::Time & time)
 }
 
 bool MultipleVehicleTracker::measure(
-  const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+  const types::DynamicObject & object, const rclcpp::Time & time,
   const geometry_msgs::msg::Transform & self_transform)
 {
   big_vehicle_tracker_.measure(object, time, self_transform);

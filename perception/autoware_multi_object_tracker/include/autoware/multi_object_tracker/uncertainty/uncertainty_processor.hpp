@@ -18,6 +18,7 @@
 #ifndef AUTOWARE__MULTI_OBJECT_TRACKER__UNCERTAINTY__UNCERTAINTY_PROCESSOR_HPP_
 #define AUTOWARE__MULTI_OBJECT_TRACKER__UNCERTAINTY__UNCERTAINTY_PROCESSOR_HPP_
 
+#include "autoware/multi_object_tracker/object_model/dynamic_object.hpp"
 #include "autoware/multi_object_tracker/object_model/object_model.hpp"
 
 #include <autoware/object_recognition_utils/object_recognition_utils.hpp>
@@ -32,21 +33,19 @@ namespace uncertainty
 {
 
 using autoware::multi_object_tracker::object_model::ObjectModel;
-using autoware_perception_msgs::msg::DetectedObject;
-using autoware_perception_msgs::msg::DetectedObjects;
 using autoware_perception_msgs::msg::ObjectClassification;
 using nav_msgs::msg::Odometry;
 
 ObjectModel decodeObjectModel(const ObjectClassification & object_class);
 
-DetectedObjects modelUncertainty(const DetectedObjects & detected_objects);
+types::DynamicObjects modelUncertainty(const types::DynamicObjects & detected_objects);
 
 object_model::StateCovariance covarianceFromObjectClass(
-  const DetectedObject & detected_object, const ObjectClassification & object_class);
+  const types::DynamicObject & detected_object, const ObjectClassification & object_class);
 
-void normalizeUncertainty(DetectedObjects & detected_objects);
+void normalizeUncertainty(types::DynamicObjects & detected_objects);
 
-void addOdometryUncertainty(const Odometry & odometry, DetectedObjects & detected_objects);
+void addOdometryUncertainty(const Odometry & odometry, types::DynamicObjects & detected_objects);
 }  // namespace uncertainty
 
 }  // namespace autoware::multi_object_tracker

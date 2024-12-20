@@ -25,12 +25,20 @@
 #include <autoware_perception_msgs/msg/object_classification.hpp>
 #include <autoware_perception_msgs/msg/shape.hpp>
 #include <autoware_perception_msgs/msg/tracked_object.hpp>
+#include <autoware_perception_msgs/msg/tracked_object_kinematics.hpp>
 #include <geometry_msgs/msg/polygon.hpp>
 #include <geometry_msgs/msg/pose_with_covariance.hpp>
 #include <geometry_msgs/msg/twist_with_covariance.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
 #include <std_msgs/msg/header.hpp>
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
+#include <boost/optional.hpp>
+
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
+
+#include <string>
 #include <vector>
 
 namespace autoware::multi_object_tracker
@@ -80,56 +88,21 @@ struct DynamicObjects
   std::vector<DynamicObject> objects;
 };
 
-DynamicObject getDynamicObject(autoware_perception_msgs::msg::DetectedObject object)
-{
-  DynamicObject dynamic_object;
-  dynamic_object.existence_probability = object.existence_probability;
-  dynamic_object.classification = object.classification;
+DynamicObject getDynamicObject(const autoware_perception_msgs::msg::DetectedObject & det_object);
 
-  dynamic_object.kinematics.pose_with_covariance = object.kinematics.pose_with_covariance;
-  dynamic_object.kinematics.twist_with_covariance = object.kinematics.twist_with_covariance;
-  dynamic_object.kinematics.has_position_covariance = object.kinematics.has_position_covariance;
-  if (
-    object.kinematics.orientation_availability ==
-    autoware_perception_msgs::msg::DetectedObjectKinematics::UNAVAILABLE) {
-    dynamic_object.kinematics.orientation_availability = OrientationAvailability::UNAVAILABLE;
-  } else if (
-    object.kinematics.orientation_availability ==
-    autoware_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN) {
-    dynamic_object.kinematics.orientation_availability = OrientationAvailability::SIGN_UNKNOWN;
-  } else if (
-    object.kinematics.orientation_availability ==
-    autoware_perception_msgs::msg::DetectedObjectKinematics::AVAILABLE) {
-    dynamic_object.kinematics.orientation_availability = OrientationAvailability::AVAILABLE;
-  }
-  dynamic_object.kinematics.has_twist = object.kinematics.has_twist;
-  dynamic_object.kinematics.has_twist_covariance = object.kinematics.has_twist_covariance;
 
-  if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
-    dynamic_object.shape.type = ShapeType::BOUNDING_BOX;
-  } else if (object.shape.type == autoware_perception_msgs::msg::Shape::CYLINDER) {
-    dynamic_object.shape.type = ShapeType::CYLINDER;
-  } else if (object.shape.type == autoware_perception_msgs::msg::Shape::POLYGON) {
-    dynamic_object.shape.type = ShapeType::POLYGON;
-  }
+DynamicObjects getDynamicObjects(const autoware_perception_msgs::msg::DetectedObjects & det_objects);
 
-  dynamic_object.shape.footprint = object.shape.footprint;
-  dynamic_object.shape.dimensions = object.shape.dimensions;
-  return dynamic_object;
-}
-
-DynamicObjects getDynamicObject(autoware_perception_msgs::msg::DetectedObjects objects)
-{
-  DynamicObjects dynamic_objects;
-  dynamic_objects.header = objects.header;
-  dynamic_objects.objects.reserve(objects.objects.size());
-  for (const auto & object : objects.objects) {
-    dynamic_objects.objects.emplace_back(getDynamicObject(object));
-  }
-  return dynamic_objects;
-}
+autoware_perception_msgs::msg::TrackedObject getTrackedObject(const DynamicObject & dyn_object);
 
 }  // namespace types
+
+
+bool transformObjects(
+  const types::DynamicObjects & input_msg, const std::string & target_frame_id,
+  const tf2_ros::Buffer & tf_buffer, types::DynamicObjects & output_msg);
+
+  double getArea(const types::ObjectShape & shape);
 }  // namespace autoware::multi_object_tracker
 
 #endif  // AUTOWARE__MULTI_OBJECT_TRACKER__OBJECT_MODEL__DYNAMIC_OBJECT_HPP_

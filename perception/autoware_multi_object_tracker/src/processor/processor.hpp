@@ -15,6 +15,7 @@
 #ifndef PROCESSOR__PROCESSOR_HPP_
 #define PROCESSOR__PROCESSOR_HPP_
 
+#include "autoware/multi_object_tracker/object_model/dynamic_object.hpp"
 #include "autoware/multi_object_tracker/tracker/model/tracker_base.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -53,11 +54,11 @@ public:
   // tracker processes
   void predict(const rclcpp::Time & time);
   void update(
-    const autoware_perception_msgs::msg::DetectedObjects & detected_objects,
+    const types::DynamicObjects & detected_objects,
     const geometry_msgs::msg::Transform & self_transform,
     const std::unordered_map<int, int> & direct_assignment, const uint & channel_index);
   void spawn(
-    const autoware_perception_msgs::msg::DetectedObjects & detected_objects,
+    const types::DynamicObjects & detected_objects,
     const geometry_msgs::msg::Transform & self_transform,
     const std::unordered_map<int, int> & reverse_assignment, const uint & channel_index);
   void prune(const rclcpp::Time & time);
@@ -79,7 +80,7 @@ private:
   void removeOldTracker(const rclcpp::Time & time);
   void removeOverlappedTracker(const rclcpp::Time & time);
   std::shared_ptr<Tracker> createNewTracker(
-    const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+    const types::DynamicObject & object, const rclcpp::Time & time,
     const geometry_msgs::msg::Transform & self_transform, const uint & channel_index) const;
 };
 
