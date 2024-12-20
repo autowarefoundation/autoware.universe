@@ -116,9 +116,9 @@ void CameraProjection::initialize()
 
 void CameraProjection::initializeCache()
 {
-  // sample grid centers till the camera height, width to precompute the projection
+  // sample grid cell centers till the camera height, width to precompute the projections
   //
-  //      grid_size
+  //      grid cell size
   //      /
   //     v
   //   |---|          w
@@ -128,10 +128,11 @@ void CameraProjection::initializeCache()
   //   | . | . | . |
   //   | ^
   // h | |
-  //   v grid center
+  //   v grid cell center
   //
-  // each pixel will be rounded in this grid center
-  // edge pixels in the image will be assign to centers that is the outside of the image
+  // each pixel will be rounded in these grid cell centers
+  // edge pixels in right and bottom side in the image will be assign to these centers
+  // that is the outside of the image
 
   for (int grid_y = 0; grid_y < grid_height_; grid_y++) {
     for (int grid_x = 0; grid_x < grid_width_; grid_x++) {
