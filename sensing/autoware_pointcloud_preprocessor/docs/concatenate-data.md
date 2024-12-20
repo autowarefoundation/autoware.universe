@@ -6,20 +6,10 @@ The `concatenate_and_time_synchronize_node` is a node designed to combine and sy
 
 For example, consider a vehicle equipped with three LiDAR sensors mounted on the left, right, and top positions. Each LiDAR captures data from its respective field of view, as shown below:
 
-<div align="center">
-  <table>
-    <tr>
-      <td><img src="./image/concatenate_left.png" alt="Concatenate Left" width="300"></td>
-      <td><img src="./image/concatenate_top.png" alt="Concatenate Top" width="300"></td>
-      <td><img src="./image/concatenate_right.png" alt="Concatenate Right" width="300"></td>
-    </tr>
-    <tr>
-      <td align="center">Left</td>
-      <td align="center">Right</td>
-      <td align="center">Top</td>
-    </tr>
-  </table>
-</div>
+| Left | Top | Right |
+|:-:|:-:|:-:|
+| ![Concatenate Left](./image/concatenate_left.png) | ![Concatenate Top](./image/concatenate_top.png) | ![Concatenate Right](./image/concatenate_right.png) |
+
 
 After processing the data through the `concatenate_and_time_synchronize_node`, the outputs from all LiDARs are combined into a single comprehensive point cloud that provides a complete view of the environment:
 
