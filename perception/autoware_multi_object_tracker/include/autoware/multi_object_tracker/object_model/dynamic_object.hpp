@@ -65,7 +65,7 @@ struct DynamicObject
   autoware_perception_msgs::msg::Shape shape;
 };
 
-struct DynamicObjects
+struct DynamicObjectList
 {
   std_msgs::msg::Header header;
   uint channel_index;
@@ -74,7 +74,7 @@ struct DynamicObjects
 
 DynamicObject getDynamicObject(const autoware_perception_msgs::msg::DetectedObject & det_object);
 
-DynamicObjects getDynamicObjects(
+DynamicObjectList getDynamicObjectList(
   const autoware_perception_msgs::msg::DetectedObjects & det_objects);
 
 autoware_perception_msgs::msg::TrackedObject toTrackedObjectMsg(const DynamicObject & dyn_object);

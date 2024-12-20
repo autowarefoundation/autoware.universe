@@ -102,9 +102,9 @@ types::DynamicObject modelUncertaintyByClass(
   return updating_object;
 }
 
-types::DynamicObjects modelUncertainty(const types::DynamicObjects & detected_objects)
+types::DynamicObjectList modelUncertainty(const types::DynamicObjectList & detected_objects)
 {
-  types::DynamicObjects updating_objects;
+  types::DynamicObjectList updating_objects;
   updating_objects.header = detected_objects.header;
   updating_objects.channel_index = detected_objects.channel_index;
   for (const auto & object : detected_objects.objects) {
@@ -119,7 +119,7 @@ types::DynamicObjects modelUncertainty(const types::DynamicObjects & detected_ob
   return updating_objects;
 }
 
-void normalizeUncertainty(types::DynamicObjects & detected_objects)
+void normalizeUncertainty(types::DynamicObjectList & detected_objects)
 {
   constexpr double min_cov_dist = 1e-4;
   constexpr double min_cov_rad = 1e-6;
@@ -140,7 +140,7 @@ void normalizeUncertainty(types::DynamicObjects & detected_objects)
   }
 }
 
-void addOdometryUncertainty(const Odometry & odometry, types::DynamicObjects & detected_objects)
+void addOdometryUncertainty(const Odometry & odometry, types::DynamicObjectList & detected_objects)
 {
   const auto & odom_pose = odometry.pose.pose;
   const auto & odom_pose_cov = odometry.pose.covariance;

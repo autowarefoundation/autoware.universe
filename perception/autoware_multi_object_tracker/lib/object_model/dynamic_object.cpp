@@ -55,9 +55,10 @@ DynamicObject getDynamicObject(const autoware_perception_msgs::msg::DetectedObje
   return dynamic_object;
 }
 
-DynamicObjects getDynamicObjects(const autoware_perception_msgs::msg::DetectedObjects & det_objects)
+DynamicObjectList getDynamicObjectList(
+  const autoware_perception_msgs::msg::DetectedObjects & det_objects)
 {
-  DynamicObjects dynamic_objects;
+  DynamicObjectList dynamic_objects;
   dynamic_objects.header = det_objects.header;
   dynamic_objects.objects.reserve(det_objects.objects.size());
   for (const auto & det_object : det_objects.objects) {

@@ -50,8 +50,8 @@ inline boost::optional<geometry_msgs::msg::Transform> getTransform(
 }
 
 bool transformObjects(
-  const types::DynamicObjects & input_msg, const std::string & target_frame_id,
-  const tf2_ros::Buffer & tf_buffer, types::DynamicObjects & output_msg)
+  const types::DynamicObjectList & input_msg, const std::string & target_frame_id,
+  const tf2_ros::Buffer & tf_buffer, types::DynamicObjectList & output_msg)
 {
   output_msg = input_msg;
 

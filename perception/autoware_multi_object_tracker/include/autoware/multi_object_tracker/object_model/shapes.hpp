@@ -29,8 +29,8 @@ namespace autoware::multi_object_tracker
 namespace shapes
 {
 bool transformObjects(
-  const types::DynamicObjects & input_msg, const std::string & target_frame_id,
-  const tf2_ros::Buffer & tf_buffer, types::DynamicObjects & output_msg);
+  const types::DynamicObjectList & input_msg, const std::string & target_frame_id,
+  const tf2_ros::Buffer & tf_buffer, types::DynamicObjectList & output_msg);
 
 double get2dIoU(
   const types::DynamicObject & source_object, const types::DynamicObject & target_object,
