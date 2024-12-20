@@ -18,9 +18,11 @@
 #include "autoware/universe_utils/geometry/boost_geometry.hpp"
 #include "autoware/universe_utils/geometry/temp_polygon_clip.hpp"
 
+#include <boost/geometry/algorithms/buffer.hpp>
 #include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/algorithms/simplify.hpp>
 #include <boost/geometry/algorithms/within.hpp>
+#include <boost/geometry/strategies/buffer.hpp>
 
 #include <cmath>
 #include <fstream>
