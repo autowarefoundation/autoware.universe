@@ -31,8 +31,8 @@ CameraProjection::CameraProjection(
     throw std::runtime_error("Both grid_cell_width and grid_cell_height must be > 0.0");
   }
 
-  image_w_ = camera_info.width;
-  image_h_ = camera_info.height;
+  image_width_ = camera_info.width;
+  image_height_ = camera_info.height;
 
   // prepare camera model
   camera_model_.fromCameraInfo(camera_info);
@@ -40,8 +40,8 @@ CameraProjection::CameraProjection(
   // cache settings
   inv_cell_width_ = 1 / cell_width_;
   inv_cell_height_ = 1 / cell_height_;
-  grid_width_ = static_cast<int>(std::ceil(image_w_ / cell_width_));
-  grid_height_ = static_cast<int>(std::ceil(image_h_ / cell_height_));
+  grid_width_ = static_cast<int>(std::ceil(image_width_ / cell_width_));
+  grid_height_ = static_cast<int>(std::ceil(image_height_ / cell_height_));
   cache_size_ = grid_width_ * grid_height_;
 
   // compute 3D rays for the image corners and pixels related to optical center
