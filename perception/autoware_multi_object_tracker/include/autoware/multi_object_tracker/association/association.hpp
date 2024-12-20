@@ -27,7 +27,7 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-#include "autoware_perception_msgs/msg/detected_objects.hpp"
+#include <autoware_perception_msgs/msg/detected_objects.hpp>
 
 #include <list>
 #include <memory>
