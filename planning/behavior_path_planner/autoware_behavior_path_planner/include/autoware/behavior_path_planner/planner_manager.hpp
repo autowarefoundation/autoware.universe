@@ -45,7 +45,7 @@ using SceneModulePtr = std::shared_ptr<SceneModuleInterface>;
 using SceneModuleManagerPtr = std::shared_ptr<SceneModuleManagerInterface>;
 using DebugPublisher = autoware::universe_utils::DebugPublisher;
 using DebugDoubleMsg = tier4_debug_msgs::msg::Float64Stamped;
-using DebugStringMsg = tier4_debug_msgs::msg::StringStamped;
+using DebugStringMsg = autoware_internal_debug_msgs::msg::StringStamped;
 
 struct SceneModuleUpdateInfo
 {
