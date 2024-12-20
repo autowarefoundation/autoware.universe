@@ -29,7 +29,7 @@
 
 namespace autoware::multi_object_tracker
 {
-using ObjectsList = std::vector<types::DynamicObjects>;
+using ObjectsList = std::vector<std::pair<uint, types::DynamicObjects>>;
 
 struct InputChannel
 {
