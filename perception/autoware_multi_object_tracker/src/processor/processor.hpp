@@ -56,11 +56,11 @@ public:
   void update(
     const types::DynamicObjects & detected_objects,
     const geometry_msgs::msg::Transform & self_transform,
-    const std::unordered_map<int, int> & direct_assignment, const uint & channel_index);
+    const std::unordered_map<int, int> & direct_assignment);
   void spawn(
     const types::DynamicObjects & detected_objects,
     const geometry_msgs::msg::Transform & self_transform,
-    const std::unordered_map<int, int> & reverse_assignment, const uint & channel_index);
+    const std::unordered_map<int, int> & reverse_assignment);
   void prune(const rclcpp::Time & time);
 
   // output
