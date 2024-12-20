@@ -105,11 +105,7 @@ autoware_perception_msgs::msg::TrackedObject getTrackedObject(const DynamicObjec
   tracked_object.shape.dimensions = dyn_object.shape.dimensions;
   return tracked_object;
 };
-
 }  // namespace types
-
-
-
 
 
 inline boost::optional<geometry_msgs::msg::Transform> getTransform(
