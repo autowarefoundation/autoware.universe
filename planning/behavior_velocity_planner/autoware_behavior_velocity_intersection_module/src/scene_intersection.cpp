@@ -353,9 +353,7 @@ DecisionResult IntersectionModule::modifyPathVelocityDetail(PathWithLaneId * pat
         (std::fabs(dist_stopline) < planner_param_.common.stopline_overshoot_margin);
       const bool over_stopline = (dist_stopline < 0.0);
       const bool is_stopped_duration = planner_data_->isVehicleStopped(duration);
-      if (over_stopline) {
-        state_machine.setState(StateMachine::State::GO);
-      } else if (is_stopped_duration && approached_dist_stopline) {
+      if (over_stopline || (is_stopped_duration && approached_dist_stopline)) {
         state_machine.setState(StateMachine::State::GO);
       }
       return state_machine.getState() == StateMachine::State::GO;
@@ -366,12 +364,7 @@ DecisionResult IntersectionModule::modifyPathVelocityDetail(PathWithLaneId * pat
       (std::fabs(dist_stopline) < planner_param_.common.stopline_overshoot_margin);
     const bool over_stopline = (dist_stopline < -planner_param_.common.stopline_overshoot_margin);
     const bool is_stopped = planner_data_->isVehicleStopped(duration);
-    if (over_stopline) {
-      return true;
-    } else if (is_stopped && approached_dist_stopline) {
-      return true;
-    }
-    return false;
+    return over_stopline || (is_stopped && approached_dist_stopline);
   };
 
   const auto occlusion_wo_tl_pass_judge_line_idx =
