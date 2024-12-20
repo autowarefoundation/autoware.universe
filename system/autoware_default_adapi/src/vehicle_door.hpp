@@ -58,6 +58,7 @@ private:
   Sub<InternalDoorStatus> sub_status_;
   std::optional<InternalDoorStatus::Message> status_;
 
+  bool check_autoware_control_;
   bool is_autoware_control_;
   bool is_stop_mode_;
   Sub<OperationModeState> sub_operation_mode_;
