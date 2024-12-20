@@ -67,7 +67,9 @@ SurroundObstacleCheckerDebugNode::SurroundObstacleCheckerDebugNode(
   const double & surround_check_back_distance, const double & surround_check_hysteresis_distance,
   const geometry_msgs::msg::Pose & self_pose, const rclcpp::Clock::SharedPtr clock,
   rclcpp::Node & node)
-: vehicle_info_(vehicle_info),
+: planning_factor_interface_{std::make_unique<autoware::motion_utils::PlanningFactorInterface>(
+    &node, "surround_obstacle_checker")},
+  vehicle_info_(vehicle_info),
   object_label_(object_label),
   surround_check_front_distance_(surround_check_front_distance),
   surround_check_side_distance_(surround_check_side_distance),
@@ -145,6 +147,12 @@ void SurroundObstacleCheckerDebugNode::publish()
   /* publish stop reason for autoware api */
   const auto velocity_factor_msg = makeVelocityFactorArray();
   velocity_factor_pub_->publish(velocity_factor_msg);
+  if (stop_pose_ptr_ != nullptr) {
+    planning_factor_interface_->add(
+      0.0, *stop_pose_ptr_, tier4_planning_msgs::msg::PlanningFactor::STOP,
+      tier4_planning_msgs::msg::SafetyFactorArray{});
+  }
+  planning_factor_interface_->publish();
 
   /* reset variables */
   stop_pose_ptr_ = nullptr;

@@ -15,6 +15,7 @@
 #ifndef DEBUG_MARKER_HPP_
 #define DEBUG_MARKER_HPP_
 
+#include <autoware/motion_utils/factor/planning_factor_interface.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -22,6 +23,7 @@
 #include <autoware_adapi_v1_msgs/msg/velocity_factor_array.hpp>
 #include <geometry_msgs/msg/polygon_stamped.hpp>
 #include <geometry_msgs/msg/pose.hpp>
+#include <tier4_planning_msgs/msg/planning_factor_array.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -38,6 +40,9 @@ using autoware_adapi_v1_msgs::msg::PlanningBehavior;
 using autoware_adapi_v1_msgs::msg::VelocityFactor;
 using autoware_adapi_v1_msgs::msg::VelocityFactorArray;
 using geometry_msgs::msg::PolygonStamped;
+using tier4_planning_msgs::msg::ControlPoint;
+using tier4_planning_msgs::msg::PlanningFactor;
+using tier4_planning_msgs::msg::PlanningFactorArray;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 
@@ -70,6 +75,8 @@ private:
   rclcpp::Publisher<PolygonStamped>::SharedPtr vehicle_footprint_pub_;
   rclcpp::Publisher<PolygonStamped>::SharedPtr vehicle_footprint_offset_pub_;
   rclcpp::Publisher<PolygonStamped>::SharedPtr vehicle_footprint_recover_offset_pub_;
+
+  std::unique_ptr<autoware::motion_utils::PlanningFactorInterface> planning_factor_interface_;
 
   autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
   std::string object_label_;
