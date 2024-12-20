@@ -18,7 +18,10 @@
 #include <boost/geometry/algorithms/simplify.hpp>
 #include <boost/geometry/algorithms/within.hpp>
 
+#include <limits>
 #include <set>
+#include <utility>
+#include <vector>
 
 namespace autoware::universe_utils
 {
