@@ -57,7 +57,7 @@ protected:
   void initializeCache();
 
   sensor_msgs::msg::CameraInfo camera_info_;
-  uint32_t image_h_, image_w_;
+  uint32_t image_height_, image_width_;
   double tan_h_x_, tan_h_y_;
   double fov_left_, fov_right_, fov_top_, fov_bottom_;
 
