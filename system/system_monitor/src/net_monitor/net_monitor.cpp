@@ -811,7 +811,7 @@ NetSnmp::Result NetSnmp::check_metrics(uint64_t & current_value, uint64_t & valu
     queue_.pop_front();
   }
 
-  value_per_unit_time_ = std::accumulate(queue_.begin(), queue_.end(), 0);
+  value_per_unit_time_ = std::accumulate(queue_.begin(), queue_.end(), static_cast<uint64_t>(0));
 
   current_value = current_value_;
   value_per_unit_time = value_per_unit_time_;
