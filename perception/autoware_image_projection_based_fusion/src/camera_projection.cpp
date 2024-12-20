@@ -138,7 +138,7 @@ void CameraProjection::initializeCache()
       // grid_x * grid_w_size_ + half_grid_w_size_
       const float qx = (grid_x + 0.5f) * cell_width_;
       const float qy = (grid_y + 0.5f) * cell_height_;
-      const uint32_t index = grid_y*grid_width_ + grid_x;
+      const uint32_t index = grid_y * grid_width_ + grid_x;
 
       // precompute projected point
       cv::Point2d raw_image_point = camera_model_.unrectifyPoint(cv::Point2d(qx, qy));
@@ -200,8 +200,8 @@ bool CameraProjection::calcRawImageProjectedPointWithApproximation(
   const int grid_x = static_cast<int>(std::floor(rectified_image_point.x * inv_cell_width_));
   const int grid_y = static_cast<int>(std::floor(rectified_image_point.y * inv_cell_height_));
 
-  if (grid_x < 0.0 || grid_x>= grid_width_) return false;
-  if (grid_y < 0.0 || grid_y>= grid_height_) return false;
+  if (grid_x < 0.0 || grid_x >= grid_width_) return false;
+  if (grid_y < 0.0 || grid_y >= grid_height_) return false;
 
   const uint32_t index = grid_y * grid_width_ + grid_x;
   projected_point << projection_cache_[index].x, projection_cache_[index].y;
