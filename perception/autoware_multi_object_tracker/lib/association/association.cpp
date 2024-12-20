@@ -15,6 +15,7 @@
 #include "autoware/multi_object_tracker/association/association.hpp"
 
 #include "autoware/multi_object_tracker/association/solver/gnn_solver.hpp"
+#include "autoware/multi_object_tracker/object_model/dynamic_object.hpp"
 #include "autoware/multi_object_tracker/utils/utils.hpp"
 #include "autoware/object_recognition_utils/object_recognition_utils.hpp"
 
@@ -150,8 +151,7 @@ void DataAssociation::assign(
 }
 
 Eigen::MatrixXd DataAssociation::calcScoreMatrix(
-  const autoware_perception_msgs::msg::DetectedObjects & measurements,
-  const std::list<std::shared_ptr<Tracker>> & trackers)
+  const types::DynamicObjects & measurements, const std::list<std::shared_ptr<Tracker>> & trackers)
 {
   Eigen::MatrixXd score_matrix =
     Eigen::MatrixXd::Zero(trackers.size(), measurements.objects.size());
@@ -162,8 +162,7 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
 
     for (size_t measurement_idx = 0; measurement_idx < measurements.objects.size();
          ++measurement_idx) {
-      const autoware_perception_msgs::msg::DetectedObject & measurement_object =
-        measurements.objects.at(measurement_idx);
+      const types::DynamicObject & measurement_object = measurements.objects.at(measurement_idx);
       const std::uint8_t measurement_label =
         autoware::object_recognition_utils::getHighestProbLabel(measurement_object.classification);
 
@@ -186,7 +185,7 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
         if (passed_gate) {
           const double max_area = max_area_matrix_(tracker_label, measurement_label);
           const double min_area = min_area_matrix_(tracker_label, measurement_label);
-          const double area = autoware::universe_utils::getArea(measurement_object.shape);
+          const double area = getArea(measurement_object.shape);
           if (area < min_area || max_area < area) passed_gate = false;
         }
         // angle gate
@@ -210,8 +209,9 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
         if (passed_gate) {
           const double min_iou = min_iou_matrix_(tracker_label, measurement_label);
           const double min_union_iou_area = 1e-2;
+          const auto meas_obj = types::getTrackedObject(measurement_object);
           const double iou = autoware::object_recognition_utils::get2dIoU(
-            measurement_object, tracked_object, min_union_iou_area);
+            meas_obj, tracked_object, min_union_iou_area);
           if (iou < min_iou) passed_gate = false;
         }
 

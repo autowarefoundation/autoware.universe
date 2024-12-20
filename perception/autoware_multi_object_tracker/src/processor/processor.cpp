@@ -44,7 +44,7 @@ void TrackerProcessor::predict(const rclcpp::Time & time)
 }
 
 void TrackerProcessor::update(
-  const autoware_perception_msgs::msg::DetectedObjects & detected_objects,
+  const types::DynamicObjects & detected_objects,
   const geometry_msgs::msg::Transform & self_transform,
   const std::unordered_map<int, int> & direct_assignment, const uint & channel_index)
 {
@@ -64,7 +64,7 @@ void TrackerProcessor::update(
 }
 
 void TrackerProcessor::spawn(
-  const autoware_perception_msgs::msg::DetectedObjects & detected_objects,
+  const types::DynamicObjects & detected_objects,
   const geometry_msgs::msg::Transform & self_transform,
   const std::unordered_map<int, int> & reverse_assignment, const uint & channel_index)
 {
@@ -81,7 +81,7 @@ void TrackerProcessor::spawn(
 }
 
 std::shared_ptr<Tracker> TrackerProcessor::createNewTracker(
-  const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+  const types::DynamicObject & object, const rclcpp::Time & time,
   const geometry_msgs::msg::Transform & self_transform, const uint & channel_index) const
 {
   const LabelType label =

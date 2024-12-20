@@ -241,7 +241,7 @@ void MultiObjectTracker::onTrigger()
   last_updated_time_ = current_time;
   const rclcpp::Time latest_time(objects_list.back().second.header.stamp);
   debugger_->startMeasurementTime(this->now(), latest_time);
-  // run process for each DetectedObjects
+  // run process for each DynamicObjects
   for (const auto & objects_data : objects_list) {
     runProcess(objects_data.second, objects_data.first);
   }
@@ -279,7 +279,7 @@ void MultiObjectTracker::onTimer()
 }
 
 void MultiObjectTracker::runProcess(
-  const DetectedObjects & input_objects, const uint & channel_index)
+  const types::DynamicObjects & input_objects, const uint & channel_index)
 {
   // Get the time of the measurement
   const rclcpp::Time measurement_time =
@@ -293,9 +293,8 @@ void MultiObjectTracker::runProcess(
   }
 
   // Transform the objects to the world frame
-  DetectedObjects transformed_objects;
-  if (!autoware::object_recognition_utils::transformObjects(
-        input_objects, world_frame_id_, tf_buffer_, transformed_objects)) {
+  types::DynamicObjects transformed_objects;
+  if (!transformObjects(input_objects, world_frame_id_, tf_buffer_, transformed_objects)) {
     return;
   }
 

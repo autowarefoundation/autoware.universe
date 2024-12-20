@@ -80,8 +80,7 @@ void TrackerObjectDebugger::reset()
 
 void TrackerObjectDebugger::collect(
   const rclcpp::Time & message_time, const std::list<std::shared_ptr<Tracker>> & list_tracker,
-  const uint & channel_index,
-  const autoware_perception_msgs::msg::DetectedObjects & detected_objects,
+  const uint & channel_index, const types::DynamicObjects & detected_objects,
   const std::unordered_map<int, int> & direct_assignment,
   const std::unordered_map<int, int> & /*reverse_assignment*/)
 {

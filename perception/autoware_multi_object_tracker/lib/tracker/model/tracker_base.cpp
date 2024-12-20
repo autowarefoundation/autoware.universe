@@ -81,9 +81,8 @@ void Tracker::initializeExistenceProbabilities(
 }
 
 bool Tracker::updateWithMeasurement(
-  const autoware_perception_msgs::msg::DetectedObject & object,
-  const rclcpp::Time & measurement_time, const geometry_msgs::msg::Transform & self_transform,
-  const uint & channel_index)
+  const types::DynamicObject & object, const rclcpp::Time & measurement_time,
+  const geometry_msgs::msg::Transform & self_transform, const uint & channel_index)
 {
   // Update existence probability
   {

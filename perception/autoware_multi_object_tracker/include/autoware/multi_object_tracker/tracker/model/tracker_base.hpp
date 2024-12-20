@@ -20,14 +20,15 @@
 #define AUTOWARE__MULTI_OBJECT_TRACKER__TRACKER__MODEL__TRACKER_BASE_HPP_
 
 #define EIGEN_MPL2_ONLY
+#include "autoware/multi_object_tracker/object_model/dynamic_object.hpp"
 #include "autoware/multi_object_tracker/utils/utils.hpp"
-#include "autoware/object_recognition_utils/object_recognition_utils.hpp"
 
 #include <Eigen/Core>
+#include <autoware/object_recognition_utils/object_recognition_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include "autoware_perception_msgs/msg/detected_object.hpp"
-#include "autoware_perception_msgs/msg/tracked_object.hpp"
+#include <autoware_perception_msgs/msg/detected_object.hpp>
+#include <autoware_perception_msgs/msg/tracked_object.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <unique_identifier_msgs/msg/uuid.hpp>
 
@@ -67,9 +68,8 @@ public:
     return existence_vector.size() > 0;
   }
   bool updateWithMeasurement(
-    const autoware_perception_msgs::msg::DetectedObject & object,
-    const rclcpp::Time & measurement_time, const geometry_msgs::msg::Transform & self_transform,
-    const uint & channel_index);
+    const types::DynamicObject & object, const rclcpp::Time & measurement_time,
+    const geometry_msgs::msg::Transform & self_transform, const uint & channel_index);
   bool updateWithoutMeasurement(const rclcpp::Time & now);
 
   // classification
@@ -108,7 +108,7 @@ public:
 
 protected:
   virtual bool measure(
-    const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+    const types::DynamicObject & object, const rclcpp::Time & time,
     const geometry_msgs::msg::Transform & self_transform) = 0;
 
 public:

@@ -47,9 +47,8 @@ using Label = autoware_perception_msgs::msg::ObjectClassification;
 
 VehicleTracker::VehicleTracker(
   const object_model::ObjectModel & object_model, const rclcpp::Time & time,
-  const autoware_perception_msgs::msg::DetectedObject & object,
-  const geometry_msgs::msg::Transform & /*self_transform*/, const size_t channel_size,
-  const uint & channel_index)
+  const types::DynamicObject & object, const geometry_msgs::msg::Transform & /*self_transform*/,
+  const size_t channel_size, const uint & channel_index)
 : Tracker(time, object.classification, channel_size),
   object_model_(object_model),
   logger_(rclcpp::get_logger("VehicleTracker")),
@@ -67,11 +66,11 @@ VehicleTracker::VehicleTracker(
   velocity_deviation_threshold_ = autoware::universe_utils::kmph2mps(10);  // [m/s]
 
   // OBJECT SHAPE MODEL
-  if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  if (object.shape.type == types::ShapeType::BOUNDING_BOX) {
     bounding_box_ = {
       object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
   } else {
-    autoware_perception_msgs::msg::DetectedObject bbox_object;
+    types::DynamicObject bbox_object;
     if (!utils::convertConvexHullToBoundingBox(object, bbox_object)) {
       RCLCPP_WARN(
         logger_,
@@ -167,16 +166,15 @@ bool VehicleTracker::predict(const rclcpp::Time & time)
   return motion_model_.predictState(time);
 }
 
-autoware_perception_msgs::msg::DetectedObject VehicleTracker::getUpdatingObject(
-  const autoware_perception_msgs::msg::DetectedObject & object,
-  const geometry_msgs::msg::Transform & self_transform)
+types::DynamicObject VehicleTracker::getUpdatingObject(
+  const types::DynamicObject & object, const geometry_msgs::msg::Transform & self_transform)
 {
-  autoware_perception_msgs::msg::DetectedObject updating_object = object;
+  types::DynamicObject updating_object = object;
 
   // OBJECT SHAPE MODEL
   // convert to bounding box if input is convex shape
-  autoware_perception_msgs::msg::DetectedObject bbox_object = object;
-  if (object.shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  types::DynamicObject bbox_object = object;
+  if (object.shape.type != types::ShapeType::BOUNDING_BOX) {
     if (!utils::convertConvexHullToBoundingBox(object, bbox_object)) {
       RCLCPP_WARN(
         logger_,
@@ -200,7 +198,7 @@ autoware_perception_msgs::msg::DetectedObject VehicleTracker::getUpdatingObject(
   return updating_object;
 }
 
-bool VehicleTracker::measureWithPose(const autoware_perception_msgs::msg::DetectedObject & object)
+bool VehicleTracker::measureWithPose(const types::DynamicObject & object)
 {
   // current (predicted) state
   const double tracked_vel = motion_model_.getStateElement(IDX::VEL);
@@ -242,9 +240,9 @@ bool VehicleTracker::measureWithPose(const autoware_perception_msgs::msg::Detect
   return is_updated;
 }
 
-bool VehicleTracker::measureWithShape(const autoware_perception_msgs::msg::DetectedObject & object)
+bool VehicleTracker::measureWithShape(const types::DynamicObject & object)
 {
-  if (object.shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
+  if (object.shape.type != types::ShapeType::BOUNDING_BOX) {
     // do not update shape if the input is not a bounding box
     return false;
   }
@@ -295,7 +293,7 @@ bool VehicleTracker::measureWithShape(const autoware_perception_msgs::msg::Detec
 }
 
 bool VehicleTracker::measure(
-  const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+  const types::DynamicObject & object, const rclcpp::Time & time,
   const geometry_msgs::msg::Transform & self_transform)
 {
   // keep the latest input object
@@ -320,8 +318,7 @@ bool VehicleTracker::measure(
   }
 
   // update object
-  const autoware_perception_msgs::msg::DetectedObject updating_object =
-    getUpdatingObject(object, self_transform);
+  const types::DynamicObject updating_object = getUpdatingObject(object, self_transform);
   measureWithPose(updating_object);
   measureWithShape(updating_object);
 
@@ -331,7 +328,7 @@ bool VehicleTracker::measure(
 bool VehicleTracker::getTrackedObject(
   const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObject & object) const
 {
-  object = autoware::object_recognition_utils::toTrackedObject(object_);
+  object = types::getTrackedObject(object_);
   object.object_id = getUUID();
   object.classification = getClassification();
 

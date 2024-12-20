@@ -40,7 +40,7 @@ namespace autoware::multi_object_tracker
 {
 
 PassThroughTracker::PassThroughTracker(
-  const rclcpp::Time & time, const autoware_perception_msgs::msg::DetectedObject & object,
+  const rclcpp::Time & time, const types::DynamicObject & object,
   const geometry_msgs::msg::Transform & /*self_transform*/, const size_t channel_size,
   const uint & channel_index)
 : Tracker(time, object.classification, channel_size),
@@ -66,7 +66,7 @@ bool PassThroughTracker::predict(const rclcpp::Time & time)
 }
 
 bool PassThroughTracker::measure(
-  const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+  const types::DynamicObject & object, const rclcpp::Time & time,
   const geometry_msgs::msg::Transform & self_transform)
 {
   prev_observed_object_ = object_;
@@ -91,7 +91,7 @@ bool PassThroughTracker::getTrackedObject(
   const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObject & object) const
 {
   using autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
-  object = autoware::object_recognition_utils::toTrackedObject(object_);
+  object = types::getTrackedObject(object_);
   object.object_id = getUUID();
   object.classification = getClassification();
   object.kinematics.pose_with_covariance.covariance[XYZRPY_COV_IDX::X_X] = 0.0;
