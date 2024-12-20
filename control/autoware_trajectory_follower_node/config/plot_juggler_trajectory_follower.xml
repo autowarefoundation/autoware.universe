@@ -228,7 +228,7 @@
         </transform>
        </curve>
        <curve name="/control/trajectory_follower/longitudinal/diagnostic/data[34]" color="#ff7f0e">
-        <transform alias="localization_pithc_lpf" name="Scale/Offset">
+        <transform alias="localization_pitch_lpf" name="Scale/Offset">
          <options value_scale="1.0" time_offset="0.0" value_offset="0.0"/>
         </transform>
        </curve>
@@ -294,7 +294,7 @@
    <parameters time_axis="" delimiter="0"/>
   </plugin>
   <plugin ID="DataLoad MCAP"/>
-  <plugin ID="DataLoad ROS2 bags">
+  <plugin ID="DataLoad ROS 2 bags">
    <use_header_stamp value="false"/>
    <discard_large_arrays value="true"/>
    <max_array_size value="100"/>
@@ -304,7 +304,7 @@
   </plugin>
   <plugin ID="DataLoad ULog"/>
   <plugin ID="MQTT Subscriber (Mosquitto)"/>
-  <plugin ID="ROS2 Topic Subscriber">
+  <plugin ID="ROS 2 Topic Subscriber">
    <use_header_stamp value="false"/>
    <discard_large_arrays value="true"/>
    <max_array_size value="100"/>
@@ -322,7 +322,7 @@
    <scripts/>
   </plugin>
   <plugin ID="CSV Exporter"/>
-  <plugin ID="ROS2 Topic Re-Publisher"/>
+  <plugin ID="ROS 2 Topic Re-Publisher"/>
  </Plugins>
  <!-- - - - - - - - - - - - - - - -->
  <previouslyLoaded_Datafiles/>
