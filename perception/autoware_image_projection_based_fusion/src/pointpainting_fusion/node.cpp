@@ -161,11 +161,11 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
   sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS().keep_last(3), sub_callback);
 
-  tan_h_.resize(rois_number_);
+  fov_left_.resize(rois_number_);
+  fov_right_.resize(rois_number_);
   for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
-    auto fx = camera_info_map_[roi_i].k.at(0);
-    auto x0 = camera_info_map_[roi_i].k.at(2);
-    tan_h_[roi_i] = x0 / fx;
+    fov_left_[roi_i] = 0;
+    fov_right_[roi_i] = 0;
   }
 
   detection_class_remapper_.setParameters(
@@ -256,6 +256,15 @@ void PointPaintingFusionNode::preprocess(sensor_msgs::msg::PointCloud2 & painted
     painted_pointcloud_msg.point_step);
   painted_pointcloud_msg.row_step =
     static_cast<uint32_t>(painted_pointcloud_msg.data.size() / painted_pointcloud_msg.height);
+
+  // update camera fov
+  for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
+    const auto fx = camera_info_map_[roi_i].k.at(0);
+    const auto x0 = camera_info_map_[roi_i].k.at(2);
+    const auto width = camera_info_map_[roi_i].width;
+    fov_left_[roi_i] = -x0 / fx;
+    fov_right_[roi_i] = (-x0 + width) / fx;
+  }
 }
 
 void PointPaintingFusionNode::fuseOnSingleImage(
@@ -346,9 +355,11 @@ dc   | dc dc dc  dc ||zc|
     p_y = point_camera.y();
     p_z = point_camera.z();
 
-    if (p_z <= 0.0 || p_x > (tan_h_.at(image_id) * p_z) || p_x < (-tan_h_.at(image_id) * p_z)) {
-      continue;
-    }
+    /// check if the point is in the camera view
+    if (p_z <= 0.0) continue;
+    if (p_x < fov_left_.at(image_id) * p_z) continue;
+    if (p_x > fov_right_.at(image_id) * p_z) continue;
+
     // project
     Eigen::Vector2d projected_point = calcRawImageProjectedPoint(
       pinhole_camera_model, cv::Point3d(p_x, p_y, p_z), point_project_to_unrectified_image_);
