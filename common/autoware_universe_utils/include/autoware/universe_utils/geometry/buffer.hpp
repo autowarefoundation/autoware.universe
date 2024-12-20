@@ -16,7 +16,7 @@
 #define AUTOWARE__UNIVERSE_UTILS__GEOMETRY__BUFFER_HPP_
 
 #include "autoware/universe_utils/geometry/boost_geometry.hpp"
-#include "autoware/universe_utils/geometry/polygon_clip.hpp"
+#include "autoware/universe_utils/geometry/temp_polygon_clip.hpp"
 
 #include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/algorithms/simplify.hpp>
@@ -41,14 +41,11 @@ namespace offset_buffer
  * @param end_vertex the end vertex of the arc
  * @param start_vertex_next the next vertex after the start vertex
  * @param segments the number of segments to divide the arc into
- * @return the updated Polygon2d with the arc
  */
-autoware::universe_utils::Polygon2d create_arc(
-  autoware::universe_utils::Polygon2d & vertices, const autoware::universe_utils::Point2d & center,
-  double radius, const autoware::universe_utils::Point2d & offset_v1,
-  const autoware::universe_utils::Point2d & offset_v2next,
-  const autoware::universe_utils::Point2d & end_vertex,
-  const autoware::universe_utils::Point2d & start_vertex_next, double segments);
+Polygon2d create_arc(
+  Polygon2d & vertices, const Point2d & center, double radius, const Point2d & offset_v1,
+  const Point2d & offset_v2next, const Point2d & end_vertex, const Point2d & start_vertex_next,
+  double segments);
 
 /**
  * @brief offset a polygon segment between two vertices with a specified distance
@@ -60,9 +57,8 @@ autoware::universe_utils::Polygon2d create_arc(
  * @return the offset polygon segment
  */
 void offset_segment(
-  const autoware::universe_utils::Point2d & v1, const autoware::universe_utils::Point2d & v2,
-  const autoware::universe_utils::Point2d & next_vertex, double dist, double segments,
-  autoware::universe_utils::Polygon2d & vertices);
+  Polygon2d & vertices, const Point2d & v1, const Point2d & v2, const Point2d & next_vertex,
+  double dist, double segments);
 }  // namespace offset_buffer
 
 /**
@@ -72,8 +68,7 @@ void offset_segment(
  * @param segments the number of segments to divide the arcs into
  * @return the buffered polygon
  */
-autoware::universe_utils::Polygon2d buffer(
-  const autoware::universe_utils::Polygon2d & input_polygon, double dist, double segments);
+Polygon2d buffer(const Polygon2d & input_polygon, double dist, double segments);
 
 /**
  * @brief buffer a point by a specified distance and number of segments
@@ -82,8 +77,7 @@ autoware::universe_utils::Polygon2d buffer(
  * @param segments The number of segments to divide the arc into
  * @return the buffered polygon representing a circle (point buffer)
  */
-autoware::universe_utils::Polygon2d buffer(
-  const autoware::universe_utils::Point2d & point, double distance, double segments);
+Polygon2d buffer(const Point2d & point, double distance, double segments);
 
 /**
  * @brief buffer (offset) multiple points and return the union of their buffers
@@ -92,15 +86,14 @@ autoware::universe_utils::Polygon2d buffer(
  * @param segments the number of segments to divide the arcs into
  * @return The union of all buffered polygons
  */
-autoware::universe_utils::Polygon2d buffer(
-  const autoware::universe_utils::MultiPoint2d & multi_point, double distance, double segments);
+Polygon2d buffer(const MultiPoint2d & multi_point, double distance, double segments);
 
 /**
  * @brief Dissolves the input polygon to eliminate self-intersections or redundant structures.
- * @param polygon The input polygon of type autoware::universe_utils::Polygon2d.
+ * @param polygon The input polygon of type Polygon2d.
  * @return A simplified polygon with self-intersections dissolved and redundant structures removed.
  */
-autoware::universe_utils::Polygon2d dissolve(autoware::universe_utils::Polygon2d const & polygon);
+Polygon2d dissolve(const Polygon2d & polygon);
 
 }  // namespace autoware::universe_utils
 
