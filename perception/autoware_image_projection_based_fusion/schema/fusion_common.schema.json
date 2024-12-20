@@ -71,14 +71,14 @@
           "description": "An array of options indicating whether to use approximated projection for each camera.",
           "default": [true, true, true, true, true, true]
         },
-        "approximation_grid_width_size": {
+        "approximation_grid_cell_width": {
           "type": "number",
-          "description": "The size of the gird's width of approximate_camera_projection in pixel.",
+          "description": "The width of grid cell used in approximated projection [pixel].",
           "default": 1.0
         },
-        "approximation_grid_height_size": {
+        "approximation_grid_cell_height": {
           "type": "number",
-          "description": "The size of the gird's height of approximate_camera_projection in pixel.",
+          "description": "The height of grid cell used in approximated projection [pixel].",
           "default": 1.0
         }
       }

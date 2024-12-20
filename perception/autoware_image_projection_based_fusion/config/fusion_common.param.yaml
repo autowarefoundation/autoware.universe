@@ -17,8 +17,8 @@
     # camera cache setting for each ROI
     approximate_camera_projection: [true, true, true, true, true, true]
     # grid size in pixels
-    approximation_grid_width_size: 1.0
-    approximation_grid_height_size: 1.0
+    approximation_grid_cell_width: 1.0
+    approximation_grid_cell_height: 1.0
 
     # debug parameters
     publish_processing_time_detail: false

@@ -38,9 +38,9 @@ class CameraProjection
 {
 public:
   explicit CameraProjection(
-    const sensor_msgs::msg::CameraInfo & camera_info, const float grid_width,
-    const float grid_height, const bool unrectify, const bool use_approximation);
-  CameraProjection() : grid_w_size_(1.0), grid_h_size_(1.0), unrectify_(false) {}
+    const sensor_msgs::msg::CameraInfo & camera_info, const float grid_cell_width,
+    const float grid_cell_height, const bool unrectify, const bool use_approximation);
+  CameraProjection() : cell_width_(1.0), cell_height_(1.0), unrectify_(false) {}
   void initialize();
   std::function<bool(const cv::Point3d &, Eigen::Vector2d &)> calcImageProjectedPoint;
   sensor_msgs::msg::CameraInfo getCameraInfo();
@@ -62,16 +62,12 @@ protected:
   double fov_left_, fov_right_, fov_top_, fov_bottom_;
 
   uint32_t cache_size_;
-  float grid_w_size_;
-  float grid_h_size_;
-  float half_grid_w_size_;
-  float half_grid_h_size_;
-  float inv_grid_w_size_;
-  float inv_grid_h_size_;
-  int grid_x_num_;
-  int grid_y_num_;
-  float index_grid_out_h_;
-  float index_grid_out_w_;
+  float cell_width_;
+  float cell_height_;
+  float inv_cell_width_;
+  float inv_cell_height_;
+  int grid_width_;
+  int grid_height_;
 
   bool unrectify_;
   bool use_approximation_;

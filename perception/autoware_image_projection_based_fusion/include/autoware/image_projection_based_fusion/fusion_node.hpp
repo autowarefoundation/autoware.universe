@@ -110,8 +110,8 @@ protected:
   // camera projection
   std::vector<CameraProjection> camera_projectors_;
   std::vector<bool> approx_camera_projection_;
-  float approx_grid_w_size_;
-  float approx_grid_h_size_;
+  float approx_grid_cell_w_size_;
+  float approx_grid_cell_h_size_;
 
   rclcpp::TimerBase::SharedPtr timer_;
   double timeout_ms_{};

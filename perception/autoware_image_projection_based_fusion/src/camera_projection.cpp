@@ -19,16 +19,16 @@
 namespace autoware::image_projection_based_fusion
 {
 CameraProjection::CameraProjection(
-  const sensor_msgs::msg::CameraInfo & camera_info, const float grid_width, const float grid_height,
-  const bool unrectify, const bool use_approximation = false)
+  const sensor_msgs::msg::CameraInfo & camera_info, const float grid_cell_width,
+  const float grid_cell_height, const bool unrectify, const bool use_approximation = false)
 : camera_info_(camera_info),
-  grid_w_size_(grid_width),
-  grid_h_size_(grid_height),
+  cell_width_(grid_cell_width),
+  cell_height_(grid_cell_height),
   unrectify_(unrectify),
   use_approximation_(use_approximation)
 {
-  if (grid_w_size_ <= 0.0 || grid_h_size_ <= 0.0) {
-    throw std::runtime_error("Both grid_width and grid_height must be > 0.0");
+  if (grid_cell_width <= 0.0 || grid_cell_height <= 0.0) {
+    throw std::runtime_error("Both grid_cell_width and grid_cell_height must be > 0.0");
   }
 
   image_w_ = camera_info.width;
@@ -38,14 +38,11 @@ CameraProjection::CameraProjection(
   camera_model_.fromCameraInfo(camera_info);
 
   // cache settings
-  // for shifting to the grid center
-  half_grid_w_size_ = grid_w_size_ / 2.0;
-  half_grid_h_size_ = grid_h_size_ / 2.0;
-  inv_grid_w_size_ = 1 / grid_w_size_;
-  inv_grid_h_size_ = 1 / grid_h_size_;
-  grid_x_num_ = static_cast<int>(std::ceil(image_w_ / grid_w_size_));
-  grid_y_num_ = static_cast<int>(std::ceil(image_h_ / grid_h_size_));
-  cache_size_ = grid_x_num_ * grid_y_num_;
+  inv_cell_width_ = 1 / cell_width_;
+  inv_cell_height_ = 1 / cell_height_;
+  grid_width_ = static_cast<int>(std::ceil(image_w_ / cell_width_));
+  grid_height_ = static_cast<int>(std::ceil(image_h_ / cell_height_));
+  cache_size_ = grid_width_ * grid_height_;
 
   // compute 3D rays for the image corners and pixels related to optical center
   // to find the actual FOV size
@@ -136,12 +133,12 @@ void CameraProjection::initializeCache()
   // each pixel will be rounded in this grid center
   // edge pixels in the image will be assign to centers that is the outside of the image
 
-  for (int grid_y = 0; grid_y < grid_y_num_; grid_y++) {
-    for (int grid_x = 0; grid_x < grid_x_num_; grid_x++) {
+  for (int grid_y = 0; grid_y < grid_height_; grid_y++) {
+    for (int grid_x = 0; grid_x < grid_width_; grid_x++) {
       // grid_x * grid_w_size_ + half_grid_w_size_
-      const float qx = (grid_x + 0.5f) * grid_w_size_;
-      const float qy = (grid_y + 0.5f) * grid_h_size_;
-      const uint32_t index = grid_y*grid_x_num_ + grid_x;
+      const float qx = (grid_x + 0.5f) * cell_width_;
+      const float qy = (grid_y + 0.5f) * cell_height_;
+      const uint32_t index = grid_y*grid_width_ + grid_x;
 
       // precompute projected point
       cv::Point2d raw_image_point = camera_model_.unrectifyPoint(cv::Point2d(qx, qy));
@@ -199,14 +196,14 @@ bool CameraProjection::calcRawImageProjectedPointWithApproximation(
 {
   const cv::Point2d rectified_image_point = camera_model_.project3dToPixel(point3d);
 
-  // round to a near grid center
-  const int grid_x = static_cast<int>(std::floor(rectified_image_point.x * inv_grid_w_size_));
-  const int grid_y = static_cast<int>(std::floor(rectified_image_point.y * inv_grid_h_size_));
+  // round to a near grid cell
+  const int grid_x = static_cast<int>(std::floor(rectified_image_point.x * inv_cell_width_));
+  const int grid_y = static_cast<int>(std::floor(rectified_image_point.y * inv_cell_height_));
 
-  if (grid_x < 0.0 || grid_x>= grid_x_num_) return false;
-  if (grid_y < 0.0 || grid_y>= grid_y_num_) return false;
+  if (grid_x < 0.0 || grid_x>= grid_width_) return false;
+  if (grid_y < 0.0 || grid_y>= grid_height_) return false;
 
-  const uint32_t index = grid_y * grid_x_num_ + grid_x;
+  const uint32_t index = grid_y * grid_width_ + grid_x;
   projected_point << projection_cache_[index].x, projection_cache_[index].y;
 
   return true;

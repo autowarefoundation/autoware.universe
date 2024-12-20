@@ -145,8 +145,8 @@ FusionNode<TargetMsg3D, ObjType, Msg2D>::FusionNode(
       }
     }
   }
-  approx_grid_w_size_ = declare_parameter<float>("approximation_grid_width_size");
-  approx_grid_h_size_ = declare_parameter<float>("approximation_grid_height_size");
+  approx_grid_cell_w_size_ = declare_parameter<float>("approximation_grid_cell_width");
+  approx_grid_cell_h_size_ = declare_parameter<float>("approximation_grid_cell_height");
 
   // debugger
   if (declare_parameter("debug_mode", false)) {
@@ -195,7 +195,7 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::cameraInfoCallback(
     camera_info_map_.find(camera_id) == camera_info_map_.end() &&
     checkCameraInfo(*input_camera_info_msg)) {
     camera_projectors_.at(camera_id) = CameraProjection(
-      *input_camera_info_msg, approx_grid_w_size_, approx_grid_h_size_,
+      *input_camera_info_msg, approx_grid_cell_w_size_, approx_grid_cell_h_size_,
       point_project_to_unrectified_image_.at(camera_id), approx_camera_projection_.at(camera_id));
     camera_projectors_.at(camera_id).initialize();
 
