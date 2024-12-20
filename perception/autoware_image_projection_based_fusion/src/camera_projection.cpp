@@ -51,14 +51,17 @@ CameraProjection::CameraProjection(
   const double ocy = static_cast<double>(camera_info.k.at(5));
   // for checking pincushion shape case
   const cv::Point3d ray_top_left = camera_model_.projectPixelTo3dRay(cv::Point(0, 0));
-  const cv::Point3d ray_top_right = camera_model_.projectPixelTo3dRay(cv::Point(image_width_ - 1, 0));
-  const cv::Point3d ray_bottom_left = camera_model_.projectPixelTo3dRay(cv::Point(0, image_height_ - 1));
+  const cv::Point3d ray_top_right =
+    camera_model_.projectPixelTo3dRay(cv::Point(image_width_ - 1, 0));
+  const cv::Point3d ray_bottom_left =
+    camera_model_.projectPixelTo3dRay(cv::Point(0, image_height_ - 1));
   const cv::Point3d ray_bottom_right =
     camera_model_.projectPixelTo3dRay(cv::Point(image_width_ - 1, image_height_ - 1));
   // for checking barrel shape case
   const cv::Point3d ray_mid_top = camera_model_.projectPixelTo3dRay(cv::Point(ocx, 0));
   const cv::Point3d ray_mid_left = camera_model_.projectPixelTo3dRay(cv::Point(0, ocy));
-  const cv::Point3d ray_mid_right = camera_model_.projectPixelTo3dRay(cv::Point(image_width_ - 1, ocy));
+  const cv::Point3d ray_mid_right =
+    camera_model_.projectPixelTo3dRay(cv::Point(image_width_ - 1, ocy));
   const cv::Point3d ray_mid_bottom =
     camera_model_.projectPixelTo3dRay(cv::Point(ocx, image_height_ - 1));
 
@@ -137,11 +140,11 @@ void CameraProjection::initializeCache()
   for (int idx_y = 0; idx_y < grid_height_; idx_y++) {
     for (int idx_x = 0; idx_x < grid_width_; idx_x++) {
       const uint32_t grid_index = idx_y * grid_width_ + idx_x;
-      const float qx = (idx_x + 0.5f) * cell_width_;
-      const float qy = (idx_y + 0.5f) * cell_height_;
-      
+      const float px = (idx_x + 0.5f) * cell_width_;
+      const float py = (idx_y + 0.5f) * cell_height_;
+
       // precompute projected point
-      cv::Point2d raw_image_point = camera_model_.unrectifyPoint(cv::Point2d(qx, qy));
+      cv::Point2d raw_image_point = camera_model_.unrectifyPoint(cv::Point2d(px, py));
       projection_cache_[grid_index] =
         PixelPos{static_cast<float>(raw_image_point.x), static_cast<float>(raw_image_point.y)};
     }
@@ -158,8 +161,8 @@ bool CameraProjection::calcRectifiedImageProjectedPoint(
   const cv::Point2d rectified_image_point = camera_model_.project3dToPixel(point3d);
 
   if (
-    rectified_image_point.x < 0.0 || rectified_image_point.x >= image_w_ ||
-    rectified_image_point.y < 0.0 || rectified_image_point.y >= image_h_) {
+    rectified_image_point.x < 0.0 || rectified_image_point.x >= image_width_ ||
+    rectified_image_point.y < 0.0 || rectified_image_point.y >= image_height_) {
     return false;
   } else {
     projected_point << rectified_image_point.x, rectified_image_point.y;
@@ -178,8 +181,8 @@ bool CameraProjection::calcRawImageProjectedPoint(
   const cv::Point2d raw_image_point = camera_model_.unrectifyPoint(rectified_image_point);
 
   if (
-    rectified_image_point.x < 0.0 || rectified_image_point.x >= image_w_ ||
-    rectified_image_point.y < 0.0 || rectified_image_point.y >= image_h_) {
+    rectified_image_point.x < 0.0 || rectified_image_point.x >= image_width_ ||
+    rectified_image_point.y < 0.0 || rectified_image_point.y >= image_height_) {
     return false;
   } else {
     projected_point << raw_image_point.x, raw_image_point.y;
