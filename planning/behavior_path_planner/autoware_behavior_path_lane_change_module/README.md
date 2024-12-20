@@ -934,6 +934,16 @@ The following parameters are used to judge lane change completion.
 | `delay_lane_change.min_road_shoulder_width`       | [m]  | double | Width considered as road shoulder if lane doesn't have road shoulder when checking for parked vehicle | 0.5           |
 | `delay_lane_change.th_parked_vehicle_shift_ratio` | [-]  | double | Stopped vehicles beyond this distance ratio from center line will be considered as parked             | 0.6           |
 
+### Terminal Lane Change Path
+
+The following parameters are used to configure terminal lane change path feature.
+
+| Name                              | Unit | Type | Description                                                               | Default value |
+| :-------------------------------- | ---- | ---- | ------------------------------------------------------------------------- | ------------- |
+| `terminal_path.enable`            | [-]  | bool | Flag to enable/disable terminal path feature                              | true          |
+| `terminal_path.disable_near_goal` | [-]  | bool | Flag to disable terminal path feature if ego is near goal                 | true          |
+| `terminal_path.stop_at_boundary`  | [-]  | bool | If true, ego will stop at current lane boundary instead of middle of lane | true          |
+
 ### Collision checks
 
 #### Target Objects

@@ -128,6 +128,22 @@ struct Info
     terminal_lane_changing_velocity = _lc_metrics.velocity;
     shift_line = _shift_line;
   }
+
+  void set_prepare(const PhaseMetrics & _prep_metrics)
+  {
+    longitudinal_acceleration.prepare = _prep_metrics.actual_lon_accel;
+    velocity.prepare = _prep_metrics.velocity;
+    duration.prepare = _prep_metrics.duration;
+    length.prepare = _prep_metrics.length;
+  }
+
+  void set_lane_changing(const PhaseMetrics & _lc_metrics)
+  {
+    longitudinal_acceleration.prepare = _lc_metrics.actual_lon_accel;
+    velocity.prepare = _lc_metrics.velocity;
+    duration.prepare = _lc_metrics.duration;
+    length.prepare = _lc_metrics.length;
+  }
 };
 
 struct TargetLaneLeadingObjects
@@ -216,6 +232,8 @@ struct TransientData
     std::numeric_limits<double>::max()};  // maximum prepare length, starting from ego's base link
 
   double target_lane_length{std::numeric_limits<double>::min()};
+
+  double dist_to_target_end{std::numeric_limits<double>::max()};
 
   lanelet::ArcCoordinates current_lanes_ego_arc;  // arc coordinates of ego pose along current lanes
   lanelet::ArcCoordinates target_lanes_ego_arc;   // arc coordinates of ego pose along target lanes
