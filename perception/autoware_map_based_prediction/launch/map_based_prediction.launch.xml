@@ -10,7 +10,7 @@
   <node pkg="autoware_map_based_prediction" exec="map_based_prediction" name="map_based_prediction" output="both">
     <param from="$(var param_path)"/>
     <remap from="/vector_map" to="$(var vector_map_topic)"/>
-    <remap from="/traffic_signals" to="$(var traffic_signals_topic)"/>
+    <remap from="/traffic_lights" to="$(var traffic_signals_topic)"/>
     <remap from="~/output/objects" to="$(var output_topic)"/>
     <remap from="~/input/objects" to="$(var input_topic)"/>
   </node>
