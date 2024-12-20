@@ -48,7 +48,7 @@ void TrackerProcessor::predict(const rclcpp::Time & time)
 void TrackerProcessor::update(
   const types::DynamicObjects & detected_objects,
   const geometry_msgs::msg::Transform & self_transform,
-  const std::unordered_map<int, int> & direct_assignment, const uint & channel_index)
+  const std::unordered_map<int, int> & direct_assignment)
 {
   int tracker_idx = 0;
   const auto & time = detected_objects.header.stamp;
@@ -58,7 +58,8 @@ void TrackerProcessor::update(
       const auto & associated_object =
         detected_objects.objects.at(direct_assignment.find(tracker_idx)->second);
       (*(tracker_itr))
-        ->updateWithMeasurement(associated_object, time, self_transform, channel_index);
+        ->updateWithMeasurement(
+          associated_object, time, self_transform, detected_objects.channel_index);
     } else {  // not found
       (*(tracker_itr))->updateWithoutMeasurement(time);
     }
@@ -68,7 +69,7 @@ void TrackerProcessor::update(
 void TrackerProcessor::spawn(
   const types::DynamicObjects & detected_objects,
   const geometry_msgs::msg::Transform & self_transform,
-  const std::unordered_map<int, int> & reverse_assignment, const uint & channel_index)
+  const std::unordered_map<int, int> & reverse_assignment)
 {
   const auto & time = detected_objects.header.stamp;
   for (size_t i = 0; i < detected_objects.objects.size(); ++i) {
@@ -77,7 +78,7 @@ void TrackerProcessor::spawn(
     }
     const auto & new_object = detected_objects.objects.at(i);
     std::shared_ptr<Tracker> tracker =
-      createNewTracker(new_object, time, self_transform, channel_index);
+      createNewTracker(new_object, time, self_transform, detected_objects.channel_index);
     if (tracker) list_tracker_.push_back(tracker);
   }
 }

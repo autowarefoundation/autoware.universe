@@ -106,6 +106,7 @@ types::DynamicObjects modelUncertainty(const types::DynamicObjects & detected_ob
 {
   types::DynamicObjects updating_objects;
   updating_objects.header = detected_objects.header;
+  updating_objects.channel_index = detected_objects.channel_index;
   for (const auto & object : detected_objects.objects) {
     if (object.kinematics.has_position_covariance) {
       updating_objects.objects.push_back(object);

@@ -73,12 +73,14 @@ struct DynamicObject
 struct DynamicObjects
 {
   std_msgs::msg::Header header;
+  uint channel_index;
   std::vector<DynamicObject> objects;
 };
 
 DynamicObject getDynamicObject(const autoware_perception_msgs::msg::DetectedObject & det_object);
 
-DynamicObjects getDynamicObjects(const autoware_perception_msgs::msg::DetectedObjects & det_objects);
+DynamicObjects getDynamicObjects(
+  const autoware_perception_msgs::msg::DetectedObjects & det_objects);
 
 autoware_perception_msgs::msg::TrackedObject toTrackedObjectMsg(const DynamicObject & dyn_object);
 
@@ -90,12 +92,10 @@ bool transformObjects(
   const types::DynamicObjects & input_msg, const std::string & target_frame_id,
   const tf2_ros::Buffer & tf_buffer, types::DynamicObjects & output_msg);
 
-
 double get2dIoU(
   const types::DynamicObject & source_object, const types::DynamicObject & target_object,
   const double min_union_area = 0.01);
 }  // namespace shapes
-
 }  // namespace autoware::multi_object_tracker
 
 #endif  // AUTOWARE__MULTI_OBJECT_TRACKER__OBJECT_MODEL__DYNAMIC_OBJECT_HPP_
