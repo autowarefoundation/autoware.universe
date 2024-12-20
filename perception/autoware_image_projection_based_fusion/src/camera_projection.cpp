@@ -198,14 +198,14 @@ bool CameraProjection::calcRawImageProjectedPointWithApproximation(
   const cv::Point2d rectified_image_point = camera_model_.project3dToPixel(point3d);
 
   // round to a near grid cell
-  const int grid_x = static_cast<int>(std::floor(rectified_image_point.x * inv_cell_width_));
-  const int grid_y = static_cast<int>(std::floor(rectified_image_point.y * inv_cell_height_));
+  const int grid_idx_x = static_cast<int>(std::floor(rectified_image_point.x * inv_cell_width_));
+  const int grid_idx_y = static_cast<int>(std::floor(rectified_image_point.y * inv_cell_height_));
 
-  if (grid_x < 0.0 || grid_x >= grid_width_) return false;
-  if (grid_y < 0.0 || grid_y >= grid_height_) return false;
+  if (grid_idx_x < 0.0 || grid_idx_x >= grid_width_) return false;
+  if (grid_idx_y < 0.0 || grid_idx_y >= grid_height_) return false;
 
-  const uint32_t index = grid_y * grid_width_ + grid_x;
-  projected_point << projection_cache_[index].x, projection_cache_[index].y;
+  const uint32_t grid_index = grid_idx_y * grid_width_ + grid_idx_x;
+  projected_point << projection_cache_[grid_index].x, projection_cache_[grid_index].y;
 
   return true;
 }
