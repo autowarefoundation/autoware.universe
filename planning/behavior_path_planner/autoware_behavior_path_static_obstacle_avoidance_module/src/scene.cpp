@@ -233,11 +233,7 @@ void StaticObstacleAvoidanceModule::fillFundamentalData(
 
   std::for_each(
     data.current_lanelets.begin(), data.current_lanelets.end(), [&](const auto & lanelet) {
-      if (!not_use_adjacent_lane) {
-        data.drivable_lanes.push_back(
-          utils::static_obstacle_avoidance::generateExpandedDrivableLanes(
-            lanelet, planner_data_, parameters_));
-      } else if (red_signal_lane_itr->id() != lanelet.id()) {
+      if (!not_use_adjacent_lane || red_signal_lane_itr->id() != lanelet.id()) {
         data.drivable_lanes.push_back(
           utils::static_obstacle_avoidance::generateExpandedDrivableLanes(
             lanelet, planner_data_, parameters_));
