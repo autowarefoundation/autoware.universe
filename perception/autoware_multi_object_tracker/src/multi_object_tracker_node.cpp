@@ -95,8 +95,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
     get_parameter("selected_input_channels").as_string_array();
 
   // ROS interface - Publisher
-  tracked_objects_pub_ =
-    create_publisher<autoware_perception_msgs::msg::TrackedObjects>("output", rclcpp::QoS{1});
+  tracked_objects_pub_ = create_publisher<autoware_perception_msgs::msg::TrackedObjects>("output", rclcpp::QoS{1});
 
   // ROS interface - Input channels
   // Get input channels
@@ -240,18 +239,18 @@ void MultiObjectTracker::onTrigger()
 
   // process start
   last_updated_time_ = current_time;
-  const rclcpp::Time latest_time(objects_list.back().header.stamp);
+  const rclcpp::Time latest_time(objects_list.back().second.header.stamp);
   debugger_->startMeasurementTime(this->now(), latest_time);
   // run process for each DynamicObjects
   for (const auto & objects_data : objects_list) {
-    runProcess(objects_data);
+    runProcess(objects_data.second, objects_data.first);
   }
   // process end
   debugger_->endMeasurementTime(this->now());
 
   // Publish without delay compensation
   if (!publish_timer_) {
-    const auto latest_object_time = rclcpp::Time(objects_list.back().header.stamp);
+    const auto latest_object_time = rclcpp::Time(objects_list.back().second.header.stamp);
     checkAndPublish(latest_object_time);
   }
 }
@@ -279,9 +278,9 @@ void MultiObjectTracker::onTimer()
   if (should_publish) checkAndPublish(current_time);
 }
 
-void MultiObjectTracker::runProcess(const types::DynamicObjects & input_objects)
+void MultiObjectTracker::runProcess(
+  const types::DynamicObjects & input_objects, const uint & channel_index)
 {
-  const uint & channel_index = input_objects.channel_index;
   // Get the time of the measurement
   const rclcpp::Time measurement_time =
     rclcpp::Time(input_objects.header.stamp, this->now().get_clock_type());
@@ -355,14 +354,14 @@ void MultiObjectTracker::runProcess(const types::DynamicObjects & input_objects)
   }
 
   /* tracker update */
-  processor_->update(transformed_objects, *self_transform, direct_assignment);
+  processor_->update(transformed_objects, *self_transform, direct_assignment, channel_index);
 
   /* tracker pruning */
   processor_->prune(measurement_time);
 
   /* spawn new tracker */
   if (input_manager_->isChannelSpawnEnabled(channel_index)) {
-    processor_->spawn(transformed_objects, *self_transform, reverse_assignment);
+    processor_->spawn(transformed_objects, *self_transform, reverse_assignment, channel_index);
   }
 }
 

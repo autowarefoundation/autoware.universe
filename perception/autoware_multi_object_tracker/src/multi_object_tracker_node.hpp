@@ -64,8 +64,7 @@ public:
 private:
   // ROS interface
   rclcpp::Publisher<autoware_perception_msgs::msg::TrackedObjects>::SharedPtr tracked_objects_pub_;
-  rclcpp::Subscription<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr
-    detected_object_sub_;
+  rclcpp::Subscription<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr detected_object_sub_;
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 
@@ -98,7 +97,7 @@ private:
   void onTrigger();
 
   // publish processes
-  void runProcess(const types::DynamicObjects & input_objects);
+  void runProcess(const types::DynamicObjects & input_objects, const uint & channel_index);
   void checkAndPublish(const rclcpp::Time & time);
   void publish(const rclcpp::Time & time) const;
   inline bool shouldTrackerPublish(const std::shared_ptr<const Tracker> tracker) const;

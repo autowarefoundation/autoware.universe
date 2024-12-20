@@ -58,7 +58,6 @@ void InputStream::onMessage(
   const autoware_perception_msgs::msg::DetectedObjects & objects = *msg;
 
   types::DynamicObjects dynamic_objects = types::getDynamicObjects(objects);
-  dynamic_objects.channel_index = index_;
 
   // Model the object uncertainty only if it is not available
   types::DynamicObjects objects_with_uncertainty = uncertainty::modelUncertainty(dynamic_objects);
@@ -172,7 +171,8 @@ void InputStream::getObjectsOlderThan(
 
     // Add the object if the object is older than the specified latest time
     if (object_time <= object_latest_time) {
-      objects_list.push_back(objects);
+      std::pair<uint, types::DynamicObjects> objects_pair(index_, objects);
+      objects_list.push_back(objects_pair);
     }
   }
 
@@ -220,11 +220,10 @@ void InputManager::init(const std::vector<InputChannel> & input_channels)
     RCLCPP_INFO(
       node_.get_logger(), "InputManager::init Initializing %s input stream from %s",
       input_channels[i].long_name.c_str(), input_channels[i].input_topic.c_str());
-    std::function<void(const autoware_perception_msgs::msg::DetectedObjects::ConstSharedPtr msg)>
-      func = std::bind(&InputStream::onMessage, input_streams_.at(i), std::placeholders::_1);
-    sub_objects_array_.at(i) =
-      node_.create_subscription<autoware_perception_msgs::msg::DetectedObjects>(
-        input_channels[i].input_topic, rclcpp::QoS{1}, func);
+    std::function<void(const autoware_perception_msgs::msg::DetectedObjects::ConstSharedPtr msg)> func =
+      std::bind(&InputStream::onMessage, input_streams_.at(i), std::placeholders::_1);
+    sub_objects_array_.at(i) = node_.create_subscription<autoware_perception_msgs::msg::DetectedObjects>(
+      input_channels[i].input_topic, rclcpp::QoS{1}, func);
   }
 
   // Check if any spawn enabled input streams
@@ -344,14 +343,17 @@ bool InputManager::getObjects(const rclcpp::Time & now, ObjectsList & objects_li
   // Sort objects by timestamp
   std::sort(
     objects_list.begin(), objects_list.end(),
-    [](const types::DynamicObjects & a, const types::DynamicObjects & b) {
-      return (rclcpp::Time(a.header.stamp) - rclcpp::Time(b.header.stamp)).seconds() < 0;
+    [](
+      const std::pair<uint, types::DynamicObjects> & a,
+      const std::pair<uint, types::DynamicObjects> & b) {
+      return (rclcpp::Time(a.second.header.stamp) - rclcpp::Time(b.second.header.stamp)).seconds() <
+             0;
     });
 
   // Update the latest exported object time
   bool is_any_object = !objects_list.empty();
   if (is_any_object) {
-    latest_exported_object_time_ = rclcpp::Time(objects_list.back().header.stamp);
+    latest_exported_object_time_ = rclcpp::Time(objects_list.back().second.header.stamp);
   } else {
     // check time jump back
     if (now < latest_exported_object_time_) {

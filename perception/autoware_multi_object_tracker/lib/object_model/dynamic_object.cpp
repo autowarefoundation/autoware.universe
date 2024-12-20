@@ -17,12 +17,6 @@
 
 #include "autoware/multi_object_tracker/object_model/dynamic_object.hpp"
 
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-
-#include <tf2_ros/transform_listener.h>
-
-#include <string>
-
 namespace autoware::multi_object_tracker
 {
 
@@ -113,6 +107,7 @@ autoware_perception_msgs::msg::TrackedObject getTrackedObject(const DynamicObjec
 };
 }  // namespace types
 
+
 inline boost::optional<geometry_msgs::msg::Transform> getTransform(
   const tf2_ros::Buffer & tf_buffer, const std::string & source_frame_id,
   const std::string & target_frame_id, const rclcpp::Time & time)
@@ -179,4 +174,4 @@ double getArea(const types::ObjectShape & shape)
   }
   return 0.0;
 };
-}  // namespace autoware::multi_object_tracker
+} // namespace autoware::multi_object_tracker
