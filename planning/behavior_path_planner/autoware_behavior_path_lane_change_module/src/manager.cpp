@@ -241,8 +241,10 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
   p.publish_debug_marker = getOrDeclareParameter<bool>(*node, parameter("publish_debug_marker"));
 
   // terminal lane change path
-  p.enable_terminal_path = getOrDeclareParameter<bool>(*node, parameter("terminal_path.enable"));
-  p.stop_at_boundary_for_terminal_path =
+  p.terminal_path.enable = getOrDeclareParameter<bool>(*node, parameter("terminal_path.enable"));
+  p.terminal_path.disable_near_goal =
+    getOrDeclareParameter<bool>(*node, parameter("terminal_path.disable_near_goal"));
+  p.terminal_path.stop_at_boundary =
     getOrDeclareParameter<bool>(*node, parameter("terminal_path.stop_at_boundary"));
 
   // validation of safety check parameters

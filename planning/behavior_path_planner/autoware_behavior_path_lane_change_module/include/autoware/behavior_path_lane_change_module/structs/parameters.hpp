@@ -137,12 +137,20 @@ struct DelayParameters
   double th_parked_vehicle_shift_ratio{0.6};
 };
 
+struct TerminalPathParameters
+{
+  bool enable{false};
+  bool disable_near_goal{false};
+  bool stop_at_boundary{false};
+};
+
 struct Parameters
 {
   TrajectoryParameters trajectory{};
   SafetyParameters safety{};
   CancelParameters cancel{};
   DelayParameters delay{};
+  TerminalPathParameters terminal_path{};
 
   // lane change parameters
   double backward_lane_length{200.0};
@@ -173,10 +181,6 @@ struct Parameters
 
   // debug marker
   bool publish_debug_marker{false};
-
-  // terminal lane change path
-  bool enable_terminal_path{false};
-  bool stop_at_boundary_for_terminal_path{false};
 };
 
 }  // namespace autoware::behavior_path_planner::lane_change

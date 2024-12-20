@@ -12,7 +12,8 @@
       # terminal path
       terminal_path:
         enable: true
-        stop_at_boundary: false
+        disable_near_goal: true
+        stop_at_boundary: true
 
       # trajectory generation
       trajectory:

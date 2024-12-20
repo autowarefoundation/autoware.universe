@@ -233,6 +233,8 @@ struct TransientData
 
   double target_lane_length{std::numeric_limits<double>::min()};
 
+  double dist_to_target_end{std::numeric_limits<double>::max()};
+
   lanelet::ArcCoordinates current_lanes_ego_arc;  // arc coordinates of ego pose along current lanes
   lanelet::ArcCoordinates target_lanes_ego_arc;   // arc coordinates of ego pose along target lanes
 

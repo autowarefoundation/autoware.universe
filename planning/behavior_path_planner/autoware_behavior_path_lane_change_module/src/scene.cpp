@@ -168,6 +168,9 @@ void NormalLaneChange::update_transient_data(const bool is_approved)
   transient_data.dist_to_terminal_start =
     transient_data.dist_to_terminal_end - transient_data.current_dist_buffer.min;
 
+  transient_data.dist_to_target_end = calculation::calc_dist_from_pose_to_terminal_end(
+    common_data_ptr_, common_data_ptr_->lanes_ptr->target, common_data_ptr_->get_ego_pose());
+
   transient_data.max_prepare_length = calculation::calc_maximum_prepare_length(common_data_ptr_);
 
   transient_data.target_lane_length =
@@ -386,8 +389,16 @@ LaneChangePath NormalLaneChange::getLaneChangePath() const
 BehaviorModuleOutput NormalLaneChange::getTerminalLaneChangePath() const
 {
   if (
-    !lane_change_parameters_->enable_terminal_path ||
+    !lane_change_parameters_->terminal_path.enable ||
     !common_data_ptr_->transient_data.is_ego_near_current_terminal_start) {
+    return prev_module_output_;
+  }
+
+  const auto is_near_goal = lane_change_parameters_->terminal_path.disable_near_goal &&
+                            common_data_ptr_->lanes_ptr->target_lane_in_goal_section &&
+                            common_data_ptr_->transient_data.dist_to_target_end <
+                              common_data_ptr_->transient_data.lane_changing_length.max;
+  if (is_near_goal) {
     return prev_module_output_;
   }
 
@@ -536,7 +547,7 @@ void NormalLaneChange::insert_stop_point_on_current_lanes(
 
     if (
       terminal_lane_change_path_ && is_waiting_approval &&
-      lc_param_ptr->stop_at_boundary_for_terminal_path) {
+      lc_param_ptr->terminal_path.stop_at_boundary) {
       return calculation::calc_dist_to_last_fit_width(common_data_ptr_, path);
     }
 
