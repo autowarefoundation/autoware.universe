@@ -421,10 +421,8 @@ public:
   double m_raw_steer_cmd_prev = 0.0;     // Previous MPC raw output.
 
   /* Parameters for control */
-  double m_admissible_position_error;  // Threshold for lateral error to trigger stop command [m].
-  double m_admissible_yaw_error_rad;   // Threshold for yaw error to trigger stop command [rad].
-  double m_steer_lim;                  // Steering command limit [rad].
-  double m_ctrl_period;                // Control frequency [s].
+  double m_steer_lim;    // Steering command limit [rad].
+  double m_ctrl_period;  // Control frequency [s].
 
   //!< @brief steering rate limit list depending on curvature [/m], [rad/s]
   std::vector<std::pair<double, double>> m_steer_rate_lim_map_by_curvature{};
