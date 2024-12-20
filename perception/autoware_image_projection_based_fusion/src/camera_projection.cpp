@@ -14,6 +14,8 @@
 
 #include "autoware/image_projection_based_fusion/camera_projection.hpp"
 
+#include <memory>
+
 namespace autoware::image_projection_based_fusion
 {
 CameraProjection::CameraProjection(

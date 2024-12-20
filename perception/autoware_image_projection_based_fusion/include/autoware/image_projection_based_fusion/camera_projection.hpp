@@ -40,7 +40,7 @@ public:
   explicit CameraProjection(
     const sensor_msgs::msg::CameraInfo & camera_info, const float grid_width,
     const float grid_height, const bool unrectify, const bool use_approximation);
-  CameraProjection() : grid_w_size_(1.0), grid_h_size_(1.0), unrectify_(false) {};
+  CameraProjection() : grid_w_size_(1.0), grid_h_size_(1.0), unrectify_(false) {}
   void initialize();
   std::function<bool(const cv::Point3d &, Eigen::Vector2d &)> calcImageProjectedPoint;
   sensor_msgs::msg::CameraInfo getCameraInfo();
