@@ -134,16 +134,15 @@ void CameraProjection::initializeCache()
   // edge pixels in right and bottom side in the image will be assign to these centers
   // that is the outside of the image
 
-  for (int grid_y = 0; grid_y < grid_height_; grid_y++) {
-    for (int grid_x = 0; grid_x < grid_width_; grid_x++) {
-      // grid_x * grid_w_size_ + half_grid_w_size_
-      const float qx = (grid_x + 0.5f) * cell_width_;
-      const float qy = (grid_y + 0.5f) * cell_height_;
-      const uint32_t index = grid_y * grid_width_ + grid_x;
-
+  for (int idx_y = 0; idx_y < grid_height_; idx_y++) {
+    for (int idx_x = 0; idx_x < grid_width_; idx_x++) {
+      const uint32_t grid_index = idx_y * grid_width_ + idx_x;
+      const float qx = (idx_x + 0.5f) * cell_width_;
+      const float qy = (idx_y + 0.5f) * cell_height_;
+      
       // precompute projected point
       cv::Point2d raw_image_point = camera_model_.unrectifyPoint(cv::Point2d(qx, qy));
-      projection_cache_[index] =
+      projection_cache_[grid_index] =
         PixelPos{static_cast<float>(raw_image_point.x), static_cast<float>(raw_image_point.y)};
     }
   }
