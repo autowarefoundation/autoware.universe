@@ -167,11 +167,7 @@ void TrackerProcessor::removeOverlappedTracker(const rclcpp::Time & time)
 
       // Check the Intersection over Union (IoU) between the two objects
       constexpr double min_union_iou_area = 1e-2;
-      const auto obj1 = types::toTrackedObjectMsg(object1);
-      const auto obj2 = types::toTrackedObjectMsg(object2);
-      const auto iou =
-        autoware::object_recognition_utils::get2dIoU(obj1, obj2, min_union_iou_area);
-      // const auto iou = shapes::get2dIoU(object1, object2, min_union_iou_area);
+      const auto iou = shapes::get2dIoU(object1, object2, min_union_iou_area);
       const auto & label1 = (*itr1)->getHighestProbLabel();
       const auto & label2 = (*itr2)->getHighestProbLabel();
       bool should_delete_tracker1 = false;

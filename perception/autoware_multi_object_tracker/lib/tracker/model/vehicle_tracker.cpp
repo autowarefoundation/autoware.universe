@@ -66,7 +66,7 @@ VehicleTracker::VehicleTracker(
   velocity_deviation_threshold_ = autoware::universe_utils::kmph2mps(10);  // [m/s]
 
   // OBJECT SHAPE MODEL
-  if (object.shape.type == types::ShapeType::BOUNDING_BOX) {
+  if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     bounding_box_ = {
       object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
   } else {
@@ -174,7 +174,7 @@ types::DynamicObject VehicleTracker::getUpdatingObject(
   // OBJECT SHAPE MODEL
   // convert to bounding box if input is convex shape
   types::DynamicObject bbox_object = object;
-  if (object.shape.type != types::ShapeType::BOUNDING_BOX) {
+  if (object.shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     if (!utils::convertConvexHullToBoundingBox(object, bbox_object)) {
       RCLCPP_WARN(
         logger_,
@@ -242,7 +242,7 @@ bool VehicleTracker::measureWithPose(const types::DynamicObject & object)
 
 bool VehicleTracker::measureWithShape(const types::DynamicObject & object)
 {
-  if (object.shape.type != types::ShapeType::BOUNDING_BOX) {
+  if (object.shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     // do not update shape if the input is not a bounding box
     return false;
   }

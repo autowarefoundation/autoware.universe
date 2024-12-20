@@ -59,7 +59,7 @@ BicycleTracker::BicycleTracker(
   initializeExistenceProbabilities(channel_index, object.existence_probability);
 
   // OBJECT SHAPE MODEL
-  if (object.shape.type == types::ShapeType::BOUNDING_BOX) {
+  if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     bounding_box_ = {
       object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
   } else {
@@ -156,7 +156,7 @@ types::DynamicObject BicycleTracker::getUpdatingObject(
 
   // OBJECT SHAPE MODEL
   // convert to bounding box if input is convex shape
-  if (object.shape.type != types::ShapeType::BOUNDING_BOX) {
+  if (object.shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     if (!utils::convertConvexHullToBoundingBox(object, updating_object)) {
       updating_object = object;
     }
@@ -198,7 +198,7 @@ bool BicycleTracker::measureWithPose(const types::DynamicObject & object)
 
 bool BicycleTracker::measureWithShape(const types::DynamicObject & object)
 {
-  if (object.shape.type != types::ShapeType::BOUNDING_BOX) {
+  if (object.shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     // do not update shape if the input is not a bounding box
     return false;
   }

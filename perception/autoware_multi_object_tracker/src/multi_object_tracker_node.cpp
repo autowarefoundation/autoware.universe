@@ -294,7 +294,7 @@ void MultiObjectTracker::runProcess(
 
   // Transform the objects to the world frame
   types::DynamicObjects transformed_objects;
-  if (!transformObjects(input_objects, world_frame_id_, tf_buffer_, transformed_objects)) {
+  if (!shapes::transformObjects(input_objects, world_frame_id_, tf_buffer_, transformed_objects)) {
     return;
   }
 

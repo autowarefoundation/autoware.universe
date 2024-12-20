@@ -185,8 +185,7 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
         if (passed_gate) {
           const double max_area = max_area_matrix_(tracker_label, measurement_label);
           const double min_area = min_area_matrix_(tracker_label, measurement_label);
-          const double area = getArea(measurement_object.shape);
-          // const double area = autoware::universe_utils::getArea(measurement_object.shape);
+          const double area = autoware::universe_utils::getArea(measurement_object.shape);
           if (area < min_area || max_area < area) passed_gate = false;
         }
         // angle gate
@@ -210,12 +209,8 @@ Eigen::MatrixXd DataAssociation::calcScoreMatrix(
         if (passed_gate) {
           const double min_iou = min_iou_matrix_(tracker_label, measurement_label);
           const double min_union_iou_area = 1e-2;
-          const auto object1 = types::toTrackedObjectMsg(measurement_object);
-          const auto object2 = types::toTrackedObjectMsg(tracked_object);
-          const double iou = autoware::object_recognition_utils::get2dIoU(
-            object1, object2, min_union_iou_area);
-          // const double iou =
-          //   shapes::get2dIoU(measurement_object, tracked_object, min_union_iou_area);
+          const double iou =
+            shapes::get2dIoU(measurement_object, tracked_object, min_union_iou_area);
           if (iou < min_iou) passed_gate = false;
         }
 
