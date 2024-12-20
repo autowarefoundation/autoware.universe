@@ -16,8 +16,10 @@
 
 #include "autoware/multi_object_tracker/association/solver/gnn_solver.hpp"
 #include "autoware/multi_object_tracker/object_model/dynamic_object.hpp"
+#include "autoware/multi_object_tracker/object_model/shapes.hpp"
 #include "autoware/multi_object_tracker/utils/utils.hpp"
-#include "autoware/object_recognition_utils/object_recognition_utils.hpp"
+
+#include <autoware/object_recognition_utils/object_recognition_utils.hpp>
 
 #include <algorithm>
 #include <list>

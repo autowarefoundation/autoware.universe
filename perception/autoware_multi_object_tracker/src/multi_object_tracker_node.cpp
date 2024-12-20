@@ -17,6 +17,7 @@
 
 #include "multi_object_tracker_node.hpp"
 
+#include "autoware/multi_object_tracker/object_model/shapes.hpp"
 #include "autoware/multi_object_tracker/uncertainty/uncertainty_processor.hpp"
 #include "autoware/multi_object_tracker/utils/utils.hpp"
 
