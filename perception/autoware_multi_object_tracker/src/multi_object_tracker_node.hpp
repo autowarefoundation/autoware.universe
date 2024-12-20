@@ -20,6 +20,7 @@
 #define MULTI_OBJECT_TRACKER_NODE_HPP_
 
 #include "autoware/multi_object_tracker/association/association.hpp"
+#include "autoware/multi_object_tracker/object_model/dynamic_object.hpp"
 #include "autoware/multi_object_tracker/tracker/model/tracker_base.hpp"
 #include "debugger/debugger.hpp"
 #include "processor/input_manager.hpp"
