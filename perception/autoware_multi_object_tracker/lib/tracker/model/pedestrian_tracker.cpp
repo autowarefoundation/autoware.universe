@@ -20,14 +20,14 @@
 #include "autoware/multi_object_tracker/tracker/model/pedestrian_tracker.hpp"
 
 #include "autoware/multi_object_tracker/utils/utils.hpp"
-#include "autoware/object_recognition_utils/object_recognition_utils.hpp"
-#include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
-#include "autoware/universe_utils/math/normalization.hpp"
-#include "autoware/universe_utils/math/unit_conversion.hpp"
-#include "autoware/universe_utils/ros/msg_covariance.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include <autoware/object_recognition_utils/object_recognition_utils.hpp>
+#include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
+#include <autoware/universe_utils/math/normalization.hpp>
+#include <autoware/universe_utils/math/unit_conversion.hpp>
+#include <autoware/universe_utils/ros/msg_covariance.hpp>
 
 #include <bits/stdc++.h>
 #include <tf2/LinearMath/Matrix3x3.h>
@@ -46,7 +46,7 @@ namespace autoware::multi_object_tracker
 using Label = autoware_perception_msgs::msg::ObjectClassification;
 
 PedestrianTracker::PedestrianTracker(
-  const rclcpp::Time & time, const autoware_perception_msgs::msg::DetectedObject & object,
+  const rclcpp::Time & time, const types::DynamicObject & object,
   const geometry_msgs::msg::Transform & /*self_transform*/, const size_t channel_size,
   const uint & channel_index)
 : Tracker(time, object.classification, channel_size),
@@ -148,17 +148,16 @@ bool PedestrianTracker::predict(const rclcpp::Time & time)
   return motion_model_.predictState(time);
 }
 
-autoware_perception_msgs::msg::DetectedObject PedestrianTracker::getUpdatingObject(
-  const autoware_perception_msgs::msg::DetectedObject & object,
+types::DynamicObject PedestrianTracker::getUpdatingObject(
+  const types::DynamicObject & object,
   const geometry_msgs::msg::Transform & /*self_transform*/) const
 {
-  autoware_perception_msgs::msg::DetectedObject updating_object = object;
+  types::DynamicObject updating_object = object;
 
   return updating_object;
 }
 
-bool PedestrianTracker::measureWithPose(
-  const autoware_perception_msgs::msg::DetectedObject & object)
+bool PedestrianTracker::measureWithPose(const types::DynamicObject & object)
 {
   // update motion model
   bool is_updated = false;
@@ -178,8 +177,7 @@ bool PedestrianTracker::measureWithPose(
   return is_updated;
 }
 
-bool PedestrianTracker::measureWithShape(
-  const autoware_perception_msgs::msg::DetectedObject & object)
+bool PedestrianTracker::measureWithShape(const types::DynamicObject & object)
 {
   constexpr double gain = 0.1;
   constexpr double gain_inv = 1.0 - gain;
@@ -235,7 +233,7 @@ bool PedestrianTracker::measureWithShape(
 }
 
 bool PedestrianTracker::measure(
-  const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+  const types::DynamicObject & object, const rclcpp::Time & time,
   const geometry_msgs::msg::Transform & self_transform)
 {
   // keep the latest input object
@@ -259,8 +257,7 @@ bool PedestrianTracker::measure(
   }
 
   // update object
-  const autoware_perception_msgs::msg::DetectedObject updating_object =
-    getUpdatingObject(object, self_transform);
+  const types::DynamicObject updating_object = getUpdatingObject(object, self_transform);
   measureWithPose(updating_object);
   measureWithShape(updating_object);
 
@@ -269,9 +266,9 @@ bool PedestrianTracker::measure(
 }
 
 bool PedestrianTracker::getTrackedObject(
-  const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObject & object) const
+  const rclcpp::Time & time, types::DynamicObject & object) const
 {
-  object = autoware::object_recognition_utils::toTrackedObject(object_);
+  object = object_;
   object.object_id = getUUID();
   object.classification = getClassification();
 

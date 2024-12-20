@@ -19,23 +19,21 @@
 #ifndef AUTOWARE__MULTI_OBJECT_TRACKER__UTILS__UTILS_HPP_
 #define AUTOWARE__MULTI_OBJECT_TRACKER__UTILS__UTILS_HPP_
 
+#include "autoware/multi_object_tracker/object_model/dynamic_object.hpp"
+
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-#include "autoware_perception_msgs/msg/detected_object.hpp"
-#include "autoware_perception_msgs/msg/shape.hpp"
-#include "autoware_perception_msgs/msg/tracked_object.hpp"
-#include <geometry_msgs/msg/polygon.hpp>
-#include <geometry_msgs/msg/transform.hpp>
-#include <geometry_msgs/msg/vector3.hpp>
+#include <autoware_perception_msgs/msg/shape.hpp>
 
 #include <tf2/utils.h>
 
 #include <algorithm>
 #include <cmath>
-#include <tuple>
 #include <vector>
 
+namespace autoware::multi_object_tracker
+{
 namespace utils
 {
 enum BBOX_IDX {
@@ -50,17 +48,6 @@ enum BBOX_IDX {
   INSIDE = 8,
   INVALID = -1
 };
-
-/**
- * @brief check if object label belongs to "large vehicle"
- * @param label: input object label
- * @return True if object label means large vehicle
- */
-inline bool isLargeVehicleLabel(const uint8_t label)
-{
-  using Label = autoware_perception_msgs::msg::ObjectClassification;
-  return label == Label::BUS || label == Label::TRUCK || label == Label::TRAILER;
-}
 
 /**
  * @brief Determine the Nearest Corner or Surface of detected object observed from ego vehicle
@@ -172,9 +159,8 @@ inline Eigen::Vector2d calcOffsetVectorFromShapeChange(
  * @return nearest corner index(int)
  */
 inline void calcAnchorPointOffset(
-  const double w, const double l, const int indx,
-  const autoware_perception_msgs::msg::DetectedObject & input_object, const double & yaw,
-  autoware_perception_msgs::msg::DetectedObject & offset_object, Eigen::Vector2d & tracking_offset)
+  const double w, const double l, const int indx, const types::DynamicObject & input_object,
+  const double & yaw, types::DynamicObject & offset_object, Eigen::Vector2d & tracking_offset)
 {
   // copy value
   offset_object = input_object;
@@ -204,8 +190,7 @@ inline void calcAnchorPointOffset(
  * @param output_object: output bounding box objects
  */
 inline bool convertConvexHullToBoundingBox(
-  const autoware_perception_msgs::msg::DetectedObject & input_object,
-  autoware_perception_msgs::msg::DetectedObject & output_object)
+  const types::DynamicObject & input_object, types::DynamicObject & output_object)
 {
   // check footprint size
   if (input_object.shape.footprint.points.size() < 3) {
@@ -249,16 +234,13 @@ inline bool convertConvexHullToBoundingBox(
 }
 
 inline bool getMeasurementYaw(
-  const autoware_perception_msgs::msg::DetectedObject & object, const double & predicted_yaw,
-  double & measurement_yaw)
+  const types::DynamicObject & object, const double & predicted_yaw, double & measurement_yaw)
 {
   measurement_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
 
   // check orientation sign is known or not, and fix the limiting delta yaw
   double limiting_delta_yaw = M_PI_2;
-  if (
-    object.kinematics.orientation_availability ==
-    autoware_perception_msgs::msg::DetectedObjectKinematics::AVAILABLE) {
+  if (object.kinematics.orientation_availability == types::OrientationAvailability::AVAILABLE) {
     limiting_delta_yaw = M_PI;
   }
   // limiting delta yaw, even the availability is unknown
@@ -270,10 +252,10 @@ inline bool getMeasurementYaw(
     }
   }
   // return false if the orientation is unknown
-  return object.kinematics.orientation_availability !=
-         autoware_perception_msgs::msg::DetectedObjectKinematics::UNAVAILABLE;
+  return object.kinematics.orientation_availability != types::OrientationAvailability::UNAVAILABLE;
 }
 
 }  // namespace utils
+}  // namespace autoware::multi_object_tracker
 
 #endif  // AUTOWARE__MULTI_OBJECT_TRACKER__UTILS__UTILS_HPP_

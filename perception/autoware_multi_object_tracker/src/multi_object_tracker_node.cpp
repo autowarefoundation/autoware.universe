@@ -17,6 +17,7 @@
 
 #include "multi_object_tracker_node.hpp"
 
+#include "autoware/multi_object_tracker/object_model/shapes.hpp"
 #include "autoware/multi_object_tracker/uncertainty/uncertainty_processor.hpp"
 #include "autoware/multi_object_tracker/utils/utils.hpp"
 
@@ -95,7 +96,8 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
     get_parameter("selected_input_channels").as_string_array();
 
   // ROS interface - Publisher
-  tracked_objects_pub_ = create_publisher<TrackedObjects>("output", rclcpp::QoS{1});
+  tracked_objects_pub_ =
+    create_publisher<autoware_perception_msgs::msg::TrackedObjects>("output", rclcpp::QoS{1});
 
   // ROS interface - Input channels
   // Get input channels
@@ -239,18 +241,18 @@ void MultiObjectTracker::onTrigger()
 
   // process start
   last_updated_time_ = current_time;
-  const rclcpp::Time latest_time(objects_list.back().second.header.stamp);
+  const rclcpp::Time latest_time(objects_list.back().header.stamp);
   debugger_->startMeasurementTime(this->now(), latest_time);
-  // run process for each DetectedObjects
+  // run process for each DynamicObject
   for (const auto & objects_data : objects_list) {
-    runProcess(objects_data.second, objects_data.first);
+    runProcess(objects_data);
   }
   // process end
   debugger_->endMeasurementTime(this->now());
 
   // Publish without delay compensation
   if (!publish_timer_) {
-    const auto latest_object_time = rclcpp::Time(objects_list.back().second.header.stamp);
+    const auto latest_object_time = rclcpp::Time(objects_list.back().header.stamp);
     checkAndPublish(latest_object_time);
   }
 }
@@ -278,9 +280,9 @@ void MultiObjectTracker::onTimer()
   if (should_publish) checkAndPublish(current_time);
 }
 
-void MultiObjectTracker::runProcess(
-  const DetectedObjects & input_objects, const uint & channel_index)
+void MultiObjectTracker::runProcess(const types::DynamicObjectList & input_objects)
 {
+  const uint & channel_index = input_objects.channel_index;
   // Get the time of the measurement
   const rclcpp::Time measurement_time =
     rclcpp::Time(input_objects.header.stamp, this->now().get_clock_type());
@@ -293,9 +295,8 @@ void MultiObjectTracker::runProcess(
   }
 
   // Transform the objects to the world frame
-  DetectedObjects transformed_objects;
-  if (!autoware::object_recognition_utils::transformObjects(
-        input_objects, world_frame_id_, tf_buffer_, transformed_objects)) {
+  types::DynamicObjectList transformed_objects;
+  if (!shapes::transformObjects(input_objects, world_frame_id_, tf_buffer_, transformed_objects)) {
     return;
   }
 
@@ -355,14 +356,14 @@ void MultiObjectTracker::runProcess(
   }
 
   /* tracker update */
-  processor_->update(transformed_objects, *self_transform, direct_assignment, channel_index);
+  processor_->update(transformed_objects, *self_transform, direct_assignment);
 
   /* tracker pruning */
   processor_->prune(measurement_time);
 
   /* spawn new tracker */
   if (input_manager_->isChannelSpawnEnabled(channel_index)) {
-    processor_->spawn(transformed_objects, *self_transform, reverse_assignment, channel_index);
+    processor_->spawn(transformed_objects, *self_transform, reverse_assignment);
   }
 }
 
@@ -387,7 +388,7 @@ void MultiObjectTracker::publish(const rclcpp::Time & time) const
     return;
   }
   // Create output msg
-  TrackedObjects output_msg, tentative_objects_msg;
+  autoware_perception_msgs::msg::TrackedObjects output_msg, tentative_objects_msg;
   output_msg.header.frame_id = world_frame_id_;
   processor_->getTrackedObjects(time, output_msg);
 
@@ -399,7 +400,7 @@ void MultiObjectTracker::publish(const rclcpp::Time & time) const
   debugger_->endPublishTime(this->now(), time);
 
   if (debugger_->shouldPublishTentativeObjects()) {
-    TrackedObjects tentative_output_msg;
+    autoware_perception_msgs::msg::TrackedObjects tentative_output_msg;
     tentative_output_msg.header.frame_id = world_frame_id_;
     processor_->getTentativeObjects(time, tentative_output_msg);
     debugger_->publishTentativeObjects(tentative_output_msg);
