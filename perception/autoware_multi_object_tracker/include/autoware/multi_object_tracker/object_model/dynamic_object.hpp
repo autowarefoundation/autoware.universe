@@ -90,7 +90,6 @@ struct DynamicObjects
 
 DynamicObject getDynamicObject(const autoware_perception_msgs::msg::DetectedObject & det_object);
 
-
 DynamicObjects getDynamicObjects(const autoware_perception_msgs::msg::DetectedObjects & det_objects);
 
 autoware_perception_msgs::msg::TrackedObject getTrackedObject(const DynamicObject & dyn_object);

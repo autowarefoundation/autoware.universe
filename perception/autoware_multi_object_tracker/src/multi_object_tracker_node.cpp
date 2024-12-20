@@ -95,7 +95,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
     get_parameter("selected_input_channels").as_string_array();
 
   // ROS interface - Publisher
-  tracked_objects_pub_ = create_publisher<TrackedObjects>("output", rclcpp::QoS{1});
+  tracked_objects_pub_ = create_publisher<autoware_perception_msgs::msg::TrackedObjects>("output", rclcpp::QoS{1});
 
   // ROS interface - Input channels
   // Get input channels
@@ -386,7 +386,7 @@ void MultiObjectTracker::publish(const rclcpp::Time & time) const
     return;
   }
   // Create output msg
-  TrackedObjects output_msg, tentative_objects_msg;
+  autoware_perception_msgs::msg::TrackedObjects output_msg, tentative_objects_msg;
   output_msg.header.frame_id = world_frame_id_;
   processor_->getTrackedObjects(time, output_msg);
 
@@ -398,7 +398,7 @@ void MultiObjectTracker::publish(const rclcpp::Time & time) const
   debugger_->endPublishTime(this->now(), time);
 
   if (debugger_->shouldPublishTentativeObjects()) {
-    TrackedObjects tentative_output_msg;
+    autoware_perception_msgs::msg::TrackedObjects tentative_output_msg;
     tentative_output_msg.header.frame_id = world_frame_id_;
     processor_->getTentativeObjects(time, tentative_output_msg);
     debugger_->publishTentativeObjects(tentative_output_msg);
