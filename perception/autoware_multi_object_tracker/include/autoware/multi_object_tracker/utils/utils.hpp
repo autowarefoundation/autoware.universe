@@ -24,18 +24,12 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-#include <autoware_perception_msgs/msg/detected_object.hpp>
 #include <autoware_perception_msgs/msg/shape.hpp>
-#include <autoware_perception_msgs/msg/tracked_object.hpp>
-#include <geometry_msgs/msg/polygon.hpp>
-#include <geometry_msgs/msg/transform.hpp>
-#include <geometry_msgs/msg/vector3.hpp>
 
 #include <tf2/utils.h>
 
 #include <algorithm>
 #include <cmath>
-#include <tuple>
 #include <vector>
 
 namespace autoware::multi_object_tracker
@@ -54,17 +48,6 @@ enum BBOX_IDX {
   INSIDE = 8,
   INVALID = -1
 };
-
-/**
- * @brief check if object label belongs to "large vehicle"
- * @param label: input object label
- * @return True if object label means large vehicle
- */
-inline bool isLargeVehicleLabel(const uint8_t label)
-{
-  using Label = autoware_perception_msgs::msg::ObjectClassification;
-  return label == Label::BUS || label == Label::TRUCK || label == Label::TRAILER;
-}
 
 /**
  * @brief Determine the Nearest Corner or Surface of detected object observed from ego vehicle
