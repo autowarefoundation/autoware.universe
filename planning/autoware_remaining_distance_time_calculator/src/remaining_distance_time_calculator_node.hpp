@@ -17,6 +17,7 @@
 
 #include <autoware/route_handler/route_handler.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <remaining_distance_time_calculator_parameters.hpp>
 
 #include <autoware_internal_msgs/msg/mission_remaining_distance_time.hpp>
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
@@ -37,11 +38,6 @@
 
 namespace autoware::remaining_distance_time_calculator
 {
-
-struct NodeParam
-{
-  double update_rate{0.0};
-};
 
 class RemainingDistanceTimeCalculatorNode : public rclcpp::Node
 {
@@ -82,7 +78,7 @@ private:
   double remaining_time_;
 
   // Parameter
-  NodeParam node_param_;
+  std::shared_ptr<::remaining_distance_time_calculator::ParamListener> param_listener_;
 
   // Callbacks
   void on_timer();
