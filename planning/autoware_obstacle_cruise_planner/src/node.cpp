@@ -726,6 +726,7 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
   // 8. Publish debug data
   published_time_publisher_->publish_if_subscribed(trajectory_pub_, output_traj.header.stamp);
   planner_ptr_->publishMetrics(now());
+  planner_ptr_->publishPlanningFactors();
   publishDebugMarker();
   publishDebugInfo();
   objects_of_interest_marker_interface_.publishMarkerArray();
