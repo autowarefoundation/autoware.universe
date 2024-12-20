@@ -61,9 +61,7 @@ public:
     const types::DynamicObject & object, const geometry_msgs::msg::Transform & self_transform);
   bool measureWithPose(const types::DynamicObject & object);
   bool measureWithShape(const types::DynamicObject & object);
-  bool getTrackedObject(
-    const rclcpp::Time & time,
-    autoware_perception_msgs::msg::TrackedObject & object) const override;
+  bool getTrackedObject(const rclcpp::Time & time, types::DynamicObject & object) const override;
 };
 
 }  // namespace autoware::multi_object_tracker

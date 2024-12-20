@@ -268,9 +268,9 @@ bool BicycleTracker::measure(
 }
 
 bool BicycleTracker::getTrackedObject(
-  const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObject & object) const
+  const rclcpp::Time & time, types::DynamicObject & object) const
 {
-  object = types::getTrackedObject(object_);
+  object = object_;
   object.object_id = getUUID();
   object.classification = getClassification();
 

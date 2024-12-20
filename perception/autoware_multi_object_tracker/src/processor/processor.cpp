@@ -14,11 +14,13 @@
 
 #include "processor.hpp"
 
+#include "autoware/multi_object_tracker/object_model/dynamic_object.hpp"
 #include "autoware/multi_object_tracker/object_model/object_model.hpp"
 #include "autoware/multi_object_tracker/tracker/tracker.hpp"
-#include "autoware/object_recognition_utils/object_recognition_utils.hpp"
 
-#include "autoware_perception_msgs/msg/tracked_objects.hpp"
+#include <autoware/object_recognition_utils/object_recognition_utils.hpp>
+
+#include <autoware_perception_msgs/msg/tracked_objects.hpp>
 
 #include <iterator>
 #include <map>
@@ -143,12 +145,12 @@ void TrackerProcessor::removeOverlappedTracker(const rclcpp::Time & time)
 {
   // Iterate through the list of trackers
   for (auto itr1 = list_tracker_.begin(); itr1 != list_tracker_.end(); ++itr1) {
-    autoware_perception_msgs::msg::TrackedObject object1;
+    types::DynamicObject object1;
     if (!(*itr1)->getTrackedObject(time, object1)) continue;
 
     // Compare the current tracker with the remaining trackers
     for (auto itr2 = std::next(itr1); itr2 != list_tracker_.end(); ++itr2) {
-      autoware_perception_msgs::msg::TrackedObject object2;
+      types::DynamicObject object2;
       if (!(*itr2)->getTrackedObject(time, object2)) continue;
 
       // Calculate the distance between the two objects
@@ -164,9 +166,12 @@ void TrackerProcessor::removeOverlappedTracker(const rclcpp::Time & time)
       }
 
       // Check the Intersection over Union (IoU) between the two objects
-      const double min_union_iou_area = 1e-2;
+      constexpr double min_union_iou_area = 1e-2;
+      const auto obj1 = types::toTrackedObjectMsg(object1);
+      const auto obj2 = types::toTrackedObjectMsg(object2);
       const auto iou =
-        autoware::object_recognition_utils::get2dIoU(object1, object2, min_union_iou_area);
+        autoware::object_recognition_utils::get2dIoU(obj1, obj2, min_union_iou_area);
+      // const auto iou = shapes::get2dIoU(object1, object2, min_union_iou_area);
       const auto & label1 = (*itr1)->getHighestProbLabel();
       const auto & label2 = (*itr2)->getHighestProbLabel();
       bool should_delete_tracker1 = false;
@@ -225,13 +230,13 @@ void TrackerProcessor::getTrackedObjects(
   const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObjects & tracked_objects) const
 {
   tracked_objects.header.stamp = time;
+  types::DynamicObject tracked_object;
   for (const auto & tracker : list_tracker_) {
     // Skip if the tracker is not confident
     if (!isConfidentTracker(tracker)) continue;
     // Get the tracked object, extrapolated to the given time
-    autoware_perception_msgs::msg::TrackedObject tracked_object;
     if (tracker->getTrackedObject(time, tracked_object)) {
-      tracked_objects.objects.push_back(tracked_object);
+      tracked_objects.objects.push_back(toTrackedObjectMsg(tracked_object));
     }
   }
 }
@@ -241,11 +246,11 @@ void TrackerProcessor::getTentativeObjects(
   autoware_perception_msgs::msg::TrackedObjects & tentative_objects) const
 {
   tentative_objects.header.stamp = time;
+  types::DynamicObject tracked_object;
   for (const auto & tracker : list_tracker_) {
     if (!isConfidentTracker(tracker)) {
-      autoware_perception_msgs::msg::TrackedObject tracked_object;
       if (tracker->getTrackedObject(time, tracked_object)) {
-        tentative_objects.objects.push_back(tracked_object);
+        tentative_objects.objects.push_back(toTrackedObjectMsg(tracked_object));
       }
     }
   }

@@ -70,11 +70,12 @@ DynamicObjects getDynamicObjects(const autoware_perception_msgs::msg::DetectedOb
     dynamic_objects.objects.emplace_back(getDynamicObject(det_object));
   }
   return dynamic_objects;
-};
+}
 
-autoware_perception_msgs::msg::TrackedObject getTrackedObject(const DynamicObject & dyn_object)
+autoware_perception_msgs::msg::TrackedObject toTrackedObjectMsg(const DynamicObject & dyn_object)
 {
   autoware_perception_msgs::msg::TrackedObject tracked_object;
+  tracked_object.object_id = dyn_object.object_id;
   tracked_object.existence_probability = dyn_object.existence_probability;
   tracked_object.classification = dyn_object.classification;
 
