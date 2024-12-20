@@ -144,24 +144,22 @@ void RawVehicleCommandConverterNode::publishActuationCmd()
     }
   }
 
-  const auto current_accel = sub_accel_.takeData();
-  const auto current_operation_mode = sub_operation_mode_.takeData();
+  /* compensate control command if vehicle adaptor is enabled */
+  Control control_cmd = *control_cmd_ptr_;
   if (use_vehicle_adaptor_) {
-    if (!current_accel || !current_operation_mode) {
+    const auto current_accel = sub_accel_.takeData();
+    const auto current_operation_mode = sub_operation_mode_.takeData();
+    const auto control_horizon = sub_control_horizon_.takeData();
+    if (!current_accel || !current_operation_mode || !control_horizon) {
       RCLCPP_WARN_EXPRESSION(
-        get_logger(), is_debugging_, "some pointers are null: %s, %s",
-        !current_accel ? "accel" : "", !current_operation_mode ? "operation_mode" : "");
+        get_logger(), is_debugging_, "some pointers are null: %s, %s %s",
+        !current_accel ? "accel" : "", !current_operation_mode ? "operation_mode" : "",
+        !control_horizon ? "control_horizon" : "");
       return;
     }
-  }
-
-  /* compensate control command if vehicle adaptor is enabled */
-  const Control control_cmd = use_vehicle_adaptor_
-                                ? vehicle_adaptor_.compensate(
-                                    *control_cmd_ptr_, *current_odometry_, *current_accel,
-                                    *current_steer_ptr_, *current_operation_mode)
-                                : *control_cmd_ptr_;
-  if (use_vehicle_adaptor_) {
+    control_cmd = vehicle_adaptor_.compensate(
+      *control_cmd_ptr_, *current_odometry_, *current_accel, *current_steer_ptr_,
+      *current_operation_mode, *control_horizon);
     pub_compensated_control_cmd_->publish(control_cmd);
   }
 

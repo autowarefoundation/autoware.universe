@@ -17,6 +17,7 @@
 
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <autoware_control_msgs/msg/control.hpp>
+#include <autoware_control_msgs/msg/control_horizon.hpp>
 #include <autoware_vehicle_msgs/msg/steering_report.hpp>
 #include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
@@ -26,6 +27,7 @@ namespace autoware::raw_vehicle_cmd_converter
 
 using autoware_adapi_v1_msgs::msg::OperationModeState;
 using autoware_control_msgs::msg::Control;
+using autoware_control_msgs::msg::ControlHorizon;
 using autoware_vehicle_msgs::msg::SteeringReport;
 using geometry_msgs::msg::AccelWithCovarianceStamped;
 using nav_msgs::msg::Odometry;
@@ -38,7 +40,8 @@ public:
     const Control & input_control_cmd, [[maybe_unused]] const Odometry & odometry,
     [[maybe_unused]] const AccelWithCovarianceStamped & accel,
     [[maybe_unused]] const double steering,
-    [[maybe_unused]] const OperationModeState & operation_mode);
+    [[maybe_unused]] const OperationModeState & operation_mode,
+    [[maybe_unused]] const ControlHorizon & control_horizon);
 
 private:
 };

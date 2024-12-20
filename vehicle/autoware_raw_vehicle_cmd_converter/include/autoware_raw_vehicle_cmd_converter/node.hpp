@@ -94,6 +94,10 @@ public:
     this, "~/input/accel"};
   autoware::universe_utils::InterProcessPollingSubscriber<OperationModeState> sub_operation_mode_{
     this, "~/input/operation_mode_state"};
+  // NOTE:
+  // control_horizon is an experimental topic, but vehicle_adaptor uses it to improve performance,
+  autoware::universe_utils::InterProcessPollingSubscriber<ControlHorizon> sub_control_horizon_{
+    this, "~/input/control_horizon"};
 
   rclcpp::TimerBase::SharedPtr timer_;
 

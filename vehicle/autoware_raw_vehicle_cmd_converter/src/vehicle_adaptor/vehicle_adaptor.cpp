@@ -21,7 +21,8 @@ namespace autoware::raw_vehicle_cmd_converter
 Control VehicleAdaptor::compensate(
   const Control & input_control_cmd, [[maybe_unused]] const Odometry & odometry,
   [[maybe_unused]] const AccelWithCovarianceStamped & accel, [[maybe_unused]] const double steering,
-  [[maybe_unused]] const OperationModeState & operation_mode)
+  [[maybe_unused]] const OperationModeState & operation_mode,
+  [[maybe_unused]] const ControlHorizon & control_horizon)
 {
   // TODO(someone): implement the control command compensation
   Control output_control_cmd = input_control_cmd;
