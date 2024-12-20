@@ -51,16 +51,16 @@ CameraProjection::CameraProjection(
   const double ocy = static_cast<double>(camera_info.k.at(5));
   // for checking pincushion shape case
   const cv::Point3d ray_top_left = camera_model_.projectPixelTo3dRay(cv::Point(0, 0));
-  const cv::Point3d ray_top_right = camera_model_.projectPixelTo3dRay(cv::Point(image_w_ - 1, 0));
-  const cv::Point3d ray_bottom_left = camera_model_.projectPixelTo3dRay(cv::Point(0, image_h_ - 1));
+  const cv::Point3d ray_top_right = camera_model_.projectPixelTo3dRay(cv::Point(image_width_ - 1, 0));
+  const cv::Point3d ray_bottom_left = camera_model_.projectPixelTo3dRay(cv::Point(0, image_height_ - 1));
   const cv::Point3d ray_bottom_right =
-    camera_model_.projectPixelTo3dRay(cv::Point(image_w_ - 1, image_h_ - 1));
+    camera_model_.projectPixelTo3dRay(cv::Point(image_width_ - 1, image_height_ - 1));
   // for checking barrel shape case
   const cv::Point3d ray_mid_top = camera_model_.projectPixelTo3dRay(cv::Point(ocx, 0));
   const cv::Point3d ray_mid_left = camera_model_.projectPixelTo3dRay(cv::Point(0, ocy));
-  const cv::Point3d ray_mid_right = camera_model_.projectPixelTo3dRay(cv::Point(image_w_ - 1, ocy));
+  const cv::Point3d ray_mid_right = camera_model_.projectPixelTo3dRay(cv::Point(image_width_ - 1, ocy));
   const cv::Point3d ray_mid_bottom =
-    camera_model_.projectPixelTo3dRay(cv::Point(ocx, image_h_ - 1));
+    camera_model_.projectPixelTo3dRay(cv::Point(ocx, image_height_ - 1));
 
   cv::Point3d x_left = ray_top_left;
   cv::Point3d x_right = ray_top_right;
