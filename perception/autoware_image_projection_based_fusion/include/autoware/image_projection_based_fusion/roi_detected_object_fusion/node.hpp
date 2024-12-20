@@ -42,13 +42,11 @@ protected:
 
   void fuseOnSingleImage(
     const DetectedObjects & input_object_msg, const std::size_t image_id,
-    const DetectedObjectsWithFeature & input_roi_msg,
-    const sensor_msgs::msg::CameraInfo & camera_info, DetectedObjects & output_object_msg) override;
+    const DetectedObjectsWithFeature & input_roi_msg, DetectedObjects & output_object_msg) override;
 
   std::map<std::size_t, DetectedObjectWithFeature> generateDetectedObjectRoIs(
-    const DetectedObjects & input_object_msg, const double image_width, const double image_height,
-    const Eigen::Affine3d & object2camera_affine,
-    const image_geometry::PinholeCameraModel & pinhole_camera_model);
+    const DetectedObjects & input_object_msg, const std::size_t & image_id,
+    const Eigen::Affine3d & object2camera_affine);
 
   void fuseObjectsOnImage(
     const DetectedObjects & input_object_msg,
