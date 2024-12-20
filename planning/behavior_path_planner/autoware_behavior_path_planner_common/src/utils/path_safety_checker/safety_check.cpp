@@ -28,8 +28,12 @@
 
 #include <tf2/utils.h>
 
+#include <algorithm>
 #include <cmath>
 #include <limits>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace autoware::behavior_path_planner::utils::path_safety_checker
 {
@@ -622,13 +626,15 @@ std::vector<Polygon2d> get_collided_polygons(
 
     // check intersects
     if (boost::geometry::intersects(ego_polygon, obj_polygon)) {
-      debug.unsafe_reason = "overlap_polygon";
+      if (collided_polygons.empty()) {
+        debug.unsafe_reason = "overlap_polygon";
+        debug.expected_ego_pose = ego_pose;
+        debug.expected_obj_pose = obj_pose;
+        debug.extended_ego_polygon = ego_polygon;
+        debug.extended_obj_polygon = obj_polygon;
+      }
       collided_polygons.push_back(obj_polygon);
 
-      debug.expected_ego_pose = ego_pose;
-      debug.expected_obj_pose = obj_pose;
-      debug.extended_ego_polygon = ego_polygon;
-      debug.extended_obj_polygon = obj_polygon;
       continue;
     }
 
@@ -676,14 +682,17 @@ std::vector<Polygon2d> get_collided_polygons(
 
     // check intersects with extended polygon
     if (boost::geometry::intersects(extended_ego_polygon, extended_obj_polygon)) {
-      debug.unsafe_reason = "overlap_extended_polygon";
+      if (collided_polygons.empty()) {
+        debug.unsafe_reason = "overlap_extended_polygon";
+        debug.rss_longitudinal = rss_dist;
+        debug.inter_vehicle_distance = min_lon_length;
+        debug.expected_ego_pose = ego_pose;
+        debug.expected_obj_pose = obj_pose;
+        debug.extended_ego_polygon = extended_ego_polygon;
+        debug.extended_obj_polygon = extended_obj_polygon;
+        debug.is_front = is_object_front;
+      }
       collided_polygons.push_back(obj_polygon);
-
-      debug.rss_longitudinal = rss_dist;
-      debug.inter_vehicle_distance = min_lon_length;
-      debug.extended_ego_polygon = extended_ego_polygon;
-      debug.extended_obj_polygon = extended_obj_polygon;
-      debug.is_front = is_object_front;
     }
   }
 

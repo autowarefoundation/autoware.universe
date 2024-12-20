@@ -14,32 +14,26 @@
 
 #include "processor.hpp"
 
+#include "autoware/multi_object_tracker/object_model/object_model.hpp"
 #include "autoware/multi_object_tracker/tracker/tracker.hpp"
 #include "autoware/object_recognition_utils/object_recognition_utils.hpp"
 
 #include "autoware_perception_msgs/msg/tracked_objects.hpp"
 
 #include <iterator>
+#include <map>
+#include <memory>
+#include <string>
+#include <unordered_map>
 
 namespace autoware::multi_object_tracker
 {
 
 using Label = autoware_perception_msgs::msg::ObjectClassification;
+using LabelType = autoware_perception_msgs::msg::ObjectClassification::_label_type;
 
-TrackerProcessor::TrackerProcessor(
-  const std::map<std::uint8_t, std::string> & tracker_map, const size_t & channel_size)
-: tracker_map_(tracker_map), channel_size_(channel_size)
+TrackerProcessor::TrackerProcessor(const TrackerProcessorConfig & config) : config_(config)
 {
-  // Set tracker lifetime parameters
-  max_elapsed_time_ = 1.0;  // [s]
-
-  // Set tracker overlap remover parameters
-  min_iou_ = 0.1;                       // [ratio]
-  min_iou_for_unknown_object_ = 0.001;  // [ratio]
-  distance_threshold_ = 5.0;            // [m]
-
-  // Set tracker confidence threshold
-  confident_count_threshold_ = 3;  // [count]
 }
 
 void TrackerProcessor::predict(const rclcpp::Time & time)
@@ -90,34 +84,36 @@ std::shared_ptr<Tracker> TrackerProcessor::createNewTracker(
   const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
   const geometry_msgs::msg::Transform & self_transform, const uint & channel_index) const
 {
-  const std::uint8_t label =
+  const LabelType label =
     autoware::object_recognition_utils::getHighestProbLabel(object.classification);
-  if (tracker_map_.count(label) != 0) {
-    const auto tracker = tracker_map_.at(label);
+  if (config_.tracker_map.count(label) != 0) {
+    const auto tracker = config_.tracker_map.at(label);
     if (tracker == "bicycle_tracker")
       return std::make_shared<BicycleTracker>(
-        time, object, self_transform, channel_size_, channel_index);
+        time, object, self_transform, config_.channel_size, channel_index);
     if (tracker == "big_vehicle_tracker")
-      return std::make_shared<BigVehicleTracker>(
-        time, object, self_transform, channel_size_, channel_index);
+      return std::make_shared<VehicleTracker>(
+        object_model::big_vehicle, time, object, self_transform, config_.channel_size,
+        channel_index);
     if (tracker == "multi_vehicle_tracker")
       return std::make_shared<MultipleVehicleTracker>(
-        time, object, self_transform, channel_size_, channel_index);
+        time, object, self_transform, config_.channel_size, channel_index);
     if (tracker == "normal_vehicle_tracker")
-      return std::make_shared<NormalVehicleTracker>(
-        time, object, self_transform, channel_size_, channel_index);
+      return std::make_shared<VehicleTracker>(
+        object_model::normal_vehicle, time, object, self_transform, config_.channel_size,
+        channel_index);
     if (tracker == "pass_through_tracker")
       return std::make_shared<PassThroughTracker>(
-        time, object, self_transform, channel_size_, channel_index);
+        time, object, self_transform, config_.channel_size, channel_index);
     if (tracker == "pedestrian_and_bicycle_tracker")
       return std::make_shared<PedestrianAndBicycleTracker>(
-        time, object, self_transform, channel_size_, channel_index);
+        time, object, self_transform, config_.channel_size, channel_index);
     if (tracker == "pedestrian_tracker")
       return std::make_shared<PedestrianTracker>(
-        time, object, self_transform, channel_size_, channel_index);
+        time, object, self_transform, config_.channel_size, channel_index);
   }
   return std::make_shared<UnknownTracker>(
-    time, object, self_transform, channel_size_, channel_index);
+    time, object, self_transform, config_.channel_size, channel_index);
 }
 
 void TrackerProcessor::prune(const rclcpp::Time & time)
@@ -132,7 +128,7 @@ void TrackerProcessor::removeOldTracker(const rclcpp::Time & time)
 {
   // Check elapsed time from last update
   for (auto itr = list_tracker_.begin(); itr != list_tracker_.end(); ++itr) {
-    const bool is_old = max_elapsed_time_ < (*itr)->getElapsedTimeFromLastUpdate(time);
+    const bool is_old = config_.tracker_lifetime < (*itr)->getElapsedTimeFromLastUpdate(time);
     // If the tracker is old, delete it
     if (is_old) {
       auto erase_itr = itr;
@@ -163,7 +159,7 @@ void TrackerProcessor::removeOverlappedTracker(const rclcpp::Time & time)
           object2.kinematics.pose_with_covariance.pose.position.y);
 
       // If the distance is too large, skip
-      if (distance > distance_threshold_) {
+      if (distance > config_.distance_threshold) {
         continue;
       }
 
@@ -179,7 +175,7 @@ void TrackerProcessor::removeOverlappedTracker(const rclcpp::Time & time)
       // If both trackers are UNKNOWN, delete the younger tracker
       // If one side of the tracker is UNKNOWN, delete UNKNOWN objects
       if (label1 == Label::UNKNOWN || label2 == Label::UNKNOWN) {
-        if (iou > min_iou_for_unknown_object_) {
+        if (iou > config_.min_unknown_object_removal_iou) {
           if (label1 == Label::UNKNOWN && label2 == Label::UNKNOWN) {
             if ((*itr1)->getTotalMeasurementCount() < (*itr2)->getTotalMeasurementCount()) {
               should_delete_tracker1 = true;
@@ -193,7 +189,7 @@ void TrackerProcessor::removeOverlappedTracker(const rclcpp::Time & time)
           }
         }
       } else {  // If neither object is UNKNOWN, delete the younger tracker
-        if (iou > min_iou_) {
+        if (iou > config_.min_known_object_removal_iou) {
           if ((*itr1)->getTotalMeasurementCount() < (*itr2)->getTotalMeasurementCount()) {
             should_delete_tracker1 = true;
           } else {
@@ -221,7 +217,8 @@ bool TrackerProcessor::isConfidentTracker(const std::shared_ptr<Tracker> & track
   // Confidence is determined by counting the number of measurements.
   // If the number of measurements is equal to or greater than the threshold, the tracker is
   // considered confident.
-  return tracker->getTotalMeasurementCount() >= confident_count_threshold_;
+  auto label = tracker->getHighestProbLabel();
+  return tracker->getTotalMeasurementCount() >= config_.confident_count_threshold.at(label);
 }
 
 void TrackerProcessor::getTrackedObjects(

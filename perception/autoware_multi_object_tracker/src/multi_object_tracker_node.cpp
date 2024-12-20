@@ -31,6 +31,7 @@
 
 #include <iterator>
 #include <list>
+#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -63,12 +64,12 @@ boost::optional<geometry_msgs::msg::Transform> getTransformAnonymous(
     return boost::none;
   }
 }
-
 }  // namespace
 
 namespace autoware::multi_object_tracker
 {
 using Label = autoware_perception_msgs::msg::ObjectClassification;
+using LabelType = autoware_perception_msgs::msg::ObjectClassification::_label_type;
 
 MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
 : rclcpp::Node("multi_object_tracker", node_options),
@@ -87,6 +88,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   double publish_rate = declare_parameter<double>("publish_rate");  // [hz]
   world_frame_id_ = declare_parameter<std::string>("world_frame_id");
   bool enable_delay_compensation{declare_parameter<bool>("enable_delay_compensation")};
+  enable_odometry_uncertainty_ = declare_parameter<bool>("consider_odometry_uncertainty");
 
   declare_parameter("selected_input_channels", std::vector<std::string>());
   std::vector<std::string> selected_input_channels =
@@ -164,23 +166,45 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
 
   // Initialize processor
   {
-    std::map<std::uint8_t, std::string> tracker_map;
-    tracker_map.insert(
+    TrackerProcessorConfig config;
+    config.tracker_map.insert(
       std::make_pair(Label::CAR, this->declare_parameter<std::string>("car_tracker")));
-    tracker_map.insert(
+    config.tracker_map.insert(
       std::make_pair(Label::TRUCK, this->declare_parameter<std::string>("truck_tracker")));
-    tracker_map.insert(
+    config.tracker_map.insert(
       std::make_pair(Label::BUS, this->declare_parameter<std::string>("bus_tracker")));
-    tracker_map.insert(
+    config.tracker_map.insert(
       std::make_pair(Label::TRAILER, this->declare_parameter<std::string>("trailer_tracker")));
-    tracker_map.insert(std::make_pair(
+    config.tracker_map.insert(std::make_pair(
       Label::PEDESTRIAN, this->declare_parameter<std::string>("pedestrian_tracker")));
-    tracker_map.insert(
+    config.tracker_map.insert(
       std::make_pair(Label::BICYCLE, this->declare_parameter<std::string>("bicycle_tracker")));
-    tracker_map.insert(std::make_pair(
+    config.tracker_map.insert(std::make_pair(
       Label::MOTORCYCLE, this->declare_parameter<std::string>("motorcycle_tracker")));
+    config.channel_size = input_channel_size_;
 
-    processor_ = std::make_unique<TrackerProcessor>(tracker_map, input_channel_size_);
+    // Declare parameters
+    config.tracker_lifetime = declare_parameter<double>("tracker_lifetime");
+    config.min_known_object_removal_iou = declare_parameter<double>("min_known_object_removal_iou");
+    config.min_unknown_object_removal_iou =
+      declare_parameter<double>("min_unknown_object_removal_iou");
+    config.distance_threshold = declare_parameter<double>("distance_threshold");
+
+    // Map from class name to label
+    std::map<std::string, LabelType> class_name_to_label = {
+      {"UNKNOWN", Label::UNKNOWN}, {"CAR", Label::CAR},
+      {"TRUCK", Label::TRUCK},     {"BUS", Label::BUS},
+      {"TRAILER", Label::TRAILER}, {"MOTORBIKE", Label::MOTORCYCLE},
+      {"BICYCLE", Label::BICYCLE}, {"PEDESTRIAN", Label::PEDESTRIAN}};
+
+    // Declare parameters and initialize confident_count_threshold_map
+    for (const auto & [class_name, class_label] : class_name_to_label) {
+      int64_t value = declare_parameter<int64_t>("confident_count_threshold." + class_name);
+      config.confident_count_threshold[class_label] = static_cast<int>(value);
+    }
+
+    // Initialize processor with parameters
+    processor_ = std::make_unique<TrackerProcessor>(config);
   }
 
   // Data association initialization
@@ -212,7 +236,17 @@ void MultiObjectTracker::onTrigger()
   ObjectsList objects_list;
   const bool is_objects_ready = input_manager_->getObjects(current_time, objects_list);
   if (!is_objects_ready) return;
-  onMessage(objects_list);
+
+  // process start
+  last_updated_time_ = current_time;
+  const rclcpp::Time latest_time(objects_list.back().second.header.stamp);
+  debugger_->startMeasurementTime(this->now(), latest_time);
+  // run process for each DetectedObjects
+  for (const auto & objects_data : objects_list) {
+    runProcess(objects_data.second, objects_data.first);
+  }
+  // process end
+  debugger_->endMeasurementTime(this->now());
 
   // Publish without delay compensation
   if (!publish_timer_) {
@@ -244,22 +278,6 @@ void MultiObjectTracker::onTimer()
   if (should_publish) checkAndPublish(current_time);
 }
 
-void MultiObjectTracker::onMessage(const ObjectsList & objects_list)
-{
-  const rclcpp::Time current_time = this->now();
-  const rclcpp::Time oldest_time(objects_list.front().second.header.stamp);
-  last_updated_time_ = current_time;
-
-  // process start
-  debugger_->startMeasurementTime(this->now(), oldest_time);
-  // run process for each DetectedObjects
-  for (const auto & objects_data : objects_list) {
-    runProcess(objects_data.second, objects_data.first);
-  }
-  // process end
-  debugger_->endMeasurementTime(this->now());
-}
-
 void MultiObjectTracker::runProcess(
   const DetectedObjects & input_objects, const uint & channel_index)
 {
@@ -274,18 +292,48 @@ void MultiObjectTracker::runProcess(
     return;
   }
 
-  // Model the object uncertainty if it is empty
-  DetectedObjects input_objects_with_uncertainty = uncertainty::modelUncertainty(input_objects);
-
-  // Normalize the object uncertainty
-  uncertainty::normalizeUncertainty(input_objects_with_uncertainty);
-
   // Transform the objects to the world frame
   DetectedObjects transformed_objects;
   if (!autoware::object_recognition_utils::transformObjects(
-        input_objects_with_uncertainty, world_frame_id_, tf_buffer_, transformed_objects)) {
+        input_objects, world_frame_id_, tf_buffer_, transformed_objects)) {
     return;
   }
+
+  // the object uncertainty
+  if (enable_odometry_uncertainty_) {
+    // Create a modeled odometry message
+    nav_msgs::msg::Odometry odometry;
+    odometry.header.stamp = measurement_time + rclcpp::Duration::from_seconds(0.001);
+
+    // set odometry pose from self_transform
+    auto & odom_pose = odometry.pose.pose;
+    odom_pose.position.x = self_transform->translation.x;
+    odom_pose.position.y = self_transform->translation.y;
+    odom_pose.position.z = self_transform->translation.z;
+    odom_pose.orientation = self_transform->rotation;
+
+    // set odometry twist
+    auto & odom_twist = odometry.twist.twist;
+    odom_twist.linear.x = 10.0;  // m/s
+    odom_twist.linear.y = 0.1;   // m/s
+    odom_twist.angular.z = 0.1;  // rad/s
+
+    // model the uncertainty
+    auto & odom_pose_cov = odometry.pose.covariance;
+    odom_pose_cov[0] = 0.1;      // x-x
+    odom_pose_cov[7] = 0.1;      // y-y
+    odom_pose_cov[35] = 0.0001;  // yaw-yaw
+
+    auto & odom_twist_cov = odometry.twist.covariance;
+    odom_twist_cov[0] = 2.0;     // x-x [m^2/s^2]
+    odom_twist_cov[7] = 0.2;     // y-y [m^2/s^2]
+    odom_twist_cov[35] = 0.001;  // yaw-yaw [rad^2/s^2]
+
+    // Add the odometry uncertainty to the object uncertainty
+    uncertainty::addOdometryUncertainty(odometry, transformed_objects);
+  }
+  // Normalize the object uncertainty
+  uncertainty::normalizeUncertainty(transformed_objects);
 
   /* prediction */
   processor_->predict(measurement_time);

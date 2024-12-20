@@ -213,15 +213,21 @@ LaneletMapBin make_map_bin_msg(
   const std::string & absolute_path, const double center_line_resolution = 5.0);
 
 /**
- * @brief Creates a LaneletMapBin message using a predefined Lanelet2 map file.
+ * @brief Creates a LaneletMapBin message using a Lanelet2 map file.
  *
- * This function loads a lanelet2_map.osm from the test_map folder in the
- * autoware_test_utils package, overwrites the centerline with a resolution of 5.0,
+ * This function loads a specified map file from the test_map folder in the
+ * specified package (or autoware_test_utils if no package is specified),
+ * overwrites the centerline with a resolution of 5.0,
  * and converts the map to a LaneletMapBin message.
  *
+ * @param package_name The name of the package containing the map file. If empty, defaults to
+ * "autoware_test_utils".
+ * @param map_filename The name of the map file (e.g. "lanelet2_map.osm")
  * @return A LaneletMapBin message containing the map data.
  */
-LaneletMapBin makeMapBinMsg();
+LaneletMapBin makeMapBinMsg(
+  const std::string & package_name = "autoware_test_utils",
+  const std::string & map_filename = "lanelet2_map.osm");
 
 /**
  * @brief Creates an Odometry message with a specified shift.
@@ -329,6 +335,19 @@ void updateNodeOptions(
  * @return A PathWithLaneId message containing the loaded data.
  */
 PathWithLaneId loadPathWithLaneIdInYaml();
+
+/**
+ * @brief create a straight lanelet from 2 segments defined by 4 points
+ * @param [in] left0 start of the left segment
+ * @param [in] left1 end of the left segment
+ * @param [in] right0 start of the right segment
+ * @param [in] right1 end of the right segment
+ * @return a ConstLanelet with the given left and right bounds and a unique lanelet id
+ *
+ */
+lanelet::ConstLanelet make_lanelet(
+  const lanelet::BasicPoint2d & left0, const lanelet::BasicPoint2d & left1,
+  const lanelet::BasicPoint2d & right0, const lanelet::BasicPoint2d & right1);
 
 /**
  * @brief Generates a trajectory with specified parameters.
