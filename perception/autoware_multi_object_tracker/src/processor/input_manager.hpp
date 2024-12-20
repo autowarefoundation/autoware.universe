@@ -29,7 +29,7 @@
 
 namespace autoware::multi_object_tracker
 {
-using ObjectsList = std::vector<types::DynamicObjects>;
+using ObjectsList = std::vector<types::DynamicObjectList>;
 
 struct InputChannel
 {
@@ -82,7 +82,7 @@ private:
   bool is_spawn_enabled_{};
 
   size_t que_size_{30};
-  std::deque<types::DynamicObjects> objects_que_;
+  std::deque<types::DynamicObjectList> objects_que_;
 
   std::function<void(const uint &)> func_trigger_;
 

@@ -153,7 +153,8 @@ void DataAssociation::assign(
 }
 
 Eigen::MatrixXd DataAssociation::calcScoreMatrix(
-  const types::DynamicObjects & measurements, const std::list<std::shared_ptr<Tracker>> & trackers)
+  const types::DynamicObjectList & measurements,
+  const std::list<std::shared_ptr<Tracker>> & trackers)
 {
   Eigen::MatrixXd score_matrix =
     Eigen::MatrixXd::Zero(trackers.size(), measurements.objects.size());

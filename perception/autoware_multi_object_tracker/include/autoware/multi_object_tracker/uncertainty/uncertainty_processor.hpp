@@ -38,14 +38,14 @@ using nav_msgs::msg::Odometry;
 
 ObjectModel decodeObjectModel(const ObjectClassification & object_class);
 
-types::DynamicObjects modelUncertainty(const types::DynamicObjects & detected_objects);
+types::DynamicObjectList modelUncertainty(const types::DynamicObjectList & detected_objects);
 
 object_model::StateCovariance covarianceFromObjectClass(
   const types::DynamicObject & detected_object, const ObjectClassification & object_class);
 
-void normalizeUncertainty(types::DynamicObjects & detected_objects);
+void normalizeUncertainty(types::DynamicObjectList & detected_objects);
 
-void addOdometryUncertainty(const Odometry & odometry, types::DynamicObjects & detected_objects);
+void addOdometryUncertainty(const Odometry & odometry, types::DynamicObjectList & detected_objects);
 }  // namespace uncertainty
 
 }  // namespace autoware::multi_object_tracker

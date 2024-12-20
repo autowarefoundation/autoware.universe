@@ -58,7 +58,7 @@ public:
     const Eigen::MatrixXd & src, std::unordered_map<int, int> & direct_assignment,
     std::unordered_map<int, int> & reverse_assignment);
   Eigen::MatrixXd calcScoreMatrix(
-    const types::DynamicObjects & measurements,
+    const types::DynamicObjectList & measurements,
     const std::list<std::shared_ptr<Tracker>> & trackers);
   virtual ~DataAssociation() {}
 };

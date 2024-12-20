@@ -57,11 +57,12 @@ void InputStream::onMessage(
 {
   const autoware_perception_msgs::msg::DetectedObjects & objects = *msg;
 
-  types::DynamicObjects dynamic_objects = types::getDynamicObjects(objects);
+  types::DynamicObjectList dynamic_objects = types::getDynamicObjectList(objects);
   dynamic_objects.channel_index = index_;
 
   // Model the object uncertainty only if it is not available
-  types::DynamicObjects objects_with_uncertainty = uncertainty::modelUncertainty(dynamic_objects);
+  types::DynamicObjectList objects_with_uncertainty =
+    uncertainty::modelUncertainty(dynamic_objects);
 
   // Move the objects_with_uncertainty to the objects queue
   objects_que_.push_back(std::move(objects_with_uncertainty));
@@ -344,7 +345,7 @@ bool InputManager::getObjects(const rclcpp::Time & now, ObjectsList & objects_li
   // Sort objects by timestamp
   std::sort(
     objects_list.begin(), objects_list.end(),
-    [](const types::DynamicObjects & a, const types::DynamicObjects & b) {
+    [](const types::DynamicObjectList & a, const types::DynamicObjectList & b) {
       return (rclcpp::Time(a.header.stamp) - rclcpp::Time(b.header.stamp)).seconds() < 0;
     });
 
