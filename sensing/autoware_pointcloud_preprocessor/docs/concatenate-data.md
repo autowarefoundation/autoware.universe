@@ -13,8 +13,8 @@ For example, consider a vehicle equipped with three LiDAR sensors mounted on the
 
 After processing the data through the `concatenate_and_time_synchronize_node`, the outputs from all LiDARs are combined into a single comprehensive point cloud that provides a complete view of the environment:
 
-<div align="center">
-  <img src="./image/concatenate_all.png" alt="Full Scene View" width="500">
+<div style="margin: 0 auto; max-width: 500px" markdown="1">
+  ![Full Scene View](./image/concatenate_all.png)
 </div>
 
 This resulting point cloud allows autonomous systems to detect obstacles, map the environment, and navigate more effectively, leveraging the complementary fields of view from multiple LiDAR sensors.
