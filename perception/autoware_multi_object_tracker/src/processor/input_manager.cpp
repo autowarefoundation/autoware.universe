@@ -263,11 +263,11 @@ void InputManager::getObjectTimeInterval(
   // The default object_earliest_time is to have a 1-second time interval
   const rclcpp::Time object_earliest_time_default =
     object_latest_time - rclcpp::Duration::from_seconds(1.0);
-  if (latest_exported_object_time_ < object_earliest_time_default) {
-    // if the latest exported object time is too old, set to the default
-    object_earliest_time = object_earliest_time_default;
-  } else if (latest_exported_object_time_ > object_latest_time) {
-    // if the latest exported object time is newer than the object_latest_time, set to the default
+  if (
+    latest_exported_object_time_ < object_earliest_time_default ||
+    latest_exported_object_time_ > object_latest_time) {
+    // if the latest exported object time is too old or newer than the object_latest_time,
+    // set to the default
     object_earliest_time = object_earliest_time_default;
   } else {
     // The object_earliest_time is the latest exported object time
