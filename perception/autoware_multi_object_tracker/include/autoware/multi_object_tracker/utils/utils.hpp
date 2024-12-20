@@ -242,7 +242,7 @@ inline bool convertConvexHullToBoundingBox(
   output_object.kinematics.pose_with_covariance.pose.position.x = new_center.x();
   output_object.kinematics.pose_with_covariance.pose.position.y = new_center.y();
 
-  output_object.shape.type = types::ShapeType::BOUNDING_BOX;
+  output_object.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
   output_object.shape.dimensions.x = max_x - min_x;
   output_object.shape.dimensions.y = max_y - min_y;
   output_object.shape.dimensions.z = max_z;

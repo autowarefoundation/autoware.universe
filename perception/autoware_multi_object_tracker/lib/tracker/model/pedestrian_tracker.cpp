@@ -63,12 +63,12 @@ PedestrianTracker::PedestrianTracker(
     object_model_.init_size.length, object_model_.init_size.width,
     object_model_.init_size.height};                                             // default value
   cylinder_ = {object_model_.init_size.length, object_model_.init_size.height};  // default value
-  if (object.shape.type == types::ShapeType::BOUNDING_BOX) {
+  if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     bounding_box_ = {
       object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
-  } else if (object.shape.type == types::ShapeType::CYLINDER) {
+  } else if (object.shape.type == autoware_perception_msgs::msg::Shape::CYLINDER) {
     cylinder_ = {object.shape.dimensions.x, object.shape.dimensions.z};
-  } else if (object.shape.type == types::ShapeType::POLYGON) {
+  } else if (object.shape.type == autoware_perception_msgs::msg::Shape::POLYGON) {
     // do not update polygon shape
   }
   // set maximum and minimum size
@@ -182,7 +182,7 @@ bool PedestrianTracker::measureWithShape(const types::DynamicObject & object)
   constexpr double gain = 0.1;
   constexpr double gain_inv = 1.0 - gain;
 
-  if (object.shape.type == types::ShapeType::BOUNDING_BOX) {
+  if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     // check bound box size abnormality
     constexpr double size_max = 30.0;  // [m]
     constexpr double size_min = 0.1;   // [m]
@@ -198,7 +198,7 @@ bool PedestrianTracker::measureWithShape(const types::DynamicObject & object)
     bounding_box_.width = gain_inv * bounding_box_.width + gain * object.shape.dimensions.y;
     bounding_box_.height = gain_inv * bounding_box_.height + gain * object.shape.dimensions.z;
 
-  } else if (object.shape.type == types::ShapeType::CYLINDER) {
+  } else if (object.shape.type == autoware_perception_msgs::msg::Shape::CYLINDER) {
     // check cylinder size abnormality
     constexpr double size_max = 30.0;  // [m]
     constexpr double size_min = 0.1;   // [m]
@@ -287,15 +287,15 @@ bool PedestrianTracker::getTrackedObject(
   pose_with_cov.pose.position.z = z_;
 
   // set shape
-  if (object.shape.type == types::ShapeType::BOUNDING_BOX) {
+  if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     object.shape.dimensions.x = bounding_box_.length;
     object.shape.dimensions.y = bounding_box_.width;
     object.shape.dimensions.z = bounding_box_.height;
-  } else if (object.shape.type == types::ShapeType::CYLINDER) {
+  } else if (object.shape.type == autoware_perception_msgs::msg::Shape::CYLINDER) {
     object.shape.dimensions.x = cylinder_.width;
     object.shape.dimensions.y = cylinder_.width;
     object.shape.dimensions.z = cylinder_.height;
-  } else if (object.shape.type == types::ShapeType::POLYGON) {
+  } else if (object.shape.type == autoware_perception_msgs::msg::Shape::POLYGON) {
     const auto origin_yaw = tf2::getYaw(object_.kinematics.pose_with_covariance.pose.orientation);
     const auto ekf_pose_yaw = tf2::getYaw(pose_with_cov.pose.orientation);
     object.shape.footprint =

@@ -31,7 +31,6 @@
 #include <geometry_msgs/msg/twist_with_covariance.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
 #include <std_msgs/msg/header.hpp>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #include <unique_identifier_msgs/msg/uuid.hpp>
 
 #include <boost/optional.hpp>
@@ -52,12 +51,6 @@ enum OrientationAvailability : uint8_t {
   AVAILABLE = 2,
 };
 
-enum ShapeType : uint8_t {
-  BOUNDING_BOX = 0,
-  CYLINDER = 1,
-  POLYGON = 2,
-};
-
 struct ObjectKinematics
 {
   geometry_msgs::msg::PoseWithCovariance pose_with_covariance;
@@ -68,20 +61,13 @@ struct ObjectKinematics
   bool has_twist_covariance = false;
 };
 
-struct ObjectShape
-{
-  ShapeType type;
-  geometry_msgs::msg::Polygon footprint;
-  geometry_msgs::msg::Vector3 dimensions;
-};
-
 struct DynamicObject
 {
   unique_identifier_msgs::msg::UUID object_id = unique_identifier_msgs::msg::UUID();
   float_t existence_probability;
   std::vector<autoware_perception_msgs::msg::ObjectClassification> classification;
   ObjectKinematics kinematics;
-  ObjectShape shape;
+  autoware_perception_msgs::msg::Shape shape;
 };
 
 struct DynamicObjects
@@ -98,12 +84,18 @@ autoware_perception_msgs::msg::TrackedObject toTrackedObjectMsg(const DynamicObj
 
 }  // namespace types
 
-
+namespace shapes
+{
 bool transformObjects(
   const types::DynamicObjects & input_msg, const std::string & target_frame_id,
   const tf2_ros::Buffer & tf_buffer, types::DynamicObjects & output_msg);
 
-  double getArea(const types::ObjectShape & shape);
+
+double get2dIoU(
+  const types::DynamicObject & source_object, const types::DynamicObject & target_object,
+  const double min_union_area = 0.01);
+}  // namespace shapes
+
 }  // namespace autoware::multi_object_tracker
 
 #endif  // AUTOWARE__MULTI_OBJECT_TRACKER__OBJECT_MODEL__DYNAMIC_OBJECT_HPP_
