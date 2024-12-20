@@ -112,8 +112,7 @@ protected:
     const geometry_msgs::msg::Transform & self_transform) = 0;
 
 public:
-  virtual bool getTrackedObject(
-    const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObject & object) const = 0;
+  virtual bool getTrackedObject(const rclcpp::Time & time, types::DynamicObject & object) const = 0;
   virtual bool predict(const rclcpp::Time & time) = 0;
 };
 

@@ -64,9 +64,7 @@ public:
     const geometry_msgs::msg::Transform & self_transform) override;
   bool measureWithPose(const types::DynamicObject & object);
   bool measureWithShape(const types::DynamicObject & object);
-  bool getTrackedObject(
-    const rclcpp::Time & time,
-    autoware_perception_msgs::msg::TrackedObject & object) const override;
+  bool getTrackedObject(const rclcpp::Time & time, types::DynamicObject & object) const override;
 
 private:
   types::DynamicObject getUpdatingObject(

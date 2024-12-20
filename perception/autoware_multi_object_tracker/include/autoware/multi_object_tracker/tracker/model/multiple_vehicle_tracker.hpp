@@ -45,9 +45,7 @@ public:
   bool measure(
     const types::DynamicObject & object, const rclcpp::Time & time,
     const geometry_msgs::msg::Transform & self_transform) override;
-  bool getTrackedObject(
-    const rclcpp::Time & time,
-    autoware_perception_msgs::msg::TrackedObject & object) const override;
+  bool getTrackedObject(const rclcpp::Time & time, types::DynamicObject & object) const override;
   virtual ~MultipleVehicleTracker() {}
 };
 

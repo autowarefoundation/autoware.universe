@@ -32,6 +32,7 @@
 #include <geometry_msgs/msg/vector3.hpp>
 #include <std_msgs/msg/header.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <unique_identifier_msgs/msg/uuid.hpp>
 
 #include <boost/optional.hpp>
 
@@ -76,6 +77,7 @@ struct ObjectShape
 
 struct DynamicObject
 {
+  unique_identifier_msgs::msg::UUID object_id = unique_identifier_msgs::msg::UUID();
   float_t existence_probability;
   std::vector<autoware_perception_msgs::msg::ObjectClassification> classification;
   ObjectKinematics kinematics;
@@ -92,7 +94,7 @@ DynamicObject getDynamicObject(const autoware_perception_msgs::msg::DetectedObje
 
 DynamicObjects getDynamicObjects(const autoware_perception_msgs::msg::DetectedObjects & det_objects);
 
-autoware_perception_msgs::msg::TrackedObject getTrackedObject(const DynamicObject & dyn_object);
+autoware_perception_msgs::msg::TrackedObject toTrackedObjectMsg(const DynamicObject & dyn_object);
 
 }  // namespace types
 

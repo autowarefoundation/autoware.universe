@@ -60,7 +60,7 @@ bool MultipleVehicleTracker::measure(
 }
 
 bool MultipleVehicleTracker::getTrackedObject(
-  const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObject & object) const
+  const rclcpp::Time & time, types::DynamicObject & object) const
 {
   using Label = autoware_perception_msgs::msg::ObjectClassification;
   const uint8_t label = getHighestProbLabel();

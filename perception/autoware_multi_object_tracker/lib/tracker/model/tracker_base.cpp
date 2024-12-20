@@ -201,7 +201,7 @@ void Tracker::updateClassification(
 geometry_msgs::msg::PoseWithCovariance Tracker::getPoseWithCovariance(
   const rclcpp::Time & time) const
 {
-  autoware_perception_msgs::msg::TrackedObject object;
+  types::DynamicObject object;
   getTrackedObject(time, object);
   return object.kinematics.pose_with_covariance;
 }

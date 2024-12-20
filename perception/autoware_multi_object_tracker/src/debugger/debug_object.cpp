@@ -95,7 +95,7 @@ void TrackerObjectDebugger::collect(
     object_data.time = message_time;
     object_data.channel_id = channel_index;
 
-    autoware_perception_msgs::msg::TrackedObject tracked_object;
+    types::DynamicObject tracked_object;
     (*(tracker_itr))->getTrackedObject(message_time, tracked_object);
     object_data.uuid = uuidToBoostUuid(tracked_object.object_id);
     object_data.uuid_int = uuidToInt(object_data.uuid);

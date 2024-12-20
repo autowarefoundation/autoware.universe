@@ -88,10 +88,10 @@ bool PassThroughTracker::measure(
 }
 
 bool PassThroughTracker::getTrackedObject(
-  const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObject & object) const
+  const rclcpp::Time & time, types::DynamicObject & object) const
 {
   using autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
-  object = types::getTrackedObject(object_);
+  object = object_;
   object.object_id = getUUID();
   object.classification = getClassification();
   object.kinematics.pose_with_covariance.covariance[XYZRPY_COV_IDX::X_X] = 0.0;
