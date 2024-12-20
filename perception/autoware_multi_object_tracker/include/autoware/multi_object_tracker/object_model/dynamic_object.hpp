@@ -14,7 +14,6 @@
 //
 //
 // Author: v1.0 Taekjin Lee
-//
 
 #ifndef AUTOWARE__MULTI_OBJECT_TRACKER__OBJECT_MODEL__DYNAMIC_OBJECT_HPP_
 #define AUTOWARE__MULTI_OBJECT_TRACKER__OBJECT_MODEL__DYNAMIC_OBJECT_HPP_
@@ -35,10 +34,6 @@
 
 #include <boost/optional.hpp>
 
-#include <tf2_ros/buffer.h>
-#include <tf2_ros/transform_listener.h>
-
-#include <string>
 #include <vector>
 
 namespace autoware::multi_object_tracker
@@ -64,7 +59,7 @@ struct ObjectKinematics
 struct DynamicObject
 {
   unique_identifier_msgs::msg::UUID object_id = unique_identifier_msgs::msg::UUID();
-  float_t existence_probability;
+  float existence_probability;
   std::vector<autoware_perception_msgs::msg::ObjectClassification> classification;
   ObjectKinematics kinematics;
   autoware_perception_msgs::msg::Shape shape;
@@ -86,16 +81,6 @@ autoware_perception_msgs::msg::TrackedObject toTrackedObjectMsg(const DynamicObj
 
 }  // namespace types
 
-namespace shapes
-{
-bool transformObjects(
-  const types::DynamicObjects & input_msg, const std::string & target_frame_id,
-  const tf2_ros::Buffer & tf_buffer, types::DynamicObjects & output_msg);
-
-double get2dIoU(
-  const types::DynamicObject & source_object, const types::DynamicObject & target_object,
-  const double min_union_area = 0.01);
-}  // namespace shapes
 }  // namespace autoware::multi_object_tracker
 
 #endif  // AUTOWARE__MULTI_OBJECT_TRACKER__OBJECT_MODEL__DYNAMIC_OBJECT_HPP_
