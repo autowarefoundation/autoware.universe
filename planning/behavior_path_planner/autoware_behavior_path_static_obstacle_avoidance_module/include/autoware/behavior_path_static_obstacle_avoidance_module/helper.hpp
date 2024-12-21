@@ -212,7 +212,8 @@ public:
                        : std::max(shift_length, getRightShiftBound());
   }
 
-  double getForwardDetectionRange() const
+  double getForwardDetectionRange(
+    const std::optional<lanelet::ConstLanelet> & closest_lanelet) const
   {
     if (parameters_->use_static_detection_area) {
       return parameters_->object_check_max_forward_distance;
@@ -220,12 +221,11 @@ public:
 
     const auto & route_handler = data_->route_handler;
 
-    lanelet::ConstLanelet closest_lane;
-    if (!route_handler->getClosestLaneletWithinRoute(getEgoPose(), &closest_lane)) {
+    if (!closest_lanelet.has_value()) {
       return parameters_->object_check_max_forward_distance;
     }
 
-    const auto limit = route_handler->getTrafficRulesPtr()->speedLimit(closest_lane);
+    const auto limit = route_handler->getTrafficRulesPtr()->speedLimit(closest_lanelet.value());
     const auto speed = isShifted() ? limit.speedLimit.value() : getEgoSpeed();
 
     const auto max_shift_length = std::max(
@@ -321,37 +321,56 @@ public:
     });
   }
 
-  bool isReady(const ObjectDataArray & objects) const
+  bool isFeasible(const AvoidLineArray & shift_lines) const
+  {
+    constexpr double JERK_BUFFER = 0.1;  // [m/sss]
+    const auto & values = parameters_->velocity_map;
+    const auto idx = getConstraintsMapIndex(0.0, values);  // use minimum avoidance speed
+    const auto jerk_limit = parameters_->lateral_max_jerk_map.at(idx);
+    return std::all_of(shift_lines.begin(), shift_lines.end(), [&](const auto & line) {
+      return autoware::motion_utils::calc_jerk_from_lat_lon_distance(
+               line.getRelativeLength(), line.getRelativeLongitudinal(), values.at(idx)) <
+             jerk_limit + JERK_BUFFER;
+    });
+  }
+
+  /**
+   * @brief Check if the module is ready to avoid the target object.
+   * @param [in] objects Target objects.
+   * @return first is whether it is ready, and second is if the object is ambiguous
+   */
+  [[nodiscard]] std::pair<bool, bool> isReady(const ObjectDataArray & objects) const
   {
     if (objects.empty()) {
-      return true;
+      return std::make_pair(true, false);
     }
 
-    const auto object = objects.front();
+    const auto & object = objects.front();
 
     // if the object is NOT ambiguous, this module doesn't wait operator approval if RTC is running
     // as AUTO mode.
     if (!object.is_ambiguous) {
-      return true;
+      return std::make_pair(true, false);
     }
 
     // check only front objects.
     if (object.longitudinal < 0.0) {
-      return true;
+      return std::make_pair(true, false);
     }
 
     // if the policy is "manual", this module generates candidate path and waits approval.
     if (parameters_->policy_ambiguous_vehicle == "manual") {
-      return false;
+      return std::make_pair(false, true);
     }
 
     // don't delay avoidance start position if it's not MERGING or DEVIATING vehicle.
     if (!isWaitAndSeeTarget(object)) {
-      return true;
+      return std::make_pair(true, false);
     }
 
     if (!object.avoid_margin.has_value()) {
-      return true;
+      return std::make_pair(true, false);
+      ;
     }
 
     const auto is_object_on_right = utils::static_obstacle_avoidance::isOnRight(object);
@@ -362,8 +381,10 @@ public:
     const auto constant_distance = getFrontConstantDistance(object);
     const auto avoidance_distance = getMinAvoidanceDistance(desire_shift_length);
 
-    return object.longitudinal < prepare_distance + constant_distance + avoidance_distance +
-                                   parameters_->wait_and_see_th_closest_distance;
+    const bool enough_distance =
+      object.longitudinal < prepare_distance + constant_distance + avoidance_distance +
+                              parameters_->wait_and_see_th_closest_distance;
+    return std::make_pair(enough_distance, false);
   }
 
   bool isWaitAndSeeTarget(const ObjectData & object) const

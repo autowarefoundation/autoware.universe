@@ -14,6 +14,9 @@
 
 #include "autoware/lidar_centerpoint/network/network_trt.hpp"
 
+#include <string>
+#include <vector>
+
 namespace autoware::lidar_centerpoint
 {
 bool VoxelEncoderTRT::setProfile(
@@ -63,7 +66,7 @@ bool HeadTRT::setProfile(
     if (
       out_name == std::string("heatmap") &&
       network.getOutput(ci)->getDimensions().d[1] != static_cast<int32_t>(out_channel_sizes_[ci])) {
-      tensorrt_common::LOG_ERROR(logger_)
+      autoware::tensorrt_common::LOG_ERROR(logger_)
         << "Expected and actual number of classes do not match" << std::endl;
       return false;
     }

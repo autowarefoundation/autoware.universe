@@ -14,8 +14,8 @@
 #ifndef AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__SCENE_HPP_
 #define AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__SCENE_HPP_
 
-#include "autoware/behavior_path_lane_change_module/utils/base_class.hpp"
-#include "autoware/behavior_path_lane_change_module/utils/data_structs.hpp"
+#include "autoware/behavior_path_lane_change_module/base_class.hpp"
+#include "autoware/behavior_path_lane_change_module/structs/data.hpp"
 
 #include <memory>
 #include <utility>
@@ -54,7 +54,7 @@ public:
 
   void update_lanes(const bool is_approved) final;
 
-  void update_transient_data() final;
+  void update_transient_data(const bool is_approved) final;
 
   void update_filtered_objects() final;
 
@@ -120,22 +120,13 @@ protected:
 
   TurnSignalInfo get_terminal_turn_signal_info() const final;
 
-  std::vector<double> sampleLongitudinalAccValues(
-    const lanelet::ConstLanelets & current_lanes,
-    const lanelet::ConstLanelets & target_lanes) const;
-
-  std::vector<double> calc_prepare_durations() const;
-
-  lane_change::TargetObjects getTargetObjects(
-    const FilteredByLanesExtendedObjects & predicted_objects,
+  lane_change::TargetObjects get_target_objects(
+    const FilteredLanesObjects & filtered_objects,
     const lanelet::ConstLanelets & current_lanes) const;
 
-  FilteredByLanesExtendedObjects filterObjects() const;
+  FilteredLanesObjects filter_objects() const;
 
   void filterOncomingObjects(PredictedObjects & objects) const;
-
-  FilteredByLanesObjects filterObjectsByLanelets(
-    const PredictedObjects & objects, const PathWithLaneId & current_lanes_ref_path) const;
 
   bool get_prepare_segment(
     PathWithLaneId & prepare_segment, const double prepare_length) const override;
@@ -175,12 +166,13 @@ protected:
   bool has_collision_with_decel_patterns(
     const LaneChangePath & lane_change_path, const ExtendedPredictedObjects & objects,
     const size_t deceleration_sampling_num, const RSSparams & rss_param,
-    CollisionCheckDebugMap & debug_data) const;
+    const bool check_prepare_phase, CollisionCheckDebugMap & debug_data) const;
 
   bool is_collided(
-    const PathWithLaneId & lane_change_path, const ExtendedPredictedObject & obj,
+    const LaneChangePath & lane_change_path, const ExtendedPredictedObject & obj,
     const std::vector<PoseWithVelocityStamped> & ego_predicted_path,
-    const RSSparams & selected_rss_param, CollisionCheckDebugMap & debug_data) const;
+    const RSSparams & selected_rss_param, const bool check_prepare_phase,
+    CollisionCheckDebugMap & debug_data) const;
 
   double get_max_velocity_for_safety_check() const;
 
@@ -206,11 +198,6 @@ protected:
 
   bool check_prepare_phase() const;
 
-  double calcMaximumLaneChangeLength(
-    const lanelet::ConstLanelet & current_terminal_lanelet, const double max_acc) const;
-
-  std::pair<double, double> calcCurrentMinMaxAcceleration() const;
-
   void set_stop_pose(const double arc_length_to_stop_pose, PathWithLaneId & path);
 
   void updateStopTime();
@@ -222,6 +209,9 @@ protected:
     return common_data_ptr_->lanes_ptr->target;
   }
 
+  void update_dist_from_intersection();
+
+  std::vector<PathPointWithLaneId> path_after_intersection_;
   double stop_time_{0.0};
   static constexpr double floating_err_th{1e-3};
 };
