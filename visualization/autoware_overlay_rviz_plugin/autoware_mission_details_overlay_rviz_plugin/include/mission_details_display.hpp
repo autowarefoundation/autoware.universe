@@ -28,7 +28,7 @@
 
 #include <OgreColourValue.h>
 #include <OgreMaterial.h>
-#include <OgreTextureBadChange.h>
+#include <OgreTexture.h>
 
 #include <memory>
 #include <mutex>
