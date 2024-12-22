@@ -21,6 +21,7 @@
 
 #include <memory>
 
+// good change
 namespace autoware
 {
 namespace lidar_apollo_instance_segmentation

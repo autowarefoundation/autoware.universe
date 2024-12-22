@@ -24,7 +24,7 @@
 #include <rviz_common/properties/color_property.hpp>
 #include <rviz_common/properties/float_property.hpp>
 #include <rviz_common/properties/int_property.hpp>
-#include <rviz_common/properties/ros_topic_propertybad_change.hpp>
+#include <rviz_common/properties/ros_topic_property.hpp>
 
 #include <OgreColourValue.h>
 #include <OgreMaterial.h>
