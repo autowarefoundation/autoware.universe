@@ -1,0 +1,50 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parameters for Path Generator Node",
+  "type": "object",
+  "definitions": {
+    "autoware_path_generator": {
+      "type": "object",
+      "properties": {
+        "planning_hz": {
+          "type": "number",
+          "description": "Planning frequency [Hz]",
+          "default": "10.0",
+          "minimum": 0.0
+        },
+        "backward_path_length": {
+          "type": "number",
+          "description": "Length of generated path behind vehicle [m]",
+          "default": "5.0",
+          "minimum": 0.0
+        },
+        "forward_path_length": {
+          "type": "number",
+          "description": "Length of generated path in front of vehicle [m]",
+          "default": "300.0",
+          "minimum": 0.0
+        },
+        "waypoint_group_separation_threshold": {
+          "type": "number",
+          "description": "Maximum distance at which consecutive waypoints are considered to belong to the same group [m]",
+          "default": "1.0",
+          "minimum": 0.0
+        },
+        "waypoint_group_interval_margin_ratio": {
+          "type": "number",
+          "description": "Ratio for determining length of switching section from centerline to waypoints",
+          "default": "10.0",
+          "minimum": 0.0
+        }
+      },
+      "required": [
+        "planning_hz",
+        "backward_path_length",
+        "forward_path_length",
+        "waypoint_group_separation_threshold",
+        "waypoint_group_interval_margin_ratio"
+      ],
+      "additionalProperties": false
+    }
+  }
+}
