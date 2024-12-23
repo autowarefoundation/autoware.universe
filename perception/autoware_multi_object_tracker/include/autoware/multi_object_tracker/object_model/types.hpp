@@ -73,10 +73,10 @@ struct DynamicObjectList
   std::vector<DynamicObject> objects;
 };
 
-DynamicObject getDynamicObject(
+DynamicObject toDynamicObject(
   const autoware_perception_msgs::msg::DetectedObject & det_object, const uint channel_index = 0);
 
-DynamicObjectList getDynamicObjectList(
+DynamicObjectList toDynamicObjectList(
   const autoware_perception_msgs::msg::DetectedObjects & det_objects, const uint channel_index = 0);
 
 autoware_perception_msgs::msg::TrackedObject toTrackedObjectMsg(const DynamicObject & dyn_object);

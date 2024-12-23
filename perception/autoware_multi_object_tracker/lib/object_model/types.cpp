@@ -25,7 +25,7 @@ namespace autoware::multi_object_tracker
 namespace types
 {
 
-DynamicObject getDynamicObject(
+DynamicObject toDynamicObject(
   const autoware_perception_msgs::msg::DetectedObject & det_object, const uint channel_index)
 {
   DynamicObject dynamic_object;
@@ -57,7 +57,7 @@ DynamicObject getDynamicObject(
   return dynamic_object;
 }
 
-DynamicObjectList getDynamicObjectList(
+DynamicObjectList toDynamicObjectList(
   const autoware_perception_msgs::msg::DetectedObjects & det_objects, const uint channel_index)
 {
   DynamicObjectList dynamic_objects;
@@ -65,7 +65,7 @@ DynamicObjectList getDynamicObjectList(
   dynamic_objects.channel_index = channel_index;
   dynamic_objects.objects.reserve(det_objects.objects.size());
   for (const auto & det_object : det_objects.objects) {
-    dynamic_objects.objects.emplace_back(getDynamicObject(det_object, channel_index));
+    dynamic_objects.objects.emplace_back(toDynamicObject(det_object, channel_index));
   }
   return dynamic_objects;
 }
