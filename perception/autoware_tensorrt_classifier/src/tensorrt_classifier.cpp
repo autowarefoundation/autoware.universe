@@ -193,9 +193,15 @@ TrtClassifier::TrtClassifier(
 
 TrtClassifier::~TrtClassifier()
 {
-  if (m_cuda) {
-    if (h_img_) CHECK_CUDA_ERROR(cudaFreeHost(h_img_));
-    if (d_img_) CHECK_CUDA_ERROR(cudaFree(d_img_));
+  try {
+    if (m_cuda) {
+      if (h_img_) CHECK_CUDA_ERROR(cudaFreeHost(h_img_));
+      if (d_img_) CHECK_CUDA_ERROR(cudaFree(d_img_));
+    }
+  } catch (const std::exception & e) {
+    std::cerr << "Exception in TrtClassifier destructor: " << e.what() << std::endl;
+  } catch (...) {
+    std::cerr << "Unknown exception in TrtClassifier destructor" << std::endl;
   }
 }
 
