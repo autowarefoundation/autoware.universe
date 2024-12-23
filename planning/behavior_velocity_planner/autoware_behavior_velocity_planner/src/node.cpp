@@ -28,6 +28,8 @@
 #include <lanelet2_routing/Route.h>
 #include <pcl/common/transforms.h>
 #include <pcl_conversions/pcl_conversions.h>
+
+#include <string>
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
 #else
@@ -37,20 +39,6 @@
 #include <functional>
 #include <memory>
 #include <vector>
-
-namespace
-{
-rclcpp::SubscriptionOptions createSubscriptionOptions(rclcpp::Node * node_ptr)
-{
-  rclcpp::CallbackGroup::SharedPtr callback_group =
-    node_ptr->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-
-  auto sub_opt = rclcpp::SubscriptionOptions();
-  sub_opt.callback_group = callback_group;
-
-  return sub_opt;
-}
-}  // namespace
 
 namespace autoware::behavior_velocity_planner
 {
@@ -80,8 +68,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
   // Trigger Subscriber
   trigger_sub_path_with_lane_id_ =
     this->create_subscription<tier4_planning_msgs::msg::PathWithLaneId>(
-      "~/input/path_with_lane_id", 1, std::bind(&BehaviorVelocityPlannerNode::onTrigger, this, _1),
-      createSubscriptionOptions(this));
+      "~/input/path_with_lane_id", 1, std::bind(&BehaviorVelocityPlannerNode::onTrigger, this, _1));
 
   srv_load_plugin_ = create_service<LoadPlugin>(
     "~/service/load_plugin", std::bind(&BehaviorVelocityPlannerNode::onLoadPlugin, this, _1, _2));
@@ -94,8 +81,6 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
 
   // Publishers
   path_pub_ = this->create_publisher<autoware_planning_msgs::msg::Path>("~/output/path", 1);
-  stop_reason_diag_pub_ =
-    this->create_publisher<diagnostic_msgs::msg::DiagnosticStatus>("~/output/stop_reason", 1);
   debug_viz_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/path", 1);
 
   // Parameters
@@ -248,7 +233,7 @@ bool BehaviorVelocityPlannerNode::processData(rclcpp::Clock clock)
   bool is_ready = true;
   const auto & logData = [&clock, this](const std::string & data_type) {
     std::string msg = "Waiting for " + data_type + " data";
-    RCLCPP_INFO_THROTTLE(get_logger(), clock, logger_throttle_interval, msg.c_str());
+    RCLCPP_INFO_THROTTLE(get_logger(), clock, logger_throttle_interval, "%s", msg.c_str());
   };
 
   const auto & getData = [&logData](auto & dest, auto & sub, const std::string & data_type = "") {
@@ -342,7 +327,6 @@ void BehaviorVelocityPlannerNode::onTrigger(
 
   path_pub_->publish(output_path_msg);
   published_time_publisher_->publish_if_subscribed(path_pub_, output_path_msg.header.stamp);
-  stop_reason_diag_pub_->publish(planner_manager_.getStopReasonDiag());
 
   if (debug_viz_pub_->get_subscription_count() > 0) {
     publishDebugMarker(output_path_msg);

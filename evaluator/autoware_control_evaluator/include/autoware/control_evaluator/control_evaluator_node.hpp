@@ -16,24 +16,29 @@
 #define AUTOWARE__CONTROL_EVALUATOR__CONTROL_EVALUATOR_NODE_HPP_
 
 #include "autoware/control_evaluator/metrics/deviation_metrics.hpp"
+#include "autoware/control_evaluator/metrics/metric.hpp"
+#include "autoware/universe_utils/math/accumulator.hpp"
 
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware/universe_utils/ros/polling_subscriber.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <tier4_debug_msgs/msg/float64_stamped.hpp>
 #include <tier4_metric_msgs/msg/metric.hpp>
 #include <tier4_metric_msgs/msg/metric_array.hpp>
 
 #include <deque>
 #include <optional>
 #include <string>
+#include <vector>
 
 namespace control_diagnostics
 {
-
+using autoware::universe_utils::Accumulator;
 using autoware_planning_msgs::msg::Trajectory;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
@@ -51,6 +56,9 @@ class ControlEvaluatorNode : public rclcpp::Node
 {
 public:
   explicit ControlEvaluatorNode(const rclcpp::NodeOptions & node_options);
+  ~ControlEvaluatorNode() override;
+
+  void AddMetricMsg(const Metric & metric, const double & metric_value);
   void AddLateralDeviationMetricMsg(const Trajectory & traj, const Point & ego_point);
   void AddYawDeviationMetricMsg(const Trajectory & traj, const Pose & ego_pose);
   void AddGoalLongitudinalDeviationMetricMsg(const Pose & ego_pose);
@@ -77,14 +85,24 @@ private:
     LaneletMapBin, autoware::universe_utils::polling_policy::Newest>
     vector_map_subscriber_{this, "~/input/vector_map", rclcpp::QoS{1}.transient_local()};
 
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr processing_time_pub_;
   rclcpp::Publisher<MetricArrayMsg>::SharedPtr metrics_pub_;
 
   // update Route Handler
   void getRouteData();
 
-  // Calculator
-  // Metrics
-  std::deque<rclcpp::Time> stamps_;
+  // Parameters
+  bool output_metrics_;
+
+  // Metric
+  const std::vector<Metric> metrics_ = {
+    // collect all metrics
+    Metric::lateral_deviation,      Metric::yaw_deviation,      Metric::goal_longitudinal_deviation,
+    Metric::goal_lateral_deviation, Metric::goal_yaw_deviation,
+  };
+
+  std::array<Accumulator<double>, static_cast<size_t>(Metric::SIZE)>
+    metric_accumulators_;  // 3(min, max, mean) * metric_size
 
   MetricArrayMsg metrics_msg_;
   autoware::route_handler::RouteHandler route_handler_;
