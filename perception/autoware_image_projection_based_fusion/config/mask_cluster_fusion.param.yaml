@@ -1,0 +1,5 @@
+/**:
+  ros__parameters:
+    fusion_distance: 100.0
+    fusion_ratio: 0.4
+    remove_unknown: false
