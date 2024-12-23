@@ -227,8 +227,6 @@ private:
 
   bool m_is_forward_shift = true;  // Flag indicating if the shift is in the forward direction.
 
-  double m_min_prediction_length = 5.0;  // Minimum prediction distance.
-
   rclcpp::Publisher<Trajectory>::SharedPtr m_debug_frenet_predicted_trajectory_pub;
   rclcpp::Publisher<Trajectory>::SharedPtr m_debug_resampled_reference_trajectory_pub;
   /**
@@ -405,7 +403,7 @@ private:
   template <typename... Args>
   inline bool fail_warn_throttle(Args &&... args) const
   {
-    RCLCPP_WARN_THROTTLE(m_logger, *m_clock, 3000, args...);
+    RCLCPP_WARN_THROTTLE(m_logger, *m_clock, 3000, "%s", args...);
     return false;
   }
 
@@ -413,7 +411,7 @@ private:
   template <typename... Args>
   inline void warn_throttle(Args &&... args) const
   {
-    RCLCPP_WARN_THROTTLE(m_logger, *m_clock, 3000, args...);
+    RCLCPP_WARN_THROTTLE(m_logger, *m_clock, 3000, "%s", args...);
   }
 
 public:
@@ -423,10 +421,8 @@ public:
   double m_raw_steer_cmd_prev = 0.0;     // Previous MPC raw output.
 
   /* Parameters for control */
-  double m_admissible_position_error;  // Threshold for lateral error to trigger stop command [m].
-  double m_admissible_yaw_error_rad;   // Threshold for yaw error to trigger stop command [rad].
-  double m_steer_lim;                  // Steering command limit [rad].
-  double m_ctrl_period;                // Control frequency [s].
+  double m_steer_lim;    // Steering command limit [rad].
+  double m_ctrl_period;  // Control frequency [s].
 
   //!< @brief steering rate limit list depending on curvature [/m], [rad/s]
   std::vector<std::pair<double, double>> m_steer_rate_lim_map_by_curvature{};

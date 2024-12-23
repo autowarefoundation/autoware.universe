@@ -28,6 +28,8 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
+#include <algorithm>
+
 namespace autoware::multi_object_tracker
 {
 
@@ -313,7 +315,7 @@ bool BicycleMotionModel::predictStateStep(const double dt, KalmanFilter & ekf) c
   double w = vel * sin_slip / lr_;
   const double sin_2yaw = std::sin(2.0f * X_t(IDX::YAW));
   const double w_dtdt = w * dt * dt;
-  const double vv_dtdt__lr = vel * vel * dt * dt / lr_;
+  const double vv_dtdt_lr = vel * vel * dt * dt / lr_;
 
   // Predict state vector X t+1
   Eigen::MatrixXd X_next_t(DIM, 1);  // predicted state
@@ -330,11 +332,11 @@ bool BicycleMotionModel::predictStateStep(const double dt, KalmanFilter & ekf) c
   A(IDX::X, IDX::YAW) = -vel * sin_yaw * dt - 0.5 * vel * cos_yaw * w_dtdt;
   A(IDX::X, IDX::VEL) = cos_yaw * dt - sin_yaw * w_dtdt;
   A(IDX::X, IDX::SLIP) =
-    -vel * sin_yaw * dt - 0.5 * (cos_slip * sin_yaw + sin_slip * cos_yaw) * vv_dtdt__lr;
+    -vel * sin_yaw * dt - 0.5 * (cos_slip * sin_yaw + sin_slip * cos_yaw) * vv_dtdt_lr;
   A(IDX::Y, IDX::YAW) = vel * cos_yaw * dt - 0.5 * vel * sin_yaw * w_dtdt;
   A(IDX::Y, IDX::VEL) = sin_yaw * dt + cos_yaw * w_dtdt;
   A(IDX::Y, IDX::SLIP) =
-    vel * cos_yaw * dt + 0.5 * (cos_slip * cos_yaw - sin_slip * sin_yaw) * vv_dtdt__lr;
+    vel * cos_yaw * dt + 0.5 * (cos_slip * cos_yaw - sin_slip * sin_yaw) * vv_dtdt_lr;
   A(IDX::YAW, IDX::VEL) = 1.0 / lr_ * sin_slip * dt;
   A(IDX::YAW, IDX::SLIP) = vel / lr_ * cos_slip * dt;
 

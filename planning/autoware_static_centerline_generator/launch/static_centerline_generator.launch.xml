@@ -35,7 +35,7 @@
 
   <!-- Global parameters (for PathFootprint in tier4_planning_rviz_plugin) -->
   <!-- Do not add "group" in order to propagate global parameters -->
-  <include file="$(find-pkg-share global_parameter_loader)/launch/global_params.launch.py">
+  <include file="$(find-pkg-share autoware_global_parameter_loader)/launch/global_params.launch.py">
     <arg name="vehicle_model" value="$(var vehicle_model)"/>
   </include>
 
@@ -48,7 +48,7 @@
   </node>
 
   <!-- visualize map -->
-  <node pkg="map_loader" exec="lanelet2_map_visualization" name="lanelet2_map_visualization">
+  <node pkg="autoware_lanelet2_map_visualizer" exec="lanelet2_map_visualization" name="lanelet2_map_visualization">
     <remap from="input/lanelet2_map" to="$(var lanelet2_map_topic)"/>
     <remap from="output/lanelet2_map_marker" to="$(var lanelet2_map_marker_topic)"/>
   </node>

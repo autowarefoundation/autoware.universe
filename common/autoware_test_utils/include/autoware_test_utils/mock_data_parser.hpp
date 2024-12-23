@@ -35,6 +35,7 @@
 
 #include <array>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -197,10 +198,10 @@ template <typename T>
 T parse(const std::string & filename);
 
 template <>
-LaneletRoute parse(const std::string & filename);
+std::optional<LaneletRoute> parse(const std::string & filename);
 
 template <>
-PathWithLaneId parse(const std::string & filename);
+std::optional<PathWithLaneId> parse(const std::string & filename);
 
 template <typename MessageType>
 auto create_const_shared_ptr(MessageType && payload)

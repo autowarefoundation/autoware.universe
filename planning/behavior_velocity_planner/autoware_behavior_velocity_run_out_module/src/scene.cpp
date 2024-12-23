@@ -32,7 +32,9 @@
 
 #include <algorithm>
 #include <limits>
+#include <memory>
 #include <utility>
+#include <vector>
 
 namespace autoware::behavior_velocity_planner
 {
@@ -63,8 +65,7 @@ void RunOutModule::setPlannerParam(const PlannerParam & planner_param)
   planner_param_ = planner_param;
 }
 
-bool RunOutModule::modifyPathVelocity(
-  PathWithLaneId * path, [[maybe_unused]] StopReason * stop_reason)
+bool RunOutModule::modifyPathVelocity(PathWithLaneId * path)
 {
   // timer starts
   const auto t_start = std::chrono::system_clock::now();

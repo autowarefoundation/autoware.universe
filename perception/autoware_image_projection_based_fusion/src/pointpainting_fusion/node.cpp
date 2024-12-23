@@ -24,14 +24,19 @@
 #include <autoware/lidar_centerpoint/utils.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/math/constants.hpp>
+#include <autoware/universe_utils/system/time_keeper.hpp>
 #include <pcl_ros/transforms.hpp>
 
 #include <omp.h>
 
 #include <chrono>
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace
 {
+using autoware::universe_utils::ScopedTimeTrack;
 
 Eigen::Affine3f _transformToEigen(const geometry_msgs::msg::Transform & t)
 {
@@ -168,9 +173,6 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
 
   {
     autoware::lidar_centerpoint::NMSParams p;
-    p.nms_type_ = autoware::lidar_centerpoint::NMS_TYPE::IoU_BEV;
-    p.target_class_names_ = this->declare_parameter<std::vector<std::string>>(
-      "post_process_params.iou_nms_target_class_names");
     p.search_distance_2d_ =
       this->declare_parameter<double>("post_process_params.iou_nms_search_distance_2d");
     p.iou_threshold_ = this->declare_parameter<double>("post_process_params.iou_nms_threshold");
@@ -202,6 +204,9 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
 
 void PointPaintingFusionNode::preprocess(sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   if (painted_pointcloud_msg.data.empty() || painted_pointcloud_msg.fields.empty()) {
     RCLCPP_WARN_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), 1000, "Empty sensor points!");
@@ -272,6 +277,9 @@ void PointPaintingFusionNode::fuseOnSingleImage(
   }
 
   if (!checkCameraInfo(camera_info)) return;
+
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
   std::vector<sensor_msgs::msg::RegionOfInterest> debug_image_rois;
   std::vector<Eigen::Vector2d> debug_image_points;
@@ -372,6 +380,10 @@ dc   | dc dc dc  dc ||zc|
   }
 
   if (debugger_) {
+    std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
+    if (time_keeper_)
+      inner_st_ptr = std::make_unique<ScopedTimeTrack>("publish debug message", *time_keeper_);
+
     debugger_->image_rois_ = debug_image_rois;
     debugger_->obstacle_points_ = debug_image_points;
     debugger_->publishImage(image_id, input_roi_msg.header.stamp);
@@ -380,6 +392,9 @@ dc   | dc dc dc  dc ||zc|
 
 void PointPaintingFusionNode::postprocess(sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   const auto objects_sub_count =
     obj_pub_ptr_->get_subscription_count() + obj_pub_ptr_->get_intra_process_subscription_count();
   if (objects_sub_count < 1) {

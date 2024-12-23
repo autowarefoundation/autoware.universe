@@ -26,7 +26,9 @@
 #include <tf2/utils.h>
 #include <yaml-cpp/yaml.h>
 
+#include <string>
 #include <utility>
+#include <vector>
 
 namespace autoware::test_utils
 {
@@ -178,10 +180,9 @@ LaneletMapBin make_map_bin_msg(
   return map_bin_msg;
 }
 
-LaneletMapBin makeMapBinMsg()
+LaneletMapBin makeMapBinMsg(const std::string & package_name, const std::string & map_filename)
 {
-  return make_map_bin_msg(
-    get_absolute_path_to_lanelet_map("autoware_test_utils", "lanelet2_map.osm"));
+  return make_map_bin_msg(get_absolute_path_to_lanelet_map(package_name, map_filename));
 }
 
 Odometry makeOdometry(const double shift)
@@ -310,7 +311,12 @@ PathWithLaneId loadPathWithLaneIdInYaml()
   const auto yaml_path =
     get_absolute_path_to_config("autoware_test_utils", "path_with_lane_id_data.yaml");
 
-  return parse<PathWithLaneId>(yaml_path);
+  if (const auto path = parse<std::optional<PathWithLaneId>>(yaml_path)) {
+    return *path;
+  }
+
+  throw std::runtime_error(
+    "Failed to parse YAML file: " + yaml_path + ". The file might be corrupted.");
 }
 
 lanelet::ConstLanelet make_lanelet(
