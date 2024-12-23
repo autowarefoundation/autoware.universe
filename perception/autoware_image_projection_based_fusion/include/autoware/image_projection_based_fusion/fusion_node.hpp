@@ -102,7 +102,7 @@ protected:
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 
-  std::vector<bool> point_project_to_unrectified_image_{false};
+  std::vector<bool> point_project_to_unrectified_image_;
 
   // camera_info
   std::map<std::size_t, sensor_msgs::msg::CameraInfo> camera_info_map_;
