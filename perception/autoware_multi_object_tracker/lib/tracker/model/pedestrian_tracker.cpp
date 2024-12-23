@@ -46,8 +46,7 @@ namespace autoware::multi_object_tracker
 using Label = autoware_perception_msgs::msg::ObjectClassification;
 
 PedestrianTracker::PedestrianTracker(
-  const rclcpp::Time & time, const types::DynamicObject & object,
-  const geometry_msgs::msg::Transform & /*self_transform*/, const size_t channel_size)
+  const rclcpp::Time & time, const types::DynamicObject & object, const size_t channel_size)
 : Tracker(time, object.classification, channel_size),
   logger_(rclcpp::get_logger("PedestrianTracker")),
   z_(object.kinematics.pose_with_covariance.pose.position.z)

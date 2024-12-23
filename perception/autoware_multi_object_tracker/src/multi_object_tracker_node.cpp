@@ -362,7 +362,7 @@ void MultiObjectTracker::runProcess(const types::DynamicObjectList & input_objec
 
   /* spawn new tracker */
   if (input_manager_->isChannelSpawnEnabled(input_objects.channel_index)) {
-    processor_->spawn(transformed_objects, *self_transform, reverse_assignment);
+    processor_->spawn(transformed_objects, reverse_assignment);
   }
 }
 

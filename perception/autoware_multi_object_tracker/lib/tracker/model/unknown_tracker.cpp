@@ -40,8 +40,7 @@ namespace autoware::multi_object_tracker
 {
 
 UnknownTracker::UnknownTracker(
-  const rclcpp::Time & time, const types::DynamicObject & object,
-  const geometry_msgs::msg::Transform & /*self_transform*/, const size_t channel_size)
+  const rclcpp::Time & time, const types::DynamicObject & object, const size_t channel_size)
 : Tracker(time, object.classification, channel_size),
   logger_(rclcpp::get_logger("UnknownTracker")),
   z_(object.kinematics.pose_with_covariance.pose.position.z)

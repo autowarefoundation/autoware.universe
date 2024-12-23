@@ -55,8 +55,7 @@ private:
 public:
   VehicleTracker(
     const object_model::ObjectModel & object_model, const rclcpp::Time & time,
-    const types::DynamicObject & object, const geometry_msgs::msg::Transform & self_transform,
-    const size_t channel_size);
+    const types::DynamicObject & object, const size_t channel_size);
 
   bool predict(const rclcpp::Time & time) override;
   bool measure(

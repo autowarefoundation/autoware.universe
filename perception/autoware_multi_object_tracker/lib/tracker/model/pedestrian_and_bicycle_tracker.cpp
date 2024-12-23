@@ -24,11 +24,10 @@ namespace autoware::multi_object_tracker
 using Label = autoware_perception_msgs::msg::ObjectClassification;
 
 PedestrianAndBicycleTracker::PedestrianAndBicycleTracker(
-  const rclcpp::Time & time, const types::DynamicObject & object,
-  const geometry_msgs::msg::Transform & self_transform, const size_t channel_size)
+  const rclcpp::Time & time, const types::DynamicObject & object, const size_t channel_size)
 : Tracker(time, object.classification, channel_size),
-  pedestrian_tracker_(time, object, self_transform, channel_size),
-  bicycle_tracker_(time, object, self_transform, channel_size)
+  pedestrian_tracker_(time, object, channel_size),
+  bicycle_tracker_(time, object, channel_size)
 {
   // initialize existence probability
   initializeExistenceProbabilities(object.channel_index, object.existence_probability);

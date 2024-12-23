@@ -59,7 +59,6 @@ public:
     const std::unordered_map<int, int> & direct_assignment);
   void spawn(
     const types::DynamicObjectList & detected_objects,
-    const geometry_msgs::msg::Transform & self_transform,
     const std::unordered_map<int, int> & reverse_assignment);
   void prune(const rclcpp::Time & time);
 
@@ -80,8 +79,7 @@ private:
   void removeOldTracker(const rclcpp::Time & time);
   void removeOverlappedTracker(const rclcpp::Time & time);
   std::shared_ptr<Tracker> createNewTracker(
-    const types::DynamicObject & object, const rclcpp::Time & time,
-    const geometry_msgs::msg::Transform & self_transform) const;
+    const types::DynamicObject & object, const rclcpp::Time & time) const;
 };
 
 }  // namespace autoware::multi_object_tracker

@@ -47,8 +47,7 @@ using Label = autoware_perception_msgs::msg::ObjectClassification;
 
 VehicleTracker::VehicleTracker(
   const object_model::ObjectModel & object_model, const rclcpp::Time & time,
-  const types::DynamicObject & object, const geometry_msgs::msg::Transform & /*self_transform*/,
-  const size_t channel_size)
+  const types::DynamicObject & object, const size_t channel_size)
 : Tracker(time, object.classification, channel_size),
   object_model_(object_model),
   logger_(rclcpp::get_logger("VehicleTracker")),
