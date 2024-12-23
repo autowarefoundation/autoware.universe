@@ -17,13 +17,17 @@
 
 #include "autoware/multi_object_tracker/object_model/shapes.hpp"
 
+#include <Eigen/Core>
+#include <Eigen/Geometry>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 
+#include <autoware_perception_msgs/msg/shape.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <boost/geometry.hpp>
 
+#include <tf2/utils.h>
 #include <tf2_ros/transform_listener.h>
 
 #include <algorithm>
@@ -130,6 +134,78 @@ double get2dIoU(
     union_area < min_union_area ? 0.0 : std::min(1.0, intersection_area / union_area);
   return iou;
 }
+
+/**
+ * @brief convert convex hull shape object to bounding box object
+ * @param input_object: input convex hull objects
+ * @param output_object: output bounding box objects
+ */
+bool convertConvexHullToBoundingBox(
+  const types::DynamicObject & input_object, types::DynamicObject & output_object)
+{
+  // check footprint size
+  if (input_object.shape.footprint.points.size() < 3) {
+    return false;
+  }
+
+  // look for bounding box boundary
+  float max_x = 0;
+  float max_y = 0;
+  float min_x = 0;
+  float min_y = 0;
+  float max_z = 0;
+  for (const auto & point : input_object.shape.footprint.points) {
+    max_x = std::max(max_x, point.x);
+    max_y = std::max(max_y, point.y);
+    min_x = std::min(min_x, point.x);
+    min_y = std::min(min_y, point.y);
+    max_z = std::max(max_z, point.z);
+  }
+
+  // calc new center
+  const Eigen::Vector2d center{
+    input_object.kinematics.pose_with_covariance.pose.position.x,
+    input_object.kinematics.pose_with_covariance.pose.position.y};
+  const auto yaw = tf2::getYaw(input_object.kinematics.pose_with_covariance.pose.orientation);
+  const Eigen::Matrix2d R_inv = Eigen::Rotation2Dd(-yaw).toRotationMatrix();
+  const Eigen::Vector2d new_local_center{(max_x + min_x) / 2.0, (max_y + min_y) / 2.0};
+  const Eigen::Vector2d new_center = center + R_inv.transpose() * new_local_center;
+
+  // set output parameters
+  output_object = input_object;
+  output_object.kinematics.pose_with_covariance.pose.position.x = new_center.x();
+  output_object.kinematics.pose_with_covariance.pose.position.y = new_center.y();
+
+  output_object.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
+  output_object.shape.dimensions.x = max_x - min_x;
+  output_object.shape.dimensions.y = max_y - min_y;
+  output_object.shape.dimensions.z = max_z;
+
+  return true;
+}
+
+bool getMeasurementYaw(
+  const types::DynamicObject & object, const double & predicted_yaw, double & measurement_yaw)
+{
+  measurement_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
+
+  // check orientation sign is known or not, and fix the limiting delta yaw
+  double limiting_delta_yaw = M_PI_2;
+  if (object.kinematics.orientation_availability == types::OrientationAvailability::AVAILABLE) {
+    limiting_delta_yaw = M_PI;
+  }
+  // limiting delta yaw, even the availability is unknown
+  while (std::fabs(predicted_yaw - measurement_yaw) > limiting_delta_yaw) {
+    if (measurement_yaw < predicted_yaw) {
+      measurement_yaw += 2 * limiting_delta_yaw;
+    } else {
+      measurement_yaw -= 2 * limiting_delta_yaw;
+    }
+  }
+  // return false if the orientation is unknown
+  return object.kinematics.orientation_availability != types::OrientationAvailability::UNAVAILABLE;
+}
+
 }  // namespace shapes
 
 }  // namespace autoware::multi_object_tracker

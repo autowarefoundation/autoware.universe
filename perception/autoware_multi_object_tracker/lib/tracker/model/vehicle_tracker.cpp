@@ -19,6 +19,7 @@
 
 #include "autoware/multi_object_tracker/tracker/model/vehicle_tracker.hpp"
 
+#include "autoware/multi_object_tracker/object_model/shapes.hpp"
 #include "autoware/multi_object_tracker/utils/utils.hpp"
 
 #include <Eigen/Core>
@@ -70,7 +71,7 @@ VehicleTracker::VehicleTracker(
       object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
   } else {
     types::DynamicObject bbox_object;
-    if (!utils::convertConvexHullToBoundingBox(object, bbox_object)) {
+    if (!shapes::convertConvexHullToBoundingBox(object, bbox_object)) {
       RCLCPP_WARN(
         logger_,
         "VehicleTracker::VehicleTracker: Failed to convert convex hull to bounding "
@@ -174,7 +175,7 @@ types::DynamicObject VehicleTracker::getUpdatingObject(
   // convert to bounding box if input is convex shape
   types::DynamicObject bbox_object = object;
   if (object.shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
-    if (!utils::convertConvexHullToBoundingBox(object, bbox_object)) {
+    if (!shapes::convertConvexHullToBoundingBox(object, bbox_object)) {
       RCLCPP_WARN(
         logger_,
         "VehicleTracker::getUpdatingObject: Failed to convert convex hull to bounding box.");

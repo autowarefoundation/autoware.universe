@@ -19,6 +19,7 @@
 
 #include "autoware/multi_object_tracker/tracker/model/bicycle_tracker.hpp"
 
+#include "autoware/multi_object_tracker/object_model/shapes.hpp"
 #include "autoware/multi_object_tracker/utils/utils.hpp"
 
 #include <Eigen/Core>
@@ -155,7 +156,7 @@ types::DynamicObject BicycleTracker::getUpdatingObject(
   // OBJECT SHAPE MODEL
   // convert to bounding box if input is convex shape
   if (object.shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
-    if (!utils::convertConvexHullToBoundingBox(object, updating_object)) {
+    if (!shapes::convertConvexHullToBoundingBox(object, updating_object)) {
       updating_object = object;
     }
   }
@@ -168,7 +169,7 @@ bool BicycleTracker::measureWithPose(const types::DynamicObject & object)
   // get measurement yaw angle to update
   const double tracked_yaw = motion_model_.getStateElement(IDX::YAW);
   double measurement_yaw = 0.0;
-  bool is_yaw_available = utils::getMeasurementYaw(object, tracked_yaw, measurement_yaw);
+  bool is_yaw_available = shapes::getMeasurementYaw(object, tracked_yaw, measurement_yaw);
 
   // update
   bool is_updated = false;
