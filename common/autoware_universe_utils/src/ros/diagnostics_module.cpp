@@ -76,7 +76,7 @@ void DiagnosticsModule::add_key_value(const std::string & key, const bool & valu
 
 void DiagnosticsModule::update_level_and_message(const int8_t level, const std::string & message)
 {
-  if ((level > diagnostic_msgs::msg::DiagnosticStatus::OK)) {
+  if ((level >= diagnostic_msgs::msg::DiagnosticStatus::OK)) {
     if (!diagnostics_status_msg_.message.empty()) {
       diagnostics_status_msg_.message += "; ";
     }
