@@ -31,6 +31,11 @@
           "default": 15,
           "minimum": 1
         },
+        "point_project_to_unrectified_image": {
+          "type": "array",
+          "description": "An array of options indicating whether to project point to unrectified image or not.",
+          "default": [false, false, false, false, false, false]
+        },
         "debug_mode": {
           "type": "boolean",
           "description": "Whether to debug or not.",
