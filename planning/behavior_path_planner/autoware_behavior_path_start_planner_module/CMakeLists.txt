@@ -12,6 +12,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/freespace_pull_out.cpp
   src/geometric_pull_out.cpp
   src/shift_pull_out.cpp
+  src/data_structs.cpp
   src/util.cpp
 )
 
