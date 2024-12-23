@@ -127,14 +127,16 @@ Accumulator<double> calcTrajectoryLateralDisplacement(
   constexpr double num_evaluation_points = 10.0;
   const double interval = evaluation_section_length / num_evaluation_points;
 
-  const auto resampled_traj1 = autoware::motion_utils::resampleTrajectory(traj1, interval);
-  double total_lateral_displacement = 0.0;
+  const auto resampled_traj1 = autoware::motion_utils::resampleTrajectory(
+    utils::get_lookahead_trajectory(
+      traj1, ego_odom.pose.pose, evaluation_section_length, trajectory_eval_time_s),
+    interval);
+
   for (const auto & point : resampled_traj1.points) {
     const auto p0 = autoware::universe_utils::getPoint(point);
     const double dist = autoware::motion_utils::calcLateralOffset(traj2.points, p0);
-    total_lateral_displacement += std::abs(dist);
+    stat.add(std::abs(dist));
   }
-  stat.add(total_lateral_displacement);
   return stat;
 }
 
