@@ -62,8 +62,9 @@ StartPlannerModule::StartPlannerModule(
   const std::shared_ptr<StartPlannerParameters> & parameters,
   const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
   std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
-    objects_of_interest_marker_interface_ptr_map)
-: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map},  // NOLINT
+    objects_of_interest_marker_interface_ptr_map,
+  const std::shared_ptr<PlanningFactorInterface> planning_factor_interface)
+: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map, planning_factor_interface},  // NOLINT
   parameters_{parameters},
   vehicle_info_{autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo()},
   is_freespace_planner_cb_running_{false}
@@ -745,7 +746,10 @@ BehaviorModuleOutput StartPlannerModule::plan()
 
   setVelocityFactor(output.path);
 
+  set_longitudinal_planning_factor(output.path);
+
   const auto steering_factor_direction = getSteeringFactorDirection(output);
+  const auto planning_factor_direction = getPlanningFactorDirection(output);
 
   if (status_.driving_forward) {
     const double start_distance = autoware::motion_utils::calcSignedArcLength(
@@ -758,6 +762,9 @@ BehaviorModuleOutput StartPlannerModule::plan()
     steering_factor_interface_.set(
       {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose},
       {start_distance, finish_distance}, steering_factor_direction, SteeringFactor::TURNING, "");
+    planning_factor_interface_->add(
+      start_distance, finish_distance, status_.pull_out_path.start_pose,
+      status_.pull_out_path.end_pose, planning_factor_direction, SafetyFactorArray{});
     setDebugData();
     return output;
   }
@@ -768,6 +775,9 @@ BehaviorModuleOutput StartPlannerModule::plan()
   steering_factor_interface_.set(
     {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose}, {0.0, distance},
     steering_factor_direction, SteeringFactor::TURNING, "");
+  planning_factor_interface_->add(
+    0.0, distance, status_.pull_out_path.start_pose, status_.pull_out_path.end_pose,
+    planning_factor_direction, SafetyFactorArray{});
 
   setDebugData();
 
@@ -851,6 +861,7 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
   setDrivableAreaInfo(output);
 
   const auto steering_factor_direction = getSteeringFactorDirection(output);
+  const auto planning_factor_direction = getPlanningFactorDirection(output);
 
   if (status_.driving_forward) {
     const double start_distance = autoware::motion_utils::calcSignedArcLength(
@@ -864,6 +875,9 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
       {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose},
       {start_distance, finish_distance}, steering_factor_direction, SteeringFactor::APPROACHING,
       "");
+    planning_factor_interface_->add(
+      start_distance, finish_distance, status_.pull_out_path.start_pose,
+      status_.pull_out_path.end_pose, planning_factor_direction, SafetyFactorArray{});
     setDebugData();
 
     return output;
@@ -875,6 +889,9 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
   steering_factor_interface_.set(
     {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose}, {0.0, distance},
     steering_factor_direction, SteeringFactor::APPROACHING, "");
+  planning_factor_interface_->add(
+    0.0, distance, status_.pull_out_path.start_pose, status_.pull_out_path.end_pose,
+    planning_factor_direction, SafetyFactorArray{});
 
   setDebugData();
 
