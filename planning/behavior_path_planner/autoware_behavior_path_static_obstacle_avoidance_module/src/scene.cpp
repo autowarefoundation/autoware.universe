@@ -79,8 +79,9 @@ StaticObstacleAvoidanceModule::StaticObstacleAvoidanceModule(
   const std::string & name, rclcpp::Node & node, std::shared_ptr<AvoidanceParameters> parameters,
   const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
   std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
-    objects_of_interest_marker_interface_ptr_map)
-: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map},  // NOLINT
+    objects_of_interest_marker_interface_ptr_map,
+  const std::shared_ptr<PlanningFactorInterface> & planning_factor_interface)
+: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map, planning_factor_interface},  // NOLINT
   helper_{std::make_shared<AvoidanceHelper>(parameters)},
   parameters_{parameters},
   generator_{parameters}
@@ -780,6 +781,8 @@ void StaticObstacleAvoidanceModule::updateEgoBehavior(
 
   insertReturnDeadLine(isBestEffort(parameters_->policy_deceleration), path);
 
+  set_longitudinal_planning_factor(path.path);
+
   setVelocityFactor(path.path);
 }
 
@@ -1220,6 +1223,13 @@ CandidateOutput StaticObstacleAvoidanceModule::planCandidate() const
     {sl_front.start, sl_back.end},
     {output.start_distance_to_path_change, output.finish_distance_to_path_change},
     steering_factor_direction, SteeringFactor::APPROACHING, "");
+
+  const uint16_t planning_factor_direction = std::invoke([&output]() {
+    return output.lateral_shift > 0.0 ? PlanningFactor::SHIFT_LEFT : PlanningFactor::SHIFT_RIGHT;
+  });
+  planning_factor_interface_->add(
+    output.start_distance_to_path_change, output.finish_distance_to_path_change, sl_front.start,
+    sl_back.end, planning_factor_direction, SafetyFactorArray{}, true, 0.0, output.lateral_shift);
 
   output.path_candidate = shifted_path.path;
   return output;
