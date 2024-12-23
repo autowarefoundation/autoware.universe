@@ -21,7 +21,6 @@
 
 #include <memory>
 #include <string>
-#include <tuple>
 #include <unordered_map>
 #include <utility>
 
@@ -49,25 +48,14 @@ CloudCollector::CloudCollector(
     });
 }
 
-void CloudCollector::set_arrival_timestamp(double timestamp)
+void CloudCollector::set_info(CollectorInfo collector_info)
 {
-  arrival_timestamp_ = timestamp;
+  collector_info_ = collector_info;
 }
 
-double CloudCollector::get_arrival_timestamp() const
+CollectorInfo CloudCollector::get_info() const
 {
-  return arrival_timestamp_;
-}
-
-void CloudCollector::set_reference_timestamp(double timestamp, double noise_window)
-{
-  reference_timestamp_max_ = timestamp + noise_window;
-  reference_timestamp_min_ = timestamp - noise_window;
-}
-
-std::tuple<double, double> CloudCollector::get_reference_timestamp_boundary()
-{
-  return std::make_tuple(reference_timestamp_min_, reference_timestamp_max_);
+  return collector_info_;
 }
 
 bool CloudCollector::topic_exists(const std::string & topic_name)
@@ -106,28 +94,7 @@ bool CloudCollector::concatenate_finished() const
 void CloudCollector::concatenate_callback()
 {
   if (debug_mode_) {
-    auto time_until_trigger = timer_->time_until_trigger();
-    std::stringstream log_stream;
-    log_stream << std::fixed << std::setprecision(6);
-    log_stream << "Collector's concatenate callback time: "
-               << ros2_parent_node_->get_clock()->now().seconds() << " seconds\n";
-
-    log_stream << "Collector's reference time min: " << reference_timestamp_min_
-               << " to max: " << reference_timestamp_max_ << " seconds\n";
-
-    log_stream << "Time until trigger: " << (time_until_trigger.count() / 1e9) << " seconds\n";
-
-    log_stream << "Pointclouds: [";
-    std::string separator = "";
-    for (const auto & [topic, cloud] : topic_to_cloud_map_) {
-      log_stream << separator;
-      log_stream << "[" << topic << ", " << rclcpp::Time(cloud->header.stamp).seconds() << "]";
-      separator = ", ";
-    }
-
-    log_stream << "]\n";
-
-    RCLCPP_INFO(ros2_parent_node_->get_logger(), "%s", log_stream.str().c_str());
+    show_debug_message();
   }
 
   // All pointclouds are received or the timer has timed out, cancel the timer and concatenate the
@@ -136,9 +103,7 @@ void CloudCollector::concatenate_callback()
 
   auto concatenated_cloud_result = concatenate_pointclouds(topic_to_cloud_map_);
 
-  ros2_parent_node_->publish_clouds(
-    std::move(concatenated_cloud_result), reference_timestamp_min_, reference_timestamp_max_,
-    arrival_timestamp_);
+  ros2_parent_node_->publish_clouds(std::move(concatenated_cloud_result), collector_info_);
 
   concatenate_finished_ = true;
 }
@@ -153,6 +118,39 @@ std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr>
 CloudCollector::get_topic_to_cloud_map()
 {
   return topic_to_cloud_map_;
+}
+
+void CloudCollector::show_debug_message()
+{
+  auto time_until_trigger = timer_->time_until_trigger();
+  std::stringstream log_stream;
+  log_stream << std::fixed << std::setprecision(6);
+  log_stream << "Collector's concatenate callback time: "
+             << ros2_parent_node_->get_clock()->now().seconds() << " seconds\n";
+
+  if (collector_info_.strategy_type == CollectorStrategyType::Advanced) {
+    log_stream << "Advanced stratygy:\n Collector's reference time min: "
+               << collector_info_.timestamp - collector_info_.noise_window
+               << " to max: " << collector_info_.timestamp + collector_info_.noise_window
+               << " seconds\n";
+  } else if (collector_info_.strategy_type == CollectorStrategyType::Naive) {
+    log_stream << "Naive stratygy:\n Collector's first cloud arrival time: "
+               << collector_info_.timestamp << " seconds\n";
+  }
+
+  log_stream << "Time until trigger: " << (time_until_trigger.count() / 1e9) << " seconds\n";
+
+  log_stream << "Pointclouds: [";
+  std::string separator = "";
+  for (const auto & [topic, cloud] : topic_to_cloud_map_) {
+    log_stream << separator;
+    log_stream << "[" << topic << ", " << rclcpp::Time(cloud->header.stamp).seconds() << "]";
+    separator = ", ";
+  }
+
+  log_stream << "]\n";
+
+  RCLCPP_INFO(ros2_parent_node_->get_logger(), "%s", log_stream.str().c_str());
 }
 
 }  // namespace autoware::pointcloud_preprocessor

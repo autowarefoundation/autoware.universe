@@ -54,8 +54,7 @@ public:
   explicit PointCloudConcatenateDataSynchronizerComponent(const rclcpp::NodeOptions & node_options);
   ~PointCloudConcatenateDataSynchronizerComponent() override = default;
   void publish_clouds(
-    ConcatenatedCloudResult && concatenated_cloud_result, double reference_timestamp_min,
-    double reference_timestamp_max, double arrival_timestamp);
+    ConcatenatedCloudResult && concatenated_cloud_result, CollectorInfo collector_info);
   void manage_collector_list();
   std::list<std::shared_ptr<CloudCollector>> get_cloud_collectors();
   void add_cloud_collector(const std::shared_ptr<CloudCollector> & collector);
@@ -85,9 +84,7 @@ private:
   bool drop_previous_but_late_pointcloud_{false};
   bool publish_pointcloud_{false};
   bool is_concatenated_cloud_empty_{false};
-  double diagnostic_reference_timestamp_min_{0.0};
-  double diagnostic_reference_timestamp_max_{0.0};
-  double diagnostic_arrival_timestamp_{0.0};
+  CollectorInfo diagnostic_collector_info_;
   std::unordered_map<std::string, double> diagnostic_topic_to_original_stamp_map_;
 
   std::shared_ptr<CombineCloudHandler> combine_cloud_handler_;

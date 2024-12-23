@@ -27,6 +27,15 @@ namespace autoware::pointcloud_preprocessor
 class PointCloudConcatenateDataSynchronizerComponent;
 class CombineCloudHandler;
 
+enum class CollectorStrategyType { Naive, Advanced };
+
+struct CollectorInfo
+{
+  double timestamp{0.0};
+  double noise_window{0.0};
+  CollectorStrategyType strategy_type{CollectorStrategyType::Naive};
+};
+
 class CloudCollector
 {
 public:
@@ -34,13 +43,6 @@ public:
     std::shared_ptr<PointCloudConcatenateDataSynchronizerComponent> && ros2_parent_node,
     std::shared_ptr<CombineCloudHandler> & combine_cloud_handler, int num_of_clouds,
     double timeout_sec, bool debug_mode);
-
-  // Naive approach
-  void set_arrival_timestamp(double timestamp);
-  double get_arrival_timestamp() const;
-  // Advanced approach
-  void set_reference_timestamp(double timestamp, double noise_window);
-  std::tuple<double, double> get_reference_timestamp_boundary();
   bool topic_exists(const std::string & topic_name);
   bool process_pointcloud(
     const std::string & topic_name, sensor_msgs::msg::PointCloud2::SharedPtr cloud);
@@ -54,6 +56,10 @@ public:
 
   bool concatenate_finished() const;
 
+  void set_info(CollectorInfo collector_info);
+  CollectorInfo get_info() const;
+  void show_debug_message();
+
 private:
   std::shared_ptr<PointCloudConcatenateDataSynchronizerComponent> ros2_parent_node_;
   std::shared_ptr<CombineCloudHandler> combine_cloud_handler_;
@@ -61,12 +67,10 @@ private:
   std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr> topic_to_cloud_map_;
   uint64_t num_of_clouds_;
   double timeout_sec_;
-  double reference_timestamp_min_{0.0};
-  double reference_timestamp_max_{0.0};
-  double arrival_timestamp_{0.0};  // This is used for the naive approach
   bool debug_mode_;
   bool concatenate_finished_{false};
   std::mutex concatenate_mutex_;
+  CollectorInfo collector_info_;
 };
 
 }  // namespace autoware::pointcloud_preprocessor

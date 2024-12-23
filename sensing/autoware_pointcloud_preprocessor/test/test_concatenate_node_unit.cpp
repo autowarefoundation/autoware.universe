@@ -291,12 +291,15 @@ TEST_F(ConcatenateCloudTest, TestComputeTransformToAdjustForOldTimestamp)
 
 //////////////////////////////// Test cloud_collector ////////////////////////////////
 
-TEST_F(ConcatenateCloudTest, TestSetAndGetReferenceTimeStampBoundary)
+TEST_F(ConcatenateCloudTest, TestSetAndGetCollectorInfo)
 {
-  double reference_timestamp = 10.0;
-  double noise_window = 0.1;
-  collector_->set_reference_timestamp(reference_timestamp, noise_window);
-  auto [min, max] = collector_->get_reference_timestamp_boundary();
+  autoware::pointcloud_preprocessor::CollectorInfo collector_info;
+  collector_info.timestamp = 10.0;
+  collector_info.noise_window = 0.1;
+  collector_->set_info(collector_info);
+  auto collector_info_new = collector_->get_info();
+  auto min = collector_info_new.timestamp - collector_info_new.noise_window;
+  auto max = collector_info_new.timestamp + collector_info_new.noise_window;
   EXPECT_DOUBLE_EQ(min, 9.9);
   EXPECT_DOUBLE_EQ(max, 10.1);
 }

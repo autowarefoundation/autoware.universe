@@ -242,7 +242,7 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
     cloud_collectors_.push_back(new_cloud_collector);
     cloud_collectors_lock.unlock();
 
-    collector_matching_strategy_->set_collector_timestamp(new_cloud_collector, matching_params);
+    collector_matching_strategy_->set_collector_info(new_cloud_collector, matching_params);
     (void)new_cloud_collector->process_pointcloud(topic_name, input_ptr);
   }
 }
@@ -260,8 +260,7 @@ void PointCloudConcatenateDataSynchronizerComponent::odom_callback(
 }
 
 void PointCloudConcatenateDataSynchronizerComponent::publish_clouds(
-  ConcatenatedCloudResult && concatenated_cloud_result, double reference_timestamp_min,
-  double reference_timestamp_max, double arrival_timestamp)
+  ConcatenatedCloudResult && concatenated_cloud_result, CollectorInfo collector_info)
 {
   // should never come to this state.
   if (concatenated_cloud_result.concatenate_cloud_ptr == nullptr) {
@@ -321,9 +320,8 @@ void PointCloudConcatenateDataSynchronizerComponent::publish_clouds(
     }
   }
 
-  diagnostic_reference_timestamp_min_ = reference_timestamp_min;
-  diagnostic_reference_timestamp_max_ = reference_timestamp_max;
-  diagnostic_arrival_timestamp_ = arrival_timestamp;
+  diagnostic_collector_info_ = collector_info;
+
   diagnostic_topic_to_original_stamp_map_ = concatenated_cloud_result.topic_to_original_stamp_map;
   diagnostic_updater_.force_update();
 
@@ -371,11 +369,18 @@ void PointCloudConcatenateDataSynchronizerComponent::check_concat_status(
     stat.add(
       "concatenated cloud timestamp", format_timestamp(current_concatenate_cloud_timestamp_));
 
-    if (params_.matching_strategy == "naive") {
-      stat.add("first cloud's arrival timestamp", format_timestamp(diagnostic_arrival_timestamp_));
-    } else {
-      stat.add("reference timestamp min", format_timestamp(diagnostic_reference_timestamp_min_));
-      stat.add("reference timestamp max", format_timestamp(diagnostic_reference_timestamp_max_));
+    if (diagnostic_collector_info_.strategy_type == CollectorStrategyType::Naive) {
+      stat.add(
+        "first cloud's arrival timestamp", format_timestamp(diagnostic_collector_info_.timestamp));
+    } else if (diagnostic_collector_info_.strategy_type == CollectorStrategyType::Advanced) {
+      stat.add(
+        "reference timestamp min",
+        format_timestamp(
+          diagnostic_collector_info_.timestamp - diagnostic_collector_info_.noise_window));
+      stat.add(
+        "reference timestamp max",
+        format_timestamp(
+          diagnostic_collector_info_.timestamp + diagnostic_collector_info_.noise_window));
     }
 
     bool topic_miss = false;

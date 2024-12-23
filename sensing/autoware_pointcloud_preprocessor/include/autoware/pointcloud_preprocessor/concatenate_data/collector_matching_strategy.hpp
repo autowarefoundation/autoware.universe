@@ -45,8 +45,11 @@ public:
   [[nodiscard]] virtual std::optional<std::shared_ptr<CloudCollector>> match_cloud_to_collector(
     const std::list<std::shared_ptr<CloudCollector>> & cloud_collectors,
     const MatchingParams & params) const = 0;
-  virtual void set_collector_timestamp(
+  virtual void set_collector_info(
     std::shared_ptr<CloudCollector> & collector, const MatchingParams & matching_params) = 0;
+
+protected:
+  CollectorStrategyType strategy_type_;
 };
 
 class NaiveMatchingStrategy : public CollectorMatchingStrategy
@@ -56,7 +59,7 @@ public:
   [[nodiscard]] std::optional<std::shared_ptr<CloudCollector>> match_cloud_to_collector(
     const std::list<std::shared_ptr<CloudCollector>> & cloud_collectors,
     const MatchingParams & params) const override;
-  void set_collector_timestamp(
+  void set_collector_info(
     std::shared_ptr<CloudCollector> & collector, const MatchingParams & matching_params) override;
 };
 
@@ -68,7 +71,7 @@ public:
   [[nodiscard]] std::optional<std::shared_ptr<CloudCollector>> match_cloud_to_collector(
     const std::list<std::shared_ptr<CloudCollector>> & cloud_collectors,
     const MatchingParams & params) const override;
-  void set_collector_timestamp(
+  void set_collector_info(
     std::shared_ptr<CloudCollector> & collector, const MatchingParams & matching_params) override;
 
 private:
