@@ -15,8 +15,6 @@
 
 #include "autoware/multi_object_tracker/tracker/model/unknown_tracker.hpp"
 
-#include "autoware/multi_object_tracker/utils/utils.hpp"
-
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <autoware/object_recognition_utils/object_recognition_utils.hpp>

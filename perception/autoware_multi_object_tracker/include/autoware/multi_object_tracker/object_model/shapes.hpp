@@ -20,6 +20,8 @@
 
 #include "autoware/multi_object_tracker/object_model/types.hpp"
 
+#include <Eigen/Core>
+
 #include <tf2_ros/buffer.h>
 
 #include <string>
@@ -42,6 +44,13 @@ bool convertConvexHullToBoundingBox(
 bool getMeasurementYaw(
   const types::DynamicObject & object, const double & predicted_yaw, double & measurement_yaw);
 
+int getNearestCornerOrSurface(
+  const double x, const double y, const double yaw, const double width, const double length,
+  const geometry_msgs::msg::Transform & self_transform);
+
+void calcAnchorPointOffset(
+  const double w, const double l, const int indx, const types::DynamicObject & input_object,
+  const double & yaw, types::DynamicObject & offset_object, Eigen::Vector2d & tracking_offset);
 }  // namespace shapes
 }  // namespace autoware::multi_object_tracker
 

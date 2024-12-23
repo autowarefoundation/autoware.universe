@@ -20,7 +20,6 @@
 #include "autoware/multi_object_tracker/tracker/model/bicycle_tracker.hpp"
 
 #include "autoware/multi_object_tracker/object_model/shapes.hpp"
-#include "autoware/multi_object_tracker/utils/utils.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>

@@ -20,7 +20,6 @@
 #include "autoware/multi_object_tracker/tracker/motion_model/ctrv_motion_model.hpp"
 
 #include "autoware/multi_object_tracker/tracker/motion_model/motion_model_base.hpp"
-#include "autoware/multi_object_tracker/utils/utils.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>

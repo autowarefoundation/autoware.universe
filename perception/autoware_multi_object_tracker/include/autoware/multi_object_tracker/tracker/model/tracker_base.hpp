@@ -21,7 +21,6 @@
 
 #define EIGEN_MPL2_ONLY
 #include "autoware/multi_object_tracker/object_model/types.hpp"
-#include "autoware/multi_object_tracker/utils/utils.hpp"
 
 #include <Eigen/Core>
 #include <autoware/object_recognition_utils/object_recognition_utils.hpp>

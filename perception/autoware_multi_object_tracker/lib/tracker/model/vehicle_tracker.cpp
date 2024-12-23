@@ -20,7 +20,6 @@
 #include "autoware/multi_object_tracker/tracker/model/vehicle_tracker.hpp"
 
 #include "autoware/multi_object_tracker/object_model/shapes.hpp"
-#include "autoware/multi_object_tracker/utils/utils.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -189,9 +188,9 @@ types::DynamicObject VehicleTracker::getUpdatingObject(
   const double tracked_yaw = motion_model_.getStateElement(IDX::YAW);
 
   // get offset measurement
-  const int nearest_corner_index = utils::getNearestCornerOrSurface(
+  const int nearest_corner_index = shapes::getNearestCornerOrSurface(
     tracked_x, tracked_y, tracked_yaw, bounding_box_.width, bounding_box_.length, self_transform);
-  utils::calcAnchorPointOffset(
+  shapes::calcAnchorPointOffset(
     bounding_box_.width, bounding_box_.length, nearest_corner_index, bbox_object, tracked_yaw,
     updating_object, tracking_offset_);
 
