@@ -187,19 +187,6 @@ bool get_prepare_segment(
     throw std::logic_error("lane change start is behind target lanelet!");
   }
 
-  if (common_data_ptr->get_ego_speed() >= prep_metric.velocity) {
-    // deceleration
-    prepare_segment.points.back().point.longitudinal_velocity_mps = std::min(
-      prepare_segment.points.back().point.longitudinal_velocity_mps,
-      static_cast<float>(prep_metric.velocity));
-  } else {
-    // acceleration
-    for (auto & point : prepare_segment.points) {
-      point.point.longitudinal_velocity_mps =
-        std::min(point.point.longitudinal_velocity_mps, static_cast<float>(prep_metric.velocity));
-    }
-  }
-
   return true;
 }
 

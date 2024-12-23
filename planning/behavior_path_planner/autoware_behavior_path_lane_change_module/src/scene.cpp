@@ -1145,6 +1145,11 @@ bool NormalLaneChange::get_lane_change_paths(LaneChangePaths & candidate_paths) 
     const auto lane_changing_metrics = get_lane_changing_metrics(
       prepare_segment, prep_metric, shift_length, dist_to_next_regulatory_element);
 
+    // set_prepare_velocity must only be called after computing lane change metrics, as lane change
+    // metrics rely on the prepare segment's original velocity as max_path_velocity.
+    utils::lane_change::set_prepare_velocity(
+      prepare_segment, common_data_ptr_->get_ego_speed(), prep_metric.velocity);
+
     for (const auto & lc_metric : lane_changing_metrics) {
       const auto debug_print_lat = [&](const std::string & s) {
         RCLCPP_DEBUG(

@@ -66,6 +66,9 @@ rclcpp::Logger get_logger();
 
 bool is_mandatory_lane_change(const ModuleType lc_type);
 
+void set_prepare_velocity(
+  PathWithLaneId & prepare_segment, const double current_velocity, const double prepare_velocity);
+
 std::vector<int64_t> replaceWithSortedIds(
   const std::vector<int64_t> & original_lane_ids,
   const std::vector<std::vector<int64_t>> & sorted_lane_ids);

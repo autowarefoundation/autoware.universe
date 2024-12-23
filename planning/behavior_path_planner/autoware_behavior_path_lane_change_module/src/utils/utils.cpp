@@ -85,6 +85,23 @@ bool is_mandatory_lane_change(const ModuleType lc_type)
          lc_type == LaneChangeModuleType::AVOIDANCE_BY_LANE_CHANGE;
 }
 
+void set_prepare_velocity(
+  PathWithLaneId & prepare_segment, const double current_velocity, const double prepare_velocity)
+{
+  if (current_velocity >= prepare_velocity) {
+    // deceleration
+    prepare_segment.points.back().point.longitudinal_velocity_mps = std::min(
+      prepare_segment.points.back().point.longitudinal_velocity_mps,
+      static_cast<float>(prepare_velocity));
+    return;
+  }
+  // acceleration
+  for (auto & point : prepare_segment.points) {
+    point.point.longitudinal_velocity_mps =
+      std::min(point.point.longitudinal_velocity_mps, static_cast<float>(prepare_velocity));
+  }
+}
+
 lanelet::ConstLanelets get_target_neighbor_lanes(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
   const LaneChangeModuleType & type)
