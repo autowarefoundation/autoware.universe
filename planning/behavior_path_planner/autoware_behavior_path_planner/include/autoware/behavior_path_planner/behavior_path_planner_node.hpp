@@ -20,6 +20,7 @@
 #include "autoware/universe_utils/ros/logger_level_configure.hpp"
 #include "planner_manager.hpp"
 
+#include <autoware/motion_utils/factor/planning_factor_interface.hpp>
 #include <autoware/motion_utils/factor/steering_factor_interface.hpp>
 #include <autoware/universe_utils/ros/polling_subscriber.hpp>
 #include <autoware/universe_utils/ros/published_time_publisher.hpp>
@@ -51,6 +52,7 @@
 
 namespace autoware::behavior_path_planner
 {
+using autoware::motion_utils::PlanningFactorInterface;
 using autoware::motion_utils::SteeringFactorInterface;
 using autoware_adapi_v1_msgs::msg::OperationModeState;
 using autoware_map_msgs::msg::LaneletMapBin;
@@ -137,6 +139,7 @@ private:
   std::shared_ptr<PlannerManager> planner_manager_;
 
   SteeringFactorInterface steering_factor_interface_;
+  std::unique_ptr<PlanningFactorInterface> planning_factor_interface_;
 
   std::mutex mutex_pd_;       // mutex for planner_data_
   std::mutex mutex_manager_;  // mutex for bt_manager_ or planner_manager_

@@ -32,7 +32,9 @@ using autoware::vehicle_info_utils::VehicleInfoUtils;
 using tier4_planning_msgs::msg::PathChangeModuleId;
 
 BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & node_options)
-: Node("behavior_path_planner", node_options)
+: Node("behavior_path_planner", node_options),
+  planning_factor_interface_{
+    std::make_unique<PlanningFactorInterface>(this, "behavior_path_planner")}
 {
   using std::placeholders::_1;
   using std::chrono_literals::operator""ms;
@@ -476,6 +478,17 @@ void BehaviorPathPlannerNode::publish_steering_factor(
     steering_factor_interface_.set(
       {intersection_pose, intersection_pose}, {intersection_distance, intersection_distance},
       steering_factor_direction, SteeringFactor::TURNING, "");
+
+    const uint16_t planning_factor_direction = std::invoke([&turn_signal]() {
+      if (turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
+        return PlanningFactor::TURN_LEFT;
+      }
+      return PlanningFactor::TURN_RIGHT;
+    });
+
+    planning_factor_interface_->add(
+      intersection_distance, intersection_distance, intersection_pose, intersection_pose,
+      planning_factor_direction, SafetyFactorArray{});
   } else {
     steering_factor_interface_.reset();
   }
@@ -490,6 +503,8 @@ void BehaviorPathPlannerNode::publish_steering_factor(
   }
 
   pub_steering_factors_->publish(steering_factor_array);
+
+  planning_factor_interface_->publish();
 }
 
 void BehaviorPathPlannerNode::publish_reroute_availability() const
