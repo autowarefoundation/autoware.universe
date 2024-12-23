@@ -64,8 +64,7 @@ private:
   std::size_t max_points_per_ring_{0};
 
   std::vector<std::size_t> next_ring_index_;
-  std::vector<autoware::point_types::PointXYZIRCAEDT> buffer_;
-  // autoware::point_types::PointXYZIRCAEDT * device_buffer_;
+  cuda_blackboard::HostUniquePtr<autoware::point_types::PointXYZIRCAEDT[]> host_buffer_;
   cuda_blackboard::CudaUniquePtr<std::uint8_t[]> device_buffer_;
 
   std::unique_ptr<autoware::universe_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;

@@ -84,7 +84,8 @@ void CudaOrganizedPointcloudAdapterNode::estimatePointcloudRingInfo(
 
   next_ring_index_.resize(num_rings_);
   std::fill(next_ring_index_.begin(), next_ring_index_.end(), 0);
-  buffer_.resize(num_rings_ * max_points_per_ring_);
+  host_buffer_ = cuda_blackboard::make_host_unique<autoware::point_types::PointXYZIRCAEDT[]>(
+    num_rings_ * max_points_per_ring_);
 
   device_buffer_ = cuda_blackboard::make_unique<std::uint8_t[]>(
     num_rings_ * max_points_per_ring_ * sizeof(autoware::point_types::PointXYZIRCAEDT));
@@ -106,6 +107,8 @@ bool CudaOrganizedPointcloudAdapterNode::orderPointcloud(
   bool ring_overflow = false;
   bool point_overflow = false;
 
+  autoware::point_types::PointXYZIRCAEDT * buffer = host_buffer_.get();
+
   for (std::size_t i = 0; i < input_pointcloud_msg_ptr->width * input_pointcloud_msg_ptr->height;
        i++) {
     const autoware::point_types::PointXYZIRCAEDT & point = input_buffer[i];
@@ -118,7 +121,7 @@ bool CudaOrganizedPointcloudAdapterNode::orderPointcloud(
     ring_overflow |= raw_ring >= num_rings_;
     point_overflow |= raw_index >= max_points_per_ring_;
 
-    buffer_[ring * max_points_per_ring_ + index] = point;
+    buffer[ring * max_points_per_ring_ + index] = point;
     next_ring_index_[ring] = raw_index + 1;
   }
 
@@ -145,7 +148,7 @@ void CudaOrganizedPointcloudAdapterNode::pointcloudCallback(
 
   // Copy to cuda memory
   cudaMemcpy(
-    device_buffer_.get(), buffer_.data(),
+    device_buffer_.get(), host_buffer_.get(),
     num_rings_ * max_points_per_ring_ * sizeof(autoware::point_types::PointXYZIRCAEDT),
     cudaMemcpyHostToDevice);
 
@@ -184,7 +187,10 @@ void CudaOrganizedPointcloudAdapterNode::pointcloudCallback(
   std::fill(next_ring_index_.begin(), next_ring_index_.end(), 0);
 
   // Clear pointcloud buffer
-  std::fill(buffer_.begin(), buffer_.end(), autoware::point_types::PointXYZIRCAEDT{});
+  auto host_buffer = host_buffer_.get();
+  for (std::size_t i = 0; i < num_rings_ * max_points_per_ring_; i++) {
+    host_buffer[i] = autoware::point_types::PointXYZIRCAEDT{};
+  }
 }
 
 }  // namespace autoware::cuda_organized_pointcloud_adapter
