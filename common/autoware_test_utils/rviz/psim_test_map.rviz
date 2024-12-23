@@ -5,8 +5,13 @@ Panels:
     Property Tree Widget:
       Expanded:
         - /Sensing1/LiDAR1/ConcatenatePointCloud1/Autocompute Value Bounds1
-      Splitter Ratio: 0.557669460773468
-    Tree Height: 225
+        - /Planning1
+        - /Planning1/ScenarioPlanning1
+        - /Planning1/ScenarioPlanning1/LaneDriving1
+        - /Planning1/ScenarioPlanning1/LaneDriving1/BehaviorPlanning1
+        - /Planning1/ScenarioPlanning1/LaneDriving1/BehaviorPlanning1/DebugMarker1
+      Splitter Ratio: 0.7495682239532471
+    Tree Height: 533
   - Class: rviz_common/Selection
     Name: Selection
   - Class: rviz_common/Tool Properties
@@ -83,11 +88,6 @@ Visualization Manager:
                 Expand Link Details: false
                 Expand Tree: false
                 Link Tree Style: Links in Alphabetic Order
-                ars408_front_center:
-                  Alpha: 1
-                  Show Axes: false
-                  Show Trail: false
-                  Value: true
                 base_link:
                   Alpha: 1
                   Show Axes: false
@@ -147,43 +147,7 @@ Visualization Manager:
                   Alpha: 1
                   Show Axes: false
                   Show Trail: false
-                camera6/camera_link:
-                  Alpha: 1
-                  Show Axes: false
-                  Show Trail: false
-                  Value: true
-                camera6/camera_optical_link:
-                  Alpha: 1
-                  Show Axes: false
-                  Show Trail: false
-                camera7/camera_link:
-                  Alpha: 1
-                  Show Axes: false
-                  Show Trail: false
-                  Value: true
-                camera7/camera_optical_link:
-                  Alpha: 1
-                  Show Axes: false
-                  Show Trail: false
                 gnss_link:
-                  Alpha: 1
-                  Show Axes: false
-                  Show Trail: false
-                  Value: true
-                livox_front_left:
-                  Alpha: 1
-                  Show Axes: false
-                  Show Trail: false
-                livox_front_left_base_link:
-                  Alpha: 1
-                  Show Axes: false
-                  Show Trail: false
-                  Value: true
-                livox_front_right:
-                  Alpha: 1
-                  Show Axes: false
-                  Show Trail: false
-                livox_front_right_base_link:
                   Alpha: 1
                   Show Axes: false
                   Show Trail: false
@@ -197,6 +161,24 @@ Visualization Manager:
                   Show Axes: false
                   Show Trail: false
                   Value: true
+                traffic_light_left_camera/camera_link:
+                  Alpha: 1
+                  Show Axes: false
+                  Show Trail: false
+                  Value: true
+                traffic_light_left_camera/camera_optical_link:
+                  Alpha: 1
+                  Show Axes: false
+                  Show Trail: false
+                traffic_light_right_camera/camera_link:
+                  Alpha: 1
+                  Show Axes: false
+                  Show Trail: false
+                  Value: true
+                traffic_light_right_camera/camera_optical_link:
+                  Alpha: 1
+                  Show Axes: false
+                  Show Trail: false
                 velodyne_left:
                   Alpha: 1
                   Show Axes: false
@@ -956,7 +938,11 @@ Visualization Manager:
               Enabled: true
               Name: RouteArea
               Namespaces:
-                {}
+                goal_lanelets: true
+                lane_start_bound: true
+                left_lane_bound: true
+                right_lane_bound: true
+                route_lanelets: true
               Topic:
                 Depth: 5
                 Durability Policy: Transient Local
@@ -1016,10 +1002,10 @@ Visualization Manager:
                 Alpha: 1
                 Color: 230; 230; 50
                 Offset from BaseLink: 0
-                Rear Overhang: 1.0299999713897705
+                Rear Overhang: 1.100000023841858
                 Value: false
-                Vehicle Length: 4.769999980926514
-                Vehicle Width: 1.8300000429153442
+                Vehicle Length: 4.889999866485596
+                Vehicle Width: 1.8960000276565552
               View Path:
                 Alpha: 0.9990000128746033
                 Constant Width: false
@@ -1072,10 +1058,10 @@ Visualization Manager:
                         Alpha: 1
                         Color: 230; 230; 50
                         Offset from BaseLink: 0
-                        Rear Overhang: 1.0299999713897705
+                        Rear Overhang: 1.100000023841858
                         Value: false
-                        Vehicle Length: 4.769999980926514
-                        Vehicle Width: 1.8300000429153442
+                        Vehicle Length: 4.889999866485596
+                        Vehicle Width: 1.8960000276565552
                       View Path:
                         Alpha: 0.4000000059604645
                         Constant Width: false
@@ -1417,7 +1403,7 @@ Visualization Manager:
                         Value: false
                     - Class: rviz_plugins/Path
                       Color Border Vel Max: 3
-                      Enabled: true
+                      Enabled: false
                       Name: PathChangeCandidate_AvoidanceByLC
                       Topic:
                         Depth: 5
@@ -1426,7 +1412,7 @@ Visualization Manager:
                         History Policy: Keep Last
                         Reliability Policy: Reliable
                         Value: /planning/path_candidate/avoidance_by_lane_change
-                      Value: true
+                      Value: false
                       View Drivable Area:
                         Alpha: 0.9990000128746033
                         Color: 0; 148; 205
@@ -1436,10 +1422,10 @@ Visualization Manager:
                         Alpha: 1
                         Color: 230; 230; 50
                         Offset from BaseLink: 0
-                        Rear Overhang: 1.0299999713897705
+                        Rear Overhang: 1.100000023841858
                         Value: false
-                        Vehicle Length: 4.769999980926514
-                        Vehicle Width: 1.8300000429153442
+                        Vehicle Length: 4.889999866485596
+                        Vehicle Width: 1.8960000276565552
                       View Path:
                         Alpha: 0.30000001192092896
                         Constant Width: false
@@ -1469,7 +1455,7 @@ Visualization Manager:
                         Value: false
                     - Class: rviz_plugins/Path
                       Color Border Vel Max: 3
-                      Enabled: true
+                      Enabled: false
                       Name: (old)PathChangeCandidate_LaneChange
                       Topic:
                         Depth: 5
@@ -1478,7 +1464,7 @@ Visualization Manager:
                         History Policy: Keep Last
                         Reliability Policy: Reliable
                         Value: /planning/path_candidate/lane_change
-                      Value: true
+                      Value: false
                       View Drivable Area:
                         Alpha: 0.9990000128746033
                         Color: 0; 148; 205
@@ -1521,7 +1507,7 @@ Visualization Manager:
                         Value: false
                     - Class: rviz_plugins/Path
                       Color Border Vel Max: 3
-                      Enabled: true
+                      Enabled: false
                       Name: PathChangeCandidate_LaneChangeRight
                       Topic:
                         Depth: 5
@@ -1530,7 +1516,7 @@ Visualization Manager:
                         History Policy: Keep Last
                         Reliability Policy: Reliable
                         Value: /planning/path_candidate/lane_change_right
-                      Value: true
+                      Value: false
                       View Drivable Area:
                         Alpha: 0.9990000128746033
                         Color: 0; 148; 205
@@ -1540,10 +1526,10 @@ Visualization Manager:
                         Alpha: 1
                         Color: 230; 230; 50
                         Offset from BaseLink: 0
-                        Rear Overhang: 1.0299999713897705
+                        Rear Overhang: 1.100000023841858
                         Value: false
-                        Vehicle Length: 4.769999980926514
-                        Vehicle Width: 1.8300000429153442
+                        Vehicle Length: 4.889999866485596
+                        Vehicle Width: 1.8960000276565552
                       View Path:
                         Alpha: 0.30000001192092896
                         Constant Width: false
@@ -1573,7 +1559,7 @@ Visualization Manager:
                         Value: false
                     - Class: rviz_plugins/Path
                       Color Border Vel Max: 3
-                      Enabled: true
+                      Enabled: false
                       Name: PathChangeCandidate_LaneChangeLeft
                       Topic:
                         Depth: 5
@@ -1582,7 +1568,7 @@ Visualization Manager:
                         History Policy: Keep Last
                         Reliability Policy: Reliable
                         Value: /planning/path_candidate/lane_change_left
-                      Value: true
+                      Value: false
                       View Drivable Area:
                         Alpha: 0.9990000128746033
                         Color: 0; 148; 205
@@ -1592,10 +1578,10 @@ Visualization Manager:
                         Alpha: 1
                         Color: 230; 230; 50
                         Offset from BaseLink: 0
-                        Rear Overhang: 1.0299999713897705
+                        Rear Overhang: 1.100000023841858
                         Value: false
-                        Vehicle Length: 4.769999980926514
-                        Vehicle Width: 1.8300000429153442
+                        Vehicle Length: 4.889999866485596
+                        Vehicle Width: 1.8960000276565552
                       View Path:
                         Alpha: 0.30000001192092896
                         Constant Width: false
@@ -1625,7 +1611,7 @@ Visualization Manager:
                         Value: false
                     - Class: rviz_plugins/Path
                       Color Border Vel Max: 3
-                      Enabled: true
+                      Enabled: false
                       Name: PathChangeCandidate_ExternalRequestLaneChangeRight
                       Topic:
                         Depth: 5
@@ -1634,7 +1620,7 @@ Visualization Manager:
                         History Policy: Keep Last
                         Reliability Policy: Reliable
                         Value: /planning/path_candidate/external_request_lane_change_right
-                      Value: true
+                      Value: false
                       View Drivable Area:
                         Alpha: 0.9990000128746033
                         Color: 0; 148; 205
@@ -1677,7 +1663,7 @@ Visualization Manager:
                         Value: false
                     - Class: rviz_plugins/Path
                       Color Border Vel Max: 3
-                      Enabled: true
+                      Enabled: false
                       Name: PathChangeCandidate_ExternalRequestLaneChangeLeft
                       Topic:
                         Depth: 5
@@ -1686,7 +1672,7 @@ Visualization Manager:
                         History Policy: Keep Last
                         Reliability Policy: Reliable
                         Value: /planning/path_candidate/external_request_lane_change_left
-                      Value: true
+                      Value: false
                       View Drivable Area:
                         Alpha: 0.9990000128746033
                         Color: 0; 148; 205
@@ -1729,7 +1715,7 @@ Visualization Manager:
                         Value: false
                     - Class: rviz_plugins/Path
                       Color Border Vel Max: 3
-                      Enabled: true
+                      Enabled: false
                       Name: PathChangeCandidate_Avoidance
                       Topic:
                         Depth: 5
@@ -1738,7 +1724,7 @@ Visualization Manager:
                         History Policy: Keep Last
                         Reliability Policy: Reliable
                         Value: /planning/path_candidate/static_obstacle_avoidance
-                      Value: true
+                      Value: false
                       View Drivable Area:
                         Alpha: 0.9990000128746033
                         Color: 0; 148; 205
@@ -1748,10 +1734,10 @@ Visualization Manager:
                         Alpha: 1
                         Color: 230; 230; 50
                         Offset from BaseLink: 0
-                        Rear Overhang: 1.0299999713897705
+                        Rear Overhang: 1.100000023841858
                         Value: false
-                        Vehicle Length: 4.769999980926514
-                        Vehicle Width: 1.8300000429153442
+                        Vehicle Length: 4.889999866485596
+                        Vehicle Width: 1.8960000276565552
                       View Path:
                         Alpha: 0.30000001192092896
                         Constant Width: false
@@ -1781,7 +1767,7 @@ Visualization Manager:
                         Value: false
                     - Class: rviz_plugins/Path
                       Color Border Vel Max: 3
-                      Enabled: true
+                      Enabled: false
                       Name: PathChangeCandidate_StartPlanner
                       Topic:
                         Depth: 5
@@ -1790,7 +1776,7 @@ Visualization Manager:
                         History Policy: Keep Last
                         Reliability Policy: Reliable
                         Value: /planning/path_candidate/start_planner
-                      Value: true
+                      Value: false
                       View Drivable Area:
                         Alpha: 0.9990000128746033
                         Color: 0; 148; 205
@@ -1800,10 +1786,10 @@ Visualization Manager:
                         Alpha: 1
                         Color: 230; 230; 50
                         Offset from BaseLink: 0
-                        Rear Overhang: 1.0299999713897705
+                        Rear Overhang: 1.100000023841858
                         Value: false
-                        Vehicle Length: 4.769999980926514
-                        Vehicle Width: 1.8300000429153442
+                        Vehicle Length: 4.889999866485596
+                        Vehicle Width: 1.8960000276565552
                       View Path:
                         Alpha: 0.30000001192092896
                         Constant Width: false
@@ -1852,10 +1838,10 @@ Visualization Manager:
                         Alpha: 1
                         Color: 230; 230; 50
                         Offset from BaseLink: 0
-                        Rear Overhang: 1.0299999713897705
+                        Rear Overhang: 1.100000023841858
                         Value: false
-                        Vehicle Length: 4.769999980926514
-                        Vehicle Width: 1.8300000429153442
+                        Vehicle Length: 4.889999866485596
+                        Vehicle Width: 1.8960000276565552
                       View Path:
                         Alpha: 0.30000001192092896
                         Constant Width: false
@@ -1973,7 +1959,8 @@ Visualization Manager:
                           Enabled: true
                           Name: VirtualWall (GoalPlanner)
                           Namespaces:
-                            {}
+                            stop_factor_text: true
+                            stop_virtual_wall: true
                           Topic:
                             Depth: 5
                             Durability Policy: Volatile
@@ -2057,7 +2044,8 @@ Visualization Manager:
                           Enabled: true
                           Name: VirtualWall (MergeFromPrivateArea)
                           Namespaces:
-                            {}
+                            stop_factor_text: true
+                            stop_virtual_wall: true
                           Topic:
                             Depth: 5
                             Durability Policy: Volatile
@@ -2346,17 +2334,31 @@ Visualization Manager:
                             Value: /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/lane_following
                           Value: false
                         - Class: rviz_default_plugins/MarkerArray
-                          Enabled: false
+                          Enabled: true
                           Name: GoalPlanner
                           Namespaces:
-                            {}
+                            current_path: true
+                            detection_polygons: true
+                            expanded_pull_over_lane_between_ego: true
+                            full_path: true
+                            goal_candidates: true
+                            goal_candidates_num_objects_to_avoid: true
+                            goal_candidates_priority: true
+                            objects_extraction_polygon: true
+                            partial_path_0: true
+                            planner_type: true
+                            previous_module_path: true
+                            pull_over_area_0: true
+                            pull_over_end_pose: true
+                            pull_over_start_pose: true
+                            safety_status: true
                           Topic:
                             Depth: 5
                             Durability Policy: Volatile
                             History Policy: Keep Last
                             Reliability Policy: Reliable
                             Value: /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/goal_planner
-                          Value: false
+                          Value: true
                         - Class: rviz_default_plugins/MarkerArray
                           Enabled: false
                           Name: StartPlanner
@@ -2417,7 +2419,7 @@ Visualization Manager:
                             Reliability Policy: Reliable
                             Value: /planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/debug/no_drivable_lane
                           Value: false
-                      Enabled: false
+                      Enabled: true
                       Name: DebugMarker
                     - Class: rviz_common/Group
                       Displays:
@@ -2970,10 +2972,10 @@ Visualization Manager:
             Alpha: 1
             Color: 230; 230; 50
             Offset from BaseLink: 0
-            Rear Overhang: 1.0299999713897705
+            Rear Overhang: 1.100000023841858
             Value: false
-            Vehicle Length: 4.769999980926514
-            Vehicle Width: 1.8300000429153442
+            Vehicle Length: 4.889999866485596
+            Vehicle Width: 1.8960000276565552
           View Path:
             Alpha: 1
             Constant Width: true
@@ -3137,6 +3139,7 @@ Visualization Manager:
                 Value: /sensing/camera/camera6/image_raw
               Value: true
               Visibility:
+                "": true
                 Control:
                   Debug/AEB: true
                   Debug/MPC: true
@@ -3151,15 +3154,42 @@ Visualization Manager:
                 Debug:
                   Control: true
                   Localization:
-                    "": true
+                    EKFPoseHistory: true
+                    NDT pointclouds: true
+                    NDTLoadedPCDMap: true
+                    NDTPoseHistory: true
                     Value: true
                   Map: true
                   Perception:
-                    "": true
+                    CameraLidarFusion(purple): true
+                    Centerpoint(red1): true
+                    CenterpointROIFusion(red2): true
+                    CenterpointValidator(red3): true
+                    Detection(yellow): true
+                    DetectionByTracker(orange): true
+                    PointPainting(light_green1): true
+                    PointPaintingROIFusion(light_green2): true
+                    PointPaintingValidator(light_green3): true
+                    Prediction(light_blue): true
+                    RadarFarObjects(white): true
+                    Tracking(green): true
                     Value: true
                   Planning:
-                    "":
-                      "": true
+                    Objects Of Interest:
+                      AvoidanceByLCLeft: true
+                      AvoidanceByLCRight: true
+                      AvoidanceLeft: true
+                      AvoidanceRight: true
+                      BlindSpot: true
+                      Crosswalk: true
+                      DetectionArea: true
+                      GoalPlanner: true
+                      Intersection: true
+                      LaneChangeLeft: true
+                      LaneChangeRight: true
+                      NoStoppingArea: true
+                      StartPlanner: true
+                      TrafficLight: true
                       Value: true
                     Value: true
                   Sensing:
@@ -4391,6 +4421,22 @@ Visualization Manager:
           Name: Control
       Enabled: false
       Name: Debug
+    - Class: rviz_plugins/StringStampedOverlayDisplay
+      Enabled: true
+      Font Size: 12
+      Left: 10
+      Max Letter Num: 100
+      Name: StringStampedOverlayDisplay
+      Text Color: 25; 255; 240
+      Top: 64
+      Topic:
+        Depth: 5
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /planning/scenario_planning/lane_driving/behavior_planning/behavior_path_planner/debug/internal_state
+      Value: true
+      Value height offset: 0
   Enabled: true
   Global Options:
     Background Color: 15; 20; 23
@@ -4488,7 +4534,7 @@ Visualization Manager:
   Value: true
   Views:
     Current:
-      Angle: 0
+      Angle: -1.5949994325637817
       Class: rviz_default_plugins/TopDownOrtho
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.05999999865889549
@@ -4498,11 +4544,11 @@ Visualization Manager:
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.009999999776482582
-      Scale: 10
-      Target Frame: viewer
+      Scale: 21.228200912475586
+      Target Frame: base_link
       Value: TopDownOrtho (rviz_default_plugins)
-      X: 0
-      Y: 0
+      X: 21.211475372314453
+      Y: 24.770742416381836
     Saved:
       - Class: rviz_default_plugins/ThirdPersonFollower
         Distance: 18
@@ -4545,13 +4591,13 @@ Window Geometry:
   AutowareStatePanel:
     collapsed: false
   Displays:
-    collapsed: false
+    collapsed: true
   Height: 939
   Hide Left Dock: false
-  Hide Right Dock: false
+  Hide Right Dock: true
   PointcloudOnCamera:
     collapsed: false
-  QMainWindow State: 000000ff00000000fd0000000400000000000001ef00000349fc020000000ffb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006b00fffffffb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb00000024004100750074006f00770061007200650053007400610074006500500061006e0065006c01000000440000029b0000008100fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000c00430061006d0065007200610100000682000000eb0000000000000000fb0000000a0049006d0061006700650100000505000002680000000000000000fb0000002c0049006e0069007400690061006c0050006f007300650042007500740074006f006e00500061006e0065006c000000068f000000de0000000000000000fb0000002c0049006e0069007400690061006c0050006f007300650042007500740074006f006e00500061006e0065006c000000068f000000de0000000000000000fb00000030005200650063006f0067006e006900740069006f006e0052006500730075006c0074004f006e0049006d0061006700650000000246000000c10000002c00fffffffb0000002a004100750074006f0077006100720065004400610074006500540069006d006500500061006e0065006c0000000332000000720000004600fffffffb000000240050006f0069006e00740063006c006f00750064004f006e00430061006d006500720061000000039d000000560000002c00fffffffb0000002600530069006d0075006c00610074006500640043006c006f0063006b00500061006e0065006c01000002e6000000a70000007f00ffffff00000001000001ab00000349fc0200000004fb000000100044006900730070006c006100790073010000004400000122000000eb00fffffffc0000016d00000220000000da01000020fa000000000100000002fb0000000a0056006900650077007301000005d5000001ab0000010200fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000000ffffffff000000a400fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000e7a0000005afc0100000001fb0000000a00560069006500770073030000004e00000080000002e1000001970000000300000e7a0000005afc0100000002fb0000000800540069006d0065010000000000000e7a0000000000000000fb0000000800540069006d00650100000000000004500000000000000000000003d80000034900000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
+  QMainWindow State: 000000ff00000000fd00000004000000000000022d00000349fc0200000010fb0000001200530065006c0065006300740069006f006e00000001e10000009b0000006b00fffffffb000000120056006900650077007300200054006f006f02000001df000002110000018500000122fb000000200054006f006f006c002000500072006f0070006500720074006900650073003203000002880000011d000002210000017afb00000024004100750074006f00770061007200650053007400610074006500500061006e0065006c0100000044000001ac0000008100fffffffb0000002000730065006c0065006300740069006f006e00200062007500660066006500720200000138000000aa0000023a00000294fb00000014005700690064006500530074006500720065006f02000000e6000000d2000003ee0000030bfb0000000c004b0069006e0065006300740200000186000001060000030c00000261fb0000000c00430061006d0065007200610100000682000000eb0000000000000000fb0000000a0049006d0061006700650100000505000002680000000000000000fb0000002c0049006e0069007400690061006c0050006f007300650042007500740074006f006e00500061006e0065006c000000068f000000de0000000000000000fb0000002c0049006e0069007400690061006c0050006f007300650042007500740074006f006e00500061006e0065006c000000068f000000de0000000000000000fb00000030005200650063006f0067006e006900740069006f006e0052006500730075006c0074004f006e0049006d0061006700650000000246000000c10000002c00fffffffb0000002a004100750074006f0077006100720065004400610074006500540069006d006500500061006e0065006c0000000332000000720000004600fffffffb000000240050006f0069006e00740063006c006f00750064004f006e00430061006d006500720061000000039d000000560000002c00fffffffb0000002600530069006d0075006c00610074006500640043006c006f0063006b00500061006e0065006c01000001f70000007f0000007f00fffffffb000000300054007200610066006600690063004c0069006700680074005000750062006c00690073006800500061006e0065006c010000027d000001100000011000ffffff000000010000024500000349fc0200000004fb000000100044006900730070006c006100790073000000004400000256000000eb00fffffffc000002a1000000ec0000000000fffffffaffffffff0100000002fb0000000a0056006900650077007300000005d5000001ab0000010200fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730000000000ffffffff000000a400fffffffb0000001e0054006f006f006c002000500072006f00700065007200740069006500730100000041000000780000000000000000fb0000001200530065006c0065006300740069006f006e010000025a000000b200000000000000000000000200000e7a0000005afc0100000001fb0000000a00560069006500770073030000004e00000080000002e1000001970000000300000e7a0000005afc0100000002fb0000000800540069006d0065010000000000000e7a0000000000000000fb0000000800540069006d006501000000000000045000000000000000000000054c0000034900000004000000040000000800000008fc0000000100000002000000010000000a0054006f006f006c00730100000000ffffffff0000000000000000
   RecognitionResultOnImage:
     collapsed: false
   Selection:
@@ -4559,11 +4605,11 @@ Window Geometry:
   SimulatedClockPanel:
     collapsed: false
   Tool Properties:
-    collapsed: false
+    collapsed: true
   TrafficLightPublishPanel:
     collapsed: false
   Views:
-    collapsed: false
+    collapsed: true
   Width: 1920
   X: 0
   Y: 34

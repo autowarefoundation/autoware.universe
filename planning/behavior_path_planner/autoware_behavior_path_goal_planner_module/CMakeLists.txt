@@ -3,7 +3,7 @@ project(autoware_behavior_path_goal_planner_module)
 
 set(ament_cmake_lint_cmake_FOUND TRUE)
 
-option(BUILD_EXAMPLES "Build examples" OFF)
+option(BUILD_EXAMPLES "Build examples" ON)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
