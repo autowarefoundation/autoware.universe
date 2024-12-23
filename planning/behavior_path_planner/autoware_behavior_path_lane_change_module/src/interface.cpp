@@ -40,8 +40,9 @@ LaneChangeInterface::LaneChangeInterface(
   const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
   std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
     objects_of_interest_marker_interface_ptr_map,
+  const std::shared_ptr<PlanningFactorInterface> & planning_factor_interface,
   std::unique_ptr<LaneChangeBase> && module_type)
-: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map},  // NOLINT
+: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map, planning_factor_interface},  // NOLINT
   parameters_{std::move(parameters)},
   module_type_{std::move(module_type)},
   prev_approved_path_{std::make_unique<PathWithLaneId>()}
@@ -150,6 +151,8 @@ BehaviorModuleOutput LaneChangeInterface::plan()
     }
   }
 
+  set_longitudinal_planning_factor(output.path);
+
   setVelocityFactor(output.path);
 
   return output;
@@ -187,6 +190,8 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
     candidate.start_distance_to_path_change, candidate.finish_distance_to_path_change,
     isExecutionReady(), State::WAITING_FOR_EXECUTION);
   is_abort_path_approved_ = false;
+
+  set_longitudinal_planning_factor(out.path);
 
   setVelocityFactor(out.path);
 
@@ -436,6 +441,20 @@ void LaneChangeInterface::updateSteeringFactorPtr(const BehaviorModuleOutput & o
   steering_factor_interface_.set(
     {status.lane_change_path.info.shift_line.start, status.lane_change_path.info.shift_line.end},
     {start_distance, finish_distance}, steering_factor_direction, SteeringFactor::TURNING, "");
+
+  const auto planning_factor_direction = std::invoke([&]() {
+    if (module_type_->getDirection() == Direction::LEFT) {
+      return PlanningFactor::SHIFT_LEFT;
+    }
+    if (module_type_->getDirection() == Direction::RIGHT) {
+      return PlanningFactor::SHIFT_RIGHT;
+    }
+    return PlanningFactor::UNKNOWN;
+  });
+
+  planning_factor_interface_->add(
+    start_distance, finish_distance, status.lane_change_path.info.shift_line.start,
+    status.lane_change_path.info.shift_line.end, planning_factor_direction, SafetyFactorArray{});
 }
 
 void LaneChangeInterface::updateSteeringFactorPtr(
@@ -452,5 +471,17 @@ void LaneChangeInterface::updateSteeringFactorPtr(
     {selected_path.info.shift_line.start, selected_path.info.shift_line.end},
     {output.start_distance_to_path_change, output.finish_distance_to_path_change},
     steering_factor_direction, SteeringFactor::APPROACHING, "");
+
+  const uint16_t planning_factor_direction = std::invoke([&output]() {
+    if (output.lateral_shift > 0.0) {
+      return PlanningFactor::SHIFT_LEFT;
+    }
+    return PlanningFactor::SHIFT_RIGHT;
+  });
+
+  planning_factor_interface_->add(
+    output.start_distance_to_path_change, output.finish_distance_to_path_change,
+    selected_path.info.shift_line.start, selected_path.info.shift_line.end,
+    planning_factor_direction, SafetyFactorArray{});
 }
 }  // namespace autoware::behavior_path_planner
