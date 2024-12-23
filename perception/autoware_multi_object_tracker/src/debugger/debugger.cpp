@@ -185,13 +185,13 @@ void TrackerDebugger::endPublishTime(const rclcpp::Time & now, const rclcpp::Tim
 
 void TrackerDebugger::collectObjectInfo(
   const rclcpp::Time & message_time, const std::list<std::shared_ptr<Tracker>> & list_tracker,
-  const uint & channel_index, const types::DynamicObjectList & detected_objects,
+  const types::DynamicObjectList & detected_objects,
   const std::unordered_map<int, int> & direct_assignment,
   const std::unordered_map<int, int> & reverse_assignment)
 {
   if (!debug_settings_.publish_debug_markers) return;
   object_debugger_.collect(
-    message_time, list_tracker, channel_index, detected_objects, direct_assignment,
+    message_time, list_tracker, detected_objects, direct_assignment,
     reverse_assignment);
 }
 

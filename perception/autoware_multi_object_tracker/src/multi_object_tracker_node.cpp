@@ -282,7 +282,6 @@ void MultiObjectTracker::onTimer()
 
 void MultiObjectTracker::runProcess(const types::DynamicObjectList & input_objects)
 {
-  const uint & channel_index = input_objects.channel_index;
   // Get the time of the measurement
   const rclcpp::Time measurement_time =
     rclcpp::Time(input_objects.header.stamp, this->now().get_clock_type());
@@ -351,7 +350,7 @@ void MultiObjectTracker::runProcess(const types::DynamicObjectList & input_objec
 
     // Collect debug information - tracker list, existence probabilities, association results
     debugger_->collectObjectInfo(
-      measurement_time, processor_->getListTracker(), channel_index, transformed_objects,
+      measurement_time, processor_->getListTracker(), transformed_objects,
       direct_assignment, reverse_assignment);
   }
 
@@ -362,7 +361,7 @@ void MultiObjectTracker::runProcess(const types::DynamicObjectList & input_objec
   processor_->prune(measurement_time);
 
   /* spawn new tracker */
-  if (input_manager_->isChannelSpawnEnabled(channel_index)) {
+  if (input_manager_->isChannelSpawnEnabled(input_objects.channel_index)) {
     processor_->spawn(transformed_objects, *self_transform, reverse_assignment);
   }
 }

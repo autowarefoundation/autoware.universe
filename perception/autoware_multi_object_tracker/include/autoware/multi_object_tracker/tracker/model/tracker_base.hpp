@@ -69,7 +69,7 @@ public:
   }
   bool updateWithMeasurement(
     const types::DynamicObject & object, const rclcpp::Time & measurement_time,
-    const geometry_msgs::msg::Transform & self_transform, const uint & channel_index);
+    const geometry_msgs::msg::Transform & self_transform);
   bool updateWithoutMeasurement(const rclcpp::Time & now);
 
   // classification

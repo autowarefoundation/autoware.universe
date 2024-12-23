@@ -47,8 +47,7 @@ using Label = autoware_perception_msgs::msg::ObjectClassification;
 
 PedestrianTracker::PedestrianTracker(
   const rclcpp::Time & time, const types::DynamicObject & object,
-  const geometry_msgs::msg::Transform & /*self_transform*/, const size_t channel_size,
-  const uint & channel_index)
+  const geometry_msgs::msg::Transform & /*self_transform*/, const size_t channel_size)
 : Tracker(time, object.classification, channel_size),
   logger_(rclcpp::get_logger("PedestrianTracker")),
   z_(object.kinematics.pose_with_covariance.pose.position.z)
@@ -56,7 +55,7 @@ PedestrianTracker::PedestrianTracker(
   object_ = object;
 
   // initialize existence probability
-  initializeExistenceProbabilities(channel_index, object.existence_probability);
+  initializeExistenceProbabilities(object.channel_index, object.existence_probability);
 
   // OBJECT SHAPE MODEL
   bounding_box_ = {

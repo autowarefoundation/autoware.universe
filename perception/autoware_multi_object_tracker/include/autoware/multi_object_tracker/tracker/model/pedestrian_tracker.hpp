@@ -59,8 +59,7 @@ private:
 public:
   PedestrianTracker(
     const rclcpp::Time & time, const types::DynamicObject & object,
-    const geometry_msgs::msg::Transform & self_transform, const size_t channel_size,
-    const uint & channel_index);
+    const geometry_msgs::msg::Transform & self_transform, const size_t channel_size);
 
   bool predict(const rclcpp::Time & time) override;
   bool measure(

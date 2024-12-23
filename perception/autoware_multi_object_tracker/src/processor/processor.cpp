@@ -60,7 +60,7 @@ void TrackerProcessor::update(
         detected_objects.objects.at(direct_assignment.find(tracker_idx)->second);
       (*(tracker_itr))
         ->updateWithMeasurement(
-          associated_object, time, self_transform, detected_objects.channel_index);
+          associated_object, time, self_transform);
     } else {  // not found
       (*(tracker_itr))->updateWithoutMeasurement(time);
     }
@@ -79,14 +79,14 @@ void TrackerProcessor::spawn(
     }
     const auto & new_object = detected_objects.objects.at(i);
     std::shared_ptr<Tracker> tracker =
-      createNewTracker(new_object, time, self_transform, detected_objects.channel_index);
+      createNewTracker(new_object, time, self_transform);
     if (tracker) list_tracker_.push_back(tracker);
   }
 }
 
 std::shared_ptr<Tracker> TrackerProcessor::createNewTracker(
   const types::DynamicObject & object, const rclcpp::Time & time,
-  const geometry_msgs::msg::Transform & self_transform, const uint & channel_index) const
+  const geometry_msgs::msg::Transform & self_transform) const
 {
   const LabelType label =
     autoware::object_recognition_utils::getHighestProbLabel(object.classification);
@@ -94,30 +94,28 @@ std::shared_ptr<Tracker> TrackerProcessor::createNewTracker(
     const auto tracker = config_.tracker_map.at(label);
     if (tracker == "bicycle_tracker")
       return std::make_shared<BicycleTracker>(
-        time, object, self_transform, config_.channel_size, channel_index);
+        time, object, self_transform, config_.channel_size);
     if (tracker == "big_vehicle_tracker")
       return std::make_shared<VehicleTracker>(
-        object_model::big_vehicle, time, object, self_transform, config_.channel_size,
-        channel_index);
+        object_model::big_vehicle, time, object, self_transform, config_.channel_size);
     if (tracker == "multi_vehicle_tracker")
       return std::make_shared<MultipleVehicleTracker>(
-        time, object, self_transform, config_.channel_size, channel_index);
+        time, object, self_transform, config_.channel_size);
     if (tracker == "normal_vehicle_tracker")
       return std::make_shared<VehicleTracker>(
-        object_model::normal_vehicle, time, object, self_transform, config_.channel_size,
-        channel_index);
+        object_model::normal_vehicle, time, object, self_transform, config_.channel_size);
     if (tracker == "pass_through_tracker")
       return std::make_shared<PassThroughTracker>(
-        time, object, self_transform, config_.channel_size, channel_index);
+        time, object, self_transform, config_.channel_size);
     if (tracker == "pedestrian_and_bicycle_tracker")
       return std::make_shared<PedestrianAndBicycleTracker>(
-        time, object, self_transform, config_.channel_size, channel_index);
+        time, object, self_transform, config_.channel_size);
     if (tracker == "pedestrian_tracker")
       return std::make_shared<PedestrianTracker>(
-        time, object, self_transform, config_.channel_size, channel_index);
+        time, object, self_transform, config_.channel_size);
   }
   return std::make_shared<UnknownTracker>(
-    time, object, self_transform, config_.channel_size, channel_index);
+    time, object, self_transform, config_.channel_size);
 }
 
 void TrackerProcessor::prune(const rclcpp::Time & time)

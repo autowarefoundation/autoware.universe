@@ -48,7 +48,7 @@ using Label = autoware_perception_msgs::msg::ObjectClassification;
 VehicleTracker::VehicleTracker(
   const object_model::ObjectModel & object_model, const rclcpp::Time & time,
   const types::DynamicObject & object, const geometry_msgs::msg::Transform & /*self_transform*/,
-  const size_t channel_size, const uint & channel_index)
+  const size_t channel_size)
 : Tracker(time, object.classification, channel_size),
   object_model_(object_model),
   logger_(rclcpp::get_logger("VehicleTracker")),
@@ -58,7 +58,7 @@ VehicleTracker::VehicleTracker(
   object_ = object;
 
   // initialize existence probability
-  initializeExistenceProbabilities(channel_index, object.existence_probability);
+  initializeExistenceProbabilities(object.channel_index, object.existence_probability);
 
   // velocity deviation threshold
   //   if the predicted velocity is close to the observed velocity,

@@ -81,7 +81,7 @@ private:
   void removeOverlappedTracker(const rclcpp::Time & time);
   std::shared_ptr<Tracker> createNewTracker(
     const types::DynamicObject & object, const rclcpp::Time & time,
-    const geometry_msgs::msg::Transform & self_transform, const uint & channel_index) const;
+    const geometry_msgs::msg::Transform & self_transform) const;
 };
 
 }  // namespace autoware::multi_object_tracker
