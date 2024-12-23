@@ -14,7 +14,6 @@
 
 #ifndef AUTOWARE__PLANNING_EVALUATOR__METRICS__METRICS_UTILS_HPP_
 #define AUTOWARE__PLANNING_EVALUATOR__METRICS__METRICS_UTILS_HPP_
-
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "autoware_planning_msgs/msg/trajectory_point.hpp"
 
@@ -25,6 +24,7 @@ namespace metrics
 namespace utils
 {
 using autoware_planning_msgs::msg::Trajectory;
+using geometry_msgs::msg::Pose;
 
 /**
  * @brief find the index in the trajectory at the given distance of the given index
@@ -34,6 +34,18 @@ using autoware_planning_msgs::msg::Trajectory;
  * @return index of the trajectory point at distance ahead of traj[curr_id]
  */
 size_t getIndexAfterDistance(const Trajectory & traj, const size_t curr_id, const double distance);
+
+/**
+ * @brief calculate the total distance from ego position to the end of trajectory
+ * @details finds the nearest point to ego position on the trajectory and calculates
+ *          the cumulative distance by summing up the distances between consecutive points
+ *          from that position to the end of the trajectory.
+ *
+ * @param [in] traj input trajectory to calculate distance along
+ * @param [in] ego_pose current ego vehicle pose
+ * @return total distance from ego position to trajectory end in meters
+ */
+double calc_lookahead_trajectory_distance(const Trajectory & traj, const Pose & ego_pose);
 
 }  // namespace utils
 }  // namespace metrics

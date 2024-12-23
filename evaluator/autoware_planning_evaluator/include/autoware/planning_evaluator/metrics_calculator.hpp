@@ -23,6 +23,7 @@
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "autoware_planning_msgs/msg/trajectory_point.hpp"
 #include "geometry_msgs/msg/pose.hpp"
+#include <nav_msgs/msg/odometry.hpp>
 
 #include <optional>
 
@@ -74,7 +75,7 @@ public:
    * @brief set the ego pose
    * @param [in] traj input previous trajectory
    */
-  void setEgoPose(const geometry_msgs::msg::Pose & pose);
+  void setEgoPose(const nav_msgs::msg::Odometry & ego_odometry);
 
   /**
    * @brief get the ego pose
@@ -100,6 +101,7 @@ private:
   Trajectory previous_trajectory_lookahead_;
   PredictedObjects dynamic_objects_;
   geometry_msgs::msg::Pose ego_pose_;
+  nav_msgs::msg::Odometry ego_odometry_;
   PoseWithUuidStamped modified_goal_;
 };  // class MetricsCalculator
 

@@ -20,6 +20,7 @@
 #include "autoware/planning_evaluator/metrics/stability_metrics.hpp"
 #include "autoware/planning_evaluator/metrics/trajectory_metrics.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
+
 namespace planning_diagnostics
 {
 std::optional<Accumulator<double>> MetricsCalculator::calculate(
@@ -67,6 +68,9 @@ std::optional<Accumulator<double>> MetricsCalculator::calculate(
         getLookaheadTrajectory(
           traj, parameters.trajectory.lookahead.max_dist_m,
           parameters.trajectory.lookahead.max_time_s));
+    case Metric::trajectory_lateral_displacement:
+      return metrics::calcTrajectoryLateralDisplacement(
+        previous_trajectory_, traj, ego_odometry_, parameters.trajectory.evaluation_time_s);
     case Metric::obstacle_distance:
       return metrics::calcDistanceToObstacle(dynamic_objects_, traj);
     case Metric::obstacle_ttc:
@@ -107,9 +111,10 @@ void MetricsCalculator::setPredictedObjects(const PredictedObjects & objects)
   dynamic_objects_ = objects;
 }
 
-void MetricsCalculator::setEgoPose(const geometry_msgs::msg::Pose & pose)
+void MetricsCalculator::setEgoPose(const nav_msgs::msg::Odometry & ego_odometry)
 {
-  ego_pose_ = pose;
+  ego_pose_ = ego_odometry.pose.pose;
+  ego_odometry_ = ego_odometry;
 }
 
 Pose MetricsCalculator::getEgoPose()

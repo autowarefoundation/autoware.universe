@@ -50,6 +50,8 @@ PlanningEvaluatorNode::PlanningEvaluatorNode(const rclcpp::NodeOptions & node_op
     declare_parameter<double>("trajectory.lookahead.max_dist_m");
   metrics_calculator_.parameters.trajectory.lookahead.max_time_s =
     declare_parameter<double>("trajectory.lookahead.max_time_s");
+  metrics_calculator_.parameters.trajectory.evaluation_time_s =
+    declare_parameter<double>("trajectory.evaluation_time_s");
   metrics_calculator_.parameters.obstacle.dist_thr_m =
     declare_parameter<double>("obstacle.dist_thr_m");
 
@@ -343,7 +345,7 @@ void PlanningEvaluatorNode::onModifiedGoal(
 void PlanningEvaluatorNode::onOdometry(const Odometry::ConstSharedPtr odometry_msg)
 {
   if (!odometry_msg) return;
-  metrics_calculator_.setEgoPose(odometry_msg->pose.pose);
+  metrics_calculator_.setEgoPose(*odometry_msg);
   {
     getRouteData();
     if (route_handler_.isHandlerReady() && odometry_msg) {
