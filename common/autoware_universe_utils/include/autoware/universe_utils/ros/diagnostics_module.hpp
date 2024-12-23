@@ -54,11 +54,6 @@ void DiagnosticsModule::add_key_value(const std::string & key, const T & value)
   add_key_value(key_value);
 }
 
-template <>
-void DiagnosticsModule::add_key_value(const std::string & key, const std::string & value);
-template <>
-void DiagnosticsModule::add_key_value(const std::string & key, const bool & value);
-
 }  // namespace autoware::universe_utils
 
 #endif  // AUTOWARE__UNIVERSE_UTILS__ROS__DIAGNOSTICS_MODULE_HPP_
