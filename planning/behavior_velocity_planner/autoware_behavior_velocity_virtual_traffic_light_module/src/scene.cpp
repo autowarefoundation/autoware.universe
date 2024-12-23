@@ -38,12 +38,15 @@ VirtualTrafficLightModule::VirtualTrafficLightModule(
   const int64_t module_id, const int64_t lane_id,
   const lanelet::autoware::VirtualTrafficLight & reg_elem, lanelet::ConstLanelet lane,
   const PlannerParam & planner_param, const rclcpp::Logger logger,
-  const rclcpp::Clock::SharedPtr clock)
+  const rclcpp::Clock::SharedPtr clock,
+  const autoware::universe_utils::InterProcessPollingSubscriber<
+    tier4_v2x_msgs::msg::VirtualTrafficLightStateArray>::SharedPtr sub_virtual_traffic_light_states)
 : SceneModuleInterface(module_id, logger, clock),
   lane_id_(lane_id),
   reg_elem_(reg_elem),
   lane_(lane),
-  planner_param_(planner_param)
+  planner_param_(planner_param),
+  sub_virtual_traffic_light_states_(sub_virtual_traffic_light_states)
 {
   velocity_factor_.init(PlanningBehavior::VIRTUAL_TRAFFIC_LIGHT);
 
@@ -334,11 +337,12 @@ std::optional<tier4_v2x_msgs::msg::VirtualTrafficLightState>
 VirtualTrafficLightModule::findCorrespondingState()
 {
   // No message
-  if (!planner_data_->virtual_traffic_light_states) {
+  const auto virtual_traffic_light_states = sub_virtual_traffic_light_states_->takeData();
+  if (!virtual_traffic_light_states) {
     return {};
   }
 
-  for (const auto & state : planner_data_->virtual_traffic_light_states->states) {
+  for (const auto & state : virtual_traffic_light_states->states) {
     if (state.id == map_data_.instrument_id) {
       return state;
     }

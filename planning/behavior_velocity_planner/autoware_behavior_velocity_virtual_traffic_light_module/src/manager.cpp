@@ -53,6 +53,10 @@ VirtualTrafficLightModuleManager::VirtualTrafficLightModuleManager(rclcpp::Node 
     p.check_timeout_after_stop_line =
       getOrDeclareParameter<bool>(node, ns + ".check_timeout_after_stop_line");
   }
+
+  sub_virtual_traffic_light_states_ = autoware::universe_utils::InterProcessPollingSubscriber<
+    tier4_v2x_msgs::msg::VirtualTrafficLightStateArray>::
+    create_subscription(&node, "~/input/virtual_traffic_light_states");
 }
 
 void VirtualTrafficLightModuleManager::launchNewModules(
@@ -84,7 +88,8 @@ void VirtualTrafficLightModuleManager::launchNewModules(
         ego_path_linestring, lanelet::utils::to2D(stop_line_opt.value()).basicLineString())) {
       registerModule(std::make_shared<VirtualTrafficLightModule>(
         module_id, lane_id, *m.first, m.second, planner_param_,
-        logger_.get_child("virtual_traffic_light_module"), clock_));
+        logger_.get_child("virtual_traffic_light_module"), clock_,
+        sub_virtual_traffic_light_states_));
     }
   }
 }
