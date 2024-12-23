@@ -84,17 +84,6 @@ public:
   Pose getEgoPose();
 
 private:
-  /**
-   * @brief trim a trajectory from the current ego pose to some fixed time or distance
-   * @param [in] traj input trajectory to trim
-   * @param [in] max_dist_m [m] maximum distance ahead of the ego pose
-   * @param [in] max_time_s [s] maximum time ahead of the ego pose
-   * @return sub-trajectory starting from the ego pose and of maximum length max_dist_m, maximum
-   * duration max_time_s
-   */
-  Trajectory getLookaheadTrajectory(
-    const Trajectory & traj, const double max_dist_m, const double max_time_s) const;
-
   Trajectory reference_trajectory_;
   Trajectory reference_trajectory_lookahead_;
   Trajectory previous_trajectory_;

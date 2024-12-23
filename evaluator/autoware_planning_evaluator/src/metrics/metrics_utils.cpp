@@ -44,6 +44,35 @@ size_t getIndexAfterDistance(const Trajectory & traj, const size_t curr_id, cons
   return target_id;
 }
 
+Trajectory get_lookahead_trajectory(
+  const Trajectory & traj, const Pose & ego_pose, const double max_dist_m, const double max_time_s)
+{
+  if (traj.points.empty()) {
+    return traj;
+  }
+
+  const auto ego_index =
+    autoware::motion_utils::findNearestSegmentIndex(traj.points, ego_pose.position);
+  Trajectory lookahead_traj;
+  lookahead_traj.header = traj.header;
+  double dist = 0.0;
+  double time = 0.0;
+  auto curr_point_it = std::next(traj.points.begin(), ego_index);
+  auto prev_point_it = curr_point_it;
+  while (curr_point_it != traj.points.end() && dist <= max_dist_m && time <= max_time_s) {
+    lookahead_traj.points.push_back(*curr_point_it);
+    const auto d = autoware::universe_utils::calcDistance2d(
+      prev_point_it->pose.position, curr_point_it->pose.position);
+    dist += d;
+    if (prev_point_it->longitudinal_velocity_mps != 0.0) {
+      time += d / std::abs(prev_point_it->longitudinal_velocity_mps);
+    }
+    prev_point_it = curr_point_it;
+    ++curr_point_it;
+  }
+  return lookahead_traj;
+}
+
 double calc_lookahead_trajectory_distance(const Trajectory & traj, const Pose & ego_pose)
 {
   const auto ego_index =
