@@ -129,12 +129,12 @@ void CloudCollector::show_debug_message()
              << ros2_parent_node_->get_clock()->now().seconds() << " seconds\n";
 
   if (collector_info_.strategy_type == CollectorStrategyType::Advanced) {
-    log_stream << "Advanced stratygy:\n Collector's reference time min: "
+    log_stream << "Advanced strategy:\n Collector's reference time min: "
                << collector_info_.timestamp - collector_info_.noise_window
                << " to max: " << collector_info_.timestamp + collector_info_.noise_window
                << " seconds\n";
   } else if (collector_info_.strategy_type == CollectorStrategyType::Naive) {
-    log_stream << "Naive stratygy:\n Collector's first cloud arrival time: "
+    log_stream << "Naive strategy:\n Collector's first cloud arrival time: "
                << collector_info_.timestamp << " seconds\n";
   }
 
