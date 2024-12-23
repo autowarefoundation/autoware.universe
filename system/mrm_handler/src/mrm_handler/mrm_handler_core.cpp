@@ -115,12 +115,11 @@ void MrmHandler::publishHazardCmd()
   HazardLightsCommand msg;
 
   msg.stamp = this->now();
-  if (is_emergency_holding_) {
-    // turn hazard on during emergency holding
-    msg.command = HazardLightsCommand::ENABLE;
-  } else if (isEmergency() && param_.turning_hazard_on.emergency) {
-    // turn hazard on if vehicle is in emergency state and
-    // turning hazard on if emergency flag is true
+  if (
+    is_emergency_holding_ ||              // turn hazard on during emergency holding
+    (isEmergency() &&                     // turn hazard on if emergency flag is true
+     param_.turning_hazard_on.emergency)  // turn hazard on if vehicle is in emergency state
+  ) {
     msg.command = HazardLightsCommand::ENABLE;
   } else {
     msg.command = HazardLightsCommand::NO_COMMAND;
@@ -185,12 +184,12 @@ void MrmHandler::operateMrm()
     if (current_mrm_behavior == mrm_state_.behavior) {
       return;
     }
-    if (!requestMrmBehavior(mrm_state_.behavior, RequestType::CANCEL)) {
+    if (
+      !requestMrmBehavior(mrm_state_.behavior, RequestType::CANCEL) ||
+      !requestMrmBehavior(current_mrm_behavior, RequestType::CALL)) {
       handleFailedRequest();
-    } else if (requestMrmBehavior(current_mrm_behavior, RequestType::CALL)) {
-      mrm_state_.behavior = current_mrm_behavior;
     } else {
-      handleFailedRequest();
+      mrm_state_.behavior = current_mrm_behavior;
     }
     return;
   }
