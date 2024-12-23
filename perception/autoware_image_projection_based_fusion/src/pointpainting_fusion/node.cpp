@@ -193,6 +193,7 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
   // create detector
   detector_ptr_ = std::make_unique<image_projection_based_fusion::PointPaintingTRT>(
     encoder_param, head_param, densification_param, config);
+  diagnostics_module_ptr_ = std::make_unique<DiagnosticsModule>(this, "pointpainting_trt");
 
   obj_pub_ptr_ = this->create_publisher<DetectedObjects>("~/output/objects", rclcpp::QoS{1});
 
@@ -401,6 +402,8 @@ void PointPaintingFusionNode::postprocess(sensor_msgs::msg::PointCloud2 & painte
     return;
   }
 
+  diagnostics_module_ptr_->clear();
+
   if (painted_pointcloud_msg.data.empty() || painted_pointcloud_msg.fields.empty()) {
     RCLCPP_WARN_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), 1000, "Empty sensor points!");
@@ -408,9 +411,18 @@ void PointPaintingFusionNode::postprocess(sensor_msgs::msg::PointCloud2 & painte
   }
 
   std::vector<autoware::lidar_centerpoint::Box3D> det_boxes3d;
-  bool is_success = detector_ptr_->detect(painted_pointcloud_msg, tf_buffer_, det_boxes3d);
+  bool is_num_pillars_within_range = true;
+  bool is_success = detector_ptr_->detect(painted_pointcloud_msg, tf_buffer_, det_boxes3d, is_num_pillars_within_range);
   if (!is_success) {
     return;
+  }
+  diagnostics_module_ptr_->add_key_value("is_num_pillars_within_range", is_num_pillars_within_range);
+  if (!is_num_pillars_within_range) {
+    std::stringstream message;
+    message << "PointPaintingTRT::detect: The actual number of pillars exceeds its maximum value, "
+            << "which may limit the detection performance.";
+    diagnostics_module_ptr_->update_level_and_message(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
 
   std::vector<autoware_perception_msgs::msg::DetectedObject> raw_objects;
