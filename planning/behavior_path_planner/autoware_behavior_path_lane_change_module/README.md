@@ -942,7 +942,7 @@ The following parameters are used to configure terminal lane change path feature
 | :-------------------------------- | ---- | ---- | ------------------------------------------------------------------------- | ------------- |
 | `terminal_path.enable`            | [-]  | bool | Flag to enable/disable terminal path feature                              | true          |
 | `terminal_path.disable_near_goal` | [-]  | bool | Flag to disable terminal path feature if ego is near goal                 | true          |
-| `terminal_path.stop_at_boundary`  | [-]  | bool | If true, ego will stop at current lane boundary instead of middle of lane | true          |
+| `terminal_path.stop_at_boundary`  | [-]  | bool | If true, ego will stop at current lane boundary instead of middle of lane | false         |
 
 ### Collision checks
 
