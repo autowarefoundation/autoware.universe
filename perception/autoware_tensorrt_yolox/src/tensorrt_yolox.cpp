@@ -353,7 +353,7 @@ TrtYoloX::~TrtYoloX()
         argmax_buf_d_.reset();
       }
     }
-  } catch (const std::exception &e) {
+  } catch (const std::exception & e) {
     std::cerr << "Exception in TrtYoloX destructor: " << e.what() << std::endl;
   } catch (...) {
     std::cerr << "Unknown exception in TrtYoloX destructor" << std::endl;
@@ -1149,7 +1149,7 @@ void TrtYoloX::generateYoloxProposals(
         objects.push_back(obj);
       }
     }  // class loop
-  }  // point anchor loop
+  }    // point anchor loop
 }
 
 void TrtYoloX::qsortDescentInplace(ObjectArray & face_objects, int left, int right) const
