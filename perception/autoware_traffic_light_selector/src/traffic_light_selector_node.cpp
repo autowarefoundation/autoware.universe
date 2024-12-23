@@ -19,6 +19,7 @@
 
 #include "sensor_msgs/msg/region_of_interest.hpp"
 
+#include <algorithm>
 #include <map>
 #include <memory>
 #include <string>
@@ -65,47 +66,6 @@ float calIou(
   return static_cast<float>(area1) / static_cast<float>(area2);
 }
 
-// double getGenIoU(
-//   const sensor_msgs::msg::RegionOfInterest & roi1, const sensor_msgs::msg::RegionOfInterest &
-//   roi2)
-// {
-//   int rect1_x_min = static_cast<int>(roi1.x_offset);
-//   int rect1_x_max = static_cast<int>(roi1.x_offset + roi1.width);
-//   int rect1_y_min = static_cast<int>(roi1.y_offset);
-//   int rect1_y_max = static_cast<int>(roi1.y_offset + roi1.height);
-//   int rect2_x_min = static_cast<int>(roi2.x_offset);
-//   int rect2_x_max = static_cast<int>(roi2.x_offset + roi2.width);
-//   int rect2_y_min = static_cast<int>(roi2.y_offset);
-//   int rect2_y_max = static_cast<int>(roi2.y_offset + roi2.height);
-//   int rect1_area = roi1.width * roi1.height;
-//   int rect2_area = roi2.width * roi2.height;
-//   int x_min = std::max(rect1_x_min, rect2_x_min);
-//   int y_min = std::max(rect1_y_min, rect2_y_min);
-//   int x_max = std::min(rect1_x_max, rect2_x_max);
-//   int y_max = std::min(rect1_y_max, rect2_y_max);
-
-//   auto w = std::max(0, x_max - x_min);
-//   auto h = std::max(0, y_max - y_min);
-//   auto intersect = w * h;
-
-//   auto union_area = rect1_area + rect2_area - intersect;
-
-//   double iou = static_cast<double>(intersect) / static_cast<double>(union_area);
-
-//   // convex shape area
-
-//   auto con_x_min = std::min(rect1_x_min, rect2_x_min);
-//   auto con_y_min = std::min(rect1_y_min, rect2_y_min);
-//   auto con_x_max = std::max(rect1_x_max, rect2_x_max);
-//   auto con_y_max = std::max(rect1_y_max, rect2_y_max);
-
-//   auto con_area = (con_x_max - con_x_min + 1) * (con_y_max - con_y_min + 1);
-
-//   // GIoU calc
-//   double giou = iou - static_cast<double>(con_area - union_area) / static_cast<double>(con_area);
-
-//   return giou;
-// }
 // create and function of 2 binary image
 int andOf2Images(cv::Mat & img1, cv::Mat & img2)
 {
@@ -174,7 +134,6 @@ TrafficLightSelectorNode::TrafficLightSelectorNode(const rclcpp::NodeOptions & n
 {
   max_iou_threshold_ = declare_parameter<double>("max_iou_threshold", 0.0);
   RCLCPP_INFO(get_logger(), "max_iou_threshold: %f", max_iou_threshold_);
-  debug_ = declare_parameter<bool>("debug");
   using std::placeholders::_1;
   using std::placeholders::_2;
   using std::placeholders::_3;
@@ -282,8 +241,6 @@ void TrafficLightSelectorNode::objectsCallback(
     }
   }
   pub_traffic_light_rois_->publish(output);
-  if (debug_) {
-  }
   return;
 }
 }  // namespace autoware::traffic_light

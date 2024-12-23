@@ -72,13 +72,10 @@ private:
   rclcpp::Publisher<TrafficLightRoiArray>::SharedPtr pub_traffic_light_rois_;
   // Subscribe camera_info to get width and height of image
   rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_sub_;
-  bool debug_{false};
   bool camera_info_subscribed_;
   uint32_t image_width_{1280};
   uint32_t image_height_{960};
   double max_iou_threshold_{0.0};
-  // declare publisher for debug image
-  // rclcpp::Publisher<sensor_msgs::msg::Image>::SharedPtr pub_debug_image_;
 };
 
 }  // namespace autoware::traffic_light
