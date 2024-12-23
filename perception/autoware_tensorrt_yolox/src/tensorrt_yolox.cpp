@@ -1149,7 +1149,7 @@ void TrtYoloX::generateYoloxProposals(
         objects.push_back(obj);
       }
     }  // class loop
-  }    // point anchor loop
+  }  // point anchor loop
 }
 
 void TrtYoloX::qsortDescentInplace(ObjectArray & face_objects, int left, int right) const
