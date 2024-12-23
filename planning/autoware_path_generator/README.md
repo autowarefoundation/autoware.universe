@@ -16,6 +16,48 @@ The overlap interval is determined as shown in the following figure.
 
 ![waypoint_group_overlap_interval_determination](./media/waypoint_group_overlap_interval_determination.drawio.svg)
 
+## Flowchart
+
+```plantuml
+@startuml
+title run
+start
+
+:take_data;
+:set_planner_data;
+if (is_data_ready) then (yes)
+else (no)
+  stop
+endif
+
+group plan_path
+  group generate_path
+    :getClosestLanelet;
+    :get_lanelets_within_route;
+    :get_waypoint_groups;
+    if (any waypoint interval starts behind lanelets?) then (yes)
+      :get_previous_lanelet_within_route;
+      :extend lanelets;
+    endif
+    while (for each centerline point)
+      if (overlapped by waypoint group?) then (yes)
+        if (previously overlapped?) then
+        else (no)
+          :add waypoints to path;
+        endif
+      else (no)
+        :add point to path;
+      endif
+    endwhile
+  end group
+end group
+
+:publish path;
+
+stop
+@enduml
+```
+
 ## Input topics
 
 | Name                 | Type                                        | Description                      |
