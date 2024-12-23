@@ -75,11 +75,3 @@ stop
 ## Parameters
 
 {{ json_to_markdown("planning/autoware_path_generator/schema/path_generator.schema.json") }}
-
-| Name                                   | Type   | Description                                                                                                                           |
-| :------------------------------------- | :----- | :------------------------------------------------------------------------------------------------------------------------------------ |
-| `planning_hz`                          | double | planning frequency                                                                                                                    |
-| `backward_path_length`                 | double | length of generated path behind vehicle                                                                                               |
-| `forward_path_length`                  | double | length of generated path in front of vehicle                                                                                          |
-| `waypoint_group_separation_threshold`  | double | maximum distance at which consecutive waypoints are considered to belong to the same group (see [here](#path-generation) for details) |
-| `waypoint_group_interval_margin_ratio` | double | ratio for determining length of switching section from centerline to waypoints (see [here](#path-generation) for details)             |
