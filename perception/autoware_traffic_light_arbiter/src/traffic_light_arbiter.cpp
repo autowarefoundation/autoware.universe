@@ -70,7 +70,8 @@ namespace autoware
 TrafficLightArbiter::TrafficLightArbiter(const rclcpp::NodeOptions & options)
 : Node("traffic_light_arbiter", options)
 {
-  external_current_time_tolerance_ = this->declare_parameter<double>("external_current_time_tolerance", 5.0);
+  external_current_time_tolerance_ =
+    this->declare_parameter<double>("external_current_time_tolerance", 5.0);
   external_time_tolerance_ = this->declare_parameter<double>("external_time_tolerance", 5.0);
   perception_time_tolerance_ = this->declare_parameter<double>("perception_time_tolerance", 1.0);
   external_priority_ = this->declare_parameter<bool>("external_priority", false);
@@ -130,7 +131,7 @@ void TrafficLightArbiter::onPerceptionMsg(const TrafficSignalArray::ConstSharedP
 
 void TrafficLightArbiter::onExternalMsg(const TrafficSignalArray::ConstSharedPtr msg)
 {
-  if ((this->now() - rclcpp::Time(msg->stamp)).seconds() >  external_current_time_tolerance_) {
+  if ((this->now() - rclcpp::Time(msg->stamp)).seconds() > external_current_time_tolerance_) {
     RCLCPP_WARN_THROTTLE(
       get_logger(), *get_clock(), 5000, "Received outdated V2X traffic signal messages");
     return;
@@ -237,8 +238,8 @@ void TrafficLightArbiter::arbitrateAndPublish(const builtin_interfaces::msg::Tim
 
   pub_->publish(output_signals_msg);
 
-  const auto latest_time = std::max(
-    rclcpp::Time(latest_perception_msg_.stamp), rclcpp::Time(latest_external_msg_.stamp));
+  const auto latest_time =
+    std::max(rclcpp::Time(latest_perception_msg_.stamp), rclcpp::Time(latest_external_msg_.stamp));
   if (rclcpp::Time(output_signals_msg.stamp) < latest_time) {
     RCLCPP_WARN_THROTTLE(
       get_logger(), *get_clock(), 5000, "Published traffic signal messages are not latest");
