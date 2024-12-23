@@ -36,11 +36,7 @@ These implementations inherit `autoware::pointcloud_preprocessor::Filter` class,
 
 #### Approximate Downsample Filter
 
-| Name           | Type   | Default Value | Description      |
-| -------------- | ------ | ------------- | ---------------- |
-| `voxel_size_x` | double | 0.3           | voxel size x [m] |
-| `voxel_size_y` | double | 0.3           | voxel size y [m] |
-| `voxel_size_z` | double | 0.1           | voxel size z [m] |
+{{ json_to_markdown("sensing/autoware_pointcloud_preprocessor/schema/approximate_downsample_filter_node.schema.json") }}
 
 ### Random Downsample Filter
 

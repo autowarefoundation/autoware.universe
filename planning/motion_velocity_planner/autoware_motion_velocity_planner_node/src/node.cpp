@@ -26,7 +26,6 @@
 #include <tf2_eigen/tf2_eigen.hpp>
 
 #include <autoware_planning_msgs/msg/trajectory_point.hpp>
-#include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <pcl/common/transforms.h>
@@ -37,6 +36,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace
@@ -89,7 +89,7 @@ MotionVelocityPlannerNode::MotionVelocityPlannerNode(const rclcpp::NodeOptions &
     this->create_publisher<tier4_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
   debug_viz_pub_ =
     this->create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/markers", 1);
-  diagnostics_pub_ = this->create_publisher<DiagnosticArray>("/diagnostics", 10);
+  metrics_pub_ = this->create_publisher<MetricArray>("~/metrics", 1);
 
   // Parameters
   smooth_velocity_before_planning_ = declare_parameter<bool>("smooth_velocity_before_planning");
@@ -185,9 +185,6 @@ bool MotionVelocityPlannerNode::update_planner_data(
   // optional data
   const auto traffic_signals_ptr = sub_traffic_signals_.takeData();
   if (traffic_signals_ptr) process_traffic_signals(traffic_signals_ptr);
-  const auto virtual_traffic_light_states_ptr = sub_virtual_traffic_light_states_.takeData();
-  if (virtual_traffic_light_states_ptr)
-    planner_data_.virtual_traffic_light_states = *virtual_traffic_light_states_ptr;
   processing_times["update_planner_data.traffic_lights"] = sw.toc(true);
 
   return is_ready;
@@ -307,12 +304,9 @@ void MotionVelocityPlannerNode::on_trajectory(
   processing_time_msg.data = processing_times["Total"];
   processing_time_publisher_->publish(processing_time_msg);
 
-  std::shared_ptr<DiagnosticArray> diagnostics =
-    planner_manager_.get_diagnostics(get_clock()->now());
-  if (!diagnostics->status.empty()) {
-    diagnostics_pub_->publish(*diagnostics);
-  }
-  planner_manager_.clear_diagnostics();
+  std::shared_ptr<MetricArray> metrics = planner_manager_.get_metrics(get_clock()->now());
+  metrics_pub_->publish(*metrics);
+  planner_manager_.clear_metrics();
 }
 
 void MotionVelocityPlannerNode::insert_stop(
