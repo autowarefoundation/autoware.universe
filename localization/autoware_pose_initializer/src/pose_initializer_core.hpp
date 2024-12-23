@@ -15,10 +15,9 @@
 #ifndef POSE_INITIALIZER_CORE_HPP_
 #define POSE_INITIALIZER_CORE_HPP_
 
-#include "autoware/universe_utils/ros/diagnostics_module.hpp"
-
 #include <autoware/component_interface_specs/localization.hpp>
 #include <autoware/component_interface_utils/rclcpp.hpp>
+#include <autoware/universe_utils/ros/diagnostics_module.hpp>
 #include <autoware/universe_utils/ros/logger_level_configure.hpp>
 #include <rclcpp/rclcpp.hpp>
 
