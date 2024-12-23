@@ -19,6 +19,7 @@
 
 #include <autoware_common_msgs/msg/response_status.hpp>
 
+#include <functional>
 #include <stdexcept>
 #include <string>
 

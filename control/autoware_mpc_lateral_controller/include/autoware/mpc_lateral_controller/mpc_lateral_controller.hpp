@@ -292,13 +292,13 @@ private:
   template <typename... Args>
   inline void info_throttle(Args &&... args)
   {
-    RCLCPP_INFO_THROTTLE(logger_, *clock_, 5000, args...);
+    RCLCPP_INFO_THROTTLE(logger_, *clock_, 5000, "%s", args...);
   }
 
   template <typename... Args>
   inline void warn_throttle(Args &&... args)
   {
-    RCLCPP_WARN_THROTTLE(logger_, *clock_, 5000, args...);
+    RCLCPP_WARN_THROTTLE(logger_, *clock_, 5000, "%s", args...);
   }
 };
 }  // namespace autoware::motion::control::mpc_lateral_controller

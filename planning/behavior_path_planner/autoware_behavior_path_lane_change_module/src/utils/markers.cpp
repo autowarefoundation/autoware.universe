@@ -14,7 +14,6 @@
 
 #include "autoware/behavior_path_planner_common/marker_utils/colors.hpp"
 #include "autoware/behavior_path_planner_common/marker_utils/utils.hpp"
-#include "autoware/behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 
 #include <autoware/behavior_path_lane_change_module/utils/markers.hpp>
 #include <autoware/universe_utils/ros/marker_helper.hpp>
@@ -26,6 +25,7 @@
 #include <visualization_msgs/msg/detail/marker__struct.hpp>
 #include <visualization_msgs/msg/detail/marker_array__struct.hpp>
 
+#include <algorithm>
 #include <cstdint>
 #include <cstdlib>
 #include <sstream>

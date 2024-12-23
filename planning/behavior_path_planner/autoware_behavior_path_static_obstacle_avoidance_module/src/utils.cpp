@@ -37,6 +37,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace autoware::behavior_path_planner::utils::static_obstacle_avoidance
@@ -1511,7 +1512,7 @@ lanelet::ConstLanelets getExtendLanes(
 
 void insertDecelPoint(
   const Point & p_src, const double offset, const double velocity, PathWithLaneId & path,
-  std::optional<Pose> & p_out)
+  PoseWithDetailOpt & p_out)
 {
   const auto decel_point =
     autoware::motion_utils::calcLongitudinalOffsetPoint(path.points, p_src, offset);
@@ -1540,7 +1541,7 @@ void insertDecelPoint(
 
   insertVelocity(path, velocity);
 
-  p_out = getPose(path.points.at(insert_idx.value()));
+  p_out = PoseWithDetail(getPose(path.points.at(insert_idx.value())));
 }
 
 void fillObjectEnvelopePolygon(

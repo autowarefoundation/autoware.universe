@@ -17,9 +17,12 @@
 #include <algorithm>
 #include <chrono>
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
+namespace autoware::traffic_light_recognition_marker_publisher
+{
 TrafficLightRecognitionMarkerPublisher::TrafficLightRecognitionMarkerPublisher(
   const rclcpp::NodeOptions & options)
 : Node("traffic_light_recognition_marker_publisher", options)
@@ -159,6 +162,8 @@ std_msgs::msg::ColorRGBA TrafficLightRecognitionMarkerPublisher::getTrafficLight
 
   return c;  // white
 }
+}  // namespace autoware::traffic_light_recognition_marker_publisher
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(TrafficLightRecognitionMarkerPublisher)
+RCLCPP_COMPONENTS_REGISTER_NODE(
+  autoware::traffic_light_recognition_marker_publisher::TrafficLightRecognitionMarkerPublisher)
