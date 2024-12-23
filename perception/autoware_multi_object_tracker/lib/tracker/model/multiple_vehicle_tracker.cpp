@@ -29,10 +29,8 @@ MultipleVehicleTracker::MultipleVehicleTracker(
   const rclcpp::Time & time, const types::DynamicObject & object,
   const geometry_msgs::msg::Transform & self_transform, const size_t channel_size)
 : Tracker(time, object.classification, channel_size),
-  normal_vehicle_tracker_(
-    object_model::normal_vehicle, time, object, self_transform, channel_size),
-  big_vehicle_tracker_(
-    object_model::big_vehicle, time, object, self_transform, channel_size)
+  normal_vehicle_tracker_(object_model::normal_vehicle, time, object, self_transform, channel_size),
+  big_vehicle_tracker_(object_model::big_vehicle, time, object, self_transform, channel_size)
 {
   // initialize existence probability
   initializeExistenceProbabilities(object.channel_index, object.existence_probability);

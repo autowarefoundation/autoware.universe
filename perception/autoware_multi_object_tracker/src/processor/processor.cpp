@@ -58,9 +58,7 @@ void TrackerProcessor::update(
     if (direct_assignment.find(tracker_idx) != direct_assignment.end()) {  // found
       const auto & associated_object =
         detected_objects.objects.at(direct_assignment.find(tracker_idx)->second);
-      (*(tracker_itr))
-        ->updateWithMeasurement(
-          associated_object, time, self_transform);
+      (*(tracker_itr))->updateWithMeasurement(associated_object, time, self_transform);
     } else {  // not found
       (*(tracker_itr))->updateWithoutMeasurement(time);
     }
@@ -78,8 +76,7 @@ void TrackerProcessor::spawn(
       continue;
     }
     const auto & new_object = detected_objects.objects.at(i);
-    std::shared_ptr<Tracker> tracker =
-      createNewTracker(new_object, time, self_transform);
+    std::shared_ptr<Tracker> tracker = createNewTracker(new_object, time, self_transform);
     if (tracker) list_tracker_.push_back(tracker);
   }
 }
@@ -93,8 +90,7 @@ std::shared_ptr<Tracker> TrackerProcessor::createNewTracker(
   if (config_.tracker_map.count(label) != 0) {
     const auto tracker = config_.tracker_map.at(label);
     if (tracker == "bicycle_tracker")
-      return std::make_shared<BicycleTracker>(
-        time, object, self_transform, config_.channel_size);
+      return std::make_shared<BicycleTracker>(time, object, self_transform, config_.channel_size);
     if (tracker == "big_vehicle_tracker")
       return std::make_shared<VehicleTracker>(
         object_model::big_vehicle, time, object, self_transform, config_.channel_size);
@@ -114,8 +110,7 @@ std::shared_ptr<Tracker> TrackerProcessor::createNewTracker(
       return std::make_shared<PedestrianTracker>(
         time, object, self_transform, config_.channel_size);
   }
-  return std::make_shared<UnknownTracker>(
-    time, object, self_transform, config_.channel_size);
+  return std::make_shared<UnknownTracker>(time, object, self_transform, config_.channel_size);
 }
 
 void TrackerProcessor::prune(const rclcpp::Time & time)

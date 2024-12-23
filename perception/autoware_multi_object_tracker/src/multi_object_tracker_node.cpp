@@ -350,8 +350,8 @@ void MultiObjectTracker::runProcess(const types::DynamicObjectList & input_objec
 
     // Collect debug information - tracker list, existence probabilities, association results
     debugger_->collectObjectInfo(
-      measurement_time, processor_->getListTracker(), transformed_objects,
-      direct_assignment, reverse_assignment);
+      measurement_time, processor_->getListTracker(), transformed_objects, direct_assignment,
+      reverse_assignment);
   }
 
   /* tracker update */

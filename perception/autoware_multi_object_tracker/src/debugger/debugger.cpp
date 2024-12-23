@@ -191,8 +191,7 @@ void TrackerDebugger::collectObjectInfo(
 {
   if (!debug_settings_.publish_debug_markers) return;
   object_debugger_.collect(
-    message_time, list_tracker, detected_objects, direct_assignment,
-    reverse_assignment);
+    message_time, list_tracker, detected_objects, direct_assignment, reverse_assignment);
 }
 
 // ObjectDebugger

@@ -88,7 +88,7 @@ public:
   }
   void collect(
     const rclcpp::Time & message_time, const std::list<std::shared_ptr<Tracker>> & list_tracker,
-     const types::DynamicObjectList & detected_objects,
+    const types::DynamicObjectList & detected_objects,
     const std::unordered_map<int, int> & direct_assignment,
     const std::unordered_map<int, int> & reverse_assignment);
 
