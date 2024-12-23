@@ -62,7 +62,7 @@ public:
 
   bool detect(
     const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer,
-    std::vector<Box3D> & det_boxes3d);
+    std::vector<Box3D> & det_boxes3d, bool & is_num_pillars_within_range);
 
 protected:
   void initPtr();

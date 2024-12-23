@@ -20,6 +20,7 @@
 #include "autoware/lidar_centerpoint/postprocess/non_maximum_suppression.hpp"
 
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
+#include <autoware/universe_utils/ros/diagnostics_module.hpp>
 #include <autoware/universe_utils/ros/published_time_publisher.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -39,6 +40,8 @@ namespace autoware::lidar_centerpoint
 
 class LidarCenterPointNode : public rclcpp::Node
 {
+  using DiagnosticsModule = autoware::universe_utils::DiagnosticsModule;
+
 public:
   explicit LidarCenterPointNode(const rclcpp::NodeOptions & node_options);
 
@@ -59,6 +62,7 @@ private:
   DetectionClassRemapper detection_class_remapper_;
 
   std::unique_ptr<CenterPointTRT> detector_ptr_{nullptr};
+  std::unique_ptr<DiagnosticsModule> diagnostics_module_ptr_;
 
   // debugger
   std::unique_ptr<autoware::universe_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_{

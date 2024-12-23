@@ -127,8 +127,10 @@ void CenterPointTRT::initPtr()
 
 bool CenterPointTRT::detect(
   const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer,
-  std::vector<Box3D> & det_boxes3d)
+  std::vector<Box3D> & det_boxes3d, bool & is_num_pillars_within_range)
 {
+  is_num_pillars_within_range = true;
+
   CHECK_CUDA_ERROR(cudaMemsetAsync(
     encoder_in_features_d_.get(), 0, encoder_in_feature_size_ * sizeof(float), stream_));
   CHECK_CUDA_ERROR(
@@ -155,6 +157,7 @@ bool CenterPointTRT::detect(
       "The actual number of pillars (%u) exceeds its maximum value (%zu). "
       "Please considering increasing it since it may limit the detection performance.",
       num_pillars, config_.max_voxel_size_);
+    is_num_pillars_within_range = false;
   }
 
   return true;

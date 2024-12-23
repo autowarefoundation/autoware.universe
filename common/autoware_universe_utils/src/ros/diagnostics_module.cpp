@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/localization_util/diagnostics_module.hpp"
+#include "autoware/universe_utils/ros/diagnostics_module.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -21,7 +21,7 @@
 #include <algorithm>
 #include <string>
 
-namespace autoware::localization_util
+namespace autoware::universe_utils
 {
 DiagnosticsModule::DiagnosticsModule(rclcpp::Node * node, const std::string & diagnostic_name)
 : clock_(node->get_clock())
@@ -76,7 +76,7 @@ void DiagnosticsModule::add_key_value(const std::string & key, const bool & valu
 
 void DiagnosticsModule::update_level_and_message(const int8_t level, const std::string & message)
 {
-  if ((level > diagnostic_msgs::msg::DiagnosticStatus::OK)) {
+  if ((level >= diagnostic_msgs::msg::DiagnosticStatus::OK)) {
     if (!diagnostics_status_msg_.message.empty()) {
       diagnostics_status_msg_.message += "; ";
     }
@@ -105,4 +105,4 @@ diagnostic_msgs::msg::DiagnosticArray DiagnosticsModule::create_diagnostics_arra
 
   return diagnostics_msg;
 }
-}  // namespace autoware::localization_util
+}  // namespace autoware::universe_utils
