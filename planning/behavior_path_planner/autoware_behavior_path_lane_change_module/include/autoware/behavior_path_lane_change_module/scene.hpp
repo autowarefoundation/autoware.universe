@@ -54,7 +54,7 @@ public:
 
   void update_lanes(const bool is_approved) final;
 
-  void update_transient_data() final;
+  void update_transient_data(const bool is_approved) final;
 
   void update_filtered_objects() final;
 
@@ -121,15 +121,12 @@ protected:
   TurnSignalInfo get_terminal_turn_signal_info() const final;
 
   lane_change::TargetObjects get_target_objects(
-    const FilteredByLanesExtendedObjects & filtered_objects,
+    const FilteredLanesObjects & filtered_objects,
     const lanelet::ConstLanelets & current_lanes) const;
 
-  FilteredByLanesExtendedObjects filterObjects() const;
+  FilteredLanesObjects filter_objects() const;
 
   void filterOncomingObjects(PredictedObjects & objects) const;
-
-  FilteredByLanesObjects filterObjectsByLanelets(
-    const PredictedObjects & objects, const PathWithLaneId & current_lanes_ref_path) const;
 
   bool get_prepare_segment(
     PathWithLaneId & prepare_segment, const double prepare_length) const override;
@@ -169,12 +166,13 @@ protected:
   bool has_collision_with_decel_patterns(
     const LaneChangePath & lane_change_path, const ExtendedPredictedObjects & objects,
     const size_t deceleration_sampling_num, const RSSparams & rss_param,
-    CollisionCheckDebugMap & debug_data) const;
+    const bool check_prepare_phase, CollisionCheckDebugMap & debug_data) const;
 
   bool is_collided(
-    const PathWithLaneId & lane_change_path, const ExtendedPredictedObject & obj,
+    const LaneChangePath & lane_change_path, const ExtendedPredictedObject & obj,
     const std::vector<PoseWithVelocityStamped> & ego_predicted_path,
-    const RSSparams & selected_rss_param, CollisionCheckDebugMap & debug_data) const;
+    const RSSparams & selected_rss_param, const bool check_prepare_phase,
+    CollisionCheckDebugMap & debug_data) const;
 
   double get_max_velocity_for_safety_check() const;
 

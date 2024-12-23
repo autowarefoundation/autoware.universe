@@ -29,6 +29,9 @@
 #include <omp.h>
 
 #include <chrono>
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace
 {
@@ -168,9 +171,6 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
 
   {
     autoware::lidar_centerpoint::NMSParams p;
-    p.nms_type_ = autoware::lidar_centerpoint::NMS_TYPE::IoU_BEV;
-    p.target_class_names_ = this->declare_parameter<std::vector<std::string>>(
-      "post_process_params.iou_nms_target_class_names");
     p.search_distance_2d_ =
       this->declare_parameter<double>("post_process_params.iou_nms_search_distance_2d");
     p.iou_threshold_ = this->declare_parameter<double>("post_process_params.iou_nms_threshold");

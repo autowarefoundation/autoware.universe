@@ -14,12 +14,17 @@
 
 #include "processor.hpp"
 
+#include "autoware/multi_object_tracker/object_model/object_model.hpp"
 #include "autoware/multi_object_tracker/tracker/tracker.hpp"
 #include "autoware/object_recognition_utils/object_recognition_utils.hpp"
 
 #include "autoware_perception_msgs/msg/tracked_objects.hpp"
 
 #include <iterator>
+#include <map>
+#include <memory>
+#include <string>
+#include <unordered_map>
 
 namespace autoware::multi_object_tracker
 {
@@ -98,14 +103,14 @@ std::shared_ptr<Tracker> TrackerProcessor::createNewTracker(
       return std::make_shared<BicycleTracker>(
         time, object, self_transform, channel_size_, channel_index);
     if (tracker == "big_vehicle_tracker")
-      return std::make_shared<BigVehicleTracker>(
-        time, object, self_transform, channel_size_, channel_index);
+      return std::make_shared<VehicleTracker>(
+        object_model::big_vehicle, time, object, self_transform, channel_size_, channel_index);
     if (tracker == "multi_vehicle_tracker")
       return std::make_shared<MultipleVehicleTracker>(
         time, object, self_transform, channel_size_, channel_index);
     if (tracker == "normal_vehicle_tracker")
-      return std::make_shared<NormalVehicleTracker>(
-        time, object, self_transform, channel_size_, channel_index);
+      return std::make_shared<VehicleTracker>(
+        object_model::normal_vehicle, time, object, self_transform, channel_size_, channel_index);
     if (tracker == "pass_through_tracker")
       return std::make_shared<PassThroughTracker>(
         time, object, self_transform, channel_size_, channel_index);
