@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 //
-// Author: v1.0 Taekjin Lee
+// Author: v1.0 Yukihiro Saito, Taekjin Lee
 
 #include "autoware/multi_object_tracker/object_model/shapes.hpp"
 
