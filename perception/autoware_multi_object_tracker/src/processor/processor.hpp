@@ -15,7 +15,7 @@
 #ifndef PROCESSOR__PROCESSOR_HPP_
 #define PROCESSOR__PROCESSOR_HPP_
 
-#include "autoware/multi_object_tracker/object_model/dynamic_object.hpp"
+#include "autoware/multi_object_tracker/object_model/types.hpp"
 #include "autoware/multi_object_tracker/tracker/model/tracker_base.hpp"
 
 #include <rclcpp/rclcpp.hpp>

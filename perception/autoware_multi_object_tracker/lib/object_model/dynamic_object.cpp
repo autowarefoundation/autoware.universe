@@ -15,7 +15,7 @@
 //
 // Author: v1.0 Taekjin Lee
 
-#include "autoware/multi_object_tracker/object_model/dynamic_object.hpp"
+#include "autoware/multi_object_tracker/object_model/types.hpp"
 
 #include <vector>
 

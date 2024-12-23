@@ -18,7 +18,7 @@
 #ifndef AUTOWARE__MULTI_OBJECT_TRACKER__OBJECT_MODEL__SHAPES_HPP_
 #define AUTOWARE__MULTI_OBJECT_TRACKER__OBJECT_MODEL__SHAPES_HPP_
 
-#include "autoware/multi_object_tracker/object_model/dynamic_object.hpp"
+#include "autoware/multi_object_tracker/object_model/types.hpp"
 
 #include <tf2_ros/buffer.h>
 

@@ -19,7 +19,7 @@
 #ifndef AUTOWARE__MULTI_OBJECT_TRACKER__UTILS__UTILS_HPP_
 #define AUTOWARE__MULTI_OBJECT_TRACKER__UTILS__UTILS_HPP_
 
-#include "autoware/multi_object_tracker/object_model/dynamic_object.hpp"
+#include "autoware/multi_object_tracker/object_model/types.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
