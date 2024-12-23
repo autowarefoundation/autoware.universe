@@ -1127,6 +1127,7 @@ bool is_valid_start_point(const lane_change::CommonDataPtr & common_data_ptr, co
   const auto & target_neighbor_poly = common_data_ptr->lanes_polygon_ptr->target_neighbor;
   const auto & target_lane_poly = common_data_ptr->lanes_polygon_ptr->target;
 
+  // Check the target lane because the previous approved path might be shifted by avoidance module
   return boost::geometry::covered_by(lc_start_point, target_neighbor_poly) ||
          boost::geometry::covered_by(lc_start_point, target_lane_poly);
 }

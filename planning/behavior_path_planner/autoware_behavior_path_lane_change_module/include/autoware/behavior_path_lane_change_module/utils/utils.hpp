@@ -397,10 +397,37 @@ std::vector<lanelet::ConstLanelets> get_preceding_lanes(const CommonDataPtr & co
 bool object_path_overlaps_lanes(
   const ExtendedPredictedObject & object, const lanelet::BasicPolygon2d & lanes_polygon);
 
+/**
+ * @brief Converts a lane change path into multiple predicted paths with varying acceleration
+ * profiles.
+ *
+ * This function generates a set of predicted paths for the ego vehicle during a lane change,
+ * using different acceleration values within the specified range. It accounts for deceleration
+ * sampling if the global minimum acceleration differs from the lane-changing acceleration.
+ *
+ * @param common_data_ptr Shared pointer to CommonData containing parameters and state information.
+ * @param lane_change_path The lane change path used to generate predicted paths.
+ * @param deceleration_sampling_num Number of samples for deceleration profiles to generate paths.
+ *
+ * @return std::vector<std::vector<PoseWithVelocityStamped>> A collection of predicted paths, where
+ *         each path is represented as a series of poses with associated velocity.
+ */
 std::vector<std::vector<PoseWithVelocityStamped>> convert_to_predicted_paths(
   const CommonDataPtr & common_data_ptr, const LaneChangePath & lane_change_path,
   const size_t deceleration_sampling_num);
 
+/**
+ * @brief Validates whether a given pose is a valid starting point for a lane change.
+ *
+ * This function checks if the specified pose lies within the polygons representing
+ * the target lane or its neighboring areas. This ensures that the starting point is
+ * appropriately positioned for initiating a lane change, even if previous paths were adjusted.
+ *
+ * @param common_data_ptr Shared pointer to CommonData containing lane polygon information.
+ * @param pose The pose to validate as a potential lane change starting point.
+ *
+ * @return true if the pose is within the target or target neighbor polygons, false otherwise.
+ */
 bool is_valid_start_point(const lane_change::CommonDataPtr & common_data_ptr, const Pose & pose);
 }  // namespace autoware::behavior_path_planner::utils::lane_change
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__UTILS_HPP_
