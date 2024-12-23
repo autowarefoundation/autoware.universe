@@ -129,6 +129,11 @@ FusionNode<TargetMsg3D, ObjType, Msg2D>::FusionNode(
   camera_projectors_.resize(rois_number_);
   point_project_to_unrectified_image_ =
     declare_parameter<std::vector<bool>>("point_project_to_unrectified_image");
+
+  if (rois_number_ > point_project_to_unrectified_image_.size()) {
+    throw std::runtime_error(
+      "The number of point_project_to_unrectified_image does not match the number of rois topics.");
+  }
   approx_camera_projection_ = declare_parameter<std::vector<bool>>("approximate_camera_projection");
   if (rois_number_ != approx_camera_projection_.size()) {
     const std::size_t current_size = approx_camera_projection_.size();
