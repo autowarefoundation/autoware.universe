@@ -17,8 +17,8 @@
 
 #define FMT_HEADER_ONLY
 
-#include "autoware/universe_utils/ros/diagnostics_module.hpp"
 #include "autoware/localization_util/smart_pose_buffer.hpp"
+#include "autoware/universe_utils/ros/diagnostics_module.hpp"
 #include "hyper_parameters.hpp"
 #include "map_update_module.hpp"
 #include "ndt_omp/multigrid_ndt_omp.h"

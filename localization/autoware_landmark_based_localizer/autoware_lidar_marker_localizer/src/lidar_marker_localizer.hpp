@@ -15,8 +15,8 @@
 #ifndef LIDAR_MARKER_LOCALIZER_HPP_
 #define LIDAR_MARKER_LOCALIZER_HPP_
 
-#include "autoware/universe_utils/ros/diagnostics_module.hpp"
 #include "autoware/localization_util/smart_pose_buffer.hpp"
+#include "autoware/universe_utils/ros/diagnostics_module.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 

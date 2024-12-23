@@ -49,9 +49,9 @@ using autoware::localization_util::matrix4f_to_pose;
 using autoware::localization_util::point_to_vector3d;
 using autoware::localization_util::pose_to_matrix4f;
 
-using autoware::universe_utils::DiagnosticsModule;
 using autoware::localization_util::SmartPoseBuffer;
 using autoware::localization_util::TreeStructuredParzenEstimator;
+using autoware::universe_utils::DiagnosticsModule;
 
 tier4_debug_msgs::msg::Float32Stamped make_float32_stamped(
   const builtin_interfaces::msg::Time & stamp, const float data)

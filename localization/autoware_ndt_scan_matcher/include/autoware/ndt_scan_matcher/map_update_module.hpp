@@ -15,8 +15,8 @@
 #ifndef AUTOWARE__NDT_SCAN_MATCHER__MAP_UPDATE_MODULE_HPP_
 #define AUTOWARE__NDT_SCAN_MATCHER__MAP_UPDATE_MODULE_HPP_
 
-#include "autoware/universe_utils/ros/diagnostics_module.hpp"
 #include "autoware/localization_util/util_func.hpp"
+#include "autoware/universe_utils/ros/diagnostics_module.hpp"
 #include "hyper_parameters.hpp"
 #include "ndt_omp/multigrid_ndt_omp.h"
 #include "particle.hpp"
