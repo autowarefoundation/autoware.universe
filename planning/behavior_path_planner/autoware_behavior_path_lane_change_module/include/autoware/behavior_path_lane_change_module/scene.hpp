@@ -145,7 +145,7 @@ protected:
     const utils::path_safety_checker::RSSparams & rss_params,
     CollisionCheckDebugMap & debug_data) const;
 
-  bool is_collided(
+  bool is_colliding(
     const LaneChangePath & lane_change_path, const ExtendedPredictedObject & obj,
     const std::vector<PoseWithVelocityStamped> & ego_predicted_path,
     const RSSparams & selected_rss_param, const bool check_prepare_phase,

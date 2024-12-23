@@ -1522,7 +1522,7 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
         const auto selected_rss_param = (object.initial_twist.linear.x <= stopped_obj_vel_th)
                                           ? lane_change_parameters_->safety.rss_params_for_parked
                                           : rss_params;
-        return is_collided(
+        return is_colliding(
           lane_change_path, object, ego_predicted_path, selected_rss_param, is_check_prepare_phase,
           debug_data);
       };
@@ -1541,20 +1541,20 @@ PathSafetyStatus NormalLaneChange::isLaneChangePathSafe(
   return {is_safe, !is_object_behind_ego};
 }
 
-bool NormalLaneChange::is_collided(
+bool NormalLaneChange::is_colliding(
   const LaneChangePath & lane_change_path, const ExtendedPredictedObject & obj,
   const std::vector<PoseWithVelocityStamped> & ego_predicted_path,
   const RSSparams & selected_rss_param, const bool check_prepare_phase,
   CollisionCheckDebugMap & debug_data) const
 {
-  constexpr auto is_collided{true};
+  constexpr auto is_colliding{true};
 
   if (lane_change_path.path.points.empty()) {
-    return !is_collided;
+    return !is_colliding;
   }
 
   if (ego_predicted_path.empty()) {
-    return !is_collided;
+    return !is_colliding;
   }
 
   const auto & lanes_polygon_ptr = common_data_ptr_->lanes_polygon_ptr;
@@ -1562,7 +1562,7 @@ bool NormalLaneChange::is_collided(
   const auto & expanded_target_polygon = lanes_polygon_ptr->target;
 
   if (current_polygon.empty() || expanded_target_polygon.empty()) {
-    return !is_collided;
+    return !is_colliding;
   }
 
   constexpr auto is_safe{true};
@@ -1613,10 +1613,10 @@ bool NormalLaneChange::is_collided(
 
     utils::path_safety_checker::updateCollisionCheckDebugMap(
       debug_data, current_debug_data, !is_safe);
-    return is_collided;
+    return is_colliding;
   }
   utils::path_safety_checker::updateCollisionCheckDebugMap(debug_data, current_debug_data, is_safe);
-  return !is_collided;
+  return !is_colliding;
 }
 
 double NormalLaneChange::get_max_velocity_for_safety_check() const
