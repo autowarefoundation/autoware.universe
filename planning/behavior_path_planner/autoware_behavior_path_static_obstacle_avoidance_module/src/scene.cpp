@@ -35,6 +35,7 @@
 #include <optional>
 #include <set>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace autoware::behavior_path_planner
@@ -735,12 +736,11 @@ void StaticObstacleAvoidanceModule::fillDebugData(
   const auto prepare_distance = helper_->getNominalPrepareDistance();
   const auto total_avoid_distance = prepare_distance + avoidance_distance + constant_distance;
 
-  dead_pose_ = autoware::motion_utils::calcLongitudinalOffsetPose(
+  const auto dead_pose_opt = autoware::motion_utils::calcLongitudinalOffsetPose(
     data.reference_path.points, getEgoPosition(), o_front.longitudinal - total_avoid_distance);
-
-  if (!dead_pose_) {
-    dead_pose_ = getPose(data.reference_path.points.front());
-  }
+  dead_pose_ = dead_pose_opt.has_value()
+                 ? PoseWithDetail(dead_pose_opt.value())
+                 : PoseWithDetail(getPose(data.reference_path.points.front()));
 }
 
 void StaticObstacleAvoidanceModule::updateEgoBehavior(
@@ -1948,8 +1948,10 @@ void StaticObstacleAvoidanceModule::insertPrepareVelocity(ShiftedPath & shifted_
     shifted_path.path.points.at(i).point.longitudinal_velocity_mps = std::min(v_original, v_insert);
   }
 
-  slow_pose_ = autoware::motion_utils::calcLongitudinalOffsetPose(
+  const auto slow_pose_opt = autoware::motion_utils::calcLongitudinalOffsetPose(
     shifted_path.path.points, start_idx, distance_to_object);
+  slow_pose_ = slow_pose_opt.has_value() ? PoseWithDetailOpt(PoseWithDetail(slow_pose_opt.value()))
+                                         : std::nullopt;
 }
 
 void StaticObstacleAvoidanceModule::insertAvoidanceVelocity(ShiftedPath & shifted_path) const
@@ -1996,8 +1998,10 @@ void StaticObstacleAvoidanceModule::insertAvoidanceVelocity(ShiftedPath & shifte
     shifted_path.path.points.at(i).point.longitudinal_velocity_mps = std::min(v_original, v_target);
   }
 
-  slow_pose_ = autoware::motion_utils::calcLongitudinalOffsetPose(
+  const auto slow_pose_opt = autoware::motion_utils::calcLongitudinalOffsetPose(
     shifted_path.path.points, start_idx, distance_to_accel_end_point);
+  slow_pose_ = slow_pose_opt.has_value() ? PoseWithDetailOpt(PoseWithDetail(slow_pose_opt.value()))
+                                         : std::nullopt;
 }
 
 std::shared_ptr<AvoidanceDebugMsgArray> StaticObstacleAvoidanceModule::get_debug_msg_array() const

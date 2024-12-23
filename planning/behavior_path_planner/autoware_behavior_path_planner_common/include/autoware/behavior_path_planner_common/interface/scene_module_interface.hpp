@@ -39,9 +39,6 @@
 #include <autoware_adapi_v1_msgs/msg/steering_factor.hpp>
 #include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
-#include <tier4_planning_msgs/msg/stop_factor.hpp>
-#include <tier4_planning_msgs/msg/stop_reason.hpp>
-#include <tier4_planning_msgs/msg/stop_reason_array.hpp>
 #include <tier4_rtc_msgs/msg/state.hpp>
 #include <unique_identifier_msgs/msg/uuid.hpp>
 #include <visualization_msgs/msg/detail/marker_array__struct.hpp>
@@ -69,9 +66,6 @@ using autoware_adapi_v1_msgs::msg::SteeringFactor;
 using autoware_adapi_v1_msgs::msg::VelocityFactor;
 using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
 using tier4_planning_msgs::msg::PathWithLaneId;
-using tier4_planning_msgs::msg::StopFactor;
-using tier4_planning_msgs::msg::StopReason;
-using tier4_planning_msgs::msg::StopReasonArray;
 using tier4_rtc_msgs::msg::State;
 using unique_identifier_msgs::msg::UUID;
 using visualization_msgs::msg::MarkerArray;
@@ -192,8 +186,6 @@ public:
 
     reset_factor();
 
-    stop_reason_ = StopReason();
-
     processOnExit();
   }
 
@@ -266,8 +258,6 @@ public:
 
   ModuleStatus getCurrentStatus() const { return current_state_; }
 
-  StopReason getStopReason() const { return stop_reason_; }
-
   void reset_factor()
   {
     steering_factor_interface_.reset();
@@ -280,34 +270,40 @@ public:
 
   std::string name() const { return name_; }
 
-  std::optional<Pose> getStopPose() const
+  PoseWithDetailOpt getStopPose() const
   {
     if (!stop_pose_) {
       return {};
     }
 
     const auto & base_link2front = planner_data_->parameters.base_link2front;
-    return calcOffsetPose(stop_pose_.value(), base_link2front, 0.0, 0.0);
+    return PoseWithDetail(
+      calcOffsetPose(stop_pose_.value().pose, base_link2front, 0.0, 0.0),
+      stop_pose_.value().detail);
   }
 
-  std::optional<Pose> getSlowPose() const
+  PoseWithDetailOpt getSlowPose() const
   {
     if (!slow_pose_) {
       return {};
     }
 
     const auto & base_link2front = planner_data_->parameters.base_link2front;
-    return calcOffsetPose(slow_pose_.value(), base_link2front, 0.0, 0.0);
+    return PoseWithDetail(
+      calcOffsetPose(slow_pose_.value().pose, base_link2front, 0.0, 0.0),
+      slow_pose_.value().detail);
   }
 
-  std::optional<Pose> getDeadPose() const
+  PoseWithDetailOpt getDeadPose() const
   {
     if (!dead_pose_) {
       return {};
     }
 
     const auto & base_link2front = planner_data_->parameters.base_link2front;
-    return calcOffsetPose(dead_pose_.value(), base_link2front, 0.0, 0.0);
+    return PoseWithDetail(
+      calcOffsetPose(dead_pose_.value().pose, base_link2front, 0.0, 0.0),
+      dead_pose_.value().detail);
   }
 
   void resetWallPoses() const
@@ -446,8 +442,6 @@ private:
 
   BehaviorModuleOutput previous_module_output_;
 
-  StopReason stop_reason_;
-
   bool is_locked_new_module_launch_{false};
 
   bool is_locked_output_path_{false};
@@ -568,7 +562,7 @@ protected:
   {
     if (stop_pose_.has_value()) {
       velocity_factor_interface_.set(
-        path.points, getEgoPose(), stop_pose_.value(), VelocityFactor::APPROACHING, "stop");
+        path.points, getEgoPose(), stop_pose_.value().pose, VelocityFactor::APPROACHING, "stop");
       return;
     }
 
@@ -577,24 +571,7 @@ protected:
     }
 
     velocity_factor_interface_.set(
-      path.points, getEgoPose(), slow_pose_.value(), VelocityFactor::APPROACHING, "slow down");
-  }
-
-  void setStopReason(const std::string & stop_reason, const PathWithLaneId & path)
-  {
-    stop_reason_.reason = stop_reason;
-    stop_reason_.stop_factors.clear();
-
-    if (!stop_pose_) {
-      stop_reason_.reason = "";
-      return;
-    }
-
-    StopFactor stop_factor;
-    stop_factor.stop_pose = stop_pose_.value();
-    stop_factor.dist_to_stop_pose = autoware::motion_utils::calcSignedArcLength(
-      path.points, getEgoPosition(), stop_pose_.value().position);
-    stop_reason_.stop_factors.push_back(stop_factor);
+      path.points, getEgoPose(), slow_pose_.value().pose, VelocityFactor::APPROACHING, "slow down");
   }
 
   void setDrivableLanes(const std::vector<DrivableLanes> & drivable_lanes);
@@ -654,11 +631,11 @@ protected:
 
   mutable VelocityFactorInterface velocity_factor_interface_;
 
-  mutable std::optional<Pose> stop_pose_{std::nullopt};
+  mutable PoseWithDetailOpt stop_pose_{std::nullopt};
 
-  mutable std::optional<Pose> slow_pose_{std::nullopt};
+  mutable PoseWithDetailOpt slow_pose_{std::nullopt};
 
-  mutable std::optional<Pose> dead_pose_{std::nullopt};
+  mutable PoseWithDetailOpt dead_pose_{std::nullopt};
 
   mutable MarkerArray info_marker_;
 

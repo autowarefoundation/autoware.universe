@@ -23,7 +23,11 @@
 #include <fmt/format.h>
 
 #include <algorithm>
+#include <iostream>
 #include <limits>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace autoware::motion::control::mpc_lateral_controller
 {
@@ -302,17 +306,6 @@ std::pair<ResultWithReason, MPCData> MPC::getData(
 
   // get predicted steer
   data.predicted_steer = m_steering_predictor->calcSteerPrediction();
-
-  // check error limit
-  const double dist_err = calcDistance2d(current_pose, data.nearest_pose);
-  if (dist_err > m_admissible_position_error) {
-    return {ResultWithReason{false, "too large position error"}, MPCData{}};
-  }
-
-  // check yaw error limit
-  if (std::fabs(data.yaw_err) > m_admissible_yaw_error_rad) {
-    return {ResultWithReason{false, "too large yaw error"}, MPCData{}};
-  }
 
   // check trajectory time length
   const double max_prediction_time =

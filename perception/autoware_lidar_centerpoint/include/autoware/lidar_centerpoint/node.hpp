@@ -57,7 +57,6 @@ private:
     pointcloud_sub_;
   rclcpp::Publisher<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr objects_pub_;
 
-  float score_threshold_{0.0};
   std::vector<std::string> class_names_;
   bool has_variance_{false};
   bool has_twist_{false};
