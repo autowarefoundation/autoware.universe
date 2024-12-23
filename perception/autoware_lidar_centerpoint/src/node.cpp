@@ -150,11 +150,13 @@ void LidarCenterPointNode::pointCloudCallback(
 
   std::vector<Box3D> det_boxes3d;
   bool is_num_pillars_within_range = true;
-  bool is_success = detector_ptr_->detect(*input_pointcloud_msg, tf_buffer_, det_boxes3d, is_num_pillars_within_range);
+  bool is_success = detector_ptr_->detect(
+    *input_pointcloud_msg, tf_buffer_, det_boxes3d, is_num_pillars_within_range);
   if (!is_success) {
     return;
   }
-  diagnostics_module_ptr_->add_key_value("is_num_pillars_within_range", is_num_pillars_within_range);
+  diagnostics_module_ptr_->add_key_value(
+    "is_num_pillars_within_range", is_num_pillars_within_range);
   if (!is_num_pillars_within_range) {
     std::stringstream message;
     message << "CenterPointTRT::detect: The actual number of pillars exceeds its maximum value, "

@@ -12,14 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <gtest/gtest.h>
+#include "autoware/universe_utils/ros/diagnostics_module.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <diagnostic_msgs/msg/key_value.hpp>
 
-#include "autoware/universe_utils/ros/diagnostics_module.hpp"
+#include <gtest/gtest.h>
 
 using autoware::universe_utils::DiagnosticsModule;
 
@@ -47,10 +48,8 @@ TEST_F(TestDiagnosticsModule, ClearTest)
   // Add some key-value pairs and update level/message
   module.add_key_value("param1", 42);
   module.update_level_and_message(
-    diagnostic_msgs::msg::DiagnosticStatus::WARN,
-    "Something is not OK"
-  );
-  
+    diagnostic_msgs::msg::DiagnosticStatus::WARN, "Something is not OK");
+
   // Call clear()
   module.clear();
 
@@ -58,10 +57,7 @@ TEST_F(TestDiagnosticsModule, ClearTest)
   diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr received_msg;
   auto sub = node_->create_subscription<diagnostic_msgs::msg::DiagnosticArray>(
     "/diagnostics", 10,
-    [&](diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr msg) {
-      received_msg = msg;
-    }
-  );
+    [&](diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr msg) { received_msg = msg; });
 
   // Publish the message
   module.publish(node_->now());
@@ -104,10 +100,7 @@ TEST_F(TestDiagnosticsModule, AddKeyValueTest)
   diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr received_msg;
   auto sub = node_->create_subscription<diagnostic_msgs::msg::DiagnosticArray>(
     "/diagnostics", 10,
-    [&](diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr msg) {
-        received_msg = msg;
-    }
-  );
+    [&](diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr msg) { received_msg = msg; });
   module.publish(node_->now());
   rclcpp::spin_some(node_);
 
@@ -138,7 +131,6 @@ TEST_F(TestDiagnosticsModule, AddKeyValueTest)
   EXPECT_EQ(status.message, "OK");
 }
 
-
 /*
  * Test update_level_and_message():
  * Verify that the level is updated to the highest severity and
@@ -149,33 +141,19 @@ TEST_F(TestDiagnosticsModule, UpdateLevelAndMessageTest)
   DiagnosticsModule module(node_.get(), "test_diagnostic");
 
   // Initial status is level=OK(0), message=""
-  module.update_level_and_message(
-    diagnostic_msgs::msg::DiagnosticStatus::OK,
-    "Initial OK"
-  );
+  module.update_level_and_message(diagnostic_msgs::msg::DiagnosticStatus::OK, "Initial OK");
   // Update to WARN (1)
-  module.update_level_and_message(
-    diagnostic_msgs::msg::DiagnosticStatus::WARN,
-    "Low battery"
-  );
+  module.update_level_and_message(diagnostic_msgs::msg::DiagnosticStatus::WARN, "Low battery");
   // Update to ERROR (2)
-  module.update_level_and_message(
-    diagnostic_msgs::msg::DiagnosticStatus::ERROR,
-    "Sensor failure"
-  );
+  module.update_level_and_message(diagnostic_msgs::msg::DiagnosticStatus::ERROR, "Sensor failure");
   // Another WARN (1) after ERROR should not downgrade the overall level
   module.update_level_and_message(
-    diagnostic_msgs::msg::DiagnosticStatus::WARN,
-    "Should not override error"
-  );
+    diagnostic_msgs::msg::DiagnosticStatus::WARN, "Should not override error");
 
   diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr received_msg;
   auto sub = node_->create_subscription<diagnostic_msgs::msg::DiagnosticArray>(
     "/diagnostics", 10,
-    [&](diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr msg) {
-        received_msg = msg;
-    }
-  );
+    [&](diagnostic_msgs::msg::DiagnosticArray::ConstSharedPtr msg) { received_msg = msg; });
 
   module.publish(node_->now());
   rclcpp::spin_some(node_);

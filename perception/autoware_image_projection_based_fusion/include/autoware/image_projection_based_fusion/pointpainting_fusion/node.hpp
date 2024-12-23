@@ -23,7 +23,6 @@
 #include <autoware/image_projection_based_fusion/utils/utils.hpp>
 #include <autoware/lidar_centerpoint/centerpoint_trt.hpp>
 #include <autoware/lidar_centerpoint/detection_class_remapper.hpp>
-
 #include <autoware/universe_utils/ros/diagnostics_module.hpp>
 
 #include <map>
@@ -46,7 +45,7 @@ inline bool isInsideBbox(
 class PointPaintingFusionNode
 : public FusionNode<sensor_msgs::msg::PointCloud2, DetectedObjects, DetectedObjectsWithFeature>
 {
-using DiagnosticsModule = autoware::universe_utils::DiagnosticsModule;
+  using DiagnosticsModule = autoware::universe_utils::DiagnosticsModule;
 
 public:
   explicit PointPaintingFusionNode(const rclcpp::NodeOptions & options);
