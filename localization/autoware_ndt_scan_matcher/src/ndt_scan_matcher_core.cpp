@@ -49,7 +49,7 @@ using autoware::localization_util::matrix4f_to_pose;
 using autoware::localization_util::point_to_vector3d;
 using autoware::localization_util::pose_to_matrix4f;
 
-using autoware::localization_util::DiagnosticsModule;
+using autoware::universe_utils::DiagnosticsModule;
 using autoware::localization_util::SmartPoseBuffer;
 using autoware::localization_util::TreeStructuredParzenEstimator;
 

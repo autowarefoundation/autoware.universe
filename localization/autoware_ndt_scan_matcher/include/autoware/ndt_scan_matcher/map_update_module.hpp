@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__NDT_SCAN_MATCHER__MAP_UPDATE_MODULE_HPP_
 #define AUTOWARE__NDT_SCAN_MATCHER__MAP_UPDATE_MODULE_HPP_
 
-#include "autoware/localization_util/diagnostics_module.hpp"
+#include "autoware/universe_utils/ros/diagnostics_module.hpp"
 #include "autoware/localization_util/util_func.hpp"
 #include "hyper_parameters.hpp"
 #include "ndt_omp/multigrid_ndt_omp.h"
@@ -42,7 +42,7 @@
 
 namespace autoware::ndt_scan_matcher
 {
-using DiagnosticsModule = autoware::localization_util::DiagnosticsModule;
+using DiagnosticsModule = autoware::universe_utils::DiagnosticsModule;
 
 class MapUpdateModule
 {
