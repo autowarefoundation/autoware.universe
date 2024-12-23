@@ -37,6 +37,17 @@ using geometry_msgs::msg::Pose;
 size_t getIndexAfterDistance(const Trajectory & traj, const size_t curr_id, const double distance);
 
 /**
+ * @brief trim a trajectory from the current ego pose to some fixed time or distance
+ * @param [in] traj input trajectory to trim
+ * @param [in] max_dist_m [m] maximum distance ahead of the ego pose
+ * @param [in] max_time_s [s] maximum time ahead of the ego pose
+ * @return sub-trajectory starting from the ego pose and of maximum length max_dist_m, maximum
+ * duration max_time_s
+ */
+Trajectory get_lookahead_trajectory(
+  const Trajectory & traj, const Pose & ego_pose, const double max_dist_m, const double max_time_s);
+
+/**
  * @brief calculate the total distance from ego position to the end of trajectory
  * @details finds the nearest point to ego position on the trajectory and calculates
  *          the cumulative distance by summing up the distances between consecutive points
