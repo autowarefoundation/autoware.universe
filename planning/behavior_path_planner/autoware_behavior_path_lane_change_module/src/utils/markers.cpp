@@ -38,33 +38,74 @@ using autoware::universe_utils::createDefaultMarker;
 using autoware::universe_utils::createMarkerScale;
 using geometry_msgs::msg::Point;
 
-MarkerArray showAllValidLaneChangePath(const std::vector<LaneChangePath> & lanes, std::string && ns)
+MarkerArray showAllValidLaneChangePath(
+  const std::vector<LaneChangePath> & lane_change_paths, std::string && ns)
 {
-  if (lanes.empty()) {
+  if (lane_change_paths.empty()) {
     return MarkerArray{};
   }
 
   MarkerArray marker_array;
-  int32_t id{0};
   const auto current_time{rclcpp::Clock{RCL_ROS_TIME}.now()};
 
   const auto colors = colors::colors_list();
-  const auto loop_size = std::min(lanes.size(), colors.size());
+  const auto loop_size = std::min(lane_change_paths.size(), colors.size());
   marker_array.markers.reserve(loop_size);
 
+  const auto info_prep_to_string =
+    [](const autoware::behavior_path_planner::lane_change::Info & info) -> std::string {
+    std::ostringstream ss_text;
+    ss_text << std::setprecision(3) << "vel: " << info.velocity.prepare
+            << "[m/s] | lon_acc: " << info.longitudinal_acceleration.prepare
+            << "[m/s2] | t: " << info.duration.prepare << "[s] | L: " << info.length.prepare
+            << "[m]";
+    return ss_text.str();
+  };
+
+  const auto info_lc_to_string =
+    [](const autoware::behavior_path_planner::lane_change::Info & info) -> std::string {
+    std::ostringstream ss_text;
+    ss_text << std::setprecision(3) << "vel: " << info.velocity.lane_changing
+            << "[m/s] | lon_acc: " << info.longitudinal_acceleration.lane_changing
+            << "[m/s2] | lat_acc: " << info.lateral_acceleration
+            << "[m/s2] | t: " << info.duration.lane_changing
+            << "[s] | L: " << info.length.lane_changing << "[m]";
+    return ss_text.str();
+  };
+
   for (std::size_t idx = 0; idx < loop_size; ++idx) {
-    if (lanes.at(idx).path.points.empty()) {
+    int32_t id{0};
+    const auto & lc_path = lane_change_paths.at(idx);
+    if (lc_path.path.points.empty()) {
       continue;
     }
-
+    std::ostringstream ss;
+    ss << ns.c_str() << "[" << idx << "]";
     const auto & color = colors.at(idx);
-    Marker marker = createDefaultMarker(
-      "map", current_time, ns, ++id, Marker::LINE_STRIP, createMarkerScale(0.1, 0.1, 0.0), color);
-    marker.points.reserve(lanes.at(idx).path.points.size());
+    const auto & points = lc_path.path.points;
+    auto marker = createDefaultMarker(
+      "map", current_time, ss.str(), ++id, Marker::LINE_STRIP, createMarkerScale(0.1, 0.1, 0.0),
+      color);
+    marker.points.reserve(points.size());
 
-    for (const auto & point : lanes.at(idx).path.points) {
+    for (const auto & point : points) {
       marker.points.push_back(point.point.pose.position);
     }
+
+    auto text_marker = createDefaultMarker(
+      "map", current_time, ss.str(), ++id, visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
+      createMarkerScale(0.1, 0.1, 0.8), colors::yellow());
+    const auto prep_idx = points.size() / 4;
+    text_marker.pose = points.at(prep_idx).point.pose;
+    text_marker.pose.position.z += 2.0;
+    text_marker.text = info_prep_to_string(lc_path.info);
+    marker_array.markers.push_back(text_marker);
+
+    const auto lc_idx = points.size() / 2;
+    text_marker.id = ++id;
+    text_marker.pose = points.at(lc_idx).point.pose;
+    text_marker.text = info_lc_to_string(lc_path.info);
+    marker_array.markers.push_back(text_marker);
 
     marker_array.markers.push_back(marker);
   }
