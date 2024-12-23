@@ -57,11 +57,6 @@ DynamicObject getDynamicObject(
   return dynamic_object;
 }
 
-DynamicObject getDynamicObject(const autoware_perception_msgs::msg::DetectedObject & det_object)
-{
-  return getDynamicObject(det_object, 0);
-}
-
 DynamicObjectList getDynamicObjectList(
   const autoware_perception_msgs::msg::DetectedObjects & det_objects, const uint channel_index)
 {
@@ -73,12 +68,6 @@ DynamicObjectList getDynamicObjectList(
     dynamic_objects.objects.emplace_back(getDynamicObject(det_object, channel_index));
   }
   return dynamic_objects;
-}
-
-DynamicObjectList getDynamicObjectList(
-  const autoware_perception_msgs::msg::DetectedObjects & det_objects)
-{
-  return getDynamicObjectList(det_objects, 0);
 }
 
 autoware_perception_msgs::msg::TrackedObject toTrackedObjectMsg(const DynamicObject & dyn_object)
