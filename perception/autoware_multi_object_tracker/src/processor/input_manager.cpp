@@ -57,8 +57,7 @@ void InputStream::onMessage(
 {
   const autoware_perception_msgs::msg::DetectedObjects & objects = *msg;
 
-  types::DynamicObjectList dynamic_objects = types::getDynamicObjectList(objects);
-  dynamic_objects.channel_index = index_;
+  types::DynamicObjectList dynamic_objects = types::getDynamicObjectList(objects, index_);
 
   // Model the object uncertainty only if it is not available
   types::DynamicObjectList objects_with_uncertainty =

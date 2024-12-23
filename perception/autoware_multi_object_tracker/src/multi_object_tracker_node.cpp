@@ -388,7 +388,7 @@ void MultiObjectTracker::publish(const rclcpp::Time & time) const
     return;
   }
   // Create output msg
-  autoware_perception_msgs::msg::TrackedObjects output_msg, tentative_objects_msg;
+  autoware_perception_msgs::msg::TrackedObjects output_msg;
   output_msg.header.frame_id = world_frame_id_;
   processor_->getTrackedObjects(time, output_msg);
 

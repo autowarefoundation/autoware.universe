@@ -25,9 +25,11 @@ namespace autoware::multi_object_tracker
 namespace types
 {
 
-DynamicObject getDynamicObject(const autoware_perception_msgs::msg::DetectedObject & det_object)
+DynamicObject getDynamicObject(
+  const autoware_perception_msgs::msg::DetectedObject & det_object, const uint channel_index)
 {
   DynamicObject dynamic_object;
+  dynamic_object.channel_index = channel_index;
   dynamic_object.existence_probability = det_object.existence_probability;
   dynamic_object.classification = det_object.classification;
 
@@ -55,16 +57,28 @@ DynamicObject getDynamicObject(const autoware_perception_msgs::msg::DetectedObje
   return dynamic_object;
 }
 
+DynamicObject getDynamicObject(const autoware_perception_msgs::msg::DetectedObject & det_object)
+{
+  return getDynamicObject(det_object, 0);
+}
+
 DynamicObjectList getDynamicObjectList(
-  const autoware_perception_msgs::msg::DetectedObjects & det_objects)
+  const autoware_perception_msgs::msg::DetectedObjects & det_objects, const uint channel_index)
 {
   DynamicObjectList dynamic_objects;
   dynamic_objects.header = det_objects.header;
+  dynamic_objects.channel_index = channel_index;
   dynamic_objects.objects.reserve(det_objects.objects.size());
   for (const auto & det_object : det_objects.objects) {
-    dynamic_objects.objects.emplace_back(getDynamicObject(det_object));
+    dynamic_objects.objects.emplace_back(getDynamicObject(det_object, channel_index));
   }
   return dynamic_objects;
+}
+
+DynamicObjectList getDynamicObjectList(
+  const autoware_perception_msgs::msg::DetectedObjects & det_objects)
+{
+  return getDynamicObjectList(det_objects, 0);
 }
 
 autoware_perception_msgs::msg::TrackedObject toTrackedObjectMsg(const DynamicObject & dyn_object)

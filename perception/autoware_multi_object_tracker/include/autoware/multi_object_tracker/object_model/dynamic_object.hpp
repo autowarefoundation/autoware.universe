@@ -59,6 +59,7 @@ struct ObjectKinematics
 struct DynamicObject
 {
   unique_identifier_msgs::msg::UUID object_id = unique_identifier_msgs::msg::UUID();
+  uint channel_index;
   float existence_probability;
   std::vector<autoware_perception_msgs::msg::ObjectClassification> classification;
   ObjectKinematics kinematics;
@@ -72,8 +73,12 @@ struct DynamicObjectList
   std::vector<DynamicObject> objects;
 };
 
+DynamicObject getDynamicObject(
+  const autoware_perception_msgs::msg::DetectedObject & det_object, const uint channel_index);
 DynamicObject getDynamicObject(const autoware_perception_msgs::msg::DetectedObject & det_object);
 
+DynamicObjectList getDynamicObjectList(
+  const autoware_perception_msgs::msg::DetectedObjects & det_objects, const uint channel_index);
 DynamicObjectList getDynamicObjectList(
   const autoware_perception_msgs::msg::DetectedObjects & det_objects);
 
