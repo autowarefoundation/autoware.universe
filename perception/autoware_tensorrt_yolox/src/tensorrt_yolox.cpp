@@ -341,16 +341,22 @@ TrtYoloX::TrtYoloX(
 
 TrtYoloX::~TrtYoloX()
 {
-  if (use_gpu_preprocess_) {
-    if (image_buf_h_) {
-      image_buf_h_.reset();
+  try {
+    if (use_gpu_preprocess_) {
+      if (image_buf_h_) {
+        image_buf_h_.reset();
+      }
+      if (image_buf_d_) {
+        image_buf_d_.reset();
+      }
+      if (argmax_buf_d_) {
+        argmax_buf_d_.reset();
+      }
     }
-    if (image_buf_d_) {
-      image_buf_d_.reset();
-    }
-    if (argmax_buf_d_) {
-      argmax_buf_d_.reset();
-    }
+  } catch (const std::exception &e) {
+    std::cerr << "Exception in TrtYoloX destructor: " << e.what() << std::endl;
+  } catch (...) {
+    std::cerr << "Unknown exception in TrtYoloX destructor" << std::endl;
   }
 }
 
