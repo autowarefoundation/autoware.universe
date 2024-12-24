@@ -25,14 +25,16 @@
 namespace autoware::default_adapi
 {
 
-using GearReport = autoware::component_interface_specs::vehicle::GearStatus::Message;
+using GearReport = autoware::universe_component_interface_specs::vehicle::GearStatus::Message;
 using ApiGear = autoware_adapi_v1_msgs::msg::Gear;
 using TurnIndicatorsReport =
-  autoware::component_interface_specs::vehicle::TurnIndicatorStatus::Message;
+  autoware::universe_component_interface_specs::vehicle::TurnIndicatorStatus::Message;
 using ApiTurnIndicator = autoware_adapi_v1_msgs::msg::TurnIndicators;
-using HazardLightsReport = autoware::component_interface_specs::vehicle::HazardLightStatus::Message;
+using HazardLightsReport =
+  autoware::universe_component_interface_specs::vehicle::HazardLightStatus::Message;
 using ApiHazardLight = autoware_adapi_v1_msgs::msg::HazardLights;
-using MapProjectorInfo = autoware::component_interface_specs::map::MapProjectorInfo::Message;
+using MapProjectorInfo =
+  autoware::universe_component_interface_specs::map::MapProjectorInfo::Message;
 
 std::unordered_map<uint8_t, uint8_t> gear_type_ = {
   {GearReport::NONE, ApiGear::UNKNOWN},    {GearReport::NEUTRAL, ApiGear::NEUTRAL},
@@ -90,23 +92,20 @@ uint8_t VehicleNode::mapping(
   }
 }
 
-void VehicleNode::kinematic_state(
-  const autoware::component_interface_specs::localization::KinematicState::Message::ConstSharedPtr
-    msg_ptr)
+void VehicleNode::kinematic_state(const autoware::universe_component_interface_specs::localization::
+                                    KinematicState::Message::ConstSharedPtr msg_ptr)
 {
   kinematic_state_msgs_ = msg_ptr;
 }
 
-void VehicleNode::acceleration_status(
-  const autoware::component_interface_specs::localization::Acceleration::Message::ConstSharedPtr
-    msg_ptr)
+void VehicleNode::acceleration_status(const autoware::universe_component_interface_specs::
+                                        localization::Acceleration::Message::ConstSharedPtr msg_ptr)
 {
   acceleration_msgs_ = msg_ptr;
 }
 
-void VehicleNode::steering_status(
-  const autoware::component_interface_specs::vehicle::SteeringStatus::Message::ConstSharedPtr
-    msg_ptr)
+void VehicleNode::steering_status(const autoware::universe_component_interface_specs::vehicle::
+                                    SteeringStatus::Message::ConstSharedPtr msg_ptr)
 {
   steering_status_msgs_ = msg_ptr;
 }
@@ -127,7 +126,8 @@ void VehicleNode::hazard_light_status(const HazardLightsReport::ConstSharedPtr m
 }
 
 void VehicleNode::energy_status(
-  const autoware::component_interface_specs::vehicle::EnergyStatus::Message::ConstSharedPtr msg_ptr)
+  const autoware::universe_component_interface_specs::vehicle::EnergyStatus::Message::ConstSharedPtr
+    msg_ptr)
 {
   energy_status_msgs_ = msg_ptr;
 }

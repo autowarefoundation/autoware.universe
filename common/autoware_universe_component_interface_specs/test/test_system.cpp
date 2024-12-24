@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/component_interface_specs/system.hpp"
+#include "autoware/universe_component_interface_specs/system.hpp"
 #include "gtest/gtest.h"
 
 TEST(system, interface)
 {
   {
-    using autoware::component_interface_specs::system::MrmState;
+    using autoware::universe_component_interface_specs::system::MrmState;
     MrmState state;
     size_t depth = 1;
     EXPECT_EQ(state.depth, depth);
@@ -27,7 +27,7 @@ TEST(system, interface)
   }
 
   {
-    using autoware::component_interface_specs::system::OperationModeState;
+    using autoware::universe_component_interface_specs::system::OperationModeState;
     OperationModeState state;
     size_t depth = 1;
     EXPECT_EQ(state.depth, depth);

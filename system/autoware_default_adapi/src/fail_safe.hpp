@@ -16,8 +16,8 @@
 #define FAIL_SAFE_HPP_
 
 #include <autoware/adapi_specs/fail_safe.hpp>
-#include <autoware/component_interface_specs/system.hpp>
 #include <autoware/component_interface_utils/rclcpp.hpp>
+#include <autoware/universe_component_interface_specs/system.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 // This file should be included after messages.
@@ -34,7 +34,7 @@ public:
 private:
   using MrmState = autoware::adapi_specs::fail_safe::MrmState::Message;
   Pub<autoware::adapi_specs::fail_safe::MrmState> pub_mrm_state_;
-  Sub<autoware::component_interface_specs::system::MrmState> sub_mrm_state_;
+  Sub<autoware::universe_component_interface_specs::system::MrmState> sub_mrm_state_;
   MrmState prev_state_;
   void on_state(const MrmState::ConstSharedPtr msg);
 };

@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/component_interface_specs/map.hpp"
+#include "autoware/universe_component_interface_specs/map.hpp"
 #include "gtest/gtest.h"
 
 TEST(map, interface)
 {
   {
-    using autoware::component_interface_specs::map::MapProjectorInfo;
+    using autoware::universe_component_interface_specs::map::MapProjectorInfo;
     MapProjectorInfo map_projector;
     size_t depth = 1;
     EXPECT_EQ(map_projector.depth, depth);

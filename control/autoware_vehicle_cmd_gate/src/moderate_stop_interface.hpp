@@ -15,8 +15,8 @@
 #ifndef MODERATE_STOP_INTERFACE_HPP_
 #define MODERATE_STOP_INTERFACE_HPP_
 
-#include <autoware/component_interface_specs/control.hpp>
 #include <autoware/component_interface_utils/rclcpp.hpp>
+#include <autoware/universe_component_interface_specs/control.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <string>
@@ -28,9 +28,9 @@ namespace autoware::vehicle_cmd_gate
 class ModerateStopInterface
 {
 private:
-  using SetStop = autoware::component_interface_specs::control::SetStop;
-  using IsStopped = autoware::component_interface_specs::control::IsStopped;
-  using IsStartRequested = autoware::component_interface_specs::control::IsStartRequested;
+  using SetStop = autoware::universe_component_interface_specs::control::SetStop;
+  using IsStopped = autoware::universe_component_interface_specs::control::IsStopped;
+  using IsStartRequested = autoware::universe_component_interface_specs::control::IsStartRequested;
 
 public:
   explicit ModerateStopInterface(rclcpp::Node * node);

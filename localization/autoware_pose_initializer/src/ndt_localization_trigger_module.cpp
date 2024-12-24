@@ -14,8 +14,8 @@
 
 #include "ndt_localization_trigger_module.hpp"
 
-#include <autoware/component_interface_specs/localization.hpp>
 #include <autoware/component_interface_utils/rclcpp/exceptions.hpp>
+#include <autoware/universe_component_interface_specs/localization.hpp>
 
 #include <memory>
 #include <string>
@@ -23,7 +23,7 @@
 namespace autoware::pose_initializer
 {
 using ServiceException = autoware::component_interface_utils::ServiceException;
-using Initialize = autoware::component_interface_specs::localization::Initialize;
+using Initialize = autoware::universe_component_interface_specs::localization::Initialize;
 
 NdtLocalizationTriggerModule::NdtLocalizationTriggerModule(rclcpp::Node * node) : node_(node)
 {

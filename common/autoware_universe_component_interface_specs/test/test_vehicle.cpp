@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/component_interface_specs/vehicle.hpp"
+#include "autoware/universe_component_interface_specs/vehicle.hpp"
 #include "gtest/gtest.h"
 
 TEST(vehicle, interface)
 {
   {
-    using autoware::component_interface_specs::vehicle::SteeringStatus;
+    using autoware::universe_component_interface_specs::vehicle::SteeringStatus;
     SteeringStatus status;
     size_t depth = 1;
     EXPECT_EQ(status.depth, depth);
@@ -27,7 +27,7 @@ TEST(vehicle, interface)
   }
 
   {
-    using autoware::component_interface_specs::vehicle::GearStatus;
+    using autoware::universe_component_interface_specs::vehicle::GearStatus;
     GearStatus status;
     size_t depth = 1;
     EXPECT_EQ(status.depth, depth);
@@ -36,7 +36,7 @@ TEST(vehicle, interface)
   }
 
   {
-    using autoware::component_interface_specs::vehicle::TurnIndicatorStatus;
+    using autoware::universe_component_interface_specs::vehicle::TurnIndicatorStatus;
     TurnIndicatorStatus status;
     size_t depth = 1;
     EXPECT_EQ(status.depth, depth);
@@ -45,7 +45,7 @@ TEST(vehicle, interface)
   }
 
   {
-    using autoware::component_interface_specs::vehicle::HazardLightStatus;
+    using autoware::universe_component_interface_specs::vehicle::HazardLightStatus;
     HazardLightStatus status;
     size_t depth = 1;
     EXPECT_EQ(status.depth, depth);
@@ -54,7 +54,7 @@ TEST(vehicle, interface)
   }
 
   {
-    using autoware::component_interface_specs::vehicle::EnergyStatus;
+    using autoware::universe_component_interface_specs::vehicle::EnergyStatus;
     EnergyStatus status;
     size_t depth = 1;
     EXPECT_EQ(status.depth, depth);

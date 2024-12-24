@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__COMPONENT_INTERFACE_SPECS__VEHICLE_HPP_
-#define AUTOWARE__COMPONENT_INTERFACE_SPECS__VEHICLE_HPP_
+#ifndef AUTOWARE__UNIVERSE_COMPONENT_INTERFACE_SPECS__VEHICLE_HPP_
+#define AUTOWARE__UNIVERSE_COMPONENT_INTERFACE_SPECS__VEHICLE_HPP_
 
 #include <rclcpp/qos.hpp>
 
@@ -26,7 +26,7 @@
 #include <autoware_vehicle_msgs/msg/turn_indicators_report.hpp>
 #include <tier4_vehicle_msgs/msg/battery_status.hpp>
 
-namespace autoware::component_interface_specs::vehicle
+namespace autoware::universe_component_interface_specs::vehicle
 {
 
 struct SteeringStatus
@@ -95,6 +95,6 @@ struct DoorStatus
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
 };
 
-}  // namespace autoware::component_interface_specs::vehicle
+}  // namespace autoware::universe_component_interface_specs::vehicle
 
-#endif  // AUTOWARE__COMPONENT_INTERFACE_SPECS__VEHICLE_HPP_
+#endif  // AUTOWARE__UNIVERSE_COMPONENT_INTERFACE_SPECS__VEHICLE_HPP_
