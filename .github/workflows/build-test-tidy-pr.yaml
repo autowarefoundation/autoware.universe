@@ -58,6 +58,20 @@ jobs:
     secrets:
       codecov-token: ${{ secrets.CODECOV_TOKEN }}
 
+  build-test-pr:
+    needs:
+      - build-and-test-differential
+      - build-and-test-differential-cuda
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check build-and-test success
+        if: ${{ needs.build-and-test-differential.result == 'success' && (needs.build-and-test-differential-cuda.result == 'success' || needs.build-and-test-differential-cuda.result == 'skipped') }}
+        run: echo "build-test-pr succeeded."
+      - name: Fail if conditions not met
+        if: ${{ !(needs.build-and-test-differential.result == 'success' && (needs.build-and-test-differential-cuda.result == 'success' || needs.build-and-test-differential-cuda.result == 'skipped')) }}
+        run: exit 1
+
   clang-tidy-differential:
     needs:
       - check-if-cuda-job-is-needed
@@ -74,3 +88,17 @@ jobs:
     with:
       container: ghcr.io/autowarefoundation/autoware:universe-devel
       container-suffix: -cuda
+
+  clang-tidy-pr:
+    needs:
+      - clang-tidy-differential
+      - clang-tidy-differential-cuda
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check clang-tidy success
+        if: ${{ needs.clang-tidy-differential.result == 'success' || needs.clang-tidy-differential-cuda.result == 'success' }}
+        run: echo "clang-tidy-pr succeeded."
+      - name: Fail if conditions not met
+        if: ${{ !(needs.clang-tidy-differential.result == 'success' || needs.clang-tidy-differential-cuda.result == 'success') }}
+        run: exit 1
