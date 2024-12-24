@@ -417,7 +417,7 @@ double calc_actual_prepare_duration(
     if (max_acc < eps) {
       return params.max_prepare_duration;
     }
-    return (min_lc_velocity - current_velocity) / max_acc;
+    return std::max((min_lc_velocity - current_velocity) / max_acc, params.min_prepare_duration);
   });
 
   return std::max(params.max_prepare_duration - active_signal_duration, min_prepare_duration);
