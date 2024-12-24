@@ -71,10 +71,12 @@ autoware_internal_debug_msgs::msg::ProcessingTimeTree ProcessingTimeNode::to_msg
 {
   autoware_debug_msgs::msg::ProcessingTimeTree time_tree_msg;
 
-  std::function<void(const ProcessingTimeNode &, autoware_internal_debug_msgs::msg::ProcessingTimeTree &, int)>
+  std::function<void(
+    const ProcessingTimeNode &, autoware_internal_debug_msgs::msg::ProcessingTimeTree &, int)>
     construct_msg = [&](
                       const ProcessingTimeNode & node,
-                      autoware_internal_debug_msgs::msg::ProcessingTimeTree & tree_msg, int parent_id) {
+                      autoware_internal_debug_msgs::msg::ProcessingTimeTree & tree_msg,
+                      int parent_id) {
       autoware_internal_debug_msgs::msg::ProcessingTimeNode time_node_msg;
       time_node_msg.name = node.name_;
       time_node_msg.processing_time = node.processing_time_;

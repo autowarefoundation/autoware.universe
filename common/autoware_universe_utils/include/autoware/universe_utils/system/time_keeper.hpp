@@ -18,9 +18,9 @@
 
 #include <rclcpp/publisher.hpp>
 
-#include <std_msgs/msg/string.hpp>
 #include <autoware_internal_debug_msgs/msg/processing_time_node.hpp>
 #include <autoware_internal_debug_msgs/msg/processing_time_tree.hpp>
+#include <std_msgs/msg/string.hpp>
 
 #include <memory>
 #include <ostream>
@@ -61,7 +61,8 @@ public:
   /**
    * @brief Construct a ProcessingTimeTree message from the node and its children
    *
-   * @return autoware_internal_debug_msgs::msg::ProcessingTimeTree Constructed ProcessingTimeTree message
+   * @return autoware_internal_debug_msgs::msg::ProcessingTimeTree Constructed ProcessingTimeTree
+   * message
    */
   autoware_internal_debug_msgs::msg::ProcessingTimeTree to_msg() const;
 
@@ -111,7 +112,8 @@ private:
 };
 
 using ProcessingTimeDetail =
-  autoware_internal_debug_msgs::msg::ProcessingTimeTree;  //!< Alias for the ProcessingTimeTree message
+  autoware_internal_debug_msgs::msg::ProcessingTimeTree;  //!< Alias for the ProcessingTimeTree
+                                                          //!< message
 
 /**
  * @brief Class for tracking and reporting the processing time of various functions
