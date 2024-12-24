@@ -42,6 +42,7 @@
 #include <cmath>
 #include <limits>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -1407,11 +1408,11 @@ std::optional<PathWithLaneId> NormalLaneChange::compute_terminal_lane_change_pat
   try {
     if (!get_prepare_segment(prepare_segment, dist_to_terminal_start)) {
       RCLCPP_DEBUG(logger_, "failed to get valid prepare segment for terminal LC path");
-      return {};
+      return std::nullopt;
     }
   } catch (const std::exception & e) {
     RCLCPP_DEBUG(logger_, "failed to get terminal LC path: %s", e.what());
-    return {};
+    return std::nullopt;
   }
 
   // t = 2 * d / (v1 + v2)
@@ -1479,7 +1480,7 @@ std::optional<PathWithLaneId> NormalLaneChange::compute_terminal_lane_change_pat
     return candidate_path.path;
   }
 
-  return {};
+  return std::nullopt;
 }
 
 PathSafetyStatus NormalLaneChange::isApprovedPathSafe() const
