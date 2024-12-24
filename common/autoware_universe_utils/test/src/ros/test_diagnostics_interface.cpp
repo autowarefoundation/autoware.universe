@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/universe_utils/ros/diagnostics_module.hpp"
+#include "autoware/universe_utils/ros/diagnostics_interface.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -22,15 +22,15 @@
 
 #include <gtest/gtest.h>
 
-using autoware::universe_utils::DiagnosticsModule;
+using autoware::universe_utils::DiagnosticInterface;
 
-class TestDiagnosticsModule : public ::testing::Test
+class TestDiagnosticInterface : public ::testing::Test
 {
 protected:
   void SetUp() override
   {
     // Create a test node
-    node_ = std::make_shared<rclcpp::Node>("test_diagnostics_module");
+    node_ = std::make_shared<rclcpp::Node>("test_diagnostics_interface");
   }
 
   // Automatically destroyed at the end of each test
@@ -41,9 +41,9 @@ protected:
  * Test clear():
  * Verify that calling clear() resets DiagnosticStatus values, level, and message.
  */
-TEST_F(TestDiagnosticsModule, ClearTest)
+TEST_F(TestDiagnosticInterface, ClearTest)
 {
-  DiagnosticsModule module(node_.get(), "test_diagnostic");
+  DiagnosticInterface module(node_.get(), "test_diagnostic");
 
   // Add some key-value pairs and update level/message
   module.add_key_value("param1", 42);
@@ -84,9 +84,9 @@ TEST_F(TestDiagnosticsModule, ClearTest)
  * Test add_key_value():
  * Verify that adding the same key updates its value instead of adding a duplicate.
  */
-TEST_F(TestDiagnosticsModule, AddKeyValueTest)
+TEST_F(TestDiagnosticInterface, AddKeyValueTest)
 {
-  DiagnosticsModule module(node_.get(), "test_diagnostic");
+  DiagnosticInterface module(node_.get(), "test_diagnostic");
 
   // Call the template version of add_key_value() with different types
   module.add_key_value("string_key", std::string("initial_value"));
@@ -136,9 +136,9 @@ TEST_F(TestDiagnosticsModule, AddKeyValueTest)
  * Verify that the level is updated to the highest severity and
  * that messages are concatenated if level > OK.
  */
-TEST_F(TestDiagnosticsModule, UpdateLevelAndMessageTest)
+TEST_F(TestDiagnosticInterface, UpdateLevelAndMessageTest)
 {
-  DiagnosticsModule module(node_.get(), "test_diagnostic");
+  DiagnosticInterface module(node_.get(), "test_diagnostic");
 
   // Initial status is level=OK(0), message=""
   module.update_level_and_message(diagnostic_msgs::msg::DiagnosticStatus::OK, "Initial OK");

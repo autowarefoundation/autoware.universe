@@ -24,10 +24,10 @@
 
 namespace autoware::universe_utils
 {
-class DiagnosticsModule
+class DiagnosticInterface
 {
 public:
-  DiagnosticsModule(rclcpp::Node * node, const std::string & diagnostic_name);
+  DiagnosticInterface(rclcpp::Node * node, const std::string & diagnostic_name);
   void clear();
   void add_key_value(const diagnostic_msgs::msg::KeyValue & key_value_msg);
   template <typename T>
@@ -44,15 +44,21 @@ private:
 
   diagnostic_msgs::msg::DiagnosticStatus diagnostics_status_msg_;
 };
-
 template <typename T>
-void DiagnosticsModule::add_key_value(const std::string & key, const T & value)
+void DiagnosticInterface::add_key_value(const std::string & key, const T & value)
 {
   diagnostic_msgs::msg::KeyValue key_value;
   key_value.key = key;
   key_value.value = std::to_string(value);
   add_key_value(key_value);
 }
+
+
+// template <>
+// void DiagnosticInterface::add_key_value(const std::string & key, const std::string & value);
+// template <>
+// void DiagnosticInterface::add_key_value(const std::string & key, const bool & value);
+
 
 }  // namespace autoware::universe_utils
 
