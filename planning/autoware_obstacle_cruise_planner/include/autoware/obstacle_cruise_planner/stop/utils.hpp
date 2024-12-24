@@ -38,7 +38,7 @@ std::vector<Polygon2d> createOneStepPolygons(
   const std::vector<TrajectoryPoint> & traj_points,
   const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
   const geometry_msgs::msg::Pose & current_ego_pose, const double lat_margin,
-  const BehaviorDeterminationParam & behavior_determination_param);
+  const CommonBehaviorDeterminationParam & common_behavior_determination_param);
 
 template <typename T>
 std::optional<T> getObstacleFromUuid(

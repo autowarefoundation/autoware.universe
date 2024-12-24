@@ -157,16 +157,17 @@ public:
     double dist_to_collide_on_decimated_traj;
     ObjectClassification classification;
   };
+
   ObstacleStopModule(rclcpp::Node & node, const LongitudinalInfo & longitudinal_info)
   : clock_(node.get_clock()),
     longitudinal_info_(longitudinal_info),
     stop_param_(StopParam(node, longitudinal_info))
   {
     inside_stop_obstacle_types_ =
-      obstacle_cruise_utils::getTargetObjectType(node, "common.stop_obstacle_type.inside.");
+      obstacle_cruise_utils::getTargetObjectType(node, "stop.obstacle_type.inside.");
     outside_stop_obstacle_types_ =
-      obstacle_cruise_utils::getTargetObjectType(node, "common.stop_obstacle_type.outside.");
-    use_pointcloud_for_stop_ = node.declare_parameter<bool>("common.stop_obstacle_type.pointcloud");
+      obstacle_cruise_utils::getTargetObjectType(node, "stop.obstacle_type.outside.");
+    use_pointcloud_for_stop_ = node.declare_parameter<bool>("stop.obstacle_type.pointcloud");
 
     stop_speed_exceeded_pub_ =
       node.create_publisher<StopSpeedExceeded>("~/output/stop_speed_exceeded", 1);
@@ -183,18 +184,29 @@ public:
       node.create_publisher<Float32MultiArrayStamped>("~/debug/stop_planning_info", 1);
     debug_stop_wall_marker_pub_ = node.create_publisher<MarkerArray>("~/virtual_wall/stop", 1);
     debug_marker_pub_ = node.create_publisher<MarkerArray>("~/debug/marker", 1);
+
+    min_behavior_stop_margin_ = node.declare_parameter<double>("stop.min_behavior_stop_margin");
+    additional_safe_distance_margin_on_curve_ =
+      node.declare_parameter<double>("stop.stop_on_curve.additional_safe_distance_margin");
+    enable_approaching_on_curve_ =
+      node.declare_parameter<bool>("stop.stop_on_curve.enable_approaching");
+    min_safe_distance_margin_on_curve_ =
+      node.declare_parameter<double>("stop.stop_on_curve.min_safe_distance_margin");
+    suppress_sudden_obstacle_stop_ =
+      node.declare_parameter<bool>("stop.suppress_sudden_obstacle_stop");
   }
 
   std::vector<TrajectoryPoint> plan(
     const PredictedObjects & objects, const std::vector<TrajectoryPoint> & decimated_traj_points,
     const std::vector<Polygon2d> & decimated_traj_polys, const std::vector<Obstacle> & obstacles,
-    const BehaviorDeterminationParam & behavior_determination_param,
-    const double min_behavior_stop_margin, const PlannerData & planner_data)
+    const CommonBehaviorDeterminationParam & common_behavior_determination_param,
+    const PlannerData & planner_data)
   {
+    common_behavior_determination_param_ = common_behavior_determination_param;
+
     const auto stop_obstacles = determineEgoBehaviorAgainstPredictedObjectObstacles(
       planner_data.current_odometry, objects, decimated_traj_points, decimated_traj_polys,
-      obstacles, planner_data.is_driving_forward, behavior_determination_param,
-      min_behavior_stop_margin, planner_data.vehicle_info);
+      obstacles, planner_data.is_driving_forward, planner_data.vehicle_info);
     const auto stop_traj_points = generateStopTrajectory(planner_data, stop_obstacles);
     publishMetrics(clock_->now());
     postprocess();
@@ -205,18 +217,11 @@ public:
 
   void setParam(
     const bool enable_debug_info, const bool enable_calculation_time_info,
-    const bool use_pointcloud, const double min_behavior_stop_margin,
-    const double enable_approaching_on_curve, const double additional_safe_distance_margin_on_curve,
-    const double min_safe_distance_margin_on_curve, const bool suppress_sudden_obstacle_stop)
+    const bool use_pointcloud)
   {
     enable_debug_info_ = enable_debug_info;
     enable_calculation_time_info_ = enable_calculation_time_info;
     use_pointcloud_ = use_pointcloud;
-    min_behavior_stop_margin_ = min_behavior_stop_margin;
-    enable_approaching_on_curve_ = enable_approaching_on_curve;
-    additional_safe_distance_margin_on_curve_ = additional_safe_distance_margin_on_curve;
-    min_safe_distance_margin_on_curve_ = min_safe_distance_margin_on_curve;
-    suppress_sudden_obstacle_stop_ = suppress_sudden_obstacle_stop;
   }
 
   void onParam(const std::vector<rclcpp::Parameter> & parameters)
@@ -242,12 +247,8 @@ private:
     const Odometry & odometry, const PredictedObjects & objects,
     const std::vector<TrajectoryPoint> & decimated_traj_points,
     const std::vector<Polygon2d> & decimated_traj_polys, const std::vector<Obstacle> & obstacles,
-    const bool is_driving_forward, const BehaviorDeterminationParam & behavior_determination_param,
-    const double min_behavior_stop_margin, const VehicleInfo & vehicle_info)
+    const bool is_driving_forward, const VehicleInfo & vehicle_info)
   {
-    behavior_determination_param_ = behavior_determination_param;
-    min_behavior_stop_margin_ = min_behavior_stop_margin;
-
     // stop
     std::vector<StopObstacle> stop_obstacles;
     for (const auto & obstacle : obstacles) {
@@ -408,7 +409,7 @@ private:
     // Hold previous stop distance if necessary
     if (
       std::abs(planner_data.current_odometry.twist.twist.linear.x) <
-        longitudinal_info_.hold_stop_velocity_threshold &&
+        stop_param_.hold_stop_velocity_threshold &&
       prev_stop_distance_info_) {
       // NOTE: We assume that the current trajectory's front point is ahead of the previous
       // trajectory's front point.
@@ -422,7 +423,7 @@ private:
       const double prev_zero_vel_dist = prev_stop_distance_info_->second - diff_dist_front_points;
       if (
         std::abs(prev_zero_vel_dist - determined_zero_vel_dist.value()) <
-        longitudinal_info_.hold_stop_distance_threshold) {
+        stop_param_.hold_stop_distance_threshold) {
         determined_zero_vel_dist.value() = prev_zero_vel_dist;
       }
     }
@@ -486,7 +487,7 @@ private:
     const Odometry & odometry, const geometry_msgs::msg::Point & collision_point,
     const std::vector<TrajectoryPoint> & traj_points, const double abs_ego_offset) const
   {
-    const auto & p = behavior_determination_param_;
+    const auto & p = stop_param_;
     const double dist_from_ego_to_obstacle =
       std::abs(autoware::motion_utils::calcSignedArcLength(
         traj_points, odometry.pose.pose.position, collision_point)) -
@@ -630,6 +631,18 @@ private:
 
   struct StopParam
   {
+    double hold_stop_velocity_threshold;
+    double hold_stop_distance_threshold;
+    double collision_time_margin;
+    double max_lat_margin_for_stop;
+    double max_lat_margin_for_stop_against_unknown;
+    double min_velocity_to_reach_collision_point;
+    double max_lat_time_margin_for_stop;
+    int num_of_predicted_paths_for_outside_stop_obstacle;
+    double pedestrian_deceleration_rate;
+    double bicycle_deceleration_rate;
+    double stop_obstacle_hold_time_threshold;
+
     struct ObstacleSpecificParams
     {
       double limit_min_acc;
@@ -643,8 +656,34 @@ private:
       {ObjectClassification::TRAILER, "trailer"}, {ObjectClassification::MOTORCYCLE, "motorcycle"},
       {ObjectClassification::BICYCLE, "bicycle"}, {ObjectClassification::PEDESTRIAN, "pedestrian"}};
     std::unordered_map<std::string, ObstacleSpecificParams> type_specified_param_list;
+
     explicit StopParam(rclcpp::Node & node, const LongitudinalInfo & longitudinal_info)
     {
+      hold_stop_velocity_threshold =
+        node.declare_parameter<double>("stop.hold_stop_velocity_threshold");
+      hold_stop_distance_threshold =
+        node.declare_parameter<double>("stop.hold_stop_distance_threshold");
+
+      // behavior determination
+      collision_time_margin = node.declare_parameter<double>(
+        "stop.behavior_determination.crossing_obstacle.collision_time_margin");
+      max_lat_margin_for_stop =
+        node.declare_parameter<double>("stop.behavior_determination.max_lat_margin");
+      max_lat_margin_for_stop_against_unknown = node.declare_parameter<double>(
+        "stop.behavior_determination.max_lat_margin_against_unknown");
+      min_velocity_to_reach_collision_point = node.declare_parameter<double>(
+        "stop.behavior_determination.min_velocity_to_reach_collision_point");
+      max_lat_time_margin_for_stop = node.declare_parameter<double>(
+        "stop.behavior_determination.outside_obstacle.max_lateral_time_margin");
+      num_of_predicted_paths_for_outside_stop_obstacle = node.declare_parameter<int>(
+        "stop.behavior_determination.outside_obstacle.num_of_predicted_paths");
+      pedestrian_deceleration_rate = node.declare_parameter<double>(
+        "stop.behavior_determination.outside_obstacle.pedestrian_deceleration_rate");
+      bicycle_deceleration_rate = node.declare_parameter<double>(
+        "stop.behavior_determination.outside_obstacle.bicycle_deceleration_rate");
+      stop_obstacle_hold_time_threshold =
+        node.declare_parameter<double>("stop.behavior_determination_obstacle_hold_time_threshold");
+
       const std::string param_prefix = "stop.type_specified_params.";
       std::vector<std::string> obstacle_labels{"default"};
       obstacle_labels =
@@ -668,9 +707,42 @@ private:
         }
       }
     }
+
     void onParam(
       const std::vector<rclcpp::Parameter> & parameters, const LongitudinalInfo & longitudinal_info)
     {
+      autoware::universe_utils::updateParam<double>(
+        parameters, "stop.hold_stop_velocity_threshold", hold_stop_velocity_threshold);
+      autoware::universe_utils::updateParam<double>(
+        parameters, "stop.hold_stop_distance_threshold", hold_stop_distance_threshold);
+
+      autoware::universe_utils::updateParam<double>(
+        parameters, "stop.behavior_determination.crossing_obstacle.collision_time_margin",
+        collision_time_margin);
+      autoware::universe_utils::updateParam<double>(
+        parameters, "stop.behavior_determination.max_lat_margin", max_lat_margin_for_stop);
+      autoware::universe_utils::updateParam<double>(
+        parameters, "stop.behavior_determination.max_lat_margin_against_unknown",
+        max_lat_margin_for_stop_against_unknown);
+      autoware::universe_utils::updateParam<double>(
+        parameters, "stop.behavior_determination.min_velocity_to_reach_collision_point",
+        min_velocity_to_reach_collision_point);
+      autoware::universe_utils::updateParam<double>(
+        parameters, "stop.behavior_determination.outside_obstacle.max_lateral_time_margin",
+        max_lat_time_margin_for_stop);
+      autoware::universe_utils::updateParam<int>(
+        parameters, "stop.behavior_determination.outside_obstacle.num_of_predicted_paths",
+        num_of_predicted_paths_for_outside_stop_obstacle);
+      autoware::universe_utils::updateParam<double>(
+        parameters, "stop.behavior_determination.outside_obstacle.pedestrian_deceleration_rate",
+        pedestrian_deceleration_rate);
+      autoware::universe_utils::updateParam<double>(
+        parameters, "stop.behavior_determination.outside_obstacle.bicycle_deceleration_rate",
+        bicycle_deceleration_rate);
+      autoware::universe_utils::updateParam<double>(
+        parameters, "stop.behavior_determination_obstacle_hold_time_threshold",
+        stop_obstacle_hold_time_threshold);
+
       const std::string param_prefix = "stop.type_specified_params.";
       for (auto & [type_str, param] : type_specified_param_list) {
         if (type_str == "default") {
@@ -712,7 +784,8 @@ private:
     const double precise_lat_dist, const bool is_driving_forward,
     const VehicleInfo & vehicle_info) const
   {
-    const auto & p = behavior_determination_param_;
+    const auto & cp = common_behavior_determination_param_;
+    const auto & sp = stop_param_;
     const auto & object_id = obstacle.uuid.substr(0, 4);
 
     if (!isStopObstacle(obstacle.classification.label)) {
@@ -720,8 +793,8 @@ private:
     }
     const double max_lat_margin_for_stop =
       (obstacle.classification.label == ObjectClassification::UNKNOWN)
-        ? p.max_lat_margin_for_stop_against_unknown
-        : p.max_lat_margin_for_stop;
+        ? sp.max_lat_margin_for_stop_against_unknown
+        : sp.max_lat_margin_for_stop;
 
     // Obstacle that is not inside of trajectory
     if (precise_lat_dist > std::max(max_lat_margin_for_stop, 1e-3)) {
@@ -730,7 +803,7 @@ private:
       }
 
       const auto time_to_traj = precise_lat_dist / std::max(1e-6, obstacle.approach_velocity);
-      if (time_to_traj > p.max_lat_time_margin_for_stop) {
+      if (time_to_traj > sp.max_lat_time_margin_for_stop) {
         // RCLCPP_INFO_EXPRESSION(
         //   get_logger(), enable_debug_info_,
         //   "[Stop] Ignore outside obstacle (%s) since it's far from trajectory.",
@@ -740,21 +813,21 @@ private:
 
       // brkay54: For the pedestrians and bicycles, we need to check the collision point by thinking
       // they will stop with a predefined deceleration rate to avoid unnecessary stops.
-      double resample_time_horizon = p.prediction_resampling_time_horizon;
+      double resample_time_horizon = cp.prediction_resampling_time_horizon;
       if (obstacle.classification.label == ObjectClassification::PEDESTRIAN) {
         resample_time_horizon =
           std::sqrt(std::pow(obstacle.twist.linear.x, 2) + std::pow(obstacle.twist.linear.y, 2)) /
-          (2.0 * p.pedestrian_deceleration_rate);
+          (2.0 * sp.pedestrian_deceleration_rate);
       } else if (obstacle.classification.label == ObjectClassification::BICYCLE) {
         resample_time_horizon =
           std::sqrt(std::pow(obstacle.twist.linear.x, 2) + std::pow(obstacle.twist.linear.y, 2)) /
-          (2.0 * p.bicycle_deceleration_rate);
+          (2.0 * sp.bicycle_deceleration_rate);
       }
 
       // Get the highest confidence predicted path
       const auto resampled_predicted_paths = resampleHighestConfidencePredictedPaths(
-        obstacle.predicted_paths, p.prediction_resampling_time_interval, resample_time_horizon,
-        p.num_of_predicted_paths_for_outside_stop_obstacle);
+        obstacle.predicted_paths, cp.prediction_resampling_time_interval, resample_time_horizon,
+        sp.num_of_predicted_paths_for_outside_stop_obstacle);
       if (resampled_predicted_paths.empty()) {
         return std::nullopt;
       }
@@ -797,7 +870,7 @@ private:
     // calculate collision points with trajectory with lateral stop margin
     const auto traj_polys_with_lat_margin = obstacle_cruise_utils::createOneStepPolygons(
       traj_points, vehicle_info, odometry.pose.pose, max_lat_margin_for_stop,
-      behavior_determination_param_);
+      common_behavior_determination_param_);
 
     const auto collision_point = polygon_utils::getCollisionPoint(
       traj_points, traj_polys_with_lat_margin, obstacle, is_driving_forward, vehicle_info);
@@ -814,18 +887,18 @@ private:
     const double time_to_reach_stop_point =
       calcTimeToReachCollisionPoint(odometry, collision_point->first, traj_points, abs_ego_offset);
     const bool is_transient_obstacle = [&]() {
-      if (time_to_reach_stop_point <= p.collision_time_margin) {
+      if (time_to_reach_stop_point <= sp.collision_time_margin) {
         return false;
       }
       // get the predicted position of the obstacle when ego reaches the collision point
       const auto resampled_predicted_paths = resampleHighestConfidencePredictedPaths(
-        obstacle.predicted_paths, p.prediction_resampling_time_interval,
-        p.prediction_resampling_time_horizon, 1);
+        obstacle.predicted_paths, cp.prediction_resampling_time_interval,
+        cp.prediction_resampling_time_horizon, 1);
       if (resampled_predicted_paths.empty() || resampled_predicted_paths.front().path.empty()) {
         return false;
       }
       const auto future_obj_pose = autoware::object_recognition_utils::calcInterpolatedPose(
-        resampled_predicted_paths.front(), time_to_reach_stop_point - p.collision_time_margin);
+        resampled_predicted_paths.front(), time_to_reach_stop_point - sp.collision_time_margin);
 
       Obstacle tmp_future_obs = obstacle;
       tmp_future_obs.pose =
@@ -900,8 +973,8 @@ private:
         const double elapsed_time = (current_time - prev_closest_stop_obstacle.stamp).seconds();
         if (
           predicted_object_itr->kinematics.initial_twist_with_covariance.twist.linear.x <
-            behavior_determination_param_.obstacle_velocity_threshold_from_stop_to_cruise &&
-          elapsed_time < behavior_determination_param_.stop_obstacle_hold_time_threshold) {
+            common_behavior_determination_param_.obstacle_velocity_threshold_from_stop_to_cruise &&
+          elapsed_time < stop_param_.stop_obstacle_hold_time_threshold) {
           stop_obstacles.push_back(prev_closest_stop_obstacle);
         }
       }
@@ -918,14 +991,15 @@ private:
     const bool is_driving_forward, const VehicleInfo & vehicle_info) const
   {
     const auto & object_id = obstacle.uuid.substr(0, 4);
-    const auto & p = behavior_determination_param_;
+    const auto & cp = common_behavior_determination_param_;
+    const auto & sp = stop_param_;
 
     std::vector<size_t> collision_index;
     const auto collision_points = polygon_utils::getCollisionPoints(
       traj_points, traj_polys, obstacle.stamp, resampled_predicted_path, obstacle.shape,
       clock_->now(), is_driving_forward, collision_index,
       obstacle_cruise_utils::calcObstacleMaxLength(obstacle.shape) +
-        p.decimate_trajectory_step_length +
+        cp.decimate_trajectory_step_length +
         std::hypot(
           vehicle_info.vehicle_length_m,
           vehicle_info.vehicle_width_m * 0.5 + max_lat_margin_for_stop));
@@ -942,7 +1016,7 @@ private:
 
     const double collision_time_margin = calcCollisionTimeMargin(
       odometry, collision_points, traj_points, is_driving_forward, vehicle_info);
-    if (p.collision_time_margin < collision_time_margin) {
+    if (sp.collision_time_margin < collision_time_margin) {
       // RCLCPP_INFO_EXPRESSION(
       //   get_logger(), enable_debug_info_,
       //   "[Stop] Ignore outside obstacle (%s) since it will not collide with the ego.",
@@ -959,7 +1033,7 @@ private:
     const std::vector<TrajectoryPoint> & traj_points, const bool is_driving_forward,
     const VehicleInfo & vehicle_info) const
   {
-    const auto & p = behavior_determination_param_;
+    const auto & p = stop_param_;
     const double abs_ego_offset =
       min_behavior_stop_margin_ + (is_driving_forward
                                      ? std::abs(vehicle_info.max_longitudinal_offset_m)
@@ -1109,7 +1183,7 @@ private:
   StopParam stop_param_;
   std::unique_ptr<autoware::objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface>
     objects_of_interest_marker_interface_;
-  BehaviorDeterminationParam behavior_determination_param_;
+  CommonBehaviorDeterminationParam common_behavior_determination_param_;
 
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_marker_pub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_stop_wall_marker_pub_;

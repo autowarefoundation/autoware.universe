@@ -218,9 +218,9 @@ public:
   {
     enable_slow_down_planning_ = node.declare_parameter<bool>("common.enable_slow_down_planning");
     slow_down_obstacle_types_ =
-      obstacle_cruise_utils::getTargetObjectType(node, "common.slow_down_obstacle_type.");
+      obstacle_cruise_utils::getTargetObjectType(node, "slow_down.obstacle_type.");
     use_pointcloud_for_slow_down_ =
-      node.declare_parameter<bool>("common.slow_down_obstacle_type.pointcloud");
+      node.declare_parameter<bool>("slow_down.obstacle_type.pointcloud");
 
     moving_object_speed_threshold =
       node.declare_parameter<double>("slow_down.moving_object_speed_threshold");
@@ -247,12 +247,13 @@ public:
   std::vector<TrajectoryPoint> plan(
     const std::vector<TrajectoryPoint> & decimated_traj_points,
     const std::vector<Obstacle> & obstacles,
-    const BehaviorDeterminationParam & behavior_determination_param,
+    const CommonBehaviorDeterminationParam & common_behavior_determination_param,
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & cruise_traj_points)
   {
+    common_behavior_determination_param_ = common_behavior_determination_param;
+
     const auto slow_down_obstacles = determineEgoBehaviorAgainstPredictedObjectObstacles(
-      planner_data.current_odometry, decimated_traj_points, obstacles, behavior_determination_param,
-      planner_data.vehicle_info);
+      planner_data.current_odometry, decimated_traj_points, obstacles, planner_data.vehicle_info);
     std::optional<VelocityLimit> slow_down_vel_limit;
     const auto slow_down_traj_points = generateSlowDownTrajectory(
       planner_data, cruise_traj_points, slow_down_obstacles, slow_down_vel_limit,
@@ -283,12 +284,8 @@ public:
 private:
   std::vector<SlowDownObstacle> determineEgoBehaviorAgainstPredictedObjectObstacles(
     const Odometry & odometry, const std::vector<TrajectoryPoint> & decimated_traj_points,
-    const std::vector<Obstacle> & obstacles,
-    const BehaviorDeterminationParam & behavior_determination_param,
-    const VehicleInfo & vehicle_info)
+    const std::vector<Obstacle> & obstacles, const VehicleInfo & vehicle_info)
   {
-    behavior_determination_param_ = behavior_determination_param;
-
     // slow down
     slow_down_condition_counter_.resetCurrentUuids();
     std::vector<SlowDownObstacle> slow_down_obstacles;
@@ -704,6 +701,13 @@ private:
 
   struct SlowDownParam
   {
+    double slow_down_min_jerk;
+    double slow_down_min_accel;
+    double max_lat_margin_for_slow_down;
+    double lat_hysteresis_margin_for_slow_down;
+    int successive_num_to_entry_slow_down_condition;
+    int successive_num_to_exit_slow_down_condition;
+
     std::vector<std::string> obstacle_labels{"default"};
     std::vector<std::string> obstacle_moving_classification{"static", "moving"};
     std::unordered_map<uint8_t, std::string> types_map;
@@ -714,8 +718,22 @@ private:
       double max_ego_velocity;
       double min_ego_velocity;
     };
+
     explicit SlowDownParam(rclcpp::Node & node)
     {
+      slow_down_min_accel = node.declare_parameter<double>("slow_down.slow_down_min_acc");
+      slow_down_min_jerk = node.declare_parameter<double>("slow_down.slow_down_min_jerk");
+
+      // behavior determination
+      max_lat_margin_for_slow_down =
+        node.declare_parameter<double>("slow_down.behavior_determination.max_lat_margin");
+      lat_hysteresis_margin_for_slow_down =
+        node.declare_parameter<double>("slow_down.behavior_determination.lat_hysteresis_margin");
+      successive_num_to_entry_slow_down_condition = node.declare_parameter<int>(
+        "slow_down.behavior_determination.successive_num_to_entry_slow_down_condition");
+      successive_num_to_exit_slow_down_condition = node.declare_parameter<int>(
+        "slow_down.behavior_determination.successive_num_to_exit_slow_down_condition");
+
       obstacle_labels =
         node.declare_parameter<std::vector<std::string>>("slow_down.labels", obstacle_labels);
       // obstacle label dependant parameters
@@ -766,6 +784,24 @@ private:
 
     void onParam(const std::vector<rclcpp::Parameter> & parameters)
     {
+      autoware::universe_utils::updateParam<double>(
+        parameters, "slow_down.slow_down_min_accel", slow_down_min_accel);
+      autoware::universe_utils::updateParam<double>(
+        parameters, "slow_down.slow_down_min_jerk", slow_down_min_jerk);
+
+      autoware::universe_utils::updateParam<double>(
+        parameters, "slow_down.behavior_determination.max_lat_margin",
+        max_lat_margin_for_slow_down);
+      autoware::universe_utils::updateParam<double>(
+        parameters, "slow_down.behavior_determination.lat_hysteresis_margin",
+        lat_hysteresis_margin_for_slow_down);
+      autoware::universe_utils::updateParam<int>(
+        parameters, "slow_down.behavior_determination.successive_num_to_entry_slow_down_condition",
+        successive_num_to_entry_slow_down_condition);
+      autoware::universe_utils::updateParam<int>(
+        parameters, "slow_down.behavior_determination.successive_num_to_exit_slow_down_condition",
+        successive_num_to_exit_slow_down_condition);
+
       // obstacle type dependant parameters
       for (const auto & label : obstacle_labels) {
         for (const auto & movement_postfix : obstacle_moving_classification) {
@@ -820,7 +856,7 @@ private:
     const Obstacle & obstacle, const double precise_lat_dist, const VehicleInfo & vehicle_info)
   {
     const auto & object_id = obstacle.uuid.substr(0, 4);
-    const auto & p = behavior_determination_param_;
+    const auto & p = slow_down_param_;
     slow_down_condition_counter_.addCurrentUuid(obstacle.uuid);
 
     const bool is_prev_obstacle_slow_down =
@@ -874,7 +910,7 @@ private:
     const auto traj_polys_with_lat_margin = obstacle_cruise_utils::createOneStepPolygons(
       traj_points, vehicle_info, odometry.pose.pose,
       p.max_lat_margin_for_slow_down + p.lat_hysteresis_margin_for_slow_down,
-      behavior_determination_param_);
+      common_behavior_determination_param_);
 
     std::vector<Polygon2d> front_collision_polygons;
     size_t front_seg_idx = 0;
@@ -1065,7 +1101,7 @@ private:
         }
         // TODO(murooka) Calculate more precisely. Final acceleration should be zero.
         const double min_feasible_slow_down_vel = calcDecelerationVelocityFromDistanceToTarget(
-          longitudinal_info_.slow_down_min_jerk, longitudinal_info_.slow_down_min_accel,
+          slow_down_param_.slow_down_min_jerk, slow_down_param_.slow_down_min_accel,
           planner_data.current_acceleration.accel.accel.linear.x,
           planner_data.current_odometry.twist.twist.linear.x, deceleration_dist);
         return min_feasible_slow_down_vel;
@@ -1137,7 +1173,7 @@ private:
 
   std::unique_ptr<autoware::objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface>
     objects_of_interest_marker_interface_;
-  BehaviorDeterminationParam behavior_determination_param_;
+  CommonBehaviorDeterminationParam common_behavior_determination_param_;
 
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_marker_pub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_slow_down_wall_marker_pub_;

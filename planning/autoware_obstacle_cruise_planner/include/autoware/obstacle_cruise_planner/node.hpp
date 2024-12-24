@@ -81,11 +81,6 @@ std::tuple<std::vector<StopObstacle>, std::vector<CruiseObstacle>, std::vector<S
 
   bool enable_debug_info_;
   bool enable_calculation_time_info_;
-  double min_behavior_stop_margin_;
-  bool enable_approaching_on_curve_;
-  double additional_safe_distance_margin_on_curve_;
-  double min_safe_distance_margin_on_curve_;
-  bool suppress_sudden_obstacle_stop_;
 
   // parameter callback result
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
@@ -132,7 +127,7 @@ std::tuple<std::vector<StopObstacle>, std::vector<CruiseObstacle>, std::vector<S
   // std::vector<StopObstacle> stop_pc_obstacle_history_;
 
   // behavior determination parameter
-  BehaviorDeterminationParam behavior_determination_param_;
+  CommonBehaviorDeterminationParam common_behavior_determination_param_;
 
   std::unordered_map<std::string, bool> need_to_clear_vel_limit_{
     {"cruise", false}, {"slow_down", false}};

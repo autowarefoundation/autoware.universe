@@ -41,7 +41,7 @@ std::unique_ptr<ObstacleCruiseModule> getModule(
   rclcpp::Node & node, const LongitudinalInfo & longitudinal_info)
 {
   const std::string planning_algorithm_param =
-    node.declare_parameter<std::string>("common.planning_algorithm");
+    node.declare_parameter<std::string>("cruise.planning_algorithm");
   const auto planning_algorithm = getPlanningAlgorithmType(planning_algorithm_param);
 
   if (planning_algorithm == PlanningAlgorithm::OPTIMIZATION_BASE) {

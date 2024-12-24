@@ -87,6 +87,86 @@ VelocityLimitClearCommand createVelocityLimitClearCommandMessage(
 
 namespace autoware::motion_planning
 {
+// cruise
+struct CruiseBehaviorDeterminationParam
+{
+  CruiseBehaviorDeterminationParam() = default;
+
+  explicit CruiseBehaviorDeterminationParam(rclcpp::Node & node)
+  {  // behavior determination
+    outside_obstacle_min_velocity_threshold = node.declare_parameter<double>(
+      "cruise.behavior_determination.outside_obstacle.obstacle_velocity_threshold");
+    ego_obstacle_overlap_time_threshold = node.declare_parameter<double>(
+      "cruise.behavior_determination.outside_obstacle.ego_obstacle_overlap_time_threshold");
+    max_prediction_time_for_collision_check = node.declare_parameter<double>(
+      "cruise.behavior_determination.outside_obstacle.max_prediction_time_for_collision_check");
+    max_lat_margin_for_cruise =
+      node.declare_parameter<double>("cruise.behavior_determination.max_lat_margin");
+    enable_yield = node.declare_parameter<bool>("cruise.behavior_determination.yield.enable_yield");
+    yield_lat_distance_threshold =
+      node.declare_parameter<double>("cruise.behavior_determination.yield.lat_distance_threshold");
+    max_lat_dist_between_obstacles = node.declare_parameter<double>(
+      "cruise.behavior_determination.yield.max_lat_dist_between_obstacles");
+    stopped_obstacle_velocity_threshold = node.declare_parameter<double>(
+      "cruise.behavior_determination.yield.stopped_obstacle_velocity_threshold");
+    max_obstacles_collision_time = node.declare_parameter<double>(
+      "cruise.behavior_determination.yield.max_obstacles_collision_time");
+    max_lat_time_margin_for_cruise = node.declare_parameter<double>(
+      "cruise.behavior_determination.outside_obstacle.max_lateral_time_margin");
+    num_of_predicted_paths_for_outside_cruise_obstacle = node.declare_parameter<int>(
+      "cruise.behavior_determination.outside_obstacle.num_of_predicted_paths");
+  }
+
+  void onParam(const std::vector<rclcpp::Parameter> & parameters)
+  {
+    autoware::universe_utils::updateParam<double>(
+      parameters, "cruise.behavior_determination.outside_obstacle.obstacle_velocity_threshold",
+      outside_obstacle_min_velocity_threshold);
+    autoware::universe_utils::updateParam<double>(
+      parameters,
+      "cruise.behavior_determination.outside_obstacle.ego_obstacle_overlap_time_threshold",
+      ego_obstacle_overlap_time_threshold);
+    autoware::universe_utils::updateParam<double>(
+      parameters,
+      "cruise.behavior_determination.outside_obstacle.max_prediction_time_for_collision_check",
+      max_prediction_time_for_collision_check);
+    autoware::universe_utils::updateParam<double>(
+      parameters, "cruise.behavior_determination.max_lat_margin", max_lat_margin_for_cruise);
+    autoware::universe_utils::updateParam<bool>(
+      parameters, "cruise.behavior_determination.yield.enable_yield", enable_yield);
+    autoware::universe_utils::updateParam<double>(
+      parameters, "cruise.behavior_determination.yield.lat_distance_threshold",
+      yield_lat_distance_threshold);
+    autoware::universe_utils::updateParam<double>(
+      parameters, "cruise.behavior_determination.yield.max_lat_dist_between_obstacles",
+      max_lat_dist_between_obstacles);
+    autoware::universe_utils::updateParam<double>(
+      parameters, "cruise.behavior_determination.yield.stopped_obstacle_velocity_threshold",
+      stopped_obstacle_velocity_threshold);
+    autoware::universe_utils::updateParam<double>(
+      parameters, "cruise.behavior_determination.yield.max_obstacles_collision_time",
+      max_obstacles_collision_time);
+    autoware::universe_utils::updateParam<double>(
+      parameters, "cruise.behavior_determination.outside_obstacle.max_lateral_time_margin",
+      max_lat_time_margin_for_cruise);
+    autoware::universe_utils::updateParam<int>(
+      parameters, "cruise.behavior_determination.outside_obstacle.num_of_predicted_paths",
+      num_of_predicted_paths_for_outside_cruise_obstacle);
+  }
+
+  double outside_obstacle_min_velocity_threshold;
+  double ego_obstacle_overlap_time_threshold;
+  double max_prediction_time_for_collision_check;
+  double max_lat_margin_for_cruise;
+  bool enable_yield;
+  double yield_lat_distance_threshold;
+  double max_lat_dist_between_obstacles;
+  double stopped_obstacle_velocity_threshold;
+  double max_obstacles_collision_time;
+  double max_lat_time_margin_for_cruise;
+  int num_of_predicted_paths_for_outside_cruise_obstacle;
+};
+
 class ObstacleCruiseModule
 {
 public:
@@ -120,9 +200,9 @@ public:
   : clock_(node.get_clock()), longitudinal_info_(longitudinal_info)
   {
     inside_cruise_obstacle_types_ =
-      obstacle_cruise_utils::getTargetObjectType(node, "common.cruise_obstacle_type.inside.");
+      obstacle_cruise_utils::getTargetObjectType(node, "cruise.obstacle_type.inside.");
     outside_cruise_obstacle_types_ =
-      obstacle_cruise_utils::getTargetObjectType(node, "common.cruise_obstacle_type.outside.");
+      obstacle_cruise_utils::getTargetObjectType(node, "cruise.obstacle_type.outside.");
 
     objects_of_interest_marker_interface_ = std::make_unique<
       autoware::objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface>(
@@ -138,17 +218,21 @@ public:
       "~/output/velocity_limit", rclcpp::QoS{1}.transient_local());
     clear_vel_limit_pub_ = node.create_publisher<VelocityLimitClearCommand>(
       "~/output/clear_velocity_limit", rclcpp::QoS{1}.transient_local());
+
+    cruise_behavior_determination_param_ = CruiseBehaviorDeterminationParam(node);
   }
 
   std::vector<TrajectoryPoint> plan(
     const std::vector<TrajectoryPoint> & decimated_traj_points,
     const std::vector<Polygon2d> & decimated_traj_polys, const std::vector<Obstacle> & obstacles,
-    const BehaviorDeterminationParam & behavior_determination_param,
+    const CommonBehaviorDeterminationParam & common_behavior_determination_param,
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points)
   {
+    common_behavior_determination_param_ = common_behavior_determination_param;
+
     const auto cruise_obstacles = determineEgoBehaviorAgainstPredictedObjectObstacles(
       planner_data.current_odometry, decimated_traj_points, decimated_traj_polys, obstacles,
-      planner_data.is_driving_forward, behavior_determination_param, planner_data.vehicle_info);
+      planner_data.is_driving_forward, planner_data.vehicle_info);
     std::optional<VelocityLimit> cruise_vel_limit;
     const auto cruise_traj_points =
       generateCruiseTrajectory(planner_data, stop_traj_points, cruise_obstacles, cruise_vel_limit);
@@ -185,11 +269,8 @@ protected:
   std::vector<CruiseObstacle> determineEgoBehaviorAgainstPredictedObjectObstacles(
     const Odometry & odometry, const std::vector<TrajectoryPoint> & decimated_traj_points,
     const std::vector<Polygon2d> & decimated_traj_polys, const std::vector<Obstacle> & obstacles,
-    const bool is_driving_forward, const BehaviorDeterminationParam & behavior_determination_param,
-    const VehicleInfo & vehicle_info)
+    const bool is_driving_forward, const VehicleInfo & vehicle_info)
   {
-    behavior_determination_param_ = behavior_determination_param;
-
     // cruise
     std::vector<CruiseObstacle> cruise_obstacles;
     for (const auto & obstacle : obstacles) {
@@ -200,7 +281,7 @@ protected:
         cruise_obstacles.push_back(*cruise_obstacle);
       }
     }
-    const auto & p = behavior_determination_param_;
+    const auto & p = cruise_behavior_determination_param_;
     if (p.enable_yield) {
       const auto yield_obstacles =
         findYieldCruiseObstacles(obstacles, decimated_traj_points, vehicle_info);
@@ -398,7 +479,7 @@ protected:
     const double precise_lat_dist, const bool is_driving_forward, const VehicleInfo & vehicle_info)
   {
     const auto & object_id = obstacle.uuid.substr(0, 4);
-    const auto & p = behavior_determination_param_;
+    const auto & p = cruise_behavior_determination_param_;
 
     // NOTE: When driving backward, Stop will be planned instead of cruise.
     //       When the obstacle is crossing the ego's trajectory, cruise can be ignored.
@@ -465,7 +546,7 @@ protected:
     const VehicleInfo & vehicle_info)
   {
     if (obstacles.empty() || traj_points.empty()) return std::nullopt;
-    const auto & p = behavior_determination_param_;
+    const auto & p = cruise_behavior_determination_param_;
 
     std::vector<Obstacle> stopped_obstacles;
     std::vector<Obstacle> moving_obstacles;
@@ -547,7 +628,8 @@ protected:
     const VehicleInfo & vehicle_info) const
   {
     const auto & object_id = obstacle.uuid.substr(0, 4);
-    const auto & p = behavior_determination_param_;
+    const auto & crp = cruise_behavior_determination_param_;
+    const auto & cp = common_behavior_determination_param_;
 
     // check label
     if (!isInsideCruiseObstacle(obstacle.classification.label)) {
@@ -566,14 +648,14 @@ protected:
           .has_value();
 
       if (is_prev_obstacle_cruise) {
-        if (obstacle.longitudinal_velocity < p.obstacle_velocity_threshold_from_cruise_to_stop) {
+        if (obstacle.longitudinal_velocity < cp.obstacle_velocity_threshold_from_cruise_to_stop) {
           return std::nullopt;
         }
         // NOTE: else is keeping cruise
       } else {  // if (is_prev_obstacle_stop) {
         // TODO(murooka) consider hysteresis for slow down
         // If previous obstacle is stop or does not exist.
-        if (obstacle.longitudinal_velocity < p.obstacle_velocity_threshold_from_stop_to_cruise) {
+        if (obstacle.longitudinal_velocity < cp.obstacle_velocity_threshold_from_stop_to_cruise) {
           return std::nullopt;
         }
         // NOTE: else is cruise from stop
@@ -582,8 +664,8 @@ protected:
 
     // Get highest confidence predicted path
     const auto resampled_predicted_paths = resampleHighestConfidencePredictedPaths1(
-      obstacle.predicted_paths, p.prediction_resampling_time_interval,
-      p.prediction_resampling_time_horizon, 1);
+      obstacle.predicted_paths, cp.prediction_resampling_time_interval,
+      cp.prediction_resampling_time_horizon, 1);
 
     if (resampled_predicted_paths.empty()) {
       return std::nullopt;
@@ -595,10 +677,10 @@ protected:
       traj_points, traj_polys, obstacle.stamp, resampled_predicted_paths.front(), obstacle.shape,
       clock_->now(), is_driving_forward, collision_index,
       obstacle_cruise_utils::calcObstacleMaxLength(obstacle.shape) +
-        p.decimate_trajectory_step_length +
+        cp.decimate_trajectory_step_length +
         std::hypot(
           vehicle_info.vehicle_length_m,
-          vehicle_info.vehicle_width_m * 0.5 + p.max_lat_margin_for_cruise));
+          vehicle_info.vehicle_width_m * 0.5 + crp.max_lat_margin_for_cruise));
     return collision_points;
   }
 
@@ -607,7 +689,8 @@ protected:
     const Obstacle & obstacle, const bool is_driving_forward,
     const VehicleInfo & vehicle_info) const
   {
-    const auto & p = behavior_determination_param_;
+    const auto & cp = common_behavior_determination_param_;
+    const auto & crp = cruise_behavior_determination_param_;
     const auto & object_id = obstacle.uuid.substr(0, 4);
 
     // check label
@@ -621,7 +704,7 @@ protected:
 
     if (
       std::hypot(obstacle.twist.linear.x, obstacle.twist.linear.y) <
-      p.outside_obstacle_min_velocity_threshold) {
+      crp.outside_obstacle_min_velocity_threshold) {
       // RCLCPP_INFO_EXPRESSION(
       //   get_logger(), enable_debug_info_,
       //   "[Cruise] Ignore outside obstacle (%s) since the obstacle velocity is low.",
@@ -631,8 +714,9 @@ protected:
 
     // Get the highest confidence predicted paths
     const auto resampled_predicted_paths = resampleHighestConfidencePredictedPaths(
-      obstacle.predicted_paths, p.prediction_resampling_time_interval,
-      p.prediction_resampling_time_horizon, p.num_of_predicted_paths_for_outside_cruise_obstacle);
+      obstacle.predicted_paths, cp.prediction_resampling_time_interval,
+      cp.prediction_resampling_time_horizon,
+      crp.num_of_predicted_paths_for_outside_cruise_obstacle);
 
     // calculate collision condition for cruise
     std::vector<size_t> collision_index;
@@ -642,11 +726,11 @@ protected:
           traj_points, traj_polys, obstacle.stamp, predicted_path, obstacle.shape, clock_->now(),
           is_driving_forward, collision_index,
           obstacle_cruise_utils::calcObstacleMaxLength(obstacle.shape) +
-            p.decimate_trajectory_step_length +
+            cp.decimate_trajectory_step_length +
             std::hypot(
               vehicle_info.vehicle_length_m,
-              vehicle_info.vehicle_width_m * 0.5 + p.max_lat_margin_for_cruise),
-          p.max_prediction_time_for_collision_check);
+              vehicle_info.vehicle_width_m * 0.5 + crp.max_lat_margin_for_cruise),
+          crp.max_prediction_time_for_collision_check);
         if (!collision_points.empty()) {
           return collision_points;
         }
@@ -669,7 +753,7 @@ protected:
     const double overlap_time =
       (rclcpp::Time(collision_points.back().stamp) - rclcpp::Time(collision_points.front().stamp))
         .seconds();
-    if (overlap_time < p.ego_obstacle_overlap_time_threshold) {
+    if (overlap_time < crp.ego_obstacle_overlap_time_threshold) {
       // Ignore vehicle obstacles outside the trajectory, whose predicted path
       // overlaps the ego trajectory in a certain time.
       // RCLCPP_INFO_EXPRESSION(
@@ -696,7 +780,7 @@ protected:
     if (traj_points.empty()) return std::nullopt;
     // check label
     const auto & object_id = obstacle.uuid.substr(0, 4);
-    const auto & p = behavior_determination_param_;
+    const auto & p = cruise_behavior_determination_param_;
 
     if (!isOutsideCruiseObstacle(obstacle.classification.label)) {
       // RCLCPP_INFO_EXPRESSION(
@@ -793,8 +877,9 @@ protected:
     // NOTE: Currently predicted objects does not have orientation availability even
     // though sometimes orientation is not available.
     const bool is_obstacle_crossing_trajectory =
-      behavior_determination_param_.crossing_obstacle_traj_angle_threshold < std::abs(diff_angle) &&
-      behavior_determination_param_.crossing_obstacle_traj_angle_threshold <
+      common_behavior_determination_param_.crossing_obstacle_traj_angle_threshold <
+        std::abs(diff_angle) &&
+      common_behavior_determination_param_.crossing_obstacle_traj_angle_threshold <
         M_PI - std::abs(diff_angle);
     if (!is_obstacle_crossing_trajectory) {
       return false;
@@ -842,7 +927,8 @@ protected:
 
   std::unique_ptr<autoware::objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface>
     objects_of_interest_marker_interface_;
-  BehaviorDeterminationParam behavior_determination_param_;
+  CommonBehaviorDeterminationParam common_behavior_determination_param_;
+  CruiseBehaviorDeterminationParam cruise_behavior_determination_param_;
 
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_marker_pub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_cruise_wall_marker_pub_;

@@ -66,9 +66,9 @@ std::vector<Polygon2d> createOneStepPolygons(
   const std::vector<TrajectoryPoint> & traj_points,
   const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
   const geometry_msgs::msg::Pose & current_ego_pose, const double lat_margin,
-  const BehaviorDeterminationParam & behavior_determination_param)
+  const CommonBehaviorDeterminationParam & common_behavior_determination_param)
 {
-  const auto & p = behavior_determination_param;
+  const auto & p = common_behavior_determination_param;
 
   const double front_length = vehicle_info.max_longitudinal_offset_m;
   const double rear_length = vehicle_info.rear_overhang_m;

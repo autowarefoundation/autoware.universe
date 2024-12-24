@@ -148,8 +148,6 @@ struct LongitudinalInfo
     limit_min_accel = node.declare_parameter<double>("limit.min_acc");
     limit_max_jerk = node.declare_parameter<double>("limit.max_jerk");
     limit_min_jerk = node.declare_parameter<double>("limit.min_jerk");
-    slow_down_min_accel = node.declare_parameter<double>("common.slow_down_min_acc");
-    slow_down_min_jerk = node.declare_parameter<double>("common.slow_down_min_jerk");
 
     idling_time = node.declare_parameter<double>("common.idling_time");
     min_ego_accel_for_rss = node.declare_parameter<double>("common.min_ego_accel_for_rss");
@@ -158,11 +156,6 @@ struct LongitudinalInfo
     safe_distance_margin = node.declare_parameter<double>("common.safe_distance_margin");
     terminal_safe_distance_margin =
       node.declare_parameter<double>("common.terminal_safe_distance_margin");
-
-    hold_stop_velocity_threshold =
-      node.declare_parameter<double>("common.hold_stop_velocity_threshold");
-    hold_stop_distance_threshold =
-      node.declare_parameter<double>("common.hold_stop_distance_threshold");
   }
 
   void onParam(const std::vector<rclcpp::Parameter> & parameters)
@@ -175,10 +168,6 @@ struct LongitudinalInfo
     autoware::universe_utils::updateParam<double>(parameters, "limit.min_accel", limit_min_accel);
     autoware::universe_utils::updateParam<double>(parameters, "limit.max_jerk", limit_max_jerk);
     autoware::universe_utils::updateParam<double>(parameters, "limit.min_jerk", limit_min_jerk);
-    autoware::universe_utils::updateParam<double>(
-      parameters, "common.slow_down_min_accel", slow_down_min_accel);
-    autoware::universe_utils::updateParam<double>(
-      parameters, "common.slow_down_min_jerk", slow_down_min_jerk);
 
     autoware::universe_utils::updateParam<double>(parameters, "common.idling_time", idling_time);
     autoware::universe_utils::updateParam<double>(
@@ -190,11 +179,6 @@ struct LongitudinalInfo
       parameters, "common.safe_distance_margin", safe_distance_margin);
     autoware::universe_utils::updateParam<double>(
       parameters, "common.terminal_safe_distance_margin", terminal_safe_distance_margin);
-
-    autoware::universe_utils::updateParam<double>(
-      parameters, "common.hold_stop_velocity_threshold", hold_stop_velocity_threshold);
-    autoware::universe_utils::updateParam<double>(
-      parameters, "common.hold_stop_distance_threshold", hold_stop_distance_threshold);
   }
 
   // common parameter
@@ -202,8 +186,6 @@ struct LongitudinalInfo
   double min_accel;
   double max_jerk;
   double min_jerk;
-  double slow_down_min_jerk;
-  double slow_down_min_accel;
   double limit_max_accel;
   double limit_min_accel;
   double limit_max_jerk;
@@ -217,17 +199,13 @@ struct LongitudinalInfo
   // distance margin
   double safe_distance_margin;
   double terminal_safe_distance_margin;
-
-  // hold stop
-  double hold_stop_velocity_threshold;
-  double hold_stop_distance_threshold;
 };
 
-struct BehaviorDeterminationParam
+struct CommonBehaviorDeterminationParam
 {
-  BehaviorDeterminationParam() = default;
+  CommonBehaviorDeterminationParam() = default;
 
-  explicit BehaviorDeterminationParam(rclcpp::Node & node)
+  explicit CommonBehaviorDeterminationParam(rclcpp::Node & node)
   {  // behavior determination
     decimate_trajectory_step_length =
       node.declare_parameter<double>("behavior_determination.decimate_trajectory_step_length");
@@ -253,62 +231,15 @@ struct BehaviorDeterminationParam
       "behavior_determination.crossing_obstacle.obstacle_velocity_threshold");
     crossing_obstacle_traj_angle_threshold = node.declare_parameter<double>(
       "behavior_determination.crossing_obstacle.obstacle_traj_angle_threshold");
-    collision_time_margin = node.declare_parameter<double>(
-      "behavior_determination.stop.crossing_obstacle.collision_time_margin");
-    outside_obstacle_min_velocity_threshold = node.declare_parameter<double>(
-      "behavior_determination.cruise.outside_obstacle.obstacle_velocity_threshold");
-    ego_obstacle_overlap_time_threshold = node.declare_parameter<double>(
-      "behavior_determination.cruise.outside_obstacle.ego_obstacle_overlap_time_threshold");
-    max_prediction_time_for_collision_check = node.declare_parameter<double>(
-      "behavior_determination.cruise.outside_obstacle.max_prediction_time_for_collision_check");
-    stop_obstacle_hold_time_threshold =
-      node.declare_parameter<double>("behavior_determination.stop_obstacle_hold_time_threshold");
     prediction_resampling_time_interval =
       node.declare_parameter<double>("behavior_determination.prediction_resampling_time_interval");
     prediction_resampling_time_horizon =
       node.declare_parameter<double>("behavior_determination.prediction_resampling_time_horizon");
 
-    max_lat_margin_for_stop =
-      node.declare_parameter<double>("behavior_determination.stop.max_lat_margin");
-    max_lat_margin_for_stop_against_unknown =
-      node.declare_parameter<double>("behavior_determination.stop.max_lat_margin_against_unknown");
-    max_lat_margin_for_cruise =
-      node.declare_parameter<double>("behavior_determination.cruise.max_lat_margin");
-    enable_yield = node.declare_parameter<bool>("behavior_determination.cruise.yield.enable_yield");
-    yield_lat_distance_threshold =
-      node.declare_parameter<double>("behavior_determination.cruise.yield.lat_distance_threshold");
-    max_lat_dist_between_obstacles = node.declare_parameter<double>(
-      "behavior_determination.cruise.yield.max_lat_dist_between_obstacles");
-    stopped_obstacle_velocity_threshold = node.declare_parameter<double>(
-      "behavior_determination.cruise.yield.stopped_obstacle_velocity_threshold");
-    max_obstacles_collision_time = node.declare_parameter<double>(
-      "behavior_determination.cruise.yield.max_obstacles_collision_time");
-    max_lat_margin_for_slow_down =
-      node.declare_parameter<double>("behavior_determination.slow_down.max_lat_margin");
-    lat_hysteresis_margin_for_slow_down =
-      node.declare_parameter<double>("behavior_determination.slow_down.lat_hysteresis_margin");
-    successive_num_to_entry_slow_down_condition = node.declare_parameter<int>(
-      "behavior_determination.slow_down.successive_num_to_entry_slow_down_condition");
-    successive_num_to_exit_slow_down_condition = node.declare_parameter<int>(
-      "behavior_determination.slow_down.successive_num_to_exit_slow_down_condition");
     enable_to_consider_current_pose = node.declare_parameter<bool>(
       "behavior_determination.consider_current_pose.enable_to_consider_current_pose");
     time_to_convergence = node.declare_parameter<double>(
       "behavior_determination.consider_current_pose.time_to_convergence");
-    min_velocity_to_reach_collision_point = node.declare_parameter<double>(
-      "behavior_determination.stop.min_velocity_to_reach_collision_point");
-    max_lat_time_margin_for_stop = node.declare_parameter<double>(
-      "behavior_determination.stop.outside_obstacle.max_lateral_time_margin");
-    max_lat_time_margin_for_cruise = node.declare_parameter<double>(
-      "behavior_determination.cruise.outside_obstacle.max_lateral_time_margin");
-    num_of_predicted_paths_for_outside_cruise_obstacle = node.declare_parameter<int>(
-      "behavior_determination.cruise.outside_obstacle.num_of_predicted_paths");
-    num_of_predicted_paths_for_outside_stop_obstacle = node.declare_parameter<int>(
-      "behavior_determination.stop.outside_obstacle.num_of_predicted_paths");
-    pedestrian_deceleration_rate = node.declare_parameter<double>(
-      "behavior_determination.stop.outside_obstacle.pedestrian_deceleration_rate");
-    bicycle_deceleration_rate = node.declare_parameter<double>(
-      "behavior_determination.stop.outside_obstacle.bicycle_deceleration_rate");
   }
 
   void onParam(const std::vector<rclcpp::Parameter> & parameters)
@@ -341,88 +272,18 @@ struct BehaviorDeterminationParam
       parameters, "behavior_determination.crossing_obstacle.obstacle_traj_angle_threshold",
       crossing_obstacle_traj_angle_threshold);
     autoware::universe_utils::updateParam<double>(
-      parameters, "behavior_determination.stop.crossing_obstacle.collision_time_margin",
-      collision_time_margin);
-    autoware::universe_utils::updateParam<double>(
-      parameters, "behavior_determination.cruise.outside_obstacle.obstacle_velocity_threshold",
-      outside_obstacle_min_velocity_threshold);
-    autoware::universe_utils::updateParam<double>(
-      parameters,
-      "behavior_determination.cruise.outside_obstacle.ego_obstacle_overlap_time_threshold",
-      ego_obstacle_overlap_time_threshold);
-    autoware::universe_utils::updateParam<double>(
-      parameters,
-      "behavior_determination.cruise.outside_obstacle.max_prediction_time_for_collision_check",
-      max_prediction_time_for_collision_check);
-    autoware::universe_utils::updateParam<double>(
-      parameters, "behavior_determination.stop_obstacle_hold_time_threshold",
-      stop_obstacle_hold_time_threshold);
-    autoware::universe_utils::updateParam<double>(
       parameters, "behavior_determination.prediction_resampling_time_interval",
       prediction_resampling_time_interval);
     autoware::universe_utils::updateParam<double>(
       parameters, "behavior_determination.prediction_resampling_time_horizon",
       prediction_resampling_time_horizon);
 
-    autoware::universe_utils::updateParam<double>(
-      parameters, "behavior_determination.stop.max_lat_margin", max_lat_margin_for_stop);
-    autoware::universe_utils::updateParam<double>(
-      parameters, "behavior_determination.stop.max_lat_margin_against_unknown",
-      max_lat_margin_for_stop_against_unknown);
-    autoware::universe_utils::updateParam<double>(
-      parameters, "behavior_determination.cruise.max_lat_margin", max_lat_margin_for_cruise);
-    autoware::universe_utils::updateParam<bool>(
-      parameters, "behavior_determination.cruise.yield.enable_yield", enable_yield);
-    autoware::universe_utils::updateParam<double>(
-      parameters, "behavior_determination.cruise.yield.lat_distance_threshold",
-      yield_lat_distance_threshold);
-    autoware::universe_utils::updateParam<double>(
-      parameters, "behavior_determination.cruise.yield.max_lat_dist_between_obstacles",
-      max_lat_dist_between_obstacles);
-    autoware::universe_utils::updateParam<double>(
-      parameters, "behavior_determination.cruise.yield.stopped_obstacle_velocity_threshold",
-      stopped_obstacle_velocity_threshold);
-    autoware::universe_utils::updateParam<double>(
-      parameters, "behavior_determination.cruise.yield.max_obstacles_collision_time",
-      max_obstacles_collision_time);
-    autoware::universe_utils::updateParam<double>(
-      parameters, "behavior_determination.slow_down.max_lat_margin", max_lat_margin_for_slow_down);
-    autoware::universe_utils::updateParam<double>(
-      parameters, "behavior_determination.slow_down.lat_hysteresis_margin",
-      lat_hysteresis_margin_for_slow_down);
-    autoware::universe_utils::updateParam<int>(
-      parameters, "behavior_determination.slow_down.successive_num_to_entry_slow_down_condition",
-      successive_num_to_entry_slow_down_condition);
-    autoware::universe_utils::updateParam<int>(
-      parameters, "behavior_determination.slow_down.successive_num_to_exit_slow_down_condition",
-      successive_num_to_exit_slow_down_condition);
     autoware::universe_utils::updateParam<bool>(
       parameters, "behavior_determination.consider_current_pose.enable_to_consider_current_pose",
       enable_to_consider_current_pose);
     autoware::universe_utils::updateParam<double>(
       parameters, "behavior_determination.consider_current_pose.time_to_convergence",
       time_to_convergence);
-    autoware::universe_utils::updateParam<double>(
-      parameters, "behavior_determination.stop.min_velocity_to_reach_collision_point",
-      min_velocity_to_reach_collision_point);
-    autoware::universe_utils::updateParam<double>(
-      parameters, "behavior_determination.stop.outside_obstacle.max_lateral_time_margin",
-      max_lat_time_margin_for_stop);
-    autoware::universe_utils::updateParam<double>(
-      parameters, "behavior_determination.cruise.outside_obstacle.max_lateral_time_margin",
-      max_lat_time_margin_for_cruise);
-    autoware::universe_utils::updateParam<int>(
-      parameters, "behavior_determination.cruise.outside_obstacle.num_of_predicted_paths",
-      num_of_predicted_paths_for_outside_cruise_obstacle);
-    autoware::universe_utils::updateParam<int>(
-      parameters, "behavior_determination.stop.outside_obstacle.num_of_predicted_paths",
-      num_of_predicted_paths_for_outside_stop_obstacle);
-    autoware::universe_utils::updateParam<double>(
-      parameters, "behavior_determination.stop.outside_obstacle.pedestrian_deceleration_rate",
-      pedestrian_deceleration_rate);
-    autoware::universe_utils::updateParam<double>(
-      parameters, "behavior_determination.stop.outside_obstacle.bicycle_deceleration_rate",
-      bicycle_deceleration_rate);
   }
 
   double decimate_trajectory_step_length;
@@ -433,48 +294,15 @@ struct BehaviorDeterminationParam
   double pointcloud_cluster_tolerance;
   int pointcloud_min_cluster_size;
   int pointcloud_max_cluster_size;
-  // hysteresis for stop and cruise
   double obstacle_velocity_threshold_from_cruise_to_stop;
   double obstacle_velocity_threshold_from_stop_to_cruise;
-  // inside
   double crossing_obstacle_velocity_threshold;
-  double collision_time_margin;
-  // outside
-  double outside_obstacle_min_velocity_threshold;
-  double ego_obstacle_overlap_time_threshold;
-  double max_prediction_time_for_collision_check;
   double crossing_obstacle_traj_angle_threshold;
-  int num_of_predicted_paths_for_outside_cruise_obstacle;
-  int num_of_predicted_paths_for_outside_stop_obstacle;
-  double pedestrian_deceleration_rate;
-  double bicycle_deceleration_rate;
-  // obstacle hold
-  double stop_obstacle_hold_time_threshold;
-  // reach collision point
-  double min_velocity_to_reach_collision_point;
-  // prediction resampling
   double prediction_resampling_time_interval;
   double prediction_resampling_time_horizon;
-  // max lateral time margin
-  double max_lat_time_margin_for_stop;
-  double max_lat_time_margin_for_cruise;
-  // max lateral margin
-  double max_lat_margin_for_stop;
-  double max_lat_margin_for_stop_against_unknown;
-  double max_lat_margin_for_cruise;
-  double max_lat_margin_for_slow_down;
-  double lat_hysteresis_margin_for_slow_down;
-  int successive_num_to_entry_slow_down_condition;
-  int successive_num_to_exit_slow_down_condition;
-  // consideration for the current ego pose
-  double time_to_convergence{1.5};
-  bool enable_to_consider_current_pose{false};
-  // yield related parameters
-  bool enable_yield{false};
-  double yield_lat_distance_threshold;
-  double max_lat_dist_between_obstacles;
-  double stopped_obstacle_velocity_threshold;
-  double max_obstacles_collision_time;
+
+  bool enable_to_consider_current_pose;
+  double time_to_convergence;
 };
 
 #endif  // AUTOWARE__OBSTACLE_CRUISE_PLANNER__STOP__COMMON_STRUCTS_HPP_
