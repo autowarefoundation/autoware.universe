@@ -44,6 +44,7 @@ private:
 
   diagnostic_msgs::msg::DiagnosticStatus diagnostics_status_msg_;
 };
+
 template <typename T>
 void DiagnosticInterface::add_key_value(const std::string & key, const T & value)
 {
@@ -53,12 +54,10 @@ void DiagnosticInterface::add_key_value(const std::string & key, const T & value
   add_key_value(key_value);
 }
 
-
-// template <>
-// void DiagnosticInterface::add_key_value(const std::string & key, const std::string & value);
-// template <>
-// void DiagnosticInterface::add_key_value(const std::string & key, const bool & value);
-
+template <>
+void DiagnosticInterface::add_key_value(const std::string & key, const std::string & value);
+template <>
+void DiagnosticInterface::add_key_value(const std::string & key, const bool & value);
 
 }  // namespace autoware::universe_utils
 
