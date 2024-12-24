@@ -357,7 +357,6 @@ autoware::motion_velocity_planner::TrajectoryPoints MotionVelocityPlannerNode::s
   const geometry_msgs::msg::Pose current_pose = planner_data.current_odometry.pose.pose;
   const double v0 = planner_data.current_odometry.twist.twist.linear.x;
   const double a0 = planner_data.current_acceleration.accel.accel.linear.x;
-  const auto & external_v_limit = planner_data.external_velocity_limit;
   const auto & smoother = planner_data.velocity_smoother_;
 
   const auto traj_lateral_acc_filtered =
