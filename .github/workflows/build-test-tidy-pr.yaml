@@ -16,7 +16,7 @@ jobs:
   require-label:
     uses: autowarefoundation/autoware-github-actions/.github/workflows/require-label.yaml@v1
     with:
-      label: run:build-test-tidy-checks
+      label: run:build-and-test-differential
 
   check-if-cuda-job-is-needed:
     needs: require-label
