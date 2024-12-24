@@ -18,6 +18,36 @@ jobs:
     with:
       label: run:build-and-test-differential
 
+  require-label-test:
+    needs:
+      - require-label
+    if: ${{ always() }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Initialize Summary
+        run: echo "### Build Test PR Results" > $GITHUB_STEP_SUMMARY
+        shell: bash
+
+      - name: Evaluate build-and-test-differential
+        id: eval_diff
+        uses: ./.github/actions/evaluate-job-result
+        with:
+          job_result: ${{ needs.build-and-test-differential.result }}
+          job_name: require-label
+          expected_results: success
+
+      - name: Final Status
+        run: |
+          if [[ "${{ steps.eval_diff.outputs.failed }}" == "true" || "${{ steps.eval_cuda.outputs.failed }}" == "true" ]]; then
+            echo "Some checks failed. ❌"
+            exit 1
+          else
+            echo "::notice::All checks passed successfully! ✅"
+          fi
+        shell: bash
+
   check-if-cuda-job-is-needed:
     needs: require-label
     runs-on: ubuntu-latest
@@ -65,6 +95,8 @@ jobs:
     if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v4
+
       - name: Initialize Summary
         run: echo "### Build Test PR Results" > $GITHUB_STEP_SUMMARY
         shell: bash

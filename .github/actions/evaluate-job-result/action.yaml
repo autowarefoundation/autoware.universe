@@ -24,7 +24,6 @@ runs:
   steps:
     - name: Evaluate Job Result
       id: evaluate
-      shell: bash
       run: |
         JOB_RESULT="${{ inputs.job_result }}"
         IFS=',' read -ra EXPECTED <<< "${{ inputs.expected_results }}"
@@ -44,3 +43,4 @@ runs:
         echo "::error::${{ inputs.job_name }} failed. ❌"
         SUMMARY_LINE="- ${{ inputs.job_name }}: Failed ❌" >> "$GITHUB_STEP_SUMMARY"
         echo "failed=true" >> "$GITHUB_OUTPUT"
+      shell: bash
