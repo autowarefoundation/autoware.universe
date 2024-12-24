@@ -260,7 +260,8 @@ void PointCloudConcatenateDataSynchronizerComponent::odom_callback(
 }
 
 void PointCloudConcatenateDataSynchronizerComponent::publish_clouds(
-  ConcatenatedCloudResult && concatenated_cloud_result, CollectorInfo collector_info)
+  ConcatenatedCloudResult && concatenated_cloud_result,
+  std::shared_ptr<CollectorInfoBase> collector_info)
 {
   // should never come to this state.
   if (concatenated_cloud_result.concatenate_cloud_ptr == nullptr) {
@@ -369,18 +370,18 @@ void PointCloudConcatenateDataSynchronizerComponent::check_concat_status(
     stat.add(
       "concatenated cloud timestamp", format_timestamp(current_concatenate_cloud_timestamp_));
 
-    if (diagnostic_collector_info_.strategy_type == CollectorStrategyType::Naive) {
-      stat.add(
-        "first cloud's arrival timestamp", format_timestamp(diagnostic_collector_info_.timestamp));
-    } else if (diagnostic_collector_info_.strategy_type == CollectorStrategyType::Advanced) {
+    if (
+      auto naive_info = std::dynamic_pointer_cast<NaiveCollectorInfo>(diagnostic_collector_info_)) {
+      stat.add("first cloud's arrival timestamp", format_timestamp(naive_info->timestamp));
+    } else if (
+      auto advanced_info =
+        std::dynamic_pointer_cast<AdvancedCollectorInfo>(diagnostic_collector_info_)) {
       stat.add(
         "reference timestamp min",
-        format_timestamp(
-          diagnostic_collector_info_.timestamp - diagnostic_collector_info_.noise_window));
+        format_timestamp(advanced_info->timestamp - advanced_info->noise_window));
       stat.add(
         "reference timestamp max",
-        format_timestamp(
-          diagnostic_collector_info_.timestamp + diagnostic_collector_info_.noise_window));
+        format_timestamp(advanced_info->timestamp + advanced_info->noise_window));
     }
 
     bool topic_miss = false;

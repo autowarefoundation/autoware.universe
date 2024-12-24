@@ -41,11 +41,13 @@ std::optional<std::shared_ptr<CloudCollector>> NaiveMatchingStrategy::match_clou
 
   for (const auto & cloud_collector : cloud_collectors) {
     if (!cloud_collector->topic_exists(params.topic_name)) {
-      CollectorInfo collector_info = cloud_collector->get_info();
-      double time_difference = std::abs(params.cloud_arrival_time - collector_info.timestamp);
-      if (!smallest_time_difference || time_difference < smallest_time_difference) {
-        smallest_time_difference = time_difference;
-        closest_collector = cloud_collector;
+      auto info = cloud_collector->get_info();
+      if (auto naive_info = std::dynamic_pointer_cast<NaiveCollectorInfo>(info)) {
+        double time_difference = std::abs(params.cloud_arrival_time - naive_info->timestamp);
+        if (!smallest_time_difference || time_difference < smallest_time_difference) {
+          smallest_time_difference = time_difference;
+          closest_collector = cloud_collector;
+        }
       }
     }
   }
@@ -56,11 +58,9 @@ std::optional<std::shared_ptr<CloudCollector>> NaiveMatchingStrategy::match_clou
 void NaiveMatchingStrategy::set_collector_info(
   std::shared_ptr<CloudCollector> & collector, const MatchingParams & matching_params)
 {
-  CollectorInfo collector_info;
-  ;
-  collector_info.timestamp = matching_params.cloud_arrival_time;
-  collector_info.strategy_type = strategy_type_;
-  collector->set_info(collector_info);
+  auto info = std::make_shared<NaiveCollectorInfo>();
+  info->timestamp = matching_params.cloud_arrival_time;
+  collector->set_info(info);
 }
 
 AdvancedMatchingStrategy::AdvancedMatchingStrategy(
@@ -96,14 +96,16 @@ std::optional<std::shared_ptr<CloudCollector>> AdvancedMatchingStrategy::match_c
   const MatchingParams & params) const
 {
   for (const auto & cloud_collector : cloud_collectors) {
-    CollectorInfo collector_info = cloud_collector->get_info();
-    auto reference_timestamp_min = collector_info.timestamp - collector_info.noise_window;
-    auto reference_timestamp_max = collector_info.timestamp + collector_info.noise_window;
-    double time = params.cloud_timestamp - topic_to_offset_map_.at(params.topic_name);
-    if (
-      time < reference_timestamp_max + topic_to_noise_window_map_.at(params.topic_name) &&
-      time > reference_timestamp_min - topic_to_noise_window_map_.at(params.topic_name)) {
-      return cloud_collector;
+    auto info = cloud_collector->get_info();
+    if (auto advanced_info = std::dynamic_pointer_cast<AdvancedCollectorInfo>(info)) {
+      auto reference_timestamp_min = advanced_info->timestamp - advanced_info->noise_window;
+      auto reference_timestamp_max = advanced_info->timestamp + advanced_info->noise_window;
+      double time = params.cloud_timestamp - topic_to_offset_map_.at(params.topic_name);
+      if (
+        time < reference_timestamp_max + topic_to_noise_window_map_.at(params.topic_name) &&
+        time > reference_timestamp_min - topic_to_noise_window_map_.at(params.topic_name)) {
+        return cloud_collector;
+      }
     }
   }
   return std::nullopt;
@@ -112,13 +114,11 @@ std::optional<std::shared_ptr<CloudCollector>> AdvancedMatchingStrategy::match_c
 void AdvancedMatchingStrategy::set_collector_info(
   std::shared_ptr<CloudCollector> & collector, const MatchingParams & matching_params)
 {
-  CollectorInfo collector_info;
-  ;
-  collector_info.timestamp =
+  auto info = std::make_shared<AdvancedCollectorInfo>();
+  info->timestamp =
     matching_params.cloud_timestamp - topic_to_offset_map_[matching_params.topic_name];
-  collector_info.noise_window = topic_to_noise_window_map_[matching_params.topic_name];
-  collector_info.strategy_type = strategy_type_;
-  collector->set_info(collector_info);
+  info->noise_window = topic_to_noise_window_map_[matching_params.topic_name];
+  collector->set_info(info);
 }
 
 }  // namespace autoware::pointcloud_preprocessor

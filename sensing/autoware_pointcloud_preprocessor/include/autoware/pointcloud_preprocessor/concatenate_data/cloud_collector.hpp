@@ -29,11 +29,31 @@ class CombineCloudHandler;
 
 enum class CollectorStrategyType { Naive, Advanced };
 
-struct CollectorInfo
+struct CollectorInfoBase
+{
+  virtual ~CollectorInfoBase() = default;
+  [[nodiscard]] virtual CollectorStrategyType getStrategyType() const = 0;
+};
+
+struct NaiveCollectorInfo : public CollectorInfoBase
+{
+  double timestamp{0.0};
+
+  [[nodiscard]] CollectorStrategyType getStrategyType() const override
+  {
+    return CollectorStrategyType::Naive;
+  }
+};
+
+struct AdvancedCollectorInfo : public CollectorInfoBase
 {
   double timestamp{0.0};
   double noise_window{0.0};
-  CollectorStrategyType strategy_type{CollectorStrategyType::Naive};
+
+  [[nodiscard]] CollectorStrategyType getStrategyType() const override
+  {
+    return CollectorStrategyType::Advanced;
+  }
 };
 
 class CloudCollector
@@ -54,10 +74,10 @@ public:
   std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr>
   get_topic_to_cloud_map();
 
-  bool concatenate_finished() const;
+  [[nodiscard]] bool concatenate_finished() const;
 
-  void set_info(CollectorInfo collector_info);
-  CollectorInfo get_info() const;
+  void set_info(std::shared_ptr<CollectorInfoBase> collector_info);
+  [[nodiscard]] std::shared_ptr<CollectorInfoBase> get_info() const;
   void show_debug_message();
 
 private:
@@ -70,7 +90,7 @@ private:
   bool debug_mode_;
   bool concatenate_finished_{false};
   std::mutex concatenate_mutex_;
-  CollectorInfo collector_info_;
+  std::shared_ptr<CollectorInfoBase> collector_info_;
 };
 
 }  // namespace autoware::pointcloud_preprocessor

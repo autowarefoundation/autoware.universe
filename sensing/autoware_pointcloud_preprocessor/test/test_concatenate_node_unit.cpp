@@ -291,15 +291,37 @@ TEST_F(ConcatenateCloudTest, TestComputeTransformToAdjustForOldTimestamp)
 
 //////////////////////////////// Test cloud_collector ////////////////////////////////
 
-TEST_F(ConcatenateCloudTest, TestSetAndGetCollectorInfo)
+TEST_F(ConcatenateCloudTest, TestSetAndGetNaiveCollectorInfo)
 {
-  autoware::pointcloud_preprocessor::CollectorInfo collector_info;
-  collector_info.timestamp = 10.0;
-  collector_info.noise_window = 0.1;
-  collector_->set_info(collector_info);
+  auto naive_info = std::make_shared<autoware::pointcloud_preprocessor::NaiveCollectorInfo>();
+  naive_info->timestamp = 15.0;
+
+  collector_->set_info(naive_info);
   auto collector_info_new = collector_->get_info();
-  auto min = collector_info_new.timestamp - collector_info_new.noise_window;
-  auto max = collector_info_new.timestamp + collector_info_new.noise_window;
+
+  auto naive_info_new =
+    std::dynamic_pointer_cast<autoware::pointcloud_preprocessor::NaiveCollectorInfo>(
+      collector_info_new);
+  ASSERT_NE(naive_info_new, nullptr) << "Collector info is not of type NaiveCollectorInfo";
+
+  EXPECT_DOUBLE_EQ(naive_info_new->timestamp, 15.0);
+}
+
+TEST_F(ConcatenateCloudTest, TestSetAndGetAdvancedCollectorInfo)
+{
+  auto advanced_info = std::make_shared<autoware::pointcloud_preprocessor::AdvancedCollectorInfo>();
+  advanced_info->timestamp = 10.0;
+  advanced_info->noise_window = 0.1;
+  collector_->set_info(advanced_info);
+  auto collector_info_new = collector_->get_info();
+  auto advanced_info_new =
+    std::dynamic_pointer_cast<autoware::pointcloud_preprocessor::AdvancedCollectorInfo>(
+      collector_info_new);
+  ASSERT_NE(advanced_info_new, nullptr) << "Collector info is not of type AdvancedCollectorInfo";
+
+  // Validate the values
+  auto min = advanced_info_new->timestamp - advanced_info_new->noise_window;
+  auto max = advanced_info_new->timestamp + advanced_info_new->noise_window;
   EXPECT_DOUBLE_EQ(min, 9.9);
   EXPECT_DOUBLE_EQ(max, 10.1);
 }
