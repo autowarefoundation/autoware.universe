@@ -275,41 +275,41 @@ ObstacleCruisePlannerNode::PlanningAlgorithm ObstacleCruisePlannerNode::getPlann
   return PlanningAlgorithm::INVALID;
 }
 
-// rcl_interfaces::msg::SetParametersResult ObstacleCruisePlannerNode::onParam(
-//   const std::vector<rclcpp::Parameter> & parameters)
-// {
-//   planner_ptr_->onParam(parameters);
-//
-//   autoware::universe_utils::updateParam<bool>(
-//     parameters, "common.enable_debug_info", enable_debug_info_);
-//   autoware::universe_utils::updateParam<bool>(
-//     parameters, "common.enable_calculation_time_info", enable_calculation_time_info_);
-//
-//   autoware::universe_utils::updateParam<bool>(
-//     parameters, "common.stop_on_curve.enable_approaching", enable_approaching_on_curve_);
-//   autoware::universe_utils::updateParam<double>(
-//     parameters, "common.stop_on_curve.additional_safe_distance_margin",
-//     additional_safe_distance_margin_on_curve_);
-//   autoware::universe_utils::updateParam<double>(
-//     parameters, "common.stop_on_curve.min_safe_distance_margin",
-//     min_safe_distance_margin_on_curve_);
-//
-//   planner_ptr_->setParam(
-//     enable_debug_info_, enable_calculation_time_info_, use_pointcloud_,
-//     min_behavior_stop_margin_, enable_approaching_on_curve_,
-//     additional_safe_distance_margin_on_curve_, min_safe_distance_margin_on_curve_,
-//     suppress_sudden_obstacle_stop_);
-//
-//   autoware::universe_utils::updateParam<bool>(
-//     parameters, "common.enable_slow_down_planning", enable_slow_down_planning_);
-//
-//   behavior_determination_param_.onParam(parameters);
-//
-//   rcl_interfaces::msg::SetParametersResult result;
-//   result.successful = true;
-//   result.reason = "success";
-//   return result;
-// }
+rcl_interfaces::msg::SetParametersResult ObstacleCruisePlannerNode::onParam(
+  [[maybe_unused]] const std::vector<rclcpp::Parameter> & parameters)
+{
+  //   planner_ptr_->onParam(parameters);
+  //
+  //   autoware::universe_utils::updateParam<bool>(
+  //     parameters, "common.enable_debug_info", enable_debug_info_);
+  //   autoware::universe_utils::updateParam<bool>(
+  //     parameters, "common.enable_calculation_time_info", enable_calculation_time_info_);
+  //
+  //   autoware::universe_utils::updateParam<bool>(
+  //     parameters, "common.stop_on_curve.enable_approaching", enable_approaching_on_curve_);
+  //   autoware::universe_utils::updateParam<double>(
+  //     parameters, "common.stop_on_curve.additional_safe_distance_margin",
+  //     additional_safe_distance_margin_on_curve_);
+  //   autoware::universe_utils::updateParam<double>(
+  //     parameters, "common.stop_on_curve.min_safe_distance_margin",
+  //     min_safe_distance_margin_on_curve_);
+  //
+  //   planner_ptr_->setParam(
+  //     enable_debug_info_, enable_calculation_time_info_, use_pointcloud_,
+  //     min_behavior_stop_margin_, enable_approaching_on_curve_,
+  //     additional_safe_distance_margin_on_curve_, min_safe_distance_margin_on_curve_,
+  //     suppress_sudden_obstacle_stop_);
+  //
+  //   autoware::universe_utils::updateParam<bool>(
+  //     parameters, "common.enable_slow_down_planning", enable_slow_down_planning_);
+  //
+  //   behavior_determination_param_.onParam(parameters);
+  //
+  rcl_interfaces::msg::SetParametersResult result;
+  result.successful = true;
+  result.reason = "success";
+  return result;
+}
 
 void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr msg)
 {

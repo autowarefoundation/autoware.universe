@@ -93,8 +93,8 @@ struct Obstacle
   : stamp(arg_stamp),
     ego_to_obstacle_distance(ego_to_obstacle_distance),
     lat_dist_from_obstacle_to_traj(lat_dist_from_obstacle_to_traj),
-    stop_collision_point(stop_collision_point),
     precise_lat_dist(lat_dist_from_obstacle_to_traj),
+    stop_collision_point(stop_collision_point),
     slow_down_front_collision_point(slow_down_front_collision_point),
     slow_down_back_collision_point(slow_down_back_collision_point)
   {
