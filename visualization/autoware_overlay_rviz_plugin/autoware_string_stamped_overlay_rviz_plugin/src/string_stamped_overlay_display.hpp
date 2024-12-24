@@ -45,8 +45,8 @@
 // POSSIBILITY OF SUCH DAMAGE.S SOFTWARE, EVEN IF ADVISED OF THE
 //  POSSIBILITY OF SUCH DAMAGE.
 
-#ifndef STRING_STAMPED_HPP_
-#define STRING_STAMPED_HPP_
+#ifndef STRING_STAMPED_OVERLAY_DISPLAY_HPP_
+#define STRING_STAMPED_OVERLAY_DISPLAY_HPP_
 
 #include <memory>
 #include <mutex>
@@ -61,12 +61,12 @@
 
 #endif
 
-#include <tier4_debug_msgs/msg/string_stamped.hpp>
+#include <autoware_internal_debug_msgs/msg/string_stamped.hpp>
 
-namespace rviz_plugins
+namespace autoware::string_stamped_rviz_plugin
 {
 class StringStampedOverlayDisplay
-: public rviz_common::RosTopicDisplay<tier4_debug_msgs::msg::StringStamped>
+: public rviz_common::RosTopicDisplay<autoware_internal_debug_msgs::msg::StringStamped>
 
 {
   Q_OBJECT
@@ -84,7 +84,8 @@ private Q_SLOTS:
 
 protected:
   void update(float wall_dt, float ros_dt) override;
-  void processMessage(const tier4_debug_msgs::msg::StringStamped::ConstSharedPtr msg_ptr) override;
+  void processMessage(
+    const autoware_internal_debug_msgs::msg::StringStamped::ConstSharedPtr msg_ptr) override;
   jsk_rviz_plugins::OverlayObject::Ptr overlay_;
   rviz_common::properties::ColorProperty * property_text_color_;
   rviz_common::properties::IntProperty * property_left_;
@@ -100,8 +101,8 @@ private:
   static constexpr int hand_width_ = 4;
 
   std::mutex mutex_;
-  tier4_debug_msgs::msg::StringStamped::ConstSharedPtr last_msg_ptr_;
+  autoware_internal_debug_msgs::msg::StringStamped::ConstSharedPtr last_msg_ptr_;
 };
-}  // namespace rviz_plugins
+}  // namespace autoware::string_stamped_rviz_plugin
 
-#endif  // STRING_STAMPED_HPP_
+#endif  // STRING_STAMPED_OVERLAY_DISPLAY_HPP_
