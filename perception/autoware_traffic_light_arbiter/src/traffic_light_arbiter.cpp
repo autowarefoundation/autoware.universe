@@ -20,6 +20,7 @@
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 
+#include <algorithm>
 #include <map>
 #include <memory>
 #include <tuple>
