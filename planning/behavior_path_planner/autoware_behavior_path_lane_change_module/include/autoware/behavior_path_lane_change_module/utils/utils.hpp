@@ -24,6 +24,8 @@
 
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
+#include <autoware_frenet_planner/structures.hpp>
+#include <autoware_sampler_common/transform/spline_transform.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -56,6 +58,7 @@ using behavior_path_planner::lane_change::LCParamPtr;
 using behavior_path_planner::lane_change::ModuleType;
 using behavior_path_planner::lane_change::PathSafetyStatus;
 using behavior_path_planner::lane_change::TargetLaneLeadingObjects;
+using behavior_path_planner::lane_change::TrajectoryGroup;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
@@ -82,6 +85,10 @@ lanelet::ConstLanelets get_target_neighbor_lanes(
 bool path_footprint_exceeds_target_lane_bound(
   const CommonDataPtr & common_data_ptr, const PathWithLaneId & path, const VehicleInfo & ego_info,
   const double margin = 0.1);
+
+void filter_out_of_bound_trajectories(
+  const CommonDataPtr & common_data_ptr,
+  std::vector<lane_change::TrajectoryGroup> & trajectory_groups);
 
 std::vector<DrivableLanes> generateDrivableLanes(
   const std::vector<DrivableLanes> & original_drivable_lanes, const RouteHandler & route_handler,
@@ -432,5 +439,11 @@ std::vector<std::vector<PoseWithVelocityStamped>> convert_to_predicted_paths(
  * @return true if the pose is within the target or target neighbor polygons, false otherwise.
  */
 bool is_valid_start_point(const lane_change::CommonDataPtr & common_data_ptr, const Pose & pose);
+
+std::vector<PoseWithVelocityStamped> convert_to_predicted_path(
+  const CommonDataPtr & common_data_ptr, const lane_change::TrajectoryGroup & frenet_candidate,
+  [[maybe_unused]] const size_t deceleration_sampling_num);
+
+double calc_limit(const CommonDataPtr & common_data_ptr, const Pose & lc_end_pose);
 }  // namespace autoware::behavior_path_planner::utils::lane_change
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__UTILS_HPP_

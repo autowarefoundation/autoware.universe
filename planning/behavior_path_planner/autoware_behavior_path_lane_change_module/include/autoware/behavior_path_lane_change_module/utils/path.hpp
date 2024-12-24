@@ -12,9 +12,6 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__PATH_HPP_
-#define AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__PATH_HPP_
-
 #include "autoware/behavior_path_lane_change_module/structs/data.hpp"
 #include "autoware/behavior_path_lane_change_module/structs/path.hpp"
 
@@ -26,6 +23,7 @@ namespace autoware::behavior_path_planner::utils::lane_change
 {
 using behavior_path_planner::LaneChangePath;
 using behavior_path_planner::lane_change::CommonDataPtr;
+using behavior_path_planner::lane_change::TrajectoryGroup;
 
 /**
  * @brief Generates a prepare segment for a lane change maneuver.
@@ -98,5 +96,11 @@ LaneChangePath construct_candidate_path(
   const LaneChangeInfo & lane_change_info, const PathWithLaneId & prepare_segment,
   const PathWithLaneId & target_lane_reference_path,
   const std::vector<std::vector<int64_t>> & sorted_lane_ids);
+
+/// @brief generate lane change candidate paths using the Frenet planner
+std::vector<lane_change::TrajectoryGroup> generate_frenet_candidates(
+  const CommonDataPtr & common_data_ptr, const PathWithLaneId & prev_module_path,
+  const std::vector<LaneChangePhaseMetrics> & metrics);
+
+std::optional<LaneChangePath> get_candidate_path(const TrajectoryGroup & trajectory_group);
 }  // namespace autoware::behavior_path_planner::utils::lane_change
-#endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__PATH_HPP_
