@@ -26,13 +26,11 @@ runs:
       run: |
         JOB_RESULT="${{ inputs.job_result }}"
         IFS=',' read -ra EXPECTED <<< "${{ inputs.expected_results }}"
-        SUMMARY_LINE=""
         FAILED=false
 
         for RESULT in "${EXPECTED[@]}"; do
           if [[ "$JOB_RESULT" == "$RESULT" ]]; then
-            SUMMARY_LINE="- ${{ inputs.job_name }}: Success ✅"
-            echo "$SUMMARY_LINE" >> "$GITHUB_STEP_SUMMARY"
+            echo "- ${{ inputs.job_name }}: Success ✅" >> "$GITHUB_STEP_SUMMARY"
             echo "failed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -40,6 +38,6 @@ runs:
 
         # If no expected result matched
         echo "::error::${{ inputs.job_name }} failed. ❌"
-        SUMMARY_LINE="- ${{ inputs.job_name }}: Failed ❌" >> "$GITHUB_STEP_SUMMARY"
+        "- ${{ inputs.job_name }}: Failed ❌" >> "$GITHUB_STEP_SUMMARY"
         echo "failed=true" >> "$GITHUB_OUTPUT"
       shell: bash
