@@ -134,20 +134,6 @@ void plot_goal_candidate(
     Kwargs("angles"_a = "xy", "scale_units"_a = "xy", "scale"_a = 2.0));
 }
 
-void plot_goal_candidates(
-  matplotlibcpp17::axes::Axes & axes, const GoalCandidates & goals,
-  const std::map<size_t, size_t> & goal_id2prio,
-  const autoware::universe_utils::LinearRing2d & local_footprint,
-  const std::string & color = "green")
-{
-  for (const auto & goal : goals) {
-    const auto it = goal_id2prio.find(goal.id);
-    if (it != goal_id2prio.end()) {
-      plot_goal_candidate(axes, goal, it->second, local_footprint, color);
-    }
-  }
-}
-
 void plot_path_with_lane_id(
   matplotlibcpp17::axes::Axes & axes, const PathWithLaneId & path,
   const std::string & color = "red", const std::string & label = "", const double linewidth = 1.0)
@@ -606,8 +592,6 @@ int main(int argc, char ** argv)
     plot_lanelet(ax2, lanelet);
     // plot_lanelet(ax3, lanelet);
   }
-
-  // plot_goal_candidates(ax1, goal_candidates, footprint);
 
   // plot_path_with_lane_id(ax2, reference_path.path, "green", "reference_path");
 
