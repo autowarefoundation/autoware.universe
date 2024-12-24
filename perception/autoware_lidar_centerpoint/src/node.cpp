@@ -86,8 +86,8 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
     iou_bev_nms_.setParameters(p);
   }
 
-  NetworkParam encoder_param(encoder_onnx_path, encoder_engine_path, trt_precision);
-  NetworkParam head_param(head_onnx_path, head_engine_path, trt_precision);
+  TrtCommonConfig encoder_param(encoder_onnx_path, trt_precision, encoder_engine_path);
+  TrtCommonConfig head_param(head_onnx_path, trt_precision, head_engine_path);
   DensificationParam densification_param(
     densification_world_frame_id, densification_num_past_frames);
 
