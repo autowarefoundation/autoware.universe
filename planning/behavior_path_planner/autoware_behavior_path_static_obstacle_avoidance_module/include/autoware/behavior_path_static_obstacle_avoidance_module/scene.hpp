@@ -65,6 +65,8 @@ public:
   std::shared_ptr<AvoidanceDebugMsgArray> get_debug_msg_array() const;
 
 private:
+  ModuleStatus setInitState() const override { return ModuleStatus::WAITING_APPROVAL; };
+
   /**
    * @brief return the result whether the module can stop path generation process.
    * @param avoidance data.
@@ -88,7 +90,7 @@ private:
       rtc_interface_ptr_map_.at("left")->updateCooperateStatus(
         uuid_map_.at("left"), isExecutionReady(), State::WAITING_FOR_EXECUTION,
         candidate.start_distance_to_path_change, candidate.finish_distance_to_path_change,
-        clock_->now());
+        clock_->now(), avoid_data_.request_operator);
       candidate_uuid_ = uuid_map_.at("left");
       return;
     }
@@ -96,7 +98,7 @@ private:
       rtc_interface_ptr_map_.at("right")->updateCooperateStatus(
         uuid_map_.at("right"), isExecutionReady(), State::WAITING_FOR_EXECUTION,
         candidate.start_distance_to_path_change, candidate.finish_distance_to_path_change,
-        clock_->now());
+        clock_->now(), avoid_data_.request_operator);
       candidate_uuid_ = uuid_map_.at("right");
       return;
     }
@@ -115,28 +117,43 @@ private:
     const auto ego_idx = planner_data_->findEgoIndex(path.points);
 
     for (const auto & left_shift : left_shift_array_) {
-      const double start_distance = autoware_motion_utils::calcSignedArcLength(
+      const double start_distance = autoware::motion_utils::calcSignedArcLength(
         path.points, ego_idx, left_shift.start_pose.position);
       const double finish_distance = start_distance + left_shift.relative_longitudinal;
-      rtc_interface_ptr_map_.at("left")->updateCooperateStatus(
-        left_shift.uuid, true, State::RUNNING, start_distance, finish_distance, clock_->now());
+
+      // If force activated keep safety to false
+      if (rtc_interface_ptr_map_.at("left")->isForceActivated(left_shift.uuid)) {
+        rtc_interface_ptr_map_.at("left")->updateCooperateStatus(
+          left_shift.uuid, false, State::RUNNING, start_distance, finish_distance, clock_->now());
+      } else {
+        rtc_interface_ptr_map_.at("left")->updateCooperateStatus(
+          left_shift.uuid, true, State::RUNNING, start_distance, finish_distance, clock_->now());
+      }
+
       if (finish_distance > -1.0e-03) {
-        steering_factor_interface_ptr_->updateSteeringFactor(
+        steering_factor_interface_.set(
           {left_shift.start_pose, left_shift.finish_pose}, {start_distance, finish_distance},
-          PlanningBehavior::AVOIDANCE, SteeringFactor::LEFT, SteeringFactor::TURNING, "");
+          SteeringFactor::LEFT, SteeringFactor::TURNING, "");
       }
     }
 
     for (const auto & right_shift : right_shift_array_) {
-      const double start_distance = autoware_motion_utils::calcSignedArcLength(
+      const double start_distance = autoware::motion_utils::calcSignedArcLength(
         path.points, ego_idx, right_shift.start_pose.position);
       const double finish_distance = start_distance + right_shift.relative_longitudinal;
-      rtc_interface_ptr_map_.at("right")->updateCooperateStatus(
-        right_shift.uuid, true, State::RUNNING, start_distance, finish_distance, clock_->now());
+
+      if (rtc_interface_ptr_map_.at("right")->isForceActivated(right_shift.uuid)) {
+        rtc_interface_ptr_map_.at("right")->updateCooperateStatus(
+          right_shift.uuid, false, State::RUNNING, start_distance, finish_distance, clock_->now());
+      } else {
+        rtc_interface_ptr_map_.at("right")->updateCooperateStatus(
+          right_shift.uuid, true, State::RUNNING, start_distance, finish_distance, clock_->now());
+      }
+
       if (finish_distance > -1.0e-03) {
-        steering_factor_interface_ptr_->updateSteeringFactor(
+        steering_factor_interface_.set(
           {right_shift.start_pose, right_shift.finish_pose}, {start_distance, finish_distance},
-          PlanningBehavior::AVOIDANCE, SteeringFactor::RIGHT, SteeringFactor::TURNING, "");
+          SteeringFactor::RIGHT, SteeringFactor::TURNING, "");
       }
     }
   }
@@ -146,16 +163,26 @@ private:
    */
   void removeCandidateRTCStatus()
   {
+    bool candidate_registered = false;
+
     if (rtc_interface_ptr_map_.at("left")->isRegistered(candidate_uuid_)) {
       rtc_interface_ptr_map_.at("left")->updateCooperateStatus(
         candidate_uuid_, true, State::FAILED, std::numeric_limits<double>::lowest(),
         std::numeric_limits<double>::lowest(), clock_->now());
+      candidate_registered = true;
     }
 
     if (rtc_interface_ptr_map_.at("right")->isRegistered(candidate_uuid_)) {
       rtc_interface_ptr_map_.at("right")->updateCooperateStatus(
         candidate_uuid_, true, State::FAILED, std::numeric_limits<double>::lowest(),
         std::numeric_limits<double>::lowest(), clock_->now());
+      candidate_registered = true;
+    }
+
+    if (candidate_registered) {
+      uuid_map_.at("left") = generateUUID();
+      uuid_map_.at("right") = generateUUID();
+      candidate_uuid_ = generateUUID();
     }
   }
 
@@ -267,6 +294,12 @@ private:
   void fillAvoidanceTargetObjects(AvoidancePlanningData & data, DebugData & debug) const;
 
   /**
+   * @brief fill additional data which are necessary to plan avoidance path/velocity.
+   * @param avoidance target objects.
+   */
+  void fillAvoidanceTargetData(ObjectDataArray & objects) const;
+
+  /**
    * @brief fill candidate shift lines.
    * @param avoidance data.
    * @param debug data.
@@ -324,7 +357,8 @@ private:
    * @brief fill debug markers.
    */
   void updateDebugMarker(
-    const AvoidancePlanningData & data, const PathShifter & shifter, const DebugData & debug) const;
+    const BehaviorModuleOutput & output, const AvoidancePlanningData & data,
+    const PathShifter & shifter, const DebugData & debug) const;
 
   /**
    * @brief fill information markers that are shown in Rviz by default.
@@ -345,6 +379,9 @@ private:
    * @return result.
    */
   bool isSafePath(ShiftedPath & shifted_path, DebugData & debug) const;
+
+  auto getTurnSignal(const ShiftedPath & spline_shift_path, const ShiftedPath & linear_shift_path)
+    -> TurnSignalInfo;
 
   // post process
 
@@ -436,6 +473,8 @@ private:
 
   UUID candidate_uuid_;
 
+  ObjectDataArray clip_objects_;
+
   // TODO(Satoshi OTA) create detected object manager.
   ObjectDataArray registered_objects_;
 
@@ -454,6 +493,9 @@ private:
   mutable std::vector<AvoidanceDebugMsg> debug_avoidance_initializer_for_shift_line_;
 
   mutable rclcpp::Time debug_avoidance_initializer_for_shift_line_time_;
+
+  bool force_deactivated_{false};
+  rclcpp::Time last_deactivation_triggered_time_;
 };
 
 }  // namespace autoware::behavior_path_planner

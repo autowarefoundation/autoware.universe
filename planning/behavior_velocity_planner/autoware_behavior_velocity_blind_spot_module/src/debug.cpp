@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scene.hpp"
+#include "autoware/behavior_velocity_blind_spot_module/scene.hpp"
 
 #include <autoware/behavior_velocity_planner_common/utilization/debug.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
@@ -24,13 +24,14 @@
 #include <tf2/utils.h>
 
 #include <string>
+#include <vector>
 
 namespace autoware::behavior_velocity_planner
 {
-using autoware_universe_utils::appendMarkerArray;
-using autoware_universe_utils::createMarkerColor;
-using autoware_universe_utils::createMarkerOrientation;
-using autoware_universe_utils::createMarkerScale;
+using autoware::universe_utils::appendMarkerArray;
+using autoware::universe_utils::createMarkerColor;
+using autoware::universe_utils::createMarkerOrientation;
+using autoware::universe_utils::createMarkerScale;
 
 namespace
 {
@@ -73,12 +74,12 @@ visualization_msgs::msg::MarkerArray createLaneletPolygonsMarkerArray(
 
 }  // namespace
 
-autoware_motion_utils::VirtualWalls BlindSpotModule::createVirtualWalls()
+autoware::motion_utils::VirtualWalls BlindSpotModule::createVirtualWalls()
 {
-  autoware_motion_utils::VirtualWalls virtual_walls;
+  autoware::motion_utils::VirtualWalls virtual_walls;
 
   if (debug_data_.virtual_wall_pose) {
-    autoware_motion_utils::VirtualWall wall;
+    autoware::motion_utils::VirtualWall wall;
     wall.text = "blind_spot";
     wall.pose = debug_data_.virtual_wall_pose.value();
     wall.ns = std::to_string(module_id_) + "_";

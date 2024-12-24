@@ -15,14 +15,15 @@
 #ifndef AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__INTERFACE_HPP_
 #define AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__INTERFACE_HPP_
 
+#include "autoware/behavior_path_lane_change_module/base_class.hpp"
 #include "autoware/behavior_path_lane_change_module/scene.hpp"
-#include "autoware/behavior_path_lane_change_module/utils/base_class.hpp"
-#include "autoware/behavior_path_lane_change_module/utils/data_structs.hpp"
-#include "autoware/behavior_path_lane_change_module/utils/path.hpp"
+#include "autoware/behavior_path_lane_change_module/structs/data.hpp"
+#include "autoware/behavior_path_lane_change_module/structs/path.hpp"
 #include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
 #include "autoware/behavior_path_planner_common/turn_signal_decider.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 
+#include <autoware/universe_utils/system/time_keeper.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose.hpp>
@@ -92,6 +93,8 @@ public:
   MarkerArray getModuleVirtualWall() override;
 
 protected:
+  using SceneModuleInterface::updateRTCStatus;
+
   std::shared_ptr<LaneChangeParameters> parameters_;
 
   std::unique_ptr<LaneChangeBase> module_type_;
@@ -108,6 +111,7 @@ protected:
     const double start_distance, const double finish_distance, const bool safe,
     const uint8_t & state)
   {
+    universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
     for (const auto & [module_name, ptr] : rtc_interface_ptr_map_) {
       if (ptr) {
         ptr->updateCooperateStatus(

@@ -19,8 +19,10 @@
 #include "velocity_planning_result.hpp"
 
 #include <autoware/motion_utils/factor/velocity_factor_interface.hpp>
+#include <autoware/universe_utils/ros/processing_time_publisher.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_internal_debug_msgs/msg/float64_stamped.hpp>
 #include <autoware_planning_msgs/msg/trajectory_point.hpp>
 
 #include <memory>
@@ -40,11 +42,14 @@ public:
     const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
     const std::shared_ptr<const PlannerData> planner_data) = 0;
   virtual std::string get_module_name() const = 0;
-  autoware_motion_utils::VelocityFactorInterface velocity_factor_interface_;
+  autoware::motion_utils::VelocityFactorInterface velocity_factor_interface_;
   rclcpp::Logger logger_ = rclcpp::get_logger("");
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_publisher_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr virtual_wall_publisher_;
-  autoware_motion_utils::VirtualWallMarkerCreator virtual_wall_marker_creator{};
+  std::shared_ptr<autoware::universe_utils::ProcessingTimePublisher> processing_diag_publisher_;
+  rclcpp::Publisher<autoware_internal_debug_msgs::msg::Float64Stamped>::SharedPtr
+    processing_time_publisher_;
+  autoware::motion_utils::VirtualWallMarkerCreator virtual_wall_marker_creator{};
 };
 
 }  // namespace autoware::motion_velocity_planner

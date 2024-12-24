@@ -21,8 +21,8 @@
 #include <autoware/behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/trajectory_utils.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 
 #include <boost/optional.hpp>
 
@@ -30,6 +30,7 @@
 
 #include <algorithm>
 #include <memory>
+#include <string>
 #include <vector>
 
 // turn on only when debugging.
@@ -82,8 +83,7 @@ OcclusionSpotModule::OcclusionSpotModule(
   }
 }
 
-bool OcclusionSpotModule::modifyPathVelocity(
-  PathWithLaneId * path, [[maybe_unused]] StopReason * stop_reason)
+bool OcclusionSpotModule::modifyPathVelocity(PathWithLaneId * path)
 {
   if (param_.is_show_processing_time) stop_watch_.tic("total_processing_time");
   debug_data_.resetData();
@@ -110,12 +110,12 @@ bool OcclusionSpotModule::modifyPathVelocity(
   //! never change this interpolation interval(will affect module accuracy)
   splineInterpolate(clipped_path, 1.0, path_interpolated, logger_);
   const geometry_msgs::msg::Point start_point = path_interpolated.points.at(0).point.pose.position;
-  const auto ego_segment_idx = autoware_motion_utils::findNearestSegmentIndex(
+  const auto ego_segment_idx = autoware::motion_utils::findNearestSegmentIndex(
     path_interpolated.points, ego_pose, param_.dist_thr, param_.angle_thr);
   if (!ego_segment_idx) return true;
   const size_t start_point_segment_idx =
-    autoware_motion_utils::findNearestSegmentIndex(path_interpolated.points, start_point);
-  const auto offset = autoware_motion_utils::calcSignedArcLength(
+    autoware::motion_utils::findNearestSegmentIndex(path_interpolated.points, start_point);
+  const auto offset = autoware::motion_utils::calcSignedArcLength(
     path_interpolated.points, ego_pose.position, *ego_segment_idx, start_point,
     start_point_segment_idx);
   const double offset_from_start_to_ego = -offset;

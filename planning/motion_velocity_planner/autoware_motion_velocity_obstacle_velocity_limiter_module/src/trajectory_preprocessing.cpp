@@ -1,4 +1,4 @@
-// Copyright 2022 TIER IV, Inc.
+// Copyright 2022-2024 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,13 +14,17 @@
 
 #include "trajectory_preprocessing.hpp"
 
+#include "types.hpp"
+
+#include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 
+#include <geometry_msgs/msg/detail/point__struct.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <tf2/utils.h>
 
-#include <algorithm>
+#include <optional>
 
 namespace autoware::motion_velocity_planner::obstacle_velocity_limiter
 {
@@ -31,7 +35,7 @@ size_t calculateStartIndex(
   auto dist = 0.0;
   auto idx = ego_idx;
   while (idx + 1 < trajectory.size() && dist < start_distance) {
-    dist += autoware_universe_utils::calcDistance2d(trajectory[idx], trajectory[idx + 1]);
+    dist += autoware::universe_utils::calcDistance2d(trajectory[idx], trajectory[idx + 1]);
     ++idx;
   }
   return idx;
@@ -46,7 +50,7 @@ size_t calculateEndIndex(
   auto idx = start_idx;
   while (idx + 1 < trajectory.size() && length < max_length && duration < max_duration) {
     const auto length_d =
-      autoware_universe_utils::calcDistance2d(trajectory[idx], trajectory[idx + 1]);
+      autoware::universe_utils::calcDistance2d(trajectory[idx], trajectory[idx + 1]);
     length += length_d;
     if (trajectory[idx].longitudinal_velocity_mps > 0.0)
       duration += length_d / trajectory[idx].longitudinal_velocity_mps;
@@ -57,7 +61,7 @@ size_t calculateEndIndex(
 
 TrajectoryPoints downsampleTrajectory(
   const TrajectoryPoints & trajectory, const size_t start_idx, const size_t end_idx,
-  const int factor)
+  const int64_t factor)
 {
   if (factor < 1) return trajectory;
   TrajectoryPoints downsampled_traj;
@@ -68,32 +72,35 @@ TrajectoryPoints downsampleTrajectory(
 
 void calculateSteeringAngles(TrajectoryPoints & trajectory, const double wheel_base)
 {
-  auto t = 0.0;
   auto prev_point = trajectory.front();
   auto prev_heading = tf2::getYaw(prev_point.pose.orientation);
   for (auto i = 1ul; i < trajectory.size(); ++i) {
-    const auto & prev_point = trajectory[i - 1];
+    prev_point = trajectory[i - 1];
     auto & point = trajectory[i];
-    const auto dt = autoware_universe_utils::calcDistance2d(prev_point, point) /
+    const auto dt = autoware::universe_utils::calcDistance2d(prev_point, point) /
                     prev_point.longitudinal_velocity_mps;
-    t += dt;
     const auto heading = tf2::getYaw(point.pose.orientation);
     const auto d_heading = heading - prev_heading;
     prev_heading = heading;
     point.front_wheel_angle_rad =
-      std::atan2(wheel_base * d_heading, point.longitudinal_velocity_mps * dt);
+      static_cast<float>(std::atan2(wheel_base * d_heading, point.longitudinal_velocity_mps * dt));
   }
 }
 
-TrajectoryPoints copyDownsampledVelocity(
-  const TrajectoryPoints & downsampled_traj, TrajectoryPoints trajectory, const size_t start_idx,
-  const int factor)
+void add_trajectory_point(TrajectoryPoints & trajectory, const geometry_msgs::msg::Point & point)
 {
-  const auto size = std::min(downsampled_traj.size(), trajectory.size());
-  for (size_t i = 0; i < size; ++i) {
-    trajectory[start_idx + i * factor].longitudinal_velocity_mps =
-      downsampled_traj[i].longitudinal_velocity_mps;
+  const auto segment_idx = motion_utils::findNearestSegmentIndex(trajectory, point);
+  const auto lat_offset = motion_utils::calcLateralOffset(trajectory, point, segment_idx);
+  if (lat_offset < 1.0) {
+    const auto lon_offset_to_segment =
+      motion_utils::calcLongitudinalOffsetToSegment(trajectory, segment_idx, point);
+    const auto inserted_idx =
+      motion_utils::insertTargetPoint(segment_idx, lon_offset_to_segment, trajectory);
+    if (inserted_idx) {
+      trajectory[*inserted_idx].longitudinal_velocity_mps =
+        trajectory[segment_idx].longitudinal_velocity_mps;
+      trajectory[*inserted_idx].acceleration_mps2 = trajectory[segment_idx].acceleration_mps2;
+    }
   }
-  return trajectory;
 }
 }  // namespace autoware::motion_velocity_planner::obstacle_velocity_limiter

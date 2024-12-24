@@ -34,15 +34,15 @@ namespace autoware::behavior_velocity_planner
 namespace run_out_utils
 {
 namespace bg = boost::geometry;
+using autoware::universe_utils::Box2d;
+using autoware::universe_utils::LineString2d;
+using autoware::universe_utils::Point2d;
+using autoware::universe_utils::Polygon2d;
 using autoware::vehicle_info_utils::VehicleInfo;
 using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::Shape;
 using autoware_planning_msgs::msg::PathPoint;
-using autoware_universe_utils::Box2d;
-using autoware_universe_utils::LineString2d;
-using autoware_universe_utils::Point2d;
-using autoware_universe_utils::Polygon2d;
 using tier4_debug_msgs::msg::Float32Stamped;
 using tier4_planning_msgs::msg::PathWithLaneId;
 using PathPointsWithLaneId = std::vector<tier4_planning_msgs::msg::PathPointWithLaneId>;
@@ -224,10 +224,6 @@ std::vector<geometry_msgs::msg::Point> findLateralSameSidePoints(
 
 bool isSamePoint(const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2);
 
-// if path points have the same point as target_point, return the index
-std::optional<size_t> haveSamePoint(
-  const PathPointsWithLaneId & path_points, const geometry_msgs::msg::Point & target_point);
-
 // insert path velocity which doesn't exceed original velocity
 void insertPathVelocityFromIndexLimited(
   const size_t & start_idx, const float velocity_mps, PathPointsWithLaneId & path_points);
@@ -235,7 +231,7 @@ void insertPathVelocityFromIndexLimited(
 void insertPathVelocityFromIndex(
   const size_t & start_idx, const float velocity_mps, PathPointsWithLaneId & path_points);
 
-std::optional<size_t> findFirstStopPointIdx(PathPointsWithLaneId & path_points);
+std::optional<size_t> findFirstStopPointIdx(const PathPointsWithLaneId & path_points);
 
 LineString2d createLineString2d(const lanelet::BasicPolygon2d & poly);
 
@@ -259,7 +255,8 @@ std::optional<std::vector<geometry_msgs::msg::Point>> createDetectionAreaPolygon
 
 // extend path to the pose of goal
 PathWithLaneId extendPath(const PathWithLaneId & input, const double extend_distance);
-PathPoint createExtendPathPoint(const double extend_distance, const PathPoint & goal_point);
+PathPointWithLaneId createExtendPathPoint(
+  const double extend_distance, const PathPointWithLaneId & goal_point);
 
 DetectionMethod toEnum(const std::string & detection_method);
 

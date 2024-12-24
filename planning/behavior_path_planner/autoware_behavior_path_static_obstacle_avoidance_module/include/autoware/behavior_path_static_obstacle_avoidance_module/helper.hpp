@@ -20,9 +20,12 @@
 #include "autoware/behavior_path_static_obstacle_avoidance_module/type_alias.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/utils.hpp"
 
+#include <autoware/motion_utils/trajectory/path_shift.hpp>
+
 #include <algorithm>
 #include <limits>
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -117,26 +120,27 @@ public:
     const auto nominal_speed = std::max(getEgoSpeed(), p->nominal_avoidance_speed);
     const auto nominal_jerk =
       p->lateral_min_jerk_map.at(getConstraintsMapIndex(nominal_speed, p->velocity_map));
-    return PathShifter::calcLongitudinalDistFromJerk(shift_length, nominal_jerk, nominal_speed);
+    return autoware::motion_utils::calc_longitudinal_dist_from_jerk(
+      shift_length, nominal_jerk, nominal_speed);
   }
 
   double getMinAvoidanceDistance(const double shift_length) const
   {
     const auto & p = parameters_;
-    return PathShifter::calcLongitudinalDistFromJerk(
+    return autoware::motion_utils::calc_longitudinal_dist_from_jerk(
       shift_length, p->lateral_max_jerk_map.front(), p->velocity_map.front());
   }
 
   double getMaxAvoidanceDistance(const double shift_length) const
   {
-    const auto distance_from_jerk = PathShifter::calcLongitudinalDistFromJerk(
+    const auto distance_from_jerk = autoware::motion_utils::calc_longitudinal_dist_from_jerk(
       shift_length, getLateralMinJerkLimit(), getAvoidanceEgoSpeed());
     return std::max(getNominalAvoidanceDistance(shift_length), distance_from_jerk);
   }
 
   double getSharpAvoidanceDistance(const double shift_length) const
   {
-    return PathShifter::calcLongitudinalDistFromJerk(
+    return autoware::motion_utils::calc_longitudinal_dist_from_jerk(
       shift_length, getLateralMaxJerkLimit(), getAvoidanceEgoSpeed());
   }
 
@@ -177,14 +181,14 @@ public:
   double getShift(const Point & p) const
   {
     validate();
-    const auto idx = autoware_motion_utils::findNearestIndex(prev_reference_path_.points, p);
+    const auto idx = autoware::motion_utils::findNearestIndex(prev_reference_path_.points, p);
     return prev_spline_shift_path_.shift_length.at(idx);
   }
 
   double getLinearShift(const Point & p) const
   {
     validate();
-    const auto idx = autoware_motion_utils::findNearestIndex(prev_reference_path_.points, p);
+    const auto idx = autoware::motion_utils::findNearestIndex(prev_reference_path_.points, p);
     return prev_linear_shift_path_.shift_length.at(idx);
   }
 
@@ -208,7 +212,8 @@ public:
                        : std::max(shift_length, getRightShiftBound());
   }
 
-  double getForwardDetectionRange() const
+  double getForwardDetectionRange(
+    const std::optional<lanelet::ConstLanelet> & closest_lanelet) const
   {
     if (parameters_->use_static_detection_area) {
       return parameters_->object_check_max_forward_distance;
@@ -216,18 +221,17 @@ public:
 
     const auto & route_handler = data_->route_handler;
 
-    lanelet::ConstLanelet closest_lane;
-    if (!route_handler->getClosestLaneletWithinRoute(getEgoPose(), &closest_lane)) {
+    if (!closest_lanelet.has_value()) {
       return parameters_->object_check_max_forward_distance;
     }
 
-    const auto limit = route_handler->getTrafficRulesPtr()->speedLimit(closest_lane);
+    const auto limit = route_handler->getTrafficRulesPtr()->speedLimit(closest_lanelet.value());
     const auto speed = isShifted() ? limit.speedLimit.value() : getEgoSpeed();
 
     const auto max_shift_length = std::max(
       std::abs(parameters_->max_right_shift_length), std::abs(parameters_->max_left_shift_length));
-    const auto dynamic_distance =
-      PathShifter::calcLongitudinalDistFromJerk(max_shift_length, getLateralMinJerkLimit(), speed);
+    const auto dynamic_distance = autoware::motion_utils::calc_longitudinal_dist_from_jerk(
+      max_shift_length, getLateralMinJerkLimit(), speed);
 
     return std::clamp(
       1.5 * dynamic_distance + getNominalPrepareDistance(),
@@ -278,7 +282,7 @@ public:
     }
 
     const auto start_idx = data_->findEgoIndex(path.points);
-    const auto distance = autoware_motion_utils::calcSignedArcLength(
+    const auto distance = autoware::motion_utils::calcSignedArcLength(
       path.points, start_idx, max_v_point_.value().first.position);
     return std::make_pair(distance, max_v_point_.value().second);
   }
@@ -290,7 +294,7 @@ public:
     const auto & a_now = data_->self_acceleration->accel.accel.linear.x;
     const auto & a_lim = use_hard_constraints ? p->max_deceleration : p->nominal_deceleration;
     const auto & j_lim = use_hard_constraints ? p->max_jerk : p->nominal_jerk;
-    const auto ret = autoware_motion_utils::calcDecelDistWithJerkAndAccConstraints(
+    const auto ret = autoware::motion_utils::calcDecelDistWithJerkAndAccConstraints(
       getEgoSpeed(), target_velocity, a_now, a_lim, j_lim, -1.0 * j_lim);
 
     if (!!ret) {
@@ -304,33 +308,69 @@ public:
   {
     const auto & p = parameters_;
     return prepare_distance >
-           std::max(getEgoSpeed() * p->min_prepare_distance, p->min_prepare_distance);
+           std::max(getEgoSpeed() * p->min_prepare_time, p->min_prepare_distance);
   }
 
   bool isComfortable(const AvoidLineArray & shift_lines) const
   {
     const auto JERK_BUFFER = 0.1;  // [m/sss]
     return std::all_of(shift_lines.begin(), shift_lines.end(), [&](const auto & line) {
-      return PathShifter::calcJerkFromLatLonDistance(
+      return autoware::motion_utils::calc_jerk_from_lat_lon_distance(
                line.getRelativeLength(), line.getRelativeLongitudinal(), getAvoidanceEgoSpeed()) <
              getLateralMaxJerkLimit() + JERK_BUFFER;
     });
   }
 
-  bool isReady(const ObjectDataArray & objects) const
+  bool isFeasible(const AvoidLineArray & shift_lines) const
+  {
+    constexpr double JERK_BUFFER = 0.1;  // [m/sss]
+    const auto & values = parameters_->velocity_map;
+    const auto idx = getConstraintsMapIndex(0.0, values);  // use minimum avoidance speed
+    const auto jerk_limit = parameters_->lateral_max_jerk_map.at(idx);
+    return std::all_of(shift_lines.begin(), shift_lines.end(), [&](const auto & line) {
+      return autoware::motion_utils::calc_jerk_from_lat_lon_distance(
+               line.getRelativeLength(), line.getRelativeLongitudinal(), values.at(idx)) <
+             jerk_limit + JERK_BUFFER;
+    });
+  }
+
+  /**
+   * @brief Check if the module is ready to avoid the target object.
+   * @param [in] objects Target objects.
+   * @return first is whether it is ready, and second is if the object is ambiguous
+   */
+  [[nodiscard]] std::pair<bool, bool> isReady(const ObjectDataArray & objects) const
   {
     if (objects.empty()) {
-      return true;
+      return std::make_pair(true, false);
     }
 
-    const auto object = objects.front();
+    const auto & object = objects.front();
 
+    // if the object is NOT ambiguous, this module doesn't wait operator approval if RTC is running
+    // as AUTO mode.
     if (!object.is_ambiguous) {
-      return true;
+      return std::make_pair(true, false);
+    }
+
+    // check only front objects.
+    if (object.longitudinal < 0.0) {
+      return std::make_pair(true, false);
+    }
+
+    // if the policy is "manual", this module generates candidate path and waits approval.
+    if (parameters_->policy_ambiguous_vehicle == "manual") {
+      return std::make_pair(false, true);
+    }
+
+    // don't delay avoidance start position if it's not MERGING or DEVIATING vehicle.
+    if (!isWaitAndSeeTarget(object)) {
+      return std::make_pair(true, false);
     }
 
     if (!object.avoid_margin.has_value()) {
-      return true;
+      return std::make_pair(true, false);
+      ;
     }
 
     const auto is_object_on_right = utils::static_obstacle_avoidance::isOnRight(object);
@@ -341,9 +381,34 @@ public:
     const auto constant_distance = getFrontConstantDistance(object);
     const auto avoidance_distance = getMinAvoidanceDistance(desire_shift_length);
 
-    return object.longitudinal <
-           prepare_distance + constant_distance + avoidance_distance +
-             parameters_->closest_distance_to_wait_and_see_for_ambiguous_vehicle;
+    const bool enough_distance =
+      object.longitudinal < prepare_distance + constant_distance + avoidance_distance +
+                              parameters_->wait_and_see_th_closest_distance;
+    return std::make_pair(enough_distance, false);
+  }
+
+  bool isWaitAndSeeTarget(const ObjectData & object) const
+  {
+    const auto & behaviors = parameters_->wait_and_see_target_behaviors;
+    if (object.behavior == ObjectData::Behavior::MERGING) {
+      return std::any_of(behaviors.begin(), behaviors.end(), [](const std::string & behavior) {
+        return behavior == "MERGING";
+      });
+    }
+
+    if (object.behavior == ObjectData::Behavior::DEVIATING) {
+      return std::any_of(behaviors.begin(), behaviors.end(), [](const std::string & behavior) {
+        return behavior == "DEVIATING";
+      });
+    }
+
+    if (object.behavior == ObjectData::Behavior::NONE) {
+      return std::any_of(behaviors.begin(), behaviors.end(), [](const std::string & behavior) {
+        return behavior == "NONE";
+      });
+    }
+
+    return false;
   }
 
   static bool isAbsolutelyNotAvoidable(const ObjectData & object)
@@ -449,14 +514,14 @@ public:
     const auto x_max_accel =
       v_neg_jerk * t_max_accel + p->max_acceleration * std::pow(t_max_accel, 2.0) / 2.0;
 
-    const auto point = autoware_motion_utils::calcLongitudinalOffsetPose(
+    const auto point = autoware::motion_utils::calcLongitudinalOffsetPose(
       path.points, getEgoPosition(), x_neg_jerk + x_max_accel);
     if (point.has_value()) {
       max_v_point_ = std::make_pair(point.value(), v_max);
       return;
     }
 
-    const auto x_end = autoware_motion_utils::calcSignedArcLength(
+    const auto x_end = autoware::motion_utils::calcSignedArcLength(
       path.points, getEgoPosition(), path.points.size() - 1);
     const auto t_end =
       (std::sqrt(v0 * v0 + 2.0 * p->max_acceleration * x_end) - v0) / p->max_acceleration;

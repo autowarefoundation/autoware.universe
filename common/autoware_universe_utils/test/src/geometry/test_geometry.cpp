@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2020-2024 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,20 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include "autoware/universe_utils/geometry/boost_geometry.hpp"
+#include "autoware/universe_utils/geometry/ear_clipping.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/geometry/random_concave_polygon.hpp"
+#include "autoware/universe_utils/geometry/random_convex_polygon.hpp"
+#include "autoware/universe_utils/geometry/sat_2d.hpp"
 #include "autoware/universe_utils/math/unit_conversion.hpp"
+#include "autoware/universe_utils/system/stop_watch.hpp"
 
 #include <geometry_msgs/msg/point32.hpp>
 
+#include <boost/geometry/algorithms/correct.hpp>
+#include <boost/geometry/io/wkt/write.hpp>
+
 #include <gtest/gtest.h>
 
+#include <chrono>
+#include <cstdio>
+#include <iostream>
 #include <string>
+#include <vector>
 
 constexpr double epsilon = 1e-6;
 
 TEST(geometry, getPoint)
 {
-  using autoware_universe_utils::getPoint;
+  using autoware::universe_utils::getPoint;
 
   const double x_ans = 1.0;
   const double y_ans = 2.0;
@@ -114,7 +127,7 @@ TEST(geometry, getPoint)
 
 TEST(geometry, getPose)
 {
-  using autoware_universe_utils::getPose;
+  using autoware::universe_utils::getPose;
 
   const double x_ans = 1.0;
   const double y_ans = 2.0;
@@ -203,7 +216,7 @@ TEST(geometry, getPose)
 
 TEST(geometry, getLongitudinalVelocity)
 {
-  using autoware_universe_utils::getLongitudinalVelocity;
+  using autoware::universe_utils::getLongitudinalVelocity;
 
   const double velocity = 1.0;
 
@@ -222,7 +235,7 @@ TEST(geometry, getLongitudinalVelocity)
 
 TEST(geometry, setPose)
 {
-  using autoware_universe_utils::setPose;
+  using autoware::universe_utils::setPose;
 
   const double x_ans = 1.0;
   const double y_ans = 2.0;
@@ -292,9 +305,9 @@ TEST(geometry, setPose)
 
 TEST(geometry, setOrientation)
 {
-  using autoware_universe_utils::createQuaternionFromRPY;
-  using autoware_universe_utils::deg2rad;
-  using autoware_universe_utils::setOrientation;
+  using autoware::universe_utils::createQuaternionFromRPY;
+  using autoware::universe_utils::deg2rad;
+  using autoware::universe_utils::setOrientation;
 
   geometry_msgs::msg::Pose p;
   const auto orientation = createQuaternionFromRPY(deg2rad(30), deg2rad(30), deg2rad(30));
@@ -308,7 +321,7 @@ TEST(geometry, setOrientation)
 
 TEST(geometry, setLongitudinalVelocity)
 {
-  using autoware_universe_utils::setLongitudinalVelocity;
+  using autoware::universe_utils::setLongitudinalVelocity;
 
   const double velocity = 1.0;
 
@@ -327,7 +340,7 @@ TEST(geometry, setLongitudinalVelocity)
 
 TEST(geometry, createPoint)
 {
-  using autoware_universe_utils::createPoint;
+  using autoware::universe_utils::createPoint;
 
   const geometry_msgs::msg::Point p_out = createPoint(1.0, 2.0, 3.0);
   EXPECT_DOUBLE_EQ(p_out.x, 1.0);
@@ -337,7 +350,7 @@ TEST(geometry, createPoint)
 
 TEST(geometry, createQuaternion)
 {
-  using autoware_universe_utils::createQuaternion;
+  using autoware::universe_utils::createQuaternion;
 
   // (0.18257419, 0.36514837, 0.54772256, 0.73029674) is normalized quaternion of (1, 2, 3, 4)
   const geometry_msgs::msg::Quaternion q_out =
@@ -350,7 +363,7 @@ TEST(geometry, createQuaternion)
 
 TEST(geometry, createTranslation)
 {
-  using autoware_universe_utils::createTranslation;
+  using autoware::universe_utils::createTranslation;
 
   const geometry_msgs::msg::Vector3 v_out = createTranslation(1.0, 2.0, 3.0);
   EXPECT_DOUBLE_EQ(v_out.x, 1.0);
@@ -360,8 +373,8 @@ TEST(geometry, createTranslation)
 
 TEST(geometry, createQuaternionFromRPY)
 {
-  using autoware_universe_utils::createQuaternionFromRPY;
-  using autoware_universe_utils::deg2rad;
+  using autoware::universe_utils::createQuaternionFromRPY;
+  using autoware::universe_utils::deg2rad;
 
   {
     const auto q_out = createQuaternionFromRPY(0, 0, 0);
@@ -390,8 +403,8 @@ TEST(geometry, createQuaternionFromRPY)
 
 TEST(geometry, createQuaternionFromYaw)
 {
-  using autoware_universe_utils::createQuaternionFromYaw;
-  using autoware_universe_utils::deg2rad;
+  using autoware::universe_utils::createQuaternionFromYaw;
+  using autoware::universe_utils::deg2rad;
 
   {
     const auto q_out = createQuaternionFromYaw(0);
@@ -420,9 +433,9 @@ TEST(geometry, createQuaternionFromYaw)
 
 TEST(geometry, calcElevationAngle)
 {
-  using autoware_universe_utils::calcElevationAngle;
-  using autoware_universe_utils::createPoint;
-  using autoware_universe_utils::deg2rad;
+  using autoware::universe_utils::calcElevationAngle;
+  using autoware::universe_utils::createPoint;
+  using autoware::universe_utils::deg2rad;
 
   {
     const auto p1 = createPoint(1.0, 1.0, 1.0);
@@ -468,9 +481,9 @@ TEST(geometry, calcElevationAngle)
 
 TEST(geometry, calcAzimuthAngle)
 {
-  using autoware_universe_utils::calcAzimuthAngle;
-  using autoware_universe_utils::createPoint;
-  using autoware_universe_utils::deg2rad;
+  using autoware::universe_utils::calcAzimuthAngle;
+  using autoware::universe_utils::createPoint;
+  using autoware::universe_utils::deg2rad;
 
   {
     const auto p1 = createPoint(0.0, 0.0, 9.0);
@@ -521,7 +534,7 @@ TEST(geometry, calcAzimuthAngle)
 
 TEST(geometry, calcDistance2d)
 {
-  using autoware_universe_utils::calcDistance2d;
+  using autoware::universe_utils::calcDistance2d;
 
   geometry_msgs::msg::Point point;
   point.x = 1.0;
@@ -538,7 +551,7 @@ TEST(geometry, calcDistance2d)
 
 TEST(geometry, calcSquaredDistance2d)
 {
-  using autoware_universe_utils::calcSquaredDistance2d;
+  using autoware::universe_utils::calcSquaredDistance2d;
 
   geometry_msgs::msg::Point point;
   point.x = 1.0;
@@ -555,7 +568,7 @@ TEST(geometry, calcSquaredDistance2d)
 
 TEST(geometry, calcDistance3d)
 {
-  using autoware_universe_utils::calcDistance3d;
+  using autoware::universe_utils::calcDistance3d;
 
   geometry_msgs::msg::Point point;
   point.x = 1.0;
@@ -572,9 +585,9 @@ TEST(geometry, calcDistance3d)
 
 TEST(geometry, getRPY)
 {
-  using autoware_universe_utils::createQuaternionFromRPY;
-  using autoware_universe_utils::deg2rad;
-  using autoware_universe_utils::getRPY;
+  using autoware::universe_utils::createQuaternionFromRPY;
+  using autoware::universe_utils::deg2rad;
+  using autoware::universe_utils::getRPY;
 
   {
     const double ans_roll = deg2rad(5);
@@ -610,9 +623,9 @@ TEST(geometry, getRPY)
 
 TEST(geometry, getRPY_wrapper)
 {
-  using autoware_universe_utils::createQuaternionFromRPY;
-  using autoware_universe_utils::deg2rad;
-  using autoware_universe_utils::getRPY;
+  using autoware::universe_utils::createQuaternionFromRPY;
+  using autoware::universe_utils::deg2rad;
+  using autoware::universe_utils::getRPY;
 
   {
     const double ans_roll = deg2rad(45);
@@ -652,9 +665,9 @@ TEST(geometry, getRPY_wrapper)
 
 TEST(geometry, transform2pose)
 {
-  using autoware_universe_utils::createQuaternionFromRPY;
-  using autoware_universe_utils::deg2rad;
-  using autoware_universe_utils::transform2pose;
+  using autoware::universe_utils::createQuaternionFromRPY;
+  using autoware::universe_utils::deg2rad;
+  using autoware::universe_utils::transform2pose;
 
   {
     geometry_msgs::msg::Transform transform;
@@ -703,9 +716,9 @@ TEST(geometry, transform2pose)
 
 TEST(geometry, pose2transform)
 {
-  using autoware_universe_utils::createQuaternionFromRPY;
-  using autoware_universe_utils::deg2rad;
-  using autoware_universe_utils::pose2transform;
+  using autoware::universe_utils::createQuaternionFromRPY;
+  using autoware::universe_utils::deg2rad;
+  using autoware::universe_utils::pose2transform;
 
   {
     geometry_msgs::msg::Pose pose;
@@ -756,9 +769,9 @@ TEST(geometry, pose2transform)
 
 TEST(geometry, point2tfVector)
 {
-  using autoware_universe_utils::createQuaternionFromRPY;
-  using autoware_universe_utils::deg2rad;
-  using autoware_universe_utils::point2tfVector;
+  using autoware::universe_utils::createQuaternionFromRPY;
+  using autoware::universe_utils::deg2rad;
+  using autoware::universe_utils::point2tfVector;
 
   // Point
   {
@@ -823,11 +836,11 @@ TEST(geometry, point2tfVector)
 
 TEST(geometry, transformPoint)
 {
-  using autoware_universe_utils::createQuaternionFromRPY;
-  using autoware_universe_utils::deg2rad;
-  using autoware_universe_utils::Point2d;
-  using autoware_universe_utils::Point3d;
-  using autoware_universe_utils::transformPoint;
+  using autoware::universe_utils::createQuaternionFromRPY;
+  using autoware::universe_utils::deg2rad;
+  using autoware::universe_utils::Point2d;
+  using autoware::universe_utils::Point3d;
+  using autoware::universe_utils::transformPoint;
 
   {
     const Point2d p(1.0, 2.0);
@@ -916,9 +929,9 @@ TEST(geometry, transformPoint)
 
 TEST(geometry, transformPose)
 {
-  using autoware_universe_utils::createQuaternionFromRPY;
-  using autoware_universe_utils::deg2rad;
-  using autoware_universe_utils::transformPose;
+  using autoware::universe_utils::createQuaternionFromRPY;
+  using autoware::universe_utils::deg2rad;
+  using autoware::universe_utils::transformPose;
 
   geometry_msgs::msg::Pose pose;
   pose.position.x = 2.0;
@@ -967,9 +980,9 @@ TEST(geometry, transformPose)
 
 TEST(geometry, inverseTransformPose)
 {
-  using autoware_universe_utils::createQuaternionFromRPY;
-  using autoware_universe_utils::deg2rad;
-  using autoware_universe_utils::inverseTransformPose;
+  using autoware::universe_utils::createQuaternionFromRPY;
+  using autoware::universe_utils::deg2rad;
+  using autoware::universe_utils::inverseTransformPose;
 
   geometry_msgs::msg::Pose pose;
   pose.position.x = 2.0;
@@ -1018,10 +1031,10 @@ TEST(geometry, inverseTransformPose)
 
 TEST(geometry, inverseTransformPoint)
 {
-  using autoware_universe_utils::createQuaternionFromRPY;
-  using autoware_universe_utils::deg2rad;
-  using autoware_universe_utils::inverseTransformPoint;
-  using autoware_universe_utils::inverseTransformPose;
+  using autoware::universe_utils::createQuaternionFromRPY;
+  using autoware::universe_utils::deg2rad;
+  using autoware::universe_utils::inverseTransformPoint;
+  using autoware::universe_utils::inverseTransformPose;
 
   geometry_msgs::msg::Pose pose_transform;
   pose_transform.position.x = 1.0;
@@ -1050,10 +1063,10 @@ TEST(geometry, inverseTransformPoint)
 
 TEST(geometry, transformVector)
 {
-  using autoware_universe_utils::createQuaternionFromRPY;
-  using autoware_universe_utils::deg2rad;
-  using autoware_universe_utils::MultiPoint3d;
-  using autoware_universe_utils::transformVector;
+  using autoware::universe_utils::createQuaternionFromRPY;
+  using autoware::universe_utils::deg2rad;
+  using autoware::universe_utils::MultiPoint3d;
+  using autoware::universe_utils::transformVector;
 
   {
     const MultiPoint3d ps{{1.0, 2.0, 3.0}, {2.0, 3.0, 4.0}};
@@ -1078,51 +1091,51 @@ TEST(geometry, transformVector)
 
 TEST(geometry, calcCurvature)
 {
-  using autoware_universe_utils::calcCurvature;
+  using autoware::universe_utils::calcCurvature;
   // Straight Line
   {
-    geometry_msgs::msg::Point p1 = autoware_universe_utils::createPoint(0.0, 0.0, 0.0);
-    geometry_msgs::msg::Point p2 = autoware_universe_utils::createPoint(1.0, 0.0, 0.0);
-    geometry_msgs::msg::Point p3 = autoware_universe_utils::createPoint(2.0, 0.0, 0.0);
+    geometry_msgs::msg::Point p1 = autoware::universe_utils::createPoint(0.0, 0.0, 0.0);
+    geometry_msgs::msg::Point p2 = autoware::universe_utils::createPoint(1.0, 0.0, 0.0);
+    geometry_msgs::msg::Point p3 = autoware::universe_utils::createPoint(2.0, 0.0, 0.0);
     EXPECT_DOUBLE_EQ(calcCurvature(p1, p2, p3), 0.0);
   }
 
   // Clockwise Curved Road with a 1[m] radius
   {
-    geometry_msgs::msg::Point p1 = autoware_universe_utils::createPoint(0.0, 0.0, 0.0);
-    geometry_msgs::msg::Point p2 = autoware_universe_utils::createPoint(1.0, 1.0, 0.0);
-    geometry_msgs::msg::Point p3 = autoware_universe_utils::createPoint(2.0, 0.0, 0.0);
+    geometry_msgs::msg::Point p1 = autoware::universe_utils::createPoint(0.0, 0.0, 0.0);
+    geometry_msgs::msg::Point p2 = autoware::universe_utils::createPoint(1.0, 1.0, 0.0);
+    geometry_msgs::msg::Point p3 = autoware::universe_utils::createPoint(2.0, 0.0, 0.0);
     EXPECT_DOUBLE_EQ(calcCurvature(p1, p2, p3), -1.0);
   }
 
   // Clockwise Curved Road with a 5[m] radius
   {
-    geometry_msgs::msg::Point p1 = autoware_universe_utils::createPoint(0.0, 0.0, 0.0);
-    geometry_msgs::msg::Point p2 = autoware_universe_utils::createPoint(5.0, 5.0, 0.0);
-    geometry_msgs::msg::Point p3 = autoware_universe_utils::createPoint(10.0, 0.0, 0.0);
+    geometry_msgs::msg::Point p1 = autoware::universe_utils::createPoint(0.0, 0.0, 0.0);
+    geometry_msgs::msg::Point p2 = autoware::universe_utils::createPoint(5.0, 5.0, 0.0);
+    geometry_msgs::msg::Point p3 = autoware::universe_utils::createPoint(10.0, 0.0, 0.0);
     EXPECT_DOUBLE_EQ(calcCurvature(p1, p2, p3), -0.2);
   }
 
   // Counter-Clockwise Curved Road with a 1[m] radius
   {
-    geometry_msgs::msg::Point p1 = autoware_universe_utils::createPoint(0.0, 0.0, 0.0);
-    geometry_msgs::msg::Point p2 = autoware_universe_utils::createPoint(-1.0, 1.0, 0.0);
-    geometry_msgs::msg::Point p3 = autoware_universe_utils::createPoint(-2.0, 0.0, 0.0);
+    geometry_msgs::msg::Point p1 = autoware::universe_utils::createPoint(0.0, 0.0, 0.0);
+    geometry_msgs::msg::Point p2 = autoware::universe_utils::createPoint(-1.0, 1.0, 0.0);
+    geometry_msgs::msg::Point p3 = autoware::universe_utils::createPoint(-2.0, 0.0, 0.0);
     EXPECT_DOUBLE_EQ(calcCurvature(p1, p2, p3), 1.0);
   }
 
   // Counter-Clockwise Curved Road with a 5[m] radius
   {
-    geometry_msgs::msg::Point p1 = autoware_universe_utils::createPoint(0.0, 0.0, 0.0);
-    geometry_msgs::msg::Point p2 = autoware_universe_utils::createPoint(-5.0, 5.0, 0.0);
-    geometry_msgs::msg::Point p3 = autoware_universe_utils::createPoint(-10.0, 0.0, 0.0);
+    geometry_msgs::msg::Point p1 = autoware::universe_utils::createPoint(0.0, 0.0, 0.0);
+    geometry_msgs::msg::Point p2 = autoware::universe_utils::createPoint(-5.0, 5.0, 0.0);
+    geometry_msgs::msg::Point p3 = autoware::universe_utils::createPoint(-10.0, 0.0, 0.0);
     EXPECT_DOUBLE_EQ(calcCurvature(p1, p2, p3), 0.2);
   }
 
   // Give same points
   {
-    geometry_msgs::msg::Point p1 = autoware_universe_utils::createPoint(0.0, 0.0, 0.0);
-    geometry_msgs::msg::Point p2 = autoware_universe_utils::createPoint(1.0, 0.0, 0.0);
+    geometry_msgs::msg::Point p1 = autoware::universe_utils::createPoint(0.0, 0.0, 0.0);
+    geometry_msgs::msg::Point p2 = autoware::universe_utils::createPoint(1.0, 0.0, 0.0);
     ASSERT_ANY_THROW(calcCurvature(p1, p1, p1));
     ASSERT_ANY_THROW(calcCurvature(p1, p1, p2));
     ASSERT_ANY_THROW(calcCurvature(p1, p2, p1));
@@ -1132,11 +1145,11 @@ TEST(geometry, calcCurvature)
 
 TEST(geometry, calcOffsetPose)
 {
-  using autoware_universe_utils::calcOffsetPose;
-  using autoware_universe_utils::createPoint;
-  using autoware_universe_utils::createQuaternion;
-  using autoware_universe_utils::createQuaternionFromRPY;
-  using autoware_universe_utils::deg2rad;
+  using autoware::universe_utils::calcOffsetPose;
+  using autoware::universe_utils::createPoint;
+  using autoware::universe_utils::createQuaternion;
+  using autoware::universe_utils::createQuaternionFromRPY;
+  using autoware::universe_utils::deg2rad;
 
   // Only translation
   {
@@ -1224,12 +1237,12 @@ TEST(geometry, calcOffsetPose)
 
 TEST(geometry, isDrivingForward)
 {
-  using autoware_universe_utils::calcInterpolatedPoint;
-  using autoware_universe_utils::createPoint;
-  using autoware_universe_utils::createQuaternion;
-  using autoware_universe_utils::createQuaternionFromRPY;
-  using autoware_universe_utils::deg2rad;
-  using autoware_universe_utils::isDrivingForward;
+  using autoware::universe_utils::calcInterpolatedPoint;
+  using autoware::universe_utils::createPoint;
+  using autoware::universe_utils::createQuaternion;
+  using autoware::universe_utils::createQuaternionFromRPY;
+  using autoware::universe_utils::deg2rad;
+  using autoware::universe_utils::isDrivingForward;
 
   const double epsilon = 1e-3;
 
@@ -1286,8 +1299,8 @@ TEST(geometry, isDrivingForward)
 
 TEST(geometry, calcInterpolatedPoint)
 {
-  using autoware_universe_utils::calcInterpolatedPoint;
-  using autoware_universe_utils::createPoint;
+  using autoware::universe_utils::calcInterpolatedPoint;
+  using autoware::universe_utils::createPoint;
 
   {
     const auto src_point = createPoint(0.0, 0.0, 0.0);
@@ -1343,11 +1356,11 @@ TEST(geometry, calcInterpolatedPoint)
 
 TEST(geometry, calcInterpolatedPose)
 {
-  using autoware_universe_utils::calcInterpolatedPose;
-  using autoware_universe_utils::createPoint;
-  using autoware_universe_utils::createQuaternion;
-  using autoware_universe_utils::createQuaternionFromRPY;
-  using autoware_universe_utils::deg2rad;
+  using autoware::universe_utils::calcInterpolatedPose;
+  using autoware::universe_utils::createPoint;
+  using autoware::universe_utils::createQuaternion;
+  using autoware::universe_utils::createQuaternionFromRPY;
+  using autoware::universe_utils::deg2rad;
   const double epsilon = 1e-3;
 
   // Position Interpolation
@@ -1527,11 +1540,11 @@ TEST(geometry, calcInterpolatedPose)
 
 TEST(geometry, calcInterpolatedPose_with_Spherical_Interpolation)
 {
-  using autoware_universe_utils::calcInterpolatedPose;
-  using autoware_universe_utils::createPoint;
-  using autoware_universe_utils::createQuaternion;
-  using autoware_universe_utils::createQuaternionFromRPY;
-  using autoware_universe_utils::deg2rad;
+  using autoware::universe_utils::calcInterpolatedPose;
+  using autoware::universe_utils::createPoint;
+  using autoware::universe_utils::createQuaternion;
+  using autoware::universe_utils::createQuaternionFromRPY;
+  using autoware::universe_utils::deg2rad;
   const double epsilon = 1e-3;
 
   // Position Interpolation
@@ -1675,7 +1688,7 @@ TEST(geometry, calcInterpolatedPose_with_Spherical_Interpolation)
 
 TEST(geometry, getTwist)
 {
-  using autoware_universe_utils::createVector3;
+  using autoware::universe_utils::createVector3;
 
   geometry_msgs::msg::Vector3 velocity = createVector3(1.0, 2.0, 3.0);
   geometry_msgs::msg::Vector3 angular = createVector3(0.1, 0.2, 0.3);
@@ -1691,7 +1704,7 @@ TEST(geometry, getTwist)
 
   // getTwist
   {
-    auto t_out = autoware_universe_utils::createTwist(velocity, angular);
+    auto t_out = autoware::universe_utils::createTwist(velocity, angular);
     EXPECT_DOUBLE_EQ(t_out.linear.x, twist.linear.x);
     EXPECT_DOUBLE_EQ(t_out.linear.y, twist.linear.y);
     EXPECT_DOUBLE_EQ(t_out.linear.z, twist.linear.z);
@@ -1703,32 +1716,32 @@ TEST(geometry, getTwist)
 
 TEST(geometry, getTwistNorm)
 {
-  using autoware_universe_utils::createVector3;
+  using autoware::universe_utils::createVector3;
   geometry_msgs::msg::TwistWithCovariance twist_with_covariance;
   twist_with_covariance.twist = geometry_msgs::build<geometry_msgs::msg::Twist>()
                                   .linear(createVector3(3.0, 4.0, 0.0))
                                   .angular(createVector3(0.1, 0.2, 0.3));
-  EXPECT_NEAR(autoware_universe_utils::calcNorm(twist_with_covariance.twist.linear), 5.0, epsilon);
+  EXPECT_NEAR(autoware::universe_utils::calcNorm(twist_with_covariance.twist.linear), 5.0, epsilon);
 }
 
 TEST(geometry, isTwistCovarianceValid)
 {
-  using autoware_universe_utils::createVector3;
+  using autoware::universe_utils::createVector3;
   geometry_msgs::msg::TwistWithCovariance twist_with_covariance;
   twist_with_covariance.twist = geometry_msgs::build<geometry_msgs::msg::Twist>()
                                   .linear(createVector3(1.0, 2.0, 3.0))
                                   .angular(createVector3(0.1, 0.2, 0.3));
 
-  EXPECT_EQ(autoware_universe_utils::isTwistCovarianceValid(twist_with_covariance), false);
+  EXPECT_EQ(autoware::universe_utils::isTwistCovarianceValid(twist_with_covariance), false);
 
   twist_with_covariance.covariance.at(0) = 1.0;
-  EXPECT_EQ(autoware_universe_utils::isTwistCovarianceValid(twist_with_covariance), true);
+  EXPECT_EQ(autoware::universe_utils::isTwistCovarianceValid(twist_with_covariance), true);
 }
 
 TEST(geometry, intersect)
 {
-  using autoware_universe_utils::createPoint;
-  using autoware_universe_utils::intersect;
+  using autoware::universe_utils::createPoint;
+  using autoware::universe_utils::intersect;
 
   {  // Normally crossing
     const auto p1 = createPoint(0.0, -1.0, 0.0);
@@ -1827,5 +1840,586 @@ TEST(geometry, intersect)
     EXPECT_NEAR(result->x, 0.0, epsilon);
     EXPECT_NEAR(result->y, -1.0, epsilon);
     EXPECT_NEAR(result->z, 0.0, epsilon);
+  }
+}
+
+TEST(
+  geometry,
+  DISABLED_intersectPolygon)  // GJK give different result for edge test (point sharing and edge
+                              // sharing) compared to SAT and boost::geometry::intersect
+{
+  {  // 2 triangles with intersection
+    autoware::universe_utils::Polygon2d poly1;
+    autoware::universe_utils::Polygon2d poly2;
+    poly1.outer().emplace_back(0, 2);
+    poly1.outer().emplace_back(2, 2);
+    poly1.outer().emplace_back(2, 0);
+    poly2.outer().emplace_back(1, 1);
+    poly2.outer().emplace_back(1, 0);
+    poly2.outer().emplace_back(0, 1);
+    boost::geometry::correct(poly1);
+    boost::geometry::correct(poly2);
+    EXPECT_TRUE(autoware::universe_utils::intersects_convex(poly1, poly2));
+    EXPECT_TRUE(autoware::universe_utils::sat::intersects(poly1, poly2));
+  }
+  {  // 2 triangles with no intersection (but they share an edge)
+    autoware::universe_utils::Polygon2d poly1;
+    autoware::universe_utils::Polygon2d poly2;
+    poly1.outer().emplace_back(0, 2);
+    poly1.outer().emplace_back(2, 2);
+    poly1.outer().emplace_back(0, 0);
+    poly2.outer().emplace_back(0, 0);
+    poly2.outer().emplace_back(2, 0);
+    poly2.outer().emplace_back(2, 2);
+    boost::geometry::correct(poly1);
+    boost::geometry::correct(poly2);
+    EXPECT_FALSE(autoware::universe_utils::intersects_convex(poly1, poly2));
+    EXPECT_FALSE(autoware::universe_utils::sat::intersects(poly1, poly2));
+  }
+  {  // 2 triangles with no intersection (but they share a point)
+    autoware::universe_utils::Polygon2d poly1;
+    autoware::universe_utils::Polygon2d poly2;
+    poly1.outer().emplace_back(0, 2);
+    poly1.outer().emplace_back(2, 2);
+    poly1.outer().emplace_back(0, 0);
+    poly2.outer().emplace_back(4, 4);
+    poly2.outer().emplace_back(4, 2);
+    poly2.outer().emplace_back(2, 2);
+    boost::geometry::correct(poly1);
+    boost::geometry::correct(poly2);
+    EXPECT_FALSE(autoware::universe_utils::intersects_convex(poly1, poly2));
+    EXPECT_FALSE(autoware::universe_utils::sat::intersects(poly1, poly2));
+  }
+  {  // 2 triangles sharing a point and then with very small intersection
+    autoware::universe_utils::Polygon2d poly1;
+    autoware::universe_utils::Polygon2d poly2;
+    poly1.outer().emplace_back(0, 0);
+    poly1.outer().emplace_back(2, 2);
+    poly1.outer().emplace_back(4, 0);
+    poly2.outer().emplace_back(0, 4);
+    poly2.outer().emplace_back(2, 2);
+    poly2.outer().emplace_back(4, 4);
+    boost::geometry::correct(poly1);
+    boost::geometry::correct(poly2);
+    EXPECT_FALSE(autoware::universe_utils::intersects_convex(poly1, poly2));
+    poly1.outer()[1].y() += 1e-12;
+    EXPECT_TRUE(autoware::universe_utils::intersects_convex(poly1, poly2));
+    EXPECT_TRUE(autoware::universe_utils::sat::intersects(poly1, poly2));
+  }
+  {  // 2 triangles with no intersection and no touching
+    autoware::universe_utils::Polygon2d poly1;
+    autoware::universe_utils::Polygon2d poly2;
+    poly1.outer().emplace_back(0, 2);
+    poly1.outer().emplace_back(2, 2);
+    poly1.outer().emplace_back(0, 0);
+    poly2.outer().emplace_back(4, 4);
+    poly2.outer().emplace_back(5, 5);
+    poly2.outer().emplace_back(3, 5);
+    boost::geometry::correct(poly1);
+    boost::geometry::correct(poly2);
+    EXPECT_FALSE(autoware::universe_utils::intersects_convex(poly1, poly2));
+    EXPECT_FALSE(autoware::universe_utils::sat::intersects(poly1, poly2));
+  }
+  {  // triangle and quadrilateral with intersection
+    autoware::universe_utils::Polygon2d poly1;
+    autoware::universe_utils::Polygon2d poly2;
+    poly1.outer().emplace_back(4, 11);
+    poly1.outer().emplace_back(4, 5);
+    poly1.outer().emplace_back(9, 9);
+    poly2.outer().emplace_back(5, 7);
+    poly2.outer().emplace_back(7, 3);
+    poly2.outer().emplace_back(10, 2);
+    poly2.outer().emplace_back(12, 7);
+    boost::geometry::correct(poly1);
+    boost::geometry::correct(poly2);
+    EXPECT_TRUE(autoware::universe_utils::intersects_convex(poly1, poly2));
+    EXPECT_TRUE(autoware::universe_utils::sat::intersects(poly1, poly2));
+  }
+}
+
+TEST(geometry, intersectPolygonRand)
+{
+  std::vector<autoware::universe_utils::Polygon2d> polygons;
+  constexpr auto polygons_nb = 100;
+  constexpr auto max_vertices = 10;
+  constexpr auto max_values = 1000;
+
+  autoware::universe_utils::StopWatch<std::chrono::nanoseconds, std::chrono::nanoseconds> sw;
+
+  for (auto vertices = 3UL; vertices < max_vertices; ++vertices) {
+    double ground_truth_intersect_ns = 0.0;
+    double ground_truth_no_intersect_ns = 0.0;
+    double gjk_intersect_ns = 0.0;
+    double gjk_no_intersect_ns = 0.0;
+    double sat_intersect_ns = 0.0;
+    double sat_no_intersect_ns = 0.0;
+    int intersect_count = 0;
+    polygons.clear();
+
+    for (auto i = 0; i < polygons_nb; ++i) {
+      polygons.push_back(autoware::universe_utils::random_convex_polygon(vertices, max_values));
+    }
+
+    for (auto i = 0UL; i < polygons.size(); ++i) {
+      for (auto j = 0UL; j < polygons.size(); ++j) {
+        sw.tic();
+        const auto ground_truth = boost::geometry::intersects(polygons[i], polygons[j]);
+        if (ground_truth) {
+          ++intersect_count;
+          ground_truth_intersect_ns += sw.toc();
+        } else {
+          ground_truth_no_intersect_ns += sw.toc();
+        }
+
+        sw.tic();
+        const auto gjk = autoware::universe_utils::intersects_convex(polygons[i], polygons[j]);
+        if (gjk) {
+          gjk_intersect_ns += sw.toc();
+        } else {
+          gjk_no_intersect_ns += sw.toc();
+        }
+
+        sw.tic();
+        const auto sat = autoware::universe_utils::sat::intersects(polygons[i], polygons[j]);
+        if (sat) {
+          sat_intersect_ns += sw.toc();
+        } else {
+          sat_no_intersect_ns += sw.toc();
+        }
+
+        EXPECT_EQ(ground_truth, gjk);
+        EXPECT_EQ(ground_truth, sat);
+
+        if (ground_truth != gjk) {
+          std::cout << "Failed for the 2 polygons with GJK: ";
+          std::cout << boost::geometry::wkt(polygons[i]) << boost::geometry::wkt(polygons[j])
+                    << std::endl;
+        }
+
+        if (ground_truth != sat) {
+          std::cout << "Failed for the 2 polygons with SAT: ";
+          std::cout << boost::geometry::wkt(polygons[i]) << boost::geometry::wkt(polygons[j])
+                    << std::endl;
+        }
+      }
+    }
+
+    std::printf(
+      "polygons_nb = %d, vertices = %ld, %d / %d pairs with intersects\n", polygons_nb, vertices,
+      intersect_count, polygons_nb * polygons_nb);
+
+    std::printf(
+      "\tIntersect:\n\t\tBoost::geometry = %2.2f ms\n\t\tGJK = %2.2f ms\n\t\tSAT = %2.2f ms\n",
+      ground_truth_intersect_ns / 1e6, gjk_intersect_ns / 1e6, sat_intersect_ns / 1e6);
+
+    std::printf(
+      "\tNo Intersect:\n\t\tBoost::geometry = %2.2f ms\n\t\tGJK = %2.2f ms\n\t\tSAT = %2.2f ms\n",
+      ground_truth_no_intersect_ns / 1e6, gjk_no_intersect_ns / 1e6, sat_no_intersect_ns / 1e6);
+
+    std::printf(
+      "\tTotal:\n\t\tBoost::geometry = %2.2f ms\n\t\tGJK = %2.2f ms\n\t\tSAT = %2.2f ms\n",
+      (ground_truth_no_intersect_ns + ground_truth_intersect_ns) / 1e6,
+      (gjk_no_intersect_ns + gjk_intersect_ns) / 1e6,
+      (sat_no_intersect_ns + sat_intersect_ns) / 1e6);
+  }
+}
+
+double calculate_total_polygon_area(
+  const std::vector<autoware::universe_utils::Polygon2d> & polygons)
+{
+  double totalArea = 0.0;
+  for (const auto & polygon : polygons) {
+    totalArea += boost::geometry::area(polygon);
+  }
+  return totalArea;
+}
+
+TEST(geometry, PolygonTriangulation)
+{
+  using autoware::universe_utils::Polygon2d;
+  using autoware::universe_utils::triangulate;
+
+  {  // concave polygon
+    Polygon2d poly;
+
+    poly.outer().emplace_back(0.0, 0.0);
+    poly.outer().emplace_back(4.0, 0.0);
+    poly.outer().emplace_back(4.0, 4.0);
+    poly.outer().emplace_back(2.0, 2.0);
+    poly.outer().emplace_back(0.0, 4.0);
+    boost::geometry::correct(poly);
+
+    const auto triangles = triangulate(poly);
+
+    const auto triangle_area = calculate_total_polygon_area(triangles);
+    const auto poly_area = boost::geometry::area(poly);
+    EXPECT_NEAR(triangle_area, poly_area, epsilon);
+  }
+
+  {  // concave polygon with empty inners
+    Polygon2d poly;
+
+    poly.outer().emplace_back(0.0, 0.0);
+    poly.outer().emplace_back(4.0, 0.0);
+    poly.outer().emplace_back(4.0, 4.0);
+    poly.outer().emplace_back(2.0, 2.0);
+    poly.outer().emplace_back(0.0, 4.0);
+    boost::geometry::correct(poly);
+
+    poly.inners().emplace_back();
+
+    const auto triangles = triangulate(poly);
+
+    const auto triangle_area = calculate_total_polygon_area(triangles);
+    const auto poly_area = boost::geometry::area(poly);
+    EXPECT_NEAR(triangle_area, poly_area, epsilon);
+  }
+
+  {  // concave polygon with hole
+    Polygon2d poly;
+
+    poly.outer().emplace_back(0.0, 0.0);
+    poly.outer().emplace_back(4.0, 0.0);
+    poly.outer().emplace_back(4.0, 4.0);
+    poly.outer().emplace_back(2.0, 2.0);
+    poly.outer().emplace_back(0.0, 4.0);
+
+    poly.inners().emplace_back();
+    poly.inners().back().emplace_back(1.0, 1.0);
+    poly.inners().back().emplace_back(1.5, 1.0);
+    poly.inners().back().emplace_back(1.5, 1.5);
+    poly.inners().back().emplace_back(1.0, 1.5);
+    boost::geometry::correct(poly);
+
+    const auto triangles = triangulate(poly);
+
+    const auto triangle_area = calculate_total_polygon_area(triangles);
+    const auto poly_area = boost::geometry::area(poly);
+    EXPECT_NEAR(triangle_area, poly_area, epsilon);
+  }
+
+  {  // concave polygon with one empty inner followed by one hole
+    Polygon2d poly;
+
+    poly.outer().emplace_back(0.0, 0.0);
+    poly.outer().emplace_back(4.0, 0.0);
+    poly.outer().emplace_back(4.0, 4.0);
+    poly.outer().emplace_back(2.0, 2.0);
+    poly.outer().emplace_back(0.0, 4.0);
+
+    poly.inners().emplace_back();
+    poly.inners().emplace_back();
+    poly.inners().back().emplace_back(1.0, 1.0);
+    poly.inners().back().emplace_back(1.5, 1.0);
+    poly.inners().back().emplace_back(1.5, 1.5);
+    poly.inners().back().emplace_back(1.0, 1.5);
+    boost::geometry::correct(poly);
+
+    const auto triangles = triangulate(poly);
+
+    const auto triangle_area = calculate_total_polygon_area(triangles);
+    const auto poly_area = boost::geometry::area(poly);
+    EXPECT_NEAR(triangle_area, poly_area, epsilon);
+  }
+}
+
+TEST(geometry, intersectPolygonWithHoles)
+{
+  using autoware::universe_utils::Polygon2d;
+  using autoware::universe_utils::triangulate;
+
+  {  // quadrilateral inside the hole of another quadrilateral (not intersecting)
+    Polygon2d outerConcave;
+    Polygon2d innerConcave;
+
+    outerConcave.outer().emplace_back(0.0, 0.0);
+    outerConcave.outer().emplace_back(4.0, 0.0);
+    outerConcave.outer().emplace_back(4.0, 4.0);
+    outerConcave.outer().emplace_back(2.0, 2.0);
+    outerConcave.outer().emplace_back(0.0, 4.0);
+
+    outerConcave.inners().emplace_back();
+    outerConcave.inners().back().emplace_back(1.0, 1.0);
+    outerConcave.inners().back().emplace_back(3.0, 1.0);
+    outerConcave.inners().back().emplace_back(3.0, 3.0);
+    outerConcave.inners().back().emplace_back(1.0, 3.0);
+
+    innerConcave.outer().emplace_back(1.5, 1.5);
+    innerConcave.outer().emplace_back(2.5, 1.5);
+    innerConcave.outer().emplace_back(2.5, 2.5);
+    innerConcave.outer().emplace_back(1.5, 2.5);
+
+    const auto triangles1 = triangulate(outerConcave);
+    const auto triangles2 = triangulate(innerConcave);
+
+    const bool gjk_intersect = autoware::universe_utils::test_intersection(
+      triangles1, triangles2, autoware::universe_utils::intersects_convex);
+    const bool sat_intersect = autoware::universe_utils::test_intersection(
+      triangles1, triangles2, autoware::universe_utils::sat::intersects);
+
+    EXPECT_FALSE(gjk_intersect);
+    EXPECT_FALSE(sat_intersect);
+  }
+
+  {  // quadrilateral inside the hole of another quadrilateral (intersecting)
+    Polygon2d outerConcave;
+    Polygon2d intersectingInnerConcave;
+
+    outerConcave.outer().emplace_back(0.0, 0.0);
+    outerConcave.outer().emplace_back(4.0, 0.0);
+    outerConcave.outer().emplace_back(4.0, 4.0);
+    outerConcave.outer().emplace_back(2.0, 2.0);
+    outerConcave.outer().emplace_back(0.0, 4.0);
+
+    outerConcave.inners().emplace_back();
+    outerConcave.inners().back().emplace_back(1.0, 1.0);
+    outerConcave.inners().back().emplace_back(3.0, 1.0);
+    outerConcave.inners().back().emplace_back(3.0, 3.0);
+    outerConcave.inners().back().emplace_back(1.0, 3.0);
+
+    intersectingInnerConcave.outer().emplace_back(0.5, 0.5);
+    intersectingInnerConcave.outer().emplace_back(2.5, 0.5);
+    intersectingInnerConcave.outer().emplace_back(2.5, 2.0);
+    intersectingInnerConcave.outer().emplace_back(0.5, 2.0);
+
+    const auto triangles1 = triangulate(outerConcave);
+    const auto triangles2 = triangulate(intersectingInnerConcave);
+    const auto gjk_intersect = autoware::universe_utils::test_intersection(
+      triangles1, triangles2, autoware::universe_utils::intersects_convex);
+    const auto sat_intersect = autoware::universe_utils::test_intersection(
+      triangles1, triangles2, autoware::universe_utils::sat::intersects);
+
+    EXPECT_TRUE(gjk_intersect);
+    EXPECT_TRUE(sat_intersect);
+  }
+}
+
+TEST(
+  geometry,
+  DISABLED_intersectConcavePolygon)  // GJK give different result for edge test (point sharing and
+                                     // edge sharing) compared to SAT and boost::geometry::intersect
+{
+  using autoware::universe_utils::Polygon2d;
+  using autoware::universe_utils::triangulate;
+
+  {  // 2 Concave quadrilateral with intersection
+    Polygon2d poly1;
+    Polygon2d poly2;
+    poly1.outer().emplace_back(4, 11);
+    poly1.outer().emplace_back(4, 5);
+    poly1.outer().emplace_back(9, 9);
+    poly1.outer().emplace_back(2, 2);
+    poly2.outer().emplace_back(5, 7);
+    poly2.outer().emplace_back(7, 3);
+    poly2.outer().emplace_back(9, 6);
+    poly2.outer().emplace_back(12, 7);
+
+    boost::geometry::correct(poly1);
+    boost::geometry::correct(poly2);
+
+    const auto triangles1 = triangulate(poly1);
+    const auto triangles2 = triangulate(poly2);
+
+    const auto gjk_intersect = autoware::universe_utils::test_intersection(
+      triangles1, triangles2, autoware::universe_utils::intersects_convex);
+    const auto sat_intersect = autoware::universe_utils::test_intersection(
+      triangles1, triangles2, autoware::universe_utils::sat::intersects);
+
+    EXPECT_TRUE(gjk_intersect);
+    EXPECT_TRUE(sat_intersect);
+  }
+
+  {  // 2 concave polygons with no intersection (but they share an edge)
+    Polygon2d poly1;
+    Polygon2d poly2;
+    poly1.outer().emplace_back(0, 2);
+    poly1.outer().emplace_back(2, 2);
+    poly1.outer().emplace_back(2, 0);
+    poly1.outer().emplace_back(0, 0);
+
+    poly2.outer().emplace_back(0, 0);
+    poly2.outer().emplace_back(2, 0);
+    poly2.outer().emplace_back(2, -2);
+    poly2.outer().emplace_back(0, -2);
+
+    boost::geometry::correct(poly1);
+    boost::geometry::correct(poly2);
+
+    const auto triangles1 = triangulate(poly1);
+    const auto triangles2 = triangulate(poly2);
+
+    const auto gjk_intersect = autoware::universe_utils::test_intersection(
+      triangles1, triangles2, autoware::universe_utils::intersects_convex);
+    const auto sat_intersect = autoware::universe_utils::test_intersection(
+      triangles1, triangles2, autoware::universe_utils::sat::intersects);
+
+    EXPECT_FALSE(gjk_intersect);
+    EXPECT_FALSE(sat_intersect);
+  }
+
+  {  // 2 concave polygons with no intersection (but they share a point)
+    Polygon2d poly1;
+    Polygon2d poly2;
+    poly1.outer().emplace_back(0, 2);
+    poly1.outer().emplace_back(2, 2);
+    poly1.outer().emplace_back(0, 0);
+
+    poly2.outer().emplace_back(4, 4);
+    poly2.outer().emplace_back(4, 2);
+    poly2.outer().emplace_back(2, 2);
+    poly2.outer().emplace_back(2, 4);
+
+    boost::geometry::correct(poly1);
+    boost::geometry::correct(poly2);
+
+    auto triangles1 = triangulate(poly1);
+    auto triangles2 = triangulate(poly2);
+
+    const auto gjk_intersect = autoware::universe_utils::test_intersection(
+      triangles1, triangles2, autoware::universe_utils::intersects_convex);
+    const auto sat_intersect = autoware::universe_utils::test_intersection(
+      triangles1, triangles2, autoware::universe_utils::sat::intersects);
+
+    EXPECT_FALSE(gjk_intersect);
+    EXPECT_FALSE(sat_intersect);
+  }
+
+  {  // 2 concave polygons sharing a point and then with very small intersection
+    Polygon2d poly1;
+    Polygon2d poly2;
+    poly1.outer().emplace_back(0, 0);
+    poly1.outer().emplace_back(2, 2);
+    poly1.outer().emplace_back(4, 0);
+    poly1.outer().emplace_back(2, -2);
+
+    poly2.outer().emplace_back(0, 4);
+    poly2.outer().emplace_back(2, 2);
+    poly2.outer().emplace_back(4, 4);
+    poly2.outer().emplace_back(2, 6);
+
+    boost::geometry::correct(poly1);
+    boost::geometry::correct(poly2);
+
+    const auto triangles1 = triangulate(poly1);
+    const auto triangles2 = triangulate(poly2);
+
+    const auto gjk_intersect = autoware::universe_utils::test_intersection(
+      triangles1, triangles2, autoware::universe_utils::intersects_convex);
+    const auto sat_intersect = autoware::universe_utils::test_intersection(
+      triangles1, triangles2, autoware::universe_utils::sat::intersects);
+
+    EXPECT_FALSE(gjk_intersect);
+    EXPECT_FALSE(sat_intersect);
+
+    // small intersection test
+    poly1.outer()[1].y() += 1e-12;
+    {
+      const auto triangles = triangulate(poly1);
+      const bool gjk_intersect = autoware::universe_utils::test_intersection(
+        triangles, triangles2, autoware::universe_utils::intersects_convex);
+      const bool sat_intersect = autoware::universe_utils::test_intersection(
+        triangles, triangles2, autoware::universe_utils::sat::intersects);
+      EXPECT_TRUE(gjk_intersect);
+      EXPECT_TRUE(sat_intersect);
+    }
+  }
+}
+
+TEST(geometry, intersectConcavePolygonRand)
+{
+  std::vector<autoware::universe_utils::Polygon2d> polygons;
+  std::vector<std::vector<autoware::universe_utils::Polygon2d>> triangulations;
+  constexpr auto polygons_nb = 100;
+  constexpr auto max_vertices = 10;
+  constexpr auto max_values = 1000;
+
+  autoware::universe_utils::StopWatch<std::chrono::nanoseconds, std::chrono::nanoseconds> sw;
+
+  for (auto vertices = 4UL; vertices < max_vertices; ++vertices) {
+    double ground_truth_intersect_ns = 0.0;
+    double ground_truth_no_intersect_ns = 0.0;
+    double gjk_intersect_ns = 0.0;
+    double gjk_no_intersect_ns = 0.0;
+    double sat_intersect_ns = 0.0;
+    double sat_no_intersect_ns = 0.0;
+    double triangulation_ns = 0.0;
+    int intersect_count = 0;
+    polygons.clear();
+    triangulations.clear();
+
+    for (auto i = 0; i < polygons_nb; ++i) {
+      auto polygon_opt = autoware::universe_utils::random_concave_polygon(vertices, max_values);
+      if (polygon_opt.has_value()) {
+        polygons.push_back(polygon_opt.value());
+      }
+    }
+
+    for (const auto & polygon : polygons) {
+      sw.tic();
+      std::vector<autoware::universe_utils::Polygon2d> triangles =
+        autoware::universe_utils::triangulate(polygon);
+      triangulation_ns += sw.toc();
+      triangulations.push_back(triangles);
+    }
+
+    for (auto i = 0UL; i < polygons.size(); ++i) {
+      for (auto j = 0UL; j < polygons.size(); ++j) {
+        sw.tic();
+        const auto ground_truth = boost::geometry::intersects(polygons[i], polygons[j]);
+        if (ground_truth) {
+          ++intersect_count;
+          ground_truth_intersect_ns += sw.toc();
+        } else {
+          ground_truth_no_intersect_ns += sw.toc();
+        }
+
+        sw.tic();
+        bool gjk_intersect = autoware::universe_utils::test_intersection(
+          triangulations[i], triangulations[j], autoware::universe_utils::intersects_convex);
+        if (!gjk_intersect) {
+          gjk_no_intersect_ns += sw.toc();
+        } else {
+          gjk_intersect_ns += sw.toc();
+        }
+
+        sw.tic();
+        bool sat_intersect = autoware::universe_utils::test_intersection(
+          triangulations[i], triangulations[j], autoware::universe_utils::sat::intersects);
+        if (!sat_intersect) {
+          sat_no_intersect_ns += sw.toc();
+        } else {
+          sat_intersect_ns += sw.toc();
+        }
+
+        EXPECT_EQ(ground_truth, gjk_intersect);
+        EXPECT_EQ(ground_truth, sat_intersect);
+
+        if (ground_truth != gjk_intersect) {
+          std::cout << "Failed for the 2 polygons with GJK: ";
+          std::cout << boost::geometry::wkt(polygons[i]) << boost::geometry::wkt(polygons[j])
+                    << std::endl;
+        }
+
+        if (ground_truth != sat_intersect) {
+          std::cout << "Failed for the 2 polygons with SAT: ";
+          std::cout << boost::geometry::wkt(polygons[i]) << boost::geometry::wkt(polygons[j])
+                    << std::endl;
+        }
+      }
+    }
+
+    std::printf(
+      "polygons_nb = %d, vertices = %ld, %d / %d pairs with intersects\n", polygons_nb, vertices,
+      intersect_count, polygons_nb * polygons_nb);
+
+    std::printf(
+      "\tIntersect:\n\t\tBoost::geometry = %2.2f ms\n\t\tGJK = %2.2f ms\n\t\tSAT = %2.2f ms\n",
+      ground_truth_intersect_ns / 1e6, gjk_intersect_ns / 1e6, sat_intersect_ns / 1e6);
+
+    std::printf(
+      "\tNo Intersect:\n\t\tBoost::geometry = %2.2f ms\n\t\tGJK = %2.2f ms\n\t\tSAT = %2.2f ms\n",
+      ground_truth_no_intersect_ns / 1e6, gjk_no_intersect_ns / 1e6, sat_no_intersect_ns / 1e6);
+
+    std::printf("\tTotal:\n\t\tTriangulation = %2.2f ms\n", triangulation_ns / 1e6);
   }
 }

@@ -21,10 +21,10 @@
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 
 #include <autoware/route_handler/route_handler.hpp>
-#include <lanelet2_extension/regulatory_elements/Forward.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
-#include <rclcpp/rclcpp/clock.hpp>
-#include <rclcpp/rclcpp/time.hpp>
+#include <autoware_lanelet2_extension/regulatory_elements/Forward.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
+#include <rclcpp/clock.hpp>
+#include <rclcpp/time.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
@@ -102,7 +102,7 @@ struct DrivableAreaInfo
   struct Obstacle
   {
     geometry_msgs::msg::Pose pose;
-    autoware_universe_utils::Polygon2d poly;
+    autoware::universe_utils::Polygon2d poly;
     bool is_left{true};
   };
   std::vector<DrivableLanes> drivable_lanes{};
@@ -147,6 +147,17 @@ struct CandidateOutput
   double finish_distance_to_path_change{std::numeric_limits<double>::lowest()};
 };
 
+/**
+ * @brief Adds detail text to stop/slow/dead_pose virtual walls.
+ */
+struct PoseWithDetail
+{
+  Pose pose;
+  std::string detail;
+  explicit PoseWithDetail(const Pose & p, const std::string & d = "") : pose(p), detail(d) {}
+};
+using PoseWithDetailOpt = std::optional<PoseWithDetail>;
+
 struct PlannerData
 {
   Odometry::ConstSharedPtr self_odometry{};
@@ -170,11 +181,86 @@ struct PlannerData
   mutable std::vector<double> drivable_area_expansion_prev_curvatures{};
   mutable TurnSignalDecider turn_signal_decider;
 
+  void init_parameters(rclcpp::Node & node)
+  {
+    parameters.traffic_light_signal_timeout =
+      node.declare_parameter<double>("traffic_light_signal_timeout");
+
+    // vehicle info
+    const auto vehicle_info = autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo();
+    parameters.vehicle_info = vehicle_info;
+    parameters.vehicle_width = vehicle_info.vehicle_width_m;
+    parameters.vehicle_length = vehicle_info.vehicle_length_m;
+    parameters.wheel_tread = vehicle_info.wheel_tread_m;
+    parameters.wheel_base = vehicle_info.wheel_base_m;
+    parameters.front_overhang = vehicle_info.front_overhang_m;
+    parameters.rear_overhang = vehicle_info.rear_overhang_m;
+    parameters.left_over_hang = vehicle_info.left_overhang_m;
+    parameters.right_over_hang = vehicle_info.right_overhang_m;
+    parameters.base_link2front = vehicle_info.max_longitudinal_offset_m;
+    parameters.base_link2rear = parameters.rear_overhang;
+
+    // NOTE: backward_path_length is used not only calculating path length but also calculating the
+    // size of a drivable area.
+    //       The drivable area has to cover not the base link but the vehicle itself. Therefore
+    //       rear_overhang must be added to backward_path_length. In addition, because of the
+    //       calculation of the drivable area in the autoware_path_optimizer package, the drivable
+    //       area has to be a little longer than the backward_path_length parameter by adding
+    //       min_backward_offset.
+    constexpr double min_backward_offset = 1.0;
+    const double backward_offset = vehicle_info.rear_overhang_m + min_backward_offset;
+
+    // ROS parameters
+    parameters.backward_path_length =
+      node.declare_parameter<double>("backward_path_length") + backward_offset;
+    parameters.forward_path_length = node.declare_parameter<double>("forward_path_length");
+
+    // acceleration parameters
+    parameters.min_acc = node.declare_parameter<double>("normal.min_acc");
+    parameters.max_acc = node.declare_parameter<double>("normal.max_acc");
+
+    parameters.max_vel = node.declare_parameter<double>("max_vel");
+    parameters.backward_length_buffer_for_end_of_pull_over =
+      node.declare_parameter<double>("backward_length_buffer_for_end_of_pull_over");
+    parameters.backward_length_buffer_for_end_of_pull_out =
+      node.declare_parameter<double>("backward_length_buffer_for_end_of_pull_out");
+
+    parameters.minimum_pull_over_length =
+      node.declare_parameter<double>("minimum_pull_over_length");
+    parameters.refine_goal_search_radius_range =
+      node.declare_parameter<double>("refine_goal_search_radius_range");
+    parameters.turn_signal_intersection_search_distance =
+      node.declare_parameter<double>("turn_signal_intersection_search_distance");
+    parameters.turn_signal_intersection_angle_threshold_deg =
+      node.declare_parameter<double>("turn_signal_intersection_angle_threshold_deg");
+    parameters.turn_signal_minimum_search_distance =
+      node.declare_parameter<double>("turn_signal_minimum_search_distance");
+    parameters.turn_signal_search_time = node.declare_parameter<double>("turn_signal_search_time");
+    parameters.turn_signal_shift_length_threshold =
+      node.declare_parameter<double>("turn_signal_shift_length_threshold");
+    parameters.turn_signal_remaining_shift_length_threshold =
+      node.declare_parameter<double>("turn_signal_remaining_shift_length_threshold");
+    parameters.turn_signal_on_swerving = node.declare_parameter<bool>("turn_signal_on_swerving");
+
+    parameters.enable_akima_spline_first =
+      node.declare_parameter<bool>("enable_akima_spline_first");
+    parameters.enable_cog_on_centerline = node.declare_parameter<bool>("enable_cog_on_centerline");
+    parameters.input_path_interval = node.declare_parameter<double>("input_path_interval");
+    parameters.output_path_interval = node.declare_parameter<double>("output_path_interval");
+    parameters.ego_nearest_dist_threshold =
+      node.declare_parameter<double>("ego_nearest_dist_threshold");
+    parameters.ego_nearest_yaw_threshold =
+      node.declare_parameter<double>("ego_nearest_yaw_threshold");
+
+    drivable_area_expansion_parameters.init(node);
+  }
+
   std::pair<TurnSignalInfo, bool> getBehaviorTurnSignalInfo(
     const PathWithLaneId & path, const size_t shift_start_idx, const size_t shift_end_idx,
     const lanelet::ConstLanelets & current_lanelets, const double current_shift_length,
     const bool is_driving_forward, const bool egos_lane_is_shifted,
-    const bool override_ego_stopped_check = false, const bool is_pull_out = false) const
+    const bool override_ego_stopped_check = false, const bool is_pull_out = false,
+    const bool is_lane_change = false, const bool is_pull_over = false) const
   {
     if (shift_start_idx + 1 > path.points.size()) {
       RCLCPP_WARN(rclcpp::get_logger(__func__), "index inconsistency.");
@@ -211,7 +297,7 @@ struct PlannerData
     return turn_signal_decider.getBehaviorTurnSignalInfo(
       shifted_path, shift_line, current_lanelets, route_handler, parameters, self_odometry,
       current_shift_length, is_driving_forward, egos_lane_is_shifted, override_ego_stopped_check,
-      is_pull_out);
+      is_pull_out, is_lane_change, is_pull_over);
   }
 
   std::pair<TurnSignalInfo, bool> getBehaviorTurnSignalInfo(
@@ -254,7 +340,7 @@ struct PlannerData
   template <class T>
   size_t findEgoIndex(const std::vector<T> & points) const
   {
-    return autoware_motion_utils::findFirstNearestIndexWithSoftConstraints(
+    return autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
       points, self_odometry->pose.pose, parameters.ego_nearest_dist_threshold,
       parameters.ego_nearest_yaw_threshold);
   }
@@ -262,7 +348,7 @@ struct PlannerData
   template <class T>
   size_t findEgoSegmentIndex(const std::vector<T> & points) const
   {
-    return autoware_motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+    return autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
       points, self_odometry->pose.pose, parameters.ego_nearest_dist_threshold,
       parameters.ego_nearest_yaw_threshold);
   }

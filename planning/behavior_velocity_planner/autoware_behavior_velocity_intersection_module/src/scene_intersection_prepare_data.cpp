@@ -17,11 +17,11 @@
 
 #include <autoware/behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>  // for to_bg2d
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>  // for planning_utils::
+#include <autoware/interpolation/spline_interpolation_points_2d.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
-#include <interpolation/spline_interpolation_points_2d.hpp>
-#include <lanelet2_extension/regulatory_elements/road_marking.hpp>  // for lanelet::autoware::RoadMarking
-#include <lanelet2_extension/utility/query.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
+#include <autoware_lanelet2_extension/regulatory_elements/road_marking.hpp>  // for lanelet::autoware::RoadMarking
+#include <autoware_lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 
 #include <boost/geometry/algorithms/intersection.hpp>
 #include <boost/geometry/algorithms/within.hpp>
@@ -31,7 +31,14 @@
 #include <lanelet2_core/geometry/Polygon.h>
 #include <lanelet2_core/primitives/Point.h>
 
-namespace autoware_universe_utils
+#include <algorithm>
+#include <list>
+#include <set>
+#include <string>
+#include <utility>
+#include <vector>
+
+namespace autoware::universe_utils
 {
 
 template <>
@@ -44,7 +51,7 @@ inline geometry_msgs::msg::Point getPoint(const lanelet::ConstPoint3d & p)
   return point;
 }
 
-}  // namespace autoware_universe_utils
+}  // namespace autoware::universe_utils
 
 namespace
 {
@@ -74,7 +81,7 @@ lanelet::ConstLanelet generatePathLanelet(
   for (size_t i = start_idx; i <= end_idx; ++i) {
     const auto & p = path.points.at(i).point.pose;
     const auto & p_prev = path.points.at(prev_idx).point.pose;
-    if (i != start_idx && autoware_universe_utils::calcDistance2d(p_prev, p) < interval) {
+    if (i != start_idx && autoware::universe_utils::calcDistance2d(p_prev, p) < interval) {
       continue;
     }
     prev_idx = i;
@@ -146,7 +153,7 @@ double getHighestCurvature(const lanelet::ConstLineString3d & centerline)
     points.push_back(*point);
   }
 
-  SplineInterpolationPoints2d interpolation(points);
+  autoware::interpolation::SplineInterpolationPoints2d interpolation(points);
   const std::vector<double> curvatures = interpolation.getSplineInterpolatedCurvatures();
   std::vector<double> curvatures_positive;
   for (const auto & curvature : curvatures) {
@@ -198,7 +205,7 @@ Result<IntersectionModule::BasicData, InternalError> IntersectionModule::prepare
 
   const auto & path_ip = interpolated_path_info.path;
   const auto & path_ip_intersection_end = interpolated_path_info.lane_id_interval.value().second;
-  internal_debug_data_.distance = autoware_motion_utils::calcSignedArcLength(
+  internal_debug_data_.distance = autoware::motion_utils::calcSignedArcLength(
     path->points, current_pose.position,
     path_ip.points.at(path_ip_intersection_end).point.pose.position);
 
@@ -266,8 +273,8 @@ Result<IntersectionModule::BasicData, InternalError> IntersectionModule::prepare
 
   if (!occlusion_attention_divisions_) {
     occlusion_attention_divisions_ = generateDetectionLaneDivisions(
-      intersection_lanelets.occlusion_attention(), routing_graph_ptr,
-      planner_data_->occupancy_grid->info.resolution);
+      intersection_lanelets.occlusion_attention(), intersection_lanelets.attention_non_preceding(),
+      routing_graph_ptr, planner_data_->occupancy_grid->info.resolution);
   }
 
   if (has_traffic_light_) {
@@ -275,9 +282,9 @@ Result<IntersectionModule::BasicData, InternalError> IntersectionModule::prepare
     if (is_green_solid_on && !initial_green_light_observed_time_) {
       const auto assigned_lane_begin_point = assigned_lanelet.centerline().front();
       const bool approached_assigned_lane =
-        autoware_motion_utils::calcSignedArcLength(
+        autoware::motion_utils::calcSignedArcLength(
           path->points, closest_idx,
-          autoware_universe_utils::createPoint(
+          autoware::universe_utils::createPoint(
             assigned_lane_begin_point.x(), assigned_lane_begin_point.y(),
             assigned_lane_begin_point.z())) <
         planner_param_.collision_detection.yield_on_green_traffic_light
@@ -338,7 +345,7 @@ std::optional<size_t> IntersectionModule::getStopLineIndexFromMap(
   stop_point_from_map.position.y = 0.5 * (p_start.y() + p_end.y());
   stop_point_from_map.position.z = 0.5 * (p_start.z() + p_end.z());
 
-  return autoware_motion_utils::findFirstNearestIndexWithSoftConstraints(
+  return autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
     path.points, stop_point_from_map, planner_data_->ego_nearest_dist_threshold,
     planner_data_->ego_nearest_yaw_threshold);
 }
@@ -381,8 +388,8 @@ std::optional<IntersectionStopLines> IntersectionModule::generateIntersectionSto
   std::optional<size_t> first_footprint_attention_centerline_ip_opt = std::nullopt;
   for (auto i = std::get<0>(lane_interval_ip); i < std::get<1>(lane_interval_ip); ++i) {
     const auto & base_pose = path_ip.points.at(i).point.pose;
-    const auto path_footprint = autoware_universe_utils::transformVector(
-      local_footprint, autoware_universe_utils::pose2transform(base_pose));
+    const auto path_footprint = autoware::universe_utils::transformVector(
+      local_footprint, autoware::universe_utils::pose2transform(base_pose));
     if (bg::intersects(path_footprint, first_attention_lane_centerline.basicLineString())) {
       // NOTE: maybe consideration of braking dist is necessary
       first_footprint_attention_centerline_ip_opt = i;
@@ -413,7 +420,7 @@ std::optional<IntersectionStopLines> IntersectionModule::generateIntersectionSto
 
   // (2) ego front stop line position on interpolated path
   const geometry_msgs::msg::Pose & current_pose = planner_data_->current_odometry->pose;
-  const auto closest_idx_ip = autoware_motion_utils::findFirstNearestIndexWithSoftConstraints(
+  const auto closest_idx_ip = autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
     path_ip.points, current_pose, planner_data_->ego_nearest_dist_threshold,
     planner_data_->ego_nearest_yaw_threshold);
 
@@ -423,8 +430,8 @@ std::optional<IntersectionStopLines> IntersectionModule::generateIntersectionSto
   // NOTE: if footprints[0] is already inside the attention area, invalid
   {
     const auto & base_pose0 = path_ip.points.at(default_stopline_ip).point.pose;
-    const auto path_footprint0 = autoware_universe_utils::transformVector(
-      local_footprint, autoware_universe_utils::pose2transform(base_pose0));
+    const auto path_footprint0 = autoware::universe_utils::transformVector(
+      local_footprint, autoware::universe_utils::pose2transform(base_pose0));
     if (bg::intersects(
           path_footprint0, lanelet::utils::to2D(first_attention_area).basicPolygon())) {
       occlusion_peeking_line_valid = false;
@@ -577,6 +584,73 @@ std::optional<IntersectionStopLines> IntersectionModule::generateIntersectionSto
   return intersection_stoplines;
 }
 
+static std::vector<std::deque<lanelet::ConstLanelet>> getPrecedingLaneletsUptoIntersectionRecursive(
+  const lanelet::routing::RoutingGraphPtr & graph, const lanelet::ConstLanelet & lanelet,
+  const double length, const lanelet::ConstLanelets & exclude_lanelets)
+{
+  std::vector<std::deque<lanelet::ConstLanelet>> preceding_lanelet_sequences;
+
+  const auto prev_lanelets = graph->previous(lanelet);
+  const double lanelet_length = lanelet::utils::getLaneletLength3d(lanelet);
+
+  // end condition of the recursive function
+  if (prev_lanelets.empty() || lanelet_length >= length) {
+    preceding_lanelet_sequences.push_back({lanelet});
+    return preceding_lanelet_sequences;
+  }
+
+  for (const auto & prev_lanelet : prev_lanelets) {
+    if (lanelet::utils::contains(exclude_lanelets, prev_lanelet)) {
+      // if prev_lanelet is included in exclude_lanelets,
+      // remove prev_lanelet from preceding_lanelet_sequences
+      continue;
+    }
+    if (const std::string turn_direction = prev_lanelet.attributeOr("turn_direction", "else");
+        turn_direction == "left" || turn_direction == "right") {
+      continue;
+    }
+
+    // get lanelet sequence after prev_lanelet
+    auto tmp_lanelet_sequences = getPrecedingLaneletsUptoIntersectionRecursive(
+      graph, prev_lanelet, length - lanelet_length, exclude_lanelets);
+    for (auto & tmp_lanelet_sequence : tmp_lanelet_sequences) {
+      tmp_lanelet_sequence.push_back(lanelet);
+      preceding_lanelet_sequences.push_back(tmp_lanelet_sequence);
+    }
+  }
+
+  if (preceding_lanelet_sequences.empty()) {
+    preceding_lanelet_sequences.push_back({lanelet});
+  }
+  return preceding_lanelet_sequences;
+}
+
+static std::vector<lanelet::ConstLanelets> getPrecedingLaneletsUptoIntersection(
+  const lanelet::routing::RoutingGraphPtr & graph, const lanelet::ConstLanelet & lanelet,
+  const double length, const lanelet::ConstLanelets & exclude_lanelets)
+{
+  std::vector<lanelet::ConstLanelets> lanelet_sequences_vec;
+  const auto prev_lanelets = graph->previous(lanelet);
+  for (const auto & prev_lanelet : prev_lanelets) {
+    if (lanelet::utils::contains(exclude_lanelets, prev_lanelet)) {
+      // if prev_lanelet is included in exclude_lanelets,
+      // remove prev_lanelet from preceding_lanelet_sequences
+      continue;
+    }
+    if (const std::string turn_direction = prev_lanelet.attributeOr("turn_direction", "else");
+        turn_direction == "left" || turn_direction == "right") {
+      continue;
+    }
+    // convert deque into vector
+    const auto lanelet_sequences_deq =
+      getPrecedingLaneletsUptoIntersectionRecursive(graph, prev_lanelet, length, exclude_lanelets);
+    for (const auto & lanelet_sequence : lanelet_sequences_deq) {
+      lanelet_sequences_vec.emplace_back(lanelet_sequence.begin(), lanelet_sequence.end());
+    }
+  }
+  return lanelet_sequences_vec;
+}
+
 IntersectionLanelets IntersectionModule::generateObjectiveLanelets(
   lanelet::LaneletMapConstPtr lanelet_map_ptr, lanelet::routing::RoutingGraphPtr routing_graph_ptr,
   const lanelet::ConstLanelet assigned_lanelet) const
@@ -689,8 +763,8 @@ IntersectionLanelets IntersectionModule::generateObjectiveLanelets(
         routing_graph_ptr, ll, length, ego_lanelets);
       for (const auto & ls : lanelet_sequences) {
         for (const auto & l : ls) {
-          const auto & inserted = detection_ids.insert(l.id());
-          if (inserted.second) detection_and_preceding_lanelets.push_back(l);
+          const auto & inner_inserted = detection_ids.insert(l.id());
+          if (inner_inserted.second) detection_and_preceding_lanelets.push_back(l);
         }
       }
     }
@@ -706,27 +780,20 @@ IntersectionLanelets IntersectionModule::generateObjectiveLanelets(
       if (inserted.second) occlusion_detection_and_preceding_lanelets.push_back(ll);
       // get preceding lanelets without ego_lanelets
       // to prevent the detection area from including the ego lanes and its' preceding lanes.
-      const auto lanelet_sequences = lanelet::utils::query::getPrecedingLaneletSequences(
-        routing_graph_ptr, ll, length, ego_lanelets);
+      const auto lanelet_sequences =
+        getPrecedingLaneletsUptoIntersection(routing_graph_ptr, ll, length, ego_lanelets);
       for (const auto & ls : lanelet_sequences) {
         for (const auto & l : ls) {
-          const auto & inserted = detection_ids.insert(l.id());
-          if (inserted.second) occlusion_detection_and_preceding_lanelets.push_back(l);
+          const auto & inner_inserted = detection_ids.insert(l.id());
+          if (inner_inserted.second) occlusion_detection_and_preceding_lanelets.push_back(l);
         }
       }
     }
   }
-  lanelet::ConstLanelets occlusion_detection_and_preceding_lanelets_wo_turn_direction;
-  for (const auto & ll : occlusion_detection_and_preceding_lanelets) {
-    const std::string turn_direction = ll.attributeOr("turn_direction", "else");
-    if (turn_direction == "left" || turn_direction == "right") {
-      continue;
-    }
-    occlusion_detection_and_preceding_lanelets_wo_turn_direction.push_back(ll);
-  }
 
   auto [attention_lanelets, original_attention_lanelet_sequences] =
-    util::mergeLaneletsByTopologicalSort(detection_and_preceding_lanelets, routing_graph_ptr);
+    util::mergeLaneletsByTopologicalSort(
+      detection_and_preceding_lanelets, detection_lanelets, routing_graph_ptr);
 
   IntersectionLanelets result;
   result.attention_ = std::move(attention_lanelets);
@@ -764,8 +831,7 @@ IntersectionLanelets IntersectionModule::generateObjectiveLanelets(
   // NOTE: occlusion_attention is not inverted here
   // TODO(Mamoru Sobue): apply mergeLaneletsByTopologicalSort for occlusion lanelets as well and
   // then trim part of them based on curvature threshold
-  result.occlusion_attention_ =
-    std::move(occlusion_detection_and_preceding_lanelets_wo_turn_direction);
+  result.occlusion_attention_ = std::move(occlusion_detection_and_preceding_lanelets);
 
   // NOTE: to properly update(), each element in conflicting_/conflicting_area_,
   // attention_non_preceding_/attention_non_preceding_area_ need to be matched
@@ -851,7 +917,8 @@ std::optional<PathLanelets> IntersectionModule::generatePathLanelets(
 }
 
 std::vector<lanelet::ConstLineString3d> IntersectionModule::generateDetectionLaneDivisions(
-  lanelet::ConstLanelets detection_lanelets_all,
+  const lanelet::ConstLanelets & occlusion_detection_lanelets,
+  const lanelet::ConstLanelets & conflicting_detection_lanelets,
   const lanelet::routing::RoutingGraphPtr routing_graph_ptr, const double resolution) const
 {
   const double curvature_threshold =
@@ -861,9 +928,9 @@ std::vector<lanelet::ConstLineString3d> IntersectionModule::generateDetectionLan
 
   using lanelet::utils::getCenterlineWithOffset;
 
-  // (0) remove left/right lanelet
+  // (0) remove curved
   lanelet::ConstLanelets detection_lanelets;
-  for (const auto & detection_lanelet : detection_lanelets_all) {
+  for (const auto & detection_lanelet : occlusion_detection_lanelets) {
     // TODO(Mamoru Sobue): instead of ignoring, only trim straight part of lanelet
     const auto fine_centerline =
       lanelet::utils::generateFineCenterline(detection_lanelet, curvature_calculation_ds);
@@ -874,9 +941,17 @@ std::vector<lanelet::ConstLineString3d> IntersectionModule::generateDetectionLan
     detection_lanelets.push_back(detection_lanelet);
   }
 
+  std::vector<lanelet::ConstLineString3d> detection_divisions;
+  if (detection_lanelets.empty()) {
+    // NOTE(soblin): due to the above filtering detection_lanelets may be empty or do not contain
+    // conflicting_detection_lanelets
+    // OK to return empty detection_divisions
+    return detection_divisions;
+  }
+
   // (1) tsort detection_lanelets
-  const auto [merged_detection_lanelets, originals] =
-    util::mergeLaneletsByTopologicalSort(detection_lanelets, routing_graph_ptr);
+  const auto [merged_detection_lanelets, originals] = util::mergeLaneletsByTopologicalSort(
+    detection_lanelets, conflicting_detection_lanelets, routing_graph_ptr);
 
   // (2) merge each branch to one lanelet
   // NOTE: somehow bg::area() for merged lanelet does not work, so calculate it here
@@ -892,7 +967,6 @@ std::vector<lanelet::ConstLineString3d> IntersectionModule::generateDetectionLan
   }
 
   // (3) discretize each merged lanelet
-  std::vector<lanelet::ConstLineString3d> detection_divisions;
   for (const auto & [merged_lanelet, area] : merged_lanelet_with_area) {
     const double length = bg::length(merged_lanelet.centerline());
     const double width = area / length;

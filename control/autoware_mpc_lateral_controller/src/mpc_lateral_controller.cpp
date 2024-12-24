@@ -35,12 +35,15 @@
 namespace autoware::motion::control::mpc_lateral_controller
 {
 
-MpcLateralController::MpcLateralController(rclcpp::Node & node)
+MpcLateralController::MpcLateralController(
+  rclcpp::Node & node, std::shared_ptr<diagnostic_updater::Updater> diag_updater)
 : clock_(node.get_clock()), logger_(node.get_logger().get_child("lateral_controller"))
 {
   const auto dp_int = [&](const std::string & s) { return node.declare_parameter<int>(s); };
   const auto dp_bool = [&](const std::string & s) { return node.declare_parameter<bool>(s); };
   const auto dp_double = [&](const std::string & s) { return node.declare_parameter<double>(s); };
+
+  diag_updater_ = diag_updater;
 
   m_mpc = std::make_unique<MPC>(node);
 
@@ -54,8 +57,6 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node)
   p_filt.traj_resample_dist = dp_double("traj_resample_dist");
   p_filt.extend_trajectory_for_end_yaw_control = dp_bool("extend_trajectory_for_end_yaw_control");
 
-  m_mpc->m_admissible_position_error = dp_double("admissible_position_error");
-  m_mpc->m_admissible_yaw_error_rad = dp_double("admissible_yaw_error_rad");
   m_mpc->m_use_steer_prediction = dp_bool("use_steer_prediction");
   m_mpc->m_param.steer_tau = dp_double("vehicle_model_steer_tau");
 
@@ -101,7 +102,6 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node)
   m_mpc->setVehicleModel(vehicle_model_ptr);
 
   /* QP solver setup */
-  m_mpc->setVehicleModel(vehicle_model_ptr);
   auto qpsolver_ptr = createQPSolverInterface(node);
   m_mpc->setQPSolver(qpsolver_ptr);
 
@@ -134,7 +134,9 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node)
   m_mpc->ego_nearest_dist_threshold = m_ego_nearest_dist_threshold;
   m_mpc->ego_nearest_yaw_threshold = m_ego_nearest_yaw_threshold;
 
-  m_mpc->m_debug_publish_predicted_trajectory = dp_bool("debug_publish_predicted_trajectory");
+  m_mpc->m_use_delayed_initial_state = dp_bool("use_delayed_initial_state");
+
+  m_mpc->m_publish_debug_trajectories = dp_bool("publish_debug_trajectories");
 
   m_pub_predicted_traj = node.create_publisher<Trajectory>("~/output/predicted_trajectory", 1);
   m_pub_debug_values =
@@ -152,6 +154,8 @@ MpcLateralController::MpcLateralController(rclcpp::Node & node)
 
   m_mpc->setLogger(logger_);
   m_mpc->setClock(clock_);
+
+  setupDiag();
 }
 
 MpcLateralController::~MpcLateralController()
@@ -227,6 +231,21 @@ std::shared_ptr<SteeringOffsetEstimator> MpcLateralController::createSteerOffset
   return steering_offset_;
 }
 
+void MpcLateralController::setStatus(diagnostic_updater::DiagnosticStatusWrapper & stat)
+{
+  if (m_mpc_solved_status.result) {
+    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::OK, "MPC succeeded.");
+  } else {
+    const std::string error_msg = "MPC failed due to " + m_mpc_solved_status.reason;
+    stat.summary(diagnostic_msgs::msg::DiagnosticStatus::ERROR, error_msg);
+  }
+}
+
+void MpcLateralController::setupDiag()
+{
+  diag_updater_->add("MPC_solve_checker", [&](auto & stat) { setStatus(stat); });
+}
+
 trajectory_follower::LateralOutput MpcLateralController::run(
   trajectory_follower::InputData const & input_data)
 {
@@ -252,15 +271,26 @@ trajectory_follower::LateralOutput MpcLateralController::run(
     m_is_ctrl_cmd_prev_initialized = true;
   }
 
-  const bool is_mpc_solved = m_mpc->calculateMPC(
-    m_current_steering, m_current_kinematic_state, ctrl_cmd, predicted_traj, debug_values);
+  trajectory_follower::LateralHorizon ctrl_cmd_horizon{};
+  const auto mpc_solved_status = m_mpc->calculateMPC(
+    m_current_steering, m_current_kinematic_state, ctrl_cmd, predicted_traj, debug_values,
+    ctrl_cmd_horizon);
+
+  if (
+    (m_mpc_solved_status.result == true && mpc_solved_status.result == false) ||
+    (!mpc_solved_status.result && mpc_solved_status.reason != m_mpc_solved_status.reason)) {
+    RCLCPP_ERROR(logger_, "MPC failed due to %s", mpc_solved_status.reason.c_str());
+  }
+  m_mpc_solved_status = mpc_solved_status;  // for diagnostic updater
+
+  diag_updater_->force_update();
 
   // reset previous MPC result
   // Note: When a large deviation from the trajectory occurs, the optimization stops and
   // the vehicle will return to the path by re-planning the trajectory or external operation.
   // After the recovery, the previous value of the optimization may deviate greatly from
   // the actual steer angle, and it may make the optimization result unstable.
-  if (!is_mpc_solved) {
+  if (!mpc_solved_status.result || !is_under_control) {
     m_mpc->resetPrevResult(m_current_steering);
   } else {
     setSteeringToHistory(ctrl_cmd);
@@ -276,9 +306,13 @@ trajectory_follower::LateralOutput MpcLateralController::run(
   publishPredictedTraj(predicted_traj);
   publishDebugValues(debug_values);
 
-  const auto createLateralOutput = [this](const auto & cmd, const bool is_mpc_solved) {
+  const auto createLateralOutput =
+    [this](
+      const auto & cmd, const bool is_mpc_solved,
+      const auto & cmd_horizon) -> trajectory_follower::LateralOutput {
     trajectory_follower::LateralOutput output;
     output.control_cmd = createCtrlCmdMsg(cmd);
+    output.control_cmd_horizon = createCtrlCmdHorizonMsg(cmd_horizon);
     // To be sure current steering of the vehicle is desired steering angle, we need to check
     // following conditions.
     // 1. At the last loop, mpc should be solved because command should be optimized output.
@@ -297,16 +331,15 @@ trajectory_follower::LateralOutput MpcLateralController::run(
     }
     // Use previous command value as previous raw steer command
     m_mpc->m_raw_steer_cmd_prev = m_ctrl_cmd_prev.steering_tire_angle;
-    return createLateralOutput(m_ctrl_cmd_prev, false);
+    return createLateralOutput(m_ctrl_cmd_prev, false, ctrl_cmd_horizon);
   }
 
-  if (!is_mpc_solved) {
-    warn_throttle("MPC is not solved. publish 0 velocity.");
+  if (!mpc_solved_status.result) {
     ctrl_cmd = getStopControlCommand();
   }
 
   m_ctrl_cmd_prev = ctrl_cmd;
-  return createLateralOutput(ctrl_cmd, is_mpc_solved);
+  return createLateralOutput(ctrl_cmd, mpc_solved_status.result, ctrl_cmd_horizon);
 }
 
 bool MpcLateralController::isSteerConverged(const Lateral & cmd) const
@@ -399,34 +432,43 @@ Lateral MpcLateralController::getInitialControlCommand() const
 
 bool MpcLateralController::isStoppedState() const
 {
+  const double current_vel = m_current_kinematic_state.twist.twist.linear.x;
   // If the nearest index is not found, return false
-  if (m_current_trajectory.points.empty()) {
+  if (
+    m_current_trajectory.points.empty() || std::fabs(current_vel) > m_stop_state_entry_ego_speed) {
     return false;
   }
-
-  // Note: This function used to take into account the distance to the stop line
-  // for the stop state judgement. However, it has been removed since the steering
-  // control was turned off when approaching/exceeding the stop line on a curve or
-  // emergency stop situation and it caused large tracking error.
-  const size_t nearest = autoware_motion_utils::findFirstNearestIndexWithSoftConstraints(
-    m_current_trajectory.points, m_current_kinematic_state.pose.pose, m_ego_nearest_dist_threshold,
-    m_ego_nearest_yaw_threshold);
-
-  const double current_vel = m_current_kinematic_state.twist.twist.linear.x;
-  const double target_vel = m_current_trajectory.points.at(nearest).longitudinal_velocity_mps;
 
   const auto latest_published_cmd = m_ctrl_cmd_prev;  // use prev_cmd as a latest published command
   if (m_keep_steer_control_until_converged && !isSteerConverged(latest_published_cmd)) {
     return false;  // not stopState: keep control
   }
 
-  if (
-    std::fabs(current_vel) < m_stop_state_entry_ego_speed &&
-    std::fabs(target_vel) < m_stop_state_entry_target_speed) {
-    return true;
-  } else {
-    return false;
-  }
+  // Note: This function used to take into account the distance to the stop line
+  // for the stop state judgement. However, it has been removed since the steering
+  // control was turned off when approaching/exceeding the stop line on a curve or
+  // emergency stop situation and it caused large tracking error.
+  const size_t nearest = autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
+    m_current_trajectory.points, m_current_kinematic_state.pose.pose, m_ego_nearest_dist_threshold,
+    m_ego_nearest_yaw_threshold);
+
+  // It is possible that stop is executed earlier than stop point, and velocity controller
+  // will not start when the distance from ego to stop point is less than 0.5 meter.
+  // So we use a distance margin to ensure we can detect stopped state.
+  static constexpr double distance_margin = 1.0;
+  const double target_vel = std::invoke([&]() -> double {
+    auto min_vel = m_current_trajectory.points.at(nearest).longitudinal_velocity_mps;
+    auto covered_distance = 0.0;
+    for (auto i = nearest + 1; i < m_current_trajectory.points.size(); ++i) {
+      min_vel = std::min(min_vel, m_current_trajectory.points.at(i).longitudinal_velocity_mps);
+      covered_distance += autoware::universe_utils::calcDistance2d(
+        m_current_trajectory.points.at(i - 1).pose, m_current_trajectory.points.at(i).pose);
+      if (covered_distance > distance_margin) break;
+    }
+    return min_vel;
+  });
+
+  return std::fabs(target_vel) < m_stop_state_entry_target_speed;
 }
 
 Lateral MpcLateralController::createCtrlCmdMsg(const Lateral & ctrl_cmd)
@@ -434,6 +476,17 @@ Lateral MpcLateralController::createCtrlCmdMsg(const Lateral & ctrl_cmd)
   auto out = ctrl_cmd;
   out.stamp = clock_->now();
   m_steer_cmd_prev = out.steering_tire_angle;
+  return out;
+}
+
+LateralHorizon MpcLateralController::createCtrlCmdHorizonMsg(
+  const LateralHorizon & ctrl_cmd_horizon) const
+{
+  auto out = ctrl_cmd_horizon;
+  const auto now = clock_->now();
+  for (auto & cmd : out.controls) {
+    cmd.stamp = now;
+  }
   return out;
 }
 
@@ -497,7 +550,7 @@ bool MpcLateralController::isMpcConverged()
 
   // Find the maximum and minimum values of the steering angle in the past 1 second.
   double min_steering_value = m_mpc_steering_history[0].first.steering_tire_angle;
-  double max_steering_value = m_mpc_steering_history[0].first.steering_tire_angle;
+  double max_steering_value = min_steering_value;
   for (size_t i = 1; i < m_mpc_steering_history.size(); i++) {
     if (m_mpc_steering_history.at(i).first.steering_tire_angle < min_steering_value) {
       min_steering_value = m_mpc_steering_history.at(i).first.steering_tire_angle;
@@ -554,11 +607,12 @@ rcl_interfaces::msg::SetParametersResult MpcLateralController::paramCallback(
 
   // strong exception safety wrt MPCParam
   MPCParam param = m_mpc->m_param;
-  auto & nw = param.nominal_weight;
-  auto & lcw = param.low_curvature_weight;
 
   using MPCUtils::update_param;
   try {
+    auto & nw = param.nominal_weight;
+    auto & lcw = param.low_curvature_weight;
+
     update_param(parameters, "mpc_prediction_horizon", param.prediction_horizon);
     update_param(parameters, "mpc_prediction_dt", param.prediction_dt);
 
@@ -616,7 +670,7 @@ bool MpcLateralController::isTrajectoryShapeChanged() const
   // TODO(Horibe): update implementation to check trajectory shape around ego vehicle.
   // Now temporally check the goal position.
   for (const auto & trajectory : m_trajectory_buffer) {
-    const auto change_distance = autoware_universe_utils::calcDistance2d(
+    const auto change_distance = autoware::universe_utils::calcDistance2d(
       trajectory.points.back().pose, m_current_trajectory.points.back().pose);
     if (change_distance > m_new_traj_end_dist) {
       return true;
@@ -633,8 +687,8 @@ bool MpcLateralController::isValidTrajectory(const Trajectory & traj) const
       !isfinite(p.pose.orientation.w) || !isfinite(p.pose.orientation.x) ||
       !isfinite(p.pose.orientation.y) || !isfinite(p.pose.orientation.z) ||
       !isfinite(p.longitudinal_velocity_mps) || !isfinite(p.lateral_velocity_mps) ||
-      !isfinite(p.lateral_velocity_mps) || !isfinite(p.heading_rate_rps) ||
-      !isfinite(p.front_wheel_angle_rad) || !isfinite(p.rear_wheel_angle_rad)) {
+      !isfinite(p.heading_rate_rps) || !isfinite(p.front_wheel_angle_rad) ||
+      !isfinite(p.rear_wheel_angle_rad)) {
       return false;
     }
   }

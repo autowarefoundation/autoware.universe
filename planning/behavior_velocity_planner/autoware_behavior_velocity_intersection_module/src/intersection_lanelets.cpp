@@ -26,7 +26,7 @@ namespace autoware::behavior_velocity_planner
 
 void IntersectionLanelets::update(
   const bool is_prioritized, const InterpolatedPathInfo & interpolated_path_info,
-  const autoware_universe_utils::LinearRing2d & footprint, const double vehicle_length,
+  const autoware::universe_utils::LinearRing2d & footprint, const double vehicle_length,
   lanelet::routing::RoutingGraphPtr routing_graph_ptr)
 {
   is_prioritized_ = is_prioritized;
@@ -48,11 +48,10 @@ void IntersectionLanelets::update(
     }
   }
   if (first_attention_lane_ && !second_attention_lane_ && !second_attention_lane_empty_) {
-    const auto first_attention_lane = first_attention_lane_.value();
     // remove first_attention_area_ and non-straight lanelets from attention_non_preceding
     lanelet::ConstLanelets attention_non_preceding_ex_first;
     lanelet::ConstLanelets sibling_first_attention_lanelets;
-    for (const auto & previous : routing_graph_ptr->previous(first_attention_lane)) {
+    for (const auto & previous : routing_graph_ptr->previous(first_attention_lane_.value())) {
       for (const auto & following : routing_graph_ptr->following(previous)) {
         sibling_first_attention_lanelets.push_back(following);
       }

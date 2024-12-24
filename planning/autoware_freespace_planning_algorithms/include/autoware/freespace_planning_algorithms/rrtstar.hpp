@@ -39,7 +39,7 @@ class RRTStar : public AbstractPlanningAlgorithm
 public:
   RRTStar(
     const PlannerCommonParam & planner_common_param, const VehicleShape & original_vehicle_shape,
-    const RRTStarParam & rrtstar_param);
+    const RRTStarParam & rrtstar_param, const rclcpp::Clock::SharedPtr & clock);
 
   RRTStar(
     const PlannerCommonParam & planner_common_param, const VehicleShape & original_vehicle_shape,
@@ -51,13 +51,17 @@ public:
         node.declare_parameter<bool>("rrtstar.use_informed_sampling"),
         node.declare_parameter<double>("rrtstar.max_planning_time"),
         node.declare_parameter<double>("rrtstar.neighbor_radius"),
-        node.declare_parameter<double>("rrtstar.margin")})
+        node.declare_parameter<double>("rrtstar.margin")},
+      node.get_clock())
   {
   }
 
   bool makePlan(
     const geometry_msgs::msg::Pose & start_pose,
     const geometry_msgs::msg::Pose & goal_pose) override;
+  bool makePlan(
+    const geometry_msgs::msg::Pose & start_pose,
+    const std::vector<geometry_msgs::msg::Pose> & goal_candidates) override;
   bool hasObstacleOnTrajectory(const geometry_msgs::msg::PoseArray & trajectory) const override;
 
 private:
@@ -65,8 +69,6 @@ private:
 
   // algorithm specific param
   const RRTStarParam rrtstar_param_;
-
-  const VehicleShape original_vehicle_shape_;
 };
 
 }  // namespace autoware::freespace_planning_algorithms

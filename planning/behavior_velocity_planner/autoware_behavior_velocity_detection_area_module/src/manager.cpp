@@ -16,7 +16,7 @@
 
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
 #include <autoware/universe_utils/ros/parameter.hpp>
-#include <lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
 
 #include <tf2/utils.h>
 
@@ -30,14 +30,14 @@
 
 namespace autoware::behavior_velocity_planner
 {
-using autoware_universe_utils::getOrDeclareParameter;
+using autoware::universe_utils::getOrDeclareParameter;
 using lanelet::autoware::DetectionArea;
 
 DetectionAreaModuleManager::DetectionAreaModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterfaceWithRTC(
     node, getModuleName(), getEnableRTC(node, std::string(getModuleName()) + ".enable_rtc"))
 {
-  const std::string ns(getModuleName());
+  const std::string ns(DetectionAreaModuleManager::getModuleName());
   planner_param_.stop_margin = getOrDeclareParameter<double>(node, ns + ".stop_margin");
   planner_param_.use_dead_line = getOrDeclareParameter<bool>(node, ns + ".use_dead_line");
   planner_param_.dead_line_margin = getOrDeclareParameter<double>(node, ns + ".dead_line_margin");
@@ -48,6 +48,8 @@ DetectionAreaModuleManager::DetectionAreaModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<double>(node, ns + ".hold_stop_margin_distance");
   planner_param_.distance_to_judge_over_stop_line =
     getOrDeclareParameter<double>(node, ns + ".distance_to_judge_over_stop_line");
+  planner_param_.suppress_pass_judge_when_stopping =
+    getOrDeclareParameter<bool>(node, ns + ".suppress_pass_judge_when_stopping");
 }
 
 void DetectionAreaModuleManager::launchNewModules(

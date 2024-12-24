@@ -54,15 +54,19 @@ public:
   void publishCooperateStatus(const rclcpp::Time & stamp);
   void updateCooperateStatus(
     const UUID & uuid, const bool safe, const uint8_t state, const double start_distance,
-    const double finish_distance, const rclcpp::Time & stamp);
+    const double finish_distance, const rclcpp::Time & stamp, const bool requested = false);
   void removeCooperateStatus(const UUID & uuid);
   void removeExpiredCooperateStatus();
   void clearCooperateStatus();
   bool isActivated(const UUID & uuid) const;
+  bool isForceActivated(const UUID & uuid) const;
+  bool isForceDeactivated(const UUID & UUID) const;
   bool isRegistered(const UUID & uuid) const;
   bool isRTCEnabled(const UUID & uuid) const;
+  bool isTerminated(const UUID & uuid) const;
   void lockCommandUpdate();
   void unlockCommandUpdate();
+  void print() const;
 
 private:
   void onCooperateCommandService(
@@ -99,6 +103,9 @@ private:
   std::string enable_auto_mode_namespace_ = "/planning/enable_auto_mode";
 
   mutable std::mutex mutex_;
+
+public:
+  friend class RTCInterfaceTest;
 };
 
 }  // namespace autoware::rtc_interface

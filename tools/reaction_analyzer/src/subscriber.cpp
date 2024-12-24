@@ -15,8 +15,11 @@
 #include "subscriber.hpp"
 
 #include <algorithm>
+#include <map>
 #include <memory>
+#include <string>
 #include <utility>
+#include <vector>
 
 namespace reaction_analyzer::subscriber
 {
@@ -260,18 +263,19 @@ void SubscriberBase::on_trajectory(
     return;
   }
 
-  const auto nearest_seg_idx = autoware_motion_utils::findNearestSegmentIndex(
+  const auto nearest_seg_idx = autoware::motion_utils::findNearestSegmentIndex(
     msg_ptr->points, current_odometry_ptr->pose.pose.position);
 
   const auto nearest_objects_seg_idx =
-    autoware_motion_utils::findNearestIndex(msg_ptr->points, entity_pose_.position);
+    autoware::motion_utils::findNearestIndex(msg_ptr->points, entity_pose_.position);
 
-  const auto zero_vel_idx = autoware_motion_utils::searchZeroVelocityIndex(
+  const auto zero_vel_idx = autoware::motion_utils::searchZeroVelocityIndex(
     msg_ptr->points, nearest_seg_idx, nearest_objects_seg_idx);
 
   if (zero_vel_idx) {
     RCLCPP_INFO(node_->get_logger(), "%s reacted without published time", node_name.c_str());
     // set header time
+    // cppcheck-suppress constVariableReference
     auto & buffer = std::get<MessageBuffer>(variant);
     buffer->header.stamp = msg_ptr->header.stamp;
     buffer->published_stamp = msg_ptr->header.stamp;
@@ -299,7 +303,7 @@ void SubscriberBase::on_trajectory(
     return;
   }
 
-  const auto nearest_seg_idx = autoware_motion_utils::findNearestSegmentIndex(
+  const auto nearest_seg_idx = autoware::motion_utils::findNearestSegmentIndex(
     msg_ptr->points, current_odometry_ptr->pose.pose.position);
 
   // find the target index which we will search for zero velocity
@@ -310,7 +314,7 @@ void SubscriberBase::on_trajectory(
   }
   const auto target_idx = tmp_target_idx;
   const auto zero_vel_idx =
-    autoware_motion_utils::searchZeroVelocityIndex(msg_ptr->points, nearest_seg_idx, target_idx);
+    autoware::motion_utils::searchZeroVelocityIndex(msg_ptr->points, nearest_seg_idx, target_idx);
 
   if (zero_vel_idx) {
     RCLCPP_INFO(node_->get_logger(), "%s reacted with published time", node_name.c_str());
@@ -363,6 +367,7 @@ void SubscriberBase::on_pointcloud(
   if (search_pointcloud_near_pose(pcl_pointcloud, entity_pose_, entity_search_radius_)) {
     RCLCPP_INFO(node_->get_logger(), "%s reacted without published time", node_name.c_str());
     // set header time
+    // cppcheck-suppress constVariableReference
     auto & buffer = std::get<MessageBuffer>(variant);
     buffer->header.stamp = msg_ptr->header.stamp;
     buffer->published_stamp = msg_ptr->header.stamp;
@@ -440,6 +445,7 @@ void SubscriberBase::on_predicted_objects(
   if (search_predicted_objects_near_pose(*msg_ptr, entity_pose_, entity_search_radius_)) {
     RCLCPP_INFO(node_->get_logger(), "%s reacted without published time", node_name.c_str());
     // set header time
+    // cppcheck-suppress constVariableReference
     auto & buffer = std::get<MessageBuffer>(variant);
     buffer->header.stamp = msg_ptr->header.stamp;
     buffer->published_stamp = msg_ptr->header.stamp;
@@ -520,6 +526,7 @@ void SubscriberBase::on_detected_objects(
   if (search_detected_objects_near_pose(output_objs, entity_pose_, entity_search_radius_)) {
     RCLCPP_INFO(node_->get_logger(), "%s reacted without published time", node_name.c_str());
     // set header time
+    // cppcheck-suppress constVariableReference
     auto & buffer = std::get<MessageBuffer>(variant);
     buffer->header.stamp = msg_ptr->header.stamp;
     buffer->published_stamp = msg_ptr->header.stamp;

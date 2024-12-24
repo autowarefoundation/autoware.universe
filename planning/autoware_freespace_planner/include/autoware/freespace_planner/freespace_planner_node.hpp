@@ -35,6 +35,7 @@
 
 #include <autoware/freespace_planning_algorithms/astar_search.hpp>
 #include <autoware/freespace_planning_algorithms/rrtstar.hpp>
+#include <autoware/universe_utils/ros/polling_subscriber.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -44,6 +45,7 @@
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <std_msgs/msg/bool.hpp>
+#include <tier4_debug_msgs/msg/float64_stamped.hpp>
 #include <tier4_planning_msgs/msg/scenario.hpp>
 
 #ifdef ROS_DISTRO_GALACTIC
@@ -62,6 +64,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+
+class TestFreespacePlanner;
 
 namespace autoware::freespace_planner
 {
@@ -91,6 +95,7 @@ struct NodeParam
   double th_stopped_time_sec;
   double th_stopped_velocity_mps;
   double th_course_out_distance_m;  // collision margin [m]
+  double th_obstacle_time_sec;
   double vehicle_shape_margin_m;
   bool replan_when_obstacle_found;
   bool replan_when_course_out;
@@ -107,11 +112,17 @@ private:
   rclcpp::Publisher<PoseArray>::SharedPtr debug_pose_array_pub_;
   rclcpp::Publisher<PoseArray>::SharedPtr debug_partial_pose_array_pub_;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr parking_state_pub_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr processing_time_pub_;
 
   rclcpp::Subscription<LaneletRoute>::SharedPtr route_sub_;
-  rclcpp::Subscription<OccupancyGrid>::SharedPtr occupancy_grid_sub_;
-  rclcpp::Subscription<Scenario>::SharedPtr scenario_sub_;
-  rclcpp::Subscription<Odometry>::SharedPtr odom_sub_;
+
+  autoware::universe_utils::InterProcessPollingSubscriber<OccupancyGrid> occupancy_grid_sub_{
+    this, "~/input/occupancy_grid"};
+  autoware::universe_utils::InterProcessPollingSubscriber<Scenario> scenario_sub_{
+    this, "~/input/scenario"};
+  autoware::universe_utils::InterProcessPollingSubscriber<
+    Odometry, autoware::universe_utils::polling_policy::All>
+    odom_sub_{this, "~/input/odometry", rclcpp::QoS{100}};
 
   rclcpp::TimerBase::SharedPtr timer_;
 
@@ -135,6 +146,7 @@ private:
   bool is_completed_ = false;
   bool reset_in_progress_ = false;
   bool is_new_parking_cycle_ = true;
+  boost::optional<rclcpp::Time> obs_found_time_;
 
   LaneletRoute::ConstSharedPtr route_;
   OccupancyGrid::ConstSharedPtr occupancy_grid_;
@@ -149,21 +161,52 @@ private:
 
   // functions, callback
   void onRoute(const LaneletRoute::ConstSharedPtr msg);
-  void onOccupancyGrid(const OccupancyGrid::ConstSharedPtr msg);
-  void onScenario(const Scenario::ConstSharedPtr msg);
   void onOdometry(const Odometry::ConstSharedPtr msg);
 
   void onTimer();
-
+  void updateData();
   void reset();
-  bool isPlanRequired();
   void planTrajectory();
-  void updateTargetIndex();
   void initializePlanningAlgorithm();
+  bool isDataReady();
+
+  /**
+   * @brief Checks if a new trajectory planning is required.
+   * @details A new trajectory planning is required if:
+   *           - Current trajectory points are empty, or
+   *           - Current trajectory collides with an object, or
+   *           - Ego deviates from current trajectory
+   * @return true if any of the conditions are met.
+   */
+  bool isPlanRequired();
+
+  /**
+   * @brief Sets the target index along the current trajectory points
+   * @details if Ego is stopped AND is near the current target index along the trajectory,
+   *          then will get the next target index along the trajectory.
+   *          If the new target index is the same as the current target index, then
+   *          is_complete_ is set to true, and will publish is_completed_msg.
+   *          Otherwise will update prev_target_index_ and target_index_, to continue
+   *          following the trajectory.
+   */
+  void updateTargetIndex();
+
+  /**
+   * @brief Checks if current trajectory is colliding with an object.
+   * @details Will check if an obstacle exists along the current trajectory,
+   *          if there is no obstacle along the current trajectory, will reset obs_found_time_.
+   *          If an obstacle exists and the variable obs_found_time_ is not initialized,
+   *          will initialize with the current time.
+   * @return true if there is an obstacle along current trajectory, AND duration since
+   *         obs_found_time_ exceeds the parameter th_obstacle_time_sec
+   */
+  bool checkCurrentTrajectoryCollision();
 
   TransformStamped getTransform(const std::string & from, const std::string & to);
 
-  std::unique_ptr<autoware_universe_utils::LoggerLevelConfigure> logger_configure_;
+  std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;
+
+  friend class ::TestFreespacePlanner;
 };
 }  // namespace autoware::freespace_planner
 

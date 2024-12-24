@@ -20,7 +20,7 @@
 #include <autoware/behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
-#include <lanelet2_extension/regulatory_elements/crosswalk.hpp>
+#include <autoware_lanelet2_extension/regulatory_elements/crosswalk.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
@@ -39,6 +39,7 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <algorithm>
+#include <iostream>
 #include <memory>
 #include <optional>
 #include <string>
@@ -49,18 +50,21 @@
 namespace autoware::behavior_velocity_planner
 {
 namespace bg = boost::geometry;
+using autoware::universe_utils::Polygon2d;
+using autoware::universe_utils::StopWatch;
 using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::TrafficLightElement;
-using autoware_universe_utils::Polygon2d;
-using autoware_universe_utils::StopWatch;
 using lanelet::autoware::Crosswalk;
-using tier4_api_msgs::msg::CrosswalkStatus;
 using tier4_planning_msgs::msg::PathWithLaneId;
 
 namespace
 {
+/**
+ * @param x_vec Strictly monotone increasing is required.
+ * @param y_vec The same number of elements as x_vec is required.
+ */
 double interpolateEgoPassMargin(
   const std::vector<double> & x_vec, const std::vector<double> & y_vec, const double target_x)
 {
@@ -76,6 +80,10 @@ double interpolateEgoPassMargin(
   return y_vec.back();
 }
 
+/**
+ * @param key_map Strictly monotone increasing should be satisfied.
+ * @param value_map The same number of elements as key_map is required.
+ */
 double InterpolateMap(
   const std::vector<double> & key_map, const std::vector<double> & value_map, const double query)
 {
@@ -111,10 +119,15 @@ public:
   {
     bool show_processing_time;
     // param for stop position
-    double stop_distance_from_object;
+    double stop_distance_from_object_preferred;
+    double stop_distance_from_object_limit;
     double stop_distance_from_crosswalk;
-    double far_object_threshold;
     double stop_position_threshold;
+    double min_acc_preferred;
+    double min_jerk_preferred;
+    // param for restart suppression
+    double min_dist_to_stop_for_restart_suppression;
+    double max_dist_to_stop_for_restart_suppression;
     // param for ego velocity
     float min_slow_down_velocity;
     double max_slow_down_jerk;
@@ -136,10 +149,9 @@ public:
     std::vector<double> ego_pass_later_margin_y;
     double ego_pass_later_additional_margin;
     double ego_min_assumed_speed;
-    double max_offset_to_crosswalk_for_yield;
     double min_acc_for_no_stop_decision;
-    double max_jerk_for_no_stop_decision;
     double min_jerk_for_no_stop_decision;
+    double overrun_threshold_length_for_no_stop_decision;
     double stop_object_velocity;
     double min_object_velocity;
     bool disable_yield_for_new_stopped_object;
@@ -264,7 +276,7 @@ public:
       const bool is_object_away_from_path =
         !attention_area.outer().empty() &&
         boost::geometry::distance(
-          autoware_universe_utils::fromMsg(position).to_2d(), attention_area) > 0.5;
+          autoware::universe_utils::fromMsg(position).to_2d(), attention_area) > 0.5;
 
       // add new object
       if (objects.count(uuid) == 0) {
@@ -324,30 +336,44 @@ public:
     const PlannerParam & planner_param, const rclcpp::Logger & logger,
     const rclcpp::Clock::SharedPtr clock);
 
-  bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
+  bool modifyPathVelocity(PathWithLaneId * path) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
-  autoware_motion_utils::VirtualWalls createVirtualWalls() override;
+  autoware::motion_utils::VirtualWalls createVirtualWalls() override;
 
 private:
   // main functions
-  void applySafetySlowDownSpeed(
-    PathWithLaneId & output, const std::vector<geometry_msgs::msg::Point> & path_intersects,
-    const float speed);
+  void applySlowDown(
+    PathWithLaneId & output, const geometry_msgs::msg::Point & first_path_point_on_crosswalk,
+    const geometry_msgs::msg::Point & last_path_point_on_crosswalk,
+    const float safety_slow_down_speed);
 
-  std::optional<std::pair<geometry_msgs::msg::Point, double>> getStopPointWithMargin(
+  void applySlowDownByLanelet2Map(
+    PathWithLaneId & output, const geometry_msgs::msg::Point & first_path_point_on_crosswalk,
+    const geometry_msgs::msg::Point & last_path_point_on_crosswalk);
+
+  void applySlowDownByOcclusion(
+    PathWithLaneId & output, const geometry_msgs::msg::Point & first_path_point_on_crosswalk,
+    const geometry_msgs::msg::Point & last_path_point_on_crosswalk);
+
+  std::optional<geometry_msgs::msg::Pose> getDefaultStopPose(
     const PathWithLaneId & ego_path,
-    const std::vector<geometry_msgs::msg::Point> & path_intersects) const;
+    const geometry_msgs::msg::Point & first_path_point_on_crosswalk) const;
+
+  std::optional<geometry_msgs::msg::Pose> calcStopPose(
+    const PathWithLaneId & ego_path, double dist_nearest_cp,
+    const std::optional<geometry_msgs::msg::Pose> & default_stop_pose_opt);
 
   std::optional<StopFactor> checkStopForCrosswalkUsers(
     const PathWithLaneId & ego_path, const PathWithLaneId & sparse_resample_path,
-    const std::optional<std::pair<geometry_msgs::msg::Point, double>> & p_stop_line,
-    const std::vector<geometry_msgs::msg::Point> & path_intersects,
+    const geometry_msgs::msg::Point & first_path_point_on_crosswalk,
+    const geometry_msgs::msg::Point & last_path_point_on_crosswalk,
     const std::optional<geometry_msgs::msg::Pose> & default_stop_pose);
 
   std::optional<StopFactor> checkStopForStuckVehicles(
     const PathWithLaneId & ego_path, const std::vector<PredictedObject> & objects,
-    const std::vector<geometry_msgs::msg::Point> & path_intersects,
+    const geometry_msgs::msg::Point & first_path_point_on_crosswalk,
+    const geometry_msgs::msg::Point & last_path_point_on_crosswalk,
     const std::optional<geometry_msgs::msg::Pose> & stop_pose);
 
   std::optional<double> findEgoPassageDirectionAlongPath(
@@ -373,12 +399,13 @@ private:
 
   void planStop(
     PathWithLaneId & ego_path, const std::optional<StopFactor> & nearest_stop_factor,
-    const std::optional<geometry_msgs::msg::Pose> & default_stop_pose, StopReason * stop_reason);
+    const std::optional<geometry_msgs::msg::Pose> & default_stop_pose);
 
   // minor functions
   std::pair<double, double> getAttentionRange(
     const PathWithLaneId & ego_path,
-    const std::vector<geometry_msgs::msg::Point> & path_intersects);
+    const geometry_msgs::msg::Point & first_path_point_on_crosswalk,
+    const geometry_msgs::msg::Point & last_path_point_on_crosswalk);
 
   void insertDecelPointWithDebugInfo(
     const geometry_msgs::msg::Point & stop_point, const float target_velocity,
@@ -401,10 +428,6 @@ private:
     const PathWithLaneId & sparse_resample_path,
     const std::pair<double, double> & crosswalk_attention_range) const;
 
-  bool isStuckVehicle(
-    const PathWithLaneId & ego_path, const std::vector<PredictedObject> & objects,
-    const std::vector<geometry_msgs::msg::Point> & path_intersects) const;
-
   void updateObjectState(
     const double dist_ego_to_stop, const PathWithLaneId & sparse_resample_path,
     const std::pair<double, double> & crosswalk_attention_range, const Polygon2d & attention_area);
@@ -420,6 +443,9 @@ private:
 
   static geometry_msgs::msg::Polygon createVehiclePolygon(
     const autoware::vehicle_info_utils::VehicleInfo & vehicle_info);
+
+  bool checkRestartSuppression(
+    const PathWithLaneId & ego_path, const std::optional<StopFactor> & stop_factor) const;
 
   void recordTime(const int step_num)
   {

@@ -12,30 +12,33 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/behavior_path_planner_common/utils/parking_departure/geometric_parallel_parking.hpp"
-
-#include "autoware/behavior_path_planner_common/utils/parking_departure/utils.hpp"
-#include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
-#include "autoware/behavior_path_planner_common/utils/utils.hpp"
-#include "autoware/universe_utils/geometry/geometry.hpp"
-#include "autoware/universe_utils/math/unit_conversion.hpp"
-
-#include <interpolation/spline_interpolation.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
+#include <autoware/behavior_path_planner_common/utils/parking_departure/geometric_parallel_parking.hpp>
+#include <autoware/behavior_path_planner_common/utils/parking_departure/utils.hpp>
+#include <autoware/behavior_path_planner_common/utils/path_utils.hpp>
+#include <autoware/behavior_path_planner_common/utils/utils.hpp>
+#include <autoware/interpolation/spline_interpolation.hpp>
+#include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/math/unit_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 
 #include <boost/geometry/algorithms/within.hpp>
 
 #include <lanelet2_core/geometry/Polygon.h>
 
+#include <algorithm>
+#include <limits>
+#include <memory>
 #include <optional>
 #include <utility>
 #include <vector>
 
-using autoware_universe_utils::calcDistance2d;
-using autoware_universe_utils::calcOffsetPose;
-using autoware_universe_utils::inverseTransformPoint;
-using autoware_universe_utils::normalizeRadian;
-using autoware_universe_utils::transformPose;
+using autoware::universe_utils::calcDistance2d;
+using autoware::universe_utils::calcOffsetPose;
+using autoware::universe_utils::inverseTransformPoint;
+using autoware::universe_utils::normalizeRadian;
+using autoware::universe_utils::transformPose;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using lanelet::utils::getArcCoordinates;
@@ -70,7 +73,7 @@ PathWithLaneId GeometricParallelParking::getFullPath() const
   }
 
   PathWithLaneId filtered_path = path;
-  filtered_path.points = autoware_motion_utils::removeOverlapPoints(filtered_path.points);
+  filtered_path.points = autoware::motion_utils::removeOverlapPoints(filtered_path.points);
   return filtered_path;
 }
 
@@ -105,7 +108,7 @@ void GeometricParallelParking::setVelocityToArcPaths(
 
 std::vector<PathWithLaneId> GeometricParallelParking::generatePullOverPaths(
   const Pose & start_pose, const Pose & goal_pose, const double R_E_far,
-  const lanelet::ConstLanelets & road_lanes, const lanelet::ConstLanelets & shoulder_lanes,
+  const lanelet::ConstLanelets & road_lanes, const lanelet::ConstLanelets & pull_over_lanes,
   const bool is_forward, const bool left_side_parking, const double end_pose_offset,
   const double velocity)
 {
@@ -115,7 +118,7 @@ std::vector<PathWithLaneId> GeometricParallelParking::generatePullOverPaths(
   const double arc_path_interval = is_forward ? parameters_.forward_parking_path_interval
                                               : parameters_.backward_parking_path_interval;
   auto arc_paths = planOneTrial(
-    start_pose, goal_pose, R_E_far, road_lanes, shoulder_lanes, is_forward, left_side_parking,
+    start_pose, goal_pose, R_E_far, road_lanes, pull_over_lanes, is_forward, left_side_parking,
     end_pose_offset, lane_departure_margin, arc_path_interval, {});
   if (arc_paths.empty()) {
     return std::vector<PathWithLaneId>{};
@@ -132,10 +135,10 @@ std::vector<PathWithLaneId> GeometricParallelParking::generatePullOverPaths(
   // check the continuity of straight path and arc path
   const Pose & road_path_last_pose = straight_path.points.back().point.pose;
   const Pose & arc_path_first_pose = arc_paths.front().points.front().point.pose;
-  const double yaw_diff = std::abs(autoware_universe_utils::normalizeRadian(
+  const double yaw_diff = std::abs(autoware::universe_utils::normalizeRadian(
     tf2::getYaw(road_path_last_pose.orientation) - tf2::getYaw(arc_path_first_pose.orientation)));
   const double distance = calcDistance2d(road_path_last_pose, arc_path_first_pose);
-  if (yaw_diff > autoware_universe_utils::deg2rad(5.0) || distance > 0.1) {
+  if (yaw_diff > autoware::universe_utils::deg2rad(5.0) || distance > 0.1) {
     return std::vector<PathWithLaneId>{};
   }
 
@@ -156,7 +159,7 @@ void GeometricParallelParking::clearPaths()
 
 bool GeometricParallelParking::planPullOver(
   const Pose & goal_pose, const lanelet::ConstLanelets & road_lanes,
-  const lanelet::ConstLanelets & shoulder_lanes, const bool is_forward,
+  const lanelet::ConstLanelets & pull_over_lanes, const bool is_forward,
   const bool left_side_parking)
 {
   const auto & common_params = planner_data_->parameters;
@@ -186,7 +189,7 @@ bool GeometricParallelParking::planPullOver(
       }
 
       const auto paths = generatePullOverPaths(
-        *start_pose, goal_pose, R_E_far, road_lanes, shoulder_lanes, is_forward, left_side_parking,
+        *start_pose, goal_pose, R_E_far, road_lanes, pull_over_lanes, is_forward, left_side_parking,
         end_pose_offset, parameters_.forward_parking_velocity);
       if (!paths.empty()) {
         paths_ = paths;
@@ -208,8 +211,8 @@ bool GeometricParallelParking::planPullOver(
       }
 
       const auto paths = generatePullOverPaths(
-        *start_pose, goal_pose, R_E_min_, road_lanes, shoulder_lanes, is_forward, left_side_parking,
-        end_pose_offset, parameters_.backward_parking_velocity);
+        *start_pose, goal_pose, R_E_min_, road_lanes, pull_over_lanes, is_forward,
+        left_side_parking, end_pose_offset, parameters_.backward_parking_velocity);
       if (!paths.empty()) {
         paths_ = paths;
         return true;
@@ -222,7 +225,7 @@ bool GeometricParallelParking::planPullOver(
 
 bool GeometricParallelParking::planPullOut(
   const Pose & start_pose, const Pose & goal_pose, const lanelet::ConstLanelets & road_lanes,
-  const lanelet::ConstLanelets & shoulder_lanes, const bool left_side_start,
+  const lanelet::ConstLanelets & pull_over_lanes, const bool left_side_start,
   const std::shared_ptr<autoware::lane_departure_checker::LaneDepartureChecker>
     lane_departure_checker)
 {
@@ -242,7 +245,7 @@ bool GeometricParallelParking::planPullOut(
 
     // plan reverse path of parking. end_pose <-> start_pose
     auto arc_paths = planOneTrial(
-      *end_pose, start_pose, R_E_min_, road_lanes, shoulder_lanes, is_forward, left_side_start,
+      *end_pose, start_pose, R_E_min_, road_lanes, pull_over_lanes, is_forward, left_side_start,
       start_pose_offset, parameters_.pull_out_lane_departure_margin,
       parameters_.pull_out_arc_path_interval, lane_departure_checker);
     if (arc_paths.empty()) {
@@ -282,10 +285,10 @@ bool GeometricParallelParking::planPullOut(
     // check the continuity of straight path and arc path
     const Pose & road_path_first_pose = road_center_line_path.points.front().point.pose;
     const Pose & arc_path_last_pose = arc_paths.back().points.back().point.pose;
-    const double yaw_diff = std::abs(autoware_universe_utils::normalizeRadian(
+    const double yaw_diff = std::abs(autoware::universe_utils::normalizeRadian(
       tf2::getYaw(road_path_first_pose.orientation) - tf2::getYaw(arc_path_last_pose.orientation)));
     const double distance = calcDistance2d(road_path_first_pose, arc_path_last_pose);
-    if (yaw_diff > autoware_universe_utils::deg2rad(5.0) || distance > 0.1) {
+    if (yaw_diff > autoware::universe_utils::deg2rad(5.0) || distance > 0.1) {
       continue;
     }
 
@@ -299,7 +302,7 @@ bool GeometricParallelParking::planPullOut(
       paths.back().points.end(),
       road_center_line_path.points.begin() + 1,  // to avoid overlapped point
       road_center_line_path.points.end());
-    paths.back().points = autoware_motion_utils::removeOverlapPoints(paths.back().points);
+    paths.back().points = autoware::motion_utils::removeOverlapPoints(paths.back().points);
 
     // if the end point is the goal, set the velocity to 0
     if (path_terminal_is_goal) {
@@ -333,8 +336,20 @@ std::optional<Pose> GeometricParallelParking::calcStartPose(
   }
   const double dx_sign = is_forward ? -1 : 1;
   const double dx = 2 * std::sqrt(squared_distance_to_arc_connect) * dx_sign;
-  const Pose start_pose =
-    calcOffsetPose(goal_pose, dx + start_pose_offset, -arc_coordinates.distance, 0);
+
+  // Assuming parallel poses, calculate the approximate start pose on the centerline from the goal
+  // pose
+  const Pose approximate_start_pose = calcOffsetPose(goal_pose, dx, -arc_coordinates.distance, 0);
+  lanelet::ConstLanelet closest_road_lane{};
+
+  // Calculate start pose on the centerline, then offset it.
+  lanelet::utils::query::getClosestLanelet(road_lanes, approximate_start_pose, &closest_road_lane);
+  const Pose start_pose_no_offset =
+    lanelet::utils::getClosestCenterPose(closest_road_lane, approximate_start_pose.position);
+  const auto road_lane_path = planner_data_->route_handler->getCenterLinePath(
+    road_lanes, 0.0, std::numeric_limits<double>::max());
+  const auto start_pose = autoware::motion_utils::calcLongitudinalOffsetPose(
+    road_lane_path.points, start_pose_no_offset.position, start_pose_offset);
 
   return start_pose;
 }
@@ -362,7 +377,7 @@ PathWithLaneId GeometricParallelParking::generateStraightPath(
 
 std::vector<PathWithLaneId> GeometricParallelParking::planOneTrial(
   const Pose & start_pose, const Pose & goal_pose, const double R_E_far,
-  const lanelet::ConstLanelets & road_lanes, const lanelet::ConstLanelets & shoulder_lanes,
+  const lanelet::ConstLanelets & road_lanes, const lanelet::ConstLanelets & pull_over_lanes,
   const bool is_forward, const bool left_side_parking, const double end_pose_offset,
   const double lane_departure_margin, const double arc_path_interval,
   const std::shared_ptr<autoware::lane_departure_checker::LaneDepartureChecker>
@@ -399,7 +414,7 @@ std::vector<PathWithLaneId> GeometricParallelParking::planOneTrial(
   // combine road and shoulder lanes
   // cut the road lanes up to start_pose to prevent unintended processing for overlapped lane
   lanelet::ConstLanelets lanes{};
-  autoware_universe_utils::Point2d start_point2d(start_pose.position.x, start_pose.position.y);
+  autoware::universe_utils::Point2d start_point2d(start_pose.position.x, start_pose.position.y);
   for (const auto & lane : road_lanes) {
     if (boost::geometry::within(start_point2d, lane.polygon2d().basicPolygon())) {
       lanes.push_back(lane);
@@ -407,7 +422,7 @@ std::vector<PathWithLaneId> GeometricParallelParking::planOneTrial(
     }
     lanes.push_back(lane);
   }
-  lanes.insert(lanes.end(), shoulder_lanes.begin(), shoulder_lanes.end());
+  lanes.insert(lanes.end(), pull_over_lanes.begin(), pull_over_lanes.end());
 
   // If start_pose is parallel to goal_pose, we can know lateral deviation of edges of vehicle,
   // and detect lane departure.
@@ -415,7 +430,7 @@ std::vector<PathWithLaneId> GeometricParallelParking::planOneTrial(
     const double R_front_near =
       std::hypot(R_E_far + common_params.vehicle_width / 2, common_params.base_link2front);
     const double distance_to_near_bound =
-      utils::getSignedDistanceFromBoundary(shoulder_lanes, arc_end_pose, left_side_parking);
+      utils::getSignedDistanceFromBoundary(pull_over_lanes, arc_end_pose, left_side_parking);
     const double near_deviation = R_front_near - R_E_far;
     if (std::abs(distance_to_near_bound) - near_deviation < lane_departure_margin) {
       return std::vector<PathWithLaneId>{};

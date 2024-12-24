@@ -54,7 +54,7 @@ void modifyVelocityByDirection(
   const double acceleration);
 
 void updatePathProperty(
-  std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
+  const std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
   const std::pair<double, double> & pairs_terminal_velocity_and_accel);
 
 void initializeCollisionCheckDebugMap(CollisionCheckDebugMap & collision_check_debug_map);
@@ -70,8 +70,7 @@ std::pair<double, double> getPairsTerminalVelocityAndAccel(
 
 std::optional<PathWithLaneId> generateFeasibleStopPath(
   PathWithLaneId & current_path, std::shared_ptr<const PlannerData> planner_data,
-  std::optional<geometry_msgs::msg::Pose> & stop_pose, const double maximum_deceleration,
-  const double maximum_jerk);
+  PoseWithDetailOpt & stop_pose, const double maximum_deceleration, const double maximum_jerk);
 
 /**
  * @brief calculate end arc length to generate reference path considering the goal position

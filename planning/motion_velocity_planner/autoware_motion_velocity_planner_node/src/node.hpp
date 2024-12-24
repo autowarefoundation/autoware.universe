@@ -25,6 +25,7 @@
 #include <autoware_motion_velocity_planner_node/srv/unload_plugin.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_internal_debug_msgs/msg/float64_stamped.hpp>
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_perception_msgs/msg/traffic_signal_array.hpp>
@@ -37,6 +38,7 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
+#include <map>
 #include <memory>
 #include <mutex>
 #include <string>
@@ -62,25 +64,22 @@ private:
 
   // subscriber
   rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr sub_trajectory_;
-  autoware_universe_utils::InterProcessPollingSubscriber<
+  autoware::universe_utils::InterProcessPollingSubscriber<
     autoware_perception_msgs::msg::PredictedObjects>
     sub_predicted_objects_{this, "~/input/dynamic_objects"};
-  autoware_universe_utils::InterProcessPollingSubscriber<sensor_msgs::msg::PointCloud2>
+  autoware::universe_utils::InterProcessPollingSubscriber<sensor_msgs::msg::PointCloud2>
     sub_no_ground_pointcloud_{
-      this, "~/input/no_ground_pointcloud", autoware_universe_utils::SingleDepthSensorQoS()};
-  autoware_universe_utils::InterProcessPollingSubscriber<nav_msgs::msg::Odometry>
+      this, "~/input/no_ground_pointcloud", autoware::universe_utils::SingleDepthSensorQoS()};
+  autoware::universe_utils::InterProcessPollingSubscriber<nav_msgs::msg::Odometry>
     sub_vehicle_odometry_{this, "~/input/vehicle_odometry"};
-  autoware_universe_utils::InterProcessPollingSubscriber<
+  autoware::universe_utils::InterProcessPollingSubscriber<
     geometry_msgs::msg::AccelWithCovarianceStamped>
     sub_acceleration_{this, "~/input/accel"};
-  autoware_universe_utils::InterProcessPollingSubscriber<nav_msgs::msg::OccupancyGrid>
+  autoware::universe_utils::InterProcessPollingSubscriber<nav_msgs::msg::OccupancyGrid>
     sub_occupancy_grid_{this, "~/input/occupancy_grid"};
-  autoware_universe_utils::InterProcessPollingSubscriber<
+  autoware::universe_utils::InterProcessPollingSubscriber<
     autoware_perception_msgs::msg::TrafficLightGroupArray>
     sub_traffic_signals_{this, "~/input/traffic_signals"};
-  autoware_universe_utils::InterProcessPollingSubscriber<
-    tier4_v2x_msgs::msg::VirtualTrafficLightStateArray>
-    sub_virtual_traffic_light_states_{this, "~/input/virtual_traffic_light_states"};
   rclcpp::Subscription<autoware_map_msgs::msg::LaneletMapBin>::SharedPtr sub_lanelet_map_;
 
   void on_trajectory(
@@ -96,6 +95,12 @@ private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_viz_pub_;
   rclcpp::Publisher<autoware_adapi_v1_msgs::msg::VelocityFactorArray>::SharedPtr
     velocity_factor_publisher_;
+  autoware::universe_utils::ProcessingTimePublisher processing_diag_publisher_{
+    this, "~/debug/processing_time_ms_diag"};
+  rclcpp::Publisher<autoware_internal_debug_msgs::msg::Float64Stamped>::SharedPtr
+    processing_time_publisher_;
+  autoware::universe_utils::PublishedTimePublisher published_time_publisher_{this};
+  rclcpp::Publisher<MetricArray>::SharedPtr metrics_pub_;
 
   //  parameters
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr set_param_callback_;
@@ -125,7 +130,7 @@ private:
   // function
   /// @brief update the PlannerData instance with the latest messages received
   /// @return false if some data is not available
-  bool update_planner_data();
+  bool update_planner_data(std::map<std::string, double> & processing_times);
   void insert_stop(
     autoware_planning_msgs::msg::Trajectory & trajectory,
     const geometry_msgs::msg::Point & stop_point) const;
@@ -136,11 +141,10 @@ private:
     const autoware::motion_velocity_planner::TrajectoryPoints & trajectory_points,
     const autoware::motion_velocity_planner::PlannerData & planner_data) const;
   autoware_planning_msgs::msg::Trajectory generate_trajectory(
-    autoware::motion_velocity_planner::TrajectoryPoints input_trajectory_points);
+    autoware::motion_velocity_planner::TrajectoryPoints input_trajectory_points,
+    std::map<std::string, double> & processing_times);
 
-  std::unique_ptr<autoware_universe_utils::LoggerLevelConfigure> logger_configure_;
-
-  std::unique_ptr<autoware_universe_utils::PublishedTimePublisher> published_time_publisher_;
+  std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;
 };
 }  // namespace autoware::motion_velocity_planner
 

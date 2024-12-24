@@ -21,6 +21,11 @@
 #include <yabloc_common/cv_decompress.hpp>
 #include <yabloc_common/pub_sub.hpp>
 
+#include <memory>
+#include <set>
+#include <unordered_map>
+#include <unordered_set>
+
 namespace yabloc::graph_segment
 {
 GraphSegment::GraphSegment(const rclcpp::NodeOptions & options)
@@ -98,7 +103,7 @@ void GraphSegment::on_image(const Image & msg)
   cv::resize(image, resized, cv::Size(), 0.5, 0.5);
 
   // Execute graph-based segmentation
-  autoware_universe_utils::StopWatch stop_watch;
+  autoware::universe_utils::StopWatch stop_watch;
   cv::Mat segmented;
   segmentation_->processImage(resized, segmented);
   RCLCPP_INFO_STREAM(get_logger(), "segmentation time: " << stop_watch.toc() * 1000 << "[ms]");

@@ -90,6 +90,9 @@ struct StartPlannerDebugData
   std::vector<Pose> start_pose_candidates;
   size_t selected_start_pose_candidate_index;
   double margin_for_start_pose_candidate;
+
+  // for isPreventingRearVehicleFromPassingThrough
+  std::optional<Pose> estimated_stop_pose;
 };
 
 struct StartPlannerParameters
@@ -99,6 +102,7 @@ struct StartPlannerParameters
   double th_stopped_time{0.0};
   double prepare_time_before_start{0.0};
   double th_distance_to_middle_of_the_road{0.0};
+  bool skip_rear_vehicle_check{false};
   double extra_width_margin_for_rear_obstacle{0.0};
   std::vector<double> collision_check_margins{};
   double collision_check_margin_from_front_object{0.0};
@@ -119,6 +123,7 @@ struct StartPlannerParameters
   double maximum_lateral_acc{0.0};
   double minimum_lateral_acc{0.0};
   double maximum_curvature{0.0};  // maximum curvature considered in the path generation
+  double end_pose_curvature_threshold{0.0};
   double maximum_longitudinal_deviation{0.0};
   // geometric pull out
   bool enable_geometric_pull_out{false};

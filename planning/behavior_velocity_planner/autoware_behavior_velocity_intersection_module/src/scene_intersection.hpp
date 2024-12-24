@@ -321,11 +321,11 @@ public:
    * INTERSECTION_OCCLUSION.
    * @{
    */
-  bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
+  bool modifyPathVelocity(PathWithLaneId * path) override;
   /** @}*/
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
-  autoware_motion_utils::VirtualWalls createVirtualWalls() override;
+  autoware::motion_utils::VirtualWalls createVirtualWalls() override;
 
   const std::set<lanelet::Id> & getAssociativeIds() const { return associative_ids_; }
 
@@ -504,7 +504,7 @@ private:
   /**
    * @brief analyze traffic_light/occupancy/objects context and return DecisionResult
    */
-  DecisionResult modifyPathVelocityDetail(PathWithLaneId * path, StopReason * stop_reason);
+  DecisionResult modifyPathVelocityDetail(PathWithLaneId * path);
 
   /**
    * @brief set RTC value according to calculated DecisionResult
@@ -516,8 +516,7 @@ private:
    * @brief act based on current RTC approval
    */
   void reactRTCApproval(
-    const DecisionResult & decision_result, tier4_planning_msgs::msg::PathWithLaneId * path,
-    StopReason * stop_reason);
+    const DecisionResult & decision_result, tier4_planning_msgs::msg::PathWithLaneId * path);
   /** @}*/
 
 private:
@@ -590,7 +589,8 @@ private:
    * @brief generate discretized detection lane linestring.
    */
   std::vector<lanelet::ConstLineString3d> generateDetectionLaneDivisions(
-    lanelet::ConstLanelets detection_lanelets,
+    const lanelet::ConstLanelets & occlusion_detection_lanelets,
+    const lanelet::ConstLanelets & conflicting_detection_lanelets,
     const lanelet::routing::RoutingGraphPtr routing_graph_ptr, const double resolution) const;
   /** @} */
 
@@ -752,7 +752,7 @@ private:
 
   void cutPredictPathWithinDuration(
     const builtin_interfaces::msg::Time & object_stamp, const double time_thr,
-    autoware_perception_msgs::msg::PredictedPath * predicted_path) const;
+    autoware_perception_msgs::msg::PredictedPath * path) const;
 
   /**
    * @brief check if there are any objects around the stoplines on the attention areas when ego
@@ -809,7 +809,7 @@ private:
   TimeDistanceArray calcIntersectionPassingTime(
     const tier4_planning_msgs::msg::PathWithLaneId & path, const bool is_prioritized,
     const IntersectionStopLines & intersection_stoplines,
-    tier4_debug_msgs::msg::Float64MultiArrayStamped * debug_ttc_array) const;
+    tier4_debug_msgs::msg::Float64MultiArrayStamped * ego_ttc_array) const;
   /** @} */
 
   mutable DebugData debug_data_;

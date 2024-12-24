@@ -23,6 +23,7 @@ from launch.substitutions import LaunchConfiguration
 from launch.substitutions import PathJoinSubstitution
 from launch_ros.actions import LoadComposableNodes
 from launch_ros.descriptions import ComposableNode
+from launch_ros.parameter_descriptions import ParameterFile
 from launch_ros.substitutions import FindPackageShare
 import yaml
 
@@ -82,11 +83,17 @@ class GroundSegmentationPipeline:
                 "margin_min_z"
             ]
         )
+        # Get the plugin name from the full plugin path
+        ground_segmentation_plugin_name = self.ground_segmentation_param[
+            f"{lidar_name}_ground_filter"
+        ]["plugin"]
+        ground_segmentation_plugin_name = ground_segmentation_plugin_name.split("::")[-1]
+
         components = []
         components.append(
             ComposableNode(
-                package="pointcloud_preprocessor",
-                plugin="pointcloud_preprocessor::CropBoxFilterComponent",
+                package="autoware_pointcloud_preprocessor",
+                plugin="autoware::pointcloud_preprocessor::CropBoxFilterComponent",
                 name=f"{lidar_name}_crop_box_filter",
                 remappings=[
                     ("input", f"/sensing/lidar/{lidar_name}/pointcloud"),
@@ -109,8 +116,8 @@ class GroundSegmentationPipeline:
 
         components.append(
             ComposableNode(
-                package="ground_segmentation",
-                plugin=self.ground_segmentation_param[f"{lidar_name}_ground_filter"]["plugin"],
+                package="autoware_ground_segmentation",
+                plugin="autoware::ground_segmentation::" + ground_segmentation_plugin_name,
                 name=f"{lidar_name}_ground_filter",
                 remappings=[
                     ("input", f"{lidar_name}/range_cropped/pointcloud"),
@@ -131,8 +138,8 @@ class GroundSegmentationPipeline:
         components = []
         components.append(
             ComposableNode(
-                package="pointcloud_preprocessor",
-                plugin="pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent",
+                package="autoware_pointcloud_preprocessor",
+                plugin="autoware::pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent",
                 name="concatenate_data",
                 namespace="plane_fitting",
                 remappings=[
@@ -155,8 +162,8 @@ class GroundSegmentationPipeline:
 
         components.append(
             ComposableNode(
-                package="pointcloud_preprocessor",
-                plugin="pointcloud_preprocessor::CropBoxFilterComponent",
+                package="autoware_pointcloud_preprocessor",
+                plugin="autoware::pointcloud_preprocessor::CropBoxFilterComponent",
                 name="short_height_obstacle_detection_area_filter",
                 namespace="plane_fitting",
                 remappings=[
@@ -180,8 +187,8 @@ class GroundSegmentationPipeline:
 
         components.append(
             ComposableNode(
-                package="pointcloud_preprocessor",
-                plugin="pointcloud_preprocessor::Lanelet2MapFilterComponent",
+                package="autoware_pointcloud_preprocessor",
+                plugin="autoware::pointcloud_preprocessor::Lanelet2MapFilterComponent",
                 name="vector_map_filter",
                 namespace="plane_fitting",
                 remappings=[
@@ -202,8 +209,8 @@ class GroundSegmentationPipeline:
 
         components.append(
             ComposableNode(
-                package="ground_segmentation",
-                plugin="ground_segmentation::RANSACGroundFilterComponent",
+                package="autoware_ground_segmentation",
+                plugin="autoware::ground_segmentation::" + "RANSACGroundFilterComponent",
                 name="ransac_ground_filter",
                 namespace="plane_fitting",
                 remappings=[
@@ -228,11 +235,17 @@ class GroundSegmentationPipeline:
             self.vehicle_info["min_height_offset"]
             + self.ground_segmentation_param["common_crop_box_filter"]["parameters"]["margin_min_z"]
         )
+        # Get the plugin name from the full plugin path
+        ground_segmentation_plugin_name = self.ground_segmentation_param["common_ground_filter"][
+            "plugin"
+        ]
+        ground_segmentation_plugin_name = ground_segmentation_plugin_name.split("::")[-1]
+
         components = []
         components.append(
             ComposableNode(
-                package="pointcloud_preprocessor",
-                plugin="pointcloud_preprocessor::CropBoxFilterComponent",
+                package="autoware_pointcloud_preprocessor",
+                plugin="autoware::pointcloud_preprocessor::CropBoxFilterComponent",
                 name="crop_box_filter",
                 remappings=[
                     ("input", input_topic),
@@ -255,8 +268,8 @@ class GroundSegmentationPipeline:
 
         components.append(
             ComposableNode(
-                package="ground_segmentation",
-                plugin=self.ground_segmentation_param["common_ground_filter"]["plugin"],
+                package="autoware_ground_segmentation",
+                plugin="autoware::ground_segmentation::" + ground_segmentation_plugin_name,
                 name="common_ground_filter",
                 remappings=[
                     ("input", "range_cropped/pointcloud"),
@@ -315,18 +328,21 @@ class GroundSegmentationPipeline:
         return components
 
     @staticmethod
-    def create_time_series_outlier_filter_components(input_topic, output_topic):
+    def create_time_series_outlier_filter_components(
+        input_topic, output_topic, ogm_outlier_filter_param
+    ):
         components = []
         components.append(
             ComposableNode(
-                package="occupancy_grid_map_outlier_filter",
-                plugin="occupancy_grid_map_outlier_filter::OccupancyGridMapOutlierFilterComponent",
+                package="autoware_occupancy_grid_map_outlier_filter",
+                plugin="autoware::occupancy_grid_map_outlier_filter::OccupancyGridMapOutlierFilterComponent",
                 name="occupancy_grid_based_outlier_filter",
                 remappings=[
                     ("~/input/occupancy_grid_map", "/perception/occupancy_grid_map/map"),
                     ("~/input/pointcloud", input_topic),
                     ("~/output/pointcloud", output_topic),
                 ],
+                parameters=[ogm_outlier_filter_param],
                 extra_arguments=[
                     {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
                 ],
@@ -340,8 +356,8 @@ class GroundSegmentationPipeline:
         components = []
         components.append(
             ComposableNode(
-                package="elevation_map_loader",
-                plugin="ElevationMapLoaderNode",
+                package="autoware_elevation_map_loader",
+                plugin="autoware::elevation_map_loader::ElevationMapLoaderNode",
                 name="elevation_map_loader",
                 namespace="elevation_map",
                 remappings=[
@@ -367,7 +383,11 @@ class GroundSegmentationPipeline:
                             ]
                         ),
                         "elevation_map_directory": PathJoinSubstitution(
-                            [FindPackageShare("elevation_map_loader"), "data", "elevation_maps"]
+                            [
+                                FindPackageShare("autoware_elevation_map_loader"),
+                                "data",
+                                "elevation_maps",
+                            ]
                         ),
                         "use_elevation_map_cloud_publisher": False,
                     }
@@ -378,8 +398,8 @@ class GroundSegmentationPipeline:
 
         components.append(
             ComposableNode(
-                package="compare_map_segmentation",
-                plugin="compare_map_segmentation::CompareElevationMapFilterComponent",
+                package="autoware_compare_map_segmentation",
+                plugin="autoware::compare_map_segmentation::CompareElevationMapFilterComponent",
                 name="compare_elevation_map_filter",
                 namespace="elevation_map",
                 remappings=[
@@ -404,8 +424,8 @@ class GroundSegmentationPipeline:
 
         components.append(
             ComposableNode(
-                package="pointcloud_preprocessor",
-                plugin="pointcloud_preprocessor::VoxelGridDownsampleFilterComponent",
+                package="autoware_pointcloud_preprocessor",
+                plugin="autoware::pointcloud_preprocessor::VoxelGridDownsampleFilterComponent",
                 name="voxel_grid_filter",
                 namespace="elevation_map",
                 remappings=[
@@ -429,8 +449,8 @@ class GroundSegmentationPipeline:
 
         components.append(
             ComposableNode(
-                package="pointcloud_preprocessor",
-                plugin="pointcloud_preprocessor::VoxelGridOutlierFilterComponent",
+                package="autoware_pointcloud_preprocessor",
+                plugin="autoware::pointcloud_preprocessor::VoxelGridOutlierFilterComponent",
                 name="voxel_grid_outlier_filter",
                 namespace="elevation_map",
                 remappings=[
@@ -456,8 +476,8 @@ class GroundSegmentationPipeline:
     @staticmethod
     def get_additional_lidars_concatenated_component(input_topics, output_topic):
         return ComposableNode(
-            package="pointcloud_preprocessor",
-            plugin="pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent",
+            package="autoware_pointcloud_preprocessor",
+            plugin="autoware::pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent",
             name="concatenate_data",
             remappings=[
                 ("~/input/odom", "/localization/kinematic_state"),
@@ -476,8 +496,8 @@ class GroundSegmentationPipeline:
     @staticmethod
     def get_single_frame_obstacle_segmentation_concatenated_component(input_topics, output_topic):
         return ComposableNode(
-            package="pointcloud_preprocessor",
-            plugin="pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent",
+            package="autoware_pointcloud_preprocessor",
+            plugin="autoware::pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent",
             name="concatenate_no_ground_data",
             remappings=[
                 ("~/input/odom", "/localization/kinematic_state"),
@@ -529,6 +549,9 @@ def launch_setup(context, *args, **kwargs):
                     else pipeline.single_frame_obstacle_seg_output
                 ),
                 output_topic=pipeline.output_topic,
+                ogm_outlier_filter_param=ParameterFile(
+                    LaunchConfiguration("ogm_outlier_filter_param_path").perform(context)
+                ),
             )
         )
     pointcloud_container_loader = LoadComposableNodes(
@@ -549,6 +572,13 @@ def generate_launch_description():
     add_launch_arg("use_intra_process", "True")
     add_launch_arg("pointcloud_container_name", "pointcloud_container")
     add_launch_arg("input/pointcloud", "/sensing/lidar/concatenated/pointcloud")
+    add_launch_arg(
+        "ogm_outlier_filter_param_path",
+        [
+            FindPackageShare("autoware_launch"),
+            "/config/perception/obstacle_segmentation/occupancy_grid_based_outlier_filter/occupancy_grid_map_outlier_filter.param.yaml",
+        ],
+    )
 
     set_container_executable = SetLaunchConfiguration(
         "container_executable",

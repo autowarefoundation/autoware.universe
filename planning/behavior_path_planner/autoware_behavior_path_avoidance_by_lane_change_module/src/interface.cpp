@@ -19,6 +19,7 @@
 
 #include <memory>
 #include <string>
+#include <unordered_map>
 
 namespace autoware::behavior_path_planner
 {
@@ -47,6 +48,7 @@ bool AvoidanceByLaneChangeInterface::isExecutionRequested() const
   return module_type_->isLaneChangeRequired() && module_type_->specialRequiredCheck() &&
          module_type_->isValidPath();
 }
+
 void AvoidanceByLaneChangeInterface::processOnEntry()
 {
   waitApproval();

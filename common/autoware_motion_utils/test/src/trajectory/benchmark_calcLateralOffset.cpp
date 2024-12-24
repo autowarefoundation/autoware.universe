@@ -22,11 +22,9 @@
 
 namespace
 {
+using autoware::universe_utils::createPoint;
+using autoware::universe_utils::createQuaternionFromRPY;
 using autoware_planning_msgs::msg::Trajectory;
-using autoware_universe_utils::createPoint;
-using autoware_universe_utils::createQuaternionFromRPY;
-
-constexpr double epsilon = 1e-6;
 
 geometry_msgs::msg::Pose createPose(
   double x, double y, double z, double roll, double pitch, double yaw)
@@ -66,7 +64,7 @@ TEST(trajectory_benchmark, DISABLED_calcLateralOffset)
   std::default_random_engine e1(r());
   std::uniform_real_distribution<double> uniform_dist(0.0, 1000.0);
 
-  using autoware_motion_utils::calcLateralOffset;
+  using autoware::motion_utils::calcLateralOffset;
 
   const auto traj = generateTestTrajectory<Trajectory>(1000, 1.0, 0.0, 0.0, 0.1);
   constexpr auto nb_iteration = 10000;

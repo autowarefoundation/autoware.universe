@@ -8,10 +8,22 @@ pluginlib_export_plugin_description_file(autoware_behavior_path_planner plugins.
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/start_planner_module.cpp
   src/manager.cpp
+  src/pull_out_planner_base.cpp
   src/freespace_pull_out.cpp
   src/geometric_pull_out.cpp
   src/shift_pull_out.cpp
   src/util.cpp
 )
+
+if(BUILD_TESTING)
+  find_package(ament_lint_auto REQUIRED)
+  ament_lint_auto_find_test_dependencies()
+  file(GLOB_RECURSE TEST_SOURCES test/*.cpp)
+  ament_add_ros_isolated_gtest(test_${PROJECT_NAME}
+    ${TEST_SOURCES}
+  )
+  target_link_libraries(test_${PROJECT_NAME} ${PROJECT_NAME})
+endif()
+
 
 ament_auto_package(INSTALL_TO_SHARE config)

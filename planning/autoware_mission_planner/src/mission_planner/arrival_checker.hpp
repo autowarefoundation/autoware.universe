@@ -33,7 +33,6 @@ public:
   explicit ArrivalChecker(rclcpp::Node * node);
   void set_goal();
   void set_goal(const PoseWithUuidStamped & goal);
-  void modify_goal(const PoseWithUuidStamped & modified_goal);
   bool is_arrived(const PoseStamped & pose) const;
 
 private:
@@ -42,7 +41,7 @@ private:
   double duration_;
   std::optional<PoseWithUuidStamped> goal_with_uuid_;
   rclcpp::Subscription<PoseWithUuidStamped>::SharedPtr sub_goal_;
-  autoware_motion_utils::VehicleStopChecker vehicle_stop_checker_;
+  autoware::motion_utils::VehicleStopChecker vehicle_stop_checker_;
 };
 
 }  // namespace autoware::mission_planner

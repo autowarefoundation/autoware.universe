@@ -4,7 +4,11 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
+
+concurrency:
+  # Ensures sequential execution of this workflow
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
 
 env:
   CC: /usr/lib/ccache/gcc
@@ -12,7 +16,7 @@ env:
 
 jobs:
   build-and-test:
-    runs-on: [self-hosted, linux, X64]
+    runs-on: [self-hosted, Linux, X64]
     container: ${{ matrix.container }}${{ matrix.container-suffix }}
     strategy:
       fail-fast: false
@@ -23,7 +27,7 @@ jobs:
           - -cuda
         include:
           - rosdistro: humble
-            container: ghcr.io/autowarefoundation/autoware:latest-prebuilt
+            container: ghcr.io/autowarefoundation/autoware:universe-devel
             build-depends-repos: build_depends.repos
     steps:
       - name: Check out repository
@@ -33,6 +37,9 @@ jobs:
 
       - name: Show disk space before the tasks
         run: df -h
+
+      - name: Show machine specs
+        run: lscpu && free -h
 
       - name: Remove exec_depend
         uses: autowarefoundation/autoware-github-actions/remove-exec-depend@v1
@@ -62,8 +69,20 @@ jobs:
           echo -e "# Set maximum cache size\nmax_size = 600MB" >> "${CCACHE_DIR}/ccache.conf"
         shell: bash
 
-      - name: Show ccache stats before build
-        run: du -sh ${CCACHE_DIR} && ccache -s
+      - name: Show ccache stats before build and reset stats
+        run: |
+          du -sh ${CCACHE_DIR} && ccache -s
+          ccache --zero-stats
+        shell: bash
+
+      - name: Export CUDA state as a variable for adding to cache key
+        run: |
+          build_type_cuda_state=nocuda
+          if [[ "${{ matrix.container-suffix }}" == "-cuda" ]]; then
+            build_type_cuda_state=cuda
+          fi
+          echo "BUILD_TYPE_CUDA_STATE=$build_type_cuda_state" >> "${GITHUB_ENV}"
+          echo "::notice::BUILD_TYPE_CUDA_STATE=$build_type_cuda_state"
         shell: bash
 
       - name: Build
@@ -73,6 +92,8 @@ jobs:
           rosdistro: ${{ matrix.rosdistro }}
           target-packages: ${{ steps.get-self-packages.outputs.self-packages }}
           build-depends-repos: ${{ matrix.build-depends-repos }}
+          cache-key-element: ${{ env.BUILD_TYPE_CUDA_STATE }}
+          build-pre-command: taskset --cpu-list 0-5
 
       - name: Show ccache stats after build
         run: du -sh ${CCACHE_DIR} && ccache -s
@@ -104,6 +125,7 @@ jobs:
           fail_ci_if_error: false
           verbose: true
           flags: total
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Show disk space after the tasks
         run: df -h

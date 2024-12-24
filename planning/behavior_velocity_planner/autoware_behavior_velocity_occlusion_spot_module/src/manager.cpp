@@ -27,14 +27,14 @@
 
 namespace autoware::behavior_velocity_planner
 {
-using autoware_universe_utils::getOrDeclareParameter;
+using autoware::universe_utils::getOrDeclareParameter;
 using occlusion_spot_utils::DETECTION_METHOD;
 using occlusion_spot_utils::PASS_JUDGE;
 
 OcclusionSpotModuleManager::OcclusionSpotModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterface(node, getModuleName())
 {
-  const std::string ns(getModuleName());
+  const std::string ns(OcclusionSpotModuleManager::getModuleName());
   auto & pp = planner_param_;
   // for detection type
   {

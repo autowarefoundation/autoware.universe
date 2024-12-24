@@ -24,7 +24,7 @@
 #include <string>
 #include <vector>
 
-namespace autoware_motion_utils
+namespace autoware::motion_utils
 {
 using autoware_adapi_v1_msgs::msg::PlanningBehavior;
 using autoware_adapi_v1_msgs::msg::VelocityFactor;
@@ -44,11 +44,14 @@ public:
     const std::vector<PointType> & points, const Pose & curr_pose, const Pose & stop_pose,
     const VelocityFactorStatus status, const std::string & detail = "");
 
+  void set(
+    const double & distance, const VelocityFactorStatus & status, const std::string & detail = "");
+
 private:
   VelocityFactorBehavior behavior_{VelocityFactor::UNKNOWN};
   VelocityFactor velocity_factor_{};
 };
 
-}  // namespace autoware_motion_utils
+}  // namespace autoware::motion_utils
 
 #endif  // AUTOWARE__MOTION_UTILS__FACTOR__VELOCITY_FACTOR_INTERFACE_HPP_

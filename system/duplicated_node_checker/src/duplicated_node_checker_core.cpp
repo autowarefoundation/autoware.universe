@@ -18,6 +18,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <chrono>
+#include <set>
 #include <string>
 #include <vector>
 
@@ -29,25 +30,17 @@ DuplicatedNodeChecker::DuplicatedNodeChecker(const rclcpp::NodeOptions & node_op
 {
   double update_rate = declare_parameter<double>("update_rate");
   add_duplicated_node_names_to_msg_ = declare_parameter<bool>("add_duplicated_node_names_to_msg");
+
+  std::vector<std::string> nodes_to_ignore_vector =
+    declare_parameter<std::vector<std::string>>("nodes_to_ignore");
+  nodes_to_ignore_.insert(nodes_to_ignore_vector.begin(), nodes_to_ignore_vector.end());
+
   updater_.setHardwareID("duplicated_node_checker");
   updater_.add("duplicated_node_checker", this, &DuplicatedNodeChecker::produceDiagnostics);
 
   const auto period_ns = rclcpp::Rate(update_rate).period();
   timer_ = rclcpp::create_timer(
     this, get_clock(), period_ns, std::bind(&DuplicatedNodeChecker::onTimer, this));
-}
-
-std::string get_fullname_from_name_ns_pair(std::pair<std::string, std::string> name_and_ns_pair)
-{
-  std::string full_name;
-  const std::string & name = name_and_ns_pair.first;
-  const std::string & ns = name_and_ns_pair.second;
-  if (ns.back() == '/') {
-    full_name = ns + name;
-  } else {
-    full_name = ns + "/" + name;
-  }
-  return full_name;
 }
 
 void DuplicatedNodeChecker::onTimer()
@@ -74,6 +67,8 @@ void DuplicatedNodeChecker::produceDiagnostics(diagnostic_updater::DiagnosticSta
     }
     for (auto name : identical_names) {
       stat.add("Duplicated Node Name", name);
+      RCLCPP_WARN_THROTTLE(
+        get_logger(), *get_clock(), 5000, "%s node is duplicated.", name.c_str());
     }
   } else {
     msg = "OK";

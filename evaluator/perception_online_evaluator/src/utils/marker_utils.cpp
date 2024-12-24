@@ -24,16 +24,19 @@
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/primitives/LineString.h>
 
+#include <algorithm>
 #include <cstdint>
+#include <string>
+#include <vector>
 
 namespace marker_utils
 {
-using autoware_universe_utils::calcOffsetPose;
-using autoware_universe_utils::createDefaultMarker;
-using autoware_universe_utils::createMarkerColor;
-using autoware_universe_utils::createMarkerOrientation;
-using autoware_universe_utils::createMarkerScale;
-using autoware_universe_utils::createPoint;
+using autoware::universe_utils::calcOffsetPose;
+using autoware::universe_utils::createDefaultMarker;
+using autoware::universe_utils::createMarkerColor;
+using autoware::universe_utils::createMarkerOrientation;
+using autoware::universe_utils::createMarkerScale;
+using autoware::universe_utils::createPoint;
 using std_msgs::msg::ColorRGBA;
 using visualization_msgs::msg::Marker;
 
@@ -46,13 +49,13 @@ void addFootprintMarker(
   const double base_to_rear = vehicle_info.rear_overhang_m;
 
   marker.points.push_back(
-    autoware_universe_utils::calcOffsetPose(pose, base_to_front, -half_width, 0.0).position);
+    autoware::universe_utils::calcOffsetPose(pose, base_to_front, -half_width, 0.0).position);
   marker.points.push_back(
-    autoware_universe_utils::calcOffsetPose(pose, base_to_front, half_width, 0.0).position);
+    autoware::universe_utils::calcOffsetPose(pose, base_to_front, half_width, 0.0).position);
   marker.points.push_back(
-    autoware_universe_utils::calcOffsetPose(pose, -base_to_rear, half_width, 0.0).position);
+    autoware::universe_utils::calcOffsetPose(pose, -base_to_rear, half_width, 0.0).position);
   marker.points.push_back(
-    autoware_universe_utils::calcOffsetPose(pose, -base_to_rear, -half_width, 0.0).position);
+    autoware::universe_utils::calcOffsetPose(pose, -base_to_rear, -half_width, 0.0).position);
   marker.points.push_back(marker.points.front());
 }
 
@@ -76,7 +79,7 @@ MarkerArray createFootprintMarkerArray(
 }
 
 MarkerArray createPointsMarkerArray(
-  const std::vector<Point> points, const std::string & ns, const int32_t id, const float r,
+  const std::vector<Point> & points, const std::string & ns, const int32_t id, const float r,
   const float g, const float b)
 {
   auto marker = createDefaultMarker(
@@ -93,7 +96,7 @@ MarkerArray createPointsMarkerArray(
 }
 
 MarkerArray createPointsMarkerArray(
-  const std::vector<Pose> poses, const std::string & ns, const int32_t id, const float r,
+  const std::vector<Pose> & poses, const std::string & ns, const int32_t id, const float r,
   const float g, const float b)
 {
   auto marker = createDefaultMarker(
@@ -110,7 +113,7 @@ MarkerArray createPointsMarkerArray(
 }
 
 MarkerArray createDeviationLines(
-  const std::vector<Pose> poses1, const std::vector<Pose> poses2, const std::string & ns,
+  const std::vector<Pose> & poses1, const std::vector<Pose> & poses2, const std::string & ns,
   const int32_t & first_id, const float r, const float g, const float b)
 {
   MarkerArray msg;
@@ -144,7 +147,7 @@ MarkerArray createPoseMarkerArray(
 }
 
 MarkerArray createPosesMarkerArray(
-  const std::vector<Pose> poses, std::string && ns, const int32_t & first_id, const float & r,
+  const std::vector<Pose> & poses, std::string && ns, const int32_t & first_id, const float & r,
   const float & g, const float & b, const float & x_scale, const float & y_scale,
   const float & z_scale)
 {
@@ -167,7 +170,7 @@ std_msgs::msg::ColorRGBA createColorFromString(const std::string & str)
   const auto r = (hash & 0xFF) / 255.0;
   const auto g = ((hash >> 8) & 0xFF) / 255.0;
   const auto b = ((hash >> 16) & 0xFF) / 255.0;
-  return autoware_universe_utils::createMarkerColor(r, g, b, 0.5);
+  return autoware::universe_utils::createMarkerColor(r, g, b, 0.5);
 }
 
 MarkerArray createObjectPolygonMarkerArray(
@@ -182,7 +185,7 @@ MarkerArray createObjectPolygonMarkerArray(
 
   const double z = object.kinematics.initial_pose_with_covariance.pose.position.z;
   const double height = object.shape.dimensions.z;
-  const auto polygon = autoware_universe_utils::toPolygon2d(
+  const auto polygon = autoware::universe_utils::toPolygon2d(
     object.kinematics.initial_pose_with_covariance.pose, object.shape);
   for (const auto & p : polygon.outer()) {
     marker.points.push_back(createPoint(p.x(), p.y(), z - height / 2));

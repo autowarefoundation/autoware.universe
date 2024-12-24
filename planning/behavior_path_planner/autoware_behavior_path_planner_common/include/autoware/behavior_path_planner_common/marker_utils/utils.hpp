@@ -40,9 +40,9 @@ using autoware::behavior_path_planner::utils::path_safety_checker::CollisionChec
 using autoware::behavior_path_planner::utils::path_safety_checker::CollisionCheckDebugPair;
 using autoware::behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObject;
 using autoware::behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObjects;
+using autoware::universe_utils::Polygon2d;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::PredictedPath;
-using autoware_universe_utils::Polygon2d;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Polygon;
 using geometry_msgs::msg::Pose;
@@ -67,7 +67,7 @@ MarkerArray createFootprintMarkerArray(
   const std::string && ns, const int32_t & id, const float & r, const float & g, const float & b);
 
 MarkerArray createPointsMarkerArray(
-  const std::vector<Point> points, const std::string & ns, const int32_t id, const float r,
+  const std::vector<Point> & points, const std::string & ns, const int32_t id, const float r,
   const float g, const float b);
 
 MarkerArray createPoseMarkerArray(

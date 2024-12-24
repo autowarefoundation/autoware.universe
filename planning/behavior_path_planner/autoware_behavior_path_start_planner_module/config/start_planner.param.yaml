@@ -7,6 +7,7 @@
       th_stopped_time: 1.0
       collision_check_margins: [2.0, 1.0, 0.5, 0.1]
       collision_check_margin_from_front_object: 5.0
+      skip_rear_vehicle_check: false
       extra_width_margin_for_rear_obstacle: 0.5
       th_moving_object_velocity: 1.0
       object_types_to_check_for_path_generation:
@@ -32,6 +33,7 @@
       minimum_lateral_acc: 0.15
       maximum_lateral_acc: 0.5
       maximum_curvature: 0.07
+      end_pose_curvature_threshold: 0.1
       # geometric pull out
       enable_geometric_pull_out: true
       geometric_collision_check_distance_from_end: 0.0
@@ -48,7 +50,7 @@
       max_back_distance: 20.0
       backward_search_resolution: 2.0
       backward_path_update_duration: 3.0
-      ignore_distance_from_lane_end: 15.0
+      ignore_distance_from_lane_end: 0.0
       # turns signal
       prepare_time_before_start: 0.0
       # freespace planner
@@ -61,25 +63,32 @@
         velocity: 1.0
         vehicle_shape_margin: 1.0
         time_limit: 3000.0
-        minimum_turning_radius: 5.0
-        maximum_turning_radius: 5.0
-        turning_radius_size: 1
+        max_turning_ratio: 0.7
+        turning_steps: 1
         # search configs
         search_configs:
-          theta_size: 144
+          theta_size: 120
           angle_goal_range: 6.0
-          curve_weight: 1.2
-          reverse_weight: 1.0
           lateral_goal_range: 0.5
           longitudinal_goal_range: 2.0
+          curve_weight: 0.5
+          reverse_weight: 1.0
+          direction_change_weight: 1.5
         # costmap configs
         costmap_configs:
           obstacle_threshold: 30
         # -- A* search Configurations --
         astar:
+          search_method: "forward"  # options: forward, backward
           only_behind_solutions: false
-          use_back: false
-          distance_heuristic_weight: 1.0
+          use_back: true
+          adapt_expansion_distance: true
+          expansion_distance: 0.5
+          near_goal_distance: 3.0
+          distance_heuristic_weight: 2.0
+          smoothness_weight: 0.5
+          obstacle_distance_weight: 1.75
+          goal_lat_distance_weight: 5.0
         # -- RRT* search Configurations --
         rrtstar:
           enable_update: true
@@ -102,7 +111,7 @@
           delay_until_departure: 1.0
         # For target object filtering
         target_filtering:
-          safety_check_time_horizon: 5.0
+          safety_check_time_horizon: 10.0
           safety_check_time_resolution: 1.0
           # detection range
           object_check_forward_distance: 10.0
@@ -143,8 +152,10 @@
             lateral_distance_max_threshold: 2.0
             longitudinal_distance_min_threshold: 3.0
             longitudinal_velocity_delta_time: 0.8
+            extended_polygon_policy: "along_path" # [-] select "rectangle" or "along_path"
           # hysteresis factor to expand/shrink polygon
           hysteresis_factor_expand_rate: 1.0
+          collision_check_yaw_diff_threshold: 1.578
           # temporary
           backward_path_length: 30.0
           forward_path_length: 100.0

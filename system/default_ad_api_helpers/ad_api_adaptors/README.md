@@ -5,7 +5,7 @@
 This node makes it easy to use the localization AD API from RViz.
 When a initial pose topic is received, call the localization initialize API.
 This node depends on the map height fitter library.
-[See here for more details.](../../../map/map_height_fitter/README.md)
+[See here for more details.](../../../map/autoware_map_height_fitter/README.md)
 
 | Interface    | Local Name  | Global Name                  | Description                               |
 | ------------ | ----------- | ---------------------------- | ----------------------------------------- |
@@ -29,3 +29,7 @@ The clear API is called automatically before setting the route.
 | Client       | -                  | /api/routing/clear_route              | The route clear API.                               |
 | Client       | -                  | /api/routing/set_route_points         | The route points set API.                          |
 | Client       | -                  | /api/routing/change_route_points      | The route points change API.                       |
+
+## parameters
+
+{{ json_to_markdown("/system/default_ad_api_helpers/ad_api_adaptors/schema/ad_api_adaptors.schema.json") }}

@@ -31,14 +31,14 @@
 #include "autoware/universe_utils/system/stop_watch.hpp"
 #include "autoware_bezier_sampler/bezier_sampling.hpp"
 #include "autoware_frenet_planner/frenet_planner.hpp"
+#include "autoware_lanelet2_extension/utility/query.hpp"
+#include "autoware_lanelet2_extension/utility/utilities.hpp"
 #include "autoware_sampler_common/constraints/footprint.hpp"
 #include "autoware_sampler_common/constraints/hard_constraint.hpp"
 #include "autoware_sampler_common/constraints/soft_constraint.hpp"
 #include "autoware_sampler_common/structures.hpp"
 #include "autoware_sampler_common/transform/spline_transform.hpp"
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
-#include "lanelet2_extension/utility/query.hpp"
-#include "lanelet2_extension/utility/utilities.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include "tier4_planning_msgs/msg/lateral_offset.hpp"
@@ -75,8 +75,8 @@ struct SamplingPlannerDebugData
 {
   std::vector<autoware::sampler_common::Path> sampled_candidates{};
   size_t previous_sampled_candidates_nb = 0UL;
-  std::vector<autoware_universe_utils::Polygon2d> obstacles{};
-  std::vector<autoware_universe_utils::MultiPoint2d> footprints{};
+  std::vector<autoware::universe_utils::Polygon2d> obstacles{};
+  std::vector<autoware::universe_utils::MultiPoint2d> footprints{};
 };
 class SamplingPlannerModule : public SceneModuleInterface
 {
@@ -155,8 +155,6 @@ private:
   bool canTransitSuccessState() override
   {
     std::vector<DrivableLanes> drivable_lanes{};
-    const auto & prev_module_path =
-      std::make_shared<PathWithLaneId>(getPreviousModuleOutput().path);
     const auto prev_module_reference_path =
       std::make_shared<PathWithLaneId>(getPreviousModuleOutput().reference_path);
 
@@ -204,10 +202,10 @@ private:
     if (length_to_goal < epsilon) return isReferencePathSafe();
 
     const auto nearest_index =
-      autoware_motion_utils::findNearestIndex(prev_module_reference_path->points, ego_pose);
+      autoware::motion_utils::findNearestIndex(prev_module_reference_path->points, ego_pose);
     if (!nearest_index) return false;
     auto toYaw = [](const geometry_msgs::msg::Quaternion & quat) -> double {
-      const auto rpy = autoware_universe_utils::getRPY(quat);
+      const auto rpy = autoware::universe_utils::getRPY(quat);
       return rpy.z;
     };
     const auto quat = prev_module_reference_path->points[*nearest_index].point.pose.orientation;

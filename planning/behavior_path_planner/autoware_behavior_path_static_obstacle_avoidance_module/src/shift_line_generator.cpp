@@ -17,6 +17,11 @@
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/utils.hpp"
 
+#include <algorithm>
+#include <string>
+#include <utility>
+#include <vector>
+
 namespace autoware::behavior_path_planner::utils::static_obstacle_avoidance
 {
 
@@ -165,9 +170,9 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
     }
 
     // the avoidance path is already approved
-    const auto & object_pos = object.object.kinematics.initial_pose_with_covariance.pose.position;
-    const auto is_approved = (helper_->getShift(object_pos) > 0.0 && is_object_on_right) ||
-                             (helper_->getShift(object_pos) < 0.0 && !is_object_on_right);
+    const auto is_approved =
+      (helper_->getShift(object.getPosition()) > 0.0 && is_object_on_right) ||
+      (helper_->getShift(object.getPosition()) < 0.0 && !is_object_on_right);
     if (is_approved) {
       return std::make_pair(desire_shift_length, avoidance_distance);
     }
@@ -179,7 +184,7 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
     }
 
     // calculate lateral jerk.
-    const auto required_jerk = PathShifter::calcJerkFromLatLonDistance(
+    const auto required_jerk = autoware::motion_utils::calc_jerk_from_lat_lon_distance(
       avoiding_shift, avoidance_distance, helper_->getAvoidanceEgoSpeed());
 
     // relax lateral jerk limit. avoidable.
@@ -201,7 +206,7 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
     }
 
     // output avoidance path under lateral jerk constraints.
-    const auto feasible_relative_shift_length = PathShifter::calcLateralDistFromJerk(
+    const auto feasible_relative_shift_length = autoware::motion_utils::calc_lateral_dist_from_jerk(
       avoidance_distance, helper_->getLateralMaxJerkLimit(), helper_->getAvoidanceEgoSpeed());
 
     if (std::abs(feasible_relative_shift_length) < parameters_->lateral_execution_threshold) {
@@ -239,10 +244,23 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
 
   const auto is_forward_object = [](const auto & object) { return object.longitudinal > 0.0; };
 
+  const auto is_on_path = [this](const auto & object) {
+    const auto [overhang, point] = object.overhang_points.front();
+    return std::abs(overhang) < 0.5 * data_->parameters.vehicle_width;
+  };
+
   const auto is_valid_shift_line = [](const auto & s) {
     return s.start_longitudinal > 0.0 && s.start_longitudinal < s.end_longitudinal;
   };
 
+  const auto is_approved = [this](const auto & object) {
+    return (helper_->getShift(object.getPosition()) > 0.0 && isOnRight(object)) ||
+           (helper_->getShift(object.getPosition()) < 0.0 && !isOnRight(object));
+  };
+
+  ObjectDataArray unavoidable_objects;
+
+  // target objects are sorted by longitudinal distance.
   AvoidOutlines outlines;
   for (auto & o : data.target_objects) {
     if (!o.avoid_margin.has_value()) {
@@ -253,22 +271,22 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
       } else {
         o.info = ObjectInfo::INSUFFICIENT_DRIVABLE_SPACE;
       }
-      if (o.avoid_required && is_forward_object(o)) {
+      if (o.avoid_required && is_forward_object(o) && is_on_path(o)) {
         break;
       } else {
+        unavoidable_objects.push_back(o);
         continue;
       }
     }
 
-    const auto is_object_on_right = utils::static_obstacle_avoidance::isOnRight(o);
     const auto desire_shift_length =
-      helper_->getShiftLength(o, is_object_on_right, o.avoid_margin.value());
-    if (utils::static_obstacle_avoidance::isSameDirectionShift(
-          is_object_on_right, desire_shift_length)) {
+      helper_->getShiftLength(o, isOnRight(o), o.avoid_margin.value());
+    if (utils::static_obstacle_avoidance::isSameDirectionShift(isOnRight(o), desire_shift_length)) {
       o.info = ObjectInfo::SAME_DIRECTION_SHIFT;
-      if (o.avoid_required && is_forward_object(o)) {
+      if (o.avoid_required && is_forward_object(o) && is_on_path(o)) {
         break;
       } else {
+        unavoidable_objects.push_back(o);
         continue;
       }
     }
@@ -276,10 +294,27 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
     // calculate feasible shift length based on behavior policy
     const auto feasible_shift_profile = get_shift_profile(o, desire_shift_length);
     if (!feasible_shift_profile.has_value()) {
-      if (o.avoid_required && is_forward_object(o)) {
+      if (is_approved(o)) {
+        // the avoidance path for this object has already approved
+        o.is_avoidable = true;
+        continue;
+      }
+      if (o.avoid_required && is_forward_object(o) && is_on_path(o)) {
         break;
       } else {
+        unavoidable_objects.push_back(o);
         continue;
+      }
+    }
+
+    // If there is an object that cannot be avoided, this module only avoids object on the same side
+    // as unavoidable object.
+    if (!unavoidable_objects.empty()) {
+      if (isOnRight(unavoidable_objects.front()) && !isOnRight(o)) {
+        break;
+      }
+      if (!isOnRight(unavoidable_objects.front()) && isOnRight(o)) {
+        break;
       }
     }
 
@@ -355,7 +390,7 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
         return false;
       }
       const auto goal_pose = data_->route_handler->getGoalPose();
-      const double goal_longitudinal_distance = autoware_motion_utils::calcSignedArcLength(
+      const double goal_longitudinal_distance = autoware::motion_utils::calcSignedArcLength(
         data.reference_path.points, 0, goal_pose.position);
       const bool is_return_shift_to_goal =
         std::abs(al_return.end_longitudinal - goal_longitudinal_distance) <
@@ -363,9 +398,8 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
       if (is_return_shift_to_goal) {
         return true;
       }
-      const auto & object_pos = o.object.kinematics.initial_pose_with_covariance.pose.position;
       const bool has_object_near_goal =
-        autoware_universe_utils::calcDistance2d(goal_pose.position, object_pos) <
+        autoware::universe_utils::calcDistance2d(goal_pose.position, o.getPosition()) <
         parameters_->object_check_goal_distance;
       return has_object_near_goal;
     }();
@@ -375,7 +409,7 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
       outlines.emplace_back(al_avoid, std::nullopt);
     } else if (is_valid_shift_line(al_avoid) && is_valid_shift_line(al_return)) {
       outlines.emplace_back(al_avoid, al_return);
-    } else {
+    } else if (!is_approved(o)) {
       o.info = ObjectInfo::INVALID_SHIFT_LINE;
       continue;
     }
@@ -793,7 +827,7 @@ AvoidLineArray ShiftLineGenerator::applyFillGapProcess(
 
   // fill gap among shift lines.
   for (size_t i = 0; i < sorted.size() - 1; ++i) {
-    if (sorted.at(i + 1).start_longitudinal < sorted.at(i).end_longitudinal) {
+    if (sorted.at(i + 1).start_longitudinal < sorted.at(i).end_longitudinal + 1e-3) {
       continue;
     }
 
@@ -1026,9 +1060,8 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
   if (utils::isAllowedGoalModification(data_->route_handler)) {
     const auto has_object_near_goal =
       std::any_of(data.target_objects.begin(), data.target_objects.end(), [&](const auto & o) {
-        return autoware_universe_utils::calcDistance2d(
-                 data_->route_handler->getGoalPose().position,
-                 o.object.kinematics.initial_pose_with_covariance.pose.position) <
+        return autoware::universe_utils::calcDistance2d(
+                 data_->route_handler->getGoalPose().position, o.getPosition()) <
                parameters_->object_check_goal_distance;
       });
     if (has_object_near_goal) {
@@ -1097,9 +1130,7 @@ AvoidLineArray ShiftLineGenerator::addReturnShiftLine(
   if (utils::isAllowedGoalModification(data_->route_handler)) {
     const bool has_last_shift_near_goal =
       std::any_of(data.target_objects.begin(), data.target_objects.end(), [&](const auto & o) {
-        return autoware_universe_utils::calcDistance2d(
-                 last_sl.end.position,
-                 o.object.kinematics.initial_pose_with_covariance.pose.position) <
+        return autoware::universe_utils::calcDistance2d(last_sl.end.position, o.getPosition()) <
                parameters_->object_check_goal_distance;
       });
     if (has_last_shift_near_goal) {

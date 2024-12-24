@@ -33,27 +33,29 @@ if(BUILD_TESTING)
     test/trajectory_follower_test_utils.hpp
     test/test_controller_node.cpp
   )
-  ament_target_dependencies(${TRAJECTORY_FOLLOWER_NODES_TEST} fake_test_node)
+  ament_target_dependencies(${TRAJECTORY_FOLLOWER_NODES_TEST} autoware_fake_test_node)
   target_link_libraries(
     ${TRAJECTORY_FOLLOWER_NODES_TEST} ${CONTROLLER_NODE})
 
-  find_package(autoware_testing REQUIRED)
-  # smoke test for MPC controller
-  add_smoke_test(${PROJECT_NAME} ${CONTROLLER_NODE}_exe
-    PARAM_FILENAMES "lateral/mpc.param.yaml longitudinal/pid.param.yaml
-trajectory_follower_node.param.yaml"
-    TEST_PARAM_FILENAMES "test_controller_mpc.param.yaml test_controller_pid.param.yaml
-test_vehicle_info.param.yaml test_nearest_search.param.yaml"
-    TARGET_INFIX "mpc"
-  )
-  # smoke test for pure pursuit controller
-  add_smoke_test(${PROJECT_NAME} ${CONTROLLER_NODE}_exe
-    PARAM_FILENAMES "lateral/pure_pursuit.param.yaml longitudinal/pid.param.yaml
-trajectory_follower_node.param.yaml"
-    TEST_PARAM_FILENAMES "test_controller_pure_pursuit.param.yaml test_controller_pid.param.yaml
-test_vehicle_info.param.yaml test_nearest_search.param.yaml"
-    TARGET_INFIX "pure_pursuit"
-  )
+  # Temporary disabled, tracked by:
+  # https://github.com/autowarefoundation/autoware.universe/issues/7733
+#  find_package(autoware_testing REQUIRED)
+#  # smoke test for MPC controller
+#  add_smoke_test(${PROJECT_NAME} ${CONTROLLER_NODE}_exe
+#    PARAM_FILENAMES "lateral/mpc.param.yaml longitudinal/pid.param.yaml
+#trajectory_follower_node.param.yaml"
+#    TEST_PARAM_FILENAMES "test_controller_mpc.param.yaml test_controller_pid.param.yaml
+#test_vehicle_info.param.yaml test_nearest_search.param.yaml"
+#    TARGET_INFIX "mpc"
+#  )
+#  # smoke test for pure pursuit controller
+#  add_smoke_test(${PROJECT_NAME} ${CONTROLLER_NODE}_exe
+#    PARAM_FILENAMES "lateral/pure_pursuit.param.yaml longitudinal/pid.param.yaml
+#trajectory_follower_node.param.yaml"
+#    TEST_PARAM_FILENAMES "test_controller_pure_pursuit.param.yaml test_controller_pid.param.yaml
+#test_vehicle_info.param.yaml test_nearest_search.param.yaml"
+#    TARGET_INFIX "pure_pursuit"
+#  )
 
 endif()
 

@@ -1,4 +1,4 @@
-// Copyright 2023 TIER IV, Inc.
+// Copyright 2023-2024 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,11 +14,15 @@
 
 #include "autoware/universe_utils/geometry/geometry.hpp"
 
+#include "autoware/universe_utils/geometry/gjk_2d.hpp"
+
 #include <Eigen/Geometry>
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <tf2/convert.h>
+
+#include <string>
 
 namespace tf2
 {
@@ -32,7 +36,7 @@ void fromMsg(const geometry_msgs::msg::PoseStamped & msg, tf2::Stamped<tf2::Tran
 }
 }  // namespace tf2
 
-namespace autoware_universe_utils
+namespace autoware::universe_utils
 {
 geometry_msgs::msg::Vector3 getRPY(const geometry_msgs::msg::Quaternion & quat)
 {
@@ -208,7 +212,7 @@ geometry_msgs::msg::Point32 transformPoint(
 {
   const auto point =
     geometry_msgs::build<geometry_msgs::msg::Point>().x(point32.x).y(point32.y).z(point32.z);
-  const auto transformed_point = autoware_universe_utils::transformPoint(point, pose);
+  const auto transformed_point = autoware::universe_utils::transformPoint(point, pose);
   return geometry_msgs::build<geometry_msgs::msg::Point32>()
     .x(transformed_point.x)
     .y(transformed_point.y)
@@ -225,7 +229,7 @@ geometry_msgs::msg::Pose transformPose(
 }
 
 geometry_msgs::msg::Pose transformPose(
-  const geometry_msgs::msg::Pose & pose, geometry_msgs::msg::Transform & transform)
+  const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Transform & transform)
 {
   geometry_msgs::msg::TransformStamped transform_stamped;
   transform_stamped.transform = transform;
@@ -383,4 +387,9 @@ std::optional<geometry_msgs::msg::Point> intersect(
   return intersect_point;
 }
 
-}  // namespace autoware_universe_utils
+bool intersects_convex(const Polygon2d & convex_polygon1, const Polygon2d & convex_polygon2)
+{
+  return gjk::intersects(convex_polygon1, convex_polygon2);
+}
+
+}  // namespace autoware::universe_utils

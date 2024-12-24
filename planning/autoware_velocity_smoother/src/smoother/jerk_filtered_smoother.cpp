@@ -14,6 +14,7 @@
 
 #include "autoware/velocity_smoother/smoother/jerk_filtered_smoother.hpp"
 
+#include "autoware/qp_interface/proxqp_interface.hpp"
 #include "autoware/velocity_smoother/trajectory_utils.hpp"
 
 #include <Eigen/Core>
@@ -21,7 +22,9 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <iostream>
 #include <limits>
+#include <memory>
 #include <numeric>
 #include <vector>
 
@@ -29,7 +32,9 @@
 
 namespace autoware::velocity_smoother
 {
-JerkFilteredSmoother::JerkFilteredSmoother(rclcpp::Node & node) : SmootherBase(node)
+JerkFilteredSmoother::JerkFilteredSmoother(
+  rclcpp::Node & node, const std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper)
+: SmootherBase(node, time_keeper)
 {
   auto & p = smoother_param_;
   p.jerk_weight = node.declare_parameter<double>("jerk_weight");
@@ -38,11 +43,8 @@ JerkFilteredSmoother::JerkFilteredSmoother(rclcpp::Node & node) : SmootherBase(n
   p.over_j_weight = node.declare_parameter<double>("over_j_weight");
   p.jerk_filter_ds = node.declare_parameter<double>("jerk_filter_ds");
 
-  qp_solver_.updateMaxIter(20000);
-  qp_solver_.updateRhoInterval(0);  // 0 means automatic
-  qp_solver_.updateEpsRel(1.0e-6);  // def: 1.0e-4
-  qp_solver_.updateEpsAbs(1.0e-8);  // def: 1.0e-4
-  qp_solver_.updateVerbose(false);
+  qp_interface_ =
+    std::make_shared<autoware::qp_interface::ProxQPInterface>(false, 20000, 1.0e-8, 1.0e-6, false);
 }
 
 void JerkFilteredSmoother::setParam(const Param & smoother_param)
@@ -57,8 +59,10 @@ JerkFilteredSmoother::Param JerkFilteredSmoother::getParam() const
 
 bool JerkFilteredSmoother::apply(
   const double v0, const double a0, const TrajectoryPoints & input, TrajectoryPoints & output,
-  std::vector<TrajectoryPoints> & debug_trajectories)
+  std::vector<TrajectoryPoints> & debug_trajectories, const bool publish_debug_trajs)
 {
+  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+
   output = input;
 
   if (input.empty()) {
@@ -102,6 +106,8 @@ bool JerkFilteredSmoother::apply(
   const auto initial_traj_pose = filtered.front().pose;
 
   const auto resample = [&](const auto & trajectory) {
+    autoware::universe_utils::ScopedTimeTrack st("resample", *time_keeper_);
+
     return resampling::resampleTrajectory(
       trajectory, v0, initial_traj_pose, std::numeric_limits<double>::max(),
       std::numeric_limits<double>::max(), base_param_.resample_param);
@@ -110,10 +116,12 @@ bool JerkFilteredSmoother::apply(
   auto opt_resampled_trajectory = resample(filtered);
 
   // Set debug trajectories
-  debug_trajectories.resize(3);
-  debug_trajectories[0] = resample(forward_filtered);
-  debug_trajectories[1] = resample(backward_filtered);
-  debug_trajectories[2] = resample(filtered);
+  if (publish_debug_trajs) {
+    debug_trajectories.resize(3);
+    debug_trajectories[0] = resample(forward_filtered);
+    debug_trajectories[1] = resample(backward_filtered);
+    debug_trajectories[2] = resample(filtered);
+  }
 
   // Ensure terminal velocity is zero
   opt_resampled_trajectory.back().longitudinal_velocity_mps = 0.0;
@@ -123,15 +131,18 @@ bool JerkFilteredSmoother::apply(
     // No need to do optimization
     output.front().longitudinal_velocity_mps = v0;
     output.front().acceleration_mps2 = a0;
-    debug_trajectories[0] = output;
-    debug_trajectories[1] = output;
-    debug_trajectories[2] = output;
+    if (publish_debug_trajs) {
+      debug_trajectories.resize(3);
+      debug_trajectories[0] = output;
+      debug_trajectories[1] = output;
+      debug_trajectories[2] = output;
+    }
     return true;
   }
 
   // to avoid getting 0 as a stop point, search zero velocity index from 1.
   // the size of the resampled trajectory must not be less than 2.
-  const auto zero_vel_id = autoware_motion_utils::searchZeroVelocityIndex(
+  const auto zero_vel_id = autoware::motion_utils::searchZeroVelocityIndex(
     opt_resampled_trajectory, 1, opt_resampled_trajectory.size());
 
   if (!zero_vel_id) {
@@ -152,6 +163,7 @@ bool JerkFilteredSmoother::apply(
     v_max_arr.at(i) = opt_resampled_trajectory.at(i).longitudinal_velocity_mps;
   }
 
+  time_keeper_->start_track("initOptimization");
   /*
    * x = [
    *      b[0], b[1], ..., b[N],               : 0~N
@@ -290,15 +302,17 @@ bool JerkFilteredSmoother::apply(
     lower_bound[constr_idx] = a0;
     ++constr_idx;
   }
+  time_keeper_->end_track("initOptimization");
 
   // execute optimization
-  const auto result = qp_solver_.optimize(P, A, q, lower_bound, upper_bound);
-  const std::vector<double> optval = std::get<0>(result);
-  const int status_val = std::get<3>(result);
-  if (status_val != 1) {
-    RCLCPP_WARN(logger_, "optimization failed : %s", qp_solver_.getStatusMessage().c_str());
+  time_keeper_->start_track("optimize");
+  const auto optval = qp_interface_->optimize(P, A, q, lower_bound, upper_bound);
+  time_keeper_->end_track("optimize");
+  if (!qp_interface_->isSolved()) {
+    RCLCPP_WARN(logger_, "optimization failed : %s", qp_interface_->getStatus().c_str());
     return false;
   }
+
   const auto has_nan =
     std::any_of(optval.begin(), optval.end(), [](const auto v) { return std::isnan(v); });
   if (has_nan) {
@@ -320,16 +334,6 @@ bool JerkFilteredSmoother::apply(
   for (size_t i = N; i < output.size(); ++i) {
     output.at(i).longitudinal_velocity_mps = 0.0;
     output.at(i).acceleration_mps2 = a_stop_decel;
-  }
-
-  qp_solver_.logUnsolvedStatus("[autoware_velocity_smoother]");
-
-  const int status_polish = std::get<2>(result);
-  if (status_polish != 1) {
-    const auto msg = status_polish == 0    ? "unperformed"
-                     : status_polish == -1 ? "unsuccessful"
-                                           : "unknown";
-    RCLCPP_DEBUG(logger_, "osqp polish process failed : %s. The result may be inaccurate", msg);
   }
 
   if (VERBOSE_TRAJECTORY_VELOCITY) {
@@ -356,6 +360,8 @@ TrajectoryPoints JerkFilteredSmoother::forwardJerkFilter(
   const double v0, const double a0, const double a_max, const double a_start, const double j_max,
   const TrajectoryPoints & input) const
 {
+  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+
   auto applyLimits = [&input, &a_start](double & v, double & a, size_t i) {
     double v_lim = input.at(i).longitudinal_velocity_mps;
     static constexpr double ep = 1.0e-5;
@@ -385,7 +391,7 @@ TrajectoryPoints JerkFilteredSmoother::forwardJerkFilter(
   output.front().longitudinal_velocity_mps = current_vel;
   output.front().acceleration_mps2 = current_acc;
   for (size_t i = 1; i < input.size(); ++i) {
-    const double ds = autoware_universe_utils::calcDistance2d(input.at(i), input.at(i - 1));
+    const double ds = autoware::universe_utils::calcDistance2d(input.at(i), input.at(i - 1));
     const double max_dt = std::pow(6.0 * ds / j_max, 1.0 / 3.0);  // assuming v0 = a0 = 0.
     const double dt = std::min(ds / std::max(current_vel, 1.0e-6), max_dt);
 
@@ -408,6 +414,8 @@ TrajectoryPoints JerkFilteredSmoother::backwardJerkFilter(
   const double v0, const double a0, const double a_min, const double a_stop, const double j_min,
   const TrajectoryPoints & input) const
 {
+  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+
   auto input_rev = input;
   std::reverse(input_rev.begin(), input_rev.end());
   auto filtered = forwardJerkFilter(
@@ -423,6 +431,8 @@ TrajectoryPoints JerkFilteredSmoother::mergeFilteredTrajectory(
   const double v0, const double a0, const double a_min, const double j_min,
   const TrajectoryPoints & forward_filtered, const TrajectoryPoints & backward_filtered) const
 {
+  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+
   TrajectoryPoints merged;
   merged = forward_filtered;
 
@@ -439,8 +449,8 @@ TrajectoryPoints JerkFilteredSmoother::mergeFilteredTrajectory(
       merged.at(i).longitudinal_velocity_mps = current_vel;
       merged.at(i).acceleration_mps2 = current_acc;
 
-      const double ds =
-        autoware_universe_utils::calcDistance2d(forward_filtered.at(i + 1), forward_filtered.at(i));
+      const double ds = autoware::universe_utils::calcDistance2d(
+        forward_filtered.at(i + 1), forward_filtered.at(i));
       const double max_dt =
         std::pow(6.0 * ds / std::fabs(j_min), 1.0 / 3.0);  // assuming v0 = a0 = 0.
       const double dt = std::min(ds / std::max(current_vel, 1.0e-6), max_dt);
@@ -475,6 +485,8 @@ TrajectoryPoints JerkFilteredSmoother::resampleTrajectory(
   const geometry_msgs::msg::Pose & current_pose, const double nearest_dist_threshold,
   const double nearest_yaw_threshold) const
 {
+  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+
   return resampling::resampleTrajectory(
     input, current_pose, nearest_dist_threshold, nearest_yaw_threshold, base_param_.resample_param,
     smoother_param_.jerk_filter_ds);

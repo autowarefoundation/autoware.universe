@@ -27,6 +27,9 @@
 #include <algorithm>
 #include <chrono>
 #include <limits>
+#include <memory>
+#include <tuple>
+#include <vector>
 
 namespace
 {
@@ -34,9 +37,9 @@ Eigen::SparseMatrix<double> makePMatrix(const int num_points)
 {
   std::vector<Eigen::Triplet<double>> triplet_vec;
   const auto assign_value_to_triplet_vec =
-    [&](const double row, const double colum, const double value) {
-      triplet_vec.push_back(Eigen::Triplet<double>(row, colum, value));
-      triplet_vec.push_back(Eigen::Triplet<double>(row + num_points, colum + num_points, value));
+    [&](const double row, const double column, const double value) {
+      triplet_vec.push_back(Eigen::Triplet<double>(row, column, value));
+      triplet_vec.push_back(Eigen::Triplet<double>(row + num_points, column + num_points, value));
     };
 
   for (int r = 0; r < num_points; ++r) {
@@ -50,9 +53,7 @@ Eigen::SparseMatrix<double> makePMatrix(const int num_points)
           assign_value_to_triplet_vec(r, c, 6.0);
         }
       } else if (std::abs(c - r) == 1) {
-        if (r == 0 || r == num_points - 1) {
-          assign_value_to_triplet_vec(r, c, -2.0);
-        } else if (c == 0 || c == num_points - 1) {
+        if (r == 0 || r == num_points - 1 || c == 0 || c == num_points - 1) {
           assign_value_to_triplet_vec(r, c, -2.0);
         } else {
           assign_value_to_triplet_vec(r, c, -4.0);
@@ -125,7 +126,7 @@ EBPathSmoother::EBParam::EBParam(rclcpp::Node * node)
 
 void EBPathSmoother::EBParam::onParam(const std::vector<rclcpp::Parameter> & parameters)
 {
-  using autoware_universe_utils::updateParam;
+  using autoware::universe_utils::updateParam;
 
   {  // option
     updateParam<bool>(parameters, "elastic_band.option.enable_warm_start", enable_warm_start);
@@ -212,7 +213,7 @@ std::vector<TrajectoryPoint> EBPathSmoother::smoothTrajectory(
 
   const size_t ego_seg_idx =
     trajectory_utils::findEgoSegmentIndex(traj_points, ego_pose, ego_nearest_param_);
-  const auto cropped_traj_points = autoware_motion_utils::cropPoints(
+  const auto cropped_traj_points = autoware::motion_utils::cropPoints(
     traj_points, ego_pose.position, ego_seg_idx, forward_traj_length, backward_traj_length);
 
   // check if goal is contained in cropped_traj_points
@@ -263,7 +264,7 @@ std::vector<TrajectoryPoint> EBPathSmoother::smoothTrajectory(
 
   // 8. publish eb trajectory
   const auto eb_traj =
-    autoware_motion_utils::convertToTrajectory(*eb_traj_points, createHeader(clock_.now()));
+    autoware::motion_utils::convertToTrajectory(*eb_traj_points, createHeader(clock_.now()));
   debug_eb_traj_pub_->publish(eb_traj);
 
   time_keeper_ptr_->toc(__func__, "      ");
@@ -381,7 +382,7 @@ void EBPathSmoother::updateConstraint(
     osqp_solver_ptr_->updateBounds(lower_bound, upper_bound);
     osqp_solver_ptr_->updateEpsRel(p.qp_param.eps_rel);
   } else {
-    osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
+    osqp_solver_ptr_ = std::make_unique<autoware::osqp_interface::OSQPInterface>(
       P, A, q, lower_bound, upper_bound, p.qp_param.eps_abs);
     osqp_solver_ptr_->updateEpsRel(p.qp_param.eps_rel);
     osqp_solver_ptr_->updateEpsAbs(p.qp_param.eps_abs);
@@ -389,8 +390,8 @@ void EBPathSmoother::updateConstraint(
   }
 
   // publish fixed trajectory
-  const auto eb_fixed_traj =
-    autoware_motion_utils::convertToTrajectory(debug_fixed_traj_points, createHeader(clock_.now()));
+  const auto eb_fixed_traj = autoware::motion_utils::convertToTrajectory(
+    debug_fixed_traj_points, createHeader(clock_.now()));
   debug_eb_fixed_traj_pub_->publish(eb_fixed_traj);
 
   time_keeper_ptr_->toc(__func__, "        ");
@@ -443,12 +444,12 @@ std::optional<std::vector<TrajectoryPoint>> EBPathSmoother::convertOptimizedPoin
 
     auto eb_traj_point = traj_points.at(i);
     eb_traj_point.pose =
-      autoware_universe_utils::calcOffsetPose(eb_traj_point.pose, 0.0, lat_offset, 0.0);
+      autoware::universe_utils::calcOffsetPose(eb_traj_point.pose, 0.0, lat_offset, 0.0);
     eb_traj_points.push_back(eb_traj_point);
   }
 
   // update orientation
-  autoware_motion_utils::insertOrientation(eb_traj_points, true);
+  autoware::motion_utils::insertOrientation(eb_traj_points, true);
 
   time_keeper_ptr_->toc(__func__, "        ");
   return eb_traj_points;

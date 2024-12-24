@@ -23,6 +23,10 @@
 #include <lanelet2_core/geometry/Lanelet.h>
 
 #include <limits>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace autoware::static_centerline_generator
 {
@@ -94,8 +98,8 @@ geometry_msgs::msg::Pose get_center_pose(
   // calculate middle pose
   geometry_msgs::msg::Pose middle_pose;
   middle_pose.position = middle_pos;
-  const double yaw = autoware_universe_utils::calcAzimuthAngle(middle_pos, next_middle_pos);
-  middle_pose.orientation = autoware_universe_utils::createQuaternionFromYaw(yaw);
+  const double yaw = autoware::universe_utils::calcAzimuthAngle(middle_pos, next_middle_pos);
+  middle_pose.orientation = autoware::universe_utils::createQuaternionFromYaw(yaw);
 
   return middle_pose;
 }
@@ -151,6 +155,7 @@ void update_centerline(
       auto & lanelet_ref = lanelets_ref.at(lanelet_idx);
 
       const lanelet::BasicPoint2d point(traj_pos.x, traj_pos.y);
+      // TODO(murooka) This does not work with L-crank map.
       const bool is_inside = lanelet::geometry::inside(lanelet_ref, point);
       if (is_inside) {
         const auto center_point = createPoint3d(traj_pos.x, traj_pos.y, traj_pos.z);
@@ -181,20 +186,17 @@ void update_centerline(
   }
 }
 
-MarkerArray create_footprint_marker(
-  const LinearRing2d & footprint_poly, const std::array<double, 3> & marker_color,
-  const rclcpp::Time & now, const size_t idx)
+Marker create_footprint_marker(
+  const LinearRing2d & footprint_poly, const double width, const double r, const double g,
+  const double b, const double a, const rclcpp::Time & now, const size_t idx)
 {
-  const double r = marker_color.at(0);
-  const double g = marker_color.at(1);
-  const double b = marker_color.at(2);
-
-  auto marker = autoware_universe_utils::createDefaultMarker(
+  auto marker = autoware::universe_utils::createDefaultMarker(
     "map", rclcpp::Clock().now(), "unsafe_footprints", idx,
     visualization_msgs::msg::Marker::LINE_STRIP,
-    autoware_universe_utils::createMarkerScale(0.1, 0.0, 0.0),
-    autoware_universe_utils::createMarkerColor(r, g, b, 0.999));
+    autoware::universe_utils::createMarkerScale(width, 0.0, 0.0),
+    autoware::universe_utils::createMarkerColor(r, g, b, a));
   marker.header.stamp = now;
+  // TODO(murooka) Ideally, the following is unnecessary for the topic of transient local.
   marker.lifetime = rclcpp::Duration(0, 0);
 
   for (const auto & point : footprint_poly) {
@@ -206,38 +208,56 @@ MarkerArray create_footprint_marker(
     marker.points.push_back(geom_point);
   }
   marker.points.push_back(marker.points.front());
-
-  visualization_msgs::msg::MarkerArray marker_array;
-  marker_array.markers.push_back(marker);
-
-  return marker_array;
+  return marker;
 }
 
-MarkerArray create_distance_text_marker(
-  const geometry_msgs::msg::Pose & pose, const double dist,
-  const std::array<double, 3> & marker_color, const rclcpp::Time & now, const size_t idx)
+Marker create_text_marker(
+  const std::string & ns, const geometry_msgs::msg::Pose & pose, const double value, const double r,
+  const double g, const double b, const double a, const rclcpp::Time & now, const size_t idx)
 {
-  const double r = marker_color.at(0);
-  const double g = marker_color.at(1);
-  const double b = marker_color.at(2);
-
-  auto marker = autoware_universe_utils::createDefaultMarker(
-    "map", rclcpp::Clock().now(), "unsafe_footprints_distance", idx,
-    visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
-    autoware_universe_utils::createMarkerScale(0.5, 0.5, 0.5),
-    autoware_universe_utils::createMarkerColor(r, g, b, 0.999));
+  auto marker = autoware::universe_utils::createDefaultMarker(
+    "map", rclcpp::Clock().now(), ns, idx, visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
+    autoware::universe_utils::createMarkerScale(0.5, 0.5, 0.5),
+    autoware::universe_utils::createMarkerColor(r, g, b, a));
   marker.pose = pose;
   marker.header.stamp = now;
   marker.lifetime = rclcpp::Duration(0, 0);
 
   std::stringstream ss;
-  ss << std::setprecision(2) << dist;
+  ss << std::setprecision(2) << value;
   marker.text = ss.str();
 
-  visualization_msgs::msg::MarkerArray marker_array;
-  marker_array.markers.push_back(marker);
+  return marker;
+}
+
+Marker create_points_marker(
+  const std::string & ns, const std::vector<geometry_msgs::msg::Point> & points, const double width,
+  const double r, const double g, const double b, const double a, const rclcpp::Time & now)
+{
+  auto marker = autoware::universe_utils::createDefaultMarker(
+    "map", now, ns, 1, Marker::LINE_STRIP,
+    autoware::universe_utils::createMarkerScale(width, 0.0, 0.0),
+    autoware::universe_utils::createMarkerColor(r, g, b, a));
+  marker.lifetime = rclcpp::Duration(0, 0);
+  marker.points = points;
+  return marker;
+}
+
+MarkerArray create_delete_all_marker_array(
+  const std::vector<std::string> & ns_vec, const rclcpp::Time & now)
+{
+  Marker marker;
+  marker.header.stamp = now;
+  marker.action = visualization_msgs::msg::Marker::DELETEALL;
+
+  MarkerArray marker_array;
+  for (const auto & ns : ns_vec) {
+    marker.ns = ns;
+    marker_array.markers.push_back(marker);
+  }
 
   return marker_array;
 }
+
 }  // namespace utils
 }  // namespace autoware::static_centerline_generator

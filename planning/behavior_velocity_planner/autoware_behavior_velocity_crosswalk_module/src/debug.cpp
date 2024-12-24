@@ -24,14 +24,12 @@
 namespace autoware::behavior_velocity_planner
 {
 
-using autoware_motion_utils::createSlowDownVirtualWallMarker;
-using autoware_motion_utils::createStopVirtualWallMarker;
-using autoware_universe_utils::appendMarkerArray;
-using autoware_universe_utils::calcOffsetPose;
-using autoware_universe_utils::createDefaultMarker;
-using autoware_universe_utils::createMarkerColor;
-using autoware_universe_utils::createMarkerScale;
-using autoware_universe_utils::createPoint;
+using autoware::universe_utils::appendMarkerArray;
+using autoware::universe_utils::calcOffsetPose;
+using autoware::universe_utils::createDefaultMarker;
+using autoware::universe_utils::createMarkerColor;
+using autoware::universe_utils::createMarkerScale;
+using autoware::universe_utils::createPoint;
 using visualization_msgs::msg::Marker;
 
 namespace
@@ -173,23 +171,43 @@ visualization_msgs::msg::MarkerArray createCrosswalkMarkers(
     msg.markers.push_back(marker);
   }
 
+  if (!debug_data.occlusion_detection_areas.empty()) {
+    auto marker = createDefaultMarker(
+      "map", now, "occlusion_detection_areas", uid, Marker::LINE_LIST,
+      createMarkerScale(0.25, 0.25, 0.0), createMarkerColor(1.0, 1.0, 1.0, 0.5));
+    for (const auto & area : debug_data.occlusion_detection_areas) {
+      for (auto i = 0UL; i + 1 < area.size(); ++i) {
+        const auto & p1 = area[i];
+        const auto & p2 = area[i + 1];
+        marker.points.push_back(createPoint(p1.x(), p1.y(), 0.0));
+        marker.points.push_back(createPoint(p2.x(), p2.y(), 0.0));
+      }
+    }
+    msg.markers.push_back(marker);
+    marker = createDefaultMarker(
+      "map", now, "crosswalk_origin", uid, Marker::SPHERE, createMarkerScale(0.25, 0.25, 0.25),
+      createMarkerColor(1.0, 1.0, 1.0, 0.5));
+    marker.pose.position = debug_data.crosswalk_origin;
+    msg.markers.push_back(marker);
+  }
+
   return msg;
 }
 }  // namespace
 
-autoware_motion_utils::VirtualWalls CrosswalkModule::createVirtualWalls()
+autoware::motion_utils::VirtualWalls CrosswalkModule::createVirtualWalls()
 {
-  autoware_motion_utils::VirtualWalls virtual_walls;
-  autoware_motion_utils::VirtualWall wall;
+  autoware::motion_utils::VirtualWalls virtual_walls;
+  autoware::motion_utils::VirtualWall wall;
   wall.text = "crosswalk";
   wall.ns = std::to_string(module_id_) + "_";
 
-  wall.style = autoware_motion_utils::VirtualWallType::stop;
+  wall.style = autoware::motion_utils::VirtualWallType::stop;
   for (const auto & p : debug_data_.stop_poses) {
     wall.pose = calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
     virtual_walls.push_back(wall);
   }
-  wall.style = autoware_motion_utils::VirtualWallType::slowdown;
+  wall.style = autoware::motion_utils::VirtualWallType::slowdown;
   wall.text += debug_data_.virtual_wall_suffix;
   for (const auto & p : debug_data_.slow_poses) {
     wall.pose = calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);

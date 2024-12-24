@@ -38,7 +38,7 @@ def generate_test_description():
         output="screen",
         parameters=[
             {"lanelet2_map_path": lanelet2_map_path},
-            {"run_background": False},
+            {"mode": "AUTO"},
             {"rviz": False},
             {"centerline_source": "optimization_trajectory_base"},
             {"lanelet2_input_file_path": lanelet2_map_path},
@@ -71,7 +71,7 @@ def generate_test_description():
                 "config/path_optimizer.param.yaml",
             ),
             os.path.join(
-                get_package_share_directory("map_loader"),
+                get_package_share_directory("autoware_map_loader"),
                 "config/lanelet2_map_loader.param.yaml",
             ),
             os.path.join(

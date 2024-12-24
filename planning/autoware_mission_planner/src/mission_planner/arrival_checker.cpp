@@ -26,7 +26,7 @@ namespace autoware::mission_planner
 ArrivalChecker::ArrivalChecker(rclcpp::Node * node) : vehicle_stop_checker_(node)
 {
   const double angle_deg = node->declare_parameter<double>("arrival_check_angle_deg");
-  angle_ = autoware_universe_utils::deg2rad(angle_deg);
+  angle_ = autoware::universe_utils::deg2rad(angle_deg);
   distance_ = node->declare_parameter<double>("arrival_check_distance");
   duration_ = node->declare_parameter<double>("arrival_check_duration");
 }
@@ -43,17 +43,6 @@ void ArrivalChecker::set_goal(const PoseWithUuidStamped & goal)
   goal_with_uuid_ = goal;
 }
 
-void ArrivalChecker::modify_goal(const PoseWithUuidStamped & modified_goal)
-{
-  if (!goal_with_uuid_) {
-    return;
-  }
-  if (goal_with_uuid_.value().uuid.uuid != modified_goal.uuid.uuid) {
-    return;
-  }
-  set_goal(modified_goal);
-}
-
 bool ArrivalChecker::is_arrived(const PoseStamped & pose) const
 {
   if (!goal_with_uuid_) {
@@ -67,14 +56,14 @@ bool ArrivalChecker::is_arrived(const PoseStamped & pose) const
   }
 
   // Check distance.
-  if (distance_ < autoware_universe_utils::calcDistance2d(pose.pose, goal.pose)) {
+  if (distance_ < autoware::universe_utils::calcDistance2d(pose.pose, goal.pose)) {
     return false;
   }
 
   // Check angle.
   const double yaw_pose = tf2::getYaw(pose.pose.orientation);
   const double yaw_goal = tf2::getYaw(goal.pose.orientation);
-  const double yaw_diff = autoware_universe_utils::normalizeRadian(yaw_pose - yaw_goal);
+  const double yaw_diff = autoware::universe_utils::normalizeRadian(yaw_pose - yaw_goal);
   if (angle_ < std::fabs(yaw_diff)) {
     return false;
   }

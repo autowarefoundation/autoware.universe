@@ -28,6 +28,7 @@
 #include <memory>
 #include <regex>
 #include <string>
+#include <utility>
 #include <vector>
 
 ProcessMonitor::ProcessMonitor(const rclcpp::NodeOptions & options)
@@ -127,8 +128,6 @@ void ProcessMonitor::getTasksSummary(
   }
   bp::pipe p{p_fd[0], p_fd[1]};
 
-  std::string line;
-
   // Echo output for grep
   {
     int out_fd[2];
@@ -179,6 +178,7 @@ void ProcessMonitor::getTasksSummary(
       return;
     }
 
+    std::string line;
     std::getline(is_out, line);
     std::cmatch match;
     const std::regex filter(
@@ -517,7 +517,7 @@ void ProcessMonitor::onTimer()
   bool is_top_error = false;
 
   // Start to measure elapsed time
-  autoware_universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
+  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   stop_watch.tic("execution_time");
 
   int out_fd[2];

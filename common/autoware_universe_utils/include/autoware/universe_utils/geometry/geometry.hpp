@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2020-2024 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -96,7 +96,7 @@ inline void doTransform(
 #endif
 }  // namespace tf2
 
-namespace autoware_universe_utils
+namespace autoware::universe_utils
 {
 template <class T>
 geometry_msgs::msg::Point getPoint(const T & p)
@@ -413,7 +413,7 @@ geometry_msgs::msg::Pose transformPose(
   const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::TransformStamped & transform);
 
 geometry_msgs::msg::Pose transformPose(
-  const geometry_msgs::msg::Pose & pose, geometry_msgs::msg::Transform & transform);
+  const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Transform & transform);
 
 geometry_msgs::msg::Pose transformPose(
   const geometry_msgs::msg::Pose & pose, const geometry_msgs::msg::Pose & pose_transform);
@@ -577,6 +577,12 @@ std::optional<geometry_msgs::msg::Point> intersect(
   const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2,
   const geometry_msgs::msg::Point & p3, const geometry_msgs::msg::Point & p4);
 
-}  // namespace autoware_universe_utils
+/**
+ * @brief Check if 2 convex polygons intersect using the GJK algorithm
+ * @details much faster than boost::geometry::intersects()
+ */
+bool intersects_convex(const Polygon2d & convex_polygon1, const Polygon2d & convex_polygon2);
+
+}  // namespace autoware::universe_utils
 
 #endif  // AUTOWARE__UNIVERSE_UTILS__GEOMETRY__GEOMETRY_HPP_

@@ -29,6 +29,7 @@
 #include <map>
 #include <regex>
 #include <string>
+#include <utility>
 
 namespace bp = boost::process;
 namespace fs = boost::filesystem;
@@ -126,7 +127,7 @@ void NTPMonitor::checkOffset(diagnostic_updater::DiagnosticStatusWrapper & stat)
 void NTPMonitor::onTimer()
 {
   // Start to measure elapsed time
-  autoware_universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
+  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   stop_watch.tic("execution_time");
 
   std::string error_str;

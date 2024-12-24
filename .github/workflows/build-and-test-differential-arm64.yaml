@@ -8,6 +8,10 @@ on:
       - reopened
       - labeled
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
+  cancel-in-progress: true
+
 jobs:
   make-sure-label-is-present:
     uses: autowarefoundation/autoware-github-actions/.github/workflows/make-sure-label-is-present.yaml@v1
@@ -17,7 +21,7 @@ jobs:
   build-and-test-differential-arm64:
     needs: make-sure-label-is-present
     if: ${{ needs.make-sure-label-is-present.outputs.result == 'true' }}
-    runs-on: [self-hosted, linux, ARM64]
+    runs-on: codebuild-autoware-us-east-1-${{ github.run_id }}-${{ github.run_attempt }}-arm-3.0-large
     container: ${{ matrix.container }}${{ matrix.container-suffix }}
     strategy:
       fail-fast: false
@@ -29,7 +33,7 @@ jobs:
           - -cuda
         include:
           - rosdistro: humble
-            container: ghcr.io/autowarefoundation/autoware:latest-prebuilt
+            container: ghcr.io/autowarefoundation/autoware:universe-devel
             build-depends-repos: build_depends.repos
     steps:
       - name: Set PR fetch depth
@@ -44,12 +48,25 @@ jobs:
       - name: Show disk space before the tasks
         run: df -h
 
+      - name: Show machine specs
+        run: lscpu && free -h
+
       - name: Remove exec_depend
         uses: autowarefoundation/autoware-github-actions/remove-exec-depend@v1
 
       - name: Get modified packages
         id: get-modified-packages
         uses: autowarefoundation/autoware-github-actions/get-modified-packages@v1
+
+      - name: Export CUDA state as a variable for adding to cache key
+        run: |
+          build_type_cuda_state=nocuda
+          if [[ "${{ matrix.container-suffix }}" == "-cuda" ]]; then
+            build_type_cuda_state=cuda
+          fi
+          echo "BUILD_TYPE_CUDA_STATE=$build_type_cuda_state" >> "${GITHUB_ENV}"
+          echo "::notice::BUILD_TYPE_CUDA_STATE=$build_type_cuda_state"
+        shell: bash
 
       - name: Build
         if: ${{ steps.get-modified-packages.outputs.modified-packages != '' }}
@@ -58,6 +75,8 @@ jobs:
           rosdistro: ${{ matrix.rosdistro }}
           target-packages: ${{ steps.get-modified-packages.outputs.modified-packages }}
           build-depends-repos: ${{ matrix.build-depends-repos }}
+          cache-key-element: ${{ env.BUILD_TYPE_CUDA_STATE }}
+          build-pre-command: taskset --cpu-list 0-5
 
       - name: Test
         id: test
@@ -76,6 +95,7 @@ jobs:
           fail_ci_if_error: false
           verbose: true
           flags: differential-arm64
+          token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Show disk space after the tasks
         run: df -h

@@ -38,6 +38,8 @@ None
 
 ### Parameters
 
+{{json_to_markdown("planning/autoware_freespace_planner/schema/freespace_planner.schema.json")}}
+
 #### Node parameters
 
 | Parameter                    | Type   | Description                                                                     |
@@ -50,6 +52,7 @@ None
 | `th_stopped_time_sec`        | double | threshold time to check if vehicle is stopped                                   |
 | `th_stopped_velocity_mps`    | double | threshold velocity to check if vehicle is stopped                               |
 | `th_course_out_distance_m`   | double | threshold distance to check if vehicle is out of course                         |
+| `th_obstacle_time_sec`       | double | threshold time to check if obstacle is on the trajectory                        |
 | `vehicle_shape_margin_m`     | double | vehicle margin                                                                  |
 | `replan_when_obstacle_found` | bool   | whether replanning when obstacle has found on the trajectory                    |
 | `replan_when_course_out`     | bool   | whether replanning when vehicle is out of course                                |
@@ -59,23 +62,31 @@ None
 | Parameter                 | Type   | Description                                        |
 | ------------------------- | ------ | -------------------------------------------------- |
 | `time_limit`              | double | time limit of planning                             |
-| `minimum_turning_radius`  | double | minimum turning radius of robot                    |
-| `maximum_turning_radius`  | double | maximum turning radius of robot                    |
+| `maximum_turning_ratio`   | double | max ratio of actual turning range to use           |
+| `turning_steps`           | double | number of turning steps within turning range       |
 | `theta_size`              | double | the number of angle's discretization               |
 | `lateral_goal_range`      | double | goal range of lateral position                     |
 | `longitudinal_goal_range` | double | goal range of longitudinal position                |
 | `angle_goal_range`        | double | goal range of angle                                |
 | `curve_weight`            | double | additional cost factor for curve actions           |
 | `reverse_weight`          | double | additional cost factor for reverse actions         |
+| `direction_change_weight` | double | additional cost factor for switching direction     |
 | `obstacle_threshold`      | double | threshold for regarding a certain grid as obstacle |
 
 #### A\* search parameters
 
 | Parameter                   | Type   | Description                                             |
 | --------------------------- | ------ | ------------------------------------------------------- |
+| `search_method`             | string | method of searching, start to goal or vice versa        |
 | `only_behind_solutions`     | bool   | whether restricting the solutions to be behind the goal |
 | `use_back`                  | bool   | whether using backward trajectory                       |
+| `adapt_expansion_distance`  | bool   | if true, adapt expansion distance based on environment  |
+| `expansion_distance`        | double | length of expansion for node transitions                |
+| `near_goal_distance`        | double | near goal distance threshold                            |
 | `distance_heuristic_weight` | double | heuristic weight for estimating node's cost             |
+| `smoothness_weight`         | double | cost factor for change in curvature                     |
+| `obstacle_distance_weight`  | double | cost factor for distance to obstacle                    |
+| `goal_lat_distance_weight`  | double | cost factor for lateral distance from goal              |
 
 #### RRT\* search parameters
 

@@ -14,15 +14,17 @@
 
 #include "autoware/mpc_lateral_controller/mpc_utils.hpp"
 
+#include "autoware/interpolation/linear_interpolation.hpp"
+#include "autoware/interpolation/spline_interpolation.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware/universe_utils/math/normalization.hpp"
-#include "interpolation/linear_interpolation.hpp"
-#include "interpolation/spline_interpolation.hpp"
 
 #include <algorithm>
+#include <iostream>
 #include <limits>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace autoware::motion::control::mpc_lateral_controller
@@ -42,9 +44,9 @@ double calcLongitudinalOffset(
 
 namespace MPCUtils
 {
-using autoware_universe_utils::calcDistance2d;
-using autoware_universe_utils::createQuaternionFromYaw;
-using autoware_universe_utils::normalizeRadian;
+using autoware::universe_utils::calcDistance2d;
+using autoware::universe_utils::createQuaternionFromYaw;
+using autoware::universe_utils::normalizeRadian;
 
 double calcDistance2d(const MPCTrajectory & trajectory, const size_t idx1, const size_t idx2)
 {
@@ -134,16 +136,16 @@ std::pair<bool, MPCTrajectory> resampleMPCTrajectoryByDistance(
   convertEulerAngleToMonotonic(input_yaw);
 
   const auto lerp_arc_length = [&](const auto & input_value) {
-    return interpolation::lerp(input_arclength, input_value, output_arclength);
+    return autoware::interpolation::lerp(input_arclength, input_value, output_arclength);
   };
   const auto spline_arc_length = [&](const auto & input_value) {
-    return interpolation::spline(input_arclength, input_value, output_arclength);
+    return autoware::interpolation::spline(input_arclength, input_value, output_arclength);
   };
 
   output.x = spline_arc_length(input.x);
   output.y = spline_arc_length(input.y);
   output.z = spline_arc_length(input.z);
-  output.yaw = spline_arc_length(input.yaw);
+  output.yaw = spline_arc_length(input_yaw);
   output.vx = lerp_arc_length(input.vx);  // must be linear
   output.k = spline_arc_length(input.k);
   output.smooth_k = spline_arc_length(input.smooth_k);
@@ -165,7 +167,7 @@ bool linearInterpMPCTrajectory(
   convertEulerAngleToMonotonic(in_traj_yaw);
 
   const auto lerp_arc_length = [&](const auto & input_value) {
-    return interpolation::lerp(in_index, input_value, out_index);
+    return autoware::interpolation::lerp(in_index, input_value, out_index);
   };
 
   try {
@@ -240,7 +242,7 @@ std::vector<double> calcTrajectoryCurvature(
     p2.y = traj.y.at(curr_idx);
     p3.y = traj.y.at(next_idx);
     try {
-      curvature_vec.at(curr_idx) = autoware_universe_utils::calcCurvature(p1, p2, p3);
+      curvature_vec.at(curr_idx) = autoware::universe_utils::calcCurvature(p1, p2, p3);
     } catch (...) {
       std::cerr << "[MPC] 2 points are too close to calculate curvature." << std::endl;
       curvature_vec.at(curr_idx) = 0.0;
@@ -281,7 +283,7 @@ Trajectory convertToAutowareTrajectory(const MPCTrajectory & input)
     p.pose.position.x = input.x.at(i);
     p.pose.position.y = input.y.at(i);
     p.pose.position.z = input.z.at(i);
-    p.pose.orientation = autoware_universe_utils::createQuaternionFromYaw(input.yaw.at(i));
+    p.pose.orientation = autoware::universe_utils::createQuaternionFromYaw(input.yaw.at(i));
     p.longitudinal_velocity_mps =
       static_cast<decltype(p.longitudinal_velocity_mps)>(input.vx.at(i));
     output.points.push_back(p);
@@ -346,7 +348,7 @@ bool calcNearestPoseInterp(
     return false;
   }
 
-  *nearest_index = autoware_motion_utils::findFirstNearestIndexWithSoftConstraints(
+  *nearest_index = autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
     autoware_traj.points, self_pose, max_dist, max_yaw);
   const size_t traj_size = traj.size();
 
@@ -389,7 +391,7 @@ bool calcNearestPoseInterp(
   prev_traj_point.x = traj.x.at(prev);
   prev_traj_point.y = traj.y.at(prev);
   const double traj_seg_length =
-    autoware_universe_utils::calcDistance2d(prev_traj_point, next_traj_point);
+    autoware::universe_utils::calcDistance2d(prev_traj_point, next_traj_point);
   /* if distance between two points are too close */
   if (traj_seg_length < 1.0E-5) {
     nearest_pose->position.x = traj.x.at(*nearest_index);
@@ -460,7 +462,7 @@ void extendTrajectoryInYawDirection(
   const double dt = interval / extend_vel;
   const size_t num_extended_point = static_cast<size_t>(extend_dist / interval);
   for (size_t i = 0; i < num_extended_point; ++i) {
-    extended_pose = autoware_universe_utils::calcOffsetPose(extended_pose, x_offset, 0.0, 0.0);
+    extended_pose = autoware::universe_utils::calcOffsetPose(extended_pose, x_offset, 0.0, 0.0);
     traj.push_back(
       extended_pose.position.x, extended_pose.position.y, extended_pose.position.z, traj.yaw.back(),
       extend_vel, traj.k.back(), traj.smooth_k.back(), traj.relative_time.back() + dt);

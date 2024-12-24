@@ -21,6 +21,8 @@
 
 #include <pcl_conversions/pcl_conversions.h>
 
+#include <vector>
+
 namespace yabloc::line_segment_detector
 {
 LineSegmentDetector::LineSegmentDetector(const rclcpp::NodeOptions & options)
@@ -53,7 +55,7 @@ void LineSegmentDetector::execute(const cv::Mat & image, const rclcpp::Time & st
 
   cv::Mat lines;
   {
-    autoware_universe_utils::StopWatch stop_watch;
+    autoware::universe_utils::StopWatch stop_watch;
     line_segment_detector_->detect(gray_image, lines);
     if (lines.size().width != 0) {
       line_segment_detector_->drawSegments(gray_image, lines);

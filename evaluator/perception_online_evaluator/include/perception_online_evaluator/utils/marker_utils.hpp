@@ -30,8 +30,8 @@
 namespace marker_utils
 {
 
+using autoware::universe_utils::Polygon2d;
 using autoware_perception_msgs::msg::PredictedObject;
-using autoware_universe_utils::Polygon2d;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using std_msgs::msg::ColorRGBA;
@@ -52,10 +52,10 @@ MarkerArray createFootprintMarkerArray(
   const std::string && ns, const int32_t & id, const float & r, const float & g, const float & b);
 
 MarkerArray createPointsMarkerArray(
-  const std::vector<Point> points, const std::string & ns, const int32_t id, const float r,
+  const std::vector<Point> & points, const std::string & ns, const int32_t id, const float r,
   const float g, const float b);
 MarkerArray createPointsMarkerArray(
-  const std::vector<Pose> poses, const std::string & ns, const int32_t id, const float r,
+  const std::vector<Pose> & poses, const std::string & ns, const int32_t id, const float r,
   const float g, const float b);
 
 MarkerArray createPoseMarkerArray(
@@ -63,7 +63,7 @@ MarkerArray createPoseMarkerArray(
   const float & b);
 
 MarkerArray createPosesMarkerArray(
-  const std::vector<Pose> poses, std::string && ns, const int32_t & first_id, const float & r,
+  const std::vector<Pose> & poses, std::string && ns, const int32_t & first_id, const float & r,
   const float & g, const float & b, const float & x_scale = 0.5, const float & y_scale = 0.2,
   const float & z_scale = 0.2);
 
@@ -74,7 +74,7 @@ MarkerArray createObjectPolygonMarkerArray(
   const float & g, const float & b);
 
 MarkerArray createDeviationLines(
-  const std::vector<Pose> poses1, const std::vector<Pose> poses2, const std::string & ns,
+  const std::vector<Pose> & poses1, const std::vector<Pose> & poses2, const std::string & ns,
   const int32_t & first_id, const float r, const float g, const float b);
 
 }  // namespace marker_utils

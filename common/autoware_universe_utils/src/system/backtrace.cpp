@@ -23,9 +23,10 @@
 #include <sstream>
 #include <vector>
 
-namespace autoware_universe_utils
+namespace autoware::universe_utils
 {
 
+// cppcheck-suppress unusedFunction
 void print_backtrace()
 {
   constexpr size_t max_frames = 100;
@@ -49,4 +50,4 @@ void print_backtrace()
   free(symbol_list);
 }
 
-}  // namespace autoware_universe_utils
+}  // namespace autoware::universe_utils

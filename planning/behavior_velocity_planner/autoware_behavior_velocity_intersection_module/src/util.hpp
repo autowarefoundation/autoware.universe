@@ -76,24 +76,8 @@ bool isOverTargetIndex(
   const tier4_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx,
   const geometry_msgs::msg::Pose & current_pose, const size_t target_idx);
 
-/**
- * @brief check if ego is before the target_idx. If the index is same, compare the exact pose
- * @param[in] path path
- * @param[in] closest_idx ego's closest index on the path
- * @param[in] current_pose ego's exact pose
- * @return true if ego is over the target_idx
- */
-bool isBeforeTargetIndex(
-  const tier4_planning_msgs::msg::PathWithLaneId & path, const size_t closest_idx,
-  const geometry_msgs::msg::Pose & current_pose, const size_t target_idx);
-
-std::optional<autoware_universe_utils::Polygon2d> getIntersectionArea(
+std::optional<autoware::universe_utils::Polygon2d> getIntersectionArea(
   lanelet::ConstLanelet assigned_lane, lanelet::LaneletMapConstPtr lanelet_map_ptr);
-
-/**
- * @brief check if the given lane has related traffic light
- */
-bool hasAssociatedTrafficLight(lanelet::ConstLanelet lane);
 
 /**
  * @brief interpolate PathWithLaneId
@@ -116,8 +100,16 @@ geometry_msgs::msg::Pose getObjectPoseWithVelocityDirection(
  */
 std::pair<lanelet::ConstLanelets, std::vector<lanelet::ConstLanelets>>
 mergeLaneletsByTopologicalSort(
-  const lanelet::ConstLanelets & lanelets,
+  const lanelet::ConstLanelets & lanelets, const lanelet::ConstLanelets & terminal_lanelets,
   const lanelet::routing::RoutingGraphPtr routing_graph_ptr);
+
+/**
+ * @brief this functions retrieves all the paths from the given source to terminal nodes on the tree
+ @param[in] visited_indices visited node indices excluding src_ind so far
+ */
+void retrievePathsBackward(
+  const std::vector<std::vector<bool>> & adjacency, const size_t src_index,
+  const std::vector<size_t> & visited_indices, std::vector<std::vector<size_t>> & paths);
 
 /**
  * @brief find the index of the first point where vehicle footprint intersects with the given
@@ -125,7 +117,7 @@ mergeLaneletsByTopologicalSort(
  */
 std::optional<size_t> getFirstPointInsidePolygonByFootprint(
   const lanelet::CompoundPolygon3d & polygon, const InterpolatedPathInfo & interpolated_path_info,
-  const autoware_universe_utils::LinearRing2d & footprint, const double vehicle_length);
+  const autoware::universe_utils::LinearRing2d & footprint, const double vehicle_length);
 
 /**
  * @brief find the index of the first point where vehicle footprint intersects with the given
@@ -136,7 +128,7 @@ std::optional<std::pair<
 getFirstPointInsidePolygonsByFootprint(
   const std::vector<lanelet::CompoundPolygon3d> & polygons,
   const InterpolatedPathInfo & interpolated_path_info,
-  const autoware_universe_utils::LinearRing2d & footprint, const double vehicle_length);
+  const autoware::universe_utils::LinearRing2d & footprint, const double vehicle_length);
 
 std::vector<lanelet::CompoundPolygon3d> getPolygon3dFromLanelets(
   const lanelet::ConstLanelets & ll_vec);

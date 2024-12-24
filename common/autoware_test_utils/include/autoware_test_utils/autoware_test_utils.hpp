@@ -15,39 +15,34 @@
 #ifndef AUTOWARE_TEST_UTILS__AUTOWARE_TEST_UTILS_HPP_
 #define AUTOWARE_TEST_UTILS__AUTOWARE_TEST_UTILS_HPP_
 
-#include <autoware/universe_utils/geometry/geometry.hpp>
-#include <component_interface_specs/planning.hpp>
-#include <lanelet2_extension/io/autoware_osm_parser.hpp>
-#include <lanelet2_extension/projection/mgrs_projector.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
-#include <lanelet2_extension/utility/utilities.hpp>
+#include <ament_index_cpp/get_package_share_directory.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_planning_msgs/msg/lanelet_primitive.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <autoware_planning_msgs/msg/lanelet_segment.hpp>
+#include <autoware_planning_msgs/msg/path.hpp>
 #include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
-#include <sensor_msgs/msg/point_cloud2.hpp>
-#include <std_msgs/msg/bool.hpp>
+#include <rosgraph_msgs/msg/clock.hpp>
 #include <tf2_msgs/msg/tf_message.hpp>
 #include <tier4_planning_msgs/msg/path_point_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/scenario.hpp>
-#include <unique_identifier_msgs/msg/uuid.hpp>
 
-#include <cxxabi.h>
 #include <lanelet2_io/Io.h>
-#include <tf2/utils.h>
-#include <tf2_ros/buffer.h>
-#include <yaml-cpp/yaml.h>
 
+#include <filesystem>
 #include <limits>
 #include <memory>
+#include <optional>
+#include <regex>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace autoware::test_utils
@@ -62,18 +57,13 @@ using autoware_planning_msgs::msg::Trajectory;
 using tier4_planning_msgs::msg::PathPointWithLaneId;
 using tier4_planning_msgs::msg::PathWithLaneId;
 using RouteSections = std::vector<autoware_planning_msgs::msg::LaneletSegment>;
-using autoware_universe_utils::createPoint;
-using autoware_universe_utils::createQuaternionFromRPY;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;
-using geometry_msgs::msg::TransformStamped;
 using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
-using sensor_msgs::msg::PointCloud2;
 using tf2_msgs::msg::TFMessage;
 using tier4_planning_msgs::msg::Scenario;
-using unique_identifier_msgs::msg::UUID;
 
 /**
  * @brief Creates a Pose message with the specified position and orientation.
@@ -223,15 +213,21 @@ LaneletMapBin make_map_bin_msg(
   const std::string & absolute_path, const double center_line_resolution = 5.0);
 
 /**
- * @brief Creates a LaneletMapBin message using a predefined Lanelet2 map file.
+ * @brief Creates a LaneletMapBin message using a Lanelet2 map file.
  *
- * This function loads a lanelet2_map.osm from the test_map folder in the
- * autoware_test_utils package, overwrites the centerline with a resolution of 5.0,
+ * This function loads a specified map file from the test_map folder in the
+ * specified package (or autoware_test_utils if no package is specified),
+ * overwrites the centerline with a resolution of 5.0,
  * and converts the map to a LaneletMapBin message.
  *
+ * @param package_name The name of the package containing the map file. If empty, defaults to
+ * "autoware_test_utils".
+ * @param map_filename The name of the map file (e.g. "lanelet2_map.osm")
  * @return A LaneletMapBin message containing the map data.
  */
-LaneletMapBin makeMapBinMsg();
+LaneletMapBin makeMapBinMsg(
+  const std::string & package_name = "autoware_test_utils",
+  const std::string & map_filename = "lanelet2_map.osm");
 
 /**
  * @brief Creates an Odometry message with a specified shift.
@@ -341,6 +337,19 @@ void updateNodeOptions(
 PathWithLaneId loadPathWithLaneIdInYaml();
 
 /**
+ * @brief create a straight lanelet from 2 segments defined by 4 points
+ * @param [in] left0 start of the left segment
+ * @param [in] left1 end of the left segment
+ * @param [in] right0 start of the right segment
+ * @param [in] right1 end of the right segment
+ * @return a ConstLanelet with the given left and right bounds and a unique lanelet id
+ *
+ */
+lanelet::ConstLanelet make_lanelet(
+  const lanelet::BasicPoint2d & left0, const lanelet::BasicPoint2d & left1,
+  const lanelet::BasicPoint2d & right0, const lanelet::BasicPoint2d & right1);
+
+/**
  * @brief Generates a trajectory with specified parameters.
  *
  * This function generates a trajectory of type T with a given number of points,
@@ -366,9 +375,9 @@ T generateTrajectory(
 
   T traj;
   for (size_t i = 0; i < num_points; ++i) {
-    const double theta = init_theta + i * delta_theta;
-    const double x = i * point_interval * std::cos(theta);
-    const double y = i * point_interval * std::sin(theta);
+    const double theta = init_theta + static_cast<double>(i) * delta_theta;
+    const double x = static_cast<double>(i) * point_interval * std::cos(theta);
+    const double y = static_cast<double>(i) * point_interval * std::sin(theta);
 
     Point p;
     p.pose = createPose(x, y, 0.0, 0.0, 0.0, theta);
@@ -381,6 +390,33 @@ T generateTrajectory(
     }
   }
 
+  return traj;
+}
+
+template <>
+inline PathWithLaneId generateTrajectory<PathWithLaneId>(
+  const size_t num_points, const double point_interval, const double velocity,
+  const double init_theta, const double delta_theta, const size_t overlapping_point_index)
+{
+  PathWithLaneId traj;
+
+  for (size_t i = 0; i < num_points; i++) {
+    const double theta = init_theta + static_cast<double>(i) * delta_theta;
+    const double x = static_cast<double>(i) * point_interval * std::cos(theta);
+    const double y = static_cast<double>(i) * point_interval * std::sin(theta);
+
+    PathPointWithLaneId p;
+    p.point.pose = createPose(x, y, 0.0, 0.0, 0.0, theta);
+    p.point.longitudinal_velocity_mps = static_cast<float>(velocity);
+    p.lane_ids.push_back(static_cast<int64_t>(i));
+    traj.points.push_back(p);
+
+    if (i == overlapping_point_index) {
+      auto value_to_insert = traj.points.at(overlapping_point_index);
+      traj.points.insert(
+        traj.points.begin() + static_cast<int64_t>(overlapping_point_index) + 1, value_to_insert);
+    }
+  }
   return traj;
 }
 
@@ -400,6 +436,7 @@ void createPublisherWithQoS(
   rclcpp::Node::SharedPtr test_node, std::string topic_name,
   std::shared_ptr<rclcpp::Publisher<T>> & publisher)
 {
+  // override QoS settings for specific message types
   if constexpr (
     std::is_same_v<T, LaneletRoute> || std::is_same_v<T, LaneletMapBin> ||
     std::is_same_v<T, OperationModeState>) {
@@ -441,18 +478,23 @@ void setPublisher(
  * @param topic_name The name of the topic to subscribe to.
  * @param callback The callback function to call when a message is received.
  * @param subscriber A reference to the subscription to be created.
+ * @param qos The QoS settings for the subscription (optional).
  */
 template <typename T>
 void createSubscription(
-  rclcpp::Node::SharedPtr test_node, std::string topic_name,
+  rclcpp::Node::SharedPtr test_node, const std::string & topic_name,
   std::function<void(const typename T::ConstSharedPtr)> callback,
-  std::shared_ptr<rclcpp::Subscription<T>> & subscriber)
+  std::shared_ptr<rclcpp::Subscription<T>> & subscriber,
+  std::optional<rclcpp::QoS> qos = std::nullopt)
 {
-  if constexpr (std::is_same_v<T, Trajectory>) {
-    subscriber = test_node->create_subscription<T>(topic_name, rclcpp::QoS{1}, callback);
-  } else {
-    subscriber = test_node->create_subscription<T>(topic_name, 10, callback);
+  if (!qos.has_value()) {
+    if constexpr (std::is_same_v<T, Trajectory>) {
+      qos = rclcpp::QoS{1};
+    } else {
+      qos = rclcpp::QoS{10};
+    }
   }
+  subscriber = test_node->create_subscription<T>(topic_name, *qos, callback);
 }
 
 /**
@@ -465,14 +507,17 @@ void createSubscription(
  * @param topic_name The name of the topic to subscribe to.
  * @param subscriber A reference to the subscription to be set.
  * @param count A reference to a counter that increments on message receipt.
+ * @param qos The QoS settings for the subscription (optional).
  */
 template <typename T>
 void setSubscriber(
   rclcpp::Node::SharedPtr test_node, std::string topic_name,
-  std::shared_ptr<rclcpp::Subscription<T>> & subscriber, size_t & count)
+  std::shared_ptr<rclcpp::Subscription<T>> & subscriber, size_t & count,
+  std::optional<rclcpp::QoS> qos = std::nullopt)
 {
   createSubscription(
-    test_node, topic_name, [&count](const typename T::ConstSharedPtr) { count++; }, subscriber);
+    test_node, topic_name, [&count](const typename T::ConstSharedPtr) { count++; }, subscriber,
+    qos);
 }
 
 /**
@@ -511,6 +556,95 @@ void publishToTargetNode(
   }
   autoware::test_utils::spinSomeNodes(test_node, target_node, repeat_count);
 }
+
+/**
+ * @brief Manages publishing and subscribing to ROS topics for testing Autoware.
+ *
+ * The AutowareTestManager class provides utility functions to facilitate
+ * the publishing of messages to specified topics and the setting up of
+ * subscribers to listen for messages on specified topics. This class
+ * simplifies the setup of test environments in Autoware.
+ */
+class AutowareTestManager
+{
+public:
+  AutowareTestManager()
+  {
+    test_node_ = std::make_shared<rclcpp::Node>("autoware_test_manager_node");
+    pub_clock_ = test_node_->create_publisher<rosgraph_msgs::msg::Clock>("/clock", 1);
+  }
+
+  template <typename MessageType>
+  void test_pub_msg(
+    rclcpp::Node::SharedPtr target_node, const std::string & topic_name, MessageType & msg)
+  {
+    rclcpp::QoS qos(rclcpp::KeepLast(10));
+    test_pub_msg(target_node, topic_name, msg, qos);
+  }
+
+  template <typename MessageType>
+  void test_pub_msg(
+    rclcpp::Node::SharedPtr target_node, const std::string & topic_name, MessageType & msg,
+    rclcpp::QoS qos)
+  {
+    if (publishers_.find(topic_name) == publishers_.end()) {
+      auto publisher = test_node_->create_publisher<MessageType>(topic_name, qos);
+      publishers_[topic_name] = std::static_pointer_cast<rclcpp::PublisherBase>(publisher);
+    }
+
+    auto publisher =
+      std::dynamic_pointer_cast<rclcpp::Publisher<MessageType>>(publishers_[topic_name]);
+
+    publisher->publish(msg);
+    const int repeat_count = 3;
+    autoware::test_utils::spinSomeNodes(test_node_, target_node, repeat_count);
+    RCLCPP_INFO(test_node_->get_logger(), "Published message on topic '%s'", topic_name.c_str());
+  }
+
+  template <typename MessageType>
+  void set_subscriber(
+    const std::string & topic_name,
+    std::function<void(const typename MessageType::ConstSharedPtr)> callback,
+    std::optional<rclcpp::QoS> qos = std::nullopt)
+  {
+    if (subscribers_.find(topic_name) == subscribers_.end()) {
+      std::shared_ptr<rclcpp::Subscription<MessageType>> subscriber;
+      autoware::test_utils::createSubscription<MessageType>(
+        test_node_, topic_name, callback, subscriber, qos);
+      subscribers_[topic_name] = std::static_pointer_cast<rclcpp::SubscriptionBase>(subscriber);
+    } else {
+      RCLCPP_WARN(test_node_->get_logger(), "Subscriber %s already set.", topic_name.c_str());
+    }
+  }
+
+  /**
+   * @brief Publishes a ROS Clock message with the specified time.
+   *
+   * This function publishes a ROS Clock message with the specified time.
+   * Be careful when using this function, as it can affect the behavior of
+   * the system under test. Consider using ament_add_ros_isolated_gtest to
+   * isolate the system under test from the ROS clock.
+   *
+   * @param time The time to publish.
+   */
+  void jump_clock(const rclcpp::Time & time)
+  {
+    rosgraph_msgs::msg::Clock clock;
+    clock.clock = time;
+    pub_clock_->publish(clock);
+  }
+
+protected:
+  // Publisher
+  std::unordered_map<std::string, std::shared_ptr<rclcpp::PublisherBase>> publishers_;
+  std::unordered_map<std::string, std::shared_ptr<rclcpp::SubscriptionBase>> subscribers_;
+  rclcpp::Publisher<rosgraph_msgs::msg::Clock>::SharedPtr pub_clock_;
+
+  // Node
+  rclcpp::Node::SharedPtr test_node_;
+};  // class AutowareTestManager
+
+std::optional<std::string> resolve_pkg_share_uri(const std::string & uri_path);
 
 }  // namespace autoware::test_utils
 

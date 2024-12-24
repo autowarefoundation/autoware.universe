@@ -27,6 +27,7 @@
 
 #include <limits>
 #include <memory>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -73,8 +74,6 @@ struct ObjectParameter
 
   bool is_safety_check_target{false};
 
-  size_t execute_num{1};
-
   double moving_speed_threshold{0.0};
 
   double moving_time_threshold{1.0};
@@ -90,6 +89,8 @@ struct ObjectParameter
   double lateral_hard_margin_for_parked_vehicle{1.0};
 
   double longitudinal_margin{0.0};
+
+  double th_error_eclipse_long_radius{0.0};
 };
 
 struct AvoidanceParameters
@@ -101,27 +102,22 @@ struct AvoidanceParameters
   // computational cost for latter modules.
   double resample_interval_for_output = 3.0;
 
-  // enable avoidance to be perform only in lane with same direction
-  bool use_adjacent_lane{true};
-
-  // enable avoidance to be perform in opposite lane direction
-  // to use this, enable_avoidance_over_same_direction need to be set to true.
-  bool use_opposite_lane{true};
+  // drivable lane config
+  std::string use_lane_type{"current_lane"};
 
   // if this param is true, it reverts avoidance path when the path is no longer needed.
   bool enable_cancel_maneuver{false};
 
+  double force_deactivate_duration_time{0.0};
+
   // enable avoidance for all parking vehicle
-  bool enable_avoidance_for_ambiguous_vehicle{false};
+  std::string policy_ambiguous_vehicle{"ignore"};
 
   // enable yield maneuver.
   bool enable_yield_maneuver{false};
 
   // enable yield maneuver.
   bool enable_yield_maneuver_during_shifting{false};
-
-  // disable path update
-  bool disable_path_update{false};
 
   // use hatched road markings for avoidance
   bool use_hatched_road_markings{false};
@@ -198,8 +194,12 @@ struct AvoidanceParameters
   // minimum road shoulder width. maybe 0.5 [m]
   double object_check_min_road_shoulder_width{0.0};
 
+  // time threshold for vehicle in freespace.
+  double freespace_condition_th_stopped_time{0.0};
+
   // force avoidance
-  double closest_distance_to_wait_and_see_for_ambiguous_vehicle{0.0};
+  std::vector<std::string> wait_and_see_target_behaviors{"NONE", "MERGING", "DEVIATING"};
+  double wait_and_see_th_closest_distance{0.0};
   double time_threshold_for_ambiguous_vehicle{0.0};
   double distance_threshold_for_ambiguous_vehicle{0.0};
 
@@ -225,6 +225,8 @@ struct AvoidanceParameters
   // transit hysteresis (unsafe to safe)
   size_t hysteresis_factor_safe_count;
   double hysteresis_factor_expand_rate{0.0};
+
+  double collision_check_yaw_diff_threshold{3.1416};
 
   bool consider_front_overhang{true};
   bool consider_rear_overhang{true};
@@ -313,6 +315,9 @@ struct AvoidanceParameters
   // policy
   std::string policy_lateral_margin{"best_effort"};
 
+  // path generation method.
+  std::string path_generation_method{"shift_line_base"};
+
   // target velocity matrix
   std::vector<double> velocity_map;
 
@@ -334,9 +339,6 @@ struct AvoidanceParameters
   // rss parameters
   utils::path_safety_checker::RSSparams rss_params{};
 
-  // clip left and right bounds for objects
-  bool enable_bound_clipping{false};
-
   // debug
   bool enable_other_objects_marker{false};
   bool enable_other_objects_info{false};
@@ -356,6 +358,10 @@ struct ObjectData  // avoidance target
   : object(std::move(obj)), to_centerline(lat), longitudinal(lon), length(len)
   {
   }
+
+  Pose getPose() const { return object.kinematics.initial_pose_with_covariance.pose; }
+
+  Point getPosition() const { return object.kinematics.initial_pose_with_covariance.pose.position; }
 
   PredictedObject object;
 
@@ -417,6 +423,9 @@ struct ObjectData  // avoidance target
   // to stop line distance
   double to_stop_line{std::numeric_limits<double>::infinity()};
 
+  // long radius of the covariance error ellipse
+  double error_eclipse_max{std::numeric_limits<double>::infinity()};
+
   // if lateral margin is NOT enough, the ego must avoid the object.
   bool avoid_required{false};
 
@@ -437,6 +446,9 @@ struct ObjectData  // avoidance target
 
   // is ambiguous stopped vehicle.
   bool is_ambiguous{false};
+
+  // is clip targe.
+  bool is_clip_target{false};
 
   // object direction.
   Direction direction{Direction::NONE};
@@ -575,11 +587,21 @@ struct AvoidancePlanningData
 
   bool found_avoidance_path{false};
 
+  bool force_deactivated{false};
+
   double to_stop_line{std::numeric_limits<double>::max()};
 
   double to_start_point{std::numeric_limits<double>::lowest()};
 
   double to_return_point{std::numeric_limits<double>::max()};
+
+  std::optional<double> distance_to_red_traffic_light{std::nullopt};
+
+  std::optional<lanelet::ConstLanelet> closest_lanelet{std::nullopt};
+
+  bool is_allowed_goal_modification{false};
+
+  bool request_operator{false};
 };
 
 /*

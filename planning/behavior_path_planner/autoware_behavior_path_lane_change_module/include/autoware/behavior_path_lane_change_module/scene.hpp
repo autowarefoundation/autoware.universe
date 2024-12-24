@@ -14,8 +14,8 @@
 #ifndef AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__SCENE_HPP_
 #define AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__SCENE_HPP_
 
-#include "autoware/behavior_path_lane_change_module/utils/base_class.hpp"
-#include "autoware/behavior_path_lane_change_module/utils/data_structs.hpp"
+#include "autoware/behavior_path_lane_change_module/base_class.hpp"
+#include "autoware/behavior_path_lane_change_module/structs/data.hpp"
 
 #include <memory>
 #include <utility>
@@ -31,12 +31,13 @@ using autoware::behavior_path_planner::utils::path_safety_checker::
 using autoware::behavior_path_planner::utils::path_safety_checker::PoseWithVelocityStamped;
 using autoware::behavior_path_planner::utils::path_safety_checker::PredictedPathWithPolygon;
 using autoware::route_handler::Direction;
-using data::lane_change::LanesPolygon;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
+using lane_change::LanesPolygon;
 using tier4_planning_msgs::msg::PathWithLaneId;
 using utils::path_safety_checker::ExtendedPredictedObjects;
+using utils::path_safety_checker::RSSparams;
 
 class NormalLaneChange : public LaneChangeBase
 {
@@ -51,19 +52,25 @@ public:
   NormalLaneChange & operator=(NormalLaneChange &&) = delete;
   ~NormalLaneChange() override = default;
 
+  void update_lanes(const bool is_approved) final;
+
+  void update_transient_data(const bool is_approved) final;
+
+  void update_filtered_objects() final;
+
   void updateLaneChangeStatus() override;
 
   std::pair<bool, bool> getSafePath(LaneChangePath & safe_path) const override;
 
   LaneChangePath getLaneChangePath() const override;
 
-  BehaviorModuleOutput getTerminalLaneChangePath() const override;
-
   BehaviorModuleOutput generateOutput() override;
 
   void extendOutputDrivableArea(BehaviorModuleOutput & output) const override;
 
-  void insertStopPoint(const lanelet::ConstLanelets & lanelets, PathWithLaneId & path) override;
+  void insert_stop_point(const lanelet::ConstLanelets & lanelets, PathWithLaneId & path) override;
+
+  void insert_stop_point_on_current_lanes(PathWithLaneId & path);
 
   PathWithLaneId getReferencePath() const override;
 
@@ -80,15 +87,13 @@ public:
   PathSafetyStatus evaluateApprovedPathWithUnsafeHysteresis(
     PathSafetyStatus approved_path_safety_status) override;
 
-  bool isRequiredStop(const bool is_object_coming_from_rear) override;
-
-  bool isNearEndOfCurrentLanes(
-    const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
-    const double threshold) const override;
+  bool isRequiredStop(const bool is_trailing_object) override;
 
   bool hasFinishedLaneChange() const override;
 
   bool isAbleToReturnCurrentLane() const override;
+
+  bool is_near_terminal() const final;
 
   bool isEgoOnPreparePhase() const override;
 
@@ -102,107 +107,70 @@ public:
 
   bool isStoppedAtRedTrafficLight() const override;
 
-  TurnSignalInfo get_current_turn_signal_info() override;
+  bool is_near_regulatory_element() const final;
+
+  TurnSignalInfo get_current_turn_signal_info() const final;
 
 protected:
-  lanelet::ConstLanelets getCurrentLanes() const override;
-
-  lanelet::ConstLanelets getLaneChangeLanes(
-    const lanelet::ConstLanelets & current_lanes, Direction direction) const override;
+  lanelet::ConstLanelets get_lane_change_lanes(const lanelet::ConstLanelets & current_lanes) const;
 
   int getNumToPreferredLane(const lanelet::ConstLanelet & lane) const override;
 
-  std::vector<double> sampleLongitudinalAccValues(
-    const lanelet::ConstLanelets & current_lanes,
-    const lanelet::ConstLanelets & target_lanes) const;
+  TurnSignalInfo get_terminal_turn_signal_info() const final;
 
-  std::vector<double> calcPrepareDuration(
-    const lanelet::ConstLanelets & current_lanes,
-    const lanelet::ConstLanelets & target_lanes) const;
-
-  ExtendedPredictedObjects getTargetObjects(
-    const LaneChangeLanesFilteredObjects & predicted_objects,
+  lane_change::TargetObjects get_target_objects(
+    const FilteredLanesObjects & filtered_objects,
     const lanelet::ConstLanelets & current_lanes) const;
 
-  LaneChangeLanesFilteredObjects filterObjects(
-    const lanelet::ConstLanelets & current_lanes,
-    const lanelet::ConstLanelets & target_lanes) const;
+  FilteredLanesObjects filter_objects() const;
 
   void filterOncomingObjects(PredictedObjects & objects) const;
 
-  void filterAheadTerminalObjects(
-    PredictedObjects & objects, const lanelet::ConstLanelets & current_lanes) const;
+  std::vector<LaneChangePhaseMetrics> get_prepare_metrics() const;
+  std::vector<LaneChangePhaseMetrics> get_lane_changing_metrics(
+    const PathWithLaneId & prep_segment, const LaneChangePhaseMetrics & prep_metrics,
+    const double shift_length, const double dist_to_reg_element) const;
 
-  void filterObjectsByLanelets(
-    const PredictedObjects & objects, const lanelet::ConstLanelets & current_lanes,
-    const lanelet::ConstLanelets & target_lanes,
-    std::vector<PredictedObject> & current_lane_objects,
-    std::vector<PredictedObject> & target_lane_objects,
-    std::vector<PredictedObject> & other_lane_objects) const;
+  bool get_lane_change_paths(LaneChangePaths & candidate_paths) const;
 
-  PathWithLaneId getPrepareSegment(
-    const lanelet::ConstLanelets & current_lanes, const double backward_path_length,
-    const double prepare_length) const override;
-
-  PathWithLaneId getTargetSegment(
-    const lanelet::ConstLanelets & target_lanes, const Pose & lane_changing_start_pose,
-    const double target_lane_length, const double lane_changing_length,
-    const double lane_changing_velocity, const double buffer_for_next_lane_change) const;
-
-  bool hasEnoughLength(
-    const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes,
-    const lanelet::ConstLanelets & target_lanes, const Direction direction = Direction::NONE) const;
-
-  bool hasEnoughLengthToCrosswalk(
-    const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes) const;
-
-  bool hasEnoughLengthToIntersection(
-    const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes) const;
-
-  bool hasEnoughLengthToTrafficLight(
-    const LaneChangePath & path, const lanelet::ConstLanelets & current_lanes) const;
-
-  bool getLaneChangePaths(
-    const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & target_lanes,
-    Direction direction, LaneChangePaths * candidate_paths,
-    const utils::path_safety_checker::RSSparams rss_params, const bool is_stuck,
-    const bool check_safety = true) const override;
-
-  std::optional<LaneChangePath> calcTerminalLaneChangePath(
-    const lanelet::ConstLanelets & current_lanes,
-    const lanelet::ConstLanelets & target_lanes) const;
+  bool check_candidate_path_safety(
+    const LaneChangePath & candidate_path, const lane_change::TargetObjects & target_objects) const;
 
   bool isValidPath(const PathWithLaneId & path) const override;
 
   PathSafetyStatus isLaneChangePathSafe(
     const LaneChangePath & lane_change_path,
-    const ExtendedPredictedObjects & collision_check_objects,
+    const std::vector<std::vector<PoseWithVelocityStamped>> & ego_predicted_paths,
+    const lane_change::TargetObjects & collision_check_objects,
     const utils::path_safety_checker::RSSparams & rss_params,
     CollisionCheckDebugMap & debug_data) const;
 
-  //! @brief Check if the ego vehicle is in stuck by a stationary obstacle.
-  //! @param obstacle_check_distance Distance to check ahead for any objects that might be
-  //! obstructing ego path. It makes sense to use values like the maximum lane change distance.
-  bool isVehicleStuck(
-    const lanelet::ConstLanelets & current_lanes, const double obstacle_check_distance) const;
+  bool is_colliding(
+    const LaneChangePath & lane_change_path, const ExtendedPredictedObject & obj,
+    const std::vector<PoseWithVelocityStamped> & ego_predicted_path,
+    const RSSparams & selected_rss_param, const bool check_prepare_phase,
+    CollisionCheckDebugMap & debug_data) const;
 
   double get_max_velocity_for_safety_check() const;
 
-  bool isVehicleStuck(const lanelet::ConstLanelets & current_lanes) const;
+  bool is_ego_stuck() const;
 
   bool check_prepare_phase() const;
 
-  double calcMaximumLaneChangeLength(
-    const lanelet::ConstLanelet & current_terminal_lanelet, const double max_acc) const;
-
-  std::pair<double, double> calcCurrentMinMaxAcceleration() const;
-
-  void setStopPose(const Pose & stop_pose);
+  void set_stop_pose(const double arc_length_to_stop_pose, PathWithLaneId & path);
 
   void updateStopTime();
 
   double getStopTime() const { return stop_time_; }
 
+  const lanelet::ConstLanelets & get_target_lanes() const
+  {
+    return common_data_ptr_->lanes_ptr->target;
+  }
+
+  void update_dist_from_intersection();
+
+  std::vector<PathPointWithLaneId> path_after_intersection_;
   double stop_time_{0.0};
 };
 }  // namespace autoware::behavior_path_planner
