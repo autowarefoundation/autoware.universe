@@ -16,6 +16,7 @@
 
 #include "autoware/motion_utils/resample/resample.hpp"
 #include "autoware/motion_utils/trajectory/conversion.hpp"
+#include "autoware/obstacle_cruise_planner/obstacle_cruise_initializer.hpp"
 #include "autoware/obstacle_cruise_planner/polygon_utils.hpp"
 #include "autoware/obstacle_cruise_planner/utils.hpp"
 #include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
@@ -41,16 +42,6 @@
 
 namespace
 {
-VelocityLimitClearCommand createVelocityLimitClearCommandMessage(
-  const rclcpp::Time & current_time, const std::string & module_name)
-{
-  VelocityLimitClearCommand msg;
-  msg.stamp = current_time;
-  msg.sender = "obstacle_cruise_planner." + module_name;
-  msg.command = true;
-  return msg;
-}
-
 std::optional<double> calcDistanceToFrontVehicle(
   const std::vector<TrajectoryPoint> & traj_points, const size_t ego_idx,
   const geometry_msgs::msg::Point & obstacle_pos)
@@ -187,23 +178,10 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
 
   // publisher
   trajectory_pub_ = create_publisher<Trajectory>("~/output/trajectory", 1);
-  vel_limit_pub_ =
-    create_publisher<VelocityLimit>("~/output/velocity_limit", rclcpp::QoS{1}.transient_local());
-  clear_vel_limit_pub_ = create_publisher<VelocityLimitClearCommand>(
-    "~/output/clear_velocity_limit", rclcpp::QoS{1}.transient_local());
 
   // debug publisher
   debug_calculation_time_pub_ = create_publisher<Float64Stamped>("~/debug/processing_time_ms", 1);
-  debug_cruise_wall_marker_pub_ = create_publisher<MarkerArray>("~/virtual_wall/cruise", 1);
-  debug_stop_wall_marker_pub_ = create_publisher<MarkerArray>("~/virtual_wall/stop", 1);
-  debug_slow_down_wall_marker_pub_ = create_publisher<MarkerArray>("~/virtual_wall/slow_down", 1);
   debug_marker_pub_ = create_publisher<MarkerArray>("~/debug/marker", 1);
-  debug_stop_planning_info_pub_ =
-    create_publisher<Float32MultiArrayStamped>("~/debug/stop_planning_info", 1);
-  debug_cruise_planning_info_pub_ =
-    create_publisher<Float32MultiArrayStamped>("~/debug/cruise_planning_info", 1);
-  debug_slow_down_planning_info_pub_ =
-    create_publisher<Float32MultiArrayStamped>("~/debug/slow_down_planning_info", 1);
 
   // tf listener
   tf_buffer_ = std::make_unique<tf2_ros::Buffer>(get_clock());
@@ -221,23 +199,12 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
   behavior_determination_param_ = BehaviorDeterminationParam(*this);
 
   {  // planning algorithm
-    const std::string planning_algorithm_param =
-      declare_parameter<std::string>("common.planning_algorithm");
-    planning_algorithm_ = getPlanningAlgorithmType(planning_algorithm_param);
-
     obstacle_stop_module_ = std::make_unique<ObstacleStopModule>(
-      *this, longitudinal_info, vehicle_info_, ego_nearest_param_, debug_data_ptr_);
+      *this, longitudinal_info, vehicle_info_, ego_nearest_param_);
     obstacle_slow_down_module_ = std::make_unique<ObstacleSlowDownModule>(
-      *this, longitudinal_info, vehicle_info_, ego_nearest_param_, debug_data_ptr_);
-    if (planning_algorithm_ == PlanningAlgorithm::OPTIMIZATION_BASE) {
-      obstacle_cruise_module_ = std::make_unique<OptimizationBasedPlanner>(
-        *this, longitudinal_info, vehicle_info_, ego_nearest_param_, debug_data_ptr_);
-    } else if (planning_algorithm_ == PlanningAlgorithm::PID_BASE) {
-      obstacle_cruise_module_ = std::make_unique<PIDBasedPlanner>(
-        *this, longitudinal_info, vehicle_info_, ego_nearest_param_, debug_data_ptr_);
-    } else {
-      throw std::logic_error("Designated algorithm is not supported.");
-    }
+      *this, longitudinal_info, vehicle_info_, ego_nearest_param_);
+    obstacle_cruise_module_ =
+      getModule(*this, longitudinal_info, vehicle_info_, ego_nearest_param_);
 
     min_behavior_stop_margin_ = declare_parameter<double>("common.min_behavior_stop_margin");
     additional_safe_distance_margin_on_curve_ =
@@ -272,17 +239,6 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
   logger_configure_ = std::make_unique<autoware::universe_utils::LoggerLevelConfigure>(this);
   published_time_publisher_ =
     std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
-}
-
-ObstacleCruisePlannerNode::PlanningAlgorithm ObstacleCruisePlannerNode::getPlanningAlgorithmType(
-  const std::string & param) const
-{
-  if (param == "pid_base") {
-    return PlanningAlgorithm::PID_BASE;
-  } else if (param == "optimization_base") {
-    return PlanningAlgorithm::OPTIMIZATION_BASE;
-  }
-  return PlanningAlgorithm::INVALID;
 }
 
 rcl_interfaces::msg::SetParametersResult ObstacleCruisePlannerNode::onParam(
@@ -412,7 +368,7 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
   std::optional<VelocityLimit> cruise_vel_limit;
   const auto cruise_traj_points = obstacle_cruise_module_->generateCruiseTrajectory(
     planner_data, stop_traj_points, cruise_obstacles, cruise_vel_limit);
-  publishVelocityLimit(cruise_vel_limit, "cruise");
+  obstacle_cruise_module_->publishVelocityLimit(cruise_vel_limit);
 
   // slow down
   const auto slow_down_obstacles =
@@ -421,7 +377,7 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
   std::optional<VelocityLimit> slow_down_vel_limit;
   const auto slow_down_traj_points = obstacle_slow_down_module_->generateSlowDownTrajectory(
     planner_data, cruise_traj_points, slow_down_obstacles, slow_down_vel_limit);
-  publishVelocityLimit(slow_down_vel_limit, "slow_down");
+  obstacle_slow_down_module_->publishVelocityLimit(slow_down_vel_limit);
 
   // 7. Publish trajectory
   const auto output_traj =
@@ -440,7 +396,6 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
   obstacle_cruise_module_->postprocess();
 
   publishDebugMarker();
-  publishDebugInfo();
 
   // 9. Publish and print calculation time
   const double calculation_time = stop_watch_.toc(__func__);
@@ -824,159 +779,39 @@ PlannerData ObstacleCruisePlannerNode::createPlannerData(
   return planner_data;
 }
 
-void ObstacleCruisePlannerNode::publishVelocityLimit(
-  const std::optional<VelocityLimit> & vel_limit, const std::string & module_name)
-{
-  if (vel_limit) {
-    vel_limit_pub_->publish(*vel_limit);
-    need_to_clear_vel_limit_.at(module_name) = true;
-    return;
-  }
-
-  if (!need_to_clear_vel_limit_.at(module_name)) {
-    return;
-  }
-
-  // clear velocity limit
-  const auto clear_vel_limit_msg = createVelocityLimitClearCommandMessage(now(), module_name);
-  clear_vel_limit_pub_->publish(clear_vel_limit_msg);
-  need_to_clear_vel_limit_.at(module_name) = false;
-}
-
 void ObstacleCruisePlannerNode::publishDebugMarker() const
 {
   stop_watch_.tic(__func__);
+  obstacle_stop_module_->publishDebugMarker();
+  obstacle_slow_down_module_->publishDebugMarker();
+  obstacle_cruise_module_->publishDebugMarker();
 
-  // 1. publish debug marker
-  MarkerArray debug_marker;
-
-  // obstacles to cruise
-  std::vector<geometry_msgs::msg::Point> stop_collision_points;
-  for (size_t i = 0; i < debug_data_ptr_->obstacles_to_cruise.size(); ++i) {
-    // obstacle
-    const auto obstacle_marker = obstacle_cruise_utils::getObjectMarker(
-      debug_data_ptr_->obstacles_to_cruise.at(i).pose, i, "obstacles_to_cruise", 1.0, 0.6, 0.1);
-    debug_marker.markers.push_back(obstacle_marker);
-
-    // collision points
-    for (size_t j = 0; j < debug_data_ptr_->obstacles_to_cruise.at(i).collision_points.size();
-         ++j) {
-      stop_collision_points.push_back(
-        debug_data_ptr_->obstacles_to_cruise.at(i).collision_points.at(j).point);
-    }
-  }
-  for (size_t i = 0; i < stop_collision_points.size(); ++i) {
-    auto collision_point_marker = autoware::universe_utils::createDefaultMarker(
-      "map", now(), "cruise_collision_points", i, Marker::SPHERE,
-      autoware::universe_utils::createMarkerScale(0.25, 0.25, 0.25),
-      autoware::universe_utils::createMarkerColor(1.0, 0.0, 0.0, 0.999));
-    collision_point_marker.pose.position = stop_collision_points.at(i);
-    debug_marker.markers.push_back(collision_point_marker);
-  }
-
-  // obstacles to stop
-  for (size_t i = 0; i < debug_data_ptr_->obstacles_to_stop.size(); ++i) {
-    // obstacle
-    const auto obstacle_marker = obstacle_cruise_utils::getObjectMarker(
-      debug_data_ptr_->obstacles_to_stop.at(i).pose, i, "obstacles_to_stop", 1.0, 0.0, 0.0);
-    debug_marker.markers.push_back(obstacle_marker);
-
-    // collision point
-    auto collision_point_marker = autoware::universe_utils::createDefaultMarker(
-      "map", now(), "stop_collision_points", 0, Marker::SPHERE,
-      autoware::universe_utils::createMarkerScale(0.25, 0.25, 0.25),
-      autoware::universe_utils::createMarkerColor(1.0, 0.0, 0.0, 0.999));
-    collision_point_marker.pose.position = debug_data_ptr_->obstacles_to_stop.at(i).collision_point;
-    debug_marker.markers.push_back(collision_point_marker);
-  }
-
-  // obstacles to slow down
-  for (size_t i = 0; i < debug_data_ptr_->obstacles_to_slow_down.size(); ++i) {
-    // obstacle
-    const auto obstacle_marker = obstacle_cruise_utils::getObjectMarker(
-      debug_data_ptr_->obstacles_to_slow_down.at(i).pose, i, "obstacles_to_slow_down", 0.7, 0.7,
-      0.0);
-    debug_marker.markers.push_back(obstacle_marker);
-
-    // collision points
-    auto front_collision_point_marker = autoware::universe_utils::createDefaultMarker(
-      "map", now(), "slow_down_collision_points", i * 2 + 0, Marker::SPHERE,
-      autoware::universe_utils::createMarkerScale(0.25, 0.25, 0.25),
-      autoware::universe_utils::createMarkerColor(1.0, 0.0, 0.0, 0.999));
-    front_collision_point_marker.pose.position =
-      debug_data_ptr_->obstacles_to_slow_down.at(i).front_collision_point;
-    auto back_collision_point_marker = autoware::universe_utils::createDefaultMarker(
-      "map", now(), "slow_down_collision_points", i * 2 + 1, Marker::SPHERE,
-      autoware::universe_utils::createMarkerScale(0.25, 0.25, 0.25),
-      autoware::universe_utils::createMarkerColor(1.0, 0.0, 0.0, 0.999));
-    back_collision_point_marker.pose.position =
-      debug_data_ptr_->obstacles_to_slow_down.at(i).back_collision_point;
-
-    debug_marker.markers.push_back(front_collision_point_marker);
-    debug_marker.markers.push_back(back_collision_point_marker);
-  }
-
-  // intentionally ignored obstacles to cruise or stop
-  for (size_t i = 0; i < debug_data_ptr_->intentionally_ignored_obstacles.size(); ++i) {
-    const auto marker = obstacle_cruise_utils::getObjectMarker(
-      debug_data_ptr_->intentionally_ignored_obstacles.at(i).pose, i,
-      "intentionally_ignored_obstacles", 0.0, 1.0, 0.0);
-    debug_marker.markers.push_back(marker);
-  }
-
-  {  // footprint polygons
-    auto marker = autoware::universe_utils::createDefaultMarker(
-      "map", now(), "detection_polygons", 0, Marker::LINE_LIST,
-      autoware::universe_utils::createMarkerScale(0.01, 0.0, 0.0),
-      autoware::universe_utils::createMarkerColor(0.0, 1.0, 0.0, 0.999));
-
-    for (const auto & detection_polygon : debug_data_ptr_->detection_polygons) {
-      for (size_t dp_idx = 0; dp_idx < detection_polygon.outer().size(); ++dp_idx) {
-        const auto & current_point = detection_polygon.outer().at(dp_idx);
-        const auto & next_point =
-          detection_polygon.outer().at((dp_idx + 1) % detection_polygon.outer().size());
-
-        marker.points.push_back(
-          autoware::universe_utils::createPoint(current_point.x(), current_point.y(), 0.0));
-        marker.points.push_back(
-          autoware::universe_utils::createPoint(next_point.x(), next_point.y(), 0.0));
-      }
-    }
-    debug_marker.markers.push_back(marker);
-  }
-
-  // slow down debug wall marker
-  autoware::universe_utils::appendMarkerArray(
-    debug_data_ptr_->slow_down_debug_wall_marker, &debug_marker);
-
-  debug_marker_pub_->publish(debug_marker);
-
-  // 2. publish virtual wall for cruise and stop
-  debug_cruise_wall_marker_pub_->publish(debug_data_ptr_->cruise_wall_marker);
-  debug_stop_wall_marker_pub_->publish(debug_data_ptr_->stop_wall_marker);
-  debug_slow_down_wall_marker_pub_->publish(debug_data_ptr_->slow_down_wall_marker);
+  // {  // footprint polygons
+  //   auto marker = autoware::universe_utils::createDefaultMarker(
+  //     "map", now(), "detection_polygons", 0, Marker::LINE_LIST,
+  //     autoware::universe_utils::createMarkerScale(0.01, 0.0, 0.0),
+  //     autoware::universe_utils::createMarkerColor(0.0, 1.0, 0.0, 0.999));
+  //
+  //   for (const auto & detection_polygon : debug_data_ptr_->detection_polygons) {
+  //     for (size_t dp_idx = 0; dp_idx < detection_polygon.outer().size(); ++dp_idx) {
+  //       const auto & current_point = detection_polygon.outer().at(dp_idx);
+  //       const auto & next_point =
+  //         detection_polygon.outer().at((dp_idx + 1) % detection_polygon.outer().size());
+  //
+  //       marker.points.push_back(
+  //         autoware::universe_utils::createPoint(current_point.x(), current_point.y(), 0.0));
+  //       marker.points.push_back(
+  //         autoware::universe_utils::createPoint(next_point.x(), next_point.y(), 0.0));
+  //     }
+  //   }
+  //   debug_marker.markers.push_back(marker);
+  // }
 
   // 3. print calculation time
   const double calculation_time = stop_watch_.toc(__func__);
   RCLCPP_INFO_EXPRESSION(
     rclcpp::get_logger("ObstacleCruisePlanner"), enable_calculation_time_info_, "  %s := %f [ms]",
     __func__, calculation_time);
-}
-
-void ObstacleCruisePlannerNode::publishDebugInfo() const
-{
-  // stop
-  const auto stop_debug_msg = obstacle_stop_module_->getStopPlanningDebugMessage(now());
-  debug_stop_planning_info_pub_->publish(stop_debug_msg);
-
-  // cruise
-  const auto cruise_debug_msg = obstacle_cruise_module_->getCruisePlanningDebugMessage(now());
-  debug_cruise_planning_info_pub_->publish(cruise_debug_msg);
-
-  // slow_down
-  const auto slow_down_debug_msg =
-    obstacle_slow_down_module_->getSlowDownPlanningDebugMessage(now());
-  debug_slow_down_planning_info_pub_->publish(slow_down_debug_msg);
 }
 
 void ObstacleCruisePlannerNode::publishCalculationTime(const double calculation_time) const

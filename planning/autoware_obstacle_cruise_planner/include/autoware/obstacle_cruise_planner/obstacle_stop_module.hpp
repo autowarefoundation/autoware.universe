@@ -124,15 +124,46 @@ namespace autoware::motion_planning
 class ObstacleStopModule
 {
 public:
+  struct StopObstacle
+  {
+    StopObstacle(
+      const std::string & arg_uuid, const rclcpp::Time & arg_stamp,
+      const ObjectClassification & object_classification, const geometry_msgs::msg::Pose & arg_pose,
+      const Shape & arg_shape, const double arg_lon_velocity, const double arg_lat_velocity,
+      const geometry_msgs::msg::Point arg_collision_point,
+      const double arg_dist_to_collide_on_decimated_traj)
+    : uuid(arg_uuid),
+      stamp(arg_stamp),
+      pose(arg_pose),
+      velocity(arg_lon_velocity),
+      lat_velocity(arg_lat_velocity),
+      shape(arg_shape),
+      collision_point(arg_collision_point),
+      dist_to_collide_on_decimated_traj(arg_dist_to_collide_on_decimated_traj),
+      classification(object_classification)
+    {
+    }
+    std::string uuid;
+    rclcpp::Time stamp;
+    geometry_msgs::msg::Pose pose;  // interpolated with the current stamp
+    double velocity;                // longitudinal velocity against ego's trajectory
+    double lat_velocity;            // lateral velocity against ego's trajectory
+
+    Shape shape;
+    geometry_msgs::msg::Point
+      collision_point;  // TODO(yuki_takagi): this member variable still used in
+                        // calculateMarginFromObstacleOnCurve() and  should be removed as it can be
+                        // replaced by ”dist_to_collide_on_decimated_traj”
+    double dist_to_collide_on_decimated_traj;
+    ObjectClassification classification;
+  };
   ObstacleStopModule(
     rclcpp::Node & node, const LongitudinalInfo & longitudinal_info,
-    const VehicleInfo & vehicle_info, const EgoNearestParam & ego_nearest_param,
-    const std::shared_ptr<DebugData> debug_data_ptr)
+    const VehicleInfo & vehicle_info, const EgoNearestParam & ego_nearest_param)
   : clock_(node.get_clock()),
     longitudinal_info_(longitudinal_info),
     vehicle_info_(vehicle_info),
     ego_nearest_param_(ego_nearest_param),
-    debug_data_ptr_(debug_data_ptr),
     stop_param_(StopParam(node, longitudinal_info))
   {
     inside_stop_obstacle_types_ =
@@ -151,6 +182,11 @@ public:
     objects_of_interest_marker_interface_ = std::make_unique<
       autoware::objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface>(
       &node, "obstacle_cruise_planner");
+
+    debug_stop_planning_info_pub_ =
+      node.create_publisher<Float32MultiArrayStamped>("~/debug/stop_planning_info", 1);
+    debug_stop_wall_marker_pub_ = node.create_publisher<MarkerArray>("~/virtual_wall/stop", 1);
+    debug_marker_pub_ = node.create_publisher<MarkerArray>("~/debug/marker", 1);
   }
 
   void postprocess() { objects_of_interest_marker_interface_->publishMarkerArray(); }
@@ -185,6 +221,8 @@ public:
   std::vector<TrajectoryPoint> generateStopTrajectory(
     const PlannerData & planner_data, const std::vector<StopObstacle> & stop_obstacles)
   {
+    *debug_data_ptr_ = DebugData();
+
     stop_watch_.tic(__func__);
 
     stop_planning_debug_info_.reset();
@@ -215,8 +253,7 @@ public:
     std::optional<double> determined_zero_vel_dist{};
     std::optional<double> determined_desired_margin{};
 
-    const auto closest_stop_obstacles =
-      obstacle_cruise_utils::getClosestStopObstacles(stop_obstacles);
+    const auto closest_stop_obstacles = getClosestStopObstacles(stop_obstacles);
     for (const auto & stop_obstacle : closest_stop_obstacles) {
       const auto ego_segment_idx =
         ego_nearest_param_.findSegmentIndex(planner_data.traj_points, planner_data.ego_pose);
@@ -487,18 +524,11 @@ public:
       }
     };
     addMetrics(debug_data_ptr_->stop_metrics);
-    addMetrics(debug_data_ptr_->slow_down_metrics);
-    addMetrics(debug_data_ptr_->cruise_metrics);
     metrics_pub_->publish(metrics_msg);
     clearMetrics();
   }
 
-  void clearMetrics()
-  {
-    debug_data_ptr_->stop_metrics = std::nullopt;
-    debug_data_ptr_->slow_down_metrics = std::nullopt;
-    debug_data_ptr_->cruise_metrics = std::nullopt;
-  }
+  void clearMetrics() { debug_data_ptr_->stop_metrics = std::nullopt; }
 
   double getSafeDistanceMargin() const { return longitudinal_info_.safe_distance_margin; }
 
@@ -518,6 +548,46 @@ public:
     suppress_sudden_obstacle_stop_ = suppress_sudden_obstacle_stop;
   }
 
+  void publishDebugMarker()
+  {
+    // 1. publish debug marker
+    MarkerArray debug_marker;
+
+    // obstacles to stop
+    for (size_t i = 0; i < debug_data_ptr_->obstacles_to_stop.size(); ++i) {
+      // obstacle
+      const auto obstacle_marker = obstacle_cruise_utils::getObjectMarker(
+        debug_data_ptr_->obstacles_to_stop.at(i).pose, i, "obstacles_to_stop", 1.0, 0.0, 0.0);
+      debug_marker.markers.push_back(obstacle_marker);
+
+      // collision point
+      auto collision_point_marker = autoware::universe_utils::createDefaultMarker(
+        "map", clock_->now(), "stop_collision_points", 0, Marker::SPHERE,
+        autoware::universe_utils::createMarkerScale(0.25, 0.25, 0.25),
+        autoware::universe_utils::createMarkerColor(1.0, 0.0, 0.0, 0.999));
+      collision_point_marker.pose.position =
+        debug_data_ptr_->obstacles_to_stop.at(i).collision_point;
+      debug_marker.markers.push_back(collision_point_marker);
+    }
+
+    // intentionally ignored obstacles to cruise or stop
+    for (size_t i = 0; i < debug_data_ptr_->intentionally_ignored_obstacles.size(); ++i) {
+      const auto marker = obstacle_cruise_utils::getObjectMarker(
+        debug_data_ptr_->intentionally_ignored_obstacles.at(i).pose, i,
+        "intentionally_ignored_obstacles", 0.0, 1.0, 0.0);
+      debug_marker.markers.push_back(marker);
+    }
+
+    debug_marker_pub_->publish(debug_marker);
+
+    // 2. publish virtual wall for cruise and stop
+    debug_stop_wall_marker_pub_->publish(debug_data_ptr_->stop_wall_marker);
+
+    // stop
+    const auto stop_debug_msg = getStopPlanningDebugMessage(clock_->now());
+    debug_stop_planning_info_pub_->publish(stop_debug_msg);
+  }
+
 private:
   std::vector<StopObstacle> prev_closest_stop_object_obstacles_{};
   bool use_pointcloud_for_stop_;
@@ -527,6 +597,16 @@ private:
   std::vector<int> outside_stop_obstacle_types_;
 
   rclcpp::Publisher<StopSpeedExceeded>::SharedPtr stop_speed_exceeded_pub_;
+
+  struct DebugData
+  {
+    DebugData() = default;
+    std::vector<Obstacle> intentionally_ignored_obstacles;
+    std::vector<StopObstacle> obstacles_to_stop;
+    MarkerArray stop_wall_marker;
+    std::vector<autoware::universe_utils::Polygon2d> detection_polygons;
+    std::optional<std::vector<Metric>> stop_metrics{std::nullopt};
+  };
 
   struct StopParam
   {
@@ -806,8 +886,7 @@ private:
       }
     }
 
-    prev_closest_stop_object_obstacles_ =
-      obstacle_cruise_utils::getClosestStopObstacles(stop_obstacles);
+    prev_closest_stop_object_obstacles_ = getClosestStopObstacles(stop_obstacles);
   }
 
   std::optional<std::pair<geometry_msgs::msg::Point, double>>
@@ -1010,6 +1089,29 @@ private:
   std::unique_ptr<autoware::objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface>
     objects_of_interest_marker_interface_;
   BehaviorDeterminationParam behavior_determination_param_;
+
+  rclcpp::Publisher<MarkerArray>::SharedPtr debug_marker_pub_;
+  rclcpp::Publisher<MarkerArray>::SharedPtr debug_stop_wall_marker_pub_;
+  rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr debug_stop_planning_info_pub_;
+
+  std::vector<StopObstacle> getClosestStopObstacles(
+    const std::vector<StopObstacle> & stop_obstacles)
+  {
+    std::vector<StopObstacle> candidates{};
+    for (const auto & stop_obstacle : stop_obstacles) {
+      const auto itr = std::find_if(
+        candidates.begin(), candidates.end(), [&stop_obstacle](const StopObstacle & co) {
+          return co.classification.label == stop_obstacle.classification.label;
+        });
+      if (itr == candidates.end()) {
+        candidates.emplace_back(stop_obstacle);
+      } else if (
+        stop_obstacle.dist_to_collide_on_decimated_traj < itr->dist_to_collide_on_decimated_traj) {
+        *itr = stop_obstacle;
+      }
+    }
+    return candidates;
+  }
 };
 }  // namespace autoware::motion_planning
 

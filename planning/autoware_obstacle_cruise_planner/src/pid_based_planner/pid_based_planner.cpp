@@ -68,8 +68,8 @@ T getSign(const T val)
 PIDBasedPlanner::PIDBasedPlanner(
   rclcpp::Node & node, const LongitudinalInfo & longitudinal_info,
   const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
-  const EgoNearestParam & ego_nearest_param, const std::shared_ptr<DebugData> debug_data_ptr)
-: ObstacleCruiseModule(node, longitudinal_info, vehicle_info, ego_nearest_param, debug_data_ptr)
+  const EgoNearestParam & ego_nearest_param)
+: ObstacleCruiseModule(node, longitudinal_info, vehicle_info, ego_nearest_param)
 {
   min_accel_during_cruise_ =
     node.declare_parameter<double>("cruise.pid_based_planner.min_accel_during_cruise");
@@ -165,6 +165,8 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::generateCruiseTrajectory(
   const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points,
   const std::vector<CruiseObstacle> & obstacles, std::optional<VelocityLimit> & vel_limit)
 {
+  *debug_data_ptr_ = DebugData();
+
   stop_watch_.tic(__func__);
   cruise_planning_debug_info_.reset();
 

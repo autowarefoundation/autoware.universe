@@ -33,6 +33,7 @@
 #include <algorithm>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <vector>
 
 namespace
@@ -71,6 +72,17 @@ std::vector<PredictedPath> resampleHighestConfidencePredictedPaths1(
 
   return resampled_paths;
 }
+
+VelocityLimitClearCommand createVelocityLimitClearCommandMessage(
+  const rclcpp::Time & current_time, const std::string & module_name)
+{
+  VelocityLimitClearCommand msg;
+  msg.stamp = current_time;
+  msg.sender = "obstacle_cruise_planner." + module_name;
+  msg.command = true;
+  return msg;
+}
+
 }  // namespace
 
 namespace autoware::motion_planning
@@ -78,15 +90,40 @@ namespace autoware::motion_planning
 class ObstacleCruiseModule
 {
 public:
+  struct CruiseObstacle
+  {
+    CruiseObstacle(
+      const std::string & arg_uuid, const rclcpp::Time & arg_stamp,
+      const geometry_msgs::msg::Pose & arg_pose, const double arg_lon_velocity,
+      const double arg_lat_velocity, const std::vector<PointWithStamp> & arg_collision_points,
+      bool arg_is_yield_obstacle = false)
+    : uuid(arg_uuid),
+      stamp(arg_stamp),
+      pose(arg_pose),
+      velocity(arg_lon_velocity),
+      lat_velocity(arg_lat_velocity),
+      collision_points(arg_collision_points),
+      is_yield_obstacle(arg_is_yield_obstacle)
+    {
+    }
+    std::string uuid;
+    rclcpp::Time stamp;
+    geometry_msgs::msg::Pose pose;  // interpolated with the current stamp
+    double velocity;                // longitudinal velocity against ego's trajectory
+    double lat_velocity;            // lateral velocity against ego's trajectory
+
+    std::vector<PointWithStamp> collision_points;  // time-series collision points
+    bool is_yield_obstacle;
+  };
+
   ObstacleCruiseModule(
     rclcpp::Node & node, const LongitudinalInfo & longitudinal_info,
     const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
-    const EgoNearestParam & ego_nearest_param, const std::shared_ptr<DebugData> debug_data_ptr)
+    const EgoNearestParam & ego_nearest_param)
   : clock_(node.get_clock()),
     longitudinal_info_(longitudinal_info),
     vehicle_info_(vehicle_info),
-    ego_nearest_param_(ego_nearest_param),
-    debug_data_ptr_(debug_data_ptr)
+    ego_nearest_param_(ego_nearest_param)
   {
     inside_cruise_obstacle_types_ =
       obstacle_cruise_utils::getTargetObjectType(node, "common.cruise_obstacle_type.inside.");
@@ -96,6 +133,17 @@ public:
     objects_of_interest_marker_interface_ = std::make_unique<
       autoware::objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface>(
       &node, "obstacle_cruise_planner");
+
+    debug_cruise_wall_marker_pub_ = node.create_publisher<MarkerArray>("~/virtual_wall/cruise", 1);
+    debug_marker_pub_ = node.create_publisher<MarkerArray>("~/debug/marker", 1);
+
+    debug_cruise_planning_info_pub_ =
+      node.create_publisher<Float32MultiArrayStamped>("~/debug/cruise_planning_info", 1);
+
+    vel_limit_pub_ = node.create_publisher<VelocityLimit>(
+      "~/output/velocity_limit", rclcpp::QoS{1}.transient_local());
+    clear_vel_limit_pub_ = node.create_publisher<VelocityLimitClearCommand>(
+      "~/output/clear_velocity_limit", rclcpp::QoS{1}.transient_local());
   }
 
   void postprocess() { objects_of_interest_marker_interface_->publishMarkerArray(); }
@@ -172,15 +220,18 @@ public:
   }
 
   virtual std::vector<TrajectoryPoint> generateCruiseTrajectory(
-    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points,
-    const std::vector<CruiseObstacle> & cruise_obstacles,
-    std::optional<VelocityLimit> & vel_limit) = 0;
+    [[maybe_unused]] const PlannerData & planner_data,
+    [[maybe_unused]] const std::vector<TrajectoryPoint> & stop_traj_points,
+    [[maybe_unused]] const std::vector<CruiseObstacle> & cruise_obstacles,
+    [[maybe_unused]] std::optional<VelocityLimit> & vel_limit)
+  {
+    return std::vector<TrajectoryPoint>{};
+  }
 
   std::vector<Metric> makeMetrics(
     const std::string & module_name, const std::string & reason,
     const std::optional<PlannerData> & planner_data = std::nullopt,
-    const std::optional<geometry_msgs::msg::Pose> & stop_pose = std::nullopt,
-    const std::optional<StopObstacle> & stop_obstacle = std::nullopt)
+    const std::optional<geometry_msgs::msg::Pose> & stop_pose = std::nullopt)
   {
     auto metrics = std::vector<Metric>();
 
@@ -222,16 +273,6 @@ public:
       metrics.push_back(dist_to_stop_pose_metric);
     }
 
-    if (stop_obstacle.has_value()) {
-      // Obstacle info
-      Metric collision_point_metric;
-      const auto & p = stop_obstacle.value().collision_point;
-      collision_point_metric.name = module_name + "/collision_point";
-      collision_point_metric.unit = "string";
-      collision_point_metric.value =
-        "{" + std::to_string(p.x) + ", " + std::to_string(p.y) + ", " + std::to_string(p.z) + "}";
-      metrics.push_back(collision_point_metric);
-    }
     return metrics;
   }
 
@@ -247,19 +288,12 @@ public:
           metrics_msg.metric_array.end(), opt_metrics->begin(), opt_metrics->end());
       }
     };
-    addMetrics(debug_data_ptr_->stop_metrics);
-    addMetrics(debug_data_ptr_->slow_down_metrics);
     addMetrics(debug_data_ptr_->cruise_metrics);
     metrics_pub_->publish(metrics_msg);
     clearMetrics();
   }
 
-  void clearMetrics()
-  {
-    debug_data_ptr_->stop_metrics = std::nullopt;
-    debug_data_ptr_->slow_down_metrics = std::nullopt;
-    debug_data_ptr_->cruise_metrics = std::nullopt;
-  }
+  void clearMetrics() { debug_data_ptr_->cruise_metrics = std::nullopt; }
 
   void setParam(
     const bool enable_debug_info, const bool enable_calculation_time_info,
@@ -277,11 +311,79 @@ public:
     suppress_sudden_obstacle_stop_ = suppress_sudden_obstacle_stop;
   }
 
+  void publishDebugMarker()
+  {
+    // 1. publish debug marker
+    MarkerArray debug_marker;
+
+    // obstacles to cruise
+    std::vector<geometry_msgs::msg::Point> stop_collision_points;
+    for (size_t i = 0; i < debug_data_ptr_->obstacles_to_cruise.size(); ++i) {
+      // obstacle
+      const auto obstacle_marker = obstacle_cruise_utils::getObjectMarker(
+        debug_data_ptr_->obstacles_to_cruise.at(i).pose, i, "obstacles_to_cruise", 1.0, 0.6, 0.1);
+      debug_marker.markers.push_back(obstacle_marker);
+
+      // collision points
+      for (size_t j = 0; j < debug_data_ptr_->obstacles_to_cruise.at(i).collision_points.size();
+           ++j) {
+        stop_collision_points.push_back(
+          debug_data_ptr_->obstacles_to_cruise.at(i).collision_points.at(j).point);
+      }
+    }
+    for (size_t i = 0; i < stop_collision_points.size(); ++i) {
+      auto collision_point_marker = autoware::universe_utils::createDefaultMarker(
+        "map", clock_->now(), "cruise_collision_points", i, Marker::SPHERE,
+        autoware::universe_utils::createMarkerScale(0.25, 0.25, 0.25),
+        autoware::universe_utils::createMarkerColor(1.0, 0.0, 0.0, 0.999));
+      collision_point_marker.pose.position = stop_collision_points.at(i);
+      debug_marker.markers.push_back(collision_point_marker);
+    }
+
+    debug_cruise_wall_marker_pub_->publish(debug_data_ptr_->cruise_wall_marker);
+    debug_marker_pub_->publish(debug_marker);
+
+    // cruise
+    const auto cruise_debug_msg = getCruisePlanningDebugMessage(clock_->now());
+    debug_cruise_planning_info_pub_->publish(cruise_debug_msg);
+  }
+
+  void publishVelocityLimit(const std::optional<VelocityLimit> & vel_limit)
+  {
+    const std::string module_name = "cruise";
+
+    if (vel_limit) {
+      vel_limit_pub_->publish(*vel_limit);
+      need_to_clear_vel_limit_.at(module_name) = true;
+      return;
+    }
+
+    if (!need_to_clear_vel_limit_.at(module_name)) {
+      return;
+    }
+
+    // clear velocity limit
+    const auto clear_vel_limit_msg =
+      createVelocityLimitClearCommandMessage(clock_->now(), module_name);
+    clear_vel_limit_pub_->publish(clear_vel_limit_msg);
+    need_to_clear_vel_limit_.at(module_name) = false;
+  }
+
 protected:
   bool is_driving_forward_;
   std::vector<CruiseObstacle> prev_cruise_object_obstacles_;
   std::vector<int> inside_cruise_obstacle_types_;
   std::vector<int> outside_cruise_obstacle_types_;
+
+  struct DebugData
+  {
+    DebugData() = default;
+    std::vector<Obstacle> intentionally_ignored_obstacles;
+    std::vector<CruiseObstacle> obstacles_to_cruise;
+    MarkerArray cruise_wall_marker;
+    std::vector<autoware::universe_utils::Polygon2d> detection_polygons;
+    std::optional<std::vector<Metric>> cruise_metrics{std::nullopt};
+  };
 
   std::optional<CruiseObstacle> createCruiseObstacle(
     const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
@@ -754,6 +856,15 @@ protected:
   std::unique_ptr<autoware::objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface>
     objects_of_interest_marker_interface_;
   BehaviorDeterminationParam behavior_determination_param_;
+
+  rclcpp::Publisher<MarkerArray>::SharedPtr debug_marker_pub_;
+  rclcpp::Publisher<MarkerArray>::SharedPtr debug_cruise_wall_marker_pub_;
+  rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr debug_cruise_planning_info_pub_;
+
+  rclcpp::Publisher<VelocityLimit>::SharedPtr vel_limit_pub_;
+  rclcpp::Publisher<VelocityLimitClearCommand>::SharedPtr clear_vel_limit_pub_;
+
+  std::unordered_map<std::string, bool> need_to_clear_vel_limit_{{"cruise", false}};
 };
 }  // namespace autoware::motion_planning
 

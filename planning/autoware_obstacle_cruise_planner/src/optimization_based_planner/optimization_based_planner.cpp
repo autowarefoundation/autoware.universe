@@ -47,8 +47,8 @@ constexpr double CLOSE_S_DIST_THRESHOLD = 1e-3;
 OptimizationBasedPlanner::OptimizationBasedPlanner(
   rclcpp::Node & node, const LongitudinalInfo & longitudinal_info,
   const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
-  const EgoNearestParam & ego_nearest_param, const std::shared_ptr<DebugData> debug_data_ptr)
-: ObstacleCruiseModule(node, longitudinal_info, vehicle_info, ego_nearest_param, debug_data_ptr)
+  const EgoNearestParam & ego_nearest_param)
+: ObstacleCruiseModule(node, longitudinal_info, vehicle_info, ego_nearest_param)
 {
   smoothed_traj_sub_ = node.create_subscription<Trajectory>(
     "/planning/scenario_planning/trajectory", rclcpp::QoS{1},

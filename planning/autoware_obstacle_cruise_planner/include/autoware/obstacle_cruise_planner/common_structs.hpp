@@ -123,87 +123,6 @@ struct Obstacle
   std::optional<geometry_msgs::msg::Point> slow_down_back_collision_point;
 };
 
-struct TargetObstacleInterface
-{
-  TargetObstacleInterface(
-    const std::string & arg_uuid, const rclcpp::Time & arg_stamp,
-    const geometry_msgs::msg::Pose & arg_pose, const double arg_velocity,
-    const double arg_lat_velocity)
-  : uuid(arg_uuid),
-    stamp(arg_stamp),
-    pose(arg_pose),
-    velocity(arg_velocity),
-    lat_velocity(arg_lat_velocity)
-  {
-  }
-  std::string uuid;
-  rclcpp::Time stamp;
-  geometry_msgs::msg::Pose pose;  // interpolated with the current stamp
-  double velocity;                // longitudinal velocity against ego's trajectory
-  double lat_velocity;            // lateral velocity against ego's trajectory
-};
-
-struct StopObstacle : public TargetObstacleInterface
-{
-  StopObstacle(
-    const std::string & arg_uuid, const rclcpp::Time & arg_stamp,
-    const ObjectClassification & object_classification, const geometry_msgs::msg::Pose & arg_pose,
-    const Shape & arg_shape, const double arg_lon_velocity, const double arg_lat_velocity,
-    const geometry_msgs::msg::Point arg_collision_point,
-    const double arg_dist_to_collide_on_decimated_traj)
-  : TargetObstacleInterface(arg_uuid, arg_stamp, arg_pose, arg_lon_velocity, arg_lat_velocity),
-    shape(arg_shape),
-    collision_point(arg_collision_point),
-    dist_to_collide_on_decimated_traj(arg_dist_to_collide_on_decimated_traj),
-    classification(object_classification)
-  {
-  }
-  Shape shape;
-  geometry_msgs::msg::Point
-    collision_point;  // TODO(yuki_takagi): this member variable still used in
-                      // calculateMarginFromObstacleOnCurve() and  should be removed as it can be
-                      // replaced by ”dist_to_collide_on_decimated_traj”
-  double dist_to_collide_on_decimated_traj;
-  ObjectClassification classification;
-};
-
-struct CruiseObstacle : public TargetObstacleInterface
-{
-  CruiseObstacle(
-    const std::string & arg_uuid, const rclcpp::Time & arg_stamp,
-    const geometry_msgs::msg::Pose & arg_pose, const double arg_lon_velocity,
-    const double arg_lat_velocity, const std::vector<PointWithStamp> & arg_collision_points,
-    bool arg_is_yield_obstacle = false)
-  : TargetObstacleInterface(arg_uuid, arg_stamp, arg_pose, arg_lon_velocity, arg_lat_velocity),
-    collision_points(arg_collision_points),
-    is_yield_obstacle(arg_is_yield_obstacle)
-  {
-  }
-  std::vector<PointWithStamp> collision_points;  // time-series collision points
-  bool is_yield_obstacle;
-};
-
-struct SlowDownObstacle : public TargetObstacleInterface
-{
-  SlowDownObstacle(
-    const std::string & arg_uuid, const rclcpp::Time & arg_stamp,
-    const ObjectClassification & object_classification, const geometry_msgs::msg::Pose & arg_pose,
-    const double arg_lon_velocity, const double arg_lat_velocity, const double arg_precise_lat_dist,
-    const geometry_msgs::msg::Point & arg_front_collision_point,
-    const geometry_msgs::msg::Point & arg_back_collision_point)
-  : TargetObstacleInterface(arg_uuid, arg_stamp, arg_pose, arg_lon_velocity, arg_lat_velocity),
-    precise_lat_dist(arg_precise_lat_dist),
-    front_collision_point(arg_front_collision_point),
-    back_collision_point(arg_back_collision_point),
-    classification(object_classification)
-  {
-  }
-  double precise_lat_dist;  // for efficient calculation
-  geometry_msgs::msg::Point front_collision_point;
-  geometry_msgs::msg::Point back_collision_point;
-  ObjectClassification classification;
-};
-
 struct LongitudinalInfo
 {
   explicit LongitudinalInfo(rclcpp::Node & node)
@@ -289,23 +208,6 @@ struct LongitudinalInfo
   // hold stop
   double hold_stop_velocity_threshold;
   double hold_stop_distance_threshold;
-};
-
-struct DebugData
-{
-  DebugData() = default;
-  std::vector<Obstacle> intentionally_ignored_obstacles;
-  std::vector<StopObstacle> obstacles_to_stop;
-  std::vector<CruiseObstacle> obstacles_to_cruise;
-  std::vector<SlowDownObstacle> obstacles_to_slow_down;
-  MarkerArray slow_down_debug_wall_marker;
-  MarkerArray stop_wall_marker;
-  MarkerArray cruise_wall_marker;
-  MarkerArray slow_down_wall_marker;
-  std::vector<autoware::universe_utils::Polygon2d> detection_polygons;
-  std::optional<std::vector<Metric>> stop_metrics{std::nullopt};
-  std::optional<std::vector<Metric>> slow_down_metrics{std::nullopt};
-  std::optional<std::vector<Metric>> cruise_metrics{std::nullopt};
 };
 
 struct EgoNearestParam

@@ -223,24 +223,6 @@ PoseWithStamp getCurrentObjectPose(
   return PoseWithStamp{obj_base_time, *interpolated_pose};
 }
 
-std::vector<StopObstacle> getClosestStopObstacles(const std::vector<StopObstacle> & stop_obstacles)
-{
-  std::vector<StopObstacle> candidates{};
-  for (const auto & stop_obstacle : stop_obstacles) {
-    const auto itr =
-      std::find_if(candidates.begin(), candidates.end(), [&stop_obstacle](const StopObstacle & co) {
-        return co.classification.label == stop_obstacle.classification.label;
-      });
-    if (itr == candidates.end()) {
-      candidates.emplace_back(stop_obstacle);
-    } else if (
-      stop_obstacle.dist_to_collide_on_decimated_traj < itr->dist_to_collide_on_decimated_traj) {
-      *itr = stop_obstacle;
-    }
-  }
-  return candidates;
-}
-
 VelocityFactorArray makeVelocityFactorArray(
   const rclcpp::Time & time, const std::string & behavior,
   const std::optional<geometry_msgs::msg::Pose> pose)
