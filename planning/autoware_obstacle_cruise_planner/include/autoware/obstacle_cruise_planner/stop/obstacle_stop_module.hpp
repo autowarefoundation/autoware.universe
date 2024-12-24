@@ -189,6 +189,58 @@ public:
     debug_marker_pub_ = node.create_publisher<MarkerArray>("~/debug/marker", 1);
   }
 
+  std::vector<TrajectoryPoint> plan(
+    const Odometry & odometry, const PredictedObjects & objects,
+    const std::vector<TrajectoryPoint> & decimated_traj_points,
+    const std::vector<Polygon2d> & decimated_traj_polys, const std::vector<Obstacle> & obstacles,
+    const bool is_driving_forward, const BehaviorDeterminationParam & behavior_determination_param,
+    const double min_behavior_stop_margin, const PlannerData & planner_data)
+  {
+    const auto stop_obstacles = determineEgoBehaviorAgainstPredictedObjectObstacles(
+      odometry, objects, decimated_traj_points, decimated_traj_polys, obstacles, is_driving_forward,
+      behavior_determination_param, min_behavior_stop_margin);
+    const auto stop_traj_points = generateStopTrajectory(planner_data, stop_obstacles);
+    publishMetrics(clock_->now());
+    postprocess();
+    publishDebugMarker();
+
+    return stop_traj_points;
+  }
+
+  void setParam(
+    const bool enable_debug_info, const bool enable_calculation_time_info,
+    const bool use_pointcloud, const double min_behavior_stop_margin,
+    const double enable_approaching_on_curve, const double additional_safe_distance_margin_on_curve,
+    const double min_safe_distance_margin_on_curve, const bool suppress_sudden_obstacle_stop)
+  {
+    enable_debug_info_ = enable_debug_info;
+    enable_calculation_time_info_ = enable_calculation_time_info;
+    use_pointcloud_ = use_pointcloud;
+    min_behavior_stop_margin_ = min_behavior_stop_margin;
+    enable_approaching_on_curve_ = enable_approaching_on_curve;
+    additional_safe_distance_margin_on_curve_ = additional_safe_distance_margin_on_curve;
+    min_safe_distance_margin_on_curve_ = min_safe_distance_margin_on_curve;
+    suppress_sudden_obstacle_stop_ = suppress_sudden_obstacle_stop;
+  }
+
+  void onParam(const std::vector<rclcpp::Parameter> & parameters)
+  {
+    updateCommonParam(parameters);
+    stop_param_.onParam(parameters, longitudinal_info_);
+  }
+
+  double getSafeDistanceMargin() const { return longitudinal_info_.safe_distance_margin; }
+
+private:
+  std::vector<StopObstacle> prev_closest_stop_object_obstacles_{};
+  bool use_pointcloud_for_stop_;
+  bool is_driving_forward_;
+  std::vector<StopObstacle> prev_stop_object_obstacles_;
+  std::vector<int> inside_stop_obstacle_types_;
+  std::vector<int> outside_stop_obstacle_types_;
+
+  rclcpp::Publisher<StopSpeedExceeded>::SharedPtr stop_speed_exceeded_pub_;
+
   void postprocess() { objects_of_interest_marker_interface_->publishMarkerArray(); }
 
   std::vector<StopObstacle> determineEgoBehaviorAgainstPredictedObjectObstacles(
@@ -441,12 +493,6 @@ public:
              p.min_velocity_to_reach_collision_point, std::abs(odometry.twist.twist.linear.x));
   }
 
-  void onParam(const std::vector<rclcpp::Parameter> & parameters)
-  {
-    updateCommonParam(parameters);
-    stop_param_.onParam(parameters, longitudinal_info_);
-  }
-
   Float32MultiArrayStamped getStopPlanningDebugMessage(const rclcpp::Time & current_time) const
   {
     return stop_planning_debug_info_.convertToMessage(current_time);
@@ -530,24 +576,6 @@ public:
 
   void clearMetrics() { debug_data_ptr_->stop_metrics = std::nullopt; }
 
-  double getSafeDistanceMargin() const { return longitudinal_info_.safe_distance_margin; }
-
-  void setParam(
-    const bool enable_debug_info, const bool enable_calculation_time_info,
-    const bool use_pointcloud, const double min_behavior_stop_margin,
-    const double enable_approaching_on_curve, const double additional_safe_distance_margin_on_curve,
-    const double min_safe_distance_margin_on_curve, const bool suppress_sudden_obstacle_stop)
-  {
-    enable_debug_info_ = enable_debug_info;
-    enable_calculation_time_info_ = enable_calculation_time_info;
-    use_pointcloud_ = use_pointcloud;
-    min_behavior_stop_margin_ = min_behavior_stop_margin;
-    enable_approaching_on_curve_ = enable_approaching_on_curve;
-    additional_safe_distance_margin_on_curve_ = additional_safe_distance_margin_on_curve;
-    min_safe_distance_margin_on_curve_ = min_safe_distance_margin_on_curve;
-    suppress_sudden_obstacle_stop_ = suppress_sudden_obstacle_stop;
-  }
-
   void publishDebugMarker()
   {
     // 1. publish debug marker
@@ -587,16 +615,6 @@ public:
     const auto stop_debug_msg = getStopPlanningDebugMessage(clock_->now());
     debug_stop_planning_info_pub_->publish(stop_debug_msg);
   }
-
-private:
-  std::vector<StopObstacle> prev_closest_stop_object_obstacles_{};
-  bool use_pointcloud_for_stop_;
-  bool is_driving_forward_;
-  std::vector<StopObstacle> prev_stop_object_obstacles_;
-  std::vector<int> inside_stop_obstacle_types_;
-  std::vector<int> outside_stop_obstacle_types_;
-
-  rclcpp::Publisher<StopSpeedExceeded>::SharedPtr stop_speed_exceeded_pub_;
 
   struct DebugData
   {

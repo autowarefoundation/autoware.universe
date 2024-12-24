@@ -353,31 +353,19 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
   const auto target_obstacles = convertToObstacles(ego_odom, *objects_ptr, traj_points);
 
   // stop
-  const auto stop_obstacles =
-    obstacle_stop_module_->determineEgoBehaviorAgainstPredictedObjectObstacles(
-      ego_odom, *objects_ptr, decimated_traj_points, decimated_traj_polys, target_obstacles,
-      is_driving_forward_, behavior_determination_param_, min_behavior_stop_margin_);
-  const auto stop_traj_points =
-    obstacle_stop_module_->generateStopTrajectory(planner_data, stop_obstacles);
+  const auto stop_traj_points = obstacle_stop_module_->plan(
+    ego_odom, *objects_ptr, decimated_traj_points, decimated_traj_polys, target_obstacles,
+    is_driving_forward_, behavior_determination_param_, min_behavior_stop_margin_, planner_data);
 
   // cruise
-  const auto cruise_obstacles =
-    obstacle_cruise_module_->determineEgoBehaviorAgainstPredictedObjectObstacles(
-      ego_odom, decimated_traj_points, decimated_traj_polys, target_obstacles, is_driving_forward_,
-      behavior_determination_param_);
-  std::optional<VelocityLimit> cruise_vel_limit;
-  const auto cruise_traj_points = obstacle_cruise_module_->generateCruiseTrajectory(
-    planner_data, stop_traj_points, cruise_obstacles, cruise_vel_limit);
-  obstacle_cruise_module_->publishVelocityLimit(cruise_vel_limit);
+  const auto cruise_traj_points = obstacle_cruise_module_->plan(
+    ego_odom, decimated_traj_points, decimated_traj_polys, target_obstacles, is_driving_forward_,
+    behavior_determination_param_, planner_data, stop_traj_points);
 
   // slow down
-  const auto slow_down_obstacles =
-    obstacle_slow_down_module_->determineEgoBehaviorAgainstPredictedObjectObstacles(
-      ego_odom, decimated_traj_points, target_obstacles, behavior_determination_param_);
-  std::optional<VelocityLimit> slow_down_vel_limit;
-  const auto slow_down_traj_points = obstacle_slow_down_module_->generateSlowDownTrajectory(
-    planner_data, cruise_traj_points, slow_down_obstacles, slow_down_vel_limit);
-  obstacle_slow_down_module_->publishVelocityLimit(slow_down_vel_limit);
+  const auto slow_down_traj_points = obstacle_slow_down_module_->plan(
+    ego_odom, decimated_traj_points, target_obstacles, behavior_determination_param_, planner_data,
+    cruise_traj_points);
 
   // 7. Publish trajectory
   const auto output_traj =
@@ -386,14 +374,6 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
 
   // 8. Publish debug data
   published_time_publisher_->publish_if_subscribed(trajectory_pub_, output_traj.header.stamp);
-
-  obstacle_stop_module_->publishMetrics(now());
-  obstacle_slow_down_module_->publishMetrics(now());
-  obstacle_cruise_module_->publishMetrics(now());
-
-  obstacle_stop_module_->postprocess();
-  obstacle_slow_down_module_->postprocess();
-  obstacle_cruise_module_->postprocess();
 
   publishDebugMarker();
 
@@ -782,9 +762,6 @@ PlannerData ObstacleCruisePlannerNode::createPlannerData(
 void ObstacleCruisePlannerNode::publishDebugMarker() const
 {
   stop_watch_.tic(__func__);
-  obstacle_stop_module_->publishDebugMarker();
-  obstacle_slow_down_module_->publishDebugMarker();
-  obstacle_cruise_module_->publishDebugMarker();
 
   // {  // footprint polygons
   //   auto marker = autoware::universe_utils::createDefaultMarker(

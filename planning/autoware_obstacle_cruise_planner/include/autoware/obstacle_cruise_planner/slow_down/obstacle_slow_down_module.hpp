@@ -249,6 +249,48 @@ public:
       "~/output/clear_velocity_limit", rclcpp::QoS{1}.transient_local());
   }
 
+  std::vector<TrajectoryPoint> plan(
+    const Odometry & odometry, const std::vector<TrajectoryPoint> & decimated_traj_points,
+    const std::vector<Obstacle> & obstacles,
+    const BehaviorDeterminationParam & behavior_determination_param,
+    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & cruise_traj_points)
+  {
+    const auto slow_down_obstacles = determineEgoBehaviorAgainstPredictedObjectObstacles(
+      odometry, decimated_traj_points, obstacles, behavior_determination_param);
+    std::optional<VelocityLimit> slow_down_vel_limit;
+    const auto slow_down_traj_points = generateSlowDownTrajectory(
+      planner_data, cruise_traj_points, slow_down_obstacles, slow_down_vel_limit);
+    publishVelocityLimit(slow_down_vel_limit);
+    publishMetrics(clock_->now());
+    postprocess();
+    publishDebugMarker();
+
+    return slow_down_traj_points;
+  }
+
+  void onParam(const std::vector<rclcpp::Parameter> & parameters)
+  {
+    updateCommonParam(parameters);
+    slow_down_param_.onParam(parameters);
+  }
+
+  void setParam(
+    const bool enable_debug_info, const bool enable_calculation_time_info,
+    const bool use_pointcloud, const double min_behavior_stop_margin,
+    const double enable_approaching_on_curve, const double additional_safe_distance_margin_on_curve,
+    const double min_safe_distance_margin_on_curve, const bool suppress_sudden_obstacle_stop)
+  {
+    enable_debug_info_ = enable_debug_info;
+    enable_calculation_time_info_ = enable_calculation_time_info;
+    use_pointcloud_ = use_pointcloud;
+    min_behavior_stop_margin_ = min_behavior_stop_margin;
+    enable_approaching_on_curve_ = enable_approaching_on_curve;
+    additional_safe_distance_margin_on_curve_ = additional_safe_distance_margin_on_curve;
+    min_safe_distance_margin_on_curve_ = min_safe_distance_margin_on_curve;
+    suppress_sudden_obstacle_stop_ = suppress_sudden_obstacle_stop;
+  }
+
+private:
   std::vector<SlowDownObstacle> determineEgoBehaviorAgainstPredictedObjectObstacles(
     const Odometry & odometry, const std::vector<TrajectoryPoint> & decimated_traj_points,
     const std::vector<Obstacle> & obstacles,
@@ -446,12 +488,6 @@ public:
     return slow_down_debug_multi_array_;
   }
 
-  void onParam(const std::vector<rclcpp::Parameter> & parameters)
-  {
-    updateCommonParam(parameters);
-    slow_down_param_.onParam(parameters);
-  }
-
   std::vector<Metric> makeMetrics(
     const std::string & module_name, const std::string & reason,
     const std::optional<PlannerData> & planner_data = std::nullopt,
@@ -519,22 +555,6 @@ public:
 
   void clearMetrics() { debug_data_ptr_->slow_down_metrics = std::nullopt; }
 
-  void setParam(
-    const bool enable_debug_info, const bool enable_calculation_time_info,
-    const bool use_pointcloud, const double min_behavior_stop_margin,
-    const double enable_approaching_on_curve, const double additional_safe_distance_margin_on_curve,
-    const double min_safe_distance_margin_on_curve, const bool suppress_sudden_obstacle_stop)
-  {
-    enable_debug_info_ = enable_debug_info;
-    enable_calculation_time_info_ = enable_calculation_time_info;
-    use_pointcloud_ = use_pointcloud;
-    min_behavior_stop_margin_ = min_behavior_stop_margin;
-    enable_approaching_on_curve_ = enable_approaching_on_curve;
-    additional_safe_distance_margin_on_curve_ = additional_safe_distance_margin_on_curve;
-    min_safe_distance_margin_on_curve_ = min_safe_distance_margin_on_curve;
-    suppress_sudden_obstacle_stop_ = suppress_sudden_obstacle_stop;
-  }
-
   void publishDebugMarker()
   {
     // 1. publish debug marker
@@ -599,7 +619,6 @@ public:
     need_to_clear_vel_limit_.at(module_name) = false;
   }
 
-private:
   bool use_pointcloud_for_slow_down_;
   bool enable_slow_down_planning_{false};
   std::vector<SlowDownObstacle> prev_slow_down_object_obstacles_;

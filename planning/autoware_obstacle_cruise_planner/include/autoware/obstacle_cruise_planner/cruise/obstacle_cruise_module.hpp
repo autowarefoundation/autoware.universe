@@ -146,6 +146,54 @@ public:
       "~/output/clear_velocity_limit", rclcpp::QoS{1}.transient_local());
   }
 
+  std::vector<TrajectoryPoint> plan(
+    const Odometry & odometry, const std::vector<TrajectoryPoint> & decimated_traj_points,
+    const std::vector<Polygon2d> & decimated_traj_polys, const std::vector<Obstacle> & obstacles,
+    const bool is_driving_forward, const BehaviorDeterminationParam & behavior_determination_param,
+    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points)
+  {
+    const auto cruise_obstacles = determineEgoBehaviorAgainstPredictedObjectObstacles(
+      odometry, decimated_traj_points, decimated_traj_polys, obstacles, is_driving_forward,
+      behavior_determination_param);
+    std::optional<VelocityLimit> cruise_vel_limit;
+    const auto cruise_traj_points =
+      generateCruiseTrajectory(planner_data, stop_traj_points, cruise_obstacles, cruise_vel_limit);
+    publishVelocityLimit(cruise_vel_limit);
+    publishMetrics(clock_->now());
+    postprocess();
+    publishDebugMarker();
+
+    return cruise_traj_points;
+  }
+
+  void setParam(
+    const bool enable_debug_info, const bool enable_calculation_time_info,
+    const bool use_pointcloud, const double min_behavior_stop_margin,
+    const double enable_approaching_on_curve, const double additional_safe_distance_margin_on_curve,
+    const double min_safe_distance_margin_on_curve, const bool suppress_sudden_obstacle_stop)
+  {
+    enable_debug_info_ = enable_debug_info;
+    enable_calculation_time_info_ = enable_calculation_time_info;
+    use_pointcloud_ = use_pointcloud;
+    min_behavior_stop_margin_ = min_behavior_stop_margin;
+    enable_approaching_on_curve_ = enable_approaching_on_curve;
+    additional_safe_distance_margin_on_curve_ = additional_safe_distance_margin_on_curve;
+    min_safe_distance_margin_on_curve_ = min_safe_distance_margin_on_curve;
+    suppress_sudden_obstacle_stop_ = suppress_sudden_obstacle_stop;
+  }
+
+  void onParam(const std::vector<rclcpp::Parameter> & parameters)
+  {
+    updateCommonParam(parameters);
+    updateCruiseParam(parameters);
+  }
+
+protected:
+  bool is_driving_forward_;
+  std::vector<CruiseObstacle> prev_cruise_object_obstacles_;
+  std::vector<int> inside_cruise_obstacle_types_;
+  std::vector<int> outside_cruise_obstacle_types_;
+
   void postprocess() { objects_of_interest_marker_interface_->publishMarkerArray(); }
 
   std::vector<CruiseObstacle> determineEgoBehaviorAgainstPredictedObjectObstacles(
@@ -205,12 +253,6 @@ public:
       collision_segment_idx);
 
     return dist_to_collision_point - offset;
-  }
-
-  void onParam(const std::vector<rclcpp::Parameter> & parameters)
-  {
-    updateCommonParam(parameters);
-    updateCruiseParam(parameters);
   }
 
   virtual Float32MultiArrayStamped getCruisePlanningDebugMessage(
@@ -295,22 +337,6 @@ public:
 
   void clearMetrics() { debug_data_ptr_->cruise_metrics = std::nullopt; }
 
-  void setParam(
-    const bool enable_debug_info, const bool enable_calculation_time_info,
-    const bool use_pointcloud, const double min_behavior_stop_margin,
-    const double enable_approaching_on_curve, const double additional_safe_distance_margin_on_curve,
-    const double min_safe_distance_margin_on_curve, const bool suppress_sudden_obstacle_stop)
-  {
-    enable_debug_info_ = enable_debug_info;
-    enable_calculation_time_info_ = enable_calculation_time_info;
-    use_pointcloud_ = use_pointcloud;
-    min_behavior_stop_margin_ = min_behavior_stop_margin;
-    enable_approaching_on_curve_ = enable_approaching_on_curve;
-    additional_safe_distance_margin_on_curve_ = additional_safe_distance_margin_on_curve;
-    min_safe_distance_margin_on_curve_ = min_safe_distance_margin_on_curve;
-    suppress_sudden_obstacle_stop_ = suppress_sudden_obstacle_stop;
-  }
-
   void publishDebugMarker()
   {
     // 1. publish debug marker
@@ -368,12 +394,6 @@ public:
     clear_vel_limit_pub_->publish(clear_vel_limit_msg);
     need_to_clear_vel_limit_.at(module_name) = false;
   }
-
-protected:
-  bool is_driving_forward_;
-  std::vector<CruiseObstacle> prev_cruise_object_obstacles_;
-  std::vector<int> inside_cruise_obstacle_types_;
-  std::vector<int> outside_cruise_obstacle_types_;
 
   struct DebugData
   {
