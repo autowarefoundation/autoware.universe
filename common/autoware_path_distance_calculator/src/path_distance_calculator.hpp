@@ -19,8 +19,8 @@
 #include <autoware/universe_utils/ros/self_pose_listener.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_planning_msgs/msg/path.hpp>
 #include <autoware_internal_debug_msgs/msg/float64_stamped.hpp>
+#include <autoware_planning_msgs/msg/path.hpp>
 
 namespace autoware::path_distance_calculator
 {
