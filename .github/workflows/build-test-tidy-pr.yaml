@@ -59,6 +59,7 @@ jobs:
       codecov-token: ${{ secrets.CODECOV_TOKEN }}
 
   clang-tidy-differential:
+    if: ${{ always() }}
     needs:
       - check-if-cuda-job-is-needed
       - build-and-test-differential
@@ -68,9 +69,11 @@ jobs:
       run-condition: ${{ needs.check-if-cuda-job-is-needed.outputs.cuda_job_is_needed == 'false' }}
 
   clang-tidy-differential-cuda:
+    if: ${{ always() }}
     needs:
       - build-and-test-differential-cuda
     uses: ./.github/workflows/clang-tidy-differential.yaml
     with:
       container: ghcr.io/autowarefoundation/autoware:universe-devel
       container-suffix: -cuda
+      run-condition: ${{ needs.check-if-cuda-job-is-needed.outputs.cuda_job_is_needed == 'true' }}
