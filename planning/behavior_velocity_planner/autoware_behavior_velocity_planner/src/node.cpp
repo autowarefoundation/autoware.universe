@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "node.hpp"
+#include "autoware/behavior_velocity_planner/node.hpp"
 
 #include <autoware/behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <autoware/motion_utils/trajectory/path_with_lane_id.hpp>
