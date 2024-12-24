@@ -4,7 +4,7 @@
   <arg name="input/pedestrian_signals" default="classified/pedestrian/traffic_signals"/>
   <arg name="output/traffic_light_signals" default="classification/traffic_signals"/>
   <arg name="input/expect_rois" default="input/expect_rois"/>
-  
+
   <!-- Node -->
   <node pkg="autoware_traffic_light_signals_merger" exec="traffic_light_signals_merger_node" name="autoware_traffic_light_signals_merger_node" output="screen">
     <remap from="input/car_signals" to="$(var input/car_signals)"/>
