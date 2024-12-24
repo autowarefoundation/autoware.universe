@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
-#include <autoware/behavior_path_start_planner_module/geometric_pull_out.hpp>
+#include <autoware/behavior_path_start_planner_module/shift_pull_out.hpp>
 #include <autoware/behavior_path_start_planner_module/start_planner_module.hpp>
 #include <autoware/behavior_path_start_planner_module/util.hpp>
 #include <autoware/lane_departure_checker/lane_departure_checker.hpp>
@@ -24,13 +24,11 @@
 
 #include <gtest/gtest.h>
 
-#include <iostream>
 #include <memory>
-#include <optional>
 #include <string>
 #include <vector>
 
-using autoware::behavior_path_planner::GeometricPullOut;
+using autoware::behavior_path_planner::ShiftPullOut;
 using autoware::behavior_path_planner::StartPlannerParameters;
 using autoware::lane_departure_checker::LaneDepartureChecker;
 using autoware::test_utils::get_absolute_path_to_config;
@@ -41,26 +39,26 @@ using autoware_planning_test_manager::utils::makeBehaviorRouteFromLaneId;
 namespace autoware::behavior_path_planner
 {
 
-class TestGeometricPullOut : public ::testing::Test
+class TestShiftPullOut : public ::testing::Test
 {
 public:
   std::optional<PullOutPath> plan(
     const Pose & start_pose, const Pose & goal_pose, PlannerDebugData & planner_debug_data)
   {
-    return geometric_pull_out_->plan(start_pose, goal_pose, planner_debug_data);
+    return shift_pull_out_->plan(start_pose, goal_pose, planner_debug_data);
   }
 
 protected:
   void SetUp() override
   {
     rclcpp::init(0, nullptr);
-    node_ = rclcpp::Node::make_shared("geometric_pull_out", get_node_options());
+    node_ = rclcpp::Node::make_shared("shift_pull_out", get_node_options());
 
     load_parameters();
     initialize_vehicle_info();
     initialize_lane_departure_checker();
     initialize_route_handler();
-    initialize_geometric_pull_out_planner();
+    initialize_shift_pull_out_planner();
     initialize_planner_data();
   }
 
@@ -69,7 +67,7 @@ protected:
   std::shared_ptr<rclcpp::Node> node_;
   std::shared_ptr<autoware::route_handler::RouteHandler> route_handler_;
   autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
-  std::shared_ptr<GeometricPullOut> geometric_pull_out_;
+  std::shared_ptr<ShiftPullOut> shift_pull_out_;
   std::shared_ptr<LaneDepartureChecker> lane_departure_checker_;
   PlannerData planner_data_;
 
@@ -107,16 +105,21 @@ private:
     const auto dp_double = [&](const std::string & s) {
       return node_->declare_parameter<double>(s);
     };
-    const auto dp_bool = [&](const std::string & s) { return node_->declare_parameter<bool>(s); };
+    const auto dp_int = [&](const std::string & s) { return node_->declare_parameter<int>(s); };
     // Load parameters required for planning
     const std::string ns = "start_planner.";
     lane_departure_check_expansion_margin_ =
       dp_double(ns + "lane_departure_check_expansion_margin");
-    pull_out_max_steer_angle_ = dp_double(ns + "pull_out_max_steer_angle");
-    pull_out_arc_path_interval_ = dp_double(ns + "arc_path_interval");
     center_line_path_interval_ = dp_double(ns + "center_line_path_interval");
     th_moving_object_velocity_ = dp_double(ns + "th_moving_object_velocity");
-    divide_pull_out_path_ = dp_bool(ns + "divide_pull_out_path");
+    lateral_jerk_ = dp_double(ns + "lateral_jerk");
+    minimum_lateral_acc_ = dp_double(ns + "minimum_lateral_acc");
+    maximum_lateral_acc_ = dp_double(ns + "maximum_lateral_acc");
+    maximum_curvature_ = dp_double(ns + "maximum_curvature");
+    end_pose_curvature_threshold_ = dp_double(ns + "end_pose_curvature_threshold");
+    minimum_shift_pull_out_distance_ = dp_double(ns + "minimum_shift_pull_out_distance");
+    lateral_acceleration_sampling_num_ = dp_int(ns + "lateral_acceleration_sampling_num");
+
     backward_path_length_ = dp_double("backward_path_length");
     forward_path_length_ = dp_double("forward_path_length");
   }
@@ -146,19 +149,22 @@ private:
     route_handler_ = std::make_shared<autoware::route_handler::RouteHandler>(map_bin_msg);
   }
 
-  void initialize_geometric_pull_out_planner()
+  void initialize_shift_pull_out_planner()
   {
     auto parameters = std::make_shared<StartPlannerParameters>();
-    parameters->parallel_parking_parameters.pull_out_max_steer_angle = pull_out_max_steer_angle_;
-    parameters->parallel_parking_parameters.pull_out_arc_path_interval =
-      pull_out_arc_path_interval_;
-    parameters->parallel_parking_parameters.center_line_path_interval = center_line_path_interval_;
+    parameters->center_line_path_interval = center_line_path_interval_;
     parameters->th_moving_object_velocity = th_moving_object_velocity_;
-    parameters->divide_pull_out_path = divide_pull_out_path_;
+    parameters->lateral_jerk = lateral_jerk_;
+    parameters->minimum_lateral_acc = minimum_lateral_acc_;
+    parameters->maximum_lateral_acc = maximum_lateral_acc_;
+    parameters->maximum_curvature = maximum_curvature_;
+    parameters->end_pose_curvature_threshold = end_pose_curvature_threshold_;
+    parameters->minimum_shift_pull_out_distance = minimum_shift_pull_out_distance_;
+    parameters->lateral_acceleration_sampling_num = lateral_acceleration_sampling_num_;
 
     auto time_keeper = std::make_shared<autoware::universe_utils::TimeKeeper>();
-    geometric_pull_out_ =
-      std::make_shared<GeometricPullOut>(*node_, *parameters, lane_departure_checker_, time_keeper);
+    shift_pull_out_ =
+      std::make_shared<ShiftPullOut>(*node_, *parameters, lane_departure_checker_, time_keeper);
   }
 
   void initialize_planner_data()
@@ -174,16 +180,20 @@ private:
 
   // Parameter variables
   double lane_departure_check_expansion_margin_{0.0};
-  double pull_out_max_steer_angle_{0.0};
-  double pull_out_arc_path_interval_{0.0};
   double center_line_path_interval_{0.0};
   double th_moving_object_velocity_{0.0};
+  double lateral_jerk_{0.0};
+  double minimum_lateral_acc_{0.0};
+  double maximum_lateral_acc_{0.0};
+  double maximum_curvature_{0.0};
+  double end_pose_curvature_threshold_{0.0};
+  double minimum_shift_pull_out_distance_{0.0};
+  int lateral_acceleration_sampling_num_{0};
   double backward_path_length_{0.0};
   double forward_path_length_{0.0};
-  bool divide_pull_out_path_{false};
 };
 
-TEST_F(TestGeometricPullOut, GenerateValidGeometricPullOutPath)
+TEST_F(TestShiftPullOut, GenerateValidShiftPullOutPath)
 {
   const auto start_pose =
     geometry_msgs::build<geometry_msgs::msg::Pose>()
@@ -212,18 +222,18 @@ TEST_F(TestGeometricPullOut, GenerateValidGeometricPullOutPath)
 
   // Update planner data with the route handler
   planner_data_.route_handler = route_handler_;
-  geometric_pull_out_->setPlannerData(std::make_shared<PlannerData>(planner_data_));
+  shift_pull_out_->setPlannerData(std::make_shared<PlannerData>(planner_data_));
 
   // Plan the pull out path
   PlannerDebugData debug_data;
   auto result = plan(start_pose, goal_pose, debug_data);
 
-  // Assert that a valid geometric pull out path is generated
-  ASSERT_TRUE(result.has_value()) << "Geometric pull out path generation failed.";
-  EXPECT_EQ(result->partial_paths.size(), 2UL)
-    << "Generated geometric pull out path does not have the expected number of partial paths.";
+  // Assert that a valid shift pull out path is generated
+  ASSERT_TRUE(result.has_value()) << "shift pull out path generation failed.";
+  EXPECT_EQ(result->partial_paths.size(), 1UL)
+    << "Generated shift pull out path does not have the expected number of partial paths.";
   EXPECT_EQ(debug_data.conditions_evaluation.back(), "success")
-    << "Geometric pull out path planning did not succeed.";
+    << "shift pull out path planning did not succeed.";
 }
 
 }  // namespace autoware::behavior_path_planner
