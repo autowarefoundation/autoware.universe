@@ -386,9 +386,9 @@ void PointCloudConcatenateDataSynchronizerComponent::check_concat_status(
 
     bool topic_miss = false;
 
-    int concatenated_cloud_status = 1;  // Status of concatenated cloud, 1: success, 0: failure
+    bool concatenation_success = true;
     for (const auto & topic : params_.input_topics) {
-      int cloud_status = 1;  // Status of each lidar's pointcloud
+      bool input_cloud_concatenated = true;
       if (
         diagnostic_topic_to_original_stamp_map_.find(topic) !=
         diagnostic_topic_to_original_stamp_map_.end()) {
@@ -396,13 +396,13 @@ void PointCloudConcatenateDataSynchronizerComponent::check_concat_status(
           topic + " timestamp", format_timestamp(diagnostic_topic_to_original_stamp_map_[topic]));
       } else {
         topic_miss = true;
-        concatenated_cloud_status = 0;
-        cloud_status = 0;
+        concatenation_success = false;
+        input_cloud_concatenated = false;
       }
-      stat.add(topic, cloud_status);
+      stat.add(topic + " is concatenated", input_cloud_concatenated);
     }
 
-    stat.add("concatenate status", concatenated_cloud_status);
+    stat.add("cloud concatenation success", concatenation_success);
 
     int8_t level = diagnostic_msgs::msg::DiagnosticStatus::OK;
     std::string message = "Concatenated pointcloud is published and include all topics";
