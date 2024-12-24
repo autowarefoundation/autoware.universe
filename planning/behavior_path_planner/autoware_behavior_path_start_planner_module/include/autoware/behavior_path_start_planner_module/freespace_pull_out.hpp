@@ -45,6 +45,8 @@ public:
   std::optional<PullOutPath> plan(
     const Pose & start_pose, const Pose & end_pose, PlannerDebugData & planner_debug_data) override;
 
+  friend class TestFreespacePullOut;
+
 protected:
   std::unique_ptr<AbstractPlanningAlgorithm> planner_;
   double velocity_;
