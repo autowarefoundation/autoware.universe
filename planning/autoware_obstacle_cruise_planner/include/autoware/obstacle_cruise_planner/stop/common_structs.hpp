@@ -39,10 +39,29 @@ struct PlannerData
 {
   rclcpp::Time current_time;
   std::vector<TrajectoryPoint> traj_points;
-  geometry_msgs::msg::Pose ego_pose;
-  double ego_vel;
-  double ego_acc;
+  nav_msgs::msg::Odometry current_odometry;
+  geometry_msgs::msg::AccelWithCovarianceStamped current_acceleration;
+  // geometry_msgs::msg::Pose ego_pose;
+  // double ego_vel;
+  // double ego_acc;
   bool is_driving_forward;
+  VehicleInfo vehicle_info;
+  double ego_nearest_dist_threshold;
+  double ego_nearest_yaw_threshold;
+
+  size_t findIndex(
+    const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & pose) const
+  {
+    return autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
+      traj_points, pose, ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
+  }
+
+  size_t findSegmentIndex(
+    const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & pose) const
+  {
+    return autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      traj_points, pose, ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
+  }
 };
 
 struct PointWithStamp
@@ -202,41 +221,6 @@ struct LongitudinalInfo
   // hold stop
   double hold_stop_velocity_threshold;
   double hold_stop_distance_threshold;
-};
-
-struct EgoNearestParam
-{
-  EgoNearestParam() = default;
-  explicit EgoNearestParam(rclcpp::Node & node)
-  {
-    dist_threshold = node.declare_parameter<double>("ego_nearest_dist_threshold");
-    yaw_threshold = node.declare_parameter<double>("ego_nearest_yaw_threshold");
-  }
-
-  TrajectoryPoint calcInterpolatedPoint(
-    const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & pose) const
-  {
-    return autoware::motion_utils::calcInterpolatedPoint(
-      autoware::motion_utils::convertToTrajectory(traj_points), pose, dist_threshold,
-      yaw_threshold);
-  }
-
-  size_t findIndex(
-    const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & pose) const
-  {
-    return autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
-      traj_points, pose, dist_threshold, yaw_threshold);
-  }
-
-  size_t findSegmentIndex(
-    const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & pose) const
-  {
-    return autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      traj_points, pose, dist_threshold, yaw_threshold);
-  }
-
-  double dist_threshold;
-  double yaw_threshold;
 };
 
 struct BehaviorDeterminationParam

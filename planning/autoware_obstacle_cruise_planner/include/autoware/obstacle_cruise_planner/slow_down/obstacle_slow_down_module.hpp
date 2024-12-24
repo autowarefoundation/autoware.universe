@@ -211,15 +211,10 @@ public:
     ObjectClassification classification;
   };
 
-  ObstacleSlowDownModule(
-    rclcpp::Node & node, const LongitudinalInfo & longitudinal_info,
-    const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
-    const EgoNearestParam & ego_nearest_param)
+  ObstacleSlowDownModule(rclcpp::Node & node, const LongitudinalInfo & longitudinal_info)
   : clock_(node.get_clock()),
     slow_down_param_(SlowDownParam(node)),
-    longitudinal_info_(longitudinal_info),
-    vehicle_info_(vehicle_info),
-    ego_nearest_param_(ego_nearest_param)
+    longitudinal_info_(longitudinal_info)
   {
     enable_slow_down_planning_ = node.declare_parameter<bool>("common.enable_slow_down_planning");
     slow_down_obstacle_types_ =
@@ -250,16 +245,18 @@ public:
   }
 
   std::vector<TrajectoryPoint> plan(
-    const Odometry & odometry, const std::vector<TrajectoryPoint> & decimated_traj_points,
+    const std::vector<TrajectoryPoint> & decimated_traj_points,
     const std::vector<Obstacle> & obstacles,
     const BehaviorDeterminationParam & behavior_determination_param,
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & cruise_traj_points)
   {
     const auto slow_down_obstacles = determineEgoBehaviorAgainstPredictedObjectObstacles(
-      odometry, decimated_traj_points, obstacles, behavior_determination_param);
+      planner_data.current_odometry, decimated_traj_points, obstacles, behavior_determination_param,
+      planner_data.vehicle_info);
     std::optional<VelocityLimit> slow_down_vel_limit;
     const auto slow_down_traj_points = generateSlowDownTrajectory(
-      planner_data, cruise_traj_points, slow_down_obstacles, slow_down_vel_limit);
+      planner_data, cruise_traj_points, slow_down_obstacles, slow_down_vel_limit,
+      planner_data.vehicle_info);
     publishVelocityLimit(slow_down_vel_limit);
     publishMetrics(clock_->now());
     postprocess();
@@ -276,25 +273,19 @@ public:
 
   void setParam(
     const bool enable_debug_info, const bool enable_calculation_time_info,
-    const bool use_pointcloud, const double min_behavior_stop_margin,
-    const double enable_approaching_on_curve, const double additional_safe_distance_margin_on_curve,
-    const double min_safe_distance_margin_on_curve, const bool suppress_sudden_obstacle_stop)
+    const bool use_pointcloud)
   {
     enable_debug_info_ = enable_debug_info;
     enable_calculation_time_info_ = enable_calculation_time_info;
     use_pointcloud_ = use_pointcloud;
-    min_behavior_stop_margin_ = min_behavior_stop_margin;
-    enable_approaching_on_curve_ = enable_approaching_on_curve;
-    additional_safe_distance_margin_on_curve_ = additional_safe_distance_margin_on_curve;
-    min_safe_distance_margin_on_curve_ = min_safe_distance_margin_on_curve;
-    suppress_sudden_obstacle_stop_ = suppress_sudden_obstacle_stop;
   }
 
 private:
   std::vector<SlowDownObstacle> determineEgoBehaviorAgainstPredictedObjectObstacles(
     const Odometry & odometry, const std::vector<TrajectoryPoint> & decimated_traj_points,
     const std::vector<Obstacle> & obstacles,
-    const BehaviorDeterminationParam & behavior_determination_param)
+    const BehaviorDeterminationParam & behavior_determination_param,
+    const VehicleInfo & vehicle_info)
   {
     behavior_determination_param_ = behavior_determination_param;
 
@@ -303,7 +294,7 @@ private:
     std::vector<SlowDownObstacle> slow_down_obstacles;
     for (const auto & obstacle : obstacles) {
       const auto slow_down_obstacle = createSlowDownObstacleForPredictedObject(
-        odometry, decimated_traj_points, obstacle, obstacle.precise_lat_dist);
+        odometry, decimated_traj_points, obstacle, obstacle.precise_lat_dist, vehicle_info);
       if (slow_down_obstacle) {
         slow_down_obstacles.push_back(*slow_down_obstacle);
         continue;
@@ -318,7 +309,7 @@ private:
   std::vector<TrajectoryPoint> generateSlowDownTrajectory(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & cruise_traj_points,
     const std::vector<SlowDownObstacle> & obstacles,
-    [[maybe_unused]] std::optional<VelocityLimit> & vel_limit)
+    [[maybe_unused]] std::optional<VelocityLimit> & vel_limit, const VehicleInfo & vehicle_info)
   {
     *debug_data_ptr_ = DebugData();
 
@@ -327,14 +318,14 @@ private:
     slow_down_debug_multi_array_ = Float32MultiArrayStamped();
 
     const double dist_to_ego = [&]() {
-      const size_t ego_seg_idx =
-        ego_nearest_param_.findSegmentIndex(slow_down_traj_points, planner_data.ego_pose);
+      const size_t ego_seg_idx = planner_data.findSegmentIndex(
+        slow_down_traj_points, planner_data.current_odometry.pose.pose);
       return autoware::motion_utils::calcSignedArcLength(
-        slow_down_traj_points, 0, planner_data.ego_pose.position, ego_seg_idx);
+        slow_down_traj_points, 0, planner_data.current_odometry.pose.pose.position, ego_seg_idx);
     }();
     const double abs_ego_offset = planner_data.is_driving_forward
-                                    ? std::abs(vehicle_info_.max_longitudinal_offset_m)
-                                    : std::abs(vehicle_info_.min_longitudinal_offset_m);
+                                    ? std::abs(vehicle_info.max_longitudinal_offset_m)
+                                    : std::abs(vehicle_info.min_longitudinal_offset_m);
 
     // define function to insert slow down velocity to trajectory
     const auto insert_point_in_trajectory = [&](const double lon_dist) -> std::optional<size_t> {
@@ -366,8 +357,8 @@ private:
 
       // calculate slow down start distance, and insert slow down velocity
       const auto dist_vec_to_slow_down = calculateDistanceToSlowDownWithConstraints(
-        planner_data, slow_down_traj_points, obstacle, prev_output, dist_to_ego,
-        is_obstacle_moving);
+        planner_data, slow_down_traj_points, obstacle, prev_output, dist_to_ego, is_obstacle_moving,
+        vehicle_info);
       if (!dist_vec_to_slow_down) {
         RCLCPP_INFO_EXPRESSION(
           rclcpp::get_logger("ObstacleCruisePlanner::PlannerInterface"), enable_debug_info_,
@@ -421,7 +412,7 @@ private:
       // add virtual wall
       if (slow_down_start_idx && slow_down_end_idx) {
         const size_t ego_idx =
-          ego_nearest_param_.findIndex(slow_down_traj_points, planner_data.ego_pose);
+          planner_data.findIndex(slow_down_traj_points, planner_data.current_odometry.pose.pose);
         const size_t slow_down_wall_idx = [&]() {
           if (ego_idx < *slow_down_start_idx) return *slow_down_start_idx;
           if (ego_idx < *slow_down_end_idx) return ego_idx;
@@ -523,7 +514,7 @@ private:
       metrics.push_back(stop_orientation_metric);
 
       const auto dist_to_stop_pose = autoware::motion_utils::calcSignedArcLength(
-        planner_data.value().traj_points, planner_data.value().ego_pose.position,
+        planner_data->traj_points, planner_data->current_odometry.pose.pose.position,
         stop_pose.value().position);
 
       Metric dist_to_stop_pose_metric;
@@ -627,11 +618,9 @@ private:
   struct DebugData
   {
     DebugData() = default;
-    std::vector<Obstacle> intentionally_ignored_obstacles;
     std::vector<SlowDownObstacle> obstacles_to_slow_down;
     MarkerArray slow_down_debug_wall_marker;
     MarkerArray slow_down_wall_marker;
-    std::vector<autoware::universe_utils::Polygon2d> detection_polygons;
     std::optional<std::vector<Metric>> slow_down_metrics{std::nullopt};
   };
 
@@ -828,7 +817,7 @@ private:
 
   std::optional<SlowDownObstacle> createSlowDownObstacleForPredictedObject(
     const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
-    const Obstacle & obstacle, const double precise_lat_dist)
+    const Obstacle & obstacle, const double precise_lat_dist, const VehicleInfo & vehicle_info)
   {
     const auto & object_id = obstacle.uuid.substr(0, 4);
     const auto & p = behavior_determination_param_;
@@ -883,7 +872,7 @@ private:
     // calculate collision points with trajectory with lateral stop margin
     // NOTE: For additional margin, hysteresis is not divided by two.
     const auto traj_polys_with_lat_margin = obstacle_cruise_utils::createOneStepPolygons(
-      traj_points, vehicle_info_, odometry.pose.pose,
+      traj_points, vehicle_info, odometry.pose.pose,
       p.max_lat_margin_for_slow_down + p.lat_hysteresis_margin_for_slow_down,
       behavior_determination_param_);
 
@@ -981,11 +970,11 @@ private:
   std::optional<std::tuple<double, double, double>> calculateDistanceToSlowDownWithConstraints(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & traj_points,
     const SlowDownObstacle & obstacle, const std::optional<SlowDownOutput> & prev_output,
-    const double dist_to_ego, const bool is_obstacle_moving) const
+    const double dist_to_ego, const bool is_obstacle_moving, const VehicleInfo & vehicle_info) const
   {
     const double abs_ego_offset = planner_data.is_driving_forward
-                                    ? std::abs(vehicle_info_.max_longitudinal_offset_m)
-                                    : std::abs(vehicle_info_.min_longitudinal_offset_m);
+                                    ? std::abs(vehicle_info.max_longitudinal_offset_m)
+                                    : std::abs(vehicle_info.min_longitudinal_offset_m);
     const double obstacle_vel = obstacle.velocity;
     // calculate slow down velocity
     const double slow_down_vel =
@@ -998,7 +987,8 @@ private:
       autoware::motion_utils::calcSignedArcLength(traj_points, 0, obstacle.back_collision_point);
 
     // calculate offset distance to first collision considering relative velocity
-    const double relative_vel = planner_data.ego_vel - obstacle.velocity;
+    const double relative_vel =
+      planner_data.current_odometry.twist.twist.linear.x - obstacle.velocity;
     const double offset_dist_to_collision = [&]() {
       if (dist_to_front_collision < dist_to_ego + abs_ego_offset) {
         return 0.0;
@@ -1057,16 +1047,17 @@ private:
         if (prev_output) {
           return prev_output->target_vel;
         }
-        return std::max(planner_data.ego_vel, slow_down_vel);
+        return std::max(planner_data.current_odometry.twist.twist.linear.x, slow_down_vel);
       }
-      if (planner_data.ego_vel < slow_down_vel) {
+      if (planner_data.current_odometry.twist.twist.linear.x < slow_down_vel) {
         return slow_down_vel;
       }
 
       const double one_shot_feasible_slow_down_vel = [&]() {
-        if (planner_data.ego_acc < longitudinal_info_.min_accel) {
-          const double squared_vel = std::pow(planner_data.ego_vel, 2) +
-                                     2 * deceleration_dist * longitudinal_info_.min_accel;
+        if (planner_data.current_acceleration.accel.accel.linear.x < longitudinal_info_.min_accel) {
+          const double squared_vel =
+            std::pow(planner_data.current_odometry.twist.twist.linear.x, 2) +
+            2 * deceleration_dist * longitudinal_info_.min_accel;
           if (squared_vel < 0) {
             return slow_down_vel;
           }
@@ -1075,7 +1066,8 @@ private:
         // TODO(murooka) Calculate more precisely. Final acceleration should be zero.
         const double min_feasible_slow_down_vel = calcDecelerationVelocityFromDistanceToTarget(
           longitudinal_info_.slow_down_min_jerk, longitudinal_info_.slow_down_min_accel,
-          planner_data.ego_acc, planner_data.ego_vel, deceleration_dist);
+          planner_data.current_acceleration.accel.accel.linear.x,
+          planner_data.current_odometry.twist.twist.linear.x, deceleration_dist);
         return min_feasible_slow_down_vel;
       }();
       if (prev_output) {
@@ -1131,19 +1123,12 @@ private:
   rclcpp::Clock::SharedPtr clock_;
   SlowDownParam slow_down_param_;
   LongitudinalInfo longitudinal_info_;
-  VehicleInfo vehicle_info_;
-  EgoNearestParam ego_nearest_param_;
   mutable std::shared_ptr<DebugData> debug_data_ptr_;
 
   // Parameters
   bool enable_debug_info_{false};
   bool enable_calculation_time_info_{false};
   bool use_pointcloud_{false};
-  double min_behavior_stop_margin_;
-  bool enable_approaching_on_curve_;
-  double additional_safe_distance_margin_on_curve_;
-  double min_safe_distance_margin_on_curve_;
-  bool suppress_sudden_obstacle_stop_;
 
   void updateCommonParam(const std::vector<rclcpp::Parameter> & parameters)
   {

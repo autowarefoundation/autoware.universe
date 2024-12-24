@@ -116,14 +116,8 @@ public:
     bool is_yield_obstacle;
   };
 
-  ObstacleCruiseModule(
-    rclcpp::Node & node, const LongitudinalInfo & longitudinal_info,
-    const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
-    const EgoNearestParam & ego_nearest_param)
-  : clock_(node.get_clock()),
-    longitudinal_info_(longitudinal_info),
-    vehicle_info_(vehicle_info),
-    ego_nearest_param_(ego_nearest_param)
+  ObstacleCruiseModule(rclcpp::Node & node, const LongitudinalInfo & longitudinal_info)
+  : clock_(node.get_clock()), longitudinal_info_(longitudinal_info)
   {
     inside_cruise_obstacle_types_ =
       obstacle_cruise_utils::getTargetObjectType(node, "common.cruise_obstacle_type.inside.");
@@ -147,14 +141,14 @@ public:
   }
 
   std::vector<TrajectoryPoint> plan(
-    const Odometry & odometry, const std::vector<TrajectoryPoint> & decimated_traj_points,
+    const std::vector<TrajectoryPoint> & decimated_traj_points,
     const std::vector<Polygon2d> & decimated_traj_polys, const std::vector<Obstacle> & obstacles,
-    const bool is_driving_forward, const BehaviorDeterminationParam & behavior_determination_param,
+    const BehaviorDeterminationParam & behavior_determination_param,
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points)
   {
     const auto cruise_obstacles = determineEgoBehaviorAgainstPredictedObjectObstacles(
-      odometry, decimated_traj_points, decimated_traj_polys, obstacles, is_driving_forward,
-      behavior_determination_param);
+      planner_data.current_odometry, decimated_traj_points, decimated_traj_polys, obstacles,
+      planner_data.is_driving_forward, behavior_determination_param, planner_data.vehicle_info);
     std::optional<VelocityLimit> cruise_vel_limit;
     const auto cruise_traj_points =
       generateCruiseTrajectory(planner_data, stop_traj_points, cruise_obstacles, cruise_vel_limit);
@@ -168,18 +162,11 @@ public:
 
   void setParam(
     const bool enable_debug_info, const bool enable_calculation_time_info,
-    const bool use_pointcloud, const double min_behavior_stop_margin,
-    const double enable_approaching_on_curve, const double additional_safe_distance_margin_on_curve,
-    const double min_safe_distance_margin_on_curve, const bool suppress_sudden_obstacle_stop)
+    const bool use_pointcloud)
   {
     enable_debug_info_ = enable_debug_info;
     enable_calculation_time_info_ = enable_calculation_time_info;
     use_pointcloud_ = use_pointcloud;
-    min_behavior_stop_margin_ = min_behavior_stop_margin;
-    enable_approaching_on_curve_ = enable_approaching_on_curve;
-    additional_safe_distance_margin_on_curve_ = additional_safe_distance_margin_on_curve;
-    min_safe_distance_margin_on_curve_ = min_safe_distance_margin_on_curve;
-    suppress_sudden_obstacle_stop_ = suppress_sudden_obstacle_stop;
   }
 
   void onParam(const std::vector<rclcpp::Parameter> & parameters)
@@ -189,7 +176,6 @@ public:
   }
 
 protected:
-  bool is_driving_forward_;
   std::vector<CruiseObstacle> prev_cruise_object_obstacles_;
   std::vector<int> inside_cruise_obstacle_types_;
   std::vector<int> outside_cruise_obstacle_types_;
@@ -199,23 +185,25 @@ protected:
   std::vector<CruiseObstacle> determineEgoBehaviorAgainstPredictedObjectObstacles(
     const Odometry & odometry, const std::vector<TrajectoryPoint> & decimated_traj_points,
     const std::vector<Polygon2d> & decimated_traj_polys, const std::vector<Obstacle> & obstacles,
-    const bool is_driving_forward, const BehaviorDeterminationParam & behavior_determination_param)
+    const bool is_driving_forward, const BehaviorDeterminationParam & behavior_determination_param,
+    const VehicleInfo & vehicle_info)
   {
-    is_driving_forward_ = is_driving_forward;
     behavior_determination_param_ = behavior_determination_param;
 
     // cruise
     std::vector<CruiseObstacle> cruise_obstacles;
     for (const auto & obstacle : obstacles) {
       const auto cruise_obstacle = createCruiseObstacle(
-        odometry, decimated_traj_points, decimated_traj_polys, obstacle, obstacle.precise_lat_dist);
+        odometry, decimated_traj_points, decimated_traj_polys, obstacle, obstacle.precise_lat_dist,
+        is_driving_forward, vehicle_info);
       if (cruise_obstacle) {
         cruise_obstacles.push_back(*cruise_obstacle);
       }
     }
     const auto & p = behavior_determination_param_;
     if (p.enable_yield) {
-      const auto yield_obstacles = findYieldCruiseObstacles(obstacles, decimated_traj_points);
+      const auto yield_obstacles =
+        findYieldCruiseObstacles(obstacles, decimated_traj_points, vehicle_info);
       if (yield_obstacles) {
         for (const auto & y : yield_obstacles.value()) {
           // Check if there is no member with the same UUID in cruise_obstacles
@@ -239,18 +227,18 @@ protected:
     const PlannerData & planner_data, const geometry_msgs::msg::Point & collision_point)
   {
     const double offset = planner_data.is_driving_forward
-                            ? std::abs(vehicle_info_.max_longitudinal_offset_m)
-                            : std::abs(vehicle_info_.min_longitudinal_offset_m);
+                            ? std::abs(planner_data.vehicle_info.max_longitudinal_offset_m)
+                            : std::abs(planner_data.vehicle_info.min_longitudinal_offset_m);
 
-    const size_t ego_segment_idx =
-      ego_nearest_param_.findSegmentIndex(planner_data.traj_points, planner_data.ego_pose);
+    const size_t ego_segment_idx = planner_data.findSegmentIndex(
+      planner_data.traj_points, planner_data.current_odometry.pose.pose);
 
     const size_t collision_segment_idx =
       autoware::motion_utils::findNearestSegmentIndex(planner_data.traj_points, collision_point);
 
     const auto dist_to_collision_point = autoware::motion_utils::calcSignedArcLength(
-      planner_data.traj_points, planner_data.ego_pose.position, ego_segment_idx, collision_point,
-      collision_segment_idx);
+      planner_data.traj_points, planner_data.current_odometry.pose.pose.position, ego_segment_idx,
+      collision_point, collision_segment_idx);
 
     return dist_to_collision_point - offset;
   }
@@ -305,7 +293,7 @@ protected:
       metrics.push_back(stop_orientation_metric);
 
       const auto dist_to_stop_pose = autoware::motion_utils::calcSignedArcLength(
-        planner_data.value().traj_points, planner_data.value().ego_pose.position,
+        planner_data->traj_points, planner_data->current_odometry.pose.pose.position,
         stop_pose.value().position);
 
       Metric dist_to_stop_pose_metric;
@@ -401,21 +389,20 @@ protected:
     std::vector<Obstacle> intentionally_ignored_obstacles;
     std::vector<CruiseObstacle> obstacles_to_cruise;
     MarkerArray cruise_wall_marker;
-    std::vector<autoware::universe_utils::Polygon2d> detection_polygons;
     std::optional<std::vector<Metric>> cruise_metrics{std::nullopt};
   };
 
   std::optional<CruiseObstacle> createCruiseObstacle(
     const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
     const std::vector<Polygon2d> & traj_polys, const Obstacle & obstacle,
-    const double precise_lat_dist)
+    const double precise_lat_dist, const bool is_driving_forward, const VehicleInfo & vehicle_info)
   {
     const auto & object_id = obstacle.uuid.substr(0, 4);
     const auto & p = behavior_determination_param_;
 
     // NOTE: When driving backward, Stop will be planned instead of cruise.
     //       When the obstacle is crossing the ego's trajectory, cruise can be ignored.
-    if (!isCruiseObstacle(obstacle.classification.label) || !is_driving_forward_) {
+    if (!isCruiseObstacle(obstacle.classification.label) || !is_driving_forward) {
       return std::nullopt;
     }
 
@@ -449,14 +436,16 @@ protected:
       constexpr double epsilon = 1e-6;
       if (precise_lat_dist < epsilon) {
         // obstacle is inside the trajectory
-        return createCollisionPointsForInsideCruiseObstacle(traj_points, traj_polys, obstacle);
+        return createCollisionPointsForInsideCruiseObstacle(
+          traj_points, traj_polys, obstacle, is_driving_forward, vehicle_info);
       }
       // obstacle is outside the trajectory
       // If the ego is stopping, do not plan cruise for outside obstacles. Stop will be planned.
       if (odometry.twist.twist.linear.x < 0.1) {
         return std::nullopt;
       }
-      return createCollisionPointsForOutsideCruiseObstacle(traj_points, traj_polys, obstacle);
+      return createCollisionPointsForOutsideCruiseObstacle(
+        traj_points, traj_polys, obstacle, is_driving_forward, vehicle_info);
     }();
     if (!collision_points) {
       return std::nullopt;
@@ -472,7 +461,8 @@ protected:
   }
 
   std::optional<std::vector<CruiseObstacle>> findYieldCruiseObstacles(
-    const std::vector<Obstacle> & obstacles, const std::vector<TrajectoryPoint> & traj_points)
+    const std::vector<Obstacle> & obstacles, const std::vector<TrajectoryPoint> & traj_points,
+    const VehicleInfo & vehicle_info)
   {
     if (obstacles.empty() || traj_points.empty()) return std::nullopt;
     const auto & p = behavior_determination_param_;
@@ -517,7 +507,7 @@ protected:
         const bool is_moving_obs_behind_of_stopped_obs =
           moving_obstacle.ego_to_obstacle_distance < stopped_obstacle.ego_to_obstacle_distance;
         const bool is_moving_obs_ahead_of_ego_front =
-          moving_obstacle.ego_to_obstacle_distance > vehicle_info_.vehicle_length_m;
+          moving_obstacle.ego_to_obstacle_distance > vehicle_info.vehicle_length_m;
 
         if (!is_moving_obs_ahead_of_ego_front || !is_moving_obs_behind_of_stopped_obs) continue;
 
@@ -553,7 +543,8 @@ protected:
 
   std::optional<std::vector<PointWithStamp>> createCollisionPointsForInsideCruiseObstacle(
     const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
-    const Obstacle & obstacle) const
+    const Obstacle & obstacle, const bool is_driving_forward,
+    const VehicleInfo & vehicle_info) const
   {
     const auto & object_id = obstacle.uuid.substr(0, 4);
     const auto & p = behavior_determination_param_;
@@ -602,18 +593,19 @@ protected:
     std::vector<size_t> collision_index;
     const auto collision_points = polygon_utils::getCollisionPoints(
       traj_points, traj_polys, obstacle.stamp, resampled_predicted_paths.front(), obstacle.shape,
-      clock_->now(), is_driving_forward_, collision_index,
+      clock_->now(), is_driving_forward, collision_index,
       obstacle_cruise_utils::calcObstacleMaxLength(obstacle.shape) +
         p.decimate_trajectory_step_length +
         std::hypot(
-          vehicle_info_.vehicle_length_m,
-          vehicle_info_.vehicle_width_m * 0.5 + p.max_lat_margin_for_cruise));
+          vehicle_info.vehicle_length_m,
+          vehicle_info.vehicle_width_m * 0.5 + p.max_lat_margin_for_cruise));
     return collision_points;
   }
 
   std::optional<std::vector<PointWithStamp>> createCollisionPointsForOutsideCruiseObstacle(
     const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
-    const Obstacle & obstacle) const
+    const Obstacle & obstacle, const bool is_driving_forward,
+    const VehicleInfo & vehicle_info) const
   {
     const auto & p = behavior_determination_param_;
     const auto & object_id = obstacle.uuid.substr(0, 4);
@@ -648,12 +640,12 @@ protected:
       for (const auto & predicted_path : resampled_predicted_paths) {
         const auto collision_points = polygon_utils::getCollisionPoints(
           traj_points, traj_polys, obstacle.stamp, predicted_path, obstacle.shape, clock_->now(),
-          is_driving_forward_, collision_index,
+          is_driving_forward, collision_index,
           obstacle_cruise_utils::calcObstacleMaxLength(obstacle.shape) +
             p.decimate_trajectory_step_length +
             std::hypot(
-              vehicle_info_.vehicle_length_m,
-              vehicle_info_.vehicle_width_m * 0.5 + p.max_lat_margin_for_cruise),
+              vehicle_info.vehicle_length_m,
+              vehicle_info.vehicle_width_m * 0.5 + p.max_lat_margin_for_cruise),
           p.max_prediction_time_for_collision_check);
         if (!collision_points.empty()) {
           return collision_points;
@@ -822,24 +814,6 @@ protected:
     return rss_dist_with_margin;
   }
 
-  size_t findEgoSegmentIndex(
-    const std::vector<TrajectoryPoint> & traj_points,
-    const geometry_msgs::msg::Pose & ego_pose) const
-  {
-    const auto & p = ego_nearest_param_;
-    return autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      traj_points, ego_pose, p.dist_threshold, p.yaw_threshold);
-  }
-
-  size_t findEgoIndex(
-    const std::vector<TrajectoryPoint> & traj_points,
-    const geometry_msgs::msg::Pose & ego_pose) const
-  {
-    const auto & p = ego_nearest_param_;
-    return autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
-      traj_points, ego_pose, p.dist_threshold, p.yaw_threshold);
-  }
-
   virtual void updateCruiseParam([[maybe_unused]] const std::vector<rclcpp::Parameter> & parameters)
   {
   }
@@ -856,11 +830,6 @@ protected:
   bool enable_debug_info_{false};
   bool enable_calculation_time_info_{false};
   bool use_pointcloud_{false};
-  double min_behavior_stop_margin_;
-  bool enable_approaching_on_curve_;
-  double additional_safe_distance_margin_on_curve_;
-  double min_safe_distance_margin_on_curve_;
-  bool suppress_sudden_obstacle_stop_;
 
   void updateCommonParam(const std::vector<rclcpp::Parameter> & parameters)
   {
@@ -869,8 +838,6 @@ protected:
 
   rclcpp::Clock::SharedPtr clock_;
   LongitudinalInfo longitudinal_info_;
-  VehicleInfo vehicle_info_;
-  EgoNearestParam ego_nearest_param_;
   mutable std::shared_ptr<DebugData> debug_data_ptr_;
 
   std::unique_ptr<autoware::objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface>

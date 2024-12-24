@@ -19,7 +19,6 @@
 #include "autoware/obstacle_cruise_planner/cruise/optimization_based_planner/s_boundary.hpp"
 #include "autoware/obstacle_cruise_planner/cruise/optimization_based_planner/velocity_optimizer.hpp"
 #include "autoware/obstacle_cruise_planner/cruise/type_alias.hpp"
-#include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
@@ -35,10 +34,7 @@ namespace autoware::motion_planning
 class OptimizationBasedPlanner : public ObstacleCruiseModule
 {
 public:
-  OptimizationBasedPlanner(
-    rclcpp::Node & node, const LongitudinalInfo & longitudinal_info,
-    const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
-    const EgoNearestParam & ego_nearest_param);
+  OptimizationBasedPlanner(rclcpp::Node & node, const LongitudinalInfo & longitudinal_info);
 
   std::vector<TrajectoryPoint> generateCruiseTrajectory(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points,
@@ -76,7 +72,8 @@ private:
     const PointWithStamp & point);
 
   std::optional<double> calcTrajectoryLengthFromCurrentPose(
-    const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & ego_pose);
+    const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & ego_pose,
+    const PlannerData & planner_data);
 
   geometry_msgs::msg::Pose transformBaseLink2Center(
     const geometry_msgs::msg::Pose & pose_base_link);

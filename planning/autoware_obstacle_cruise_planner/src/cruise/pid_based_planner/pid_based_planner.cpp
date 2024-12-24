@@ -65,11 +65,8 @@ T getSign(const T val)
 }
 }  // namespace
 
-PIDBasedPlanner::PIDBasedPlanner(
-  rclcpp::Node & node, const LongitudinalInfo & longitudinal_info,
-  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
-  const EgoNearestParam & ego_nearest_param)
-: ObstacleCruiseModule(node, longitudinal_info, vehicle_info, ego_nearest_param)
+PIDBasedPlanner::PIDBasedPlanner(rclcpp::Node & node, const LongitudinalInfo & longitudinal_info)
+: ObstacleCruiseModule(node, longitudinal_info)
 {
   min_accel_during_cruise_ =
     node.declare_parameter<double>("cruise.pid_based_planner.min_accel_during_cruise");
@@ -190,9 +187,11 @@ std::optional<PIDBasedPlanner::CruiseObstacleInfo> PIDBasedPlanner::calcObstacle
   const PlannerData & planner_data, const std::vector<CruiseObstacle> & obstacles)
 {
   cruise_planning_debug_info_.set(
-    CruisePlanningDebugInfo::TYPE::EGO_VELOCITY, planner_data.ego_vel);
+    CruisePlanningDebugInfo::TYPE::EGO_VELOCITY,
+    planner_data.current_odometry.twist.twist.linear.x);
   cruise_planning_debug_info_.set(
-    CruisePlanningDebugInfo::TYPE::EGO_ACCELERATION, planner_data.ego_acc);
+    CruisePlanningDebugInfo::TYPE::EGO_ACCELERATION,
+    planner_data.current_acceleration.accel.accel.linear.x);
 
   auto modified_target_obstacles = obstacles;  // TODO(murooka) what is this variable?
 
@@ -209,11 +208,13 @@ std::optional<PIDBasedPlanner::CruiseObstacleInfo> PIDBasedPlanner::calcObstacle
     // TODO(murooka) this is not dist to obstacle
     const double dist_to_obstacle =
       calcDistanceToCollisionPoint(planner_data, obstacle.collision_points.front().point) +
-      (obstacle.velocity - planner_data.ego_vel) * time_to_evaluate_rss_;
+      (obstacle.velocity - planner_data.current_odometry.twist.twist.linear.x) *
+        time_to_evaluate_rss_;
 
     // calculate distance between ego and obstacle based on RSS
     const double target_dist_to_obstacle = calcRSSDistance(
-      planner_data.ego_vel, obstacle.velocity, longitudinal_info_.safe_distance_margin);
+      planner_data.current_odometry.twist.twist.linear.x, obstacle.velocity,
+      longitudinal_info_.safe_distance_margin);
 
     // calculate error distance and normalized one
     const double error_cruise_dist = dist_to_obstacle - target_dist_to_obstacle;
@@ -237,9 +238,10 @@ std::optional<PIDBasedPlanner::CruiseObstacleInfo> PIDBasedPlanner::calcObstacle
   {  // debug data
     cruise_planning_debug_info_.set(
       CruisePlanningDebugInfo::TYPE::CRUISE_RELATIVE_EGO_VELOCITY,
-      planner_data.ego_vel - cruise_obstacle_info->obstacle.velocity);
+      planner_data.current_odometry.twist.twist.linear.x - cruise_obstacle_info->obstacle.velocity);
     const double non_zero_relative_vel = [&]() {
-      const double relative_vel = planner_data.ego_vel - cruise_obstacle_info->obstacle.velocity;
+      const double relative_vel = planner_data.current_odometry.twist.twist.linear.x -
+                                  cruise_obstacle_info->obstacle.velocity;
       constexpr double epsilon = 0.001;
       if (epsilon < std::abs(relative_vel)) {
         return relative_vel;
@@ -315,10 +317,12 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::planCruise(
       // virtual wall marker for cruise
       const double error_cruise_dist = cruise_obstacle_info->error_cruise_dist;
       const double dist_to_obstacle = cruise_obstacle_info->dist_to_obstacle;
-      const size_t ego_idx = findEgoIndex(stop_traj_points, planner_data.ego_pose);
-      const double abs_ego_offset = planner_data.is_driving_forward
-                                      ? std::abs(vehicle_info_.max_longitudinal_offset_m)
-                                      : std::abs(vehicle_info_.min_longitudinal_offset_m);
+      const size_t ego_idx =
+        planner_data.findIndex(stop_traj_points, planner_data.current_odometry.pose.pose);
+      const double abs_ego_offset =
+        planner_data.is_driving_forward
+          ? std::abs(planner_data.vehicle_info.max_longitudinal_offset_m)
+          : std::abs(planner_data.vehicle_info.min_longitudinal_offset_m);
       const double dist_to_rss_wall =
         std::min(error_cruise_dist + abs_ego_offset, dist_to_obstacle + abs_ego_offset);
       const size_t wall_idx = obstacle_cruise_utils::getIndexWithLongitudinalOffset(
@@ -392,8 +396,8 @@ VelocityLimit PIDBasedPlanner::doCruiseWithVelocityLimit(
     return pid_output_vel;
   }();
 
-  const double positive_target_vel = lpf_output_vel_ptr_->filter(
-    std::max(min_cruise_target_vel_, planner_data.ego_vel + additional_vel));
+  const double positive_target_vel = lpf_output_vel_ptr_->filter(std::max(
+    min_cruise_target_vel_, planner_data.current_odometry.twist.twist.linear.x + additional_vel));
 
   // calculate target acceleration
   const double target_acc = [&]() {
@@ -500,16 +504,20 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::doCruiseWithTrajectory(
   const auto prev_traj_closest_point = [&]() -> TrajectoryPoint {
     // if (smoothed_trajectory_ptr_) {
     //   return autoware::motion_utils::calcInterpolatedPoint(
-    //     *smoothed_trajectory_ptr_, planner_data.ego_pose, nearest_dist_deviation_threshold_,
-    //     nearest_yaw_deviation_threshold_);
+    //     *smoothed_trajectory_ptr_, planner_data.current_odometry.pose.pose,
+    //     nearest_dist_deviation_threshold_, nearest_yaw_deviation_threshold_);
     // }
-    return ego_nearest_param_.calcInterpolatedPoint(prev_traj_points_, planner_data.ego_pose);
+    return autoware::motion_utils::calcInterpolatedPoint(
+      autoware::motion_utils::convertToTrajectory(prev_traj_points_),
+      planner_data.current_odometry.pose.pose, planner_data.ego_nearest_dist_threshold,
+      planner_data.ego_nearest_yaw_threshold);
   }();
   const double v0 = prev_traj_closest_point.longitudinal_velocity_mps;
   const double a0 = prev_traj_closest_point.acceleration_mps2;
 
   auto cruise_traj_points = getAccelerationLimitedTrajectory(
-    stop_traj_points, planner_data.ego_pose, v0, a0, target_acc, target_jerk_ratio);
+    stop_traj_points, planner_data.current_odometry.pose.pose, v0, a0, target_acc,
+    target_jerk_ratio, planner_data);
 
   const auto zero_vel_idx_opt = autoware::motion_utils::searchZeroVelocityIndex(cruise_traj_points);
   if (!zero_vel_idx_opt) {
@@ -525,7 +533,8 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::doCruiseWithTrajectory(
 
 std::vector<TrajectoryPoint> PIDBasedPlanner::getAccelerationLimitedTrajectory(
   const std::vector<TrajectoryPoint> traj_points, const geometry_msgs::msg::Pose & start_pose,
-  const double v0, const double a0, const double target_acc, const double target_jerk_ratio) const
+  const double v0, const double a0, const double target_acc, const double target_jerk_ratio,
+  const PlannerData & planner_data) const
 {
   // calculate vt function
   const auto vt = [&](
@@ -613,7 +622,7 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::getAccelerationLimitedTrajectory(
   }
 
   auto acc_limited_traj_points = traj_points;
-  const size_t ego_seg_idx = findEgoIndex(acc_limited_traj_points, start_pose);
+  const size_t ego_seg_idx = planner_data.findIndex(acc_limited_traj_points, start_pose);
   double sum_dist = 0.0;
   for (size_t i = ego_seg_idx; i < acc_limited_traj_points.size(); ++i) {
     if (i != ego_seg_idx) {

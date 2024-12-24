@@ -189,8 +189,6 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
 
   const auto longitudinal_info = LongitudinalInfo(*this);
 
-  ego_nearest_param_ = EgoNearestParam(*this);
-
   enable_debug_info_ = declare_parameter<bool>("common.enable_debug_info");
   enable_calculation_time_info_ = declare_parameter<bool>("common.enable_calculation_time_info");
 
@@ -199,12 +197,9 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
   behavior_determination_param_ = BehaviorDeterminationParam(*this);
 
   {  // planning algorithm
-    obstacle_stop_module_ = std::make_unique<ObstacleStopModule>(
-      *this, longitudinal_info, vehicle_info_, ego_nearest_param_);
-    obstacle_slow_down_module_ = std::make_unique<ObstacleSlowDownModule>(
-      *this, longitudinal_info, vehicle_info_, ego_nearest_param_);
-    obstacle_cruise_module_ =
-      getModule(*this, longitudinal_info, vehicle_info_, ego_nearest_param_);
+    obstacle_stop_module_ = std::make_unique<ObstacleStopModule>(*this, longitudinal_info);
+    obstacle_slow_down_module_ = std::make_unique<ObstacleSlowDownModule>(*this, longitudinal_info);
+    obstacle_cruise_module_ = getModule(*this, longitudinal_info);
 
     min_behavior_stop_margin_ = declare_parameter<double>("common.min_behavior_stop_margin");
     additional_safe_distance_margin_on_curve_ =
@@ -221,15 +216,9 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
       additional_safe_distance_margin_on_curve_, min_safe_distance_margin_on_curve_,
       suppress_sudden_obstacle_stop_);
     obstacle_slow_down_module_->setParam(
-      enable_debug_info_, enable_calculation_time_info_, true /*use_pointcloud_*/,
-      min_behavior_stop_margin_, enable_approaching_on_curve_,
-      additional_safe_distance_margin_on_curve_, min_safe_distance_margin_on_curve_,
-      suppress_sudden_obstacle_stop_);
+      enable_debug_info_, enable_calculation_time_info_, true /*use_pointcloud_*/);
     obstacle_cruise_module_->setParam(
-      enable_debug_info_, enable_calculation_time_info_, true /*use_pointcloud_*/,
-      min_behavior_stop_margin_, enable_approaching_on_curve_,
-      additional_safe_distance_margin_on_curve_, min_safe_distance_margin_on_curve_,
-      suppress_sudden_obstacle_stop_);
+      enable_debug_info_, enable_calculation_time_info_, true /*use_pointcloud_*/);
   }
 
   // set parameter callback
@@ -312,7 +301,8 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
       //    (1) with a proper label
       //    (2) in front of ego
       //    (3) not too far from trajectory
-      const auto target_obstacles = convertToObstacles(ego_odom, *objects_ptr, traj_points);
+      const auto target_obstacles = convertToObstacles(ego_odom, *objects_ptr, traj_points,
+  planner_data);
 
       const auto stop_obstacles =
   obstacle_stop_module_->determineEgoBehaviorAgainstPredictedObjectObstacles(ego_odom, *objects_ptr,
@@ -328,7 +318,7 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
     }
     if (use_pointcloud_) {
       const auto target_obstacles =
-        convertToObstacles(ego_odom, *pointcloud_ptr, traj_points, msg->header);
+        convertToObstacles(ego_odom, *pointcloud_ptr, traj_points, msg->header, planner_data);
 
       const auto & [stop_pc_obstacles, cruise_pc_obstacles, slow_down_pc_obstacles] =
         determineEgoBehaviorAgainstPointCloudObstacles(ego_odom, traj_points, target_obstacles);
@@ -345,26 +335,28 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
   const auto planner_data = createPlannerData(ego_odom, acc, traj_points);
 
   // calculated decimated trajectory points and trajectory polygon
-  const auto decimated_traj_points = decimateTrajectoryPoints(ego_odom, traj_points);
+  const auto decimated_traj_points = decimateTrajectoryPoints(ego_odom, traj_points, planner_data);
   const auto decimated_traj_polys = obstacle_cruise_utils::createOneStepPolygons(
-    decimated_traj_points, vehicle_info_, ego_odom.pose.pose, 0.0, behavior_determination_param_);
+    decimated_traj_points, planner_data.vehicle_info, ego_odom.pose.pose, 0.0,
+    behavior_determination_param_);
   debug_data_ptr_->detection_polygons = decimated_traj_polys;
 
-  const auto target_obstacles = convertToObstacles(ego_odom, *objects_ptr, traj_points);
+  const auto target_obstacles =
+    convertToObstacles(ego_odom, *objects_ptr, traj_points, planner_data);
 
   // stop
   const auto stop_traj_points = obstacle_stop_module_->plan(
-    ego_odom, *objects_ptr, decimated_traj_points, decimated_traj_polys, target_obstacles,
-    is_driving_forward_, behavior_determination_param_, min_behavior_stop_margin_, planner_data);
+    *objects_ptr, decimated_traj_points, decimated_traj_polys, target_obstacles,
+    behavior_determination_param_, min_behavior_stop_margin_, planner_data);
 
   // cruise
   const auto cruise_traj_points = obstacle_cruise_module_->plan(
-    ego_odom, decimated_traj_points, decimated_traj_polys, target_obstacles, is_driving_forward_,
-    behavior_determination_param_, planner_data, stop_traj_points);
+    decimated_traj_points, decimated_traj_polys, target_obstacles, behavior_determination_param_,
+    planner_data, stop_traj_points);
 
   // slow down
   const auto slow_down_traj_points = obstacle_slow_down_module_->plan(
-    ego_odom, decimated_traj_points, target_obstacles, behavior_determination_param_, planner_data,
+    decimated_traj_points, target_obstacles, behavior_determination_param_, planner_data,
     cruise_traj_points);
 
   // 7. Publish trajectory
@@ -386,7 +378,7 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
 
 std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
   const Odometry & odometry, const PredictedObjects & objects,
-  const std::vector<TrajectoryPoint> & traj_points) const
+  const std::vector<TrajectoryPoint> & traj_points, const PlannerData & planner_data) const
 {
   stop_watch_.tic(__func__);
 
@@ -399,7 +391,7 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
      p.max_lat_margin_for_cruise, p.max_lat_margin_for_slow_down});
   const double max_lat_time_margin =
     std::max({p.max_lat_time_margin_for_stop, p.max_lat_time_margin_for_cruise});
-  const size_t ego_idx = ego_nearest_param_.findIndex(traj_points, odometry.pose.pose);
+  const size_t ego_idx = planner_data.findIndex(traj_points, odometry.pose.pose);
 
   std::vector<Obstacle> target_obstacles;
   for (const auto & predicted_object : objects.objects) {
@@ -468,7 +460,8 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
       }
     }
 
-    const auto decimated_traj_points = decimateTrajectoryPoints(odometry, traj_points);
+    const auto decimated_traj_points =
+      decimateTrajectoryPoints(odometry, traj_points, planner_data);
     const auto decimated_traj_polys = obstacle_cruise_utils::createOneStepPolygons(
       decimated_traj_points, vehicle_info_, odometry.pose.pose, 0.0, behavior_determination_param_);
     debug_data_ptr_->detection_polygons = decimated_traj_polys;
@@ -499,7 +492,8 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
 
 std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
   const Odometry & odometry, const PointCloud2 & pointcloud,
-  const std::vector<TrajectoryPoint> & traj_points, const std_msgs::msg::Header & traj_header) const
+  const std::vector<TrajectoryPoint> & traj_points, const std_msgs::msg::Header & traj_header,
+  const PlannerData & planner_data) const
 {
   stop_watch_.tic(__func__);
 
@@ -548,7 +542,7 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
 
     const auto max_lat_margin =
       std::max(p.max_lat_margin_for_stop_against_unknown, p.max_lat_margin_for_slow_down);
-    const size_t ego_idx = ego_nearest_param_.findIndex(traj_points, odometry.pose.pose);
+    const size_t ego_idx = planner_data.findIndex(traj_points, odometry.pose.pose);
 
     // 3. convert clusters to obstacles
     for (const auto & cluster_indices : clusters) {
@@ -681,12 +675,13 @@ ObstacleCruisePlannerNode::determineEgoBehaviorAgainstPointCloudObstacles(
 */
 
 std::vector<TrajectoryPoint> ObstacleCruisePlannerNode::decimateTrajectoryPoints(
-  const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points) const
+  const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
+  const PlannerData & planner_data) const
 {
   const auto & p = behavior_determination_param_;
 
   // trim trajectory
-  const size_t ego_seg_idx = ego_nearest_param_.findSegmentIndex(traj_points, odometry.pose.pose);
+  const size_t ego_seg_idx = planner_data.findSegmentIndex(traj_points, odometry.pose.pose);
   const size_t traj_start_point_idx = ego_seg_idx;
   const auto trimmed_traj_points =
     std::vector<TrajectoryPoint>(traj_points.begin() + traj_start_point_idx, traj_points.end());
@@ -747,15 +742,17 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacleForPoin
 
 PlannerData ObstacleCruisePlannerNode::createPlannerData(
   const Odometry & odometry, const AccelWithCovarianceStamped & acc,
-  const std::vector<TrajectoryPoint> & traj_points) const
+  const std::vector<TrajectoryPoint> & traj_points)
 {
   PlannerData planner_data;
   planner_data.current_time = now();
   planner_data.traj_points = traj_points;
-  planner_data.ego_pose = odometry.pose.pose;
-  planner_data.ego_vel = odometry.twist.twist.linear.x;
-  planner_data.ego_acc = acc.accel.accel.linear.x;
+  planner_data.current_odometry = odometry;
+  planner_data.current_acceleration = acc;
   planner_data.is_driving_forward = is_driving_forward_;
+  planner_data.vehicle_info = vehicle_info_;
+  planner_data.ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
+  planner_data.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
   return planner_data;
 }
 

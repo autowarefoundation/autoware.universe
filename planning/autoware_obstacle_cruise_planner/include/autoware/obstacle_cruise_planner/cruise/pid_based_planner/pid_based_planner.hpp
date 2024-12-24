@@ -52,10 +52,7 @@ public:
     double target_dist_to_obstacle;
   };
 
-  PIDBasedPlanner(
-    rclcpp::Node & node, const LongitudinalInfo & longitudinal_info,
-    const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
-    const EgoNearestParam & ego_nearest_param);
+  PIDBasedPlanner(rclcpp::Node & node, const LongitudinalInfo & longitudinal_info);
 
   std::vector<TrajectoryPoint> generateCruiseTrajectory(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points,
@@ -88,9 +85,9 @@ private:
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points,
     const CruiseObstacleInfo & cruise_obstacle_info);
   std::vector<TrajectoryPoint> getAccelerationLimitedTrajectory(
-    const std::vector<TrajectoryPoint> traj, const geometry_msgs::msg::Pose & start_pose,
-    const double v0, const double a0, const double target_acc,
-    const double target_jerk_ratio) const;
+    const std::vector<TrajectoryPoint> traj_points, const geometry_msgs::msg::Pose & start_pose,
+    const double v0, const double a0, const double target_acc, const double target_jerk_ratio,
+    const PlannerData & planner_data) const;
 
   // ROS parameters
   double min_accel_during_cruise_;

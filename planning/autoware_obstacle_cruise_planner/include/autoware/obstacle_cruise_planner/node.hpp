@@ -58,11 +58,11 @@ private:
   // main functions
   std::vector<Obstacle> convertToObstacles(
     const Odometry & odometry, const PredictedObjects & objects,
-    const std::vector<TrajectoryPoint> & traj_points) const;
+    const std::vector<TrajectoryPoint> & traj_points, const PlannerData & planner_data) const;
   std::vector<Obstacle> convertToObstacles(
     const Odometry & odometry, const PointCloud2 & pointcloud,
-    const std::vector<TrajectoryPoint> & traj_points,
-    const std_msgs::msg::Header & traj_header) const;
+    const std::vector<TrajectoryPoint> & traj_points, const std_msgs::msg::Header & traj_header,
+    const PlannerData & planner_data) const;
   /*
 std::tuple<std::vector<StopObstacle>, std::vector<CruiseObstacle>, std::vector<SlowDownObstacle>>
   determineEgoBehaviorAgainstPointCloudObstacles(
@@ -70,10 +70,11 @@ std::tuple<std::vector<StopObstacle>, std::vector<CruiseObstacle>, std::vector<S
     const std::vector<Obstacle> & obstacles);
   */
   std::vector<TrajectoryPoint> decimateTrajectoryPoints(
-    const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points) const;
+    const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
+    const PlannerData & planner_data) const;
   PlannerData createPlannerData(
     const Odometry & odometry, const AccelWithCovarianceStamped & acc,
-    const std::vector<TrajectoryPoint> & traj_points) const;
+    const std::vector<TrajectoryPoint> & traj_points);
 
   void publishDebugMarker() const;
   void publishCalculationTime(const double calculation_time) const;
@@ -135,8 +136,6 @@ std::tuple<std::vector<StopObstacle>, std::vector<CruiseObstacle>, std::vector<S
 
   std::unordered_map<std::string, bool> need_to_clear_vel_limit_{
     {"cruise", false}, {"slow_down", false}};
-
-  EgoNearestParam ego_nearest_param_;
 
   bool is_driving_forward_{true};
   bool use_pointcloud_{false};
