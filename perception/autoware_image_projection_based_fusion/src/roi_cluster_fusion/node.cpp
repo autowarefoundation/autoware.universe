@@ -95,16 +95,12 @@ void RoiClusterFusionNode::postprocess(DetectedObjectsWithFeature & output_clust
 
 void RoiClusterFusionNode::fuseOnSingleImage(
   const DetectedObjectsWithFeature & input_cluster_msg, const std::size_t image_id,
-  const DetectedObjectsWithFeature & input_roi_msg,
-  const sensor_msgs::msg::CameraInfo & camera_info, DetectedObjectsWithFeature & output_cluster_msg)
+  const DetectedObjectsWithFeature & input_roi_msg, DetectedObjectsWithFeature & output_cluster_msg)
 {
-  if (!checkCameraInfo(camera_info)) return;
-
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
-  image_geometry::PinholeCameraModel pinhole_camera_model;
-  pinhole_camera_model.fromCameraInfo(camera_info);
+  const sensor_msgs::msg::CameraInfo & camera_info = camera_projectors_[image_id].getCameraInfo();
 
   // get transform from cluster frame id to camera optical frame id
   geometry_msgs::msg::TransformStamped transform_stamped;
@@ -152,18 +148,17 @@ void RoiClusterFusionNode::fuseOnSingleImage(
         continue;
       }
 
-      Eigen::Vector2d projected_point = calcRawImageProjectedPoint(
-        pinhole_camera_model, cv::Point3d(*iter_x, *iter_y, *iter_z),
-        point_project_to_unrectified_image_);
-      if (
-        0 <= static_cast<int>(projected_point.x()) &&
-        static_cast<int>(projected_point.x()) <= static_cast<int>(camera_info.width) - 1 &&
-        0 <= static_cast<int>(projected_point.y()) &&
-        static_cast<int>(projected_point.y()) <= static_cast<int>(camera_info.height) - 1) {
-        min_x = std::min(static_cast<int>(projected_point.x()), min_x);
-        min_y = std::min(static_cast<int>(projected_point.y()), min_y);
-        max_x = std::max(static_cast<int>(projected_point.x()), max_x);
-        max_y = std::max(static_cast<int>(projected_point.y()), max_y);
+      Eigen::Vector2d projected_point;
+      if (camera_projectors_[image_id].calcImageProjectedPoint(
+            cv::Point3d(*iter_x, *iter_y, *iter_z), projected_point)) {
+        const int px = static_cast<int>(projected_point.x());
+        const int py = static_cast<int>(projected_point.y());
+
+        min_x = std::min(px, min_x);
+        min_y = std::min(py, min_y);
+        max_x = std::max(px, max_x);
+        max_y = std::max(py, max_y);
+
         projected_points.push_back(projected_point);
         if (debugger_) debugger_->obstacle_points_.push_back(projected_point);
       }
