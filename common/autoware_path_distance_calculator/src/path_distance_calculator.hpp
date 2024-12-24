@@ -20,7 +20,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_planning_msgs/msg/path.hpp>
-#include <tier4_debug_msgs/msg/float64_stamped.hpp>
+#include <autoware_internal_debug_msgs/msg/float64_stamped.hpp>
 
 namespace autoware::path_distance_calculator
 {
@@ -33,7 +33,7 @@ public:
 private:
   autoware::universe_utils::InterProcessPollingSubscriber<autoware_planning_msgs::msg::Path>
     sub_path_{this, "~/input/path"};
-  rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr pub_dist_;
+  rclcpp::Publisher<autoware_internal_debug_msgs::msg::Float64Stamped>::SharedPtr pub_dist_;
   rclcpp::TimerBase::SharedPtr timer_;
   autoware::universe_utils::SelfPoseListener self_pose_listener_;
 };
