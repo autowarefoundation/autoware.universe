@@ -80,22 +80,13 @@ jobs:
           expected_results: success
 
       - name: Evaluate build-and-test-differential-cuda
+        if: ${{ always() }}
         id: eval_cuda
         uses: ./.github/actions/evaluate-job-result
         with:
           job_result: ${{ needs.build-and-test-differential-cuda.result }}
           job_name: build-and-test-differential-cuda
           expected_results: success,skipped
-
-      - name: Final Status
-        run: |
-          if [[ "${{ steps.eval_diff.outputs.failed }}" == "true" || "${{ steps.eval_cuda.outputs.failed }}" == "true" ]]; then
-            echo "Some checks failed. ❌"
-            exit 1
-          else
-            echo "::notice::All checks passed successfully! ✅"
-          fi
-        shell: bash
 
   clang-tidy-differential:
     needs:

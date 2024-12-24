@@ -40,4 +40,6 @@ runs:
         echo "::error::${{ inputs.job_name }} failed. ❌"
         echo "- **${{ inputs.job_name }}:** failed ❌" >> "$GITHUB_STEP_SUMMARY"
         echo "failed=true" >> "$GITHUB_OUTPUT"
+
+        exit 1
       shell: bash
