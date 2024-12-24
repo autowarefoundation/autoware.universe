@@ -59,7 +59,7 @@ jobs:
       codecov-token: ${{ secrets.CODECOV_TOKEN }}
 
   clang-tidy-differential:
-    if: ${{ always() }}
+    if: ${{ always() }} # always run to provide report for status check
     needs:
       - check-if-cuda-job-is-needed
       - build-and-test-differential
@@ -69,7 +69,7 @@ jobs:
       run-condition: ${{ needs.check-if-cuda-job-is-needed.outputs.cuda_job_is_needed == 'false' }}
 
   clang-tidy-differential-cuda:
-    if: ${{ always() }}
+    if: ${{ always() }} # always run to provide report for status check
     needs:
       - build-and-test-differential-cuda
     uses: ./.github/workflows/clang-tidy-differential.yaml
