@@ -16,7 +16,6 @@ inputs:
 outputs:
   failed:
     description: Indicates if the job failed
-    type: boolean
     value: ${{ steps.evaluate.outputs.failed }}
 
 runs:

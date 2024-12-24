@@ -34,7 +34,7 @@ jobs:
         id: eval_diff
         uses: ./.github/actions/evaluate-job-result
         with:
-          job_result: ${{ needs.build-and-test-differential.result }}
+          job_result: ${{ needs.require-label.result }}
           job_name: require-label
           expected_results: success
 
