@@ -62,8 +62,8 @@ using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
 using autoware_adapi_v1_msgs::msg::OperationModeState;
-using autoware_internal_debug_msgs::msg::Float32Stamped;  // temporary
-using autoware_internal_debug_msgs::msg::Float64Stamped;  // temporary
+using autoware_internal_debug_msgs::msg::Float32Stamped;
+using autoware_internal_debug_msgs::msg::Float64Stamped;
 using geometry_msgs::msg::AccelWithCovarianceStamped;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;
