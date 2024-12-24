@@ -161,7 +161,7 @@ bool get_prepare_segment(
   const auto backward_path_length = common_data_ptr->bpp_param_ptr->backward_path_length;
 
   if (current_lanes.empty() || target_lanes.empty()) {
-    throw std::logic_error("lane change start is behind target lanelet!");
+    throw std::logic_error("Empty lanes!");
   }
 
   prepare_segment = prev_module_path;
