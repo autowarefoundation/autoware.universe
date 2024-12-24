@@ -381,10 +381,6 @@ autoware::motion_velocity_planner::TrajectoryPoints MotionVelocityPlannerNode::s
   if (!smoother->apply(v0, a0, clipped, traj_smoothed, debug_trajectories, false)) {
     RCLCPP_ERROR(get_logger(), "failed to smooth");
   }
-  if (external_v_limit) {
-    autoware::velocity_smoother::trajectory_utils::applyMaximumVelocityLimit(
-      0LU, traj_smoothed.size(), external_v_limit->max_velocity, traj_smoothed);
-  }
   return traj_smoothed;
 }
 
