@@ -128,8 +128,7 @@ jobs:
       - name: Check clang-tidy success
         if: ${{ needs.clang-tidy-differential.result == 'success' || needs.clang-tidy-differential-cuda.result == 'success' }}
         run: |
-          echo "All checks passed successfully! ✅"
-          echo "All checks passed successfully! ✅" >> $GITHUB_STEP_SUMMARY
+          echo "✅ Either one of the following has succeeded:" >> $GITHUB_STEP_SUMMARY
 
       - name: Fail if conditions not met
         if: ${{ !(needs.clang-tidy-differential.result == 'success' || needs.clang-tidy-differential-cuda.result == 'success') }}
@@ -139,7 +138,11 @@ jobs:
           echo "::error::clang-tidy-differential-cuda: ${{ needs.clang-tidy-differential-cuda.result }}"
 
           echo "❌ Either one of the following should have succeeded:" >> $GITHUB_STEP_SUMMARY
-          echo "- clang-tidy-differential: ${{ needs.clang-tidy-differential.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- clang-tidy-differential-cuda: ${{ needs.clang-tidy-differential-cuda.result }}" >> $GITHUB_STEP_SUMMARY
 
           exit 1
+
+      - name: Print the results
+        if: ${{ always() }}
+        run: |
+          echo "- **clang-tidy-differential:** ${{ needs.clang-tidy-differential.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **clang-tidy-differential-cuda:** ${{ needs.clang-tidy-differential-cuda.result }}" >> $GITHUB_STEP_SUMMARY

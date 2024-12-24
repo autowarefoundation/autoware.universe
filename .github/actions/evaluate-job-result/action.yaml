@@ -30,7 +30,7 @@ runs:
 
         for RESULT in "${EXPECTED[@]}"; do
           if [[ "$JOB_RESULT" == "$RESULT" ]]; then
-            echo "- ${{ inputs.job_name }}: Success ✅" >> "$GITHUB_STEP_SUMMARY"
+            echo "- **${{ inputs.job_name }}:** "$JOB_RESULT" ✅" >> "$GITHUB_STEP_SUMMARY"
             echo "failed=false" >> "$GITHUB_OUTPUT"
             exit 0
           fi
@@ -38,6 +38,6 @@ runs:
 
         # If no expected result matched
         echo "::error::${{ inputs.job_name }} failed. ❌"
-        "- ${{ inputs.job_name }}: Failed ❌" >> "$GITHUB_STEP_SUMMARY"
+        echo "- **${{ inputs.job_name }}:** failed ❌" >> "$GITHUB_STEP_SUMMARY"
         echo "failed=true" >> "$GITHUB_OUTPUT"
       shell: bash
