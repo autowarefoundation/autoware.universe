@@ -17,12 +17,15 @@
 
 #include <autoware/behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
+#include <autoware/universe_utils/ros/polling_subscriber.hpp>
 #include <autoware_lanelet2_extension/regulatory_elements/virtual_traffic_light.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info.hpp>
 #include <nlohmann/json.hpp>
 #include <rclcpp/clock.hpp>
 #include <rclcpp/logger.hpp>
+
+#include <tier4_v2x_msgs/msg/virtual_traffic_light_state_array.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
@@ -77,7 +80,10 @@ public:
     const int64_t module_id, const int64_t lane_id,
     const lanelet::autoware::VirtualTrafficLight & reg_elem, lanelet::ConstLanelet lane,
     const PlannerParam & planner_param, const rclcpp::Logger logger,
-    const rclcpp::Clock::SharedPtr clock);
+    const rclcpp::Clock::SharedPtr clock,
+    const autoware::universe_utils::InterProcessPollingSubscriber<
+      tier4_v2x_msgs::msg::VirtualTrafficLightStateArray>::SharedPtr
+      sub_virtual_traffic_light_states);
 
   bool modifyPathVelocity(PathWithLaneId * path) override;
 
@@ -93,6 +99,9 @@ private:
   tier4_v2x_msgs::msg::InfrastructureCommand command_;
   MapData map_data_;
   ModuleData module_data_;
+  autoware::universe_utils::InterProcessPollingSubscriber<
+    tier4_v2x_msgs::msg::VirtualTrafficLightStateArray>::SharedPtr
+    sub_virtual_traffic_light_states_;
 
   void updateInfrastructureCommand();
 

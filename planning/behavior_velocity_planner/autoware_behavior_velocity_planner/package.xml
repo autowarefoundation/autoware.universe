@@ -57,7 +57,6 @@
   <depend>tf2_geometry_msgs</depend>
   <depend>tf2_ros</depend>
   <depend>tier4_planning_msgs</depend>
-  <depend>tier4_v2x_msgs</depend>
   <depend>visualization_msgs</depend>
 
   <exec_depend>rosidl_default_runtime</exec_depend>
