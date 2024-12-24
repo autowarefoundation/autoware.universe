@@ -13,8 +13,8 @@
 // limitations under the License.
 
 #include "ament_index_cpp/get_package_share_directory.hpp"
+#include "autoware/fake_test_node/fake_test_node.hpp"
 #include "autoware/trajectory_follower_node/controller_node.hpp"
-#include "fake_test_node/fake_test_node.hpp"
 #include "gtest/gtest.h"
 #include "rclcpp/rclcpp.hpp"
 #include "rclcpp/time.hpp"
@@ -30,6 +30,7 @@
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 
+#include <iostream>
 #include <memory>
 #include <vector>
 
@@ -42,7 +43,7 @@ using SteeringReport = autoware_vehicle_msgs::msg::SteeringReport;
 using autoware_adapi_v1_msgs::msg::OperationModeState;
 using geometry_msgs::msg::AccelWithCovarianceStamped;
 
-using FakeNodeFixture = autoware::tools::testing::FakeTestNode;
+using FakeNodeFixture = autoware::fake_test_node::FakeTestNode;
 
 const rclcpp::Duration one_second(1, 0);
 
