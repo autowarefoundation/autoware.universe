@@ -27,8 +27,8 @@
 
 #include <autoware_adapi_v1_msgs/msg/velocity_factor.hpp>
 #include <autoware_adapi_v1_msgs/msg/velocity_factor_array.hpp>
+#include <autoware_internal_debug_msgs/msg/float64_stamped.hpp>
 #include <autoware_planning_msgs/msg/path.hpp>
-#include <tier4_debug_msgs/msg/float64_stamped.hpp>
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_rtc_msgs/msg/state.hpp>
 #include <tier4_v2x_msgs/msg/infrastructure_command_array.hpp>
@@ -57,8 +57,8 @@ using autoware::objects_of_interest_marker_interface::ObjectsOfInterestMarkerInt
 using autoware::rtc_interface::RTCInterface;
 using autoware::universe_utils::DebugPublisher;
 using autoware::universe_utils::getOrDeclareParameter;
+using autoware_internal_debug_msgs::msg::Float64Stamped;
 using builtin_interfaces::msg::Time;
-using tier4_debug_msgs::msg::Float64Stamped;
 using tier4_planning_msgs::msg::PathWithLaneId;
 using tier4_rtc_msgs::msg::Module;
 using tier4_rtc_msgs::msg::State;
