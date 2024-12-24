@@ -172,10 +172,10 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
     iou_bev_nms_.setParameters(p);
   }
 
-  autoware::lidar_centerpoint::NetworkParam encoder_param(
-    encoder_onnx_path, encoder_engine_path, trt_precision);
-  autoware::lidar_centerpoint::NetworkParam head_param(
-    head_onnx_path, head_engine_path, trt_precision);
+  autoware::tensorrt_common::TrtCommonConfig encoder_param(
+    encoder_onnx_path, trt_precision, encoder_engine_path);
+  autoware::tensorrt_common::TrtCommonConfig head_param(
+    head_onnx_path, trt_precision, head_engine_path);
   autoware::lidar_centerpoint::DensificationParam densification_param(
     densification_world_frame_id, densification_num_past_frames);
   autoware::lidar_centerpoint::CenterPointConfig config(
