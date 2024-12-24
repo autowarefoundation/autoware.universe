@@ -53,14 +53,11 @@ protected:
   void fuseOnSingleImage(
     const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const std::size_t image_id,
     const DetectedObjectsWithFeature & input_roi_msg,
-    const sensor_msgs::msg::CameraInfo & camera_info,
     sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg) override;
 
   void postprocess(sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg) override;
 
   rclcpp::Publisher<DetectedObjects>::SharedPtr obj_pub_ptr_;
-
-  std::vector<double> tan_h_;  // horizontal field of view
 
   int omp_num_threads_{1};
   float score_threshold_{0.0};
