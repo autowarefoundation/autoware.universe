@@ -35,7 +35,7 @@ using autoware::behavior_path_planner::lane_change::Debug;
 using autoware::behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObjects;
 using visualization_msgs::msg::MarkerArray;
 MarkerArray showAllValidLaneChangePath(
-  const std::vector<LaneChangePath> & lanes, std::string && ns);
+  const std::vector<LaneChangePath> & lane_change_paths, std::string && ns);
 MarkerArray createLaneChangingVirtualWallMarker(
   const geometry_msgs::msg::Pose & lane_changing_pose, const std::string & module_name,
   const rclcpp::Time & now, const std::string & ns);
