@@ -175,9 +175,8 @@ TEST(TrafficLightArbiterTest, testTrafficSignalOnlyPerceptionMsg)
 {
   rclcpp::init(0, nullptr);
   const std::string input_map_topic = "/traffic_light_arbiter/sub/vector_map";
-  const std::string input_perception_topic =
-    "/traffic_light_arbiter/sub/perception_traffic_signals";
-  const std::string output_topic = "/traffic_light_arbiter/pub/traffic_signals";
+  const std::string input_perception_topic = "/traffic_light_arbiter/sub/perception_traffic_lights";
+  const std::string output_topic = "/traffic_light_arbiter/pub/traffic_lights";
   auto test_manager = generateTestManager();
   auto test_target_node = generateNode();
 
@@ -212,8 +211,8 @@ TEST(TrafficLightArbiterTest, testTrafficSignalOnlyExternalMsg)
 {
   rclcpp::init(0, nullptr);
   const std::string input_map_topic = "/traffic_light_arbiter/sub/vector_map";
-  const std::string input_external_topic = "/traffic_light_arbiter/sub/external_traffic_signals";
-  const std::string output_topic = "/traffic_light_arbiter/pub/traffic_signals";
+  const std::string input_external_topic = "/traffic_light_arbiter/sub/external_traffic_lights";
+  const std::string output_topic = "/traffic_light_arbiter/pub/traffic_lights";
   auto test_manager = generateTestManager();
   auto test_target_node = generateNode();
 
@@ -248,10 +247,9 @@ TEST(TrafficLightArbiterTest, testTrafficSignalBothMsg)
 {
   rclcpp::init(0, nullptr);
   const std::string input_map_topic = "/traffic_light_arbiter/sub/vector_map";
-  const std::string input_perception_topic =
-    "/traffic_light_arbiter/sub/perception_traffic_signals";
-  const std::string input_external_topic = "/traffic_light_arbiter/sub/external_traffic_signals";
-  const std::string output_topic = "/traffic_light_arbiter/pub/traffic_signals";
+  const std::string input_perception_topic = "/traffic_light_arbiter/sub/perception_traffic_lights";
+  const std::string input_external_topic = "/traffic_light_arbiter/sub/external_traffic_lights";
+  const std::string output_topic = "/traffic_light_arbiter/pub/traffic_lights";
   auto test_manager = generateTestManager();
   auto test_target_node = generateNode();
 
