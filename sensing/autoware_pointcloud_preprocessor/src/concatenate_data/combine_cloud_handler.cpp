@@ -298,7 +298,6 @@ Eigen::Matrix4f CombineCloudHandler::compute_transform_to_adjust_for_old_timesta
   double x = 0.0;
   double y = 0.0;
   double yaw = 0.0;
-  tf2::Quaternion baselink_quat{};
   for (auto twist_it = old_twist_it; twist_it != new_twist_it + 1; ++twist_it) {
     const double dt =
       (twist_it != new_twist_it)
