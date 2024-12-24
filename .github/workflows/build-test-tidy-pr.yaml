@@ -139,7 +139,7 @@ jobs:
           echo "::error::clang-tidy-differential-cuda: ${{ needs.clang-tidy-differential-cuda.result }}"
 
           echo "❌ Either one of the following should have succeeded:" >> $GITHUB_STEP_SUMMARY
-          echo "clang-tidy-differential: ${{ needs.clang-tidy-differential.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "clang-tidy-differential-cuda: ${{ needs.clang-tidy-differential-cuda.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- clang-tidy-differential: ${{ needs.clang-tidy-differential.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- clang-tidy-differential-cuda: ${{ needs.clang-tidy-differential-cuda.result }}" >> $GITHUB_STEP_SUMMARY
 
           exit 1
