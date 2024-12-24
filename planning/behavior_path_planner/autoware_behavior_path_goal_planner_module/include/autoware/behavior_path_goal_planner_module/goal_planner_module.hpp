@@ -15,24 +15,15 @@
 #ifndef AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__GOAL_PLANNER_MODULE_HPP_
 #define AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__GOAL_PLANNER_MODULE_HPP_
 
-#include "autoware/behavior_path_goal_planner_module/default_fixed_goal_planner.hpp"
+#include "autoware/behavior_path_goal_planner_module/decision_state.hpp"
+#include "autoware/behavior_path_goal_planner_module/fixed_goal_planner_base.hpp"
 #include "autoware/behavior_path_goal_planner_module/goal_planner_parameters.hpp"
-#include "autoware/behavior_path_goal_planner_module/goal_searcher.hpp"
 #include "autoware/behavior_path_goal_planner_module/pull_over_planner/freespace_pull_over.hpp"
-#include "autoware/behavior_path_goal_planner_module/pull_over_planner/geometric_pull_over.hpp"
-#include "autoware/behavior_path_goal_planner_module/pull_over_planner/shift_pull_over.hpp"
-#include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
-#include "autoware/behavior_path_planner_common/utils/occupancy_grid_based_collision_detector/occupancy_grid_based_collision_detector.hpp"
+#include "autoware/behavior_path_goal_planner_module/thread_data.hpp"
 #include "autoware/behavior_path_planner_common/utils/parking_departure/common_module_data.hpp"
-#include "autoware/behavior_path_planner_common/utils/parking_departure/geometric_parallel_parking.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
-#include "autoware/behavior_path_planner_common/utils/utils.hpp"
 
-#include <autoware/freespace_planning_algorithms/astar_search.hpp>
-#include <autoware/freespace_planning_algorithms/rrtstar.hpp>
 #include <autoware/lane_departure_checker/lane_departure_checker.hpp>
-#include <autoware/motion_utils/distance/distance.hpp>
-#include <autoware/universe_utils/geometry/boost_geometry.hpp>
 
 #include <autoware_vehicle_msgs/msg/hazard_lights_command.hpp>
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
@@ -41,7 +32,6 @@
 
 #include <atomic>
 #include <deque>
-#include <limits>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -61,8 +51,6 @@ using autoware::freespace_planning_algorithms::AbstractPlanningAlgorithm;
 using autoware::freespace_planning_algorithms::AstarParam;
 using autoware::freespace_planning_algorithms::AstarSearch;
 using autoware::freespace_planning_algorithms::PlannerCommonParam;
-using autoware::freespace_planning_algorithms::RRTStar;
-using autoware::freespace_planning_algorithms::RRTStarParam;
 
 using autoware::behavior_path_planner::utils::path_safety_checker::EgoPredictedPathParams;
 using autoware::behavior_path_planner::utils::path_safety_checker::ObjectsFilteringParams;
@@ -70,187 +58,6 @@ using autoware::behavior_path_planner::utils::path_safety_checker::PoseWithVeloc
 using autoware::behavior_path_planner::utils::path_safety_checker::SafetyCheckParams;
 using autoware::behavior_path_planner::utils::path_safety_checker::TargetObjectsOnLane;
 using autoware::universe_utils::Polygon2d;
-
-#define DEFINE_SETTER_WITH_MUTEX(TYPE, NAME)                  \
-public:                                                       \
-  void set_##NAME(const TYPE & value)                         \
-  {                                                           \
-    const std::lock_guard<std::recursive_mutex> lock(mutex_); \
-    NAME##_ = value;                                          \
-  }
-
-#define DEFINE_GETTER_WITH_MUTEX(TYPE, NAME)                  \
-public:                                                       \
-  TYPE get_##NAME() const                                     \
-  {                                                           \
-    const std::lock_guard<std::recursive_mutex> lock(mutex_); \
-    return NAME##_;                                           \
-  }
-
-#define DEFINE_SETTER_GETTER_WITH_MUTEX(TYPE, NAME) \
-  DEFINE_SETTER_WITH_MUTEX(TYPE, NAME)              \
-  DEFINE_GETTER_WITH_MUTEX(TYPE, NAME)
-
-class PathDecisionState
-{
-public:
-  enum class DecisionKind {
-    NOT_DECIDED,
-    DECIDING,
-    DECIDED,
-  };
-
-  DecisionKind state{DecisionKind::NOT_DECIDED};
-  rclcpp::Time stamp{};
-  bool is_stable_safe{false};
-  std::optional<rclcpp::Time> safe_start_time{std::nullopt};
-};
-
-class ThreadSafeData
-{
-public:
-  ThreadSafeData(std::recursive_mutex & mutex, rclcpp::Clock::SharedPtr clock)
-  : mutex_(mutex), clock_(clock)
-  {
-  }
-
-  bool incrementPathIndex()
-  {
-    const std::lock_guard<std::recursive_mutex> lock(mutex_);
-    if (!pull_over_path_) {
-      return false;
-    }
-
-    if (pull_over_path_->incrementPathIndex()) {
-      last_path_idx_increment_time_ = clock_->now();
-      return true;
-    }
-    return false;
-  }
-
-  void set_pull_over_path(const PullOverPath & path)
-  {
-    const std::lock_guard<std::recursive_mutex> lock(mutex_);
-    set_pull_over_path_no_lock(path);
-  }
-
-  void set_pull_over_path(const std::shared_ptr<PullOverPath> & path)
-  {
-    const std::lock_guard<std::recursive_mutex> lock(mutex_);
-    set_pull_over_path_no_lock(path);
-  }
-
-  template <typename... Args>
-  void set(Args... args)
-  {
-    std::lock_guard<std::recursive_mutex> lock(mutex_);
-    (..., set_no_lock(args));
-  }
-
-  void clearPullOverPath()
-  {
-    const std::lock_guard<std::recursive_mutex> lock(mutex_);
-    pull_over_path_ = nullptr;
-  }
-
-  bool foundPullOverPath() const
-  {
-    const std::lock_guard<std::recursive_mutex> lock(mutex_);
-    if (!pull_over_path_) {
-      return false;
-    }
-
-    return pull_over_path_->isValidPath();
-  }
-
-  PullOverPlannerType getPullOverPlannerType() const
-  {
-    const std::lock_guard<std::recursive_mutex> lock(mutex_);
-    if (!pull_over_path_) {
-      return PullOverPlannerType::NONE;
-    }
-
-    return pull_over_path_->type;
-  };
-
-  void reset()
-  {
-    const std::lock_guard<std::recursive_mutex> lock(mutex_);
-    pull_over_path_ = nullptr;
-    pull_over_path_candidates_.clear();
-    goal_candidates_.clear();
-    modified_goal_pose_ = std::nullopt;
-    last_path_update_time_ = std::nullopt;
-    last_path_idx_increment_time_ = std::nullopt;
-    closest_start_pose_ = std::nullopt;
-    last_previous_module_output_ = std::nullopt;
-    prev_data_ = PathDecisionState{};
-  }
-
-  DEFINE_GETTER_WITH_MUTEX(std::shared_ptr<PullOverPath>, pull_over_path)
-  DEFINE_GETTER_WITH_MUTEX(std::shared_ptr<PullOverPath>, lane_parking_pull_over_path)
-  DEFINE_GETTER_WITH_MUTEX(std::optional<rclcpp::Time>, last_path_update_time)
-  DEFINE_GETTER_WITH_MUTEX(std::optional<rclcpp::Time>, last_path_idx_increment_time)
-
-  DEFINE_SETTER_GETTER_WITH_MUTEX(std::vector<PullOverPath>, pull_over_path_candidates)
-  DEFINE_SETTER_GETTER_WITH_MUTEX(GoalCandidates, goal_candidates)
-  DEFINE_SETTER_GETTER_WITH_MUTEX(std::optional<GoalCandidate>, modified_goal_pose)
-  DEFINE_SETTER_GETTER_WITH_MUTEX(std::optional<Pose>, closest_start_pose)
-  DEFINE_SETTER_GETTER_WITH_MUTEX(std::optional<BehaviorModuleOutput>, last_previous_module_output)
-  DEFINE_SETTER_GETTER_WITH_MUTEX(CollisionCheckDebugMap, collision_check)
-  DEFINE_SETTER_GETTER_WITH_MUTEX(PredictedObjects, static_target_objects)
-  DEFINE_SETTER_GETTER_WITH_MUTEX(PredictedObjects, dynamic_target_objects)
-  DEFINE_SETTER_GETTER_WITH_MUTEX(PathDecisionState, prev_data)
-
-private:
-  void set_pull_over_path_no_lock(const PullOverPath & path)
-  {
-    pull_over_path_ = std::make_shared<PullOverPath>(path);
-    if (path.type != PullOverPlannerType::NONE && path.type != PullOverPlannerType::FREESPACE) {
-      lane_parking_pull_over_path_ = std::make_shared<PullOverPath>(path);
-    }
-
-    last_path_update_time_ = clock_->now();
-  }
-
-  void set_pull_over_path_no_lock(const std::shared_ptr<PullOverPath> & path)
-  {
-    pull_over_path_ = path;
-    if (path->type != PullOverPlannerType::NONE && path->type != PullOverPlannerType::FREESPACE) {
-      lane_parking_pull_over_path_ = path;
-    }
-    last_path_update_time_ = clock_->now();
-  }
-
-  void set_no_lock(const GoalCandidates & arg) { goal_candidates_ = arg; }
-  void set_no_lock(const std::vector<PullOverPath> & arg) { pull_over_path_candidates_ = arg; }
-  void set_no_lock(const std::shared_ptr<PullOverPath> & arg) { set_pull_over_path_no_lock(arg); }
-  void set_no_lock(const PullOverPath & arg) { set_pull_over_path_no_lock(arg); }
-  void set_no_lock(const GoalCandidate & arg) { modified_goal_pose_ = arg; }
-  void set_no_lock(const BehaviorModuleOutput & arg) { last_previous_module_output_ = arg; }
-  void set_no_lock(const CollisionCheckDebugMap & arg) { collision_check_ = arg; }
-
-  std::shared_ptr<PullOverPath> pull_over_path_{nullptr};
-  std::shared_ptr<PullOverPath> lane_parking_pull_over_path_{nullptr};
-  std::vector<PullOverPath> pull_over_path_candidates_;
-  GoalCandidates goal_candidates_{};
-  std::optional<GoalCandidate> modified_goal_pose_;
-  std::optional<rclcpp::Time> last_path_update_time_;
-  std::optional<rclcpp::Time> last_path_idx_increment_time_;
-  std::optional<Pose> closest_start_pose_{};
-  std::optional<BehaviorModuleOutput> last_previous_module_output_{};
-  CollisionCheckDebugMap collision_check_{};
-  PredictedObjects static_target_objects_{};
-  PredictedObjects dynamic_target_objects_{};
-  PathDecisionState prev_data_{};
-
-  std::recursive_mutex & mutex_;
-  rclcpp::Clock::SharedPtr clock_;
-};
-
-#undef DEFINE_SETTER_WITH_MUTEX
-#undef DEFINE_GETTER_WITH_MUTEX
-#undef DEFINE_SETTER_GETTER_WITH_MUTEX
 
 struct FreespacePlannerDebugData
 {
@@ -265,6 +72,7 @@ struct GoalPlannerDebugData
   std::vector<Polygon2d> ego_polygons_expanded{};
   lanelet::ConstLanelet expanded_pull_over_lane_between_ego{};
   Polygon2d objects_extraction_polygon{};
+  utils::path_safety_checker::CollisionCheckDebugMap collision_check{};
 };
 
 struct LastApprovalData
@@ -275,85 +83,153 @@ struct LastApprovalData
   Pose pose{};
 };
 
-// store stop_pose_ pointer with reason string
-struct PoseWithString
-{
-  std::optional<Pose> * pose;
-  std::string string;
-
-  explicit PoseWithString(std::optional<Pose> * shared_pose) : pose(shared_pose), string("") {}
-
-  void set(const Pose & new_pose, const std::string & new_string)
-  {
-    *pose = new_pose;
-    string = new_string;
-  }
-
-  void set(const std::string & new_string) { string = new_string; }
-
-  void clear()
-  {
-    pose->reset();
-    string = "";
-  }
-};
-
 struct PullOverContextData
 {
   PullOverContextData() = delete;
   explicit PullOverContextData(
     const bool is_stable_safe_path, const PredictedObjects & static_objects,
-    const PredictedObjects & dynamic_objects)
+    const PredictedObjects & dynamic_objects, const PathDecisionState & prev_state,
+    const bool is_stopped, const LaneParkingResponse & lane_parking_response,
+    const FreespaceParkingResponse & freespace_parking_response)
   : is_stable_safe_path(is_stable_safe_path),
     static_target_objects(static_objects),
-    dynamic_target_objects(dynamic_objects)
+    dynamic_target_objects(dynamic_objects),
+    prev_state_for_debug(prev_state),
+    is_stopped(is_stopped),
+    lane_parking_response(lane_parking_response),
+    freespace_parking_response(freespace_parking_response)
   {
   }
-  const bool is_stable_safe_path;
-  const PredictedObjects static_target_objects;
-  const PredictedObjects dynamic_target_objects;
+  // TODO(soblin): make following variables private
+  bool is_stable_safe_path;
+  PredictedObjects static_target_objects;
+  PredictedObjects dynamic_target_objects;
+  PathDecisionState prev_state_for_debug;
+  bool is_stopped;
+  LaneParkingResponse lane_parking_response;
+  FreespaceParkingResponse freespace_parking_response;
+  std::optional<PullOverPath> pull_over_path_opt;
+  std::optional<rclcpp::Time> last_path_update_time;
+  std::optional<rclcpp::Time> last_path_idx_increment_time;
+
+  void update(
+    const bool is_stable_safe_path_, const PredictedObjects static_target_objects_,
+    const PredictedObjects dynamic_target_objects_, const PathDecisionState prev_state_for_debug_,
+    const bool is_stopped_, const LaneParkingResponse & lane_parking_response_,
+    const FreespaceParkingResponse & freespace_parking_response_)
+  {
+    is_stable_safe_path = is_stable_safe_path_;
+    static_target_objects = static_target_objects_;
+    dynamic_target_objects = dynamic_target_objects_;
+    prev_state_for_debug = prev_state_for_debug_;
+    is_stopped = is_stopped_;
+    lane_parking_response = lane_parking_response_;
+    freespace_parking_response = freespace_parking_response_;
+  }
 };
 
-class PathDecisionStateController
+bool isOnModifiedGoal(
+  const Pose & current_pose, const std::optional<GoalCandidate> & modified_goal_opt,
+  const GoalPlannerParameters & parameters);
+
+bool hasPreviousModulePathShapeChanged(
+  const BehaviorModuleOutput & previous_module_output,
+  const BehaviorModuleOutput & last_previous_module_output);
+bool hasDeviatedFromLastPreviousModulePath(
+  const PlannerData & planner_data, const BehaviorModuleOutput & last_previous_module_output);
+bool hasDeviatedFromCurrentPreviousModulePath(
+  const PlannerData & planner_data, const BehaviorModuleOutput & previous_module_output);
+
+bool needPathUpdate(
+  const Pose & current_pose, const double path_update_duration, const rclcpp::Time & now,
+  const std::optional<GoalCandidate> & modified_goal,
+  const std::optional<rclcpp::Time> & selected_time, const GoalPlannerParameters & parameters);
+
+bool checkOccupancyGridCollision(
+  const PathWithLaneId & path,
+  const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map);
+
+// freespace parking
+std::optional<PullOverPath> planFreespacePath(
+  const FreespaceParkingRequest & req, const PredictedObjects & static_target_objects,
+  std::shared_ptr<FreespacePullOver> freespace_planner);
+
+bool isStopped(
+  std::deque<nav_msgs::msg::Odometry::ConstSharedPtr> & odometry_buffer,
+  const nav_msgs::msg::Odometry::ConstSharedPtr self_odometry, const double duration_lower,
+  const double velocity_upper);
+
+void sortPullOverPaths(
+  const std::shared_ptr<const PlannerData> planner_data, const GoalPlannerParameters & parameters,
+  const std::vector<PullOverPath> & pull_over_path_candidates,
+  const GoalCandidates & goal_candidates, const PredictedObjects & static_target_objects,
+  rclcpp::Logger logger, std::vector<size_t> & sorted_path_indices);
+
+// Flag class for managing whether a certain callback is running in multi-threading
+class ScopedFlag
 {
 public:
-  PathDecisionStateController() = default;
+  explicit ScopedFlag(std::atomic<bool> & flag) : flag_(flag) { flag_.store(true); }
 
-  /**
-   * @brief update current state and save old current state to prev state
-   */
-  void transit_state(
-    const bool found_pull_over_path, const rclcpp::Time & now,
-    const PredictedObjects & static_target_objects, const PredictedObjects & dynamic_target_objects,
-    const std::optional<GoalCandidate> modified_goal_opt,
-    const std::shared_ptr<const PlannerData> planner_data,
-    const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
-    const bool is_current_safe, const GoalPlannerParameters & parameters,
-    const std::shared_ptr<GoalSearcherBase> goal_searcher, const bool is_activated,
-    const std::optional<PullOverPath> & pull_over_path,
-    std::vector<Polygon2d> & ego_polygons_expanded);
-
-  PathDecisionState get_current_state() const { return current_state_; }
-
-  PathDecisionState get_prev_state() const { return prev_state_; }
+  ~ScopedFlag() { flag_.store(false); }
 
 private:
-  PathDecisionState current_state_{};
-  PathDecisionState prev_state_{};
+  std::atomic<bool> & flag_;
+};
 
-  /**
-   * @brief update current state and save old current state to prev state
-   */
-  PathDecisionState get_next_state(
-    const bool found_pull_over_path, const rclcpp::Time & now,
+class LaneParkingPlanner
+{
+public:
+  LaneParkingPlanner(
+    rclcpp::Node & node, std::mutex & lane_parking_mutex,
+    const std::optional<LaneParkingRequest> & request, LaneParkingResponse & response,
+    std::atomic<bool> & is_lane_parking_cb_running, const rclcpp::Logger & logger,
+    const GoalPlannerParameters & parameters);
+  rclcpp::Logger getLogger() const { return logger_; }
+  void onTimer();
+
+private:
+  std::mutex & mutex_;
+  const std::optional<LaneParkingRequest> & request_;
+  LaneParkingResponse & response_;
+  std::atomic<bool> & is_lane_parking_cb_running_;
+  rclcpp::Logger logger_;
+
+  std::vector<std::shared_ptr<PullOverPlannerBase>> pull_over_planners_;
+};
+
+class FreespaceParkingPlanner
+{
+public:
+  FreespaceParkingPlanner(
+    std::mutex & freespace_parking_mutex, const std::optional<FreespaceParkingRequest> & request,
+    FreespaceParkingResponse & response, std::atomic<bool> & is_freespace_parking_cb_running,
+    const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock,
+    const std::shared_ptr<FreespacePullOver> freespace_planner)
+  : mutex_(freespace_parking_mutex),
+    request_(request),
+    response_(response),
+    is_freespace_parking_cb_running_(is_freespace_parking_cb_running),
+    logger_(logger),
+    clock_(clock),
+    freespace_planner_(freespace_planner)
+  {
+  }
+  void onTimer();
+
+private:
+  std::mutex & mutex_;
+  const std::optional<FreespaceParkingRequest> & request_;
+  FreespaceParkingResponse & response_;
+  std::atomic<bool> & is_freespace_parking_cb_running_;
+  rclcpp::Logger logger_;
+  rclcpp::Clock::SharedPtr clock_;
+
+  std::shared_ptr<FreespacePullOver> freespace_planner_;
+
+  bool isStuck(
     const PredictedObjects & static_target_objects, const PredictedObjects & dynamic_target_objects,
-    const std::optional<GoalCandidate> modified_goal_opt,
-    const std::shared_ptr<const PlannerData> planner_data,
-    const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
-    const bool is_current_safe, const GoalPlannerParameters & parameters,
-    const std::shared_ptr<GoalSearcherBase> goal_searcher, const bool is_activated,
-    const std::optional<PullOverPath> & pull_over_path_opt,
-    std::vector<Polygon2d> & ego_polygons_expanded) const;
+    const FreespaceParkingRequest & req) const;
 };
 
 class GoalPlannerModule : public SceneModuleInterface
@@ -364,8 +240,7 @@ public:
     const std::shared_ptr<GoalPlannerParameters> & parameters,
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
     std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
-      objects_of_interest_marker_interface_ptr_map,
-    std::shared_ptr<SteeringFactorInterface> & steering_factor_interface_ptr);
+      objects_of_interest_marker_interface_ptr_map);
 
   ~GoalPlannerModule()
   {
@@ -415,18 +290,6 @@ public:
   void processOnExit() override;
   void updateData() override;
 
-  void updateEgoPredictedPathParams(
-    std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
-    const std::shared_ptr<GoalPlannerParameters> & goal_planner_params);
-
-  void updateSafetyCheckParams(
-    std::shared_ptr<SafetyCheckParams> & safety_check_params,
-    const std::shared_ptr<GoalPlannerParameters> & goal_planner_params);
-
-  void updateObjectsFilteringParams(
-    std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params,
-    const std::shared_ptr<GoalPlannerParameters> & goal_planner_params);
-
   void postProcess() override;
   void setParameters(const std::shared_ptr<GoalPlannerParameters> & parameters);
   void acceptVisitor(
@@ -436,54 +299,16 @@ public:
   CandidateOutput planCandidate() const override { return CandidateOutput{}; }
 
 private:
-  /**
-   * @brief shared data for onTimer(onTimer/onFreespaceParkingTimer just read this)
-   */
-  struct GoalPlannerData
-  {
-    GoalPlannerData(const PlannerData & planner_data, const GoalPlannerParameters & parameters)
-    {
-      initializeOccupancyGridMap(planner_data, parameters);
-    };
-    GoalPlannerParameters parameters;
-    autoware::universe_utils::LinearRing2d vehicle_footprint;
+  std::pair<LaneParkingResponse, FreespaceParkingResponse> syncWithThreads();
 
-    PlannerData planner_data;
-    ModuleStatus current_status;
-    BehaviorModuleOutput previous_module_output;
-    // collision detector
-    // need to be shared_ptr to be used in planner and goal searcher
-    std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map;
-    std::shared_ptr<GoalSearcherBase> goal_searcher;
+  // NOTE: never access to following variables except in updateData()!!!
+  std::mutex lane_parking_mutex_;
+  std::optional<LaneParkingRequest> lane_parking_request_;
+  LaneParkingResponse lane_parking_response_;
 
-    const BehaviorModuleOutput & getPreviousModuleOutput() const { return previous_module_output; }
-    const ModuleStatus & getCurrentStatus() const { return current_status; }
-    void updateOccupancyGrid();
-    GoalPlannerData clone() const;
-    void update(
-      const GoalPlannerParameters & parameters, const PlannerData & planner_data,
-      const ModuleStatus & current_status, const BehaviorModuleOutput & previous_module_output,
-      const std::shared_ptr<GoalSearcherBase> goal_searcher_,
-      const autoware::universe_utils::LinearRing2d & vehicle_footprint);
-
-  private:
-    void initializeOccupancyGridMap(
-      const PlannerData & planner_data, const GoalPlannerParameters & parameters);
-  };
-  std::optional<GoalPlannerData> gp_planner_data_{std::nullopt};
-  std::mutex gp_planner_data_mutex_;
-
-  // Flag class for managing whether a certain callback is running in multi-threading
-  class ScopedFlag
-  {
-  public:
-    explicit ScopedFlag(std::atomic<bool> & flag) : flag_(flag) { flag_.store(true); }
-
-    ~ScopedFlag() { flag_.store(false); }
-
-  private:
-    std::atomic<bool> & flag_;
-  };
+  std::mutex freespace_parking_mutex_;
+  std::optional<FreespaceParkingRequest> freespace_parking_request_;
+  FreespaceParkingResponse freespace_parking_response_;
 
   /*
    * state transitions and plan function used in each state
@@ -522,13 +347,11 @@ private:
 
   autoware::vehicle_info_utils::VehicleInfo vehicle_info_{};
 
-  // planner
-  std::vector<std::shared_ptr<PullOverPlannerBase>> pull_over_planners_;
-  std::unique_ptr<PullOverPlannerBase> freespace_planner_;
   std::unique_ptr<FixedGoalPlannerBase> fixed_goal_planner_;
 
   // goal searcher
   std::shared_ptr<GoalSearcherBase> goal_searcher_;
+  GoalCandidates goal_candidates_{};
 
   // NOTE: this is latest occupancy_grid_map pointer which the local planner_data on
   // onFreespaceParkingTimer thread storage may point to while calculation.
@@ -541,15 +364,9 @@ private:
 
   autoware::universe_utils::LinearRing2d vehicle_footprint_;
 
-  std::recursive_mutex mutex_;
-  // TODO(Mamoru Sobue): isSafePath() modifies ThreadSafeData::check_collision, avoid this mutable
-  mutable ThreadSafeData thread_safe_data_;
-
-  // TODO(soblin): organize part of thread_safe_data and previous data to PullOverContextData
-  // context_data_ is initialized in updateData(), used in plan() and refreshed in postProcess()
   std::optional<PullOverContextData> context_data_{std::nullopt};
   // path_decision_controller is updated in updateData(), and used in plan()
-  PathDecisionStateController path_decision_controller_{};
+  PathDecisionStateController path_decision_controller_{getLogger()};
   std::unique_ptr<LastApprovalData> last_approval_data_{nullptr};
 
   // approximate distance from the start point to the end point of pull_over.
@@ -573,15 +390,8 @@ private:
 
   // debug
   mutable GoalPlannerDebugData debug_data_;
-  mutable PoseWithString debug_stop_pose_with_info_;
-
-  // collision check
-  bool checkOccupancyGridCollision(
-    const PathWithLaneId & path,
-    const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map) const;
 
   // goal seach
-  Pose calcRefinedGoal(const Pose & goal_pose) const;
   GoalCandidates generateGoalCandidates() const;
 
   // stop or decelerate
@@ -589,28 +399,19 @@ private:
   void decelerateForTurnSignal(const Pose & stop_pose, PathWithLaneId & path) const;
   void decelerateBeforeSearchStart(
     const Pose & search_start_offset_pose, PathWithLaneId & path) const;
-  PathWithLaneId generateStopPath() const;
-  PathWithLaneId generateFeasibleStopPath(const PathWithLaneId & path) const;
+  PathWithLaneId generateStopPath(
+    const PullOverContextData & context_data, const std::string & detail) const;
+  PathWithLaneId generateFeasibleStopPath(
+    const PathWithLaneId & path, const std::string & detail) const;
 
-  void keepStoppedWithCurrentPath(PathWithLaneId & path) const;
+  void keepStoppedWithCurrentPath(
+    const PullOverContextData & ctx_data, PathWithLaneId & path) const;
   double calcSignedArcLengthFromEgo(const PathWithLaneId & path, const Pose & pose) const;
 
   // status
-  bool isStopped();
-  bool isStopped(
-    std::deque<nav_msgs::msg::Odometry::ConstSharedPtr> & odometry_buffer, const double time);
-  bool hasFinishedCurrentPath();
-  bool isOnModifiedGoal(const Pose & current_pose, const GoalPlannerParameters & parameters) const;
+  bool hasFinishedCurrentPath(const PullOverContextData & ctx_data);
   double calcModuleRequestLength() const;
-  bool needPathUpdate(
-    const Pose & current_pose, const double path_update_duration,
-    const GoalPlannerParameters & parameters) const;
-  bool isStuck(
-    const PredictedObjects & static_target_objects, const PredictedObjects & dynamic_target_objects,
-    const std::shared_ptr<const PlannerData> planner_data,
-    const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
-    const GoalPlannerParameters & parameters);
-  void decideVelocity();
+  void decideVelocity(PullOverPath & pull_over_path);
   void updateStatus(const BehaviorModuleOutput & output);
 
   // validation
@@ -621,55 +422,44 @@ private:
   bool isCrossingPossible(
     const Pose & start_pose, const Pose & end_pose, const lanelet::ConstLanelets lanes) const;
   bool isCrossingPossible(const PullOverPath & pull_over_path) const;
-  bool hasEnoughTimePassedSincePathUpdate(const double duration) const;
-
-  // freespace parking
-  bool planFreespacePath(
-    std::shared_ptr<const PlannerData> planner_data,
-    const std::shared_ptr<GoalSearcherBase> goal_searcher,
-    const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map);
   bool canReturnToLaneParking(const PullOverContextData & context_data);
 
   // plan pull over path
-  BehaviorModuleOutput planPullOver(const PullOverContextData & context_data);
-  BehaviorModuleOutput planPullOverAsOutput(const PullOverContextData & context_data);
-  BehaviorModuleOutput planPullOverAsCandidate(const PullOverContextData & context_data);
-  std::optional<std::pair<PullOverPath, GoalCandidate>> selectPullOverPath(
+  BehaviorModuleOutput planPullOver(PullOverContextData & context_data);
+  BehaviorModuleOutput planPullOverAsOutput(PullOverContextData & context_data);
+  BehaviorModuleOutput planPullOverAsCandidate(
+    PullOverContextData & context_data, const std::string & detail);
+  std::optional<PullOverPath> selectPullOverPath(
     const PullOverContextData & context_data,
     const std::vector<PullOverPath> & pull_over_path_candidates,
     const GoalCandidates & goal_candidates) const;
 
   // lanes and drivable area
   std::vector<DrivableLanes> generateDrivableLanes() const;
-  void setDrivableAreaInfo(BehaviorModuleOutput & output) const;
+  void setDrivableAreaInfo(
+    const PullOverContextData & context_data, BehaviorModuleOutput & output) const;
 
   // output setter
-  void setOutput(const PullOverContextData & context_data, BehaviorModuleOutput & output);
+  void setOutput(
+    const std::optional<PullOverPath> selected_pull_over_path_with_velocity_opt,
+    const PullOverContextData & context_data, BehaviorModuleOutput & output);
 
-  void setModifiedGoal(BehaviorModuleOutput & output) const;
-  void setTurnSignalInfo(BehaviorModuleOutput & output);
+  void setModifiedGoal(
+    const PullOverContextData & context_data, BehaviorModuleOutput & output) const;
+  void setTurnSignalInfo(const PullOverContextData & context_data, BehaviorModuleOutput & output);
 
   // new turn signal
-  TurnSignalInfo calcTurnSignalInfo();
+  TurnSignalInfo calcTurnSignalInfo(const PullOverContextData & context_data);
   std::optional<lanelet::Id> ignore_signal_{std::nullopt};
-
-  bool hasPreviousModulePathShapeChanged(const BehaviorModuleOutput & previous_module_output) const;
-  bool hasDeviatedFromLastPreviousModulePath(
-    const std::shared_ptr<const PlannerData> planner_data) const;
-  bool hasDeviatedFromCurrentPreviousModulePath(
-    const std::shared_ptr<const PlannerData> planner_data,
-    const BehaviorModuleOutput & previous_module_output) const;
-
-  // timer for generating pull over path candidates in a separate thread
-  void onTimer();
-  void onFreespaceParkingTimer();
 
   // steering factor
   void updateSteeringFactor(
-    const std::array<Pose, 2> & pose, const std::array<double, 2> distance, const uint16_t type);
+    const PullOverContextData & context_data, const std::array<Pose, 2> & pose,
+    const std::array<double, 2> distance, const uint16_t type);
 
   // rtc
-  std::pair<double, double> calcDistanceToPathChange() const;
+  std::pair<double, double> calcDistanceToPathChange(
+    const PullOverContextData & context_data) const;
 
   // safety check
   void initializeSafetyCheckParameters();
@@ -683,9 +473,9 @@ private:
    * @brief Checks if the current path is safe.
    * @return If the path is safe in the current state, true.
    */
-  bool isSafePath(
+  std::pair<bool, utils::path_safety_checker::CollisionCheckDebugMap> isSafePath(
     const std::shared_ptr<const PlannerData> planner_data, const bool found_pull_over_path,
-    const std::optional<PullOverPath> & pull_over_path_opt,
+    const std::optional<PullOverPath> & pull_over_path_opt, const PathDecisionState & prev_data,
     const GoalPlannerParameters & parameters,
     const std::shared_ptr<EgoPredictedPathParams> & ego_predicted_path_params,
     const std::shared_ptr<ObjectsFilteringParams> & objects_filtering_params,

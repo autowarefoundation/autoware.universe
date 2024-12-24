@@ -186,12 +186,11 @@ void AvoidanceByLaneChangeModuleManager::init(rclcpp::Node * node)
   avoidance_parameters_ = std::make_shared<AvoidanceByLCParameters>(p);
 }
 
-std::unique_ptr<SceneModuleInterface>
-AvoidanceByLaneChangeModuleManager::createNewSceneModuleInstance()
+SMIPtr AvoidanceByLaneChangeModuleManager::createNewSceneModuleInstance()
 {
   return std::make_unique<AvoidanceByLaneChangeInterface>(
     name_, *node_, parameters_, avoidance_parameters_, rtc_interface_ptr_map_,
-    objects_of_interest_marker_interface_ptr_map_, steering_factor_interface_ptr_);
+    objects_of_interest_marker_interface_ptr_map_);
 }
 
 }  // namespace autoware::behavior_path_planner

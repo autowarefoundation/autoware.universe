@@ -27,6 +27,8 @@
 #include <lanelet2_core/primitives/LineString.h>
 
 #include <cstdint>
+#include <string>
+#include <vector>
 
 namespace marker_utils
 {
@@ -608,7 +610,7 @@ MarkerArray showFilteredObjects(
         cube_marker = default_cube_marker(1.0, 1.0, color);
         cube_marker.pose = pose;
       };
-      insert_cube_marker(obj.initial_pose.pose);
+      insert_cube_marker(obj.initial_pose);
     });
 
   return marker_array;

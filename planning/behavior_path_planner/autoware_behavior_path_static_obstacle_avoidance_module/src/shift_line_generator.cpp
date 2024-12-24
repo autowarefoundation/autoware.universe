@@ -17,6 +17,11 @@
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/utils.hpp"
 
+#include <algorithm>
+#include <string>
+#include <utility>
+#include <vector>
+
 namespace autoware::behavior_path_planner::utils::static_obstacle_avoidance
 {
 
@@ -179,7 +184,7 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
     }
 
     // calculate lateral jerk.
-    const auto required_jerk = PathShifter::calcJerkFromLatLonDistance(
+    const auto required_jerk = autoware::motion_utils::calc_jerk_from_lat_lon_distance(
       avoiding_shift, avoidance_distance, helper_->getAvoidanceEgoSpeed());
 
     // relax lateral jerk limit. avoidable.
@@ -201,7 +206,7 @@ AvoidOutlines ShiftLineGenerator::generateAvoidOutline(
     }
 
     // output avoidance path under lateral jerk constraints.
-    const auto feasible_relative_shift_length = PathShifter::calcLateralDistFromJerk(
+    const auto feasible_relative_shift_length = autoware::motion_utils::calc_lateral_dist_from_jerk(
       avoidance_distance, helper_->getLateralMaxJerkLimit(), helper_->getAvoidanceEgoSpeed());
 
     if (std::abs(feasible_relative_shift_length) < parameters_->lateral_execution_threshold) {

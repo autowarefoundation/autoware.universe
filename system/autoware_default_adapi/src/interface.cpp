@@ -25,7 +25,7 @@ InterfaceNode::InterfaceNode(const rclcpp::NodeOptions & options) : Node("interf
     res->patch = 0;
   };
 
-  const auto adaptor = component_interface_utils::NodeAdaptor(this);
+  const auto adaptor = autoware::component_interface_utils::NodeAdaptor(this);
   adaptor.init_srv(srv_, on_interface_version);
 }
 

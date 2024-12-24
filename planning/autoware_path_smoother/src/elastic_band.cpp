@@ -27,6 +27,9 @@
 #include <algorithm>
 #include <chrono>
 #include <limits>
+#include <memory>
+#include <tuple>
+#include <vector>
 
 namespace
 {
@@ -34,9 +37,9 @@ Eigen::SparseMatrix<double> makePMatrix(const int num_points)
 {
   std::vector<Eigen::Triplet<double>> triplet_vec;
   const auto assign_value_to_triplet_vec =
-    [&](const double row, const double colum, const double value) {
-      triplet_vec.push_back(Eigen::Triplet<double>(row, colum, value));
-      triplet_vec.push_back(Eigen::Triplet<double>(row + num_points, colum + num_points, value));
+    [&](const double row, const double column, const double value) {
+      triplet_vec.push_back(Eigen::Triplet<double>(row, column, value));
+      triplet_vec.push_back(Eigen::Triplet<double>(row + num_points, column + num_points, value));
     };
 
   for (int r = 0; r < num_points; ++r) {
@@ -50,9 +53,7 @@ Eigen::SparseMatrix<double> makePMatrix(const int num_points)
           assign_value_to_triplet_vec(r, c, 6.0);
         }
       } else if (std::abs(c - r) == 1) {
-        if (r == 0 || r == num_points - 1) {
-          assign_value_to_triplet_vec(r, c, -2.0);
-        } else if (c == 0 || c == num_points - 1) {
+        if (r == 0 || r == num_points - 1 || c == 0 || c == num_points - 1) {
           assign_value_to_triplet_vec(r, c, -2.0);
         } else {
           assign_value_to_triplet_vec(r, c, -4.0);
@@ -381,7 +382,7 @@ void EBPathSmoother::updateConstraint(
     osqp_solver_ptr_->updateBounds(lower_bound, upper_bound);
     osqp_solver_ptr_->updateEpsRel(p.qp_param.eps_rel);
   } else {
-    osqp_solver_ptr_ = std::make_unique<autoware::common::osqp::OSQPInterface>(
+    osqp_solver_ptr_ = std::make_unique<autoware::osqp_interface::OSQPInterface>(
       P, A, q, lower_bound, upper_bound, p.qp_param.eps_abs);
     osqp_solver_ptr_->updateEpsRel(p.qp_param.eps_rel);
     osqp_solver_ptr_->updateEpsAbs(p.qp_param.eps_abs);

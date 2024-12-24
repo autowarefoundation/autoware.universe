@@ -15,11 +15,13 @@
 #include <autoware/autonomous_emergency_braking/node.hpp>
 #include <autoware/autonomous_emergency_braking/utils.hpp>
 #include <autoware/motion_utils/marker/marker_helper.hpp>
+#include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/ros/marker_helper.hpp>
 #include <autoware/universe_utils/ros/update_param.hpp>
+#include <autoware_utils/autoware_utils.hpp>
 #include <pcl_ros/transforms.hpp>
 #include <rclcpp/node.hpp>
 
@@ -41,10 +43,13 @@
 #include <pcl/segmentation/extract_clusters.h>
 #include <tf2/utils.h>
 
+#include <algorithm>
 #include <cmath>
 #include <functional>
 #include <limits>
+#include <memory>
 #include <optional>
+#include <string>
 #include <vector>
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
@@ -54,6 +59,16 @@
 
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
+
+namespace
+{
+using autoware::motion::control::autonomous_emergency_braking::colorTuple;
+constexpr double MIN_MOVING_VELOCITY_THRESHOLD = 0.1;
+// Sky blue (RGB: 0, 148, 205) - A medium-bright blue color
+constexpr colorTuple IMU_PATH_COLOR = {0.0 / 256.0, 148.0 / 256.0, 205.0 / 256.0, 0.999};
+// Forest green (RGB: 0, 100, 0) - A deep, dark green color
+constexpr colorTuple MPC_PATH_COLOR = {0.0 / 256.0, 100.0 / 256.0, 0.0 / 256.0, 0.999};
+}  // namespace
 
 namespace autoware::motion::control::autonomous_emergency_braking
 {
@@ -138,7 +153,10 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
     pub_obstacle_pointcloud_ =
       this->create_publisher<sensor_msgs::msg::PointCloud2>("~/debug/obstacle_pointcloud", 1);
     debug_marker_publisher_ = this->create_publisher<MarkerArray>("~/debug/markers", 1);
-    info_marker_publisher_ = this->create_publisher<MarkerArray>("~/info/markers", 1);
+    virtual_wall_publisher_ = this->create_publisher<MarkerArray>("~/virtual_wall", 1);
+    debug_rss_distance_publisher_ =
+      this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("~/debug/rss_distance", 1);
+    metrics_pub_ = this->create_publisher<MetricArray>("~/metrics", 1);
   }
   // Diagnostics
   {
@@ -150,20 +168,26 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   publish_debug_markers_ = declare_parameter<bool>("publish_debug_markers");
   use_predicted_trajectory_ = declare_parameter<bool>("use_predicted_trajectory");
   use_imu_path_ = declare_parameter<bool>("use_imu_path");
+  limit_imu_path_lat_dev_ = declare_parameter<bool>("limit_imu_path_lat_dev");
+  limit_imu_path_length_ = declare_parameter<bool>("limit_imu_path_length");
   use_pointcloud_data_ = declare_parameter<bool>("use_pointcloud_data");
   use_predicted_object_data_ = declare_parameter<bool>("use_predicted_object_data");
   use_object_velocity_calculation_ = declare_parameter<bool>("use_object_velocity_calculation");
   check_autoware_state_ = declare_parameter<bool>("check_autoware_state");
   path_footprint_extra_margin_ = declare_parameter<double>("path_footprint_extra_margin");
+  imu_path_lat_dev_threshold_ = declare_parameter<double>("imu_path_lat_dev_threshold");
+  speed_calculation_expansion_margin_ =
+    declare_parameter<double>("speed_calculation_expansion_margin");
   detection_range_min_height_ = declare_parameter<double>("detection_range_min_height");
   detection_range_max_height_margin_ =
     declare_parameter<double>("detection_range_max_height_margin");
   voxel_grid_x_ = declare_parameter<double>("voxel_grid_x");
   voxel_grid_y_ = declare_parameter<double>("voxel_grid_y");
   voxel_grid_z_ = declare_parameter<double>("voxel_grid_z");
-  min_generated_path_length_ = declare_parameter<double>("min_generated_path_length");
+  min_generated_imu_path_length_ = declare_parameter<double>("min_generated_imu_path_length");
+  max_generated_imu_path_length_ = declare_parameter<double>("max_generated_imu_path_length");
   expand_width_ = declare_parameter<double>("expand_width");
-  longitudinal_offset_ = declare_parameter<double>("longitudinal_offset");
+  longitudinal_offset_margin_ = declare_parameter<double>("longitudinal_offset_margin");
   t_response_ = declare_parameter<double>("t_response");
   a_ego_min_ = declare_parameter<double>("a_ego_min");
   a_obj_min_ = declare_parameter<double>("a_obj_min");
@@ -209,21 +233,27 @@ rcl_interfaces::msg::SetParametersResult AEB::onParameter(
   updateParam<bool>(parameters, "publish_debug_markers", publish_debug_markers_);
   updateParam<bool>(parameters, "use_predicted_trajectory", use_predicted_trajectory_);
   updateParam<bool>(parameters, "use_imu_path", use_imu_path_);
+  updateParam<bool>(parameters, "limit_imu_path_lat_dev", limit_imu_path_lat_dev_);
+  updateParam<bool>(parameters, "limit_imu_path_length", limit_imu_path_length_);
   updateParam<bool>(parameters, "use_pointcloud_data", use_pointcloud_data_);
   updateParam<bool>(parameters, "use_predicted_object_data", use_predicted_object_data_);
   updateParam<bool>(
     parameters, "use_object_velocity_calculation", use_object_velocity_calculation_);
   updateParam<bool>(parameters, "check_autoware_state", check_autoware_state_);
   updateParam<double>(parameters, "path_footprint_extra_margin", path_footprint_extra_margin_);
+  updateParam<double>(parameters, "imu_path_lat_dev_threshold", imu_path_lat_dev_threshold_);
+  updateParam<double>(
+    parameters, "speed_calculation_expansion_margin", speed_calculation_expansion_margin_);
   updateParam<double>(parameters, "detection_range_min_height", detection_range_min_height_);
   updateParam<double>(
     parameters, "detection_range_max_height_margin", detection_range_max_height_margin_);
   updateParam<double>(parameters, "voxel_grid_x", voxel_grid_x_);
   updateParam<double>(parameters, "voxel_grid_y", voxel_grid_y_);
   updateParam<double>(parameters, "voxel_grid_z", voxel_grid_z_);
-  updateParam<double>(parameters, "min_generated_path_length", min_generated_path_length_);
+  updateParam<double>(parameters, "min_generated_imu_path_length", min_generated_imu_path_length_);
+  updateParam<double>(parameters, "max_generated_imu_path_length", max_generated_imu_path_length_);
   updateParam<double>(parameters, "expand_width", expand_width_);
-  updateParam<double>(parameters, "longitudinal_offset", longitudinal_offset_);
+  updateParam<double>(parameters, "longitudinal_offset_margin", longitudinal_offset_margin_);
   updateParam<double>(parameters, "t_response", t_response_);
   updateParam<double>(parameters, "a_ego_min", a_ego_min_);
   updateParam<double>(parameters, "a_obj_min", a_obj_min_);
@@ -390,7 +420,8 @@ bool AEB::fetchLatestData()
 void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
 {
   MarkerArray debug_markers;
-  MarkerArray info_markers;
+  MarkerArray virtual_wall_marker;
+  auto metrics = MetricArray();
   checkCollision(debug_markers);
 
   if (!collision_data_keeper_.checkCollisionExpired()) {
@@ -406,7 +437,15 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
         addCollisionMarker(data.value(), debug_markers);
       }
     }
-    addVirtualStopWallMarker(info_markers);
+    addVirtualStopWallMarker(virtual_wall_marker);
+
+    {
+      auto metric = Metric();
+      metric.name = "decision";
+      metric.value = "brake";
+      metrics.metric_array.push_back(metric);
+    }
+
   } else {
     const std::string error_msg = "[AEB]: No Collision";
     const auto diag_level = DiagnosticStatus::OK;
@@ -415,7 +454,10 @@ void AEB::onCheckCollision(DiagnosticStatusWrapper & stat)
 
   // publish debug markers
   debug_marker_publisher_->publish(debug_markers);
-  info_marker_publisher_->publish(info_markers);
+  virtual_wall_publisher_->publish(virtual_wall_marker);
+  // publish metrics
+  metrics.stamp = get_clock()->now();
+  metrics_pub_->publish(metrics);
 }
 
 bool AEB::checkCollision(MarkerArray & debug_markers)
@@ -433,9 +475,8 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
   }
 
   // step2. create velocity data check if the vehicle stops or not
-  constexpr double min_moving_velocity_th{0.1};
   const double current_v = current_velocity_ptr_->longitudinal_velocity;
-  if (std::abs(current_v) < min_moving_velocity_th) {
+  if (std::abs(current_v) < MIN_MOVING_VELOCITY_THRESHOLD) {
     return false;
   }
 
@@ -455,10 +496,11 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     const auto ego_polys = generatePathFootprint(path, expand_width_);
     std::vector<ObjectData> objects;
     // Crop out Pointcloud using an extra wide ego path
-    if (use_pointcloud_data_ && !points_belonging_to_cluster_hulls->empty()) {
+    if (
+      use_pointcloud_data_ && points_belonging_to_cluster_hulls &&
+      !points_belonging_to_cluster_hulls->empty()) {
       const auto current_time = obstacle_ros_pointcloud_ptr_->header.stamp;
-      getClosestObjectsOnPath(
-        path, ego_polys, current_time, points_belonging_to_cluster_hulls, objects);
+      getClosestObjectsOnPath(path, current_time, points_belonging_to_cluster_hulls, objects);
     }
     if (use_predicted_object_data_) {
       createObjectDataUsingPredictedObjects(path, ego_polys, objects);
@@ -473,39 +515,41 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
     return objects;
   };
 
-  auto check_collision = [&](
-                           const Path & path, const colorTuple & debug_colors,
-                           const std::string & debug_ns,
-                           PointCloud::Ptr points_belonging_to_cluster_hulls) {
-    time_keeper_->start_track("has_collision_with_" + debug_ns);
-    auto objects =
-      get_objects_on_path(path, points_belonging_to_cluster_hulls, debug_colors, debug_ns);
-    // Get only the closest object and calculate its speed
+  auto check_collision = [&](const Path & path, std::vector<ObjectData> & objects) {
+    time_keeper_->start_track("has_collision");
     const auto closest_object_point = std::invoke([&]() -> std::optional<ObjectData> {
-      const auto closest_object_point_itr =
+      // Attempt to find the closest object
+      const auto closest_object_itr =
         std::min_element(objects.begin(), objects.end(), [](const auto & o1, const auto & o2) {
+          // target objects have priority
+          if (o1.is_target != o2.is_target) {
+            return o1.is_target;
+          }
           return o1.distance_to_object < o2.distance_to_object;
         });
 
-      if (closest_object_point_itr == objects.end()) {
-        return std::nullopt;
+      if (closest_object_itr != objects.end()) {
+        // Calculate speed for the closest object
+        const auto closest_object_speed = (use_object_velocity_calculation_)
+                                            ? collision_data_keeper_.calcObjectSpeedFromHistory(
+                                                *closest_object_itr, path, current_v)
+                                            : std::make_optional<double>(0.0);
+
+        if (closest_object_speed.has_value()) {
+          closest_object_itr->velocity = closest_object_speed.value();
+          return std::make_optional<ObjectData>(*closest_object_itr);
+        }
       }
-      const auto closest_object_speed = (use_object_velocity_calculation_)
-                                          ? collision_data_keeper_.calcObjectSpeedFromHistory(
-                                              *closest_object_point_itr, path, current_v)
-                                          : std::make_optional<double>(0.0);
-      if (!closest_object_speed.has_value()) {
-        return std::nullopt;
-      }
-      closest_object_point_itr->velocity = closest_object_speed.value();
-      return std::make_optional<ObjectData>(*closest_object_point_itr);
+
+      return std::nullopt;
     });
 
-    const bool has_collision = (closest_object_point.has_value())
-                                 ? hasCollision(current_v, closest_object_point.value())
-                                 : false;
+    const bool has_collision =
+      (closest_object_point.has_value() && closest_object_point.value().is_target)
+        ? hasCollision(current_v, closest_object_point.value())
+        : false;
 
-    time_keeper_->end_track("has_collision_with_" + debug_ns);
+    time_keeper_->end_track("has_collision");
     // check collision using rss distance
     return has_collision;
   };
@@ -540,27 +584,44 @@ bool AEB::checkCollision(MarkerArray & debug_markers)
   getPointsBelongingToClusterHulls(
     filtered_objects, points_belonging_to_cluster_hulls, debug_markers);
 
-  const auto has_collision_imu_path =
-    [&](const PointCloud::Ptr points_belonging_to_cluster_hulls) -> bool {
-    if (!use_imu_path_ || !angular_velocity_ptr_) return false;
-    constexpr colorTuple debug_color = {0.0 / 256.0, 148.0 / 256.0, 205.0 / 256.0, 0.999};
-    const std::string ns = "imu";
-    return check_collision(ego_imu_path, debug_color, ns, points_belonging_to_cluster_hulls);
+  const auto imu_path_objects =
+    (!use_imu_path_ || !angular_velocity_ptr_)
+      ? std::vector<ObjectData>{}
+      : get_objects_on_path(ego_imu_path, points_belonging_to_cluster_hulls, IMU_PATH_COLOR, "imu");
+
+  const auto mpc_path_objects =
+    (!use_predicted_trajectory_ || !predicted_traj_ptr_ || !ego_mpc_path.has_value())
+      ? std::vector<ObjectData>{}
+      : get_objects_on_path(
+          ego_mpc_path.value(), points_belonging_to_cluster_hulls, MPC_PATH_COLOR, "mpc");
+
+  // merge object data which comes from the ego (imu) path and predicted path
+  auto merge_objects =
+    [&](const std::vector<ObjectData> & imu_objects, const std::vector<ObjectData> & mpc_objects) {
+      std::vector<ObjectData> merged_objects = imu_objects;
+      merged_objects.insert(merged_objects.end(), mpc_objects.begin(), mpc_objects.end());
+      return merged_objects;
+    };
+
+  auto merged_imu_mpc_objects = merge_objects(imu_path_objects, mpc_path_objects);
+  if (merged_imu_mpc_objects.empty()) return false;
+
+  // merge path points for the collision checking
+  auto merge_paths = [&](const std::optional<Path> & mpc_path, const Path & imu_path) {
+    if (!mpc_path.has_value()) {
+      return imu_path;
+    }
+    Path merged_path = imu_path;  // Start with imu_path
+    merged_path.insert(
+      merged_path.end(), mpc_path.value().begin(), mpc_path.value().end());  // Append mpc_path
+    return merged_path;
   };
 
-  // step4. make function to check collision with predicted trajectory from control module
-  const auto has_collision_mpc_path =
-    [&](const PointCloud::Ptr points_belonging_to_cluster_hulls) -> bool {
-    if (!use_predicted_trajectory_ || !ego_mpc_path.has_value()) return false;
-    constexpr colorTuple debug_color = {0.0 / 256.0, 100.0 / 256.0, 0.0 / 256.0, 0.999};
-    const std::string ns = "mpc";
-    return check_collision(
-      ego_mpc_path.value(), debug_color, ns, points_belonging_to_cluster_hulls);
-  };
+  auto merge_imu_mpc_path = merge_paths(ego_mpc_path, ego_imu_path);
+  if (merge_imu_mpc_path.empty()) return false;
 
-  // evaluate if there is a collision for both paths
-  const bool has_collision = has_collision_imu_path(points_belonging_to_cluster_hulls) ||
-                             has_collision_mpc_path(points_belonging_to_cluster_hulls);
+  // evaluate if there is a collision for merged (imu and mpc) paths
+  const bool has_collision = check_collision(merge_imu_mpc_path, merged_imu_mpc_objects);
 
   // Debug print
   if (!filtered_objects->empty() && publish_debug_pointcloud_) {
@@ -583,8 +644,13 @@ bool AEB::hasCollision(const double current_v, const ObjectData & closest_object
     const double obj_braking_distance = (obj_v > 0.0)
                                           ? -(obj_v * obj_v) / (2 * std::fabs(a_obj_min_))
                                           : (obj_v * obj_v) / (2 * std::fabs(a_obj_min_));
-    return ego_stopping_distance + obj_braking_distance + longitudinal_offset_;
+    return ego_stopping_distance + obj_braking_distance + longitudinal_offset_margin_;
   });
+
+  tier4_debug_msgs::msg::Float32Stamped rss_distance_msg;
+  rss_distance_msg.stamp = get_clock()->now();
+  rss_distance_msg.data = rss_dist;
+  debug_rss_distance_publisher_->publish(rss_distance_msg);
 
   if (closest_object.distance_to_object > rss_dist) return false;
 
@@ -598,47 +664,64 @@ bool AEB::hasCollision(const double current_v, const ObjectData & closest_object
 Path AEB::generateEgoPath(const double curr_v, const double curr_w)
 {
   autoware::universe_utils::ScopedTimeTrack st(std::string(__func__) + "(IMU)", *time_keeper_);
-  Path path;
+  const double & dt = imu_prediction_time_interval_;
+  const double distance_between_points = std::abs(curr_v) * dt;
+  constexpr double minimum_distance_between_points{1e-2};
+  // if distance between points is too small, arc length calculation is unreliable, so we skip
+  // creating the path
+  if (distance_between_points < minimum_distance_between_points) {
+    return {};
+  }
+
+  // The initial pose is always aligned with the local reference frame.
+  geometry_msgs::msg::Pose initial_pose;
+  initial_pose.position = autoware::universe_utils::createPoint(0.0, 0.0, 0.0);
+  initial_pose.orientation = autoware::universe_utils::createQuaternionFromYaw(0.0);
+
+  const double horizon = imu_prediction_time_horizon_;
+  const double base_link_to_front_offset = vehicle_info_.max_longitudinal_offset_m;
+  const double rear_overhang = vehicle_info_.rear_overhang_m;
+  const double vehicle_half_width = expand_width_ + vehicle_info_.vehicle_width_m / 2.0;
+
+  // Choose the coordinates of the ego footprint vertex that will used to check for lateral
+  // deviation
+  const auto longitudinal_offset = (curr_v > 0.0) ? base_link_to_front_offset : -rear_overhang;
+  const auto lateral_offset = (curr_v * curr_w > 0.0) ? vehicle_half_width : -vehicle_half_width;
+
+  Path path{initial_pose};
+  path.reserve(static_cast<int>(horizon / dt));
   double curr_x = 0.0;
   double curr_y = 0.0;
   double curr_yaw = 0.0;
-  geometry_msgs::msg::Pose ini_pose;
-  ini_pose.position = autoware::universe_utils::createPoint(curr_x, curr_y, 0.0);
-  ini_pose.orientation = autoware::universe_utils::createQuaternionFromYaw(curr_yaw);
-  path.push_back(ini_pose);
+  double path_arc_length = 0.0;
+  double t = 0.0;
 
-  if (std::abs(curr_v) < 0.1) {
-    // if current velocity is too small, assume it stops at the same point
-    return path;
-  }
-
-  constexpr double epsilon = std::numeric_limits<double>::epsilon();
-  const double & dt = imu_prediction_time_interval_;
-  const double & horizon = imu_prediction_time_horizon_;
-  for (double t = 0.0; t < horizon + epsilon; t += dt) {
+  while (true) {
     curr_x = curr_x + curr_v * std::cos(curr_yaw) * dt;
     curr_y = curr_y + curr_v * std::sin(curr_yaw) * dt;
     curr_yaw = curr_yaw + curr_w * dt;
-    geometry_msgs::msg::Pose current_pose;
-    current_pose.position = autoware::universe_utils::createPoint(curr_x, curr_y, 0.0);
-    current_pose.orientation = autoware::universe_utils::createQuaternionFromYaw(curr_yaw);
-    if (autoware::universe_utils::calcDistance2d(path.back(), current_pose) < 1e-3) {
-      continue;
-    }
-    path.push_back(current_pose);
-  }
+    geometry_msgs::msg::Pose current_pose =
+      autoware::universe_utils::calcOffsetPose(initial_pose, curr_x, curr_y, 0.0, curr_yaw);
 
-  // If path is shorter than minimum path length
-  while (autoware::motion_utils::calcArcLength(path) < min_generated_path_length_) {
-    curr_x = curr_x + curr_v * std::cos(curr_yaw) * dt;
-    curr_y = curr_y + curr_v * std::sin(curr_yaw) * dt;
-    curr_yaw = curr_yaw + curr_w * dt;
-    geometry_msgs::msg::Pose current_pose;
-    current_pose.position = autoware::universe_utils::createPoint(curr_x, curr_y, 0.0);
-    current_pose.orientation = autoware::universe_utils::createQuaternionFromYaw(curr_yaw);
-    if (autoware::universe_utils::calcDistance2d(path.back(), current_pose) < 1e-3) {
-      continue;
+    t += dt;
+    path_arc_length += distance_between_points;
+    const auto edge_of_ego_vehicle = autoware::universe_utils::calcOffsetPose(
+                                       current_pose, longitudinal_offset, lateral_offset, 0.0)
+                                       .position;
+
+    const bool basic_path_conditions_satisfied =
+      (t > horizon) && (path_arc_length > min_generated_imu_path_length_);
+    const bool path_length_threshold_surpassed =
+      limit_imu_path_length_ && path_arc_length > max_generated_imu_path_length_;
+    const bool lat_dev_threshold_surpassed =
+      limit_imu_path_lat_dev_ && std::abs(edge_of_ego_vehicle.y) > imu_path_lat_dev_threshold_;
+
+    if (
+      basic_path_conditions_satisfied || path_length_threshold_surpassed ||
+      lat_dev_threshold_surpassed) {
+      break;
     }
+
     path.push_back(current_pose);
   }
   return path;
@@ -658,9 +741,18 @@ std::optional<Path> AEB::generateEgoPath(const Trajectory & predicted_traj)
   time_keeper_->start_track("createPath");
   Path path;
   path.reserve(predicted_traj.points.size());
+  constexpr double minimum_distance_between_points{1e-2};
   for (size_t i = 0; i < predicted_traj.points.size(); ++i) {
     geometry_msgs::msg::Pose map_pose;
     tf2::doTransform(predicted_traj.points.at(i).pose, map_pose, transform_stamped.value());
+
+    // skip points that are too close to the last point in the path
+    if (
+      autoware::universe_utils::calcDistance2d(path.back(), map_pose) <
+      minimum_distance_between_points) {
+      continue;
+    }
+
     path.push_back(map_pose);
 
     if (i * mpc_prediction_time_interval_ > mpc_prediction_time_horizon_) {
@@ -668,13 +760,16 @@ std::optional<Path> AEB::generateEgoPath(const Trajectory & predicted_traj)
     }
   }
   time_keeper_->end_track("createPath");
-  return path;
+  return (!path.empty()) ? std::make_optional(path) : std::nullopt;
 }
 
 void AEB::generatePathFootprint(
   const Path & path, const double extra_width_margin, std::vector<Polygon2d> & polygons)
 {
   autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+  if (path.empty()) {
+    return;
+  }
   for (size_t i = 0; i < path.size() - 1; ++i) {
     polygons.push_back(
       createPolygon(path.at(i), path.at(i + 1), vehicle_info_, extra_width_margin));
@@ -684,8 +779,11 @@ void AEB::generatePathFootprint(
 std::vector<Polygon2d> AEB::generatePathFootprint(
   const Path & path, const double extra_width_margin)
 {
-  std::vector<Polygon2d> polygons;
   autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+  if (path.empty()) {
+    return {};
+  }
+  std::vector<Polygon2d> polygons;
   for (size_t i = 0; i < path.size() - 1; ++i) {
     polygons.push_back(
       createPolygon(path.at(i), path.at(i + 1), vehicle_info_, extra_width_margin));
@@ -698,7 +796,7 @@ void AEB::createObjectDataUsingPredictedObjects(
   std::vector<ObjectData> & object_data_vector)
 {
   autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
-  if (predicted_objects_ptr_->objects.empty()) return;
+  if (predicted_objects_ptr_->objects.empty() || ego_polys.empty()) return;
 
   const double current_ego_speed = current_velocity_ptr_->longitudinal_velocity;
   const auto & objects = predicted_objects_ptr_->objects;
@@ -729,6 +827,13 @@ void AEB::createObjectDataUsingPredictedObjects(
   const auto transform_stamped_opt =
     utils::getTransform("base_link", predicted_objects_ptr_->header.frame_id, tf_buffer_, logger);
   if (!transform_stamped_opt.has_value()) return;
+
+  const auto longitudinal_offset_opt = utils::getLongitudinalOffset(
+    ego_path, vehicle_info_.max_longitudinal_offset_m, vehicle_info_.rear_overhang_m);
+
+  if (!longitudinal_offset_opt.has_value()) return;
+  const auto longitudinal_offset = longitudinal_offset_opt.value();
+
   // Check which objects collide with the ego footprints
   std::for_each(objects.begin(), objects.end(), [&](const auto & predicted_object) {
     // get objects in base_link frame
@@ -756,16 +861,14 @@ void AEB::createObjectDataUsingPredictedObjects(
 
         // If the object is behind the ego, we need to use the backward long offset. The
         // distance should be a positive number in any case
-        const bool is_object_in_front_of_ego = obj_arc_length > 0.0;
-        const double dist_ego_to_object =
-          (is_object_in_front_of_ego) ? obj_arc_length - vehicle_info_.max_longitudinal_offset_m
-                                      : obj_arc_length + vehicle_info_.min_longitudinal_offset_m;
+        const double dist_ego_to_object = obj_arc_length - longitudinal_offset;
 
         ObjectData obj;
         obj.stamp = stamp;
         obj.position = obj_position;
         obj.velocity = obj_tangent_velocity;
         obj.distance_to_object = std::abs(dist_ego_to_object);
+        obj.is_target = true;
         object_data_vector.push_back(obj);
         collision_points_added = true;
       }
@@ -833,48 +936,29 @@ void AEB::getPointsBelongingToClusterHulls(
 }
 
 void AEB::getClosestObjectsOnPath(
-  const Path & ego_path, const std::vector<Polygon2d> & ego_polys, const rclcpp::Time & stamp,
+  const Path & ego_path, const rclcpp::Time & stamp,
   const PointCloud::Ptr points_belonging_to_cluster_hulls, std::vector<ObjectData> & objects)
 {
   autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
-  // check if the predicted path has valid number of points
-  if (ego_path.size() < 2 || ego_polys.empty() || points_belonging_to_cluster_hulls->empty()) {
+  // check if the predicted path has a valid number of points
+  if (ego_path.size() < 2 || points_belonging_to_cluster_hulls->empty()) {
     return;
   }
 
-  // select points inside the ego footprint path
-  const auto current_p = [&]() {
-    const auto & first_point_of_path = ego_path.front();
-    const auto & p = first_point_of_path.position;
-    return autoware::universe_utils::createPoint(p.x, p.y, p.z);
-  }();
+  const auto longitudinal_offset_opt = utils::getLongitudinalOffset(
+    ego_path, vehicle_info_.max_longitudinal_offset_m, vehicle_info_.rear_overhang_m);
 
+  if (!longitudinal_offset_opt.has_value()) return;
+  const auto longitudinal_offset = longitudinal_offset_opt.value();
+  const auto path_length = autoware::motion_utils::calcArcLength(ego_path);
+  const auto path_width = vehicle_info_.vehicle_width_m / 2.0 + expand_width_;
+  // select points inside the ego footprint path
   for (const auto & p : *points_belonging_to_cluster_hulls) {
     const auto obj_position = autoware::universe_utils::createPoint(p.x, p.y, p.z);
-    const double obj_arc_length =
-      autoware::motion_utils::calcSignedArcLength(ego_path, current_p, obj_position);
-    if (std::isnan(obj_arc_length)) continue;
-
-    // If the object is behind the ego, we need to use the backward long offset. The distance should
-    // be a positive number in any case
-    const bool is_object_in_front_of_ego = obj_arc_length > 0.0;
-    const double dist_ego_to_object = (is_object_in_front_of_ego)
-                                        ? obj_arc_length - vehicle_info_.max_longitudinal_offset_m
-                                        : obj_arc_length + vehicle_info_.min_longitudinal_offset_m;
-
-    ObjectData obj;
-    obj.stamp = stamp;
-    obj.position = obj_position;
-    obj.velocity = 0.0;
-    obj.distance_to_object = std::abs(dist_ego_to_object);
-
-    const Point2d obj_point(p.x, p.y);
-    for (const auto & ego_poly : ego_polys) {
-      if (bg::within(obj_point, ego_poly)) {
-        objects.push_back(obj);
-        break;
-      }
-    }
+    auto obj_data_opt = utils::getObjectOnPathData(
+      ego_path, obj_position, stamp, path_length, path_width, speed_calculation_expansion_margin_,
+      longitudinal_offset, 0.0);
+    if (obj_data_opt.has_value()) objects.push_back(obj_data_opt.value());
   }
 }
 
@@ -882,6 +966,9 @@ void AEB::cropPointCloudWithEgoFootprintPath(
   const std::vector<Polygon2d> & ego_polys, PointCloud::Ptr filtered_objects)
 {
   autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+  if (ego_polys.empty()) {
+    return;
+  }
   PointCloud::Ptr full_points_ptr(new PointCloud);
   pcl::fromROSMsg(*obstacle_ros_pointcloud_ptr_, *full_points_ptr);
   // Create a Point cloud with the points of the ego footprint
@@ -998,9 +1085,9 @@ void AEB::addVirtualStopWallMarker(MarkerArray & markers)
   });
 
   if (ego_map_pose.has_value()) {
-    const double base_to_front_offset = vehicle_info_.max_longitudinal_offset_m;
+    const double base_link_to_front_offset = vehicle_info_.max_longitudinal_offset_m;
     const auto ego_front_pose = autoware::universe_utils::calcOffsetPose(
-      ego_map_pose.value(), base_to_front_offset, 0.0, 0.0, 0.0);
+      ego_map_pose.value(), base_link_to_front_offset, 0.0, 0.0, 0.0);
     const auto virtual_stop_wall = autoware::motion_utils::createStopVirtualWallMarker(
       ego_front_pose, "autonomous_emergency_braking", this->now(), 0);
     autoware::universe_utils::appendMarkerArray(virtual_stop_wall, &markers);
