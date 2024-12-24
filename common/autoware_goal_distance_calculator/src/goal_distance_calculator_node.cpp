@@ -104,7 +104,8 @@ void GoalDistanceCalculatorNode::onTimer()
       "deviation/lateral", deviation.lateral);
     debug_publisher_.publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "deviation/longitudinal", deviation.longitudinal);
-    debug_publisher_.publish<autoware_internal_debug_msgs::msg::Float64Stamped>("deviation/yaw", deviation.yaw);
+    debug_publisher_.publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
+      "deviation/yaw", deviation.yaw);
     debug_publisher_.publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "deviation/yaw_deg", rad2deg(deviation.yaw));
     RCLCPP_INFO_THROTTLE(
