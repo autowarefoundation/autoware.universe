@@ -65,12 +65,35 @@ jobs:
     if: ${{ always() }}
     runs-on: ubuntu-latest
     steps:
-      - name: Check build-and-test success
-        if: ${{ needs.build-and-test-differential.result == 'success' && (needs.build-and-test-differential-cuda.result == 'success' || needs.build-and-test-differential-cuda.result == 'skipped') }}
-        run: echo "build-test-pr succeeded."
-      - name: Fail if conditions not met
-        if: ${{ !(needs.build-and-test-differential.result == 'success' && (needs.build-and-test-differential-cuda.result == 'success' || needs.build-and-test-differential-cuda.result == 'skipped')) }}
-        run: exit 1
+      - name: Initialize Summary
+        run: echo "### Build Test PR Results" > $GITHUB_STEP_SUMMARY
+        shell: bash
+
+      - name: Evaluate build-and-test-differential
+        id: eval_diff
+        uses: ./.github/actions/evaluate-job-result
+        with:
+          job_result: ${{ needs.build-and-test-differential.result }}
+          job_name: build-and-test-differential
+          expected_results: success
+
+      - name: Evaluate build-and-test-differential-cuda
+        id: eval_cuda
+        uses: ./.github/actions/evaluate-job-result
+        with:
+          job_result: ${{ needs.build-and-test-differential-cuda.result }}
+          job_name: build-and-test-differential-cuda
+          expected_results: success,skipped
+
+      - name: Final Status
+        run: |
+          if [[ "${{ steps.eval_diff.outputs.failed }}" == "true" || "${{ steps.eval_cuda.outputs.failed }}" == "true" ]]; then
+            echo "Some checks failed. ❌"
+            exit 1
+          else
+            echo "::notice::All checks passed successfully! ✅"
+          fi
+        shell: bash
 
   clang-tidy-differential:
     needs:
