@@ -1,4 +1,4 @@
-// Copyright 2023 TIER IV, Inc.
+// Copyright 2024 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -45,8 +45,9 @@
 // POSSIBILITY OF SUCH DAMAGE.S SOFTWARE, EVEN IF ADVISED OF THE
 //  POSSIBILITY OF SUCH DAMAGE.
 
-#include "jsk_overlay_utils.hpp"
 #include "string_stamped_overlay_display.hpp"
+
+#include "jsk_overlay_utils.hpp"
 
 #include <QPainter>
 #include <rviz_common/uniform_string_stream.hpp>
@@ -58,7 +59,7 @@
 #include <string>
 #include <vector>
 
-namespace rviz_plugins
+namespace autoware::string_stamped_rviz_plugin
 {
 StringStampedOverlayDisplay::StringStampedOverlayDisplay()
 {
@@ -169,7 +170,7 @@ void StringStampedOverlayDisplay::update(float wall_dt, float ros_dt)
 }
 
 void StringStampedOverlayDisplay::processMessage(
-  const tier4_debug_msgs::msg::StringStamped::ConstSharedPtr msg_ptr)
+  const autoware_internal_debug_msgs::msg::StringStamped::ConstSharedPtr msg_ptr)
 {
   if (!isEnabled()) {
     return;
@@ -191,7 +192,8 @@ void StringStampedOverlayDisplay::updateVisualization()
   overlay_->setDimensions(overlay_->getTextureWidth(), overlay_->getTextureHeight());
 }
 
-}  // namespace rviz_plugins
+}  // namespace autoware::string_stamped_rviz_plugin
 
 #include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(rviz_plugins::StringStampedOverlayDisplay, rviz_common::Display)
+PLUGINLIB_EXPORT_CLASS(
+  autoware::string_stamped_rviz_plugin::StringStampedOverlayDisplay, rviz_common::Display)
