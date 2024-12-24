@@ -1,0 +1,27 @@
+<launch>
+  <arg name="input_odometry" default="/localization/kinematic_state"/>
+  <arg name="input_lanelet_map" default="/map/vector_map"/>
+  <arg name="input_route" default="/planning/mission_planning/route"/>
+  <arg name="input_trajectory" default="/planning/scenario_planning/lane_driving/trajectory"/>
+  <arg name="input_pull_over_operate" default="/system/mrm/pull_over_manager/operate"/>
+  <arg name="output_emergency_goals" default="/system/mrm/pull_over_manager/emergency_goals"/>
+  <arg name="output_pull_over_status" default="/system/mrm/pull_over_manager/status"/>
+  <arg name="output_goals_clear_command" default="/system/mrm/pull_over_manager/goals_clear_command"/>
+
+  <arg name="pull_over_point_file_path" default="$(find-pkg-share mrm_pull_over_manager)/config/pull_over_point.csv"/>
+  <arg name="config_file" default="$(find-pkg-share mrm_pull_over_manager)/config/mrm_pull_over_manager.param.yaml"/>
+
+  <!-- mrm_pull_over_manager -->
+  <node pkg="mrm_pull_over_manager" exec="mrm_pull_over_manager" name="mrm_pull_over_manager" output="screen">
+    <remap from="~/input/odometry" to="$(var input_odometry)"/>
+    <remap from="~/input/lanelet_map" to="$(var input_lanelet_map)"/>
+    <remap from="~/input/route" to="$(var input_route)"/>
+    <remap from="~/input/trajectory" to="$(var input_trajectory)"/>
+    <remap from="~/input/mrm/pull_over/operate" to="$(var input_pull_over_operate)"/>
+    <remap from="~/output/mrm/pull_over/emergency_goals" to="$(var output_emergency_goals)"/>
+    <remap from="~/output/mrm/pull_over/status" to="$(var output_pull_over_status)"/>
+    <remap from="~/output/mrm/pull_over/goals_clear_command" to="$(var output_goals_clear_command)"/>
+    <param name="pull_over_point_file_path" value="$(var pull_over_point_file_path)"/>
+    <param from="$(var config_file)"/>
+  </node>
+</launch>
