@@ -70,8 +70,7 @@ namespace autoware
 TrafficLightArbiter::TrafficLightArbiter(const rclcpp::NodeOptions & options)
 : Node("traffic_light_arbiter", options)
 {
-  external_delay_tolerance_ =
-    this->declare_parameter<double>("external_delay_tolerance", 5.0);
+  external_delay_tolerance_ = this->declare_parameter<double>("external_delay_tolerance", 5.0);
   external_time_tolerance_ = this->declare_parameter<double>("external_time_tolerance", 5.0);
   perception_time_tolerance_ = this->declare_parameter<double>("perception_time_tolerance", 1.0);
   external_priority_ = this->declare_parameter<bool>("external_priority", false);
