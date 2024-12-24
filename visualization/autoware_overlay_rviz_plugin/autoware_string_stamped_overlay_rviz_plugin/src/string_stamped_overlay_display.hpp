@@ -50,6 +50,7 @@
 
 #include <memory>
 #include <mutex>
+#include <string>
 
 #ifndef Q_MOC_RUN
 #include "jsk_overlay_utils.hpp"
@@ -101,7 +102,8 @@ private:
   static constexpr int hand_width_ = 4;
 
   std::mutex mutex_;
-  autoware_internal_debug_msgs::msg::StringStamped::ConstSharedPtr last_msg_ptr_;
+  std::string last_msg_text_;
+  autoware_internal_debug_msgs::msg::StringStamped::ConstSharedPtr last_non_empty_msg_ptr_;
 };
 }  // namespace autoware::string_stamped_rviz_plugin
 

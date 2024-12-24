@@ -57,6 +57,7 @@
 #include <algorithm>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace autoware::string_stamped_rviz_plugin
@@ -133,10 +134,26 @@ void StringStampedOverlayDisplay::update(float wall_dt, float ros_dt)
   (void)wall_dt;
   (void)ros_dt;
 
-  std::lock_guard<std::mutex> message_lock(mutex_);
-  if (!last_msg_ptr_) {
-    return;
+  {
+    std::lock_guard<std::mutex> message_lock(mutex_);
+    if (!last_non_empty_msg_ptr_) {
+      return;
+    }
   }
+
+  const auto text_with_alpha = [&]() {
+    std::lock_guard<std::mutex> message_lock(mutex_);
+    if (last_msg_text_.empty()) {
+      const auto current_time = context_->getRosNodeAbstraction().lock()->get_raw_node()->now();
+      const auto duration = (current_time - last_non_empty_msg_ptr_->stamp).seconds();
+      if (duration < 1.0 + 2.0) {
+        const int dynamic_alpha =
+          static_cast<int>((1.0 - std::max(duration - 1.0, 0.0) / 2.0) * 255);
+        return std::make_pair(last_non_empty_msg_ptr_->data, dynamic_alpha);
+      }
+    }
+    return std::make_pair(last_msg_text_, 255);
+  }();
 
   // Display
   QColor background_color;
@@ -153,7 +170,7 @@ void StringStampedOverlayDisplay::update(float wall_dt, float ros_dt)
 
   // text
   QColor text_color(property_text_color_->getColor());
-  text_color.setAlpha(255);
+  text_color.setAlpha(text_with_alpha.second);
   painter.setPen(QPen(text_color, static_cast<int>(2), Qt::SolidLine));
   QFont font = painter.font();
   font.setPixelSize(property_font_size_->getInt());
@@ -164,7 +181,7 @@ void StringStampedOverlayDisplay::update(float wall_dt, float ros_dt)
   painter.drawText(
     0, std::min(property_value_height_offset_->getInt(), h - 1), w,
     std::max(h - property_value_height_offset_->getInt(), 1), Qt::AlignLeft | Qt::AlignTop,
-    last_msg_ptr_->data.c_str());
+    text_with_alpha.first.c_str());
   painter.end();
   updateVisualization();
 }
@@ -178,7 +195,10 @@ void StringStampedOverlayDisplay::processMessage(
 
   {
     std::lock_guard<std::mutex> message_lock(mutex_);
-    last_msg_ptr_ = msg_ptr;
+    last_msg_text_ = msg_ptr->data;
+    if (!msg_ptr->data.empty()) {
+      last_non_empty_msg_ptr_ = msg_ptr;
+    }
   }
 
   queueRender();
