@@ -157,7 +157,8 @@ protected:
 
   bool check_prepare_phase() const;
 
-  void set_stop_pose(const double arc_length_to_stop_pose, PathWithLaneId & path);
+  void set_stop_pose(
+    const double arc_length_to_stop_pose, PathWithLaneId & path, const std::string & reason = "");
 
   void updateStopTime();
 
