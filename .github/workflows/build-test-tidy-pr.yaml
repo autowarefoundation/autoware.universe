@@ -72,7 +72,6 @@ jobs:
         shell: bash
 
       - name: Evaluate build-and-test-differential
-        id: eval_diff
         uses: ./.github/actions/evaluate-job-result
         with:
           job_result: ${{ needs.build-and-test-differential.result }}
@@ -81,7 +80,6 @@ jobs:
 
       - name: Evaluate build-and-test-differential-cuda
         if: ${{ always() }}
-        id: eval_cuda
         uses: ./.github/actions/evaluate-job-result
         with:
           job_result: ${{ needs.build-and-test-differential-cuda.result }}
