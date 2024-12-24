@@ -77,6 +77,11 @@
           "type": "number",
           "description": "The resolution of the fusion map.",
           "default": 0.5
+        },
+        "publish_processing_time_detail": {
+          "type": "boolean",
+          "description": "True for showing detail of publish processing time.",
+          "default": false
         }
       },
       "required": [
@@ -91,7 +96,8 @@
         "grid_map_origin_frame_",
         "fusion_map_length_x",
         "fusion_map_length_y",
-        "fusion_map_resolution"
+        "fusion_map_resolution",
+        "publish_processing_time_detail"
       ],
       "additionalProperties": false
     }
