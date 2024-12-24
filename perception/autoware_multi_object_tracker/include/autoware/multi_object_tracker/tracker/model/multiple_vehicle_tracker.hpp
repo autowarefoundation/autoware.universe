@@ -20,9 +20,8 @@
 #define AUTOWARE__MULTI_OBJECT_TRACKER__TRACKER__MODEL__MULTIPLE_VEHICLE_TRACKER_HPP_
 
 #include "autoware/kalman_filter/kalman_filter.hpp"
-#include "autoware/multi_object_tracker/tracker/model/big_vehicle_tracker.hpp"
-#include "autoware/multi_object_tracker/tracker/model/normal_vehicle_tracker.hpp"
 #include "autoware/multi_object_tracker/tracker/model/tracker_base.hpp"
+#include "autoware/multi_object_tracker/tracker/model/vehicle_tracker.hpp"
 
 #include <rclcpp/time.hpp>
 
@@ -32,8 +31,8 @@ namespace autoware::multi_object_tracker
 class MultipleVehicleTracker : public Tracker
 {
 private:
-  NormalVehicleTracker normal_vehicle_tracker_;
-  BigVehicleTracker big_vehicle_tracker_;
+  VehicleTracker normal_vehicle_tracker_;
+  VehicleTracker big_vehicle_tracker_;
 
 public:
   MultipleVehicleTracker(

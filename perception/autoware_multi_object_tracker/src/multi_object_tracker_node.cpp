@@ -31,6 +31,7 @@
 
 #include <iterator>
 #include <list>
+#include <map>
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -87,6 +88,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   double publish_rate = declare_parameter<double>("publish_rate");  // [hz]
   world_frame_id_ = declare_parameter<std::string>("world_frame_id");
   bool enable_delay_compensation{declare_parameter<bool>("enable_delay_compensation")};
+  enable_odometry_uncertainty_ = declare_parameter<bool>("consider_odometry_uncertainty");
 
   declare_parameter("selected_input_channels", std::vector<std::string>());
   std::vector<std::string> selected_input_channels =
@@ -212,7 +214,17 @@ void MultiObjectTracker::onTrigger()
   ObjectsList objects_list;
   const bool is_objects_ready = input_manager_->getObjects(current_time, objects_list);
   if (!is_objects_ready) return;
-  onMessage(objects_list);
+
+  // process start
+  last_updated_time_ = current_time;
+  const rclcpp::Time latest_time(objects_list.back().second.header.stamp);
+  debugger_->startMeasurementTime(this->now(), latest_time);
+  // run process for each DetectedObjects
+  for (const auto & objects_data : objects_list) {
+    runProcess(objects_data.second, objects_data.first);
+  }
+  // process end
+  debugger_->endMeasurementTime(this->now());
 
   // Publish without delay compensation
   if (!publish_timer_) {
@@ -244,22 +256,6 @@ void MultiObjectTracker::onTimer()
   if (should_publish) checkAndPublish(current_time);
 }
 
-void MultiObjectTracker::onMessage(const ObjectsList & objects_list)
-{
-  const rclcpp::Time current_time = this->now();
-  const rclcpp::Time oldest_time(objects_list.front().second.header.stamp);
-  last_updated_time_ = current_time;
-
-  // process start
-  debugger_->startMeasurementTime(this->now(), oldest_time);
-  // run process for each DetectedObjects
-  for (const auto & objects_data : objects_list) {
-    runProcess(objects_data.second, objects_data.first);
-  }
-  // process end
-  debugger_->endMeasurementTime(this->now());
-}
-
 void MultiObjectTracker::runProcess(
   const DetectedObjects & input_objects, const uint & channel_index)
 {
@@ -274,18 +270,48 @@ void MultiObjectTracker::runProcess(
     return;
   }
 
-  // Model the object uncertainty if it is empty
-  DetectedObjects input_objects_with_uncertainty = uncertainty::modelUncertainty(input_objects);
-
-  // Normalize the object uncertainty
-  uncertainty::normalizeUncertainty(input_objects_with_uncertainty);
-
   // Transform the objects to the world frame
   DetectedObjects transformed_objects;
   if (!autoware::object_recognition_utils::transformObjects(
-        input_objects_with_uncertainty, world_frame_id_, tf_buffer_, transformed_objects)) {
+        input_objects, world_frame_id_, tf_buffer_, transformed_objects)) {
     return;
   }
+
+  // the object uncertainty
+  if (enable_odometry_uncertainty_) {
+    // Create a modeled odometry message
+    nav_msgs::msg::Odometry odometry;
+    odometry.header.stamp = measurement_time + rclcpp::Duration::from_seconds(0.001);
+
+    // set odometry pose from self_transform
+    auto & odom_pose = odometry.pose.pose;
+    odom_pose.position.x = self_transform->translation.x;
+    odom_pose.position.y = self_transform->translation.y;
+    odom_pose.position.z = self_transform->translation.z;
+    odom_pose.orientation = self_transform->rotation;
+
+    // set odometry twist
+    auto & odom_twist = odometry.twist.twist;
+    odom_twist.linear.x = 10.0;  // m/s
+    odom_twist.linear.y = 0.1;   // m/s
+    odom_twist.angular.z = 0.1;  // rad/s
+
+    // model the uncertainty
+    auto & odom_pose_cov = odometry.pose.covariance;
+    odom_pose_cov[0] = 0.1;      // x-x
+    odom_pose_cov[7] = 0.1;      // y-y
+    odom_pose_cov[35] = 0.0001;  // yaw-yaw
+
+    auto & odom_twist_cov = odometry.twist.covariance;
+    odom_twist_cov[0] = 2.0;     // x-x [m^2/s^2]
+    odom_twist_cov[7] = 0.2;     // y-y [m^2/s^2]
+    odom_twist_cov[35] = 0.001;  // yaw-yaw [rad^2/s^2]
+
+    // Add the odometry uncertainty to the object uncertainty
+    uncertainty::addOdometryUncertainty(odometry, transformed_objects);
+  }
+  // Normalize the object uncertainty
+  uncertainty::normalizeUncertainty(transformed_objects);
 
   /* prediction */
   processor_->predict(measurement_time);
