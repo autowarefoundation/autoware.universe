@@ -24,7 +24,6 @@
   <depend>autoware_behavior_velocity_planner_common</depend>
   <depend>autoware_grid_map_utils</depend>
   <depend>autoware_internal_debug_msgs</depend>
-  <depend>autoware_internal_debug_msgs</depend>
   <depend>autoware_interpolation</depend>
   <depend>autoware_lanelet2_extension</depend>
   <depend>autoware_motion_utils</depend>
