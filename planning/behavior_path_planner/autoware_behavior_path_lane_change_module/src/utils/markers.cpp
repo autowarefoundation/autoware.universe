@@ -79,12 +79,11 @@ MarkerArray showAllValidLaneChangePath(
     if (lc_path.path.points.empty()) {
       continue;
     }
-    std::ostringstream ss;
-    ss << ns.c_str() << "[" << idx << "]";
+    std::string ns_with_idx = ns + "[" + std::to_string(idx) + "]";
     const auto & color = colors.at(idx);
     const auto & points = lc_path.path.points;
     auto marker = createDefaultMarker(
-      "map", current_time, ss.str(), ++id, Marker::LINE_STRIP, createMarkerScale(0.1, 0.1, 0.0),
+      "map", current_time, ns_with_idx, ++id, Marker::LINE_STRIP, createMarkerScale(0.1, 0.1, 0.0),
       color);
     marker.points.reserve(points.size());
 
@@ -93,7 +92,7 @@ MarkerArray showAllValidLaneChangePath(
     }
 
     auto text_marker = createDefaultMarker(
-      "map", current_time, ss.str(), ++id, visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
+      "map", current_time, ns_with_idx, ++id, visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
       createMarkerScale(0.1, 0.1, 0.8), colors::yellow());
     const auto prep_idx = points.size() / 4;
     text_marker.pose = points.at(prep_idx).point.pose;
