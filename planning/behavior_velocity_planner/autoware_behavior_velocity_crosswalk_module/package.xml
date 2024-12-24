@@ -23,6 +23,8 @@
 
   <depend>autoware_behavior_velocity_planner_common</depend>
   <depend>autoware_grid_map_utils</depend>
+  <depend>autoware_internal_debug_msgs</depend>
+  <depend>autoware_internal_debug_msgs</depend>
   <depend>autoware_interpolation</depend>
   <depend>autoware_lanelet2_extension</depend>
   <depend>autoware_motion_utils</depend>
@@ -41,7 +43,6 @@
   <depend>pluginlib</depend>
   <depend>rclcpp</depend>
   <depend>sensor_msgs</depend>
-  <depend>tier4_debug_msgs</depend>
   <depend>visualization_msgs</depend>
 
   <test_depend>ament_cmake_ros</test_depend>
