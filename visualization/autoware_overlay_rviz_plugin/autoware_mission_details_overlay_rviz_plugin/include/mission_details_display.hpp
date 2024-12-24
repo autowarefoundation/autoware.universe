@@ -34,7 +34,6 @@
 #include <mutex>
 #endif
 
-// test
 namespace autoware::mission_details_overlay_rviz_plugin
 {
 class MissionDetailsDisplay : public rviz_common::Display
