@@ -15,11 +15,11 @@
 #ifndef AUTOWARE__OBSTACLE_CRUISE_PLANNER__NODE_HPP_
 #define AUTOWARE__OBSTACLE_CRUISE_PLANNER__NODE_HPP_
 
-#include "autoware/obstacle_cruise_planner/common_structs.hpp"
-#include "autoware/obstacle_cruise_planner/obstacle_cruise_module.hpp"
-#include "autoware/obstacle_cruise_planner/obstacle_slow_down_module.hpp"
-#include "autoware/obstacle_cruise_planner/obstacle_stop_module.hpp"
-#include "autoware/obstacle_cruise_planner/type_alias.hpp"
+#include "autoware/obstacle_cruise_planner/cruise/obstacle_cruise_module.hpp"
+#include "autoware/obstacle_cruise_planner/slow_down/obstacle_slow_down_module.hpp"
+#include "autoware/obstacle_cruise_planner/stop/common_structs.hpp"
+#include "autoware/obstacle_cruise_planner/stop/obstacle_stop_module.hpp"
+#include "autoware/obstacle_cruise_planner/stop/type_alias.hpp"
 #include "autoware/signal_processing/lowpass_filter_1d.hpp"
 #include "autoware/universe_utils/ros/logger_level_configure.hpp"
 #include "autoware/universe_utils/ros/polling_subscriber.hpp"
@@ -76,7 +76,6 @@ std::tuple<std::vector<StopObstacle>, std::vector<CruiseObstacle>, std::vector<S
     const std::vector<TrajectoryPoint> & traj_points) const;
 
   void publishDebugMarker() const;
-  void publishDebugInfo() const;
   void publishCalculationTime(const double calculation_time) const;
 
   bool enable_debug_info_;

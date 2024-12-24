@@ -16,9 +16,9 @@
 
 #include "autoware/motion_utils/resample/resample.hpp"
 #include "autoware/motion_utils/trajectory/conversion.hpp"
-#include "autoware/obstacle_cruise_planner/obstacle_cruise_initializer.hpp"
-#include "autoware/obstacle_cruise_planner/polygon_utils.hpp"
-#include "autoware/obstacle_cruise_planner/utils.hpp"
+#include "autoware/obstacle_cruise_planner/cruise/obstacle_cruise_initializer.hpp"
+#include "autoware/obstacle_cruise_planner/stop/polygon_utils.hpp"
+#include "autoware/obstacle_cruise_planner/stop/utils.hpp"
 #include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
 #include "autoware/universe_utils/ros/marker_helper.hpp"
 #include "autoware/universe_utils/ros/update_param.hpp"

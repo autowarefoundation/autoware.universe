@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__OBSTACLE_CRUISE_PLANNER__OBSTACLE_STOP_MODULE_HPP_
-#define AUTOWARE__OBSTACLE_CRUISE_PLANNER__OBSTACLE_STOP_MODULE_HPP_
+#ifndef AUTOWARE__OBSTACLE_CRUISE_PLANNER__STOP__OBSTACLE_STOP_MODULE_HPP_
+#define AUTOWARE__OBSTACLE_CRUISE_PLANNER__STOP__OBSTACLE_STOP_MODULE_HPP_
 
 #include "autoware/motion_utils/marker/marker_helper.hpp"
 #include "autoware/motion_utils/resample/resample.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/object_recognition_utils/predicted_path_utils.hpp"
-#include "autoware/obstacle_cruise_planner/common_structs.hpp"
-#include "autoware/obstacle_cruise_planner/polygon_utils.hpp"
-#include "autoware/obstacle_cruise_planner/stop_planning_debug_info.hpp"
-#include "autoware/obstacle_cruise_planner/type_alias.hpp"
-#include "autoware/obstacle_cruise_planner/utils.hpp"
+#include "autoware/obstacle_cruise_planner/stop/common_structs.hpp"
+#include "autoware/obstacle_cruise_planner/stop/polygon_utils.hpp"
+#include "autoware/obstacle_cruise_planner/stop/stop_planning_debug_info.hpp"
+#include "autoware/obstacle_cruise_planner/stop/type_alias.hpp"
+#include "autoware/obstacle_cruise_planner/stop/utils.hpp"
 #include "autoware/universe_utils/ros/update_param.hpp"
 #include "autoware/universe_utils/system/stop_watch.hpp"
 
@@ -1115,4 +1115,4 @@ private:
 };
 }  // namespace autoware::motion_planning
 
-#endif  // AUTOWARE__OBSTACLE_CRUISE_PLANNER__OBSTACLE_STOP_MODULE_HPP_
+#endif  // AUTOWARE__OBSTACLE_CRUISE_PLANNER__STOP__OBSTACLE_STOP_MODULE_HPP_

@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__OBSTACLE_CRUISE_PLANNER__POLYGON_UTILS_HPP_
-#define AUTOWARE__OBSTACLE_CRUISE_PLANNER__POLYGON_UTILS_HPP_
+#ifndef AUTOWARE__OBSTACLE_CRUISE_PLANNER__STOP__POLYGON_UTILS_HPP_
+#define AUTOWARE__OBSTACLE_CRUISE_PLANNER__STOP__POLYGON_UTILS_HPP_
 
-#include "autoware/obstacle_cruise_planner/common_structs.hpp"
-#include "autoware/obstacle_cruise_planner/type_alias.hpp"
+#include "autoware/obstacle_cruise_planner/stop/common_structs.hpp"
+#include "autoware/obstacle_cruise_planner/stop/type_alias.hpp"
 #include "autoware/universe_utils/geometry/boost_geometry.hpp"
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 
@@ -57,4 +57,4 @@ std::vector<PointWithStamp> getCollisionPoints(
 
 }  // namespace polygon_utils
 
-#endif  // AUTOWARE__OBSTACLE_CRUISE_PLANNER__POLYGON_UTILS_HPP_
+#endif  // AUTOWARE__OBSTACLE_CRUISE_PLANNER__STOP__POLYGON_UTILS_HPP_

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__OBSTACLE_CRUISE_PLANNER__TYPE_ALIAS_HPP_
-#define AUTOWARE__OBSTACLE_CRUISE_PLANNER__TYPE_ALIAS_HPP_
+#ifndef AUTOWARE__OBSTACLE_CRUISE_PLANNER__CRUISE__TYPE_ALIAS_HPP_
+#define AUTOWARE__OBSTACLE_CRUISE_PLANNER__CRUISE__TYPE_ALIAS_HPP_
 
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 
@@ -51,7 +51,6 @@ using autoware_perception_msgs::msg::PredictedPath;
 using autoware_perception_msgs::msg::Shape;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
-using geometry_msgs::msg::AccelStamped;
 using geometry_msgs::msg::AccelWithCovarianceStamped;
 using geometry_msgs::msg::Twist;
 using nav_msgs::msg::Odometry;
@@ -71,4 +70,4 @@ using MetricArray = tier4_metric_msgs::msg::MetricArray;
 
 using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
 
-#endif  // AUTOWARE__OBSTACLE_CRUISE_PLANNER__TYPE_ALIAS_HPP_
+#endif  // AUTOWARE__OBSTACLE_CRUISE_PLANNER__CRUISE__TYPE_ALIAS_HPP_

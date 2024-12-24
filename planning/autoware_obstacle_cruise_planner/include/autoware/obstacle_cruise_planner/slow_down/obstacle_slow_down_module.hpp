@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__OBSTACLE_CRUISE_PLANNER__OBSTACLE_SLOW_DOWN_MODULE_HPP_
-#define AUTOWARE__OBSTACLE_CRUISE_PLANNER__OBSTACLE_SLOW_DOWN_MODULE_HPP_
+#ifndef AUTOWARE__OBSTACLE_CRUISE_PLANNER__SLOW_DOWN__OBSTACLE_SLOW_DOWN_MODULE_HPP_
+#define AUTOWARE__OBSTACLE_CRUISE_PLANNER__SLOW_DOWN__OBSTACLE_SLOW_DOWN_MODULE_HPP_
 
 #include "autoware/motion_utils/marker/marker_helper.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
-#include "autoware/obstacle_cruise_planner/common_structs.hpp"
-#include "autoware/obstacle_cruise_planner/stop_planning_debug_info.hpp"
-#include "autoware/obstacle_cruise_planner/type_alias.hpp"
-#include "autoware/obstacle_cruise_planner/utils.hpp"
+#include "autoware/obstacle_cruise_planner/slow_down/type_alias.hpp"
+#include "autoware/obstacle_cruise_planner/stop/common_structs.hpp"
+#include "autoware/obstacle_cruise_planner/stop/stop_planning_debug_info.hpp"
+#include "autoware/obstacle_cruise_planner/stop/utils.hpp"
 #include "autoware/signal_processing/lowpass_filter_1d.hpp"
 #include "autoware/universe_utils/ros/update_param.hpp"
 #include "autoware/universe_utils/system/stop_watch.hpp"
@@ -1146,4 +1146,4 @@ private:
 };
 }  // namespace autoware::motion_planning
 
-#endif  // AUTOWARE__OBSTACLE_CRUISE_PLANNER__OBSTACLE_SLOW_DOWN_MODULE_HPP_
+#endif  // AUTOWARE__OBSTACLE_CRUISE_PLANNER__SLOW_DOWN__OBSTACLE_SLOW_DOWN_MODULE_HPP_

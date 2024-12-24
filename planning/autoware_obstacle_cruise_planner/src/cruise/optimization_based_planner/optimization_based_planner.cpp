@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/obstacle_cruise_planner/optimization_based_planner/optimization_based_planner.hpp"
+#include "autoware/obstacle_cruise_planner/cruise/optimization_based_planner/optimization_based_planner.hpp"
 
 #include "autoware/interpolation/linear_interpolation.hpp"
 #include "autoware/interpolation/spline_interpolation.hpp"
@@ -21,7 +21,7 @@
 #include "autoware/motion_utils/resample/resample.hpp"
 #include "autoware/motion_utils/trajectory/interpolation.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
-#include "autoware/obstacle_cruise_planner/utils.hpp"
+#include "autoware/obstacle_cruise_planner/stop/utils.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware/universe_utils/ros/marker_helper.hpp"
 

@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__OBSTACLE_CRUISE_PLANNER__COMMON_STRUCTS_HPP_
-#define AUTOWARE__OBSTACLE_CRUISE_PLANNER__COMMON_STRUCTS_HPP_
+#ifndef AUTOWARE__OBSTACLE_CRUISE_PLANNER__STOP__COMMON_STRUCTS_HPP_
+#define AUTOWARE__OBSTACLE_CRUISE_PLANNER__STOP__COMMON_STRUCTS_HPP_
 
 #include "autoware/motion_utils/trajectory/conversion.hpp"
 #include "autoware/motion_utils/trajectory/interpolation.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
-#include "autoware/obstacle_cruise_planner/type_alias.hpp"
+#include "autoware/obstacle_cruise_planner/stop/type_alias.hpp"
 #include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
 #include "autoware/universe_utils/ros/update_param.hpp"
 #include "autoware/universe_utils/ros/uuid_helper.hpp"
@@ -43,12 +43,6 @@ struct PlannerData
   double ego_vel;
   double ego_acc;
   bool is_driving_forward;
-};
-
-struct PoseWithStamp
-{
-  rclcpp::Time stamp;
-  geometry_msgs::msg::Pose pose;
 };
 
 struct PointWithStamp
@@ -499,4 +493,4 @@ struct BehaviorDeterminationParam
   double max_obstacles_collision_time;
 };
 
-#endif  // AUTOWARE__OBSTACLE_CRUISE_PLANNER__COMMON_STRUCTS_HPP_
+#endif  // AUTOWARE__OBSTACLE_CRUISE_PLANNER__STOP__COMMON_STRUCTS_HPP_

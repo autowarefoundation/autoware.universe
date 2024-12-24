@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__OBSTACLE_CRUISE_PLANNER__OBSTACLE_CRUISE_INITIALIZER_HPP_
-#define AUTOWARE__OBSTACLE_CRUISE_PLANNER__OBSTACLE_CRUISE_INITIALIZER_HPP_
+#ifndef AUTOWARE__OBSTACLE_CRUISE_PLANNER__CRUISE__OBSTACLE_CRUISE_INITIALIZER_HPP_
+#define AUTOWARE__OBSTACLE_CRUISE_PLANNER__CRUISE__OBSTACLE_CRUISE_INITIALIZER_HPP_
 
-#include "autoware/obstacle_cruise_planner/obstacle_cruise_module.hpp"
-#include "autoware/obstacle_cruise_planner/optimization_based_planner/optimization_based_planner.hpp"
-#include "autoware/obstacle_cruise_planner/pid_based_planner/pid_based_planner.hpp"
+#include "autoware/obstacle_cruise_planner/cruise/obstacle_cruise_module.hpp"
+#include "autoware/obstacle_cruise_planner/cruise/optimization_based_planner/optimization_based_planner.hpp"
+#include "autoware/obstacle_cruise_planner/cruise/pid_based_planner/pid_based_planner.hpp"
 
 #include <memory>
 #include <string>
@@ -58,4 +58,4 @@ std::unique_ptr<ObstacleCruiseModule> getModule(
 
 }  // namespace autoware::motion_planning
 
-#endif  // AUTOWARE__OBSTACLE_CRUISE_PLANNER__OBSTACLE_CRUISE_INITIALIZER_HPP_
+#endif  // AUTOWARE__OBSTACLE_CRUISE_PLANNER__CRUISE__OBSTACLE_CRUISE_INITIALIZER_HPP_
