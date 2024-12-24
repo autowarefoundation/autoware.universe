@@ -138,7 +138,7 @@ std::tuple<std::vector<StopObstacle>, std::vector<CruiseObstacle>, std::vector<S
   mutable std::shared_ptr<DebugData> debug_data_ptr_{nullptr};
 
   // planner
-  std::unique_ptr<PlannerInterface> planner_ptr_{nullptr};
+  std::unique_ptr<ObstacleCruiseModule> planner_ptr_{nullptr};
 
   // PointCloud-based stop obstacle history
   std::vector<StopObstacle> stop_pc_obstacle_history_;

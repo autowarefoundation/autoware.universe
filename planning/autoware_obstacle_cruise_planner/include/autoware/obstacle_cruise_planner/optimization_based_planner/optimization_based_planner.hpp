@@ -15,9 +15,9 @@
 #ifndef AUTOWARE__OBSTACLE_CRUISE_PLANNER__OPTIMIZATION_BASED_PLANNER__OPTIMIZATION_BASED_PLANNER_HPP_  // NOLINT
 #define AUTOWARE__OBSTACLE_CRUISE_PLANNER__OPTIMIZATION_BASED_PLANNER__OPTIMIZATION_BASED_PLANNER_HPP_  // NOLINT
 
+#include "autoware/obstacle_cruise_planner/obstacle_cruise_module.hpp"
 #include "autoware/obstacle_cruise_planner/optimization_based_planner/s_boundary.hpp"
 #include "autoware/obstacle_cruise_planner/optimization_based_planner/velocity_optimizer.hpp"
-#include "autoware/obstacle_cruise_planner/planner_interface.hpp"
 #include "autoware/obstacle_cruise_planner/type_alias.hpp"
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 
@@ -30,7 +30,9 @@
 #include <tuple>
 #include <vector>
 
-class OptimizationBasedPlanner : public PlannerInterface
+namespace autoware::motion_planning
+{
+class OptimizationBasedPlanner : public ObstacleCruiseModule
 {
 public:
   OptimizationBasedPlanner(
@@ -117,6 +119,7 @@ private:
   double engage_exit_ratio_;
   double stop_dist_to_prohibit_engage_;
 };
+}  // namespace autoware::motion_planning
 // clang-format off
 #endif  // AUTOWARE__OBSTACLE_CRUISE_PLANNER__OPTIMIZATION_BASED_PLANNER__OPTIMIZATION_BASED_PLANNER_HPP_  // NOLINT
 // clang-format on

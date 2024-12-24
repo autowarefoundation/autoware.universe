@@ -147,7 +147,7 @@ std::vector<TrajectoryPoint> extendTrajectoryPoints(
   return output_points;
 }
 
-std::vector<TrajectoryPoint> resampleTrajectoryPoints(
+std::vector<TrajectoryPoint> resampleTrajectoryPoints2(
   const std::vector<TrajectoryPoint> & traj_points, const double interval)
 {
   const auto traj = autoware::motion_utils::convertToTrajectory(traj_points);
@@ -155,7 +155,7 @@ std::vector<TrajectoryPoint> resampleTrajectoryPoints(
   return autoware::motion_utils::convertToTrajectoryPointArray(resampled_traj);
 }
 
-geometry_msgs::msg::Point toGeomPoint(const pcl::PointXYZ & point)
+geometry_msgs::msg::Point toGeomPoint2(const pcl::PointXYZ & point)
 {
   geometry_msgs::msg::Point geom_point;
   geom_point.x = point.x;
@@ -225,11 +225,15 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
       declare_parameter<std::string>("common.planning_algorithm");
     planning_algorithm_ = getPlanningAlgorithmType(planning_algorithm_param);
 
+    obstacle_stop_module_ = std::make_unique<ObstacleStopModule>(
+      *this, longitudinal_info, vehicle_info_, ego_nearest_param_, debug_data_ptr_);
+    obstacle_slow_down_module_ = std::make_unique<ObstacleSlowDownModule>(
+      *this, longitudinal_info, vehicle_info_, ego_nearest_param_, debug_data_ptr_);
     if (planning_algorithm_ == PlanningAlgorithm::OPTIMIZATION_BASE) {
-      planner_ptr_ = std::make_unique<OptimizationBasedPlanner>(
+      obstacle_cruise_module_ = std::make_unique<OptimizationBasedPlanner>(
         *this, longitudinal_info, vehicle_info_, ego_nearest_param_, debug_data_ptr_);
     } else if (planning_algorithm_ == PlanningAlgorithm::PID_BASE) {
-      planner_ptr_ = std::make_unique<PIDBasedPlanner>(
+      obstacle_cruise_module_ = std::make_unique<PIDBasedPlanner>(
         *this, longitudinal_info, vehicle_info_, ego_nearest_param_, debug_data_ptr_);
     } else {
       throw std::logic_error("Designated algorithm is not supported.");
@@ -244,7 +248,17 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
       declare_parameter<double>("common.stop_on_curve.min_safe_distance_margin");
     suppress_sudden_obstacle_stop_ =
       declare_parameter<bool>("common.suppress_sudden_obstacle_stop");
-    planner_ptr_->setParam(
+    obstacle_stop_module_->setParam(
+      enable_debug_info_, enable_calculation_time_info_, true /*use_pointcloud_*/,
+      min_behavior_stop_margin_, enable_approaching_on_curve_,
+      additional_safe_distance_margin_on_curve_, min_safe_distance_margin_on_curve_,
+      suppress_sudden_obstacle_stop_);
+    obstacle_slow_down_module_->setParam(
+      enable_debug_info_, enable_calculation_time_info_, true /*use_pointcloud_*/,
+      min_behavior_stop_margin_, enable_approaching_on_curve_,
+      additional_safe_distance_margin_on_curve_, min_safe_distance_margin_on_curve_,
+      suppress_sudden_obstacle_stop_);
+    obstacle_cruise_module_->setParam(
       enable_debug_info_, enable_calculation_time_info_, true /*use_pointcloud_*/,
       min_behavior_stop_margin_, enable_approaching_on_curve_,
       additional_safe_distance_margin_on_curve_, min_safe_distance_margin_on_curve_,
@@ -258,10 +272,6 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
   logger_configure_ = std::make_unique<autoware::universe_utils::LoggerLevelConfigure>(this);
   published_time_publisher_ =
     std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
-
-  obstacle_stop_module_ = std::make_unique<ObstacleStopModule>(this, vehicle_info_);
-  obstacle_slow_down_module_ = std::make_unique<ObstacleSlowDownModule>(this, vehicle_info_);
-  obstacle_cruise_module_ = std::make_unique<ObstacleCruiseModule>(this, vehicle_info_);
 }
 
 ObstacleCruisePlannerNode::PlanningAlgorithm ObstacleCruisePlannerNode::getPlanningAlgorithmType(
@@ -391,7 +401,8 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
     obstacle_stop_module_->determineEgoBehaviorAgainstPredictedObjectObstacles(
       ego_odom, *objects_ptr, decimated_traj_points, decimated_traj_polys, target_obstacles,
       is_driving_forward_, behavior_determination_param_, min_behavior_stop_margin_);
-  const auto stop_traj_points = planner_ptr_->generateStopTrajectory(planner_data, stop_obstacles);
+  const auto stop_traj_points =
+    obstacle_stop_module_->generateStopTrajectory(planner_data, stop_obstacles);
 
   // cruise
   const auto cruise_obstacles =
@@ -399,7 +410,7 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
       ego_odom, decimated_traj_points, decimated_traj_polys, target_obstacles, is_driving_forward_,
       behavior_determination_param_);
   std::optional<VelocityLimit> cruise_vel_limit;
-  const auto cruise_traj_points = planner_ptr_->generateCruiseTrajectory(
+  const auto cruise_traj_points = obstacle_cruise_module_->generateCruiseTrajectory(
     planner_data, stop_traj_points, cruise_obstacles, cruise_vel_limit);
   publishVelocityLimit(cruise_vel_limit, "cruise");
 
@@ -408,7 +419,7 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
     obstacle_slow_down_module_->determineEgoBehaviorAgainstPredictedObjectObstacles(
       ego_odom, decimated_traj_points, target_obstacles, behavior_determination_param_);
   std::optional<VelocityLimit> slow_down_vel_limit;
-  const auto slow_down_traj_points = planner_ptr_->generateSlowDownTrajectory(
+  const auto slow_down_traj_points = obstacle_slow_down_module_->generateSlowDownTrajectory(
     planner_data, cruise_traj_points, slow_down_obstacles, slow_down_vel_limit);
   publishVelocityLimit(slow_down_vel_limit, "slow_down");
 
@@ -419,7 +430,15 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
 
   // 8. Publish debug data
   published_time_publisher_->publish_if_subscribed(trajectory_pub_, output_traj.header.stamp);
-  planner_ptr_->publishMetrics(now());
+
+  obstacle_stop_module_->publishMetrics(now());
+  obstacle_slow_down_module_->publishMetrics(now());
+  obstacle_cruise_module_->publishMetrics(now());
+
+  obstacle_stop_module_->postprocess();
+  obstacle_slow_down_module_->postprocess();
+  obstacle_cruise_module_->postprocess();
+
   publishDebugMarker();
   publishDebugInfo();
 
@@ -608,7 +627,7 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
       std::optional<geometry_msgs::msg::Point> slow_down_back_collision_point = std::nullopt;
 
       for (const auto & index : cluster_indices.indices) {
-        const auto obstacle_point = toGeomPoint(filtered_points_ptr->points[index]);
+        const auto obstacle_point = toGeomPoint2(filtered_points_ptr->points[index]);
         const auto current_lat_dist_from_obstacle_to_traj =
           autoware::motion_utils::calcLateralOffset(traj_points, obstacle_point);
         const auto min_lat_dist_to_traj_poly =
@@ -739,11 +758,11 @@ std::vector<TrajectoryPoint> ObstacleCruisePlannerNode::decimateTrajectoryPoints
 
   // decimate trajectory
   const auto decimated_traj_points =
-    resampleTrajectoryPoints(trimmed_traj_points, p.decimate_trajectory_step_length);
+    resampleTrajectoryPoints2(trimmed_traj_points, p.decimate_trajectory_step_length);
 
   // extend trajectory
   const auto extended_traj_points = extendTrajectoryPoints(
-    decimated_traj_points, planner_ptr_->getSafeDistanceMargin(),
+    decimated_traj_points, obstacle_stop_module_->getSafeDistanceMargin(),
     p.decimate_trajectory_step_length);
   if (extended_traj_points.size() < 2) {
     return traj_points;
@@ -947,15 +966,16 @@ void ObstacleCruisePlannerNode::publishDebugMarker() const
 void ObstacleCruisePlannerNode::publishDebugInfo() const
 {
   // stop
-  const auto stop_debug_msg = planner_ptr_->getStopPlanningDebugMessage(now());
+  const auto stop_debug_msg = obstacle_stop_module_->getStopPlanningDebugMessage(now());
   debug_stop_planning_info_pub_->publish(stop_debug_msg);
 
   // cruise
-  const auto cruise_debug_msg = planner_ptr_->getCruisePlanningDebugMessage(now());
+  const auto cruise_debug_msg = obstacle_cruise_module_->getCruisePlanningDebugMessage(now());
   debug_cruise_planning_info_pub_->publish(cruise_debug_msg);
 
   // slow_down
-  const auto slow_down_debug_msg = planner_ptr_->getSlowDownPlanningDebugMessage(now());
+  const auto slow_down_debug_msg =
+    obstacle_slow_down_module_->getSlowDownPlanningDebugMessage(now());
   debug_slow_down_planning_info_pub_->publish(slow_down_debug_msg);
 }
 

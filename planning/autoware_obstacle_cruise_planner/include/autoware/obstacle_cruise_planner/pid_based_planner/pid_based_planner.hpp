@@ -15,9 +15,9 @@
 #ifndef AUTOWARE__OBSTACLE_CRUISE_PLANNER__PID_BASED_PLANNER__PID_BASED_PLANNER_HPP_
 #define AUTOWARE__OBSTACLE_CRUISE_PLANNER__PID_BASED_PLANNER__PID_BASED_PLANNER_HPP_
 
+#include "autoware/obstacle_cruise_planner/obstacle_cruise_module.hpp"
 #include "autoware/obstacle_cruise_planner/pid_based_planner/cruise_planning_debug_info.hpp"
 #include "autoware/obstacle_cruise_planner/pid_based_planner/pid_controller.hpp"
-#include "autoware/obstacle_cruise_planner/planner_interface.hpp"
 #include "autoware/signal_processing/lowpass_filter_1d.hpp"
 
 #include "visualization_msgs/msg/marker_array.hpp"
@@ -28,7 +28,10 @@
 
 using autoware::signal_processing::LowpassFilter1d;
 
-class PIDBasedPlanner : public PlannerInterface
+namespace autoware::motion_planning
+{
+
+class PIDBasedPlanner : public ObstacleCruiseModule
 {
 public:
   struct CruiseObstacleInfo
@@ -138,5 +141,6 @@ private:
 
   std::function<double(double)> error_func_;
 };
+}  // namespace autoware::motion_planning
 
 #endif  // AUTOWARE__OBSTACLE_CRUISE_PLANNER__PID_BASED_PLANNER__PID_BASED_PLANNER_HPP_

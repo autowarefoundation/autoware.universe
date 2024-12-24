@@ -29,6 +29,8 @@
 #include <vector>
 
 using autoware::signal_processing::LowpassFilter1d;
+namespace autoware::motion_planning
+{
 
 namespace
 {
@@ -67,7 +69,7 @@ PIDBasedPlanner::PIDBasedPlanner(
   rclcpp::Node & node, const LongitudinalInfo & longitudinal_info,
   const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
   const EgoNearestParam & ego_nearest_param, const std::shared_ptr<DebugData> debug_data_ptr)
-: PlannerInterface(node, longitudinal_info, vehicle_info, ego_nearest_param, debug_data_ptr)
+: ObstacleCruiseModule(node, longitudinal_info, vehicle_info, ego_nearest_param, debug_data_ptr)
 {
   min_accel_during_cruise_ =
     node.declare_parameter<double>("cruise.pid_based_planner.min_accel_during_cruise");
@@ -721,3 +723,4 @@ void PIDBasedPlanner::updateCruiseParam(const std::vector<rclcpp::Parameter> & p
   autoware::universe_utils::updateParam<double>(
     parameters, "cruise.pid_based_planner.time_to_evaluate_rss", time_to_evaluate_rss_);
 }
+}  // namespace autoware::motion_planning

@@ -15,29 +15,90 @@
 #ifndef AUTOWARE__OBSTACLE_CRUISE_PLANNER__OBSTACLE_CRUISE_MODULE_HPP_
 #define AUTOWARE__OBSTACLE_CRUISE_PLANNER__OBSTACLE_CRUISE_MODULE_HPP_
 
+#include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/obstacle_cruise_planner/common_structs.hpp"
 #include "autoware/obstacle_cruise_planner/obstacle_stop_module.hpp"
-#include "autoware/obstacle_cruise_planner/obstacle_velocity_module_interface.hpp"
 #include "autoware/obstacle_cruise_planner/polygon_utils.hpp"
+#include "autoware/obstacle_cruise_planner/stop_planning_debug_info.hpp"
 #include "autoware/obstacle_cruise_planner/type_alias.hpp"
 #include "autoware/obstacle_cruise_planner/utils.hpp"
+#include "autoware/universe_utils/ros/update_param.hpp"
+#include "autoware/universe_utils/system/stop_watch.hpp"
+
+#include <autoware/objects_of_interest_marker_interface/objects_of_interest_marker_interface.hpp>
+
+#include <tier4_metric_msgs/msg/metric.hpp>
+#include <tier4_metric_msgs/msg/metric_array.hpp>
 
 #include <algorithm>
+#include <memory>
+#include <string>
 #include <vector>
+
+namespace
+{
+std::vector<PredictedPath> resampleHighestConfidencePredictedPaths1(
+  const std::vector<PredictedPath> & predicted_paths, const double time_interval,
+  const double time_horizon, const size_t num_paths)
+{
+  std::vector<PredictedPath> sorted_paths = predicted_paths;
+
+  // Sort paths by descending confidence
+  std::sort(
+    sorted_paths.begin(), sorted_paths.end(),
+    [](const PredictedPath & a, const PredictedPath & b) { return a.confidence > b.confidence; });
+
+  std::vector<PredictedPath> selected_paths;
+  size_t path_count = 0;
+
+  // Select paths that meet the confidence thresholds
+  for (const auto & path : sorted_paths) {
+    if (path_count < num_paths) {
+      selected_paths.push_back(path);
+      ++path_count;
+    }
+  }
+
+  // Resample each selected path
+  std::vector<PredictedPath> resampled_paths;
+  for (const auto & path : selected_paths) {
+    if (path.path.size() < 2) {
+      continue;
+    }
+    resampled_paths.push_back(
+      autoware::object_recognition_utils::resamplePredictedPath(path, time_interval, time_horizon));
+  }
+
+  return resampled_paths;
+}
+}  // namespace
 
 namespace autoware::motion_planning
 {
-class ObstacleCruiseModule : public ObstacleVelocityModuleInterface
+class ObstacleCruiseModule
 {
 public:
-  ObstacleCruiseModule(rclcpp::Node * node, const VehicleInfo & vehicle_info)
-  : ObstacleVelocityModuleInterface(node, vehicle_info)
+  ObstacleCruiseModule(
+    rclcpp::Node & node, const LongitudinalInfo & longitudinal_info,
+    const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
+    const EgoNearestParam & ego_nearest_param, const std::shared_ptr<DebugData> debug_data_ptr)
+  : clock_(node.get_clock()),
+    longitudinal_info_(longitudinal_info),
+    vehicle_info_(vehicle_info),
+    ego_nearest_param_(ego_nearest_param),
+    debug_data_ptr_(debug_data_ptr)
   {
     inside_cruise_obstacle_types_ =
-      obstacle_cruise_utils::getTargetObjectType(*node, "common.cruise_obstacle_type.inside.");
+      obstacle_cruise_utils::getTargetObjectType(node, "common.cruise_obstacle_type.inside.");
     outside_cruise_obstacle_types_ =
-      obstacle_cruise_utils::getTargetObjectType(*node, "common.cruise_obstacle_type.outside.");
+      obstacle_cruise_utils::getTargetObjectType(node, "common.cruise_obstacle_type.outside.");
+
+    objects_of_interest_marker_interface_ = std::make_unique<
+      autoware::objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface>(
+      &node, "obstacle_cruise_planner");
   }
+
+  void postprocess() { objects_of_interest_marker_interface_->publishMarkerArray(); }
 
   std::vector<CruiseObstacle> determineEgoBehaviorAgainstPredictedObjectObstacles(
     const Odometry & odometry, const std::vector<TrajectoryPoint> & decimated_traj_points,
@@ -78,7 +139,145 @@ public:
     return cruise_obstacles;
   }
 
-private:
+  double calcDistanceToCollisionPoint(
+    const PlannerData & planner_data, const geometry_msgs::msg::Point & collision_point)
+  {
+    const double offset = planner_data.is_driving_forward
+                            ? std::abs(vehicle_info_.max_longitudinal_offset_m)
+                            : std::abs(vehicle_info_.min_longitudinal_offset_m);
+
+    const size_t ego_segment_idx =
+      ego_nearest_param_.findSegmentIndex(planner_data.traj_points, planner_data.ego_pose);
+
+    const size_t collision_segment_idx =
+      autoware::motion_utils::findNearestSegmentIndex(planner_data.traj_points, collision_point);
+
+    const auto dist_to_collision_point = autoware::motion_utils::calcSignedArcLength(
+      planner_data.traj_points, planner_data.ego_pose.position, ego_segment_idx, collision_point,
+      collision_segment_idx);
+
+    return dist_to_collision_point - offset;
+  }
+
+  void onParam(const std::vector<rclcpp::Parameter> & parameters)
+  {
+    updateCommonParam(parameters);
+    updateCruiseParam(parameters);
+  }
+
+  virtual Float32MultiArrayStamped getCruisePlanningDebugMessage(
+    [[maybe_unused]] const rclcpp::Time & current_time) const
+  {
+    return Float32MultiArrayStamped{};
+  }
+
+  virtual std::vector<TrajectoryPoint> generateCruiseTrajectory(
+    const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points,
+    const std::vector<CruiseObstacle> & cruise_obstacles,
+    std::optional<VelocityLimit> & vel_limit) = 0;
+
+  std::vector<Metric> makeMetrics(
+    const std::string & module_name, const std::string & reason,
+    const std::optional<PlannerData> & planner_data = std::nullopt,
+    const std::optional<geometry_msgs::msg::Pose> & stop_pose = std::nullopt,
+    const std::optional<StopObstacle> & stop_obstacle = std::nullopt)
+  {
+    auto metrics = std::vector<Metric>();
+
+    // Create status
+    {
+      // Decision
+      Metric decision_metric;
+      decision_metric.name = module_name + "/decision";
+      decision_metric.unit = "string";
+      decision_metric.value = reason;
+      metrics.push_back(decision_metric);
+    }
+
+    if (stop_pose.has_value() && planner_data.has_value()) {  // Stop info
+      Metric stop_position_metric;
+      stop_position_metric.name = module_name + "/stop_position";
+      stop_position_metric.unit = "string";
+      const auto & p = stop_pose.value().position;
+      stop_position_metric.value =
+        "{" + std::to_string(p.x) + ", " + std::to_string(p.y) + ", " + std::to_string(p.z) + "}";
+      metrics.push_back(stop_position_metric);
+
+      Metric stop_orientation_metric;
+      stop_orientation_metric.name = module_name + "/stop_orientation";
+      stop_orientation_metric.unit = "string";
+      const auto & o = stop_pose.value().orientation;
+      stop_orientation_metric.value = "{" + std::to_string(o.w) + ", " + std::to_string(o.x) +
+                                      ", " + std::to_string(o.y) + ", " + std::to_string(o.z) + "}";
+      metrics.push_back(stop_orientation_metric);
+
+      const auto dist_to_stop_pose = autoware::motion_utils::calcSignedArcLength(
+        planner_data.value().traj_points, planner_data.value().ego_pose.position,
+        stop_pose.value().position);
+
+      Metric dist_to_stop_pose_metric;
+      dist_to_stop_pose_metric.name = module_name + "/distance_to_stop_pose";
+      dist_to_stop_pose_metric.unit = "double";
+      dist_to_stop_pose_metric.value = std::to_string(dist_to_stop_pose);
+      metrics.push_back(dist_to_stop_pose_metric);
+    }
+
+    if (stop_obstacle.has_value()) {
+      // Obstacle info
+      Metric collision_point_metric;
+      const auto & p = stop_obstacle.value().collision_point;
+      collision_point_metric.name = module_name + "/collision_point";
+      collision_point_metric.unit = "string";
+      collision_point_metric.value =
+        "{" + std::to_string(p.x) + ", " + std::to_string(p.y) + ", " + std::to_string(p.z) + "}";
+      metrics.push_back(collision_point_metric);
+    }
+    return metrics;
+  }
+
+  void publishMetrics(const rclcpp::Time & current_time)
+  {
+    // create array
+    MetricArray metrics_msg;
+    metrics_msg.stamp = current_time;
+
+    auto addMetrics = [&metrics_msg](std::optional<std::vector<Metric>> & opt_metrics) {
+      if (opt_metrics) {
+        metrics_msg.metric_array.insert(
+          metrics_msg.metric_array.end(), opt_metrics->begin(), opt_metrics->end());
+      }
+    };
+    addMetrics(debug_data_ptr_->stop_metrics);
+    addMetrics(debug_data_ptr_->slow_down_metrics);
+    addMetrics(debug_data_ptr_->cruise_metrics);
+    metrics_pub_->publish(metrics_msg);
+    clearMetrics();
+  }
+
+  void clearMetrics()
+  {
+    debug_data_ptr_->stop_metrics = std::nullopt;
+    debug_data_ptr_->slow_down_metrics = std::nullopt;
+    debug_data_ptr_->cruise_metrics = std::nullopt;
+  }
+
+  void setParam(
+    const bool enable_debug_info, const bool enable_calculation_time_info,
+    const bool use_pointcloud, const double min_behavior_stop_margin,
+    const double enable_approaching_on_curve, const double additional_safe_distance_margin_on_curve,
+    const double min_safe_distance_margin_on_curve, const bool suppress_sudden_obstacle_stop)
+  {
+    enable_debug_info_ = enable_debug_info;
+    enable_calculation_time_info_ = enable_calculation_time_info;
+    use_pointcloud_ = use_pointcloud;
+    min_behavior_stop_margin_ = min_behavior_stop_margin;
+    enable_approaching_on_curve_ = enable_approaching_on_curve;
+    additional_safe_distance_margin_on_curve_ = additional_safe_distance_margin_on_curve;
+    min_safe_distance_margin_on_curve_ = min_safe_distance_margin_on_curve;
+    suppress_sudden_obstacle_stop_ = suppress_sudden_obstacle_stop;
+  }
+
+protected:
   bool is_driving_forward_;
   std::vector<CruiseObstacle> prev_cruise_object_obstacles_;
   std::vector<int> inside_cruise_obstacle_types_;
@@ -269,7 +468,7 @@ private:
     }
 
     // Get highest confidence predicted path
-    const auto resampled_predicted_paths = resampleHighestConfidencePredictedPaths(
+    const auto resampled_predicted_paths = resampleHighestConfidencePredictedPaths1(
       obstacle.predicted_paths, p.prediction_resampling_time_interval,
       p.prediction_resampling_time_horizon, 1);
 
@@ -490,6 +689,71 @@ private:
     // Only obstacles crossing the ego's trajectory with high speed are considered.
     return true;
   }
+
+  double calcRSSDistance(
+    const double ego_vel, const double obstacle_vel, const double margin = 0.0) const
+  {
+    const auto & i = longitudinal_info_;
+    const double rss_dist_with_margin =
+      ego_vel * i.idling_time + std::pow(ego_vel, 2) * 0.5 / std::abs(i.min_ego_accel_for_rss) -
+      std::pow(obstacle_vel, 2) * 0.5 / std::abs(i.min_object_accel_for_rss) + margin;
+    return rss_dist_with_margin;
+  }
+
+  size_t findEgoSegmentIndex(
+    const std::vector<TrajectoryPoint> & traj_points,
+    const geometry_msgs::msg::Pose & ego_pose) const
+  {
+    const auto & p = ego_nearest_param_;
+    return autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      traj_points, ego_pose, p.dist_threshold, p.yaw_threshold);
+  }
+
+  size_t findEgoIndex(
+    const std::vector<TrajectoryPoint> & traj_points,
+    const geometry_msgs::msg::Pose & ego_pose) const
+  {
+    const auto & p = ego_nearest_param_;
+    return autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
+      traj_points, ego_pose, p.dist_threshold, p.yaw_threshold);
+  }
+
+  virtual void updateCruiseParam([[maybe_unused]] const std::vector<rclcpp::Parameter> & parameters)
+  {
+  }
+
+  // stop watch
+  autoware::universe_utils::StopWatch<
+    std::chrono::milliseconds, std::chrono::microseconds, std::chrono::steady_clock>
+    stop_watch_;
+
+  rclcpp::Publisher<MetricArray>::SharedPtr metrics_pub_;
+  rclcpp::Publisher<VelocityFactorArray>::SharedPtr velocity_factors_pub_;
+
+  // Parameters
+  bool enable_debug_info_{false};
+  bool enable_calculation_time_info_{false};
+  bool use_pointcloud_{false};
+  double min_behavior_stop_margin_;
+  bool enable_approaching_on_curve_;
+  double additional_safe_distance_margin_on_curve_;
+  double min_safe_distance_margin_on_curve_;
+  bool suppress_sudden_obstacle_stop_;
+
+  void updateCommonParam(const std::vector<rclcpp::Parameter> & parameters)
+  {
+    longitudinal_info_.onParam(parameters);
+  }
+
+  rclcpp::Clock::SharedPtr clock_;
+  LongitudinalInfo longitudinal_info_;
+  VehicleInfo vehicle_info_;
+  EgoNearestParam ego_nearest_param_;
+  mutable std::shared_ptr<DebugData> debug_data_ptr_;
+
+  std::unique_ptr<autoware::objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface>
+    objects_of_interest_marker_interface_;
+  BehaviorDeterminationParam behavior_determination_param_;
 };
 }  // namespace autoware::motion_planning
 

@@ -39,6 +39,8 @@
 
 #include <tf2/utils.h>
 
+namespace autoware::motion_planning
+{
 constexpr double ZERO_VEL_THRESHOLD = 0.01;
 constexpr double CLOSE_S_DIST_THRESHOLD = 1e-3;
 
@@ -46,7 +48,7 @@ OptimizationBasedPlanner::OptimizationBasedPlanner(
   rclcpp::Node & node, const LongitudinalInfo & longitudinal_info,
   const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
   const EgoNearestParam & ego_nearest_param, const std::shared_ptr<DebugData> debug_data_ptr)
-: PlannerInterface(node, longitudinal_info, vehicle_info, ego_nearest_param, debug_data_ptr)
+: ObstacleCruiseModule(node, longitudinal_info, vehicle_info, ego_nearest_param, debug_data_ptr)
 {
   smoothed_traj_sub_ = node.create_subscription<Trajectory>(
     "/planning/scenario_planning/trajectory", rclcpp::QoS{1},
@@ -752,3 +754,4 @@ void OptimizationBasedPlanner::publishDebugTrajectory(
   }
   optimized_st_graph_pub_->publish(optimized_st_graph);
 }
+}  // namespace autoware::motion_planning

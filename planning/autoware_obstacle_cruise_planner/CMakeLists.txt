@@ -13,7 +13,6 @@ ament_auto_add_library(autoware_obstacle_cruise_planner_core SHARED
   src/optimization_based_planner/velocity_optimizer.cpp
   src/optimization_based_planner/optimization_based_planner.cpp
   src/pid_based_planner/pid_based_planner.cpp
-  src/planner_interface.cpp
 )
 
 rclcpp_components_register_node(autoware_obstacle_cruise_planner_core
