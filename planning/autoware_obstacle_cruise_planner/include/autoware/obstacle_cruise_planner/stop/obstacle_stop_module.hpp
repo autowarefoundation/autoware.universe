@@ -237,11 +237,26 @@ private:
   {
     std::vector<StopObstacle> stop_obstacles;
     for (const auto & obstacle : obstacles) {
-      const auto stop_obstacle = createStopObstacleForPredictedObject(
+      // check label
+      if (!isStopObstacle(obstacle.classification.label)) {
+        continue;
+      }
+
+      // outside stop obstacle
+      const auto outside_stop_obstacle = createOutsideStopObstacleForPredictedObject(
         odometry, decimated_traj_points, decimated_traj_polys, obstacle, obstacle.precise_lat_dist,
         is_driving_forward, vehicle_info);
-      if (stop_obstacle) {
-        stop_obstacles.push_back(*stop_obstacle);
+      if (outside_stop_obstacle) {
+        stop_obstacles.push_back(*outside_stop_obstacle);
+        continue;
+      }
+
+      // inside stop obstacle
+      const auto inside_stop_obstacle = createInsideStopObstacleForPredictedObject(
+        odometry, decimated_traj_points, obstacle, obstacle.precise_lat_dist, is_driving_forward,
+        vehicle_info);
+      if (inside_stop_obstacle) {
+        stop_obstacles.push_back(*inside_stop_obstacle);
       }
     }
 
@@ -578,7 +593,7 @@ private:
     debug_stop_planning_info_pub_->publish(stop_debug_msg);
   }
 
-  std::optional<StopObstacle> createStopObstacleForPredictedObject(
+  std::optional<StopObstacle> createOutsideStopObstacleForPredictedObject(
     const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
     const std::vector<Polygon2d> & traj_polys, const Obstacle & obstacle,
     const double precise_lat_dist, const bool is_driving_forward,
@@ -588,77 +603,94 @@ private:
     const auto & sp = stop_param_;
     const auto & object_id = obstacle.uuid.substr(0, 4);
 
-    if (!isStopObstacle(obstacle.classification.label)) {
-      return std::nullopt;
-    }
     const double max_lat_margin_for_stop =
       (obstacle.classification.label == ObjectClassification::UNKNOWN)
         ? sp.max_lat_margin_for_stop_against_unknown
         : sp.max_lat_margin_for_stop;
 
     // Obstacle that is not inside of trajectory
-    if (precise_lat_dist > std::max(max_lat_margin_for_stop, 1e-3)) {
-      if (!isOutsideStopObstacle(obstacle.classification.label)) {
-        return std::nullopt;
-      }
+    if (precise_lat_dist < std::max(max_lat_margin_for_stop, 1e-3)) {
+      return std::nullopt;
+    }
 
-      const auto time_to_traj = precise_lat_dist / std::max(1e-6, obstacle.approach_velocity);
-      if (time_to_traj > sp.max_lat_time_margin_for_stop) {
-        // RCLCPP_INFO_EXPRESSION(
-        //   get_logger(), enable_debug_info_,
-        //   "[Stop] Ignore outside obstacle (%s) since it's far from trajectory.",
-        //   object_id.c_str());
-        return std::nullopt;
-      }
+    if (!isOutsideStopObstacle(obstacle.classification.label)) {
+      return std::nullopt;
+    }
 
-      // brkay54: For the pedestrians and bicycles, we need to check the collision point by thinking
-      // they will stop with a predefined deceleration rate to avoid unnecessary stops.
-      double resample_time_horizon = cp.prediction_resampling_time_horizon;
-      if (obstacle.classification.label == ObjectClassification::PEDESTRIAN) {
-        resample_time_horizon =
-          std::sqrt(std::pow(obstacle.twist.linear.x, 2) + std::pow(obstacle.twist.linear.y, 2)) /
-          (2.0 * sp.pedestrian_deceleration_rate);
-      } else if (obstacle.classification.label == ObjectClassification::BICYCLE) {
-        resample_time_horizon =
-          std::sqrt(std::pow(obstacle.twist.linear.x, 2) + std::pow(obstacle.twist.linear.y, 2)) /
-          (2.0 * sp.bicycle_deceleration_rate);
-      }
+    const auto time_to_traj = precise_lat_dist / std::max(1e-6, obstacle.approach_velocity);
+    if (time_to_traj > sp.max_lat_time_margin_for_stop) {
+      // RCLCPP_INFO_EXPRESSION(
+      //   get_logger(), enable_debug_info_,
+      //   "[Stop] Ignore outside obstacle (%s) since it's far from trajectory.",
+      //   object_id.c_str());
+      return std::nullopt;
+    }
 
-      // Get the highest confidence predicted path
-      const auto resampled_predicted_paths = resampleHighestConfidencePredictedPaths(
-        obstacle.predicted_paths, cp.prediction_resampling_time_interval, resample_time_horizon,
-        sp.num_of_predicted_paths_for_outside_stop_obstacle);
-      if (resampled_predicted_paths.empty()) {
-        return std::nullopt;
-      }
+    // brkay54: For the pedestrians and bicycles, we need to check the collision point by thinking
+    // they will stop with a predefined deceleration rate to avoid unnecessary stops.
+    double resample_time_horizon = cp.prediction_resampling_time_horizon;
+    if (obstacle.classification.label == ObjectClassification::PEDESTRIAN) {
+      resample_time_horizon =
+        std::sqrt(std::pow(obstacle.twist.linear.x, 2) + std::pow(obstacle.twist.linear.y, 2)) /
+        (2.0 * sp.pedestrian_deceleration_rate);
+    } else if (obstacle.classification.label == ObjectClassification::BICYCLE) {
+      resample_time_horizon =
+        std::sqrt(std::pow(obstacle.twist.linear.x, 2) + std::pow(obstacle.twist.linear.y, 2)) /
+        (2.0 * sp.bicycle_deceleration_rate);
+    }
 
-      const auto getCollisionPoint =
-        [&]() -> std::optional<std::pair<geometry_msgs::msg::Point, double>> {
-        for (const auto & predicted_path : resampled_predicted_paths) {
-          const auto collision_point = createCollisionPointForOutsideStopObstacle(
-            odometry, traj_points, traj_polys, obstacle, predicted_path, max_lat_margin_for_stop,
-            is_driving_forward, vehicle_info);
-          if (collision_point) {
-            return collision_point;
-          }
+    // Get the highest confidence predicted path
+    const auto resampled_predicted_paths = resampleHighestConfidencePredictedPaths(
+      obstacle.predicted_paths, cp.prediction_resampling_time_interval, resample_time_horizon,
+      sp.num_of_predicted_paths_for_outside_stop_obstacle);
+    if (resampled_predicted_paths.empty()) {
+      return std::nullopt;
+    }
+
+    const auto getCollisionPoint =
+      [&]() -> std::optional<std::pair<geometry_msgs::msg::Point, double>> {
+      for (const auto & predicted_path : resampled_predicted_paths) {
+        const auto collision_point = createCollisionPointForOutsideStopObstacle(
+          odometry, traj_points, traj_polys, obstacle, predicted_path, max_lat_margin_for_stop,
+          is_driving_forward, vehicle_info);
+        if (collision_point) {
+          return collision_point;
         }
-        return std::nullopt;
-      };
-
-      const auto collision_point = getCollisionPoint();
-
-      if (collision_point) {
-        return StopObstacle{
-          obstacle.uuid,
-          obstacle.stamp,
-          obstacle.classification,
-          obstacle.pose,
-          obstacle.shape,
-          obstacle.longitudinal_velocity,
-          obstacle.approach_velocity,
-          collision_point->first,
-          collision_point->second};
       }
+      return std::nullopt;
+    };
+
+    const auto collision_point = getCollisionPoint();
+
+    if (collision_point) {
+      return StopObstacle{
+        obstacle.uuid,
+        obstacle.stamp,
+        obstacle.classification,
+        obstacle.pose,
+        obstacle.shape,
+        obstacle.longitudinal_velocity,
+        obstacle.approach_velocity,
+        collision_point->first,
+        collision_point->second};
+    }
+    return std::nullopt;
+  }
+
+  std::optional<StopObstacle> createInsideStopObstacleForPredictedObject(
+    const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
+    const Obstacle & obstacle, const double precise_lat_dist, const bool is_driving_forward,
+    const VehicleInfo & vehicle_info) const
+  {
+    const auto & sp = stop_param_;
+    const auto & object_id = obstacle.uuid.substr(0, 4);
+
+    const double max_lat_margin_for_stop =
+      (obstacle.classification.label == ObjectClassification::UNKNOWN)
+        ? sp.max_lat_margin_for_stop_against_unknown
+        : sp.max_lat_margin_for_stop;
+
+    if (precise_lat_dist >= std::max(max_lat_margin_for_stop, 1e-3)) {
       return std::nullopt;
     }
 
@@ -679,42 +711,9 @@ private:
     }
 
     // check transient obstacle or not
-    const double abs_ego_offset =
-      min_behavior_stop_margin_ + (is_driving_forward
-                                     ? std::abs(vehicle_info.max_longitudinal_offset_m)
-                                     : std::abs(vehicle_info.min_longitudinal_offset_m));
-
-    const double time_to_reach_stop_point = calcTimeToReachCollisionPoint(
-      odometry, collision_point->first, traj_points, abs_ego_offset,
-      stop_param_.min_velocity_to_reach_collision_point);
-    const bool is_transient_obstacle = [&]() {
-      if (time_to_reach_stop_point <= sp.collision_time_margin) {
-        return false;
-      }
-      // get the predicted position of the obstacle when ego reaches the collision point
-      const auto resampled_predicted_paths = resampleHighestConfidencePredictedPaths(
-        obstacle.predicted_paths, cp.prediction_resampling_time_interval,
-        cp.prediction_resampling_time_horizon, 1);
-      if (resampled_predicted_paths.empty() || resampled_predicted_paths.front().path.empty()) {
-        return false;
-      }
-      const auto future_obj_pose = autoware::object_recognition_utils::calcInterpolatedPose(
-        resampled_predicted_paths.front(), time_to_reach_stop_point - sp.collision_time_margin);
-
-      Obstacle tmp_future_obs = obstacle;
-      tmp_future_obs.pose =
-        future_obj_pose ? future_obj_pose.value() : resampled_predicted_paths.front().path.back();
-      const auto future_collision_point = polygon_utils::getCollisionPoint(
-        traj_points, traj_polys_with_lat_margin, tmp_future_obs, is_driving_forward, vehicle_info);
-
-      return !future_collision_point;
-    }();
-
-    if (is_transient_obstacle) {
-      // RCLCPP_INFO_EXPRESSION(
-      //   get_logger(), enable_debug_info_,
-      //   "[Stop] Ignore inside obstacle (%s) since it is transient obstacle.", object_id.c_str());
-      // debug_data_ptr_->intentionally_ignored_obstacles.push_back(obstacle);
+    if (is_transient_obstacle(
+          odometry, traj_points, obstacle, is_driving_forward, vehicle_info,
+          traj_polys_with_lat_margin, collision_point)) {
       return std::nullopt;
     }
 
@@ -728,6 +727,45 @@ private:
       obstacle.approach_velocity,
       collision_point->first,
       collision_point->second};
+  }
+
+  bool is_transient_obstacle(
+    const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
+    const Obstacle & obstacle, const bool is_driving_forward, const VehicleInfo & vehicle_info,
+    const std::vector<Polygon2d> & traj_polys_with_lat_margin,
+    const std::optional<std::pair<geometry_msgs::msg::Point, double>> & collision_point) const
+  {
+    const auto & cp = common_behavior_determination_param_;
+    const auto & sp = stop_param_;
+
+    const double abs_ego_offset =
+      min_behavior_stop_margin_ + (is_driving_forward
+                                     ? std::abs(vehicle_info.max_longitudinal_offset_m)
+                                     : std::abs(vehicle_info.min_longitudinal_offset_m));
+
+    const double time_to_reach_stop_point = calcTimeToReachCollisionPoint(
+      odometry, collision_point->first, traj_points, abs_ego_offset,
+      stop_param_.min_velocity_to_reach_collision_point);
+    if (time_to_reach_stop_point <= sp.collision_time_margin) {
+      return false;
+    }
+    // get the predicted position of the obstacle when ego reaches the collision point
+    const auto resampled_predicted_paths = resampleHighestConfidencePredictedPaths(
+      obstacle.predicted_paths, cp.prediction_resampling_time_interval,
+      cp.prediction_resampling_time_horizon, 1);
+    if (resampled_predicted_paths.empty() || resampled_predicted_paths.front().path.empty()) {
+      return false;
+    }
+    const auto future_obj_pose = autoware::object_recognition_utils::calcInterpolatedPose(
+      resampled_predicted_paths.front(), time_to_reach_stop_point - sp.collision_time_margin);
+
+    Obstacle tmp_future_obs = obstacle;
+    tmp_future_obs.pose =
+      future_obj_pose ? future_obj_pose.value() : resampled_predicted_paths.front().path.back();
+    const auto future_collision_point = polygon_utils::getCollisionPoint(
+      traj_points, traj_polys_with_lat_margin, tmp_future_obs, is_driving_forward, vehicle_info);
+
+    return !future_collision_point;
   }
 
   bool isInsideStopObstacle(const uint8_t label) const
