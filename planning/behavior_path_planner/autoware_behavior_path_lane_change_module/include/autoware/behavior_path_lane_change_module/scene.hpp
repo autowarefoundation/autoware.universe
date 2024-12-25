@@ -64,8 +64,6 @@ public:
 
   LaneChangePath getLaneChangePath() const override;
 
-  BehaviorModuleOutput getTerminalLaneChangePath() const override;
-
   BehaviorModuleOutput generateOutput() override;
 
   void extendOutputDrivableArea(BehaviorModuleOutput & output) const override;
@@ -131,25 +129,12 @@ protected:
 
   void filterOncomingObjects(PredictedObjects & objects) const;
 
-  bool get_prepare_segment(
-    PathWithLaneId & prepare_segment, const double prepare_length) const override;
-
-  PathWithLaneId getTargetSegment(
-    const lanelet::ConstLanelets & target_lanes, const Pose & lane_changing_start_pose,
-    const double target_lane_length, const double lane_changing_length,
-    const double lane_changing_velocity, const double buffer_for_next_lane_change) const;
-
   std::vector<LaneChangePhaseMetrics> get_prepare_metrics() const;
   std::vector<LaneChangePhaseMetrics> get_lane_changing_metrics(
     const PathWithLaneId & prep_segment, const LaneChangePhaseMetrics & prep_metrics,
     const double shift_length, const double dist_to_reg_element) const;
 
   bool get_lane_change_paths(LaneChangePaths & candidate_paths) const;
-
-  LaneChangePath get_candidate_path(
-    const LaneChangePhaseMetrics & prep_metrics, const LaneChangePhaseMetrics & lc_metrics,
-    const PathWithLaneId & prep_segment, const std::vector<std::vector<int64_t>> & sorted_lane_ids,
-    const Pose & lc_start_pose, const double shift_length) const;
 
   bool check_candidate_path_safety(
     const LaneChangePath & candidate_path, const lane_change::TargetObjects & target_objects) const;
@@ -160,16 +145,12 @@ protected:
 
   PathSafetyStatus isLaneChangePathSafe(
     const LaneChangePath & lane_change_path,
+    const std::vector<std::vector<PoseWithVelocityStamped>> & ego_predicted_paths,
     const lane_change::TargetObjects & collision_check_objects,
     const utils::path_safety_checker::RSSparams & rss_params,
-    const size_t deceleration_sampling_num, CollisionCheckDebugMap & debug_data) const;
+    CollisionCheckDebugMap & debug_data) const;
 
-  bool has_collision_with_decel_patterns(
-    const LaneChangePath & lane_change_path, const ExtendedPredictedObjects & objects,
-    const size_t deceleration_sampling_num, const RSSparams & rss_param,
-    const bool check_prepare_phase, CollisionCheckDebugMap & debug_data) const;
-
-  bool is_collided(
+  bool is_colliding(
     const LaneChangePath & lane_change_path, const ExtendedPredictedObject & obj,
     const std::vector<PoseWithVelocityStamped> & ego_predicted_path,
     const RSSparams & selected_rss_param, const bool check_prepare_phase,
@@ -178,24 +159,6 @@ protected:
   double get_max_velocity_for_safety_check() const;
 
   bool is_ego_stuck() const;
-
-  /**
-   * @brief Checks if the given pose is a valid starting point for a lane change.
-   *
-   * This function determines whether the given pose (position) of the vehicle is within
-   * the area of either the target neighbor lane or the target lane itself. It uses geometric
-   * checks to see if the start point of the lane change is covered by the polygons representing
-   * these lanes.
-   *
-   * @param common_data_ptr Shared pointer to a CommonData structure, which should include:
-   *  - Non-null `lanes_polygon_ptr` that contains the polygon data for lanes.
-   * @param pose The current pose of the vehicle
-   *
-   * @return `true` if the pose is within either the target neighbor lane or the target lane;
-   * `false` otherwise.
-   */
-  bool is_valid_start_point(
-    const lane_change::CommonDataPtr & common_data_ptr, const Pose & pose) const;
 
   bool check_prepare_phase() const;
 
@@ -214,7 +177,6 @@ protected:
 
   std::vector<PathPointWithLaneId> path_after_intersection_;
   double stop_time_{0.0};
-  static constexpr double floating_err_th{1e-3};
 };
 }  // namespace autoware::behavior_path_planner
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__SCENE_HPP_
