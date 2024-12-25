@@ -219,45 +219,54 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::preprocess(TargetMsg3D & ouput_msg
 }
 
 template <class TargetMsg3D, class Obj, class Msg2D>
+void FusionNode<TargetMsg3D, Obj, Msg2D>::exportProcess()
+{
+  timer_->cancel();
+
+  postprocess(*(cached_msg_.second));
+  publish(*(cached_msg_.second));
+
+  // add processing time for debug
+  if (debug_publisher_) {
+    const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
+    const double pipeline_latency_ms =
+      std::chrono::duration<double, std::milli>(
+        std::chrono::nanoseconds(
+          (this->get_clock()->now() - cached_msg_.second->header.stamp).nanoseconds()))
+        .count();
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/cyclic_time_ms", cyclic_time_ms);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/processing_time_ms",
+      processing_time_ms + stop_watch_ptr_->toc("processing_time", true));
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/pipeline_latency_ms", pipeline_latency_ms);
+    processing_time_ms = 0;
+  }
+
+  // reset flags
+  std::fill(is_fused_.begin(), is_fused_.end(), false);
+  cached_msg_.second = nullptr;
+}
+
+template <class TargetMsg3D, class Obj, class Msg2D>
 void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
   const typename TargetMsg3D::ConstSharedPtr input_msg)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
+  std::lock_guard<std::mutex> lock(mutex_cached_msgs_);
+
   if (cached_msg_.second != nullptr) {
     // PROCESS: if the main message is remained (and roi is not collected all) publish the main
     // message may processed partially with arrived 2d rois
     stop_watch_ptr_->toc("processing_time", true);
-    timer_->cancel();
-    postprocess(*(cached_msg_.second));
-    publish(*(cached_msg_.second));
 
-    // add processing time for debug
-    if (debug_publisher_) {
-      const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
-      const double pipeline_latency_ms =
-        std::chrono::duration<double, std::milli>(
-          std::chrono::nanoseconds(
-            (this->get_clock()->now() - cached_msg_.second->header.stamp).nanoseconds()))
-          .count();
-      debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-        "debug/cyclic_time_ms", cyclic_time_ms);
-      debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-        "debug/processing_time_ms",
-        processing_time_ms + stop_watch_ptr_->toc("processing_time", true));
-      debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-        "debug/pipeline_latency_ms", pipeline_latency_ms);
-      processing_time_ms = 0;
-    }
-
-    // reset flags
-    std::fill(is_fused_.begin(), is_fused_.end(), false);
-    cached_msg_.second = nullptr;
+    exportProcess();
   }
 
   // TIMING: reset timer to the timeout time
-  std::lock_guard<std::mutex> lock(mutex_cached_msgs_);
   auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
     std::chrono::duration<double, std::milli>(timeout_ms_));
   try {
@@ -332,31 +341,15 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
       }
     }
   }
+  cached_msg_.first = timestamp_nsec;
+  cached_msg_.second = output_msg;
 
   // PROCESS: if all camera fused, postprocess and publish the main message
   if (std::count(is_fused_.begin(), is_fused_.end(), true) == static_cast<int>(rois_number_)) {
-    timer_->cancel();
-    postprocess(*output_msg);
-    publish(*output_msg);
-
-    // add processing time for debug
-    if (debug_publisher_) {
-      const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
-      processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
-      debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-        "debug/cyclic_time_ms", cyclic_time_ms);
-      debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-        "debug/processing_time_ms", processing_time_ms);
-      processing_time_ms = 0;
-    }
-    // reset flags
-    std::fill(is_fused_.begin(), is_fused_.end(), false);
-    cached_msg_.second = nullptr;
+    exportProcess();
   } else {
     // PROCESS: if all of rois are not collected, publish the old Msg(if exists) and cache the
     // current Msg
-    cached_msg_.first = timestamp_nsec;
-    cached_msg_.second = output_msg;
     processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
   }
 }
@@ -407,24 +400,8 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::roiCallback(
 
       // PROCESS: if all camera fused, postprocess and publish the main message
       if (std::count(is_fused_.begin(), is_fused_.end(), true) == static_cast<int>(rois_number_)) {
-        timer_->cancel();
-        postprocess(*(cached_msg_.second));
-        publish(*(cached_msg_.second));
-
-        // add processing time for debug
-        if (debug_publisher_) {
-          const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
-          debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-            "debug/cyclic_time_ms", cyclic_time_ms);
-          debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-            "debug/processing_time_ms",
-            processing_time_ms + stop_watch_ptr_->toc("processing_time", true));
-          processing_time_ms = 0;
-        }
-
-        // reset flags
-        std::fill(is_fused_.begin(), is_fused_.end(), false);
-        cached_msg_.second = nullptr;
+        std::lock_guard<std::mutex> lock(mutex_cached_msgs_);
+        exportProcess();
       }
       processing_time_ms = processing_time_ms + stop_watch_ptr_->toc("processing_time", true);
       return;
@@ -453,23 +430,10 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::timer_callback()
     // PROCESS: if timeout, postprocess cached msg
     if (cached_msg_.second != nullptr) {
       stop_watch_ptr_->toc("processing_time", true);
-
-      postprocess(*(cached_msg_.second));
-      publish(*(cached_msg_.second));
-
-      // add processing time for debug
-      if (debug_publisher_) {
-        const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
-        debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-          "debug/cyclic_time_ms", cyclic_time_ms);
-        debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
-          "debug/processing_time_ms",
-          processing_time_ms + stop_watch_ptr_->toc("processing_time", true));
-        processing_time_ms = 0;
-      }
+      exportProcess();
     }
 
-    // reset flags
+    // reset flags whether the message is fused or not
     std::fill(is_fused_.begin(), is_fused_.end(), false);
     cached_msg_.second = nullptr;
 
