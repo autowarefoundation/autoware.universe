@@ -218,17 +218,6 @@ inline void plot_lanelet2_object(
   axes.add_patch(Args(poly.unwrap()));
 }
 
-/**
- * @brief plot the point by `axes.plot()`
- * @param [in] config_opt argument for plotting the point. if valid, each field is used as the
- * kwargs
- */
-/*
-void plot_lanelet2_point(
-const lanelet::ConstPoint3d & point, autoware::pyplot::Axes & axes,
-const std::optional<PointConfig> & config_opt = std::nullopt);
-*/
-
 struct DrivableAreaConfig
 {
   static DrivableAreaConfig defaults() { return {"turquoise", 1.5}; }
@@ -243,9 +232,13 @@ struct PathWithLaneIdConfig
   std::optional<std::string> color{};
   std::optional<double> linewidth{};
   std::optional<DrivableAreaConfig> da{};
-  bool lane_id{};
+  bool lane_id{};  //<! flag to plot lane_id text
 };
 
+/**
+ * @brief plot path_with_lane_id
+ * @param [in] config_opt if null, only the path points & quiver are plotted with "k" color.
+ */
 inline void plot_autoware_object(
   const tier4_planning_msgs::msg::PathWithLaneId & path, autoware::pyplot::Axes & axes,
   const std::optional<PathWithLaneIdConfig> & config_opt = std::nullopt)
@@ -284,9 +277,11 @@ inline void plot_autoware_object(
   }
   // plot centerline
   axes.plot(Args(xs, ys), kwargs);
+  const auto quiver_color =
+    config_opt ? (config_opt.value().label ? config_opt.value().label.value() : "k") : "k";
   axes.quiver(
     Args(xs, ys, yaw_cos, yaw_sin),
-    Kwargs("angles"_a = "xy", "scale_units"_a = "xy", "scale"_a = 1.0));
+    Kwargs("angles"_a = "xy", "scale_units"_a = "xy", "scale"_a = 1.0, "color"_a = quiver_color));
   if (plot_lane_id) {
     for (size_t i = 0; i < xs.size(); ++i) {
       std::stringstream ss;
