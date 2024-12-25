@@ -12,6 +12,9 @@
 
   <license>Apache License 2.0</license>
 
+  <buildtool_depend>ament_cmake_auto</buildtool_depend>
+  <buildtool_depend>autoware_cmake</buildtool_depend>
+
   <depend>ament_index_cpp</depend>
   <depend>autoware_internal_debug_msgs</depend>
   <depend>rviz_common</depend>
@@ -20,8 +23,6 @@
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>
-
-  <buildtool_depend>ament_cmake_auto</buildtool_depend>
 
   <export>
     <build_type>ament_cmake</build_type>
