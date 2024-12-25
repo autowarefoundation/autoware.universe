@@ -51,7 +51,7 @@ public:
    *
    * @param[in] src_profilers Source profilers to merge.
    */
-  Profiler(const std::vector<Profiler> & src_profilers = std::vector<Profiler>());
+  explicit Profiler(const std::vector<Profiler> & src_profilers = std::vector<Profiler>());
 
   /**
    * @brief Report layer time.

@@ -65,7 +65,9 @@ public:
    */
   explicit ConvProfiler(
     const std::vector<Profiler> & src_profilers = std::vector<tensorrt_common::Profiler>())
-  : Profiler(src_profilers) {};
+  : Profiler(src_profilers)
+  {
+  }
 
   /**
    * @brief Set per-layer profile information for model.
