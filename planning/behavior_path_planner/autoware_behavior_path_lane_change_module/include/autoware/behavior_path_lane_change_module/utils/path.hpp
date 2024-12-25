@@ -11,6 +11,8 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+#ifndef AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__PATH_HPP_
+#define AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__PATH_HPP_
 
 #include "autoware/behavior_path_lane_change_module/structs/data.hpp"
 #include "autoware/behavior_path_lane_change_module/structs/path.hpp"
@@ -104,3 +106,5 @@ std::vector<lane_change::TrajectoryGroup> generate_frenet_candidates(
 
 std::optional<LaneChangePath> get_candidate_path(const TrajectoryGroup & trajectory_group);
 }  // namespace autoware::behavior_path_planner::utils::lane_change
+
+#endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__PATH_HPP_
