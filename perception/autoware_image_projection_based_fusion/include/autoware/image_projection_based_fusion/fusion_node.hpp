@@ -118,7 +118,6 @@ protected:
   double match_threshold_ms_{};
   std::vector<std::string> input_rois_topics_;
   std::vector<std::string> input_camera_info_topics_;
-  std::vector<std::string> input_camera_topics_;
 
   /** \brief A vector of subscriber. */
   typename rclcpp::Subscription<TargetMsg3D>::SharedPtr sub_;
