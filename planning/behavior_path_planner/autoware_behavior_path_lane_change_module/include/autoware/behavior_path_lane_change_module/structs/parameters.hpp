@@ -113,6 +113,11 @@ struct SafetyParameters
   CollisionCheckParameters collision_check{};
 };
 
+struct FrenetPlannerParameters
+{
+  bool enable{true};
+};
+
 struct TrajectoryParameters
 {
   double max_prepare_duration{4.0};
@@ -127,6 +132,7 @@ struct TrajectoryParameters
   int lon_acc_sampling_num{10};
   int lat_acc_sampling_num{10};
   LateralAccelerationMap lat_acc_map{};
+  FrenetPlannerParameters frenet{};
 };
 
 struct DelayParameters

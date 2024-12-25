@@ -177,11 +177,6 @@ FrenetState init_frenet_state(
     0.0;  // TODO(Maxime): this can be sampled if we want but it would impact the LC duration
   initial_state.longitudinal_acceleration = prepare_metrics.sampled_lon_accel;
   initial_state.lateral_acceleration = prepare_metrics.lat_accel;
-  std::printf(
-    "\tInitial state [s=%2.2f, d=%2.2f, s'=%2.2f, d'=%2.2f, s''=%2.2f, d''=%2.2f], ",
-    initial_state.position.s, initial_state.position.d, initial_state.longitudinal_velocity,
-    initial_state.lateral_velocity, initial_state.longitudinal_acceleration,
-    initial_state.lateral_acceleration);
   return initial_state;
 }
 
@@ -204,7 +199,6 @@ std::optional<SamplingParameters> init_sampling_parameters(
     std::tan(initial_yaw - ref_spline.yaw(target_s));
 
   if (std::isnan(target_lat_vel)) {
-    std::cout << " Skipped (invalid target lateral velocity)\n";
     return std::nullopt;
   }
 
@@ -219,7 +213,6 @@ std::optional<SamplingParameters> init_sampling_parameters(
   sampling_parameters.parameters.back().target_state.longitudinal_velocity = final_velocity;
   sampling_parameters.parameters.back().target_state.longitudinal_acceleration =
     prepare_metrics.sampled_lon_accel;
-  std::cout << " Target : " << sampling_parameters.parameters.back() << "\n";
   return sampling_parameters;
 }
 
@@ -375,10 +368,6 @@ std::vector<lane_change::TrajectoryGroup> generate_frenet_candidates(
 {
   std::vector<lane_change::TrajectoryGroup> trajectory_groups;
   universe_utils::StopWatch<std::chrono::microseconds> sw;
-  double prepare_segment_us = 0.0;
-  double ref_spline_us = 0.0;
-  double gen_us = 0.0;
-  double ref_path_us = 0.0;
 
   const auto & transient_data = common_data_ptr->transient_data;
   const auto & target_lanes = common_data_ptr->lanes_ptr->target;
@@ -387,20 +376,16 @@ std::vector<lane_change::TrajectoryGroup> generate_frenet_candidates(
   for (const auto & metric : metrics) {
     PathWithLaneId prepare_segment;
     try {
-      sw.tic("prepare_segment");
       if (!utils::lane_change::get_prepare_segment(
             common_data_ptr, prev_module_path, metric, prepare_segment)) {
         RCLCPP_DEBUG(get_logger(), "Reject: failed to get valid prepare segment!");
         continue;
       }
-      prepare_segment_us += sw.toc("prepare_segment");
     } catch (const std::exception & e) {
       RCLCPP_WARN(get_logger(), "%s", e.what());
       break;
     }
     const auto lc_start_pose = prepare_segment.points.back().point.pose;
-    sw.tic("ref_path");  // TODO(Maxime): this is the most time consuming step. We can probably only
-                         // do it once
 
     const auto dist_to_end_from_lc_start =
       calculation::calc_dist_from_pose_to_terminal_end(
@@ -423,14 +408,16 @@ std::vector<lane_change::TrajectoryGroup> generate_frenet_candidates(
       target_ref_path_sums.push_back(ref_s);
     }
 
-    ref_path_us += sw.toc("ref_path");
-
-    sw.tic("ref_spline");
     const auto reference_spline = init_reference_spline(target_lane_reference_path.points);
-    ref_spline_us += sw.toc("ref_spline");
 
     const auto initial_state = init_frenet_state(
       reference_spline.frenet({lc_start_pose.position.x, lc_start_pose.position.y}), metric);
+
+    RCLCPP_DEBUG(
+      get_logger(), "Initial state [s=%2.2f, d=%2.2f, s'=%2.2f, d'=%2.2f, s''=%2.2f, d''=%2.2f]",
+      initial_state.position.s, initial_state.position.d, initial_state.longitudinal_velocity,
+      initial_state.lateral_velocity, initial_state.longitudinal_acceleration,
+      initial_state.lateral_acceleration);
 
     const auto sampling_parameters_opt = init_sampling_parameters(
       common_data_ptr->lc_param_ptr, metric, initial_state, reference_spline, lc_start_pose);
@@ -439,16 +426,23 @@ std::vector<lane_change::TrajectoryGroup> generate_frenet_candidates(
       continue;
     }
 
-    sw.tic("gen");
     auto frenet_trajectories = frenet_planner::generateTrajectories(
       reference_spline, initial_state, *sampling_parameters_opt);
-    gen_us += sw.toc("gen");
 
-    ranges::for_each(frenet_trajectories, [&](const auto & frenet_trajectory) {
+    for (const auto & traj : frenet_trajectories) {
+      if (!trajectory_groups.empty()) {
+        const auto diff = std::abs(
+          traj.frenet_points.back().s -
+          trajectory_groups.back().lane_changing.frenet_points.back().s);
+        if (diff < common_data_ptr->lc_param_ptr->trajectory.th_lane_changing_length_diff) {
+          continue;
+        }
+      }
+
       trajectory_groups.emplace_back(
-        prepare_segment, target_lane_reference_path, target_ref_path_sums, metric,
-        frenet_trajectory, initial_state);
-    });
+        prepare_segment, target_lane_reference_path, target_ref_path_sums, metric, traj,
+        initial_state);
+    }
   }
 
   const auto avg_curvature = [](const std::vector<double> & curvatures) {
@@ -475,11 +469,6 @@ std::vector<lane_change::TrajectoryGroup> generate_frenet_candidates(
   });
 
   utils::lane_change::filter_out_of_bound_trajectories(common_data_ptr, trajectory_groups);
-
-  std::printf(
-    "\tGenerated %lu candidates | prepare_segment %2.2fus, reference spline %2.2fus, frenet "
-    "generation %2.2fus, reference path %2.2fus\n",
-    trajectory_groups.size(), prepare_segment_us, ref_spline_us, gen_us, ref_path_us);
   return trajectory_groups;
 }
 
@@ -556,13 +545,6 @@ std::optional<LaneChangePath> get_candidate_path(const TrajectoryGroup & traject
   info.duration = {
     prepare_metric.duration, lane_changing_candidate.sampling_parameter.target_duration};
   info.length = {prepare_metric.length, lane_changing_candidate.lengths.back()};
-
-  std::printf(
-    "p: l=%2.2f, t=%2.2f, v=%2.2f, a=%2.2f | lc: l=%2.2f, t=%2.2f, v=%2.2f, a=%2.2f",
-    info.length.prepare, info.duration.prepare, info.velocity.prepare,
-    info.longitudinal_acceleration.prepare, info.length.lane_changing, info.duration.lane_changing,
-    info.velocity.lane_changing, info.longitudinal_acceleration.lane_changing);
-
   info.lane_changing_start = prepare_segment.points.back().point.pose;
   info.lane_changing_end = lane_changing_candidate.poses.back();
 
