@@ -55,10 +55,9 @@ polygon_t random_polygon()
 
 int main()
 {
-  Obstacles obstacles;
-  std::vector<polygon_t> polygons;
-
   try {
+    Obstacles obstacles;
+    std::vector<polygon_t> polygons;
     polygons.reserve(100);
     for (auto i = 0; i < 100; ++i) {
       polygons.push_back(random_polygon());
