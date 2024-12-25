@@ -107,7 +107,8 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
     circle_nms_dist_threshold, yaw_norm_thresholds, has_variance_);
   detector_ptr_ =
     std::make_unique<CenterPointTRT>(encoder_param, head_param, densification_param, config);
-  diagnostics_interface_ptr_ = std::make_unique<autoware::universe_utils::DiagnosticInterface>(this, "centerpoint_trt");
+  diagnostics_interface_ptr_ =
+    std::make_unique<autoware::universe_utils::DiagnosticInterface>(this, "centerpoint_trt");
 
   pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS{}.keep_last(1),
@@ -149,11 +150,13 @@ void LidarCenterPointNode::pointCloudCallback(
 
   std::vector<Box3D> det_boxes3d;
   bool is_num_pillars_within_range = true;
-  bool is_success = detector_ptr_->detect(*input_pointcloud_msg, tf_buffer_, det_boxes3d, is_num_pillars_within_range);
+  bool is_success = detector_ptr_->detect(
+    *input_pointcloud_msg, tf_buffer_, det_boxes3d, is_num_pillars_within_range);
   if (!is_success) {
     return;
   }
-  diagnostics_interface_ptr_->add_key_value("is_num_pillars_within_range", is_num_pillars_within_range);
+  diagnostics_interface_ptr_->add_key_value(
+    "is_num_pillars_within_range", is_num_pillars_within_range);
   if (!is_num_pillars_within_range) {
     std::stringstream message;
     message << "CenterPointTRT::detect: The actual number of pillars exceeds its maximum value, "
