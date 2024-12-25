@@ -18,6 +18,7 @@
 #include "autoware/behavior_path_lane_change_module/structs/data.hpp"
 
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 

@@ -408,7 +408,7 @@ BehaviorModuleOutput NormalLaneChange::generateOutput()
         output.path.points, output.path.points.front().point.pose.position, getEgoPosition());
       const auto stop_dist =
         -(current_velocity * current_velocity / (2.0 * planner_data_->parameters.min_acc));
-      set_stop_pose(stop_dist + current_dist, output.path);
+      set_stop_pose(stop_dist + current_dist, output.path, "incoming rear object");
     } else {
       insert_stop_point(get_target_lanes(), output.path);
     }
