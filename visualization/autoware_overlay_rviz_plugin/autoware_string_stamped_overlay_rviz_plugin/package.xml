@@ -7,15 +7,13 @@
     RViz2 plugin for 2D overlays in the 3D view. Mainly a port of the JSK overlay plugin
         (https://github.com/jsk-ros-pkg/jsk_visualization).
   </description>
-  <maintainer email="khalil@leodrive.ai">Khalil Selyan</maintainer>
+  <maintainer email="takayuki.murooka@tier4.jp">Takayuki Murooka</maintainer>
+  <maintainer email="satoshi.ota@tier4.jp">Satoshi Ota</maintainer>
 
-  <license>BSD-3-Clause</license>
+  <license>Apache License 2.0</license>
 
   <depend>ament_index_cpp</depend>
   <depend>autoware_internal_debug_msgs</depend>
-  <depend>autoware_perception_msgs</depend>
-  <depend>autoware_vehicle_msgs</depend>
-  <depend>boost</depend>
   <depend>rviz_common</depend>
   <depend>rviz_ogre_vendor</depend>
   <depend>rviz_rendering</depend>

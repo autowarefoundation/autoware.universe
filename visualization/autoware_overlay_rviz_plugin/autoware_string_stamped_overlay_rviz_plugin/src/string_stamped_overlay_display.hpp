@@ -92,10 +92,10 @@ protected:
   rviz_common::properties::IntProperty * property_left_;
   rviz_common::properties::IntProperty * property_top_;
   rviz_common::properties::IntProperty * property_value_height_offset_;
-  rviz_common::properties::FloatProperty * property_value_scale_;
   rviz_common::properties::IntProperty * property_font_size_;
   rviz_common::properties::IntProperty * property_max_letter_num_;
-  // QImage hud_;
+  rviz_common::properties::FloatProperty * property_last_diag_keep_time_;
+  rviz_common::properties::FloatProperty * property_last_diag_erase_time_;
 
 private:
   static constexpr int line_width_ = 2;
