@@ -86,38 +86,45 @@
           "properties": {
             "UNKNOWN": {
               "type": "number",
-              "default": 3
+              "default": 3,
+              "description": "Number of measurements to consider tracker as confident for unknown object classes."
             },
             "CAR": {
               "type": "number",
-              "default": 3
+              "default": 3,
+              "description": "Number of measurements to consider tracker as confident for car object classes."
             },
             "TRUCK": {
               "type": "number",
-              "default": 3
+              "default": 3,
+              "description": "Number of measurements to consider tracker as confident for truck object classes."
             },
             "BUS": {
               "type": "number",
-              "default": 3
+              "default": 3,
+              "description": "Number of measurements to consider tracker as confident for bus object classes."
             },
             "TRAILER": {
               "type": "number",
-              "default": 3
+              "default": 3,
+              "description": "Number of measurements to consider tracker as confident for trailer object classes."
             },
             "MOTORBIKE": {
               "type": "number",
-              "default": 3
+              "default": 3,
+              "description": "Number of measurements to consider tracker as confident for motorbike object classes."
             },
             "BICYCLE": {
               "type": "number",
-              "default": 3
+              "default": 3,
+              "description": "Number of measurements to consider tracker as confident for bicycle object classes."
             },
             "PEDESTRIAN": {
               "type": "number",
-              "default": 3
+              "default": 3,
+              "description": "Number of measurements to consider tracker as confident for pedestrian object classes."
             }
-          },
-          "description": "Number of measurements to consider tracker as confident for different object classes."
+          }
         },
         "publish_processing_time": {
           "type": "boolean",
