@@ -28,6 +28,7 @@
 #include <list>
 #include <memory>
 #include <string>
+#include <vector>
 
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>
@@ -68,7 +69,6 @@ FusionNode<TargetMsg3D, ObjType, Msg2D>::FusionNode(
   timeout_ms_ = declare_parameter<double>("timeout_ms");
 
   input_rois_topics_.resize(rois_number_);
-  input_camera_topics_.resize(rois_number_);
   input_camera_info_topics_.resize(rois_number_);
 
   for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
@@ -79,10 +79,6 @@ FusionNode<TargetMsg3D, ObjType, Msg2D>::FusionNode(
     input_camera_info_topics_.at(roi_i) = declare_parameter<std::string>(
       "input/camera_info" + std::to_string(roi_i),
       "/sensing/camera/camera" + std::to_string(roi_i) + "/camera_info");
-
-    input_camera_topics_.at(roi_i) = declare_parameter<std::string>(
-      "input/image" + std::to_string(roi_i),
-      "/sensing/camera/camera" + std::to_string(roi_i) + "/image_rect_color");
   }
 
   input_offset_ms_ = declare_parameter<std::vector<double>>("input_offset_ms");
@@ -155,10 +151,17 @@ FusionNode<TargetMsg3D, ObjType, Msg2D>::FusionNode(
 
   // debugger
   if (declare_parameter("debug_mode", false)) {
+    std::vector<std::string> input_camera_topics;
+    input_camera_topics.resize(rois_number_);
+    for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
+      input_camera_topics.at(roi_i) = declare_parameter<std::string>(
+        "input/image" + std::to_string(roi_i),
+        "/sensing/camera/camera" + std::to_string(roi_i) + "/image_rect_color");
+    }
     std::size_t image_buffer_size =
       static_cast<std::size_t>(declare_parameter<int32_t>("image_buffer_size"));
     debugger_ =
-      std::make_shared<Debugger>(this, rois_number_, image_buffer_size, input_camera_topics_);
+      std::make_shared<Debugger>(this, rois_number_, image_buffer_size, input_camera_topics);
   }
 
   // time keeper
