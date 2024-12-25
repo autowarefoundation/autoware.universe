@@ -88,10 +88,11 @@ IntersectionModule::IntersectionModule(
     static_occlusion_timeout_state_machine_.setState(StateMachine::State::STOP);
   }
 
-  ego_ttc_pub_ = node.create_publisher<tier4_debug_msgs::msg::Float64MultiArrayStamped>(
+  ego_ttc_pub_ = node.create_publisher<autoware_internal_debug_msgs::msg::Float64MultiArrayStamped>(
     "~/debug/intersection/ego_ttc", 1);
-  object_ttc_pub_ = node.create_publisher<tier4_debug_msgs::msg::Float64MultiArrayStamped>(
-    "~/debug/intersection/object_ttc", 1);
+  object_ttc_pub_ =
+    node.create_publisher<autoware_internal_debug_msgs::msg::Float64MultiArrayStamped>(
+      "~/debug/intersection/object_ttc", 1);
 }
 
 bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path)
@@ -231,7 +232,7 @@ DecisionResult IntersectionModule::modifyPathVelocityDetail(PathWithLaneId * pat
   // calculate the expected vehicle speed and obtain the spatiotemporal profile of ego to the
   // exit of intersection
   // ==========================================================================================
-  tier4_debug_msgs::msg::Float64MultiArrayStamped ego_ttc_time_array;
+  autoware_internal_debug_msgs::msg::Float64MultiArrayStamped ego_ttc_time_array;
   const auto time_distance_array =
     calcIntersectionPassingTime(*path, is_prioritized, intersection_stoplines, &ego_ttc_time_array);
 
@@ -240,7 +241,7 @@ DecisionResult IntersectionModule::modifyPathVelocityDetail(PathWithLaneId * pat
   // passed each pass judge line for the first time, save current collision status for late
   // diagnosis
   // ==========================================================================================
-  tier4_debug_msgs::msg::Float64MultiArrayStamped object_ttc_time_array;
+  autoware_internal_debug_msgs::msg::Float64MultiArrayStamped object_ttc_time_array;
   updateObjectInfoManagerCollision(
     path_lanelets, time_distance_array, traffic_prioritized_level, safely_passed_1st_judge_line,
     safely_passed_2nd_judge_line, &object_ttc_time_array);
