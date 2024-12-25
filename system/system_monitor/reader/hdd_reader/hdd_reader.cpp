@@ -699,7 +699,6 @@ int main(int argc, char ** argv)
 
     // Close descriptor used to write to system logger
     closelog();
-
   } catch (const std::exception & e) {
     std::cerr << "Exception in main(): " << e.what() << std::endl;
     return EXIT_FAILURE;
