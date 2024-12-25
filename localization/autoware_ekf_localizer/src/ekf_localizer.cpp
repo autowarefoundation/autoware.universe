@@ -372,7 +372,6 @@ void EKFLocalizer::publish_diagnostics(
   diag_status_array.push_back(check_set_initialpose(is_set_initialpose_));
 
   if (is_activated_ && is_set_initialpose_) {
-
     diag_status_array.push_back(check_measurement_updated(
       "pose", pose_diag_info_.no_update_count, params_.pose_no_update_count_threshold_warn,
       params_.pose_no_update_count_threshold_error));
