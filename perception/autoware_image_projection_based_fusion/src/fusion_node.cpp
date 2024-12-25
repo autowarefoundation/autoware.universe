@@ -339,10 +339,6 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
     postprocess(*output_msg);
     publish(*output_msg);
 
-    // reset flags
-    std::fill(is_fused_.begin(), is_fused_.end(), false);
-    cached_msg_.second = nullptr;
-
     // add processing time for debug
     if (debug_publisher_) {
       const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
@@ -353,6 +349,9 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
         "debug/processing_time_ms", processing_time_ms);
       processing_time_ms = 0;
     }
+    // reset flags
+    std::fill(is_fused_.begin(), is_fused_.end(), false);
+    cached_msg_.second = nullptr;
   } else {
     // PROCESS: if all of rois are not collected, publish the old Msg(if exists) and cache the
     // current Msg

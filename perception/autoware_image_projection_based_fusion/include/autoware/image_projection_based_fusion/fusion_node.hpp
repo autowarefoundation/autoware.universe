@@ -72,32 +72,27 @@ public:
     const std::string & node_name, const rclcpp::NodeOptions & options, int queue_size);
 
 protected:
+  // Common process methods
   void cameraInfoCallback(
     const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_camera_info_msg,
     const std::size_t camera_id);
-
-  virtual void preprocess(TargetMsg3D & output_msg);
-
-  // callback for Msg subscription
-  virtual void subCallback(const typename TargetMsg3D::ConstSharedPtr input_msg);
-
+  // callback for main subscription
+  void subCallback(const typename TargetMsg3D::ConstSharedPtr input_msg);
   // callback for roi subscription
-
-  virtual void roiCallback(
-    const typename Msg2D::ConstSharedPtr input_roi_msg, const std::size_t roi_i);
-
-  virtual void fuseOnSingleImage(
-    const TargetMsg3D & input_msg, const std::size_t image_id, const Msg2D & input_roi_msg,
-    TargetMsg3D & output_msg) = 0;
-
-  // set args if you need
-  virtual void postprocess(TargetMsg3D & output_msg);
-
-  virtual void publish(const TargetMsg3D & output_msg);
-
+  void roiCallback(const typename Msg2D::ConstSharedPtr input_roi_msg, const std::size_t roi_i);
+  // callback for timer
   void timer_callback();
   void setPeriod(const int64_t new_period);
 
+  // Custom process methods
+  virtual void preprocess(TargetMsg3D & output_msg);
+  virtual void fuseOnSingleImage(
+    const TargetMsg3D & input_msg, const std::size_t image_id, const Msg2D & input_roi_msg,
+    TargetMsg3D & output_msg) = 0;
+  virtual void postprocess(TargetMsg3D & output_msg);
+  virtual void publish(const TargetMsg3D & output_msg);
+
+  // Members
   std::size_t rois_number_{1};
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
