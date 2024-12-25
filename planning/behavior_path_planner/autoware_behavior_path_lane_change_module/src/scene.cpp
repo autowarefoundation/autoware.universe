@@ -455,7 +455,7 @@ BehaviorModuleOutput NormalLaneChange::generateOutput()
         output.path.points, output.path.points.front().point.pose.position, getEgoPosition());
       const auto stop_dist =
         -(current_velocity * current_velocity / (2.0 * planner_data_->parameters.min_acc));
-      set_stop_pose(stop_dist + current_dist, output.path);
+      set_stop_pose(stop_dist + current_dist, output.path, "incoming rear object");
     } else {
       insert_stop_point(get_target_lanes(), output.path);
     }
@@ -518,7 +518,7 @@ void NormalLaneChange::insert_stop_point(
   if (!is_current_lane) {
     const auto arc_length_to_stop_pose = motion_utils::calcArcLength(path.points) -
                                          common_data_ptr_->transient_data.next_dist_buffer.min;
-    set_stop_pose(arc_length_to_stop_pose, path);
+    set_stop_pose(arc_length_to_stop_pose, path, "next lc terminal");
     return;
   }
 
@@ -559,8 +559,9 @@ void NormalLaneChange::insert_stop_point_on_current_lanes(
     return std::min(dist_from_path_front + dist_to_terminal_start, dist_to_last_fit_width);
   });
 
+  const auto terminal_stop_reason = status_.is_valid_path ? "no safe path" : "no valid path";
   if (filtered_objects_.current_lane.empty()) {
-    set_stop_pose(dist_to_terminal_stop, path);
+    set_stop_pose(dist_to_terminal_stop, path, terminal_stop_reason);
     return;
   }
 
@@ -588,12 +589,12 @@ void NormalLaneChange::insert_stop_point_on_current_lanes(
   const auto stop_arc_length_behind_obj = arc_length_to_current_obj - stop_margin;
 
   if (stop_arc_length_behind_obj < dist_to_target_lane_start) {
-    set_stop_pose(dist_to_target_lane_start, path);
+    set_stop_pose(dist_to_target_lane_start, path, "maintain distance to front object");
     return;
   }
 
   if (stop_arc_length_behind_obj > dist_to_terminal_stop) {
-    set_stop_pose(dist_to_terminal_stop, path);
+    set_stop_pose(dist_to_terminal_stop, path, terminal_stop_reason);
     return;
   }
 
@@ -609,11 +610,11 @@ void NormalLaneChange::insert_stop_point_on_current_lanes(
     filtered_objects_.target_lane_leading, stop_arc_length_behind_obj, path);
 
   if (has_blocking_target_lane_obj || stop_arc_length_behind_obj <= 0.0) {
-    set_stop_pose(dist_to_terminal_stop, path);
+    set_stop_pose(dist_to_terminal_stop, path, terminal_stop_reason);
     return;
   }
 
-  set_stop_pose(stop_arc_length_behind_obj, path);
+  set_stop_pose(stop_arc_length_behind_obj, path, "maintain distance to front object");
 }
 
 PathWithLaneId NormalLaneChange::getReferencePath() const
@@ -1820,10 +1821,11 @@ bool NormalLaneChange::is_ego_stuck() const
   return has_object_blocking;
 }
 
-void NormalLaneChange::set_stop_pose(const double arc_length_to_stop_pose, PathWithLaneId & path)
+void NormalLaneChange::set_stop_pose(
+  const double arc_length_to_stop_pose, PathWithLaneId & path, const std::string & reason)
 {
   const auto stop_point = utils::insertStopPoint(arc_length_to_stop_pose, path);
-  lane_change_stop_pose_ = stop_point.point.pose;
+  lane_change_stop_pose_ = PoseWithDetailOpt(PoseWithDetail(stop_point.point.pose, reason));
 }
 
 void NormalLaneChange::updateStopTime()
