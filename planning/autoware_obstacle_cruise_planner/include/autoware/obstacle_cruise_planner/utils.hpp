@@ -34,6 +34,11 @@ struct PoseWithStamp
   geometry_msgs::msg::Pose pose;
 };
 
+std::vector<TrajectoryPoint> decimateTrajectoryPoints(
+  const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
+  const PlannerData & planner_data, const double decimate_trajectory_step_length,
+  const double extend_trajectory_length);
+
 std::vector<Polygon2d> createOneStepPolygons(
   const std::vector<TrajectoryPoint> & traj_points,
   const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,

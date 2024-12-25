@@ -97,55 +97,6 @@ std::pair<double, double> calculateObstacleVelocitiesRelativeToTrajectory(
   return std::make_pair(projected_velocity[0], sign * projected_velocity[1]);
 }
 
-TrajectoryPoint getExtendTrajectoryPoint(
-  const double extend_distance, const TrajectoryPoint & goal_point, const bool is_driving_forward)
-{
-  TrajectoryPoint extend_trajectory_point;
-  extend_trajectory_point.pose = autoware::universe_utils::calcOffsetPose(
-    goal_point.pose, extend_distance * (is_driving_forward ? 1.0 : -1.0), 0.0, 0.0);
-  extend_trajectory_point.longitudinal_velocity_mps = goal_point.longitudinal_velocity_mps;
-  extend_trajectory_point.lateral_velocity_mps = goal_point.lateral_velocity_mps;
-  extend_trajectory_point.acceleration_mps2 = goal_point.acceleration_mps2;
-  return extend_trajectory_point;
-}
-
-std::vector<TrajectoryPoint> extendTrajectoryPoints(
-  const std::vector<TrajectoryPoint> & input_points, const double extend_distance,
-  const double step_length)
-{
-  auto output_points = input_points;
-  const auto is_driving_forward_opt =
-    autoware::motion_utils::isDrivingForwardWithTwist(input_points);
-  const bool is_driving_forward = is_driving_forward_opt ? *is_driving_forward_opt : true;
-
-  if (extend_distance < std::numeric_limits<double>::epsilon()) {
-    return output_points;
-  }
-
-  const auto goal_point = input_points.back();
-
-  double extend_sum = 0.0;
-  while (extend_sum <= (extend_distance - step_length)) {
-    const auto extend_trajectory_point =
-      getExtendTrajectoryPoint(extend_sum, goal_point, is_driving_forward);
-    output_points.push_back(extend_trajectory_point);
-    extend_sum += step_length;
-  }
-  const auto extend_trajectory_point =
-    getExtendTrajectoryPoint(extend_distance, goal_point, is_driving_forward);
-  output_points.push_back(extend_trajectory_point);
-
-  return output_points;
-}
-
-std::vector<TrajectoryPoint> resampleTrajectoryPoints2(
-  const std::vector<TrajectoryPoint> & traj_points, const double interval)
-{
-  const auto traj = autoware::motion_utils::convertToTrajectory(traj_points);
-  const auto resampled_traj = autoware::motion_utils::resampleTrajectory(traj, interval);
-  return autoware::motion_utils::convertToTrajectoryPointArray(resampled_traj);
-}
-
 geometry_msgs::msg::Point toGeomPoint2(const pcl::PointXYZ & point)
 {
   geometry_msgs::msg::Point geom_point;
@@ -312,7 +263,10 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
   const auto planner_data = createPlannerData(ego_odom, acc, traj_points);
 
   // calculated decimated trajectory points and trajectory polygon
-  const auto decimated_traj_points = decimateTrajectoryPoints(ego_odom, traj_points, planner_data);
+  const auto decimated_traj_points = obstacle_cruise_utils::decimateTrajectoryPoints(
+    ego_odom, traj_points, planner_data,
+    common_behavior_determination_param_.decimate_trajectory_step_length,
+    obstacle_stop_module_->getSafeDistanceMargin());
   const auto decimated_traj_polys = obstacle_cruise_utils::createOneStepPolygons(
     decimated_traj_points, planner_data.vehicle_info, ego_odom.pose.pose, 0.0,
     common_behavior_determination_param_);
@@ -323,13 +277,13 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
 
   // stop
   const auto stop_traj_points = obstacle_stop_module_->plan(
-    *objects_ptr, decimated_traj_points, decimated_traj_polys, target_obstacles,
-    common_behavior_determination_param_, planner_data);
+    *objects_ptr, traj_points, target_obstacles, common_behavior_determination_param_,
+    planner_data);
 
   // cruise
   const auto cruise_traj_points = obstacle_cruise_module_->plan(
-    decimated_traj_points, decimated_traj_polys, target_obstacles,
-    common_behavior_determination_param_, planner_data, stop_traj_points);
+    traj_points, target_obstacles, common_behavior_determination_param_, planner_data,
+    stop_traj_points);
 
   // slow down
   const auto slow_down_traj_points = obstacle_slow_down_module_->plan(
@@ -439,8 +393,10 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
       }
     }
 
-    const auto decimated_traj_points =
-      decimateTrajectoryPoints(odometry, traj_points, planner_data);
+    const auto decimated_traj_points = obstacle_cruise_utils::decimateTrajectoryPoints(
+      odometry, traj_points, planner_data,
+      common_behavior_determination_param_.decimate_trajectory_step_length,
+      obstacle_stop_module_->getSafeDistanceMargin());
     const auto decimated_traj_polys = obstacle_cruise_utils::createOneStepPolygons(
       decimated_traj_points, vehicle_info_, odometry.pose.pose, 0.0,
       common_behavior_determination_param_);
@@ -654,32 +610,6 @@ ObstacleCruisePlannerNode::determineEgoBehaviorAgainstPointCloudObstacles(
   return {stop_obstacles, {}, slow_down_obstacles};
 }
 */
-
-std::vector<TrajectoryPoint> ObstacleCruisePlannerNode::decimateTrajectoryPoints(
-  const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
-  const PlannerData & planner_data) const
-{
-  const auto & p = common_behavior_determination_param_;
-
-  // trim trajectory
-  const size_t ego_seg_idx = planner_data.findSegmentIndex(traj_points, odometry.pose.pose);
-  const size_t traj_start_point_idx = ego_seg_idx;
-  const auto trimmed_traj_points =
-    std::vector<TrajectoryPoint>(traj_points.begin() + traj_start_point_idx, traj_points.end());
-
-  // decimate trajectory
-  const auto decimated_traj_points =
-    resampleTrajectoryPoints2(trimmed_traj_points, p.decimate_trajectory_step_length);
-
-  // extend trajectory
-  const auto extended_traj_points = extendTrajectoryPoints(
-    decimated_traj_points, obstacle_stop_module_->getSafeDistanceMargin(),
-    p.decimate_trajectory_step_length);
-  if (extended_traj_points.size() < 2) {
-    return traj_points;
-  }
-  return extended_traj_points;
-}
 
 /*
 std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacleForPointCloud(

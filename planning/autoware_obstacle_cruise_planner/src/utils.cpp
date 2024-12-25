@@ -14,6 +14,7 @@
 
 #include "autoware/obstacle_cruise_planner/utils.hpp"
 
+#include "autoware/motion_utils/resample/resample.hpp"
 #include "autoware/object_recognition_utils/predicted_path_utils.hpp"
 #include "autoware/universe_utils/ros/marker_helper.hpp"
 
@@ -60,7 +61,81 @@ std::optional<geometry_msgs::msg::Pose> getCurrentObjectPoseFromPredictedPaths(
 
   return getCurrentObjectPoseFromPredictedPath(*predicted_path, obj_base_time, current_time);
 }
+
+TrajectoryPoint getExtendTrajectoryPoint(
+  const double extend_distance, const TrajectoryPoint & goal_point, const bool is_driving_forward)
+{
+  TrajectoryPoint extend_trajectory_point;
+  extend_trajectory_point.pose = autoware::universe_utils::calcOffsetPose(
+    goal_point.pose, extend_distance * (is_driving_forward ? 1.0 : -1.0), 0.0, 0.0);
+  extend_trajectory_point.longitudinal_velocity_mps = goal_point.longitudinal_velocity_mps;
+  extend_trajectory_point.lateral_velocity_mps = goal_point.lateral_velocity_mps;
+  extend_trajectory_point.acceleration_mps2 = goal_point.acceleration_mps2;
+  return extend_trajectory_point;
+}
+
+std::vector<TrajectoryPoint> extendTrajectoryPoints(
+  const std::vector<TrajectoryPoint> & input_points, const double extend_distance,
+  const double step_length)
+{
+  auto output_points = input_points;
+  const auto is_driving_forward_opt =
+    autoware::motion_utils::isDrivingForwardWithTwist(input_points);
+  const bool is_driving_forward = is_driving_forward_opt ? *is_driving_forward_opt : true;
+
+  if (extend_distance < std::numeric_limits<double>::epsilon()) {
+    return output_points;
+  }
+
+  const auto goal_point = input_points.back();
+
+  double extend_sum = 0.0;
+  while (extend_sum <= (extend_distance - step_length)) {
+    const auto extend_trajectory_point =
+      getExtendTrajectoryPoint(extend_sum, goal_point, is_driving_forward);
+    output_points.push_back(extend_trajectory_point);
+    extend_sum += step_length;
+  }
+  const auto extend_trajectory_point =
+    getExtendTrajectoryPoint(extend_distance, goal_point, is_driving_forward);
+  output_points.push_back(extend_trajectory_point);
+
+  return output_points;
+}
+
+std::vector<TrajectoryPoint> resampleTrajectoryPoints(
+  const std::vector<TrajectoryPoint> & traj_points, const double interval)
+{
+  const auto traj = autoware::motion_utils::convertToTrajectory(traj_points);
+  const auto resampled_traj = autoware::motion_utils::resampleTrajectory(traj, interval);
+  return autoware::motion_utils::convertToTrajectoryPointArray(resampled_traj);
+}
+
 }  // namespace
+
+std::vector<TrajectoryPoint> decimateTrajectoryPoints(
+  const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
+  const PlannerData & planner_data, const double decimate_trajectory_step_length,
+  const double extend_trajectory_length)
+{
+  // trim trajectory
+  const size_t ego_seg_idx = planner_data.findSegmentIndex(traj_points, odometry.pose.pose);
+  const size_t traj_start_point_idx = ego_seg_idx;
+  const auto trimmed_traj_points =
+    std::vector<TrajectoryPoint>(traj_points.begin() + traj_start_point_idx, traj_points.end());
+
+  // decimate trajectory
+  const auto decimated_traj_points =
+    resampleTrajectoryPoints(trimmed_traj_points, decimate_trajectory_step_length);
+
+  // extend trajectory
+  const auto extended_traj_points = extendTrajectoryPoints(
+    decimated_traj_points, extend_trajectory_length, decimate_trajectory_step_length);
+  if (extended_traj_points.size() < 2) {
+    return traj_points;
+  }
+  return extended_traj_points;
+}
 
 std::vector<Polygon2d> createOneStepPolygons(
   const std::vector<TrajectoryPoint> & traj_points,

@@ -285,12 +285,15 @@ public:
   }
 
   std::vector<TrajectoryPoint> plan(
-    const std::vector<TrajectoryPoint> & decimated_traj_points,
-    const std::vector<Obstacle> & obstacles,
+    const std::vector<TrajectoryPoint> & base_traj_points, const std::vector<Obstacle> & obstacles,
     const CommonBehaviorDeterminationParam & common_behavior_determination_param,
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & cruise_traj_points)
   {
     common_behavior_determination_param_ = common_behavior_determination_param;
+
+    const auto decimated_traj_points = obstacle_cruise_utils::decimateTrajectoryPoints(
+      planner_data.current_odometry, base_traj_points, planner_data,
+      common_behavior_determination_param_.decimate_trajectory_step_length, 0.0);
 
     const auto slow_down_obstacles = determineEgoBehaviorAgainstPredictedObjectObstacles(
       planner_data.current_odometry, decimated_traj_points, obstacles, planner_data.vehicle_info);
