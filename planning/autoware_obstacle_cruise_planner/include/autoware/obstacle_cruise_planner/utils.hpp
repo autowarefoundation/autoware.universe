@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__OBSTACLE_CRUISE_PLANNER__STOP__UTILS_HPP_
-#define AUTOWARE__OBSTACLE_CRUISE_PLANNER__STOP__UTILS_HPP_
+#ifndef AUTOWARE__OBSTACLE_CRUISE_PLANNER__UTILS_HPP_
+#define AUTOWARE__OBSTACLE_CRUISE_PLANNER__UTILS_HPP_
 
-#include "autoware/obstacle_cruise_planner/stop/common_structs.hpp"
+#include "autoware/obstacle_cruise_planner/common_structs.hpp"
 #include "autoware/obstacle_cruise_planner/stop/type_alias.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
 
@@ -127,4 +127,4 @@ VelocityFactorArray makeVelocityFactorArray(
   const std::optional<geometry_msgs::msg::Pose> pose = std::nullopt);
 }  // namespace obstacle_cruise_utils
 
-#endif  // AUTOWARE__OBSTACLE_CRUISE_PLANNER__STOP__UTILS_HPP_
+#endif  // AUTOWARE__OBSTACLE_CRUISE_PLANNER__UTILS_HPP_

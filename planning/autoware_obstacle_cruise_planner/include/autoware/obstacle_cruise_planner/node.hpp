@@ -15,9 +15,9 @@
 #ifndef AUTOWARE__OBSTACLE_CRUISE_PLANNER__NODE_HPP_
 #define AUTOWARE__OBSTACLE_CRUISE_PLANNER__NODE_HPP_
 
+#include "autoware/obstacle_cruise_planner/common_structs.hpp"
 #include "autoware/obstacle_cruise_planner/cruise/obstacle_cruise_module.hpp"
 #include "autoware/obstacle_cruise_planner/slow_down/obstacle_slow_down_module.hpp"
-#include "autoware/obstacle_cruise_planner/stop/common_structs.hpp"
 #include "autoware/obstacle_cruise_planner/stop/obstacle_stop_module.hpp"
 #include "autoware/obstacle_cruise_planner/stop/type_alias.hpp"
 #include "autoware/signal_processing/lowpass_filter_1d.hpp"

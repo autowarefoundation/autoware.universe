@@ -16,7 +16,7 @@
 
 #include "autoware/interpolation/spline_interpolation.hpp"
 #include "autoware/motion_utils/marker/marker_helper.hpp"
-#include "autoware/obstacle_cruise_planner/stop/utils.hpp"
+#include "autoware/obstacle_cruise_planner/utils.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware/universe_utils/ros/marker_helper.hpp"
 #include "autoware/universe_utils/ros/update_param.hpp"
