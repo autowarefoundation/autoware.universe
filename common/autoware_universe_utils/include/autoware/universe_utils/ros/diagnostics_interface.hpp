@@ -32,6 +32,8 @@ public:
   void add_key_value(const diagnostic_msgs::msg::KeyValue & key_value_msg);
   template <typename T>
   void add_key_value(const std::string & key, const T & value);
+  void add_key_value(const std::string & key, const std::string & value);
+  void add_key_value(const std::string & key, bool value);
   void update_level_and_message(const int8_t level, const std::string & message);
   void publish(const rclcpp::Time & publish_time_stamp);
 
@@ -53,11 +55,6 @@ void DiagnosticInterface::add_key_value(const std::string & key, const T & value
   key_value.value = std::to_string(value);
   add_key_value(key_value);
 }
-
-template <>
-void DiagnosticInterface::add_key_value(const std::string & key, const std::string & value);
-template <>
-void DiagnosticInterface::add_key_value(const std::string & key, const bool & value);
 
 }  // namespace autoware::universe_utils
 

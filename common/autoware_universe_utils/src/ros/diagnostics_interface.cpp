@@ -56,7 +56,6 @@ void DiagnosticInterface::add_key_value(const diagnostic_msgs::msg::KeyValue & k
   }
 }
 
-template <>
 void DiagnosticInterface::add_key_value(const std::string & key, const std::string & value)
 {
   diagnostic_msgs::msg::KeyValue key_value;
@@ -65,8 +64,7 @@ void DiagnosticInterface::add_key_value(const std::string & key, const std::stri
   add_key_value(key_value);
 }
 
-template <>
-void DiagnosticInterface::add_key_value(const std::string & key, const bool & value)
+void DiagnosticInterface::add_key_value(const std::string & key, bool value)
 {
   diagnostic_msgs::msg::KeyValue key_value;
   key_value.key = key;
