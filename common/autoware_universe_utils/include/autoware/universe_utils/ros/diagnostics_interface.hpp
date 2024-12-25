@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__LOCALIZATION_UTIL__DIAGNOSTICS_MODULE_HPP_
-#define AUTOWARE__LOCALIZATION_UTIL__DIAGNOSTICS_MODULE_HPP_
+#ifndef AUTOWARE__UNIVERSE_UTILS__ROS__DIAGNOSTICS_INTERFACE_HPP_
+#define AUTOWARE__UNIVERSE_UTILS__ROS__DIAGNOSTICS_INTERFACE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -22,16 +22,18 @@
 #include <string>
 #include <vector>
 
-namespace autoware::localization_util
+namespace autoware::universe_utils
 {
-class DiagnosticsModule
+class DiagnosticInterface
 {
 public:
-  DiagnosticsModule(rclcpp::Node * node, const std::string & diagnostic_name);
+  DiagnosticInterface(rclcpp::Node * node, const std::string & diagnostic_name);
   void clear();
   void add_key_value(const diagnostic_msgs::msg::KeyValue & key_value_msg);
   template <typename T>
   void add_key_value(const std::string & key, const T & value);
+  void add_key_value(const std::string & key, const std::string & value);
+  void add_key_value(const std::string & key, bool value);
   void update_level_and_message(const int8_t level, const std::string & message);
   void publish(const rclcpp::Time & publish_time_stamp);
 
@@ -46,7 +48,7 @@ private:
 };
 
 template <typename T>
-void DiagnosticsModule::add_key_value(const std::string & key, const T & value)
+void DiagnosticInterface::add_key_value(const std::string & key, const T & value)
 {
   diagnostic_msgs::msg::KeyValue key_value;
   key_value.key = key;
@@ -54,11 +56,6 @@ void DiagnosticsModule::add_key_value(const std::string & key, const T & value)
   add_key_value(key_value);
 }
 
-template <>
-void DiagnosticsModule::add_key_value(const std::string & key, const std::string & value);
-template <>
-void DiagnosticsModule::add_key_value(const std::string & key, const bool & value);
+}  // namespace autoware::universe_utils
 
-}  // namespace autoware::localization_util
-
-#endif  // AUTOWARE__LOCALIZATION_UTIL__DIAGNOSTICS_MODULE_HPP_
+#endif  // AUTOWARE__UNIVERSE_UTILS__ROS__DIAGNOSTICS_INTERFACE_HPP_

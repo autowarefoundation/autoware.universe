@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/localization_util/diagnostics_module.hpp"
+#include "autoware/universe_utils/ros/diagnostics_interface.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -21,9 +21,9 @@
 #include <algorithm>
 #include <string>
 
-namespace autoware::localization_util
+namespace autoware::universe_utils
 {
-DiagnosticsModule::DiagnosticsModule(rclcpp::Node * node, const std::string & diagnostic_name)
+DiagnosticInterface::DiagnosticInterface(rclcpp::Node * node, const std::string & diagnostic_name)
 : clock_(node->get_clock())
 {
   diagnostics_pub_ =
@@ -34,7 +34,7 @@ DiagnosticsModule::DiagnosticsModule(rclcpp::Node * node, const std::string & di
   diagnostics_status_msg_.hardware_id = node->get_name();
 }
 
-void DiagnosticsModule::clear()
+void DiagnosticInterface::clear()
 {
   diagnostics_status_msg_.values.clear();
   diagnostics_status_msg_.values.shrink_to_fit();
@@ -43,7 +43,7 @@ void DiagnosticsModule::clear()
   diagnostics_status_msg_.message = "";
 }
 
-void DiagnosticsModule::add_key_value(const diagnostic_msgs::msg::KeyValue & key_value_msg)
+void DiagnosticInterface::add_key_value(const diagnostic_msgs::msg::KeyValue & key_value_msg)
 {
   auto it = std::find_if(
     std::begin(diagnostics_status_msg_.values), std::end(diagnostics_status_msg_.values),
@@ -56,8 +56,7 @@ void DiagnosticsModule::add_key_value(const diagnostic_msgs::msg::KeyValue & key
   }
 }
 
-template <>
-void DiagnosticsModule::add_key_value(const std::string & key, const std::string & value)
+void DiagnosticInterface::add_key_value(const std::string & key, const std::string & value)
 {
   diagnostic_msgs::msg::KeyValue key_value;
   key_value.key = key;
@@ -65,8 +64,7 @@ void DiagnosticsModule::add_key_value(const std::string & key, const std::string
   add_key_value(key_value);
 }
 
-template <>
-void DiagnosticsModule::add_key_value(const std::string & key, const bool & value)
+void DiagnosticInterface::add_key_value(const std::string & key, bool value)
 {
   diagnostic_msgs::msg::KeyValue key_value;
   key_value.key = key;
@@ -74,7 +72,7 @@ void DiagnosticsModule::add_key_value(const std::string & key, const bool & valu
   add_key_value(key_value);
 }
 
-void DiagnosticsModule::update_level_and_message(const int8_t level, const std::string & message)
+void DiagnosticInterface::update_level_and_message(const int8_t level, const std::string & message)
 {
   if ((level > diagnostic_msgs::msg::DiagnosticStatus::OK)) {
     if (!diagnostics_status_msg_.message.empty()) {
@@ -87,12 +85,12 @@ void DiagnosticsModule::update_level_and_message(const int8_t level, const std::
   }
 }
 
-void DiagnosticsModule::publish(const rclcpp::Time & publish_time_stamp)
+void DiagnosticInterface::publish(const rclcpp::Time & publish_time_stamp)
 {
   diagnostics_pub_->publish(create_diagnostics_array(publish_time_stamp));
 }
 
-diagnostic_msgs::msg::DiagnosticArray DiagnosticsModule::create_diagnostics_array(
+diagnostic_msgs::msg::DiagnosticArray DiagnosticInterface::create_diagnostics_array(
   const rclcpp::Time & publish_time_stamp) const
 {
   diagnostic_msgs::msg::DiagnosticArray diagnostics_msg;
@@ -105,4 +103,4 @@ diagnostic_msgs::msg::DiagnosticArray DiagnosticsModule::create_diagnostics_arra
 
   return diagnostics_msg;
 }
-}  // namespace autoware::localization_util
+}  // namespace autoware::universe_utils
