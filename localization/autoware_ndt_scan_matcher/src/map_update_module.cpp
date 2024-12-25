@@ -86,7 +86,8 @@ void MapUpdateModule::callback_timer(
 }
 
 bool MapUpdateModule::should_update_map(
-  const geometry_msgs::msg::Point & position, std::unique_ptr<DiagnosticInterface> & diagnostics_ptr)
+  const geometry_msgs::msg::Point & position,
+  std::unique_ptr<DiagnosticInterface> & diagnostics_ptr)
 {
   last_update_position_mtx_.lock();
 
@@ -141,7 +142,8 @@ bool MapUpdateModule::out_of_map_range(const geometry_msgs::msg::Point & positio
 }
 
 void MapUpdateModule::update_map(
-  const geometry_msgs::msg::Point & position, std::unique_ptr<DiagnosticInterface> & diagnostics_ptr)
+  const geometry_msgs::msg::Point & position,
+  std::unique_ptr<DiagnosticInterface> & diagnostics_ptr)
 {
   diagnostics_ptr->add_key_value("is_need_rebuild", need_rebuild_);
 

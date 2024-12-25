@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__UNIVERSE_UTILS__ROS__DIAGNOSTICS_MODULE_HPP_
-#define AUTOWARE__UNIVERSE_UTILS__ROS__DIAGNOSTICS_MODULE_HPP_
+#ifndef AUTOWARE__UNIVERSE_UTILS__ROS__DIAGNOSTICS_INTERFACE_HPP_
+#define AUTOWARE__UNIVERSE_UTILS__ROS__DIAGNOSTICS_INTERFACE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -61,4 +61,4 @@ void DiagnosticInterface::add_key_value(const std::string & key, const bool & va
 
 }  // namespace autoware::universe_utils
 
-#endif  // AUTOWARE__UNIVERSE_UTILS__ROS__DIAGNOSTICS_MODULE_HPP_
+#endif  // AUTOWARE__UNIVERSE_UTILS__ROS__DIAGNOSTICS_INTERFACE_HPP_
