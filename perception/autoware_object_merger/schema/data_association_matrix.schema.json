@@ -38,7 +38,12 @@
             "minimum": 0.0
           },
           "description": "Minimum IoU threshold matrix for data association. If value is negative, it will be ignored.",
-          "default": []
+          "default": [
+            0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.3, 0.2, 0.2, 0.2, 0.1, 0.1, 0.1, 0.1,
+            0.2, 0.3, 0.3, 0.3, 0.1, 0.1, 0.1, 0.1, 0.2, 0.3, 0.3, 0.3, 0.1, 0.1, 0.1, 0.1, 0.2,
+            0.3, 0.3, 0.3, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1,
+            0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1, 0.1
+          ],
         }
       },
       "required": ["can_assign_matrix", "max_dist_matrix", "max_rad_matrix", "min_iou_matrix"],
