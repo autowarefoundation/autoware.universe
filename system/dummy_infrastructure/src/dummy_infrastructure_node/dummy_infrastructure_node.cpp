@@ -24,7 +24,6 @@ using namespace std::literals;
 using std::chrono::duration;
 using std::chrono::duration_cast;
 using std::chrono::nanoseconds;
-using std::placeholders::_1;
 
 namespace dummy_infrastructure
 {
@@ -84,6 +83,7 @@ boost::optional<InfrastructureCommandArray> findCommand(
 DummyInfrastructureNode::DummyInfrastructureNode(const rclcpp::NodeOptions & node_options)
 : Node("dummy_infrastructure", node_options)
 {
+  using std::placeholders::_1;
   // Parameter Server
   set_param_res_ =
     this->add_on_set_parameters_callback(std::bind(&DummyInfrastructureNode::onSetParam, this, _1));
