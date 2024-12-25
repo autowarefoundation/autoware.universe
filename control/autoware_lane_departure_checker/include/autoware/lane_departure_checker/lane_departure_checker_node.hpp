@@ -31,7 +31,7 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
-#include <tier4_debug_msgs/msg/float64_stamped.hpp>
+#include <autoware_internal_debug_msgs/msg/float64_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
@@ -115,7 +115,7 @@ private:
   autoware::universe_utils::DebugPublisher debug_publisher_{this, "~/debug"};
   autoware::universe_utils::ProcessingTimePublisher processing_diag_publisher_{
     this, "~/debug/processing_time_ms_diag"};
-  rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr processing_time_publisher_;
+  rclcpp::Publisher<autoware_internal_debug_msgs::msg::Float64Stamped>::SharedPtr processing_time_publisher_;
 
   // Timer
   rclcpp::TimerBase::SharedPtr timer_;
