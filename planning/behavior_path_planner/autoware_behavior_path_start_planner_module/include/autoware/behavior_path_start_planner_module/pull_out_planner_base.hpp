@@ -41,11 +41,11 @@ public:
   explicit PullOutPlannerBase(
     rclcpp::Node & node, const StartPlannerParameters & parameters,
     std::shared_ptr<universe_utils::TimeKeeper> time_keeper)
-  : time_keeper_(time_keeper)
+  : vehicle_info_{autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo()},
+    vehicle_footprint_{vehicle_info_.createFootprint()},
+    parameters_{parameters},
+    time_keeper_(time_keeper)
   {
-    vehicle_info_ = autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo();
-    vehicle_footprint_ = vehicle_info_.createFootprint();
-    parameters_ = parameters;
   }
   virtual ~PullOutPlannerBase() = default;
 
