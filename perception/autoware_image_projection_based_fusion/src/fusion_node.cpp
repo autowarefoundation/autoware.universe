@@ -83,12 +83,7 @@ FusionNode<TargetMsg3D, ObjType, Msg2D>::FusionNode(
       "/sensing/camera/camera" + std::to_string(roi_i) + "/camera_info");
   }
 
-  input_offset_ms_ = declare_parameter<std::vector<double>>("input_offset_ms");
-  if (!input_offset_ms_.empty() && rois_number_ > input_offset_ms_.size()) {
-    throw std::runtime_error("The number of offsets does not match the number of topics.");
-  }
-
-  // sub camera info
+  // subscribe camera info
   camera_info_subs_.resize(rois_number_);
   for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
     std::function<void(const sensor_msgs::msg::CameraInfo::ConstSharedPtr msg)> fnc =
@@ -97,10 +92,8 @@ FusionNode<TargetMsg3D, ObjType, Msg2D>::FusionNode(
       input_camera_info_topics.at(roi_i), rclcpp::QoS{1}.best_effort(), fnc);
   }
 
-  // sub rois
+  // subscribe rois
   rois_subs_.resize(rois_number_);
-  cached_det2d_msgs_.resize(rois_number_);
-  is_fused_.resize(rois_number_, false);
   for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
     std::function<void(const typename Msg2D::ConstSharedPtr msg)> roi_callback =
       std::bind(&FusionNode::roiCallback, this, std::placeholders::_1, roi_i);
@@ -108,7 +101,7 @@ FusionNode<TargetMsg3D, ObjType, Msg2D>::FusionNode(
       input_rois_topics.at(roi_i), rclcpp::QoS{1}.best_effort(), roi_callback);
   }
 
-  // subscribers
+  // subscribe 3d detection
   std::function<void(const typename TargetMsg3D::ConstSharedPtr msg)> sub_callback =
     std::bind(&FusionNode::subCallback, this, std::placeholders::_1);
   sub_ =
@@ -123,8 +116,11 @@ FusionNode<TargetMsg3D, ObjType, Msg2D>::FusionNode(
   timer_ = rclcpp::create_timer(
     this, get_clock(), period_ns, std::bind(&FusionNode::timer_callback, this));
 
-  // camera manager initialization
-  det2d_list_.resize(rois_number_);
+  // camera offset settings
+  std::vector<double> input_offset_ms = declare_parameter<std::vector<double>>("input_offset_ms");
+  if (!input_offset_ms.empty() && rois_number_ > input_offset_ms.size()) {
+    throw std::runtime_error("The number of offsets does not match the number of topics.");
+  }
 
   // camera projection settings
   std::vector<bool> point_project_to_unrectified_image =
@@ -150,15 +146,18 @@ FusionNode<TargetMsg3D, ObjType, Msg2D>::FusionNode(
       }
     }
   }
+  approx_grid_cell_w_size_ = declare_parameter<float>("approximation_grid_cell_width");
+  approx_grid_cell_h_size_ = declare_parameter<float>("approximation_grid_cell_height");
+
+  // camera manager initialization
+  det2d_list_.resize(rois_number_);
   for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
     det2d_list_.at(roi_i).id = roi_i;
     det2d_list_.at(roi_i).project_to_unrectified_image =
       point_project_to_unrectified_image.at(roi_i);
     det2d_list_.at(roi_i).approximate_camera_projection = approx_camera_projection.at(roi_i);
+    det2d_list_.at(roi_i).input_offset_ms = input_offset_ms.at(roi_i);
   }
-
-  approx_grid_cell_w_size_ = declare_parameter<float>("approximation_grid_cell_width");
-  approx_grid_cell_h_size_ = declare_parameter<float>("approximation_grid_cell_height");
 
   // debugger
   if (declare_parameter("debug_mode", false)) {
@@ -231,8 +230,8 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::exportProcess()
 {
   timer_->cancel();
 
-  postprocess(*(cached_msg_.second));
-  publish(*(cached_msg_.second));
+  postprocess(*(cached_det3d_msg_ptr_));
+  publish(*(cached_det3d_msg_ptr_));
 
   // add processing time for debug
   if (debug_publisher_) {
@@ -240,7 +239,7 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::exportProcess()
     const double pipeline_latency_ms =
       std::chrono::duration<double, std::milli>(
         std::chrono::nanoseconds(
-          (this->get_clock()->now() - cached_msg_.second->header.stamp).nanoseconds()))
+          (this->get_clock()->now() - cached_det3d_msg_ptr_->header.stamp).nanoseconds()))
         .count();
     debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
       "debug/cyclic_time_ms", cyclic_time_ms);
@@ -256,19 +255,19 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::exportProcess()
   for (auto & det_2d : det2d_list_) {
     det_2d.is_fused = false;
   }
-  cached_msg_.second = nullptr;
+  cached_det3d_msg_ptr_ = nullptr;
 }
 
 template <class TargetMsg3D, class Obj, class Msg2D>
 void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
-  const typename TargetMsg3D::ConstSharedPtr input_msg)
+  const typename TargetMsg3D::ConstSharedPtr det3d_msg)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
   std::lock_guard<std::mutex> lock(mutex_cached_msgs_);
 
-  if (cached_msg_.second != nullptr) {
+  if (cached_det3d_msg_ptr_ != nullptr) {
     // PROCESS: if the main message is remained (and roi is not collected all) publish the main
     // message may processed partially with arrived 2d rois
     stop_watch_ptr_->toc("processing_time", true);
@@ -289,7 +288,7 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
   stop_watch_ptr_->toc("processing_time", true);
 
   // PROCESS: preprocess the main message
-  typename TargetMsg3D::SharedPtr output_msg = std::make_shared<TargetMsg3D>(*input_msg);
+  typename TargetMsg3D::SharedPtr output_msg = std::make_shared<TargetMsg3D>(*det3d_msg);
   preprocess(*output_msg);
 
   // PROCESS: fuse the main message with the cached roi messages
@@ -338,7 +337,7 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
         debugger_->clear();
       }
 
-      fuseOnSingleImage(*input_msg, roi_i, *(roi_msgs[matched_stamp]), *output_msg);
+      fuseOnSingleImage(*det3d_msg, roi_i, *(roi_msgs[matched_stamp]), *output_msg);
       roi_msgs.erase(matched_stamp);
       det_2d.is_fused = true;
 
@@ -353,8 +352,8 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
       }
     }
   }
-  cached_msg_.first = timestamp_nsec;
-  cached_msg_.second = output_msg;
+  cached_det3d_msg_timestamp_ = timestamp_nsec;
+  cached_det3d_msg_ptr_ = output_msg;
 
   // PROCESS: if all camera fused, postprocess and publish the main message
   if (checkAllDet2dFused(det2d_list_)) {
@@ -368,7 +367,7 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
 
 template <class TargetMsg3D, class Obj, class Msg2D>
 void FusionNode<TargetMsg3D, Obj, Msg2D>::roiCallback(
-  const typename Msg2D::ConstSharedPtr input_roi_msg, const std::size_t roi_i)
+  const typename Msg2D::ConstSharedPtr det2d_msg, const std::size_t roi_i)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
@@ -377,12 +376,13 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::roiCallback(
 
   auto & det_2d = det2d_list_.at(roi_i);
 
-  int64_t timestamp_nsec = (*input_roi_msg).header.stamp.sec * static_cast<int64_t>(1e9) +
-                           (*input_roi_msg).header.stamp.nanosec;
+  int64_t timestamp_nsec =
+    (*det2d_msg).header.stamp.sec * static_cast<int64_t>(1e9) + (*det2d_msg).header.stamp.nanosec;
 
   // if cached Msg exist, try to match
-  if (cached_msg_.second != nullptr) {
-    int64_t new_stamp = cached_msg_.first + det_2d.input_offset_ms * static_cast<int64_t>(1e6);
+  if (cached_det3d_msg_ptr_ != nullptr) {
+    int64_t new_stamp =
+      cached_det3d_msg_timestamp_ + det_2d.input_offset_ms * static_cast<int64_t>(1e6);
     int64_t interval = abs(timestamp_nsec - new_stamp);
 
     // PROCESS: if matched, fuse the main message with the roi message
@@ -391,7 +391,7 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::roiCallback(
       if (det_2d.camera_projector_ptr == nullptr) {
         RCLCPP_WARN_THROTTLE(
           this->get_logger(), *this->get_clock(), 5000, "no camera info. id is %zu", roi_i);
-        (cached_det2d_msgs_.at(roi_i))[timestamp_nsec] = input_roi_msg;
+        det_2d.cached_det2d_msgs[timestamp_nsec] = det2d_msg;
         return;
       }
 
@@ -399,11 +399,11 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::roiCallback(
         debugger_->clear();
       }
       // PROCESS: fuse the main message with the roi message
-      fuseOnSingleImage(*(cached_msg_.second), roi_i, *input_roi_msg, *(cached_msg_.second));
+      fuseOnSingleImage(*(cached_det3d_msg_ptr_), roi_i, *det2d_msg, *(cached_det3d_msg_ptr_));
       det_2d.is_fused = true;
 
       if (debug_publisher_) {
-        double timestamp_interval_ms = (timestamp_nsec - cached_msg_.first) / 1e6;
+        double timestamp_interval_ms = (timestamp_nsec - cached_det3d_msg_timestamp_) / 1e6;
         debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
           "debug/roi" + std::to_string(roi_i) + "/timestamp_interval_ms", timestamp_interval_ms);
         debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
@@ -421,7 +421,7 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::roiCallback(
     }
   }
   // store roi msg if not matched
-  det_2d.cached_det2d_msgs[timestamp_nsec] = input_roi_msg;
+  det_2d.cached_det2d_msgs[timestamp_nsec] = det2d_msg;
 }
 
 template <class TargetMsg3D, class Obj, class Msg2D>
@@ -441,7 +441,7 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::timer_callback()
   timer_->cancel();
   if (mutex_cached_msgs_.try_lock()) {
     // PROCESS: if timeout, postprocess cached msg
-    if (cached_msg_.second != nullptr) {
+    if (cached_det3d_msg_ptr_ != nullptr) {
       stop_watch_ptr_->toc("processing_time", true);
       exportProcess();
     }
@@ -450,7 +450,7 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::timer_callback()
     for (auto & det_2d : det2d_list_) {
       det_2d.is_fused = false;
     }
-    cached_msg_.second = nullptr;
+    cached_det3d_msg_ptr_ = nullptr;
 
     mutex_cached_msgs_.unlock();
   } else {

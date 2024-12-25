@@ -131,12 +131,11 @@ protected:
   // camera_info
   std::vector<Det2dManager<Msg2D>> det2d_list_;
 
-  std::vector<rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr> camera_info_subs_;
   // camera projection
-
   float approx_grid_cell_w_size_;
   float approx_grid_cell_h_size_;
 
+  // timer
   rclcpp::TimerBase::SharedPtr timer_;
   double timeout_ms_{};
   double match_threshold_ms_{};
@@ -144,15 +143,11 @@ protected:
   /** \brief A vector of subscriber. */
   typename rclcpp::Subscription<TargetMsg3D>::SharedPtr sub_;
   std::vector<typename rclcpp::Subscription<Msg2D>::SharedPtr> rois_subs_;
-
-  // offsets between cameras and the lidars
-  std::vector<double> input_offset_ms_;
+  std::vector<rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr> camera_info_subs_;
 
   // cache for fusion
-  std::vector<bool> is_fused_;
-  std::pair<int64_t, typename TargetMsg3D::SharedPtr>
-    cached_msg_;  // first element is the timestamp in nanoseconds, second element is the message
-  std::vector<std::map<int64_t, typename Msg2D::ConstSharedPtr>> cached_det2d_msgs_;
+  int64_t cached_det3d_msg_timestamp_;
+  typename TargetMsg3D::SharedPtr cached_det3d_msg_ptr_;
   std::mutex mutex_cached_msgs_;
 
   // output publisher
