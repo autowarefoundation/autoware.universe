@@ -1,0 +1,22 @@
+/**:
+  ros__parameters:
+
+    base_frame: base_link
+    use_imu: true
+    use_3d_distortion_correction: false
+    distance_ratio: 1.03
+    object_length_threshold: 0.1
+    num_points_threshold: 4
+
+    self_crop.min_x: 1.0
+    self_crop.min_y: 1.0
+    self_crop.min_z: 1.0
+    self_crop.max_x: -1.0
+    self_crop.max_y: -1.0
+    self_crop.max_z: -1.0
+    mirror_crop.min_x: 1.0
+    mirror_crop.min_y: 1.0
+    mirror_crop.min_z: 1.0
+    mirror_crop.max_x: -1.0
+    mirror_crop.max_y: -1.0
+    mirror_crop.max_z: -1.0
