@@ -16,6 +16,7 @@
 #include "../src/types.hpp"
 
 #include <chrono>
+#include <iostream>
 #include <random>
 #include <vector>
 
