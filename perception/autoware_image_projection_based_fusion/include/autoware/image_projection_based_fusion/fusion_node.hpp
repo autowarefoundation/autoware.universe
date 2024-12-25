@@ -59,6 +59,35 @@ using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
 using autoware::image_projection_based_fusion::CameraProjection;
 using autoware_perception_msgs::msg::ObjectClassification;
 
+template <class Msg2D>
+struct Det2dManager
+{
+  // camera projection
+  std::unique_ptr<CameraProjection> camera_projector_ptr;
+  bool project_to_unrectified_image = false;
+  bool approximate_camera_projection = false;
+
+  // process flags
+  bool is_fused = false;
+
+  // timing
+  double input_offset_ms = 0.0;
+
+  // cache
+  std::map<int64_t, typename Msg2D::ConstSharedPtr> cached_det2d_msgs;
+};
+
+template <class Msg2D>
+bool checkAllDet2dFused(const std::vector<Det2dManager<Msg2D>> & det2d_list)
+{
+  for (const auto & det2d : det2d_list) {
+    if (!det2d.is_fused) {
+      return false;
+    }
+  }
+  return true;
+}
+
 template <class TargetMsg3D, class ObjType, class Msg2D>
 class FusionNode : public rclcpp::Node
 {
@@ -101,6 +130,8 @@ protected:
   std::vector<bool> point_project_to_unrectified_image_;
 
   // camera_info
+  std::vector<Det2dManager<Msg2D>> det2d_list_;
+
   std::map<std::size_t, sensor_msgs::msg::CameraInfo> camera_info_map_;
   std::vector<rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr> camera_info_subs_;
   // camera projection
@@ -112,8 +143,6 @@ protected:
   rclcpp::TimerBase::SharedPtr timer_;
   double timeout_ms_{};
   double match_threshold_ms_{};
-  std::vector<std::string> input_rois_topics_;
-  std::vector<std::string> input_camera_info_topics_;
 
   /** \brief A vector of subscriber. */
   typename rclcpp::Subscription<TargetMsg3D>::SharedPtr sub_;
@@ -126,7 +155,7 @@ protected:
   std::vector<bool> is_fused_;
   std::pair<int64_t, typename TargetMsg3D::SharedPtr>
     cached_msg_;  // first element is the timestamp in nanoseconds, second element is the message
-  std::vector<std::map<int64_t, typename Msg2D::ConstSharedPtr>> cached_roi_msgs_;
+  std::vector<std::map<int64_t, typename Msg2D::ConstSharedPtr>> cached_det2d_msgs_;
   std::mutex mutex_cached_msgs_;
 
   // output publisher
