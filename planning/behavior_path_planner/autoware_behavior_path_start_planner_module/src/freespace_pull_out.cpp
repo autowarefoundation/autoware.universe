@@ -51,13 +51,14 @@ FreespacePullOut::FreespacePullOut(
 }
 
 std::optional<PullOutPath> FreespacePullOut::plan(
-  const Pose & start_pose, const Pose & end_pose, PlannerDebugData & planner_debug_data)
+  const Pose & start_pose, const Pose & end_pose,
+  const std::shared_ptr<const PlannerData> & planner_data, PlannerDebugData & planner_debug_data)
 {
-  const auto & route_handler = planner_data_->route_handler;
-  const double backward_path_length = planner_data_->parameters.backward_path_length;
-  const double forward_path_length = planner_data_->parameters.forward_path_length;
+  const auto & route_handler = planner_data->route_handler;
+  const double backward_path_length = planner_data->parameters.backward_path_length;
+  const double forward_path_length = planner_data->parameters.forward_path_length;
 
-  planner_->setMap(*planner_data_->costmap);
+  planner_->setMap(*planner_data->costmap);
 
   try {
     if (!planner_->makePlan(start_pose, end_pose)) {
@@ -69,11 +70,11 @@ std::optional<PullOutPath> FreespacePullOut::plan(
   }
 
   const auto road_lanes = utils::getExtendedCurrentLanes(
-    planner_data_, backward_path_length, std::numeric_limits<double>::max(),
+    planner_data, backward_path_length, std::numeric_limits<double>::max(),
     /*forward_only_in_route*/ true);
   // find candidate paths
   const auto pull_out_lanes =
-    start_planner_utils::getPullOutLanes(planner_data_, backward_path_length);
+    start_planner_utils::getPullOutLanes(planner_data, backward_path_length);
   const auto lanes = utils::combineLanelets(road_lanes, pull_out_lanes);
 
   const PathWithLaneId path =

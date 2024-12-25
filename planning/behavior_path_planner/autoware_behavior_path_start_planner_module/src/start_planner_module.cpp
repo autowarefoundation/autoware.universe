@@ -986,17 +986,16 @@ bool StartPlannerModule::findPullOutPath(
   const bool backward_is_unnecessary = backwards_distance < epsilon;
 
   planner->setCollisionCheckMargin(collision_check_margin);
-  planner->setPlannerData(planner_data_);
   PlannerDebugData debug_data{
     planner->getPlannerType(), {}, collision_check_margin, backwards_distance};
 
-  const auto pull_out_path = planner->plan(start_pose_candidate, goal_pose, debug_data);
+  const auto pull_out_path =
+    planner->plan(start_pose_candidate, goal_pose, planner_data_, debug_data);
   debug_data_vector.push_back(debug_data);
   // If no path is found, return false
   if (!pull_out_path) {
     return false;
   }
-
   if (backward_is_unnecessary) {
     updateStatusWithCurrentPath(*pull_out_path, start_pose_candidate, planner->getPlannerType());
     return true;
@@ -1595,9 +1594,9 @@ std::optional<PullOutStatus> StartPlannerModule::planFreespacePath(
 
   for (const auto & p : center_line_path.points) {
     const Pose end_pose = p.point.pose;
-    freespace_planner_->setPlannerData(planner_data);
     PlannerDebugData debug_data{freespace_planner_->getPlannerType(), {}, 0.0, 0.0};
-    auto freespace_path = freespace_planner_->plan(current_pose, end_pose, debug_data);
+    auto freespace_path =
+      freespace_planner_->plan(current_pose, end_pose, planner_data, debug_data);
     DEBUG_PRINT(
       "\nFreespace Pull out path search results\n%s%s", debug_data.header_str().c_str(),
       debug_data.str().c_str());
