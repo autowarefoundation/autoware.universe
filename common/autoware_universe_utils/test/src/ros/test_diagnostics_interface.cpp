@@ -22,6 +22,9 @@
 
 #include <gtest/gtest.h>
 
+#include <memory>
+#include <string>
+
 using autoware::universe_utils::DiagnosticInterface;
 
 class TestDiagnosticInterface : public ::testing::Test
