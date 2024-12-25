@@ -25,7 +25,7 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
-#include <tier4_planning_msgs/msg/scenario.hpp>
+#include <autoware_planning_msgs/msg/scenario.hpp>
 
 #include <deque>
 #include <vector>
@@ -41,7 +41,7 @@ using geometry_msgs::msg::PoseArray;
 using geometry_msgs::msg::PoseStamped;
 using geometry_msgs::msg::TransformStamped;
 using nav_msgs::msg::Odometry;
-using tier4_planning_msgs::msg::Scenario;
+using autoware_planning_msgs::msg::Scenario;
 
 PoseArray trajectory_to_pose_array(const Trajectory & trajectory);
 

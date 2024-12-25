@@ -38,7 +38,7 @@
 #include <autoware_vehicle_msgs/msg/gear_report.hpp>
 #include <tier4_external_api_msgs/msg/emergency.hpp>
 #include <tier4_external_api_msgs/srv/set_emergency.hpp>
-#include <tier4_planning_msgs/msg/velocity_limit.hpp>
+#include <autoware_planning_msgs/msg/velocity_limit.hpp>
 
 #include <memory>
 
@@ -93,7 +93,7 @@ protected:
   rclcpp::Subscription<autoware_vehicle_msgs::msg::GearReport>::SharedPtr sub_gear_;
   rclcpp::Client<tier4_external_api_msgs::srv::SetEmergency>::SharedPtr client_emergency_stop_;
   rclcpp::Subscription<tier4_external_api_msgs::msg::Emergency>::SharedPtr sub_emergency_;
-  rclcpp::Publisher<tier4_planning_msgs::msg::VelocityLimit>::SharedPtr pub_velocity_limit_;
+  rclcpp::Publisher<autoware_planning_msgs::msg::VelocityLimit>::SharedPtr pub_velocity_limit_;
 
   // Operation Mode
   QLabel * operation_mode_label_ptr_{nullptr};

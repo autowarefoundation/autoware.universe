@@ -29,7 +29,7 @@
 #include <geometry_msgs/msg/pose_with_covariance.hpp>
 #include <geometry_msgs/msg/twist_with_covariance.hpp>
 #include <nav_msgs/msg/odometry.hpp>
-#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <yaml-cpp/yaml.h>
 
@@ -71,8 +71,8 @@ using geometry_msgs::msg::Twist;
 using geometry_msgs::msg::TwistWithCovariance;
 using nav_msgs::msg::Odometry;
 using std_msgs::msg::Header;
-using tier4_planning_msgs::msg::PathPointWithLaneId;
-using tier4_planning_msgs::msg::PathWithLaneId;
+using autoware_planning_msgs::msg::PathPointWithLaneId;
+using autoware_planning_msgs::msg::PathWithLaneId;
 using unique_identifier_msgs::msg::UUID;
 
 /**

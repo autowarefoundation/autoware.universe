@@ -46,7 +46,7 @@ namespace
 {
 
 autoware_planning_msgs::msg::Path to_path(
-  const tier4_planning_msgs::msg::PathWithLaneId & path_with_id)
+  const autoware_planning_msgs::msg::PathWithLaneId & path_with_id)
 {
   autoware_planning_msgs::msg::Path path;
   for (const auto & path_point : path_with_id.points) {
@@ -67,7 +67,7 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
 
   // Trigger Subscriber
   trigger_sub_path_with_lane_id_ =
-    this->create_subscription<tier4_planning_msgs::msg::PathWithLaneId>(
+    this->create_subscription<autoware_planning_msgs::msg::PathWithLaneId>(
       "~/input/path_with_lane_id", 1, std::bind(&BehaviorVelocityPlannerNode::onTrigger, this, _1));
 
   srv_load_plugin_ = create_service<LoadPlugin>(
@@ -300,7 +300,7 @@ bool BehaviorVelocityPlannerNode::isDataReady(rclcpp::Clock clock)
 }
 
 void BehaviorVelocityPlannerNode::onTrigger(
-  const tier4_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg)
+  const autoware_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg)
 {
   std::unique_lock<std::mutex> lk(mutex_);
 
@@ -334,7 +334,7 @@ void BehaviorVelocityPlannerNode::onTrigger(
 }
 
 autoware_planning_msgs::msg::Path BehaviorVelocityPlannerNode::generatePath(
-  const tier4_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg,
+  const autoware_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg,
   const PlannerData & planner_data)
 {
   autoware_planning_msgs::msg::Path output_path_msg;

@@ -19,8 +19,8 @@ MRM comfortable stop operator is a node that generates comfortable stop commands
 | Name                                   | Type                                                  | Description                  |
 | -------------------------------------- | ----------------------------------------------------- | ---------------------------- |
 | `~/output/mrm/comfortable_stop/status` | `tier4_system_msgs::msg::MrmBehaviorStatus`           | MRM execution status         |
-| `~/output/velocity_limit`              | `tier4_planning_msgs::msg::VelocityLimit`             | Velocity limit command       |
-| `~/output/velocity_limit/clear`        | `tier4_planning_msgs::msg::VelocityLimitClearCommand` | Velocity limit clear command |
+| `~/output/velocity_limit`              | `autoware_planning_msgs::msg::VelocityLimit`             | Velocity limit command       |
+| `~/output/velocity_limit/clear`        | `autoware_planning_msgs::msg::VelocityLimitClearCommand` | Velocity limit clear command |
 
 ## Parameters
 

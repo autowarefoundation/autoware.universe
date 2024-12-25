@@ -18,7 +18,7 @@
 
 #include <rclcpp/logging.hpp>
 
-#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <optional>
 #include <utility>
@@ -41,7 +41,7 @@ StopLineModule::StopLineModule(
 bool StopLineModule::modifyPathVelocity(PathWithLaneId * path)
 {
   auto trajectory =
-    trajectory::Trajectory<tier4_planning_msgs::msg::PathPointWithLaneId>::Builder{}.build(
+    trajectory::Trajectory<autoware_planning_msgs::msg::PathPointWithLaneId>::Builder{}.build(
       path->points);
 
   if (!trajectory) {

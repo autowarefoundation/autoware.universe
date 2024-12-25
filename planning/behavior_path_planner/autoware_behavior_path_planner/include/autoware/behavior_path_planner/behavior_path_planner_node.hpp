@@ -34,13 +34,12 @@
 #include <autoware_vehicle_msgs/msg/turn_indicators_command.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
-#include <tier4_planning_msgs/msg/approval.hpp>
-#include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
-#include <tier4_planning_msgs/msg/path_change_module.hpp>
-#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
-#include <tier4_planning_msgs/msg/reroute_availability.hpp>
-#include <tier4_planning_msgs/msg/scenario.hpp>
-#include <tier4_planning_msgs/msg/velocity_limit.hpp>
+#include <autoware_planning_msgs/msg/avoidance_debug_msg_array.hpp>
+#include <autoware_planning_msgs/msg/path_change_module.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_planning_msgs/msg/reroute_availability.hpp>
+#include <autoware_planning_msgs/msg/scenario.hpp>
+#include <autoware_planning_msgs/msg/velocity_limit.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 
 #include <map>
@@ -65,11 +64,11 @@ using autoware_vehicle_msgs::msg::TurnIndicatorsCommand;
 using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
 using rcl_interfaces::msg::SetParametersResult;
-using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
-using tier4_planning_msgs::msg::LateralOffset;
-using tier4_planning_msgs::msg::PathWithLaneId;
-using tier4_planning_msgs::msg::RerouteAvailability;
-using tier4_planning_msgs::msg::Scenario;
+using autoware_planning_msgs::msg::AvoidanceDebugMsgArray;
+using autoware_planning_msgs::msg::LateralOffset;
+using autoware_planning_msgs::msg::PathWithLaneId;
+using autoware_planning_msgs::msg::RerouteAvailability;
+using autoware_planning_msgs::msg::Scenario;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 
@@ -111,7 +110,7 @@ private:
   autoware::universe_utils::InterProcessPollingSubscriber<OperationModeState>
     operation_mode_subscriber_{
       this, "/system/operation_mode/state", rclcpp::QoS{1}.transient_local()};
-  autoware::universe_utils::InterProcessPollingSubscriber<tier4_planning_msgs::msg::VelocityLimit>
+  autoware::universe_utils::InterProcessPollingSubscriber<autoware_planning_msgs::msg::VelocityLimit>
     external_limit_max_velocity_subscriber_{this, "/planning/scenario_planning/max_velocity"};
 
   // publisher
@@ -157,7 +156,7 @@ private:
   void onOperationMode(const OperationModeState::ConstSharedPtr msg);
   void onLateralOffset(const LateralOffset::ConstSharedPtr msg);
   void on_external_velocity_limiter(
-    const tier4_planning_msgs::msg::VelocityLimit::ConstSharedPtr msg);
+    const autoware_planning_msgs::msg::VelocityLimit::ConstSharedPtr msg);
 
   SetParametersResult onSetParam(const std::vector<rclcpp::Parameter> & parameters);
 

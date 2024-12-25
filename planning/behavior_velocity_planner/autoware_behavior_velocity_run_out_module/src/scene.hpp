@@ -36,8 +36,8 @@ using autoware_perception_msgs::msg::PredictedObjects;
 using run_out_utils::PlannerParam;
 using run_out_utils::PoseWithRange;
 using tier4_debug_msgs::msg::Float32Stamped;
-using tier4_planning_msgs::msg::PathPointWithLaneId;
-using tier4_planning_msgs::msg::PathWithLaneId;
+using autoware_planning_msgs::msg::PathPointWithLaneId;
+using autoware_planning_msgs::msg::PathWithLaneId;
 using BasicPolygons2d = std::vector<lanelet::BasicPolygon2d>;
 
 class RunOutModule : public SceneModuleInterface
@@ -124,7 +124,7 @@ private:
 
   bool insertStopPoint(
     const std::optional<geometry_msgs::msg::Pose> stop_point,
-    tier4_planning_msgs::msg::PathWithLaneId & path);
+    autoware_planning_msgs::msg::PathWithLaneId & path);
 
   void insertVelocityForState(
     const std::optional<DynamicObstacle> & dynamic_obstacle, const PlannerData planner_data,

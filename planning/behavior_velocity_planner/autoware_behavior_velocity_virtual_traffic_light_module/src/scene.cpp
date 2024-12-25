@@ -366,7 +366,7 @@ bool VirtualTrafficLightModule::hasRightOfWay(
 }
 
 void VirtualTrafficLightModule::insertStopVelocityAtStopLine(
-  tier4_planning_msgs::msg::PathWithLaneId * path, const size_t end_line_idx)
+  autoware_planning_msgs::msg::PathWithLaneId * path, const size_t end_line_idx)
 {
   const auto collision =
     findLastCollisionBeforeEndLine(path->points, *map_data_.stop_line, end_line_idx);
@@ -427,7 +427,7 @@ void VirtualTrafficLightModule::insertStopVelocityAtStopLine(
 }
 
 void VirtualTrafficLightModule::insertStopVelocityAtEndLine(
-  tier4_planning_msgs::msg::PathWithLaneId * path, const size_t end_line_idx)
+  autoware_planning_msgs::msg::PathWithLaneId * path, const size_t end_line_idx)
 {
   const auto collision =
     findLastCollisionBeforeEndLine(path->points, map_data_.end_lines, end_line_idx);

@@ -25,7 +25,7 @@
 #include <pluginlib/class_loader.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <lanelet2_core/primitives/Lanelet.h>
 
@@ -40,7 +40,7 @@ namespace autoware::behavior_path_planner
 {
 
 using autoware::universe_utils::StopWatch;
-using tier4_planning_msgs::msg::PathWithLaneId;
+using autoware_planning_msgs::msg::PathWithLaneId;
 using SceneModulePtr = std::shared_ptr<SceneModuleInterface>;
 using SceneModuleManagerPtr = std::shared_ptr<SceneModuleManagerInterface>;
 using DebugPublisher = autoware::universe_utils::DebugPublisher;

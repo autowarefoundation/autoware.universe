@@ -31,8 +31,8 @@
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
-#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
-#include <tier4_planning_msgs/msg/velocity_limit.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_planning_msgs/msg/velocity_limit.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <tf2_ros/buffer.h>
@@ -48,7 +48,7 @@ namespace autoware::behavior_velocity_planner
 using autoware_behavior_velocity_planner::srv::LoadPlugin;
 using autoware_behavior_velocity_planner::srv::UnloadPlugin;
 using autoware_map_msgs::msg::LaneletMapBin;
-using tier4_planning_msgs::msg::VelocityLimit;
+using autoware_planning_msgs::msg::VelocityLimit;
 
 class BehaviorVelocityPlannerNode : public rclcpp::Node
 {
@@ -61,7 +61,7 @@ private:
   tf2_ros::TransformListener tf_listener_;
 
   // subscriber
-  rclcpp::Subscription<tier4_planning_msgs::msg::PathWithLaneId>::SharedPtr
+  rclcpp::Subscription<autoware_planning_msgs::msg::PathWithLaneId>::SharedPtr
     trigger_sub_path_with_lane_id_;
 
   // polling subscribers
@@ -99,7 +99,7 @@ private:
     sub_external_velocity_limit_{
       this, "~/input/external_velocity_limit_mps", rclcpp::QoS{1}.transient_local()};
 
-  void onTrigger(const tier4_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg);
+  void onTrigger(const autoware_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg);
 
   void onParam();
 
@@ -139,7 +139,7 @@ private:
   // function
   bool isDataReady(rclcpp::Clock clock);
   autoware_planning_msgs::msg::Path generatePath(
-    const tier4_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg,
+    const autoware_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg,
     const PlannerData & planner_data);
 
   std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;

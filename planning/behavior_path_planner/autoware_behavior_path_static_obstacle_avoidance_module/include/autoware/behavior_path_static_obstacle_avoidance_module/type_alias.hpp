@@ -25,9 +25,9 @@
 
 #include <autoware_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_vehicle_msgs/msg/turn_indicators_command.hpp>
-#include <tier4_planning_msgs/msg/avoidance_debug_msg.hpp>
-#include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
-#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_planning_msgs/msg/avoidance_debug_msg.hpp>
+#include <autoware_planning_msgs/msg/avoidance_debug_msg_array.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_rtc_msgs/msg/state.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -38,7 +38,7 @@ using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedPath;
 using autoware_perception_msgs::msg::Shape;
-using tier4_planning_msgs::msg::PathWithLaneId;
+using autoware_planning_msgs::msg::PathWithLaneId;
 
 // ROS 2 general msgs
 using geometry_msgs::msg::Point;
@@ -50,9 +50,9 @@ using std_msgs::msg::ColorRGBA;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 
-// tier4 msgs
-using tier4_planning_msgs::msg::AvoidanceDebugMsg;
-using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
+// autoware msgs
+using autoware_planning_msgs::msg::AvoidanceDebugMsg;
+using autoware_planning_msgs::msg::AvoidanceDebugMsgArray;
 using tier4_rtc_msgs::msg::State;
 
 // tier4 utils functions

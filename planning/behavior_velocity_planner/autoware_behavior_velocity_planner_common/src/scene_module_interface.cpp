@@ -43,7 +43,7 @@ SceneModuleInterface::SceneModuleInterface(
 }
 
 size_t SceneModuleInterface::findEgoSegmentIndex(
-  const std::vector<tier4_planning_msgs::msg::PathPointWithLaneId> & points) const
+  const std::vector<autoware_planning_msgs::msg::PathPointWithLaneId> & points) const
 {
   const auto & p = planner_data_;
   return autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
@@ -62,7 +62,7 @@ SceneModuleManagerInterface::SceneModuleManagerInterface(
     is_publish_debug_path_ = node.get_parameter("is_publish_debug_path").as_bool();
   }
   if (is_publish_debug_path_) {
-    pub_debug_path_ = node.create_publisher<tier4_planning_msgs::msg::PathWithLaneId>(
+    pub_debug_path_ = node.create_publisher<autoware_planning_msgs::msg::PathWithLaneId>(
       std::string("~/debug/path_with_lane_id/") + module_name, 1);
   }
   pub_virtual_wall_ = node.create_publisher<visualization_msgs::msg::MarkerArray>(
@@ -82,7 +82,7 @@ SceneModuleManagerInterface::SceneModuleManagerInterface(
 }
 
 size_t SceneModuleManagerInterface::findEgoSegmentIndex(
-  const std::vector<tier4_planning_msgs::msg::PathPointWithLaneId> & points) const
+  const std::vector<autoware_planning_msgs::msg::PathPointWithLaneId> & points) const
 {
   const auto & p = planner_data_;
   return autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
@@ -91,7 +91,7 @@ size_t SceneModuleManagerInterface::findEgoSegmentIndex(
 
 void SceneModuleManagerInterface::updateSceneModuleInstances(
   const std::shared_ptr<const PlannerData> & planner_data,
-  const tier4_planning_msgs::msg::PathWithLaneId & path)
+  const autoware_planning_msgs::msg::PathWithLaneId & path)
 {
   planner_data_ = planner_data;
 
@@ -100,7 +100,7 @@ void SceneModuleManagerInterface::updateSceneModuleInstances(
 }
 
 void SceneModuleManagerInterface::modifyPathVelocity(
-  tier4_planning_msgs::msg::PathWithLaneId * path)
+  autoware_planning_msgs::msg::PathWithLaneId * path)
 {
   universe_utils::ScopedTimeTrack st(
     "SceneModuleManagerInterface::modifyPathVelocity", *time_keeper_);
@@ -140,7 +140,7 @@ void SceneModuleManagerInterface::modifyPathVelocity(
   pub_infrastructure_commands_->publish(infrastructure_command_array);
   pub_debug_->publish(debug_marker_array);
   if (is_publish_debug_path_) {
-    tier4_planning_msgs::msg::PathWithLaneId debug_path;
+    autoware_planning_msgs::msg::PathWithLaneId debug_path;
     debug_path.header = path->header;
     debug_path.points = path->points;
     pub_debug_path_->publish(debug_path);
@@ -151,7 +151,7 @@ void SceneModuleManagerInterface::modifyPathVelocity(
 }
 
 void SceneModuleManagerInterface::deleteExpiredModules(
-  const tier4_planning_msgs::msg::PathWithLaneId & path)
+  const autoware_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto isModuleExpired = getModuleExpiredFunction(path);
 
@@ -183,7 +183,7 @@ SceneModuleManagerInterfaceWithRTC::SceneModuleManagerInterfaceWithRTC(
 {
 }
 
-void SceneModuleManagerInterfaceWithRTC::plan(tier4_planning_msgs::msg::PathWithLaneId * path)
+void SceneModuleManagerInterfaceWithRTC::plan(autoware_planning_msgs::msg::PathWithLaneId * path)
 {
   setActivation();
   modifyPathVelocity(path);
@@ -248,7 +248,7 @@ void SceneModuleManagerInterfaceWithRTC::publishObjectsOfInterestMarker()
 }
 
 void SceneModuleManagerInterfaceWithRTC::deleteExpiredModules(
-  const tier4_planning_msgs::msg::PathWithLaneId & path)
+  const autoware_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto isModuleExpired = getModuleExpiredFunction(path);
 

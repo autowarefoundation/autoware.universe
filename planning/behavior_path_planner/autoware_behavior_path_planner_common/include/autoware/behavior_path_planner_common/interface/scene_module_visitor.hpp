@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__BEHAVIOR_PATH_PLANNER_COMMON__INTERFACE__SCENE_MODULE_VISITOR_HPP_
 #define AUTOWARE__BEHAVIOR_PATH_PLANNER_COMMON__INTERFACE__SCENE_MODULE_VISITOR_HPP_
 
-#include "tier4_planning_msgs/msg/detail/avoidance_debug_msg_array__struct.hpp"
+#include "autoware_planning_msgs/msg/detail/avoidance_debug_msg_array__struct.hpp"
 
 #include <memory>
 namespace autoware::behavior_path_planner
@@ -29,8 +29,8 @@ class StartPlannerModule;
 class GoalPlannerModule;
 class SideShiftModule;
 
-using tier4_planning_msgs::msg::AvoidanceDebugMsg;
-using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
+using autoware_planning_msgs::msg::AvoidanceDebugMsg;
+using autoware_planning_msgs::msg::AvoidanceDebugMsgArray;
 
 class SceneModuleVisitor
 {

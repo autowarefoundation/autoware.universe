@@ -40,7 +40,6 @@
   <depend>tf2_ros</depend>
   <depend>tier4_debug_msgs</depend>
   <depend>tier4_metric_msgs</depend>
-  <depend>tier4_planning_msgs</depend>
   <depend>visualization_msgs</depend>
 
   <test_depend>ament_cmake_ros</test_depend>

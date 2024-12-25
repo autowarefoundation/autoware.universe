@@ -20,7 +20,7 @@
 #include <autoware/universe_utils/ros/update_param.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 
-#include <tier4_planning_msgs/msg/path_change_module_id.hpp>
+#include <autoware_planning_msgs/msg/path_change_module_id.hpp>
 
 #include <memory>
 #include <string>
@@ -29,7 +29,7 @@
 namespace autoware::behavior_path_planner
 {
 using autoware::vehicle_info_utils::VehicleInfoUtils;
-using tier4_planning_msgs::msg::PathChangeModuleId;
+using autoware_planning_msgs::msg::PathChangeModuleId;
 
 BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & node_options)
 : Node("behavior_path_planner", node_options)
@@ -694,7 +694,7 @@ Path BehaviorPathPlannerNode::convertToPath(
     return output;
   }
 
-  output = autoware::motion_utils::convertToPath<tier4_planning_msgs::msg::PathWithLaneId>(
+  output = autoware::motion_utils::convertToPath<autoware_planning_msgs::msg::PathWithLaneId>(
     *path_candidate_ptr);
   // header is replaced by the input one, so it is substituted again
   output.header = planner_data->route_handler->getRouteHeader();

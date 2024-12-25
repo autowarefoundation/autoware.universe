@@ -21,11 +21,11 @@
 #include <autoware_planning_msgs/msg/path_point.hpp>
 #include <autoware_planning_msgs/msg/trajectory_point.hpp>
 #include <geometry_msgs/msg/pose.hpp>
-#include <tier4_planning_msgs/msg/control_point.hpp>
-#include <tier4_planning_msgs/msg/path_point_with_lane_id.hpp>
-#include <tier4_planning_msgs/msg/planning_factor.hpp>
-#include <tier4_planning_msgs/msg/planning_factor_array.hpp>
-#include <tier4_planning_msgs/msg/safety_factor_array.hpp>
+#include <autoware_planning_msgs/msg/control_point.hpp>
+#include <autoware_planning_msgs/msg/path_point_with_lane_id.hpp>
+#include <autoware_planning_msgs/msg/planning_factor.hpp>
+#include <autoware_planning_msgs/msg/planning_factor_array.hpp>
+#include <autoware_planning_msgs/msg/safety_factor_array.hpp>
 
 #include <string>
 #include <vector>
@@ -34,10 +34,10 @@ namespace autoware::motion_utils
 {
 
 using geometry_msgs::msg::Pose;
-using tier4_planning_msgs::msg::ControlPoint;
-using tier4_planning_msgs::msg::PlanningFactor;
-using tier4_planning_msgs::msg::PlanningFactorArray;
-using tier4_planning_msgs::msg::SafetyFactorArray;
+using autoware_planning_msgs::msg::ControlPoint;
+using autoware_planning_msgs::msg::PlanningFactor;
+using autoware_planning_msgs::msg::PlanningFactorArray;
+using autoware_planning_msgs::msg::SafetyFactorArray;
 
 class PlanningFactorInterface
 {
@@ -124,13 +124,13 @@ public:
     const SafetyFactorArray & safety_factors, const bool is_driving_forward = true,
     const double velocity = 0.0, const double shift_length = 0.0, const std::string & detail = "")
   {
-    const auto control_point = tier4_planning_msgs::build<ControlPoint>()
+    const auto control_point = autoware_planning_msgs::build<ControlPoint>()
                                  .pose(control_point_pose)
                                  .velocity(velocity)
                                  .shift_length(shift_length)
                                  .distance(distance);
 
-    const auto factor = tier4_planning_msgs::build<PlanningFactor>()
+    const auto factor = autoware_planning_msgs::build<PlanningFactor>()
                           .module(name_)
                           .is_driving_forward(is_driving_forward)
                           .control_points({control_point})
@@ -161,19 +161,19 @@ public:
     const bool is_driving_forward = true, const double velocity = 0.0,
     const double shift_length = 0.0, const std::string & detail = "")
   {
-    const auto control_start_point = tier4_planning_msgs::build<ControlPoint>()
+    const auto control_start_point = autoware_planning_msgs::build<ControlPoint>()
                                        .pose(start_pose)
                                        .velocity(velocity)
                                        .shift_length(shift_length)
                                        .distance(start_distance);
 
-    const auto control_end_point = tier4_planning_msgs::build<ControlPoint>()
+    const auto control_end_point = autoware_planning_msgs::build<ControlPoint>()
                                      .pose(end_pose)
                                      .velocity(velocity)
                                      .shift_length(shift_length)
                                      .distance(end_distance);
 
-    const auto factor = tier4_planning_msgs::build<PlanningFactor>()
+    const auto factor = autoware_planning_msgs::build<PlanningFactor>()
                           .module(name_)
                           .is_driving_forward(is_driving_forward)
                           .control_points({control_start_point, control_end_point})
@@ -209,8 +209,8 @@ private:
   std::vector<PlanningFactor> factors_;
 };
 
-extern template void PlanningFactorInterface::add<tier4_planning_msgs::msg::PathPointWithLaneId>(
-  const std::vector<tier4_planning_msgs::msg::PathPointWithLaneId> &, const Pose &, const Pose &,
+extern template void PlanningFactorInterface::add<autoware_planning_msgs::msg::PathPointWithLaneId>(
+  const std::vector<autoware_planning_msgs::msg::PathPointWithLaneId> &, const Pose &, const Pose &,
   const uint16_t behavior, const SafetyFactorArray &, const bool, const double, const double,
   const std::string &);
 extern template void PlanningFactorInterface::add<autoware_planning_msgs::msg::PathPoint>(
@@ -222,8 +222,8 @@ extern template void PlanningFactorInterface::add<autoware_planning_msgs::msg::T
   const uint16_t behavior, const SafetyFactorArray &, const bool, const double, const double,
   const std::string &);
 
-extern template void PlanningFactorInterface::add<tier4_planning_msgs::msg::PathPointWithLaneId>(
-  const std::vector<tier4_planning_msgs::msg::PathPointWithLaneId> &, const Pose &, const Pose &,
+extern template void PlanningFactorInterface::add<autoware_planning_msgs::msg::PathPointWithLaneId>(
+  const std::vector<autoware_planning_msgs::msg::PathPointWithLaneId> &, const Pose &, const Pose &,
   const Pose &, const uint16_t behavior, const SafetyFactorArray &, const bool, const double,
   const double, const std::string &);
 extern template void PlanningFactorInterface::add<autoware_planning_msgs::msg::PathPoint>(

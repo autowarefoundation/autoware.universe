@@ -17,7 +17,7 @@
 
 #include "autoware/behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
 
-#include <tier4_planning_msgs/msg/lateral_offset.hpp>
+#include <autoware_planning_msgs/msg/lateral_offset.hpp>
 
 #include <memory>
 #include <string>
@@ -25,7 +25,7 @@
 
 namespace autoware::behavior_path_planner
 {
-using tier4_planning_msgs::msg::LateralOffset;
+using autoware_planning_msgs::msg::LateralOffset;
 
 enum class SideShiftStatus { STOP = 0, BEFORE_SHIFT, SHIFTING, AFTER_SHIFT };
 

@@ -30,8 +30,8 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <tier4_debug_msgs/msg/float64_stamped.hpp>
-#include <tier4_planning_msgs/msg/velocity_limit.hpp>
-#include <tier4_planning_msgs/msg/velocity_limit_clear_command.hpp>
+#include <autoware_planning_msgs/msg/velocity_limit.hpp>
+#include <autoware_planning_msgs/msg/velocity_limit_clear_command.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <tf2/utils.h>
@@ -52,8 +52,8 @@ using autoware::motion_utils::VehicleStopChecker;
 using autoware::vehicle_info_utils::VehicleInfo;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::Shape;
-using tier4_planning_msgs::msg::VelocityLimit;
-using tier4_planning_msgs::msg::VelocityLimitClearCommand;
+using autoware_planning_msgs::msg::VelocityLimit;
+using autoware_planning_msgs::msg::VelocityLimitClearCommand;
 
 using Obstacle = std::pair<double /* distance */, geometry_msgs::msg::Point>;
 

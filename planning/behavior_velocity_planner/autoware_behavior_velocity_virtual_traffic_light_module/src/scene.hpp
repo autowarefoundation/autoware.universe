@@ -57,7 +57,7 @@ public:
   struct ModuleData
   {
     geometry_msgs::msg::Pose head_pose{};
-    tier4_planning_msgs::msg::PathWithLaneId path{};
+    autoware_planning_msgs::msg::PathWithLaneId path{};
     std::optional<geometry_msgs::msg::Pose> stop_head_pose_at_stop_line;
     std::optional<geometry_msgs::msg::Pose> stop_head_pose_at_end_line;
   };
@@ -117,10 +117,10 @@ private:
   bool hasRightOfWay(const tier4_v2x_msgs::msg::VirtualTrafficLightState & state);
 
   void insertStopVelocityAtStopLine(
-    tier4_planning_msgs::msg::PathWithLaneId * path, const size_t end_line_idx);
+    autoware_planning_msgs::msg::PathWithLaneId * path, const size_t end_line_idx);
 
   void insertStopVelocityAtEndLine(
-    tier4_planning_msgs::msg::PathWithLaneId * path, const size_t end_line_idx);
+    autoware_planning_msgs::msg::PathWithLaneId * path, const size_t end_line_idx);
 };
 }  // namespace autoware::behavior_velocity_planner
 #endif  // SCENE_HPP_

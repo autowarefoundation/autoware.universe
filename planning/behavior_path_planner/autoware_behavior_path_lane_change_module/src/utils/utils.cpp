@@ -68,9 +68,9 @@ using autoware::universe_utils::Polygon2d;
 using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::PredictedObjects;
 using geometry_msgs::msg::Pose;
-using tier4_planning_msgs::msg::PathWithLaneId;
+using autoware_planning_msgs::msg::PathWithLaneId;
 
-using tier4_planning_msgs::msg::PathPointWithLaneId;
+using autoware_planning_msgs::msg::PathPointWithLaneId;
 
 rclcpp::Logger get_logger()
 {

@@ -54,11 +54,11 @@
 #include <tf2_msgs/msg/tf_message.hpp>
 #include <tier4_api_msgs/msg/crosswalk_status.hpp>
 #include <tier4_api_msgs/msg/intersection_status.hpp>
-#include <tier4_planning_msgs/msg/expand_stop_range.hpp>
-#include <tier4_planning_msgs/msg/lateral_offset.hpp>
-#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
-#include <tier4_planning_msgs/msg/scenario.hpp>
-#include <tier4_planning_msgs/msg/velocity_limit.hpp>
+#include <autoware_planning_msgs/msg/expand_stop_range.hpp>
+#include <autoware_planning_msgs/msg/lateral_offset.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_planning_msgs/msg/scenario.hpp>
+#include <autoware_planning_msgs/msg/velocity_limit.hpp>
 #include <tier4_v2x_msgs/msg/virtual_traffic_light_state_array.hpp>
 
 #include <gtest/gtest.h>
@@ -89,11 +89,11 @@ using sensor_msgs::msg::PointCloud2;
 using tf2_msgs::msg::TFMessage;
 using tier4_api_msgs::msg::CrosswalkStatus;
 using tier4_api_msgs::msg::IntersectionStatus;
-using tier4_planning_msgs::msg::ExpandStopRange;
-using tier4_planning_msgs::msg::LateralOffset;
-using tier4_planning_msgs::msg::PathWithLaneId;
-using tier4_planning_msgs::msg::Scenario;
-using tier4_planning_msgs::msg::VelocityLimit;
+using autoware_planning_msgs::msg::ExpandStopRange;
+using autoware_planning_msgs::msg::LateralOffset;
+using autoware_planning_msgs::msg::PathWithLaneId;
+using autoware_planning_msgs::msg::Scenario;
+using autoware_planning_msgs::msg::VelocityLimit;
 using tier4_v2x_msgs::msg::VirtualTrafficLightStateArray;
 
 enum class ModuleName {

@@ -26,7 +26,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <tier4_debug_msgs/msg/float64_stamped.hpp>
-#include <tier4_planning_msgs/msg/scenario.hpp>
+#include <autoware_planning_msgs/msg/scenario.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
@@ -79,12 +79,12 @@ private:
 
   inline bool isCurrentLaneDriving() const
   {
-    return current_scenario_ == tier4_planning_msgs::msg::Scenario::LANEDRIVING;
+    return current_scenario_ == autoware_planning_msgs::msg::Scenario::LANEDRIVING;
   }
 
   inline bool isCurrentParking() const
   {
-    return current_scenario_ == tier4_planning_msgs::msg::Scenario::PARKING;
+    return current_scenario_ == autoware_planning_msgs::msg::Scenario::PARKING;
   }
 
   rclcpp::TimerBase::SharedPtr timer_;
@@ -96,7 +96,7 @@ private:
     sub_lane_driving_trajectory_;
   rclcpp::Subscription<autoware_planning_msgs::msg::Trajectory>::SharedPtr sub_parking_trajectory_;
   rclcpp::Publisher<autoware_planning_msgs::msg::Trajectory>::SharedPtr pub_trajectory_;
-  rclcpp::Publisher<tier4_planning_msgs::msg::Scenario>::SharedPtr pub_scenario_;
+  rclcpp::Publisher<autoware_planning_msgs::msg::Scenario>::SharedPtr pub_scenario_;
   rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr pub_processing_time_;
 
   // polling subscribers

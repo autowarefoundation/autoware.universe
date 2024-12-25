@@ -46,7 +46,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <tier4_debug_msgs/msg/float64_stamped.hpp>
-#include <tier4_planning_msgs/msg/scenario.hpp>
+#include <autoware_planning_msgs/msg/scenario.hpp>
 
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -84,7 +84,7 @@ using geometry_msgs::msg::TransformStamped;
 using geometry_msgs::msg::Twist;
 using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
-using tier4_planning_msgs::msg::Scenario;
+using autoware_planning_msgs::msg::Scenario;
 
 struct NodeParam
 {

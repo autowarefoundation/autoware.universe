@@ -302,7 +302,7 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
 }
 
 void IntersectionModuleManager::launchNewModules(
-  const tier4_planning_msgs::msg::PathWithLaneId & path)
+  const autoware_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto routing_graph = planner_data_->route_handler_->getRoutingGraphPtr();
   const auto lanelet_map = planner_data_->route_handler_->getLaneletMapPtr();
@@ -355,7 +355,7 @@ void IntersectionModuleManager::launchNewModules(
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 IntersectionModuleManager::getModuleExpiredFunction(
-  const tier4_planning_msgs::msg::PathWithLaneId & path)
+  const autoware_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto lane_set = planning_utils::getLaneletsOnPath(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
@@ -446,7 +446,7 @@ void IntersectionModuleManager::setActivation()
 }
 
 void IntersectionModuleManager::deleteExpiredModules(
-  const tier4_planning_msgs::msg::PathWithLaneId & path)
+  const autoware_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto isModuleExpired = getModuleExpiredFunction(path);
 
@@ -483,7 +483,7 @@ MergeFromPrivateModuleManager::MergeFromPrivateModuleManager(rclcpp::Node & node
 }
 
 void MergeFromPrivateModuleManager::launchNewModules(
-  const tier4_planning_msgs::msg::PathWithLaneId & path)
+  const autoware_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto routing_graph = planner_data_->route_handler_->getRoutingGraphPtr();
   const auto lanelet_map = planner_data_->route_handler_->getLaneletMapPtr();
@@ -550,7 +550,7 @@ void MergeFromPrivateModuleManager::launchNewModules(
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 MergeFromPrivateModuleManager::getModuleExpiredFunction(
-  const tier4_planning_msgs::msg::PathWithLaneId & path)
+  const autoware_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto lane_set = planning_utils::getLaneletsOnPath(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);

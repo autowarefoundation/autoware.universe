@@ -29,7 +29,7 @@
 #include <autoware_adapi_v1_msgs/msg/velocity_factor_array.hpp>
 #include <autoware_planning_msgs/msg/path.hpp>
 #include <tier4_debug_msgs/msg/float64_stamped.hpp>
-#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_rtc_msgs/msg/state.hpp>
 #include <tier4_v2x_msgs/msg/infrastructure_command_array.hpp>
 #include <unique_identifier_msgs/msg/uuid.hpp>
@@ -59,7 +59,7 @@ using autoware::universe_utils::DebugPublisher;
 using autoware::universe_utils::getOrDeclareParameter;
 using builtin_interfaces::msg::Time;
 using tier4_debug_msgs::msg::Float64Stamped;
-using tier4_planning_msgs::msg::PathWithLaneId;
+using autoware_planning_msgs::msg::PathWithLaneId;
 using tier4_rtc_msgs::msg::Module;
 using tier4_rtc_msgs::msg::State;
 using unique_identifier_msgs::msg::UUID;
@@ -157,7 +157,7 @@ protected:
   }
 
   size_t findEgoSegmentIndex(
-    const std::vector<tier4_planning_msgs::msg::PathPointWithLaneId> & points) const;
+    const std::vector<autoware_planning_msgs::msg::PathPointWithLaneId> & points) const;
 };
 
 class SceneModuleManagerInterface
@@ -171,19 +171,19 @@ public:
 
   void updateSceneModuleInstances(
     const std::shared_ptr<const PlannerData> & planner_data,
-    const tier4_planning_msgs::msg::PathWithLaneId & path);
+    const autoware_planning_msgs::msg::PathWithLaneId & path);
 
-  virtual void plan(tier4_planning_msgs::msg::PathWithLaneId * path) { modifyPathVelocity(path); }
+  virtual void plan(autoware_planning_msgs::msg::PathWithLaneId * path) { modifyPathVelocity(path); }
 
 protected:
-  virtual void modifyPathVelocity(tier4_planning_msgs::msg::PathWithLaneId * path);
+  virtual void modifyPathVelocity(autoware_planning_msgs::msg::PathWithLaneId * path);
 
-  virtual void launchNewModules(const tier4_planning_msgs::msg::PathWithLaneId & path) = 0;
+  virtual void launchNewModules(const autoware_planning_msgs::msg::PathWithLaneId & path) = 0;
 
   virtual std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
-  getModuleExpiredFunction(const tier4_planning_msgs::msg::PathWithLaneId & path) = 0;
+  getModuleExpiredFunction(const autoware_planning_msgs::msg::PathWithLaneId & path) = 0;
 
-  virtual void deleteExpiredModules(const tier4_planning_msgs::msg::PathWithLaneId & path);
+  virtual void deleteExpiredModules(const autoware_planning_msgs::msg::PathWithLaneId & path);
 
   bool isModuleRegistered(const int64_t module_id)
   {
@@ -193,7 +193,7 @@ protected:
   void registerModule(const std::shared_ptr<SceneModuleInterface> & scene_module);
 
   size_t findEgoSegmentIndex(
-    const std::vector<tier4_planning_msgs::msg::PathPointWithLaneId> & points) const;
+    const std::vector<autoware_planning_msgs::msg::PathPointWithLaneId> & points) const;
 
   std::set<std::shared_ptr<SceneModuleInterface>> scene_modules_;
   std::set<int64_t> registered_module_id_set_;
@@ -208,7 +208,7 @@ protected:
   rclcpp::Logger logger_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_virtual_wall_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_;
-  rclcpp::Publisher<tier4_planning_msgs::msg::PathWithLaneId>::SharedPtr pub_debug_path_;
+  rclcpp::Publisher<autoware_planning_msgs::msg::PathWithLaneId>::SharedPtr pub_debug_path_;
   rclcpp::Publisher<autoware_adapi_v1_msgs::msg::VelocityFactorArray>::SharedPtr
     pub_velocity_factor_;
   rclcpp::Publisher<tier4_v2x_msgs::msg::InfrastructureCommandArray>::SharedPtr
@@ -227,7 +227,7 @@ public:
   SceneModuleManagerInterfaceWithRTC(
     rclcpp::Node & node, const char * module_name, const bool enable_rtc = true);
 
-  void plan(tier4_planning_msgs::msg::PathWithLaneId * path) override;
+  void plan(autoware_planning_msgs::msg::PathWithLaneId * path) override;
 
 protected:
   RTCInterface rtc_interface_;
@@ -262,7 +262,7 @@ protected:
 
   void publishObjectsOfInterestMarker();
 
-  void deleteExpiredModules(const tier4_planning_msgs::msg::PathWithLaneId & path) override;
+  void deleteExpiredModules(const autoware_planning_msgs::msg::PathWithLaneId & path) override;
 
   static bool getEnableRTC(rclcpp::Node & node, const std::string & param_name)
   {

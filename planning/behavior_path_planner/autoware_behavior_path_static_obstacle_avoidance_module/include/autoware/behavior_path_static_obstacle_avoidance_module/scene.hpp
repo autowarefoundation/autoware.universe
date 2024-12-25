@@ -37,7 +37,7 @@ namespace autoware::behavior_path_planner
 {
 
 using helper::static_obstacle_avoidance::AvoidanceHelper;
-using tier4_planning_msgs::msg::AvoidanceDebugMsg;
+using autoware_planning_msgs::msg::AvoidanceDebugMsg;
 
 class StaticObstacleAvoidanceModule : public SceneModuleInterface
 {

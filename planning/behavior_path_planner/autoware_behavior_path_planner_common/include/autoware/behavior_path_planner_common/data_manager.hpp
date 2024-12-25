@@ -37,9 +37,9 @@
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
-#include <tier4_planning_msgs/msg/detail/velocity_limit__struct.hpp>
-#include <tier4_planning_msgs/msg/lateral_offset.hpp>
-#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_planning_msgs/msg/detail/velocity_limit__struct.hpp>
+#include <autoware_planning_msgs/msg/lateral_offset.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <limits>
 #include <map>
@@ -62,11 +62,11 @@ using geometry_msgs::msg::AccelWithCovarianceStamped;
 using geometry_msgs::msg::PoseStamped;
 using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
-using tier4_planning_msgs::msg::LateralOffset;
-using tier4_planning_msgs::msg::PathWithLaneId;
+using autoware_planning_msgs::msg::LateralOffset;
+using autoware_planning_msgs::msg::PathWithLaneId;
 using PlanResult = PathWithLaneId::SharedPtr;
 using lanelet::TrafficLight;
-using tier4_planning_msgs::msg::VelocityLimit;
+using autoware_planning_msgs::msg::VelocityLimit;
 using unique_identifier_msgs::msg::UUID;
 
 struct TrafficSignalStamped

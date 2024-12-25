@@ -31,7 +31,7 @@ This plugin also can engage from the panel.
 | `/api/routing/clear_route`                         | `autoware_adapi_v1_msgs::srv::ClearRoute`          | The service to clear route state                   |
 | `/api/motion/accept_start`                         | `autoware_adapi_v1_msgs::srv::AcceptStart`         | The service to accept the vehicle to start         |
 | `/api/autoware/set/emergency`                      | `tier4_external_api_msgs::srv::SetEmergency`       | The service to set external emergency              |
-| `/planning/scenario_planning/max_velocity_default` | `tier4_planning_msgs::msg::VelocityLimit`          | The topic to set maximum speed of the vehicle      |
+| `/planning/scenario_planning/max_velocity_default` | `autoware_planning_msgs::msg::VelocityLimit`          | The topic to set maximum speed of the vehicle      |
 
 ## HowToUse
 

@@ -40,9 +40,9 @@
 #include <tier4_debug_msgs/msg/float32_multi_array_stamped.hpp>
 #include <tier4_debug_msgs/msg/float32_stamped.hpp>
 #include <tier4_debug_msgs/msg/float64_stamped.hpp>
-#include <tier4_planning_msgs/msg/expand_stop_range.hpp>
-#include <tier4_planning_msgs/msg/velocity_limit.hpp>
-#include <tier4_planning_msgs/msg/velocity_limit_clear_command.hpp>
+#include <autoware_planning_msgs/msg/expand_stop_range.hpp>
+#include <autoware_planning_msgs/msg/velocity_limit.hpp>
+#include <autoware_planning_msgs/msg/velocity_limit_clear_command.hpp>
 
 #include <boost/assert.hpp>
 #include <boost/assign/list_of.hpp>
@@ -88,9 +88,9 @@ using tier4_debug_msgs::msg::BoolStamped;
 using tier4_debug_msgs::msg::Float32MultiArrayStamped;
 using tier4_debug_msgs::msg::Float32Stamped;
 using tier4_debug_msgs::msg::Float64Stamped;
-using tier4_planning_msgs::msg::ExpandStopRange;
-using tier4_planning_msgs::msg::VelocityLimit;
-using tier4_planning_msgs::msg::VelocityLimitClearCommand;
+using autoware_planning_msgs::msg::ExpandStopRange;
+using autoware_planning_msgs::msg::VelocityLimit;
+using autoware_planning_msgs::msg::VelocityLimitClearCommand;
 
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
 using PointCloud = pcl::PointCloud<pcl::PointXYZ>;

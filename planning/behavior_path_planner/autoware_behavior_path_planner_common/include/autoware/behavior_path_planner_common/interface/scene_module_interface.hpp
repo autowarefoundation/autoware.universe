@@ -37,8 +37,8 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/steering_factor.hpp>
-#include <tier4_planning_msgs/msg/avoidance_debug_msg_array.hpp>
-#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_planning_msgs/msg/avoidance_debug_msg_array.hpp>
+#include <autoware_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_rtc_msgs/msg/state.hpp>
 #include <unique_identifier_msgs/msg/uuid.hpp>
 #include <visualization_msgs/msg/detail/marker_array__struct.hpp>
@@ -64,8 +64,8 @@ using autoware::universe_utils::generateUUID;
 using autoware_adapi_v1_msgs::msg::PlanningBehavior;
 using autoware_adapi_v1_msgs::msg::SteeringFactor;
 using autoware_adapi_v1_msgs::msg::VelocityFactor;
-using tier4_planning_msgs::msg::AvoidanceDebugMsgArray;
-using tier4_planning_msgs::msg::PathWithLaneId;
+using autoware_planning_msgs::msg::AvoidanceDebugMsgArray;
+using autoware_planning_msgs::msg::PathWithLaneId;
 using tier4_rtc_msgs::msg::State;
 using unique_identifier_msgs::msg::UUID;
 using visualization_msgs::msg::MarkerArray;

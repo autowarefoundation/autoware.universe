@@ -19,36 +19,36 @@
 
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <autoware_planning_msgs/msg/trajectory.hpp>
-#include <tier4_planning_msgs/msg/route_state.hpp>
-#include <tier4_planning_msgs/srv/clear_route.hpp>
-#include <tier4_planning_msgs/srv/set_lanelet_route.hpp>
-#include <tier4_planning_msgs/srv/set_waypoint_route.hpp>
+#include <autoware_planning_msgs/msg/route_state.hpp>
+#include <autoware_planning_msgs/srv/clear_route.hpp>
+#include <autoware_planning_msgs/srv/set_lanelet_route.hpp>
+#include <autoware_planning_msgs/srv/set_waypoint_route.hpp>
 
 namespace autoware::component_interface_specs::planning
 {
 
 struct SetLaneletRoute
 {
-  using Service = tier4_planning_msgs::srv::SetLaneletRoute;
+  using Service = autoware_planning_msgs::srv::SetLaneletRoute;
   static constexpr char name[] = "/planning/mission_planning/route_selector/main/set_lanelet_route";
 };
 
 struct SetWaypointRoute
 {
-  using Service = tier4_planning_msgs::srv::SetWaypointRoute;
+  using Service = autoware_planning_msgs::srv::SetWaypointRoute;
   static constexpr char name[] =
     "/planning/mission_planning/route_selector/main/set_waypoint_route";
 };
 
 struct ClearRoute
 {
-  using Service = tier4_planning_msgs::srv::ClearRoute;
+  using Service = autoware_planning_msgs::srv::ClearRoute;
   static constexpr char name[] = "/planning/mission_planning/route_selector/main/clear_route";
 };
 
 struct RouteState
 {
-  using Message = tier4_planning_msgs::msg::RouteState;
+  using Message = autoware_planning_msgs::msg::RouteState;
   static constexpr char name[] = "/planning/mission_planning/route_selector/main/state";
   static constexpr size_t depth = 1;
   static constexpr auto reliability = RMW_QOS_POLICY_RELIABILITY_RELIABLE;

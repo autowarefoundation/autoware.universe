@@ -17,7 +17,7 @@
 
 #include <autoware_planning_msgs/msg/path_point.hpp>
 #include <autoware_planning_msgs/msg/trajectory_point.hpp>
-#include <tier4_planning_msgs/msg/path_point_with_lane_id.hpp>
+#include <autoware_planning_msgs/msg/path_point_with_lane_id.hpp>
 
 #include <string>
 #include <vector>
@@ -48,8 +48,8 @@ void VelocityFactorInterface::set(
   velocity_factor_.detail = detail;
 }
 
-template void VelocityFactorInterface::set<tier4_planning_msgs::msg::PathPointWithLaneId>(
-  const std::vector<tier4_planning_msgs::msg::PathPointWithLaneId> &, const Pose &, const Pose &,
+template void VelocityFactorInterface::set<autoware_planning_msgs::msg::PathPointWithLaneId>(
+  const std::vector<autoware_planning_msgs::msg::PathPointWithLaneId> &, const Pose &, const Pose &,
   const VelocityFactorStatus, const std::string &);
 template void VelocityFactorInterface::set<autoware_planning_msgs::msg::PathPoint>(
   const std::vector<autoware_planning_msgs::msg::PathPoint> &, const Pose &, const Pose &,

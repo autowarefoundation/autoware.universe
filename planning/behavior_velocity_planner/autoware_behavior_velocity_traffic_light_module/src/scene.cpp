@@ -272,11 +272,11 @@ bool TrafficLightModule::isTrafficSignalTimedOut() const
   return false;
 }
 
-tier4_planning_msgs::msg::PathWithLaneId TrafficLightModule::insertStopPose(
-  const tier4_planning_msgs::msg::PathWithLaneId & input, const size_t & insert_target_point_idx,
+autoware_planning_msgs::msg::PathWithLaneId TrafficLightModule::insertStopPose(
+  const autoware_planning_msgs::msg::PathWithLaneId & input, const size_t & insert_target_point_idx,
   const Eigen::Vector2d & target_point)
 {
-  tier4_planning_msgs::msg::PathWithLaneId modified_path;
+  autoware_planning_msgs::msg::PathWithLaneId modified_path;
   modified_path = input;
 
   // Create stop pose

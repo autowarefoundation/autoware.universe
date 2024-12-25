@@ -20,7 +20,7 @@
 | `~/input/vector_map`        | autoware_map_msgs::msg::LaneletMapBin      | vector map          |
 | `~/input/odometry`          | nav_msgs::Odometry                         | vehicle velocity    |
 | `~/input/dynamic_objects`   | autoware_perception_msgs::PredictedObjects | dynamic objects     |
-| `~/input/expand_stop_range` | tier4_planning_msgs::msg::ExpandStopRange  | expand stop range   |
+| `~/input/expand_stop_range` | autoware_planning_msgs::msg::ExpandStopRange  | expand stop range   |
 
 ### Output topics
 

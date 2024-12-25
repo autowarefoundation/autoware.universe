@@ -36,15 +36,15 @@ It distributes route requests and planning results according to current MRM oper
 
 | Name                                                                | Type                                     | Description                                |
 | ------------------------------------------------------------------- | ---------------------------------------- | ------------------------------------------ |
-| `/planning/mission_planning/mission_planner/clear_route`            | tier4_planning_msgs/srv/ClearRoute       | route clear request                        |
-| `/planning/mission_planning/mission_planner/set_waypoint_route`     | tier4_planning_msgs/srv/SetWaypointRoute | route request with lanelet waypoints.      |
-| `/planning/mission_planning/mission_planner/set_lanelet_route`      | tier4_planning_msgs/srv/SetLaneletRoute  | route request with pose waypoints.         |
-| `/planning/mission_planning/route_selector/main/clear_route`        | tier4_planning_msgs/srv/ClearRoute       | main route clear request                   |
-| `/planning/mission_planning/route_selector/main/set_waypoint_route` | tier4_planning_msgs/srv/SetWaypointRoute | main route request with lanelet waypoints. |
-| `/planning/mission_planning/route_selector/main/set_lanelet_route`  | tier4_planning_msgs/srv/SetLaneletRoute  | main route request with pose waypoints.    |
-| `/planning/mission_planning/route_selector/mrm/clear_route`         | tier4_planning_msgs/srv/ClearRoute       | mrm route clear request                    |
-| `/planning/mission_planning/route_selector/mrm/set_waypoint_route`  | tier4_planning_msgs/srv/SetWaypointRoute | mrm route request with lanelet waypoints.  |
-| `/planning/mission_planning/route_selector/mrm/set_lanelet_route`   | tier4_planning_msgs/srv/SetLaneletRoute  | mrm route request with pose waypoints.     |
+| `/planning/mission_planning/mission_planner/clear_route`            | autoware_planning_msgs/srv/ClearRoute       | route clear request                        |
+| `/planning/mission_planning/mission_planner/set_waypoint_route`     | autoware_planning_msgs/srv/SetWaypointRoute | route request with lanelet waypoints.      |
+| `/planning/mission_planning/mission_planner/set_lanelet_route`      | autoware_planning_msgs/srv/SetLaneletRoute  | route request with pose waypoints.         |
+| `/planning/mission_planning/route_selector/main/clear_route`        | autoware_planning_msgs/srv/ClearRoute       | main route clear request                   |
+| `/planning/mission_planning/route_selector/main/set_waypoint_route` | autoware_planning_msgs/srv/SetWaypointRoute | main route request with lanelet waypoints. |
+| `/planning/mission_planning/route_selector/main/set_lanelet_route`  | autoware_planning_msgs/srv/SetLaneletRoute  | main route request with pose waypoints.    |
+| `/planning/mission_planning/route_selector/mrm/clear_route`         | autoware_planning_msgs/srv/ClearRoute       | mrm route clear request                    |
+| `/planning/mission_planning/route_selector/mrm/set_waypoint_route`  | autoware_planning_msgs/srv/SetWaypointRoute | mrm route request with lanelet waypoints.  |
+| `/planning/mission_planning/route_selector/mrm/set_lanelet_route`   | autoware_planning_msgs/srv/SetLaneletRoute  | mrm route request with pose waypoints.     |
 
 ### Subscriptions
 
@@ -58,11 +58,11 @@ It distributes route requests and planning results according to current MRM oper
 
 | Name                                                   | Type                                | Description              |
 | ------------------------------------------------------ | ----------------------------------- | ------------------------ |
-| `/planning/mission_planning/state`                     | tier4_planning_msgs/msg/RouteState  | route state              |
+| `/planning/mission_planning/state`                     | autoware_planning_msgs/msg/RouteState  | route state              |
 | `/planning/mission_planning/route`                     | autoware_planning_msgs/LaneletRoute | route                    |
-| `/planning/mission_planning/route_selector/main/state` | tier4_planning_msgs/msg/RouteState  | main route state         |
+| `/planning/mission_planning/route_selector/main/state` | autoware_planning_msgs/msg/RouteState  | main route state         |
 | `/planning/mission_planning/route_selector/main/route` | autoware_planning_msgs/LaneletRoute | main route               |
-| `/planning/mission_planning/route_selector/mrm/state`  | tier4_planning_msgs/msg/RouteState  | mrm route state          |
+| `/planning/mission_planning/route_selector/mrm/state`  | autoware_planning_msgs/msg/RouteState  | mrm route state          |
 | `/planning/mission_planning/route_selector/mrm/route`  | autoware_planning_msgs/LaneletRoute | mrm route                |
 | `~/debug/route_marker`                                 | visualization_msgs/msg/MarkerArray  | route marker for debug   |
 | `~/debug/goal_footprint`                               | visualization_msgs/msg/MarkerArray  | goal footprint for debug |
