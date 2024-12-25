@@ -3,7 +3,6 @@
     stop:
       common:
         enable_debug_info: false
-        enable_calculation_time_info: false
 
       safe_distance_margin : 5.0 # This is also used as a stop margin [m]
       terminal_safe_distance_margin : 3.0 # Stop margin at the goal. This value cannot exceed safe distance margin. [m]

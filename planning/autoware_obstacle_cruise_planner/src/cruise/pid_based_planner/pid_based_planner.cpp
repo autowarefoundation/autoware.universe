@@ -161,9 +161,6 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::generateCruiseTrajectory(
   const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points,
   const std::vector<CruiseObstacle> & obstacles, std::optional<VelocityLimit> & vel_limit)
 {
-  *debug_data_ptr_ = DebugData();
-
-  stop_watch_.tic(__func__);
   cruise_planning_debug_info_.reset();
 
   // calc obstacles to cruise
@@ -172,11 +169,6 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::generateCruiseTrajectory(
   // plan cruise
   const auto cruise_traj_points =
     planCruise(planner_data, stop_traj_points, vel_limit, cruise_obstacle_info);
-
-  const double calculation_time = stop_watch_.toc(__func__);
-  RCLCPP_INFO_EXPRESSION(
-    rclcpp::get_logger("ObstacleCruisePlanner::PIDBasedPlanner"), enable_calculation_time_info_,
-    "  %s := %f [ms]", __func__, calculation_time);
 
   prev_traj_points_ = cruise_traj_points;
   return cruise_traj_points;

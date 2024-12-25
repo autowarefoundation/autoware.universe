@@ -22,6 +22,7 @@
 #include "autoware/obstacle_cruise_planner/stop/obstacle_stop_module.hpp"
 #include "autoware/obstacle_cruise_planner/stop/stop_planning_debug_info.hpp"
 #include "autoware/obstacle_cruise_planner/utils.hpp"
+#include "autoware/universe_utils/ros/parameter.hpp"
 #include "autoware/universe_utils/ros/update_param.hpp"
 #include "autoware/universe_utils/system/stop_watch.hpp"
 
@@ -87,6 +88,8 @@ VelocityLimitClearCommand createVelocityLimitClearCommandMessage(
 
 namespace autoware::motion_planning
 {
+using autoware::universe_utils::getOrDeclareParameter;
+
 // cruise
 struct CruiseBehaviorDeterminationParam
 {
@@ -94,32 +97,34 @@ struct CruiseBehaviorDeterminationParam
 
   explicit CruiseBehaviorDeterminationParam(rclcpp::Node & node)
   {  // behavior determination
-    outside_obstacle_min_velocity_threshold = node.declare_parameter<double>(
-      "cruise.behavior_determination.outside_obstacle.obstacle_velocity_threshold");
-    ego_obstacle_overlap_time_threshold = node.declare_parameter<double>(
-      "cruise.behavior_determination.outside_obstacle.ego_obstacle_overlap_time_threshold");
-    max_prediction_time_for_collision_check = node.declare_parameter<double>(
+    outside_obstacle_min_velocity_threshold = getOrDeclareParameter<double>(
+      node, "cruise.behavior_determination.outside_obstacle.obstacle_velocity_threshold");
+    ego_obstacle_overlap_time_threshold = getOrDeclareParameter<double>(
+      node, "cruise.behavior_determination.outside_obstacle.ego_obstacle_overlap_time_threshold");
+    max_prediction_time_for_collision_check = getOrDeclareParameter<double>(
+      node,
       "cruise.behavior_determination.outside_obstacle.max_prediction_time_for_collision_check");
     max_lat_margin_for_cruise =
-      node.declare_parameter<double>("cruise.behavior_determination.max_lat_margin");
-    enable_yield = node.declare_parameter<bool>("cruise.behavior_determination.yield.enable_yield");
-    yield_lat_distance_threshold =
-      node.declare_parameter<double>("cruise.behavior_determination.yield.lat_distance_threshold");
-    max_lat_dist_between_obstacles = node.declare_parameter<double>(
-      "cruise.behavior_determination.yield.max_lat_dist_between_obstacles");
-    stopped_obstacle_velocity_threshold = node.declare_parameter<double>(
-      "cruise.behavior_determination.yield.stopped_obstacle_velocity_threshold");
-    max_obstacles_collision_time = node.declare_parameter<double>(
-      "cruise.behavior_determination.yield.max_obstacles_collision_time");
-    max_lat_time_margin_for_cruise = node.declare_parameter<double>(
-      "cruise.behavior_determination.outside_obstacle.max_lateral_time_margin");
-    num_of_predicted_paths_for_outside_cruise_obstacle = node.declare_parameter<int>(
-      "cruise.behavior_determination.outside_obstacle.num_of_predicted_paths");
+      getOrDeclareParameter<double>(node, "cruise.behavior_determination.max_lat_margin");
+    enable_yield =
+      getOrDeclareParameter<bool>(node, "cruise.behavior_determination.yield.enable_yield");
+    yield_lat_distance_threshold = getOrDeclareParameter<double>(
+      node, "cruise.behavior_determination.yield.lat_distance_threshold");
+    max_lat_dist_between_obstacles = getOrDeclareParameter<double>(
+      node, "cruise.behavior_determination.yield.max_lat_dist_between_obstacles");
+    stopped_obstacle_velocity_threshold = getOrDeclareParameter<double>(
+      node, "cruise.behavior_determination.yield.stopped_obstacle_velocity_threshold");
+    max_obstacles_collision_time = getOrDeclareParameter<double>(
+      node, "cruise.behavior_determination.yield.max_obstacles_collision_time");
+    max_lat_time_margin_for_cruise = getOrDeclareParameter<double>(
+      node, "cruise.behavior_determination.outside_obstacle.max_lateral_time_margin");
+    num_of_predicted_paths_for_outside_cruise_obstacle = getOrDeclareParameter<int>(
+      node, "cruise.behavior_determination.outside_obstacle.num_of_predicted_paths");
 
-    obstacle_velocity_threshold_from_cruise_to_stop = node.declare_parameter<double>(
-      "cruise.behavior_determination.obstacle_velocity_threshold_from_cruise_to_stop");
-    obstacle_velocity_threshold_from_stop_to_cruise = node.declare_parameter<double>(
-      "cruise.behavior_determination.obstacle_velocity_threshold_from_stop_to_cruise");
+    obstacle_velocity_threshold_from_cruise_to_stop = getOrDeclareParameter<double>(
+      node, "cruise.behavior_determination.obstacle_velocity_threshold_from_cruise_to_stop");
+    obstacle_velocity_threshold_from_stop_to_cruise = getOrDeclareParameter<double>(
+      node, "cruise.behavior_determination.obstacle_velocity_threshold_from_stop_to_cruise");
   }
 
   void onParam(const std::vector<rclcpp::Parameter> & parameters)
@@ -181,20 +186,21 @@ public:
   {
     explicit LongitudinalInfo(rclcpp::Node & node)
     {
-      max_accel = node.declare_parameter<double>("normal.max_acc");
-      min_accel = node.declare_parameter<double>("normal.min_acc");
-      max_jerk = node.declare_parameter<double>("normal.max_jerk");
-      min_jerk = node.declare_parameter<double>("normal.min_jerk");
-      limit_max_accel = node.declare_parameter<double>("limit.max_acc");
-      limit_min_accel = node.declare_parameter<double>("limit.min_acc");
-      limit_max_jerk = node.declare_parameter<double>("limit.max_jerk");
-      limit_min_jerk = node.declare_parameter<double>("limit.min_jerk");
+      max_accel = getOrDeclareParameter<double>(node, "normal.max_acc");
+      min_accel = getOrDeclareParameter<double>(node, "normal.min_acc");
+      max_jerk = getOrDeclareParameter<double>(node, "normal.max_jerk");
+      min_jerk = getOrDeclareParameter<double>(node, "normal.min_jerk");
+      limit_max_accel = getOrDeclareParameter<double>(node, "limit.max_acc");
+      limit_min_accel = getOrDeclareParameter<double>(node, "limit.min_acc");
+      limit_max_jerk = getOrDeclareParameter<double>(node, "limit.max_jerk");
+      limit_min_jerk = getOrDeclareParameter<double>(node, "limit.min_jerk");
 
-      idling_time = node.declare_parameter<double>("cruise.idling_time");
-      min_ego_accel_for_rss = node.declare_parameter<double>("cruise.min_ego_accel_for_rss");
-      min_object_accel_for_rss = node.declare_parameter<double>("cruise.min_object_accel_for_rss");
+      idling_time = getOrDeclareParameter<double>(node, "cruise.idling_time");
+      min_ego_accel_for_rss = getOrDeclareParameter<double>(node, "cruise.min_ego_accel_for_rss");
+      min_object_accel_for_rss =
+        getOrDeclareParameter<double>(node, "cruise.min_object_accel_for_rss");
 
-      safe_distance_margin = node.declare_parameter<double>("cruise.safe_distance_margin");
+      safe_distance_margin = getOrDeclareParameter<double>(node, "cruise.safe_distance_margin");
     }
 
     void onParam(const std::vector<rclcpp::Parameter> & parameters)
@@ -266,9 +272,7 @@ public:
   explicit ObstacleCruiseModule(rclcpp::Node & node)
   : clock_(node.get_clock()), longitudinal_info_(node)
   {
-    enable_debug_info_ = node.declare_parameter<bool>("cruise.common.enable_debug_info");
-    enable_calculation_time_info_ =
-      node.declare_parameter<bool>("cruise.common.enable_calculation_time_info");
+    enable_debug_info_ = getOrDeclareParameter<bool>(node, "cruise.common.enable_debug_info");
 
     inside_cruise_obstacle_types_ =
       obstacle_cruise_utils::getTargetObjectType(node, "cruise.obstacle_type.inside.");
@@ -285,6 +289,11 @@ public:
     debug_cruise_planning_info_pub_ =
       node.create_publisher<Float32MultiArrayStamped>("~/debug/cruise_planning_info", 1);
 
+    metrics_pub_ = node.create_publisher<MetricArray>("~/cruise/metrics", 10);
+
+    velocity_factors_pub_ = node.create_publisher<VelocityFactorArray>(
+      "/planning/velocity_factors/obstacle_cruise/cruise", 1);
+
     vel_limit_pub_ = node.create_publisher<VelocityLimit>(
       "~/output/velocity_limit", rclcpp::QoS{1}.transient_local());
     clear_vel_limit_pub_ = node.create_publisher<VelocityLimitClearCommand>(
@@ -298,6 +307,7 @@ public:
     const CommonBehaviorDeterminationParam & common_behavior_determination_param,
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points)
   {
+    debug_data_ptr_ = std::make_shared<DebugData>();
     common_behavior_determination_param_ = common_behavior_determination_param;
 
     const auto decimated_traj_points = obstacle_cruise_utils::decimateTrajectoryPoints(
@@ -971,17 +981,11 @@ protected:
   {
   }
 
-  // stop watch
-  autoware::universe_utils::StopWatch<
-    std::chrono::milliseconds, std::chrono::microseconds, std::chrono::steady_clock>
-    stop_watch_;
-
   rclcpp::Publisher<MetricArray>::SharedPtr metrics_pub_;
   rclcpp::Publisher<VelocityFactorArray>::SharedPtr velocity_factors_pub_;
 
   // Parameters
   bool enable_debug_info_{false};
-  bool enable_calculation_time_info_{false};
   bool use_pointcloud_{false};
 
   void updateCommonParam(const std::vector<rclcpp::Parameter> & parameters)

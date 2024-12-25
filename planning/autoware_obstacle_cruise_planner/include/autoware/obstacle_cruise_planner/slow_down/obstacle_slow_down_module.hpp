@@ -22,8 +22,8 @@
 #include "autoware/obstacle_cruise_planner/stop/stop_planning_debug_info.hpp"
 #include "autoware/obstacle_cruise_planner/utils.hpp"
 #include "autoware/signal_processing/lowpass_filter_1d.hpp"
+#include "autoware/universe_utils/ros/parameter.hpp"
 #include "autoware/universe_utils/ros/update_param.hpp"
-#include "autoware/universe_utils/system/stop_watch.hpp"
 
 #include <autoware/objects_of_interest_marker_interface/objects_of_interest_marker_interface.hpp>
 
@@ -38,6 +38,8 @@
 
 namespace autoware::motion_planning
 {
+using autoware::universe_utils::getOrDeclareParameter;
+
 namespace
 {
 bool isLowerConsideringHysteresis(
@@ -183,14 +185,14 @@ public:
   {
     explicit LongitudinalInfo(rclcpp::Node & node)
     {
-      max_accel = node.declare_parameter<double>("normal.max_acc");
-      min_accel = node.declare_parameter<double>("normal.min_acc");
-      max_jerk = node.declare_parameter<double>("normal.max_jerk");
-      min_jerk = node.declare_parameter<double>("normal.min_jerk");
-      limit_max_accel = node.declare_parameter<double>("limit.max_acc");
-      limit_min_accel = node.declare_parameter<double>("limit.min_acc");
-      limit_max_jerk = node.declare_parameter<double>("limit.max_jerk");
-      limit_min_jerk = node.declare_parameter<double>("limit.min_jerk");
+      max_accel = getOrDeclareParameter<double>(node, "normal.max_acc");
+      min_accel = getOrDeclareParameter<double>(node, "normal.min_acc");
+      max_jerk = getOrDeclareParameter<double>(node, "normal.max_jerk");
+      min_jerk = getOrDeclareParameter<double>(node, "normal.min_jerk");
+      limit_max_accel = getOrDeclareParameter<double>(node, "limit.max_acc");
+      limit_min_accel = getOrDeclareParameter<double>(node, "limit.min_acc");
+      limit_max_jerk = getOrDeclareParameter<double>(node, "limit.max_jerk");
+      limit_min_jerk = getOrDeclareParameter<double>(node, "limit.min_jerk");
     }
 
     void onParam(const std::vector<rclcpp::Parameter> & parameters)
@@ -251,21 +253,19 @@ public:
   explicit ObstacleSlowDownModule(rclcpp::Node & node)
   : clock_(node.get_clock()), slow_down_param_(SlowDownParam(node)), longitudinal_info_(node)
   {
-    enable_debug_info_ = node.declare_parameter<bool>("slow_down.common.enable_debug_info");
-    enable_calculation_time_info_ =
-      node.declare_parameter<bool>("slow_down.common.enable_calculation_time_info");
+    enable_debug_info_ = getOrDeclareParameter<bool>(node, "slow_down.common.enable_debug_info");
 
     enable_slow_down_planning_ =
-      node.declare_parameter<bool>("slow_down.common.enable_slow_down_planning");
+      getOrDeclareParameter<bool>(node, "slow_down.common.enable_slow_down_planning");
     slow_down_obstacle_types_ =
       obstacle_cruise_utils::getTargetObjectType(node, "slow_down.obstacle_type.");
     use_pointcloud_for_slow_down_ =
-      node.declare_parameter<bool>("slow_down.obstacle_type.pointcloud");
+      getOrDeclareParameter<bool>(node, "slow_down.obstacle_type.pointcloud");
 
     moving_object_speed_threshold =
-      node.declare_parameter<double>("slow_down.moving_object_speed_threshold");
+      getOrDeclareParameter<double>(node, "slow_down.moving_object_speed_threshold");
     moving_object_hysteresis_range =
-      node.declare_parameter<double>("slow_down.moving_object_hysteresis_range");
+      getOrDeclareParameter<double>(node, "slow_down.moving_object_hysteresis_range");
 
     objects_of_interest_marker_interface_ = std::make_unique<
       autoware::objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface>(
@@ -275,8 +275,13 @@ public:
       node.create_publisher<MarkerArray>("~/virtual_wall/slow_down", 1);
     debug_marker_pub_ = node.create_publisher<MarkerArray>("~/debug/marker", 1);
 
+    metrics_pub_ = node.create_publisher<MetricArray>("~/slow_down/metrics", 10);
+
     debug_slow_down_planning_info_pub_ =
       node.create_publisher<Float32MultiArrayStamped>("~/debug/slow_down_planning_info", 1);
+
+    velocity_factors_pub_ = node.create_publisher<VelocityFactorArray>(
+      "/planning/velocity_factors/obstacle_cruise/stop", 1);
 
     vel_limit_pub_ = node.create_publisher<VelocityLimit>(
       "~/output/velocity_limit", rclcpp::QoS{1}.transient_local());
@@ -289,6 +294,7 @@ public:
     const CommonBehaviorDeterminationParam & common_behavior_determination_param,
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & cruise_traj_points)
   {
+    debug_data_ptr_ = std::make_shared<DebugData>();
     common_behavior_determination_param_ = common_behavior_determination_param;
 
     const auto decimated_traj_points = obstacle_cruise_utils::decimateTrajectoryPoints(
@@ -342,9 +348,6 @@ private:
     const std::vector<SlowDownObstacle> & obstacles,
     [[maybe_unused]] std::optional<VelocityLimit> & vel_limit, const VehicleInfo & vehicle_info)
   {
-    *debug_data_ptr_ = DebugData();
-
-    stop_watch_.tic(__func__);
     auto slow_down_traj_points = cruise_traj_points;
     slow_down_debug_multi_array_ = Float32MultiArrayStamped();
 
@@ -493,11 +496,6 @@ private:
 
     // update prev_slow_down_output_
     prev_slow_down_output_ = new_prev_slow_down_output;
-
-    const double calculation_time = stop_watch_.toc(__func__);
-    RCLCPP_INFO_EXPRESSION(
-      rclcpp::get_logger("ObstacleCruisePlanner::SlowDownPlanner"), enable_calculation_time_info_,
-      "  %s := %f [ms]", __func__, calculation_time);
 
     return slow_down_traj_points;
   }
@@ -755,33 +753,32 @@ private:
 
     explicit SlowDownParam(rclcpp::Node & node)
     {
-      slow_down_min_accel = node.declare_parameter<double>("slow_down.slow_down_min_acc");
-      slow_down_min_jerk = node.declare_parameter<double>("slow_down.slow_down_min_jerk");
+      slow_down_min_accel = getOrDeclareParameter<double>(node, "slow_down.slow_down_min_acc");
+      slow_down_min_jerk = getOrDeclareParameter<double>(node, "slow_down.slow_down_min_jerk");
 
       // behavior determination
       max_lat_margin_for_slow_down =
-        node.declare_parameter<double>("slow_down.behavior_determination.max_lat_margin");
-      lat_hysteresis_margin_for_slow_down =
-        node.declare_parameter<double>("slow_down.behavior_determination.lat_hysteresis_margin");
-      successive_num_to_entry_slow_down_condition = node.declare_parameter<int>(
-        "slow_down.behavior_determination.successive_num_to_entry_slow_down_condition");
-      successive_num_to_exit_slow_down_condition = node.declare_parameter<int>(
-        "slow_down.behavior_determination.successive_num_to_exit_slow_down_condition");
+        getOrDeclareParameter<double>(node, "slow_down.behavior_determination.max_lat_margin");
+      lat_hysteresis_margin_for_slow_down = getOrDeclareParameter<double>(
+        node, "slow_down.behavior_determination.lat_hysteresis_margin");
+      successive_num_to_entry_slow_down_condition = getOrDeclareParameter<int>(
+        node, "slow_down.behavior_determination.successive_num_to_entry_slow_down_condition");
+      successive_num_to_exit_slow_down_condition = getOrDeclareParameter<int>(
+        node, "slow_down.behavior_determination.successive_num_to_exit_slow_down_condition");
 
-      obstacle_labels =
-        node.declare_parameter<std::vector<std::string>>("slow_down.labels", obstacle_labels);
+      obstacle_labels = getOrDeclareParameter<std::vector<std::string>>(node, "slow_down.labels");
       // obstacle label dependant parameters
       for (const auto & label : obstacle_labels) {
         for (const auto & movement_postfix : obstacle_moving_classification) {
           ObstacleSpecificParams params;
-          params.max_lat_margin = node.declare_parameter<double>(
-            "slow_down." + label + "." + movement_postfix + ".max_lat_margin");
-          params.min_lat_margin = node.declare_parameter<double>(
-            "slow_down." + label + "." + movement_postfix + ".min_lat_margin");
-          params.max_ego_velocity = node.declare_parameter<double>(
-            "slow_down." + label + "." + movement_postfix + ".max_ego_velocity");
-          params.min_ego_velocity = node.declare_parameter<double>(
-            "slow_down." + label + "." + movement_postfix + ".min_ego_velocity");
+          params.max_lat_margin = getOrDeclareParameter<double>(
+            node, "slow_down." + label + "." + movement_postfix + ".max_lat_margin");
+          params.min_lat_margin = getOrDeclareParameter<double>(
+            node, "slow_down." + label + "." + movement_postfix + ".min_lat_margin");
+          params.max_ego_velocity = getOrDeclareParameter<double>(
+            node, "slow_down." + label + "." + movement_postfix + ".max_ego_velocity");
+          params.min_ego_velocity = getOrDeclareParameter<double>(
+            node, "slow_down." + label + "." + movement_postfix + ".min_ego_velocity");
           obstacle_to_param_struct_map.emplace(
             std::make_pair(label + "." + movement_postfix, params));
         }
@@ -789,11 +786,12 @@ private:
 
       // common parameters
       time_margin_on_target_velocity =
-        node.declare_parameter<double>("slow_down.time_margin_on_target_velocity");
-      lpf_gain_slow_down_vel = node.declare_parameter<double>("slow_down.lpf_gain_slow_down_vel");
-      lpf_gain_lat_dist = node.declare_parameter<double>("slow_down.lpf_gain_lat_dist");
+        getOrDeclareParameter<double>(node, "slow_down.time_margin_on_target_velocity");
+      lpf_gain_slow_down_vel =
+        getOrDeclareParameter<double>(node, "slow_down.lpf_gain_slow_down_vel");
+      lpf_gain_lat_dist = getOrDeclareParameter<double>(node, "slow_down.lpf_gain_lat_dist");
       lpf_gain_dist_to_slow_down =
-        node.declare_parameter<double>("slow_down.lpf_gain_dist_to_slow_down");
+        getOrDeclareParameter<double>(node, "slow_down.lpf_gain_dist_to_slow_down");
 
       types_map = {{ObjectClassification::UNKNOWN, "unknown"},
                    {ObjectClassification::CAR, "car"},
@@ -1182,11 +1180,6 @@ private:
 
   Float32MultiArrayStamped slow_down_debug_multi_array_;
 
-  // stop watch
-  autoware::universe_utils::StopWatch<
-    std::chrono::milliseconds, std::chrono::microseconds, std::chrono::steady_clock>
-    stop_watch_;
-
   rclcpp::Publisher<MetricArray>::SharedPtr metrics_pub_;
   rclcpp::Publisher<VelocityFactorArray>::SharedPtr velocity_factors_pub_;
 
@@ -1197,7 +1190,6 @@ private:
 
   // Parameters
   bool enable_debug_info_{false};
-  bool enable_calculation_time_info_{false};
   bool use_pointcloud_{false};
 
   void updateCommonParam(const std::vector<rclcpp::Parameter> & parameters)

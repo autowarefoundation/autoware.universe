@@ -77,10 +77,8 @@ std::tuple<std::vector<StopObstacle>, std::vector<CruiseObstacle>, std::vector<S
     const std::vector<TrajectoryPoint> & traj_points);
 
   void publishDebugMarker() const;
-  void publishCalculationTime(const double calculation_time) const;
 
   bool enable_debug_info_;
-  bool enable_calculation_time_info_;
 
   // parameter callback result
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
@@ -88,7 +86,6 @@ std::tuple<std::vector<StopObstacle>, std::vector<CruiseObstacle>, std::vector<S
   // publisher
   rclcpp::Publisher<Trajectory>::SharedPtr trajectory_pub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_marker_pub_;
-  rclcpp::Publisher<Float64Stamped>::SharedPtr debug_calculation_time_pub_;
 
   // subscriber
   rclcpp::Subscription<Trajectory>::SharedPtr traj_sub_;
@@ -106,11 +103,6 @@ std::tuple<std::vector<StopObstacle>, std::vector<CruiseObstacle>, std::vector<S
 
   // Vehicle Parameters
   VehicleInfo vehicle_info_;
-
-  // stop watch
-  mutable autoware::universe_utils::StopWatch<
-    std::chrono::milliseconds, std::chrono::microseconds, std::chrono::steady_clock>
-    stop_watch_;
 
   struct DebugData
   {

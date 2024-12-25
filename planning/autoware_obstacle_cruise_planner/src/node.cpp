@@ -21,6 +21,7 @@
 #include "autoware/obstacle_cruise_planner/utils.hpp"
 #include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
 #include "autoware/universe_utils/ros/marker_helper.hpp"
+#include "autoware/universe_utils/ros/parameter.hpp"
 #include "autoware/universe_utils/ros/update_param.hpp"
 
 #include <pcl_ros/transforms.hpp>
@@ -115,6 +116,8 @@ void concatenate(std::vector<T> & first, const std::vector<T> & last)
 
 namespace autoware::motion_planning
 {
+using autoware::universe_utils::getOrDeclareParameter;
+
 ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions & node_options)
 : Node("obstacle_cruise_planner", node_options),
   vehicle_info_(autoware::vehicle_info_utils::VehicleInfoUtils(*this).getVehicleInfo()),
@@ -131,7 +134,6 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
   trajectory_pub_ = create_publisher<Trajectory>("~/output/trajectory", 1);
 
   // debug publisher
-  debug_calculation_time_pub_ = create_publisher<Float64Stamped>("~/debug/processing_time_ms", 1);
   debug_marker_pub_ = create_publisher<MarkerArray>("~/debug/marker", 1);
 
   // tf listener
@@ -139,7 +141,6 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
   enable_debug_info_ = declare_parameter<bool>("common.enable_debug_info");
-  enable_calculation_time_info_ = declare_parameter<bool>("common.enable_calculation_time_info");
 
   common_behavior_determination_param_ = CommonBehaviorDeterminationParam(*this);
 
@@ -165,8 +166,6 @@ rcl_interfaces::msg::SetParametersResult ObstacleCruisePlannerNode::onParam(
   //
   //   autoware::universe_utils::updateParam<bool>(
   //     parameters, "common.enable_debug_info", enable_debug_info_);
-  //   autoware::universe_utils::updateParam<bool>(
-  //     parameters, "common.enable_calculation_time_info", enable_calculation_time_info_);
   //
   //   autoware::universe_utils::updateParam<bool>(
   //     parameters, "common.stop_on_curve.enable_approaching", enable_approaching_on_curve_);
@@ -200,7 +199,7 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
   const auto objects_ptr = objects_sub_.takeData();
   const auto pointcloud_ptr = pointcloud_sub_.takeData();
   const auto acc_ptr = acc_sub_.takeData();
-  if (!ego_odom_ptr || !acc_ptr) {
+  if (!ego_odom_ptr || !objects_ptr || !pointcloud_ptr || !acc_ptr) {
     return;
   }
 
@@ -213,8 +212,7 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
     return;
   }
 
-  stop_watch_.tic(__func__);
-  *debug_data_ptr_ = DebugData();
+  debug_data_ptr_ = std::make_shared<DebugData>();
 
   const auto is_driving_forward = autoware::motion_utils::isDrivingForwardWithTwist(traj_points);
   is_driving_forward_ = is_driving_forward ? is_driving_forward.value() : is_driving_forward_;
@@ -287,7 +285,7 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
 
   // slow down
   const auto slow_down_traj_points = obstacle_slow_down_module_->plan(
-    decimated_traj_points, target_obstacles, common_behavior_determination_param_, planner_data,
+    traj_points, target_obstacles, common_behavior_determination_param_, planner_data,
     cruise_traj_points);
 
   // 7. Publish trajectory
@@ -299,20 +297,12 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
   published_time_publisher_->publish_if_subscribed(trajectory_pub_, output_traj.header.stamp);
 
   publishDebugMarker();
-
-  // 9. Publish and print calculation time
-  const double calculation_time = stop_watch_.toc(__func__);
-  publishCalculationTime(calculation_time);
-  RCLCPP_INFO_EXPRESSION(
-    get_logger(), enable_calculation_time_info_, "%s := %f [ms]", __func__, calculation_time);
 }
 
 std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
   const Odometry & odometry, const PredictedObjects & objects,
   const std::vector<TrajectoryPoint> & traj_points, const PlannerData & planner_data) const
 {
-  stop_watch_.tic(__func__);
-
   const auto obj_stamp = rclcpp::Time(objects.header.stamp);
   // const auto & p = common_behavior_determination_param_;
 
@@ -418,11 +408,6 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
     target_obstacles.push_back(target_obstacle);
   }
 
-  const double calculation_time = stop_watch_.toc(__func__);
-  RCLCPP_INFO_EXPRESSION(
-    rclcpp::get_logger("ObstacleCruisePlanner"), enable_debug_info_, "  %s := %f [ms]", __func__,
-    calculation_time);
-
   return target_obstacles;
 }
 
@@ -431,8 +416,6 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
   const std::vector<TrajectoryPoint> & traj_points, const std_msgs::msg::Header & traj_header,
   const PlannerData & planner_data) const
 {
-  stop_watch_.tic(__func__);
-
   const auto & p = common_behavior_determination_param_;
 
   std::vector<Obstacle> target_obstacles;
@@ -537,11 +520,6 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
       }
     }
   }
-
-  const double calculation_time = stop_watch_.toc(__func__);
-  RCLCPP_INFO_EXPRESSION(
-    rclcpp::get_logger("ObstacleCruisePlanner"), enable_debug_info_, "  %s := %f [ms]", __func__,
-    calculation_time);
 
   return target_obstacles;
 }
@@ -662,15 +640,15 @@ PlannerData ObstacleCruisePlannerNode::createPlannerData(
   planner_data.current_acceleration = acc;
   planner_data.is_driving_forward = is_driving_forward_;
   planner_data.vehicle_info = vehicle_info_;
-  planner_data.ego_nearest_dist_threshold = declare_parameter<double>("ego_nearest_dist_threshold");
-  planner_data.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
+  planner_data.ego_nearest_dist_threshold =
+    getOrDeclareParameter<double>(*this, "ego_nearest_dist_threshold");
+  planner_data.ego_nearest_yaw_threshold =
+    getOrDeclareParameter<double>(*this, "ego_nearest_yaw_threshold");
   return planner_data;
 }
 
 void ObstacleCruisePlannerNode::publishDebugMarker() const
 {
-  stop_watch_.tic(__func__);
-
   // {  // footprint polygons
   //   auto marker = autoware::universe_utils::createDefaultMarker(
   //     "map", now(), "detection_polygons", 0, Marker::LINE_LIST,
@@ -691,21 +669,8 @@ void ObstacleCruisePlannerNode::publishDebugMarker() const
   //   }
   //   debug_marker.markers.push_back(marker);
   // }
-
-  // 3. print calculation time
-  const double calculation_time = stop_watch_.toc(__func__);
-  RCLCPP_INFO_EXPRESSION(
-    rclcpp::get_logger("ObstacleCruisePlanner"), enable_calculation_time_info_, "  %s := %f [ms]",
-    __func__, calculation_time);
 }
 
-void ObstacleCruisePlannerNode::publishCalculationTime(const double calculation_time) const
-{
-  Float64Stamped calculation_time_msg;
-  calculation_time_msg.stamp = now();
-  calculation_time_msg.data = calculation_time;
-  debug_calculation_time_pub_->publish(calculation_time_msg);
-}
 }  // namespace autoware::motion_planning
 
 #include <rclcpp_components/register_node_macro.hpp>

@@ -2,7 +2,6 @@
   ros__parameters:
     common:
       enable_debug_info: false
-      enable_calculation_time_info: false
 
       nearest_dist_deviation_threshold: 3.0 # [m] for finding nearest index
       nearest_yaw_deviation_threshold: 1.57 # [rad] for finding nearest index

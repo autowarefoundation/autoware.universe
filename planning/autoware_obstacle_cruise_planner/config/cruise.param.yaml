@@ -3,7 +3,6 @@
     cruise:
       common:
         enable_debug_info: false
-        enable_calculation_time_info: false
 
       planning_algorithm: "pid_base" # currently supported algorithm is "pid_base"
 
