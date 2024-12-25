@@ -223,10 +223,6 @@ struct CommonBehaviorDeterminationParam
       node.declare_parameter<int>("behavior_determination.pointcloud_min_cluster_size");
     pointcloud_max_cluster_size =
       node.declare_parameter<int>("behavior_determination.pointcloud_max_cluster_size");
-    obstacle_velocity_threshold_from_cruise_to_stop = node.declare_parameter<double>(
-      "behavior_determination.obstacle_velocity_threshold_from_cruise_to_stop");
-    obstacle_velocity_threshold_from_stop_to_cruise = node.declare_parameter<double>(
-      "behavior_determination.obstacle_velocity_threshold_from_stop_to_cruise");
     crossing_obstacle_velocity_threshold = node.declare_parameter<double>(
       "behavior_determination.crossing_obstacle.obstacle_velocity_threshold");
     crossing_obstacle_traj_angle_threshold = node.declare_parameter<double>(
@@ -294,8 +290,6 @@ struct CommonBehaviorDeterminationParam
   double pointcloud_cluster_tolerance;
   int pointcloud_min_cluster_size;
   int pointcloud_max_cluster_size;
-  double obstacle_velocity_threshold_from_cruise_to_stop;
-  double obstacle_velocity_threshold_from_stop_to_cruise;
   double crossing_obstacle_velocity_threshold;
   double crossing_obstacle_traj_angle_threshold;
   double prediction_resampling_time_interval;

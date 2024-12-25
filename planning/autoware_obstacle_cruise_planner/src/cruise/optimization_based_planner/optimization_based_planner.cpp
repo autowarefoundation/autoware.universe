@@ -44,9 +44,7 @@ namespace autoware::motion_planning
 constexpr double ZERO_VEL_THRESHOLD = 0.01;
 constexpr double CLOSE_S_DIST_THRESHOLD = 1e-3;
 
-OptimizationBasedPlanner::OptimizationBasedPlanner(
-  rclcpp::Node & node, const LongitudinalInfo & longitudinal_info)
-: ObstacleCruiseModule(node, longitudinal_info)
+OptimizationBasedPlanner::OptimizationBasedPlanner(rclcpp::Node & node) : ObstacleCruiseModule(node)
 {
   smoothed_traj_sub_ = node.create_subscription<Trajectory>(
     "/planning/scenario_planning/trajectory", rclcpp::QoS{1},

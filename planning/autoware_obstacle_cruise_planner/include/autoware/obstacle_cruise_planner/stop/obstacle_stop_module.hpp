@@ -124,6 +124,56 @@ namespace autoware::motion_planning
 class ObstacleStopModule
 {
 public:
+  struct LongitudinalInfo
+  {
+    explicit LongitudinalInfo(rclcpp::Node & node)
+    {
+      max_accel = node.declare_parameter<double>("normal.max_acc");
+      min_accel = node.declare_parameter<double>("normal.min_acc");
+      max_jerk = node.declare_parameter<double>("normal.max_jerk");
+      min_jerk = node.declare_parameter<double>("normal.min_jerk");
+      limit_max_accel = node.declare_parameter<double>("limit.max_acc");
+      limit_min_accel = node.declare_parameter<double>("limit.min_acc");
+      limit_max_jerk = node.declare_parameter<double>("limit.max_jerk");
+      limit_min_jerk = node.declare_parameter<double>("limit.min_jerk");
+
+      safe_distance_margin = node.declare_parameter<double>("stop.safe_distance_margin");
+      terminal_safe_distance_margin =
+        node.declare_parameter<double>("stop.terminal_safe_distance_margin");
+    }
+
+    void onParam(const std::vector<rclcpp::Parameter> & parameters)
+    {
+      autoware::universe_utils::updateParam<double>(parameters, "normal.max_accel", max_accel);
+      autoware::universe_utils::updateParam<double>(parameters, "normal.min_accel", min_accel);
+      autoware::universe_utils::updateParam<double>(parameters, "normal.max_jerk", max_jerk);
+      autoware::universe_utils::updateParam<double>(parameters, "normal.min_jerk", min_jerk);
+      autoware::universe_utils::updateParam<double>(parameters, "limit.max_accel", limit_max_accel);
+      autoware::universe_utils::updateParam<double>(parameters, "limit.min_accel", limit_min_accel);
+      autoware::universe_utils::updateParam<double>(parameters, "limit.max_jerk", limit_max_jerk);
+      autoware::universe_utils::updateParam<double>(parameters, "limit.min_jerk", limit_min_jerk);
+
+      autoware::universe_utils::updateParam<double>(
+        parameters, "stop.safe_distance_margin", safe_distance_margin);
+      autoware::universe_utils::updateParam<double>(
+        parameters, "stop.terminal_safe_distance_margin", terminal_safe_distance_margin);
+    }
+
+    // common parameter
+    double max_accel;
+    double min_accel;
+    double max_jerk;
+    double min_jerk;
+    double limit_max_accel;
+    double limit_min_accel;
+    double limit_max_jerk;
+    double limit_min_jerk;
+
+    // distance margin
+    double safe_distance_margin;
+    double terminal_safe_distance_margin;
+  };
+
   struct StopObstacle
   {
     StopObstacle(
@@ -158,11 +208,15 @@ public:
     ObjectClassification classification;
   };
 
-  ObstacleStopModule(rclcpp::Node & node, const LongitudinalInfo & longitudinal_info)
+  explicit ObstacleStopModule(rclcpp::Node & node)
   : clock_(node.get_clock()),
-    longitudinal_info_(longitudinal_info),
-    stop_param_(StopParam(node, longitudinal_info))
+    longitudinal_info_(node),
+    stop_param_(StopParam(node, longitudinal_info_))
   {
+    enable_debug_info_ = node.declare_parameter<bool>("stop.common.enable_debug_info");
+    enable_calculation_time_info_ =
+      node.declare_parameter<bool>("stop.common.enable_calculation_time_info");
+
     inside_stop_obstacle_types_ =
       obstacle_cruise_utils::getTargetObjectType(node, "stop.obstacle_type.inside.");
     outside_stop_obstacle_types_ =
@@ -213,15 +267,6 @@ public:
     publishDebugMarker();
 
     return stop_traj_points;
-  }
-
-  void setParam(
-    const bool enable_debug_info, const bool enable_calculation_time_info,
-    const bool use_pointcloud)
-  {
-    enable_debug_info_ = enable_debug_info;
-    enable_calculation_time_info_ = enable_calculation_time_info;
-    use_pointcloud_ = use_pointcloud;
   }
 
   void onParam(const std::vector<rclcpp::Parameter> & parameters)
@@ -642,6 +687,8 @@ private:
     double pedestrian_deceleration_rate;
     double bicycle_deceleration_rate;
     double stop_obstacle_hold_time_threshold;
+    double obstacle_velocity_threshold_from_cruise_to_stop;
+    double obstacle_velocity_threshold_from_stop_to_cruise;
 
     struct ObstacleSpecificParams
     {
@@ -681,8 +728,12 @@ private:
         "stop.behavior_determination.outside_obstacle.pedestrian_deceleration_rate");
       bicycle_deceleration_rate = node.declare_parameter<double>(
         "stop.behavior_determination.outside_obstacle.bicycle_deceleration_rate");
-      stop_obstacle_hold_time_threshold =
-        node.declare_parameter<double>("stop.behavior_determination_obstacle_hold_time_threshold");
+      stop_obstacle_hold_time_threshold = node.declare_parameter<double>(
+        "stop.behavior_determination.stop_obstacle_hold_time_threshold");
+      obstacle_velocity_threshold_from_cruise_to_stop = node.declare_parameter<double>(
+        "stop.behavior_determination.obstacle_velocity_threshold_from_cruise_to_stop");
+      obstacle_velocity_threshold_from_stop_to_cruise = node.declare_parameter<double>(
+        "stop.behavior_determination.obstacle_velocity_threshold_from_stop_to_cruise");
 
       const std::string param_prefix = "stop.type_specified_params.";
       std::vector<std::string> obstacle_labels{"default"};
@@ -973,7 +1024,7 @@ private:
         const double elapsed_time = (current_time - prev_closest_stop_obstacle.stamp).seconds();
         if (
           predicted_object_itr->kinematics.initial_twist_with_covariance.twist.linear.x <
-            common_behavior_determination_param_.obstacle_velocity_threshold_from_stop_to_cruise &&
+            stop_param_.obstacle_velocity_threshold_from_stop_to_cruise &&
           elapsed_time < stop_param_.stop_obstacle_hold_time_threshold) {
           stop_obstacles.push_back(prev_closest_stop_obstacle);
         }
@@ -1208,6 +1259,7 @@ private:
     return candidates;
   }
 };
+
 }  // namespace autoware::motion_planning
 
 #endif  // AUTOWARE__OBSTACLE_CRUISE_PLANNER__STOP__OBSTACLE_STOP_MODULE_HPP_

@@ -1,6 +1,13 @@
 /**:
   ros__parameters:
     stop:
+      common:
+        enable_debug_info: false
+        enable_calculation_time_info: false
+
+      safe_distance_margin : 5.0 # This is also used as a stop margin [m]
+      terminal_safe_distance_margin : 3.0 # Stop margin at the goal. This value cannot exceed safe distance margin. [m]
+
       hold_stop_velocity_threshold: 0.01 # The maximum ego velocity to hold stopping [m/s]
       hold_stop_distance_threshold: 0.3 # The ego keeps stopping if the distance to stop changes within the threshold [m]
 
@@ -44,6 +51,12 @@
           bicycle_deceleration_rate: 0.5 # planner perceives bicycles will stop with this rate to avoid unnecessary stops [m/ss]
         crossing_obstacle:
           collision_time_margin : 4.0 # time threshold of collision between obstacle adn ego for cruise or stop [s]
+
+        stop_obstacle_hold_time_threshold : 1.0 # maximum time for holding closest stop obstacle
+
+        # hysteresis for cruise and stop
+        obstacle_velocity_threshold_from_cruise_to_stop : 3.0 # stop planning is executed to the obstacle whose velocity is less than this value [m/s]
+        obstacle_velocity_threshold_from_stop_to_cruise : 3.5 # stop planning is executed to the obstacle whose velocity is less than this value [m/s]
 
       type_specified_params:
         labels: # For the listed types, the node try to read the following type specified values

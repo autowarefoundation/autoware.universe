@@ -37,17 +37,16 @@ PlanningAlgorithm getPlanningAlgorithmType(const std::string & param)
   return PlanningAlgorithm::INVALID;
 }
 
-std::unique_ptr<ObstacleCruiseModule> getModule(
-  rclcpp::Node & node, const LongitudinalInfo & longitudinal_info)
+std::unique_ptr<ObstacleCruiseModule> getModule(rclcpp::Node & node)
 {
   const std::string planning_algorithm_param =
     node.declare_parameter<std::string>("cruise.planning_algorithm");
   const auto planning_algorithm = getPlanningAlgorithmType(planning_algorithm_param);
 
   if (planning_algorithm == PlanningAlgorithm::OPTIMIZATION_BASE) {
-    return std::make_unique<OptimizationBasedPlanner>(node, longitudinal_info);
+    return std::make_unique<OptimizationBasedPlanner>(node);
   } else if (planning_algorithm == PlanningAlgorithm::PID_BASE) {
-    return std::make_unique<PIDBasedPlanner>(node, longitudinal_info);
+    return std::make_unique<PIDBasedPlanner>(node);
   }
   throw std::logic_error("Designated algorithm is not supported.");
 }

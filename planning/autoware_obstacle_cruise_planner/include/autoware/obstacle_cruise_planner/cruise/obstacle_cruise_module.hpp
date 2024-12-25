@@ -115,6 +115,11 @@ struct CruiseBehaviorDeterminationParam
       "cruise.behavior_determination.outside_obstacle.max_lateral_time_margin");
     num_of_predicted_paths_for_outside_cruise_obstacle = node.declare_parameter<int>(
       "cruise.behavior_determination.outside_obstacle.num_of_predicted_paths");
+
+    obstacle_velocity_threshold_from_cruise_to_stop = node.declare_parameter<double>(
+      "cruise.behavior_determination.obstacle_velocity_threshold_from_cruise_to_stop");
+    obstacle_velocity_threshold_from_stop_to_cruise = node.declare_parameter<double>(
+      "cruise.behavior_determination.obstacle_velocity_threshold_from_stop_to_cruise");
   }
 
   void onParam(const std::vector<rclcpp::Parameter> & parameters)
@@ -165,11 +170,73 @@ struct CruiseBehaviorDeterminationParam
   double max_obstacles_collision_time;
   double max_lat_time_margin_for_cruise;
   int num_of_predicted_paths_for_outside_cruise_obstacle;
+  double obstacle_velocity_threshold_from_cruise_to_stop;
+  double obstacle_velocity_threshold_from_stop_to_cruise;
 };
 
 class ObstacleCruiseModule
 {
 public:
+  struct LongitudinalInfo
+  {
+    explicit LongitudinalInfo(rclcpp::Node & node)
+    {
+      max_accel = node.declare_parameter<double>("normal.max_acc");
+      min_accel = node.declare_parameter<double>("normal.min_acc");
+      max_jerk = node.declare_parameter<double>("normal.max_jerk");
+      min_jerk = node.declare_parameter<double>("normal.min_jerk");
+      limit_max_accel = node.declare_parameter<double>("limit.max_acc");
+      limit_min_accel = node.declare_parameter<double>("limit.min_acc");
+      limit_max_jerk = node.declare_parameter<double>("limit.max_jerk");
+      limit_min_jerk = node.declare_parameter<double>("limit.min_jerk");
+
+      idling_time = node.declare_parameter<double>("cruise.idling_time");
+      min_ego_accel_for_rss = node.declare_parameter<double>("cruise.min_ego_accel_for_rss");
+      min_object_accel_for_rss = node.declare_parameter<double>("cruise.min_object_accel_for_rss");
+
+      safe_distance_margin = node.declare_parameter<double>("cruise.safe_distance_margin");
+    }
+
+    void onParam(const std::vector<rclcpp::Parameter> & parameters)
+    {
+      autoware::universe_utils::updateParam<double>(parameters, "normal.max_accel", max_accel);
+      autoware::universe_utils::updateParam<double>(parameters, "normal.min_accel", min_accel);
+      autoware::universe_utils::updateParam<double>(parameters, "normal.max_jerk", max_jerk);
+      autoware::universe_utils::updateParam<double>(parameters, "normal.min_jerk", min_jerk);
+      autoware::universe_utils::updateParam<double>(parameters, "limit.max_accel", limit_max_accel);
+      autoware::universe_utils::updateParam<double>(parameters, "limit.min_accel", limit_min_accel);
+      autoware::universe_utils::updateParam<double>(parameters, "limit.max_jerk", limit_max_jerk);
+      autoware::universe_utils::updateParam<double>(parameters, "limit.min_jerk", limit_min_jerk);
+
+      autoware::universe_utils::updateParam<double>(parameters, "cruise.idling_time", idling_time);
+      autoware::universe_utils::updateParam<double>(
+        parameters, "cruise.min_ego_accel_for_rss", min_ego_accel_for_rss);
+      autoware::universe_utils::updateParam<double>(
+        parameters, "cruise.min_object_accel_for_rss", min_object_accel_for_rss);
+
+      autoware::universe_utils::updateParam<double>(
+        parameters, "cruise.safe_distance_margin", safe_distance_margin);
+    }
+
+    // common parameter
+    double max_accel;
+    double min_accel;
+    double max_jerk;
+    double min_jerk;
+    double limit_max_accel;
+    double limit_min_accel;
+    double limit_max_jerk;
+    double limit_min_jerk;
+
+    // rss parameter
+    double idling_time;
+    double min_ego_accel_for_rss;
+    double min_object_accel_for_rss;
+
+    // distance margin
+    double safe_distance_margin;
+  };
+
   struct CruiseObstacle
   {
     CruiseObstacle(
@@ -196,9 +263,13 @@ public:
     bool is_yield_obstacle;
   };
 
-  ObstacleCruiseModule(rclcpp::Node & node, const LongitudinalInfo & longitudinal_info)
-  : clock_(node.get_clock()), longitudinal_info_(longitudinal_info)
+  explicit ObstacleCruiseModule(rclcpp::Node & node)
+  : clock_(node.get_clock()), longitudinal_info_(node)
   {
+    enable_debug_info_ = node.declare_parameter<bool>("cruise.common.enable_debug_info");
+    enable_calculation_time_info_ =
+      node.declare_parameter<bool>("cruise.common.enable_calculation_time_info");
+
     inside_cruise_obstacle_types_ =
       obstacle_cruise_utils::getTargetObjectType(node, "cruise.obstacle_type.inside.");
     outside_cruise_obstacle_types_ =
@@ -242,15 +313,6 @@ public:
     publishDebugMarker();
 
     return cruise_traj_points;
-  }
-
-  void setParam(
-    const bool enable_debug_info, const bool enable_calculation_time_info,
-    const bool use_pointcloud)
-  {
-    enable_debug_info_ = enable_debug_info;
-    enable_calculation_time_info_ = enable_calculation_time_info;
-    use_pointcloud_ = use_pointcloud;
   }
 
   void onParam(const std::vector<rclcpp::Parameter> & parameters)
@@ -648,14 +710,14 @@ protected:
           .has_value();
 
       if (is_prev_obstacle_cruise) {
-        if (obstacle.longitudinal_velocity < cp.obstacle_velocity_threshold_from_cruise_to_stop) {
+        if (obstacle.longitudinal_velocity < crp.obstacle_velocity_threshold_from_cruise_to_stop) {
           return std::nullopt;
         }
         // NOTE: else is keeping cruise
       } else {  // if (is_prev_obstacle_stop) {
         // TODO(murooka) consider hysteresis for slow down
         // If previous obstacle is stop or does not exist.
-        if (obstacle.longitudinal_velocity < cp.obstacle_velocity_threshold_from_stop_to_cruise) {
+        if (obstacle.longitudinal_velocity < crp.obstacle_velocity_threshold_from_stop_to_cruise) {
           return std::nullopt;
         }
         // NOTE: else is cruise from stop

@@ -179,6 +179,43 @@ VelocityLimitClearCommand createVelocityLimitClearCommandMessage(
 class ObstacleSlowDownModule
 {
 public:
+  struct LongitudinalInfo
+  {
+    explicit LongitudinalInfo(rclcpp::Node & node)
+    {
+      max_accel = node.declare_parameter<double>("normal.max_acc");
+      min_accel = node.declare_parameter<double>("normal.min_acc");
+      max_jerk = node.declare_parameter<double>("normal.max_jerk");
+      min_jerk = node.declare_parameter<double>("normal.min_jerk");
+      limit_max_accel = node.declare_parameter<double>("limit.max_acc");
+      limit_min_accel = node.declare_parameter<double>("limit.min_acc");
+      limit_max_jerk = node.declare_parameter<double>("limit.max_jerk");
+      limit_min_jerk = node.declare_parameter<double>("limit.min_jerk");
+    }
+
+    void onParam(const std::vector<rclcpp::Parameter> & parameters)
+    {
+      autoware::universe_utils::updateParam<double>(parameters, "normal.max_accel", max_accel);
+      autoware::universe_utils::updateParam<double>(parameters, "normal.min_accel", min_accel);
+      autoware::universe_utils::updateParam<double>(parameters, "normal.max_jerk", max_jerk);
+      autoware::universe_utils::updateParam<double>(parameters, "normal.min_jerk", min_jerk);
+      autoware::universe_utils::updateParam<double>(parameters, "limit.max_accel", limit_max_accel);
+      autoware::universe_utils::updateParam<double>(parameters, "limit.min_accel", limit_min_accel);
+      autoware::universe_utils::updateParam<double>(parameters, "limit.max_jerk", limit_max_jerk);
+      autoware::universe_utils::updateParam<double>(parameters, "limit.min_jerk", limit_min_jerk);
+    }
+
+    // common parameter
+    double max_accel;
+    double min_accel;
+    double max_jerk;
+    double min_jerk;
+    double limit_max_accel;
+    double limit_min_accel;
+    double limit_max_jerk;
+    double limit_min_jerk;
+  };
+
   struct SlowDownObstacle
   {
     SlowDownObstacle(
@@ -211,12 +248,15 @@ public:
     ObjectClassification classification;
   };
 
-  ObstacleSlowDownModule(rclcpp::Node & node, const LongitudinalInfo & longitudinal_info)
-  : clock_(node.get_clock()),
-    slow_down_param_(SlowDownParam(node)),
-    longitudinal_info_(longitudinal_info)
+  explicit ObstacleSlowDownModule(rclcpp::Node & node)
+  : clock_(node.get_clock()), slow_down_param_(SlowDownParam(node)), longitudinal_info_(node)
   {
-    enable_slow_down_planning_ = node.declare_parameter<bool>("common.enable_slow_down_planning");
+    enable_debug_info_ = node.declare_parameter<bool>("slow_down.common.enable_debug_info");
+    enable_calculation_time_info_ =
+      node.declare_parameter<bool>("slow_down.common.enable_calculation_time_info");
+
+    enable_slow_down_planning_ =
+      node.declare_parameter<bool>("slow_down.common.enable_slow_down_planning");
     slow_down_obstacle_types_ =
       obstacle_cruise_utils::getTargetObjectType(node, "slow_down.obstacle_type.");
     use_pointcloud_for_slow_down_ =
@@ -270,15 +310,6 @@ public:
   {
     updateCommonParam(parameters);
     slow_down_param_.onParam(parameters);
-  }
-
-  void setParam(
-    const bool enable_debug_info, const bool enable_calculation_time_info,
-    const bool use_pointcloud)
-  {
-    enable_debug_info_ = enable_debug_info;
-    enable_calculation_time_info_ = enable_calculation_time_info;
-    use_pointcloud_ = use_pointcloud;
   }
 
 private:

@@ -34,7 +34,7 @@ namespace autoware::motion_planning
 class OptimizationBasedPlanner : public ObstacleCruiseModule
 {
 public:
-  OptimizationBasedPlanner(rclcpp::Node & node, const LongitudinalInfo & longitudinal_info);
+  explicit OptimizationBasedPlanner(rclcpp::Node & node);
 
   std::vector<TrajectoryPoint> generateCruiseTrajectory(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points,

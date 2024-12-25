@@ -52,7 +52,7 @@ public:
     double target_dist_to_obstacle;
   };
 
-  PIDBasedPlanner(rclcpp::Node & node, const LongitudinalInfo & longitudinal_info);
+  explicit PIDBasedPlanner(rclcpp::Node & node);
 
   std::vector<TrajectoryPoint> generateCruiseTrajectory(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points,

@@ -1,6 +1,10 @@
 /**:
   ros__parameters:
     slow_down:
+      common:
+        enable_debug_info: false
+        enable_calculation_time_info: false
+
       slow_down_min_acc: -1.0         # slow down min deceleration [m/ss]
       slow_down_min_jerk: -1.0        # slow down min jerk [m/sss]
 

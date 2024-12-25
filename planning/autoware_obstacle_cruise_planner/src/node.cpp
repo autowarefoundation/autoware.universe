@@ -187,26 +187,15 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
   tf_buffer_ = std::make_unique<tf2_ros::Buffer>(get_clock());
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_);
 
-  const auto longitudinal_info = LongitudinalInfo(*this);
-
   enable_debug_info_ = declare_parameter<bool>("common.enable_debug_info");
   enable_calculation_time_info_ = declare_parameter<bool>("common.enable_calculation_time_info");
-
-  // use_pointcloud_ = use_pointcloud_for_stop_ || use_pointcloud_for_slow_down_;
 
   common_behavior_determination_param_ = CommonBehaviorDeterminationParam(*this);
 
   {  // planning algorithm
-    obstacle_stop_module_ = std::make_unique<ObstacleStopModule>(*this, longitudinal_info);
-    obstacle_slow_down_module_ = std::make_unique<ObstacleSlowDownModule>(*this, longitudinal_info);
-    obstacle_cruise_module_ = getModule(*this, longitudinal_info);
-
-    obstacle_stop_module_->setParam(
-      enable_debug_info_, enable_calculation_time_info_, true /*use_pointcloud_*/);
-    obstacle_slow_down_module_->setParam(
-      enable_debug_info_, enable_calculation_time_info_, true /*use_pointcloud_*/);
-    obstacle_cruise_module_->setParam(
-      enable_debug_info_, enable_calculation_time_info_, true /*use_pointcloud_*/);
+    obstacle_stop_module_ = std::make_unique<ObstacleStopModule>(*this);
+    obstacle_slow_down_module_ = std::make_unique<ObstacleSlowDownModule>(*this);
+    obstacle_cruise_module_ = getModule(*this);
   }
 
   // set parameter callback

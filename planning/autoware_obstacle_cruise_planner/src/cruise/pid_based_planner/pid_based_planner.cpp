@@ -65,8 +65,7 @@ T getSign(const T val)
 }
 }  // namespace
 
-PIDBasedPlanner::PIDBasedPlanner(rclcpp::Node & node, const LongitudinalInfo & longitudinal_info)
-: ObstacleCruiseModule(node, longitudinal_info)
+PIDBasedPlanner::PIDBasedPlanner(rclcpp::Node & node) : ObstacleCruiseModule(node)
 {
   min_accel_during_cruise_ =
     node.declare_parameter<double>("cruise.pid_based_planner.min_accel_during_cruise");
