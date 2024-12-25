@@ -113,7 +113,7 @@ public:
   virtual ~OverlayObject();
 
   virtual std::string getName();
-  virtual void hide();
+  /*virtual*/ void hide();  // remove "virtual" for cppcheck
   virtual void show();
   virtual bool isTextureReady();
   virtual void updateTextureSize(unsigned int width, unsigned int height);
