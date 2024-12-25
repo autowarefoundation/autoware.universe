@@ -12,7 +12,11 @@
             "type": "number"
           },
           "description": "Assignment table for data association.",
-          "default": []
+          "default": [
+            0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 1, 1, 1, 1,
+            0, 0, 0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0,
+            0, 0, 0, 1, 1, 1
+          ]
         },
         "max_dist_matrix": {
           "type": "array",
