@@ -18,7 +18,7 @@ Enabling and disabling modules involves managing settings in key configuration a
 
 ### Key Files for Configuration
 
-The `default_preset.yaml` file acts as the primary configuration file, where planning modules can be disable or enabled. Furthermore, users can also set the type of motion planner across various motion planners. For example:
+The `default_preset.yaml` file acts as the primary configuration file, where planning modules can be disabled or enabled. Furthermore, users can also set the type of motion planner across various motion planners. For example:
 
 - `launch_avoidance_module`: Set to `true` to enable the avoidance module, or `false` to disable it.
 - `motion_stop_planner_type`: Set `default` to either `obstacle_stop_planner` or `obstacle_cruise_planner`.
@@ -35,7 +35,7 @@ The [launch files](https://github.com/autowarefoundation/autoware.universe/tree/
 
 corresponds to launch_avoidance_module from `default_preset.yaml`.
 
-### Parameters configuration
+### Parameter configuration
 
 There are multiple parameters available for configuration, and users have the option to modify them in [here](https://github.com/autowarefoundation/autoware_launch/tree/main/autoware_launch/config/planning). It's important to note that not all parameters are adjustable via `rqt_reconfigure`. To ensure the changes are effective, modify the parameters and then restart Autoware. Additionally, detailed information about each parameter is available in the corresponding documents under the planning tab.
 
@@ -63,7 +63,7 @@ This guide outlines the steps for integrating your custom module into Autoware:
 />
 ```
 
-- If applicable, place your parameter folder within the appropriate existing parameter folder. For example [intersection_module's parameters](https://github.com/autowarefoundation/autoware_launch/blob/main/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/intersection.param.yaml) is in [behavior_velocity_planner](https://github.com/autowarefoundation/autoware_launch/tree/main/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner).
+- If applicable, place your parameter folder within the appropriate existing parameter folder. For example, [intersection_module's parameters](https://github.com/autowarefoundation/autoware_launch/blob/main/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner/intersection.param.yaml) are in [behavior_velocity_planner](https://github.com/autowarefoundation/autoware_launch/tree/main/autoware_launch/config/planning/scenario_planning/lane_driving/behavior_planning/behavior_velocity_planner).
 - Insert the path of your parameters in the [tier4_planning_component.launch.xml](https://github.com/autowarefoundation/autoware_launch/blob/main/autoware_launch/launch/components/tier4_planning_component.launch.xml). For example `behavior_velocity_planner_intersection_module_param_path` is used.
 
 ```xml
@@ -82,7 +82,7 @@ This guide outlines the steps for integrating your custom module into Autoware:
 
 ## Join Our Community-Driven Effort
 
-Autoware thrives on community collaboration. Every contribution, big or small, is invaluable to us. Whether it's reporting bugs, suggesting improvements, offering new ideas, or anything else you can think of – we welcome it all with open arms.
+Autoware thrives on community collaboration. Every contribution, big or small, is invaluable to us. Whether it's reporting bugs, suggesting improvements, offering new ideas, or anything else you can think of – we welcome all contributions with open arms.
 
 ### How to Contribute?
 
@@ -105,7 +105,7 @@ Interested in joining our meetings? We’d love to have you! For more informatio
 
 Occasionally, we publish papers specific to the Planning Component in Autoware. We encourage you to explore these publications and find valuable insights for your work. If you find them useful and incorporate any of our methodologies or algorithms in your projects, citing our papers would be immensely helpful. This support allows us to reach a broader audience and continue contributing to the field.
 
-If you use the Jerk Constrained Velocity Planning algorithm in [Motion Velocity Smoother](./autoware_velocity_smoother/README.md) module in the Planning Component, we kindly request you to cite the relevant paper.
+If you use the Jerk Constrained Velocity Planning algorithm in the [Motion Velocity Smoother](./autoware_velocity_smoother/README.md) module in the Planning Component, we kindly request you cite the relevant paper.
 
 <!-- cspell:ignore Shimizu, Horibe, Watanabe, Kato -->
 
