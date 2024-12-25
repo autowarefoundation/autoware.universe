@@ -2,7 +2,7 @@
   "$schema": "http://json-schema.org/draft-07/schema#",
   "title": "Parameters for Synchronized Grid Map Fusion Node",
   "type": "object",
-  "properties": {
+  "definitions": {
     "/**": {
       "type": "object",
       "properties": {
