@@ -21,7 +21,7 @@ You may need to choose `scan_origin_frame` and `gridmap_origin_frame` which mean
 
 ### Parameters
 
-- binary bayes fitler updater
+- binary bayes filter updater
 
   {{ json_to_markdown("perception/autoware_probabilistic_occupancy_grid_map/schema/binary_bayes_filter_updater.schema.json") }}
 
