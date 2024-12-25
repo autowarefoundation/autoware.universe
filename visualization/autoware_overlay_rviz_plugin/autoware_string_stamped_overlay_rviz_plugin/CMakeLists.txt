@@ -20,9 +20,9 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 # Export the plugin to be imported by rviz2
-pluginlib_export_plugin_description_file(rviz_common plugins_description.xml)
+pluginlib_export_plugin_description_file(rviz_common plugins/plugins_description.xml)
 
 ament_auto_package(
   INSTALL_TO_SHARE
-  plugins_description.xml
+  plugins
 )
