@@ -14,15 +14,15 @@
 
 import warnings
 
+from autoware_vehicle_adaptor.param import parameters
 import numpy as np
 from sklearn import linear_model
-from autoware_vehicle_adaptor.param import parameters
 
 warnings.simplefilter("ignore")
 
 
 class pure_pursuit_gain_updater:
-    def __init__(self, control_dt = 0.033, max_time=10.0, max_input_delay=1.5):
+    def __init__(self, control_dt=0.033, max_time=10.0, max_input_delay=1.5):
         self.vel_queue = []
         self.yaw_queue = []
         self.acc_queue = []
@@ -34,6 +34,7 @@ class pure_pursuit_gain_updater:
         self.A_wheel_base = np.zeros((2, 2))
         self.B_wheel_base = np.zeros(2)
         self.control_dt = control_dt
+
     def reset(self):
         self.vel_queue = []
         self.yaw_queue = []
@@ -43,6 +44,7 @@ class pure_pursuit_gain_updater:
         self.steer_input_queue = []
         self.A_wheel_base = np.zeros((2, 2))
         self.B_wheel_base = np.zeros(2)
+
     def state_queue_updater(self, vel, yaw, acc, steer):
         self.vel_queue.append(vel)
         self.yaw_queue.append(yaw)
@@ -55,9 +57,7 @@ class pure_pursuit_gain_updater:
             self.steer_queue.pop(0)
         if len(self.vel_queue) > 1:
             numerator = self.vel_queue[-2] * np.tan(self.steer_queue[-2])
-            yaw_dot_error = (
-                self.yaw_queue[-1] - self.yaw_queue[-2]
-            ) / self.control_dt
+            yaw_dot_error = (self.yaw_queue[-1] - self.yaw_queue[-2]) / self.control_dt
             yaw_dot_error -= numerator / parameters.wheel_base
 
             X_wheel_base = np.array([[1.0, numerator]])

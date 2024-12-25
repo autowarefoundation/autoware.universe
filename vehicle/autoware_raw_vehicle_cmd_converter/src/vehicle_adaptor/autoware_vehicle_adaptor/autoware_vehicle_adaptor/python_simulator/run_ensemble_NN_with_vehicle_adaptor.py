@@ -12,12 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from utils.data_collection_utils import ControlType
-from autoware_vehicle_adaptor.calibrator import accel_brake_map_calibrator 
+import os
+
+from autoware_vehicle_adaptor.calibrator import accel_brake_map_calibrator
 from autoware_vehicle_adaptor.training import train_error_prediction_NN
 import numpy as np
 import python_simulator
-import os
+from utils.data_collection_utils import ControlType
 
 SKIP_CALIBRATION = False
 SKIP_VEHICLE_ADAPTOR_TRAINING = False
@@ -34,34 +35,43 @@ if not os.path.isdir(root_dir):
     os.mkdir(root_dir)
 
 
-
 sim_setting_dict = {}
 sim_setting_dict["accel_brake_map_control_path"] = low_quality_map_dir
 simulator.perturbed_sim(sim_setting_dict)
-train_dir = root_dir +"/test_pure_pursuit_train"
-val_dir = root_dir +"/test_pure_pursuit_val"
+train_dir = root_dir + "/test_pure_pursuit_train"
+val_dir = root_dir + "/test_pure_pursuit_val"
 if not SKIP_CALIBRATION:
-    simulator.drive_sim(control_type=ControlType.pp_eight, max_control_time=1500, save_dir=train_dir, max_lateral_accel=0.5)
+    simulator.drive_sim(
+        control_type=ControlType.pp_eight,
+        max_control_time=1500,
+        save_dir=train_dir,
+        max_lateral_accel=0.5,
+    )
     calibrator.add_data_from_csv(train_dir)
     calibrator.extract_data_for_calibration()
     calibrator.calibrate_by_ensemble_NN(ensemble_num=10)
-    calibrator.save_accel_brake_map_ensemble_NN(save_dir=train_dir,save_heat_map=True)
+    calibrator.save_accel_brake_map_ensemble_NN(save_dir=train_dir, save_heat_map=True)
 sim_setting_dict = {}
 sim_setting_dict["accel_brake_map_control_path"] = train_dir
 simulator.perturbed_sim(sim_setting_dict)
 if not SKIP_VEHICLE_ADAPTOR_TRAINING:
-    simulator.drive_sim(control_type=ControlType.pp_eight, max_control_time=1500, save_dir=val_dir, max_lateral_accel=0.5)
+    simulator.drive_sim(
+        control_type=ControlType.pp_eight,
+        max_control_time=1500,
+        save_dir=val_dir,
+        max_lateral_accel=0.5,
+    )
 
     model_trainer = train_error_prediction_NN.train_error_prediction_NN()
-    model_trainer.add_data_from_csv(train_dir,add_mode="as_train",map_dir=train_dir)
-    model_trainer.add_data_from_csv(val_dir,add_mode="as_val",map_dir=train_dir)
+    model_trainer.add_data_from_csv(train_dir, add_mode="as_train", map_dir=train_dir)
+    model_trainer.add_data_from_csv(val_dir, add_mode="as_val", map_dir=train_dir)
 
     model_trainer.get_trained_model(batch_sizes=[100])
-    model_trainer.save_model(path=train_dir+"/vehicle_model.pth")
+    model_trainer.save_model(path=train_dir + "/vehicle_model.pth")
 
 simulator.drive_sim(
     save_dir=root_dir + "/test_mpc_with_calibrated_vehicle_adaptor",
     use_vehicle_adaptor=True,
-    vehicle_adaptor_model_path=train_dir+"/vehicle_model.pth",
+    vehicle_adaptor_model_path=train_dir + "/vehicle_model.pth",
     states_ref_mode="controller_d_inputs_schedule",
 )

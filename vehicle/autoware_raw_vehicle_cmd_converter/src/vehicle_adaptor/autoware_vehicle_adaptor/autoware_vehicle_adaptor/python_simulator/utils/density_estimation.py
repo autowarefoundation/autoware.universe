@@ -12,12 +12,10 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 from typing import Callable
 from typing import Literal
 
-from utils.parameter_change_utils import ChangeParam  # type: ignore
-from utils.data_collection_utils import ControlType
-from utils.parameter_change_utils import test_dir_name
 from matplotlib.patches import Ellipse  # type: ignore
 import matplotlib.pyplot as plt  # type: ignore
 import numpy as np
@@ -27,10 +25,13 @@ from scipy.spatial import ConvexHull  # type: ignore
 from scipy.spatial import Delaunay
 from sklearn.neighbors import KernelDensity  # type: ignore
 from sklearn.preprocessing import StandardScaler  # type: ignore
-import json
+from utils.data_collection_utils import ControlType
+from utils.parameter_change_utils import ChangeParam  # type: ignore
+from utils.parameter_change_utils import test_dir_name
 
 KinematicKey = Literal["speed", "acc", "steer"]
 """The key of kinematic states."""
+
 
 class KinematicStates:
     """The class for kinematic states, which includes speed, acceleration, and steering angle."""
@@ -137,19 +138,27 @@ def load_kinematic_states_and_result(
     with open(f"{load_dir_for_trained_result}/auto_test_performance_result.json", "r") as f:
         data_trained = json.load(f)
 
-    total_abs_max_lateral_deviation = min(data.get("total_abs_max_lateral_deviation"), max_lateral_deviation)
-    trained_total_abs_max_lateral_deviation = min(data_trained.get("total_abs_max_lateral_deviation"), max_lateral_deviation)
-    return kinematic_states, total_abs_max_lateral_deviation, trained_total_abs_max_lateral_deviation
+    total_abs_max_lateral_deviation = min(
+        data.get("total_abs_max_lateral_deviation"), max_lateral_deviation
+    )
+    trained_total_abs_max_lateral_deviation = min(
+        data_trained.get("total_abs_max_lateral_deviation"), max_lateral_deviation
+    )
+    return (
+        kinematic_states,
+        total_abs_max_lateral_deviation,
+        trained_total_abs_max_lateral_deviation,
+    )
 
 
-class CalcMethodOfScalarIndex():
-    name : Literal["minimum", "percentage"]
+class CalcMethodOfScalarIndex:
+    name: Literal["minimum", "percentage"]
     """Which scalar index is to be calculated."""
 
-    threshold : float
+    threshold: float
     """This is used only when the name is `percentage`."""
 
-    def __init__(self, name : Literal["minimum", "percentage"], threshold : float = 0.0):
+    def __init__(self, name: Literal["minimum", "percentage"], threshold: float = 0.0):
         self.name = name
         self.threshold = threshold
 
@@ -158,8 +167,6 @@ class CalcMethodOfScalarIndex():
             return "minimum value of KDE"
         if self.name == "percentage":
             return "percentage of KDE below threshold"
-
-
 
 
 class Shape:
@@ -292,6 +299,7 @@ def calc_scalar_indexes(
         pass
 
     return array
+
 
 # cSpell:ignore silverman
 def kde_score_func(
@@ -460,7 +468,8 @@ def kde_data(
     Z = np.exp(kde_score(grids)).reshape(n_points, n_points)
     return X, Y, Z
 
-def default_range(axis : KinematicKey) -> list[float]:
+
+def default_range(axis: KinematicKey) -> list[float]:
     """Return the default range of the given axis."""
     if axis == "speed":
         return [0.0, 12.0]
@@ -627,11 +636,12 @@ def visualize_speed_steer(
     ax.set_title(f"kernel density: min_density={min_val: .4f} at {rounded_min_element}")
     return fig, ax
 
-def plot_histogram(data : np.ndarray, xlabel : str, title="histogram"):
+
+def plot_histogram(data: np.ndarray, xlabel: str, title="histogram"):
     bins = int(np.sqrt(data.size))
-    plt.hist(data, bins=bins, edgecolor='black')
+    plt.hist(data, bins=bins, edgecolor="black")
     plt.xlabel(xlabel)
-    plt.ylabel('count')
+    plt.ylabel("count")
     plt.title(title)
     plt.grid(True)
     plt.show()
@@ -641,8 +651,8 @@ def plot_histogram_of_kde_scores(
     load_dir_list: list[str],
     fst: Literal["speed", "acc", "steer"],
     snd: Literal["speed", "acc", "steer"],
-    shape : Callable[..., bool],
-    bandwidth : float | ScottCoef,
+    shape: Callable[..., bool],
+    bandwidth: float | ScottCoef,
 ):
     for load_dir in load_dir_list:
         kinematic_states = load_kinematic_states(load_dir=load_dir)
@@ -690,9 +700,9 @@ def correlation_between_scalar_indexes_and_lateral_errors(
 
         if accumulation.size == 0:
             accumulation = accumulation.reshape(scalar_indexes.shape[0], -1)
-        accumulation = np.hstack((accumulation, scalar_indexes.reshape(-1,1)))
+        accumulation = np.hstack((accumulation, scalar_indexes.reshape(-1, 1)))
 
-    return np.corrcoef(accumulation)[-1,:-2]
+    return np.corrcoef(accumulation)[-1, :-2]
 
 
 def list_of_scalar_index_and_error(
@@ -711,9 +721,7 @@ def list_of_scalar_index_and_error(
     if method.name == "minimum":
         for load_dir in load_dir_list:
             # The one that was additionally learned is named "trained"
-            kinematic_states, result, trained_result = load_kinematic_states_and_result(
-                load_dir
-            )
+            kinematic_states, result, trained_result = load_kinematic_states_and_result(load_dir)
             min_point, min_val = calc_minimum_density_point(
                 kinematic_states=kinematic_states,
                 fst=fst,
@@ -728,9 +736,7 @@ def list_of_scalar_index_and_error(
     if method.name == "percentage":
         for load_dir in load_dir_list:
             # The one that was additionally learned is named "trained"
-            kinematic_states, result, trained_result = load_kinematic_states_and_result(
-                load_dir
-            )
+            kinematic_states, result, trained_result = load_kinematic_states_and_result(load_dir)
             index = calc_percentage_of_density_below_threshold(
                 kinematic_states=kinematic_states,
                 threshold=method.threshold,
@@ -745,59 +751,59 @@ def list_of_scalar_index_and_error(
     return accumulation.reshape(-1, 2)
 
 
-def plot_scatter_acc(bandwidth : float | ScottCoef, method : CalcMethodOfScalarIndex) -> None:
-    data = list_of_scalar_index_and_error (
-            load_dir_list=[
-                f"test_param_search_{i}_test_vehicle/test_pure_pursuit_figure_eight_sim_test_vehicle_3th"
-                for i in range(0, 65)
-            ],
-            method=method,
-            fst="speed",
-            snd="acc",
-            fst_range=default_range("speed"),
-            snd_range=default_range("acc"),
-            bandwidth=bandwidth,
-            shape=lambda x, y: Shape.ellipse(x, y),
-        )
+def plot_scatter_acc(bandwidth: float | ScottCoef, method: CalcMethodOfScalarIndex) -> None:
+    data = list_of_scalar_index_and_error(
+        load_dir_list=[
+            f"test_param_search_{i}_test_vehicle/test_pure_pursuit_figure_eight_sim_test_vehicle_3th"
+            for i in range(0, 65)
+        ],
+        method=method,
+        fst="speed",
+        snd="acc",
+        fst_range=default_range("speed"),
+        snd_range=default_range("acc"),
+        bandwidth=bandwidth,
+        shape=lambda x, y: Shape.ellipse(x, y),
+    )
     plt.scatter(data[:, 0], data[:, 1])
 
-    plt.xlabel('Trained lateral error')
+    plt.xlabel("Trained lateral error")
     plt.ylabel(method.description())
 
-    plt.title('Kernel density and lateral error')
+    plt.title("Kernel density and lateral error")
 
     plt.show()
 
 
-def plot_scatter_steer(bandwidth : float | ScottCoef, method: CalcMethodOfScalarIndex) -> None:
-    coef = 4.76/2.79
+def plot_scatter_steer(bandwidth: float | ScottCoef, method: CalcMethodOfScalarIndex) -> None:
+    coef = 4.76 / 2.79
     POINTS = np.array(
         [
-            [1.0+0.3*5, coef * (0.15)],
+            [1.0 + 0.3 * 5, coef * (0.15)],
             [4.0, coef * (0.15)],
             [11.0, 0.0],
-            [1.0+0.3*5, coef * -(0.15)],
+            [1.0 + 0.3 * 5, coef * -(0.15)],
             [4, coef * -(0.15)],
         ]
     )
-    data = list_of_scalar_index_and_error (
-            load_dir_list=[
-                f"test_param_search_{i}_test_vehicle/test_pure_pursuit_figure_eight_sim_test_vehicle_2th"
-                for i in range(0, 65)
-            ],
-            method=method,
-            fst="speed",
-            snd="steer",
-            fst_range=default_range("speed"),
-            snd_range=default_range("steer"),
-            bandwidth=bandwidth,
-            shape=lambda x, y: Shape.convex_hull(POINTS, x, y),
-        )
+    data = list_of_scalar_index_and_error(
+        load_dir_list=[
+            f"test_param_search_{i}_test_vehicle/test_pure_pursuit_figure_eight_sim_test_vehicle_2th"
+            for i in range(0, 65)
+        ],
+        method=method,
+        fst="speed",
+        snd="steer",
+        fst_range=default_range("speed"),
+        snd_range=default_range("steer"),
+        bandwidth=bandwidth,
+        shape=lambda x, y: Shape.convex_hull(POINTS, x, y),
+    )
     plt.scatter(data[:, 0], data[:, 1])
 
-    plt.xlabel('Trained lateral error')
+    plt.xlabel("Trained lateral error")
     plt.ylabel(method.description())
 
-    plt.title('Kernel density and lateral error')
+    plt.title("Kernel density and lateral error")
 
     plt.show()

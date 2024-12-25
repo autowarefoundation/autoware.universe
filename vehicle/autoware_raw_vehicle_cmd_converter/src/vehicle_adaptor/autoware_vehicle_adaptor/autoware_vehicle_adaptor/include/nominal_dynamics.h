@@ -1,18 +1,19 @@
-#ifndef NOMINAL_DYNAMICS_H
-#define NOMINAL_DYNAMICS_H
+#ifndef NOMINAL_DYNAMICS_H_
+#define NOMINAL_DYNAMICS_H_
 
 #include <Eigen/Core>
 #include <Eigen/Dense>
 
-namespace nominal_dynamics_constants {
-  constexpr int x_index_ = 0;
-  constexpr int y_index_ = 1;
-  constexpr int vel_index_ = 2;
-  constexpr int yaw_index_ = 3;
-  constexpr int acc_index_ = 4;
-  constexpr int steer_index_ = 5;
-  constexpr int state_size_ = 6;
-}
+namespace nominal_dynamics_constants
+{
+constexpr int x_index_ = 0;
+constexpr int y_index_ = 1;
+constexpr int vel_index_ = 2;
+constexpr int yaw_index_ = 3;
+constexpr int acc_index_ = 4;
+constexpr int steer_index_ = 5;
+constexpr int state_size_ = 6;
+}  // namespace nominal_dynamics_constants
 
 class NominalDynamics
 {
@@ -37,6 +38,7 @@ private:
   int steer_delay_step_ =
     std::min(int(std::round(steer_time_delay_ / control_dt_)), steer_queue_size_);
   double steer_dead_band_ = 0.0;
+
 public:
   NominalDynamics();
   virtual ~NominalDynamics();
@@ -70,8 +72,8 @@ public:
     Eigen::MatrixXd & A, Eigen::MatrixXd & B);
   Eigen::VectorXd F_with_input_history_and_diff(
     const Eigen::VectorXd states, Eigen::VectorXd & acc_input_history,
-    Eigen::VectorXd & steer_input_history, const Eigen::Vector2d & d_inputs,
-    Eigen::MatrixXd & A, Eigen::MatrixXd & B);
+    Eigen::VectorXd & steer_input_history, const Eigen::Vector2d & d_inputs, Eigen::MatrixXd & A,
+    Eigen::MatrixXd & B);
   Eigen::MatrixXd F_with_input_history_for_candidates(
     const Eigen::MatrixXd & States, Eigen::MatrixXd & Acc_input_history,
     Eigen::MatrixXd & Steer_input_history, Eigen::MatrixXd & Acc_input_history_concat,
@@ -81,4 +83,4 @@ public:
     Eigen::MatrixXd & Steer_input_history, const Eigen::MatrixXd & D_inputs);
 };
 
-#endif  // NOMINAL_DYNAMICS_H
+#endif  // NOMINAL_DYNAMICS_H_

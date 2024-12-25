@@ -12,18 +12,19 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from utils.data_collection_utils import ControlType
-from autoware_vehicle_adaptor.calibrator import accel_brake_map_calibrator 
+import os
+
+from autoware_vehicle_adaptor.calibrator import accel_brake_map_calibrator
 import numpy as np
 import python_simulator
-import os
+from utils.data_collection_utils import ControlType
 
 SKIP_DATA_COLLECTION = False
 SKIP_CALIBRATION = False
 
 map_accel = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5]
 map_brake = [0.0, 0.1, 0.2, 0.3, 0.4, 0.5, 0.6, 0.7, 0.8]
-map_vel=[0.0,1.39,2.78,4.17,5.56,6.94,8.33,9.72,11.11,12.5,13.89]
+map_vel = [0.0, 1.39, 2.78, 4.17, 5.56, 6.94, 8.33, 9.72, 11.11, 12.5, 13.89]
 
 root_dir = "log_data/test_accel_brake_map_calibrator"
 if not os.path.isdir("log_data"):
@@ -51,7 +52,7 @@ if not SKIP_DATA_COLLECTION:
     simulator.setattr(figure_eight_data)
     simulator.drive_sim(
         data_collection_seed=0,
-        max_control_time = 900.0,
+        max_control_time=900.0,
         control_type=ControlType.pp_eight,
         save_dir=train_dir,
     )
@@ -62,7 +63,7 @@ if not SKIP_DATA_COLLECTION:
     simulator.setattr(figure_eight_data)
     simulator.drive_sim(
         data_collection_seed=1,
-        max_control_time = 900.0,
+        max_control_time=900.0,
         control_type=ControlType.pp_eight,
         save_dir=test_dir,
     )
@@ -72,11 +73,9 @@ if not SKIP_CALIBRATION:
     calibrator.add_data_from_csv(train_dir)
     tester.add_data_from_csv(test_dir)
 
-
     print("calibrate by NN")
     calibrator.calibrate_by_NN()
-    calibrator.save_accel_brake_map_NN(map_vel,map_accel,map_brake,test_NN_dir)
-
+    calibrator.save_accel_brake_map_NN(map_vel, map_accel, map_brake, test_NN_dir)
 
     print("nominal map")
     print("train data error")
@@ -98,7 +97,4 @@ simulator.drive_sim(save_dir=test_NN_dir)
 print("Correct map test")
 sim_setting_dict["accel_brake_map_control_path"] = correct_map_dir
 simulator.perturbed_sim(sim_setting_dict)
-simulator.drive_sim(save_dir=root_dir+"correct_map")
-
-
-
+simulator.drive_sim(save_dir=root_dir + "correct_map")

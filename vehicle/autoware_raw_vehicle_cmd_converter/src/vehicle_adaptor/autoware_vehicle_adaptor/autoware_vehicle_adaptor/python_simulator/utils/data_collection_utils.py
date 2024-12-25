@@ -1,5 +1,5 @@
-from enum import Enum
 import csv
+from enum import Enum
 
 import numpy as np
 
@@ -34,7 +34,7 @@ class DataCollectionMode(Enum):
         else:
             print(f"Error: unexpected DataCollectionMode: {self}")
             raise Exception
-        
+
 
 class GetInputNoise:
     def __init__(self):
@@ -42,25 +42,28 @@ class GetInputNoise:
         self.amp_acc_list = []
         self.t_steer_list = []
         self.amp_steer_list = []
+
     def clear_list(self):
         self.t_acc_list.clear()
         self.amp_acc_list.clear()
         self.t_steer_list.clear()
         self.amp_steer_list.clear()
-    def set_step_response(self, step_response_interval, step_response_max_input, step_response_max_length, step_response_min_length):
+
+    def set_step_response(
+        self,
+        step_response_interval,
+        step_response_max_input,
+        step_response_max_length,
+        step_response_min_length,
+    ):
         self.step_response_interval = step_response_interval
         self.step_response_max_input = step_response_max_input
         self.step_response_max_length = step_response_max_length
         self.step_response_min_length = step_response_min_length
+
     def create_additional_sine_data(
-            self,
-            seed,
-            t_range,
-            acc_amp_range,
-            acc_period_range,
-            steer_amp_range,
-            steer_period_range
-        ):
+        self, seed, t_range, acc_amp_range, acc_period_range, steer_amp_range, steer_period_range
+    ):
         """Create sine wave data to be added randomly to feed-forward runs."""
         self.clear_list()
         np.random.seed(seed=seed)
@@ -70,12 +73,16 @@ class GetInputNoise:
         self.t_steer_list.append(t_steer)
         while True:
             if t_acc >= t_steer:
-                period = (steer_period_range[1] - steer_period_range[0]) * np.random.uniform() + steer_period_range[0]
+                period = (
+                    steer_period_range[1] - steer_period_range[0]
+                ) * np.random.uniform() + steer_period_range[0]
                 t_steer += period
                 self.t_steer_list.append(t_steer)
                 self.amp_steer_list.append(steer_amp_range * np.random.uniform())
             else:
-                period = (acc_period_range[1] - acc_period_range[0]) * np.random.uniform() + acc_period_range[0]
+                period = (
+                    acc_period_range[1] - acc_period_range[0]
+                ) * np.random.uniform() + acc_period_range[0]
                 t_acc += period
                 self.t_acc_list.append(t_acc)
                 self.amp_acc_list.append(acc_amp_range * np.random.uniform())
@@ -95,32 +102,44 @@ class GetInputNoise:
                 break
             steer_index += 1
         acc_noise = self.amp_acc_list[acc_index] * np.sin(
-            2 * np.pi * (t - self.t_acc_list[acc_index]) / (self.t_acc_list[acc_index + 1] - self.t_acc_list[acc_index])
+            2
+            * np.pi
+            * (t - self.t_acc_list[acc_index])
+            / (self.t_acc_list[acc_index + 1] - self.t_acc_list[acc_index])
         )
         steer_noise = self.amp_steer_list[steer_index] * np.sin(
-            2 * np.pi * (t - self.t_steer_list[steer_index]) / (self.t_steer_list[steer_index + 1] - self.t_steer_list[steer_index])
+            2
+            * np.pi
+            * (t - self.t_steer_list[steer_index])
+            / (self.t_steer_list[steer_index + 1] - self.t_steer_list[steer_index])
         )
         return np.array([acc_noise, steer_noise])
+
     def get_step_response(self, t):
-        step = int(t//self.step_response_interval)
+        step = int(t // self.step_response_interval)
         step_start_time = step * self.step_response_interval
         np.random.seed(seed=step + RANDOM_SEED_STEP_RESPONSE)
 
         if self.step_response_max_length > self.step_response_interval:
-            print(f"warning: max_length = {self.step_response_max_length} > interval = {self.step_response_interval}")
+            print(
+                f"warning: max_length = {self.step_response_max_length} > interval = {self.step_response_interval}"
+            )
 
-        length = np.random.uniform(self.step_response_min_length, min(self.step_response_max_length, self.step_response_interval))
+        length = np.random.uniform(
+            self.step_response_min_length,
+            min(self.step_response_max_length, self.step_response_interval),
+        )
         input_u = np.random.uniform(-self.step_response_max_input, self.step_response_max_input)
 
         if (t - step_start_time) >= length:
             return 0.0
 
         return input_u
+
     def get_input_noise(self, t):
         result = self.get_additional_sine(t)
         result[1] += self.get_step_response(t)
         return result
-    
 
 
 def compute_curvature_radius(trajectory_position_data, trajectory_yaw_data):
@@ -158,6 +177,7 @@ def compute_curvature_radius_loop_trajectory(trajectory_position_data, trajector
     return compute_curvature_radius(
         augmented_trajectory_position_data, augmented_trajectory_yaw_data
     )[:data_length]
+
 
 class FigureEight:
     """Figure eight trajectory."""
@@ -198,11 +218,10 @@ class FigureEight:
         arc = a * np.pi
         diagonal = 2 * np.sqrt((b - a) ** 2 + a**2)
         return arc + diagonal
-    
 
-    def get_trajectory_points(self, step:float):
+    def get_trajectory_points(self, step: float):
         """Get the position and yaw angle in world coordinates of the figure eight.
-        
+
         The return value is a 2-dimensional array of positions and a 1-dimensional array of yaw angles corresponding to `t`.
         """
         a = self.y_length
@@ -270,7 +289,7 @@ class FigureEight:
                 x[i] = OL[0] + R * np.cos(np.pi / 2 + t3_rad)
                 y[i] = OL[1] + R * np.sin(np.pi / 2 + t3_rad)
                 yaw[i] = np.pi + t3_rad
-                curvature[i] =  1.0 / R
+                curvature[i] = 1.0 / R
                 parts.append("left_circle")
                 achievement_rates.append(0.0)
 
@@ -282,7 +301,6 @@ class FigureEight:
                 curvature[i] = 1e-10
                 parts.append("linear_positive")
                 achievement_rates.append(t4 / (2 * OB))
-
 
         # drop rest
         x = x[:i_end]
@@ -362,15 +380,24 @@ class FigureEight:
         elif t < self.period / 4 + self.constant_vel_time:
             vel = self.v_mid + v_range
         elif t < 3 * self.period / 4 + self.constant_vel_time:
-            vel = self.v_mid + v_range * np.sin(2 * np.pi * (t - self.constant_vel_time) / self.period)
+            vel = self.v_mid + v_range * np.sin(
+                2 * np.pi * (t - self.constant_vel_time) / self.period
+            )
         elif t < 3 * self.period / 4 + 2 * self.constant_vel_time:
             vel = self.v_mid - v_range
         else:
-            vel = self.v_mid + v_range * np.sin(2 * np.pi * (t - 2 * self.constant_vel_time) / self.period)
+            vel = self.v_mid + v_range * np.sin(
+                2 * np.pi * (t - 2 * self.constant_vel_time) / self.period
+            )
         return vel
+
     def get_periodic_count(self, index):
-        return self.split_size - 0.5 - np.abs(index % (2 * self.split_size - 1) - self.split_size + 0.5)
-    
+        return (
+            self.split_size
+            - 0.5
+            - np.abs(index % (2 * self.split_size - 1) - self.split_size + 0.5)
+        )
+
     def get_target_velocity(self, t):
         index = int(t / (self.period + 2 * self.constant_vel_time))
         t1 = t - (self.period + 2 * self.constant_vel_time) * index
@@ -387,9 +414,10 @@ class FigureEight:
         else:
             self.break_flag = True
             return self.v_mid
-        
-    #def get_target_velocity():
-        
+
+    # def get_target_velocity():
+
+
 def get_pure_pursuit_info(states, trajectory_position_data, trajectory_yaw_data, previous_index):
     """Calculate the target position and yaw angle required for pure pursuit."""
     search_range = (
@@ -427,7 +455,7 @@ class driving_log_updater:
         # data collection
         # velocity and acceleration grid
         self.num_bins = 10
-        self.v_min, self.v_max = 0.0, 11.8 #40km/h ~ 11.111m/s
+        self.v_min, self.v_max = 0.0, 11.8  # 40km/h ~ 11.111m/s
         self.a_min, self.a_max = -1.0, 1.0
         self.collected_data_counts = np.zeros((self.num_bins, self.num_bins))
         self.collected_data_counts_on_line = np.zeros((self.num_bins, self.num_bins))
@@ -436,13 +464,14 @@ class driving_log_updater:
         self.v_bin_centers = (self.v_bins[:-1] + self.v_bins[1:]) / 2
         self.a_bin_centers = (self.a_bins[:-1] + self.a_bins[1:]) / 2
 
-
         self.vehicle_command_control_cmd_list = []
         self.control_command_actuation_cmd_list = []
 
         self.data_collection_mode = "autonomous_driving"
+
     def set_data_collection_mode(self, data_collection_mode):
         self.data_collection_mode = data_collection_mode
+
     def clear_list(self):
         self.X_history.clear()
         self.U_history.clear()
@@ -458,7 +487,8 @@ class driving_log_updater:
         self.control_command_actuation_cmd_list.clear()
         self.collected_data_counts = 0.0 * self.collected_data_counts
         self.collected_data_counts_on_line = 0.0 * self.collected_data_counts_on_line
-    def update(self, t_current, states, inputs, vehicle_adaptor_inputs, accel, brake,part=None):
+
+    def update(self, t_current, states, inputs, vehicle_adaptor_inputs, accel, brake, part=None):
         """Update logs."""
         self.X_history.append(states)
         self.U_history.append(inputs)
@@ -509,10 +539,10 @@ class driving_log_updater:
         vehicle_command_control_cmd[16] = vehicle_adaptor_inputs[0]
         self.vehicle_command_control_cmd_list.append(vehicle_command_control_cmd)
 
-        #update velocity vs acceleration array (this array is visualized via heatmap)
-        v = states[2]#vel_index]
+        # update velocity vs acceleration array (this array is visualized via heatmap)
+        v = states[2]  # vel_index]
         v_bin = np.digitize(v, self.v_bins) - 1
-        a = states[4]#acc_index]
+        a = states[4]  # acc_index]
         a_bin = np.digitize(a, self.a_bins) - 1
         if part is not None:
             if 0 <= v_bin < self.num_bins and 0 <= a_bin < self.num_bins:
@@ -526,13 +556,22 @@ class driving_log_updater:
         control_command_actuation_cmd[4] = brake
         self.control_command_actuation_cmd_list.append(control_command_actuation_cmd)
 
-
     def save(self, save_dir):
         """Save logs in csv format."""
         localization_kinematic_state = np.zeros((len(self.localization_kinematic_state_list), 48))
-        localization_kinematic_state[:, [0, 1, 4, 5, 9, 10, 47]] = np.array(self.localization_kinematic_state_list)
-        np.savetxt(save_dir + "/localization_kinematic_state.csv", localization_kinematic_state, delimiter=",")
-        np.savetxt(save_dir + "/localization_acceleration.csv", np.array(self.localization_acceleration_list), delimiter=",")
+        localization_kinematic_state[:, [0, 1, 4, 5, 9, 10, 47]] = np.array(
+            self.localization_kinematic_state_list
+        )
+        np.savetxt(
+            save_dir + "/localization_kinematic_state.csv",
+            localization_kinematic_state,
+            delimiter=",",
+        )
+        np.savetxt(
+            save_dir + "/localization_acceleration.csv",
+            np.array(self.localization_acceleration_list),
+            delimiter=",",
+        )
         np.savetxt(
             save_dir + "/vehicle_status_steering_status.csv",
             np.array(self.vehicle_status_steering_status_list),
@@ -554,12 +593,19 @@ class driving_log_updater:
         with open(save_dir + "/system_operation_mode_state.csv", "w") as f:
             writer = csv.writer(f)
             for i in range(len(self.system_operation_mode_state_list)):
-                system_operation_mode_state_plus_true = self.system_operation_mode_state_list[i].tolist()
+                system_operation_mode_state_plus_true = self.system_operation_mode_state_list[
+                    i
+                ].tolist()
                 system_operation_mode_state_plus_true.append("True")
                 writer.writerow(system_operation_mode_state_plus_true)
         if self.data_collection_mode == "autonomous_driving_with_vehicle_adaptor":
-            np.savetxt(save_dir + "/vehicle_raw_vehicle_cmd_converter_debug_compensated_control_cmd.csv",
+            np.savetxt(
+                save_dir + "/vehicle_raw_vehicle_cmd_converter_debug_compensated_control_cmd.csv",
                 np.array(self.vehicle_command_control_cmd_list),
-                delimiter=","
+                delimiter=",",
             )
-        np.savetxt(save_dir + "/control_command_actuation_cmd.csv", np.array(self.control_command_actuation_cmd_list), delimiter=",")
+        np.savetxt(
+            save_dir + "/control_command_actuation_cmd.csv",
+            np.array(self.control_command_actuation_cmd_list),
+            delimiter=",",
+        )

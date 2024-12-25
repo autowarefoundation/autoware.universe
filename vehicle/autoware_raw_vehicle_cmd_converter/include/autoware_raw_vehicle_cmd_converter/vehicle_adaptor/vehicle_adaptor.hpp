@@ -15,13 +15,14 @@
 #ifndef AUTOWARE_RAW_VEHICLE_CMD_CONVERTER__VEHICLE_ADAPTOR__VEHICLE_ADAPTOR_HPP_
 #define AUTOWARE_RAW_VEHICLE_CMD_CONVERTER__VEHICLE_ADAPTOR__VEHICLE_ADAPTOR_HPP_
 
+#include "vehicle_adaptor_compensator.h"
+
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <autoware_control_msgs/msg/control.hpp>
 #include <autoware_control_msgs/msg/control_horizon.hpp>
 #include <autoware_vehicle_msgs/msg/steering_report.hpp>
 #include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
-#include "vehicle_adaptor_compensator.h"
 
 namespace autoware::raw_vehicle_cmd_converter
 {

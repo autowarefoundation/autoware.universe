@@ -1,5 +1,6 @@
 from pathlib import Path
 import subprocess
+
 package_path = {}
 package_path["path"] = str(Path(__file__).parent)
 build_actuation_map_2d_command = (

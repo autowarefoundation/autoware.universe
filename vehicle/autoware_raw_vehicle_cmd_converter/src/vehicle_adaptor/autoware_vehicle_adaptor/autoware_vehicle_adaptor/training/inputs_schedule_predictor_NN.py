@@ -1,23 +1,30 @@
+import copy
+import csv
+import os
+from typing import List
+from typing import Tuple
+
+from autoware_vehicle_adaptor.param import parameters
+from autoware_vehicle_adaptor.training import convert_model_to_csv
+from autoware_vehicle_adaptor.training.early_stopping import EarlyStopping
 import numpy as np
+import scipy.interpolate
+from scipy.ndimage import gaussian_filter
 import torch
 import torch.nn as nn
-import os
-import csv
-import scipy.interpolate
-from autoware_vehicle_adaptor.training.early_stopping import EarlyStopping
-from autoware_vehicle_adaptor.training import convert_model_to_csv
-from autoware_vehicle_adaptor.param import parameters
-from scipy.ndimage import gaussian_filter
-import copy
-from typing import Tuple, List
 
 # Number of steps in the history used as input to the neural network.
-input_step = max(parameters.controller_acc_input_history_len, parameters.controller_steer_input_history_len)
+input_step = max(
+    parameters.controller_acc_input_history_len, parameters.controller_steer_input_history_len
+)
 # Number of steps in the future to predict.
-output_step = max(parameters.acc_input_schedule_prediction_len, parameters.steer_input_schedule_prediction_len)
-control_dt = parameters.control_dt # Time step for the controller
-acc_cmd_smoothing_sigma = 10.0 # smoothing parameter for acceleration command
-steer_cmd_smoothing_sigma = 10.0 # smoothing parameter for steering command
+output_step = max(
+    parameters.acc_input_schedule_prediction_len, parameters.steer_input_schedule_prediction_len
+)
+control_dt = parameters.control_dt  # Time step for the controller
+acc_cmd_smoothing_sigma = 10.0  # smoothing parameter for acceleration command
+steer_cmd_smoothing_sigma = 10.0  # smoothing parameter for steering command
+
 
 def data_smoothing(data: np.ndarray, sigma: float) -> np.ndarray:
     """
@@ -28,23 +35,26 @@ def data_smoothing(data: np.ndarray, sigma: float) -> np.ndarray:
     data_smoothed = gaussian_filter(data, sigma)
     return data_smoothed
 
+
 # Neural Network definition: Input Schedule Predictor
 class InputsSchedulePredictorNN(nn.Module):
     """
     LSTM-based model for predicting input schedules (e.g., acceleration and steering).
     Output is a sequence of change rates for the input values.
     """
-    def __init__(self,
-                 dataset_num:int,
-                 lstm_hidden_size:int=64,
-                 post_decoder_hidden_size:Tuple[int, int] =(16,16),
-                 control_dt:float=0.033,
-                 target_size:int=35, 
-                 input_rate_limit:float=1.0,
-                 augmented_input_size:int=15,
-                 vel_scaling:float=0.1,
-                 vel_bias:float=0.0
-                ):
+
+    def __init__(
+        self,
+        dataset_num: int,
+        lstm_hidden_size: int = 64,
+        post_decoder_hidden_size: Tuple[int, int] = (16, 16),
+        control_dt: float = 0.033,
+        target_size: int = 35,
+        input_rate_limit: float = 1.0,
+        augmented_input_size: int = 15,
+        vel_scaling: float = 0.1,
+        vel_bias: float = 0.0,
+    ):
         """
         Constructor
         - dataset_num: Number of controller types included in the data
@@ -68,34 +78,48 @@ class InputsSchedulePredictorNN(nn.Module):
         self.vel_scaling = vel_scaling
         self.vel_bias = vel_bias
         # Define the LSTM layers for encoding and decoding
-        self.lstm_encoder = nn.LSTM(self.input_size, lstm_hidden_size, num_layers=2, batch_first=True)
-        self.lstm_decoder = nn.LSTM(self.output_size + self.augmented_input_size, lstm_hidden_size, num_layers=2, batch_first=True)
+        self.lstm_encoder = nn.LSTM(
+            self.input_size, lstm_hidden_size, num_layers=2, batch_first=True
+        )
+        self.lstm_decoder = nn.LSTM(
+            self.output_size + self.augmented_input_size,
+            lstm_hidden_size,
+            num_layers=2,
+            batch_first=True,
+        )
         # Fully connected layers after the LSTM decoder
         self.post_decoder = nn.Sequential(
-            nn.Linear(lstm_hidden_size, post_decoder_hidden_size[0]),
-            nn.ReLU()
+            nn.Linear(lstm_hidden_size, post_decoder_hidden_size[0]), nn.ReLU()
         )
         # Dataset-specific adaptive scaling parameters
-        self.post_decoder_adaptive_scales = nn.ParameterList([nn.Parameter(torch.ones(post_decoder_hidden_size[0])) for _ in range(dataset_num)])
+        self.post_decoder_adaptive_scales = nn.ParameterList(
+            [nn.Parameter(torch.ones(post_decoder_hidden_size[0])) for _ in range(dataset_num)]
+        )
         # Final layers to produce the output
         self.finalize = nn.Sequential(
             nn.Linear(post_decoder_hidden_size[0], post_decoder_hidden_size[1]),
             nn.ReLU(),
             nn.Linear(post_decoder_hidden_size[1], self.output_size),
-            nn.Tanh()
+            nn.Tanh(),
         )
         # Define input transformation matrices for augmented inputs, focusing on updating the history of inputs during decoding.
         input_transition_matrix = torch.zeros(self.augmented_input_size, self.augmented_input_size)
         input_transition_matrix[1:, :-1] = torch.eye(self.augmented_input_size - 1)
         input_transition_matrix[-1, -1] = 1.0
-        add_new_input = torch.zeros(1,self.augmented_input_size)
-        add_new_input[0,-1] = 1.0
+        add_new_input = torch.zeros(1, self.augmented_input_size)
+        add_new_input[0, -1] = 1.0
         # Register as non-trainable buffers
         self.register_buffer("input_transition_matrix", input_transition_matrix)
         self.register_buffer("add_new_input", add_new_input)
         # Input rate limit for the model outputs
         self.input_rate_limit = input_rate_limit
-    def forward(self, x: torch.Tensor, dataset_idx: torch.Tensor, true_prediction:torch.Tensor|None=None) -> torch.Tensor:
+
+    def forward(
+        self,
+        x: torch.Tensor,
+        dataset_idx: torch.Tensor,
+        true_prediction: torch.Tensor | None = None,
+    ) -> torch.Tensor:
         """
         Forward pass of the model.
         - x: Input sequence (batch_size, seq_length, input_size).
@@ -105,7 +129,7 @@ class InputsSchedulePredictorNN(nn.Module):
         device = x.device
         # Scale the velocity input
         x_vel_scaled = x.clone()
-        x_vel_scaled[:,:,0] = (x_vel_scaled[:,:,0] - self.vel_bias ) * self.vel_scaling
+        x_vel_scaled[:, :, 0] = (x_vel_scaled[:, :, 0] - self.vel_bias) * self.vel_scaling
         # Retrieve adaptive scales for the dataset
         post_decoder_scales_tensor = torch.stack(list(self.post_decoder_adaptive_scales)).to(device)
         post_decoder_scales = post_decoder_scales_tensor[dataset_idx].unsqueeze(1)
@@ -114,27 +138,32 @@ class InputsSchedulePredictorNN(nn.Module):
         hidden = hidden_raw
         cell = cell_raw
         # Initialize decoder inputs
-        decoder_input_head = x[:,-self.augmented_input_size:,-1]
-        decoder_input_tail = (x[:,[-1],-1] - x[:,[-2],-1])/self.control_dt
+        decoder_input_head = x[:, -self.augmented_input_size :, -1]
+        decoder_input_tail = (x[:, [-1], -1] - x[:, [-2], -1]) / self.control_dt
         outputs = []
         # Perform decoding for the target size
         for i in range(self.target_size):
             decoder_output, (hidden, cell) = self.lstm_decoder(
-                torch.cat([decoder_input_head,decoder_input_tail],dim=1).unsqueeze(1), 
-                (hidden, cell)
+                torch.cat([decoder_input_head, decoder_input_tail], dim=1).unsqueeze(1),
+                (hidden, cell),
             )
             # Apply the post-decoder layers
             decoder_output = self.post_decoder(decoder_output)
             decoder_output = decoder_output * post_decoder_scales
-            output = self.finalize(decoder_output)[:,:,0] * self.input_rate_limit
-        
+            output = self.finalize(decoder_output)[:, :, 0] * self.input_rate_limit
+
             outputs.append(output)
-            if true_prediction is not None: # Teacher forcing case
-                decoder_input_head = decoder_input_head @ self.input_transition_matrix + \
-                                     true_prediction[:, i, :] @ self.add_new_input * self.control_dt
-                decoder_input_tail = true_prediction[:,i,:]
+            if true_prediction is not None:  # Teacher forcing case
+                decoder_input_head = (
+                    decoder_input_head @ self.input_transition_matrix
+                    + true_prediction[:, i, :] @ self.add_new_input * self.control_dt
+                )
+                decoder_input_tail = true_prediction[:, i, :]
             else:
-                decoder_input_head = decoder_input_head @ self.input_transition_matrix + output @ self.add_new_input * self.control_dt
+                decoder_input_head = (
+                    decoder_input_head @ self.input_transition_matrix
+                    + output @ self.add_new_input * self.control_dt
+                )
                 decoder_input_tail = output
         # Concatenate outputs
         outputs_tensor = torch.cat(outputs, dim=1).unsqueeze(2)
@@ -145,19 +174,39 @@ class AddDataFromCsv:
     """
     A helper class for loading and managing training and validation data from CSV files.
     """
+
     def __init__(self) -> None:
         # Initialize lists to store data for acceleration and steering
-        self.X_acc_train_list: List[np.ndarray] = []  # List of NumPy arrays for acceleration training input sequences
-        self.Y_acc_train_list: List[np.ndarray] = []  # List of NumPy arrays for acceleration training target sequences
-        self.X_steer_train_list: List[np.ndarray] = []  # List of NumPy arrays for steering training input sequences
-        self.Y_steer_train_list: List[np.ndarray] = []  # List of NumPy arrays for steering training target sequences
-        self.indices_train_list: List[int] = []  # List of indices indicating boundaries between datasets in training data
-        self.X_acc_val_list: List[np.ndarray] = [] # List of NumPy arrays for acceleration validation input sequences
-        self.Y_acc_val_list: List[np.ndarray] = [] # List of NumPy arrays for acceleration validation target sequences
-        self.X_steer_val_list: List[np.ndarray] = [] # List of NumPy arrays for steering validation input sequences
-        self.Y_steer_val_list: List[np.ndarray] = [] # List of NumPy arrays for steering validation target sequences
+        self.X_acc_train_list: List[np.ndarray] = (
+            []
+        )  # List of NumPy arrays for acceleration training input sequences
+        self.Y_acc_train_list: List[np.ndarray] = (
+            []
+        )  # List of NumPy arrays for acceleration training target sequences
+        self.X_steer_train_list: List[np.ndarray] = (
+            []
+        )  # List of NumPy arrays for steering training input sequences
+        self.Y_steer_train_list: List[np.ndarray] = (
+            []
+        )  # List of NumPy arrays for steering training target sequences
+        self.indices_train_list: List[int] = (
+            []
+        )  # List of indices indicating boundaries between datasets in training data
+        self.X_acc_val_list: List[np.ndarray] = (
+            []
+        )  # List of NumPy arrays for acceleration validation input sequences
+        self.Y_acc_val_list: List[np.ndarray] = (
+            []
+        )  # List of NumPy arrays for acceleration validation target sequences
+        self.X_steer_val_list: List[np.ndarray] = (
+            []
+        )  # List of NumPy arrays for steering validation input sequences
+        self.Y_steer_val_list: List[np.ndarray] = (
+            []
+        )  # List of NumPy arrays for steering validation target sequences
         self.indices_val_list: List[int] = []
-        self.dataset_num:int = 0  # Number of controller types included in the data
+        self.dataset_num: int = 0  # Number of controller types included in the data
+
     def clear_data(self):
         """
         Clear all stored data to reset the class instance.
@@ -173,14 +222,15 @@ class AddDataFromCsv:
         self.Y_steer_val_list = []
         self.indices_val_list = []
         self.dataset_num = 0
+
     def add_data_from_csv(
-            self,
-            dir_name:str,
-            add_mode:str="as_train",
-            control_cmd_mode:str|None=None,
-            dataset_idx:int=0,
-            reverse_steer:bool=False
-        ) -> None:
+        self,
+        dir_name: str,
+        add_mode: str = "as_train",
+        control_cmd_mode: str | None = None,
+        dataset_idx: int = 0,
+        reverse_steer: bool = False,
+    ) -> None:
         """
         Load data from CSV files and prepare it for training or validation.
         - dir_name: Path to the directory containing the data files.
@@ -192,44 +242,67 @@ class AddDataFromCsv:
         # Load localization state data
         # columns: time_sec, time_nsec, x, y, quaternion_x, quaternion_y, quaternion_z, quaternion_w, linear_velocity_x
         localization_kinematic_state = np.loadtxt(
-            dir_name + "/localization_kinematic_state.csv", delimiter=",", usecols=[0, 1, 4, 5, 7, 8, 9, 10, 47]
+            dir_name + "/localization_kinematic_state.csv",
+            delimiter=",",
+            usecols=[0, 1, 4, 5, 7, 8, 9, 10, 47],
         )
         vel = localization_kinematic_state[:, 8]
         # Load control command based on the specified mode
         # columns: time_sec, time_nsec, steering input, acceleration input
-        if control_cmd_mode == "compensated_control_cmd": # compensated by the vehicle adaptor
+        if control_cmd_mode == "compensated_control_cmd":  # compensated by the vehicle adaptor
             control_cmd = np.loadtxt(
-                dir_name + "/vehicle_raw_vehicle_cmd_converter_debug_compensated_control_cmd.csv", delimiter=",", usecols=[0, 1, 8, 16]
+                dir_name + "/vehicle_raw_vehicle_cmd_converter_debug_compensated_control_cmd.csv",
+                delimiter=",",
+                usecols=[0, 1, 8, 16],
             )
-        elif control_cmd_mode == "control_command": # controller inputs after the filter
+        elif control_cmd_mode == "control_command":  # controller inputs after the filter
             control_cmd = np.loadtxt(
                 dir_name + "/control_command_control_cmd.csv", delimiter=",", usecols=[0, 1, 8, 16]
             )
-        elif control_cmd_mode == "control_trajectory_follower": # controller raw inputs by the trajectory follower node
+        elif (
+            control_cmd_mode == "control_trajectory_follower"
+        ):  # controller raw inputs by the trajectory follower node
             control_cmd = np.loadtxt(
-                dir_name + "/control_trajectory_follower_control_cmd.csv", delimiter=",", usecols=[0, 1, 8, 16]
+                dir_name + "/control_trajectory_follower_control_cmd.csv",
+                delimiter=",",
+                usecols=[0, 1, 8, 16],
             )
-        elif control_cmd_mode == "external_selected": # controller inputs by the external selector, e.g., data collecting tool
+        elif (
+            control_cmd_mode == "external_selected"
+        ):  # controller inputs by the external selector, e.g., data collecting tool
             control_cmd = np.loadtxt(
-                dir_name + "/external_selected_control_cmd.csv", delimiter=",", usecols=[0, 1, 8, 16]
+                dir_name + "/external_selected_control_cmd.csv",
+                delimiter=",",
+                usecols=[0, 1, 8, 16],
             )
         elif control_cmd_mode is None:
             # Automatically determine which file to load based on availability
-            if os.path.exists(dir_name + '/control_command_control_cmd.csv'):
+            if os.path.exists(dir_name + "/control_command_control_cmd.csv"):
                 control_cmd = np.loadtxt(
-                    dir_name + "/control_command_control_cmd.csv", delimiter=",", usecols=[0, 1, 8, 16]
+                    dir_name + "/control_command_control_cmd.csv",
+                    delimiter=",",
+                    usecols=[0, 1, 8, 16],
                 )
-            elif os.path.exists(dir_name + '/control_trajectory_follower_control_cmd.csv'):
+            elif os.path.exists(dir_name + "/control_trajectory_follower_control_cmd.csv"):
                 control_cmd = np.loadtxt(
-                    dir_name + "/control_trajectory_follower_control_cmd.csv", delimiter=",", usecols=[0, 1, 8, 16]
+                    dir_name + "/control_trajectory_follower_control_cmd.csv",
+                    delimiter=",",
+                    usecols=[0, 1, 8, 16],
                 )
-            elif os.path.exists(dir_name + '/external_selected_control_cmd.csv'):
+            elif os.path.exists(dir_name + "/external_selected_control_cmd.csv"):
                 control_cmd = np.loadtxt(
-                    dir_name + "/external_selected_control_cmd.csv", delimiter=",", usecols=[0, 1, 8, 16]
+                    dir_name + "/external_selected_control_cmd.csv",
+                    delimiter=",",
+                    usecols=[0, 1, 8, 16],
                 )
-            elif os.path.exists(dir_name + "/vehicle_raw_vehicle_cmd_converter_debug_compensated_control_cmd.csv"):
+            elif os.path.exists(
+                dir_name + "/vehicle_raw_vehicle_cmd_converter_debug_compensated_control_cmd.csv"
+            ):
                 control_cmd = np.loadtxt(
-                    dir_name + "/vehicle_raw_vehicle_cmd_converter_debug_compensated_control_cmd.csv", delimiter=",", usecols=[0, 1, 8, 16]
+                    dir_name
+                    + "/vehicle_raw_vehicle_cmd_converter_debug_compensated_control_cmd.csv",
+                    delimiter=",",
+                    usecols=[0, 1, 8, 16],
                 )
             else:
                 print("control command csv is not found")
@@ -252,19 +325,34 @@ class AddDataFromCsv:
 
         control_enabled = np.zeros(system_operation_mode_state.shape[0])
         for i in range(system_operation_mode_state.shape[0]):
-            if system_operation_mode_state[i, 2] > 1.5 and autoware_control_enabled_str[i] == "True":
+            if (
+                system_operation_mode_state[i, 2] > 1.5
+                and autoware_control_enabled_str[i] == "True"
+            ):
                 control_enabled[i] = 1.0
         for i in range(system_operation_mode_state.shape[0] - 1):
             if control_enabled[i] < 0.5 and control_enabled[i + 1] > 0.5:
-                operation_start_time = system_operation_mode_state[i + 1, 0] + 1e-9 * system_operation_mode_state[i + 1, 1]
+                operation_start_time = (
+                    system_operation_mode_state[i + 1, 0]
+                    + 1e-9 * system_operation_mode_state[i + 1, 1]
+                )
             elif control_enabled[i] > 0.5 and control_enabled[i + 1] < 0.5:
-                operation_end_time = system_operation_mode_state[i + 1, 0] + 1e-9 * system_operation_mode_state[i + 1, 1]
+                operation_end_time = (
+                    system_operation_mode_state[i + 1, 0]
+                    + 1e-9 * system_operation_mode_state[i + 1, 1]
+                )
                 break
-            operation_end_time = localization_kinematic_state[-1, 0] + 1e-9 * localization_kinematic_state[-1, 1]
+            operation_end_time = (
+                localization_kinematic_state[-1, 0] + 1e-9 * localization_kinematic_state[-1, 1]
+            )
         if system_operation_mode_state.shape[0] == 1:
-            operation_end_time = localization_kinematic_state[-1, 0] + 1e-9 * localization_kinematic_state[-1, 1]
+            operation_end_time = (
+                localization_kinematic_state[-1, 0] + 1e-9 * localization_kinematic_state[-1, 1]
+            )
         if control_enabled[0] > 0.5:
-            operation_start_time = system_operation_mode_state[0, 0] + 1e-9 * system_operation_mode_state[0, 1]
+            operation_start_time = (
+                system_operation_mode_state[0, 0] + 1e-9 * system_operation_mode_state[0, 1]
+            )
         print("operation_start_time", operation_start_time)
         print("operation_end_time", operation_end_time)
         # Synchronize timestamps and interpolate data
@@ -282,12 +370,18 @@ class AddDataFromCsv:
                 control_cmd[-1, 0] + 1e-9 * control_cmd[-1, 1],
             ]
         )
-        data_num = int((max_time_stamp - min_time_stamp)/control_dt)
+        data_num = int((max_time_stamp - min_time_stamp) / control_dt)
         data_time_stamps = min_time_stamp + control_dt * np.arange(data_num)
         # Interpolate velocity and control commands
-        vel_interp = scipy.interpolate.interp1d(localization_kinematic_state[:, 0] + 1e-9 * localization_kinematic_state[:, 1], vel)(data_time_stamps)
-        acc_cmd_interp = scipy.interpolate.interp1d(control_cmd[:, 0] + 1e-9 * control_cmd[:, 1], acc_cmd)(data_time_stamps)
-        steer_cmd_interp = scipy.interpolate.interp1d(control_cmd[:, 0] + 1e-9 * control_cmd[:, 1], steer_cmd)(data_time_stamps)
+        vel_interp = scipy.interpolate.interp1d(
+            localization_kinematic_state[:, 0] + 1e-9 * localization_kinematic_state[:, 1], vel
+        )(data_time_stamps)
+        acc_cmd_interp = scipy.interpolate.interp1d(
+            control_cmd[:, 0] + 1e-9 * control_cmd[:, 1], acc_cmd
+        )(data_time_stamps)
+        steer_cmd_interp = scipy.interpolate.interp1d(
+            control_cmd[:, 0] + 1e-9 * control_cmd[:, 1], steer_cmd
+        )(data_time_stamps)
         # Apply smoothing to commands
         acc_cmd_smoothed = data_smoothing(acc_cmd_interp, acc_cmd_smoothing_sigma)
         steer_cmd_smoothed = data_smoothing(steer_cmd_interp, steer_cmd_smoothing_sigma)
@@ -298,20 +392,24 @@ class AddDataFromCsv:
         Y_steer = []
         indices = []
         for i in range(data_num - input_step - output_step):
-            if vel_interp[i + input_step] < 0.1: # Skip low velocity data
+            if vel_interp[i + input_step] < 0.1:  # Skip low velocity data
                 continue
             # Acceleration input sequence data
             X_acc.append(
                 np.stack(
                     [
-                        vel_interp[i:i + input_step],
-                        acc_cmd_interp[i:i + input_step],
+                        vel_interp[i : i + input_step],
+                        acc_cmd_interp[i : i + input_step],
                     ]
                 ).T
             )
             # Compute the rate of change for acceleration commands
             Y_acc.append(
-                np.array(acc_cmd_smoothed[i + input_step:i + input_step + output_step] - acc_cmd_smoothed[i + input_step - 1:i + input_step + output_step - 1]).reshape(-1, 1)/control_dt
+                np.array(
+                    acc_cmd_smoothed[i + input_step : i + input_step + output_step]
+                    - acc_cmd_smoothed[i + input_step - 1 : i + input_step + output_step - 1]
+                ).reshape(-1, 1)
+                / control_dt
             )
 
             # Steering input with optional reversal
@@ -320,30 +418,37 @@ class AddDataFromCsv:
                 X_steer.append(
                     np.stack(
                         [
-                            vel_interp[i:i + input_step],
-                            -steer_cmd_interp[i:i + input_step],
+                            vel_interp[i : i + input_step],
+                            -steer_cmd_interp[i : i + input_step],
                         ]
                     ).T
                 )
                 # Compute the rate of change for reversed steering commands
                 Y_steer.append(
-                    - np.array(steer_cmd_smoothed[i + input_step:i + input_step + output_step] - steer_cmd_smoothed[i + input_step - 1:i + input_step + output_step - 1]).reshape(-1, 1)/control_dt
+                    -np.array(
+                        steer_cmd_smoothed[i + input_step : i + input_step + output_step]
+                        - steer_cmd_smoothed[i + input_step - 1 : i + input_step + output_step - 1]
+                    ).reshape(-1, 1)
+                    / control_dt
                 )
             else:
                 # Use the original steering commands without reversal
                 X_steer.append(
                     np.stack(
                         [
-                            vel_interp[i:i + input_step],
-                            steer_cmd_interp[i:i + input_step],
+                            vel_interp[i : i + input_step],
+                            steer_cmd_interp[i : i + input_step],
                         ]
                     ).T
                 )
                 # Compute the rate of change for original steering commands
                 Y_steer.append(
-                    np.array(steer_cmd_smoothed[i + input_step:i + input_step + output_step] - steer_cmd_smoothed[i + input_step - 1:i + input_step + output_step - 1]).reshape(-1, 1)/control_dt
+                    np.array(
+                        steer_cmd_smoothed[i + input_step : i + input_step + output_step]
+                        - steer_cmd_smoothed[i + input_step - 1 : i + input_step + output_step - 1]
+                    ).reshape(-1, 1)
+                    / control_dt
                 )
-
 
             # Store the dataset index for each data segment, which indicating the controller type
             indices.append(dataset_idx)
@@ -368,15 +473,16 @@ class AddDataFromCsv:
         else:
             print("add_mode is invalid")
             return
-        
+
+
 def generate_random_vector(
-        batch_size:int,
-        seq_len:int,
-        state_dim:int,
-        dt:float,
-        device:torch.device,
-        vel_scaling:float
-    ) -> torch.Tensor:
+    batch_size: int,
+    seq_len: int,
+    state_dim: int,
+    dt: float,
+    device: torch.device,
+    vel_scaling: float,
+) -> torch.Tensor:
     """
     Generate a random vector for perturbation purposes.
     - batch_size: Number of samples in the batch.
@@ -390,10 +496,11 @@ def generate_random_vector(
     # Generate random vector
     random_vector = torch.randn(batch_size, seq_len, state_dim, device=device)
     # Scale and integrate over time
-    random_vector[:,1:,:] = random_vector[:,1:,:] * dt
-    random_vector[:,:,0] = random_vector[:,:,0] / vel_scaling # Scale the velocity
+    random_vector[:, 1:, :] = random_vector[:, 1:, :] * dt
+    random_vector[:, :, 0] = random_vector[:, :, 0] / vel_scaling  # Scale the velocity
     random_vector_integrated = torch.cumsum(random_vector, dim=1)
     return random_vector_integrated
+
 
 def get_loss(
     criterion: nn.Module,
@@ -411,7 +518,7 @@ def get_loss(
     tanh_gain: float = 2.0,
     tanh_weight: float = 0.1,
     use_true_prediction: bool = False,
-    alpha_jacobian: float|None = None,
+    alpha_jacobian: float | None = None,
     eps: float = 1e-5,
 ) -> torch.Tensor:
     """
@@ -438,39 +545,71 @@ def get_loss(
     device = X.device
     # Generate random perturbations for Jacobian calculation
     if alpha_jacobian is not None:
-        random_vector = generate_random_vector(X.size(0),X.size(1),X.size(2),control_dt,device,model.vel_scaling) * eps
+        random_vector = (
+            generate_random_vector(
+                X.size(0), X.size(1), X.size(2), control_dt, device, model.vel_scaling
+            )
+            * eps
+        )
     # Forward pass through the model
-    if use_true_prediction: # Teacher forcing
-        Y_pred = model(X,indices,Y)
+    if use_true_prediction:  # Teacher forcing
+        Y_pred = model(X, indices, Y)
         if alpha_jacobian is not None:
-            Y_perturbed = model(X+random_vector,indices,Y)
+            Y_perturbed = model(X + random_vector, indices, Y)
     else:
-        Y_pred = model(X,indices)
+        Y_pred = model(X, indices)
         if alpha_jacobian is not None:
-            Y_perturbed = model(X+random_vector,indices)
+            Y_perturbed = model(X + random_vector, indices)
     # Compute stage-wise loss
-    loss = stage_error_weight * criterion(Y_pred,Y)
+    loss = stage_error_weight * criterion(Y_pred, Y)
     # Add Jacobian penalty if applicable
     if alpha_jacobian is not None:
         loss = loss + alpha_jacobian * torch.mean(torch.abs((Y_perturbed - Y_pred) / eps))
     # inputs predicted by the model
-    input_future = torch.mean(torch.abs(X[:,-1,1] + torch.cumsum(Y, dim=1) * control_dt), dim=1)
+    input_future = torch.mean(torch.abs(X[:, -1, 1] + torch.cumsum(Y, dim=1) * control_dt), dim=1)
     # weight for emphasizing small inputs
-    small_input_weight = torch.where(input_future > small_input_threshold, 
-                                    torch.tensor(1.0, device=X.device), 
-                                    1.0/(input_future + 1.0/max_small_input_weight))
+    small_input_weight = torch.where(
+        input_future > small_input_threshold,
+        torch.tensor(1.0, device=X.device),
+        1.0 / (input_future + 1.0 / max_small_input_weight),
+    )
 
     # Compute the prediction error
     for i in range(len(integral_points)):
-        loss = loss + integral_weights[i] * tanh_weight * torch.mean(torch.abs(torch.tanh(tanh_gain * (Y_pred[:,:int(model.target_size*integral_points[i]),0].sum(dim=1) - Y[:,:int(model.target_size*integral_points[i]),0].sum(dim=1)))))
-        loss = loss + integral_weights[i] * prediction_error_weight * torch.mean(small_input_weight * torch.abs(Y_pred[:,:int(model.target_size*integral_points[i])].sum(dim=1)*control_dt - Y[:,:int(model.target_size*integral_points[i])].sum(dim=1)*control_dt))
+        loss = loss + integral_weights[i] * tanh_weight * torch.mean(
+            torch.abs(
+                torch.tanh(
+                    tanh_gain
+                    * (
+                        Y_pred[:, : int(model.target_size * integral_points[i]), 0].sum(dim=1)
+                        - Y[:, : int(model.target_size * integral_points[i]), 0].sum(dim=1)
+                    )
+                )
+            )
+        )
+        loss = loss + integral_weights[i] * prediction_error_weight * torch.mean(
+            small_input_weight
+            * torch.abs(
+                Y_pred[:, : int(model.target_size * integral_points[i])].sum(dim=1) * control_dt
+                - Y[:, : int(model.target_size * integral_points[i])].sum(dim=1) * control_dt
+            )
+        )
     # Add penalty for second-order derivatives
-    loss = loss + second_order_weight * torch.mean(torch.abs((Y_pred[:,1:] - Y_pred[:,:-1])/control_dt))
+    loss = loss + second_order_weight * torch.mean(
+        torch.abs((Y_pred[:, 1:] - Y_pred[:, :-1]) / control_dt)
+    )
     # Add penalty for the final time step.
     # This cost assumes the rate of change for the next input is zero.
     # To match the scale with other stages, the cost is divided by model.target_size.
-    loss = loss + second_order_weight * torch.mean(torch.abs(Y_pred[:,-1]/control_dt)) / model.target_size
+    loss = (
+        loss
+        + second_order_weight
+        * torch.mean(torch.abs(Y_pred[:, -1] / control_dt))
+        / model.target_size
+    )
     return loss
+
+
 def validate_in_batches(
     criterion: nn.Module,
     model: InputsSchedulePredictorNN,
@@ -482,7 +621,7 @@ def validate_in_batches(
     tanh_weight: float = 0.1,
     max_small_input_weight: float = 50.0,
     small_input_threshold: float = 0.01,
-    alpha_jacobian: float|None = None,
+    alpha_jacobian: float | None = None,
 ) -> float:
     """
     Validate the model in batches to avoid memory overflow.
@@ -510,25 +649,41 @@ def validate_in_batches(
             Y_val_batch = Y_val[start:end]
             indices_batch = indices[start:end]
             # Compute loss for the current batch
-            loss = get_loss(criterion,model,X_val_batch,Y_val_batch, indices_batch, tanh_gain=tanh_gain, tanh_weight=tanh_weight, max_small_input_weight=max_small_input_weight, small_input_threshold=small_input_threshold, alpha_jacobian=alpha_jacobian).item()
-            val_loss += loss *(end - start)  # Scale by batch size
+            loss = get_loss(
+                criterion,
+                model,
+                X_val_batch,
+                Y_val_batch,
+                indices_batch,
+                tanh_gain=tanh_gain,
+                tanh_weight=tanh_weight,
+                max_small_input_weight=max_small_input_weight,
+                small_input_threshold=small_input_threshold,
+                alpha_jacobian=alpha_jacobian,
+            ).item()
+            val_loss += loss * (end - start)  # Scale by batch size
     val_loss /= X_val.size(0)  # Normalize by total validation size
     return val_loss
+
+
 class TrainInputsSchedulePredictorNN(AddDataFromCsv):
     """
     A class for training the Inputs Schedule Predictor Neural Network.
     Inherits data handling methods from AddDataFromCsv.
     """
-    def __init__(self,
-                 max_iter: int = 10000,
-                 tol: float = 1e-5,
-                 alpha_1: float = 0.1**7,
-                 alpha_2: float = 0.1**7,
-                 tanh_gain_acc: float = 2.0,
-                 tanh_weight_acc: float = 0.1,
-                 tanh_gain_steer: float = 10.0,
-                 tanh_weight_steer: float = 0.01,
-                 alpha_jacobian: float|None = None) -> None:
+
+    def __init__(
+        self,
+        max_iter: int = 10000,
+        tol: float = 1e-5,
+        alpha_1: float = 0.1**7,
+        alpha_2: float = 0.1**7,
+        tanh_gain_acc: float = 2.0,
+        tanh_weight_acc: float = 0.1,
+        tanh_gain_steer: float = 10.0,
+        tanh_weight_steer: float = 0.01,
+        alpha_jacobian: float | None = None,
+    ) -> None:
         """
         Initialize the training class.
         - max_iter: Maximum number of iterations for training.
@@ -552,8 +707,9 @@ class TrainInputsSchedulePredictorNN(AddDataFromCsv):
         self.tanh_weight_acc = tanh_weight_acc
         self.tanh_weight_steer = tanh_weight_steer
         self.device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-        self.model_acc: InputsSchedulePredictorNN|None= None
-        self.model_steer: InputsSchedulePredictorNN|None = None
+        self.model_acc: InputsSchedulePredictorNN | None = None
+        self.model_steer: InputsSchedulePredictorNN | None = None
+
     def train_model(
         self,
         model: InputsSchedulePredictorNN,
@@ -598,10 +754,16 @@ class TrainInputsSchedulePredictorNN(AddDataFromCsv):
         optimizer = torch.optim.Adam(model.parameters(), lr=learning_rates[0])
         # Compute the initial validation loss
         initial_loss = validate_in_batches(
-            criterion,model,X_val,Y_val,indices_val,
-            tanh_gain=tanh_gain, tanh_weight=tanh_weight,
+            criterion,
+            model,
+            X_val,
+            Y_val,
+            indices_val,
+            tanh_gain=tanh_gain,
+            tanh_weight=tanh_weight,
             max_small_input_weight=max_small_input_weight,
-            small_input_threshold=small_input_threshold)
+            small_input_threshold=small_input_threshold,
+        )
         print("initial_loss:", initial_loss)
         batch_size = batch_sizes[0]
 
@@ -610,7 +772,9 @@ class TrainInputsSchedulePredictorNN(AddDataFromCsv):
         early_stopping = EarlyStopping(initial_loss, tol=self.tol, patience=patience)
         # Data loader for training.
         train_dataset = torch.utils.data.TensorDataset(X_train, Y_train, indices_train)
-        train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+        train_loader = torch.utils.data.DataLoader(
+            train_dataset, batch_size=batch_size, shuffle=True
+        )
         # learning_rate index
         learning_rate_index = 0
         print("learning rate:", learning_rates[learning_rate_index])
@@ -623,12 +787,17 @@ class TrainInputsSchedulePredictorNN(AddDataFromCsv):
                 use_true_prediction = learning_rates[learning_rate_index] > 5e-3
                 # Compute loss
                 loss = get_loss(
-                    criterion,model,X_batch,Y_batch,indices_batch,
+                    criterion,
+                    model,
+                    X_batch,
+                    Y_batch,
+                    indices_batch,
                     use_true_prediction=use_true_prediction,
-                    tanh_gain=tanh_gain, tanh_weight=tanh_weight,
+                    tanh_gain=tanh_gain,
+                    tanh_weight=tanh_weight,
                     max_small_input_weight=max_small_input_weight,
                     small_input_threshold=small_input_threshold,
-                    alpha_jacobian=self.alpha_jacobian
+                    alpha_jacobian=self.alpha_jacobian,
                 )
                 # Add L2 and L1 regularization terms
                 for w in model.named_parameters():
@@ -637,18 +806,28 @@ class TrainInputsSchedulePredictorNN(AddDataFromCsv):
                         loss += self.alpha_2 * torch.sum(torch.abs(w[1]))  # L1 regularization
                 # Add penalty for adaptive scales
                 for j in range(self.dataset_num):
-                    index_rates = (indices_batch == j).sum().item()/indices_batch.size(0)
-                    loss += self.alpha_1 * index_rates * torch.mean(torch.abs(model.post_decoder_adaptive_scales[j] - 1.0))
+                    index_rates = (indices_batch == j).sum().item() / indices_batch.size(0)
+                    loss += (
+                        self.alpha_1
+                        * index_rates
+                        * torch.mean(torch.abs(model.post_decoder_adaptive_scales[j] - 1.0))
+                    )
                 # Backpropagation
                 loss.backward()
                 optimizer.step()
             # Validation step
             model.eval()
             val_loss = validate_in_batches(
-                criterion,model,X_val,Y_val, indices_val,
-                tanh_gain=tanh_gain, tanh_weight=tanh_weight,
+                criterion,
+                model,
+                X_val,
+                Y_val,
+                indices_val,
+                tanh_gain=tanh_gain,
+                tanh_weight=tanh_weight,
                 max_small_input_weight=max_small_input_weight,
-                small_input_threshold=small_input_threshold)
+                small_input_threshold=small_input_threshold,
+            )
             if i % 10 == 0:
                 print(val_loss, i)
             if early_stopping(val_loss):
@@ -658,9 +837,14 @@ class TrainInputsSchedulePredictorNN(AddDataFromCsv):
                     break
                 else:
                     print("update learning rate to ", learning_rates[learning_rate_index])
-                    optimizer = torch.optim.Adam(model.parameters(), lr=learning_rates[learning_rate_index])
-                    train_loader = torch.utils.data.DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+                    optimizer = torch.optim.Adam(
+                        model.parameters(), lr=learning_rates[learning_rate_index]
+                    )
+                    train_loader = torch.utils.data.DataLoader(
+                        train_dataset, batch_size=batch_size, shuffle=True
+                    )
                     early_stopping.reset()
+
     def relearn_model(
         self,
         model: InputsSchedulePredictorNN,
@@ -705,10 +889,16 @@ class TrainInputsSchedulePredictorNN(AddDataFromCsv):
         criterion = nn.L1Loss()
         # Compute the original validation loss
         original_val_loss = validate_in_batches(
-            criterion,model,X_val,Y_val,indices_val,
-            tanh_gain=tanh_gain, tanh_weight=tanh_weight,
+            criterion,
+            model,
+            X_val,
+            Y_val,
+            indices_val,
+            tanh_gain=tanh_gain,
+            tanh_weight=tanh_weight,
             max_small_input_weight=max_small_input_weight,
-            small_input_threshold=small_input_threshold)
+            small_input_threshold=small_input_threshold,
+        )
         # Copy the model and add random noise to its parameters
         relearned_model = copy.deepcopy(model)
         relearned_model.lstm_decoder.flatten_parameters()
@@ -731,14 +921,20 @@ class TrainInputsSchedulePredictorNN(AddDataFromCsv):
             tanh_gain,
             tanh_weight,
             max_small_input_weight=max_small_input_weight,
-            small_input_threshold=small_input_threshold
+            small_input_threshold=small_input_threshold,
         )
         # Compute the validation loss after retraining
         relearned_val_loss = validate_in_batches(
-            criterion,relearned_model,X_val,Y_val,indices_val,
-            tanh_gain=tanh_gain, tanh_weight=tanh_weight,
+            criterion,
+            relearned_model,
+            X_val,
+            Y_val,
+            indices_val,
+            tanh_gain=tanh_gain,
+            tanh_weight=tanh_weight,
             max_small_input_weight=max_small_input_weight,
-            small_input_threshold=small_input_threshold)
+            small_input_threshold=small_input_threshold,
+        )
         # Compare the original and retrained validation losse
         print("original_val_loss:", original_val_loss)
         print("relearned_val_loss:", relearned_val_loss)
@@ -747,7 +943,7 @@ class TrainInputsSchedulePredictorNN(AddDataFromCsv):
             return relearned_model, True
         else:
             return model, False
-                    
+
     def get_trained_model(
         self,
         learning_rates: List[float] = [1e-3, 1e-4, 1e-5, 1e-6],
@@ -760,7 +956,7 @@ class TrainInputsSchedulePredictorNN(AddDataFromCsv):
         small_acc_threshold: float = 0.01,
         max_small_steer_weight: float = 30.0,
         small_steer_threshold: float = 0.005,
-        cmd_mode: str = "both"
+        cmd_mode: str = "both",
     ) -> None:
         """
         Train the acceleration and/or steering models based on the provided mode.
@@ -781,16 +977,42 @@ class TrainInputsSchedulePredictorNN(AddDataFromCsv):
                 dataset_num=self.dataset_num,
                 target_size=parameters.acc_input_schedule_prediction_len,
                 input_rate_limit=jerk_limit,
-                augmented_input_size=augmented_input_size
+                augmented_input_size=augmented_input_size,
             ).to(self.device)
             self.train_model(
                 self.model_acc,
-                torch.tensor(np.array(self.X_acc_train_list)[:,output_step - parameters.controller_acc_input_history_len:], dtype=torch.float32,device=self.device),
-                torch.tensor(np.array(self.Y_acc_train_list)[:,:parameters.acc_input_schedule_prediction_len], dtype=torch.float32,device=self.device),
-                torch.tensor(np.array(self.indices_train_list), dtype=torch.long,device=self.device),
-                torch.tensor(np.array(self.X_acc_val_list)[:,output_step - parameters.controller_acc_input_history_len:], dtype=torch.float32,device=self.device),
-                torch.tensor(np.array(self.Y_acc_val_list)[:,:parameters.acc_input_schedule_prediction_len], dtype=torch.float32,device=self.device),
-                torch.tensor(np.array(self.indices_val_list), dtype=torch.long,device=self.device),
+                torch.tensor(
+                    np.array(self.X_acc_train_list)[
+                        :, output_step - parameters.controller_acc_input_history_len :
+                    ],
+                    dtype=torch.float32,
+                    device=self.device,
+                ),
+                torch.tensor(
+                    np.array(self.Y_acc_train_list)[
+                        :, : parameters.acc_input_schedule_prediction_len
+                    ],
+                    dtype=torch.float32,
+                    device=self.device,
+                ),
+                torch.tensor(
+                    np.array(self.indices_train_list), dtype=torch.long, device=self.device
+                ),
+                torch.tensor(
+                    np.array(self.X_acc_val_list)[
+                        :, output_step - parameters.controller_acc_input_history_len :
+                    ],
+                    dtype=torch.float32,
+                    device=self.device,
+                ),
+                torch.tensor(
+                    np.array(self.Y_acc_val_list)[
+                        :, : parameters.acc_input_schedule_prediction_len
+                    ],
+                    dtype=torch.float32,
+                    device=self.device,
+                ),
+                torch.tensor(np.array(self.indices_val_list), dtype=torch.long, device=self.device),
                 batch_sizes,
                 learning_rates,
                 patience,
@@ -804,16 +1026,42 @@ class TrainInputsSchedulePredictorNN(AddDataFromCsv):
                 dataset_num=self.dataset_num,
                 target_size=parameters.steer_input_schedule_prediction_len,
                 input_rate_limit=steer_rate_limit,
-                augmented_input_size=augmented_input_size
+                augmented_input_size=augmented_input_size,
             ).to(self.device)
             self.train_model(
                 self.model_steer,
-                torch.tensor(np.array(self.X_steer_train_list)[:,output_step - parameters.controller_steer_input_history_len:], dtype=torch.float32,device=self.device),
-                torch.tensor(np.array(self.Y_steer_train_list)[:,:parameters.steer_input_schedule_prediction_len], dtype=torch.float32,device=self.device),
-                torch.tensor(np.array(self.indices_train_list), dtype=torch.long,device=self.device),
-                torch.tensor(np.array(self.X_steer_val_list)[:,output_step - parameters.controller_steer_input_history_len:], dtype=torch.float32,device=self.device),
-                torch.tensor(np.array(self.Y_steer_val_list)[:,:parameters.steer_input_schedule_prediction_len], dtype=torch.float32,device=self.device),
-                torch.tensor(np.array(self.indices_val_list), dtype=torch.long,device=self.device),
+                torch.tensor(
+                    np.array(self.X_steer_train_list)[
+                        :, output_step - parameters.controller_steer_input_history_len :
+                    ],
+                    dtype=torch.float32,
+                    device=self.device,
+                ),
+                torch.tensor(
+                    np.array(self.Y_steer_train_list)[
+                        :, : parameters.steer_input_schedule_prediction_len
+                    ],
+                    dtype=torch.float32,
+                    device=self.device,
+                ),
+                torch.tensor(
+                    np.array(self.indices_train_list), dtype=torch.long, device=self.device
+                ),
+                torch.tensor(
+                    np.array(self.X_steer_val_list)[
+                        :, output_step - parameters.controller_steer_input_history_len :
+                    ],
+                    dtype=torch.float32,
+                    device=self.device,
+                ),
+                torch.tensor(
+                    np.array(self.Y_steer_val_list)[
+                        :, : parameters.steer_input_schedule_prediction_len
+                    ],
+                    dtype=torch.float32,
+                    device=self.device,
+                ),
+                torch.tensor(np.array(self.indices_val_list), dtype=torch.long, device=self.device),
                 batch_sizes,
                 learning_rates,
                 patience,
@@ -822,6 +1070,7 @@ class TrainInputsSchedulePredictorNN(AddDataFromCsv):
                 max_small_input_weight=max_small_steer_weight,
                 small_input_threshold=small_steer_threshold,
             )
+
     def relearn_acc(
         self,
         learning_rates: List[float] = [1e-3, 1e-4, 1e-5, 1e-6],
@@ -846,12 +1095,12 @@ class TrainInputsSchedulePredictorNN(AddDataFromCsv):
         self.model_acc.to(self.device)
         self.model_acc, updated = self.relearn_model(
             self.model_acc,
-            torch.tensor(np.array(self.X_acc_train_list), dtype=torch.float32,device=self.device),
-            torch.tensor(np.array(self.Y_acc_train_list), dtype=torch.float32,device=self.device),
-            torch.tensor(np.array(self.indices_train_list), dtype=torch.long,device=self.device),
-            torch.tensor(np.array(self.X_acc_val_list), dtype=torch.float32,device=self.device),
-            torch.tensor(np.array(self.Y_acc_val_list), dtype=torch.float32,device=self.device),
-            torch.tensor(np.array(self.indices_val_list), dtype=torch.long,device=self.device),
+            torch.tensor(np.array(self.X_acc_train_list), dtype=torch.float32, device=self.device),
+            torch.tensor(np.array(self.Y_acc_train_list), dtype=torch.float32, device=self.device),
+            torch.tensor(np.array(self.indices_train_list), dtype=torch.long, device=self.device),
+            torch.tensor(np.array(self.X_acc_val_list), dtype=torch.float32, device=self.device),
+            torch.tensor(np.array(self.Y_acc_val_list), dtype=torch.float32, device=self.device),
+            torch.tensor(np.array(self.indices_val_list), dtype=torch.long, device=self.device),
             batch_sizes,
             learning_rates,
             patience,
@@ -859,9 +1108,10 @@ class TrainInputsSchedulePredictorNN(AddDataFromCsv):
             self.tanh_weight_acc,
             max_small_input_weight=max_small_acc_weight,
             small_input_threshold=small_acc_threshold,
-            randomize=randomize
+            randomize=randomize,
         )
         return updated
+
     def relearn_steer(
         self,
         learning_rates: List[float] = [1e-3, 1e-4, 1e-5, 1e-6],
@@ -887,12 +1137,16 @@ class TrainInputsSchedulePredictorNN(AddDataFromCsv):
         self.model_steer.to(self.device)
         self.model_steer, updated = self.relearn_model(
             self.model_steer,
-            torch.tensor(np.array(self.X_steer_train_list), dtype=torch.float32,device=self.device),
-            torch.tensor(np.array(self.Y_steer_train_list), dtype=torch.float32,device=self.device),
-            torch.tensor(np.array(self.indices_train_list), dtype=torch.long,device=self.device),
-            torch.tensor(np.array(self.X_steer_val_list), dtype=torch.float32,device=self.device),
-            torch.tensor(np.array(self.Y_steer_val_list), dtype=torch.float32,device=self.device),
-            torch.tensor(np.array(self.indices_val_list), dtype=torch.long,device=self.device),
+            torch.tensor(
+                np.array(self.X_steer_train_list), dtype=torch.float32, device=self.device
+            ),
+            torch.tensor(
+                np.array(self.Y_steer_train_list), dtype=torch.float32, device=self.device
+            ),
+            torch.tensor(np.array(self.indices_train_list), dtype=torch.long, device=self.device),
+            torch.tensor(np.array(self.X_steer_val_list), dtype=torch.float32, device=self.device),
+            torch.tensor(np.array(self.Y_steer_val_list), dtype=torch.float32, device=self.device),
+            torch.tensor(np.array(self.indices_val_list), dtype=torch.long, device=self.device),
             batch_sizes,
             learning_rates,
             patience,
@@ -900,10 +1154,13 @@ class TrainInputsSchedulePredictorNN(AddDataFromCsv):
             self.tanh_weight_steer,
             max_small_input_weight=max_small_steer_weight,
             small_input_threshold=small_steer_threshold,
-            randomize=randomize
+            randomize=randomize,
         )
         return updated
-    def save_model(self, path: str = "inputs_schedule_predictor_model", cmd_mode: str = "both") -> None:
+
+    def save_model(
+        self, path: str = "inputs_schedule_predictor_model", cmd_mode: str = "both"
+    ) -> None:
         """
         Save the trained models to files and export them as CSV for further use.
         - path: Directory path where the models will be saved.
@@ -919,7 +1176,9 @@ class TrainInputsSchedulePredictorNN(AddDataFromCsv):
                 return
             self.model_acc.to("cpu")
             torch.save(self.model_acc, path + "/acc_schedule_predictor.pth")
-            convert_model_to_csv.convert_inputs_schedule_model_to_csv(self.model_acc, path + "/acc_schedule_predictor")
+            convert_model_to_csv.convert_inputs_schedule_model_to_csv(
+                self.model_acc, path + "/acc_schedule_predictor"
+            )
         # Save the steering model if specified
         if cmd_mode == "both" or cmd_mode == "steer":
             if self.model_steer is None:
@@ -927,4 +1186,6 @@ class TrainInputsSchedulePredictorNN(AddDataFromCsv):
                 return
             self.model_steer.to("cpu")
             torch.save(self.model_steer, path + "/steer_schedule_predictor.pth")
-            convert_model_to_csv.convert_inputs_schedule_model_to_csv(self.model_steer, path + "/steer_schedule_predictor")
+            convert_model_to_csv.convert_inputs_schedule_model_to_csv(
+                self.model_steer, path + "/steer_schedule_predictor"
+            )

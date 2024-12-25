@@ -19,21 +19,23 @@ import time
 import traceback
 from typing import Dict
 
-from utils.parameter_change_utils import ChangeParam
-from utils.data_collection_utils import DataCollectionMode
-from utils.data_collection_utils import ControlType
-from utils.parameter_change_utils import DirGenerator
 from autoware_vehicle_adaptor.training import train_error_prediction_NN
 import numpy as np
 import python_simulator
+from utils.data_collection_utils import ControlType
+from utils.data_collection_utils import DataCollectionMode
+from utils.parameter_change_utils import ChangeParam
+from utils.parameter_change_utils import DirGenerator
 
 SKIP_DATA_COLLECTION = False
 SKIP_TRAINING = False
 NOMINAL_TEST = False
 MODEL_NUM = 5
-#STATES_REF_MODE = "predict_by_polynomial_regression"
-#STATES_REF_MODE = "controller_prediction"
+# STATES_REF_MODE = "predict_by_polynomial_regression"
+# STATES_REF_MODE = "controller_prediction"
 STATES_REF_MODE = "controller_d_inputs_schedule"
+
+
 def run_parameter_change_sim(
     change_param: ChangeParam,
     root: str = ".",
@@ -48,7 +50,7 @@ def run_parameter_change_sim(
     step_response_max_length=1.5,
     step_response_interval=5.0,
     step_response_min_length=0.5,
-    batch_sizes=[100]
+    batch_sizes=[100],
 ):
     param_val_list = change_param.value()
     dir_generator = DirGenerator(root=root)
@@ -105,7 +107,9 @@ def run_parameter_change_sim(
                     "step_response_min_length": step_response_min_length,
                 }
                 simulator.setattr(figure_eight_data)
-                simulator.drive_sim(save_dir=save_dir, max_control_time=900.0, control_type=ControlType.pp_eight)
+                simulator.drive_sim(
+                    save_dir=save_dir, max_control_time=900.0, control_type=ControlType.pp_eight
+                )
             if not SKIP_TRAINING:
                 model_trainer.add_data_from_csv(save_dir, add_mode=add_mode[j])
                 if j == 0:
@@ -116,11 +120,13 @@ def run_parameter_change_sim(
         for k in range(MODEL_NUM):
             paths.append(save_dir + "/vehicle_model_" + str(k) + ".pth")
         if not SKIP_TRAINING:
-            #model_trainer.get_trained_model(batch_size=batch_size)
-            #model_trainer.save_model(path=save_dir+"/vehicle_model.pth")
-            model_trainer.get_trained_ensemble_models(batch_sizes=batch_sizes,ensemble_size=MODEL_NUM)
+            # model_trainer.get_trained_model(batch_size=batch_size)
+            # model_trainer.save_model(path=save_dir+"/vehicle_model.pth")
+            model_trainer.get_trained_ensemble_models(
+                batch_sizes=batch_sizes, ensemble_size=MODEL_NUM
+            )
             model_trainer.save_ensemble_models(paths=paths)
-        #load_dir = save_dir
+        # load_dir = save_dir
         save_dir = dir_generator.test_dir_name(
             control_type=ControlType.mpc,
             change_param=change_param,
@@ -129,18 +135,18 @@ def run_parameter_change_sim(
             with_adaptor=True,
         )
 
-        #for k in range(MODEL_NUM):
+        # for k in range(MODEL_NUM):
         #    simulator.drive_sim(
         #        save_dir=save_dir + "_model_" + str(k),
         #        use_vehicle_adaptor=True,
-                #vehicle_adaptor_model_path=load_dir+"/vehicle_model.pth",
+        # vehicle_adaptor_model_path=load_dir+"/vehicle_model.pth",
         #        vehicle_adaptor_model_path=paths[k],
         #        states_ref_mode=STATES_REF_MODE,
         #    )
         simulator.drive_sim(
             save_dir=save_dir,
             use_vehicle_adaptor=True,
-            #vehicle_adaptor_model_path=load_dir+"/vehicle_model.pth",
+            # vehicle_adaptor_model_path=load_dir+"/vehicle_model.pth",
             vehicle_adaptor_model_path=paths,
             states_ref_mode=STATES_REF_MODE,
         )

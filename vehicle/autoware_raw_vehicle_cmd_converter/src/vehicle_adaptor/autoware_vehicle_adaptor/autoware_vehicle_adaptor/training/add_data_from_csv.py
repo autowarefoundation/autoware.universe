@@ -4,14 +4,13 @@ import json
 import os
 from pathlib import Path
 
-from autoware_vehicle_adaptor.src import vehicle_adaptor_compensator
 from autoware_vehicle_adaptor.calibrator import get_acc_input_from_csv_via_map
+from autoware_vehicle_adaptor.param import parameters
+from autoware_vehicle_adaptor.src import vehicle_adaptor_compensator
 import numpy as np
 import scipy.interpolate
 from scipy.ndimage import gaussian_filter
 from scipy.spatial.transform import Rotation
-import os
-from autoware_vehicle_adaptor.param import parameters
 
 wheel_base = parameters.wheel_base
 acc_queue_size = parameters.acc_queue_size
@@ -89,6 +88,7 @@ class add_data_from_csv:
             control_dt,
             predict_step,
         )
+
     def clear_data(self):
         self.X_train_list = []
         self.Y_train_list = []
@@ -102,9 +102,19 @@ class add_data_from_csv:
         self.division_indices_val = []
         self.division_indices_test = []
         self.division_indices_replay = []
-    def add_data_from_csv(self, dir_name: str, add_mode="divide",map_dir=None,control_cmd_mode=None,reverse_steer=False) -> None:
+
+    def add_data_from_csv(
+        self,
+        dir_name: str,
+        add_mode="divide",
+        map_dir=None,
+        control_cmd_mode=None,
+        reverse_steer=False,
+    ) -> None:
         localization_kinematic_state = np.loadtxt(
-            dir_name + "/localization_kinematic_state.csv", delimiter=",", usecols=[0, 1, 4, 5, 7, 8, 9, 10, 47]
+            dir_name + "/localization_kinematic_state.csv",
+            delimiter=",",
+            usecols=[0, 1, 4, 5, 7, 8, 9, 10, 47],
         )
         pose_position_x = localization_kinematic_state[:, 2]
         pose_position_y = localization_kinematic_state[:, 3]
@@ -112,7 +122,9 @@ class add_data_from_csv:
         raw_yaw = Rotation.from_quat(localization_kinematic_state[:, 4:8]).as_euler("xyz")[:, 2]
         yaw = yaw_transform(raw_yaw)
 
-        localization_acceleration = np.loadtxt(dir_name + "/localization_acceleration.csv", delimiter=",", usecols=[0, 1, 3])
+        localization_acceleration = np.loadtxt(
+            dir_name + "/localization_acceleration.csv", delimiter=",", usecols=[0, 1, 3]
+        )
         acc = localization_acceleration[:, 2]
 
         vehicle_status_steering_status = np.loadtxt(
@@ -121,7 +133,9 @@ class add_data_from_csv:
         steer = vehicle_status_steering_status[:, 2]
         if control_cmd_mode == "compensated_control_cmd":
             control_cmd = np.loadtxt(
-                dir_name + "/vehicle_raw_vehicle_cmd_converter_debug_compensated_control_cmd.csv", delimiter=",", usecols=[0, 1, 8, 16]
+                dir_name + "/vehicle_raw_vehicle_cmd_converter_debug_compensated_control_cmd.csv",
+                delimiter=",",
+                usecols=[0, 1, 8, 16],
             )
         elif control_cmd_mode == "control_command":
             control_cmd = np.loadtxt(
@@ -129,28 +143,43 @@ class add_data_from_csv:
             )
         elif control_cmd_mode == "control_trajectory_follower":
             control_cmd = np.loadtxt(
-                dir_name + "/control_trajectory_follower_control_cmd.csv", delimiter=",", usecols=[0, 1, 8, 16]
+                dir_name + "/control_trajectory_follower_control_cmd.csv",
+                delimiter=",",
+                usecols=[0, 1, 8, 16],
             )
         elif control_cmd_mode == "external_selected":
             control_cmd = np.loadtxt(
-                dir_name + "/external_selected_control_cmd.csv", delimiter=",", usecols=[0, 1, 8, 16]
+                dir_name + "/external_selected_control_cmd.csv",
+                delimiter=",",
+                usecols=[0, 1, 8, 16],
             )
         elif control_cmd_mode is None:
-            if os.path.exists(dir_name + "/vehicle_raw_vehicle_cmd_converter_debug_compensated_control_cmd.csv"):
+            if os.path.exists(
+                dir_name + "/vehicle_raw_vehicle_cmd_converter_debug_compensated_control_cmd.csv"
+            ):
                 control_cmd = np.loadtxt(
-                    dir_name + "/vehicle_raw_vehicle_cmd_converter_debug_compensated_control_cmd.csv", delimiter=",", usecols=[0, 1, 8, 16]
+                    dir_name
+                    + "/vehicle_raw_vehicle_cmd_converter_debug_compensated_control_cmd.csv",
+                    delimiter=",",
+                    usecols=[0, 1, 8, 16],
                 )
-            elif os.path.exists(dir_name + '/control_command_control_cmd.csv'):
+            elif os.path.exists(dir_name + "/control_command_control_cmd.csv"):
                 control_cmd = np.loadtxt(
-                    dir_name + "/control_command_control_cmd.csv", delimiter=",", usecols=[0, 1, 8, 16]
+                    dir_name + "/control_command_control_cmd.csv",
+                    delimiter=",",
+                    usecols=[0, 1, 8, 16],
                 )
-            elif os.path.exists(dir_name + '/control_trajectory_follower_control_cmd.csv'):
+            elif os.path.exists(dir_name + "/control_trajectory_follower_control_cmd.csv"):
                 control_cmd = np.loadtxt(
-                    dir_name + "/control_trajectory_follower_control_cmd.csv", delimiter=",", usecols=[0, 1, 8, 16]
+                    dir_name + "/control_trajectory_follower_control_cmd.csv",
+                    delimiter=",",
+                    usecols=[0, 1, 8, 16],
                 )
-            elif os.path.exists(dir_name + '/external_selected_control_cmd.csv'):
+            elif os.path.exists(dir_name + "/external_selected_control_cmd.csv"):
                 control_cmd = np.loadtxt(
-                    dir_name + "/external_selected_control_cmd.csv", delimiter=",", usecols=[0, 1, 8, 16]
+                    dir_name + "/external_selected_control_cmd.csv",
+                    delimiter=",",
+                    usecols=[0, 1, 8, 16],
                 )
             else:
                 print("control command csv is not found")
@@ -158,10 +187,12 @@ class add_data_from_csv:
         else:
             print("control_cmd_mode is invalid")
             return
-        acc_cmd = control_cmd[:, [0,1,3]]
+        acc_cmd = control_cmd[:, [0, 1, 3]]
         steer_cmd = control_cmd[:, 2]
         if map_dir is not None:
-            acc_cmd = get_acc_input_from_csv_via_map.transform_accel_and_brake_to_acc_via_map(csv_dir=dir_name, map_dir=map_dir)
+            acc_cmd = get_acc_input_from_csv_via_map.transform_accel_and_brake_to_acc_via_map(
+                csv_dir=dir_name, map_dir=map_dir
+            )
         system_operation_mode_state = np.loadtxt(
             dir_name + "/system_operation_mode_state.csv", delimiter=",", usecols=[0, 1, 2]
         )
@@ -173,19 +204,34 @@ class add_data_from_csv:
 
         control_enabled = np.zeros(system_operation_mode_state.shape[0])
         for i in range(system_operation_mode_state.shape[0]):
-            if system_operation_mode_state[i, 2] > 1.5 and autoware_control_enabled_str[i] == "True":
+            if (
+                system_operation_mode_state[i, 2] > 1.5
+                and autoware_control_enabled_str[i] == "True"
+            ):
                 control_enabled[i] = 1.0
         for i in range(system_operation_mode_state.shape[0] - 1):
             if control_enabled[i] < 0.5 and control_enabled[i + 1] > 0.5:
-                operation_start_time = system_operation_mode_state[i + 1, 0] + 1e-9 * system_operation_mode_state[i + 1, 1]
+                operation_start_time = (
+                    system_operation_mode_state[i + 1, 0]
+                    + 1e-9 * system_operation_mode_state[i + 1, 1]
+                )
             elif control_enabled[i] > 0.5 and control_enabled[i + 1] < 0.5:
-                operation_end_time = system_operation_mode_state[i + 1, 0] + 1e-9 * system_operation_mode_state[i + 1, 1]
+                operation_end_time = (
+                    system_operation_mode_state[i + 1, 0]
+                    + 1e-9 * system_operation_mode_state[i + 1, 1]
+                )
                 break
-            operation_end_time = localization_kinematic_state[-1, 0] + 1e-9 * localization_kinematic_state[-1, 1]
+            operation_end_time = (
+                localization_kinematic_state[-1, 0] + 1e-9 * localization_kinematic_state[-1, 1]
+            )
         if system_operation_mode_state.shape[0] == 1:
-            operation_end_time = localization_kinematic_state[-1, 0] + 1e-9 * localization_kinematic_state[-1, 1]
+            operation_end_time = (
+                localization_kinematic_state[-1, 0] + 1e-9 * localization_kinematic_state[-1, 1]
+            )
         if control_enabled[0] > 0.5:
-            operation_start_time = system_operation_mode_state[0, 0] + 1e-9 * system_operation_mode_state[0, 1]
+            operation_start_time = (
+                system_operation_mode_state[0, 0] + 1e-9 * system_operation_mode_state[0, 1]
+            )
         print("operation_start_time", operation_start_time)
         print("operation_end_time", operation_end_time)
 
@@ -204,7 +250,8 @@ class add_data_from_csv:
                 operation_end_time,
                 localization_kinematic_state[-1, 0] + 1e-9 * localization_kinematic_state[-1, 1],
                 localization_acceleration[-1, 0] + 1e-9 * localization_acceleration[-1, 1],
-                vehicle_status_steering_status[-1, 0] + 1e-9 * vehicle_status_steering_status[-1, 1],
+                vehicle_status_steering_status[-1, 0]
+                + 1e-9 * vehicle_status_steering_status[-1, 1],
                 acc_cmd[-1, 0] + 1e-9 * acc_cmd[-1, 1],
                 control_cmd[-1, 0] + 1e-9 * control_cmd[-1, 1],
             ]
@@ -212,25 +259,40 @@ class add_data_from_csv:
 
         trajectory_interpolator_list = []
         trajectory_interpolator_list.append(
-            scipy.interpolate.interp1d(localization_kinematic_state[:, 0] + 1e-9 * localization_kinematic_state[:, 1], pose_position_x)
+            scipy.interpolate.interp1d(
+                localization_kinematic_state[:, 0] + 1e-9 * localization_kinematic_state[:, 1],
+                pose_position_x,
+            )
         )
         trajectory_interpolator_list.append(
-            scipy.interpolate.interp1d(localization_kinematic_state[:, 0] + 1e-9 * localization_kinematic_state[:, 1], pose_position_y)
+            scipy.interpolate.interp1d(
+                localization_kinematic_state[:, 0] + 1e-9 * localization_kinematic_state[:, 1],
+                pose_position_y,
+            )
         )
         trajectory_interpolator_list.append(
-            scipy.interpolate.interp1d(localization_kinematic_state[:, 0] + 1e-9 * localization_kinematic_state[:, 1], vel)
+            scipy.interpolate.interp1d(
+                localization_kinematic_state[:, 0] + 1e-9 * localization_kinematic_state[:, 1], vel
+            )
         )
         trajectory_interpolator_list.append(
-            scipy.interpolate.interp1d(localization_kinematic_state[:, 0] + 1e-9 * localization_kinematic_state[:, 1], yaw)
+            scipy.interpolate.interp1d(
+                localization_kinematic_state[:, 0] + 1e-9 * localization_kinematic_state[:, 1], yaw
+            )
         )
         trajectory_interpolator_list.append(
-            scipy.interpolate.interp1d(localization_acceleration[:, 0] + 1e-9 * localization_acceleration[:, 1], acc)
+            scipy.interpolate.interp1d(
+                localization_acceleration[:, 0] + 1e-9 * localization_acceleration[:, 1], acc
+            )
         )
         trajectory_interpolator_list.append(
-            scipy.interpolate.interp1d(vehicle_status_steering_status[:, 0] + 1e-9 * vehicle_status_steering_status[:, 1], steer)
+            scipy.interpolate.interp1d(
+                vehicle_status_steering_status[:, 0] + 1e-9 * vehicle_status_steering_status[:, 1],
+                steer,
+            )
         )
         trajectory_interpolator_list.append(
-            scipy.interpolate.interp1d(acc_cmd[:, 0] + 1e-9 * acc_cmd[:, 1], acc_cmd[:,2])
+            scipy.interpolate.interp1d(acc_cmd[:, 0] + 1e-9 * acc_cmd[:, 1], acc_cmd[:, 2])
         )
         trajectory_interpolator_list.append(
             scipy.interpolate.interp1d(control_cmd[:, 0] + 1e-9 * control_cmd[:, 1], steer_cmd)
@@ -301,10 +363,16 @@ class add_data_from_csv:
 
             u_for_predict_nom = np.zeros((predict_step, 2))
             u_for_predict_nom[:, 0] = acc_input_queue[
-                acc_input_queue.shape[0] - acc_delay_step - predict_step : acc_input_queue.shape[0] - acc_delay_step
+                acc_input_queue.shape[0]
+                - acc_delay_step
+                - predict_step : acc_input_queue.shape[0]
+                - acc_delay_step
             ]
             u_for_predict_nom[:, 1] = steer_input_queue[
-                steer_input_queue.shape[0] - steer_delay_step - predict_step : steer_input_queue.shape[0] - steer_delay_step
+                steer_input_queue.shape[0]
+                - steer_delay_step
+                - predict_step : steer_input_queue.shape[0]
+                - steer_delay_step
             ]
             predicted_state = self.nominal_dynamics.F_nominal_predict(
                 state, u_for_predict_nom.flatten()
@@ -351,11 +419,11 @@ class add_data_from_csv:
                 if i < 3 * len(X_list) / 4:
                     self.X_train_list.append(X_list[i])
                     self.Y_train_list.append(Y_smooth[i])
-                    #self.Y_train_list.append(Y_list[i])
+                    # self.Y_train_list.append(Y_list[i])
                 else:
                     self.X_val_list.append(X_list[i])
                     self.Y_val_list.append(Y_smooth[i])
-                    #self.Y_val_list.append(Y_list[i])
+                    # self.Y_val_list.append(Y_list[i])
 
             self.division_indices_train.append(len(self.X_train_list))
             self.division_indices_val.append(len(self.X_val_list))
@@ -364,28 +432,27 @@ class add_data_from_csv:
             for i in range(len(X_list)):
                 self.X_train_list.append(X_list[i])
                 self.Y_train_list.append(Y_smooth[i])
-                #self.Y_train_list.append(Y_list[i])
+                # self.Y_train_list.append(Y_list[i])
 
             self.division_indices_train.append(len(self.X_train_list))
         elif add_mode == "as_val":
             for i in range(len(X_list)):
                 self.X_val_list.append(X_list[i])
                 self.Y_val_list.append(Y_smooth[i])
-                #self.Y_val_list.append(Y_list[i])
+                # self.Y_val_list.append(Y_list[i])
 
             self.division_indices_val.append(len(self.X_val_list))
         elif add_mode == "as_test":
             for i in range(len(X_list)):
                 self.X_test_list.append(X_list[i])
                 self.Y_test_list.append(Y_smooth[i])
-                #self.Y_test_list.append(Y_list[i])
+                # self.Y_test_list.append(Y_list[i])
 
             self.division_indices_test.append(len(self.X_test_list))
         elif add_mode == "as_replay":
             for i in range(len(X_list)):
                 self.X_replay_list.append(X_list[i])
                 self.Y_replay_list.append(Y_smooth[i])
-                #self.Y_replay_list.append(Y_list[i])
+                # self.Y_replay_list.append(Y_list[i])
 
             self.division_indices_replay.append(len(self.X_replay_list))
-        
