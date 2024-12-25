@@ -21,6 +21,7 @@
 #include <autoware_vehicle_msgs/msg/steering_report.hpp>
 #include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include "vehicle_adaptor_compensator.h"
 
 namespace autoware::raw_vehicle_cmd_converter
 {
@@ -44,6 +45,9 @@ public:
     [[maybe_unused]] const ControlHorizon & control_horizon);
 
 private:
+  Proxima::VehicleAdaptor proxima_vehicle_adaptor_;
+  double yaw_prev_ = 0.0;
+  bool initialized_ = false;
 };
 }  // namespace autoware::raw_vehicle_cmd_converter
 

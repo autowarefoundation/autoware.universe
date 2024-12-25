@@ -14,14 +14,16 @@
 
 #include "autoware_raw_vehicle_cmd_converter/vehicle_adaptor/vehicle_adaptor.hpp"
 
+#include <cmath>
 #include <iostream>
 
 namespace autoware::raw_vehicle_cmd_converter
 {
 double get_current_yaw(const Odometry & odometry, double yaw_prev)
 {
-  double yaw = atan2(2.0 * (odometry.pose.pose.orientation.w * odometry.pose.pose.orientation.z),
-                     1.0 - 2.0 * (odometry.pose.pose.orientation.z * odometry.pose.pose.orientation.z));
+  double yaw = std::atan2(
+    2.0 * (odometry.pose.pose.orientation.w * odometry.pose.pose.orientation.z),
+    1.0 - 2.0 * (odometry.pose.pose.orientation.z * odometry.pose.pose.orientation.z));
   while (yaw - yaw_prev > M_PI) {
     yaw -= 2.0 * M_PI;
   }
@@ -50,8 +52,7 @@ Control VehicleAdaptor::compensate(
     proxima_vehicle_adaptor_.set_NN_params_from_csv("vehicle_models/vehicle_model_5");
     proxima_vehicle_adaptor_.send_initialized_flag();
 
-    if (proxima_vehicle_adaptor_.use_offline_features_autoware_)
-    {
+    if (proxima_vehicle_adaptor_.use_offline_features_autoware_) {
       proxima_vehicle_adaptor_.set_offline_features_from_csv("vehicle_models/vehicle_model_1");
     }
     initialized_ = true;
@@ -71,17 +72,19 @@ Control VehicleAdaptor::compensate(
     std::cerr << "vehicle adaptor on" << std::endl;
     return input_control_cmd;
   }
-  if (proxima_vehicle_adaptor_.use_controller_steer_input_schedule_){
+  if (proxima_vehicle_adaptor_.use_controller_steer_input_schedule_) {
     std::vector<double> steer_controller_input_schedule(control_horizon.controls.size());
-    for (int i = 0;i<int(control_horizon.controls.size());i++) {
+    for (int i = 0; i < int(control_horizon.controls.size()); i++) {
       steer_controller_input_schedule[i] = control_horizon.controls[i].lateral.steering_tire_angle;
     }
-    proxima_vehicle_adaptor_.set_controller_steer_input_schedule(control_timestamp, steer_controller_input_schedule);
+    proxima_vehicle_adaptor_.set_controller_steer_input_schedule(
+      control_timestamp, steer_controller_input_schedule);
   }
-  Eigen::Vector2d vehicle_adaptor_control_cmd = 
-    proxima_vehicle_adaptor_.get_adjusted_inputs(control_timestamp, states, input_control_cmd.longitudinal.acceleration, input_control_cmd.lateral.steering_tire_angle);
+  Eigen::Vector2d vehicle_adaptor_control_cmd = proxima_vehicle_adaptor_.get_adjusted_inputs(
+    control_timestamp, states, input_control_cmd.longitudinal.acceleration,
+    input_control_cmd.lateral.steering_tire_angle);
   Control output_control_cmd = input_control_cmd;
-  
+
   output_control_cmd.longitudinal.acceleration = vehicle_adaptor_control_cmd[0];
   output_control_cmd.lateral.steering_tire_angle = vehicle_adaptor_control_cmd[1];
   yaw_prev_ = yaw;
