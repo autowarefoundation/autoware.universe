@@ -258,6 +258,7 @@ TEST_F(TestNormalLaneChange, testGetPathWhenValid)
   constexpr auto is_approved = true;
   ego_pose_ = autoware::test_utils::createPose(1.0, 1.75, 0.0, 0.0, 0.0, 0.0);
   planner_data_->self_odometry = set_odometry(ego_pose_);
+  normal_lane_change_->setData(planner_data_);
   set_previous_approved_path();
   normal_lane_change_->update_lanes(!is_approved);
   normal_lane_change_->update_filtered_objects();

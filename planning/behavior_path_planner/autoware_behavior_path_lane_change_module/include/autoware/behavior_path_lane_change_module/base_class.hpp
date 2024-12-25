@@ -102,8 +102,6 @@ public:
 
   virtual LaneChangePath getLaneChangePath() const = 0;
 
-  virtual BehaviorModuleOutput getTerminalLaneChangePath() const = 0;
-
   virtual bool isEgoOnPreparePhase() const = 0;
 
   virtual bool isRequiredStop(const bool is_trailing_object) = 0;
@@ -234,9 +232,6 @@ public:
 
 protected:
   virtual int getNumToPreferredLane(const lanelet::ConstLanelet & lane) const = 0;
-
-  virtual bool get_prepare_segment(
-    PathWithLaneId & prepare_segment, const double prepare_length) const = 0;
 
   virtual bool isValidPath(const PathWithLaneId & path) const = 0;
 
