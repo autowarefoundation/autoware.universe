@@ -83,6 +83,7 @@ protected:
   // callback for timer
   void timer_callback();
   void setPeriod(const int64_t new_period);
+  void exportProcess();
 
   // Custom process methods
   virtual void preprocess(TargetMsg3D & output_msg);
