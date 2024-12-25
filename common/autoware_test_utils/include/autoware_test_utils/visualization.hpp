@@ -278,7 +278,7 @@ inline void plot_autoware_object(
   // plot centerline
   axes.plot(Args(xs, ys), kwargs);
   const auto quiver_color =
-    config_opt ? (config_opt.value().label ? config_opt.value().label.value() : "k") : "k";
+    config_opt ? (config_opt.value().color ? config_opt.value().color.value() : "k") : "k";
   axes.quiver(
     Args(xs, ys, yaw_cos, yaw_sin),
     Kwargs("angles"_a = "xy", "scale_units"_a = "xy", "scale"_a = 1.0, "color"_a = quiver_color));
