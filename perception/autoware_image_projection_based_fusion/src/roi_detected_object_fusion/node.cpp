@@ -131,7 +131,8 @@ RoiDetectedObjectFusionNode::generateDetectedObjectRoIs(
     return object_roi_map;
   }
   const auto & passthrough_object_flags = passthrough_object_flags_map_.at(timestamp_nsec);
-  const sensor_msgs::msg::CameraInfo & camera_info = camera_projectors_[image_id].getCameraInfo();
+  const sensor_msgs::msg::CameraInfo & camera_info =
+    det2d_list_.at(image_id).camera_projector_ptr->getCameraInfo();
   const double image_width = static_cast<double>(camera_info.width);
   const double image_height = static_cast<double>(camera_info.height);
 
@@ -162,7 +163,7 @@ RoiDetectedObjectFusionNode::generateDetectedObjectRoIs(
       }
 
       Eigen::Vector2d proj_point;
-      if (camera_projectors_[image_id].calcImageProjectedPoint(
+      if (det2d_list_.at(image_id).camera_projector_ptr->calcImageProjectedPoint(
             cv::Point3d(point.x(), point.y(), point.z()), proj_point)) {
         const double px = proj_point.x();
         const double py = proj_point.y();

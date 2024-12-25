@@ -62,6 +62,7 @@ using autoware_perception_msgs::msg::ObjectClassification;
 template <class Msg2D>
 struct Det2dManager
 {
+  std::size_t id = 0;
   // camera projection
   std::unique_ptr<CameraProjection> camera_projector_ptr;
   bool project_to_unrectified_image = false;
@@ -127,16 +128,12 @@ protected:
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 
-  std::vector<bool> point_project_to_unrectified_image_;
-
   // camera_info
   std::vector<Det2dManager<Msg2D>> det2d_list_;
 
-  std::map<std::size_t, sensor_msgs::msg::CameraInfo> camera_info_map_;
   std::vector<rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr> camera_info_subs_;
   // camera projection
-  std::vector<CameraProjection> camera_projectors_;
-  std::vector<bool> approx_camera_projection_;
+
   float approx_grid_cell_w_size_;
   float approx_grid_cell_h_size_;
 

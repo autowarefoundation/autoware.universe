@@ -127,16 +127,16 @@ FusionNode<TargetMsg3D, ObjType, Msg2D>::FusionNode(
   det2d_list_.resize(rois_number_);
 
   // camera projection settings
-  camera_projectors_.resize(rois_number_);
-  point_project_to_unrectified_image_ =
+  std::vector<bool> point_project_to_unrectified_image =
     declare_parameter<std::vector<bool>>("point_project_to_unrectified_image");
-  if (rois_number_ > point_project_to_unrectified_image_.size()) {
+  if (rois_number_ > point_project_to_unrectified_image.size()) {
     throw std::runtime_error(
       "The number of point_project_to_unrectified_image does not match the number of rois topics.");
   }
-  approx_camera_projection_ = declare_parameter<std::vector<bool>>("approximate_camera_projection");
-  if (rois_number_ != approx_camera_projection_.size()) {
-    const std::size_t current_size = approx_camera_projection_.size();
+  std::vector<bool> approx_camera_projection =
+    declare_parameter<std::vector<bool>>("approximate_camera_projection");
+  if (rois_number_ != approx_camera_projection.size()) {
+    const std::size_t current_size = approx_camera_projection.size();
     RCLCPP_WARN(
       this->get_logger(),
       "The number of elements in approximate_camera_projection should be the same as in "
@@ -144,16 +144,17 @@ FusionNode<TargetMsg3D, ObjType, Msg2D>::FusionNode(
       "It has %zu elements.",
       current_size);
     if (current_size < rois_number_) {
-      approx_camera_projection_.resize(rois_number_);
+      approx_camera_projection.resize(rois_number_);
       for (std::size_t i = current_size; i < rois_number_; i++) {
-        approx_camera_projection_.at(i) = true;
+        approx_camera_projection.at(i) = true;
       }
     }
   }
   for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
+    det2d_list_.at(roi_i).id = roi_i;
     det2d_list_.at(roi_i).project_to_unrectified_image =
-      point_project_to_unrectified_image_.at(roi_i);
-    det2d_list_.at(roi_i).approximate_camera_projection = approx_camera_projection_.at(roi_i);
+      point_project_to_unrectified_image.at(roi_i);
+    det2d_list_.at(roi_i).approximate_camera_projection = approx_camera_projection.at(roi_i);
   }
 
   approx_grid_cell_w_size_ = declare_parameter<float>("approximation_grid_cell_width");
@@ -209,17 +210,6 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::cameraInfoCallback(
 {
   // create the CameraProjection when the camera info arrives for the first time
   // assuming the camera info does not change while the node is running
-  if (
-    camera_info_map_.find(camera_id) == camera_info_map_.end() &&
-    checkCameraInfo(*input_camera_info_msg)) {
-    camera_projectors_.at(camera_id) = CameraProjection(
-      *input_camera_info_msg, approx_grid_cell_w_size_, approx_grid_cell_h_size_,
-      point_project_to_unrectified_image_.at(camera_id), approx_camera_projection_.at(camera_id));
-    camera_projectors_.at(camera_id).initialize();
-
-    camera_info_map_[camera_id] = *input_camera_info_msg;
-  }
-
   auto & det_2d = det2d_list_.at(camera_id);
   if (!det_2d.camera_projector_ptr && checkCameraInfo(*input_camera_info_msg)) {
     det_2d.camera_projector_ptr = std::make_unique<CameraProjection>(
@@ -307,8 +297,9 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
   int64_t timestamp_nsec =
     (*output_msg).header.stamp.sec * static_cast<int64_t>(1e9) + (*output_msg).header.stamp.nanosec;
   // for loop for each roi
-  for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
-    auto & det_2d = det2d_list_.at(roi_i);
+  for (auto & det_2d : det2d_list_) {
+    const auto roi_i = det_2d.id;
+
     // check camera info
     if (det_2d.camera_projector_ptr == nullptr) {
       RCLCPP_WARN_THROTTLE(

@@ -100,7 +100,8 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
     return;
   }
 
-  const sensor_msgs::msg::CameraInfo & camera_info = camera_projectors_[image_id].getCameraInfo();
+  const sensor_msgs::msg::CameraInfo & camera_info =
+    det2d_list_.at(image_id).camera_projector_ptr->getCameraInfo();
   std::vector<uint8_t> mask_data(input_mask.data.begin(), input_mask.data.end());
   cv::Mat mask = perception_utils::runLengthDecoder(mask_data, input_mask.height, input_mask.width);
 
@@ -150,7 +151,7 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
     }
 
     Eigen::Vector2d projected_point;
-    if (!camera_projectors_[image_id].calcImageProjectedPoint(
+    if (!det2d_list_.at(image_id).camera_projector_ptr->calcImageProjectedPoint(
           cv::Point3d(transformed_x, transformed_y, transformed_z), projected_point)) {
       continue;
     }
