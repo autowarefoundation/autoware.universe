@@ -514,7 +514,9 @@ void NormalLaneChange::insert_stop_point_on_current_lanes(PathWithLaneId & path)
 
   const auto dist_to_terminal_stop = std::min(dist_to_terminal_start, distance_to_last_fit_width);
 
-  if (filtered_objects_.current_lane.empty()) {
+  if (
+    filtered_objects_.current_lane.empty() ||
+    !lane_change_parameters_->enable_stopped_vehicle_buffer) {
     set_stop_pose(dist_to_terminal_stop, path);
     return;
   }
