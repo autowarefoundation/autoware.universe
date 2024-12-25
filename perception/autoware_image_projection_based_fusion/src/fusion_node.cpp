@@ -209,12 +209,12 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::cameraInfoCallback(
 {
   // create the CameraProjection when the camera info arrives for the first time
   // assuming the camera info does not change while the node is running
-  auto & det_2d = det2d_list_.at(camera_id);
-  if (!det_2d.camera_projector_ptr && checkCameraInfo(*input_camera_info_msg)) {
-    det_2d.camera_projector_ptr = std::make_unique<CameraProjection>(
+  auto & det2d = det2d_list_.at(camera_id);
+  if (!det2d.camera_projector_ptr && checkCameraInfo(*input_camera_info_msg)) {
+    det2d.camera_projector_ptr = std::make_unique<CameraProjection>(
       *input_camera_info_msg, approx_grid_cell_w_size_, approx_grid_cell_h_size_,
-      det_2d.project_to_unrectified_image, det_2d.approximate_camera_projection);
-    det_2d.camera_projector_ptr->initialize();
+      det2d.project_to_unrectified_image, det2d.approximate_camera_projection);
+    det2d.camera_projector_ptr->initialize();
   }
 }
 
@@ -252,8 +252,8 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::exportProcess()
   }
 
   // reset flags
-  for (auto & det_2d : det2d_list_) {
-    det_2d.is_fused = false;
+  for (auto & det2d : det2d_list_) {
+    det2d.is_fused = false;
   }
   cached_det3d_msg_ptr_ = nullptr;
 }
@@ -296,16 +296,16 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
   int64_t timestamp_nsec =
     (*output_msg).header.stamp.sec * static_cast<int64_t>(1e9) + (*output_msg).header.stamp.nanosec;
   // for loop for each roi
-  for (auto & det_2d : det2d_list_) {
-    const auto roi_i = det_2d.id;
+  for (auto & det2d : det2d_list_) {
+    const auto roi_i = det2d.id;
 
     // check camera info
-    if (det_2d.camera_projector_ptr == nullptr) {
+    if (det2d.camera_projector_ptr == nullptr) {
       RCLCPP_WARN_THROTTLE(
         this->get_logger(), *this->get_clock(), 5000, "no camera info. id is %zu", roi_i);
       continue;
     }
-    auto & roi_msgs = det_2d.cached_det2d_msgs;
+    auto & roi_msgs = det2d.cached_det2d_msgs;
 
     // check if the roi is collected
     if (roi_msgs.size() == 0) continue;
@@ -315,7 +315,7 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
     int64_t matched_stamp = -1;
     std::list<int64_t> outdate_stamps;
     for (const auto & [roi_stamp, value] : roi_msgs) {
-      int64_t new_stamp = timestamp_nsec + det_2d.input_offset_ms * static_cast<int64_t>(1e6);
+      int64_t new_stamp = timestamp_nsec + det2d.input_offset_ms * static_cast<int64_t>(1e6);
       int64_t interval = abs(static_cast<int64_t>(roi_stamp) - new_stamp);
 
       if (interval <= min_interval && interval <= match_threshold_ms_ * static_cast<int64_t>(1e6)) {
@@ -339,7 +339,7 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
 
       fuseOnSingleImage(*det3d_msg, roi_i, *(roi_msgs[matched_stamp]), *output_msg);
       roi_msgs.erase(matched_stamp);
-      det_2d.is_fused = true;
+      det2d.is_fused = true;
 
       // add timestamp interval for debug
       if (debug_publisher_) {
@@ -348,7 +348,7 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
           "debug/roi" + std::to_string(roi_i) + "/timestamp_interval_ms", timestamp_interval_ms);
         debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
           "debug/roi" + std::to_string(roi_i) + "/timestamp_interval_offset_ms",
-          timestamp_interval_ms - det_2d.input_offset_ms);
+          timestamp_interval_ms - det2d.input_offset_ms);
       }
     }
   }
@@ -374,7 +374,7 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::roiCallback(
 
   stop_watch_ptr_->toc("processing_time", true);
 
-  auto & det_2d = det2d_list_.at(roi_i);
+  auto & det2d = det2d_list_.at(roi_i);
 
   int64_t timestamp_nsec =
     (*det2d_msg).header.stamp.sec * static_cast<int64_t>(1e9) + (*det2d_msg).header.stamp.nanosec;
@@ -382,16 +382,16 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::roiCallback(
   // if cached Msg exist, try to match
   if (cached_det3d_msg_ptr_ != nullptr) {
     int64_t new_stamp =
-      cached_det3d_msg_timestamp_ + det_2d.input_offset_ms * static_cast<int64_t>(1e6);
+      cached_det3d_msg_timestamp_ + det2d.input_offset_ms * static_cast<int64_t>(1e6);
     int64_t interval = abs(timestamp_nsec - new_stamp);
 
     // PROCESS: if matched, fuse the main message with the roi message
-    if (interval < match_threshold_ms_ * static_cast<int64_t>(1e6) && det_2d.is_fused == false) {
+    if (interval < match_threshold_ms_ * static_cast<int64_t>(1e6) && det2d.is_fused == false) {
       // check camera info
-      if (det_2d.camera_projector_ptr == nullptr) {
+      if (det2d.camera_projector_ptr == nullptr) {
         RCLCPP_WARN_THROTTLE(
           this->get_logger(), *this->get_clock(), 5000, "no camera info. id is %zu", roi_i);
-        det_2d.cached_det2d_msgs[timestamp_nsec] = det2d_msg;
+        det2d.cached_det2d_msgs[timestamp_nsec] = det2d_msg;
         return;
       }
 
@@ -400,7 +400,7 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::roiCallback(
       }
       // PROCESS: fuse the main message with the roi message
       fuseOnSingleImage(*(cached_det3d_msg_ptr_), roi_i, *det2d_msg, *(cached_det3d_msg_ptr_));
-      det_2d.is_fused = true;
+      det2d.is_fused = true;
 
       if (debug_publisher_) {
         double timestamp_interval_ms = (timestamp_nsec - cached_det3d_msg_timestamp_) / 1e6;
@@ -408,7 +408,7 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::roiCallback(
           "debug/roi" + std::to_string(roi_i) + "/timestamp_interval_ms", timestamp_interval_ms);
         debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
           "debug/roi" + std::to_string(roi_i) + "/timestamp_interval_offset_ms",
-          timestamp_interval_ms - det_2d.input_offset_ms);
+          timestamp_interval_ms - det2d.input_offset_ms);
       }
 
       // PROCESS: if all camera fused, postprocess and publish the main message
@@ -421,7 +421,7 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::roiCallback(
     }
   }
   // store roi msg if not matched
-  det_2d.cached_det2d_msgs[timestamp_nsec] = det2d_msg;
+  det2d.cached_det2d_msgs[timestamp_nsec] = det2d_msg;
 }
 
 template <class TargetMsg3D, class Obj, class Msg2D>
@@ -447,8 +447,8 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::timer_callback()
     }
 
     // reset flags whether the message is fused or not
-    for (auto & det_2d : det2d_list_) {
-      det_2d.is_fused = false;
+    for (auto & det2d : det2d_list_) {
+      det2d.is_fused = false;
     }
     cached_det3d_msg_ptr_ = nullptr;
 
