@@ -139,10 +139,10 @@ struct Info
 
   void set_lane_changing(const PhaseMetrics & _lc_metrics)
   {
-    longitudinal_acceleration.prepare = _lc_metrics.actual_lon_accel;
-    velocity.prepare = _lc_metrics.velocity;
-    duration.prepare = _lc_metrics.duration;
-    length.prepare = _lc_metrics.length;
+    longitudinal_acceleration.lane_changing = _lc_metrics.actual_lon_accel;
+    velocity.lane_changing = _lc_metrics.velocity;
+    duration.lane_changing = _lc_metrics.duration;
+    length.lane_changing = _lc_metrics.length;
   }
 };
 

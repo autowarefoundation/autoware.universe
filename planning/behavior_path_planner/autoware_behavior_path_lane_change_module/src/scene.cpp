@@ -1362,7 +1362,7 @@ std::optional<PathWithLaneId> NormalLaneChange::compute_terminal_lane_change_pat
   LaneChangePath candidate_path;
   for (const auto & lc_metric : lane_changing_metrics) {
     try {
-      candidate_path = get_candidate_path(
+      candidate_path = utils::lane_change::get_candidate_path(
         prep_metric, lc_metric, prepare_segment, sorted_lane_ids, lane_changing_start_pose,
         shift_length);
     } catch (const std::exception & e) {
