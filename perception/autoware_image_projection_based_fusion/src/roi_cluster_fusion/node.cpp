@@ -100,7 +100,8 @@ void RoiClusterFusionNode::fuseOnSingleImage(
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
-  const sensor_msgs::msg::CameraInfo & camera_info = camera_projectors_[image_id].getCameraInfo();
+  const sensor_msgs::msg::CameraInfo & camera_info =
+    det2d_list_.at(image_id).camera_projector_ptr->getCameraInfo();
 
   // get transform from cluster frame id to camera optical frame id
   geometry_msgs::msg::TransformStamped transform_stamped;
@@ -149,7 +150,7 @@ void RoiClusterFusionNode::fuseOnSingleImage(
       }
 
       Eigen::Vector2d projected_point;
-      if (camera_projectors_[image_id].calcImageProjectedPoint(
+      if (det2d_list_.at(image_id).camera_projector_ptr->calcImageProjectedPoint(
             cv::Point3d(*iter_x, *iter_y, *iter_z), projected_point)) {
         const int px = static_cast<int>(projected_point.x());
         const int py = static_cast<int>(projected_point.y());

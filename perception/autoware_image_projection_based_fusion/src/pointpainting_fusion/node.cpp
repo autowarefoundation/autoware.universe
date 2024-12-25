@@ -335,13 +335,13 @@ dc   | dc dc dc  dc ||zc|
       p_y = point_camera.y();
       p_z = point_camera.z();
 
-      if (camera_projectors_[image_id].isOutsideHorizontalView(p_x, p_z)) {
+      if (det2d_list_.at(image_id).camera_projector_ptr->isOutsideHorizontalView(p_x, p_z)) {
         continue;
       }
 
       // project
       Eigen::Vector2d projected_point;
-      if (camera_projectors_[image_id].calcImageProjectedPoint(
+      if (det2d_list_.at(image_id).camera_projector_ptr->calcImageProjectedPoint(
             cv::Point3d(p_x, p_y, p_z), projected_point)) {
         // iterate 2d bbox
         for (const auto & feature_object : objects) {
