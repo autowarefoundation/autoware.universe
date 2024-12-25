@@ -19,6 +19,9 @@
 
 #include <autoware/pyplot/patches.hpp>
 #include <autoware/pyplot/pyplot.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <lanelet2_core/primitives/Lanelet.h>
 #include <lanelet2_core/primitives/LineString.h>
@@ -150,7 +153,8 @@ inline void plot_lanelet2_object(
     const auto center = (left.front().basicPoint2d() + left.back().basicPoint2d() +
                          right.front().basicPoint2d() + right.back().basicPoint2d()) /
                         4.0;
-    axes.text(Args(center.x(), center.y(), std::to_string(lanelet.id())));
+    axes.text(
+      Args(center.x(), center.y(), std::to_string(lanelet.id())), Kwargs("clip_on"_a = true));
   }
 
   if (config_opt && config_opt.value().label) {
@@ -224,6 +228,99 @@ void plot_lanelet2_point(
 const lanelet::ConstPoint3d & point, autoware::pyplot::Axes & axes,
 const std::optional<PointConfig> & config_opt = std::nullopt);
 */
+
+struct DrivableAreaConfig
+{
+  static DrivableAreaConfig defaults() { return {"turquoise", 1.5}; }
+  std::optional<std::string> color{};
+  std::optional<double> linewidth{};
+};
+
+struct PathWithLaneIdConfig
+{
+  static PathWithLaneIdConfig defaults() { return {std::nullopt, "k", 1.0, std::nullopt, false}; }
+  std::optional<std::string> label{};
+  std::optional<std::string> color{};
+  std::optional<double> linewidth{};
+  std::optional<DrivableAreaConfig> da{};
+  bool lane_id{};
+};
+
+inline void plot_autoware_object(
+  const tier4_planning_msgs::msg::PathWithLaneId & path, autoware::pyplot::Axes & axes,
+  const std::optional<PathWithLaneIdConfig> & config_opt = std::nullopt)
+{
+  py::dict kwargs{};
+  if (config_opt) {
+    const auto & config = config_opt.value();
+    if (config.label) {
+      kwargs["label"] = config.label.value();
+    }
+    if (config.color) {
+      kwargs["color"] = config.color.value();
+    }
+    if (config.linewidth) {
+      kwargs["linewidth"] = config.linewidth.value();
+    }
+  }
+  std::vector<double> xs;
+  std::vector<double> ys;
+  std::vector<double> yaw_cos;
+  std::vector<double> yaw_sin;
+  std::vector<std::vector<lanelet::Id>> ids;
+  const bool plot_lane_id = config_opt ? config_opt.value().lane_id : false;
+  for (const auto & point : path.points) {
+    xs.push_back(point.point.pose.position.x);
+    ys.push_back(point.point.pose.position.y);
+    const auto th = autoware::universe_utils::getRPY(point.point.pose.orientation).z;
+    yaw_cos.push_back(std::cos(th));
+    yaw_sin.push_back(std::sin(th));
+    if (plot_lane_id) {
+      ids.emplace_back();
+      for (const auto & id : point.lane_ids) {
+        ids.back().push_back(id);
+      }
+    }
+  }
+  // plot centerline
+  axes.plot(Args(xs, ys), kwargs);
+  axes.quiver(
+    Args(xs, ys, yaw_cos, yaw_sin),
+    Kwargs("angles"_a = "xy", "scale_units"_a = "xy", "scale"_a = 1.0));
+  if (plot_lane_id) {
+    for (size_t i = 0; i < xs.size(); ++i) {
+      std::stringstream ss;
+      const char * delimiter = "";
+      for (const auto id : ids[i]) {
+        ss << std::exchange(delimiter, ",") << id;
+      }
+      axes.text(Args(xs[i], ys[i], ss.str()), Kwargs("clip_on"_a = true));
+    }
+  }
+  // plot drivable area
+  if (config_opt && config_opt.value().da) {
+    auto plot_boundary = [&](const decltype(path.left_bound) & points) {
+      std::vector<double> xs;
+      std::vector<double> ys;
+      for (const auto & point : points) {
+        xs.push_back(point.x);
+        ys.push_back(point.y);
+      }
+      const auto & cfg = config_opt.value().da.value();
+      py::dict kwargs{};
+      if (cfg.color) {
+        kwargs["color"] = cfg.color.value();
+      }
+      if (cfg.linewidth) {
+        kwargs["linewidth"] = cfg.linewidth.value();
+      }
+      axes.plot(Args(xs, ys), kwargs);
+    };
+    plot_boundary(path.left_bound);
+    plot_boundary(path.right_bound);
+  }
+}
+
 }  // namespace autoware::test_utils
 
 #endif  // AUTOWARE_TEST_UTILS__VISUALIZATION_HPP_
