@@ -1348,9 +1348,7 @@ std::optional<PathWithLaneId> NormalLaneChange::compute_terminal_lane_change_pat
 
   const auto max_lane_changing_length = std::invoke([&]() {
     double max_length = transient_data.dist_to_terminal_end - prep_metric.length;
-    max_length =
-      std::min(max_length, dist_lc_start_to_end_of_lanes - transient_data.next_dist_buffer.min);
-    return max_length;
+    return std::min(max_length, dist_lc_start_to_end_of_lanes - transient_data.next_dist_buffer.min);
   });
 
   const auto max_path_velocity = prepare_segment.points.back().point.longitudinal_velocity_mps;
