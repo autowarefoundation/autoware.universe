@@ -178,12 +178,12 @@ TEST_F(TestFreespacePullOut, GenerateValidFreespacePullOutPath)
   PlannerDebugData debug_data;
   auto result = call_plan(start_pose, goal_pose, debug_data);
 
-  // Assert that a valid shift pull out path is generated
-  ASSERT_TRUE(result.has_value()) << "shift pull out path generation failed.";
+  // Assert that a valid Freespace pull out path is generated
+  ASSERT_TRUE(result.has_value()) << "Freespace pull out path generation failed.";
   EXPECT_EQ(result->partial_paths.size(), 2UL)
-    << "Generated shift pull out path does not have the expected number of partial paths.";
+    << "Freespace pull out path does not have the expected number of partial paths.";
   EXPECT_EQ(debug_data.conditions_evaluation.back(), "success")
-    << "shift pull out path planning did not succeed.";
+    << "Freespace pull out path planning did not succeed.";
 }
 
 }  // namespace autoware::behavior_path_planner
