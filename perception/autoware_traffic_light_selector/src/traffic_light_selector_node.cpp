@@ -129,7 +129,7 @@ void TrafficLightSelectorNode::objectsCallback(
         static_cast<int>(detected_roi.feature.roi.y_offset) - det_roi_shift_y, 0,
         static_cast<int>(image_height_ - detected_roi.feature.roi.height));
 
-      double iou = utils::calIOU(expect_roi.roi, detected_roi_shifted);
+      double iou = utils::getGenIoU(expect_roi.roi, detected_roi_shifted);
       if (iou > max_iou) {
         max_iou = iou;
         max_iou_roi = detected_roi.feature.roi;
