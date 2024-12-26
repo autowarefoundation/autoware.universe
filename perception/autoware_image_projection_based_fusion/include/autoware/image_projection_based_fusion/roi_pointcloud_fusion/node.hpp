@@ -31,8 +31,7 @@ public:
   explicit RoiPointCloudFusionNode(const rclcpp::NodeOptions & options);
 
 protected:
-  rclcpp::Publisher<ClusterMsgType>::SharedPtr pub_objects_ptr_;
-  rclcpp::Publisher<PointCloudMsgType>::SharedPtr pub_ptr_;
+  rclcpp::Publisher<PointCloudMsgType>::SharedPtr point_pub_ptr_;
   rclcpp::Publisher<PointCloudMsgType>::SharedPtr cluster_debug_pub_;
 
   void postprocess(PointCloudMsgType & pointcloud_msg) override;

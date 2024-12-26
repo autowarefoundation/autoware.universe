@@ -162,8 +162,8 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
     "~/input/pointcloud", rclcpp::SensorDataQoS().keep_last(3), sub_callback);
 
   // publisher
-  pub_ptr_ = this->create_publisher<PointCloudMsgType>("output", rclcpp::QoS{1});
-  obj_pub_ptr_ = this->create_publisher<DetectedObjects>("~/output/objects", rclcpp::QoS{1});
+  point_pub_ptr_ = this->create_publisher<PointCloudMsgType>("output", rclcpp::QoS{1});
+  pub_ptr_ = this->create_publisher<DetectedObjects>("~/output/objects", rclcpp::QoS{1});
 
   detection_class_remapper_.setParameters(
     allow_remapping_by_area_matrix, min_area_matrix, max_area_matrix);
@@ -387,7 +387,7 @@ void PointPaintingFusionNode::postprocess(PointCloudMsgType & painted_pointcloud
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
   const auto objects_sub_count =
-    obj_pub_ptr_->get_subscription_count() + obj_pub_ptr_->get_intra_process_subscription_count();
+    pub_ptr_->get_subscription_count() + pub_ptr_->get_intra_process_subscription_count();
   if (objects_sub_count < 1) {
     return;
   }
@@ -419,16 +419,16 @@ void PointPaintingFusionNode::postprocess(PointCloudMsgType & painted_pointcloud
   detection_class_remapper_.mapClasses(output_msg);
 
   if (objects_sub_count > 0) {
-    obj_pub_ptr_->publish(output_msg);
+    pub_ptr_->publish(output_msg);
   }
 }
 
 void PointPaintingFusionNode::publish(const PointCloudMsgType & painted_pointcloud_msg)
 {
-  if (pub_ptr_->get_subscription_count() < 1) {
+  if (point_pub_ptr_->get_subscription_count() < 1) {
     return;
   }
-  pub_ptr_->publish(painted_pointcloud_msg);
+  point_pub_ptr_->publish(painted_pointcloud_msg);
 }
 
 }  // namespace autoware::image_projection_based_fusion

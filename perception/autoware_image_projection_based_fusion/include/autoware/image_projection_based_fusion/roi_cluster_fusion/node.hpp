@@ -38,8 +38,6 @@ protected:
     const ClusterMsgType & input_cluster_msg, const Det2dManager<RoiMsgType> & det2d,
     const RoiMsgType & input_roi_msg, ClusterMsgType & output_cluster_msg) override;
 
-  rclcpp::Publisher<ClusterMsgType>::SharedPtr pub_ptr_;
-
 private:
   std::string trust_object_iou_mode_{"iou"};
   bool use_cluster_semantic_type_{false};

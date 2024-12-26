@@ -58,9 +58,6 @@ protected:
 
   void publish(const PointCloudMsgType & output_msg) override;
 
-  // publisher
-  rclcpp::Publisher<PointCloudMsgType>::SharedPtr pub_ptr_;
-
   // debug
   image_transport::Publisher pub_debug_mask_ptr_;
 
