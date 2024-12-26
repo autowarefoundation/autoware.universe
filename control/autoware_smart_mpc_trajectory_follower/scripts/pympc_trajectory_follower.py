@@ -43,9 +43,9 @@ import scipy.interpolate
 from scipy.spatial.transform import Rotation as R
 from scipy.spatial.transform import Slerp
 from std_msgs.msg import String
-from tier4_debug_msgs.msg import BoolStamped
-from tier4_debug_msgs.msg import Float32MultiArrayStamped
-from tier4_debug_msgs.msg import Float32Stamped
+from autoware_internal_debug_msgs.msg import BoolStamped
+from autoware_internal_debug_msgs.msg import Float32MultiArrayStamped
+from autoware_internal_debug_msgs.msg import Float32Stamped
 from visualization_msgs.msg import Marker
 from visualization_msgs.msg import MarkerArray
 

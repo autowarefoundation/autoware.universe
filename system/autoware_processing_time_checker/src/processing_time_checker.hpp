@@ -19,7 +19,7 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <tier4_debug_msgs/msg/float64_stamped.hpp>
+#include <autoware_internal_debug_msgs/msg/float64_stamped.hpp>
 #include <tier4_metric_msgs/msg/metric.hpp>
 #include <tier4_metric_msgs/msg/metric_array.hpp>
 
@@ -32,7 +32,7 @@ namespace autoware::processing_time_checker
 using autoware::universe_utils::Accumulator;
 using MetricMsg = tier4_metric_msgs::msg::Metric;
 using MetricArrayMsg = tier4_metric_msgs::msg::MetricArray;
-using tier4_debug_msgs::msg::Float64Stamped;
+using autoware_internal_debug_msgs::msg::Float64Stamped;
 
 class ProcessingTimeChecker : public rclcpp::Node
 {

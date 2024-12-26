@@ -29,7 +29,7 @@
   <depend>nav_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
-  <depend>tier4_debug_msgs</depend>
+  <depend>autoware_internal_debug_msgs</depend>
   <depend>tier4_vehicle_msgs</depend>
 
   <exec_depend>rclpy</exec_depend>

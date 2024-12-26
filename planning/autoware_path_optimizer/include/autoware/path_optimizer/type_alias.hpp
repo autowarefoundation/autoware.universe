@@ -25,7 +25,7 @@
 #include "geometry_msgs/msg/twist.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "std_msgs/msg/header.hpp"
-#include "tier4_debug_msgs/msg/float64_stamped.hpp"
+#include "autoware_internal_debug_msgs/msg/float64_stamped.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
 namespace autoware::path_optimizer
@@ -44,7 +44,7 @@ using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 // debug
 using autoware_internal_debug_msgs::msg::StringStamped;
-using tier4_debug_msgs::msg::Float64Stamped;
+using autoware_internal_debug_msgs::msg::Float64Stamped;
 }  // namespace autoware::path_optimizer
 
 #endif  // AUTOWARE__PATH_OPTIMIZER__TYPE_ALIAS_HPP_

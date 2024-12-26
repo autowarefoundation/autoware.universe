@@ -41,8 +41,8 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <std_srvs/srv/trigger.hpp>
 #include <tier4_control_msgs/msg/gate_mode.hpp>
-#include <tier4_debug_msgs/msg/bool_stamped.hpp>
-#include <tier4_debug_msgs/msg/float64_stamped.hpp>
+#include <autoware_internal_debug_msgs/msg/bool_stamped.hpp>
+#include <autoware_internal_debug_msgs/msg/float64_stamped.hpp>
 #include <tier4_external_api_msgs/msg/emergency.hpp>
 #include <tier4_external_api_msgs/msg/heartbeat.hpp>
 #include <tier4_external_api_msgs/srv/engage.hpp>
@@ -70,7 +70,7 @@ using autoware_vehicle_msgs::msg::TurnIndicatorsCommand;
 using geometry_msgs::msg::AccelWithCovarianceStamped;
 using std_srvs::srv::Trigger;
 using tier4_control_msgs::msg::GateMode;
-using tier4_debug_msgs::msg::BoolStamped;
+using autoware_internal_debug_msgs::msg::BoolStamped;
 using tier4_external_api_msgs::msg::Emergency;
 using tier4_external_api_msgs::msg::Heartbeat;
 using tier4_external_api_msgs::srv::SetEmergency;
@@ -116,7 +116,7 @@ private:
   rclcpp::Publisher<MarkerArray>::SharedPtr filter_activated_marker_pub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr filter_activated_marker_raw_pub_;
   rclcpp::Publisher<BoolStamped>::SharedPtr filter_activated_flag_pub_;
-  rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr processing_time_pub_;
+  rclcpp::Publisher<autoware_internal_debug_msgs::msg::Float64Stamped>::SharedPtr processing_time_pub_;
   // Parameter callback
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
   rcl_interfaces::msg::SetParametersResult onParameter(

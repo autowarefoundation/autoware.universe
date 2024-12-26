@@ -23,7 +23,7 @@
 #include "geometry_msgs/msg/point.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "std_msgs/msg/header.hpp"
-#include "tier4_debug_msgs/msg/float64_stamped.hpp"
+#include "autoware_internal_debug_msgs/msg/float64_stamped.hpp"
 
 namespace autoware::path_smoother
 {
@@ -38,7 +38,7 @@ using autoware_planning_msgs::msg::TrajectoryPoint;
 using nav_msgs::msg::Odometry;
 // debug
 using autoware_internal_debug_msgs::msg::StringStamped;
-using tier4_debug_msgs::msg::Float64Stamped;
+using autoware_internal_debug_msgs::msg::Float64Stamped;
 }  // namespace autoware::path_smoother
 
 #endif  // AUTOWARE__PATH_SMOOTHER__TYPE_ALIAS_HPP_

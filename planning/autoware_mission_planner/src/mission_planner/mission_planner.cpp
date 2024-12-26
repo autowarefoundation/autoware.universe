@@ -88,13 +88,13 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
 
   logger_configure_ = std::make_unique<autoware::universe_utils::LoggerLevelConfigure>(this);
   pub_processing_time_ =
-    this->create_publisher<tier4_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
+    this->create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
 }
 
 void MissionPlanner::publish_processing_time(
   autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch)
 {
-  tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
+  autoware_internal_debug_msgs::msg::Float64Stamped processing_time_msg;
   processing_time_msg.stamp = get_clock()->now();
   processing_time_msg.data = stop_watch.toc();
   pub_processing_time_->publish(processing_time_msg);

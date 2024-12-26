@@ -20,14 +20,14 @@
 
 #include "autoware_vehicle_msgs/msg/steering_report.hpp"
 #include "geometry_msgs/msg/twist_stamped.hpp"
-#include "tier4_debug_msgs/msg/float32_stamped.hpp"
+#include "autoware_internal_debug_msgs/msg/float32_stamped.hpp"
 
 #include <memory>
 
 namespace autoware::steer_offset_estimator
 {
 using geometry_msgs::msg::TwistStamped;
-using tier4_debug_msgs::msg::Float32Stamped;
+using autoware_internal_debug_msgs::msg::Float32Stamped;
 using Steering = autoware_vehicle_msgs::msg::SteeringReport;
 using diagnostic_updater::DiagnosticStatusWrapper;
 using diagnostic_updater::Updater;

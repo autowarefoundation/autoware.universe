@@ -74,8 +74,8 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
-#include <tier4_debug_msgs/msg/int32_stamped.hpp>
-#include <tier4_debug_msgs/msg/string_stamped.hpp>
+#include <autoware_internal_debug_msgs/msg/int32_stamped.hpp>
+#include <autoware_internal_debug_msgs/msg/string_stamped.hpp>
 
 #include <message_filters/pass_through.h>
 #include <message_filters/subscriber.h>

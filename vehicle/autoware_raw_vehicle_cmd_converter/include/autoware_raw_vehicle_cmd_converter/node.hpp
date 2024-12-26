@@ -31,7 +31,7 @@
 #include <autoware_vehicle_msgs/msg/steering_report.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
-#include <tier4_debug_msgs/msg/float32_multi_array_stamped.hpp>
+#include <autoware_internal_debug_msgs/msg/float32_multi_array_stamped.hpp>
 #include <tier4_vehicle_msgs/msg/actuation_command_stamped.hpp>
 #include <tier4_vehicle_msgs/msg/actuation_status_stamped.hpp>
 
@@ -42,7 +42,7 @@
 namespace autoware::raw_vehicle_cmd_converter
 {
 using Control = autoware_control_msgs::msg::Control;
-using tier4_debug_msgs::msg::Float32MultiArrayStamped;
+using autoware_internal_debug_msgs::msg::Float32MultiArrayStamped;
 using tier4_vehicle_msgs::msg::ActuationCommandStamped;
 using tier4_vehicle_msgs::msg::ActuationStatusStamped;
 using TwistStamped = geometry_msgs::msg::TwistStamped;

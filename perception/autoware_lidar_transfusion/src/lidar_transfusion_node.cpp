@@ -165,14 +165,14 @@ void LidarTransfusionNode::cloudCallback(const sensor_msgs::msg::PointCloud2::Co
         std::chrono::nanoseconds(
           (this->get_clock()->now() - output_msg.header.stamp).nanoseconds()))
         .count();
-    debug_publisher_ptr_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    debug_publisher_ptr_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/cyclic_time_ms", cyclic_time_ms);
-    debug_publisher_ptr_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    debug_publisher_ptr_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/pipeline_latency_ms", pipeline_latency_ms);
-    debug_publisher_ptr_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    debug_publisher_ptr_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/processing_time/total_ms", processing_time_ms);
     for (const auto & [topic, time_ms] : proc_timing) {
-      debug_publisher_ptr_->publish<tier4_debug_msgs::msg::Float64Stamped>(topic, time_ms);
+      debug_publisher_ptr_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(topic, time_ms);
     }
   }
 }

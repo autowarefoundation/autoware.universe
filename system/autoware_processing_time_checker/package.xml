@@ -16,7 +16,7 @@
   <depend>nlohmann-json-dev</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
-  <depend>tier4_debug_msgs</depend>
+  <depend>autoware_internal_debug_msgs</depend>
   <depend>tier4_metric_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>

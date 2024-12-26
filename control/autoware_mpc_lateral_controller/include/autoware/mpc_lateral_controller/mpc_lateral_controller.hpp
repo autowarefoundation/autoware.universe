@@ -31,8 +31,8 @@
 #include "geometry_msgs/msg/pose.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
-#include "tier4_debug_msgs/msg/float32_multi_array_stamped.hpp"
-#include "tier4_debug_msgs/msg/float32_stamped.hpp"
+#include "autoware_internal_debug_msgs/msg/float32_multi_array_stamped.hpp"
+#include "autoware_internal_debug_msgs/msg/float32_stamped.hpp"
 
 #include <deque>
 #include <memory>
@@ -48,8 +48,8 @@ using autoware_control_msgs::msg::Lateral;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_vehicle_msgs::msg::SteeringReport;
 using nav_msgs::msg::Odometry;
-using tier4_debug_msgs::msg::Float32MultiArrayStamped;
-using tier4_debug_msgs::msg::Float32Stamped;
+using autoware_internal_debug_msgs::msg::Float32MultiArrayStamped;
+using autoware_internal_debug_msgs::msg::Float32Stamped;
 using trajectory_follower::LateralHorizon;
 
 class MpcLateralController : public trajectory_follower::LateralControllerBase

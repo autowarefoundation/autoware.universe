@@ -25,7 +25,7 @@
   <depend>std_srvs</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>tf2_ros</depend>
-  <depend>tier4_debug_msgs</depend>
+  <depend>autoware_internal_debug_msgs</depend>
   <depend>tier4_external_api_msgs</depend>
   <depend>tier4_vehicle_msgs</depend>
   <depend>visualization_msgs</depend>

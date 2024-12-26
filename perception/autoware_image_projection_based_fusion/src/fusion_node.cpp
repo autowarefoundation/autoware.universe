@@ -237,12 +237,12 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
           std::chrono::nanoseconds(
             (this->get_clock()->now() - cached_msg_.second->header.stamp).nanoseconds()))
           .count();
-      debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
         "debug/cyclic_time_ms", cyclic_time_ms);
-      debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
         "debug/processing_time_ms",
         processing_time_ms + stop_watch_ptr_->toc("processing_time", true));
-      debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
         "debug/pipeline_latency_ms", pipeline_latency_ms);
       processing_time_ms = 0;
     }
@@ -317,9 +317,9 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
         // add timestamp interval for debug
         if (debug_publisher_) {
           double timestamp_interval_ms = (matched_stamp - timestamp_nsec) / 1e6;
-          debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+          debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
             "debug/roi" + std::to_string(roi_i) + "/timestamp_interval_ms", timestamp_interval_ms);
-          debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+          debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
             "debug/roi" + std::to_string(roi_i) + "/timestamp_interval_offset_ms",
             timestamp_interval_ms - input_offset_ms_.at(roi_i));
         }
@@ -340,9 +340,9 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
     if (debug_publisher_) {
       const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
       processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
-      debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
         "debug/cyclic_time_ms", cyclic_time_ms);
-      debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
         "debug/processing_time_ms", processing_time_ms);
       processing_time_ms = 0;
     }
@@ -387,9 +387,9 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::roiCallback(
 
       if (debug_publisher_) {
         double timestamp_interval_ms = (timestamp_nsec - cached_msg_.first) / 1e6;
-        debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+        debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
           "debug/roi" + std::to_string(roi_i) + "/timestamp_interval_ms", timestamp_interval_ms);
-        debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+        debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
           "debug/roi" + std::to_string(roi_i) + "/timestamp_interval_offset_ms",
           timestamp_interval_ms - input_offset_ms_.at(roi_i));
       }
@@ -404,9 +404,9 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::roiCallback(
         // add processing time for debug
         if (debug_publisher_) {
           const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
-          debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+          debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
             "debug/cyclic_time_ms", cyclic_time_ms);
-          debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+          debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
             "debug/processing_time_ms",
             processing_time_ms + stop_watch_ptr_->toc("processing_time", true));
           processing_time_ms = 0;
@@ -446,9 +446,9 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::timer_callback()
       // add processing time for debug
       if (debug_publisher_) {
         const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
-        debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+        debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
           "debug/cyclic_time_ms", cyclic_time_ms);
-        debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+        debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
           "debug/processing_time_ms",
           processing_time_ms + stop_watch_ptr_->toc("processing_time", true));
         processing_time_ms = 0;

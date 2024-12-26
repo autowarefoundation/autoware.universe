@@ -245,7 +245,7 @@ double RawVehicleCommandConverterNode::calculateSteerFromMap(
     debug_steer_.setValues(DebugValues::TYPE::ERROR_P, pid_errors.at(0));
     debug_steer_.setValues(DebugValues::TYPE::ERROR_I, pid_errors.at(1));
     debug_steer_.setValues(DebugValues::TYPE::ERROR_D, pid_errors.at(2));
-    tier4_debug_msgs::msg::Float32MultiArrayStamped msg{};
+    autoware_internal_debug_msgs::msg::Float32MultiArrayStamped msg{};
     for (const auto & v : debug_steer_.getValues()) {
       msg.data.push_back(v);
     }

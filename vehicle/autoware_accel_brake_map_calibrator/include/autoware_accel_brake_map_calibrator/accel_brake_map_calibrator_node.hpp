@@ -37,8 +37,8 @@
 #include "std_msgs/msg/multi_array_dimension.hpp"
 #include "std_msgs/msg/string.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
-#include "tier4_debug_msgs/msg/float32_multi_array_stamped.hpp"
-#include "tier4_debug_msgs/msg/float32_stamped.hpp"
+#include "autoware_internal_debug_msgs/msg/float32_multi_array_stamped.hpp"
+#include "autoware_internal_debug_msgs/msg/float32_stamped.hpp"
 #include "tier4_external_api_msgs/msg/calibration_status.hpp"
 #include "tier4_external_api_msgs/msg/calibration_status_array.hpp"
 #include "tier4_external_api_msgs/srv/get_accel_brake_map_calibration_data.hpp"
@@ -64,8 +64,8 @@ using nav_msgs::msg::OccupancyGrid;
 using raw_vehicle_cmd_converter::AccelMap;
 using raw_vehicle_cmd_converter::BrakeMap;
 using std_msgs::msg::Float32MultiArray;
-using tier4_debug_msgs::msg::Float32MultiArrayStamped;
-using tier4_debug_msgs::msg::Float32Stamped;
+using autoware_internal_debug_msgs::msg::Float32MultiArrayStamped;
+using autoware_internal_debug_msgs::msg::Float32Stamped;
 using tier4_external_api_msgs::msg::CalibrationStatus;
 using tier4_vehicle_msgs::msg::ActuationCommandStamped;
 using tier4_vehicle_msgs::msg::ActuationStatusStamped;

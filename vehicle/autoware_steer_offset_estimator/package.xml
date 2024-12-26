@@ -17,7 +17,7 @@
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>std_msgs</depend>
-  <depend>tier4_debug_msgs</depend>
+  <depend>autoware_internal_debug_msgs</depend>
   <exec_depend>autoware_global_parameter_loader</exec_depend>
   <exec_depend>autoware_pose2twist</exec_depend>
 

@@ -78,7 +78,7 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
   pub_external_emergency_ = create_publisher<Emergency>("output/external_emergency", durable_qos);
   operation_mode_pub_ = create_publisher<OperationModeState>("output/operation_mode", durable_qos);
   processing_time_pub_ =
-    this->create_publisher<tier4_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
+    this->create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
 
   is_filter_activated_pub_ =
     create_publisher<IsFilterActivated>("~/is_filter_activated", durable_qos);
@@ -520,7 +520,7 @@ void VehicleCmdGate::onTimer()
   }
 
   // ProcessingTime
-  tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
+  autoware_internal_debug_msgs::msg::Float64Stamped processing_time_msg;
   processing_time_msg.stamp = get_clock()->now();
   processing_time_msg.data = stop_watch.toc();
   processing_time_pub_->publish(processing_time_msg);

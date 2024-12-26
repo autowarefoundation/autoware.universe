@@ -20,8 +20,8 @@ The `twist.angular` is calculated as `relative_rotation_vector / dt` for each fi
 | Name      | Type                                  | Description                                   |
 | --------- | ------------------------------------- | --------------------------------------------- |
 | twist     | geometry_msgs::msg::TwistStamped      | twist calculated from the input pose history. |
-| linear_x  | tier4_debug_msgs::msg::Float32Stamped | linear-x field of the output twist.           |
-| angular_z | tier4_debug_msgs::msg::Float32Stamped | angular-z field of the output twist.          |
+| linear_x  | autoware_internal_debug_msgs::msg::Float32Stamped | linear-x field of the output twist.           |
+| angular_z | autoware_internal_debug_msgs::msg::Float32Stamped | angular-z field of the output twist.          |
 
 ## Parameters
 

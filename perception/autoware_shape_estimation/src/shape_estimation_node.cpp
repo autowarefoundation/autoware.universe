@@ -180,9 +180,9 @@ void ShapeEstimationNode::callback(const DetectedObjectsWithFeature::ConstShared
   // Publish
   pub_->publish(output_msg);
   published_time_publisher_->publish_if_subscribed(pub_, output_msg.header.stamp);
-  processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+  processing_time_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
     "debug/cyclic_time_ms", stop_watch_ptr_->toc("cyclic_time", true));
-  processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+  processing_time_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
     "debug/processing_time_ms", stop_watch_ptr_->toc("processing_time", true));
 }
 }  // namespace autoware::shape_estimation
