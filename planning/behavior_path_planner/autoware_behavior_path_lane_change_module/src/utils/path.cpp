@@ -291,8 +291,10 @@ bool get_prepare_segment(
     curvatures.push_back(autoware::universe_utils::calcCurvature(point1, point2, point3));
   }
 
-  return calc_average_curvature(curvatures) <=
-         common_data_ptr->lc_param_ptr->trajectory.th_prepare_curvature;
+  const auto average_curvature = calc_average_curvature(curvatures);
+
+  RCLCPP_DEBUG(get_logger(), "average curvature: %.3f", average_curvature);
+  return average_curvature <= common_data_ptr->lc_param_ptr->trajectory.th_prepare_curvature;
 }
 
 LaneChangePath get_candidate_path(
