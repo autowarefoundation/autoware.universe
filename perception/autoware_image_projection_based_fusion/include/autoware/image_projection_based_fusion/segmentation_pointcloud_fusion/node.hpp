@@ -34,10 +34,10 @@
 
 namespace autoware::image_projection_based_fusion
 {
-class SegmentPointCloudFusionNode : public FusionNode<PointCloud2, Image, PointCloud2>
+class SegmentPointCloudFusionNode : public FusionNode<PointCloudMsgType, Image, PointCloudMsgType>
 {
 private:
-  rclcpp::Publisher<PointCloud2>::SharedPtr pub_pointcloud_ptr_;
+  rclcpp::Publisher<PointCloudMsgType>::SharedPtr pub_pointcloud_ptr_;
   std::vector<bool> filter_semantic_label_target_;
   float filter_distance_threshold_;
   // declare list of semantic label target, depend on trained data of yolox segmentation model
@@ -55,18 +55,18 @@ public:
   explicit SegmentPointCloudFusionNode(const rclcpp::NodeOptions & options);
 
 protected:
-  void preprocess(PointCloud2 & pointcloud_msg) override;
+  void preprocess(PointCloudMsgType & pointcloud_msg) override;
 
-  void postprocess(PointCloud2 & pointcloud_msg) override;
+  void postprocess(PointCloudMsgType & pointcloud_msg) override;
 
   void fuseOnSingleImage(
-    const PointCloud2 & input_pointcloud_msg, const Det2dManager<Image> & det2d,
-    const Image & input_mask, PointCloud2 & output_pointcloud_msg) override;
+    const PointCloudMsgType & input_pointcloud_msg, const Det2dManager<Image> & det2d,
+    const Image & input_mask, PointCloudMsgType & output_pointcloud_msg) override;
 
-  bool out_of_scope(const PointCloud2 & filtered_cloud) override;
+  bool out_of_scope(const PointCloudMsgType & filtered_cloud) override;
   inline void copyPointCloud(
-    const PointCloud2 & input, const int point_step, const size_t global_offset,
-    PointCloud2 & output, size_t & output_pointcloud_size)
+    const PointCloudMsgType & input, const int point_step, const size_t global_offset,
+    PointCloudMsgType & output, size_t & output_pointcloud_size)
   {
     std::memcpy(&output.data[output_pointcloud_size], &input.data[global_offset], point_step);
     output_pointcloud_size += point_step;
