@@ -19,6 +19,7 @@
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
   <depend>autoware_control_msgs</depend>
+  <depend>autoware_internal_debug_msgs</depend>
   <depend>autoware_interpolation</depend>
   <depend>autoware_motion_utils</depend>
   <depend>autoware_osqp_interface</depend>
@@ -36,7 +37,6 @@
   <depend>std_msgs</depend>
   <depend>tf2</depend>
   <depend>tf2_ros</depend>
-  <depend>autoware_internal_debug_msgs</depend>
 
   <test_depend>ament_cmake_ros</test_depend>
   <test_depend>ament_lint_auto</test_depend>

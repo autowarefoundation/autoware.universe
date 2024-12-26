@@ -171,7 +171,8 @@ LaneDepartureCheckerNode::LaneDepartureCheckerNode(const rclcpp::NodeOptions & o
 
   // Publisher
   processing_time_publisher_ =
-    this->create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
+    this->create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>(
+      "~/debug/processing_time_ms", 1);
   // Nothing
 
   // Diagnostic Updater
@@ -344,7 +345,8 @@ void LaneDepartureCheckerNode::onTimer()
     const auto & deviation = output_.trajectory_deviation;
     debug_publisher_.publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "deviation/lateral", deviation.lateral);
-    debug_publisher_.publish<autoware_internal_debug_msgs::msg::Float64Stamped>("deviation/yaw", deviation.yaw);
+    debug_publisher_.publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
+      "deviation/yaw", deviation.yaw);
     debug_publisher_.publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "deviation/yaw_deg", rad2deg(deviation.yaw));
   }
