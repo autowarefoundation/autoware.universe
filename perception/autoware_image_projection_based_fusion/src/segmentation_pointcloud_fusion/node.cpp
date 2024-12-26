@@ -87,7 +87,7 @@ void SegmentPointCloudFusionNode::postprocess(PointCloud2 & pointcloud_msg)
 }
 
 void SegmentPointCloudFusionNode::fuseOnSingleImage(
-  const PointCloud2 & input_pointcloud_msg, const std::size_t image_id,
+  const PointCloud2 & input_pointcloud_msg, const Det2dManager<Image> & det2d,
   [[maybe_unused]] const Image & input_mask, __attribute__((unused)) PointCloud2 & output_cloud)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
@@ -100,8 +100,7 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
     return;
   }
 
-  const sensor_msgs::msg::CameraInfo & camera_info =
-    det2d_list_.at(image_id).camera_projector_ptr->getCameraInfo();
+  const sensor_msgs::msg::CameraInfo & camera_info = det2d.camera_projector_ptr->getCameraInfo();
   std::vector<uint8_t> mask_data(input_mask.data.begin(), input_mask.data.end());
   cv::Mat mask = perception_utils::runLengthDecoder(mask_data, input_mask.height, input_mask.width);
 
@@ -151,7 +150,7 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
     }
 
     Eigen::Vector2d projected_point;
-    if (!det2d_list_.at(image_id).camera_projector_ptr->calcImageProjectedPoint(
+    if (!det2d.camera_projector_ptr->calcImageProjectedPoint(
           cv::Point3d(transformed_x, transformed_y, transformed_z), projected_point)) {
       continue;
     }

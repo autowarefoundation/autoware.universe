@@ -253,7 +253,8 @@ void PointPaintingFusionNode::preprocess(sensor_msgs::msg::PointCloud2 & painted
 
 void PointPaintingFusionNode::fuseOnSingleImage(
   __attribute__((unused)) const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg,
-  const std::size_t image_id, const DetectedObjectsWithFeature & input_roi_msg,
+  const Det2dManager<DetectedObjectsWithFeature> & det2d,
+  const DetectedObjectsWithFeature & input_roi_msg,
   sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg)
 {
   if (painted_pointcloud_msg.data.empty() || painted_pointcloud_msg.fields.empty()) {
@@ -335,28 +336,26 @@ dc   | dc dc dc  dc ||zc|
       p_y = point_camera.y();
       p_z = point_camera.z();
 
-      if (det2d_list_.at(image_id).camera_projector_ptr->isOutsideHorizontalView(p_x, p_z)) {
-        continue;
-      }
+    if (det2d.camera_projector_ptr->isOutsideHorizontalView(p_x, p_z)) {
+      continue;
+    }
 
-      // project
-      Eigen::Vector2d projected_point;
-      if (det2d_list_.at(image_id).camera_projector_ptr->calcImageProjectedPoint(
-            cv::Point3d(p_x, p_y, p_z), projected_point)) {
-        // iterate 2d bbox
-        for (const auto & feature_object : objects) {
-          sensor_msgs::msg::RegionOfInterest roi = feature_object.feature.roi;
-          // paint current point if it is inside bbox
-          int label2d = feature_object.object.classification.front().label;
-          if (
-            !isUnknown(label2d) &&
-            isInsideBbox(projected_point.x(), projected_point.y(), roi, 1.0)) {
-            // cppcheck-suppress invalidPointerCast
-            auto p_class = reinterpret_cast<float *>(&output[stride + class_offset]);
-            for (const auto & cls : isClassTable_) {
-              // add up the class values if the point belongs to multiple classes
-              *p_class = cls.second(label2d) ? (class_index_[cls.first] + *p_class) : *p_class;
-            }
+    // project
+    Eigen::Vector2d projected_point;
+    if (det2d.camera_projector_ptr->calcImageProjectedPoint(
+          cv::Point3d(p_x, p_y, p_z), projected_point)) {
+      // iterate 2d bbox
+      for (const auto & feature_object : objects) {
+        sensor_msgs::msg::RegionOfInterest roi = feature_object.feature.roi;
+        // paint current point if it is inside bbox
+        int label2d = feature_object.object.classification.front().label;
+        if (
+          !isUnknown(label2d) && isInsideBbox(projected_point.x(), projected_point.y(), roi, 1.0)) {
+          // cppcheck-suppress invalidPointerCast
+          auto p_class = reinterpret_cast<float *>(&output[stride + class_offset]);
+          for (const auto & cls : isClassTable_) {
+            // add up the class values if the point belongs to multiple classes
+            *p_class = cls.second(label2d) ? (class_index_[cls.first] + *p_class) : *p_class;
           }
         }
         if (debugger_) {
@@ -381,7 +380,7 @@ dc   | dc dc dc  dc ||zc|
 
     debugger_->image_rois_ = debug_image_rois;
     debugger_->obstacle_points_ = debug_image_points;
-    debugger_->publishImage(image_id, input_roi_msg.header.stamp);
+    debugger_->publishImage(det2d.id, input_roi_msg.header.stamp);
   }
 }
 

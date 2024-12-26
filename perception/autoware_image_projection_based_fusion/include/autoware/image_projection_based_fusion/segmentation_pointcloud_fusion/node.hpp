@@ -60,8 +60,8 @@ protected:
   void postprocess(PointCloud2 & pointcloud_msg) override;
 
   void fuseOnSingleImage(
-    const PointCloud2 & input_pointcloud_msg, const std::size_t image_id, const Image & input_mask,
-    PointCloud2 & output_pointcloud_msg) override;
+    const PointCloud2 & input_pointcloud_msg, const Det2dManager<Image> & det2d,
+    const Image & input_mask, PointCloud2 & output_pointcloud_msg) override;
 
   bool out_of_scope(const PointCloud2 & filtered_cloud) override;
   inline void copyPointCloud(

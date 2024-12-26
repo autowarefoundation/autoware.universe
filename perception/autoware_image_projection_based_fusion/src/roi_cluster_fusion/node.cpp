@@ -94,14 +94,14 @@ void RoiClusterFusionNode::postprocess(DetectedObjectsWithFeature & output_clust
 }
 
 void RoiClusterFusionNode::fuseOnSingleImage(
-  const DetectedObjectsWithFeature & input_cluster_msg, const std::size_t image_id,
+  const DetectedObjectsWithFeature & input_cluster_msg,
+  const Det2dManager<DetectedObjectsWithFeature> & det2d,
   const DetectedObjectsWithFeature & input_roi_msg, DetectedObjectsWithFeature & output_cluster_msg)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
-  const sensor_msgs::msg::CameraInfo & camera_info =
-    det2d_list_.at(image_id).camera_projector_ptr->getCameraInfo();
+  const sensor_msgs::msg::CameraInfo & camera_info = det2d.camera_projector_ptr->getCameraInfo();
 
   // get transform from cluster frame id to camera optical frame id
   geometry_msgs::msg::TransformStamped transform_stamped;
@@ -150,7 +150,7 @@ void RoiClusterFusionNode::fuseOnSingleImage(
       }
 
       Eigen::Vector2d projected_point;
-      if (det2d_list_.at(image_id).camera_projector_ptr->calcImageProjectedPoint(
+      if (det2d.camera_projector_ptr->calcImageProjectedPoint(
             cv::Point3d(*iter_x, *iter_y, *iter_z), projected_point)) {
         const int px = static_cast<int>(projected_point.x());
         const int py = static_cast<int>(projected_point.y());
@@ -232,7 +232,7 @@ void RoiClusterFusionNode::fuseOnSingleImage(
 
   // note: debug objects are safely cleared in fusion_node.cpp
   if (debugger_) {
-    debugger_->publishImage(image_id, input_roi_msg.header.stamp);
+    debugger_->publishImage(det2d.id, input_roi_msg.header.stamp);
   }
 }
 
