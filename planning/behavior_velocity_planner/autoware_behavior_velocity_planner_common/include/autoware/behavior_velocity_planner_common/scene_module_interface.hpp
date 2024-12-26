@@ -308,6 +308,19 @@ protected:
 
   std::shared_ptr<universe_utils::TimeKeeper> time_keeper_;
 };
+extern template SceneModuleManagerInterface<SceneModuleInterface>::SceneModuleManagerInterface(
+  rclcpp::Node & node, [[maybe_unused]] const char * module_name);
+extern template size_t SceneModuleManagerInterface<SceneModuleInterface>::findEgoSegmentIndex(
+  const std::vector<tier4_planning_msgs::msg::PathPointWithLaneId> & points) const;
+extern template void SceneModuleManagerInterface<SceneModuleInterface>::updateSceneModuleInstances(
+  const std::shared_ptr<const PlannerData> & planner_data,
+  const tier4_planning_msgs::msg::PathWithLaneId & path);
+extern template void SceneModuleManagerInterface<SceneModuleInterface>::modifyPathVelocity(
+  tier4_planning_msgs::msg::PathWithLaneId * path);
+extern template void SceneModuleManagerInterface<SceneModuleInterface>::deleteExpiredModules(
+  const tier4_planning_msgs::msg::PathWithLaneId & path);
+extern template void SceneModuleManagerInterface<SceneModuleInterface>::registerModule(
+  const std::shared_ptr<SceneModuleInterface> & scene_module);
 }  // namespace autoware::behavior_velocity_planner
 
 #endif  // AUTOWARE__BEHAVIOR_VELOCITY_PLANNER_COMMON__SCENE_MODULE_INTERFACE_HPP_
