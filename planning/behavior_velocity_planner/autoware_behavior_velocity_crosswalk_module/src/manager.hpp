@@ -19,7 +19,7 @@
 
 #include <autoware/behavior_velocity_planner_common/plugin_interface.hpp>
 #include <autoware/behavior_velocity_planner_common/plugin_wrapper.hpp>
-#include <autoware/behavior_velocity_planner_common/scene_module_interface.hpp>
+#include <autoware/behavior_velocity_rtc_interface/scene_module_interface_with_rtc.hpp>
 #include <autoware_lanelet2_extension/regulatory_elements/crosswalk.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -48,8 +48,8 @@ private:
 
   void launchNewModules(const PathWithLaneId & path) override;
 
-  std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
-    const PathWithLaneId & path) override;
+  std::function<bool(const std::shared_ptr<SceneModuleInterfaceWithRTC> &)>
+  getModuleExpiredFunction(const PathWithLaneId & path) override;
 };
 
 class CrosswalkModulePlugin : public PluginWrapper<CrosswalkModuleManager>
