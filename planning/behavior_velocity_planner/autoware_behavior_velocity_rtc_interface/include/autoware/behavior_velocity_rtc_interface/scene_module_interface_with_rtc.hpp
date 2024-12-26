@@ -136,6 +136,15 @@ protected:
 
     return enable_rtc;
   }
+extern template size_t SceneModuleManagerInterface<SceneModuleInterfaceWithRTC>::findEgoSegmentIndex(
+  const std::vector<tier4_planning_msgs::msg::PathPointWithLaneId> & points) const;
+extern template void SceneModuleManagerInterface<SceneModuleInterfaceWithRTC>::updateSceneModuleInstances(
+  const std::shared_ptr<const PlannerData> & planner_data,
+  const tier4_planning_msgs::msg::PathWithLaneId & path);
+extern template void SceneModuleManagerInterface<SceneModuleInterfaceWithRTC>::modifyPathVelocity(
+  tier4_planning_msgs::msg::PathWithLaneId * path);
+extern template void SceneModuleManagerInterface<SceneModuleInterfaceWithRTC>::registerModule(
+  const std::shared_ptr<SceneModuleInterfaceWithRTC> & scene_module);
 };
 }  // namespace autoware::behavior_velocity_planner
 
