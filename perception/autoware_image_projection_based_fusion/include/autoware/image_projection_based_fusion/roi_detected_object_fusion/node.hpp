@@ -31,7 +31,7 @@ namespace autoware::image_projection_based_fusion
 
 using sensor_msgs::msg::RegionOfInterest;
 
-class RoiDetectedObjectFusionNode : public FusionNode<DetectedObjects, RoiMsgType, DetectedObject>
+class RoiDetectedObjectFusionNode : public FusionNode<DetectedObjects, RoiMsgType, DetectedObjects>
 {
 public:
   explicit RoiDetectedObjectFusionNode(const rclcpp::NodeOptions & options);
@@ -55,6 +55,8 @@ protected:
   void publish(const DetectedObjects & output_msg) override;
 
   bool out_of_scope(const DetectedObject & obj);
+
+  rclcpp::Publisher<DetectedObjects>::SharedPtr pub_ptr_;
 
 private:
   struct

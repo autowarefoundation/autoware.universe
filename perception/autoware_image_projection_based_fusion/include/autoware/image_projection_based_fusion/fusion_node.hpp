@@ -166,7 +166,7 @@ protected:
   std::mutex mutex_det3d_msg_;
 
   // output publisher
-  typename rclcpp::Publisher<Msg3D>::SharedPtr pub_ptr_;
+  // typename rclcpp::Publisher<Msg3D>::SharedPtr pub_ptr_;
 
   // debugger
   std::shared_ptr<Debugger> debugger_;

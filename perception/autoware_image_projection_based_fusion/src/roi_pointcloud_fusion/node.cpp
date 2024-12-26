@@ -45,18 +45,12 @@ RoiPointCloudFusionNode::RoiPointCloudFusionNode(const rclcpp::NodeOptions & opt
   cluster_2d_tolerance_ = declare_parameter<double>("cluster_2d_tolerance");
   pub_objects_ptr_ = this->create_publisher<ClusterMsgType>("output_clusters", rclcpp::QoS{1});
   cluster_debug_pub_ = this->create_publisher<PointCloudMsgType>("debug/clusters", 1);
+
+  // publisher
+  pub_ptr_ = this->create_publisher<PointCloudMsgType>("output", rclcpp::QoS{1});
 }
 
-void RoiPointCloudFusionNode::preprocess(__attribute__((unused)) PointCloudMsgType & pointcloud_msg)
-{
-  std::unique_ptr<ScopedTimeTrack> st_ptr;
-  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
-
-  return;
-}
-
-void RoiPointCloudFusionNode::postprocess(__attribute__((unused))
-                                          PointCloudMsgType & pointcloud_msg)
+void RoiPointCloudFusionNode::postprocess(PointCloudMsgType & pointcloud_msg)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
@@ -201,6 +195,14 @@ void RoiPointCloudFusionNode::fuseOnSingleImage(
     debugger_->obstacle_points_ = debug_image_points;
     debugger_->publishImage(det2d.id, input_roi_msg.header.stamp);
   }
+}
+
+void RoiPointCloudFusionNode::publish(const PointCloudMsgType & output_msg)
+{
+  if (pub_ptr_->get_subscription_count() < 1) {
+    return;
+  }
+  pub_ptr_->publish(output_msg);
 }
 
 }  // namespace autoware::image_projection_based_fusion

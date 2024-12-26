@@ -42,13 +42,15 @@ public:
   explicit RoiPointCloudFusionNode(const rclcpp::NodeOptions & options);
 
 protected:
-  void preprocess(PointCloudMsgType & pointcloud_msg) override;
+  rclcpp::Publisher<PointCloudMsgType>::SharedPtr pub_ptr_;
 
   void postprocess(PointCloudMsgType & pointcloud_msg) override;
 
   void fuseOnSingleImage(
     const PointCloudMsgType & input_pointcloud_msg, const Det2dManager<RoiMsgType> & det2d,
     const RoiMsgType & input_roi_msg, PointCloudMsgType & output_pointcloud_msg) override;
+
+  void publish(const PointCloudMsgType & output_msg) override;
 };
 
 }  // namespace autoware::image_projection_based_fusion

@@ -53,6 +53,9 @@ RoiClusterFusionNode::RoiClusterFusionNode(const rclcpp::NodeOptions & options)
   remove_unknown_ = declare_parameter<bool>("remove_unknown");
   fusion_distance_ = declare_parameter<double>("fusion_distance");
   trust_object_distance_ = declare_parameter<double>("trust_object_distance");
+
+  // publisher
+  pub_ptr_ = this->create_publisher<ClusterMsgType>("output", rclcpp::QoS{1});
 }
 
 void RoiClusterFusionNode::preprocess(ClusterMsgType & output_cluster_msg)
@@ -68,28 +71,6 @@ void RoiClusterFusionNode::preprocess(ClusterMsgType & output_cluster_msg)
       feature_object.object.existence_probability = 0.0;
     }
   }
-}
-
-void RoiClusterFusionNode::postprocess(ClusterMsgType & output_cluster_msg)
-{
-  std::unique_ptr<ScopedTimeTrack> st_ptr;
-  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
-
-  if (!remove_unknown_) {
-    return;
-  }
-  ClusterMsgType known_objects;
-  known_objects.feature_objects.reserve(output_cluster_msg.feature_objects.size());
-  for (auto & feature_object : output_cluster_msg.feature_objects) {
-    bool is_roi_label_known = feature_object.object.classification.front().label !=
-                              autoware_perception_msgs::msg::ObjectClassification::UNKNOWN;
-    if (
-      is_roi_label_known ||
-      feature_object.object.existence_probability >= min_roi_existence_prob_) {
-      known_objects.feature_objects.push_back(feature_object);
-    }
-  }
-  output_cluster_msg.feature_objects = known_objects.feature_objects;
 }
 
 void RoiClusterFusionNode::fuseOnSingleImage(
@@ -287,6 +268,36 @@ double RoiClusterFusionNode::cal_iou_by_mode(
     default:
       return 0.0;
   }
+}
+
+void RoiClusterFusionNode::postprocess(ClusterMsgType & output_cluster_msg)
+{
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
+  if (!remove_unknown_) {
+    return;
+  }
+  ClusterMsgType known_objects;
+  known_objects.feature_objects.reserve(output_cluster_msg.feature_objects.size());
+  for (auto & feature_object : output_cluster_msg.feature_objects) {
+    bool is_roi_label_known = feature_object.object.classification.front().label !=
+                              autoware_perception_msgs::msg::ObjectClassification::UNKNOWN;
+    if (
+      is_roi_label_known ||
+      feature_object.object.existence_probability >= min_roi_existence_prob_) {
+      known_objects.feature_objects.push_back(feature_object);
+    }
+  }
+  output_cluster_msg.feature_objects = known_objects.feature_objects;
+}
+
+void RoiClusterFusionNode::publish(const ClusterMsgType & output_msg)
+{
+  if (pub_ptr_->get_subscription_count() < 1) {
+    return;
+  }
+  pub_ptr_->publish(output_msg);
 }
 
 }  // namespace autoware::image_projection_based_fusion

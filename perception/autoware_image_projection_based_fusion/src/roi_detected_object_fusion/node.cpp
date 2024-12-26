@@ -31,7 +31,7 @@ namespace autoware::image_projection_based_fusion
 using autoware::universe_utils::ScopedTimeTrack;
 
 RoiDetectedObjectFusionNode::RoiDetectedObjectFusionNode(const rclcpp::NodeOptions & options)
-: FusionNode<DetectedObjects, RoiMsgType, DetectedObject>("roi_detected_object_fusion", options)
+: FusionNode<DetectedObjects, RoiMsgType, DetectedObjects>("roi_detected_object_fusion", options)
 {
   fusion_params_.passthrough_lower_bound_probability_thresholds =
     declare_parameter<std::vector<double>>("passthrough_lower_bound_probability_thresholds");
@@ -47,6 +47,9 @@ RoiDetectedObjectFusionNode::RoiDetectedObjectFusionNode(const rclcpp::NodeOptio
       can_assign_vector.data(), label_num, label_num);
     fusion_params_.can_assign_matrix = can_assign_matrix_tmp.transpose();
   }
+
+  // publisher
+  pub_ptr_ = this->create_publisher<DetectedObjects>("output", rclcpp::QoS{1});
 }
 
 void RoiDetectedObjectFusionNode::preprocess(DetectedObjects & output_msg)
