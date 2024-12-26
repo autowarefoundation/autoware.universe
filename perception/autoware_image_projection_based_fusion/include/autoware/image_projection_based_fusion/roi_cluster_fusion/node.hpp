@@ -24,7 +24,7 @@ namespace autoware::image_projection_based_fusion
 {
 const std::map<std::string, uint8_t> IOU_MODE_MAP{{"iou", 0}, {"iou_x", 1}, {"iou_y", 2}};
 
-class RoiClusterFusionNode : public FusionNode<ClusterMsgType, RoiMsgType, ClusterObjType>
+class RoiClusterFusionNode : public FusionNode<ClusterMsgType, RoiMsgType, ClusterMsgType>
 {
 public:
   explicit RoiClusterFusionNode(const rclcpp::NodeOptions & options);
@@ -51,7 +51,7 @@ protected:
   std::string non_trust_object_iou_mode_{"iou_x"};
 
   bool is_far_enough(const ClusterObjType & obj, const double distance_threshold);
-  bool out_of_scope(const ClusterObjType & obj) override;
+  bool out_of_scope(const ClusterObjType & obj);
   double cal_iou_by_mode(
     const sensor_msgs::msg::RegionOfInterest & roi_1,
     const sensor_msgs::msg::RegionOfInterest & roi_2, const std::string iou_mode);

@@ -497,13 +497,13 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::publish(const Msg3D & output_msg)
 template class FusionNode<PointCloudMsgType, RoiMsgType, DetectedObjects>;
 
 // roi cluster fusion
-template class FusionNode<ClusterMsgType, RoiMsgType, ClusterObjType>;
+template class FusionNode<ClusterMsgType, RoiMsgType, ClusterMsgType>;
 
 // roi detected-object fusion
 template class FusionNode<DetectedObjects, RoiMsgType, DetectedObject>;
 
 // roi pointcloud fusion
-template class FusionNode<PointCloudMsgType, RoiMsgType, ClusterObjType>;
+template class FusionNode<PointCloudMsgType, RoiMsgType, ClusterMsgType>;
 
 // segment pointcloud fusion
 template class FusionNode<PointCloudMsgType, Image, PointCloudMsgType>;

@@ -41,7 +41,7 @@ namespace autoware::image_projection_based_fusion
 using autoware::universe_utils::ScopedTimeTrack;
 
 RoiClusterFusionNode::RoiClusterFusionNode(const rclcpp::NodeOptions & options)
-: FusionNode<ClusterMsgType, RoiMsgType, DetectedObjectWithFeature>("roi_cluster_fusion", options)
+: FusionNode<ClusterMsgType, RoiMsgType, ClusterMsgType>("roi_cluster_fusion", options)
 {
   trust_object_iou_mode_ = declare_parameter<std::string>("trust_object_iou_mode");
   non_trust_object_iou_mode_ = declare_parameter<std::string>("non_trust_object_iou_mode");
@@ -167,7 +167,6 @@ void RoiClusterFusionNode::fuseOnSingleImage(
     }
 
     sensor_msgs::msg::RegionOfInterest roi;
-    // roi.do_rectify = m_camera_info_.at(id).do_rectify;
     roi.x_offset = min_x;
     roi.y_offset = min_y;
     roi.width = max_x - min_x;

@@ -424,10 +424,6 @@ void PointPaintingFusionNode::postprocess(PointCloudMsgType & painted_pointcloud
   }
 }
 
-bool PointPaintingFusionNode::out_of_scope(__attribute__((unused)) const DetectedObjects & obj)
-{
-  return false;
-}
 }  // namespace autoware::image_projection_based_fusion
 
 #include <rclcpp_components/register_node_macro.hpp>
