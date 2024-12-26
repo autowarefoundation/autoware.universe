@@ -43,7 +43,6 @@ void DynamicObstacleStopModule::init(rclcpp::Node & node, const std::string & mo
   module_name_ = module_name;
   logger_ = node.get_logger().get_child(ns_);
   clock_ = node.get_clock();
-  velocity_factor_interface_.init(autoware::motion_utils::PlanningBehavior::ROUTE_OBSTACLE);
 
   planning_factor_interface_ = std::make_unique<autoware::motion_utils::PlanningFactorInterface>(
     &node, "dynamic_obstacle_stop");
@@ -163,18 +162,9 @@ VelocityPlanningResult DynamicObstacleStopModule::plan(
     debug_data_.stop_pose = stop_pose;
     if (stop_pose) {
       result.stop_points.push_back(stop_pose->position);
-      const auto stop_pose_reached =
-        planner_data->current_odometry.twist.twist.linear.x < 1e-3 &&
-        autoware::universe_utils::calcDistance2d(ego_data.pose, *stop_pose) < 1e-3;
       planning_factor_interface_->add(
         ego_trajectory_points, ego_data.pose, *stop_pose, PlanningFactor::STOP,
         SafetyFactorArray{});
-      velocity_factor_interface_.set(
-        ego_trajectory_points, ego_data.pose, *stop_pose,
-        stop_pose_reached ? autoware::motion_utils::VelocityFactor::STOPPED
-                          : autoware::motion_utils::VelocityFactor::APPROACHING,
-        "dynamic_obstacle_stop");
-      result.velocity_factor = velocity_factor_interface_.get();
       create_virtual_walls();
     }
   }

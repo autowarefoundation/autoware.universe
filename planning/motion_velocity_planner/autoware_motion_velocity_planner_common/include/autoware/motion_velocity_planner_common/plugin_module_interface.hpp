@@ -19,7 +19,6 @@
 #include "velocity_planning_result.hpp"
 
 #include <autoware/motion_utils/factor/planning_factor_interface.hpp>
-#include <autoware/motion_utils/factor/velocity_factor_interface.hpp>
 #include <autoware/universe_utils/ros/processing_time_publisher.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -47,7 +46,6 @@ public:
     const std::shared_ptr<const PlannerData> planner_data) = 0;
   virtual std::string get_module_name() const = 0;
   virtual void publish_planning_factor() {}
-  autoware::motion_utils::VelocityFactorInterface velocity_factor_interface_;
   rclcpp::Logger logger_ = rclcpp::get_logger("");
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_publisher_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr virtual_wall_publisher_;
