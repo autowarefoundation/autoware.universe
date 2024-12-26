@@ -21,6 +21,8 @@
 #include <autoware/universe_utils/ros/parameter.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 
+#include <tier4_v2x_msgs/msg/infrastructure_command_array.hpp>
+
 #include <boost/geometry/algorithms/intersects.hpp>
 
 #include <lanelet2_core/geometry/LineString.h>
@@ -57,6 +59,10 @@ VirtualTrafficLightModuleManager::VirtualTrafficLightModuleManager(rclcpp::Node 
   sub_virtual_traffic_light_states_ = autoware::universe_utils::InterProcessPollingSubscriber<
     tier4_v2x_msgs::msg::VirtualTrafficLightStateArray>::
     create_subscription(&node, "~/input/virtual_traffic_light_states");
+
+  pub_infrastructure_commands_ =
+    node.create_publisher<tier4_v2x_msgs::msg::InfrastructureCommandArray>(
+      "~/output/infrastructure_commands", 1);
 }
 
 void VirtualTrafficLightModuleManager::launchNewModules(
@@ -104,6 +110,25 @@ VirtualTrafficLightModuleManager::getModuleExpiredFunction(
   return [id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
     return id_set.count(scene_module->getModuleId()) == 0;
   };
+}
+
+void VirtualTrafficLightModuleManager::modifyPathVelocity(
+  tier4_planning_msgs::msg::PathWithLaneId * path)
+{
+  SceneModuleManagerInterface<>::modifyPathVelocity(path);
+
+  // publish infrastructure_command_array
+  tier4_v2x_msgs::msg::InfrastructureCommandArray infrastructure_command_array;
+  infrastructure_command_array.stamp = clock_->now();
+
+  for (const auto & scene_module : scene_modules_) {
+    if (
+      const auto command =
+        dynamic_cast<VirtualTrafficLightModule *>(scene_module.get())->getInfrastructureCommand()) {
+      infrastructure_command_array.commands.push_back(*command);
+    }
+  }
+  pub_infrastructure_commands_->publish(infrastructure_command_array);
 }
 }  // namespace autoware::behavior_velocity_planner
 

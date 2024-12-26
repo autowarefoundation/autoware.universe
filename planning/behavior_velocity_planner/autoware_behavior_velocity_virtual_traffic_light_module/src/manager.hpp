@@ -24,6 +24,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
+#include <tier4_v2x_msgs/msg/infrastructure_command_array.hpp>
 #include <tier4_v2x_msgs/msg/virtual_traffic_light_state_array.hpp>
 
 #include <functional>
@@ -40,6 +41,9 @@ public:
 
 private:
   VirtualTrafficLightModule::PlannerParam planner_param_;
+
+  void modifyPathVelocity(tier4_planning_msgs::msg::PathWithLaneId * path) override;
+
   void launchNewModules(const tier4_planning_msgs::msg::PathWithLaneId & path) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
@@ -48,6 +52,9 @@ private:
   autoware::universe_utils::InterProcessPollingSubscriber<
     tier4_v2x_msgs::msg::VirtualTrafficLightStateArray>::SharedPtr
     sub_virtual_traffic_light_states_;
+
+  rclcpp::Publisher<tier4_v2x_msgs::msg::InfrastructureCommandArray>::SharedPtr
+    pub_infrastructure_commands_;
 };
 
 class VirtualTrafficLightModulePlugin : public PluginWrapper<VirtualTrafficLightModuleManager>
