@@ -63,7 +63,6 @@ protected:
     const PointCloudMsgType & input_pointcloud_msg, const Det2dManager<Image> & det2d,
     const Image & input_mask, PointCloudMsgType & output_pointcloud_msg) override;
 
-  bool out_of_scope(const PointCloudMsgType & filtered_cloud) override;
   inline void copyPointCloud(
     const PointCloudMsgType & input, const int point_step, const size_t global_offset,
     PointCloudMsgType & output, size_t & output_pointcloud_size)

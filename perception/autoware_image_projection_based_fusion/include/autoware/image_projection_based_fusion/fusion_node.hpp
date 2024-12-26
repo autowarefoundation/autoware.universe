@@ -170,7 +170,6 @@ protected:
 
   // debugger
   std::shared_ptr<Debugger> debugger_;
-  virtual bool out_of_scope(const ExportObj & obj) = 0;
   float filter_scope_min_x_;
   float filter_scope_max_x_;
   float filter_scope_min_y_;

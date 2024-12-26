@@ -54,7 +54,7 @@ protected:
 
   void publish(const DetectedObjects & output_msg) override;
 
-  bool out_of_scope(const DetectedObject & obj) override;
+  bool out_of_scope(const DetectedObject & obj);
 
 private:
   struct

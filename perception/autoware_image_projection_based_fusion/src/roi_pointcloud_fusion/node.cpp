@@ -37,8 +37,7 @@ namespace autoware::image_projection_based_fusion
 using autoware::universe_utils::ScopedTimeTrack;
 
 RoiPointCloudFusionNode::RoiPointCloudFusionNode(const rclcpp::NodeOptions & options)
-: FusionNode<PointCloudMsgType, RoiMsgType, DetectedObjectWithFeature>(
-    "roi_pointcloud_fusion", options)
+: FusionNode<PointCloudMsgType, RoiMsgType, ClusterMsgType>("roi_pointcloud_fusion", options)
 {
   fuse_unknown_only_ = declare_parameter<bool>("fuse_unknown_only");
   min_cluster_size_ = declare_parameter<int>("min_cluster_size");
@@ -204,11 +203,6 @@ void RoiPointCloudFusionNode::fuseOnSingleImage(
   }
 }
 
-bool RoiPointCloudFusionNode::out_of_scope(__attribute__((unused))
-                                           const DetectedObjectWithFeature & obj)
-{
-  return false;
-}
 }  // namespace autoware::image_projection_based_fusion
 
 #include <rclcpp_components/register_node_macro.hpp>

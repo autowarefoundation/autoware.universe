@@ -25,7 +25,7 @@
 
 namespace autoware::image_projection_based_fusion
 {
-class RoiPointCloudFusionNode : public FusionNode<PointCloudMsgType, RoiMsgType, ClusterObjType>
+class RoiPointCloudFusionNode : public FusionNode<PointCloudMsgType, RoiMsgType, ClusterMsgType>
 {
 private:
   int min_cluster_size_{1};
@@ -49,7 +49,6 @@ protected:
   void fuseOnSingleImage(
     const PointCloudMsgType & input_pointcloud_msg, const Det2dManager<RoiMsgType> & det2d,
     const RoiMsgType & input_roi_msg, PointCloudMsgType & output_pointcloud_msg) override;
-  bool out_of_scope(const ClusterObjType & obj) override;
 };
 
 }  // namespace autoware::image_projection_based_fusion
