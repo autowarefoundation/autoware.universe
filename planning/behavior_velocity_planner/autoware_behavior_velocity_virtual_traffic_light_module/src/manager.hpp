@@ -29,7 +29,7 @@
 
 namespace autoware::behavior_velocity_planner
 {
-class VirtualTrafficLightModuleManager : public SceneModuleManagerInterface
+class VirtualTrafficLightModuleManager : public SceneModuleManagerInterface<>
 {
 public:
   explicit VirtualTrafficLightModuleManager(rclcpp::Node & node);

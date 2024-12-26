@@ -37,7 +37,7 @@ DetectionAreaModule::DetectionAreaModule(
   const lanelet::autoware::DetectionArea & detection_area_reg_elem,
   const PlannerParam & planner_param, const rclcpp::Logger & logger,
   const rclcpp::Clock::SharedPtr clock)
-: SceneModuleInterface(module_id, logger, clock),
+: SceneModuleInterfaceWithRTC(module_id, logger, clock),
   lane_id_(lane_id),
   detection_area_reg_elem_(detection_area_reg_elem),
   state_(State::GO),
