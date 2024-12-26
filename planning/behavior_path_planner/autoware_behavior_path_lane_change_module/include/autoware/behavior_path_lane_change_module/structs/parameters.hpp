@@ -130,6 +130,7 @@ struct TrajectoryParameters
   double th_lane_changing_length_diff{0.5};
   double min_lane_changing_velocity{5.6};
   double lane_changing_decel_factor{0.5};
+  double th_prepare_curvature{0.03};
   int lon_acc_sampling_num{10};
   int lat_acc_sampling_num{10};
   LateralAccelerationMap lat_acc_map{};
