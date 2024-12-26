@@ -461,4 +461,16 @@ void VirtualTrafficLightModule::insertStopVelocityAtEndLine(
   module_data_.stop_head_pose_at_end_line =
     calcHeadPose(stop_pose, planner_data_->vehicle_info_.max_longitudinal_offset_m);
 }
+
+std::optional<tier4_v2x_msgs::msg::InfrastructureCommand>
+VirtualTrafficLightModule::getInfrastructureCommand() const
+{
+  return infrastructure_command_;
+}
+
+void VirtualTrafficLightModule::setInfrastructureCommand(
+  const std::optional<tier4_v2x_msgs::msg::InfrastructureCommand> & command)
+{
+  infrastructure_command_ = command;
+}
 }  // namespace autoware::behavior_velocity_planner

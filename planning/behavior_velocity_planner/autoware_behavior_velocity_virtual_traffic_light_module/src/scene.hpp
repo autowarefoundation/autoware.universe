@@ -25,6 +25,7 @@
 #include <rclcpp/clock.hpp>
 #include <rclcpp/logger.hpp>
 
+#include <tier4_v2x_msgs/msg/infrastructure_command_array.hpp>
 #include <tier4_v2x_msgs/msg/virtual_traffic_light_state_array.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
@@ -90,6 +91,10 @@ public:
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
   autoware::motion_utils::VirtualWalls createVirtualWalls() override;
 
+  std::optional<tier4_v2x_msgs::msg::InfrastructureCommand> getInfrastructureCommand() const;
+  void setInfrastructureCommand(
+    const std::optional<tier4_v2x_msgs::msg::InfrastructureCommand> & command);
+
 private:
   const int64_t lane_id_;
   const lanelet::autoware::VirtualTrafficLight & reg_elem_;
@@ -97,6 +102,7 @@ private:
   const PlannerParam planner_param_;
   State state_{State::NONE};
   tier4_v2x_msgs::msg::InfrastructureCommand command_;
+  std::optional<tier4_v2x_msgs::msg::InfrastructureCommand> infrastructure_command_;
   MapData map_data_;
   ModuleData module_data_;
   autoware::universe_utils::InterProcessPollingSubscriber<
