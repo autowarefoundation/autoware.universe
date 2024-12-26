@@ -70,6 +70,10 @@ protected:
     std::memcpy(&output.data[output_pointcloud_size], &input.data[global_offset], point_step);
     output_pointcloud_size += point_step;
   }
+
+  void publish(const PointCloudMsgType & output_msg) override;
+
+  rclcpp::Publisher<PointCloudMsgType>::SharedPtr pub_ptr_;
 };
 
 }  // namespace autoware::image_projection_based_fusion

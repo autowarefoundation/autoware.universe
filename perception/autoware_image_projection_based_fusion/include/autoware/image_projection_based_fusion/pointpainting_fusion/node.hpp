@@ -55,7 +55,10 @@ protected:
 
   void postprocess(PointCloudMsgType & painted_pointcloud_msg) override;
 
+  void publish(const PointCloudMsgType & output_msg) override;
+
   rclcpp::Publisher<DetectedObjects>::SharedPtr obj_pub_ptr_;
+  rclcpp::Publisher<PointCloudMsgType>::SharedPtr pub_ptr_;
 
   int omp_num_threads_{1};
   float score_threshold_{0.0};

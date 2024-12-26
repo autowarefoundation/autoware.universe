@@ -48,6 +48,9 @@ SegmentPointCloudFusionNode::SegmentPointCloudFusionNode(const rclcpp::NodeOptio
   }
   is_publish_debug_mask_ = declare_parameter<bool>("is_publish_debug_mask");
   pub_debug_mask_ptr_ = image_transport::create_publisher(this, "~/debug/mask");
+
+  // publisher
+  pub_ptr_ = this->create_publisher<PointCloudMsgType>("output", rclcpp::QoS{1});
 }
 
 void SegmentPointCloudFusionNode::preprocess(__attribute__((unused))
@@ -168,6 +171,14 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
 
     filter_global_offset_set_.insert(global_offset);
   }
+}
+
+void SegmentPointCloudFusionNode::publish(const PointCloudMsgType & output_msg)
+{
+  if (pub_ptr_->get_subscription_count() < 1) {
+    return;
+  }
+  pub_ptr_->publish(output_msg);
 }
 
 }  // namespace autoware::image_projection_based_fusion

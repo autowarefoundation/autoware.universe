@@ -155,10 +155,15 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
   const auto min_area_matrix = this->declare_parameter<std::vector<double>>("min_area_matrix");
   const auto max_area_matrix = this->declare_parameter<std::vector<double>>("max_area_matrix");
 
+  // subscriber
   std::function<void(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)> sub_callback =
     std::bind(&PointPaintingFusionNode::subCallback, this, std::placeholders::_1);
   sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS().keep_last(3), sub_callback);
+
+  // publisher
+  pub_ptr_ = this->create_publisher<PointCloudMsgType>("output", rclcpp::QoS{1});
+  obj_pub_ptr_ = this->create_publisher<DetectedObjects>("~/output/objects", rclcpp::QoS{1});
 
   detection_class_remapper_.setParameters(
     allow_remapping_by_area_matrix, min_area_matrix, max_area_matrix);
@@ -185,8 +190,6 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
   // create detector
   detector_ptr_ = std::make_unique<image_projection_based_fusion::PointPaintingTRT>(
     encoder_param, head_param, densification_param, config);
-
-  obj_pub_ptr_ = this->create_publisher<DetectedObjects>("~/output/objects", rclcpp::QoS{1});
 
   if (this->declare_parameter("build_only", false)) {
     RCLCPP_INFO(this->get_logger(), "TensorRT engine is built and shutdown node.");
@@ -422,6 +425,14 @@ void PointPaintingFusionNode::postprocess(PointCloudMsgType & painted_pointcloud
   if (objects_sub_count > 0) {
     obj_pub_ptr_->publish(output_msg);
   }
+}
+
+void PointPaintingFusionNode::publish(const PointCloudMsgType & painted_pointcloud_msg)
+{
+  if (pub_ptr_->get_subscription_count() < 1) {
+    return;
+  }
+  pub_ptr_->publish(painted_pointcloud_msg);
 }
 
 }  // namespace autoware::image_projection_based_fusion

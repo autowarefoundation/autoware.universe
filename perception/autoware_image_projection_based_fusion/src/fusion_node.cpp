@@ -106,8 +106,8 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
     std::bind(&FusionNode::subCallback, this, std::placeholders::_1);
   sub_ = this->create_subscription<Msg3D>("input", rclcpp::QoS(1).best_effort(), sub_callback);
 
-  // publisher
-  pub_ptr_ = this->create_publisher<Msg3D>("output", rclcpp::QoS{1});
+  // // publisher
+  // pub_ptr_ = this->create_publisher<Msg3D>("output", rclcpp::QoS{1});
 
   // Set timer
   const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -483,12 +483,9 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::setPeriod(const int64_t new_period)
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
-void FusionNode<Msg3D, Msg2D, ExportObj>::publish(const Msg3D & output_msg)
+void FusionNode<Msg3D, Msg2D, ExportObj>::publish(const Msg3D & output_msg __attribute__((unused)))
 {
-  if (pub_ptr_->get_subscription_count() < 1) {
-    return;
-  }
-  pub_ptr_->publish(output_msg);
+  // do nothing by default
 }
 
 // Explicit instantiation for the supported types
@@ -500,7 +497,7 @@ template class FusionNode<PointCloudMsgType, RoiMsgType, DetectedObjects>;
 template class FusionNode<ClusterMsgType, RoiMsgType, ClusterMsgType>;
 
 // roi detected-object fusion
-template class FusionNode<DetectedObjects, RoiMsgType, DetectedObject>;
+template class FusionNode<DetectedObjects, RoiMsgType, DetectedObjects>;
 
 // roi pointcloud fusion
 template class FusionNode<PointCloudMsgType, RoiMsgType, ClusterMsgType>;
