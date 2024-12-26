@@ -26,7 +26,7 @@ const std::map<std::string, uint8_t> IOU_MODE_MAP{{"iou", 0}, {"iou_x", 1}, {"io
 
 class RoiClusterFusionNode
 : public FusionNode<
-    DetectedObjectsWithFeature, DetectedObjectWithFeature, DetectedObjectsWithFeature>
+    DetectedObjectsWithFeature, DetectedObjectsWithFeature, DetectedObjectWithFeature>
 {
 public:
   explicit RoiClusterFusionNode(const rclcpp::NodeOptions & options);

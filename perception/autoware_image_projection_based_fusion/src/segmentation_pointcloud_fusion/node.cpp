@@ -36,7 +36,7 @@ namespace autoware::image_projection_based_fusion
 using autoware::universe_utils::ScopedTimeTrack;
 
 SegmentPointCloudFusionNode::SegmentPointCloudFusionNode(const rclcpp::NodeOptions & options)
-: FusionNode<PointCloud2, PointCloud2, Image>("segmentation_pointcloud_fusion", options)
+: FusionNode<PointCloud2, Image, PointCloud2>("segmentation_pointcloud_fusion", options)
 {
   filter_distance_threshold_ = declare_parameter<float>("filter_distance_threshold");
   for (auto & item : filter_semantic_label_target_list_) {

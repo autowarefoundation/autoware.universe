@@ -34,7 +34,7 @@
 
 namespace autoware::image_projection_based_fusion
 {
-class SegmentPointCloudFusionNode : public FusionNode<PointCloud2, PointCloud2, Image>
+class SegmentPointCloudFusionNode : public FusionNode<PointCloud2, Image, PointCloud2>
 {
 private:
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_pointcloud_ptr_;

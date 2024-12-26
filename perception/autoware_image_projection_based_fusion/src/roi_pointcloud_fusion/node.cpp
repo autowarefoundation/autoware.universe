@@ -37,7 +37,7 @@ namespace autoware::image_projection_based_fusion
 using autoware::universe_utils::ScopedTimeTrack;
 
 RoiPointCloudFusionNode::RoiPointCloudFusionNode(const rclcpp::NodeOptions & options)
-: FusionNode<PointCloud2, DetectedObjectWithFeature, DetectedObjectsWithFeature>(
+: FusionNode<PointCloud2, DetectedObjectsWithFeature, DetectedObjectWithFeature>(
     "roi_pointcloud_fusion", options)
 {
   fuse_unknown_only_ = declare_parameter<bool>("fuse_unknown_only");

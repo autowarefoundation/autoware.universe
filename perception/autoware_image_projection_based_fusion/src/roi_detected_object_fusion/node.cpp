@@ -31,7 +31,7 @@ namespace autoware::image_projection_based_fusion
 using autoware::universe_utils::ScopedTimeTrack;
 
 RoiDetectedObjectFusionNode::RoiDetectedObjectFusionNode(const rclcpp::NodeOptions & options)
-: FusionNode<DetectedObjects, DetectedObject, DetectedObjectsWithFeature>(
+: FusionNode<DetectedObjects, DetectedObjectsWithFeature, DetectedObject>(
     "roi_detected_object_fusion", options)
 {
   fusion_params_.passthrough_lower_bound_probability_thresholds =

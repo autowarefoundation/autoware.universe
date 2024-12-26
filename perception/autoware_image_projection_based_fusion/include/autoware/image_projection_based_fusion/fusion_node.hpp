@@ -77,7 +77,7 @@ struct Det2dManager
   std::unique_ptr<std::mutex> mtx_ptr;
 };
 
-template <class TargetMsg3D, class ObjType, class Msg2D>
+template <class Msg3D, class Msg2D, class ExportObj>
 class FusionNode : public rclcpp::Node
 {
 public:
@@ -95,7 +95,7 @@ protected:
     const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_camera_info_msg,
     const std::size_t camera_id);
   // callback for main subscription
-  void subCallback(const typename TargetMsg3D::ConstSharedPtr input_msg);
+  void subCallback(const typename Msg3D::ConstSharedPtr input_msg);
   // callback for roi subscription
   void roiCallback(const typename Msg2D::ConstSharedPtr input_roi_msg, const std::size_t roi_i);
   // callback for timer
@@ -128,12 +128,12 @@ protected:
   }
 
   // Custom process methods
-  virtual void preprocess(TargetMsg3D & output_msg);
+  virtual void preprocess(Msg3D & output_msg);
   virtual void fuseOnSingleImage(
-    const TargetMsg3D & input_msg, const Det2dManager<Msg2D> & det2d, const Msg2D & input_roi_msg,
-    TargetMsg3D & output_msg) = 0;
-  virtual void postprocess(TargetMsg3D & output_msg);
-  virtual void publish(const TargetMsg3D & output_msg);
+    const Msg3D & input_msg, const Det2dManager<Msg2D> & det2d, const Msg2D & input_roi_msg,
+    Msg3D & output_msg) = 0;
+  virtual void postprocess(Msg3D & output_msg);
+  virtual void publish(const Msg3D & output_msg);
 
   // Members
   std::size_t rois_number_{1};
@@ -154,21 +154,21 @@ protected:
   double match_threshold_ms_{};
 
   /** \brief A vector of subscriber. */
-  typename rclcpp::Subscription<TargetMsg3D>::SharedPtr sub_;
+  typename rclcpp::Subscription<Msg3D>::SharedPtr sub_;
   std::vector<typename rclcpp::Subscription<Msg2D>::SharedPtr> rois_subs_;
   std::vector<rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr> camera_info_subs_;
 
   // cache for fusion
   int64_t cached_det3d_msg_timestamp_;
-  typename TargetMsg3D::SharedPtr cached_det3d_msg_ptr_;
+  typename Msg3D::SharedPtr cached_det3d_msg_ptr_;
   std::mutex mutex_det3d_msg_;
 
   // output publisher
-  typename rclcpp::Publisher<TargetMsg3D>::SharedPtr pub_ptr_;
+  typename rclcpp::Publisher<Msg3D>::SharedPtr pub_ptr_;
 
   // debugger
   std::shared_ptr<Debugger> debugger_;
-  virtual bool out_of_scope(const ObjType & obj) = 0;
+  virtual bool out_of_scope(const ExportObj & obj) = 0;
   float filter_scope_min_x_;
   float filter_scope_max_x_;
   float filter_scope_min_y_;
