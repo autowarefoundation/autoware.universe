@@ -184,11 +184,17 @@ void MrmHandler::operateMrm()
     if (current_mrm_behavior == mrm_state_.behavior) {
       return;
     }
-    if (requestMrmBehavior(current_mrm_behavior, RequestType::CALL)) {
-      mrm_state_.behavior = current_mrm_behavior;
-    } else {
+    // First: cancel the previous behavior
+    if (!requestMrmBehavior(mrm_state_.behavior, RequestType::CANCEL)) {
       handleFailedRequest();
+      return;
     }
+    // Second: call the current behavior
+    if (!requestMrmBehavior(current_mrm_behavior, RequestType::CALL)) {
+      handleFailedRequest();
+      return;
+    }
+    mrm_state_.behavior = current_mrm_behavior;
     return;
   }
   if (mrm_state_.state == MrmState::MRM_SUCCEEDED) {
