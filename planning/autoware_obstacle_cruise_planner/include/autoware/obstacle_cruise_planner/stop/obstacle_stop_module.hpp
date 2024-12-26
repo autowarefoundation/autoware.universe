@@ -139,11 +139,12 @@ public:
     ignore_crossing_obstacle_ =
       getOrDeclareParameter<bool>(node, "stop.common.ignore_crossing_obstacle");
 
-    inside_stop_obstacle_types_ =
-      obstacle_cruise_utils::getTargetObjectType(node, "stop.obstacle_type.inside.");
-    outside_stop_obstacle_types_ =
-      obstacle_cruise_utils::getTargetObjectType(node, "stop.obstacle_type.outside.");
-    use_pointcloud_for_stop_ = getOrDeclareParameter<bool>(node, "stop.obstacle_type.pointcloud");
+    inside_stop_obstacle_types_ = obstacle_cruise_utils::getTargetObjectType(
+      node, "stop.obstacle_filtering.obstacle_type.inside.");
+    outside_stop_obstacle_types_ = obstacle_cruise_utils::getTargetObjectType(
+      node, "stop.obstacle_filtering.obstacle_type.outside.");
+    use_pointcloud_for_stop_ =
+      getOrDeclareParameter<bool>(node, "stop.obstacle_filtering.obstacle_type.pointcloud");
 
     velocity_factors_pub_ = node.create_publisher<VelocityFactorArray>(
       "/planning/velocity_factors/obstacle_cruise/stop", 1);
@@ -696,6 +697,10 @@ private:
       return std::nullopt;
     }
 
+    if (!is_stop_obstacle_velocity(obstacle)) {
+      return std::nullopt;
+    }
+
     // calculate collision points with trajectory with lateral stop margin
     const auto traj_polys_with_lat_margin = obstacle_cruise_utils::createOneStepPolygons(
       traj_points, vehicle_info, odometry.pose.pose, max_lat_margin_for_stop,
@@ -720,6 +725,25 @@ private:
                         obstacle.classification, obstacle.pose,
                         obstacle.shape,          obstacle.longitudinal_velocity,
                         collision_point->first,  collision_point->second};
+  }
+
+  bool is_stop_obstacle_velocity(const Obstacle & obstacle) const
+  {
+    const bool is_prev_obstacle_stop =
+      obstacle_cruise_utils::getObstacleFromUuid(prev_stop_object_obstacles_, obstacle.uuid)
+        .has_value();
+
+    if (is_prev_obstacle_stop) {
+      if (stop_param_.obstacle_velocity_threshold_from_stop < obstacle.longitudinal_velocity) {
+        return false;
+      }
+      return true;
+    }
+
+    if (obstacle.longitudinal_velocity < stop_param_.obstacle_velocity_threshold_to_stop) {
+      return true;
+    }
+    return false;
   }
 
   bool is_crossing_transient_obstacle(
@@ -812,7 +836,7 @@ private:
         const double elapsed_time = (current_time - prev_closest_stop_obstacle.stamp).seconds();
         if (
           predicted_object_itr->kinematics.initial_twist_with_covariance.twist.linear.x <
-            stop_param_.obstacle_velocity_threshold_from_stop_to_cruise &&
+            stop_param_.obstacle_velocity_threshold_from_stop &&
           elapsed_time < stop_param_.stop_obstacle_hold_time_threshold) {
           stop_obstacles.push_back(prev_closest_stop_obstacle);
         }

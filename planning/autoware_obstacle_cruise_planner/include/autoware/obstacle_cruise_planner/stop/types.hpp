@@ -144,8 +144,8 @@ struct StopParam
   double pedestrian_deceleration_rate;
   double bicycle_deceleration_rate;
   double stop_obstacle_hold_time_threshold;
-  double obstacle_velocity_threshold_from_cruise_to_stop;
-  double obstacle_velocity_threshold_from_stop_to_cruise;
+  double obstacle_velocity_threshold_to_stop;
+  double obstacle_velocity_threshold_from_stop;
 
   struct ObstacleSpecificParams
   {
@@ -170,27 +170,27 @@ struct StopParam
 
     // behavior determination
     collision_time_margin = getOrDeclareParameter<double>(
-      node, "stop.behavior_determination.crossing_obstacle.collision_time_margin");
+      node, "stop.obstacle_filtering.crossing_obstacle.collision_time_margin");
     max_lat_margin_for_stop =
-      getOrDeclareParameter<double>(node, "stop.behavior_determination.max_lat_margin");
-    max_lat_margin_for_stop_against_unknown = getOrDeclareParameter<double>(
-      node, "stop.behavior_determination.max_lat_margin_against_unknown");
+      getOrDeclareParameter<double>(node, "stop.obstacle_filtering.max_lat_margin");
+    max_lat_margin_for_stop_against_unknown =
+      getOrDeclareParameter<double>(node, "stop.obstacle_filtering.max_lat_margin_against_unknown");
     min_velocity_to_reach_collision_point = getOrDeclareParameter<double>(
-      node, "stop.behavior_determination.min_velocity_to_reach_collision_point");
+      node, "stop.obstacle_filtering.min_velocity_to_reach_collision_point");
     max_lat_time_margin_for_stop = getOrDeclareParameter<double>(
-      node, "stop.behavior_determination.outside_obstacle.max_lateral_time_margin");
+      node, "stop.obstacle_filtering.outside_obstacle.max_lateral_time_margin");
     num_of_predicted_paths_for_outside_stop_obstacle = getOrDeclareParameter<int>(
-      node, "stop.behavior_determination.outside_obstacle.num_of_predicted_paths");
+      node, "stop.obstacle_filtering.outside_obstacle.num_of_predicted_paths");
     pedestrian_deceleration_rate = getOrDeclareParameter<double>(
-      node, "stop.behavior_determination.outside_obstacle.pedestrian_deceleration_rate");
+      node, "stop.obstacle_filtering.outside_obstacle.pedestrian_deceleration_rate");
     bicycle_deceleration_rate = getOrDeclareParameter<double>(
-      node, "stop.behavior_determination.outside_obstacle.bicycle_deceleration_rate");
+      node, "stop.obstacle_filtering.outside_obstacle.bicycle_deceleration_rate");
     stop_obstacle_hold_time_threshold = getOrDeclareParameter<double>(
-      node, "stop.behavior_determination.stop_obstacle_hold_time_threshold");
-    obstacle_velocity_threshold_from_cruise_to_stop = getOrDeclareParameter<double>(
-      node, "stop.behavior_determination.obstacle_velocity_threshold_from_cruise_to_stop");
-    obstacle_velocity_threshold_from_stop_to_cruise = getOrDeclareParameter<double>(
-      node, "stop.behavior_determination.obstacle_velocity_threshold_from_stop_to_cruise");
+      node, "stop.obstacle_filtering.stop_obstacle_hold_time_threshold");
+    obstacle_velocity_threshold_to_stop = getOrDeclareParameter<double>(
+      node, "stop.obstacle_filtering.obstacle_velocity_threshold_to_stop");
+    obstacle_velocity_threshold_from_stop = getOrDeclareParameter<double>(
+      node, "stop.obstacle_filtering.obstacle_velocity_threshold_from_stop");
 
     const std::string param_prefix = "stop.type_specified_params.";
     std::vector<std::string> obstacle_labels{"default"};
@@ -226,30 +226,30 @@ struct StopParam
       parameters, "stop.hold_stop_distance_threshold", hold_stop_distance_threshold);
 
     autoware::universe_utils::updateParam<double>(
-      parameters, "stop.behavior_determination.crossing_obstacle.collision_time_margin",
+      parameters, "stop.obstacle_filtering.crossing_obstacle.collision_time_margin",
       collision_time_margin);
     autoware::universe_utils::updateParam<double>(
-      parameters, "stop.behavior_determination.max_lat_margin", max_lat_margin_for_stop);
+      parameters, "stop.obstacle_filtering.max_lat_margin", max_lat_margin_for_stop);
     autoware::universe_utils::updateParam<double>(
-      parameters, "stop.behavior_determination.max_lat_margin_against_unknown",
+      parameters, "stop.obstacle_filtering.max_lat_margin_against_unknown",
       max_lat_margin_for_stop_against_unknown);
     autoware::universe_utils::updateParam<double>(
-      parameters, "stop.behavior_determination.min_velocity_to_reach_collision_point",
+      parameters, "stop.obstacle_filtering.min_velocity_to_reach_collision_point",
       min_velocity_to_reach_collision_point);
     autoware::universe_utils::updateParam<double>(
-      parameters, "stop.behavior_determination.outside_obstacle.max_lateral_time_margin",
+      parameters, "stop.obstacle_filtering.outside_obstacle.max_lateral_time_margin",
       max_lat_time_margin_for_stop);
     autoware::universe_utils::updateParam<int>(
-      parameters, "stop.behavior_determination.outside_obstacle.num_of_predicted_paths",
+      parameters, "stop.obstacle_filtering.outside_obstacle.num_of_predicted_paths",
       num_of_predicted_paths_for_outside_stop_obstacle);
     autoware::universe_utils::updateParam<double>(
-      parameters, "stop.behavior_determination.outside_obstacle.pedestrian_deceleration_rate",
+      parameters, "stop.obstacle_filtering.outside_obstacle.pedestrian_deceleration_rate",
       pedestrian_deceleration_rate);
     autoware::universe_utils::updateParam<double>(
-      parameters, "stop.behavior_determination.outside_obstacle.bicycle_deceleration_rate",
+      parameters, "stop.obstacle_filtering.outside_obstacle.bicycle_deceleration_rate",
       bicycle_deceleration_rate);
     autoware::universe_utils::updateParam<double>(
-      parameters, "stop.behavior_determination_obstacle_hold_time_threshold",
+      parameters, "stop.obstacle_filtering_obstacle_hold_time_threshold",
       stop_obstacle_hold_time_threshold);
 
     const std::string param_prefix = "stop.type_specified_params.";
