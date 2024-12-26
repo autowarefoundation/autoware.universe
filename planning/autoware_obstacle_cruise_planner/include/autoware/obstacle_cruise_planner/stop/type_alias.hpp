@@ -30,7 +30,6 @@
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
-#include "tier4_planning_msgs/msg/stop_speed_exceeded.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 #include <tier4_metric_msgs/msg/metric.hpp>
 #include <tier4_metric_msgs/msg/metric_array.hpp>
@@ -55,7 +54,6 @@ using geometry_msgs::msg::AccelWithCovarianceStamped;
 using geometry_msgs::msg::Twist;
 using nav_msgs::msg::Odometry;
 using sensor_msgs::msg::PointCloud2;
-using tier4_planning_msgs::msg::StopSpeedExceeded;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 namespace bg = boost::geometry;

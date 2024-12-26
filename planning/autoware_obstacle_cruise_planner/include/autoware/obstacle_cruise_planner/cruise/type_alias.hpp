@@ -30,7 +30,6 @@
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
-#include "tier4_planning_msgs/msg/stop_speed_exceeded.hpp"
 #include "tier4_planning_msgs/msg/velocity_limit.hpp"
 #include "tier4_planning_msgs/msg/velocity_limit_clear_command.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
@@ -57,7 +56,6 @@ using geometry_msgs::msg::AccelWithCovarianceStamped;
 using geometry_msgs::msg::Twist;
 using nav_msgs::msg::Odometry;
 using sensor_msgs::msg::PointCloud2;
-using tier4_planning_msgs::msg::StopSpeedExceeded;
 using tier4_planning_msgs::msg::VelocityLimit;
 using tier4_planning_msgs::msg::VelocityLimitClearCommand;
 using visualization_msgs::msg::Marker;
