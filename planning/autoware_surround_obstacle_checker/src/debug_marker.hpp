@@ -19,8 +19,6 @@
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_adapi_v1_msgs/msg/planning_behavior.hpp>
-#include <autoware_adapi_v1_msgs/msg/velocity_factor_array.hpp>
 #include <geometry_msgs/msg/polygon_stamped.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <tier4_planning_msgs/msg/planning_factor_array.hpp>
@@ -36,9 +34,6 @@ namespace autoware::surround_obstacle_checker
 {
 
 using autoware::vehicle_info_utils::VehicleInfo;
-using autoware_adapi_v1_msgs::msg::PlanningBehavior;
-using autoware_adapi_v1_msgs::msg::VelocityFactor;
-using autoware_adapi_v1_msgs::msg::VelocityFactorArray;
 using geometry_msgs::msg::PolygonStamped;
 using tier4_planning_msgs::msg::ControlPoint;
 using tier4_planning_msgs::msg::PlanningFactor;
@@ -70,7 +65,6 @@ public:
 
 private:
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_viz_pub_;
-  rclcpp::Publisher<VelocityFactorArray>::SharedPtr velocity_factor_pub_;
 
   rclcpp::Publisher<PolygonStamped>::SharedPtr vehicle_footprint_pub_;
   rclcpp::Publisher<PolygonStamped>::SharedPtr vehicle_footprint_offset_pub_;
@@ -87,7 +81,6 @@ private:
   geometry_msgs::msg::Pose self_pose_;
 
   MarkerArray makeVisualizationMarker();
-  VelocityFactorArray makeVelocityFactorArray();
 
   PolygonStamped boostPolygonToPolygonStamped(const Polygon2d & boost_polygon, const double & z);
 
