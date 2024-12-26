@@ -138,7 +138,13 @@ void TrafficLightSelectorNode::objectsCallback(
     if (max_iou > max_iou_threshold_) {
       TrafficLightRoi traffic_light_roi;
       traffic_light_roi.traffic_light_id = expect_roi.traffic_light_id;
+      traffic_light_roi.traffic_light_type = expect_roi.traffic_light_type;
       traffic_light_roi.roi = max_iou_roi;
+      output.rois.push_back(traffic_light_roi);
+    } else {
+      TrafficLightRoi traffic_light_roi;
+      traffic_light_roi.traffic_light_id = expect_roi.traffic_light_id;
+      traffic_light_roi.traffic_light_type = expect_roi.traffic_light_type;
       output.rois.push_back(traffic_light_roi);
     }
   }
