@@ -62,33 +62,20 @@ using autoware_perception_msgs::msg::ObjectClassification;
 template <class Msg2D>
 struct Det2dManager
 {
+  // camera index
   std::size_t id = 0;
   // camera projection
   std::unique_ptr<CameraProjection> camera_projector_ptr;
   bool project_to_unrectified_image = false;
   bool approximate_camera_projection = false;
-
   // process flags
   bool is_fused = false;
-
   // timing
   double input_offset_ms = 0.0;
-
   // cache
   std::map<int64_t, typename Msg2D::ConstSharedPtr> cached_det2d_msgs;
   std::unique_ptr<std::mutex> mtx_ptr;
 };
-
-template <class Msg2D>
-bool checkAllDet2dFused(const std::vector<Det2dManager<Msg2D>> & det2d_list)
-{
-  for (const auto & det2d : det2d_list) {
-    if (!det2d.is_fused) {
-      return false;
-    }
-  }
-  return true;
-}
 
 template <class TargetMsg3D, class ObjType, class Msg2D>
 class FusionNode : public rclcpp::Node
@@ -116,6 +103,30 @@ protected:
   void setPeriod(const int64_t new_period);
   void exportProcess();
 
+  // 2d detection management methods
+  bool checkAllDet2dFused()
+  {
+    std::lock_guard<std::mutex> lock(mutex_det2d_flags_);
+    for (const auto & det2d : det2d_list_) {
+      if (!det2d.is_fused) {
+        return false;
+      }
+    }
+    return true;
+  }
+  void setDet2dFused(Det2dManager<Msg2D> & det2d)
+  {
+    std::lock_guard<std::mutex> lock(mutex_det2d_flags_);
+    det2d.is_fused = true;
+  }
+  void clearAllDet2dFlags()
+  {
+    std::lock_guard<std::mutex> lock(mutex_det2d_flags_);
+    for (auto & det2d : det2d_list_) {
+      det2d.is_fused = false;
+    }
+  }
+
   // Custom process methods
   virtual void preprocess(TargetMsg3D & output_msg);
   virtual void fuseOnSingleImage(
@@ -129,8 +140,9 @@ protected:
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 
-  // camera_info
+  // 2d detection management
   std::vector<Det2dManager<Msg2D>> det2d_list_;
+  std::mutex mutex_det2d_flags_;
 
   // camera projection
   float approx_grid_cell_w_size_;

@@ -251,11 +251,6 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::exportProcess()
       "debug/pipeline_latency_ms", pipeline_latency_ms);
     processing_time_ms = 0;
   }
-
-  // reset flags
-  for (auto & det2d : det2d_list_) {
-    det2d.is_fused = false;
-  }
   cached_det3d_msg_ptr_ = nullptr;
 }
 
@@ -272,6 +267,9 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
     stop_watch_ptr_->toc("processing_time", true);
     std::lock_guard<std::mutex> lock(mutex_det3d_msg_);
     exportProcess();
+
+    // reset flags
+    clearAllDet2dFlags();
   }
 
   // TIMING: reset timer to the timeout time
@@ -339,7 +337,7 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
 
       fuseOnSingleImage(*det3d_msg, roi_i, *(roi_msgs[matched_stamp]), *output_msg);
       roi_msgs.erase(matched_stamp);
-      det2d.is_fused = true;
+      setDet2dFused(det2d);
 
       // add timestamp interval for debug
       if (debug_publisher_) {
@@ -357,9 +355,12 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
   std::lock_guard<std::mutex> lock(mutex_det3d_msg_);
   cached_det3d_msg_timestamp_ = timestamp_nsec;
   cached_det3d_msg_ptr_ = output_msg;
-  if (checkAllDet2dFused(det2d_list_)) {
+  if (checkAllDet2dFused()) {
     // if all camera fused, postprocess and publish the main message
     exportProcess();
+
+    // reset flags
+    clearAllDet2dFlags();
   } else {
     // if all of rois are not collected, publish the old Msg(if exists) and cache the
     // current Msg
@@ -404,7 +405,7 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::roiCallback(
       }
       // PROCESS: fuse the main message with the roi message
       fuseOnSingleImage(*(cached_det3d_msg_ptr_), roi_i, *det2d_msg, *(cached_det3d_msg_ptr_));
-      det2d.is_fused = true;
+      setDet2dFused(det2d);
 
       if (debug_publisher_) {
         double timestamp_interval_ms = (timestamp_nsec - cached_det3d_msg_timestamp_) / 1e6;
@@ -416,8 +417,10 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::roiCallback(
       }
 
       // PROCESS: if all camera fused, postprocess and publish the main message
-      if (checkAllDet2dFused(det2d_list_)) {
+      if (checkAllDet2dFused()) {
         exportProcess();
+        // reset flags
+        clearAllDet2dFlags();
       }
       processing_time_ms = processing_time_ms + stop_watch_ptr_->toc("processing_time", true);
       return;
@@ -450,10 +453,7 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::timer_callback()
     }
 
     // reset flags whether the message is fused or not
-    for (auto & det2d : det2d_list_) {
-      det2d.is_fused = false;
-    }
-    cached_det3d_msg_ptr_ = nullptr;
+    clearAllDet2dFlags();
 
     mutex_det3d_msg_.unlock();
   } else {
