@@ -131,7 +131,6 @@ struct DebugData
   std::vector<Obstacle> intentionally_ignored_obstacles;
   std::vector<StopObstacle> obstacles_to_stop;
   MarkerArray stop_wall_marker;
-  std::optional<std::vector<Metric>> stop_metrics{std::nullopt};
 };
 
 struct StopParam

@@ -39,6 +39,19 @@
 
 namespace
 {
+double calcDiffAngleAgainstTrajectory(
+  const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & target_pose)
+{
+  const size_t nearest_idx =
+    autoware::motion_utils::findNearestIndex(traj_points, target_pose.position);
+  const double traj_yaw = tf2::getYaw(traj_points.at(nearest_idx).pose.orientation);
+
+  const double target_yaw = tf2::getYaw(target_pose.orientation);
+
+  const double diff_yaw = autoware::universe_utils::normalizeRadian(target_yaw - traj_yaw);
+  return diff_yaw;
+}
+
 std::vector<PredictedPath> resampleHighestConfidencePredictedPaths1(
   const std::vector<PredictedPath> & predicted_paths, const double time_interval,
   const double time_horizon, const size_t num_paths)
@@ -791,7 +804,7 @@ protected:
     }
 
     // Get the highest confidence predicted paths
-    const auto resampled_predicted_paths = resampleHighestConfidencePredictedPaths(
+    const auto resampled_predicted_paths = resampleHighestConfidencePredictedPaths1(
       obstacle.predicted_paths, cp.prediction_resampling_time_interval,
       cp.prediction_resampling_time_horizon,
       crp.num_of_predicted_paths_for_outside_cruise_obstacle);
