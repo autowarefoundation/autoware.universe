@@ -108,7 +108,7 @@ protected:
   // 2d detection management methods
   bool checkAllDet2dFused()
   {
-    std::lock_guard<std::mutex> lock(mutex_det2d_flags_);
+    std::lock_guard<std::mutex> lock_det2d_flags(mutex_det2d_flags_);
     for (const auto & det2d : det2d_list_) {
       if (!det2d.is_fused) {
         return false;
@@ -118,12 +118,12 @@ protected:
   }
   void setDet2dFused(Det2dManager<Msg2D> & det2d)
   {
-    std::lock_guard<std::mutex> lock(mutex_det2d_flags_);
+    std::lock_guard<std::mutex> lock_det2d_flags(mutex_det2d_flags_);
     det2d.is_fused = true;
   }
   void clearAllDet2dFlags()
   {
-    std::lock_guard<std::mutex> lock(mutex_det2d_flags_);
+    std::lock_guard<std::mutex> lock_det2d_flags(mutex_det2d_flags_);
     for (auto & det2d : det2d_list_) {
       det2d.is_fused = false;
     }

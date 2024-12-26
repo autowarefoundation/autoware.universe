@@ -263,7 +263,7 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::subCallback(
     // PROCESS: if the main message is remained (and roi is not collected all) publish the main
     // message may processed partially with arrived 2d rois
     stop_watch_ptr_->toc("processing_time", true);
-    std::lock_guard<std::mutex> lock(mutex_det3d_msg_);
+    std::lock_guard<std::mutex> lock_det3d(mutex_det3d_msg_);
     exportProcess();
 
     // reset flags
@@ -293,7 +293,7 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::subCallback(
   // for loop for each roi
   for (auto & det2d : det2d_list_) {
     const auto roi_i = det2d.id;
-    std::lock_guard<std::mutex> lock(*(det2d.mtx_ptr));
+    std::lock_guard<std::mutex> lock_det2d(*(det2d.mtx_ptr));
 
     // check camera info
     if (det2d.camera_projector_ptr == nullptr) {
@@ -350,7 +350,7 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::subCallback(
   }
 
   // PROCESS: check if the fused message is ready to publish
-  std::lock_guard<std::mutex> lock(mutex_det3d_msg_);
+  std::lock_guard<std::mutex> lock_det3d(mutex_det3d_msg_);
   cached_det3d_msg_timestamp_ = timestamp_nsec;
   cached_det3d_msg_ptr_ = output_msg;
   if (checkAllDet2dFused()) {
@@ -376,13 +376,13 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::roiCallback(
   stop_watch_ptr_->toc("processing_time", true);
 
   auto & det2d = det2d_list_.at(roi_i);
-  std::lock_guard<std::mutex> lock(*(det2d.mtx_ptr));
+  std::lock_guard<std::mutex> lock_det2d(*(det2d.mtx_ptr));
 
   int64_t timestamp_nsec =
     (*det2d_msg).header.stamp.sec * static_cast<int64_t>(1e9) + (*det2d_msg).header.stamp.nanosec;
   // if cached Msg exist, try to match
   if (cached_det3d_msg_ptr_ != nullptr) {
-    std::lock_guard<std::mutex> lock(mutex_det3d_msg_);
+    std::lock_guard<std::mutex> lock_det3d(mutex_det3d_msg_);
 
     int64_t new_stamp =
       cached_det3d_msg_timestamp_ + det2d.input_offset_ms * static_cast<int64_t>(1e6);
