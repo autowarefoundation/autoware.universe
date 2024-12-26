@@ -32,7 +32,7 @@ namespace autoware::image_projection_based_fusion
 using sensor_msgs::msg::RegionOfInterest;
 
 class RoiDetectedObjectFusionNode
-: public FusionNode<DetectedObjects, DetectedObject, DetectedObjectsWithFeature>
+: public FusionNode<DetectedObjects, DetectedObjectsWithFeature, DetectedObject>
 {
 public:
   explicit RoiDetectedObjectFusionNode(const rclcpp::NodeOptions & options);

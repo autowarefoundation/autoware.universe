@@ -41,7 +41,7 @@ namespace autoware::image_projection_based_fusion
 using autoware::universe_utils::ScopedTimeTrack;
 
 RoiClusterFusionNode::RoiClusterFusionNode(const rclcpp::NodeOptions & options)
-: FusionNode<DetectedObjectsWithFeature, DetectedObjectWithFeature, DetectedObjectsWithFeature>(
+: FusionNode<DetectedObjectsWithFeature, DetectedObjectsWithFeature, DetectedObjectWithFeature>(
     "roi_cluster_fusion", options)
 {
   trust_object_iou_mode_ = declare_parameter<std::string>("trust_object_iou_mode");

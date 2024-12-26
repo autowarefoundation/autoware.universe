@@ -26,7 +26,7 @@
 namespace autoware::image_projection_based_fusion
 {
 class RoiPointCloudFusionNode
-: public FusionNode<PointCloud2, DetectedObjectWithFeature, DetectedObjectsWithFeature>
+: public FusionNode<PointCloud2, DetectedObjectsWithFeature, DetectedObjectWithFeature>
 {
 private:
   int min_cluster_size_{1};

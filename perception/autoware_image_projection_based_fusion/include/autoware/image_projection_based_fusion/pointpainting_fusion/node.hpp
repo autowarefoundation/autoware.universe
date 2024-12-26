@@ -42,7 +42,7 @@ inline bool isInsideBbox(
 }
 
 class PointPaintingFusionNode
-: public FusionNode<sensor_msgs::msg::PointCloud2, DetectedObjects, DetectedObjectsWithFeature>
+: public FusionNode<sensor_msgs::msg::PointCloud2, DetectedObjectsWithFeature, DetectedObjects>
 {
 public:
   explicit PointPaintingFusionNode(const rclcpp::NodeOptions & options);

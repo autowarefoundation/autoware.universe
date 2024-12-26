@@ -46,8 +46,8 @@ namespace autoware::image_projection_based_fusion
 {
 using autoware::universe_utils::ScopedTimeTrack;
 
-template <class TargetMsg3D, class ObjType, class Msg2D>
-FusionNode<TargetMsg3D, ObjType, Msg2D>::FusionNode(
+template <class Msg3D, class Msg2D, class ExportObj>
+FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
   const std::string & node_name, const rclcpp::NodeOptions & options)
 : Node(node_name, options), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
 {
@@ -102,13 +102,12 @@ FusionNode<TargetMsg3D, ObjType, Msg2D>::FusionNode(
   }
 
   // subscribe 3d detection
-  std::function<void(const typename TargetMsg3D::ConstSharedPtr msg)> sub_callback =
+  std::function<void(const typename Msg3D::ConstSharedPtr msg)> sub_callback =
     std::bind(&FusionNode::subCallback, this, std::placeholders::_1);
-  sub_ =
-    this->create_subscription<TargetMsg3D>("input", rclcpp::QoS(1).best_effort(), sub_callback);
+  sub_ = this->create_subscription<Msg3D>("input", rclcpp::QoS(1).best_effort(), sub_callback);
 
   // publisher
-  pub_ptr_ = this->create_publisher<TargetMsg3D>("output", rclcpp::QoS{1});
+  pub_ptr_ = this->create_publisher<Msg3D>("output", rclcpp::QoS{1});
 
   // Set timer
   const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -203,8 +202,8 @@ FusionNode<TargetMsg3D, ObjType, Msg2D>::FusionNode(
   filter_scope_max_z_ = declare_parameter<double>("filter_scope_max_z");
 }
 
-template <class TargetMsg3D, class Obj, class Msg2D>
-void FusionNode<TargetMsg3D, Obj, Msg2D>::cameraInfoCallback(
+template <class Msg3D, class Msg2D, class ExportObj>
+void FusionNode<Msg3D, Msg2D, ExportObj>::cameraInfoCallback(
   const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_camera_info_msg,
   const std::size_t camera_id)
 {
@@ -219,15 +218,14 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::cameraInfoCallback(
   }
 }
 
-template <class TargetMsg3D, class Obj, class Msg2D>
-void FusionNode<TargetMsg3D, Obj, Msg2D>::preprocess(TargetMsg3D & ouput_msg
-                                                     __attribute__((unused)))
+template <class Msg3D, class Msg2D, class ExportObj>
+void FusionNode<Msg3D, Msg2D, ExportObj>::preprocess(Msg3D & ouput_msg __attribute__((unused)))
 {
   // do nothing by default
 }
 
-template <class TargetMsg3D, class Obj, class Msg2D>
-void FusionNode<TargetMsg3D, Obj, Msg2D>::exportProcess()
+template <class Msg3D, class Msg2D, class ExportObj>
+void FusionNode<Msg3D, Msg2D, ExportObj>::exportProcess()
 {
   timer_->cancel();
 
@@ -254,9 +252,9 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::exportProcess()
   cached_det3d_msg_ptr_ = nullptr;
 }
 
-template <class TargetMsg3D, class Obj, class Msg2D>
-void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
-  const typename TargetMsg3D::ConstSharedPtr det3d_msg)
+template <class Msg3D, class Msg2D, class ExportObj>
+void FusionNode<Msg3D, Msg2D, ExportObj>::subCallback(
+  const typename Msg3D::ConstSharedPtr det3d_msg)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
@@ -285,7 +283,7 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
   stop_watch_ptr_->toc("processing_time", true);
 
   // PROCESS: preprocess the main message
-  typename TargetMsg3D::SharedPtr output_msg = std::make_shared<TargetMsg3D>(*det3d_msg);
+  typename Msg3D::SharedPtr output_msg = std::make_shared<Msg3D>(*det3d_msg);
   preprocess(*output_msg);
 
   // PROCESS: fuse the main message with the cached roi messages
@@ -368,8 +366,8 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
   }
 }
 
-template <class TargetMsg3D, class Obj, class Msg2D>
-void FusionNode<TargetMsg3D, Obj, Msg2D>::roiCallback(
+template <class Msg3D, class Msg2D, class ExportObj>
+void FusionNode<Msg3D, Msg2D, ExportObj>::roiCallback(
   const typename Msg2D::ConstSharedPtr det2d_msg, const std::size_t roi_i)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
@@ -430,15 +428,14 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::roiCallback(
   det2d.cached_det2d_msgs[timestamp_nsec] = det2d_msg;
 }
 
-template <class TargetMsg3D, class Obj, class Msg2D>
-void FusionNode<TargetMsg3D, Obj, Msg2D>::postprocess(TargetMsg3D & output_msg
-                                                      __attribute__((unused)))
+template <class Msg3D, class Msg2D, class ExportObj>
+void FusionNode<Msg3D, Msg2D, ExportObj>::postprocess(Msg3D & output_msg __attribute__((unused)))
 {
   // do nothing by default
 }
 
-template <class TargetMsg3D, class Obj, class Msg2D>
-void FusionNode<TargetMsg3D, Obj, Msg2D>::timer_callback()
+template <class Msg3D, class Msg2D, class ExportObj>
+void FusionNode<Msg3D, Msg2D, ExportObj>::timer_callback()
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
@@ -468,8 +465,8 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::timer_callback()
   }
 }
 
-template <class TargetMsg3D, class Obj, class Msg2D>
-void FusionNode<TargetMsg3D, Obj, Msg2D>::setPeriod(const int64_t new_period)
+template <class Msg3D, class Msg2D, class ExportObj>
+void FusionNode<Msg3D, Msg2D, ExportObj>::setPeriod(const int64_t new_period)
 {
   if (!timer_) {
     return;
@@ -485,8 +482,8 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::setPeriod(const int64_t new_period)
   }
 }
 
-template <class TargetMsg3D, class Obj, class Msg2D>
-void FusionNode<TargetMsg3D, Obj, Msg2D>::publish(const TargetMsg3D & output_msg)
+template <class Msg3D, class Msg2D, class ExportObj>
+void FusionNode<Msg3D, Msg2D, ExportObj>::publish(const Msg3D & output_msg)
 {
   if (pub_ptr_->get_subscription_count() < 1) {
     return;
@@ -495,10 +492,10 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::publish(const TargetMsg3D & output_msg
 }
 
 // explicit instantiation for the supported types
-template class FusionNode<DetectedObjects, DetectedObject, DetectedObjectsWithFeature>;
+template class FusionNode<DetectedObjects, DetectedObjectsWithFeature, DetectedObject>;
 template class FusionNode<
-  DetectedObjectsWithFeature, DetectedObjectWithFeature, DetectedObjectsWithFeature>;
-template class FusionNode<PointCloud2, DetectedObjects, DetectedObjectsWithFeature>;
-template class FusionNode<PointCloud2, DetectedObjectWithFeature, DetectedObjectsWithFeature>;
-template class FusionNode<PointCloud2, PointCloud2, Image>;
+  DetectedObjectsWithFeature, DetectedObjectsWithFeature, DetectedObjectWithFeature>;
+template class FusionNode<PointCloud2, DetectedObjectsWithFeature, DetectedObjects>;
+template class FusionNode<PointCloud2, DetectedObjectsWithFeature, DetectedObjectWithFeature>;
+template class FusionNode<PointCloud2, Image, PointCloud2>;
 }  // namespace autoware::image_projection_based_fusion
