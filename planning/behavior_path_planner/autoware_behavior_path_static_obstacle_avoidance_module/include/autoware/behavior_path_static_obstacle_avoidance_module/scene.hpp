@@ -132,9 +132,6 @@ private:
       }
 
       if (finish_distance > -1.0e-03) {
-        steering_factor_interface_.set(
-          {left_shift.start_pose, left_shift.finish_pose}, {start_distance, finish_distance},
-          SteeringFactor::LEFT, SteeringFactor::TURNING, "");
         planning_factor_interface_->add(
           start_distance, finish_distance, left_shift.start_pose, left_shift.finish_pose,
           PlanningFactor::SHIFT_LEFT, SafetyFactorArray{});
@@ -155,9 +152,6 @@ private:
       }
 
       if (finish_distance > -1.0e-03) {
-        steering_factor_interface_.set(
-          {right_shift.start_pose, right_shift.finish_pose}, {start_distance, finish_distance},
-          SteeringFactor::RIGHT, SteeringFactor::TURNING, "");
         planning_factor_interface_->add(
           start_distance, finish_distance, right_shift.start_pose, right_shift.finish_pose,
           PlanningFactor::SHIFT_RIGHT, SafetyFactorArray{});

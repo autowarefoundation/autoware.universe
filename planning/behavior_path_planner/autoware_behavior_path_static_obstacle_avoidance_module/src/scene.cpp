@@ -86,8 +86,6 @@ StaticObstacleAvoidanceModule::StaticObstacleAvoidanceModule(
   parameters_{parameters},
   generator_{parameters}
 {
-  steering_factor_interface_.init(PlanningBehavior::AVOIDANCE);
-  velocity_factor_interface_.init(PlanningBehavior::AVOIDANCE);
 }
 
 bool StaticObstacleAvoidanceModule::isExecutionRequested() const
@@ -778,8 +776,6 @@ void StaticObstacleAvoidanceModule::updateEgoBehavior(
   insertReturnDeadLine(isBestEffort(parameters_->policy_deceleration), path);
 
   set_longitudinal_planning_factor(path.path);
-
-  setVelocityFactor(path.path);
 }
 
 bool StaticObstacleAvoidanceModule::isSafePath(
@@ -1211,14 +1207,6 @@ CandidateOutput StaticObstacleAvoidanceModule::planCandidate() const
   output.lateral_shift = helper_->getRelativeShiftToPath(sl);
   output.start_distance_to_path_change = sl_front.start_longitudinal;
   output.finish_distance_to_path_change = sl_back.end_longitudinal;
-
-  const uint16_t steering_factor_direction = std::invoke([&output]() {
-    return output.lateral_shift > 0.0 ? SteeringFactor::LEFT : SteeringFactor::RIGHT;
-  });
-  steering_factor_interface_.set(
-    {sl_front.start, sl_back.end},
-    {output.start_distance_to_path_change, output.finish_distance_to_path_change},
-    steering_factor_direction, SteeringFactor::APPROACHING, "");
 
   const uint16_t planning_factor_direction = std::invoke([&output]() {
     return output.lateral_shift > 0.0 ? PlanningFactor::SHIFT_LEFT : PlanningFactor::SHIFT_RIGHT;
