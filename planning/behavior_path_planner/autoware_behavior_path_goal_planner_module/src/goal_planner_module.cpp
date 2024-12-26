@@ -121,9 +121,6 @@ GoalPlannerModule::GoalPlannerModule(
     initializeSafetyCheckParameters();
   }
 
-  steering_factor_interface_.init(PlanningBehavior::GOAL_PLANNER);
-  velocity_factor_interface_.init(PlanningBehavior::GOAL_PLANNER);
-
   /**
    * NOTE: Add `universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);` to functions called
    * from the main thread only.
@@ -1345,20 +1342,8 @@ void GoalPlannerModule::setTurnSignalInfo(
 
 void GoalPlannerModule::updateSteeringFactor(
   const PullOverContextData & context_data, const std::array<Pose, 2> & pose,
-  const std::array<double, 2> distance, const uint16_t type)
+  const std::array<double, 2> distance)
 {
-  const uint16_t steering_factor_direction = std::invoke([&]() {
-    const auto turn_signal = calcTurnSignalInfo(context_data);
-    if (turn_signal.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
-      return SteeringFactor::LEFT;
-    } else if (turn_signal.turn_signal.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
-      return SteeringFactor::RIGHT;
-    }
-    return SteeringFactor::STRAIGHT;
-  });
-
-  steering_factor_interface_.set(pose, distance, steering_factor_direction, type, "");
-
   const uint16_t planning_factor_direction = std::invoke([&]() {
     const auto turn_signal = calcTurnSignalInfo(context_data);
     if (turn_signal.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
@@ -1582,12 +1567,9 @@ void GoalPlannerModule::postProcess()
 
   updateSteeringFactor(
     context_data, {pull_over_path.start_pose(), pull_over_path.modified_goal_pose()},
-    {distance_to_path_change.first, distance_to_path_change.second},
-    has_decided_path ? SteeringFactor::TURNING : SteeringFactor::APPROACHING);
+    {distance_to_path_change.first, distance_to_path_change.second});
 
   set_longitudinal_planning_factor(pull_over_path.full_path());
-
-  setVelocityFactor(pull_over_path.full_path());
 }
 
 BehaviorModuleOutput GoalPlannerModule::planWaitingApproval()

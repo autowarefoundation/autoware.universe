@@ -456,7 +456,7 @@ private:
   // steering factor
   void updateSteeringFactor(
     const PullOverContextData & context_data, const std::array<Pose, 2> & pose,
-    const std::array<double, 2> distance, const uint16_t type);
+    const std::array<double, 2> distance);
 
   // rtc
   std::pair<double, double> calcDistanceToPathChange(
