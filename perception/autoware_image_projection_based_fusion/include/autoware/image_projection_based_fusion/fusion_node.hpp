@@ -76,6 +76,7 @@ struct Det2dManager
 
   // cache
   std::map<int64_t, typename Msg2D::ConstSharedPtr> cached_det2d_msgs;
+  std::unique_ptr<std::mutex> mtx_ptr;
 };
 
 template <class Msg2D>
@@ -148,7 +149,7 @@ protected:
   // cache for fusion
   int64_t cached_det3d_msg_timestamp_;
   typename TargetMsg3D::SharedPtr cached_det3d_msg_ptr_;
-  std::mutex mutex_cached_msgs_;
+  std::mutex mutex_det3d_msg_;
 
   // output publisher
   typename rclcpp::Publisher<TargetMsg3D>::SharedPtr pub_ptr_;
