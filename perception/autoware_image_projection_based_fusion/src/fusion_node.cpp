@@ -106,9 +106,6 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
     std::bind(&FusionNode::subCallback, this, std::placeholders::_1);
   sub_ = this->create_subscription<Msg3D>("input", rclcpp::QoS(1).best_effort(), sub_callback);
 
-  // // publisher
-  // pub_ptr_ = this->create_publisher<Msg3D>("output", rclcpp::QoS{1});
-
   // Set timer
   const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
     std::chrono::duration<double, std::milli>(timeout_ms_));
@@ -159,6 +156,14 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
     det2d_list_.at(roi_i).input_offset_ms = input_offset_ms.at(roi_i);
   }
 
+  // parameters for out_of_scope filter
+  filter_scope_min_x_ = declare_parameter<double>("filter_scope_min_x");
+  filter_scope_max_x_ = declare_parameter<double>("filter_scope_max_x");
+  filter_scope_min_y_ = declare_parameter<double>("filter_scope_min_y");
+  filter_scope_max_y_ = declare_parameter<double>("filter_scope_max_y");
+  filter_scope_min_z_ = declare_parameter<double>("filter_scope_min_z");
+  filter_scope_max_z_ = declare_parameter<double>("filter_scope_max_z");
+
   // debugger
   if (declare_parameter("debug_mode", false)) {
     std::vector<std::string> input_camera_topics;
@@ -193,13 +198,6 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
     stop_watch_ptr_->tic("cyclic_time");
     stop_watch_ptr_->tic("processing_time");
   }
-
-  filter_scope_min_x_ = declare_parameter<double>("filter_scope_min_x");
-  filter_scope_max_x_ = declare_parameter<double>("filter_scope_max_x");
-  filter_scope_min_y_ = declare_parameter<double>("filter_scope_min_y");
-  filter_scope_max_y_ = declare_parameter<double>("filter_scope_max_y");
-  filter_scope_min_z_ = declare_parameter<double>("filter_scope_min_z");
-  filter_scope_max_z_ = declare_parameter<double>("filter_scope_max_z");
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
