@@ -52,8 +52,8 @@ std::optional<Accumulator<double>> MetricsCalculator::calculate(
       return metrics::calcVelocityDeviation(reference_trajectory_, traj);
     case Metric::lateral_trajectory_displacement_local:
       return metrics::calcLocalLateralTrajectoryDisplacement(previous_trajectory_, traj, ego_pose_);
-    case Metric::trajectory_lateral_displacement_lookahead:
-      return metrics::calcTrajectoryLateralDisplacement(
+    case Metric::lateral_trajectory_displacement_lookahead:
+      return metrics::calcLookaheadLateralTrajectoryDisplacement(
         previous_trajectory_, traj, ego_odometry_, parameters.trajectory.evaluation_time_s);
     case Metric::stability_frechet:
       return metrics::calcFrechetDistance(
