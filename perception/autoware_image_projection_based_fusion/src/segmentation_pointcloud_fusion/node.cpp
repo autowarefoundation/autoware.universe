@@ -36,7 +36,7 @@ namespace autoware::image_projection_based_fusion
 using autoware::universe_utils::ScopedTimeTrack;
 
 SegmentPointCloudFusionNode::SegmentPointCloudFusionNode(const rclcpp::NodeOptions & options)
-: FusionNode<PointCloud2, Image, PointCloud2>("segmentation_pointcloud_fusion", options)
+: FusionNode<PointCloudMsgType, Image, PointCloudMsgType>("segmentation_pointcloud_fusion", options)
 {
   filter_distance_threshold_ = declare_parameter<float>("filter_distance_threshold");
   for (auto & item : filter_semantic_label_target_list_) {
@@ -50,7 +50,8 @@ SegmentPointCloudFusionNode::SegmentPointCloudFusionNode(const rclcpp::NodeOptio
   pub_debug_mask_ptr_ = image_transport::create_publisher(this, "~/debug/mask");
 }
 
-void SegmentPointCloudFusionNode::preprocess(__attribute__((unused)) PointCloud2 & pointcloud_msg)
+void SegmentPointCloudFusionNode::preprocess(__attribute__((unused))
+                                             PointCloudMsgType & pointcloud_msg)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
@@ -58,12 +59,12 @@ void SegmentPointCloudFusionNode::preprocess(__attribute__((unused)) PointCloud2
   return;
 }
 
-void SegmentPointCloudFusionNode::postprocess(PointCloud2 & pointcloud_msg)
+void SegmentPointCloudFusionNode::postprocess(PointCloudMsgType & pointcloud_msg)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
-  auto original_cloud = std::make_shared<PointCloud2>(pointcloud_msg);
+  auto original_cloud = std::make_shared<PointCloudMsgType>(pointcloud_msg);
 
   int point_step = original_cloud->point_step;
   size_t output_pointcloud_size = 0;
@@ -87,8 +88,9 @@ void SegmentPointCloudFusionNode::postprocess(PointCloud2 & pointcloud_msg)
 }
 
 void SegmentPointCloudFusionNode::fuseOnSingleImage(
-  const PointCloud2 & input_pointcloud_msg, const Det2dManager<Image> & det2d,
-  [[maybe_unused]] const Image & input_mask, __attribute__((unused)) PointCloud2 & output_cloud)
+  const PointCloudMsgType & input_pointcloud_msg, const Det2dManager<Image> & det2d,
+  [[maybe_unused]] const Image & input_mask,
+  __attribute__((unused)) PointCloudMsgType & output_cloud)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
@@ -128,7 +130,7 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
     transform_stamped = transform_stamped_optional.value();
   }
 
-  PointCloud2 transformed_cloud;
+  PointCloudMsgType transformed_cloud;
   tf2::doTransform(input_pointcloud_msg, transformed_cloud, transform_stamped);
 
   int point_step = input_pointcloud_msg.point_step;
@@ -169,7 +171,7 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
 }
 
 bool SegmentPointCloudFusionNode::out_of_scope(__attribute__((unused))
-                                               const PointCloud2 & filtered_cloud)
+                                               const PointCloudMsgType & filtered_cloud)
 {
   return false;
 }

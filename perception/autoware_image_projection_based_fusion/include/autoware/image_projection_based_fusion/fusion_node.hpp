@@ -52,7 +52,7 @@ using autoware_perception_msgs::msg::DetectedObject;
 using autoware_perception_msgs::msg::DetectedObjects;
 using sensor_msgs::msg::CameraInfo;
 using sensor_msgs::msg::Image;
-using sensor_msgs::msg::PointCloud2;
+using PointCloudMsgType = sensor_msgs::msg::PointCloud2;
 using RoiMsgType = tier4_perception_msgs::msg::DetectedObjectsWithFeature;
 using ClusterMsgType = tier4_perception_msgs::msg::DetectedObjectsWithFeature;
 using ClusterObjType = tier4_perception_msgs::msg::DetectedObjectWithFeature;
