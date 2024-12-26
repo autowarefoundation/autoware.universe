@@ -110,7 +110,7 @@ static const std::unordered_map<Metric, std::string> metric_descriptions = {
   {Metric::yaw_deviation, "Yaw_deviation[rad]"},
   {Metric::velocity_deviation, "Velocity_deviation[m/s]"},
   {Metric::lateral_trajectory_displacement_local, "Nearest Pose Lateral Deviation[m]"},
-  {Metric::lateral_trajectory_displacement_lookahead, "Kateral_Offset_Over_Distance_Ahead[m]"},
+  {Metric::lateral_trajectory_displacement_lookahead, "Lateral_Offset_Over_Distance_Ahead[m]"},
   {Metric::stability, "Stability[m]"},
   {Metric::stability_frechet, "StabilityFrechet[m]"},
   {Metric::obstacle_distance, "Obstacle_distance[m]"},
