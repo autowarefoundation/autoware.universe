@@ -220,19 +220,23 @@ inline void plot_lanelet2_object(
 
 struct DrivableAreaConfig
 {
-  static DrivableAreaConfig defaults() { return {"turquoise", 1.5}; }
+  static DrivableAreaConfig defaults() { return {"turquoise", 2.0}; }
   std::optional<std::string> color{};
   std::optional<double> linewidth{};
 };
 
 struct PathWithLaneIdConfig
 {
-  static PathWithLaneIdConfig defaults() { return {std::nullopt, "k", 1.0, std::nullopt, false}; }
+  static PathWithLaneIdConfig defaults()
+  {
+    return {std::nullopt, "k", 1.0, std::nullopt, false, 1.0};
+  }
   std::optional<std::string> label{};
   std::optional<std::string> color{};
   std::optional<double> linewidth{};
   std::optional<DrivableAreaConfig> da{};
-  bool lane_id{};  //<! flag to plot lane_id text
+  bool lane_id{};           //<! flag to plot lane_id text
+  double quiver_size{1.0};  //<! quvier color is same as `color` or "k" if it is null
 };
 
 /**
@@ -277,11 +281,14 @@ inline void plot_autoware_object(
   }
   // plot centerline
   axes.plot(Args(xs, ys), kwargs);
+  const auto quiver_scale =
+    config_opt ? config_opt.value().quiver_size : PathWithLaneIdConfig::defaults().quiver_size;
   const auto quiver_color =
     config_opt ? (config_opt.value().color ? config_opt.value().color.value() : "k") : "k";
   axes.quiver(
-    Args(xs, ys, yaw_cos, yaw_sin),
-    Kwargs("angles"_a = "xy", "scale_units"_a = "xy", "scale"_a = 1.0, "color"_a = quiver_color));
+    Args(xs, ys, yaw_cos, yaw_sin), Kwargs(
+                                      "angles"_a = "xy", "scale_units"_a = "xy",
+                                      "scale"_a = quiver_scale, "color"_a = quiver_color));
   if (plot_lane_id) {
     for (size_t i = 0; i < xs.size(); ++i) {
       std::stringstream ss;
