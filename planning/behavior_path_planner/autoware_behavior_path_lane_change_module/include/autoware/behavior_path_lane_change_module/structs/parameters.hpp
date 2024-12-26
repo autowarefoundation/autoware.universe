@@ -132,7 +132,6 @@ struct TrajectoryParameters
   int lon_acc_sampling_num{10};
   int lat_acc_sampling_num{10};
   LateralAccelerationMap lat_acc_map{};
-  FrenetPlannerParameters frenet{};
 };
 
 struct DelayParameters
@@ -149,6 +148,7 @@ struct Parameters
   SafetyParameters safety{};
   CancelParameters cancel{};
   DelayParameters delay{};
+  FrenetPlannerParameters frenet{};
 
   // lane change parameters
   double backward_lane_length{200.0};
