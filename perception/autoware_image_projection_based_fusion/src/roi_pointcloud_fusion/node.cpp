@@ -45,8 +45,8 @@ RoiPointCloudFusionNode::RoiPointCloudFusionNode(const rclcpp::NodeOptions & opt
   cluster_2d_tolerance_ = declare_parameter<double>("cluster_2d_tolerance");
 
   // publisher
-  pub_ptr_ = this->create_publisher<PointCloudMsgType>("output", rclcpp::QoS{1});
-  pub_objects_ptr_ = this->create_publisher<ClusterMsgType>("output_clusters", rclcpp::QoS{1});
+  point_pub_ptr_ = this->create_publisher<PointCloudMsgType>("output", rclcpp::QoS{1});
+  pub_ptr_ = this->create_publisher<ClusterMsgType>("output_clusters", rclcpp::QoS{1});
   cluster_debug_pub_ = this->create_publisher<PointCloudMsgType>("debug/clusters", 1);
 }
 
@@ -55,8 +55,8 @@ void RoiPointCloudFusionNode::postprocess(PointCloudMsgType & pointcloud_msg)
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
-  const auto objects_sub_count = pub_objects_ptr_->get_subscription_count() +
-                                 pub_objects_ptr_->get_intra_process_subscription_count();
+  const auto objects_sub_count =
+    pub_ptr_->get_subscription_count() + pub_ptr_->get_intra_process_subscription_count();
   if (objects_sub_count < 1) {
     return;
   }
@@ -66,7 +66,7 @@ void RoiPointCloudFusionNode::postprocess(PointCloudMsgType & pointcloud_msg)
   output_msg.feature_objects = output_fused_objects_;
 
   if (objects_sub_count > 0) {
-    pub_objects_ptr_->publish(output_msg);
+    pub_ptr_->publish(output_msg);
   }
   output_fused_objects_.clear();
   // publish debug cluster
@@ -199,10 +199,10 @@ void RoiPointCloudFusionNode::fuseOnSingleImage(
 
 void RoiPointCloudFusionNode::publish(const PointCloudMsgType & output_msg)
 {
-  if (pub_ptr_->get_subscription_count() < 1) {
+  if (point_pub_ptr_->get_subscription_count() < 1) {
     return;
   }
-  pub_ptr_->publish(output_msg);
+  point_pub_ptr_->publish(output_msg);
 }
 
 }  // namespace autoware::image_projection_based_fusion

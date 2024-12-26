@@ -56,8 +56,6 @@ protected:
 
   bool out_of_scope(const DetectedObject & obj);
 
-  rclcpp::Publisher<DetectedObjects>::SharedPtr pub_ptr_;
-
 private:
   struct
   {
