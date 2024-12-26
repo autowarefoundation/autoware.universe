@@ -491,8 +491,8 @@ ScenarioSelectorNode::ScenarioSelectorNode(const rclcpp::NodeOptions & node_opti
     this, get_clock(), period_ns, std::bind(&ScenarioSelectorNode::onTimer, this));
   published_time_publisher_ =
     std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
-  pub_processing_time_ =
-    this->create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
+  pub_processing_time_ = this->create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>(
+    "~/debug/processing_time_ms", 1);
 }
 }  // namespace autoware::scenario_selector
 

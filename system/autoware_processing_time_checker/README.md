@@ -17,8 +17,8 @@ ros2 launch autoware_processing_time_checker processing_time_checker.launch.xml
 
 ### Input
 
-| Name                      | Type                              | Description                    |
-| ------------------------- | --------------------------------- | ------------------------------ |
+| Name                      | Type                                          | Description                    |
+| ------------------------- | --------------------------------------------- | ------------------------------ |
 | `/.../processing_time_ms` | `autoware_internal_debug_msgs/Float64Stamped` | processing time of each module |
 
 ### Output

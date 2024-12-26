@@ -176,7 +176,8 @@ CostmapGenerator::CostmapGenerator(const rclcpp::NodeOptions & node_options)
     create_publisher<autoware::universe_utils::ProcessingTimeDetail>("processing_time", 1);
   time_keeper_ = std::make_shared<autoware::universe_utils::TimeKeeper>(pub_processing_time_);
   pub_processing_time_ms_ =
-    this->create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
+    this->create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>(
+      "~/debug/processing_time_ms", 1);
 
   // Timer
   const auto period_ns = rclcpp::Rate(param_->update_rate).period();

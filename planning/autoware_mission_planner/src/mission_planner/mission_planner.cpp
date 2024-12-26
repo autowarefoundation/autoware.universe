@@ -87,8 +87,8 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   is_mission_planner_ready_ = false;
 
   logger_configure_ = std::make_unique<autoware::universe_utils::LoggerLevelConfigure>(this);
-  pub_processing_time_ =
-    this->create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
+  pub_processing_time_ = this->create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>(
+    "~/debug/processing_time_ms", 1);
 }
 
 void MissionPlanner::publish_processing_time(

@@ -34,11 +34,11 @@
 
 #include "autoware_adapi_v1_msgs/msg/operation_mode_state.hpp"
 #include "autoware_control_msgs/msg/longitudinal.hpp"
+#include "autoware_internal_debug_msgs/msg/float32_multi_array_stamped.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "tf2_msgs/msg/tf_message.hpp"
-#include "autoware_internal_debug_msgs/msg/float32_multi_array_stamped.hpp"
 #include "visualization_msgs/msg/marker.hpp"
 
 #include <deque>
@@ -98,8 +98,10 @@ private:
   rclcpp::Clock::SharedPtr clock_;
   rclcpp::Logger logger_;
   // ros variables
-  rclcpp::Publisher<autoware_internal_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr m_pub_slope;
-  rclcpp::Publisher<autoware_internal_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr m_pub_debug;
+  rclcpp::Publisher<autoware_internal_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr
+    m_pub_slope;
+  rclcpp::Publisher<autoware_internal_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr
+    m_pub_debug;
   rclcpp::Publisher<MarkerArray>::SharedPtr m_pub_virtual_wall_marker;
 
   rclcpp::Node::OnSetParametersCallbackHandle::SharedPtr m_set_param_res;

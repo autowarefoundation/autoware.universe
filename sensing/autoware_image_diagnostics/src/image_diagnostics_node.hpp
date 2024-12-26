@@ -21,10 +21,10 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <sensor_msgs/msg/image.hpp>
 #include <autoware_internal_debug_msgs/msg/float32_multi_array_stamped.hpp>
 #include <autoware_internal_debug_msgs/msg/float32_stamped.hpp>
 #include <autoware_internal_debug_msgs/msg/int32_stamped.hpp>
+#include <sensor_msgs/msg/image.hpp>
 
 #if __has_include(<cv_bridge/cv_bridge.hpp>)
 #include <cv_bridge/cv_bridge.hpp>
@@ -95,7 +95,8 @@ protected:
   image_transport::Publisher block_diag_image_pub_;
   image_transport::Publisher dft_image_pub_;
   image_transport::Publisher gray_image_pub_;
-  rclcpp::Publisher<autoware_internal_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr average_pub_;
+  rclcpp::Publisher<autoware_internal_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr
+    average_pub_;
   rclcpp::Publisher<autoware_internal_debug_msgs::msg::Int32Stamped>::SharedPtr image_state_pub_;
 };
 

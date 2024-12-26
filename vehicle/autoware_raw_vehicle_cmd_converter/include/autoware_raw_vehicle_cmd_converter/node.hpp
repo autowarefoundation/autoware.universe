@@ -28,10 +28,10 @@
 
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <autoware_control_msgs/msg/control.hpp>
+#include <autoware_internal_debug_msgs/msg/float32_multi_array_stamped.hpp>
 #include <autoware_vehicle_msgs/msg/steering_report.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
-#include <autoware_internal_debug_msgs/msg/float32_multi_array_stamped.hpp>
 #include <tier4_vehicle_msgs/msg/actuation_command_stamped.hpp>
 #include <tier4_vehicle_msgs/msg/actuation_status_stamped.hpp>
 

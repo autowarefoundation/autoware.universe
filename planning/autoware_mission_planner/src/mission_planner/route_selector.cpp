@@ -138,8 +138,8 @@ RouteSelector::RouteSelector(const rclcpp::NodeOptions & options)
   main_request_ = std::monostate{};
 
   // Processing time
-  pub_processing_time_ =
-    this->create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
+  pub_processing_time_ = this->create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>(
+    "~/debug/processing_time_ms", 1);
 }
 
 void RouteSelector::publish_processing_time(

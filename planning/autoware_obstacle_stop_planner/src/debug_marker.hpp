@@ -18,9 +18,9 @@
 
 #include <autoware_adapi_v1_msgs/msg/planning_behavior.hpp>
 #include <autoware_adapi_v1_msgs/msg/velocity_factor_array.hpp>
+#include <autoware_internal_debug_msgs/msg/float32_multi_array_stamped.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/pose.hpp>
-#include <autoware_internal_debug_msgs/msg/float32_multi_array_stamped.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 

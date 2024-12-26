@@ -26,6 +26,8 @@
 #include <autoware/universe_utils/ros/logger_level_configure.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_internal_debug_msgs/msg/float32_stamped.hpp>
+#include <autoware_internal_debug_msgs/msg/int32_stamped.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
@@ -33,8 +35,6 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <std_srvs/srv/set_bool.hpp>
-#include <autoware_internal_debug_msgs/msg/float32_stamped.hpp>
-#include <autoware_internal_debug_msgs/msg/int32_stamped.hpp>
 #include <tier4_localization_msgs/srv/pose_with_covariance_stamped.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -167,7 +167,8 @@ private:
   rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr multi_ndt_pose_pub_;
   rclcpp::Publisher<geometry_msgs::msg::PoseArray>::SharedPtr multi_initial_pose_pub_;
   rclcpp::Publisher<autoware_internal_debug_msgs::msg::Float32Stamped>::SharedPtr exe_time_pub_;
-  rclcpp::Publisher<autoware_internal_debug_msgs::msg::Float32Stamped>::SharedPtr transform_probability_pub_;
+  rclcpp::Publisher<autoware_internal_debug_msgs::msg::Float32Stamped>::SharedPtr
+    transform_probability_pub_;
   rclcpp::Publisher<autoware_internal_debug_msgs::msg::Float32Stamped>::SharedPtr
     nearest_voxel_transformation_likelihood_pub_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr voxel_score_points_pub_;

@@ -18,11 +18,11 @@
 #include <autoware/component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_internal_debug_msgs/msg/bool_stamped.hpp>
 #include <autoware_sensing_msgs/msg/gnss_ins_orientation_stamped.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <sensor_msgs/msg/nav_sat_fix.hpp>
-#include <autoware_internal_debug_msgs/msg/bool_stamped.hpp>
 
 #include <boost/circular_buffer.hpp>
 

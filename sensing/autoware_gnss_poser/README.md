@@ -23,11 +23,11 @@ If the transformation from `base_link` to the antenna cannot be obtained, it out
 
 ### Output
 
-| Name                     | Type                                            | Description                                                    |
-| ------------------------ | ----------------------------------------------- | -------------------------------------------------------------- |
-| `~/output/pose`          | `geometry_msgs::msg::PoseStamped`               | vehicle pose calculated from gnss sensing data                 |
-| `~/output/gnss_pose_cov` | `geometry_msgs::msg::PoseWithCovarianceStamped` | vehicle pose with covariance calculated from gnss sensing data |
-| `~/output/gnss_fixed`    | `autoware_internal_debug_msgs::msg::BoolStamped`            | gnss fix status                                                |
+| Name                     | Type                                             | Description                                                    |
+| ------------------------ | ------------------------------------------------ | -------------------------------------------------------------- |
+| `~/output/pose`          | `geometry_msgs::msg::PoseStamped`                | vehicle pose calculated from gnss sensing data                 |
+| `~/output/gnss_pose_cov` | `geometry_msgs::msg::PoseWithCovarianceStamped`  | vehicle pose with covariance calculated from gnss sensing data |
+| `~/output/gnss_fixed`    | `autoware_internal_debug_msgs::msg::BoolStamped` | gnss fix status                                                |
 
 ## Parameters
 

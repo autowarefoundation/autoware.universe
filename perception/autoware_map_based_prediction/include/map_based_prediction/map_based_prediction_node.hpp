@@ -71,8 +71,8 @@ struct hash<lanelet::routing::LaneletPath>
 }  // namespace std
 namespace autoware::map_based_prediction
 {
-using autoware_planning_msgs::msg::TrajectoryPoint;
 using autoware_internal_debug_msgs::msg::StringStamped;
+using autoware_planning_msgs::msg::TrajectoryPoint;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
 
 class MapBasedPredictionNode : public rclcpp::Node

@@ -29,7 +29,8 @@ Pose2Twist::Pose2Twist(const rclcpp::NodeOptions & options) : rclcpp::Node("pose
   durable_qos.transient_local();
 
   twist_pub_ = create_publisher<geometry_msgs::msg::TwistStamped>("twist", durable_qos);
-  linear_x_pub_ = create_publisher<autoware_internal_debug_msgs::msg::Float32Stamped>("linear_x", durable_qos);
+  linear_x_pub_ =
+    create_publisher<autoware_internal_debug_msgs::msg::Float32Stamped>("linear_x", durable_qos);
   angular_z_pub_ =
     create_publisher<autoware_internal_debug_msgs::msg::Float32Stamped>("angular_z", durable_qos);
   // Note: this callback publishes topics above

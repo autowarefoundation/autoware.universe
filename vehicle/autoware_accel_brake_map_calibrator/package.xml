@@ -14,6 +14,7 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
+  <depend>autoware_internal_debug_msgs</depend>
   <depend>autoware_motion_utils</depend>
   <depend>autoware_raw_vehicle_cmd_converter</depend>
   <depend>autoware_universe_utils</depend>
@@ -25,7 +26,6 @@
   <depend>std_srvs</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>tf2_ros</depend>
-  <depend>autoware_internal_debug_msgs</depend>
   <depend>tier4_external_api_msgs</depend>
   <depend>tier4_vehicle_msgs</depend>
   <depend>visualization_msgs</depend>

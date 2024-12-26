@@ -16,6 +16,7 @@
   <depend>autoware_bezier_sampler</depend>
   <depend>autoware_frenet_planner</depend>
   <depend>autoware_internal_debug_msgs</depend>
+  <depend>autoware_internal_debug_msgs</depend>
   <depend>autoware_interpolation</depend>
   <depend>autoware_motion_utils</depend>
   <depend>autoware_perception_msgs</depend>
@@ -28,7 +29,6 @@
   <depend>rclcpp_components</depend>
   <depend>std_msgs</depend>
   <depend>tf2_ros</depend>
-  <depend>autoware_internal_debug_msgs</depend>
   <depend>tier4_planning_msgs</depend>
   <depend>visualization_msgs</depend>
 

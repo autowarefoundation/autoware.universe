@@ -61,7 +61,8 @@ GNSSPoser::GNSSPoser(const rclcpp::NodeOptions & node_options)
   pose_pub_ = create_publisher<geometry_msgs::msg::PoseStamped>("gnss_pose", rclcpp::QoS{1});
   pose_cov_pub_ = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "gnss_pose_cov", rclcpp::QoS{1});
-  fixed_pub_ = create_publisher<autoware_internal_debug_msgs::msg::BoolStamped>("gnss_fixed", rclcpp::QoS{1});
+  fixed_pub_ =
+    create_publisher<autoware_internal_debug_msgs::msg::BoolStamped>("gnss_fixed", rclcpp::QoS{1});
 
   // Set msg_gnss_ins_orientation_stamped_ with temporary values (not to publish zero value
   // covariances)

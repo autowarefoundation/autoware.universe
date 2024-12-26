@@ -59,8 +59,8 @@ PlanningEvaluatorNode::PlanningEvaluatorNode(const rclcpp::NodeOptions & node_op
   output_metrics_ = declare_parameter<bool>("output_metrics");
   ego_frame_str_ = declare_parameter<std::string>("ego_frame");
 
-  processing_time_pub_ =
-    this->create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
+  processing_time_pub_ = this->create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>(
+    "~/debug/processing_time_ms", 1);
 
   // List of metrics to calculate and publish
   metrics_pub_ = create_publisher<MetricArrayMsg>("~/metrics", 1);

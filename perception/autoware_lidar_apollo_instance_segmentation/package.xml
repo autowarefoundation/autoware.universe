@@ -14,6 +14,7 @@
   <buildtool_depend>ament_cmake</buildtool_depend>
 
   <depend>autoware_cuda_utils</depend>
+  <depend>autoware_internal_debug_msgs</depend>
   <depend>autoware_perception_msgs</depend>
   <depend>autoware_tensorrt_common</depend>
   <depend>autoware_universe_utils</depend>
@@ -22,7 +23,6 @@
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>tf2_eigen</depend>
-  <depend>autoware_internal_debug_msgs</depend>
   <depend>tier4_perception_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>

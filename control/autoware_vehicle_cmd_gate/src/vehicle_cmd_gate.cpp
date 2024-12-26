@@ -77,8 +77,8 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
   engage_pub_ = create_publisher<EngageMsg>("output/engage", durable_qos);
   pub_external_emergency_ = create_publisher<Emergency>("output/external_emergency", durable_qos);
   operation_mode_pub_ = create_publisher<OperationModeState>("output/operation_mode", durable_qos);
-  processing_time_pub_ =
-    this->create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
+  processing_time_pub_ = this->create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>(
+    "~/debug/processing_time_ms", 1);
 
   is_filter_activated_pub_ =
     create_publisher<IsFilterActivated>("~/is_filter_activated", durable_qos);

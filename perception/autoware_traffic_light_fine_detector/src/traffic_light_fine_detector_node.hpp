@@ -22,9 +22,9 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_internal_debug_msgs/msg/float32_stamped.hpp>
 #include <sensor_msgs/image_encodings.hpp>
 #include <sensor_msgs/msg/image.hpp>
-#include <autoware_internal_debug_msgs/msg/float32_stamped.hpp>
 #include <tier4_perception_msgs/msg/traffic_light_roi_array.hpp>
 
 #if __has_include(<cv_bridge/cv_bridge.hpp>)

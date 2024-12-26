@@ -25,6 +25,8 @@
 #include <autoware/universe_utils/system/stop_watch.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_internal_debug_msgs/msg/float64_multi_array_stamped.hpp>
+#include <autoware_internal_debug_msgs/msg/float64_stamped.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <geometry_msgs/msg/pose_array.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -34,8 +36,6 @@
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <std_srvs/srv/set_bool.hpp>
-#include <autoware_internal_debug_msgs/msg/float64_multi_array_stamped.hpp>
-#include <autoware_internal_debug_msgs/msg/float64_stamped.hpp>
 
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/utils.h>
@@ -86,7 +86,8 @@ private:
   //!< @brief diagnostics publisher
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr pub_diag_;
   //!< @brief processing_time publisher
-  rclcpp::Publisher<autoware_internal_debug_msgs::msg::Float64Stamped>::SharedPtr pub_processing_time_;
+  rclcpp::Publisher<autoware_internal_debug_msgs::msg::Float64Stamped>::SharedPtr
+    pub_processing_time_;
   //!< @brief initial pose subscriber
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr sub_initialpose_;
   //!< @brief measurement pose with covariance subscriber

@@ -24,8 +24,8 @@ Calculate yaw rate error and then calculate steering error recursively by least 
 
 ### Output
 
-| Name                                  | Type                                    | Description                   |
-| ------------------------------------- | --------------------------------------- | ----------------------------- |
+| Name                                  | Type                                                | Description                   |
+| ------------------------------------- | --------------------------------------------------- | ----------------------------- |
 | `~/output/steering_offset`            | `autoware_internal_debug_msgs::msg::Float32Stamped` | steering offset               |
 | `~/output/steering_offset_covariance` | `autoware_internal_debug_msgs::msg::Float32Stamped` | covariance of steering offset |
 

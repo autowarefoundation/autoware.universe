@@ -25,16 +25,6 @@
 #include <autoware_internal_debug_msgs/msg/int64_multi_array_stamped.hpp>
 #include <autoware_internal_debug_msgs/msg/int64_stamped.hpp>
 #include <autoware_internal_debug_msgs/msg/string_stamped.hpp>
-#include <autoware_internal_debug_msgs/msg/bool_stamped.hpp>
-#include <autoware_internal_debug_msgs/msg/float32_multi_array_stamped.hpp>
-#include <autoware_internal_debug_msgs/msg/float32_stamped.hpp>
-#include <autoware_internal_debug_msgs/msg/float64_multi_array_stamped.hpp>
-#include <autoware_internal_debug_msgs/msg/float64_stamped.hpp>
-#include <autoware_internal_debug_msgs/msg/int32_multi_array_stamped.hpp>
-#include <autoware_internal_debug_msgs/msg/int32_stamped.hpp>
-#include <autoware_internal_debug_msgs/msg/int64_multi_array_stamped.hpp>
-#include <autoware_internal_debug_msgs/msg/int64_stamped.hpp>
-#include <autoware_internal_debug_msgs/msg/string_stamped.hpp>
 
 #include <type_traits>
 
@@ -51,7 +41,8 @@ struct is_debug_message<autoware_internal_debug_msgs::msg::BoolStamped> : std::t
 };
 
 template <>
-struct is_debug_message<autoware_internal_debug_msgs::msg::Float32MultiArrayStamped> : std::true_type
+struct is_debug_message<autoware_internal_debug_msgs::msg::Float32MultiArrayStamped>
+: std::true_type
 {
 };
 
@@ -61,7 +52,8 @@ struct is_debug_message<autoware_internal_debug_msgs::msg::Float32Stamped> : std
 };
 
 template <>
-struct is_debug_message<autoware_internal_debug_msgs::msg::Float64MultiArrayStamped> : std::true_type
+struct is_debug_message<autoware_internal_debug_msgs::msg::Float64MultiArrayStamped>
+: std::true_type
 {
 };
 

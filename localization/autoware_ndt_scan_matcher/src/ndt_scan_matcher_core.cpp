@@ -158,9 +158,11 @@ NDTScanMatcher::NDTScanMatcher(const rclcpp::NodeOptions & options)
   multi_ndt_pose_pub_ = this->create_publisher<geometry_msgs::msg::PoseArray>("multi_ndt_pose", 10);
   multi_initial_pose_pub_ =
     this->create_publisher<geometry_msgs::msg::PoseArray>("multi_initial_pose", 10);
-  exe_time_pub_ = this->create_publisher<autoware_internal_debug_msgs::msg::Float32Stamped>("exe_time_ms", 10);
+  exe_time_pub_ =
+    this->create_publisher<autoware_internal_debug_msgs::msg::Float32Stamped>("exe_time_ms", 10);
   transform_probability_pub_ =
-    this->create_publisher<autoware_internal_debug_msgs::msg::Float32Stamped>("transform_probability", 10);
+    this->create_publisher<autoware_internal_debug_msgs::msg::Float32Stamped>(
+      "transform_probability", 10);
   nearest_voxel_transformation_likelihood_pub_ =
     this->create_publisher<autoware_internal_debug_msgs::msg::Float32Stamped>(
       "nearest_voxel_transformation_likelihood", 10);
@@ -177,7 +179,8 @@ NDTScanMatcher::NDTScanMatcher(const rclcpp::NodeOptions & options)
   initial_to_result_relative_pose_pub_ =
     this->create_publisher<geometry_msgs::msg::PoseStamped>("initial_to_result_relative_pose", 10);
   initial_to_result_distance_pub_ =
-    this->create_publisher<autoware_internal_debug_msgs::msg::Float32Stamped>("initial_to_result_distance", 10);
+    this->create_publisher<autoware_internal_debug_msgs::msg::Float32Stamped>(
+      "initial_to_result_distance", 10);
   initial_to_result_distance_old_pub_ =
     this->create_publisher<autoware_internal_debug_msgs::msg::Float32Stamped>(
       "initial_to_result_distance_old", 10);

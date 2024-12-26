@@ -25,6 +25,7 @@
 #include <pcl_ros/transforms.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_internal_debug_msgs/msg/float32_stamped.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <autoware_system_msgs/msg/autoware_state.hpp>
@@ -33,7 +34,6 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/imu.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
-#include <autoware_internal_debug_msgs/msg/float32_stamped.hpp>
 #include <tier4_metric_msgs/msg/metric.hpp>
 #include <tier4_metric_msgs/msg/metric_array.hpp>
 #include <visualization_msgs/msg/marker.hpp>
@@ -348,7 +348,8 @@ public:
   rclcpp::Publisher<MarkerArray>::SharedPtr virtual_wall_publisher_;
   rclcpp::Publisher<autoware::universe_utils::ProcessingTimeDetail>::SharedPtr
     debug_processing_time_detail_pub_;
-  rclcpp::Publisher<autoware_internal_debug_msgs::msg::Float32Stamped>::SharedPtr debug_rss_distance_publisher_;
+  rclcpp::Publisher<autoware_internal_debug_msgs::msg::Float32Stamped>::SharedPtr
+    debug_rss_distance_publisher_;
   rclcpp::Publisher<MetricArray>::SharedPtr metrics_pub_;
   // timer
   rclcpp::TimerBase::SharedPtr timer_;

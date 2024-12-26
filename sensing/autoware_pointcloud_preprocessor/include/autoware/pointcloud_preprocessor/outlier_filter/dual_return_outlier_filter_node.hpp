@@ -22,9 +22,9 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_internal_debug_msgs/msg/float32_stamped.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
-#include <autoware_internal_debug_msgs/msg/float32_stamped.hpp>
 
 #if __has_include(<cv_bridge/cv_bridge.hpp>)
 #include <cv_bridge/cv_bridge.hpp>

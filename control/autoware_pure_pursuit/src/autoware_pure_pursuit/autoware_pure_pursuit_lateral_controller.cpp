@@ -92,8 +92,9 @@ PurePursuitLateralController::PurePursuitLateralController(rclcpp::Node & node)
   // Debug Publishers
   pub_debug_marker_ =
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/markers", 0);
-  pub_debug_values_ = node.create_publisher<autoware_internal_debug_msgs::msg::Float32MultiArrayStamped>(
-    "~/debug/ld_outputs", rclcpp::QoS{1});
+  pub_debug_values_ =
+    node.create_publisher<autoware_internal_debug_msgs::msg::Float32MultiArrayStamped>(
+      "~/debug/ld_outputs", rclcpp::QoS{1});
 
   // Publish predicted trajectory
   pub_predicted_trajectory_ = node.create_publisher<autoware_planning_msgs::msg::Trajectory>(
