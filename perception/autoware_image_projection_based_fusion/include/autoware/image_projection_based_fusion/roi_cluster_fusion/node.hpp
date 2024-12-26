@@ -36,7 +36,8 @@ protected:
   void postprocess(DetectedObjectsWithFeature & output_cluster_msg) override;
 
   void fuseOnSingleImage(
-    const DetectedObjectsWithFeature & input_cluster_msg, const std::size_t image_id,
+    const DetectedObjectsWithFeature & input_cluster_msg,
+    const Det2dManager<DetectedObjectsWithFeature> & det2d,
     const DetectedObjectsWithFeature & input_roi_msg,
     DetectedObjectsWithFeature & output_cluster_msg) override;
 

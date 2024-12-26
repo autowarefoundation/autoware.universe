@@ -82,7 +82,7 @@ void RoiDetectedObjectFusionNode::preprocess(DetectedObjects & output_msg)
 }
 
 void RoiDetectedObjectFusionNode::fuseOnSingleImage(
-  const DetectedObjects & input_object_msg, const std::size_t image_id,
+  const DetectedObjects & input_object_msg, const Det2dManager<DetectedObjectsWithFeature> & det2d,
   const DetectedObjectsWithFeature & input_roi_msg,
   DetectedObjects & output_object_msg __attribute__((unused)))
 {
@@ -101,7 +101,7 @@ void RoiDetectedObjectFusionNode::fuseOnSingleImage(
   }
 
   const auto object_roi_map =
-    generateDetectedObjectRoIs(input_object_msg, image_id, object2camera_affine);
+    generateDetectedObjectRoIs(input_object_msg, det2d, object2camera_affine);
   fuseObjectsOnImage(input_object_msg, input_roi_msg.feature_objects, object_roi_map);
 
   if (debugger_) {
@@ -109,13 +109,13 @@ void RoiDetectedObjectFusionNode::fuseOnSingleImage(
     for (std::size_t roi_i = 0; roi_i < input_roi_msg.feature_objects.size(); ++roi_i) {
       debugger_->image_rois_.push_back(input_roi_msg.feature_objects.at(roi_i).feature.roi);
     }
-    debugger_->publishImage(image_id, input_roi_msg.header.stamp);
+    debugger_->publishImage(det2d.id, input_roi_msg.header.stamp);
   }
 }
 
 std::map<std::size_t, DetectedObjectWithFeature>
 RoiDetectedObjectFusionNode::generateDetectedObjectRoIs(
-  const DetectedObjects & input_object_msg, const std::size_t & image_id,
+  const DetectedObjects & input_object_msg, const Det2dManager<DetectedObjectsWithFeature> & det2d,
   const Eigen::Affine3d & object2camera_affine)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
@@ -131,8 +131,7 @@ RoiDetectedObjectFusionNode::generateDetectedObjectRoIs(
     return object_roi_map;
   }
   const auto & passthrough_object_flags = passthrough_object_flags_map_.at(timestamp_nsec);
-  const sensor_msgs::msg::CameraInfo & camera_info =
-    det2d_list_.at(image_id).camera_projector_ptr->getCameraInfo();
+  const sensor_msgs::msg::CameraInfo & camera_info = det2d.camera_projector_ptr->getCameraInfo();
   const double image_width = static_cast<double>(camera_info.width);
   const double image_height = static_cast<double>(camera_info.height);
 
@@ -163,7 +162,7 @@ RoiDetectedObjectFusionNode::generateDetectedObjectRoIs(
       }
 
       Eigen::Vector2d proj_point;
-      if (det2d_list_.at(image_id).camera_projector_ptr->calcImageProjectedPoint(
+      if (det2d.camera_projector_ptr->calcImageProjectedPoint(
             cv::Point3d(point.x(), point.y(), point.z()), proj_point)) {
         const double px = proj_point.x();
         const double py = proj_point.y();

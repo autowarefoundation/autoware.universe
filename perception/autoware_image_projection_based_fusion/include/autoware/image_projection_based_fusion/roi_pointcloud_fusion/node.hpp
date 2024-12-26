@@ -48,7 +48,8 @@ protected:
   void postprocess(sensor_msgs::msg::PointCloud2 & pointcloud_msg) override;
 
   void fuseOnSingleImage(
-    const PointCloud2 & input_pointcloud_msg, const std::size_t image_id,
+    const PointCloud2 & input_pointcloud_msg,
+    const Det2dManager<DetectedObjectsWithFeature> & det2d,
     const DetectedObjectsWithFeature & input_roi_msg, PointCloud2 & output_pointcloud_msg) override;
   bool out_of_scope(const DetectedObjectWithFeature & obj) override;
 };

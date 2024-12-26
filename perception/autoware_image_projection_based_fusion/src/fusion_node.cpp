@@ -303,16 +303,16 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
         this->get_logger(), *this->get_clock(), 5000, "no camera info. id is %zu", roi_i);
       continue;
     }
-    auto & roi_msgs = det2d.cached_det2d_msgs;
+    auto & det2d_msgs = det2d.cached_det2d_msgs;
 
     // check if the roi is collected
-    if (roi_msgs.size() == 0) continue;
+    if (det2d_msgs.size() == 0) continue;
 
     // MATCH: get the closest roi message, and remove outdated messages
     int64_t min_interval = 1e9;
     int64_t matched_stamp = -1;
     std::list<int64_t> outdate_stamps;
-    for (const auto & [roi_stamp, value] : roi_msgs) {
+    for (const auto & [roi_stamp, value] : det2d_msgs) {
       int64_t new_stamp = timestamp_nsec + det2d.input_offset_ms * static_cast<int64_t>(1e6);
       int64_t interval = abs(static_cast<int64_t>(roi_stamp) - new_stamp);
 
@@ -326,7 +326,7 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
       }
     }
     for (auto stamp : outdate_stamps) {
-      roi_msgs.erase(stamp);
+      det2d_msgs.erase(stamp);
     }
 
     // PROCESS: if matched, fuse the main message with the roi message
@@ -335,8 +335,8 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::subCallback(
         debugger_->clear();
       }
 
-      fuseOnSingleImage(*det3d_msg, roi_i, *(roi_msgs[matched_stamp]), *output_msg);
-      roi_msgs.erase(matched_stamp);
+      fuseOnSingleImage(*det3d_msg, det2d, *(det2d_msgs[matched_stamp]), *output_msg);
+      det2d_msgs.erase(matched_stamp);
       setDet2dFused(det2d);
 
       // add timestamp interval for debug
@@ -404,7 +404,7 @@ void FusionNode<TargetMsg3D, Obj, Msg2D>::roiCallback(
         debugger_->clear();
       }
       // PROCESS: fuse the main message with the roi message
-      fuseOnSingleImage(*(cached_det3d_msg_ptr_), roi_i, *det2d_msg, *(cached_det3d_msg_ptr_));
+      fuseOnSingleImage(*(cached_det3d_msg_ptr_), det2d, *det2d_msg, *(cached_det3d_msg_ptr_));
       setDet2dFused(det2d);
 
       if (debug_publisher_) {

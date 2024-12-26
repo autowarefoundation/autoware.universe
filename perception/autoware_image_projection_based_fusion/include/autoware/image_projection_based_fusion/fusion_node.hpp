@@ -130,7 +130,7 @@ protected:
   // Custom process methods
   virtual void preprocess(TargetMsg3D & output_msg);
   virtual void fuseOnSingleImage(
-    const TargetMsg3D & input_msg, const std::size_t image_id, const Msg2D & input_roi_msg,
+    const TargetMsg3D & input_msg, const Det2dManager<Msg2D> & det2d, const Msg2D & input_roi_msg,
     TargetMsg3D & output_msg) = 0;
   virtual void postprocess(TargetMsg3D & output_msg);
   virtual void publish(const TargetMsg3D & output_msg);

@@ -41,11 +41,13 @@ protected:
   void preprocess(DetectedObjects & output_msg) override;
 
   void fuseOnSingleImage(
-    const DetectedObjects & input_object_msg, const std::size_t image_id,
+    const DetectedObjects & input_object_msg,
+    const Det2dManager<DetectedObjectsWithFeature> & det2d,
     const DetectedObjectsWithFeature & input_roi_msg, DetectedObjects & output_object_msg) override;
 
   std::map<std::size_t, DetectedObjectWithFeature> generateDetectedObjectRoIs(
-    const DetectedObjects & input_object_msg, const std::size_t & image_id,
+    const DetectedObjects & input_object_msg,
+    const Det2dManager<DetectedObjectsWithFeature> & det2d,
     const Eigen::Affine3d & object2camera_affine);
 
   void fuseObjectsOnImage(

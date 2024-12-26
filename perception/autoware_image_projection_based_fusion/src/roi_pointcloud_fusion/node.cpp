@@ -86,7 +86,8 @@ void RoiPointCloudFusionNode::postprocess(
   }
 }
 void RoiPointCloudFusionNode::fuseOnSingleImage(
-  const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const std::size_t image_id,
+  const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg,
+  const Det2dManager<DetectedObjectsWithFeature> & det2d,
   const DetectedObjectsWithFeature & input_roi_msg,
   __attribute__((unused)) sensor_msgs::msg::PointCloud2 & output_pointcloud_msg)
 {
@@ -162,7 +163,7 @@ void RoiPointCloudFusionNode::fuseOnSingleImage(
     }
 
     Eigen::Vector2d projected_point;
-    if (det2d_list_.at(image_id).camera_projector_ptr->calcImageProjectedPoint(
+    if (det2d.camera_projector_ptr->calcImageProjectedPoint(
           cv::Point3d(transformed_x, transformed_y, transformed_z), projected_point)) {
       for (std::size_t i = 0; i < output_objs.size(); ++i) {
         auto & feature_obj = output_objs.at(i);
@@ -202,7 +203,7 @@ void RoiPointCloudFusionNode::fuseOnSingleImage(
   if (debugger_) {
     debugger_->image_rois_ = debug_image_rois;
     debugger_->obstacle_points_ = debug_image_points;
-    debugger_->publishImage(image_id, input_roi_msg.header.stamp);
+    debugger_->publishImage(det2d.id, input_roi_msg.header.stamp);
   }
 }
 
