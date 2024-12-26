@@ -42,7 +42,7 @@ inline bool isInsideBbox(
 }
 
 class PointPaintingFusionNode
-: public FusionNode<sensor_msgs::msg::PointCloud2, DetectedObjectsWithFeature, DetectedObjects>
+: public FusionNode<sensor_msgs::msg::PointCloud2, RoiMsgType, DetectedObjects>
 {
 public:
   explicit PointPaintingFusionNode(const rclcpp::NodeOptions & options);
@@ -52,8 +52,7 @@ protected:
 
   void fuseOnSingleImage(
     const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg,
-    const Det2dManager<DetectedObjectsWithFeature> & det2d,
-    const DetectedObjectsWithFeature & input_roi_msg,
+    const Det2dManager<RoiMsgType> & det2d, const RoiMsgType & input_roi_msg,
     sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg) override;
 
   void postprocess(sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg) override;

@@ -24,22 +24,18 @@ namespace autoware::image_projection_based_fusion
 {
 const std::map<std::string, uint8_t> IOU_MODE_MAP{{"iou", 0}, {"iou_x", 1}, {"iou_y", 2}};
 
-class RoiClusterFusionNode
-: public FusionNode<
-    DetectedObjectsWithFeature, DetectedObjectsWithFeature, DetectedObjectWithFeature>
+class RoiClusterFusionNode : public FusionNode<ClusterMsgType, RoiMsgType, ClusterObjType>
 {
 public:
   explicit RoiClusterFusionNode(const rclcpp::NodeOptions & options);
 
 protected:
-  void preprocess(DetectedObjectsWithFeature & output_cluster_msg) override;
-  void postprocess(DetectedObjectsWithFeature & output_cluster_msg) override;
+  void preprocess(ClusterMsgType & output_cluster_msg) override;
+  void postprocess(ClusterMsgType & output_cluster_msg) override;
 
   void fuseOnSingleImage(
-    const DetectedObjectsWithFeature & input_cluster_msg,
-    const Det2dManager<DetectedObjectsWithFeature> & det2d,
-    const DetectedObjectsWithFeature & input_roi_msg,
-    DetectedObjectsWithFeature & output_cluster_msg) override;
+    const ClusterMsgType & input_cluster_msg, const Det2dManager<RoiMsgType> & det2d,
+    const RoiMsgType & input_roi_msg, ClusterMsgType & output_cluster_msg) override;
 
   std::string trust_object_iou_mode_{"iou"};
   bool use_cluster_semantic_type_{false};
@@ -54,12 +50,11 @@ protected:
   double trust_object_distance_;
   std::string non_trust_object_iou_mode_{"iou_x"};
 
-  bool is_far_enough(const DetectedObjectWithFeature & obj, const double distance_threshold);
-  bool out_of_scope(const DetectedObjectWithFeature & obj) override;
+  bool is_far_enough(const ClusterObjType & obj, const double distance_threshold);
+  bool out_of_scope(const ClusterObjType & obj) override;
   double cal_iou_by_mode(
     const sensor_msgs::msg::RegionOfInterest & roi_1,
     const sensor_msgs::msg::RegionOfInterest & roi_2, const std::string iou_mode);
-  // bool CheckUnknown(const DetectedObjectsWithFeature & obj);
 };
 
 }  // namespace autoware::image_projection_based_fusion

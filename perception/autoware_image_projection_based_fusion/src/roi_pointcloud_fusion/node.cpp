@@ -37,15 +37,13 @@ namespace autoware::image_projection_based_fusion
 using autoware::universe_utils::ScopedTimeTrack;
 
 RoiPointCloudFusionNode::RoiPointCloudFusionNode(const rclcpp::NodeOptions & options)
-: FusionNode<PointCloud2, DetectedObjectsWithFeature, DetectedObjectWithFeature>(
-    "roi_pointcloud_fusion", options)
+: FusionNode<PointCloud2, RoiMsgType, DetectedObjectWithFeature>("roi_pointcloud_fusion", options)
 {
   fuse_unknown_only_ = declare_parameter<bool>("fuse_unknown_only");
   min_cluster_size_ = declare_parameter<int>("min_cluster_size");
   max_cluster_size_ = declare_parameter<int>("max_cluster_size");
   cluster_2d_tolerance_ = declare_parameter<double>("cluster_2d_tolerance");
-  pub_objects_ptr_ =
-    this->create_publisher<DetectedObjectsWithFeature>("output_clusters", rclcpp::QoS{1});
+  pub_objects_ptr_ = this->create_publisher<ClusterMsgType>("output_clusters", rclcpp::QoS{1});
   cluster_debug_pub_ = this->create_publisher<sensor_msgs::msg::PointCloud2>("debug/clusters", 1);
 }
 
@@ -70,7 +68,7 @@ void RoiPointCloudFusionNode::postprocess(
     return;
   }
 
-  DetectedObjectsWithFeature output_msg;
+  ClusterMsgType output_msg;
   output_msg.header = pointcloud_msg.header;
   output_msg.feature_objects = output_fused_objects_;
 
@@ -87,8 +85,7 @@ void RoiPointCloudFusionNode::postprocess(
 }
 void RoiPointCloudFusionNode::fuseOnSingleImage(
   const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg,
-  const Det2dManager<DetectedObjectsWithFeature> & det2d,
-  const DetectedObjectsWithFeature & input_roi_msg,
+  const Det2dManager<RoiMsgType> & det2d, const RoiMsgType & input_roi_msg,
   __attribute__((unused)) sensor_msgs::msg::PointCloud2 & output_pointcloud_msg)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;

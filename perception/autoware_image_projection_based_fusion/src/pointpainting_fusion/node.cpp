@@ -91,8 +91,7 @@ inline bool isUnknown(int label2d)
 }
 
 PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & options)
-: FusionNode<sensor_msgs::msg::PointCloud2, DetectedObjectsWithFeature, DetectedObjects>(
-    "pointpainting_fusion", options)
+: FusionNode<PointCloud2, RoiMsgType, DetectedObjects>("pointpainting_fusion", options)
 {
   omp_num_threads_ = this->declare_parameter<int>("omp_params.num_threads");
   const float score_threshold =
@@ -195,7 +194,7 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
   }
 }
 
-void PointPaintingFusionNode::preprocess(sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg)
+void PointPaintingFusionNode::preprocess(PointCloud2 & painted_pointcloud_msg)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
@@ -252,10 +251,9 @@ void PointPaintingFusionNode::preprocess(sensor_msgs::msg::PointCloud2 & painted
 }
 
 void PointPaintingFusionNode::fuseOnSingleImage(
-  __attribute__((unused)) const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg,
-  const Det2dManager<DetectedObjectsWithFeature> & det2d,
-  const DetectedObjectsWithFeature & input_roi_msg,
-  sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg)
+  __attribute__((unused)) const PointCloud2 & input_pointcloud_msg,
+  const Det2dManager<RoiMsgType> & det2d, const RoiMsgType & input_roi_msg,
+  PointCloud2 & painted_pointcloud_msg)
 {
   if (painted_pointcloud_msg.data.empty() || painted_pointcloud_msg.fields.empty()) {
     RCLCPP_WARN_STREAM_THROTTLE(
@@ -384,7 +382,7 @@ dc   | dc dc dc  dc ||zc|
   }
 }
 
-void PointPaintingFusionNode::postprocess(sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg)
+void PointPaintingFusionNode::postprocess(PointCloud2 & painted_pointcloud_msg)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);

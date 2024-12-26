@@ -31,8 +31,7 @@ namespace autoware::image_projection_based_fusion
 
 using sensor_msgs::msg::RegionOfInterest;
 
-class RoiDetectedObjectFusionNode
-: public FusionNode<DetectedObjects, DetectedObjectsWithFeature, DetectedObject>
+class RoiDetectedObjectFusionNode : public FusionNode<DetectedObjects, RoiMsgType, DetectedObject>
 {
 public:
   explicit RoiDetectedObjectFusionNode(const rclcpp::NodeOptions & options);
@@ -41,13 +40,11 @@ protected:
   void preprocess(DetectedObjects & output_msg) override;
 
   void fuseOnSingleImage(
-    const DetectedObjects & input_object_msg,
-    const Det2dManager<DetectedObjectsWithFeature> & det2d,
-    const DetectedObjectsWithFeature & input_roi_msg, DetectedObjects & output_object_msg) override;
+    const DetectedObjects & input_object_msg, const Det2dManager<RoiMsgType> & det2d,
+    const RoiMsgType & input_roi_msg, DetectedObjects & output_object_msg) override;
 
   std::map<std::size_t, DetectedObjectWithFeature> generateDetectedObjectRoIs(
-    const DetectedObjects & input_object_msg,
-    const Det2dManager<DetectedObjectsWithFeature> & det2d,
+    const DetectedObjects & input_object_msg, const Det2dManager<RoiMsgType> & det2d,
     const Eigen::Affine3d & object2camera_affine);
 
   void fuseObjectsOnImage(

@@ -491,11 +491,21 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::publish(const Msg3D & output_msg)
   pub_ptr_->publish(output_msg);
 }
 
-// explicit instantiation for the supported types
-template class FusionNode<DetectedObjects, DetectedObjectsWithFeature, DetectedObject>;
-template class FusionNode<
-  DetectedObjectsWithFeature, DetectedObjectsWithFeature, DetectedObjectWithFeature>;
-template class FusionNode<PointCloud2, DetectedObjectsWithFeature, DetectedObjects>;
-template class FusionNode<PointCloud2, DetectedObjectsWithFeature, DetectedObjectWithFeature>;
+// Explicit instantiation for the supported types
+
+// pointpainting fusion
+template class FusionNode<PointCloud2, RoiMsgType, DetectedObjects>;
+
+// roi cluster fusion
+template class FusionNode<ClusterMsgType, RoiMsgType, ClusterObjType>;
+
+// roi detected-object fusion
+template class FusionNode<DetectedObjects, RoiMsgType, DetectedObject>;
+
+// roi pointcloud fusion
+template class FusionNode<PointCloud2, RoiMsgType, ClusterObjType>;
+
+// segment pointcloud fusion
 template class FusionNode<PointCloud2, Image, PointCloud2>;
+
 }  // namespace autoware::image_projection_based_fusion

@@ -31,8 +31,7 @@ namespace autoware::image_projection_based_fusion
 using autoware::universe_utils::ScopedTimeTrack;
 
 RoiDetectedObjectFusionNode::RoiDetectedObjectFusionNode(const rclcpp::NodeOptions & options)
-: FusionNode<DetectedObjects, DetectedObjectsWithFeature, DetectedObject>(
-    "roi_detected_object_fusion", options)
+: FusionNode<DetectedObjects, RoiMsgType, DetectedObject>("roi_detected_object_fusion", options)
 {
   fusion_params_.passthrough_lower_bound_probability_thresholds =
     declare_parameter<std::vector<double>>("passthrough_lower_bound_probability_thresholds");
@@ -82,9 +81,8 @@ void RoiDetectedObjectFusionNode::preprocess(DetectedObjects & output_msg)
 }
 
 void RoiDetectedObjectFusionNode::fuseOnSingleImage(
-  const DetectedObjects & input_object_msg, const Det2dManager<DetectedObjectsWithFeature> & det2d,
-  const DetectedObjectsWithFeature & input_roi_msg,
-  DetectedObjects & output_object_msg __attribute__((unused)))
+  const DetectedObjects & input_object_msg, const Det2dManager<RoiMsgType> & det2d,
+  const RoiMsgType & input_roi_msg, DetectedObjects & output_object_msg __attribute__((unused)))
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
@@ -115,7 +113,7 @@ void RoiDetectedObjectFusionNode::fuseOnSingleImage(
 
 std::map<std::size_t, DetectedObjectWithFeature>
 RoiDetectedObjectFusionNode::generateDetectedObjectRoIs(
-  const DetectedObjects & input_object_msg, const Det2dManager<DetectedObjectsWithFeature> & det2d,
+  const DetectedObjects & input_object_msg, const Det2dManager<RoiMsgType> & det2d,
   const Eigen::Affine3d & object2camera_affine)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
