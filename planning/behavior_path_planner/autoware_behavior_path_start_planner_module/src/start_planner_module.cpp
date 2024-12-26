@@ -90,9 +90,6 @@ StartPlannerModule::StartPlannerModule(
       std::bind(&StartPlannerModule::onFreespacePlannerTimer, this),
       freespace_planner_timer_cb_group_);
   }
-
-  steering_factor_interface_.init(PlanningBehavior::START_PLANNER);
-  velocity_factor_interface_.init(PlanningBehavior::START_PLANNER);
 }
 
 void StartPlannerModule::onFreespacePlannerTimer()
@@ -733,11 +730,8 @@ BehaviorModuleOutput StartPlannerModule::plan()
 
   setDrivableAreaInfo(output);
 
-  setVelocityFactor(output.path);
-
   set_longitudinal_planning_factor(output.path);
 
-  const auto steering_factor_direction = getSteeringFactorDirection(output);
   const auto planning_factor_direction = getPlanningFactorDirection(output);
 
   if (status_.driving_forward) {
@@ -748,9 +742,6 @@ BehaviorModuleOutput StartPlannerModule::plan()
       path.points, planner_data_->self_odometry->pose.pose.position,
       status_.pull_out_path.end_pose.position);
     updateRTCStatus(start_distance, finish_distance);
-    steering_factor_interface_.set(
-      {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose},
-      {start_distance, finish_distance}, steering_factor_direction, SteeringFactor::TURNING, "");
     planning_factor_interface_->add(
       start_distance, finish_distance, status_.pull_out_path.start_pose,
       status_.pull_out_path.end_pose, planning_factor_direction, SafetyFactorArray{});
@@ -761,9 +752,6 @@ BehaviorModuleOutput StartPlannerModule::plan()
     path.points, planner_data_->self_odometry->pose.pose.position,
     status_.pull_out_path.start_pose.position);
   updateRTCStatus(0.0, distance);
-  steering_factor_interface_.set(
-    {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose}, {0.0, distance},
-    steering_factor_direction, SteeringFactor::TURNING, "");
   planning_factor_interface_->add(
     0.0, distance, status_.pull_out_path.start_pose, status_.pull_out_path.end_pose,
     planning_factor_direction, SafetyFactorArray{});
@@ -849,7 +837,6 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
 
   setDrivableAreaInfo(output);
 
-  const auto steering_factor_direction = getSteeringFactorDirection(output);
   const auto planning_factor_direction = getPlanningFactorDirection(output);
 
   if (status_.driving_forward) {
@@ -860,10 +847,6 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
       stop_path.points, planner_data_->self_odometry->pose.pose.position,
       status_.pull_out_path.end_pose.position);
     updateRTCStatus(start_distance, finish_distance);
-    steering_factor_interface_.set(
-      {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose},
-      {start_distance, finish_distance}, steering_factor_direction, SteeringFactor::APPROACHING,
-      "");
     planning_factor_interface_->add(
       start_distance, finish_distance, status_.pull_out_path.start_pose,
       status_.pull_out_path.end_pose, planning_factor_direction, SafetyFactorArray{});
@@ -875,9 +858,6 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
     stop_path.points, planner_data_->self_odometry->pose.pose.position,
     status_.pull_out_path.start_pose.position);
   updateRTCStatus(0.0, distance);
-  steering_factor_interface_.set(
-    {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose}, {0.0, distance},
-    steering_factor_direction, SteeringFactor::APPROACHING, "");
   planning_factor_interface_->add(
     0.0, distance, status_.pull_out_path.start_pose, status_.pull_out_path.end_pose,
     planning_factor_direction, SafetyFactorArray{});
