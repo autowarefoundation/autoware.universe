@@ -45,7 +45,7 @@ struct Debug
   double distance_to_end_of_current_lane{std::numeric_limits<double>::max()};
   double distance_to_lane_change_finished{std::numeric_limits<double>::max()};
   double distance_to_abort_finished{std::numeric_limits<double>::max()};
-  bool is_able_to_return_to_current_lane{false};
+  bool is_able_to_return_to_current_lane{true};
   bool is_stuck{false};
   bool is_abort{false};
 
@@ -69,7 +69,7 @@ struct Debug
     distance_to_end_of_current_lane = std::numeric_limits<double>::max();
     distance_to_lane_change_finished = std::numeric_limits<double>::max();
     distance_to_abort_finished = std::numeric_limits<double>::max();
-    is_able_to_return_to_current_lane = false;
+    is_able_to_return_to_current_lane = true;
     is_stuck = false;
     is_abort = false;
   }
