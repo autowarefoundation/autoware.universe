@@ -36,21 +36,6 @@ namespace autoware::image_projection_based_fusion
 {
 class SegmentPointCloudFusionNode : public FusionNode<PointCloudMsgType, Image, PointCloudMsgType>
 {
-private:
-  rclcpp::Publisher<PointCloudMsgType>::SharedPtr pub_pointcloud_ptr_;
-  std::vector<bool> filter_semantic_label_target_;
-  float filter_distance_threshold_;
-  // declare list of semantic label target, depend on trained data of yolox segmentation model
-  std::vector<std::pair<std::string, bool>> filter_semantic_label_target_list_ = {
-    {"UNKNOWN", false},       {"BUILDING", false},     {"WALL", false},       {"OBSTACLE", false},
-    {"TRAFFIC_LIGHT", false}, {"TRAFFIC_SIGN", false}, {"PERSON", false},     {"VEHICLE", false},
-    {"BIKE", false},          {"ROAD", false},         {"SIDEWALK", false},   {"ROAD_PAINT", false},
-    {"CURBSTONE", false},     {"CROSSWALK", false},    {"VEGETATION", false}, {"SKY", false}};
-
-  image_transport::Publisher pub_debug_mask_ptr_;
-  bool is_publish_debug_mask_;
-  std::unordered_set<size_t> filter_global_offset_set_;
-
 public:
   explicit SegmentPointCloudFusionNode(const rclcpp::NodeOptions & options);
 
@@ -73,7 +58,24 @@ protected:
 
   void publish(const PointCloudMsgType & output_msg) override;
 
+  // publisher
   rclcpp::Publisher<PointCloudMsgType>::SharedPtr pub_ptr_;
+
+  // debug
+  image_transport::Publisher pub_debug_mask_ptr_;
+
+private:
+  std::vector<bool> filter_semantic_label_target_;
+  float filter_distance_threshold_;
+  // declare list of semantic label target, depend on trained data of yolox segmentation model
+  std::vector<std::pair<std::string, bool>> filter_semantic_label_target_list_ = {
+    {"UNKNOWN", false},       {"BUILDING", false},     {"WALL", false},       {"OBSTACLE", false},
+    {"TRAFFIC_LIGHT", false}, {"TRAFFIC_SIGN", false}, {"PERSON", false},     {"VEHICLE", false},
+    {"BIKE", false},          {"ROAD", false},         {"SIDEWALK", false},   {"ROAD_PAINT", false},
+    {"CURBSTONE", false},     {"CROSSWALK", false},    {"VEGETATION", false}, {"SKY", false}};
+
+  bool is_publish_debug_mask_;
+  std::unordered_set<size_t> filter_global_offset_set_;
 };
 
 }  // namespace autoware::image_projection_based_fusion
