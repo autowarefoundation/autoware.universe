@@ -25,8 +25,7 @@
 
 namespace autoware::image_projection_based_fusion
 {
-class RoiPointCloudFusionNode
-: public FusionNode<PointCloud2, DetectedObjectsWithFeature, DetectedObjectWithFeature>
+class RoiPointCloudFusionNode : public FusionNode<PointCloud2, RoiMsgType, ClusterObjType>
 {
 private:
   int min_cluster_size_{1};
@@ -34,8 +33,8 @@ private:
   bool fuse_unknown_only_{true};
   double cluster_2d_tolerance_;
 
-  rclcpp::Publisher<DetectedObjectsWithFeature>::SharedPtr pub_objects_ptr_;
-  std::vector<DetectedObjectWithFeature> output_fused_objects_;
+  rclcpp::Publisher<ClusterMsgType>::SharedPtr pub_objects_ptr_;
+  std::vector<ClusterObjType> output_fused_objects_;
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr cluster_debug_pub_;
 
   /* data */
@@ -48,10 +47,9 @@ protected:
   void postprocess(sensor_msgs::msg::PointCloud2 & pointcloud_msg) override;
 
   void fuseOnSingleImage(
-    const PointCloud2 & input_pointcloud_msg,
-    const Det2dManager<DetectedObjectsWithFeature> & det2d,
-    const DetectedObjectsWithFeature & input_roi_msg, PointCloud2 & output_pointcloud_msg) override;
-  bool out_of_scope(const DetectedObjectWithFeature & obj) override;
+    const PointCloud2 & input_pointcloud_msg, const Det2dManager<RoiMsgType> & det2d,
+    const RoiMsgType & input_roi_msg, PointCloud2 & output_pointcloud_msg) override;
+  bool out_of_scope(const ClusterObjType & obj) override;
 };
 
 }  // namespace autoware::image_projection_based_fusion

@@ -41,8 +41,7 @@ namespace autoware::image_projection_based_fusion
 using autoware::universe_utils::ScopedTimeTrack;
 
 RoiClusterFusionNode::RoiClusterFusionNode(const rclcpp::NodeOptions & options)
-: FusionNode<DetectedObjectsWithFeature, DetectedObjectsWithFeature, DetectedObjectWithFeature>(
-    "roi_cluster_fusion", options)
+: FusionNode<ClusterMsgType, RoiMsgType, DetectedObjectWithFeature>("roi_cluster_fusion", options)
 {
   trust_object_iou_mode_ = declare_parameter<std::string>("trust_object_iou_mode");
   non_trust_object_iou_mode_ = declare_parameter<std::string>("non_trust_object_iou_mode");
@@ -56,7 +55,7 @@ RoiClusterFusionNode::RoiClusterFusionNode(const rclcpp::NodeOptions & options)
   trust_object_distance_ = declare_parameter<double>("trust_object_distance");
 }
 
-void RoiClusterFusionNode::preprocess(DetectedObjectsWithFeature & output_cluster_msg)
+void RoiClusterFusionNode::preprocess(ClusterMsgType & output_cluster_msg)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
@@ -71,7 +70,7 @@ void RoiClusterFusionNode::preprocess(DetectedObjectsWithFeature & output_cluste
   }
 }
 
-void RoiClusterFusionNode::postprocess(DetectedObjectsWithFeature & output_cluster_msg)
+void RoiClusterFusionNode::postprocess(ClusterMsgType & output_cluster_msg)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
@@ -79,7 +78,7 @@ void RoiClusterFusionNode::postprocess(DetectedObjectsWithFeature & output_clust
   if (!remove_unknown_) {
     return;
   }
-  DetectedObjectsWithFeature known_objects;
+  ClusterMsgType known_objects;
   known_objects.feature_objects.reserve(output_cluster_msg.feature_objects.size());
   for (auto & feature_object : output_cluster_msg.feature_objects) {
     bool is_roi_label_known = feature_object.object.classification.front().label !=
@@ -94,9 +93,8 @@ void RoiClusterFusionNode::postprocess(DetectedObjectsWithFeature & output_clust
 }
 
 void RoiClusterFusionNode::fuseOnSingleImage(
-  const DetectedObjectsWithFeature & input_cluster_msg,
-  const Det2dManager<DetectedObjectsWithFeature> & det2d,
-  const DetectedObjectsWithFeature & input_roi_msg, DetectedObjectsWithFeature & output_cluster_msg)
+  const ClusterMsgType & input_cluster_msg, const Det2dManager<RoiMsgType> & det2d,
+  const RoiMsgType & input_roi_msg, ClusterMsgType & output_cluster_msg)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
