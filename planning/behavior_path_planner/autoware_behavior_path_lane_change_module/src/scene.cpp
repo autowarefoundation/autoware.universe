@@ -41,7 +41,6 @@
 
 #include <boost/geometry/algorithms/buffer.hpp>
 
-#include <fmt/format.h>
 #include <lanelet2_core/geometry/Point.h>
 #include <lanelet2_core/geometry/Polygon.h>
 #include <lanelet2_core/primitives/LineString.h>

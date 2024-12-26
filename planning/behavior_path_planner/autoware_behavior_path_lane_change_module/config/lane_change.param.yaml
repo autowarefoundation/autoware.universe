@@ -40,6 +40,7 @@
       # trajectory generation near terminal using frenet planner
       frenet:
         enable: true
+        th_yaw_diff: 10.0  # [deg]
 
       # safety check
       safety_check:
