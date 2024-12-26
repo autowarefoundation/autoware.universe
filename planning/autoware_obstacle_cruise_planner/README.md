@@ -76,7 +76,7 @@ title Overall flowchart
 start
 
 partition filter_stop_obstacle_for_predicted_object {
-:is_stop_obstacle_type
+:is_stop_obstacle_type;
 note right
  - reference pose
  - reference path:
