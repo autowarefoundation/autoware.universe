@@ -155,7 +155,7 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
     debug_marker_publisher_ = this->create_publisher<MarkerArray>("~/debug/markers", 1);
     virtual_wall_publisher_ = this->create_publisher<MarkerArray>("~/virtual_wall", 1);
     debug_rss_distance_publisher_ =
-      this->create_publisher<tier4_debug_msgs::msg::Float32Stamped>("~/debug/rss_distance", 1);
+      this->create_publisher<autoware_internal_debug_msgs::msg::Float32Stamped>("~/debug/rss_distance", 1);
     metrics_pub_ = this->create_publisher<MetricArray>("~/metrics", 1);
   }
   // Diagnostics
@@ -647,7 +647,7 @@ bool AEB::hasCollision(const double current_v, const ObjectData & closest_object
     return ego_stopping_distance + obj_braking_distance + longitudinal_offset_margin_;
   });
 
-  tier4_debug_msgs::msg::Float32Stamped rss_distance_msg;
+  autoware_internal_debug_msgs::msg::Float32Stamped rss_distance_msg;
   rss_distance_msg.stamp = get_clock()->now();
   rss_distance_msg.data = rss_dist;
   debug_rss_distance_publisher_->publish(rss_distance_msg);

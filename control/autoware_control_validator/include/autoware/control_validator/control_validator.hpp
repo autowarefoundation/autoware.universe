@@ -28,7 +28,7 @@
 #include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <nav_msgs/msg/odometry.hpp>
-#include <tier4_debug_msgs/msg/float64_stamped.hpp>
+#include <autoware_internal_debug_msgs/msg/float64_stamped.hpp>
 
 #include <cstdint>
 #include <memory>
@@ -139,7 +139,7 @@ private:
   universe_utils::InterProcessPollingSubscriber<Trajectory>::SharedPtr sub_reference_traj_;
   rclcpp::Publisher<ControlValidatorStatus>::SharedPtr pub_status_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_markers_;
-  rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr pub_processing_time_;
+  rclcpp::Publisher<autoware_internal_debug_msgs::msg::Float64Stamped>::SharedPtr pub_processing_time_;
 
   // system parameters
   int64_t diag_error_count_threshold_ = 0;
