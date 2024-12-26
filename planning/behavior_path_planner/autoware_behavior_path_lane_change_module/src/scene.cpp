@@ -1253,7 +1253,8 @@ bool NormalLaneChange::get_path_using_frenet(
   for (const auto & frenet_candidate : frenet_candidates) {
     std::optional<LaneChangePath> candidate_path_opt;
     try {
-      candidate_path_opt = utils::lane_change::get_candidate_path(frenet_candidate);
+      candidate_path_opt =
+        utils::lane_change::get_candidate_path(frenet_candidate, common_data_ptr_);
     } catch (const std::exception & e) {
       RCLCPP_DEBUG(logger_, "%s", e.what());
     }

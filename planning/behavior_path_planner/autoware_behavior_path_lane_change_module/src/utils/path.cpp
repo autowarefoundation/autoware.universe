@@ -336,12 +336,12 @@ LaneChangePath get_candidate_path(
   }
 
   return utils::lane_change::construct_candidate_path(
-    lane_change_info, common_data_ptr, prep_segment, target_lane_reference_path, sorted_lane_ids);
+    lane_change_info, prep_segment, target_lane_reference_path, sorted_lane_ids);
 }
 
 LaneChangePath construct_candidate_path(
-  const LaneChangeInfo & lane_change_info, const CommonDataPtr & common_data_ptr,
-  const PathWithLaneId & prepare_segment, const PathWithLaneId & target_lane_reference_path,
+  const LaneChangeInfo & lane_change_info, const PathWithLaneId & prepare_segment,
+  const PathWithLaneId & target_lane_reference_path,
   const std::vector<std::vector<int64_t>> & sorted_lane_ids)
 {
   const auto & shift_line = lane_change_info.shift_line;
@@ -377,15 +377,14 @@ LaneChangePath construct_candidate_path(
     point.lane_ids = target_lane_reference_path.points.at(*nearest_idx).lane_ids;
   }
 
-  const auto th_yaw_diff_deg = common_data_ptr->lc_param_ptr->frenet.th_yaw_diff_deg;
+  constexpr auto yaw_diff_th = autoware::universe_utils::deg2rad(5.0);
   if (
-    const auto yaw_diff_opt = exceed_yaw_threshold(
-      prepare_segment, shifted_path.path, autoware::universe_utils::deg2rad(th_yaw_diff_deg))) {
-    const auto yaw_diff_deg = autoware::universe_utils::rad2deg(yaw_diff_opt.value());
-    const auto err_msg = fmt::format(
-      "Excessive yaw difference {yaw_diff:2.2f}[deg]. The threshold is {th_yaw_diff:2.2f}[deg].",
-      fmt::arg("yaw_diff", yaw_diff_deg), fmt::arg("th_yaw_diff", th_yaw_diff_deg));
-    throw std::logic_error(err_msg);
+    const auto yaw_diff_opt =
+      exceed_yaw_threshold(prepare_segment, shifted_path.path, yaw_diff_th)) {
+    std::stringstream err_msg;
+    err_msg << "Excessive yaw difference " << yaw_diff_opt.value() << " which exceeds the "
+            << yaw_diff_th << " radian threshold.";
+    throw std::logic_error(err_msg.str());
   }
 
   LaneChangePath candidate_path;
@@ -499,7 +498,8 @@ std::vector<lane_change::TrajectoryGroup> generate_frenet_candidates(
   return trajectory_groups;
 }
 
-std::optional<LaneChangePath> get_candidate_path(const TrajectoryGroup & trajectory_group)
+std::optional<LaneChangePath> get_candidate_path(
+  const TrajectoryGroup & trajectory_group, const CommonDataPtr & common_data_ptr)
 {
   if (trajectory_group.lane_changing.frenet_points.empty()) {
     return std::nullopt;
@@ -555,14 +555,15 @@ std::optional<LaneChangePath> get_candidate_path(const TrajectoryGroup & traject
       static_cast<float>(shifted_path.path.points.back().point.longitudinal_velocity_mps));
   }
 
-  constexpr auto yaw_diff_th = autoware::universe_utils::deg2rad(5.0);
+  const auto th_yaw_diff_deg = common_data_ptr->lc_param_ptr->frenet.th_yaw_diff_deg;
   if (
-    const auto yaw_diff_opt =
-      exceed_yaw_threshold(prepare_segment, shifted_path.path, yaw_diff_th)) {
-    std::stringstream err_msg;
-    err_msg << "Excessive yaw difference " << yaw_diff_opt.value() << " which exceeds the "
-            << yaw_diff_th << " radian threshold.";
-    throw std::logic_error(err_msg.str());
+    const auto yaw_diff_opt = exceed_yaw_threshold(
+      prepare_segment, shifted_path.path, autoware::universe_utils::deg2rad(th_yaw_diff_deg))) {
+    const auto yaw_diff_deg = autoware::universe_utils::rad2deg(yaw_diff_opt.value());
+    const auto err_msg = fmt::format(
+      "Excessive yaw difference {yaw_diff:2.2f}[deg]. The threshold is {th_yaw_diff:2.2f}[deg].",
+      fmt::arg("yaw_diff", yaw_diff_deg), fmt::arg("th_yaw_diff", th_yaw_diff_deg));
+    throw std::logic_error(err_msg);
   }
 
   LaneChangeInfo info;
