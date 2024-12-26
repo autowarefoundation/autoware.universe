@@ -12,9 +12,7 @@ For example, consider a vehicle equipped with three LiDAR sensors mounted on the
 
 After processing the data through the `concatenate_and_time_synchronize_node`, the outputs from all LiDARs are combined into a single comprehensive point cloud that provides a complete view of the environment:
 
-<div style="margin: 0 auto; max-width: 500px" markdown="1">
-  ![Full Scene View](./image/concatenate_all.png)
-</div>
+![Full Scene View](./image/concatenate_all.png)
 
 This resulting point cloud allows autonomous systems to detect obstacles, map the environment, and navigate more effectively, leveraging the complementary fields of view from multiple LiDAR sensors.
 
@@ -130,7 +128,7 @@ colcon test --packages-select autoware_pointcloud_preprocessor --event-handlers 
 
 ## Debug and Diagnostics
 
-To verify whether the node has successfully concatenated the point clouds, the user can examine the `/diagnostics` topic using the following command:
+To verify whether the node has successfully concatenated the point clouds, the user can examine rqt or the `/diagnostics` topic using the following command:
 
 ```bash
 ros2 topic echo /diagnostics
@@ -138,8 +136,8 @@ ros2 topic echo /diagnostics
 
 Below is an example output when the point clouds are concatenated successfully:
 
-- Each point cloud has a value of `1`.
-- The `concatenate status` is `1`.
+- Each point cloud has a value of `True`.
+- The `cloud concatenation success` is `True`.
 - The `level` value is `\0`. (diagnostic_msgs::msg::DiagnosticStatus::OK)
 
 ```bash
@@ -162,24 +160,24 @@ status:
     value: '1718260240.169229984'
   - key: /sensing/lidar/left/pointcloud_before_sync timestamp
     value: '1718260240.159229994'
-  - key: /sensing/lidar/left/pointcloud_before_sync
-    value: '1'
+  - key: /sensing/lidar/left/pointcloud_before_sync is concatenated
+    value: 'True'
   - key: /sensing/lidar/right/pointcloud_before_sync timestamp
     value: '1718260240.194104910'
-  - key: /sensing/lidar/right/pointcloud_before_sync
-    value: '1'
+  - key: /sensing/lidar/right/pointcloud_before_sync is concatenated
+    value: 'True'
   - key: /sensing/lidar/top/pointcloud_before_sync timestamp
     value: '1718260240.234578133'
-  - key: /sensing/lidar/top/pointcloud_before_sync
-    value: '1'
-  - key: concatenate status
-    value: '1'
+  - key: /sensing/lidar/top/pointcloud_before_sync is concatenated
+    value: 'True'
+  - key: cloud concatenation success
+    value: 'True'
 ```
 
 Below is an example when point clouds fail to concatenate successfully.
 
-- Some point clouds might have values of `0`.
-- The `concatenate status` is `0`.
+- Some point clouds might have values of `False`.
+- The `cloud concatenation success` is `False`.
 - The `level` value is `\x02`. (diagnostic_msgs::msg::DiagnosticStatus::ERROR)
 
 ```bash
@@ -202,16 +200,16 @@ status:
     value: '1718260240.869827986'
   - key: /sensing/lidar/left/pointcloud_before_sync timestamp
     value: '1718260240.859827995'
-  - key: /sensing/lidar/left/pointcloud_before_sync
-    value: '1'
+  - key: /sensing/lidar/left/pointcloud_before_sync is concatenated
+    value: 'True'
   - key: /sensing/lidar/right/pointcloud_before_sync timestamp
     value: '1718260240.895193815'
-  - key: /sensing/lidar/right/pointcloud_before_sync
-    value: '1'
-  - key: /sensing/lidar/top/pointcloud_before_sync
-    value: '0'
-  - key: concatenate status
-    value: '0'
+  - key: /sensing/lidar/right/pointcloud_before_sync is concatenated
+    value: 'True'
+  - key: /sensing/lidar/top/pointcloud_before_sync is concatenated
+    value: 'False'
+  - key: cloud concatenation success
+    value: 'False'
 ```
 
 ## Node separation options
