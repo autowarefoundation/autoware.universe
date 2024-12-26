@@ -63,6 +63,8 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
       getOrDeclareParameter<double>(*node, parameter("trajectory.min_lane_changing_velocity"));
     p.trajectory.lane_changing_decel_factor =
       getOrDeclareParameter<double>(*node, parameter("trajectory.lane_changing_decel_factor"));
+    p.trajectory.th_prepare_curvature =
+      getOrDeclareParameter<double>(*node, parameter("trajectory.th_prepare_curvature"));
     p.trajectory.lon_acc_sampling_num =
       getOrDeclareParameter<int>(*node, parameter("trajectory.lon_acc_sampling_num"));
     p.trajectory.lat_acc_sampling_num =
@@ -215,6 +217,7 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
 
   // trajectory generation near terminal using frenet planner
   p.frenet.enable = getOrDeclareParameter<bool>(*node, parameter("frenet.enable"));
+  p.frenet.th_yaw_diff_deg = getOrDeclareParameter<double>(*node, parameter("frenet.th_yaw_diff"));
 
   // lane change cancel
   p.cancel.enable_on_prepare_phase =
@@ -341,6 +344,8 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
       parameters, ns + "max_longitudinal_acc", p->trajectory.max_longitudinal_acc);
     updateParam<double>(
       parameters, ns + "lane_changing_decel_factor", p->trajectory.lane_changing_decel_factor);
+    updateParam<double>(
+      parameters, ns + "th_prepare_curvature", p->trajectory.th_prepare_curvature);
     int longitudinal_acc_sampling_num = 0;
     updateParam<int>(parameters, ns + "lon_acc_sampling_num", longitudinal_acc_sampling_num);
     if (longitudinal_acc_sampling_num > 0) {
@@ -357,6 +362,12 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
       parameters, ns + "th_prepare_length_diff", p->trajectory.th_prepare_length_diff);
     updateParam<double>(
       parameters, ns + "th_lane_changing_length_diff", p->trajectory.th_lane_changing_length_diff);
+  }
+
+  {
+    const std::string ns = "lane_change.frenet.";
+    updateParam<bool>(parameters, ns + "enable", p->frenet.enable);
+    updateParam<double>(parameters, ns + "th_yaw_diff", p->frenet.th_yaw_diff_deg);
   }
 
   {

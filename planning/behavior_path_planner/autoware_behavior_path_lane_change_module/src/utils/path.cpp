@@ -218,6 +218,15 @@ std::optional<SamplingParameters> init_sampling_parameters(
   return sampling_parameters;
 }
 
+double calc_average_curvature(const std::vector<double> & curvatures)
+{
+  const auto filter_zeros = [](const auto & k) { return k != 0.0; };
+  const auto sums_of_curvatures = [](float sum, const double k) { return sum + std::abs(k); };
+  auto filtered_k = curvatures | ranges::views::filter(filter_zeros);
+  const auto sum_of_k = ranges::accumulate(filtered_k, 0.0, sums_of_curvatures);
+  const auto count_k = static_cast<double>(ranges::distance(filtered_k));
+  return sum_of_k / count_k;
+}
 };  // namespace
 
 namespace autoware::behavior_path_planner::utils::lane_change
@@ -260,7 +269,30 @@ bool get_prepare_segment(
     throw std::logic_error("lane change start is behind target lanelet!");
   }
 
-  return true;
+  const auto nearest_segment_idx = autoware::motion_utils::findNearestSegmentIndex(
+    prepare_segment.points, common_data_ptr->get_ego_pose().position);
+
+  // Ignore all path points behind ego vehicle.
+  if (prepare_segment.points.size() <= nearest_segment_idx + 2) {
+    return true;
+  }
+
+  std::vector<double> curvatures;
+  const auto & points = prepare_segment.points;
+  curvatures.reserve(points.size() - nearest_segment_idx + 2);
+  for (const auto & [p1, p2, p3] : ranges::views::zip(
+         points | ranges::views::drop(nearest_segment_idx),
+         points | ranges::views::drop(nearest_segment_idx + 1),
+         points | ranges::views::drop(nearest_segment_idx + 2))) {
+    const auto point1 = autoware::universe_utils::getPoint(p1);
+    const auto point2 = autoware::universe_utils::getPoint(p2);
+    const auto point3 = autoware::universe_utils::getPoint(p3);
+
+    curvatures.push_back(autoware::universe_utils::calcCurvature(point1, point2, point3));
+  }
+
+  return calc_average_curvature(curvatures) <=
+         common_data_ptr->lc_param_ptr->trajectory.th_prepare_curvature;
 }
 
 LaneChangePath get_candidate_path(
@@ -448,15 +480,6 @@ std::vector<lane_change::TrajectoryGroup> generate_frenet_candidates(
     }
   }
 
-  const auto avg_curvature = [](const std::vector<double> & curvatures) {
-    const auto filter_zeros = [](const auto & k) { return k != 0.0; };
-    const auto sums_of_curvatures = [](float sum, const double k) { return sum + std::abs(k); };
-    auto filtered_k = curvatures | ranges::views::filter(filter_zeros);
-    const auto sum_of_k = ranges::accumulate(filtered_k, 0.0, sums_of_curvatures);
-    const auto count_k = static_cast<double>(ranges::distance(filtered_k));
-    return sum_of_k / count_k;
-  };
-
   const auto limit_vel = [&](TrajectoryGroup & group) {
     const auto max_vel =
       utils::lane_change::calc_limit(common_data_ptr, group.lane_changing.poses.back());
@@ -468,7 +491,8 @@ std::vector<lane_change::TrajectoryGroup> generate_frenet_candidates(
   ranges::for_each(trajectory_groups, limit_vel);
 
   ranges::sort(trajectory_groups, [&](const auto & p1, const auto & p2) {
-    return avg_curvature(p1.lane_changing.curvatures) < avg_curvature(p2.lane_changing.curvatures);
+    return calc_average_curvature(p1.lane_changing.curvatures) <
+           calc_average_curvature(p2.lane_changing.curvatures);
   });
 
   utils::lane_change::filter_out_of_bound_trajectories(common_data_ptr, trajectory_groups);

@@ -29,6 +29,7 @@
         lon_acc_sampling_num: 5
         lat_acc_sampling_num: 3
         lane_changing_decel_factor: 0.5
+        th_prepare_curvature: 0.03 # [/]
 
       # delay lane change
       delay_lane_change:
