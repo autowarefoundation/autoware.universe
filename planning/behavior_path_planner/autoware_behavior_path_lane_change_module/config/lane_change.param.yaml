@@ -37,6 +37,10 @@
         min_road_shoulder_width: 0.5  # [m]
         th_parked_vehicle_shift_ratio: 0.6
 
+      # trajectory generation near terminal using frenet planner
+      frenet:
+        enable: true
+
       # safety check
       safety_check:
         allow_loose_check_for_cancel: true

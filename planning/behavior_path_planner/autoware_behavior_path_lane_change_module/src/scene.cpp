@@ -1140,7 +1140,7 @@ bool NormalLaneChange::get_lane_change_paths(LaneChangePaths & candidate_paths) 
   const auto prepare_phase_metrics = get_prepare_metrics();
 
   if (
-    common_data_ptr_->lc_param_ptr->trajectory.frenet.enable &&
+    common_data_ptr_->lc_param_ptr->frenet.enable &&
     common_data_ptr_->transient_data.is_ego_near_current_terminal_start) {
     return get_path_using_frenet(prepare_phase_metrics, target_objects, candidate_paths);
   }

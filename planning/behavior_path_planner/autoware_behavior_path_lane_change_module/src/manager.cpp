@@ -213,6 +213,10 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
   p.delay.th_parked_vehicle_shift_ratio = getOrDeclareParameter<double>(
     *node, parameter("delay_lane_change.th_parked_vehicle_shift_ratio"));
 
+  // trajectory generation near terminal using frenet planner
+  p.frenet.enable =
+    getOrDeclareParameter<bool>(*node, parameter("frenet.enable"));
+
   // lane change cancel
   p.cancel.enable_on_prepare_phase =
     getOrDeclareParameter<bool>(*node, parameter("cancel.enable_on_prepare_phase"));
