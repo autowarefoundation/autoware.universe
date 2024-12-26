@@ -40,6 +40,7 @@ protected:
 
   rclcpp::Publisher<ClusterMsgType>::SharedPtr pub_ptr_;
 
+private:
   std::string trust_object_iou_mode_{"iou"};
   bool use_cluster_semantic_type_{false};
   bool only_allow_inside_cluster_{false};

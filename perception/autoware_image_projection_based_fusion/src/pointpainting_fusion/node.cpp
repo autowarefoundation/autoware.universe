@@ -288,10 +288,6 @@ void PointPaintingFusionNode::fuseOnSingleImage(
     lidar2cam_affine = _transformToEigen(transform_stamped_optional.value().transform);
   }
 
-  // transform
-  // sensor_msgs::msg::PointCloud2 transformed_pointcloud;
-  // tf2::doTransform(painted_pointcloud_msg, transformed_pointcloud, transform_stamped);
-
   const auto x_offset = painted_pointcloud_msg.fields
                           .at(static_cast<size_t>(autoware::point_types::PointXYZIRCIndex::X))
                           .offset;

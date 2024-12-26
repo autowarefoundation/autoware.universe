@@ -27,22 +27,13 @@ namespace autoware::image_projection_based_fusion
 {
 class RoiPointCloudFusionNode : public FusionNode<PointCloudMsgType, RoiMsgType, ClusterMsgType>
 {
-private:
-  int min_cluster_size_{1};
-  int max_cluster_size_{20};
-  bool fuse_unknown_only_{true};
-  double cluster_2d_tolerance_;
-
-  rclcpp::Publisher<ClusterMsgType>::SharedPtr pub_objects_ptr_;
-  std::vector<ClusterObjType> output_fused_objects_;
-  rclcpp::Publisher<PointCloudMsgType>::SharedPtr cluster_debug_pub_;
-
-  /* data */
 public:
   explicit RoiPointCloudFusionNode(const rclcpp::NodeOptions & options);
 
 protected:
+  rclcpp::Publisher<ClusterMsgType>::SharedPtr pub_objects_ptr_;
   rclcpp::Publisher<PointCloudMsgType>::SharedPtr pub_ptr_;
+  rclcpp::Publisher<PointCloudMsgType>::SharedPtr cluster_debug_pub_;
 
   void postprocess(PointCloudMsgType & pointcloud_msg) override;
 
@@ -51,6 +42,14 @@ protected:
     const RoiMsgType & input_roi_msg, PointCloudMsgType & output_pointcloud_msg) override;
 
   void publish(const PointCloudMsgType & output_msg) override;
+
+private:
+  int min_cluster_size_{1};
+  int max_cluster_size_{20};
+  bool fuse_unknown_only_{true};
+  double cluster_2d_tolerance_;
+
+  std::vector<ClusterObjType> output_fused_objects_;
 };
 
 }  // namespace autoware::image_projection_based_fusion

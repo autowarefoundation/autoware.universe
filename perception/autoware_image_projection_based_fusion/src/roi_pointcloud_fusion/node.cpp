@@ -43,11 +43,11 @@ RoiPointCloudFusionNode::RoiPointCloudFusionNode(const rclcpp::NodeOptions & opt
   min_cluster_size_ = declare_parameter<int>("min_cluster_size");
   max_cluster_size_ = declare_parameter<int>("max_cluster_size");
   cluster_2d_tolerance_ = declare_parameter<double>("cluster_2d_tolerance");
-  pub_objects_ptr_ = this->create_publisher<ClusterMsgType>("output_clusters", rclcpp::QoS{1});
-  cluster_debug_pub_ = this->create_publisher<PointCloudMsgType>("debug/clusters", 1);
 
   // publisher
   pub_ptr_ = this->create_publisher<PointCloudMsgType>("output", rclcpp::QoS{1});
+  pub_objects_ptr_ = this->create_publisher<ClusterMsgType>("output_clusters", rclcpp::QoS{1});
+  cluster_debug_pub_ = this->create_publisher<PointCloudMsgType>("debug/clusters", 1);
 }
 
 void RoiPointCloudFusionNode::postprocess(PointCloudMsgType & pointcloud_msg)
