@@ -165,17 +165,19 @@ protected:
   typename Msg3D::SharedPtr cached_det3d_msg_ptr_;
   std::mutex mutex_det3d_msg_;
 
-  // output publisher
-  typename rclcpp::Publisher<ExportObj>::SharedPtr pub_ptr_;
-
-  // debugger
-  std::shared_ptr<Debugger> debugger_;
+  // parameters for out_of_scope filter
   float filter_scope_min_x_;
   float filter_scope_max_x_;
   float filter_scope_min_y_;
   float filter_scope_max_y_;
   float filter_scope_min_z_;
   float filter_scope_max_z_;
+
+  // output publisher
+  typename rclcpp::Publisher<ExportObj>::SharedPtr pub_ptr_;
+
+  // debugger
+  std::shared_ptr<Debugger> debugger_;
 
   /** \brief processing time publisher. **/
   std::unique_ptr<autoware::universe_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
