@@ -39,6 +39,7 @@
 #include <map>
 #include <memory>
 #include <optional>
+#include <vector>
 
 namespace autoware::motion_velocity_planner
 {
@@ -49,62 +50,75 @@ struct TrafficSignalStamped
 };
 struct PlannerData
 {
-  struct Object
-  {
-  public:
-    autoware_perception_msgs::msg::PredictedObject predicted_object;
-    double get_lon_velocity_relative_to_trajectory()
-    {
-      if (!velocity_relative_to_trajectory.longitudinal) {
-        velocity_relative_to_trajectory.longitudinal = 0.0;
-      }
-      return *velocity_relative_to_trajectory.longitudinal;
-    }
-    double get_lat_velocity_relative_to_trajectory()
-    {
-      if (!velocity_relative_to_trajectory.lateral) {
-        velocity_relative_to_trajectory.lateral = 0.0;
-      }
-      return *velocity_relative_to_trajectory.lateral;
-    }
-
-  private:
-    struct Distance
-    {
-      std::optional<double> to_trajectory_polygon{std::nullopt};
-      std::optional<double> to_trajectory_lateral{std::nullopt};
-      std::optional<double> from_ego_longitudinal{std::nullopt};
-    };
-    Distance distance;
-    struct VelocityRelativeToTrajectory
-    {
-      std::optional<double> longitudinal{std::nullopt};
-      std::optional<double> lateral{std::nullopt};
-    };
-    VelocityRelativeToTrajectory velocity_relative_to_trajectory;
-  };
-
-  struct Pointcloud
-  {
-  public:
-    pcl::PointCloud<pcl::PointXYZ> no_ground_pointcloud;
-
-  private:
-    // NOTE: clustered result will be added.
-  };
-
   explicit PlannerData(rclcpp::Node & node)
   : vehicle_info_(autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo())
   {
   }
 
+  struct Object
+  {
+  public:
+    Object() = default;
+    explicit Object(const autoware_perception_msgs::msg::PredictedObject & arg_predicted_object)
+    : predicted_object(arg_predicted_object)
+    {
+    }
+
+    autoware_perception_msgs::msg::PredictedObject predicted_object;
+    // double get_lon_vel_relative_to_traj()
+    // {
+    //   if (!lon_vel_relative_to_traj) {
+    //     lon_vel_relative_to_traj = 0.0;
+    //   }
+    //   return *lon_vel_relative_to_traj;
+    // }
+    // double get_lat_vel_relative_to_traj()
+    // {
+    //   if (!lat_vel_relative_to_traj) {
+    //     lat_vel_relative_to_traj = 0.0;
+    //   }
+    //   return *lat_vel_relative_to_traj;
+    // }
+
+  private:
+    // TODO(murooka) implement the following variables and their functions.
+    // std::optional<double> dist_to_traj_poly{std::nullopt};
+    // std::optional<double> dist_to_traj_lateral{std::nullopt};
+    // std::optional<double> dist_from_ego_longitudinal{std::nullopt};
+    // std::optional<double> lon_vel_relative_to_traj{std::nullopt};
+    // std::optional<double> lat_vel_relative_to_traj{std::nullopt};
+  };
+
+  struct Pointcloud
+  {
+  public:
+    Pointcloud() = default;
+    explicit Pointcloud(const pcl::PointCloud<pcl::PointXYZ> & arg_pointcloud)
+    : pointcloud(arg_pointcloud)
+    {
+    }
+
+    pcl::PointCloud<pcl::PointXYZ> pointcloud;
+
+  private:
+    // NOTE: clustered result will be added.
+  };
+
+  void process_predicted_objects(
+    const autoware_perception_msgs::msg::PredictedObjects & predicted_objects)
+  {
+    predicted_object_header = predicted_objects.header;
+    for (const auto & predicted_object : predicted_objects.objects) {
+      objects.push_back(Object(predicted_object));
+    }
+  }
+
   // msgs from callbacks that are used for data-ready
   nav_msgs::msg::Odometry current_odometry;
   geometry_msgs::msg::AccelWithCovarianceStamped current_acceleration;
-  autoware_perception_msgs::msg::PredictedObjects predicted_objects;
-  // NOTE: will be replaced by std::vector<Object> objects;
-  pcl::PointCloud<pcl::PointXYZ> no_ground_pointcloud;
-  // NOTE: will be replaced by Pointcloud no_ground_pointcloud;
+  std_msgs::msg::Header predicted_object_header;
+  std::vector<Object> objects;
+  Pointcloud no_ground_pointcloud;
   nav_msgs::msg::OccupancyGrid occupancy_grid;
   std::shared_ptr<route_handler::RouteHandler> route_handler;
 
