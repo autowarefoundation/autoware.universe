@@ -39,7 +39,7 @@ private:
 
   std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;
 
-  std::unique_ptr<autoware::universe_utils::DiagnosticInterface> diagnostics_error_monitor_;
+  std::unique_ptr<autoware::universe_utils::DiagnosticsInterface> diagnostics_error_monitor_;
 
   double scale_;
   double error_ellipse_size_;
