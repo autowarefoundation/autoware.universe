@@ -515,7 +515,9 @@ void NormalLaneChange::insert_stop_point_on_current_lanes(PathWithLaneId & path)
   const auto dist_to_terminal_stop = std::min(dist_to_terminal_start, distance_to_last_fit_width);
 
   const auto terminal_stop_reason = status_.is_valid_path ? "no safe path" : "no valid path";
-  if (filtered_objects_.current_lane.empty()) {
+  if (
+    filtered_objects_.current_lane.empty() ||
+    !lane_change_parameters_->enable_stopped_vehicle_buffer) {
     set_stop_pose(dist_to_terminal_stop, path, terminal_stop_reason);
     return;
   }
@@ -948,8 +950,6 @@ FilteredLanesObjects NormalLaneChange::filter_objects() const
   filtered_objects.target_lane_trailing.reserve(reserve_size);
   filtered_objects.others.reserve(reserve_size);
 
-  const auto stopped_obj_vel_th = lane_change_parameters_->safety.th_stopped_object_velocity;
-
   for (const auto & object : objects.objects) {
     auto ext_object = utils::lane_change::transform(object, *lane_change_parameters_);
     const auto & ext_obj_pose = ext_object.initial_pose;
@@ -968,12 +968,8 @@ FilteredLanesObjects NormalLaneChange::filter_objects() const
       continue;
     }
 
-    // TODO(Azu): We have to think about how to remove is_within_vel_th without breaking AW behavior
-    const auto is_moving = velocity_filter(
-      ext_object.initial_twist, stopped_obj_vel_th, std::numeric_limits<double>::max());
-
     if (
-      ahead_of_ego && is_moving && is_before_terminal &&
+      ahead_of_ego && is_before_terminal &&
       !boost::geometry::disjoint(ext_object.initial_polygon, lanes_polygon.current)) {
       // check only the objects that are in front of the ego vehicle
       filtered_objects.current_lane.push_back(ext_object);

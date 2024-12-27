@@ -195,6 +195,8 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
     getOrDeclareParameter<double>(*node, parameter("backward_length_buffer_for_blocking_object"));
   p.backward_length_from_intersection =
     getOrDeclareParameter<double>(*node, parameter("backward_length_from_intersection"));
+  p.enable_stopped_vehicle_buffer =
+    getOrDeclareParameter<bool>(*node, parameter("enable_stopped_vehicle_buffer"));
 
   if (p.backward_length_buffer_for_end_of_lane < 1.0) {
     RCLCPP_WARN_STREAM(
@@ -305,6 +307,8 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
       p->backward_length_buffer_for_blocking_object);
     updateParam<double>(
       parameters, ns + "lane_change_finish_judge_buffer", p->lane_change_finish_judge_buffer);
+    updateParam<bool>(
+      parameters, ns + "enable_stopped_vehicle_buffer", p->enable_stopped_vehicle_buffer);
 
     updateParam<double>(
       parameters, ns + "finish_judge_lateral_threshold", p->th_finish_judge_lateral_diff);
