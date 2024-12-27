@@ -76,7 +76,6 @@ struct Det2dStatus
   double input_offset_ms = 0.0;
   // cache
   std::map<int64_t, typename Msg2D::ConstSharedPtr> cached_det2d_msgs;
-  std::unique_ptr<std::mutex> mtx_ptr;
 };
 
 template <class Msg3D, class Msg2D, class ExportObj>
@@ -108,25 +107,12 @@ protected:
   // 2d detection management methods
   bool checkAllDet2dFused()
   {
-    std::lock_guard<std::mutex> lock_det2d_flags(mutex_det2d_flags_);
     for (const auto & det2d : det2d_list_) {
       if (!det2d.is_fused) {
         return false;
       }
     }
     return true;
-  }
-  void setDet2dFused(Det2dStatus<Msg2D> & det2d)
-  {
-    std::lock_guard<std::mutex> lock_det2d_flags(mutex_det2d_flags_);
-    det2d.is_fused = true;
-  }
-  void clearAllDet2dFlags()
-  {
-    std::lock_guard<std::mutex> lock_det2d_flags(mutex_det2d_flags_);
-    for (auto & det2d : det2d_list_) {
-      det2d.is_fused = false;
-    }
   }
 
   // Custom process methods
@@ -144,7 +130,6 @@ protected:
 
   // 2d detection management
   std::vector<Det2dStatus<Msg2D>> det2d_list_;
-  std::mutex mutex_det2d_flags_;
 
   // camera projection
   float approx_grid_cell_w_size_;
@@ -163,7 +148,7 @@ protected:
   // cache for fusion
   int64_t cached_det3d_msg_timestamp_;
   typename Msg3D::SharedPtr cached_det3d_msg_ptr_;
-  std::mutex mutex_det3d_msg_;
+  std::mutex mutex_cached_msgs_;
 
   // parameters for out_of_scope filter
   float filter_scope_min_x_;
