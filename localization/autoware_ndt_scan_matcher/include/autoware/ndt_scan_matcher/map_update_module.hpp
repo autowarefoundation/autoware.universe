@@ -42,7 +42,7 @@
 
 namespace autoware::ndt_scan_matcher
 {
-using DiagnosticInterface = autoware::universe_utils::DiagnosticInterface;
+using DiagnosticsInterface = autoware::universe_utils::DiagnosticsInterface;
 
 class MapUpdateModule
 {
@@ -63,19 +63,19 @@ private:
 
   void callback_timer(
     const bool is_activated, const std::optional<geometry_msgs::msg::Point> & position,
-    std::unique_ptr<DiagnosticInterface> & diagnostics_ptr);
+    std::unique_ptr<DiagnosticsInterface> & diagnostics_ptr);
 
   [[nodiscard]] bool should_update_map(
     const geometry_msgs::msg::Point & position,
-    std::unique_ptr<DiagnosticInterface> & diagnostics_ptr);
+    std::unique_ptr<DiagnosticsInterface> & diagnostics_ptr);
 
   void update_map(
     const geometry_msgs::msg::Point & position,
-    std::unique_ptr<DiagnosticInterface> & diagnostics_ptr);
+    std::unique_ptr<DiagnosticsInterface> & diagnostics_ptr);
   // Update the specified NDT
   bool update_ndt(
     const geometry_msgs::msg::Point & position, NdtType & ndt,
-    std::unique_ptr<DiagnosticInterface> & diagnostics_ptr);
+    std::unique_ptr<DiagnosticsInterface> & diagnostics_ptr);
   void publish_partial_pcd_map();
 
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr loaded_pcd_pub_;
