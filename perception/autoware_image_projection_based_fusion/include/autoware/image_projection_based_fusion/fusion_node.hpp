@@ -62,7 +62,7 @@ using autoware::image_projection_based_fusion::CameraProjection;
 using autoware_perception_msgs::msg::ObjectClassification;
 
 template <class Msg2D>
-struct Det2dManager
+struct Det2dStatus
 {
   // camera index
   std::size_t id = 0;
@@ -116,7 +116,7 @@ protected:
     }
     return true;
   }
-  void setDet2dFused(Det2dManager<Msg2D> & det2d)
+  void setDet2dFused(Det2dStatus<Msg2D> & det2d)
   {
     std::lock_guard<std::mutex> lock_det2d_flags(mutex_det2d_flags_);
     det2d.is_fused = true;
@@ -132,7 +132,7 @@ protected:
   // Custom process methods
   virtual void preprocess(Msg3D & output_msg);
   virtual void fuseOnSingleImage(
-    const Msg3D & input_msg, const Det2dManager<Msg2D> & det2d, const Msg2D & input_roi_msg,
+    const Msg3D & input_msg, const Det2dStatus<Msg2D> & det2d, const Msg2D & input_roi_msg,
     Msg3D & output_msg) = 0;
   virtual void postprocess(Msg3D & output_msg);
   virtual void publish(const Msg3D & output_msg);
@@ -143,7 +143,7 @@ protected:
   tf2_ros::TransformListener tf_listener_;
 
   // 2d detection management
-  std::vector<Det2dManager<Msg2D>> det2d_list_;
+  std::vector<Det2dStatus<Msg2D>> det2d_list_;
   std::mutex mutex_det2d_flags_;
 
   // camera projection

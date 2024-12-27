@@ -45,7 +45,7 @@ protected:
   void postprocess(PointCloudMsgType & pointcloud_msg) override;
 
   void fuseOnSingleImage(
-    const PointCloudMsgType & input_pointcloud_msg, const Det2dManager<Image> & det2d,
+    const PointCloudMsgType & input_pointcloud_msg, const Det2dStatus<Image> & det2d,
     const Image & input_mask, PointCloudMsgType & output_pointcloud_msg) override;
 
   inline void copyPointCloud(

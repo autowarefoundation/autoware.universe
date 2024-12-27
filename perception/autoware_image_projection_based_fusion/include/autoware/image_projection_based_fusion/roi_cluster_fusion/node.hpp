@@ -35,7 +35,7 @@ protected:
   void publish(const ClusterMsgType & output_msg) override;
 
   void fuseOnSingleImage(
-    const ClusterMsgType & input_cluster_msg, const Det2dManager<RoiMsgType> & det2d,
+    const ClusterMsgType & input_cluster_msg, const Det2dStatus<RoiMsgType> & det2d,
     const RoiMsgType & input_roi_msg, ClusterMsgType & output_cluster_msg) override;
 
 private:

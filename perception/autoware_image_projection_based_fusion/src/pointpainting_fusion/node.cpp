@@ -255,7 +255,7 @@ void PointPaintingFusionNode::preprocess(PointCloudMsgType & painted_pointcloud_
 
 void PointPaintingFusionNode::fuseOnSingleImage(
   __attribute__((unused)) const PointCloudMsgType & input_pointcloud_msg,
-  const Det2dManager<RoiMsgType> & det2d, const RoiMsgType & input_roi_msg,
+  const Det2dStatus<RoiMsgType> & det2d, const RoiMsgType & input_roi_msg,
   PointCloudMsgType & painted_pointcloud_msg)
 {
   if (painted_pointcloud_msg.data.empty() || painted_pointcloud_msg.fields.empty()) {

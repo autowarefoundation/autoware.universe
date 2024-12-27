@@ -145,7 +145,7 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
   approx_grid_cell_w_size_ = declare_parameter<float>("approximation_grid_cell_width");
   approx_grid_cell_h_size_ = declare_parameter<float>("approximation_grid_cell_height");
 
-  // camera manager initialization
+  // 2d detection status initialization
   det2d_list_.resize(rois_number_);
   for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
     det2d_list_.at(roi_i).mtx_ptr = std::make_unique<std::mutex>();

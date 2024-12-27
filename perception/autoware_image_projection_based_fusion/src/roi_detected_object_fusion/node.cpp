@@ -84,7 +84,7 @@ void RoiDetectedObjectFusionNode::preprocess(DetectedObjects & output_msg)
 }
 
 void RoiDetectedObjectFusionNode::fuseOnSingleImage(
-  const DetectedObjects & input_object_msg, const Det2dManager<RoiMsgType> & det2d,
+  const DetectedObjects & input_object_msg, const Det2dStatus<RoiMsgType> & det2d,
   const RoiMsgType & input_roi_msg, DetectedObjects & output_object_msg __attribute__((unused)))
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
@@ -116,7 +116,7 @@ void RoiDetectedObjectFusionNode::fuseOnSingleImage(
 
 std::map<std::size_t, DetectedObjectWithFeature>
 RoiDetectedObjectFusionNode::generateDetectedObjectRoIs(
-  const DetectedObjects & input_object_msg, const Det2dManager<RoiMsgType> & det2d,
+  const DetectedObjects & input_object_msg, const Det2dStatus<RoiMsgType> & det2d,
   const Eigen::Affine3d & object2camera_affine)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;

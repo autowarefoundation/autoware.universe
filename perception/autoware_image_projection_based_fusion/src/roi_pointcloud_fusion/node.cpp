@@ -77,7 +77,7 @@ void RoiPointCloudFusionNode::postprocess(PointCloudMsgType & pointcloud_msg)
   }
 }
 void RoiPointCloudFusionNode::fuseOnSingleImage(
-  const PointCloudMsgType & input_pointcloud_msg, const Det2dManager<RoiMsgType> & det2d,
+  const PointCloudMsgType & input_pointcloud_msg, const Det2dStatus<RoiMsgType> & det2d,
   const RoiMsgType & input_roi_msg,
   __attribute__((unused)) PointCloudMsgType & output_pointcloud_msg)
 {
