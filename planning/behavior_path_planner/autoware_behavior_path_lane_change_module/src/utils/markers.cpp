@@ -18,6 +18,7 @@
 #include <autoware/behavior_path_lane_change_module/utils/markers.hpp>
 #include <autoware/universe_utils/ros/marker_helper.hpp>
 #include <autoware_lanelet2_extension/visualization/visualization.hpp>
+#include <magic_enum.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <geometry_msgs/msg/detail/pose__struct.hpp>
@@ -89,8 +90,10 @@ MarkerArray showAllValidLaneChangePath(
     text_marker.id = ++id;
     text_marker.pose = points.at(lc_idx).point.pose;
     text_marker.text = fmt::format(
-      "vel: {vel:.3f}[m/s] | lon_acc: {lon_acc:.3f}[m/s2] | lat_acc: {lat_acc:.3f}[m/s2] | t: "
+      "type: {type} | vel: {vel:.3f}[m/s] | lon_acc: {lon_acc:.3f}[m/s2] | lat_acc: "
+      "{lat_acc:.3f}[m/s2] | t: "
       "{time:.3f}[s] | L: {length:.3f}[m]",
+      fmt::arg("type", magic_enum::enum_name(lc_path.type)),
       fmt::arg("vel", info.velocity.lane_changing),
       fmt::arg("lon_acc", info.longitudinal_acceleration.lane_changing),
       fmt::arg("lat_acc", info.lateral_acceleration), fmt::arg("time", info.duration.lane_changing),

@@ -87,10 +87,6 @@ bool path_footprint_exceeds_target_lane_bound(
   const CommonDataPtr & common_data_ptr, const PathWithLaneId & path, const VehicleInfo & ego_info,
   const double margin = 0.1);
 
-void filter_out_of_bound_trajectories(
-  const CommonDataPtr & common_data_ptr,
-  std::vector<lane_change::TrajectoryGroup> & trajectory_groups);
-
 std::vector<DrivableLanes> generateDrivableLanes(
   const std::vector<DrivableLanes> & original_drivable_lanes, const RouteHandler & route_handler,
   const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & lane_change_lanes);

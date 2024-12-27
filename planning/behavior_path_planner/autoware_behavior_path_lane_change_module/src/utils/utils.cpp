@@ -162,69 +162,6 @@ bool path_footprint_exceeds_target_lane_bound(
   return false;
 }
 
-void filter_out_of_bound_trajectories(
-  const CommonDataPtr & common_data_ptr,
-  std::vector<lane_change::TrajectoryGroup> & trajectory_groups)
-{
-  const auto lane_boundary = std::invoke([&]() {
-    universe_utils::LineString2d line_string;
-    const auto & get_bound = [&](const lanelet::ConstLanelet & lane) {
-      const auto direction = common_data_ptr->direction;
-      return (direction == Direction::LEFT) ? lane.leftBound2d() : lane.rightBound2d();
-    };
-
-    const auto & lanes = common_data_ptr->lanes_ptr->current;
-
-    const auto reserve_size = ranges::accumulate(
-      lanes, 0UL,
-      [&](auto sum, const lanelet::ConstLanelet & lane) { return sum + get_bound(lane).size(); });
-    line_string.reserve(reserve_size);
-    for (const auto & lane : lanes) {
-      const auto & bound =
-        (common_data_ptr->direction == Direction::LEFT) ? lane.leftBound2d() : lane.rightBound2d();
-      ranges::for_each(get_bound(lane), [&line_string](const auto & point) {
-        boost::geometry::append(line_string, universe_utils::Point2d(point.x(), point.y()));
-      });
-    }
-    return line_string;
-  });
-
-  const auto shift_point = [&](const Point2d & p1, const Point2d & p2) {
-    const auto direction = common_data_ptr->direction;
-    const auto left_side = direction == Direction::LEFT;
-    const auto distance = (0.5 * common_data_ptr->bpp_param_ptr->vehicle_width + 0.1);
-    const auto offset = (left_side ? 1.0 : -1.0) * distance;  // invert direction
-    // Calculate the perpendicular vector
-    double dx = p2.x() - p1.x();
-    double dy = p2.y() - p1.y();
-    double length = std::sqrt(dx * dx + dy * dy);
-
-    // Normalize and find the perpendicular direction
-    double nx = -dy / length;
-    double ny = dx / length;
-
-    return Point2d(p1.x() + nx * offset, p1.y() + ny * offset);
-  };
-
-  trajectory_groups |= ranges::actions::remove_if([&](const TrajectoryGroup & candidate) {
-    if (candidate.lane_changing.poses.size() <= 2) {
-      return true;  // Remove candidates with insufficient poses
-    }
-
-    universe_utils::LineString2d path_ls;
-    path_ls.reserve(candidate.lane_changing.poses.size());
-
-    const auto segments = candidate.lane_changing.poses | ranges::views::sliding(2);
-    ranges::for_each(segments | ranges::views::drop(1), [&](const auto & segment) {
-      const auto & p1 = segment[0].position;
-      const auto & p2 = segment[1].position;
-      boost::geometry::append(path_ls, shift_point({p2.x, p2.y}, {p1.x, p1.y}));
-    });
-
-    return boost::geometry::disjoint(path_ls, lane_boundary);  // Remove if disjoint
-  });
-}
-
 std::vector<DrivableLanes> generateDrivableLanes(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & lane_change_lanes)
