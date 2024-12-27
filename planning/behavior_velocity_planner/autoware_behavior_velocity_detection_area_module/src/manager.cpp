@@ -69,17 +69,16 @@ void DetectionAreaModuleManager::launchNewModules(
   }
 }
 
-std::function<bool(const std::shared_ptr<SceneModuleInterfaceWithRTC> &)>
+std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 DetectionAreaModuleManager::getModuleExpiredFunction(
   const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto detection_area_id_set = planning_utils::getRegElemIdSetOnPath<DetectionArea>(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
-  return
-    [detection_area_id_set](const std::shared_ptr<SceneModuleInterfaceWithRTC> & scene_module) {
-      return detection_area_id_set.count(scene_module->getModuleId()) == 0;
-    };
+  return [detection_area_id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
+    return detection_area_id_set.count(scene_module->getModuleId()) == 0;
+  };
 }
 
 }  // namespace autoware::behavior_velocity_planner
