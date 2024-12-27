@@ -22,8 +22,8 @@
 #include "object_manager.hpp"
 #include "result.hpp"
 
-#include <autoware/behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/state_machine.hpp>
+#include <autoware/behavior_velocity_rtc_interface/scene_module_interface_with_rtc.hpp>
 #include <autoware/motion_utils/marker/virtual_wall_marker_creator.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -46,7 +46,7 @@
 namespace autoware::behavior_velocity_planner
 {
 
-class IntersectionModule : public SceneModuleInterface
+class IntersectionModule : public SceneModuleInterfaceWithRTC
 {
 public:
   struct PlannerParam
