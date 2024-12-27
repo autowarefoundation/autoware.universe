@@ -107,7 +107,7 @@ struct PlannerData
   void process_predicted_objects(
     const autoware_perception_msgs::msg::PredictedObjects & predicted_objects)
   {
-    predicted_object_header = predicted_objects.header;
+    predicted_objects_header = predicted_objects.header;
     for (const auto & predicted_object : predicted_objects.objects) {
       objects.push_back(Object(predicted_object));
     }
@@ -116,7 +116,7 @@ struct PlannerData
   // msgs from callbacks that are used for data-ready
   nav_msgs::msg::Odometry current_odometry;
   geometry_msgs::msg::AccelWithCovarianceStamped current_acceleration;
-  std_msgs::msg::Header predicted_object_header;
+  std_msgs::msg::Header predicted_objects_header;
   std::vector<Object> objects;
   Pointcloud no_ground_pointcloud;
   nav_msgs::msg::OccupancyGrid occupancy_grid;
