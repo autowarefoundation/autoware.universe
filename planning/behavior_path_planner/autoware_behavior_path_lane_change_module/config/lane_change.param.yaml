@@ -10,6 +10,12 @@
       # turn signal
       min_length_for_turn_signal_activation: 10.0 # [m]
 
+      # terminal path
+      terminal_path:
+        enable: true
+        disable_near_goal: true
+        stop_at_boundary: false
+
       # trajectory generation
       trajectory:
         max_prepare_duration: 4.0

@@ -154,7 +154,7 @@ using behavior_path_planner::lane_change::CommonDataPtr;
 
 bool get_prepare_segment(
   const CommonDataPtr & common_data_ptr, const PathWithLaneId & prev_module_path,
-  const LaneChangePhaseMetrics prep_metric, PathWithLaneId & prepare_segment)
+  const double prep_length, PathWithLaneId & prepare_segment)
 {
   const auto & current_lanes = common_data_ptr->lanes_ptr->current;
   const auto & target_lanes = common_data_ptr->lanes_ptr->target;
@@ -168,7 +168,7 @@ bool get_prepare_segment(
   const size_t current_seg_idx =
     autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
       prepare_segment.points, common_data_ptr->get_ego_pose(), 3.0, 1.0);
-  utils::clipPathLength(prepare_segment, current_seg_idx, prep_metric.length, backward_path_length);
+  utils::clipPathLength(prepare_segment, current_seg_idx, prep_length, backward_path_length);
 
   if (prepare_segment.points.empty()) return false;
 

@@ -242,6 +242,13 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
   // debug marker
   p.publish_debug_marker = getOrDeclareParameter<bool>(*node, parameter("publish_debug_marker"));
 
+  // terminal lane change path
+  p.terminal_path.enable = getOrDeclareParameter<bool>(*node, parameter("terminal_path.enable"));
+  p.terminal_path.disable_near_goal =
+    getOrDeclareParameter<bool>(*node, parameter("terminal_path.disable_near_goal"));
+  p.terminal_path.stop_at_boundary =
+    getOrDeclareParameter<bool>(*node, parameter("terminal_path.stop_at_boundary"));
+
   // validation of safety check parameters
   // if loose check is not enabled, lane change module will keep on chattering and canceling, and
   // false positive situation might  occur

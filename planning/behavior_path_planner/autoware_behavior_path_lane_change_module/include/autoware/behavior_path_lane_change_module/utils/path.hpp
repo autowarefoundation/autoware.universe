@@ -48,7 +48,7 @@ using behavior_path_planner::lane_change::CommonDataPtr;
  */
 bool get_prepare_segment(
   const CommonDataPtr & common_data_ptr, const PathWithLaneId & prev_module_path,
-  const LaneChangePhaseMetrics prep_metric, PathWithLaneId & prepare_segment);
+  const double prep_length, PathWithLaneId & prepare_segment);
 
 /**
  * @brief Generates the candidate path for a lane change maneuver.
