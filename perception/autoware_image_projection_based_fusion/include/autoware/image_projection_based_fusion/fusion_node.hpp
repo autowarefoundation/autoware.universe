@@ -90,15 +90,12 @@ public:
   explicit FusionNode(
     const std::string & node_name, const rclcpp::NodeOptions & options, int queue_size);
 
-protected:
+private:
   // Common process methods
   void cameraInfoCallback(
     const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_camera_info_msg,
     const std::size_t camera_id);
-  // callback for main subscription
-  void subCallback(const typename Msg3D::ConstSharedPtr input_msg);
-  // callback for roi subscription
-  void roiCallback(const typename Msg2D::ConstSharedPtr input_roi_msg, const std::size_t roi_i);
+
   // callback for timer
   void timer_callback();
   void setPeriod(const int64_t new_period);
@@ -114,6 +111,29 @@ protected:
     }
     return true;
   }
+
+  // camera projection
+  float approx_grid_cell_w_size_;
+  float approx_grid_cell_h_size_;
+
+  // timer
+  rclcpp::TimerBase::SharedPtr timer_;
+  double timeout_ms_{};
+  double match_threshold_ms_{};
+
+  std::vector<typename rclcpp::Subscription<Msg2D>::SharedPtr> rois_subs_;
+  std::vector<rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr> camera_info_subs_;
+
+  // cache for fusion
+  int64_t cached_det3d_msg_timestamp_;
+  typename Msg3D::SharedPtr cached_det3d_msg_ptr_;
+  std::mutex mutex_cached_msgs_;
+
+protected:
+  // callback for main subscription
+  void subCallback(const typename Msg3D::ConstSharedPtr input_msg);
+  // callback for roi subscription
+  void roiCallback(const typename Msg2D::ConstSharedPtr input_roi_msg, const std::size_t roi_i);
 
   // Custom process methods
   virtual void preprocess(Msg3D & output_msg);
@@ -131,24 +151,8 @@ protected:
   // 2d detection management
   std::vector<Det2dStatus<Msg2D>> det2d_list_;
 
-  // camera projection
-  float approx_grid_cell_w_size_;
-  float approx_grid_cell_h_size_;
-
-  // timer
-  rclcpp::TimerBase::SharedPtr timer_;
-  double timeout_ms_{};
-  double match_threshold_ms_{};
-
   /** \brief A vector of subscriber. */
   typename rclcpp::Subscription<Msg3D>::SharedPtr sub_;
-  std::vector<typename rclcpp::Subscription<Msg2D>::SharedPtr> rois_subs_;
-  std::vector<rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr> camera_info_subs_;
-
-  // cache for fusion
-  int64_t cached_det3d_msg_timestamp_;
-  typename Msg3D::SharedPtr cached_det3d_msg_ptr_;
-  std::mutex mutex_cached_msgs_;
 
   // parameters for out_of_scope filter
   float filter_scope_min_x_;
