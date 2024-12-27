@@ -31,7 +31,7 @@ namespace autoware::behavior_path_planner::lane_change
 {
 using utils::path_safety_checker::CollisionCheckDebugMap;
 
-struct LaneChangeMetricsDebug
+struct MetricsDebug
 {
   LaneChangePhaseMetrics prep_metric;
   std::vector<LaneChangePhaseMetrics> lc_metrics;
@@ -51,7 +51,7 @@ struct Debug
   lanelet::ConstLanelets current_lanes;
   lanelet::ConstLanelets target_lanes;
   lanelet::ConstLanelets target_backward_lanes;
-  std::vector<LaneChangeMetricsDebug> lane_change_metrics;
+  std::vector<MetricsDebug> lane_change_metrics;
   double collision_check_object_debug_lifetime{0.0};
   double distance_to_end_of_current_lane{std::numeric_limits<double>::max()};
   double distance_to_lane_change_finished{std::numeric_limits<double>::max()};
