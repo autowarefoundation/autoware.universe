@@ -401,7 +401,8 @@ void PointPaintingFusionNode::postprocess(sensor_msgs::msg::PointCloud2 & painte
 
   std::vector<autoware::lidar_centerpoint::Box3D> det_boxes3d;
   bool is_num_pillars_within_range = true;
-  bool is_success = detector_ptr_->detect(painted_pointcloud_msg, tf_buffer_, det_boxes3d, is_num_pillars_within_range);
+  bool is_success = detector_ptr_->detect(
+    painted_pointcloud_msg, tf_buffer_, det_boxes3d, is_num_pillars_within_range);
   if (!is_success) {
     return;
   }
