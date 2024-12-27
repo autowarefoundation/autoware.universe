@@ -91,8 +91,7 @@ inline bool isUnknown(int label2d)
 }
 
 PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & options)
-: FusionNode<sensor_msgs::msg::PointCloud2, DetectedObjects, DetectedObjectsWithFeature>(
-    "pointpainting_fusion", options)
+: FusionNode<PointCloudMsgType, RoiMsgType, DetectedObjects>("pointpainting_fusion", options)
 {
   omp_num_threads_ = this->declare_parameter<int>("omp_params.num_threads");
   const float score_threshold =
@@ -156,10 +155,15 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
   const auto min_area_matrix = this->declare_parameter<std::vector<double>>("min_area_matrix");
   const auto max_area_matrix = this->declare_parameter<std::vector<double>>("max_area_matrix");
 
+  // subscriber
   std::function<void(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)> sub_callback =
     std::bind(&PointPaintingFusionNode::subCallback, this, std::placeholders::_1);
   sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS().keep_last(3), sub_callback);
+
+  // publisher
+  point_pub_ptr_ = this->create_publisher<PointCloudMsgType>("output", rclcpp::QoS{1});
+  pub_ptr_ = this->create_publisher<DetectedObjects>("~/output/objects", rclcpp::QoS{1});
 
   detection_class_remapper_.setParameters(
     allow_remapping_by_area_matrix, min_area_matrix, max_area_matrix);
@@ -187,15 +191,13 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
   detector_ptr_ = std::make_unique<image_projection_based_fusion::PointPaintingTRT>(
     encoder_param, head_param, densification_param, config);
 
-  obj_pub_ptr_ = this->create_publisher<DetectedObjects>("~/output/objects", rclcpp::QoS{1});
-
   if (this->declare_parameter("build_only", false)) {
     RCLCPP_INFO(this->get_logger(), "TensorRT engine is built and shutdown node.");
     rclcpp::shutdown();
   }
 }
 
-void PointPaintingFusionNode::preprocess(sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg)
+void PointPaintingFusionNode::preprocess(PointCloudMsgType & painted_pointcloud_msg)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
@@ -252,9 +254,9 @@ void PointPaintingFusionNode::preprocess(sensor_msgs::msg::PointCloud2 & painted
 }
 
 void PointPaintingFusionNode::fuseOnSingleImage(
-  __attribute__((unused)) const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg,
-  const std::size_t image_id, const DetectedObjectsWithFeature & input_roi_msg,
-  sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg)
+  __attribute__((unused)) const PointCloudMsgType & input_pointcloud_msg,
+  const Det2dStatus<RoiMsgType> & det2d, const RoiMsgType & input_roi_msg,
+  PointCloudMsgType & painted_pointcloud_msg)
 {
   if (painted_pointcloud_msg.data.empty() || painted_pointcloud_msg.fields.empty()) {
     RCLCPP_WARN_STREAM_THROTTLE(
@@ -285,10 +287,6 @@ void PointPaintingFusionNode::fuseOnSingleImage(
     }
     lidar2cam_affine = _transformToEigen(transform_stamped_optional.value().transform);
   }
-
-  // transform
-  // sensor_msgs::msg::PointCloud2 transformed_pointcloud;
-  // tf2::doTransform(painted_pointcloud_msg, transformed_pointcloud, transform_stamped);
 
   const auto x_offset = painted_pointcloud_msg.fields
                           .at(static_cast<size_t>(autoware::point_types::PointXYZIRCIndex::X))
@@ -332,13 +330,13 @@ dc   | dc dc dc  dc ||zc|
     p_y = point_camera.y();
     p_z = point_camera.z();
 
-    if (camera_projectors_[image_id].isOutsideHorizontalView(p_x, p_z)) {
+    if (det2d.camera_projector_ptr->isOutsideHorizontalView(p_x, p_z)) {
       continue;
     }
 
     // project
     Eigen::Vector2d projected_point;
-    if (camera_projectors_[image_id].calcImageProjectedPoint(
+    if (det2d.camera_projector_ptr->calcImageProjectedPoint(
           cv::Point3d(p_x, p_y, p_z), projected_point)) {
       // iterate 2d bbox
       for (const auto & feature_object : objects) {
@@ -375,17 +373,17 @@ dc   | dc dc dc  dc ||zc|
 
     debugger_->image_rois_ = debug_image_rois;
     debugger_->obstacle_points_ = debug_image_points;
-    debugger_->publishImage(image_id, input_roi_msg.header.stamp);
+    debugger_->publishImage(det2d.id, input_roi_msg.header.stamp);
   }
 }
 
-void PointPaintingFusionNode::postprocess(sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg)
+void PointPaintingFusionNode::postprocess(PointCloudMsgType & painted_pointcloud_msg)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
   const auto objects_sub_count =
-    obj_pub_ptr_->get_subscription_count() + obj_pub_ptr_->get_intra_process_subscription_count();
+    pub_ptr_->get_subscription_count() + pub_ptr_->get_intra_process_subscription_count();
   if (objects_sub_count < 1) {
     return;
   }
@@ -417,14 +415,18 @@ void PointPaintingFusionNode::postprocess(sensor_msgs::msg::PointCloud2 & painte
   detection_class_remapper_.mapClasses(output_msg);
 
   if (objects_sub_count > 0) {
-    obj_pub_ptr_->publish(output_msg);
+    pub_ptr_->publish(output_msg);
   }
 }
 
-bool PointPaintingFusionNode::out_of_scope(__attribute__((unused)) const DetectedObjects & obj)
+void PointPaintingFusionNode::publish(const PointCloudMsgType & painted_pointcloud_msg)
 {
-  return false;
+  if (point_pub_ptr_->get_subscription_count() < 1) {
+    return;
+  }
+  point_pub_ptr_->publish(painted_pointcloud_msg);
 }
+
 }  // namespace autoware::image_projection_based_fusion
 
 #include <rclcpp_components/register_node_macro.hpp>

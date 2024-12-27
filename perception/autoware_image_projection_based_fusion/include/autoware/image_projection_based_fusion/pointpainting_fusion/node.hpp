@@ -41,23 +41,23 @@ inline bool isInsideBbox(
          proj_y >= roi.y_offset * zc && proj_y <= (roi.y_offset + roi.height) * zc;
 }
 
-class PointPaintingFusionNode
-: public FusionNode<sensor_msgs::msg::PointCloud2, DetectedObjects, DetectedObjectsWithFeature>
+class PointPaintingFusionNode : public FusionNode<PointCloudMsgType, RoiMsgType, DetectedObjects>
 {
 public:
   explicit PointPaintingFusionNode(const rclcpp::NodeOptions & options);
 
 protected:
-  void preprocess(sensor_msgs::msg::PointCloud2 & pointcloud_msg) override;
+  void preprocess(PointCloudMsgType & pointcloud_msg) override;
 
   void fuseOnSingleImage(
-    const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const std::size_t image_id,
-    const DetectedObjectsWithFeature & input_roi_msg,
-    sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg) override;
+    const PointCloudMsgType & input_pointcloud_msg, const Det2dStatus<RoiMsgType> & det2d,
+    const RoiMsgType & input_roi_msg, PointCloudMsgType & painted_pointcloud_msg) override;
 
-  void postprocess(sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg) override;
+  void postprocess(PointCloudMsgType & painted_pointcloud_msg) override;
 
-  rclcpp::Publisher<DetectedObjects>::SharedPtr obj_pub_ptr_;
+  void publish(const PointCloudMsgType & output_msg) override;
+
+  rclcpp::Publisher<PointCloudMsgType>::SharedPtr point_pub_ptr_;
 
   int omp_num_threads_{1};
   float score_threshold_{0.0};
@@ -72,8 +72,6 @@ protected:
   autoware::lidar_centerpoint::DetectionClassRemapper detection_class_remapper_;
 
   std::unique_ptr<image_projection_based_fusion::PointPaintingTRT> detector_ptr_{nullptr};
-
-  bool out_of_scope(const DetectedObjects & obj) override;
 };
 }  // namespace autoware::image_projection_based_fusion
 #endif  // AUTOWARE__IMAGE_PROJECTION_BASED_FUSION__POINTPAINTING_FUSION__NODE_HPP_

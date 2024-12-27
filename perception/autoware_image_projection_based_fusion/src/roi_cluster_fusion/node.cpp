@@ -41,8 +41,7 @@ namespace autoware::image_projection_based_fusion
 using autoware::universe_utils::ScopedTimeTrack;
 
 RoiClusterFusionNode::RoiClusterFusionNode(const rclcpp::NodeOptions & options)
-: FusionNode<DetectedObjectsWithFeature, DetectedObjectWithFeature, DetectedObjectsWithFeature>(
-    "roi_cluster_fusion", options)
+: FusionNode<ClusterMsgType, RoiMsgType, ClusterMsgType>("roi_cluster_fusion", options)
 {
   trust_object_iou_mode_ = declare_parameter<std::string>("trust_object_iou_mode");
   non_trust_object_iou_mode_ = declare_parameter<std::string>("non_trust_object_iou_mode");
@@ -54,9 +53,12 @@ RoiClusterFusionNode::RoiClusterFusionNode(const rclcpp::NodeOptions & options)
   remove_unknown_ = declare_parameter<bool>("remove_unknown");
   fusion_distance_ = declare_parameter<double>("fusion_distance");
   trust_object_distance_ = declare_parameter<double>("trust_object_distance");
+
+  // publisher
+  pub_ptr_ = this->create_publisher<ClusterMsgType>("output", rclcpp::QoS{1});
 }
 
-void RoiClusterFusionNode::preprocess(DetectedObjectsWithFeature & output_cluster_msg)
+void RoiClusterFusionNode::preprocess(ClusterMsgType & output_cluster_msg)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
@@ -71,36 +73,14 @@ void RoiClusterFusionNode::preprocess(DetectedObjectsWithFeature & output_cluste
   }
 }
 
-void RoiClusterFusionNode::postprocess(DetectedObjectsWithFeature & output_cluster_msg)
-{
-  std::unique_ptr<ScopedTimeTrack> st_ptr;
-  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
-
-  if (!remove_unknown_) {
-    return;
-  }
-  DetectedObjectsWithFeature known_objects;
-  known_objects.feature_objects.reserve(output_cluster_msg.feature_objects.size());
-  for (auto & feature_object : output_cluster_msg.feature_objects) {
-    bool is_roi_label_known = feature_object.object.classification.front().label !=
-                              autoware_perception_msgs::msg::ObjectClassification::UNKNOWN;
-    if (
-      is_roi_label_known ||
-      feature_object.object.existence_probability >= min_roi_existence_prob_) {
-      known_objects.feature_objects.push_back(feature_object);
-    }
-  }
-  output_cluster_msg.feature_objects = known_objects.feature_objects;
-}
-
 void RoiClusterFusionNode::fuseOnSingleImage(
-  const DetectedObjectsWithFeature & input_cluster_msg, const std::size_t image_id,
-  const DetectedObjectsWithFeature & input_roi_msg, DetectedObjectsWithFeature & output_cluster_msg)
+  const ClusterMsgType & input_cluster_msg, const Det2dStatus<RoiMsgType> & det2d,
+  const RoiMsgType & input_roi_msg, ClusterMsgType & output_cluster_msg)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
-  const sensor_msgs::msg::CameraInfo & camera_info = camera_projectors_[image_id].getCameraInfo();
+  const sensor_msgs::msg::CameraInfo & camera_info = det2d.camera_projector_ptr->getCameraInfo();
 
   // get transform from cluster frame id to camera optical frame id
   geometry_msgs::msg::TransformStamped transform_stamped;
@@ -149,7 +129,7 @@ void RoiClusterFusionNode::fuseOnSingleImage(
       }
 
       Eigen::Vector2d projected_point;
-      if (camera_projectors_[image_id].calcImageProjectedPoint(
+      if (det2d.camera_projector_ptr->calcImageProjectedPoint(
             cv::Point3d(*iter_x, *iter_y, *iter_z), projected_point)) {
         const int px = static_cast<int>(projected_point.x());
         const int py = static_cast<int>(projected_point.y());
@@ -168,7 +148,6 @@ void RoiClusterFusionNode::fuseOnSingleImage(
     }
 
     sensor_msgs::msg::RegionOfInterest roi;
-    // roi.do_rectify = m_camera_info_.at(id).do_rectify;
     roi.x_offset = min_x;
     roi.y_offset = min_y;
     roi.width = max_x - min_x;
@@ -231,7 +210,7 @@ void RoiClusterFusionNode::fuseOnSingleImage(
 
   // note: debug objects are safely cleared in fusion_node.cpp
   if (debugger_) {
-    debugger_->publishImage(image_id, input_roi_msg.header.stamp);
+    debugger_->publishImage(det2d.id, input_roi_msg.header.stamp);
   }
 }
 
@@ -289,6 +268,36 @@ double RoiClusterFusionNode::cal_iou_by_mode(
     default:
       return 0.0;
   }
+}
+
+void RoiClusterFusionNode::postprocess(ClusterMsgType & output_cluster_msg)
+{
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
+  if (!remove_unknown_) {
+    return;
+  }
+  ClusterMsgType known_objects;
+  known_objects.feature_objects.reserve(output_cluster_msg.feature_objects.size());
+  for (auto & feature_object : output_cluster_msg.feature_objects) {
+    bool is_roi_label_known = feature_object.object.classification.front().label !=
+                              autoware_perception_msgs::msg::ObjectClassification::UNKNOWN;
+    if (
+      is_roi_label_known ||
+      feature_object.object.existence_probability >= min_roi_existence_prob_) {
+      known_objects.feature_objects.push_back(feature_object);
+    }
+  }
+  output_cluster_msg.feature_objects = known_objects.feature_objects;
+}
+
+void RoiClusterFusionNode::publish(const ClusterMsgType & output_msg)
+{
+  if (pub_ptr_->get_subscription_count() < 1) {
+    return;
+  }
+  pub_ptr_->publish(output_msg);
 }
 
 }  // namespace autoware::image_projection_based_fusion
