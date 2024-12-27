@@ -49,6 +49,50 @@ struct TrafficSignalStamped
 };
 struct PlannerData
 {
+  struct Object
+  {
+  public:
+    autoware_perception_msgs::msg::PredictedObject predicted_object;
+    double get_lon_velocity_relative_to_trajectory()
+    {
+      if (!velocity_relative_to_trajectory.longitudinal) {
+        velocity_relative_to_trajectory.longitudinal = 0.0;
+      }
+      return *velocity_relative_to_trajectory.longitudinal;
+    }
+    double get_lat_velocity_relative_to_trajectory()
+    {
+      if (!velocity_relative_to_trajectory.lateral) {
+        velocity_relative_to_trajectory.lateral = 0.0;
+      }
+      return *velocity_relative_to_trajectory.lateral;
+    }
+
+  private:
+    struct Distance
+    {
+      std::optional<double> to_trajectory_polygon{std::nullopt};
+      std::optional<double> to_trajectory_lateral{std::nullopt};
+      std::optional<double> from_ego_longitudinal{std::nullopt};
+    };
+    Distance distance;
+    struct VelocityRelativeToTrajectory
+    {
+      std::optional<double> longitudinal{std::nullopt};
+      std::optional<double> lateral{std::nullopt};
+    };
+    VelocityRelativeToTrajectory velocity_relative_to_trajectory;
+  };
+
+  struct Pointcloud
+  {
+  public:
+    pcl::PointCloud<pcl::PointXYZ> no_ground_pointcloud;
+
+  private:
+    // NOTE: clustered result will be added.
+  };
+
   explicit PlannerData(rclcpp::Node & node)
   : vehicle_info_(autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo())
   {
@@ -58,7 +102,9 @@ struct PlannerData
   nav_msgs::msg::Odometry current_odometry;
   geometry_msgs::msg::AccelWithCovarianceStamped current_acceleration;
   autoware_perception_msgs::msg::PredictedObjects predicted_objects;
+  // NOTE: will be replaced by std::vector<Object> objects;
   pcl::PointCloud<pcl::PointXYZ> no_ground_pointcloud;
+  // NOTE: will be replaced by Pointcloud no_ground_pointcloud;
   nav_msgs::msg::OccupancyGrid occupancy_grid;
   std::shared_ptr<route_handler::RouteHandler> route_handler;
 
