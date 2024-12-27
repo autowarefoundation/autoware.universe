@@ -40,6 +40,7 @@ public:
   PlannerType getPlannerType() const override { return PlannerType::GEOMETRIC; };
   std::optional<PullOutPath> plan(
     const Pose & start_pose, const Pose & goal_pose,
+    const std::shared_ptr<const PlannerData> & planner_data,
     PlannerDebugData & planner_debug_data) override;
 
   GeometricParallelParking planner_;
