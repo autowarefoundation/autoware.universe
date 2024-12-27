@@ -415,8 +415,8 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::roiCallback(
       if (checkAllDet2dFused()) {
         exportProcess();
         // reset flags
-        for (auto & det2d : det2d_list_) {
-          det2d.is_fused = false;
+        for (auto & status : det2d_list_) {
+          status.is_fused = false;
         }
       }
       processing_time_ms = processing_time_ms + stop_watch_ptr_->toc("processing_time", true);
