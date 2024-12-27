@@ -142,7 +142,15 @@ protected:
 
   bool get_path_using_frenet(
     const std::vector<LaneChangePhaseMetrics> & prepare_metrics,
-    const lane_change::TargetObjects & target_objects, LaneChangePaths & candidate_paths) const;
+    const lane_change::TargetObjects & target_objects,
+    const std::vector<std::vector<int64_t>> & sorted_lane_ids,
+    LaneChangePaths & candidate_paths) const;
+
+  bool get_path_using_path_shifter(
+    const std::vector<LaneChangePhaseMetrics> & prepare_metrics,
+    const lane_change::TargetObjects & target_objects,
+    const std::vector<std::vector<int64_t>> & sorted_lane_ids,
+    LaneChangePaths & candidate_paths) const;
 
   bool check_candidate_path_safety(
     const LaneChangePath & candidate_path, const lane_change::TargetObjects & target_objects) const;

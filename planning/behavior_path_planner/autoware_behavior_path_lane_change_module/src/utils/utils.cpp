@@ -455,17 +455,25 @@ std::vector<std::vector<int64_t>> get_sorted_lane_ids(const CommonDataPtr & comm
 }
 
 std::vector<int64_t> replaceWithSortedIds(
-  const std::vector<int64_t> & original_lane_ids,
-  const std::vector<std::vector<int64_t>> & sorted_lane_ids)
+  const std::vector<int64_t> & current_lane_ids,
+  const std::vector<std::vector<int64_t>> & sorted_lane_ids, std::vector<int64_t> & prev_lane_ids,
+  std::vector<int64_t> & prev_sorted_lane_ids)
 {
-  for (const auto original_id : original_lane_ids) {
+  if (current_lane_ids == prev_lane_ids) {
+    return prev_sorted_lane_ids;
+  }
+
+  for (const auto original_id : current_lane_ids) {
     for (const auto & sorted_id : sorted_lane_ids) {
       if (std::find(sorted_id.cbegin(), sorted_id.cend(), original_id) != sorted_id.cend()) {
-        return sorted_id;
+        prev_lane_ids = current_lane_ids;
+        prev_sorted_lane_ids = sorted_id;
+        return prev_sorted_lane_ids;
       }
     }
   }
-  return original_lane_ids;
+
+  return current_lane_ids;
 }
 
 CandidateOutput assignToCandidate(

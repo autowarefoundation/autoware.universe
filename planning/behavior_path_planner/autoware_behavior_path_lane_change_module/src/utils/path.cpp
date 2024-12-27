@@ -366,10 +366,14 @@ LaneChangePath construct_candidate_path(
     throw std::logic_error("Lane change end idx not found on target path.");
   }
 
+  std::vector<int64_t> prev_ids;
+  std::vector<int64_t> prev_sorted_ids;
   for (size_t i = 0; i < shifted_path.path.points.size(); ++i) {
     auto & point = shifted_path.path.points.at(i);
     if (i < *lc_end_idx_opt) {
-      point.lane_ids = replaceWithSortedIds(point.lane_ids, sorted_lane_ids);
+      const auto & current_ids = point.lane_ids;
+      point.lane_ids =
+        replaceWithSortedIds(current_ids, sorted_lane_ids, prev_ids, prev_sorted_ids);
       point.point.longitudinal_velocity_mps = std::min(
         point.point.longitudinal_velocity_mps, static_cast<float>(terminal_lane_changing_velocity));
       continue;
@@ -501,40 +505,48 @@ std::vector<lane_change::TrajectoryGroup> generate_frenet_candidates(
 }
 
 std::optional<LaneChangePath> get_candidate_path(
-  const TrajectoryGroup & trajectory_group, const CommonDataPtr & common_data_ptr)
+  const TrajectoryGroup & trajectory_group, const CommonDataPtr & common_data_ptr,
+  const std::vector<std::vector<int64_t>> & sorted_lane_ids)
 {
   if (trajectory_group.lane_changing.frenet_points.empty()) {
     return std::nullopt;
   }
 
   ShiftedPath shifted_path;
-  PathPointWithLaneId pp;
+  std::vector<int64_t> prev_ids;
+  std::vector<int64_t> prev_sorted_ids;
   const auto & lane_changing_candidate = trajectory_group.lane_changing;
   const auto & target_lane_ref_path = trajectory_group.target_lane_ref_path;
   const auto & prepare_segment = trajectory_group.prepare;
   const auto & prepare_metric = trajectory_group.prepare_metric;
   const auto & initial_state = trajectory_group.initial_state;
   const auto & target_ref_sums = trajectory_group.target_lane_ref_path_dist;
-  for (auto i = 0UL; i < lane_changing_candidate.poses.size(); ++i) {
-    const auto s = lane_changing_candidate.frenet_points[i].s;
-    pp.point.pose = lane_changing_candidate.poses[i];
-    pp.point.longitudinal_velocity_mps =
-      static_cast<float>(lane_changing_candidate.longitudinal_velocities[i]);
-    pp.point.lateral_velocity_mps =
-      static_cast<float>(lane_changing_candidate.lateral_velocities[i]);
-    pp.point.heading_rate_rps = static_cast<float>(
-      lane_changing_candidate
-        .curvatures[i]);  // TODO(Maxime): dirty way to attach the curvature at each point
-    // copy from original reference path
+  auto zipped_candidates = ranges::views::zip(
+    lane_changing_candidate.poses, lane_changing_candidate.frenet_points,
+    lane_changing_candidate.longitudinal_velocities, lane_changing_candidate.lateral_velocities,
+    lane_changing_candidate.curvatures);
+
+  for (const auto & [pose, frenet_point, longitudinal_velocity, lateral_velocity, curvature] :
+       zipped_candidates) {
+    // Find the reference index
+    const auto & s = frenet_point.s;
     auto ref_i_itr = std::find_if(
       target_ref_sums.begin(), target_ref_sums.end(),
       [s](const double ref_s) { return ref_s > s; });
     auto ref_i = std::distance(target_ref_sums.begin(), ref_i_itr);
-    pp.point.pose.position.z = target_lane_ref_path.points[ref_i].point.pose.position.z;
-    pp.lane_ids = target_lane_ref_path.points[ref_i].lane_ids;
 
-    shifted_path.shift_length.push_back(lane_changing_candidate.frenet_points[i].d);
-    shifted_path.path.points.push_back(pp);
+    PathPointWithLaneId point;
+    point.point.pose = pose;
+    point.point.longitudinal_velocity_mps = static_cast<float>(longitudinal_velocity);
+    point.point.lateral_velocity_mps = static_cast<float>(lateral_velocity);
+    point.point.heading_rate_rps = static_cast<float>(curvature);
+    point.point.pose.position.z = target_lane_ref_path.points[ref_i].point.pose.position.z;
+    const auto & current_ids = target_lane_ref_path.points[ref_i].lane_ids;
+    point.lane_ids = replaceWithSortedIds(current_ids, sorted_lane_ids, prev_ids, prev_sorted_ids);
+
+    // Add to shifted path
+    shifted_path.shift_length.push_back(frenet_point.d);
+    shifted_path.path.points.push_back(point);
   }
 
   if (shifted_path.path.points.empty()) {
@@ -581,8 +593,6 @@ std::optional<LaneChangePath> get_candidate_path(
   ShiftLine sl;
 
   sl.start = lane_changing_candidate.poses.front();
-  // prepare_segment.points.back() .point.pose;  // TODO(Maxime): should it be 1st point of
-  // lane_changing_candidate ?
   sl.end = lane_changing_candidate.poses.back();
   sl.start_shift_length = 0.0;
   sl.end_shift_length = initial_state.position.d;
@@ -590,7 +600,6 @@ std::optional<LaneChangePath> get_candidate_path(
   sl.end_idx = shifted_path.shift_length.size() - 1;
 
   info.shift_line = sl;
-
   info.terminal_lane_changing_velocity = lane_changing_candidate.longitudinal_velocities.back();
   info.lateral_acceleration = lane_changing_candidate.lateral_accelerations.front();
 

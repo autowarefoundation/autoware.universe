@@ -105,7 +105,8 @@ std::vector<lane_change::TrajectoryGroup> generate_frenet_candidates(
   const std::vector<LaneChangePhaseMetrics> & metrics);
 
 std::optional<LaneChangePath> get_candidate_path(
-  const TrajectoryGroup & trajectory_group, const CommonDataPtr & common_data_ptr);
+  const TrajectoryGroup & trajectory_group, const CommonDataPtr & common_data_ptr,
+  const std::vector<std::vector<int64_t>> & sorted_lane_ids);
 }  // namespace autoware::behavior_path_planner::utils::lane_change
 
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__PATH_HPP_
