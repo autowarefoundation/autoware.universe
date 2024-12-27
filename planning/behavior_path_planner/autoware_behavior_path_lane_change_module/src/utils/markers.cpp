@@ -73,6 +73,34 @@ MarkerArray showAllValidLaneChangePath(
       marker.points.push_back(point.point.pose.position);
     }
 
+    const auto & info = lc_path.info;
+    auto text_marker = createDefaultMarker(
+      "map", current_time, ns_with_idx, ++id, visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
+      createMarkerScale(0.1, 0.1, 0.8), colors::yellow());
+    const auto prep_idx = points.size() / 4;
+    text_marker.pose = points.at(prep_idx).point.pose;
+    text_marker.pose.position.z += 2.0;
+    text_marker.text = fmt::format(
+      "vel: {vel:.3f}[m/s] | lon_acc: {lon_acc:.3f}[m/s2] | t: {time:.3f}[s] | L: {length:.3f}[m]",
+      fmt::arg("vel", info.velocity.prepare),
+      fmt::arg("lon_acc", info.longitudinal_acceleration.prepare),
+      fmt::arg("time", info.duration.prepare), fmt::arg("length", info.length.prepare));
+    marker_array.markers.push_back(text_marker);
+
+    const auto lc_idx = points.size() / 2;
+    text_marker.id = ++id;
+    text_marker.pose = points.at(lc_idx).point.pose;
+    text_marker.text = fmt::format(
+      "type: {type} | vel: {vel:.3f}[m/s] | lon_acc: {lon_acc:.3f}[m/s2] | lat_acc: "
+      "{lat_acc:.3f}[m/s2] | t: "
+      "{time:.3f}[s] | L: {length:.3f}[m]",
+      fmt::arg("type", magic_enum::enum_name(lc_path.type)),
+      fmt::arg("vel", info.velocity.lane_changing),
+      fmt::arg("lon_acc", info.longitudinal_acceleration.lane_changing),
+      fmt::arg("lat_acc", info.lateral_acceleration), fmt::arg("time", info.duration.lane_changing),
+      fmt::arg("length", info.length.lane_changing));
+    marker_array.markers.push_back(text_marker);
+
     marker_array.markers.push_back(marker);
   }
   return marker_array;

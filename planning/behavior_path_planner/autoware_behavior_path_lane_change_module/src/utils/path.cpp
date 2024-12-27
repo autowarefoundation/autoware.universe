@@ -24,6 +24,7 @@
 #include <autoware/universe_utils/system/stop_watch.hpp>
 #include <autoware_frenet_planner/frenet_planner.hpp>
 #include <range/v3/action/insert.hpp>
+#include <range/v3/action/remove_if.hpp>
 #include <range/v3/algorithm.hpp>
 #include <range/v3/numeric/accumulate.hpp>
 #include <range/v3/view.hpp>
@@ -46,10 +47,14 @@ using autoware::behavior_path_planner::lane_change::LCParamPtr;
 
 using autoware::behavior_path_planner::LaneChangePhaseMetrics;
 using autoware::behavior_path_planner::ShiftLine;
+using autoware::behavior_path_planner::lane_change::TrajectoryGroup;
 using autoware::frenet_planner::FrenetState;
 using autoware::frenet_planner::SamplingParameters;
+using autoware::route_handler::Direction;
 using autoware::sampler_common::FrenetPoint;
 using autoware::sampler_common::transform::Spline2D;
+using autoware::universe_utils::LineString2d;
+using autoware::universe_utils::Point2d;
 using geometry_msgs::msg::Pose;
 
 double calc_resample_interval(
@@ -226,6 +231,62 @@ double calc_average_curvature(const std::vector<double> & curvatures)
   const auto sum_of_k = ranges::accumulate(filtered_k, 0.0, sums_of_curvatures);
   const auto count_k = static_cast<double>(ranges::distance(filtered_k));
   return sum_of_k / count_k;
+}
+
+LineString2d get_linestring_bound(const lanelet::ConstLanelets & lanes, const Direction direction)
+{
+  LineString2d line_string;
+  const auto & get_bound = [&](const lanelet::ConstLanelet & lane) {
+    return (direction == Direction::LEFT) ? lane.leftBound2d() : lane.rightBound2d();
+  };
+
+  const auto reserve_size = ranges::accumulate(
+    lanes, 0UL,
+    [&](auto sum, const lanelet::ConstLanelet & lane) { return sum + get_bound(lane).size(); });
+  line_string.reserve(reserve_size);
+  for (const auto & lane : lanes) {
+    ranges::for_each(get_bound(lane), [&line_string](const auto & point) {
+      boost::geometry::append(line_string, Point2d(point.x(), point.y()));
+    });
+  }
+  return line_string;
+}
+
+Point2d shift_point(const Point2d & p1, const Point2d & p2, const double offset)
+{
+  // Calculate the perpendicular vector
+  double dx = p2.x() - p1.x();
+  double dy = p2.y() - p1.y();
+  double length = std::sqrt(dx * dx + dy * dy);
+
+  // Normalize and find the perpendicular direction
+  double nx = -dy / length;
+  double ny = dx / length;
+
+  return {p1.x() + nx * offset, p1.y() + ny * offset};
+}
+
+bool check_out_of_bound_paths(
+  const CommonDataPtr & common_data_ptr, const std::vector<Pose> & lane_changing_poses,
+  const LineString2d & lane_boundary, const bool shift_to_left)
+{
+  const auto distance = (0.5 * common_data_ptr->bpp_param_ptr->vehicle_width + 0.1);
+  const auto offset = (shift_to_left ? 1.0 : -1.0) * distance;  // invert direction
+  if (lane_changing_poses.size() <= 2) {
+    return true;  // Remove candidates with insufficient poses
+  }
+
+  LineString2d path_ls;
+  path_ls.reserve(lane_changing_poses.size());
+
+  const auto segments = lane_changing_poses | ranges::views::sliding(2);
+  ranges::for_each(segments | ranges::views::drop(1), [&](const auto & segment) {
+    const auto & p1 = segment[0].position;
+    const auto & p2 = segment[1].position;
+    boost::geometry::append(path_ls, shift_point({p2.x, p2.y}, {p1.x, p1.y}, offset));
+  });
+
+  return boost::geometry::disjoint(path_ls, lane_boundary);  // Remove if disjoint
 }
 };  // namespace
 
@@ -410,7 +471,11 @@ std::vector<lane_change::TrajectoryGroup> generate_frenet_candidates(
   universe_utils::StopWatch<std::chrono::microseconds> sw;
 
   const auto & transient_data = common_data_ptr->transient_data;
+  const auto & current_lanes = common_data_ptr->lanes_ptr->current;
   const auto & target_lanes = common_data_ptr->lanes_ptr->target;
+  const auto direction = common_data_ptr->direction;
+  const auto current_lane_boundary = get_linestring_bound(current_lanes, direction);
+  const auto is_shift_to_left = direction == Direction::LEFT;
 
   trajectory_groups.reserve(metrics.size());
   for (const auto & metric : metrics) {
@@ -479,6 +544,13 @@ std::vector<lane_change::TrajectoryGroup> generate_frenet_candidates(
         }
       }
 
+      const auto out_of_bound = check_out_of_bound_paths(
+        common_data_ptr, traj.poses, current_lane_boundary, is_shift_to_left);
+
+      if (out_of_bound) {
+        continue;
+      }
+
       trajectory_groups.emplace_back(
         prepare_segment, target_lane_reference_path, target_ref_path_sums, metric, traj,
         initial_state);
@@ -500,7 +572,6 @@ std::vector<lane_change::TrajectoryGroup> generate_frenet_candidates(
            calc_average_curvature(p2.lane_changing.curvatures);
   });
 
-  utils::lane_change::filter_out_of_bound_trajectories(common_data_ptr, trajectory_groups);
   return trajectory_groups;
 }
 
