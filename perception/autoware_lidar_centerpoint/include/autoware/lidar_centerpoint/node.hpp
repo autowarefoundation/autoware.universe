@@ -60,7 +60,7 @@ private:
   DetectionClassRemapper detection_class_remapper_;
 
   std::unique_ptr<CenterPointTRT> detector_ptr_{nullptr};
-  std::unique_ptr<autoware::universe_utils::DiagnosticInterface> diagnostics_interface_ptr_;
+  std::unique_ptr<autoware::universe_utils::DiagnosticsInterface> diagnostics_interface_ptr_;
 
   // debugger
   std::unique_ptr<autoware::universe_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_{

@@ -59,7 +59,7 @@ protected:
   void postprocess(sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg) override;
 
   rclcpp::Publisher<DetectedObjects>::SharedPtr obj_pub_ptr_;
-  std::unique_ptr<autoware::universe_utils::DiagnosticInterface> diagnostics_interface_ptr_;
+  std::unique_ptr<autoware::universe_utils::DiagnosticsInterface> diagnostics_interface_ptr_;
 
   int omp_num_threads_{1};
   float score_threshold_{0.0};
