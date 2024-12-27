@@ -18,6 +18,7 @@
 #include "autoware/behavior_path_goal_planner_module/decision_state.hpp"
 #include "autoware/behavior_path_goal_planner_module/fixed_goal_planner_base.hpp"
 #include "autoware/behavior_path_goal_planner_module/goal_planner_parameters.hpp"
+#include "autoware/behavior_path_goal_planner_module/pull_over_planner/freespace_pull_over.hpp"
 #include "autoware/behavior_path_goal_planner_module/thread_data.hpp"
 #include "autoware/behavior_path_planner_common/utils/parking_departure/common_module_data.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
@@ -151,12 +152,18 @@ bool checkOccupancyGridCollision(
 // freespace parking
 std::optional<PullOverPath> planFreespacePath(
   const FreespaceParkingRequest & req, const PredictedObjects & static_target_objects,
-  std::shared_ptr<PullOverPlannerBase> freespace_planner);
+  std::shared_ptr<FreespacePullOver> freespace_planner);
 
 bool isStopped(
   std::deque<nav_msgs::msg::Odometry::ConstSharedPtr> & odometry_buffer,
   const nav_msgs::msg::Odometry::ConstSharedPtr self_odometry, const double duration_lower,
   const double velocity_upper);
+
+void sortPullOverPaths(
+  const std::shared_ptr<const PlannerData> planner_data, const GoalPlannerParameters & parameters,
+  const std::vector<PullOverPath> & pull_over_path_candidates,
+  const GoalCandidates & goal_candidates, const PredictedObjects & static_target_objects,
+  rclcpp::Logger logger, std::vector<size_t> & sorted_path_indices);
 
 // Flag class for managing whether a certain callback is running in multi-threading
 class ScopedFlag
@@ -198,7 +205,7 @@ public:
     std::mutex & freespace_parking_mutex, const std::optional<FreespaceParkingRequest> & request,
     FreespaceParkingResponse & response, std::atomic<bool> & is_freespace_parking_cb_running,
     const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock,
-    const std::shared_ptr<PullOverPlannerBase> freespace_planner)
+    const std::shared_ptr<FreespacePullOver> freespace_planner)
   : mutex_(freespace_parking_mutex),
     request_(request),
     response_(response),
@@ -218,7 +225,7 @@ private:
   rclcpp::Logger logger_;
   rclcpp::Clock::SharedPtr clock_;
 
-  std::shared_ptr<PullOverPlannerBase> freespace_planner_;
+  std::shared_ptr<FreespacePullOver> freespace_planner_;
 
   bool isStuck(
     const PredictedObjects & static_target_objects, const PredictedObjects & dynamic_target_objects,

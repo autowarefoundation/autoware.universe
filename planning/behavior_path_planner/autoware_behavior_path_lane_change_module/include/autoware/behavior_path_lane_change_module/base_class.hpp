@@ -18,6 +18,7 @@
 #include "autoware/behavior_path_lane_change_module/structs/debug.hpp"
 #include "autoware/behavior_path_lane_change_module/structs/path.hpp"
 #include "autoware/behavior_path_lane_change_module/utils/utils.hpp"
+#include "autoware/behavior_path_planner_common/data_manager.hpp"
 #include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
 #include "autoware/behavior_path_planner_common/turn_signal_decider.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
@@ -38,6 +39,7 @@
 class TestNormalLaneChange;
 namespace autoware::behavior_path_planner
 {
+using autoware::behavior_path_planner::PoseWithDetailOpt;
 using autoware::route_handler::Direction;
 using autoware::universe_utils::StopWatch;
 using geometry_msgs::msg::Point;
@@ -101,8 +103,6 @@ public:
   virtual bool is_near_terminal() const = 0;
 
   virtual LaneChangePath getLaneChangePath() const = 0;
-
-  virtual BehaviorModuleOutput getTerminalLaneChangePath() const = 0;
 
   virtual bool isEgoOnPreparePhase() const = 0;
 
@@ -224,7 +224,7 @@ public:
     return direction_;
   }
 
-  std::optional<Pose> getStopPose() const { return lane_change_stop_pose_; }
+  PoseWithDetailOpt getStopPose() const { return lane_change_stop_pose_; }
 
   void resetStopPose() { lane_change_stop_pose_ = std::nullopt; }
 
@@ -234,9 +234,6 @@ public:
 
 protected:
   virtual int getNumToPreferredLane(const lanelet::ConstLanelet & lane) const = 0;
-
-  virtual bool get_prepare_segment(
-    PathWithLaneId & prepare_segment, const double prepare_length) const = 0;
 
   virtual bool isValidPath(const PathWithLaneId & path) const = 0;
 
@@ -287,7 +284,7 @@ protected:
   lane_change::CommonDataPtr common_data_ptr_;
   FilteredLanesObjects filtered_objects_{};
   BehaviorModuleOutput prev_module_output_{};
-  std::optional<Pose> lane_change_stop_pose_{std::nullopt};
+  PoseWithDetailOpt lane_change_stop_pose_{std::nullopt};
 
   PathWithLaneId prev_approved_path_;
 

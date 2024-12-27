@@ -1,4 +1,4 @@
-// Copyright 2023 Tier IV, Inc.
+// Copyright 2024 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,22 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "node.hpp"
+#include "autoware/behavior_velocity_planner/test_utils.hpp"
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <autoware_planning_test_manager/autoware_planning_test_manager.hpp>
 #include <autoware_test_utils/autoware_test_utils.hpp>
 
-#include <gtest/gtest.h>
-
-#include <cmath>
 #include <memory>
 #include <string>
 #include <vector>
 
-using autoware::behavior_velocity_planner::BehaviorVelocityPlannerNode;
-using autoware::planning_test_manager::PlanningInterfaceTestManager;
-
+namespace autoware::behavior_velocity_planner
+{
 std::shared_ptr<PlanningInterfaceTestManager> generateTestManager()
 {
   auto test_manager = std::make_shared<PlanningInterfaceTestManager>();
@@ -45,7 +41,8 @@ std::shared_ptr<PlanningInterfaceTestManager> generateTestManager()
   return test_manager;
 }
 
-std::shared_ptr<BehaviorVelocityPlannerNode> generateNode()
+std::shared_ptr<BehaviorVelocityPlannerNode> generateNode(
+  const std::vector<PluginInfo> & plugin_info_vec)
 {
   auto node_options = rclcpp::NodeOptions{};
 
@@ -64,49 +61,29 @@ std::shared_ptr<BehaviorVelocityPlannerNode> generateNode()
     return package_path + "/config/" + module + ".param.yaml";
   };
 
-  std::vector<std::string> module_names;
-  module_names.emplace_back("autoware::behavior_velocity_planner::CrosswalkModulePlugin");
-  module_names.emplace_back("autoware::behavior_velocity_planner::WalkwayModulePlugin");
-  module_names.emplace_back("autoware::behavior_velocity_planner::TrafficLightModulePlugin");
-  module_names.emplace_back("autoware::behavior_velocity_planner::IntersectionModulePlugin");
-  module_names.emplace_back("autoware::behavior_velocity_planner::MergeFromPrivateModulePlugin");
-  module_names.emplace_back("autoware::behavior_velocity_planner::BlindSpotModulePlugin");
-  module_names.emplace_back("autoware::behavior_velocity_planner::DetectionAreaModulePlugin");
-  module_names.emplace_back("autoware::behavior_velocity_planner::VirtualTrafficLightModulePlugin");
-  module_names.emplace_back("autoware::behavior_velocity_planner::NoStoppingAreaModulePlugin");
-  module_names.emplace_back("autoware::behavior_velocity_planner::StopLineModulePlugin");
-  module_names.emplace_back("autoware::behavior_velocity_planner::OcclusionSpotModulePlugin");
-  module_names.emplace_back("autoware::behavior_velocity_planner::RunOutModulePlugin");
-  module_names.emplace_back("autoware::behavior_velocity_planner::SpeedBumpModulePlugin");
-  module_names.emplace_back("autoware::behavior_velocity_planner::NoDrivableLaneModulePlugin");
+  std::vector<std::string> plugin_names;
+  for (const auto & plugin_info : plugin_info_vec) {
+    plugin_names.emplace_back(plugin_info.plugin_name);
+  }
 
   std::vector<rclcpp::Parameter> params;
-  params.emplace_back("launch_modules", module_names);
+  params.emplace_back("launch_modules", plugin_names);
   params.emplace_back("is_simulation", false);
   node_options.parameter_overrides(params);
 
-  autoware::test_utils::updateNodeOptions(
-    node_options,
-    {autoware_test_utils_dir + "/config/test_common.param.yaml",
-     autoware_test_utils_dir + "/config/test_nearest_search.param.yaml",
-     autoware_test_utils_dir + "/config/test_vehicle_info.param.yaml",
-     velocity_smoother_dir + "/config/default_velocity_smoother.param.yaml",
-     velocity_smoother_dir + "/config/Analytical.param.yaml",
-     behavior_velocity_planner_common_dir + "/config/behavior_velocity_planner_common.param.yaml",
-     behavior_velocity_planner_dir + "/config/behavior_velocity_planner.param.yaml",
-     get_behavior_velocity_module_config("blind_spot"),
-     get_behavior_velocity_module_config("crosswalk"),
-     get_behavior_velocity_module_config("walkway"),
-     get_behavior_velocity_module_config("detection_area"),
-     get_behavior_velocity_module_config("intersection"),
-     get_behavior_velocity_module_config("no_stopping_area"),
-     get_behavior_velocity_module_config("occlusion_spot"),
-     get_behavior_velocity_module_config("run_out"),
-     get_behavior_velocity_module_config("speed_bump"),
-     get_behavior_velocity_module_config("stop_line"),
-     get_behavior_velocity_module_config("traffic_light"),
-     get_behavior_velocity_module_config("virtual_traffic_light"),
-     get_behavior_velocity_module_config("no_drivable_lane")});
+  auto yaml_files = std::vector<std::string>{
+    autoware_test_utils_dir + "/config/test_common.param.yaml",
+    autoware_test_utils_dir + "/config/test_nearest_search.param.yaml",
+    autoware_test_utils_dir + "/config/test_vehicle_info.param.yaml",
+    velocity_smoother_dir + "/config/default_velocity_smoother.param.yaml",
+    velocity_smoother_dir + "/config/Analytical.param.yaml",
+    behavior_velocity_planner_common_dir + "/config/behavior_velocity_planner_common.param.yaml",
+    behavior_velocity_planner_dir + "/config/behavior_velocity_planner.param.yaml"};
+  for (const auto & plugin_info : plugin_info_vec) {
+    yaml_files.push_back(get_behavior_velocity_module_config(plugin_info.module_name));
+  }
+
+  autoware::test_utils::updateNodeOptions(node_options, yaml_files);
 
   // TODO(Takagi, Isamu): set launch_modules
   // TODO(Kyoichi Sugahara) set to true launch_virtual_traffic_light
@@ -141,39 +118,4 @@ void publishMandatoryTopics(
   test_manager->publishOccupancyGrid(
     test_target_node, "behavior_velocity_planner_node/input/occupancy_grid");
 }
-
-TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionPathWithLaneID)
-{
-  rclcpp::init(0, nullptr);
-  auto test_manager = generateTestManager();
-  auto test_target_node = generateNode();
-
-  publishMandatoryTopics(test_manager, test_target_node);
-
-  // test with nominal path_with_lane_id
-  ASSERT_NO_THROW_WITH_ERROR_MSG(test_manager->testWithNominalPathWithLaneId(test_target_node));
-  EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
-
-  // test with empty path_with_lane_id
-  ASSERT_NO_THROW_WITH_ERROR_MSG(test_manager->testWithAbnormalPathWithLaneId(test_target_node));
-  rclcpp::shutdown();
-}
-
-TEST(PlanningModuleInterfaceTest, NodeTestWithOffTrackEgoPose)
-{
-  rclcpp::init(0, nullptr);
-
-  auto test_manager = generateTestManager();
-  auto test_target_node = generateNode();
-  publishMandatoryTopics(test_manager, test_target_node);
-
-  // test for normal trajectory
-  ASSERT_NO_THROW_WITH_ERROR_MSG(test_manager->testWithNominalPathWithLaneId(test_target_node));
-
-  // make sure behavior_path_planner is running
-  EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
-
-  ASSERT_NO_THROW_WITH_ERROR_MSG(test_manager->testOffTrackFromPathWithLaneId(test_target_node));
-
-  rclcpp::shutdown();
-}
+}  // namespace autoware::behavior_velocity_planner

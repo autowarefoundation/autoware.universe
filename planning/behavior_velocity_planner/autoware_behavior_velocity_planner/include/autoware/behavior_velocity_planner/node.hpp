@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef NODE_HPP_
-#define NODE_HPP_
+#ifndef AUTOWARE__BEHAVIOR_VELOCITY_PLANNER__NODE_HPP_
+#define AUTOWARE__BEHAVIOR_VELOCITY_PLANNER__NODE_HPP_
 
+#include "autoware/behavior_velocity_planner/planner_manager.hpp"
 #include "autoware/universe_utils/ros/logger_level_configure.hpp"
 #include "autoware/universe_utils/ros/polling_subscriber.hpp"
-#include "planner_manager.hpp"
 
 #include <autoware/behavior_velocity_planner_common/planner_data.hpp>
 #include <autoware/universe_utils/ros/published_time_publisher.hpp>
@@ -31,8 +31,6 @@
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
-#include <tier4_api_msgs/msg/crosswalk_status.hpp>
-#include <tier4_api_msgs/msg/intersection_status.hpp>
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
@@ -152,4 +150,4 @@ private:
 };
 }  // namespace autoware::behavior_velocity_planner
 
-#endif  // NODE_HPP_
+#endif  // AUTOWARE__BEHAVIOR_VELOCITY_PLANNER__NODE_HPP_

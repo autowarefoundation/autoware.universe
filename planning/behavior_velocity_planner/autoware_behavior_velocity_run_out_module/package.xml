@@ -21,6 +21,7 @@
 
   <depend>autoware_behavior_velocity_crosswalk_module</depend>
   <depend>autoware_behavior_velocity_planner_common</depend>
+  <depend>autoware_internal_debug_msgs</depend>
   <depend>autoware_motion_utils</depend>
   <depend>autoware_object_recognition_utils</depend>
   <depend>autoware_perception_msgs</depend>

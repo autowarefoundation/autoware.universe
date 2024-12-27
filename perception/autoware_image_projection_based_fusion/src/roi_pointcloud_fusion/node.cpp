@@ -17,6 +17,9 @@
 #include "autoware/image_projection_based_fusion/utils/geometry.hpp"
 #include "autoware/image_projection_based_fusion/utils/utils.hpp"
 
+#include <autoware/universe_utils/system/time_keeper.hpp>
+
+#include <memory>
 #include <vector>
 
 #ifdef ROS_DISTRO_GALACTIC
@@ -31,6 +34,8 @@
 
 namespace autoware::image_projection_based_fusion
 {
+using autoware::universe_utils::ScopedTimeTrack;
+
 RoiPointCloudFusionNode::RoiPointCloudFusionNode(const rclcpp::NodeOptions & options)
 : FusionNode<PointCloud2, DetectedObjectWithFeature, DetectedObjectsWithFeature>(
     "roi_pointcloud_fusion", options)
@@ -47,12 +52,18 @@ RoiPointCloudFusionNode::RoiPointCloudFusionNode(const rclcpp::NodeOptions & opt
 void RoiPointCloudFusionNode::preprocess(
   __attribute__((unused)) sensor_msgs::msg::PointCloud2 & pointcloud_msg)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   return;
 }
 
 void RoiPointCloudFusionNode::postprocess(
   __attribute__((unused)) sensor_msgs::msg::PointCloud2 & pointcloud_msg)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   const auto objects_sub_count = pub_objects_ptr_->get_subscription_count() +
                                  pub_objects_ptr_->get_intra_process_subscription_count();
   if (objects_sub_count < 1) {
@@ -75,16 +86,16 @@ void RoiPointCloudFusionNode::postprocess(
   }
 }
 void RoiPointCloudFusionNode::fuseOnSingleImage(
-  const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg,
-  __attribute__((unused)) const std::size_t image_id,
+  const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const std::size_t image_id,
   const DetectedObjectsWithFeature & input_roi_msg,
-  const sensor_msgs::msg::CameraInfo & camera_info,
   __attribute__((unused)) sensor_msgs::msg::PointCloud2 & output_pointcloud_msg)
 {
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
   if (input_pointcloud_msg.data.empty()) {
     return;
   }
-  if (!checkCameraInfo(camera_info)) return;
 
   std::vector<DetectedObjectWithFeature> output_objs;
   std::vector<sensor_msgs::msg::RegionOfInterest> debug_image_rois;
@@ -108,10 +119,6 @@ void RoiPointCloudFusionNode::fuseOnSingleImage(
     return;
   }
 
-  // transform pointcloud to camera optical frame id
-  image_geometry::PinholeCameraModel pinhole_camera_model;
-  pinhole_camera_model.fromCameraInfo(camera_info);
-
   geometry_msgs::msg::TransformStamped transform_stamped;
   {
     const auto transform_stamped_optional = getTransformStamped(
@@ -122,10 +129,13 @@ void RoiPointCloudFusionNode::fuseOnSingleImage(
     }
     transform_stamped = transform_stamped_optional.value();
   }
-  int point_step = input_pointcloud_msg.point_step;
-  int x_offset = input_pointcloud_msg.fields[pcl::getFieldIndex(input_pointcloud_msg, "x")].offset;
-  int y_offset = input_pointcloud_msg.fields[pcl::getFieldIndex(input_pointcloud_msg, "y")].offset;
-  int z_offset = input_pointcloud_msg.fields[pcl::getFieldIndex(input_pointcloud_msg, "z")].offset;
+  const int point_step = input_pointcloud_msg.point_step;
+  const int x_offset =
+    input_pointcloud_msg.fields[pcl::getFieldIndex(input_pointcloud_msg, "x")].offset;
+  const int y_offset =
+    input_pointcloud_msg.fields[pcl::getFieldIndex(input_pointcloud_msg, "y")].offset;
+  const int z_offset =
+    input_pointcloud_msg.fields[pcl::getFieldIndex(input_pointcloud_msg, "z")].offset;
 
   sensor_msgs::msg::PointCloud2 transformed_cloud;
   tf2::doTransform(input_pointcloud_msg, transformed_cloud, transform_stamped);
@@ -150,33 +160,36 @@ void RoiPointCloudFusionNode::fuseOnSingleImage(
     if (transformed_z <= 0.0) {
       continue;
     }
-    Eigen::Vector2d projected_point = calcRawImageProjectedPoint(
-      pinhole_camera_model, cv::Point3d(transformed_x, transformed_y, transformed_z),
-      point_project_to_unrectified_image_);
-    for (std::size_t i = 0; i < output_objs.size(); ++i) {
-      auto & feature_obj = output_objs.at(i);
-      const auto & check_roi = feature_obj.feature.roi;
-      auto & cluster = clusters.at(i);
 
-      if (
-        clusters_data_size.at(i) >=
-        static_cast<size_t>(max_cluster_size_) * static_cast<size_t>(point_step)) {
-        continue;
+    Eigen::Vector2d projected_point;
+    if (camera_projectors_[image_id].calcImageProjectedPoint(
+          cv::Point3d(transformed_x, transformed_y, transformed_z), projected_point)) {
+      for (std::size_t i = 0; i < output_objs.size(); ++i) {
+        auto & feature_obj = output_objs.at(i);
+        const auto & check_roi = feature_obj.feature.roi;
+        auto & cluster = clusters.at(i);
+
+        const double px = projected_point.x();
+        const double py = projected_point.y();
+
+        if (
+          clusters_data_size.at(i) >=
+          static_cast<size_t>(max_cluster_size_) * static_cast<size_t>(point_step)) {
+          continue;
+        }
+        if (
+          check_roi.x_offset <= px && check_roi.y_offset <= py &&
+          check_roi.x_offset + check_roi.width >= px &&
+          check_roi.y_offset + check_roi.height >= py) {
+          std::memcpy(
+            &cluster.data[clusters_data_size.at(i)], &input_pointcloud_msg.data[offset],
+            point_step);
+          clusters_data_size.at(i) += point_step;
+        }
       }
-      if (
-        check_roi.x_offset <= projected_point.x() && check_roi.y_offset <= projected_point.y() &&
-        check_roi.x_offset + check_roi.width >= projected_point.x() &&
-        check_roi.y_offset + check_roi.height >= projected_point.y()) {
-        std::memcpy(
-          &cluster.data[clusters_data_size.at(i)], &input_pointcloud_msg.data[offset], point_step);
-        clusters_data_size.at(i) += point_step;
-      }
-    }
-    if (debugger_) {
-      // add all points inside image to debug
-      if (
-        projected_point.x() > 0 && projected_point.x() < camera_info.width &&
-        projected_point.y() > 0 && projected_point.y() < camera_info.height) {
+
+      if (debugger_) {
+        // add all points inside image to debug
         debug_image_points.push_back(projected_point);
       }
     }
