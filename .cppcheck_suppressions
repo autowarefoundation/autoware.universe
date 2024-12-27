@@ -1,4 +1,5 @@
 *:*/test/*
+*:*/examples/*
 
 checkersReport
 missingInclude
