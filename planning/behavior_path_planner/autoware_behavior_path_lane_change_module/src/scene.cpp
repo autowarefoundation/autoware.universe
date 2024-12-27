@@ -1174,7 +1174,7 @@ bool NormalLaneChange::get_lane_change_paths(LaneChangePaths & candidate_paths) 
     PathWithLaneId prepare_segment;
     try {
       if (!utils::lane_change::get_prepare_segment(
-            common_data_ptr_, prev_module_output_.path, prep_metric, prepare_segment)) {
+            common_data_ptr_, prev_module_output_.path, prep_metric.length, prepare_segment)) {
         debug_print("Reject: failed to get valid prepare segment!");
         continue;
       }
@@ -1301,7 +1301,8 @@ std::optional<PathWithLaneId> NormalLaneChange::compute_terminal_lane_change_pat
 
   PathWithLaneId prepare_segment;
   try {
-    if (!get_prepare_segment(prepare_segment, dist_to_terminal_start)) {
+    if (!utils::lane_change::get_prepare_segment(
+          common_data_ptr_, prev_module_output_.path, dist_to_terminal_start, prepare_segment)) {
       RCLCPP_DEBUG(logger_, "failed to get valid prepare segment for terminal LC path");
       return std::nullopt;
     }
@@ -1365,8 +1366,7 @@ std::optional<PathWithLaneId> NormalLaneChange::compute_terminal_lane_change_pat
   for (const auto & lc_metric : lane_changing_metrics) {
     try {
       candidate_path = utils::lane_change::get_candidate_path(
-        prep_metric, lc_metric, prepare_segment, sorted_lane_ids, lane_changing_start_pose,
-        shift_length);
+        common_data_ptr_, prep_metric, lc_metric, prepare_segment, sorted_lane_ids, shift_length);
     } catch (const std::exception & e) {
       continue;
     }
