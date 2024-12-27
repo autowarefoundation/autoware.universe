@@ -106,11 +106,15 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path)
   }
 
   // Check state
-  last_obstacle_found_time_ = {};
-  if (!planner_param_.suppress_pass_judge_when_stopping || !is_stopped) {
-    state_ = State::GO;
+  const bool is_safe = detection_area::can_clear_stop_state(
+    last_obstacle_found_time_, clock_->now(), planner_param_.state_clear_time);
+  if (is_safe) {
+    last_obstacle_found_time_ = {};
+    if (!planner_param_.suppress_pass_judge_when_stopping || !is_stopped) {
+      state_ = State::GO;
+    }
+    return true;
   }
-  return true;
 
   // Force ignore objects after dead_line
   if (planner_param_.use_dead_line) {
