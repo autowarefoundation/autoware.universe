@@ -15,6 +15,7 @@
 #ifndef AUTOWARE__IMAGE_PROJECTION_BASED_FUSION__FUSION_NODE_HPP_
 #define AUTOWARE__IMAGE_PROJECTION_BASED_FUSION__FUSION_NODE_HPP_
 
+#include <autoware/image_projection_based_fusion/camera_projection.hpp>
 #include <autoware/image_projection_based_fusion/debugger.hpp>
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
@@ -55,6 +56,7 @@ using sensor_msgs::msg::PointCloud2;
 using tier4_perception_msgs::msg::DetectedObjectsWithFeature;
 using tier4_perception_msgs::msg::DetectedObjectWithFeature;
 using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
+using autoware::image_projection_based_fusion::CameraProjection;
 using autoware_perception_msgs::msg::ObjectClassification;
 
 template <class TargetMsg3D, class ObjType, class Msg2D>
@@ -86,7 +88,7 @@ protected:
 
   virtual void fuseOnSingleImage(
     const TargetMsg3D & input_msg, const std::size_t image_id, const Msg2D & input_roi_msg,
-    const sensor_msgs::msg::CameraInfo & camera_info, TargetMsg3D & output_msg) = 0;
+    TargetMsg3D & output_msg) = 0;
 
   // set args if you need
   virtual void postprocess(TargetMsg3D & output_msg);
@@ -100,11 +102,16 @@ protected:
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 
-  bool point_project_to_unrectified_image_{false};
+  std::vector<bool> point_project_to_unrectified_image_;
 
   // camera_info
   std::map<std::size_t, sensor_msgs::msg::CameraInfo> camera_info_map_;
   std::vector<rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr> camera_info_subs_;
+  // camera projection
+  std::vector<CameraProjection> camera_projectors_;
+  std::vector<bool> approx_camera_projection_;
+  float approx_grid_cell_w_size_;
+  float approx_grid_cell_h_size_;
 
   rclcpp::TimerBase::SharedPtr timer_;
   double timeout_ms_{};

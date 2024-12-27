@@ -16,6 +16,7 @@ autoware_package()
 ament_auto_add_library(${PROJECT_NAME}_lib SHARED
   src/node.cpp
   src/planner_manager.cpp
+  src/test_utils.cpp
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}_lib
@@ -34,7 +35,7 @@ endif()
 
 if(BUILD_TESTING)
   ament_add_ros_isolated_gtest(test_${PROJECT_NAME}
-    test/src/test_node_interface.cpp
+    test/test_node_interface.cpp
   )
   target_link_libraries(test_${PROJECT_NAME}
     gtest_main

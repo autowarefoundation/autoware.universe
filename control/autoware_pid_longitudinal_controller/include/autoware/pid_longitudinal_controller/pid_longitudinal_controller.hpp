@@ -204,7 +204,12 @@ private:
   double m_max_acc_cmd_diff;
 
   // slope compensation
-  enum class SlopeSource { RAW_PITCH = 0, TRAJECTORY_PITCH, TRAJECTORY_ADAPTIVE };
+  enum class SlopeSource {
+    RAW_PITCH = 0,
+    TRAJECTORY_PITCH,
+    TRAJECTORY_ADAPTIVE,
+    TRAJECTORY_GOAL_ADAPTIVE
+  };
   SlopeSource m_slope_source{SlopeSource::RAW_PITCH};
   double m_adaptive_trajectory_velocity_th;
   std::shared_ptr<LowpassFilter1d> m_lpf_pitch{nullptr};

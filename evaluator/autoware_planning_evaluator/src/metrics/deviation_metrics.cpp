@@ -45,7 +45,7 @@ Accumulator<double> calcLateralDeviation(const Trajectory & ref, const Trajector
   return stat;
 }
 
-Accumulator<double> calcLateralTrajectoryDisplacement(
+Accumulator<double> calcLocalLateralTrajectoryDisplacement(
   const Trajectory & prev, const Trajectory & traj, const Pose & ego_pose)
 {
   Accumulator<double> stat;
