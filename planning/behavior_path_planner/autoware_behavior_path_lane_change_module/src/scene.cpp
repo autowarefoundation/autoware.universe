@@ -1065,14 +1065,20 @@ std::vector<LaneChangePhaseMetrics> NormalLaneChange::get_lane_changing_metrics(
   });
 
   const auto max_path_velocity = prep_segment.points.back().point.longitudinal_velocity_mps;
-  return calculation::calc_shift_phase_metrics(
+  const auto lc_metrics = calculation::calc_shift_phase_metrics(
     common_data_ptr_, shift_length, prep_metric.velocity, max_path_velocity,
     prep_metric.sampled_lon_accel, max_lane_changing_length);
+
+  const auto max_prep_length = common_data_ptr_->transient_data.dist_to_terminal_start;
+  lane_change_debug_.lane_change_metrics.push_back(
+    {prep_metric, lc_metrics, max_prep_length, max_lane_changing_length});
+  return lc_metrics;
 }
 
 bool NormalLaneChange::get_lane_change_paths(LaneChangePaths & candidate_paths) const
 {
   lane_change_debug_.collision_check_objects.clear();
+  lane_change_debug_.lane_change_metrics.clear();
 
   if (!common_data_ptr_->is_lanes_available()) {
     RCLCPP_WARN(logger_, "lanes are not available. Not expected.");
