@@ -409,7 +409,7 @@ void PointPaintingFusionNode::postprocess(sensor_msgs::msg::PointCloud2 & painte
     "is_num_pillars_within_range", is_num_pillars_within_range);
   if (!is_num_pillars_within_range) {
     std::stringstream message;
-    message << "CenterPointTRT::detect: The actual number of pillars exceeds its maximum value, "
+    message << "PointPaintingTRT::detect: The actual number of pillars exceeds its maximum value, "
             << "which may limit the detection performance.";
     diagnostics_interface_ptr_->update_level_and_message(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
