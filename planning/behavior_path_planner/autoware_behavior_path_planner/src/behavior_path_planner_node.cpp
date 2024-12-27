@@ -53,8 +53,6 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   const auto durable_qos = rclcpp::QoS(1).transient_local();
   modified_goal_publisher_ =
     create_publisher<PoseWithUuidStamped>("~/output/modified_goal", durable_qos);
-  pub_steering_factors_ =
-    create_publisher<SteeringFactorArray>("/planning/steering_factor/intersection", 1);
   reroute_availability_publisher_ =
     create_publisher<RerouteAvailability>("~/output/is_reroute_available", 1);
   debug_avoidance_msg_array_publisher_ =
@@ -116,8 +114,6 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       planner_data_->parameters.base_link2front, turn_signal_intersection_search_distance,
       turn_signal_search_time, turn_signal_intersection_angle_threshold_deg);
   }
-
-  steering_factor_interface_.init(PlanningBehavior::INTERSECTION);
 
   // Start timer
   {
@@ -465,19 +461,8 @@ void BehaviorPathPlannerNode::publish_steering_factor(
   const auto [intersection_flag, approaching_intersection_flag] =
     planner_data->turn_signal_decider.getIntersectionTurnSignalFlag();
   if (intersection_flag || approaching_intersection_flag) {
-    const uint16_t steering_factor_direction = std::invoke([&turn_signal]() {
-      if (turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
-        return SteeringFactor::LEFT;
-      }
-      return SteeringFactor::RIGHT;
-    });
-
     const auto [intersection_pose, intersection_distance] =
       planner_data->turn_signal_decider.getIntersectionPoseAndDistance();
-
-    steering_factor_interface_.set(
-      {intersection_pose, intersection_pose}, {intersection_distance, intersection_distance},
-      steering_factor_direction, SteeringFactor::TURNING, "");
 
     const uint16_t planning_factor_direction = std::invoke([&turn_signal]() {
       if (turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
@@ -489,20 +474,7 @@ void BehaviorPathPlannerNode::publish_steering_factor(
     planning_factor_interface_->add(
       intersection_distance, intersection_distance, intersection_pose, intersection_pose,
       planning_factor_direction, SafetyFactorArray{});
-  } else {
-    steering_factor_interface_.reset();
   }
-
-  autoware_adapi_v1_msgs::msg::SteeringFactorArray steering_factor_array;
-  steering_factor_array.header.frame_id = "map";
-  steering_factor_array.header.stamp = this->now();
-
-  const auto steering_factor = steering_factor_interface_.get();
-  if (steering_factor.behavior != PlanningBehavior::UNKNOWN) {
-    steering_factor_array.factors.emplace_back(steering_factor);
-  }
-
-  pub_steering_factors_->publish(steering_factor_array);
 
   planning_factor_interface_->publish();
 }

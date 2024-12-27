@@ -21,7 +21,6 @@
 #include "planner_manager.hpp"
 
 #include <autoware/motion_utils/factor/planning_factor_interface.hpp>
-#include <autoware/motion_utils/factor/steering_factor_interface.hpp>
 #include <autoware/universe_utils/ros/polling_subscriber.hpp>
 #include <autoware/universe_utils/ros/published_time_publisher.hpp>
 
@@ -53,7 +52,6 @@
 namespace autoware::behavior_path_planner
 {
 using autoware::motion_utils::PlanningFactorInterface;
-using autoware::motion_utils::SteeringFactorInterface;
 using autoware_adapi_v1_msgs::msg::OperationModeState;
 using autoware_map_msgs::msg::LaneletMapBin;
 using autoware_perception_msgs::msg::PredictedObject;
@@ -123,7 +121,6 @@ private:
   rclcpp::Publisher<MarkerArray>::SharedPtr bound_publisher_;
   rclcpp::Publisher<PoseWithUuidStamped>::SharedPtr modified_goal_publisher_;
   rclcpp::Publisher<RerouteAvailability>::SharedPtr reroute_availability_publisher_;
-  rclcpp::Publisher<SteeringFactorArray>::SharedPtr pub_steering_factors_;
   rclcpp::TimerBase::SharedPtr timer_;
 
   std::map<std::string, rclcpp::Publisher<Path>::SharedPtr> path_candidate_publishers_;
@@ -138,7 +135,6 @@ private:
 
   std::shared_ptr<PlannerManager> planner_manager_;
 
-  SteeringFactorInterface steering_factor_interface_;
   std::unique_ptr<PlanningFactorInterface> planning_factor_interface_;
 
   std::mutex mutex_pd_;       // mutex for planner_data_
