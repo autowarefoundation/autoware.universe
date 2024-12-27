@@ -19,7 +19,7 @@
 
 #include <autoware/behavior_velocity_planner_common/plugin_interface.hpp>
 #include <autoware/behavior_velocity_planner_common/plugin_wrapper.hpp>
-#include <autoware/behavior_velocity_rtc_interface/scene_module_interface_with_rtc.hpp>
+#include <autoware/behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
@@ -29,7 +29,7 @@
 
 namespace autoware::behavior_velocity_planner
 {
-class DetectionAreaModuleManager : public SceneModuleManagerInterfaceWithRTC
+class DetectionAreaModuleManager : public SceneModuleManagerInterface<>
 {
 public:
   explicit DetectionAreaModuleManager(rclcpp::Node & node);
@@ -41,8 +41,8 @@ private:
 
   void launchNewModules(const tier4_planning_msgs::msg::PathWithLaneId & path) override;
 
-  std::function<bool(const std::shared_ptr<SceneModuleInterfaceWithRTC> &)>
-  getModuleExpiredFunction(const tier4_planning_msgs::msg::PathWithLaneId & path) override;
+  std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
+    const tier4_planning_msgs::msg::PathWithLaneId & path) override;
 };
 
 class DetectionAreaModulePlugin : public PluginWrapper<DetectionAreaModuleManager>

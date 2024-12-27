@@ -37,7 +37,7 @@ DetectionAreaModule::DetectionAreaModule(
   const lanelet::autoware::DetectionArea & detection_area_reg_elem,
   const PlannerParam & planner_param, const rclcpp::Logger & logger,
   const rclcpp::Clock::SharedPtr clock)
-: SceneModuleInterfaceWithRTC(module_id, logger, clock),
+: SceneModuleInterface(module_id, logger, clock),
   lane_id_(lane_id),
   detection_area_reg_elem_(detection_area_reg_elem),
   state_(State::GO),
@@ -105,12 +105,10 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path)
     modified_stop_line_seg_idx = current_seg_idx;
   }
 
-  setDistance(stop_dist);
-
   // Check state
-  setSafe(detection_area::can_clear_stop_state(
-    last_obstacle_found_time_, clock_->now(), planner_param_.state_clear_time));
-  if (isActivated()) {
+  const bool is_safe = detection_area::can_clear_stop_state(
+    last_obstacle_found_time_, clock_->now(), planner_param_.state_clear_time);
+  if (is_safe) {
     last_obstacle_found_time_ = {};
     if (!planner_param_.suppress_pass_judge_when_stopping || !is_stopped) {
       state_ = State::GO;
@@ -139,7 +137,6 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path)
         dead_line_seg_idx);
       if (dist_from_ego_to_dead_line < 0.0) {
         RCLCPP_WARN(logger_, "[detection_area] vehicle is over dead line");
-        setSafe(true);
         return true;
       }
     }
@@ -152,7 +149,6 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path)
   if (
     state_ != State::STOP &&
     dist_from_ego_to_stop < -planner_param_.distance_to_judge_over_stop_line) {
-    setSafe(true);
     return true;
   }
 
@@ -169,7 +165,6 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path)
       RCLCPP_WARN_THROTTLE(
         logger_, *clock_, std::chrono::milliseconds(1000).count(),
         "[detection_area] vehicle is over stop border");
-      setSafe(true);
       return true;
     }
   }
