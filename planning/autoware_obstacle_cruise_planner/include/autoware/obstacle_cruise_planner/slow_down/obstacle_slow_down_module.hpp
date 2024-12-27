@@ -290,7 +290,7 @@ public:
   }
 
   std::vector<TrajectoryPoint> plan(
-    const std::vector<TrajectoryPoint> & base_traj_points, const std::vector<Obstacle> & obstacles,
+    const std::vector<TrajectoryPoint> & base_traj_points,
     const CommonBehaviorDeterminationParam & common_behavior_determination_param,
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & cruise_traj_points)
   {
@@ -302,7 +302,8 @@ public:
       common_behavior_determination_param_.decimate_trajectory_step_length, 0.0);
 
     const auto slow_down_obstacles = determineEgoBehaviorAgainstPredictedObjectObstacles(
-      planner_data.current_odometry, decimated_traj_points, obstacles, planner_data.vehicle_info);
+      planner_data.current_odometry, decimated_traj_points, planner_data.obstacles,
+      planner_data.vehicle_info);
     std::optional<VelocityLimit> slow_down_vel_limit;
     const auto slow_down_traj_points = generateSlowDownTrajectory(
       planner_data, cruise_traj_points, slow_down_obstacles, slow_down_vel_limit,
@@ -324,7 +325,7 @@ public:
 private:
   std::vector<SlowDownObstacle> determineEgoBehaviorAgainstPredictedObjectObstacles(
     const Odometry & odometry, const std::vector<TrajectoryPoint> & decimated_traj_points,
-    const std::vector<Obstacle> & obstacles, const VehicleInfo & vehicle_info)
+    const std::vector<PredictedObjectBasedObstacle> & obstacles, const VehicleInfo & vehicle_info)
   {
     // slow down
     slow_down_condition_counter_.resetCurrentUuids();
@@ -885,7 +886,8 @@ private:
 
   std::optional<SlowDownObstacle> createSlowDownObstacleForPredictedObject(
     const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
-    const Obstacle & obstacle, const double precise_lat_dist, const VehicleInfo & vehicle_info)
+    const PredictedObjectBasedObstacle & obstacle, const double precise_lat_dist,
+    const VehicleInfo & vehicle_info)
   {
     const auto & object_id = obstacle.uuid.substr(0, 4);
     const auto & p = slow_down_param_;
@@ -1016,7 +1018,7 @@ private:
   }
 
   std::optional<SlowDownObstacle> createSlowDownObstacleForPointCloud(
-    const Obstacle & obstacle, const double precise_lat_dist)
+    const PredictedObjectBasedObstacle & obstacle, const double precise_lat_dist)
   {
     if (!enable_slow_down_planning_ || !use_pointcloud_for_slow_down_) {
       return std::nullopt;

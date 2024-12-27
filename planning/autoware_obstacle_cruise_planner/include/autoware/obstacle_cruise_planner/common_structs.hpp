@@ -23,10 +23,15 @@
 #include "autoware/universe_utils/ros/update_param.hpp"
 #include "autoware/universe_utils/ros/uuid_helper.hpp"
 
+#include <pcl_ros/transforms.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <tier4_metric_msgs/msg/metric.hpp>
 #include <tier4_metric_msgs/msg/metric_array.hpp>
+
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/segmentation/extract_clusters.h>
+#include <pcl_conversions/pcl_conversions.h>
 
 #include <optional>
 #include <string>
@@ -35,44 +40,9 @@
 using Metric = tier4_metric_msgs::msg::Metric;
 using MetricArray = tier4_metric_msgs::msg::MetricArray;
 
-struct PlannerData
+struct PredictedObjectBasedObstacle
 {
-  rclcpp::Time current_time;
-  std::vector<TrajectoryPoint> traj_points;
-  nav_msgs::msg::Odometry current_odometry;
-  geometry_msgs::msg::AccelWithCovarianceStamped current_acceleration;
-  // geometry_msgs::msg::Pose ego_pose;
-  // double ego_vel;
-  // double ego_acc;
-  bool is_driving_forward;
-  VehicleInfo vehicle_info;
-  double ego_nearest_dist_threshold;
-  double ego_nearest_yaw_threshold;
-
-  size_t findIndex(
-    const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & pose) const
-  {
-    return autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
-      traj_points, pose, ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
-  }
-
-  size_t findSegmentIndex(
-    const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & pose) const
-  {
-    return autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      traj_points, pose, ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
-  }
-};
-
-struct PointWithStamp
-{
-  rclcpp::Time stamp;
-  geometry_msgs::msg::Point point;
-};
-
-struct Obstacle
-{
-  Obstacle(
+  PredictedObjectBasedObstacle(
     const rclcpp::Time & arg_stamp, const PredictedObject & object,
     const geometry_msgs::msg::Pose & arg_pose, const double ego_to_obstacle_distance,
     const double lat_dist_from_obstacle_to_traj, const double longitudinal_velocity,
@@ -97,22 +67,6 @@ struct Obstacle
     }
   }
 
-  Obstacle(
-    const rclcpp::Time & arg_stamp,
-    const std::optional<geometry_msgs::msg::Point> & stop_collision_point,
-    const std::optional<geometry_msgs::msg::Point> & slow_down_front_collision_point,
-    const std::optional<geometry_msgs::msg::Point> & slow_down_back_collision_point,
-    const double ego_to_obstacle_distance, const double lat_dist_from_obstacle_to_traj)
-  : stamp(arg_stamp),
-    ego_to_obstacle_distance(ego_to_obstacle_distance),
-    lat_dist_from_obstacle_to_traj(lat_dist_from_obstacle_to_traj),
-    precise_lat_dist(lat_dist_from_obstacle_to_traj),
-    stop_collision_point(stop_collision_point),
-    slow_down_front_collision_point(slow_down_front_collision_point),
-    slow_down_back_collision_point(slow_down_back_collision_point)
-  {
-  }
-
   rclcpp::Time stamp;  // This is not the current stamp, but when the object was observed.
   double ego_to_obstacle_distance;
   double lat_dist_from_obstacle_to_traj;
@@ -129,11 +83,55 @@ struct Obstacle
   Shape shape;
   double precise_lat_dist;
   std::vector<PredictedPath> predicted_paths;
+};
 
-  // for PointCloud
-  std::optional<geometry_msgs::msg::Point> stop_collision_point;
-  std::optional<geometry_msgs::msg::Point> slow_down_front_collision_point;
-  std::optional<geometry_msgs::msg::Point> slow_down_back_collision_point;
+struct PointcloudBasedObstacle
+{
+  PointcloudBasedObstacle(const rclcpp::Time & arg_stamp, const pcl::PointIndices & arg_clusters)
+  : stamp(arg_stamp), clusters(arg_clusters)
+  {
+  }
+
+  rclcpp::Time stamp;  // This is not the current stamp, but when the object was observed.
+  pcl::PointIndices clusters;
+};
+
+struct PlannerData
+{
+  rclcpp::Time current_time;
+  std::vector<TrajectoryPoint> traj_points;
+  nav_msgs::msg::Odometry current_odometry;
+  geometry_msgs::msg::AccelWithCovarianceStamped current_acceleration;
+  // geometry_msgs::msg::Pose ego_pose;
+  // double ego_vel;
+  // double ego_acc;
+  bool is_driving_forward;
+  VehicleInfo vehicle_info;
+  double ego_nearest_dist_threshold;
+  double ego_nearest_yaw_threshold;
+
+  std::vector<PredictedObjectBasedObstacle> predicted_object_based_obstacles;
+  std::vector<PointcloudBasedObstacle> pointcloud_based_obstacles;
+
+  size_t findIndex(
+    const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & pose) const
+  {
+    return autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
+      traj_points, pose, ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
+  }
+
+  size_t findSegmentIndex(
+    const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & pose) const
+  {
+    return autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      traj_points, pose, ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
+  }
+};
+
+struct PointWithStamp
+{
+  rclcpp::Time stamp;
+  geometry_msgs::msg::Point point;
 };
 
 struct LongitudinalInfo

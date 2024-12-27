@@ -126,7 +126,7 @@ struct StopObstacle
 struct DebugData
 {
   DebugData() = default;
-  std::vector<Obstacle> intentionally_ignored_obstacles;
+  std::vector<PredictedObjectBasedObstacle> intentionally_ignored_obstacles;
   std::vector<StopObstacle> obstacles_to_stop;
   MarkerArray stop_wall_marker;
 };

@@ -99,7 +99,7 @@ namespace polygon_utils
 {
 std::optional<std::pair<geometry_msgs::msg::Point, double>> getCollisionPoint(
   const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polygons,
-  const Obstacle & obstacle, const double dist_to_bumper)
+  const PredictedObjectBasedObstacle & obstacle, const double dist_to_bumper)
 {
   const auto collision_info =
     getCollisionIndex(traj_points, traj_polygons, obstacle.pose, obstacle.stamp, obstacle.shape);

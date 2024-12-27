@@ -173,7 +173,6 @@ public:
 
   std::vector<TrajectoryPoint> plan(
     const PredictedObjects & objects, const std::vector<TrajectoryPoint> & base_traj_points,
-    const std::vector<Obstacle> & obstacles,
     const CommonBehaviorDeterminationParam & common_behavior_determination_param,
     const PlannerData & planner_data)
   {
@@ -203,8 +202,11 @@ public:
     // 3. filter obstacles
     const auto stop_obstacles_for_predicted_object = filter_stop_obstacle_for_predicted_object(
       planner_data.current_odometry, objects, decimated_traj_points, decimated_traj_polys,
-      obstacles, planner_data.is_driving_forward, planner_data.vehicle_info, dist_to_bumper);
-    const auto stop_obstacles_for_point_cloud = filter_stop_obstacle_for_point_cloud();
+      planner_data.predicted_object_based_obstacles, planner_data.is_driving_forward,
+      planner_data.vehicle_info, dist_to_bumper);
+    const auto stop_obstacles_for_point_cloud = filter_stop_obstacle_for_point_cloud(
+      planner_data.current_odometry, planner_data.traj_points, decimated_traj_points,
+      planner_data.pointcloud_based_obstacles, planner_data.vehicle_info);
 
     // 4. concat stop obstacles by predicted objects and point cloud
     const auto stop_obstacles =
@@ -250,8 +252,9 @@ private:
   std::vector<StopObstacle> filter_stop_obstacle_for_predicted_object(
     const Odometry & odometry, const PredictedObjects & objects,
     const std::vector<TrajectoryPoint> & decimated_traj_points,
-    const std::vector<Polygon2d> & decimated_traj_polys, const std::vector<Obstacle> & obstacles,
-    const bool is_driving_forward, const VehicleInfo & vehicle_info, const double dist_to_bumper)
+    const std::vector<Polygon2d> & decimated_traj_polys,
+    const std::vector<PredictedObjectBasedObstacle> & obstacles, const bool is_driving_forward,
+    const VehicleInfo & vehicle_info, const double dist_to_bumper)
   {
     std::vector<StopObstacle> stop_obstacles;
     for (const auto & obstacle : obstacles) {
@@ -286,9 +289,89 @@ private:
     return stop_obstacles;
   }
 
-  std::vector<StopObstacle> filter_stop_obstacle_for_point_cloud()
+  std::vector<StopObstacle> filter_stop_obstacle_for_point_cloud(
+    const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
+    const std::vector<TrajectoryPoint> & decimated_traj_points,
+    const std::vector<PointcloudBasedObstacle> & obstacles, const VehicleInfo & vehicle_info)
   {
-    return std::vector<StopObstacle>{};
+    const auto & p = common_behavior_determination_param_;
+
+    std::vector<StopObstacle> stop_obstacles;
+    for (const auto & obstacle : obstacles) {
+      const auto & precise_lat_dist = obstacle.lat_dist_from_obstacle_to_traj;
+      const auto stop_obstacle =
+        createStopObstacleForPointCloud(decimated_traj_points, obstacle, precise_lat_dist);
+      if (stop_obstacle) {
+        stop_obstacles.push_back(*stop_obstacle);
+      }
+    }
+
+    std::vector<StopObstacle> past_stop_obstacles;
+    for (auto itr = stop_pc_obstacle_history_.begin(); itr != stop_pc_obstacle_history_.end();) {
+      const double elapsed_time = (rclcpp::Time(odometry.header.stamp) - itr->stamp).seconds();
+      if (elapsed_time >= p.stop_obstacle_hold_time_threshold) {
+        itr = stop_pc_obstacle_history_.erase(itr);
+        continue;
+      }
+
+      const auto lat_dist_from_obstacle_to_traj =
+        autoware::motion_utils::calcLateralOffset(traj_points, itr->collision_point);
+      const auto min_lat_dist_to_traj_poly =
+        std::abs(lat_dist_from_obstacle_to_traj) - vehicle_info.vehicle_width_m;
+
+      if (min_lat_dist_to_traj_poly < p.max_lat_margin_for_stop_against_unknown) {
+        auto stop_obstacle = *itr;
+        stop_obstacle.dist_to_collide_on_decimated_traj =
+          autoware::motion_utils::calcSignedArcLength(
+            decimated_traj_points, 0, stop_obstacle.collision_point);
+        past_stop_obstacles.push_back(stop_obstacle);
+      }
+
+      ++itr;
+    }
+
+    concatenate(stop_pc_obstacle_history_, stop_obstacles);
+    concatenate(stop_obstacles, past_stop_obstacles);
+
+    return stop_obstacles;
+  }
+
+  std::optional<StopObstacle> createStopObstacleForPointCloud(
+    const std::vector<TrajectoryPoint> & traj_points, const PredictedObjectBasedObstacle & obstacle,
+    const double precise_lat_dist) const
+  {
+    const auto & p = common_behavior_determination_param_;
+
+    if (!use_pointcloud_for_stop_) {
+      return std::nullopt;
+    }
+
+    if (!obstacle.stop_collision_point) {
+      return std::nullopt;
+    }
+
+    const double max_lat_margin_for_stop =
+      (obstacle.classification.label == ObjectClassification::UNKNOWN)
+        ? p.max_lat_margin_for_stop_against_unknown
+        : p.max_lat_margin_for_stop;
+
+    if (precise_lat_dist > std::max(max_lat_margin_for_stop, 1e-3)) {
+      return std::nullopt;
+    }
+
+    const auto dist_to_collide_on_traj =
+      autoware::motion_utils::calcSignedArcLength(traj_points, 0, *obstacle.stop_collision_point);
+
+    return StopObstacle{
+      obstacle.uuid,
+      obstacle.stamp,
+      obstacle.classification,
+      obstacle.pose,
+      obstacle.shape,
+      {},
+      {},
+      *obstacle.stop_collision_point,
+      dist_to_collide_on_traj};
   }
 
   std::vector<TrajectoryPoint> generate_stop_trajectory(
@@ -590,7 +673,7 @@ private:
 
   std::optional<StopObstacle> filter_outside_stop_obstacle_for_predicted_object(
     const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
-    const std::vector<Polygon2d> & traj_polys, const Obstacle & obstacle,
+    const std::vector<Polygon2d> & traj_polys, const PredictedObjectBasedObstacle & obstacle,
     const double precise_lat_dist, const bool is_driving_forward, const VehicleInfo & vehicle_info,
     const double dist_to_bumper) const
   {
@@ -668,8 +751,8 @@ private:
 
   std::optional<StopObstacle> filter_inside_stop_obstacle_for_predicted_object(
     const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
-    const Obstacle & obstacle, const double precise_lat_dist, const VehicleInfo & vehicle_info,
-    const double dist_to_bumper) const
+    const PredictedObjectBasedObstacle & obstacle, const double precise_lat_dist,
+    const VehicleInfo & vehicle_info, const double dist_to_bumper) const
   {
     const auto & sp = stop_param_;
     const auto & object_id = obstacle.uuid.substr(0, 4);
@@ -697,6 +780,7 @@ private:
       return std::nullopt;
     }
 
+    // 3. filter by velocity
     if (!is_stop_obstacle_velocity(obstacle)) {
       return std::nullopt;
     }
@@ -706,14 +790,14 @@ private:
       traj_points, vehicle_info, odometry.pose.pose, max_lat_margin_for_stop,
       common_behavior_determination_param_);
 
-    // 3. check if the obstacle really collides with the trajectory
+    // 4. check if the obstacle really collides with the trajectory
     const auto collision_point = polygon_utils::getCollisionPoint(
       traj_points, traj_polys_with_lat_margin, obstacle, dist_to_bumper);
     if (!collision_point) {
       return std::nullopt;
     }
 
-    // 4. filter if the obstacle will cross and go out of trajectory soon
+    // 5. filter if the obstacle will cross and go out of trajectory soon
     if (
       ignore_crossing_obstacle_ && is_crossing_transient_obstacle(
                                      odometry, traj_points, obstacle, dist_to_bumper,
@@ -727,7 +811,7 @@ private:
                         collision_point->first,  collision_point->second};
   }
 
-  bool is_stop_obstacle_velocity(const Obstacle & obstacle) const
+  bool is_stop_obstacle_velocity(const PredictedObjectBasedObstacle & obstacle) const
   {
     const bool is_prev_obstacle_stop =
       obstacle_cruise_utils::getObstacleFromUuid(prev_stop_object_obstacles_, obstacle.uuid)
@@ -739,7 +823,6 @@ private:
       }
       return true;
     }
-
     if (obstacle.longitudinal_velocity < stop_param_.obstacle_velocity_threshold_to_stop) {
       return true;
     }
@@ -748,7 +831,7 @@ private:
 
   bool is_crossing_transient_obstacle(
     const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
-    const Obstacle & obstacle, const double dist_to_bumper,
+    const PredictedObjectBasedObstacle & obstacle, const double dist_to_bumper,
     const std::vector<Polygon2d> & traj_polys_with_lat_margin,
     const std::optional<std::pair<geometry_msgs::msg::Point, double>> & collision_point) const
   {
@@ -782,7 +865,7 @@ private:
     }();
 
     // check if the ego will collide with the obstacle
-    Obstacle future_obstacle = obstacle;
+    PredictedObjectBasedObstacle future_obstacle = obstacle;
     future_obstacle.pose = future_obj_pose;
     const auto future_collision_point = polygon_utils::getCollisionPoint(
       traj_points, traj_polys_with_lat_margin, future_obstacle, dist_to_bumper);
@@ -850,7 +933,7 @@ private:
   std::optional<std::pair<geometry_msgs::msg::Point, double>>
   createCollisionPointForOutsideStopObstacle(
     const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
-    const std::vector<Polygon2d> & traj_polys, const Obstacle & obstacle,
+    const std::vector<Polygon2d> & traj_polys, const PredictedObjectBasedObstacle & obstacle,
     const PredictedPath & resampled_predicted_path, double max_lat_margin_for_stop,
     const bool is_driving_forward, const VehicleInfo & vehicle_info,
     const double dist_to_bumper) const
@@ -1052,6 +1135,9 @@ private:
     }
     return candidates;
   }
+
+  // PointCloud-based stop obstacle history
+  std::vector<StopObstacle> stop_pc_obstacle_history_;
 };
 
 }  // namespace autoware::motion_planning

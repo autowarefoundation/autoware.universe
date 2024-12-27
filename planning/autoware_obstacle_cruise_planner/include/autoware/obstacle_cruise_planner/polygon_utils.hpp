@@ -40,7 +40,7 @@ Polygon2d createOneStepPolygon(
 
 std::optional<std::pair<geometry_msgs::msg::Point, double>> getCollisionPoint(
   const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polygons,
-  const Obstacle & obstacle, const double dist_to_bumper);
+  const PredictedObjectBasedObstacle & obstacle, const double dist_to_bumper);
 
 std::optional<std::pair<geometry_msgs::msg::Point, double>> getCollisionPoint(
   const std::vector<TrajectoryPoint> & traj_points, const size_t collision_idx,

@@ -56,10 +56,10 @@ private:
   void onSmoothedTrajectory(const Trajectory::ConstSharedPtr msg);
 
   // main functions
-  std::vector<Obstacle> convertToObstacles(
+  std::vector<PredictedObjectBasedObstacle> convertToPredictedObjectBasedObstacles(
     const Odometry & odometry, const PredictedObjects & objects,
     const std::vector<TrajectoryPoint> & traj_points, const PlannerData & planner_data) const;
-  std::vector<Obstacle> convertToObstacles(
+  std::vector<PointcloudBasedObstacle> convertToPointcloudBasedObstacles(
     const Odometry & odometry, const PointCloud2 & pointcloud,
     const std::vector<TrajectoryPoint> & traj_points, const std_msgs::msg::Header & traj_header,
     const PlannerData & planner_data) const;
@@ -67,7 +67,7 @@ private:
 std::tuple<std::vector<StopObstacle>, std::vector<CruiseObstacle>, std::vector<SlowDownObstacle>>
   determineEgoBehaviorAgainstPointCloudObstacles(
     const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
-    const std::vector<Obstacle> & obstacles);
+    const std::vector<PredictedObjectBasedObstacle> & obstacles);
   */
   std::vector<TrajectoryPoint> decimateTrajectoryPoints(
     const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
@@ -114,9 +114,6 @@ std::tuple<std::vector<StopObstacle>, std::vector<CruiseObstacle>, std::vector<S
 
   // planner
   std::unique_ptr<ObstacleCruiseModule> planner_ptr_{nullptr};
-
-  // PointCloud-based stop obstacle history
-  // std::vector<StopObstacle> stop_pc_obstacle_history_;
 
   // behavior determination parameter
   CommonBehaviorDeterminationParam common_behavior_determination_param_;

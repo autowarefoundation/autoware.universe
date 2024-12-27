@@ -316,7 +316,8 @@ public:
   }
 
   std::vector<TrajectoryPoint> plan(
-    const std::vector<TrajectoryPoint> & base_traj_points, const std::vector<Obstacle> & obstacles,
+    const std::vector<TrajectoryPoint> & base_traj_points,
+    const std::vector<PredictedObjectBasedObstacle> & obstacles,
     const CommonBehaviorDeterminationParam & common_behavior_determination_param,
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points)
   {
@@ -359,8 +360,9 @@ protected:
 
   std::vector<CruiseObstacle> determineEgoBehaviorAgainstPredictedObjectObstacles(
     const Odometry & odometry, const std::vector<TrajectoryPoint> & decimated_traj_points,
-    const std::vector<Polygon2d> & decimated_traj_polys, const std::vector<Obstacle> & obstacles,
-    const bool is_driving_forward, const VehicleInfo & vehicle_info)
+    const std::vector<Polygon2d> & decimated_traj_polys,
+    const std::vector<PredictedObjectBasedObstacle> & obstacles, const bool is_driving_forward,
+    const VehicleInfo & vehicle_info)
   {
     // cruise
     std::vector<CruiseObstacle> cruise_obstacles;
@@ -558,7 +560,7 @@ protected:
   struct DebugData
   {
     DebugData() = default;
-    std::vector<Obstacle> intentionally_ignored_obstacles;
+    std::vector<PredictedObjectBasedObstacle> intentionally_ignored_obstacles;
     std::vector<CruiseObstacle> obstacles_to_cruise;
     MarkerArray cruise_wall_marker;
     std::optional<std::vector<Metric>> cruise_metrics{std::nullopt};
@@ -566,7 +568,7 @@ protected:
 
   std::optional<CruiseObstacle> createCruiseObstacle(
     const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
-    const std::vector<Polygon2d> & traj_polys, const Obstacle & obstacle,
+    const std::vector<Polygon2d> & traj_polys, const PredictedObjectBasedObstacle & obstacle,
     const double precise_lat_dist, const bool is_driving_forward, const VehicleInfo & vehicle_info)
   {
     const auto & object_id = obstacle.uuid.substr(0, 4);
@@ -633,14 +635,14 @@ protected:
   }
 
   std::optional<std::vector<CruiseObstacle>> findYieldCruiseObstacles(
-    const std::vector<Obstacle> & obstacles, const std::vector<TrajectoryPoint> & traj_points,
-    const VehicleInfo & vehicle_info)
+    const std::vector<PredictedObjectBasedObstacle> & obstacles,
+    const std::vector<TrajectoryPoint> & traj_points, const VehicleInfo & vehicle_info)
   {
     if (obstacles.empty() || traj_points.empty()) return std::nullopt;
     const auto & p = cruise_behavior_determination_param_;
 
-    std::vector<Obstacle> stopped_obstacles;
-    std::vector<Obstacle> moving_obstacles;
+    std::vector<PredictedObjectBasedObstacle> stopped_obstacles;
+    std::vector<PredictedObjectBasedObstacle> moving_obstacles;
 
     std::for_each(
       obstacles.begin(), obstacles.end(),
@@ -715,7 +717,7 @@ protected:
 
   std::optional<std::vector<PointWithStamp>> createCollisionPointsForInsideCruiseObstacle(
     const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
-    const Obstacle & obstacle, const bool is_driving_forward,
+    const PredictedObjectBasedObstacle & obstacle, const bool is_driving_forward,
     const VehicleInfo & vehicle_info) const
   {
     const auto & object_id = obstacle.uuid.substr(0, 4);
@@ -777,7 +779,7 @@ protected:
 
   std::optional<std::vector<PointWithStamp>> createCollisionPointsForOutsideCruiseObstacle(
     const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polys,
-    const Obstacle & obstacle, const bool is_driving_forward,
+    const PredictedObjectBasedObstacle & obstacle, const bool is_driving_forward,
     const VehicleInfo & vehicle_info) const
   {
     const auto & cp = common_behavior_determination_param_;
@@ -866,7 +868,7 @@ protected:
   }
 
   std::optional<CruiseObstacle> createYieldCruiseObstacle(
-    const Obstacle & obstacle, const std::vector<TrajectoryPoint> & traj_points)
+    const PredictedObjectBasedObstacle & obstacle, const std::vector<TrajectoryPoint> & traj_points)
   {
     if (traj_points.empty()) return std::nullopt;
     // check label
@@ -946,7 +948,7 @@ protected:
   }
 
   bool isFrontCollideObstacle(
-    const std::vector<TrajectoryPoint> & traj_points, const Obstacle & obstacle,
+    const std::vector<TrajectoryPoint> & traj_points, const PredictedObjectBasedObstacle & obstacle,
     const size_t first_collision_idx) const
   {
     const auto obstacle_idx =
@@ -961,7 +963,8 @@ protected:
   }
 
   bool isObstacleCrossing(
-    const std::vector<TrajectoryPoint> & traj_points, const Obstacle & obstacle) const
+    const std::vector<TrajectoryPoint> & traj_points,
+    const PredictedObjectBasedObstacle & obstacle) const
   {
     const double diff_angle = calcDiffAngleAgainstTrajectory(traj_points, obstacle.pose);
 
