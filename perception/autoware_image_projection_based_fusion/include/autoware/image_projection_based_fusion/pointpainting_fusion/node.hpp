@@ -50,7 +50,7 @@ protected:
   void preprocess(PointCloudMsgType & pointcloud_msg) override;
 
   void fuseOnSingleImage(
-    const PointCloudMsgType & input_pointcloud_msg, const Det2dManager<RoiMsgType> & det2d,
+    const PointCloudMsgType & input_pointcloud_msg, const Det2dStatus<RoiMsgType> & det2d,
     const RoiMsgType & input_roi_msg, PointCloudMsgType & painted_pointcloud_msg) override;
 
   void postprocess(PointCloudMsgType & painted_pointcloud_msg) override;

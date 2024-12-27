@@ -91,7 +91,7 @@ void SegmentPointCloudFusionNode::postprocess(PointCloudMsgType & pointcloud_msg
 }
 
 void SegmentPointCloudFusionNode::fuseOnSingleImage(
-  const PointCloudMsgType & input_pointcloud_msg, const Det2dManager<Image> & det2d,
+  const PointCloudMsgType & input_pointcloud_msg, const Det2dStatus<Image> & det2d,
   [[maybe_unused]] const Image & input_mask,
   __attribute__((unused)) PointCloudMsgType & output_cloud)
 {

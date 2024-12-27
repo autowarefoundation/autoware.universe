@@ -74,7 +74,7 @@ void RoiClusterFusionNode::preprocess(ClusterMsgType & output_cluster_msg)
 }
 
 void RoiClusterFusionNode::fuseOnSingleImage(
-  const ClusterMsgType & input_cluster_msg, const Det2dManager<RoiMsgType> & det2d,
+  const ClusterMsgType & input_cluster_msg, const Det2dStatus<RoiMsgType> & det2d,
   const RoiMsgType & input_roi_msg, ClusterMsgType & output_cluster_msg)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
