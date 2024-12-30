@@ -24,7 +24,7 @@
 #include <rviz_common/properties/color_property.hpp>
 #include <rviz_common/properties/float_property.hpp>
 #include <rviz_common/properties/int_property.hpp>
-#include <rviz_common/properties/ros_topic_property.hpp>
+#include <rviz_common/properties/ros_topic_propertybad_change.hpp>
 
 #include <OgreColourValue.h>
 #include <OgreMaterial.h>
@@ -34,7 +34,6 @@
 #include <mutex>
 #endif
 
-// Good change test
 namespace autoware::mission_details_overlay_rviz_plugin
 {
 class MissionDetailsDisplay : public rviz_common::Display
