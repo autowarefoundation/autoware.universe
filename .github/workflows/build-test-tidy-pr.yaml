@@ -71,6 +71,7 @@ jobs:
   clang-tidy-differential-cuda:
     if: ${{ always() }} # always run to provide report for status check
     needs:
+      - check-if-cuda-job-is-needed
       - build-and-test-differential-cuda
     uses: ./.github/workflows/clang-tidy-differential.yaml
     with:
