@@ -14,7 +14,7 @@ concurrency:
 
 jobs:
   require-label:
-    uses: autowarefoundation/autoware-github-actions/.github/workflows/require-label.yaml@v1
+    uses: autowarefoundation/autoware-github-actions/.github/workflows/require-label.yaml@fix/require-label-output
     with:
       label: run:build-and-test-differential
 
