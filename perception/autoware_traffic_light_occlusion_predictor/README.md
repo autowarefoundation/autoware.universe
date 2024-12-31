@@ -14,19 +14,20 @@ If no point cloud is received or all point clouds have very large stamp differen
 
 ## Input topics
 
-| Name                                          | Type                                             | Description              |
-| --------------------------------------------- | ------------------------------------------------ | ------------------------ |
-| `~/input/vector_map`                          | autoware_map_msgs::msg::LaneletMapBin            | vector map               |
-| `~/input/<car or pedestrian>/traffic_signals` | tier4_perception_msgs::msg::TrafficLightArray    | traffic light signals    |
-| `~/input/rois`                                | tier4_perception_msgs::msg::TrafficLightRoiArray | traffic light detections |
-| `~/input/camera_info`                         | sensor_msgs::msg::CameraInfo                     | target camera parameter  |
-| `~/input/cloud`                               | sensor_msgs::msg::PointCloud2                    | LiDAR point cloud        |
+| Name                                 | Type                                             | Description                      |
+| ------------------------------------ | ------------------------------------------------ | -------------------------------- |
+| `~/input/vector_map`                 | autoware_map_msgs::msg::LaneletMapBin            | vector map                       |
+| `~/input/car/traffic_signals`        | tier4_perception_msgs::msg::TrafficLightArray    | vehicular traffic light signals  |
+| `~/input/pedestrian/traffic_signals` | tier4_perception_msgs::msg::TrafficLightArray    | pedestrian traffic light signals |
+| `~/input/rois`                       | tier4_perception_msgs::msg::TrafficLightRoiArray | traffic light detections         |
+| `~/input/camera_info`                | sensor_msgs::msg::CameraInfo                     | target camera parameter          |
+| `~/input/cloud`                      | sensor_msgs::msg::PointCloud2                    | LiDAR point cloud                |
 
 ## Output topics
 
-| Name                       | Type                                          | Description                                        |
-| -------------------------- | --------------------------------------------- | -------------------------------------------------- |
-| `~/output/traffic_signals` | tier4_perception_msgs::msg::TrafficLightArray | The array which occluded image results overwritten |
+| Name                       | Type                                          | Description                                                    |
+| -------------------------- | --------------------------------------------- | -------------------------------------------------------------- |
+| `~/output/traffic_signals` | tier4_perception_msgs::msg::TrafficLightArray | traffic light signals which occluded image results overwritten |
 
 ## Node parameters
 
@@ -37,3 +38,4 @@ If no point cloud is received or all point clouds have very large stamp differen
 | `max_valid_pt_dist`                  | double | The points within this distance would be used for calculation |
 | `max_image_cloud_delay`              | double | The maximum delay between LiDAR point cloud and camera image  |
 | `max_wait_t`                         | double | The maximum time waiting for the LiDAR point cloud            |
+| `max_occlusion_ratio`                | int    | The maximum occlusion ratio for setting signal as unknown     |
