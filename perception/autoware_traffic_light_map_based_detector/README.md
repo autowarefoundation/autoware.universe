@@ -1,4 +1,4 @@
-# The `autoware_traffic_light_map_based_detector` Package
+# autoware_traffic_light_map_based_detector
 
 ## Overview
 
