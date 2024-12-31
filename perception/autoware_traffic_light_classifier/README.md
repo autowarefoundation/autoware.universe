@@ -1,10 +1,12 @@
-# traffic_light_classifier
+# autoware_traffic_light_classifier
 
 ## Purpose
 
-traffic_light_classifier is a package for classifying traffic light labels using cropped image around a traffic light. This package has two classifier models: `cnn_classifier` and `hsv_classifier`.
+`autoware_traffic_light_classifier` is a package for classifying traffic light labels using cropped image around a traffic light. This package has two classifier models: `cnn_classifier` and `hsv_classifier`.
 
 ## Inner-workings / Algorithms
+If height and width of `~/input/rois` is `0`, color, shape, and confidence of `~/output/traffic_signals` become `UNKNOWN`, `CIRCLE`, and `0.0`.
+If `~/input/rois` is judged as backlight, color, shape, and confidence of `~/output/traffic_signals` become `UNKNOWN`, `UNKNOWN`, and `0.0`.
 
 ### cnn_classifier
 
