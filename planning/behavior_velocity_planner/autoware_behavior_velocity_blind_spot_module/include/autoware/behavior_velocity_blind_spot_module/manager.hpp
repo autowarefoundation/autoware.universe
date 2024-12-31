@@ -15,6 +15,7 @@
 #ifndef AUTOWARE__BEHAVIOR_VELOCITY_BLIND_SPOT_MODULE__MANAGER_HPP_
 #define AUTOWARE__BEHAVIOR_VELOCITY_BLIND_SPOT_MODULE__MANAGER_HPP_
 
+#include "autoware/behavior_velocity_blind_spot_module/parameter.hpp"
 #include "autoware/behavior_velocity_blind_spot_module/scene.hpp"
 
 #include <autoware/behavior_velocity_planner_common/plugin_interface.hpp>
@@ -38,7 +39,7 @@ public:
   const char * getModuleName() override { return "blind_spot"; }
 
 private:
-  BlindSpotModule::PlannerParam planner_param_;
+  PlannerParam planner_param_;
 
   void launchNewModules(const tier4_planning_msgs::msg::PathWithLaneId & path) override;
 
