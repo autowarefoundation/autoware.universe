@@ -61,7 +61,7 @@ TrafficLightFineDetectorNode::TrafficLightFineDetectorNode(const rclcpp::NodeOpt
 
   std::string model_path = declare_parameter("fine_detector_model_path", "");
   std::string label_path = declare_parameter("fine_detector_label_path", "");
-  std::string precision = declare_parameter("fine_detector_precision", "fp32");
+  std::string precision = declare_parameter("fine_detector_precision", "fp16");
   const uint8_t gpu_id = declare_parameter("gpu_id", 0);
   // Objects with a score lower than this value will be ignored.
   // This threshold will be ignored if specified model contains EfficientNMS_TRT module in it
@@ -70,6 +70,7 @@ TrafficLightFineDetectorNode::TrafficLightFineDetectorNode(const rclcpp::NodeOpt
   // This threshold will be ignored if specified model contains EfficientNMS_TRT module in it
   float nms_threshold = declare_parameter("fine_detector_nms_thresh", 0.65);
   is_approximate_sync_ = this->declare_parameter<bool>("approximate_sync", false);
+  const bool cuda_preprocess = declare_parameter("cuda_preprocess", true);
 
   if (!readLabelFile(label_path, tlr_label_id_, num_class)) {
     RCLCPP_ERROR(this->get_logger(), "Could not find tlr id");
@@ -78,7 +79,6 @@ TrafficLightFineDetectorNode::TrafficLightFineDetectorNode(const rclcpp::NodeOpt
   const autoware::tensorrt_common::BuildConfig build_config =
     autoware::tensorrt_common::BuildConfig("MinMax", -1, false, false, false, 0.0);
 
-  const bool cuda_preprocess = true;
   const std::string calib_image_list = "";
   const double scale = 1.0;
   const std::string cache_dir = "";
