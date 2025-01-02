@@ -131,7 +131,7 @@ VelocityPlanningResult DynamicObstacleStopModule::plan(
       ? 0.0
       : params_.hysteresis;
   const auto dynamic_obstacles = dynamic_obstacle_stop::filter_predicted_objects(
-    planner_data->predicted_objects, ego_data, params_, hysteresis);
+    planner_data->objects, ego_data, params_, hysteresis);
 
   const auto preprocessing_duration_us = stopwatch.toc("preprocessing");
 
