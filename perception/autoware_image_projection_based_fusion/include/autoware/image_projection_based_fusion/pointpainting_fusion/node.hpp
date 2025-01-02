@@ -23,6 +23,7 @@
 #include <autoware/image_projection_based_fusion/utils/utils.hpp>
 #include <autoware/lidar_centerpoint/centerpoint_trt.hpp>
 #include <autoware/lidar_centerpoint/detection_class_remapper.hpp>
+#include <autoware/universe_utils/ros/diagnostics_interface.hpp>
 
 #include <map>
 #include <memory>
@@ -58,6 +59,7 @@ protected:
   void postprocess(sensor_msgs::msg::PointCloud2 & painted_pointcloud_msg) override;
 
   rclcpp::Publisher<DetectedObjects>::SharedPtr obj_pub_ptr_;
+  std::unique_ptr<autoware::universe_utils::DiagnosticsInterface> diagnostics_interface_ptr_;
 
   int omp_num_threads_{1};
   float score_threshold_{0.0};
