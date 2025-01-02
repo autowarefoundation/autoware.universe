@@ -17,6 +17,7 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
+  <depend>autoware_behavior_velocity_planner</depend>
   <depend>autoware_behavior_velocity_planner_common</depend>
   <depend>autoware_behavior_velocity_rtc_interface</depend>
   <depend>autoware_lanelet2_extension</depend>
@@ -32,6 +33,7 @@
   <depend>tier4_planning_msgs</depend>
   <depend>visualization_msgs</depend>
 
+  <test_depend>ament_cmake_ros</test_depend>
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>
 
