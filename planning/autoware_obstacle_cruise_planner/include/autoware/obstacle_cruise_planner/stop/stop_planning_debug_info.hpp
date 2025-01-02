@@ -12,18 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__OBSTACLE_CRUISE_PLANNER__PID_BASED_PLANNER__CRUISE_PLANNING_DEBUG_INFO_HPP_
-#define AUTOWARE__OBSTACLE_CRUISE_PLANNER__PID_BASED_PLANNER__CRUISE_PLANNING_DEBUG_INFO_HPP_
+#ifndef AUTOWARE__OBSTACLE_CRUISE_PLANNER__STOP__STOP_PLANNING_DEBUG_INFO_HPP_
+#define AUTOWARE__OBSTACLE_CRUISE_PLANNER__STOP__STOP_PLANNING_DEBUG_INFO_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
-#include "tier4_debug_msgs/msg/float32_multi_array_stamped.hpp"
+#include "autoware_internal_debug_msgs/msg/float32_multi_array_stamped.hpp"
 
 #include <array>
 
-using tier4_debug_msgs::msg::Float32MultiArrayStamped;
+using autoware_internal_debug_msgs::msg::Float32MultiArrayStamped;
 
-class CruisePlanningDebugInfo
+class StopPlanningDebugInfo
 {
 public:
   enum class TYPE {
@@ -32,21 +32,12 @@ public:
     EGO_ACCELERATION,
     EGO_JERK,  // no data
 
-    // cruise planning
-    CRUISE_CURRENT_OBSTACLE_DISTANCE_RAW,  // index: 3
-    CRUISE_CURRENT_OBSTACLE_DISTANCE_FILTERED,
-    CRUISE_CURRENT_OBSTACLE_VELOCITY_RAW,
-    CRUISE_CURRENT_OBSTACLE_VELOCITY_FILTERED,
-    CRUISE_TARGET_OBSTACLE_DISTANCE,
-    CRUISE_ERROR_DISTANCE_RAW,
-    CRUISE_ERROR_DISTANCE_FILTERED,
-
-    CRUISE_RELATIVE_EGO_VELOCITY,  // index: 10
-    CRUISE_TIME_TO_COLLISION,
-
-    CRUISE_TARGET_VELOCITY,  // index: 12
-    CRUISE_TARGET_ACCELERATION,
-    CRUISE_TARGET_JERK_RATIO,
+    // stop planning
+    STOP_CURRENT_OBSTACLE_DISTANCE,  // index: 3
+    STOP_CURRENT_OBSTACLE_VELOCITY,
+    STOP_TARGET_OBSTACLE_DISTANCE,
+    STOP_TARGET_VELOCITY,
+    STOP_TARGET_ACCELERATION,
 
     SIZE
   };
@@ -94,4 +85,4 @@ private:
   std::array<double, static_cast<int>(TYPE::SIZE)> info_;
 };
 
-#endif  // AUTOWARE__OBSTACLE_CRUISE_PLANNER__PID_BASED_PLANNER__CRUISE_PLANNING_DEBUG_INFO_HPP_
+#endif  // AUTOWARE__OBSTACLE_CRUISE_PLANNER__STOP__STOP_PLANNING_DEBUG_INFO_HPP_

@@ -18,15 +18,20 @@
 #include "autoware/motion_utils/trajectory/conversion.hpp"
 #include "autoware/motion_utils/trajectory/interpolation.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
-#include "autoware/obstacle_cruise_planner/type_alias.hpp"
+#include "autoware/obstacle_cruise_planner/stop/type_alias.hpp"
 #include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
 #include "autoware/universe_utils/ros/update_param.hpp"
 #include "autoware/universe_utils/ros/uuid_helper.hpp"
 
+#include <pcl_ros/transforms.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <tier4_metric_msgs/msg/metric.hpp>
 #include <tier4_metric_msgs/msg/metric_array.hpp>
+
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/segmentation/extract_clusters.h>
+#include <pcl_conversions/pcl_conversions.h>
 
 #include <optional>
 #include <string>
@@ -35,35 +40,13 @@
 using Metric = tier4_metric_msgs::msg::Metric;
 using MetricArray = tier4_metric_msgs::msg::MetricArray;
 
-struct PlannerData
+struct PredictedObjectBasedObstacle
 {
-  rclcpp::Time current_time;
-  std::vector<TrajectoryPoint> traj_points;
-  geometry_msgs::msg::Pose ego_pose;
-  double ego_vel;
-  double ego_acc;
-  bool is_driving_forward;
-};
-
-struct PoseWithStamp
-{
-  rclcpp::Time stamp;
-  geometry_msgs::msg::Pose pose;
-};
-
-struct PointWithStamp
-{
-  rclcpp::Time stamp;
-  geometry_msgs::msg::Point point;
-};
-
-struct Obstacle
-{
-  Obstacle(
+  PredictedObjectBasedObstacle(
     const rclcpp::Time & arg_stamp, const PredictedObject & object,
     const geometry_msgs::msg::Pose & arg_pose, const double ego_to_obstacle_distance,
     const double lat_dist_from_obstacle_to_traj, const double longitudinal_velocity,
-    const double approach_velocity)
+    const double approach_velocity, const double arg_precise_lat_dist)
   : stamp(arg_stamp),
     ego_to_obstacle_distance(ego_to_obstacle_distance),
     lat_dist_from_obstacle_to_traj(lat_dist_from_obstacle_to_traj),
@@ -75,27 +58,13 @@ struct Obstacle
     twist_reliable(true),
     classification(object.classification.at(0)),
     uuid(autoware::universe_utils::toHexString(object.object_id)),
-    shape(object.shape)
+    shape(object.shape),
+    precise_lat_dist(arg_precise_lat_dist)
   {
     predicted_paths.clear();
     for (const auto & path : object.kinematics.predicted_paths) {
       predicted_paths.push_back(path);
     }
-  }
-
-  Obstacle(
-    const rclcpp::Time & arg_stamp,
-    const std::optional<geometry_msgs::msg::Point> & stop_collision_point,
-    const std::optional<geometry_msgs::msg::Point> & slow_down_front_collision_point,
-    const std::optional<geometry_msgs::msg::Point> & slow_down_back_collision_point,
-    const double ego_to_obstacle_distance, const double lat_dist_from_obstacle_to_traj)
-  : stamp(arg_stamp),
-    ego_to_obstacle_distance(ego_to_obstacle_distance),
-    lat_dist_from_obstacle_to_traj(lat_dist_from_obstacle_to_traj),
-    stop_collision_point(stop_collision_point),
-    slow_down_front_collision_point(slow_down_front_collision_point),
-    slow_down_back_collision_point(slow_down_back_collision_point)
-  {
   }
 
   rclcpp::Time stamp;  // This is not the current stamp, but when the object was observed.
@@ -112,93 +81,57 @@ struct Obstacle
   ObjectClassification classification;
   std::string uuid;
   Shape shape;
+  double precise_lat_dist;
   std::vector<PredictedPath> predicted_paths;
-
-  // for PointCloud
-  std::optional<geometry_msgs::msg::Point> stop_collision_point;
-  std::optional<geometry_msgs::msg::Point> slow_down_front_collision_point;
-  std::optional<geometry_msgs::msg::Point> slow_down_back_collision_point;
 };
 
-struct TargetObstacleInterface
+struct PointcloudBasedObstacle
 {
-  TargetObstacleInterface(
-    const std::string & arg_uuid, const rclcpp::Time & arg_stamp,
-    const geometry_msgs::msg::Pose & arg_pose, const double arg_velocity,
-    const double arg_lat_velocity)
-  : uuid(arg_uuid),
-    stamp(arg_stamp),
-    pose(arg_pose),
-    velocity(arg_velocity),
-    lat_velocity(arg_lat_velocity)
+  PointcloudBasedObstacle(const rclcpp::Time & arg_stamp, const pcl::PointIndices & arg_clusters)
+  : stamp(arg_stamp), clusters(arg_clusters)
   {
   }
-  std::string uuid;
+
+  rclcpp::Time stamp;  // This is not the current stamp, but when the object was observed.
+  pcl::PointIndices clusters;
+};
+
+struct PlannerData
+{
+  rclcpp::Time current_time;
+  std::vector<TrajectoryPoint> traj_points;
+  nav_msgs::msg::Odometry current_odometry;
+  geometry_msgs::msg::AccelWithCovarianceStamped current_acceleration;
+  // geometry_msgs::msg::Pose ego_pose;
+  // double ego_vel;
+  // double ego_acc;
+  bool is_driving_forward;
+  VehicleInfo vehicle_info;
+  double ego_nearest_dist_threshold;
+  double ego_nearest_yaw_threshold;
+
+  std::vector<PredictedObjectBasedObstacle> predicted_object_based_obstacles;
+  std::vector<PointcloudBasedObstacle> pointcloud_based_obstacles;
+
+  size_t findIndex(
+    const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & pose) const
+  {
+    return autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
+      traj_points, pose, ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
+  }
+
+  size_t findSegmentIndex(
+    const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & pose) const
+  {
+    return autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      traj_points, pose, ego_nearest_dist_threshold, ego_nearest_yaw_threshold);
+  }
+};
+
+struct PointWithStamp
+{
   rclcpp::Time stamp;
-  geometry_msgs::msg::Pose pose;  // interpolated with the current stamp
-  double velocity;                // longitudinal velocity against ego's trajectory
-  double lat_velocity;            // lateral velocity against ego's trajectory
-};
-
-struct StopObstacle : public TargetObstacleInterface
-{
-  StopObstacle(
-    const std::string & arg_uuid, const rclcpp::Time & arg_stamp,
-    const ObjectClassification & object_classification, const geometry_msgs::msg::Pose & arg_pose,
-    const Shape & arg_shape, const double arg_lon_velocity, const double arg_lat_velocity,
-    const geometry_msgs::msg::Point arg_collision_point,
-    const double arg_dist_to_collide_on_decimated_traj)
-  : TargetObstacleInterface(arg_uuid, arg_stamp, arg_pose, arg_lon_velocity, arg_lat_velocity),
-    shape(arg_shape),
-    collision_point(arg_collision_point),
-    dist_to_collide_on_decimated_traj(arg_dist_to_collide_on_decimated_traj),
-    classification(object_classification)
-  {
-  }
-  Shape shape;
-  geometry_msgs::msg::Point
-    collision_point;  // TODO(yuki_takagi): this member variable still used in
-                      // calculateMarginFromObstacleOnCurve() and  should be removed as it can be
-                      // replaced by ”dist_to_collide_on_decimated_traj”
-  double dist_to_collide_on_decimated_traj;
-  ObjectClassification classification;
-};
-
-struct CruiseObstacle : public TargetObstacleInterface
-{
-  CruiseObstacle(
-    const std::string & arg_uuid, const rclcpp::Time & arg_stamp,
-    const geometry_msgs::msg::Pose & arg_pose, const double arg_lon_velocity,
-    const double arg_lat_velocity, const std::vector<PointWithStamp> & arg_collision_points,
-    bool arg_is_yield_obstacle = false)
-  : TargetObstacleInterface(arg_uuid, arg_stamp, arg_pose, arg_lon_velocity, arg_lat_velocity),
-    collision_points(arg_collision_points),
-    is_yield_obstacle(arg_is_yield_obstacle)
-  {
-  }
-  std::vector<PointWithStamp> collision_points;  // time-series collision points
-  bool is_yield_obstacle;
-};
-
-struct SlowDownObstacle : public TargetObstacleInterface
-{
-  SlowDownObstacle(
-    const std::string & arg_uuid, const rclcpp::Time & arg_stamp,
-    const ObjectClassification & object_classification, const geometry_msgs::msg::Pose & arg_pose,
-    const double arg_lon_velocity, const double arg_lat_velocity, const double arg_precise_lat_dist,
-    const geometry_msgs::msg::Point & arg_front_collision_point,
-    const geometry_msgs::msg::Point & arg_back_collision_point)
-  : TargetObstacleInterface(arg_uuid, arg_stamp, arg_pose, arg_lon_velocity, arg_lat_velocity),
-    precise_lat_dist(arg_precise_lat_dist),
-    front_collision_point(arg_front_collision_point),
-    back_collision_point(arg_back_collision_point),
-    classification(object_classification)
-  {
-  }
-  double precise_lat_dist;  // for efficient calculation
-  geometry_msgs::msg::Point front_collision_point;
-  geometry_msgs::msg::Point back_collision_point;
-  ObjectClassification classification;
+  geometry_msgs::msg::Point point;
 };
 
 struct LongitudinalInfo
@@ -213,8 +146,6 @@ struct LongitudinalInfo
     limit_min_accel = node.declare_parameter<double>("limit.min_acc");
     limit_max_jerk = node.declare_parameter<double>("limit.max_jerk");
     limit_min_jerk = node.declare_parameter<double>("limit.min_jerk");
-    slow_down_min_accel = node.declare_parameter<double>("common.slow_down_min_acc");
-    slow_down_min_jerk = node.declare_parameter<double>("common.slow_down_min_jerk");
 
     idling_time = node.declare_parameter<double>("common.idling_time");
     min_ego_accel_for_rss = node.declare_parameter<double>("common.min_ego_accel_for_rss");
@@ -223,11 +154,6 @@ struct LongitudinalInfo
     safe_distance_margin = node.declare_parameter<double>("common.safe_distance_margin");
     terminal_safe_distance_margin =
       node.declare_parameter<double>("common.terminal_safe_distance_margin");
-
-    hold_stop_velocity_threshold =
-      node.declare_parameter<double>("common.hold_stop_velocity_threshold");
-    hold_stop_distance_threshold =
-      node.declare_parameter<double>("common.hold_stop_distance_threshold");
   }
 
   void onParam(const std::vector<rclcpp::Parameter> & parameters)
@@ -240,10 +166,6 @@ struct LongitudinalInfo
     autoware::universe_utils::updateParam<double>(parameters, "limit.min_accel", limit_min_accel);
     autoware::universe_utils::updateParam<double>(parameters, "limit.max_jerk", limit_max_jerk);
     autoware::universe_utils::updateParam<double>(parameters, "limit.min_jerk", limit_min_jerk);
-    autoware::universe_utils::updateParam<double>(
-      parameters, "common.slow_down_min_accel", slow_down_min_accel);
-    autoware::universe_utils::updateParam<double>(
-      parameters, "common.slow_down_min_jerk", slow_down_min_jerk);
 
     autoware::universe_utils::updateParam<double>(parameters, "common.idling_time", idling_time);
     autoware::universe_utils::updateParam<double>(
@@ -255,11 +177,6 @@ struct LongitudinalInfo
       parameters, "common.safe_distance_margin", safe_distance_margin);
     autoware::universe_utils::updateParam<double>(
       parameters, "common.terminal_safe_distance_margin", terminal_safe_distance_margin);
-
-    autoware::universe_utils::updateParam<double>(
-      parameters, "common.hold_stop_velocity_threshold", hold_stop_velocity_threshold);
-    autoware::universe_utils::updateParam<double>(
-      parameters, "common.hold_stop_distance_threshold", hold_stop_distance_threshold);
   }
 
   // common parameter
@@ -267,8 +184,6 @@ struct LongitudinalInfo
   double min_accel;
   double max_jerk;
   double min_jerk;
-  double slow_down_min_jerk;
-  double slow_down_min_accel;
   double limit_max_accel;
   double limit_min_accel;
   double limit_max_jerk;
@@ -282,62 +197,104 @@ struct LongitudinalInfo
   // distance margin
   double safe_distance_margin;
   double terminal_safe_distance_margin;
-
-  // hold stop
-  double hold_stop_velocity_threshold;
-  double hold_stop_distance_threshold;
 };
 
-struct DebugData
+struct CommonBehaviorDeterminationParam
 {
-  DebugData() = default;
-  std::vector<Obstacle> intentionally_ignored_obstacles;
-  std::vector<StopObstacle> obstacles_to_stop;
-  std::vector<CruiseObstacle> obstacles_to_cruise;
-  std::vector<SlowDownObstacle> obstacles_to_slow_down;
-  MarkerArray slow_down_debug_wall_marker;
-  MarkerArray stop_wall_marker;
-  MarkerArray cruise_wall_marker;
-  MarkerArray slow_down_wall_marker;
-  std::vector<autoware::universe_utils::Polygon2d> detection_polygons;
-  std::optional<std::vector<Metric>> stop_metrics{std::nullopt};
-  std::optional<std::vector<Metric>> slow_down_metrics{std::nullopt};
-  std::optional<std::vector<Metric>> cruise_metrics{std::nullopt};
-};
+  CommonBehaviorDeterminationParam() = default;
 
-struct EgoNearestParam
-{
-  EgoNearestParam() = default;
-  explicit EgoNearestParam(rclcpp::Node & node)
-  {
-    dist_threshold = node.declare_parameter<double>("ego_nearest_dist_threshold");
-    yaw_threshold = node.declare_parameter<double>("ego_nearest_yaw_threshold");
+  explicit CommonBehaviorDeterminationParam(rclcpp::Node & node)
+  {  // behavior determination
+    decimate_trajectory_step_length =
+      node.declare_parameter<double>("behavior_determination.decimate_trajectory_step_length");
+    pointcloud_search_radius =
+      node.declare_parameter<double>("behavior_determination.pointcloud_search_radius");
+    pointcloud_voxel_grid_x =
+      node.declare_parameter<double>("behavior_determination.pointcloud_voxel_grid_x");
+    pointcloud_voxel_grid_y =
+      node.declare_parameter<double>("behavior_determination.pointcloud_voxel_grid_y");
+    pointcloud_voxel_grid_z =
+      node.declare_parameter<double>("behavior_determination.pointcloud_voxel_grid_z");
+    pointcloud_cluster_tolerance =
+      node.declare_parameter<double>("behavior_determination.pointcloud_cluster_tolerance");
+    pointcloud_min_cluster_size =
+      node.declare_parameter<int>("behavior_determination.pointcloud_min_cluster_size");
+    pointcloud_max_cluster_size =
+      node.declare_parameter<int>("behavior_determination.pointcloud_max_cluster_size");
+    crossing_obstacle_velocity_threshold = node.declare_parameter<double>(
+      "behavior_determination.crossing_obstacle.obstacle_velocity_threshold");
+    crossing_obstacle_traj_angle_threshold = node.declare_parameter<double>(
+      "behavior_determination.crossing_obstacle.obstacle_traj_angle_threshold");
+    prediction_resampling_time_interval =
+      node.declare_parameter<double>("behavior_determination.prediction_resampling_time_interval");
+    prediction_resampling_time_horizon =
+      node.declare_parameter<double>("behavior_determination.prediction_resampling_time_horizon");
+
+    enable_to_consider_current_pose = node.declare_parameter<bool>(
+      "behavior_determination.consider_current_pose.enable_to_consider_current_pose");
+    time_to_convergence = node.declare_parameter<double>(
+      "behavior_determination.consider_current_pose.time_to_convergence");
   }
 
-  TrajectoryPoint calcInterpolatedPoint(
-    const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & pose) const
+  void onParam(const std::vector<rclcpp::Parameter> & parameters)
   {
-    return autoware::motion_utils::calcInterpolatedPoint(
-      autoware::motion_utils::convertToTrajectory(traj_points), pose, dist_threshold,
-      yaw_threshold);
+    // behavior determination
+    autoware::universe_utils::updateParam<double>(
+      parameters, "behavior_determination.decimate_trajectory_step_length",
+      decimate_trajectory_step_length);
+    autoware::universe_utils::updateParam<double>(
+      parameters, "behavior_determination.pointcloud_search_radius", pointcloud_search_radius);
+    autoware::universe_utils::updateParam<double>(
+      parameters, "behavior_determination.pointcloud_voxel_grid_x", pointcloud_voxel_grid_x);
+    autoware::universe_utils::updateParam<double>(
+      parameters, "behavior_determination.pointcloud_voxel_grid_y", pointcloud_voxel_grid_y);
+    autoware::universe_utils::updateParam<double>(
+      parameters, "behavior_determination.pointcloud_voxel_grid_z", pointcloud_voxel_grid_z);
+    autoware::universe_utils::updateParam<double>(
+      parameters, "behavior_determination.pointcloud_cluster_tolerance",
+      pointcloud_cluster_tolerance);
+    autoware::universe_utils::updateParam<int>(
+      parameters, "behavior_determination.pointcloud_min_cluster_size",
+      pointcloud_min_cluster_size);
+    autoware::universe_utils::updateParam<int>(
+      parameters, "behavior_determination.pointcloud_max_cluster_size",
+      pointcloud_max_cluster_size);
+    autoware::universe_utils::updateParam<double>(
+      parameters, "behavior_determination.crossing_obstacle.obstacle_velocity_threshold",
+      crossing_obstacle_velocity_threshold);
+    autoware::universe_utils::updateParam<double>(
+      parameters, "behavior_determination.crossing_obstacle.obstacle_traj_angle_threshold",
+      crossing_obstacle_traj_angle_threshold);
+    autoware::universe_utils::updateParam<double>(
+      parameters, "behavior_determination.prediction_resampling_time_interval",
+      prediction_resampling_time_interval);
+    autoware::universe_utils::updateParam<double>(
+      parameters, "behavior_determination.prediction_resampling_time_horizon",
+      prediction_resampling_time_horizon);
+
+    autoware::universe_utils::updateParam<bool>(
+      parameters, "behavior_determination.consider_current_pose.enable_to_consider_current_pose",
+      enable_to_consider_current_pose);
+    autoware::universe_utils::updateParam<double>(
+      parameters, "behavior_determination.consider_current_pose.time_to_convergence",
+      time_to_convergence);
   }
 
-  size_t findIndex(
-    const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & pose) const
-  {
-    return autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
-      traj_points, pose, dist_threshold, yaw_threshold);
-  }
+  double decimate_trajectory_step_length;
+  double pointcloud_search_radius;
+  double pointcloud_voxel_grid_x;
+  double pointcloud_voxel_grid_y;
+  double pointcloud_voxel_grid_z;
+  double pointcloud_cluster_tolerance;
+  int pointcloud_min_cluster_size;
+  int pointcloud_max_cluster_size;
+  double crossing_obstacle_velocity_threshold;
+  double crossing_obstacle_traj_angle_threshold;
+  double prediction_resampling_time_interval;
+  double prediction_resampling_time_horizon;
 
-  size_t findSegmentIndex(
-    const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & pose) const
-  {
-    return autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
-      traj_points, pose, dist_threshold, yaw_threshold);
-  }
-
-  double dist_threshold;
-  double yaw_threshold;
+  bool enable_to_consider_current_pose;
+  double time_to_convergence;
 };
 
 #endif  // AUTOWARE__OBSTACLE_CRUISE_PLANNER__COMMON_STRUCTS_HPP_

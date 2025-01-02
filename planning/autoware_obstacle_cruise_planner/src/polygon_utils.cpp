@@ -99,8 +99,7 @@ namespace polygon_utils
 {
 std::optional<std::pair<geometry_msgs::msg::Point, double>> getCollisionPoint(
   const std::vector<TrajectoryPoint> & traj_points, const std::vector<Polygon2d> & traj_polygons,
-  const Obstacle & obstacle, const bool is_driving_forward,
-  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info)
+  const PredictedObjectBasedObstacle & obstacle, const double dist_to_bumper)
 {
   const auto collision_info =
     getCollisionIndex(traj_points, traj_polygons, obstacle.pose, obstacle.stamp, obstacle.shape);
@@ -108,10 +107,8 @@ std::optional<std::pair<geometry_msgs::msg::Point, double>> getCollisionPoint(
     return std::nullopt;
   }
 
-  const double x_diff_to_bumper = is_driving_forward ? vehicle_info.max_longitudinal_offset_m
-                                                     : vehicle_info.min_longitudinal_offset_m;
   const auto bumper_pose = autoware::universe_utils::calcOffsetPose(
-    traj_points.at(collision_info->first).pose, x_diff_to_bumper, 0.0, 0.0);
+    traj_points.at(collision_info->first).pose, dist_to_bumper, 0.0, 0.0);
 
   std::optional<double> max_collision_length = std::nullopt;
   std::optional<geometry_msgs::msg::Point> max_collision_point = std::nullopt;
@@ -132,17 +129,14 @@ std::optional<std::pair<geometry_msgs::msg::Point, double>> getCollisionPoint(
 
 std::optional<std::pair<geometry_msgs::msg::Point, double>> getCollisionPoint(
   const std::vector<TrajectoryPoint> & traj_points, const size_t collision_idx,
-  const std::vector<PointWithStamp> & collision_points, const bool is_driving_forward,
-  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info)
+  const std::vector<PointWithStamp> & collision_points, const double dist_to_bumper)
 {
   std::pair<size_t, std::vector<PointWithStamp>> collision_info;
   collision_info.first = collision_idx;
   collision_info.second = collision_points;
 
-  const double x_diff_to_bumper = is_driving_forward ? vehicle_info.max_longitudinal_offset_m
-                                                     : vehicle_info.min_longitudinal_offset_m;
   const auto bumper_pose = autoware::universe_utils::calcOffsetPose(
-    traj_points.at(collision_info.first).pose, x_diff_to_bumper, 0.0, 0.0);
+    traj_points.at(collision_info.first).pose, dist_to_bumper, 0.0, 0.0);
 
   std::optional<double> max_collision_length = std::nullopt;
   std::optional<geometry_msgs::msg::Point> max_collision_point = std::nullopt;

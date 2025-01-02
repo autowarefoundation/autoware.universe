@@ -68,6 +68,71 @@ struct Obstacle
 };
 ```
 
+```plantuml
+@startuml
+skinparam monochrome true
+
+title Overall flowchart
+start
+
+partition filter_stop_obstacle_for_predicted_object {
+:is_stop_obstacle_type;
+
+partition filter_inside_stop_obstacle_for_predicted_object {
+:filter by lateral distance;
+
+:filter by label;
+
+:is_stop_obstacle_velocity;
+
+:check if the obstacle really collides with the trajectory;
+
+:is_crossing_transient_obstacle;
+}
+
+partition filter_outside_stop_obstacle_for_predicted_object {
+}
+
+:checkConsistency;
+note right
+consistent
+end note
+}
+
+partition filter_stop_obstacle_for_point_cloud {
+}
+
+:concat stop obstacles;
+note right
+concat stop obstacles by predicted objects and point cloud
+end note
+
+partition generate_stop_trajectory {
+:calculate dist to collide;
+
+:calc_desired_stop_margin;
+note right
+- whether the ego is cloes to the goal
+- whether the ego is on the curve
+- whether there is stop point by behavior's stop point
+end note
+
+:calc_candidate_zero_vel_dist;
+
+:hold_previous_stop_if_necessary;
+
+:insert_stop_point;
+
+:set_stop_planning_debug_info;
+}
+
+:publishDebugInfo;
+
+stop
+
+@enduml
+```
+
 ### Behavior determination against obstacles
 
 Obstacles for cruising, stopping and slowing down are selected in this order based on their pose and velocity.

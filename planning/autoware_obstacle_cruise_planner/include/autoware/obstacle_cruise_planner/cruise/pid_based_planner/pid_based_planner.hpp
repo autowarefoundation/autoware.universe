@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__OBSTACLE_CRUISE_PLANNER__PID_BASED_PLANNER__PID_BASED_PLANNER_HPP_
-#define AUTOWARE__OBSTACLE_CRUISE_PLANNER__PID_BASED_PLANNER__PID_BASED_PLANNER_HPP_
+#ifndef AUTOWARE__OBSTACLE_CRUISE_PLANNER__CRUISE__PID_BASED_PLANNER__PID_BASED_PLANNER_HPP_
+#define AUTOWARE__OBSTACLE_CRUISE_PLANNER__CRUISE__PID_BASED_PLANNER__PID_BASED_PLANNER_HPP_
 
-#include "autoware/obstacle_cruise_planner/pid_based_planner/cruise_planning_debug_info.hpp"
-#include "autoware/obstacle_cruise_planner/pid_based_planner/pid_controller.hpp"
-#include "autoware/obstacle_cruise_planner/planner_interface.hpp"
+#include "autoware/obstacle_cruise_planner/cruise/obstacle_cruise_module.hpp"
+#include "autoware/obstacle_cruise_planner/cruise/pid_based_planner/cruise_planning_debug_info.hpp"
+#include "autoware/obstacle_cruise_planner/cruise/pid_based_planner/pid_controller.hpp"
 #include "autoware/signal_processing/lowpass_filter_1d.hpp"
 
 #include "visualization_msgs/msg/marker_array.hpp"
@@ -28,7 +28,10 @@
 
 using autoware::signal_processing::LowpassFilter1d;
 
-class PIDBasedPlanner : public PlannerInterface
+namespace autoware::motion_planning
+{
+
+class PIDBasedPlanner : public ObstacleCruiseModule
 {
 public:
   struct CruiseObstacleInfo
@@ -49,10 +52,7 @@ public:
     double target_dist_to_obstacle;
   };
 
-  PIDBasedPlanner(
-    rclcpp::Node & node, const LongitudinalInfo & longitudinal_info,
-    const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
-    const EgoNearestParam & ego_nearest_param, const std::shared_ptr<DebugData> debug_data_ptr);
+  explicit PIDBasedPlanner(rclcpp::Node & node);
 
   std::vector<TrajectoryPoint> generateCruiseTrajectory(
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points,
@@ -85,9 +85,9 @@ private:
     const PlannerData & planner_data, const std::vector<TrajectoryPoint> & stop_traj_points,
     const CruiseObstacleInfo & cruise_obstacle_info);
   std::vector<TrajectoryPoint> getAccelerationLimitedTrajectory(
-    const std::vector<TrajectoryPoint> traj, const geometry_msgs::msg::Pose & start_pose,
-    const double v0, const double a0, const double target_acc,
-    const double target_jerk_ratio) const;
+    const std::vector<TrajectoryPoint> traj_points, const geometry_msgs::msg::Pose & start_pose,
+    const double v0, const double a0, const double target_acc, const double target_jerk_ratio,
+    const PlannerData & planner_data) const;
 
   // ROS parameters
   double min_accel_during_cruise_;
@@ -138,5 +138,6 @@ private:
 
   std::function<double(double)> error_func_;
 };
+}  // namespace autoware::motion_planning
 
-#endif  // AUTOWARE__OBSTACLE_CRUISE_PLANNER__PID_BASED_PLANNER__PID_BASED_PLANNER_HPP_
+#endif  // AUTOWARE__OBSTACLE_CRUISE_PLANNER__CRUISE__PID_BASED_PLANNER__PID_BASED_PLANNER_HPP_

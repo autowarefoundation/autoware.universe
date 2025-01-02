@@ -11,10 +11,10 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-#ifndef AUTOWARE__OBSTACLE_CRUISE_PLANNER__OPTIMIZATION_BASED_PLANNER__VELOCITY_OPTIMIZER_HPP_
-#define AUTOWARE__OBSTACLE_CRUISE_PLANNER__OPTIMIZATION_BASED_PLANNER__VELOCITY_OPTIMIZER_HPP_
+#ifndef AUTOWARE__OBSTACLE_CRUISE_PLANNER__CRUISE__OPTIMIZATION_BASED_PLANNER__VELOCITY_OPTIMIZER_HPP_
+#define AUTOWARE__OBSTACLE_CRUISE_PLANNER__CRUISE__OPTIMIZATION_BASED_PLANNER__VELOCITY_OPTIMIZER_HPP_
 
-#include "autoware/obstacle_cruise_planner/optimization_based_planner/s_boundary.hpp"
+#include "autoware/obstacle_cruise_planner/cruise/optimization_based_planner/s_boundary.hpp"
 #include "autoware/osqp_interface/osqp_interface.hpp"
 
 #include <vector>
@@ -72,4 +72,4 @@ private:
   autoware::osqp_interface::OSQPInterface qp_solver_;
 };
 
-#endif  // AUTOWARE__OBSTACLE_CRUISE_PLANNER__OPTIMIZATION_BASED_PLANNER__VELOCITY_OPTIMIZER_HPP_
+#endif  // AUTOWARE__OBSTACLE_CRUISE_PLANNER__CRUISE__OPTIMIZATION_BASED_PLANNER__VELOCITY_OPTIMIZER_HPP_

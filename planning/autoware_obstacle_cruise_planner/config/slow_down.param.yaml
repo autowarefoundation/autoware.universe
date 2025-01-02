@@ -1,0 +1,51 @@
+/**:
+  ros__parameters:
+    slow_down:
+      common:
+        enable_debug_info: false
+        enable_slow_down_planning: true
+
+      slow_down_min_acc: -1.0         # slow down min deceleration [m/ss]
+      slow_down_min_jerk: -1.0        # slow down min jerk [m/sss]
+
+      obstacle_type:
+        unknown: false
+        car: true
+        truck: true
+        bus: true
+        trailer: true
+        motorcycle: true
+        bicycle: true
+        pedestrian: true
+        pointcloud: false
+
+      behavior_determination:
+        max_lat_margin: 1.1  # lateral margin between obstacle and trajectory band with ego's width
+        lat_hysteresis_margin: 0.2
+
+        successive_num_to_entry_slow_down_condition: 5
+        successive_num_to_exit_slow_down_condition: 5
+
+      # parameters to calculate slow down velocity by linear interpolation
+      labels:
+        - "default"
+      default:
+        moving:
+          min_lat_margin: 0.2
+          max_lat_margin: 1.0
+          min_ego_velocity: 2.0
+          max_ego_velocity: 8.0
+        static:
+          min_lat_margin: 0.2
+          max_lat_margin: 1.0
+          min_ego_velocity: 4.0
+          max_ego_velocity: 8.0
+
+      moving_object_speed_threshold: 0.5 # [m/s] how fast the object needs to move to be considered as "moving"
+      moving_object_hysteresis_range: 0.1 # [m/s] hysteresis range used to prevent chattering when obstacle moves close to moving_object_speed_threshold
+
+      time_margin_on_target_velocity: 1.5 # [s]
+
+      lpf_gain_slow_down_vel: 0.99 # low-pass filter gain for slow down velocity
+      lpf_gain_lat_dist: 0.999 # low-pass filter gain for lateral distance from obstacle to ego's path
+      lpf_gain_dist_to_slow_down: 0.7 # low-pass filter gain for distance to slow down start

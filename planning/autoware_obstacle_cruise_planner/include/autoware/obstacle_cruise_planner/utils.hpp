@@ -15,9 +15,9 @@
 #ifndef AUTOWARE__OBSTACLE_CRUISE_PLANNER__UTILS_HPP_
 #define AUTOWARE__OBSTACLE_CRUISE_PLANNER__UTILS_HPP_
 
-#include "autoware/obstacle_cruise_planner/type_alias.hpp"
+#include "autoware/obstacle_cruise_planner/common_structs.hpp"
+#include "autoware/obstacle_cruise_planner/stop/type_alias.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
-#include "common_structs.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -28,6 +28,41 @@
 
 namespace obstacle_cruise_utils
 {
+struct PoseWithStamp
+{
+  rclcpp::Time stamp;
+  geometry_msgs::msg::Pose pose;
+};
+
+std::vector<TrajectoryPoint> decimateTrajectoryPoints(
+  const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
+  const PlannerData & planner_data, const double decimate_trajectory_step_length,
+  const double extend_trajectory_length);
+
+std::vector<Polygon2d> createOneStepPolygons(
+  const std::vector<TrajectoryPoint> & traj_points,
+  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
+  const geometry_msgs::msg::Pose & current_ego_pose, const double lat_margin,
+  const CommonBehaviorDeterminationParam & common_behavior_determination_param);
+
+template <typename T>
+std::optional<T> getObstacleFromUuid(
+  const std::vector<T> & obstacles, const std::string & target_uuid)
+{
+  const auto itr = std::find_if(obstacles.begin(), obstacles.end(), [&](const auto & obstacle) {
+    return obstacle.uuid == target_uuid;
+  });
+
+  if (itr == obstacles.end()) {
+    return std::nullopt;
+  }
+  return *itr;
+}
+
+std::vector<int> getTargetObjectType(rclcpp::Node & node, const std::string & param_prefix);
+
+double calcObstacleMaxLength(const Shape & shape);
+
 Marker getObjectMarker(
   const geometry_msgs::msg::Pose & obj_pose, size_t idx, const std::string & ns, const double r,
   const double g, const double b);
@@ -35,8 +70,6 @@ Marker getObjectMarker(
 PoseWithStamp getCurrentObjectPose(
   const PredictedObject & predicted_object, const rclcpp::Time & obj_base_time,
   const rclcpp::Time & current_time, const bool use_prediction);
-
-std::vector<StopObstacle> getClosestStopObstacles(const std::vector<StopObstacle> & stop_obstacles);
 
 template <class T>
 size_t getIndexWithLongitudinalOffset(
