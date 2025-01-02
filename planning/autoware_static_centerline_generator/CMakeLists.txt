@@ -52,6 +52,10 @@ if(BUILD_TESTING)
     test/test_static_centerline_generator.test.py
     TIMEOUT "30"
   )
+  add_launch_test(
+    test/test_static_centerline_generator_launch.test.py
+    TIMEOUT "30"
+  )
   install(DIRECTORY
     test/data/
     DESTINATION share/${PROJECT_NAME}/test/data/
