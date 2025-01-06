@@ -28,7 +28,6 @@ namespace autoware::pointcloud_preprocessor
 
 NaiveMatchingStrategy::NaiveMatchingStrategy(rclcpp::Node & node)
 {
-  strategy_type_ = CollectorStrategyType::Naive;
   RCLCPP_INFO(node.get_logger(), "Utilize naive matching strategy");
 }
 
@@ -58,15 +57,13 @@ std::optional<std::shared_ptr<CloudCollector>> NaiveMatchingStrategy::match_clou
 void NaiveMatchingStrategy::set_collector_info(
   std::shared_ptr<CloudCollector> & collector, const MatchingParams & matching_params)
 {
-  auto info = std::make_shared<NaiveCollectorInfo>();
-  info->timestamp = matching_params.cloud_arrival_time;
+  auto info = std::make_shared<NaiveCollectorInfo>(matching_params.cloud_arrival_time);
   collector->set_info(info);
 }
 
 AdvancedMatchingStrategy::AdvancedMatchingStrategy(
   rclcpp::Node & node, std::vector<std::string> input_topics)
 {
-  strategy_type_ = CollectorStrategyType::Advanced;
   auto lidar_timestamp_offsets =
     node.declare_parameter<std::vector<double>>("matching_strategy.lidar_timestamp_offsets");
   auto lidar_timestamp_noise_window =
@@ -114,10 +111,9 @@ std::optional<std::shared_ptr<CloudCollector>> AdvancedMatchingStrategy::match_c
 void AdvancedMatchingStrategy::set_collector_info(
   std::shared_ptr<CloudCollector> & collector, const MatchingParams & matching_params)
 {
-  auto info = std::make_shared<AdvancedCollectorInfo>();
-  info->timestamp =
-    matching_params.cloud_timestamp - topic_to_offset_map_[matching_params.topic_name];
-  info->noise_window = topic_to_noise_window_map_[matching_params.topic_name];
+  auto info = std::make_shared<AdvancedCollectorInfo>(
+    matching_params.cloud_timestamp - topic_to_offset_map_[matching_params.topic_name],
+    topic_to_noise_window_map_[matching_params.topic_name]);
   collector->set_info(info);
 }
 

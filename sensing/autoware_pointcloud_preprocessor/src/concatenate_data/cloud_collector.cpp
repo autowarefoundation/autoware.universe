@@ -128,18 +128,14 @@ void CloudCollector::show_debug_message()
   log_stream << "Collector's concatenate callback time: "
              << ros2_parent_node_->get_clock()->now().seconds() << " seconds\n";
 
-  if (collector_info_) {
-    if (collector_info_->getStrategyType() == CollectorStrategyType::Advanced) {
-      auto advanced_info = std::dynamic_pointer_cast<AdvancedCollectorInfo>(collector_info_);
-      log_stream << "Advanced strategy:\n Collector's reference time min: "
-                 << advanced_info->timestamp - advanced_info->noise_window
-                 << " to max: " << advanced_info->timestamp + advanced_info->noise_window
-                 << " seconds\n";
-    } else if (collector_info_->getStrategyType() == CollectorStrategyType::Naive) {
-      auto naive_info = std::dynamic_pointer_cast<NaiveCollectorInfo>(collector_info_);
-      log_stream << "Naive strategy:\n Collector's timestamp: " << naive_info->timestamp
-                 << " seconds\n";
-    }
+  if (auto advanced_info = std::dynamic_pointer_cast<AdvancedCollectorInfo>(collector_info_)) {
+    log_stream << "Advanced strategy:\n Collector's reference time min: "
+               << advanced_info->timestamp - advanced_info->noise_window
+               << " to max: " << advanced_info->timestamp + advanced_info->noise_window
+               << " seconds\n";
+  } else if (auto naive_info = std::dynamic_pointer_cast<NaiveCollectorInfo>(collector_info_)) {
+    log_stream << "Naive strategy:\n Collector's timestamp: " << naive_info->timestamp
+               << " seconds\n";
   }
 
   log_stream << "Time until trigger: " << (time_until_trigger.count() / 1e9) << " seconds\n";

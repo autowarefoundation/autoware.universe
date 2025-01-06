@@ -47,9 +47,6 @@ public:
     const MatchingParams & params) const = 0;
   virtual void set_collector_info(
     std::shared_ptr<CloudCollector> & collector, const MatchingParams & matching_params) = 0;
-
-protected:
-  CollectorStrategyType strategy_type_;
 };
 
 class NaiveMatchingStrategy : public CollectorMatchingStrategy

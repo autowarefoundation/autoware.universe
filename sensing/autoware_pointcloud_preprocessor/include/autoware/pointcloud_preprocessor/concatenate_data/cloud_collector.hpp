@@ -18,7 +18,6 @@
 
 #include <memory>
 #include <string>
-#include <tuple>
 #include <unordered_map>
 
 namespace autoware::pointcloud_preprocessor
@@ -27,32 +26,26 @@ namespace autoware::pointcloud_preprocessor
 class PointCloudConcatenateDataSynchronizerComponent;
 class CombineCloudHandler;
 
-enum class CollectorStrategyType { Naive, Advanced };
-
 struct CollectorInfoBase
 {
   virtual ~CollectorInfoBase() = default;
-  [[nodiscard]] virtual CollectorStrategyType getStrategyType() const = 0;
 };
 
 struct NaiveCollectorInfo : public CollectorInfoBase
 {
-  double timestamp{0.0};
+  double timestamp;
 
-  [[nodiscard]] CollectorStrategyType getStrategyType() const override
-  {
-    return CollectorStrategyType::Naive;
-  }
+  explicit NaiveCollectorInfo(double timestamp = 0.0) : timestamp(timestamp) {}
 };
 
 struct AdvancedCollectorInfo : public CollectorInfoBase
 {
-  double timestamp{0.0};
-  double noise_window{0.0};
+  double timestamp;
+  double noise_window;
 
-  [[nodiscard]] CollectorStrategyType getStrategyType() const override
+  explicit AdvancedCollectorInfo(double timestamp = 0.0, double noise_window = 0.0)
+  : timestamp(timestamp), noise_window(noise_window)
   {
-    return CollectorStrategyType::Advanced;
   }
 };
 
