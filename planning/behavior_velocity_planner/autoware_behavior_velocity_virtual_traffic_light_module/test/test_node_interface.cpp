@@ -26,10 +26,17 @@ namespace autoware::behavior_velocity_planner
 TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionPathWithLaneID)
 {
   rclcpp::init(0, nullptr);
+
+  const auto plugin_info_vec = {autoware::behavior_velocity_planner::PluginInfo{
+    "virtual_traffic_light",
+    "autoware::behavior_velocity_planner::VirtualTrafficLightModulePlugin"}};
+
   auto test_manager = autoware::behavior_velocity_planner::generateTestManager();
-  auto test_target_node = autoware::behavior_velocity_planner::generateNode({});
+  auto test_target_node = autoware::behavior_velocity_planner::generateNode(plugin_info_vec);
 
   autoware::behavior_velocity_planner::publishMandatoryTopics(test_manager, test_target_node);
+  test_manager->publishVirtualTrafficLightState(
+    test_target_node, "behavior_velocity_planner_node/input/virtual_traffic_light_states");
 
   // test with nominal path_with_lane_id
   ASSERT_NO_THROW_WITH_ERROR_MSG(test_manager->testWithNominalPathWithLaneId(test_target_node));
@@ -51,6 +58,8 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithOffTrackEgoPose)
   auto test_manager = autoware::behavior_velocity_planner::generateTestManager();
   auto test_target_node = autoware::behavior_velocity_planner::generateNode(plugin_info_vec);
   autoware::behavior_velocity_planner::publishMandatoryTopics(test_manager, test_target_node);
+  test_manager->publishVirtualTrafficLightState(
+    test_target_node, "behavior_velocity_planner_node/input/virtual_traffic_light_states");
 
   // test for normal trajectory
   ASSERT_NO_THROW_WITH_ERROR_MSG(test_manager->testWithNominalPathWithLaneId(test_target_node));
