@@ -101,7 +101,7 @@ GoalPlannerModule::GoalPlannerModule(
 
   // freespace parking
   if (parameters_->enable_freespace_parking) {
-    auto freespace_planner = std::make_shared<FreespacePullOver>(node, *parameters, vehicle_info);
+    auto freespace_planner = std::make_shared<FreespacePullOver>(node, *parameters);
     const auto freespace_parking_period_ns = rclcpp::Rate(1.0).period();
     freespace_parking_timer_cb_group_ =
       node.create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -289,22 +289,15 @@ LaneParkingPlanner::LaneParkingPlanner(
   is_lane_parking_cb_running_(is_lane_parking_cb_running),
   logger_(logger)
 {
-  const auto vehicle_info = autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo();
-  lane_departure_checker::Param lane_departure_checker_params;
-  lane_departure_checker_params.footprint_extra_margin =
-    parameters.lane_departure_check_expansion_margin;
-  LaneDepartureChecker lane_departure_checker(lane_departure_checker_params, vehicle_info);
-
   for (const std::string & planner_type : parameters.efficient_path_order) {
     if (planner_type == "SHIFT" && parameters.enable_shift_parking) {
-      pull_over_planners_.push_back(
-        std::make_shared<ShiftPullOver>(node, parameters, lane_departure_checker));
+      pull_over_planners_.push_back(std::make_shared<ShiftPullOver>(node, parameters));
     } else if (planner_type == "ARC_FORWARD" && parameters.enable_arc_forward_parking) {
-      pull_over_planners_.push_back(std::make_shared<GeometricPullOver>(
-        node, parameters, lane_departure_checker, /*is_forward*/ true));
+      pull_over_planners_.push_back(
+        std::make_shared<GeometricPullOver>(node, parameters, /*is_forward*/ true));
     } else if (planner_type == "ARC_BACKWARD" && parameters.enable_arc_backward_parking) {
-      pull_over_planners_.push_back(std::make_shared<GeometricPullOver>(
-        node, parameters, lane_departure_checker, /*is_forward*/ false));
+      pull_over_planners_.push_back(
+        std::make_shared<GeometricPullOver>(node, parameters, /*is_forward*/ false));
     }
   }
 

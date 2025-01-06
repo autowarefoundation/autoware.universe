@@ -29,9 +29,7 @@ using autoware::lane_departure_checker::LaneDepartureChecker;
 class BezierPullOver : public PullOverPlannerBase
 {
 public:
-  BezierPullOver(
-    rclcpp::Node & node, const GoalPlannerParameters & parameters,
-    const LaneDepartureChecker & lane_departure_checker);
+  BezierPullOver(rclcpp::Node & node, const GoalPlannerParameters & parameters);
   PullOverPlannerType getPlannerType() const override { return PullOverPlannerType::BEZIER; }
   std::optional<PullOverPath> plan(
     const GoalCandidate & modified_goal_pose, const size_t id,
