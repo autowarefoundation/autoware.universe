@@ -806,16 +806,16 @@ The following table provides comparisons between the planners
       <td align="center">With Frenet Planner</td>
     </tr>
     <tr>
-      <td><img src="./image/terminal_straight_path_shifter.png" alt="Path shifter result at straight lanelets" width="300"></a></td>
-      <td><img src="./image/terminal_straight_frenet.png" alt="Frenet planner result at straight lanelets" width="300"></a></td>
+      <td><img src="./images/terminal_straight_path_shifter.png" alt="Path shifter result at straight lanelets" width="300"></a></td>
+      <td><img src="./images/terminal_straight_frenet.png" alt="Frenet planner result at straight lanelets" width="300"></a></td>
     </tr>
     <tr>
-      <td><img src="./image/terminal_branched_path_shifter.png" alt="Path shifter result at branching lanelets" width="300"></a></td>
-      <td><img src="./image/terminal_branched_frenet.png" alt="Frenet planner result at branching lanelets" width="300"></a></td>
+      <td><img src="./images/terminal_branched_path_shifter.png" alt="Path shifter result at branching lanelets" width="300"></a></td>
+      <td><img src="./images/terminal_branched_frenet.png" alt="Frenet planner result at branching lanelets" width="300"></a></td>
     </tr>
     <tr>
-      <td><img src="./image/terminal_curved_path_shifter.png" alt="Path shifter result at curved lanelets" width="300"></a></td>
-      <td><img src="./image/terminal_curved_frenet.png" alt="Frenet planner result at curved lanelets" width="300"></a></td>
+      <td><img src="./images/terminal_curved_path_shifter.png" alt="Path shifter result at curved lanelets" width="300"></a></td>
+      <td><img src="./images/terminal_curved_frenet.png" alt="Frenet planner result at curved lanelets" width="300"></a></td>
     </tr>
   </table>
 </div>
