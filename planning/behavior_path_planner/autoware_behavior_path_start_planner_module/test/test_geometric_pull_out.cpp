@@ -24,9 +24,7 @@
 
 #include <gtest/gtest.h>
 
-#include <iostream>
 #include <memory>
-#include <optional>
 #include <string>
 #include <vector>
 
@@ -129,22 +127,19 @@ private:
 
   void initialize_lane_departure_checker()
   {
+    autoware::lane_departure_checker::Param lane_departure_checker_params{};
     const auto vehicle_info =
       autoware::vehicle_info_utils::VehicleInfoUtils(*node_).getVehicleInfo();
-    lane_departure_checker_ = std::make_shared<LaneDepartureChecker>();
-    lane_departure_checker_->setVehicleInfo(vehicle_info);
-
-    autoware::lane_departure_checker::Param lane_departure_checker_params{};
-    lane_departure_checker_->setParam(lane_departure_checker_params);
+    lane_departure_checker_ =
+      std::make_shared<LaneDepartureChecker>(lane_departure_checker_params, vehicle_info);
   }
 
   void initialize_geometric_pull_out_planner()
   {
     auto parameters = StartPlannerParameters::init(*node_);
 
-    auto time_keeper = std::make_shared<autoware::universe_utils::TimeKeeper>();
     geometric_pull_out_ =
-      std::make_shared<GeometricPullOut>(*node_, parameters, lane_departure_checker_, time_keeper);
+      std::make_shared<GeometricPullOut>(*node_, parameters, lane_departure_checker_);
   }
 };
 
@@ -163,7 +158,6 @@ TEST_F(TestGeometricPullOut, GenerateValidGeometricPullOutPath)
       .orientation(
         geometry_msgs::build<geometry_msgs::msg::Quaternion>().x(0.0).y(0.0).z(0.705897).w(
           0.708314));
-
   const auto planner_data = make_planner_data(start_pose, 4619, 4635);
 
   // Plan the pull out path

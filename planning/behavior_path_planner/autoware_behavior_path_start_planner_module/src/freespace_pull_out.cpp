@@ -28,15 +28,11 @@
 
 namespace autoware::behavior_path_planner
 {
-FreespacePullOut::FreespacePullOut(
-  rclcpp::Node & node, const StartPlannerParameters & parameters,
-  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
-  std::shared_ptr<universe_utils::TimeKeeper> time_keeper)
-: PullOutPlannerBase{node, parameters, time_keeper},
-  velocity_{parameters.freespace_planner_velocity}
+FreespacePullOut::FreespacePullOut(rclcpp::Node & node, const StartPlannerParameters & parameters)
+: PullOutPlannerBase{node, parameters}, velocity_{parameters.freespace_planner_velocity}
 {
   autoware::freespace_planning_algorithms::VehicleShape vehicle_shape(
-    vehicle_info, parameters.vehicle_shape_margin);
+    vehicle_info_, parameters.vehicle_shape_margin);
   if (parameters.freespace_planner_algorithm == "astar") {
     use_back_ = parameters.astar_parameters.use_back;
     planner_ = std::make_unique<AstarSearch>(
