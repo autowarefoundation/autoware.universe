@@ -88,8 +88,7 @@ StartPlannerModule::StartPlannerModule(
   }
 
   if (parameters_->enable_freespace_planner) {
-    freespace_planner_ =
-      std::make_unique<FreespacePullOut>(node, *parameters, vehicle_info_, time_keeper_);
+    freespace_planner_ = std::make_unique<FreespacePullOut>(node, *parameters);
     const auto freespace_planner_period_ns = rclcpp::Rate(1.0).period();
     freespace_planner_timer_cb_group_ =
       node.create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
