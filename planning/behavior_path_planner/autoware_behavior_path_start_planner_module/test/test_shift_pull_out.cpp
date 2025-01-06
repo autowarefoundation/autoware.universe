@@ -139,9 +139,8 @@ private:
   {
     auto parameters = StartPlannerParameters::init(*node_);
 
-    auto time_keeper = std::make_shared<autoware::universe_utils::TimeKeeper>();
     shift_pull_out_ =
-      std::make_shared<ShiftPullOut>(*node_, parameters, lane_departure_checker_, time_keeper);
+      std::make_shared<ShiftPullOut>(*node_, parameters, lane_departure_checker_);
   }
 };
 

@@ -37,8 +37,7 @@ class FreespacePullOut : public PullOutPlannerBase
 public:
   FreespacePullOut(
     rclcpp::Node & node, const StartPlannerParameters & parameters,
-    const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
-    std::shared_ptr<universe_utils::TimeKeeper> time_keeper);
+    const autoware::vehicle_info_utils::VehicleInfo & vehicle_info);
 
   PlannerType getPlannerType() const override { return PlannerType::FREESPACE; }
 
