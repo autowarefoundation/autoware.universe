@@ -108,6 +108,8 @@ struct PlannerData
     const autoware_perception_msgs::msg::PredictedObjects & predicted_objects)
   {
     predicted_objects_header = predicted_objects.header;
+
+    objects.clear();
     for (const auto & predicted_object : predicted_objects.objects) {
       objects.push_back(Object(predicted_object));
     }
