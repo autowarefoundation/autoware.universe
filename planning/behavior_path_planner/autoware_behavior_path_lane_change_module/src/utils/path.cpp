@@ -57,6 +57,12 @@ using autoware::universe_utils::LineString2d;
 using autoware::universe_utils::Point2d;
 using geometry_msgs::msg::Pose;
 
+template <typename T>
+T sign(const Direction direction)
+{
+  return static_cast<T>(direction == Direction::LEFT ? 1.0 : -1.0);
+}
+
 double calc_resample_interval(
   const double lane_changing_length, const double lane_changing_velocity)
 {
@@ -188,21 +194,22 @@ FrenetState init_frenet_state(
 }
 
 std::optional<SamplingParameters> init_sampling_parameters(
-  const LCParamPtr & lc_param_ptr, const LaneChangePhaseMetrics & prepare_metrics,
+  const CommonDataPtr & common_data_ptr, const LaneChangePhaseMetrics & prepare_metrics,
   const FrenetState & initial_state, const Spline2D & ref_spline, const Pose & lc_start_pose)
 {
-  const auto min_lc_vel = lc_param_ptr->trajectory.min_lane_changing_velocity;
+  const auto & trajectory = common_data_ptr->lc_param_ptr->trajectory;
+  const auto min_lc_vel = trajectory.min_lane_changing_velocity;
   const auto [min_lateral_acc, max_lateral_acc] =
-    lc_param_ptr->trajectory.lat_acc_map.find(std::max(min_lc_vel, prepare_metrics.velocity));
+    trajectory.lat_acc_map.find(std::max(min_lc_vel, prepare_metrics.velocity));
   const auto duration = autoware::motion_utils::calc_shift_time_from_jerk(
-    std::abs(initial_state.position.d), lc_param_ptr->trajectory.lateral_jerk, max_lateral_acc);
+    std::abs(initial_state.position.d), trajectory.lateral_jerk, max_lateral_acc);
   const auto final_velocity =
     std::max(min_lc_vel, prepare_metrics.velocity + prepare_metrics.sampled_lon_accel * duration);
   const auto lc_length = duration * (prepare_metrics.velocity + final_velocity) * 0.5;
   const auto target_s = initial_state.position.s + lc_length;
   const auto initial_yaw = tf2::getYaw(lc_start_pose.orientation);
   const auto target_lat_vel =
-    (1 - ref_spline.curvature(target_s + 1e-3) * initial_state.position.d) *
+    (1.0 - ref_spline.curvature(target_s + 1e-3) * initial_state.position.d) *
     std::tan(initial_yaw - ref_spline.yaw(target_s));
 
   if (std::isnan(target_lat_vel)) {
@@ -210,17 +217,46 @@ std::optional<SamplingParameters> init_sampling_parameters(
   }
 
   SamplingParameters sampling_parameters;
-  sampling_parameters.resolution = lc_param_ptr->safety.collision_check.prediction_time_resolution;
+  const auto & safety = common_data_ptr->lc_param_ptr->safety;
+  sampling_parameters.resolution = safety.collision_check.prediction_time_resolution;
   sampling_parameters.parameters.emplace_back();
   sampling_parameters.parameters.back().target_duration = duration;
   sampling_parameters.parameters.back().target_state.position = {target_s, 0.0};
   // TODO(Maxime): not sure if we should use curvature at initial or target s
-  sampling_parameters.parameters.back().target_state.lateral_velocity = target_lat_vel;
+  sampling_parameters.parameters.back().target_state.lateral_velocity =
+    sign<double>(common_data_ptr->direction) * target_lat_vel;
   sampling_parameters.parameters.back().target_state.lateral_acceleration = 0.0;
   sampling_parameters.parameters.back().target_state.longitudinal_velocity = final_velocity;
   sampling_parameters.parameters.back().target_state.longitudinal_acceleration =
     prepare_metrics.sampled_lon_accel;
   return sampling_parameters;
+}
+
+std::vector<double> calc_curvatures(
+  const std::vector<PathPointWithLaneId> & points, const Pose & current_pose)
+{
+  const auto nearest_segment_idx =
+    autoware::motion_utils::findNearestSegmentIndex(points, current_pose.position);
+
+  // Ignore all path points behind ego vehicle.
+  if (points.size() <= nearest_segment_idx + 2) {
+    return {};
+  }
+
+  std::vector<double> curvatures;
+  curvatures.reserve(points.size() - nearest_segment_idx + 2);
+  for (const auto & [p1, p2, p3] : ranges::views::zip(
+         points | ranges::views::drop(nearest_segment_idx),
+         points | ranges::views::drop(nearest_segment_idx + 1),
+         points | ranges::views::drop(nearest_segment_idx + 2))) {
+    const auto point1 = autoware::universe_utils::getPoint(p1);
+    const auto point2 = autoware::universe_utils::getPoint(p2);
+    const auto point3 = autoware::universe_utils::getPoint(p3);
+
+    curvatures.push_back(autoware::universe_utils::calcCurvature(point1, point2, point3));
+  }
+
+  return curvatures;
 }
 
 double calc_average_curvature(const std::vector<double> & curvatures)
@@ -330,26 +366,11 @@ bool get_prepare_segment(
     throw std::logic_error("lane change start is behind target lanelet!");
   }
 
-  const auto nearest_segment_idx = autoware::motion_utils::findNearestSegmentIndex(
-    prepare_segment.points, common_data_ptr->get_ego_pose().position);
+  const auto curvatures = calc_curvatures(prepare_segment.points, common_data_ptr->get_ego_pose());
 
-  // Ignore all path points behind ego vehicle.
-  if (prepare_segment.points.size() <= nearest_segment_idx + 2) {
+  // curvatures may be empty if ego is near the terminal start of the path.
+  if (curvatures.empty()) {
     return true;
-  }
-
-  std::vector<double> curvatures;
-  const auto & points = prepare_segment.points;
-  curvatures.reserve(points.size() - nearest_segment_idx + 2);
-  for (const auto & [p1, p2, p3] : ranges::views::zip(
-         points | ranges::views::drop(nearest_segment_idx),
-         points | ranges::views::drop(nearest_segment_idx + 1),
-         points | ranges::views::drop(nearest_segment_idx + 2))) {
-    const auto point1 = autoware::universe_utils::getPoint(p1);
-    const auto point2 = autoware::universe_utils::getPoint(p2);
-    const auto point3 = autoware::universe_utils::getPoint(p3);
-
-    curvatures.push_back(autoware::universe_utils::calcCurvature(point1, point2, point3));
   }
 
   const auto average_curvature = calc_average_curvature(curvatures);
@@ -482,7 +503,7 @@ std::vector<lane_change::TrajectoryGroup> generate_frenet_candidates(
     PathWithLaneId prepare_segment;
     try {
       if (!utils::lane_change::get_prepare_segment(
-            common_data_ptr, prev_module_path, metric, prepare_segment)) {
+            common_data_ptr, prev_module_path, metric.length, prepare_segment)) {
         RCLCPP_DEBUG(get_logger(), "Reject: failed to get valid prepare segment!");
         continue;
       }
@@ -498,8 +519,10 @@ std::vector<lane_change::TrajectoryGroup> generate_frenet_candidates(
       common_data_ptr->lc_param_ptr->lane_change_finish_judge_buffer;
     const auto max_lc_len = transient_data.lane_changing_length.max;
 
+    constexpr auto resample_interval = 0.5;
     const auto target_lane_reference_path = get_reference_path_from_target_lane(
-      common_data_ptr, lc_start_pose, std::min(dist_to_end_from_lc_start, max_lc_len), 0.5);
+      common_data_ptr, lc_start_pose, std::min(dist_to_end_from_lc_start, max_lc_len),
+      resample_interval);
     if (target_lane_reference_path.points.empty()) {
       continue;
     }
@@ -525,7 +548,7 @@ std::vector<lane_change::TrajectoryGroup> generate_frenet_candidates(
       initial_state.lateral_acceleration);
 
     const auto sampling_parameters_opt = init_sampling_parameters(
-      common_data_ptr->lc_param_ptr, metric, initial_state, reference_spline, lc_start_pose);
+      common_data_ptr, metric, initial_state, reference_spline, lc_start_pose);
 
     if (!sampling_parameters_opt) {
       continue;
@@ -544,7 +567,7 @@ std::vector<lane_change::TrajectoryGroup> generate_frenet_candidates(
         }
       }
 
-      const auto out_of_bound = check_out_of_bound_paths(
+      [[maybe_unused]] const auto out_of_bound = check_out_of_bound_paths(
         common_data_ptr, traj.poses, current_lane_boundary, is_shift_to_left);
 
       if (out_of_bound) {
@@ -597,6 +620,8 @@ std::optional<LaneChangePath> get_candidate_path(
     lane_changing_candidate.longitudinal_velocities, lane_changing_candidate.lateral_velocities,
     lane_changing_candidate.curvatures);
 
+  shifted_path.path.points.reserve(zipped_candidates.size());
+  shifted_path.shift_length.reserve(zipped_candidates.size());
   for (const auto & [pose, frenet_point, longitudinal_velocity, lateral_velocity, curvature] :
        zipped_candidates) {
     // Find the reference index
@@ -624,17 +649,7 @@ std::optional<LaneChangePath> get_candidate_path(
     return std::nullopt;
   }
 
-  const auto nearest_segment_idx = autoware::motion_utils::findNearestSegmentIndex(
-    target_lane_ref_path.points, shifted_path.path.points.back().point.pose.position);
-  for (auto i = nearest_segment_idx + 2; i < target_lane_ref_path.points.size(); ++i) {
-    shifted_path.path.points.push_back(target_lane_ref_path.points[i]);
-    shifted_path.shift_length.push_back(0.0);
-  }
-
-  const auto lane_change_end_idx = autoware::motion_utils::findNearestIndex(
-    shifted_path.path.points, shifted_path.path.points.back().point.pose);
-  for (size_t i = 0; i < *lane_change_end_idx; ++i) {
-    auto & point = shifted_path.path.points.at(i);
+  for (auto & point : shifted_path.path.points) {
     point.point.longitudinal_velocity_mps = std::min(
       point.point.longitudinal_velocity_mps,
       static_cast<float>(shifted_path.path.points.back().point.longitudinal_velocity_mps));
@@ -682,5 +697,34 @@ std::optional<LaneChangePath> get_candidate_path(
   candidate_path.type = PathType::FrenetPlanner;
 
   return candidate_path;
+}
+
+void append_target_ref_to_candidate(
+  LaneChangePath & frenet_candidate, const double th_curvature_smoothing)
+{
+  const auto & target_lane_ref_path = frenet_candidate.frenet_path.target_lane_ref_path.points;
+  const auto & lc_end_pose = frenet_candidate.info.lane_changing_end;
+  const auto lc_end_idx =
+    motion_utils::findNearestIndex(target_lane_ref_path, lc_end_pose.position);
+  auto & candidate_path = frenet_candidate.path.points;
+  if (target_lane_ref_path.size() <= lc_end_idx + 2) {
+    return;
+  }
+  const auto add_size = target_lane_ref_path.size() - (lc_end_idx + 1);
+  candidate_path.reserve(candidate_path.size() + add_size);
+  const auto & points = target_lane_ref_path;
+  for (const auto & [p2, p3] : ranges::views::zip(
+         points | ranges::views::drop(lc_end_idx + 1),
+         points | ranges::views::drop(lc_end_idx + 2))) {
+    const auto point1 = autoware::universe_utils::getPoint(candidate_path.back().point.pose);
+    const auto point2 = autoware::universe_utils::getPoint(p2);
+    const auto point3 = autoware::universe_utils::getPoint(p3);
+    const auto curvature =
+      std::abs(autoware::universe_utils::calcCurvature(point1, point2, point3));
+    if (curvature < th_curvature_smoothing) {
+      candidate_path.push_back(p2);
+    }
+  }
+  candidate_path.push_back(target_lane_ref_path.back());
 }
 }  // namespace autoware::behavior_path_planner::utils::lane_change

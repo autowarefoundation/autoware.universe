@@ -1162,6 +1162,7 @@ bool NormalLaneChange::get_path_using_frenet(
     logger_, "Generated %lu candidate paths in %2.2f[us]", frenet_candidates.size(),
     stop_watch_.toc("frenet_candidates"));
 
+  candidate_paths.reserve(frenet_candidates.size());
   for (const auto & frenet_candidate : frenet_candidates) {
     std::optional<LaneChangePath> candidate_path_opt;
     try {
@@ -1179,6 +1180,8 @@ bool NormalLaneChange::get_path_using_frenet(
         RCLCPP_DEBUG(
           logger_, "Found safe path after %lu candidate(s). Total time: %2.2f[us]",
           frenet_candidates.size(), stop_watch_.toc("frenet_candidates"));
+        utils::lane_change::append_target_ref_to_candidate(
+          *candidate_path_opt, common_data_ptr_->lc_param_ptr->frenet.th_curvature_smoothing);
         candidate_paths.push_back(*candidate_path_opt);
         return found_safe_path;
       }
@@ -1186,6 +1189,7 @@ bool NormalLaneChange::get_path_using_frenet(
       RCLCPP_DEBUG(logger_, "%s", e.what());
     }
 
+    // appending all paths affect performance
     if (candidate_paths.empty()) {
       candidate_paths.push_back(*candidate_path_opt);
     }

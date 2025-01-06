@@ -99,14 +99,65 @@ LaneChangePath construct_candidate_path(
   const PathWithLaneId & target_lane_reference_path,
   const std::vector<std::vector<int64_t>> & sorted_lane_ids);
 
-/// @brief generate lane change candidate paths using the Frenet planner
+/**
+ * @brief Generates candidate trajectories in the Frenet frame for a lane change maneuver.
+ *
+ * This function computes a set of candidate trajectories for the ego vehicle in the Frenet frame,
+ * based on the provided metrics, target lane reference path, and preparation segments. It ensures
+ * that the generated trajectories adhere to specified constraints, such as lane boundaries and
+ * velocity limits, while optimizing for smoothness and curvature.
+ *
+ * @param common_data_ptr Shared pointer to CommonData containing route, lane, and transient
+ * information.
+ * @param prev_module_path The previous module's path used as a base for preparation segments.
+ * @param metrics A collection of metrics defining lane change phases, such as lengths and
+ * velocities.
+ *
+ * @return std::vector<lane_change::TrajectoryGroup> A vector of trajectory groups representing
+ * valid lane change candidates, each containing the prepare segment, target reference path, and
+ * Frenet trajectory.
+ */
 std::vector<lane_change::TrajectoryGroup> generate_frenet_candidates(
   const CommonDataPtr & common_data_ptr, const PathWithLaneId & prev_module_path,
   const std::vector<LaneChangePhaseMetrics> & metrics);
 
+/**
+ * @brief Constructs a lane change path candidate based on a Frenet trajectory group.
+ *
+ * This function generates a candidate lane change path by converting a Frenet trajectory group
+ * into a shifted path and combining it with a prepare segment. It validates the path's feasibility
+ * by ensuring yaw differences are within allowable thresholds and calculates lane change
+ * information, such as acceleration, velocity, and duration.
+ *
+ * @param trajectory_group A Frenet trajectory group containing the prepared path and Frenet
+ * trajectory data.
+ * @param common_data_ptr Shared pointer to CommonData providing parameters and constraints for lane
+ * changes.
+ * @param sorted_lane_ids A vector of sorted lane IDs used to update the lane IDs in the path.
+ *
+ * @return std::optional<LaneChangePath> The constructed candidate lane change path if valid, or
+ *         std::nullopt if the path is not feasible.
+ *
+ * @throws std::logic_error If the yaw difference exceeds the threshold, or other critical errors
+ * occur.
+ */
 std::optional<LaneChangePath> get_candidate_path(
   const TrajectoryGroup & trajectory_group, const CommonDataPtr & common_data_ptr,
   const std::vector<std::vector<int64_t>> & sorted_lane_ids);
+
+/**
+ * @brief Appends the target lane reference path to the candidate lane change path.
+ *
+ * This function extends the lane change candidate path by appending points from the
+ * target lane reference path beyond the lane change end position. The appending process
+ * is constrained by a curvature threshold to ensure smooth transitions and avoid sharp turns.
+ *
+ * @param frenet_candidate The candidate lane change path to which the target reference path is
+ * appended. This includes the lane change path and associated Frenet trajectory data.
+ * @param th_curvature_smoothing A threshold for the allowable curvature during the extension
+ * process. Points with curvature exceeding this threshold are excluded.
+ */
+void append_target_ref_to_candidate(LaneChangePath & frenet_candidate, const double th_curvature);
 }  // namespace autoware::behavior_path_planner::utils::lane_change
 
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__UTILS__PATH_HPP_

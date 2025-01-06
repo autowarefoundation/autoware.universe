@@ -42,6 +42,7 @@
       frenet:
         enable: true
         th_yaw_diff: 10.0  # [deg]
+        th_curvature_smoothing: 0.1 # [/]
 
       # safety check
       safety_check:
