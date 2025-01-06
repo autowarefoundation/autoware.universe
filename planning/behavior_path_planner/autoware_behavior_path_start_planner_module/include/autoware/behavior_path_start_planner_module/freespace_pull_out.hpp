@@ -44,6 +44,8 @@ public:
     const std::shared_ptr<const PlannerData> & planner_data,
     PlannerDebugData & planner_debug_data) override;
 
+  friend class TestFreespacePullOut;
+
 protected:
   std::unique_ptr<AbstractPlanningAlgorithm> planner_;
   double velocity_;
