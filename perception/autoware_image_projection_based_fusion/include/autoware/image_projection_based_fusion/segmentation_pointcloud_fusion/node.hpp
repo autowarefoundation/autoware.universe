@@ -20,6 +20,7 @@
 #include <autoware/image_projection_based_fusion/utils/utils.hpp>
 #include <image_transport/image_transport.hpp>
 
+#include <memory>
 #include <string>
 #include <unordered_set>
 #include <utility>
@@ -60,7 +61,7 @@ protected:
 
   void fuseOnSingleImage(
     const PointCloud2 & input_pointcloud_msg, const std::size_t image_id, const Image & input_mask,
-    const CameraInfo & camera_info, PointCloud2 & output_pointcloud_msg) override;
+    PointCloud2 & output_pointcloud_msg) override;
 
   bool out_of_scope(const PointCloud2 & filtered_cloud) override;
   inline void copyPointCloud(

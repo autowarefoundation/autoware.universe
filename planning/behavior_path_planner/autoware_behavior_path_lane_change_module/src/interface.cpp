@@ -43,8 +43,7 @@ LaneChangeInterface::LaneChangeInterface(
   std::unique_ptr<LaneChangeBase> && module_type)
 : SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map},  // NOLINT
   parameters_{std::move(parameters)},
-  module_type_{std::move(module_type)},
-  prev_approved_path_{std::make_unique<PathWithLaneId>()}
+  module_type_{std::move(module_type)}
 {
   module_type_->setTimeKeeper(getTimeKeeper());
   logger_ = utils::lane_change::getLogger(module_type_->getModuleTypeStr());
@@ -109,11 +108,8 @@ BehaviorModuleOutput LaneChangeInterface::plan()
 
   auto output = module_type_->generateOutput();
   path_reference_ = std::make_shared<PathWithLaneId>(output.reference_path);
-  *prev_approved_path_ = getPreviousModuleOutput().path;
 
-  const auto stop_pose_opt = module_type_->getStopPose();
-  stop_pose_ = stop_pose_opt.has_value() ? PoseWithDetailOpt(PoseWithDetail(stop_pose_opt.value()))
-                                         : PoseWithDetailOpt();
+  stop_pose_ = module_type_->getStopPose();
 
   const auto & lane_change_debug = module_type_->getDebugData();
   for (const auto & [uuid, data] : lane_change_debug.collision_check_objects_after_approval) {
@@ -157,11 +153,9 @@ BehaviorModuleOutput LaneChangeInterface::plan()
 
 BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
 {
-  BehaviorModuleOutput out = getPreviousModuleOutput();
+  BehaviorModuleOutput out = module_type_->getTerminalLaneChangePath();
 
-  *prev_approved_path_ = out.path;
-
-  module_type_->insert_stop_point(module_type_->get_current_lanes(), out.path);
+  module_type_->insert_stop_point(module_type_->get_current_lanes(), out.path, true);
   out.turn_signal_info = module_type_->get_current_turn_signal_info();
 
   const auto & lane_change_debug = module_type_->getDebugData();
@@ -171,9 +165,7 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
   }
 
   path_reference_ = std::make_shared<PathWithLaneId>(out.reference_path);
-  const auto stop_pose_opt = module_type_->getStopPose();
-  stop_pose_ = stop_pose_opt.has_value() ? PoseWithDetailOpt(PoseWithDetail(stop_pose_opt.value()))
-                                         : PoseWithDetailOpt();
+  stop_pose_ = module_type_->getStopPose();
 
   if (!module_type_->isValidPath()) {
     path_candidate_ = std::make_shared<PathWithLaneId>();
