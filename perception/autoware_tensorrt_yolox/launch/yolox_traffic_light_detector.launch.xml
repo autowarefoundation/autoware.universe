@@ -2,7 +2,7 @@
 <launch>
   <arg name="input/image" default="/sensing/camera/camera6/image_raw"/>
   <arg name="output/objects" default="/perception/traffic_light_recognition/camera6/detection/rois"/>
-  <arg name="model_name" default="yolox_s_car_ped_tl_detector_960_960_batch_1" description="model name for traffic light detectioin"/>
+  <arg name="model_name" default="yolox_s_car_ped_tl_detector_960_960_batch_1" description="model name for traffic light detection"/>
   <arg name="data_path" default="$(env HOME)/autoware_data" description="packages data and artifacts directory path"/>
   <arg name="yolox_param_path" default="$(find-pkg-share autoware_tensorrt_yolox)/config/yolox_traffic_light_detector.param.yaml"/>
   <arg name="use_decompress" default="true" description="use image decompress"/>
