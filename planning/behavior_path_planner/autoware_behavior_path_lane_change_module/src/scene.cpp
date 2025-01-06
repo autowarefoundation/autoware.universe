@@ -1163,7 +1163,13 @@ bool NormalLaneChange::get_path_using_frenet(
     stop_watch_.toc("frenet_candidates"));
 
   candidate_paths.reserve(frenet_candidates.size());
+  lane_change_debug_.frenet_states.clear();
+  lane_change_debug_.frenet_states.reserve(frenet_candidates.size());
   for (const auto & frenet_candidate : frenet_candidates) {
+    lane_change_debug_.frenet_states.emplace_back(
+      frenet_candidate.prepare_metric, frenet_candidate.lane_changing.sampling_parameter,
+      frenet_candidate.max_lane_changing_length);
+
     std::optional<LaneChangePath> candidate_path_opt;
     try {
       candidate_path_opt =
@@ -1175,6 +1181,7 @@ bool NormalLaneChange::get_path_using_frenet(
     if (!candidate_path_opt) {
       continue;
     }
+
     try {
       if (check_candidate_path_safety(*candidate_path_opt, target_objects)) {
         RCLCPP_DEBUG(

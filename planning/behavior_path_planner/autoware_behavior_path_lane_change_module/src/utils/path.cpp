@@ -521,7 +521,6 @@ std::vector<lane_change::TrajectoryGroup> generate_frenet_candidates(
   const auto current_lane_boundary = get_linestring_bound(current_lanes, direction);
   const auto is_shift_to_left = direction == Direction::LEFT;
 
-  trajectory_groups.reserve(metrics.size());
   for (const auto & metric : metrics) {
     PathWithLaneId prepare_segment;
     try {
@@ -541,11 +540,11 @@ std::vector<lane_change::TrajectoryGroup> generate_frenet_candidates(
         common_data_ptr, target_lanes, lc_start_pose) -
       common_data_ptr->lc_param_ptr->lane_change_finish_judge_buffer;
     const auto max_lc_len = transient_data.lane_changing_length.max;
+    const auto max_lane_changing_length = std::min(dist_to_end_from_lc_start, max_lc_len);
 
     constexpr auto resample_interval = 0.5;
     const auto target_lane_reference_path = get_reference_path_from_target_lane(
-      common_data_ptr, lc_start_pose, std::min(dist_to_end_from_lc_start, max_lc_len),
-      resample_interval);
+      common_data_ptr, lc_start_pose, max_lane_changing_length, resample_interval);
     if (target_lane_reference_path.points.empty()) {
       continue;
     }
@@ -580,6 +579,7 @@ std::vector<lane_change::TrajectoryGroup> generate_frenet_candidates(
     auto frenet_trajectories = frenet_planner::generateTrajectories(
       reference_spline, initial_state, *sampling_parameters_opt);
 
+    trajectory_groups.reserve(trajectory_groups.size() + frenet_trajectories.size());
     for (const auto & traj : frenet_trajectories) {
       if (!trajectory_groups.empty()) {
         const auto diff = std::abs(
@@ -599,7 +599,7 @@ std::vector<lane_change::TrajectoryGroup> generate_frenet_candidates(
 
       trajectory_groups.emplace_back(
         prepare_segment, target_lane_reference_path, target_ref_path_sums, metric, traj,
-        initial_state);
+        initial_state, max_lane_changing_length);
     }
   }
 
