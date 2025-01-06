@@ -324,6 +324,29 @@ bool check_out_of_bound_paths(
 
   return boost::geometry::disjoint(path_ls, lane_boundary);  // Remove if disjoint
 }
+
+double calc_limit(const CommonDataPtr & common_data_ptr, const Pose & lc_end_pose)
+{
+  const auto dist_to_target_end = std::invoke([&]() {
+    if (common_data_ptr->lanes_ptr->target_lane_in_goal_section) {
+      return autoware::motion_utils::calcSignedArcLength(
+        common_data_ptr->target_lanes_path.points, lc_end_pose.position,
+        common_data_ptr->route_handler_ptr->getGoalPose().position);
+    }
+    return autoware::motion_utils::calcSignedArcLength(
+      common_data_ptr->target_lanes_path.points, lc_end_pose.position,
+      common_data_ptr->target_lanes_path.points.back().point.pose.position);
+  });
+
+  // v2 = u2 + 2ad
+  // u = sqrt(2ad)
+  return std::clamp(
+    std::sqrt(
+      std::abs(2.0 * common_data_ptr->bpp_param_ptr->min_acc * std::max(dist_to_target_end, 0.0))),
+    common_data_ptr->lc_param_ptr->trajectory.min_lane_changing_velocity,
+    common_data_ptr->bpp_param_ptr->max_vel);
+}
+
 };  // namespace
 
 namespace autoware::behavior_path_planner::utils::lane_change
@@ -455,7 +478,7 @@ LaneChangePath construct_candidate_path(
     if (i < *lc_end_idx_opt) {
       const auto & current_ids = point.lane_ids;
       point.lane_ids =
-        replaceWithSortedIds(current_ids, sorted_lane_ids, prev_ids, prev_sorted_ids);
+        replace_with_sorted_ids(current_ids, sorted_lane_ids, prev_ids, prev_sorted_ids);
       point.point.longitudinal_velocity_mps = std::min(
         point.point.longitudinal_velocity_mps, static_cast<float>(terminal_lane_changing_velocity));
       continue;
@@ -581,8 +604,7 @@ std::vector<lane_change::TrajectoryGroup> generate_frenet_candidates(
   }
 
   const auto limit_vel = [&](TrajectoryGroup & group) {
-    const auto max_vel =
-      utils::lane_change::calc_limit(common_data_ptr, group.lane_changing.poses.back());
+    const auto max_vel = calc_limit(common_data_ptr, group.lane_changing.poses.back());
     for (auto & vel : group.lane_changing.longitudinal_velocities) {
       vel = std::clamp(vel, 0.0, max_vel);
     }
@@ -638,7 +660,8 @@ std::optional<LaneChangePath> get_candidate_path(
     point.point.heading_rate_rps = static_cast<float>(curvature);
     point.point.pose.position.z = target_lane_ref_path.points[ref_i].point.pose.position.z;
     const auto & current_ids = target_lane_ref_path.points[ref_i].lane_ids;
-    point.lane_ids = replaceWithSortedIds(current_ids, sorted_lane_ids, prev_ids, prev_sorted_ids);
+    point.lane_ids =
+      replace_with_sorted_ids(current_ids, sorted_lane_ids, prev_ids, prev_sorted_ids);
 
     // Add to shifted path
     shifted_path.shift_length.push_back(frenet_point.d);

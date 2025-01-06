@@ -391,7 +391,7 @@ std::vector<std::vector<int64_t>> get_sorted_lane_ids(const CommonDataPtr & comm
   return sorted_lane_ids;
 }
 
-std::vector<int64_t> replaceWithSortedIds(
+std::vector<int64_t> replace_with_sorted_ids(
   const std::vector<int64_t> & current_lane_ids,
   const std::vector<std::vector<int64_t>> & sorted_lane_ids, std::vector<int64_t> & prev_lane_ids,
   std::vector<int64_t> & prev_sorted_lane_ids)
@@ -1209,27 +1209,5 @@ bool is_valid_start_point(const lane_change::CommonDataPtr & common_data_ptr, co
   // Check the target lane because the previous approved path might be shifted by avoidance module
   return boost::geometry::covered_by(lc_start_point, target_neighbor_poly) ||
          boost::geometry::covered_by(lc_start_point, target_lane_poly);
-}
-
-double calc_limit(const CommonDataPtr & common_data_ptr, const Pose & lc_end_pose)
-{
-  const auto dist_to_target_end = std::invoke([&]() {
-    if (common_data_ptr->lanes_ptr->target_lane_in_goal_section) {
-      return motion_utils::calcSignedArcLength(
-        common_data_ptr->target_lanes_path.points, lc_end_pose.position,
-        common_data_ptr->route_handler_ptr->getGoalPose().position);
-    }
-    return motion_utils::calcSignedArcLength(
-      common_data_ptr->target_lanes_path.points, lc_end_pose.position,
-      common_data_ptr->target_lanes_path.points.back().point.pose.position);
-  });
-
-  // v2 = u2 + 2ad
-  // u = sqrt(2ad)
-  return std::clamp(
-    std::sqrt(
-      std::abs(2.0 * common_data_ptr->bpp_param_ptr->min_acc * std::max(dist_to_target_end, 0.0))),
-    common_data_ptr->lc_param_ptr->trajectory.min_lane_changing_velocity,
-    common_data_ptr->bpp_param_ptr->max_vel);
 }
 }  // namespace autoware::behavior_path_planner::utils::lane_change
