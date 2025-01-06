@@ -26,7 +26,9 @@
 #include <tf2/utils.h>
 #include <yaml-cpp/yaml.h>
 
+#include <string>
 #include <utility>
+#include <vector>
 
 namespace autoware::test_utils
 {
@@ -310,7 +312,25 @@ PathWithLaneId loadPathWithLaneIdInYaml()
   const auto yaml_path =
     get_absolute_path_to_config("autoware_test_utils", "path_with_lane_id_data.yaml");
 
-  return parse<PathWithLaneId>(yaml_path);
+  if (const auto path = parse<std::optional<PathWithLaneId>>(yaml_path)) {
+    return *path;
+  }
+
+  throw std::runtime_error(
+    "Failed to parse YAML file: " + yaml_path + ". The file might be corrupted.");
+}
+
+lanelet::ConstLanelet make_lanelet(
+  const lanelet::BasicPoint2d & left0, const lanelet::BasicPoint2d & left1,
+  const lanelet::BasicPoint2d & right0, const lanelet::BasicPoint2d & right1)
+{
+  lanelet::LineString3d left_bound;
+  left_bound.push_back(lanelet::Point3d(lanelet::InvalId, left0.x(), left0.y(), 0.0));
+  left_bound.push_back(lanelet::Point3d(lanelet::InvalId, left1.x(), left1.y(), 0.0));
+  lanelet::LineString3d right_bound;
+  right_bound.push_back(lanelet::Point3d(lanelet::InvalId, right0.x(), right0.y(), 0.0));
+  right_bound.push_back(lanelet::Point3d(lanelet::InvalId, right1.x(), right1.y(), 0.0));
+  return {lanelet::utils::getId(), left_bound, right_bound};
 }
 
 std::optional<std::string> resolve_pkg_share_uri(const std::string & uri_path)
