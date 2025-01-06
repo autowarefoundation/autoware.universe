@@ -78,23 +78,19 @@ StartPlannerModule::StartPlannerModule(
 
   // set enabled planner
   if (parameters_->enable_shift_pull_out) {
-    const auto shift_pull_out =
-      std::make_shared<ShiftPullOut>(node, *parameters, lane_departure_checker_);
-    shift_pull_out->setTimeKeeper(time_keeper_);
-    start_planners_.push_back(shift_pull_out);
+    start_planners_.push_back(
+      std::make_shared<ShiftPullOut>(node, *parameters, lane_departure_checker_, time_keeper_));
   }
   if (parameters_->enable_geometric_pull_out) {
-    const auto geometric_pull_out =
-      std::make_shared<GeometricPullOut>(node, *parameters, lane_departure_checker_);
-    geometric_pull_out->setTimeKeeper(time_keeper_);
-    start_planners_.push_back(geometric_pull_out);
+    start_planners_.push_back(
+      std::make_shared<GeometricPullOut>(node, *parameters, lane_departure_checker_, time_keeper_));
   }
   if (start_planners_.empty()) {
     RCLCPP_ERROR(getLogger(), "Not found enabled planner");
   }
 
   if (parameters_->enable_freespace_planner) {
-    freespace_planner_ = std::make_unique<FreespacePullOut>(node, *parameters, vehicle_info_);
+    freespace_planner_ = std::make_unique<FreespacePullOut>(node, *parameters);
     const auto freespace_planner_period_ns = rclcpp::Rate(1.0).period();
     freespace_planner_timer_cb_group_ =
       node.create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);

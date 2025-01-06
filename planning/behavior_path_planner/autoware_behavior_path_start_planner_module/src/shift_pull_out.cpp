@@ -41,8 +41,9 @@ using start_planner_utils::getPullOutLanes;
 
 ShiftPullOut::ShiftPullOut(
   rclcpp::Node & node, const StartPlannerParameters & parameters,
-  std::shared_ptr<LaneDepartureChecker> & lane_departure_checker)
-: PullOutPlannerBase{node, parameters}, lane_departure_checker_{lane_departure_checker}
+  std::shared_ptr<LaneDepartureChecker> & lane_departure_checker,
+  std::shared_ptr<universe_utils::TimeKeeper> time_keeper)
+: PullOutPlannerBase{node, parameters, time_keeper}, lane_departure_checker_{lane_departure_checker}
 {
 }
 
