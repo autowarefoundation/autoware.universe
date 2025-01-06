@@ -47,7 +47,7 @@ ShiftPullOut::ShiftPullOut(
   lane_departure_checker_ =
     std::make_shared<autoware::lane_departure_checker::LaneDepartureChecker>(
       autoware::lane_departure_checker::Param{parameters.lane_departure_check_expansion_margin},
-      vehicle_info_);
+      vehicle_info_, time_keeper_);
 }
 
 std::optional<PullOutPath> ShiftPullOut::plan(
