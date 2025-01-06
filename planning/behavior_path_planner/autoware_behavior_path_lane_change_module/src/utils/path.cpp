@@ -304,10 +304,10 @@ Point2d shift_point(const Point2d & p1, const Point2d & p2, const double offset)
 
 bool check_out_of_bound_paths(
   const CommonDataPtr & common_data_ptr, const std::vector<Pose> & lane_changing_poses,
-  const LineString2d & lane_boundary, const bool shift_to_left)
+  const LineString2d & lane_boundary, const Direction direction)
 {
   const auto distance = (0.5 * common_data_ptr->bpp_param_ptr->vehicle_width + 0.1);
-  const auto offset = (shift_to_left ? 1.0 : -1.0) * distance;  // invert direction
+  const auto offset = sign<double>(direction) * distance;  // invert direction
   if (lane_changing_poses.size() <= 2) {
     return true;  // Remove candidates with insufficient poses
   }
@@ -519,7 +519,6 @@ std::vector<lane_change::TrajectoryGroup> generate_frenet_candidates(
   const auto & target_lanes = common_data_ptr->lanes_ptr->target;
   const auto direction = common_data_ptr->direction;
   const auto current_lane_boundary = get_linestring_bound(current_lanes, direction);
-  const auto is_shift_to_left = direction == Direction::LEFT;
 
   for (const auto & metric : metrics) {
     PathWithLaneId prepare_segment;
@@ -590,8 +589,8 @@ std::vector<lane_change::TrajectoryGroup> generate_frenet_candidates(
         }
       }
 
-      [[maybe_unused]] const auto out_of_bound = check_out_of_bound_paths(
-        common_data_ptr, traj.poses, current_lane_boundary, is_shift_to_left);
+      const auto out_of_bound =
+        check_out_of_bound_paths(common_data_ptr, traj.poses, current_lane_boundary, direction);
 
       if (out_of_bound) {
         continue;
