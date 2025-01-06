@@ -41,7 +41,7 @@ BlindSpotModule::BlindSpotModule(
   const int64_t module_id, const int64_t lane_id, const TurnDirection turn_direction,
   const std::shared_ptr<const PlannerData> planner_data, const PlannerParam & planner_param,
   const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock)
-: SceneModuleInterface(module_id, logger, clock),
+: SceneModuleInterfaceWithRTC(module_id, logger, clock),
   lane_id_(lane_id),
   planner_param_{planner_param},
   turn_direction_(turn_direction),

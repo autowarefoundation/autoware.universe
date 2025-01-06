@@ -14,38 +14,46 @@
 
 #include "static_centerline_generator_node.hpp"
 
+#include <iostream>
 #include <memory>
 #include <string>
 
 int main(int argc, char * argv[])
 {
-  rclcpp::init(argc, argv);
+  try {
+    rclcpp::init(argc, argv);
 
-  // initialize node
-  rclcpp::NodeOptions node_options;
-  auto node =
-    std::make_shared<autoware::static_centerline_generator::StaticCenterlineGeneratorNode>(
-      node_options);
+    // initialize node
+    rclcpp::NodeOptions node_options;
+    auto node =
+      std::make_shared<autoware::static_centerline_generator::StaticCenterlineGeneratorNode>(
+        node_options);
 
-  // get ros parameter
-  const auto mode = node->declare_parameter<std::string>("mode");
+    // get ros parameter
+    const auto mode = node->declare_parameter<std::string>("mode");
 
-  // process
-  if (mode == "AUTO") {
-    node->generate_centerline();
-    node->validate();
-    node->save_map();
-  } else if (mode == "GUI") {
-    node->generate_centerline();
-  } else if (mode == "VMB") {
-    // Do nothing
-  } else {
-    throw std::invalid_argument("The `mode` is invalid.");
+    // process
+    if (mode == "AUTO") {
+      node->generate_centerline();
+      node->validate();
+      node->save_map();
+    } else if (mode == "GUI") {
+      node->generate_centerline();
+    } else if (mode == "VMB") {
+      // Do nothing
+    } else {
+      throw std::invalid_argument("The `mode` is invalid.");
+    }
+
+    // NOTE: spin node to keep showing debug path/trajectory in rviz with transient local
+    rclcpp::spin(node);
+    rclcpp::shutdown();
+  } catch (const std::exception & e) {
+    std::cerr << "Exception in main(): " << e.what() << std::endl;
+    return {};
+  } catch (...) {
+    std::cerr << "Unknown exception in main()" << std::endl;
+    return {};
   }
-
-  // NOTE: spin node to keep showing debug path/trajectory in rviz with transient local
-  rclcpp::spin(node);
-  rclcpp::shutdown();
-
   return 0;
 }

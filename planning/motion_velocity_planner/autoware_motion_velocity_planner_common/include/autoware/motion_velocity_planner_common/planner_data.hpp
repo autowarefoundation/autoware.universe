@@ -31,7 +31,6 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <std_msgs/msg/header.hpp>
-#include <tier4_planning_msgs/msg/velocity_limit.hpp>
 
 #include <lanelet2_core/Forward.h>
 #include <pcl/point_cloud.h>
@@ -72,7 +71,6 @@ struct PlannerData
   // last observed infomation for UNKNOWN
   std::map<lanelet::Id, TrafficSignalStamped> traffic_light_id_map_raw_;
   std::map<lanelet::Id, TrafficSignalStamped> traffic_light_id_map_last_observed_;
-  std::optional<tier4_planning_msgs::msg::VelocityLimit> external_velocity_limit;
 
   // velocity smoother
   std::shared_ptr<autoware::velocity_smoother::SmootherBase> velocity_smoother_;
