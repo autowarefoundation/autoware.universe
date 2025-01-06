@@ -94,20 +94,19 @@ void VirtualTrafficLightModuleManager::launchNewModules(
         ego_path_linestring, lanelet::utils::to2D(stop_line_opt.value()).basicLineString())) {
       registerModule(std::make_shared<VirtualTrafficLightModule>(
         module_id, lane_id, *m.first, m.second, planner_param_,
-        logger_.get_child("virtual_traffic_light_module"), clock_,
-        sub_virtual_traffic_light_states_));
+        logger_.get_child("virtual_traffic_light_module"), clock_));
     }
   }
 }
 
-std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
+std::function<bool(const std::shared_ptr<VirtualTrafficLightModule> &)>
 VirtualTrafficLightModuleManager::getModuleExpiredFunction(
   const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto id_set = planning_utils::getLaneletIdSetOnPath<VirtualTrafficLight>(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
-  return [id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
+  return [id_set](const std::shared_ptr<VirtualTrafficLightModule> & scene_module) {
     return id_set.count(scene_module->getModuleId()) == 0;
   };
 }
@@ -115,16 +114,23 @@ VirtualTrafficLightModuleManager::getModuleExpiredFunction(
 void VirtualTrafficLightModuleManager::modifyPathVelocity(
   tier4_planning_msgs::msg::PathWithLaneId * path)
 {
-  SceneModuleManagerInterface<>::modifyPathVelocity(path);
+  // NOTE: virtual traffic light specific implementation
+  //       Since the argument of modifyPathVelocity cannot be changed, the specific information
+  //       of virtual traffic light states is set here.
+  const auto virtual_traffic_light_states = sub_virtual_traffic_light_states_->takeData();
+  for (const auto & scene_module : scene_modules_) {
+    scene_module->setVirtualTrafficLightStates(virtual_traffic_light_states);
+  }
 
-  // publish infrastructure_command_array
+  SceneModuleManagerInterface<VirtualTrafficLightModule>::modifyPathVelocity(path);
+
+  // NOTE: virtual traffic light specific implementation
+  //       publish infrastructure_command_array
   tier4_v2x_msgs::msg::InfrastructureCommandArray infrastructure_command_array;
   infrastructure_command_array.stamp = clock_->now();
 
   for (const auto & scene_module : scene_modules_) {
-    if (
-      const auto command =
-        dynamic_cast<VirtualTrafficLightModule *>(scene_module.get())->getInfrastructureCommand()) {
+    if (const auto command = scene_module->getInfrastructureCommand()) {
       infrastructure_command_array.commands.push_back(*command);
     }
   }

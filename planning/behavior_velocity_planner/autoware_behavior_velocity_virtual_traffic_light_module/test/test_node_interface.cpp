@@ -26,8 +26,13 @@ namespace autoware::behavior_velocity_planner
 TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionPathWithLaneID)
 {
   rclcpp::init(0, nullptr);
+
+  const auto plugin_info_vec = {autoware::behavior_velocity_planner::PluginInfo{
+    "virtual_traffic_light",
+    "autoware::behavior_velocity_planner::VirtualTrafficLightModulePlugin"}};
+
   auto test_manager = autoware::behavior_velocity_planner::generateTestManager();
-  auto test_target_node = autoware::behavior_velocity_planner::generateNode({});
+  auto test_target_node = autoware::behavior_velocity_planner::generateNode(plugin_info_vec);
 
   autoware::behavior_velocity_planner::publishMandatoryTopics(test_manager, test_target_node);
   test_manager->publishVirtualTrafficLightState(

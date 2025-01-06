@@ -81,10 +81,7 @@ public:
     const int64_t module_id, const int64_t lane_id,
     const lanelet::autoware::VirtualTrafficLight & reg_elem, lanelet::ConstLanelet lane,
     const PlannerParam & planner_param, const rclcpp::Logger logger,
-    const rclcpp::Clock::SharedPtr clock,
-    const autoware::universe_utils::InterProcessPollingSubscriber<
-      tier4_v2x_msgs::msg::VirtualTrafficLightStateArray>::SharedPtr
-      sub_virtual_traffic_light_states);
+    const rclcpp::Clock::SharedPtr clock);
 
   bool modifyPathVelocity(PathWithLaneId * path) override;
 
@@ -95,19 +92,21 @@ public:
   void setInfrastructureCommand(
     const std::optional<tier4_v2x_msgs::msg::InfrastructureCommand> & command);
 
+  void setVirtualTrafficLightStates(
+    const tier4_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr
+      virtual_traffic_light_states);
+
 private:
   const int64_t lane_id_;
   const lanelet::autoware::VirtualTrafficLight & reg_elem_;
   const lanelet::ConstLanelet lane_;
   const PlannerParam planner_param_;
+  tier4_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr virtual_traffic_light_states_;
   State state_{State::NONE};
   tier4_v2x_msgs::msg::InfrastructureCommand command_;
   std::optional<tier4_v2x_msgs::msg::InfrastructureCommand> infrastructure_command_;
   MapData map_data_;
   ModuleData module_data_;
-  autoware::universe_utils::InterProcessPollingSubscriber<
-    tier4_v2x_msgs::msg::VirtualTrafficLightStateArray>::SharedPtr
-    sub_virtual_traffic_light_states_;
 
   void updateInfrastructureCommand();
 

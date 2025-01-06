@@ -38,15 +38,12 @@ VirtualTrafficLightModule::VirtualTrafficLightModule(
   const int64_t module_id, const int64_t lane_id,
   const lanelet::autoware::VirtualTrafficLight & reg_elem, lanelet::ConstLanelet lane,
   const PlannerParam & planner_param, const rclcpp::Logger logger,
-  const rclcpp::Clock::SharedPtr clock,
-  const autoware::universe_utils::InterProcessPollingSubscriber<
-    tier4_v2x_msgs::msg::VirtualTrafficLightStateArray>::SharedPtr sub_virtual_traffic_light_states)
+  const rclcpp::Clock::SharedPtr clock)
 : SceneModuleInterface(module_id, logger, clock),
   lane_id_(lane_id),
   reg_elem_(reg_elem),
   lane_(lane),
-  planner_param_(planner_param),
-  sub_virtual_traffic_light_states_(sub_virtual_traffic_light_states)
+  planner_param_(planner_param)
 {
   velocity_factor_.init(PlanningBehavior::VIRTUAL_TRAFFIC_LIGHT);
 
@@ -336,13 +333,12 @@ bool VirtualTrafficLightModule::isNearAnyEndLine(const size_t end_line_idx)
 std::optional<tier4_v2x_msgs::msg::VirtualTrafficLightState>
 VirtualTrafficLightModule::findCorrespondingState()
 {
-  // No message
-  const auto virtual_traffic_light_states = sub_virtual_traffic_light_states_->takeData();
-  if (!virtual_traffic_light_states) {
+  // Note: This variable is set by virtul traffic light's manager.
+  if (!virtual_traffic_light_states_) {
     return {};
   }
 
-  for (const auto & state : virtual_traffic_light_states->states) {
+  for (const auto & state : virtual_traffic_light_states_->states) {
     if (state.id == map_data_.instrument_id) {
       return state;
     }
@@ -472,5 +468,12 @@ void VirtualTrafficLightModule::setInfrastructureCommand(
   const std::optional<tier4_v2x_msgs::msg::InfrastructureCommand> & command)
 {
   infrastructure_command_ = command;
+}
+
+void VirtualTrafficLightModule::setVirtualTrafficLightStates(
+  const tier4_v2x_msgs::msg::VirtualTrafficLightStateArray::ConstSharedPtr
+    virtual_traffic_light_states)
+{
+  virtual_traffic_light_states_ = virtual_traffic_light_states;
 }
 }  // namespace autoware::behavior_velocity_planner

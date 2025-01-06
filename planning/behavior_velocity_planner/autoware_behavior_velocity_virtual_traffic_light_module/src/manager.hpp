@@ -32,7 +32,8 @@
 
 namespace autoware::behavior_velocity_planner
 {
-class VirtualTrafficLightModuleManager : public SceneModuleManagerInterface<>
+class VirtualTrafficLightModuleManager
+: public SceneModuleManagerInterface<VirtualTrafficLightModule>
 {
 public:
   explicit VirtualTrafficLightModuleManager(rclcpp::Node & node);
@@ -46,7 +47,7 @@ private:
 
   void launchNewModules(const tier4_planning_msgs::msg::PathWithLaneId & path) override;
 
-  std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
+  std::function<bool(const std::shared_ptr<VirtualTrafficLightModule> &)> getModuleExpiredFunction(
     const tier4_planning_msgs::msg::PathWithLaneId & path) override;
 
   autoware::universe_utils::InterProcessPollingSubscriber<
