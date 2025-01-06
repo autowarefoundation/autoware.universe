@@ -787,6 +787,39 @@ Depending on the space configuration around the Ego vehicle, it is possible that
 
 Additionally if terminal path feature is enabled and path is computed, stop point placement can be configured to be at the edge of the current lane instead of at the `terminal_start` position, as indicated by the dashed red line in the image above.
 
+## Generating Path Using Frenet Planner
+
+!!! warning
+
+    Generating path using Frenet planner applies only when ego is near terminal start
+
+If the ego vehicle is far from the terminal, the lane change module defaults to using the path shifter. This ensures that the lane change is completed while the target lane remains a neighbor of the current lane. However, this approach may result in high curvature paths near the terminal, potentially causing long vehicles to deviate from the lane.
+
+To address this, the lane change module provides an option to choose between the path shifter and the Frenet planner. The Frenet planner allows for some flexibility in the lane change endpoint, extending the lane changing end point slightly beyond the current lane's neighbors.
+
+The following table provides comparisons between the planners
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center">With Path Shifter</td>
+      <td align="center">With Frenet Planner</td>
+    </tr>
+    <tr>
+      <td><img src="./image/terminal_straight_path_shifter.png" alt="Path shifter result at straight lanelets" width="300"></a></td>
+      <td><img src="./image/terminal_straight_frenet.png" alt="Frenet planner result at straight lanelets" width="300"></a></td>
+    </tr>
+    <tr>
+      <td><img src="./image/terminal_branched_path_shifter.png" alt="Path shifter result at branching lanelets" width="300"></a></td>
+      <td><img src="./image/terminal_branched_frenet.png" alt="Frenet planner result at branching lanelets" width="300"></a></td>
+    </tr>
+    <tr>
+      <td><img src="./image/terminal_curved_path_shifter.png" alt="Path shifter result at curved lanelets" width="300"></a></td>
+      <td><img src="./image/terminal_curved_frenet.png" alt="Frenet planner result at curved lanelets" width="300"></a></td>
+    </tr>
+  </table>
+</div>
+
 ## Aborting a Previously Approved Lane Change
 
 Once the lane change path is approved, there are several situations where we may need to abort the maneuver. The abort process is triggered when any of the following conditions is met
@@ -1008,6 +1041,7 @@ The following parameters are configurable in [lane_change.param.yaml](https://gi
 | `trajectory.max_longitudinal_acc`            | [m/s2] | double | maximum longitudinal acceleration for lane change                                                                      | 1.0                |
 | `trajectory.min_longitudinal_acc`            | [m/s2] | double | maximum longitudinal deceleration for lane change                                                                      | -1.0               |
 | `trajectory.lane_changing_decel_factor`      | [-]    | double | longitudinal deceleration factor during lane changing phase                                                            | 0.5                |
+| `trajectory.th_prepare_curvature`            | [-]    | double | If the maximum curvature of the prepare segment exceeds the threshold, the prepare segment is invalid.                 | 0.03               |
 | `min_length_for_turn_signal_activation`      | [m]    | double | Turn signal will be activated if the ego vehicle approaches to this length from minimum lane change length             | 10.0               |
 | `lateral_acceleration.velocity`              | [m/s]  | double | Reference velocity for lateral acceleration calculation (look up table)                                                | [0.0, 4.0, 10.0]   |
 | `lateral_acceleration.min_values`            | [m/s2] | double | Min lateral acceleration values corresponding to velocity (look up table)                                              | [0.4, 0.4, 0.4]    |
@@ -1056,6 +1090,18 @@ The following parameters are used to configure terminal lane change path feature
 | `terminal_path.enable`            | [-]  | bool | Flag to enable/disable terminal path feature                              | true          |
 | `terminal_path.disable_near_goal` | [-]  | bool | Flag to disable terminal path feature if ego is near goal                 | true          |
 | `terminal_path.stop_at_boundary`  | [-]  | bool | If true, ego will stop at current lane boundary instead of middle of lane | false         |
+
+### Generating Lane Changing Path using Frenet Planner
+
+!!! warning
+
+    Only applicable when ego is near terminal start
+
+| Name                            | Unit  | Type   | Description                                                                                                                                         | Default value |
+| :------------------------------ | ----- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------- | ------------- |
+| `frenet.enable`                 | [-]   | bool   | Flag to enable/disable frenet planner when ego is near terminal start.                                                                              | true          |
+| `frenet.th_yaw_diff`            | [deg] | double | If the yaw diff between of the prepare segment's end and lane changing segment's start exceed the threshold , the lane changing segment is invalid. | 10.0          |
+| `frenet.th_curvature_smoothing` | [-]   | double | Filters and appends target path points with curvature below the threshold to candidate path.                                                        | 0.1           |
 
 ### Collision checks
 
