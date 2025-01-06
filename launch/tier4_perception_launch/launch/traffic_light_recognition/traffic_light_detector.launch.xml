@@ -8,16 +8,15 @@
     <arg name="use_decompress" default="true" description="use image decompress"/>
     <arg name="build_only" default="false" description="exit after trt engine is built"/>
 
-
     <arg name="input/rough_rois" default="/perception/traffic_light_recognition/$(var namespace)/detection/rough/rois"/>
     <arg name="output/traffic_light_rois" default="/perception/traffic_light_recognition/$(var namespace)/detection/rois"/>
     <arg name="input/expect_rois" default="/perception/traffic_light_recognition/$(var namespace)/detection/expect/rois"/>
     <arg name="input/camera_info" default="/sensing/camera/$(var namespace)/camera_info"/>
 
-    <include file="$(find-pkg-share autoware_tensorrt_yolox)/launch/yolox_traffic_light_detector.launch.xml" >
+    <include file="$(find-pkg-share autoware_tensorrt_yolox)/launch/yolox_traffic_light_detector.launch.xml">
       <arg name="use_decompress" value="$(var use_decompress)"/>
-      <arg name="build_only" value="$(var build_only)" />
-      <arg name="input/image" value="$(var input/image)" />
+      <arg name="build_only" value="$(var build_only)"/>
+      <arg name="input/image" value="$(var input/image)"/>
       <arg name="output/objects" value="$(var yolox_detected_traffic/rois)"/>
     </include>
 
