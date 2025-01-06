@@ -333,7 +333,7 @@ bool VirtualTrafficLightModule::isNearAnyEndLine(const size_t end_line_idx)
 std::optional<tier4_v2x_msgs::msg::VirtualTrafficLightState>
 VirtualTrafficLightModule::findCorrespondingState()
 {
-  // Note: This variable is set by virtul traffic light's manager.
+  // Note: This variable is set by virtual traffic light's manager.
   if (!virtual_traffic_light_states_) {
     return {};
   }
