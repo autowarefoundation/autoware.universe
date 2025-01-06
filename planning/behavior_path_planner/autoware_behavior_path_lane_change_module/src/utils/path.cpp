@@ -509,7 +509,7 @@ LaneChangePath construct_candidate_path(
 
 std::vector<lane_change::TrajectoryGroup> generate_frenet_candidates(
   const CommonDataPtr & common_data_ptr, const PathWithLaneId & prev_module_path,
-  const std::vector<LaneChangePhaseMetrics> & metrics)
+  const std::vector<LaneChangePhaseMetrics> & prep_metrics)
 {
   std::vector<lane_change::TrajectoryGroup> trajectory_groups;
   universe_utils::StopWatch<std::chrono::microseconds> sw;
@@ -520,7 +520,7 @@ std::vector<lane_change::TrajectoryGroup> generate_frenet_candidates(
   const auto direction = common_data_ptr->direction;
   const auto current_lane_boundary = get_linestring_bound(current_lanes, direction);
 
-  for (const auto & metric : metrics) {
+  for (const auto & metric : prep_metrics) {
     PathWithLaneId prepare_segment;
     try {
       if (!utils::lane_change::get_prepare_segment(

@@ -110,8 +110,7 @@ LaneChangePath construct_candidate_path(
  * @param common_data_ptr Shared pointer to CommonData containing route, lane, and transient
  * information.
  * @param prev_module_path The previous module's path used as a base for preparation segments.
- * @param metrics A collection of metrics defining lane change phases, such as lengths and
- * velocities.
+ * @param prep_metric Metrics for the preparation phase, including path length and velocity.
  *
  * @return std::vector<lane_change::TrajectoryGroup> A vector of trajectory groups representing
  * valid lane change candidates, each containing the prepare segment, target reference path, and
@@ -119,7 +118,7 @@ LaneChangePath construct_candidate_path(
  */
 std::vector<lane_change::TrajectoryGroup> generate_frenet_candidates(
   const CommonDataPtr & common_data_ptr, const PathWithLaneId & prev_module_path,
-  const std::vector<LaneChangePhaseMetrics> & metrics);
+  const std::vector<LaneChangePhaseMetrics> & prep_metrics);
 
 /**
  * @brief Constructs a lane change path candidate based on a Frenet trajectory group.
