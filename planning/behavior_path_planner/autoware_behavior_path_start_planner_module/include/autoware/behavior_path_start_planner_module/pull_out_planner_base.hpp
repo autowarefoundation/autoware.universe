@@ -39,9 +39,9 @@ class PullOutPlannerBase
 {
 public:
   explicit PullOutPlannerBase(rclcpp::Node & node, const StartPlannerParameters & parameters)
-  :parameters_(parameters),
-  vehicle_info_(autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo()),
-  vehicle_footprint_(vehicle_info_.createFootprint())
+  : parameters_(parameters),
+    vehicle_info_(autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo()),
+    vehicle_footprint_(vehicle_info_.createFootprint())
   {
   }
   virtual ~PullOutPlannerBase() = default;

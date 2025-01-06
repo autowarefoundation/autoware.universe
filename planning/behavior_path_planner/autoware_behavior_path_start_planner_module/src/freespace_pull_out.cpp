@@ -31,8 +31,7 @@ namespace autoware::behavior_path_planner
 FreespacePullOut::FreespacePullOut(
   rclcpp::Node & node, const StartPlannerParameters & parameters,
   const autoware::vehicle_info_utils::VehicleInfo & vehicle_info)
-: PullOutPlannerBase{node, parameters},
-  velocity_{parameters.freespace_planner_velocity}
+: PullOutPlannerBase{node, parameters}, velocity_{parameters.freespace_planner_velocity}
 {
   autoware::freespace_planning_algorithms::VehicleShape vehicle_shape(
     vehicle_info, parameters.vehicle_shape_margin);

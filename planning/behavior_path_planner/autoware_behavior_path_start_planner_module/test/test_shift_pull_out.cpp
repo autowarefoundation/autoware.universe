@@ -139,8 +139,7 @@ private:
   {
     auto parameters = StartPlannerParameters::init(*node_);
 
-    shift_pull_out_ =
-      std::make_shared<ShiftPullOut>(*node_, parameters, lane_departure_checker_);
+    shift_pull_out_ = std::make_shared<ShiftPullOut>(*node_, parameters, lane_departure_checker_);
   }
 };
 
