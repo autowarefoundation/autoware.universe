@@ -5,57 +5,22 @@
     <arg name="namespace" default="camera6"/>
     <arg name="input/image" default="/sensing/camera/$(var namespace)/image_raw"/>
     <arg name="yolox_detected_traffic/rois" default="/perception/traffic_light_recognition/$(var namespace)/detection/yolox/rois"/>
-    <arg
-      name="model_name"
-      default="tlr_car_ped_yolox_s_960_960_batch_1"
-      description="options `yolox-sPlus-T4-960x960-pseudo-finetune` if only detection is needed, `yolox-sPlus-opt-pseudoV2-T4-960x960-T4-seg16cls` if sematic segmentation is also needed"
-    />
     <arg name="use_decompress" default="true" description="use image decompress"/>
     <arg name="build_only" default="false" description="exit after trt engine is built"/>
 
-    <arg name="param_file" default="$(find-pkg-share autoware_image_transport_decompressor)/config/image_transport_decompressor.param.yaml"/>
-    <node pkg="autoware_image_transport_decompressor" exec="image_transport_decompressor_node" name="image_transport_decompressor_$(var namespace)_node" if="$(var use_decompress)">
-      <remap from="~/input/compressed_image" to="$(var input/image)/compressed"/>
-      <remap from="~/output/raw_image" to="$(var input/image)"/>
-      <param from="$(var param_file)"/>
-    </node>
 
-    <node pkg="autoware_tensorrt_yolox" exec="autoware_tensorrt_yolox_node_exe" name="traffic_light_yolox_$(var namespace)" output="screen">
-      <remap from="~/in/image" to="$(var input/image)"/>
-      <remap from="~/out/objects" to="$(var yolox_detected_traffic/rois)"/>
-      <param name="build_only" value="$(var build_only)"/>
-      <param name="is_roi_overlap_segment" value="false"/>
-      <param name="overlap_roi_score_threshold" value="0.3"/>
-      <param name="is_publish_color_mask" value="false"/>
-      <param name="roi_overlay_segment_label.UNKNOWN" value="false"/>
-      <param name="roi_overlay_segment_label.CAR" value="false"/>
-      <param name="roi_overlay_segment_label.TRUCK" value="false"/>
-      <param name="roi_overlay_segment_label.BUS" value="false"/>
-      <param name="roi_overlay_segment_label.MOTORCYCLE" value="false"/>
-      <param name="roi_overlay_segment_label.BICYCLE" value="false"/>
-      <param name="roi_overlay_segment_label.PEDESTRIAN" value="false"/>
-      <param name="roi_overlay_segment_label.ANIMAL" value="false"/>
-      <param name="model_path" value="/opt/autoware/mlmodels/traffic_light_detector/$(var model_name).onnx"/>
-      <param name="label_path" value="/opt/autoware/mlmodels/traffic_light_detector/label.txt"/>
-      <param name="color_map_path" value=""/>
-      <param name="score_threshold" value="0.35"/>
-      <param name="nms_threshold" value="0.7"/>
-      <param name="precision" value="fp16"/>
-      <param name="calibration_algorithm" value="Entropy"/>
-      <param name="dla_core_id" value="-1"/>
-      <param name="quantize_first_layer" value="false"/>
-      <param name="quantize_last_layer" value="false"/>
-      <param name="profile_per_layer" value="false"/>
-      <param name="clip_value" value="6.0"/>
-      <param name="preprocess_on_gpu" value="true"/>
-      <param name="gpu_id" value="0"/>
-      <param name="calibration_image_list_path" value=""/>
-    </node>
-    <arg name="input/detected_rois" default="input/detected_rois"/>
     <arg name="input/rough_rois" default="/perception/traffic_light_recognition/$(var namespace)/detection/rough/rois"/>
     <arg name="output/traffic_light_rois" default="/perception/traffic_light_recognition/$(var namespace)/detection/rois"/>
     <arg name="input/expect_rois" default="/perception/traffic_light_recognition/$(var namespace)/detection/expect/rois"/>
     <arg name="input/camera_info" default="/sensing/camera/$(var namespace)/camera_info"/>
+
+    <include file="$(find-pkg-share autoware_tensorrt_yolox)/launch/yolox_traffic_light_detector.launch.xml" >
+      <arg name="use_decompress" value="$(var use_decompress)"/>
+      <arg name="build_only" value="$(var build_only)" />
+      <arg name="input/image" value="$(var input/image)" />
+      <arg name="output/objects" value="$(var yolox_detected_traffic/rois)"/>
+    </include>
+
     <!-- Node -->
     <node pkg="autoware_traffic_light_selector" exec="traffic_light_selector_node" name="autoware_traffic_light_selector_$(var namespace)" output="screen">
       <remap from="input/detected_rois" to="$(var yolox_detected_traffic/rois)"/>
