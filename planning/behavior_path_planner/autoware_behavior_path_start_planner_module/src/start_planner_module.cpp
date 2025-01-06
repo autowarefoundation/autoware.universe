@@ -68,20 +68,12 @@ StartPlannerModule::StartPlannerModule(
   vehicle_info_{autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo()},
   is_freespace_planner_cb_running_{false}
 {
-  autoware::lane_departure_checker::Param lane_departure_checker_params{};
-  lane_departure_checker_params.footprint_extra_margin =
-    parameters->lane_departure_check_expansion_margin;
-  lane_departure_checker_ = std::make_shared<LaneDepartureChecker>(
-    lane_departure_checker_params, vehicle_info_, time_keeper_);
-
   // set enabled planner
   if (parameters_->enable_shift_pull_out) {
-    start_planners_.push_back(
-      std::make_shared<ShiftPullOut>(node, *parameters, lane_departure_checker_, time_keeper_));
+    start_planners_.push_back(std::make_shared<ShiftPullOut>(node, *parameters, time_keeper_));
   }
   if (parameters_->enable_geometric_pull_out) {
-    start_planners_.push_back(
-      std::make_shared<GeometricPullOut>(node, *parameters, lane_departure_checker_, time_keeper_));
+    start_planners_.push_back(std::make_shared<GeometricPullOut>(node, *parameters, time_keeper_));
   }
   if (start_planners_.empty()) {
     RCLCPP_ERROR(getLogger(), "Not found enabled planner");

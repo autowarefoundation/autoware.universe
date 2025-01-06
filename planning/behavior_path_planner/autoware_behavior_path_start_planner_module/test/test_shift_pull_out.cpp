@@ -16,7 +16,6 @@
 #include <autoware/behavior_path_start_planner_module/shift_pull_out.hpp>
 #include <autoware/behavior_path_start_planner_module/start_planner_module.hpp>
 #include <autoware/behavior_path_start_planner_module/util.hpp>
-#include <autoware/lane_departure_checker/lane_departure_checker.hpp>
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_planning_test_manager/autoware_planning_test_manager_utils.hpp>
@@ -30,7 +29,6 @@
 
 using autoware::behavior_path_planner::ShiftPullOut;
 using autoware::behavior_path_planner::StartPlannerParameters;
-using autoware::lane_departure_checker::LaneDepartureChecker;
 using autoware::test_utils::get_absolute_path_to_config;
 using autoware_planning_msgs::msg::LaneletRoute;
 using RouteSections = std::vector<autoware_planning_msgs::msg::LaneletSegment>;
@@ -55,7 +53,6 @@ protected:
     rclcpp::init(0, nullptr);
     node_ = rclcpp::Node::make_shared("shift_pull_out", make_node_options());
 
-    initialize_lane_departure_checker();
     initialize_shift_pull_out_planner();
   }
 
@@ -94,7 +91,6 @@ protected:
   // Member variables
   std::shared_ptr<rclcpp::Node> node_;
   std::shared_ptr<ShiftPullOut> shift_pull_out_;
-  std::shared_ptr<LaneDepartureChecker> lane_departure_checker_;
 
 private:
   rclcpp::NodeOptions make_node_options() const
@@ -125,20 +121,11 @@ private:
     return node_options;
   }
 
-  void initialize_lane_departure_checker()
-  {
-    autoware::lane_departure_checker::Param lane_departure_checker_params{};
-    const auto vehicle_info =
-      autoware::vehicle_info_utils::VehicleInfoUtils(*node_).getVehicleInfo();
-    lane_departure_checker_ =
-      std::make_shared<LaneDepartureChecker>(lane_departure_checker_params, vehicle_info);
-  }
-
   void initialize_shift_pull_out_planner()
   {
     auto parameters = StartPlannerParameters::init(*node_);
 
-    shift_pull_out_ = std::make_shared<ShiftPullOut>(*node_, parameters, lane_departure_checker_);
+    shift_pull_out_ = std::make_shared<ShiftPullOut>(*node_, parameters);
   }
 };
 
