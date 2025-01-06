@@ -15,26 +15,22 @@
 #ifndef TRAFFIC_LIGHT_SELECTOR_NODE_HPP_
 #define TRAFFIC_LIGHT_SELECTOR_NODE_HPP_
 
-#include "autoware/universe_utils/ros/transform_listener.hpp"
-#include "message_filters/subscriber.h"
-#include "message_filters/sync_policies/approximate_time.h"
-#include "message_filters/synchronizer.h"
-#include "rclcpp/rclcpp.hpp"
+#include "utils.hpp"
 
-#include "sensor_msgs/msg/camera_info.hpp"
-#include "tier4_perception_msgs/msg/detected_object_with_feature.hpp"
-#include "tier4_perception_msgs/msg/detected_objects_with_feature.hpp"
-#include "tier4_perception_msgs/msg/traffic_light_roi.hpp"
-#include "tier4_perception_msgs/msg/traffic_light_roi_array.hpp"
+#include <autoware/universe_utils/ros/transform_listener.hpp>
+#include <rclcpp/rclcpp.hpp>
 
+#include <sensor_msgs/msg/camera_info.hpp>
+#include <tier4_perception_msgs/msg/detected_object_with_feature.hpp>
+#include <tier4_perception_msgs/msg/detected_objects_with_feature.hpp>
+#include <tier4_perception_msgs/msg/traffic_light_roi.hpp>
+#include <tier4_perception_msgs/msg/traffic_light_roi_array.hpp>
+
+#include <message_filters/subscriber.h>
+#include <message_filters/sync_policies/approximate_time.h>
+#include <message_filters/synchronizer.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
-
-#include <algorithm>
-#include <chrono>
-#include <memory>
-#include <string>
-#include <vector>
 
 namespace autoware::traffic_light
 {

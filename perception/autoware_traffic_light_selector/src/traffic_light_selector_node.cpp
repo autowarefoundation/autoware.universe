@@ -17,108 +17,10 @@
 #include <opencv2/core/types.hpp>
 #include <opencv2/opencv.hpp>
 
-#include "sensor_msgs/msg/region_of_interest.hpp"
+#include <sensor_msgs/msg/region_of_interest.hpp>
 
-#include <algorithm>
 #include <map>
-#include <memory>
-#include <string>
 #include <vector>
-
-namespace
-{
-bool isInsideRoughRoi(
-  const sensor_msgs::msg::RegionOfInterest & detected_roi,
-  const sensor_msgs::msg::RegionOfInterest & rough_roi)
-{
-  // check if tl or br of detected roi is inside the rough roi
-  auto tl_x = detected_roi.x_offset;
-  auto tl_y = detected_roi.y_offset;
-  auto br_x = detected_roi.x_offset + detected_roi.width;
-  auto br_y = detected_roi.y_offset + detected_roi.height;
-  bool is_tl_inside = rough_roi.x_offset <= tl_x && tl_x <= rough_roi.x_offset + rough_roi.width &&
-                      rough_roi.y_offset <= tl_y && tl_y <= rough_roi.y_offset + rough_roi.height;
-  if (is_tl_inside) {
-    return true;
-  }
-
-  bool is_br_inside = rough_roi.x_offset <= br_x && br_x <= rough_roi.x_offset + rough_roi.width &&
-                      rough_roi.y_offset <= br_y && br_y <= rough_roi.y_offset + rough_roi.height;
-  if (is_br_inside) {
-    return true;
-  }
-  return false;
-}
-
-float calIOU(
-  const sensor_msgs::msg::RegionOfInterest & bbox1,
-  const sensor_msgs::msg::RegionOfInterest & bbox2)
-{
-  int x1 = std::max(bbox1.x_offset, bbox2.x_offset);
-  int x2 = std::min(bbox1.x_offset + bbox1.width, bbox2.x_offset + bbox2.width);
-  int y1 = std::max(bbox1.y_offset, bbox2.y_offset);
-  int y2 = std::min(bbox1.y_offset + bbox1.height, bbox2.y_offset + bbox2.height);
-  int area1 = std::max(x2 - x1, 0) * std::max(y2 - y1, 0);
-  int area2 = bbox1.width * bbox1.height + bbox2.width * bbox2.height - area1;
-  if (area2 == 0) {
-    return 0.0;
-  }
-  return static_cast<float>(area1) / static_cast<float>(area2);
-}
-
-// create and function of 2 binary image
-int andOf2Images(cv::Mat & img1, cv::Mat & img2)
-{
-  cv::Mat img_and;
-  cv::bitwise_and(img1, img2, img_and);
-  return cv::countNonZero(img_and);
-}
-
-// create OR function of 2 binary image
-int orOf2Images(cv::Mat & img1, cv::Mat & img2)
-{
-  cv::Mat img_or;
-  cv::bitwise_or(img1, img2, img_or);
-  return cv::countNonZero(img_or);
-}
-
-// create the overall IOU of 2 binary image
-double getIoUOf2BinaryImages(cv::Mat & img1, cv::Mat & img2)
-{
-  int and_area = andOf2Images(img1, img2);
-  int or_area = orOf2Images(img1, img2);
-  return static_cast<double>(and_area) / static_cast<double>(or_area);
-}
-
-// create binary image from list of rois
-cv::Mat createBinaryImageFromRois(
-  const std::vector<sensor_msgs::msg::RegionOfInterest> & rois, const cv::Size & size)
-{
-  cv::Mat img = cv::Mat::zeros(size, CV_8UC1);
-  for (const auto & roi : rois) {
-    // check roi is inside the image
-    cv::Rect rect(roi.x_offset, roi.y_offset, roi.width, roi.height);
-    cv::rectangle(img, rect, cv::Scalar(255), cv::FILLED);
-  }
-  return img;
-}
-// shift and padding image by dx, dy
-cv::Mat shiftAndPaddingImage(cv::Mat & img, int dx, int dy)
-{
-  cv::Mat img_shifted = cv::Mat::zeros(img.size(), img.type());
-  uint32_t tl_x = static_cast<uint32_t>(std::max(0, dx));
-  uint32_t tl_y = static_cast<uint32_t>(std::max(0, dy));
-  uint32_t br_x = std::min(img.cols, (static_cast<int>(img.cols) + dx));
-  uint32_t br_y = std::min(img.rows, (static_cast<int>(img.rows) + dy));
-  if (br_x <= tl_x || br_y <= tl_y) {
-    return img_shifted;
-  }
-  cv::Rect img_rect(tl_x, tl_y, br_x - tl_x, br_y - tl_y);
-  img(img_rect).copyTo(img_shifted(img_rect));
-  return img_shifted;
-}
-
-}  // namespace
 
 namespace autoware::traffic_light
 {
@@ -132,8 +34,7 @@ TrafficLightSelectorNode::TrafficLightSelectorNode(const rclcpp::NodeOptions & n
   expected_rois_sub_(this, "input/expect_rois", rclcpp::QoS{1}.get_rmw_qos_profile()),
   sync_(SyncPolicy(10), detected_rois_sub_, rough_rois_sub_, expected_rois_sub_)
 {
-  max_iou_threshold_ = declare_parameter<double>("max_iou_threshold", 0.0);
-  RCLCPP_INFO(get_logger(), "max_iou_threshold: %f", max_iou_threshold_);
+  max_iou_threshold_ = declare_parameter<double>("max_iou_threshold");
   using std::placeholders::_1;
   using std::placeholders::_2;
   using std::placeholders::_3;
@@ -187,8 +88,9 @@ void TrafficLightSelectorNode::objectsCallback(
     expect_rois.push_back(expected_roi.roi);
   }
   cv::Mat expect_roi_img =
-    createBinaryImageFromRois(expect_rois, cv::Size(image_width_, image_height_));
-  cv::Mat det_roi_img = createBinaryImageFromRois(det_rois, cv::Size(image_width_, image_height_));
+    utils::createBinaryImageFromRois(expect_rois, cv::Size(image_width_, image_height_));
+  cv::Mat det_roi_img =
+    utils::createBinaryImageFromRois(det_rois, cv::Size(image_width_, image_height_));
   // for (const auto expect_roi : expect_rois) {
   for (const auto & expect_traffic_roi : expected_rois_msg->rois) {
     const auto & expect_roi = expect_traffic_roi.roi;
@@ -197,13 +99,13 @@ void TrafficLightSelectorNode::objectsCallback(
 
     for (const auto & detected_roi : det_rois) {
       // check if the detected roi is inside the rough roi
-      if (!isInsideRoughRoi(detected_roi, rough_roi)) {
+      if (!utils::isInsideRoughRoi(detected_roi, rough_roi)) {
         continue;
       }
       int dx = static_cast<int>(detected_roi.x_offset) - static_cast<int>(expect_roi.x_offset);
       int dy = static_cast<int>(detected_roi.y_offset) - static_cast<int>(expect_roi.y_offset);
-      cv::Mat det_roi_shifted = shiftAndPaddingImage(det_roi_img, dx, dy);
-      double iou = getIoUOf2BinaryImages(expect_roi_img, det_roi_shifted);
+      cv::Mat det_roi_shifted = utils::shiftAndPaddingImage(det_roi_img, dx, dy);
+      double iou = utils::getIoUOf2BinaryImages(expect_roi_img, det_roi_shifted);
       if (iou > max_matching_score) {
         max_matching_score = iou;
         det_roi_shift_x = dx;
@@ -227,7 +129,7 @@ void TrafficLightSelectorNode::objectsCallback(
         static_cast<int>(detected_roi.feature.roi.y_offset) - det_roi_shift_y, 0,
         static_cast<int>(image_height_ - detected_roi.feature.roi.height));
 
-      double iou = calIOU(expect_roi.roi, detected_roi_shifted);
+      double iou = utils::calIOU(expect_roi.roi, detected_roi_shifted);
       if (iou > max_iou) {
         max_iou = iou;
         max_iou_roi = detected_roi.feature.roi;
