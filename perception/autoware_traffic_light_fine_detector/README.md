@@ -21,7 +21,7 @@ Please visit [autoware-documentation](https://github.com/autowarefoundation/auto
 
 ## Inner-workings / Algorithms
 
-Based on the camera image and the global ROI array detected by `map_based_detection` node, a CNN-based detection method enables highly accurate traffic light detection. If can not detect traffic light, x_offset, y_offset, height and width of output ROI become `0`.  
+Based on the camera image and the global ROI array detected by `map_based_detector` node, a CNN-based detection method enables highly accurate traffic light detection. If can not detect traffic light, x_offset, y_offset, height and width of output ROI become `0`.
 ROIs detected from YOLOX will be selected by a combination of `expect/rois`. At this time, evaluate the whole as ROIs, not just the ROI alone.
 
 ## Inputs / Outputs
