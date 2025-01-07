@@ -14,11 +14,11 @@ This module is activated when there is a stop line in a target lane.
 
 | Parameter                        | Type   | Description                                                                                                                                                                       |
 | -------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `stop_margin`                    | double | Margin that the vehicle tries to stop in before stop_line                                                                                                                          |
-| `stop_duration_sec`              | double | [s] Time parameter for the ego vehicle to stop before stop line                                                                                                            |
+| `stop_margin`                    | double | Margin that the vehicle tries to stop in before stop_line                                                                                                                         |
+| `stop_duration_sec`              | double | [s] Time parameter for the ego vehicle to stop before stop line                                                                                                                   |
 | `hold_stop_margin_distance`      | double | [m] Parameter for restart prevention (See Algorithm section). Also, when the ego vehicle is within this distance from a stop line, the ego state becomes STOPPED from APPROACHING |
-| `use_initialization_stop_state`  | bool   | Flag to determine whether to return to the approaching state when the vehicle moves away from a stop line.                                                                      |
-| `show_stop_line_collision_check` | bool   | Flag to determine whether to show the debug information of collision check with a stop line                                                                                     |
+| `use_initialization_stop_state`  | bool   | Flag to determine whether to return to the approaching state when the vehicle moves away from a stop line.                                                                        |
+| `show_stop_line_collision_check` | bool   | Flag to determine whether to show the debug information of collision check with a stop line                                                                                       |
 
 ## Inner-workings / Algorithms
 
