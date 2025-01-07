@@ -54,8 +54,6 @@ protected:
 
   void postprocess(const DetectedObjects & processing_msg, DetectedObjects & output_msg) override;
 
-  void publish(const DetectedObjects & output_msg) override;
-
   bool out_of_scope(const DetectedObject & obj);
 
 private:

@@ -56,8 +56,6 @@ protected:
   void postprocess(
     const PointCloudMsgType & painted_pointcloud_msg, DetectedObjects & output_msg) override;
 
-  void publish(const DetectedObjects & output_msg) override;
-
   rclcpp::Publisher<PointCloudMsgType>::SharedPtr point_pub_ptr_;
 
   int omp_num_threads_{1};

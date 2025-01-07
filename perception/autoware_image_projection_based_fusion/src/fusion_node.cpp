@@ -487,10 +487,12 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::postprocess(
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
-void FusionNode<Msg3D, Msg2D, ExportObj>::publish(const ExportObj & output_msg
-                                                  __attribute__((unused)))
+void FusionNode<Msg3D, Msg2D, ExportObj>::publish(const ExportObj & output_msg)
 {
-  // do nothing by default
+  if (pub_ptr_->get_subscription_count() < 1) {
+    return;
+  }
+  pub_ptr_->publish(output_msg);
 }
 
 // Explicit instantiation for the supported types

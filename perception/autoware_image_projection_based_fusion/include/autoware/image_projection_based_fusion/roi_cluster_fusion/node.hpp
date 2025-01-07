@@ -38,8 +38,6 @@ protected:
 
   void postprocess(const ClusterMsgType & output_cluster_msg, ClusterMsgType & output_msg) override;
 
-  void publish(const ClusterMsgType & output_msg) override;
-
 private:
   std::string trust_object_iou_mode_{"iou"};
   bool use_cluster_semantic_type_{false};

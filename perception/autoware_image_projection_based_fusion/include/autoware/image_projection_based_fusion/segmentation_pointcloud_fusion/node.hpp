@@ -57,8 +57,6 @@ protected:
   void postprocess(
     const PointCloudMsgType & pointcloud_msg, PointCloudMsgType & output_msg) override;
 
-  void publish(const PointCloudMsgType & output_msg) override;
-
   // debug
   image_transport::Publisher pub_debug_mask_ptr_;
 

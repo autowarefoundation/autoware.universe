@@ -292,14 +292,6 @@ void RoiClusterFusionNode::postprocess(
   }
 }
 
-void RoiClusterFusionNode::publish(const ClusterMsgType & output_msg)
-{
-  if (pub_ptr_->get_subscription_count() < 1) {
-    return;
-  }
-  pub_ptr_->publish(output_msg);
-}
-
 }  // namespace autoware::image_projection_based_fusion
 
 #include <rclcpp_components/register_node_macro.hpp>
