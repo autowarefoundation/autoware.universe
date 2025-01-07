@@ -259,6 +259,7 @@ bool LaneChangeInterface::canTransitFailureState()
   }
 
   if (state == LaneChangeStates::Abort) {
+    module_type_->toAbortState();
     return false;
   }
 
@@ -305,10 +306,6 @@ std::pair<LaneChangeStates, std::string_view> LaneChangeInterface::check_transit
 
     if (force_deactivated && can_return_to_current) {
       return {LaneChangeStates::Cancel, "ForceDeactivation"};
-    }
-
-    if (module_type_->isStoppedAtRedTrafficLight()) {
-      return {LaneChangeStates::Cancel, "StoppingAtRedLight"};
     }
   }
 
