@@ -104,6 +104,8 @@ public:
 
   virtual LaneChangePath getLaneChangePath() const = 0;
 
+  virtual BehaviorModuleOutput getTerminalLaneChangePath() const = 0;
+
   virtual bool isEgoOnPreparePhase() const = 0;
 
   virtual bool isRequiredStop(const bool is_trailing_object) = 0;
@@ -130,7 +132,7 @@ public:
 
   virtual void insert_stop_point(
     [[maybe_unused]] const lanelet::ConstLanelets & lanelets,
-    [[maybe_unused]] PathWithLaneId & path)
+    [[maybe_unused]] PathWithLaneId & path, [[maybe_unused]] const bool is_waiting_approval = false)
   {
   }
 
@@ -285,8 +287,7 @@ protected:
   FilteredLanesObjects filtered_objects_{};
   BehaviorModuleOutput prev_module_output_{};
   PoseWithDetailOpt lane_change_stop_pose_{std::nullopt};
-
-  PathWithLaneId prev_approved_path_;
+  mutable std::optional<LaneChangePath> terminal_lane_change_path_{std::nullopt};
 
   int unsafe_hysteresis_count_{0};
   bool is_abort_path_approved_{false};

@@ -12,19 +12,18 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef NODE_HPP_
-#define NODE_HPP_
+#ifndef AUTOWARE__BEHAVIOR_VELOCITY_PLANNER__NODE_HPP_
+#define AUTOWARE__BEHAVIOR_VELOCITY_PLANNER__NODE_HPP_
 
+#include "autoware/behavior_velocity_planner/planner_manager.hpp"
 #include "autoware/universe_utils/ros/logger_level_configure.hpp"
 #include "autoware/universe_utils/ros/polling_subscriber.hpp"
-#include "planner_manager.hpp"
 
 #include <autoware/behavior_velocity_planner_common/planner_data.hpp>
 #include <autoware/universe_utils/ros/published_time_publisher.hpp>
-#include <autoware_behavior_velocity_planner/srv/load_plugin.hpp>
-#include <autoware_behavior_velocity_planner/srv/unload_plugin.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_internal_debug_msgs/srv/string.hpp>
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_planning_msgs/msg/path.hpp>
@@ -45,8 +44,6 @@
 
 namespace autoware::behavior_velocity_planner
 {
-using autoware_behavior_velocity_planner::srv::LoadPlugin;
-using autoware_behavior_velocity_planner::srv::UnloadPlugin;
 using autoware_map_msgs::msg::LaneletMapBin;
 using tier4_planning_msgs::msg::VelocityLimit;
 
@@ -83,10 +80,6 @@ private:
   autoware::universe_utils::InterProcessPollingSubscriber<
     autoware_perception_msgs::msg::TrafficLightGroupArray>
     sub_traffic_signals_{this, "~/input/traffic_signals"};
-
-  autoware::universe_utils::InterProcessPollingSubscriber<
-    tier4_v2x_msgs::msg::VirtualTrafficLightStateArray>
-    sub_virtual_traffic_light_states_{this, "~/input/virtual_traffic_light_states"};
 
   autoware::universe_utils::InterProcessPollingSubscriber<nav_msgs::msg::OccupancyGrid>
     sub_occupancy_grid_{this, "~/input/occupancy_grid"};
@@ -125,13 +118,14 @@ private:
   BehaviorVelocityPlannerManager planner_manager_;
   bool is_driving_forward_{true};
 
-  rclcpp::Service<LoadPlugin>::SharedPtr srv_load_plugin_;
-  rclcpp::Service<UnloadPlugin>::SharedPtr srv_unload_plugin_;
+  rclcpp::Service<autoware_internal_debug_msgs::srv::String>::SharedPtr srv_load_plugin_;
+  rclcpp::Service<autoware_internal_debug_msgs::srv::String>::SharedPtr srv_unload_plugin_;
   void onUnloadPlugin(
-    const UnloadPlugin::Request::SharedPtr request,
-    const UnloadPlugin::Response::SharedPtr response);
+    const autoware_internal_debug_msgs::srv::String::Request::SharedPtr request,
+    const autoware_internal_debug_msgs::srv::String::Response::SharedPtr response);
   void onLoadPlugin(
-    const LoadPlugin::Request::SharedPtr request, const LoadPlugin::Response::SharedPtr response);
+    const autoware_internal_debug_msgs::srv::String::Request::SharedPtr request,
+    const autoware_internal_debug_msgs::srv::String::Response::SharedPtr response);
 
   // mutex for planner_data_
   std::mutex mutex_;
@@ -150,4 +144,4 @@ private:
 };
 }  // namespace autoware::behavior_velocity_planner
 
-#endif  // NODE_HPP_
+#endif  // AUTOWARE__BEHAVIOR_VELOCITY_PLANNER__NODE_HPP_
