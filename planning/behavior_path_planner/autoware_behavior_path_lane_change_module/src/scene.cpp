@@ -1491,14 +1491,8 @@ bool NormalLaneChange::isValidPath(const PathWithLaneId & path) const
 bool NormalLaneChange::isRequiredStop(const bool is_trailing_object)
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
-  if (
-    common_data_ptr_->transient_data.is_ego_near_current_terminal_start && isAbleToStopSafely() &&
-    is_trailing_object) {
-    current_lane_change_state_ = LaneChangeStates::Stop;
-    return true;
-  }
-  current_lane_change_state_ = LaneChangeStates::Normal;
-  return false;
+  return common_data_ptr_->transient_data.is_ego_near_current_terminal_start &&
+         isAbleToStopSafely() && is_trailing_object;
 }
 
 bool NormalLaneChange::calcAbortPath()

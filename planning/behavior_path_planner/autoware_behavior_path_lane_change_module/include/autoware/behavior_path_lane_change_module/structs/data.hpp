@@ -48,6 +48,7 @@ enum class States {
   Cancel,
   Abort,
   Stop,
+  Warning,
 };
 
 struct PhaseInfo

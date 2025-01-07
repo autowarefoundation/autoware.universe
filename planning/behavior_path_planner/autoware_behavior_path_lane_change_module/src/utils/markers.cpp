@@ -19,6 +19,7 @@
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/ros/marker_helper.hpp>
 #include <autoware_lanelet2_extension/visualization/visualization.hpp>
+#include <magic_enum.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <geometry_msgs/msg/detail/pose__struct.hpp>
@@ -164,7 +165,9 @@ MarkerArray showFilteredObjects(
   return marker_array;
 }
 
-MarkerArray showExecutionInfo(const Debug & debug_data, const geometry_msgs::msg::Pose & ego_pose)
+MarkerArray showExecutionInfo(
+  const InterfaceDebug & interface_debug_data, const Debug & scene_debug_data,
+  const geometry_msgs::msg::Pose & ego_pose)
 {
   auto default_text_marker = [&]() {
     return createDefaultMarker(
@@ -177,11 +180,15 @@ MarkerArray showExecutionInfo(const Debug & debug_data, const geometry_msgs::msg
   auto safety_check_info_text = default_text_marker();
   safety_check_info_text.pose = ego_pose;
   safety_check_info_text.pose.position.z += 4.0;
+  const auto lc_state = interface_debug_data.lc_state;
+  const auto & failing_reason = interface_debug_data.failing_reason;
 
   safety_check_info_text.text = fmt::format(
-    "{stuck} | {return_lane} | {abort}", fmt::arg("stuck", debug_data.is_stuck ? "is stuck" : ""),
-    fmt::arg("return_lane", debug_data.is_able_to_return_to_current_lane ? "" : "can't return"),
-    fmt::arg("abort", debug_data.is_abort ? "aborting" : ""));
+    "{stuck} | {return_lane} | {state} : {reason}",
+    fmt::arg("stuck", scene_debug_data.is_stuck ? "is stuck" : ""),
+    fmt::arg(
+      "return_lane", scene_debug_data.is_able_to_return_to_current_lane ? "" : "can't return"),
+    fmt::arg("state", magic_enum::enum_name(lc_state)), fmt::arg("reason", failing_reason));
   marker_array.markers.push_back(safety_check_info_text);
   return marker_array;
 }
@@ -227,7 +234,8 @@ MarkerArray ShowLaneChangeMetricsInfo(
 }
 
 MarkerArray createDebugMarkerArray(
-  const Debug & debug_data, const geometry_msgs::msg::Pose & ego_pose)
+  const InterfaceDebug & interface_debug_data, const Debug & scene_debug_data,
+  const geometry_msgs::msg::Pose & ego_pose)
 {
   using lanelet::visualization::laneletsAsTriangleMarkerArray;
   using marker_utils::showPolygon;
@@ -236,31 +244,32 @@ MarkerArray createDebugMarkerArray(
   using marker_utils::lane_change_markers::showAllValidLaneChangePath;
   using marker_utils::lane_change_markers::showFilteredObjects;
 
-  const auto & debug_collision_check_object = debug_data.collision_check_objects;
+  const auto & debug_collision_check_object = scene_debug_data.collision_check_objects;
   const auto & debug_collision_check_object_after_approval =
-    debug_data.collision_check_objects_after_approval;
-  const auto & debug_valid_paths = debug_data.valid_paths;
-  const auto & debug_filtered_objects = debug_data.filtered_objects;
+    scene_debug_data.collision_check_objects_after_approval;
+  const auto & debug_valid_paths = scene_debug_data.valid_paths;
+  const auto & debug_filtered_objects = scene_debug_data.filtered_objects;
 
   MarkerArray debug_marker;
   const auto add = [&debug_marker](const MarkerArray & added) {
     autoware::universe_utils::appendMarkerArray(added, &debug_marker);
   };
 
-  if (!debug_data.execution_area.points.empty()) {
+  if (!scene_debug_data.execution_area.points.empty()) {
     add(createPolygonMarkerArray(
-      debug_data.execution_area, "execution_area", 0, 0.16, 1.0, 0.69, 0.1));
+      scene_debug_data.execution_area, "execution_area", 0, 0.16, 1.0, 0.69, 0.1));
   }
 
-  add(showExecutionInfo(debug_data, ego_pose));
-  add(ShowLaneChangeMetricsInfo(debug_data, ego_pose));
+  add(showExecutionInfo(interface_debug_data, scene_debug_data, ego_pose));
+  add(ShowLaneChangeMetricsInfo(scene_debug_data, ego_pose));
 
   // lanes
   add(laneletsAsTriangleMarkerArray(
-    "current_lanes", debug_data.current_lanes, colors::light_yellow(0.2)));
-  add(laneletsAsTriangleMarkerArray("target_lanes", debug_data.target_lanes, colors::aqua(0.2)));
+    "current_lanes", scene_debug_data.current_lanes, colors::light_yellow(0.2)));
   add(laneletsAsTriangleMarkerArray(
-    "target_backward_lanes", debug_data.target_backward_lanes, colors::blue(0.2)));
+    "target_lanes", scene_debug_data.target_lanes, colors::aqua(0.2)));
+  add(laneletsAsTriangleMarkerArray(
+    "target_backward_lanes", scene_debug_data.target_backward_lanes, colors::blue(0.2)));
 
   add(showAllValidLaneChangePath(debug_valid_paths, "lane_change_valid_paths"));
   add(showFilteredObjects(debug_filtered_objects, "object_filtered"));

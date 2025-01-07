@@ -86,6 +86,12 @@ struct Debug
     is_abort = false;
   }
 };
+
+struct InterfaceDebug
+{
+  std::string_view failing_reason;
+  LaneChangeStates lc_state;
+};
 }  // namespace autoware::behavior_path_planner::lane_change
 
 #endif  // AUTOWARE__BEHAVIOR_PATH_LANE_CHANGE_MODULE__STRUCTS__DEBUG_HPP_
