@@ -153,11 +153,13 @@ void PlanningFactorRvizPlugin::processMessage(
 {
   size_t i = 0L;
   for (const auto & factor : msg->factors) {
+    const auto text = factor.module + (factor.detail.empty() ? "" : " (" + factor.detail + ")");
+
     switch (factor.behavior) {
       case tier4_planning_msgs::msg::PlanningFactor::STOP:
         for (const auto & control_point : factor.control_points) {
           const auto virtual_wall = createStopVirtualWallMarker(
-            control_point.pose, factor.module, msg->header.stamp, i++, baselink2front_.getFloat());
+            control_point.pose, text, msg->header.stamp, i++, baselink2front_.getFloat());
           add_marker(std::make_shared<visualization_msgs::msg::MarkerArray>(virtual_wall));
         }
         break;
@@ -165,7 +167,7 @@ void PlanningFactorRvizPlugin::processMessage(
       case tier4_planning_msgs::msg::PlanningFactor::SLOW_DOWN:
         for (const auto & control_point : factor.control_points) {
           const auto virtual_wall = createSlowDownVirtualWallMarker(
-            control_point.pose, factor.module, msg->header.stamp, i++, baselink2front_.getFloat());
+            control_point.pose, text, msg->header.stamp, i++, baselink2front_.getFloat());
           add_marker(std::make_shared<visualization_msgs::msg::MarkerArray>(virtual_wall));
         }
         break;
