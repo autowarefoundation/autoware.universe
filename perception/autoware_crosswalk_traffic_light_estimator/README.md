@@ -3,6 +3,7 @@
 ## Purpose
 
 `autoware_crosswalk_traffic_light_estimator` estimates pedestrian traffic signals which can be summarized as the following two tasks:
+
 - Estimate pedestrian traffic signals that are not subject to be detected by perception pipeline.
 - Estimate whether pedestrian traffic signals are flashing and modify the result.
 
