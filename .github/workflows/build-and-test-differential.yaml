@@ -14,6 +14,10 @@ on:
         default: humble
         required: false
         type: string
+      run-condition:
+        default: true
+        required: false
+        type: boolean
       container-suffix:
         required: false
         default: ""
@@ -28,6 +32,7 @@ env:
 
 jobs:
   build-and-test-differential:
+    if: ${{ inputs.run-condition }}
     runs-on: ${{ inputs.runner }}
     container: ${{ inputs.container }}${{ inputs.container-suffix }}
     steps:
