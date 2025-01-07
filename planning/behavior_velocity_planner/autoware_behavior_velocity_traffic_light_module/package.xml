@@ -19,6 +19,7 @@
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
 
   <depend>autoware_adapi_v1_msgs</depend>
+  <depend>autoware_behavior_velocity_planner</depend>
   <depend>autoware_behavior_velocity_planner_common</depend>
   <depend>autoware_behavior_velocity_rtc_interface</depend>
   <depend>autoware_lanelet2_extension</depend>

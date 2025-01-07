@@ -21,6 +21,7 @@
   <buildtool_depend>autoware_cmake</buildtool_depend>
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
 
+  <depend>autoware_behavior_velocity_planner</depend>
   <depend>autoware_behavior_velocity_planner_common</depend>
   <depend>autoware_behavior_velocity_rtc_interface</depend>
   <depend>autoware_grid_map_utils</depend>
