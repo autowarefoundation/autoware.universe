@@ -36,7 +36,7 @@ class RoiDetectedObjectFusionNode : public FusionNode<DetectedObjects, RoiMsgTyp
 public:
   explicit RoiDetectedObjectFusionNode(const rclcpp::NodeOptions & options);
 
-protected:
+private:
   void preprocess(DetectedObjects & output_msg) override;
 
   void fuseOnSingleImage(
@@ -56,7 +56,6 @@ protected:
 
   bool out_of_scope(const DetectedObject & obj);
 
-private:
   struct
   {
     std::vector<double> passthrough_lower_bound_probability_thresholds{};

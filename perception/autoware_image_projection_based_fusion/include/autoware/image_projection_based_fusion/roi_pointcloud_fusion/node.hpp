@@ -30,7 +30,7 @@ class RoiPointCloudFusionNode : public FusionNode<PointCloudMsgType, RoiMsgType,
 public:
   explicit RoiPointCloudFusionNode(const rclcpp::NodeOptions & options);
 
-protected:
+private:
   rclcpp::Publisher<PointCloudMsgType>::SharedPtr point_pub_ptr_;
   rclcpp::Publisher<PointCloudMsgType>::SharedPtr cluster_debug_pub_;
 
@@ -42,7 +42,6 @@ protected:
 
   void publish(const ClusterMsgType & output_msg) override;
 
-private:
   int min_cluster_size_{1};
   int max_cluster_size_{20};
   bool fuse_unknown_only_{true};

@@ -46,7 +46,7 @@ class PointPaintingFusionNode : public FusionNode<PointCloudMsgType, RoiMsgType,
 public:
   explicit PointPaintingFusionNode(const rclcpp::NodeOptions & options);
 
-protected:
+private:
   void preprocess(PointCloudMsgType & pointcloud_msg) override;
 
   void fuseOnSingleImage(

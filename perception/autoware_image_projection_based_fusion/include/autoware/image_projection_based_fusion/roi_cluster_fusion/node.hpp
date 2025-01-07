@@ -29,7 +29,7 @@ class RoiClusterFusionNode : public FusionNode<ClusterMsgType, RoiMsgType, Clust
 public:
   explicit RoiClusterFusionNode(const rclcpp::NodeOptions & options);
 
-protected:
+private:
   void preprocess(ClusterMsgType & output_cluster_msg) override;
 
   void fuseOnSingleImage(
@@ -38,7 +38,6 @@ protected:
 
   void postprocess(const ClusterMsgType & output_cluster_msg, ClusterMsgType & output_msg) override;
 
-private:
   std::string trust_object_iou_mode_{"iou"};
   bool use_cluster_semantic_type_{false};
   bool only_allow_inside_cluster_{false};

@@ -39,7 +39,7 @@ class SegmentPointCloudFusionNode : public FusionNode<PointCloudMsgType, Image, 
 public:
   explicit SegmentPointCloudFusionNode(const rclcpp::NodeOptions & options);
 
-protected:
+private:
   void preprocess(PointCloudMsgType & pointcloud_msg) override;
 
   void fuseOnSingleImage(
@@ -60,7 +60,6 @@ protected:
   // debug
   image_transport::Publisher pub_debug_mask_ptr_;
 
-private:
   std::vector<bool> filter_semantic_label_target_;
   float filter_distance_threshold_;
   // declare list of semantic label target, depend on trained data of yolox segmentation model
