@@ -53,9 +53,10 @@ protected:
     const PointCloudMsgType & input_pointcloud_msg, const Det2dStatus<RoiMsgType> & det2d,
     const RoiMsgType & input_roi_msg, PointCloudMsgType & painted_pointcloud_msg) override;
 
-  void postprocess(PointCloudMsgType & painted_pointcloud_msg) override;
+  void postprocess(
+    const PointCloudMsgType & painted_pointcloud_msg, DetectedObjects & output_msg) override;
 
-  void publish(const PointCloudMsgType & output_msg) override;
+  void publish(const DetectedObjects & output_msg) override;
 
   rclcpp::Publisher<PointCloudMsgType>::SharedPtr point_pub_ptr_;
 

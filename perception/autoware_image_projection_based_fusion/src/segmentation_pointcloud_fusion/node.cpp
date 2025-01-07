@@ -62,34 +62,6 @@ void SegmentPointCloudFusionNode::preprocess(__attribute__((unused))
   return;
 }
 
-void SegmentPointCloudFusionNode::postprocess(PointCloudMsgType & pointcloud_msg)
-{
-  std::unique_ptr<ScopedTimeTrack> st_ptr;
-  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
-
-  auto original_cloud = std::make_shared<PointCloudMsgType>(pointcloud_msg);
-
-  int point_step = original_cloud->point_step;
-  size_t output_pointcloud_size = 0;
-  pointcloud_msg.data.clear();
-  pointcloud_msg.data.resize(original_cloud->data.size());
-
-  for (size_t global_offset = 0; global_offset < original_cloud->data.size();
-       global_offset += point_step) {
-    if (filter_global_offset_set_.find(global_offset) == filter_global_offset_set_.end()) {
-      copyPointCloud(
-        *original_cloud, point_step, global_offset, pointcloud_msg, output_pointcloud_size);
-    }
-  }
-
-  pointcloud_msg.data.resize(output_pointcloud_size);
-  pointcloud_msg.row_step = output_pointcloud_size / pointcloud_msg.height;
-  pointcloud_msg.width = output_pointcloud_size / pointcloud_msg.point_step / pointcloud_msg.height;
-
-  filter_global_offset_set_.clear();
-  return;
-}
-
 void SegmentPointCloudFusionNode::fuseOnSingleImage(
   const PointCloudMsgType & input_pointcloud_msg, const Det2dStatus<Image> & det2d,
   [[maybe_unused]] const Image & input_mask,
@@ -171,6 +143,33 @@ void SegmentPointCloudFusionNode::fuseOnSingleImage(
 
     filter_global_offset_set_.insert(global_offset);
   }
+}
+
+void SegmentPointCloudFusionNode::postprocess(
+  const PointCloudMsgType & pointcloud_msg, PointCloudMsgType & output_msg)
+{
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
+  output_msg.header = pointcloud_msg.header;
+  output_msg.data.clear();
+  output_msg.data.resize(pointcloud_msg.data.size());
+  const int point_step = pointcloud_msg.point_step;
+
+  size_t output_pointcloud_size = 0;
+  for (size_t global_offset = 0; global_offset < pointcloud_msg.data.size();
+       global_offset += point_step) {
+    if (filter_global_offset_set_.find(global_offset) == filter_global_offset_set_.end()) {
+      copyPointCloud(pointcloud_msg, point_step, global_offset, output_msg, output_pointcloud_size);
+    }
+  }
+
+  output_msg.data.resize(output_pointcloud_size);
+  output_msg.row_step = output_pointcloud_size / output_msg.height;
+  output_msg.width = output_pointcloud_size / output_msg.point_step / output_msg.height;
+
+  filter_global_offset_set_.clear();
+  return;
 }
 
 void SegmentPointCloudFusionNode::publish(const PointCloudMsgType & output_msg)

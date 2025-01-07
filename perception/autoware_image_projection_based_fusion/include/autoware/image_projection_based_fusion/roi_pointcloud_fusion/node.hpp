@@ -34,13 +34,13 @@ protected:
   rclcpp::Publisher<PointCloudMsgType>::SharedPtr point_pub_ptr_;
   rclcpp::Publisher<PointCloudMsgType>::SharedPtr cluster_debug_pub_;
 
-  void postprocess(PointCloudMsgType & pointcloud_msg) override;
-
   void fuseOnSingleImage(
     const PointCloudMsgType & input_pointcloud_msg, const Det2dStatus<RoiMsgType> & det2d,
     const RoiMsgType & input_roi_msg, PointCloudMsgType & output_pointcloud_msg) override;
 
-  void publish(const PointCloudMsgType & output_msg) override;
+  void postprocess(const PointCloudMsgType & pointcloud_msg, ClusterMsgType & output_msg) override;
+
+  void publish(const ClusterMsgType & output_msg) override;
 
 private:
   int min_cluster_size_{1};

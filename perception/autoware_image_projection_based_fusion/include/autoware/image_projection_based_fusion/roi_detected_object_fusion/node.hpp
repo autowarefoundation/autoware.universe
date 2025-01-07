@@ -52,6 +52,8 @@ protected:
     const std::vector<DetectedObjectWithFeature> & image_rois,
     const std::map<std::size_t, DetectedObjectWithFeature> & object_roi_map);
 
+  void postprocess(const DetectedObjects & processing_msg, DetectedObjects & output_msg) override;
+
   void publish(const DetectedObjects & output_msg) override;
 
   bool out_of_scope(const DetectedObject & obj);

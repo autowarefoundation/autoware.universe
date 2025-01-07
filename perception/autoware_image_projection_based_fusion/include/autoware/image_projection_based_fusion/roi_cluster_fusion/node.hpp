@@ -31,12 +31,14 @@ public:
 
 protected:
   void preprocess(ClusterMsgType & output_cluster_msg) override;
-  void postprocess(ClusterMsgType & output_cluster_msg) override;
-  void publish(const ClusterMsgType & output_msg) override;
 
   void fuseOnSingleImage(
     const ClusterMsgType & input_cluster_msg, const Det2dStatus<RoiMsgType> & det2d,
     const RoiMsgType & input_roi_msg, ClusterMsgType & output_cluster_msg) override;
+
+  void postprocess(const ClusterMsgType & output_cluster_msg, ClusterMsgType & output_msg) override;
+
+  void publish(const ClusterMsgType & output_msg) override;
 
 private:
   std::string trust_object_iou_mode_{"iou"};

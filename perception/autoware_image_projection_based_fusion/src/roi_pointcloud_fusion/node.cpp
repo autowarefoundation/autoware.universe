@@ -50,32 +50,6 @@ RoiPointCloudFusionNode::RoiPointCloudFusionNode(const rclcpp::NodeOptions & opt
   cluster_debug_pub_ = this->create_publisher<PointCloudMsgType>("debug/clusters", 1);
 }
 
-void RoiPointCloudFusionNode::postprocess(PointCloudMsgType & pointcloud_msg)
-{
-  std::unique_ptr<ScopedTimeTrack> st_ptr;
-  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
-
-  const auto objects_sub_count =
-    pub_ptr_->get_subscription_count() + pub_ptr_->get_intra_process_subscription_count();
-  if (objects_sub_count < 1) {
-    return;
-  }
-
-  ClusterMsgType output_msg;
-  output_msg.header = pointcloud_msg.header;
-  output_msg.feature_objects = output_fused_objects_;
-
-  if (objects_sub_count > 0) {
-    pub_ptr_->publish(output_msg);
-  }
-  output_fused_objects_.clear();
-  // publish debug cluster
-  if (cluster_debug_pub_->get_subscription_count() > 0) {
-    PointCloudMsgType debug_cluster_msg;
-    autoware::euclidean_cluster::convertObjectMsg2SensorMsg(output_msg, debug_cluster_msg);
-    cluster_debug_pub_->publish(debug_cluster_msg);
-  }
-}
 void RoiPointCloudFusionNode::fuseOnSingleImage(
   const PointCloudMsgType & input_pointcloud_msg, const Det2dStatus<RoiMsgType> & det2d,
   const RoiMsgType & input_roi_msg,
@@ -197,14 +171,37 @@ void RoiPointCloudFusionNode::fuseOnSingleImage(
   }
 }
 
-void RoiPointCloudFusionNode::publish(const PointCloudMsgType & output_msg)
+void RoiPointCloudFusionNode::postprocess(
+  const PointCloudMsgType & pointcloud_msg, ClusterMsgType & output_msg)
 {
-  if (point_pub_ptr_->get_subscription_count() < 1) {
-    return;
+  std::unique_ptr<ScopedTimeTrack> st_ptr;
+  if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
+  output_msg.header = pointcloud_msg.header;
+  output_msg.feature_objects = output_fused_objects_;
+
+  output_fused_objects_.clear();
+
+  // publish debug cluster
+  if (cluster_debug_pub_->get_subscription_count() > 0) {
+    PointCloudMsgType debug_cluster_msg;
+    autoware::euclidean_cluster::convertObjectMsg2SensorMsg(output_msg, debug_cluster_msg);
+    cluster_debug_pub_->publish(debug_cluster_msg);
   }
-  point_pub_ptr_->publish(output_msg);
+  if (point_pub_ptr_->get_subscription_count() > 0) {
+    point_pub_ptr_->publish(pointcloud_msg);
+  }
 }
 
+void RoiPointCloudFusionNode::publish(const ClusterMsgType & output_msg)
+{
+  const auto objects_sub_count =
+    pub_ptr_->get_subscription_count() + pub_ptr_->get_intra_process_subscription_count();
+  if (objects_sub_count < 1) {
+    return;
+  }
+  pub_ptr_->publish(output_msg);
+}
 }  // namespace autoware::image_projection_based_fusion
 
 #include <rclcpp_components/register_node_macro.hpp>

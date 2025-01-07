@@ -42,8 +42,6 @@ public:
 protected:
   void preprocess(PointCloudMsgType & pointcloud_msg) override;
 
-  void postprocess(PointCloudMsgType & pointcloud_msg) override;
-
   void fuseOnSingleImage(
     const PointCloudMsgType & input_pointcloud_msg, const Det2dStatus<Image> & det2d,
     const Image & input_mask, PointCloudMsgType & output_pointcloud_msg) override;
@@ -55,6 +53,9 @@ protected:
     std::memcpy(&output.data[output_pointcloud_size], &input.data[global_offset], point_step);
     output_pointcloud_size += point_step;
   }
+
+  void postprocess(
+    const PointCloudMsgType & pointcloud_msg, PointCloudMsgType & output_msg) override;
 
   void publish(const PointCloudMsgType & output_msg) override;
 

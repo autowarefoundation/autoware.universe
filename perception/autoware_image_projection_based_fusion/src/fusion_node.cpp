@@ -226,8 +226,9 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::exportProcess()
 {
   timer_->cancel();
 
-  postprocess(*(cached_det3d_msg_ptr_));
-  publish(*(cached_det3d_msg_ptr_));
+  ExportObj output_msg;
+  postprocess(*(cached_det3d_msg_ptr_), output_msg);
+  publish(output_msg);
 
   // add processing time for debug
   if (debug_publisher_) {
@@ -428,12 +429,6 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::roiCallback(
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
-void FusionNode<Msg3D, Msg2D, ExportObj>::postprocess(Msg3D & output_msg __attribute__((unused)))
-{
-  // do nothing by default
-}
-
-template <class Msg3D, class Msg2D, class ExportObj>
 void FusionNode<Msg3D, Msg2D, ExportObj>::timer_callback()
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
@@ -484,7 +479,16 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::setPeriod(const int64_t new_period)
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
-void FusionNode<Msg3D, Msg2D, ExportObj>::publish(const Msg3D & output_msg __attribute__((unused)))
+void FusionNode<Msg3D, Msg2D, ExportObj>::postprocess(
+  const Msg3D & processing_msg __attribute__((unused)),
+  ExportObj & output_msg __attribute__((unused)))
+{
+  // do nothing by default
+}
+
+template <class Msg3D, class Msg2D, class ExportObj>
+void FusionNode<Msg3D, Msg2D, ExportObj>::publish(const ExportObj & output_msg
+                                                  __attribute__((unused)))
 {
   // do nothing by default
 }

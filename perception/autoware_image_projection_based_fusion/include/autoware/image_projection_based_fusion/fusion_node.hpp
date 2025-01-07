@@ -140,8 +140,8 @@ protected:
   virtual void fuseOnSingleImage(
     const Msg3D & input_msg, const Det2dStatus<Msg2D> & det2d, const Msg2D & input_roi_msg,
     Msg3D & output_msg) = 0;
-  virtual void postprocess(Msg3D & output_msg);
-  virtual void publish(const Msg3D & output_msg);
+  virtual void postprocess(const Msg3D & processing_msg, ExportObj & output_msg);
+  virtual void publish(const ExportObj & output_msg);
 
   // Members
   std::size_t rois_number_{1};

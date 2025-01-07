@@ -270,26 +270,26 @@ double RoiClusterFusionNode::cal_iou_by_mode(
   }
 }
 
-void RoiClusterFusionNode::postprocess(ClusterMsgType & output_cluster_msg)
+void RoiClusterFusionNode::postprocess(
+  const ClusterMsgType & processing_msg, ClusterMsgType & output_msg)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
-  if (!remove_unknown_) {
-    return;
-  }
-  ClusterMsgType known_objects;
-  known_objects.feature_objects.reserve(output_cluster_msg.feature_objects.size());
-  for (auto & feature_object : output_cluster_msg.feature_objects) {
-    bool is_roi_label_known = feature_object.object.classification.front().label !=
-                              autoware_perception_msgs::msg::ObjectClassification::UNKNOWN;
-    if (
-      is_roi_label_known ||
-      feature_object.object.existence_probability >= min_roi_existence_prob_) {
-      known_objects.feature_objects.push_back(feature_object);
+  output_msg = processing_msg;
+
+  if (remove_unknown_) {
+    // filter by object classification and existence probability
+    output_msg.feature_objects.clear();
+    for (const auto & feature_object : processing_msg.feature_objects) {
+      if (
+        feature_object.object.classification.front().label !=
+          autoware_perception_msgs::msg::ObjectClassification::UNKNOWN ||
+        feature_object.object.existence_probability >= min_roi_existence_prob_) {
+        output_msg.feature_objects.push_back(feature_object);
+      }
     }
   }
-  output_cluster_msg.feature_objects = known_objects.feature_objects;
 }
 
 void RoiClusterFusionNode::publish(const ClusterMsgType & output_msg)

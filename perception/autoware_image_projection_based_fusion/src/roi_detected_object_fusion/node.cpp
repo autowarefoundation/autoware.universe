@@ -290,14 +290,15 @@ bool RoiDetectedObjectFusionNode::out_of_scope(const DetectedObject & obj)
   return is_out;
 }
 
-void RoiDetectedObjectFusionNode::publish(const DetectedObjects & output_msg)
+void RoiDetectedObjectFusionNode::postprocess(
+  const DetectedObjects & processing_msg, DetectedObjects & output_msg)
 {
-  if (pub_ptr_->get_subscription_count() < 1) {
-    return;
-  }
+  output_msg.header = processing_msg.header;
+  output_msg.objects.clear();
 
-  int64_t timestamp_nsec =
-    output_msg.header.stamp.sec * static_cast<int64_t>(1e9) + output_msg.header.stamp.nanosec;
+  // filter out ignored objects
+  int64_t timestamp_nsec = processing_msg.header.stamp.sec * static_cast<int64_t>(1e9) +
+                           processing_msg.header.stamp.nanosec;
   if (
     passthrough_object_flags_map_.size() == 0 || fused_object_flags_map_.size() == 0 ||
     ignored_object_flags_map_.size() == 0) {
@@ -309,36 +310,45 @@ void RoiDetectedObjectFusionNode::publish(const DetectedObjects & output_msg)
     ignored_object_flags_map_.count(timestamp_nsec) == 0) {
     return;
   }
+
   auto & passthrough_object_flags = passthrough_object_flags_map_.at(timestamp_nsec);
   auto & fused_object_flags = fused_object_flags_map_.at(timestamp_nsec);
-  auto & ignored_object_flags = ignored_object_flags_map_.at(timestamp_nsec);
-
-  DetectedObjects output_objects_msg, debug_fused_objects_msg, debug_ignored_objects_msg;
-  output_objects_msg.header = output_msg.header;
-  debug_fused_objects_msg.header = output_msg.header;
-  debug_ignored_objects_msg.header = output_msg.header;
-  for (std::size_t obj_i = 0; obj_i < output_msg.objects.size(); ++obj_i) {
-    const auto & obj = output_msg.objects.at(obj_i);
-    if (passthrough_object_flags.at(obj_i)) {
-      output_objects_msg.objects.emplace_back(obj);
+  for (std::size_t obj_i = 0; obj_i < processing_msg.objects.size(); ++obj_i) {
+    const auto & obj = processing_msg.objects.at(obj_i);
+    if (passthrough_object_flags.at(obj_i) || fused_object_flags.at(obj_i)) {
+      output_msg.objects.emplace_back(obj);
     }
+  }
+
+  // debug messages
+  auto & ignored_object_flags = ignored_object_flags_map_.at(timestamp_nsec);
+  DetectedObjects debug_fused_objects_msg, debug_ignored_objects_msg;
+  debug_fused_objects_msg.header = processing_msg.header;
+  debug_ignored_objects_msg.header = processing_msg.header;
+  for (std::size_t obj_i = 0; obj_i < processing_msg.objects.size(); ++obj_i) {
+    const auto & obj = processing_msg.objects.at(obj_i);
     if (fused_object_flags.at(obj_i)) {
-      output_objects_msg.objects.emplace_back(obj);
       debug_fused_objects_msg.objects.emplace_back(obj);
     }
     if (ignored_object_flags.at(obj_i)) {
       debug_ignored_objects_msg.objects.emplace_back(obj);
     }
   }
-
-  pub_ptr_->publish(output_objects_msg);
-
   debug_publisher_->publish<DetectedObjects>("debug/fused_objects", debug_fused_objects_msg);
   debug_publisher_->publish<DetectedObjects>("debug/ignored_objects", debug_ignored_objects_msg);
 
+  // clear flags
   passthrough_object_flags_map_.erase(timestamp_nsec);
   fused_object_flags_map_.erase(timestamp_nsec);
   ignored_object_flags_map_.erase(timestamp_nsec);
+}
+
+void RoiDetectedObjectFusionNode::publish(const DetectedObjects & output_msg)
+{
+  if (pub_ptr_->get_subscription_count() < 1) {
+    return;
+  }
+  pub_ptr_->publish(output_msg);
 }
 
 }  // namespace autoware::image_projection_based_fusion

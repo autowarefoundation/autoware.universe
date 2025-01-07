@@ -383,10 +383,14 @@ dc   | dc dc dc  dc ||zc|
   }
 }
 
-void PointPaintingFusionNode::postprocess(PointCloudMsgType & painted_pointcloud_msg)
+void PointPaintingFusionNode::postprocess(
+  const PointCloudMsgType & painted_pointcloud_msg, DetectedObjects & output_msg)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+
+  output_msg.header = painted_pointcloud_msg.header;
+  output_msg.objects.clear();
 
   const auto objects_sub_count =
     pub_ptr_->get_subscription_count() + pub_ptr_->get_intra_process_subscription_count();
@@ -414,23 +418,23 @@ void PointPaintingFusionNode::postprocess(PointCloudMsgType & painted_pointcloud
     raw_objects.emplace_back(obj);
   }
 
-  autoware_perception_msgs::msg::DetectedObjects output_msg;
-  output_msg.header = painted_pointcloud_msg.header;
+  // prepare output message
   output_msg.objects = iou_bev_nms_.apply(raw_objects);
 
   detection_class_remapper_.mapClasses(output_msg);
 
-  if (objects_sub_count > 0) {
-    pub_ptr_->publish(output_msg);
+  // publish debug message: painted pointcloud
+  if (point_pub_ptr_->get_subscription_count() < 1) {
+    point_pub_ptr_->publish(painted_pointcloud_msg);
   }
 }
 
-void PointPaintingFusionNode::publish(const PointCloudMsgType & painted_pointcloud_msg)
+void PointPaintingFusionNode::publish(const DetectedObjects & output_msg)
 {
-  if (point_pub_ptr_->get_subscription_count() < 1) {
+  if (pub_ptr_->get_subscription_count() < 1) {
     return;
   }
-  point_pub_ptr_->publish(painted_pointcloud_msg);
+  pub_ptr_->publish(output_msg);
 }
 
 }  // namespace autoware::image_projection_based_fusion
