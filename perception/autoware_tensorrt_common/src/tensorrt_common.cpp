@@ -140,7 +140,7 @@ bool TrtCommon::setup(ProfileDimsPtr profile_dims, NetworkIOPtr network_io)
   if (!validateNetworkIO() || !validateProfileDims()) {
     logger_->log(
       nvinfer1::ILogger::Severity::kERROR,
-      "Final network validation failed. Possibly input / output of currently "
+      "Final network validation failed. Possibly the input / output of the currently "
       "deployed model has been changed. Check your configuration file with the current model.");
     return false;
   }
