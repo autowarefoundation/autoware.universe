@@ -799,7 +799,7 @@ Furthermore, if the path has become unsafe, there are three possible outcomes fo
 
 1. **CANCEL**: The approved lane change path is canceled, and the ego vehicle resumes its previous maneuver.
 2. **ABORT**: The lane change module generates a return path to bring the ego vehicle back to its current lane.
-3. **CRUISE** or **STOP**: If aborting is not feasible, the ego vehicle continues with the lane change. [Another module](<https://autowarefoundation.github.io/autoware.universe/main/planning/autoware_obstacle_cruise_planner/> should decide whether the ego vehicle should cruise or stop in this scenario.
+3. **CRUISE** or **STOP**: If aborting is not feasible, the ego vehicle continues with the lane change. [Another module](https://autowarefoundation.github.io/autoware.universe/main/planning/autoware_obstacle_cruise_planner/) should decide whether the ego vehicle should cruise or stop in this scenario.
 
 **CANCEL** can be enabled by setting the `cancel.enable_on_prepare_phase` flag to `true`, and **ABORT** can be enabled by setting the `cancel.enable_on_lane_changing_phase` flag to true.
 
@@ -881,7 +881,7 @@ endif
 
 ### Evaluating Ego Vehicle's Position to Prevent Abrupt Maneuvers
 
-To prevent abrupt maneuvers caused by ``CANCEL or ABORT, lane change module ensures that the ego vehicle can safely return to the original lane. This is achieved by converting the current lane, where the ego vehicle was originally situated, into a polygon. This polygon representation allows for geometric checks to verify if the ego vehicle remains within the lane boundaries.
+To prevent abrupt maneuvers caused by **CANCEL** or **ABORT**, lane change module ensures that the ego vehicle can safely return to the original lane. This is achieved by converting the current lane, where the ego vehicle was originally situated, into a polygon. This polygon representation allows for geometric checks to verify if the ego vehicle remains within the lane boundaries.
 
 The edges of the ego vehicle's current footprint are checked against the polygon. The vehicle is considered to be diverging if the distance from any edge of the footprint to the lane exceeds `cancel.overhang_tolerance`.
 
