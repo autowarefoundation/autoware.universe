@@ -111,7 +111,7 @@ void CenterPointTRT::initPtr()
 void CenterPointTRT::initTrt(
   const TrtCommonConfig & encoder_param, const TrtCommonConfig & head_param)
 {
-  /// encoder input profile
+  // encoder input profile
   auto enc_in_dims = nvinfer1::Dims{
     3,
     {static_cast<int32_t>(config_.max_voxel_size_),
