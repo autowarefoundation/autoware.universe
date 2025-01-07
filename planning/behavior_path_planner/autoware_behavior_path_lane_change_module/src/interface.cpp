@@ -317,6 +317,8 @@ std::pair<LaneChangeStates, std::string_view> LaneChangeInterface::check_transit
     return {LaneChangeStates::Warning, "CancelDisabled"};
   }
 
+  // We also check if the ego can return to the current lane, as prepare segment might be out of the
+  // lane, for example, during an evasive maneuver around a static object.
   if (is_preparing && can_return_to_current) {
     return {LaneChangeStates::Cancel, "SafeToCancel"};
   }
@@ -327,6 +329,12 @@ std::pair<LaneChangeStates, std::string_view> LaneChangeInterface::check_transit
 
   if (!module_type_->isAbortEnabled()) {
     return {LaneChangeStates::Warning, "AbortDisabled"};
+  }
+
+  // To prevent the lane module from having to check rear objects in the current lane, we limit the
+  // abort maneuver to cases where the ego vehicle is still in the current lane.
+  if (!can_return_to_current) {
+    return {LaneChangeStates::Warning, "TooLateToAbort"};
   }
 
   const auto found_abort_path = module_type_->calcAbortPath();
