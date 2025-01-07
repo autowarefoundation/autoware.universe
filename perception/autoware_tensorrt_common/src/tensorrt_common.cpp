@@ -396,26 +396,6 @@ std::shared_ptr<Logger> TrtCommon::getLogger()
   return logger_;
 }
 
-#if (NV_TENSORRT_MAJOR * 1000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH < 10000
-bool TrtCommon::enqueueV2(void ** bindings, cudaStream_t stream, cudaEvent_t * input_consumed)
-{
-  if (!context_) {
-    logger_->log(nvinfer1::ILogger::Severity::kERROR, "Context is not initialized");
-    return false;
-  }
-  if (trt_config_->profile_per_layer) {
-    auto inference_start = std::chrono::high_resolution_clock::now();
-    auto success = context_->enqueueV2(bindings, stream, input_consumed);
-    auto inference_end = std::chrono::high_resolution_clock::now();
-    host_profiler_->reportLayerTime(
-      "inference_host",
-      std::chrono::duration<float, std::milli>(inference_end - inference_start).count());
-    return success;
-  }
-  return context_->enqueueV2(bindings, stream, input_consumed);
-}
-#endif
-
 bool TrtCommon::enqueueV3(cudaStream_t stream)
 {
   if (!context_) {

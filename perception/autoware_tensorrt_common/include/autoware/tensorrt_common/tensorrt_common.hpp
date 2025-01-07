@@ -283,18 +283,6 @@ public:
   /**
    * @brief Execute inference via TensorRT context.
    *
-   * @param[in] bindings input/output tensor addresses.
-   * @param[in] stream CUDA stream.
-   * @param[in] input_consumed Signal whether input buffers can be refilled with new data
-   * @return Whether inference is successful.
-   */
-#if (NV_TENSORRT_MAJOR * 1000) + (NV_TENSORRT_MINOR * 100) + NV_TENSOR_PATCH < 10000
-  bool enqueueV2(void ** bindings, cudaStream_t stream, cudaEvent_t * input_consumed);
-#endif
-
-  /**
-   * @brief Execute inference via TensorRT context.
-   *
    * @param[in] stream CUDA stream.
    * @return Whether inference is successful.
    */
