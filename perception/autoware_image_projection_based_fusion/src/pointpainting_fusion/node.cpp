@@ -424,7 +424,7 @@ void PointPaintingFusionNode::postprocess(
   detection_class_remapper_.mapClasses(output_msg);
 
   // publish debug message: painted pointcloud
-  if (point_pub_ptr_->get_subscription_count() < 1) {
+  if (point_pub_ptr_->get_subscription_count() > 0) {
     point_pub_ptr_->publish(painted_pointcloud_msg);
   }
 }
