@@ -16,6 +16,7 @@
 #include "autoware/behavior_path_planner_common/marker_utils/utils.hpp"
 
 #include <autoware/behavior_path_lane_change_module/utils/markers.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/ros/marker_helper.hpp>
 #include <autoware_lanelet2_extension/visualization/visualization.hpp>
 
@@ -185,6 +186,46 @@ MarkerArray showExecutionInfo(const Debug & debug_data, const geometry_msgs::msg
   return marker_array;
 }
 
+MarkerArray ShowLaneChangeMetricsInfo(
+  const Debug & debug_data, const geometry_msgs::msg::Pose & pose)
+{
+  MarkerArray marker_array;
+  if (debug_data.lane_change_metrics.empty()) {
+    return marker_array;
+  }
+
+  auto text_marker = createDefaultMarker(
+    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), "sampling_metrics", 0, Marker::TEXT_VIEW_FACING,
+    createMarkerScale(0.6, 0.6, 0.6), colors::yellow());
+  text_marker.pose = autoware::universe_utils::calcOffsetPose(pose, 10.0, 15.0, 0.0);
+
+  text_marker.text = fmt::format("{:<12}", "") + fmt::format("{:^18}|", "lat_accel[m/s2]") +
+                     fmt::format("{:^18}|", "lon_accel[m/s2]") +
+                     fmt::format("{:^17}|", "velocity[m/s]") +
+                     fmt::format("{:^15}|", "duration[s]") + fmt::format("{:^15}|", "length[m]") +
+                     fmt::format("{:^20}\n", "max_length_th[m]");
+  for (const auto & metrics : debug_data.lane_change_metrics) {
+    text_marker.text += fmt::format("{:-<170}\n", "");
+    const auto & p_m = metrics.prep_metric;
+    text_marker.text +=
+      fmt::format("{:<17}", "prep_metrics:") + fmt::format("{:^10.3f}", p_m.lat_accel) +
+      fmt::format("{:^21.3f}", p_m.actual_lon_accel) + fmt::format("{:^12.3f}", p_m.velocity) +
+      fmt::format("{:^15.3f}", p_m.duration) + fmt::format("{:^15.3f}", p_m.length) +
+      fmt::format("{:^17.3f}\n", metrics.max_prepare_length);
+    text_marker.text += fmt::format("{:<20}\n", "lc_metrics:");
+    for (const auto lc_m : metrics.lc_metrics) {
+      text_marker.text +=
+        fmt::format("{:<15}", "") + fmt::format("{:^10.3f}", lc_m.lat_accel) +
+        fmt::format("{:^21.3f}", lc_m.actual_lon_accel) + fmt::format("{:^12.3f}", lc_m.velocity) +
+        fmt::format("{:^15.3f}", lc_m.duration) + fmt::format("{:^15.3f}", lc_m.length) +
+        fmt::format("{:^17.3f}\n", metrics.max_lane_changing_length);
+    }
+  }
+
+  marker_array.markers.push_back(text_marker);
+  return marker_array;
+}
+
 MarkerArray createDebugMarkerArray(
   const Debug & debug_data, const geometry_msgs::msg::Pose & ego_pose)
 {
@@ -212,6 +253,7 @@ MarkerArray createDebugMarkerArray(
   }
 
   add(showExecutionInfo(debug_data, ego_pose));
+  add(ShowLaneChangeMetricsInfo(debug_data, ego_pose));
 
   // lanes
   add(laneletsAsTriangleMarkerArray(
