@@ -9,7 +9,7 @@
 
 The fusion method is below.
 
-1. Use the results of the new timestamp
+1. Use the results of the new timestamp if the results are from the same sensor
 2. Use the results that are not `elements.size() == 1 && color == UNKNOWN && shape == UNKNOWN`
 3. Use the results that each vertex of ROI is not at the edge of the image
 4. Use the results of high confidence
