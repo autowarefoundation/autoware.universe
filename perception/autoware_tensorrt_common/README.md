@@ -4,7 +4,7 @@ This package provides a high-level API to work with TensorRT. This library simpl
 
 ## Usage
 
-Here is example usage of the library. For full API documentation, please refer to the doxygen documentation (see header [file](include/autoware/tensorrt_common/tensorrt_common.hpp)).
+Here is an example usage of the library. For the full API documentation, please refer to the doxygen documentation (see header [file](include/autoware/tensorrt_common/tensorrt_common.hpp)).
 
 ```c++
 #include <autoware/tensorrt_common/tensorrt_common.hpp>
