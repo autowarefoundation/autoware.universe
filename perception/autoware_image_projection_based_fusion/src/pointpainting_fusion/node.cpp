@@ -333,51 +333,53 @@ dc   | dc dc dc  dc ||zc|
       p_y = point_camera.y();
       p_z = point_camera.z();
 
-    if (det2d.camera_projector_ptr->isOutsideHorizontalView(p_x, p_z)) {
-      continue;
-    }
+      if (det2d.camera_projector_ptr->isOutsideHorizontalView(p_x, p_z)) {
+        continue;
+      }
 
-    // project
-    Eigen::Vector2d projected_point;
-    if (det2d.camera_projector_ptr->calcImageProjectedPoint(
-          cv::Point3d(p_x, p_y, p_z), projected_point)) {
-      // iterate 2d bbox
-      for (const auto & feature_object : objects) {
-        sensor_msgs::msg::RegionOfInterest roi = feature_object.feature.roi;
-        // paint current point if it is inside bbox
-        int label2d = feature_object.object.classification.front().label;
-        if (
-          !isUnknown(label2d) && isInsideBbox(projected_point.x(), projected_point.y(), roi, 1.0)) {
-          // cppcheck-suppress invalidPointerCast
-          auto p_class = reinterpret_cast<float *>(&output[stride + class_offset]);
-          for (const auto & cls : isClassTable_) {
-            // add up the class values if the point belongs to multiple classes
-            *p_class = cls.second(label2d) ? (class_index_[cls.first] + *p_class) : *p_class;
+      // project
+      Eigen::Vector2d projected_point;
+      if (det2d.camera_projector_ptr->calcImageProjectedPoint(
+            cv::Point3d(p_x, p_y, p_z), projected_point)) {
+        // iterate 2d bbox
+        for (const auto & feature_object : objects) {
+          sensor_msgs::msg::RegionOfInterest roi = feature_object.feature.roi;
+          // paint current point if it is inside bbox
+          int label2d = feature_object.object.classification.front().label;
+          if (
+            !isUnknown(label2d) &&
+            isInsideBbox(projected_point.x(), projected_point.y(), roi, 1.0)) {
+            // cppcheck-suppress invalidPointerCast
+            auto p_class = reinterpret_cast<float *>(&output[stride + class_offset]);
+            for (const auto & cls : isClassTable_) {
+              // add up the class values if the point belongs to multiple classes
+              *p_class = cls.second(label2d) ? (class_index_[cls.first] + *p_class) : *p_class;
+            }
           }
-        }
-        if (debugger_) {
-          int thread_id = omp_get_thread_num();
-          local_vectors[thread_id].push_back(projected_point);
+          if (debugger_) {
+            int thread_id = omp_get_thread_num();
+            local_vectors[thread_id].push_back(projected_point);
+          }
         }
       }
     }
-  }
-  if (debugger_) {
-    std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
-    if (time_keeper_)
-      inner_st_ptr = std::make_unique<ScopedTimeTrack>("publish debug message", *time_keeper_);
+    if (debugger_) {
+      std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
+      if (time_keeper_)
+        inner_st_ptr = std::make_unique<ScopedTimeTrack>("publish debug message", *time_keeper_);
 
-    for (const auto & feature_object : input_roi_msg.feature_objects) {
-      debug_image_rois.push_back(feature_object.feature.roi);
+      for (const auto & feature_object : input_roi_msg.feature_objects) {
+        debug_image_rois.push_back(feature_object.feature.roi);
+      }
+
+      for (const auto & local_vec : local_vectors) {
+        debug_image_points.insert(debug_image_points.end(), local_vec.begin(), local_vec.end());
+      }
+
+      debugger_->image_rois_ = debug_image_rois;
+      debugger_->obstacle_points_ = debug_image_points;
+      debugger_->publishImage(det2d.id, input_roi_msg.header.stamp);
     }
-
-    for (const auto & local_vec : local_vectors) {
-      debug_image_points.insert(debug_image_points.end(), local_vec.begin(), local_vec.end());
-    }
-
-    debugger_->image_rois_ = debug_image_rois;
-    debugger_->obstacle_points_ = debug_image_points;
-    debugger_->publishImage(det2d.id, input_roi_msg.header.stamp);
   }
 }
 
