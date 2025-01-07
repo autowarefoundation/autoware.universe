@@ -2,13 +2,9 @@
 
 ## Purpose
 
-`autoware_crosswalk_traffic_light_estimator` has the following two functions.
-
-- If the pedestrian traffic signals are not detected by perception pipeline, estimates the color from detected vehicle traffic signals, HDMap, and route.
-  - The assumption is that `~/input/route` is subscribed and the conflicting crosswalk to route is known.
-  - Include the pedestrian traffic signals are invalid(`no detection`, `backlight`, or `occlusion`)
-  - This means that it is not perception pipeline can not detect, does not detect caused by not met conditions.
-- Estimates whether the pedestrian traffic signals are flashing or not, and overwrite the results.
+`autoware_crosswalk_traffic_light_estimator` is a module that estimates pedestrian traffic signals outside the detection range of the perception pipeline.
+It also estimates whether the pedestrian traffic signals are flashing and modifies the result.
+This module works without `~/input/route`, but its behavior is outputting the subscribed results as is.
 
 ## Inputs / Outputs
 
@@ -36,8 +32,42 @@
 
 ## Inner-workings / Algorithms
 
-1. Estimate the color of pedestrian traffic light from HDMap and detected vehicle traffic signals.
-2. If pedestrian traffic signals are flashing or invalid, overwrite the classification results.
+When the pedestrian traffic signals **are detected** by perception pipeline
+
+- If estimates the pedestrian traffic signals are flashing, overwrite the results
+- Prefer the output from perception pipeline, but overwrite it if the pedestrian traffic signals are invalid(`no detection`, `backlight`, or `occlusion`)
+
+When the pedestrian traffic signals **are NOT detected** by perception pipeline
+
+- Estimate the color of pedestrian traffic signals based on detected vehicle traffic signals, HDMap, and route
+
+### Estimate whether pedestrian traffic signals are flashing
+
+```plantumul
+start
+if (the pedestrian traffic light classification result exists)then
+    : update the flashing flag according to the classification result(in_signal) and last_signals
+    if (the traffic light is flashing?)then(yes)
+      : update the traffic light state
+    else(no)
+      : the traffic light state is the same with the classification result
+if (the classification result not exists)
+    : the traffic light state is the same with the estimation
+ : output the current traffic light state
+end
+```
+
+#### Update flashing flag
+
+<div align="center">
+  <img src="images/flashing_state.png" width=50%>
+</div>
+
+#### Update traffic light status
+
+<div align="center">
+  <img src="images/traffic_light.png" width=50%>
+</div>
 
 ### Estimate the color of pedestrian traffic signals
 
@@ -89,28 +119,6 @@ If traffic between pedestrians and vehicles is controlled by traffic signals, th
 
 <div align="center">
   <img src="images/intersection2.svg" width=80%>
-</div>
-
-### Estimate whether pedestrian traffic signals are flashing
-
-```plantumul
-start
-if (the pedestrian traffic light classification result exists)then
-    : update the flashing flag according to the classification result(in_signal) and last_signals
-    if (the traffic light is flashing?)then(yes)
-      : update the traffic light state
-    else(no)
-      : the traffic light state is the same with the classification result
-if (the classification result not exists)
-    : the traffic light state is the same with the estimation
- : output the current traffic light state
-end
-```
-
-#### Update flashing flag
-
-<div align="center">
-  <img src="images/flashing_state.png" width=50%>
 </div>
 
 ## Assumptions / Known limits
