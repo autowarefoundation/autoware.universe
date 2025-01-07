@@ -40,12 +40,13 @@ class PullOutPlannerBase
 public:
   explicit PullOutPlannerBase(
     rclcpp::Node & node, const StartPlannerParameters & parameters,
-    std::shared_ptr<universe_utils::TimeKeeper> time_keeper)
-  : time_keeper_(time_keeper)
+    std::shared_ptr<universe_utils::TimeKeeper> time_keeper =
+      std::make_shared<universe_utils::TimeKeeper>())
+  : parameters_(parameters),
+    vehicle_info_(autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo()),
+    vehicle_footprint_(vehicle_info_.createFootprint()),
+    time_keeper_(time_keeper)
   {
-    vehicle_info_ = autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo();
-    vehicle_footprint_ = vehicle_info_.createFootprint();
-    parameters_ = parameters;
   }
   virtual ~PullOutPlannerBase() = default;
 
@@ -68,9 +69,9 @@ protected:
     double collision_check_distance_from_end) const;
 
   std::shared_ptr<const PlannerData> planner_data_;
+  StartPlannerParameters parameters_;
   autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
   LinearRing2d vehicle_footprint_;
-  StartPlannerParameters parameters_;
   double collision_check_margin_;
 
   mutable std::shared_ptr<universe_utils::TimeKeeper> time_keeper_;
