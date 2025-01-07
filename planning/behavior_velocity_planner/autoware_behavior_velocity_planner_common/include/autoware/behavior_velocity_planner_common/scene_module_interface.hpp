@@ -32,7 +32,6 @@
 #include <autoware_internal_debug_msgs/msg/float64_stamped.hpp>
 #include <autoware_planning_msgs/msg/path.hpp>
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
-#include <tier4_v2x_msgs/msg/infrastructure_command_array.hpp>
 #include <unique_identifier_msgs/msg/uuid.hpp>
 
 #include <memory>
@@ -95,17 +94,6 @@ public:
     planner_data_ = planner_data;
   }
 
-  std::optional<tier4_v2x_msgs::msg::InfrastructureCommand> getInfrastructureCommand()
-  {
-    return infrastructure_command_;
-  }
-
-  void setInfrastructureCommand(
-    const std::optional<tier4_v2x_msgs::msg::InfrastructureCommand> & command)
-  {
-    infrastructure_command_ = command;
-  }
-
   void setTimeKeeper(const std::shared_ptr<universe_utils::TimeKeeper> & time_keeper)
   {
     time_keeper_ = time_keeper;
@@ -123,7 +111,6 @@ protected:
   rclcpp::Logger logger_;
   rclcpp::Clock::SharedPtr clock_;
   std::shared_ptr<const PlannerData> planner_data_;
-  std::optional<tier4_v2x_msgs::msg::InfrastructureCommand> infrastructure_command_;
   autoware::motion_utils::VelocityFactorInterface velocity_factor_;
   std::vector<ObjectOfInterest> objects_of_interest_;
   mutable std::shared_ptr<universe_utils::TimeKeeper> time_keeper_;
@@ -161,9 +148,6 @@ public:
       std::string("~/virtual_wall/") + module_name, 5);
     pub_velocity_factor_ = node.create_publisher<autoware_adapi_v1_msgs::msg::VelocityFactorArray>(
       std::string("/planning/velocity_factors/") + module_name, 1);
-    pub_infrastructure_commands_ =
-      node.create_publisher<tier4_v2x_msgs::msg::InfrastructureCommandArray>(
-        "~/output/infrastructure_commands", 1);
 
     processing_time_publisher_ = std::make_shared<DebugPublisher>(&node, "~/debug");
 
@@ -201,9 +185,6 @@ protected:
     velocity_factor_array.header.frame_id = "map";
     velocity_factor_array.header.stamp = clock_->now();
 
-    tier4_v2x_msgs::msg::InfrastructureCommandArray infrastructure_command_array;
-    infrastructure_command_array.stamp = clock_->now();
-
     for (const auto & scene_module : scene_modules_) {
       scene_module->resetVelocityFactor();
       scene_module->setPlannerData(planner_data_);
@@ -215,10 +196,6 @@ protected:
         velocity_factor_array.factors.emplace_back(velocity_factor);
       }
 
-      if (const auto command = scene_module->getInfrastructureCommand()) {
-        infrastructure_command_array.commands.push_back(*command);
-      }
-
       for (const auto & marker : scene_module->createDebugMarkerArray().markers) {
         debug_marker_array.markers.push_back(marker);
       }
@@ -227,7 +204,6 @@ protected:
     }
 
     pub_velocity_factor_->publish(velocity_factor_array);
-    pub_infrastructure_commands_->publish(infrastructure_command_array);
     pub_debug_->publish(debug_marker_array);
     if (is_publish_debug_path_) {
       tier4_planning_msgs::msg::PathWithLaneId debug_path;
@@ -299,8 +275,6 @@ protected:
   rclcpp::Publisher<tier4_planning_msgs::msg::PathWithLaneId>::SharedPtr pub_debug_path_;
   rclcpp::Publisher<autoware_adapi_v1_msgs::msg::VelocityFactorArray>::SharedPtr
     pub_velocity_factor_;
-  rclcpp::Publisher<tier4_v2x_msgs::msg::InfrastructureCommandArray>::SharedPtr
-    pub_infrastructure_commands_;
 
   std::shared_ptr<DebugPublisher> processing_time_publisher_;
 
