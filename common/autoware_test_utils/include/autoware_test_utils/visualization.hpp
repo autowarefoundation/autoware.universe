@@ -236,7 +236,7 @@ struct PathWithLaneIdConfig
   std::optional<double> linewidth{};
   std::optional<DrivableAreaConfig> da{};
   bool lane_id{};           //<! flag to plot lane_id text
-  double quiver_size{1.0};  //<! quvier color is same as `color` or "k" if it is null
+  double quiver_size{1.0};  //<! quiver color is same as `color` or "k" if it is null
 };
 
 /**
