@@ -288,7 +288,7 @@ bool hasEnoughDistance(
 std::vector<PullOverPath> selectPullOverPaths(
   const std::vector<PullOverPath> & pull_over_path_candidates,
   const GoalCandidates & goal_candidates, const std::shared_ptr<const PlannerData> planner_data,
-  const GoalPlannerParameters & parameters, const BehaviorModuleOutput & previous_module_output)
+  const GoalPlannerParameters & parameters, const BehaviorModuleOutput & upstream_module_output)
 {
   using autoware::behavior_path_planner::utils::getExtendedCurrentLanesFromPath;
   using autoware::motion_utils::calcSignedArcLength;
@@ -313,15 +313,15 @@ std::vector<PullOverPath> selectPullOverPaths(
   }
 
   const double prev_path_front_to_goal_dist = calcSignedArcLength(
-    previous_module_output.path.points,
-    previous_module_output.path.points.front().point.pose.position, goal_pose.position);
+    upstream_module_output.path.points,
+    upstream_module_output.path.points.front().point.pose.position, goal_pose.position);
   const auto & long_tail_reference_path = [&]() {
     if (prev_path_front_to_goal_dist > backward_length) {
-      return previous_module_output.path;
+      return upstream_module_output.path;
     }
     // get road lanes which is at least backward_length[m] behind the goal
     const auto road_lanes = getExtendedCurrentLanesFromPath(
-      previous_module_output.path, planner_data, backward_length, 0.0, false);
+      upstream_module_output.path, planner_data, backward_length, 0.0, false);
     const auto goal_pose_length = lanelet::utils::getArcCoordinates(road_lanes, goal_pose).length;
     return planner_data->route_handler->getCenterLinePath(
       road_lanes, std::max(0.0, goal_pose_length - backward_length),

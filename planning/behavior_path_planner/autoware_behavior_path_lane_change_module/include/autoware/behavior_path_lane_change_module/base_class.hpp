@@ -18,6 +18,7 @@
 #include "autoware/behavior_path_lane_change_module/structs/debug.hpp"
 #include "autoware/behavior_path_lane_change_module/structs/path.hpp"
 #include "autoware/behavior_path_lane_change_module/utils/utils.hpp"
+#include "autoware/behavior_path_planner_common/data_manager.hpp"
 #include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
 #include "autoware/behavior_path_planner_common/turn_signal_decider.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_shifter/path_shifter.hpp"
@@ -38,6 +39,7 @@
 class TestNormalLaneChange;
 namespace autoware::behavior_path_planner
 {
+using autoware::behavior_path_planner::PoseWithDetailOpt;
 using autoware::route_handler::Direction;
 using autoware::universe_utils::StopWatch;
 using geometry_msgs::msg::Point;
@@ -102,6 +104,8 @@ public:
 
   virtual LaneChangePath getLaneChangePath() const = 0;
 
+  virtual BehaviorModuleOutput getTerminalLaneChangePath() const = 0;
+
   virtual bool isEgoOnPreparePhase() const = 0;
 
   virtual bool isRequiredStop(const bool is_trailing_object) = 0;
@@ -128,7 +132,7 @@ public:
 
   virtual void insert_stop_point(
     [[maybe_unused]] const lanelet::ConstLanelets & lanelets,
-    [[maybe_unused]] PathWithLaneId & path)
+    [[maybe_unused]] PathWithLaneId & path, [[maybe_unused]] const bool is_waiting_approval = false)
   {
   }
 
@@ -222,7 +226,7 @@ public:
     return direction_;
   }
 
-  std::optional<Pose> getStopPose() const { return lane_change_stop_pose_; }
+  PoseWithDetailOpt getStopPose() const { return lane_change_stop_pose_; }
 
   void resetStopPose() { lane_change_stop_pose_ = std::nullopt; }
 
@@ -282,9 +286,8 @@ protected:
   lane_change::CommonDataPtr common_data_ptr_;
   FilteredLanesObjects filtered_objects_{};
   BehaviorModuleOutput prev_module_output_{};
-  std::optional<Pose> lane_change_stop_pose_{std::nullopt};
-
-  PathWithLaneId prev_approved_path_;
+  PoseWithDetailOpt lane_change_stop_pose_{std::nullopt};
+  mutable std::optional<LaneChangePath> terminal_lane_change_path_{std::nullopt};
 
   int unsafe_hysteresis_count_{0};
   bool is_abort_path_approved_{false};
