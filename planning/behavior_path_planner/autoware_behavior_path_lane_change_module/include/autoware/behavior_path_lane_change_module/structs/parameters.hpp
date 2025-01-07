@@ -137,18 +137,27 @@ struct DelayParameters
   double th_parked_vehicle_shift_ratio{0.6};
 };
 
+struct TerminalPathParameters
+{
+  bool enable{false};
+  bool disable_near_goal{false};
+  bool stop_at_boundary{false};
+};
+
 struct Parameters
 {
   TrajectoryParameters trajectory{};
   SafetyParameters safety{};
   CancelParameters cancel{};
   DelayParameters delay{};
+  TerminalPathParameters terminal_path{};
 
   // lane change parameters
   double backward_lane_length{200.0};
   double backward_length_buffer_for_end_of_lane{0.0};
   double backward_length_buffer_for_blocking_object{0.0};
   double backward_length_from_intersection{5.0};
+  bool enable_stopped_vehicle_buffer{false};
 
   // parked vehicle
   double object_check_min_road_shoulder_width{0.5};

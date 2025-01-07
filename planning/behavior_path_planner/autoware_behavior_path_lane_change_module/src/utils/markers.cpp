@@ -16,6 +16,7 @@
 #include "autoware/behavior_path_planner_common/marker_utils/utils.hpp"
 
 #include <autoware/behavior_path_lane_change_module/utils/markers.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/ros/marker_helper.hpp>
 #include <autoware_lanelet2_extension/visualization/visualization.hpp>
 
@@ -25,10 +26,11 @@
 #include <visualization_msgs/msg/detail/marker__struct.hpp>
 #include <visualization_msgs/msg/detail/marker_array__struct.hpp>
 
+#include <fmt/format.h>
+
 #include <algorithm>
 #include <cstdint>
 #include <cstdlib>
-#include <sstream>
 #include <string>
 #include <vector>
 
@@ -52,27 +54,6 @@ MarkerArray showAllValidLaneChangePath(
   const auto loop_size = std::min(lane_change_paths.size(), colors.size());
   marker_array.markers.reserve(loop_size);
 
-  const auto info_prep_to_string =
-    [](const autoware::behavior_path_planner::lane_change::Info & info) -> std::string {
-    std::ostringstream ss_text;
-    ss_text << std::setprecision(3) << "vel: " << info.velocity.prepare
-            << "[m/s] | lon_acc: " << info.longitudinal_acceleration.prepare
-            << "[m/s2] | t: " << info.duration.prepare << "[s] | L: " << info.length.prepare
-            << "[m]";
-    return ss_text.str();
-  };
-
-  const auto info_lc_to_string =
-    [](const autoware::behavior_path_planner::lane_change::Info & info) -> std::string {
-    std::ostringstream ss_text;
-    ss_text << std::setprecision(3) << "vel: " << info.velocity.lane_changing
-            << "[m/s] | lon_acc: " << info.longitudinal_acceleration.lane_changing
-            << "[m/s2] | lat_acc: " << info.lateral_acceleration
-            << "[m/s2] | t: " << info.duration.lane_changing
-            << "[s] | L: " << info.length.lane_changing << "[m]";
-    return ss_text.str();
-  };
-
   for (std::size_t idx = 0; idx < loop_size; ++idx) {
     int32_t id{0};
     const auto & lc_path = lane_change_paths.at(idx);
@@ -91,19 +72,30 @@ MarkerArray showAllValidLaneChangePath(
       marker.points.push_back(point.point.pose.position);
     }
 
+    const auto & info = lc_path.info;
     auto text_marker = createDefaultMarker(
       "map", current_time, ns_with_idx, ++id, visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
       createMarkerScale(0.1, 0.1, 0.8), colors::yellow());
     const auto prep_idx = points.size() / 4;
     text_marker.pose = points.at(prep_idx).point.pose;
     text_marker.pose.position.z += 2.0;
-    text_marker.text = info_prep_to_string(lc_path.info);
+    text_marker.text = fmt::format(
+      "vel: {vel:.3f}[m/s] | lon_acc: {lon_acc:.3f}[m/s2] | t: {time:.3f}[s] | L: {length:.3f}[m]",
+      fmt::arg("vel", info.velocity.prepare),
+      fmt::arg("lon_acc", info.longitudinal_acceleration.prepare),
+      fmt::arg("time", info.duration.prepare), fmt::arg("length", info.length.prepare));
     marker_array.markers.push_back(text_marker);
 
     const auto lc_idx = points.size() / 2;
     text_marker.id = ++id;
     text_marker.pose = points.at(lc_idx).point.pose;
-    text_marker.text = info_lc_to_string(lc_path.info);
+    text_marker.text = fmt::format(
+      "vel: {vel:.3f}[m/s] | lon_acc: {lon_acc:.3f}[m/s2] | lat_acc: {lat_acc:.3f}[m/s2] | t: "
+      "{time:.3f}[s] | L: {length:.3f}[m]",
+      fmt::arg("vel", info.velocity.lane_changing),
+      fmt::arg("lon_acc", info.longitudinal_acceleration.lane_changing),
+      fmt::arg("lat_acc", info.lateral_acceleration), fmt::arg("time", info.duration.lane_changing),
+      fmt::arg("length", info.length.lane_changing));
     marker_array.markers.push_back(text_marker);
 
     marker_array.markers.push_back(marker);
@@ -186,18 +178,51 @@ MarkerArray showExecutionInfo(const Debug & debug_data, const geometry_msgs::msg
   safety_check_info_text.pose = ego_pose;
   safety_check_info_text.pose.position.z += 4.0;
 
-  std::ostringstream ss;
-
-  ss << "\nDistToEndOfCurrentLane: " << std::setprecision(5)
-     << debug_data.distance_to_end_of_current_lane
-     << "\nDistToLaneChangeFinished: " << debug_data.distance_to_lane_change_finished
-     << (debug_data.is_stuck ? "\nVehicleStuck" : "")
-     << (debug_data.is_able_to_return_to_current_lane ? "\nAbleToReturnToCurrentLane" : "")
-     << (debug_data.is_abort ? "\nAborting" : "")
-     << "\nDistanceToAbortFinished: " << debug_data.distance_to_abort_finished;
-
-  safety_check_info_text.text = ss.str();
+  safety_check_info_text.text = fmt::format(
+    "{stuck} | {return_lane} | {abort}", fmt::arg("stuck", debug_data.is_stuck ? "is stuck" : ""),
+    fmt::arg("return_lane", debug_data.is_able_to_return_to_current_lane ? "" : "can't return"),
+    fmt::arg("abort", debug_data.is_abort ? "aborting" : ""));
   marker_array.markers.push_back(safety_check_info_text);
+  return marker_array;
+}
+
+MarkerArray ShowLaneChangeMetricsInfo(
+  const Debug & debug_data, const geometry_msgs::msg::Pose & pose)
+{
+  MarkerArray marker_array;
+  if (debug_data.lane_change_metrics.empty()) {
+    return marker_array;
+  }
+
+  auto text_marker = createDefaultMarker(
+    "map", rclcpp::Clock{RCL_ROS_TIME}.now(), "sampling_metrics", 0, Marker::TEXT_VIEW_FACING,
+    createMarkerScale(0.6, 0.6, 0.6), colors::yellow());
+  text_marker.pose = autoware::universe_utils::calcOffsetPose(pose, 10.0, 15.0, 0.0);
+
+  text_marker.text = fmt::format("{:<12}", "") + fmt::format("{:^18}|", "lat_accel[m/s2]") +
+                     fmt::format("{:^18}|", "lon_accel[m/s2]") +
+                     fmt::format("{:^17}|", "velocity[m/s]") +
+                     fmt::format("{:^15}|", "duration[s]") + fmt::format("{:^15}|", "length[m]") +
+                     fmt::format("{:^20}\n", "max_length_th[m]");
+  for (const auto & metrics : debug_data.lane_change_metrics) {
+    text_marker.text += fmt::format("{:-<170}\n", "");
+    const auto & p_m = metrics.prep_metric;
+    text_marker.text +=
+      fmt::format("{:<17}", "prep_metrics:") + fmt::format("{:^10.3f}", p_m.lat_accel) +
+      fmt::format("{:^21.3f}", p_m.actual_lon_accel) + fmt::format("{:^12.3f}", p_m.velocity) +
+      fmt::format("{:^15.3f}", p_m.duration) + fmt::format("{:^15.3f}", p_m.length) +
+      fmt::format("{:^17.3f}\n", metrics.max_prepare_length);
+    text_marker.text += fmt::format("{:<20}\n", "lc_metrics:");
+    for (const auto lc_m : metrics.lc_metrics) {
+      text_marker.text +=
+        fmt::format("{:<15}", "") + fmt::format("{:^10.3f}", lc_m.lat_accel) +
+        fmt::format("{:^21.3f}", lc_m.actual_lon_accel) + fmt::format("{:^12.3f}", lc_m.velocity) +
+        fmt::format("{:^15.3f}", lc_m.duration) + fmt::format("{:^15.3f}", lc_m.length) +
+        fmt::format("{:^17.3f}\n", metrics.max_lane_changing_length);
+    }
+  }
+
+  marker_array.markers.push_back(text_marker);
   return marker_array;
 }
 
@@ -228,6 +253,7 @@ MarkerArray createDebugMarkerArray(
   }
 
   add(showExecutionInfo(debug_data, ego_pose));
+  add(ShowLaneChangeMetricsInfo(debug_data, ego_pose));
 
   // lanes
   add(laneletsAsTriangleMarkerArray(

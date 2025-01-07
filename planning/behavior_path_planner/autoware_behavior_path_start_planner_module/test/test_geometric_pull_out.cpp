@@ -156,9 +156,8 @@ private:
     parameters->th_moving_object_velocity = th_moving_object_velocity_;
     parameters->divide_pull_out_path = divide_pull_out_path_;
 
-    auto time_keeper = std::make_shared<autoware::universe_utils::TimeKeeper>();
     geometric_pull_out_ =
-      std::make_shared<GeometricPullOut>(*node_, *parameters, lane_departure_checker_, time_keeper);
+      std::make_shared<GeometricPullOut>(*node_, *parameters, lane_departure_checker_);
   }
 
   void initialize_planner_data()
