@@ -113,8 +113,6 @@ void publishMandatoryTopics(
     test_target_node, "behavior_velocity_planner_node/input/traffic_signals");
   test_manager->publishMaxVelocity(
     test_target_node, "behavior_velocity_planner_node/input/external_velocity_limit_mps");
-  test_manager->publishVirtualTrafficLightState(
-    test_target_node, "behavior_velocity_planner_node/input/virtual_traffic_light_states");
   test_manager->publishOccupancyGrid(
     test_target_node, "behavior_velocity_planner_node/input/occupancy_grid");
 }
