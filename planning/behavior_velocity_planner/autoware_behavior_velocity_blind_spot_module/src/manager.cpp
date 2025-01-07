@@ -83,7 +83,7 @@ void BlindSpotModuleManager::launchNewModules(const tier4_planning_msgs::msg::Pa
   }
 }
 
-std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
+std::function<bool(const std::shared_ptr<SceneModuleInterfaceWithRTC> &)>
 BlindSpotModuleManager::getModuleExpiredFunction(
   const tier4_planning_msgs::msg::PathWithLaneId & path)
 {

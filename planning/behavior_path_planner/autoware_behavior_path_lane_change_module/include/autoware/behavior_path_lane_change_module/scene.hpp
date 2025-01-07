@@ -18,6 +18,7 @@
 #include "autoware/behavior_path_lane_change_module/structs/data.hpp"
 
 #include <memory>
+#include <string>
 #include <utility>
 #include <vector>
 
@@ -64,13 +65,18 @@ public:
 
   LaneChangePath getLaneChangePath() const override;
 
+  BehaviorModuleOutput getTerminalLaneChangePath() const override;
+
   BehaviorModuleOutput generateOutput() override;
 
   void extendOutputDrivableArea(BehaviorModuleOutput & output) const override;
 
-  void insert_stop_point(const lanelet::ConstLanelets & lanelets, PathWithLaneId & path) override;
+  void insert_stop_point(
+    const lanelet::ConstLanelets & lanelets, PathWithLaneId & path,
+    const bool is_waiting_approval = false) override;
 
-  void insert_stop_point_on_current_lanes(PathWithLaneId & path);
+  void insert_stop_point_on_current_lanes(
+    PathWithLaneId & path, const bool is_waiting_approval = false);
 
   PathWithLaneId getReferencePath() const override;
 
@@ -136,6 +142,8 @@ protected:
   bool check_candidate_path_safety(
     const LaneChangePath & candidate_path, const lane_change::TargetObjects & target_objects) const;
 
+  std::optional<PathWithLaneId> compute_terminal_lane_change_path() const;
+
   bool isValidPath(const PathWithLaneId & path) const override;
 
   PathSafetyStatus isLaneChangePathSafe(
@@ -157,7 +165,8 @@ protected:
 
   bool check_prepare_phase() const;
 
-  void set_stop_pose(const double arc_length_to_stop_pose, PathWithLaneId & path);
+  void set_stop_pose(
+    const double arc_length_to_stop_pose, PathWithLaneId & path, const std::string & reason = "");
 
   void updateStopTime();
 
