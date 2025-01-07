@@ -35,10 +35,7 @@ using autoware::freespace_planning_algorithms::RRTStar;
 class FreespacePullOut : public PullOutPlannerBase
 {
 public:
-  FreespacePullOut(
-    rclcpp::Node & node, const StartPlannerParameters & parameters,
-    const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
-    std::shared_ptr<universe_utils::TimeKeeper> time_keeper);
+  FreespacePullOut(rclcpp::Node & node, const StartPlannerParameters & parameters);
 
   PlannerType getPlannerType() const override { return PlannerType::FREESPACE; }
 
