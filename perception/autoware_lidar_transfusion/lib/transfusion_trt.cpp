@@ -240,7 +240,7 @@ bool TransfusionTRT::preprocess(
   success &= network_trt_ptr_->setTensor(
     "voxels", voxel_features_d_.get(),
     nvinfer1::Dims3{
-      static_cast<int32_t>(params_input), config_.max_num_points_per_pillar_,
+      params_input_i32, config_.max_num_points_per_pillar_,
       static_cast<int32_t>(config_.num_point_feature_size_)});
   success &= network_trt_ptr_->setTensor(
     "num_points", voxel_num_d_.get(), nvinfer1::Dims{1, {params_input_i32}});
