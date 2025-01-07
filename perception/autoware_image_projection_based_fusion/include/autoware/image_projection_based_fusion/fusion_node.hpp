@@ -130,6 +130,8 @@ private:
   std::mutex mutex_cached_msgs_;
 
 protected:
+  void setDet2DStatus(std::size_t rois_number);
+
   // callback for main subscription
   void subCallback(const typename Msg3D::ConstSharedPtr input_msg);
   // callback for roi subscription
@@ -144,7 +146,6 @@ protected:
   virtual void publish(const ExportObj & output_msg);
 
   // Members
-  std::size_t rois_number_{1};
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 

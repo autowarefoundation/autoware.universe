@@ -52,16 +52,16 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
 : Node(node_name, options), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
 {
   // set rois_number
-  rois_number_ = static_cast<std::size_t>(declare_parameter<int32_t>("rois_number"));
-  if (rois_number_ < 1) {
-    RCLCPP_WARN(
-      this->get_logger(), "minimum rois_number is 1. current rois_number is %zu", rois_number_);
-    rois_number_ = 1;
+  const std::size_t rois_number =
+    static_cast<std::size_t>(declare_parameter<int32_t>("rois_number"));
+  if (rois_number < 1) {
+    RCLCPP_ERROR(
+      this->get_logger(), "minimum rois_number is 1. current rois_number is %zu", rois_number);
   }
-  if (rois_number_ > 8) {
+  if (rois_number > 8) {
     RCLCPP_WARN(
       this->get_logger(),
-      "Current rois_number is %zu. Large rois number may cause performance issue.", rois_number_);
+      "Current rois_number is %zu. Large rois number may cause performance issue.", rois_number);
   }
 
   // Set parameters
@@ -70,10 +70,11 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
 
   std::vector<std::string> input_rois_topics;
   std::vector<std::string> input_camera_info_topics;
-  input_rois_topics.resize(rois_number_);
-  input_camera_info_topics.resize(rois_number_);
 
-  for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
+  input_rois_topics.resize(rois_number);
+  input_camera_info_topics.resize(rois_number);
+
+  for (std::size_t roi_i = 0; roi_i < rois_number; ++roi_i) {
     input_rois_topics.at(roi_i) = declare_parameter<std::string>(
       "input/rois" + std::to_string(roi_i),
       "/perception/object_recognition/detection/rois" + std::to_string(roi_i));
@@ -84,8 +85,8 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
   }
 
   // subscribe camera info
-  camera_info_subs_.resize(rois_number_);
-  for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
+  camera_info_subs_.resize(rois_number);
+  for (std::size_t roi_i = 0; roi_i < rois_number; ++roi_i) {
     std::function<void(const sensor_msgs::msg::CameraInfo::ConstSharedPtr msg)> fnc =
       std::bind(&FusionNode::cameraInfoCallback, this, std::placeholders::_1, roi_i);
     camera_info_subs_.at(roi_i) = this->create_subscription<sensor_msgs::msg::CameraInfo>(
@@ -93,8 +94,8 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
   }
 
   // subscribe rois
-  rois_subs_.resize(rois_number_);
-  for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
+  rois_subs_.resize(rois_number);
+  for (std::size_t roi_i = 0; roi_i < rois_number; ++roi_i) {
     std::function<void(const typename Msg2D::ConstSharedPtr msg)> roi_callback =
       std::bind(&FusionNode::roiCallback, this, std::placeholders::_1, roi_i);
     rois_subs_.at(roi_i) = this->create_subscription<Msg2D>(
@@ -112,48 +113,12 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
   timer_ = rclcpp::create_timer(
     this, get_clock(), period_ns, std::bind(&FusionNode::timer_callback, this));
 
-  // camera offset settings
-  std::vector<double> input_offset_ms = declare_parameter<std::vector<double>>("input_offset_ms");
-  if (!input_offset_ms.empty() && rois_number_ > input_offset_ms.size()) {
-    throw std::runtime_error("The number of offsets does not match the number of topics.");
-  }
+  // initialization on each 2d detections
+  setDet2DStatus(rois_number);
 
-  // camera projection settings
-  std::vector<bool> point_project_to_unrectified_image =
-    declare_parameter<std::vector<bool>>("point_project_to_unrectified_image");
-  if (rois_number_ > point_project_to_unrectified_image.size()) {
-    throw std::runtime_error(
-      "The number of point_project_to_unrectified_image does not match the number of rois topics.");
-  }
-  std::vector<bool> approx_camera_projection =
-    declare_parameter<std::vector<bool>>("approximate_camera_projection");
-  if (rois_number_ != approx_camera_projection.size()) {
-    const std::size_t current_size = approx_camera_projection.size();
-    RCLCPP_WARN(
-      this->get_logger(),
-      "The number of elements in approximate_camera_projection should be the same as in "
-      "rois_number. "
-      "It has %zu elements.",
-      current_size);
-    if (current_size < rois_number_) {
-      approx_camera_projection.resize(rois_number_);
-      for (std::size_t i = current_size; i < rois_number_; i++) {
-        approx_camera_projection.at(i) = true;
-      }
-    }
-  }
+  // parameters for approximation grid
   approx_grid_cell_w_size_ = declare_parameter<float>("approximation_grid_cell_width");
   approx_grid_cell_h_size_ = declare_parameter<float>("approximation_grid_cell_height");
-
-  // 2d detection status initialization
-  det2d_list_.resize(rois_number_);
-  for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
-    det2d_list_.at(roi_i).id = roi_i;
-    det2d_list_.at(roi_i).project_to_unrectified_image =
-      point_project_to_unrectified_image.at(roi_i);
-    det2d_list_.at(roi_i).approximate_camera_projection = approx_camera_projection.at(roi_i);
-    det2d_list_.at(roi_i).input_offset_ms = input_offset_ms.at(roi_i);
-  }
 
   // parameters for out_of_scope filter
   filter_scope_min_x_ = declare_parameter<double>("filter_scope_min_x");
@@ -166,8 +131,8 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
   // debugger
   if (declare_parameter("debug_mode", false)) {
     std::vector<std::string> input_camera_topics;
-    input_camera_topics.resize(rois_number_);
-    for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
+    input_camera_topics.resize(rois_number);
+    for (std::size_t roi_i = 0; roi_i < rois_number; ++roi_i) {
       input_camera_topics.at(roi_i) = declare_parameter<std::string>(
         "input/image" + std::to_string(roi_i),
         "/sensing/camera/camera" + std::to_string(roi_i) + "/image_rect_color");
@@ -175,7 +140,7 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
     std::size_t image_buffer_size =
       static_cast<std::size_t>(declare_parameter<int32_t>("image_buffer_size"));
     debugger_ =
-      std::make_shared<Debugger>(this, rois_number_, image_buffer_size, input_camera_topics);
+      std::make_shared<Debugger>(this, rois_number, image_buffer_size, input_camera_topics);
   }
 
   // time keeper
@@ -196,6 +161,52 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
     debug_publisher_ = std::make_unique<DebugPublisher>(this, get_name());
     stop_watch_ptr_->tic("cyclic_time");
     stop_watch_ptr_->tic("processing_time");
+  }
+}
+
+template <class Msg3D, class Msg2D, class ExportObj>
+void FusionNode<Msg3D, Msg2D, ExportObj>::setDet2DStatus(std::size_t rois_number)
+{
+  // camera offset settings
+  std::vector<double> input_offset_ms = declare_parameter<std::vector<double>>("input_offset_ms");
+  if (!input_offset_ms.empty() && rois_number > input_offset_ms.size()) {
+    throw std::runtime_error("The number of offsets does not match the number of topics.");
+  }
+
+  // camera projection settings
+  std::vector<bool> point_project_to_unrectified_image =
+    declare_parameter<std::vector<bool>>("point_project_to_unrectified_image");
+  if (rois_number > point_project_to_unrectified_image.size()) {
+    throw std::runtime_error(
+      "The number of point_project_to_unrectified_image does not match the number of rois "
+      "topics.");
+  }
+  std::vector<bool> approx_camera_projection =
+    declare_parameter<std::vector<bool>>("approximate_camera_projection");
+  if (rois_number != approx_camera_projection.size()) {
+    const std::size_t current_size = approx_camera_projection.size();
+    RCLCPP_WARN(
+      get_logger(),
+      "The number of elements in approximate_camera_projection should be the same as in "
+      "rois_number. "
+      "It has %zu elements.",
+      current_size);
+    if (current_size < rois_number) {
+      approx_camera_projection.resize(rois_number);
+      for (std::size_t i = current_size; i < rois_number; i++) {
+        approx_camera_projection.at(i) = true;
+      }
+    }
+  }
+
+  // 2d detection status initialization
+  det2d_list_.resize(rois_number);
+  for (std::size_t roi_i = 0; roi_i < rois_number; ++roi_i) {
+    det2d_list_.at(roi_i).id = roi_i;
+    det2d_list_.at(roi_i).project_to_unrectified_image =
+      point_project_to_unrectified_image.at(roi_i);
+    det2d_list_.at(roi_i).approximate_camera_projection = approx_camera_projection.at(roi_i);
+    det2d_list_.at(roi_i).input_offset_ms = input_offset_ms.at(roi_i);
   }
 }
 
