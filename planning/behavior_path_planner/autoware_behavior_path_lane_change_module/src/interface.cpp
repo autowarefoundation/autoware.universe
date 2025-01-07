@@ -259,7 +259,6 @@ bool LaneChangeInterface::canTransitFailureState()
   }
 
   if (state == LaneChangeStates::Abort) {
-    module_type_->toAbortState();
     return false;
   }
 
