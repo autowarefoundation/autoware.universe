@@ -28,13 +28,13 @@ Profiler::Profiler(const std::vector<Profiler> & src_profilers)
 {
   index_ = 0;
   for (const auto & src_profiler : src_profilers) {
-    for (const auto & rec : src_profiler.profile_) {
-      auto it = profile_.find(rec.first);
+    for (const auto & [name, record] : src_profiler.profile_) {
+      auto it = profile_.find(name);
       if (it == profile_.end()) {
-        profile_.insert(rec);
+        profile_.emplace(name, record);
       } else {
-        it->second.time += rec.second.time;
-        it->second.count += rec.second.count;
+        it->second.time += record.time;
+        it->second.count += record.count;
       }
     }
   }
