@@ -59,7 +59,6 @@ private:
   rclcpp::Publisher<PointCloudMsgType>::SharedPtr point_pub_ptr_;
 
   int omp_num_threads_{1};
-  float score_threshold_{0.0};
   std::vector<std::string> class_names_;
   std::map<std::string, float> class_index_;
   std::map<std::string, std::function<bool(int)>> isClassTable_;
