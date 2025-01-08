@@ -155,7 +155,7 @@ bool hasPreviousModulePathShapeChanged(
 {
   // Calculate the lateral distance between each point of the current path and the nearest point of
   // the last path
-  constexpr double LATERAL_DEVIATION_THRESH = 0.3;
+  constexpr double LATERAL_DEVIATION_THRESH = 0.1;
   for (const auto & p : upstream_module_output.path.points) {
     const size_t nearest_seg_idx = autoware::motion_utils::findNearestSegmentIndex(
       last_upstream_module_output.path.points, p.point.pose.position);
@@ -189,13 +189,13 @@ bool hasDeviatedFromLastPreviousModulePath(
 {
   return std::abs(autoware::motion_utils::calcLateralOffset(
            last_upstream_module_output.path.points,
-           planner_data.self_odometry->pose.pose.position)) > 0.3;
+           planner_data.self_odometry->pose.pose.position)) > 0.1;
 }
 
 bool hasDeviatedFromCurrentPreviousModulePath(
   const PlannerData & planner_data, const BehaviorModuleOutput & upstream_module_output)
 {
-  constexpr double LATERAL_DEVIATION_THRESH = 0.3;
+  constexpr double LATERAL_DEVIATION_THRESH = 0.1;
   return std::abs(autoware::motion_utils::calcLateralOffset(
            upstream_module_output.path.points, planner_data.self_odometry->pose.pose.position)) >
          LATERAL_DEVIATION_THRESH;
