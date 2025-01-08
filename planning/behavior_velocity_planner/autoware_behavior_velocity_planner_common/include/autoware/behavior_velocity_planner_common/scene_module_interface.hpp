@@ -17,6 +17,7 @@
 
 #include <autoware/behavior_velocity_planner_common/planner_data.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
+#include <autoware/motion_utils/factor/planning_factor_interface.hpp>
 #include <autoware/motion_utils/factor/velocity_factor_interface.hpp>
 #include <autoware/motion_utils/marker/virtual_wall_marker_creator.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
@@ -79,7 +80,9 @@ class SceneModuleInterface
 {
 public:
   explicit SceneModuleInterface(
-    const int64_t module_id, rclcpp::Logger logger, rclcpp::Clock::SharedPtr clock);
+    const int64_t module_id, rclcpp::Logger logger, rclcpp::Clock::SharedPtr clock,
+    const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+    const std::shared_ptr<motion_utils::PlanningFactorInterface> planning_factor_interface);
   virtual ~SceneModuleInterface() = default;
 
   virtual bool modifyPathVelocity(PathWithLaneId * path) = 0;
@@ -94,13 +97,6 @@ public:
     planner_data_ = planner_data;
   }
 
-  void setTimeKeeper(const std::shared_ptr<universe_utils::TimeKeeper> & time_keeper)
-  {
-    time_keeper_ = time_keeper;
-  }
-
-  std::shared_ptr<universe_utils::TimeKeeper> getTimeKeeper() { return time_keeper_; }
-
   void resetVelocityFactor() { velocity_factor_.reset(); }
   VelocityFactor getVelocityFactor() const { return velocity_factor_.get(); }
   std::vector<ObjectOfInterest> getObjectsOfInterestData() const { return objects_of_interest_; }
@@ -111,9 +107,10 @@ protected:
   rclcpp::Logger logger_;
   rclcpp::Clock::SharedPtr clock_;
   std::shared_ptr<const PlannerData> planner_data_;
-  autoware::motion_utils::VelocityFactorInterface velocity_factor_;
+  autoware::motion_utils::VelocityFactorInterface velocity_factor_;  // TODO(soblin): remove this
   std::vector<ObjectOfInterest> objects_of_interest_;
   mutable std::shared_ptr<universe_utils::TimeKeeper> time_keeper_;
+  std::shared_ptr<motion_utils::PlanningFactorInterface> planning_factor_interface_;
 
   void setObjectsOfInterestData(
     const geometry_msgs::msg::Pose & pose, const autoware_perception_msgs::msg::Shape & shape,
@@ -148,6 +145,8 @@ public:
       std::string("~/virtual_wall/") + module_name, 5);
     pub_velocity_factor_ = node.create_publisher<autoware_adapi_v1_msgs::msg::VelocityFactorArray>(
       std::string("/planning/velocity_factors/") + module_name, 1);
+    planning_factor_interface_ =
+      std::make_shared<motion_utils::PlanningFactorInterface>(&node, module_name);
 
     processing_time_publisher_ = std::make_shared<DebugPublisher>(&node, "~/debug");
 
@@ -191,6 +190,7 @@ protected:
       scene_module->modifyPathVelocity(path);
 
       // The velocity factor must be called after modifyPathVelocity.
+      // TODO(soblin): remove this
       const auto velocity_factor = scene_module->getVelocityFactor();
       if (velocity_factor.behavior != PlanningBehavior::UNKNOWN) {
         velocity_factor_array.factors.emplace_back(velocity_factor);
@@ -204,6 +204,7 @@ protected:
     }
 
     pub_velocity_factor_->publish(velocity_factor_array);
+    planning_factor_interface_->publish();
     pub_debug_->publish(debug_marker_array);
     if (is_publish_debug_path_) {
       tier4_planning_msgs::msg::PathWithLaneId debug_path;
@@ -247,7 +248,6 @@ protected:
       logger_, "register task: module = %s, id = %lu", getModuleName(),
       scene_module->getModuleId());
     registered_module_id_set_.emplace(scene_module->getModuleId());
-    scene_module->setTimeKeeper(time_keeper_);
     scene_modules_.insert(scene_module);
   }
 
@@ -282,6 +282,8 @@ protected:
   rclcpp::Publisher<universe_utils::ProcessingTimeDetail>::SharedPtr pub_processing_time_detail_;
 
   std::shared_ptr<universe_utils::TimeKeeper> time_keeper_;
+
+  std::shared_ptr<motion_utils::PlanningFactorInterface> planning_factor_interface_;
 };
 extern template SceneModuleManagerInterface<SceneModuleInterface>::SceneModuleManagerInterface(
   rclcpp::Node & node, [[maybe_unused]] const char * module_name);

@@ -45,8 +45,10 @@ RunOutModule::RunOutModule(
   const int64_t module_id, const std::shared_ptr<const PlannerData> & planner_data,
   const PlannerParam & planner_param, const rclcpp::Logger logger,
   std::unique_ptr<DynamicObstacleCreator> dynamic_obstacle_creator,
-  const std::shared_ptr<RunOutDebug> & debug_ptr, const rclcpp::Clock::SharedPtr clock)
-: SceneModuleInterface(module_id, logger, clock),
+  const std::shared_ptr<RunOutDebug> & debug_ptr, const rclcpp::Clock::SharedPtr clock,
+  const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+  const std::shared_ptr<motion_utils::PlanningFactorInterface> planning_factor_interface)
+: SceneModuleInterface(module_id, logger, clock, time_keeper, planning_factor_interface),
   planner_param_(planner_param),
   dynamic_obstacle_creator_(std::move(dynamic_obstacle_creator)),
   debug_ptr_(debug_ptr),

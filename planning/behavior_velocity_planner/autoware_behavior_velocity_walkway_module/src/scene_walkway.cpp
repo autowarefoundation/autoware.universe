@@ -18,6 +18,7 @@
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 
 #include <cmath>
+#include <memory>
 #include <utility>
 
 namespace autoware::behavior_velocity_planner
@@ -32,8 +33,10 @@ using autoware::universe_utils::getPose;
 WalkwayModule::WalkwayModule(
   const int64_t module_id, const lanelet::LaneletMapPtr & lanelet_map_ptr,
   const PlannerParam & planner_param, const bool use_regulatory_element,
-  const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock)
-: SceneModuleInterface(module_id, logger, clock),
+  const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock,
+  const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+  const std::shared_ptr<motion_utils::PlanningFactorInterface> planning_factor_interface)
+: SceneModuleInterface(module_id, logger, clock, time_keeper, planning_factor_interface),
   module_id_(module_id),
   state_(State::APPROACH),
   planner_param_(planner_param),

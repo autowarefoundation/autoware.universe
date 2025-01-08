@@ -52,8 +52,10 @@ IntersectionModule::IntersectionModule(
   [[maybe_unused]] std::shared_ptr<const PlannerData> planner_data,
   const PlannerParam & planner_param, const std::set<lanelet::Id> & associative_ids,
   const std::string & turn_direction, const bool has_traffic_light, rclcpp::Node & node,
-  const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock)
-: SceneModuleInterfaceWithRTC(module_id, logger, clock),
+  const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock,
+  const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+  const std::shared_ptr<motion_utils::PlanningFactorInterface> planning_factor_interface)
+: SceneModuleInterfaceWithRTC(module_id, logger, clock, time_keeper, planning_factor_interface),
   planner_param_(planner_param),
   lane_id_(lane_id),
   associative_ids_(associative_ids),

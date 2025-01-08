@@ -304,7 +304,9 @@ public:
     const int64_t module_id, const int64_t lane_id, std::shared_ptr<const PlannerData> planner_data,
     const PlannerParam & planner_param, const std::set<lanelet::Id> & associative_ids,
     const std::string & turn_direction, const bool has_traffic_light, rclcpp::Node & node,
-    const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock);
+    const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock,
+    const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+    const std::shared_ptr<motion_utils::PlanningFactorInterface> planning_factor_interface);
 
   /**
    ***********************************************************
