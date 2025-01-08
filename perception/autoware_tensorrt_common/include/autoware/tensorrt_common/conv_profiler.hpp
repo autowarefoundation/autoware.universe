@@ -74,7 +74,7 @@ public:
    *
    * @param[in] layer Layer to set profile information.
    */
-  void setProfDict(nvinfer1::ILayer * layer) noexcept final
+  void setProfDict(nvinfer1::ILayer * const layer) noexcept final
   {
     std::string name = layer->getName();
     layer_dict_[name];
