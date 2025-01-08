@@ -374,7 +374,8 @@ void LaneParkingPlanner::onTimer()
       RCLCPP_DEBUG(getLogger(), "has previous module path shape changed");
       return true;
     }
-    if (hasDeviatedFromPath(*local_planner_data, original_upstream_module_output_) &&
+    if (
+      hasDeviatedFromPath(*local_planner_data, original_upstream_module_output_) &&
       current_state != PathDecisionState::DecisionKind::DECIDED) {
       RCLCPP_DEBUG(getLogger(), "has deviated from last previous module path");
       return true;
