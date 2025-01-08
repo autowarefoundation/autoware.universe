@@ -135,9 +135,7 @@ bool isOnModifiedGoal(
 bool hasPreviousModulePathShapeChanged(
   const BehaviorModuleOutput & upstream_module_output,
   const BehaviorModuleOutput & last_upstream_module_output);
-bool hasDeviatedFromLastPreviousModulePath(
-  const PlannerData & planner_data, const BehaviorModuleOutput & last_upstream_module_output);
-bool hasDeviatedFromCurrentPreviousModulePath(
+bool hasDeviatedFromPath(
   const PlannerData & planner_data, const BehaviorModuleOutput & upstream_module_output);
 
 bool needPathUpdate(
