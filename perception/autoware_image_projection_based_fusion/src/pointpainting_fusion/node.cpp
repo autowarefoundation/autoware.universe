@@ -190,6 +190,8 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
   // create detector
   detector_ptr_ = std::make_unique<image_projection_based_fusion::PointPaintingTRT>(
     encoder_param, head_param, densification_param, config);
+  diagnostics_interface_ptr_ =
+    std::make_unique<autoware::universe_utils::DiagnosticsInterface>(this, "pointpainting_trt");
 
   if (this->declare_parameter("build_only", false)) {
     RCLCPP_INFO(this->get_logger(), "TensorRT engine is built and shutdown node.");
@@ -388,6 +390,7 @@ void PointPaintingFusionNode::postprocess(
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
+  diagnostics_interface_ptr_->clear();
 
   output_msg.header = painted_pointcloud_msg.header;
   output_msg.objects.clear();
@@ -405,9 +408,20 @@ void PointPaintingFusionNode::postprocess(
   }
 
   std::vector<autoware::lidar_centerpoint::Box3D> det_boxes3d;
-  bool is_success = detector_ptr_->detect(painted_pointcloud_msg, tf_buffer_, det_boxes3d);
+  bool is_num_pillars_within_range = true;
+  bool is_success = detector_ptr_->detect(
+    painted_pointcloud_msg, tf_buffer_, det_boxes3d, is_num_pillars_within_range);
   if (!is_success) {
     return;
+  }
+  diagnostics_interface_ptr_->add_key_value(
+    "is_num_pillars_within_range", is_num_pillars_within_range);
+  if (!is_num_pillars_within_range) {
+    std::stringstream message;
+    message << "PointPaintingTRT::detect: The actual number of pillars exceeds its maximum value, "
+            << "which may limit the detection performance.";
+    diagnostics_interface_ptr_->update_level_and_message(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
 
   std::vector<autoware_perception_msgs::msg::DetectedObject> raw_objects;
@@ -427,6 +441,7 @@ void PointPaintingFusionNode::postprocess(
   if (point_pub_ptr_->get_subscription_count() > 0) {
     point_pub_ptr_->publish(painted_pointcloud_msg);
   }
+  diagnostics_interface_ptr_->publish(painted_pointcloud_msg.header.stamp);
 }
 
 }  // namespace autoware::image_projection_based_fusion
