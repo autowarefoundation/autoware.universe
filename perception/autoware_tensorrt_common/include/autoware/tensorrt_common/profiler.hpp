@@ -75,13 +75,6 @@ public:
    */
   virtual void setProfDict([[maybe_unused]] nvinfer1::ILayer * layer) noexcept {};
 
-  /**
-   * @brief Get printable per-layer profile information for model.
-   *
-   * @param[in] format Format for layer information.
-   * @return Layer information.
-   */
-  std::string getLayerInformation(nvinfer1::LayerInformationFormat format);
 
   /**
    * @brief Output Profiler to ostream.
