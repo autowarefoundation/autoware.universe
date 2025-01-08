@@ -926,6 +926,8 @@ Assume the ego vehicle has already departed from the current lane. In that case,
 
 ![abort](./images/lane_change-abort.png)
 
+![abort_computation](./images/lane_change-abort_computation.png)
+
 ### Stop/Cruise
 
 The last behavior will also occur if the ego vehicle has departed from the current lane. If the abort function is disabled or the abort is no longer possible, the ego vehicle will attempt to stop or transition to the obstacle cruise mode. Do note that the module DOESN'T GUARANTEE safe maneuver due to the unexpected behavior that might've occurred during these critical scenarios. The following images illustrate the situation.
