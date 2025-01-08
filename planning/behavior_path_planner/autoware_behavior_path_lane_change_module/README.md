@@ -883,12 +883,12 @@ endif
 
 To prevent abrupt maneuvers caused by **CANCEL** or **ABORT**, the lane change module ensures that the ego vehicle can safely return to the original lane. This is done through geometric checks that verify whether the ego vehicle remains within the lane boundaries.
 
-The edges of the ego vehicle’s footprint are compared against the boundary of the current lane to determine if they exceed the overhang tolerance, cancel.overhang_tolerance. If the distance from any edge of the footprint to the boundary exceeds this threshold, the vehicle is considered to be diverging.
+The edges of the ego vehicle’s footprint are compared against the boundary of the current lane to determine if they exceed the overhang tolerance, `cancel.overhang_tolerance`. If the distance from any edge of the footprint to the boundary exceeds this threshold, the vehicle is considered to be diverging.
 
 The footprints checked against the lane boundary include:
 
-1. Current Footprint Check: Based on the ego vehicle's current position.
-2. Future Footprint Check: Based on the ego vehicle's estimated position after traveling a distance, calculated as:
+1. Current Footprint: Based on the ego vehicle's current position.
+2. Future Footprint: Based on the ego vehicle's estimated position after traveling a distance, calculated as:
 
    $$
    𝑑_{est}=𝑣_{ego} \cdot \Delta_{𝑡}
