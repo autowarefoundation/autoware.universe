@@ -162,7 +162,8 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
     "~/input/pointcloud", rclcpp::SensorDataQoS().keep_last(3), sub_callback);
 
   // publisher
-  point_pub_ptr_ = this->create_publisher<PointCloudMsgType>("output", rclcpp::QoS{1});
+  point_pub_ptr_ =
+    this->create_publisher<PointCloudMsgType>("~/debug/painted_pointcloud", rclcpp::QoS{1});
   pub_ptr_ = this->create_publisher<DetectedObjects>("~/output/objects", rclcpp::QoS{1});
 
   detection_class_remapper_.setParameters(
