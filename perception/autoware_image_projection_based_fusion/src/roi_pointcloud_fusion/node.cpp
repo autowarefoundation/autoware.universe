@@ -188,7 +188,7 @@ void RoiPointCloudFusionNode::postprocess(
     autoware::euclidean_cluster::convertObjectMsg2SensorMsg(output_msg, debug_cluster_msg);
     cluster_debug_pub_->publish(debug_cluster_msg);
   }
-  if (point_pub_ptr_->get_subscription_count() > 0) {
+  if (!!(debugger_) && point_pub_ptr_->get_subscription_count() > 0) {
     point_pub_ptr_->publish(pointcloud_msg);
   }
 }
