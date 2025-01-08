@@ -28,10 +28,10 @@ namespace autoware
 namespace tensorrt_common
 {
 /**
- * @struct LayerInfo
+ * @struct ConvLayerInfo
  * @brief Information of a layer.
  */
-struct LayerInfo
+struct ConvLayerInfo
 {
   //! @brief Input channel.
   int in_c;
@@ -99,7 +99,7 @@ public:
 
 private:
   //! @brief Per-layer information.
-  std::map<std::string, LayerInfo> layer_dict_;
+  std::map<std::string, ConvLayerInfo> layer_dict_;
 };
 }  // namespace tensorrt_common
 }  // namespace autoware
