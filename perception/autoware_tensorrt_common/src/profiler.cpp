@@ -42,6 +42,9 @@ Profiler::Profiler(const std::vector<Profiler> & src_profilers)
 
 void Profiler::reportLayerTime(const char * layerName, float ms) noexcept
 {
+  if (profile_.find(layerName) == profile_.end()) {
+    return;
+  }
   profile_[layerName].count++;
   profile_[layerName].time += ms;
   if (profile_[layerName].min_time == -1.0) {
