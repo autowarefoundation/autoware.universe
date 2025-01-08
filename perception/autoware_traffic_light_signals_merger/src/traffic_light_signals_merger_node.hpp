@@ -1,4 +1,4 @@
-// Copyright 2024 TIER IV, Inc.
+// Copyright 2025 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,13 +15,14 @@
 #ifndef TRAFFIC_LIGHT_SIGNALS_MERGER_NODE_HPP_
 #define TRAFFIC_LIGHT_SIGNALS_MERGER_NODE_HPP_
 
-#include "autoware/universe_utils/ros/transform_listener.hpp"
-#include "message_filters/subscriber.h"
-#include "message_filters/sync_policies/approximate_time.h"
-#include "message_filters/synchronizer.h"
-#include "rclcpp/rclcpp.hpp"
+#include <autoware/universe_utils/ros/transform_listener.hpp>
+#include <rclcpp/rclcpp.hpp>
 
-#include "tier4_perception_msgs/msg/traffic_light_array.hpp"
+#include <tier4_perception_msgs/msg/traffic_light_array.hpp>
+
+#include <message_filters/subscriber.h>
+#include <message_filters/sync_policies/approximate_time.h>
+#include <message_filters/synchronizer.h>
 
 #include <chrono>
 #include <memory>
