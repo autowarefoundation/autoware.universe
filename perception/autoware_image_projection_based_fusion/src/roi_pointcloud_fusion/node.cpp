@@ -45,7 +45,7 @@ RoiPointCloudFusionNode::RoiPointCloudFusionNode(const rclcpp::NodeOptions & opt
   cluster_2d_tolerance_ = declare_parameter<double>("cluster_2d_tolerance");
 
   // publisher
-  pub_ptr_ = this->create_publisher<ClusterMsgType>("output/clusters", rclcpp::QoS{1});
+  pub_ptr_ = this->create_publisher<ClusterMsgType>("output", rclcpp::QoS{1});
   cluster_debug_pub_ = this->create_publisher<PointCloudMsgType>("debug/clusters", 1);
 }
 

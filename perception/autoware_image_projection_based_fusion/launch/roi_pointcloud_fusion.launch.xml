@@ -38,7 +38,7 @@
       <param from="$(var param_path)"/>
       <param from="$(var sync_param_path)"/>
       <remap from="input" to="$(var input/pointcloud)"/>
-      <remap from="output/clusters" to="$(var output/clusters)"/>
+      <remap from="output" to="$(var output/clusters)"/>
       <remap from="debug/clusters" to="$(var debug/clusters)"/>
 
       <!-- rois, camera and info -->
