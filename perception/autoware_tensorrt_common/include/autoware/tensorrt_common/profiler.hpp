@@ -75,7 +75,6 @@ public:
    */
   virtual void setProfDict([[maybe_unused]] nvinfer1::ILayer * layer) noexcept {};
 
-
   /**
    * @brief Output Profiler to ostream.
    *
