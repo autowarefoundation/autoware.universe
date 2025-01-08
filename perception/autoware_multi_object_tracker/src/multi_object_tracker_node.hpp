@@ -25,6 +25,8 @@
 #include "debugger/debugger.hpp"
 #include "processor/input_manager.hpp"
 #include "processor/processor.hpp"
+#include "processor/odometry.hpp"
+
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -89,6 +91,8 @@ private:
 
   // input manager
   std::unique_ptr<InputManager> input_manager_;
+  std::unique_ptr<Odometry> odometry_;
+
 
   std::vector<InputChannel> input_channels_{};
   size_t input_channel_size_{};

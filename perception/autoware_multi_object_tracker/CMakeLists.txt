@@ -26,6 +26,7 @@ set(${PROJECT_NAME}_src
   src/debugger/debug_object.cpp
   src/processor/processor.cpp
   src/processor/input_manager.cpp
+  src/processor/odometry.cpp
 )
 set(${PROJECT_NAME}_lib
   lib/association/association.cpp

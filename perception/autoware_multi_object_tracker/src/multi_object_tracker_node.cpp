@@ -154,6 +154,10 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
     this->get_node_base_interface(), this->get_node_timers_interface());
   tf_buffer_.setCreateTimerInterface(cti);
 
+
+  // Odometry manager
+  odometry_ = std::make_unique<Odometry>(world_frame_id_, this->get_clock());
+
   // Create ROS time based timer.
   // If the delay compensation is enabled, the timer is used to publish the output at the correct
   // time.
