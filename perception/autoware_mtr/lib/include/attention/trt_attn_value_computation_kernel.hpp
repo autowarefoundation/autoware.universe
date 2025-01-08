@@ -17,6 +17,8 @@
 
 #include <cuda_runtime.h>
 
+#include <cstdint>
+
 /**
  * @brief The launcher to invoke attention value computation kernel.
  *

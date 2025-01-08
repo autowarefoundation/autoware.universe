@@ -14,9 +14,17 @@
 
 #include "autoware/mtr/trt_mtr.hpp"
 
+#include "autoware/mtr/cuda_helper.hpp"
+#include "autoware/mtr/intention_point.hpp"
+#include "autoware/mtr/trajectory.hpp"
 #include "postprocess/postprocess_kernel.cuh"
 #include "preprocess/agent_preprocess_kernel.cuh"
 #include "preprocess/polyline_preprocess_kernel.cuh"
+
+#include <iostream>
+#include <memory>
+#include <string>
+#include <vector>
 
 namespace autoware::mtr
 {
@@ -24,7 +32,8 @@ TrtMTR::TrtMTR(
   const std::string & model_path, const MTRConfig & config, const BuildConfig & build_config,
   const size_t max_workspace_size)
 : config_(config),
-  intention_point_(config_.intention_point_filepath, config_.num_intention_point_cluster)
+  intention_point_(IntentionPoint::from_file(
+    config_.num_intention_point_cluster, config_.intention_point_filepath))
 {
   max_num_polyline_ = config_.max_num_polyline;
   num_mode_ = config_.num_mode;
@@ -141,10 +150,10 @@ void TrtMTR::initCudaPtr(const AgentData & agent_data, const PolylineData & poly
 bool TrtMTR::preProcess(const AgentData & agent_data, const PolylineData & polyline_data)
 {
   CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    d_target_index_.get(), agent_data.target_index().data(), sizeof(int) * num_target_,
+    d_target_index_.get(), agent_data.target_indices().data(), sizeof(int) * num_target_,
     cudaMemcpyHostToDevice, stream_));
   CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    d_label_index_.get(), agent_data.label_index().data(), sizeof(int) * num_agent_,
+    d_label_index_.get(), agent_data.label_ids().data(), sizeof(int) * num_agent_,
     cudaMemcpyHostToDevice, stream_));
   CHECK_CUDA_ERROR(cudaMemcpyAsync(
     d_timestamp_.get(), agent_data.timestamps().data(), sizeof(float) * num_timestamp_,
@@ -153,22 +162,22 @@ bool TrtMTR::preProcess(const AgentData & agent_data, const PolylineData & polyl
     d_trajectory_.get(), agent_data.data_ptr(), sizeof(float) * agent_data.size(),
     cudaMemcpyHostToDevice, stream_));
   CHECK_CUDA_ERROR(cudaMemcpyAsync(
-    d_target_state_.get(), agent_data.target_data_ptr(),
+    d_target_state_.get(), agent_data.current_target_data_ptr(),
     sizeof(float) * num_target_ * agent_data.state_dim(), cudaMemcpyHostToDevice, stream_));
 
   CHECK_CUDA_ERROR(cudaMemcpyAsync(
     d_polyline_.get(), polyline_data.data_ptr(), sizeof(float) * polyline_data.size(),
     cudaMemcpyHostToDevice, stream_));
 
-  const auto target_label_names = getLabelNames(agent_data.target_label_index());
-  const auto intention_point = intention_point_.get_points(target_label_names);
+  const auto target_label_names = getLabelNames(agent_data.target_label_ids());
+  const auto intention_point = intention_point_.as_array(target_label_names);
   CHECK_CUDA_ERROR(cudaMemcpyAsync(
     d_intention_point_.get(), intention_point.data(),
     sizeof(float) * num_target_ * intention_point_.size(), cudaMemcpyHostToDevice, stream_));
 
   CHECK_CUDA_ERROR(agentPreprocessLauncher(
     num_target_, num_agent_, num_timestamp_, agent_data.state_dim(), agent_data.num_class(),
-    agent_data.sdc_index(), d_target_index_.get(), d_label_index_.get(), d_timestamp_.get(),
+    agent_data.ego_index(), d_target_index_.get(), d_label_index_.get(), d_timestamp_.get(),
     d_trajectory_.get(), d_in_trajectory_.get(), d_in_trajectory_mask_.get(), d_in_last_pos_.get(),
     stream_));
 
@@ -194,26 +203,29 @@ bool TrtMTR::postProcess(
     num_target_, num_mode_, num_future_, agent_data.state_dim(), d_target_state_.get(),
     PredictedStateDim, d_out_trajectory_.get(), stream_));
 
+  CHECK_CUDA_ERROR(cudaStreamSynchronize(stream_));
+
   h_out_score_.clear();
   h_out_trajectory_.clear();
-  h_out_score_.reserve(num_target_ * num_mode_);
-  h_out_trajectory_.reserve(num_target_ * num_mode_ * num_future_ * PredictedStateDim);
+  h_out_score_.resize(num_target_ * num_mode_);
+  h_out_trajectory_.resize(num_target_ * num_mode_ * num_future_ * PredictedStateDim);
 
-  CHECK_CUDA_ERROR(cudaMemcpyAsync(
+  CHECK_CUDA_ERROR(cudaMemcpy(
     h_out_score_.data(), d_out_score_.get(), sizeof(float) * num_target_ * num_mode_,
-    cudaMemcpyDeviceToHost, stream_));
-  CHECK_CUDA_ERROR(cudaMemcpyAsync(
+    cudaMemcpyDeviceToHost));
+  CHECK_CUDA_ERROR(cudaMemcpy(
     h_out_trajectory_.data(), d_out_trajectory_.get(),
     sizeof(float) * num_target_ * num_mode_ * num_future_ * PredictedStateDim,
-    cudaMemcpyDeviceToHost, stream_));
+    cudaMemcpyDeviceToHost));
 
+  trajectories.clear();
   trajectories.reserve(num_target_);
   for (auto b = 0; b < num_target_; ++b) {
     const auto score_itr = h_out_score_.cbegin() + b * num_mode_;
-    std::vector<float> scores(score_itr, score_itr + num_mode_);
+    const std::vector<double> scores(score_itr, score_itr + num_mode_);
     const auto mode_itr =
       h_out_trajectory_.cbegin() + b * num_mode_ * num_future_ * PredictedStateDim;
-    std::vector<float> modes(mode_itr, mode_itr + num_mode_ * num_future_ * PredictedStateDim);
+    std::vector<double> modes(mode_itr, mode_itr + num_mode_ * num_future_ * PredictedStateDim);
     trajectories.emplace_back(scores, modes, num_mode_, num_future_);
   }
   return true;

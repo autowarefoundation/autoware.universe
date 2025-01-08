@@ -26,25 +26,26 @@ namespace autoware::mtr
 constexpr size_t PredictedStateDim = 7;
 
 /**
- * @brief A class to represent a predicted state.
+ * @brief A class to represent a predicted state. Note that output elements are (x, y, stdX,
+ * stdY, rho, vx, vy).
  */
 struct PredictedState
 {
-  explicit PredictedState(const std::array<float, PredictedStateDim> & state)
+  explicit PredictedState(const std::array<double, PredictedStateDim> & state)
   : x_(state.at(0)),
     y_(state.at(1)),
-    dx_(state.at(2)),
-    dy_(state.at(3)),
-    yaw_(state.at(4)),
+    std_x_(state.at(2)),
+    std_y_(state.at(3)),
+    rho_(state.at(4)),
     vx_(state.at(5)),
     vy_(state.at(6))
   {
   }
 
   PredictedState(
-    const float x, const float y, const float dx, const float dy, const float yaw, const float vx,
-    const float vy)
-  : x_(x), y_(y), dx_(dx), dy_(dy), yaw_(yaw), vx_(vx), vy_(vy)
+    const double x, const double y, const double std_x, const double std_y, const double rho,
+    const double vx, const double vy)
+  : x_(x), y_(y), std_x_(std_x), std_y_(std_y), rho_(rho), vx_(vx), vy_(vy)
   {
   }
 
@@ -52,28 +53,28 @@ struct PredictedState
   static size_t dim() { return PredictedStateDim; }
 
   // Return the predicted x position.
-  float x() const { return x_; }
+  double x() const { return x_; }
 
   // Return the predicted y position.
-  float y() const { return y_; }
+  double y() const { return y_; }
 
-  // Return the predicted dx.
-  float dx() const { return dx_; }
+  // Return the predicted std x.
+  double std_x() const { return std_x_; }
 
-  // Return the predicted dy.
-  float dy() const { return dy_; }
+  // Return the predicted mean y.
+  double std_y() const { return std_y_; }
 
-  // Return the predicted yaw.
-  float yaw() const { return yaw_; }
+  // Return the predicted rho.
+  double rho() const { return rho_; }
 
   // Return the predicted x velocity.
-  float vx() const { return vx_; }
+  double vx() const { return vx_; }
 
   // Return the predicted y velocity.
-  float vy() const { return vy_; }
+  double vy() const { return vy_; }
 
 private:
-  float x_, y_, dx_, dy_, yaw_, vx_, vy_;
+  double x_, y_, std_x_, std_y_, rho_, vx_, vy_;
 };  // struct PredictedState
 
 /**
@@ -81,12 +82,12 @@ private:
  */
 struct PredictedMode
 {
-  PredictedMode(const float score, const std::vector<float> & waypoints, const size_t num_future)
+  PredictedMode(const double score, const std::vector<double> & waypoints, const size_t num_future)
   : score_(score), num_future_(num_future)
   {
     for (size_t t = 0; t < num_future_; ++t) {
       const auto start_itr = waypoints.cbegin() + t * state_dim();
-      std::array<float, PredictedStateDim> state;
+      std::array<double, PredictedStateDim> state;
       std::copy_n(start_itr, PredictedStateDim, state.begin());
       waypoints_.emplace_back(state);
     }
@@ -99,13 +100,13 @@ struct PredictedMode
   static size_t state_dim() { return PredictedStateDim; }
 
   // Return the predicted score.
-  float score() const { return score_; }
+  double score() const { return score_; }
 
   // Return the vector of waypoints.
   const std::vector<PredictedState> & get_waypoints() const { return waypoints_; }
 
 private:
-  float score_;
+  double score_;
   size_t num_future_;
   std::vector<PredictedState> waypoints_;
 };  // struct PredictedMode
@@ -126,14 +127,14 @@ struct PredictedTrajectory
    * @param num_future The number of predicted timestamps.
    */
   PredictedTrajectory(
-    const std::vector<float> & scores, const std::vector<float> & modes, const size_t num_mode,
+    const std::vector<double> & scores, const std::vector<double> & modes, const size_t num_mode,
     const size_t num_future)
   : num_mode_(num_mode), num_future_(num_future)
   {
     for (size_t m = 0; m < num_mode_; ++m) {
       const auto score = scores.at(m);
       const auto wp_itr = modes.cbegin() + m * num_future_ * state_dim();
-      std::vector<float> waypoints(wp_itr, wp_itr + num_future_ * state_dim());
+      std::vector<double> waypoints(wp_itr, wp_itr + num_future_ * state_dim());
       modes_.emplace_back(score, waypoints, num_future_);
     }
     // sort by score

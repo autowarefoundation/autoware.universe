@@ -17,9 +17,9 @@
 #include "common/trt_serialize.hpp"
 #include "knn/trt_knn_batch_kernel.hpp"
 
-#include <cstring>
+#include <string>
 
-namespace trt_mtr
+namespace autoware::trt_mtr
 {
 namespace
 {
@@ -205,4 +205,4 @@ nvinfer1::IPluginV2DynamicExt * KnnBatchCreator::deserializePlugin(
   return plugin;
 }
 
-}  // namespace trt_mtr
+}  // namespace autoware::trt_mtr

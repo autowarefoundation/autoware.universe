@@ -14,153 +14,75 @@
 
 #include "autoware/mtr/node.hpp"
 
-#include <autoware_utils/ros/uuid_helper.hpp>
-#include <lanelet2_extension/utility/message_conversion.hpp>
+#include "autoware/mtr/agent.hpp"
+#include "autoware/mtr/conversions/history.hpp"
+#include "autoware/mtr/conversions/lanelet.hpp"
+#include "autoware/mtr/fixed_queue.hpp"
 
+#include <lanelet2_extension/utility/message_conversion.hpp>
+#include <rclcpp/logging.hpp>
+
+#include <autoware_perception_msgs/msg/detail/object_classification__builder.hpp>
+#include <autoware_perception_msgs/msg/detail/tracked_object__struct.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/vector3.hpp>
 
 #include <tf2/utils.h>
 
 #include <algorithm>
 #include <cmath>
+#include <memory>
+#include <optional>
+#include <string>
+#include <vector>
 
 namespace autoware::mtr
 {
+// TODO(ktro2828): use a parameter
+constexpr double TIME_THRESHOLD = 1.0;
+constexpr size_t MAX_NUM_TARGET = 1;
+constexpr double POLYLINE_DISTANCE_THRESHOLD = 100.0;
 namespace
 {
-// Return the Lanelet subtype name. If input Lanelet has no attribute named `type` return empty
-// string `""`.
-std::string subtype_from(const lanelet::Lanelet & lanelet)
-{
-  if (!lanelet.hasAttribute("subtype")) {
-    return "";
-  } else {
-    const auto subtype = lanelet.attribute("subtype").as<std::string>();
-    return subtype ? subtype.get() : "";
-  }
-}
-
-// Return the LineString type name. If input LineString has no attribute named `type` return empty
-// string `""`.
-std::string linestring_type_from(const lanelet::ConstLineString3d & linestring)
-{
-  if (!linestring.hasAttribute("type")) {
-    return "";
-  } else {
-    const auto type = linestring.attribute("type").as<std::string>();
-    return type ? type.get() : "";
-  }
-}
-
-// Return the LineString subtype name. If input LineString has no attribute named `subtype` return
-// empty string `""`.
-std::string linestring_subtype_from(const lanelet::ConstLineString3d & linestring)
-{
-  if (!linestring.hasAttribute("subtype")) {
-    return "";
-  } else {
-    const auto subtype = linestring.attribute("subtype").as<std::string>();
-    return subtype ? subtype.get() : "";
-  }
-}
-
-// Check whether lanelet has an attribute named `turn_direction`.
-bool is_turn_intersection(const lanelet::Lanelet & lanelet)
-{
-  if (lanelet.hasAttribute("turn_direction")) {
-    return true;
-  } else {
-    return false;
-  }
-}
-
-// Insert source `LanePoints` into target `LanePoints`.
-void insert_lane_points(const std::vector<LanePoint> & src, std::vector<LanePoint> & dst)
-{
-  dst.reserve(dst.size() * 2);
-  dst.insert(dst.end(), src.cbegin(), src.cend());
-}
-
 // Convert `TrackedObject` to `AgentState`.
-AgentState to_agent_state(const TrackedObject & object, const bool is_valid)
+AgentState createAgentState(const TrackedObject & object, const bool is_valid)
 {
   const auto & pose = object.kinematics.pose_with_covariance.pose;
   const auto & twist = object.kinematics.twist_with_covariance.twist;
   const auto & accel = object.kinematics.acceleration_with_covariance.accel;
-  const auto & dimensions = object.shape.dimensions;
-  const auto yaw = tf2::getYaw(pose.orientation);
-  const auto valid = is_valid ? 1.0f : 0.0f;
+  const auto & dimension = object.shape.dimensions;
 
-  return {
-    static_cast<float>(pose.position.x),
-    static_cast<float>(pose.position.y),
-    static_cast<float>(pose.position.z),
-    static_cast<float>(dimensions.x),
-    static_cast<float>(dimensions.y),
-    static_cast<float>(dimensions.z),
-    static_cast<float>(yaw),
-    static_cast<float>(twist.linear.x),
-    static_cast<float>(twist.linear.y),
-    static_cast<float>(accel.linear.x),
-    static_cast<float>(accel.linear.y),
-    valid};
+  const float yaw = tf2::getYaw(pose.orientation);
+  const float valid = is_valid ? 1.0f : 0.0f;
+
+  return {pose.position, dimension, yaw, twist.linear, accel.linear, valid};
 }
 
 // Get the label index corresponding to AgentLabel. If the label of tracked object is not * defined
 // in AgentLabel returns `-1`.
-int label_index_from(const TrackedObject & object)
+int getLabelIndex(const TrackedObject & object)
 {
   const auto classification =
     autoware::object_recognition_utils::getHighestProbLabel(object.classification);
   if (autoware::object_recognition_utils::isCarLikeVehicle(classification)) {
     return AgentLabel::VEHICLE;
-  } else if (classification == ObjectClassification::PEDESTRIAN) {
+  }
+  if (classification == ObjectClassification::PEDESTRIAN) {
     return AgentLabel::PEDESTRIAN;
-  } else if (
+  }
+  if (
     classification == ObjectClassification::MOTORCYCLE ||
     classification == ObjectClassification::BICYCLE) {
     return AgentLabel::CYCLIST;
-  } else {
-    return -1;  // other labels
   }
-}
-
-// Return corresponding PrecisionType from string.
-PrecisionType as_precision_type(const std::string & name)
-{
-  if (name == "FP32") {
-    return PrecisionType::FP32;
-  } else if (name == "FP16") {
-    return PrecisionType::FP16;
-  } else if (name == "INT8") {
-    return PrecisionType::INT8;
-  } else {
-    throw std::invalid_argument("Invalid precision name.");
-  }
-}
-
-// Return corresponding CalibrationType from string.
-CalibrationType as_calibration_type(const std::string & name)
-{
-  if (name == "ENTROPY") {
-    return CalibrationType::ENTROPY;
-  } else if (name == "LEGACY") {
-    return CalibrationType::LEGACY;
-  } else if (name == "PERCENTILE") {
-    return CalibrationType::PERCENTILE;
-  } else if (name == "MINMAX") {
-    return CalibrationType::MINMAX;
-  } else {
-    throw std::invalid_argument("Invalid calibration name.");
-  }
+  return -1;  // other labels
 }
 }  // namespace
 
 MTRNode::MTRNode(const rclcpp::NodeOptions & node_options)
-: rclcpp::Node("mtr", node_options), transform_listener_(this), polyline_type_map_(this)
+: rclcpp::Node("mtr", node_options), transform_listener_(this)
 {
-  // TODO(ktro2828)
   {
     // Build MTR
     // Model config
@@ -185,21 +107,24 @@ MTRNode::MTRNode(const rclcpp::NodeOptions & node_options)
       point_break_distance, intention_point_filepath, num_intention_point_cluster);
     // Build config
     const auto is_dynamic = declare_parameter<bool>("build_params.is_dynamic");
-    const auto precision_str = declare_parameter<std::string>("build_params.precision");
-    const auto calibration_str = declare_parameter<std::string>("build_params.calibration");
-    const auto precision = as_precision_type(precision_str);
-    const auto calibration = as_calibration_type(calibration_str);
+    const auto precision = declare_parameter<std::string>("build_params.precision");
+    const auto calibration = declare_parameter<std::string>("build_params.calibration");
     build_config_ptr_ = std::make_unique<BuildConfig>(is_dynamic, precision, calibration);
     model_ptr_ = std::make_unique<TrtMTR>(model_path, *config_ptr_, *build_config_ptr_);
   }
 
+  {
+    // Ego states and timestamps buffer
+    int ego_buffer_size = declare_parameter<int>("ego_buffer_size", 100);
+    ego_states_ = std::make_unique<FixedQueue<std::pair<float, AgentState>>>(ego_buffer_size);
+    timestamps_ = std::make_unique<FixedQueue<double>>(config_ptr_->num_past);
+  }
+
   sub_objects_ = create_subscription<TrackedObjects>(
     "~/input/objects", rclcpp::QoS{1}, std::bind(&MTRNode::callback, this, std::placeholders::_1));
-  sub_map_ = create_subscription<LaneletMapBin>(
+  sub_map_ = create_subscription<HADMapBin>(
     "~/input/vector_map", rclcpp::QoS{1}.transient_local(),
-    std::bind(&MTRNode::on_map, this, std::placeholders::_1));
-  sub_ego_ = create_subscription<Odometry>(
-    "~/input/ego", rclcpp::QoS{1}, std::bind(&MTRNode::on_ego, this, std::placeholders::_1));
+    std::bind(&MTRNode::onMap, this, std::placeholders::_1));
 
   pub_objects_ = create_publisher<PredictedObjects>("~/output/objects", rclcpp::QoS{1});
 
@@ -211,58 +136,62 @@ MTRNode::MTRNode(const rclcpp::NodeOptions & node_options)
 
 void MTRNode::callback(const TrackedObjects::ConstSharedPtr object_msg)
 {
-  if (!polyline_ptr_) {
+  const auto ego_msg = getLatestEgo();
+
+  if (!ego_msg) {
+    RCLCPP_WARN(get_logger(), "No ego data");
+    return;
+  }
+
+  const auto polyline_data = lanelet_converter_ptr_->convert(
+    ego_msg->kinematics.pose_with_covariance.pose.position, POLYLINE_DISTANCE_THRESHOLD);
+
+  if (!polyline_data) {
     RCLCPP_WARN(get_logger(), "No polyline");
     return;
   }
 
-  const auto current_time = static_cast<float>(rclcpp::Time(object_msg->header.stamp).seconds());
+  const auto current_time = rclcpp::Time(object_msg->header.stamp).seconds();
+  timestamps_->push_back(current_time);
 
-  timestamps_.emplace_back(current_time);
-  // TODO(ktro2828): update timestamps
-  if (timestamps_.size() < config_ptr_->num_past) {
-    RCLCPP_WARN(get_logger(), "Not enough timestamp");
-    return;  // Not enough timestamps
-  } else if (config_ptr_->num_past < timestamps_.size()) {
-    timestamps_.erase(timestamps_.begin(), timestamps_.begin());
-  }
-
-  remove_ancient_history(current_time, object_msg);
-  update_history(current_time, object_msg);
+  removeAncientAgentHistory(current_time, object_msg);
+  updateAgentHistory(current_time, object_msg, ego_msg.value());
 
   std::vector<std::string> object_ids;
   std::vector<AgentHistory> histories;
-  std::vector<size_t> label_indices;
+  std::vector<size_t> label_ids;
   histories.reserve(agent_history_map_.size());
   object_ids.reserve(agent_history_map_.size());
-  label_indices.reserve(agent_history_map_.size());
-  int sdc_index = -1;
+  label_ids.reserve(agent_history_map_.size());
+  int tmp_ego_index = -1;
   for (const auto & [object_id, history] : agent_history_map_) {
     object_ids.emplace_back(object_id);
     histories.emplace_back(history);
-    label_indices.emplace_back(history.label_index());
+    label_ids.emplace_back(history.label_id());
     if (object_id == EGO_ID) {
-      sdc_index = histories.size() - 1;
+      tmp_ego_index = histories.size() - 1;
     }
   }
 
-  if (sdc_index == -1) {
+  if (tmp_ego_index == -1) {
     RCLCPP_WARN(get_logger(), "No EGO");
     return;
   }
 
-  const auto target_indices = extract_target_agents(histories);
+  const auto target_indices = extractTargetAgent(histories);
   if (target_indices.empty()) {
     RCLCPP_WARN(get_logger(), "No target agents");
     return;
   }
 
-  const auto relative_timestamps = get_relative_timestamps();
-  AgentData agent_data(
-    histories, static_cast<size_t>(sdc_index), target_indices, label_indices, relative_timestamps);
+  const auto ego_index = static_cast<size_t>(tmp_ego_index);
+  const auto relative_timestamps = getRelativeTimestamps();
+  // For testing purposes, normally pre-processing is done in the cuda side.
+  // const auto agent_centric_histories = getAgentCentricHistories(histories);
+  AgentData agent_data(histories, ego_index, target_indices, label_ids, relative_timestamps);
 
   std::vector<PredictedTrajectory> trajectories;
-  if (!model_ptr_->doInference(agent_data, *polyline_ptr_, trajectories)) {
+  if (!model_ptr_->doInference(agent_data, *polyline_data, trajectories)) {
     RCLCPP_WARN(get_logger(), "Inference failed");
     return;
   }
@@ -271,11 +200,12 @@ void MTRNode::callback(const TrackedObjects::ConstSharedPtr object_msg)
   output.header = object_msg->header;
   output.objects.reserve(target_indices.size());
   for (size_t i = 0; i < target_indices.size(); ++i) {
-    const auto & trajectory = trajectories.at(i);
     const auto & target_idx = target_indices.at(i);
     const auto & object_id = object_ids.at(target_idx);
     const auto & object = object_msg_map_.at(object_id);
-    auto predicted_object = to_predicted_object(object, trajectory);
+    const auto & trajectory = trajectories.at(i);
+
+    auto predicted_object = createPredictedObject(object, trajectory);
     output.objects.emplace_back(predicted_object);
   }
 
@@ -283,174 +213,134 @@ void MTRNode::callback(const TrackedObjects::ConstSharedPtr object_msg)
   pub_objects_->publish(output);
 }
 
-void MTRNode::on_map(const LaneletMapBin::ConstSharedPtr map_msg)
+void MTRNode::onMap(const HADMapBin::ConstSharedPtr map_msg)
 {
   lanelet_map_ptr_ = std::make_shared<lanelet::LaneletMap>();
   lanelet::utils::conversion::fromBinMsg(
     *map_msg, lanelet_map_ptr_, &traffic_rules_ptr_, &routing_graph_ptr_);
 
-  RCLCPP_DEBUG(get_logger(), "[TensorRT MTR]: Start converting lanelet to polyline");
-  if (lanelet_to_polyline()) {
-    RCLCPP_DEBUG(get_logger(), "[TensorRT MTR]: Success to convert lanelet to polyline");
-  } else {
-    RCLCPP_WARN(get_logger(), "[TensorRT MTR]: Fail to convert lanelet to polyline");
-  }
+  lanelet_converter_ptr_ = std::make_unique<LaneletConverter>(
+    lanelet_map_ptr_, config_ptr_->max_num_polyline, config_ptr_->max_num_point,
+    config_ptr_->point_break_distance);
 }
 
-void MTRNode::on_ego(const Odometry::ConstSharedPtr ego_msg)
+std::optional<TrackedObject> MTRNode::getLatestEgo()
 {
-  const auto current_time = static_cast<float>(rclcpp::Time(ego_msg->header.stamp).seconds());
-  const auto & position = ego_msg->pose.pose.position;
-  const auto & twist = ego_msg->twist.twist;
-  const auto yaw = static_cast<float>(tf2::getYaw(ego_msg->pose.pose.orientation));
-  float ax = 0.0f, ay = 0.0f;
-  if (!ego_states_.empty()) {
-    const auto & latest_state = ego_states_.back();
-    const auto time_diff = current_time - latest_state.first;
-    ax = static_cast<float>(twist.linear.x) - latest_state.second.vx() / (time_diff + 1e-10f);
-    ay = static_cast<float>(twist.linear.y) - latest_state.second.vy() / (time_diff + 1e-10f);
+  const Odometry::ConstSharedPtr odometry_msg = sub_ego_.takeData();
+  if (!odometry_msg) {
+    return std::nullopt;
   }
 
-  // TODO(ktro2828): use received ego size topic
-  ego_states_.emplace_back(
-    current_time,
-    AgentState(
-      static_cast<float>(position.x), static_cast<float>(position.y),
-      static_cast<float>(position.z), EGO_LENGTH, EGO_WIDTH, EGO_HEIGHT, yaw,
-      static_cast<float>(twist.linear.x), static_cast<float>(twist.linear.y), ax, ay, true));
+  auto createPoint32 =
+    [](const double x, const double y, const double z) -> geometry_msgs::msg::Point32 {
+    geometry_msgs::msg::Point32 p;
+    p.x = x;
+    p.y = y;
+    p.z = z;
+    return p;
+  };
 
-  constexpr size_t max_buffer_size = 100;
-  if (max_buffer_size < ego_states_.size()) {
-    ego_states_.erase(ego_states_.begin(), ego_states_.begin());
+  TrackedObject output;
+  // Classification and probability
+  {
+    output.existence_probability = 1.0;
+    ObjectClassification classification;
+    classification.label = ObjectClassification::CAR;
+    output.classification = {classification};
   }
+
+  // Kinematics
+  {
+    output.kinematics.pose_with_covariance = odometry_msg->pose;
+    output.kinematics.twist_with_covariance = odometry_msg->twist;
+  }
+
+  // Shape
+  {
+    const auto & ego_max_long_offset = vehicle_info_.max_longitudinal_offset_m;
+    const auto & ego_rear_overhang = vehicle_info_.vehicle_height_m;
+    const auto & ego_length = vehicle_info_.vehicle_length_m;
+    const auto & ego_width = vehicle_info_.vehicle_width_m;
+    const auto & ego_height = vehicle_info_.vehicle_height_m;
+
+    autoware_perception_msgs::msg::Shape shape;
+    shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
+    shape.dimensions.x = ego_length;
+    shape.dimensions.y = ego_width;
+    shape.dimensions.z = ego_height;
+
+    // TODO(Daniel): Should use overhang and ego info utils
+    shape.footprint.points.emplace_back(
+      createPoint32(-ego_rear_overhang, -0.5 * ego_width, ego_height));
+    shape.footprint.points.emplace_back(
+      createPoint32(-ego_rear_overhang, 0.5 * ego_width, ego_height));
+    shape.footprint.points.emplace_back(
+      createPoint32(ego_max_long_offset, 0.5 * ego_width, ego_height));
+    shape.footprint.points.emplace_back(
+      createPoint32(ego_max_long_offset, -0.5 * ego_width, ego_height));
+    output.shape = shape;
+  }
+  return output;
 }
 
-bool MTRNode::lanelet_to_polyline()
+void MTRNode::removeAncientAgentHistory(
+  const double current_time, const TrackedObjects::ConstSharedPtr objects_msg)
 {
-  if (!lanelet_map_ptr_) {
-    return false;
-  }
-
-  std::vector<LanePoint> all_points;
-  for (const auto & lanelet : lanelet_map_ptr_->laneletLayer) {
-    const auto lanelet_subtype = subtype_from(lanelet);
-    if (
-      lanelet_subtype == "road" || lanelet_subtype == "highway" ||
-      lanelet_subtype == "road_shoulder" || lanelet_subtype == "pedestrian_lane" ||
-      lanelet_subtype == "bicycle_lane" || lanelet_subtype == "walkway") {
-      if (
-        lanelet_subtype == "road" || lanelet_subtype == "highway" ||
-        lanelet_subtype == "road_shoulder") {
-        const auto & type_id = polyline_type_map_.type_to_id(lanelet_subtype);
-        auto points = getLanePointFromLineString(lanelet.centerline3d(), type_id);
-        insert_lane_points(points, all_points);
-      }
-      if (!is_turn_intersection(lanelet)) {
-        const auto & left = lanelet.leftBound3d();
-        const auto left_type = linestring_type_from(left);
-        if (left_type == "line_thin" || left_type == "line_thick") {
-          const auto left_subtype = linestring_subtype_from(left);
-          const auto & type_id = polyline_type_map_.type_to_id(left_subtype);
-          if (type_id != -1) {
-            auto points = getLanePointFromLineString(left, type_id);
-            insert_lane_points(points, all_points);
-          }
-        }
-        const auto & right = lanelet.rightBound3d();
-        const auto right_type = linestring_type_from(right);
-        if (right_type == "line_thin" || right_type == "line_thick") {
-          const auto right_subtype = linestring_subtype_from(right);
-          const auto & type_id = polyline_type_map_.type_to_id(right_subtype);
-          if (type_id != -1) {
-            auto points = getLanePointFromLineString(right, type_id);
-            insert_lane_points(points, all_points);
-          }
-        }
-      }
-    } else if (lanelet_subtype == "crosswalk") {
-      const auto & type_id = polyline_type_map_.type_to_id(lanelet_subtype);
-      auto points = getLanePointFromPolygon(lanelet.polygon3d(), type_id);
-      insert_lane_points(points, all_points);
-    }
-  }
-
-  for (const auto & linestring : lanelet_map_ptr_->lineStringLayer) {
-    const auto linestring_type = linestring_type_from(linestring);
-    if (linestring_type != "road_boarder" && linestring_type != "traffic_sign") {
-      continue;
-    }
-    const auto & type_id = polyline_type_map_.type_to_id(linestring_type);
-    auto points = getLanePointFromLineString(linestring, type_id);
-    insert_lane_points(points, all_points);
-  }
-
-  if (all_points.size() == 0) {
-    return false;
-  } else {
-    polyline_ptr_ = std::make_shared<PolylineData>(
-      all_points, config_ptr_->max_num_polyline, config_ptr_->max_num_point,
-      config_ptr_->point_break_distance);
-    return true;
-  }
-}
-
-void MTRNode::remove_ancient_history(
-  const float current_time, const TrackedObjects::ConstSharedPtr objects_msg)
-{
-  constexpr float time_threshold = 1.0f;  // TODO(ktro2828): use parameter
   for (const auto & object : objects_msg->objects) {
-    const auto & object_id = autoware_utils::to_hex_string(object.object_id);
+    const auto & object_id = autoware::universe_utils::toHexString(object.object_id);
     if (agent_history_map_.count(object_id) == 0) {
       continue;
     }
 
     const auto & history = agent_history_map_.at(object_id);
-    if (history.is_ancient(current_time, time_threshold)) {
+    if (history.is_ancient(current_time, TIME_THRESHOLD)) {
       agent_history_map_.erase(object_id);
     }
   }
 
   if (
     agent_history_map_.count(EGO_ID) != 0 &&
-    agent_history_map_.at(EGO_ID).is_ancient(current_time, time_threshold)) {
+    agent_history_map_.at(EGO_ID).is_ancient(current_time, TIME_THRESHOLD)) {
     agent_history_map_.erase(EGO_ID);
   }
 }
 
-void MTRNode::update_history(
-  const float current_time, const TrackedObjects::ConstSharedPtr objects_msg)
+void MTRNode::updateAgentHistory(
+  const double current_time, const TrackedObjects::ConstSharedPtr objects_msg,
+  const TrackedObject & ego_msg)
 {
-  // TODO(ktro2828): use ego info
   std::vector<std::string> observed_ids;
+  // other agents
   for (const auto & object : objects_msg->objects) {
-    auto label_index = label_index_from(object);
+    auto label_index = getLabelIndex(object);
     if (label_index == -1) {
       continue;
     }
 
-    const auto & object_id = autoware_utils::to_hex_string(object.object_id);
+    const auto object_id = autoware::universe_utils::toHexString(object.object_id);
     observed_ids.emplace_back(object_id);
-    object_msg_map_.emplace(object_id, object);
-    auto state = to_agent_state(object, true);
+    object_msg_map_.insert_or_assign(object_id, object);
 
+    const auto state = createAgentState(object, true);
     if (agent_history_map_.count(object_id) == 0) {
-      AgentHistory history(object_id, label_index, config_ptr_->num_past);
-      history.update(current_time, state);
+      AgentHistory history(state, object_id, label_index, current_time, config_ptr_->num_past);
       agent_history_map_.emplace(object_id, history);
     } else {
       agent_history_map_.at(object_id).update(current_time, state);
     }
   }
 
-  auto ego_state = lookup_ego_state(current_time);
+  // ego vehicle
+  observed_ids.emplace_back(EGO_ID);
+  object_msg_map_.insert_or_assign(EGO_ID, ego_msg);
+
+  const auto ego = createAgentState(ego_msg, true);
   if (agent_history_map_.count(EGO_ID) == 0) {
-    AgentHistory history(EGO_ID, AgentLabel::VEHICLE, config_ptr_->num_past);
-    history.update(current_time, ego_state);
+    AgentHistory history(ego, EGO_ID, AgentLabel::VEHICLE, current_time, config_ptr_->num_past);
     agent_history_map_.emplace(EGO_ID, history);
   } else {
-    agent_history_map_.at(EGO_ID).update(current_time, ego_state);
+    agent_history_map_.at(EGO_ID).update(current_time, ego);
   }
-  observed_ids.emplace_back(EGO_ID);
 
   // update unobserved histories with empty
   for (auto & [object_id, history] : agent_history_map_) {
@@ -461,32 +351,21 @@ void MTRNode::update_history(
   }
 }
 
-AgentState MTRNode::lookup_ego_state(const float current_time) const
+std::vector<size_t> MTRNode::extractTargetAgent(const std::vector<AgentHistory> & histories)
 {
-  auto state = std::min_element(
-    ego_states_.cbegin(), ego_states_.cend(), [&](const auto & s1, const auto & s2) {
-      return std::abs(s1.first - current_time) < std::abs(s2.first - current_time);
-    });
-  return state->second;
-}
+  auto map2ego = transform_listener_.getTransform(
+    "base_link", "map", rclcpp::Time(), rclcpp::Duration::from_seconds(0.1));
 
-std::vector<size_t> MTRNode::extract_target_agents(const std::vector<AgentHistory> & histories)
-{
-  std::vector<std::pair<size_t, float>> distances;
-  for (size_t i = 0; i < histories.size(); ++i) {
-    const auto & history = histories.at(i);
-    if (!history.is_valid_latest() || history.object_id() == EGO_ID) {
-      distances.emplace_back(i, INFINITY);
-    } else {
-      auto map2ego = transform_listener_.getTransform(
-        "base_link",  // target
-        "map",        // src
-        rclcpp::Time(), rclcpp::Duration::from_seconds(0.1));
-      if (!map2ego) {
-        RCLCPP_WARN(get_logger(), "Failed to get transform from map to base_link.");
-        return {};
-      }
-      const auto state = history.get_latest_state();
+  if (!map2ego) {
+    RCLCPP_WARN(get_logger(), "Failed to get transform from map to base_link.");
+    return {};
+  }
+
+  std::vector<std::pair<size_t, double>> index_distances;
+  for (size_t idx = 0; idx < histories.size(); ++idx) {
+    const auto & history = histories.at(idx);
+    if (history.is_valid_latest() && history.object_id() != EGO_ID) {
+      const auto & state = history.get_latest_state();
       geometry_msgs::msg::PoseStamped pose_in_map;
       pose_in_map.pose.position.x = state.x();
       pose_in_map.pose.position.y = state.y();
@@ -496,22 +375,20 @@ std::vector<size_t> MTRNode::extract_target_agents(const std::vector<AgentHistor
       geometry_msgs::msg::PoseStamped pose_in_ego;
       tf2::doTransform(pose_in_map, pose_in_ego, *map2ego);
 
-      const auto dist = std::hypot(
-        pose_in_ego.pose.position.x, pose_in_ego.pose.position.y, pose_in_ego.pose.position.z);
-      distances.emplace_back(i, dist);
+      const auto distance = std::hypot(pose_in_ego.pose.position.x, pose_in_ego.pose.position.y);
+      index_distances.emplace_back(idx, distance);
     }
   }
 
-  std::sort(distances.begin(), distances.end(), [](const auto & item1, const auto & item2) {
-    return item1.second < item2.second;
-  });
+  // sort by distance
+  std::sort(
+    index_distances.begin(), index_distances.end(),
+    [](const auto & item1, const auto & item2) { return item1.second < item2.second; });
 
-  constexpr size_t max_target_size = 15;  // TODO(ktro2828): use a parameter
   std::vector<size_t> target_indices;
-  target_indices.reserve(max_target_size);
-  for (const auto & [idx, _] : distances) {
+  for (const auto & [idx, _] : index_distances) {
     target_indices.emplace_back(idx);
-    if (max_target_size <= target_indices.size()) {
+    if (MAX_NUM_TARGET <= target_indices.size()) {
       break;
     }
   }
@@ -519,16 +396,17 @@ std::vector<size_t> MTRNode::extract_target_agents(const std::vector<AgentHistor
   return target_indices;
 }
 
-std::vector<float> MTRNode::get_relative_timestamps() const
+std::vector<float> MTRNode::getRelativeTimestamps() const
 {
-  auto output = timestamps_;
-  for (auto & t : output) {
-    t -= timestamps_.at(0);
+  std::vector<float> output;
+  output.reserve(timestamps_->size());
+  for (const auto & t : *timestamps_) {
+    output.push_back(t - timestamps_->front());
   }
   return output;
 }
 
-PredictedObject MTRNode::to_predicted_object(
+PredictedObject MTRNode::createPredictedObject(
   const TrackedObject & object, const PredictedTrajectory & trajectory)
 {
   const auto & init_pose_with_cov = object.kinematics.pose_with_covariance;
@@ -542,20 +420,18 @@ PredictedObject MTRNode::to_predicted_object(
   predicted_object.classification = object.classification;
   predicted_object.shape = object.shape;
   predicted_object.object_id = object.object_id;
+  predicted_object.existence_probability = object.existence_probability;
 
-  float max_existence_probability = 0.0f;
   for (const auto & mode : trajectory.get_modes()) {
     PredictedPath waypoints;
     waypoints.confidence = mode.score();
     waypoints.time_step = rclcpp::Duration::from_seconds(0.1);  // TODO(ktro282): use a parameter
     waypoints.path.reserve(mode.num_future());
-    if (max_existence_probability < mode.score()) {
-      max_existence_probability = mode.score();
-    }
+
     for (const auto & state : mode.get_waypoints()) {
       geometry_msgs::msg::Pose predicted_pose;
-      predicted_pose.position.x = static_cast<double>(state.x());
-      predicted_pose.position.y = static_cast<double>(state.y());
+      predicted_pose.position.x = state.x();
+      predicted_pose.position.y = state.y();
       predicted_pose.position.z = init_pose_with_cov.pose.position.z;
       predicted_pose.orientation = init_pose_with_cov.pose.orientation;
       waypoints.path.emplace_back(predicted_pose);
@@ -565,7 +441,6 @@ PredictedObject MTRNode::to_predicted_object(
     }
     predicted_object.kinematics.predicted_paths.emplace_back(waypoints);
   }
-  predicted_object.existence_probability = max_existence_probability;
 
   return predicted_object;
 }

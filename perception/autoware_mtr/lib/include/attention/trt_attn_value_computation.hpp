@@ -19,7 +19,7 @@
 
 #include <string>
 
-namespace trt_mtr
+namespace autoware::trt_mtr
 {
 /**
  * @brief Attention value computation plugin.
@@ -97,5 +97,5 @@ public:
     const char * name, const void * serialData, size_t serialLength) TRT_NOEXCEPT override;
 };  // class AttentionValueComputationCreator
 REGISTER_TENSORRT_PLUGIN(AttentionValueComputationCreator);
-}  // namespace trt_mtr
+}  // namespace autoware::trt_mtr
 #endif  // ATTENTION__TRT_ATTN_VALUE_COMPUTATION_HPP_

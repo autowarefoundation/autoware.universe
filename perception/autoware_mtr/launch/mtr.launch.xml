@@ -6,7 +6,7 @@
   <arg name="input/objects" default="/perception/object_recognition/tracking/objects"/>
   <arg name="input/vector_map" default="/map/vector_map"/>
   <arg name="input/ego" default="/localization/kinematic_state"/>
-  <arg name="output/objects" default="objects"/>
+  <arg name="output/objects" default="mtr/objects"/>
   <arg name="build_only" default="false"/>
 
   <node pkg="autoware_mtr" exec="autoware_mtr" name="mtr" output="screen">

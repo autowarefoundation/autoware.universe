@@ -29,6 +29,7 @@
 #include <array>
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace autoware::mtr
@@ -50,12 +51,12 @@ struct MTRConfig
    * @param intention_point_filepath The path to intention points file.
    * @param num_intention_point_cluster The number of clusters for intension points.
    */
-  MTRConfig(
+  explicit MTRConfig(
     const std::vector<std::string> & target_labels = {"VEHICLE", "PEDESTRIAN", "CYCLIST"},
     const size_t num_past = 11, const size_t num_mode = 6, const size_t num_future = 80,
     const size_t max_num_polyline = 768, const size_t max_num_point = 20,
     const float point_break_distance = 1.0f,
-    const std::string & intention_point_filepath = "./data/intention_point.csv",
+    std::string intention_point_filepath = "./data/intention_point.csv",
     const size_t num_intention_point_cluster = 64)
   : target_labels(target_labels),
     num_class(target_labels.size()),
@@ -65,7 +66,7 @@ struct MTRConfig
     max_num_polyline(max_num_polyline),
     max_num_point(max_num_point),
     point_break_distance(point_break_distance),
-    intention_point_filepath(intention_point_filepath),
+    intention_point_filepath(std::move(intention_point_filepath)),
     num_intention_point_cluster(num_intention_point_cluster)
   {
   }
@@ -97,7 +98,7 @@ public:
    * @param max_workspace_size The max size of workspace.
    * @param build_config The configuration of build.
    */
-  TrtMTR(
+  explicit TrtMTR(
     const std::string & model_path, const MTRConfig & config = MTRConfig(),
     const BuildConfig & build_config = BuildConfig(),
     const size_t max_workspace_size = (1ULL << 30));

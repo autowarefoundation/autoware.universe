@@ -23,7 +23,6 @@
 
 #include <cuda_runtime_api.h>
 
-#include <iostream>
 #include <memory>
 #include <sstream>
 #include <stdexcept>

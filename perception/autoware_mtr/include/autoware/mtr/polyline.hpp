@@ -15,9 +15,6 @@
 #ifndef AUTOWARE__MTR__POLYLINE_HPP_
 #define AUTOWARE__MTR__POLYLINE_HPP_
 
-#include <lanelet2_core/geometry/LineString.h>
-#include <lanelet2_core/geometry/Polygon.h>
-
 #include <array>
 #include <cmath>
 #include <cstddef>
@@ -234,72 +231,5 @@ private:
   std::vector<float> data_;
   const float distance_threshold_;
 };
-
-/**
- * @brief Generate LanePoints from LineString.
- *
- * @param linestring
- * @param type_id
- * @return std::vector<LanePoint>
- */
-std::vector<LanePoint> getLanePointFromLineString(
-  const lanelet::ConstLineString3d & linestring, const int type_id)
-{
-  if (linestring.size() == 0) {
-    return {};
-  }
-
-  const float type_value = static_cast<float>(type_id);
-  const auto & start = linestring.begin();
-  std::vector<LanePoint> points{
-    {static_cast<float>(start->x()), static_cast<float>(start->y()), static_cast<float>(start->z()),
-     0.0f, 0.0f, 0.0f, type_value}};
-  points.reserve(linestring.size());
-  for (auto itr = start + 1; itr != linestring.end(); ++itr) {
-    const auto dx = (itr)->x() - (itr - 1)->x();
-    const auto dy = (itr)->y() - (itr - 1)->y();
-    const auto dz = (itr)->z() - (itr - 1)->z();
-    const auto norm = std::hypot(dx, dy, dz);
-    points.emplace_back(
-      static_cast<float>(itr->x()), static_cast<float>(itr->y()), static_cast<float>(itr->z()),
-      static_cast<float>(dx / norm), static_cast<float>(dy / norm), static_cast<float>(dz / norm),
-      type_value);
-  }
-  return points;
-}
-
-/**
- * @brief Generate LanePoints from Polygon.
- *
- * @param polygon
- * @param type_id
- * @return std::vector<LanePoint>
- */
-std::vector<LanePoint> getLanePointFromPolygon(
-  const lanelet::CompoundPolygon3d & polygon, const int type_id)
-{
-  if (polygon.size() == 0) {
-    return {};
-  }
-
-  const float type_value = static_cast<float>(type_id);
-  const auto & start = polygon.begin();
-  std::vector<LanePoint> points{
-    {static_cast<float>(start->x()), static_cast<float>(start->y()), static_cast<float>(start->z()),
-     0.0f, 0.0f, 0.0f, type_value}};
-  points.reserve(polygon.size());
-  for (auto itr = start + 1; itr != polygon.end(); ++itr) {
-    const auto dx = (itr)->x() - (itr - 1)->x();
-    const auto dy = (itr)->y() - (itr - 1)->y();
-    const auto dz = (itr)->z() - (itr - 1)->z();
-    const auto norm = std::hypot(dx, dy, dz);
-    points.emplace_back(
-      static_cast<float>(itr->x()), static_cast<float>(itr->y()), static_cast<float>(itr->z()),
-      static_cast<float>(dx / norm), static_cast<float>(dy / norm), static_cast<float>(dz / norm),
-      type_value);
-  }
-  return points;
-}
-
 }  // namespace autoware::mtr
 #endif  // AUTOWARE__MTR__POLYLINE_HPP_

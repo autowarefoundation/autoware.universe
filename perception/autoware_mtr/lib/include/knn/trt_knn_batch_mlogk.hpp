@@ -19,7 +19,7 @@
 
 #include <string>
 
-namespace trt_mtr
+namespace autoware::trt_mtr
 {
 /**
  * @brief The function to compute KNN batch with MLogK.
@@ -99,5 +99,5 @@ public:
     const char * name, const void * serialData, size_t serialLength) TRT_NOEXCEPT override;
 };  // class KnnBatchMlogKCreator
 REGISTER_TENSORRT_PLUGIN(KnnBatchMlogKCreator);
-}  // namespace trt_mtr
+}  // namespace autoware::trt_mtr
 #endif  // KNN__TRT_KNN_BATCH_MLOGK_HPP_

@@ -35,8 +35,8 @@ __global__ void transformTrajectoryKernel(
   const float targetCos = cosf(targetYaw);
   const float targetSin = sinf(targetYaw);
 
-  predTrajectory[predIdx] = targetCos * predX + targetSin * predY + targetX;
-  predTrajectory[predIdx + 1] = -targetSin * predX + targetCos * predY + targetY;
+  predTrajectory[predIdx] = targetCos * predX - targetSin * predY + targetX;
+  predTrajectory[predIdx + 1] = targetSin * predX + targetCos * predY + targetY;
 }
 
 cudaError_t postprocessLauncher(

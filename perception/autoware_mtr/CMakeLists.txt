@@ -55,6 +55,9 @@ target_include_directories(${PROJECT_NAME}_cuda_lib PUBLIC
 ament_auto_add_library(${PROJECT_NAME}_lib SHARED
   src/builder.cpp
   src/trt_mtr.cpp
+  src/conversions/lanelet.cpp
+  src/intention_point.cpp
+  src/conversions/history.cpp
 )
 target_link_libraries(${PROJECT_NAME}_lib
   ${TRT_PLUGINS}
@@ -90,6 +93,7 @@ rclcpp_components_register_node(${PROJECT_NAME}_node
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
+  ament_auto_add_gtest(test_fixed_queue test/test_fixed_queue.cpp)
 endif()
 
 ament_auto_package(

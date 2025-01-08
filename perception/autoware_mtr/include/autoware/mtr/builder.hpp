@@ -54,8 +54,41 @@ using TrtUniquePtr = std::unique_ptr<T, TrtDeleter<T>>;
 // Type names of precisions.
 enum PrecisionType { FP32 = 0, FP16 = 1, INT8 = 2 };
 
+// Return corresponding PrecisionType from string.
+inline PrecisionType toPrecisionType(const std::string & name)
+{
+  if (name == "FP32") {
+    return PrecisionType::FP32;
+  }
+  if (name == "FP16") {
+    return PrecisionType::FP16;
+  }
+  if (name == "INT8") {
+    return PrecisionType::INT8;
+  }
+  throw std::invalid_argument("Invalid precision name.");
+}
+
 // Type names of calibrations.
 enum CalibrationType { ENTROPY = 0, LEGACY = 1, PERCENTILE = 2, MINMAX = 3 };
+
+// Return corresponding CalibrationType from string.
+inline CalibrationType toCalibrationType(const std::string & name)
+{
+  if (name == "ENTROPY") {
+    return CalibrationType::ENTROPY;
+  }
+  if (name == "LEGACY") {
+    return CalibrationType::LEGACY;
+  }
+  if (name == "PERCENTILE") {
+    return CalibrationType::PERCENTILE;
+  }
+  if (name == "MINMAX") {
+    return CalibrationType::MINMAX;
+  }
+  throw std::invalid_argument("Invalid calibration name.");
+}
 
 struct BatchOptConfig
 {
@@ -112,12 +145,11 @@ struct BuildConfig
    * @param calibration
    */
   BuildConfig(
-    const bool is_dynamic, const PrecisionType & precision = PrecisionType::FP32,
-    const CalibrationType & calibration = CalibrationType::MINMAX,
+    const bool is_dynamic, const std::string & precision, const std::string & calibration,
     const BatchOptConfig & batch_target = BatchOptConfig(1, 10, 20),
     const BatchOptConfig & batch_agent = BatchOptConfig(1, 30, 50))
-  : precision(precision),
-    calibration(calibration),
+  : precision(toPrecisionType(precision)),
+    calibration(toCalibrationType(calibration)),
     batch_target(batch_target),
     batch_agent(batch_agent),
     is_dynamic_(is_dynamic)
@@ -155,10 +187,10 @@ public:
    *
    * @return True if plugins were initialized successfully.
    */
-  bool isInitialized() const;
+  [[nodiscard]] bool isInitialized() const;
 
   // Return true if the model supports dynamic shape inference.
-  bool isDynamic() const;
+  [[nodiscard]] bool isDynamic() const;
 
   // Set binding dimensions for specified for dynamic shape inference.
   bool setBindingDimensions(int index, nvinfer1::Dims dimensions);
@@ -184,7 +216,7 @@ private:
   bool loadEngine(const std::string & filepath);
 
   // Create a cache path of engine file.
-  fs::path createEngineCachePath() const;
+  [[nodiscard]] fs::path createEngineCachePath() const;
 
   /**
    * @brief Build engine from onnx file.
