@@ -787,13 +787,14 @@ Depending on the space configuration around the Ego vehicle, it is possible that
 
 Additionally if terminal path feature is enabled and path is computed, stop point placement can be configured to be at the edge of the current lane instead of at the `terminal_start` position, as indicated by the dashed red line in the image above.
 
-## Canceling/Aborting a Previously Approved Lane Change
+## Aborting a Previously Approved Lane Change
 
 Once the lane change path is approved, there are several situations where we may need to abort the maneuver. The abort process is triggered if any one of the following conditions is met
 
 1. The ego vehicle is near a traffic light, crosswalk, or intersection, and it is possible to complete the lane change after the ego vehicle passes these areas.
-2. The lane change is forcefully canceled via [RTC](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-interfaces/ad-api/features/cooperation/).
-3. The path has become unsafe.
+2. The target object list is updated, requiring us to [delay lane change](#delay-lane-change-check)
+3. The lane change is forcefully canceled via [RTC](https://autowarefoundation.github.io/autoware-documentation/main/design/autoware-interfaces/ad-api/features/cooperation/).
+4. The path has become unsafe.
 
 Furthermore, if the path has become unsafe, there are three possible outcomes for the maneuver:
 
@@ -888,13 +889,7 @@ The edges of the ego vehicle’s footprint are compared against the boundary of 
 The footprints checked against the lane boundary include:
 
 1. Current Footprint: Based on the ego vehicle's current position.
-2. Future Footprint: Based on the ego vehicle's estimated position after traveling a distance, calculated as:
-
-   $$
-   𝑑_{est}=𝑣_{ego} \cdot \Delta_{𝑡}
-   $$
-
-   where
+2. Future Footprint: Based on the ego vehicle's estimated position after traveling a distance, calculated as $𝑑_{est}=𝑣_{ego} \cdot \Delta_{𝑡}$, where
 
    - $v_{ego}$ is ego vehicle current velocity
    - $\Delta_{t}$ is parameterized time constant value, `cancel.delta_time`.
@@ -909,15 +904,21 @@ The footprints checked against the lane boundary include:
 
 ### Cancel
 
-Suppose the lane change trajectory is evaluated as unsafe. In that case, if the ego vehicle has not departed from the current lane yet, the trajectory will be reset, and the ego vehicle will resume the lane following the maneuver.
-
-The function can be enabled by setting `enable_on_prepare_phase` to `true`.
-
-The following image illustrates the cancel process.
+When lane change is canceled, the approved path is reset. After the reset, the ego vehicle will return to following the original reference path (the last approved path before the lane change started), as illustrated in the following image
 
 ![cancel](./images/lane_change-cancel.png)
 
-During a lane change, a safety check is made in consideration of the deceleration of the ego vehicle, and a safety check is made for `cancel.deceleration_sampling_num` deceleration patterns, and the lane change will be canceled if the abort condition is satisfied for all deceleration patterns.
+The following parameters can be configured to tune the behavior of the cancel process:
+
+1. [Safety constraints](#safety-constraints-to-cancel-lane-change-path) for cancel.
+2. [Safety constraints](#safety-constraints-specifically-for-stopped-or-parked-vehicles) for parked vehicle.
+
+!!! note
+
+    To ensure feasible behavior, all safety constraint values must be equal to or less than their corresponding parameters in the [execution](#safety-constraints-during-lane-change-path-is-computed) settings.
+
+    - The closer the values, the more conservative the lane change behavior will be. This means it will be easier to cancel the lane change but harder for the ego vehicle to complete a lane change.
+    - The larger the difference, the more aggressive the lane change behavior will be. This makes it harder to cancel the lane change but easier for the ego vehicle to change lanes.
 
 ### Abort
 
@@ -933,9 +934,7 @@ The last behavior will also occur if the ego vehicle has departed from the curre
 
 ### Limitation
 
-!!! warning
-
-    TBA
+1. When a lane change is canceled, the lane change module returns `ModuleStatus::FAILURE`. As the lane change module is removed from the approved module's stack (see [Failure modules](https://autowarefoundation.github.io/autoware.universe/main/planning/behavior_path_planner/autoware_behavior_path_planner/docs/behavior_path_planner_manager_design/#failure-modules) explanation), a new instance of the lane change module will start. Due to this reset, any information stored before the reset will be lost. For example, the `lane_change_prepare_duration` in the `TransientData` will be reset to its maximum value..
 
 ## Parameters
 
