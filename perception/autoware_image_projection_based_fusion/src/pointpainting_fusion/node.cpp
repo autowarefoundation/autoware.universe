@@ -162,9 +162,9 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
     "~/input/pointcloud", rclcpp::SensorDataQoS().keep_last(3), sub_callback);
 
   // publisher
-  point_pub_ptr_ =
-    this->create_publisher<PointCloudMsgType>("~/debug/painted_pointcloud", rclcpp::QoS{1});
   pub_ptr_ = this->create_publisher<DetectedObjects>("~/output/objects", rclcpp::QoS{1});
+  painted_point_pub_ptr_ =
+    this->create_publisher<PointCloudMsgType>("~/debug/painted_pointcloud", rclcpp::QoS{1});
 
   detection_class_remapper_.setParameters(
     allow_remapping_by_area_matrix, min_area_matrix, max_area_matrix);
@@ -439,8 +439,8 @@ void PointPaintingFusionNode::postprocess(
   detection_class_remapper_.mapClasses(output_msg);
 
   // publish debug message: painted pointcloud
-  if (!!(debugger_) && point_pub_ptr_->get_subscription_count() > 0) {
-    point_pub_ptr_->publish(painted_pointcloud_msg);
+  if (!!(debugger_) && painted_point_pub_ptr_->get_subscription_count() > 0) {
+    painted_point_pub_ptr_->publish(painted_pointcloud_msg);
   }
   diagnostics_interface_ptr_->publish(painted_pointcloud_msg.header.stamp);
 }
