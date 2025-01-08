@@ -79,7 +79,7 @@ public:
     if (const auto type = layer->getType(); type == nvinfer1::LayerType::kCONVOLUTION) {
       const auto name = layer->getName();
       auto conv = dynamic_cast<nvinfer1::IConvolutionLayer *>(layer);
-      
+
       nvinfer1::ITensor * in = layer->getInput(0);
       nvinfer1::Dims in_dim = in->getDimensions();
 
@@ -93,7 +93,9 @@ public:
       int32_t stride = s_dims.d[0];
       int32_t groups = conv->getNbGroups();
 
-      layer_dict_.insert_or_assign(name, ConvLayerInfo{in_dim.d[1], out_dim.d[1], in_dim.d[3], in_dim.d[2], kernel, stride, groups, type});
+      layer_dict_.insert_or_assign(
+        name, ConvLayerInfo{
+                in_dim.d[1], out_dim.d[1], in_dim.d[3], in_dim.d[2], kernel, stride, groups, type});
     }
   }
 
