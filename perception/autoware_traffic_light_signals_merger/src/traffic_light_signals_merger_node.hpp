@@ -21,11 +21,7 @@
 #include "message_filters/synchronizer.h"
 #include "rclcpp/rclcpp.hpp"
 
-#include "tier4_perception_msgs/msg/traffic_light.hpp"
 #include "tier4_perception_msgs/msg/traffic_light_array.hpp"
-#include "tier4_perception_msgs/msg/traffic_light_element.hpp"
-#include "tier4_perception_msgs/msg/traffic_light_roi.hpp"
-#include "tier4_perception_msgs/msg/traffic_light_roi_array.hpp"
 
 #include <chrono>
 #include <memory>
@@ -34,11 +30,7 @@
 
 namespace autoware::traffic_light
 {
-using tier4_perception_msgs::msg::TrafficLight;
 using tier4_perception_msgs::msg::TrafficLightArray;
-using tier4_perception_msgs::msg::TrafficLightElement;
-using tier4_perception_msgs::msg::TrafficLightRoi;
-using tier4_perception_msgs::msg::TrafficLightRoiArray;
 
 class TrafficLightSignalsMergerNode : public rclcpp::Node
 {
@@ -52,17 +44,14 @@ private:
 
   message_filters::Subscriber<TrafficLightArray> car_signal_sub_;
   message_filters::Subscriber<TrafficLightArray> pedestrian_signal_sub_;
-  message_filters::Subscriber<TrafficLightRoiArray> expected_rois_sub_;
 
-  typedef message_filters::sync_policies::ApproximateTime<
-    TrafficLightArray, TrafficLightArray, TrafficLightRoiArray>
+  typedef message_filters::sync_policies::ApproximateTime<TrafficLightArray, TrafficLightArray>
     SyncPolicy;
   message_filters::Synchronizer<SyncPolicy> sync_;
 
   void signalsCallback(
     const TrafficLightArray::ConstSharedPtr & car_signals_msg,
-    const TrafficLightArray::ConstSharedPtr & pedestrian_signals_msg,
-    const TrafficLightRoiArray::ConstSharedPtr & expected_rois_msg);
+    const TrafficLightArray::ConstSharedPtr & pedestrian_signals_msg);
 
   rclcpp::Publisher<TrafficLightArray>::SharedPtr pub_traffic_light_signals_;
 };
