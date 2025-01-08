@@ -280,8 +280,6 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::subCallback(
     }
   }
 
-  std::lock_guard<std::mutex> lock(mutex_cached_msgs_);
-
   // TIMING: reset timer to the timeout time
   auto period = std::chrono::duration_cast<std::chrono::nanoseconds>(
     std::chrono::duration<double, std::milli>(timeout_ms_));
@@ -447,28 +445,16 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::timer_callback()
 
   using std::chrono_literals::operator""ms;
   timer_->cancel();
-  if (mutex_cached_msgs_.try_lock()) {
-    // PROCESS: if timeout, postprocess cached msg
-    if (cached_det3d_msg_ptr_ != nullptr) {
-      stop_watch_ptr_->toc("processing_time", true);
-      exportProcess();
-    }
 
-    // reset flags whether the message is fused or not
-    for (auto & det2d : det2d_list_) {
-      det2d.is_fused = false;
-    }
+  // PROCESS: if timeout, postprocess cached msg
+  if (cached_det3d_msg_ptr_ != nullptr) {
+    stop_watch_ptr_->toc("processing_time", true);
+    exportProcess();
+  }
 
-    mutex_cached_msgs_.unlock();
-  } else {
-    // TIMING: retry the process after 10ms
-    try {
-      std::chrono::nanoseconds period = 10ms;
-      setPeriod(period.count());
-    } catch (rclcpp::exceptions::RCLError & ex) {
-      RCLCPP_WARN_THROTTLE(get_logger(), *get_clock(), 5000, "%s", ex.what());
-    }
-    timer_->reset();
+  // reset flags whether the message is fused or not
+  for (auto & det2d : det2d_list_) {
+    det2d.is_fused = false;
   }
 }
 
