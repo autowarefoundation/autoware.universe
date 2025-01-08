@@ -439,7 +439,9 @@ TEST_F(TestWithShoulderData, generateBlindSpotLaneletsShoulder_left)
 
 int main(int argc, char ** argv)
 {
+#ifdef EXPORT_TEST_PLOT_FIGURE
   py::scoped_interpreter guard{};
+#endif
   rclcpp::init(0, nullptr);
   testing::InitGoogleTest(&argc, argv);
   return RUN_ALL_TESTS();
