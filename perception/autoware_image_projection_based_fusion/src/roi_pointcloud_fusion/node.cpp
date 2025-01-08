@@ -79,7 +79,15 @@ void RoiPointCloudFusionNode::fuseOnSingleImage(
       debug_image_rois.push_back(feature_obj.feature.roi);
     }
   }
+
+  // check if there is no object to fuse
   if (output_objs.empty()) {
+    // publish debug image, which is empty
+    if (debugger_) {
+      debugger_->image_rois_ = debug_image_rois;
+      debugger_->obstacle_points_ = debug_image_points;
+      debugger_->publishImage(det2d.id, input_roi_msg.header.stamp);
+    }
     return;
   }
 
@@ -163,6 +171,8 @@ void RoiPointCloudFusionNode::fuseOnSingleImage(
   updateOutputFusedObjects(
     output_objs, clusters, clusters_data_size, input_pointcloud_msg, input_roi_msg.header,
     tf_buffer_, min_cluster_size_, max_cluster_size_, cluster_2d_tolerance_, output_fused_objects_);
+
+  // publish debug image
   if (debugger_) {
     debugger_->image_rois_ = debug_image_rois;
     debugger_->obstacle_points_ = debug_image_points;
