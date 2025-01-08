@@ -76,27 +76,24 @@ public:
    */
   void setProfDict(nvinfer1::ILayer * const layer) noexcept final
   {
-    std::string name = layer->getName();
-    layer_dict_[name];
-    layer_dict_[name].type = layer->getType();
-    if (layer->getType() == nvinfer1::LayerType::kCONVOLUTION) {
+    if (const auto type = layer->getType(); type == nvinfer1::LayerType::kCONVOLUTION) {
+      const auto name = layer->getName();
       auto conv = dynamic_cast<nvinfer1::IConvolutionLayer *>(layer);
+      
       nvinfer1::ITensor * in = layer->getInput(0);
-      nvinfer1::Dims dim_in = in->getDimensions();
+      nvinfer1::Dims in_dim = in->getDimensions();
+
       nvinfer1::ITensor * out = layer->getOutput(0);
-      nvinfer1::Dims dim_out = out->getDimensions();
+      nvinfer1::Dims out_dim = out->getDimensions();
+
       nvinfer1::Dims k_dims = conv->getKernelSizeNd();
       nvinfer1::Dims s_dims = conv->getStrideNd();
-      int groups = conv->getNbGroups();
-      int stride = s_dims.d[0];
-      int kernel = k_dims.d[0];
-      layer_dict_[name].in_c = dim_in.d[1];
-      layer_dict_[name].out_c = dim_out.d[1];
-      layer_dict_[name].w = dim_in.d[3];
-      layer_dict_[name].h = dim_in.d[2];
-      layer_dict_[name].k = kernel;
-      layer_dict_[name].stride = stride;
-      layer_dict_[name].groups = groups;
+
+      int32_t kernel = k_dims.d[0];
+      int32_t stride = s_dims.d[0];
+      int32_t groups = conv->getNbGroups();
+
+      layer_dict_.insert_or_assign(name, ConvLayerInfo{in_dim.d[1], out_dim.d[1], in_dim.d[3], in_dim.d[2], kernel, stride, groups, type});
     }
   }
 
