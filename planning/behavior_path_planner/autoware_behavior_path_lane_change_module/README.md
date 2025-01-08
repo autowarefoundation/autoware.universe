@@ -881,26 +881,31 @@ endif
 
 ### Evaluating Ego Vehicle's Position to Prevent Abrupt Maneuvers
 
-To prevent abrupt maneuvers caused by **CANCEL** or **ABORT**, lane change module ensures that the ego vehicle can safely return to the original lane. This is achieved by converting the current lane, where the ego vehicle was originally situated, into a polygon. This polygon representation allows for geometric checks to verify if the ego vehicle remains within the lane boundaries.
+To prevent abrupt maneuvers caused by **CANCEL** or **ABORT**, the lane change module ensures that the ego vehicle can safely return to the original lane. This is done through geometric checks that verify whether the ego vehicle remains within the lane boundaries.
 
-The edges of the ego vehicle's current footprint are checked against the polygon. The vehicle is considered to be diverging if the distance from any edge of the footprint to the lane exceeds `cancel.overhang_tolerance`.
+The edges of the ego vehicle’s footprint are compared against the boundary of the current lane to determine if they exceed the overhang tolerance, cancel.overhang_tolerance. If the distance from any edge of the footprint to the boundary exceeds this threshold, the vehicle is considered to be diverging.
 
-If the vehicle is not diverging, the module calculates the ego vehicle’s estimated future position. This is done by computing the estimated travel distance,
+The footprints checked against the lane boundary include:
 
-$$
-𝑑_{est}=𝑣_ego \cdot \Delta_{𝑡}
-$$
+1. Current Footprint Check: Based on the ego vehicle's current position.
+2. Future Footprint Check: Based on the ego vehicle's estimated position after traveling a distance, calculated as:
 
-where
+   $$
+   𝑑_{est}=𝑣_{ego} \cdot \Delta_{𝑡}
+   $$
 
-- $v_{ego}$ is ego vehicle current velocity
-- $\Delta_{t}$ is parameterized time constant value, `cancel.delta_time`.
+   where
 
-as depicted in the following diagram
+   - $v_{ego}$ is ego vehicle current velocity
+   - $\Delta_{t}$ is parameterized time constant value, `cancel.delta_time`.
 
-![can_return](./images/check_able_to_return.png)
+   as depicted in the following diagram
 
-The estimated future footprint of the ego vehicle is then derived based on this travel distance. The same checks are applied to the estimated footprint. If the divergence of the estimated footprint is within the overhang tolerance, the ego vehicle is assumed to be able to safely return to the current lane.
+   ![can_return](./images/check_able_to_return.png)
+
+!!! note
+
+    The ego vehicle is considered capable of safely returning to the current lane only if **BOTH** the current and future footprint checks are `true`.
 
 ### Cancel
 
