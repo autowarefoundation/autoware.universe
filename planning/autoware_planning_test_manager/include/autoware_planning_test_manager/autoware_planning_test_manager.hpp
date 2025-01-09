@@ -42,6 +42,7 @@
 #include <ctime>
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace autoware::planning_test_manager
 {

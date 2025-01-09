@@ -22,9 +22,6 @@
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <iostream>
-#include <memory>
-#include <string>
-#include <vector>
 
 namespace autoware::planning_test_manager
 {
