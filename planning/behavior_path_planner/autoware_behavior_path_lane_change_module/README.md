@@ -789,7 +789,7 @@ Additionally if terminal path feature is enabled and path is computed, stop poin
 
 ## Aborting a Previously Approved Lane Change
 
-Once the lane change path is approved, there are several situations where we may need to abort the maneuver. The abort process is triggered if any one of the following conditions is met
+Once the lane change path is approved, there are several situations where we may need to abort the maneuver. The abort process is triggered when any of the following conditions is met
 
 1. The ego vehicle is near a traffic light, crosswalk, or intersection, and it is possible to complete the lane change after the ego vehicle passes these areas.
 2. The target object list is updated, requiring us to [delay lane change](#delay-lane-change-check)
@@ -856,7 +856,7 @@ detach
 
 ### Preventing Oscillating Paths When Unsafe
 
-Lane change paths can oscillate when conditions switch between safe and unsafe. To address this, a hysteresis count check is added before executing an abort maneuver. When the path is unsafe, the `unsafe_hysteresis_count_` increases. If it exceeds the `unsafe_hysteresis_threshold`, an abort condition check is triggered. This logic helps stabilize path's approval process and prevents abrupt changes caused by temporary unsafe conditions.
+Lane change paths can oscillate when conditions switch between safe and unsafe. To address this, a hysteresis count check is added before executing an abort maneuver. When the path is unsafe, the `unsafe_hysteresis_count_` increases. If it exceeds the `unsafe_hysteresis_threshold`, an abort condition check is triggered. This logic stabilizes the path approval process and prevents abrupt changes caused by temporary unsafe conditions.
 
 ```plantuml
 @startuml
@@ -884,7 +884,7 @@ stop
 
 ### Evaluating Ego Vehicle's Position to Prevent Abrupt Maneuvers
 
-To prevent abrupt maneuvers caused by **CANCEL** or **ABORT**, the lane change module ensures that the ego vehicle can safely return to the original lane. This is done through geometric checks that verify whether the ego vehicle remains within the lane boundaries.
+To avoid abrupt maneuvers during **CANCEL** or **ABORT**, the lane change module ensures the ego vehicle can safely return to the original lane. This is done through geometric checks that verify whether the ego vehicle remains within the lane boundaries.
 
 The edges of the ego vehicle’s footprint are compared against the boundary of the current lane to determine if they exceed the overhang tolerance, `cancel.overhang_tolerance`. If the distance from any edge of the footprint to the boundary exceeds this threshold, the vehicle is considered to be diverging.
 
@@ -904,6 +904,32 @@ The footprints checked against the lane boundary include:
 
     The ego vehicle is considered capable of safely returning to the current lane only if **BOTH** the current and future footprint checks are `true`.
 
+### Sampling Accelerations Along Lane Changing Path
+
+The lane change module samples accelerations along the path and recalculates velocity to perform safety checks. The motivation for this feature is explained in the [Limitation](#limitation) section.
+
+The computation of sampled accelerations is as follows:
+
+Let
+
+$$
+\text{resolution} = \frac{a_{\text{min}} - a_{\text{LC}}}{N}
+$$
+
+The sequence of sampled accelerations is then given as
+
+$$
+\text{acc} = a_{\text{LC}} + k \cdot \text{resolution}, \quad k = [0, N]
+$$
+
+where
+
+- $a_{\text{min}}$, is the minimum of the parameterized [global acceleration constant](https://github.com/autowarefoundation/autoware_launch/blob/main/autoware_launch/config/planning/scenario_planning/common/common.param.yaml) `normal.min_acc` or the [parameterized constant](#essential-lane-change-parameters) `trajectory.min_longitudinal_acceleration`.
+- $a_{\text{LC}}$ is the acceleration used to generated the approved path.
+- $N$ is the parameterized constant `cancel.deceleration_sampling`
+
+If none of the sampled accelerations pass the safety check, the lane change path will be canceled, subject to the [hysteresis check](#preventing-oscillating-paths-when-unsafe).
+
 ### Cancel
 
 When lane change is canceled, the approved path is reset. After the reset, the ego vehicle will return to following the original reference path (the last approved path before the lane change started), as illustrated in the following image
@@ -914,7 +940,6 @@ The following parameters can be configured to tune the behavior of the cancel pr
 
 1. [Safety constraints](#safety-constraints-to-cancel-lane-change-path) for cancel.
 2. [Safety constraints](#safety-constraints-specifically-for-stopped-or-parked-vehicles) for parked vehicle.
-3. `cancel.deceleration_sampling`
 
 !!! note
 
@@ -923,46 +948,50 @@ The following parameters can be configured to tune the behavior of the cancel pr
     - The closer the values, the more conservative the lane change behavior will be. This means it will be easier to cancel the lane change but harder for the ego vehicle to complete a lane change.
     - The larger the difference, the more aggressive the lane change behavior will be. This makes it harder to cancel the lane change but easier for the ego vehicle to change lanes.
 
-<a id="sampling-accelerations-along-lane-changing-path"></a>
-!!! note
-
-    The lane change module samples accelerations along the path and recalculates velocity to perform safety checks.
-
-    The sampled accelerations are computed as follows:
-
-    If none of the sampled accelerations pass the safety check, the lane change path will be canceled, subject to the [hysteresis check](#preventing-oscillating-paths-when-unsafe).
-
 ### Abort
 
-During the prepare phase, the ego vehicle follows the previously approved path. However, once the ego vehicle begins the lane change, its heading starts to diverge from this path. Simply resetting to the previously approved path in such a situation would result in abrupt steering, as the controller would attempt to quickly realign the vehicle with the reference trajectory.
+During the prepare phase, the ego vehicle follows the previously approved path. However, once the ego vehicle begins the lane change, its heading starts to diverge from this path. Resetting to the previously approved path in this situation would cause abrupt steering, as the controller would attempt to rapidly realign the vehicle with the reference trajectory.
 
 Instead, the lane change module generates an abort path. This return path is specifically designed to guide the ego vehicle back to the current lane, avoiding any sudden maneuvers. The following image provides an illustration of the abort process.
 
 ![abort](./images/lane_change-abort.png)
 
-The abort path is generated by shifting the approved lane change path using the path shifter. This shifting ensures the continuity of the lateral velocity, preventing abrupt changes in the vehicle’s movement. The abort start shift and abort end shift are computed as follows:
+The abort path is generated by shifting the approved lane change path using the path shifter. This ensures the continuity in lateral velocity, and prevents abrupt changes in the vehicle’s movement. The abort start shift and abort end shift are computed as follows:
 
 1. Start Shift: $d_{end}^{abort} = v_{ego} \cdot \Delta_{t}$
 2. End Shift: $d_{end}^{abort} = v_{ego} \cdot ( \Delta_{t} + t_{end} )$
 
 - $v_{ego}$ is ego vehicle's current velocity
 - $\Delta_{t}$ is parameterized time constant value, `cancel.delta_time`.
-- $\t_{end}$ is the parameterized time constant value, `cancel.duration`.
+- $t_{end}$ is the parameterized time constant value, `cancel.duration`.
 
 as depicted in the following diagram
 
 ![abort_computation](./images/lane_change-abort_computation.png)
 
+!!! note
+
+    When executing the abort process, comfort is not a primary concern. However, due to safety considerations, limited real-world testing has been conducted to tune or validate this parameter. Currently, the maximum lateral jerk is set to an arbitrary value. To avoid generating a path with excessive lateral jerk, this value can be configured using `cancel.max_lateral_jerk`.
+
+!!! note
+
+    Lane change module returns ModuleStatus::FAILURE once abort is completed.
+
 ### Stop/Cruise
 
-The last behavior will also occur if the ego vehicle has departed from the current lane. If the abort function is disabled or the abort is no longer possible, the ego vehicle will attempt to stop or transition to the obstacle cruise mode. Do note that the module DOESN'T GUARANTEE safe maneuver due to the unexpected behavior that might've occurred during these critical scenarios. The following images illustrate the situation.
+Once canceling or aborting the lane change is no longer an option, the ego vehicle will proceed with the lane change. This can happen in the following situations:
+
+- The ego vehicle is performing a lane change near a terminal or dead-end, making it impossible to return to the original lane. In such cases, completing the lane change is necessary.
+- If safety parameters are tuned too aggressively, it becomes harder to cancel or abort the lane change. This offers less tolerance for unexpected behaviors from surrounding vehicles, such as a trailing vehicle in the target lane suddenly accelerating or a leading vehicle suddenly decelerating. Aggressive settings leave less room for error during the maneuver.
 
 ![stop](./images/lane_change-cant_cancel_no_abort.png)
 
 ### Limitation
 
-1. When a lane change is canceled, the lane change module returns `ModuleStatus::FAILURE`. As the lane change module is removed from the approved module's stack (see [Failure modules](https://autowarefoundation.github.io/autoware.universe/main/planning/behavior_path_planner/autoware_behavior_path_planner/docs/behavior_path_planner_manager_design/#failure-modules) explanation), a new instance of the lane change module will start. Due to this reset, any information stored before the reset will be lost. For example, the `lane_change_prepare_duration` in the `TransientData` will be reset to its maximum value.
-2. The lane change module has no knowledge of any modified velocity introduced to the path once it is approved. This is because other modules may add deceleration points after subscribing to the behavior path planner output, and the final velocity is managed by the velocity smoother. Since this limitation affects CANCEL's behavior, the lane change module addresses them by [sampling accelerations along the approved lane change path](#sampling-accelerations-along-lane-changing-path). These sampled accelerations are used to estimate the velocity that might occur if the ego vehicle decelerates and to perform safety checks.
+1. When a lane change is canceled, the lane change module returns `ModuleStatus::FAILURE`. As the module is removed from the approved module stack (see [Failure modules](https://autowarefoundation.github.io/autoware.universe/main/planning/behavior_path_planner/autoware_behavior_path_planner/docs/behavior_path_planner_manager_design/#failure-modules)), a new instance of the lane change module is initiated. Due to this, any information stored prior to the reset is lost. For example, the `lane_change_prepare_duration` in the `TransientData` is reset to its maximum value.
+2. The lane change module has no knowledge of any velocity modifications introduced to the path after it is approved. This is because other modules may add deceleration points after subscribing to the behavior path planner output, and the final velocity is managed by the velocity smoother. Since this limitation affects **CANCEL**, the lane change module mitigates it by [sampling accelerations along the approved lane change path](#sampling-accelerations-along-lane-changing-path). These sampled accelerations estimate the velocity that might occur if the ego vehicle decelerates and are used for safety checks.
+3. Ideally, the abort path should account for whether its execution would affect trailing vehicles in the current lane. However, the lane change module does not evaluate such interactions or assess whether the abort path is safe. As a result, **the abort path is not guaranteed to be safe**. To minimize the risk of unsafe situations, the abort maneuver is only permitted if the ego vehicle has not yet diverged from the current lane.
+4. Due to limited resources, the abort path logic is not fully optimized. The generated path may overshoot, causing the return trajectory to slightly shift toward the opposite lane. This can be dangerous, especially if the opposite lane has traffic moving in the opposite direction. Furthermore, the logic does not account for different vehicle types, which can lead to varying effects. For instance, the behavior might differ significantly between a bus and a small passenger car.
 
 ## Parameters
 
