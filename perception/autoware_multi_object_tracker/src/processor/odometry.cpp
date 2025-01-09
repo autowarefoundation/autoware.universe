@@ -34,6 +34,33 @@ Odometry::Odometry(rclcpp::Node & node, const std::string & world_frame_id)
   tf_buffer_.setCreateTimerInterface(cti);
 }
 
+std::optional<geometry_msgs::msg::Transform> Odometry::getTransform(const rclcpp::Time & time) const
+{
+  return getTransform(ego_frame_id_, time);
+}
+
+std::optional<geometry_msgs::msg::Transform> Odometry::getTransform(
+  const std::string & source_frame_id, const rclcpp::Time & time) const
+{
+  try {
+    // Check if the frames are ready
+    std::string errstr;  // This argument prevents error msg from being displayed in the terminal.
+    if (!tf_buffer_.canTransform(
+          world_frame_id_, source_frame_id, tf2::TimePointZero, tf2::Duration::zero(), &errstr)) {
+      return std::nullopt;
+    }
+
+    // Lookup the transform
+    geometry_msgs::msg::TransformStamped self_transform_stamped;
+    self_transform_stamped = tf_buffer_.lookupTransform(
+      world_frame_id_, source_frame_id, time, rclcpp::Duration::from_seconds(0.5));
+    return std::optional<geometry_msgs::msg::Transform>(self_transform_stamped.transform);
+  } catch (tf2::TransformException & ex) {
+    RCLCPP_WARN_STREAM(rclcpp::get_logger("multi_object_tracker"), ex.what());
+    return std::nullopt;
+  }
+}
+
 bool Odometry::setOdometryFromTf(const rclcpp::Time & time)
 {
   // Get the transform of the self frame

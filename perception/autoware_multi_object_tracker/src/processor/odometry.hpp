@@ -33,6 +33,10 @@ class Odometry
 public:
   Odometry(rclcpp::Node & node, const std::string & world_frame_id);
 
+  std::optional<geometry_msgs::msg::Transform> getTransform(
+    const std::string & source_frame_id, const rclcpp::Time & time) const;
+  std::optional<geometry_msgs::msg::Transform> getTransform(const rclcpp::Time & time) const;
+
   bool setOdometryFromTf(const rclcpp::Time & time);
 
   const geometry_msgs::msg::PoseStamped & getOdometry() const { return pose_; }

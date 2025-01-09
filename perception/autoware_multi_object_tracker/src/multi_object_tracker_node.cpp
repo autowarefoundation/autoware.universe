@@ -38,34 +38,6 @@
 #include <utility>
 #include <vector>
 
-namespace
-{
-// Function to get the transform between two frames
-boost::optional<geometry_msgs::msg::Transform> getTransformAnonymous(
-  const tf2_ros::Buffer & tf_buffer, const std::string & source_frame_id,
-  const std::string & target_frame_id, const rclcpp::Time & time)
-{
-  try {
-    // Check if the frames are ready
-    std::string errstr;  // This argument prevents error msg from being displayed in the terminal.
-    if (!tf_buffer.canTransform(
-          target_frame_id, source_frame_id, tf2::TimePointZero, tf2::Duration::zero(), &errstr)) {
-      return boost::none;
-    }
-
-    // Lookup the transform
-    geometry_msgs::msg::TransformStamped self_transform_stamped;
-    self_transform_stamped = tf_buffer.lookupTransform(
-      /*target*/ target_frame_id, /*src*/ source_frame_id, time,
-      rclcpp::Duration::from_seconds(0.5));
-    return self_transform_stamped.transform;
-  } catch (tf2::TransformException & ex) {
-    RCLCPP_WARN_STREAM(rclcpp::get_logger("multi_object_tracker"), ex.what());
-    return boost::none;
-  }
-}
-}  // namespace
-
 namespace autoware::multi_object_tracker
 {
 using Label = autoware_perception_msgs::msg::ObjectClassification;
@@ -289,8 +261,13 @@ void MultiObjectTracker::runProcess(const types::DynamicObjectList & input_objec
     rclcpp::Time(input_objects.header.stamp, this->now().get_clock_type());
 
   // Get the transform of the self frame
-  const auto self_transform =
-    getTransformAnonymous(tf_buffer_, "base_link", world_frame_id_, measurement_time);
+  // const auto self_transform =
+  //   getTransformAnonymous(tf_buffer_, "base_link", world_frame_id_, measurement_time);
+  // if (!self_transform) {
+  //   return;
+  // }
+
+  const auto self_transform = odometry_->getTransform(measurement_time);
   if (!self_transform) {
     return;
   }
