@@ -837,12 +837,11 @@ while(Lane Following)
               #Cyan:ABORT;
               break
               else (NO)
-              #Yellow:CRUISE/STOP;
               endif
             endif
           else (**NO**)
           endif
-
+          #Yellow:CRUISE/STOP;
         endif
       endwhile (**YES**)
     else (<color:red><b>UNSAFE</b></color>)
@@ -864,19 +863,22 @@ Lane change paths can oscillate when conditions switch between safe and unsafe. 
 skinparam defaultTextAlignment center
 skinparam backgroundColor #WHITE
 
-title Abort Lane Change
+title Hysteresis count flow for oscillation prevention
 
+while (lane changing completed?) is (FALSE)
 if (Perform collision check?) then (<color:green><b>SAFE</b></color>)
   :Reset unsafe_hysteresis_count_;
 else (<color:red><b>UNSAFE</b></color>)
   :Increase unsafe_hysteresis_count_;
-  if (unsafe_hysteresis_count_ > unsafe_hysteresis_threshold?) then (<color:green><b>FALSE</b></color>)
+  if (unsafe_hysteresis_count_ is more than\n unsafe_hysteresis_threshold?) then (<color:green><b>FALSE</b></color>)
   else (<color:red><b>TRUE</b></color>)
     #LightPink:Check abort condition;
-    stop
+  -[hidden]->
+  detach
   endif
 endif
-:Continue lane changing;
+endwhile (TRUE)
+stop
 @enduml
 ```
 
