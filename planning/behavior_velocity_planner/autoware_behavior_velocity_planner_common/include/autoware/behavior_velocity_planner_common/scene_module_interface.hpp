@@ -228,6 +228,7 @@ protected:
     auto itr = scene_modules_.begin();
     while (itr != scene_modules_.end()) {
       if (isModuleExpired(*itr)) {
+        registered_module_id_set_.erase((*itr)->getModuleId());
         itr = scene_modules_.erase(itr);
       } else {
         itr++;
