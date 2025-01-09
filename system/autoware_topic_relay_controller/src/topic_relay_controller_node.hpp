@@ -49,6 +49,10 @@ private:
   // Subscriber
   rclcpp::GenericSubscription::SharedPtr sub_topic_;
   rclcpp::Subscription<tf2_msgs::msg::TFMessage>::SharedPtr sub_transform_;
+
+  // Publisher
+  rclcpp::GenericPublisher::SharedPtr pub_topic_;
+  rclcpp::Publisher<tf2_msgs::msg::TFMessage>::SharedPtr pub_transform_;
 };
 }  // namespace autoware::topic_relay_controller
 

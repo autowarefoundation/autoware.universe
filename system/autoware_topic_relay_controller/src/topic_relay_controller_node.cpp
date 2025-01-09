@@ -45,23 +45,29 @@ TopicRelayController::TopicRelayController(const rclcpp::NodeOptions & options) 
   }
 
   if (node_param_.is_transform) {
+    // Publisher
+    pub_transform_ = this->create_publisher<tf2_msgs::msg::TFMessage>(
+      node_param_.remap_topic, qos);
+
     sub_transform_ = this->create_subscription<tf2_msgs::msg::TFMessage>(
       node_param_.topic, qos, [this](tf2_msgs::msg::TFMessage::ConstSharedPtr msg) {
         for (const auto & transform : msg->transforms) {
           if (
             transform.header.frame_id == node_param_.frame_id &&
             transform.child_frame_id == node_param_.child_frame_id) {
-            RCLCPP_INFO (
-              this->get_logger(), "Received transform from %s to %s",
-              transform.header.frame_id.c_str(), transform.child_frame_id.c_str());
+            pub_transform_->publish(*msg);
           }
         }
       });
   } else {
+    // Publisher
+    pub_topic_ = this->create_generic_publisher(
+      node_param_.remap_topic, node_param_.topic_type, qos);
+
     sub_topic_ = this->create_generic_subscription(
       node_param_.topic, node_param_.topic_type, qos,
       [this]([[maybe_unused]] std::shared_ptr<rclcpp::SerializedMessage> msg) {
-        RCLCPP_INFO(this->get_logger(), "Received message");
+        pub_topic_->publish(*msg);
       });
   }
 }
