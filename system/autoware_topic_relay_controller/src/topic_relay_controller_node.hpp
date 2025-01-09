@@ -19,6 +19,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <tf2_msgs/msg/tf_message.hpp>
+#include <tier4_system_msgs/srv/change_topic_relay_control.hpp>
 
 #include <string>
 
@@ -35,6 +36,8 @@ struct NodeParam
   bool transient_local;
   bool best_effort;
   bool is_transform;
+  bool enable_relay_control;
+  std::string srv_name;
 };
 
 class TopicRelayController : public rclcpp::Node
@@ -53,6 +56,12 @@ private:
   // Publisher
   rclcpp::GenericPublisher::SharedPtr pub_topic_;
   rclcpp::Publisher<tf2_msgs::msg::TFMessage>::SharedPtr pub_transform_;
+
+  // Service
+  rclcpp::Service<tier4_system_msgs::srv::ChangeTopicRelayControl>::SharedPtr srv_change_relay_control_;
+
+  // State
+  bool is_relaying_;
 };
 }  // namespace autoware::topic_relay_controller
 
