@@ -60,7 +60,7 @@ FreespacePullOver::FreespacePullOver(
 std::optional<PullOverPath> FreespacePullOver::plan(
   const GoalCandidate & modified_goal_pose, const size_t id,
   const std::shared_ptr<const PlannerData> planner_data,
-  [[maybe_unused]] const BehaviorModuleOutput & previous_module_output)
+  [[maybe_unused]] const BehaviorModuleOutput & upstream_module_output)
 {
   const Pose & current_pose = planner_data->self_odometry->pose.pose;
 
