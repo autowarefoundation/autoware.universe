@@ -11,8 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
-//
+
 #define EIGEN_MPL2_ONLY
 
 #include "multi_object_tracker_node.hpp"
@@ -260,17 +259,14 @@ void MultiObjectTracker::runProcess(const types::DynamicObjectList & input_objec
   const rclcpp::Time measurement_time =
     rclcpp::Time(input_objects.header.stamp, this->now().get_clock_type());
 
-  // Get the transform of the self frame
-  // const auto self_transform =
-  //   getTransformAnonymous(tf_buffer_, "base_link", world_frame_id_, measurement_time);
-  // if (!self_transform) {
-  //   return;
-  // }
-
+  // Get the self transform
   const auto self_transform = odometry_->getTransform(measurement_time);
   if (!self_transform) {
     return;
   }
+
+  // Set the odometry to the processor
+  odometry_->setOdometryFromTf(measurement_time);
 
   // Transform the objects to the world frame
   types::DynamicObjectList transformed_objects;

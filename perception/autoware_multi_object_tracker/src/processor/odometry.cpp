@@ -63,26 +63,11 @@ std::optional<geometry_msgs::msg::Transform> Odometry::getTransform(
 
 bool Odometry::setOdometryFromTf(const rclcpp::Time & time)
 {
-  // Get the transform of the self frame
-  try {
-    // Check if the frames are ready
-    std::string errstr;  // This argument prevents error msg from being displayed in the terminal.
-    if (!tf_buffer_.canTransform(
-          world_frame_id_, ego_frame_id_, tf2::TimePointZero, tf2::Duration::zero(), &errstr)) {
-      return false;
-    }
-
-    // Lookup the transform
-    geometry_msgs::msg::TransformStamped self_transform_stamped;
-    self_transform_stamped = tf_buffer_.lookupTransform(
-      /*target*/ world_frame_id_, /*src*/ ego_frame_id_, time, rclcpp::Duration::from_seconds(0.5));
-
-    // set the current transform and continue processing
-    current_transform_ = self_transform_stamped.transform;
-  } catch (tf2::TransformException & ex) {
-    RCLCPP_WARN_STREAM(rclcpp::get_logger("multi_object_tracker"), ex.what());
+  const auto self_transform = getTransform(time);
+  if (!self_transform) {
     return false;
   }
+  current_transform_ = self_transform.value();
 
   {
     nav_msgs::msg::Odometry odometry;
