@@ -22,12 +22,10 @@
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 
 #include <autoware_perception_msgs/msg/shape.hpp>
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <boost/geometry.hpp>
 
 #include <tf2/utils.h>
-#include <tf2_ros/transform_listener.h>
 
 #include <algorithm>
 #include <string>
@@ -37,55 +35,6 @@ namespace autoware::multi_object_tracker
 {
 namespace shapes
 {
-inline boost::optional<geometry_msgs::msg::Transform> getTransform(
-  const tf2_ros::Buffer & tf_buffer, const std::string & source_frame_id,
-  const std::string & target_frame_id, const rclcpp::Time & time)
-{
-  try {
-    geometry_msgs::msg::TransformStamped self_transform_stamped;
-    self_transform_stamped = tf_buffer.lookupTransform(
-      target_frame_id, source_frame_id, time, rclcpp::Duration::from_seconds(0.5));
-    return self_transform_stamped.transform;
-  } catch (tf2::TransformException & ex) {
-    RCLCPP_WARN_STREAM(rclcpp::get_logger("multi_object_tracker"), ex.what());
-    return boost::none;
-  }
-}
-
-bool transformObjects(
-  const types::DynamicObjectList & input_msg, const std::string & target_frame_id,
-  const tf2_ros::Buffer & tf_buffer, types::DynamicObjectList & output_msg)
-{
-  output_msg = input_msg;
-
-  // transform to world coordinate
-  if (input_msg.header.frame_id != target_frame_id) {
-    output_msg.header.frame_id = target_frame_id;
-    tf2::Transform tf_target2objects_world;
-    tf2::Transform tf_target2objects;
-    tf2::Transform tf_objects_world2objects;
-    {
-      const auto ros_target2objects_world =
-        getTransform(tf_buffer, input_msg.header.frame_id, target_frame_id, input_msg.header.stamp);
-      if (!ros_target2objects_world) {
-        return false;
-      }
-      tf2::fromMsg(*ros_target2objects_world, tf_target2objects_world);
-    }
-    for (auto & object : output_msg.objects) {
-      auto & pose_with_cov = object.kinematics.pose_with_covariance;
-      tf2::fromMsg(pose_with_cov.pose, tf_objects_world2objects);
-      tf_target2objects = tf_target2objects_world * tf_objects_world2objects;
-      // transform pose, frame difference and object pose
-      tf2::toMsg(tf_target2objects, pose_with_cov.pose);
-      // transform covariance, only the frame difference
-      pose_with_cov.covariance =
-        tf2::transformCovariance(pose_with_cov.covariance, tf_target2objects_world);
-    }
-  }
-  return true;
-}
-
 inline double getSumArea(const std::vector<autoware::universe_utils::Polygon2d> & polygons)
 {
   return std::accumulate(

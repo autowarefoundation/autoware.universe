@@ -15,9 +15,12 @@
 #ifndef PROCESSOR__ODOMETRY_HPP_
 #define PROCESSOR__ODOMETRY_HPP_
 
+#include "autoware/multi_object_tracker/object_model/types.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
+#include <geometry_msgs/msg/transform.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 
 #include <tf2_ros/buffer.h>
@@ -33,9 +36,18 @@ class Odometry
 public:
   Odometry(rclcpp::Node & node, const std::string & world_frame_id);
 
-  bool setOdometryFromTf(const rclcpp::Time & time);
+  bool getTransformFromTf(
+    const rclcpp::Time & time, const std::string source_frame_id,
+    geometry_msgs::msg::Transform & transform) const;
+  bool getTransformFromTf(
+    const rclcpp::Time & time, geometry_msgs::msg::Transform & transform) const;
+  bool updateFromTf(const rclcpp::Time & time);
 
-  const geometry_msgs::msg::PoseStamped & getOdometry() const { return pose_; }
+  const geometry_msgs::msg::Transform & getTransform() const { return current_transform_; }
+  const nav_msgs::msg::Odometry & getOdometry() const { return current_odometry_; }
+
+  std::optional<types::DynamicObjectList> transformObjects(
+    const types::DynamicObjectList & input_objects);
 
 private:
   rclcpp::Node & node_;
