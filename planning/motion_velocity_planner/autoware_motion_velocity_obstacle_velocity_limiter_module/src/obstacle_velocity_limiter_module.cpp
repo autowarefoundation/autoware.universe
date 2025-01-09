@@ -170,7 +170,7 @@ VelocityPlanningResult ObstacleVelocityLimiterModule::plan(
   const auto preprocessing_us = stopwatch.toc("preprocessing");
   stopwatch.tic("obstacles");
   obstacle_masks.negative_masks = obstacle_velocity_limiter::createPolygonMasks(
-    planner_data->predicted_objects, obstacle_params_.dynamic_obstacles_buffer,
+    planner_data->objects, obstacle_params_.dynamic_obstacles_buffer,
     obstacle_params_.dynamic_obstacles_min_vel);
   if (obstacle_params_.ignore_on_path)
     obstacle_masks.negative_masks.push_back(obstacle_velocity_limiter::createTrajectoryFootprint(
@@ -189,8 +189,8 @@ VelocityPlanningResult ObstacleVelocityLimiterModule::plan(
       obstacle_masks.positive_mask =
         obstacle_velocity_limiter::createEnvelopePolygon(footprint_polygons);
     obstacle_velocity_limiter::addSensorObstacles(
-      obstacles, planner_data->occupancy_grid, planner_data->no_ground_pointcloud, obstacle_masks,
-      obstacle_params_);
+      obstacles, planner_data->occupancy_grid, planner_data->no_ground_pointcloud.pointcloud,
+      obstacle_masks, obstacle_params_);
   }
   const auto obstacles_us = stopwatch.toc("obstacles");
   autoware::motion_utils::VirtualWalls virtual_walls;
