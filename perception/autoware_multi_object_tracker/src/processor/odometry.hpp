@@ -18,6 +18,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
@@ -32,12 +33,15 @@ class Odometry
 public:
   Odometry(rclcpp::Node & node, const std::string & world_frame_id);
 
-  void setOdometry(const geometry_msgs::msg::PoseStamped & pose) { pose_ = pose; }
+  bool setOdometryFromTf(const rclcpp::Time & time);
+
+  const geometry_msgs::msg::PoseStamped & getOdometry() const { return pose_; }
 
 private:
   rclcpp::Node & node_;
   // frame id
-  std::string world_frame_id_;  // absolute/relative ground frame
+  std::string ego_frame_id_ = "base_link";  // ego vehicle frame
+  std::string world_frame_id_;              // absolute/relative ground frame
 
   // tf
   tf2_ros::Buffer tf_buffer_;
@@ -45,6 +49,10 @@ private:
 
   // time-history of odometry
   geometry_msgs::msg::PoseStamped pose_;
+
+  // current transform
+  geometry_msgs::msg::Transform current_transform_;
+  nav_msgs::msg::Odometry current_odometry_;
 };
 
 }  // namespace autoware::multi_object_tracker
