@@ -70,13 +70,14 @@ EKFLocalizer::EKFLocalizer(const rclcpp::NodeOptions & node_options)
   pub_twist_ = create_publisher<geometry_msgs::msg::TwistStamped>("ekf_twist", 1);
   pub_twist_cov_ = create_publisher<geometry_msgs::msg::TwistWithCovarianceStamped>(
     "ekf_twist_with_covariance", 1);
-  pub_yaw_bias_ = create_publisher<tier4_debug_msgs::msg::Float64Stamped>("estimated_yaw_bias", 1);
+  pub_yaw_bias_ =
+    create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>("estimated_yaw_bias", 1);
   pub_biased_pose_ = create_publisher<geometry_msgs::msg::PoseStamped>("ekf_biased_pose", 1);
   pub_biased_pose_cov_ = create_publisher<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "ekf_biased_pose_with_covariance", 1);
   pub_diag_ = this->create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", 10);
-  pub_processing_time_ =
-    create_publisher<tier4_debug_msgs::msg::Float64Stamped>("debug/processing_time_ms", 1);
+  pub_processing_time_ = create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>(
+    "debug/processing_time_ms", 1);
   sub_initialpose_ = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
     "initialpose", 1, std::bind(&EKFLocalizer::callback_initial_pose, this, _1));
   sub_pose_with_cov_ = create_subscription<geometry_msgs::msg::PoseWithCovarianceStamped>(
@@ -235,9 +236,10 @@ void EKFLocalizer::timer_callback()
 
   /* publish processing time */
   const double elapsed_time = stop_watch_timer_cb_.toc();
-  pub_processing_time_->publish(tier4_debug_msgs::build<tier4_debug_msgs::msg::Float64Stamped>()
-                                  .stamp(current_time)
-                                  .data(elapsed_time));
+  pub_processing_time_->publish(
+    autoware_internal_debug_msgs::build<autoware_internal_debug_msgs::msg::Float64Stamped>()
+      .stamp(current_time)
+      .data(elapsed_time));
 }
 
 /*
@@ -343,7 +345,7 @@ void EKFLocalizer::publish_estimate_result(
   pub_twist_cov_->publish(twist_cov);
 
   /* publish yaw bias */
-  tier4_debug_msgs::msg::Float64Stamped yawb;
+  autoware_internal_debug_msgs::msg::Float64Stamped yawb;
   yawb.stamp = current_ekf_twist.header.stamp;
   yawb.data = ekf_module_->get_yaw_bias();
   pub_yaw_bias_->publish(yawb);
