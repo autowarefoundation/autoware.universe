@@ -40,7 +40,6 @@
 
 #include <map>
 #include <memory>
-#include <mutex>
 #include <set>
 #include <string>
 #include <utility>
@@ -127,7 +126,6 @@ private:
   // cache for fusion
   int64_t cached_det3d_msg_timestamp_;
   typename Msg3D::SharedPtr cached_det3d_msg_ptr_;
-  std::mutex mutex_cached_msgs_;
 
 protected:
   void setDet2DStatus(std::size_t rois_number);
