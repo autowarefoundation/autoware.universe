@@ -56,7 +56,7 @@ Accumulator<double> calcLateralDistance(const Trajectory & traj1, const Trajecto
  * @param [in]  trajectory_eval_time_s time duration for trajectory evaluation in seconds
  * @return statistical accumulator containing the total lateral displacement
  */
-Accumulator<double> calcTrajectoryLateralDisplacement(
+Accumulator<double> calcLookaheadLateralTrajectoryDisplacement(
   const Trajectory traj1, const Trajectory traj2, const nav_msgs::msg::Odometry & ego_odom,
   const double trajectory_eval_time_s);
 

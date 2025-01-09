@@ -56,6 +56,7 @@ EKFLocalizer::EKFLocalizer(const rclcpp::NodeOptions & node_options)
   twist_queue_(params_.twist_smoothing_steps)
 {
   is_activated_ = false;
+  is_set_initialpose_ = false;
 
   /* initialize ros system */
   timer_control_ = rclcpp::create_timer(
@@ -139,6 +140,13 @@ void EKFLocalizer::timer_callback()
   if (!is_activated_) {
     warning_->warn_throttle(
       "The node is not activated. Provide initial pose to pose_initializer", 2000);
+    publish_diagnostics(geometry_msgs::msg::PoseStamped{}, current_time);
+    return;
+  }
+
+  if (!is_set_initialpose_) {
+    warning_->warn_throttle(
+      "Initial pose is not set. Provide initial pose to pose_initializer", 2000);
     publish_diagnostics(geometry_msgs::msg::PoseStamped{}, current_time);
     return;
   }
@@ -264,6 +272,8 @@ void EKFLocalizer::callback_initial_pose(
       params_.pose_frame_id.c_str(), msg->header.frame_id.c_str());
   }
   ekf_module_->initialize(*msg, transform);
+
+  is_set_initialpose_ = true;
 }
 
 /*
@@ -272,7 +282,7 @@ void EKFLocalizer::callback_initial_pose(
 void EKFLocalizer::callback_pose_with_covariance(
   geometry_msgs::msg::PoseWithCovarianceStamped::SharedPtr msg)
 {
-  if (!is_activated_) {
+  if (!is_activated_ && !is_set_initialpose_) {
     return;
   }
 
@@ -359,8 +369,9 @@ void EKFLocalizer::publish_diagnostics(
   std::vector<diagnostic_msgs::msg::DiagnosticStatus> diag_status_array;
 
   diag_status_array.push_back(check_process_activated(is_activated_));
+  diag_status_array.push_back(check_set_initialpose(is_set_initialpose_));
 
-  if (is_activated_) {
+  if (is_activated_ && is_set_initialpose_) {
     diag_status_array.push_back(check_measurement_updated(
       "pose", pose_diag_info_.no_update_count, params_.pose_no_update_count_threshold_warn,
       params_.pose_no_update_count_threshold_error));
@@ -439,6 +450,7 @@ void EKFLocalizer::service_trigger_node(
     is_activated_ = true;
   } else {
     is_activated_ = false;
+    is_set_initialpose_ = false;
   }
   res->success = true;
 }

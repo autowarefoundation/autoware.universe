@@ -920,19 +920,17 @@ double get_min_dist_to_current_lanes_obj(
       continue;
     }
 
-    // calculate distance from path front to the stationary object polygon on the ego lane.
-    for (const auto & polygon_p : object.initial_polygon.outer()) {
-      const auto p_fp = autoware::universe_utils::toMsg(polygon_p.to_3d());
-      const auto lateral_fp = motion_utils::calcLateralOffset(path_points, p_fp);
-
-      // ignore if the point is not on ego path
-      if (std::abs(lateral_fp) > (common_data_ptr->bpp_param_ptr->vehicle_width / 2)) {
-        continue;
-      }
-
-      const auto current_distance_to_obj = motion_utils::calcSignedArcLength(path_points, 0, p_fp);
-      min_dist_to_obj = std::min(min_dist_to_obj, current_distance_to_obj);
+    // check if object is on ego path
+    const auto obj_half_width = object.shape.dimensions.y / 2;
+    const auto obj_lat_dist_to_path =
+      std::abs(motion_utils::calcLateralOffset(path_points, object.initial_pose.position)) -
+      obj_half_width;
+    if (obj_lat_dist_to_path > (common_data_ptr->bpp_param_ptr->vehicle_width / 2)) {
+      continue;
     }
+
+    min_dist_to_obj = std::min(min_dist_to_obj, dist_to_obj);
+    break;
   }
   return min_dist_to_obj;
 }
