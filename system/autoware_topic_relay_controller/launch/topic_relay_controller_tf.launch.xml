@@ -6,6 +6,8 @@
   <arg name="child_frame_id" description="child frame id"/>
   <arg name="transient_local" default="false" description="add transient_local option to subscriber or not"/>
   <arg name="best_effort" default="false" description="add best_effort option to subscriber or not"/>
+  <arg name="enabele_relay_control" default="true" description="enable relay control or not"/>
+  <arg name="srv_name" default="/system/topic_relay_controller_$(var node_name_suffix)/operate" description="service name for relay control"/>
 
   <node pkg="autoware_topic_relay_controller" exec="autoware_topic_relay_controller_node" name="topic_relay_controller_$(var node_name_suffix)" output="screen">
     <param name="topic" value="$(var topic)"/>
@@ -14,5 +16,7 @@
     <param name="child_frame_id" value="$(var child_frame_id)"/>
     <param name="transient_local" value="$(var transient_local)"/>
     <param name="best_effort" value="$(var best_effort)"/>
+    <param name="enable_relay_control" value="$(var enabele_relay_control)"/>
+    <param name="srv_name" value="$(var srv_name)"/>
   </node>
 </launch>

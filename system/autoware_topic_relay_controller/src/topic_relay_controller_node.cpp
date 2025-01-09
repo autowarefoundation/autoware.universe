@@ -18,7 +18,7 @@
 
 namespace autoware::topic_relay_controller
 {
-TopicRelayController::TopicRelayController(const rclcpp::NodeOptions & options) : Node("topic_relay_controller", options)
+TopicRelayController::TopicRelayController(const rclcpp::NodeOptions & options): Node("topic_relay_controller", options), is_relaying_(true)
 {
   // Parameter
   node_param_.topic = declare_parameter<std::string>("topic");
@@ -27,12 +27,25 @@ TopicRelayController::TopicRelayController(const rclcpp::NodeOptions & options) 
   node_param_.transient_local = declare_parameter("transient_local", false);
   node_param_.best_effort = declare_parameter("best_effort", false);
   node_param_.is_transform = (node_param_.topic == "/tf" || node_param_.topic == "/tf_static");
+  node_param_.enable_relay_control = declare_parameter<bool>("enable_relay_control");
+  node_param_.srv_name = declare_parameter<std::string>("srv_name");
 
   if (node_param_.is_transform) {
     node_param_.frame_id = declare_parameter<std::string>("frame_id");
     node_param_.child_frame_id = declare_parameter<std::string>("child_frame_id");
   } else {
     node_param_.topic_type = declare_parameter<std::string>("topic_type");
+  }
+
+  // Service
+  if (node_param_.enable_relay_control) {
+    srv_change_relay_control_ = create_service<tier4_system_msgs::srv::ChangeTopicRelayControl>(
+      node_param_.srv_name,
+      [this](const tier4_system_msgs::srv::ChangeTopicRelayControl::Request::SharedPtr request,
+        tier4_system_msgs::srv::ChangeTopicRelayControl::Response::SharedPtr response) {
+        is_relaying_ = request->relay_on;
+        response->status.success = true;
+      });
   }
 
   // Subscriber
@@ -54,7 +67,8 @@ TopicRelayController::TopicRelayController(const rclcpp::NodeOptions & options) 
         for (const auto & transform : msg->transforms) {
           if (
             transform.header.frame_id == node_param_.frame_id &&
-            transform.child_frame_id == node_param_.child_frame_id) {
+            transform.child_frame_id == node_param_.child_frame_id &&
+            is_relaying_) {
             pub_transform_->publish(*msg);
           }
         }
@@ -67,7 +81,7 @@ TopicRelayController::TopicRelayController(const rclcpp::NodeOptions & options) 
     sub_topic_ = this->create_generic_subscription(
       node_param_.topic, node_param_.topic_type, qos,
       [this]([[maybe_unused]] std::shared_ptr<rclcpp::SerializedMessage> msg) {
-        pub_topic_->publish(*msg);
+        if (is_relaying_) pub_topic_->publish(*msg);
       });
   }
 }
