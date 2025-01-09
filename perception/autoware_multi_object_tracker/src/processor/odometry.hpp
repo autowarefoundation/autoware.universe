@@ -30,11 +30,12 @@ namespace autoware::multi_object_tracker
 class Odometry
 {
 public:
-  Odometry(const std::string & world_frame_id, const rclcpp::Clock::SharedPtr clock);
+  Odometry(rclcpp::Node & node, const std::string & world_frame_id);
 
   void setOdometry(const geometry_msgs::msg::PoseStamped & pose) { pose_ = pose; }
 
 private:
+  rclcpp::Node & node_;
   // frame id
   std::string world_frame_id_;  // absolute/relative ground frame
 

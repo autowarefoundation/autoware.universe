@@ -14,15 +14,24 @@
 
 #include "odometry.hpp"
 
+#include <tf2_ros/create_timer_ros.h>
+
+#include <memory>
+#include <string>
+
 namespace autoware::multi_object_tracker
 {
 
-
-Odometry::Odometry(const std::string & world_frame_id, const rclcpp::Clock::SharedPtr clock)
-: world_frame_id_(world_frame_id), 
-  tf_buffer_(clock),
+Odometry::Odometry(rclcpp::Node & node, const std::string & world_frame_id)
+: node_(node),
+  world_frame_id_(world_frame_id),
+  tf_buffer_(node_.get_clock()),
   tf_listener_(tf_buffer_)
 {
+  // Create tf timer
+  auto cti = std::make_shared<tf2_ros::CreateTimerROS>(
+    node_.get_node_base_interface(), node_.get_node_timers_interface());
+  tf_buffer_.setCreateTimerInterface(cti);
 }
 
 }  // namespace autoware::multi_object_tracker
