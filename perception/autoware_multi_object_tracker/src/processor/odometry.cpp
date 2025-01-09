@@ -14,6 +14,8 @@
 
 #include "odometry.hpp"
 
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+
 #include <tf2_ros/create_timer_ros.h>
 
 #include <memory>
@@ -101,6 +103,39 @@ bool Odometry::setOdometryFromTf(const rclcpp::Time & time)
   }
 
   return true;
+}
+
+std::optional<types::DynamicObjectList> Odometry::transformObjects(
+  const types::DynamicObjectList & input_msg) const
+{
+  types::DynamicObjectList output_msg = input_msg;
+
+  // transform to world coordinate
+  if (input_msg.header.frame_id != world_frame_id_) {
+    output_msg.header.frame_id = world_frame_id_;
+    tf2::Transform tf_target2objects_world;
+    tf2::Transform tf_target2objects;
+    tf2::Transform tf_objects_world2objects;
+    {
+      const auto ros_target2objects_world =
+        getTransform(input_msg.header.frame_id, input_msg.header.stamp);
+      if (!ros_target2objects_world) {
+        return std::nullopt;
+      }
+      tf2::fromMsg(*ros_target2objects_world, tf_target2objects_world);
+    }
+    for (auto & object : output_msg.objects) {
+      auto & pose_with_cov = object.kinematics.pose_with_covariance;
+      tf2::fromMsg(pose_with_cov.pose, tf_objects_world2objects);
+      tf_target2objects = tf_target2objects_world * tf_objects_world2objects;
+      // transform pose, frame difference and object pose
+      tf2::toMsg(tf_target2objects, pose_with_cov.pose);
+      // transform covariance, only the frame difference
+      pose_with_cov.covariance =
+        tf2::transformCovariance(pose_with_cov.covariance, tf_target2objects_world);
+    }
+  }
+  return std::optional<types::DynamicObjectList>(output_msg);
 }
 
 }  // namespace autoware::multi_object_tracker

@@ -15,6 +15,8 @@
 #ifndef PROCESSOR__ODOMETRY_HPP_
 #define PROCESSOR__ODOMETRY_HPP_
 
+#include "autoware/multi_object_tracker/object_model/types.hpp"
+
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -23,6 +25,7 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
+#include <optional>
 #include <string>
 
 namespace autoware::multi_object_tracker
@@ -40,6 +43,9 @@ public:
   bool setOdometryFromTf(const rclcpp::Time & time);
 
   const geometry_msgs::msg::PoseStamped & getOdometry() const { return pose_; }
+
+  std::optional<types::DynamicObjectList> transformObjects(
+    const types::DynamicObjectList & input_msg) const;
 
 private:
   rclcpp::Node & node_;

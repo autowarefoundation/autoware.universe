@@ -269,10 +269,11 @@ void MultiObjectTracker::runProcess(const types::DynamicObjectList & input_objec
   odometry_->setOdometryFromTf(measurement_time);
 
   // Transform the objects to the world frame
-  types::DynamicObjectList transformed_objects;
-  if (!shapes::transformObjects(input_objects, world_frame_id_, tf_buffer_, transformed_objects)) {
+  auto transformed_objects = odometry_->transformObjects(input_objects);
+  if (!transformed_objects) {
     return;
   }
+  auto & detected_objects = transformed_objects.value();
 
   // the object uncertainty
   if (enable_odometry_uncertainty_) {
@@ -305,10 +306,10 @@ void MultiObjectTracker::runProcess(const types::DynamicObjectList & input_objec
     odom_twist_cov[35] = 0.001;  // yaw-yaw [rad^2/s^2]
 
     // Add the odometry uncertainty to the object uncertainty
-    uncertainty::addOdometryUncertainty(odometry, transformed_objects);
+    uncertainty::addOdometryUncertainty(odometry, detected_objects);
   }
   // Normalize the object uncertainty
-  uncertainty::normalizeUncertainty(transformed_objects);
+  uncertainty::normalizeUncertainty(detected_objects);
 
   /* prediction */
   processor_->predict(measurement_time);
@@ -317,7 +318,6 @@ void MultiObjectTracker::runProcess(const types::DynamicObjectList & input_objec
   std::unordered_map<int, int> direct_assignment, reverse_assignment;
   {
     const auto & list_tracker = processor_->getListTracker();
-    const auto & detected_objects = transformed_objects;
     // global nearest neighbor
     Eigen::MatrixXd score_matrix = association_->calcScoreMatrix(
       detected_objects, list_tracker);  // row : tracker, col : measurement
@@ -325,19 +325,19 @@ void MultiObjectTracker::runProcess(const types::DynamicObjectList & input_objec
 
     // Collect debug information - tracker list, existence probabilities, association results
     debugger_->collectObjectInfo(
-      measurement_time, processor_->getListTracker(), transformed_objects, direct_assignment,
+      measurement_time, processor_->getListTracker(), detected_objects, direct_assignment,
       reverse_assignment);
   }
 
   /* tracker update */
-  processor_->update(transformed_objects, *self_transform, direct_assignment);
+  processor_->update(detected_objects, *self_transform, direct_assignment);
 
   /* tracker pruning */
   processor_->prune(measurement_time);
 
   /* spawn new tracker */
   if (input_manager_->isChannelSpawnEnabled(input_objects.channel_index)) {
-    processor_->spawn(transformed_objects, reverse_assignment);
+    processor_->spawn(detected_objects, reverse_assignment);
   }
 }
 
