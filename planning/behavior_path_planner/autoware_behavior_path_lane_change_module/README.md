@@ -925,7 +925,7 @@ $$
 where
 
 - $a_{\text{min}}$, is the minimum of the parameterized [global acceleration constant](https://github.com/autowarefoundation/autoware_launch/blob/main/autoware_launch/config/planning/scenario_planning/common/common.param.yaml) `normal.min_acc` or the [parameterized constant](#essential-lane-change-parameters) `trajectory.min_longitudinal_acceleration`.
-- $a_{\text{LC}}$ is the acceleration used to generated the approved path.
+- $a_{\text{LC}}$ is the acceleration used to generate the approved path.
 - $N$ is the parameterized constant `cancel.deceleration_sampling`
 
 If none of the sampled accelerations pass the safety check, the lane change path will be canceled, subject to the [hysteresis check](#preventing-oscillating-paths-when-unsafe).
