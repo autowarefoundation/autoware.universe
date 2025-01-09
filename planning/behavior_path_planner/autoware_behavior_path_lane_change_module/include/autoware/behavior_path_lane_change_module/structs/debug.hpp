@@ -25,10 +25,20 @@
 
 #include <limits>
 #include <string>
+#include <vector>
 
 namespace autoware::behavior_path_planner::lane_change
 {
 using utils::path_safety_checker::CollisionCheckDebugMap;
+
+struct MetricsDebug
+{
+  LaneChangePhaseMetrics prep_metric;
+  std::vector<LaneChangePhaseMetrics> lc_metrics;
+  double max_prepare_length;
+  double max_lane_changing_length;
+};
+
 struct Debug
 {
   std::string module_type;
@@ -41,6 +51,7 @@ struct Debug
   lanelet::ConstLanelets current_lanes;
   lanelet::ConstLanelets target_lanes;
   lanelet::ConstLanelets target_backward_lanes;
+  std::vector<MetricsDebug> lane_change_metrics;
   double collision_check_object_debug_lifetime{0.0};
   double distance_to_end_of_current_lane{std::numeric_limits<double>::max()};
   double distance_to_lane_change_finished{std::numeric_limits<double>::max()};
@@ -64,6 +75,7 @@ struct Debug
     current_lanes.clear();
     target_lanes.clear();
     target_backward_lanes.clear();
+    lane_change_metrics.clear();
 
     collision_check_object_debug_lifetime = 0.0;
     distance_to_end_of_current_lane = std::numeric_limits<double>::max();

@@ -212,12 +212,12 @@ private:
   std::unique_ptr<autoware::localization_util::SmartPoseBuffer> regularization_pose_buffer_;
 
   std::atomic<bool> is_activated_;
-  std::unique_ptr<DiagnosticInterface> diagnostics_scan_points_;
-  std::unique_ptr<DiagnosticInterface> diagnostics_initial_pose_;
-  std::unique_ptr<DiagnosticInterface> diagnostics_regularization_pose_;
-  std::unique_ptr<DiagnosticInterface> diagnostics_map_update_;
-  std::unique_ptr<DiagnosticInterface> diagnostics_ndt_align_;
-  std::unique_ptr<DiagnosticInterface> diagnostics_trigger_node_;
+  std::unique_ptr<DiagnosticsInterface> diagnostics_scan_points_;
+  std::unique_ptr<DiagnosticsInterface> diagnostics_initial_pose_;
+  std::unique_ptr<DiagnosticsInterface> diagnostics_regularization_pose_;
+  std::unique_ptr<DiagnosticsInterface> diagnostics_map_update_;
+  std::unique_ptr<DiagnosticsInterface> diagnostics_ndt_align_;
+  std::unique_ptr<DiagnosticsInterface> diagnostics_trigger_node_;
   std::unique_ptr<MapUpdateModule> map_update_module_;
   std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;
 
