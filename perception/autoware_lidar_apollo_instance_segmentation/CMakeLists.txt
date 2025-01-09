@@ -9,7 +9,7 @@ find_package(rclcpp REQUIRED)
 find_package(rclcpp_components REQUIRED)
 find_package(tf2_eigen REQUIRED)
 find_package(autoware_universe_utils REQUIRED)
-find_package(tier4_debug_msgs REQUIRED)
+find_package(autoware_internal_debug_msgs REQUIRED)
 find_package(tier4_perception_msgs REQUIRED)
 
 find_package(autoware_tensorrt_common)
@@ -50,7 +50,7 @@ target_link_libraries(${PROJECT_NAME}
   rclcpp_components::component
   tf2_eigen::tf2_eigen
   ${autoware_tensorrt_common_TARGETS}
-  ${tier4_debug_msgs_TARGETS}
+  ${autoware_internal_debug_msgs_TARGETS}
   ${tier4_perception_msgs_TARGETS}
 )
 
