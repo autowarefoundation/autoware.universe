@@ -29,14 +29,8 @@ std::shared_ptr<PlanningInterfaceTestManager> generateTestManager()
   auto test_manager = std::make_shared<PlanningInterfaceTestManager>();
 
   // set subscriber with topic name: behavior_velocity_planner → test_node_
-  test_manager->setPathSubscriber("behavior_velocity_planner_node/output/path");
-
-  // set behavior_velocity_planner node's input topic name(this topic is changed to test node)
-  test_manager->setPathWithLaneIdTopicName(
-    "behavior_velocity_planner_node/input/path_with_lane_id");
-
-  test_manager->setInitialPoseTopicName("behavior_velocity_planner_node/input/vehicle_odometry");
-  test_manager->setOdometryTopicName("behavior_velocity_planner_node/input/vehicle_odometry");
+  test_manager->subscribeOutput<autoware_planning_msgs::msg::Path>(
+    "behavior_velocity_planner_node/output/path");
 
   return test_manager;
 }
@@ -99,21 +93,35 @@ void publishMandatoryTopics(
   std::shared_ptr<BehaviorVelocityPlannerNode> test_target_node)
 {
   // publish necessary topics from test_manager
-  test_manager->publishTF(test_target_node, "/tf");
-  test_manager->publishAcceleration(test_target_node, "behavior_velocity_planner_node/input/accel");
-  test_manager->publishPredictedObjects(
-    test_target_node, "behavior_velocity_planner_node/input/dynamic_objects");
-  test_manager->publishPointCloud(
-    test_target_node, "behavior_velocity_planner_node/input/no_ground_pointcloud");
-  test_manager->publishOdometry(
-    test_target_node, "behavior_velocity_planner_node/input/vehicle_odometry");
-  test_manager->publishAcceleration(test_target_node, "behavior_velocity_planner_node/input/accel");
-  test_manager->publishMap(test_target_node, "behavior_velocity_planner_node/input/vector_map");
-  test_manager->publishTrafficSignals(
-    test_target_node, "behavior_velocity_planner_node/input/traffic_signals");
-  test_manager->publishMaxVelocity(
-    test_target_node, "behavior_velocity_planner_node/input/external_velocity_limit_mps");
-  test_manager->publishOccupancyGrid(
-    test_target_node, "behavior_velocity_planner_node/input/occupancy_grid");
+  test_manager->publishInput(
+    test_target_node, "/tf", autoware::test_utils::makeTFMsg(test_target_node, "base_link", "map"));
+  test_manager->publishInput(
+    test_target_node, "behavior_velocity_planner_node/input/accel",
+    geometry_msgs::msg::AccelWithCovarianceStamped{});
+  test_manager->publishInput(
+    test_target_node, "behavior_velocity_planner_node/input/dynamic_objects",
+    autoware_perception_msgs::msg::PredictedObjects{});
+  test_manager->publishInput(
+    test_target_node, "behavior_velocity_planner_node/input/no_ground_pointcloud",
+    sensor_msgs::msg::PointCloud2{}.set__header(
+      std_msgs::msg::Header{}.set__frame_id("base_link")));
+  test_manager->publishInput(
+    test_target_node, "behavior_velocity_planner_node/input/vehicle_odometry",
+    autoware::test_utils::makeOdometry());
+  test_manager->publishInput(
+    test_target_node, "behavior_velocity_planner_node/input/accel",
+    geometry_msgs::msg::AccelWithCovarianceStamped{});
+  test_manager->publishInput(
+    test_target_node, "behavior_velocity_planner_node/input/vector_map",
+    autoware::test_utils::makeMapBinMsg());
+  test_manager->publishInput(
+    test_target_node, "behavior_velocity_planner_node/input/traffic_signals",
+    autoware_perception_msgs::msg::TrafficLightGroupArray{});
+  test_manager->publishInput(
+    test_target_node, "behavior_velocity_planner_node/input/external_velocity_limit_mps",
+    tier4_planning_msgs::msg::VelocityLimit{});
+  test_manager->publishInput(
+    test_target_node, "behavior_velocity_planner_node/input/occupancy_grid",
+    autoware::test_utils::makeCostMapMsg());
 }
 }  // namespace autoware::behavior_velocity_planner
