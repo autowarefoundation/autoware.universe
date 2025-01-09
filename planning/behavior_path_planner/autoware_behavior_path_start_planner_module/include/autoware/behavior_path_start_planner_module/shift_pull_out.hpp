@@ -36,7 +36,8 @@ public:
   explicit ShiftPullOut(
     rclcpp::Node & node, const StartPlannerParameters & parameters,
     std::shared_ptr<LaneDepartureChecker> & lane_departure_checker,
-    std::shared_ptr<universe_utils::TimeKeeper> time_keeper);
+    std::shared_ptr<universe_utils::TimeKeeper> time_keeper =
+      std::make_shared<universe_utils::TimeKeeper>());
 
   PlannerType getPlannerType() const override { return PlannerType::SHIFT; };
   std::optional<PullOutPath> plan(
