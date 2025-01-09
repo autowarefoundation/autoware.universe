@@ -106,25 +106,25 @@ bool Odometry::setOdometryFromTf(const rclcpp::Time & time)
 }
 
 std::optional<types::DynamicObjectList> Odometry::transformObjects(
-  const types::DynamicObjectList & input_msg) const
+  const types::DynamicObjectList & input_objects) const
 {
-  types::DynamicObjectList output_msg = input_msg;
+  types::DynamicObjectList output_objects = input_objects;
 
   // transform to world coordinate
-  if (input_msg.header.frame_id != world_frame_id_) {
-    output_msg.header.frame_id = world_frame_id_;
+  if (input_objects.header.frame_id != world_frame_id_) {
+    output_objects.header.frame_id = world_frame_id_;
     tf2::Transform tf_target2objects_world;
     tf2::Transform tf_target2objects;
     tf2::Transform tf_objects_world2objects;
     {
       const auto ros_target2objects_world =
-        getTransform(input_msg.header.frame_id, input_msg.header.stamp);
+        getTransform(input_objects.header.frame_id, input_objects.header.stamp);
       if (!ros_target2objects_world) {
         return std::nullopt;
       }
       tf2::fromMsg(*ros_target2objects_world, tf_target2objects_world);
     }
-    for (auto & object : output_msg.objects) {
+    for (auto & object : output_objects.objects) {
       auto & pose_with_cov = object.kinematics.pose_with_covariance;
       tf2::fromMsg(pose_with_cov.pose, tf_objects_world2objects);
       tf_target2objects = tf_target2objects_world * tf_objects_world2objects;
@@ -135,7 +135,7 @@ std::optional<types::DynamicObjectList> Odometry::transformObjects(
         tf2::transformCovariance(pose_with_cov.covariance, tf_target2objects_world);
     }
   }
-  return std::optional<types::DynamicObjectList>(output_msg);
+  return std::optional<types::DynamicObjectList>(output_objects);
 }
 
 }  // namespace autoware::multi_object_tracker

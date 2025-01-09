@@ -45,7 +45,7 @@ public:
   const geometry_msgs::msg::PoseStamped & getOdometry() const { return pose_; }
 
   std::optional<types::DynamicObjectList> transformObjects(
-    const types::DynamicObjectList & input_msg) const;
+    const types::DynamicObjectList & input_objects) const;
 
 private:
   rclcpp::Node & node_;
