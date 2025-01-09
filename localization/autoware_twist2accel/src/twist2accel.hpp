@@ -19,7 +19,6 @@
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_internal_debug_msgs/msg/bool_stamped.hpp>
 #include <geometry_msgs/msg/accel_with_covariance_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
