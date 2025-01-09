@@ -14,8 +14,6 @@
 
 #include "odometry.hpp"
 
-#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-
 #include <tf2_ros/create_timer_ros.h>
 
 #include <memory>
@@ -36,46 +34,28 @@ Odometry::Odometry(rclcpp::Node & node, const std::string & world_frame_id)
   tf_buffer_.setCreateTimerInterface(cti);
 }
 
-bool Odometry::getTransformFromTf(
-  const rclcpp::Time & time, geometry_msgs::msg::Transform & transform) const
-{
-  return getTransformFromTf(time, ego_frame_id_, transform);
-}
-
-bool Odometry::getTransformFromTf(
-  const rclcpp::Time & time, const std::string source_frame_id,
-  geometry_msgs::msg::Transform & transform) const
+bool Odometry::setOdometryFromTf(const rclcpp::Time & time)
 {
   // Get the transform of the self frame
   try {
     // Check if the frames are ready
     std::string errstr;  // This argument prevents error msg from being displayed in the terminal.
     if (!tf_buffer_.canTransform(
-          world_frame_id_, source_frame_id, tf2::TimePointZero, tf2::Duration::zero(), &errstr)) {
+          world_frame_id_, ego_frame_id_, tf2::TimePointZero, tf2::Duration::zero(), &errstr)) {
       return false;
     }
 
     // Lookup the transform
     geometry_msgs::msg::TransformStamped self_transform_stamped;
     self_transform_stamped = tf_buffer_.lookupTransform(
-      world_frame_id_, source_frame_id, time, rclcpp::Duration::from_seconds(0.5));
+      /*target*/ world_frame_id_, /*src*/ ego_frame_id_, time, rclcpp::Duration::from_seconds(0.5));
 
     // set the current transform and continue processing
-    transform = self_transform_stamped.transform;
-    return true;
+    current_transform_ = self_transform_stamped.transform;
   } catch (tf2::TransformException & ex) {
     RCLCPP_WARN_STREAM(rclcpp::get_logger("multi_object_tracker"), ex.what());
     return false;
   }
-}
-
-bool Odometry::updateFromTf(const rclcpp::Time & time)
-{
-  geometry_msgs::msg::Transform transform;
-  if (!getTransformFromTf(time, transform)) {
-    return false;
-  }
-  current_transform_ = transform;
 
   {
     nav_msgs::msg::Odometry odometry;
@@ -83,10 +63,10 @@ bool Odometry::updateFromTf(const rclcpp::Time & time)
 
     // set the odometry pose
     auto & odom_pose = odometry.pose.pose;
-    odom_pose.position.x = transform.translation.x;
-    odom_pose.position.y = transform.translation.y;
-    odom_pose.position.z = transform.translation.z;
-    odom_pose.orientation = transform.rotation;
+    odom_pose.position.x = current_transform_.translation.x;
+    odom_pose.position.y = current_transform_.translation.y;
+    odom_pose.position.z = current_transform_.translation.z;
+    odom_pose.orientation = current_transform_.rotation;
 
     // set odometry twist
     auto & odom_twist = odometry.twist.twist;
@@ -109,43 +89,6 @@ bool Odometry::updateFromTf(const rclcpp::Time & time)
   }
 
   return true;
-}
-
-std::optional<types::DynamicObjectList> Odometry::transformObjects(
-  const types::DynamicObjectList & input_objects)
-{
-  types::DynamicObjectList output_objects = input_objects;
-
-  // transform to world coordinate
-  if (input_objects.header.frame_id != world_frame_id_) {
-    output_objects.header.frame_id = world_frame_id_;
-    tf2::Transform tf_target2objects_world;
-    tf2::Transform tf_target2objects;
-    tf2::Transform tf_objects_world2objects;
-    {
-      geometry_msgs::msg::Transform ros_target2objects_world;
-      const auto & time = input_objects.header.stamp;
-
-      if (!getTransformFromTf(time, input_objects.header.frame_id, ros_target2objects_world)) {
-        return std::nullopt;
-      }
-
-      tf2::fromMsg(ros_target2objects_world, tf_target2objects_world);
-    }
-
-    for (auto & object : output_objects.objects) {
-      auto & pose_with_cov = object.kinematics.pose_with_covariance;
-      tf2::fromMsg(pose_with_cov.pose, tf_objects_world2objects);
-      tf_target2objects = tf_target2objects_world * tf_objects_world2objects;
-      // transform pose, frame difference and object pose
-      tf2::toMsg(tf_target2objects, pose_with_cov.pose);
-      // transform covariance, only the frame difference
-      pose_with_cov.covariance =
-        tf2::transformCovariance(pose_with_cov.covariance, tf_target2objects_world);
-    }
-  }
-
-  return std::optional<types::DynamicObjectList>(output_objects);
 }
 
 }  // namespace autoware::multi_object_tracker
