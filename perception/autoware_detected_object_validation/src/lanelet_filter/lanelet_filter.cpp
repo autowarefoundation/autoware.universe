@@ -180,9 +180,9 @@ void ObjectLaneletFilterNode::objectCallback(
       std::chrono::nanoseconds(
         (this->get_clock()->now() - output_object_msg.header.stamp).nanoseconds()))
       .count();
-  debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+  debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
     "debug/pipeline_latency_ms", pipeline_latency);
-  debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+  debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
     "debug/processing_time_ms", stop_watch_ptr_->toc("processing_time", true));
 }
 
