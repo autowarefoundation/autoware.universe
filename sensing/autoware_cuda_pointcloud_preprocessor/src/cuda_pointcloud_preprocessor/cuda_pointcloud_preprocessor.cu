@@ -71,7 +71,7 @@ __host__ __device__ Eigen::Matrix4f transformationMatrixFromVelocity(
 }
 
 __global__ void transformPointsKernel(
-  const InputPointType * input_points, InputPointType * output_points, int num_points,
+  const InputPointType * __restrict__ input_points, InputPointType * output_points, int num_points,
   TransformStruct transform)
 {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
