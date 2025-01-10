@@ -26,9 +26,9 @@ set(${PROJECT_NAME}_src
   src/debugger/debug_object.cpp
   src/processor/processor.cpp
   src/processor/input_manager.cpp
-  src/processor/odometry.cpp
 )
 set(${PROJECT_NAME}_lib
+  lib/odometry.cpp
   lib/association/association.cpp
   lib/association/mu_successive_shortest_path/mu_ssp.cpp
   lib/object_model/types.cpp

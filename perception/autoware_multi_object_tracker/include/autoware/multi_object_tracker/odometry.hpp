@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PROCESSOR__ODOMETRY_HPP_
-#define PROCESSOR__ODOMETRY_HPP_
+#ifndef AUTOWARE__MULTI_OBJECT_TRACKER__ODOMETRY_HPP_
+#define AUTOWARE__MULTI_OBJECT_TRACKER__ODOMETRY_HPP_
 
 #include "autoware/multi_object_tracker/object_model/types.hpp"
 
@@ -67,4 +67,4 @@ private:
 
 }  // namespace autoware::multi_object_tracker
 
-#endif  // PROCESSOR__ODOMETRY_HPP_
+#endif  // AUTOWARE__MULTI_OBJECT_TRACKER__ODOMETRY_HPP_

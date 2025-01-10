@@ -21,12 +21,11 @@
 
 #include "autoware/multi_object_tracker/association/association.hpp"
 #include "autoware/multi_object_tracker/object_model/types.hpp"
+#include "autoware/multi_object_tracker/odometry.hpp"
 #include "autoware/multi_object_tracker/tracker/model/tracker_base.hpp"
 #include "debugger/debugger.hpp"
 #include "processor/input_manager.hpp"
 #include "processor/processor.hpp"
-#include "processor/odometry.hpp"
-
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -90,7 +89,6 @@ private:
   // input manager
   std::unique_ptr<InputManager> input_manager_;
   std::shared_ptr<Odometry> odometry_;
-
 
   std::vector<InputChannel> input_channels_{};
   size_t input_channel_size_{};
