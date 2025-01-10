@@ -42,9 +42,7 @@ public:
     const std::string & source_frame_id, const rclcpp::Time & time) const;
   std::optional<geometry_msgs::msg::Transform> getTransform(const rclcpp::Time & time) const;
 
-  bool updateFromTf(const rclcpp::Time & time);
-
-  const nav_msgs::msg::Odometry & getOdometry() const { return current_odometry_; }
+  std::optional<nav_msgs::msg::Odometry> getOdometryFromTf(const rclcpp::Time & time);
 
   std::optional<types::DynamicObjectList> transformObjects(
     const types::DynamicObjectList & input_objects) const;

@@ -77,10 +77,9 @@ void InputStream::onMessage(
   // Add the odometry uncertainty to the object uncertainty
   if (odometry_->enable_odometry_uncertainty_) {
     // Create a modeled odometry message
-    odometry_->updateFromTf(dynamic_objects.header.stamp);
-    nav_msgs::msg::Odometry odometry = odometry_->getOdometry();
+    const auto odometry = odometry_->getOdometryFromTf(dynamic_objects.header.stamp);
     // Add the odometry uncertainty to the object uncertainty
-    uncertainty::addOdometryUncertainty(odometry, dynamic_objects);
+    uncertainty::addOdometryUncertainty(odometry.value(), dynamic_objects);
   }
 
   // Normalize the object uncertainty

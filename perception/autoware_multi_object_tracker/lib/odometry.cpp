@@ -65,11 +65,11 @@ std::optional<geometry_msgs::msg::Transform> Odometry::getTransform(
   }
 }
 
-bool Odometry::updateFromTf(const rclcpp::Time & time)
+std::optional<nav_msgs::msg::Odometry> Odometry::getOdometryFromTf(const rclcpp::Time & time)
 {
   const auto self_transform = getTransform(time);
   if (!self_transform) {
-    return false;
+    return std::nullopt;
   }
   current_transform_ = self_transform.value();
 
@@ -104,7 +104,7 @@ bool Odometry::updateFromTf(const rclcpp::Time & time)
     current_odometry_ = odometry;
   }
 
-  return true;
+  return std::optional<nav_msgs::msg::Odometry>(current_odometry_);
 }
 
 std::optional<types::DynamicObjectList> Odometry::transformObjects(
