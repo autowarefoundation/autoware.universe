@@ -21,11 +21,11 @@ If the node receives no route information, it looks at them within a radius of `
 
 ## Output topics
 
-| Name              | Type                                             | Description                                                                    |
-| ----------------- | ------------------------------------------------ | ------------------------------------------------------------------------------ |
-| `~/output/rois`   | tier4_perception_msgs::msg::TrafficLightRoiArray | location of traffic lights in image corresponding to the camera info           |
-| `~/expect/rois`   | tier4_perception_msgs::msg::TrafficLightRoiArray | location of traffic lights in image without any offset                         |
-| `~/debug/markers` | visualization_msgs::msg::MarkerArray             | markers which show a line that combines from ego vehicle to each traffic light |
+| Name              | Type                                             | Description                                                               |
+| ----------------- | ------------------------------------------------ | ------------------------------------------------------------------------- |
+| `~/output/rois`   | tier4_perception_msgs::msg::TrafficLightRoiArray | location of traffic lights in image corresponding to the camera info      |
+| `~/expect/rois`   | tier4_perception_msgs::msg::TrafficLightRoiArray | location of traffic lights in image without any offset                    |
+| `~/debug/markers` | visualization_msgs::msg::MarkerArray             | markers which show a line that combines from camera to each traffic light |
 
 ## Node parameters
 
