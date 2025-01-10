@@ -107,7 +107,7 @@ __global__ void cropBoxKernel(
 }
 
 __global__ void combineMasksKernel(
-  uint32_t * mask1, uint32_t * mask2, uint32_t * mask3, int num_points, uint32_t * output_mask)
+  const uint32_t * __restrict__ mask1, const uint32_t * __restrict__ mask2, const uint32_t * __restrict__ mask3, int num_points, uint32_t * output_mask)
 {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   if (idx < num_points) {
