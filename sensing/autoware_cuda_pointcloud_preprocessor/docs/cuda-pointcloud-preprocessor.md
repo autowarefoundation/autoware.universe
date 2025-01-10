@@ -5,7 +5,7 @@
 This node implements all standard pointcloud preprocessing algorithms applied to a single LiDAR's pointcloud in CUDA.
 In particular, this node implements:
 
-- crop boxing (ego-vehicle and ego-vehicle's mirrors)
+- box cropping (ego-vehicle and ego-vehicle's mirrors)
 - distortion correction
 - ring-based outlier filtering
 
