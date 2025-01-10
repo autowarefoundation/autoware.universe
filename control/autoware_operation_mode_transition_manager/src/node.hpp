@@ -37,8 +37,10 @@ public:
 private:
   using ChangeAutowareControlAPI =
     autoware::component_interface_specs_universe::system::ChangeAutowareControl;
-  using ChangeOperationModeAPI = autoware::component_interface_specs_universe::system::ChangeOperationMode;
-  using OperationModeStateAPI = autoware::component_interface_specs_universe::system::OperationModeState;
+  using ChangeOperationModeAPI =
+    autoware::component_interface_specs_universe::system::ChangeOperationMode;
+  using OperationModeStateAPI =
+    autoware::component_interface_specs_universe::system::OperationModeState;
   autoware::component_interface_utils::Service<ChangeAutowareControlAPI>::SharedPtr
     srv_autoware_control_;
   autoware::component_interface_utils::Service<ChangeOperationModeAPI>::SharedPtr

@@ -35,7 +35,8 @@ public:
   explicit VehicleDoorNode(const rclcpp::NodeOptions & options);
 
 private:
-  using OperationModeState = autoware::component_interface_specs_universe::system::OperationModeState;
+  using OperationModeState =
+    autoware::component_interface_specs_universe::system::OperationModeState;
   using InternalDoorStatus = autoware::component_interface_specs_universe::vehicle::DoorStatus;
   using InternalDoorLayout = autoware::component_interface_specs_universe::vehicle::DoorLayout;
   using InternalDoorCommand = autoware::component_interface_specs_universe::vehicle::DoorCommand;

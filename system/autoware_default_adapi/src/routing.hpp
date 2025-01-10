@@ -33,7 +33,8 @@ public:
   explicit RoutingNode(const rclcpp::NodeOptions & options);
 
 private:
-  using OperationModeState = autoware::component_interface_specs_universe::system::OperationModeState;
+  using OperationModeState =
+    autoware::component_interface_specs_universe::system::OperationModeState;
   using State = autoware::component_interface_specs_universe::planning::RouteState;
   using Route = autoware::component_interface_specs_universe::planning::LaneletRoute;
 
@@ -47,10 +48,13 @@ private:
   Srv<autoware::adapi_specs::routing::ClearRoute> srv_clear_route_;
   Sub<autoware::component_interface_specs_universe::planning::RouteState> sub_state_;
   Sub<autoware::component_interface_specs_universe::planning::LaneletRoute> sub_route_;
-  Cli<autoware::component_interface_specs_universe::planning::SetWaypointRoute> cli_set_waypoint_route_;
-  Cli<autoware::component_interface_specs_universe::planning::SetLaneletRoute> cli_set_lanelet_route_;
+  Cli<autoware::component_interface_specs_universe::planning::SetWaypointRoute>
+    cli_set_waypoint_route_;
+  Cli<autoware::component_interface_specs_universe::planning::SetLaneletRoute>
+    cli_set_lanelet_route_;
   Cli<autoware::component_interface_specs_universe::planning::ClearRoute> cli_clear_route_;
-  Cli<autoware::component_interface_specs_universe::system::ChangeOperationMode> cli_operation_mode_;
+  Cli<autoware::component_interface_specs_universe::system::ChangeOperationMode>
+    cli_operation_mode_;
   Sub<autoware::component_interface_specs_universe::system::OperationModeState> sub_operation_mode_;
   bool is_autoware_control_;
   bool is_auto_mode_;
