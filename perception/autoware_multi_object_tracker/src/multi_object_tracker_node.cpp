@@ -57,7 +57,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   double publish_rate = declare_parameter<double>("publish_rate");  // [hz]
   world_frame_id_ = declare_parameter<std::string>("world_frame_id");
   bool enable_delay_compensation{declare_parameter<bool>("enable_delay_compensation")};
-  enable_odometry_uncertainty_ = declare_parameter<bool>("consider_odometry_uncertainty");
+  bool enable_odometry_uncertainty = declare_parameter<bool>("consider_odometry_uncertainty");
 
   declare_parameter("selected_input_channels", std::vector<std::string>());
   std::vector<std::string> selected_input_channels =
@@ -68,7 +68,7 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
     create_publisher<autoware_perception_msgs::msg::TrackedObjects>("output", rclcpp::QoS{1});
 
   // Odometry manager
-  odometry_ = std::make_shared<Odometry>(*this, world_frame_id_);
+  odometry_ = std::make_shared<Odometry>(*this, world_frame_id_, enable_odometry_uncertainty);
 
   // ROS interface - Input channels
   // Get input channels
@@ -246,33 +246,17 @@ void MultiObjectTracker::onTimer()
   if (should_publish) checkAndPublish(current_time);
 }
 
-void MultiObjectTracker::runProcess(const types::DynamicObjectList & input_objects)
+void MultiObjectTracker::runProcess(const types::DynamicObjectList & detected_objects)
 {
   // Get the time of the measurement
   const rclcpp::Time measurement_time =
-    rclcpp::Time(input_objects.header.stamp, this->now().get_clock_type());
+    rclcpp::Time(detected_objects.header.stamp, this->now().get_clock_type());
 
   // Get the self transform
   const auto self_transform = odometry_->getTransform(measurement_time);
   if (!self_transform) {
     return;
   }
-
-  // Set the odometry to the processor
-  odometry_->updateFromTf(measurement_time);
-
-  auto detected_objects = input_objects;
-
-  // the object uncertainty
-  if (enable_odometry_uncertainty_) {
-    // Create a modeled odometry message
-    nav_msgs::msg::Odometry odometry = odometry_->getOdometry();
-
-    // Add the odometry uncertainty to the object uncertainty
-    uncertainty::addOdometryUncertainty(odometry, detected_objects);
-  }
-  // Normalize the object uncertainty
-  uncertainty::normalizeUncertainty(detected_objects);
 
   /* prediction */
   processor_->predict(measurement_time);
@@ -299,7 +283,7 @@ void MultiObjectTracker::runProcess(const types::DynamicObjectList & input_objec
   processor_->prune(measurement_time);
 
   /* spawn new tracker */
-  if (input_manager_->isChannelSpawnEnabled(input_objects.channel_index)) {
+  if (input_manager_->isChannelSpawnEnabled(detected_objects.channel_index)) {
     processor_->spawn(detected_objects, reverse_assignment);
   }
 }

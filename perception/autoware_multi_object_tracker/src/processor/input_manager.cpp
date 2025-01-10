@@ -61,22 +61,33 @@ void InputStream::onMessage(
 
   types::DynamicObjectList dynamic_objects = types::toDynamicObjectList(objects, index_);
 
-  auto transformed_objects = odometry_->transformObjects(dynamic_objects);
-  if (!transformed_objects) {
-    RCLCPP_WARN(
-      node_.get_logger(),
-      "InputManager::onMessage %s: Failed to transform objects.",
-      long_name_.c_str());
-    return;
-  }
-  dynamic_objects = transformed_objects.value();
-
   // Model the object uncertainty only if it is not available
   types::DynamicObjectList objects_with_uncertainty =
     uncertainty::modelUncertainty(dynamic_objects);
 
+  // Transform the objects to the world frame
+  auto transformed_objects = odometry_->transformObjects(objects_with_uncertainty);
+  if (!transformed_objects) {
+    RCLCPP_WARN(
+      node_.get_logger(), "InputManager::onMessage %s: Failed to transform objects.",
+      long_name_.c_str());
+    return;
+  }
+  dynamic_objects = transformed_objects.value();
+  // Add the odometry uncertainty to the object uncertainty
+  if (odometry_->enable_odometry_uncertainty_) {
+    // Create a modeled odometry message
+    odometry_->updateFromTf(dynamic_objects.header.stamp);
+    nav_msgs::msg::Odometry odometry = odometry_->getOdometry();
+    // Add the odometry uncertainty to the object uncertainty
+    uncertainty::addOdometryUncertainty(odometry, dynamic_objects);
+  }
+
+  // Normalize the object uncertainty
+  uncertainty::normalizeUncertainty(dynamic_objects);
+
   // Move the objects_with_uncertainty to the objects queue
-  objects_que_.push_back(std::move(objects_with_uncertainty));
+  objects_que_.push_back(std::move(dynamic_objects));
   while (objects_que_.size() > que_size_) {
     objects_que_.pop_front();
   }

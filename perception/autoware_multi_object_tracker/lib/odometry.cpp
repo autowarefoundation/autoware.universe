@@ -24,11 +24,13 @@
 namespace autoware::multi_object_tracker
 {
 
-Odometry::Odometry(rclcpp::Node & node, const std::string & world_frame_id)
+Odometry::Odometry(
+  rclcpp::Node & node, const std::string & world_frame_id, bool enable_odometry_uncertainty)
 : node_(node),
   world_frame_id_(world_frame_id),
   tf_buffer_(node_.get_clock()),
-  tf_listener_(tf_buffer_)
+  tf_listener_(tf_buffer_),
+  enable_odometry_uncertainty_(enable_odometry_uncertainty)
 {
   // Create tf timer
   auto cti = std::make_shared<tf2_ros::CreateTimerROS>(
