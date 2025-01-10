@@ -72,7 +72,6 @@ public:
     std::shared_ptr<CloudCollector> & collector, const MatchingParams & matching_params) override;
 
 private:
-  std::vector<std::string> input_topics_;
   std::unordered_map<std::string, double> topic_to_offset_map_;
   std::unordered_map<std::string, double> topic_to_noise_window_map_;
 };

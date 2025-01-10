@@ -31,11 +31,10 @@ namespace autoware::pointcloud_preprocessor
 {
 
 CombineCloudHandler::CombineCloudHandler(
-  rclcpp::Node & node, std::vector<std::string> input_topics, std::string output_frame,
-  bool is_motion_compensated, bool publish_synchronized_pointcloud,
-  bool keep_input_frame_in_synchronized_pointcloud, bool has_static_tf_only)
+  rclcpp::Node & node, std::string output_frame, bool is_motion_compensated,
+  bool publish_synchronized_pointcloud, bool keep_input_frame_in_synchronized_pointcloud,
+  bool has_static_tf_only)
 : node_(node),
-  input_topics_(std::move(input_topics)),
   output_frame_(std::move(output_frame)),
   is_motion_compensated_(is_motion_compensated),
   publish_synchronized_pointcloud_(publish_synchronized_pointcloud),

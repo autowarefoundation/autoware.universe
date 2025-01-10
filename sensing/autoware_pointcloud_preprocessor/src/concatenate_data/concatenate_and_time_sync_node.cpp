@@ -138,7 +138,7 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
 
   // Combine cloud handler
   combine_cloud_handler_ = std::make_shared<CombineCloudHandler>(
-    *this, params_.input_topics, params_.output_frame, params_.is_motion_compensated,
+    *this, params_.output_frame, params_.is_motion_compensated,
     params_.publish_synchronized_pointcloud, params_.keep_input_frame_in_synchronized_pointcloud,
     params_.has_static_tf_only);
 
@@ -393,13 +393,13 @@ void PointCloudConcatenateDataSynchronizerComponent::check_concat_status(
         diagnostic_topic_to_original_stamp_map_.find(topic) !=
         diagnostic_topic_to_original_stamp_map_.end()) {
         stat.add(
-          topic + "_timestamp", format_timestamp(diagnostic_topic_to_original_stamp_map_[topic]));
+          topic + "/timestamp", format_timestamp(diagnostic_topic_to_original_stamp_map_[topic]));
       } else {
         topic_miss = true;
         concatenation_success = false;
         input_cloud_concatenated = false;
       }
-      stat.add(topic + "_is_concatenated", input_cloud_concatenated);
+      stat.add(topic + "/is_concatenated", input_cloud_concatenated);
     }
 
     stat.add("cloud_concatenation_success", concatenation_success);

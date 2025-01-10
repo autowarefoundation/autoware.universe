@@ -83,8 +83,6 @@ AdvancedMatchingStrategy::AdvancedMatchingStrategy(
     topic_to_noise_window_map_[input_topics[i]] = lidar_timestamp_noise_window[i];
   }
 
-  input_topics_ = input_topics;
-
   RCLCPP_INFO(node.get_logger(), "Utilize advanced matching strategy");
 }
 

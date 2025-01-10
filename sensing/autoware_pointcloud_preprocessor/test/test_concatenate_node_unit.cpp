@@ -67,8 +67,7 @@ protected:
       node_options);
     combine_cloud_handler_ =
       std::make_shared<autoware::pointcloud_preprocessor::CombineCloudHandler>(
-        *concatenate_node_, std::vector<std::string>{"lidar_top", "lidar_left", "lidar_right"},
-        "base_link", true, true, true, false);
+        *concatenate_node_, "base_link", true, true, true, false);
 
     collector_ = std::make_shared<autoware::pointcloud_preprocessor::CloudCollector>(
       std::dynamic_pointer_cast<

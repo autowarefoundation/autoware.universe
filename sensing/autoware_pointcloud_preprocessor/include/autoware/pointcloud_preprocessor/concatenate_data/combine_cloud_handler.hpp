@@ -61,7 +61,6 @@ class CombineCloudHandler
 private:
   rclcpp::Node & node_;
 
-  std::vector<std::string> input_topics_;
   std::string output_frame_;
   bool is_motion_compensated_;
   bool publish_synchronized_pointcloud_;
@@ -92,9 +91,9 @@ private:
 
 public:
   CombineCloudHandler(
-    rclcpp::Node & node, std::vector<std::string> input_topics, std::string output_frame,
-    bool is_motion_compensated, bool publish_synchronized_pointcloud,
-    bool keep_input_frame_in_synchronized_pointcloud, bool has_static_tf_only);
+    rclcpp::Node & node, std::string output_frame, bool is_motion_compensated,
+    bool publish_synchronized_pointcloud, bool keep_input_frame_in_synchronized_pointcloud,
+    bool has_static_tf_only);
   void process_twist(
     const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr & twist_msg);
   void process_odometry(const nav_msgs::msg::Odometry::ConstSharedPtr & odometry_msg);
