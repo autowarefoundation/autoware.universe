@@ -61,6 +61,16 @@ void InputStream::onMessage(
 
   types::DynamicObjectList dynamic_objects = types::toDynamicObjectList(objects, index_);
 
+  auto transformed_objects = odometry_->transformObjects(dynamic_objects);
+  if (!transformed_objects) {
+    RCLCPP_WARN(
+      node_.get_logger(),
+      "InputManager::onMessage %s: Failed to transform objects.",
+      long_name_.c_str());
+    return;
+  }
+  dynamic_objects = transformed_objects.value();
+
   // Model the object uncertainty only if it is not available
   types::DynamicObjectList objects_with_uncertainty =
     uncertainty::modelUncertainty(dynamic_objects);

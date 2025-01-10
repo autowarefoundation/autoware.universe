@@ -261,12 +261,7 @@ void MultiObjectTracker::runProcess(const types::DynamicObjectList & input_objec
   // Set the odometry to the processor
   odometry_->updateFromTf(measurement_time);
 
-  // Transform the objects to the world frame
-  auto transformed_objects = odometry_->transformObjects(input_objects);
-  if (!transformed_objects) {
-    return;
-  }
-  auto & detected_objects = transformed_objects.value();
+  auto detected_objects = input_objects;
 
   // the object uncertainty
   if (enable_odometry_uncertainty_) {
