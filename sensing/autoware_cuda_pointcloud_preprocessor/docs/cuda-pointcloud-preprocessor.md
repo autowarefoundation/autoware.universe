@@ -41,6 +41,6 @@ In addition to the individual algorithms previously mentioned, this node uses th
 
 ## Assumptions / Known limits
 
-- The CUDA implementations, while following the original CPU ones, will not offer the same numerical results, and small approximations were needed to maximize the GPU use.
+- The CUDA implementations, while following the original CPU ones, will not offer the same numerical results, and small approximations were needed to maximize GPU usage.
 - This node expects that the input pointcloud follows the `autoware::point_types::PointXYZIRCAEDT` layout and the output pointcloud will use the `autoware::point_types::PointXYZIRC` layout defined in the `autoware_point_types` package.
 - The input pointcloud must be a 2D tensor where each row represents a different channel/ring with its points in non-decreasing azimuth order. Invalid points should contain 0-values. The `cuda_organized_pointcloud_adapter` provides such a pointcloud.
