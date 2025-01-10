@@ -26,7 +26,6 @@
 #include <gtest/gtest.h>
 
 #include <memory>
-#include <optional>
 #include <string>
 #include <vector>
 
@@ -90,6 +89,7 @@ TEST_F(TestGeometricPullOut, GenerateValidGeometricPullOutPath)
       .orientation(
         geometry_msgs::build<geometry_msgs::msg::Quaternion>().x(0.0).y(0.0).z(0.705897).w(
           0.708314));
+  const auto planner_data = make_planner_data(start_pose, 4619, 4635);
 
   auto planner_data = std::make_shared<PlannerData>();
   planner_data->init_parameters(*node_);
