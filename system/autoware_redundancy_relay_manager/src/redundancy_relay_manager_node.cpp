@@ -15,11 +15,12 @@
 
 namespace autoware::redundancy_relay_manager
 {
-RedundancyRelayManager::RedundancyRelayManager(const rclcpp::NodeOptions & options) : Node("redundancy_relay_manager", options)
+RedundancyRelayManager::RedundancyRelayManager(const rclcpp::NodeOptions & options)
+: Node("redundancy_relay_manager", options)
 {
   RCLCPP_INFO(get_logger(), "redundancy_relay_manager_node started.");
 }
-} // namespace autoware::redundancy_relay_manager
+}  // namespace autoware::redundancy_relay_manager
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(autoware::redundancy_relay_manager::RedundancyRelayManager)
