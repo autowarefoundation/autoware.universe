@@ -11,41 +11,43 @@
           "properties": {
             "enable_on_prepare_phase": {
               "type": "boolean",
+              "units": "s",
               "description": "Enable cancel lane change.",
               "default": true
             },
             "enable_on_lane_changing_phase": {
               "type": "boolean",
+              "units": "s",
               "description": "Enable abort lane change.",
               "default": true
             },
             "overhang_tolerance": {
               "type": "number",
-              "description": "Threshold to determine ego vehicle diverges from the current lane.",
               "units": "s",
+              "description": "Threshold to determine ego vehicle diverges from the current lane.",
               "default": 0.0,
               "minimum": 0.0
             },
             "delta_time": {
               "type": "number",
-              "description": "The time taken to start steering to return to the center line.",
               "units": "s",
+              "description": "The time taken to start steering to return to the center line.",
               "default": 2.0,
               "minimum": 1.0,
               "maximum": 3.0
             },
             "duration": {
               "type": "number",
-              "description": "The time taken to complete returning to the center line.",
               "units": "s",
+              "description": "The time taken to complete returning to the center line.",
               "default": 2.0,
               "minimum": 1.0,
               "maximum": 3.0
             },
             "max_lateral_jerk": {
               "type": "number",
-              "description": "The maximum lateral jerk for abort path.",
               "units": "m/s³",
+              "description": "The maximum lateral jerk for abort path.",
               "default": 1000.0
             },
             "unsafe_hysteresis_threshold": {
@@ -56,6 +58,7 @@
             },
             "deceleration_sampling_num": {
               "type": "integer",
+              "units": "m/s³",
               "description": "Number of samples used for deceleration.",
               "default": 5,
               "minimum": 1
