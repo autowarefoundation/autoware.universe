@@ -58,7 +58,6 @@ struct Debug
   double distance_to_abort_finished{std::numeric_limits<double>::max()};
   bool is_able_to_return_to_current_lane{true};
   bool is_stuck{false};
-  bool is_abort{false};
 
   void reset()
   {
@@ -83,8 +82,13 @@ struct Debug
     distance_to_abort_finished = std::numeric_limits<double>::max();
     is_able_to_return_to_current_lane = true;
     is_stuck = false;
-    is_abort = false;
   }
+};
+
+struct InterfaceDebug
+{
+  std::string_view failing_reason;
+  LaneChangeStates lc_state;
 };
 }  // namespace autoware::behavior_path_planner::lane_change
 

@@ -892,7 +892,6 @@ bool NormalLaneChange::isAbleToStopSafely() const
 bool NormalLaneChange::hasFinishedAbort() const
 {
   if (!abort_path_) {
-    lane_change_debug_.is_abort = true;
     return true;
   }
 
@@ -901,7 +900,6 @@ bool NormalLaneChange::hasFinishedAbort() const
   lane_change_debug_.distance_to_abort_finished = distance_to_finish;
 
   const auto has_finished_abort = distance_to_finish < 0.0;
-  lane_change_debug_.is_abort = has_finished_abort;
 
   return has_finished_abort;
 }
@@ -916,12 +914,7 @@ bool NormalLaneChange::isAbortState() const
     return false;
   }
 
-  if (!abort_path_) {
-    return false;
-  }
-
-  lane_change_debug_.is_abort = true;
-  return true;
+  return abort_path_ != nullptr;
 }
 
 int NormalLaneChange::getNumToPreferredLane(const lanelet::ConstLanelet & lane) const
@@ -1491,14 +1484,8 @@ bool NormalLaneChange::isValidPath(const PathWithLaneId & path) const
 bool NormalLaneChange::isRequiredStop(const bool is_trailing_object)
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
-  if (
-    common_data_ptr_->transient_data.is_ego_near_current_terminal_start && isAbleToStopSafely() &&
-    is_trailing_object) {
-    current_lane_change_state_ = LaneChangeStates::Stop;
-    return true;
-  }
-  current_lane_change_state_ = LaneChangeStates::Normal;
-  return false;
+  return common_data_ptr_->transient_data.is_ego_near_current_terminal_start &&
+         isAbleToStopSafely() && is_trailing_object;
 }
 
 bool NormalLaneChange::calcAbortPath()
