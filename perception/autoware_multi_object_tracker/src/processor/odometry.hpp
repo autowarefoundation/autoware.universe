@@ -40,7 +40,7 @@ public:
     const std::string & source_frame_id, const rclcpp::Time & time) const;
   std::optional<geometry_msgs::msg::Transform> getTransform(const rclcpp::Time & time) const;
 
-  bool setOdometryFromTf(const rclcpp::Time & time);
+  bool updateFromTf(const rclcpp::Time & time);
 
   const geometry_msgs::msg::PoseStamped & getOdometry() const { return pose_; }
 

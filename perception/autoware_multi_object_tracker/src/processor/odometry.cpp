@@ -63,7 +63,7 @@ std::optional<geometry_msgs::msg::Transform> Odometry::getTransform(
   }
 }
 
-bool Odometry::setOdometryFromTf(const rclcpp::Time & time)
+bool Odometry::updateFromTf(const rclcpp::Time & time)
 {
   const auto self_transform = getTransform(time);
   if (!self_transform) {
