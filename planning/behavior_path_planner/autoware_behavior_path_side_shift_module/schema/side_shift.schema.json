@@ -1,0 +1,68 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Parameters for side_shift",
+  "type": "object",
+  "definitions": {
+    "side_shift": {
+      "type": "object",
+      "properties": {
+        "min_distance_to_start_shifting": {
+          "type": "number",
+          "default": 5.0,
+          "description": "Minimum distance to start shifting."
+        },
+        "time_to_start_shifting": {
+          "type": "number",
+          "default": 1.0,
+          "description": "Time to start shifting."
+        },
+        "shifting_lateral_jerk": {
+          "type": "number",
+          "default": 0.2,
+          "description": "Lateral jerk during shifting."
+        },
+        "min_shifting_distance": {
+          "type": "number",
+          "default": 5.0,
+          "description": "Minimum shifting distance."
+        },
+        "min_shifting_speed": {
+          "type": "number",
+          "default": 5.56,
+          "description": "Minimum speed to perform shifting."
+        },
+        "shift_request_time_limit": {
+          "type": "number",
+          "default": 1.0,
+          "description": "Time limit for shift request."
+        },
+        "publish_debug_marker": {
+          "type": "boolean",
+          "default": false,
+          "description": "Flag to publish debug markers."
+        }
+      },
+      "required": [
+        "min_distance_to_start_shifting",
+        "time_to_start_shifting",
+        "shifting_lateral_jerk",
+        "min_shifting_distance",
+        "min_shifting_speed",
+        "shift_request_time_limit",
+        "publish_debug_marker"
+      ]
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/side_shift"
+        }
+      },
+      "required": ["ros__parameters"]
+    }
+  },
+  "required": ["/**"]
+}
