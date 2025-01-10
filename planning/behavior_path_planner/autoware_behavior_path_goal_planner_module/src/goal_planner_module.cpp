@@ -155,7 +155,7 @@ bool hasPreviousModulePathShapeChanged(
 {
   // Calculate the lateral distance between each point of the current path and the nearest point of
   // the last path
-  constexpr double LATERAL_DEVIATION_THRESH = 0.3;
+  constexpr double LATERAL_DEVIATION_THRESH = 0.1;
   for (const auto & p : upstream_module_output.path.points) {
     const size_t nearest_seg_idx = autoware::motion_utils::findNearestSegmentIndex(
       last_upstream_module_output.path.points, p.point.pose.position);
@@ -184,21 +184,12 @@ bool hasPreviousModulePathShapeChanged(
   return false;
 }
 
-bool hasDeviatedFromLastPreviousModulePath(
-  const PlannerData & planner_data, const BehaviorModuleOutput & last_upstream_module_output)
+bool hasDeviatedFromPath(
+  const Point & ego_position, const BehaviorModuleOutput & upstream_module_output)
 {
+  constexpr double LATERAL_DEVIATION_THRESH = 0.1;
   return std::abs(autoware::motion_utils::calcLateralOffset(
-           last_upstream_module_output.path.points,
-           planner_data.self_odometry->pose.pose.position)) > 0.3;
-}
-
-bool hasDeviatedFromCurrentPreviousModulePath(
-  const PlannerData & planner_data, const BehaviorModuleOutput & upstream_module_output)
-{
-  constexpr double LATERAL_DEVIATION_THRESH = 0.3;
-  return std::abs(autoware::motion_utils::calcLateralOffset(
-           upstream_module_output.path.points, planner_data.self_odometry->pose.pose.position)) >
-         LATERAL_DEVIATION_THRESH;
+           upstream_module_output.path.points, ego_position)) > LATERAL_DEVIATION_THRESH;
 }
 
 bool needPathUpdate(
@@ -371,7 +362,8 @@ void LaneParkingPlanner::onTimer()
           local_planner_data->self_odometry->pose.pose, modified_goal_opt, parameters_)) {
       return false;
     }
-    if (hasDeviatedFromCurrentPreviousModulePath(*local_planner_data, upstream_module_output)) {
+    if (hasDeviatedFromPath(
+          local_planner_data->self_odometry->pose.pose.position, upstream_module_output)) {
       RCLCPP_DEBUG(getLogger(), "has deviated from current previous module path");
       return false;
     }
@@ -381,8 +373,8 @@ void LaneParkingPlanner::onTimer()
       return true;
     }
     if (
-      hasDeviatedFromLastPreviousModulePath(
-        *local_planner_data, original_upstream_module_output_) &&
+      hasDeviatedFromPath(
+        local_planner_data->self_odometry->pose.pose.position, original_upstream_module_output_) &&
       current_state != PathDecisionState::DecisionKind::DECIDED) {
       RCLCPP_DEBUG(getLogger(), "has deviated from last previous module path");
       return true;
