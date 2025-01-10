@@ -20,6 +20,8 @@
 
 #include <tf2_msgs/msg/tf_message.hpp>
 
+#include <string>
+
 namespace autoware::topic_relay_controller
 {
 struct NodeParam

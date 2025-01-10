@@ -13,6 +13,9 @@
 
 #include "topic_relay_controller_node.hpp"
 
+#include <memory>
+#include <string>
+
 namespace autoware::topic_relay_controller
 {
 TopicRelayController::TopicRelayController(const rclcpp::NodeOptions & options) : Node("topic_relay_controller", options)
