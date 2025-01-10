@@ -136,7 +136,7 @@ bool hasPreviousModulePathShapeChanged(
   const BehaviorModuleOutput & upstream_module_output,
   const BehaviorModuleOutput & last_upstream_module_output);
 bool hasDeviatedFromPath(
-  const PlannerData & planner_data, const BehaviorModuleOutput & upstream_module_output);
+  const Point & ego_position, const BehaviorModuleOutput & upstream_module_output);
 
 bool needPathUpdate(
   const Pose & current_pose, const double path_update_duration, const rclcpp::Time & now,
