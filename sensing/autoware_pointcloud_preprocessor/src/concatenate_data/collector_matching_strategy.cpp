@@ -112,7 +112,7 @@ void AdvancedMatchingStrategy::set_collector_info(
   std::shared_ptr<CloudCollector> & collector, const MatchingParams & matching_params)
 {
   auto info = std::make_shared<AdvancedCollectorInfo>(
-    matching_params.cloud_timestamp - topic_to_offset_map_[matching_params.topic_name],
+    matching_params.cloud_timestamp - topic_to_offset_map_.at(matching_params.topic_name),
     topic_to_noise_window_map_[matching_params.topic_name]);
   collector->set_info(info);
 }

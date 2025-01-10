@@ -368,19 +368,19 @@ void PointCloudConcatenateDataSynchronizerComponent::check_concat_status(
 {
   if (publish_pointcloud_ || drop_previous_but_late_pointcloud_) {
     stat.add(
-      "concatenated cloud timestamp", format_timestamp(current_concatenate_cloud_timestamp_));
+      "concatenated_cloud_timestamp", format_timestamp(current_concatenate_cloud_timestamp_));
 
     if (
       auto naive_info = std::dynamic_pointer_cast<NaiveCollectorInfo>(diagnostic_collector_info_)) {
-      stat.add("first cloud's arrival timestamp", format_timestamp(naive_info->timestamp));
+      stat.add("first_cloud_arrival_timestamp", format_timestamp(naive_info->timestamp));
     } else if (
       auto advanced_info =
         std::dynamic_pointer_cast<AdvancedCollectorInfo>(diagnostic_collector_info_)) {
       stat.add(
-        "reference timestamp min",
+        "reference_timestamp_min",
         format_timestamp(advanced_info->timestamp - advanced_info->noise_window));
       stat.add(
-        "reference timestamp max",
+        "reference_timestamp_max",
         format_timestamp(advanced_info->timestamp + advanced_info->noise_window));
     }
 
@@ -393,16 +393,16 @@ void PointCloudConcatenateDataSynchronizerComponent::check_concat_status(
         diagnostic_topic_to_original_stamp_map_.find(topic) !=
         diagnostic_topic_to_original_stamp_map_.end()) {
         stat.add(
-          topic + " timestamp", format_timestamp(diagnostic_topic_to_original_stamp_map_[topic]));
+          topic + "_timestamp", format_timestamp(diagnostic_topic_to_original_stamp_map_[topic]));
       } else {
         topic_miss = true;
         concatenation_success = false;
         input_cloud_concatenated = false;
       }
-      stat.add(topic + " is concatenated", input_cloud_concatenated);
+      stat.add(topic + "_is_concatenated", input_cloud_concatenated);
     }
 
-    stat.add("cloud concatenation success", concatenation_success);
+    stat.add("cloud_concatenation_success", concatenation_success);
 
     int8_t level = diagnostic_msgs::msg::DiagnosticStatus::OK;
     std::string message = "Concatenated pointcloud is published and include all topics";
