@@ -27,7 +27,8 @@ namespace autoware::multi_object_tracker
 ///////////////////////////
 /////// InputStream ///////
 ///////////////////////////
-InputStream::InputStream(rclcpp::Node & node, uint & index) : node_(node), index_(index)
+InputStream::InputStream(rclcpp::Node & node, uint & index, std::shared_ptr<Odometry> odometry)
+: node_(node), index_(index), odometry_(odometry)
 {
 }
 
@@ -190,7 +191,8 @@ void InputStream::getObjectsOlderThan(
 ////////////////////////////
 /////// InputManager ///////
 ////////////////////////////
-InputManager::InputManager(rclcpp::Node & node) : node_(node)
+InputManager::InputManager(rclcpp::Node & node, std::shared_ptr<Odometry> odometry)
+: node_(node), odometry_(odometry)
 {
   latest_exported_object_time_ = node_.now() - rclcpp::Duration::from_seconds(3.0);
 }
@@ -209,7 +211,7 @@ void InputManager::init(const std::vector<InputChannel> & input_channels)
   bool is_any_spawn_enabled = false;
   for (size_t i = 0; i < input_size_; i++) {
     uint index(i);
-    InputStream input_stream(node_, index);
+    InputStream input_stream(node_, index, odometry_);
     input_stream.init(input_channels[i]);
     input_stream.setTriggerFunction(
       std::bind(&InputManager::onTrigger, this, std::placeholders::_1));

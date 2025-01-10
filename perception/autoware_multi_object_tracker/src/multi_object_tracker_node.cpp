@@ -116,13 +116,10 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   }
 
   // Initialize input manager
-  input_manager_ = std::make_unique<InputManager>(*this);
+  input_manager_ = std::make_unique<InputManager>(*this, odometry_);
   input_manager_->init(input_channels_);  // Initialize input manager, set subscriptions
   input_manager_->setTriggerFunction(
     std::bind(&MultiObjectTracker::onTrigger, this));  // Set trigger function
-  input_manager_->setOdometer(odometry_);  // Set odometry
-
-
 
   // Create ROS time based timer.
   // If the delay compensation is enabled, the timer is used to publish the output at the correct

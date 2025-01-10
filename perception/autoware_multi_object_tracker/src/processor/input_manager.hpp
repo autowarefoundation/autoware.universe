@@ -43,7 +43,7 @@ struct InputChannel
 class InputStream
 {
 public:
-  explicit InputStream(rclcpp::Node & node, uint & index);
+  explicit InputStream(rclcpp::Node & node, uint & index, std::shared_ptr<Odometry> odometry);
 
   void init(const InputChannel & input_channel);
 
@@ -76,6 +76,7 @@ public:
 private:
   rclcpp::Node & node_;
   uint index_;
+  std::shared_ptr<Odometry> odometry_;
 
   std::string input_topic_;
   std::string long_name_;
@@ -100,11 +101,10 @@ private:
 class InputManager
 {
 public:
-  explicit InputManager(rclcpp::Node & node);
+  InputManager(rclcpp::Node & node, std::shared_ptr<Odometry> odometry);
   void init(const std::vector<InputChannel> & input_channels);
 
   void setTriggerFunction(std::function<void()> func_trigger) { func_trigger_ = func_trigger; }
-  void setOdometer(std::shared_ptr<Odometry> odometry) { odometry_ = odometry; }
   void onTrigger(const uint & index) const;
 
   bool getObjects(const rclcpp::Time & now, ObjectsList & objects_list);
@@ -116,6 +116,8 @@ public:
 
 private:
   rclcpp::Node & node_;
+  std::shared_ptr<Odometry> odometry_;
+
   std::vector<rclcpp::Subscription<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr>
     sub_objects_array_{};
 
@@ -131,8 +133,6 @@ private:
   double target_stream_latency_std_{0.04};   // [s]
   double target_stream_interval_{0.1};       // [s]
   double target_stream_interval_std_{0.02};  // [s]
-
-  std::shared_ptr<Odometry> odometry_;
 
 private:
   void getObjectTimeInterval(
