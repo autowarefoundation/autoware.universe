@@ -132,10 +132,8 @@ bool isOnModifiedGoal(
 bool hasPreviousModulePathShapeChanged(
   const BehaviorModuleOutput & upstream_module_output,
   const BehaviorModuleOutput & last_upstream_module_output);
-bool hasDeviatedFromLastPreviousModulePath(
-  const PlannerData & planner_data, const BehaviorModuleOutput & last_upstream_module_output);
-bool hasDeviatedFromCurrentPreviousModulePath(
-  const PlannerData & planner_data, const BehaviorModuleOutput & upstream_module_output);
+bool hasDeviatedFromPath(
+  const Point & ego_position, const BehaviorModuleOutput & upstream_module_output);
 
 bool needPathUpdate(
   const Pose & current_pose, const double path_update_duration, const rclcpp::Time & now,
