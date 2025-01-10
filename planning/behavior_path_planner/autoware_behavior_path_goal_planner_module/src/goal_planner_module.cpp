@@ -189,7 +189,7 @@ bool hasDeviatedFromPath(
 {
   constexpr double LATERAL_DEVIATION_THRESH = 0.1;
   return std::abs(autoware::motion_utils::calcLateralOffset(
-    upstream_module_output.path.points, ego_position)) > LATERAL_DEVIATION_THRESH;
+           upstream_module_output.path.points, ego_position)) > LATERAL_DEVIATION_THRESH;
 }
 
 bool needPathUpdate(
@@ -364,7 +364,8 @@ void LaneParkingPlanner::onTimer()
           local_planner_data->self_odometry->pose.pose, modified_goal_opt, parameters_)) {
       return false;
     }
-    if (hasDeviatedFromPath(local_planner_data->self_odometry->pose.pose.position, upstream_module_output)) {
+    if (hasDeviatedFromPath(
+          local_planner_data->self_odometry->pose.pose.position, upstream_module_output)) {
       RCLCPP_DEBUG(getLogger(), "has deviated from current previous module path");
       return false;
     }
@@ -374,7 +375,8 @@ void LaneParkingPlanner::onTimer()
       return true;
     }
     if (
-      hasDeviatedFromPath(local_planner_data->self_odometry->pose.pose.position, original_upstream_module_output_) &&
+      hasDeviatedFromPath(
+        local_planner_data->self_odometry->pose.pose.position, original_upstream_module_output_) &&
       current_state != PathDecisionState::DecisionKind::DECIDED) {
       RCLCPP_DEBUG(getLogger(), "has deviated from last previous module path");
       return true;
