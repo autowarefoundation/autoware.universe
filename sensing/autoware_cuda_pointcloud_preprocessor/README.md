@@ -13,7 +13,7 @@ A detailed description of each filter's algorithm is available in the following 
 | Filter Name                       | Description                                                                                                                                  | Detail                                            |
 | --------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------- |
 | cuda_organized_pointcloud_adapter | Organizes a pointcloud per ring/channel, so that the memory layout allows parallel processing in cuda                                        | [link](docs/cuda-organized-pointcloud-adapter.md) |
-| cuda_pointcloud_preprocessor      | Implements the cropping, distortion correction, and outlier filtering (ring-based) of the `autoware_pointcloud_preprocessor`'s cpu versions. | [link](docs/cuda-pointcloud-preprocessor.md)      |
+| cuda_pointcloud_preprocessor      | Implements the cropping, distortion correction, and outlier filtering (ring-based) of the `autoware_pointcloud_preprocessor`'s CPU versions. | [link](docs/cuda-pointcloud-preprocessor.md)      |
 
 ## (Optional) Future extensions / Unimplemented parts
 
