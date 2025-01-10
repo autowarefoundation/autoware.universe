@@ -157,9 +157,6 @@ private:
   Param param_;
   std::shared_ptr<autoware::vehicle_info_utils::VehicleInfo> vehicle_info_ptr_;
 
-  static std::vector<LinearRing2d> createVehiclePassingAreas(
-    const std::vector<LinearRing2d> & vehicle_footprints);
-
   bool willLeaveLane(
     const lanelet::ConstLanelets & candidate_lanelets,
     const std::vector<LinearRing2d> & vehicle_footprints) const;

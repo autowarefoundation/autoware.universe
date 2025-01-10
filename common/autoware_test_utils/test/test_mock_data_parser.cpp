@@ -673,11 +673,12 @@ TEST(ParseFunctions, CompleteYAMLTest)
   // Test parsing of segments
   const auto segments = parse<std::vector<LaneletSegment>>(config["segments"]);
   ASSERT_EQ(
-    segments.size(), uint64_t(1));  // Assuming only one segment in the provided YAML for this test
+    segments.size(),
+    static_cast<uint64_t>(1));  // Assuming only one segment in the provided YAML for this test
 
   const auto & segment0 = segments[0];
   EXPECT_EQ(segment0.preferred_primitive.id, 11);
-  EXPECT_EQ(segment0.primitives.size(), uint64_t(2));
+  EXPECT_EQ(segment0.primitives.size(), static_cast<uint64_t>(2));
   EXPECT_EQ(segment0.primitives[0].id, 22);
   EXPECT_EQ(segment0.primitives[0].primitive_type, "lane");
   EXPECT_EQ(segment0.primitives[1].id, 33);
@@ -811,10 +812,10 @@ TEST(ParseFunction, CompleteFromFilename)
 
     ASSERT_EQ(
       lanelet_route.segments.size(),
-      uint64_t(2));  // Assuming only one segment in the provided YAML for this test
+      static_cast<uint64_t>(2));  // Assuming only one segment in the provided YAML for this test
     const auto & segment1 = lanelet_route.segments[1];
     EXPECT_EQ(segment1.preferred_primitive.id, 44);
-    EXPECT_EQ(segment1.primitives.size(), uint64_t(4));
+    EXPECT_EQ(segment1.primitives.size(), static_cast<uint64_t>(4));
     EXPECT_EQ(segment1.primitives[0].id, 55);
     EXPECT_EQ(segment1.primitives[0].primitive_type, "lane");
     EXPECT_EQ(segment1.primitives[1].id, 66);

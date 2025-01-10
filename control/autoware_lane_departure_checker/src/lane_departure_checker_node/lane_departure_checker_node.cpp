@@ -171,7 +171,8 @@ LaneDepartureCheckerNode::LaneDepartureCheckerNode(const rclcpp::NodeOptions & o
 
   // Publisher
   processing_time_publisher_ =
-    this->create_publisher<tier4_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
+    this->create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>(
+      "~/debug/processing_time_ms", 1);
   // Nothing
 
   // Diagnostic Updater
@@ -342,10 +343,11 @@ void LaneDepartureCheckerNode::onTimer()
 
   {
     const auto & deviation = output_.trajectory_deviation;
-    debug_publisher_.publish<tier4_debug_msgs::msg::Float64Stamped>(
+    debug_publisher_.publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "deviation/lateral", deviation.lateral);
-    debug_publisher_.publish<tier4_debug_msgs::msg::Float64Stamped>("deviation/yaw", deviation.yaw);
-    debug_publisher_.publish<tier4_debug_msgs::msg::Float64Stamped>(
+    debug_publisher_.publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
+      "deviation/yaw", deviation.yaw);
+    debug_publisher_.publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "deviation/yaw_deg", rad2deg(deviation.yaw));
   }
   processing_time_map["Node: publishTrajectoryDeviation"] = stop_watch.toc(true);
@@ -361,7 +363,7 @@ void LaneDepartureCheckerNode::onTimer()
 
   processing_time_map["Total"] = stop_watch.toc("Total");
   processing_diag_publisher_.publish(processing_time_map);
-  tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
+  autoware_internal_debug_msgs::msg::Float64Stamped processing_time_msg;
   processing_time_msg.stamp = get_clock()->now();
   processing_time_msg.data = processing_time_map["Total"];
   processing_time_publisher_->publish(processing_time_msg);
