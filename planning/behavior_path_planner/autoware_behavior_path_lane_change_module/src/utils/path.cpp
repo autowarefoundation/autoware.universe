@@ -262,8 +262,11 @@ std::vector<double> calc_curvatures(
 double calc_average_curvature(const std::vector<double> & curvatures)
 {
   const auto filter_zeros = [](const auto & k) { return k != 0.0; };
-  const auto sums_of_curvatures = [](float sum, const double k) { return sum + std::abs(k); };
   auto filtered_k = curvatures | ranges::views::filter(filter_zeros);
+  if (filtered_k.empty()) {
+    return 0.0;
+  }
+  const auto sums_of_curvatures = [](float sum, const double k) { return sum + std::abs(k); };
   const auto sum_of_k = ranges::accumulate(filtered_k, 0.0, sums_of_curvatures);
   const auto count_k = static_cast<double>(ranges::distance(filtered_k));
   return sum_of_k / count_k;
