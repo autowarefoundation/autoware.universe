@@ -31,9 +31,7 @@ using autoware::lane_departure_checker::LaneDepartureChecker;
 class ShiftPullOver : public PullOverPlannerBase
 {
 public:
-  ShiftPullOver(
-    rclcpp::Node & node, const GoalPlannerParameters & parameters,
-    const LaneDepartureChecker & lane_departure_checker);
+  ShiftPullOver(rclcpp::Node & node, const GoalPlannerParameters & parameters);
   PullOverPlannerType getPlannerType() const override { return PullOverPlannerType::SHIFT; };
   std::optional<PullOverPath> plan(
     const GoalCandidate & modified_goal_pose, const size_t id,

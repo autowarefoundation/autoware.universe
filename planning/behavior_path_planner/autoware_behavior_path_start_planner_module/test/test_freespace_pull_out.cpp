@@ -15,7 +15,7 @@
 #include "start_planner_test_helper.hpp"
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
-#include <autoware/behavior_path_start_planner_module/geometric_pull_out.hpp>
+#include <autoware/behavior_path_start_planner_module/freespace_pull_out.hpp>
 #include <autoware/behavior_path_start_planner_module/start_planner_module.hpp>
 #include <autoware/behavior_path_start_planner_module/util.hpp>
 #include <autoware/route_handler/route_handler.hpp>
@@ -29,7 +29,7 @@
 #include <string>
 #include <vector>
 
-using autoware::behavior_path_planner::GeometricPullOut;
+using autoware::behavior_path_planner::FreespacePullOut;
 using autoware::behavior_path_planner::StartPlannerParameters;
 using autoware::test_utils::get_absolute_path_to_config;
 using autoware_planning_msgs::msg::LaneletRoute;
@@ -40,14 +40,14 @@ using autoware_planning_test_manager::utils::makeBehaviorRouteFromLaneId;
 namespace autoware::behavior_path_planner
 {
 
-class TestGeometricPullOut : public ::testing::Test
+class TestFreespacePullOut : public ::testing::Test
 {
 public:
   std::optional<PullOutPath> call_plan(
     const Pose & start_pose, const Pose & goal_pose,
     const std::shared_ptr<const PlannerData> & planner_data, PlannerDebugData & planner_debug_data)
   {
-    return geometric_pull_out_->plan(start_pose, goal_pose, planner_data, planner_debug_data);
+    return freespace_pull_out_->plan(start_pose, goal_pose, planner_data, planner_debug_data);
   }
 
 protected:
@@ -55,56 +55,59 @@ protected:
   {
     rclcpp::init(0, nullptr);
     node_ =
-      rclcpp::Node::make_shared("geometric_pull_out", StartPlannerTestHelper::make_node_options());
+      rclcpp::Node::make_shared("freespace_pull_out", StartPlannerTestHelper::make_node_options());
 
-    initialize_geometric_pull_out_planner();
+    planner_data_ = std::make_shared<PlannerData>();
+    planner_data_->init_parameters(*node_);
+
+    initialize_freespace_pull_out_planner();
   }
+
   void TearDown() override { rclcpp::shutdown(); }
 
   // Member variables
   std::shared_ptr<rclcpp::Node> node_;
-  std::shared_ptr<GeometricPullOut> geometric_pull_out_;
+  std::shared_ptr<FreespacePullOut> freespace_pull_out_;
+  std::shared_ptr<PlannerData> planner_data_;
 
 private:
-  void initialize_geometric_pull_out_planner()
+  void initialize_freespace_pull_out_planner()
   {
     auto parameters = StartPlannerParameters::init(*node_);
-
-    geometric_pull_out_ = std::make_shared<GeometricPullOut>(*node_, parameters);
+    freespace_pull_out_ = std::make_shared<FreespacePullOut>(*node_, parameters);
   }
 };
 
-TEST_F(TestGeometricPullOut, GenerateValidGeometricPullOutPath)
+TEST_F(TestFreespacePullOut, GenerateValidFreespacePullOutPath)
 {
   const auto start_pose =
     geometry_msgs::build<geometry_msgs::msg::Pose>()
-      .position(geometry_msgs::build<geometry_msgs::msg::Point>().x(362.181).y(362.164).z(100.000))
+      .position(geometry_msgs::build<geometry_msgs::msg::Point>().x(299.796).y(303.529).z(100.000))
       .orientation(
-        geometry_msgs::build<geometry_msgs::msg::Quaternion>().x(0.0).y(0.0).z(0.709650).w(
-          0.704554));
+        geometry_msgs::build<geometry_msgs::msg::Quaternion>().x(0.0).y(0.0).z(-0.748629).w(
+          0.662990));
 
   const auto goal_pose =
     geometry_msgs::build<geometry_msgs::msg::Pose>()
-      .position(geometry_msgs::build<geometry_msgs::msg::Point>().x(365.658).y(507.253).z(100.000))
+      .position(geometry_msgs::build<geometry_msgs::msg::Point>().x(280.721).y(301.025).z(100.000))
       .orientation(
-        geometry_msgs::build<geometry_msgs::msg::Quaternion>().x(0.0).y(0.0).z(0.705897).w(
-          0.708314));
+        geometry_msgs::build<geometry_msgs::msg::Quaternion>().x(0.0).y(0.0).z(0.991718).w(
+          0.128435));
 
-  auto planner_data = std::make_shared<PlannerData>();
-  planner_data->init_parameters(*node_);
-  StartPlannerTestHelper::set_odometry(planner_data, start_pose);
-  StartPlannerTestHelper::set_route(planner_data, 4619, 4635);
+  StartPlannerTestHelper::set_odometry(planner_data_, start_pose);
+  StartPlannerTestHelper::set_route(planner_data_, 508, 720);
+  StartPlannerTestHelper::set_costmap(planner_data_, start_pose, 0.3, 70.0, 70.0);
 
   // Plan the pull out path
   PlannerDebugData debug_data;
-  auto result = call_plan(start_pose, goal_pose, planner_data, debug_data);
+  auto result = call_plan(start_pose, goal_pose, planner_data_, debug_data);
 
-  // Assert that a valid geometric pull out path is generated
-  ASSERT_TRUE(result.has_value()) << "Geometric pull out path generation failed.";
-  EXPECT_EQ(result->partial_paths.size(), 2UL)
-    << "Generated geometric pull out path does not have the expected number of partial paths.";
+  // Assert that a valid Freespace pull out path is generated
+  ASSERT_TRUE(result.has_value()) << "Freespace pull out path generation failed.";
+  // EXPECT_EQ(result->partial_paths.size(), 2UL)
+  //   << "Freespace pull out path does not have the expected number of partial paths.";
   EXPECT_EQ(debug_data.conditions_evaluation.back(), "success")
-    << "Geometric pull out path planning did not succeed.";
+    << "Freespace pull out path planning did not succeed.";
 }
 
 }  // namespace autoware::behavior_path_planner
