@@ -16,6 +16,7 @@
 #define PROCESSOR__INPUT_MANAGER_HPP_
 
 #include "autoware/multi_object_tracker/object_model/types.hpp"
+#include "odometry.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include <autoware_perception_msgs/msg/detected_objects.hpp>
@@ -103,6 +104,7 @@ public:
   void init(const std::vector<InputChannel> & input_channels);
 
   void setTriggerFunction(std::function<void()> func_trigger) { func_trigger_ = func_trigger; }
+  void setOdometer(std::shared_ptr<Odometry> odometry) { odometry_ = odometry; }
   void onTrigger(const uint & index) const;
 
   bool getObjects(const rclcpp::Time & now, ObjectsList & objects_list);
@@ -129,6 +131,8 @@ private:
   double target_stream_latency_std_{0.04};   // [s]
   double target_stream_interval_{0.1};       // [s]
   double target_stream_interval_std_{0.02};  // [s]
+
+  std::shared_ptr<Odometry> odometry_;
 
 private:
   void getObjectTimeInterval(

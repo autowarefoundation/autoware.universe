@@ -42,7 +42,7 @@ public:
 
   bool updateFromTf(const rclcpp::Time & time);
 
-  const geometry_msgs::msg::PoseStamped & getOdometry() const { return pose_; }
+  const nav_msgs::msg::Odometry & getOdometry() const { return current_odometry_; }
 
   std::optional<types::DynamicObjectList> transformObjects(
     const types::DynamicObjectList & input_objects) const;
@@ -58,7 +58,7 @@ private:
   tf2_ros::TransformListener tf_listener_;
 
   // time-history of odometry
-  geometry_msgs::msg::PoseStamped pose_;
+  // geometry_msgs::msg::PoseStamped pose_;
 
   // current transform
   geometry_msgs::msg::Transform current_transform_;

@@ -68,8 +68,6 @@ private:
   rclcpp::Publisher<autoware_perception_msgs::msg::TrackedObjects>::SharedPtr tracked_objects_pub_;
   rclcpp::Subscription<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr
     detected_object_sub_;
-  tf2_ros::Buffer tf_buffer_;
-  tf2_ros::TransformListener tf_listener_;
 
   // debugger
   std::unique_ptr<TrackerDebugger> debugger_;
@@ -91,7 +89,7 @@ private:
 
   // input manager
   std::unique_ptr<InputManager> input_manager_;
-  std::unique_ptr<Odometry> odometry_;
+  std::shared_ptr<Odometry> odometry_;
 
 
   std::vector<InputChannel> input_channels_{};

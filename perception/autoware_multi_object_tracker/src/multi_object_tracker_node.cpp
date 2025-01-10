@@ -44,8 +44,6 @@ using LabelType = autoware_perception_msgs::msg::ObjectClassification::_label_ty
 
 MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
 : rclcpp::Node("multi_object_tracker", node_options),
-  tf_buffer_(this->get_clock()),
-  tf_listener_(tf_buffer_),
   last_published_time_(this->now()),
   last_updated_time_(this->now())
 {
@@ -68,6 +66,9 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   // ROS interface - Publisher
   tracked_objects_pub_ =
     create_publisher<autoware_perception_msgs::msg::TrackedObjects>("output", rclcpp::QoS{1});
+
+  // Odometry manager
+  odometry_ = std::make_shared<Odometry>(*this, world_frame_id_);
 
   // ROS interface - Input channels
   // Get input channels
@@ -119,14 +120,9 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   input_manager_->init(input_channels_);  // Initialize input manager, set subscriptions
   input_manager_->setTriggerFunction(
     std::bind(&MultiObjectTracker::onTrigger, this));  // Set trigger function
+  input_manager_->setOdometer(odometry_);  // Set odometry
 
-  // Create tf timer
-  auto cti = std::make_shared<tf2_ros::CreateTimerROS>(
-    this->get_node_base_interface(), this->get_node_timers_interface());
-  tf_buffer_.setCreateTimerInterface(cti);
 
-  // Odometry manager
-  odometry_ = std::make_unique<Odometry>(*this, world_frame_id_);
 
   // Create ROS time based timer.
   // If the delay compensation is enabled, the timer is used to publish the output at the correct
@@ -278,32 +274,7 @@ void MultiObjectTracker::runProcess(const types::DynamicObjectList & input_objec
   // the object uncertainty
   if (enable_odometry_uncertainty_) {
     // Create a modeled odometry message
-    nav_msgs::msg::Odometry odometry;
-    odometry.header.stamp = measurement_time + rclcpp::Duration::from_seconds(0.001);
-
-    // set odometry pose from self_transform
-    auto & odom_pose = odometry.pose.pose;
-    odom_pose.position.x = self_transform->translation.x;
-    odom_pose.position.y = self_transform->translation.y;
-    odom_pose.position.z = self_transform->translation.z;
-    odom_pose.orientation = self_transform->rotation;
-
-    // set odometry twist
-    auto & odom_twist = odometry.twist.twist;
-    odom_twist.linear.x = 10.0;  // m/s
-    odom_twist.linear.y = 0.1;   // m/s
-    odom_twist.angular.z = 0.1;  // rad/s
-
-    // model the uncertainty
-    auto & odom_pose_cov = odometry.pose.covariance;
-    odom_pose_cov[0] = 0.1;      // x-x
-    odom_pose_cov[7] = 0.1;      // y-y
-    odom_pose_cov[35] = 0.0001;  // yaw-yaw
-
-    auto & odom_twist_cov = odometry.twist.covariance;
-    odom_twist_cov[0] = 2.0;     // x-x [m^2/s^2]
-    odom_twist_cov[7] = 0.2;     // y-y [m^2/s^2]
-    odom_twist_cov[35] = 0.001;  // yaw-yaw [rad^2/s^2]
+    nav_msgs::msg::Odometry odometry = odometry_->getOdometry();
 
     // Add the odometry uncertainty to the object uncertainty
     uncertainty::addOdometryUncertainty(odometry, detected_objects);
