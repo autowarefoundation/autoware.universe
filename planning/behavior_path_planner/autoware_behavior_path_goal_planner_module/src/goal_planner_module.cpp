@@ -290,12 +290,10 @@ LaneParkingPlanner::LaneParkingPlanner(
   logger_(logger)
 {
   const auto vehicle_info = autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo();
-  LaneDepartureChecker lane_departure_checker{};
-  lane_departure_checker.setVehicleInfo(vehicle_info);
   lane_departure_checker::Param lane_departure_checker_params;
   lane_departure_checker_params.footprint_extra_margin =
     parameters.lane_departure_check_expansion_margin;
-  lane_departure_checker.setParam(lane_departure_checker_params);
+  LaneDepartureChecker lane_departure_checker(lane_departure_checker_params, vehicle_info);
 
   for (const std::string & planner_type : parameters.efficient_path_order) {
     if (planner_type == "SHIFT" && parameters.enable_shift_parking) {

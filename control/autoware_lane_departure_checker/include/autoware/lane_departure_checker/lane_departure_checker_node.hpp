@@ -16,6 +16,7 @@
 #define AUTOWARE__LANE_DEPARTURE_CHECKER__LANE_DEPARTURE_CHECKER_NODE_HPP_
 
 #include "autoware/lane_departure_checker/lane_departure_checker.hpp"
+#include "autoware/lane_departure_checker/parameters.hpp"
 #include "autoware/universe_utils/ros/polling_subscriber.hpp"
 
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
@@ -46,21 +47,6 @@
 namespace autoware::lane_departure_checker
 {
 using autoware_map_msgs::msg::LaneletMapBin;
-
-struct NodeParam
-{
-  bool will_out_of_lane_checker;
-  bool out_of_lane_checker;
-  bool boundary_departure_checker;
-
-  double update_rate;
-  bool visualize_lanelet;
-  bool include_right_lanes;
-  bool include_left_lanes;
-  bool include_opposite_lanes;
-  bool include_conflicting_lanes;
-  std::vector<std::string> boundary_types_to_detect;
-};
 
 class LaneDepartureCheckerNode : public rclcpp::Node
 {
