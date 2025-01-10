@@ -24,17 +24,17 @@ Essentially, the module has three primary responsibilities:
 
 Behavior Path Planner has the following scene modules
 
-| Name                       | Description                                                                                                                                                                | Details                                                                       |
-| :------------------------- | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------- |
-| Lane Following             | This module generates a reference path from lanelet centerline.                                                                                                              | LINK                                                                          |
-| Static Obstacle Avoidance  | This module generates an avoidance path when there are objects that should be avoided.                                                                                           | [LINK](../autoware_behavior_path_static_obstacle_avoidance_module/README.md)  |
-| Dynamic Obstacle Avoidance | WIP                                                                                                                                                                        | [LINK](../autoware_behavior_path_dynamic_obstacle_avoidance_module/README.md) |
-| Avoidance By Lane Change   | This module generates a lane change path when there are objects that should be avoided.                                                                                         | [LINK](../behavior_path_avoidance_by_lane_change_module/README.md)            |
-| Lane Change                | This module is performed when it is necessary and a collision check with other vehicles is cleared.                                                                        | [LINK](../autoware_behavior_path_lane_change_module/README.md)                |
-| External Lane Change       | WIP                                                                                                                                                                        | LINK                                                                          |
-| Goal Planner               | This module is performed when the ego vehicle is in a driving lane and the goal is in the shoulder lane. The ego vehicle will stop at the goal.                                         | [LINK](../autoware_behavior_path_goal_planner_module/README.md)               |
+| Name                       | Description                                                                                                                                                                                    | Details                                                                       |
+| :------------------------- | :--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :---------------------------------------------------------------------------- |
+| Lane Following             | This module generates a reference path from lanelet centerline.                                                                                                                                | LINK                                                                          |
+| Static Obstacle Avoidance  | This module generates an avoidance path when there are objects that should be avoided.                                                                                                         | [LINK](../autoware_behavior_path_static_obstacle_avoidance_module/README.md)  |
+| Dynamic Obstacle Avoidance | WIP                                                                                                                                                                                            | [LINK](../autoware_behavior_path_dynamic_obstacle_avoidance_module/README.md) |
+| Avoidance By Lane Change   | This module generates a lane change path when there are objects that should be avoided.                                                                                                        | [LINK](../behavior_path_avoidance_by_lane_change_module/README.md)            |
+| Lane Change                | This module is performed when it is necessary and a collision check with other vehicles is cleared.                                                                                            | [LINK](../autoware_behavior_path_lane_change_module/README.md)                |
+| External Lane Change       | WIP                                                                                                                                                                                            | LINK                                                                          |
+| Goal Planner               | This module is performed when the ego vehicle is in a driving lane and the goal is in the shoulder lane. The ego vehicle will stop at the goal.                                                | [LINK](../autoware_behavior_path_goal_planner_module/README.md)               |
 | Start Planner              | This module is performed when the ego vehicle is stationary and the footprint of the ego vehicle is included in the shoulder lane. This module ends when the ego vehicle merges into the road. | [LINK](../autoware_behavior_path_start_planner_module/README.md)              |
-| Side Shift                 | This module shifts the path to the left or right based on external instructions, intended for remote control applications.                                                                                | [LINK](../autoware_behavior_path_side_shift_module/README.md)                 |
+| Side Shift                 | This module shifts the path to the left or right based on external instructions, intended for remote control applications.                                                                     | [LINK](../autoware_behavior_path_side_shift_module/README.md)                 |
 
 !!! Note
 
@@ -89,17 +89,17 @@ The Planner Manager's responsibilities include:
 
 ### Input
 
-| Name                          | Required? | Type                                                    | Description                                                                                                                                                                                                                      |
-| :---------------------------- | :-------: | :------------------------------------------------------ | :------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| ~/input/odometry              |     ○     | `nav_msgs::msg::Odometry`                               | For ego velocity                                                                                                                                                                                                                |
-| ~/input/accel                 |     ○     | `geometry_msgs::msg::AccelWithCovarianceStamped`        | For ego acceleration                                                                                                                                                                                                            |
-| ~/input/objects               |     ○     | `autoware_perception_msgs::msg::PredictedObjects`       | Dynamic objects from the perception module                                                                                                                                                                                          |
-| ~/input/occupancy_grid_map    |     ○     | `nav_msgs::msg::OccupancyGrid`                          | Occupancy grid map from the perception module. This is used for only the Goal Planner module                                                                                                                                            |
-| ~/input/traffic_signals       |     ○     | `autoware_perception_msgs::msg::TrafficLightGroupArray` | Traffic signal information from the perception module                                                                                                                                                                           |
-| ~/input/vector_map            |     ○     | `autoware_map_msgs::msg::LaneletMapBin`                 | Vector map information                                                                                                                                                                                                          |
-| ~/input/route                 |     ○     | `autoware_planning_msgs::msg::LaneletRoute`             | Current route from start to goal                                                                                                                                                                                                |
-| ~/input/scenario              |     ○     | `tier4_planning_msgs::msg::Scenario`                    | Launches Behavior Path Planner if current scenario == `Scenario:LaneDriving`                                                                                                                                                    |
-| ~/input/lateral_offset        |     △     | `tier4_planning_msgs::msg::LateralOffset`               | Lateral offset to trigger side shift                                                                                                                                                                                             |
+| Name                          | Required? | Type                                                    | Description                                                                                                                                                                                                                                |
+| :---------------------------- | :-------: | :------------------------------------------------------ | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| ~/input/odometry              |     ○     | `nav_msgs::msg::Odometry`                               | For ego velocity                                                                                                                                                                                                                           |
+| ~/input/accel                 |     ○     | `geometry_msgs::msg::AccelWithCovarianceStamped`        | For ego acceleration                                                                                                                                                                                                                       |
+| ~/input/objects               |     ○     | `autoware_perception_msgs::msg::PredictedObjects`       | Dynamic objects from the perception module                                                                                                                                                                                                 |
+| ~/input/occupancy_grid_map    |     ○     | `nav_msgs::msg::OccupancyGrid`                          | Occupancy grid map from the perception module. This is used for only the Goal Planner module                                                                                                                                               |
+| ~/input/traffic_signals       |     ○     | `autoware_perception_msgs::msg::TrafficLightGroupArray` | Traffic signal information from the perception module                                                                                                                                                                                      |
+| ~/input/vector_map            |     ○     | `autoware_map_msgs::msg::LaneletMapBin`                 | Vector map information                                                                                                                                                                                                                     |
+| ~/input/route                 |     ○     | `autoware_planning_msgs::msg::LaneletRoute`             | Current route from start to goal                                                                                                                                                                                                           |
+| ~/input/scenario              |     ○     | `tier4_planning_msgs::msg::Scenario`                    | Launches Behavior Path Planner if current scenario == `Scenario:LaneDriving`                                                                                                                                                               |
+| ~/input/lateral_offset        |     △     | `tier4_planning_msgs::msg::LateralOffset`               | Lateral offset to trigger side shift                                                                                                                                                                                                       |
 | ~/system/operation_mode/state |     ○     | `autoware_adapi_v1_msgs::msg::OperationModeState`       | Allows the planning module to know if vehicle is in autonomous mode or if it can be controlled<sup>[ref](https://github.com/autowarefoundation/autoware.universe/blob/main/system/autoware_default_adapi/document/operation-mode.md)</sup> |
 
 - ○ Mandatory: The planning module would not work if anyone of these were not present.
@@ -107,8 +107,8 @@ The Planner Manager's responsibilities include:
 
 ### Output
 
-| Name                          | Type                                                | Description                                                                                    | QoS Durability    |
-| :---------------------------- | :-------------------------------------------------- | :--------------------------------------------------------------------------------------------- | ----------------- |
+| Name                          | Type                                                | Description                                                                                   | QoS Durability    |
+| :---------------------------- | :-------------------------------------------------- | :-------------------------------------------------------------------------------------------- | ----------------- |
 | ~/output/path                 | `tier4_planning_msgs::msg::PathWithLaneId`          | The path generated by modules                                                                 | `volatile`        |
 | ~/output/turn_indicators_cmd  | `autoware_vehicle_msgs::msg::TurnIndicatorsCommand` | Turn indicators command                                                                       | `volatile`        |
 | ~/output/hazard_lights_cmd    | `autoware_vehicle_msgs::msg::HazardLightsCommand`   | Hazard lights command                                                                         | `volatile`        |
@@ -117,15 +117,15 @@ The Planner Manager's responsibilities include:
 
 ### Debug
 
-| Name                                    | Type                                                | Description                                                                               | QoS Durability |
-| :-------------------------------------- | :-------------------------------------------------- | :---------------------------------------------------------------------------------------- | -------------- |
-| ~/debug/avoidance_debug_message_array   | `tier4_planning_msgs::msg::AvoidanceDebugMsgArray`  | Debug message for avoidance. Notifies users of reasons avoidance path cannot be generated | `volatile`     |
-| ~/debug/lane_change_debug_message_array | `tier4_planning_msgs::msg::LaneChangeDebugMsgArray` | Debug message for lane change. Notifies users of unsafe conditions during lane-changing process    | `volatile`     |
-| ~/debug/maximum_drivable_area           | `visualization_msgs::msg::MarkerArray`              | Shows maximum static drivable area                                                       | `volatile`     |
-| ~/debug/turn_signal_info                | `visualization_msgs::msg::MarkerArray`              | TBA                                                                                       | `volatile`     |
-| ~/debug/bound                           | `visualization_msgs::msg::MarkerArray`              | Debug for static drivable area                                                            | `volatile`     |
-| ~/planning/path_candidate/\*            | `autoware_planning_msgs::msg::Path`                 | The path before approval                                                                 | `volatile`     |
-| ~/planning/path_reference/\*            | `autoware_planning_msgs::msg::Path`                 | Reference path generated by each module                                                 | `volatile`     |
+| Name                                    | Type                                                | Description                                                                                     | QoS Durability |
+| :-------------------------------------- | :-------------------------------------------------- | :---------------------------------------------------------------------------------------------- | -------------- |
+| ~/debug/avoidance_debug_message_array   | `tier4_planning_msgs::msg::AvoidanceDebugMsgArray`  | Debug message for avoidance. Notifies users of reasons avoidance path cannot be generated       | `volatile`     |
+| ~/debug/lane_change_debug_message_array | `tier4_planning_msgs::msg::LaneChangeDebugMsgArray` | Debug message for lane change. Notifies users of unsafe conditions during lane-changing process | `volatile`     |
+| ~/debug/maximum_drivable_area           | `visualization_msgs::msg::MarkerArray`              | Shows maximum static drivable area                                                              | `volatile`     |
+| ~/debug/turn_signal_info                | `visualization_msgs::msg::MarkerArray`              | TBA                                                                                             | `volatile`     |
+| ~/debug/bound                           | `visualization_msgs::msg::MarkerArray`              | Debug for static drivable area                                                                  | `volatile`     |
+| ~/planning/path_candidate/\*            | `autoware_planning_msgs::msg::Path`                 | The path before approval                                                                        | `volatile`     |
+| ~/planning/path_reference/\*            | `autoware_planning_msgs::msg::Path`                 | Reference path generated by each module                                                         | `volatile`     |
 
 !!! note
 
@@ -148,7 +148,6 @@ The `behavior_path_planner.launch.xml` file references the settings defined in `
 ```xml
 <param name="static_obstacle_avoidance.enable_module" value="$(var launch_static_obstacle_avoidance_module)"/>
 ```
-
 
 Therefore, to enable or disable a module, simply set the corresponding module in `default_preset.yaml` to `true` or `false`. These changes will be applied upon the next launch of Autoware.
 
