@@ -150,17 +150,17 @@ bool isOnModifiedGoal(
 }
 
 bool hasPreviousModulePathShapeChanged(
-  const BehaviorModuleOutput & previous_module_output,
-  const BehaviorModuleOutput & last_previous_module_output)
+  const BehaviorModuleOutput & upstream_module_output,
+  const BehaviorModuleOutput & last_upstream_module_output)
 {
   // Calculate the lateral distance between each point of the current path and the nearest point of
   // the last path
   constexpr double LATERAL_DEVIATION_THRESH = 0.3;
-  for (const auto & p : previous_module_output.path.points) {
+  for (const auto & p : upstream_module_output.path.points) {
     const size_t nearest_seg_idx = autoware::motion_utils::findNearestSegmentIndex(
-      last_previous_module_output.path.points, p.point.pose.position);
-    const auto seg_front = last_previous_module_output.path.points.at(nearest_seg_idx);
-    const auto seg_back = last_previous_module_output.path.points.at(nearest_seg_idx + 1);
+      last_upstream_module_output.path.points, p.point.pose.position);
+    const auto seg_front = last_upstream_module_output.path.points.at(nearest_seg_idx);
+    const auto seg_back = last_upstream_module_output.path.points.at(nearest_seg_idx + 1);
     // Check if the target point is within the segment
     const Eigen::Vector3d segment_vec{
       seg_back.point.pose.position.x - seg_front.point.pose.position.x,
@@ -176,7 +176,7 @@ bool hasPreviousModulePathShapeChanged(
       continue;
     }
     const double lateral_distance = std::abs(autoware::motion_utils::calcLateralOffset(
-      last_previous_module_output.path.points, p.point.pose.position, nearest_seg_idx));
+      last_upstream_module_output.path.points, p.point.pose.position, nearest_seg_idx));
     if (lateral_distance > LATERAL_DEVIATION_THRESH) {
       return true;
     }
@@ -185,19 +185,19 @@ bool hasPreviousModulePathShapeChanged(
 }
 
 bool hasDeviatedFromLastPreviousModulePath(
-  const PlannerData & planner_data, const BehaviorModuleOutput & last_previous_module_output)
+  const PlannerData & planner_data, const BehaviorModuleOutput & last_upstream_module_output)
 {
   return std::abs(autoware::motion_utils::calcLateralOffset(
-           last_previous_module_output.path.points,
+           last_upstream_module_output.path.points,
            planner_data.self_odometry->pose.pose.position)) > 0.3;
 }
 
 bool hasDeviatedFromCurrentPreviousModulePath(
-  const PlannerData & planner_data, const BehaviorModuleOutput & previous_module_output)
+  const PlannerData & planner_data, const BehaviorModuleOutput & upstream_module_output)
 {
   constexpr double LATERAL_DEVIATION_THRESH = 0.3;
   return std::abs(autoware::motion_utils::calcLateralOffset(
-           previous_module_output.path.points, planner_data.self_odometry->pose.pose.position)) >
+           upstream_module_output.path.points, planner_data.self_odometry->pose.pose.position)) >
          LATERAL_DEVIATION_THRESH;
 }
 
@@ -282,19 +282,18 @@ LaneParkingPlanner::LaneParkingPlanner(
   const std::optional<LaneParkingRequest> & request, LaneParkingResponse & response,
   std::atomic<bool> & is_lane_parking_cb_running, const rclcpp::Logger & logger,
   const GoalPlannerParameters & parameters)
-: mutex_(lane_parking_mutex),
+: parameters_(parameters),
+  mutex_(lane_parking_mutex),
   request_(request),
   response_(response),
   is_lane_parking_cb_running_(is_lane_parking_cb_running),
   logger_(logger)
 {
   const auto vehicle_info = autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo();
-  LaneDepartureChecker lane_departure_checker{};
-  lane_departure_checker.setVehicleInfo(vehicle_info);
   lane_departure_checker::Param lane_departure_checker_params;
   lane_departure_checker_params.footprint_extra_margin =
     parameters.lane_departure_check_expansion_margin;
-  lane_departure_checker.setParam(lane_departure_checker_params);
+  LaneDepartureChecker lane_departure_checker(lane_departure_checker_params, vehicle_info);
 
   for (const std::string & planner_type : parameters.efficient_path_order) {
     if (planner_type == "SHIFT" && parameters.enable_shift_parking) {
@@ -335,12 +334,10 @@ void LaneParkingPlanner::onTimer()
     return;
   }
   const auto & local_request = local_request_opt.value();
-  const auto & parameters = local_request.parameters_;
   const auto & goal_candidates = local_request.goal_candidates_;
   const auto & local_planner_data = local_request.get_planner_data();
   const auto & current_status = local_request.get_current_status();
-  const auto & previous_module_output = local_request.get_previous_module_output();
-  const auto & last_previous_module_output = local_request.get_last_previous_module_output();
+  const auto & upstream_module_output = local_request.get_upstream_module_output();
   const auto & pull_over_path_opt = local_request.get_pull_over_path();
   const auto & prev_data = local_request.get_prev_data();
 
@@ -371,19 +368,21 @@ void LaneParkingPlanner::onTimer()
         ? std::make_optional<GoalCandidate>(pull_over_path_opt.value().modified_goal())
         : std::nullopt;
     if (isOnModifiedGoal(
-          local_planner_data->self_odometry->pose.pose, modified_goal_opt, parameters)) {
+          local_planner_data->self_odometry->pose.pose, modified_goal_opt, parameters_)) {
       return false;
     }
-    if (hasDeviatedFromCurrentPreviousModulePath(*local_planner_data, previous_module_output)) {
+    if (hasDeviatedFromCurrentPreviousModulePath(*local_planner_data, upstream_module_output)) {
       RCLCPP_DEBUG(getLogger(), "has deviated from current previous module path");
       return false;
     }
-    if (hasPreviousModulePathShapeChanged(previous_module_output, last_previous_module_output)) {
+    if (hasPreviousModulePathShapeChanged(
+          upstream_module_output, original_upstream_module_output_)) {
       RCLCPP_DEBUG(getLogger(), "has previous module path shape changed");
       return true;
     }
     if (
-      hasDeviatedFromLastPreviousModulePath(*local_planner_data, last_previous_module_output) &&
+      hasDeviatedFromLastPreviousModulePath(
+        *local_planner_data, original_upstream_module_output_) &&
       current_state != PathDecisionState::DecisionKind::DECIDED) {
       RCLCPP_DEBUG(getLogger(), "has deviated from last previous module path");
       return true;
@@ -400,8 +399,8 @@ void LaneParkingPlanner::onTimer()
 
   // generate valid pull over path candidates and calculate closest start pose
   const auto current_lanes = utils::getExtendedCurrentLanes(
-    local_planner_data, parameters.backward_goal_search_length,
-    parameters.forward_goal_search_length,
+    local_planner_data, parameters_.backward_goal_search_length,
+    parameters_.forward_goal_search_length,
     /*forward_only_in_route*/ false);
   std::vector<PullOverPath> path_candidates{};
   std::optional<Pose> closest_start_pose{};
@@ -410,7 +409,7 @@ void LaneParkingPlanner::onTimer()
                                     const std::shared_ptr<PullOverPlannerBase> & planner,
                                     const GoalCandidate & goal_candidate) {
     const auto pull_over_path = planner->plan(
-      goal_candidate, path_candidates.size(), local_planner_data, previous_module_output);
+      goal_candidate, path_candidates.size(), local_planner_data, upstream_module_output);
     if (pull_over_path) {
       // calculate absolute maximum curvature of parking path(start pose to end pose) for path
       // priority
@@ -428,13 +427,13 @@ void LaneParkingPlanner::onTimer()
 
   // todo: currently non centerline input path is supported only by shift pull over
   const bool is_center_line_input_path = goal_planner_utils::isReferencePath(
-    previous_module_output.reference_path, previous_module_output.path, 0.1);
+    upstream_module_output.reference_path, upstream_module_output.path, 0.1);
   RCLCPP_DEBUG(
     getLogger(), "the input path of pull over planner is center line: %d",
     is_center_line_input_path);
 
   // plan candidate paths and set them to the member variable
-  if (parameters.path_priority == "efficient_path") {
+  if (parameters_.path_priority == "efficient_path") {
     for (const auto & planner : pull_over_planners_) {
       // todo: temporary skip NON SHIFT planner when input path is not center line
       if (!is_center_line_input_path && planner->getPlannerType() != PullOverPlannerType::SHIFT) {
@@ -444,7 +443,7 @@ void LaneParkingPlanner::onTimer()
         planCandidatePaths(planner, goal_candidate);
       }
     }
-  } else if (parameters.path_priority == "close_goal") {
+  } else if (parameters_.path_priority == "close_goal") {
     for (const auto & goal_candidate : goal_candidates) {
       for (const auto & planner : pull_over_planners_) {
         // todo: temporary skip NON SHIFT planner when input path is not center line
@@ -457,14 +456,15 @@ void LaneParkingPlanner::onTimer()
   } else {
     RCLCPP_ERROR(
       getLogger(), "path_priority should be efficient_path or close_goal, but %s is given.",
-      parameters.path_priority.c_str());
+      parameters_.path_priority.c_str());
     throw std::domain_error("[pull_over] invalid path_priority");
   }
 
   // set response
   {
+    original_upstream_module_output_ = upstream_module_output;
     std::lock_guard<std::mutex> guard(mutex_);
-    response_.pull_over_path_candidates = path_candidates;
+    response_.pull_over_path_candidates = std::move(path_candidates);
     response_.closest_start_pose = closest_start_pose;
     RCLCPP_INFO(
       getLogger(), "generated %lu pull over path candidates",
@@ -562,7 +562,7 @@ std::pair<LaneParkingResponse, FreespaceParkingResponse> GoalPlannerModule::sync
   // In PlannerManager::run(), it calls SceneModuleInterface::setData and
   // SceneModuleInterface::setPreviousModuleOutput before module_ptr->run().
   // Then module_ptr->run() invokes GoalPlannerModule::updateData and then
-  // planWaitingApproval()/plan(), so we can copy latest current_status/previous_module_output to
+  // planWaitingApproval()/plan(), so we can copy latest current_status/upstream_module_output to
   // lane_parking_request/freespace_parking_request
 
   std::optional<PullOverPath> pull_over_path =
@@ -578,7 +578,7 @@ std::pair<LaneParkingResponse, FreespaceParkingResponse> GoalPlannerModule::sync
     std::lock_guard<std::mutex> guard(lane_parking_mutex_);
     if (!lane_parking_request_) {
       lane_parking_request_.emplace(
-        *parameters_, vehicle_footprint_, goal_candidates_, getPreviousModuleOutput());
+        vehicle_footprint_, goal_candidates_, getPreviousModuleOutput());
     }
     // NOTE: for the above reasons, PlannerManager/behavior_path_planner_node ensure that
     // planner_data_ is not nullptr, so it is OK to copy as value

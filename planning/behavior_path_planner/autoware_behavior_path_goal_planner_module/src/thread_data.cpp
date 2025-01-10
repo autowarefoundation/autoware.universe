@@ -21,14 +21,13 @@ namespace autoware::behavior_path_planner
 
 void LaneParkingRequest::update(
   const PlannerData & planner_data, const ModuleStatus & current_status,
-  const BehaviorModuleOutput & previous_module_output,
+  const BehaviorModuleOutput & upstream_module_output,
   const std::optional<PullOverPath> & pull_over_path, const PathDecisionState & prev_data)
 {
   planner_data_ = std::make_shared<PlannerData>(planner_data);
   planner_data_->route_handler = std::make_shared<RouteHandler>(*(planner_data.route_handler));
   current_status_ = current_status;
-  last_previous_module_output_ = previous_module_output_;
-  previous_module_output_ = previous_module_output;
+  upstream_module_output_ = upstream_module_output;
   pull_over_path_ = pull_over_path;
   prev_data_ = prev_data;
 }

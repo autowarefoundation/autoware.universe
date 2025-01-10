@@ -5,9 +5,16 @@
       backward_length_buffer_for_end_of_lane: 3.0 # [m]
       backward_length_buffer_for_blocking_object: 3.0 # [m]
       backward_length_from_intersection: 5.0 # [m]
+      enable_stopped_vehicle_buffer: true
 
       # turn signal
       min_length_for_turn_signal_activation: 10.0 # [m]
+
+      # terminal path
+      terminal_path:
+        enable: true
+        disable_near_goal: true
+        stop_at_boundary: false
 
       # trajectory generation
       trajectory:

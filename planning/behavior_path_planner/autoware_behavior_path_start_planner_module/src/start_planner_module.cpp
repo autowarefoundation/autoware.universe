@@ -68,13 +68,11 @@ StartPlannerModule::StartPlannerModule(
   vehicle_info_{autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo()},
   is_freespace_planner_cb_running_{false}
 {
-  lane_departure_checker_ = std::make_shared<LaneDepartureChecker>(time_keeper_);
-  lane_departure_checker_->setVehicleInfo(vehicle_info_);
   autoware::lane_departure_checker::Param lane_departure_checker_params{};
   lane_departure_checker_params.footprint_extra_margin =
     parameters->lane_departure_check_expansion_margin;
-
-  lane_departure_checker_->setParam(lane_departure_checker_params);
+  lane_departure_checker_ = std::make_shared<LaneDepartureChecker>(
+    lane_departure_checker_params, vehicle_info_, time_keeper_);
 
   // set enabled planner
   if (parameters_->enable_shift_pull_out) {
@@ -90,8 +88,7 @@ StartPlannerModule::StartPlannerModule(
   }
 
   if (parameters_->enable_freespace_planner) {
-    freespace_planner_ =
-      std::make_unique<FreespacePullOut>(node, *parameters, vehicle_info_, time_keeper_);
+    freespace_planner_ = std::make_unique<FreespacePullOut>(node, *parameters);
     const auto freespace_planner_period_ns = rclcpp::Rate(1.0).period();
     freespace_planner_timer_cb_group_ =
       node.create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);

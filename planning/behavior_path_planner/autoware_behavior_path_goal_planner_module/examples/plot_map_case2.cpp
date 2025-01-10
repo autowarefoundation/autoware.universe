@@ -287,7 +287,7 @@ bool hasEnoughDistance(
 std::vector<PullOverPath> selectPullOverPaths(
   const std::vector<PullOverPath> & pull_over_path_candidates,
   const GoalCandidates & goal_candidates, const std::shared_ptr<const PlannerData> planner_data,
-  const GoalPlannerParameters & parameters, const BehaviorModuleOutput & previous_module_output)
+  const GoalPlannerParameters & parameters, const BehaviorModuleOutput & upstream_module_output)
 {
   using autoware::behavior_path_planner::utils::getExtendedCurrentLanesFromPath;
   using autoware::motion_utils::calcSignedArcLength;
@@ -312,15 +312,15 @@ std::vector<PullOverPath> selectPullOverPaths(
   }
 
   const double prev_path_front_to_goal_dist = calcSignedArcLength(
-    previous_module_output.path.points,
-    previous_module_output.path.points.front().point.pose.position, goal_pose.position);
+    upstream_module_output.path.points,
+    upstream_module_output.path.points.front().point.pose.position, goal_pose.position);
   const auto & long_tail_reference_path = [&]() {
     if (prev_path_front_to_goal_dist > backward_length) {
-      return previous_module_output.path;
+      return upstream_module_output.path;
     }
     // get road lanes which is at least backward_length[m] behind the goal
     const auto road_lanes = getExtendedCurrentLanesFromPath(
-      previous_module_output.path, planner_data, backward_length, 0.0, false);
+      upstream_module_output.path, planner_data, backward_length, 0.0, false);
     const auto goal_pose_length = lanelet::utils::getArcCoordinates(road_lanes, goal_pose).length;
     return planner_data->route_handler->getCenterLinePath(
       road_lanes, std::max(0.0, goal_pose_length - backward_length),
@@ -573,12 +573,11 @@ int main(int argc, char ** argv)
     autoware::behavior_path_planner::GoalPlannerModuleManager::initGoalPlannerParameters(
       node.get(), "goal_planner.");
   const auto vehicle_info = autoware::vehicle_info_utils::VehicleInfoUtils(*node).getVehicleInfo();
-  autoware::lane_departure_checker::LaneDepartureChecker lane_departure_checker{};
-  lane_departure_checker.setVehicleInfo(vehicle_info);
   autoware::lane_departure_checker::Param lane_departure_checker_params;
   lane_departure_checker_params.footprint_extra_margin =
     goal_planner_parameter.lane_departure_check_expansion_margin;
-  lane_departure_checker.setParam(lane_departure_checker_params);
+  autoware::lane_departure_checker::LaneDepartureChecker lane_departure_checker(
+    lane_departure_checker_params, vehicle_info);
   const auto footprint = vehicle_info.createFootprint();
   autoware::behavior_path_planner::GoalSearcher goal_searcher(goal_planner_parameter, footprint);
   auto goal_candidates = goal_searcher.search(planner_data);
