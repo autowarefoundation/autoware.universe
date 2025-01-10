@@ -1,0 +1,4 @@
+<launch>
+  <node pkg="autoware_redundancy_relay_manager" exec="autoware_redundancy_relay_manager_node" name="redundancy_relay_manager" output="screen">
+  </node>
+</launch>
