@@ -4,7 +4,7 @@
 
 The pointcloud preprocessing implemented in `autoware_pointcloud_preprocessor` has been thoroughly tested in autoware. However, the latency it introduces does not scale well with modern LiDAR devices due to the high number of points they introduce.
 
-To alleviate this issue, this package reimplements most of the pipeline presented in `autoware_pointcloud_preprocessor` leveraging the use of GPGPUs. In particular, this package makes use of CUDA to provide accelerated versions of the already establishes implementations, while also maintaining compatibility with normal ROS nodes/topics. <!-- cSpell: ignore GPGPUs >
+To alleviate this issue, this package reimplements most of the pipeline presented in `autoware_pointcloud_preprocessor` leveraging the use of GPGPUs. In particular, this package makes use of CUDA to provide accelerated versions of the already established implementations, while also maintaining compatibility with normal ROS nodes/topics. <!-- cSpell: ignore GPGPUs >
 
 ## Inner-workings / Algorithms
 
