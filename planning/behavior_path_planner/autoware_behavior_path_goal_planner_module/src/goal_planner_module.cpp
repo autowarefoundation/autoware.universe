@@ -1671,7 +1671,10 @@ PathWithLaneId GoalPlannerModule::generateStopPath(
   const auto reference_path = std::invoke([&]() -> PathWithLaneId {
     const auto s_current = lanelet::utils::getArcCoordinates(current_lanes, current_pose).length;
     const double s_start = std::max(0.0, s_current - common_parameters.backward_path_length);
-    const double s_end = s_current + common_parameters.forward_path_length;
+    const double s_end = std::clamp(
+      lanelet::utils::getArcCoordinates(current_lanes, route_handler->getGoalPose()).length,
+      s_current + std::numeric_limits<double>::epsilon(),
+      s_current + common_parameters.forward_path_length);
     return route_handler->getCenterLinePath(current_lanes, s_start, s_end, true);
   });
 
