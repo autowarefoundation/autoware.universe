@@ -18,12 +18,13 @@
 
 namespace autoware::topic_relay_controller
 {
-TopicRelayController::TopicRelayController(const rclcpp::NodeOptions & options): Node("topic_relay_controller", options), is_relaying_(true)
+TopicRelayController::TopicRelayController(const rclcpp::NodeOptions & options)
+: Node("topic_relay_controller", options), is_relaying_(true)
 {
   // Parameter
   node_param_.topic = declare_parameter<std::string>("topic");
   node_param_.remap_topic = declare_parameter<std::string>("remap_topic");
-	node_param_.qos = declare_parameter("qos", 1);
+  node_param_.qos = declare_parameter("qos", 1);
   node_param_.transient_local = declare_parameter("transient_local", false);
   node_param_.best_effort = declare_parameter("best_effort", false);
   node_param_.is_transform = (node_param_.topic == "/tf" || node_param_.topic == "/tf_static");
@@ -41,7 +42,8 @@ TopicRelayController::TopicRelayController(const rclcpp::NodeOptions & options):
   if (node_param_.enable_relay_control) {
     srv_change_relay_control_ = create_service<tier4_system_msgs::srv::ChangeTopicRelayControl>(
       node_param_.srv_name,
-      [this](const tier4_system_msgs::srv::ChangeTopicRelayControl::Request::SharedPtr request,
+      [this](
+        const tier4_system_msgs::srv::ChangeTopicRelayControl::Request::SharedPtr request,
         tier4_system_msgs::srv::ChangeTopicRelayControl::Response::SharedPtr response) {
         is_relaying_ = request->relay_on;
         response->status.success = true;
@@ -59,24 +61,22 @@ TopicRelayController::TopicRelayController(const rclcpp::NodeOptions & options):
 
   if (node_param_.is_transform) {
     // Publisher
-    pub_transform_ = this->create_publisher<tf2_msgs::msg::TFMessage>(
-      node_param_.remap_topic, qos);
+    pub_transform_ = this->create_publisher<tf2_msgs::msg::TFMessage>(node_param_.remap_topic, qos);
 
     sub_transform_ = this->create_subscription<tf2_msgs::msg::TFMessage>(
       node_param_.topic, qos, [this](tf2_msgs::msg::TFMessage::ConstSharedPtr msg) {
         for (const auto & transform : msg->transforms) {
           if (
             transform.header.frame_id == node_param_.frame_id &&
-            transform.child_frame_id == node_param_.child_frame_id &&
-            is_relaying_) {
+            transform.child_frame_id == node_param_.child_frame_id && is_relaying_) {
             pub_transform_->publish(*msg);
           }
         }
       });
   } else {
     // Publisher
-    pub_topic_ = this->create_generic_publisher(
-      node_param_.remap_topic, node_param_.topic_type, qos);
+    pub_topic_ =
+      this->create_generic_publisher(node_param_.remap_topic, node_param_.topic_type, qos);
 
     sub_topic_ = this->create_generic_subscription(
       node_param_.topic, node_param_.topic_type, qos,
@@ -85,7 +85,7 @@ TopicRelayController::TopicRelayController(const rclcpp::NodeOptions & options):
       });
   }
 }
-} // namespace autoware::topic_relay_controller
+}  // namespace autoware::topic_relay_controller
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(autoware::topic_relay_controller::TopicRelayController)
