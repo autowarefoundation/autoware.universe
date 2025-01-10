@@ -142,6 +142,10 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
       static_cast<std::size_t>(declare_parameter<int32_t>("image_buffer_size"));
     debugger_ =
       std::make_shared<Debugger>(this, rois_number, image_buffer_size, input_camera_topics);
+
+    // input topic timing publisher
+    debug_internal_pub_ =
+      std::make_unique<autoware::universe_utils::DebugPublisher>(this, get_name());
   }
 
   // time keeper
@@ -156,10 +160,9 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
 
   // initialize debug tool
   {
-    using autoware::universe_utils::DebugPublisher;
-    using autoware::universe_utils::StopWatch;
-    stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
-    debug_publisher_ = std::make_unique<DebugPublisher>(this, get_name());
+    stop_watch_ptr_ =
+      std::make_unique<autoware::universe_utils::StopWatch<std::chrono::milliseconds>>();
+    debug_publisher_ = std::make_unique<autoware::universe_utils::DebugPublisher>(this, get_name());
     stop_watch_ptr_->tic("cyclic_time");
     stop_watch_ptr_->tic("processing_time");
   }
@@ -348,11 +351,11 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::subCallback(
       det2d.is_fused = true;
 
       // add timestamp interval for debug
-      if (debug_publisher_) {
+      if (debug_internal_pub_) {
         double timestamp_interval_ms = (matched_stamp - timestamp_nsec) / 1e6;
-        debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+        debug_internal_pub_->publish<tier4_debug_msgs::msg::Float64Stamped>(
           "debug/roi" + std::to_string(roi_i) + "/timestamp_interval_ms", timestamp_interval_ms);
-        debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+        debug_internal_pub_->publish<tier4_debug_msgs::msg::Float64Stamped>(
           "debug/roi" + std::to_string(roi_i) + "/timestamp_interval_offset_ms",
           timestamp_interval_ms - det2d.input_offset_ms);
       }
@@ -413,11 +416,11 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::roiCallback(
       fuseOnSingleImage(*(cached_det3d_msg_ptr_), det2d, *det2d_msg, *(cached_det3d_msg_ptr_));
       det2d.is_fused = true;
 
-      if (debug_publisher_) {
+      if (debug_internal_pub_) {
         double timestamp_interval_ms = (timestamp_nsec - cached_det3d_msg_timestamp_) / 1e6;
-        debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+        debug_internal_pub_->publish<tier4_debug_msgs::msg::Float64Stamped>(
           "debug/roi" + std::to_string(roi_i) + "/timestamp_interval_ms", timestamp_interval_ms);
-        debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+        debug_internal_pub_->publish<tier4_debug_msgs::msg::Float64Stamped>(
           "debug/roi" + std::to_string(roi_i) + "/timestamp_interval_offset_ms",
           timestamp_interval_ms - det2d.input_offset_ms);
       }

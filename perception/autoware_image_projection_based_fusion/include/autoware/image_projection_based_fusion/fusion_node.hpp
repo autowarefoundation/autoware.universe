@@ -166,6 +166,7 @@ protected:
 
   // debugger
   std::shared_ptr<Debugger> debugger_;
+  std::unique_ptr<autoware::universe_utils::DebugPublisher> debug_internal_pub_;
 
   /** \brief processing time publisher. **/
   std::unique_ptr<autoware::universe_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
