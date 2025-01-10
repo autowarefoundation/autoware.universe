@@ -98,11 +98,7 @@ __global__ void cropBoxKernel(
     const float y = d_points[idx].y;
     const float z = d_points[idx].z;
 
-    if (x > min_x && x < max_x && y > min_y && y < max_y && z > min_z && z < max_z) {
-      output_mask[idx] = 0;
-    } else {
-      output_mask[idx] = 1;
-    }
+    output_mask[idx] = (x <= min_x || x >= max_x) || (y <= min_y || y >= max_y) || (z <= min_z || z >= max_z);
   }
 }
 
