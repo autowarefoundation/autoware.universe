@@ -34,7 +34,7 @@ using utils::path_safety_checker::CollisionCheckDebugMap;
 struct MetricsDebug
 {
   LaneChangePhaseMetrics prep_metric;
-  std::vector<LaneChangePhaseMetrics> lc_metrics;
+  std::vector<std::pair<LaneChangePhaseMetrics, int>> lc_metrics;
   double max_prepare_length;
   double max_lane_changing_length;
 };

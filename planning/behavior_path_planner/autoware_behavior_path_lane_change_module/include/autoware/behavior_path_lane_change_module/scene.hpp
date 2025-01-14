@@ -135,7 +135,8 @@ protected:
   std::vector<LaneChangePhaseMetrics> get_prepare_metrics() const;
   std::vector<LaneChangePhaseMetrics> get_lane_changing_metrics(
     const PathWithLaneId & prep_segment, const LaneChangePhaseMetrics & prep_metrics,
-    const double shift_length, const double dist_to_reg_element) const;
+    const double shift_length, const double dist_to_reg_element,
+    lane_change::MetricsDebug & debug_metrics) const;
 
   bool get_lane_change_paths(LaneChangePaths & candidate_paths) const;
 
