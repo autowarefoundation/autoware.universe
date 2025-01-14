@@ -51,7 +51,10 @@ std::optional<std::shared_ptr<CloudCollector>> NaiveMatchingStrategy::match_clou
     }
   }
 
-  return closest_collector;
+  if (closest_collector != nullptr) {
+    return closest_collector;
+  }
+  return std::nullopt;
 }
 
 void NaiveMatchingStrategy::set_collector_info(
