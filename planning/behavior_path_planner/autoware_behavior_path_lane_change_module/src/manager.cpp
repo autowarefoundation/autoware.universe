@@ -354,8 +354,8 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
     if (longitudinal_acc_sampling_num > 0) {
       p->trajectory.lon_acc_sampling_num = longitudinal_acc_sampling_num;
     } else {
-      RCLCPP_WARN(
-        rclcpp::get_logger("lane_change"),
+      RCLCPP_WARN_ONCE(
+        node_->get_logger(),
         "Parameter 'lon_acc_sampling_num' is not updated because the value (%d) is not positive",
         longitudinal_acc_sampling_num);
     }
@@ -365,8 +365,8 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
     if (lateral_acc_sampling_num > 0) {
       p->trajectory.lat_acc_sampling_num = lateral_acc_sampling_num;
     } else {
-      RCLCPP_WARN(
-        rclcpp::get_logger("lane_change"),
+      RCLCPP_WARN_ONCE(
+        node_->get_logger(),
         "Parameter 'lat_acc_sampling_num' is not updated because the value (%d) is not positive",
         lateral_acc_sampling_num);
     }
@@ -389,6 +389,32 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
     const std::string ns = "lane_change.safety_check.lane_expansion.";
     updateParam<double>(parameters, ns + "left_offset", p->safety.lane_expansion_left_offset);
     updateParam<double>(parameters, ns + "right_offset", p->safety.lane_expansion_right_offset);
+  }
+
+  {
+    const std::string ns = "lane_change.lateral_acceleration.";
+    std::vector<double> velocity = p->trajectory.lat_acc_map.base_vel;
+    std::vector<double> min_values = p->trajectory.lat_acc_map.base_min_acc;
+    std::vector<double> max_values = p->trajectory.lat_acc_map.base_max_acc;
+
+    updateParam<std::vector<double>>(parameters, ns + "velocity", velocity);
+    updateParam<std::vector<double>>(parameters, ns + "min_values", min_values);
+    updateParam<std::vector<double>>(parameters, ns + "max_values", max_values);
+    if (
+      velocity.size() >= 2 && velocity.size() == min_values.size() &&
+      velocity.size() == max_values.size()) {
+      LateralAccelerationMap lat_acc_map;
+      for (size_t i = 0; i < velocity.size(); ++i) {
+        lat_acc_map.add(velocity.at(i), min_values.at(i), max_values.at(i));
+      }
+      p->trajectory.lat_acc_map = lat_acc_map;
+    } else {
+      RCLCPP_WARN_ONCE(
+        node_->get_logger(),
+        "Mismatched size for lateral acceleration. Expected size: %lu, but velocity: %lu, "
+        "min_values: %lu, max_values: %lu",
+        std::max(2ul, velocity.size()), velocity.size(), min_values.size(), max_values.size());
+    }
   }
 
   {
@@ -509,8 +535,8 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
     if (deceleration_sampling_num > 0) {
       p->cancel.deceleration_sampling_num = deceleration_sampling_num;
     } else {
-      RCLCPP_WARN(
-        rclcpp::get_logger("lane_change"),
+      RCLCPP_WARN_ONCE(
+        node_->get_logger(),
         "Parameter 'deceleration_sampling_num' is not updated because the value (%d) is not "
         "positive",
         deceleration_sampling_num);
