@@ -18,6 +18,7 @@
 // ROS 2 core
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware/universe_utils/ros/polling_subscriber.hpp>
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
 #include <tier4_system_msgs/msg/election_status.hpp>
 #include <tier4_system_msgs/srv/change_topic_relay_control.hpp>
@@ -40,8 +41,8 @@ private:
   // Params
   NodeParam node_param_;
   // Subscribers
-  rclcpp::Subscription<autoware_adapi_v1_msgs::msg::OperationModeState>::SharedPtr
-    sub_operation_mode_state_;
+  autoware::universe_utils::InterProcessPollingSubscriber<autoware_adapi_v1_msgs::msg::OperationModeState>
+    sub_operation_mode_state_{this, "~/input/operation_mode/state"};
   rclcpp::Subscription<tier4_system_msgs::msg::ElectionStatus>::SharedPtr sub_main_election_status_;
   rclcpp::Subscription<tier4_system_msgs::msg::ElectionStatus>::SharedPtr sub_sub_election_status_;
 
@@ -61,7 +62,6 @@ private:
   // State
   bool is_relaying_;
   bool is_stopped_by_main_;
-  autoware_adapi_v1_msgs::msg::OperationModeState::SharedPtr operation_mode_state_;
   tier4_system_msgs::msg::ElectionStatus::SharedPtr main_election_status_;
   tier4_system_msgs::msg::ElectionStatus::SharedPtr sub_election_status_;
 
