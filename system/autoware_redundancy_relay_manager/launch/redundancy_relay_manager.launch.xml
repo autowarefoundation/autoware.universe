@@ -1,9 +1,11 @@
 <launch>
   <arg name="input_operation_mode_state" default="/system/operation_mode/state"/>
-  <arg name="input_election_status" default="/system/election/status"/>
+  <arg name="input_main_election_status" default="/system/election/status"/>
+  <arg name="input_sub_election_status" default="/sub/system/election/status"/>
 
   <node pkg="autoware_redundancy_relay_manager" exec="autoware_redundancy_relay_manager_node" name="redundancy_relay_manager" output="screen">
     <remap from="~/input/operation_mode/state" to="$(var input_operation_mode_state)"/>
-    <remap from="~/input/election/status" to="$(var input_election_status)"/>
+    <remap from="~/input/main/election/status" to="$(var input_main_election_status)"/>
+    <remap from="~/input/sub/election/status" to="$(var input_sub_election_status)"/>
   </node>
 </launch>

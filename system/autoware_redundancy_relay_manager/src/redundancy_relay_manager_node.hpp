@@ -32,12 +32,14 @@ private:
   // Subscribers
   rclcpp::Subscription<autoware_adapi_v1_msgs::msg::OperationModeState>::SharedPtr
     sub_operation_mode_state_;
-  rclcpp::Subscription<tier4_system_msgs::msg::ElectionStatus>::SharedPtr sub_election_status_;
+  rclcpp::Subscription<tier4_system_msgs::msg::ElectionStatus>::SharedPtr sub_main_election_status_;
+  rclcpp::Subscription<tier4_system_msgs::msg::ElectionStatus>::SharedPtr sub_sub_election_status_;
 
   // Callbacks
   void onOperationModeState(
     const autoware_adapi_v1_msgs::msg::OperationModeState::ConstSharedPtr msg);
-  void onElectionStatus(const tier4_system_msgs::msg::ElectionStatus::ConstSharedPtr msg);
+  void onMainElectionStatus(const tier4_system_msgs::msg::ElectionStatus::ConstSharedPtr msg);
+  void onSubElectionStatus(const tier4_system_msgs::msg::ElectionStatus::ConstSharedPtr msg);
 };
 }  // namespace autoware::redundancy_relay_manager
 
