@@ -38,8 +38,36 @@ Odometry::Odometry(
   tf_buffer_.setCreateTimerInterface(cti);
 }
 
+void Odometry::updateTfCache(
+  const rclcpp::Time & time, const geometry_msgs::msg::Transform & tf) const
+{
+  // remove cache if time is same
+  if (tf_cache_.find(time) != tf_cache_.end()) {
+    tf_cache_.erase(time);
+  }
+  // update the tf buffer
+  tf_cache_.emplace(time, tf);
+
+  // remove too old tf
+  const auto max_tf_age = rclcpp::Duration::from_seconds(1.0);
+  for (auto it = tf_cache_.begin(); it != tf_cache_.end();) {
+    if (time - it->first > max_tf_age) {
+      it = tf_cache_.erase(it);
+    } else {
+      ++it;
+    }
+  }
+}
+
 std::optional<geometry_msgs::msg::Transform> Odometry::getTransform(const rclcpp::Time & time) const
 {
+  // check buffer and return if the transform is found
+  for (const auto & tf : tf_cache_) {
+    if (tf.first == time) {
+      return std::optional<geometry_msgs::msg::Transform>(tf.second);
+    }
+  }
+  // if not found, get the transform from tf
   return getTransform(ego_frame_id_, time);
 }
 
@@ -58,6 +86,10 @@ std::optional<geometry_msgs::msg::Transform> Odometry::getTransform(
     geometry_msgs::msg::TransformStamped self_transform_stamped;
     self_transform_stamped = tf_buffer_.lookupTransform(
       world_frame_id_, source_frame_id, time, rclcpp::Duration::from_seconds(0.5));
+
+    // update the cache
+    updateTfCache(time, self_transform_stamped.transform);
+
     return std::optional<geometry_msgs::msg::Transform>(self_transform_stamped.transform);
   } catch (tf2::TransformException & ex) {
     RCLCPP_WARN_STREAM(rclcpp::get_logger("multi_object_tracker"), ex.what());

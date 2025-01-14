@@ -25,6 +25,7 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
+#include <map>
 #include <optional>
 #include <string>
 
@@ -60,8 +61,11 @@ public:
   bool enable_odometry_uncertainty_ = false;
 
 private:
-  // time-history of odometry
-  // geometry_msgs::msg::PoseStamped pose_;
+  void updateTfCache(
+    const rclcpp::Time & time, const geometry_msgs::msg::Transform & transform) const;
+
+  // cache of tf
+  mutable std::map<rclcpp::Time, geometry_msgs::msg::Transform> tf_cache_;
 
   // current transform
   geometry_msgs::msg::Transform current_transform_;
