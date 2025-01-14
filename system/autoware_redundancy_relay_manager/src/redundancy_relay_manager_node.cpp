@@ -28,7 +28,6 @@ RedundancyRelayManager::RedundancyRelayManager(const rclcpp::NodeOptions & optio
   sub_sub_election_status_ = create_subscription<tier4_system_msgs::msg::ElectionStatus>(
     "~/input/sub/election/status", rclcpp::QoS{1},
     std::bind(&RedundancyRelayManager::onSubElectionStatus, this, std::placeholders::_1));
-  
 }
 
 void RedundancyRelayManager::onOperationModeState(
