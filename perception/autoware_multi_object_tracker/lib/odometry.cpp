@@ -88,7 +88,9 @@ std::optional<geometry_msgs::msg::Transform> Odometry::getTransform(
       world_frame_id_, source_frame_id, time, rclcpp::Duration::from_seconds(0.5));
 
     // update the cache
-    updateTfCache(time, self_transform_stamped.transform);
+    if (source_frame_id == ego_frame_id_) {
+      updateTfCache(time, self_transform_stamped.transform);
+    }
 
     return std::optional<geometry_msgs::msg::Transform>(self_transform_stamped.transform);
   } catch (tf2::TransformException & ex) {
