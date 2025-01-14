@@ -63,6 +63,8 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
       getOrDeclareParameter<double>(*node, parameter("trajectory.min_lane_changing_velocity"));
     p.trajectory.lane_changing_decel_factor =
       getOrDeclareParameter<double>(*node, parameter("trajectory.lane_changing_decel_factor"));
+    p.trajectory.th_prepare_curvature =
+      getOrDeclareParameter<double>(*node, parameter("trajectory.th_prepare_curvature"));
     p.trajectory.lon_acc_sampling_num =
       getOrDeclareParameter<int>(*node, parameter("trajectory.lon_acc_sampling_num"));
     p.trajectory.lat_acc_sampling_num =
@@ -195,6 +197,8 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
     getOrDeclareParameter<double>(*node, parameter("backward_length_buffer_for_blocking_object"));
   p.backward_length_from_intersection =
     getOrDeclareParameter<double>(*node, parameter("backward_length_from_intersection"));
+  p.enable_stopped_vehicle_buffer =
+    getOrDeclareParameter<bool>(*node, parameter("enable_stopped_vehicle_buffer"));
 
   if (p.backward_length_buffer_for_end_of_lane < 1.0) {
     RCLCPP_WARN_STREAM(
@@ -210,6 +214,12 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
     getOrDeclareParameter<double>(*node, parameter("delay_lane_change.min_road_shoulder_width"));
   p.delay.th_parked_vehicle_shift_ratio = getOrDeclareParameter<double>(
     *node, parameter("delay_lane_change.th_parked_vehicle_shift_ratio"));
+
+  // trajectory generation near terminal using frenet planner
+  p.frenet.enable = getOrDeclareParameter<bool>(*node, parameter("frenet.enable"));
+  p.frenet.th_yaw_diff_deg = getOrDeclareParameter<double>(*node, parameter("frenet.th_yaw_diff"));
+  p.frenet.th_curvature_smoothing =
+    getOrDeclareParameter<double>(*node, parameter("frenet.th_curvature_smoothing"));
 
   // lane change cancel
   p.cancel.enable_on_prepare_phase =
@@ -239,6 +249,13 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
 
   // debug marker
   p.publish_debug_marker = getOrDeclareParameter<bool>(*node, parameter("publish_debug_marker"));
+
+  // terminal lane change path
+  p.terminal_path.enable = getOrDeclareParameter<bool>(*node, parameter("terminal_path.enable"));
+  p.terminal_path.disable_near_goal =
+    getOrDeclareParameter<bool>(*node, parameter("terminal_path.disable_near_goal"));
+  p.terminal_path.stop_at_boundary =
+    getOrDeclareParameter<bool>(*node, parameter("terminal_path.stop_at_boundary"));
 
   // validation of safety check parameters
   // if loose check is not enabled, lane change module will keep on chattering and canceling, and
@@ -305,6 +322,8 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
       p->backward_length_buffer_for_blocking_object);
     updateParam<double>(
       parameters, ns + "lane_change_finish_judge_buffer", p->lane_change_finish_judge_buffer);
+    updateParam<bool>(
+      parameters, ns + "enable_stopped_vehicle_buffer", p->enable_stopped_vehicle_buffer);
 
     updateParam<double>(
       parameters, ns + "finish_judge_lateral_threshold", p->th_finish_judge_lateral_diff);
@@ -327,6 +346,8 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
       parameters, ns + "max_longitudinal_acc", p->trajectory.max_longitudinal_acc);
     updateParam<double>(
       parameters, ns + "lane_changing_decel_factor", p->trajectory.lane_changing_decel_factor);
+    updateParam<double>(
+      parameters, ns + "th_prepare_curvature", p->trajectory.th_prepare_curvature);
     int longitudinal_acc_sampling_num = 0;
     updateParam<int>(parameters, ns + "lon_acc_sampling_num", longitudinal_acc_sampling_num);
     if (longitudinal_acc_sampling_num > 0) {
@@ -343,6 +364,14 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
       parameters, ns + "th_prepare_length_diff", p->trajectory.th_prepare_length_diff);
     updateParam<double>(
       parameters, ns + "th_lane_changing_length_diff", p->trajectory.th_lane_changing_length_diff);
+  }
+
+  {
+    const std::string ns = "lane_change.frenet.";
+    updateParam<bool>(parameters, ns + "enable", p->frenet.enable);
+    updateParam<double>(parameters, ns + "th_yaw_diff", p->frenet.th_yaw_diff_deg);
+    updateParam<double>(
+      parameters, ns + "th_curvature_smoothing", p->frenet.th_curvature_smoothing);
   }
 
   {
