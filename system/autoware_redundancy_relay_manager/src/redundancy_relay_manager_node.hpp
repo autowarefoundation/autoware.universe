@@ -37,9 +37,9 @@ private:
 
   // Callbacks
   void onOperationModeState(
-    const autoware_adapi_v1_msgs::msg::OperationModeState::ConstSharedPtr msg);
-  void onMainElectionStatus(const tier4_system_msgs::msg::ElectionStatus::ConstSharedPtr msg);
-  void onSubElectionStatus(const tier4_system_msgs::msg::ElectionStatus::ConstSharedPtr msg);
+    const autoware_adapi_v1_msgs::msg::OperationModeState::SharedPtr msg);
+  void onMainElectionStatus(const tier4_system_msgs::msg::ElectionStatus::SharedPtr msg);
+  void onSubElectionStatus(const tier4_system_msgs::msg::ElectionStatus::SharedPtr msg);
 };
 }  // namespace autoware::redundancy_relay_manager
 

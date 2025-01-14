@@ -32,19 +32,19 @@ RedundancyRelayManager::RedundancyRelayManager(const rclcpp::NodeOptions & optio
 }
 
 void RedundancyRelayManager::onOperationModeState(
-  const autoware_adapi_v1_msgs::msg::OperationModeState::ConstSharedPtr msg)
+  const autoware_adapi_v1_msgs::msg::OperationModeState::SharedPtr msg)
 {
   RCLCPP_INFO(get_logger(), "Received operation mode state: %d", msg->mode);
 }
 
 void RedundancyRelayManager::onMainElectionStatus(
-  const tier4_system_msgs::msg::ElectionStatus::ConstSharedPtr msg)
+  const tier4_system_msgs::msg::ElectionStatus::SharedPtr msg)
 {
   RCLCPP_INFO(get_logger(), "Received main election state: %d", msg->path_info);
 }
 
 void RedundancyRelayManager::onSubElectionStatus(
-  const tier4_system_msgs::msg::ElectionStatus::ConstSharedPtr msg)
+  const tier4_system_msgs::msg::ElectionStatus::SharedPtr msg)
 {
   RCLCPP_INFO(get_logger(), "Received sub election state: %d", msg->path_info);
 }
