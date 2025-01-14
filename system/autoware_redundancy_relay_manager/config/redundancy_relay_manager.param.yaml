@@ -1,4 +1,4 @@
 ---
 /**:
   ros__parameters:
-    tmp: 0
+    service_timeout_ms: 10 # [ms]
