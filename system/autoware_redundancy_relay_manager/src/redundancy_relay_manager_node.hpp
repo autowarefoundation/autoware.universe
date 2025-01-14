@@ -47,13 +47,14 @@ private:
 
   // Clients
   rclcpp::CallbackGroup::SharedPtr client_relay_trajectory_group_;
-  rclcpp::Client<tier4_system_msgs::srv::ChangeTopicRelayControl>::SharedPtr client_relay_trajectory_;
+  rclcpp::Client<tier4_system_msgs::srv::ChangeTopicRelayControl>::SharedPtr
+    client_relay_trajectory_;
   rclcpp::CallbackGroup::SharedPtr client_relay_pose_with_covariance_group_;
-  rclcpp::Client<tier4_system_msgs::srv::ChangeTopicRelayControl>::SharedPtr client_relay_pose_with_covariance_;
+  rclcpp::Client<tier4_system_msgs::srv::ChangeTopicRelayControl>::SharedPtr
+    client_relay_pose_with_covariance_;
 
   // Callbacks
-  void onOperationModeState(
-    const autoware_adapi_v1_msgs::msg::OperationModeState::SharedPtr msg);
+  void onOperationModeState(const autoware_adapi_v1_msgs::msg::OperationModeState::SharedPtr msg);
   void onMainElectionStatus(const tier4_system_msgs::msg::ElectionStatus::SharedPtr msg);
   void onSubElectionStatus(const tier4_system_msgs::msg::ElectionStatus::SharedPtr msg);
 
@@ -66,7 +67,8 @@ private:
 
   // Functions
   void requestTopicRelayControl(
-    const bool relay_on, const rclcpp::Client<tier4_system_msgs::srv::ChangeTopicRelayControl>::SharedPtr client,
+    const bool relay_on,
+    const rclcpp::Client<tier4_system_msgs::srv::ChangeTopicRelayControl>::SharedPtr client,
     std::string topic_name);
 };
 }  // namespace autoware::redundancy_relay_manager

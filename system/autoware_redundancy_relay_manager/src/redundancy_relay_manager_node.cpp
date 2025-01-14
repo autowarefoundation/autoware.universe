@@ -20,9 +20,7 @@
 namespace autoware::redundancy_relay_manager
 {
 RedundancyRelayManager::RedundancyRelayManager(const rclcpp::NodeOptions & options)
-: Node("redundancy_relay_manager", options),
-  is_relaying_(true),
-  is_stopped_by_main_(true)
+: Node("redundancy_relay_manager", options), is_relaying_(true), is_stopped_by_main_(true)
 {
   // Params
   node_param_.service_timeout_ms = declare_parameter<int>("service_timeout_ms");
@@ -37,17 +35,19 @@ RedundancyRelayManager::RedundancyRelayManager(const rclcpp::NodeOptions & optio
   sub_sub_election_status_ = create_subscription<tier4_system_msgs::msg::ElectionStatus>(
     "~/input/sub/election/status", rclcpp::QoS{1},
     std::bind(&RedundancyRelayManager::onSubElectionStatus, this, std::placeholders::_1));
-  
+
   // Clients
-  client_relay_trajectory_group_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
+  client_relay_trajectory_group_ =
+    create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
   client_relay_trajectory_ = create_client<tier4_system_msgs::srv::ChangeTopicRelayControl>(
     "~/output/topic_relay_controller_trajectory/operate", rmw_qos_profile_services_default,
     client_relay_trajectory_group_);
   client_relay_pose_with_covariance_group_ =
     create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
-  client_relay_pose_with_covariance_ = create_client<tier4_system_msgs::srv::ChangeTopicRelayControl>(
-    "~/output/topic_relay_controller_pose_with_covariance/operate", rmw_qos_profile_services_default,
-    client_relay_pose_with_covariance_group_);
+  client_relay_pose_with_covariance_ =
+    create_client<tier4_system_msgs::srv::ChangeTopicRelayControl>(
+      "~/output/topic_relay_controller_pose_with_covariance/operate",
+      rmw_qos_profile_services_default, client_relay_pose_with_covariance_group_);
 }
 
 void RedundancyRelayManager::onOperationModeState(
@@ -64,17 +64,21 @@ void RedundancyRelayManager::onMainElectionStatus(
 
   if (is_relaying_) {
     if (tmp_election_status == nullptr || operation_mode_state_ == nullptr) return;
-    if (operation_mode_state_->mode != autoware_adapi_v1_msgs::msg::OperationModeState::AUTONOMOUS) return;
-    if (((msg->path_info >> 3) & 0x01) == 1 || ((tmp_election_status->path_info >> 3) & 0x01) == 0) return;
+    if (operation_mode_state_->mode != autoware_adapi_v1_msgs::msg::OperationModeState::AUTONOMOUS)
+      return;
+    if (((msg->path_info >> 3) & 0x01) == 1 || ((tmp_election_status->path_info >> 3) & 0x01) == 0)
+      return;
 
     requestTopicRelayControl(false, client_relay_trajectory_, "topic_relay_control_trajectory");
-    requestTopicRelayControl(false, client_relay_pose_with_covariance_, "topic_relay_control_pose_with_covariance");
+    requestTopicRelayControl(
+      false, client_relay_pose_with_covariance_, "topic_relay_control_pose_with_covariance");
     is_relaying_ = false;
     is_stopped_by_main_ = true;
   } else {
     if (((msg->path_info >> 3) & 0x01) == 1 && is_stopped_by_main_) {
       requestTopicRelayControl(true, client_relay_trajectory_, "topic_relay_control_trajectory");
-      requestTopicRelayControl(true, client_relay_pose_with_covariance_, "topic_relay_control_pose_with_covariance");
+      requestTopicRelayControl(
+        true, client_relay_pose_with_covariance_, "topic_relay_control_pose_with_covariance");
       is_relaying_ = true;
     }
   }
@@ -88,24 +92,28 @@ void RedundancyRelayManager::onSubElectionStatus(
 
   if (is_relaying_) {
     if (tmp_election_status == nullptr || operation_mode_state_ == nullptr) return;
-    if (operation_mode_state_->mode != autoware_adapi_v1_msgs::msg::OperationModeState::AUTONOMOUS) return;
-    if (((msg->path_info >> 3) & 0x01) == 1 || ((tmp_election_status->path_info >> 3) & 0x01) == 0) return;
+    if (operation_mode_state_->mode != autoware_adapi_v1_msgs::msg::OperationModeState::AUTONOMOUS)
+      return;
+    if (((msg->path_info >> 3) & 0x01) == 1 || ((tmp_election_status->path_info >> 3) & 0x01) == 0)
+      return;
 
     requestTopicRelayControl(false, client_relay_trajectory_, "topic_relay_control_trajectory");
-    requestTopicRelayControl(false, client_relay_pose_with_covariance_, "topic_relay_control_pose_with_covariance");
+    requestTopicRelayControl(
+      false, client_relay_pose_with_covariance_, "topic_relay_control_pose_with_covariance");
     is_relaying_ = false;
     is_stopped_by_main_ = false;
   } else {
     if (((msg->path_info >> 3) & 0x01) == 1 && !is_stopped_by_main_) {
       requestTopicRelayControl(true, client_relay_trajectory_, "topic_relay_control_trajectory");
-      requestTopicRelayControl(true, client_relay_pose_with_covariance_, "topic_relay_control_pose_with_covariance");
+      requestTopicRelayControl(
+        true, client_relay_pose_with_covariance_, "topic_relay_control_pose_with_covariance");
       is_relaying_ = true;
     }
   }
 }
 
 void RedundancyRelayManager::requestTopicRelayControl(
-  const bool relay_on, 
+  const bool relay_on,
   rclcpp::Client<tier4_system_msgs::srv::ChangeTopicRelayControl>::SharedPtr client,
   std::string srv_name)
 {
@@ -118,12 +126,17 @@ void RedundancyRelayManager::requestTopicRelayControl(
   if (future.wait_for(duration) == std::future_status::ready) {
     auto response = future.get();
     if (response->status.success) {
-      RCLCPP_INFO(get_logger(), "Changed %s relay control: %s", srv_name.c_str(), relay_on ? "ON" : "OFF");
+      RCLCPP_INFO(
+        get_logger(), "Changed %s relay control: %s", srv_name.c_str(), relay_on ? "ON" : "OFF");
     } else {
-      RCLCPP_ERROR(get_logger(), "Failed to change %s relay control: %s", srv_name.c_str(), relay_on ? "ON" : "OFF");
+      RCLCPP_ERROR(
+        get_logger(), "Failed to change %s relay control: %s", srv_name.c_str(),
+        relay_on ? "ON" : "OFF");
     }
   } else {
-    RCLCPP_ERROR(get_logger(), "Service timeout %s relay control: %s", srv_name.c_str(), relay_on ? "ON" : "OFF");
+    RCLCPP_ERROR(
+      get_logger(), "Service timeout %s relay control: %s", srv_name.c_str(),
+      relay_on ? "ON" : "OFF");
   }
 }
 }  // namespace autoware::redundancy_relay_manager
