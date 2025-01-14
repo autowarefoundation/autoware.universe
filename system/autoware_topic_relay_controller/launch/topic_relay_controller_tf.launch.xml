@@ -2,6 +2,7 @@
   <arg name="node_name_suffix" description="node name suffix"/>
   <arg name="topic" description="transform topic name"/>
   <arg name="remap_topic" description="remap topic name"/>
+  <arg name="qos" default="1" description="QoS profile"/>
   <arg name="frame_id" description="parent frame id"/>
   <arg name="child_frame_id" description="child frame id"/>
   <arg name="transient_local" default="false" description="add transient_local option to subscriber or not"/>
@@ -12,6 +13,7 @@
   <node pkg="autoware_topic_relay_controller" exec="autoware_topic_relay_controller_node" name="topic_relay_controller_$(var node_name_suffix)" output="screen">
     <param name="topic" value="$(var topic)"/>
     <param name="remap_topic" value="$(var remap_topic)"/>
+    <param name="qos" value="$(var qos)"/>
     <param name="frame_id" value="$(var frame_id)"/>
     <param name="child_frame_id" value="$(var child_frame_id)"/>
     <param name="transient_local" value="$(var transient_local)"/>
