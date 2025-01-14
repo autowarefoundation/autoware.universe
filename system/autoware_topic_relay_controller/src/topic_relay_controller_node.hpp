@@ -22,6 +22,7 @@
 #include <tier4_system_msgs/srv/change_topic_relay_control.hpp>
 
 #include <string>
+#include <memory>
 
 namespace autoware::topic_relay_controller
 {
