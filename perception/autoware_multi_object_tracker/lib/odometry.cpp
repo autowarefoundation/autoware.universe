@@ -43,10 +43,6 @@ Odometry::Odometry(
 void Odometry::updateTfCache(
   const rclcpp::Time & time, const geometry_msgs::msg::Transform & tf) const
 {
-  // remove cache if time is same
-  if (tf_cache_.find(time) != tf_cache_.end()) {
-    tf_cache_.erase(time);
-  }
   // update the tf buffer
   tf_cache_.emplace(time, tf);
 
