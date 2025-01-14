@@ -188,6 +188,7 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
   }
 
   // lane change parameters
+  p.time_limit = getOrDeclareParameter<double>(*node, parameter("time_limit"));
   p.backward_lane_length = getOrDeclareParameter<double>(*node, parameter("backward_lane_length"));
   p.backward_length_buffer_for_end_of_lane =
     getOrDeclareParameter<double>(*node, parameter("backward_length_buffer_for_end_of_lane"));
@@ -305,6 +306,7 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
 
   {
     const std::string ns = "lane_change.";
+    updateParam<double>(parameters, ns + "time_limit", p->time_limit);
     updateParam<double>(parameters, ns + "backward_lane_length", p->backward_lane_length);
     updateParam<double>(
       parameters, ns + "backward_length_buffer_for_end_of_lane",

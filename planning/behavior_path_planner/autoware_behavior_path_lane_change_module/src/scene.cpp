@@ -1113,6 +1113,7 @@ std::vector<LaneChangePhaseMetrics> NormalLaneChange::get_lane_changing_metrics(
 
 bool NormalLaneChange::get_lane_change_paths(LaneChangePaths & candidate_paths) const
 {
+  stop_watch_.tic(__func__);
   lane_change_debug_.collision_check_objects.clear();
   lane_change_debug_.lane_change_metrics.clear();
 
@@ -1194,6 +1195,10 @@ bool NormalLaneChange::get_lane_change_paths(LaneChangePaths & candidate_paths) 
       prepare_segment, common_data_ptr_->get_ego_speed(), prep_metric.velocity);
 
     for (const auto & lc_metric : lane_changing_metrics) {
+      if (stop_watch_.toc(__func__) >= lane_change_parameters_->time_limit) {
+        return false;
+      }
+
       const auto debug_print_lat = [&](const std::string & s) {
         RCLCPP_DEBUG(
           logger_, "%s | lc_time: %.5f | lon_acc: %.5f | lat_acc: %.5f | lc_len: %.5f", s.c_str(),
