@@ -1154,18 +1154,22 @@ bool NormalLaneChange::get_path_using_frenet(
   const std::vector<std::vector<int64_t>> & sorted_lane_ids,
   LaneChangePaths & candidate_paths) const
 {
-  stop_watch_.tic("frenet_candidates");
+  stop_watch_.tic(__func__);
   constexpr auto found_safe_path = true;
   const auto frenet_candidates = utils::lane_change::generate_frenet_candidates(
     common_data_ptr_, prev_module_output_.path, prepare_metrics);
   RCLCPP_DEBUG(
     logger_, "Generated %lu candidate paths in %2.2f[us]", frenet_candidates.size(),
-    stop_watch_.toc("frenet_candidates"));
+    stop_watch_.toc(__func__));
 
   candidate_paths.reserve(frenet_candidates.size());
   lane_change_debug_.frenet_states.clear();
   lane_change_debug_.frenet_states.reserve(frenet_candidates.size());
   for (const auto & frenet_candidate : frenet_candidates) {
+    if (stop_watch_.toc(__func__) >= lane_change_parameters_->time_limit) {
+      break;
+    }
+
     lane_change_debug_.frenet_states.emplace_back(
       frenet_candidate.prepare_metric, frenet_candidate.lane_changing.sampling_parameter,
       frenet_candidate.max_lane_changing_length);
@@ -1186,7 +1190,7 @@ bool NormalLaneChange::get_path_using_frenet(
       if (check_candidate_path_safety(*candidate_path_opt, target_objects)) {
         RCLCPP_DEBUG(
           logger_, "Found safe path after %lu candidate(s). Total time: %2.2f[us]",
-          frenet_candidates.size(), stop_watch_.toc("frenet_candidates"));
+          frenet_candidates.size(), stop_watch_.toc("__func__"));
         utils::lane_change::append_target_ref_to_candidate(
           *candidate_path_opt, common_data_ptr_->lc_param_ptr->frenet.th_curvature_smoothing);
         candidate_paths.push_back(*candidate_path_opt);
@@ -1204,7 +1208,7 @@ bool NormalLaneChange::get_path_using_frenet(
 
   RCLCPP_DEBUG(
     logger_, "No safe path after %lu candidate(s). Total time: %2.2f[us]", frenet_candidates.size(),
-    stop_watch_.toc("frenet_candidates"));
+    stop_watch_.toc(__func__));
   return !found_safe_path;
 }
 
@@ -1281,6 +1285,7 @@ bool NormalLaneChange::get_path_using_path_shifter(
 
     for (const auto & lc_metric : lane_changing_metrics) {
       if (stop_watch_.toc(__func__) >= lane_change_parameters_->time_limit) {
+        RCLCPP_DEBUG(logger_, "Time limit reached and no safe path was found.");
         return false;
       }
 
