@@ -820,6 +820,18 @@ The following table provides comparisons between the planners
   </table>
 </div>
 
+!!! note
+
+    The planner can be enabled or disabled using the `frenet.enable` flag.
+
+!!! note
+
+    Since only a segment of the target lane is used as input to generate the lane change path, the end pose of the lane change segment may not smoothly connect to the target lane centerline. To address this, increase the value of `frenet.th_curvature_smoothing` to improve the smoothness.
+
+!!! note
+
+    The yaw difference threshold (`frenet.th_yaw_diff`) limits the maximum curvature difference between the end of the prepare segment and the lane change segment. This threshold might prevent the generation of a lane change path when the lane curvature is high. In such cases, you can increase the frenet.th_yaw_diff value. However, note that if the prepare path was initially shifted by other modules, the resultant steering may not be continuous.
+
 ## Aborting a Previously Approved Lane Change
 
 Once the lane change path is approved, there are several situations where we may need to abort the maneuver. The abort process is triggered when any of the following conditions is met
