@@ -5,8 +5,16 @@
   "definitions": {
     "topic_rely_controller": {
       "type": "object",
-      "properties": {},
-      "required": [],
+      "properties": {
+        "service_timeout_ms": {
+          "type": "integer",
+          "description": "Timeout for service call in milliseconds.",
+          "default": 10
+        }
+      },
+      "required": [
+        "service_timeout_ms"
+      ],
       "additionalProperties": false
     }
   },
