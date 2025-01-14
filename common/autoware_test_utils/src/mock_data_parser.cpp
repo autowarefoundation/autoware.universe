@@ -17,6 +17,7 @@
 #include <rclcpp/logging.hpp>
 
 #include <algorithm>
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -62,6 +63,16 @@ std::array<double, 36> parse(const YAML::Node & node)
     msg[i] = cov.at(i);
   }
   return msg;
+}
+
+template <>
+Point parse(const YAML::Node & node)
+{
+  Point geom_point;
+  geom_point.x = node["x"].as<double>();
+  geom_point.y = node["y"].as<double>();
+  geom_point.z = node["z"].as<double>();
+  return geom_point;
 }
 
 template <>
@@ -205,15 +216,22 @@ std::vector<LaneletSegment> parse(const YAML::Node & node)
 }
 
 template <>
+LaneletRoute parse(const YAML::Node & node)
+{
+  LaneletRoute route;
+
+  route.start_pose = parse<Pose>(node["start_pose"]);
+  route.goal_pose = parse<Pose>(node["goal_pose"]);
+  route.segments = parse<std::vector<LaneletSegment>>(node["segments"]);
+  return route;
+}
+
+template <>
 std::vector<PathPointWithLaneId> parse<std::vector<PathPointWithLaneId>>(const YAML::Node & node)
 {
   std::vector<PathPointWithLaneId> path_points;
 
-  if (!node["points"]) {
-    return path_points;
-  }
-
-  const auto & points = node["points"];
+  const auto & points = node;
   path_points.reserve(points.size());
   std::transform(
     points.begin(), points.end(), std::back_inserter(path_points), [&](const YAML::Node & input) {
@@ -278,6 +296,46 @@ Shape parse(const YAML::Node & node)
 }
 
 template <>
+PathPoint parse(const YAML::Node & node)
+{
+  PathPoint point;
+  point.pose = parse<Pose>(node["pose"]);
+  point.longitudinal_velocity_mps = node["longitudinal_velocity_mps"].as<float>();
+  point.lateral_velocity_mps = node["lateral_velocity_mps"].as<float>();
+  point.heading_rate_rps = node["heading_rate_rps"].as<float>();
+  point.is_final = node["is_final"].as<bool>();
+  return point;
+}
+
+template <>
+PathPointWithLaneId parse(const YAML::Node & node)
+{
+  PathPointWithLaneId point;
+  point.point = parse<PathPoint>(node["point"]);
+  for (const auto & lane_id_node : node["lane_ids"]) {
+    point.lane_ids.push_back(lane_id_node.as<int64_t>());
+  }
+  return point;
+}
+
+template <>
+PathWithLaneId parse(const YAML::Node & node)
+{
+  PathWithLaneId path;
+  path.header = parse<Header>(node["header"]);
+  for (const auto & point_node : node["points"]) {
+    path.points.push_back(parse<PathPointWithLaneId>(point_node));
+  }
+  for (const auto & left_bound_node : node["left_bound"]) {
+    path.left_bound.push_back(parse<Point>(left_bound_node));
+  }
+  for (const auto & right_bound_node : node["right_bound"]) {
+    path.right_bound.push_back(parse<Point>(right_bound_node));
+  }
+  return path;
+}
+
+template <>
 PredictedPath parse(const YAML::Node & node)
 {
   PredictedPath path;
@@ -331,6 +389,44 @@ PredictedObjects parse(const YAML::Node & node)
 }
 
 template <>
+TrackedObjectKinematics parse(const YAML::Node & node)
+{
+  TrackedObjectKinematics msg;
+  msg.pose_with_covariance = parse<PoseWithCovariance>(node["pose_with_covariance"]);
+  msg.twist_with_covariance = parse<TwistWithCovariance>(node["twist_with_covariance"]);
+  msg.acceleration_with_covariance =
+    parse<AccelWithCovariance>(node["acceleration_with_covariance"]);
+  msg.orientation_availability = node["orientation_availability"].as<uint8_t>();
+  msg.is_stationary = node["is_stationary"].as<bool>();
+  return msg;
+}
+
+template <>
+TrackedObject parse(const YAML::Node & node)
+{
+  TrackedObject msg;
+  msg.object_id = parse<UUID>(node["object_id"]);
+  msg.existence_probability = node["existence_probability"].as<float>();
+  for (const auto & classification_node : node["classification"]) {
+    msg.classification.push_back(parse<ObjectClassification>(classification_node));
+  }
+  msg.kinematics = parse<TrackedObjectKinematics>(node["kinematics"]);
+  msg.shape = parse<Shape>(node["shape"]);
+  return msg;
+}
+
+template <>
+TrackedObjects parse(const YAML::Node & node)
+{
+  TrackedObjects msg;
+  msg.header = parse<Header>(node["header"]);
+  for (const auto & object_node : node["objects"]) {
+    msg.objects.push_back(parse<TrackedObject>(object_node));
+  }
+  return msg;
+}
+
+template <>
 TrafficLightElement parse(const YAML::Node & node)
 {
   TrafficLightElement msg;
@@ -379,36 +475,30 @@ OperationModeState parse(const YAML::Node & node)
 }
 
 template <>
-LaneletRoute parse(const std::string & filename)
+std::optional<LaneletRoute> parse(const std::string & filename)
 {
-  LaneletRoute lanelet_route;
-  try {
-    YAML::Node config = YAML::LoadFile(filename);
-
-    lanelet_route.start_pose = (config["start_pose"]) ? parse<Pose>(config["start_pose"]) : Pose();
-    lanelet_route.goal_pose = (config["goal_pose"]) ? parse<Pose>(config["goal_pose"]) : Pose();
-    lanelet_route.segments = parse<std::vector<LaneletSegment>>(config["segments"]);
-  } catch (const std::exception & e) {
-    RCLCPP_DEBUG(rclcpp::get_logger("autoware_test_utils"), "Exception caught: %s", e.what());
+  YAML::Node node = YAML::LoadFile(filename);
+  if (!node["start_pose"] || !node["goal_pose"] || !node["segments"]) {
+    return std::nullopt;
   }
-  return lanelet_route;
+
+  return parse<LaneletRoute>(node);
 }
 
 template <>
-PathWithLaneId parse(const std::string & filename)
+std::optional<PathWithLaneId> parse(const std::string & filename)
 {
-  PathWithLaneId path;
-  YAML::Node yaml_node = YAML::LoadFile(filename);
+  YAML::Node node = YAML::LoadFile(filename);
 
-  try {
-    path.header = parse<Header>(yaml_node["header"]);
-    path.points = parse<std::vector<PathPointWithLaneId>>(yaml_node);
-    path.left_bound = parse<std::vector<Point>>(yaml_node["left_bound"]);
-    path.right_bound = parse<std::vector<Point>>(yaml_node["right_bound"]);
-  } catch (const std::exception & e) {
-    RCLCPP_DEBUG(rclcpp::get_logger("autoware_test_utils"), "Exception caught: %s", e.what());
+  if (!node["header"] || !node["points"] || !node["left_bound"] || !node["right_bound"]) {
+    return std::nullopt;
   }
 
+  PathWithLaneId path;
+  path.header = parse<Header>(node["header"]);
+  path.points = parse<std::vector<PathPointWithLaneId>>(node["points"]);
+  path.left_bound = parse<std::vector<Point>>(node["left_bound"]);
+  path.right_bound = parse<std::vector<Point>>(node["right_bound"]);
   return path;
 }
 }  // namespace autoware::test_utils

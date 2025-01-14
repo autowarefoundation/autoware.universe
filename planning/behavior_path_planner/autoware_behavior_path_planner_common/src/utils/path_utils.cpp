@@ -27,7 +27,9 @@
 #include <tf2/utils.h>
 
 #include <algorithm>
+#include <memory>
 #include <optional>
+#include <unordered_set>
 #include <utility>
 #include <vector>
 

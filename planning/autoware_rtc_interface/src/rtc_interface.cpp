@@ -14,6 +14,9 @@
 
 #include "autoware/rtc_interface/rtc_interface.hpp"
 
+#include <string>
+#include <vector>
+
 namespace
 {
 using tier4_rtc_msgs::msg::Module;
@@ -77,9 +80,7 @@ Module getModuleType(const std::string & module_name)
     module.type = Module::OCCLUSION_SPOT;
   } else if (module_name == "stop_line") {
     module.type = Module::NONE;
-  } else if (module_name == "traffic_light") {
-    module.type = Module::TRAFFIC_LIGHT;
-  } else if (module_name == "virtual_traffic_light") {
+  } else if (module_name == "traffic_light" || module_name == "virtual_traffic_light") {
     module.type = Module::TRAFFIC_LIGHT;
   } else if (module_name == "lane_change_left") {
     module.type = Module::LANE_CHANGE_LEFT;
