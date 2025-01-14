@@ -39,6 +39,20 @@ struct MetricsDebug
   double max_lane_changing_length;
 };
 
+struct FrenetStateDebug
+{
+  LaneChangePhaseMetrics prep_metric;
+  frenet_planner::SamplingParameter sampling_parameter;
+  double max_lane_changing_length;
+
+  FrenetStateDebug(
+    LaneChangePhaseMetrics prep_metric, frenet_planner::SamplingParameter sampling_param,
+    const double max_len)
+  : prep_metric(prep_metric), sampling_parameter(sampling_param), max_lane_changing_length(max_len)
+  {
+  }
+};
+
 struct Debug
 {
   std::string module_type;
@@ -52,6 +66,7 @@ struct Debug
   lanelet::ConstLanelets target_lanes;
   lanelet::ConstLanelets target_backward_lanes;
   std::vector<MetricsDebug> lane_change_metrics;
+  std::vector<FrenetStateDebug> frenet_states;
   double collision_check_object_debug_lifetime{0.0};
   double distance_to_end_of_current_lane{std::numeric_limits<double>::max()};
   double distance_to_lane_change_finished{std::numeric_limits<double>::max()};

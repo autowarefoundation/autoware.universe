@@ -28,7 +28,10 @@
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <autoware/universe_utils/math/unit_conversion.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <autoware/universe_utils/system/time_keeper.hpp>
+#include <autoware_frenet_planner/frenet_planner.hpp>
+#include <autoware_frenet_planner/structures.hpp>
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <range/v3/action/insert.hpp>
@@ -36,8 +39,11 @@
 #include <range/v3/numeric/accumulate.hpp>
 #include <range/v3/view.hpp>
 
+#include <boost/geometry/algorithms/buffer.hpp>
+
 #include <lanelet2_core/geometry/Point.h>
 #include <lanelet2_core/geometry/Polygon.h>
+#include <lanelet2_core/primitives/LineString.h>
 
 #include <algorithm>
 #include <cmath>
@@ -103,6 +109,9 @@ void NormalLaneChange::update_lanes(const bool is_approved)
   const auto & route_handler_ptr = common_data_ptr_->route_handler_ptr;
   common_data_ptr_->current_lanes_path =
     route_handler_ptr->getCenterLinePath(current_lanes, 0.0, std::numeric_limits<double>::max());
+
+  common_data_ptr_->target_lanes_path =
+    route_handler_ptr->getCenterLinePath(target_lanes, 0.0, std::numeric_limits<double>::max());
 
   common_data_ptr_->lanes_ptr->target_neighbor = utils::lane_change::get_target_neighbor_lanes(
     *route_handler_ptr, current_lanes, common_data_ptr_->lc_type);
@@ -232,8 +241,6 @@ void NormalLaneChange::updateLaneChangeStatus()
   // Update status
   status_.is_valid_path = found_valid_path;
   status_.is_safe = found_safe_path;
-
-  status_.start_distance = common_data_ptr_->transient_data.target_lanes_ego_arc.length;
   status_.lane_change_path.path.header = getRouteHeader();
 }
 
@@ -1124,15 +1131,92 @@ bool NormalLaneChange::get_lane_change_paths(LaneChangePaths & candidate_paths) 
   }
 
   const auto & current_lanes = get_current_lanes();
-  const auto & target_lanes = get_target_lanes();
 
-  const auto sorted_lane_ids = utils::lane_change::get_sorted_lane_ids(common_data_ptr_);
   const auto target_objects = get_target_objects(filtered_objects_, current_lanes);
 
   const auto prepare_phase_metrics = get_prepare_metrics();
 
+  const auto sorted_lane_ids = utils::lane_change::get_sorted_lane_ids(common_data_ptr_);
+  if (
+    common_data_ptr_->lc_param_ptr->frenet.enable &&
+    common_data_ptr_->transient_data.is_ego_near_current_terminal_start) {
+    return get_path_using_frenet(
+      prepare_phase_metrics, target_objects, sorted_lane_ids, candidate_paths);
+  }
+
+  return get_path_using_path_shifter(
+    prepare_phase_metrics, target_objects, sorted_lane_ids, candidate_paths);
+}
+
+bool NormalLaneChange::get_path_using_frenet(
+  const std::vector<LaneChangePhaseMetrics> & prepare_metrics,
+  const lane_change::TargetObjects & target_objects,
+  const std::vector<std::vector<int64_t>> & sorted_lane_ids,
+  LaneChangePaths & candidate_paths) const
+{
+  stop_watch_.tic("frenet_candidates");
+  constexpr auto found_safe_path = true;
+  const auto frenet_candidates = utils::lane_change::generate_frenet_candidates(
+    common_data_ptr_, prev_module_output_.path, prepare_metrics);
+  RCLCPP_DEBUG(
+    logger_, "Generated %lu candidate paths in %2.2f[us]", frenet_candidates.size(),
+    stop_watch_.toc("frenet_candidates"));
+
+  candidate_paths.reserve(frenet_candidates.size());
+  lane_change_debug_.frenet_states.clear();
+  lane_change_debug_.frenet_states.reserve(frenet_candidates.size());
+  for (const auto & frenet_candidate : frenet_candidates) {
+    lane_change_debug_.frenet_states.emplace_back(
+      frenet_candidate.prepare_metric, frenet_candidate.lane_changing.sampling_parameter,
+      frenet_candidate.max_lane_changing_length);
+
+    std::optional<LaneChangePath> candidate_path_opt;
+    try {
+      candidate_path_opt =
+        utils::lane_change::get_candidate_path(frenet_candidate, common_data_ptr_, sorted_lane_ids);
+    } catch (const std::exception & e) {
+      RCLCPP_DEBUG(logger_, "%s", e.what());
+    }
+
+    if (!candidate_path_opt) {
+      continue;
+    }
+
+    try {
+      if (check_candidate_path_safety(*candidate_path_opt, target_objects)) {
+        RCLCPP_DEBUG(
+          logger_, "Found safe path after %lu candidate(s). Total time: %2.2f[us]",
+          frenet_candidates.size(), stop_watch_.toc("frenet_candidates"));
+        utils::lane_change::append_target_ref_to_candidate(
+          *candidate_path_opt, common_data_ptr_->lc_param_ptr->frenet.th_curvature_smoothing);
+        candidate_paths.push_back(*candidate_path_opt);
+        return found_safe_path;
+      }
+    } catch (const std::exception & e) {
+      RCLCPP_DEBUG(logger_, "%s", e.what());
+    }
+
+    // appending all paths affect performance
+    if (candidate_paths.empty()) {
+      candidate_paths.push_back(*candidate_path_opt);
+    }
+  }
+
+  RCLCPP_DEBUG(
+    logger_, "No safe path after %lu candidate(s). Total time: %2.2f[us]", frenet_candidates.size(),
+    stop_watch_.toc("frenet_candidates"));
+  return !found_safe_path;
+}
+
+bool NormalLaneChange::get_path_using_path_shifter(
+  const std::vector<LaneChangePhaseMetrics> & prepare_metrics,
+  const lane_change::TargetObjects & target_objects,
+  const std::vector<std::vector<int64_t>> & sorted_lane_ids,
+  LaneChangePaths & candidate_paths) const
+{
+  const auto & target_lanes = get_target_lanes();
   candidate_paths.reserve(
-    prepare_phase_metrics.size() * lane_change_parameters_->trajectory.lat_acc_sampling_num);
+    prepare_metrics.size() * lane_change_parameters_->trajectory.lat_acc_sampling_num);
 
   const bool only_tl = getStopTime() >= lane_change_parameters_->th_stop_time;
   const auto dist_to_next_regulatory_element =
@@ -1151,7 +1235,7 @@ bool NormalLaneChange::get_lane_change_paths(LaneChangePaths & candidate_paths) 
       return lc_diff > lane_change_parameters_->trajectory.th_lane_changing_length_diff;
     };
 
-  for (const auto & prep_metric : prepare_phase_metrics) {
+  for (const auto & prep_metric : prepare_metrics) {
     const auto debug_print = [&](const std::string & s) {
       RCLCPP_DEBUG(
         logger_, "%s | prep_time: %.5f | lon_acc: %.5f | prep_len: %.5f", s.c_str(),
@@ -1195,7 +1279,7 @@ bool NormalLaneChange::get_lane_change_paths(LaneChangePaths & candidate_paths) 
       prepare_segment, common_data_ptr_->get_ego_speed(), prep_metric.velocity);
 
     for (const auto & lc_metric : lane_changing_metrics) {
-      debug_metrics.lc_metrics.push_back({lc_metric, -1});
+      debug_metrics.lc_metrics.emplace_back(lc_metric, -1);
 
       const auto debug_print_lat = [&](const std::string & s) {
         RCLCPP_DEBUG(
@@ -1218,7 +1302,7 @@ bool NormalLaneChange::get_lane_change_paths(LaneChangePaths & candidate_paths) 
       }
 
       candidate_paths.push_back(candidate_path);
-      debug_metrics.lc_metrics.back().second = candidate_paths.size() - 1;
+      debug_metrics.lc_metrics.back().second = static_cast<int>(candidate_paths.size()) - 1;
 
       try {
         if (check_candidate_path_safety(candidate_path, target_objects)) {
