@@ -14,9 +14,9 @@
 
 #include "radar_object_clustering_node.hpp"
 
+#include "autoware/object_recognition_utils/object_recognition_utils.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware/universe_utils/math/unit_conversion.hpp"
-#include "object_recognition_utils/object_recognition_utils.hpp"
 
 #include <tf2/utils.h>
 
@@ -162,7 +162,7 @@ void RadarObjectClusteringNode::onObjects(const DetectedObjects::ConstSharedPtr 
     // Fixed label correction
     if (node_param_.is_fixed_label) {
       clustered_output_object.classification.at(0).label =
-        object_recognition_utils::toLabel(node_param_.fixed_label);
+        autoware::object_recognition_utils::toLabel(node_param_.fixed_label);
     }
 
     // Fixed size correction

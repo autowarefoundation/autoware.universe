@@ -38,7 +38,8 @@ pluginlib_export_plugin_description_file(autoware_mission_planner plugins/plugin
 
 if(BUILD_TESTING)
   ament_add_ros_isolated_gtest(test_${PROJECT_NAME}
-    test/test_lanelet2_plugins_default_planner.cpp
+  test/test_lanelet2_plugins_default_planner.cpp
+  test/test_utility_functions.cpp
   )
   target_link_libraries(test_${PROJECT_NAME}
     ${PROJECT_NAME}_lanelet2_plugins

@@ -19,15 +19,13 @@
 
 #include "autoware/multi_object_tracker/tracker/model/pedestrian_tracker.hpp"
 
-#include "autoware/multi_object_tracker/utils/utils.hpp"
-#include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
-#include "autoware/universe_utils/math/normalization.hpp"
-#include "autoware/universe_utils/math/unit_conversion.hpp"
-#include "autoware/universe_utils/ros/msg_covariance.hpp"
-#include "object_recognition_utils/object_recognition_utils.hpp"
-
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include <autoware/object_recognition_utils/object_recognition_utils.hpp>
+#include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
+#include <autoware/universe_utils/math/normalization.hpp>
+#include <autoware/universe_utils/math/unit_conversion.hpp>
+#include <autoware/universe_utils/ros/msg_covariance.hpp>
 
 #include <bits/stdc++.h>
 #include <tf2/LinearMath/Matrix3x3.h>
@@ -46,9 +44,7 @@ namespace autoware::multi_object_tracker
 using Label = autoware_perception_msgs::msg::ObjectClassification;
 
 PedestrianTracker::PedestrianTracker(
-  const rclcpp::Time & time, const autoware_perception_msgs::msg::DetectedObject & object,
-  const geometry_msgs::msg::Transform & /*self_transform*/, const size_t channel_size,
-  const uint & channel_index)
+  const rclcpp::Time & time, const types::DynamicObject & object, const size_t channel_size)
 : Tracker(time, object.classification, channel_size),
   logger_(rclcpp::get_logger("PedestrianTracker")),
   z_(object.kinematics.pose_with_covariance.pose.position.z)
@@ -56,7 +52,7 @@ PedestrianTracker::PedestrianTracker(
   object_ = object;
 
   // initialize existence probability
-  initializeExistenceProbabilities(channel_index, object.existence_probability);
+  initializeExistenceProbabilities(object.channel_index, object.existence_probability);
 
   // OBJECT SHAPE MODEL
   bounding_box_ = {
@@ -148,53 +144,16 @@ bool PedestrianTracker::predict(const rclcpp::Time & time)
   return motion_model_.predictState(time);
 }
 
-autoware_perception_msgs::msg::DetectedObject PedestrianTracker::getUpdatingObject(
-  const autoware_perception_msgs::msg::DetectedObject & object,
+types::DynamicObject PedestrianTracker::getUpdatingObject(
+  const types::DynamicObject & object,
   const geometry_msgs::msg::Transform & /*self_transform*/) const
 {
-  autoware_perception_msgs::msg::DetectedObject updating_object = object;
-
-  // UNCERTAINTY MODEL
-  if (!object.kinematics.has_position_covariance) {
-    // measurement noise covariance
-    auto r_cov_x = object_model_.measurement_covariance.pos_x;
-    auto r_cov_y = object_model_.measurement_covariance.pos_y;
-
-    // yaw angle fix
-    const double pose_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
-    const bool is_yaw_available =
-      object.kinematics.orientation_availability !=
-      autoware_perception_msgs::msg::DetectedObjectKinematics::UNAVAILABLE;
-
-    // fill covariance matrix
-    using autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
-    auto & pose_cov = updating_object.kinematics.pose_with_covariance.covariance;
-    const double cos_yaw = std::cos(pose_yaw);
-    const double sin_yaw = std::sin(pose_yaw);
-    const double sin_2yaw = std::sin(2.0 * pose_yaw);
-    pose_cov[XYZRPY_COV_IDX::X_X] =
-      r_cov_x * cos_yaw * cos_yaw + r_cov_y * sin_yaw * sin_yaw;           // x - x
-    pose_cov[XYZRPY_COV_IDX::X_Y] = 0.5 * (r_cov_x - r_cov_y) * sin_2yaw;  // x - y
-    pose_cov[XYZRPY_COV_IDX::Y_Y] =
-      r_cov_x * sin_yaw * sin_yaw + r_cov_y * cos_yaw * cos_yaw;                   // y - y
-    pose_cov[XYZRPY_COV_IDX::Y_X] = pose_cov[XYZRPY_COV_IDX::X_Y];                 // y - x
-    pose_cov[XYZRPY_COV_IDX::X_YAW] = 0.0;                                         // x - yaw
-    pose_cov[XYZRPY_COV_IDX::Y_YAW] = 0.0;                                         // y - yaw
-    pose_cov[XYZRPY_COV_IDX::YAW_X] = 0.0;                                         // yaw - x
-    pose_cov[XYZRPY_COV_IDX::YAW_Y] = 0.0;                                         // yaw - y
-    pose_cov[XYZRPY_COV_IDX::YAW_YAW] = object_model_.measurement_covariance.yaw;  // yaw - yaw
-    if (!is_yaw_available) {
-      pose_cov[XYZRPY_COV_IDX::YAW_YAW] *= 1e3;  // yaw is not available, multiply large value
-    }
-    auto & twist_cov = updating_object.kinematics.twist_with_covariance.covariance;
-    twist_cov[XYZRPY_COV_IDX::X_X] = object_model_.measurement_covariance.vel_long;  // vel - vel
-  }
+  types::DynamicObject updating_object = object;
 
   return updating_object;
 }
 
-bool PedestrianTracker::measureWithPose(
-  const autoware_perception_msgs::msg::DetectedObject & object)
+bool PedestrianTracker::measureWithPose(const types::DynamicObject & object)
 {
   // update motion model
   bool is_updated = false;
@@ -214,8 +173,7 @@ bool PedestrianTracker::measureWithPose(
   return is_updated;
 }
 
-bool PedestrianTracker::measureWithShape(
-  const autoware_perception_msgs::msg::DetectedObject & object)
+bool PedestrianTracker::measureWithShape(const types::DynamicObject & object)
 {
   constexpr double gain = 0.1;
   constexpr double gain_inv = 1.0 - gain;
@@ -271,14 +229,16 @@ bool PedestrianTracker::measureWithShape(
 }
 
 bool PedestrianTracker::measure(
-  const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+  const types::DynamicObject & object, const rclcpp::Time & time,
   const geometry_msgs::msg::Transform & self_transform)
 {
   // keep the latest input object
   object_ = object;
 
   const auto & current_classification = getClassification();
-  if (object_recognition_utils::getHighestProbLabel(object.classification) == Label::UNKNOWN) {
+  if (
+    autoware::object_recognition_utils::getHighestProbLabel(object.classification) ==
+    Label::UNKNOWN) {
     setClassification(current_classification);
   }
 
@@ -293,8 +253,7 @@ bool PedestrianTracker::measure(
   }
 
   // update object
-  const autoware_perception_msgs::msg::DetectedObject updating_object =
-    getUpdatingObject(object, self_transform);
+  const types::DynamicObject updating_object = getUpdatingObject(object, self_transform);
   measureWithPose(updating_object);
   measureWithShape(updating_object);
 
@@ -303,9 +262,9 @@ bool PedestrianTracker::measure(
 }
 
 bool PedestrianTracker::getTrackedObject(
-  const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObject & object) const
+  const rclcpp::Time & time, types::DynamicObject & object) const
 {
-  object = object_recognition_utils::toTrackedObject(object_);
+  object = object_;
   object.object_id = getUUID();
   object.classification = getClassification();
 

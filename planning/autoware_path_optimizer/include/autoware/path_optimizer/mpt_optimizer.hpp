@@ -17,6 +17,7 @@
 
 #include "autoware/interpolation/linear_interpolation.hpp"
 #include "autoware/interpolation/spline_interpolation_points_2d.hpp"
+#include "autoware/osqp_interface/osqp_interface.hpp"
 #include "autoware/path_optimizer/common_structs.hpp"
 #include "autoware/path_optimizer/state_equation_generator.hpp"
 #include "autoware/path_optimizer/type_alias.hpp"
@@ -24,7 +25,6 @@
 #include "autoware/universe_utils/system/time_keeper.hpp"
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 #include "gtest/gtest.h"
-#include "osqp_interface/osqp_interface.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Sparse>
@@ -228,7 +228,7 @@ private:
   MPTParam mpt_param_;
 
   StateEquationGenerator state_equation_generator_;
-  std::unique_ptr<autoware::common::osqp::OSQPInterface> osqp_solver_ptr_;
+  std::unique_ptr<autoware::osqp_interface::OSQPInterface> osqp_solver_ptr_;
 
   const double osqp_epsilon_ = 1.0e-3;
 

@@ -14,6 +14,8 @@
 
 #include "autoware/signal_processing/lowpass_filter.hpp"
 
+#include <boost/optional/optional_io.hpp>
+
 #include <gtest/gtest.h>
 
 constexpr double epsilon = 1e-6;
@@ -41,7 +43,7 @@ TEST(lowpass_filter_twist, filter)
   LowpassFilterTwist lowpass_filter_(0.1);
 
   {  // initial state
-    EXPECT_EQ(lowpass_filter_.getValue(), boost::none);
+    EXPECT_FALSE(lowpass_filter_.getValue());
   }
 
   {  // random filter
@@ -58,7 +60,7 @@ TEST(lowpass_filter_twist, filter)
 
   {  // reset without value
     lowpass_filter_.reset();
-    EXPECT_EQ(lowpass_filter_.getValue(), boost::none);
+    EXPECT_FALSE(lowpass_filter_.getValue());
   }
 
   {  // reset with value

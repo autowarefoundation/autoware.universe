@@ -14,7 +14,8 @@
 
 #include "autoware/behavior_path_goal_planner_module/manager.hpp"
 
-#include "autoware/behavior_path_goal_planner_module/util.hpp"
+#include "autoware/behavior_path_goal_planner_module/goal_planner_module.hpp"
+#include "autoware/behavior_path_goal_planner_module/goal_planner_parameters.hpp"
 #include "autoware/universe_utils/ros/update_param.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -25,6 +26,13 @@
 
 namespace autoware::behavior_path_planner
 {
+
+std::unique_ptr<SceneModuleInterface> GoalPlannerModuleManager::createNewSceneModuleInstance()
+{
+  return std::make_unique<GoalPlannerModule>(
+    name_, *node_, parameters_, rtc_interface_ptr_map_,
+    objects_of_interest_marker_interface_ptr_map_);
+}
 
 GoalPlannerParameters GoalPlannerModuleManager::initGoalPlannerParameters(
   rclcpp::Node * node, const std::string & base_ns)
@@ -537,7 +545,6 @@ void GoalPlannerModuleManager::updateModuleParams(
 
   // parallel parking common
   {
-    const std::string ns = base_ns + "pull_over.parallel_parking.";
     p->parallel_parking_parameters.center_line_path_interval =
       p->center_line_path_interval;  // for geometric parallel parking
   }

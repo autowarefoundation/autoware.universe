@@ -16,9 +16,9 @@
 
 #include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/static_drivable_area.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
+#include "autoware/object_recognition_utils/predicted_path_utils.hpp"
 #include "autoware/signal_processing/lowpass_filter_1d.hpp"
 #include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
-#include "object_recognition_utils/predicted_path_utils.hpp"
 
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
@@ -36,6 +36,8 @@
 #include <limits>
 #include <memory>
 #include <string>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 
 namespace autoware::behavior_path_planner
@@ -329,9 +331,8 @@ DynamicObstacleAvoidanceModule::DynamicObstacleAvoidanceModule(
   std::shared_ptr<DynamicAvoidanceParameters> parameters,
   const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
   std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
-    objects_of_interest_marker_interface_ptr_map,
-  std::shared_ptr<SteeringFactorInterface> & steering_factor_interface_ptr)
-: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map, steering_factor_interface_ptr},  // NOLINT
+    objects_of_interest_marker_interface_ptr_map)
+: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map},  // NOLINT
   parameters_{std::move(parameters)},
   target_objects_manager_{TargetObjectsManager(
     parameters_->successive_num_to_entry_dynamic_avoidance_condition,
@@ -796,7 +797,7 @@ void DynamicObstacleAvoidanceModule::determineWhetherToAvoidAgainstRegulatedObje
         return is_object_left;
       }
       const auto future_obj_pose =
-        object_recognition_utils::calcInterpolatedPose(obj_path, time_to_collision);
+        autoware::object_recognition_utils::calcInterpolatedPose(obj_path, time_to_collision);
       const size_t future_obj_idx =
         autoware::motion_utils::findNearestIndex(input_path.points, future_obj_pose->position);
 
@@ -1001,7 +1002,7 @@ DynamicObstacleAvoidanceModule::calcCollisionSection(
 
     const auto future_ego_pose = ego_path.at(i);
     const auto future_obj_pose =
-      object_recognition_utils::calcInterpolatedPose(obj_path, elapsed_time);
+      autoware::object_recognition_utils::calcInterpolatedPose(obj_path, elapsed_time);
 
     if (future_obj_pose) {
       const double dist_ego_to_obj =

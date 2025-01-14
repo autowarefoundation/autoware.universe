@@ -4,6 +4,9 @@ project(autoware_shape_estimation)
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
+# TODO(amadeuszsz): Remove -Wno-deprecated-declarations once removing implicit quantization
+add_compile_options(-Wno-deprecated-declarations)
+
 find_package(PCL REQUIRED COMPONENTS common)
 find_package(pcl_conversions REQUIRED)
 
@@ -34,6 +37,7 @@ set(${PROJECT_NAME}_SOURCES
   lib/corrector/utils.cpp
   lib/corrector/no_corrector.cpp
   lib/corrector/vehicle_corrector.cpp
+  lib/corrector/reference_object_based_corrector.cpp
   lib/corrector/reference_shape_size_corrector.cpp
 )
 

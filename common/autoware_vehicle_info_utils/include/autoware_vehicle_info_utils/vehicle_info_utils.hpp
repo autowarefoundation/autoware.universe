@@ -17,7 +17,7 @@
 
 #include "autoware_vehicle_info_utils/vehicle_info.hpp"
 
-#include <rclcpp/rclcpp.hpp>
+#include <rclcpp/node.hpp>
 
 namespace autoware::vehicle_info_utils
 {
@@ -28,10 +28,11 @@ class VehicleInfoUtils
 {
 public:
   /// Constructor
+  // NOTE(soblin): this throws which should be replaced with a factory
   explicit VehicleInfoUtils(rclcpp::Node & node);
 
   /// Get vehicle info
-  VehicleInfo getVehicleInfo();
+  VehicleInfo getVehicleInfo() const;
 
 private:
   /// Buffer for base parameters

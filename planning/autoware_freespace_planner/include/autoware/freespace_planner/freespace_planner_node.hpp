@@ -45,6 +45,7 @@
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <std_msgs/msg/bool.hpp>
+#include <tier4_debug_msgs/msg/float64_stamped.hpp>
 #include <tier4_planning_msgs/msg/scenario.hpp>
 
 #ifdef ROS_DISTRO_GALACTIC
@@ -63,6 +64,8 @@
 #include <memory>
 #include <string>
 #include <vector>
+
+class TestFreespacePlanner;
 
 namespace autoware::freespace_planner
 {
@@ -109,6 +112,7 @@ private:
   rclcpp::Publisher<PoseArray>::SharedPtr debug_pose_array_pub_;
   rclcpp::Publisher<PoseArray>::SharedPtr debug_partial_pose_array_pub_;
   rclcpp::Publisher<std_msgs::msg::Bool>::SharedPtr parking_state_pub_;
+  rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr processing_time_pub_;
 
   rclcpp::Subscription<LaneletRoute>::SharedPtr route_sub_;
 
@@ -159,22 +163,50 @@ private:
   void onRoute(const LaneletRoute::ConstSharedPtr msg);
   void onOdometry(const Odometry::ConstSharedPtr msg);
 
+  void onTimer();
   void updateData();
+  void reset();
+  void planTrajectory();
+  void initializePlanningAlgorithm();
   bool isDataReady();
 
-  void onTimer();
-
-  void reset();
+  /**
+   * @brief Checks if a new trajectory planning is required.
+   * @details A new trajectory planning is required if:
+   *           - Current trajectory points are empty, or
+   *           - Current trajectory collides with an object, or
+   *           - Ego deviates from current trajectory
+   * @return true if any of the conditions are met.
+   */
   bool isPlanRequired();
-  void planTrajectory();
-  void updateTargetIndex();
-  void initializePlanningAlgorithm();
 
+  /**
+   * @brief Sets the target index along the current trajectory points
+   * @details if Ego is stopped AND is near the current target index along the trajectory,
+   *          then will get the next target index along the trajectory.
+   *          If the new target index is the same as the current target index, then
+   *          is_complete_ is set to true, and will publish is_completed_msg.
+   *          Otherwise will update prev_target_index_ and target_index_, to continue
+   *          following the trajectory.
+   */
+  void updateTargetIndex();
+
+  /**
+   * @brief Checks if current trajectory is colliding with an object.
+   * @details Will check if an obstacle exists along the current trajectory,
+   *          if there is no obstacle along the current trajectory, will reset obs_found_time_.
+   *          If an obstacle exists and the variable obs_found_time_ is not initialized,
+   *          will initialize with the current time.
+   * @return true if there is an obstacle along current trajectory, AND duration since
+   *         obs_found_time_ exceeds the parameter th_obstacle_time_sec
+   */
   bool checkCurrentTrajectoryCollision();
 
   TransformStamped getTransform(const std::string & from, const std::string & to);
 
   std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;
+
+  friend class ::TestFreespacePlanner;
 };
 }  // namespace autoware::freespace_planner
 

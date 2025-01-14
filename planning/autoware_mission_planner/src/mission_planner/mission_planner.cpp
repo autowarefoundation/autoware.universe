@@ -27,7 +27,10 @@
 #include <lanelet2_core/geometry/LineString.h>
 
 #include <algorithm>
+#include <memory>
+#include <string>
 #include <utility>
+#include <vector>
 
 namespace autoware::mission_planner
 {
@@ -81,8 +84,20 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   // otherwise the mission planner rejects the request for the API.
   const auto period = rclcpp::Rate(10).period();
   data_check_timer_ = create_wall_timer(period, [this] { check_initialization(); });
+  is_mission_planner_ready_ = false;
 
   logger_configure_ = std::make_unique<autoware::universe_utils::LoggerLevelConfigure>(this);
+  pub_processing_time_ =
+    this->create_publisher<tier4_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
+}
+
+void MissionPlanner::publish_processing_time(
+  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch)
+{
+  tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
+  processing_time_msg.stamp = get_clock()->now();
+  processing_time_msg.data = stop_watch.toc();
+  pub_processing_time_->publish(processing_time_msg);
 }
 
 void MissionPlanner::publish_pose_log(const Pose & pose, const std::string & pose_type)
@@ -111,6 +126,7 @@ void MissionPlanner::check_initialization()
   }
 
   // All data is ready. Now API is available.
+  is_mission_planner_ready_ = true;
   RCLCPP_DEBUG(logger, "Route API is ready.");
   change_state(RouteState::UNSET);
 
@@ -174,12 +190,8 @@ void MissionPlanner::on_modified_goal(const PoseWithUuidStamped::ConstSharedPtr 
     RCLCPP_ERROR(get_logger(), "The route hasn't set yet. Cannot reroute.");
     return;
   }
-  if (!planner_->ready()) {
-    RCLCPP_ERROR(get_logger(), "The planner is not ready.");
-    return;
-  }
-  if (!odometry_) {
-    RCLCPP_ERROR(get_logger(), "The vehicle pose is not received.");
+  if (!is_mission_planner_ready_) {
+    RCLCPP_ERROR(get_logger(), "The mission planner is not ready.");
     return;
   }
   if (!current_route_) {
@@ -198,6 +210,7 @@ void MissionPlanner::on_modified_goal(const PoseWithUuidStamped::ConstSharedPtr 
     cancel_route();
     change_state(RouteState::SET);
     RCLCPP_ERROR(get_logger(), "The planned route is empty.");
+    return;
   }
 
   change_route(route);
@@ -208,6 +221,12 @@ void MissionPlanner::on_modified_goal(const PoseWithUuidStamped::ConstSharedPtr 
 void MissionPlanner::on_clear_route(
   const ClearRoute::Request::SharedPtr, const ClearRoute::Response::SharedPtr res)
 {
+  if (!is_mission_planner_ready_) {
+    using ResponseCode = autoware_adapi_v1_msgs::msg::ResponseStatus;
+    throw service_utils::ServiceException(
+      ResponseCode::NO_EFFECT, "The mission planner is not ready.", true);
+  }
+
   change_route();
   change_state(RouteState::UNSET);
   res->status.success = true;
@@ -223,13 +242,9 @@ void MissionPlanner::on_set_lanelet_route(
     throw service_utils::ServiceException(
       ResponseCode::ERROR_INVALID_STATE, "The route cannot be set in the current state.");
   }
-  if (!planner_->ready()) {
+  if (!is_mission_planner_ready_) {
     throw service_utils::ServiceException(
-      ResponseCode::ERROR_PLANNER_UNREADY, "The planner is not ready.");
-  }
-  if (!odometry_) {
-    throw service_utils::ServiceException(
-      ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
+      ResponseCode::ERROR_PLANNER_UNREADY, "The mission planner is not ready.");
   }
   if (is_reroute && !operation_mode_state_) {
     throw service_utils::ServiceException(
@@ -290,13 +305,9 @@ void MissionPlanner::on_set_waypoint_route(
     throw service_utils::ServiceException(
       ResponseCode::ERROR_INVALID_STATE, "The route cannot be set in the current state.");
   }
-  if (!planner_->ready()) {
+  if (!is_mission_planner_ready_) {
     throw service_utils::ServiceException(
-      ResponseCode::ERROR_PLANNER_UNREADY, "The planner is not ready.");
-  }
-  if (!odometry_) {
-    throw service_utils::ServiceException(
-      ResponseCode::ERROR_PLANNER_UNREADY, "The vehicle pose is not received.");
+      ResponseCode::ERROR_PLANNER_UNREADY, "The mission planner is not ready.");
   }
   if (is_reroute && !operation_mode_state_) {
     throw service_utils::ServiceException(
@@ -395,7 +406,8 @@ LaneletRoute MissionPlanner::create_route(const SetWaypointRoute::Request & req)
   const auto & uuid = req.uuid;
   const auto & allow_goal_modification = req.allow_modification;
 
-  return create_route(header, waypoints, goal_pose, uuid, allow_goal_modification);
+  return create_route(
+    header, waypoints, odometry_->pose.pose, goal_pose, uuid, allow_goal_modification);
 }
 
 LaneletRoute MissionPlanner::create_route(const PoseWithUuidStamped & msg)
@@ -405,7 +417,21 @@ LaneletRoute MissionPlanner::create_route(const PoseWithUuidStamped & msg)
   const auto & uuid = msg.uuid;
   const auto & allow_goal_modification = current_route_->allow_modification;
 
-  return create_route(header, std::vector<Pose>(), goal_pose, uuid, allow_goal_modification);
+  // NOTE: Reroute by modifed goal is assumed to be a slight modification near the goal lane.
+  //       It is assumed that ego and goal are on the extension of the current route at least.
+  //       Therefore, the start pose is the start pose of the current route if it exists.
+  //       This prevents the route from becoming shorter due to reroute.
+  //       Also, use start pose and waypoints that are on the preferred lanelet of the current route
+  //       as much as possible.
+  //       For this process, refer to RouteHandler::planPathLaneletsBetweenCheckpoints() or
+  //       https://github.com/autowarefoundation/autoware.universe/pull/8238 too.
+  const auto & start_pose = current_route_ ? current_route_->start_pose : odometry_->pose.pose;
+  std::vector<Pose> waypoints{};
+  if (current_route_) {
+    waypoints.push_back(odometry_->pose.pose);
+  }
+
+  return create_route(header, waypoints, start_pose, goal_pose, uuid, allow_goal_modification);
 }
 
 LaneletRoute MissionPlanner::create_route(
@@ -424,11 +450,11 @@ LaneletRoute MissionPlanner::create_route(
 }
 
 LaneletRoute MissionPlanner::create_route(
-  const Header & header, const std::vector<Pose> & waypoints, const Pose & goal_pose,
-  const UUID & uuid, const bool allow_goal_modification)
+  const Header & header, const std::vector<Pose> & waypoints, const Pose & start_pose,
+  const Pose & goal_pose, const UUID & uuid, const bool allow_goal_modification)
 {
   PlannerPlugin::RoutePoints points;
-  points.push_back(odometry_->pose.pose);
+  points.push_back(start_pose);
   for (const auto & waypoint : waypoints) {
     points.push_back(transform_pose(waypoint, header));
   }

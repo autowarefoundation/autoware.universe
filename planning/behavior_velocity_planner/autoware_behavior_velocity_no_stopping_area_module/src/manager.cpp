@@ -16,17 +16,12 @@
 
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
 #include <autoware/universe_utils/ros/parameter.hpp>
-#include <autoware_lanelet2_extension/utility/query.hpp>
-
-#include <tf2/utils.h>
 
 #include <limits>
 #include <memory>
 #include <set>
 #include <string>
-#include <unordered_map>
 #include <utility>
-#include <vector>
 
 namespace autoware::behavior_velocity_planner
 {
@@ -74,16 +69,17 @@ void NoStoppingAreaModuleManager::launchNewModules(
   }
 }
 
-std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
+std::function<bool(const std::shared_ptr<SceneModuleInterfaceWithRTC> &)>
 NoStoppingAreaModuleManager::getModuleExpiredFunction(
   const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto no_stopping_area_id_set = planning_utils::getRegElemIdSetOnPath<NoStoppingArea>(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
-  return [no_stopping_area_id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
-    return no_stopping_area_id_set.count(scene_module->getModuleId()) == 0;
-  };
+  return
+    [no_stopping_area_id_set](const std::shared_ptr<SceneModuleInterfaceWithRTC> & scene_module) {
+      return no_stopping_area_id_set.count(scene_module->getModuleId()) == 0;
+    };
 }
 
 }  // namespace autoware::behavior_velocity_planner
