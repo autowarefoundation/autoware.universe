@@ -97,7 +97,7 @@ private:
   void onTrigger();
 
   // publish processes
-  void runProcess(const types::DynamicObjectList & input_objects);
+  void runProcess(const types::DynamicObjectList & detected_objects);
   void checkAndPublish(const rclcpp::Time & time);
   void publish(const rclcpp::Time & time) const;
   inline bool shouldTrackerPublish(const std::shared_ptr<const Tracker> tracker) const;
