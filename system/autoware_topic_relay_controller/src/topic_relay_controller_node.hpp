@@ -39,6 +39,8 @@ struct NodeParam
   bool is_transform;
   bool enable_relay_control;
   std::string srv_name;
+  bool enable_keep_publishing;
+  int update_rate;
 };
 
 class TopicRelayController : public rclcpp::Node
@@ -62,8 +64,13 @@ private:
   rclcpp::Service<tier4_system_msgs::srv::ChangeTopicRelayControl>::SharedPtr
     srv_change_relay_control_;
 
+  // Timer
+  rclcpp::TimerBase::SharedPtr timer_;
+
   // State
   bool is_relaying_;
+  tf2_msgs::msg::TFMessage::SharedPtr last_tf_topic_;
+  std::shared_ptr<rclcpp::SerializedMessage> last_topic_;
 };
 }  // namespace autoware::topic_relay_controller
 

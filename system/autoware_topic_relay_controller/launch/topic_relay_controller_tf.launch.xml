@@ -9,6 +9,8 @@
   <arg name="best_effort" default="false" description="add best_effort option to subscriber or not"/>
   <arg name="enable_relay_control" default="true" description="enable relay control or not"/>
   <arg name="srv_name" default="/system/topic_relay_controller_$(var node_name_suffix)/operate" description="service name for relay control"/>
+  <arg name="enable_keep_publishing" default="false" description="enable keep publish last topic when not subscribed"/>
+  <arg name="update_rate" default="10" description="update rate for tf publish"/>
 
   <node pkg="autoware_topic_relay_controller" exec="autoware_topic_relay_controller_node" name="topic_relay_controller_$(var node_name_suffix)" output="screen">
     <param name="topic" value="$(var topic)"/>
@@ -20,5 +22,7 @@
     <param name="best_effort" value="$(var best_effort)"/>
     <param name="enable_relay_control" value="$(var enable_relay_control)"/>
     <param name="srv_name" value="$(var srv_name)"/>
+    <param name="enable_keep_publishing" value="$(var enable_keep_publishing)"/>
+    <param name="update_rate" value="$(var update_rate)"/>
   </node>
 </launch>
