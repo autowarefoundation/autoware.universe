@@ -346,7 +346,7 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
       p->trajectory.lon_acc_sampling_num = longitudinal_acc_sampling_num;
     } else {
       RCLCPP_WARN(
-        get_logger(),
+        rclcpp::get_logger("lane_change"),
         "Parameter 'lon_acc_sampling_num' is not updated because the value (%d) is not positive",
         longitudinal_acc_sampling_num);
     }
@@ -357,7 +357,7 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
       p->trajectory.lat_acc_sampling_num = lateral_acc_sampling_num;
     } else {
       RCLCPP_WARN(
-        get_logger(),
+        rclcpp::get_logger("lane_change"),
         "Parameter 'lat_acc_sampling_num' is not updated because the value (%d) is not positive",
         lateral_acc_sampling_num);
     }
@@ -487,8 +487,17 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
       p->cancel.enable_on_lane_changing_phase = enable_on_lane_changing_phase;
     }
 
-    updateParam<int>(
-      parameters, ns + "deceleration_sampling_num", p->cancel.deceleration_sampling_num);
+    int deceleration_sampling_num = 0;
+    updateParam<int>(parameters, ns + "deceleration_sampling_num", deceleration_sampling_num);
+    if (deceleration_sampling_num > 0) {
+      p->cancel.deceleration_sampling_num = deceleration_sampling_num;
+    } else {
+      RCLCPP_WARN(
+        rclcpp::get_logger("lane_change"),
+        "Parameter 'deceleration_sampling_num' is not updated because the value (%d) is not "
+        "positive",
+        deceleration_sampling_num);
+    }
 
     updateParam<double>(parameters, ns + "delta_time", p->cancel.delta_time);
     updateParam<double>(parameters, ns + "duration", p->cancel.duration);
