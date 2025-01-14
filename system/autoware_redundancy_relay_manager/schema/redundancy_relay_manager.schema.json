@@ -12,9 +12,7 @@
           "default": 10
         }
       },
-      "required": [
-        "service_timeout_ms"
-      ],
+      "required": ["service_timeout_ms"],
       "additionalProperties": false
     }
   },
