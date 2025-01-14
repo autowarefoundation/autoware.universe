@@ -21,8 +21,10 @@
 #include "autoware/universe_utils/math/normalization.hpp"
 
 #include <algorithm>
+#include <iostream>
 #include <limits>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace autoware::motion::control::mpc_lateral_controller
@@ -143,7 +145,7 @@ std::pair<bool, MPCTrajectory> resampleMPCTrajectoryByDistance(
   output.x = spline_arc_length(input.x);
   output.y = spline_arc_length(input.y);
   output.z = spline_arc_length(input.z);
-  output.yaw = spline_arc_length(input.yaw);
+  output.yaw = spline_arc_length(input_yaw);
   output.vx = lerp_arc_length(input.vx);  // must be linear
   output.k = spline_arc_length(input.k);
   output.smooth_k = spline_arc_length(input.smooth_k);

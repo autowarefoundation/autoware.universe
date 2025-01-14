@@ -77,6 +77,8 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
   engage_pub_ = create_publisher<EngageMsg>("output/engage", durable_qos);
   pub_external_emergency_ = create_publisher<Emergency>("output/external_emergency", durable_qos);
   operation_mode_pub_ = create_publisher<OperationModeState>("output/operation_mode", durable_qos);
+  processing_time_pub_ =
+    this->create_publisher<tier4_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
 
   is_filter_activated_pub_ =
     create_publisher<IsFilterActivated>("~/is_filter_activated", durable_qos);
@@ -375,6 +377,8 @@ T VehicleCmdGate::getContinuousTopic(
 
 void VehicleCmdGate::onTimer()
 {
+  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
+
   // Subscriber for auto
   const auto msg_auto_command_turn_indicator = auto_turn_indicator_cmd_sub_.takeData();
   if (msg_auto_command_turn_indicator)
@@ -514,6 +518,12 @@ void VehicleCmdGate::onTimer()
     }
     gear_cmd_pub_->publish(gear);
   }
+
+  // ProcessingTime
+  tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
+  processing_time_msg.stamp = get_clock()->now();
+  processing_time_msg.data = stop_watch.toc();
+  processing_time_pub_->publish(processing_time_msg);
 }
 
 void VehicleCmdGate::publishControlCommands(const Commands & commands)

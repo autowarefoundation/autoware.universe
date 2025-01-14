@@ -14,11 +14,16 @@
 
 #include "perception_online_evaluator/metrics/detection_count.hpp"
 
+#include "autoware/object_recognition_utils/object_recognition_utils.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
-#include "object_recognition_utils/object_recognition_utils.hpp"
 #include "perception_online_evaluator/utils/objects_filtering.hpp"
 
 #include <autoware/universe_utils/ros/uuid_helper.hpp>
+
+#include <set>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 namespace perception_diagnostics
 {
@@ -72,7 +77,8 @@ void DetectionCounter::addObjects(
 
   for (const auto & object : objects.objects) {
     const auto uuid = toHexString(object.object_id);
-    const auto label = object_recognition_utils::getHighestProbLabel(object.classification);
+    const auto label =
+      autoware::object_recognition_utils::getHighestProbLabel(object.classification);
     if (!isCountObject(label, parameters_->object_parameters)) {
       continue;
     }
@@ -104,10 +110,9 @@ void DetectionCounter::initializeDetectionMap()
        ++i) {
     for (const auto & range : getRanges()) {
       std::string range_str = range.toString();
-      if (time_series_counts_.find(i) == time_series_counts_.end()) {
-        time_series_counts_[i][range_str] = std::vector<rclcpp::Time>();
-        seen_uuids_[i][range_str] = std::set<std::string>();
-      } else if (time_series_counts_[i].find(range_str) == time_series_counts_[i].end()) {
+      if (
+        time_series_counts_[i].find(range_str) == time_series_counts_[i].end() ||
+        time_series_counts_.find(i) == time_series_counts_.end()) {
         time_series_counts_[i][range_str] = std::vector<rclcpp::Time>();
         seen_uuids_[i][range_str] = std::set<std::string>();
       }

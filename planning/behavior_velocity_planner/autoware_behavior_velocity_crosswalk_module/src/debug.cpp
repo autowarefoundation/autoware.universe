@@ -24,8 +24,6 @@
 namespace autoware::behavior_velocity_planner
 {
 
-using autoware::motion_utils::createSlowDownVirtualWallMarker;
-using autoware::motion_utils::createStopVirtualWallMarker;
 using autoware::universe_utils::appendMarkerArray;
 using autoware::universe_utils::calcOffsetPose;
 using autoware::universe_utils::createDefaultMarker;
@@ -170,6 +168,26 @@ visualization_msgs::msg::MarkerArray createCrosswalkMarkers(
     for (const auto & p : debug_data.stop_poses) {
       marker.points.push_back(createPoint(p.position.x, p.position.y, p.position.z));
     }
+    msg.markers.push_back(marker);
+  }
+
+  if (!debug_data.occlusion_detection_areas.empty()) {
+    auto marker = createDefaultMarker(
+      "map", now, "occlusion_detection_areas", uid, Marker::LINE_LIST,
+      createMarkerScale(0.25, 0.25, 0.0), createMarkerColor(1.0, 1.0, 1.0, 0.5));
+    for (const auto & area : debug_data.occlusion_detection_areas) {
+      for (auto i = 0UL; i + 1 < area.size(); ++i) {
+        const auto & p1 = area[i];
+        const auto & p2 = area[i + 1];
+        marker.points.push_back(createPoint(p1.x(), p1.y(), 0.0));
+        marker.points.push_back(createPoint(p2.x(), p2.y(), 0.0));
+      }
+    }
+    msg.markers.push_back(marker);
+    marker = createDefaultMarker(
+      "map", now, "crosswalk_origin", uid, Marker::SPHERE, createMarkerScale(0.25, 0.25, 0.25),
+      createMarkerColor(1.0, 1.0, 1.0, 0.5));
+    marker.pose.position = debug_data.crosswalk_origin;
     msg.markers.push_back(marker);
   }
 

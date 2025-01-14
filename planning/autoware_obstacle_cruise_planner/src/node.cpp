@@ -16,12 +16,12 @@
 
 #include "autoware/motion_utils/resample/resample.hpp"
 #include "autoware/motion_utils/trajectory/conversion.hpp"
+#include "autoware/object_recognition_utils/predicted_path_utils.hpp"
 #include "autoware/obstacle_cruise_planner/polygon_utils.hpp"
 #include "autoware/obstacle_cruise_planner/utils.hpp"
 #include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
 #include "autoware/universe_utils/ros/marker_helper.hpp"
 #include "autoware/universe_utils/ros/update_param.hpp"
-#include "object_recognition_utils/predicted_path_utils.hpp"
 
 #include <pcl_ros/transforms.hpp>
 #include <tf2_eigen/tf2_eigen.hpp>
@@ -32,6 +32,13 @@
 
 #include <algorithm>
 #include <chrono>
+#include <limits>
+#include <memory>
+#include <string>
+#include <tuple>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 
 namespace
 {
@@ -99,7 +106,7 @@ std::vector<PredictedPath> resampleHighestConfidencePredictedPaths(
       continue;
     }
     resampled_paths.push_back(
-      object_recognition_utils::resamplePredictedPath(path, time_interval, time_horizon));
+      autoware::object_recognition_utils::resamplePredictedPath(path, time_interval, time_horizon));
   }
 
   return resampled_paths;
@@ -508,10 +515,9 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
 
   // debug publisher
   debug_calculation_time_pub_ = create_publisher<Float64Stamped>("~/debug/processing_time_ms", 1);
-  debug_cruise_wall_marker_pub_ = create_publisher<MarkerArray>("~/debug/cruise/virtual_wall", 1);
-  debug_stop_wall_marker_pub_ = create_publisher<MarkerArray>("~/virtual_wall", 1);
-  debug_slow_down_wall_marker_pub_ =
-    create_publisher<MarkerArray>("~/debug/slow_down/virtual_wall", 1);
+  debug_cruise_wall_marker_pub_ = create_publisher<MarkerArray>("~/virtual_wall/cruise", 1);
+  debug_stop_wall_marker_pub_ = create_publisher<MarkerArray>("~/virtual_wall/stop", 1);
+  debug_slow_down_wall_marker_pub_ = create_publisher<MarkerArray>("~/virtual_wall/slow_down", 1);
   debug_marker_pub_ = create_publisher<MarkerArray>("~/debug/marker", 1);
   debug_stop_planning_info_pub_ =
     create_publisher<Float32MultiArrayStamped>("~/debug/stop_planning_info", 1);
@@ -719,9 +725,10 @@ void ObstacleCruisePlannerNode::onTrajectory(const Trajectory::ConstSharedPtr ms
 
   // 8. Publish debug data
   published_time_publisher_->publish_if_subscribed(trajectory_pub_, output_traj.header.stamp);
-  planner_ptr_->publishDiagnostics(now());
+  planner_ptr_->publishMetrics(now());
   publishDebugMarker();
   publishDebugInfo();
+  objects_of_interest_marker_interface_.publishMarkerArray();
 
   // 9. Publish and print calculation time
   const double calculation_time = stop_watch_.toc(__func__);
@@ -1378,7 +1385,8 @@ std::optional<CruiseObstacle> ObstacleCruisePlannerNode::createYieldCruiseObstac
     obstacle.pose,
     obstacle.longitudinal_velocity,
     obstacle.approach_velocity,
-    collision_points.value()};
+    collision_points.value(),
+    true};
 }
 
 std::optional<std::vector<CruiseObstacle>> ObstacleCruisePlannerNode::findYieldCruiseObstacles(
@@ -1449,6 +1457,9 @@ std::optional<std::vector<CruiseObstacle>> ObstacleCruisePlannerNode::findYieldC
         const auto yield_obstacle = createYieldCruiseObstacle(moving_obstacle, traj_points);
         if (yield_obstacle) {
           yield_obstacles.push_back(*yield_obstacle);
+          using autoware::objects_of_interest_marker_interface::ColorName;
+          objects_of_interest_marker_interface_.insertObjectData(
+            stopped_obstacle.pose, stopped_obstacle.shape, ColorName::RED);
         }
       }
     }
@@ -1758,7 +1769,7 @@ std::optional<StopObstacle> ObstacleCruisePlannerNode::createStopObstacleForPred
     if (resampled_predicted_paths.empty() || resampled_predicted_paths.front().path.empty()) {
       return false;
     }
-    const auto future_obj_pose = object_recognition_utils::calcInterpolatedPose(
+    const auto future_obj_pose = autoware::object_recognition_utils::calcInterpolatedPose(
       resampled_predicted_paths.front(), time_to_reach_stop_point - p.collision_time_margin);
 
     Obstacle tmp_future_obs = obstacle;

@@ -15,9 +15,9 @@
 #ifndef AUTOWARE__POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__RING_OUTLIER_FILTER_NODE_HPP_
 #define AUTOWARE__POINTCLOUD_PREPROCESSOR__OUTLIER_FILTER__RING_OUTLIER_FILTER_NODE_HPP_
 
+#include "autoware/point_types/types.hpp"
 #include "autoware/pointcloud_preprocessor/filter.hpp"
 #include "autoware/pointcloud_preprocessor/transform_info.hpp"
-#include "autoware_point_types/types.hpp"
 
 #include <image_transport/image_transport.hpp>
 #include <point_cloud_msg_wrapper/point_cloud_msg_wrapper.hpp>
@@ -40,18 +40,18 @@ using point_cloud_msg_wrapper::PointCloud2Modifier;
 class RingOutlierFilterComponent : public autoware::pointcloud_preprocessor::Filter
 {
 protected:
-  using InputPointIndex = autoware_point_types::PointXYZIRCAEDTIndex;
-  using InputPointType = autoware_point_types::PointXYZIRCAEDT;
-  using OutputPointType = autoware_point_types::PointXYZIRC;
+  using InputPointIndex = autoware::point_types::PointXYZIRCAEDTIndex;
+  using InputPointType = autoware::point_types::PointXYZIRCAEDT;
+  using OutputPointType = autoware::point_types::PointXYZIRC;
 
-  virtual void filter(
-    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output);
+  void filter(
+    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output) override;
 
   // TODO(sykwer): Temporary Implementation: Remove this interface when all the filter nodes conform
   // to new API
-  virtual void faster_filter(
+  void faster_filter(
     const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output,
-    const TransformInfo & transform_info);
+    const TransformInfo & transform_info) override;
 
   rclcpp::Publisher<tier4_debug_msgs::msg::Float32Stamped>::SharedPtr visibility_pub_;
 

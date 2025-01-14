@@ -67,7 +67,7 @@
 
     <!-- Service Log Checker -->
     <group>
-      <include file="$(find-pkg-share component_interface_tools)/launch/service_log_checker.launch.xml"/>
+      <include file="$(find-pkg-share autoware_component_interface_tools)/launch/service_log_checker.launch.xml"/>
     </group>
 
     <!-- Component State Monitor -->

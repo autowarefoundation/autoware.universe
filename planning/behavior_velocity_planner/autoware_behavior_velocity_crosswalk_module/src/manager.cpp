@@ -51,8 +51,6 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<double>(node, ns + ".stop_position.stop_distance_from_object_preferred");
   cp.stop_distance_from_object_limit =
     getOrDeclareParameter<double>(node, ns + ".stop_position.stop_distance_from_object_limit");
-  cp.far_object_threshold =
-    getOrDeclareParameter<double>(node, ns + ".stop_position.far_object_threshold");
   cp.stop_position_threshold =
     getOrDeclareParameter<double>(node, ns + ".stop_position.stop_position_threshold");
   cp.min_acc_preferred =
@@ -218,7 +216,7 @@ void CrosswalkModuleManager::launchNewModules(const PathWithLaneId & path)
   }
 }
 
-std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
+std::function<bool(const std::shared_ptr<SceneModuleInterfaceWithRTC> &)>
 CrosswalkModuleManager::getModuleExpiredFunction(const PathWithLaneId & path)
 {
   const auto rh = planner_data_->route_handler_;
@@ -235,7 +233,7 @@ CrosswalkModuleManager::getModuleExpiredFunction(const PathWithLaneId & path)
     crosswalk_id_set.insert(crosswalk.first->crosswalkLanelet().id());
   }
 
-  return [crosswalk_id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
+  return [crosswalk_id_set](const std::shared_ptr<SceneModuleInterfaceWithRTC> & scene_module) {
     return crosswalk_id_set.count(scene_module->getModuleId()) == 0;
   };
 }
