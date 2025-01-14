@@ -206,27 +206,30 @@ MarkerArray ShowLaneChangeMetricsInfo(
   text_marker.pose = autoware::universe_utils::calcOffsetPose(pose, 10.0, 15.0, 0.0);
 
   if (!debug_data.lane_change_metrics.empty()) {
-    text_marker.text = fmt::format("{:<12}", "") + fmt::format("{:^18}|", "lat_accel[m/s2]") +
-                       fmt::format("{:^18}|", "lon_accel[m/s2]") +
-                       fmt::format("{:^17}|", "velocity[m/s]") +
-                       fmt::format("{:^15}|", "duration[s]") + fmt::format("{:^15}|", "length[m]") +
-                       fmt::format("{:^20}\n", "max_length_th[m]");
+    text_marker.text =
+      fmt::format("{:<12}", "") + fmt::format("{:^18}|", "lat_accel[m/s2]") +
+      fmt::format("{:^18}|", "lon_accel[m/s2]") + fmt::format("{:^17}|", "velocity[m/s]") +
+      fmt::format("{:^15}|", "duration[s]") + fmt::format("{:^15}|", "length[m]") +
+      fmt::format("{:^20}|", "max_length_th[m]") + fmt::format("{:^15}\n", "path_index");
     for (const auto & metrics : debug_data.lane_change_metrics) {
-      text_marker.text += fmt::format("{:-<170}\n", "");
+      text_marker.text += fmt::format("{:-<190}\n", "");
       const auto & p_m = metrics.prep_metric;
       text_marker.text +=
         fmt::format("{:<17}", "prep_metrics:") + fmt::format("{:^10.3f}", p_m.lat_accel) +
         fmt::format("{:^21.3f}", p_m.actual_lon_accel) + fmt::format("{:^12.3f}", p_m.velocity) +
         fmt::format("{:^15.3f}", p_m.duration) + fmt::format("{:^15.3f}", p_m.length) +
-        fmt::format("{:^17.3f}\n", metrics.max_prepare_length);
+        fmt::format("{:^17.3f}", metrics.max_prepare_length) + fmt::format("{:^15}\n", "-");
       text_marker.text += fmt::format("{:<20}\n", "lc_metrics:");
-      for (const auto lc_m : metrics.lc_metrics) {
-        text_marker.text += fmt::format("{:<15}", "") + fmt::format("{:^10.3f}", lc_m.lat_accel) +
-                            fmt::format("{:^21.3f}", lc_m.actual_lon_accel) +
-                            fmt::format("{:^12.3f}", lc_m.velocity) +
-                            fmt::format("{:^15.3f}", lc_m.duration) +
-                            fmt::format("{:^15.3f}", lc_m.length) +
-                            fmt::format("{:^17.3f}\n", metrics.max_lane_changing_length);
+      for (const auto & lc_m : metrics.lc_metrics) {
+        const auto & metric = lc_m.first;
+        const auto path_index = lc_m.second < 0 ? "-" : std::to_string(lc_m.second);
+        text_marker.text += fmt::format("{:<15}", "") + fmt::format("{:^10.3f}", metric.lat_accel) +
+                            fmt::format("{:^21.3f}", metric.actual_lon_accel) +
+                            fmt::format("{:^12.3f}", metric.velocity) +
+                            fmt::format("{:^15.3f}", metric.duration) +
+                            fmt::format("{:^15.3f}", metric.length) +
+                            fmt::format("{:^17.3f}", metrics.max_lane_changing_length) +
+                            fmt::format("{:^15}\n", path_index);
       }
     }
     marker_array.markers.push_back(text_marker);

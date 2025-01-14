@@ -1266,8 +1266,12 @@ bool NormalLaneChange::get_path_using_path_shifter(
     const auto shift_length =
       lanelet::utils::getLateralDistanceToClosestLanelet(target_lanes, lane_changing_start_pose);
 
+    lane_change_debug_.lane_change_metrics.emplace_back();
+    auto & debug_metrics = lane_change_debug_.lane_change_metrics.back();
+    debug_metrics.prep_metric = prep_metric;
+    debug_metrics.max_prepare_length = common_data_ptr_->transient_data.dist_to_terminal_start;
     const auto lane_changing_metrics = get_lane_changing_metrics(
-      prepare_segment, prep_metric, shift_length, dist_to_next_regulatory_element);
+      prepare_segment, prep_metric, shift_length, dist_to_next_regulatory_element, debug_metrics);
 
     // set_prepare_velocity must only be called after computing lane change metrics, as lane change
     // metrics rely on the prepare segment's original velocity as max_path_velocity.
@@ -1275,6 +1279,8 @@ bool NormalLaneChange::get_path_using_path_shifter(
       prepare_segment, common_data_ptr_->get_ego_speed(), prep_metric.velocity);
 
     for (const auto & lc_metric : lane_changing_metrics) {
+      debug_metrics.lc_metrics.emplace_back(lc_metric, -1);
+
       const auto debug_print_lat = [&](const std::string & s) {
         RCLCPP_DEBUG(
           logger_, "%s | lc_time: %.5f | lon_acc: %.5f | lat_acc: %.5f | lc_len: %.5f", s.c_str(),
@@ -1296,6 +1302,7 @@ bool NormalLaneChange::get_path_using_path_shifter(
       }
 
       candidate_paths.push_back(candidate_path);
+      debug_metrics.lc_metrics.back().second = static_cast<int>(candidate_paths.size()) - 1;
 
       try {
         if (check_candidate_path_safety(candidate_path, target_objects)) {
