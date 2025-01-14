@@ -58,8 +58,10 @@ void RedundancyRelayManager::onMainElectionStatus(
 
   if (is_relaying_) {
     if (tmp_election_status == nullptr) return;
-    if (operation_mode_state->mode != autoware_adapi_v1_msgs::msg::OperationModeState::AUTONOMOUS) return;
-    if (((msg->path_info >> 3) & 0x01) == 1 || ((tmp_election_status->path_info >> 3) & 0x01) == 0) return;
+    if (operation_mode_state->mode != autoware_adapi_v1_msgs::msg::OperationModeState::AUTONOMOUS)
+      return;
+    if (((msg->path_info >> 3) & 0x01) == 1 || ((tmp_election_status->path_info >> 3) & 0x01) == 0)
+      return;
 
     requestTopicRelayControl(false, client_relay_trajectory_, "topic_relay_control_trajectory");
     requestTopicRelayControl(
@@ -87,8 +89,10 @@ void RedundancyRelayManager::onSubElectionStatus(
 
   if (is_relaying_) {
     if (tmp_election_status == nullptr) return;
-    if (operation_mode_state->mode != autoware_adapi_v1_msgs::msg::OperationModeState::AUTONOMOUS) return;
-    if (((msg->path_info >> 3) & 0x01) == 1 || ((tmp_election_status->path_info >> 3) & 0x01) == 0) return;
+    if (operation_mode_state->mode != autoware_adapi_v1_msgs::msg::OperationModeState::AUTONOMOUS)
+      return;
+    if (((msg->path_info >> 3) & 0x01) == 1 || ((tmp_election_status->path_info >> 3) & 0x01) == 0)
+      return;
 
     requestTopicRelayControl(false, client_relay_trajectory_, "topic_relay_control_trajectory");
     requestTopicRelayControl(
