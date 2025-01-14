@@ -43,7 +43,7 @@ public:
     const std::string & source_frame_id, const rclcpp::Time & time) const;
   std::optional<geometry_msgs::msg::Transform> getTransform(const rclcpp::Time & time) const;
 
-  std::optional<nav_msgs::msg::Odometry> getOdometryFromTf(const rclcpp::Time & time);
+  std::optional<nav_msgs::msg::Odometry> getOdometryFromTf(const rclcpp::Time & time) const;
 
   std::optional<types::DynamicObjectList> transformObjects(
     const types::DynamicObjectList & input_objects) const;
@@ -66,10 +66,6 @@ private:
 
   // cache of tf
   mutable std::map<rclcpp::Time, geometry_msgs::msg::Transform> tf_cache_;
-
-  // current transform
-  geometry_msgs::msg::Transform current_transform_;
-  nav_msgs::msg::Odometry current_odometry_;
 };
 
 }  // namespace autoware::multi_object_tracker

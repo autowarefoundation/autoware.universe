@@ -15,8 +15,7 @@
 #include "input_manager.hpp"
 
 #include "autoware/multi_object_tracker/object_model/types.hpp"
-
-#include <autoware/multi_object_tracker/uncertainty/uncertainty_processor.hpp>
+#include "autoware/multi_object_tracker/uncertainty/uncertainty_processor.hpp"
 
 #include <cassert>
 #include <memory>
@@ -74,13 +73,6 @@ void InputStream::onMessage(
     return;
   }
   dynamic_objects = transformed_objects.value();
-  // Add the odometry uncertainty to the object uncertainty
-  if (odometry_->enable_odometry_uncertainty_) {
-    // Create a modeled odometry message
-    const auto odometry = odometry_->getOdometryFromTf(dynamic_objects.header.stamp);
-    // Add the odometry uncertainty to the object uncertainty
-    uncertainty::addOdometryUncertainty(odometry.value(), dynamic_objects);
-  }
 
   // Normalize the object uncertainty
   uncertainty::normalizeUncertainty(dynamic_objects);

@@ -14,6 +14,8 @@
 
 #include "autoware/multi_object_tracker/odometry.hpp"
 
+#include "autoware/multi_object_tracker/uncertainty/uncertainty_processor.hpp"
+
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <tf2_ros/create_timer_ros.h>
@@ -99,24 +101,24 @@ std::optional<geometry_msgs::msg::Transform> Odometry::getTransform(
   }
 }
 
-std::optional<nav_msgs::msg::Odometry> Odometry::getOdometryFromTf(const rclcpp::Time & time)
+std::optional<nav_msgs::msg::Odometry> Odometry::getOdometryFromTf(const rclcpp::Time & time) const
 {
   const auto self_transform = getTransform(time);
   if (!self_transform) {
     return std::nullopt;
   }
-  current_transform_ = self_transform.value();
+  const auto current_transform = self_transform.value();
 
+  nav_msgs::msg::Odometry odometry;
   {
-    nav_msgs::msg::Odometry odometry;
     odometry.header.stamp = time + rclcpp::Duration::from_seconds(0.00001);
 
     // set the odometry pose
     auto & odom_pose = odometry.pose.pose;
-    odom_pose.position.x = current_transform_.translation.x;
-    odom_pose.position.y = current_transform_.translation.y;
-    odom_pose.position.z = current_transform_.translation.z;
-    odom_pose.orientation = current_transform_.rotation;
+    odom_pose.position.x = current_transform.translation.x;
+    odom_pose.position.y = current_transform.translation.y;
+    odom_pose.position.z = current_transform.translation.z;
+    odom_pose.orientation = current_transform.rotation;
 
     // set odometry twist
     auto & odom_twist = odometry.twist.twist;
@@ -134,11 +136,9 @@ std::optional<nav_msgs::msg::Odometry> Odometry::getOdometryFromTf(const rclcpp:
     odom_twist_cov[0] = 2.0;     // x-x [m^2/s^2]
     odom_twist_cov[7] = 0.2;     // y-y [m^2/s^2]
     odom_twist_cov[35] = 0.001;  // yaw-yaw [rad^2/s^2]
-
-    current_odometry_ = odometry;
   }
 
-  return std::optional<nav_msgs::msg::Odometry>(current_odometry_);
+  return std::optional<nav_msgs::msg::Odometry>(odometry);
 }
 
 std::optional<types::DynamicObjectList> Odometry::transformObjects(
@@ -171,6 +171,14 @@ std::optional<types::DynamicObjectList> Odometry::transformObjects(
         tf2::transformCovariance(pose_with_cov.covariance, tf_target2objects_world);
     }
   }
+  // Add the odometry uncertainty to the object uncertainty
+  if (enable_odometry_uncertainty_) {
+    // Create a modeled odometry message
+    const auto odometry = getOdometryFromTf(input_objects.header.stamp);
+    // Add the odometry uncertainty to the object uncertainty
+    uncertainty::addOdometryUncertainty(odometry.value(), output_objects);
+  }
+
   return std::optional<types::DynamicObjectList>(output_objects);
 }
 
