@@ -54,8 +54,6 @@ RunOutModule::RunOutModule(
   debug_ptr_(debug_ptr),
   state_machine_(std::make_unique<run_out_utils::StateMachine>(planner_param.approaching.state))
 {
-  velocity_factor_.init(PlanningBehavior::RUN_OUT);
-
   if (planner_param.run_out.use_partition_lanelet) {
     const lanelet::LaneletMapConstPtr & ll = planner_data->route_handler_->getLaneletMapPtr();
     planning_utils::getAllPartitionLanelets(ll, partition_lanelets_);
@@ -772,9 +770,10 @@ bool RunOutModule::insertStopPoint(
   stop_point_with_lane_id.point.pose = *stop_point;
   planning_utils::insertVelocity(path, stop_point_with_lane_id, 0.0, insert_idx);
 
-  velocity_factor_.set(
-    path.points, planner_data_->current_odometry->pose, stop_point.value(), VelocityFactor::UNKNOWN,
-    "run_out");
+  planning_factor_interface_->add(
+    path.points, planner_data_->current_odometry->pose, stop_point.value(), stop_point.value(),
+    tier4_planning_msgs::msg::PlanningFactor::STOP, tier4_planning_msgs::msg::SafetyFactorArray{},
+    true /*is_driving_forward*/, 0.0 /*velocity*/, 0.0 /*shift_distance*/, "run_out_stop");
 
   return true;
 }
@@ -878,8 +877,11 @@ void RunOutModule::insertApproachingVelocity(
     return;
   }
 
-  velocity_factor_.set(
-    output_path.points, current_pose, stop_point.value(), VelocityFactor::UNKNOWN, "run_out");
+  planning_factor_interface_->add(
+    output_path.points, planner_data_->current_odometry->pose, stop_point.value(),
+    stop_point.value(), tier4_planning_msgs::msg::PlanningFactor::STOP,
+    tier4_planning_msgs::msg::SafetyFactorArray{}, true /*is_driving_forward*/, 0.0 /*velocity*/,
+    0.0 /*shift_distance*/, "run_out_approaching_velocity");
 
   // debug
   debug_ptr_->pushStopPose(autoware::universe_utils::calcOffsetPose(
