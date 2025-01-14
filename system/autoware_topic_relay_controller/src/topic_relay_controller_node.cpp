@@ -71,17 +71,16 @@ TopicRelayController::TopicRelayController(const rclcpp::NodeOptions & options)
         for (const auto & transform : msg->transforms) {
           if (
             transform.header.frame_id != node_param_.frame_id ||
-            transform.child_frame_id != node_param_.child_frame_id ||
-            !is_relaying_) return;
-            
+            transform.child_frame_id != node_param_.child_frame_id || !is_relaying_)
+            return;
+
           if (node_param_.enable_keep_publishing) {
             last_tf_topic_ = msg;
           } else {
             pub_transform_->publish(*msg);
           }
         }
-      }
-    );
+      });
   } else {
     // Publisher
     pub_topic_ =
@@ -91,30 +90,27 @@ TopicRelayController::TopicRelayController(const rclcpp::NodeOptions & options)
       node_param_.topic, node_param_.topic_type, qos,
       [this]([[maybe_unused]] std::shared_ptr<rclcpp::SerializedMessage> msg) {
         if (!is_relaying_) return;
-        
+
         if (node_param_.enable_keep_publishing) {
           last_topic_ = msg;
         } else {
           pub_topic_->publish(*msg);
         }
-      }
-    );
+      });
   }
 
   // Timer
   if (node_param_.enable_keep_publishing) {
     const auto update_period_ns = rclcpp::Rate(node_param_.update_rate).period();
-    timer_ = rclcpp::create_timer(
-      this, get_clock(), update_period_ns, [this]() {
-        if (!is_relaying_) return;
+    timer_ = rclcpp::create_timer(this, get_clock(), update_period_ns, [this]() {
+      if (!is_relaying_) return;
 
-        if (node_param_.is_transform) {
-          if (last_tf_topic_) pub_transform_->publish(*last_tf_topic_);
-        } else {
-          if (last_topic_) pub_topic_->publish(*last_topic_);
-        }
+      if (node_param_.is_transform) {
+        if (last_tf_topic_) pub_transform_->publish(*last_tf_topic_);
+      } else {
+        if (last_topic_) pub_topic_->publish(*last_topic_);
       }
-    );
+    });
   }
 }
 }  // namespace autoware::topic_relay_controller
