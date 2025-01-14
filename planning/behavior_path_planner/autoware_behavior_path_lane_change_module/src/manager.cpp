@@ -339,9 +339,28 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
       parameters, ns + "max_longitudinal_acc", p->trajectory.max_longitudinal_acc);
     updateParam<double>(
       parameters, ns + "lane_changing_decel_factor", p->trajectory.lane_changing_decel_factor);
+
     int longitudinal_acc_sampling_num = 0;
-    updateParam<int>(parameters, ns + "lon_acc_sampling_num", p->trajectory.lon_acc_sampling_num);
-    updateParam<int>(parameters, ns + "lat_acc_sampling_num", p->trajectory.lat_acc_sampling_num);
+    updateParam<int>(parameters, ns + "lon_acc_sampling_num", longitudinal_acc_sampling_num);
+    if (longitudinal_acc_sampling_num > 0) {
+      p->trajectory.lon_acc_sampling_num = longitudinal_acc_sampling_num;
+    } else {
+      RCLCPP_WARN(
+        get_logger(),
+        "Parameter 'lon_acc_sampling_num' is not updated because the value (%d) is not positive",
+        longitudinal_acc_sampling_num);
+    }
+
+    int lateral_acc_sampling_num = 0;
+    updateParam<int>(parameters, ns + "lat_acc_sampling_num", lateral_acc_sampling_num);
+    if (lateral_acc_sampling_num > 0) {
+      p->trajectory.lat_acc_sampling_num = lateral_acc_sampling_num;
+    } else {
+      RCLCPP_WARN(
+        get_logger(),
+        "Parameter 'lat_acc_sampling_num' is not updated because the value (%d) is not positive",
+        lateral_acc_sampling_num);
+    }
 
     updateParam<double>(
       parameters, ns + "th_prepare_length_diff", p->trajectory.th_prepare_length_diff);
