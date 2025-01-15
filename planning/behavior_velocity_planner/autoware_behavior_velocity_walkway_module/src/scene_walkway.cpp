@@ -42,8 +42,6 @@ WalkwayModule::WalkwayModule(
   planner_param_(planner_param),
   use_regulatory_element_(use_regulatory_element)
 {
-  velocity_factor_.init(PlanningBehavior::SIDEWALK);
-
   if (use_regulatory_element_) {
     const auto reg_elem_ptr = std::dynamic_pointer_cast<const lanelet::autoware::Crosswalk>(
       lanelet_map_ptr->regulatoryElementLayer.get(module_id));
@@ -122,9 +120,10 @@ bool WalkwayModule::modifyPathVelocity(PathWithLaneId * path)
     }
 
     /* get stop point and stop factor */
-    velocity_factor_.set(
-      path->points, planner_data_->current_odometry->pose, stop_pose.value(),
-      VelocityFactor::UNKNOWN);
+    planning_factor_interface_->add(
+      path->points, planner_data_->current_odometry->pose, stop_pose.value(), stop_pose.value(),
+      tier4_planning_msgs::msg::PlanningFactor::STOP, tier4_planning_msgs::msg::SafetyFactorArray{},
+      true /*is_driving_forward*/, 0.0 /*velocity*/, 0.0 /*shift distance*/, "walkway_stop");
 
     // use arc length to identify if ego vehicle is in front of walkway stop or not.
     const double signed_arc_dist_to_stop_point =

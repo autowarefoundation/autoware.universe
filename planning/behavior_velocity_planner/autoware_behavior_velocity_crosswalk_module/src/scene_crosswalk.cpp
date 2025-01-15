@@ -183,7 +183,6 @@ CrosswalkModule::CrosswalkModule(
   planner_param_(planner_param),
   use_regulatory_element_(reg_elem_id)
 {
-  velocity_factor_.init(PlanningBehavior::CROSSWALK);
   passed_safety_slow_point_ = false;
 
   if (use_regulatory_element_) {
@@ -900,9 +899,11 @@ void CrosswalkModule::applySlowDown(
     }
   }
   if (slowdown_pose)
-    velocity_factor_.set(
-      output.points, planner_data_->current_odometry->pose, *slowdown_pose,
-      VelocityFactor::APPROACHING);
+    planning_factor_interface_->add(
+      output.points, planner_data_->current_odometry->pose, *slowdown_pose, *slowdown_pose,
+      tier4_planning_msgs::msg::PlanningFactor::SLOW_DOWN,
+      tier4_planning_msgs::msg::SafetyFactorArray{}, true /*is_driving_forward*/,
+      safety_slow_down_speed, 0.0 /*shift distance*/, "crosswalk_safety_slowdown_for_approaching");
 }
 
 void CrosswalkModule::applySlowDownByLanelet2Map(
@@ -1379,9 +1380,11 @@ void CrosswalkModule::planStop(
 
   // Plan stop
   insertDecelPointWithDebugInfo(stop_factor->stop_pose.position, 0.0, ego_path);
-  velocity_factor_.set(
+  planning_factor_interface_->add(
     ego_path.points, planner_data_->current_odometry->pose, stop_factor->stop_pose,
-    VelocityFactor::UNKNOWN);
+    stop_factor->stop_pose, tier4_planning_msgs::msg::PlanningFactor::STOP,
+    tier4_planning_msgs::msg::SafetyFactorArray{}, true /*is_driving_forward*/, 0.0 /*velocity*/,
+    0.0 /*shift distance*/, "crosswalk_stop");
 }
 
 bool CrosswalkModule::checkRestartSuppression(
