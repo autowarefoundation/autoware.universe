@@ -1051,7 +1051,9 @@ void NormalLaneChange::filterOncomingObjects(PredictedObjects & objects) const
 
   const auto is_same_direction = [&](const PredictedObject & object) {
     const auto & object_pose = object.kinematics.initial_pose_with_covariance.pose;
-    return !utils::path_safety_checker::isTargetObjectOncoming(current_pose, object_pose);
+    return !utils::path_safety_checker::isTargetObjectOncoming(
+      current_pose, object_pose,
+      common_data_ptr_->lc_param_ptr->safety.collision_check.th_incoming_object_yaw);
   };
 
   //  Perception noise could make stationary objects seem opposite the ego vehicle; check the

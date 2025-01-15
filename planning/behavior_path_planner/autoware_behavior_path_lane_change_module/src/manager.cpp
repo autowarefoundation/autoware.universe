@@ -152,6 +152,8 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
       getOrDeclareParameter<double>(*node, parameter("collision_check.prediction_time_resolution"));
     p.safety.collision_check.th_yaw_diff =
       getOrDeclareParameter<double>(*node, parameter("collision_check.yaw_diff_threshold"));
+    p.safety.collision_check.th_incoming_object_yaw =
+      getOrDeclareParameter<double>(*node, parameter("collision_check.th_incoming_object_yaw"));
 
     // rss check
     auto set_rss_params = [&](auto & params, const std::string & prefix) {
@@ -440,6 +442,18 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
       p->safety.collision_check.prediction_time_resolution);
     updateParam<double>(
       parameters, ns + "yaw_diff_threshold", p->safety.collision_check.th_yaw_diff);
+
+    auto th_incoming_object_yaw = p->safety.collision_check.th_incoming_object_yaw;
+    updateParam<double>(parameters, ns + "th_incoming_object_yaw", th_incoming_object_yaw);
+    if (th_incoming_object_yaw >= M_PI_2) {
+      p->safety.collision_check.th_incoming_object_yaw = th_incoming_object_yaw;
+    } else {
+      RCLCPP_WARN_THROTTLE(
+        node_->get_logger(), *node_->get_clock(), 5000,
+        "The value of th_incoming_object_yaw (%.3f rad) is less than the expected value (%.3f "
+        "rad).",
+        th_incoming_object_yaw, M_PI_2);
+    }
   }
 
   {
