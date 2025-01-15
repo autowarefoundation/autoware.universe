@@ -27,7 +27,6 @@
 #include "autoware/behavior_path_start_planner_module/pull_out_path.hpp"
 #include "autoware/behavior_path_start_planner_module/shift_pull_out.hpp"
 
-#include <autoware/lane_departure_checker/lane_departure_checker.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 
@@ -51,7 +50,6 @@ using autoware::behavior_path_planner::utils::path_safety_checker::ObjectsFilter
 using autoware::behavior_path_planner::utils::path_safety_checker::PoseWithVelocityStamped;
 using autoware::behavior_path_planner::utils::path_safety_checker::SafetyCheckParams;
 using autoware::behavior_path_planner::utils::path_safety_checker::TargetObjectsOnLane;
-using autoware::lane_departure_checker::LaneDepartureChecker;
 using geometry_msgs::msg::PoseArray;
 using PriorityOrder = std::vector<std::pair<size_t, std::shared_ptr<PullOutPlannerBase>>>;
 
@@ -309,8 +307,6 @@ ego pose.
   PathWithLaneId calcBackwardPathFromStartPose() const;
   std::vector<Pose> searchPullOutStartPoseCandidates(
     const PathWithLaneId & back_path_from_start_pose) const;
-
-  std::shared_ptr<LaneDepartureChecker> lane_departure_checker_;
 
   // turn signal
   TurnSignalInfo calcTurnSignalInfo();
