@@ -34,8 +34,8 @@ ControlEvaluatorNode::ControlEvaluatorNode(const rclcpp::NodeOptions & node_opti
   using std::placeholders::_1;
 
   // Publisher
-  processing_time_pub_ =
-    this->create_publisher<tier4_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
+  processing_time_pub_ = this->create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>(
+    "~/debug/processing_time_ms", 1);
   metrics_pub_ = create_publisher<MetricArrayMsg>("~/metrics", 1);
 
   // Parameters
@@ -288,7 +288,7 @@ void ControlEvaluatorNode::onTimer()
   metrics_msg_ = MetricArrayMsg{};
 
   // Publish processing time
-  tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
+  autoware_internal_debug_msgs::msg::Float64Stamped processing_time_msg;
   processing_time_msg.stamp = get_clock()->now();
   processing_time_msg.data = stop_watch.toc();
   processing_time_pub_->publish(processing_time_msg);
