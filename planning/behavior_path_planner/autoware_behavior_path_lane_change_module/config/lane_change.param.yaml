@@ -122,7 +122,8 @@
           intersection: true
           turns: true
         prediction_time_resolution: 0.5
-        yaw_diff_threshold: 3.1416
+        th_incoming_object_yaw: 2.3562 # [rad]
+        yaw_diff_threshold: 3.1416 # [rad]
         check_current_lanes: false
         check_other_lanes: false
         use_all_predicted_paths: false

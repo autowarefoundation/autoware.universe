@@ -1149,6 +1149,7 @@ The following parameters are used to configure terminal lane change path feature
 | `collision_check.use_all_predicted_paths`                | [-]   | boolean | If false, use only the predicted path that has the maximum confidence.                                                                                                                                     | true          |
 | `collision_check.prediction_time_resolution`             | [s]   | double  | Time resolution for object's path interpolation and collision check.                                                                                                                                       | 0.5           |
 | `collision_check.yaw_diff_threshold`                     | [rad] | double  | Maximum yaw difference between ego and object when executing rss-based collision checking                                                                                                                  | 3.1416        |
+| `collision_check.th_incoming_object_yaw`                 | [rad] | double  | Objects with a heading difference from the ego exceeding this value are excluded from the safety check.                                                                                                    | 2.3562        |
 
 #### safety constraints during lane change path is computed
 
