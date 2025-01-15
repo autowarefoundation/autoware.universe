@@ -113,6 +113,13 @@ struct SafetyParameters
   CollisionCheckParameters collision_check{};
 };
 
+struct FrenetPlannerParameters
+{
+  bool enable{true};
+  double th_yaw_diff_deg{10.0};
+  double th_curvature_smoothing{0.1};
+};
+
 struct TrajectoryParameters
 {
   double max_prepare_duration{4.0};
@@ -124,6 +131,7 @@ struct TrajectoryParameters
   double th_lane_changing_length_diff{0.5};
   double min_lane_changing_velocity{5.6};
   double lane_changing_decel_factor{0.5};
+  double th_prepare_curvature{0.03};
   int lon_acc_sampling_num{10};
   int lat_acc_sampling_num{10};
   LateralAccelerationMap lat_acc_map{};
@@ -137,18 +145,28 @@ struct DelayParameters
   double th_parked_vehicle_shift_ratio{0.6};
 };
 
+struct TerminalPathParameters
+{
+  bool enable{false};
+  bool disable_near_goal{false};
+  bool stop_at_boundary{false};
+};
+
 struct Parameters
 {
   TrajectoryParameters trajectory{};
   SafetyParameters safety{};
   CancelParameters cancel{};
   DelayParameters delay{};
+  TerminalPathParameters terminal_path{};
+  FrenetPlannerParameters frenet{};
 
   // lane change parameters
   double backward_lane_length{200.0};
   double backward_length_buffer_for_end_of_lane{0.0};
   double backward_length_buffer_for_blocking_object{0.0};
   double backward_length_from_intersection{5.0};
+  bool enable_stopped_vehicle_buffer{false};
 
   // parked vehicle
   double object_check_min_road_shoulder_width{0.5};
