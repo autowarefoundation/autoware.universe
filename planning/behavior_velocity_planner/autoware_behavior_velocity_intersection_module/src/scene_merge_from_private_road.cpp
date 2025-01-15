@@ -48,7 +48,6 @@ MergeFromPrivateRoadModule::MergeFromPrivateRoadModule(
   lane_id_(lane_id),
   associative_ids_(associative_ids)
 {
-  velocity_factor_.init(PlanningBehavior::MERGE);
   planner_param_ = planner_param;
   state_machine_.setState(StateMachine::State::STOP);
 }
@@ -155,8 +154,10 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path)
 
     /* get stop point and stop factor */
     const auto & stop_pose = path->points.at(stopline_idx).point.pose;
-    velocity_factor_.set(
-      path->points, planner_data_->current_odometry->pose, stop_pose, VelocityFactor::UNKNOWN);
+    planning_factor_interface_->add(
+      path->points, planner_data_->current_odometry->pose, stop_pose, stop_pose,
+      tier4_planning_msgs::msg::PlanningFactor::STOP, tier4_planning_msgs::msg::SafetyFactorArray{},
+      true /*is_driving_forward*/, 0.0, 0.0 /*shift distance*/, "merge_from_private");
 
     const double signed_arc_dist_to_stop_point = autoware::motion_utils::calcSignedArcLength(
       path->points, current_pose.position, path->points.at(stopline_idx).point.pose.position);

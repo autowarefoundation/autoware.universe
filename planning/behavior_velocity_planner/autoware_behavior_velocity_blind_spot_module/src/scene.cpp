@@ -49,7 +49,6 @@ BlindSpotModule::BlindSpotModule(
   turn_direction_(turn_direction),
   is_over_pass_judge_line_(false)
 {
-  velocity_factor_.init(PlanningBehavior::REAR_CHECK);
   sibling_straight_lanelet_ = getSiblingStraightLanelet(
     planner_data->route_handler_->getLaneletMapPtr()->laneletLayer.get(lane_id_),
     planner_data->route_handler_->getRoutingGraphPtr());
