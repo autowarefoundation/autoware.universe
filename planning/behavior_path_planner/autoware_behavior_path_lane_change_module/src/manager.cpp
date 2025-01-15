@@ -361,7 +361,7 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
       parameters, ns + "lane_changing_decel_factor", p->trajectory.lane_changing_decel_factor);
     updateParam<double>(
       parameters, ns + "th_prepare_curvature", p->trajectory.th_prepare_curvature);
-    int longitudinal_acc_sampling_num = 0;
+    int longitudinal_acc_sampling_num = p->trajectory.lon_acc_sampling_num;
     updateParam<int>(parameters, ns + "lon_acc_sampling_num", longitudinal_acc_sampling_num);
     if (longitudinal_acc_sampling_num > 0) {
       p->trajectory.lon_acc_sampling_num = longitudinal_acc_sampling_num;
@@ -373,7 +373,7 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
         longitudinal_acc_sampling_num);
     }
 
-    int lateral_acc_sampling_num = 0;
+    int lateral_acc_sampling_num = p->trajectory.lat_acc_sampling_num;
     updateParam<int>(parameters, ns + "lat_acc_sampling_num", lateral_acc_sampling_num);
     if (lateral_acc_sampling_num > 0) {
       p->trajectory.lat_acc_sampling_num = lateral_acc_sampling_num;
