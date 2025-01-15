@@ -321,7 +321,7 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
     } else {
       RCLCPP_WARN_THROTTLE(
         node_->get_logger(), *node_->get_clock(), 1000,
-        "WARNING! Parameter 'time_limit' is not updated becasue the value (%.3f ms) is not valid, "
+        "WARNING! Parameter 'time_limit' is not updated because the value (%.3f ms) is not valid, "
         "keep current value (%.3f ms)",
         time_limit, p->time_limit);
     }
