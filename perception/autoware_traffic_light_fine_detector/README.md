@@ -59,7 +59,6 @@ ROIs detected from YOLOX will be selected by a combination of `expect/rois`. At 
 | `fine_detector_label_path` | string  | ""                          | The label file with label names for detected objects written on it |
 | `fine_detector_precision`  | string  | "fp16"                      | The inference mode: "fp32", "fp16"                                 |
 | `approximate_sync`         | bool    | false                       | Flag for whether to ues approximate sync policy                    |
-| `cuda_preprocess`          | bool    | true                        | If true, pre-processing is performed on GPU                        |
 | `gpu_id`                   | integer | 0                           | ID for the selecting CUDA GPU device                               |
 
 ## Assumptions / Known limits
