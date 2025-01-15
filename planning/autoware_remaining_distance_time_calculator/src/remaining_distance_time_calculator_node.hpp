@@ -17,6 +17,7 @@
 
 #include <autoware/route_handler/route_handler.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <remaining_distance_time_calculator_parameters.hpp>
 
 #include <autoware_internal_msgs/msg/mission_remaining_distance_time.hpp>
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
@@ -24,6 +25,7 @@
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+#include <tier4_planning_msgs/msg/scenario.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
 
 #include <lanelet2_core/Forward.h>
@@ -37,11 +39,6 @@
 
 namespace autoware::remaining_distance_time_calculator
 {
-
-struct NodeParam
-{
-  double update_rate{0.0};
-};
 
 class RemainingDistanceTimeCalculatorNode : public rclcpp::Node
 {
@@ -59,6 +56,7 @@ private:
   rclcpp::Subscription<HADMapBin>::SharedPtr sub_map_;
   rclcpp::Subscription<Odometry>::SharedPtr sub_odometry_;
   rclcpp::Subscription<VelocityLimit>::SharedPtr sub_planning_velocity_;
+  rclcpp::Subscription<tier4_planning_msgs::msg::Scenario>::SharedPtr sub_scenario_;
 
   rclcpp::Publisher<MissionRemainingDistanceTime>::SharedPtr pub_mission_remaining_distance_time_;
 
@@ -75,14 +73,16 @@ private:
   geometry_msgs::msg::Pose current_vehicle_pose_;
   geometry_msgs::msg::Vector3 current_vehicle_velocity_;
   geometry_msgs::msg::Pose goal_pose_;
+  tier4_planning_msgs::msg::Scenario::ConstSharedPtr scenario_;
   bool has_received_route_;
+  bool has_received_scenario_;
   double velocity_limit_;
 
   double remaining_distance_;
   double remaining_time_;
 
   // Parameter
-  NodeParam node_param_;
+  std::shared_ptr<::remaining_distance_time_calculator::ParamListener> param_listener_;
 
   // Callbacks
   void on_timer();
@@ -90,6 +90,7 @@ private:
   void on_route(const LaneletRoute::ConstSharedPtr & msg);
   void on_map(const HADMapBin::ConstSharedPtr & msg);
   void on_velocity_limit(const VelocityLimit::ConstSharedPtr & msg);
+  void on_scenario(const tier4_planning_msgs::msg::Scenario::ConstSharedPtr & msg);
 
   /**
    * @brief calculate mission remaining distance
