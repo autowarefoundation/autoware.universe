@@ -86,21 +86,20 @@ inline visualization_msgs::msg::MarkerArray createDeletedVirtualWallMarkerArray(
   return marker_array;
 }
 
-inline visualization_msgs::msg::MarkerArray createIntendedPassVirtualMarkerArray(
+inline visualization_msgs::msg::MarkerArray createIntendedPassArrowMarkerArray(
   const geometry_msgs::msg::Pose & vehicle_front_pose, const std::string & module_name,
   const std::string & ns_prefix, const rclcpp::Time & now, const int32_t id,
   const std_msgs::msg::ColorRGBA & color)
 {
   visualization_msgs::msg::MarkerArray marker_array;
 
-  // Virtual Wall
+  // Arrow
   {
     auto marker = createDefaultMarker(
       "map", now, ns_prefix + "direction", id, visualization_msgs::msg::Marker::ARROW,
       createMarkerScale(2.5 /*length*/, 0.15 /*width*/, 1.0 /*height*/), color);
 
     marker.pose = vehicle_front_pose;
-    // marker.pose.position.z += 1.0;
 
     marker_array.markers.push_back(marker);
   }
@@ -168,7 +167,7 @@ visualization_msgs::msg::MarkerArray createIntendedPassVirtualMarker(
 {
   const auto pose_with_offset = autoware::universe_utils::calcOffsetPose(
     pose, longitudinal_offset * (is_driving_forward ? 1.0 : -1.0), 0.0, 0.0);
-  return createIntendedPassVirtualMarkerArray(
+  return createIntendedPassArrowMarkerArray(
     pose_with_offset, module_name, ns_prefix + "intended_pass_", now, id,
     createMarkerColor(0.77, 0.77, 0.77, 0.5));
 }
