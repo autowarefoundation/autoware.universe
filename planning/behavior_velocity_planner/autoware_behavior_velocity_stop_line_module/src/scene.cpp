@@ -31,7 +31,8 @@ StopLineModule::StopLineModule(
   const int64_t module_id, lanelet::ConstLineString3d stop_line, const PlannerParam & planner_param,
   const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock,
   const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
-  const std::shared_ptr<motion_utils::PlanningFactorInterface> planning_factor_interface)
+  const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
+    planning_factor_interface)
 : SceneModuleInterface(module_id, logger, clock, time_keeper, planning_factor_interface),
   stop_line_(std::move(stop_line)),
   planner_param_(planner_param),
