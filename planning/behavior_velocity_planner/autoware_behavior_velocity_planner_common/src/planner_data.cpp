@@ -69,4 +69,14 @@ std::optional<TrafficSignalStamped> PlannerData::getTrafficSignal(
   }
   return std::make_optional<TrafficSignalStamped>(traffic_light_id_map.at(id));
 }
+
+std::optional<double> PlannerData::getRestTimeToRedSignal(const lanelet::Id & id) const
+{
+  try {
+    return traffic_light_time_to_red_id_map_.at(id);
+  } catch (std::out_of_range &) {
+    return std::nullopt;
+  }
+}
+
 }  // namespace autoware::behavior_velocity_planner

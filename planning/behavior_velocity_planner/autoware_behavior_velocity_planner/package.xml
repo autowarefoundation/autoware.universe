@@ -45,6 +45,7 @@
   <depend>diagnostic_msgs</depend>
   <depend>eigen</depend>
   <depend>geometry_msgs</depend>
+  <depend>jpn_signal_v2i_msgs</depend>
   <depend>libboost-dev</depend>
   <depend>pcl_conversions</depend>
   <depend>pluginlib</depend>

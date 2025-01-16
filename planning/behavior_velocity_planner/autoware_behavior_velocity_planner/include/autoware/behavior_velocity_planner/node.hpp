@@ -27,6 +27,7 @@
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_planning_msgs/msg/path.hpp>
+#include <jpn_signal_v2i_msgs/msg/traffic_light_info.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -81,6 +82,15 @@ private:
     autoware_perception_msgs::msg::TrafficLightGroupArray>
     sub_traffic_signals_{this, "~/input/traffic_signals"};
 
+  autoware::universe_utils::InterProcessPollingSubscriber<
+    jpn_signal_v2i_msgs::msg::TrafficLightInfo>
+    sub_traffic_signals_raw_v2i_{this, "~/input/traffic_signals_raw_v2i"};
+
+
+  autoware::universe_utils::InterProcessPollingSubscriber<
+    tier4_v2x_msgs::msg::VirtualTrafficLightStateArray>
+    sub_virtual_traffic_light_states_{this, "~/input/virtual_traffic_light_states"};
+
   autoware::universe_utils::InterProcessPollingSubscriber<nav_msgs::msg::OccupancyGrid>
     sub_occupancy_grid_{this, "~/input/occupancy_grid"};
 
@@ -100,6 +110,8 @@ private:
   void processOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
   void processTrafficSignals(
     const autoware_perception_msgs::msg::TrafficLightGroupArray::ConstSharedPtr msg);
+  void processTrafficSignalsRawV2I(
+    const jpn_signal_v2i_msgs::msg::TrafficLightInfo::ConstSharedPtr msg);
   bool processData(rclcpp::Clock clock);
 
   // publisher

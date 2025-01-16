@@ -107,6 +107,31 @@ bool TrafficLightModule::modifyPathVelocity(PathWithLaneId * path)
 
     first_ref_stop_path_point_index_ = stop_line.value().first;
 
+    // Use V2I if available
+    const std::optional<double> rest_time_to_red_signal =
+      planner_data_->getRestTimeToRedSignal(traffic_light_reg_elem_.id());
+
+    if (planner_param_.v2i_use_rest_time && rest_time_to_red_signal) {
+      const double rest_time_allowed_to_go_ahead =
+        rest_time_to_red_signal.value() - planner_param_.v2i_last_time_allowed_to_pass;
+      const double ego_v = planner_data_->current_velocity->twist.linear.x;
+
+      // Determine whether to stop based on velocity and time constraints
+      bool should_stop =
+        (ego_v >= planner_param_.v2i_velocity_threshold &&
+         ego_v * rest_time_allowed_to_go_ahead <= signed_arc_length_to_stop_point) ||
+        (ego_v < planner_param_.v2i_velocity_threshold &&
+         rest_time_allowed_to_go_ahead < planner_param_.v2i_required_time_to_departure);
+
+      // RTC
+      setSafe(!should_stop);
+      if (isActivated()) {
+        return true;
+      }
+      *path = insertStopPose(input_path, stop_line.value().first, stop_line.value().second);
+      return true;
+    }
+
     // Check if stop is coming.
     const bool is_stop_signal = isStopSignal();
 

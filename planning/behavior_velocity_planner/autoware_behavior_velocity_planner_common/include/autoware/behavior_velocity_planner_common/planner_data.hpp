@@ -62,6 +62,7 @@ struct PlannerData
 
   std::map<lanelet::Id, TrafficSignalStamped> traffic_light_id_map_raw_;
   std::map<lanelet::Id, TrafficSignalStamped> traffic_light_id_map_last_observed_;
+  std::map<lanelet::Id, double> traffic_light_time_to_red_id_map_;
   std::optional<tier4_planning_msgs::msg::VelocityLimit> external_velocity_limit;
 
   bool is_simulation = false;
@@ -80,6 +81,8 @@ struct PlannerData
 
   std::optional<TrafficSignalStamped> getTrafficSignal(
     const lanelet::Id id, const bool keep_last_observation = false) const;
+
+  std::optional<double> getRestTimeToRedSignal(const lanelet::Id & id) const;
 };
 }  // namespace autoware::behavior_velocity_planner
 

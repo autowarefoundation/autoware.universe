@@ -228,6 +228,17 @@ void BehaviorVelocityPlannerNode::processTrafficSignals(
   }
 }
 
+void BehaviorVelocityPlannerNode::processTrafficSignalsRawV2I(
+  const jpn_signal_v2i_msgs::msg::TrafficLightInfo::ConstSharedPtr msg)
+{
+  for (const auto & car_light : msg->car_lights) {
+    for (const auto & state : car_light.states) {
+      planner_data_.traffic_light_time_to_red_id_map_[state.traffic_light_group_id] =
+        car_light.min_rest_time_to_red;
+    }
+  }
+}
+
 bool BehaviorVelocityPlannerNode::processData(rclcpp::Clock clock)
 {
   bool is_ready = true;
@@ -279,6 +290,9 @@ bool BehaviorVelocityPlannerNode::processData(rclcpp::Clock clock)
 
   const auto traffic_signals = sub_traffic_signals_.takeData();
   if (traffic_signals) processTrafficSignals(traffic_signals);
+
+  const auto traffic_signals_raw_v2i = sub_traffic_signals_raw_v2i_.takeData();
+  if (traffic_signals_raw_v2i) processTrafficSignalsRawV2I(traffic_signals_raw_v2i);
 
   return is_ready;
 }
