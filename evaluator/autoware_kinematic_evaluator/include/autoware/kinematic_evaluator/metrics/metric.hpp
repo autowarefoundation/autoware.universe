@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef KINEMATIC_EVALUATOR__METRICS__METRIC_HPP_
-#define KINEMATIC_EVALUATOR__METRICS__METRIC_HPP_
+#ifndef AUTOWARE__KINEMATIC_EVALUATOR__METRICS__METRIC_HPP_
+#define AUTOWARE__KINEMATIC_EVALUATOR__METRICS__METRIC_HPP_
 
 #include <iostream>
 #include <string>
@@ -59,4 +59,4 @@ static struct CheckCorrectMaps
 }  // namespace details
 }  // namespace autoware::kinematic_diagnostics
 
-#endif  // KINEMATIC_EVALUATOR__METRICS__METRIC_HPP_
+#endif  // AUTOWARE__KINEMATIC_EVALUATOR__METRICS__METRIC_HPP_

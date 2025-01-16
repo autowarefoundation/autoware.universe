@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef KINEMATIC_EVALUATOR__KINEMATIC_EVALUATOR_NODE_HPP_
-#define KINEMATIC_EVALUATOR__KINEMATIC_EVALUATOR_NODE_HPP_
+#ifndef AUTOWARE__KINEMATIC_EVALUATOR__KINEMATIC_EVALUATOR_NODE_HPP_
+#define AUTOWARE__KINEMATIC_EVALUATOR__KINEMATIC_EVALUATOR_NODE_HPP_
 
-#include "autoware/universe_utils/math/accumulator.hpp"
 #include "autoware/kinematic_evaluator/metrics_calculator.hpp"
+#include "autoware/universe_utils/math/accumulator.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
@@ -80,4 +80,4 @@ private:
 };
 }  // namespace autoware::kinematic_diagnostics
 
-#endif  // KINEMATIC_EVALUATOR__KINEMATIC_EVALUATOR_NODE_HPP_
+#endif  // AUTOWARE__KINEMATIC_EVALUATOR__KINEMATIC_EVALUATOR_NODE_HPP_

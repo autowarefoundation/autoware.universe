@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef KINEMATIC_EVALUATOR__METRICS__KINEMATIC_METRICS_HPP_
-#define KINEMATIC_EVALUATOR__METRICS__KINEMATIC_METRICS_HPP_
+#ifndef AUTOWARE__KINEMATIC_EVALUATOR__METRICS__KINEMATIC_METRICS_HPP_
+#define AUTOWARE__KINEMATIC_EVALUATOR__METRICS__KINEMATIC_METRICS_HPP_
 
 #include "autoware/universe_utils/math/accumulator.hpp"
 
@@ -37,4 +37,4 @@ Accumulator<double> updateVelocityStats(const double & value, const Accumulator<
 }  // namespace metrics
 }  // namespace autoware::kinematic_diagnostics
 
-#endif  // KINEMATIC_EVALUATOR__METRICS__KINEMATIC_METRICS_HPP_
+#endif  // AUTOWARE__KINEMATIC_EVALUATOR__METRICS__KINEMATIC_METRICS_HPP_

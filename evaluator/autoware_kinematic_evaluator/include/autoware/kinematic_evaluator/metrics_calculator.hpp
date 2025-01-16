@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef KINEMATIC_EVALUATOR__METRICS_CALCULATOR_HPP_
-#define KINEMATIC_EVALUATOR__METRICS_CALCULATOR_HPP_
+#ifndef AUTOWARE__KINEMATIC_EVALUATOR__METRICS_CALCULATOR_HPP_
+#define AUTOWARE__KINEMATIC_EVALUATOR__METRICS_CALCULATOR_HPP_
 
-#include "autoware/universe_utils/math/accumulator.hpp"
 #include "autoware/kinematic_evaluator/metrics/metric.hpp"
 #include "autoware/kinematic_evaluator/parameters.hpp"
+#include "autoware/universe_utils/math/accumulator.hpp"
 
 #include "geometry_msgs/msg/pose.hpp"
 #include <nav_msgs/msg/odometry.hpp>
@@ -54,4 +54,4 @@ public:
 
 }  // namespace autoware::kinematic_diagnostics
 
-#endif  // KINEMATIC_EVALUATOR__METRICS_CALCULATOR_HPP_
+#endif  // AUTOWARE__KINEMATIC_EVALUATOR__METRICS_CALCULATOR_HPP_

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef KINEMATIC_EVALUATOR__PARAMETERS_HPP_
-#define KINEMATIC_EVALUATOR__PARAMETERS_HPP_
+#ifndef AUTOWARE__KINEMATIC_EVALUATOR__PARAMETERS_HPP_
+#define AUTOWARE__KINEMATIC_EVALUATOR__PARAMETERS_HPP_
 
 #include "autoware/kinematic_evaluator/metrics/metric.hpp"
 
@@ -31,4 +31,4 @@ struct Parameters
 
 }  // namespace autoware::kinematic_diagnostics
 
-#endif  // KINEMATIC_EVALUATOR__PARAMETERS_HPP_
+#endif  // AUTOWARE__KINEMATIC_EVALUATOR__PARAMETERS_HPP_
