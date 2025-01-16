@@ -24,12 +24,18 @@
 #include "autoware/object_recognition_utils/predicted_path_utils.hpp"
 #include "autoware/universe_utils/math/unit_conversion.hpp"
 
+// for the geometry types
+#include <autoware/motion_utils/trajectory/path_shift.hpp>
+#include <autoware/universe_utils/geometry/boost_geometry.hpp>
+// for the svg mapper
 #include <autoware/behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp>
 #include <autoware/motion_utils/trajectory/interpolation.hpp>
 #include <autoware/motion_utils/trajectory/path_with_lane_id.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
+#include <autoware_frenet_planner/frenet_planner.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info.hpp>
@@ -40,9 +46,10 @@
 #include <range/v3/view.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <geometry_msgs/msg/detail/pose__struct.hpp>
-
+#include <boost/geometry/algorithms/buffer.hpp>
 #include <boost/geometry/algorithms/detail/disjoint/interface.hpp>
+#include <boost/geometry/io/svg/svg_mapper.hpp>
+#include <boost/geometry/io/svg/write.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/geometry/LineString.h>
@@ -64,9 +71,11 @@ namespace autoware::behavior_path_planner::utils::lane_change
 {
 using autoware::route_handler::RouteHandler;
 using autoware::universe_utils::LineString2d;
+using autoware::universe_utils::Point2d;
 using autoware::universe_utils::Polygon2d;
 using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::PredictedObjects;
+using behavior_path_planner::lane_change::PathType;
 using geometry_msgs::msg::Pose;
 using tier4_planning_msgs::msg::PathWithLaneId;
 
@@ -382,18 +391,26 @@ std::vector<std::vector<int64_t>> get_sorted_lane_ids(const CommonDataPtr & comm
   return sorted_lane_ids;
 }
 
-std::vector<int64_t> replaceWithSortedIds(
-  const std::vector<int64_t> & original_lane_ids,
-  const std::vector<std::vector<int64_t>> & sorted_lane_ids)
+std::vector<int64_t> replace_with_sorted_ids(
+  const std::vector<int64_t> & current_lane_ids,
+  const std::vector<std::vector<int64_t>> & sorted_lane_ids, std::vector<int64_t> & prev_lane_ids,
+  std::vector<int64_t> & prev_sorted_lane_ids)
 {
-  for (const auto original_id : original_lane_ids) {
+  if (current_lane_ids == prev_lane_ids) {
+    return prev_sorted_lane_ids;
+  }
+
+  for (const auto original_id : current_lane_ids) {
     for (const auto & sorted_id : sorted_lane_ids) {
       if (std::find(sorted_id.cbegin(), sorted_id.cend(), original_id) != sorted_id.cend()) {
-        return sorted_id;
+        prev_lane_ids = current_lane_ids;
+        prev_sorted_lane_ids = sorted_id;
+        return prev_sorted_lane_ids;
       }
     }
   }
-  return original_lane_ids;
+
+  return current_lane_ids;
 }
 
 CandidateOutput assignToCandidate(
@@ -475,6 +492,7 @@ std::vector<PoseWithVelocityStamped> convert_to_predicted_path(
                         0.5 * lane_changing_acceleration * delta_t * delta_t + offset;
     const auto pose = autoware::motion_utils::calcInterpolatedPose(
       path.points, vehicle_pose_frenet.length + length);
+
     predicted_path.emplace_back(t, pose, velocity);
   }
 
@@ -1127,12 +1145,58 @@ std::vector<std::vector<PoseWithVelocityStamped>> convert_to_predicted_paths(
   const auto acc_resolution = (min_acc - lane_changing_acc) / static_cast<double>(sampling_num);
 
   const auto ego_predicted_path = [&](size_t n) {
+    if (lane_change_path.type == PathType::FrenetPlanner) {
+      return convert_to_predicted_path(
+        common_data_ptr, lane_change_path.frenet_path, deceleration_sampling_num);
+    }
     auto acc = lane_changing_acc + static_cast<double>(n) * acc_resolution;
     return utils::lane_change::convert_to_predicted_path(common_data_ptr, lane_change_path, acc);
   };
 
   return ranges::views::iota(0UL, sampling_num) | ranges::views::transform(ego_predicted_path) |
          ranges::to<std::vector>();
+}
+
+std::vector<PoseWithVelocityStamped> convert_to_predicted_path(
+  const CommonDataPtr & common_data_ptr, const lane_change::TrajectoryGroup & frenet_candidate,
+  [[maybe_unused]] const size_t deceleration_sampling_num)
+{
+  const auto initial_velocity = common_data_ptr->get_ego_speed();
+  const auto prepare_time = frenet_candidate.prepare_metric.duration;
+  const auto resolution =
+    common_data_ptr->lc_param_ptr->safety.collision_check.prediction_time_resolution;
+  const auto prepare_acc = frenet_candidate.prepare_metric.sampled_lon_accel;
+  std::vector<PoseWithVelocityStamped> predicted_path;
+  const auto & path = frenet_candidate.prepare.points;
+  const auto & vehicle_pose = common_data_ptr->get_ego_pose();
+  const auto & bpp_param_ptr = common_data_ptr->bpp_param_ptr;
+  const auto nearest_seg_idx =
+    autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      path, vehicle_pose, bpp_param_ptr->ego_nearest_dist_threshold,
+      bpp_param_ptr->ego_nearest_yaw_threshold);
+
+  const auto vehicle_pose_frenet =
+    convertToFrenetPoint(path, vehicle_pose.position, nearest_seg_idx);
+
+  for (double t = 0.0; t < prepare_time; t += resolution) {
+    const auto velocity =
+      std::clamp(initial_velocity + prepare_acc * t, 0.0, frenet_candidate.prepare_metric.velocity);
+    const auto length = initial_velocity * t + 0.5 * prepare_acc * t * t;
+    const auto pose =
+      autoware::motion_utils::calcInterpolatedPose(path, vehicle_pose_frenet.length + length);
+    predicted_path.emplace_back(t, pose, velocity);
+  }
+
+  const auto & poses = frenet_candidate.lane_changing.poses;
+  const auto & velocities = frenet_candidate.lane_changing.longitudinal_velocities;
+  const auto & times = frenet_candidate.lane_changing.times;
+
+  for (const auto [t, pose, velocity] :
+       ranges::views::zip(times, poses, velocities) | ranges::views::drop(1)) {
+    predicted_path.emplace_back(prepare_time + t, pose, velocity);
+  }
+
+  return predicted_path;
 }
 
 bool is_valid_start_point(const lane_change::CommonDataPtr & common_data_ptr, const Pose & pose)

@@ -30,11 +30,10 @@
 
 namespace autoware::behavior_path_planner
 {
-ShiftPullOver::ShiftPullOver(
-  rclcpp::Node & node, const GoalPlannerParameters & parameters,
-  const LaneDepartureChecker & lane_departure_checker)
+ShiftPullOver::ShiftPullOver(rclcpp::Node & node, const GoalPlannerParameters & parameters)
 : PullOverPlannerBase{node, parameters},
-  lane_departure_checker_{lane_departure_checker},
+  lane_departure_checker_{
+    lane_departure_checker::Param{parameters.lane_departure_check_expansion_margin}, vehicle_info_},
   left_side_parking_{parameters.parking_policy == ParkingPolicy::LEFT_SIDE}
 {
 }

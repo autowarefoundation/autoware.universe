@@ -101,7 +101,7 @@ GoalPlannerModule::GoalPlannerModule(
 
   // freespace parking
   if (parameters_->enable_freespace_parking) {
-    auto freespace_planner = std::make_shared<FreespacePullOver>(node, *parameters, vehicle_info);
+    auto freespace_planner = std::make_shared<FreespacePullOver>(node, *parameters);
     const auto freespace_parking_period_ns = rclcpp::Rate(1.0).period();
     freespace_parking_timer_cb_group_ =
       node.create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -155,7 +155,7 @@ bool hasPreviousModulePathShapeChanged(
 {
   // Calculate the lateral distance between each point of the current path and the nearest point of
   // the last path
-  constexpr double LATERAL_DEVIATION_THRESH = 0.3;
+  constexpr double LATERAL_DEVIATION_THRESH = 0.1;
   for (const auto & p : upstream_module_output.path.points) {
     const size_t nearest_seg_idx = autoware::motion_utils::findNearestSegmentIndex(
       last_upstream_module_output.path.points, p.point.pose.position);
@@ -184,21 +184,12 @@ bool hasPreviousModulePathShapeChanged(
   return false;
 }
 
-bool hasDeviatedFromLastPreviousModulePath(
-  const PlannerData & planner_data, const BehaviorModuleOutput & last_upstream_module_output)
+bool hasDeviatedFromPath(
+  const Point & ego_position, const BehaviorModuleOutput & upstream_module_output)
 {
+  constexpr double LATERAL_DEVIATION_THRESH = 0.1;
   return std::abs(autoware::motion_utils::calcLateralOffset(
-           last_upstream_module_output.path.points,
-           planner_data.self_odometry->pose.pose.position)) > 0.3;
-}
-
-bool hasDeviatedFromCurrentPreviousModulePath(
-  const PlannerData & planner_data, const BehaviorModuleOutput & upstream_module_output)
-{
-  constexpr double LATERAL_DEVIATION_THRESH = 0.3;
-  return std::abs(autoware::motion_utils::calcLateralOffset(
-           upstream_module_output.path.points, planner_data.self_odometry->pose.pose.position)) >
-         LATERAL_DEVIATION_THRESH;
+           upstream_module_output.path.points, ego_position)) > LATERAL_DEVIATION_THRESH;
 }
 
 bool needPathUpdate(
@@ -289,24 +280,15 @@ LaneParkingPlanner::LaneParkingPlanner(
   is_lane_parking_cb_running_(is_lane_parking_cb_running),
   logger_(logger)
 {
-  const auto vehicle_info = autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo();
-  LaneDepartureChecker lane_departure_checker{};
-  lane_departure_checker.setVehicleInfo(vehicle_info);
-  lane_departure_checker::Param lane_departure_checker_params;
-  lane_departure_checker_params.footprint_extra_margin =
-    parameters.lane_departure_check_expansion_margin;
-  lane_departure_checker.setParam(lane_departure_checker_params);
-
   for (const std::string & planner_type : parameters.efficient_path_order) {
     if (planner_type == "SHIFT" && parameters.enable_shift_parking) {
-      pull_over_planners_.push_back(
-        std::make_shared<ShiftPullOver>(node, parameters, lane_departure_checker));
+      pull_over_planners_.push_back(std::make_shared<ShiftPullOver>(node, parameters));
     } else if (planner_type == "ARC_FORWARD" && parameters.enable_arc_forward_parking) {
-      pull_over_planners_.push_back(std::make_shared<GeometricPullOver>(
-        node, parameters, lane_departure_checker, /*is_forward*/ true));
+      pull_over_planners_.push_back(
+        std::make_shared<GeometricPullOver>(node, parameters, /*is_forward*/ true));
     } else if (planner_type == "ARC_BACKWARD" && parameters.enable_arc_backward_parking) {
-      pull_over_planners_.push_back(std::make_shared<GeometricPullOver>(
-        node, parameters, lane_departure_checker, /*is_forward*/ false));
+      pull_over_planners_.push_back(
+        std::make_shared<GeometricPullOver>(node, parameters, /*is_forward*/ false));
     }
   }
 
@@ -373,7 +355,8 @@ void LaneParkingPlanner::onTimer()
           local_planner_data->self_odometry->pose.pose, modified_goal_opt, parameters_)) {
       return false;
     }
-    if (hasDeviatedFromCurrentPreviousModulePath(*local_planner_data, upstream_module_output)) {
+    if (hasDeviatedFromPath(
+          local_planner_data->self_odometry->pose.pose.position, upstream_module_output)) {
       RCLCPP_DEBUG(getLogger(), "has deviated from current previous module path");
       return false;
     }
@@ -383,8 +366,8 @@ void LaneParkingPlanner::onTimer()
       return true;
     }
     if (
-      hasDeviatedFromLastPreviousModulePath(
-        *local_planner_data, original_upstream_module_output_) &&
+      hasDeviatedFromPath(
+        local_planner_data->self_odometry->pose.pose.position, original_upstream_module_output_) &&
       current_state != PathDecisionState::DecisionKind::DECIDED) {
       RCLCPP_DEBUG(getLogger(), "has deviated from last previous module path");
       return true;
@@ -1673,7 +1656,10 @@ PathWithLaneId GoalPlannerModule::generateStopPath(
   const auto reference_path = std::invoke([&]() -> PathWithLaneId {
     const auto s_current = lanelet::utils::getArcCoordinates(current_lanes, current_pose).length;
     const double s_start = std::max(0.0, s_current - common_parameters.backward_path_length);
-    const double s_end = s_current + common_parameters.forward_path_length;
+    const double s_end = std::clamp(
+      lanelet::utils::getArcCoordinates(current_lanes, route_handler->getGoalPose()).length,
+      s_current + std::numeric_limits<double>::epsilon(),
+      s_current + common_parameters.forward_path_length);
     return route_handler->getCenterLinePath(current_lanes, s_start, s_end, true);
   });
 

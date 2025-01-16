@@ -32,8 +32,7 @@ class GeometricPullOver : public PullOverPlannerBase
 {
 public:
   GeometricPullOver(
-    rclcpp::Node & node, const GoalPlannerParameters & parameters,
-    const LaneDepartureChecker & lane_departure_checker, const bool is_forward);
+    rclcpp::Node & node, const GoalPlannerParameters & parameters, const bool is_forward);
 
   PullOverPlannerType getPlannerType() const override
   {

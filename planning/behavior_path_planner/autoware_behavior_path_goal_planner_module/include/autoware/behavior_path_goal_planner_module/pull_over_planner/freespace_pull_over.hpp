@@ -30,9 +30,7 @@ using autoware::freespace_planning_algorithms::AbstractPlanningAlgorithm;
 class FreespacePullOver : public PullOverPlannerBase
 {
 public:
-  FreespacePullOver(
-    rclcpp::Node & node, const GoalPlannerParameters & parameters,
-    const autoware::vehicle_info_utils::VehicleInfo & vehicle_info);
+  FreespacePullOver(rclcpp::Node & node, const GoalPlannerParameters & parameters);
 
   PullOverPlannerType getPlannerType() const override { return PullOverPlannerType::FREESPACE; }
 
