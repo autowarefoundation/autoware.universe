@@ -52,14 +52,10 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <tf2_msgs/msg/tf_message.hpp>
-#include <tier4_api_msgs/msg/crosswalk_status.hpp>
-#include <tier4_api_msgs/msg/intersection_status.hpp>
-#include <tier4_planning_msgs/msg/expand_stop_range.hpp>
 #include <tier4_planning_msgs/msg/lateral_offset.hpp>
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/scenario.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
-#include <tier4_v2x_msgs/msg/virtual_traffic_light_state_array.hpp>
 
 #include <gtest/gtest.h>
 #include <tf2_ros/buffer.h>
@@ -87,14 +83,10 @@ using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
 using sensor_msgs::msg::PointCloud2;
 using tf2_msgs::msg::TFMessage;
-using tier4_api_msgs::msg::CrosswalkStatus;
-using tier4_api_msgs::msg::IntersectionStatus;
-using tier4_planning_msgs::msg::ExpandStopRange;
 using tier4_planning_msgs::msg::LateralOffset;
 using tier4_planning_msgs::msg::PathWithLaneId;
 using tier4_planning_msgs::msg::Scenario;
 using tier4_planning_msgs::msg::VelocityLimit;
-using tier4_v2x_msgs::msg::VirtualTrafficLightStateArray;
 
 enum class ModuleName {
   UNKNOWN = 0,
@@ -117,7 +109,6 @@ public:
   void publishPointCloud(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishAcceleration(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishPredictedObjects(rclcpp::Node::SharedPtr target_node, std::string topic_name);
-  void publishExpandStopRange(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishOccupancyGrid(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishCostMap(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishMap(rclcpp::Node::SharedPtr target_node, std::string topic_name);
@@ -131,7 +122,6 @@ public:
   void publishLateralOffset(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishOperationModeState(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishTrafficSignals(rclcpp::Node::SharedPtr target_node, std::string topic_name);
-  void publishVirtualTrafficLightState(rclcpp::Node::SharedPtr target_node, std::string topic_name);
 
   void setTrajectoryInputTopicName(std::string topic_name);
   void setParkingTrajectoryInputTopicName(std::string topic_name);
@@ -178,6 +168,7 @@ public:
   void testOffTrackFromTrajectory(rclcpp::Node::SharedPtr target_node);
 
   int getReceivedTopicNum();
+  rclcpp::Node::SharedPtr getTestNode() const;
 
 private:
   // Publisher (necessary for node running)
@@ -187,7 +178,6 @@ private:
   rclcpp::Publisher<PointCloud2>::SharedPtr point_cloud_pub_;
   rclcpp::Publisher<AccelWithCovarianceStamped>::SharedPtr acceleration_pub_;
   rclcpp::Publisher<PredictedObjects>::SharedPtr predicted_objects_pub_;
-  rclcpp::Publisher<ExpandStopRange>::SharedPtr expand_stop_range_pub_;
   rclcpp::Publisher<OccupancyGrid>::SharedPtr occupancy_grid_pub_;
   rclcpp::Publisher<OccupancyGrid>::SharedPtr cost_map_pub_;
   rclcpp::Publisher<LaneletMapBin>::SharedPtr map_pub_;
@@ -202,7 +192,6 @@ private:
   rclcpp::Publisher<LateralOffset>::SharedPtr lateral_offset_pub_;
   rclcpp::Publisher<OperationModeState>::SharedPtr operation_mode_state_pub_;
   rclcpp::Publisher<TrafficLightGroupArray>::SharedPtr traffic_signals_pub_;
-  rclcpp::Publisher<VirtualTrafficLightStateArray>::SharedPtr virtual_traffic_light_states_pub_;
 
   // Subscriber
   rclcpp::Subscription<Trajectory>::SharedPtr traj_sub_;

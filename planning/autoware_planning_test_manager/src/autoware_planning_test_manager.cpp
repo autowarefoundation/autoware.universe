@@ -71,13 +71,6 @@ void PlanningInterfaceTestManager::publishPredictedObjects(
     test_node_, target_node, topic_name, predicted_objects_pub_, PredictedObjects{});
 }
 
-void PlanningInterfaceTestManager::publishExpandStopRange(
-  rclcpp::Node::SharedPtr target_node, std::string topic_name)
-{
-  autoware::test_utils::publishToTargetNode(
-    test_node_, target_node, topic_name, expand_stop_range_pub_, ExpandStopRange{});
-}
-
 void PlanningInterfaceTestManager::publishOccupancyGrid(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {
@@ -179,14 +172,6 @@ void PlanningInterfaceTestManager::publishTrafficSignals(
 {
   autoware::test_utils::publishToTargetNode(
     test_node_, target_node, topic_name, traffic_signals_pub_, TrafficLightGroupArray{});
-}
-
-void PlanningInterfaceTestManager::publishVirtualTrafficLightState(
-  rclcpp::Node::SharedPtr target_node, std::string topic_name)
-{
-  autoware::test_utils::publishToTargetNode(
-    test_node_, target_node, topic_name, virtual_traffic_light_states_pub_,
-    VirtualTrafficLightStateArray{});
 }
 
 void PlanningInterfaceTestManager::publishInitialPoseTF(
@@ -469,6 +454,11 @@ void PlanningInterfaceTestManager::testWithAbnormalPath(rclcpp::Node::SharedPtr 
 int PlanningInterfaceTestManager::getReceivedTopicNum()
 {
   return count_;
+}
+
+rclcpp::Node::SharedPtr PlanningInterfaceTestManager::getTestNode() const
+{
+  return test_node_;
 }
 
 }  // namespace autoware::planning_test_manager
