@@ -15,12 +15,12 @@
 #ifndef AUTOWARE__OBSTACLE_CRUISE_PLANNER__PLANNER_INTERFACE_HPP_
 #define AUTOWARE__OBSTACLE_CRUISE_PLANNER__PLANNER_INTERFACE_HPP_
 
-#include "autoware/motion_utils/factor/planning_factor_interface.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/obstacle_cruise_planner/common_structs.hpp"
 #include "autoware/obstacle_cruise_planner/stop_planning_debug_info.hpp"
 #include "autoware/obstacle_cruise_planner/type_alias.hpp"
 #include "autoware/obstacle_cruise_planner/utils.hpp"
+#include "autoware/planning_factor_interface/planning_factor_interface.hpp"
 #include "autoware/universe_utils/ros/update_param.hpp"
 #include "autoware/universe_utils/system/stop_watch.hpp"
 
@@ -48,7 +48,8 @@ public:
     rclcpp::Node & node, const LongitudinalInfo & longitudinal_info,
     const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
     const EgoNearestParam & ego_nearest_param, const std::shared_ptr<DebugData> debug_data_ptr)
-  : planning_factor_interface_{std::make_unique<autoware::motion_utils::PlanningFactorInterface>(
+  : planning_factor_interface_{std::make_unique<
+      autoware::planning_factor_interface::PlanningFactorInterface>(
       &node, "obstacle_cruise_planner")},
     longitudinal_info_(longitudinal_info),
     vehicle_info_(vehicle_info),
@@ -130,7 +131,8 @@ public:
   double getSafeDistanceMargin() const { return longitudinal_info_.safe_distance_margin; }
 
 protected:
-  std::unique_ptr<autoware::motion_utils::PlanningFactorInterface> planning_factor_interface_;
+  std::unique_ptr<autoware::planning_factor_interface::PlanningFactorInterface>
+    planning_factor_interface_;
 
   // Parameters
   bool enable_debug_info_{false};
