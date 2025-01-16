@@ -58,7 +58,9 @@ void OutOfLaneModule::init(rclcpp::Node & node, const std::string & module_name)
   logger_ = node.get_logger();
   clock_ = node.get_clock();
   init_parameters(node);
-  velocity_factor_interface_.init(motion_utils::PlanningBehavior::ROUTE_OBSTACLE);
+
+  planning_factor_interface_ =
+    std::make_unique<autoware::motion_utils::PlanningFactorInterface>(&node, "out_of_lane");
 
   debug_publisher_ =
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/" + ns_ + "/debug_markers", 1);
@@ -310,15 +312,9 @@ VelocityPlanningResult OutOfLaneModule::plan(
         slowdown_pose->position, slowdown_pose->position, slowdown_velocity);
     }
 
-    const auto is_approaching =
-      motion_utils::calcSignedArcLength(
-        ego_trajectory_points, ego_data.pose.position, slowdown_pose->position) > 0.1 &&
-      planner_data->current_odometry.twist.twist.linear.x > 0.1;
-    const auto status = is_approaching ? motion_utils::VelocityFactor::APPROACHING
-                                       : motion_utils::VelocityFactor::STOPPED;
-    velocity_factor_interface_.set(
-      ego_trajectory_points, ego_data.pose, *slowdown_pose, status, "out_of_lane");
-    result.velocity_factor = velocity_factor_interface_.get();
+    planning_factor_interface_->add(
+      ego_trajectory_points, ego_data.pose, *slowdown_pose, PlanningFactor::SLOW_DOWN,
+      SafetyFactorArray{});
     virtual_wall_marker_creator.add_virtual_walls(
       out_of_lane::debug::create_virtual_walls(*slowdown_pose, slowdown_velocity == 0.0, params_));
     virtual_wall_publisher_->publish(virtual_wall_marker_creator.create_markers(clock_->now()));

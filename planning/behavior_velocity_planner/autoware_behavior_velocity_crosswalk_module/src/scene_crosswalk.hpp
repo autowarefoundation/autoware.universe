@@ -334,7 +334,9 @@ public:
     rclcpp::Node & node, const int64_t lane_id, const int64_t module_id,
     const std::optional<int64_t> & reg_elem_id, const lanelet::LaneletMapPtr & lanelet_map_ptr,
     const PlannerParam & planner_param, const rclcpp::Logger & logger,
-    const rclcpp::Clock::SharedPtr clock);
+    const rclcpp::Clock::SharedPtr clock,
+    const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+    const std::shared_ptr<motion_utils::PlanningFactorInterface> planning_factor_interface);
 
   bool modifyPathVelocity(PathWithLaneId * path) override;
 

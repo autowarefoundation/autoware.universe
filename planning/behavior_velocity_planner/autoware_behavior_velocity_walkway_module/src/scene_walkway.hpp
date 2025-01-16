@@ -44,7 +44,9 @@ public:
   WalkwayModule(
     const int64_t module_id, const lanelet::LaneletMapPtr & lanelet_map_ptr,
     const PlannerParam & planner_param, const bool use_regulatory_element,
-    const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock);
+    const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock,
+    const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+    const std::shared_ptr<motion_utils::PlanningFactorInterface> planning_factor_interface);
 
   bool modifyPathVelocity(PathWithLaneId * path) override;
 
