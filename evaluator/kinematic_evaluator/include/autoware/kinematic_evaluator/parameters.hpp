@@ -15,7 +15,7 @@
 #ifndef KINEMATIC_EVALUATOR__PARAMETERS_HPP_
 #define KINEMATIC_EVALUATOR__PARAMETERS_HPP_
 
-#include "kinematic_evaluator/metrics/metric.hpp"
+#include "autoware/kinematic_evaluator/metrics/metric.hpp"
 
 #include <array>
 

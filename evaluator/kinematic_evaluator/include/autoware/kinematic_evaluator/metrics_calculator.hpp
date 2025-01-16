@@ -16,8 +16,8 @@
 #define KINEMATIC_EVALUATOR__METRICS_CALCULATOR_HPP_
 
 #include "autoware/universe_utils/math/accumulator.hpp"
-#include "kinematic_evaluator/metrics/metric.hpp"
-#include "kinematic_evaluator/parameters.hpp"
+#include "autoware/kinematic_evaluator/metrics/metric.hpp"
+#include "autoware/kinematic_evaluator/parameters.hpp"
 
 #include "geometry_msgs/msg/pose.hpp"
 #include <nav_msgs/msg/odometry.hpp>

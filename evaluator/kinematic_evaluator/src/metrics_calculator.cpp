@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "kinematic_evaluator/metrics_calculator.hpp"
+#include "autoware/kinematic_evaluator/metrics_calculator.hpp"
 
-#include "kinematic_evaluator/metrics/kinematic_metrics.hpp"
+#include "autoware/kinematic_evaluator/metrics/kinematic_metrics.hpp"
 
 namespace autoware::kinematic_diagnostics
 {

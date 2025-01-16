@@ -18,7 +18,7 @@
 #include "rclcpp/time.hpp"
 #include "tf2_ros/transform_broadcaster.h"
 
-#include <kinematic_evaluator/kinematic_evaluator_node.hpp>
+#include <autoware/kinematic_evaluator/kinematic_evaluator_node.hpp>
 
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
