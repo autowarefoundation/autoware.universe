@@ -4,19 +4,65 @@ The Lane Change module is activated when lane change is needed and can be safely
 
 ## Lane Change Requirement
 
-- As the prerequisite, the type of lane boundary in the HD map has to be one of the following:
-  - Dashed lane marking: Lane changes are permitted in both directions.
-  - Dashed marking on the left and solid on the right: Lane changes are allowed from left to right.
-  - Dashed marking on the right and solid on the left: Lane changes are allowed from right to left.
-  - `allow_lane_change` tags is set as `true`
-- During lane change request condition
-  - The ego-vehicle isn’t on a `preferred_lane`.
-  - The ego-vehicle isn't approaching a traffic light. (condition parameterized)
-  - The ego-vehicle isn't approaching a crosswalk. (condition parameterized)
-  - The ego-vehicle isn't approaching an intersection. (condition parameterized)
-- lane change ready condition
-  - Path of the lane change does not collide with other dynamic objects (see the figure below)
-  - Lane change candidate path is approved by an operator.
+### Prerequisites
+
+The type of lane boundary in the HD map has to be one of the following:
+- Dashed lane marking: Lane changes are permitted in both directions.
+- Dashed marking on the left and solid on the right: Lane changes are allowed from left to right.
+- Dashed marking on the right and solid on the left: Lane changes are allowed from right to left.
+- `allow_lane_change` tags is set as `true`
+
+### Activation Conditions
+The lane change module will activate under the following conditions 
+- The ego-vehicle is NOT on a `preferred_lane`.
+- Distance to start of `target_lane` is less than maximum `prepare_length`
+- The ego-vehicle is NOT close to a regulatory element:
+  - Distance to next regulatory element is greater than maximum `prepare_length`.
+  - Considers distance to traffic light. (configurable)
+  - Considers distance to crosswalk. (configurable)
+  - Considers distance to intersection. (configurable)
+
+The following figure illustrates the logic for checking if lane change is required:
+
+```plantuml
+@startuml
+skinparam defaultTextAlignment center
+skinparam backgroundColor #WHITE
+
+start
+
+if (Is data available AND lanes available) then (no)
+  #LightPink:False;
+  stop
+else (yes)
+endif
+
+:Get distance to target lane start;
+
+if (Is dist to target lane start < max prepare dist) then (no)
+  #LightPink:False;
+  stop
+else (yes)
+endif
+
+:Get distance to next regulatory element;
+
+if (Is dist to next regulatory element < max prepare dist) then (yes)
+  #LightPink:False;
+  stop
+else (no)
+end if
+
+#LightGreen:True;
+stop
+
+@enduml
+```
+
+### Ready Conditions:
+- Valid lane change path is found.
+- Lane change path is safe; does not collide with other dynamic objects.
+- Lane change candidate path is approved by an operator.
 
 ## Generating Lane Change Candidate Path
 
