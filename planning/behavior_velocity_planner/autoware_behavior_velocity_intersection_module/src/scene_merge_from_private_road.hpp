@@ -63,7 +63,8 @@ public:
     const PlannerParam & planner_param, const std::set<lanelet::Id> & associative_ids,
     const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock,
     const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
-    const std::shared_ptr<motion_utils::PlanningFactorInterface> planning_factor_interface);
+    const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
+      planning_factor_interface);
 
   /**
    * @brief plan go-stop velocity at traffic crossing with collision check between reference path
