@@ -78,7 +78,7 @@ std::vector<typename rclcpp::Subscription<T>::SharedPtr> init_factors(
 }
 
 template <class T>
-std::vector<T> convert(const std::vector<PlanningFactor> & factors)
+std::vector<T> convert([[maybe_unused]] const std::vector<PlanningFactor> & factors)
 {
   static_assert(sizeof(T) == 0, "Only specializations of convert can be used.");
   throw std::logic_error("Only specializations of convert can be used.");
