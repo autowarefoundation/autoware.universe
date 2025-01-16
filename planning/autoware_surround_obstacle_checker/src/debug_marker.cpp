@@ -67,7 +67,8 @@ SurroundObstacleCheckerDebugNode::SurroundObstacleCheckerDebugNode(
   const double & surround_check_back_distance, const double & surround_check_hysteresis_distance,
   const geometry_msgs::msg::Pose & self_pose, const rclcpp::Clock::SharedPtr clock,
   rclcpp::Node & node)
-: planning_factor_interface_{std::make_unique<autoware::motion_utils::PlanningFactorInterface>(
+: planning_factor_interface_{std::make_unique<
+    autoware::planning_factor_interface::PlanningFactorInterface>(
     &node, "surround_obstacle_checker")},
   vehicle_info_(vehicle_info),
   object_label_(object_label),
