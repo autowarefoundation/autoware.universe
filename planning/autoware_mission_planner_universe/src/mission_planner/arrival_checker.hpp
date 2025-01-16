@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MISSION_PLANNER_UNIVERSE__ARRIVAL_CHECKER_HPP_
-#define MISSION_PLANNER_UNIVERSE__ARRIVAL_CHECKER_HPP_
+#ifndef MISSION_PLANNER__ARRIVAL_CHECKER_HPP_
+#define MISSION_PLANNER__ARRIVAL_CHECKER_HPP_
 
 #include <autoware/motion_utils/vehicle/vehicle_state_checker.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -46,4 +46,4 @@ private:
 
 }  // namespace autoware::mission_planner_universe
 
-#endif  // MISSION_PLANNER_UNIVERSE__ARRIVAL_CHECKER_HPP_
+#endif  // MISSION_PLANNER__ARRIVAL_CHECKER_HPP_

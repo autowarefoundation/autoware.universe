@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MISSION_PLANNER_UNIVERSE__ROUTE_SELECTOR_HPP_
-#define MISSION_PLANNER_UNIVERSE__ROUTE_SELECTOR_HPP_
+#ifndef MISSION_PLANNER__ROUTE_SELECTOR_HPP_
+#define MISSION_PLANNER__ROUTE_SELECTOR_HPP_
 
 #include <autoware/universe_utils/system/stop_watch.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -109,4 +109,4 @@ private:
 
 }  // namespace autoware::mission_planner_universe
 
-#endif  // MISSION_PLANNER_UNIVERSE__ROUTE_SELECTOR_HPP_
+#endif  // MISSION_PLANNER__ROUTE_SELECTOR_HPP_

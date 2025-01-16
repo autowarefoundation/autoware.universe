@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MISSION_PLANNER_UNIVERSE__MISSION_PLANNER_HPP_
-#define MISSION_PLANNER_UNIVERSE__MISSION_PLANNER_HPP_
+#ifndef MISSION_PLANNER__MISSION_PLANNER_HPP_
+#define MISSION_PLANNER__MISSION_PLANNER_HPP_
 
 #include "arrival_checker.hpp"
 #include "autoware/universe_utils/ros/polling_subscriber.hpp"
@@ -152,4 +152,4 @@ private:
 
 }  // namespace autoware::mission_planner_universe
 
-#endif  // MISSION_PLANNER_UNIVERSE__MISSION_PLANNER_HPP_
+#endif  // MISSION_PLANNER__MISSION_PLANNER_HPP_

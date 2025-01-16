@@ -387,4 +387,5 @@ void DefaultPlanner::clearRoute()
 
 #include <pluginlib/class_list_macros.hpp>
 PLUGINLIB_EXPORT_CLASS(
-  autoware::mission_planner_universe::lanelet2::DefaultPlanner, autoware::mission_planner_universe::PlannerPlugin)
+  autoware::mission_planner_universe::lanelet2::DefaultPlanner,
+  autoware::mission_planner_universe::PlannerPlugin)

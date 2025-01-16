@@ -38,7 +38,8 @@ namespace autoware::mission_planner_universe
 MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
 : Node("mission_planner", options),
   arrival_checker_(this),
-  plugin_loader_("autoware_mission_planner_universe", "autoware::mission_planner_universe::PlannerPlugin"),
+  plugin_loader_(
+    "autoware_mission_planner_universe", "autoware::mission_planner_universe::PlannerPlugin"),
   tf_buffer_(get_clock()),
   tf_listener_(tf_buffer_),
   odometry_(nullptr),
@@ -52,8 +53,8 @@ MissionPlanner::MissionPlanner(const rclcpp::NodeOptions & options)
   minimum_reroute_length_ = declare_parameter<double>("minimum_reroute_length");
   allow_reroute_in_autonomous_mode_ = declare_parameter<bool>("allow_reroute_in_autonomous_mode");
 
-  planner_ =
-    plugin_loader_.createSharedInstance("autoware::mission_planner_universe::lanelet2::DefaultPlanner");
+  planner_ = plugin_loader_.createSharedInstance(
+    "autoware::mission_planner_universe::lanelet2::DefaultPlanner");
   planner_->initialize(this);
 
   const auto durable_qos = rclcpp::QoS(1).transient_local();
