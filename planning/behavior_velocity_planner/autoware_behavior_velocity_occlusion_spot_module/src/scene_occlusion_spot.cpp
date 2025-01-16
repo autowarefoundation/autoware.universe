@@ -70,8 +70,6 @@ OcclusionSpotModule::OcclusionSpotModule(
 : SceneModuleInterface(module_id, logger, clock, time_keeper, planning_factor_interface),
   param_(planner_param)
 {
-  velocity_factor_.init(PlanningBehavior::UNKNOWN);
-
   if (param_.detection_method == utils::DETECTION_METHOD::OCCUPANCY_GRID) {
     debug_data_.detection_type = "occupancy";
     //! occupancy grid limitation( 100 * 100 )

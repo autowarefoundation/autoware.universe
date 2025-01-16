@@ -44,8 +44,6 @@ namespace autoware::behavior_velocity_planner
 {
 namespace bg = boost::geometry;
 
-using autoware::motion_utils::VelocityFactorInterface;
-
 IntersectionModule::IntersectionModule(
   const int64_t module_id, const int64_t lane_id,
   [[maybe_unused]] std::shared_ptr<const PlannerData> planner_data,

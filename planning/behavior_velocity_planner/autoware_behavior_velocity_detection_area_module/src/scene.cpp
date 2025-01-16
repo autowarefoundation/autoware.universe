@@ -46,7 +46,6 @@ DetectionAreaModule::DetectionAreaModule(
   planner_param_(planner_param),
   debug_data_()
 {
-  velocity_factor_.init(PlanningBehavior::USER_DEFINED_DETECTION_AREA);
 }
 
 bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path)
@@ -180,9 +179,10 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path)
 
   // Create StopReason
   {
-    velocity_factor_.set(
-      path->points, planner_data_->current_odometry->pose, stop_point->second,
-      VelocityFactor::UNKNOWN);
+    planning_factor_interface_->add(
+      path->points, planner_data_->current_odometry->pose, stop_pose, stop_pose,
+      tier4_planning_msgs::msg::PlanningFactor::STOP, tier4_planning_msgs::msg::SafetyFactorArray{},
+      true /*is_driving_forward*/, 0.0, 0.0 /*shift distance*/, "");
   }
 
   return true;
