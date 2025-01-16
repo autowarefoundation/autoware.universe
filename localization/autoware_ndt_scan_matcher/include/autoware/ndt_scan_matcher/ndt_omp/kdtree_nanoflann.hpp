@@ -41,7 +41,7 @@
  *************************************************************************/
 #ifndef AUTOWARE__NDT_SCAN_MATCHER__NDT_OMP__KDTREE_NANOFLANN_HPP_
 #define AUTOWARE__NDT_SCAN_MATCHER__NDT_OMP__KDTREE_NANOFLANN_HPP_
-#include "multigrid_pclomp/nanoflann.hpp"
+#include "autoware/ndt_scan_matcher/ndt_omp/nanoflann.hpp"
 
 #include <pcl/pcl_macros.h>
 // clang-format on
@@ -64,8 +64,7 @@ class KdTreeNanoflann
     PointCloudPtr cloud_;
     PointCloudNanoflann(PointCloudPtr cloud) { cloud_ = cloud; }
 
-    // Must return the number of data points  // Since this is inlined and the "dim" argument is
-    // typically an immediate
+    // Must return the number of data points
     inline size_t kdtree_get_point_count() const { return cloud_->size(); }
 
     // Returns the dim'th component of the idx'th point in the class:
@@ -97,7 +96,7 @@ class KdTreeNanoflann
   using kdtree_t = nanoflann::KDTreeSingleIndexAdaptor<
     nanoflann::L2_Simple_Adaptor<float, PointCloudNanoflann>, PointCloudNanoflann, 3 /* dim */
     >;
-    
+
   std::shared_ptr<kdtree_t> index_ptr_;
   std::shared_ptr<PointCloudNanoflann> cloud_ptr_;
 
