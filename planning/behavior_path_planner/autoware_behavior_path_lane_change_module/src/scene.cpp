@@ -1784,7 +1784,6 @@ bool NormalLaneChange::is_colliding(
 
   constexpr auto is_safe{true};
   auto current_debug_data = utils::path_safety_checker::createObjectDebug(obj);
-  constexpr auto collision_check_yaw_diff_threshold{M_PI};
   constexpr auto hysteresis_factor{1.0};
   const auto obj_predicted_paths = utils::path_safety_checker::getPredictedPathFromObj(
     obj, lane_change_parameters_->safety.collision_check.use_all_predicted_paths);
@@ -1809,7 +1808,8 @@ bool NormalLaneChange::is_colliding(
     const auto collided_polygons = utils::path_safety_checker::get_collided_polygons(
       lane_change_path.path, ego_predicted_path, obj, predicted_obj_path, bpp_param.vehicle_info,
       selected_rss_param, hysteresis_factor, safety_check_max_vel,
-      collision_check_yaw_diff_threshold, current_debug_data.second);
+      common_data_ptr_->lc_param_ptr->safety.collision_check.th_yaw_diff,
+      current_debug_data.second);
 
     if (collided_polygons.empty()) {
       utils::path_safety_checker::updateCollisionCheckDebugMap(

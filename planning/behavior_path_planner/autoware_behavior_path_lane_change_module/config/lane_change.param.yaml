@@ -57,6 +57,7 @@
           lateral_distance_max_threshold: 2.0
           longitudinal_distance_min_threshold: 3.0
           longitudinal_velocity_delta_time: 0.0
+          extended_polygon_policy: "rectangle"
         parked:
           expected_front_deceleration: -1.0
           expected_rear_deceleration: -2.0
@@ -65,6 +66,7 @@
           lateral_distance_max_threshold: 1.0
           longitudinal_distance_min_threshold: 3.0
           longitudinal_velocity_delta_time: 0.0
+          extended_polygon_policy: "rectangle"
         cancel:
           expected_front_deceleration: -1.0
           expected_rear_deceleration: -2.0
@@ -73,6 +75,7 @@
           lateral_distance_max_threshold: 1.0
           longitudinal_distance_min_threshold: 2.5
           longitudinal_velocity_delta_time: 0.0
+          extended_polygon_policy: "rectangle"
         stuck:
           expected_front_deceleration: -1.0
           expected_rear_deceleration: -1.0
@@ -81,6 +84,7 @@
           lateral_distance_max_threshold: 2.0
           longitudinal_distance_min_threshold: 3.0
           longitudinal_velocity_delta_time: 0.0
+          extended_polygon_policy: "rectangle"
 
         # lane expansion for object filtering
         lane_expansion:
