@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON__COLLISION_CHECKER_HPP_
-#define AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON__COLLISION_CHECKER_HPP_
+#ifndef AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON_UNIVERSE__COLLISION_CHECKER_HPP_
+#define AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON_UNIVERSE__COLLISION_CHECKER_HPP_
 
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 
@@ -66,4 +66,4 @@ public:
 };
 }  // namespace autoware::motion_velocity_planner
 
-#endif  // AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON__COLLISION_CHECKER_HPP_
+#endif  // AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON_UNIVERSE__COLLISION_CHECKER_HPP_

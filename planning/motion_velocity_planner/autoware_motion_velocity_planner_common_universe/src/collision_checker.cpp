@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/motion_velocity_planner_common/collision_checker.hpp"
+#include "autoware/motion_velocity_planner_common_universe/collision_checker.hpp"
 
 #include <memory>
 #include <utility>
