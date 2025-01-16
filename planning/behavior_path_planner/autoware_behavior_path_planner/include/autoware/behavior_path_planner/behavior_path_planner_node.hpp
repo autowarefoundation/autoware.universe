@@ -20,7 +20,7 @@
 #include "autoware/universe_utils/ros/logger_level_configure.hpp"
 #include "planner_manager.hpp"
 
-#include <autoware/motion_utils/factor/planning_factor_interface.hpp>
+#include <autoware/planning_factor_interface/planning_factor_interface.hpp>
 #include <autoware/universe_utils/ros/polling_subscriber.hpp>
 #include <autoware/universe_utils/ros/published_time_publisher.hpp>
 
@@ -51,7 +51,7 @@
 
 namespace autoware::behavior_path_planner
 {
-using autoware::motion_utils::PlanningFactorInterface;
+using autoware::planning_factor_interface::PlanningFactorInterface;
 using autoware_adapi_v1_msgs::msg::OperationModeState;
 using autoware_map_msgs::msg::LaneletMapBin;
 using autoware_perception_msgs::msg::PredictedObject;
