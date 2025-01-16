@@ -53,23 +53,13 @@ void TrafficLightModuleManager::modifyPathVelocity(tier4_planning_msgs::msg::Pat
 
   autoware_perception_msgs::msg::TrafficLightGroup tl_state;
 
-  autoware_adapi_v1_msgs::msg::VelocityFactorArray velocity_factor_array;
-  velocity_factor_array.header.frame_id = "map";
-  velocity_factor_array.header.stamp = clock_->now();
-
   nearest_ref_stop_path_point_index_ = static_cast<int>(path->points.size() - 1);
   for (const auto & scene_module : scene_modules_) {
     std::shared_ptr<TrafficLightModule> traffic_light_scene_module(
       std::dynamic_pointer_cast<TrafficLightModule>(scene_module));
-    traffic_light_scene_module->resetVelocityFactor();
+
     traffic_light_scene_module->setPlannerData(planner_data_);
     traffic_light_scene_module->modifyPathVelocity(path);
-
-    // The velocity factor must be called after modifyPathVelocity.
-    const auto velocity_factor = traffic_light_scene_module->getVelocityFactor();
-    if (velocity_factor.behavior != PlanningBehavior::UNKNOWN) {
-      velocity_factor_array.factors.emplace_back(velocity_factor);
-    }
 
     if (
       traffic_light_scene_module->getFirstRefStopPathPointIndex() <
@@ -88,7 +78,6 @@ void TrafficLightModuleManager::modifyPathVelocity(tier4_planning_msgs::msg::Pat
     virtual_wall_marker_creator_.add_virtual_walls(
       traffic_light_scene_module->createVirtualWalls());
   }
-  pub_velocity_factor_->publish(velocity_factor_array);
   pub_debug_->publish(debug_marker_array);
   pub_virtual_wall_->publish(virtual_wall_marker_creator_.create_markers(clock_->now()));
   pub_tl_state_->publish(tl_state);

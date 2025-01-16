@@ -113,10 +113,6 @@ private:
 
   void updateInfrastructureCommand();
 
-  void setVelocityFactor(
-    const geometry_msgs::msg::Pose & stop_pose,
-    autoware_adapi_v1_msgs::msg::VelocityFactor * velocity_factor);
-
   std::optional<size_t> getPathIndexOfFirstEndLine();
 
   bool isBeforeStartLine(const size_t end_line_idx);

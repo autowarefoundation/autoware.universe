@@ -18,7 +18,6 @@
 #include <autoware/behavior_velocity_planner_common/planner_data.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
 #include <autoware/motion_utils/factor/planning_factor_interface.hpp>
-#include <autoware/motion_utils/factor/velocity_factor_interface.hpp>
 #include <autoware/motion_utils/marker/virtual_wall_marker_creator.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/objects_of_interest_marker_interface/objects_of_interest_marker_interface.hpp>
@@ -28,8 +27,6 @@
 #include <autoware/universe_utils/system/time_keeper.hpp>
 #include <builtin_interfaces/msg/time.hpp>
 
-#include <autoware_adapi_v1_msgs/msg/velocity_factor.hpp>
-#include <autoware_adapi_v1_msgs/msg/velocity_factor_array.hpp>
 #include <autoware_internal_debug_msgs/msg/float64_stamped.hpp>
 #include <autoware_planning_msgs/msg/path.hpp>
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
@@ -51,8 +48,6 @@
 namespace autoware::behavior_velocity_planner
 {
 
-using autoware::motion_utils::PlanningBehavior;
-using autoware::motion_utils::VelocityFactor;
 using autoware::objects_of_interest_marker_interface::ColorName;
 using autoware::objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface;
 using autoware::universe_utils::DebugPublisher;
@@ -97,8 +92,6 @@ public:
     planner_data_ = planner_data;
   }
 
-  void resetVelocityFactor() { velocity_factor_.reset(); }
-  VelocityFactor getVelocityFactor() const { return velocity_factor_.get(); }
   std::vector<ObjectOfInterest> getObjectsOfInterestData() const { return objects_of_interest_; }
   void clearObjectsOfInterestData() { objects_of_interest_.clear(); }
 
@@ -107,7 +100,6 @@ protected:
   rclcpp::Logger logger_;
   rclcpp::Clock::SharedPtr clock_;
   std::shared_ptr<const PlannerData> planner_data_;
-  autoware::motion_utils::VelocityFactorInterface velocity_factor_;  // TODO(soblin): remove this
   std::vector<ObjectOfInterest> objects_of_interest_;
   mutable std::shared_ptr<universe_utils::TimeKeeper> time_keeper_;
   std::shared_ptr<motion_utils::PlanningFactorInterface> planning_factor_interface_;
@@ -143,8 +135,6 @@ public:
     }
     pub_virtual_wall_ = node.create_publisher<visualization_msgs::msg::MarkerArray>(
       std::string("~/virtual_wall/") + module_name, 5);
-    pub_velocity_factor_ = node.create_publisher<autoware_adapi_v1_msgs::msg::VelocityFactorArray>(
-      std::string("/planning/velocity_factors/") + module_name, 1);
     planning_factor_interface_ =
       std::make_shared<motion_utils::PlanningFactorInterface>(&node, module_name);
 
@@ -180,21 +170,12 @@ protected:
     StopWatch<std::chrono::milliseconds> stop_watch;
     stop_watch.tic("Total");
     visualization_msgs::msg::MarkerArray debug_marker_array;
-    autoware_adapi_v1_msgs::msg::VelocityFactorArray velocity_factor_array;
-    velocity_factor_array.header.frame_id = "map";
-    velocity_factor_array.header.stamp = clock_->now();
 
     for (const auto & scene_module : scene_modules_) {
-      scene_module->resetVelocityFactor();
       scene_module->setPlannerData(planner_data_);
       scene_module->modifyPathVelocity(path);
 
       // The velocity factor must be called after modifyPathVelocity.
-      // TODO(soblin): remove this
-      const auto velocity_factor = scene_module->getVelocityFactor();
-      if (velocity_factor.behavior != PlanningBehavior::UNKNOWN) {
-        velocity_factor_array.factors.emplace_back(velocity_factor);
-      }
 
       for (const auto & marker : scene_module->createDebugMarkerArray().markers) {
         debug_marker_array.markers.push_back(marker);
@@ -203,7 +184,6 @@ protected:
       virtual_wall_marker_creator_.add_virtual_walls(scene_module->createVirtualWalls());
     }
 
-    pub_velocity_factor_->publish(velocity_factor_array);
     planning_factor_interface_->publish();
     pub_debug_->publish(debug_marker_array);
     if (is_publish_debug_path_) {
@@ -274,8 +254,6 @@ protected:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_virtual_wall_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_;
   rclcpp::Publisher<tier4_planning_msgs::msg::PathWithLaneId>::SharedPtr pub_debug_path_;
-  rclcpp::Publisher<autoware_adapi_v1_msgs::msg::VelocityFactorArray>::SharedPtr
-    pub_velocity_factor_;
 
   std::shared_ptr<DebugPublisher> processing_time_publisher_;
 
