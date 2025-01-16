@@ -195,23 +195,39 @@ endif
 @enduml
 ```
 
-### Preparation phase
+### Prepare phase
 
-The preparation trajectory is the candidate path's first and the straight portion generated along the ego vehicle's current lane. The length of the preparation trajectory is computed as follows.
+The prepare phase is the first section of the lane change candidate path and the corresponding prepare segment consists of a subsection of the current reference path along the current lane. The length of the prepare phase trajectory is computed as follows.
 
 ```C++
-lane_change_prepare_distance = current_speed * lane_change_prepare_duration + 0.5 * deceleration * lane_change_prepare_duration^2
+prepare_distance = current_speed * prepare_duration + 0.5 * lon_acceleration * prepare_duration^2
 ```
 
-During the preparation phase, the turn signal will be activated when the remaining distance is equal to or less than `lane_change_search_distance`.
+The prepare phase trajectory is valid if:
+- The length of the prepare phase trajectory is greater than the distance to start of target lane
+- The length of the prepare phase trajectory is less than the distance to terminal start point
 
 ### Lane-changing phase
 
-The lane-changing phase consist of the shifted path that moves ego from current lane to the target lane. Total distance of lane-changing phase is as follows. Note that during the lane changing phase, the ego vehicle travels at a constant speed.
+The lane-changing phase consist of the shifted path that moves ego from current lane to the target lane. Total duration of lane-changing phase is computed from the `shift_length`, `lateral_jerk` and `lateral_acceleration`.
+
+In principle, positive longitudinal acceleration is considered during lane-changing phase, and is computes as follows.
 
 ```C++
-lane_change_prepare_velocity = std::max(current_speed + deceleration * lane_change_prepare_duration, minimum_lane_changing_velocity)
-lane_changing_distance = lane_change_prepare_velocity * lane_changing_duration
+lane_changing_acceleration = std::clamp((max_path_velocity - initial_lane_changing_velocity) / lane_changing_time,
+  0.0, prepare_longitudinal_acc);
+```
+
+Where `max_path_velocity` is the current path speed limit.
+
+!!! warning
+
+  If the longitudinal acceleration of prepare phase is negative (slowing down), AND ego is near terminal, then the lane-changing longitudinal acceleration will also be negative and its value is decided by the parameter `lane_changing_decel_factor`.
+
+The lane changing distance is then computed as follows.
+
+```C++
+lane_changing_distance = initial_lane_changing_velocity * lane_changing_duration + 0.5 * lon_acceleration * lane_changing_duration^2
 ```
 
 The `backward_length_buffer_for_end_of_lane` is added to allow some window for any possible delay, such as control or mechanical delay during brake lag.
