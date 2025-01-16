@@ -44,8 +44,9 @@ void DynamicObstacleStopModule::init(rclcpp::Node & node, const std::string & mo
   logger_ = node.get_logger().get_child(ns_);
   clock_ = node.get_clock();
 
-  planning_factor_interface_ = std::make_unique<autoware::motion_utils::PlanningFactorInterface>(
-    &node, "dynamic_obstacle_stop");
+  planning_factor_interface_ =
+    std::make_unique<autoware::planning_factor_interface::PlanningFactorInterface>(
+      &node, "dynamic_obstacle_stop");
 
   debug_publisher_ =
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/" + ns_ + "/debug_markers", 1);
