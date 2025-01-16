@@ -28,6 +28,7 @@ namespace autoware::behavior_path_planner
 GeometricPullOver::GeometricPullOver(
   rclcpp::Node & node, const GoalPlannerParameters & parameters, const bool is_forward)
 : PullOverPlannerBase{node, parameters},
+  parallel_parking_parameters_{parameters.parallel_parking_parameters},
   lane_departure_checker_{
     lane_departure_checker::Param{parameters.lane_departure_check_expansion_margin}, vehicle_info_},
   is_forward_{is_forward},
