@@ -22,7 +22,7 @@
 #include "geometry_msgs/msg/pose.hpp"
 #include <nav_msgs/msg/odometry.hpp>
 
-namespace kinematic_diagnostics
+namespace autoware::kinematic_diagnostics
 {
 using autoware::universe_utils::Accumulator;
 using nav_msgs::msg::Odometry;
@@ -52,6 +52,6 @@ public:
     const Metric metric, const Odometry & odom, const Accumulator<double> stat_prev) const;
 };  // class MetricsCalculator
 
-}  // namespace kinematic_diagnostics
+}  // namespace autoware::kinematic_diagnostics
 
 #endif  // KINEMATIC_EVALUATOR__METRICS_CALCULATOR_HPP_

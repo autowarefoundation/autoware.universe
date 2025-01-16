@@ -31,7 +31,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace kinematic_diagnostics
+namespace autoware::kinematic_diagnostics
 {
 using autoware::universe_utils::Accumulator;
 using diagnostic_msgs::msg::DiagnosticArray;
@@ -78,6 +78,6 @@ private:
   std::array<std::deque<Accumulator<double>>, static_cast<size_t>(Metric::SIZE)> metric_stats_;
   std::unordered_map<Metric, Accumulator<double>> metrics_dict_;
 };
-}  // namespace kinematic_diagnostics
+}  // namespace autoware::kinematic_diagnostics
 
 #endif  // KINEMATIC_EVALUATOR__KINEMATIC_EVALUATOR_NODE_HPP_

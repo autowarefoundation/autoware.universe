@@ -19,7 +19,7 @@
 
 #include <nav_msgs/msg/odometry.hpp>
 
-namespace kinematic_diagnostics
+namespace autoware::kinematic_diagnostics
 {
 namespace metrics
 {
@@ -35,6 +35,6 @@ using nav_msgs::msg::Odometry;
 Accumulator<double> updateVelocityStats(const double & value, const Accumulator<double> stat_prev);
 
 }  // namespace metrics
-}  // namespace kinematic_diagnostics
+}  // namespace autoware::kinematic_diagnostics
 
 #endif  // KINEMATIC_EVALUATOR__METRICS__KINEMATIC_METRICS_HPP_

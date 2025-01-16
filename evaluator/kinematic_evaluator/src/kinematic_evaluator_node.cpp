@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 
-namespace kinematic_diagnostics
+namespace autoware::kinematic_diagnostics
 {
 KinematicEvaluatorNode::KinematicEvaluatorNode(const rclcpp::NodeOptions & node_options)
 : Node("kinematic_evaluator", node_options)
@@ -139,7 +139,7 @@ geometry_msgs::msg::Pose KinematicEvaluatorNode::getCurrentEgoPose() const
   return p;
 }
 
-}  // namespace kinematic_diagnostics
+}  // namespace autoware::kinematic_diagnostics
 
 #include "rclcpp_components/register_node_macro.hpp"
-RCLCPP_COMPONENTS_REGISTER_NODE(kinematic_diagnostics::KinematicEvaluatorNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::kinematic_diagnostics::KinematicEvaluatorNode)

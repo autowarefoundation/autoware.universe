@@ -14,17 +14,17 @@
 
 #include "kinematic_evaluator/metrics/kinematic_metrics.hpp"
 
-namespace kinematic_diagnostics
+namespace autoware::kinematic_diagnostics
 {
 namespace metrics
 {
 
-Accumulator<double> updateVelocityStats(const double & value, const Accumulator<double> stat_prev)
+autoware::universe_utils::Accumulator<double> updateVelocityStats(const double & value, const autoware::universe_utils::Accumulator<double> stat_prev)
 {
-  Accumulator<double> stat(stat_prev);
+  autoware::universe_utils::Accumulator<double> stat(stat_prev);
   stat.add(value);
   return stat;
 }
 
 }  // namespace metrics
-}  // namespace kinematic_diagnostics
+}  // namespace autoware::kinematic_diagnostics

@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>kinematic_evaluator</name>
+  <name>autoware_kinematic_evaluator</name>
   <version>0.40.0</version>
   <description>kinematic evaluator ROS 2 node</description>
 
@@ -11,6 +11,7 @@
   <maintainer email="takayuki.murooka@tier4.jp">Takayuki Murooka</maintainer>
   <maintainer email="fumiya.watanabe@tier4.jp">Fumiya Watanabe</maintainer>
   <maintainer email="satoshi.ota@tier4.jp">Satoshi Ota</maintainer>
+  <maintainer email="junya.sasaki@tier4.jp">Junya Sasaki</maintainer>
 
   <license>Apache License 2.0</license>
 

@@ -20,7 +20,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace kinematic_diagnostics
+namespace autoware::kinematic_diagnostics
 {
 /**
  * @brief Enumeration of velocity metrics
@@ -57,6 +57,6 @@ static struct CheckCorrectMaps
 } check;
 
 }  // namespace details
-}  // namespace kinematic_diagnostics
+}  // namespace autoware::kinematic_diagnostics
 
 #endif  // KINEMATIC_EVALUATOR__METRICS__METRIC_HPP_

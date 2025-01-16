@@ -16,7 +16,7 @@
 
 #include "kinematic_evaluator/metrics/kinematic_metrics.hpp"
 
-namespace kinematic_diagnostics
+namespace autoware::kinematic_diagnostics
 {
 Accumulator<double> MetricsCalculator::updateStat(
   const Metric metric, const Odometry & odom, const Accumulator<double> stat_prev) const
@@ -31,4 +31,4 @@ Accumulator<double> MetricsCalculator::updateStat(
   }
 }
 
-}  // namespace kinematic_diagnostics
+}  // namespace autoware::kinematic_diagnostics

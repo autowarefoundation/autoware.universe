@@ -19,7 +19,7 @@
 
 #include <array>
 
-namespace kinematic_diagnostics
+namespace autoware::kinematic_diagnostics
 {
 /**
  * @brief Enumeration of trajectory metrics
@@ -29,6 +29,6 @@ struct Parameters
   std::array<bool, static_cast<size_t>(Metric::SIZE)> metrics{};  // default values to false
 };  // struct Parameters
 
-}  // namespace kinematic_diagnostics
+}  // namespace autoware::kinematic_diagnostics
 
 #endif  // KINEMATIC_EVALUATOR__PARAMETERS_HPP_

@@ -32,7 +32,7 @@
 #include <utility>
 #include <vector>
 
-using EvalNode = kinematic_diagnostics::KinematicEvaluatorNode;
+using EvalNode = autoware::kinematic_diagnostics::KinematicEvaluatorNode;
 using diagnostic_msgs::msg::DiagnosticArray;
 using nav_msgs::msg::Odometry;
 
@@ -70,9 +70,9 @@ protected:
 
   ~EvalTest() override { /*rclcpp::shutdown();*/ }
 
-  void setTargetMetric(kinematic_diagnostics::Metric metric)
+  void setTargetMetric(autoware::kinematic_diagnostics::Metric metric)
   {
-    const auto metric_str = kinematic_diagnostics::metric_to_str.at(metric);
+    const auto metric_str = autoware::kinematic_diagnostics::metric_to_str.at(metric);
     const auto is_target_metric = [metric_str](const auto & status) {
       return status.name == metric_str;
     };
@@ -130,7 +130,7 @@ protected:
 
 TEST_F(EvalTest, TestVelocityStats)
 {
-  setTargetMetric(kinematic_diagnostics::Metric::velocity_stats);
+  setTargetMetric(autoware::kinematic_diagnostics::Metric::velocity_stats);
   Odometry odom = makeOdometry(0.0);
   EXPECT_DOUBLE_EQ(publishOdometryAndGetMetric(odom), 0.0);
   Odometry odom2 = makeOdometry(1.0);
