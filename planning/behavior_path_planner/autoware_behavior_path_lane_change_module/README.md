@@ -232,6 +232,20 @@ lane_changing_distance = initial_lane_changing_velocity * lane_changing_duration
 
 The `backward_length_buffer_for_end_of_lane` is added to allow some window for any possible delay, such as control or mechanical delay during brake lag.
 
+#### Multiple candidate path samples (prepare duration)
+
+In principle, a fixed prepare duration is assumed when generating lane change candidate path. The default prepare duration value is determined from the min and max values set in the lane change parameters, as well as the duration of turn signal activation.
+For example, when the lane change module first activates and turn signal is activated then prepare duration will be `max_prepare_duration`, as time passes and a path is still not approved, the prepare duration will decrease gradually down to `min_prepare_duration`. The formula is as follows.
+
+```C++
+prepare_duration = std::max(max_prepare_duration - turn_signal_duration, min_prepare_duration);
+```
+!!! warning
+
+  When the current ego velocity is lower than the `min_lane_change_velocity`, the `min_prepare_duration` is adjusted to ensure sufficient time for reaching `min_lane_change_velocity` assuming `max_longitudinal_acceleration`.
+
+When ego vehicles is close to the terminal start, we need to sample multiple prepare duration values to find a valid and safe path. In this case prepare duration values are sampled starting from `max_prepare_duration` down to `0.0` at a fixed time interval of `0.5 s`.
+
 #### Multiple candidate path samples (longitudinal acceleration)
 
 In principle, maximum longitudinal acceleration is assumed for generating lane change candidate path.
@@ -344,7 +358,8 @@ Which path will be chosen depends on validity and safety checks.
 
 #### Multiple candidate path samples (lateral acceleration)
 
-In addition to sampling longitudinal acceleration, we also sample lane change paths by adjusting the value of lateral acceleration. Since lateral acceleration influences the duration of a lane change, a lower lateral acceleration value results in a longer lane change path, while a higher lateral acceleration value leads to a shorter lane change path. This allows the lane change module to generate a shorter lane change path by increasing the lateral acceleration when there is limited space for the lane change.
+In addition to sampling longitudinal acceleration, we also sample lane change paths by varying the lateral acceleration.
+Lateral acceleration affects the lane changing duration, a lower value results in a longer trajectory, while a higher value results in a shorter trajectory. This allows the lane change module to explore shorter trajectories through higher lateral acceleration when there is limited space for the lane change.
 
 The maximum and minimum lateral accelerations are defined in the lane change parameter file as a map. The range of lateral acceleration is determined for each velocity by linearly interpolating the values in the map. Let's assume we have the following map
 
