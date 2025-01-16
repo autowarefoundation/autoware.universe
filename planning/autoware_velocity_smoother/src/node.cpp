@@ -912,7 +912,7 @@ void VelocitySmootherNode::overwriteStopPoint(
   }
 
   diagnostics_interface_->add_key_value(
-    "invalid trajectory size is found", is_stop_velocity_exceeded);
+    "The velocity on the stop point is larger than 0.", is_stop_velocity_exceeded);
 }
 
 void VelocitySmootherNode::applyExternalVelocityLimit(TrajectoryPoints & traj) const
