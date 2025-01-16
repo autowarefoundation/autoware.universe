@@ -17,10 +17,10 @@
 
 #include <autoware/behavior_velocity_planner_common/planner_data.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
-#include <autoware/motion_utils/factor/planning_factor_interface.hpp>
 #include <autoware/motion_utils/marker/virtual_wall_marker_creator.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/objects_of_interest_marker_interface/objects_of_interest_marker_interface.hpp>
+#include <autoware/planning_factor_interface/planning_factor_interface.hpp>
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
 #include <autoware/universe_utils/ros/parameter.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
@@ -77,7 +77,8 @@ public:
   explicit SceneModuleInterface(
     const int64_t module_id, rclcpp::Logger logger, rclcpp::Clock::SharedPtr clock,
     const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
-    const std::shared_ptr<motion_utils::PlanningFactorInterface> planning_factor_interface);
+    const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
+      planning_factor_interface);
   virtual ~SceneModuleInterface() = default;
 
   virtual bool modifyPathVelocity(PathWithLaneId * path) = 0;
@@ -102,7 +103,7 @@ protected:
   std::shared_ptr<const PlannerData> planner_data_;
   std::vector<ObjectOfInterest> objects_of_interest_;
   mutable std::shared_ptr<universe_utils::TimeKeeper> time_keeper_;
-  std::shared_ptr<motion_utils::PlanningFactorInterface> planning_factor_interface_;
+  std::shared_ptr<planning_factor_interface::PlanningFactorInterface> planning_factor_interface_;
 
   void setObjectsOfInterestData(
     const geometry_msgs::msg::Pose & pose, const autoware_perception_msgs::msg::Shape & shape,
@@ -136,7 +137,7 @@ public:
     pub_virtual_wall_ = node.create_publisher<visualization_msgs::msg::MarkerArray>(
       std::string("~/virtual_wall/") + module_name, 5);
     planning_factor_interface_ =
-      std::make_shared<motion_utils::PlanningFactorInterface>(&node, module_name);
+      std::make_shared<planning_factor_interface::PlanningFactorInterface>(&node, module_name);
 
     processing_time_publisher_ = std::make_shared<DebugPublisher>(&node, "~/debug");
 
@@ -261,7 +262,7 @@ protected:
 
   std::shared_ptr<universe_utils::TimeKeeper> time_keeper_;
 
-  std::shared_ptr<motion_utils::PlanningFactorInterface> planning_factor_interface_;
+  std::shared_ptr<planning_factor_interface::PlanningFactorInterface> planning_factor_interface_;
 };
 extern template SceneModuleManagerInterface<SceneModuleInterface>::SceneModuleManagerInterface(
   rclcpp::Node & node, [[maybe_unused]] const char * module_name);

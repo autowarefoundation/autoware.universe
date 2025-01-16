@@ -54,7 +54,8 @@ public:
   explicit SceneModuleInterfaceWithRTC(
     const int64_t module_id, rclcpp::Logger logger, rclcpp::Clock::SharedPtr clock,
     const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
-    const std::shared_ptr<motion_utils::PlanningFactorInterface> planning_factor_interface);
+    const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
+      planning_factor_interface);
   virtual ~SceneModuleInterfaceWithRTC() = default;
 
   void setActivation(const bool activated) { activated_ = activated; }
