@@ -52,7 +52,7 @@ or
 - UNKNOWN
 - CAR_TRAFFIC_LIGHT
 - PEDESTRIAN_TRAFFIC_LIGHT
-  
+
 for traffic light detector onnx model.
 
 If other labels (case insensitive) are contained in the file specified via the `label_file` parameter,
