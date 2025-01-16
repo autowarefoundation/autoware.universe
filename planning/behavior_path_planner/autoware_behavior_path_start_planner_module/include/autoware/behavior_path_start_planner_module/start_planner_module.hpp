@@ -86,7 +86,8 @@ public:
     const std::shared_ptr<StartPlannerParameters> & parameters,
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
     std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
-      objects_of_interest_marker_interface_ptr_map);
+      objects_of_interest_marker_interface_ptr_map,
+    const std::shared_ptr<PlanningFactorInterface> planning_factor_interface);
 
   ~StartPlannerModule() override
   {
@@ -198,18 +199,18 @@ private:
 
   bool requiresDynamicObjectsCollisionDetection() const;
 
-  uint16_t getSteeringFactorDirection(
+  uint16_t getPlanningFactorDirection(
     const autoware::behavior_path_planner::BehaviorModuleOutput & output) const
   {
     switch (output.turn_signal_info.turn_signal.command) {
       case TurnIndicatorsCommand::ENABLE_LEFT:
-        return SteeringFactor::LEFT;
+        return PlanningFactor::SHIFT_LEFT;
 
       case TurnIndicatorsCommand::ENABLE_RIGHT:
-        return SteeringFactor::RIGHT;
+        return PlanningFactor::SHIFT_RIGHT;
 
       default:
-        return SteeringFactor::STRAIGHT;
+        return PlanningFactor::NONE;
     }
   };
 
