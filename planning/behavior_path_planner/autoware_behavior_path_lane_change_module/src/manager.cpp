@@ -450,7 +450,7 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
     } else {
       RCLCPP_WARN_THROTTLE(
         node_->get_logger(), *node_->get_clock(), 5000,
-        "The value of th_incoming_object_yaw (%.3f rad) is less than the expected value (%.3f "
+        "The value of th_incoming_object_yaw (%.3f rad) is less than the minimum possible value (%.3f "
         "rad).",
         th_incoming_object_yaw, M_PI_2);
     }
