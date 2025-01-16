@@ -89,39 +89,62 @@ endif
 
 :Calculate prepare phase metrics;
 
-:Start loop through prepare phase metrics;
-
-repeat
-  :Get prepare segment;
-
-  if (Is LC start point outside target lanes range) then (yes)
-    if (Is found a valid path) then (yes)
-      #Orange:Return first valid path;
-      stop
-    else (no)
-      #LightPink:Return prev approved path;
-      stop
-    endif
-  else (no)
-  endif
-
-  :Calculate shift phase metrics;
-
-  :Start loop through shift phase metrics;
-  repeat
-    :Get candidate path;
-    note left: Details shown in the next chart
-    if (Is valid candidate path?) then (yes)
-      :Store candidate path;
-      if (Is candidate path safe?) then (yes)
-        #LightGreen:Return candidate path;
-        stop
+if(Is near terminal AND frenet enabled) then (yes)
+  group Frenet Candidate Paths #Lavender
+    :Calculate frenet candidates;
+    :Start loop through frenet candidates;
+    repeat
+      :Get candidate path;
+      if (Is valid candidate path?) then (yes)
+        if (Is candidate path safe?) then (yes)
+          #LightGreen:Return candidate path;
+          stop
+        else (no)
+          if (Is first valid path) then (yes)
+            :Store candidate path;
+          else (no)
+          endif
+        endif
       else (no)
       endif
-    else (no)
-    endif
-    repeat while (Finished looping shift phase metrics) is (FALSE)
-  repeat while (Is finished looping prepare phase metrics) is (FALSE)
+      repeat while (Finished looping frenet candidates) is (FALSE)
+  end group
+else (no)
+  group Path Shifter Candidate Paths #LightCyan
+    :Start loop through prepare phase metrics;
+    repeat
+      :Get prepare segment;
+
+      if (Is LC start point outside target lanes range) then (yes)
+        if (Is found a valid path) then (yes)
+          #Orange:Return first valid path;
+          stop
+        else (no)
+          #LightPink:Return prev approved path;
+          stop
+        endif
+      else (no)
+      endif
+
+      :Calculate shift phase metrics;
+
+      :Start loop through shift phase metrics;
+      repeat
+        :Get candidate path;
+        note left: Details shown in the next chart
+        if (Is valid candidate path?) then (yes)
+          :Store candidate path;
+          if (Is candidate path safe?) then (yes)
+            #LightGreen:Return candidate path;
+            stop
+          else (no)
+          endif
+        else (no)
+        endif
+        repeat while (Finished looping shift phase metrics) is (FALSE)
+      repeat while (Is finished looping prepare phase metrics) is (FALSE)
+  endgroup
+endif
 
 if (Is found a valid path) then (yes)
   #Orange:Return first valid path;
@@ -135,7 +158,7 @@ stop
 @enduml
 ```
 
-While the following chart demonstrates the process of generating a valid candidate path.
+The following chart demonstrates the process of generating a valid candidate path with path shifter method.
 
 ```plantuml
 @startuml
