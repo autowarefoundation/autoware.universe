@@ -63,7 +63,8 @@ private:
   rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr param_callback_handle_;
 
   void loadRequiredDiags();
-  rcl_interfaces::msg::SetParametersResult onSetParams(const std::vector<rclcpp::Parameter> & parameters);
+  rcl_interfaces::msg::SetParametersResult onSetParams(
+    const std::vector<rclcpp::Parameter> & parameters);
 
   std::optional<Status> convertStrToStatus(const std::string & status_str);
   std::string convertStatusToStr(const Status & status);
