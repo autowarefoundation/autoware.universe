@@ -1,6 +1,7 @@
 /**:
   ros__parameters:
     lane_change:
+      time_limit: 50.0 # [ms]
       backward_lane_length: 200.0
       backward_length_buffer_for_end_of_lane: 3.0 # [m]
       backward_length_buffer_for_blocking_object: 3.0 # [m]

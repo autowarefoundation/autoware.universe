@@ -162,6 +162,7 @@ struct Parameters
   FrenetPlannerParameters frenet{};
 
   // lane change parameters
+  double time_limit{50.0};
   double backward_lane_length{200.0};
   double backward_length_buffer_for_end_of_lane{0.0};
   double backward_length_buffer_for_blocking_object{0.0};
