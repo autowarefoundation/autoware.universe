@@ -32,9 +32,7 @@ namespace autoware::behavior_path_planner
 using autoware::freespace_planning_algorithms::AstarSearch;
 using autoware::freespace_planning_algorithms::RRTStar;
 
-FreespacePullOver::FreespacePullOver(
-  rclcpp::Node & node, const GoalPlannerParameters & parameters,
-  const autoware::vehicle_info_utils::VehicleInfo & vehicle_info)
+FreespacePullOver::FreespacePullOver(rclcpp::Node & node, const GoalPlannerParameters & parameters)
 : PullOverPlannerBase{node, parameters},
   velocity_{parameters.freespace_parking_velocity},
   left_side_parking_{parameters.parking_policy == ParkingPolicy::LEFT_SIDE},
@@ -45,7 +43,7 @@ FreespacePullOver::FreespacePullOver(
   }
 {
   autoware::freespace_planning_algorithms::VehicleShape vehicle_shape(
-    vehicle_info, parameters.vehicle_shape_margin);
+    vehicle_info_, parameters.vehicle_shape_margin);
   if (parameters.freespace_parking_algorithm == "astar") {
     planner_ = std::make_unique<AstarSearch>(
       parameters.freespace_parking_common_parameters, vehicle_shape, parameters.astar_parameters,

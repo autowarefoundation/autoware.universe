@@ -27,8 +27,10 @@ namespace autoware::behavior_velocity_planner
 {
 
 SceneModuleInterfaceWithRTC::SceneModuleInterfaceWithRTC(
-  const int64_t module_id, rclcpp::Logger logger, rclcpp::Clock::SharedPtr clock)
-: SceneModuleInterface(module_id, logger, clock),
+  const int64_t module_id, rclcpp::Logger logger, rclcpp::Clock::SharedPtr clock,
+  const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+  const std::shared_ptr<motion_utils::PlanningFactorInterface> planning_factor_interface)
+: SceneModuleInterface(module_id, logger, clock, time_keeper, planning_factor_interface),
   activated_(false),
   safe_(false),
   distance_(std::numeric_limits<double>::lowest())

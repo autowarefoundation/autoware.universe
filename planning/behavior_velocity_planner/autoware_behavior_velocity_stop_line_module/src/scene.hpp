@@ -30,6 +30,7 @@
 
 #include <lanelet2_core/LaneletMap.h>
 
+#include <memory>
 #include <optional>
 #include <utility>
 
@@ -68,7 +69,9 @@ public:
   StopLineModule(
     const int64_t module_id, lanelet::ConstLineString3d stop_line,
     const PlannerParam & planner_param, const rclcpp::Logger & logger,
-    const rclcpp::Clock::SharedPtr clock);
+    const rclcpp::Clock::SharedPtr clock,
+    const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+    const std::shared_ptr<motion_utils::PlanningFactorInterface> planning_factor_interface);
 
   bool modifyPathVelocity(PathWithLaneId * path) override;
 

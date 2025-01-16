@@ -31,15 +31,13 @@
 #include <vector>
 namespace autoware::behavior_path_planner
 {
-BezierPullOver::BezierPullOver(
-  rclcpp::Node & node, const GoalPlannerParameters & parameters,
-  const LaneDepartureChecker & lane_departure_checker)
-: PullOverPlannerBase{node, parameters},
-  lane_departure_checker_{lane_departure_checker},
-  left_side_parking_{parameters.parking_policy == ParkingPolicy::LEFT_SIDE}
+BezierPullOver::BezierPullOver(rclcpp::Node & node, const GoalPlannerParameters & parameters)
+: PullOverPlannerBase(node, parameters),
+  lane_departure_checker_(
+    lane_departure_checker::Param{parameters.lane_departure_check_expansion_margin}, vehicle_info_),
+  left_side_parking_(parameters.parking_policy == ParkingPolicy::LEFT_SIDE)
 {
 }
-
 std::optional<PullOverPath> BezierPullOver::plan(
   [[maybe_unused]] const GoalCandidate & modified_goal_pose, [[maybe_unused]] const size_t id,
   [[maybe_unused]] const std::shared_ptr<const PlannerData> planner_data,

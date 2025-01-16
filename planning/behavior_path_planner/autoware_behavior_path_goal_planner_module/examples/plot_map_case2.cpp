@@ -573,12 +573,11 @@ int main(int argc, char ** argv)
     autoware::behavior_path_planner::GoalPlannerModuleManager::initGoalPlannerParameters(
       node.get(), "goal_planner.");
   const auto vehicle_info = autoware::vehicle_info_utils::VehicleInfoUtils(*node).getVehicleInfo();
-  autoware::lane_departure_checker::LaneDepartureChecker lane_departure_checker{};
-  lane_departure_checker.setVehicleInfo(vehicle_info);
   autoware::lane_departure_checker::Param lane_departure_checker_params;
   lane_departure_checker_params.footprint_extra_margin =
     goal_planner_parameter.lane_departure_check_expansion_margin;
-  lane_departure_checker.setParam(lane_departure_checker_params);
+  autoware::lane_departure_checker::LaneDepartureChecker lane_departure_checker(
+    lane_departure_checker_params, vehicle_info);
   const auto footprint = vehicle_info.createFootprint();
   autoware::behavior_path_planner::GoalSearcher goal_searcher(goal_planner_parameter, footprint);
   auto goal_candidates = goal_searcher.search(planner_data);
