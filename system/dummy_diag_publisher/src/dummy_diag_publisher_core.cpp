@@ -23,7 +23,6 @@
 #include <fmt/format.h>
 
 #include <sstream>
-#include <unordered_map>
 
 namespace
 {
