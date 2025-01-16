@@ -63,9 +63,9 @@ class KdTreeNanoflann
   {
     PointCloudPtr cloud_;
     PointCloudNanoflann(PointCloudPtr cloud) { cloud_ = cloud; }
+
     // Must return the number of data points  // Since this is inlined and the "dim" argument is
     // typically an immediate
-
     inline size_t kdtree_get_point_count() const { return cloud_->size(); }
 
     // Returns the dim'th component of the idx'th point in the class:
@@ -97,15 +97,18 @@ class KdTreeNanoflann
   using kdtree_t = nanoflann::KDTreeSingleIndexAdaptor<
     nanoflann::L2_Simple_Adaptor<float, PointCloudNanoflann>, PointCloudNanoflann, 3 /* dim */
     >;
+    
   std::shared_ptr<kdtree_t> index_ptr_;
   std::shared_ptr<PointCloudNanoflann> cloud_ptr_;
 
 public:
   KdTreeNanoflann() : index_ptr_(), cloud_ptr_() {}
+
   KdTreeNanoflann(const KdTreeNanoflann & other)
   : index_ptr_(other.index_ptr_), cloud_ptr_(other.cloud_ptr_)
   {
   }
+
   KdTreeNanoflann & operator=(const KdTreeNanoflann & other)
   {
     index_ptr_ = other.index_ptr_;
@@ -115,7 +118,6 @@ public:
 
   void setInputCloud(PointCloudPtr cloud)
   {
-    //  std::cerr << "setInputCloud" << std::endl;
     cloud_ptr_ = std::make_shared<PointCloudNanoflann>(cloud);
     index_ptr_ = std::make_shared<kdtree_t>(
       3, *cloud_ptr_, nanoflann::KDTreeSingleIndexAdaptorParams(15 /* max leaf */));
