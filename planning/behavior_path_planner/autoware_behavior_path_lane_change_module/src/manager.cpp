@@ -529,7 +529,7 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
 
   {
     const std::string ns = "lane_change.cancel.";
-    bool enable_on_prepare_phase = true;
+    bool enable_on_prepare_phase = p->cancel.enable_on_prepare_phase;
     updateParam<bool>(parameters, ns + "enable_on_prepare_phase", enable_on_prepare_phase);
     if (!enable_on_prepare_phase) {
       RCLCPP_WARN_THROTTLE(
@@ -538,7 +538,7 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
       p->cancel.enable_on_prepare_phase = enable_on_prepare_phase;
     }
 
-    bool enable_on_lane_changing_phase = true;
+    bool enable_on_lane_changing_phase = p->cancel.enable_on_lane_changing_phase;
     updateParam<bool>(
       parameters, ns + "enable_on_lane_changing_phase", enable_on_lane_changing_phase);
     if (!enable_on_lane_changing_phase) {
@@ -548,7 +548,7 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
       p->cancel.enable_on_lane_changing_phase = enable_on_lane_changing_phase;
     }
 
-    int deceleration_sampling_num = 0;
+    int deceleration_sampling_num = p->cancel.deceleration_sampling_num;
     updateParam<int>(parameters, ns + "deceleration_sampling_num", deceleration_sampling_num);
     if (deceleration_sampling_num > 0) {
       p->cancel.deceleration_sampling_num = deceleration_sampling_num;
