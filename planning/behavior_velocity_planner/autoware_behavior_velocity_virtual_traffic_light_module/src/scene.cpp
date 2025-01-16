@@ -48,8 +48,6 @@ VirtualTrafficLightModule::VirtualTrafficLightModule(
   lane_(lane),
   planner_param_(planner_param)
 {
-  velocity_factor_.init(PlanningBehavior::VIRTUAL_TRAFFIC_LIGHT);
-
   // Get map data
   const auto instrument = reg_elem_.getVirtualTrafficLight();
   const auto instrument_bottom_line = toAutowarePoints(instrument);
@@ -420,9 +418,10 @@ void VirtualTrafficLightModule::insertStopVelocityAtStopLine(
   }
 
   // Set StopReason
-  velocity_factor_.set(
-    path->points, planner_data_->current_odometry->pose, stop_pose, VelocityFactor::UNKNOWN,
-    command_.type);
+  planning_factor_interface_->add(
+    path->points, planner_data_->current_odometry->pose, stop_pose, stop_pose,
+    tier4_planning_msgs::msg::PlanningFactor::STOP, tier4_planning_msgs::msg::SafetyFactorArray{},
+    true /*is_driving_forward*/, 0.0, 0.0 /*shift distance*/, "");
 
   // Set data for visualization
   module_data_.stop_head_pose_at_stop_line =
@@ -453,8 +452,10 @@ void VirtualTrafficLightModule::insertStopVelocityAtEndLine(
   }
 
   // Set StopReason
-  velocity_factor_.set(
-    path->points, planner_data_->current_odometry->pose, stop_pose, VelocityFactor::UNKNOWN);
+  planning_factor_interface_->add(
+    path->points, planner_data_->current_odometry->pose, stop_pose, stop_pose,
+    tier4_planning_msgs::msg::PlanningFactor::STOP, tier4_planning_msgs::msg::SafetyFactorArray{},
+    true /*is_driving_forward*/, 0.0, 0.0 /*shift distance*/, "");
 
   // Set data for visualization
   module_data_.stop_head_pose_at_end_line =

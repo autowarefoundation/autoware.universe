@@ -50,7 +50,6 @@ NoStoppingAreaModule::NoStoppingAreaModule(
   planner_param_(planner_param),
   debug_data_()
 {
-  velocity_factor_.init(PlanningBehavior::NO_STOPPING_AREA);
   state_machine_.setState(StateMachine::State::GO);
   state_machine_.setMarginTime(planner_param_.state_clear_time);
 }
@@ -144,9 +143,11 @@ bool NoStoppingAreaModule::modifyPathVelocity(PathWithLaneId * path)
 
     // Create StopReason
     {
-      velocity_factor_.set(
-        path->points, planner_data_->current_odometry->pose, stop_point->second,
-        VelocityFactor::UNKNOWN);
+      planning_factor_interface_->add(
+        path->points, planner_data_->current_odometry->pose, stop_point->second, stop_point->second,
+        tier4_planning_msgs::msg::PlanningFactor::STOP,
+        tier4_planning_msgs::msg::SafetyFactorArray{}, true /*is_driving_forward*/, 0.0,
+        0.0 /*shift distance*/, "");
     }
 
   } else if (state_machine_.getState() == StateMachine::State::GO) {

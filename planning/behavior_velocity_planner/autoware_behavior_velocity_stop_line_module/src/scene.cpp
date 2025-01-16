@@ -38,7 +38,6 @@ StopLineModule::StopLineModule(
   state_(State::APPROACH),
   debug_data_()
 {
-  velocity_factor_.init(PlanningBehavior::STOP_SIGN);
 }
 
 bool StopLineModule::modifyPathVelocity(PathWithLaneId * path)
@@ -62,7 +61,12 @@ bool StopLineModule::modifyPathVelocity(PathWithLaneId * path)
 
   path->points = trajectory->restore();
 
-  updateVelocityFactor(&velocity_factor_, state_, *stop_point - ego_s);
+  // TODO(soblin): PlanningFactorInterface use trajectory class
+  planning_factor_interface_->add(
+    path->points, trajectory->compute(*stop_point).point.pose,
+    planner_data_->current_odometry->pose, planner_data_->current_odometry->pose,
+    tier4_planning_msgs::msg::PlanningFactor::STOP, tier4_planning_msgs::msg::SafetyFactorArray{},
+    true /*is_driving_forward*/, 0.0, 0.0 /*shift distance*/, "stopline");
 
   updateStateAndStoppedTime(
     &state_, &stopped_time_, clock_->now(), *stop_point - ego_s, planner_data_->isVehicleStopped());
@@ -149,24 +153,6 @@ void StopLineModule::updateStateAndStoppedTime(
     case State::START: {
       break;
     }
-  }
-}
-
-void StopLineModule::updateVelocityFactor(
-  autoware::motion_utils::VelocityFactorInterface * velocity_factor, const State & state,
-  const double & distance_to_stop_point)
-{
-  switch (state) {
-    case State::APPROACH: {
-      velocity_factor->set(distance_to_stop_point, VelocityFactor::APPROACHING);
-      break;
-    }
-    case State::STOPPED: {
-      velocity_factor->set(distance_to_stop_point, VelocityFactor::STOPPED);
-      break;
-    }
-    case State::START:
-      break;
   }
 }
 
