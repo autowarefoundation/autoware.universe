@@ -234,14 +234,13 @@ The `backward_length_buffer_for_end_of_lane` is added to allow some window for a
 
 #### Multiple candidate path samples (longitudinal acceleration)
 
-Lane change velocity is affected by the ego vehicle's current velocity. High velocity requires longer preparation and lane changing distance. However we also need to plan lane changing trajectories in case ego vehicle slows down.
-Computing candidate paths that assumes ego vehicle's slows down is performed by substituting predetermined deceleration value into `prepare_length`, `prepare_velocity` and `lane_changing_length` equation.
-
-The predetermined longitudinal acceleration values are a set of value that starts from `longitudinal_acceleration = maximum_longitudinal_acceleration`, and decrease by `longitudinal_acceleration_resolution` until it reaches `longitudinal_acceleration = -maximum_longitudinal_deceleration`. Both `maximum_longitudinal_acceleration` and `maximum_longitudinal_deceleration` are calculated as: defined in the `common.param` file as `normal.min_acc`.
+In principle, maximum longitudinal acceleration is assumed for generating lane change candidate path.
+However is certain situations, we need to sample multiple longitudinal acceleration values to find a valid and safe candidate path.
+The lower and upper bounds of the longitudinal acceleration sampled are determined from the values specified in the lane change parameters and common planner parameters, as follows
 
 ```C++
 maximum_longitudinal_acceleration = min(common_param.max_acc, lane_change_param.max_acc)
-maximum_longitudinal_deceleration = max(common_param.min_acc, lane_change_param.min_acc)
+minimum_longitudinal_acceleration = max(common_param.min_acc, lane_change_param.min_acc)
 ```
 
 where `common_param` is vehicle common parameter, which defines vehicle common maximum longitudinal acceleration and deceleration. Whereas, `lane_change_param` has maximum longitudinal acceleration and deceleration for the lane change module. For example, if a user set and `common_param.max_acc=1.0` and `lane_change_param.max_acc=0.0`, `maximum_longitudinal_acceleration` becomes `0.0`, and the lane change does not accelerate in the lane change phase.
@@ -252,9 +251,7 @@ The `longitudinal_acceleration_resolution` is determine by the following
 longitudinal_acceleration_resolution = (maximum_longitudinal_acceleration - minimum_longitudinal_acceleration) / longitudinal_acceleration_sampling_num
 ```
 
-Note that when the `current_velocity` is lower than `minimum_lane_changing_velocity`, the vehicle needs to accelerate its velocity to `minimum_lane_changing_velocity`. Therefore, longitudinal acceleration becomes positive value (not decelerate).
-
-The chart illustrates the conditions under which longitudinal acceleration values are sampled.
+The chart below illustrates the conditions under which longitudinal acceleration values are sampled.
 
 ```plantuml
 @startuml
@@ -318,7 +315,7 @@ if (min_acc > max_acc) then (yes)
   :Return empty list;
   stop
 elseif (max_acc - min_acc < epsilon) then (yes)
-  :Return {0.0};
+  :Return {min_acc};
   stop
 else (no)
   :Calculate resolution;
@@ -328,20 +325,22 @@ endif
 repeat
   if (sampled_values.back() < -epsilon AND next_value > epsilon) then (yes)
     :Insert 0.0 into sampled_values;
+  else (no)
   endif
   :Add sampled_acc to sampled_values;
   repeat while (sampled_acc < max_acc + epsilon) is (TRUE)
 
+:Reverse sampled_values;
 :Return sampled_values;
 stop
 @enduml
 ```
 
-The following figure illustrates when `longitudinal_acceleration_sampling_num = 4`. Assuming that `maximum_deceleration = 1.0` then `a0 == 0.0 == no deceleration`, `a1 == 0.25`, `a2 == 0.5`, `a3 == 0.75` and `a4 == 1.0 == maximum_deceleration`. `a0` is the expected lane change trajectories should ego vehicle do not decelerate, and `a1`'s path is the expected lane change trajectories should ego vehicle decelerate at `0.25 m/s^2`.
+The following figure illustrates when `longitudinal_acceleration_sampling_num = 4`. Assuming that `maximum_acceleration = 1.0` and `minimum_acceleration = 1.0` then `a0 == 1.0`, `a1 == 0.5`, `a2 == 0.0`, `a3 == -0.5` and `a4 == -1.0`. `a0` is the expected lane change trajectory when sampling is not required.
 
 ![path_samples](./images/lane_change-candidate_path_samples.png)
 
-Which path will be chosen will depend on validity and collision check.
+Which path will be chosen depends on validity and safety checks.
 
 #### Multiple candidate path samples (lateral acceleration)
 
