@@ -57,7 +57,6 @@ void TrafficLightModuleManager::modifyPathVelocity(tier4_planning_msgs::msg::Pat
   for (const auto & scene_module : scene_modules_) {
     std::shared_ptr<TrafficLightModule> traffic_light_scene_module(
       std::dynamic_pointer_cast<TrafficLightModule>(scene_module));
-
     traffic_light_scene_module->setPlannerData(planner_data_);
     traffic_light_scene_module->modifyPathVelocity(path);
 
