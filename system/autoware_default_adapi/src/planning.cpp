@@ -155,7 +155,8 @@ std::vector<SteeringFactor> convert(const std::vector<PlanningFactor> & factors)
 
 template <class T>
 T merge_factors(
-  [[maybe_unused]] const rclcpp::Time stamp, [[maybe_unused]] const std::vector<PlanningFactorArray::ConstSharedPtr> & factors)
+  [[maybe_unused]] const rclcpp::Time stamp,
+  [[maybe_unused]] const std::vector<PlanningFactorArray::ConstSharedPtr> & factors)
 {
   static_assert(sizeof(T) == 0, "Only specializations of merge_factors can be used.");
   throw std::logic_error("Only specializations of merge_factors can be used.");
