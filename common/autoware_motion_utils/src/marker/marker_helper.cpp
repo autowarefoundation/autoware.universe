@@ -109,7 +109,7 @@ inline visualization_msgs::msg::MarkerArray createIntendedPassVirtualMarkerArray
   {
     auto marker = createDefaultMarker(
       "map", now, ns_prefix + "factor_text", id, visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
-      createMarkerScale(0.0, 0.0, 0.5 /*font size*/), createMarkerColor(1.0, 1.0, 1.0, 1.0));
+      createMarkerScale(0.0, 0.0, 0.4 /*font size*/), createMarkerColor(1.0, 1.0, 1.0, 1.0));
 
     marker.pose = vehicle_front_pose;
     marker.pose.position.z += 2.0;
