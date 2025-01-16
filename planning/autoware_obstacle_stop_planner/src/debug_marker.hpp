@@ -14,7 +14,7 @@
 #ifndef DEBUG_MARKER_HPP_
 #define DEBUG_MARKER_HPP_
 
-#include <autoware/motion_utils/factor/planning_factor_interface.hpp>
+#include <autoware/planning_factor_interface/planning_factor_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/point.hpp>
@@ -119,7 +119,8 @@ private:
   rclcpp::Node * node_;
   double base_link2front_;
 
-  std::unique_ptr<autoware::motion_utils::PlanningFactorInterface> planning_factor_interface_;
+  std::unique_ptr<autoware::planning_factor_interface::PlanningFactorInterface>
+    planning_factor_interface_;
 
   std::shared_ptr<Pose> stop_pose_ptr_;
   std::shared_ptr<Pose> target_stop_pose_ptr_;
