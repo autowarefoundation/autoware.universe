@@ -172,7 +172,7 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
       params.lateral_distance_max_threshold =
         getOrDeclareParameter<double>(*node, parameter(prefix + ".lateral_distance_max_threshold"));
       params.extended_polygon_policy =
-        getOrDeclareParameter<std::string>(*node, parameter(prefix + "extended_polygon_policy"));
+        getOrDeclareParameter<std::string>(*node, parameter(prefix + ".extended_polygon_policy"));
     };
     set_rss_params(p.safety.rss_params, "safety_check.execution");
     set_rss_params(p.safety.rss_params_for_parked, "safety_check.parked");
@@ -452,7 +452,8 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
     } else {
       RCLCPP_WARN_THROTTLE(
         node_->get_logger(), *node_->get_clock(), 5000,
-        "The value of th_incoming_object_yaw (%.3f rad) is less than the minimum possible value (%.3f "
+        "The value of th_incoming_object_yaw (%.3f rad) is less than the minimum possible value "
+        "(%.3f "
         "rad).",
         th_incoming_object_yaw, M_PI_2);
     }
