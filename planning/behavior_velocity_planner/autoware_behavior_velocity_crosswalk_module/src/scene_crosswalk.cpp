@@ -476,12 +476,13 @@ std::optional<geometry_msgs::msg::Pose> CrosswalkModule::calcStopPose(
     return strong_brk_dist_opt ? strong_brk_dist_opt.value() : 0.0;
   }();
   if (selected_stop.dist < strong_brk_dist - p.overrun_threshold_length_for_no_stop_decision) {
-    RCLCPP_INFO(
-      logger_,
+    RCLCPP_INFO_THROTTLE(
+      logger_, *clock_, 1000,
       "Abandon to stop. "
       "Can not stop against the nearest pedestrian with a specified deceleration. "
       "dist to stop: %f, braking distance: %f",
       selected_stop.dist, strong_brk_dist);
+    debug_data_.pass_poses.push_back(selected_stop.pose);
     return std::nullopt;
   }
 
