@@ -101,8 +101,11 @@ void BlindSpotModule::reactRTCApprovalByDecision(
       decision.stop_line_idx, planner_data_->vehicle_info_.max_longitudinal_offset_m, *path);
 
     const auto stop_pose = path->points.at(decision.stop_line_idx).point.pose;
-    velocity_factor_.set(
-      path->points, planner_data_->current_odometry->pose, stop_pose, VelocityFactor::UNKNOWN);
+    planning_factor_interface_->add(
+      path->points, planner_data_->current_odometry->pose, stop_pose, stop_pose,
+      tier4_planning_msgs::msg::PlanningFactor::STOP, tier4_planning_msgs::msg::SafetyFactorArray{},
+      true /*is_driving_forward*/, 0.0, 0.0 /*shift distance*/,
+      "blind_spot(module is judging as UNSAFE)");
   }
   return;
 }
@@ -132,8 +135,11 @@ void BlindSpotModule::reactRTCApprovalByDecision(
       decision.stop_line_idx, planner_data_->vehicle_info_.max_longitudinal_offset_m, *path);
 
     const auto stop_pose = path->points.at(decision.stop_line_idx).point.pose;
-    velocity_factor_.set(
-      path->points, planner_data_->current_odometry->pose, stop_pose, VelocityFactor::UNKNOWN);
+    planning_factor_interface_->add(
+      path->points, planner_data_->current_odometry->pose, stop_pose, stop_pose,
+      tier4_planning_msgs::msg::PlanningFactor::STOP, tier4_planning_msgs::msg::SafetyFactorArray{},
+      true /*is_driving_forward*/, 0.0, 0.0 /*shift distance*/,
+      "blind_spot(module is judging as SAFE and RTC is not approved)");
   }
   return;
 }
