@@ -15,9 +15,9 @@
 #ifndef AUTOWARE__LOCALIZATION_EVALUATOR__METRICS_CALCULATOR_HPP_
 #define AUTOWARE__LOCALIZATION_EVALUATOR__METRICS_CALCULATOR_HPP_
 
-#include "autoware/universe_utils/math/accumulator.hpp"
 #include "autoware/localization_evaluator/metrics/metric.hpp"
 #include "autoware/localization_evaluator/parameters.hpp"
+#include "autoware/universe_utils/math/accumulator.hpp"
 
 #include "geometry_msgs/msg/pose.hpp"
 #include <nav_msgs/msg/odometry.hpp>

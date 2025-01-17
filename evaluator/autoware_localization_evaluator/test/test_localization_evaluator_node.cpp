@@ -46,7 +46,8 @@ protected:
     rclcpp::init(0, nullptr);
 
     rclcpp::NodeOptions options;
-    const auto share_dir = ament_index_cpp::get_package_share_directory("autoware_localization_evaluator");
+    const auto share_dir =
+      ament_index_cpp::get_package_share_directory("autoware_localization_evaluator");
     options.arguments(
       {"--ros-args", "--params-file", share_dir + "/config/localization_evaluator.param.yaml"});
 
