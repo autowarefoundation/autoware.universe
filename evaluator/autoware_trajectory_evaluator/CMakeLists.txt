@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.22)
 project(autoware_trajectory_evaluator)
 
 if(NOT CMAKE_CXX_STANDARD)
@@ -32,3 +32,12 @@ ament_auto_package(
     config
     launch
 )
+
+if(BUILD_TESTING)
+  ament_add_gtest(test_trajectory_evaluator
+    test/test_trajectory_evaluator_node.cpp
+  )
+  target_link_libraries(test_trajectory_evaluator
+    trajectory_evaluator_node
+  )
+endif()
