@@ -36,15 +36,16 @@ DetectionAreaModule::DetectionAreaModule(
   const int64_t module_id, const int64_t lane_id,
   const lanelet::autoware::DetectionArea & detection_area_reg_elem,
   const PlannerParam & planner_param, const rclcpp::Logger & logger,
-  const rclcpp::Clock::SharedPtr clock)
-: SceneModuleInterface(module_id, logger, clock),
+  const rclcpp::Clock::SharedPtr clock,
+  const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+  const std::shared_ptr<motion_utils::PlanningFactorInterface> planning_factor_interface)
+: SceneModuleInterface(module_id, logger, clock, time_keeper, planning_factor_interface),
   lane_id_(lane_id),
   detection_area_reg_elem_(detection_area_reg_elem),
   state_(State::GO),
   planner_param_(planner_param),
   debug_data_()
 {
-  velocity_factor_.init(PlanningBehavior::USER_DEFINED_DETECTION_AREA);
 }
 
 bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path)
@@ -178,9 +179,10 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path)
 
   // Create StopReason
   {
-    velocity_factor_.set(
-      path->points, planner_data_->current_odometry->pose, stop_point->second,
-      VelocityFactor::UNKNOWN);
+    planning_factor_interface_->add(
+      path->points, planner_data_->current_odometry->pose, stop_pose, stop_pose,
+      tier4_planning_msgs::msg::PlanningFactor::STOP, tier4_planning_msgs::msg::SafetyFactorArray{},
+      true /*is_driving_forward*/, 0.0, 0.0 /*shift distance*/, "");
   }
 
   return true;
