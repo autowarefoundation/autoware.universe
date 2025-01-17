@@ -1,4 +1,4 @@
-// Copyright 2024 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware/universe_utils/ros/polling_subscriber.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
+#include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
@@ -39,6 +40,7 @@
 namespace control_diagnostics
 {
 using autoware::universe_utils::Accumulator;
+using autoware::vehicle_info_utils::VehicleInfo;
 using autoware_planning_msgs::msg::Trajectory;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
@@ -64,8 +66,9 @@ public:
   void AddGoalLongitudinalDeviationMetricMsg(const Pose & ego_pose);
   void AddGoalLateralDeviationMetricMsg(const Pose & ego_pose);
   void AddGoalYawDeviationMetricMsg(const Pose & ego_pose);
-
   void AddLaneletMetricMsg(const Pose & ego_pose);
+
+  void AddLaneletInfoMsg(const Pose & ego_pose);
   void AddKinematicStateMetricMsg(
     const Odometry & odom, const AccelWithCovarianceStamped & accel_stamped);
 
@@ -106,6 +109,7 @@ private:
     metric_accumulators_;  // 3(min, max, mean) * metric_size
 
   MetricArrayMsg metrics_msg_;
+  VehicleInfo vehicle_info_;
   autoware::route_handler::RouteHandler route_handler_;
   rclcpp::TimerBase::SharedPtr timer_;
   std::optional<AccelWithCovarianceStamped> prev_acc_stamped_{std::nullopt};
