@@ -47,7 +47,9 @@ public:
     const int64_t module_id, const std::shared_ptr<const PlannerData> & planner_data,
     const PlannerParam & planner_param, const rclcpp::Logger logger,
     std::unique_ptr<DynamicObstacleCreator> dynamic_obstacle_creator,
-    const std::shared_ptr<RunOutDebug> & debug_ptr, const rclcpp::Clock::SharedPtr clock);
+    const std::shared_ptr<RunOutDebug> & debug_ptr, const rclcpp::Clock::SharedPtr clock,
+    const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+    const std::shared_ptr<motion_utils::PlanningFactorInterface> planning_factor_interface);
 
   bool modifyPathVelocity(PathWithLaneId * path) override;
 
