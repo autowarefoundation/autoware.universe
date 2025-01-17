@@ -23,8 +23,6 @@
 #include "autoware/behavior_path_planner_common/utils/parking_departure/common_module_data.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 
-#include <autoware/lane_departure_checker/lane_departure_checker.hpp>
-
 #include <autoware_vehicle_msgs/msg/hazard_lights_command.hpp>
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
@@ -40,7 +38,6 @@
 
 namespace autoware::behavior_path_planner
 {
-using autoware::lane_departure_checker::LaneDepartureChecker;
 using autoware_vehicle_msgs::msg::HazardLightsCommand;
 using geometry_msgs::msg::PoseArray;
 using nav_msgs::msg::OccupancyGrid;
@@ -133,12 +130,10 @@ bool isOnModifiedGoal(
   const GoalPlannerParameters & parameters);
 
 bool hasPreviousModulePathShapeChanged(
-  const BehaviorModuleOutput & previous_module_output,
-  const BehaviorModuleOutput & last_previous_module_output);
-bool hasDeviatedFromLastPreviousModulePath(
-  const PlannerData & planner_data, const BehaviorModuleOutput & last_previous_module_output);
-bool hasDeviatedFromCurrentPreviousModulePath(
-  const PlannerData & planner_data, const BehaviorModuleOutput & previous_module_output);
+  const BehaviorModuleOutput & upstream_module_output,
+  const BehaviorModuleOutput & last_upstream_module_output);
+bool hasDeviatedFromPath(
+  const Point & ego_position, const BehaviorModuleOutput & upstream_module_output);
 
 bool needPathUpdate(
   const Pose & current_pose, const double path_update_duration, const rclcpp::Time & now,
@@ -189,6 +184,7 @@ public:
   void onTimer();
 
 private:
+  const GoalPlannerParameters parameters_;
   std::mutex & mutex_;
   const std::optional<LaneParkingRequest> & request_;
   LaneParkingResponse & response_;
@@ -196,6 +192,10 @@ private:
   rclcpp::Logger logger_;
 
   std::vector<std::shared_ptr<PullOverPlannerBase>> pull_over_planners_;
+  BehaviorModuleOutput
+    original_upstream_module_output_;  //<! upstream_module_output used for generating last
+                                       // pull_over_path_candidates(only updated when new candidates
+                                       // are generated)
 };
 
 class FreespaceParkingPlanner
@@ -240,7 +240,8 @@ public:
     const std::shared_ptr<GoalPlannerParameters> & parameters,
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
     std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
-      objects_of_interest_marker_interface_ptr_map);
+      objects_of_interest_marker_interface_ptr_map,
+    const std::shared_ptr<PlanningFactorInterface> planning_factor_interface);
 
   ~GoalPlannerModule()
   {
@@ -455,7 +456,7 @@ private:
   // steering factor
   void updateSteeringFactor(
     const PullOverContextData & context_data, const std::array<Pose, 2> & pose,
-    const std::array<double, 2> distance, const uint16_t type);
+    const std::array<double, 2> distance);
 
   // rtc
   std::pair<double, double> calcDistanceToPathChange(
