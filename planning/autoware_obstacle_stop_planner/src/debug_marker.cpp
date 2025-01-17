@@ -47,8 +47,9 @@ ObstacleStopPlannerDebugNode::ObstacleStopPlannerDebugNode(
   rclcpp::Node * node, const double base_link2front)
 : node_(node),
   base_link2front_(base_link2front),
-  planning_factor_interface_{std::make_unique<autoware::motion_utils::PlanningFactorInterface>(
-    node, "obstacle_stop_planner")}
+  planning_factor_interface_{
+    std::make_unique<autoware::planning_factor_interface::PlanningFactorInterface>(
+      node, "obstacle_stop_planner")}
 {
   virtual_wall_pub_ = node_->create_publisher<MarkerArray>("~/virtual_wall", 1);
   debug_viz_pub_ = node_->create_publisher<MarkerArray>("~/debug/marker", 1);

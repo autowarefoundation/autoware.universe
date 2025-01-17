@@ -177,7 +177,8 @@ CrosswalkModule::CrosswalkModule(
   const PlannerParam & planner_param, const rclcpp::Logger & logger,
   const rclcpp::Clock::SharedPtr clock,
   const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
-  const std::shared_ptr<motion_utils::PlanningFactorInterface> planning_factor_interface)
+  const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
+    planning_factor_interface)
 : SceneModuleInterfaceWithRTC(module_id, logger, clock, time_keeper, planning_factor_interface),
   module_id_(module_id),
   planner_param_(planner_param),

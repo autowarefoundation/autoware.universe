@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__MOTION_UTILS__FACTOR__PLANNING_FACTOR_INTERFACE_HPP_
-#define AUTOWARE__MOTION_UTILS__FACTOR__PLANNING_FACTOR_INTERFACE_HPP_
+#ifndef AUTOWARE__PLANNING_FACTOR_INTERFACE__PLANNING_FACTOR_INTERFACE_HPP_
+#define AUTOWARE__PLANNING_FACTOR_INTERFACE__PLANNING_FACTOR_INTERFACE_HPP_
 
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -30,7 +30,7 @@
 #include <string>
 #include <vector>
 
-namespace autoware::motion_utils
+namespace autoware::planning_factor_interface
 {
 
 using geometry_msgs::msg::Pose;
@@ -235,6 +235,6 @@ extern template void PlanningFactorInterface::add<autoware_planning_msgs::msg::T
   const Pose &, const uint16_t behavior, const SafetyFactorArray &, const bool, const double,
   const double, const std::string &);
 
-}  // namespace autoware::motion_utils
+}  // namespace autoware::planning_factor_interface
 
-#endif  // AUTOWARE__MOTION_UTILS__FACTOR__PLANNING_FACTOR_INTERFACE_HPP_
+#endif  // AUTOWARE__PLANNING_FACTOR_INTERFACE__PLANNING_FACTOR_INTERFACE_HPP_

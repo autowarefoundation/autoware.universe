@@ -60,7 +60,8 @@ void OutOfLaneModule::init(rclcpp::Node & node, const std::string & module_name)
   init_parameters(node);
 
   planning_factor_interface_ =
-    std::make_unique<autoware::motion_utils::PlanningFactorInterface>(&node, "out_of_lane");
+    std::make_unique<autoware::planning_factor_interface::PlanningFactorInterface>(
+      &node, "out_of_lane");
 
   debug_publisher_ =
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/" + ns_ + "/debug_markers", 1);

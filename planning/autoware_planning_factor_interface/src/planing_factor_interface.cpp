@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <autoware/motion_utils/factor/planning_factor_interface.hpp>
+#include <autoware/planning_factor_interface/planning_factor_interface.hpp>
 
 #include <string>
 #include <vector>
 
-namespace autoware::motion_utils
+namespace autoware::planning_factor_interface
 {
 template void PlanningFactorInterface::add<tier4_planning_msgs::msg::PathPointWithLaneId>(
   const std::vector<tier4_planning_msgs::msg::PathPointWithLaneId> &, const Pose &, const Pose &,
@@ -44,4 +44,4 @@ template void PlanningFactorInterface::add<autoware_planning_msgs::msg::Trajecto
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> &, const Pose &, const Pose &,
   const Pose &, const uint16_t behavior, const SafetyFactorArray &, const bool, const double,
   const double, const std::string &);
-}  // namespace autoware::motion_utils
+}  // namespace autoware::planning_factor_interface

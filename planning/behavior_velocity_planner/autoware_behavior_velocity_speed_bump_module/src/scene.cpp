@@ -36,7 +36,8 @@ SpeedBumpModule::SpeedBumpModule(
   const lanelet::autoware::SpeedBump & speed_bump_reg_elem, const PlannerParam & planner_param,
   const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock,
   const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
-  const std::shared_ptr<motion_utils::PlanningFactorInterface> planning_factor_interface)
+  const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
+    planning_factor_interface)
 : SceneModuleInterface(module_id, logger, clock, time_keeper, planning_factor_interface),
   module_id_(module_id),
   lane_id_(lane_id),

@@ -18,7 +18,7 @@
 #include "planner_data.hpp"
 #include "velocity_planning_result.hpp"
 
-#include <autoware/motion_utils/factor/planning_factor_interface.hpp>
+#include <autoware/planning_factor_interface/planning_factor_interface.hpp>
 #include <autoware/universe_utils/ros/processing_time_publisher.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -55,7 +55,8 @@ public:
   autoware::motion_utils::VirtualWallMarkerCreator virtual_wall_marker_creator{};
 
 protected:
-  std::unique_ptr<autoware::motion_utils::PlanningFactorInterface> planning_factor_interface_;
+  std::unique_ptr<autoware::planning_factor_interface::PlanningFactorInterface>
+    planning_factor_interface_;
 };
 
 }  // namespace autoware::motion_velocity_planner
