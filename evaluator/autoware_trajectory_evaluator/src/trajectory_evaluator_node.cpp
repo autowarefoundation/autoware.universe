@@ -183,6 +183,38 @@ void TrajectoryEvaluatorNode::on_kinematic_state(
         time_error_metric.value = time_error;
         metrics_msg_.metric_array.push_back(time_error_metric);
 
+        MetricMsg closest_traj_x;
+        closest_traj_x.name = "trajectory_metrics/closest_traj_x";
+        closest_traj_x.value = closest_point.trajectory_point.pose.position.x;
+        metrics_msg_.metric_array.push_back(closest_traj_x);
+
+        MetricMsg closest_traj_y;
+        closest_traj_y.name = "trajectory_metrics/closest_traj_y";
+        closest_traj_y.value = closest_point.trajectory_point.pose.position.y;
+        metrics_msg_.metric_array.push_back(closest_traj_y);
+
+        MetricMsg closest_traj_z;
+        closest_traj_z.name = "trajectory_metrics/closest_traj_z";
+        closest_traj_z.value = closest_point.trajectory_point.pose.position.z;
+        metrics_msg_.metric_array.push_back(closest_traj_z);
+
+        MetricMsg current_pose_x;
+        current_pose_x.name = "trajectory_metrics/current_pose_x";
+        current_pose_x.value = pose.position.x;
+        metrics_msg_.metric_array.push_back(closest_traj_x);
+
+        MetricMsg current_pose_y;
+        current_pose_y.name = "trajectory_metrics/current_pose_y";
+        current_pose_y.value = pose.position.y;
+        metrics_msg_.metric_array.push_back(closest_traj_y);
+
+        MetricMsg current_pose_z;
+        current_pose_z.name = "trajectory_metrics/current_pose_z";
+        current_pose_z.value = pose.position.z;
+        metrics_msg_.metric_array.push_back(current_pose_z);
+
+        metrics_pub_->publish(metrics_msg_);
+
         metrics_pub_->publish(metrics_msg_);
 
         RCLCPP_INFO(

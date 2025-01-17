@@ -29,6 +29,8 @@
 #include <cmath>
 #include <deque>
 #include <fstream>
+#include <memory>
+#include <string>
 #include <vector>
 
 namespace trajectory_evaluator

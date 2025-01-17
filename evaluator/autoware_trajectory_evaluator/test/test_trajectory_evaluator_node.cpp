@@ -58,7 +58,7 @@ protected:
 
   virtual void TearDown() { rclcpp::shutdown(); }
 
-  void publishTrajectoryAndWait(
+  void publish_trajectory_and_wait(
     const autoware_planning_msgs::msg::Trajectory & trajectory, std::chrono::milliseconds timeout)
   {
     // received_metrics.reset();
@@ -72,7 +72,7 @@ protected:
     }
   }
 
-  void simulateEgoVehicle(
+  void simulate_ego_vehicle(
     const autoware_planning_msgs::msg::Trajectory & trajectory, double interval_seconds)
   {
     nav_msgs::msg::Odometry odometry_msg;
@@ -116,7 +116,7 @@ protected:
     }
   }
 
-  double extractMetricValue(const MetricArrayMsg & metrics, const std::string & name)
+  double extract_metric_value(const MetricArrayMsg & metrics, const std::string & name)
   {
     for (const auto & metric : metrics.metric_array) {
       if (metric.name == name) {
@@ -126,7 +126,7 @@ protected:
     throw std::runtime_error("Metric not found: " + name);
   }
 
-  autoware_planning_msgs::msg::Trajectory generateLinearTrajectory(
+  autoware_planning_msgs::msg::Trajectory generate_linear_trajectory(
     double length, int num_points, double velocity)
   {
     autoware_planning_msgs::msg::Trajectory trajectory;
@@ -148,15 +148,16 @@ TEST_F(TrajectoryEvaluatorTests, TestLinearTrajectoryWithEgoVehicleOdometry)
   int num_points = 20;
   double velocity = 5.0;
 
-  auto trajectory = generateLinearTrajectory(length, num_points, velocity);
-  publishTrajectoryAndWait(trajectory, std::chrono::milliseconds(5000));
+  auto trajectory = generate_linear_trajectory(length, num_points, velocity);
+  publish_trajectory_and_wait(trajectory, std::chrono::milliseconds(5000));
 
   double interval_seconds = 0.1;
-  simulateEgoVehicle(trajectory, interval_seconds);
+  simulate_ego_vehicle(trajectory, interval_seconds);
 
-  double expected_time = extractMetricValue(*received_metrics, "trajectory_metrics/expected_time");
-  double actual_time = extractMetricValue(*received_metrics, "trajectory_metrics/actual_time");
-  double time_error = extractMetricValue(*received_metrics, "trajectory_metrics/time_error");
+  double expected_time =
+    extract_metric_value(*received_metrics, "trajectory_metrics/expected_time");
+  double actual_time = extract_metric_value(*received_metrics, "trajectory_metrics/actual_time");
+  double time_error = extract_metric_value(*received_metrics, "trajectory_metrics/time_error");
 
   double tolerance = 0.1;
   EXPECT_NEAR(actual_time, expected_time, tolerance);
