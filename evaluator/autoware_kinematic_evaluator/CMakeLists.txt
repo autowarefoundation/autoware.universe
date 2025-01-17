@@ -29,11 +29,11 @@ rclcpp_components_register_node(${PROJECT_NAME}
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
-  ament_add_gtest(test_${PROJECT_NAME}
+  ament_add_gtest(test_kinematic_evaluator
     test/test_kinematic_evaluator_node.cpp
   )
-  target_link_libraries(test_${PROJECT_NAME}
-    ${PROJECT_NAME}_node
+  target_link_libraries(test_kinematic_evaluator
+    ${PROJECT_NAME}
   )
 endif()
 
