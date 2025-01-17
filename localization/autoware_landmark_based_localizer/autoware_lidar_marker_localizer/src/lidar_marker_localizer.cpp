@@ -125,7 +125,7 @@ LidarMarkerLocalizer::LidarMarkerLocalizer(const rclcpp::NodeOptions & node_opti
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_, this, false);
 
   diagnostics_interface_.reset(
-    new autoware::universe_utils::DiagnosticInterface(this, "marker_detection_status"));
+    new autoware::universe_utils::DiagnosticsInterface(this, "marker_detection_status"));
 }
 
 void LidarMarkerLocalizer::initialize_diagnostics()

@@ -53,6 +53,7 @@ It distributes route requests and planning results according to current MRM oper
 | `input/vector_map`           | autoware_map_msgs/msg/LaneletMapBin       | vector map of Lanelet2 |
 | `input/modified_goal`        | geometry_msgs/PoseWithUuidStamped         | modified goal pose     |
 | `input/operation_mode_state` | autoware_adapi_v1_msgs/OperationModeState | operation mode state   |
+| `input/odometry`             | nav_msgs/msg/Odometry                     | vehicle odometry       |
 
 ### Publications
 

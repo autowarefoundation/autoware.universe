@@ -17,7 +17,7 @@
 
 #include "autoware/behavior_velocity_crosswalk_module/util.hpp"
 
-#include <autoware/behavior_velocity_planner_common/scene_module_interface.hpp>
+#include <autoware/behavior_velocity_rtc_interface/scene_module_interface_with_rtc.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
 #include <autoware_lanelet2_extension/regulatory_elements/crosswalk.hpp>
@@ -112,7 +112,7 @@ double InterpolateMap(
 }
 }  // namespace
 
-class CrosswalkModule : public SceneModuleInterface
+class CrosswalkModule : public SceneModuleInterfaceWithRTC
 {
 public:
   struct PlannerParam
@@ -334,7 +334,10 @@ public:
     rclcpp::Node & node, const int64_t lane_id, const int64_t module_id,
     const std::optional<int64_t> & reg_elem_id, const lanelet::LaneletMapPtr & lanelet_map_ptr,
     const PlannerParam & planner_param, const rclcpp::Logger & logger,
-    const rclcpp::Clock::SharedPtr clock);
+    const rclcpp::Clock::SharedPtr clock,
+    const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+    const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
+      planning_factor_interface);
 
   bool modifyPathVelocity(PathWithLaneId * path) override;
 
