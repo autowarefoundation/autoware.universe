@@ -452,10 +452,23 @@ stop
 
 A candidate path is considered safe if:
 
-1. There is no overtaking turn lane object
-2. There is no parked vehicle along the target lane ahead of ego (see following section for more details)
-3. The path does NOT cause ego footpring to exceed the target lane opposite boundary
+1. There is no overtaking turn lane object (see Overtaking Object Check section below)
+2. There is no parked vehicle along the target lane ahead of ego (see Delay Lane Change Check section below)
+3. The path does NOT cause ego footprint to exceed the target lane opposite boundary
 4. The path passes collision safety check (See [safety check utils explanation](../autoware_behavior_path_planner_common/docs/behavior_path_planner_safety_check.md))
+
+#### Overtaking Object Check
+
+When ego is exiting an intersection on a turning lane, there is a possibility that a rear vehicle will attempt to overtake the ego vehicle. Which can be dangerous if ego is also trying to perform a lane change. Therefore lane change module will adopt a more conservative behavior in such situation.
+
+If the ego vehicle is currently within an intersection on a truning lane, as shown in the figure below, the generated candidate paths will be marked as unsafe.
+
+![within intersection turn lane](./images/lane_change-intersection_turn_lane_1.png)
+
+Additionally, if the ego vehicle has just exited the turn lane of an intersection and its distance from the intersection is within the `backward_length_from_intersection`, as shown in the figure below, the generated candidate paths will also be marked as unsafe.
+
+![after intersection turn lane](./images/lane_change-intersection_turn_lane_2.png)
+
 
 #### Delay Lane Change Check
 
