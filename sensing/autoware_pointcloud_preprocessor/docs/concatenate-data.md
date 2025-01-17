@@ -137,7 +137,7 @@ ros2 topic echo /diagnostics
 Below is an example output when the point clouds are concatenated successfully:
 
 - Each point cloud has a value of `True`.
-- The `cloud concatenation success` is `True`.
+- The `cloud_concatenation_success` is `True`.
 - The `level` value is `\0`. (diagnostic_msgs::msg::DiagnosticStatus::OK)
 
 ```bash
@@ -152,32 +152,32 @@ status:
   message: Concatenated pointcloud is published and include all topics
   hardware_id: concatenate_data_checker
   values:
-  - key: concatenated cloud timestamp
+  - key: concatenated_cloud_timestamp
     value: '1718260240.159229994'
-  - key: reference timestamp min
+  - key: reference_timestamp_min
     value: '1718260240.149230003'
-  - key: reference timestamp max
+  - key: reference_timestamp_max
     value: '1718260240.169229984'
-  - key: /sensing/lidar/left/pointcloud_before_sync timestamp
+  - key: /sensing/lidar/left/pointcloud_before_sync/timestamp
     value: '1718260240.159229994'
-  - key: /sensing/lidar/left/pointcloud_before_sync is concatenated
+  - key: /sensing/lidar/left/pointcloud_before_sync/is_concatenated
     value: 'True'
-  - key: /sensing/lidar/right/pointcloud_before_sync timestamp
+  - key: /sensing/lidar/right/pointcloud_before_sync/timestamp
     value: '1718260240.194104910'
-  - key: /sensing/lidar/right/pointcloud_before_sync is concatenated
+  - key: /sensing/lidar/right/pointcloud_before_sync/is_concatenated
     value: 'True'
-  - key: /sensing/lidar/top/pointcloud_before_sync timestamp
+  - key: /sensing/lidar/top/pointcloud_before_sync/timestamp
     value: '1718260240.234578133'
-  - key: /sensing/lidar/top/pointcloud_before_sync is concatenated
+  - key: /sensing/lidar/top/pointcloud_before_sync/is_concatenated
     value: 'True'
-  - key: cloud concatenation success
+  - key: cloud_concatenation_success
     value: 'True'
 ```
 
 Below is an example when point clouds fail to concatenate successfully.
 
 - Some point clouds might have values of `False`.
-- The `cloud concatenation success` is `False`.
+- The `cloud_concatenation_success` is `False`.
 - The `level` value is `\x02`. (diagnostic_msgs::msg::DiagnosticStatus::ERROR)
 
 ```bash
@@ -192,23 +192,23 @@ status:
   message: Concatenated pointcloud is published but miss some topics
   hardware_id: concatenate_data_checker
   values:
-  - key: concatenated cloud timestamp
+  - key: concatenated_cloud_timestamp
     value: '1718260240.859827995'
-  - key: reference timestamp min
+  - key: reference_timestamp_min
     value: '1718260240.849828005'
-  - key: reference timestamp max
+  - key: reference_timestamp_max
     value: '1718260240.869827986'
-  - key: /sensing/lidar/left/pointcloud_before_sync timestamp
+  - key: /sensing/lidar/left/pointcloud_before_sync/timestamp
     value: '1718260240.859827995'
-  - key: /sensing/lidar/left/pointcloud_before_sync is concatenated
+  - key: /sensing/lidar/left/pointcloud_before_sync/is_concatenated
     value: 'True'
-  - key: /sensing/lidar/right/pointcloud_before_sync timestamp
+  - key: /sensing/lidar/right/pointcloud_before_sync/timestamp
     value: '1718260240.895193815'
-  - key: /sensing/lidar/right/pointcloud_before_sync is concatenated
+  - key: /sensing/lidar/right/pointcloud_before_sync/is_concatenated
     value: 'True'
-  - key: /sensing/lidar/top/pointcloud_before_sync is concatenated
+  - key: /sensing/lidar/top/pointcloud_before_sync/is_concatenated
     value: 'False'
-  - key: cloud concatenation success
+  - key: cloud_concatenation_success
     value: 'False'
 ```
 
