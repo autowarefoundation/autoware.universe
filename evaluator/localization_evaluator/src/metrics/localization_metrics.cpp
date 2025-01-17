@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 #include <cmath>
 
-namespace localization_diagnostics
+namespace autoware::localization_diagnostics
 {
 namespace metrics
 {
@@ -43,4 +43,4 @@ Accumulator<double> updateAbsoluteStats(
 }
 
 }  // namespace metrics
-}  // namespace localization_diagnostics
+}  // namespace autoware::localization_diagnostics

@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LOCALIZATION_EVALUATOR__METRICS_CALCULATOR_HPP_
-#define LOCALIZATION_EVALUATOR__METRICS_CALCULATOR_HPP_
+#ifndef AUTOWARE__LOCALIZATION_EVALUATOR__METRICS_CALCULATOR_HPP_
+#define AUTOWARE__LOCALIZATION_EVALUATOR__METRICS_CALCULATOR_HPP_
 
 #include "autoware/universe_utils/math/accumulator.hpp"
 #include "localization_evaluator/metrics/metric.hpp"
@@ -22,7 +22,7 @@
 #include "geometry_msgs/msg/pose.hpp"
 #include <nav_msgs/msg/odometry.hpp>
 
-namespace localization_diagnostics
+namespace autoware::localization_diagnostics
 {
 using autoware::universe_utils::Accumulator;
 class MetricsCalculator
@@ -44,6 +44,6 @@ public:
     const geometry_msgs::msg::Point & pos_ref) const;
 };  // class MetricsCalculator
 
-}  // namespace localization_diagnostics
+}  // namespace autoware::localization_diagnostics
 
-#endif  // LOCALIZATION_EVALUATOR__METRICS_CALCULATOR_HPP_
+#endif  // AUTOWARE__LOCALIZATION_EVALUATOR__METRICS_CALCULATOR_HPP_

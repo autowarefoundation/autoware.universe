@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@
 #include <utility>
 #include <vector>
 
-using EvalNode = localization_diagnostics::LocalizationEvaluatorNode;
+using EvalNode = autoware::localization_diagnostics::LocalizationEvaluatorNode;
 using diagnostic_msgs::msg::DiagnosticArray;
 using geometry_msgs::msg::PoseWithCovarianceStamped;
 using nav_msgs::msg::Odometry;
@@ -46,7 +46,7 @@ protected:
     rclcpp::init(0, nullptr);
 
     rclcpp::NodeOptions options;
-    const auto share_dir = ament_index_cpp::get_package_share_directory("localization_evaluator");
+    const auto share_dir = ament_index_cpp::get_package_share_directory("autoware_localization_evaluator");
     options.arguments(
       {"--ros-args", "--params-file", share_dir + "/config/localization_evaluator.param.yaml"});
 
@@ -74,9 +74,9 @@ protected:
 
   ~EvalTest() override { rclcpp::shutdown(); }
 
-  void setTargetMetric(localization_diagnostics::Metric metric)
+  void setTargetMetric(autoware::localization_diagnostics::Metric metric)
   {
-    const auto metric_str = localization_diagnostics::metric_to_str.at(metric);
+    const auto metric_str = autoware::localization_diagnostics::metric_to_str.at(metric);
     const auto is_target_metric = [metric_str](const auto & status) {
       return status.name == metric_str;
     };
@@ -141,7 +141,7 @@ protected:
 
 TEST_F(EvalTest, TestLateralErrorStats)
 {
-  setTargetMetric(localization_diagnostics::Metric::lateral_error);
+  setTargetMetric(autoware::localization_diagnostics::Metric::lateral_error);
   Odometry odom = makeOdometry(1.0, 1.0, 0.0);
   PoseWithCovarianceStamped pos_ref = makePos(4.0, 5.0, 0.0);
   EXPECT_DOUBLE_EQ(publishOdometryAndGetMetric(odom, pos_ref), 3.0);
@@ -152,7 +152,7 @@ TEST_F(EvalTest, TestLateralErrorStats)
 
 TEST_F(EvalTest, TestAbsoluteErrorStats)
 {
-  setTargetMetric(localization_diagnostics::Metric::absolute_error);
+  setTargetMetric(autoware::localization_diagnostics::Metric::absolute_error);
   Odometry odom = makeOdometry(1.0, 1.0, 0.0);
   PoseWithCovarianceStamped pos_ref = makePos(4.0, 5.0, 0.0);
   EXPECT_DOUBLE_EQ(publishOdometryAndGetMetric(odom, pos_ref), 5.0);

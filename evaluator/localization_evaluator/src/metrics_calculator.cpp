@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 #include "localization_evaluator/metrics/localization_metrics.hpp"
 
-namespace localization_diagnostics
+namespace autoware::localization_diagnostics
 {
 Accumulator<double> MetricsCalculator::updateStat(
   const Accumulator<double> stat_prev, const Metric metric, const geometry_msgs::msg::Point & pos,
@@ -39,4 +39,4 @@ Accumulator<double> MetricsCalculator::updateStat(
   }
 }
 
-}  // namespace localization_diagnostics
+}  // namespace autoware::localization_diagnostics

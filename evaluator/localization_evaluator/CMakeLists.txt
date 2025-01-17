@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.5)
-project(localization_evaluator)
+project(autoware_localization_evaluator)
 
 if(NOT CMAKE_CXX_STANDARD)
   set(CMAKE_CXX_STANDARD 14)
@@ -15,26 +15,25 @@ autoware_package()
 find_package(ament_cmake_auto REQUIRED)
 ament_auto_find_build_dependencies()
 
-ament_auto_add_library(${PROJECT_NAME}_node SHARED
+ament_auto_add_library(${PROJECT_NAME} SHARED
   src/metrics_calculator.cpp
-  src/${PROJECT_NAME}_node.cpp
   src/localization_evaluator_node.cpp
   src/metrics/localization_metrics.cpp
 )
 
-rclcpp_components_register_node(${PROJECT_NAME}_node
-  PLUGIN "localization_diagnostics::LocalizationEvaluatorNode"
-  EXECUTABLE ${PROJECT_NAME}
+rclcpp_components_register_node(${PROJECT_NAME}
+  PLUGIN "autoware::localization_diagnostics::LocalizationEvaluatorNode"
+  EXECUTABLE ${PROJECT_NAME}_node
 )
 
 if(BUILD_TESTING)
   find_package(ament_lint_auto REQUIRED)
   ament_lint_auto_find_test_dependencies()
-  ament_add_gtest(test_${PROJECT_NAME}
+  ament_add_gtest(test_localization_evaluator
     test/test_localization_evaluator_node.cpp
   )
-  target_link_libraries(test_${PROJECT_NAME}
-    ${PROJECT_NAME}_node
+  target_link_libraries(test_localization_evaluator
+    ${PROJECT_NAME}
   )
 endif()
 
