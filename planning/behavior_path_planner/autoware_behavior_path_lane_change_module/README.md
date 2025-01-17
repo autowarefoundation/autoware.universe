@@ -18,9 +18,9 @@ The type of lane boundary in the HD map has to be one of the following:
 The lane change module will activate under the following conditions :
 
 - The ego-vehicle is NOT on a `preferred_lane`.
-- Distance to start of `target_lane` is less than maximum `prepare_length`
+- Distance to start of `target_lane` is less than `maximum_prepare_length`
 - The ego-vehicle is NOT close to a regulatory element:
-  - Distance to next regulatory element is greater than maximum `prepare_length`.
+  - Distance to next regulatory element is greater than `maximum_prepare_length`.
   - Considers distance to traffic light. (configurable)
   - Considers distance to crosswalk. (configurable)
   - Considers distance to intersection. (configurable)
@@ -355,7 +355,7 @@ stop
 
 The following figure illustrates when `longitudinal_acceleration_sampling_num = 4`. Assuming that `maximum_acceleration = 1.0` and `minimum_acceleration = 1.0` then `a0 == 1.0`, `a1 == 0.5`, `a2 == 0.0`, `a3 == -0.5` and `a4 == -1.0`. `a0` is the expected lane change trajectory when sampling is not required.
 
-![path_samples](./images/lane_change-candidate_path_samples.png)
+![path_samples](./images/lane_change-lon_accel_sampling.png)
 
 Which path will be chosen depends on validity and safety checks.
 
@@ -451,6 +451,7 @@ stop
 #### Candidate Path Safety
 
 A candidate path is considered safe if:
+
 1. There is no overtaking turn lane object
 2. There is no parked vehicle along the target lane ahead of ego (see following section for more details)
 3. The path does NOT cause ego footpring to exceed the target lane opposite boundary
@@ -511,15 +512,15 @@ stop
 The following figures demonstrate different situations under which will or will not be triggered:
 
 1. Delay lane change will be triggered as there is sufficient distance ahead.
-   ![delay lane change 1](./images/delay_lane_change_1.drawio.svg)
-2. Delay lane change will NOT be triggered as there is no sufficient distance ahead
-   ![delay lane change 2](./images/delay_lane_change_2.drawio.svg)
+    ![delay lane change 1](./images/delay_lane_change_1.drawio.svg)
+2. Delay lane change will NOT be triggered as there is no sufficient distance ahead.
+    ![delay lane change 2](./images/delay_lane_change_2.drawio.svg)
 3. Delay lane change will be triggered by fist NPC as there is sufficient distance ahead.
-   ![delay lane change 3](./images/delay_lane_change_3.drawio.svg)
+    ![delay lane change 3](./images/delay_lane_change_3.drawio.svg)
 4. Delay lane change will be triggered by second NPC as there is sufficient distance ahead
-   ![delay lane change 4](./images/delay_lane_change_4.drawio.svg)
+    ![delay lane change 4](./images/delay_lane_change_4.drawio.svg)
 5. Delay lane change will NOT be triggered as there is no sufficient distance ahead.
-   ![delay lane change 5](./images/delay_lane_change_5.drawio.svg)
+    ![delay lane change 5](./images/delay_lane_change_5.drawio.svg)
 
 #### Objects selection and classification
 
