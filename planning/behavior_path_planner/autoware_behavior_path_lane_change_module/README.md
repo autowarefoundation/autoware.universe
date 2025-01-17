@@ -7,13 +7,16 @@ The Lane Change module is activated when lane change is needed and can be safely
 ### Prerequisites
 
 The type of lane boundary in the HD map has to be one of the following:
+
 - Dashed lane marking: Lane changes are permitted in both directions.
 - Dashed marking on the left and solid on the right: Lane changes are allowed from left to right.
 - Dashed marking on the right and solid on the left: Lane changes are allowed from right to left.
 - `allow_lane_change` tags is set as `true`
 
 ### Activation Conditions
-The lane change module will activate under the following conditions 
+
+The lane change module will activate under the following conditions :
+
 - The ego-vehicle is NOT on a `preferred_lane`.
 - Distance to start of `target_lane` is less than maximum `prepare_length`
 - The ego-vehicle is NOT close to a regulatory element:
@@ -222,7 +225,7 @@ Where `max_path_velocity` is the current path speed limit.
 
 !!! warning
 
-  If the longitudinal acceleration of prepare phase is negative (slowing down), AND ego is near terminal, then the lane-changing longitudinal acceleration will also be negative and its value is decided by the parameter `lane_changing_decel_factor`.
+    If the longitudinal acceleration of prepare phase is negative (slowing down), AND ego is near terminal, then the lane-changing longitudinal acceleration will also be negative and its value is decided by the parameter `lane_changing_decel_factor`.
 
 The lane changing distance is then computed as follows.
 
@@ -242,7 +245,7 @@ prepare_duration = std::max(max_prepare_duration - turn_signal_duration, min_pre
 ```
 !!! warning
 
-  When the current ego velocity is lower than the `min_lane_change_velocity`, the `min_prepare_duration` is adjusted to ensure sufficient time for reaching `min_lane_change_velocity` assuming `max_longitudinal_acceleration`.
+    When the current ego velocity is lower than the `min_lane_change_velocity`, the `min_prepare_duration` is adjusted to ensure sufficient time for reaching `min_lane_change_velocity` assuming `max_longitudinal_acceleration`.
 
 When ego vehicles is close to the terminal start, we need to sample multiple prepare duration values to find a valid and safe path. In this case prepare duration values are sampled starting from `max_prepare_duration` down to `0.0` at a fixed time interval of `0.5 s`.
 
@@ -443,8 +446,7 @@ stop
 
 !!! warning
 
-  A valid path does NOT mean that the path is safe, however it will be available as a candidate path and can be force approved by operator.
-  A path needs to be both valid AND safe to be automatically approved.
+    A valid path does NOT mean that the path is safe, however it will be available as a candidate path and can be force approved by operator. A path needs to be both valid AND safe to be automatically approved.
 
 #### Candidate Path Safety
 
