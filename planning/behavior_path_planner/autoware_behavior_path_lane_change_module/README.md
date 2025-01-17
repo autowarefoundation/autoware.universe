@@ -378,16 +378,21 @@ Within this range, we sample the lateral acceleration for the ego vehicle. Simil
 lateral_acceleration_resolution = (maximum_lateral_acceleration - minimum_lateral_acceleration) / lateral_acceleration_sampling_num
 ```
 
-#### Candidate Path's validity check
+#### Candidate Path Validity
 
-A candidate path is considered valid if it meets the following criteria:
+It is a prerequisite, that both prepare length and lane-changing length are valid, such that:
 
-1. The distance from the ego vehicle's current position to the end of the current lanes is sufficient to perform a single lane change.
-2. The distance from the ego vehicle's current position to the goal along the current lanes is adequate to complete multiple lane changes.
-3. The distance from the ego vehicle's current position to the end of the target lanes is adequate for completing multiple lane changes.
-4. The distance from the ego vehicle's current position to the next regulatory element is adequate to perform a single lane change.
-5. The lane change can be completed after passing a parked vehicle.
-6. The lane change is deemed safe to execute.
+1. The prepare segment length is greater than the distance from ego to target lane start.
+2. The prepare segment length is smaller than the distance from ego to terminal start.
+3. The lane-changing distance is smaller than the remaining distance after prepare segment to terminal end.
+4. The lane-changing distance is smaller than the remaining distance after prepare segment to the next regulatory element.
+
+If so, a candidate path is considered valid if:
+
+1. The lane changing start point (end of prepare segment) is valid; it is within the target lane neighbor's polygon.
+2. The distance from ego to the end of the current lanes is sufficient to perform a single lane change.
+3. The distance from ego to the goal along the current lanes is adequate to complete multiple lane changes.
+4. The distance from ego to the end of the target lanes is adequate for completing multiple lane changes.
 
 The following flow chart illustrates the validity check.
 
@@ -403,52 +408,51 @@ if (Check if start point is valid by check if it is covered by neighbour lanes p
 else (covered)
 endif
 
-group check for distance #LightYellow
-    :Calculate total length and goal related distances;
-    if (total lane change length considering single lane change > distance from current pose to end of current lanes) then (yes)
-      #LightPink:Reject path;
-      stop
-    else (no)
-    endif
-
-    if (goal is in current lanes) then (yes)
-      if (total lane change length considering multiple lane changes > distance from ego to goal along current lanes) then (yes)
-         #LightPink:Reject path;
-        stop
-      else (no)
-      endif
-    else (no)
-    endif
-
-    if (target lanes is empty) then (yes)
-      #LightPink:Reject path;
-      stop
-    else (no)
-    endif
-    if (total lane change length considering multiple lane changes  > distance from ego to the end of target lanes) then (yes)
-      #LightPink:Reject path;
-      stop
-    else (no)
-    endif
-end group
-
-if (ego is not stuck but parked vehicle exists in target lane) then (yes)
+:Calculate total length and goal related distances;
+if (total lane change length considering single lane change > distance from current pose to end of current lanes) then (yes)
   #LightPink:Reject path;
   stop
 else (no)
 endif
 
-if (is safe to perform lane change) then (yes)
-  #Cyan:Return candidate path list;
-  stop
+if (goal is in current lanes) then (yes)
+  if (total lane change length considering multiple lane changes > distance from ego to goal along current lanes) then (yes)
+      #LightPink:Reject path;
+    stop
+  else (no)
+  endif
 else (no)
-  #LightPink:Reject path;
 endif
 
+if (target lanes is empty) then (yes)
+  #LightPink:Reject path;
+  stop
+else (no)
+endif
+if (total lane change length considering multiple lane changes  > distance from ego to the end of target lanes) then (yes)
+  #LightPink:Reject path;
+  stop
+else (no)
+endif
+
+#LightGreen:Valid Candidate Path;
 stop
 
 @enduml
 ```
+
+!!! warning
+
+  A valid path does NOT mean that the path is safe, however it will be available as a candidate path and can be force approved by operator.
+  A path needs to be both valid AND safe to be automatically approved.
+
+#### Candidate Path Safety
+
+A candidate path is considered safe if:
+1. There is no overtaking turn lane object
+2. There is no parked vehicle along the target lane ahead of ego (see following section for more details)
+3. The path does NOT cause ego footpring to exceed the target lane opposite boundary
+4. The path passes collision safety check (See [safety check utils explanation](../autoware_behavior_path_planner_common/docs/behavior_path_planner_safety_check.md))
 
 #### Delay Lane Change Check
 
@@ -514,10 +518,6 @@ The following figures demonstrate different situations under which will or will 
    ![delay lane change 4](./images/delay_lane_change_4.drawio.svg)
 5. Delay lane change will NOT be triggered as there is no sufficient distance ahead.
    ![delay lane change 5](./images/delay_lane_change_5.drawio.svg)
-
-#### Candidate Path's Safety check
-
-See [safety check utils explanation](../autoware_behavior_path_planner_common/docs/behavior_path_planner_safety_check.md)
 
 #### Objects selection and classification
 
