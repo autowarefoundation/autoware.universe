@@ -18,7 +18,6 @@
 
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <autoware_planning_msgs/msg/path.hpp>
-#include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <iostream>

@@ -35,6 +35,8 @@
 #include <autoware_test_utils/autoware_test_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_planning_msgs/msg/trajectory.hpp>
+
 #include <gtest/gtest.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
@@ -61,15 +63,17 @@ public:
   }
 
   template <typename OutputT>
-  void subscribeOutput(const std::string & topic_name, typename OutputT::ConstSharedPtr buffer = {})
+  void subscribeOutput(const std::string & topic_name)
   {
+    const auto qos = []() {
+      if constexpr (std::is_same_v<OutputT, autoware_planning_msgs::msg::Trajectory>) {
+        return rclcpp::QoS{1};
+      }
+      return rclcpp::QoS{10};
+    }();
+
     test_output_subs_.push_back(test_node_->create_subscription<OutputT>(
-      topic_name, 1, [&](const typename OutputT::ConstSharedPtr msg) {
-        if (buffer) {
-          buffer = msg;
-        }
-        received_topic_num_++;
-      }));
+      topic_name, qos, [this](const typename OutputT::ConstSharedPtr) { received_topic_num_++; }));
   }
 
   void testWithNormalTrajectory(
