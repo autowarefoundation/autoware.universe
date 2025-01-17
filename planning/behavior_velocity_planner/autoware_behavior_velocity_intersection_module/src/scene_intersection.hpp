@@ -22,8 +22,8 @@
 #include "object_manager.hpp"
 #include "result.hpp"
 
-#include <autoware/behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/state_machine.hpp>
+#include <autoware/behavior_velocity_rtc_interface/scene_module_interface_with_rtc.hpp>
 #include <autoware/motion_utils/marker/virtual_wall_marker_creator.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -46,7 +46,7 @@
 namespace autoware::behavior_velocity_planner
 {
 
-class IntersectionModule : public SceneModuleInterface
+class IntersectionModule : public SceneModuleInterfaceWithRTC
 {
 public:
   struct PlannerParam
@@ -304,7 +304,10 @@ public:
     const int64_t module_id, const int64_t lane_id, std::shared_ptr<const PlannerData> planner_data,
     const PlannerParam & planner_param, const std::set<lanelet::Id> & associative_ids,
     const std::string & turn_direction, const bool has_traffic_light, rclcpp::Node & node,
-    const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock);
+    const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock,
+    const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+    const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
+      planning_factor_interface);
 
   /**
    ***********************************************************
