@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "localization_evaluator/metrics_calculator.hpp"
+#include "autoware/localization_evaluator/metrics_calculator.hpp"
 
-#include "localization_evaluator/metrics/localization_metrics.hpp"
+#include "autoware/localization_evaluator/metrics/localization_metrics.hpp"
 
 namespace autoware::localization_diagnostics
 {
