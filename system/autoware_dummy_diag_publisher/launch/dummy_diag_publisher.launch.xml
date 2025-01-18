@@ -1,6 +1,6 @@
 <launch>
-  <arg name="config_file" default="$(find-pkg-share dummy_diag_publisher)/config/_empty.param.yaml"/>
-  <arg name="extra_config_file_sensor" default="$(find-pkg-share dummy_diag_publisher)/config/_empty.param.yaml"/>
+  <arg name="config_file" default="$(find-pkg-share autoware_dummy_diag_publisher)/config/_empty.param.yaml"/>
+  <arg name="extra_config_file_sensor" default="$(find-pkg-share autoware_dummy_diag_publisher)/config/_empty.param.yaml"/>
   <arg name="update_rate" default="10.0"/>
 
   <arg name="launch_rqt_reconfigure" default="true"/>
@@ -26,7 +26,7 @@
     </node>
   </group>
 
-  <include file="$(find-pkg-share dummy_diag_publisher)/launch/dummy_diag_publisher_node.launch.xml">
+  <include file="$(find-pkg-share autoware_dummy_diag_publisher)/launch/dummy_diag_publisher_node.launch.xml">
     <arg name="config_file" value="$(var config_file)"/>
     <arg name="extra_config_file_sensor" value="$(var extra_config_file_sensor)"/>
     <arg name="update_rate" value="$(var update_rate)"/>

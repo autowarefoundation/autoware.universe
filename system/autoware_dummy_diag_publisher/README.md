@@ -42,7 +42,7 @@ TBD.
 ### launch
 
 ```sh
-ros2 launch dummy_diag_publisher dummy_diag_publisher.launch.xml
+ros2 launch autoware_dummy_diag_publisher dummy_diag_publisher.launch.xml
 ```
 
 ### reconfigure

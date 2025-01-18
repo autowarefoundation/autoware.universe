@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DUMMY_DIAG_PUBLISHER__DUMMY_DIAG_PUBLISHER_CORE_HPP_
-#define DUMMY_DIAG_PUBLISHER__DUMMY_DIAG_PUBLISHER_CORE_HPP_
+#ifndef AUTOWARE__DUMMY_DIAG_PUBLISHER__DUMMY_DIAG_PUBLISHER_CORE_HPP_
+#define AUTOWARE__DUMMY_DIAG_PUBLISHER__DUMMY_DIAG_PUBLISHER_CORE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -23,6 +23,8 @@
 #include <string>
 #include <vector>
 
+namespace autoware::dummy_diag_publisher
+{
 struct DiagConfig
 {
   std::string hardware_id;
@@ -75,5 +77,6 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr pub_;
 };
+  }  // namespace autoware::dummy_diag_publisher
 
-#endif  // DUMMY_DIAG_PUBLISHER__DUMMY_DIAG_PUBLISHER_CORE_HPP_
+#endif  // AUTOWARE__DUMMY_DIAG_PUBLISHER__DUMMY_DIAG_PUBLISHER_CORE_HPP_

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(dummy_diag_publisher)
+project(autoware_dummy_diag_publisher)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
@@ -9,7 +9,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN "DummyDiagPublisher"
+  PLUGIN "autoware::dummy_diag_publisher::DummyDiagPublisher"
   EXECUTABLE ${PROJECT_NAME}_node
 )
 
