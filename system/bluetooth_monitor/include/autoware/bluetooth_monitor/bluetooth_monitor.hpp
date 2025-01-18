@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__BLUETOOTH_MONITOR__BLUETOOTH_MONITOR_HPP_
 #define AUTOWARE__BLUETOOTH_MONITOR__BLUETOOTH_MONITOR_HPP_
 
-#include "bluetooth_monitor/service/l2ping_interface.hpp"
+#include "autoware/bluetooth_monitor/service/l2ping_interface.hpp"
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rclcpp/rclcpp.hpp>

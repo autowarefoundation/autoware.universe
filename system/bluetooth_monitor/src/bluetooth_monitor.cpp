@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "bluetooth_monitor/bluetooth_monitor.hpp"
+#include "autoware/bluetooth_monitor/bluetooth_monitor.hpp"
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
