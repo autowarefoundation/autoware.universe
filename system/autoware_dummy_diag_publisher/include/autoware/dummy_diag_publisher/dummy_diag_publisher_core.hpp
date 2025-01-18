@@ -77,6 +77,6 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr pub_;
 };
-  }  // namespace autoware::dummy_diag_publisher
+}  // namespace autoware::dummy_diag_publisher
 
 #endif  // AUTOWARE__DUMMY_DIAG_PUBLISHER__DUMMY_DIAG_PUBLISHER_CORE_HPP_
