@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scenario_simulator_v2_adapter/converter_node.hpp"
+#include "autoware/scenario_simulator_v2_adapter/converter_node.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
