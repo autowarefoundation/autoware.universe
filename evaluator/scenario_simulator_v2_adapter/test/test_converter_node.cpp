@@ -1,4 +1,4 @@
-// Copyright 2023 Tier IV, Inc.
+// Copyright 2025 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@
 #include <unordered_map>
 #include <vector>
 
-using ConverterNode = scenario_simulator_v2_adapter::MetricConverter;
+using ConverterNode = autoware::scenario_simulator_v2_adapter::MetricConverter;
 using tier4_metric_msgs::msg::Metric;
 using tier4_metric_msgs::msg::MetricArray;
 using tier4_simulation_msgs::msg::UserDefinedValue;

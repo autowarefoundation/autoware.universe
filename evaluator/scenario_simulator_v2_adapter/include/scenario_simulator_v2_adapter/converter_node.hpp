@@ -1,4 +1,4 @@
-// Copyright 2023 Tier IV, Inc.
+// Copyright 2025 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SCENARIO_SIMULATOR_V2_ADAPTER__CONVERTER_NODE_HPP_
-#define SCENARIO_SIMULATOR_V2_ADAPTER__CONVERTER_NODE_HPP_
+#ifndef AUTOWARE__SCENARIO_SIMULATOR_V2_ADAPTER__CONVERTER_NODE_HPP_
+#define AUTOWARE__SCENARIO_SIMULATOR_V2_ADAPTER__CONVERTER_NODE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -27,7 +27,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace scenario_simulator_v2_adapter
+namespace autoware::scenario_simulator_v2_adapter
 {
 using tier4_metric_msgs::msg::Metric;
 using tier4_metric_msgs::msg::MetricArray;
@@ -61,6 +61,6 @@ private:
   std::vector<std::unordered_map<std::string, rclcpp::Publisher<UserDefinedValue>::SharedPtr>>
     params_pub_;
 };
-}  // namespace scenario_simulator_v2_adapter
+}  // namespace autoware::scenario_simulator_v2_adapter
 
-#endif  // SCENARIO_SIMULATOR_V2_ADAPTER__CONVERTER_NODE_HPP_
+#endif  // AUTOWARE__SCENARIO_SIMULATOR_V2_ADAPTER__CONVERTER_NODE_HPP_
