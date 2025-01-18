@@ -1,4 +1,4 @@
-// Copyright 2022 The Autoware Contributors
+// Copyright 2025 The Autoware Contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@
 #include <syslog.h>
 
 #include <cstdio>
+
 
 /**
  * @brief print usage
@@ -47,7 +48,7 @@ int main(int argc, char ** argv)
   // Parse command-line options
   int c = 0;
   int option_index = 0;
-  int port = DEFAULT_PORT;
+  int port = autoware::bluetooth_monitor::DEFAULT_PORT;
   while ((c = getopt_long(argc, argv, "hp:", long_options, &option_index)) != -1) {
     switch (c) {
       case 'h':
@@ -78,7 +79,7 @@ int main(int argc, char ** argv)
   openlog(nullptr, LOG_PID, LOG_DAEMON);
 
   // Initialize l2ping service
-  L2pingService service(port);
+  autoware::bluetooth_monitor::L2pingService service(port);
 
   if (!service.initialize()) {
     service.shutdown();

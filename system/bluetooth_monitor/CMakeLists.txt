@@ -1,11 +1,11 @@
 cmake_minimum_required(VERSION 3.5)
-project(bluetooth_monitor)
+project(autoware_bluetooth_monitor)
 
 ### Dependencies
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
-ament_auto_add_library(bluetooth_monitor_lib SHARED
+ament_auto_add_library(${PROJECT_NAME} SHARED
   src/bluetooth_monitor.cpp
 )
 
@@ -21,12 +21,12 @@ find_package(Boost REQUIRED COMPONENTS
 )
 
 ## Specify libraries to link a library or executable target against
-target_link_libraries(bluetooth_monitor_lib ${Boost_LIBRARIES})
+target_link_libraries(${PROJECT_NAME} ${Boost_LIBRARIES})
 target_link_libraries(l2ping_service ${Boost_LIBRARIES})
 
-rclcpp_components_register_node(bluetooth_monitor_lib
-  PLUGIN "BluetoothMonitor"
-  EXECUTABLE bluetooth_monitor
+rclcpp_components_register_node(${PROJECT_NAME}
+  PLUGIN "autoware::bluetooth_monitor::BluetoothMonitor"
+  EXECUTABLE ${PROJECT_NAME}_node
 )
 
 ament_auto_package(INSTALL_TO_SHARE

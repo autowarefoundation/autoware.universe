@@ -1,4 +1,4 @@
-// Copyright 2022 The Autoware Contributors
+// Copyright 2025 The Autoware Contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BLUETOOTH_MONITOR__SERVICE__L2PING_INTERFACE_HPP_
-#define BLUETOOTH_MONITOR__SERVICE__L2PING_INTERFACE_HPP_
+#ifndef AUTOWARE__BLUETOOTH_MONITOR__SERVICE__L2PING_INTERFACE_HPP_
+#define AUTOWARE__BLUETOOTH_MONITOR__SERVICE__L2PING_INTERFACE_HPP_
 
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/string.hpp>
@@ -22,6 +22,9 @@
 #include <string>
 #include <tuple>
 #include <vector>
+
+namespace autoware::bluetooth_monitor
+{
 
 // 7634-7647 Unassigned
 static constexpr int DEFAULT_PORT = 7640;
@@ -171,4 +174,6 @@ struct L2pingStatus
  */
 typedef std::vector<L2pingStatus> L2pingStatusList;
 
-#endif  // BLUETOOTH_MONITOR__SERVICE__L2PING_INTERFACE_HPP_
+}  // namespace autoware::bluetooth_monitor
+
+#endif  // AUTOWARE__BLUETOOTH_MONITOR__SERVICE__L2PING_INTERFACE_HPP_

@@ -1,4 +1,4 @@
-// Copyright 2022 The Autoware Contributors
+// Copyright 2025 The Autoware Contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,6 +24,10 @@
 
 #define FMT_HEADER_ONLY
 #include <fmt/format.h>
+
+
+namespace autoware::bluetooth_monitor
+{
 
 namespace bp = boost::process;
 
@@ -189,3 +193,5 @@ const std::string & L2ping::getAddress() const
 {
   return status_.address;
 }
+
+}  // namespace autoware::bluetooth_monitor
