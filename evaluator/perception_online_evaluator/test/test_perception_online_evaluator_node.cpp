@@ -1,4 +1,4 @@
-// Copyright 2024 TIER IV, Inc.
+// Copyright 2025 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -36,7 +36,7 @@
 #include <utility>
 #include <vector>
 
-using EvalNode = perception_diagnostics::PerceptionOnlineEvaluatorNode;
+using EvalNode = autoware::perception_diagnostics::PerceptionOnlineEvaluatorNode;
 using PredictedObjects = autoware_perception_msgs::msg::PredictedObjects;
 using PredictedObject = autoware_perception_msgs::msg::PredictedObject;
 using MarkerArray = visualization_msgs::msg::MarkerArray;
@@ -57,7 +57,7 @@ protected:
 
     rclcpp::NodeOptions options;
     const auto share_dir =
-      ament_index_cpp::get_package_share_directory("perception_online_evaluator");
+      ament_index_cpp::get_package_share_directory("autoware_perception_online_evaluator");
     options.arguments(
       {"--ros-args", "--params-file",
        share_dir + "/param/perception_online_evaluator.defaults.yaml"});
@@ -126,9 +126,9 @@ protected:
     tf_pub_->publish(tf_msg);
   }
 
-  void setTargetMetric(const perception_diagnostics::Metric & metric)
+  void setTargetMetric(const autoware::perception_diagnostics::Metric & metric)
   {
-    const auto metric_str = perception_diagnostics::metric_to_str.at(metric);
+    const auto metric_str = autoware::perception_diagnostics::metric_to_str.at(metric);
     setTargetMetric(metric_str);
   }
 

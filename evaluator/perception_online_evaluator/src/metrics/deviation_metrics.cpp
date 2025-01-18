@@ -1,4 +1,4 @@
-// Copyright 2024 TIER IV, Inc.
+// Copyright 2025 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 
 #include <vector>
 
-namespace perception_diagnostics
+namespace autoware::perception_diagnostics
 {
 namespace metrics
 {
@@ -50,4 +50,4 @@ double calcYawDeviation(const std::vector<Pose> & ref_path, const Pose & target_
 }
 
 }  // namespace metrics
-}  // namespace perception_diagnostics
+}  // namespace autoware::perception_diagnostics

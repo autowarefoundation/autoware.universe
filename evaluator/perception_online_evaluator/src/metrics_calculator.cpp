@@ -1,4 +1,4 @@
-// Copyright 2024 TIER IV, Inc.
+// Copyright 2025 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
 
 #include <autoware/universe_utils/ros/uuid_helper.hpp>
 
-namespace perception_diagnostics
+namespace autoware::perception_diagnostics
 {
 using autoware::object_recognition_utils::convertLabelToString;
 using autoware::universe_utils::inverseTransformPoint;
@@ -686,4 +686,4 @@ std::vector<Pose> MetricsCalculator::averageFilterPath(
   return filtered_path;
 }
 
-}  // namespace perception_diagnostics
+}  // namespace autoware::perception_diagnostics

@@ -1,4 +1,4 @@
-// Copyright 2024 TIER IV, Inc.
+// Copyright 2025 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,18 +33,18 @@
 #include <utility>
 #include <vector>
 
-namespace perception_diagnostics
+namespace autoware::perception_diagnostics
 {
 PerceptionOnlineEvaluatorNode::PerceptionOnlineEvaluatorNode(
   const rclcpp::NodeOptions & node_options)
-: Node("perception_online_evaluator", node_options),
+: Node("autoware_perception_online_evaluator", node_options),
   parameters_(std::make_shared<Parameters>()),
   metrics_calculator_(parameters_)
 {
   using std::placeholders::_1;
 
   if (!google::IsGoogleLoggingInitialized()) {
-    google::InitGoogleLogging("perception_online_evaluator_node");
+    google::InitGoogleLogging("autoware_perception_online_evaluator_node");
     google::InstallFailureSignalHandler();
   }
 
@@ -382,7 +382,7 @@ void PerceptionOnlineEvaluatorNode::initParameter()
       getOrDeclareParameter<bool>(*this, ns + "object_polygon");
   }
 }
-}  // namespace perception_diagnostics
+}  // namespace autoware::perception_diagnostics
 
 #include "rclcpp_components/register_node_macro.hpp"
-RCLCPP_COMPONENTS_REGISTER_NODE(perception_diagnostics::PerceptionOnlineEvaluatorNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::perception_diagnostics::PerceptionOnlineEvaluatorNode)

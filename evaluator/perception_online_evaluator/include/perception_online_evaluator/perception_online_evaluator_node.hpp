@@ -1,4 +1,4 @@
-// Copyright 2024 TIER IV, Inc.
+// Copyright 2025 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PERCEPTION_ONLINE_EVALUATOR__PERCEPTION_ONLINE_EVALUATOR_NODE_HPP_
-#define PERCEPTION_ONLINE_EVALUATOR__PERCEPTION_ONLINE_EVALUATOR_NODE_HPP_
+#ifndef AUTOWARE__PERCEPTION_ONLINE_EVALUATOR__PERCEPTION_ONLINE_EVALUATOR_NODE_HPP_
+#define AUTOWARE__PERCEPTION_ONLINE_EVALUATOR__PERCEPTION_ONLINE_EVALUATOR_NODE_HPP_
 
 #include "autoware/universe_utils/math/accumulator.hpp"
 #include "perception_online_evaluator/metrics_calculator.hpp"
@@ -34,7 +34,7 @@
 #include <string>
 #include <vector>
 
-namespace perception_diagnostics
+namespace autoware::perception_diagnostics
 {
 using autoware::universe_utils::Accumulator;
 using autoware_perception_msgs::msg::ObjectClassification;
@@ -108,6 +108,6 @@ private:
   // Debug
   void publishDebugMarker();
 };
-}  // namespace perception_diagnostics
+}  // namespace autoware::perception_diagnostics
 
-#endif  // PERCEPTION_ONLINE_EVALUATOR__PERCEPTION_ONLINE_EVALUATOR_NODE_HPP_
+#endif  // AUTOWARE__PERCEPTION_ONLINE_EVALUATOR__PERCEPTION_ONLINE_EVALUATOR_NODE_HPP_

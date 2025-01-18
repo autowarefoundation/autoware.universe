@@ -1,4 +1,4 @@
-// Copyright 2024 TIER IV, Inc.
+// Copyright 2025 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PERCEPTION_ONLINE_EVALUATOR__METRICS__METRIC_HPP_
-#define PERCEPTION_ONLINE_EVALUATOR__METRICS__METRIC_HPP_
+#ifndef AUTOWARE__PERCEPTION_ONLINE_EVALUATOR__METRICS__METRIC_HPP_
+#define AUTOWARE__PERCEPTION_ONLINE_EVALUATOR__METRICS__METRIC_HPP_
 
 #include "autoware/universe_utils/math/accumulator.hpp"
 
@@ -23,7 +23,7 @@
 #include <variant>
 #include <vector>
 
-namespace perception_diagnostics
+namespace autoware::perception_diagnostics
 {
 /**
  * @brief Enumeration of trajectory metrics
@@ -90,6 +90,6 @@ static struct CheckCorrectMaps
 } check;
 
 }  // namespace details
-}  // namespace perception_diagnostics
+}  // namespace autoware::perception_diagnostics
 
-#endif  // PERCEPTION_ONLINE_EVALUATOR__METRICS__METRIC_HPP_
+#endif  // AUTOWARE__PERCEPTION_ONLINE_EVALUATOR__METRICS__METRIC_HPP_

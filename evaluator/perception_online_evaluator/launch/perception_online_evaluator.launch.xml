@@ -3,8 +3,8 @@
 
   <!-- perception evaluator -->
   <group>
-    <node name="perception_online_evaluator" exec="perception_online_evaluator" pkg="perception_online_evaluator">
-      <param from="$(find-pkg-share perception_online_evaluator)/param/perception_online_evaluator.defaults.yaml"/>
+    <node pkg="autoware_perception_online_evaluator" exec="autoware_perception_online_evaluator_node">
+      <param from="$(find-pkg-share autoware_perception_online_evaluator)/param/perception_online_evaluator.defaults.yaml"/>
       <remap from="~/input/objects" to="$(var input/objects)"/>
       <remap from="~/metrics" to="/perception/perception_online_evaluator/metrics"/>
       <remap from="~/markers" to="/perception/perception_online_evaluator/markers"/>

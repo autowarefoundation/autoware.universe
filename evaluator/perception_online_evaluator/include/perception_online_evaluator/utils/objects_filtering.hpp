@@ -1,4 +1,4 @@
-// Copyright 2024 TIER IV, Inc.
+// Copyright 2025 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PERCEPTION_ONLINE_EVALUATOR__UTILS__OBJECTS_FILTERING_HPP_
-#define PERCEPTION_ONLINE_EVALUATOR__UTILS__OBJECTS_FILTERING_HPP_
+#ifndef AUTOWARE__PERCEPTION_ONLINE_EVALUATOR__UTILS__OBJECTS_FILTERING_HPP_
+#define AUTOWARE__PERCEPTION_ONLINE_EVALUATOR__UTILS__OBJECTS_FILTERING_HPP_
 
 #include "perception_online_evaluator/parameters.hpp"
 
@@ -31,7 +31,7 @@
  *  most of this file is copied from objects_filtering.hpp in safety_check of behavior_path_planner
  */
 
-namespace perception_diagnostics
+namespace autoware::perception_diagnostics
 {
 
 using autoware_perception_msgs::msg::ObjectClassification;
@@ -170,6 +170,6 @@ PredictedObjects filterObjectsByVelocity(
 PredictedObjects filterObjectsByVelocity(
   const PredictedObjects & objects, double velocity_threshold, double max_velocity);
 
-}  // namespace perception_diagnostics
+}  // namespace autoware::perception_diagnostics
 
-#endif  // PERCEPTION_ONLINE_EVALUATOR__UTILS__OBJECTS_FILTERING_HPP_
+#endif  // AUTOWARE__PERCEPTION_ONLINE_EVALUATOR__UTILS__OBJECTS_FILTERING_HPP_

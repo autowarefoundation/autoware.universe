@@ -1,4 +1,4 @@
-// Copyright 2024 TIER IV, Inc.
+// Copyright 2025 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@
 #include <string>
 #include <vector>
 
-namespace marker_utils
+namespace autoware::perception_diagnostics::marker_utils
 {
 using autoware::universe_utils::calcOffsetPose;
 using autoware::universe_utils::createDefaultMarker;
@@ -197,4 +197,4 @@ MarkerArray createObjectPolygonMarkerArray(
   return msg;
 }
 
-}  // namespace marker_utils
+}  // namespace autoware::perception_diagnostics::marker_utils
