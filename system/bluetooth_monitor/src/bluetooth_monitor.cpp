@@ -32,7 +32,7 @@ namespace autoware::bluetooth_monitor
 {
 
 BluetoothMonitor::BluetoothMonitor(const rclcpp::NodeOptions & options)
-: Node("bluetooth_monitor", options),
+: Node("autoware_bluetooth_monitor", options),
   updater_(this),
   socket_(-1),
   port_(declare_parameter<int64_t>("port"))
