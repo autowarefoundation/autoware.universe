@@ -20,11 +20,6 @@ rclcpp_components_register_node(${PROJECT_NAME}
   EXECUTABLE ${PROJECT_NAME}_node
 )
 
-rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN "autoware::perception_diagnostics::MotionEvaluatorNode"
-  EXECUTABLE motion_evaluator
-)
-
 target_link_libraries(${PROJECT_NAME} glog::glog)
 
 if(BUILD_TESTING)
