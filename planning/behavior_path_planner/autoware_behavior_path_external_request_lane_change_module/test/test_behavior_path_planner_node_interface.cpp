@@ -31,7 +31,7 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionRoute)
 
   auto test_manager = generateTestManager();
   auto test_target_node = generateNode(
-    {"lane_chanfge"},
+    {"lane_change"},
     {"autoware::behavior_path_planner::ExternalRequestLaneChangeRightModuleManager",
      "autoware::behavior_path_planner::ExternalRequestLaneChangeLeftModuleManager"});
   publishMandatoryTopics(test_manager, test_target_node);
@@ -51,7 +51,7 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithOffTrackEgoPose)
 
   auto test_manager = generateTestManager();
   auto test_target_node = generateNode(
-    {"lane_chanfge"},
+    {"lane_change"},
     {"autoware::behavior_path_planner::ExternalRequestLaneChangeRightModuleManager",
      "autoware::behavior_path_planner::ExternalRequestLaneChangeLeftModuleManager"});
   publishMandatoryTopics(test_manager, test_target_node);
