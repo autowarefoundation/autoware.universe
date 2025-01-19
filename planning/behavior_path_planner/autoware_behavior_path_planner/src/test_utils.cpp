@@ -39,8 +39,6 @@ void publishLateralOffset(
     "behavior_path_planner/input/lateral_offset", 1);
   pub_lateral_offset->publish(LateralOffset{});
   autoware::test_utils::spinSomeNodes(test_node, test_target_node, 3);
-  autoware::test_utils::publishToTargetNode(
-    test_node_, test_target_node, topic_name, lateral_offset_pub_, LateralOffset{});
 }
 }  // namespace
 
