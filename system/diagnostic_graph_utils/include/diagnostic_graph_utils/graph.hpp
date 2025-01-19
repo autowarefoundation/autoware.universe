@@ -1,4 +1,4 @@
-// Copyright 2024 The Autoware Contributors
+// Copyright 2025 The Autoware Contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DIAGNOSTIC_GRAPH_UTILS__GRAPH_HPP_
-#define DIAGNOSTIC_GRAPH_UTILS__GRAPH_HPP_
+#ifndef AUTOWARE__DIAGNOSTIC_GRAPH_UTILS__GRAPH_HPP_
+#define AUTOWARE__DIAGNOSTIC_GRAPH_UTILS__GRAPH_HPP_
 
 #include <rclcpp/time.hpp>
 
@@ -27,7 +27,7 @@
 #include <utility>
 #include <vector>
 
-namespace diagnostic_graph_utils
+namespace autoware::diagnostic_graph_utils
 {
 
 class DiagLink;
@@ -139,6 +139,6 @@ private:
   std::vector<std::unique_ptr<DiagLink>> links_;
 };
 
-}  // namespace diagnostic_graph_utils
+}  // namespace autoware::diagnostic_graph_utils
 
-#endif  // DIAGNOSTIC_GRAPH_UTILS__GRAPH_HPP_
+#endif  // AUTOWARE__DIAGNOSTIC_GRAPH_UTILS__GRAPH_HPP_

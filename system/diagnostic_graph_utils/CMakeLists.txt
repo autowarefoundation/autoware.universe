@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(diagnostic_graph_utils)
+project(autoware_diagnostic_graph_utils)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
@@ -16,18 +16,18 @@ ament_auto_add_library(${PROJECT_NAME}_tools SHARED
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}_tools
-  PLUGIN "diagnostic_graph_utils::DumpNode"
-  EXECUTABLE dump_node
+  PLUGIN "autoware::diagnostic_graph_utils::DumpNode"
+  EXECUTABLE autoware_dump_node
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}_tools
-  PLUGIN "diagnostic_graph_utils::ConverterNode"
-  EXECUTABLE converter_node
+  PLUGIN "autoware::diagnostic_graph_utils::ConverterNode"
+  EXECUTABLE autoware_converter_node
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}_tools
-  PLUGIN "diagnostic_graph_utils::LoggingNode"
-  EXECUTABLE logging_node
+  PLUGIN "autoware::diagnostic_graph_utils::LoggingNode"
+  EXECUTABLE autoware_logging_node
 )
 
 ament_auto_package(INSTALL_TO_SHARE launch)

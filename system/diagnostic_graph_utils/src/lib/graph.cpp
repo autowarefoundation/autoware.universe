@@ -1,4 +1,4 @@
-// Copyright 2024 The Autoware Contributors
+// Copyright 2025 The Autoware Contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 #include <vector>
 
-namespace diagnostic_graph_utils
+namespace autoware::diagnostic_graph_utils
 {
 
 DiagUnit::DiagnosticStatus DiagNode::create_diagnostic_status() const
@@ -112,4 +112,4 @@ std::vector<DiagLink *> DiagGraph::links() const
   return create_ptrs<DiagLink>(links_);
 }
 
-}  // namespace diagnostic_graph_utils
+}  // namespace autoware::diagnostic_graph_utils

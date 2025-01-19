@@ -1,4 +1,4 @@
-// Copyright 2024 The Autoware Contributors
+// Copyright 2025 The Autoware Contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef NODE__LOGGING_HPP_
-#define NODE__LOGGING_HPP_
+#ifndef AUTOWARE__DIAGNOSTIC_GRAPH_UTILS__NODE__LOGGING_HPP_
+#define AUTOWARE__DIAGNOSTIC_GRAPH_UTILS__NODE__LOGGING_HPP_
 
 #include "diagnostic_graph_utils/subscription.hpp"
 
@@ -24,7 +24,7 @@
 #include <sstream>
 #include <string>
 
-namespace diagnostic_graph_utils
+namespace autoware::diagnostic_graph_utils
 {
 
 class LoggingNode : public rclcpp::Node
@@ -48,6 +48,6 @@ private:
   bool enable_terminal_log_;
 };
 
-}  // namespace diagnostic_graph_utils
+}  // namespace autoware::diagnostic_graph_utils
 
-#endif  // NODE__LOGGING_HPP_
+#endif  // AUTOWARE__DIAGNOSTIC_GRAPH_UTILS__NODE__LOGGING_HPP_
