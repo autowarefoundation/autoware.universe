@@ -5,4 +5,3 @@
     <param from="$(var config_file)"/>
   </node>
 </launch>
-
