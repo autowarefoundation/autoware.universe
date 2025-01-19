@@ -461,7 +461,7 @@ A candidate path is considered safe if:
 
 When ego is exiting an intersection on a turning lane, there is a possibility that a rear vehicle will attempt to overtake the ego vehicle. Which can be dangerous if ego is also trying to perform a lane change. Therefore lane change module will adopt a more conservative behavior in such situation.
 
-If the ego vehicle is currently within an intersection on a truning lane, as shown in the figure below, the generated candidate paths will be marked as unsafe.
+If the ego vehicle is currently within an intersection on a turning lane, as shown in the figure below, the generated candidate paths will be marked as unsafe.
 
 ![within intersection turn lane](./images/lane_change-intersection_turn_lane_1.png)
 
