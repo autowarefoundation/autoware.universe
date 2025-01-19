@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright 2023 The Autoware Contributors
+# Copyright 2025 The Autoware Contributors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -53,7 +53,7 @@ class ComponentStateDiagnostics:
 
 class ComponentStateDiagnosticsNode(rclpy.node.Node):
     def __init__(self):
-        super().__init__("component_state_diagnostics")
+        super().__init__("autoware_system_diagnostic_monitor")
         durable_qos = rclpy.qos.QoSProfile(
             depth=1,
             durability=rclpy.qos.DurabilityPolicy.TRANSIENT_LOCAL,
@@ -66,7 +66,7 @@ class ComponentStateDiagnosticsNode(rclpy.node.Node):
         self.states.append(
             ComponentStateDiagnostics(
                 self,
-                "component_state_diagnostics: localization_state",
+                "autoware_system_diagnostic_monitor: localization_state",
                 "/api/localization/initialization_state",
                 LocalizationState,
                 durable_qos,
@@ -76,7 +76,7 @@ class ComponentStateDiagnosticsNode(rclpy.node.Node):
         self.states.append(
             ComponentStateDiagnostics(
                 self,
-                "component_state_diagnostics: route_state",
+                "autoware_system_diagnostic_monitor: route_state",
                 "/api/routing/state",
                 RouteState,
                 durable_qos,

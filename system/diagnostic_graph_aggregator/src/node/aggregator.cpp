@@ -1,4 +1,4 @@
-// Copyright 2023 The Autoware Contributors
+// Copyright 2025 The Autoware Contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 #include <sstream>
 #include <string>
 
-namespace diagnostic_graph_aggregator
+namespace autoware::diagnostic_graph_aggregator
 {
 
 AggregatorNode::AggregatorNode(const rclcpp::NodeOptions & options) : Node("aggregator", options)
@@ -97,7 +97,7 @@ void AggregatorNode::on_diag(const DiagnosticArray & msg)
   // pub_status_->publish();
 }
 
-}  // namespace diagnostic_graph_aggregator
+}  // namespace autoware::diagnostic_graph_aggregator
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(diagnostic_graph_aggregator::AggregatorNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::diagnostic_graph_aggregator::AggregatorNode)

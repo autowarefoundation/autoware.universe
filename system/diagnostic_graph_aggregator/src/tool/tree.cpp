@@ -1,4 +1,4 @@
-// Copyright 2023 The Autoware Contributors
+// Copyright 2025 The Autoware Contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 #include <iostream>
 #include <string>
 
-namespace diagnostic_graph_aggregator
+namespace autoware::diagnostic_graph_aggregator
 {
 
 void dump_unit(const BaseUnit * unit, const std::string & indent = "", bool root = true)
@@ -60,7 +60,7 @@ void dump_root(const std::string & path)
   }
 }
 
-}  // namespace diagnostic_graph_aggregator
+}  // namespace autoware::diagnostic_graph_aggregator
 
 int main(int argc, char ** argv)
 {
@@ -68,5 +68,5 @@ int main(int argc, char ** argv)
     std::cerr << "usage: tree <path>" << std::endl;
     return 1;
   }
-  diagnostic_graph_aggregator::dump_root(argv[1]);
+  autoware::diagnostic_graph_aggregator::dump_root(argv[1]);
 }

@@ -1,4 +1,4 @@
-// Copyright 2022 TIER IV, Inc.
+// Copyright 2025 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace component_state_monitor
+namespace autoware::component_state_monitor
 {
 
 // clang-format off
@@ -129,7 +129,7 @@ void StateMonitor::on_diag(const DiagnosticArray::ConstSharedPtr msg)
   }
 }
 
-}  // namespace component_state_monitor
+}  // namespace autoware::component_state_monitor
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(component_state_monitor::StateMonitor)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::component_state_monitor::StateMonitor)

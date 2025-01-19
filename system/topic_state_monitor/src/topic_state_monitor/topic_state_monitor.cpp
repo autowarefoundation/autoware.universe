@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 
 #include "topic_state_monitor/topic_state_monitor.hpp"
 
-namespace topic_state_monitor
+namespace autoware::topic_state_monitor
 {
 TopicStateMonitor::TopicStateMonitor(rclcpp::Node & node) : clock_(node.get_clock())
 {
@@ -99,4 +99,4 @@ bool TopicStateMonitor::isTimeout() const
 
   return time_diff > param_.timeout;
 }
-}  // namespace topic_state_monitor
+}  // namespace autoware::topic_state_monitor

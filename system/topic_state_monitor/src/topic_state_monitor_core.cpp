@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,10 +34,10 @@ void update_param(
 }
 }  // namespace
 
-namespace topic_state_monitor
+namespace autoware::topic_state_monitor
 {
 TopicStateMonitorNode::TopicStateMonitorNode(const rclcpp::NodeOptions & node_options)
-: Node("topic_state_monitor", node_options), updater_(this)
+: Node("autoware_topic_state_monitor", node_options), updater_(this)
 {
   using std::placeholders::_1;
 
@@ -205,7 +205,7 @@ void TopicStateMonitorNode::checkTopicStatus(diagnostic_updater::DiagnosticStatu
   stat.summary(level, msg);
 }
 
-}  // namespace topic_state_monitor
+}  // namespace autoware::topic_state_monitor
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(topic_state_monitor::TopicStateMonitorNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::topic_state_monitor::TopicStateMonitorNode)

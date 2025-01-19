@@ -1,4 +1,4 @@
-// Copyright 2023 The Autoware Contributors
+// Copyright 2025 The Autoware Contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef NODE__AGGREGATOR_HPP_
-#define NODE__AGGREGATOR_HPP_
+#ifndef AUTOWARE__DIAGNOSTIC_GRAPH_AGGREGATOR__NODE__AGGREGATOR_HPP_
+#define AUTOWARE__DIAGNOSTIC_GRAPH_AGGREGATOR__NODE__AGGREGATOR_HPP_
 
 #include "availability.hpp"
 #include "graph/graph.hpp"
@@ -24,7 +24,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace diagnostic_graph_aggregator
+namespace autoware::diagnostic_graph_aggregator
 {
 
 class AggregatorNode : public rclcpp::Node
@@ -48,6 +48,6 @@ private:
   std::unordered_map<std::string, DiagnosticStatus> unknown_diags_;
 };
 
-}  // namespace diagnostic_graph_aggregator
+}  // namespace autoware::diagnostic_graph_aggregator
 
-#endif  // NODE__AGGREGATOR_HPP_
+#endif  // AUTOWARE__DIAGNOSTIC_GRAPH_AGGREGATOR__NODE__AGGREGATOR_HPP_

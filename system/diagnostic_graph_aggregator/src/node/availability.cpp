@@ -1,4 +1,4 @@
-// Copyright 2023 The Autoware Contributors
+// Copyright 2025 The Autoware Contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace diagnostic_graph_aggregator
+namespace autoware::diagnostic_graph_aggregator
 {
 
 ModesAvailability::ModesAvailability(rclcpp::Node & node, const Graph & graph)
@@ -73,4 +73,4 @@ void ModesAvailability::update(const rclcpp::Time & stamp) const
   pub_->publish(message);
 }
 
-}  // namespace diagnostic_graph_aggregator
+}  // namespace autoware::diagnostic_graph_aggregator

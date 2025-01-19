@@ -1,4 +1,4 @@
-// Copyright 2023 The Autoware Contributors
+// Copyright 2025 The Autoware Contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
 
 #include <algorithm>
 
-namespace diagnostic_graph_aggregator
+namespace autoware::diagnostic_graph_aggregator
 {
 
 void UnitLink::initialize_object(BaseUnit * parent, BaseUnit * child)
@@ -226,4 +226,4 @@ StaleUnit::StaleUnit(const UnitLoader & unit) : ConstUnit(unit)
   status_.level = DiagnosticStatus::STALE;
 }
 
-}  // namespace diagnostic_graph_aggregator
+}  // namespace autoware::diagnostic_graph_aggregator

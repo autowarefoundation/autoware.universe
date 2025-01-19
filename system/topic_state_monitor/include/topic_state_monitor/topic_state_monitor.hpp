@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TOPIC_STATE_MONITOR__TOPIC_STATE_MONITOR_HPP_
-#define TOPIC_STATE_MONITOR__TOPIC_STATE_MONITOR_HPP_
+#ifndef AUTOWARE__TOPIC_STATE_MONITOR__TOPIC_STATE_MONITOR_HPP_
+#define AUTOWARE__TOPIC_STATE_MONITOR__TOPIC_STATE_MONITOR_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
 #include <deque>
 #include <string>
 
-namespace topic_state_monitor
+namespace autoware::topic_state_monitor
 {
 struct Param
 {
@@ -68,6 +68,6 @@ private:
   bool isErrorRate() const;
   bool isTimeout() const;
 };
-}  // namespace topic_state_monitor
+}  // namespace autoware::topic_state_monitor
 
-#endif  // TOPIC_STATE_MONITOR__TOPIC_STATE_MONITOR_HPP_
+#endif  // AUTOWARE__TOPIC_STATE_MONITOR__TOPIC_STATE_MONITOR_HPP_

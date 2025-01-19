@@ -1,4 +1,4 @@
-// Copyright 2024 The Autoware Contributors
+// Copyright 2025 The Autoware Contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 #include <string>
 
-namespace diagnostic_graph_aggregator
+namespace autoware::diagnostic_graph_aggregator
 {
 
 TreeData TreeData::Load(const std::string & path)
@@ -96,4 +96,4 @@ double TreeData::real(double fail)
   return yaml_.as<double>(fail);
 }
 
-}  // namespace diagnostic_graph_aggregator
+}  // namespace autoware::diagnostic_graph_aggregator

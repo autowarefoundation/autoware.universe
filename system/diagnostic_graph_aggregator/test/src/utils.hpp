@@ -1,4 +1,4 @@
-// Copyright 2023 The Autoware Contributors
+// Copyright 2025 The Autoware Contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef UTILS_HPP_
-#define UTILS_HPP_
+#ifndef AUTOWARE__DIAGNOSTIC_GRAPH_AGGREGATOR__TEST__SRC__UTILS_HPP_
+#define AUTOWARE__DIAGNOSTIC_GRAPH_AGGREGATOR__TEST__SRC__UTILS_HPP_
 
 #include <filesystem>
 #include <string>
 
 std::filesystem::path resource(const std::string & path);
 
-#endif  // UTILS_HPP_
+#endif  // AUTOWARE__DIAGNOSTIC_GRAPH_AGGREGATOR__TEST__SRC__UTILS_HPP_

@@ -1,4 +1,4 @@
-// Copyright 2023 The Autoware Contributors
+// Copyright 2025 The Autoware Contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@
 #include <string>
 #include <vector>
 
-using namespace diagnostic_graph_aggregator;  // NOLINT(build/namespaces)
+using namespace autoware::diagnostic_graph_aggregator;  // NOLINT(build/namespaces)
 
 using diagnostic_msgs::msg::DiagnosticArray;
 using diagnostic_msgs::msg::DiagnosticStatus;

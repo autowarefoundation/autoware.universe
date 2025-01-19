@@ -1,4 +1,4 @@
-# Copyright 2022 TIER IV, Inc.
+# Copyright 2025 TIER IV, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ def create_topic_monitor_name(row):
 
 def create_topic_monitor_node(row):
     tf_mode = "" if "topic_type" in row["args"] else "_tf"
-    package = FindPackageShare("topic_state_monitor")
+    package = FindPackageShare("autoware_topic_state_monitor")
     include = PathJoinSubstitution([package, f"launch/topic_state_monitor{tf_mode}.launch.xml"])
     diag_name = create_diagnostic_name(row)
     arguments = [("diag_name", diag_name)] + [(k, str(v)) for k, v in row["args"].items()]
@@ -60,10 +60,10 @@ def launch_setup(context, *args, **kwargs):
 
     # create component
     component = ComposableNode(
-        namespace="component_state_monitor",
+        namespace="autoware_component_state_monitor",
         name="component",
-        package="component_state_monitor",
-        plugin="component_state_monitor::StateMonitor",
+        package="autoware_component_state_monitor",
+        plugin="autoware::component_state_monitor::StateMonitor",
         parameters=[{"topic_monitor_names": topic_monitor_names}, topic_monitor_param],
     )
     container = ComposableNodeContainer(

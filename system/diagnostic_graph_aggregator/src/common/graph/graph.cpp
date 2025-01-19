@@ -1,4 +1,4 @@
-// Copyright 2023 The Autoware Contributors
+// Copyright 2025 The Autoware Contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace diagnostic_graph_aggregator
+namespace autoware::diagnostic_graph_aggregator
 {
 
 void Graph::create(const std::string & file, const std::string & id)
@@ -77,4 +77,4 @@ DiagGraphStatus Graph::create_status(const rclcpp::Time & stamp) const
 Graph::Graph() = default;
 Graph::~Graph() = default;
 
-}  // namespace diagnostic_graph_aggregator
+}  // namespace autoware::diagnostic_graph_aggregator

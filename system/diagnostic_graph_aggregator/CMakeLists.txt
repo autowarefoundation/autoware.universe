@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(diagnostic_graph_aggregator)
+project(autoware_diagnostic_graph_aggregator)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
@@ -30,8 +30,8 @@ ament_auto_add_library(aggregator SHARED
 target_include_directories(aggregator PRIVATE src/common)
 
 rclcpp_components_register_node(aggregator
-  PLUGIN "diagnostic_graph_aggregator::AggregatorNode"
-  EXECUTABLE aggregator_node
+  PLUGIN "autoware::diagnostic_graph_aggregator::AggregatorNode"
+  EXECUTABLE ${PROJECT_NAME}_node
 )
 
 if(BUILD_TESTING)

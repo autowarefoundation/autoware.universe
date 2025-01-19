@@ -1,4 +1,4 @@
-// Copyright 2022 TIER IV, Inc.
+// Copyright 2025 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MAIN_HPP_
-#define MAIN_HPP_
+#ifndef AUTOWARE__COMPONENT_STATE_MONITOR__MAIN_HPP_
+#define AUTOWARE__COMPONENT_STATE_MONITOR__MAIN_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -24,7 +24,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace component_state_monitor
+namespace autoware::component_state_monitor
 {
 
 // clang-format off
@@ -73,6 +73,6 @@ private:
   void on_diag(const DiagnosticArray::ConstSharedPtr msg);
 };
 
-}  // namespace component_state_monitor
+}  // namespace autoware::component_state_monitor
 
-#endif  // MAIN_HPP_
+#endif  // AUTOWARE__COMPONENT_STATE_MONITOR__MAIN_HPP_
