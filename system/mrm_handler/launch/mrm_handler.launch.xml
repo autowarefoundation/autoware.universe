@@ -17,10 +17,10 @@
   <arg name="output_mrm_comfortable_stop_operate" default="/system/mrm/comfortable_stop/operate"/>
   <arg name="output_mrm_emergency_stop_operate" default="/system/mrm/emergency_stop/operate"/>
 
-  <arg name="config_file" default="$(find-pkg-share mrm_handler)/config/mrm_handler.param.yaml"/>
+  <arg name="config_file" default="$(find-pkg-share autoware_mrm_handler)/config/mrm_handler.param.yaml"/>
 
   <!-- mrm_handler -->
-  <node pkg="mrm_handler" exec="mrm_handler_node" name="mrm_handler" output="screen">
+  <node pkg="autoware_mrm_handler" exec="autoware_mrm_handler_node" name="autoware_mrm_handler" output="screen">
     <remap from="~/input/operation_mode_availability" to="$(var input_operation_mode_availability)"/>
     <remap from="~/input/odometry" to="$(var input_odometry)"/>
     <remap from="~/input/control_mode" to="$(var input_control_mode)"/>

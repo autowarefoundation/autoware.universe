@@ -1,4 +1,4 @@
-// Copyright 2024 TIER IV, Inc.
+// Copyright 2025 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@
 #include <memory>
 #include <string>
 #include <utility>
+
+namespace autoware::mrm_handler
+{
 
 MrmHandler::MrmHandler(const rclcpp::NodeOptions & options) : Node("mrm_handler", options)
 {
@@ -588,5 +591,7 @@ bool MrmHandler::isArrivedAtGoal()
   return state->mode == OperationModeState::STOP;
 }
 
+}  // namespace autoware::mrm_handler
+
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(MrmHandler)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::mrm_handler::MrmHandler)

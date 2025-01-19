@@ -1,4 +1,4 @@
-// Copyright 2024 TIER IV, Inc.
+// Copyright 2025 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MRM_HANDLER__MRM_HANDLER_CORE_HPP_
-#define MRM_HANDLER__MRM_HANDLER_CORE_HPP_
+#ifndef AUTOWARE__MRM_HANDLER__MRM_HANDLER_CORE_HPP_
+#define AUTOWARE__MRM_HANDLER__MRM_HANDLER_CORE_HPP_
 
 // Core
 #include <memory>
@@ -40,6 +40,9 @@
 
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <nav_msgs/msg/odometry.hpp>
+
+namespace autoware::mrm_handler
+{
 
 struct HazardLampPolicy
 {
@@ -162,4 +165,6 @@ private:
   bool isArrivedAtGoal();
 };
 
-#endif  // MRM_HANDLER__MRM_HANDLER_CORE_HPP_
+}  // namespace autoware::mrm_handler
+
+#endif  // AUTOWARE__MRM_HANDLER__MRM_HANDLER_CORE_HPP_
