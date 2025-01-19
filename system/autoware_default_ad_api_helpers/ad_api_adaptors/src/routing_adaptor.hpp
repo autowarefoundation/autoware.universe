@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__AD_API_ADAPTORS__SRC__ROUTING_ADAPTOR_HPP_
-#define AUTOWARE__AD_API_ADAPTORS__SRC__ROUTING_ADAPTOR_HPP_
+#ifndef ROUTING_ADAPTOR_HPP_
+#define ROUTING_ADAPTOR_HPP_
 
 #include <autoware/adapi_specs/routing.hpp>
 #include <autoware/component_interface_utils/rclcpp.hpp>
@@ -61,4 +61,4 @@ private:
 
 }  // namespace autoware::ad_api_adaptors
 
-#endif  // AUTOWARE__AD_API_ADAPTORS__SRC__ROUTING_ADAPTOR_HPP_
+#endif  // ROUTING_ADAPTOR_HPP_
