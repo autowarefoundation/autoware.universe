@@ -28,16 +28,10 @@ namespace autoware::behavior_path_planner
 using autoware::behavior_path_planner::BehaviorPathPlannerNode;
 using autoware::planning_test_manager::PlanningInterfaceTestManager;
 
-struct PluginInfo
-{
-  std::string module_name;  // e.g. crosswalk
-  std::string plugin_name;  // e.g. autoware::behavior_path_planner::CrosswalkModulePlugin
-};
-
 std::shared_ptr<PlanningInterfaceTestManager> generateTestManager();
 
 std::shared_ptr<BehaviorPathPlannerNode> generateNode(
-  const std::vector<PluginInfo> & plugin_info_vec);
+  const std::vector<std::string> module_name_vec, std::vector<std::string> plugin_name_vec);
 
 void publishMandatoryTopics(
   std::shared_ptr<PlanningInterfaceTestManager> test_manager,

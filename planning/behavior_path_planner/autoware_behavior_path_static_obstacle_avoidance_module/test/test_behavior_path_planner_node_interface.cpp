@@ -26,13 +26,10 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionRoute)
 {
   rclcpp::init(0, nullptr);
 
-  const auto plugin_info_vec = {autoware::behavior_path_planner::PluginInfo{
-    "static_obstacle_avoidance",
-    "autoware::behavior_path_planner::StaticObstacleAvoidanceModuleManager"}};
-
   auto test_manager = generateTestManager();
-  auto test_target_node = generateNode(plugin_info_vec);
-
+  auto test_target_node = generateNode(
+    {"static_obstacle_avoidance"},
+    {"autoware::behavior_path_planner::StaticObstacleAvoidanceModuleManager"});
   publishMandatoryTopics(test_manager, test_target_node);
 
   // test for normal trajectory
@@ -48,13 +45,10 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithOffTrackEgoPose)
 {
   rclcpp::init(0, nullptr);
 
-  const auto plugin_info_vec = {autoware::behavior_path_planner::PluginInfo{
-    "static_obstacle_avoidance",
-    "autoware::behavior_path_planner::StaticObstacleAvoidanceModuleManager"}};
-
   auto test_manager = generateTestManager();
-  auto test_target_node = generateNode(plugin_info_vec);
-
+  auto test_target_node = generateNode(
+    {"static_obstacle_avoidance"},
+    {"autoware::behavior_path_planner::StaticObstacleAvoidanceModuleManager"});
   publishMandatoryTopics(test_manager, test_target_node);
 
   // test for normal trajectory

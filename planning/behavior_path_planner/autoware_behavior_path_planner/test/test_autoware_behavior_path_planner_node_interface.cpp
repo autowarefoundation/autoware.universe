@@ -30,7 +30,7 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionRoute)
 {
   rclcpp::init(0, nullptr);
   auto test_manager = generateTestManager();
-  auto test_target_node = generateNode({});
+  auto test_target_node = generateNode({}, {});
 
   publishMandatoryTopics(test_manager, test_target_node);
 
@@ -48,7 +48,7 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithOffTrackEgoPose)
   rclcpp::init(0, nullptr);
 
   auto test_manager = generateTestManager();
-  auto test_target_node = generateNode({});
+  auto test_target_node = generateNode({}, {});
   publishMandatoryTopics(test_manager, test_target_node);
 
   // test for normal trajectory

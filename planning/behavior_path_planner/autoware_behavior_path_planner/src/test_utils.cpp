@@ -40,7 +40,7 @@ std::shared_ptr<PlanningInterfaceTestManager> generateTestManager()
 }
 
 std::shared_ptr<BehaviorPathPlannerNode> generateNode(
-  const std::vector<PluginInfo> & plugin_info_vec)
+  const std::vector<std::string> module_name_vec, std::vector<std::string> plugin_name_vec)
 {
   auto node_options = rclcpp::NodeOptions{};
   const auto autoware_test_utils_dir =
@@ -55,8 +55,8 @@ std::shared_ptr<BehaviorPathPlannerNode> generateNode(
   };
 
   std::vector<std::string> plugin_names;
-  for (const auto & plugin_info : plugin_info_vec) {
-    plugin_names.emplace_back(plugin_info.plugin_name);
+  for (const auto & plugin_name : plugin_name_vec) {
+    plugin_names.emplace_back(plugin_name);
   }
 
   std::vector<rclcpp::Parameter> params;
@@ -70,8 +70,8 @@ std::shared_ptr<BehaviorPathPlannerNode> generateNode(
     behavior_path_planner_dir + "/config/behavior_path_planner.param.yaml",
     behavior_path_planner_dir + "/config/drivable_area_expansion.param.yaml",
     behavior_path_planner_dir + "/config/scene_module_manager.param.yaml"};
-  for (const auto & plugin_info : plugin_info_vec) {
-    yaml_files.push_back(get_behavior_path_module_config(plugin_info.module_name));
+  for (const auto & module_name : module_name_vec) {
+    yaml_files.push_back(get_behavior_path_module_config(module_name));
   }
 
   autoware::test_utils::updateNodeOptions(node_options, yaml_files);
