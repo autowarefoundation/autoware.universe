@@ -1,4 +1,4 @@
-// Copyright 2023 TIER IV, Inc.
+// Copyright 2025 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DUPLICATED_NODE_CHECKER__DUPLICATED_NODE_CHECKER_CORE_HPP_
-#define DUPLICATED_NODE_CHECKER__DUPLICATED_NODE_CHECKER_CORE_HPP_
+#ifndef AUTOWARE__DUPLICATED_NODE_CHECKER__DUPLICATED_NODE_CHECKER_CORE_HPP_
+#define AUTOWARE__DUPLICATED_NODE_CHECKER__DUPLICATED_NODE_CHECKER_CORE_HPP_
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -22,7 +22,7 @@
 #include <unordered_set>
 #include <vector>
 
-namespace duplicated_node_checker
+namespace autoware::duplicated_node_checker
 {
 class DuplicatedNodeChecker : public rclcpp::Node
 {
@@ -54,6 +54,6 @@ private:
   bool add_duplicated_node_names_to_msg_;
   std::unordered_set<std::string> nodes_to_ignore_;
 };
-}  // namespace duplicated_node_checker
+}  // namespace autoware::duplicated_node_checker
 
-#endif  // DUPLICATED_NODE_CHECKER__DUPLICATED_NODE_CHECKER_CORE_HPP_
+#endif  // AUTOWARE__DUPLICATED_NODE_CHECKER__DUPLICATED_NODE_CHECKER_CORE_HPP_

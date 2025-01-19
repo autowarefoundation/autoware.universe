@@ -1,4 +1,4 @@
-// Copyright 2023 TIER IV, Inc.
+// Copyright 2025 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 
-namespace duplicated_node_checker
+namespace autoware::duplicated_node_checker
 {
 
 DuplicatedNodeChecker::DuplicatedNodeChecker(const rclcpp::NodeOptions & node_options)
@@ -77,7 +77,7 @@ void DuplicatedNodeChecker::produceDiagnostics(diagnostic_updater::DiagnosticSta
   stat.summary(level, msg);
 }
 
-}  // namespace duplicated_node_checker
+}  // namespace autoware::duplicated_node_checker
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(duplicated_node_checker::DuplicatedNodeChecker)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::duplicated_node_checker::DuplicatedNodeChecker)
