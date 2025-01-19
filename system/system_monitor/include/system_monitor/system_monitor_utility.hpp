@@ -17,8 +17,8 @@
  * @brief System Monitor Utility class
  */
 
-#ifndef AUTOWARE__SYSTEM_MONITOR__SYSTEM_MONITOR_UTILITY_HPP_
-#define AUTOWARE__SYSTEM_MONITOR__SYSTEM_MONITOR_UTILITY_HPP_
+#ifndef SYSTEM_MONITOR__SYSTEM_MONITOR_UTILITY_HPP_
+#define SYSTEM_MONITOR__SYSTEM_MONITOR_UTILITY_HPP_
 
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
@@ -126,4 +126,4 @@ public:
 
 }  // namespace autoware::system_monitor
 
-#endif  // AUTOWARE__SYSTEM_MONITOR__SYSTEM_MONITOR_UTILITY_HPP_
+#endif  // SYSTEM_MONITOR__SYSTEM_MONITOR_UTILITY_HPP_

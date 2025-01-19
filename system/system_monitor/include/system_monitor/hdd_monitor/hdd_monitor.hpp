@@ -17,8 +17,8 @@
  * @brief HDD monitor class
  */
 
-#ifndef AUTOWARE__SYSTEM_MONITOR__HDD_MONITOR__HDD_MONITOR_HPP_
-#define AUTOWARE__SYSTEM_MONITOR__HDD_MONITOR__HDD_MONITOR_HPP_
+#ifndef SYSTEM_MONITOR__HDD_MONITOR__HDD_MONITOR_HPP_
+#define SYSTEM_MONITOR__HDD_MONITOR__HDD_MONITOR_HPP_
 
 #include "system_monitor/hdd_reader/hdd_reader.hpp"
 
@@ -396,4 +396,4 @@ protected:
 
 }  // namespace autoware::system_monitor::hdd_monitor
 
-#endif  // AUTOWARE__SYSTEM_MONITOR__HDD_MONITOR__HDD_MONITOR_HPP_
+#endif  // SYSTEM_MONITOR__HDD_MONITOR__HDD_MONITOR_HPP_

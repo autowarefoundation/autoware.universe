@@ -17,8 +17,8 @@
  * @brief diagnostics task for high load/memory procs
  */
 
-#ifndef AUTOWARE__SYSTEM_MONITOR__PROCESS_MONITOR__DIAG_TASK_HPP_
-#define AUTOWARE__SYSTEM_MONITOR__PROCESS_MONITOR__DIAG_TASK_HPP_
+#ifndef SYSTEM_MONITOR__PROCESS_MONITOR__DIAG_TASK_HPP_
+#define SYSTEM_MONITOR__PROCESS_MONITOR__DIAG_TASK_HPP_
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 
@@ -120,4 +120,4 @@ private:
 
 }  // namespace autoware::system_monitor::process_monitor
 
-#endif  // AUTOWARE__SYSTEM_MONITOR__PROCESS_MONITOR__DIAG_TASK_HPP_
+#endif  // SYSTEM_MONITOR__PROCESS_MONITOR__DIAG_TASK_HPP_

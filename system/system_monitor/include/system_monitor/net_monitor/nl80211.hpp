@@ -17,8 +17,8 @@
  * @brief 802.11 netlink-based interface class
  */
 
-#ifndef AUTOWARE__SYSTEM_MONITOR__NET_MONITOR__NL80211_HPP_
-#define AUTOWARE__SYSTEM_MONITOR__NET_MONITOR__NL80211_HPP_
+#ifndef SYSTEM_MONITOR__NET_MONITOR__NL80211_HPP_
+#define SYSTEM_MONITOR__NET_MONITOR__NL80211_HPP_
 
 namespace autoware::system_monitor::net_monitor
 {
@@ -62,4 +62,4 @@ private:
 
 }  // namespace autoware::system_monitor::net_monitor
 
-#endif  // AUTOWARE__SYSTEM_MONITOR__NET_MONITOR__NL80211_HPP_
+#endif  // SYSTEM_MONITOR__NET_MONITOR__NL80211_HPP_
