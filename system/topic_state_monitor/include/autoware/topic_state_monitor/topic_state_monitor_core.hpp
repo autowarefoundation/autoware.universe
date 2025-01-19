@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__TOPIC_STATE_MONITOR__TOPIC_STATE_MONITOR_CORE_HPP_
 #define AUTOWARE__TOPIC_STATE_MONITOR__TOPIC_STATE_MONITOR_CORE_HPP_
 
-#include "topic_state_monitor/topic_state_monitor.hpp"
+#include "autoware/topic_state_monitor/topic_state_monitor.hpp"
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rclcpp/rclcpp.hpp>
