@@ -17,7 +17,7 @@
  * @brief Velodyne monitor class
  */
 
-#include "velodyne_monitor/velodyne_monitor.hpp"
+#include "autoware/velodyne_monitor/velodyne_monitor.hpp"
 
 #include <boost/algorithm/string/join.hpp>
 
