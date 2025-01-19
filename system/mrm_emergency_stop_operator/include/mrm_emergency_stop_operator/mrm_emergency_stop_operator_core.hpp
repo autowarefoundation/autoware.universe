@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MRM_EMERGENCY_STOP_OPERATOR__MRM_EMERGENCY_STOP_OPERATOR_CORE_HPP_
-#define MRM_EMERGENCY_STOP_OPERATOR__MRM_EMERGENCY_STOP_OPERATOR_CORE_HPP_
+#ifndef AUTOWARE__MRM_EMERGENCY_STOP_OPERATOR__MRM_EMERGENCY_STOP_OPERATOR_CORE_HPP_
+#define AUTOWARE__MRM_EMERGENCY_STOP_OPERATOR__MRM_EMERGENCY_STOP_OPERATOR_CORE_HPP_
 
 // Core
 #include <functional>
@@ -28,7 +28,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <vector>
-namespace mrm_emergency_stop_operator
+namespace autoware::mrm_emergency_stop_operator
 {
 using autoware_control_msgs::msg::Control;
 using tier4_system_msgs::msg::MrmBehaviorStatus;
@@ -86,6 +86,6 @@ private:
   Control calcTargetAcceleration(const Control & prev_control_cmd) const;
 };
 
-}  // namespace mrm_emergency_stop_operator
+}  // namespace autoware::mrm_emergency_stop_operator
 
-#endif  // MRM_EMERGENCY_STOP_OPERATOR__MRM_EMERGENCY_STOP_OPERATOR_CORE_HPP_
+#endif  // AUTOWARE__MRM_EMERGENCY_STOP_OPERATOR__MRM_EMERGENCY_STOP_OPERATOR_CORE_HPP_

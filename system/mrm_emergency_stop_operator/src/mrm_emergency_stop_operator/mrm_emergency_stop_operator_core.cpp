@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 
 #include <vector>
 
-namespace mrm_emergency_stop_operator
+namespace autoware::mrm_emergency_stop_operator
 {
 
 MrmEmergencyStopOperator::MrmEmergencyStopOperator(const rclcpp::NodeOptions & node_options)
@@ -150,7 +150,7 @@ Control MrmEmergencyStopOperator::calcTargetAcceleration(const Control & prev_co
   return control_cmd;
 }
 
-}  // namespace mrm_emergency_stop_operator
+}  // namespace autoware::mrm_emergency_stop_operator
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(mrm_emergency_stop_operator::MrmEmergencyStopOperator)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::mrm_emergency_stop_operator::MrmEmergencyStopOperator)
