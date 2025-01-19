@@ -52,7 +52,6 @@
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <std_msgs/msg/bool.hpp>
 #include <tf2_msgs/msg/tf_message.hpp>
-#include <tier4_planning_msgs/msg/lateral_offset.hpp>
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/scenario.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
@@ -83,7 +82,6 @@ using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
 using sensor_msgs::msg::PointCloud2;
 using tf2_msgs::msg::TFMessage;
-using tier4_planning_msgs::msg::LateralOffset;
 using tier4_planning_msgs::msg::PathWithLaneId;
 using tier4_planning_msgs::msg::Scenario;
 using tier4_planning_msgs::msg::VelocityLimit;
@@ -119,7 +117,6 @@ public:
   void publishRoute(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishTF(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishInitialPoseTF(rclcpp::Node::SharedPtr target_node, std::string topic_name);
-  void publishLateralOffset(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishOperationModeState(rclcpp::Node::SharedPtr target_node, std::string topic_name);
   void publishTrafficSignals(rclcpp::Node::SharedPtr target_node, std::string topic_name);
 
@@ -189,7 +186,6 @@ private:
   rclcpp::Publisher<LaneletRoute>::SharedPtr route_pub_;
   rclcpp::Publisher<TFMessage>::SharedPtr TF_pub_;
   rclcpp::Publisher<TFMessage>::SharedPtr initial_pose_tf_pub_;
-  rclcpp::Publisher<LateralOffset>::SharedPtr lateral_offset_pub_;
   rclcpp::Publisher<OperationModeState>::SharedPtr operation_mode_state_pub_;
   rclcpp::Publisher<TrafficLightGroupArray>::SharedPtr traffic_signals_pub_;
 
