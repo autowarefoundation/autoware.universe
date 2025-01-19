@@ -214,7 +214,7 @@ The prepare phase trajectory is valid if:
 
 The lane-changing phase consists of the shifted path that moves ego from current lane to the target lane. Total duration of lane-changing phase is computed from the `shift_length`, `lateral_jerk` and `lateral_acceleration`.
 
-In principle, positive longitudinal acceleration is considered during lane-changing phase, and is computes as follows.
+In principle, positive longitudinal acceleration is considered during lane-changing phase, and is computed as follows.
 
 ```C++
 lane_changing_acceleration = std::clamp((max_path_velocity - initial_lane_changing_velocity) / lane_changing_time,
