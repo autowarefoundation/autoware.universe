@@ -11,7 +11,7 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language
 // governing permissions and limitations under the License.
 
-#include "mrm_handler/mrm_handler_core.hpp"
+#include "autoware/mrm_handler/mrm_handler_core.hpp"
 
 #include <chrono>
 #include <memory>
