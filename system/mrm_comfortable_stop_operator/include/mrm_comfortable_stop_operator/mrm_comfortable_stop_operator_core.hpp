@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef MRM_COMFORTABLE_STOP_OPERATOR__MRM_COMFORTABLE_STOP_OPERATOR_CORE_HPP_
-#define MRM_COMFORTABLE_STOP_OPERATOR__MRM_COMFORTABLE_STOP_OPERATOR_CORE_HPP_
+#ifndef AUTOWARE__MRM_COMFORTABLE_STOP_OPERATOR__MRM_COMFORTABLE_STOP_OPERATOR_CORE_HPP_
+#define AUTOWARE__MRM_COMFORTABLE_STOP_OPERATOR__MRM_COMFORTABLE_STOP_OPERATOR_CORE_HPP_
 
 // Core
 #include <memory>
@@ -29,7 +29,7 @@
 // ROS 2 core
 #include <rclcpp/rclcpp.hpp>
 
-namespace mrm_comfortable_stop_operator
+namespace autoware::mrm_comfortable_stop_operator
 {
 
 struct Parameters
@@ -81,6 +81,6 @@ private:
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
 };
 
-}  // namespace mrm_comfortable_stop_operator
+}  // namespace autoware::mrm_comfortable_stop_operator
 
-#endif  // MRM_COMFORTABLE_STOP_OPERATOR__MRM_COMFORTABLE_STOP_OPERATOR_CORE_HPP_
+#endif  // AUTOWARE__MRM_COMFORTABLE_STOP_OPERATOR__MRM_COMFORTABLE_STOP_OPERATOR_CORE_HPP_

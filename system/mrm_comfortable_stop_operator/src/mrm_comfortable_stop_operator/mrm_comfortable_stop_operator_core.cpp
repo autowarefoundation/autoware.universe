@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,7 +18,7 @@
 
 #include <vector>
 
-namespace mrm_comfortable_stop_operator
+namespace autoware::mrm_comfortable_stop_operator
 {
 
 MrmComfortableStopOperator::MrmComfortableStopOperator(const rclcpp::NodeOptions & node_options)
@@ -123,7 +123,7 @@ void MrmComfortableStopOperator::onTimer() const
   publishStatus();
 }
 
-}  // namespace mrm_comfortable_stop_operator
+}  // namespace autoware::mrm_comfortable_stop_operator
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(mrm_comfortable_stop_operator::MrmComfortableStopOperator)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::mrm_comfortable_stop_operator::MrmComfortableStopOperator)
