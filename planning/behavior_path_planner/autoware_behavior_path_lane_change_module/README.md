@@ -252,7 +252,7 @@ When ego vehicles is close to the terminal start, we need to sample multiple pre
 #### Multiple candidate path samples (longitudinal acceleration)
 
 In principle, maximum longitudinal acceleration is assumed for generating lane change candidate path.
-However is certain situations, we need to sample multiple longitudinal acceleration values to find a valid and safe candidate path.
+However in certain situations, we need to sample multiple longitudinal acceleration values to find a valid and safe candidate path.
 The lower and upper bounds of the longitudinal acceleration sampled are determined from the values specified in the lane change parameters and common planner parameters, as follows
 
 ```C++
