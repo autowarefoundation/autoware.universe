@@ -1,4 +1,4 @@
-// Copyright 2023 The Autoware Contributors
+// Copyright 2025 The Autoware Contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef CONVERTER_HPP_
-#define CONVERTER_HPP_
+#ifndef AUTOWARE__HAZARD_STATUS_CONVERTER__CONVERTER_HPP_
+#define AUTOWARE__HAZARD_STATUS_CONVERTER__CONVERTER_HPP_
 
 #include <autoware/universe_utils/ros/polling_subscriber.hpp>
 #include <diagnostic_graph_utils/subscription.hpp>
@@ -24,7 +24,7 @@
 
 #include <unordered_set>
 
-namespace hazard_status_converter
+namespace autoware::hazard_status_converter
 {
 
 class Converter : public rclcpp::Node
@@ -48,6 +48,6 @@ private:
   std::unordered_set<DiagUnit *> auto_mode_tree_;
 };
 
-}  // namespace hazard_status_converter
+}  // namespace autoware::hazard_status_converter
 
-#endif  // CONVERTER_HPP_
+#endif  // AUTOWARE__HAZARD_STATUS_CONVERTER__CONVERTER_HPP_
