@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "duplicated_node_checker/duplicated_node_checker_core.hpp"
+#include "autoware/duplicated_node_checker/duplicated_node_checker_core.hpp"
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rclcpp/rclcpp.hpp>
