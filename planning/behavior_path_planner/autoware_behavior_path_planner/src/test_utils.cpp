@@ -40,19 +40,14 @@ std::shared_ptr<PlanningInterfaceTestManager> generateTestManager()
 }
 
 std::shared_ptr<BehaviorPathPlannerNode> generateNode(
-  const std::vector<std::string> module_name_vec, std::vector<std::string> plugin_name_vec)
+  const std::vector<std::string> & module_name_vec,
+  const std::vector<std::string> & plugin_name_vec)
 {
   auto node_options = rclcpp::NodeOptions{};
   const auto autoware_test_utils_dir =
     ament_index_cpp::get_package_share_directory("autoware_test_utils");
   const auto behavior_path_planner_dir =
     ament_index_cpp::get_package_share_directory("autoware_behavior_path_planner");
-
-  const auto get_behavior_path_module_config = [](const std::string & module) {
-    const auto package_name = "autoware_behavior_path_" + module + "_module";
-    const auto package_path = ament_index_cpp::get_package_share_directory(package_name);
-    return package_path + "/config/" + module + ".param.yaml";
-  };
 
   std::vector<std::string> plugin_names;
   for (const auto & plugin_name : plugin_name_vec) {
@@ -62,6 +57,12 @@ std::shared_ptr<BehaviorPathPlannerNode> generateNode(
   std::vector<rclcpp::Parameter> params;
   params.emplace_back("launch_modules", plugin_names);
   node_options.parameter_overrides(params);
+
+  const auto get_behavior_path_module_config = [](const std::string & module) {
+    const auto package_name = "autoware_behavior_path_" + module + "_module";
+    const auto package_path = ament_index_cpp::get_package_share_directory(package_name);
+    return package_path + "/config/" + module + ".param.yaml";
+  };
 
   auto yaml_files = std::vector<std::string>{
     autoware_test_utils_dir + "/config/test_common.param.yaml",

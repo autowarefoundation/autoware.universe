@@ -31,7 +31,7 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionRoute)
 
   auto test_manager = generateTestManager();
   auto test_target_node = generateNode(
-    {"avoidance_by_lane_change"},
+    {"lane_change", "static_obstacle_avoidance", "avoidance_by_lane_change"},
     {"autoware::behavior_path_planner::AvoidanceByLaneChangeModuleManager"});
   publishMandatoryTopics(test_manager, test_target_node);
 
@@ -50,7 +50,7 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithOffTrackEgoPose)
 
   auto test_manager = generateTestManager();
   auto test_target_node = generateNode(
-    {"avoidance_by_lane_change"},
+    {"lane_change", "static_obstacle_avoidance", "avoidance_by_lane_change"},
     {"autoware::behavior_path_planner::AvoidanceByLaneChangeModuleManager"});
   publishMandatoryTopics(test_manager, test_target_node);
 

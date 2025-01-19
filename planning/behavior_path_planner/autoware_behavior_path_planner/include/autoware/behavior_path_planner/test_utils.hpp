@@ -31,7 +31,8 @@ using autoware::planning_test_manager::PlanningInterfaceTestManager;
 std::shared_ptr<PlanningInterfaceTestManager> generateTestManager();
 
 std::shared_ptr<BehaviorPathPlannerNode> generateNode(
-  const std::vector<std::string> module_name_vec, std::vector<std::string> plugin_name_vec);
+  const std::vector<std::string> & module_name_vec,
+  const std::vector<std::string> & plugin_name_vec);
 
 void publishMandatoryTopics(
   std::shared_ptr<PlanningInterfaceTestManager> test_manager,
