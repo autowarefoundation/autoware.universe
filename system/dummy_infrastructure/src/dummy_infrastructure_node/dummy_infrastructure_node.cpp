@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV
+// Copyright 2025 Tier IV
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ using std::chrono::duration;
 using std::chrono::duration_cast;
 using std::chrono::nanoseconds;
 
-namespace dummy_infrastructure
+namespace autoware::dummy_infrastructure
 {
 namespace
 {
@@ -192,7 +192,7 @@ void DummyInfrastructureNode::onTimer()
   pub_state_array_->publish(state_array);
 }
 
-}  // namespace dummy_infrastructure
+}  // namespace autoware::dummy_infrastructure
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(dummy_infrastructure::DummyInfrastructureNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::dummy_infrastructure::DummyInfrastructureNode)
