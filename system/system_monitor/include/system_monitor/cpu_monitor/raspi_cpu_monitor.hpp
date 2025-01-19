@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
  * @brief Raspberry Pi CPU monitor class
  */
 
-#ifndef SYSTEM_MONITOR__CPU_MONITOR__RASPI_CPU_MONITOR_HPP_
-#define SYSTEM_MONITOR__CPU_MONITOR__RASPI_CPU_MONITOR_HPP_
+#ifndef AUTOWARE__SYSTEM_MONITOR__CPU_MONITOR__RASPI_CPU_MONITOR_HPP_
+#define AUTOWARE__SYSTEM_MONITOR__CPU_MONITOR__RASPI_CPU_MONITOR_HPP_
 
 #include "system_monitor/cpu_monitor/cpu_monitor_base.hpp"
 
@@ -46,6 +46,9 @@
    : ((X) & raspiSoftTemperatureLimitHasOccurred) ? "Soft temperature limit has occurred" \
                                                   : "UNKNOWN")
 
+namespace autoware::system_monitor::cpu_monitor
+{
+
 class CPUMonitor : public CPUMonitorBase
 {
 public:
@@ -72,4 +75,6 @@ protected:
     diagnostic_updater::DiagnosticStatusWrapper & stat) override;  // NOLINT(runtime/references)
 };
 
-#endif  // SYSTEM_MONITOR__CPU_MONITOR__RASPI_CPU_MONITOR_HPP_
+}  // namespace autoware::system_monitor::cpu_monitor
+
+#endif  // AUTOWARE__SYSTEM_MONITOR__CPU_MONITOR__RASPI_CPU_MONITOR_HPP_

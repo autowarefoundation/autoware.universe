@@ -1,4 +1,4 @@
-// Copyright 2020 Autoware Foundation
+// Copyright 2025 Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -41,6 +41,9 @@
 #include <sstream>
 #include <string>
 #include <vector>
+
+namespace autoware::system_monitor::msr_reader
+{
 
 namespace fs = boost::filesystem;
 
@@ -307,3 +310,5 @@ int main(int argc, char ** argv)
 
   return EXIT_SUCCESS;
 }
+
+}  // namespace autoware::system_monitor::msr_reader

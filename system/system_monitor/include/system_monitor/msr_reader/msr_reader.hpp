@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,13 +17,16 @@
  * @brief MSR reader definitions
  */
 
-#ifndef SYSTEM_MONITOR__MSR_READER__MSR_READER_HPP_
-#define SYSTEM_MONITOR__MSR_READER__MSR_READER_HPP_
+#ifndef AUTOWARE__SYSTEM_MONITOR__MSR_READER__MSR_READER_HPP_
+#define AUTOWARE__SYSTEM_MONITOR__MSR_READER__MSR_READER_HPP_
 
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/vector.hpp>
 
 #include <vector>
+
+namespace autoware::system_monitor::msr_reader
+{
 
 /**
  * @brief MSR information
@@ -48,4 +51,6 @@ struct MSRInfo
   }
 };
 
-#endif  // SYSTEM_MONITOR__MSR_READER__MSR_READER_HPP_
+}  // namespace autoware::system_monitor::msr_reader
+
+#endif  // AUTOWARE__SYSTEM_MONITOR__MSR_READER__MSR_READER_HPP_

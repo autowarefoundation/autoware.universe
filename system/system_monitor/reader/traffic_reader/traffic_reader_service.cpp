@@ -33,7 +33,7 @@
 
 namespace process = boost::process;
 
-namespace traffic_reader_service
+namespace autoware::system_monitor::traffic_reader
 {
 
 TrafficReaderService::TrafficReaderService(std::string socket_path)
@@ -312,4 +312,4 @@ std::string TrafficReaderService::get_command_line_with_pid(pid_t pid)
   return line;
 }
 
-}  // namespace traffic_reader_service
+}  // namespace autoware::system_monitor::traffic_reader

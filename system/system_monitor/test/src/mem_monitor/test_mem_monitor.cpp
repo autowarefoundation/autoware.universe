@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,6 +26,9 @@
 
 #include <memory>
 #include <string>
+
+namespace autoware::system_monitor::mem_monitor
+{
 
 namespace fs = boost::filesystem;
 using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;
@@ -270,6 +273,8 @@ TEST_F(MemMonitorTestSuite, usageFreeErrorTest)
   ASSERT_STREQ(status.message.c_str(), "free error");
   ASSERT_TRUE(findValue(status, "free", value));
 }
+
+}  // namespace autoware::system_monitor::mem_monitor
 
 int main(int argc, char ** argv)
 {

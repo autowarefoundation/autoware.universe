@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,8 +17,11 @@
  * @brief 802.11 netlink-based interface class
  */
 
-#ifndef SYSTEM_MONITOR__NET_MONITOR__NL80211_HPP_
-#define SYSTEM_MONITOR__NET_MONITOR__NL80211_HPP_
+#ifndef AUTOWARE__SYSTEM_MONITOR__NET_MONITOR__NL80211_HPP_
+#define AUTOWARE__SYSTEM_MONITOR__NET_MONITOR__NL80211_HPP_
+
+namespace autoware::system_monitor::net_monitor
+{
 
 class NL80211
 {
@@ -57,4 +60,6 @@ private:
   struct nl_cb * cb_;        //!< @brief Callback handle
 };
 
-#endif  // SYSTEM_MONITOR__NET_MONITOR__NL80211_HPP_
+}  // namespace autoware::system_monitor::net_monitor
+
+#endif  // AUTOWARE__SYSTEM_MONITOR__NET_MONITOR__NL80211_HPP_

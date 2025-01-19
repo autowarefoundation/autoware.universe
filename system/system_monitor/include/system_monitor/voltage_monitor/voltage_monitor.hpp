@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,14 +17,18 @@
  * @brief  voltage monitor class
  */
 
-#ifndef SYSTEM_MONITOR__VOLTAGE_MONITOR__VOLTAGE_MONITOR_HPP_
-#define SYSTEM_MONITOR__VOLTAGE_MONITOR__VOLTAGE_MONITOR_HPP_
+#ifndef AUTOWARE__SYSTEM_MONITOR__VOLTAGE_MONITOR__VOLTAGE_MONITOR_HPP_
+#define AUTOWARE__SYSTEM_MONITOR__VOLTAGE_MONITOR__VOLTAGE_MONITOR_HPP_
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 
 #include <climits>
 #include <regex>
 #include <string>
+
+namespace autoware::system_monitor
+{
+
 class VoltageMonitor : public rclcpp::Node
 {
 public:
@@ -69,4 +73,6 @@ protected:
   std::regex voltage_regex_;
 };
 
-#endif  // SYSTEM_MONITOR__VOLTAGE_MONITOR__VOLTAGE_MONITOR_HPP_
+}  // namespace autoware::system_monitor
+
+#endif  // AUTOWARE__SYSTEM_MONITOR__VOLTAGE_MONITOR__VOLTAGE_MONITOR_HPP_

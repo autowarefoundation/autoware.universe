@@ -1,4 +1,4 @@
-// Copyright 2020 Autoware Foundation
+// Copyright 2025 Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,6 +30,9 @@
 #include <regex>
 #include <string>
 #include <utility>
+
+namespace autoware::system_monitor::ntp_monitor
+{
 
 namespace bp = boost::process;
 namespace fs = boost::filesystem;
@@ -223,5 +226,7 @@ std::string NTPMonitor::executeChronyc(
   return result;
 }
 
+}  // namespace autoware::system_monitor::ntp_monitor
+
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(NTPMonitor)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::system_monitor::ntp_monitor::NTPMonitor)

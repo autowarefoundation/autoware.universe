@@ -1,4 +1,4 @@
-// Copyright 2020 Autoware Foundation
+// Copyright 2025 Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,6 +22,9 @@
 
 #include <memory>
 #include <string>
+
+namespace autoware::system_monitor::gpu_monitor
+{
 
 using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;
 
@@ -543,6 +546,8 @@ TEST_F(GPUMonitorTestSuite, dummyGPUMonitorTest)
   // Publish topic
   monitor->update();
 }
+
+}  // namespace autoware::system_monitor::gpu_monitor
 
 int main(int argc, char ** argv)
 {

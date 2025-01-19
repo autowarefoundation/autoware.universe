@@ -1,4 +1,4 @@
-// Copyright 2022 The Autoware Contributors
+// Copyright 2025 The Autoware Contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SYSTEM_MONITOR__TRAFFIC_READER__TRAFFIC_READER_SERVICE_HPP_
-#define SYSTEM_MONITOR__TRAFFIC_READER__TRAFFIC_READER_SERVICE_HPP_
+#ifndef AUTOWARE__SYSTEM_MONITOR__TRAFFIC_READER__TRAFFIC_READER_SERVICE_HPP_
+#define AUTOWARE__SYSTEM_MONITOR__TRAFFIC_READER__TRAFFIC_READER_SERVICE_HPP_
 
 #include "system_monitor/traffic_reader/traffic_reader_common.hpp"
 
@@ -26,7 +26,7 @@
 #include <thread>
 #include <vector>
 
-namespace traffic_reader_service
+namespace autoware::system_monitor::traffic_reader
 {
 
 namespace local = boost::asio::local;
@@ -110,6 +110,6 @@ protected:
   traffic_reader_service::Result result_;                       //!< @brief Result of nethogs
 };
 
-}  // namespace traffic_reader_service
+}  // namespace autoware::system_monitor::traffic_reader
 
-#endif  // SYSTEM_MONITOR__TRAFFIC_READER__TRAFFIC_READER_SERVICE_HPP_
+#endif  // AUTOWARE__SYSTEM_MONITOR__TRAFFIC_READER__TRAFFIC_READER_SERVICE_HPP_

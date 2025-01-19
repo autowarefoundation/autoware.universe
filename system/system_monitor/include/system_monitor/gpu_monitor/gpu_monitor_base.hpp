@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,14 +17,17 @@
  * @brief GPU monitor class
  */
 
-#ifndef SYSTEM_MONITOR__GPU_MONITOR__GPU_MONITOR_BASE_HPP_
-#define SYSTEM_MONITOR__GPU_MONITOR__GPU_MONITOR_BASE_HPP_
+#ifndef AUTOWARE__SYSTEM_MONITOR__GPU_MONITOR__GPU_MONITOR_BASE_HPP_
+#define AUTOWARE__SYSTEM_MONITOR__GPU_MONITOR__GPU_MONITOR_BASE_HPP_
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 
 #include <climits>
 #include <map>
 #include <string>
+
+namespace autoware::system_monitor::gpu_monitor
+{
 
 class GPUMonitorBase : public rclcpp::Node
 {
@@ -126,4 +129,6 @@ protected:
     {DiagStatus::OK, "OK"}, {DiagStatus::WARN, "unused"}, {DiagStatus::ERROR, "throttling"}};
 };
 
-#endif  // SYSTEM_MONITOR__GPU_MONITOR__GPU_MONITOR_BASE_HPP_
+}  // namespace autoware::system_monitor::gpu_monitor
+
+#endif  // AUTOWARE__SYSTEM_MONITOR__GPU_MONITOR__GPU_MONITOR_BASE_HPP_

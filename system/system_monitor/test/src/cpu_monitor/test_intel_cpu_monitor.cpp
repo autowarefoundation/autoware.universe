@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,6 +30,9 @@
 #include <memory>
 #include <string>
 #include <vector>
+
+namespace autoware::system_monitor::cpu_monitor
+{
 
 static constexpr const char * TEST_FILE = "test";
 static constexpr const char * DOCKER_ENV = "/.dockerenv";
@@ -908,6 +911,8 @@ TEST_F(CPUMonitorTestSuite, dummyCPUMonitorTest)
   // Publish topic
   monitor->update();
 }
+
+}  // namespace autoware::system_monitor::cpu_monitor
 
 int main(int argc, char ** argv)
 {

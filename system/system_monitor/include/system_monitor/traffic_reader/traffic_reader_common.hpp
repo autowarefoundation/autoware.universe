@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
  * @brief traffic reader definitions
  */
 
-#ifndef SYSTEM_MONITOR__TRAFFIC_READER__TRAFFIC_READER_COMMON_HPP_
-#define SYSTEM_MONITOR__TRAFFIC_READER__TRAFFIC_READER_COMMON_HPP_
+#ifndef AUTOWARE__SYSTEM_MONITOR__TRAFFIC_READER__TRAFFIC_READER_COMMON_HPP_
+#define AUTOWARE__SYSTEM_MONITOR__TRAFFIC_READER__TRAFFIC_READER_COMMON_HPP_
 
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/string.hpp>
@@ -26,7 +26,7 @@
 
 #include <string>
 
-namespace traffic_reader_service
+namespace autoware::system_monitor::traffic_reader
 {
 
 static constexpr char socket_path[] = "/tmp/traffic_reader";
@@ -63,6 +63,6 @@ struct Result
 
 // constexpr std::string_view GET_ALL_STR{"<All>"};  //!< @brief nethogs result all request string
 
-}  // namespace traffic_reader_service
+}  // namespace autoware::system_monitor::traffic_reader
 
-#endif  // SYSTEM_MONITOR__TRAFFIC_READER__TRAFFIC_READER_COMMON_HPP_
+#endif  // AUTOWARE__SYSTEM_MONITOR__TRAFFIC_READER__TRAFFIC_READER_COMMON_HPP_

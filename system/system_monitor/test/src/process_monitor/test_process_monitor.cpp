@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,6 +25,9 @@
 
 #include <memory>
 #include <string>
+
+namespace autoware::system_monitor::process_monitor
+{
 
 namespace bp = boost::process;
 namespace fs = boost::filesystem;
@@ -369,6 +372,8 @@ TEST_F(ProcessMonitorTestSuite, sortErrorTest)
     ASSERT_STREQ(status.message.c_str(), "sort error");
   }
 }
+
+}  // namespace autoware::system_monitor::process_monitor
 
 int main(int argc, char ** argv)
 {

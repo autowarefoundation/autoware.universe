@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
  * @brief Net monitor class
  */
 
-#ifndef SYSTEM_MONITOR__NET_MONITOR__NET_MONITOR_HPP_
-#define SYSTEM_MONITOR__NET_MONITOR__NET_MONITOR_HPP_
+#ifndef AUTOWARE__SYSTEM_MONITOR__NET_MONITOR__NET_MONITOR_HPP_
+#define AUTOWARE__SYSTEM_MONITOR__NET_MONITOR__NET_MONITOR_HPP_
 
 #include "system_monitor/net_monitor/nl80211.hpp"
 #include "system_monitor/traffic_reader/traffic_reader_common.hpp"
@@ -33,6 +33,9 @@
 #include <memory>
 #include <string>
 #include <vector>
+
+namespace autoware::system_monitor::net_monitor
+{
 
 template <typename T>
 constexpr auto to_mbit(T value)
@@ -410,4 +413,6 @@ protected:
   const std::string loopback_interface_name_ = "lo";
 };
 
-#endif  // SYSTEM_MONITOR__NET_MONITOR__NET_MONITOR_HPP_
+}  // namespace autoware::system_monitor::net_monitor
+
+#endif  // AUTOWARE__SYSTEM_MONITOR__NET_MONITOR__NET_MONITOR_HPP_

@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
  * @brief HDD reader definitions
  */
 
-#ifndef SYSTEM_MONITOR__HDD_READER__HDD_READER_HPP_
-#define SYSTEM_MONITOR__HDD_READER__HDD_READER_HPP_
+#ifndef AUTOWARE__SYSTEM_MONITOR__HDD_READER__HDD_READER_HPP_
+#define AUTOWARE__SYSTEM_MONITOR__HDD_READER__HDD_READER_HPP_
 
 #include <boost/serialization/map.hpp>
 #include <boost/serialization/serialization.hpp>
@@ -27,6 +27,9 @@
 #include <bitset>
 #include <map>
 #include <string>
+
+namespace autoware::system_monitor::hdd_reader
+{
 
 /**
  * @brief Enumeration of Request ID to hdd_reader
@@ -135,4 +138,6 @@ struct UnmountDeviceInfo
  */
 typedef std::map<std::string, HddInfo> HddInfoList;
 
-#endif  // SYSTEM_MONITOR__HDD_READER__HDD_READER_HPP_
+}  // namespace autoware::system_monitor::hdd_reader
+
+#endif  // AUTOWARE__SYSTEM_MONITOR__HDD_READER__HDD_READER_HPP_

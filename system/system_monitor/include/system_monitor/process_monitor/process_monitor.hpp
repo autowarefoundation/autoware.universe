@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
  * @brief Process monitor class
  */
 
-#ifndef SYSTEM_MONITOR__PROCESS_MONITOR__PROCESS_MONITOR_HPP_
-#define SYSTEM_MONITOR__PROCESS_MONITOR__PROCESS_MONITOR_HPP_
+#ifndef AUTOWARE__SYSTEM_MONITOR__PROCESS_MONITOR__PROCESS_MONITOR_HPP_
+#define AUTOWARE__SYSTEM_MONITOR__PROCESS_MONITOR__PROCESS_MONITOR_HPP_
 
 #include "system_monitor/process_monitor/diag_task.hpp"
 
@@ -30,6 +30,9 @@
 #include <mutex>
 #include <string>
 #include <vector>
+
+namespace autoware::system_monitor::process_monitor
+{
 
 namespace bp = boost::process;
 
@@ -137,4 +140,6 @@ protected:
   rclcpp::CallbackGroup::SharedPtr timer_callback_group_;  //!< @brief Callback Group
 };
 
-#endif  // SYSTEM_MONITOR__PROCESS_MONITOR__PROCESS_MONITOR_HPP_
+}  // namespace autoware::system_monitor::process_monitor
+
+#endif  // AUTOWARE__SYSTEM_MONITOR__PROCESS_MONITOR__PROCESS_MONITOR_HPP_

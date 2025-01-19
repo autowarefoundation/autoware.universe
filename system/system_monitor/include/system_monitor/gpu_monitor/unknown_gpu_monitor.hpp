@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,12 +17,15 @@
  * @brief Unknown GPU monitor class
  */
 
-#ifndef SYSTEM_MONITOR__GPU_MONITOR__UNKNOWN_GPU_MONITOR_HPP_
-#define SYSTEM_MONITOR__GPU_MONITOR__UNKNOWN_GPU_MONITOR_HPP_
+#ifndef AUTOWARE__SYSTEM_MONITOR__GPU_MONITOR__UNKNOWN_GPU_MONITOR_HPP_
+#define AUTOWARE__SYSTEM_MONITOR__GPU_MONITOR__UNKNOWN_GPU_MONITOR_HPP_
 
 #include "system_monitor/gpu_monitor/gpu_monitor_base.hpp"
 
 #include <string>
+
+namespace autoware::system_monitor::gpu_monitor
+{
 
 class GPUMonitor : public GPUMonitorBase
 {
@@ -34,4 +37,6 @@ public:
   explicit GPUMonitor(const rclcpp::NodeOptions & options);
 };
 
-#endif  // SYSTEM_MONITOR__GPU_MONITOR__UNKNOWN_GPU_MONITOR_HPP_
+}  // namespace autoware::system_monitor::gpu_monitor
+
+#endif  // AUTOWARE__SYSTEM_MONITOR__GPU_MONITOR__UNKNOWN_GPU_MONITOR_HPP_

@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,6 +20,9 @@
 
 #include <memory>
 #include <string>
+
+namespace autoware::system_monitor::cpu_monitor
+{
 
 using DiagStatus = diagnostic_msgs::msg::DiagnosticStatus;
 
@@ -72,6 +75,8 @@ TEST_F(CPUMonitorTestSuite, test)
 {
   ASSERT_TRUE(true);
 }
+
+}  // namespace autoware::system_monitor::cpu_monitor
 
 int main(int argc, char ** argv)
 {

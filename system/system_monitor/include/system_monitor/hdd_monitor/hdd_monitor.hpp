@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
  * @brief HDD monitor class
  */
 
-#ifndef SYSTEM_MONITOR__HDD_MONITOR__HDD_MONITOR_HPP_
-#define SYSTEM_MONITOR__HDD_MONITOR__HDD_MONITOR_HPP_
+#ifndef AUTOWARE__SYSTEM_MONITOR__HDD_MONITOR__HDD_MONITOR_HPP_
+#define AUTOWARE__SYSTEM_MONITOR__HDD_MONITOR__HDD_MONITOR_HPP_
 
 #include "system_monitor/hdd_reader/hdd_reader.hpp"
 
@@ -28,6 +28,9 @@
 #include <map>
 #include <string>
 #include <vector>
+
+namespace autoware::system_monitor::hdd_monitor
+{
 
 /**
  * @brief error and warning temperature levels
@@ -391,4 +394,6 @@ protected:
     {DiagStatus::OK, "OK"}, {DiagStatus::WARN, "not connected"}, {DiagStatus::ERROR, "unused"}};
 };
 
-#endif  // SYSTEM_MONITOR__HDD_MONITOR__HDD_MONITOR_HPP_
+}  // namespace autoware::system_monitor::hdd_monitor
+
+#endif  // AUTOWARE__SYSTEM_MONITOR__HDD_MONITOR__HDD_MONITOR_HPP_

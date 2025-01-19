@@ -35,6 +35,9 @@
 #include <string>
 #include <vector>
 
+namespace autoware::system_monitor::cpu_monitor
+{
+
 namespace fs = boost::filesystem;
 
 CPUMonitor::CPUMonitor(const rclcpp::NodeOptions & options) : CPUMonitorBase("cpu_monitor", options)
@@ -205,5 +208,7 @@ void CPUMonitor::getTempNames()
   });  // NOLINT
 }
 
+}  // namespace autoware::system_monitor::cpu_monitor
+
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(CPUMonitor)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::system_monitor::cpu_monitor::CPUMonitor)

@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,12 +17,15 @@
  * @brief diagnostics task for high load/memory procs
  */
 
-#ifndef SYSTEM_MONITOR__PROCESS_MONITOR__DIAG_TASK_HPP_
-#define SYSTEM_MONITOR__PROCESS_MONITOR__DIAG_TASK_HPP_
+#ifndef AUTOWARE__SYSTEM_MONITOR__PROCESS_MONITOR__DIAG_TASK_HPP_
+#define AUTOWARE__SYSTEM_MONITOR__PROCESS_MONITOR__DIAG_TASK_HPP_
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 
 #include <string>
+
+namespace autoware::system_monitor::process_monitor
+{
 
 /**
  * @brief Struct for storing process information
@@ -115,4 +118,6 @@ private:
   struct ProcessInfo info_;    //!< @brief Struct for storing process information
 };
 
-#endif  // SYSTEM_MONITOR__PROCESS_MONITOR__DIAG_TASK_HPP_
+}  // namespace autoware::system_monitor::process_monitor
+
+#endif  // AUTOWARE__SYSTEM_MONITOR__PROCESS_MONITOR__DIAG_TASK_HPP_

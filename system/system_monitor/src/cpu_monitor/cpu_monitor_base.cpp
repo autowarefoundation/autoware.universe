@@ -1,4 +1,4 @@
-// Copyright 2020 Autoware Foundation
+// Copyright 2025 Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,6 +34,9 @@
 #include <regex>
 #include <string>
 #include <utility>
+
+namespace autoware::system_monitor::cpu_monitor
+{
 
 namespace bp = boost::process;
 namespace fs = boost::filesystem;
@@ -446,3 +449,5 @@ void CPUMonitorBase::publishCpuUsage(tier4_external_api_msgs::msg::CpuUsage usag
   usage.stamp = stamp;
   pub_cpu_usage_->publish(usage);
 }
+
+}  // namespace autoware::system_monitor::cpu_monitor

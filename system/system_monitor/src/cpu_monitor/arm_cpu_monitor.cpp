@@ -1,4 +1,4 @@
-// Copyright 2020 Autoware Foundation
+// Copyright 2025 Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,6 +24,9 @@
 #include <string>
 #include <vector>
 
+namespace autoware::system_monitor::cpu_monitor
+{
+
 CPUMonitor::CPUMonitor(const rclcpp::NodeOptions & options) : CPUMonitorBase("cpu_monitor", options)
 {
 }
@@ -44,5 +47,7 @@ void CPUMonitor::getTempNames()
   }
 }
 
+}  // namespace autoware::system_monitor::cpu_monitor
+
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(CPUMonitor)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::system_monitor::cpu_monitor::CPUMonitor)

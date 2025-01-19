@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
  * @brief System Monitor Utility class
  */
 
-#ifndef SYSTEM_MONITOR__SYSTEM_MONITOR_UTILITY_HPP_
-#define SYSTEM_MONITOR__SYSTEM_MONITOR_UTILITY_HPP_
+#ifndef AUTOWARE__SYSTEM_MONITOR__SYSTEM_MONITOR_UTILITY_HPP_
+#define AUTOWARE__SYSTEM_MONITOR__SYSTEM_MONITOR_UTILITY_HPP_
 
 #include <boost/filesystem.hpp>
 #include <boost/foreach.hpp>
@@ -28,6 +28,9 @@
 #include <regex>
 #include <string>
 #include <vector>
+
+namespace autoware::system_monitor
+{
 
 namespace fs = boost::filesystem;
 
@@ -121,4 +124,6 @@ public:
   }
 };
 
-#endif  // SYSTEM_MONITOR__SYSTEM_MONITOR_UTILITY_HPP_
+}  // namespace autoware::system_monitor
+
+#endif  // AUTOWARE__SYSTEM_MONITOR__SYSTEM_MONITOR_UTILITY_HPP_

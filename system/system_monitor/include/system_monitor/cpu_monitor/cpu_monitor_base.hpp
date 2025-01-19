@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,8 +17,8 @@
  * @brief CPU monitor base class
  */
 
-#ifndef SYSTEM_MONITOR__CPU_MONITOR__CPU_MONITOR_BASE_HPP_
-#define SYSTEM_MONITOR__CPU_MONITOR__CPU_MONITOR_BASE_HPP_
+#ifndef AUTOWARE__SYSTEM_MONITOR__CPU_MONITOR__CPU_MONITOR_BASE_HPP_
+#define AUTOWARE__SYSTEM_MONITOR__CPU_MONITOR__CPU_MONITOR_BASE_HPP_
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 
@@ -29,6 +29,9 @@
 #include <map>
 #include <string>
 #include <vector>
+
+namespace autoware::system_monitor::cpu_monitor
+{
 
 /**
  * @brief CPU temperature information
@@ -173,4 +176,6 @@ protected:
   virtual void publishCpuUsage(tier4_external_api_msgs::msg::CpuUsage usage);
 };
 
-#endif  // SYSTEM_MONITOR__CPU_MONITOR__CPU_MONITOR_BASE_HPP_
+}  // namespace autoware::system_monitor::cpu_monitor
+
+#endif  // AUTOWARE__SYSTEM_MONITOR__CPU_MONITOR__CPU_MONITOR_BASE_HPP_
