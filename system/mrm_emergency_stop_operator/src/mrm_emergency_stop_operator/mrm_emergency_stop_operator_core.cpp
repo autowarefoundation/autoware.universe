@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "mrm_emergency_stop_operator/mrm_emergency_stop_operator_core.hpp"
+#include "autoware/mrm_emergency_stop_operator/mrm_emergency_stop_operator_core.hpp"
 
 #include <autoware/universe_utils/ros/update_param.hpp>
 
