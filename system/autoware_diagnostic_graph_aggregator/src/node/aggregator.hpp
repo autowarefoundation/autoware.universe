@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__DIAGNOSTIC_GRAPH_AGGREGATOR__NODE__AGGREGATOR_HPP_
-#define AUTOWARE__DIAGNOSTIC_GRAPH_AGGREGATOR__NODE__AGGREGATOR_HPP_
+#ifndef NODE__AGGREGATOR_HPP_
+#define NODE__AGGREGATOR_HPP_
 
 #include "availability.hpp"
 #include "graph/graph.hpp"
@@ -50,4 +50,4 @@ private:
 
 }  // namespace autoware::diagnostic_graph_aggregator
 
-#endif  // AUTOWARE__DIAGNOSTIC_GRAPH_AGGREGATOR__NODE__AGGREGATOR_HPP_
+#endif  // NODE__AGGREGATOR_HPP_

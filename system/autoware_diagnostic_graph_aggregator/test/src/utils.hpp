@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__DIAGNOSTIC_GRAPH_AGGREGATOR__TEST__SRC__UTILS_HPP_
-#define AUTOWARE__DIAGNOSTIC_GRAPH_AGGREGATOR__TEST__SRC__UTILS_HPP_
+#ifndef UTILS_HPP_
+#define UTILS_HPP_
 
 #include <filesystem>
 #include <string>
 
 std::filesystem::path resource(const std::string & path);
 
-#endif  // AUTOWARE__DIAGNOSTIC_GRAPH_AGGREGATOR__TEST__SRC__UTILS_HPP_
+#endif  // UTILS_HPP_

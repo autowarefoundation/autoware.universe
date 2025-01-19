@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__DIAGNOSTIC_GRAPH_AGGREGATOR__COMMON__GRAPH__UNITS_HPP_
-#define AUTOWARE__DIAGNOSTIC_GRAPH_AGGREGATOR__COMMON__GRAPH__UNITS_HPP_
+#ifndef COMMON__GRAPH__UNITS_HPP_
+#define COMMON__GRAPH__UNITS_HPP_
 
 #include "names.hpp"
 #include "types.hpp"
@@ -227,4 +227,4 @@ public:
 
 }  // namespace autoware::diagnostic_graph_aggregator
 
-#endif  // AUTOWARE__DIAGNOSTIC_GRAPH_AGGREGATOR__COMMON__GRAPH__UNITS_HPP_
+#endif  // COMMON__GRAPH__UNITS_HPP_

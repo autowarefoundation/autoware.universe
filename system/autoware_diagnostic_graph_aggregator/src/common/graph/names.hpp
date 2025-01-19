@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__DIAGNOSTIC_GRAPH_AGGREGATOR__COMMON__GRAPH__NAMES_HPP_
-#define AUTOWARE__DIAGNOSTIC_GRAPH_AGGREGATOR__COMMON__GRAPH__NAMES_HPP_
+#ifndef COMMON__GRAPH__NAMES_HPP_
+#define COMMON__GRAPH__NAMES_HPP_
 
 namespace autoware::diagnostic_graph_aggregator::unit_name
 {
@@ -39,4 +39,4 @@ constexpr char const * remove = "remove";
 
 }  // namespace autoware::diagnostic_graph_aggregator::edit_name
 
-#endif  // AUTOWARE__DIAGNOSTIC_GRAPH_AGGREGATOR__COMMON__GRAPH__NAMES_HPP_
+#endif  // COMMON__GRAPH__NAMES_HPP_
