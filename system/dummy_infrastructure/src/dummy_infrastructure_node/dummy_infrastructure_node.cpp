@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "dummy_infrastructure/dummy_infrastructure_node.hpp"
+#include "autoware/dummy_infrastructure/dummy_infrastructure_node.hpp"
 
 #include <boost/optional.hpp>
 
