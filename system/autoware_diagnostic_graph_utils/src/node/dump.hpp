@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__DIAGNOSTIC_GRAPH_UTILS__NODE__DUMP_HPP_
-#define AUTOWARE__DIAGNOSTIC_GRAPH_UTILS__NODE__DUMP_HPP_
+#ifndef NODE__DUMP_HPP_
+#define NODE__DUMP_HPP_
 
 #include "autoware/diagnostic_graph_utils/subscription.hpp"
 
@@ -49,4 +49,4 @@ private:
 
 }  // namespace autoware::diagnostic_graph_utils
 
-#endif  // AUTOWARE__DIAGNOSTIC_GRAPH_UTILS__NODE__DUMP_HPP_
+#endif  // NODE__DUMP_HPP_
