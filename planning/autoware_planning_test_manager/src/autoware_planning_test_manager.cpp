@@ -153,13 +153,6 @@ void PlanningInterfaceTestManager::publishTF(
     autoware::test_utils::makeTFMsg(target_node, "base_link", "map"));
 }
 
-void PlanningInterfaceTestManager::publishLateralOffset(
-  rclcpp::Node::SharedPtr target_node, std::string topic_name)
-{
-  autoware::test_utils::publishToTargetNode(
-    test_node_, target_node, topic_name, lateral_offset_pub_, LateralOffset{});
-}
-
 void PlanningInterfaceTestManager::publishOperationModeState(
   rclcpp::Node::SharedPtr target_node, std::string topic_name)
 {

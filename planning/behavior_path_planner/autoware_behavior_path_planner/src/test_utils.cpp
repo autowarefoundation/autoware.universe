@@ -18,12 +18,32 @@
 #include <autoware_planning_test_manager/autoware_planning_test_manager.hpp>
 #include <autoware_test_utils/autoware_test_utils.hpp>
 
+#include <tier4_planning_msgs/msg/lateral_offset.hpp>
+
 #include <memory>
 #include <string>
 #include <vector>
 
 namespace autoware::behavior_path_planner
 {
+namespace
+{
+using tier4_planning_msgs::msg::LateralOffset;
+
+void publishLateralOffset(
+  std::shared_ptr<PlanningInterfaceTestManager> test_manager,
+  std::shared_ptr<BehaviorPathPlannerNode> test_target_node)
+{
+  auto test_node = test_manager->getTestNode();
+  const auto pub_lateral_offset = test_manager->getTestNode()->create_publisher<LateralOffset>(
+    "behavior_path_planner/input/lateral_offset", 1);
+  pub_lateral_offset->publish(LateralOffset{});
+  autoware::test_utils::spinSomeNodes(test_node, test_target_node, 3);
+  autoware::test_utils::publishToTargetNode(
+    test_node_, test_target_node, topic_name, lateral_offset_pub_, LateralOffset{});
+}
+}  // namespace
+
 std::shared_ptr<PlanningInterfaceTestManager> generateTestManager()
 {
   auto test_manager = std::make_shared<PlanningInterfaceTestManager>();
@@ -95,7 +115,6 @@ void publishMandatoryTopics(
   test_manager->publishMap(test_target_node, "behavior_path_planner/input/vector_map");
   test_manager->publishCostMap(test_target_node, "behavior_path_planner/input/costmap");
   test_manager->publishOperationModeState(test_target_node, "system/operation_mode/state");
-  test_manager->publishLateralOffset(
-    test_target_node, "behavior_path_planner/input/lateral_offset");
+  publishLateralOffset(test_manager, test_target_node);
 }
 }  // namespace autoware::behavior_path_planner
