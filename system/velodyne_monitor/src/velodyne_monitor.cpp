@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,8 +30,11 @@
 #define FMT_HEADER_ONLY
 #include <fmt/format.h>
 
+namespace autoware::system::velodyne_monitor
+{
+
 VelodyneMonitor::VelodyneMonitor(const rclcpp::NodeOptions & options)
-: Node("velodyne_monitor", options), updater_(this)
+: Node("autoware_velodyne_monitor", options), updater_(this)
 {
   timeout_ = declare_parameter<double>("timeout");
   ip_address_ = declare_parameter<std::string>("ip_address");
@@ -231,5 +234,7 @@ float VelodyneMonitor::convertTemperature(int raw)
   return std::sqrt(2.1962e6 + (1.8639 - static_cast<float>(raw) * 5.0 / 4096) / 3.88e-6) - 1481.96;
 }
 
+}  // namespace autoware::system::velodyne_monitor
+
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(VelodyneMonitor)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::system::velodyne_monitor::VelodyneMonitor)
