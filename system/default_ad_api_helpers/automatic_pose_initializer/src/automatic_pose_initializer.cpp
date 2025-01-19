@@ -1,4 +1,4 @@
-// Copyright 2022 TIER IV, Inc.
+// Copyright 2025 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,11 +16,11 @@
 
 #include <memory>
 
-namespace automatic_pose_initializer
+namespace autoware::automatic_pose_initializer
 {
 
 AutomaticPoseInitializer::AutomaticPoseInitializer(const rclcpp::NodeOptions & options)
-: Node("automatic_pose_initializer", options)
+: Node("autoware_automatic_pose_initializer", options)
 {
   const auto adaptor = autoware::component_interface_utils::NodeAdaptor(this);
   group_cli_ = create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -47,7 +47,7 @@ void AutomaticPoseInitializer::on_timer()
   timer_->reset();
 }
 
-}  // namespace automatic_pose_initializer
+}  // namespace autoware::automatic_pose_initializer
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(automatic_pose_initializer::AutomaticPoseInitializer)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::automatic_pose_initializer::AutomaticPoseInitializer)

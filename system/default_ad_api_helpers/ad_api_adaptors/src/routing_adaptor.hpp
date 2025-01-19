@@ -1,4 +1,4 @@
-// Copyright 2022 TIER IV, Inc.
+// Copyright 2025 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef ROUTING_ADAPTOR_HPP_
-#define ROUTING_ADAPTOR_HPP_
+#ifndef AUTOWARE__AD_API_ADAPTORS__SRC__ROUTING_ADAPTOR_HPP_
+#define AUTOWARE__AD_API_ADAPTORS__SRC__ROUTING_ADAPTOR_HPP_
 
 #include <autoware/adapi_specs/routing.hpp>
 #include <autoware/component_interface_utils/rclcpp.hpp>
@@ -23,7 +23,7 @@
 
 #include <string>
 
-namespace ad_api_adaptors
+namespace autoware::ad_api_adaptors
 {
 
 class RoutingAdaptor : public rclcpp::Node
@@ -59,6 +59,6 @@ private:
   void on_reroute(const PoseStamped::ConstSharedPtr pose);
 };
 
-}  // namespace ad_api_adaptors
+}  // namespace autoware::ad_api_adaptors
 
-#endif  // ROUTING_ADAPTOR_HPP_
+#endif  // AUTOWARE__AD_API_ADAPTORS__SRC__ROUTING_ADAPTOR_HPP_

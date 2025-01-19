@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(automatic_pose_initializer)
+project(autoware_automatic_pose_initializer)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
@@ -9,7 +9,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN "automatic_pose_initializer::AutomaticPoseInitializer"
+  PLUGIN "autoware::automatic_pose_initializer::AutomaticPoseInitializer"
   EXECUTABLE ${PROJECT_NAME}_node
   EXECUTOR MultiThreadedExecutor
 )

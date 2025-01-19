@@ -1,4 +1,4 @@
-// Copyright 2022 TIER IV, Inc.
+// Copyright 2025 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOMATIC_POSE_INITIALIZER_HPP_
-#define AUTOMATIC_POSE_INITIALIZER_HPP_
+#ifndef AUTOWARE__AUTOMATIC_POSE_INITIALIZER_HPP_
+#define AUTOWARE__AUTOMATIC_POSE_INITIALIZER_HPP_
 
 #include <autoware/adapi_specs/localization.hpp>
 #include <autoware/component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-namespace automatic_pose_initializer
+namespace autoware::automatic_pose_initializer
 {
 
 class AutomaticPoseInitializer : public rclcpp::Node
@@ -38,6 +38,6 @@ private:
   State::Message state_;
 };
 
-}  // namespace automatic_pose_initializer
+}  // namespace autoware::automatic_pose_initializer
 
-#endif  // AUTOMATIC_POSE_INITIALIZER_HPP_
+#endif  // AUTOWARE__AUTOMATIC_POSE_INITIALIZER_HPP_

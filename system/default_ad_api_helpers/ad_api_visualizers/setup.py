@@ -7,7 +7,7 @@ from setuptools import setup
 simplefilter("ignore", category=SetuptoolsDeprecationWarning)
 simplefilter("ignore", category=PkgResourcesDeprecationWarning)
 
-package_name = "ad_api_visualizers"
+package_name = "autoware_ad_api_visualizers"
 
 setup(
     name=package_name,
@@ -26,6 +26,6 @@ setup(
     license="Apache License 2.0",
     tests_require=["pytest"],
     entry_points={
-        "console_scripts": ["planning_factors = ad_api_visualizers.planning_factors:main"],
+        "console_scripts": ["planning_factors = autoware_ad_api_visualizers.planning_factors:main"],
     },
 )

@@ -60,7 +60,7 @@ steering_status_color = {
 
 class PlanningFactorVisualizer(rclpy.node.Node):
     def __init__(self):
-        super().__init__("planning_factor_visualizer")
+        super().__init__("autoware_planning_factor_visualizer")
         self.front_offset = self.declare_parameter("front_offset", 0.0).value
         self.pub_velocity = self.create_publisher(MarkerArray, "/visualizer/velocity_factors", 1)
         self.pub_steering = self.create_publisher(MarkerArray, "/visualizer/steering_factors", 1)

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(ad_api_adaptors)
+project(autoware_ad_api_adaptors)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
@@ -10,14 +10,14 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN "ad_api_adaptors::InitialPoseAdaptor"
-  EXECUTABLE initial_pose_adaptor_node
+  PLUGIN "autoware::ad_api_adaptors::InitialPoseAdaptor"
+  EXECUTABLE autoware_initial_pose_adaptor_node
   EXECUTOR MultiThreadedExecutor
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN "ad_api_adaptors::RoutingAdaptor"
-  EXECUTABLE routing_adaptor_node
+  PLUGIN "autoware::ad_api_adaptors::RoutingAdaptor"
+  EXECUTABLE autoware_routing_adaptor_node
   EXECUTOR SingleThreadedExecutor
 )
 
