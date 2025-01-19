@@ -212,7 +212,7 @@ The prepare phase trajectory is valid if:
 
 ### Lane-changing phase
 
-The lane-changing phase consist of the shifted path that moves ego from current lane to the target lane. Total duration of lane-changing phase is computed from the `shift_length`, `lateral_jerk` and `lateral_acceleration`.
+The lane-changing phase consists of the shifted path that moves ego from current lane to the target lane. Total duration of lane-changing phase is computed from the `shift_length`, `lateral_jerk` and `lateral_acceleration`.
 
 In principle, positive longitudinal acceleration is considered during lane-changing phase, and is computes as follows.
 
