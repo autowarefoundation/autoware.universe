@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__DIAGNOSTIC_GRAPH_UTILS__NODE__LOGGING_HPP_
 #define AUTOWARE__DIAGNOSTIC_GRAPH_UTILS__NODE__LOGGING_HPP_
 
-#include "diagnostic_graph_utils/subscription.hpp"
+#include "autoware/diagnostic_graph_utils/subscription.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 

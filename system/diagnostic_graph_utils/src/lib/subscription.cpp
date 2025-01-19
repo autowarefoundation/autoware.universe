@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "diagnostic_graph_utils/subscription.hpp"
+#include "autoware/diagnostic_graph_utils/subscription.hpp"
 
 #include <memory>
 

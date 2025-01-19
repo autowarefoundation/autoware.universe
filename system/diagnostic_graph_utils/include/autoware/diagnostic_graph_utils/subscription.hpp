@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__DIAGNOSTIC_GRAPH_UTILS__SUBSCRIPTION_HPP_
 #define AUTOWARE__DIAGNOSTIC_GRAPH_UTILS__SUBSCRIPTION_HPP_
 
-#include "diagnostic_graph_utils/graph.hpp"
+#include "autoware/diagnostic_graph_utils/graph.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
