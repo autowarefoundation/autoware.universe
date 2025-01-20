@@ -51,7 +51,8 @@ private:
   Pub<autoware::adapi_specs::planning::VelocityFactors> pub_velocity_factors_;
   Pub<autoware::adapi_specs::planning::SteeringFactors> pub_steering_factors_;
   Sub<autoware::component_interface_specs_universe::planning::Trajectory> sub_trajectory_;
-  Sub<autoware::component_interface_specs_universe::localization::KinematicState> sub_kinematic_state_;
+  Sub<autoware::component_interface_specs_universe::localization::KinematicState>
+    sub_kinematic_state_;
   std::vector<rclcpp::Subscription<PlanningFactorArray>::SharedPtr> sub_factors_;
   std::vector<PlanningFactorArray::ConstSharedPtr> factors_;
   rclcpp::TimerBase::SharedPtr timer_;
