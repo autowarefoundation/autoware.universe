@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__SIMULATOR__LEARNING_BASED_VEHICLE_MODEL__INTERCONNECTED_MODEL_HPP_
-#define AUTOWARE__SIMULATOR__LEARNING_BASED_VEHICLE_MODEL__INTERCONNECTED_MODEL_HPP_
+#ifndef AUTOWARE__LEARNING_BASED_VEHICLE_MODEL__INTERCONNECTED_MODEL_HPP_
+#define AUTOWARE__LEARNING_BASED_VEHICLE_MODEL__INTERCONNECTED_MODEL_HPP_
 
 #include "autoware/learning_based_vehicle_model/model_connections_helpers.hpp"
 #include "autoware/learning_based_vehicle_model/simple_pymodel.hpp"
@@ -132,4 +132,4 @@ public:
 
 }  // namespace autoware::simulator::learning_based_vehicle_model
 
-#endif  // AUTOWARE__SIMULATOR__LEARNING_BASED_VEHICLE_MODEL__INTERCONNECTED_MODEL_HPP_
+#endif  // AUTOWARE__LEARNING_BASED_VEHICLE_MODEL__INTERCONNECTED_MODEL_HPP_

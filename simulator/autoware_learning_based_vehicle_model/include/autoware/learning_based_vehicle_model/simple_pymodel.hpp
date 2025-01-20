@@ -13,8 +13,8 @@
 // limitations under the License.
 
 // cspell:ignore pymodel
-#ifndef AUTOWARE__SIMULATOR__LEARNING_BASED_VEHICLE_MODEL__SIMPLE_PYMODEL_HPP_
-#define AUTOWARE__SIMULATOR__LEARNING_BASED_VEHICLE_MODEL__SIMPLE_PYMODEL_HPP_
+#ifndef AUTOWARE__LEARNING_BASED_VEHICLE_MODEL__SIMPLE_PYMODEL_HPP_
+#define AUTOWARE__LEARNING_BASED_VEHICLE_MODEL__SIMPLE_PYMODEL_HPP_
 
 #include "autoware/learning_based_vehicle_model/model_connections_helpers.hpp"
 #include "autoware/learning_based_vehicle_model/submodel_interface.hpp"
@@ -104,4 +104,4 @@ public:
 
 }  // namespace autoware::simulator::learning_based_vehicle_model
 
-#endif  // AUTOWARE__SIMULATOR__LEARNING_BASED_VEHICLE_MODEL__SIMPLE_PYMODEL_HPP_
+#endif  // AUTOWARE__LEARNING_BASED_VEHICLE_MODEL__SIMPLE_PYMODEL_HPP_

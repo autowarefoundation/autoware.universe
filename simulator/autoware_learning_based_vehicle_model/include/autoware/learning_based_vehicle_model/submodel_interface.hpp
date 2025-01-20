@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__SIMULATOR__LEARNING_BASED_VEHICLE_MODEL__SUBMODEL_INTERFACE_HPP_
-#define AUTOWARE__SIMULATOR__LEARNING_BASED_VEHICLE_MODEL__SUBMODEL_INTERFACE_HPP_
+#ifndef AUTOWARE__LEARNING_BASED_VEHICLE_MODEL__SUBMODEL_INTERFACE_HPP_
+#define AUTOWARE__LEARNING_BASED_VEHICLE_MODEL__SUBMODEL_INTERFACE_HPP_
 
 #include <vector>
 
@@ -64,4 +64,4 @@ public:
 
 }  // namespace autoware::simulator::learning_based_vehicle_model
 
-#endif  // AUTOWARE__SIMULATOR__LEARNING_BASED_VEHICLE_MODEL__SUBMODEL_INTERFACE_HPP_
+#endif  // AUTOWARE__LEARNING_BASED_VEHICLE_MODEL__SUBMODEL_INTERFACE_HPP_
