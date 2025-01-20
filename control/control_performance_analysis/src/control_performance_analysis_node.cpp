@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "control_performance_analysis/control_performance_analysis_node.hpp"
+#include "autoware/control_performance_analysis/control_performance_analysis_node.hpp"
 
 #include "autoware_control_performance_analysis/msg/driving_monitor_stamped.hpp"
 #include "autoware_control_performance_analysis/msg/error_stamped.hpp"

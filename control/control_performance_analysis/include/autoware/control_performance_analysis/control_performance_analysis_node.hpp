@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__CONTROL__CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_NODE_HPP_
 #define AUTOWARE__CONTROL__CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_NODE_HPP_
 
-#include "control_performance_analysis/control_performance_analysis_core.hpp"
+#include "autoware/control_performance_analysis/control_performance_analysis_core.hpp"
 #include "autoware_control_performance_analysis/msg/driving_monitor_stamped.hpp"
 #include "autoware_control_performance_analysis/msg/error_stamped.hpp"
 

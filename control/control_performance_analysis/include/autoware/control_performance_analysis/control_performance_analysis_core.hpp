@@ -16,7 +16,7 @@
 #define AUTOWARE__CONTROL__CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_CORE_HPP_
 
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
-#include "control_performance_analysis/control_performance_analysis_utils.hpp"
+#include "autoware/control_performance_analysis/control_performance_analysis_utils.hpp"
 #include "autoware_control_performance_analysis/msg/driving_monitor_stamped.hpp"
 #include "autoware_control_performance_analysis/msg/error_stamped.hpp"
 #include "autoware_control_performance_analysis/msg/float_stamped.hpp"
