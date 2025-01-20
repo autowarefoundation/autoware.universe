@@ -24,8 +24,8 @@
 #include <autoware_vehicle_info_utils/vehicle_info.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
-#include <predicted_path_checker/collision_checker.hpp>
-#include <predicted_path_checker/utils.hpp>
+#include <autoware/predicted_path_checker/collision_checker.hpp>
+#include <autoware/predicted_path_checker/utils.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_planning_msgs/msg/trajectory.hpp>

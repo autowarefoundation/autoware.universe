@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "predicted_path_checker/collision_checker.hpp"
+#include "autoware/predicted_path_checker/collision_checker.hpp"
 
 #include <autoware/universe_utils/ros/marker_helper.hpp>
 #include <rclcpp/logging.hpp>

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "predicted_path_checker/debug_marker.hpp"
+#include "autoware/predicted_path_checker/debug_marker.hpp"
 
 #include <autoware/motion_utils/marker/marker_helper.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "predicted_path_checker/utils.hpp"
+#include "autoware/predicted_path_checker/utils.hpp"
 
 #include <boost/format.hpp>
 #include <boost/geometry/algorithms/convex_hull.hpp>

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "predicted_path_checker/predicted_path_checker_node.hpp"
+#include "autoware/predicted_path_checker/predicted_path_checker_node.hpp"
 
 #include <autoware/motion_utils/marker/marker_helper.hpp>
 #include <autoware/motion_utils/resample/resample.hpp>

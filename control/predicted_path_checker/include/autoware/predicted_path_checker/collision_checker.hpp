@@ -21,8 +21,8 @@
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
 #include <autoware/universe_utils/ros/transform_listener.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info.hpp>
-#include <predicted_path_checker/debug_marker.hpp>
-#include <predicted_path_checker/utils.hpp>
+#include <autoware/predicted_path_checker/debug_marker.hpp>
+#include <autoware/predicted_path_checker/utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
