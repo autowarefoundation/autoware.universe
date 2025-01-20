@@ -5,6 +5,7 @@
   <version>0.1.0</version>
   <description>The redundancy_relay_manger ROS 2 package</description>
   <maintainer email="tetsuhiro.kawaguchi@tier4.jp">Tetsuhiro Kawaguchi</maintainer>
+  <maintainer email="makoto.kurihara@tier4.jp">Makoto Kurihara</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
