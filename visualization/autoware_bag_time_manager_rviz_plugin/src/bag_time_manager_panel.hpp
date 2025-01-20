@@ -14,8 +14,8 @@
 //  limitations under the License.
 //
 
-#ifndef AUTOWARE__VISUALIZATION__BAG_TIME_MANAGER_RVIZ_PLUGIN__BAG_TIME_MANAGER_PANEL_HPP_
-#define AUTOWARE__VISUALIZATION__BAG_TIME_MANAGER_RVIZ_PLUGIN__BAG_TIME_MANAGER_PANEL_HPP_
+#ifndef BAG_TIME_MANAGER_PANEL_HPP_
+#define BAG_TIME_MANAGER_PANEL_HPP_
 
 #include <qt5/QtWidgets/QComboBox>
 #include <qt5/QtWidgets/QLabel>
@@ -69,4 +69,4 @@ private:
 
 }  // namespace autoware::visualization::bag_time_manager_rviz_plugin
 
-#endif  // AUTOWARE__VISUALIZATION__BAG_TIME_MANAGER_RVIZ_PLUGIN__BAG_TIME_MANAGER_PANEL_HPP_
+#endif  // BAG_TIME_MANAGER_PANEL_HPP_

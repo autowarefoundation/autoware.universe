@@ -114,4 +114,5 @@ void BagTimeManagerPanel::onApplyRateClicked()
 }  // namespace autoware::visualization::bag_time_manager_rviz_plugin
 
 #include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(autoware::visualization::bag_time_manager_rviz_plugin::BagTimeManagerPanel, rviz_common::Panel)
+PLUGINLIB_EXPORT_CLASS(
+  autoware::visualization::bag_time_manager_rviz_plugin::BagTimeManagerPanel, rviz_common::Panel)
