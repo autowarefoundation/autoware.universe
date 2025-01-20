@@ -1,18 +1,18 @@
 cmake_minimum_required(VERSION 3.14)
-project(fault_injection)
+project(autoware_fault_injection)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 find_package(pluginlib REQUIRED)
 
-ament_auto_add_library(fault_injection_node_component SHARED
+ament_auto_add_library(${PROJECT_NAME}_node_component SHARED
   src/fault_injection_node/fault_injection_node.cpp
 )
 
-rclcpp_components_register_node(fault_injection_node_component
-  PLUGIN "fault_injection::FaultInjectionNode"
-  EXECUTABLE fault_injection_node
+rclcpp_components_register_node(${PROJECT_NAME}_node_component
+  PLUGIN "autoware::simulator::fault_injection::FaultInjectionNode"
+  EXECUTABLE ${PROJECT_NAME}_node
 )
 
 if(BUILD_TESTING)
@@ -23,7 +23,7 @@ if(BUILD_TESTING)
   )
 
   target_link_libraries(test_fault_injection_node_component
-    fault_injection_node_component
+    ${PROJECT_NAME}_node_component
   )
 
   # launch_testing

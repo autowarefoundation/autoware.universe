@@ -1,4 +1,4 @@
-// Copyright 2024 TIER IV, Inc.
+// Copyright 2025 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -46,8 +46,8 @@
  *  POSSIBILITY OF SUCH DAMAGE.
  *********************************************************************/
 
-#ifndef FAULT_INJECTION__FAULT_INJECTION_DIAG_UPDATER_HPP_
-#define FAULT_INJECTION__FAULT_INJECTION_DIAG_UPDATER_HPP_
+#ifndef AUTOWARE__FAULT_INJECTION__FAULT_INJECTION_DIAG_UPDATER_HPP_
+#define AUTOWARE__FAULT_INJECTION__FAULT_INJECTION_DIAG_UPDATER_HPP_
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 
@@ -57,7 +57,7 @@
 #include <utility>
 #include <vector>
 
-namespace fault_injection
+namespace autoware::simulator::fault_injection
 {
 class FaultInjectionDiagUpdater : public diagnostic_updater::DiagnosticTaskVector
 {
@@ -240,6 +240,6 @@ private:
   std::string hardware_id_;
   std::string node_name_;
 };
-}  // namespace fault_injection
+}  // namespace autoware::simulator::fault_injection
 
-#endif  // FAULT_INJECTION__FAULT_INJECTION_DIAG_UPDATER_HPP_
+#endif  // AUTOWARE__FAULT_INJECTION__FAULT_INJECTION_DIAG_UPDATER_HPP_

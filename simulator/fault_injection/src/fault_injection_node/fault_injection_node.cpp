@@ -21,7 +21,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace
+namespace autoware::simulator::fault_injection
 {
 std::vector<std::string> split(const std::string & str, const char delim)
 {
@@ -33,10 +33,7 @@ std::vector<std::string> split(const std::string & str, const char delim)
   }
   return elems;
 }
-}  // namespace
 
-namespace fault_injection
-{
 #ifdef ROS_DISTRO_GALACTIC
 using rosidl_generator_traits::to_yaml;
 #endif
@@ -101,7 +98,7 @@ std::vector<DiagConfig> FaultInjectionNode::read_event_diag_list()
 
   return diag_configs;
 }
-}  // namespace fault_injection
+}  // namespace autoware::simulator::fault_injection
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(fault_injection::FaultInjectionNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::simulator::fault_injection::FaultInjectionNode)

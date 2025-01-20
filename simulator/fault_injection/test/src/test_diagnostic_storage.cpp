@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,6 +20,9 @@
 #include <string>
 #include <vector>
 
+namespace autoware::simulator::fault_injection
+{
+
 class TestDiagnosticStorage : public ::testing::Test
 {
 protected:
@@ -30,8 +33,8 @@ protected:
     }
   }
 
-  fault_injection::DiagnosticStorage storage_;
-  const std::vector<fault_injection::DiagConfig> diag_config{
+  DiagnosticStorage storage_;
+  const std::vector<DiagConfig> diag_config{
     {"foo", "foo_diag"},
   };
 };
@@ -52,3 +55,5 @@ TEST_F(TestDiagnosticStorage, raise_exception_with_wrong_key)
 {
   EXPECT_ANY_THROW(storage_.getDiag("invalid_name"));
 }
+
+}  // namespace autoware::simulator::fault_injection
