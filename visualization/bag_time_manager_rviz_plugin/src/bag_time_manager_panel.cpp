@@ -1,5 +1,5 @@
 //
-//  Copyright 2022 Tier IV, Inc. All rights reserved.
+//  Copyright 2025 Tier IV, Inc. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@
 
 #include <memory>
 
-namespace rviz_plugins
+namespace autoware::visualization::bag_time_manager_rviz_plugin
 {
 BagTimeManagerPanel::BagTimeManagerPanel(QWidget * parent) : rviz_common::Panel(parent)
 {
@@ -111,7 +111,7 @@ void BagTimeManagerPanel::onApplyRateClicked()
       }
     });
 }
-}  // namespace rviz_plugins
+}  // namespace autoware::visualization::bag_time_manager_rviz_plugin
 
 #include <pluginlib/class_list_macros.hpp>
-PLUGINLIB_EXPORT_CLASS(rviz_plugins::BagTimeManagerPanel, rviz_common::Panel)
+PLUGINLIB_EXPORT_CLASS(autoware::visualization::bag_time_manager_rviz_plugin::BagTimeManagerPanel, rviz_common::Panel)

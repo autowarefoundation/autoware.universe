@@ -1,5 +1,5 @@
 //
-//  Copyright 2022 Tier IV, Inc. All rights reserved.
+//  Copyright 2025 Tier IV, Inc. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
 //  limitations under the License.
 //
 
-#ifndef BAG_TIME_MANAGER_PANEL_HPP_
-#define BAG_TIME_MANAGER_PANEL_HPP_
+#ifndef AUTOWARE__VISUALIZATION__BAG_TIME_MANAGER_RVIZ_PLUGIN__BAG_TIME_MANAGER_PANEL_HPP_
+#define AUTOWARE__VISUALIZATION__BAG_TIME_MANAGER_RVIZ_PLUGIN__BAG_TIME_MANAGER_PANEL_HPP_
 
 #include <qt5/QtWidgets/QComboBox>
 #include <qt5/QtWidgets/QLabel>
@@ -29,7 +29,7 @@
 #include <memory>
 #include <string>
 
-namespace rviz_plugins
+namespace autoware::visualization::bag_time_manager_rviz_plugin
 {
 using rosbag2_interfaces::srv::Pause;
 using rosbag2_interfaces::srv::Resume;
@@ -67,6 +67,6 @@ private:
   STATE current_state_{RESUME};
 };
 
-}  // namespace rviz_plugins
+}  // namespace autoware::visualization::bag_time_manager_rviz_plugin
 
-#endif  // BAG_TIME_MANAGER_PANEL_HPP_
+#endif  // AUTOWARE__VISUALIZATION__BAG_TIME_MANAGER_RVIZ_PLUGIN__BAG_TIME_MANAGER_PANEL_HPP_
