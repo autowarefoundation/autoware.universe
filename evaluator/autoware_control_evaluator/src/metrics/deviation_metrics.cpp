@@ -38,5 +38,20 @@ double calcYawDeviation(const Trajectory & traj, const Pose & pose)
     autoware::universe_utils::calcYawDeviation(traj.points[nearest_index].pose, pose));
 }
 
+double calcLongitudinalDeviation(const Pose & base_pose, const Point & target_point)
+{
+  return std::abs(autoware::universe_utils::calcLongitudinalDeviation(base_pose, target_point));
+}
+
+double calcLateralDeviation(const Pose & base_pose, const Point & target_point)
+{
+  return std::abs(autoware::universe_utils::calcLateralDeviation(base_pose, target_point));
+}
+
+double calcYawDeviation(const Pose & base_pose, const Pose & target_pose)
+{
+  return std::abs(autoware::universe_utils::calcYawDeviation(base_pose, target_pose));
+}
+
 }  // namespace metrics
 }  // namespace control_diagnostics

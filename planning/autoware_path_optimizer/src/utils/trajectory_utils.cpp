@@ -181,7 +181,7 @@ std::vector<ReferencePoint> resampleReferencePoints(
     query_keys.push_back(base_keys.back() - epsilon);
   }
 
-  const auto query_values = interpolation::lerp(base_keys, base_values, query_keys);
+  const auto query_values = autoware::interpolation::lerp(base_keys, base_values, query_keys);
 
   // create output reference points by updating curvature with resampled one
   std::vector<ReferencePoint> output_ref_points;
@@ -200,7 +200,7 @@ void insertStopPoint(
   const double offset_to_segment = autoware::motion_utils::calcLongitudinalOffsetToSegment(
     traj_points, stop_seg_idx, input_stop_pose.position);
 
-  const auto traj_spline = SplineInterpolationPoints2d(traj_points);
+  const auto traj_spline = autoware::interpolation::SplineInterpolationPoints2d(traj_points);
   const auto stop_pose = traj_spline.getSplineInterpolatedPose(stop_seg_idx, offset_to_segment);
 
   if (geometry_utils::isSamePoint(traj_points.at(stop_seg_idx), stop_pose)) {

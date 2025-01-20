@@ -14,7 +14,7 @@
 
 #include "autoware/velocity_smoother/smoother/analytical_jerk_constrained_smoother/velocity_planning_utils.hpp"
 
-#include "interpolation/linear_interpolation.hpp"
+#include "autoware/interpolation/linear_interpolation.hpp"
 
 #include <algorithm>
 #include <vector>
@@ -234,8 +234,10 @@ bool calcStopVelocityWithConstantJerkAccLimit(
   }
 
   if (
-    !interpolation_utils::isIncreasing(xs) || !interpolation_utils::isIncreasing(distances) ||
-    !interpolation_utils::isNotDecreasing(xs) || !interpolation_utils::isNotDecreasing(distances)) {
+    !autoware::interpolation::isIncreasing(xs) ||
+    !autoware::interpolation::isIncreasing(distances) ||
+    !autoware::interpolation::isNotDecreasing(xs) ||
+    !autoware::interpolation::isNotDecreasing(distances)) {
     return false;
   }
 
@@ -245,18 +247,9 @@ bool calcStopVelocityWithConstantJerkAccLimit(
     return false;
   }
 
-  const auto vel_at_wp = interpolation::lerp(xs, vs, distances);
-  const auto acc_at_wp = interpolation::lerp(xs, as, distances);
-  const auto jerk_at_wp = interpolation::lerp(xs, js, distances);
-
-  // for debug
-  std::stringstream ssi;
-  for (unsigned int i = 0; i < distances.size(); ++i) {
-    ssi << "d: " << distances.at(i) << ", v: " << vel_at_wp.at(i) << ", a: " << acc_at_wp.at(i)
-        << ", j: " << jerk_at_wp.at(i) << std::endl;
-  }
-  RCLCPP_DEBUG(
-    rclcpp::get_logger("velocity_planning_utils"), "Interpolated = %s", ssi.str().c_str());
+  const auto vel_at_wp = autoware::interpolation::lerp(xs, vs, distances);
+  const auto acc_at_wp = autoware::interpolation::lerp(xs, as, distances);
+  const auto jerk_at_wp = autoware::interpolation::lerp(xs, js, distances);
 
   for (size_t i = 0; i < vel_at_wp.size(); ++i) {
     output_trajectory.at(start_index + i).longitudinal_velocity_mps = vel_at_wp.at(i);

@@ -15,14 +15,14 @@
 #ifndef AUTOWARE_PATH_SAMPLER__UTILS__GEOMETRY_UTILS_HPP_
 #define AUTOWARE_PATH_SAMPLER__UTILS__GEOMETRY_UTILS_HPP_
 
+#include "autoware/interpolation/linear_interpolation.hpp"
+#include "autoware/interpolation/spline_interpolation.hpp"
+#include "autoware/interpolation/spline_interpolation_points_2d.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware_path_sampler/common_structs.hpp"
 #include "autoware_path_sampler/type_alias.hpp"
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 #include "eigen3/Eigen/Core"
-#include "interpolation/linear_interpolation.hpp"
-#include "interpolation/spline_interpolation.hpp"
-#include "interpolation/spline_interpolation_points_2d.hpp"
 
 #include "autoware_planning_msgs/msg/path_point.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"

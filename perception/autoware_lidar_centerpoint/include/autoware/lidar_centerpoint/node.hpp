@@ -20,6 +20,7 @@
 #include "autoware/lidar_centerpoint/postprocess/non_maximum_suppression.hpp"
 
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
+#include <autoware/universe_utils/ros/diagnostics_interface.hpp>
 #include <autoware/universe_utils/ros/published_time_publisher.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -51,7 +52,6 @@ private:
   rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_;
   rclcpp::Publisher<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr objects_pub_;
 
-  float score_threshold_{0.0};
   std::vector<std::string> class_names_;
   bool has_variance_{false};
   bool has_twist_{false};
@@ -60,6 +60,7 @@ private:
   DetectionClassRemapper detection_class_remapper_;
 
   std::unique_ptr<CenterPointTRT> detector_ptr_{nullptr};
+  std::unique_ptr<autoware::universe_utils::DiagnosticsInterface> diagnostics_interface_ptr_;
 
   // debugger
   std::unique_ptr<autoware::universe_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_{

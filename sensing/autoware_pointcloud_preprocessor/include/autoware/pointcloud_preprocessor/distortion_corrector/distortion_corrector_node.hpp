@@ -52,12 +52,16 @@ private:
   std::string base_frame_;
   bool use_imu_;
   bool use_3d_distortion_correction_;
+  bool update_azimuth_and_distance_;
+
+  std::optional<AngleConversion> angle_conversion_opt_;
 
   std::unique_ptr<DistortionCorrectorBase> distortion_corrector_;
 
-  void onPointCloud(PointCloud2::UniquePtr points_msg);
-  void onTwist(const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg);
-  void onImu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg);
+  void pointcloud_callback(PointCloud2::UniquePtr pointcloud_msg);
+  void twist_callback(
+    const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr twist_msg);
+  void imu_callback(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg);
 };
 
 }  // namespace autoware::pointcloud_preprocessor

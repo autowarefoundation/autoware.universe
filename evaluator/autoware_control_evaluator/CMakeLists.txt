@@ -16,6 +16,15 @@ rclcpp_components_register_node(control_evaluator_node
   EXECUTABLE control_evaluator
 )
 
+if(BUILD_TESTING)
+  ament_add_ros_isolated_gtest(test_control_evaluator
+    test/test_control_evaluator_node.cpp
+  )
+  target_link_libraries(test_control_evaluator
+    control_evaluator_node
+  )
+endif()
+
 
 ament_auto_package(
   INSTALL_TO_SHARE

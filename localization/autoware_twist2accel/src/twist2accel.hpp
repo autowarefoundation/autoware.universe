@@ -15,7 +15,7 @@
 #ifndef TWIST2ACCEL_HPP_
 #define TWIST2ACCEL_HPP_
 
-#include "signal_processing/lowpass_filter_1d.hpp"
+#include "autoware/signal_processing/lowpass_filter_1d.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -23,7 +23,6 @@
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
-#include <tier4_debug_msgs/msg/bool_stamped.hpp>
 
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2/utils.h>
@@ -36,6 +35,8 @@
 #include <queue>
 #include <string>
 #include <vector>
+
+using autoware::signal_processing::LowpassFilter1d;
 
 namespace autoware::twist2accel
 {

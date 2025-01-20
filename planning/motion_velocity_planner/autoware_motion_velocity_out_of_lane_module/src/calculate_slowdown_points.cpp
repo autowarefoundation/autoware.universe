@@ -21,8 +21,7 @@
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 
-#include <autoware_planning_msgs/msg/detail/trajectory_point__struct.hpp>
-#include <geometry_msgs/msg/detail/pose__struct.hpp>
+#include <autoware_planning_msgs/msg/trajectory_point.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 
 #include <boost/geometry/algorithms/disjoint.hpp>
@@ -78,7 +77,7 @@ std::optional<geometry_msgs::msg::Pose> calculate_pose_ahead_of_collision(
     const auto interpolated_pose =
       motion_utils::calcInterpolatedPose(ego_data.trajectory_points, l);
     const auto interpolated_footprint = project_to_pose(footprint, interpolated_pose);
-    if (boost::geometry::intersects(interpolated_footprint, point_to_avoid.outside_ring)) {
+    if (!boost::geometry::disjoint(interpolated_footprint, point_to_avoid.out_overlaps)) {
       return interpolated_pose;
     }
   }
@@ -128,4 +127,21 @@ std::optional<geometry_msgs::msg::Pose> calculate_slowdown_point(
   }
   return slowdown_point;
 }
+
+void calculate_min_stop_and_slowdown_distances(
+  out_of_lane::EgoData & ego_data, const PlannerData & planner_data,
+  const std::optional<geometry_msgs::msg::Pose> & previous_slowdown_pose)
+{
+  ego_data.min_stop_distance = planner_data.calculate_min_deceleration_distance(0.0).value_or(0.0);
+  if (previous_slowdown_pose) {
+    // Ensure we do not remove the previous slowdown point due to the min distance limit
+    const auto previous_slowdown_pose_arc_length = motion_utils::calcSignedArcLength(
+      ego_data.trajectory_points, 0UL, previous_slowdown_pose->position);
+    ego_data.min_stop_distance =
+      std::min(previous_slowdown_pose_arc_length, ego_data.min_stop_distance);
+  }
+  ego_data.min_stop_arc_length =
+    ego_data.longitudinal_offset_to_first_trajectory_index + ego_data.min_stop_distance;
+}
+
 }  // namespace autoware::motion_velocity_planner::out_of_lane

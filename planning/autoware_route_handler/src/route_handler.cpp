@@ -35,9 +35,12 @@
 #include <tf2/utils.h>
 
 #include <algorithm>
+#include <functional>
+#include <iostream>
 #include <limits>
 #include <memory>
 #include <optional>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <unordered_set>
@@ -47,6 +50,8 @@ namespace autoware::route_handler
 {
 namespace
 {
+using autoware::universe_utils::createPoint;
+using autoware::universe_utils::createQuaternionFromYaw;
 using autoware_planning_msgs::msg::LaneletPrimitive;
 using autoware_planning_msgs::msg::Path;
 using geometry_msgs::msg::Pose;
@@ -1159,32 +1164,40 @@ lanelet::ConstLanelets RouteHandler::getAllLeftSharedLinestringLanelets(
   const bool & invert_opposite) const noexcept
 {
   lanelet::ConstLanelets linestring_shared;
-  auto lanelet_at_left = getLeftLanelet(lane);
-  auto lanelet_at_left_opposite = getLeftOppositeLanelets(lane);
-  while (lanelet_at_left) {
-    linestring_shared.push_back(lanelet_at_left.value());
-    lanelet_at_left = getLeftLanelet(lanelet_at_left.value());
-    if (!lanelet_at_left) {
-      break;
-    }
-    lanelet_at_left_opposite = getLeftOppositeLanelets(lanelet_at_left.value());
-  }
-
-  if (!lanelet_at_left_opposite.empty() && include_opposite) {
-    if (invert_opposite) {
-      linestring_shared.push_back(lanelet_at_left_opposite.front().invert());
-    } else {
-      linestring_shared.push_back(lanelet_at_left_opposite.front());
-    }
-    auto lanelet_at_right = getRightLanelet(lanelet_at_left_opposite.front());
-    while (lanelet_at_right) {
-      if (invert_opposite) {
-        linestring_shared.push_back(lanelet_at_right.value().invert());
-      } else {
-        linestring_shared.push_back(lanelet_at_right.value());
+  try {
+    auto lanelet_at_left = getLeftLanelet(lane);
+    auto lanelet_at_left_opposite = getLeftOppositeLanelets(lane);
+    while (lanelet_at_left) {
+      linestring_shared.push_back(lanelet_at_left.value());
+      lanelet_at_left = getLeftLanelet(lanelet_at_left.value());
+      if (!lanelet_at_left) {
+        break;
       }
-      lanelet_at_right = getRightLanelet(lanelet_at_right.value());
+      lanelet_at_left_opposite = getLeftOppositeLanelets(lanelet_at_left.value());
     }
+
+    if (!lanelet_at_left_opposite.empty() && include_opposite) {
+      if (invert_opposite) {
+        linestring_shared.push_back(lanelet_at_left_opposite.front().invert());
+      } else {
+        linestring_shared.push_back(lanelet_at_left_opposite.front());
+      }
+      auto lanelet_at_right = getRightLanelet(lanelet_at_left_opposite.front());
+      while (lanelet_at_right) {
+        if (invert_opposite) {
+          linestring_shared.push_back(lanelet_at_right.value().invert());
+        } else {
+          linestring_shared.push_back(lanelet_at_right.value());
+        }
+        lanelet_at_right = getRightLanelet(lanelet_at_right.value());
+      }
+    }
+  } catch (const std::exception & e) {
+    std::cerr << "Exception in getAllLeftSharedLinestringLanelets: " << e.what() << std::endl;
+    return {};
+  } catch (...) {
+    std::cerr << "Unknown exception in getAllLeftSharedLinestringLanelets" << std::endl;
+    return {};
   }
   return linestring_shared;
 }
@@ -1194,32 +1207,40 @@ lanelet::ConstLanelets RouteHandler::getAllRightSharedLinestringLanelets(
   const bool & invert_opposite) const noexcept
 {
   lanelet::ConstLanelets linestring_shared;
-  auto lanelet_at_right = getRightLanelet(lane);
-  auto lanelet_at_right_opposite = getRightOppositeLanelets(lane);
-  while (lanelet_at_right) {
-    linestring_shared.push_back(lanelet_at_right.value());
-    lanelet_at_right = getRightLanelet(lanelet_at_right.value());
-    if (!lanelet_at_right) {
-      break;
-    }
-    lanelet_at_right_opposite = getRightOppositeLanelets(lanelet_at_right.value());
-  }
-
-  if (!lanelet_at_right_opposite.empty() && include_opposite) {
-    if (invert_opposite) {
-      linestring_shared.push_back(lanelet_at_right_opposite.front().invert());
-    } else {
-      linestring_shared.push_back(lanelet_at_right_opposite.front());
-    }
-    auto lanelet_at_left = getLeftLanelet(lanelet_at_right_opposite.front());
-    while (lanelet_at_left) {
-      if (invert_opposite) {
-        linestring_shared.push_back(lanelet_at_left.value().invert());
-      } else {
-        linestring_shared.push_back(lanelet_at_left.value());
+  try {
+    auto lanelet_at_right = getRightLanelet(lane);
+    auto lanelet_at_right_opposite = getRightOppositeLanelets(lane);
+    while (lanelet_at_right) {
+      linestring_shared.push_back(lanelet_at_right.value());
+      lanelet_at_right = getRightLanelet(lanelet_at_right.value());
+      if (!lanelet_at_right) {
+        break;
       }
-      lanelet_at_left = getLeftLanelet(lanelet_at_left.value());
+      lanelet_at_right_opposite = getRightOppositeLanelets(lanelet_at_right.value());
     }
+
+    if (!lanelet_at_right_opposite.empty() && include_opposite) {
+      if (invert_opposite) {
+        linestring_shared.push_back(lanelet_at_right_opposite.front().invert());
+      } else {
+        linestring_shared.push_back(lanelet_at_right_opposite.front());
+      }
+      auto lanelet_at_left = getLeftLanelet(lanelet_at_right_opposite.front());
+      while (lanelet_at_left) {
+        if (invert_opposite) {
+          linestring_shared.push_back(lanelet_at_left.value().invert());
+        } else {
+          linestring_shared.push_back(lanelet_at_left.value());
+        }
+        lanelet_at_left = getLeftLanelet(lanelet_at_left.value());
+      }
+    }
+  } catch (const std::exception & e) {
+    std::cerr << "Exception in getAllRightSharedLinestringLanelets: " << e.what() << std::endl;
+    return {};
+  } catch (...) {
+    std::cerr << "Unknown exception in getAllRightSharedLinestringLanelets" << std::endl;
+    return {};
   }
   return linestring_shared;
 }
@@ -1896,17 +1917,34 @@ bool RouteHandler::planPathLaneletsBetweenCheckpoints(
     std::remove_if(
       candidates.begin(), candidates.end(), [&](const auto & l) { return !isRoadLanelet(l); }),
     candidates.end());
-  if (!lanelet::utils::query::getClosestLanelet(candidates, goal_checkpoint, &goal_lanelet)) {
-    RCLCPP_WARN_STREAM(
-      logger_, "Failed to find closest lanelet."
-                 << std::endl
-                 << " - start checkpoint: " << toString(start_checkpoint) << std::endl
-                 << " - goal checkpoint: " << toString(goal_checkpoint) << std::endl);
-    return false;
+  // if there is a lanelet in candidates that is included in previous preferred lanelets,
+  // set it as goal_lanelet.
+  // this is to select the same lane as much as possible when rerouting with waypoints.
+  const auto findGoalClosestPreferredLanelet = [&]() -> std::optional<lanelet::ConstLanelet> {
+    lanelet::ConstLanelet closest_lanelet;
+    if (getClosestPreferredLaneletWithinRoute(goal_checkpoint, &closest_lanelet)) {
+      if (std::find(candidates.begin(), candidates.end(), closest_lanelet) != candidates.end()) {
+        if (lanelet::utils::isInLanelet(goal_checkpoint, closest_lanelet)) {
+          return closest_lanelet;
+        }
+      }
+    }
+    return std::nullopt;
+  };
+  if (auto closest_lanelet = findGoalClosestPreferredLanelet()) {
+    goal_lanelet = closest_lanelet.value();
+  } else {
+    if (!lanelet::utils::query::getClosestLanelet(candidates, goal_checkpoint, &goal_lanelet)) {
+      RCLCPP_WARN_STREAM(
+        logger_, "Failed to find closest lanelet."
+                   << std::endl
+                   << " - start checkpoint: " << toString(start_checkpoint) << std::endl
+                   << " - goal checkpoint: " << toString(goal_checkpoint) << std::endl);
+      return false;
+    }
   }
 
   lanelet::Optional<lanelet::routing::Route> optional_route;
-  std::vector<lanelet::ConstLanelets> candidate_paths;
   lanelet::routing::LaneletPath shortest_path;
   bool is_route_found = false;
 
@@ -2034,5 +2072,30 @@ std::optional<lanelet::routing::LaneletPath> RouteHandler::findDrivableLanePath(
   const auto route = drivable_routing_graph_ptr->getRoute(start_lanelet, goal_lanelet, 0);
   if (route) return route->shortestPath();
   return {};
+}
+
+Pose RouteHandler::get_pose_from_2d_arc_length(
+  const lanelet::ConstLanelets & lanelet_sequence, const double s) const
+{
+  double accumulated_distance2d = 0;
+  for (const auto & llt : lanelet_sequence) {
+    const auto & centerline = llt.centerline();
+    for (auto it = centerline.begin(); std::next(it) != centerline.end(); ++it) {
+      const auto pt = *it;
+      const auto next_pt = *std::next(it);
+      const double distance2d = lanelet::geometry::distance2d(to2D(pt), to2D(next_pt));
+      if (accumulated_distance2d + distance2d > s) {
+        const double ratio = (s - accumulated_distance2d) / distance2d;
+        const auto interpolated_pt = pt.basicPoint() * (1 - ratio) + next_pt.basicPoint() * ratio;
+        const auto yaw = std::atan2(next_pt.y() - pt.y(), next_pt.x() - pt.x());
+        Pose pose;
+        pose.position = createPoint(interpolated_pt.x(), interpolated_pt.y(), interpolated_pt.z());
+        pose.orientation = createQuaternionFromYaw(yaw);
+        return pose;
+      }
+      accumulated_distance2d += distance2d;
+    }
+  }
+  return Pose{};
 }
 }  // namespace autoware::route_handler

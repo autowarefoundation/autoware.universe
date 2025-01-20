@@ -14,6 +14,10 @@
 
 #include "autoware/behavior_path_planner_common/interface/scene_module_manager_interface.hpp"
 
+#include <memory>
+#include <string>
+#include <vector>
+
 namespace autoware::behavior_path_planner
 {
 void SceneModuleManagerInterface::initInterface(
@@ -59,10 +63,9 @@ void SceneModuleManagerInterface::initInterface(
       "~/processing_time/" + name_, 20);
   }
 
-  // init steering factor
+  // planning factor
   {
-    steering_factor_interface_ptr_ =
-      std::make_shared<SteeringFactorInterface>(node, utils::convertToSnakeCase(name_));
+    planning_factor_interface_ = std::make_shared<PlanningFactorInterface>(node, name_);
   }
 
   // misc

@@ -14,7 +14,7 @@
 
 #include "cluster_merger_node.hpp"
 
-#include "object_recognition_utils/object_recognition_utils.hpp"
+#include "autoware/object_recognition_utils/object_recognition_utils.hpp"
 
 #include <memory>
 #include <string>
@@ -52,9 +52,9 @@ void ClusterMergerNode::objectsCallback(
   DetectedObjectsWithFeature transformed_objects0;
   DetectedObjectsWithFeature transformed_objects1;
   if (
-    !object_recognition_utils::transformObjectsWithFeature(
+    !autoware::object_recognition_utils::transformObjectsWithFeature(
       *input_objects0_msg, output_frame_id_, tf_buffer_, transformed_objects0) ||
-    !object_recognition_utils::transformObjectsWithFeature(
+    !autoware::object_recognition_utils::transformObjectsWithFeature(
       *input_objects1_msg, output_frame_id_, tf_buffer_, transformed_objects1)) {
     return;
   }

@@ -12,11 +12,13 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from itertools import chain
 import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import DeclareLaunchArgument
+from launch.actions import GroupAction
 from launch.actions import OpaqueFunction
 from launch.actions import SetLaunchConfiguration
 from launch.conditions import IfCondition
@@ -24,11 +26,47 @@ from launch.conditions import UnlessCondition
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import LoadComposableNodes
+from launch_ros.actions import PushRosNamespace
 from launch_ros.descriptions import ComposableNode
 from launch_ros.parameter_descriptions import ParameterFile
+import yaml
 
 
 def launch_setup(context, *args, **kwargs):
+
+    # Load all camera namespaces
+    all_camera_namespaces = LaunchConfiguration("all_camera_namespaces").perform(context)
+
+    # Convert string to list
+    all_camera_namespaces = yaml.load(all_camera_namespaces, Loader=yaml.FullLoader)
+    if not isinstance(all_camera_namespaces, list):
+        raise ValueError(
+            "all_camera_namespaces is not a list. You should declare it like `['camera6', 'camera7']`."
+        )
+    if not all((isinstance(v, str) for v in all_camera_namespaces)):
+        raise ValueError(
+            "all_camera_namespaces is not a list of strings. You should declare it like `['camera6', 'camera7']`."
+        )
+
+    # Create containers for all cameras
+    traffic_light_recognition_containers = [
+        create_traffic_light_node_container(namespace, context, *args, **kwargs)
+        for namespace in all_camera_namespaces
+    ]
+    traffic_light_recognition_containers = list(chain(*traffic_light_recognition_containers))
+
+    return traffic_light_recognition_containers
+
+
+def create_traffic_light_node_container(namespace, context, *args, **kwargs):
+    camera_arguments = {
+        "input/image": f"/sensing/camera/{namespace}/image_raw",
+        "output/rois": f"/perception/traffic_light_recognition/{namespace}/detection/rois",
+        "output/traffic_signals": f"/perception/traffic_light_recognition/{namespace}/classification/traffic_signals",
+        "output/car/traffic_signals": f"/perception/traffic_light_recognition/{namespace}/classification/car/traffic_signals",
+        "output/pedestrian/traffic_signals": f"/perception/traffic_light_recognition/{namespace}/classification/pedestrian/traffic_signals",
+    }
+
     def create_parameter_dict(*args):
         result = {}
         for x in args:
@@ -61,8 +99,8 @@ def launch_setup(context, *args, **kwargs):
                 namespace="classification",
                 parameters=[car_traffic_light_classifier_model_param],
                 remappings=[
-                    ("~/input/image", LaunchConfiguration("input/image")),
-                    ("~/input/rois", LaunchConfiguration("output/rois")),
+                    ("~/input/image", camera_arguments["input/image"]),
+                    ("~/input/rois", camera_arguments["output/rois"]),
                     ("~/output/traffic_signals", "classified/car/traffic_signals"),
                 ],
                 extra_arguments=[
@@ -76,8 +114,8 @@ def launch_setup(context, *args, **kwargs):
                 namespace="classification",
                 parameters=[pedestrian_traffic_light_classifier_model_param],
                 remappings=[
-                    ("~/input/image", LaunchConfiguration("input/image")),
-                    ("~/input/rois", LaunchConfiguration("output/rois")),
+                    ("~/input/image", camera_arguments["input/image"]),
+                    ("~/input/rois", camera_arguments["output/rois"]),
                     ("~/output/traffic_signals", "classified/pedestrian/traffic_signals"),
                 ],
                 extra_arguments=[
@@ -90,12 +128,12 @@ def launch_setup(context, *args, **kwargs):
                 name="traffic_light_roi_visualizer",
                 parameters=[create_parameter_dict("enable_fine_detection", "use_image_transport")],
                 remappings=[
-                    ("~/input/image", LaunchConfiguration("input/image")),
-                    ("~/input/rois", LaunchConfiguration("output/rois")),
+                    ("~/input/image", camera_arguments["input/image"]),
+                    ("~/input/rois", camera_arguments["output/rois"]),
                     ("~/input/rough/rois", "detection/rough/rois"),
                     (
                         "~/input/traffic_signals",
-                        LaunchConfiguration("output/traffic_signals"),
+                        camera_arguments["output/traffic_signals"],
                     ),
                     ("~/output/image", "debug/rois"),
                     ("~/output/image/compressed", "debug/rois/compressed"),
@@ -116,13 +154,14 @@ def launch_setup(context, *args, **kwargs):
                 package="autoware_image_transport_decompressor",
                 plugin="autoware::image_preprocessor::ImageTransportDecompressor",
                 name="traffic_light_image_decompressor",
+                namespace=namespace,
                 parameters=[{"encoding": "rgb8"}],
                 remappings=[
                     (
                         "~/input/compressed_image",
-                        [LaunchConfiguration("input/image"), "/compressed"],
+                        [camera_arguments["input/image"], "/compressed"],
                     ),
-                    ("~/output/raw_image", LaunchConfiguration("input/image")),
+                    ("~/output/raw_image", camera_arguments["input/image"]),
                 ],
                 extra_arguments=[
                     {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
@@ -139,13 +178,13 @@ def launch_setup(context, *args, **kwargs):
                 package="autoware_traffic_light_fine_detector",
                 plugin="autoware::traffic_light::TrafficLightFineDetectorNode",
                 name="traffic_light_fine_detector",
-                namespace="detection",
+                namespace=f"{namespace}/detection",
                 parameters=[fine_detector_model_param],
                 remappings=[
-                    ("~/input/image", LaunchConfiguration("input/image")),
+                    ("~/input/image", camera_arguments["input/image"]),
                     ("~/input/rois", "rough/rois"),
                     ("~/expect/rois", "expect/rois"),
-                    ("~/output/rois", LaunchConfiguration("output/rois")),
+                    ("~/output/rois", camera_arguments["output/rois"]),
                 ],
                 extra_arguments=[
                     {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
@@ -156,7 +195,11 @@ def launch_setup(context, *args, **kwargs):
         condition=IfCondition(LaunchConfiguration("enable_fine_detection")),
     )
 
-    return [container, decompressor_loader, fine_detector_loader]
+    return [
+        GroupAction([PushRosNamespace(namespace), container]),
+        decompressor_loader,
+        fine_detector_loader,
+    ]
 
 
 def generate_launch_description():
@@ -170,22 +213,10 @@ def generate_launch_description():
 
     fine_detector_share_dir = get_package_share_directory("autoware_traffic_light_fine_detector")
     classifier_share_dir = get_package_share_directory("autoware_traffic_light_classifier")
+    add_launch_arg("all_camera_namespaces", "[camera6, camera7]")
     add_launch_arg("enable_image_decompressor", "True")
     add_launch_arg("enable_fine_detection", "True")
     add_launch_arg("use_image_transport", "True")
-    add_launch_arg("input/image", "/sensing/camera/traffic_light/image_raw")
-    add_launch_arg("output/rois", "/perception/traffic_light_recognition/rois")
-    add_launch_arg(
-        "output/traffic_signals",
-        "/perception/traffic_light_recognition/traffic_signals",
-    )
-    add_launch_arg(
-        "output/car/traffic_signals", "/perception/traffic_light_recognition/car/traffic_signals"
-    )
-    add_launch_arg(
-        "output/pedestrian/traffic_signals",
-        "/perception/traffic_light_recognition/pedestrian/traffic_signals",
-    )
 
     # traffic_light_fine_detector
     add_launch_arg(

@@ -61,7 +61,7 @@
 #include <vector>
 
 // ROS includes
-#include "autoware_point_types/types.hpp"
+#include "autoware/point_types/types.hpp"
 
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
 #include <autoware/universe_utils/ros/managed_transform_buffer.hpp>
@@ -69,14 +69,14 @@
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <point_cloud_msg_wrapper/point_cloud_msg_wrapper.hpp>
 
+#include <autoware_internal_debug_msgs/msg/int32_stamped.hpp>
+#include <autoware_internal_debug_msgs/msg/string_stamped.hpp>
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
-#include <tier4_debug_msgs/msg/int32_stamped.hpp>
-#include <tier4_debug_msgs/msg/string_stamped.hpp>
 
 #include <message_filters/pass_through.h>
 #include <message_filters/subscriber.h>
@@ -88,7 +88,7 @@
 
 namespace autoware::pointcloud_preprocessor
 {
-using autoware_point_types::PointXYZIRC;
+using autoware::point_types::PointXYZIRC;
 using point_cloud_msg_wrapper::PointCloud2Modifier;
 
 /** \brief @b PointCloudConcatenateDataSynchronizerComponent is a special form of data

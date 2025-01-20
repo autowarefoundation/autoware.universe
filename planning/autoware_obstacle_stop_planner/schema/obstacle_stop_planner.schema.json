@@ -11,6 +11,11 @@
           "description": "even if the obstacle disappears, the stop judgment continues for chattering_threshold [s]",
           "default": "0.5"
         },
+        "lowpass_gain": {
+          "type": "number",
+          "description": "gain parameter for low pass filter [-]",
+          "default": "0.9"
+        },
         "max_velocity": {
           "type": "number",
           "description": "max velocity [m/s]",

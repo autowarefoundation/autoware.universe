@@ -26,11 +26,11 @@
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/motion_velocity_planner_common/planner_data.hpp>
 #include <autoware/route_handler/route_handler.hpp>
+#include <autoware/traffic_light_utils/traffic_light_utils.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/ros/parameter.hpp>
 #include <autoware/universe_utils/ros/update_param.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
-#include <traffic_light_utils/traffic_light_utils.hpp>
 
 #include <boost/geometry/algorithms/envelope.hpp>
 #include <boost/geometry/algorithms/intersects.hpp>
@@ -58,7 +58,10 @@ void OutOfLaneModule::init(rclcpp::Node & node, const std::string & module_name)
   logger_ = node.get_logger();
   clock_ = node.get_clock();
   init_parameters(node);
-  velocity_factor_interface_.init(motion_utils::PlanningBehavior::ROUTE_OBSTACLE);
+
+  planning_factor_interface_ =
+    std::make_unique<autoware::planning_factor_interface::PlanningFactorInterface>(
+      &node, "out_of_lane");
 
   debug_publisher_ =
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/" + ns_ + "/debug_markers", 1);
@@ -66,8 +69,9 @@ void OutOfLaneModule::init(rclcpp::Node & node, const std::string & module_name)
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/" + ns_ + "/virtual_walls", 1);
   processing_diag_publisher_ = std::make_shared<universe_utils::ProcessingTimePublisher>(
     &node, "~/debug/" + ns_ + "/processing_time_ms_diag");
-  processing_time_publisher_ = node.create_publisher<tier4_debug_msgs::msg::Float64Stamped>(
-    "~/debug/" + ns_ + "/processing_time_ms", 1);
+  processing_time_publisher_ =
+    node.create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>(
+      "~/debug/" + ns_ + "/processing_time_ms", 1);
 }
 void OutOfLaneModule::init_parameters(rclcpp::Node & node)
 {
@@ -163,28 +167,6 @@ void OutOfLaneModule::limit_trajectory_size(
   }
 }
 
-void OutOfLaneModule::calculate_min_stop_and_slowdown_distances(
-  out_of_lane::EgoData & ego_data, const PlannerData & planner_data,
-  std::optional<geometry_msgs::msg::Pose> & previous_slowdown_pose_, const double slow_velocity)
-{
-  ego_data.min_stop_distance = planner_data.calculate_min_deceleration_distance(0.0).value_or(0.0);
-  ego_data.min_slowdown_distance =
-    planner_data.calculate_min_deceleration_distance(slow_velocity).value_or(0.0);
-  if (previous_slowdown_pose_) {
-    // Ensure we do not remove the previous slowdown point due to the min distance limit
-    const auto previous_slowdown_pose_arc_length = motion_utils::calcSignedArcLength(
-      ego_data.trajectory_points, ego_data.first_trajectory_idx, previous_slowdown_pose_->position);
-    ego_data.min_stop_distance =
-      std::min(previous_slowdown_pose_arc_length, ego_data.min_stop_distance);
-    ego_data.min_slowdown_distance =
-      std::min(previous_slowdown_pose_arc_length, ego_data.min_slowdown_distance);
-  }
-  ego_data.min_stop_arc_length = motion_utils::calcSignedArcLength(
-                                   ego_data.trajectory_points, 0UL, ego_data.first_trajectory_idx) +
-                                 ego_data.longitudinal_offset_to_first_trajectory_index +
-                                 ego_data.min_stop_distance;
-}
-
 void prepare_stop_lines_rtree(
   out_of_lane::EgoData & ego_data, const PlannerData & planner_data, const double search_distance)
 {
@@ -201,7 +183,8 @@ void prepare_stop_lines_rtree(
       const auto traffic_signal_stamped = planner_data.get_traffic_signal(element->id());
       if (
         traffic_signal_stamped.has_value() && element->stopLine().has_value() &&
-        traffic_light_utils::isTrafficSignalStop(ll, traffic_signal_stamped.value().signal)) {
+        autoware::traffic_light_utils::isTrafficSignalStop(
+          ll, traffic_signal_stamped.value().signal)) {
         stop_line_node.second.stop_line.clear();
         for (const auto & p : element->stopLine()->basicLineString()) {
           stop_line_node.second.stop_line.emplace_back(p.x(), p.y());
@@ -221,12 +204,10 @@ void prepare_stop_lines_rtree(
   ego_data.stop_lines_rtree = {rtree_nodes.begin(), rtree_nodes.end()};
 }
 
-out_of_lane::OutOfLaneData prepare_out_of_lane_data(
-  const out_of_lane::EgoData & ego_data, const route_handler::RouteHandler & route_handler)
+out_of_lane::OutOfLaneData prepare_out_of_lane_data(const out_of_lane::EgoData & ego_data)
 {
   out_of_lane::OutOfLaneData out_of_lane_data;
   out_of_lane_data.outside_points = out_of_lane::calculate_out_of_lane_points(ego_data);
-  out_of_lane::calculate_overlapped_lanelets(out_of_lane_data, route_handler);
   out_of_lane::prepare_out_of_lane_areas_rtree(out_of_lane_data);
   return out_of_lane_data;
 }
@@ -243,8 +224,8 @@ VelocityPlanningResult OutOfLaneModule::plan(
   out_of_lane::EgoData ego_data;
   ego_data.pose = planner_data->current_odometry.pose.pose;
   limit_trajectory_size(ego_data, ego_trajectory_points, params_.max_arc_length);
-  calculate_min_stop_and_slowdown_distances(
-    ego_data, *planner_data, previous_slowdown_pose_, params_.slow_velocity);
+  out_of_lane::calculate_min_stop_and_slowdown_distances(
+    ego_data, *planner_data, previous_slowdown_pose_);
   prepare_stop_lines_rtree(ego_data, *planner_data, params_.max_arc_length);
   const auto preprocessing_us = stopwatch.toc("preprocessing");
 
@@ -255,11 +236,11 @@ VelocityPlanningResult OutOfLaneModule::plan(
   const auto calculate_trajectory_footprints_us = stopwatch.toc("calculate_trajectory_footprints");
 
   stopwatch.tic("calculate_lanelets");
-  out_of_lane::calculate_drivable_lane_polygons(ego_data, *planner_data->route_handler);
+  out_of_lane::calculate_out_lanelet_rtree(ego_data, *planner_data->route_handler, params_);
   const auto calculate_lanelets_us = stopwatch.toc("calculate_lanelets");
 
   stopwatch.tic("calculate_out_of_lane_areas");
-  auto out_of_lane_data = prepare_out_of_lane_data(ego_data, *planner_data->route_handler);
+  auto out_of_lane_data = prepare_out_of_lane_data(ego_data);
   const auto calculate_out_of_lane_areas_us = stopwatch.toc("calculate_out_of_lane_areas");
 
   stopwatch.tic("filter_predicted_objects");
@@ -275,9 +256,12 @@ VelocityPlanningResult OutOfLaneModule::plan(
   out_of_lane::calculate_collisions_to_avoid(out_of_lane_data, ego_data.trajectory_points, params_);
   const auto calculate_times_us = stopwatch.toc("calculate_times");
 
-  if (
-    params_.skip_if_already_overlapping && !ego_data.drivable_lane_polygons.empty() &&
-    !lanelet::geometry::within(ego_data.current_footprint, ego_data.drivable_lane_polygons)) {
+  const auto is_already_overlapping =
+    params_.skip_if_already_overlapping &&
+    std::find_if(ego_data.out_lanelets.begin(), ego_data.out_lanelets.end(), [&](const auto & ll) {
+      return !boost::geometry::disjoint(ll.polygon2d().basicPolygon(), ego_data.current_footprint);
+    }) != ego_data.out_lanelets.end();
+  if (is_already_overlapping) {
     RCLCPP_WARN(logger_, "Ego is already out of lane, skipping the module\n");
     debug_publisher_->publish(out_of_lane::debug::create_debug_marker_array(
       ego_data, out_of_lane_data, objects, debug_data_));
@@ -294,32 +278,30 @@ VelocityPlanningResult OutOfLaneModule::plan(
   auto slowdown_pose = out_of_lane::calculate_slowdown_point(ego_data, out_of_lane_data, params_);
   const auto calculate_slowdown_point_us = stopwatch.toc("calculate_slowdown_point");
 
-  if (  // reset the timer if there is no previous inserted point
-    slowdown_pose && (!previous_slowdown_pose_)) {
-    previous_slowdown_time_ = clock_->now();
-  }
   // reuse previous stop pose if there is no new one or if its velocity is not higher than the new
   // one and its arc length is lower
+  if (slowdown_pose) {  // reset the clock when we could calculate a valid slowdown pose
+    previous_slowdown_time_ = clock_->now();
+  }
   const auto should_use_previous_pose = [&]() {
     if (slowdown_pose && previous_slowdown_pose_) {
       const auto arc_length =
-        motion_utils::calcSignedArcLength(ego_trajectory_points, 0LU, slowdown_pose->position);
+        motion_utils::calcSignedArcLength(ego_data.trajectory_points, 0LU, slowdown_pose->position);
       const auto prev_arc_length = motion_utils::calcSignedArcLength(
-        ego_trajectory_points, 0LU, previous_slowdown_pose_->position);
+        ego_data.trajectory_points, 0LU, previous_slowdown_pose_->position);
       return prev_arc_length < arc_length;
     }
-    return !slowdown_pose && previous_slowdown_pose_;
+    return slowdown_pose && previous_slowdown_pose_;
   }();
   if (should_use_previous_pose) {
     // if the trajectory changed the prev point is no longer on the trajectory so we project it
     const auto new_arc_length = motion_utils::calcSignedArcLength(
-      ego_trajectory_points, 0LU, previous_slowdown_pose_->position);
-    slowdown_pose = motion_utils::calcInterpolatedPose(ego_trajectory_points, new_arc_length);
+      ego_data.trajectory_points, 0UL, previous_slowdown_pose_->position);
+    slowdown_pose = motion_utils::calcInterpolatedPose(ego_data.trajectory_points, new_arc_length);
   }
   if (slowdown_pose) {
     const auto arc_length =
-      motion_utils::calcSignedArcLength(
-        ego_trajectory_points, ego_data.first_trajectory_idx, slowdown_pose->position) -
+      motion_utils::calcSignedArcLength(ego_data.trajectory_points, 0UL, slowdown_pose->position) -
       ego_data.longitudinal_offset_to_first_trajectory_index;
     const auto slowdown_velocity =
       arc_length <= params_.stop_dist_threshold ? 0.0 : params_.slow_velocity;
@@ -331,15 +313,9 @@ VelocityPlanningResult OutOfLaneModule::plan(
         slowdown_pose->position, slowdown_pose->position, slowdown_velocity);
     }
 
-    const auto is_approaching =
-      motion_utils::calcSignedArcLength(
-        ego_trajectory_points, ego_data.pose.position, slowdown_pose->position) > 0.1 &&
-      planner_data->current_odometry.twist.twist.linear.x > 0.1;
-    const auto status = is_approaching ? motion_utils::VelocityFactor::APPROACHING
-                                       : motion_utils::VelocityFactor::STOPPED;
-    velocity_factor_interface_.set(
-      ego_trajectory_points, ego_data.pose, *slowdown_pose, status, "out_of_lane");
-    result.velocity_factor = velocity_factor_interface_.get();
+    planning_factor_interface_->add(
+      ego_trajectory_points, ego_data.pose, *slowdown_pose, PlanningFactor::SLOW_DOWN,
+      SafetyFactorArray{});
     virtual_wall_marker_creator.add_virtual_walls(
       out_of_lane::debug::create_virtual_walls(*slowdown_pose, slowdown_velocity == 0.0, params_));
     virtual_wall_publisher_->publish(virtual_wall_marker_creator.create_markers(clock_->now()));
@@ -371,7 +347,7 @@ VelocityPlanningResult OutOfLaneModule::plan(
   processing_times["publish_markers"] = pub_markers_us / 1000;
   processing_times["Total"] = total_time_us / 1000;
   processing_diag_publisher_->publish(processing_times);
-  tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
+  autoware_internal_debug_msgs::msg::Float64Stamped processing_time_msg;
   processing_time_msg.stamp = clock_->now();
   processing_time_msg.data = processing_times["Total"];
   processing_time_publisher_->publish(processing_time_msg);

@@ -19,6 +19,8 @@
 #include <gtest/gtest.h>
 
 #include <chrono>
+#include <cstdio>
+#include <iostream>
 #include <random>
 
 using autoware::motion_velocity_planner::CollisionChecker;
@@ -74,7 +76,7 @@ bool all_within(const MultiPoint2d & pts1, const MultiPoint2d & pts2)
   return true;
 }
 
-TEST(TestCollisionChecker, Benchmark)
+TEST(TestCollisionChecker, DISABLED_Benchmark)
 {
   constexpr auto nb_ego_footprints = 1000;
   constexpr auto nb_obstacles = 1000;

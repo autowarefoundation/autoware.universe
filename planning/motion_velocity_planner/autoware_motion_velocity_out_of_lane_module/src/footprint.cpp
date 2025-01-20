@@ -18,6 +18,8 @@
 
 #include <geometry_msgs/msg/pose.hpp>
 
+#include <boost/geometry/algorithms/correct.hpp>
+
 #include <lanelet2_core/geometry/Polygon.h>
 #include <tf2/utils.h>
 
@@ -37,6 +39,7 @@ universe_utils::Polygon2d make_base_footprint(const PlannerParam & p, const bool
     {p.front_offset + front_offset, p.right_offset - right_offset},
     {p.rear_offset - rear_offset, p.right_offset - right_offset},
     {p.rear_offset - rear_offset, p.left_offset + left_offset}};
+  boost::geometry::correct(base_footprint);
   return base_footprint;
 }
 
@@ -57,7 +60,7 @@ std::vector<lanelet::BasicPolygon2d> calculate_trajectory_footprints(
   const auto base_footprint = make_base_footprint(params);
   std::vector<lanelet::BasicPolygon2d> trajectory_footprints;
   trajectory_footprints.reserve(ego_data.trajectory_points.size());
-  for (auto i = ego_data.first_trajectory_idx; i < ego_data.trajectory_points.size(); ++i) {
+  for (auto i = 0UL; i < ego_data.trajectory_points.size(); ++i) {
     const auto & trajectory_pose = ego_data.trajectory_points[i].pose;
     const auto angle = tf2::getYaw(trajectory_pose.orientation);
     const auto rotated_footprint = universe_utils::rotatePolygon(base_footprint, angle);

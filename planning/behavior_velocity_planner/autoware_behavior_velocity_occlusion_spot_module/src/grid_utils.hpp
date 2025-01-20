@@ -17,9 +17,9 @@
 
 #include <autoware/behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
+#include <autoware/grid_map_utils/polygon_iterator.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/math/normalization.hpp>
-#include <autoware_grid_map_utils/polygon_iterator.hpp>
 #include <grid_map_core/GridMap.hpp>
 #include <grid_map_core/iterators/LineIterator.hpp>
 #include <grid_map_ros/GridMapRosConverter.hpp>

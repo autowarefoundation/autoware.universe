@@ -27,7 +27,6 @@
 #include "autoware/behavior_path_start_planner_module/pull_out_path.hpp"
 #include "autoware/behavior_path_start_planner_module/shift_pull_out.hpp"
 
-#include <autoware/lane_departure_checker/lane_departure_checker.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 
@@ -51,7 +50,6 @@ using autoware::behavior_path_planner::utils::path_safety_checker::ObjectsFilter
 using autoware::behavior_path_planner::utils::path_safety_checker::PoseWithVelocityStamped;
 using autoware::behavior_path_planner::utils::path_safety_checker::SafetyCheckParams;
 using autoware::behavior_path_planner::utils::path_safety_checker::TargetObjectsOnLane;
-using autoware::lane_departure_checker::LaneDepartureChecker;
 using geometry_msgs::msg::PoseArray;
 using PriorityOrder = std::vector<std::pair<size_t, std::shared_ptr<PullOutPlannerBase>>>;
 
@@ -70,7 +68,7 @@ struct PullOutStatus
   Pose pull_out_start_pose{};
   bool prev_is_safe_dynamic_objects{false};
   std::shared_ptr<PathWithLaneId> prev_stop_path_after_approval{nullptr};
-  std::optional<Pose> stop_pose{std::nullopt};
+  PoseWithDetailOpt stop_pose{std::nullopt};
   //! record the first time when ego started forward-driving (maybe after backward driving
   //! completion) in AUTONOMOUS operation mode
   std::optional<rclcpp::Time> first_engaged_and_driving_forward_time{std::nullopt};
@@ -89,7 +87,7 @@ public:
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
     std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
       objects_of_interest_marker_interface_ptr_map,
-    std::shared_ptr<SteeringFactorInterface> & steering_factor_interface_ptr);
+    const std::shared_ptr<PlanningFactorInterface> planning_factor_interface);
 
   ~StartPlannerModule() override
   {
@@ -201,18 +199,18 @@ private:
 
   bool requiresDynamicObjectsCollisionDetection() const;
 
-  uint16_t getSteeringFactorDirection(
+  uint16_t getPlanningFactorDirection(
     const autoware::behavior_path_planner::BehaviorModuleOutput & output) const
   {
     switch (output.turn_signal_info.turn_signal.command) {
       case TurnIndicatorsCommand::ENABLE_LEFT:
-        return SteeringFactor::LEFT;
+        return PlanningFactor::SHIFT_LEFT;
 
       case TurnIndicatorsCommand::ENABLE_RIGHT:
-        return SteeringFactor::RIGHT;
+        return PlanningFactor::SHIFT_RIGHT;
 
       default:
-        return SteeringFactor::STRAIGHT;
+        return PlanningFactor::NONE;
     }
   };
 
@@ -310,8 +308,6 @@ ego pose.
   PathWithLaneId calcBackwardPathFromStartPose() const;
   std::vector<Pose> searchPullOutStartPoseCandidates(
     const PathWithLaneId & back_path_from_start_pose) const;
-
-  std::shared_ptr<LaneDepartureChecker> lane_departure_checker_;
 
   // turn signal
   TurnSignalInfo calcTurnSignalInfo();

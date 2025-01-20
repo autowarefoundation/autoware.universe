@@ -105,11 +105,11 @@ mergeLaneletsByTopologicalSort(
 
 /**
  * @brief this functions retrieves all the paths from the given source to terminal nodes on the tree
- @param[in] visited_inds visited node indices excluding src_ind so far
+ @param[in] visited_indices visited node indices excluding src_ind so far
  */
 void retrievePathsBackward(
-  const std::vector<std::vector<bool>> & adjacency, const size_t src_ind,
-  const std::vector<size_t> & visited_inds, std::vector<std::vector<size_t>> & paths);
+  const std::vector<std::vector<bool>> & adjacency, const size_t src_index,
+  const std::vector<size_t> & visited_indices, std::vector<std::vector<size_t>> & paths);
 
 /**
  * @brief find the index of the first point where vehicle footprint intersects with the given
