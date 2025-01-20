@@ -279,7 +279,7 @@ Within this range, we sample the lateral acceleration for the ego vehicle. Simil
 lateral_acceleration_resolution = (maximum_lateral_acceleration - minimum_lateral_acceleration) / lateral_acceleration_sampling_num
 ```
 
-##### Object filtering
+#### Object filtering
 
 Before performing safety checks, predicted objects are categorized based on their current pose and behavior at the time. These categories help determine how each object impacts the lane change process and guide the safety evaluation.
 
