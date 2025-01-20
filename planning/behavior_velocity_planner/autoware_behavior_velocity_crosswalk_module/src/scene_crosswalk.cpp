@@ -348,7 +348,7 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
       }
 
       stop_factor_points.push_back(object.position);
-      
+
       const auto dist_ego2cp =
         calcSignedArcLength(sparse_resample_path.points, ego_pos, collision_point.collision_point);
       if (!dist_nearest_cp || dist_ego2cp < dist_nearest_cp) {
