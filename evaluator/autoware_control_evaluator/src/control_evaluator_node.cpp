@@ -20,7 +20,6 @@
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <nlohmann/json.hpp>
-#include <rclcpp/logging.hpp>
 
 #include <chrono>
 #include <filesystem>
