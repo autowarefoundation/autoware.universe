@@ -47,7 +47,7 @@ public:
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
     std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
       objects_of_interest_marker_interface_ptr_map,
-    std::shared_ptr<SteeringFactorInterface> & steering_factor_interface_ptr);
+    const std::shared_ptr<PlanningFactorInterface> & planning_factor_interface);
 
   CandidateOutput planCandidate() const override;
   BehaviorModuleOutput plan() override;
@@ -66,6 +66,8 @@ public:
   std::shared_ptr<AvoidanceDebugMsgArray> get_debug_msg_array() const;
 
 private:
+  ModuleStatus setInitState() const override { return ModuleStatus::WAITING_APPROVAL; };
+
   /**
    * @brief return the result whether the module can stop path generation process.
    * @param avoidance data.
@@ -130,9 +132,9 @@ private:
       }
 
       if (finish_distance > -1.0e-03) {
-        steering_factor_interface_ptr_->updateSteeringFactor(
-          {left_shift.start_pose, left_shift.finish_pose}, {start_distance, finish_distance},
-          PlanningBehavior::AVOIDANCE, SteeringFactor::LEFT, SteeringFactor::TURNING, "");
+        planning_factor_interface_->add(
+          start_distance, finish_distance, left_shift.start_pose, left_shift.finish_pose,
+          PlanningFactor::SHIFT_LEFT, SafetyFactorArray{});
       }
     }
 
@@ -150,9 +152,9 @@ private:
       }
 
       if (finish_distance > -1.0e-03) {
-        steering_factor_interface_ptr_->updateSteeringFactor(
-          {right_shift.start_pose, right_shift.finish_pose}, {start_distance, finish_distance},
-          PlanningBehavior::AVOIDANCE, SteeringFactor::RIGHT, SteeringFactor::TURNING, "");
+        planning_factor_interface_->add(
+          start_distance, finish_distance, right_shift.start_pose, right_shift.finish_pose,
+          PlanningFactor::SHIFT_RIGHT, SafetyFactorArray{});
       }
     }
   }

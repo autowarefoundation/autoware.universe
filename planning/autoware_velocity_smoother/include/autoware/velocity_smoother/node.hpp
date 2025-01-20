@@ -20,6 +20,7 @@
 #include "autoware/osqp_interface/osqp_interface.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware/universe_utils/math/unit_conversion.hpp"
+#include "autoware/universe_utils/ros/diagnostics_interface.hpp"
 #include "autoware/universe_utils/ros/logger_level_configure.hpp"
 #include "autoware/universe_utils/ros/polling_subscriber.hpp"
 #include "autoware/universe_utils/ros/self_pose_listener.hpp"
@@ -39,14 +40,13 @@
 #include <autoware/universe_utils/ros/published_time_publisher.hpp>
 
 #include "autoware_adapi_v1_msgs/msg/operation_mode_state.hpp"
+#include "autoware_internal_debug_msgs/msg/float32_stamped.hpp"
+#include "autoware_internal_debug_msgs/msg/float64_stamped.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "autoware_planning_msgs/msg/trajectory_point.hpp"
 #include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
-#include "tier4_debug_msgs/msg/float32_stamped.hpp"         // temporary
-#include "tier4_debug_msgs/msg/float64_stamped.hpp"         // temporary
-#include "tier4_planning_msgs/msg/stop_speed_exceeded.hpp"  // temporary
-#include "tier4_planning_msgs/msg/velocity_limit.hpp"       // temporary
+#include "tier4_planning_msgs/msg/velocity_limit.hpp"  // temporary
 #include "visualization_msgs/msg/marker_array.hpp"
 
 #include <iostream>
@@ -61,15 +61,15 @@ namespace autoware::velocity_smoother
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
+using autoware::universe_utils::DiagnosticsInterface;
 using autoware_adapi_v1_msgs::msg::OperationModeState;
+using autoware_internal_debug_msgs::msg::Float32Stamped;
+using autoware_internal_debug_msgs::msg::Float64Stamped;
 using geometry_msgs::msg::AccelWithCovarianceStamped;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;
 using nav_msgs::msg::Odometry;
-using tier4_debug_msgs::msg::Float32Stamped;        // temporary
-using tier4_debug_msgs::msg::Float64Stamped;        // temporary
-using tier4_planning_msgs::msg::StopSpeedExceeded;  // temporary
-using tier4_planning_msgs::msg::VelocityLimit;      // temporary
+using tier4_planning_msgs::msg::VelocityLimit;  // temporary
 using visualization_msgs::msg::MarkerArray;
 
 struct Motion
@@ -89,7 +89,6 @@ public:
 private:
   rclcpp::Publisher<Trajectory>::SharedPtr pub_trajectory_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_virtual_wall_;
-  rclcpp::Publisher<StopSpeedExceeded>::SharedPtr pub_over_stop_velocity_;
   rclcpp::Subscription<Trajectory>::SharedPtr sub_current_trajectory_;
   autoware::universe_utils::InterProcessPollingSubscriber<Odometry> sub_current_odometry_{
     this, "/localization/kinematic_state"};
@@ -164,10 +163,17 @@ private:
     bool plan_from_ego_speed_on_manual_mode = true;
   } node_param_{};
 
+  struct AccelerationRequest
+  {
+    bool request{false};
+    double max_acceleration{0.0};
+    double max_jerk{0.0};
+  };
   struct ExternalVelocityLimit
   {
     double velocity{0.0};  // current external_velocity_limit
     double dist{0.0};      // distance to set external velocity limit
+    AccelerationRequest acceleration_request;
     std::string sender{""};
   };
   ExternalVelocityLimit
@@ -283,6 +289,8 @@ private:
   std::unique_ptr<autoware::universe_utils::PublishedTimePublisher> published_time_publisher_;
 
   mutable std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper_{nullptr};
+
+  std::unique_ptr<DiagnosticsInterface> diagnostics_interface_{nullptr};
 };
 }  // namespace autoware::velocity_smoother
 

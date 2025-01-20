@@ -19,7 +19,9 @@
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
+#include <memory>
 #include <utility>
+#include <vector>
 
 namespace autoware::imu_corrector
 {
@@ -38,7 +40,6 @@ GyroBiasEstimator::GyroBiasEstimator(const rclcpp::NodeOptions & options)
 {
   updater_.setHardwareID(get_name());
   updater_.add("gyro_bias_validator", this, &GyroBiasEstimator::update_diagnostics);
-  // diagnostic_updater is designed to be updated at the same rate as the timer
   updater_.setPeriod(diagnostics_updater_interval_sec_);
 
   gyro_bias_estimation_module_ = std::make_unique<GyroBiasEstimationModule>();
@@ -180,8 +181,6 @@ void GyroBiasEstimator::timer_callback()
     transform_vector3(gyro_bias_estimation_module_->get_bias_base_link(), *tf_base2imu_ptr);
 
   validate_gyro_bias();
-  updater_.force_update();
-  updater_.setPeriod(diagnostics_updater_interval_sec_);  // to reset timer inside the updater
 }
 
 void GyroBiasEstimator::validate_gyro_bias()

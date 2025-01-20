@@ -23,8 +23,8 @@
 #define EIGEN_MPL2_ONLY
 #include <Eigen/Core>
 #include <Eigen/Geometry>
-#include <autoware/behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
+#include <autoware/behavior_velocity_rtc_interface/scene_module_interface_with_rtc.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -33,7 +33,7 @@
 
 namespace autoware::behavior_velocity_planner
 {
-class TrafficLightModule : public SceneModuleInterface
+class TrafficLightModule : public SceneModuleInterfaceWithRTC
 {
 public:
   using TrafficSignal = autoware_perception_msgs::msg::TrafficLightGroup;
@@ -69,9 +69,12 @@ public:
   TrafficLightModule(
     const int64_t lane_id, const lanelet::TrafficLight & traffic_light_reg_elem,
     lanelet::ConstLanelet lane, const PlannerParam & planner_param, const rclcpp::Logger logger,
-    const rclcpp::Clock::SharedPtr clock);
+    const rclcpp::Clock::SharedPtr clock,
+    const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+    const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
+      planning_factor_interface);
 
-  bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
+  bool modifyPathVelocity(PathWithLaneId * path) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
   autoware::motion_utils::VirtualWalls createVirtualWalls() override;
@@ -90,7 +93,7 @@ private:
 
   tier4_planning_msgs::msg::PathWithLaneId insertStopPose(
     const tier4_planning_msgs::msg::PathWithLaneId & input, const size_t & insert_target_point_idx,
-    const Eigen::Vector2d & target_point, tier4_planning_msgs::msg::StopReason * stop_reason);
+    const Eigen::Vector2d & target_point);
 
   bool isPassthrough(const double & signed_arc_length) const;
 
