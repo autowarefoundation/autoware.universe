@@ -48,7 +48,6 @@ void ObstacleVelocityLimiterModule::init(rclcpp::Node & node, const std::string 
   projection_params_ = obstacle_velocity_limiter::ProjectionParameters(node);
   obstacle_params_ = obstacle_velocity_limiter::ObstacleParameters(node);
   velocity_params_ = obstacle_velocity_limiter::VelocityParameters(node);
-  velocity_factor_interface_.init(autoware::motion_utils::PlanningBehavior::ROUTE_OBSTACLE);
 
   debug_publisher_ =
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/" + ns_ + "/debug_markers", 1);
