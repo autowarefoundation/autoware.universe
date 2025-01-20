@@ -25,7 +25,6 @@ namespace metrics
 namespace utils
 {
 using autoware::route_handler::RouteHandler;
-using autoware::universe_utils::Point2d;
 using geometry_msgs::msg::Pose;
 
 /**
@@ -37,19 +36,6 @@ using geometry_msgs::msg::Pose;
 lanelet::ConstLanelets get_current_lanes(const RouteHandler & route_handler, const Pose & ego_pose);
 
 /**
- * @brief Get the most side boundary of the lanelet.
- * @param [in] route_handler route handler
- * @param [in] lanelet lanelet to get the most side boundary
- * @param [in] left_side true to get left side boundary, false to get right side boundary
- * @param [in] enable_same_root true if the same root lanelets are considered, false otherwise
- * @param [in] get_shoulder_lane true if shoulder lanelets are considered, false otherwise
- * @return most side boundary of the lanelet
- **/
-lanelet::ConstLineString3d get_most_side_boundary(
-  const RouteHandler & route_handler, const lanelet::ConstLanelet & lanelet, const bool left_side,
-  const bool enable_same_root = false, const bool get_shoulder_lane = true);
-
-/**
  * @brief Calculate the Euler distance between the vehicle and the lanelet.
  * @param [in] vehicle_footprint vehicle footprint
  * @param [in] line lanelet line
@@ -58,7 +44,7 @@ lanelet::ConstLineString3d get_most_side_boundary(
  **/
 double calc_distance_to_line(
   const autoware::universe_utils::LinearRing2d & vehicle_footprint,
-  const lanelet::ConstLineString3d & line);
+  const autoware::universe_utils::LineString2d & line);
 
 /**
  * @brief Calculate the yaw deviation between the ego's orientation and the vector from the ego
@@ -67,7 +53,7 @@ double calc_distance_to_line(
  * @param [in] line The line to which the yaw deviation is calculated.
  * @return The yaw deviation in radians, normalized to the range [-π, π].
  */
-double calc_yaw_to_line(const Pose & ego_pose, const lanelet::ConstLineString3d & line);
+double calc_yaw_to_line(const Pose & ego_pose, const autoware::universe_utils::LineString2d & line);
 
 }  // namespace utils
 }  // namespace metrics

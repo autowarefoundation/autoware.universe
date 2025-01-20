@@ -64,7 +64,7 @@ static const std::unordered_map<Metric, std::string> metric_descriptions = {
   {Metric::goal_lateral_deviation, "Lateral deviation from the goal point[m]"},
   {Metric::goal_yaw_deviation, "Yaw deviation from the goal point[rad]"},
   {Metric::left_boundary_distance, "Signed distance to the left boundary[m]"},
-  {Metric::right_boundary_distance, "Signed istance to the right boundary[m]"},
+  {Metric::right_boundary_distance, "Signed distance to the right boundary[m]"},
 };
 
 namespace details

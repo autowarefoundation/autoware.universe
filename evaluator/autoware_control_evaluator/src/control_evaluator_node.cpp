@@ -20,6 +20,7 @@
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <nlohmann/json.hpp>
+#include <rclcpp/logging.hpp>
 
 #include <chrono>
 #include <filesystem>
@@ -169,7 +170,8 @@ void ControlEvaluatorNode::AddLaneletInfoMsg(const Pose & ego_pose)
   }
 }
 
-void ControlEvaluatorNode::AddLaneletMetricMsg(const Pose & ego_pose)
+void ControlEvaluatorNode::AddBoundaryDistanceMetricMsg(
+  const PathWithLaneId & behavior_path, const Pose & ego_pose)
 {
   const auto current_lanelets = metrics::utils::get_current_lanes(route_handler_, ego_pose);
   lanelet::ConstLanelet current_lane;
@@ -178,33 +180,33 @@ void ControlEvaluatorNode::AddLaneletMetricMsg(const Pose & ego_pose)
   const auto current_vehicle_footprint =
     transformVector(local_vehicle_footprint, autoware::universe_utils::pose2transform(ego_pose));
 
-  // calculate signed distance to the left boundary
-  const auto most_left_boundary =
-    metrics::utils::get_most_side_boundary(route_handler_, current_lane, true);
+  if (behavior_path.left_bound.size() >= 1) {
+    LineString2d left_boundary;
+    for (const auto & p : behavior_path.left_bound) left_boundary.push_back(Point2d(p.x, p.y));
+    double distance_to_left_boundary =
+      metrics::utils::calc_distance_to_line(current_vehicle_footprint, left_boundary);
 
-  double distance_to_left_boundary =
-    metrics::utils::calc_distance_to_line(current_vehicle_footprint, most_left_boundary);
-  const double yaw_to_left_boundary =
-    metrics::utils::calc_yaw_to_line(ego_pose, most_left_boundary);
-  if (yaw_to_left_boundary < 0.0) {
-    distance_to_left_boundary *= -1.0;
+    const double yaw_to_left_boundary = metrics::utils::calc_yaw_to_line(ego_pose, left_boundary);
+    if (yaw_to_left_boundary < 0.0) {
+      distance_to_left_boundary *= -1.0;
+    }
+    const Metric metric_left = Metric::left_boundary_distance;
+    AddMetricMsg(metric_left, distance_to_left_boundary);
   }
-  const Metric metric = Metric::left_boundary_distance;
-  AddMetricMsg(metric, distance_to_left_boundary);
 
-  // calculate signed distance to the right boundary
-  const auto most_right_boundary =
-    metrics::utils::get_most_side_boundary(route_handler_, current_lane, false);
+  if (behavior_path.right_bound.size() >= 1) {
+    LineString2d right_boundary;
+    for (const auto & p : behavior_path.right_bound) right_boundary.push_back(Point2d(p.x, p.y));
+    double distance_to_right_boundary =
+      metrics::utils::calc_distance_to_line(current_vehicle_footprint, right_boundary);
 
-  double distance_to_right_boundary =
-    metrics::utils::calc_distance_to_line(current_vehicle_footprint, most_right_boundary);
-  const double angle_to_right_boundary =
-    metrics::utils::calc_yaw_to_line(ego_pose, most_right_boundary);
-  if (angle_to_right_boundary > 0.0) {
-    distance_to_right_boundary *= -1.0;
+    const double yaw_to_right_boundary = metrics::utils::calc_yaw_to_line(ego_pose, right_boundary);
+    if (yaw_to_right_boundary > 0.0) {
+      distance_to_right_boundary *= -1.0;
+    }
+    const Metric metric_right = Metric::right_boundary_distance;
+    AddMetricMsg(metric_right, distance_to_right_boundary);
   }
-  const Metric metric_right = Metric::right_boundary_distance;
-  AddMetricMsg(metric_right, distance_to_right_boundary);
 }
 
 void ControlEvaluatorNode::AddKinematicStateMetricMsg(
@@ -294,6 +296,7 @@ void ControlEvaluatorNode::onTimer()
   const auto traj = traj_sub_.takeData();
   const auto odom = odometry_sub_.takeData();
   const auto acc = accel_sub_.takeData();
+  const auto behavior_path = behavior_path_subscriber_.takeData();
 
   // calculate deviation metrics
   if (odom && traj && !traj->points.empty()) {
@@ -306,7 +309,6 @@ void ControlEvaluatorNode::onTimer()
   if (odom && route_handler_.isHandlerReady()) {
     const Pose ego_pose = odom->pose.pose;
     AddLaneletInfoMsg(ego_pose);
-    AddLaneletMetricMsg(ego_pose);
     AddGoalLongitudinalDeviationMetricMsg(ego_pose);
     AddGoalLateralDeviationMetricMsg(ego_pose);
     AddGoalYawDeviationMetricMsg(ego_pose);
@@ -314,6 +316,11 @@ void ControlEvaluatorNode::onTimer()
 
   if (odom && acc) {
     AddKinematicStateMetricMsg(*odom, *acc);
+  }
+
+  if (odom && behavior_path) {
+    const Pose ego_pose = odom->pose.pose;
+    AddBoundaryDistanceMetricMsg(*behavior_path, ego_pose);
   }
 
   // Publish metrics

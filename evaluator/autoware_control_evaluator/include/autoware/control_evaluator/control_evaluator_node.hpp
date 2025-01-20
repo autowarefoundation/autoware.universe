@@ -31,6 +31,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_metric_msgs/msg/metric.hpp>
 #include <tier4_metric_msgs/msg/metric_array.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <deque>
 #include <optional>
@@ -40,6 +41,8 @@
 namespace control_diagnostics
 {
 using autoware::universe_utils::Accumulator;
+using autoware::universe_utils::LineString2d;
+using autoware::universe_utils::Point2d;
 using autoware::vehicle_info_utils::VehicleInfo;
 using autoware_planning_msgs::msg::Trajectory;
 using geometry_msgs::msg::Point;
@@ -50,6 +53,7 @@ using autoware_planning_msgs::msg::LaneletRoute;
 using geometry_msgs::msg::AccelWithCovarianceStamped;
 using MetricMsg = tier4_metric_msgs::msg::Metric;
 using MetricArrayMsg = tier4_metric_msgs::msg::MetricArray;
+using tier4_planning_msgs::msg::PathWithLaneId;
 
 /**
  * @brief Node for control evaluation
@@ -66,7 +70,7 @@ public:
   void AddGoalLongitudinalDeviationMetricMsg(const Pose & ego_pose);
   void AddGoalLateralDeviationMetricMsg(const Pose & ego_pose);
   void AddGoalYawDeviationMetricMsg(const Pose & ego_pose);
-  void AddLaneletMetricMsg(const Pose & ego_pose);
+  void AddBoundaryDistanceMetricMsg(const PathWithLaneId & behavior_path, const Pose & ego_pose);
 
   void AddLaneletInfoMsg(const Pose & ego_pose);
   void AddKinematicStateMetricMsg(
@@ -87,6 +91,8 @@ private:
   autoware::universe_utils::InterProcessPollingSubscriber<
     LaneletMapBin, autoware::universe_utils::polling_policy::Newest>
     vector_map_subscriber_{this, "~/input/vector_map", rclcpp::QoS{1}.transient_local()};
+  autoware::universe_utils::InterProcessPollingSubscriber<PathWithLaneId> behavior_path_subscriber_{
+    this, "~/input/behavior_path"};
 
   rclcpp::Publisher<autoware_internal_debug_msgs::msg::Float64Stamped>::SharedPtr
     processing_time_pub_;

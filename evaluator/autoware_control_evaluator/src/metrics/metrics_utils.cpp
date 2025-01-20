@@ -32,8 +32,6 @@ namespace metrics
 namespace utils
 {
 using autoware::route_handler::RouteHandler;
-using autoware::universe_utils::Point2d;
-using autoware::universe_utils::Point3d;
 using geometry_msgs::msg::Pose;
 
 lanelet::ConstLanelets get_current_lanes(const RouteHandler & route_handler, const Pose & ego_pose)
@@ -47,33 +45,14 @@ lanelet::ConstLanelets get_current_lanes(const RouteHandler & route_handler, con
   return closest_lanelets;
 }
 
-lanelet::ConstLineString3d get_most_side_boundary(
-  const RouteHandler & route_handler, const lanelet::ConstLanelet & lanelet, const bool left_side,
-  const bool enable_same_root, const bool get_shoulder_lane)
-{
-  lanelet::ConstLineString3d most_side_lanelet;
-  if (left_side) {
-    most_side_lanelet =
-      route_handler.getMostLeftLanelet(lanelet, enable_same_root, get_shoulder_lane).leftBound3d();
-  } else {
-    most_side_lanelet =
-      route_handler.getMostRightLanelet(lanelet, enable_same_root, get_shoulder_lane)
-        .rightBound3d();
-  }
-  return most_side_lanelet;
-}
-
 double calc_distance_to_line(
   const autoware::universe_utils::LinearRing2d & vehicle_footprint,
-  const lanelet::ConstLineString3d & line)
+  const autoware::universe_utils::LineString2d & line)
 {
-  // convert ConstLineString3d to LineString2d
-  autoware::universe_utils::LineString2d line_2d;
-  for (const auto & p : line) line_2d.push_back(Point2d{p.x(), p.y()});
-  return boost::geometry::distance(vehicle_footprint, line_2d);
+  return boost::geometry::distance(vehicle_footprint, line);
 }
 
-double calc_yaw_to_line(const Pose & ego_pose, const lanelet::ConstLineString3d & line)
+double calc_yaw_to_line(const Pose & ego_pose, const autoware::universe_utils::LineString2d & line)
 {
   const double ego_yaw = tf2::getYaw(ego_pose.orientation);
 
