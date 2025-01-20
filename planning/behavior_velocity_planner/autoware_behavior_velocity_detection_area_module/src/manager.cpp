@@ -64,7 +64,8 @@ void DetectionAreaModuleManager::launchNewModules(
     if (!isModuleRegistered(module_id)) {
       registerModule(std::make_shared<DetectionAreaModule>(
         module_id, lane_id, *detection_area_with_lane_id.first, planner_param_,
-        logger_.get_child("detection_area_module"), clock_));
+        logger_.get_child("detection_area_module"), clock_, time_keeper_,
+        planning_factor_interface_));
     }
   }
 }
