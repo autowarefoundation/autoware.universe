@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "learning_based_vehicle_model/simple_pymodel.hpp"
+#include "autoware/learning_based_vehicle_model/simple_pymodel.hpp"
 
 #include <pybind11/embed.h>
 #include <pybind11/stl.h>

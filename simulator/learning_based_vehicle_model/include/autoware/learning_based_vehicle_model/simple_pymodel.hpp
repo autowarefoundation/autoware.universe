@@ -16,8 +16,8 @@
 #ifndef AUTOWARE__SIMULATOR__LEARNING_BASED_VEHICLE_MODEL__SIMPLE_PYMODEL_HPP_
 #define AUTOWARE__SIMULATOR__LEARNING_BASED_VEHICLE_MODEL__SIMPLE_PYMODEL_HPP_
 
-#include "learning_based_vehicle_model/model_connections_helpers.hpp"
-#include "learning_based_vehicle_model/submodel_interface.hpp"
+#include "autoware/learning_based_vehicle_model/model_connections_helpers.hpp"
+#include "autoware/learning_based_vehicle_model/submodel_interface.hpp"
 
 #include <pybind11/embed.h>
 #include <pybind11/stl.h>
