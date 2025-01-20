@@ -6,24 +6,24 @@ The `redundancy_relay_manager` node subscribes to the election status topics fro
 
 ### Input
 
-| Name                                | Type                                      | Description                                     |
-| ----------------------------------- | ----------------------------------------- | ----------------------------------------------- |
-| `~/input/main/election/status`      | `tier4_system_msgs::msg::ElectionStatus`  | Election status topic from the Main ECU.        |
-| `~/input/sub/election/status`       | `tier4_system_msgs::msg::ElectionStatus`  | Election status topic from the Sub ECU.         |
-| `~/input/operation_mode/state`      | `autoware_adapi_v1_msgs::msg::OperationModeState` | Current operation mode of the system. |
+| Name                           | Type                                              | Description                              |
+| ------------------------------ | ------------------------------------------------- | ---------------------------------------- |
+| `~/input/main/election/status` | `tier4_system_msgs::msg::ElectionStatus`          | Election status topic from the Main ECU. |
+| `~/input/sub/election/status`  | `tier4_system_msgs::msg::ElectionStatus`          | Election status topic from the Sub ECU.  |
+| `~/input/operation_mode/state` | `autoware_adapi_v1_msgs::msg::OperationModeState` | Current operation mode of the system.    |
 
 ### Output
 
-| Name                                             | Type                                            | Description                                 |
-| ------------------------------------------------ | ----------------------------------------------- | ------------------------------------------- |
-| `~/output/topic_relay_controller_trajectory/operate` | `tier4_system_msgs::srv::ChangeTopicRelayControl` | Service to control trajectory topic relay.  |
+| Name                                                           | Type                                              | Description                                |
+| -------------------------------------------------------------- | ------------------------------------------------- | ------------------------------------------ |
+| `~/output/topic_relay_controller_trajectory/operate`           | `tier4_system_msgs::srv::ChangeTopicRelayControl` | Service to control trajectory topic relay. |
 | `~/output/topic_relay_controller_pose_with_covariance/operate` | `tier4_system_msgs::srv::ChangeTopicRelayControl` | Service to control pose topic relay.       |
 
 ## Parameters
 
-| Name                  | Type   | Default Value                            | Description                                                                 |
-| --------------------- | ------ | ---------------------------------------- | --------------------------------------------------------------------------- |
-| `service_timeout_ms`  | `int`  | `1000`                                   | Timeout duration (in milliseconds) for service calls.                       |
+| Name                 | Type  | Default Value | Description                                           |
+| -------------------- | ----- | ------------- | ----------------------------------------------------- |
+| `service_timeout_ms` | `int` | `1000`        | Timeout duration (in milliseconds) for service calls. |
 
 ## Assumptions / Known limits
 
