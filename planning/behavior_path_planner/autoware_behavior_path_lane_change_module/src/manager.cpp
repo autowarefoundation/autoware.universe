@@ -152,6 +152,8 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
       getOrDeclareParameter<double>(*node, parameter("collision_check.prediction_time_resolution"));
     p.safety.collision_check.th_yaw_diff =
       getOrDeclareParameter<double>(*node, parameter("collision_check.yaw_diff_threshold"));
+    p.safety.collision_check.th_incoming_object_yaw =
+      getOrDeclareParameter<double>(*node, parameter("collision_check.th_incoming_object_yaw"));
 
     // rss check
     auto set_rss_params = [&](auto & params, const std::string & prefix) {
@@ -169,6 +171,8 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
         *node, parameter(prefix + ".rear_vehicle_safety_time_margin"));
       params.lateral_distance_max_threshold =
         getOrDeclareParameter<double>(*node, parameter(prefix + ".lateral_distance_max_threshold"));
+      params.extended_polygon_policy =
+        getOrDeclareParameter<std::string>(*node, parameter(prefix + ".extended_polygon_policy"));
     };
     set_rss_params(p.safety.rss_params, "safety_check.execution");
     set_rss_params(p.safety.rss_params_for_parked, "safety_check.parked");
@@ -190,6 +194,7 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
   }
 
   // lane change parameters
+  p.time_limit = getOrDeclareParameter<double>(*node, parameter("time_limit"));
   p.backward_lane_length = getOrDeclareParameter<double>(*node, parameter("backward_lane_length"));
   p.backward_length_buffer_for_end_of_lane =
     getOrDeclareParameter<double>(*node, parameter("backward_length_buffer_for_end_of_lane"));
@@ -301,7 +306,7 @@ std::unique_ptr<SceneModuleInterface> LaneChangeModuleManager::createNewSceneMod
 {
   return std::make_unique<LaneChangeInterface>(
     name_, *node_, parameters_, rtc_interface_ptr_map_,
-    objects_of_interest_marker_interface_ptr_map_,
+    objects_of_interest_marker_interface_ptr_map_, planning_factor_interface_,
     std::make_unique<NormalLaneChange>(parameters_, LaneChangeModuleType::NORMAL, direction_));
 }
 
@@ -313,6 +318,17 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
 
   {
     const std::string ns = "lane_change.";
+    auto time_limit = p->time_limit;
+    updateParam<double>(parameters, ns + "time_limit", time_limit);
+    if (time_limit >= 10.0) {
+      p->time_limit = time_limit;
+    } else {
+      RCLCPP_WARN_THROTTLE(
+        node_->get_logger(), *node_->get_clock(), 1000,
+        "WARNING! Parameter 'time_limit' is not updated because the value (%.3f ms) is not valid, "
+        "keep current value (%.3f ms)",
+        time_limit, p->time_limit);
+    }
     updateParam<double>(parameters, ns + "backward_lane_length", p->backward_lane_length);
     updateParam<double>(
       parameters, ns + "backward_length_buffer_for_end_of_lane",
@@ -349,25 +365,27 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
       parameters, ns + "lane_changing_decel_factor", p->trajectory.lane_changing_decel_factor);
     updateParam<double>(
       parameters, ns + "th_prepare_curvature", p->trajectory.th_prepare_curvature);
-    int longitudinal_acc_sampling_num = 0;
+    int longitudinal_acc_sampling_num = p->trajectory.lon_acc_sampling_num;
     updateParam<int>(parameters, ns + "lon_acc_sampling_num", longitudinal_acc_sampling_num);
     if (longitudinal_acc_sampling_num > 0) {
       p->trajectory.lon_acc_sampling_num = longitudinal_acc_sampling_num;
     } else {
-      RCLCPP_WARN_ONCE(
-        node_->get_logger(),
-        "Parameter 'lon_acc_sampling_num' is not updated because the value (%d) is not positive",
+      RCLCPP_WARN_THROTTLE(
+        node_->get_logger(), *node_->get_clock(), 1000,
+        "WARNING! Parameter 'lon_acc_sampling_num' is not updated because the value (%d) is not "
+        "positive",
         longitudinal_acc_sampling_num);
     }
 
-    int lateral_acc_sampling_num = 0;
+    int lateral_acc_sampling_num = p->trajectory.lat_acc_sampling_num;
     updateParam<int>(parameters, ns + "lat_acc_sampling_num", lateral_acc_sampling_num);
     if (lateral_acc_sampling_num > 0) {
       p->trajectory.lat_acc_sampling_num = lateral_acc_sampling_num;
     } else {
-      RCLCPP_WARN_ONCE(
-        node_->get_logger(),
-        "Parameter 'lat_acc_sampling_num' is not updated because the value (%d) is not positive",
+      RCLCPP_WARN_THROTTLE(
+        node_->get_logger(), *node_->get_clock(), 1000,
+        "WARNING! Parameter 'lat_acc_sampling_num' is not updated because the value (%d) is not "
+        "positive",
         lateral_acc_sampling_num);
     }
 
@@ -409,8 +427,8 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
       }
       p->trajectory.lat_acc_map = lat_acc_map;
     } else {
-      RCLCPP_WARN_ONCE(
-        node_->get_logger(),
+      RCLCPP_WARN_THROTTLE(
+        node_->get_logger(), *node_->get_clock(), 1000,
         "Mismatched size for lateral acceleration. Expected size: %lu, but velocity: %lu, "
         "min_values: %lu, max_values: %lu",
         std::max(2ul, velocity.size()), velocity.size(), min_values.size(), max_values.size());
@@ -440,6 +458,19 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
       p->safety.collision_check.prediction_time_resolution);
     updateParam<double>(
       parameters, ns + "yaw_diff_threshold", p->safety.collision_check.th_yaw_diff);
+
+    auto th_incoming_object_yaw = p->safety.collision_check.th_incoming_object_yaw;
+    updateParam<double>(parameters, ns + "th_incoming_object_yaw", th_incoming_object_yaw);
+    if (th_incoming_object_yaw >= M_PI_2) {
+      p->safety.collision_check.th_incoming_object_yaw = th_incoming_object_yaw;
+    } else {
+      RCLCPP_WARN_THROTTLE(
+        node_->get_logger(), *node_->get_clock(), 5000,
+        "The value of th_incoming_object_yaw (%.3f rad) is less than the minimum possible value "
+        "(%.3f "
+        "rad).",
+        th_incoming_object_yaw, M_PI_2);
+    }
   }
 
   {
@@ -469,7 +500,7 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
     updateParam<double>(parameters, ns + "stop_time", p->th_stop_time);
   }
 
-  auto update_rss_params = [&parameters](const std::string & prefix, auto & params) {
+  auto update_rss_params = [&parameters, this](const std::string & prefix, auto & params) {
     using autoware::universe_utils::updateParam;
     updateParam<double>(
       parameters, prefix + "longitudinal_distance_min_threshold",
@@ -488,6 +519,19 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
       params.rear_vehicle_safety_time_margin);
     updateParam<double>(
       parameters, prefix + "lateral_distance_max_threshold", params.lateral_distance_max_threshold);
+
+    auto extended_polygon_policy = params.extended_polygon_policy;
+    updateParam<std::string>(
+      parameters, prefix + "extended_polygon_policy", extended_polygon_policy);
+    if (extended_polygon_policy == "rectangle" || extended_polygon_policy == "along_path") {
+      params.extended_polygon_policy = extended_polygon_policy;
+    } else {
+      RCLCPP_WARN_THROTTLE(
+        node_->get_logger(), *node_->get_clock(), 1000,
+        "Policy %s not supported or there's typo. Make sure you choose either 'rectangle' or "
+        "'along_path'",
+        extended_polygon_policy.c_str());
+    }
   };
 
   update_rss_params("lane_change.safety_check.execution.", p->safety.rss_params);
@@ -515,28 +559,32 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
 
   {
     const std::string ns = "lane_change.cancel.";
-    bool enable_on_prepare_phase = true;
+    bool enable_on_prepare_phase = p->cancel.enable_on_prepare_phase;
     updateParam<bool>(parameters, ns + "enable_on_prepare_phase", enable_on_prepare_phase);
     if (!enable_on_prepare_phase) {
-      RCLCPP_WARN_ONCE(node_->get_logger(), "WARNING! Lane Change cancel function is disabled.");
+      RCLCPP_WARN_THROTTLE(
+        node_->get_logger(), *node_->get_clock(), 1000,
+        "WARNING! Lane Change cancel function is disabled.");
       p->cancel.enable_on_prepare_phase = enable_on_prepare_phase;
     }
 
-    bool enable_on_lane_changing_phase = true;
+    bool enable_on_lane_changing_phase = p->cancel.enable_on_lane_changing_phase;
     updateParam<bool>(
       parameters, ns + "enable_on_lane_changing_phase", enable_on_lane_changing_phase);
     if (!enable_on_lane_changing_phase) {
-      RCLCPP_WARN_ONCE(node_->get_logger(), "WARNING! Lane Change abort function is disabled.");
+      RCLCPP_WARN_THROTTLE(
+        node_->get_logger(), *node_->get_clock(), 1000,
+        "WARNING! Lane Change abort function is disabled.");
       p->cancel.enable_on_lane_changing_phase = enable_on_lane_changing_phase;
     }
 
-    int deceleration_sampling_num = 0;
+    int deceleration_sampling_num = p->cancel.deceleration_sampling_num;
     updateParam<int>(parameters, ns + "deceleration_sampling_num", deceleration_sampling_num);
     if (deceleration_sampling_num > 0) {
       p->cancel.deceleration_sampling_num = deceleration_sampling_num;
     } else {
-      RCLCPP_WARN_ONCE(
-        node_->get_logger(),
+      RCLCPP_WARN_THROTTLE(
+        node_->get_logger(), *node_->get_clock(), 1000,
         "Parameter 'deceleration_sampling_num' is not updated because the value (%d) is not "
         "positive",
         deceleration_sampling_num);
