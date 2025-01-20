@@ -20,6 +20,7 @@
 
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
+#include <memory>
 #include <optional>
 #include <utility>
 
@@ -28,14 +29,16 @@ namespace autoware::behavior_velocity_planner
 
 StopLineModule::StopLineModule(
   const int64_t module_id, lanelet::ConstLineString3d stop_line, const PlannerParam & planner_param,
-  const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock)
-: SceneModuleInterface(module_id, logger, clock),
+  const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock,
+  const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+  const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
+    planning_factor_interface)
+: SceneModuleInterface(module_id, logger, clock, time_keeper, planning_factor_interface),
   stop_line_(std::move(stop_line)),
   planner_param_(planner_param),
   state_(State::APPROACH),
   debug_data_()
 {
-  velocity_factor_.init(PlanningBehavior::STOP_SIGN);
 }
 
 bool StopLineModule::modifyPathVelocity(PathWithLaneId * path)
@@ -59,7 +62,12 @@ bool StopLineModule::modifyPathVelocity(PathWithLaneId * path)
 
   path->points = trajectory->restore();
 
-  updateVelocityFactor(&velocity_factor_, state_, *stop_point - ego_s);
+  // TODO(soblin): PlanningFactorInterface use trajectory class
+  planning_factor_interface_->add(
+    path->points, trajectory->compute(*stop_point).point.pose,
+    planner_data_->current_odometry->pose, planner_data_->current_odometry->pose,
+    tier4_planning_msgs::msg::PlanningFactor::STOP, tier4_planning_msgs::msg::SafetyFactorArray{},
+    true /*is_driving_forward*/, 0.0, 0.0 /*shift distance*/, "stopline");
 
   updateStateAndStoppedTime(
     &state_, &stopped_time_, clock_->now(), *stop_point - ego_s, planner_data_->isVehicleStopped());
@@ -146,24 +154,6 @@ void StopLineModule::updateStateAndStoppedTime(
     case State::START: {
       break;
     }
-  }
-}
-
-void StopLineModule::updateVelocityFactor(
-  autoware::motion_utils::VelocityFactorInterface * velocity_factor, const State & state,
-  const double & distance_to_stop_point)
-{
-  switch (state) {
-    case State::APPROACH: {
-      velocity_factor->set(distance_to_stop_point, VelocityFactor::APPROACHING);
-      break;
-    }
-    case State::STOPPED: {
-      velocity_factor->set(distance_to_stop_point, VelocityFactor::STOPPED);
-      break;
-    }
-    case State::START:
-      break;
   }
 }
 

@@ -13,6 +13,9 @@
 // limitations under the License.
 
 #include <autoware/behavior_velocity_planner/test_utils.hpp>
+#include <autoware_test_utils/autoware_test_utils.hpp>
+
+#include <tier4_v2x_msgs/msg/virtual_traffic_light_state_array.hpp>
 
 #include <gtest/gtest.h>
 
@@ -23,6 +26,19 @@
 
 namespace autoware::behavior_velocity_planner
 {
+using tier4_v2x_msgs::msg::VirtualTrafficLightStateArray;
+
+void publishVirtualTrafficLightState(
+  std::shared_ptr<PlanningInterfaceTestManager> test_manager, rclcpp::Node::SharedPtr target_node)
+{
+  auto test_node = test_manager->getTestNode();
+  const auto pub_virtual_traffic_light =
+    test_manager->getTestNode()->create_publisher<VirtualTrafficLightStateArray>(
+      "behavior_velocity_planner_node/input/virtual_traffic_light_states", 1);
+  pub_virtual_traffic_light->publish(VirtualTrafficLightStateArray{});
+  autoware::test_utils::spinSomeNodes(test_node, target_node, 3);
+}
+
 TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionPathWithLaneID)
 {
   rclcpp::init(0, nullptr);
@@ -35,8 +51,7 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionPathWithLaneID)
   auto test_target_node = autoware::behavior_velocity_planner::generateNode(plugin_info_vec);
 
   autoware::behavior_velocity_planner::publishMandatoryTopics(test_manager, test_target_node);
-  test_manager->publishVirtualTrafficLightState(
-    test_target_node, "behavior_velocity_planner_node/input/virtual_traffic_light_states");
+  publishVirtualTrafficLightState(test_manager, test_target_node);
 
   // test with nominal path_with_lane_id
   ASSERT_NO_THROW_WITH_ERROR_MSG(test_manager->testWithNominalPathWithLaneId(test_target_node));
@@ -57,9 +72,9 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithOffTrackEgoPose)
 
   auto test_manager = autoware::behavior_velocity_planner::generateTestManager();
   auto test_target_node = autoware::behavior_velocity_planner::generateNode(plugin_info_vec);
+
   autoware::behavior_velocity_planner::publishMandatoryTopics(test_manager, test_target_node);
-  test_manager->publishVirtualTrafficLightState(
-    test_target_node, "behavior_velocity_planner_node/input/virtual_traffic_light_states");
+  publishVirtualTrafficLightState(test_manager, test_target_node);
 
   // test for normal trajectory
   ASSERT_NO_THROW_WITH_ERROR_MSG(test_manager->testWithNominalPathWithLaneId(test_target_node));
