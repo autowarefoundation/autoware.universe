@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__CONTROL__CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_CORE_HPP_
-#define AUTOWARE__CONTROL__CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_CORE_HPP_
+#ifndef AUTOWARE__CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_CORE_HPP_
+#define AUTOWARE__CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_CORE_HPP_
 
-#include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/control_performance_analysis/control_performance_analysis_utils.hpp"
+#include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware_control_performance_analysis/msg/driving_monitor_stamped.hpp"
 #include "autoware_control_performance_analysis/msg/error_stamped.hpp"
 #include "autoware_control_performance_analysis/msg/float_stamped.hpp"
@@ -40,12 +40,12 @@
 namespace autoware::control::control_performance_analysis
 {
 using autoware_control_msgs::msg::Control;
-using autoware_planning_msgs::msg::Trajectory;
-using autoware_vehicle_msgs::msg::SteeringReport;
 using autoware_control_performance_analysis::msg::DrivingMonitorStamped;
 using autoware_control_performance_analysis::msg::Error;
 using autoware_control_performance_analysis::msg::ErrorStamped;
 using autoware_control_performance_analysis::msg::FloatStamped;
+using autoware_planning_msgs::msg::Trajectory;
+using autoware_vehicle_msgs::msg::SteeringReport;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseArray;
 using geometry_msgs::msg::Twist;
@@ -131,4 +131,4 @@ private:
 };
 }  // namespace autoware::control::control_performance_analysis
 
-#endif  // AUTOWARE__CONTROL__CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_CORE_HPP_
+#endif  // AUTOWARE__CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_CORE_HPP_

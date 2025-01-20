@@ -198,4 +198,5 @@ bool ControlPerformanceAnalysisNode::isValidTrajectory(const Trajectory & traj)
 }  // namespace autoware::control::control_performance_analysis
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(autoware::control::control_performance_analysis::ControlPerformanceAnalysisNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(
+  autoware::control::control_performance_analysis::ControlPerformanceAnalysisNode)
