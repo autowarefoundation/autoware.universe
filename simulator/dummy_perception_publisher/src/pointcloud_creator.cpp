@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "dummy_perception_publisher/node.hpp"
-#include "dummy_perception_publisher/signed_distance_function.hpp"
+#include "autoware/dummy_perception_publisher/node.hpp"
+#include "autoware/dummy_perception_publisher/signed_distance_function.hpp"
 
 #include <pcl/impl/point_types.hpp>
 
