@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "fault_injection/diagnostic_storage.hpp"
+#include "autoware/fault_injection/diagnostic_storage.hpp"
 
 #include <gtest/gtest.h>
 

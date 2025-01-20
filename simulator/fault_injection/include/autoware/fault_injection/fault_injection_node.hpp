@@ -15,8 +15,8 @@
 #ifndef AUTOWARE__FAULT_INJECTION__FAULT_INJECTION_NODE_HPP_
 #define AUTOWARE__FAULT_INJECTION__FAULT_INJECTION_NODE_HPP_
 
-#include "fault_injection/diagnostic_storage.hpp"
-#include "fault_injection/fault_injection_diag_updater.hpp"
+#include "autoware/fault_injection/diagnostic_storage.hpp"
+#include "autoware/fault_injection/fault_injection_diag_updater.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 

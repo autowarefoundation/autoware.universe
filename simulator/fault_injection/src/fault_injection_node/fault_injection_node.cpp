@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "fault_injection/fault_injection_node.hpp"
+#include "autoware/fault_injection/fault_injection_node.hpp"
 
 #include <autoware/universe_utils/ros/update_param.hpp>
 
