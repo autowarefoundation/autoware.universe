@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package format="3">
-  <name>localization_evaluator</name>
+  <name>autoware_localization_evaluator</name>
   <version>0.40.0</version>
   <description>localization evaluator ROS 2 node</description>
 
@@ -11,6 +11,7 @@
   <maintainer email="shintaro.sakoda@tier4.jp">Shintaro Sakoda</maintainer>
   <maintainer email="taiki.yamada@tier4.jp">Taiki Yamada</maintainer>
   <maintainer email="yamato.ando@tier4.jp">Yamato Ando</maintainer>
+  <maintainer email="junya.sasaki@tier4.jp">Junya Sasaki</maintainer>
 
   <license>Apache License 2.0</license>
 

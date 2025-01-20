@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "localization_evaluator/localization_evaluator_node.hpp"
+#include "autoware/localization_evaluator/localization_evaluator_node.hpp"
 
 #include "boost/lexical_cast.hpp"
 
@@ -23,7 +23,7 @@
 #include <string>
 #include <vector>
 
-namespace localization_diagnostics
+namespace autoware::localization_diagnostics
 {
 LocalizationEvaluatorNode::LocalizationEvaluatorNode(const rclcpp::NodeOptions & node_options)
 : Node("localization_evaluator", node_options),
@@ -134,7 +134,7 @@ void LocalizationEvaluatorNode::syncCallback(
     metrics_pub_->publish(metrics_msg);
   }
 }
-}  // namespace localization_diagnostics
+}  // namespace autoware::localization_diagnostics
 
 #include "rclcpp_components/register_node_macro.hpp"
-RCLCPP_COMPONENTS_REGISTER_NODE(localization_diagnostics::LocalizationEvaluatorNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::localization_diagnostics::LocalizationEvaluatorNode)
