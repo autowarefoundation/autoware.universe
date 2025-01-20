@@ -56,10 +56,13 @@ lanelet::ConstLineString3d get_most_side_boundary(
  * @return distance between the vehicle footprint and the lanelet, 0.0 if the vehicle intersects
  *with the line
  **/
-double calc_distance_to_line(const autoware::universe_utils::LinearRing2d & vehicle_footprint, const lanelet::ConstLineString3d & line);
+double calc_distance_to_line(
+  const autoware::universe_utils::LinearRing2d & vehicle_footprint,
+  const lanelet::ConstLineString3d & line);
 
 /**
- * @brief Calculate the yaw deviation between the ego's orientation and the vector from the ego position to the closest point on the line.
+ * @brief Calculate the yaw deviation between the ego's orientation and the vector from the ego
+ * position to the closest point on the line.
  * @param [in] ego_pose The pose of the ego vehicle.
  * @param [in] line The line to which the yaw deviation is calculated.
  * @return The yaw deviation in radians, normalized to the range [-π, π].
