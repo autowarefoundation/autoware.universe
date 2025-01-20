@@ -356,25 +356,26 @@ endif
 
 stop
 
-#LightGreen:Start separating object based on its behavior in target lane;
-if (Object is behind ego AND moving?) then (TRUE)
-  :Add object to <color:blue>**filtered_object.trailing_objects**</color> list;
-  :Can separate object;
-  stop
-else (FALSE)
-  if (Object is in front of ego?) then (TRUE)
-    if (Object is moving?) then (TRUE)
-    :Add object to <color:blue>**filtered_object.leading_objects.moving**</color> list;
-    :Can separate object;
+group Target Lane Objects Subprocess #LightYellow
+start
+if (Object is behind ego?) then (TRUE)
+  if (Object is moving?) then (TRUE)
+    :Add object to <color:blue>**filtered_object.trailing_objects**</color> list;
+    #LightGreen:Can separate object;
     stop
   else (FALSE)
-  :Add object to <color:blue>**filtered_object.leading_objects.stopped**</color> list;
-  :Can separate object;
+    #LightPink:Cant separate proceed with other checks;
+    stop
+  endif
+else (FALSE)
+  if (Object is moving?) then (TRUE)
+    :Add object to <color:blue>**filtered_object.leading_objects.moving**</color> list;
+  else (FALSE)
+    :Add object to <color:blue>**filtered_object.leading_objects.stopped**</color> list;
+  endif
+  #LightGreen:Can separate object;
   stop
-  endif
-  endif
 endif
-#LightPink:Cant separate proceed with other checks;
 
 @enduml
 ```
