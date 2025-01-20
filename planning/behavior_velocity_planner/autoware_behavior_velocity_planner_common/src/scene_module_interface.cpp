@@ -25,11 +25,15 @@ namespace autoware::behavior_velocity_planner
 {
 
 SceneModuleInterface::SceneModuleInterface(
-  const int64_t module_id, rclcpp::Logger logger, rclcpp::Clock::SharedPtr clock)
+  const int64_t module_id, rclcpp::Logger logger, rclcpp::Clock::SharedPtr clock,
+  const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+  const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
+    planning_factor_interface)
 : module_id_(module_id),
   logger_(logger),
   clock_(clock),
-  time_keeper_(std::shared_ptr<universe_utils::TimeKeeper>())
+  time_keeper_(time_keeper),
+  planning_factor_interface_(planning_factor_interface)
 {
 }
 

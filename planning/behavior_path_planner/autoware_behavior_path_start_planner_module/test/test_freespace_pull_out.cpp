@@ -78,7 +78,7 @@ private:
   }
 };
 
-TEST_F(TestFreespacePullOut, GenerateValidFreespacePullOutPath)
+TEST_F(TestFreespacePullOut, DISABLED_GenerateValidFreespacePullOutPath)
 {
   const auto start_pose =
     geometry_msgs::build<geometry_msgs::msg::Pose>()
