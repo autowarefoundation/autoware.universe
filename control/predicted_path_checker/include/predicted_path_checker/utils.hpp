@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PREDICTED_PATH_CHECKER__UTILS_HPP_
-#define PREDICTED_PATH_CHECKER__UTILS_HPP_
+#ifndef AUTOWARE__PREDICTED_PATH_CHECKER__UTILS_HPP_
+#define AUTOWARE__PREDICTED_PATH_CHECKER__UTILS_HPP_
 
 #include <autoware/interpolation/linear_interpolation.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
@@ -36,7 +36,7 @@
 #include <utility>
 #include <vector>
 
-namespace utils
+namespace autoware::motion::control::predicted_path_checker::utils
 {
 
 using autoware::universe_utils::Point2d;
@@ -99,6 +99,6 @@ void getCurrentObjectPose(
   const rclcpp::Time & current_time);
 
 bool isFrontObstacle(const Pose & ego_pose, const geometry_msgs::msg::Point & obstacle_pos);
-}  // namespace utils
+}  // namespace autoware::motion::control::predicted_path_checker::utils
 
-#endif  // PREDICTED_PATH_CHECKER__UTILS_HPP_
+#endif  // AUTOWARE__PREDICTED_PATH_CHECKER__UTILS_HPP_

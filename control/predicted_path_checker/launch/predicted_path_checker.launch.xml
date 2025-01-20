@@ -5,11 +5,11 @@
   <arg name="input/odometry" default="/localization/kinematic_state"/>
   <arg name="input/current_accel" default="/localization/acceleration"/>
 
-  <arg name="config_file" default="$(find-pkg-share predicted_path_checker)/config/predicted_path_checker.param.yaml"/>
+  <arg name="config_file" default="$(find-pkg-share autoware_predicted_path_checker)/config/predicted_path_checker.param.yaml"/>
   <!-- vehicle info -->
   <arg name="vehicle_info_param_file" default="$(find-pkg-share autoware_vehicle_info_utils)/config/vehicle_info.param.yaml"/>
 
-  <node pkg="predicted_path_checker" exec="predicted_path_checker_node" name="predicted_path_checker_node" output="screen">
+  <node pkg="autoware_predicted_path_checker" exec="autoware_predicted_path_checker_node" name="autoware_predicted_path_checker_node" output="screen">
     <param from="$(var config_file)"/>
     <param from="$(var vehicle_info_param_file)"/>
     <remap from="~/input/objects" to="$(var input/objects)"/>

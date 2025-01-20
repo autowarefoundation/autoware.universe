@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(predicted_path_checker)
+project(autoware_predicted_path_checker)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
@@ -12,7 +12,7 @@ include_directories(
   ${Eigen3_INCLUDE_DIRS}
 )
 
-ament_auto_add_library(predicted_path_checker SHARED
+ament_auto_add_library(${PROJECT_NAME} SHARED
   src/predicted_path_checker_node/predicted_path_checker_node.cpp
   src/predicted_path_checker_node/collision_checker.cpp
   src/predicted_path_checker_node/utils.cpp
@@ -20,9 +20,9 @@ ament_auto_add_library(predicted_path_checker SHARED
 
 )
 
-rclcpp_components_register_node(predicted_path_checker
+rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "autoware::motion::control::predicted_path_checker::PredictedPathCheckerNode"
-  EXECUTABLE predicted_path_checker_node
+  EXECUTABLE ${PROJECT_NAME}_node
 )
 
 if(BUILD_TESTING)
