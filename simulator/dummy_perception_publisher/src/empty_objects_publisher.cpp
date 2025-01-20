@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,9 @@
 
 #include <memory>
 #include <utility>
+
+namespace autoware::simulator::dummy_perception_publisher
+{
 
 class EmptyObjectsPublisher : public rclcpp::Node
 {
@@ -45,10 +48,12 @@ private:
   }
 };
 
+}  // namespace autoware::simulator::dummy_perception_publisher
+
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<EmptyObjectsPublisher>());
+  rclcpp::spin(std::make_shared<autoware::simulator::dummy_perception_publisher::EmptyObjectsPublisher>());
   rclcpp::shutdown();
   return 0;
 }

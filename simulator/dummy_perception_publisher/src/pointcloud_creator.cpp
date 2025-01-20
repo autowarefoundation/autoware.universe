@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@
 #include <memory>
 #include <vector>
 
-namespace
+namespace autoware::simulator::dummy_perception_publisher
 {
 
 static constexpr double epsilon = 0.001;
@@ -44,8 +44,6 @@ pcl::PointXYZ getPointWrtBaseLink(
   const auto p_wrt_base = tf_base_link2moved_object(tf2::Vector3(x, y, z));
   return pcl::PointXYZ(p_wrt_base.x(), p_wrt_base.y(), p_wrt_base.z());
 }
-
-}  // namespace
 
 void ObjectCentricPointCloudCreator::create_object_pointcloud(
   const ObjectInfo & obj_info, const tf2::Transform & tf_base_link2map,
@@ -261,3 +259,5 @@ std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> EgoCentricPointCloudCreator::cr
   }
   return pointclouds;
 }
+
+}  // namespace autoware::simulator::dummy_perception_publisher

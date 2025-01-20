@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc. All rights reserved.
+// Copyright 2025 Tier IV, Inc. All rights reserved.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,6 +22,9 @@
 #include <cmath>
 #include <limits>
 #include <memory>
+
+namespace autoware::simulator::dummy_perception_publisher::signed_distance_function
+{
 
 namespace sdf = signed_distance_function;
 
@@ -76,6 +79,8 @@ TEST(SignedDistanceFunctionTest, CompositeSDF)
   // ASSERT_NEAR(func.getSphereTracingDist(0.0, 1.0, M_PI * 0.5, eps), 0.5, eps);
   // ASSERT_NEAR(func.getSphereTracingDist(0.0, 1.0, M_PI * -0.5, eps), 0.5, eps);
 }
+
+}  // namespace autoware::simulator::dummy_perception_publisher::signed_distance_function
 
 int main(int argc, char ** argv)
 {

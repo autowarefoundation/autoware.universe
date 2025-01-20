@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(dummy_perception_publisher)
+project(autoware_dummy_perception_publisher)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
@@ -23,19 +23,19 @@ ament_auto_add_library(signed_distance_function SHARED
   src/signed_distance_function.cpp
 )
 
-ament_auto_add_executable(dummy_perception_publisher_node
+ament_auto_add_executable(${PROJECT_NAME}_node
   src/main.cpp
   src/node.cpp
   src/pointcloud_creator.cpp
 )
 
-target_link_libraries(dummy_perception_publisher_node
+target_link_libraries(${PROJECT_NAME}_node
   signed_distance_function
 )
 
-ament_target_dependencies(dummy_perception_publisher_node ${${PROJECT_NAME}_DEPENDENCIES})
+ament_target_dependencies(${PROJECT_NAME}_node ${${PROJECT_NAME}_DEPENDENCIES})
 
-target_include_directories(dummy_perception_publisher_node
+target_include_directories(${PROJECT_NAME}_node
   PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
     $<INSTALL_INTERFACE:include>)
@@ -43,14 +43,14 @@ target_include_directories(dummy_perception_publisher_node
 # PCL dependencies - `ament_target_dependencies` doesn't respect the
 # components/modules selected above and only links in `common` ,so we need
 # to do this manually.
-target_compile_definitions(dummy_perception_publisher_node PRIVATE ${PCL_DEFINITIONS})
-target_include_directories(dummy_perception_publisher_node PRIVATE ${PCL_INCLUDE_DIRS})
+target_compile_definitions(${PROJECT_NAME}_node PRIVATE ${PCL_DEFINITIONS})
+target_include_directories(${PROJECT_NAME}_node PRIVATE ${PCL_INCLUDE_DIRS})
 # Unfortunately, this one can't be PRIVATE because only the plain or only the
 # keyword (PRIVATE) signature of target_link_libraries can be used for one
 # target, not both. The plain signature is already used inside
 # `ament_target_dependencies` and possibly rosidl_target_interfaces.
-target_link_libraries(dummy_perception_publisher_node ${PCL_LIBRARIES})
-target_link_directories(dummy_perception_publisher_node PRIVATE ${PCL_LIBRARY_DIRS})
+target_link_libraries(${PROJECT_NAME}_node ${PCL_LIBRARIES})
+target_link_directories(${PROJECT_NAME}_node PRIVATE ${PCL_LIBRARY_DIRS})
 
 
 ament_auto_add_executable(empty_objects_publisher

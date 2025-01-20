@@ -1,4 +1,4 @@
-// Copyright 2022 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,7 +20,7 @@
 #include <iostream>
 #include <limits>
 
-namespace signed_distance_function
+namespace autoware::simulator::dummy_perception_publisher::signed_distance_function
 {
 
 double AbstractSignedDistanceFunction::getSphereTracingDist(
@@ -89,4 +89,4 @@ size_t CompositeSDF::nearest_sdf_index(double x, double y) const
   return idx_min;
 }
 
-}  // namespace signed_distance_function
+}  // namespace autoware::simulator::dummy_perception_publisher::signed_distance_function

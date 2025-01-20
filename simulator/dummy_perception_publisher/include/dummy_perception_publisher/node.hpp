@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DUMMY_PERCEPTION_PUBLISHER__NODE_HPP_
-#define DUMMY_PERCEPTION_PUBLISHER__NODE_HPP_
+#ifndef AUTOWARE__SIMULATOR__DUMMY_PERCEPTION_PUBLISHER__NODE_HPP_
+#define AUTOWARE__SIMULATOR__DUMMY_PERCEPTION_PUBLISHER__NODE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -41,6 +41,8 @@
 #include <random>
 #include <vector>
 
+namespace autoware::simulator::dummy_perception_publisher
+{
 struct ObjectInfo
 {
   ObjectInfo(
@@ -139,4 +141,6 @@ public:
   ~DummyPerceptionPublisherNode() {}
 };
 
-#endif  // DUMMY_PERCEPTION_PUBLISHER__NODE_HPP_
+}  // namespace autoware::simulator::dummy_perception_publisher
+
+#endif  // AUTOWARE__SIMULATOR__DUMMY_PERCEPTION_PUBLISHER__NODE_HPP_
