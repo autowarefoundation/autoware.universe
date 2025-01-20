@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__SIMULATOR__DUMMY_PERCEPTION_PUBLISHER__NODE_HPP_
-#define AUTOWARE__SIMULATOR__DUMMY_PERCEPTION_PUBLISHER__NODE_HPP_
+#ifndef AUTOWARE__DUMMY_PERCEPTION_PUBLISHER__NODE_HPP_
+#define AUTOWARE__DUMMY_PERCEPTION_PUBLISHER__NODE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -143,4 +143,4 @@ public:
 
 }  // namespace autoware::simulator::dummy_perception_publisher
 
-#endif  // AUTOWARE__SIMULATOR__DUMMY_PERCEPTION_PUBLISHER__NODE_HPP_
+#endif  // AUTOWARE__DUMMY_PERCEPTION_PUBLISHER__NODE_HPP_
