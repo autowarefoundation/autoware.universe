@@ -20,6 +20,7 @@
 #include "autoware/obstacle_cruise_planner/stop_planning_debug_info.hpp"
 #include "autoware/obstacle_cruise_planner/type_alias.hpp"
 #include "autoware/obstacle_cruise_planner/utils.hpp"
+#include "autoware/planning_factor_interface/planning_factor_interface.hpp"
 #include "autoware/universe_utils/ros/update_param.hpp"
 #include "autoware/universe_utils/system/stop_watch.hpp"
 
@@ -47,15 +48,16 @@ public:
     rclcpp::Node & node, const LongitudinalInfo & longitudinal_info,
     const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
     const EgoNearestParam & ego_nearest_param, const std::shared_ptr<DebugData> debug_data_ptr)
-  : longitudinal_info_(longitudinal_info),
+  : planning_factor_interface_{std::make_unique<
+      autoware::planning_factor_interface::PlanningFactorInterface>(
+      &node, "obstacle_cruise_planner")},
+    longitudinal_info_(longitudinal_info),
     vehicle_info_(vehicle_info),
     ego_nearest_param_(ego_nearest_param),
     debug_data_ptr_(debug_data_ptr),
     slow_down_param_(SlowDownParam(node)),
     stop_param_(StopParam(node, longitudinal_info))
   {
-    velocity_factors_pub_ =
-      node.create_publisher<VelocityFactorArray>("/planning/velocity_factors/obstacle_cruise", 1);
     stop_speed_exceeded_pub_ =
       node.create_publisher<StopSpeedExceeded>("~/output/stop_speed_exceeded", 1);
     metrics_pub_ = node.create_publisher<MetricArray>("~/metrics", 10);
@@ -101,6 +103,7 @@ public:
     const std::optional<geometry_msgs::msg::Pose> & stop_pose = std::nullopt,
     const std::optional<StopObstacle> & stop_obstacle = std::nullopt);
   void publishMetrics(const rclcpp::Time & current_time);
+  void publishPlanningFactors() { planning_factor_interface_->publish(); }
   void clearMetrics();
 
   void onParam(const std::vector<rclcpp::Parameter> & parameters)
@@ -128,6 +131,9 @@ public:
   double getSafeDistanceMargin() const { return longitudinal_info_.safe_distance_margin; }
 
 protected:
+  std::unique_ptr<autoware::planning_factor_interface::PlanningFactorInterface>
+    planning_factor_interface_;
+
   // Parameters
   bool enable_debug_info_{false};
   bool enable_calculation_time_info_{false};
@@ -145,7 +151,6 @@ protected:
     stop_watch_;
 
   // Publishers
-  rclcpp::Publisher<VelocityFactorArray>::SharedPtr velocity_factors_pub_;
   rclcpp::Publisher<StopSpeedExceeded>::SharedPtr stop_speed_exceeded_pub_;
   rclcpp::Publisher<MetricArray>::SharedPtr metrics_pub_;
 

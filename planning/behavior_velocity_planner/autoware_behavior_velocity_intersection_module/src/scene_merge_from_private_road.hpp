@@ -61,7 +61,10 @@ public:
   MergeFromPrivateRoadModule(
     const int64_t module_id, const int64_t lane_id, std::shared_ptr<const PlannerData> planner_data,
     const PlannerParam & planner_param, const std::set<lanelet::Id> & associative_ids,
-    const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock);
+    const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock,
+    const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+    const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
+      planning_factor_interface);
 
   /**
    * @brief plan go-stop velocity at traffic crossing with collision check between reference path
