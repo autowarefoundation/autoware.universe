@@ -21,6 +21,7 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <iostream>
+#include <memory>
 #include <utility>
 
 namespace autoware::behavior_velocity_planner
@@ -33,8 +34,11 @@ using geometry_msgs::msg::Point32;
 SpeedBumpModule::SpeedBumpModule(
   const int64_t module_id, const int64_t lane_id,
   const lanelet::autoware::SpeedBump & speed_bump_reg_elem, const PlannerParam & planner_param,
-  const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock)
-: SceneModuleInterface(module_id, logger, clock),
+  const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock,
+  const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+  const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
+    planning_factor_interface)
+: SceneModuleInterface(module_id, logger, clock, time_keeper, planning_factor_interface),
   module_id_(module_id),
   lane_id_(lane_id),
   speed_bump_reg_elem_(std::move(speed_bump_reg_elem)),

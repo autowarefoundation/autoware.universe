@@ -17,8 +17,6 @@
 
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 
-#include "autoware_adapi_v1_msgs/msg/planning_behavior.hpp"
-#include "autoware_adapi_v1_msgs/msg/velocity_factor_array.hpp"
 #include "autoware_perception_msgs/msg/predicted_object.hpp"
 #include "autoware_perception_msgs/msg/predicted_objects.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
@@ -39,9 +37,6 @@
 #include <pcl/point_types.h>
 
 using autoware::vehicle_info_utils::VehicleInfo;
-using autoware_adapi_v1_msgs::msg::PlanningBehavior;
-using autoware_adapi_v1_msgs::msg::VelocityFactor;
-using autoware_adapi_v1_msgs::msg::VelocityFactorArray;
 using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
