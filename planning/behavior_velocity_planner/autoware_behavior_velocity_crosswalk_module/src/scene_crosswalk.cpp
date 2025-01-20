@@ -336,13 +336,8 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
 
   // Check pedestrian for stop
   // NOTE: first stop point and its minimum distance from ego to stop
-  // auto isVehicleType = [](const uint8_t label) {
-  //   return label == ObjectClassification::MOTORCYCLE || label == ObjectClassification::BICYCLE;
-  // };
   std::optional<double> dist_nearest_cp;
   std::vector<geometry_msgs::msg::Point> stop_factor_points;
-  // const std::optional<double> ego_crosswalk_passage_direction =
-  //   findEgoPassageDirectionAlongPath(sparse_resample_path);
   for (const auto & object : object_info_manager_.getObject()) {
     const auto & collision_point_opt = object.collision_point;
     if (collision_point_opt) {
@@ -352,21 +347,7 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
         continue;
       }
 
-      // if (
-      //   isVehicleType(object.classification) && ego_crosswalk_passage_direction &&
-      //   collision_point.crosswalk_passage_direction) {
-      //   double direction_diff = std::abs(std::fmod(
-      //     collision_point.crosswalk_passage_direction.value() -
-      //       ego_crosswalk_passage_direction.value(),
-      //     M_PI_2));
-      //   direction_diff = std::min(direction_diff, M_PI_2 - direction_diff);
-      //   if (direction_diff < planner_param_.vehicle_object_cross_angle_threshold) {
-      //     continue;
-      //   }
-      // }
-
       stop_factor_points.push_back(object.position);
-
       const auto dist_ego2cp =
         calcSignedArcLength(sparse_resample_path.points, ego_pos, collision_point.collision_point);
       if (!dist_nearest_cp || dist_ego2cp < dist_nearest_cp) {
