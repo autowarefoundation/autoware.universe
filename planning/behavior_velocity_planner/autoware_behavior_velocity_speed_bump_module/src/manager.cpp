@@ -63,7 +63,7 @@ void SpeedBumpModuleManager::launchNewModules(const tier4_planning_msgs::msg::Pa
     if (!isModuleRegistered(module_id)) {
       registerModule(std::make_shared<SpeedBumpModule>(
         module_id, lane_id, *speed_bump_with_lane_id.first, planner_param_,
-        logger_.get_child("speed_bump_module"), clock_));
+        logger_.get_child("speed_bump_module"), clock_, time_keeper_, planning_factor_interface_));
     }
   }
 }

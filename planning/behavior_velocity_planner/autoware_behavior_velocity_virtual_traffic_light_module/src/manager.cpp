@@ -94,7 +94,8 @@ void VirtualTrafficLightModuleManager::launchNewModules(
         ego_path_linestring, lanelet::utils::to2D(stop_line_opt.value()).basicLineString())) {
       registerModule(std::make_shared<VirtualTrafficLightModule>(
         module_id, lane_id, *m.first, m.second, planner_param_,
-        logger_.get_child("virtual_traffic_light_module"), clock_));
+        logger_.get_child("virtual_traffic_light_module"), clock_, time_keeper_,
+        planning_factor_interface_));
     }
   }
 }
