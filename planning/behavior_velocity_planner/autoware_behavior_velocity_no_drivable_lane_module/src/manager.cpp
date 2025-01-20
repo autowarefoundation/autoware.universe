@@ -51,7 +51,8 @@ void NoDrivableLaneModuleManager::launchNewModules(
     }
 
     registerModule(std::make_shared<NoDrivableLaneModule>(
-      module_id, lane_id, planner_param_, logger_.get_child("no_drivable_lane_module"), clock_));
+      module_id, lane_id, planner_param_, logger_.get_child("no_drivable_lane_module"), clock_,
+      time_keeper_, planning_factor_interface_));
   }
 }
 

@@ -44,10 +44,12 @@ ShiftPullOut::ShiftPullOut(
   std::shared_ptr<universe_utils::TimeKeeper> time_keeper)
 : PullOutPlannerBase{node, parameters, time_keeper}
 {
+  autoware::lane_departure_checker::Param lane_departure_checker_params;
+  lane_departure_checker_params.footprint_extra_margin =
+    parameters.lane_departure_check_expansion_margin;
   lane_departure_checker_ =
     std::make_shared<autoware::lane_departure_checker::LaneDepartureChecker>(
-      autoware::lane_departure_checker::Param{parameters.lane_departure_check_expansion_margin},
-      vehicle_info_, time_keeper_);
+      lane_departure_checker_params, vehicle_info_, time_keeper_);
 }
 
 std::optional<PullOutPath> ShiftPullOut::plan(
