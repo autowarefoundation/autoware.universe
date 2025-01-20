@@ -1,4 +1,4 @@
-// Copyright 2021 - 2022 Tier IV, Inc., Leo Drive Teknoloji A.Ş.
+// Copyright 2021 - 2025 Tier IV, Inc., Leo Drive Teknoloji A.Ş.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_UTILS_HPP_
-#define CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_UTILS_HPP_
+#ifndef AUTOWARE__CONTROL__CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_UTILS_HPP_
+#define AUTOWARE__CONTROL__CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_UTILS_HPP_
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -28,7 +28,7 @@
 #include <utility>
 #include <vector>
 
-namespace control_performance_analysis
+namespace autoware::control::control_performance_analysis
 {
 namespace utils
 {
@@ -84,6 +84,6 @@ double curvatureFromThreePoints(
   std::array<double, 2> const & c);
 
 }  // namespace utils
-}  // namespace control_performance_analysis
+}  // namespace autoware::control::control_performance_analysis
 
-#endif  // CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_UTILS_HPP_
+#endif  // AUTOWARE__CONTROL__CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_UTILS_HPP_

@@ -1,4 +1,4 @@
-// Copyright 2021 - 2022 Tier IV, Inc., Leo Drive Teknoloji A.Ş.
+// Copyright 2021 - 2025 Tier IV, Inc., Leo Drive Teknoloji A.Ş.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,8 +14,8 @@
 
 #include "control_performance_analysis/control_performance_analysis_node.hpp"
 
-#include "control_performance_analysis/msg/driving_monitor_stamped.hpp"
-#include "control_performance_analysis/msg/error_stamped.hpp"
+#include "autoware_control_performance_analysis/msg/driving_monitor_stamped.hpp"
+#include "autoware_control_performance_analysis/msg/error_stamped.hpp"
 
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 
@@ -25,18 +25,18 @@
 namespace
 {
 using autoware_control_msgs::msg::Control;
-using control_performance_analysis::msg::DrivingMonitorStamped;
-using control_performance_analysis::msg::ErrorStamped;
+using autoware_control_performance_analysis::msg::DrivingMonitorStamped;
+using autoware_control_performance_analysis::msg::ErrorStamped;
 
 }  // namespace
 
-namespace control_performance_analysis
+namespace autoware::control::control_performance_analysis
 {
 using autoware::vehicle_info_utils::VehicleInfoUtils;
 
 ControlPerformanceAnalysisNode::ControlPerformanceAnalysisNode(
   const rclcpp::NodeOptions & node_options)
-: Node("control_performance_analysis", node_options)
+: Node("autoware_control_performance_analysis", node_options)
 {
   using std::placeholders::_1;
 
@@ -195,7 +195,7 @@ bool ControlPerformanceAnalysisNode::isValidTrajectory(const Trajectory & traj)
 
   return check_condition;
 }
-}  // namespace control_performance_analysis
+}  // namespace autoware::control::control_performance_analysis
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(control_performance_analysis::ControlPerformanceAnalysisNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::control::control_performance_analysis::ControlPerformanceAnalysisNode)

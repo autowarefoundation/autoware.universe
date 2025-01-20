@@ -1,4 +1,4 @@
-// Copyright 2021 - 2022 Tier IV, Inc., Leo Drive Teknoloji A.Ş.
+// Copyright 2021 - 2025 Tier IV, Inc., Leo Drive Teknoloji A.Ş.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_NODE_HPP_
-#define CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_NODE_HPP_
+#ifndef AUTOWARE__CONTROL__CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_NODE_HPP_
+#define AUTOWARE__CONTROL__CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_NODE_HPP_
 
 #include "control_performance_analysis/control_performance_analysis_core.hpp"
-#include "control_performance_analysis/msg/driving_monitor_stamped.hpp"
-#include "control_performance_analysis/msg/error_stamped.hpp"
+#include "autoware_control_performance_analysis/msg/driving_monitor_stamped.hpp"
+#include "autoware_control_performance_analysis/msg/error_stamped.hpp"
 
 #include <autoware/signal_processing/lowpass_filter_1d.hpp>
 #include <autoware/universe_utils/ros/self_pose_listener.hpp>
@@ -34,13 +34,13 @@
 #include <memory>
 #include <utility>
 
-namespace control_performance_analysis
+namespace autoware::control::control_performance_analysis
 {
 using autoware_control_msgs::msg::Control;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_vehicle_msgs::msg::SteeringReport;
-using control_performance_analysis::msg::DrivingMonitorStamped;
-using control_performance_analysis::msg::ErrorStamped;
+using autoware_control_performance_analysis::msg::DrivingMonitorStamped;
+using autoware_control_performance_analysis::msg::ErrorStamped;
 using geometry_msgs::msg::PoseStamped;
 using nav_msgs::msg::Odometry;
 
@@ -92,6 +92,6 @@ private:
   // Algorithm
   std::unique_ptr<ControlPerformanceAnalysisCore> control_performance_core_ptr_;
 };
-}  // namespace control_performance_analysis
+}  // namespace autoware::control::control_performance_analysis
 
-#endif  // CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_NODE_HPP_
+#endif  // AUTOWARE__CONTROL__CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_NODE_HPP_

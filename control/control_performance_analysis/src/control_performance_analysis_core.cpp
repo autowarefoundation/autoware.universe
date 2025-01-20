@@ -1,4 +1,4 @@
-// Copyright 2021 - 2022 Tier IV, Inc., Leo Drive Teknoloji A.Ş.
+// Copyright 2021 - 2025 Tier IV, Inc., Leo Drive Teknoloji A.Ş.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,14 +25,14 @@
 #include <utility>
 #include <vector>
 
-namespace control_performance_analysis
+namespace autoware::control::control_performance_analysis
 {
 using geometry_msgs::msg::Quaternion;
 
 ControlPerformanceAnalysisCore::ControlPerformanceAnalysisCore()
 {
-  prev_target_vars_ = std::make_unique<msg::ErrorStamped>();
-  prev_driving_vars_ = std::make_unique<msg::DrivingMonitorStamped>();
+  prev_target_vars_ = std::make_unique<autoware_control_performance_analysis::msg::ErrorStamped>();
+  prev_driving_vars_ = std::make_unique<autoware_control_performance_analysis::msg::DrivingMonitorStamped>();
   odom_history_ptr_ = std::make_shared<std::vector<Odometry>>();
   p_.odom_interval_ = 0;
   p_.curvature_interval_length_ = 10.0;
@@ -46,8 +46,8 @@ ControlPerformanceAnalysisCore::ControlPerformanceAnalysisCore()
 ControlPerformanceAnalysisCore::ControlPerformanceAnalysisCore(Params & p) : p_{p}
 {
   // prepare control performance struct
-  prev_target_vars_ = std::make_unique<msg::ErrorStamped>();
-  prev_driving_vars_ = std::make_unique<msg::DrivingMonitorStamped>();
+  prev_target_vars_ = std::make_unique<autoware_control_performance_analysis::msg::ErrorStamped>();
+  prev_driving_vars_ = std::make_unique<autoware_control_performance_analysis::msg::DrivingMonitorStamped>();
   odom_history_ptr_ = std::make_shared<std::vector<Odometry>>();
 }
 
@@ -251,7 +251,7 @@ bool ControlPerformanceAnalysisCore::calculateErrorVars()
     lpf(error.error_energy, prev_error.error_energy);
   }
 
-  prev_target_vars_ = std::make_unique<msg::ErrorStamped>(error_vars);
+  prev_target_vars_ = std::make_unique<autoware_control_performance_analysis::msg::ErrorStamped>(error_vars);
 
   return true;
 }
@@ -336,7 +336,7 @@ bool ControlPerformanceAnalysisCore::calculateDrivingVars()
         lpf(curr.desired_steering_angle.data, prev->desired_steering_angle.data);
       }
 
-      prev_driving_vars_ = std::make_unique<msg::DrivingMonitorStamped>(driving_status_vars);
+      prev_driving_vars_ = std::make_unique<autoware_control_performance_analysis::msg::DrivingMonitorStamped>(driving_status_vars);
 
       last_odom_header.stamp = odom_history_ptr_->at(odom_size - 1).header.stamp;
       last_steering_report.stamp = current_vec_steering_msg_ptr_->stamp;
@@ -544,4 +544,4 @@ double ControlPerformanceAnalysisCore::estimatePurePursuitCurvature()
 
   return curvature_pure_pursuit;
 }
-}  // namespace control_performance_analysis
+}  // namespace autoware::control::control_performance_analysis

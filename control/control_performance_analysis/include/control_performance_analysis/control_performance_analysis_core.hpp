@@ -1,4 +1,4 @@
-// Copyright 2021 - 2022 Tier IV, Inc., Leo Drive Teknoloji A.Ş.
+// Copyright 2021 - 2025 Tier IV, Inc., Leo Drive Teknoloji A.Ş.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_CORE_HPP_
-#define CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_CORE_HPP_
+#ifndef AUTOWARE__CONTROL__CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_CORE_HPP_
+#define AUTOWARE__CONTROL__CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_CORE_HPP_
 
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "control_performance_analysis/control_performance_analysis_utils.hpp"
-#include "control_performance_analysis/msg/driving_monitor_stamped.hpp"
-#include "control_performance_analysis/msg/error_stamped.hpp"
-#include "control_performance_analysis/msg/float_stamped.hpp"
+#include "autoware_control_performance_analysis/msg/driving_monitor_stamped.hpp"
+#include "autoware_control_performance_analysis/msg/error_stamped.hpp"
+#include "autoware_control_performance_analysis/msg/float_stamped.hpp"
 
 #include <Eigen/Core>
 #include <rclcpp/time.hpp>
@@ -37,15 +37,15 @@
 #include <utility>
 #include <vector>
 
-namespace control_performance_analysis
+namespace autoware::control::control_performance_analysis
 {
 using autoware_control_msgs::msg::Control;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_vehicle_msgs::msg::SteeringReport;
-using control_performance_analysis::msg::DrivingMonitorStamped;
-using control_performance_analysis::msg::Error;
-using control_performance_analysis::msg::ErrorStamped;
-using control_performance_analysis::msg::FloatStamped;
+using autoware_control_performance_analysis::msg::DrivingMonitorStamped;
+using autoware_control_performance_analysis::msg::Error;
+using autoware_control_performance_analysis::msg::ErrorStamped;
+using autoware_control_performance_analysis::msg::FloatStamped;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseArray;
 using geometry_msgs::msg::Twist;
@@ -129,6 +129,6 @@ private:
   rclcpp::Logger logger_{rclcpp::get_logger("control_performance_analysis")};
   rclcpp::Clock clock_{RCL_ROS_TIME};
 };
-}  // namespace control_performance_analysis
+}  // namespace autoware::control::control_performance_analysis
 
-#endif  // CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_CORE_HPP_
+#endif  // AUTOWARE__CONTROL__CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_CORE_HPP_
