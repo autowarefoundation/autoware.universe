@@ -93,8 +93,6 @@ private:
   // publishers
   rclcpp::Publisher<autoware_planning_msgs::msg::Trajectory>::SharedPtr trajectory_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_viz_pub_;
-  rclcpp::Publisher<autoware_adapi_v1_msgs::msg::VelocityFactorArray>::SharedPtr
-    velocity_factor_publisher_;
   autoware::universe_utils::ProcessingTimePublisher processing_diag_publisher_{
     this, "~/debug/processing_time_ms_diag"};
   rclcpp::Publisher<autoware_internal_debug_msgs::msg::Float64Stamped>::SharedPtr

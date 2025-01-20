@@ -81,8 +81,8 @@ SurroundObstacleCheckerNode::SurroundObstacleCheckerNode(const rclcpp::NodeOptio
     "~/output/velocity_limit_clear_command", rclcpp::QoS{1}.transient_local());
   pub_velocity_limit_ = this->create_publisher<VelocityLimit>(
     "~/output/max_velocity", rclcpp::QoS{1}.transient_local());
-  pub_processing_time_ =
-    this->create_publisher<tier4_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
+  pub_processing_time_ = this->create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>(
+    "~/debug/processing_time_ms", 1);
 
   using std::chrono_literals::operator""ms;
   timer_ = rclcpp::create_timer(
@@ -231,7 +231,7 @@ void SurroundObstacleCheckerNode::onTimer()
     debug_ptr_->pushPose(odometry_ptr_->pose.pose, PoseType::NoStart);
   }
 
-  tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
+  autoware_internal_debug_msgs::msg::Float64Stamped processing_time_msg;
   processing_time_msg.stamp = get_clock()->now();
   processing_time_msg.data = stop_watch.toc();
   pub_processing_time_->publish(processing_time_msg);
