@@ -1,4 +1,4 @@
-// Copyright 2024 The Autoware Foundation.
+// Copyright 2025 The Autoware Foundation.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LEARNING_BASED_VEHICLE_MODEL__INTERCONNECTED_MODEL_HPP_
-#define LEARNING_BASED_VEHICLE_MODEL__INTERCONNECTED_MODEL_HPP_
+#ifndef AUTOWARE__SIMULATOR__LEARNING_BASED_VEHICLE_MODEL__INTERCONNECTED_MODEL_HPP_
+#define AUTOWARE__SIMULATOR__LEARNING_BASED_VEHICLE_MODEL__INTERCONNECTED_MODEL_HPP_
 
 #include "learning_based_vehicle_model/model_connections_helpers.hpp"
 #include "learning_based_vehicle_model/simple_pymodel.hpp"
@@ -28,6 +28,9 @@
 #include <string>
 #include <tuple>
 #include <vector>
+
+namespace autoware::simulator::learning_based_vehicle_model
+{
 
 namespace py = pybind11;
 
@@ -127,4 +130,6 @@ public:
   std::vector<double> updatePyModel(std::vector<double> psim_input);
 };
 
-#endif  // LEARNING_BASED_VEHICLE_MODEL__INTERCONNECTED_MODEL_HPP_
+}  // namespace autoware::simulator::learning_based_vehicle_model
+
+#endif  // AUTOWARE__SIMULATOR__LEARNING_BASED_VEHICLE_MODEL__INTERCONNECTED_MODEL_HPP_

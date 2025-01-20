@@ -1,4 +1,4 @@
-// Copyright 2024 The Autoware Foundation.
+// Copyright 2025 The Autoware Foundation.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,10 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef LEARNING_BASED_VEHICLE_MODEL__SUBMODEL_INTERFACE_HPP_
-#define LEARNING_BASED_VEHICLE_MODEL__SUBMODEL_INTERFACE_HPP_
+#ifndef AUTOWARE__SIMULATOR__LEARNING_BASED_VEHICLE_MODEL__SUBMODEL_INTERFACE_HPP_
+#define AUTOWARE__SIMULATOR__LEARNING_BASED_VEHICLE_MODEL__SUBMODEL_INTERFACE_HPP_
 
 #include <vector>
+
+namespace autoware::simulator::learning_based_vehicle_model
+{
 
 class SubModelInterface
 {
@@ -59,4 +62,6 @@ public:
     std::vector<double> model_signals_vec, std::vector<double> model_signals_vec_next) = 0;
 };
 
-#endif  // LEARNING_BASED_VEHICLE_MODEL__SUBMODEL_INTERFACE_HPP_
+}  // namespace autoware::simulator::learning_based_vehicle_model
+
+#endif  // AUTOWARE__SIMULATOR__LEARNING_BASED_VEHICLE_MODEL__SUBMODEL_INTERFACE_HPP_
