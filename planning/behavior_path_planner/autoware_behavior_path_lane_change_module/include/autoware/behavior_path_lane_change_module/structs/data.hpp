@@ -269,6 +269,7 @@ struct CommonData
   LanesPolygonPtr lanes_polygon_ptr;
   TransientData transient_data;
   PathWithLaneId current_lanes_path;
+  PathWithLaneId target_lanes_path;
   ModuleType lc_type;
   Direction direction;
 
