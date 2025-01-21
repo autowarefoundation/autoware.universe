@@ -1,8 +1,8 @@
 # Lane Change design
 
-The Lane Change module is activated when lane change is needed and can be safely executed.
+The Lane Change module is activated when lane change is needed (Ego is not on preferred lane), and activation requirements are satisfied.
 
-## Lane Change Requirement
+## Lane Change Requirements
 
 ### Prerequisites
 
@@ -66,6 +66,56 @@ stop
 - Valid lane change path is found.
 - Lane change path is safe; does not collide with other dynamic objects.
 - Lane change candidate path is approved by an operator.
+
+## Implementation
+
+Lane change module uses a sampling based approach for generating a valid and safe lane changing trajectory. The process for generating the trajectory includes object filtering, metrics sampling, candidate paths generation, and lastly candidate paths evaluation.
+Additionally the lane change module is responsible for turn signal activation when appropriate, and inserting a stop point when necessary.
+
+The following diagram, illustrates the overall flow of the lane change module implementation.
+
+```plantuml
+@startuml
+
+start
+
+#LightBlue:Update lane change data;
+#LightBlue:Filter detected objects;
+if (Is lane change required?) then (yes)
+  #LightBlue:Activate turn signal;
+  #LightBlue:Generate metrics samples;
+  if (Is valid metrics available) then (yes)
+    While (Can generate new candidate path?) is (TRUE)
+      if (Candidate path is valid & safe?) then (yes)
+        #LightBlue:Generate drivable area;
+        #LightBlue:Execute lane change path;
+        while (Can module transit to success state?) is (False)
+          if (Can module trasit to failure state?) then (yes)
+            if (Can cancel or abort?) then (yes)
+              #LightBlue:Cancel/Abort;
+              #Orange:Restart process;
+              stop
+            else (no)
+            endif
+          else (no)
+          endif
+        endwhile (True)
+        #LightGreen:SUCCESS;
+        stop
+      else (no)
+      endif
+    endwhile (FALSE)
+  else (no)
+  endif
+else (no)
+endif
+#LightBlue:Insert stop point;
+#LightBlue:Execute previous approved path;
+#Orange:Restart process;
+stop
+
+@enduml
+```
 
 ## Generating Lane Change Candidate Path
 
