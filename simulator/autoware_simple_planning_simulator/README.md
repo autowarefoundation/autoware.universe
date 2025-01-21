@@ -1,4 +1,4 @@
-# simple_planning_simulator
+# autoware_simple_planning_simulator
 
 ## Purpose / Use cases
 
