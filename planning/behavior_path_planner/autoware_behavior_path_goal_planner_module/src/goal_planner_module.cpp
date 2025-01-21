@@ -293,8 +293,7 @@ LaneParkingPlanner::LaneParkingPlanner(
     }
   }
 
-  bezier_pull_over_planner_ =
-    std::make_shared<BezierPullOver>(node, parameters, lane_departure_checker);
+  bezier_pull_over_planner_ = std::make_shared<BezierPullOver>(node, parameters);
 
   if (pull_over_planners_.empty()) {
     RCLCPP_ERROR(logger_, "Not found enabled planner");
@@ -506,8 +505,8 @@ void LaneParkingPlanner::bezier_planning_helper(
   autoware::universe_utils::StopWatch timer;
   timer.tic("bezier");
   for (const auto & goal_candidate : goal_candidates) {
-    auto bezier_pull_over_paths =
-      bezier_pull_over_planner_->plans(goal_candidate, 0, planner_data, upstream_module_output);
+    auto bezier_pull_over_paths = bezier_pull_over_planner_->plans(
+      goal_candidate, path_candidates.size(), planner_data, upstream_module_output);
     std::copy(
       std::make_move_iterator(bezier_pull_over_paths.begin()),
       std::make_move_iterator(bezier_pull_over_paths.end()), std::back_inserter(path_candidates));
