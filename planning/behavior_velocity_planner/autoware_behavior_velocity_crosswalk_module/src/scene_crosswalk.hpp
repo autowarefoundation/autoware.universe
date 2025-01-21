@@ -17,7 +17,7 @@
 
 #include "autoware/behavior_velocity_crosswalk_module/util.hpp"
 
-#include <autoware/behavior_velocity_planner_common/scene_module_interface.hpp>
+#include <autoware/behavior_velocity_rtc_interface/scene_module_interface_with_rtc.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
 #include <autoware_lanelet2_extension/regulatory_elements/crosswalk.hpp>
@@ -112,7 +112,7 @@ double InterpolateMap(
 }
 }  // namespace
 
-class CrosswalkModule : public SceneModuleInterface
+class CrosswalkModule : public SceneModuleInterfaceWithRTC
 {
 public:
   struct PlannerParam
@@ -194,7 +194,8 @@ public:
       const rclcpp::Time & now, const geometry_msgs::msg::Point & position, const double vel,
       const bool is_ego_yielding, const std::optional<CollisionPoint> & collision_point,
       const PlannerParam & planner_param, const lanelet::BasicPolygon2d & crosswalk_polygon,
-      const bool is_object_away_from_path)
+      const bool is_object_away_from_path,
+      const std::optional<double> & ego_crosswalk_passage_direction)
     {
       const bool is_stopped = vel < planner_param.stop_object_velocity;
 
@@ -224,6 +225,24 @@ public:
 
       // Compare time to collision and vehicle
       if (collision_point) {
+        auto isVehicleType = [](const uint8_t label) {
+          return label == ObjectClassification::MOTORCYCLE ||
+                 label == ObjectClassification::BICYCLE;
+        };
+        if (
+          isVehicleType(classification) && ego_crosswalk_passage_direction &&
+          collision_point->crosswalk_passage_direction) {
+          double direction_diff = std::abs(std::fmod(
+            collision_point->crosswalk_passage_direction.value() -
+              ego_crosswalk_passage_direction.value(),
+            M_PI_2));
+          direction_diff = std::min(direction_diff, M_PI_2 - direction_diff);
+          if (direction_diff < planner_param.vehicle_object_cross_angle_threshold) {
+            collision_state = CollisionState::IGNORE;
+            return;
+          }
+        }
+
         // Check if ego will pass first
         const double ego_pass_first_additional_margin =
           collision_state == CollisionState::EGO_PASS_FIRST
@@ -268,7 +287,8 @@ public:
       const rclcpp::Time & now, const bool is_ego_yielding, const bool has_traffic_light,
       const std::optional<CollisionPoint> & collision_point, const uint8_t classification,
       const PlannerParam & planner_param, const lanelet::BasicPolygon2d & crosswalk_polygon,
-      const Polygon2d & attention_area)
+      const Polygon2d & attention_area,
+      const std::optional<double> & ego_crosswalk_passage_direction)
     {
       // update current uuids
       current_uuids_.push_back(uuid);
@@ -292,7 +312,7 @@ public:
       // update object state
       objects.at(uuid).transitState(
         now, position, vel, is_ego_yielding, collision_point, planner_param, crosswalk_polygon,
-        is_object_away_from_path);
+        is_object_away_from_path, ego_crosswalk_passage_direction);
       objects.at(uuid).collision_point = collision_point;
       objects.at(uuid).position = position;
       objects.at(uuid).classification = classification;
@@ -334,7 +354,10 @@ public:
     rclcpp::Node & node, const int64_t lane_id, const int64_t module_id,
     const std::optional<int64_t> & reg_elem_id, const lanelet::LaneletMapPtr & lanelet_map_ptr,
     const PlannerParam & planner_param, const rclcpp::Logger & logger,
-    const rclcpp::Clock::SharedPtr clock);
+    const rclcpp::Clock::SharedPtr clock,
+    const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+    const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
+      planning_factor_interface);
 
   bool modifyPathVelocity(PathWithLaneId * path) override;
 

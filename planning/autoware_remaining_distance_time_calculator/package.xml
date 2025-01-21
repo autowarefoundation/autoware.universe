@@ -18,6 +18,7 @@
   <depend>autoware_route_handler</depend>
   <depend>autoware_test_utils</depend>
   <depend>autoware_universe_utils</depend>
+  <depend>generate_parameter_library</depend>
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>rclcpp</depend>
