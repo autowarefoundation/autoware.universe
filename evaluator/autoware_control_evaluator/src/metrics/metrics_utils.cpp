@@ -57,9 +57,9 @@ double calc_distance_to_line(
 
 bool is_point_left_of_line(const Point & point, const std::vector<Point> & line)
 {
-  const size_t clost_idx = autoware::motion_utils::findNearestSegmentIndex(line, point);
-  const auto & p1 = line[clost_idx];
-  const auto & p2 = line[clost_idx + 1];
+  const size_t closest_idx = autoware::motion_utils::findNearestSegmentIndex(line, point);
+  const auto & p1 = line[closest_idx];
+  const auto & p2 = line[closest_idx + 1];
   return ((p2.x - p1.x) * (point.y - p1.y) - (p2.y - p1.y) * (point.x - p1.x)) > 0;
 }
 
