@@ -20,7 +20,7 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@v4
         with:
-          ref: main
+          ref: humble
           fetch-depth: 0
 
       - name: Generate token
@@ -47,8 +47,6 @@ jobs:
       - name: Bump version from humble branch
         id: bump-version-from-humble-branch
         run: |
-          git fetch origin --tags
-          git checkout origin/humble
           git checkout -b tmp/bot/bump_version_base
           git fetch origin main
           git merge origin/main
@@ -76,7 +74,7 @@ jobs:
           create
           --base=main
           --body="Bump version to ${{ steps.bump-version-from-humble-branch.outputs.version }}"
-          --title="chore: Bump version to ${{ steps.bump-version-from-humble-branch.outputs.version }}"
+          --title="chore: bump version to ${{ steps.bump-version-from-humble-branch.outputs.version }}"
           --head=tmp/bot/bump_version
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
