@@ -22,7 +22,6 @@
 
 #include <cstdio>
 
-
 /**
  * @brief print usage
  */
