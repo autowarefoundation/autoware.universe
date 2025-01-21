@@ -337,13 +337,8 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
 
   // Check pedestrian for stop
   // NOTE: first stop point and its minimum distance from ego to stop
-  auto isVehicleType = [](const uint8_t label) {
-    return label == ObjectClassification::MOTORCYCLE || label == ObjectClassification::BICYCLE;
-  };
   std::optional<double> dist_nearest_cp;
   std::vector<geometry_msgs::msg::Point> stop_factor_points;
-  const std::optional<double> ego_crosswalk_passage_direction =
-    findEgoPassageDirectionAlongPath(sparse_resample_path);
   for (const auto & object : object_info_manager_.getObject()) {
     const auto & collision_point_opt = object.collision_point;
     if (collision_point_opt) {
@@ -351,19 +346,6 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
       const auto & collision_state = object.collision_state;
       if (collision_state != CollisionState::YIELD) {
         continue;
-      }
-
-      if (
-        isVehicleType(object.classification) && ego_crosswalk_passage_direction &&
-        collision_point.crosswalk_passage_direction) {
-        double direction_diff = std::abs(std::fmod(
-          collision_point.crosswalk_passage_direction.value() -
-            ego_crosswalk_passage_direction.value(),
-          M_PI_2));
-        direction_diff = std::min(direction_diff, M_PI_2 - direction_diff);
-        if (direction_diff < planner_param_.vehicle_object_cross_angle_threshold) {
-          continue;
-        }
       }
 
       stop_factor_points.push_back(object.position);
@@ -1167,10 +1149,12 @@ void CrosswalkModule::updateObjectState(
 
     const auto collision_point =
       getCollisionPoint(sparse_resample_path, object, crosswalk_attention_range, attention_area);
+    const std::optional<double> ego_crosswalk_passage_direction =
+      findEgoPassageDirectionAlongPath(sparse_resample_path);
     object_info_manager_.update(
       obj_uuid, obj_pos, std::hypot(obj_vel.x, obj_vel.y), clock_->now(), is_ego_yielding,
       has_traffic_light, collision_point, object.classification.front().label, planner_param_,
-      crosswalk_.polygon2d().basicPolygon(), attention_area);
+      crosswalk_.polygon2d().basicPolygon(), attention_area, ego_crosswalk_passage_direction);
 
     const auto collision_state = object_info_manager_.getCollisionState(obj_uuid);
     if (collision_point) {
