@@ -2,6 +2,16 @@ name: bump-version-pr
 
 on:
   workflow_dispatch:
+    inputs:
+      version_part:
+        description: 'Which part of the version number to bump?'
+        required: true
+        default: 'minor'
+        type: choice
+        options:
+          - 'major'
+          - 'minor'
+          - 'patch'
 
 jobs:
   bump-version-pr:
@@ -45,7 +55,7 @@ jobs:
           catkin_generate_changelog -y
           git add *
           git commit -m "update CHANGELOG.rst"
-          catkin_prepare_release -y --bump minor --no-push
+          catkin_prepare_release -y --bump ${{ inputs.version_part }} --no-push
           version=$(git describe --tags)
           echo "version=${version}" >> $GITHUB_OUTPUT
         shell: bash
