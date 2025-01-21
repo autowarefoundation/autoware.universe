@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__COMPONENT_INTERFACE_SPECS__MAP_HPP_
-#define AUTOWARE__COMPONENT_INTERFACE_SPECS__MAP_HPP_
+#ifndef AUTOWARE__COMPONENT_INTERFACE_SPECS_UNIVERSE__MAP_HPP_
+#define AUTOWARE__COMPONENT_INTERFACE_SPECS_UNIVERSE__MAP_HPP_
 
 #include <rclcpp/qos.hpp>
 
 #include <autoware_map_msgs/msg/map_projector_info.hpp>
 
-namespace autoware::component_interface_specs::map
+namespace autoware::component_interface_specs_universe::map
 {
 
 struct MapProjectorInfo
@@ -31,6 +31,6 @@ struct MapProjectorInfo
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_TRANSIENT_LOCAL;
 };
 
-}  // namespace autoware::component_interface_specs::map
+}  // namespace autoware::component_interface_specs_universe::map
 
-#endif  // AUTOWARE__COMPONENT_INTERFACE_SPECS__MAP_HPP_
+#endif  // AUTOWARE__COMPONENT_INTERFACE_SPECS_UNIVERSE__MAP_HPP_

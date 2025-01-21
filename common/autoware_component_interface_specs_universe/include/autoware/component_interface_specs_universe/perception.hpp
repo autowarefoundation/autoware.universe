@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__COMPONENT_INTERFACE_SPECS__PERCEPTION_HPP_
-#define AUTOWARE__COMPONENT_INTERFACE_SPECS__PERCEPTION_HPP_
+#ifndef AUTOWARE__COMPONENT_INTERFACE_SPECS_UNIVERSE__PERCEPTION_HPP_
+#define AUTOWARE__COMPONENT_INTERFACE_SPECS_UNIVERSE__PERCEPTION_HPP_
 
 #include <rclcpp/qos.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 
-namespace autoware::component_interface_specs::perception
+namespace autoware::component_interface_specs_universe::perception
 {
 
 struct ObjectRecognition
@@ -31,6 +31,6 @@ struct ObjectRecognition
   static constexpr auto durability = RMW_QOS_POLICY_DURABILITY_VOLATILE;
 };
 
-}  // namespace autoware::component_interface_specs::perception
+}  // namespace autoware::component_interface_specs_universe::perception
 
-#endif  // AUTOWARE__COMPONENT_INTERFACE_SPECS__PERCEPTION_HPP_
+#endif  // AUTOWARE__COMPONENT_INTERFACE_SPECS_UNIVERSE__PERCEPTION_HPP_
