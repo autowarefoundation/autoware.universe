@@ -13,8 +13,8 @@
 // limitations under the License.
 
 #include "ament_index_cpp/get_package_share_directory.hpp"
-#include "gtest/gtest.h"
 #include "autoware/simple_planning_simulator/simple_planning_simulator_core.hpp"
+#include "gtest/gtest.h"
 #include "tf2/utils.h"
 
 #include "tier4_vehicle_msgs/msg/actuation_command_stamped.hpp"
@@ -455,7 +455,6 @@ INSTANTIATE_TEST_SUITE_P(
     // accel/brake alone is skipped.
     std::make_tuple(CommandType::Actuation, "ACTUATION_CMD_STEER_MAP"),
     std::make_tuple(CommandType::Actuation, "ACTUATION_CMD_VGR"),
-    std::make_tuple(CommandType::Actuation, "ACTUATION_CMD_MECHANICAL"))
-  );
+    std::make_tuple(CommandType::Actuation, "ACTUATION_CMD_MECHANICAL")));
 
 }  // namespace autoware::simulator::simple_planning_simulator

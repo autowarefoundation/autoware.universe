@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__UTILS__CSV_LOADER_HPP_
-#define AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__UTILS__CSV_LOADER_HPP_
+#ifndef AUTOWARE__SIMPLE_PLANNING_SIMULATOR__UTILS__CSV_LOADER_HPP_
+#define AUTOWARE__SIMPLE_PLANNING_SIMULATOR__UTILS__CSV_LOADER_HPP_
 
 #include <fstream>
 #include <iostream>
@@ -45,4 +45,4 @@ private:
 
 }  // namespace autoware::simulator::simple_planning_simulator
 
-#endif  // AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__UTILS__CSV_LOADER_HPP_
+#endif  // AUTOWARE__SIMPLE_PLANNING_SIMULATOR__UTILS__CSV_LOADER_HPP_
