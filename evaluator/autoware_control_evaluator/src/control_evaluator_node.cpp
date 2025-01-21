@@ -185,8 +185,7 @@ void ControlEvaluatorNode::AddBoundaryDistanceMetricMsg(
     double distance_to_left_boundary =
       metrics::utils::calc_distance_to_line(current_vehicle_footprint, left_boundary);
 
-    const double yaw_to_left_boundary = metrics::utils::calc_yaw_to_line(ego_pose, left_boundary);
-    if (yaw_to_left_boundary < 0.0) {
+    if (metrics::utils::is_point_left_of_line(ego_pose.position, behavior_path.left_bound)) {
       distance_to_left_boundary *= -1.0;
     }
     const Metric metric_left = Metric::left_boundary_distance;
@@ -199,8 +198,7 @@ void ControlEvaluatorNode::AddBoundaryDistanceMetricMsg(
     double distance_to_right_boundary =
       metrics::utils::calc_distance_to_line(current_vehicle_footprint, right_boundary);
 
-    const double yaw_to_right_boundary = metrics::utils::calc_yaw_to_line(ego_pose, right_boundary);
-    if (yaw_to_right_boundary > 0.0) {
+    if (!metrics::utils::is_point_left_of_line(ego_pose.position, behavior_path.right_bound)) {
       distance_to_right_boundary *= -1.0;
     }
     const Metric metric_right = Metric::right_boundary_distance;

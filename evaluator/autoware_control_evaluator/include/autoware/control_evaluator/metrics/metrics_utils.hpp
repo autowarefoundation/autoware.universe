@@ -25,6 +25,7 @@ namespace metrics
 namespace utils
 {
 using autoware::route_handler::RouteHandler;
+using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 
 /**
@@ -47,13 +48,12 @@ double calc_distance_to_line(
   const autoware::universe_utils::LineString2d & line);
 
 /**
- * @brief Calculate the yaw deviation between the ego's orientation and the vector from the ego
- * position to the closest point on the line.
- * @param [in] ego_pose The pose of the ego vehicle.
- * @param [in] line The line to which the yaw deviation is calculated.
- * @return The yaw deviation in radians, normalized to the range [-π, π].
- */
-double calc_yaw_to_line(const Pose & ego_pose, const autoware::universe_utils::LineString2d & line);
+ * @brief Check if the point is on the left side of the line.
+ * @param [in] point point
+ * @param [in] line line
+ * @return true if the ego vehicle is on the left side of the lanelet line, false otherwise
+ **/
+bool is_point_left_of_line(const Point & point, const std::vector<Point> & line);
 
 }  // namespace utils
 }  // namespace metrics

@@ -25,6 +25,8 @@
 // #include <boost/geometry/algorithms/detail/distance/interface.hpp>
 
 #include <lanelet2_core/Forward.h>
+
+#include <cstddef>
 namespace control_diagnostics
 {
 namespace metrics
@@ -32,6 +34,7 @@ namespace metrics
 namespace utils
 {
 using autoware::route_handler::RouteHandler;
+using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 
 lanelet::ConstLanelets get_current_lanes(const RouteHandler & route_handler, const Pose & ego_pose)
@@ -52,31 +55,12 @@ double calc_distance_to_line(
   return boost::geometry::distance(vehicle_footprint, line);
 }
 
-double calc_yaw_to_line(const Pose & ego_pose, const autoware::universe_utils::LineString2d & line)
+bool is_point_left_of_line(const Point & point, const std::vector<Point> & line)
 {
-  const double ego_yaw = tf2::getYaw(ego_pose.orientation);
-
-  // find nearest point on the line.
-  double nearest_pt_x = ego_pose.position.x;
-  double nearest_pt_y = ego_pose.position.y;
-  double min_dist = std::numeric_limits<double>::max();
-  for (const auto & pt : line) {
-    const double dist = std::hypot(pt.x() - ego_pose.position.x, pt.y() - ego_pose.position.y);
-    if (dist < min_dist) {
-      min_dist = dist;
-      nearest_pt_x = pt.x();
-      nearest_pt_y = pt.y();
-    }
-  }
-
-  const double ego2line_yaw =
-    std::atan2(nearest_pt_y - ego_pose.position.y, nearest_pt_x - ego_pose.position.x);
-
-  double yaw_diff = ego2line_yaw - ego_yaw;
-  while (yaw_diff > M_PI) yaw_diff -= 2.0 * M_PI;
-  while (yaw_diff < -M_PI) yaw_diff += 2.0 * M_PI;
-
-  return yaw_diff;
+  const size_t clost_idx = autoware::motion_utils::findNearestSegmentIndex(line, point);
+  const auto & p1 = line[clost_idx];
+  const auto & p2 = line[clost_idx + 1];
+  return ((p2.x - p1.x) * (point.y - p1.y) - (p2.y - p1.y) * (point.x - p1.x)) > 0;
 }
 
 }  // namespace utils
