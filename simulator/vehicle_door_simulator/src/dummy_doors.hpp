@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DUMMY_DOORS_HPP_
-#define DUMMY_DOORS_HPP_
+#ifndef AUTOWARE__VEHICLE_DOOR_SIMULATOR_DUMMY_DOORS_HPP_
+#define AUTOWARE__VEHICLE_DOOR_SIMULATOR_DUMMY_DOORS_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -23,7 +23,7 @@
 
 #include <array>
 
-namespace vehicle_door_simulator
+namespace autoware::simulator::vehicle_door_simulator
 {
 
 class DummyDoors : public rclcpp::Node
@@ -57,6 +57,6 @@ private:
   std::array<LocalStatus, 4> statuses_;
 };
 
-}  // namespace vehicle_door_simulator
+}  // namespace autoware::simulator::vehicle_door_simulator
 
-#endif  // DUMMY_DOORS_HPP_
+#endif  // AUTOWARE__VEHICLE_DOOR_SIMULATOR_DUMMY_DOORS_HPP_
