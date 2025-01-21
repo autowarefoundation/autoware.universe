@@ -20,7 +20,7 @@
           "type": "boolean",
           "description": "flag to use x0_delayed as initial state for predicted trajectory",
           "default": true
-        },
+        }
       },
       "required": [
         "traj_resample_dist",
