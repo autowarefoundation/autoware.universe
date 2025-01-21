@@ -19,8 +19,8 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 #include <autoware/image_projection_based_fusion/utils/utils.hpp>
-#include <autoware_internal_debug_msgs/msg/float64_stamped.hpp>
 
+#include <autoware_internal_debug_msgs/msg/float64_stamped.hpp>
 #include <tier4_perception_msgs/msg/detected_object_with_feature.hpp>
 
 #include <boost/optional.hpp>
