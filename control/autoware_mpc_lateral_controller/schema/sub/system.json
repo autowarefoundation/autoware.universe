@@ -16,16 +16,11 @@
           "description": "flag for using steer prediction (do not use steer measurement)",
           "default": false
         },
-        "admissible_position_error": {
-          "type": "number",
-          "description": "stop vehicle when following position error is larger than this value [m]",
-          "default": 5.0
+        "use_delayed_initial_state": {
+          "type": "boolean",
+          "description": "flag to use x0_delayed as initial state for predicted trajectory",
+          "default": true
         },
-        "admissible_yaw_error_rad": {
-          "type": "number",
-          "description": "stop vehicle when following yaw angle error is larger than this value [rad]",
-          "default": 1.57
-        }
       },
       "required": [
         "traj_resample_dist",
