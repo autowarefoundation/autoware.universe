@@ -341,7 +341,43 @@ CudaPointcloudPreprocessor::CudaPointcloudPreprocessor()
   point_fields_.push_back(intensity_field);
   point_fields_.push_back(return_type_field);
   point_fields_.push_back(channel_field);
+  cudaMemPoolProps pool_props;
+  memset(&pool_props, 0, sizeof(cudaMemPoolProps));
+  pool_props.allocType = cudaMemAllocationTypePinned;
+  pool_props.handleTypes = cudaMemHandleTypePosixFileDescriptor;
+
+  pool_props.location.type = cudaMemLocationTypeDevice;
+  cudaGetDevice(&(pool_props.location.id));
+
+  // cudaMemPool_t device_memory_pool_ needs to be declared as a member of this class
+  cudaMemPoolCreate(&device_memory_pool_, &pool_props);
+  MemoryPoolAllocator<TwistStruct2D> allocator_2d(device_memory_pool_);
+  MemoryPoolAllocator<TwistStruct3D> allocator_3d(device_memory_pool_);
+  device_twist_2d_structs_
+      = thrust::device_vector<TwistStruct2D, MemoryPoolAllocator<TwistStruct2D>>(allocator_2d);
+  device_twist_3d_structs_
+      = thrust::device_vector<TwistStruct3D, MemoryPoolAllocator<TwistStruct3D>>(allocator_3d);
 }
+
+template <typename T>
+class MemoryPoolAllocator {
+ public:
+  using value_type = T;
+  MemoryPoolAllocator(cudaMemPool_t pool) : m_pool(pool) {}
+
+  T* allocate(std::size_t n) {
+    void* ptr = nullptr;
+    cudaMallocFromPoolAsync(&ptr, n * sizeof(T), m_pool, cudaStreamDefault);
+    return static_cast<T*>(ptr);
+  }
+
+  void deallocate(T* ptr, std::size_t) {
+    cudaFreeAsync(ptr, cudaStreamDefault);
+  }
+
+ protected:
+  cudaMemPool_t m_pool;
+};  // MemoryPoolAllocator
 
 void CudaPointcloudPreprocessor::setCropBoxParameters(
   const CropBoxParameters & self_crop_box_parameters,
