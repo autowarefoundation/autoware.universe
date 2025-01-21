@@ -1051,7 +1051,9 @@ void NormalLaneChange::filterOncomingObjects(PredictedObjects & objects) const
 
   const auto is_same_direction = [&](const PredictedObject & object) {
     const auto & object_pose = object.kinematics.initial_pose_with_covariance.pose;
-    return !utils::path_safety_checker::isTargetObjectOncoming(current_pose, object_pose);
+    return !utils::path_safety_checker::isTargetObjectOncoming(
+      current_pose, object_pose,
+      common_data_ptr_->lc_param_ptr->safety.collision_check.th_incoming_object_yaw);
   };
 
   //  Perception noise could make stationary objects seem opposite the ego vehicle; check the
@@ -1154,18 +1156,22 @@ bool NormalLaneChange::get_path_using_frenet(
   const std::vector<std::vector<int64_t>> & sorted_lane_ids,
   LaneChangePaths & candidate_paths) const
 {
-  stop_watch_.tic("frenet_candidates");
+  stop_watch_.tic(__func__);
   constexpr auto found_safe_path = true;
   const auto frenet_candidates = utils::lane_change::generate_frenet_candidates(
     common_data_ptr_, prev_module_output_.path, prepare_metrics);
   RCLCPP_DEBUG(
     logger_, "Generated %lu candidate paths in %2.2f[us]", frenet_candidates.size(),
-    stop_watch_.toc("frenet_candidates"));
+    stop_watch_.toc(__func__));
 
   candidate_paths.reserve(frenet_candidates.size());
   lane_change_debug_.frenet_states.clear();
   lane_change_debug_.frenet_states.reserve(frenet_candidates.size());
   for (const auto & frenet_candidate : frenet_candidates) {
+    if (stop_watch_.toc(__func__) >= lane_change_parameters_->time_limit) {
+      break;
+    }
+
     lane_change_debug_.frenet_states.emplace_back(
       frenet_candidate.prepare_metric, frenet_candidate.lane_changing.sampling_parameter,
       frenet_candidate.max_lane_changing_length);
@@ -1186,7 +1192,7 @@ bool NormalLaneChange::get_path_using_frenet(
       if (check_candidate_path_safety(*candidate_path_opt, target_objects)) {
         RCLCPP_DEBUG(
           logger_, "Found safe path after %lu candidate(s). Total time: %2.2f[us]",
-          frenet_candidates.size(), stop_watch_.toc("frenet_candidates"));
+          frenet_candidates.size(), stop_watch_.toc("__func__"));
         utils::lane_change::append_target_ref_to_candidate(
           *candidate_path_opt, common_data_ptr_->lc_param_ptr->frenet.th_curvature_smoothing);
         candidate_paths.push_back(*candidate_path_opt);
@@ -1204,7 +1210,7 @@ bool NormalLaneChange::get_path_using_frenet(
 
   RCLCPP_DEBUG(
     logger_, "No safe path after %lu candidate(s). Total time: %2.2f[us]", frenet_candidates.size(),
-    stop_watch_.toc("frenet_candidates"));
+    stop_watch_.toc(__func__));
   return !found_safe_path;
 }
 
@@ -1214,6 +1220,7 @@ bool NormalLaneChange::get_path_using_path_shifter(
   const std::vector<std::vector<int64_t>> & sorted_lane_ids,
   LaneChangePaths & candidate_paths) const
 {
+  stop_watch_.tic(__func__);
   const auto & target_lanes = get_target_lanes();
   candidate_paths.reserve(
     prepare_metrics.size() * lane_change_parameters_->trajectory.lat_acc_sampling_num);
@@ -1279,6 +1286,11 @@ bool NormalLaneChange::get_path_using_path_shifter(
       prepare_segment, common_data_ptr_->get_ego_speed(), prep_metric.velocity);
 
     for (const auto & lc_metric : lane_changing_metrics) {
+      if (stop_watch_.toc(__func__) >= lane_change_parameters_->time_limit) {
+        RCLCPP_DEBUG(logger_, "Time limit reached and no safe path was found.");
+        return false;
+      }
+
       debug_metrics.lc_metrics.emplace_back(lc_metric, -1);
 
       const auto debug_print_lat = [&](const std::string & s) {
@@ -1782,7 +1794,6 @@ bool NormalLaneChange::is_colliding(
 
   constexpr auto is_safe{true};
   auto current_debug_data = utils::path_safety_checker::createObjectDebug(obj);
-  constexpr auto collision_check_yaw_diff_threshold{M_PI};
   constexpr auto hysteresis_factor{1.0};
   const auto obj_predicted_paths = utils::path_safety_checker::getPredictedPathFromObj(
     obj, lane_change_parameters_->safety.collision_check.use_all_predicted_paths);
@@ -1807,7 +1818,8 @@ bool NormalLaneChange::is_colliding(
     const auto collided_polygons = utils::path_safety_checker::get_collided_polygons(
       lane_change_path.path, ego_predicted_path, obj, predicted_obj_path, bpp_param.vehicle_info,
       selected_rss_param, hysteresis_factor, safety_check_max_vel,
-      collision_check_yaw_diff_threshold, current_debug_data.second);
+      common_data_ptr_->lc_param_ptr->safety.collision_check.th_yaw_diff,
+      current_debug_data.second);
 
     if (collided_polygons.empty()) {
       utils::path_safety_checker::updateCollisionCheckDebugMap(

@@ -115,12 +115,7 @@ void MrmHandler::publishHazardCmd()
   HazardLightsCommand msg;
 
   msg.stamp = this->now();
-  if (is_emergency_holding_) {
-    // turn hazard on during emergency holding
-    msg.command = HazardLightsCommand::ENABLE;
-  } else if (isEmergency() && param_.turning_hazard_on.emergency) {
-    // turn hazard on if vehicle is in emergency state and
-    // turning hazard on if emergency flag is true
+  if (param_.turning_hazard_on.emergency && isEmergency()) {
     msg.command = HazardLightsCommand::ENABLE;
   } else {
     msg.command = HazardLightsCommand::NO_COMMAND;

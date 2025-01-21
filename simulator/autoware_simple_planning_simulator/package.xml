@@ -11,6 +11,7 @@
   <maintainer email="zulfaqar.azmi@tier4.jp">Zulfaqar Azmi</maintainer>
   <maintainer email="temkei.kem@tier4.jp">Temkei Kem</maintainer>
   <maintainer email="junya.sasaki@tier4.jp">Junya Sasaki</maintainer>
+  <maintainer email="kotaro.yoshimoto@tier4.jp">Kotaro Yoshimoto</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
