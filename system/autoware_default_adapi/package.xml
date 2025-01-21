@@ -15,7 +15,7 @@
   <depend>autoware_adapi_specs</depend>
   <depend>autoware_adapi_v1_msgs</depend>
   <depend>autoware_adapi_version_msgs</depend>
-  <depend>autoware_component_interface_specs</depend>
+  <depend>autoware_component_interface_specs_universe</depend>
   <depend>autoware_component_interface_utils</depend>
   <depend>autoware_geography_utils</depend>
   <depend>autoware_motion_utils</depend>
@@ -32,6 +32,7 @@
   <depend>std_srvs</depend>
   <depend>tier4_api_msgs</depend>
   <depend>tier4_control_msgs</depend>
+  <depend>tier4_planning_msgs</depend>
   <depend>tier4_system_msgs</depend>
 
   <exec_depend>python3-flask</exec_depend>

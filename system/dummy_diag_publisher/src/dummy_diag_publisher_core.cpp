@@ -22,6 +22,8 @@
 #define FMT_HEADER_ONLY
 #include <fmt/format.h>
 
+#include <sstream>
+
 namespace
 {
 std::vector<std::string> split(const std::string & str, const char delim)
@@ -37,7 +39,7 @@ std::vector<std::string> split(const std::string & str, const char delim)
 }  // namespace
 
 std::optional<DummyDiagPublisher::Status> DummyDiagPublisher::convertStrToStatus(
-  std::string & status_str)
+  const std::string & status_str)
 {
   static std::unordered_map<std::string, Status> const table = {
     {"OK", Status::OK}, {"Warn", Status::WARN}, {"Error", Status::ERROR}, {"Stale", Status::STALE}};
@@ -144,6 +146,61 @@ rclcpp::NodeOptions override_options(rclcpp::NodeOptions options)
     true);
 }
 
+rcl_interfaces::msg::SetParametersResult DummyDiagPublisher::onSetParams(
+  const std::vector<rclcpp::Parameter> & parameters)
+{
+  rcl_interfaces::msg::SetParametersResult result;
+  result.successful = true;
+
+  for (const auto & parameter : parameters) {
+    bool param_found = false;
+    const auto & param_name = parameter.get_name();
+
+    for (auto & diag : required_diags_) {
+      if (param_name == diag.name + std::string(".status")) {
+        param_found = true;
+        auto new_status = convertStrToStatus(parameter.as_string());
+        if (new_status) {
+          diag.status = *new_status;
+          RCLCPP_INFO(
+            this->get_logger(), "Updated %s status to: %s", diag.name.c_str(),
+            parameter.as_string().c_str());
+        } else {
+          result.successful = false;
+          result.reason = "Invalid status value for: " + parameter.as_string();
+          RCLCPP_WARN(
+            this->get_logger(), "Invalid status value for %s: %s", diag.name.c_str(),
+            parameter.as_string().c_str());
+        }
+      } else if (param_name == diag.name + std::string(".is_active")) {
+        param_found = true;
+        try {
+          diag.is_active = parameter.as_bool();
+          RCLCPP_INFO(
+            this->get_logger(), "Updated %s is_active to: %s", diag.name.c_str(),
+            diag.is_active ? "true" : "false");
+        } catch (const rclcpp::ParameterTypeException & e) {
+          result.successful = false;
+          result.reason = "Invalid is_active value for: " + parameter.as_string();
+          RCLCPP_WARN(
+            this->get_logger(), "Invalid is_active value for %s: %s", diag.name.c_str(),
+            parameter.as_string().c_str());
+        }
+      }
+    }
+
+    if (!param_found) {
+      result.successful = false;
+      result.reason = "Parameter not registered: " + parameter.get_name();
+      RCLCPP_WARN(
+        this->get_logger(), "Attempted to set unregistered parameter: %s",
+        parameter.get_name().c_str());
+    }
+  }
+
+  return result;
+}
+
 DummyDiagPublisher::DummyDiagPublisher(const rclcpp::NodeOptions & options)
 : Node("dummy_diag_publisher", override_options(options))
 
@@ -164,6 +221,10 @@ DummyDiagPublisher::DummyDiagPublisher(const rclcpp::NodeOptions & options)
 
   // Publisher
   pub_ = create_publisher<diagnostic_msgs::msg::DiagnosticArray>("/diagnostics", rclcpp::QoS(1));
+
+  // Parameter Callback Handle
+  param_callback_handle_ = this->add_on_set_parameters_callback(
+    std::bind(&DummyDiagPublisher::onSetParams, this, std::placeholders::_1));
 }
 
 #include <rclcpp_components/register_node_macro.hpp>
