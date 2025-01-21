@@ -19,7 +19,7 @@
 namespace autoware::vehicle_door_simulator
 {
 
-DummyDoors::DummyDoors() : Node("autoware_vehicle_door_simulator_node")
+DummyDoors::DummyDoors() : Node("vehicle_door_simulator_node")
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
