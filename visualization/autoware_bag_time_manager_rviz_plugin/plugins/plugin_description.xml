@@ -1,4 +1,4 @@
-<library path="bag_time_manager_rviz_plugin">
+<library path="autoware_bag_time_manager_rviz_plugin">
 
   <class
     type="autoware::visualization::bag_time_manager_rviz_plugin::BagTimeManagerPanel"
