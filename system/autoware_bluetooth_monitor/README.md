@@ -46,7 +46,7 @@ L2ping is only allowed for root by default, so this package provides the followi
 
 ## Parameters
 
-{{ json_to_markdown("system/bluetooth_monitor/schema/bluetooth_monitor.schema.json") }}
+{{ json_to_markdown("system/autoware_bluetooth_monitor/schema/bluetooth_monitor.schema.json") }}
 
 - `rtt_warn`
 
@@ -71,7 +71,7 @@ L2ping is only allowed for root by default, so this package provides the followi
 
    ```sh
    ./build/bluetooth_monitor/l2ping_service
-   ros2 launch bluetooth_monitor bluetooth_monitor.launch.xml
+   ros2 launch autoware_bluetooth_monitor bluetooth_monitor.launch.xml
    ```
 
 ## Known limitations and issues
