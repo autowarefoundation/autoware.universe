@@ -17,7 +17,6 @@
 
 #include <autoware/motion_utils/marker/virtual_wall_marker_creator.hpp>
 
-#include <autoware_adapi_v1_msgs/msg/velocity_factor.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -43,7 +42,6 @@ struct VelocityPlanningResult
 {
   std::vector<geometry_msgs::msg::Point> stop_points{};
   std::vector<SlowdownInterval> slowdown_intervals{};
-  std::optional<autoware_adapi_v1_msgs::msg::VelocityFactor> velocity_factor{};
 };
 }  // namespace autoware::motion_velocity_planner
 
