@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "simple_planning_simulator/vehicle_model/sim_model_ideal_steer_acc.hpp"
+#include "autoware/simple_planning_simulator/vehicle_model/sim_model_ideal_steer_acc.hpp"
 
 namespace autoware::simulator::simple_planning_simulator
 {

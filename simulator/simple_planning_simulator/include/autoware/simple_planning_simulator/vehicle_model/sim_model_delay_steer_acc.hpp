@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_DELAY_STEER_ACC_HPP_
 #define AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_DELAY_STEER_ACC_HPP_
 
-#include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
+#include "autoware/simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/LU>

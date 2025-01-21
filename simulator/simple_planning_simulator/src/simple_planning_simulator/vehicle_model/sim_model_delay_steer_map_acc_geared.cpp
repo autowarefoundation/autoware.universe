@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "simple_planning_simulator/vehicle_model/sim_model_delay_steer_map_acc_geared.hpp"
+#include "autoware/simple_planning_simulator/vehicle_model/sim_model_delay_steer_map_acc_geared.hpp"
 
 #include "autoware_vehicle_msgs/msg/gear_command.hpp"
 

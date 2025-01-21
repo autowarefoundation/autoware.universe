@@ -16,8 +16,8 @@
 #define AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__SIMPLE_PLANNING_SIMULATOR_CORE_HPP_
 
 #include "rclcpp/rclcpp.hpp"
-#include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
-#include "simple_planning_simulator/visibility_control.hpp"
+#include "autoware/simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
+#include "autoware/simple_planning_simulator/visibility_control.hpp"
 #include "tier4_api_utils/tier4_api_utils.hpp"
 
 #include "autoware_control_msgs/msg/control.hpp"

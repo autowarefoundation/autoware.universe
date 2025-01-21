@@ -18,9 +18,9 @@
 #include "autoware/interpolation/linear_interpolation.hpp"
 #include "eigen3/Eigen/Core"
 #include "eigen3/Eigen/LU"
-#include "simple_planning_simulator/utils/csv_loader.hpp"
-#include "simple_planning_simulator/utils/mechanical_controller.hpp"
-#include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
+#include "autoware/simple_planning_simulator/utils/csv_loader.hpp"
+#include "autoware/simple_planning_simulator/utils/mechanical_controller.hpp"
+#include "autoware/simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
 
 #include <deque>
 #include <iostream>

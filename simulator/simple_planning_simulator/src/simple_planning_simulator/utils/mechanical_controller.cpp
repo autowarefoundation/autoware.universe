@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "simple_planning_simulator/utils/mechanical_controller.hpp"
+#include "autoware/simple_planning_simulator/utils/mechanical_controller.hpp"
 
 #include <algorithm>
 #include <cmath>
