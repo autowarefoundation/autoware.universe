@@ -1,0 +1,34 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "title": "radar_tracks_noise_filter parameters",
+    "type": "object",
+    "definitions": {
+      "radar_tracks_noise_filter": {
+        "type": "object",
+        "properties": {
+          "velocity_y_threshold": {
+            "type": "number",
+            "description": "If y-axis velocity of RadarTrack is more than `velocity_y_threshold`, it treats as noise objects.",
+            "default": 7.0
+          }
+        },
+        "required": ["velocity_y_threshold"],
+        "additionalProperties": false
+      }
+    },
+    "properties": {
+      "/**": {
+        "type": "object",
+        "properties": {
+          "ros__parameters": {
+            "$ref": "#/definitions/velocity_y_threshold"
+          }
+        },
+        "required": ["ros__parameters"],
+        "additionalProperties": false
+      }
+    },
+    "required": ["/**"],
+    "additionalProperties": false
+  }
+  
