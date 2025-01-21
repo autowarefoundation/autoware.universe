@@ -1,4 +1,4 @@
-// Copyright 2021 The Autoware Foundation.
+// Copyright 2025 The Autoware Foundation.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@
 
 using namespace std::literals::chrono_literals;
 
-namespace
+namespace autoware::simulator::simple_planning_simulator
 {
 
 autoware_vehicle_msgs::msg::VelocityReport to_velocity_report(
@@ -91,12 +91,6 @@ std::vector<geometry_msgs::msg::Point> convert_centerline_to_points(
   }
   return centerline_points;
 }
-}  // namespace
-
-namespace simulation
-{
-namespace simple_planning_simulator
-{
 
 SimplePlanningSimulator::SimplePlanningSimulator(const rclcpp::NodeOptions & options)
 : Node("simple_planning_simulator", options), tf_buffer_(get_clock()), tf_listener_(tf_buffer_)
@@ -957,7 +951,6 @@ void SimplePlanningSimulator::publish_actuation_status()
   actuation_status.value().header.frame_id = simulated_frame_id_;
   pub_actuation_status_->publish(actuation_status.value());
 }
-}  // namespace simple_planning_simulator
-}  // namespace simulation
+}  // namespace autoware::simulator::simple_planning_simulator
 
-RCLCPP_COMPONENTS_REGISTER_NODE(simulation::simple_planning_simulator::SimplePlanningSimulator)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::simulator::simple_planning_simulator::SimplePlanningSimulator)

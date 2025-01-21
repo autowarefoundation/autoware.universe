@@ -1,4 +1,4 @@
-// Copyright 2021 The Autoware Foundation
+// Copyright 2025 The Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -32,14 +32,14 @@
 
 #include <memory>
 
+namespace autoware::simulator::simple_planning_simulator
+{
+
 using autoware_control_msgs::msg::Control;
 using autoware_vehicle_msgs::msg::GearCommand;
 using geometry_msgs::msg::PoseWithCovarianceStamped;
 using nav_msgs::msg::Odometry;
 using tier4_vehicle_msgs::msg::ActuationCommandStamped;
-
-using simulation::simple_planning_simulator::InputCommand;
-using simulation::simple_planning_simulator::SimplePlanningSimulator;
 
 std::string toStrInfo(const Odometry & o)
 {
@@ -455,4 +455,7 @@ INSTANTIATE_TEST_SUITE_P(
     // accel/brake alone is skipped.
     std::make_tuple(CommandType::Actuation, "ACTUATION_CMD_STEER_MAP"),
     std::make_tuple(CommandType::Actuation, "ACTUATION_CMD_VGR"),
-    std::make_tuple(CommandType::Actuation, "ACTUATION_CMD_MECHANICAL")));
+    std::make_tuple(CommandType::Actuation, "ACTUATION_CMD_MECHANICAL"))
+  );
+
+}  // namespace autoware::simulator::simple_planning_simulator

@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(simple_planning_simulator)
+project(autoware_simple_planning_simulator)
 
 find_package(autoware_cmake REQUIRED)
 find_package(Python3 COMPONENTS Interpreter Development)
@@ -28,8 +28,8 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 target_include_directories(${PROJECT_NAME} PUBLIC ${Python3_INCLUDE_DIRS} ${learning_based_vehicle_model_INCLUDE_DIRS})
 # Node executable
 rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN "simulation::simple_planning_simulator::SimplePlanningSimulator"
-  EXECUTABLE ${PROJECT_NAME}_exe
+  PLUGIN "autoware::simulator::simple_planning_simulator::SimplePlanningSimulator"
+  EXECUTABLE ${PROJECT_NAME}_node
 )
 
 if(BUILD_TESTING)

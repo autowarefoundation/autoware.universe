@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>simple_planning_simulator</name>
+  <name>autoware_simple_planning_simulator</name>
   <version>0.40.0</version>
   <description>simple_planning_simulator as a ROS 2 node</description>
   <maintainer email="takamasa.horibe@tier4.jp">Takamasa Horibe</maintainer>
@@ -10,6 +10,7 @@
   <maintainer email="mamoru.sobue@tier4.jp">Mamoru Sobue</maintainer>
   <maintainer email="zulfaqar.azmi@tier4.jp">Zulfaqar Azmi</maintainer>
   <maintainer email="temkei.kem@tier4.jp">Temkei Kem</maintainer>
+  <maintainer email="junya.sasaki@tier4.jp">Junya Sasaki</maintainer>
   <license>Apache License 2.0</license>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>

@@ -1,4 +1,4 @@
-// Copyright 2021 The Autoware Foundation.
+// Copyright 2025 The Autoware Foundation.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_IDEAL_STEER_VEL_HPP_
-#define SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_IDEAL_STEER_VEL_HPP_
+#ifndef AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_IDEAL_STEER_VEL_HPP_
+#define AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_IDEAL_STEER_VEL_HPP_
 
 #include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
 
@@ -21,6 +21,10 @@
 #include <Eigen/LU>
 
 #include <iostream>
+
+namespace autoware::simulator::simple_planning_simulator
+{
+
 /**
  * @class SimModelIdealSteerVel
  * @brief calculate ideal steering dynamics
@@ -104,4 +108,6 @@ private:
   Eigen::VectorXd calcModel(const Eigen::VectorXd & state, const Eigen::VectorXd & input) override;
 };
 
-#endif  // SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_IDEAL_STEER_VEL_HPP_
+}  // namespace autoware::simulator::simple_planning_simulator
+
+#endif  // AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_IDEAL_STEER_VEL_HPP_

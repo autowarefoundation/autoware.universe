@@ -1,4 +1,4 @@
-// Copyright 2021 The Autoware Foundation.
+// Copyright 2025 The Autoware Foundation.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -17,6 +17,9 @@
 #include "autoware_vehicle_msgs/msg/gear_command.hpp"
 
 #include <algorithm>
+
+namespace autoware::simulator::simple_planning_simulator
+{
 
 SimModelIdealSteerAccGeared::SimModelIdealSteerAccGeared(double wheelbase)
 : SimModelInterface(4 /* dim x */, 2 /* dim u */), wheelbase_(wheelbase), current_acc_(0.0)
@@ -115,3 +118,5 @@ void SimModelIdealSteerAccGeared::updateStateWithGear(
   // calculate acc from velocity diff
   current_acc_ = (state(IDX::VX) - prev_state(IDX::VX)) / std::max(dt, 1.0e-5);
 }
+
+}  // namespace autoware::simulator::simple_planning_simulator

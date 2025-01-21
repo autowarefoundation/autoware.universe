@@ -1,4 +1,4 @@
-//  Copyright 2023 Tier IV, Inc. All rights reserved.
+//  Copyright 2025 Tier IV, Inc. All rights reserved.
 //
 //  Licensed under the Apache License, Version 2.0 (the "License");
 //  you may not use this file except in compliance with the License.
@@ -20,6 +20,9 @@
 #include <string>
 #include <utility>
 #include <vector>
+
+namespace autoware::simulator::simple_planning_simulator
+{
 
 CSVLoader::CSVLoader(const std::string & csv_path)
 {
@@ -152,3 +155,5 @@ double CSVLoader::clampValue(const double val, const std::vector<double> & range
   }
   return val;
 }
+
+}  // namespace autoware::simulator::simple_planning_simulator

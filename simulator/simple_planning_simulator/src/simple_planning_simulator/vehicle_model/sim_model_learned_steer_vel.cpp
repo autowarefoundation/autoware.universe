@@ -1,4 +1,4 @@
-// Copyright 2024 The Autoware Foundation.
+// Copyright 2025 The Autoware Foundation.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -20,6 +20,9 @@
 #include <string>
 #include <tuple>
 #include <vector>
+
+namespace autoware::simulator::simple_planning_simulator
+{
 
 SimModelLearnedSteerVel::SimModelLearnedSteerVel(
   double dt, std::vector<std::string> model_python_paths,
@@ -89,3 +92,5 @@ void SimModelLearnedSteerVel::update(const double & dt)
   current_ax_ = (input_(IDX_U::VX_DES) - prev_vx_) / dt;
   prev_vx_ = input_(IDX_U::VX_DES);
 }
+
+}  // namespace autoware::simulator::simple_planning_simulator

@@ -1,4 +1,4 @@
-// Copyright 2024 The Autoware Foundation.
+// Copyright 2025 The Autoware Foundation.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware::simple_planning_simulator::utils::mechanical_controller
+namespace autoware::simulator::simple_planning_simulator
 {
 
 using DelayBuffer = std::deque<std::pair<double, double>>;
@@ -349,4 +349,4 @@ StepResult MechanicalController::run_one_step(
   return {delay_buffer_new, pid_error, d_state, false};
 }
 
-}  // namespace autoware::simple_planning_simulator::utils::mechanical_controller
+}  // namespace autoware::simulator::simple_planning_simulator

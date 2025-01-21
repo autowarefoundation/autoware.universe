@@ -1,4 +1,4 @@
-// Copyright 2021 The Autoware Foundation.
+// Copyright 2025 The Autoware Foundation.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_HPP_
-#define SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_HPP_
+#ifndef AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_HPP_
+#define AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_HPP_
 
 #include "simple_planning_simulator/vehicle_model/sim_model_actuation_cmd.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc.hpp"
@@ -27,4 +27,4 @@
 #include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model_learned_steer_vel.hpp"
 
-#endif  // SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_HPP_
+#endif  // AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_HPP_

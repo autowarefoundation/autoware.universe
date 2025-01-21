@@ -1,4 +1,4 @@
-// Copyright 2021 The Autoware Foundation.
+// Copyright 2025 The Autoware Foundation.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,6 +13,9 @@
 // limitations under the License.
 
 #include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
+
+namespace autoware::simulator::simple_planning_simulator
+{
 
 SimModelInterface::SimModelInterface(int dim_x, int dim_u) : dim_x_(dim_x), dim_u_(dim_u)
 {
@@ -57,3 +60,5 @@ uint8_t SimModelInterface::getGear() const
 {
   return gear_;
 }
+
+}  // namespace autoware::simulator::simple_planning_simulator

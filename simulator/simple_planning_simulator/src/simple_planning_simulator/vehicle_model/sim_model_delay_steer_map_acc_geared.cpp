@@ -1,4 +1,4 @@
-// Copyright 2023 The Autoware Foundation.
+// Copyright 2025 The Autoware Foundation.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -18,6 +18,9 @@
 
 #include <algorithm>
 #include <string>
+
+namespace autoware::simulator::simple_planning_simulator
+{
 
 SimModelDelaySteerMapAccGeared::SimModelDelaySteerMapAccGeared(
   double vx_lim, double steer_lim, double vx_rate_lim, double steer_rate_lim, double wheelbase,
@@ -168,3 +171,5 @@ void SimModelDelaySteerMapAccGeared::updateStateWithGear(
     state(IDX::ACCX) = (state(IDX::VX) - prev_state(IDX::VX)) / std::max(dt, 1.0e-5);
   }
 }
+
+}  // namespace autoware::simulator::simple_planning_simulator

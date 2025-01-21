@@ -1,4 +1,4 @@
-// Copyright 2021 The Autoware Foundation.
+// Copyright 2025 The Autoware Foundation.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,6 +13,9 @@
 // limitations under the License.
 
 #include "simple_planning_simulator/vehicle_model/sim_model_ideal_steer_vel.hpp"
+
+namespace autoware::simulator::simple_planning_simulator
+{
 
 SimModelIdealSteerVel::SimModelIdealSteerVel(double wheelbase)
 : SimModelInterface(3 /* dim x */, 2 /* dim u */), wheelbase_(wheelbase)
@@ -72,3 +75,5 @@ Eigen::VectorXd SimModelIdealSteerVel::calcModel(
 
   return d_state;
 }
+
+}  // namespace autoware::simulator::simple_planning_simulator

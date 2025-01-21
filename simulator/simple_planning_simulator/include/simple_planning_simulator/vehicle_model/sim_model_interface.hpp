@@ -1,4 +1,4 @@
-// Copyright 2021 The Autoware Foundation.
+// Copyright 2025 The Autoware Foundation.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_INTERFACE_HPP_
-#define SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_INTERFACE_HPP_
+#ifndef AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_INTERFACE_HPP_
+#define AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_INTERFACE_HPP_
 
 #include <Eigen/Core>
 
@@ -21,6 +21,9 @@
 #include "tier4_vehicle_msgs/msg/actuation_status_stamped.hpp"
 
 #include <optional>
+
+namespace autoware::simulator::simple_planning_simulator
+{
 
 /**
  * @class SimModelInterface
@@ -178,4 +181,6 @@ public:
     const Eigen::VectorXd & state, const Eigen::VectorXd & input) = 0;
 };
 
-#endif  // SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_INTERFACE_HPP_
+}  // namespace autoware::simulator::simple_planning_simulator
+
+#endif  // AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_INTERFACE_HPP_

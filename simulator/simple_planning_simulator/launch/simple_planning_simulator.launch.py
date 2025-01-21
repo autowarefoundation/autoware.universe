@@ -1,4 +1,4 @@
-# Copyright 2021 The Autoware Foundation.
+# Copyright 2025 The Autoware Foundation.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -87,9 +87,8 @@ def launch_setup(context, *args, **kwargs):
         )
 
     simple_planning_simulator_node = Node(
-        package="simple_planning_simulator",
-        executable="simple_planning_simulator_exe",
-        name="simple_planning_simulator",
+        package="autoware_simple_planning_simulator",
+        executable="autoware_simple_planning_simulator_node",
         namespace="simulation",
         output="screen",
         parameters=[
@@ -151,7 +150,7 @@ def generate_launch_description():
     add_launch_arg(
         "vehicle_characteristics_param_file",
         [
-            FindPackageShare("simple_planning_simulator"),
+            FindPackageShare("autoware_simple_planning_simulator"),
             "/param/vehicle_characteristics.param.yaml",
         ],
         "path to config file for vehicle characteristics",
@@ -160,7 +159,7 @@ def generate_launch_description():
     add_launch_arg(
         "simulator_model_param_file",
         [
-            FindPackageShare("simple_planning_simulator"),
+            FindPackageShare("autoware_simple_planning_simulator"),
             "/param/simple_planning_simulator_default.param.yaml",
         ],
         "path to config file for simulator_model",
@@ -169,7 +168,7 @@ def generate_launch_description():
     add_launch_arg(
         "acceleration_param_file",
         [
-            FindPackageShare("simple_planning_simulator"),
+            FindPackageShare("autoware_simple_planning_simulator"),
             "/param/acceleration_map.csv",
         ],
     )

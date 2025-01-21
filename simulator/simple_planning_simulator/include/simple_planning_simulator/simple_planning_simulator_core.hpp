@@ -1,4 +1,4 @@
-// Copyright 2021 The Autoware Foundation.
+// Copyright 2025 The Autoware Foundation.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SIMPLE_PLANNING_SIMULATOR__SIMPLE_PLANNING_SIMULATOR_CORE_HPP_
-#define SIMPLE_PLANNING_SIMULATOR__SIMPLE_PLANNING_SIMULATOR_CORE_HPP_
+#ifndef AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__SIMPLE_PLANNING_SIMULATOR_CORE_HPP_
+#define AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__SIMPLE_PLANNING_SIMULATOR_CORE_HPP_
 
 #include "rclcpp/rclcpp.hpp"
 #include "simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
@@ -57,9 +57,7 @@
 #include <variant>
 #include <vector>
 
-namespace simulation
-{
-namespace simple_planning_simulator
+namespace autoware::simulator::simple_planning_simulator
 {
 
 using autoware_control_msgs::msg::Control;
@@ -406,7 +404,6 @@ private:
    */
   void publish_tf(const Odometry & odometry);
 };
-}  // namespace simple_planning_simulator
-}  // namespace simulation
+}  // namespace autoware::simulator::simple_planning_simulator
 
-#endif  // SIMPLE_PLANNING_SIMULATOR__SIMPLE_PLANNING_SIMULATOR_CORE_HPP_
+#endif  // AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__SIMPLE_PLANNING_SIMULATOR_CORE_HPP_

@@ -1,4 +1,4 @@
-// Copyright 2023 Autoware Foundation
+// Copyright 2025 Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,14 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SIMPLE_PLANNING_SIMULATOR__UTILS__CSV_LOADER_HPP_
-#define SIMPLE_PLANNING_SIMULATOR__UTILS__CSV_LOADER_HPP_
+#ifndef AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__UTILS__CSV_LOADER_HPP_
+#define AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__UTILS__CSV_LOADER_HPP_
 
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
+
+namespace autoware::simulator::simple_planning_simulator
+{
 
 using Table = std::vector<std::vector<std::string>>;
 using Map = std::vector<std::vector<double>>;
@@ -40,4 +43,6 @@ private:
   std::string csv_path_;
 };
 
-#endif  // SIMPLE_PLANNING_SIMULATOR__UTILS__CSV_LOADER_HPP_
+}  // namespace autoware::simulator::simple_planning_simulator
+
+#endif  // AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__UTILS__CSV_LOADER_HPP_

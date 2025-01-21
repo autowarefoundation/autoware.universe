@@ -1,4 +1,4 @@
-// Copyright 2021 The Autoware Foundation.
+// Copyright 2025 The Autoware Foundation.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -15,6 +15,9 @@
 #include "simple_planning_simulator/vehicle_model/sim_model_delay_steer_acc.hpp"
 
 #include <algorithm>
+
+namespace autoware::simulator::simple_planning_simulator
+{
 
 SimModelDelaySteerAcc::SimModelDelaySteerAcc(
   double vx_lim, double steer_lim, double vx_rate_lim, double steer_rate_lim, double wheelbase,
@@ -135,3 +138,5 @@ Eigen::VectorXd SimModelDelaySteerAcc::calcModel(
 
   return d_state;
 }
+
+}  // namespace autoware::simulator::simple_planning_simulator

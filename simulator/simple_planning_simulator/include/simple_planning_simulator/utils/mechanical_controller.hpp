@@ -1,4 +1,4 @@
-// Copyright 2024 The Autoware Foundation.
+// Copyright 2025 The Autoware Foundation.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SIMPLE_PLANNING_SIMULATOR__UTILS__MECHANICAL_CONTROLLER_HPP_
-#define SIMPLE_PLANNING_SIMULATOR__UTILS__MECHANICAL_CONTROLLER_HPP_
+#ifndef AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__UTILS__MECHANICAL_CONTROLLER_HPP_
+#define AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__UTILS__MECHANICAL_CONTROLLER_HPP_
 
 #include <deque>
 #include <map>
@@ -21,7 +21,7 @@
 #include <string>
 #include <utility>
 
-namespace autoware::simple_planning_simulator::utils::mechanical_controller
+namespace autoware::simulator::simple_planning_simulator
 {
 
 using DelayBuffer = std::deque<std::pair<double, double>>;
@@ -203,6 +203,6 @@ private:
     const SteeringDynamics & dynamics) const;
 };
 
-}  // namespace autoware::simple_planning_simulator::utils::mechanical_controller
+}  // namespace autoware::simulator::simple_planning_simulator
 
-#endif  // SIMPLE_PLANNING_SIMULATOR__UTILS__MECHANICAL_CONTROLLER_HPP_
+#endif  // AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__UTILS__MECHANICAL_CONTROLLER_HPP_

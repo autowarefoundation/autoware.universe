@@ -1,4 +1,4 @@
-// Copyright 2024 The Autoware Foundation.
+// Copyright 2025 The Autoware Foundation.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,6 +19,9 @@
 #include <algorithm>
 #include <string>
 #include <vector>
+
+namespace autoware::simulator::simple_planning_simulator
+{
 
 bool ActuationMap::readActuationMapFromCSV(const std::string & csv_path, const bool validation)
 {
@@ -517,3 +520,4 @@ void SimModelActuationCmdMechanical::setState(const Eigen::VectorXd & state)
   state_ = state;
 }
 /* ---------------------------------------- */
+}  // namespace autoware::simulator::simple_planning_simulator
