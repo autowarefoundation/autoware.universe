@@ -313,9 +313,13 @@ For example, when the lane change module first activates and turn signal is acti
 ```C++
 prepare_duration = std::max(max_prepare_duration - turn_signal_duration, min_prepare_duration);
 ```
-!!! warning
+!!! note
 
     When the current ego velocity is lower than the `min_lane_change_velocity`, the `min_prepare_duration` is adjusted to ensure sufficient time for reaching `min_lane_change_velocity` assuming `max_longitudinal_acceleration`.
+
+!!! warning
+
+    The value of the prepare duration impacts lane change cancelling behavior. A shorter prepare duration results in a smaller window in which lane change maneuver can be cancelled. See [Evaluating Ego Vehicle's Position to Prevent Abrupt Maneuvers](#evaluating-ego-vehicles-position-to-prevent-abrupt-maneuvers) for more details.
 
 When ego vehicles is close to the terminal start, we need to sample multiple prepare duration values to find a valid and safe path. In this case prepare duration values are sampled starting from `max_prepare_duration` down to `0.0` at a fixed time interval of `0.5 s`.
 
