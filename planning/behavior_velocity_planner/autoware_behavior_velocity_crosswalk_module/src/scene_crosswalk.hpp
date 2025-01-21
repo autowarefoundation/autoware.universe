@@ -197,14 +197,10 @@ public:
       const bool is_object_away_from_path,
       const std::optional<double> & ego_crosswalk_passage_direction)
     {
-      const bool is_stopped = vel < planner_param.stop_object_velocity;
+      const bool is_object_stopped = vel < planner_param.stop_object_velocity;
 
       // Check if the object can be ignored
-      if (is_stopped) {
-        if (collision_state == CollisionState::IGNORE) {
-          return;
-        }
-
+      if (is_object_stopped && is_ego_yielding) {
         if (!time_to_start_stopped) {
           time_to_start_stopped = now;
         }
@@ -215,12 +211,16 @@ public:
           planner_param.timeout_set_for_no_intention_to_walk, distance_to_crosswalk);
         const bool intent_to_cross =
           (now - *time_to_start_stopped).seconds() < timeout_no_intention_to_walk;
-        if (is_ego_yielding && !intent_to_cross && is_object_away_from_path) {
+        if (!intent_to_cross && is_object_away_from_path) {
           collision_state = CollisionState::IGNORE;
           return;
         }
       } else {
         time_to_start_stopped = std::nullopt;
+      }
+
+      if (is_object_stopped && collision_state == CollisionState::IGNORE) {
+        return;
       }
 
       // Compare time to collision and vehicle
