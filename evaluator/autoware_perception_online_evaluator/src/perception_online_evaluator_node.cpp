@@ -37,14 +37,14 @@ namespace autoware::perception_diagnostics
 {
 PerceptionOnlineEvaluatorNode::PerceptionOnlineEvaluatorNode(
   const rclcpp::NodeOptions & node_options)
-: Node("autoware_perception_online_evaluator", node_options),
+: Node("perception_online_evaluator", node_options),
   parameters_(std::make_shared<Parameters>()),
   metrics_calculator_(parameters_)
 {
   using std::placeholders::_1;
 
   if (!google::IsGoogleLoggingInitialized()) {
-    google::InitGoogleLogging("autoware_perception_online_evaluator_node");
+    google::InitGoogleLogging("perception_online_evaluator_node");
     google::InstallFailureSignalHandler();
   }
 
