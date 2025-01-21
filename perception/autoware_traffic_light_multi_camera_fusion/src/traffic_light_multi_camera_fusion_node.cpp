@@ -150,7 +150,7 @@ MultiCameraFusion::MultiCameraFusion(const rclcpp::NodeOptions & node_options)
   std::vector<std::string> camera_namespaces =
     this->declare_parameter("camera_namespaces", std::vector<std::string>{});
   is_approximate_sync_ = this->declare_parameter<bool>("approximate_sync", false);
-  message_lifespan_ = this->declare_parameter<double>("message_lifespan", 0.09);
+  message_lifespan_ = this->declare_parameter<double>("message_lifespan");
   for (const std::string & camera_ns : camera_namespaces) {
     std::string signal_topic = camera_ns + "/classification/traffic_signals";
     std::string roi_topic = camera_ns + "/detection/rois";
