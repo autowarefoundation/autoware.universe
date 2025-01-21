@@ -66,8 +66,9 @@ GoalPlannerModule::GoalPlannerModule(
   const std::shared_ptr<GoalPlannerParameters> & parameters,
   const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
   std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
-    objects_of_interest_marker_interface_ptr_map)
-: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map},  // NOLINT
+    objects_of_interest_marker_interface_ptr_map,
+  const std::shared_ptr<PlanningFactorInterface> planning_factor_interface)
+: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map, planning_factor_interface},  // NOLINT
   parameters_{parameters},
   vehicle_info_{autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo()},
   is_lane_parking_cb_running_{false},
@@ -119,9 +120,6 @@ GoalPlannerModule::GoalPlannerModule(
   if (parameters_->safety_check_params.enable_safety_check) {
     initializeSafetyCheckParameters();
   }
-
-  steering_factor_interface_.init(PlanningBehavior::GOAL_PLANNER);
-  velocity_factor_interface_.init(PlanningBehavior::GOAL_PLANNER);
 
   /**
    * NOTE: Add `universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);` to functions called
@@ -1344,19 +1342,20 @@ void GoalPlannerModule::setTurnSignalInfo(
 
 void GoalPlannerModule::updateSteeringFactor(
   const PullOverContextData & context_data, const std::array<Pose, 2> & pose,
-  const std::array<double, 2> distance, const uint16_t type)
+  const std::array<double, 2> distance)
 {
-  const uint16_t steering_factor_direction = std::invoke([&]() {
+  const uint16_t planning_factor_direction = std::invoke([&]() {
     const auto turn_signal = calcTurnSignalInfo(context_data);
     if (turn_signal.turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
-      return SteeringFactor::LEFT;
+      return PlanningFactor::SHIFT_LEFT;
     } else if (turn_signal.turn_signal.command == TurnIndicatorsCommand::ENABLE_RIGHT) {
-      return SteeringFactor::RIGHT;
+      return PlanningFactor::SHIFT_RIGHT;
     }
-    return SteeringFactor::STRAIGHT;
+    return PlanningFactor::NONE;
   });
 
-  steering_factor_interface_.set(pose, distance, steering_factor_direction, type, "");
+  planning_factor_interface_->add(
+    distance[0], distance[1], pose[0], pose[1], planning_factor_direction, SafetyFactorArray{});
 }
 
 void GoalPlannerModule::decideVelocity(PullOverPath & pull_over_path)
@@ -1568,10 +1567,9 @@ void GoalPlannerModule::postProcess()
 
   updateSteeringFactor(
     context_data, {pull_over_path.start_pose(), pull_over_path.modified_goal_pose()},
-    {distance_to_path_change.first, distance_to_path_change.second},
-    has_decided_path ? SteeringFactor::TURNING : SteeringFactor::APPROACHING);
+    {distance_to_path_change.first, distance_to_path_change.second});
 
-  setVelocityFactor(pull_over_path.full_path());
+  set_longitudinal_planning_factor(pull_over_path.full_path());
 }
 
 BehaviorModuleOutput GoalPlannerModule::planWaitingApproval()
