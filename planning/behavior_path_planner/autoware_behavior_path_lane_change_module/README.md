@@ -291,7 +291,7 @@ lane_changing_distance = initial_lane_changing_velocity * lane_changing_duration
 
 The `backward_length_buffer_for_end_of_lane` is added to allow some window for any possible delay, such as control or mechanical delay during brake lag.
 
-#### Sampling Multiple Candidate Paths (prepare duration)
+#### Sampling Multiple Candidate Paths
 
 In order to find a valid and safe lane change path it might be necessary to generate multiple candidate path samples. The lane change module does this by sampling one or more of: `prepare_duration`, `longitudinal_acceleration`, and `lateral_acceleration`.
 
