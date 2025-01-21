@@ -4,14 +4,14 @@ on:
   workflow_dispatch:
     inputs:
       version_part:
-        description: 'Which part of the version number to bump?'
+        description: "Which part of the version number to bump?"
         required: true
-        default: 'minor'
+        default: "minor"
         type: choice
         options:
-          - 'major'
-          - 'minor'
-          - 'patch'
+          - "major"
+          - "minor"
+          - "patch"
 
 jobs:
   bump-version-pr:
