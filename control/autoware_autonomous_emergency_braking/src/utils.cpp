@@ -17,6 +17,8 @@
 #include <autoware/universe_utils/geometry/geometry.hpp>
 
 #include <optional>
+#include <string>
+#include <vector>
 
 namespace autoware::motion::control::autonomous_emergency_braking::utils
 {

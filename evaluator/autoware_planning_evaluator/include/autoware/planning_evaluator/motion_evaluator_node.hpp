@@ -61,7 +61,7 @@ private:
   std::unique_ptr<tf2_ros::TransformListener> tf_listener_ptr_;
 
   // Parameters
-  std::string output_file_str_;
+  bool output_metrics_;
 
   // Calculator
   MetricsCalculator metrics_calculator_;

@@ -23,6 +23,10 @@
 #include <boost/geometry/algorithms/distance.hpp>
 
 #include <algorithm>
+#include <limits>
+#include <memory>
+#include <utility>
+#include <vector>
 
 namespace autoware::behavior_path_planner::utils::path_safety_checker::filter
 {
@@ -52,6 +56,20 @@ bool is_within_circle(
   const double dist =
     std::hypot(reference_point.x - object_pos.x, reference_point.y - object_pos.y);
   return dist < search_radius;
+}
+
+bool is_vehicle(const ObjectClassification & classification)
+{
+  switch (classification.label) {
+    case ObjectClassification::CAR:
+    case ObjectClassification::TRUCK:
+    case ObjectClassification::BUS:
+    case ObjectClassification::TRAILER:
+    case ObjectClassification::MOTORCYCLE:
+      return true;
+    default:
+      return false;
+  }
 }
 }  // namespace autoware::behavior_path_planner::utils::path_safety_checker::filter
 

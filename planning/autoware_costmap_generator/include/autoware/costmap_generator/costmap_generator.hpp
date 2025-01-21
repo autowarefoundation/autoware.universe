@@ -58,10 +58,10 @@
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_internal_debug_msgs/msg/float64_stamped.hpp>
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-#include <tier4_debug_msgs/msg/float64_stamped.hpp>
 #include <tier4_planning_msgs/msg/scenario.hpp>
 
 #include <grid_map_msgs/msg/grid_map.h>
@@ -99,7 +99,8 @@ private:
   rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr pub_costmap_;
   rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr pub_occupancy_grid_;
   rclcpp::Publisher<autoware::universe_utils::ProcessingTimeDetail>::SharedPtr pub_processing_time_;
-  rclcpp::Publisher<tier4_debug_msgs::msg::Float64Stamped>::SharedPtr pub_processing_time_ms_;
+  rclcpp::Publisher<autoware_internal_debug_msgs::msg::Float64Stamped>::SharedPtr
+    pub_processing_time_ms_;
 
   rclcpp::Subscription<autoware_map_msgs::msg::LaneletMapBin>::SharedPtr sub_lanelet_bin_map_;
   autoware::universe_utils::InterProcessPollingSubscriber<sensor_msgs::msg::PointCloud2>
@@ -139,6 +140,13 @@ private:
 
   void set_current_pose();
 
+  /// \brief set position of grid center
+  /// \details computes relative position of ego from current grid center,
+  /// if offset is larger than grid resolution, grid center will be updated
+  /// by a multiple of the grid resolution
+  /// \param[in] tf costmap frame to vehicle frame transform
+  void set_grid_center(const geometry_msgs::msg::TransformStamped & tf);
+
   void onTimer();
 
   bool isActive();
@@ -148,7 +156,9 @@ private:
 
   /// \brief publish ros msg: grid_map::GridMap, and nav_msgs::OccupancyGrid
   /// \param[in] gridmap with calculated cost
-  void publishCostmap(const grid_map::GridMap & costmap);
+  /// \param[in] tf costmap frame to vehicle frame transform
+  void publishCostmap(
+    const grid_map::GridMap & costmap, const geometry_msgs::msg::TransformStamped & tf);
 
   /// \brief fill a vector with road area polygons
   /// \param [in] lanelet_map input lanelet map

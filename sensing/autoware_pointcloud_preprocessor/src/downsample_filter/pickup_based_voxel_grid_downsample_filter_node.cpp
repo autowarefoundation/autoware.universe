@@ -16,6 +16,9 @@
 
 #include "robin_hood.h"
 
+#include <memory>
+#include <vector>
+
 namespace
 {
 /**
@@ -121,15 +124,7 @@ void PickupBasedVoxelGridDownsampleFilterComponent::filter(
   size_t output_global_offset = 0;
   output.data.resize(voxel_map.size() * input->point_step);
   for (const auto & kv : voxel_map) {
-    std::memcpy(
-      &output.data[output_global_offset + x_offset], &input->data[kv.second + x_offset],
-      sizeof(float));
-    std::memcpy(
-      &output.data[output_global_offset + y_offset], &input->data[kv.second + y_offset],
-      sizeof(float));
-    std::memcpy(
-      &output.data[output_global_offset + z_offset], &input->data[kv.second + z_offset],
-      sizeof(float));
+    std::memcpy(&output.data[output_global_offset], &input->data[kv.second], input->point_step);
     output_global_offset += input->point_step;
   }
 
@@ -147,9 +142,9 @@ void PickupBasedVoxelGridDownsampleFilterComponent::filter(
   if (debug_publisher_) {
     const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
     const double processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
-    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/cyclic_time_ms", cyclic_time_ms);
-    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/processing_time_ms", processing_time_ms);
 
     auto pipeline_latency_ms =
@@ -157,7 +152,7 @@ void PickupBasedVoxelGridDownsampleFilterComponent::filter(
         std::chrono::nanoseconds((this->get_clock()->now() - input->header.stamp).nanoseconds()))
         .count();
 
-    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/pipeline_latency_ms", pipeline_latency_ms);
   }
 }

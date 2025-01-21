@@ -20,33 +20,28 @@
 
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
+#include <memory>
 #include <optional>
+#include <utility>
 
 namespace autoware::behavior_velocity_planner
 {
 
-geometry_msgs::msg::Point getCenterOfStopLine(const lanelet::ConstLineString3d & stop_line)
-{
-  geometry_msgs::msg::Point center_point;
-  center_point.x = (stop_line[0].x() + stop_line[1].x()) / 2.0;
-  center_point.y = (stop_line[0].y() + stop_line[1].y()) / 2.0;
-  center_point.z = (stop_line[0].z() + stop_line[1].z()) / 2.0;
-  return center_point;
-}
-
 StopLineModule::StopLineModule(
   const int64_t module_id, lanelet::ConstLineString3d stop_line, const PlannerParam & planner_param,
-  const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock)
-: SceneModuleInterface(module_id, logger, clock),
+  const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock,
+  const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+  const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
+    planning_factor_interface)
+: SceneModuleInterface(module_id, logger, clock, time_keeper, planning_factor_interface),
   stop_line_(std::move(stop_line)),
   planner_param_(planner_param),
   state_(State::APPROACH),
   debug_data_()
 {
-  velocity_factor_.init(PlanningBehavior::STOP_SIGN);
 }
 
-bool StopLineModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
+bool StopLineModule::modifyPathVelocity(PathWithLaneId * path)
 {
   auto trajectory =
     trajectory::Trajectory<tier4_planning_msgs::msg::PathPointWithLaneId>::Builder{}.build(
@@ -67,14 +62,17 @@ bool StopLineModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop
 
   path->points = trajectory->restore();
 
-  updateVelocityFactor(&velocity_factor_, state_, *stop_point - ego_s);
+  // TODO(soblin): PlanningFactorInterface use trajectory class
+  planning_factor_interface_->add(
+    path->points, trajectory->compute(*stop_point).point.pose,
+    planner_data_->current_odometry->pose, planner_data_->current_odometry->pose,
+    tier4_planning_msgs::msg::PlanningFactor::STOP, tier4_planning_msgs::msg::SafetyFactorArray{},
+    true /*is_driving_forward*/, 0.0, 0.0 /*shift distance*/, "stopline");
 
   updateStateAndStoppedTime(
     &state_, &stopped_time_, clock_->now(), *stop_point - ego_s, planner_data_->isVehicleStopped());
 
   geometry_msgs::msg::Pose stop_pose = trajectory->compute(*stop_point).point.pose;
-
-  updateStopReason(stop_reason, stop_pose);
 
   updateDebugData(&debug_data_, stop_pose, state_);
 
@@ -157,33 +155,6 @@ void StopLineModule::updateStateAndStoppedTime(
       break;
     }
   }
-}
-
-void StopLineModule::updateVelocityFactor(
-  autoware::motion_utils::VelocityFactorInterface * velocity_factor, const State & state,
-  const double & distance_to_stop_point)
-{
-  switch (state) {
-    case State::APPROACH: {
-      velocity_factor->set(distance_to_stop_point, VelocityFactor::APPROACHING);
-      break;
-    }
-    case State::STOPPED: {
-      velocity_factor->set(distance_to_stop_point, VelocityFactor::STOPPED);
-      break;
-    }
-    case State::START:
-      break;
-  }
-}
-
-void StopLineModule::updateStopReason(
-  StopReason * stop_reason, const geometry_msgs::msg::Pose & stop_pose) const
-{
-  tier4_planning_msgs::msg::StopFactor stop_factor;
-  stop_factor.stop_pose = stop_pose;
-  stop_factor.stop_factor_points.push_back(getCenterOfStopLine(stop_line_));
-  planning_utils::appendStopReason(stop_factor, stop_reason);
 }
 
 void StopLineModule::updateDebugData(

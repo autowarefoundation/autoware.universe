@@ -27,6 +27,9 @@
 
 #include <lanelet2_core/geometry/Polygon.h>
 
+#include <algorithm>
+#include <limits>
+#include <memory>
 #include <optional>
 #include <utility>
 #include <vector>

@@ -14,6 +14,10 @@
 
 #include "learning_based_vehicle_model/interconnected_model.hpp"
 
+#include <string>
+#include <tuple>
+#include <vector>
+
 void InterconnectedModel::mapInputs(std::vector<char *> in_names)
 {
   // index in "map_in_to_sig_vec" is index in "in_names" and value in "map_in_to_sig_vec" is index
@@ -75,8 +79,7 @@ void InterconnectedModel::addSubmodel(
   std::tuple<std::string, std::string, std::string> submodel_desc)
 {
   const auto [lib_path, param_path, class_name] = submodel_desc;
-  auto new_model = new SimplePyModel(lib_path, param_path, class_name);
-  submodels.push_back(std::unique_ptr<SimplePyModel>(new_model));
+  submodels.emplace_back(std::make_unique<SimplePyModel>(lib_path, param_path, class_name));
 }
 
 void InterconnectedModel::initState(std::vector<double> new_state)

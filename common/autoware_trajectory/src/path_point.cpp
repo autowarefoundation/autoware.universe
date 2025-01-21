@@ -18,6 +18,8 @@
 
 #include <autoware_planning_msgs/msg/path_point.hpp>
 
+#include <vector>
+
 namespace autoware::trajectory
 {
 

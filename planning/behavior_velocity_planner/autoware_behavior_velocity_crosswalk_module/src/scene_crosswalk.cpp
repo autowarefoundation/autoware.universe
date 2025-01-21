@@ -34,10 +34,12 @@
 #include <cmath>
 #include <functional>
 #include <limits>
+#include <memory>
 #include <set>
+#include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
-
 namespace autoware::behavior_velocity_planner
 {
 namespace bg = boost::geometry;
@@ -151,11 +153,11 @@ StopFactor createStopFactor(
   return stop_factor;
 }
 
-tier4_debug_msgs::msg::StringStamped createStringStampedMessage(
+autoware_internal_debug_msgs::msg::StringStamped createStringStampedMessage(
   const rclcpp::Time & now, const int64_t module_id_,
   const std::vector<std::tuple<std::string, CollisionPoint, CollisionState>> & collision_points)
 {
-  tier4_debug_msgs::msg::StringStamped msg;
+  autoware_internal_debug_msgs::msg::StringStamped msg;
   msg.stamp = now;
   for (const auto & collision_point : collision_points) {
     std::stringstream ss;
@@ -173,13 +175,15 @@ CrosswalkModule::CrosswalkModule(
   rclcpp::Node & node, const int64_t lane_id, const int64_t module_id,
   const std::optional<int64_t> & reg_elem_id, const lanelet::LaneletMapPtr & lanelet_map_ptr,
   const PlannerParam & planner_param, const rclcpp::Logger & logger,
-  const rclcpp::Clock::SharedPtr clock)
-: SceneModuleInterface(module_id, logger, clock),
+  const rclcpp::Clock::SharedPtr clock,
+  const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+  const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
+    planning_factor_interface)
+: SceneModuleInterfaceWithRTC(module_id, logger, clock, time_keeper, planning_factor_interface),
   module_id_(module_id),
   planner_param_(planner_param),
   use_regulatory_element_(reg_elem_id)
 {
-  velocity_factor_.init(PlanningBehavior::CROSSWALK);
   passed_safety_slow_point_ = false;
 
   if (use_regulatory_element_) {
@@ -197,11 +201,11 @@ CrosswalkModule::CrosswalkModule(
 
   road_ = lanelet_map_ptr->laneletLayer.get(lane_id);
 
-  collision_info_pub_ =
-    node.create_publisher<tier4_debug_msgs::msg::StringStamped>("~/debug/collision_info", 1);
+  collision_info_pub_ = node.create_publisher<autoware_internal_debug_msgs::msg::StringStamped>(
+    "~/debug/collision_info", 1);
 }
 
-bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
+bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path)
 {
   if (path->points.size() < 2) {
     RCLCPP_DEBUG(logger_, "Do not interpolate because path size is less than 2.");
@@ -213,7 +217,6 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
     logger_, planner_param_.show_processing_time,
     "=========== module_id: %ld ===========", module_id_);
 
-  *stop_reason = planning_utils::initializeStopReason(StopReason::CROSSWALK);
   const auto & ego_pos = planner_data_->current_odometry->pose.position;
   const auto objects_ptr = planner_data_->predicted_objects;
 
@@ -274,7 +277,7 @@ bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path, StopReason * sto
   if (isActivated()) {
     planGo(*path, nearest_stop_factor);
   } else {
-    planStop(*path, nearest_stop_factor, default_stop_pose, stop_reason);
+    planStop(*path, nearest_stop_factor, default_stop_pose);
   }
   recordTime(4);
 
@@ -897,9 +900,11 @@ void CrosswalkModule::applySlowDown(
     }
   }
   if (slowdown_pose)
-    velocity_factor_.set(
-      output.points, planner_data_->current_odometry->pose, *slowdown_pose,
-      VelocityFactor::APPROACHING);
+    planning_factor_interface_->add(
+      output.points, planner_data_->current_odometry->pose, *slowdown_pose, *slowdown_pose,
+      tier4_planning_msgs::msg::PlanningFactor::SLOW_DOWN,
+      tier4_planning_msgs::msg::SafetyFactorArray{}, true /*is_driving_forward*/,
+      safety_slow_down_speed, 0.0 /*shift distance*/, "crosswalk_safety_slowdown_for_approaching");
 }
 
 void CrosswalkModule::applySlowDownByLanelet2Map(
@@ -1353,7 +1358,7 @@ void CrosswalkModule::planGo(
 
 void CrosswalkModule::planStop(
   PathWithLaneId & ego_path, const std::optional<StopFactor> & nearest_stop_factor,
-  const std::optional<geometry_msgs::msg::Pose> & default_stop_pose, StopReason * stop_reason)
+  const std::optional<geometry_msgs::msg::Pose> & default_stop_pose)
 {
   // Calculate stop factor
   auto stop_factor = [&]() -> std::optional<StopFactor> {
@@ -1376,10 +1381,11 @@ void CrosswalkModule::planStop(
 
   // Plan stop
   insertDecelPointWithDebugInfo(stop_factor->stop_pose.position, 0.0, ego_path);
-  planning_utils::appendStopReason(*stop_factor, stop_reason);
-  velocity_factor_.set(
+  planning_factor_interface_->add(
     ego_path.points, planner_data_->current_odometry->pose, stop_factor->stop_pose,
-    VelocityFactor::UNKNOWN);
+    stop_factor->stop_pose, tier4_planning_msgs::msg::PlanningFactor::STOP,
+    tier4_planning_msgs::msg::SafetyFactorArray{}, true /*is_driving_forward*/, 0.0 /*velocity*/,
+    0.0 /*shift distance*/, "crosswalk_stop");
 }
 
 bool CrosswalkModule::checkRestartSuppression(

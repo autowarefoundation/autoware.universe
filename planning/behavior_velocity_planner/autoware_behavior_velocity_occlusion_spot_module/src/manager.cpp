@@ -123,8 +123,8 @@ void OcclusionSpotModuleManager::launchNewModules(
   // general
   if (!isModuleRegistered(module_id_)) {
     registerModule(std::make_shared<OcclusionSpotModule>(
-      module_id_, planner_data_, planner_param_, logger_.get_child("occlusion_spot_module"),
-      clock_));
+      module_id_, planner_data_, planner_param_, logger_.get_child("occlusion_spot_module"), clock_,
+      time_keeper_, planning_factor_interface_));
   }
 }
 

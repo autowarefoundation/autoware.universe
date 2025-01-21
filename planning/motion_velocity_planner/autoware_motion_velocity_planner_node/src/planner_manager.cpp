@@ -18,6 +18,7 @@
 
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace autoware::motion_velocity_planner
 {
@@ -100,6 +101,8 @@ std::vector<VelocityPlanningResult> MotionVelocityPlannerManager::plan_velocitie
   for (auto & plugin : loaded_plugins_) {
     VelocityPlanningResult res = plugin->plan(ego_trajectory_points, planner_data);
     results.push_back(res);
+
+    plugin->publish_planning_factor();
 
     if (res.stop_points.size() > 0) {
       const auto stop_decision_metric = make_decision_metric(plugin->get_module_name(), "stop");

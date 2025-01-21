@@ -35,9 +35,11 @@
 #include <chrono>
 #include <filesystem>
 #include <iostream>
+#include <limits>
 #include <memory>
 #include <string>
 #include <utility>
+#include <vector>
 
 using namespace std::literals::chrono_literals;
 
@@ -583,9 +585,7 @@ void SimplePlanningSimulator::set_input(const InputCommand & cmd, const double a
   std::visit(
     [this, acc_by_slope](auto && arg) {
       using T = std::decay_t<decltype(arg)>;
-      if constexpr (std::is_same_v<T, Control>) {
-        set_input(arg, acc_by_slope);
-      } else if constexpr (std::is_same_v<T, ActuationCommandStamped>) {
+      if constexpr (std::is_same_v<T, Control> || std::is_same_v<T, ActuationCommandStamped>) {
         set_input(arg, acc_by_slope);
       } else {
         throw std::invalid_argument("Invalid input command type");
@@ -638,7 +638,7 @@ void SimplePlanningSimulator::set_input(const Control & cmd, const double acc_by
     input << vel, steer;
   } else if (  // NOLINT
     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC ||
-    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC) {
+    vehicle_model_type_ == VehicleModelType::DELAY_STEER_ACC) {  // NOLINT
     input << combined_acc, steer;
   } else if (  // NOLINT
     vehicle_model_type_ == VehicleModelType::IDEAL_STEER_ACC_GEARED ||

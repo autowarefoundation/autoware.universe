@@ -17,6 +17,8 @@
 #include "autoware_vehicle_msgs/msg/gear_command.hpp"
 
 #include <algorithm>
+#include <string>
+#include <vector>
 
 bool ActuationMap::readActuationMapFromCSV(const std::string & csv_path, const bool validation)
 {

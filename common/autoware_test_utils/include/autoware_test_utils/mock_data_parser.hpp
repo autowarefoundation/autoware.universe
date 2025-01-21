@@ -35,6 +35,7 @@
 
 #include <array>
 #include <memory>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
@@ -58,6 +59,7 @@ using autoware_perception_msgs::msg::TrafficLightGroupArray;
 using autoware_planning_msgs::msg::LaneletPrimitive;
 using autoware_planning_msgs::msg::LaneletRoute;
 using autoware_planning_msgs::msg::LaneletSegment;
+using autoware_planning_msgs::msg::PathPoint;
 using builtin_interfaces::msg::Duration;
 using builtin_interfaces::msg::Time;
 using geometry_msgs::msg::Accel;
@@ -95,6 +97,9 @@ Duration parse(const YAML::Node & node);
 
 template <>
 Time parse(const YAML::Node & node);
+
+template <>
+Point parse(const YAML::Node & node);
 
 template <>
 std::vector<Point> parse(const YAML::Node & node);
@@ -143,6 +148,15 @@ std::vector<PathPointWithLaneId> parse(const YAML::Node & node);
 
 template <>
 UUID parse(const YAML::Node & node);
+
+template <>
+PathPoint parse(const YAML::Node & node);
+
+template <>
+PathPointWithLaneId parse(const YAML::Node & node);
+
+template <>
+PathWithLaneId parse(const YAML::Node & node);
 
 template <>
 PredictedPath parse(const YAML::Node & node);
@@ -197,10 +211,10 @@ template <typename T>
 T parse(const std::string & filename);
 
 template <>
-LaneletRoute parse(const std::string & filename);
+std::optional<LaneletRoute> parse(const std::string & filename);
 
 template <>
-PathWithLaneId parse(const std::string & filename);
+std::optional<PathWithLaneId> parse(const std::string & filename);
 
 template <typename MessageType>
 auto create_const_shared_ptr(MessageType && payload)

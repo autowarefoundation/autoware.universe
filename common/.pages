@@ -10,8 +10,8 @@ nav:
     - 'autoware_grid_map_utils': common/autoware_grid_map_utils
     - 'autoware_point_types': common/autoware_point_types
     - 'Geography Utils': common/autoware_geography_utils
-    - 'Global Parameter Loader': common/global_parameter_loader/Readme
-    - 'Glog Component': common/glog_component
+    - 'Global Parameter Loader': common/autoware_global_parameter_loader/Readme
+    - 'Glog Component': common/autoware_glog_component
     - 'interpolation': common/autoware_interpolation
     - 'Kalman Filter': common/autoware_kalman_filter
     - 'Motion Utils': common/autoware_motion_utils

@@ -17,15 +17,15 @@
 
 #include "autoware/behavior_velocity_crosswalk_module/util.hpp"
 
-#include <autoware/behavior_velocity_planner_common/scene_module_interface.hpp>
+#include <autoware/behavior_velocity_rtc_interface/scene_module_interface_with_rtc.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
 #include <autoware_lanelet2_extension/regulatory_elements/crosswalk.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_internal_debug_msgs/msg/string_stamped.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
-#include <tier4_debug_msgs/msg/string_stamped.hpp>
 
 #include <boost/assert.hpp>
 #include <boost/assign/list_of.hpp>
@@ -39,6 +39,7 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <algorithm>
+#include <iostream>
 #include <memory>
 #include <optional>
 #include <string>
@@ -56,7 +57,6 @@ using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::TrafficLightElement;
 using lanelet::autoware::Crosswalk;
-using tier4_api_msgs::msg::CrosswalkStatus;
 using tier4_planning_msgs::msg::PathWithLaneId;
 
 namespace
@@ -112,7 +112,7 @@ double InterpolateMap(
 }
 }  // namespace
 
-class CrosswalkModule : public SceneModuleInterface
+class CrosswalkModule : public SceneModuleInterfaceWithRTC
 {
 public:
   struct PlannerParam
@@ -334,9 +334,12 @@ public:
     rclcpp::Node & node, const int64_t lane_id, const int64_t module_id,
     const std::optional<int64_t> & reg_elem_id, const lanelet::LaneletMapPtr & lanelet_map_ptr,
     const PlannerParam & planner_param, const rclcpp::Logger & logger,
-    const rclcpp::Clock::SharedPtr clock);
+    const rclcpp::Clock::SharedPtr clock,
+    const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+    const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
+      planning_factor_interface);
 
-  bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
+  bool modifyPathVelocity(PathWithLaneId * path) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
   autoware::motion_utils::VirtualWalls createVirtualWalls() override;
@@ -399,7 +402,7 @@ private:
 
   void planStop(
     PathWithLaneId & ego_path, const std::optional<StopFactor> & nearest_stop_factor,
-    const std::optional<geometry_msgs::msg::Pose> & default_stop_pose, StopReason * stop_reason);
+    const std::optional<geometry_msgs::msg::Pose> & default_stop_pose);
 
   // minor functions
   std::pair<double, double> getAttentionRange(
@@ -456,7 +459,8 @@ private:
 
   const int64_t module_id_;
 
-  rclcpp::Publisher<tier4_debug_msgs::msg::StringStamped>::SharedPtr collision_info_pub_;
+  rclcpp::Publisher<autoware_internal_debug_msgs::msg::StringStamped>::SharedPtr
+    collision_info_pub_;
 
   lanelet::ConstLanelet crosswalk_;
 

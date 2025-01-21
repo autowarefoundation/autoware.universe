@@ -36,6 +36,7 @@
 #include <functional>
 #include <map>
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace
@@ -81,11 +82,9 @@ MotionVelocityPlannerNode::MotionVelocityPlannerNode(const rclcpp::NodeOptions &
   // Publishers
   trajectory_pub_ =
     this->create_publisher<autoware_planning_msgs::msg::Trajectory>("~/output/trajectory", 1);
-  velocity_factor_publisher_ =
-    this->create_publisher<autoware_adapi_v1_msgs::msg::VelocityFactorArray>(
-      "~/output/velocity_factors", 1);
   processing_time_publisher_ =
-    this->create_publisher<tier4_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
+    this->create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>(
+      "~/debug/processing_time_ms", 1);
   debug_viz_pub_ =
     this->create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/markers", 1);
   metrics_pub_ = this->create_publisher<MetricArray>("~/metrics", 1);
@@ -159,13 +158,14 @@ bool MotionVelocityPlannerNode::update_planner_data(
 
   const auto predicted_objects_ptr = sub_predicted_objects_.takeData();
   if (check_with_log(predicted_objects_ptr, "Waiting for predicted objects"))
-    planner_data_.predicted_objects = *predicted_objects_ptr;
+    planner_data_.process_predicted_objects(*predicted_objects_ptr);
   processing_times["update_planner_data.pred_obj"] = sw.toc(true);
 
   const auto no_ground_pointcloud_ptr = sub_no_ground_pointcloud_.takeData();
   if (check_with_log(no_ground_pointcloud_ptr, "Waiting for pointcloud")) {
     const auto no_ground_pointcloud = process_no_ground_pointcloud(no_ground_pointcloud_ptr);
-    if (no_ground_pointcloud) planner_data_.no_ground_pointcloud = *no_ground_pointcloud;
+    if (no_ground_pointcloud)
+      planner_data_.no_ground_pointcloud = PlannerData::Pointcloud(*no_ground_pointcloud);
   }
   processing_times["update_planner_data.pcd"] = sw.toc(true);
 
@@ -184,9 +184,6 @@ bool MotionVelocityPlannerNode::update_planner_data(
   // optional data
   const auto traffic_signals_ptr = sub_traffic_signals_.takeData();
   if (traffic_signals_ptr) process_traffic_signals(traffic_signals_ptr);
-  const auto virtual_traffic_light_states_ptr = sub_virtual_traffic_light_states_.takeData();
-  if (virtual_traffic_light_states_ptr)
-    planner_data_.virtual_traffic_light_states = *virtual_traffic_light_states_ptr;
   processing_times["update_planner_data.traffic_lights"] = sw.toc(true);
 
   return is_ready;
@@ -301,7 +298,7 @@ void MotionVelocityPlannerNode::on_trajectory(
     trajectory_pub_, output_trajectory_msg.header.stamp);
   processing_times["Total"] = stop_watch.toc("Total");
   processing_diag_publisher_.publish(processing_times);
-  tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
+  autoware_internal_debug_msgs::msg::Float64Stamped processing_time_msg;
   processing_time_msg.stamp = get_clock()->now();
   processing_time_msg.data = processing_times["Total"];
   processing_time_publisher_->publish(processing_time_msg);
@@ -358,7 +355,6 @@ autoware::motion_velocity_planner::TrajectoryPoints MotionVelocityPlannerNode::s
   const geometry_msgs::msg::Pose current_pose = planner_data.current_odometry.pose.pose;
   const double v0 = planner_data.current_odometry.twist.twist.linear.x;
   const double a0 = planner_data.current_acceleration.accel.accel.linear.x;
-  const auto & external_v_limit = planner_data.external_velocity_limit;
   const auto & smoother = planner_data.velocity_smoother_;
 
   const auto traj_lateral_acc_filtered =
@@ -382,10 +378,6 @@ autoware::motion_velocity_planner::TrajectoryPoints MotionVelocityPlannerNode::s
     traj_resampled.end());
   if (!smoother->apply(v0, a0, clipped, traj_smoothed, debug_trajectories, false)) {
     RCLCPP_ERROR(get_logger(), "failed to smooth");
-  }
-  if (external_v_limit) {
-    autoware::velocity_smoother::trajectory_utils::applyMaximumVelocityLimit(
-      0LU, traj_smoothed.size(), external_v_limit->max_velocity, traj_smoothed);
   }
   return traj_smoothed;
 }
@@ -427,20 +419,13 @@ autoware_planning_msgs::msg::Trajectory MotionVelocityPlannerNode::generate_traj
     resampled_trajectory, std::make_shared<const PlannerData>(planner_data_));
   processing_times["plan_velocities"] = stop_watch.toc("plan_velocities");
 
-  autoware_adapi_v1_msgs::msg::VelocityFactorArray velocity_factors;
-  velocity_factors.header.frame_id = "map";
-  velocity_factors.header.stamp = get_clock()->now();
-
   for (const auto & planning_result : planning_results) {
     for (const auto & stop_point : planning_result.stop_points)
       insert_stop(output_trajectory_msg, stop_point);
     for (const auto & slowdown_interval : planning_result.slowdown_intervals)
       insert_slowdown(output_trajectory_msg, slowdown_interval);
-    if (planning_result.velocity_factor)
-      velocity_factors.factors.push_back(*planning_result.velocity_factor);
   }
 
-  velocity_factor_publisher_->publish(velocity_factors);
   return output_trajectory_msg;
 }
 

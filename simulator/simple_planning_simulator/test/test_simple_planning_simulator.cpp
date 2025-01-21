@@ -19,6 +19,11 @@
 
 #include "tier4_vehicle_msgs/msg/actuation_command_stamped.hpp"
 
+#include <iostream>
+#include <string>
+#include <tuple>
+#include <utility>
+
 #ifdef ROS_DISTRO_GALACTIC
 #include "tf2_geometry_msgs/tf2_geometry_msgs.h"
 #else

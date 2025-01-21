@@ -28,6 +28,7 @@
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <algorithm>
+#include <iostream>
 #include <memory>
 #include <optional>
 #include <string>
@@ -350,7 +351,8 @@ public:
     std::shared_ptr<DynamicAvoidanceParameters> parameters,
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
     std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
-      objects_of_interest_marker_interface_ptr_map);
+      objects_of_interest_marker_interface_ptr_map,
+    const std::shared_ptr<PlanningFactorInterface> planning_factor_interface);
 
   void updateModuleParams(const std::any & parameters) override
   {

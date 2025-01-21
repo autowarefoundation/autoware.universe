@@ -24,6 +24,9 @@
 #include <tf2/utils.h>
 
 #include <limits>
+#include <memory>
+#include <queue>
+#include <utility>
 
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_geometry_msgs/tf2_geometry_msgs.h>
@@ -385,7 +388,7 @@ double AstarSearch::getExpansionDistance(const AstarNode & current_node) const
 double AstarSearch::getSteeringCost(const int steering_index) const
 {
   return planner_common_param_.curve_weight *
-         (abs(steering_index) / planner_common_param_.turning_steps);
+         (static_cast<double>(abs(steering_index)) / planner_common_param_.turning_steps);
 }
 
 double AstarSearch::getSteeringChangeCost(

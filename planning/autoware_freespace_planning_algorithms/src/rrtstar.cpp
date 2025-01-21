@@ -16,6 +16,8 @@
 
 #include "autoware/freespace_planning_algorithms/kinematic_bicycle_model.hpp"
 
+#include <vector>
+
 namespace autoware::freespace_planning_algorithms
 {
 rrtstar_core::Pose poseMsgToPose(const geometry_msgs::msg::Pose & pose_msg)
