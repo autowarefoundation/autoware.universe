@@ -66,7 +66,7 @@ This is an example of a diagnostic graph configuration. The configuration can be
 - [module2.yaml](./example/graph/module2.yaml)
 
 ```bash
-ros2 launch diagnostic_graph_aggregator example-main.launch.xml
+ros2 launch autoware_diagnostic_graph_aggregator example-main.launch.xml
 ```
 
 You can reuse the graph by making partial edits. For example, disable hardware checks for simulation.
@@ -74,7 +74,7 @@ You can reuse the graph by making partial edits. For example, disable hardware c
 - [edit.yaml](./example/graph/edit.yaml)
 
 ```bash
-ros2 launch diagnostic_graph_aggregator example-edit.launch.xml
+ros2 launch autoware_diagnostic_graph_aggregator example-edit.launch.xml
 ```
 
 ## Debug tools
