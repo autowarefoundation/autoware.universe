@@ -271,9 +271,6 @@ bool BehaviorVelocityPlannerNode::processData(rclcpp::Clock clock)
     planner_data_.route_handler_ = std::make_shared<route_handler::RouteHandler>(*map_data);
   }
 
-  // optional data
-  getData(planner_data_.virtual_traffic_light_states, sub_virtual_traffic_light_states_);
-
   // planner_data_.external_velocity_limit is std::optional type variable.
   const auto external_velocity_limit = sub_external_velocity_limit_.takeData();
   if (external_velocity_limit) {

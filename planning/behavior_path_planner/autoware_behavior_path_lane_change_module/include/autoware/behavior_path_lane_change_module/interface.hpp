@@ -35,6 +35,7 @@
 #include <memory>
 #include <string>
 #include <unordered_map>
+#include <utility>
 
 namespace autoware::behavior_path_planner
 {
@@ -52,6 +53,7 @@ public:
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
     std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
       objects_of_interest_marker_interface_ptr_map,
+    const std::shared_ptr<PlanningFactorInterface> & planning_factor_interface,
     std::unique_ptr<LaneChangeBase> && module_type);
 
   LaneChangeInterface(const LaneChangeInterface &) = delete;
@@ -120,6 +122,8 @@ protected:
     }
   }
 
+  std::pair<LaneChangeStates, std::string_view> check_transit_failure();
+
   void updateDebugMarker() const;
 
   void updateSteeringFactorPtr(const BehaviorModuleOutput & output);
@@ -134,6 +138,8 @@ protected:
   bool is_abort_path_approved_{false};
 
   bool is_abort_approval_requested_{false};
+
+  lane_change::InterfaceDebug interface_debug_;
 };
 }  // namespace autoware::behavior_path_planner
 
