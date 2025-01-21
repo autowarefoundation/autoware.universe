@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_DELAY_STEER_VEL_HPP_
-#define AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_DELAY_STEER_VEL_HPP_
+#ifndef AUTOWARE__SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_DELAY_STEER_VEL_HPP_
+#define AUTOWARE__SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_DELAY_STEER_VEL_HPP_
 
 #include "autoware/simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
 
@@ -155,4 +155,4 @@ private:
 
 }  // namespace autoware::simulator::simple_planning_simulator
 
-#endif  // AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_DELAY_STEER_VEL_HPP_
+#endif  // AUTOWARE__SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_DELAY_STEER_VEL_HPP_

@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__SIMPLE_PLANNING_SIMULATOR_CORE_HPP_
-#define AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__SIMPLE_PLANNING_SIMULATOR_CORE_HPP_
+#ifndef AUTOWARE__SIMPLE_PLANNING_SIMULATOR__SIMPLE_PLANNING_SIMULATOR_CORE_HPP_
+#define AUTOWARE__SIMPLE_PLANNING_SIMULATOR__SIMPLE_PLANNING_SIMULATOR_CORE_HPP_
 
-#include "rclcpp/rclcpp.hpp"
 #include "autoware/simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
 #include "autoware/simple_planning_simulator/visibility_control.hpp"
+#include "rclcpp/rclcpp.hpp"
 #include "tier4_api_utils/tier4_api_utils.hpp"
 
 #include "autoware_control_msgs/msg/control.hpp"
@@ -406,4 +406,4 @@ private:
 };
 }  // namespace autoware::simulator::simple_planning_simulator
 
-#endif  // AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__SIMPLE_PLANNING_SIMULATOR_CORE_HPP_
+#endif  // AUTOWARE__SIMPLE_PLANNING_SIMULATOR__SIMPLE_PLANNING_SIMULATOR_CORE_HPP_

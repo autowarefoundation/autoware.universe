@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_ACTUATION_CMD_HPP_
-#define AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_ACTUATION_CMD_HPP_
+#ifndef AUTOWARE__SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_ACTUATION_CMD_HPP_
+#define AUTOWARE__SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_ACTUATION_CMD_HPP_
 
 #include "autoware/interpolation/linear_interpolation.hpp"
-#include "eigen3/Eigen/Core"
-#include "eigen3/Eigen/LU"
 #include "autoware/simple_planning_simulator/utils/csv_loader.hpp"
 #include "autoware/simple_planning_simulator/utils/mechanical_controller.hpp"
 #include "autoware/simple_planning_simulator/vehicle_model/sim_model_interface.hpp"
+#include "eigen3/Eigen/Core"
+#include "eigen3/Eigen/LU"
 
 #include <deque>
 #include <iostream>
@@ -402,4 +402,4 @@ private:
 
 }  // namespace autoware::simulator::simple_planning_simulator
 
-#endif  // AUTOWARE__SIMULATOR__SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_ACTUATION_CMD_HPP_
+#endif  // AUTOWARE__SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_ACTUATION_CMD_HPP_

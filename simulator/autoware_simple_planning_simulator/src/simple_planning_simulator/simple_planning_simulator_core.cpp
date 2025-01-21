@@ -15,13 +15,13 @@
 #include "autoware/simple_planning_simulator/simple_planning_simulator_core.hpp"
 
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
+#include "autoware/simple_planning_simulator/vehicle_model/sim_model.hpp"
+#include "autoware/simple_planning_simulator/vehicle_model/sim_model_actuation_cmd.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware/universe_utils/ros/msg_covariance.hpp"
 #include "autoware/universe_utils/ros/update_param.hpp"
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 #include "rclcpp_components/register_node_macro.hpp"
-#include "autoware/simple_planning_simulator/vehicle_model/sim_model.hpp"
-#include "autoware/simple_planning_simulator/vehicle_model/sim_model_actuation_cmd.hpp"
 
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
@@ -953,4 +953,5 @@ void SimplePlanningSimulator::publish_actuation_status()
 }
 }  // namespace autoware::simulator::simple_planning_simulator
 
-RCLCPP_COMPONENTS_REGISTER_NODE(autoware::simulator::simple_planning_simulator::SimplePlanningSimulator)
+RCLCPP_COMPONENTS_REGISTER_NODE(
+  autoware::simulator::simple_planning_simulator::SimplePlanningSimulator)
