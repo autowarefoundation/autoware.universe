@@ -317,7 +317,7 @@ TEST_P(TestSimplePlanningSimulator, TestIdealSteerVel)
   node_options.append_parameter_override("brake_time_constant", 0.2);
   node_options.append_parameter_override("convert_accel_cmd", true);
   node_options.append_parameter_override("convert_brake_cmd", true);
-  const auto share_dir = ament_index_cpp::get_package_share_directory("simple_planning_simulator");
+  const auto share_dir = ament_index_cpp::get_package_share_directory("autoware_simple_planning_simulator");
   const auto accel_map_path = share_dir + "/test/actuation_cmd_map/accel_map.csv";
   const auto brake_map_path = share_dir + "/test/actuation_cmd_map/brake_map.csv";
   const auto steer_map_path = share_dir + "/test/actuation_cmd_map/steer_map.csv";

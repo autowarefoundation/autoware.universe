@@ -8,8 +8,8 @@ autoware_package()
 
 # Component
 ament_auto_add_library(${PROJECT_NAME} SHARED
-  include/simple_planning_simulator/simple_planning_simulator_core.hpp
-  include/simple_planning_simulator/visibility_control.hpp
+  include/autoware/simple_planning_simulator/simple_planning_simulator_core.hpp
+  include/autoware/simple_planning_simulator/visibility_control.hpp
   src/simple_planning_simulator/simple_planning_simulator_core.cpp
   src/simple_planning_simulator/vehicle_model/sim_model_interface.cpp
   src/simple_planning_simulator/vehicle_model/sim_model_ideal_steer_vel.cpp
