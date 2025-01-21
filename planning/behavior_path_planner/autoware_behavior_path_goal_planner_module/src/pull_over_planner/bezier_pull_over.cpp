@@ -33,8 +33,12 @@ namespace autoware::behavior_path_planner
 {
 BezierPullOver::BezierPullOver(rclcpp::Node & node, const GoalPlannerParameters & parameters)
 : PullOverPlannerBase(node, parameters),
-  lane_departure_checker_(
-    lane_departure_checker::Param{parameters.lane_departure_check_expansion_margin}, vehicle_info_),
+  lane_departure_checker_{[&]() {
+    auto lane_departure_checker_params = lane_departure_checker::Param{};
+    lane_departure_checker_params.footprint_extra_margin =
+      parameters.lane_departure_check_expansion_margin;
+    return LaneDepartureChecker{lane_departure_checker_params, vehicle_info_};
+  }()},
   left_side_parking_(parameters.parking_policy == ParkingPolicy::LEFT_SIDE)
 {
 }
@@ -76,7 +80,8 @@ std::optional<PullOverPath> BezierPullOver::plan(
 }
 
 std::vector<PullOverPath> BezierPullOver::plans(
-  [[maybe_unused]] const GoalCandidate & modified_goal_pose, [[maybe_unused]] const size_t id,
+  [[maybe_unused]] const GoalCandidate & modified_goal_pose,
+  [[maybe_unused]] const size_t initial_id,
   [[maybe_unused]] const std::shared_ptr<const PlannerData> planner_data,
   [[maybe_unused]] const BehaviorModuleOutput & upstream_module_output)
 {
@@ -101,10 +106,12 @@ std::vector<PullOverPath> BezierPullOver::plans(
 
   // find safe one from paths with different jerk
   std::vector<PullOverPath> paths;
+  auto id = initial_id;
   for (double lateral_jerk = min_jerk; lateral_jerk <= max_jerk; lateral_jerk += jerk_resolution) {
     auto pull_over_paths = generateBezierPath(
       modified_goal_pose, id, planner_data, upstream_module_output, road_lanes, pull_over_lanes,
       lateral_jerk);
+    id += pull_over_paths.size();
     std::copy(
       std::make_move_iterator(pull_over_paths.begin()),
       std::make_move_iterator(pull_over_paths.end()), std::back_inserter(paths));
@@ -114,7 +121,7 @@ std::vector<PullOverPath> BezierPullOver::plans(
 }
 
 std::vector<PullOverPath> BezierPullOver::generateBezierPath(
-  const GoalCandidate & goal_candidate, const size_t id,
+  const GoalCandidate & goal_candidate, const size_t initial_id,
   const std::shared_ptr<const PlannerData> planner_data,
   const BehaviorModuleOutput & upstream_module_output, const lanelet::ConstLanelets & road_lanes,
   const lanelet::ConstLanelets & pull_over_lanes, const double lateral_jerk) const
@@ -202,6 +209,7 @@ std::vector<PullOverPath> BezierPullOver::generateBezierPath(
     lanelet::utils::query::getAllParkingLots(planner_data->route_handler->getLaneletMapPtr());
 
   std::vector<PullOverPath> bezier_paths;
+  auto id = initial_id;
   for (const auto & [v_init_coeff, v_final_coeff, acc_coeff] : params) {
     // set path shifter and generate shifted path
     PathShifter path_shifter{};
@@ -340,6 +348,7 @@ std::vector<PullOverPath> BezierPullOver::generateBezierPath(
       continue;
     }
     bezier_paths.push_back(std::move(pull_over_path));
+    id++;
   }
 
   return bezier_paths;
