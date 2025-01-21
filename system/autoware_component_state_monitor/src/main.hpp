@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__COMPONENT_STATE_MONITOR__MAIN_HPP_
-#define AUTOWARE__COMPONENT_STATE_MONITOR__MAIN_HPP_
+#ifndef MAIN_HPP_
+#define MAIN_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -75,4 +75,4 @@ private:
 
 }  // namespace autoware::component_state_monitor
 
-#endif  // AUTOWARE__COMPONENT_STATE_MONITOR__MAIN_HPP_
+#endif  // MAIN_HPP_
