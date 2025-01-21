@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON__PLANNER_DATA_HPP_
-#define AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON__PLANNER_DATA_HPP_
+#ifndef AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON_UNIVERSE__PLANNER_DATA_HPP_
+#define AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON_UNIVERSE__PLANNER_DATA_HPP_
 
 #include <autoware/motion_utils/distance/distance.hpp>
-#include <autoware/motion_velocity_planner_common/collision_checker.hpp>
+#include <autoware/motion_velocity_planner_common_universe/collision_checker.hpp>
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <autoware/velocity_smoother/smoother/smoother_base.hpp>
@@ -166,4 +166,4 @@ struct PlannerData
 };
 }  // namespace autoware::motion_velocity_planner
 
-#endif  // AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON__PLANNER_DATA_HPP_
+#endif  // AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON_UNIVERSE__PLANNER_DATA_HPP_

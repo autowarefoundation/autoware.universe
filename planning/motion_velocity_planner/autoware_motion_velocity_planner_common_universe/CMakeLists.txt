@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(autoware_motion_velocity_planner_common)
+project(autoware_motion_velocity_planner_common_universe)
 
 find_package(autoware_cmake REQUIRED)
 
