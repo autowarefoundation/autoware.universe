@@ -61,9 +61,9 @@ jobs:
       - name: Create target branch
         run: |
           git checkout origin/main
-          git checkout -b tmp/bot/bump_version
-          git merge tmp/bot/bump_version_base
-          git push origin tmp/bot/bump_version --force
+          git checkout -b chore/bot/bump_version
+          git merge chore/bot/bump_version_base
+          git push origin chore/bot/bump_version --force
         shell: bash
 
       - name: Create PR
