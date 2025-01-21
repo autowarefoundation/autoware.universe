@@ -75,6 +75,6 @@ jobs:
           --base=main
           --body="Bump version to ${{ steps.bump-version-from-humble-branch.outputs.version }}"
           --title="chore: bump version to ${{ steps.bump-version-from-humble-branch.outputs.version }}"
-          --head=tmp/bot/bump_version
+          --head=chore/bot/bump_version
         env:
           GH_TOKEN: ${{ steps.generate-token.outputs.token }}
