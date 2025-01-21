@@ -1,7 +1,7 @@
 ### Automatically generated from package.xml ###
 common/autoware_adapi_specs/** isamu.takagi@tier4.jp ryohsuke.mitsudome@tier4.jp
 common/autoware_auto_common/** opensource@apex.ai satoshi.ota@tier4.jp shumpei.wakabayashi@tier4.jp tomoya.kimura@tier4.jp
-common/autoware_component_interface_specs/** isamu.takagi@tier4.jp yukihiro.saito@tier4.jp
+common/autoware_component_interface_specs_universe/** isamu.takagi@tier4.jp yukihiro.saito@tier4.jp
 common/autoware_component_interface_tools/** isamu.takagi@tier4.jp
 common/autoware_component_interface_utils/** isamu.takagi@tier4.jp yukihiro.saito@tier4.jp
 common/autoware_fake_test_node/** opensource@apex.ai satoshi.ota@tier4.jp shumpei.wakabayashi@tier4.jp tomoya.kimura@tier4.jp
@@ -204,7 +204,7 @@ simulator/autoware_carla_interface/** maxime.clement@tier4.jp mradityagio@gmail.
 simulator/dummy_perception_publisher/** yukihiro.saito@tier4.jp
 simulator/fault_injection/** keisuke.shima@tier4.jp
 simulator/learning_based_vehicle_model/** maxime.clement@tier4.jp nagy.tomas@tier4.jp
-simulator/simple_planning_simulator/** mamoru.sobue@tier4.jp maxime.clement@tier4.jp takamasa.horibe@tier4.jp temkei.kem@tier4.jp tomoya.kimura@tier4.jp zulfaqar.azmi@tier4.jp
+simulator/simple_planning_simulator/** mamoru.sobue@tier4.jp maxime.clement@tier4.jp takamasa.horibe@tier4.jp temkei.kem@tier4.jp tomoya.kimura@tier4.jp zulfaqar.azmi@tier4.jp kotaro.yoshimoto@tier4.jp
 simulator/tier4_dummy_object_rviz_plugin/** yukihiro.saito@tier4.jp
 simulator/vehicle_door_simulator/** isamu.takagi@tier4.jp
 system/autoware_component_monitor/** baris@leodrive.ai memin@leodrive.ai yavuz@leodrive.ai
