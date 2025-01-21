@@ -59,7 +59,6 @@ private:
   using VehicleStopChecker = autoware::motion_utils::VehicleStopCheckerBase;
   using Trajectory = autoware::component_interface_specs::planning::Trajectory::Message;
   using KinematicState = autoware::component_interface_specs::localization::KinematicState::Message;
-  void on_trajectory(const Trajectory::ConstSharedPtr msg);
   void on_kinematic_state(const KinematicState::ConstSharedPtr msg);
   void on_timer();
 
