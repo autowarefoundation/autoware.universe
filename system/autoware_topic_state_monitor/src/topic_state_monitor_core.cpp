@@ -37,7 +37,7 @@ void update_param(
 namespace autoware::topic_state_monitor
 {
 TopicStateMonitorNode::TopicStateMonitorNode(const rclcpp::NodeOptions & node_options)
-: Node("autoware_topic_state_monitor", node_options), updater_(this)
+: Node("topic_state_monitor", node_options), updater_(this)
 {
   using std::placeholders::_1;
 

@@ -53,7 +53,7 @@ class ComponentStateDiagnostics:
 
 class ComponentStateDiagnosticsNode(rclpy.node.Node):
     def __init__(self):
-        super().__init__("autoware_system_diagnostic_monitor")
+        super().__init__("system_diagnostic_monitor")
         durable_qos = rclpy.qos.QoSProfile(
             depth=1,
             durability=rclpy.qos.DurabilityPolicy.TRANSIENT_LOCAL,
@@ -66,7 +66,7 @@ class ComponentStateDiagnosticsNode(rclpy.node.Node):
         self.states.append(
             ComponentStateDiagnostics(
                 self,
-                "autoware_system_diagnostic_monitor: localization_state",
+                "system_diagnostic_monitor: localization_state",
                 "/api/localization/initialization_state",
                 LocalizationState,
                 durable_qos,
@@ -76,7 +76,7 @@ class ComponentStateDiagnosticsNode(rclpy.node.Node):
         self.states.append(
             ComponentStateDiagnostics(
                 self,
-                "autoware_system_diagnostic_monitor: route_state",
+                "system_diagnostic_monitor: route_state",
                 "/api/routing/state",
                 RouteState,
                 durable_qos,
