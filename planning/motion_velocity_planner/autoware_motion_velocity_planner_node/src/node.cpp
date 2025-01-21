@@ -82,9 +82,6 @@ MotionVelocityPlannerNode::MotionVelocityPlannerNode(const rclcpp::NodeOptions &
   // Publishers
   trajectory_pub_ =
     this->create_publisher<autoware_planning_msgs::msg::Trajectory>("~/output/trajectory", 1);
-  velocity_factor_publisher_ =
-    this->create_publisher<autoware_adapi_v1_msgs::msg::VelocityFactorArray>(
-      "~/output/velocity_factors", 1);
   processing_time_publisher_ =
     this->create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "~/debug/processing_time_ms", 1);
@@ -422,20 +419,13 @@ autoware_planning_msgs::msg::Trajectory MotionVelocityPlannerNode::generate_traj
     resampled_trajectory, std::make_shared<const PlannerData>(planner_data_));
   processing_times["plan_velocities"] = stop_watch.toc("plan_velocities");
 
-  autoware_adapi_v1_msgs::msg::VelocityFactorArray velocity_factors;
-  velocity_factors.header.frame_id = "map";
-  velocity_factors.header.stamp = get_clock()->now();
-
   for (const auto & planning_result : planning_results) {
     for (const auto & stop_point : planning_result.stop_points)
       insert_stop(output_trajectory_msg, stop_point);
     for (const auto & slowdown_interval : planning_result.slowdown_intervals)
       insert_slowdown(output_trajectory_msg, slowdown_interval);
-    if (planning_result.velocity_factor)
-      velocity_factors.factors.push_back(*planning_result.velocity_factor);
   }
 
-  velocity_factor_publisher_->publish(velocity_factors);
   return output_trajectory_msg;
 }
 
