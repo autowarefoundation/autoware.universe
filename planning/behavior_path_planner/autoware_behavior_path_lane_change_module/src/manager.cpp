@@ -152,6 +152,8 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
       getOrDeclareParameter<double>(*node, parameter("collision_check.prediction_time_resolution"));
     p.safety.collision_check.th_yaw_diff =
       getOrDeclareParameter<double>(*node, parameter("collision_check.yaw_diff_threshold"));
+    p.safety.collision_check.th_incoming_object_yaw =
+      getOrDeclareParameter<double>(*node, parameter("collision_check.th_incoming_object_yaw"));
 
     // rss check
     auto set_rss_params = [&](auto & params, const std::string & prefix) {
@@ -169,6 +171,8 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
         *node, parameter(prefix + ".rear_vehicle_safety_time_margin"));
       params.lateral_distance_max_threshold =
         getOrDeclareParameter<double>(*node, parameter(prefix + ".lateral_distance_max_threshold"));
+      params.extended_polygon_policy =
+        getOrDeclareParameter<std::string>(*node, parameter(prefix + ".extended_polygon_policy"));
     };
     set_rss_params(p.safety.rss_params, "safety_check.execution");
     set_rss_params(p.safety.rss_params_for_parked, "safety_check.parked");
@@ -302,7 +306,7 @@ std::unique_ptr<SceneModuleInterface> LaneChangeModuleManager::createNewSceneMod
 {
   return std::make_unique<LaneChangeInterface>(
     name_, *node_, parameters_, rtc_interface_ptr_map_,
-    objects_of_interest_marker_interface_ptr_map_,
+    objects_of_interest_marker_interface_ptr_map_, planning_factor_interface_,
     std::make_unique<NormalLaneChange>(parameters_, LaneChangeModuleType::NORMAL, direction_));
 }
 
@@ -454,6 +458,19 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
       p->safety.collision_check.prediction_time_resolution);
     updateParam<double>(
       parameters, ns + "yaw_diff_threshold", p->safety.collision_check.th_yaw_diff);
+
+    auto th_incoming_object_yaw = p->safety.collision_check.th_incoming_object_yaw;
+    updateParam<double>(parameters, ns + "th_incoming_object_yaw", th_incoming_object_yaw);
+    if (th_incoming_object_yaw >= M_PI_2) {
+      p->safety.collision_check.th_incoming_object_yaw = th_incoming_object_yaw;
+    } else {
+      RCLCPP_WARN_THROTTLE(
+        node_->get_logger(), *node_->get_clock(), 5000,
+        "The value of th_incoming_object_yaw (%.3f rad) is less than the minimum possible value "
+        "(%.3f "
+        "rad).",
+        th_incoming_object_yaw, M_PI_2);
+    }
   }
 
   {
@@ -483,7 +500,7 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
     updateParam<double>(parameters, ns + "stop_time", p->th_stop_time);
   }
 
-  auto update_rss_params = [&parameters](const std::string & prefix, auto & params) {
+  auto update_rss_params = [&parameters, this](const std::string & prefix, auto & params) {
     using autoware::universe_utils::updateParam;
     updateParam<double>(
       parameters, prefix + "longitudinal_distance_min_threshold",
@@ -502,6 +519,19 @@ void LaneChangeModuleManager::updateModuleParams(const std::vector<rclcpp::Param
       params.rear_vehicle_safety_time_margin);
     updateParam<double>(
       parameters, prefix + "lateral_distance_max_threshold", params.lateral_distance_max_threshold);
+
+    auto extended_polygon_policy = params.extended_polygon_policy;
+    updateParam<std::string>(
+      parameters, prefix + "extended_polygon_policy", extended_polygon_policy);
+    if (extended_polygon_policy == "rectangle" || extended_polygon_policy == "along_path") {
+      params.extended_polygon_policy = extended_polygon_policy;
+    } else {
+      RCLCPP_WARN_THROTTLE(
+        node_->get_logger(), *node_->get_clock(), 1000,
+        "Policy %s not supported or there's typo. Make sure you choose either 'rectangle' or "
+        "'along_path'",
+        extended_polygon_policy.c_str());
+    }
   };
 
   update_rss_params("lane_change.safety_check.execution.", p->safety.rss_params);

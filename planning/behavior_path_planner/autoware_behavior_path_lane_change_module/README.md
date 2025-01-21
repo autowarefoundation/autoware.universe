@@ -431,6 +431,134 @@ Within this range, we sample the lateral acceleration for the ego vehicle. Simil
 lateral_acceleration_resolution = (maximum_lateral_acceleration - minimum_lateral_acceleration) / lateral_acceleration_sampling_num
 ```
 
+#### Object filtering
+
+Before performing safety checks, predicted objects are categorized based on their current pose and behavior at the time. These categories help determine how each object impacts the lane change process and guide the safety evaluation.
+
+The predicted objects are divided into four main categories:
+
+- **Target Lane Leading**: Objects that overlap with the target lane and are in front of the ego vehicle. This category is further divided into three subcategories:
+  - Moving: Objects with a velocity above a certain threshold.
+  - Stopped: Stationary objects within the target lane.
+  - Stopped at Bound: Objects outside the target lane but close to its boundaries.
+- **Target Lane Trailing**: Objects that overlap with the target lane or any lanes preceding the target lane. Only moving vehicles are included in this category.
+- **Current Lane**: Objects in front of the ego vehicle in the ego vehicle's current lane.
+- **Others**: Any objects not classified into the above categories.
+
+![object lanes](./images/lane_objects.drawio.svg)
+
+Furthermore, for **Target Lane Leading** and **Current Lane** objects, only those positioned within the lane boundary or before the goal position are considered. Objects exceeding the end of the lane or the goal position are classified as **Others**.
+
+Once objects are filtered into their respective categories, they are sorted by distance closest to the ego vehicle to farthest.
+
+The following diagram illustrates the filtering process,
+
+```plantuml
+@startuml
+skinparam defaultTextAlignment center
+skinparam backgroundColor #WHITE
+
+title Filter Objects main flowchart
+
+start
+
+:Filter predicted objects by class;
+note left: Remove objects whose classes are\nnot specified in the <color:red>**target_object**</color> parameter.
+
+:Filter oncoming predicted objects;
+note left: Compare ego's current pose and object's current pose,\nand filter out any object whose yaw difference exceeds\n<color:red>**collision_check.th_incoming_object_yaw**</color>;
+
+:Transform predicted objects to extended predicted objects;
+
+group "Filter target lane objects" {
+if (Object's lateral distance\nfrom the centerline\nis more than\nhalf of ego's width?) then (TRUE)
+  if (Object's current pose\nis before the goal or\nthe end of the lane) then (TRUE)
+  if (Object overlaps target lane?) then (TRUE)
+  #LightGreen:To SUBPROCESS "Separate object based on its behavior in target lane";
+  if(can separate object in SUBPROCESS) then (TRUE)
+  stop
+  endif
+  else (FALSE)
+  if (Object is moving\nAND\nis a vehicle class\nAND\npath overlaps target lane?) then (TRUE)
+  #LightGreen:To SUBPROCESS "Separate object based on its behavior in target lane";
+  if(can separate object in SUBPROCESS) then (TRUE)
+  stop
+  endif
+  endif
+  endif
+  endif
+  #LightPink:From SUBPROCESS "Separate object based on its behavior in target lane";
+  if (Object is in expanded target lane\nAND\nis stopped\nAND\nin front of ego?) then (TRUE)
+  :Add object to <color:blue>**filtered_object.leading_objects.stopped_at_bound**</color> list;
+  stop
+  endif
+  else (FALSE)
+  if (Object overlaps preceding target lanes?) then (TRUE)
+  :Add object to <color:blue>**filtered_object.trailing_objects**</color> list;
+  stop
+  endif
+endif
+}
+if (Object is in front of ego\nAND\nis before terminal\nAND\noverlaps current lane?) then (TRUE)
+  :Add object to <color:orange>**filtered_object.current_lane**</color> list;
+  stop
+else (FALSE)
+  :Add object to <color:magenta>**filtered_object.others**</color> list;
+endif
+
+stop
+
+group Target Lane Objects Subprocess #LightYellow
+start
+if (Object is behind ego?) then (TRUE)
+  if (Object is moving?) then (TRUE)
+    :Add object to <color:blue>**filtered_object.trailing_objects**</color> list;
+    #LightGreen:Can separate object;
+    stop
+  else (FALSE)
+    #LightPink:Cant separate proceed with other checks;
+    stop
+  endif
+else (FALSE)
+  if (Object is moving?) then (TRUE)
+    :Add object to <color:blue>**filtered_object.leading_objects.moving**</color> list;
+  else (FALSE)
+    :Add object to <color:blue>**filtered_object.leading_objects.stopped**</color> list;
+  endif
+  #LightGreen:Can separate object;
+  stop
+endif
+
+@enduml
+```
+
+!!! note
+
+    As shown in the flowchart, oncoming objects are also filtered out. The filtering process considers the difference between the current orientation of the ego vehicle and that of the object. However, depending on the map's geometry, a certain threshold may need to be allowed. This threshold can be configured using the parameter collision_check.th_incoming_object_yaw.
+
+!!! note
+
+    The **Target Lane Leading's Stopped at Boundary** objects are detected using the expanded area of the target lane beyond its original boundaries. The parameters `lane_expansion.left_offset` and `lane_expansion.right_offset` can be configured to adjust the expanded width.
+
+    <div align="center">
+      <table>
+        <tr>
+          <td>
+            <div style="text-align: center;">
+              <div style="color: black; font-size: 20px; margin-bottom: 10px;">Without Lane Expansion</div>
+            <img src="./images/lane_change-lane_expansion-without.png" alt="Without lane expansion">
+            </div>
+          </td>
+          <td>
+            <div style="text-align: center;">
+            <div style="color: black; font-size: 20px; margin-bottom: 10px;">With Lane Expansion</div>
+            <img src="./images/lane_change-lane_expansion-with.png" alt="With lane expansion">
+            </div>
+          </td>
+        </tr>
+      </table>
+    </div>
+
 #### Candidate Path Validity
 
 It is a prerequisite, that both prepare length and lane-changing length are valid, such that:
@@ -589,165 +717,7 @@ The following figures demonstrate different situations under which will or will 
 
 First, we divide the target objects into obstacles in the target lane, obstacles in the current lane, and obstacles in other lanes. Target lane indicates the lane that the ego vehicle is going to reach after the lane change and current lane mean the current lane where the ego vehicle is following before the lane change. Other lanes are lanes that do not belong to the target and current lanes. The following picture describes objects on each lane. Note that users can remove objects either on current and other lanes from safety check by changing the flag, which are `check_objects_on_current_lanes` and `check_objects_on_other_lanes`.
 
-![object lanes](./images/lane_objects.drawio.svg)
-
 Furthermore, to change lanes behind a vehicle waiting at a traffic light, we skip the safety check for the stopping vehicles near the traffic light. The explanation for parked car detection is written in [documentation for avoidance module](../autoware_behavior_path_static_obstacle_avoidance_module/README.md).
-
-The detection area for the target lane can be expanded beyond its original boundaries to enable detection of objects that are outside the target lane's limits.
-
-<div align="center">
-  <table>
-    <tr>
-      <td>
-        <div style="text-align: center;">
-          <div style="color: black; font-size: 20px; margin-bottom: 10px;">Without Lane Expansion</div>
-          <img src="./images/lane_change-lane_expansion-without.png" alt="Without lane expansion">
-        </div>
-      </td>
-      <td>
-        <div style="text-align: center;">
-          <div style="color: black; font-size: 20px; margin-bottom: 10px;">With Lane Expansion</div>
-          <img src="./images/lane_change-lane_expansion-with.png" alt="With lane expansion">
-        </div>
-      </td>
-    </tr>
-  </table>
-</div>
-
-##### Object filtering
-
-```plantuml
-@startuml
-skinparam defaultTextAlignment center
-skinparam backgroundColor #WHITE
-
-title NormalLaneChange::filterObjects Method Execution Flow
-
-start
-
-group "Filter Objects by Class" {
-while (has not finished iterating through predicted object list) is (TRUE)
-  if (current object type != param.object_types_to_check?) then (TRUE)
-  #LightPink:Remove current object;
-else (FALSE)
-  :Keep current object;
-endif
-end while
-end group
-
-if (predicted object list is empty?) then (TRUE)
-  :Return empty result;
-  stop
-else (FALSE)
-endif
-
-group "Filter Oncoming Objects" #PowderBlue {
-while (has not finished iterating through predicted object list?) is (TRUE)
-if (object's yaw with reference to ego's yaw difference < 90 degree?) then (TRUE)
-  :Keep current object;
-else (FALSE)
-if (object is stopping?) then (TRUE)
-  :Keep current object;
-else (FALSE)
-  #LightPink:Remove current object;
-endif
-endif
-endwhile
-end group
-
-if (predicted object list is empty?) then (TRUE)
-  :Return empty result;
-  stop
-else (FALSE)
-endif
-
-group "Filter Objects By Lanelets" #LightGreen {
-
-while (has not finished iterating through predicted object list) is (TRUE)
-  :Calculate lateral distance diff;
-  if (Object in target lane polygon?) then (TRUE)
-    if (lateral distance diff > half of ego's width?) then (TRUE)
-      if (Object's physical position is before terminal point?) then (TRUE)
-        :Add to target_lane_objects;
-      else (FALSE)
-      endif
-    else (FALSE)
-    endif
-  else (FALSE)
-  endif
-
-  if (Object overlaps with backward target lanes?) then (TRUE)
-    :Add to target_lane_objects;
-  else (FALSE)
-    if (Object in current lane polygon?) then (TRUE)
-      :Add to current_lane_objects;
-    else (FALSE)
-      :Add to other_lane_objects;
-    endif
-  endif
-end while
-
-:Return target lanes object,  current lanes object and other lanes object;
-end group
-
-:Generate path from current lanes;
-
-if (path empty?) then (TRUE)
-  :Return empty result;
-  stop
-else (FALSE)
-endif
-
-group "Filter Target Lanes' objects" #LightCyan {
-
-while (has not finished iterating through target lanes' object list) is (TRUE)
-  if(velocity is within threshold?) then (TRUE)
-  :Keep current object;
-  else (FALSE)
-    if(object is ahead of ego?) then (TRUE)
-      :keep current object;
-    else (FALSE)
-      #LightPink:remove current object;
-    endif
-   endif
-endwhile
-end group
-
-group "Filter Current Lanes' objects"  #LightYellow {
-
-while (has not finished iterating through current lanes' object list) is (TRUE)
-  if(velocity is within threshold?) then (TRUE)
-    if(object is ahead of ego?) then (TRUE)
-      :keep current object;
-    else (FALSE)
-      #LightPink:remove current object;
-    endif
-    else (FALSE)
-      #LightPink:remove current object;
-   endif
-endwhile
-end group
-
-group "Filter Other Lanes' objects"  #Lavender {
-
-while (has not finished iterating through other lanes' object list) is (TRUE)
-  if(velocity is within threshold?) then (TRUE)
-    if(object is ahead of ego?) then (TRUE)
-      :keep current object;
-    else (FALSE)
-      #LightPink:remove current object;
-    endif
-    else (FALSE)
-      #LightPink:remove current object;
-   endif
-endwhile
-end group
-
-:Transform the objects into extended predicted object and return them as lane_change_target_objects;
-stop
-
-@enduml
-```
 
 ##### Collision check in prepare phase
 
@@ -1314,7 +1284,8 @@ The following parameters are used to configure terminal lane change path feature
 | `collision_check.check_other_lanes`                      | [-]   | boolean | If true, the lane change module includes objects in other lanes when performing collision assessment.                                                                                                      | false         |
 | `collision_check.use_all_predicted_paths`                | [-]   | boolean | If false, use only the predicted path that has the maximum confidence.                                                                                                                                     | true          |
 | `collision_check.prediction_time_resolution`             | [s]   | double  | Time resolution for object's path interpolation and collision check.                                                                                                                                       | 0.5           |
-| `collision_check.yaw_diff_threshold`                     | [rad] | double  | Maximum yaw difference between ego and object when executing rss-based collision checking                                                                                                                  | 3.1416        |
+| `collision_check.yaw_diff_threshold`                     | [rad] | double  | Maximum yaw difference between predicted ego pose and predicted object pose when executing rss-based collision checking                                                                                    | 3.1416        |
+| `collision_check.th_incoming_object_yaw`                 | [rad] | double  | Maximum yaw difference between current ego pose and current object pose. Objects with a yaw difference exceeding this value are excluded from the safety check.                                            | 2.3562        |
 
 #### safety constraints during lane change path is computed
 
@@ -1327,6 +1298,7 @@ The following parameters are used to configure terminal lane change path feature
 | `safety_check.execution.lateral_distance_max_threshold`      | [m]     | double | The lateral distance threshold that is used to determine whether lateral distance between two object is enough and whether lane change is safe.                | 2.0           |
 | `safety_check.execution.longitudinal_distance_min_threshold` | [m]     | double | The longitudinal distance threshold that is used to determine whether longitudinal distance between two object is enough and whether lane change is safe.      | 3.0           |
 | `safety_check.execution.longitudinal_velocity_delta_time`    | [m]     | double | The time multiplier that is used to compute the actual gap between vehicle at each predicted points (not RSS distance)                                         | 0.8           |
+| `safety_check.execution.extended_polygon_policy`             | [-]     | string | Policy used to determine the polygon shape for the safety check. Available options are: `rectangle` or `along-path`.                                           | `rectangle`   |
 
 #### safety constraints specifically for stopped or parked vehicles
 
@@ -1339,6 +1311,7 @@ The following parameters are used to configure terminal lane change path feature
 | `safety_check.parked.lateral_distance_max_threshold`      | [m]     | double | The lateral distance threshold that is used to determine whether lateral distance between two object is enough and whether lane change is safe.                | 1.0           |
 | `safety_check.parked.longitudinal_distance_min_threshold` | [m]     | double | The longitudinal distance threshold that is used to determine whether longitudinal distance between two object is enough and whether lane change is safe.      | 3.0           |
 | `safety_check.parked.longitudinal_velocity_delta_time`    | [m]     | double | The time multiplier that is used to compute the actual gap between vehicle at each predicted points (not RSS distance)                                         | 0.8           |
+| `safety_check.parked.extended_polygon_policy`             | [-]     | string | Policy used to determine the polygon shape for the safety check. Available options are: `rectangle` or `along-path`.                                           | `rectangle`   |
 
 ##### safety constraints to cancel lane change path
 
@@ -1351,6 +1324,7 @@ The following parameters are used to configure terminal lane change path feature
 | `safety_check.cancel.lateral_distance_max_threshold`      | [m]     | double | The lateral distance threshold that is used to determine whether lateral distance between two object is enough and whether lane change is safe.                | 1.0           |
 | `safety_check.cancel.longitudinal_distance_min_threshold` | [m]     | double | The longitudinal distance threshold that is used to determine whether longitudinal distance between two object is enough and whether lane change is safe.      | 2.5           |
 | `safety_check.cancel.longitudinal_velocity_delta_time`    | [m]     | double | The time multiplier that is used to compute the actual gap between vehicle at each predicted points (not RSS distance)                                         | 0.6           |
+| `safety_check.cancel.extended_polygon_policy`             | [-]     | string | Policy used to determine the polygon shape for the safety check. Available options are: `rectangle` or `along-path`.                                           | `rectangle`   |
 
 ##### safety constraints used during lane change path is computed when ego is stuck
 
@@ -1363,6 +1337,7 @@ The following parameters are used to configure terminal lane change path feature
 | `safety_check.stuck.lateral_distance_max_threshold`      | [m]     | double | The lateral distance threshold that is used to determine whether lateral distance between two object is enough and whether lane change is safe.                | 2.0           |
 | `safety_check.stuck.longitudinal_distance_min_threshold` | [m]     | double | The longitudinal distance threshold that is used to determine whether longitudinal distance between two object is enough and whether lane change is safe.      | 3.0           |
 | `safety_check.stuck.longitudinal_velocity_delta_time`    | [m]     | double | The time multiplier that is used to compute the actual gap between vehicle at each predicted points (not RSS distance)                                         | 0.8           |
+| `safety_check.stuck.extended_polygon_policy`             | [-]     | string | Policy used to determine the polygon shape for the safety check. Available options are: `rectangle` or `along-path`.                                           | `rectangle`   |
 
 (\*1) the value must be negative.
 
