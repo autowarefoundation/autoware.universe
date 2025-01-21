@@ -353,29 +353,29 @@ CudaPointcloudPreprocessor::CudaPointcloudPreprocessor()
   cudaMemPoolCreate(&device_memory_pool_, &pool_props);
   MemoryPoolAllocator<TwistStruct2D> allocator_2d(device_memory_pool_);
   MemoryPoolAllocator<TwistStruct3D> allocator_3d(device_memory_pool_);
-  device_twist_2d_structs_
-      = thrust::device_vector<TwistStruct2D, MemoryPoolAllocator<TwistStruct2D>>(allocator_2d);
-  device_twist_3d_structs_
-      = thrust::device_vector<TwistStruct3D, MemoryPoolAllocator<TwistStruct3D>>(allocator_3d);
+  device_twist_2d_structs_ =
+    thrust::device_vector<TwistStruct2D, MemoryPoolAllocator<TwistStruct2D>>(allocator_2d);
+  device_twist_3d_structs_ =
+    thrust::device_vector<TwistStruct3D, MemoryPoolAllocator<TwistStruct3D>>(allocator_3d);
 }
 
 template <typename T>
-class MemoryPoolAllocator {
- public:
+class MemoryPoolAllocator
+{
+public:
   using value_type = T;
   MemoryPoolAllocator(cudaMemPool_t pool) : m_pool(pool) {}
 
-  T* allocate(std::size_t n) {
-    void* ptr = nullptr;
+  T * allocate(std::size_t n)
+  {
+    void * ptr = nullptr;
     cudaMallocFromPoolAsync(&ptr, n * sizeof(T), m_pool, cudaStreamDefault);
-    return static_cast<T*>(ptr);
+    return static_cast<T *>(ptr);
   }
 
-  void deallocate(T* ptr, std::size_t) {
-    cudaFreeAsync(ptr, cudaStreamDefault);
-  }
+  void deallocate(T * ptr, std::size_t) { cudaFreeAsync(ptr, cudaStreamDefault); }
 
- protected:
+protected:
   cudaMemPool_t m_pool;
 };  // MemoryPoolAllocator
 
