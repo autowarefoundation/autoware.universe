@@ -89,8 +89,8 @@ __global__ void transformPointsKernel(
 }
 
 __global__ void cropBoxKernel(
-  InputPointType * __restrict__ d_points, uint32_t * output_mask, int num_points, float min_x, float min_y,
-  float min_z, float max_x, float max_y, float max_z)
+  InputPointType * __restrict__ d_points, uint32_t * output_mask, int num_points, float min_x,
+  float min_y, float min_z, float max_x, float max_y, float max_z)
 {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   if (idx < num_points) {
