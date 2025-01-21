@@ -502,7 +502,7 @@ stop
 
 A candidate path is considered safe if:
 
-1. There is no overtaking turn lane object (see Overtaking Object Check section below)
+1. There are no overtaking objects when the ego vehicle exits the turn-direction lane. (see [Overtaking Object Check](#overtaking-object-check))
 2. There is no parked vehicle along the target lane ahead of ego (see Delay Lane Change Check section below)
 3. The path does NOT cause ego footprint to exceed the target lane opposite boundary
 4. The path passes collision safety check (See [safety check utils explanation](../autoware_behavior_path_planner_common/docs/behavior_path_planner_safety_check.md))
