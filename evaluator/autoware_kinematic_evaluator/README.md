@@ -1,7 +1,7 @@
-# Kinematic Evaluator
+# autoware_kinematic_evaluator
 
 TBD
 
 ## Parameters
 
-{{json_to_markdown("evaluator/kinematic_evaluator/schema/kinematic_evaluator.schema.json")}}
+{{json_to_markdown("evaluator/autoware_kinematic_evaluator/schema/kinematic_evaluator.schema.json")}}
