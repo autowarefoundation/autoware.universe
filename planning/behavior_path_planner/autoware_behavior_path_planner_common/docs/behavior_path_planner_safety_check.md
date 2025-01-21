@@ -93,6 +93,7 @@ To provide flexibility, these parameters can vary by module. Each module can def
 !!! note
 
     Based on [RSS distance equation](#4-calculate-rss-distance), the $t_{\text{reaction}}$ and $t_{\text{margin}}$ are added together, so increasing either of them will make the RSS polygon longer. However, users should tune these parameters according to the RSS principles as closely as possible. Specifically:
+
     - $t_{\text{reaction}}$ should reflect the driver’s reaction time.
     - $t_{\text{margin}}$ should account for uncertainties, such as varying road conditions or unexpected reaction delays.
 
@@ -108,13 +109,13 @@ The Extended Polygon Policy defines the shape of the extended polygon. It can be
     <tr>
       <td>
         <div style="text-align: center;">
-        <div style="color: black; font-size: 20px; margin-bottom: 10px;">`rectangle`</div>
+        <div style="color: black; font-size: 20px; margin-bottom: 10px;">rectangle</div>
         <img src="../images/path_safety_checker/rectangle.png" alt="Rectangle">
         </div>
       </td>
       <td>
         <div style="text-align: center;">
-        <div style="color: black; font-size: 20px; margin-bottom: 10px;">`along_path`</div>
+        <div style="color: black; font-size: 20px; margin-bottom: 10px;">along_path</div>
         <img src="../images/path_safety_checker/along_path.png" alt="Along Path">
         </div>
       </td>
