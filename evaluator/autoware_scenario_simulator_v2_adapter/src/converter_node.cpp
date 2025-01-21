@@ -33,7 +33,7 @@ std::string removeInvalidTopicString(const std::string & input_string)
 }
 
 MetricConverter::MetricConverter(const rclcpp::NodeOptions & node_options)
-: Node("autoware_scenario_simulator_v2_adapter", node_options)
+: Node("scenario_simulator_v2_adapter", node_options)
 {
   using std::placeholders::_1;
 
