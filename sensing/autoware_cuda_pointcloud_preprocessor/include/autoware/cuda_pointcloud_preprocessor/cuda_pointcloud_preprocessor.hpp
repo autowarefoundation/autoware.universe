@@ -89,6 +89,26 @@ struct RingOutlierFilterParameters
   std::size_t num_points_threshold{0};
 };
 
+template <typename T>
+class MemoryPoolAllocator
+{
+public:
+  using value_type = T;
+  MemoryPoolAllocator(cudaMemPool_t pool) : m_pool(pool) {}
+
+  T * allocate(std::size_t n)
+  {
+    void * ptr = nullptr;
+    cudaMallocFromPoolAsync(&ptr, n * sizeof(T), m_pool, cudaStreamDefault);
+    return static_cast<T *>(ptr);
+  }
+
+  void deallocate(T * ptr, std::size_t) { cudaFreeAsync(ptr, cudaStreamDefault); }
+
+protected:
+  cudaMemPool_t m_pool;
+};
+
 class CudaPointcloudPreprocessor
 {
 public:
@@ -131,6 +151,7 @@ private:
   std::vector<sensor_msgs::msg::PointField> point_fields_{};
   std::unique_ptr<cuda_blackboard::CudaPointCloud2> output_pointcloud_ptr_{};
 
+  cudaMemPool_t device_memory_pool_;
   thrust::device_vector<InputPointType> device_transformed_points_{};
   thrust::device_vector<OutputPointType> device_output_points_{};
   thrust::device_vector<uint32_t> device_self_crop_mask_{};
