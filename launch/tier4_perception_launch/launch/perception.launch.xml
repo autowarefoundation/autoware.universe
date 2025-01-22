@@ -287,7 +287,7 @@
 
     <group if="$(var use_empty_dynamic_object_publisher)">
       <push-ros-namespace namespace="object_recognition"/>
-      <node pkg="dummy_perception_publisher" exec="empty_objects_publisher" name="empty_objects_publisher" output="screen">
+      <node pkg="autoware_dummy_perception_publisher" exec="empty_objects_publisher" name="empty_objects_publisher" output="screen">
         <remap from="~/output/objects" to="/perception/object_recognition/objects"/>
       </node>
     </group>
