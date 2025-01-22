@@ -268,14 +268,8 @@ void OutOfLaneModule::update_result(
         slowdown_pose->position, slowdown_pose->position, slowdown_velocity);
     }
 
-    const auto is_approaching =
-      motion_utils::calcSignedArcLength(
-        ego_data.trajectory_points, ego_data.pose.position, slowdown_pose->position) > 0.1 &&
-      ego_data.velocity > 0.1;
-    const auto status = is_approaching ? motion_utils::VelocityFactor::APPROACHING
-                                       : motion_utils::VelocityFactor::STOPPED;
     planning_factor_interface_->add(
-      ego_trajectory_points, ego_data.pose, *slowdown_pose, PlanningFactor::SLOW_DOWN,
+      ego_data.trajectory_points, ego_data.pose, *slowdown_pose, PlanningFactor::SLOW_DOWN,
       SafetyFactorArray{});
     virtual_wall_marker_creator.add_virtual_walls(
       out_of_lane::debug::create_virtual_walls(*slowdown_pose, slowdown_velocity == 0.0, params_));

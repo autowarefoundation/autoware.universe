@@ -17,7 +17,7 @@
 #include "types.hpp"
 
 #include <autoware/motion_utils/marker/virtual_wall_marker_creator.hpp>
-#include <autoware/motion_velocity_planner_common/planner_data.hpp>
+#include <autoware/motion_velocity_planner_common_universe/planner_data.hpp>
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/ros/marker_helper.hpp>
