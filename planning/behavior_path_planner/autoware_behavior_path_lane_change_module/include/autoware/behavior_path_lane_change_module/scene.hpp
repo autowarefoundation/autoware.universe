@@ -120,8 +120,6 @@ public:
 protected:
   lanelet::ConstLanelets get_lane_change_lanes(const lanelet::ConstLanelets & current_lanes) const;
 
-  int getNumToPreferredLane(const lanelet::ConstLanelet & lane) const override;
-
   TurnSignalInfo get_terminal_turn_signal_info() const final;
 
   lane_change::TargetObjects get_target_objects(
@@ -135,9 +133,22 @@ protected:
   std::vector<LaneChangePhaseMetrics> get_prepare_metrics() const;
   std::vector<LaneChangePhaseMetrics> get_lane_changing_metrics(
     const PathWithLaneId & prep_segment, const LaneChangePhaseMetrics & prep_metrics,
-    const double shift_length, const double dist_to_reg_element) const;
+    const double shift_length, const double dist_to_reg_element,
+    lane_change::MetricsDebug & debug_metrics) const;
 
   bool get_lane_change_paths(LaneChangePaths & candidate_paths) const;
+
+  bool get_path_using_frenet(
+    const std::vector<LaneChangePhaseMetrics> & prepare_metrics,
+    const lane_change::TargetObjects & target_objects,
+    const std::vector<std::vector<int64_t>> & sorted_lane_ids,
+    LaneChangePaths & candidate_paths) const;
+
+  bool get_path_using_path_shifter(
+    const std::vector<LaneChangePhaseMetrics> & prepare_metrics,
+    const lane_change::TargetObjects & target_objects,
+    const std::vector<std::vector<int64_t>> & sorted_lane_ids,
+    LaneChangePaths & candidate_paths) const;
 
   bool check_candidate_path_safety(
     const LaneChangePath & candidate_path, const lane_change::TargetObjects & target_objects) const;
