@@ -34,6 +34,15 @@ TrafficLightSelectorNode::TrafficLightSelectorNode(const rclcpp::NodeOptions & n
   expected_rois_sub_(this, "input/expect_rois", rclcpp::QoS{1}.get_rmw_qos_profile()),
   sync_(SyncPolicy(10), detected_rois_sub_, rough_rois_sub_, expected_rois_sub_)
 {
+  {
+    stop_watch_ptr_ =
+      std::make_unique<autoware::universe_utils::StopWatch<std::chrono::milliseconds>>();
+    debug_publisher_ =
+      std::make_unique<autoware::universe_utils::DebugPublisher>(this, this->get_name());
+    stop_watch_ptr_->tic("cyclic_time");
+    stop_watch_ptr_->tic("processing_time");
+  }
+
   max_iou_threshold_ = declare_parameter<double>("max_iou_threshold");
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -65,6 +74,7 @@ void TrafficLightSelectorNode::objectsCallback(
   const TrafficLightRoiArray::ConstSharedPtr & rough_rois_msg,
   const TrafficLightRoiArray::ConstSharedPtr & expected_rois_msg)
 {
+  stop_watch_ptr_->toc("processing_time", true);
   if (!camera_info_subscribed_) {
     return;
   }
@@ -149,6 +159,20 @@ void TrafficLightSelectorNode::objectsCallback(
     }
   }
   pub_traffic_light_rois_->publish(output);
+  if (debug_publisher_) {
+    const double processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
+    const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
+    const double pipeline_latency_ms =
+      std::chrono::duration<double, std::milli>(
+        std::chrono::nanoseconds((this->get_clock()->now() - output.header.stamp).nanoseconds()))
+        .count();
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/cyclic_time_ms", cyclic_time_ms);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/processing_time_ms", processing_time_ms);
+    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      "debug/pipeline_latency_ms", pipeline_latency_ms);
+  }
   return;
 }
 }  // namespace autoware::traffic_light

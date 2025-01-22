@@ -17,7 +17,9 @@
 
 #include "utils.hpp"
 
+#include <autoware/universe_utils/ros/debug_publisher.hpp>
 #include <autoware/universe_utils/ros/transform_listener.hpp>
+#include <autoware/universe_utils/system/stop_watch.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <sensor_msgs/msg/camera_info.hpp>
@@ -31,6 +33,8 @@
 #include <message_filters/synchronizer.h>
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
+
+#include <memory>
 
 namespace autoware::traffic_light
 {
@@ -72,6 +76,9 @@ private:
   uint32_t image_width_{1280};
   uint32_t image_height_{960};
   double max_iou_threshold_{0.0};
+
+  std::unique_ptr<autoware::universe_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
+  std::unique_ptr<autoware::universe_utils::DebugPublisher> debug_publisher_;
 };
 
 }  // namespace autoware::traffic_light
