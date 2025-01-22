@@ -1545,14 +1545,6 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsCandidate(
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
-  // if pull over path candidates generation is not finished, use previous module output
-  /*
-    candidateなかったら問答無用で停止
-  if (context_data.lane_parking_response.pull_over_path_candidates.empty()) {
-    return getPreviousModuleOutput();
-  }
-  */
-
   BehaviorModuleOutput output{};
   const BehaviorModuleOutput pull_over_output = planPullOverAsOutput(context_data);
   output.modified_goal = pull_over_output.modified_goal;
@@ -1589,7 +1581,7 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsOutput(PullOverContextData
     BehaviorModuleOutput output{};
     // const BehaviorModuleOutput pull_over_output = planPullOverAsOutput(context_data);
     // output.modified_goal = pull_over_output.modified_goal;
-    output.path = generateStopPath(context_data, "hoge");
+    output.path = generateStopPath(context_data, "no path candidate");
     output.reference_path = getPreviousModuleOutput().reference_path;
 
     const auto target_drivable_lanes = utils::getNonOverlappingExpandedLanes(
