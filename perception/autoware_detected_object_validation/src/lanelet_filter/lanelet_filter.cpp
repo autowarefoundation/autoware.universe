@@ -153,13 +153,16 @@ void ObjectLaneletFilterNode::objectCallback(
     return;
   }
   // vehicle base pose :map -> base_link
-  const auto ego_pose = autoware::universe_utils::getTransform(
-    tf_buffer_, lanelet_frame_id_, "base_link", transformed_objects.header.stamp);
-  if (!ego_pose) {
-    RCLCPP_ERROR(get_logger(), "Failed to get ego pose.");
+  try {
+    ego_base_height_ = tf_buffer_
+                         .lookupTransform(
+                           lanelet_frame_id_, "base_link", transformed_objects.header.stamp,
+                           rclcpp::Duration::from_seconds(0.5))
+                         .transform.translation.z;
+  } catch (const tf2::TransformException & ex) {
+    RCLCPP_ERROR_STREAM(get_logger(), "Failed to get transform: " << ex.what());
     return;
   }
-  ego_base_height_ = ego_pose.transform.translation.z;
 
   if (!transformed_objects.objects.empty()) {
     // calculate convex hull
