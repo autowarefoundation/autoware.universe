@@ -57,7 +57,7 @@ protected:
 
     rclcpp::NodeOptions options;
     const auto share_dir =
-      ament_index_cpp::get_package_share_directory("perception_online_evaluator");
+      ament_index_cpp::get_package_share_directory("autoware_perception_online_evaluator");
     options.arguments(
       {"--ros-args", "--params-file",
        share_dir + "/param/perception_online_evaluator.defaults.yaml"});
