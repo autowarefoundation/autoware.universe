@@ -32,7 +32,8 @@ using geometry_msgs::msg::Quaternion;
 ControlPerformanceAnalysisCore::ControlPerformanceAnalysisCore()
 {
   prev_target_vars_ = std::make_unique<autoware_control_performance_analysis::msg::ErrorStamped>();
-  prev_driving_vars_ = std::make_unique<autoware_control_performance_analysis::msg::DrivingMonitorStamped>();
+  prev_driving_vars_ =
+    std::make_unique<autoware_control_performance_analysis::msg::DrivingMonitorStamped>();
   odom_history_ptr_ = std::make_shared<std::vector<Odometry>>();
   p_.odom_interval_ = 0;
   p_.curvature_interval_length_ = 10.0;
@@ -47,7 +48,8 @@ ControlPerformanceAnalysisCore::ControlPerformanceAnalysisCore(Params & p) : p_{
 {
   // prepare control performance struct
   prev_target_vars_ = std::make_unique<autoware_control_performance_analysis::msg::ErrorStamped>();
-  prev_driving_vars_ = std::make_unique<autoware_control_performance_analysis::msg::DrivingMonitorStamped>();
+  prev_driving_vars_ =
+    std::make_unique<autoware_control_performance_analysis::msg::DrivingMonitorStamped>();
   odom_history_ptr_ = std::make_shared<std::vector<Odometry>>();
 }
 
@@ -251,7 +253,8 @@ bool ControlPerformanceAnalysisCore::calculateErrorVars()
     lpf(error.error_energy, prev_error.error_energy);
   }
 
-  prev_target_vars_ = std::make_unique<autoware_control_performance_analysis::msg::ErrorStamped>(error_vars);
+  prev_target_vars_ =
+    std::make_unique<autoware_control_performance_analysis::msg::ErrorStamped>(error_vars);
 
   return true;
 }
@@ -336,7 +339,9 @@ bool ControlPerformanceAnalysisCore::calculateDrivingVars()
         lpf(curr.desired_steering_angle.data, prev->desired_steering_angle.data);
       }
 
-      prev_driving_vars_ = std::make_unique<autoware_control_performance_analysis::msg::DrivingMonitorStamped>(driving_status_vars);
+      prev_driving_vars_ =
+        std::make_unique<autoware_control_performance_analysis::msg::DrivingMonitorStamped>(
+          driving_status_vars);
 
       last_odom_header.stamp = odom_history_ptr_->at(odom_size - 1).header.stamp;
       last_steering_report.stamp = current_vec_steering_msg_ptr_->stamp;
