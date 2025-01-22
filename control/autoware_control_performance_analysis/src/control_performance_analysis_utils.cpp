@@ -16,7 +16,7 @@
 
 #include <algorithm>
 
-namespace autoware::control::control_performance_analysis
+namespace autoware::control_performance_analysis
 {
 namespace utils
 {
@@ -26,4 +26,4 @@ double determinant(std::array<double, 2> const & a, std::array<double, 2> const 
 }
 
 }  // namespace utils
-}  // namespace autoware::control::control_performance_analysis
+}  // namespace autoware::control_performance_analysis

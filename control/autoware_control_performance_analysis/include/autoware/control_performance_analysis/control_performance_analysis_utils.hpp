@@ -28,7 +28,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware::control::control_performance_analysis
+namespace autoware::control_performance_analysis
 {
 namespace utils
 {
@@ -84,6 +84,6 @@ double curvatureFromThreePoints(
   std::array<double, 2> const & c);
 
 }  // namespace utils
-}  // namespace autoware::control::control_performance_analysis
+}  // namespace autoware::control_performance_analysis
 
 #endif  // AUTOWARE__CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_UTILS_HPP_

@@ -34,7 +34,7 @@
 #include <memory>
 #include <utility>
 
-namespace autoware::control::control_performance_analysis
+namespace autoware::control_performance_analysis
 {
 using autoware_control_msgs::msg::Control;
 using autoware_control_performance_analysis::msg::DrivingMonitorStamped;
@@ -92,6 +92,6 @@ private:
   // Algorithm
   std::unique_ptr<ControlPerformanceAnalysisCore> control_performance_core_ptr_;
 };
-}  // namespace autoware::control::control_performance_analysis
+}  // namespace autoware::control_performance_analysis
 
 #endif  // AUTOWARE__CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_NODE_HPP_

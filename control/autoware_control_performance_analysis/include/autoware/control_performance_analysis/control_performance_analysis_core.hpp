@@ -37,7 +37,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware::control::control_performance_analysis
+namespace autoware::control_performance_analysis
 {
 using autoware_control_msgs::msg::Control;
 using autoware_control_performance_analysis::msg::DrivingMonitorStamped;
@@ -129,6 +129,6 @@ private:
   rclcpp::Logger logger_{rclcpp::get_logger("control_performance_analysis")};
   rclcpp::Clock clock_{RCL_ROS_TIME};
 };
-}  // namespace autoware::control::control_performance_analysis
+}  // namespace autoware::control_performance_analysis
 
 #endif  // AUTOWARE__CONTROL_PERFORMANCE_ANALYSIS__CONTROL_PERFORMANCE_ANALYSIS_CORE_HPP_

@@ -25,7 +25,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware::control::control_performance_analysis
+namespace autoware::control_performance_analysis
 {
 using geometry_msgs::msg::Quaternion;
 
@@ -549,4 +549,4 @@ double ControlPerformanceAnalysisCore::estimatePurePursuitCurvature()
 
   return curvature_pure_pursuit;
 }
-}  // namespace autoware::control::control_performance_analysis
+}  // namespace autoware::control_performance_analysis

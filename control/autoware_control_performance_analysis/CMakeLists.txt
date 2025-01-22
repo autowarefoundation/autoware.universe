@@ -58,7 +58,7 @@ target_link_libraries(
 
 rclcpp_components_register_node(
         control_performance_analysis_node
-        PLUGIN "autoware::control::control_performance_analysis::ControlPerformanceAnalysisNode"
+        PLUGIN "autoware::control_performance_analysis::ControlPerformanceAnalysisNode"
         EXECUTABLE ${PROJECT_NAME}_node
 )
 

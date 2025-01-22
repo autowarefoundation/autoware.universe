@@ -22,16 +22,11 @@
 #include <memory>
 #include <utility>
 
-namespace
+namespace autoware::control_performance_analysis
 {
 using autoware_control_msgs::msg::Control;
 using autoware_control_performance_analysis::msg::DrivingMonitorStamped;
 using autoware_control_performance_analysis::msg::ErrorStamped;
-
-}  // namespace
-
-namespace autoware::control::control_performance_analysis
-{
 using autoware::vehicle_info_utils::VehicleInfoUtils;
 
 ControlPerformanceAnalysisNode::ControlPerformanceAnalysisNode(
@@ -195,8 +190,8 @@ bool ControlPerformanceAnalysisNode::isValidTrajectory(const Trajectory & traj)
 
   return check_condition;
 }
-}  // namespace autoware::control::control_performance_analysis
+}  // namespace autoware::control_performance_analysis
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(
-  autoware::control::control_performance_analysis::ControlPerformanceAnalysisNode)
+  autoware::control_performance_analysis::ControlPerformanceAnalysisNode)
