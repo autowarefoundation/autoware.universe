@@ -208,3 +208,95 @@ TEST(DetectedObjectValidationTest, testObjectLaneletFilterEmptyObjects)
 
   rclcpp::shutdown();
 }
+
+TEST(DetectedObjectValidationTest, testObjectLaneletFilterHeightThreshold)
+{
+  rclcpp::init(0, nullptr);
+
+  // 1) Setup test manager and node with a custom param override (height filter enabled)
+  auto test_manager = generateTestManager();
+
+  auto node_options = rclcpp::NodeOptions{};
+  const auto detected_object_validation_dir =
+    ament_index_cpp::get_package_share_directory("autoware_detected_object_validation");
+  node_options.arguments(
+    {"--ros-args", "--params-file",
+     detected_object_validation_dir + "/config/object_lanelet_filter.param.yaml"});
+  node_options.append_parameter_override("filter_settings.use_height_threshold", true);
+  node_options.append_parameter_override("filter_settings.max_height_threshold", 2.0);
+  node_options.append_parameter_override("filter_settings.min_height_threshold", 0.0);
+
+  auto test_target_node = std::make_shared<ObjectLaneletFilterNode>(node_options);
+
+  // 2) Create a TF broadcaster node (map->base_link at z=0.0)
+  auto tf_node = createStaticTfBroadcasterNode(
+    "map", "base_link", geometry_msgs::build<geometry_msgs::msg::Vector3>().x(0.0).y(0.0).z(0.0),
+    geometry_msgs::build<geometry_msgs::msg::Quaternion>().x(0.0).y(0.0).z(0.0).w(1.0),
+    "my_test_tf_broadcaster_1");
+
+  // Subscribe to the output topic
+  const std::string output_topic = "output/object";
+  DetectedObjects latest_msg;
+  auto output_callback = [&latest_msg](const DetectedObjects::ConstSharedPtr msg) {
+    latest_msg = *msg;
+  };
+  test_manager->set_subscriber<DetectedObjects>(output_topic, output_callback);
+
+  // 3) Publish a simple LaneletMapBin (50m straight lane)
+  publishLaneletMapBin(test_manager, test_target_node);
+
+  // 4) Publish DetectedObjects
+  const std::string input_object_topic = "input/object";
+  DetectedObjects input_objects;
+  input_objects.header.frame_id = "base_link";
+
+  // (A) Object in-lane, height=1.5 => expected to remain
+  {
+    DetectedObject obj;
+    obj.classification.resize(1);
+    obj.classification[0].label = ObjectClassification::UNKNOWN;
+    obj.kinematics.pose_with_covariance.pose.position.x = 0.0;
+    obj.kinematics.pose_with_covariance.pose.position.y = 0.0;
+    obj.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
+    obj.shape.dimensions.x = 2.0;
+    obj.shape.dimensions.y = 2.0;
+    obj.shape.dimensions.z = 1.5;
+    input_objects.objects.push_back(obj);
+  }
+
+  // (B) Object in-lane, height=3.0 => expected to be filtered out
+  {
+    DetectedObject obj;
+    obj.classification.resize(1);
+    obj.classification[0].label = ObjectClassification::UNKNOWN;
+    obj.kinematics.pose_with_covariance.pose.position.x = 5.0;
+    obj.kinematics.pose_with_covariance.pose.position.y = 0.0;
+    obj.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
+    obj.shape.dimensions.x = 2.0;
+    obj.shape.dimensions.y = 2.0;
+    obj.shape.dimensions.z = 3.0;
+    input_objects.objects.push_back(obj);
+  }
+
+  // Publish the objects (Round 1)
+  test_manager->test_pub_msg<DetectedObjects>(test_target_node, input_object_topic, input_objects);
+
+  // 5) Check result => only the first object remains
+  EXPECT_EQ(latest_msg.objects.size(), 1U)
+    << "Height filter is enabled => only the shorter object (1.5m) should remain.";
+
+  // 6) Second scenario: place ego at z=1.3, effectively lowering object's relative height
+  auto tf_node_after = createStaticTfBroadcasterNode(
+    "map", "base_link", geometry_msgs::build<geometry_msgs::msg::Vector3>().x(0.0).y(0.0).z(1.3),
+    geometry_msgs::build<geometry_msgs::msg::Quaternion>().x(0.0).y(0.0).z(0.0).w(1.0),
+    "my_test_tf_broadcaster_2");
+
+  // Publish the same objects (Round 2)
+  test_manager->test_pub_msg<DetectedObjects>(test_target_node, input_object_topic, input_objects);
+
+  // 7) Check result => now both objects remain because each one's height above base_link is < 2.0
+  EXPECT_EQ(latest_msg.objects.size(), 2U)
+    << "With ego at z=1.3, the 3.0m object is effectively only ~1.7m above ego => remain.";
+
+  rclcpp::shutdown();
+}
