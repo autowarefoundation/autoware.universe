@@ -120,8 +120,6 @@ public:
 protected:
   lanelet::ConstLanelets get_lane_change_lanes(const lanelet::ConstLanelets & current_lanes) const;
 
-  int getNumToPreferredLane(const lanelet::ConstLanelet & lane) const override;
-
   TurnSignalInfo get_terminal_turn_signal_info() const final;
 
   lane_change::TargetObjects get_target_objects(
