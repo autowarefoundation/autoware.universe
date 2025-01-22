@@ -29,9 +29,11 @@ TopicRelayController::TopicRelayController(const rclcpp::NodeOptions & options)
   node_param_.best_effort = declare_parameter<bool>("best_effort", false);
   node_param_.is_transform = (node_param_.topic == "/tf" || node_param_.topic == "/tf_static");
   node_param_.enable_relay_control = declare_parameter<bool>("enable_relay_control");
-  if(node_param_.enable_relay_control) node_param_.srv_name = declare_parameter<std::string>("srv_name");
+  if (node_param_.enable_relay_control)
+    node_param_.srv_name = declare_parameter<std::string>("srv_name");
   node_param_.enable_keep_publishing = declare_parameter<bool>("enable_keep_publishing");
-  if(node_param_.enable_keep_publishing) node_param_.update_rate = declare_parameter<int>("update_rate");
+  if (node_param_.enable_keep_publishing)
+    node_param_.update_rate = declare_parameter<int>("update_rate");
 
   if (node_param_.is_transform) {
     node_param_.frame_id = declare_parameter<std::string>("frame_id");
