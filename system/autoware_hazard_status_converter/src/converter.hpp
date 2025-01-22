@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__HAZARD_STATUS_CONVERTER__CONVERTER_HPP_
-#define AUTOWARE__HAZARD_STATUS_CONVERTER__CONVERTER_HPP_
+#ifndef CONVERTER_HPP_
+#define CONVERTER_HPP_
 
 #include <autoware/universe_utils/ros/polling_subscriber.hpp>
 #include <diagnostic_graph_utils/subscription.hpp>
@@ -50,4 +50,4 @@ private:
 
 }  // namespace autoware::hazard_status_converter
 
-#endif  // AUTOWARE__HAZARD_STATUS_CONVERTER__CONVERTER_HPP_
+#endif  // CONVERTER_HPP_
