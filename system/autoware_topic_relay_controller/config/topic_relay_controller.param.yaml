@@ -9,6 +9,6 @@
     transient_local: false
     best_effort: false
     enable_relay_control: true
-    srv_name: "/system/topic_relay_controller_defalt/operate" # neccessary for enable_relay_control is true
-    enable_keep_publishing: true
-    update_rate: 10 #neccessary for enable_keep_publishing is true
+    srv_name: "/system/topic_relay_controller_default/operate" # neccessary for enable_relay_control is true
+    enable_keep_publishing: false
+    #update_rate: #neccessary for enable_keep_publishing is true
