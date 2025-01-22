@@ -22,20 +22,20 @@ The node subscribes to a specified topic, remaps it, and republishes it. Additio
 
 ## Parameters
 
-| Variable | Type | Description |
-|----------|------|-------------|
-| topic | string | The name of the input topic to subscribe to |
-| remap_topic | string | The name of the output topic to publish to |
-| topic_type | string | The type of messages being relayed |
-| qos | integer | QoS profile to use for subscriptions and publications (default: `1`) |
-| transient_local | boolean | Enables transient local QoS for subscribers (default: `false`) |
-| best_effort | boolean | Enables best-effort QoS for subscribers (default: `false`) |
-| enable_relay_control | boolean | Allows dynamic relay control via a service (default: `true`) |
-| srv_name | string | The service name for relay control when `enable_relay_control` is `true` |
-| enable_keep_publishing | boolean | Keeps publishing the last received topic value when not subscribed (default: `false`) |
-| update_rate | integer | The rate (Hz) for publishing the last topic value when `enable_keep_publishing` is `true` (optional) |
-| frame_id | string | Frame ID for transform messages when subscribing to `/tf` or `/tf_static` (optional) |
-| child_frame_id | string | Child frame ID for transform messages when subscribing to `/tf` or `/tf_static` (optional) |
+| Variable               | Type    | Description                                                                                          |
+| ---------------------- | ------- | ---------------------------------------------------------------------------------------------------- |
+| topic                  | string  | The name of the input topic to subscribe to                                                          |
+| remap_topic            | string  | The name of the output topic to publish to                                                           |
+| topic_type             | string  | The type of messages being relayed                                                                   |
+| qos                    | integer | QoS profile to use for subscriptions and publications (default: `1`)                                 |
+| transient_local        | boolean | Enables transient local QoS for subscribers (default: `false`)                                       |
+| best_effort            | boolean | Enables best-effort QoS for subscribers (default: `false`)                                           |
+| enable_relay_control   | boolean | Allows dynamic relay control via a service (default: `true`)                                         |
+| srv_name               | string  | The service name for relay control when `enable_relay_control` is `true`                             |
+| enable_keep_publishing | boolean | Keeps publishing the last received topic value when not subscribed (default: `false`)                |
+| update_rate            | integer | The rate (Hz) for publishing the last topic value when `enable_keep_publishing` is `true` (optional) |
+| frame_id               | string  | Frame ID for transform messages when subscribing to `/tf` or `/tf_static` (optional)                 |
+| child_frame_id         | string  | Child frame ID for transform messages when subscribing to `/tf` or `/tf_static` (optional)           |
 
 ## Assumptions / Known limits
 
