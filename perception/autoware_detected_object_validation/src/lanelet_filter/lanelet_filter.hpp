@@ -89,6 +89,7 @@ private:
   tf2_ros::TransformListener tf_listener_;
 
   utils::FilterTargetLabel filter_target_;
+  double ego_base_height_ = 0.0;
   struct FilterSettings
   {
     bool polygon_overlap_filter;

@@ -152,6 +152,14 @@ void ObjectLaneletFilterNode::objectCallback(
     RCLCPP_ERROR(get_logger(), "Failed transform to %s.", lanelet_frame_id_.c_str());
     return;
   }
+  // vehicle base pose :map -> base_link
+  const auto ego_pose = autoware::universe_utils::getTransform(
+    tf_buffer_, lanelet_frame_id_, "base_link", transformed_objects.header.stamp);
+  if (!ego_pose) {
+    RCLCPP_ERROR(get_logger(), "Failed to get ego pose.");
+    return;
+  }
+  ego_base_height_ = ego_pose.transform.translation.z;
 
   if (!transformed_objects.objects.empty()) {
     // calculate convex hull
@@ -209,8 +217,8 @@ bool ObjectLaneletFilterNode::filterObject(
     if (filter_settings_.use_height_threshold) {
       const double object_height = transformed_object.shape.dimensions.z;
       if (
-        object_height > filter_settings_.max_height_threshold ||
-        object_height < filter_settings_.min_height_threshold) {
+        object_height > ego_base_height_ + filter_settings_.max_height_threshold ||
+        object_height < ego_base_height_ + filter_settings_.min_height_threshold) {
         return false;
       }
     }
