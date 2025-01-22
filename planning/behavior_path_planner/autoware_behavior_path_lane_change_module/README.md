@@ -66,7 +66,8 @@ stop
 @enduml
 ```
 
-### Ready Conditions:
+### Ready Conditions
+
 - Valid lane change path is found.
 - Lane change path is safe; does not collide with other dynamic objects.
 - Lane change candidate path is approved by an operator.
@@ -274,6 +275,7 @@ prepare_distance = current_speed * prepare_duration + 0.5 * lon_acceleration * p
 ```
 
 The prepare phase trajectory is valid if:
+
 - The length of the prepare phase trajectory is greater than the distance to start of target lane
 - The length of the prepare phase trajectory is less than the distance to terminal start point
 
@@ -307,12 +309,14 @@ The `backward_length_buffer_for_end_of_lane` is added to allow some window for a
 In order to find a valid and safe lane change path it might be necessary to generate multiple candidate path samples. The lane change module does this by sampling one or more of: `prepare_duration`, `longitudinal_acceleration`, and `lateral_acceleration`.
 
 ##### Prepare Duration Sampling
+
 In principle, a fixed prepare duration is assumed when generating lane change candidate path. The default prepare duration value is determined from the min and max values set in the lane change parameters, as well as the duration of turn signal activation.
 For example, when the lane change module first activates and turn signal is activated then prepare duration will be `max_prepare_duration`, as time passes and a path is still not approved, the prepare duration will decrease gradually down to `min_prepare_duration`. The formula is as follows.
 
 ```C++
 prepare_duration = std::max(max_prepare_duration - turn_signal_duration, min_prepare_duration);
 ```
+
 !!! note
 
     When the current ego velocity is lower than the `min_lane_change_velocity`, the `min_prepare_duration` is adjusted to ensure sufficient time for reaching `min_lane_change_velocity` assuming `max_longitudinal_acceleration`.
@@ -785,7 +789,6 @@ Additionally, if the ego vehicle has just exited the turn lane of an intersectio
 
 ![after intersection turn lane](./images/lane_change-intersection_turn_lane_2.png)
 
-
 #### Delay Lane Change Check
 
 In certain situations, when there are stopped vehicles along the target lane ahead of Ego vehicle, to avoid getting stuck, it is desired to perform the lane change maneuver after the stopped vehicle.
@@ -796,7 +799,7 @@ To do so, all static objects ahead of ego along the target lane are checked in o
 3. The distance from object to next object is sufficient to perform lane change
 
 If the parameter `check_only_parked_vehicle` is set to `true`, the check will only consider objects which are determined as parked.
-More details on parked vehicle detection can  be found in [documentation for avoidance module](../autoware_behavior_path_static_obstacle_avoidance_module/README.md).
+More details on parked vehicle detection can be found in [documentation for avoidance module](../autoware_behavior_path_static_obstacle_avoidance_module/README.md).
 
 The following flow chart illustrates the delay lane change check.
 
@@ -843,23 +846,23 @@ The following figures demonstrate different situations under which will or will 
 
 1. Delay lane change will be triggered as there is sufficient distance ahead.
 
-  ![delay lane change 1](./images/delay_lane_change_1.drawio.svg)
+![delay lane change 1](./images/delay_lane_change_1.drawio.svg)
 
 2. Delay lane change will NOT be triggered as there is no sufficient distance ahead.
 
-  ![delay lane change 2](./images/delay_lane_change_2.drawio.svg)
+![delay lane change 2](./images/delay_lane_change_2.drawio.svg)
 
 3. Delay lane change will be triggered by fist NPC as there is sufficient distance ahead.
 
-  ![delay lane change 3](./images/delay_lane_change_3.drawio.svg)
+![delay lane change 3](./images/delay_lane_change_3.drawio.svg)
 
 4. Delay lane change will be triggered by second NPC as there is sufficient distance ahead.
 
-  ![delay lane change 4](./images/delay_lane_change_4.drawio.svg)
+![delay lane change 4](./images/delay_lane_change_4.drawio.svg)
 
 5. Delay lane change will NOT be triggered as there is no sufficient distance ahead.
 
-  ![delay lane change 5](./images/delay_lane_change_5.drawio.svg)
+![delay lane change 5](./images/delay_lane_change_5.drawio.svg)
 
 #### Collision Check
 
