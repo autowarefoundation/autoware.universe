@@ -6,7 +6,7 @@ autoware_package()
 
 install(PROGRAMS
   script/component_state_diagnostics.py
-  RENAME autoware_system_diagnostic_monitor_node
+  RENAME component_state_diagnostics
   DESTINATION lib/${PROJECT_NAME}
 )
 
