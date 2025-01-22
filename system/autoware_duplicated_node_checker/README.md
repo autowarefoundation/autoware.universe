@@ -8,7 +8,7 @@ The result is published as diagnostics.
 ### Standalone Startup
 
 ```bash
-ros2 launch duplicated_node_checker duplicated_node_checker.launch.xml
+ros2 launch autoware_duplicated_node_checker duplicated_node_checker.launch.xml
 ```
 
 ## Inner-workings / Algorithms
@@ -30,7 +30,7 @@ The types of topic status and corresponding diagnostic status are following.
 
 ## Parameters
 
-{{ json_to_markdown("system/duplicated_node_checker/schema/duplicated_node_checker.schema.json") }}
+{{ json_to_markdown("system/autoware_duplicated_node_checker/schema/duplicated_node_checker.schema.json") }}
 
 ## Assumptions / Known limits
 
