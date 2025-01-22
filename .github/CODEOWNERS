@@ -217,7 +217,7 @@ system/default_ad_api_helpers/ad_api_visualizers/** isamu.takagi@tier4.jp ryohsu
 system/default_ad_api_helpers/automatic_pose_initializer/** isamu.takagi@tier4.jp ryohsuke.mitsudome@tier4.jp yukihiro.saito@tier4.jp
 system/autoware_diagnostic_graph_aggregator/** isamu.takagi@tier4.jp junya.sasaki@tier4.jp
 system/diagnostic_graph_utils/** isamu.takagi@tier4.jp
-system/dummy_diag_publisher/** fumihito.ito@tier4.jp tetsuhiro.kawaguchi@tier4.jp
+system/autoware_dummy_diag_publisher/** fumihito.ito@tier4.jp tetsuhiro.kawaguchi@tier4.jp
 system/dummy_infrastructure/** ryohsuke.mitsudome@tier4.jp
 system/duplicated_node_checker/** mamoru.sobue@tier4.jp shumpei.wakabayashi@tier4.jp uken.ryu@tier4.jp
 system/hazard_status_converter/** isamu.takagi@tier4.jp
