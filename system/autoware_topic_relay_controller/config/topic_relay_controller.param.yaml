@@ -1,7 +1,7 @@
 /**:
   ros__parameters:
     topic: "/default"
-    topic_type: "std_msgs/msg/String" # neccessary for /tf or /tf_static
+    topic_type: "std_msgs/msg/String" # unneccessary for /tf or /tf_static
     remap_topic: "/remap_default"
     #frame_id: neccessary for /tf or /tf_static
     #child_frame_id: neccessary for /tf or /tf_static
