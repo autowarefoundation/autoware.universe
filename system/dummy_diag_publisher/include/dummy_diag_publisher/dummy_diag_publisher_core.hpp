@@ -60,9 +60,13 @@ private:
   DummyDiagConfig config_;
 
   RequiredDiags required_diags_;
-  void loadRequiredDiags();
+  rclcpp::node_interfaces::OnSetParametersCallbackHandle::SharedPtr param_callback_handle_;
 
-  std::optional<Status> convertStrToStatus(std::string & status_str);
+  void loadRequiredDiags();
+  rcl_interfaces::msg::SetParametersResult onSetParams(
+    const std::vector<rclcpp::Parameter> & parameters);
+
+  std::optional<Status> convertStrToStatus(const std::string & status_str);
   std::string convertStatusToStr(const Status & status);
   diagnostic_msgs::msg::DiagnosticStatus::_level_type convertStatusToLevel(const Status & status);
 

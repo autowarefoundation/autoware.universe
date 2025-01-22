@@ -150,8 +150,8 @@ protected:
   // 2d detection management
   std::vector<Det2dStatus<Msg2D>> det2d_list_;
 
-  /** \brief A vector of subscriber. */
-  typename rclcpp::Subscription<Msg3D>::SharedPtr sub_;
+  // 3d detection subscription
+  typename rclcpp::Subscription<Msg3D>::SharedPtr det3d_sub_;
 
   // parameters for out_of_scope filter
   float filter_scope_min_x_;
@@ -166,6 +166,7 @@ protected:
 
   // debugger
   std::shared_ptr<Debugger> debugger_;
+  std::unique_ptr<autoware::universe_utils::DebugPublisher> debug_internal_pub_;
 
   /** \brief processing time publisher. **/
   std::unique_ptr<autoware::universe_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
