@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-namespace autoware::ad_api_adaptors
+namespace autoware::adapi_adaptors
 {
 template <class ServiceT>
 using Future = typename rclcpp::Client<ServiceT>::SharedFuture;
@@ -60,7 +60,7 @@ void InitialPoseAdaptor::on_initial_pose(const PoseWithCovarianceStamped::ConstS
   cli_initialize_->async_send_request(req);
 }
 
-}  // namespace autoware::ad_api_adaptors
+}  // namespace autoware::adapi_adaptors
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(autoware::ad_api_adaptors::InitialPoseAdaptor)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::adapi_adaptors::InitialPoseAdaptor)

@@ -23,7 +23,7 @@
 
 #include <string>
 
-namespace autoware::ad_api_adaptors
+namespace autoware::adapi_adaptors
 {
 
 class RoutingAdaptor : public rclcpp::Node
@@ -59,6 +59,6 @@ private:
   void on_reroute(const PoseStamped::ConstSharedPtr pose);
 };
 
-}  // namespace autoware::ad_api_adaptors
+}  // namespace autoware::adapi_adaptors
 
 #endif  // ROUTING_ADAPTOR_HPP_

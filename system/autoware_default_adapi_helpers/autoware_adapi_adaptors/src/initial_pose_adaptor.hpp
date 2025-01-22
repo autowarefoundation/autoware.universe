@@ -22,7 +22,7 @@
 
 #include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 
-namespace autoware::ad_api_adaptors
+namespace autoware::adapi_adaptors
 {
 
 class InitialPoseAdaptor : public rclcpp::Node
@@ -41,6 +41,6 @@ private:
   void on_initial_pose(const PoseWithCovarianceStamped::ConstSharedPtr msg);
 };
 
-}  // namespace autoware::ad_api_adaptors
+}  // namespace autoware::adapi_adaptors
 
 #endif  // INITIAL_POSE_ADAPTOR_HPP_

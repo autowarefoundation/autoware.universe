@@ -1,4 +1,4 @@
-# ad_api_adaptors
+# adapi_adaptors
 
 ## initial_pose_adaptor
 
@@ -32,4 +32,4 @@ The clear API is called automatically before setting the route.
 
 ## parameters
 
-{{ json_to_markdown("/system/autoware_default_ad_api_helpers/ad_api_adaptors/schema/ad_api_adaptors.schema.json") }}
+{{ json_to_markdown("/system/autoware_default_adapi_helpers/adapi_adaptors/schema/adapi_adaptors.schema.json") }}
