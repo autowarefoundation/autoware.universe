@@ -34,7 +34,7 @@ LoggingNode::LoggingNode(const rclcpp::NodeOptions & options) : Node("logging", 
   sub_graph_.register_create_callback(std::bind(&LoggingNode::on_create, this, _1));
   sub_graph_.subscribe(*this, 1);
 
-  pub_error_graph_text_ = create_publisher<tier4_debug_msgs::msg::StringStamped>(
+  pub_error_graph_text_ = create_publisher<autoware_internal_debug_msgs::msg::StringStamped>(
     "~/debug/error_graph_text", rclcpp::QoS(1));
 
   const auto period = rclcpp::Rate(declare_parameter<double>("show_rate")).period();
@@ -68,12 +68,12 @@ void LoggingNode::on_timer()
       RCLCPP_WARN_STREAM(get_logger(), prefix_message << std::endl << dump_text_.str());
     }
 
-    tier4_debug_msgs::msg::StringStamped message;
+    autoware_internal_debug_msgs::msg::StringStamped message;
     message.stamp = now();
     message.data = dump_text_.str();
     pub_error_graph_text_->publish(message);
   } else {
-    tier4_debug_msgs::msg::StringStamped message;
+    autoware_internal_debug_msgs::msg::StringStamped message;
     message.stamp = now();
     pub_error_graph_text_->publish(message);
   }
