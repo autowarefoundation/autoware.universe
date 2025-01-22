@@ -24,9 +24,9 @@ TopicRelayController::TopicRelayController(const rclcpp::NodeOptions & options)
   // Parameter
   node_param_.topic = declare_parameter<std::string>("topic");
   node_param_.remap_topic = declare_parameter<std::string>("remap_topic");
-  node_param_.qos = declare_parameter("qos", 1);
-  node_param_.transient_local = declare_parameter("transient_local", false);
-  node_param_.best_effort = declare_parameter("best_effort", false);
+  node_param_.qos_depth = declare_parameter<int>("qos_depth", 1);
+  node_param_.transient_local = declare_parameter<bool>("transient_local", false);
+  node_param_.best_effort = declare_parameter<bool>("best_effort", false);
   node_param_.is_transform = (node_param_.topic == "/tf" || node_param_.topic == "/tf_static");
   node_param_.enable_relay_control = declare_parameter<bool>("enable_relay_control");
   node_param_.srv_name = declare_parameter<std::string>("srv_name");
@@ -54,7 +54,15 @@ TopicRelayController::TopicRelayController(const rclcpp::NodeOptions & options)
   }
 
   // Subscriber
-  rclcpp::QoS qos = rclcpp::QoS{node_param_.qos};
+  rclcpp::QoS qos = rclcpp::SystemDefaultsQoS();
+  if (node_param_.qos_depth > 0) {
+    size_t qos_depth = static_cast<size_t>(node_param_.qos_depth);
+    qos.keep_last(qos_depth);
+  } else {
+    RCLCPP_ERROR(get_logger(), "qos_depth must be greater than 0");
+    return;
+  }
+
   if (node_param_.transient_local) {
     qos.transient_local();
   }

@@ -31,7 +31,7 @@ struct NodeParam
   std::string topic;
   std::string remap_topic;
   std::string topic_type;
-  size_t qos;
+  int qos_depth;
   std::string frame_id;
   std::string child_frame_id;
   bool transient_local;
