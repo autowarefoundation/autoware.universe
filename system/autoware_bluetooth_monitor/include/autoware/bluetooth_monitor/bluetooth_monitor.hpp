@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BLUETOOTH_MONITOR__BLUETOOTH_MONITOR_HPP_
-#define BLUETOOTH_MONITOR__BLUETOOTH_MONITOR_HPP_
+#ifndef AUTOWARE__BLUETOOTH_MONITOR__BLUETOOTH_MONITOR_HPP_
+#define AUTOWARE__BLUETOOTH_MONITOR__BLUETOOTH_MONITOR_HPP_
 
-#include "bluetooth_monitor/service/l2ping_interface.hpp"
+#include "autoware/bluetooth_monitor/service/l2ping_interface.hpp"
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -23,6 +23,9 @@
 #include <map>
 #include <string>
 #include <vector>
+
+namespace autoware::bluetooth_monitor
+{
 
 class BluetoothMonitor : public rclcpp::Node
 {
@@ -109,4 +112,6 @@ protected:
     {StatusCode::FUNCTION_ERROR, DiagStatus::ERROR}};
 };
 
-#endif  // BLUETOOTH_MONITOR__BLUETOOTH_MONITOR_HPP_
+}  // namespace autoware::bluetooth_monitor
+
+#endif  // AUTOWARE__BLUETOOTH_MONITOR__BLUETOOTH_MONITOR_HPP_

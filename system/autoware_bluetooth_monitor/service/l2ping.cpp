@@ -13,7 +13,7 @@
 // limitations under the License.
 //
 
-#include "bluetooth_monitor/service/l2ping.hpp"
+#include "autoware/bluetooth_monitor/service/l2ping.hpp"
 
 #include <boost/process.hpp>
 
@@ -24,6 +24,9 @@
 
 #define FMT_HEADER_ONLY
 #include <fmt/format.h>
+
+namespace autoware::bluetooth_monitor
+{
 
 namespace bp = boost::process;
 
@@ -189,3 +192,5 @@ const std::string & L2ping::getAddress() const
 {
   return status_.address;
 }
+
+}  // namespace autoware::bluetooth_monitor

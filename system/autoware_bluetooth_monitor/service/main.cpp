@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "bluetooth_monitor/service/l2ping_interface.hpp"
-#include "bluetooth_monitor/service/l2ping_service.hpp"
+#include "autoware/bluetooth_monitor/service/l2ping_interface.hpp"
+#include "autoware/bluetooth_monitor/service/l2ping_service.hpp"
 
 #include <boost/lexical_cast.hpp>
 
@@ -47,7 +47,7 @@ int main(int argc, char ** argv)
   // Parse command-line options
   int c = 0;
   int option_index = 0;
-  int port = DEFAULT_PORT;
+  int port = autoware::bluetooth_monitor::DEFAULT_PORT;
   while ((c = getopt_long(argc, argv, "hp:", long_options, &option_index)) != -1) {
     switch (c) {
       case 'h':
@@ -78,7 +78,7 @@ int main(int argc, char ** argv)
   openlog(nullptr, LOG_PID, LOG_DAEMON);
 
   // Initialize l2ping service
-  L2pingService service(port);
+  autoware::bluetooth_monitor::L2pingService service(port);
 
   if (!service.initialize()) {
     service.shutdown();

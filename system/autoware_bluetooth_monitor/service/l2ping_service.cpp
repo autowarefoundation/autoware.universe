@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "bluetooth_monitor/service/l2ping_service.hpp"
+#include "autoware/bluetooth_monitor/service/l2ping_service.hpp"
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
@@ -29,6 +29,9 @@
 
 #define FMT_HEADER_ONLY
 #include <fmt/format.h>
+
+namespace autoware::bluetooth_monitor
+{
 
 namespace bp = boost::process;
 
@@ -252,3 +255,5 @@ bool L2pingService::buildDeviceList()
 
   return true;
 }
+
+}  // namespace autoware::bluetooth_monitor

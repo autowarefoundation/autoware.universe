@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "bluetooth_monitor/bluetooth_monitor.hpp"
+#include "autoware/bluetooth_monitor/bluetooth_monitor.hpp"
 
 #include <boost/archive/text_iarchive.hpp>
 #include <boost/archive/text_oarchive.hpp>
@@ -27,6 +27,9 @@
 
 #define FMT_HEADER_ONLY
 #include <fmt/format.h>
+
+namespace autoware::bluetooth_monitor
+{
 
 BluetoothMonitor::BluetoothMonitor(const rclcpp::NodeOptions & options)
 : Node("bluetooth_monitor", options),
@@ -199,5 +202,7 @@ void BluetoothMonitor::checkConnection(diagnostic_updater::DiagnosticStatusWrapp
   setErrorLevel(stat);
 }
 
+}  // namespace autoware::bluetooth_monitor
+
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(BluetoothMonitor)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::bluetooth_monitor::BluetoothMonitor)

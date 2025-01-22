@@ -12,17 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef BLUETOOTH_MONITOR__SERVICE__L2PING_SERVICE_HPP_
-#define BLUETOOTH_MONITOR__SERVICE__L2PING_SERVICE_HPP_
+#ifndef AUTOWARE__BLUETOOTH_MONITOR__SERVICE__L2PING_SERVICE_HPP_
+#define AUTOWARE__BLUETOOTH_MONITOR__SERVICE__L2PING_SERVICE_HPP_
 
-#include "bluetooth_monitor/service/l2ping.hpp"
-#include "bluetooth_monitor/service/l2ping_interface.hpp"
+#include "autoware/bluetooth_monitor/service/l2ping.hpp"
+#include "autoware/bluetooth_monitor/service/l2ping_interface.hpp"
 
 #include <map>
 #include <memory>
 #include <string>
 #include <thread>
 #include <vector>
+
+namespace autoware::bluetooth_monitor
+{
 
 class L2pingService
 {
@@ -85,4 +88,6 @@ protected:
   L2pingStatusList status_list_;                  //!< @brief List of l2ping status
 };
 
-#endif  // BLUETOOTH_MONITOR__SERVICE__L2PING_SERVICE_HPP_
+}  // namespace autoware::bluetooth_monitor
+
+#endif  // AUTOWARE__BLUETOOTH_MONITOR__SERVICE__L2PING_SERVICE_HPP_
