@@ -27,7 +27,7 @@ The lane change module will activate under the following conditions :
 
 !!! warning
 
-    If ego vehicle is stuck, lane change will be anabled near crosswalk/intersection. Ego is considered stuck if it stops more than `stuck_detection.stop_time`. Ego is considered to be stopping if its velocity is smaller than `stuck_detection.velocity`.
+    If ego vehicle is stuck, lane change will be enabled near crosswalk/intersection. Ego is considered stuck if it stops more than `stuck_detection.stop_time`. Ego is considered to be stopping if its velocity is smaller than `stuck_detection.velocity`.
 
 The following figure illustrates the logic for checking if lane change is required:
 
@@ -844,30 +844,30 @@ stop
 
 The following figures demonstrate different situations under which will or will not be triggered:
 
-1. Delay lane change will be triggered as there is sufficient distance ahead.
+- Delay lane change will be triggered as there is sufficient distance ahead.
 
 ![delay lane change 1](./images/delay_lane_change_1.drawio.svg)
 
-2. Delay lane change will NOT be triggered as there is no sufficient distance ahead.
+- Delay lane change will NOT be triggered as there is no sufficient distance ahead.
 
 ![delay lane change 2](./images/delay_lane_change_2.drawio.svg)
 
-3. Delay lane change will be triggered by fist NPC as there is sufficient distance ahead.
+- Delay lane change will be triggered by fist NPC as there is sufficient distance ahead.
 
 ![delay lane change 3](./images/delay_lane_change_3.drawio.svg)
 
-4. Delay lane change will be triggered by second NPC as there is sufficient distance ahead.
+- Delay lane change will be triggered by second NPC as there is sufficient distance ahead.
 
 ![delay lane change 4](./images/delay_lane_change_4.drawio.svg)
 
-5. Delay lane change will NOT be triggered as there is no sufficient distance ahead.
+- Delay lane change will NOT be triggered as there is no sufficient distance ahead.
 
 ![delay lane change 5](./images/delay_lane_change_5.drawio.svg)
 
 #### Collision Check
 
 To ensure the safety of the lane change candidate path an RSS check is performed against the surrounding predicted objects.
-More details on the collision check implementaion can be found in [safety check utils explanation](../autoware_behavior_path_planner_common/docs/behavior_path_planner_safety_check.md)
+More details on the collision check implementation can be found in [safety check utils explanation](../autoware_behavior_path_planner_common/docs/behavior_path_planner_safety_check.md)
 
 ##### Collision Check In Prepare Phase
 
