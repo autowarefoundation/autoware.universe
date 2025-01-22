@@ -11,13 +11,13 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 
 rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "autoware::ad_api_adaptors::InitialPoseAdaptor"
-  EXECUTABLE autoware_initial_pose_adaptor_node
+  EXECUTABLE initial_pose_adaptor_node
   EXECUTOR MultiThreadedExecutor
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "autoware::ad_api_adaptors::RoutingAdaptor"
-  EXECUTABLE autoware_routing_adaptor_node
+  EXECUTABLE routing_adaptor_node
   EXECUTOR SingleThreadedExecutor
 )
 
