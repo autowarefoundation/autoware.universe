@@ -1,0 +1,14 @@
+/**:
+  ros__parameters:
+    topic: "/default"
+    topic_type: "std_msgs/msg/String" # neccessary for /tf or /tf_static
+    remap_topic: "/remap_default"
+    #frame_id: neccessary for /tf or /tf_static
+    #child_frame_id: neccessary for /tf or /tf_static
+    qos_depth: 1
+    transient_local: false
+    best_effort: false
+    enable_relay_control: true
+    srv_name: "/system/topic_relay_controller_defalt/operate" # neccessary for enable_relay_control is true
+    enable_keep_publishing: true
+    update_rate: 10 #neccessary for enable_keep_publishing is true
