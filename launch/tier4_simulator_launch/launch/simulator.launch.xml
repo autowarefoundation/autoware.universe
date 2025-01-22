@@ -203,7 +203,7 @@
 
   <!-- Dummy doors -->
   <group if="$(var launch_dummy_doors)">
-    <include file="$(find-pkg-share vehicle_door_simulator)/launch/vehicle_door_simulator.launch.xml"/>
+    <include file="$(find-pkg-share autoware_vehicle_door_simulator)/launch/vehicle_door_simulator.launch.xml"/>
   </group>
 
   <!-- Simulator Adapter -->
