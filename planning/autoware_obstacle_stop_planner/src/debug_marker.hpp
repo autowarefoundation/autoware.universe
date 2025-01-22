@@ -14,13 +14,12 @@
 #ifndef DEBUG_MARKER_HPP_
 #define DEBUG_MARKER_HPP_
 
+#include <autoware/planning_factor_interface/planning_factor_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_adapi_v1_msgs/msg/planning_behavior.hpp>
-#include <autoware_adapi_v1_msgs/msg/velocity_factor_array.hpp>
+#include <autoware_internal_debug_msgs/msg/float32_multi_array_stamped.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/pose.hpp>
-#include <tier4_debug_msgs/msg/float32_multi_array_stamped.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -42,10 +41,7 @@ using std_msgs::msg::Header;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 
-using autoware_adapi_v1_msgs::msg::PlanningBehavior;
-using autoware_adapi_v1_msgs::msg::VelocityFactor;
-using autoware_adapi_v1_msgs::msg::VelocityFactorArray;
-using tier4_debug_msgs::msg::Float32MultiArrayStamped;
+using autoware_internal_debug_msgs::msg::Float32MultiArrayStamped;
 
 enum class PolygonType : int8_t { Vehicle = 0, Collision, SlowDownRange, SlowDown, Obstacle };
 
@@ -109,7 +105,6 @@ public:
   bool pushObstaclePoint(const pcl::PointXYZ & obstacle_point, const PointType & type);
   MarkerArray makeVirtualWallMarker();
   MarkerArray makeVisualizationMarker();
-  VelocityFactorArray makeVelocityFactorArray();
 
   void setDebugValues(const DebugValues::TYPE type, const double val)
   {
@@ -120,10 +115,12 @@ public:
 private:
   rclcpp::Publisher<MarkerArray>::SharedPtr virtual_wall_pub_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_viz_pub_;
-  rclcpp::Publisher<VelocityFactorArray>::SharedPtr velocity_factor_pub_;
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr pub_debug_values_;
   rclcpp::Node * node_;
   double base_link2front_;
+
+  std::unique_ptr<autoware::planning_factor_interface::PlanningFactorInterface>
+    planning_factor_interface_;
 
   std::shared_ptr<Pose> stop_pose_ptr_;
   std::shared_ptr<Pose> target_stop_pose_ptr_;
