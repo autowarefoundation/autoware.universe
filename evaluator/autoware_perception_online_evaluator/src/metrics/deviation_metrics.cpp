@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "perception_online_evaluator/metrics/deviation_metrics.hpp"
+#include "autoware/perception_online_evaluator/metrics/deviation_metrics.hpp"
 
 #include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware/universe_utils/geometry/pose_deviation.hpp"
@@ -21,7 +21,7 @@
 
 #include <vector>
 
-namespace perception_diagnostics
+namespace autoware::perception_diagnostics
 {
 namespace metrics
 {
@@ -50,4 +50,4 @@ double calcYawDeviation(const std::vector<Pose> & ref_path, const Pose & target_
 }
 
 }  // namespace metrics
-}  // namespace perception_diagnostics
+}  // namespace autoware::perception_diagnostics

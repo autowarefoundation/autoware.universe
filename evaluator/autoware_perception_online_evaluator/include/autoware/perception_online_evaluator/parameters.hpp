@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PERCEPTION_ONLINE_EVALUATOR__PARAMETERS_HPP_
-#define PERCEPTION_ONLINE_EVALUATOR__PARAMETERS_HPP_
+#ifndef AUTOWARE__PERCEPTION_ONLINE_EVALUATOR__PARAMETERS_HPP_
+#define AUTOWARE__PERCEPTION_ONLINE_EVALUATOR__PARAMETERS_HPP_
 
-#include "perception_online_evaluator/metrics/metric.hpp"
+#include "autoware/perception_online_evaluator/metrics/metric.hpp"
 
 #include <unordered_map>
 #include <vector>
 
-namespace perception_diagnostics
+namespace autoware::perception_diagnostics
 {
 /**
  * @brief Enumeration of perception metrics
@@ -64,6 +64,6 @@ struct Parameters
   std::unordered_map<uint8_t, ObjectParameter> object_parameters;
 };
 
-}  // namespace perception_diagnostics
+}  // namespace autoware::perception_diagnostics
 
-#endif  // PERCEPTION_ONLINE_EVALUATOR__PARAMETERS_HPP_
+#endif  // AUTOWARE__PERCEPTION_ONLINE_EVALUATOR__PARAMETERS_HPP_

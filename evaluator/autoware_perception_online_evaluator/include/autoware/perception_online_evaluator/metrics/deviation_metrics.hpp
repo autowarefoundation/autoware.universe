@@ -12,15 +12,15 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PERCEPTION_ONLINE_EVALUATOR__METRICS__DEVIATION_METRICS_HPP_
-#define PERCEPTION_ONLINE_EVALUATOR__METRICS__DEVIATION_METRICS_HPP_
+#ifndef AUTOWARE__PERCEPTION_ONLINE_EVALUATOR__METRICS__DEVIATION_METRICS_HPP_
+#define AUTOWARE__PERCEPTION_ONLINE_EVALUATOR__METRICS__DEVIATION_METRICS_HPP_
 
 #include <autoware_perception_msgs/msg/predicted_path.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 
 #include <vector>
 
-namespace perception_diagnostics
+namespace autoware::perception_diagnostics
 {
 namespace metrics
 {
@@ -44,6 +44,6 @@ double calcLateralDeviation(const std::vector<Pose> & ref_path, const Pose & tar
 double calcYawDeviation(const std::vector<Pose> & ref_path, const Pose & target_pose);
 
 }  // namespace metrics
-}  // namespace perception_diagnostics
+}  // namespace autoware::perception_diagnostics
 
-#endif  // PERCEPTION_ONLINE_EVALUATOR__METRICS__DEVIATION_METRICS_HPP_
+#endif  // AUTOWARE__PERCEPTION_ONLINE_EVALUATOR__METRICS__DEVIATION_METRICS_HPP_

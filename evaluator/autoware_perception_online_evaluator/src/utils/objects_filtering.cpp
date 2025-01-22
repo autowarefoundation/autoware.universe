@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "perception_online_evaluator/utils/objects_filtering.hpp"
+#include "autoware/perception_online_evaluator/utils/objects_filtering.hpp"
 
 #include <limits>
 #include <vector>
 
-namespace perception_diagnostics
+namespace autoware::perception_diagnostics
 {
 namespace filter
 {
@@ -102,4 +102,4 @@ PredictedObjects filterObjectsByVelocity(
   filterObjects(filtered, filter);
   return filtered;
 }
-}  // namespace perception_diagnostics
+}  // namespace autoware::perception_diagnostics

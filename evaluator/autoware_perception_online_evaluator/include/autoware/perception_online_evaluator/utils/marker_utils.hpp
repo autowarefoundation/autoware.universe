@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PERCEPTION_ONLINE_EVALUATOR__UTILS__MARKER_UTILS_HPP_
-#define PERCEPTION_ONLINE_EVALUATOR__UTILS__MARKER_UTILS_HPP_
+#ifndef AUTOWARE__PERCEPTION_ONLINE_EVALUATOR__UTILS__MARKER_UTILS_HPP_
+#define AUTOWARE__PERCEPTION_ONLINE_EVALUATOR__UTILS__MARKER_UTILS_HPP_
 
 #include <autoware_vehicle_info_utils/vehicle_info.hpp>
 
@@ -27,7 +27,7 @@
 #include <string>
 #include <vector>
 
-namespace marker_utils
+namespace autoware::perception_diagnostics::marker_utils
 {
 
 using autoware::universe_utils::Polygon2d;
@@ -77,6 +77,6 @@ MarkerArray createDeviationLines(
   const std::vector<Pose> & poses1, const std::vector<Pose> & poses2, const std::string & ns,
   const int32_t & first_id, const float r, const float g, const float b);
 
-}  // namespace marker_utils
+}  // namespace autoware::perception_diagnostics::marker_utils
 
-#endif  // PERCEPTION_ONLINE_EVALUATOR__UTILS__MARKER_UTILS_HPP_
+#endif  // AUTOWARE__PERCEPTION_ONLINE_EVALUATOR__UTILS__MARKER_UTILS_HPP_

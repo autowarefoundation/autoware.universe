@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PERCEPTION_ONLINE_EVALUATOR__METRICS__DETECTION_COUNT_HPP_
-#define PERCEPTION_ONLINE_EVALUATOR__METRICS__DETECTION_COUNT_HPP_
+#ifndef AUTOWARE__PERCEPTION_ONLINE_EVALUATOR__METRICS__DETECTION_COUNT_HPP_
+#define AUTOWARE__PERCEPTION_ONLINE_EVALUATOR__METRICS__DETECTION_COUNT_HPP_
 
-#include "perception_online_evaluator/parameters.hpp"
+#include "autoware/perception_online_evaluator/parameters.hpp"
 #include "tf2_ros/buffer.h"
 
 #include <rclcpp/rclcpp.hpp>
@@ -32,7 +32,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace perception_diagnostics
+namespace autoware::perception_diagnostics
 {
 namespace metrics
 {
@@ -143,6 +143,6 @@ private:
     seen_uuids_;
 };
 }  // namespace metrics
-}  // namespace perception_diagnostics
+}  // namespace autoware::perception_diagnostics
 
-#endif  // PERCEPTION_ONLINE_EVALUATOR__METRICS__DETECTION_COUNT_HPP_
+#endif  // AUTOWARE__PERCEPTION_ONLINE_EVALUATOR__METRICS__DETECTION_COUNT_HPP_

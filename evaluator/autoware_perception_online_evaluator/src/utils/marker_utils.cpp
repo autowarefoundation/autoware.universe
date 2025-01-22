@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "perception_online_evaluator/utils/marker_utils.hpp"
+#include "autoware/perception_online_evaluator/utils/marker_utils.hpp"
 
 #include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
@@ -29,7 +29,7 @@
 #include <string>
 #include <vector>
 
-namespace marker_utils
+namespace autoware::perception_diagnostics::marker_utils
 {
 using autoware::universe_utils::calcOffsetPose;
 using autoware::universe_utils::createDefaultMarker;
@@ -197,4 +197,4 @@ MarkerArray createObjectPolygonMarkerArray(
   return msg;
 }
 
-}  // namespace marker_utils
+}  // namespace autoware::perception_diagnostics::marker_utils

@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "perception_online_evaluator/perception_online_evaluator_node.hpp"
+#include "autoware/perception_online_evaluator/perception_online_evaluator_node.hpp"
 
+#include "autoware/perception_online_evaluator/utils/marker_utils.hpp"
 #include "autoware/universe_utils/ros/marker_helper.hpp"
 #include "autoware/universe_utils/ros/parameter.hpp"
 #include "autoware/universe_utils/ros/update_param.hpp"
-#include "perception_online_evaluator/utils/marker_utils.hpp"
 
 #include <autoware/universe_utils/ros/uuid_helper.hpp>
 
@@ -33,7 +33,7 @@
 #include <utility>
 #include <vector>
 
-namespace perception_diagnostics
+namespace autoware::perception_diagnostics
 {
 PerceptionOnlineEvaluatorNode::PerceptionOnlineEvaluatorNode(
   const rclcpp::NodeOptions & node_options)
@@ -382,7 +382,7 @@ void PerceptionOnlineEvaluatorNode::initParameter()
       getOrDeclareParameter<bool>(*this, ns + "object_polygon");
   }
 }
-}  // namespace perception_diagnostics
+}  // namespace autoware::perception_diagnostics
 
 #include "rclcpp_components/register_node_macro.hpp"
-RCLCPP_COMPONENTS_REGISTER_NODE(perception_diagnostics::PerceptionOnlineEvaluatorNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::perception_diagnostics::PerceptionOnlineEvaluatorNode)

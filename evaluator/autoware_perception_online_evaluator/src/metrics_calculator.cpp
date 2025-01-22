@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "perception_online_evaluator/metrics_calculator.hpp"
+#include "autoware/perception_online_evaluator/metrics_calculator.hpp"
 
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/object_recognition_utils/object_classification.hpp"
@@ -21,7 +21,7 @@
 
 #include <autoware/universe_utils/ros/uuid_helper.hpp>
 
-namespace perception_diagnostics
+namespace autoware::perception_diagnostics
 {
 using autoware::object_recognition_utils::convertLabelToString;
 using autoware::universe_utils::inverseTransformPoint;
@@ -686,4 +686,4 @@ std::vector<Pose> MetricsCalculator::averageFilterPath(
   return filtered_path;
 }
 
-}  // namespace perception_diagnostics
+}  // namespace autoware::perception_diagnostics

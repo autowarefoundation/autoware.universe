@@ -1,7 +1,7 @@
 <?xml version="1.0"?>
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
-  <name>perception_online_evaluator</name>
+  <name>autoware_perception_online_evaluator</name>
   <version>0.40.0</version>
   <description>ROS 2 node for evaluating perception</description>
   <maintainer email="fumiya.watanabe@tier4.jp">Fumiya Watanabe</maintainer>
@@ -10,6 +10,7 @@
   <maintainer email="kyoichi.sugahara@tier4.jp">Kyoichi Sugahara</maintainer>
   <maintainer email="shunsuke.miura@tier4.jp">Shunsuke Miura</maintainer>
   <maintainer email="yoshi.ri@tier4.jp">Yoshi Ri</maintainer>
+  <maintainer email="junya.sasaki@tier4.jp">Junya Sasaki</maintainer>
   <license>Apache License 2.0</license>
 
   <author email="kosuke.takeuchi@tier4.jp">Kosuke Takeuchi</author>

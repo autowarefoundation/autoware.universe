@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PERCEPTION_ONLINE_EVALUATOR__METRICS_CALCULATOR_HPP_
-#define PERCEPTION_ONLINE_EVALUATOR__METRICS_CALCULATOR_HPP_
+#ifndef AUTOWARE__PERCEPTION_ONLINE_EVALUATOR__METRICS_CALCULATOR_HPP_
+#define AUTOWARE__PERCEPTION_ONLINE_EVALUATOR__METRICS_CALCULATOR_HPP_
 
-#include "perception_online_evaluator/metrics/detection_count.hpp"
-#include "perception_online_evaluator/metrics/deviation_metrics.hpp"
-#include "perception_online_evaluator/metrics/metric.hpp"
-#include "perception_online_evaluator/parameters.hpp"
-#include "perception_online_evaluator/utils/objects_filtering.hpp"
+#include "autoware/perception_online_evaluator/metrics/detection_count.hpp"
+#include "autoware/perception_online_evaluator/metrics/deviation_metrics.hpp"
+#include "autoware/perception_online_evaluator/metrics/metric.hpp"
+#include "autoware/perception_online_evaluator/parameters.hpp"
+#include "autoware/perception_online_evaluator/utils/objects_filtering.hpp"
 #include "tf2_ros/buffer.h"
 
 #include <rclcpp/time.hpp>
@@ -38,7 +38,7 @@
 #include <utility>
 #include <vector>
 
-namespace perception_diagnostics
+namespace autoware::perception_diagnostics
 {
 using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
@@ -160,6 +160,6 @@ private:
 
 };  // class MetricsCalculator
 
-}  // namespace perception_diagnostics
+}  // namespace autoware::perception_diagnostics
 
-#endif  // PERCEPTION_ONLINE_EVALUATOR__METRICS_CALCULATOR_HPP_
+#endif  // AUTOWARE__PERCEPTION_ONLINE_EVALUATOR__METRICS_CALCULATOR_HPP_
