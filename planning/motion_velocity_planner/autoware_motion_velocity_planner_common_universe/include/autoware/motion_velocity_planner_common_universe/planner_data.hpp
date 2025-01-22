@@ -149,7 +149,7 @@ struct PlannerData
   autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
 
   /// @brief queries the traffic signal information of given Id. if keep_last_observation = true,
-  /// @details recent UNKNOWN observation is overwritten as the last non-UNKNOWN observation
+  /// recent UNKNOWN observation is overwritten as the last non-UNKNOWN observation
   [[nodiscard]] std::optional<TrafficSignalStamped> get_traffic_signal(
     const lanelet::Id id, const bool keep_last_observation = false) const;
 

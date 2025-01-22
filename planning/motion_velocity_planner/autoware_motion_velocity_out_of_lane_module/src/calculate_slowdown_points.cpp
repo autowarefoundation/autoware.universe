@@ -87,7 +87,7 @@ std::optional<geometry_msgs::msg::Pose> calculate_pose_ahead_of_collision(
 std::optional<geometry_msgs::msg::Pose> calculate_last_in_lane_pose(
   const EgoData & ego_data, const OutOfLanePoint & point_to_avoid, PlannerParam params)
 {
-  std::optional<geometry_msgs::msg::Pose> slowdown_pose;
+  std::optional<geometry_msgs::msg::Pose> last_in_lane_pose;
 
   const auto outside_idx = point_to_avoid.trajectory_index;
   const auto outside_arc_length =
@@ -108,20 +108,20 @@ std::optional<geometry_msgs::msg::Pose> calculate_last_in_lane_pose(
   // then we use the base footprint (with distance buffers)
   // finally, we use the raw footprint
   for (const auto & ego_footprint : {expanded_footprint, base_footprint, raw_footprint}) {
-    slowdown_pose = calculate_last_avoiding_pose(
+    last_in_lane_pose = calculate_last_avoiding_pose(
       ego_data.trajectory_points, ego_footprint, polygons_to_avoid, ego_data.min_stop_arc_length,
       outside_arc_length, params.precision);
-    if (slowdown_pose) {
+    if (last_in_lane_pose) {
       break;
     }
   }
   // fallback to simply stopping ahead of the collision to avoid (regardless of being out of lane or
   // not)
-  if (!slowdown_pose) {
-    slowdown_pose = calculate_pose_ahead_of_collision(
+  if (!last_in_lane_pose) {
+    last_in_lane_pose = calculate_pose_ahead_of_collision(
       ego_data, point_to_avoid, expanded_footprint, params.precision);
   }
-  return slowdown_pose;
+  return last_in_lane_pose;
 }
 
 std::optional<geometry_msgs::msg::Pose> calculate_slowdown_pose(
