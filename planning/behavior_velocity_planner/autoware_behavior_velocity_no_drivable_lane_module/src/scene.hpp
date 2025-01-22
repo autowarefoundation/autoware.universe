@@ -55,7 +55,10 @@ public:
 
   NoDrivableLaneModule(
     const int64_t module_id, const int64_t lane_id, const PlannerParam & planner_param,
-    const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock);
+    const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock,
+    const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+    const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
+      planning_factor_interface);
 
   bool modifyPathVelocity(PathWithLaneId * path) override;
 
