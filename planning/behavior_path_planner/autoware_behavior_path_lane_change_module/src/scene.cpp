@@ -924,13 +924,6 @@ bool NormalLaneChange::isAbortState() const
   return abort_path_ != nullptr;
 }
 
-int NormalLaneChange::getNumToPreferredLane(const lanelet::ConstLanelet & lane) const
-{
-  const auto get_opposite_direction =
-    (direction_ == Direction::RIGHT) ? Direction::LEFT : Direction::RIGHT;
-  return std::abs(getRouteHandler()->getNumLaneToPreferredLane(lane, get_opposite_direction));
-}
-
 lane_change::TargetObjects NormalLaneChange::get_target_objects(
   const FilteredLanesObjects & filtered_objects,
   [[maybe_unused]] const lanelet::ConstLanelets & current_lanes) const
