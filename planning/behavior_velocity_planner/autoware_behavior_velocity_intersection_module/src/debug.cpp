@@ -446,6 +446,14 @@ autoware::motion_utils::VirtualWalls IntersectionModule::createVirtualWalls()
     wall.pose = debug_data_.absence_traffic_light_creep_wall.value();
     virtual_walls.push_back(wall);
   }
+  if (debug_data_.too_late_stop_wall_pose) {
+    wall.style = autoware::motion_utils::VirtualWallType::pass;
+    wall.text = "intersection";
+    wall.detail = "too late to stop";
+    wall.ns = "intersection" + std::to_string(module_id_) + "_";
+    wall.pose = debug_data_.too_late_stop_wall_pose.value();
+    virtual_walls.push_back(wall);
+  }
   return virtual_walls;
 }
 
