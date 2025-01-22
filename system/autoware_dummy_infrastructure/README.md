@@ -1,4 +1,4 @@
-# dummy_infrastructure
+# autoware_dummy_infrastructure
 
 This is a debug node for infrastructure communication.
 
