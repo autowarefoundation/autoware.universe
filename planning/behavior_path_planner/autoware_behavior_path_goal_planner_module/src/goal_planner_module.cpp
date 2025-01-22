@@ -40,6 +40,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <deque>
+#include <execution>
 #include <functional>
 #include <limits>
 #include <map>
@@ -393,7 +394,7 @@ void LaneParkingPlanner::onTimer()
   std::vector<PullOverPath> path_candidates{};
   std::optional<Pose> closest_start_pose{};
   std::optional<std::vector<size_t>> sorted_indices_opt{std::nullopt};
-  if (switch_bezier_) {
+  if (parameters_.bus_stop_area.use_bus_stop_area && switch_bezier_) {
     bezier_planning_helper(
       local_planner_data, goal_candidates, upstream_module_output, current_lanes,
       closest_start_pose, path_candidates, sorted_indices_opt);
@@ -567,15 +568,14 @@ void LaneParkingPlanner::bezier_planning_helper(
     sorted_indices.push_back(i);
   }
 
-  /*
   std::stable_sort(
-    sorted_indices.begin(), sorted_indices.end(), [&](const size_t a_i, const size_t b_i) {
+    std::execution::par, sorted_indices.begin(), sorted_indices.end(),
+    [&](const size_t a_i, const size_t b_i) {
       const auto & a = path_candidates[a_i];
       const auto & b = path_candidates[b_i];
       return a.parking_path_curvature_total_derivative() <
              b.parking_path_curvature_total_derivative();
     });
-  */
 
   double min_start_arc_length = std::numeric_limits<double>::infinity();
   for (const auto & bezier_pull_over_path : path_candidates) {
@@ -1117,7 +1117,7 @@ void sortPullOverPaths(
 
   // Sort pull_over_path_candidates based on the order in goal_candidates
   std::stable_sort(
-    sorted_path_indices.begin(), sorted_path_indices.end(),
+    std::execution::par, sorted_path_indices.begin(), sorted_path_indices.end(),
     [&](const size_t a_i, const size_t b_i) {
       const auto & a = pull_over_path_candidates[a_i];
       const auto & b = pull_over_path_candidates[b_i];
@@ -1169,7 +1169,7 @@ void sortPullOverPaths(
 
     // sorts in descending order so the item with larger margin comes first
     std::stable_sort(
-      sorted_path_indices.begin(), sorted_path_indices.end(),
+      std::execution::par, sorted_path_indices.begin(), sorted_path_indices.end(),
       [&](const size_t a_i, const size_t b_i) {
         const auto & a = pull_over_path_candidates[a_i];
         const auto & b = pull_over_path_candidates[b_i];
@@ -1204,7 +1204,7 @@ void sortPullOverPaths(
 
     // NOTE: this is just partition sort based on curvature threshold within each sub partitions
     std::stable_sort(
-      sorted_path_indices.begin(), sorted_path_indices.end(),
+      std::execution::par, sorted_path_indices.begin(), sorted_path_indices.end(),
       [&](const size_t a_i, const size_t b_i) {
         const auto & a = pull_over_path_candidates[a_i];
         const auto & b = pull_over_path_candidates[b_i];
@@ -1225,7 +1225,7 @@ void sortPullOverPaths(
     // the collision check margin and curvature priority.
     if (parameters.path_priority == "efficient_path") {
       std::stable_sort(
-        sorted_path_indices.begin(), sorted_path_indices.end(),
+        std::execution::par, sorted_path_indices.begin(), sorted_path_indices.end(),
         [&](const size_t a_i, const size_t b_i) {
           // if any of following conditions are met, sort by path type priority
           // - both are soft margin
@@ -1244,7 +1244,7 @@ void sortPullOverPaths(
     }
 
     std::stable_sort(
-      sorted_path_indices.begin(), sorted_path_indices.end(),
+      std::execution::par, sorted_path_indices.begin(), sorted_path_indices.end(),
       [&](const size_t a_i, const size_t b_i) {
         const auto & a = pull_over_path_candidates[a_i];
         const auto & b = pull_over_path_candidates[b_i];
@@ -1268,7 +1268,7 @@ void sortPullOverPaths(
      */
     if (parameters.path_priority == "efficient_path") {
       std::stable_sort(
-        sorted_path_indices.begin(), sorted_path_indices.end(),
+        std::execution::par, sorted_path_indices.begin(), sorted_path_indices.end(),
         [&](const size_t a_i, const size_t b_i) {
           const auto & a = pull_over_path_candidates[a_i];
           const auto & b = pull_over_path_candidates[b_i];

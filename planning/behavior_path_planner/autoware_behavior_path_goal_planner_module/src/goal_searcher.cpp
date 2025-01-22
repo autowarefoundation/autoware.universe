@@ -185,50 +185,52 @@ GoalCandidates GoalSearcher::search(const std::shared_ptr<const PlannerData> & p
       const auto transformed_vehicle_footprint =
         transformVector(vehicle_footprint_, autoware::universe_utils::pose2transform(search_pose));
 
-      if (
-        parameters_.bus_stop_area.use_bus_stop_area &&
-        !goal_planner_utils::isWithinAreas(transformed_vehicle_footprint, bus_stop_area_polygons)) {
-        continue;
-      }
-
-      if (goal_planner_utils::isIntersectingAreas(
-            transformed_vehicle_footprint, no_parking_area_polygons)) {
-        // break here to exclude goals located laterally in no_parking_areas
-        break;
-      }
-
-      if (goal_planner_utils::isIntersectingAreas(
-            transformed_vehicle_footprint, no_stopping_area_polygons)) {
-        // break here to exclude goals located laterally in no_stopping_areas
-        break;
-      }
-
-      if (!boost::geometry::within(
-            transformed_vehicle_footprint, departure_check_lane.polygon2d().basicPolygon())) {
-        continue;
-      }
-
       // modify the goal_pose orientation so that vehicle footprint front heading is parallel to the
       // lane boundary
       const auto vehicle_front_midpoint =
         (transformed_vehicle_footprint.at(vehicle_info_utils::VehicleInfo::FrontLeftIndex) +
          transformed_vehicle_footprint.at(vehicle_info_utils::VehicleInfo::FrontRightIndex)) /
         2.0;
-      lanelet::ConstLanelet vehicle_front_closest_lanelet;
-      lanelet::utils::query::getClosestLanelet(
-        pull_over_lanes, search_pose, &vehicle_front_closest_lanelet);
+      const auto pull_over_lanelet = lanelet::utils::combineLaneletsShape(pull_over_lanes);
       const auto vehicle_front_pose_for_bound_opt = goal_planner_utils::calcClosestPose(
-        left_side_parking_ ? vehicle_front_closest_lanelet.leftBound()
-                           : vehicle_front_closest_lanelet.rightBound(),
+        left_side_parking_ ? pull_over_lanelet.leftBound() : pull_over_lanelet.rightBound(),
         autoware::universe_utils::createPoint(
           vehicle_front_midpoint.x(), vehicle_front_midpoint.y(), search_pose.position.z));
       if (!vehicle_front_pose_for_bound_opt) {
         continue;
       }
       const auto & vehicle_front_pose_for_bound = vehicle_front_pose_for_bound_opt.value();
+      const auto aligned_pose = geometry_msgs::build<geometry_msgs::msg::Pose>()
+                                  .position(search_pose.position)
+                                  .orientation(vehicle_front_pose_for_bound.orientation);
+      const auto aligned_vehicle_footprint =
+        transformVector(vehicle_footprint_, autoware::universe_utils::pose2transform(aligned_pose));
+
+      if (
+        parameters_.bus_stop_area.use_bus_stop_area &&
+        !goal_planner_utils::isWithinAreas(aligned_vehicle_footprint, bus_stop_area_polygons)) {
+        continue;
+      }
+
+      if (goal_planner_utils::isIntersectingAreas(
+            aligned_vehicle_footprint, no_parking_area_polygons)) {
+        // break here to exclude goals located laterally in no_parking_areas
+        break;
+      }
+
+      if (goal_planner_utils::isIntersectingAreas(
+            aligned_vehicle_footprint, no_stopping_area_polygons)) {
+        // break here to exclude goals located laterally in no_stopping_areas
+        break;
+      }
+
+      if (!boost::geometry::within(
+            aligned_vehicle_footprint, departure_check_lane.polygon2d().basicPolygon())) {
+        continue;
+      }
+
       GoalCandidate goal_candidate{};
-      goal_candidate.goal_pose = search_pose;
-      goal_candidate.goal_pose.orientation = vehicle_front_pose_for_bound.orientation;
+      goal_candidate.goal_pose = aligned_pose;
       goal_candidate.lateral_offset = dy;
       goal_candidate.id = goal_id;
       goal_id++;
