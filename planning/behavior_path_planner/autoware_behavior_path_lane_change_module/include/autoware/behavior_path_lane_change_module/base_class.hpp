@@ -235,8 +235,6 @@ public:
   virtual bool is_near_regulatory_element() const = 0;
 
 protected:
-  virtual int getNumToPreferredLane(const lanelet::ConstLanelet & lane) const = 0;
-
   virtual bool isValidPath(const PathWithLaneId & path) const = 0;
 
   virtual bool isAbleToStopSafely() const = 0;

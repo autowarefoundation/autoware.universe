@@ -17,8 +17,8 @@
 
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 
-#include "autoware_adapi_v1_msgs/msg/planning_behavior.hpp"
-#include "autoware_adapi_v1_msgs/msg/velocity_factor_array.hpp"
+#include "autoware_internal_debug_msgs/msg/float32_stamped.hpp"
+#include "autoware_internal_debug_msgs/msg/float64_stamped.hpp"
 #include "autoware_perception_msgs/msg/predicted_object.hpp"
 #include "autoware_perception_msgs/msg/predicted_objects.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
@@ -28,8 +28,6 @@
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
-#include "tier4_debug_msgs/msg/float32_stamped.hpp"
-#include "tier4_debug_msgs/msg/float64_stamped.hpp"
 #include "tier4_planning_msgs/msg/stop_speed_exceeded.hpp"
 #include "tier4_planning_msgs/msg/velocity_limit.hpp"
 #include "tier4_planning_msgs/msg/velocity_limit_clear_command.hpp"
@@ -39,9 +37,8 @@
 #include <pcl/point_types.h>
 
 using autoware::vehicle_info_utils::VehicleInfo;
-using autoware_adapi_v1_msgs::msg::PlanningBehavior;
-using autoware_adapi_v1_msgs::msg::VelocityFactor;
-using autoware_adapi_v1_msgs::msg::VelocityFactorArray;
+using autoware_internal_debug_msgs::msg::Float32Stamped;
+using autoware_internal_debug_msgs::msg::Float64Stamped;
 using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
@@ -54,8 +51,6 @@ using geometry_msgs::msg::AccelWithCovarianceStamped;
 using geometry_msgs::msg::Twist;
 using nav_msgs::msg::Odometry;
 using sensor_msgs::msg::PointCloud2;
-using tier4_debug_msgs::msg::Float32Stamped;
-using tier4_debug_msgs::msg::Float64Stamped;
 using tier4_planning_msgs::msg::StopSpeedExceeded;
 using tier4_planning_msgs::msg::VelocityLimit;
 using tier4_planning_msgs::msg::VelocityLimitClearCommand;
