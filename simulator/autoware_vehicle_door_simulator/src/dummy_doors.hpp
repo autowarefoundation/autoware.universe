@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__VEHICLE_DOOR_SIMULATOR_DUMMY_DOORS_HPP_
-#define AUTOWARE__VEHICLE_DOOR_SIMULATOR_DUMMY_DOORS_HPP_
+#ifndef DUMMY_DOORS_HPP_
+#define DUMMY_DOORS_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -59,4 +59,4 @@ private:
 
 }  // namespace autoware::vehicle_door_simulator
 
-#endif  // AUTOWARE__VEHICLE_DOOR_SIMULATOR_DUMMY_DOORS_HPP_
+#endif  // DUMMY_DOORS_HPP_
