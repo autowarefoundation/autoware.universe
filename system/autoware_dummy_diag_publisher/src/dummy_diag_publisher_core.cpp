@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "dummy_diag_publisher/dummy_diag_publisher_core.hpp"
+#include "autoware/dummy_diag_publisher/dummy_diag_publisher_core.hpp"
 
 #include <set>
 #include <string>
@@ -24,7 +24,7 @@
 
 #include <sstream>
 
-namespace
+namespace autoware::dummy_diag_publisher
 {
 std::vector<std::string> split(const std::string & str, const char delim)
 {
@@ -36,7 +36,6 @@ std::vector<std::string> split(const std::string & str, const char delim)
   }
   return elems;
 }
-}  // namespace
 
 std::optional<DummyDiagPublisher::Status> DummyDiagPublisher::convertStrToStatus(
   const std::string & status_str)
@@ -226,6 +225,7 @@ DummyDiagPublisher::DummyDiagPublisher(const rclcpp::NodeOptions & options)
   param_callback_handle_ = this->add_on_set_parameters_callback(
     std::bind(&DummyDiagPublisher::onSetParams, this, std::placeholders::_1));
 }
+}  // namespace autoware::dummy_diag_publisher
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(DummyDiagPublisher)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::dummy_diag_publisher::DummyDiagPublisher)
