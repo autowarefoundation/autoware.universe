@@ -14,8 +14,8 @@
 #ifndef AUTOWARE__GNSS_POSER__GNSS_POSER_NODE_HPP_
 #define AUTOWARE__GNSS_POSER__GNSS_POSER_NODE_HPP_
 
-#include <autoware/component_interface_specs/map.hpp>
-#include <component_interface_utils/rclcpp.hpp>
+#include <autoware/component_interface_specs_universe/map.hpp>
+#include <autoware/component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_sensing_msgs/msg/gnss_ins_orientation_stamped.hpp>
@@ -47,7 +47,7 @@ public:
   explicit GNSSPoser(const rclcpp::NodeOptions & node_options);
 
 private:
-  using MapProjectorInfo = autoware::component_interface_specs::map::MapProjectorInfo;
+  using MapProjectorInfo = autoware::component_interface_specs_universe::map::MapProjectorInfo;
 
   void callback_map_projector_info(const MapProjectorInfo::Message::ConstSharedPtr msg);
   void callback_nav_sat_fix(const sensor_msgs::msg::NavSatFix::ConstSharedPtr nav_sat_fix_msg_ptr);
@@ -79,7 +79,8 @@ private:
   tf2_ros::TransformListener tf2_listener_;
   tf2_ros::TransformBroadcaster tf2_broadcaster_;
 
-  component_interface_utils::Subscription<MapProjectorInfo>::SharedPtr sub_map_projector_info_;
+  autoware::component_interface_utils::Subscription<MapProjectorInfo>::SharedPtr
+    sub_map_projector_info_;
   rclcpp::Subscription<sensor_msgs::msg::NavSatFix>::SharedPtr nav_sat_fix_sub_;
   rclcpp::Subscription<autoware_sensing_msgs::msg::GnssInsOrientationStamped>::SharedPtr
     autoware_orientation_sub_;

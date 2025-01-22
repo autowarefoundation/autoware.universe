@@ -18,12 +18,14 @@
 
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
-#include <NvCaffeParser.h>
 #include <NvInfer.h>
 #include <pcl_conversions/pcl_conversions.h>
 
+#include <functional>
+#include <memory>
 #include <numeric>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace autoware
@@ -48,12 +50,9 @@ LidarApolloInstanceSegmentation::LidarApolloInstanceSegmentation(rclcpp::Node * 
   const auto precision = node_->declare_parameter("precision", "fp32");
 
   trt_common_ = std::make_unique<autoware::tensorrt_common::TrtCommon>(
-    onnx_file, precision, nullptr, autoware::tensorrt_common::BatchConfig{1, 1, 1}, 1 << 30);
-  trt_common_->setup();
-
-  if (!trt_common_->isInitialized()) {
-    RCLCPP_ERROR_STREAM(node_->get_logger(), "failed to create tensorrt engine file.");
-    return;
+    tensorrt_common::TrtCommonConfig(onnx_file, precision));
+  if (!trt_common_->setup()) {
+    throw std::runtime_error("Failed to setup TensorRT");
   }
 
   if (node_->declare_parameter("build_only", false)) {
@@ -62,15 +61,15 @@ LidarApolloInstanceSegmentation::LidarApolloInstanceSegmentation(rclcpp::Node * 
   }
 
   // GPU memory allocation
-  const auto input_dims = trt_common_->getBindingDimensions(0);
+  const auto input_dims = trt_common_->getTensorShape(0);
   const auto input_size =
     std::accumulate(input_dims.d + 1, input_dims.d + input_dims.nbDims, 1, std::multiplies<int>());
-  input_d_ = cuda_utils::make_unique<float[]>(input_size);
-  const auto output_dims = trt_common_->getBindingDimensions(1);
+  input_d_ = autoware::cuda_utils::make_unique<float[]>(input_size);
+  const auto output_dims = trt_common_->getTensorShape(1);
   output_size_ = std::accumulate(
     output_dims.d + 1, output_dims.d + output_dims.nbDims, 1, std::multiplies<int>());
-  output_d_ = cuda_utils::make_unique<float[]>(output_size_);
-  output_h_ = cuda_utils::make_unique_host<float[]>(output_size_, cudaHostAllocPortable);
+  output_d_ = autoware::cuda_utils::make_unique<float[]>(output_size_);
+  output_h_ = autoware::cuda_utils::make_unique_host<float[]>(output_size_, cudaHostAllocPortable);
 
   // feature map generator: pre process
   feature_generator_ = std::make_shared<FeatureGenerator>(
@@ -124,10 +123,6 @@ bool LidarApolloInstanceSegmentation::detectDynamicObjects(
   const sensor_msgs::msg::PointCloud2 & input,
   tier4_perception_msgs::msg::DetectedObjectsWithFeature & output)
 {
-  if (!trt_common_->isInitialized()) {
-    return false;
-  }
-
   // move up pointcloud z_offset in z axis
   sensor_msgs::msg::PointCloud2 transformed_cloud;
   transformCloud(input, transformed_cloud, z_offset_);
@@ -166,7 +161,10 @@ bool LidarApolloInstanceSegmentation::detectDynamicObjects(
 
   std::vector<void *> buffers = {input_d_.get(), output_d_.get()};
 
-  trt_common_->enqueueV2(buffers.data(), *stream_, nullptr);
+  if (!trt_common_->setTensorsAddresses(buffers)) {
+    return false;
+  }
+  trt_common_->enqueueV3(*stream_);
 
   CHECK_CUDA_ERROR(cudaMemcpyAsync(
     output_h_.get(), output_d_.get(), sizeof(float) * output_size_, cudaMemcpyDeviceToHost,

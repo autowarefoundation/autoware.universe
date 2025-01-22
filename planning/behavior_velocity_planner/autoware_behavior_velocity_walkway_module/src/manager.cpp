@@ -45,7 +45,7 @@ void WalkwayModuleManager::launchNewModules(const PathWithLaneId & path)
 {
   const auto rh = planner_data_->route_handler_;
 
-  const auto launch = [this, &path](const auto & lanelet, const auto & use_regulatory_element) {
+  const auto launch = [this](const auto & lanelet, const auto & use_regulatory_element) {
     const auto attribute =
       lanelet.attributeOr(lanelet::AttributeNamesString::Subtype, std::string(""));
     if (attribute != lanelet::AttributeValueString::Walkway) {
@@ -61,7 +61,8 @@ void WalkwayModuleManager::launchNewModules(const PathWithLaneId & path)
     const auto lanelet_map_ptr = planner_data_->route_handler_->getLaneletMapPtr();
 
     registerModule(std::make_shared<WalkwayModule>(
-      lanelet.id(), lanelet_map_ptr, p, use_regulatory_element, logger, clock_));
+      lanelet.id(), lanelet_map_ptr, p, use_regulatory_element, logger, clock_, time_keeper_,
+      planning_factor_interface_));
   };
 
   const auto crosswalk_leg_elem_map = planning_utils::getRegElemMapOnPath<Crosswalk>(

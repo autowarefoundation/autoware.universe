@@ -14,6 +14,7 @@
 
 #include "autoware/scenario_selector/node.hpp"
 
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
 
@@ -63,6 +64,22 @@ bool isInLane(
   static constexpr double margin = 0.01;
 
   return dist_to_nearest_lanelet < margin;
+}
+
+bool isAlongLane(
+  const std::shared_ptr<autoware::route_handler::RouteHandler> & route_handler,
+  const geometry_msgs::msg::Pose & current_pose)
+{
+  lanelet::ConstLanelet closest_lanelet;
+  if (!route_handler->getClosestLaneletWithConstrainsWithinRoute(
+        current_pose, &closest_lanelet, 0.0, M_PI_4)) {
+    return false;
+  }
+  const lanelet::BasicPoint2d src_point(current_pose.position.x, current_pose.position.y);
+  const auto dist_to_centerline =
+    lanelet::geometry::distanceToCenterline2d(closest_lanelet, src_point);
+  static constexpr double margin = 1.0;
+  return dist_to_centerline < margin;
 }
 
 bool isInParkingLot(
@@ -139,9 +156,8 @@ std::string ScenarioSelectorNode::selectScenarioByPosition()
       return tier4_planning_msgs::msg::Scenario::LANEDRIVING;
     } else if (is_in_parking_lot) {
       return tier4_planning_msgs::msg::Scenario::PARKING;
-    } else {
-      return tier4_planning_msgs::msg::Scenario::LANEDRIVING;
     }
+    return tier4_planning_msgs::msg::Scenario::LANEDRIVING;
   }
 
   if (current_scenario_ == tier4_planning_msgs::msg::Scenario::LANEDRIVING) {
@@ -215,10 +231,9 @@ bool ScenarioSelectorNode::isSwitchToParking(const bool is_stopped)
 
 bool ScenarioSelectorNode::isSwitchToLaneDriving()
 {
-  const auto is_in_lane =
-    isInLane(route_handler_->getLaneletMapPtr(), current_pose_->pose.pose.position);
+  const auto is_along_lane = isAlongLane(route_handler_, current_pose_->pose.pose);
 
-  if (!isEmptyParkingTrajectory() || !is_in_lane) {
+  if (!isEmptyParkingTrajectory() || !is_along_lane) {
     empty_parking_trajectory_time_ = {};
     return false;
   }
@@ -375,7 +390,7 @@ void ScenarioSelectorNode::onTimer()
   pub_scenario_->publish(scenario);
 
   // Publish ProcessingTime
-  tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
+  autoware_internal_debug_msgs::msg::Float64Stamped processing_time_msg;
   processing_time_msg.stamp = get_clock()->now();
   processing_time_msg.data = stop_watch.toc();
   pub_processing_time_->publish(processing_time_msg);
@@ -475,8 +490,8 @@ ScenarioSelectorNode::ScenarioSelectorNode(const rclcpp::NodeOptions & node_opti
     this, get_clock(), period_ns, std::bind(&ScenarioSelectorNode::onTimer, this));
   published_time_publisher_ =
     std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
-  pub_processing_time_ =
-    this->create_publisher<tier4_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
+  pub_processing_time_ = this->create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>(
+    "~/debug/processing_time_ms", 1);
 }
 }  // namespace autoware::scenario_selector
 

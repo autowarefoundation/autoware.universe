@@ -36,18 +36,20 @@ DetectionAreaModule::DetectionAreaModule(
   const int64_t module_id, const int64_t lane_id,
   const lanelet::autoware::DetectionArea & detection_area_reg_elem,
   const PlannerParam & planner_param, const rclcpp::Logger & logger,
-  const rclcpp::Clock::SharedPtr clock)
-: SceneModuleInterface(module_id, logger, clock),
+  const rclcpp::Clock::SharedPtr clock,
+  const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+  const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
+    planning_factor_interface)
+: SceneModuleInterface(module_id, logger, clock, time_keeper, planning_factor_interface),
   lane_id_(lane_id),
   detection_area_reg_elem_(detection_area_reg_elem),
   state_(State::GO),
   planner_param_(planner_param),
   debug_data_()
 {
-  velocity_factor_.init(PlanningBehavior::USER_DEFINED_DETECTION_AREA);
 }
 
-bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason)
+bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path)
 {
   // Store original path
   const auto original_path = *path;
@@ -55,7 +57,6 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason *
   // Reset data
   debug_data_ = DebugData();
   debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
-  *stop_reason = planning_utils::initializeStopReason(StopReason::DETECTION_AREA);
 
   // Find obstacles in detection area
   const auto obstacle_points = detection_area::get_obstacle_points(
@@ -106,14 +107,14 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason *
     modified_stop_line_seg_idx = current_seg_idx;
   }
 
-  setDistance(stop_dist);
-
   // Check state
-  setSafe(detection_area::can_clear_stop_state(
-    last_obstacle_found_time_, clock_->now(), planner_param_.state_clear_time));
-  if (isActivated()) {
-    state_ = State::GO;
+  const bool is_safe = detection_area::can_clear_stop_state(
+    last_obstacle_found_time_, clock_->now(), planner_param_.state_clear_time);
+  if (is_safe) {
     last_obstacle_found_time_ = {};
+    if (!planner_param_.suppress_pass_judge_when_stopping || !is_stopped) {
+      state_ = State::GO;
+    }
     return true;
   }
 
@@ -138,7 +139,6 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason *
         dead_line_seg_idx);
       if (dist_from_ego_to_dead_line < 0.0) {
         RCLCPP_WARN(logger_, "[detection_area] vehicle is over dead line");
-        setSafe(true);
         return true;
       }
     }
@@ -151,7 +151,6 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason *
   if (
     state_ != State::STOP &&
     dist_from_ego_to_stop < -planner_param_.distance_to_judge_over_stop_line) {
-    setSafe(true);
     return true;
   }
 
@@ -168,7 +167,6 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason *
       RCLCPP_WARN_THROTTLE(
         logger_, *clock_, std::chrono::milliseconds(1000).count(),
         "[detection_area] vehicle is over stop border");
-      setSafe(true);
       return true;
     }
   }
@@ -182,25 +180,10 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path, StopReason *
 
   // Create StopReason
   {
-    StopFactor stop_factor{};
-    stop_factor.stop_pose = stop_point->second;
-    stop_factor.stop_factor_points = obstacle_points;
-    planning_utils::appendStopReason(stop_factor, stop_reason);
-    velocity_factor_.set(
-      path->points, planner_data_->current_odometry->pose, stop_point->second,
-      VelocityFactor::UNKNOWN);
-  }
-
-  // Create legacy StopReason
-  {
-    const auto insert_idx = stop_point->first + 1;
-
-    if (
-      !first_stop_path_point_index_ ||
-      static_cast<int>(insert_idx) < first_stop_path_point_index_) {
-      debug_data_.first_stop_pose = stop_point->second;
-      first_stop_path_point_index_ = static_cast<int>(insert_idx);
-    }
+    planning_factor_interface_->add(
+      path->points, planner_data_->current_odometry->pose, stop_pose, stop_pose,
+      tier4_planning_msgs::msg::PlanningFactor::STOP, tier4_planning_msgs::msg::SafetyFactorArray{},
+      true /*is_driving_forward*/, 0.0, 0.0 /*shift distance*/, "");
   }
 
   return true;

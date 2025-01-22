@@ -29,13 +29,15 @@
 #include <memory>
 #include <string>
 #include <tuple>
+#include <utility>
 #include <vector>
 
 // clang-format on
 namespace autoware::velocity_smoother
 {
 VelocitySmootherNode::VelocitySmootherNode(const rclcpp::NodeOptions & node_options)
-: Node("velocity_smoother", node_options)
+: Node("velocity_smoother", node_options),
+  diagnostics_interface_(std::make_unique<DiagnosticsInterface>(this, "velocity_smoother"))
 {
   using std::placeholders::_1;
 
@@ -62,7 +64,6 @@ VelocitySmootherNode::VelocitySmootherNode(const rclcpp::NodeOptions & node_opti
   pub_velocity_limit_ = create_publisher<VelocityLimit>(
     "~/output/current_velocity_limit_mps", rclcpp::QoS{1}.transient_local());
   pub_dist_to_stopline_ = create_publisher<Float32Stamped>("~/distance_to_stopline", 1);
-  pub_over_stop_velocity_ = create_publisher<StopSpeedExceeded>("~/stop_speed_exceeded", 1);
   sub_current_trajectory_ = create_subscription<Trajectory>(
     "~/input/trajectory", 1, std::bind(&VelocitySmootherNode::onCurrentTrajectory, this, _1));
 
@@ -319,6 +320,7 @@ void VelocitySmootherNode::calcExternalVelocityLimit()
   autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   if (!external_velocity_limit_ptr_) {
+    external_velocity_limit_.acceleration_request.request = false;
     return;
   }
 
@@ -340,6 +342,20 @@ void VelocitySmootherNode::calcExternalVelocityLimit()
     std::fabs(current_odometry_ptr_->twist.twist.linear.x) < eps &&
     external_velocity_limit_.velocity < eps) {
     external_velocity_limit_.dist = 0.0;
+  }
+
+  const auto base_max_acceleration = get_parameter("normal.max_acc").as_double();
+  const auto acceleration_request =
+    external_velocity_limit_ptr_->use_constraints &&
+    base_max_acceleration < external_velocity_limit_ptr_->constraints.max_acceleration;
+  if (
+    acceleration_request &&
+    current_odometry_ptr_->twist.twist.linear.x < external_velocity_limit_ptr_->max_velocity) {
+    external_velocity_limit_.acceleration_request.request = true;
+    external_velocity_limit_.acceleration_request.max_acceleration =
+      external_velocity_limit_ptr_->constraints.max_acceleration;
+    external_velocity_limit_.acceleration_request.max_jerk =
+      external_velocity_limit_ptr_->constraints.max_jerk;
   }
 
   // calculate distance and maximum velocity
@@ -428,6 +444,7 @@ void VelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstSharedPtr 
   RCLCPP_DEBUG(get_logger(), "========================= run start =========================");
   stop_watch_.tic();
 
+  diagnostics_interface_->clear();
   base_traj_raw_ptr_ = msg;
 
   // receive data
@@ -508,6 +525,10 @@ void VelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstSharedPtr 
 
   // Publish Calculation Time
   publishStopWatchTime();
+
+  // Publish diagnostics
+  diagnostics_interface_->publish(now());
+
   RCLCPP_DEBUG(get_logger(), "========================== run() end ==========================\n\n");
 }
 
@@ -626,6 +647,18 @@ bool VelocitySmootherNode::smoothVelocity(
   TrajectoryPoints clipped;
   clipped.insert(
     clipped.end(), traj_resampled.begin() + traj_resampled_closest, traj_resampled.end());
+
+  // Set maximum acceleration before applying smoother. Depends on acceleration request from
+  // external velocity limit
+  const double smoother_max_acceleration =
+    external_velocity_limit_.acceleration_request.request
+      ? external_velocity_limit_.acceleration_request.max_acceleration
+      : get_parameter("normal.max_acc").as_double();
+  const double smoother_max_jerk = external_velocity_limit_.acceleration_request.request
+                                     ? external_velocity_limit_.acceleration_request.max_jerk
+                                     : get_parameter("normal.max_jerk").as_double();
+  smoother_->setMaxAccel(smoother_max_acceleration);
+  smoother_->setMaxJerk(smoother_max_jerk);
 
   std::vector<TrajectoryPoints> debug_trajectories;
   if (!smoother_->apply(
@@ -791,12 +824,15 @@ std::pair<Motion, VelocitySmootherNode::InitializeType> VelocitySmootherNode::ca
           "calcInitialMotion : vehicle speed is low (%.3f), and desired speed is high (%.3f). Use "
           "engage speed (%.3f) until vehicle speed reaches engage_vel_thr (%.3f). stop_dist = %.3f",
           vehicle_speed, target_vel, node_param_.engage_velocity, engage_vel_thr, stop_dist);
-        Motion initial_motion = {node_param_.engage_velocity, node_param_.engage_acceleration};
+        const double engage_acceleration =
+          external_velocity_limit_.acceleration_request.request
+            ? external_velocity_limit_.acceleration_request.max_acceleration
+            : node_param_.engage_acceleration;
+        Motion initial_motion = {node_param_.engage_velocity, engage_acceleration};
         return {initial_motion, InitializeType::ENGAGING};
-      } else {
-        RCLCPP_DEBUG(
-          get_logger(), "calcInitialMotion : stop point is close (%.3f[m]). no engage.", stop_dist);
       }
+      RCLCPP_DEBUG(
+        get_logger(), "calcInitialMotion : stop point is close (%.3f[m]). no engage.", stop_dist);
     } else if (target_vel > 0.0) {
       RCLCPP_WARN_THROTTLE(
         get_logger(), *clock_, 3000,
@@ -875,12 +911,8 @@ void VelocitySmootherNode::overwriteStopPoint(
       input_stop_vel, output_stop_vel, over_stop_velocity_warn_thr_);
   }
 
-  {
-    StopSpeedExceeded msg{};
-    msg.stamp = this->now();
-    msg.stop_speed_exceeded = is_stop_velocity_exceeded;
-    pub_over_stop_velocity_->publish(msg);
-  }
+  diagnostics_interface_->add_key_value(
+    "The velocity on the stop point is larger than 0.", is_stop_velocity_exceeded);
 }
 
 void VelocitySmootherNode::applyExternalVelocityLimit(TrajectoryPoints & traj) const

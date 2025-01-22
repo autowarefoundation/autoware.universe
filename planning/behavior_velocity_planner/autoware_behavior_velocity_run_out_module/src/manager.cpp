@@ -16,6 +16,7 @@
 
 #include <autoware/universe_utils/ros/parameter.hpp>
 
+#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -155,17 +156,18 @@ void RunOutModuleManager::launchNewModules(const tier4_planning_msgs::msg::PathW
   if (!isModuleRegistered(module_id)) {
     registerModule(std::make_shared<RunOutModule>(
       module_id, planner_data_, planner_param_, logger_.get_child("run_out_module"),
-      std::move(dynamic_obstacle_creator_), debug_ptr_, clock_));
+      std::move(dynamic_obstacle_creator_), debug_ptr_, clock_, time_keeper_,
+      planning_factor_interface_));
   }
 }
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
-RunOutModuleManager::getModuleExpiredFunction(const tier4_planning_msgs::msg::PathWithLaneId & path)
+RunOutModuleManager::getModuleExpiredFunction(
+  [[maybe_unused]] const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
-  return
-    [&path]([[maybe_unused]] const std::shared_ptr<SceneModuleInterface> & scene_module) -> bool {
-      return false;
-    };
+  return []([[maybe_unused]] const std::shared_ptr<SceneModuleInterface> & scene_module) -> bool {
+    return false;
+  };
 }
 
 void RunOutModuleManager::setDynamicObstacleCreator(

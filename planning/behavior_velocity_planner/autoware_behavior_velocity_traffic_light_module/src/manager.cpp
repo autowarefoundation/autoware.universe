@@ -15,6 +15,7 @@
 #include "manager.hpp"
 
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
+#include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/ros/parameter.hpp>
 
 #include <tf2/utils.h>
@@ -52,36 +53,13 @@ void TrafficLightModuleManager::modifyPathVelocity(tier4_planning_msgs::msg::Pat
 
   autoware_perception_msgs::msg::TrafficLightGroup tl_state;
 
-  autoware_adapi_v1_msgs::msg::VelocityFactorArray velocity_factor_array;
-  velocity_factor_array.header.frame_id = "map";
-  velocity_factor_array.header.stamp = clock_->now();
-
-  tier4_planning_msgs::msg::StopReasonArray stop_reason_array;
-  stop_reason_array.header.frame_id = "map";
-  stop_reason_array.header.stamp = path->header.stamp;
-
-  first_stop_path_point_index_ = static_cast<int>(path->points.size() - 1);
   nearest_ref_stop_path_point_index_ = static_cast<int>(path->points.size() - 1);
   for (const auto & scene_module : scene_modules_) {
-    tier4_planning_msgs::msg::StopReason stop_reason;
     std::shared_ptr<TrafficLightModule> traffic_light_scene_module(
       std::dynamic_pointer_cast<TrafficLightModule>(scene_module));
-    traffic_light_scene_module->resetVelocityFactor();
     traffic_light_scene_module->setPlannerData(planner_data_);
-    traffic_light_scene_module->modifyPathVelocity(path, &stop_reason);
+    traffic_light_scene_module->modifyPathVelocity(path);
 
-    // The velocity factor must be called after modifyPathVelocity.
-    const auto velocity_factor = traffic_light_scene_module->getVelocityFactor();
-    if (velocity_factor.behavior != PlanningBehavior::UNKNOWN) {
-      velocity_factor_array.factors.emplace_back(velocity_factor);
-    }
-    if (stop_reason.reason != "") {
-      stop_reason_array.stop_reasons.emplace_back(stop_reason);
-    }
-
-    if (traffic_light_scene_module->getFirstStopPathPointIndex() < first_stop_path_point_index_) {
-      first_stop_path_point_index_ = traffic_light_scene_module->getFirstStopPathPointIndex();
-    }
     if (
       traffic_light_scene_module->getFirstRefStopPathPointIndex() <
       nearest_ref_stop_path_point_index_) {
@@ -99,10 +77,6 @@ void TrafficLightModuleManager::modifyPathVelocity(tier4_planning_msgs::msg::Pat
     virtual_wall_marker_creator_.add_virtual_walls(
       traffic_light_scene_module->createVirtualWalls());
   }
-  if (!stop_reason_array.stop_reasons.empty()) {
-    pub_stop_reason_->publish(stop_reason_array);
-  }
-  pub_velocity_factor_->publish(velocity_factor_array);
   pub_debug_->publish(debug_marker_array);
   pub_virtual_wall_->publish(virtual_wall_marker_creator_.create_markers(clock_->now()));
   pub_tl_state_->publish(tl_state);
@@ -128,7 +102,8 @@ void TrafficLightModuleManager::launchNewModules(
     if (!isModuleRegisteredFromExistingAssociatedModule(lane_id)) {
       registerModule(std::make_shared<TrafficLightModule>(
         lane_id, *(traffic_light_reg_elem.first), traffic_light_reg_elem.second, planner_param_,
-        logger_.get_child("traffic_light_module"), clock_));
+        logger_.get_child("traffic_light_module"), clock_, time_keeper_,
+        planning_factor_interface_));
       generateUUID(lane_id);
       updateRTCStatus(
         getUUID(lane_id), true, State::WAITING_FOR_EXECUTION, std::numeric_limits<double>::lowest(),
@@ -137,7 +112,7 @@ void TrafficLightModuleManager::launchNewModules(
   }
 }
 
-std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
+std::function<bool(const std::shared_ptr<SceneModuleInterfaceWithRTC> &)>
 TrafficLightModuleManager::getModuleExpiredFunction(
   const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
@@ -145,7 +120,7 @@ TrafficLightModuleManager::getModuleExpiredFunction(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
   return [this, lanelet_id_set](
-           [[maybe_unused]] const std::shared_ptr<SceneModuleInterface> & scene_module) {
+           [[maybe_unused]] const std::shared_ptr<SceneModuleInterfaceWithRTC> & scene_module) {
     for (const auto & id : lanelet_id_set) {
       if (isModuleRegisteredFromExistingAssociatedModule(id)) {
         return false;

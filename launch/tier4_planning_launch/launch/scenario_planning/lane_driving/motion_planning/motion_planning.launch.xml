@@ -27,7 +27,7 @@
   <let name="motion_velocity_planner_launch_modules" value="$(eval &quot;'$(var motion_velocity_planner_launch_modules)' + '$(var launch_module_list_end)'&quot;)"/>
 
   <node_container pkg="rclcpp_components" exec="$(var container_type)" name="motion_planning_container" namespace="" args="" output="screen">
-    <composable_node pkg="glog_component" plugin="GlogComponent" name="glog_component" namespace=""/>
+    <composable_node pkg="autoware_glog_component" plugin="autoware::glog_component::GlogComponent" name="glog_component" namespace=""/>
   </node_container>
 
   <!-- path smoothing -->
@@ -119,7 +119,7 @@
   <!-- plan slowdown or stops on the final trajectory -->
   <group>
     <load_composable_node target="/planning/scenario_planning/lane_driving/motion_planning/motion_planning_container">
-      <composable_node pkg="autoware_motion_velocity_planner_node" plugin="autoware::motion_velocity_planner::MotionVelocityPlannerNode" name="motion_velocity_planner" namespace="">
+      <composable_node pkg="autoware_motion_velocity_planner_node_universe" plugin="autoware::motion_velocity_planner::MotionVelocityPlannerNode" name="motion_velocity_planner" namespace="">
         <!-- topic remap -->
         <remap from="~/input/trajectory" to="path_optimizer/trajectory"/>
         <remap from="~/input/vector_map" to="/map/vector_map"/>

@@ -34,9 +34,13 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
+#include <limits>
+#include <map>
 #include <memory>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -59,36 +63,25 @@ StartPlannerModule::StartPlannerModule(
   const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
   std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
     objects_of_interest_marker_interface_ptr_map,
-  std::shared_ptr<SteeringFactorInterface> & steering_factor_interface_ptr)
-: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map, steering_factor_interface_ptr},  // NOLINT
+  const std::shared_ptr<PlanningFactorInterface> planning_factor_interface)
+: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map, planning_factor_interface},  // NOLINT
   parameters_{parameters},
   vehicle_info_{autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo()},
   is_freespace_planner_cb_running_{false}
 {
-  lane_departure_checker_ = std::make_shared<LaneDepartureChecker>(time_keeper_);
-  lane_departure_checker_->setVehicleInfo(vehicle_info_);
-  autoware::lane_departure_checker::Param lane_departure_checker_params{};
-  lane_departure_checker_params.footprint_extra_margin =
-    parameters->lane_departure_check_expansion_margin;
-
-  lane_departure_checker_->setParam(lane_departure_checker_params);
-
   // set enabled planner
   if (parameters_->enable_shift_pull_out) {
-    start_planners_.push_back(
-      std::make_shared<ShiftPullOut>(node, *parameters, lane_departure_checker_, time_keeper_));
+    start_planners_.push_back(std::make_shared<ShiftPullOut>(node, *parameters, time_keeper_));
   }
   if (parameters_->enable_geometric_pull_out) {
-    start_planners_.push_back(
-      std::make_shared<GeometricPullOut>(node, *parameters, lane_departure_checker_, time_keeper_));
+    start_planners_.push_back(std::make_shared<GeometricPullOut>(node, *parameters, time_keeper_));
   }
   if (start_planners_.empty()) {
     RCLCPP_ERROR(getLogger(), "Not found enabled planner");
   }
 
   if (parameters_->enable_freespace_planner) {
-    freespace_planner_ =
-      std::make_unique<FreespacePullOut>(node, *parameters, vehicle_info_, time_keeper_);
+    freespace_planner_ = std::make_unique<FreespacePullOut>(node, *parameters);
     const auto freespace_planner_period_ns = rclcpp::Rate(1.0).period();
     freespace_planner_timer_cb_group_ =
       node.create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -456,7 +449,6 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough(const Pose & 
   if (std::isnan(starting_pose_lateral_offset)) return false;
 
   RCLCPP_DEBUG(getLogger(), "starting pose lateral offset: %f", starting_pose_lateral_offset);
-  const bool ego_is_merging_from_the_left = (starting_pose_lateral_offset > 0.0);
 
   // Get the ego's overhang point closest to the centerline path and the gap between said point and
   // the lane's border.
@@ -507,6 +499,7 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough(const Pose & 
   };
 
   geometry_msgs::msg::Pose ego_overhang_point_as_pose;
+  const bool ego_is_merging_from_the_left = (starting_pose_lateral_offset > 0.0);
   const auto gaps_with_lane_borders_pair =
     get_gap_between_ego_and_lane_border(ego_overhang_point_as_pose, ego_is_merging_from_the_left);
 
@@ -628,7 +621,7 @@ bool StartPlannerModule::isExecutionReady() const
   }();
 
   if (!is_safe) {
-    stop_pose_ = planner_data_->self_odometry->pose.pose;
+    stop_pose_ = PoseWithDetail(planner_data_->self_odometry->pose.pose);
   }
 
   return is_safe;
@@ -737,7 +730,9 @@ BehaviorModuleOutput StartPlannerModule::plan()
 
   setDrivableAreaInfo(output);
 
-  const auto steering_factor_direction = getSteeringFactorDirection(output);
+  set_longitudinal_planning_factor(output.path);
+
+  const auto planning_factor_direction = getPlanningFactorDirection(output);
 
   if (status_.driving_forward) {
     const double start_distance = autoware::motion_utils::calcSignedArcLength(
@@ -747,10 +742,9 @@ BehaviorModuleOutput StartPlannerModule::plan()
       path.points, planner_data_->self_odometry->pose.pose.position,
       status_.pull_out_path.end_pose.position);
     updateRTCStatus(start_distance, finish_distance);
-    steering_factor_interface_ptr_->updateSteeringFactor(
-      {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose},
-      {start_distance, finish_distance}, PlanningBehavior::START_PLANNER, steering_factor_direction,
-      SteeringFactor::TURNING, "");
+    planning_factor_interface_->add(
+      start_distance, finish_distance, status_.pull_out_path.start_pose,
+      status_.pull_out_path.end_pose, planning_factor_direction, SafetyFactorArray{});
     setDebugData();
     return output;
   }
@@ -758,9 +752,9 @@ BehaviorModuleOutput StartPlannerModule::plan()
     path.points, planner_data_->self_odometry->pose.pose.position,
     status_.pull_out_path.start_pose.position);
   updateRTCStatus(0.0, distance);
-  steering_factor_interface_ptr_->updateSteeringFactor(
-    {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose}, {0.0, distance},
-    PlanningBehavior::START_PLANNER, steering_factor_direction, SteeringFactor::TURNING, "");
+  planning_factor_interface_->add(
+    0.0, distance, status_.pull_out_path.start_pose, status_.pull_out_path.end_pose,
+    planning_factor_direction, SafetyFactorArray{});
 
   setDebugData();
 
@@ -843,7 +837,7 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
 
   setDrivableAreaInfo(output);
 
-  const auto steering_factor_direction = getSteeringFactorDirection(output);
+  const auto planning_factor_direction = getPlanningFactorDirection(output);
 
   if (status_.driving_forward) {
     const double start_distance = autoware::motion_utils::calcSignedArcLength(
@@ -853,10 +847,9 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
       stop_path.points, planner_data_->self_odometry->pose.pose.position,
       status_.pull_out_path.end_pose.position);
     updateRTCStatus(start_distance, finish_distance);
-    steering_factor_interface_ptr_->updateSteeringFactor(
-      {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose},
-      {start_distance, finish_distance}, PlanningBehavior::START_PLANNER, steering_factor_direction,
-      SteeringFactor::APPROACHING, "");
+    planning_factor_interface_->add(
+      start_distance, finish_distance, status_.pull_out_path.start_pose,
+      status_.pull_out_path.end_pose, planning_factor_direction, SafetyFactorArray{});
     setDebugData();
 
     return output;
@@ -865,9 +858,9 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
     stop_path.points, planner_data_->self_odometry->pose.pose.position,
     status_.pull_out_path.start_pose.position);
   updateRTCStatus(0.0, distance);
-  steering_factor_interface_ptr_->updateSteeringFactor(
-    {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose}, {0.0, distance},
-    PlanningBehavior::START_PLANNER, steering_factor_direction, SteeringFactor::APPROACHING, "");
+  planning_factor_interface_->add(
+    0.0, distance, status_.pull_out_path.start_pose, status_.pull_out_path.end_pose,
+    planning_factor_direction, SafetyFactorArray{});
 
   setDebugData();
 
@@ -979,17 +972,16 @@ bool StartPlannerModule::findPullOutPath(
   const bool backward_is_unnecessary = backwards_distance < epsilon;
 
   planner->setCollisionCheckMargin(collision_check_margin);
-  planner->setPlannerData(planner_data_);
   PlannerDebugData debug_data{
     planner->getPlannerType(), {}, collision_check_margin, backwards_distance};
 
-  const auto pull_out_path = planner->plan(start_pose_candidate, goal_pose, debug_data);
+  const auto pull_out_path =
+    planner->plan(start_pose_candidate, goal_pose, planner_data_, debug_data);
   debug_data_vector.push_back(debug_data);
   // If no path is found, return false
   if (!pull_out_path) {
     return false;
   }
-
   if (backward_is_unnecessary) {
     updateStatusWithCurrentPath(*pull_out_path, start_pose_candidate, planner->getPlannerType());
     return true;
@@ -1369,7 +1361,7 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo()
     path.points, status_.pull_out_path.start_pose.position);
   const auto shift_end_idx =
     autoware::motion_utils::findNearestIndex(path.points, status_.pull_out_path.end_pose.position);
-  const lanelet::ConstLanelets current_lanes = utils::getCurrentLanes(planner_data_);
+  const lanelet::ConstLanelets current_lanes = utils::getExtendedCurrentLanes(planner_data_);
 
   const auto is_ignore_signal = [this](const lanelet::Id & id) {
     if (!ignore_signal_.has_value()) {
@@ -1588,9 +1580,9 @@ std::optional<PullOutStatus> StartPlannerModule::planFreespacePath(
 
   for (const auto & p : center_line_path.points) {
     const Pose end_pose = p.point.pose;
-    freespace_planner_->setPlannerData(planner_data);
     PlannerDebugData debug_data{freespace_planner_->getPlannerType(), {}, 0.0, 0.0};
-    auto freespace_path = freespace_planner_->plan(current_pose, end_pose, debug_data);
+    auto freespace_path =
+      freespace_planner_->plan(current_pose, end_pose, planner_data, debug_data);
     DEBUG_PRINT(
       "\nFreespace Pull out path search results\n%s%s", debug_data.header_str().c_str(),
       debug_data.str().c_str());

@@ -53,6 +53,7 @@
 
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
+#include <memory>
 #include <vector>
 
 namespace autoware::pointcloud_preprocessor
@@ -193,9 +194,9 @@ void CropBoxFilterComponent::faster_filter(
   if (debug_publisher_) {
     const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
     const double processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
-    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/cyclic_time_ms", cyclic_time_ms);
-    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/processing_time_ms", processing_time_ms);
 
     auto pipeline_latency_ms =
@@ -203,7 +204,7 @@ void CropBoxFilterComponent::faster_filter(
         std::chrono::nanoseconds((this->get_clock()->now() - input->header.stamp).nanoseconds()))
         .count();
 
-    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/pipeline_latency_ms", pipeline_latency_ms);
   }
 }

@@ -39,6 +39,7 @@
 #include <algorithm>
 #include <memory>
 #include <utility>
+#include <vector>
 
 namespace
 {
@@ -91,8 +92,9 @@ PurePursuitLateralController::PurePursuitLateralController(rclcpp::Node & node)
   // Debug Publishers
   pub_debug_marker_ =
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/markers", 0);
-  pub_debug_values_ = node.create_publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>(
-    "~/debug/ld_outputs", rclcpp::QoS{1});
+  pub_debug_values_ =
+    node.create_publisher<autoware_internal_debug_msgs::msg::Float32MultiArrayStamped>(
+      "~/debug/ld_outputs", rclcpp::QoS{1});
 
   // Publish predicted trajectory
   pub_predicted_trajectory_ = node.create_publisher<autoware_planning_msgs::msg::Trajectory>(
@@ -117,7 +119,7 @@ double PurePursuitLateralController::calcLookaheadDistance(
     std::clamp(vel_ld + curvature_ld + lateral_error_ld, min_ld, param_.max_lookahead_distance);
 
   auto pubDebugValues = [&]() {
-    tier4_debug_msgs::msg::Float32MultiArrayStamped debug_msg{};
+    autoware_internal_debug_msgs::msg::Float32MultiArrayStamped debug_msg{};
     debug_msg.data.resize(TYPE::SIZE);
     debug_msg.data.at(TYPE::VEL_LD) = static_cast<float>(vel_ld);
     debug_msg.data.at(TYPE::CURVATURE_LD) = static_cast<float>(curvature_ld);

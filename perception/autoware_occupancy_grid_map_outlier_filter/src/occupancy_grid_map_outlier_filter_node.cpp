@@ -32,6 +32,7 @@
 #endif
 
 #include <algorithm>
+#include <cmath>
 #include <memory>
 #include <string>
 #include <utility>
@@ -140,7 +141,8 @@ void RadiusSearch2dFilter::filter(
     const float distance =
       std::hypot(xy_cloud->points[i].x - pose.position.x, xy_cloud->points[i].y - pose.position.y);
     const int min_points_threshold = std::min(
-      std::max(static_cast<int>(min_points_and_distance_ratio_ / distance + 0.5f), min_points_),
+      std::max(
+        static_cast<int>(std::lround(min_points_and_distance_ratio_ / distance)), min_points_),
       max_points_);
     const int points_num =
       kd_tree_->radiusSearch(i, search_radius_, k_indices, k_distances, min_points_threshold);
@@ -200,7 +202,8 @@ void RadiusSearch2dFilter::filter(
     const float distance =
       std::hypot(xy_cloud->points[i].x - pose.position.x, xy_cloud->points[i].y - pose.position.y);
     const int min_points_threshold = std::min(
-      std::max(static_cast<int>(min_points_and_distance_ratio_ / distance + 0.5f), min_points_),
+      std::max(
+        static_cast<int>(std::lround(min_points_and_distance_ratio_ / distance)), min_points_),
       max_points_);
     const int points_num =
       kd_tree_->radiusSearch(i, search_radius_, k_indices, k_distances, min_points_threshold);
@@ -417,9 +420,9 @@ void OccupancyGridMapOutlierFilterComponent::onOccupancyGridMapAndPointCloud2(
   if (debug_publisher_) {
     const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
     const double processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
-    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/cyclic_time_ms", cyclic_time_ms);
-    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/processing_time_ms", processing_time_ms);
   }
 }

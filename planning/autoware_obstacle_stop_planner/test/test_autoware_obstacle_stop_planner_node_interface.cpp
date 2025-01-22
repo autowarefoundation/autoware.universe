@@ -18,12 +18,16 @@
 #include <autoware_planning_test_manager/autoware_planning_test_manager.hpp>
 #include <autoware_test_utils/autoware_test_utils.hpp>
 
+#include <tier4_planning_msgs/msg/expand_stop_range.hpp>
+
 #include <gtest/gtest.h>
 
+#include <memory>
 #include <vector>
 
 using autoware::motion_planning::ObstacleStopPlannerNode;
 using autoware::planning_test_manager::PlanningInterfaceTestManager;
+using tier4_planning_msgs::msg::ExpandStopRange;
 
 std::shared_ptr<PlanningInterfaceTestManager> generateTestManager()
 {
@@ -65,8 +69,17 @@ void publishMandatoryTopics(
   test_manager->publishPointCloud(test_target_node, "obstacle_stop_planner/input/pointcloud");
   test_manager->publishAcceleration(test_target_node, "obstacle_stop_planner/input/acceleration");
   test_manager->publishPredictedObjects(test_target_node, "obstacle_stop_planner/input/objects");
-  test_manager->publishExpandStopRange(
-    test_target_node, "obstacle_stop_planner/input/expand_stop_range");
+}
+
+void publishExpandStopRange(
+  std::shared_ptr<PlanningInterfaceTestManager> test_manager,
+  std::shared_ptr<ObstacleStopPlannerNode> test_target_node)
+{
+  auto test_node = test_manager->getTestNode();
+  const auto expand_stop_range = test_manager->getTestNode()->create_publisher<ExpandStopRange>(
+    "obstacle_stop_planner/input/expand_stop_range", 1);
+  expand_stop_range->publish(ExpandStopRange{});
+  autoware::test_utils::spinSomeNodes(test_node, test_target_node, 3);
 }
 
 TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionTrajectory)
@@ -77,6 +90,7 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithExceptionTrajectory)
   auto test_target_node = generateNode();
 
   publishMandatoryTopics(test_manager, test_target_node);
+  publishExpandStopRange(test_manager, test_target_node);
 
   // test for normal trajectory
   ASSERT_NO_THROW_WITH_ERROR_MSG(test_manager->testWithNominalTrajectory(test_target_node));
@@ -96,6 +110,7 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithOffTrackEgoPose)
   auto test_target_node = generateNode();
 
   publishMandatoryTopics(test_manager, test_target_node);
+  publishExpandStopRange(test_manager, test_target_node);
 
   // test for normal trajectory
   ASSERT_NO_THROW_WITH_ERROR_MSG(test_manager->testWithNominalTrajectory(test_target_node));
