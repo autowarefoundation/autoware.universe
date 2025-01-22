@@ -13,7 +13,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 target_link_libraries(${PROJECT_NAME} cpprest crypto fmt)
 
 rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN "autoware::system::velodyne_monitor::VelodyneMonitor"
+  PLUGIN "autoware::velodyne_monitor::VelodyneMonitor"
   EXECUTABLE ${PROJECT_NAME}_node
 )
 

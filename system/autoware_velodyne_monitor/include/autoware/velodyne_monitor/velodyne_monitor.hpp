@@ -31,7 +31,7 @@
 // Include after diagnostic_updater because it causes errors
 #include <cpprest/http_client.h>
 
-namespace autoware::system::velodyne_monitor
+namespace autoware::velodyne_monitor
 {
 
 namespace http = web::http;
@@ -118,6 +118,6 @@ protected:
     {DiagStatus::OK, "OK"}, {DiagStatus::WARN, "RPM low"}, {DiagStatus::ERROR, "RPM too low"}};
 };
 
-}  // namespace autoware::system::velodyne_monitor
+}  // namespace autoware::velodyne_monitor
 
 #endif  // AUTOWARE__VELODYNE_MONITOR__VELODYNE_MONITOR_HPP_

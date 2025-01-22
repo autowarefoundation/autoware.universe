@@ -30,7 +30,7 @@
 #define FMT_HEADER_ONLY
 #include <fmt/format.h>
 
-namespace autoware::system::velodyne_monitor
+namespace autoware::velodyne_monitor
 {
 
 VelodyneMonitor::VelodyneMonitor(const rclcpp::NodeOptions & options)
@@ -234,7 +234,7 @@ float VelodyneMonitor::convertTemperature(int raw)
   return std::sqrt(2.1962e6 + (1.8639 - static_cast<float>(raw) * 5.0 / 4096) / 3.88e-6) - 1481.96;
 }
 
-}  // namespace autoware::system::velodyne_monitor
+}  // namespace autoware::velodyne_monitor
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(autoware::system::velodyne_monitor::VelodyneMonitor)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::velodyne_monitor::VelodyneMonitor)
