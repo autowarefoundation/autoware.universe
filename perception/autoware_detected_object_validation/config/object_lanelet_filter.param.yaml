@@ -22,5 +22,5 @@
       debug: false
       lanelet_extra_margin: 0.0
       use_height_threshold: false
-      max_height_threshold: 10.0 # [m]
-      min_height_threshold: -1.0 # [m]
+      max_height_threshold: 10.0 # [m] from the base_link height in map frame
+      min_height_threshold: -1.0 # [m] from the base_link height in map frame
