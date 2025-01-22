@@ -25,9 +25,11 @@
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include "autoware_vehicle_msgs/msg/steering_report.hpp"
 #include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
 #include <autoware_internal_debug_msgs/msg/float64_stamped.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
+#include <autoware_vehicle_msgs/msg/detail/steering_report__struct.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_metric_msgs/msg/metric.hpp>
 #include <tier4_metric_msgs/msg/metric_array.hpp>
@@ -45,6 +47,7 @@ using autoware::universe_utils::LineString2d;
 using autoware::universe_utils::Point2d;
 using autoware::vehicle_info_utils::VehicleInfo;
 using autoware_planning_msgs::msg::Trajectory;
+using autoware_vehicle_msgs::msg::SteeringReport;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using nav_msgs::msg::Odometry;
@@ -93,6 +96,8 @@ private:
     vector_map_subscriber_{this, "~/input/vector_map", rclcpp::QoS{1}.transient_local()};
   autoware::universe_utils::InterProcessPollingSubscriber<PathWithLaneId> behavior_path_subscriber_{
     this, "~/input/behavior_path"};
+  autoware::universe_utils::InterProcessPollingSubscriber<SteeringReport> steering_sub_{
+    this, "~/input/steering_report"};
 
   rclcpp::Publisher<autoware_internal_debug_msgs::msg::Float64Stamped>::SharedPtr
     processing_time_pub_;

@@ -294,6 +294,7 @@ void ControlEvaluatorNode::onTimer()
   const auto odom = odometry_sub_.takeData();
   const auto acc = accel_sub_.takeData();
   const auto behavior_path = behavior_path_subscriber_.takeData();
+  const auto steering_ = steering_sub_.takeData();
 
   // calculate deviation metrics
   if (odom && traj && !traj->points.empty()) {
@@ -319,7 +320,9 @@ void ControlEvaluatorNode::onTimer()
     const Pose ego_pose = odom->pose.pose;
     AddBoundaryDistanceMetricMsg(*behavior_path, ego_pose);
   }
-
+  if (steering_) {
+    //TODO think and add metric(steering_angle, the difference between the steering angle and the previous steering angle,etc)
+  }
   // Publish metrics
   metrics_msg_.stamp = now();
   metrics_pub_->publish(metrics_msg_);
