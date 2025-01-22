@@ -153,15 +153,17 @@ void ObjectLaneletFilterNode::objectCallback(
     return;
   }
   // vehicle base pose :map -> base_link
-  try {
-    ego_base_height_ = tf_buffer_
-                         .lookupTransform(
-                           lanelet_frame_id_, "base_link", transformed_objects.header.stamp,
-                           rclcpp::Duration::from_seconds(0.5))
-                         .transform.translation.z;
-  } catch (const tf2::TransformException & ex) {
-    RCLCPP_ERROR_STREAM(get_logger(), "Failed to get transform: " << ex.what());
-    return;
+  if (filter_settings_.use_height_threshold) {
+    try {
+      ego_base_height_ = tf_buffer_
+                           .lookupTransform(
+                             lanelet_frame_id_, "base_link", transformed_objects.header.stamp,
+                             rclcpp::Duration::from_seconds(0.5))
+                           .transform.translation.z;
+    } catch (const tf2::TransformException & ex) {
+      RCLCPP_ERROR_STREAM(get_logger(), "Failed to get transform: " << ex.what());
+      return;
+    }
   }
 
   if (!transformed_objects.objects.empty()) {
