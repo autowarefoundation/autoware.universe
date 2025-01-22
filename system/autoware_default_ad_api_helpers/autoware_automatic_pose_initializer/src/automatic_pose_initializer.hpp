@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__AUTOMATIC_POSE_INITIALIZER_HPP_
-#define AUTOWARE__AUTOMATIC_POSE_INITIALIZER_HPP_
+#ifndef AUTOMATIC_POSE_INITIALIZER_HPP_
+#define AUTOMATIC_POSE_INITIALIZER_HPP_
 
 #include <autoware/adapi_specs/localization.hpp>
 #include <autoware/component_interface_utils/rclcpp.hpp>
@@ -40,4 +40,4 @@ private:
 
 }  // namespace autoware::automatic_pose_initializer
 
-#endif  // AUTOWARE__AUTOMATIC_POSE_INITIALIZER_HPP_
+#endif  // AUTOMATIC_POSE_INITIALIZER_HPP_
