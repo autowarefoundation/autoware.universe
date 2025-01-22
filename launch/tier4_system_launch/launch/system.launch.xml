@@ -105,7 +105,7 @@
 
     <!-- MRM Handler -->
     <group>
-      <include file="$(find-pkg-share mrm_handler)/launch/mrm_handler.launch.xml">
+      <include file="$(find-pkg-share autoware_mrm_handler)/launch/mrm_handler.launch.xml">
         <arg name="config_file" value="$(var mrm_handler_param_path)"/>
       </include>
     </group>
