@@ -66,6 +66,12 @@ ObjectLaneletFilterNode::ObjectLaneletFilterNode(const rclcpp::NodeOptions & nod
   filter_settings_.debug = declare_parameter<bool>("filter_settings.debug");
   filter_settings_.lanelet_extra_margin =
     declare_parameter<double>("filter_settings.lanelet_extra_margin");
+  filter_settings_.use_height_threshold =
+    declare_parameter<bool>("filter_settings.use_height_threshold");
+  filter_settings_.max_height_threshold =
+    declare_parameter<double>("filter_settings.max_height_threshold");
+  filter_settings_.min_height_threshold =
+    declare_parameter<double>("filter_settings.min_height_threshold");
 
   // Set publisher/subscriber
   map_sub_ = this->create_subscription<autoware_map_msgs::msg::LaneletMapBin>(
@@ -197,6 +203,16 @@ bool ObjectLaneletFilterNode::filterObject(
     // no tree, then no intersection
     if (local_rtree.empty()) {
       return false;
+    }
+
+    // 0. check height threshold
+    if (filter_settings_.use_height_threshold) {
+      const double object_height = transformed_object.shape.dimensions.z;
+      if (
+        object_height > filter_settings_.max_height_threshold ||
+        object_height < filter_settings_.min_height_threshold) {
+        return false;
+      }
     }
 
     bool filter_pass = true;
