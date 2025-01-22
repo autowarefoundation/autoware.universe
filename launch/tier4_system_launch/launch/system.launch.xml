@@ -113,7 +113,7 @@
 
   <!-- Dummy Diag Publisher -->
   <group if="$(var launch_dummy_diag_publisher)">
-    <include file="$(find-pkg-share dummy_diag_publisher)/launch/dummy_diag_publisher.launch.xml">
+    <include file="$(find-pkg-share autoware_dummy_diag_publisher)/launch/dummy_diag_publisher.launch.xml">
       <arg name="config_file" value="$(var dummy_diag_publisher_param_path)"/>
       <arg name="extra_config_file_sensor" value="$(var sensor_launch_pkg)/config/dummy_diag_publisher/sensor_kit.param.yaml"/>
       <arg name="launch_rqt_reconfigure" value="$(var launch_rqt_reconfigure)"/>
