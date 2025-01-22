@@ -37,7 +37,7 @@ MRM Handler is a node to select a proper MRM from a system failure state contain
 
 ## Parameters
 
-{{ json_to_markdown("system/mrm_handler/schema/mrm_handler.schema.json") }}
+{{ json_to_markdown("system/autoware_mrm_handler/schema/mrm_handler.schema.json") }}
 
 ## Assumptions / Known limits
 
