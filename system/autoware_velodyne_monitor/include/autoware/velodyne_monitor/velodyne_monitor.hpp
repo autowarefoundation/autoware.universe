@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__SYSTEM__VELODYNE_MONITOR__VELODYNE_MONITOR_HPP_
-#define AUTOWARE__SYSTEM__VELODYNE_MONITOR__VELODYNE_MONITOR_HPP_
+#ifndef AUTOWARE__VELODYNE_MONITOR__VELODYNE_MONITOR_HPP_
+#define AUTOWARE__VELODYNE_MONITOR__VELODYNE_MONITOR_HPP_
 
 /**
  * @file velodyne_monitor.hpp
@@ -120,4 +120,4 @@ protected:
 
 }  // namespace autoware::system::velodyne_monitor
 
-#endif  // AUTOWARE__SYSTEM__VELODYNE_MONITOR__VELODYNE_MONITOR_HPP_
+#endif  // AUTOWARE__VELODYNE_MONITOR__VELODYNE_MONITOR_HPP_
