@@ -22,18 +22,20 @@ The node subscribes to a specified topic, remaps it, and republishes it. Additio
 
 ## Parameters
 
-- **`topic`** (string): The name of the input topic to subscribe to.
-- **`remap_topic`** (string): The name of the output topic to publish to.
-- **`topic_type`** (string): The type of messages being relayed.
-- **`qos`** (integer, default: `1`): QoS profile to use for subscriptions and publications.
-- **`transient_local`** (boolean, default: `false`): Enables transient local QoS for subscribers.
-- **`best_effort`** (boolean, default: `false`): Enables best-effort QoS for subscribers.
-- **`enable_relay_control`** (boolean, default: `true`): Allows dynamic relay control via a service.
-- **`srv_name`** (string): The service name for relay control when `enable_relay_control` is `true`.
-- **`enable_keep_publishing`** (boolean, default: `false`): Keeps publishing the last received topic value when not subscribed.
-- **`update_rate`** (integer, default: `10`): The rate (Hz) for publishing the last topic value when `enable_keep_publishing` is `true`.
-- **`frame_id`** (string, optional): Frame ID for transform messages when subscribing to `/tf` or `/tf_static`.
-- **`child_frame_id`** (string, optional): Child frame ID for transform messages when subscribing to `/tf` or `/tf_static`.
+| Variable | Type | Description |
+|----------|------|-------------|
+| topic | string | The name of the input topic to subscribe to |
+| remap_topic | string | The name of the output topic to publish to |
+| topic_type | string | The type of messages being relayed |
+| qos | integer | QoS profile to use for subscriptions and publications (default: `1`) |
+| transient_local | boolean | Enables transient local QoS for subscribers (default: `false`) |
+| best_effort | boolean | Enables best-effort QoS for subscribers (default: `false`) |
+| enable_relay_control | boolean | Allows dynamic relay control via a service (default: `true`) |
+| srv_name | string | The service name for relay control when `enable_relay_control` is `true` |
+| enable_keep_publishing | boolean | Keeps publishing the last received topic value when not subscribed (default: `false`) |
+| update_rate | integer | The rate (Hz) for publishing the last topic value when `enable_keep_publishing` is `true` (optional) |
+| frame_id | string | Frame ID for transform messages when subscribing to `/tf` or `/tf_static` (optional) |
+| child_frame_id | string | Child frame ID for transform messages when subscribing to `/tf` or `/tf_static` (optional) |
 
 ## Assumptions / Known limits
 
