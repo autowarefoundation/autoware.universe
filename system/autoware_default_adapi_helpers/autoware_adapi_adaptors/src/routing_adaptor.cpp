@@ -16,11 +16,11 @@
 
 #include <memory>
 
-namespace ad_api_adaptors
+namespace autoware::adapi_adaptors
 {
 
 RoutingAdaptor::RoutingAdaptor(const rclcpp::NodeOptions & options)
-: Node("routing_adaptor", options)
+: Node("autoware_routing_adaptor", options)
 {
   using std::placeholders::_1;
 
@@ -109,7 +109,7 @@ void RoutingAdaptor::on_reroute(const PoseStamped::ConstSharedPtr pose)
   cli_reroute_->async_send_request(route);
 }
 
-}  // namespace ad_api_adaptors
+}  // namespace autoware::adapi_adaptors
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(ad_api_adaptors::RoutingAdaptor)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::adapi_adaptors::RoutingAdaptor)

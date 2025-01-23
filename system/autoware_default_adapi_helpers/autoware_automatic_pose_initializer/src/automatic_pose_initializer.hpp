@@ -19,7 +19,7 @@
 #include <autoware/component_interface_utils/rclcpp.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-namespace automatic_pose_initializer
+namespace autoware::automatic_pose_initializer
 {
 
 class AutomaticPoseInitializer : public rclcpp::Node
@@ -38,6 +38,6 @@ private:
   State::Message state_;
 };
 
-}  // namespace automatic_pose_initializer
+}  // namespace autoware::automatic_pose_initializer
 
 #endif  // AUTOMATIC_POSE_INITIALIZER_HPP_

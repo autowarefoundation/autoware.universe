@@ -18,7 +18,7 @@
 #include <string>
 #include <vector>
 
-namespace ad_api_adaptors
+namespace autoware::adapi_adaptors
 {
 template <class ServiceT>
 using Future = typename rclcpp::Client<ServiceT>::SharedFuture;
@@ -35,7 +35,7 @@ std::array<double, 36> get_covariance_parameter(rclcpp::Node * node, const std::
 }
 
 InitialPoseAdaptor::InitialPoseAdaptor(const rclcpp::NodeOptions & options)
-: Node("initial_pose_adaptor", options), fitter_(this)
+: Node("autoware_initial_pose_adaptor", options), fitter_(this)
 {
   rviz_particle_covariance_ = get_covariance_parameter(this, "initial_pose_particle_covariance");
   sub_initial_pose_ = create_subscription<PoseWithCovarianceStamped>(
@@ -60,7 +60,7 @@ void InitialPoseAdaptor::on_initial_pose(const PoseWithCovarianceStamped::ConstS
   cli_initialize_->async_send_request(req);
 }
 
-}  // namespace ad_api_adaptors
+}  // namespace autoware::adapi_adaptors
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(ad_api_adaptors::InitialPoseAdaptor)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::adapi_adaptors::InitialPoseAdaptor)
