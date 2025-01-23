@@ -269,8 +269,8 @@ GoalPlannerParameters GoalPlannerModuleManager::initGoalPlannerParameters(
   // bezier parking
   {
     const std::string ns = base_ns + "pull_over.bezier_parking.";
-    p.bezier_parking.pull_over_azimuth_threshold =
-      node->declare_parameter<double>(ns + "pull_over_azimuth_threshold");
+    p.bezier_parking.pull_over_angle_threshold =
+      node->declare_parameter<double>(ns + "pull_over_angle_threshold");
     p.bezier_parking.after_shift_straight_distance =
       node->declare_parameter<double>(ns + "after_shift_straight_distance");
   }

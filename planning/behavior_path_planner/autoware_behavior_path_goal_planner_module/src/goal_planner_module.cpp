@@ -280,7 +280,7 @@ LaneParkingPlanner::LaneParkingPlanner(
   response_(response),
   is_lane_parking_cb_running_(is_lane_parking_cb_running),
   logger_(logger),
-  pull_over_azimuth_threshold(parameters.bezier_parking.pull_over_azimuth_threshold)
+  pull_over_angle_threshold(parameters.bezier_parking.pull_over_angle_threshold)
 {
   for (const std::string & planner_type : parameters.efficient_path_order) {
     if (planner_type == "SHIFT" && parameters.enable_shift_parking) {
@@ -399,7 +399,7 @@ void LaneParkingPlanner::onTimer()
       local_planner_data, goal_candidates, upstream_module_output, current_lanes,
       closest_start_pose, path_candidates, sorted_indices_opt);
   } else {
-    shift_planning_helper(
+    normal_pullover_planning_helper(
       local_planner_data, goal_candidates, upstream_module_output, current_lanes,
       closest_start_pose, path_candidates);
   }
@@ -419,7 +419,7 @@ void LaneParkingPlanner::onTimer()
   }
 }
 
-void LaneParkingPlanner::shift_planning_helper(
+void LaneParkingPlanner::normal_pullover_planning_helper(
   const std::shared_ptr<PlannerData> planner_data, const GoalCandidates & goal_candidates,
   const BehaviorModuleOutput & upstream_module_output,
   const lanelet::ConstLanelets current_lanelets, std::optional<Pose> & closest_start_pose,
@@ -484,7 +484,7 @@ void LaneParkingPlanner::shift_planning_helper(
       std::fabs(autoware::universe_utils::normalizeRadian(
         autoware::universe_utils::getRPY(original_pose).z -
         autoware::universe_utils::getRPY(closest_start_pose.value()).z)) >
-        pull_over_azimuth_threshold) {
+        pull_over_angle_threshold) {
       // reset and try bezier next time
       switch_bezier_ = true;
       path_candidates.clear();
@@ -1291,22 +1291,21 @@ std::optional<PullOverPath> GoalPlannerModule::selectPullOverPath(
   std::vector<size_t> sorted_path_indices;
   if (!sorted_bezier_indices_opt) {
     sorted_path_indices.reserve(pull_over_path_candidates.size());
-
-    // STEP1-1: Extract paths which have safe goal
-    // Create a map of goal_id to GoalCandidate for quick access
-    std::unordered_map<int, GoalCandidate> goal_candidate_map;
-    for (const auto & goal_candidate : goal_candidates) {
-      goal_candidate_map[goal_candidate.id] = goal_candidate;
-    }
-    for (size_t i = 0; i < pull_over_path_candidates.size(); ++i) {
-      const auto & path = pull_over_path_candidates[i];
-      const auto goal_candidate_it = goal_candidate_map.find(path.goal_id());
-      if (goal_candidate_it != goal_candidate_map.end() && goal_candidate_it->second.is_safe) {
-        sorted_path_indices.push_back(i);
-      }
-    }
   } else {
     sorted_path_indices = sorted_bezier_indices_opt.value();
+  }
+  // STEP1-1: Extract paths which have safe goal
+  // Create a map of goal_id to GoalCandidate for quick access
+  std::unordered_map<int, GoalCandidate> goal_candidate_map;
+  for (const auto & goal_candidate : goal_candidates) {
+    goal_candidate_map[goal_candidate.id] = goal_candidate;
+  }
+  for (size_t i = 0; i < pull_over_path_candidates.size(); ++i) {
+    const auto & path = pull_over_path_candidates[i];
+    const auto goal_candidate_it = goal_candidate_map.find(path.goal_id());
+    if (goal_candidate_it != goal_candidate_map.end() && goal_candidate_it->second.is_safe) {
+      sorted_path_indices.push_back(i);
+    }
   }
 
   // STEP1-2: Remove paths which do not have enough distance
