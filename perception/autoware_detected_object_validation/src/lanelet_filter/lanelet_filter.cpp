@@ -66,6 +66,12 @@ ObjectLaneletFilterNode::ObjectLaneletFilterNode(const rclcpp::NodeOptions & nod
   filter_settings_.debug = declare_parameter<bool>("filter_settings.debug");
   filter_settings_.lanelet_extra_margin =
     declare_parameter<double>("filter_settings.lanelet_extra_margin");
+  filter_settings_.use_height_threshold =
+    declare_parameter<bool>("filter_settings.use_height_threshold");
+  filter_settings_.max_height_threshold =
+    declare_parameter<double>("filter_settings.max_height_threshold");
+  filter_settings_.min_height_threshold =
+    declare_parameter<double>("filter_settings.min_height_threshold");
 
   // Set publisher/subscriber
   map_sub_ = this->create_subscription<autoware_map_msgs::msg::LaneletMapBin>(
@@ -146,6 +152,19 @@ void ObjectLaneletFilterNode::objectCallback(
     RCLCPP_ERROR(get_logger(), "Failed transform to %s.", lanelet_frame_id_.c_str());
     return;
   }
+  // vehicle base pose :map -> base_link
+  if (filter_settings_.use_height_threshold) {
+    try {
+      ego_base_height_ = tf_buffer_
+                           .lookupTransform(
+                             lanelet_frame_id_, "base_link", transformed_objects.header.stamp,
+                             rclcpp::Duration::from_seconds(0.5))
+                           .transform.translation.z;
+    } catch (const tf2::TransformException & ex) {
+      RCLCPP_ERROR_STREAM(get_logger(), "Failed to get transform: " << ex.what());
+      return;
+    }
+  }
 
   if (!transformed_objects.objects.empty()) {
     // calculate convex hull
@@ -180,9 +199,9 @@ void ObjectLaneletFilterNode::objectCallback(
       std::chrono::nanoseconds(
         (this->get_clock()->now() - output_object_msg.header.stamp).nanoseconds()))
       .count();
-  debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+  debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
     "debug/pipeline_latency_ms", pipeline_latency);
-  debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+  debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
     "debug/processing_time_ms", stop_watch_ptr_->toc("processing_time", true));
 }
 
@@ -197,6 +216,16 @@ bool ObjectLaneletFilterNode::filterObject(
     // no tree, then no intersection
     if (local_rtree.empty()) {
       return false;
+    }
+
+    // 0. check height threshold
+    if (filter_settings_.use_height_threshold) {
+      const double object_height = transformed_object.shape.dimensions.z;
+      if (
+        object_height > ego_base_height_ + filter_settings_.max_height_threshold ||
+        object_height < ego_base_height_ + filter_settings_.min_height_threshold) {
+        return false;
+      }
     }
 
     bool filter_pass = true;
