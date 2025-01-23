@@ -40,7 +40,7 @@
 
   <group if="$(var launch_simulator_perception_modules)">
     <group if="$(var scenario_simulation)">
-      <include file="$(find-pkg-share fault_injection)/launch/fault_injection.launch.xml">
+      <include file="$(find-pkg-share autoware_fault_injection)/launch/fault_injection.launch.xml">
         <arg name="config_file" value="$(var fault_injection_param_path)"/>
       </include>
     </group>
