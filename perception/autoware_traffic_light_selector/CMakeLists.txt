@@ -3,6 +3,23 @@ project(autoware_traffic_light_selector)
 
 # find dependencies
 find_package(autoware_cmake REQUIRED)
+find_package(OpenCV REQUIRED)
+find_package(Eigen3 REQUIRED)
+find_package(Sophus REQUIRED)
+find_package(Boost REQUIRED)
+find_package(PCL REQUIRED)
+find_package(CGAL REQUIRED COMPONENTS Core)
+
+include_directories(
+  include
+  SYSTEM
+  ${Boost_INCLUDE_DIRS}
+  ${PCL_INCLUDE_DIRS}
+  ${EIGEN3_INCLUDE_DIRS}
+  ${Sophus_INCLUDE_DIRS}
+  ${OpenCV_INCLUDE_DIRS}
+)
+
 autoware_package()
 
 # Targets
