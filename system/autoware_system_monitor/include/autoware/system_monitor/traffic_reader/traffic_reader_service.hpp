@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef SYSTEM_MONITOR__TRAFFIC_READER__TRAFFIC_READER_SERVICE_HPP_
-#define SYSTEM_MONITOR__TRAFFIC_READER__TRAFFIC_READER_SERVICE_HPP_
+#ifndef AUTOWARE__SYSTEM_MONITOR__TRAFFIC_READER__TRAFFIC_READER_SERVICE_HPP_
+#define AUTOWARE__SYSTEM_MONITOR__TRAFFIC_READER__TRAFFIC_READER_SERVICE_HPP_
 
 #include "autoware/system_monitor/traffic_reader/traffic_reader_common.hpp"
 
@@ -112,4 +112,4 @@ protected:
 
 }  // namespace autoware::system_monitor
 
-#endif  // SYSTEM_MONITOR__TRAFFIC_READER__TRAFFIC_READER_SERVICE_HPP_
+#endif  // AUTOWARE__SYSTEM_MONITOR__TRAFFIC_READER__TRAFFIC_READER_SERVICE_HPP_

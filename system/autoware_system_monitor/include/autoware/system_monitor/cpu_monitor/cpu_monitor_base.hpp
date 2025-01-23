@@ -17,8 +17,8 @@
  * @brief CPU monitor base class
  */
 
-#ifndef SYSTEM_MONITOR__CPU_MONITOR__CPU_MONITOR_BASE_HPP_
-#define SYSTEM_MONITOR__CPU_MONITOR__CPU_MONITOR_BASE_HPP_
+#ifndef AUTOWARE__SYSTEM_MONITOR__CPU_MONITOR__CPU_MONITOR_BASE_HPP_
+#define AUTOWARE__SYSTEM_MONITOR__CPU_MONITOR__CPU_MONITOR_BASE_HPP_
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 
@@ -178,4 +178,4 @@ protected:
 
 }  // namespace autoware::system_monitor
 
-#endif  // SYSTEM_MONITOR__CPU_MONITOR__CPU_MONITOR_BASE_HPP_
+#endif  // AUTOWARE__SYSTEM_MONITOR__CPU_MONITOR__CPU_MONITOR_BASE_HPP_

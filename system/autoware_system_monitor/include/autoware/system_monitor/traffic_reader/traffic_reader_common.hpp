@@ -17,8 +17,8 @@
  * @brief traffic reader definitions
  */
 
-#ifndef SYSTEM_MONITOR__TRAFFIC_READER__TRAFFIC_READER_COMMON_HPP_
-#define SYSTEM_MONITOR__TRAFFIC_READER__TRAFFIC_READER_COMMON_HPP_
+#ifndef AUTOWARE__SYSTEM_MONITOR__TRAFFIC_READER__TRAFFIC_READER_COMMON_HPP_
+#define AUTOWARE__SYSTEM_MONITOR__TRAFFIC_READER__TRAFFIC_READER_COMMON_HPP_
 
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/string.hpp>
@@ -65,4 +65,4 @@ struct Result
 
 }  // namespace autoware::system_monitor
 
-#endif  // SYSTEM_MONITOR__TRAFFIC_READER__TRAFFIC_READER_COMMON_HPP_
+#endif  // AUTOWARE__SYSTEM_MONITOR__TRAFFIC_READER__TRAFFIC_READER_COMMON_HPP_

@@ -17,8 +17,8 @@
  * @brief MSR reader definitions
  */
 
-#ifndef SYSTEM_MONITOR__MSR_READER__MSR_READER_HPP_
-#define SYSTEM_MONITOR__MSR_READER__MSR_READER_HPP_
+#ifndef AUTOWARE__SYSTEM_MONITOR__MSR_READER__MSR_READER_HPP_
+#define AUTOWARE__SYSTEM_MONITOR__MSR_READER__MSR_READER_HPP_
 
 #include <boost/serialization/serialization.hpp>
 #include <boost/serialization/vector.hpp>
@@ -53,4 +53,4 @@ struct MSRInfo
 
 }  // namespace autoware::system_monitor
 
-#endif  // SYSTEM_MONITOR__MSR_READER__MSR_READER_HPP_
+#endif  // AUTOWARE__SYSTEM_MONITOR__MSR_READER__MSR_READER_HPP_

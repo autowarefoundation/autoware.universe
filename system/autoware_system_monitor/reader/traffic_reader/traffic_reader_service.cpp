@@ -36,7 +36,6 @@ namespace autoware::system_monitor
 
 namespace process = boost::process;
 
-
 TrafficReaderService::TrafficReaderService(std::string socket_path)
 : socket_path_(std::move(socket_path)), stop_(false)
 {

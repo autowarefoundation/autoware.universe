@@ -17,8 +17,8 @@
  * @brief Raspberry Pi CPU monitor class
  */
 
-#ifndef SYSTEM_MONITOR__CPU_MONITOR__RASPI_CPU_MONITOR_HPP_
-#define SYSTEM_MONITOR__CPU_MONITOR__RASPI_CPU_MONITOR_HPP_
+#ifndef AUTOWARE__SYSTEM_MONITOR__CPU_MONITOR__RASPI_CPU_MONITOR_HPP_
+#define AUTOWARE__SYSTEM_MONITOR__CPU_MONITOR__RASPI_CPU_MONITOR_HPP_
 
 #include "autoware/system_monitor/cpu_monitor/cpu_monitor_base.hpp"
 
@@ -77,4 +77,4 @@ protected:
 
 }  // namespace autoware::system_monitor
 
-#endif  // SYSTEM_MONITOR__CPU_MONITOR__RASPI_CPU_MONITOR_HPP_
+#endif  // AUTOWARE__SYSTEM_MONITOR__CPU_MONITOR__RASPI_CPU_MONITOR_HPP_
