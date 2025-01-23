@@ -85,7 +85,7 @@
       </include>
     </group>
     <group>
-      <include file="$(find-pkg-share mrm_emergency_stop_operator)/launch/mrm_emergency_stop_operator.launch.py">
+      <include file="$(find-pkg-share autoware_mrm_emergency_stop_operator)/launch/mrm_emergency_stop_operator.launch.py">
         <arg name="config_file" value="$(var mrm_emergency_stop_operator_param_path)"/>
       </include>
     </group>
