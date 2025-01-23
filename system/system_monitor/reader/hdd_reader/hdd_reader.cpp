@@ -17,7 +17,7 @@
  * @brief HDD information read class
  */
 
-#include "system_monitor/hdd_reader/hdd_reader.hpp"
+#include "autoware/system_monitor/hdd_reader/hdd_reader.hpp"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/archive/text_iarchive.hpp>

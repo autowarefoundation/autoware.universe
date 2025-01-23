@@ -17,7 +17,7 @@
  * @brief NTP monitor class
  */
 
-#include "system_monitor/ntp_monitor/ntp_monitor.hpp"
+#include "autoware/system_monitor/ntp_monitor/ntp_monitor.hpp"
 
 #include <autoware/universe_utils/system/stop_watch.hpp>
 

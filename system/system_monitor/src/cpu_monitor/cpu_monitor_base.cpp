@@ -17,9 +17,9 @@
  * @brief CPU monitor base class
  */
 
-#include "system_monitor/cpu_monitor/cpu_monitor_base.hpp"
+#include "autoware/system_monitor/cpu_monitor/cpu_monitor_base.hpp"
 
-#include "system_monitor/system_monitor_utility.hpp"
+#include "autoware/system_monitor/system_monitor_utility.hpp"
 
 #include <boost/filesystem.hpp>
 #include <boost/process.hpp>

@@ -20,7 +20,7 @@
 #ifndef AUTOWARE__SYSTEM_MONITOR__CPU_MONITOR__TEGRA_CPU_MONITOR_HPP_
 #define AUTOWARE__SYSTEM_MONITOR__CPU_MONITOR__TEGRA_CPU_MONITOR_HPP_
 
-#include "system_monitor/cpu_monitor/cpu_monitor_base.hpp"
+#include "autoware/system_monitor/cpu_monitor/cpu_monitor_base.hpp"
 
 #include <string>
 

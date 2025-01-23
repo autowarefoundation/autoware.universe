@@ -17,9 +17,9 @@
  * @brief Process monitor class
  */
 
-#include "system_monitor/process_monitor/process_monitor.hpp"
+#include "autoware/system_monitor/process_monitor/process_monitor.hpp"
 
-#include "system_monitor/system_monitor_utility.hpp"
+#include "autoware/system_monitor/system_monitor_utility.hpp"
 
 #include <autoware/universe_utils/system/stop_watch.hpp>
 

@@ -20,7 +20,7 @@
 #ifndef AUTOWARE__SYSTEM_MONITOR__PROCESS_MONITOR__PROCESS_MONITOR_HPP_
 #define AUTOWARE__SYSTEM_MONITOR__PROCESS_MONITOR__PROCESS_MONITOR_HPP_
 
-#include "system_monitor/process_monitor/diag_task.hpp"
+#include "autoware/system_monitor/process_monitor/diag_task.hpp"
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 

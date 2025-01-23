@@ -20,7 +20,7 @@
 #ifndef AUTOWARE__SYSTEM_MONITOR__HDD_MONITOR__HDD_MONITOR_HPP_
 #define AUTOWARE__SYSTEM_MONITOR__HDD_MONITOR__HDD_MONITOR_HPP_
 
-#include "system_monitor/hdd_reader/hdd_reader.hpp"
+#include "autoware/system_monitor/hdd_reader/hdd_reader.hpp"
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
 

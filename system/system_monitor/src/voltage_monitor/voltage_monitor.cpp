@@ -17,10 +17,10 @@
  * @brief  voltage monitor class
  */
 
-#include "system_monitor/voltage_monitor/voltage_monitor.hpp"
+#include "autoware/system_monitor/voltage_monitor/voltage_monitor.hpp"
 
-#include "system_monitor/msr_reader/msr_reader.hpp"
-#include "system_monitor/system_monitor_utility.hpp"
+#include "autoware/system_monitor/msr_reader/msr_reader.hpp"
+#include "autoware/system_monitor/system_monitor_utility.hpp"
 
 #include <boost/algorithm/string.hpp>
 #include <boost/archive/text_iarchive.hpp>
