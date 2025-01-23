@@ -150,5 +150,5 @@ private:
 
 }  // namespace autoware::simulator::simple_planning_simulator
 
+// NOLINTNEXTLINE
 #endif  // AUTOWARE__SIMPLE_PLANNING_SIMULATOR__VEHICLE_MODEL__SIM_MODEL_DELAY_STEER_ACC_GEARED_WO_FALL_GUARD_HPP_
-        // // NOLINT
