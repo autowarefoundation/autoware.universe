@@ -16,10 +16,10 @@
 
 #include <memory>
 
-namespace vehicle_door_simulator
+namespace autoware::vehicle_door_simulator
 {
 
-DummyDoors::DummyDoors() : Node("dummy_doors")
+DummyDoors::DummyDoors() : Node("vehicle_door_simulator_node")
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
@@ -112,13 +112,13 @@ void DummyDoors::on_timer()
   pub_status_->publish(message);
 }
 
-}  // namespace vehicle_door_simulator
+}  // namespace autoware::vehicle_door_simulator
 
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
   rclcpp::executors::SingleThreadedExecutor executor;
-  auto node = std::make_shared<vehicle_door_simulator::DummyDoors>();
+  auto node = std::make_shared<autoware::vehicle_door_simulator::DummyDoors>();
   executor.add_node(node);
   executor.spin();
   executor.remove_node(node);
