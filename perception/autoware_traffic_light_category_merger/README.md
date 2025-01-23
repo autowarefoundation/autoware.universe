@@ -1,8 +1,8 @@
-# The `autoware_traffic_light_signal_merger` Package
+# The `autoware_traffic_light_category_merger` Package
 
 ## Overview
 
-`autoware_traffic_light_signal_merger` receives the Traffic Light (TL) classification result from Car/Pedestrian classifiers and expected ROIs to merge into single classification result. The expect ROIs TL without classification result will be filled as Unknown.
+`autoware_traffic_light_category_merger` receives the Traffic Light (TL) classification result from Car/Pedestrian classifiers and expected ROIs to merge into single classification result. The expect ROIs TL without classification result will be filled as Unknown.
 
 ## Input topics
 

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "traffic_light_signals_merger_node.hpp"
+#include "traffic_light_category_merger.hpp"
 
 #include <memory>
 #include <string>
@@ -21,9 +21,9 @@
 namespace autoware::traffic_light
 {
 
-TrafficLightSignalsMergerNode::TrafficLightSignalsMergerNode(
+TrafficLightCategoryMergerNode::TrafficLightCategoryMergerNode(
   const rclcpp::NodeOptions & node_options)
-: rclcpp::Node("traffic_light_signals_merger_node", node_options),
+: rclcpp::Node("traffic_light_category_merger_node", node_options),
   tf_buffer_(get_clock()),
   tf_listener_(tf_buffer_),
   car_signal_sub_(this, "input/car_signals", rclcpp::QoS{1}.get_rmw_qos_profile()),
@@ -32,12 +32,12 @@ TrafficLightSignalsMergerNode::TrafficLightSignalsMergerNode(
 {
   using std::placeholders::_1;
   using std::placeholders::_2;
-  sync_.registerCallback(std::bind(&TrafficLightSignalsMergerNode::signalsCallback, this, _1, _2));
+  sync_.registerCallback(std::bind(&TrafficLightCategoryMergerNode::signalsCallback, this, _1, _2));
   pub_traffic_light_signals_ =
     create_publisher<TrafficLightArray>("output/traffic_light_signals", rclcpp::QoS{1});
 }
 
-void TrafficLightSignalsMergerNode::signalsCallback(
+void TrafficLightCategoryMergerNode::signalsCallback(
   const TrafficLightArray::ConstSharedPtr & car_signals_msg,
   const TrafficLightArray::ConstSharedPtr & pedestrian_signals_msg)
 {
@@ -54,4 +54,4 @@ void TrafficLightSignalsMergerNode::signalsCallback(
 }  // namespace autoware::traffic_light
 
 #include "rclcpp_components/register_node_macro.hpp"
-RCLCPP_COMPONENTS_REGISTER_NODE(autoware::traffic_light::TrafficLightSignalsMergerNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::traffic_light::TrafficLightCategoryMergerNode)

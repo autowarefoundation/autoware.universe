@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.8)
-project(autoware_traffic_light_signals_merger)
+project(autoware_traffic_light_category_merger)
 
 # find dependencies
 find_package(autoware_cmake REQUIRED)
@@ -11,8 +11,8 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN "autoware::traffic_light::TrafficLightSignalsMergerNode"
-  EXECUTABLE traffic_light_signals_merger_node)
+  PLUGIN "autoware::traffic_light::TrafficLightCategoryMergerNode"
+  EXECUTABLE traffic_light_category_merger_node)
 
 
 if(BUILD_TESTING)

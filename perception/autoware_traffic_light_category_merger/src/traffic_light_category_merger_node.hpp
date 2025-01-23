@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef TRAFFIC_LIGHT_SIGNALS_MERGER_NODE_HPP_
-#define TRAFFIC_LIGHT_SIGNALS_MERGER_NODE_HPP_
+#ifndef TRAFFIC_LIGHT_CATEGORY_MERGER_NODE_HPP_
+#define TRAFFIC_LIGHT_CATEGORY_MERGER_NODE_HPP_
 
 #include <autoware/universe_utils/ros/transform_listener.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -33,10 +33,10 @@ namespace autoware::traffic_light
 {
 using tier4_perception_msgs::msg::TrafficLightArray;
 
-class TrafficLightSignalsMergerNode : public rclcpp::Node
+class TrafficLightCategoryMergerNode : public rclcpp::Node
 {
 public:
-  explicit TrafficLightSignalsMergerNode(const rclcpp::NodeOptions & node_options);
+  explicit TrafficLightCategoryMergerNode(const rclcpp::NodeOptions & node_options);
 
 private:
   // Subscriber
@@ -59,4 +59,4 @@ private:
 
 }  // namespace autoware::traffic_light
 
-#endif  // TRAFFIC_LIGHT_SIGNALS_MERGER_NODE_HPP_
+#endif  // TRAFFIC_LIGHT_CATEGORY_MERGER_NODE_HPP_
