@@ -84,7 +84,8 @@ public:
     const PlannerParam & planner_param, const rclcpp::Logger logger,
     const rclcpp::Clock::SharedPtr clock,
     const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
-    const std::shared_ptr<motion_utils::PlanningFactorInterface> planning_factor_interface);
+    const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
+      planning_factor_interface);
 
   bool modifyPathVelocity(PathWithLaneId * path) override;
 
@@ -112,10 +113,6 @@ private:
   ModuleData module_data_;
 
   void updateInfrastructureCommand();
-
-  void setVelocityFactor(
-    const geometry_msgs::msg::Pose & stop_pose,
-    autoware_adapi_v1_msgs::msg::VelocityFactor * velocity_factor);
 
   std::optional<size_t> getPathIndexOfFirstEndLine();
 

@@ -66,12 +66,11 @@ OcclusionSpotModule::OcclusionSpotModule(
   const PlannerParam & planner_param, const rclcpp::Logger & logger,
   const rclcpp::Clock::SharedPtr clock,
   const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
-  const std::shared_ptr<motion_utils::PlanningFactorInterface> planning_factor_interface)
+  const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
+    planning_factor_interface)
 : SceneModuleInterface(module_id, logger, clock, time_keeper, planning_factor_interface),
   param_(planner_param)
 {
-  velocity_factor_.init(PlanningBehavior::UNKNOWN);
-
   if (param_.detection_method == utils::DETECTION_METHOD::OCCUPANCY_GRID) {
     debug_data_.detection_type = "occupancy";
     //! occupancy grid limitation( 100 * 100 )

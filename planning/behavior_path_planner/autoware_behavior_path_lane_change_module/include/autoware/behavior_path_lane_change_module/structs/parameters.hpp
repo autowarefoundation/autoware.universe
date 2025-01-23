@@ -94,6 +94,7 @@ struct CollisionCheckParameters
   bool check_current_lane{true};
   bool check_other_lanes{true};
   bool use_all_predicted_paths{false};
+  double th_incoming_object_yaw{2.3562};
   double th_yaw_diff{3.1416};
   double prediction_time_resolution{0.5};
 };

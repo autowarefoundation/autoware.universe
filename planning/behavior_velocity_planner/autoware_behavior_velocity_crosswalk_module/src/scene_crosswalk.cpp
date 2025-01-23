@@ -177,7 +177,8 @@ CrosswalkModule::CrosswalkModule(
   const PlannerParam & planner_param, const rclcpp::Logger & logger,
   const rclcpp::Clock::SharedPtr clock,
   const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
-  const std::shared_ptr<motion_utils::PlanningFactorInterface> planning_factor_interface)
+  const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
+    planning_factor_interface)
 : SceneModuleInterfaceWithRTC(module_id, logger, clock, time_keeper, planning_factor_interface),
   module_id_(module_id),
   planner_param_(planner_param),
@@ -336,13 +337,8 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
 
   // Check pedestrian for stop
   // NOTE: first stop point and its minimum distance from ego to stop
-  auto isVehicleType = [](const uint8_t label) {
-    return label == ObjectClassification::MOTORCYCLE || label == ObjectClassification::BICYCLE;
-  };
   std::optional<double> dist_nearest_cp;
   std::vector<geometry_msgs::msg::Point> stop_factor_points;
-  const std::optional<double> ego_crosswalk_passage_direction =
-    findEgoPassageDirectionAlongPath(sparse_resample_path);
   for (const auto & object : object_info_manager_.getObject()) {
     const auto & collision_point_opt = object.collision_point;
     if (collision_point_opt) {
@@ -350,19 +346,6 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
       const auto & collision_state = object.collision_state;
       if (collision_state != CollisionState::YIELD) {
         continue;
-      }
-
-      if (
-        isVehicleType(object.classification) && ego_crosswalk_passage_direction &&
-        collision_point.crosswalk_passage_direction) {
-        double direction_diff = std::abs(std::fmod(
-          collision_point.crosswalk_passage_direction.value() -
-            ego_crosswalk_passage_direction.value(),
-          M_PI_2));
-        direction_diff = std::min(direction_diff, M_PI_2 - direction_diff);
-        if (direction_diff < planner_param_.vehicle_object_cross_angle_threshold) {
-          continue;
-        }
       }
 
       stop_factor_points.push_back(object.position);
@@ -476,12 +459,13 @@ std::optional<geometry_msgs::msg::Pose> CrosswalkModule::calcStopPose(
     return strong_brk_dist_opt ? strong_brk_dist_opt.value() : 0.0;
   }();
   if (selected_stop.dist < strong_brk_dist - p.overrun_threshold_length_for_no_stop_decision) {
-    RCLCPP_INFO(
-      logger_,
+    RCLCPP_INFO_THROTTLE(
+      logger_, *clock_, 1000,
       "Abandon to stop. "
       "Can not stop against the nearest pedestrian with a specified deceleration. "
       "dist to stop: %f, braking distance: %f",
       selected_stop.dist, strong_brk_dist);
+    debug_data_.pass_poses.push_back(selected_stop.pose);
     return std::nullopt;
   }
 
@@ -1165,10 +1149,12 @@ void CrosswalkModule::updateObjectState(
 
     const auto collision_point =
       getCollisionPoint(sparse_resample_path, object, crosswalk_attention_range, attention_area);
+    const std::optional<double> ego_crosswalk_passage_direction =
+      findEgoPassageDirectionAlongPath(sparse_resample_path);
     object_info_manager_.update(
       obj_uuid, obj_pos, std::hypot(obj_vel.x, obj_vel.y), clock_->now(), is_ego_yielding,
       has_traffic_light, collision_point, object.classification.front().label, planner_param_,
-      crosswalk_.polygon2d().basicPolygon(), attention_area);
+      crosswalk_.polygon2d().basicPolygon(), attention_area, ego_crosswalk_passage_direction);
 
     const auto collision_state = object_info_manager_.getCollisionState(obj_uuid);
     if (collision_point) {

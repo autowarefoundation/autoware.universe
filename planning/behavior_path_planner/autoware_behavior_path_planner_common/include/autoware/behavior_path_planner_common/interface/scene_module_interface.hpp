@@ -21,11 +21,11 @@
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 
 #include <autoware/behavior_path_planner_common/turn_signal_decider.hpp>
-#include <autoware/motion_utils/factor/planning_factor_interface.hpp>
 #include <autoware/motion_utils/marker/marker_helper.hpp>
 #include <autoware/motion_utils/trajectory/path_with_lane_id.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/objects_of_interest_marker_interface/objects_of_interest_marker_interface.hpp>
+#include <autoware/planning_factor_interface/planning_factor_interface.hpp>
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware/rtc_interface/rtc_interface.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
@@ -52,9 +52,9 @@
 
 namespace autoware::behavior_path_planner
 {
-using autoware::motion_utils::PlanningFactorInterface;
 using autoware::objects_of_interest_marker_interface::ColorName;
 using autoware::objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface;
+using autoware::planning_factor_interface::PlanningFactorInterface;
 using autoware::rtc_interface::RTCInterface;
 using autoware::universe_utils::calcOffsetPose;
 using autoware::universe_utils::generateUUID;
@@ -549,7 +549,7 @@ protected:
     if (stop_pose_.has_value()) {
       planning_factor_interface_->add(
         path.points, getEgoPose(), stop_pose_.value().pose, PlanningFactor::STOP,
-        SafetyFactorArray{});
+        SafetyFactorArray{}, true, 0.0, 0.0, stop_pose_.value().detail);
       return;
     }
 
@@ -559,7 +559,7 @@ protected:
 
     planning_factor_interface_->add(
       path.points, getEgoPose(), slow_pose_.value().pose, PlanningFactor::SLOW_DOWN,
-      SafetyFactorArray{});
+      SafetyFactorArray{}, true, 0.0, 0.0, slow_pose_.value().detail);
   }
 
   void setDrivableLanes(const std::vector<DrivableLanes> & drivable_lanes);

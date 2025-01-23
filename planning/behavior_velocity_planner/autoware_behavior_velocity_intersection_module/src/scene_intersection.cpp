@@ -44,8 +44,6 @@ namespace autoware::behavior_velocity_planner
 {
 namespace bg = boost::geometry;
 
-using autoware::motion_utils::VelocityFactorInterface;
-
 IntersectionModule::IntersectionModule(
   const int64_t module_id, const int64_t lane_id,
   [[maybe_unused]] std::shared_ptr<const PlannerData> planner_data,
@@ -53,7 +51,8 @@ IntersectionModule::IntersectionModule(
   const std::string & turn_direction, const bool has_traffic_light, rclcpp::Node & node,
   const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock,
   const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
-  const std::shared_ptr<motion_utils::PlanningFactorInterface> planning_factor_interface)
+  const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
+    planning_factor_interface)
 : SceneModuleInterfaceWithRTC(module_id, logger, clock, time_keeper, planning_factor_interface),
   planner_param_(planner_param),
   lane_id_(lane_id),
@@ -274,6 +273,7 @@ DecisionResult IntersectionModule::modifyPathVelocityDetail(PathWithLaneId * pat
       const auto closest_idx = intersection_stoplines.closest_idx;
       const std::string evasive_diag = generateEgoRiskEvasiveDiagnosis(
         *path, closest_idx, time_distance_array, too_late_detect_objects, misjudge_objects);
+      debug_data_.too_late_stop_wall_pose = path->points.at(default_stopline_idx).point.pose;
       return OverPassJudge{safety_diag, evasive_diag};
     }
     return OverPassJudge{
@@ -704,7 +704,7 @@ void reactRTCApprovalByDecisionResult(
   [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
   [[maybe_unused]] const double baselink2front,
   [[maybe_unused]] tier4_planning_msgs::msg::PathWithLaneId * path,
-  [[maybe_unused]] motion_utils::PlanningFactorInterface * planning_factor_interface,
+  [[maybe_unused]] planning_factor_interface::PlanningFactorInterface * planning_factor_interface,
   [[maybe_unused]] IntersectionModule::DebugData * debug_data)
 {
   static_assert("Unsupported type passed to reactRTCByDecisionResult");
@@ -719,7 +719,7 @@ void reactRTCApprovalByDecisionResult(
   [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
   [[maybe_unused]] const double baselink2front,
   [[maybe_unused]] tier4_planning_msgs::msg::PathWithLaneId * path,
-  [[maybe_unused]] motion_utils::PlanningFactorInterface * planning_factor_interface,
+  [[maybe_unused]] planning_factor_interface::PlanningFactorInterface * planning_factor_interface,
   [[maybe_unused]] IntersectionModule::DebugData * debug_data)
 {
   return;
@@ -733,7 +733,7 @@ void reactRTCApprovalByDecisionResult(
   [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
   [[maybe_unused]] const double baselink2front,
   [[maybe_unused]] tier4_planning_msgs::msg::PathWithLaneId * path,
-  [[maybe_unused]] motion_utils::PlanningFactorInterface * planning_factor_interface,
+  [[maybe_unused]] planning_factor_interface::PlanningFactorInterface * planning_factor_interface,
   [[maybe_unused]] IntersectionModule::DebugData * debug_data)
 {
   return;
@@ -745,7 +745,7 @@ void reactRTCApprovalByDecisionResult(
   const StuckStop & decision_result,
   [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
   const double baselink2front, tier4_planning_msgs::msg::PathWithLaneId * path,
-  motion_utils::PlanningFactorInterface * planning_factor_interface,
+  planning_factor_interface::PlanningFactorInterface * planning_factor_interface,
   IntersectionModule::DebugData * debug_data)
 {
   RCLCPP_DEBUG(
@@ -792,7 +792,7 @@ void reactRTCApprovalByDecisionResult(
   const YieldStuckStop & decision_result,
   [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
   const double baselink2front, tier4_planning_msgs::msg::PathWithLaneId * path,
-  motion_utils::PlanningFactorInterface * planning_factor_interface,
+  planning_factor_interface::PlanningFactorInterface * planning_factor_interface,
   IntersectionModule::DebugData * debug_data)
 {
   RCLCPP_DEBUG(
@@ -824,7 +824,7 @@ void reactRTCApprovalByDecisionResult(
   const NonOccludedCollisionStop & decision_result,
   [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
   const double baselink2front, tier4_planning_msgs::msg::PathWithLaneId * path,
-  motion_utils::PlanningFactorInterface * planning_factor_interface,
+  planning_factor_interface::PlanningFactorInterface * planning_factor_interface,
   IntersectionModule::DebugData * debug_data)
 {
   RCLCPP_DEBUG(
@@ -868,7 +868,7 @@ void reactRTCApprovalByDecisionResult(
   const FirstWaitBeforeOcclusion & decision_result,
   const IntersectionModule::PlannerParam & planner_param, const double baselink2front,
   tier4_planning_msgs::msg::PathWithLaneId * path,
-  motion_utils::PlanningFactorInterface * planning_factor_interface,
+  planning_factor_interface::PlanningFactorInterface * planning_factor_interface,
   IntersectionModule::DebugData * debug_data)
 {
   RCLCPP_DEBUG(
@@ -920,7 +920,7 @@ void reactRTCApprovalByDecisionResult(
   const PeekingTowardOcclusion & decision_result,
   const IntersectionModule::PlannerParam & planner_param, const double baselink2front,
   tier4_planning_msgs::msg::PathWithLaneId * path,
-  motion_utils::PlanningFactorInterface * planning_factor_interface,
+  planning_factor_interface::PlanningFactorInterface * planning_factor_interface,
   IntersectionModule::DebugData * debug_data)
 {
   RCLCPP_DEBUG(
@@ -978,7 +978,7 @@ void reactRTCApprovalByDecisionResult(
   const OccludedCollisionStop & decision_result,
   [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
   const double baselink2front, tier4_planning_msgs::msg::PathWithLaneId * path,
-  motion_utils::PlanningFactorInterface * planning_factor_interface,
+  planning_factor_interface::PlanningFactorInterface * planning_factor_interface,
   IntersectionModule::DebugData * debug_data)
 {
   RCLCPP_DEBUG(
@@ -1026,7 +1026,7 @@ void reactRTCApprovalByDecisionResult(
   const OccludedAbsenceTrafficLight & decision_result,
   [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
   const double baselink2front, tier4_planning_msgs::msg::PathWithLaneId * path,
-  motion_utils::PlanningFactorInterface * planning_factor_interface,
+  planning_factor_interface::PlanningFactorInterface * planning_factor_interface,
   IntersectionModule::DebugData * debug_data)
 {
   RCLCPP_DEBUG(
@@ -1080,7 +1080,7 @@ void reactRTCApprovalByDecisionResult(
   const bool rtc_default_approved, const bool rtc_occlusion_approved, const Safe & decision_result,
   [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
   const double baselink2front, tier4_planning_msgs::msg::PathWithLaneId * path,
-  motion_utils::PlanningFactorInterface * planning_factor_interface,
+  planning_factor_interface::PlanningFactorInterface * planning_factor_interface,
   IntersectionModule::DebugData * debug_data)
 {
   RCLCPP_DEBUG(
@@ -1123,7 +1123,7 @@ void reactRTCApprovalByDecisionResult(
   const FullyPrioritized & decision_result,
   [[maybe_unused]] const IntersectionModule::PlannerParam & planner_param,
   const double baselink2front, tier4_planning_msgs::msg::PathWithLaneId * path,
-  motion_utils::PlanningFactorInterface * planning_factor_interface,
+  planning_factor_interface::PlanningFactorInterface * planning_factor_interface,
   IntersectionModule::DebugData * debug_data)
 {
   RCLCPP_DEBUG(
