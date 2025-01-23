@@ -127,7 +127,8 @@ std::vector<PullOverPath> BezierPullOver::generateBezierPath(
   const lanelet::ConstLanelets & pull_over_lanes, const double lateral_jerk) const
 {
   const double pull_over_velocity = parameters_.pull_over_velocity;
-  const double after_shift_straight_distance = parameters_.after_shift_straight_distance;
+  const double after_shift_straight_distance =
+    parameters_.bezier_parking.after_shift_straight_distance;
 
   const auto & goal_pose = goal_candidate.goal_pose;
 
