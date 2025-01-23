@@ -208,7 +208,7 @@
 
   <!-- Simulator Adapter -->
   <group if="$(var launch_scenario_simulator_v2_adapter)">
-    <node name="scenario_simulator_v2_adapter" exec="scenario_simulator_v2_adapter" pkg="scenario_simulator_v2_adapter" output="screen">
+    <node exec="autoware_scenario_simulator_v2_adapter_node" pkg="autoware_scenario_simulator_v2_adapter" output="screen">
       <param name="metric_topic_list" value="[/planning/planning_evaluator/metrics, /control/control_evaluator/metrics, /system/processing_time_checker/metrics]"/>
     </node>
   </group>

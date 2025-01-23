@@ -1,4 +1,4 @@
-// Copyright 2023 Tier IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scenario_simulator_v2_adapter/converter_node.hpp"
+#include "autoware/scenario_simulator_v2_adapter/converter_node.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -28,7 +28,7 @@
 #include <unordered_map>
 #include <vector>
 
-using ConverterNode = scenario_simulator_v2_adapter::MetricConverter;
+using ConverterNode = autoware::scenario_simulator_v2_adapter::MetricConverter;
 using tier4_metric_msgs::msg::Metric;
 using tier4_metric_msgs::msg::MetricArray;
 using tier4_simulation_msgs::msg::UserDefinedValue;

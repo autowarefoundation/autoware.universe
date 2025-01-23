@@ -1,4 +1,4 @@
-// Copyright 2023 Tier IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "scenario_simulator_v2_adapter/converter_node.hpp"
+#include "autoware/scenario_simulator_v2_adapter/converter_node.hpp"
 
 #include <regex>
 #include <string>
 #include <vector>
 
-namespace
+namespace autoware::scenario_simulator_v2_adapter
 {
 std::string removeInvalidTopicString(const std::string & input_string)
 {
@@ -31,10 +31,7 @@ std::string removeInvalidTopicString(const std::string & input_string)
   }
   return result;
 }
-}  // namespace
 
-namespace scenario_simulator_v2_adapter
-{
 MetricConverter::MetricConverter(const rclcpp::NodeOptions & node_options)
 : Node("scenario_simulator_v2_adapter", node_options)
 {
@@ -81,7 +78,7 @@ rclcpp::Publisher<UserDefinedValue>::SharedPtr MetricConverter::getPublisher(
   }
   return pubs.at(topic_name);
 }
-}  // namespace scenario_simulator_v2_adapter
+}  // namespace autoware::scenario_simulator_v2_adapter
 
 #include "rclcpp_components/register_node_macro.hpp"
-RCLCPP_COMPONENTS_REGISTER_NODE(scenario_simulator_v2_adapter::MetricConverter)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::scenario_simulator_v2_adapter::MetricConverter)
