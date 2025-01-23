@@ -25,16 +25,10 @@ import yaml
 
 
 def launch_setup(context, *args, **kwargs):
-    # vehicle information param path
+    # vehicle information config path
     vehicle_info_param_path = LaunchConfiguration("vehicle_info_param_file").perform(context)
     with open(vehicle_info_param_path, "r") as f:
         vehicle_info_param = yaml.safe_load(f)["/**"]["ros__parameters"]
-
-    vehicle_characteristics_param_path = LaunchConfiguration(
-        "vehicle_characteristics_param_file"
-    ).perform(context)
-    with open(vehicle_characteristics_param_path, "r") as f:
-        vehicle_characteristics_param = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     simulator_model_param_path = LaunchConfiguration("simulator_model_param_file").perform(context)
     simulator_model_param = launch_ros.parameter_descriptions.ParameterFile(
@@ -94,7 +88,6 @@ def launch_setup(context, *args, **kwargs):
         output="screen",
         parameters=[
             vehicle_info_param,
-            vehicle_characteristics_param,
             simulator_model_param,
             {
                 "initial_engage_state": LaunchConfiguration("initial_engage_state"),
@@ -149,19 +142,10 @@ def generate_launch_description():
     )
 
     add_launch_arg(
-        "vehicle_characteristics_param_file",
-        [
-            FindPackageShare("simple_planning_simulator"),
-            "/param/vehicle_characteristics.param.yaml",
-        ],
-        "path to config file for vehicle characteristics",
-    )
-
-    add_launch_arg(
         "simulator_model_param_file",
         [
             FindPackageShare("simple_planning_simulator"),
-            "/param/simple_planning_simulator_default.param.yaml",
+            "/config/simple_planning_simulator.param.yaml",
         ],
         "path to config file for simulator_model",
     )
