@@ -20,6 +20,7 @@
 #include <Eigen/Geometry>
 #include <autoware/image_projection_based_fusion/utils/utils.hpp>
 
+#include <autoware_internal_debug_msgs/msg/float64_stamped.hpp>
 #include <tier4_perception_msgs/msg/detected_object_with_feature.hpp>
 
 #include <boost/optional.hpp>
@@ -105,7 +106,8 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
   // subscribe 3d detection
   std::function<void(const typename Msg3D::ConstSharedPtr msg)> sub_callback =
     std::bind(&FusionNode::subCallback, this, std::placeholders::_1);
-  sub_ = this->create_subscription<Msg3D>("input", rclcpp::QoS(1).best_effort(), sub_callback);
+  det3d_sub_ =
+    this->create_subscription<Msg3D>("input", rclcpp::QoS(1).best_effort(), sub_callback);
 
   // Set timer
   const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -141,6 +143,10 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
       static_cast<std::size_t>(declare_parameter<int32_t>("image_buffer_size"));
     debugger_ =
       std::make_shared<Debugger>(this, rois_number, image_buffer_size, input_camera_topics);
+
+    // input topic timing publisher
+    debug_internal_pub_ =
+      std::make_unique<autoware::universe_utils::DebugPublisher>(this, get_name());
   }
 
   // time keeper
@@ -155,10 +161,9 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
 
   // initialize debug tool
   {
-    using autoware::universe_utils::DebugPublisher;
-    using autoware::universe_utils::StopWatch;
-    stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
-    debug_publisher_ = std::make_unique<DebugPublisher>(this, get_name());
+    stop_watch_ptr_ =
+      std::make_unique<autoware::universe_utils::StopWatch<std::chrono::milliseconds>>();
+    debug_publisher_ = std::make_unique<autoware::universe_utils::DebugPublisher>(this, get_name());
     stop_watch_ptr_->tic("cyclic_time");
     stop_watch_ptr_->tic("processing_time");
   }
@@ -249,12 +254,12 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::exportProcess()
         std::chrono::nanoseconds(
           (this->get_clock()->now() - cached_det3d_msg_ptr_->header.stamp).nanoseconds()))
         .count();
-    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/cyclic_time_ms", cyclic_time_ms);
-    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/processing_time_ms",
       processing_time_ms + stop_watch_ptr_->toc("processing_time", true));
-    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/pipeline_latency_ms", pipeline_latency_ms);
     processing_time_ms = 0;
   }
@@ -347,11 +352,11 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::subCallback(
       det2d.is_fused = true;
 
       // add timestamp interval for debug
-      if (debug_publisher_) {
+      if (debug_internal_pub_) {
         double timestamp_interval_ms = (matched_stamp - timestamp_nsec) / 1e6;
-        debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+        debug_internal_pub_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
           "debug/roi" + std::to_string(roi_i) + "/timestamp_interval_ms", timestamp_interval_ms);
-        debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+        debug_internal_pub_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
           "debug/roi" + std::to_string(roi_i) + "/timestamp_interval_offset_ms",
           timestamp_interval_ms - det2d.input_offset_ms);
       }
@@ -412,11 +417,11 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::roiCallback(
       fuseOnSingleImage(*(cached_det3d_msg_ptr_), det2d, *det2d_msg, *(cached_det3d_msg_ptr_));
       det2d.is_fused = true;
 
-      if (debug_publisher_) {
+      if (debug_internal_pub_) {
         double timestamp_interval_ms = (timestamp_nsec - cached_det3d_msg_timestamp_) / 1e6;
-        debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+        debug_internal_pub_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
           "debug/roi" + std::to_string(roi_i) + "/timestamp_interval_ms", timestamp_interval_ms);
-        debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+        debug_internal_pub_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
           "debug/roi" + std::to_string(roi_i) + "/timestamp_interval_offset_ms",
           timestamp_interval_ms - det2d.input_offset_ms);
       }
