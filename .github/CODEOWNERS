@@ -221,7 +221,7 @@ system/autoware_dummy_diag_publisher/** fumihito.ito@tier4.jp tetsuhiro.kawaguch
 system/dummy_infrastructure/** ryohsuke.mitsudome@tier4.jp
 system/autoware_duplicated_node_checker/** mamoru.sobue@tier4.jp shumpei.wakabayashi@tier4.jp uken.ryu@tier4.jp junya.sasaki@tier4.jp
 system/hazard_status_converter/** isamu.takagi@tier4.jp
-system/mrm_comfortable_stop_operator/** makoto.kurihara@tier4.jp tomohito.ando@tier4.jp
+system/autoware_mrm_comfortable_stop_operator/** makoto.kurihara@tier4.jp tomohito.ando@tier4.jp junya.sasaki@tier4.jp
 system/mrm_emergency_stop_operator/** makoto.kurihara@tier4.jp tomohito.ando@tier4.jp
 system/mrm_handler/** makoto.kurihara@tier4.jp ryuta.kambe@tier4.jp tetsuhiro.kawaguchi@tier4.jp
 system/system_diagnostic_monitor/** isamu.takagi@tier4.jp
