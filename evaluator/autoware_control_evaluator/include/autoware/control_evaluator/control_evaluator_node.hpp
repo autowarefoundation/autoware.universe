@@ -78,6 +78,7 @@ public:
   void AddLaneletInfoMsg(const Pose & ego_pose);
   void AddKinematicStateMetricMsg(
     const Odometry & odom, const AccelWithCovarianceStamped & accel_stamped);
+  void AddSteeringMetricMsg(const SteeringReport & steering_report);
 
   void onTimer();
 
@@ -97,7 +98,7 @@ private:
   autoware::universe_utils::InterProcessPollingSubscriber<PathWithLaneId> behavior_path_subscriber_{
     this, "~/input/behavior_path"};
   autoware::universe_utils::InterProcessPollingSubscriber<SteeringReport> steering_sub_{
-    this, "~/input/steering_report"};
+    this, "~/input/steering_status"};
 
   rclcpp::Publisher<autoware_internal_debug_msgs::msg::Float64Stamped>::SharedPtr
     processing_time_pub_;
@@ -112,8 +113,16 @@ private:
   // Metric
   const std::vector<Metric> metrics_ = {
     // collect all metrics
-    Metric::lateral_deviation,      Metric::yaw_deviation,      Metric::goal_longitudinal_deviation,
-    Metric::goal_lateral_deviation, Metric::goal_yaw_deviation,
+    Metric::lateral_deviation,
+    Metric::yaw_deviation,
+    Metric::goal_longitudinal_deviation,
+    Metric::goal_lateral_deviation,
+    Metric::goal_yaw_deviation,
+    Metric::left_boundary_distance,
+    Metric::right_boundary_distance,
+    Metric::steering_angle,
+    Metric::steering_rate,
+    Metric::steering_acceleration,
   };
 
   std::array<Accumulator<double>, static_cast<size_t>(Metric::SIZE)>
@@ -124,6 +133,9 @@ private:
   autoware::route_handler::RouteHandler route_handler_;
   rclcpp::TimerBase::SharedPtr timer_;
   std::optional<AccelWithCovarianceStamped> prev_acc_stamped_{std::nullopt};
+  std::optional<double> prev_steering_angle_{std::nullopt};
+  std::optional<double> prev_steering_rate_{std::nullopt};
+  std::optional<double> prev_steering_angle_timestamp_{std::nullopt};
 };
 }  // namespace control_diagnostics
 

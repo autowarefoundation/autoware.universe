@@ -14,7 +14,6 @@
 
 #ifndef AUTOWARE__CONTROL_EVALUATOR__METRICS__METRICS_UTILS_HPP_
 #define AUTOWARE__CONTROL_EVALUATOR__METRICS__METRICS_UTILS_HPP_
-
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 
