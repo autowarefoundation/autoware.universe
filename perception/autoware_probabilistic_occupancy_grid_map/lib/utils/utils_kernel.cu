@@ -150,7 +150,8 @@ inline __device__ void raytraceLine(
   int offset_dx = dx > 0 ? 1 : -1;            // sign(dx);
   int offset_dy = dy > 0 ? size_x : -size_x;  // sign(dy) * size_x;
 
-  float scale = (dist == 0.0) ? 1.0 : min(1.f, max_length / dist);
+  constexpr float epsilon = 1e-6;
+  float scale = (dist < epsilon) ? 1.0 : min(1.f, max_length / dist);
   // if x is dominant
   if (abs_dx >= abs_dy) {
     int error_y = abs_dx / 2;
