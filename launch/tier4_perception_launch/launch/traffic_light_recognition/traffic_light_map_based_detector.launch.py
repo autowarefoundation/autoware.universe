@@ -32,7 +32,7 @@ def create_traffic_light_map_based_detector(namespace, context):
 
     output_rois = (
         "rough/rois"
-        if IfCondition(LaunchConfiguration("enable_fine_detection")).evaluate(context)
+        if IfCondition(LaunchConfiguration("use_ml_detector")).evaluate(context)
         else f"/perception/traffic_light_recognition/{namespace}/detection/rois"
     )
 
@@ -43,27 +43,6 @@ def create_traffic_light_map_based_detector(namespace, context):
         # This parameter should be configured differently for each camera considering their delay.
         "min_timestamp_offset": "-0.3",
         "max_timestamp_offset": "0.0",
-    }.items()
-
-    group = GroupAction(
-        [
-            PushRosNamespace(namespace),
-            PushRosNamespace("detection"),
-            IncludeLaunchDescription(include, launch_arguments=arguments),
-        ]
-    )
-
-    return group
-
-
-def create_traffic_light_detector(namespace, context):
-    package = FindPackageShare("tier4_perception_launch")
-    include = PathJoinSubstitution(
-        [package, "launch/traffic_light_recognition/traffic_light_detector.launch.xml"]
-    )
-    arguments = {
-        "namespace": namespace,
-        "use_decompress": "true",
     }.items()
 
     group = GroupAction(
@@ -97,13 +76,6 @@ def launch_setup(context, *args, **kwargs):
         create_traffic_light_map_based_detector(namespace, context)
         for namespace in all_camera_namespaces
     ]
-
-    _ = [
-        traffic_light_recognition_containers.append(
-            create_traffic_light_detector(namespace, context)
-        )
-        for namespace in all_camera_namespaces
-    ]
     return traffic_light_recognition_containers
 
 
@@ -118,9 +90,9 @@ def generate_launch_description():
 
     add_launch_arg("all_camera_namespaces", "[camera6, camera7]")
     add_launch_arg(
-        "enable_fine_detection",
+        "use_ml_detector",
         "True",
-        "If True, output_topic will be for fine detector, otherwise for classifier",
+        "If True, output_topic will be for ml detector, otherwise for classifier",
     )
 
     return launch.LaunchDescription(
