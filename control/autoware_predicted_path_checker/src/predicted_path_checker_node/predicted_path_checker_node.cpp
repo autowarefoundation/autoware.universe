@@ -550,8 +550,7 @@ void PredictedPathCheckerNode::filterObstacles(
 
   for (auto & object : object_ptr_.get()->objects) {
     // Check is it in front of ego vehicle
-    if (!isFrontObstacle(
-          ego_pose, object.kinematics.initial_pose_with_covariance.pose.position)) {
+    if (!isFrontObstacle(ego_pose, object.kinematics.initial_pose_with_covariance.pose.position)) {
       continue;
     }
 
@@ -589,5 +588,4 @@ void PredictedPathCheckerNode::filterObstacles(
 }  // namespace autoware::predicted_path_checker
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(
-  autoware::predicted_path_checker::PredictedPathCheckerNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::predicted_path_checker::PredictedPathCheckerNode)
