@@ -34,7 +34,7 @@ namespace autoware::velodyne_monitor
 {
 
 VelodyneMonitor::VelodyneMonitor(const rclcpp::NodeOptions & options)
-: Node("autoware_velodyne_monitor", options), updater_(this)
+: Node("velodyne_monitor", options), updater_(this)
 {
   timeout_ = declare_parameter<double>("timeout");
   ip_address_ = declare_parameter<std::string>("ip_address");
