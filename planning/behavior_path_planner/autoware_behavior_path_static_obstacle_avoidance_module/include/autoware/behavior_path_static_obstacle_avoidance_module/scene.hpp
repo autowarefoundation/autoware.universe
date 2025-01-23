@@ -17,6 +17,7 @@
 
 #include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
 #include "autoware/behavior_path_planner_common/interface/scene_module_visitor.hpp"
+#include "autoware/behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/data_structs.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/helper.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/shift_line_generator.hpp"
@@ -134,7 +135,8 @@ private:
       if (finish_distance > -1.0e-03) {
         planning_factor_interface_->add(
           start_distance, finish_distance, left_shift.start_pose, left_shift.finish_pose,
-          PlanningFactor::SHIFT_LEFT, SafetyFactorArray{});
+          PlanningFactor::SHIFT_LEFT,
+          utils::path_safety_checker::to_safety_factor_array(debug_data_.collision_check));
       }
     }
 
@@ -154,7 +156,8 @@ private:
       if (finish_distance > -1.0e-03) {
         planning_factor_interface_->add(
           start_distance, finish_distance, right_shift.start_pose, right_shift.finish_pose,
-          PlanningFactor::SHIFT_RIGHT, SafetyFactorArray{});
+          PlanningFactor::SHIFT_RIGHT,
+          utils::path_safety_checker::to_safety_factor_array(debug_data_.collision_check));
       }
     }
   }
