@@ -20,6 +20,7 @@
 #include <sensor_msgs/msg/region_of_interest.hpp>
 
 #include <map>
+#include <memory>
 #include <vector>
 
 namespace autoware::traffic_light
