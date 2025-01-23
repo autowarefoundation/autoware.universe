@@ -17,8 +17,8 @@
  * @brief HDD reader definitions
  */
 
-#ifndef AUTOWARE__SYSTEM_MONITOR__HDD_READER__HDD_READER_HPP_
-#define AUTOWARE__SYSTEM_MONITOR__HDD_READER__HDD_READER_HPP_
+#ifndef SYSTEM_MONITOR__HDD_READER__HDD_READER_HPP_
+#define SYSTEM_MONITOR__HDD_READER__HDD_READER_HPP_
 
 #include <boost/serialization/map.hpp>
 #include <boost/serialization/serialization.hpp>
@@ -140,4 +140,4 @@ typedef std::map<std::string, HddInfo> HddInfoList;
 
 }  // namespace autoware::system_monitor
 
-#endif  // AUTOWARE__SYSTEM_MONITOR__HDD_READER__HDD_READER_HPP_
+#endif  // SYSTEM_MONITOR__HDD_READER__HDD_READER_HPP_
