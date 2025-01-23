@@ -28,8 +28,8 @@ def launch_setup(context, *args, **kwargs):
         params = yaml.safe_load(f)["/**"]["ros__parameters"]
 
     component = ComposableNode(
-        package="mrm_comfortable_stop_operator",
-        plugin="mrm_comfortable_stop_operator::MrmComfortableStopOperator",
+        package="autoware_mrm_comfortable_stop_operator",
+        plugin="autoware::mrm_comfortable_stop_operator::MrmComfortableStopOperator",
         name="mrm_comfortable_stop_operator",
         parameters=[
             params,
@@ -61,7 +61,7 @@ def generate_launch_description():
         DeclareLaunchArgument(
             "config_file",
             default_value=[
-                FindPackageShare("mrm_comfortable_stop_operator"),
+                FindPackageShare("autoware_mrm_comfortable_stop_operator"),
                 "/config/mrm_comfortable_stop_operator.param.yaml",
             ],
             description="path to the parameter file of mrm_comfortable_stop_operator",
