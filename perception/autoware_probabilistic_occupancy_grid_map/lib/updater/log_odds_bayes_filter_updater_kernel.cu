@@ -43,7 +43,7 @@ __host__ __device__ __forceinline__ double logOddsFusion(const double p1, const 
   const double p1_norm = std::max(EPSILON_PROB, std::min(1.0 - EPSILON_PROB, p1));
   log_odds += std::log(p1_norm / (1.0 - p1_norm));
 
-  const double p2_norm = std::max(EPSILON_PROB, std::min(1.0 - EPSILON_PROB, p1));
+  const double p2_norm = std::max(EPSILON_PROB, std::min(1.0 - EPSILON_PROB, p2));
   log_odds += std::log(p2_norm / (1.0 - p2_norm));
 
   return 1.0 / (1.0 + std::exp(-log_odds));
