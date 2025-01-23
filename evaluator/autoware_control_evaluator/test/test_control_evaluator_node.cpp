@@ -1,4 +1,4 @@
-// Copyright 2024 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -51,11 +51,13 @@ protected:
     rclcpp::init(0, nullptr);
 
     rclcpp::NodeOptions options;
-    const auto share_dir =
-      ament_index_cpp::get_package_share_directory("autoware_control_evaluator");
-    options.arguments({"--ros-args", "-p", "output_metrics:=false"});
+    const auto autoware_test_utils_dir =
+      ament_index_cpp::get_package_share_directory("autoware_test_utils");
+    options.arguments(
+      {"--ros-args", "-p", "output_metrics:=false", "--params-file",
+       autoware_test_utils_dir + "/config/test_vehicle_info.param.yaml"});
 
-    dummy_node = std::make_shared<rclcpp::Node>("control_evaluator_test_node");
+    dummy_node = std::make_shared<rclcpp::Node>("control_evaluator_test_node", options);
     eval_node = std::make_shared<EvalNode>(options);
     // Enable all logging in the node
     auto ret = rcutils_logging_set_logger_level(
