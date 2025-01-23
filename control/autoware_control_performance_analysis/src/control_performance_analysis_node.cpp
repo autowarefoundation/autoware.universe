@@ -24,10 +24,10 @@
 
 namespace autoware::control_performance_analysis
 {
+using autoware::vehicle_info_utils::VehicleInfoUtils;
 using autoware_control_msgs::msg::Control;
 using autoware_control_performance_analysis::msg::DrivingMonitorStamped;
 using autoware_control_performance_analysis::msg::ErrorStamped;
-using autoware::vehicle_info_utils::VehicleInfoUtils;
 
 ControlPerformanceAnalysisNode::ControlPerformanceAnalysisNode(
   const rclcpp::NodeOptions & node_options)
