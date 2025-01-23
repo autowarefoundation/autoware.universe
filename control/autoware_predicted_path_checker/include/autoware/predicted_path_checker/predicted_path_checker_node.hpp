@@ -12,20 +12,20 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PREDICTED_PATH_CHECKER__PREDICTED_PATH_CHECKER_NODE_HPP_
-#define PREDICTED_PATH_CHECKER__PREDICTED_PATH_CHECKER_NODE_HPP_
+#ifndef AUTOWARE__PREDICTED_PATH_CHECKER__PREDICTED_PATH_CHECKER_NODE_HPP_
+#define AUTOWARE__PREDICTED_PATH_CHECKER__PREDICTED_PATH_CHECKER_NODE_HPP_
 
 #include <autoware/component_interface_specs_universe/control.hpp>
 #include <autoware/component_interface_utils/rclcpp.hpp>
 #include <autoware/motion_utils/trajectory/conversion.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware/predicted_path_checker/collision_checker.hpp>
+#include <autoware/predicted_path_checker/utils.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/ros/self_pose_listener.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
-#include <predicted_path_checker/collision_checker.hpp>
-#include <predicted_path_checker/utils.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_planning_msgs/msg/trajectory.hpp>
@@ -45,7 +45,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware::motion::control::predicted_path_checker
+namespace autoware::predicted_path_checker
 {
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
@@ -178,6 +178,6 @@ private:
   // Diagnostic Updater
   diagnostic_updater::Updater updater_;
 };
-}  // namespace autoware::motion::control::predicted_path_checker
+}  // namespace autoware::predicted_path_checker
 
-#endif  // PREDICTED_PATH_CHECKER__PREDICTED_PATH_CHECKER_NODE_HPP_
+#endif  // AUTOWARE__PREDICTED_PATH_CHECKER__PREDICTED_PATH_CHECKER_NODE_HPP_

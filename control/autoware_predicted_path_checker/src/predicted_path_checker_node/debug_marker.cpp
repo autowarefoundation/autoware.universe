@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "predicted_path_checker/debug_marker.hpp"
+#include "autoware/predicted_path_checker/debug_marker.hpp"
 
 #include <autoware/motion_utils/marker/marker_helper.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
@@ -38,7 +38,7 @@ using autoware::universe_utils::createMarkerOrientation;
 using autoware::universe_utils::createMarkerScale;
 using autoware::universe_utils::createPoint;
 
-namespace autoware::motion::control::predicted_path_checker
+namespace autoware::predicted_path_checker
 {
 PredictedPathCheckerDebugNode::PredictedPathCheckerDebugNode(
   rclcpp::Node * node, const double base_link2front)
@@ -326,4 +326,4 @@ visualization_msgs::msg::MarkerArray PredictedPathCheckerDebugNode::makeVisualiz
   return msg;
 }
 
-}  // namespace autoware::motion::control::predicted_path_checker
+}  // namespace autoware::predicted_path_checker

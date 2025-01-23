@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef PREDICTED_PATH_CHECKER__COLLISION_CHECKER_HPP_
-#define PREDICTED_PATH_CHECKER__COLLISION_CHECKER_HPP_
+#ifndef AUTOWARE__PREDICTED_PATH_CHECKER__COLLISION_CHECKER_HPP_
+#define AUTOWARE__PREDICTED_PATH_CHECKER__COLLISION_CHECKER_HPP_
 
 #include <autoware/motion_utils/trajectory/conversion.hpp>
 #include <autoware/motion_utils/trajectory/interpolation.hpp>
+#include <autoware/predicted_path_checker/debug_marker.hpp>
+#include <autoware/predicted_path_checker/utils.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
 #include <autoware/universe_utils/ros/transform_listener.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info.hpp>
-#include <predicted_path_checker/debug_marker.hpp>
-#include <predicted_path_checker/utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
@@ -40,7 +40,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware::motion::control::predicted_path_checker
+namespace autoware::predicted_path_checker
 {
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
@@ -123,6 +123,6 @@ private:
   autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
   std::vector<PredictedObjectWithDetectionTime> predicted_object_history_{};
 };
-}  // namespace autoware::motion::control::predicted_path_checker
+}  // namespace autoware::predicted_path_checker
 
-#endif  // PREDICTED_PATH_CHECKER__COLLISION_CHECKER_HPP_
+#endif  // AUTOWARE__PREDICTED_PATH_CHECKER__COLLISION_CHECKER_HPP_

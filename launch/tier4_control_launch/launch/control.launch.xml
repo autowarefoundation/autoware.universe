@@ -257,7 +257,7 @@
       <!-- predicted path checker -->
       <group if="$(var launch_predicted_path_checker)">
         <load_composable_node target="/control/control_check_container">
-          <composable_node pkg="predicted_path_checker" plugin="autoware::motion::control::predicted_path_checker::PredictedPathCheckerNode" name="predicted_path_checker">
+          <composable_node pkg="autoware_predicted_path_checker" plugin="autoware::predicted_path_checker::PredictedPathCheckerNode" name="predicted_path_checker">
             <remap from="~/input/objects" to="/perception/object_recognition/objects"/>
             <remap from="~/input/reference_trajectory" to="/planning/scenario_planning/trajectory"/>
             <remap from="~/input/current_accel" to="/localization/acceleration"/>

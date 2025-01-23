@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "predicted_path_checker/collision_checker.hpp"
+#include "autoware/predicted_path_checker/collision_checker.hpp"
 
 #include <autoware/universe_utils/ros/marker_helper.hpp>
 #include <rclcpp/logging.hpp>
@@ -22,7 +22,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware::motion::control::predicted_path_checker
+namespace autoware::predicted_path_checker
 {
 CollisionChecker::CollisionChecker(
   rclcpp::Node * node, std::shared_ptr<PredictedPathCheckerDebugNode> debug_ptr)
@@ -61,7 +61,7 @@ CollisionChecker::checkTrajectoryForCollision(
 
     // create one-step polygon for vehicle
     Polygon2d one_step_move_vehicle_polygon2d =
-      utils::createOneStepPolygon(p_front, p_back, vehicle_info_, param_.width_margin);
+      createOneStepPolygon(p_front, p_back, vehicle_info_, param_.width_margin);
     if (param_.enable_z_axis_obstacle_filtering) {
       debug_ptr_->pushPolyhedron(
         one_step_move_vehicle_polygon2d, z_min, z_max, PolygonType::Vehicle);
@@ -126,7 +126,7 @@ CollisionChecker::checkObstacleHistory(
   std::vector<std::pair<geometry_msgs::msg::Point, PredictedObject>> collision_points_in_history;
   for (const auto & obj_history : predicted_object_history_) {
     if (param_.enable_z_axis_obstacle_filtering) {
-      if (!utils::intersectsInZAxis(obj_history.object, z_min, z_max)) {
+      if (!intersectsInZAxis(obj_history.object, z_min, z_max)) {
         continue;
       }
     }
@@ -169,11 +169,11 @@ CollisionChecker::checkDynamicObjects(
   for (size_t i = 0; i < dynamic_objects->objects.size(); ++i) {
     const auto & obj = dynamic_objects->objects.at(i);
     if (param_.enable_z_axis_obstacle_filtering) {
-      if (!utils::intersectsInZAxis(obj, z_min, z_max)) {
+      if (!intersectsInZAxis(obj, z_min, z_max)) {
         continue;
       }
     }
-    const auto object_polygon = utils::convertObjToPolygon(obj);
+    const auto object_polygon = convertObjToPolygon(obj);
     if (object_polygon.outer().empty()) {
       // unsupported type
       continue;
@@ -205,7 +205,7 @@ CollisionChecker::checkDynamicObjects(
       }
       geometry_msgs::msg::Point nearest_collision_point_tmp;
 
-      double norm = utils::getNearestPointAndDistanceForPredictedObject(
+      double norm = getNearestPointAndDistanceForPredictedObject(
         collision_point_array, base_pose, &nearest_collision_point_tmp);
       if (norm < min_norm_collision_norm || !is_init) {
         min_norm_collision_norm = norm;
@@ -217,7 +217,7 @@ CollisionChecker::checkDynamicObjects(
   }
   if (is_init) {
     const auto & obj = dynamic_objects->objects.at(nearest_collision_object_index);
-    const auto obstacle_polygon = utils::convertObjToPolygon(obj);
+    const auto obstacle_polygon = convertObjToPolygon(obj);
     if (param_.enable_z_axis_obstacle_filtering) {
       debug_ptr_->pushPolyhedron(obstacle_polygon, z_min, z_max, PolygonType::Collision);
     } else {
@@ -229,4 +229,4 @@ CollisionChecker::checkDynamicObjects(
   }
   return boost::none;
 }
-}  // namespace autoware::motion::control::predicted_path_checker
+}  // namespace autoware::predicted_path_checker
