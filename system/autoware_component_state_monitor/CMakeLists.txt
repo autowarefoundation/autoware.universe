@@ -8,9 +8,8 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
   src/main.cpp
 )
 
-rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN "autoware::component_state_monitor::StateMonitor"
-  EXECUTABLE ${PROJECT_NAME}_node
+rclcpp_components_register_nodes(${PROJECT_NAME}
+  "autoware::component_state_monitor::StateMonitor"
 )
 
 ament_auto_package(INSTALL_TO_SHARE config launch)
