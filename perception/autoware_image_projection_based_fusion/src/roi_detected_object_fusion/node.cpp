@@ -334,8 +334,11 @@ void RoiDetectedObjectFusionNode::postprocess(
       debug_ignored_objects_msg.objects.emplace_back(obj);
     }
   }
-  debug_publisher_->publish<DetectedObjects>("debug/fused_objects", debug_fused_objects_msg);
-  debug_publisher_->publish<DetectedObjects>("debug/ignored_objects", debug_ignored_objects_msg);
+  if (debug_internal_pub_) {
+    debug_internal_pub_->publish<DetectedObjects>("debug/fused_objects", debug_fused_objects_msg);
+    debug_internal_pub_->publish<DetectedObjects>(
+      "debug/ignored_objects", debug_ignored_objects_msg);
+  }
 
   // clear flags
   passthrough_object_flags_map_.erase(timestamp_nsec);

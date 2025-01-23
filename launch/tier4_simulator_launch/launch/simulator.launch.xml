@@ -105,7 +105,7 @@
 
       <!-- perception evaluator -->
       <group if="$(var use_perception_online_evaluator)">
-        <include file="$(find-pkg-share perception_online_evaluator)/launch/perception_online_evaluator.launch.xml"/>
+        <include file="$(find-pkg-share autoware_perception_online_evaluator)/launch/perception_online_evaluator.launch.xml"/>
       </group>
 
       <!-- publish empty objects instead of object recognition module -->
