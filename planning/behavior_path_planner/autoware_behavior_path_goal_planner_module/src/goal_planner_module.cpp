@@ -480,16 +480,17 @@ void LaneParkingPlanner::shift_planning_helper(
   if (closest_start_pose) {
     const auto original_pose = planner_data->route_handler->getOriginalGoalPose();
     if (
+      parameters_.bus_stop_area.use_bus_stop_area &&
       std::fabs(autoware::universe_utils::normalizeRadian(
         autoware::universe_utils::getRPY(original_pose).z -
         autoware::universe_utils::getRPY(closest_start_pose.value()).z)) >
-      pull_over_azimuth_threshold) {
+        pull_over_azimuth_threshold) {
       // reset and try bezier next time
       switch_bezier_ = true;
       path_candidates.clear();
       RCLCPP_INFO(getLogger(), "will generate Bezier Paths next");
     }
-  } else if (path_candidates.size() == 0) {
+  } else if (parameters_.bus_stop_area.use_bus_stop_area && path_candidates.size() == 0) {
     switch_bezier_ = true;
     RCLCPP_INFO(
       getLogger(), "Could not find any shift pull over paths, will generate Bezier Paths next");
