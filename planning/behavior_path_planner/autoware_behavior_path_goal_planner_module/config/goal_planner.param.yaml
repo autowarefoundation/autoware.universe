@@ -131,7 +131,7 @@
             margin: 1.0
 
         bezier_parking:
-          pull_over_azimuth_threshold: 0.5
+          pull_over_angle_threshold: 0.5
           after_shift_straight_distance: 1.5
 
       stop_condition:

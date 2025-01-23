@@ -198,10 +198,10 @@ private:
                                        // pull_over_path_candidates(only updated when new candidates
                                        // are generated)
   std::shared_ptr<BezierPullOver> bezier_pull_over_planner_;
-  const double pull_over_azimuth_threshold;
+  const double pull_over_angle_threshold;
 
   bool switch_bezier_{false};
-  void shift_planning_helper(
+  void normal_pullover_planning_helper(
     const std::shared_ptr<PlannerData> planner_data, const GoalCandidates & goal_candidates,
     const BehaviorModuleOutput & upstream_module_output,
     const lanelet::ConstLanelets current_lanelets, std::optional<Pose> & closest_start_pose,
