@@ -1,4 +1,4 @@
-// Copyright 2025 Tier IV, Inc.
+// Copyright 2022 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__SIMULATOR__DUMMY_PERCEPTION_PUBLISHER__SIGNED_DISTANCE_FUNCTION_HPP_
-#define AUTOWARE__SIMULATOR__DUMMY_PERCEPTION_PUBLISHER__SIGNED_DISTANCE_FUNCTION_HPP_
+#ifndef AUTOWARE__DUMMY_PERCEPTION_PUBLISHER__SIGNED_DISTANCE_FUNCTION_HPP_
+#define AUTOWARE__DUMMY_PERCEPTION_PUBLISHER__SIGNED_DISTANCE_FUNCTION_HPP_
 
 #include <tf2/LinearMath/Transform.h>
 
@@ -71,4 +71,4 @@ private:
 
 }  // namespace autoware::simulator::dummy_perception_publisher::signed_distance_function
 
-#endif  // AUTOWARE__SIMULATOR__DUMMY_PERCEPTION_PUBLISHER__SIGNED_DISTANCE_FUNCTION_HPP_
+#endif  // AUTOWARE__DUMMY_PERCEPTION_PUBLISHER__SIGNED_DISTANCE_FUNCTION_HPP_

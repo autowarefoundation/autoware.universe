@@ -1,4 +1,4 @@
-// Copyright 2025 Tier IV, Inc.
+// Copyright 2020 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -21,7 +21,8 @@
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<autoware::simulator::dummy_perception_publisher::DummyPerceptionPublisherNode>());
+  rclcpp::spin(std::make_shared<
+               autoware::simulator::dummy_perception_publisher::DummyPerceptionPublisherNode>());
   rclcpp::shutdown();
 
   return 0;
