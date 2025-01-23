@@ -361,9 +361,11 @@ void ControlEvaluatorNode::onTimer()
     const Pose ego_pose = odom->pose.pose;
     AddBoundaryDistanceMetricMsg(*behavior_path, ego_pose);
   }
+
   if (steering_status) {
     AddSteeringMetricMsg(*steering_status);
   }
+
   // Publish metrics
   metrics_msg_.stamp = now();
   metrics_pub_->publish(metrics_msg_);
