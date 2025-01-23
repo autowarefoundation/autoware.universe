@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DUMMY_INFRASTRUCTURE__DUMMY_INFRASTRUCTURE_NODE_HPP_
-#define DUMMY_INFRASTRUCTURE__DUMMY_INFRASTRUCTURE_NODE_HPP_
+#ifndef AUTOWARE__DUMMY_INFRASTRUCTURE__DUMMY_INFRASTRUCTURE_NODE_HPP_
+#define AUTOWARE__DUMMY_INFRASTRUCTURE__DUMMY_INFRASTRUCTURE_NODE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -25,7 +25,7 @@
 #include <string>
 #include <vector>
 
-namespace dummy_infrastructure
+namespace autoware::dummy_infrastructure
 {
 using tier4_v2x_msgs::msg::InfrastructureCommand;
 using tier4_v2x_msgs::msg::InfrastructureCommandArray;
@@ -75,6 +75,6 @@ private:
   NodeParam node_param_{};
 };
 
-}  // namespace dummy_infrastructure
+}  // namespace autoware::dummy_infrastructure
 
-#endif  // DUMMY_INFRASTRUCTURE__DUMMY_INFRASTRUCTURE_NODE_HPP_
+#endif  // AUTOWARE__DUMMY_INFRASTRUCTURE__DUMMY_INFRASTRUCTURE_NODE_HPP_

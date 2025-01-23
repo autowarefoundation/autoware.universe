@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "dummy_infrastructure/dummy_infrastructure_node.hpp"
+#include "autoware/dummy_infrastructure/dummy_infrastructure_node.hpp"
 
 #include <boost/optional.hpp>
 
@@ -25,7 +25,7 @@ using std::chrono::duration;
 using std::chrono::duration_cast;
 using std::chrono::nanoseconds;
 
-namespace dummy_infrastructure
+namespace autoware::dummy_infrastructure
 {
 namespace
 {
@@ -192,7 +192,7 @@ void DummyInfrastructureNode::onTimer()
   pub_state_array_->publish(state_array);
 }
 
-}  // namespace dummy_infrastructure
+}  // namespace autoware::dummy_infrastructure
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(dummy_infrastructure::DummyInfrastructureNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::dummy_infrastructure::DummyInfrastructureNode)

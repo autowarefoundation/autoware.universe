@@ -7,10 +7,10 @@
   <arg name="output/state_array" default="/system/v2x/virtual_traffic_light_states"/>
 
   <!-- Parameter -->
-  <arg name="config_file" default="$(find-pkg-share dummy_infrastructure)/config/dummy_infrastructure.param.yaml"/>
+  <arg name="config_file" default="$(find-pkg-share autoware_dummy_infrastructure)/config/dummy_infrastructure.param.yaml"/>
 
   <!-- Node -->
-  <node pkg="dummy_infrastructure" exec="dummy_infrastructure_node" name="dummy_infrastructure" output="screen">
+  <node pkg="autoware_dummy_infrastructure" exec="autoware_dummy_infrastructure_node" name="dummy_infrastructure" output="screen">
     <!-- Input -->
     <remap from="~/input/command_array" to="$(var input/command_array)"/>
 
