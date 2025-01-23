@@ -194,16 +194,13 @@ public:
       const rclcpp::Time & now, const geometry_msgs::msg::Point & position, const double vel,
       const bool is_ego_yielding, const std::optional<CollisionPoint> & collision_point,
       const PlannerParam & planner_param, const lanelet::BasicPolygon2d & crosswalk_polygon,
-      const bool is_object_away_from_path)
+      const bool is_object_away_from_path,
+      const std::optional<double> & ego_crosswalk_passage_direction)
     {
-      const bool is_stopped = vel < planner_param.stop_object_velocity;
+      const bool is_object_stopped = vel < planner_param.stop_object_velocity;
 
       // Check if the object can be ignored
-      if (is_stopped) {
-        if (collision_state == CollisionState::IGNORE) {
-          return;
-        }
-
+      if (is_object_stopped && is_ego_yielding) {
         if (!time_to_start_stopped) {
           time_to_start_stopped = now;
         }
@@ -214,7 +211,7 @@ public:
           planner_param.timeout_set_for_no_intention_to_walk, distance_to_crosswalk);
         const bool intent_to_cross =
           (now - *time_to_start_stopped).seconds() < timeout_no_intention_to_walk;
-        if (is_ego_yielding && !intent_to_cross && is_object_away_from_path) {
+        if (!intent_to_cross && is_object_away_from_path) {
           collision_state = CollisionState::IGNORE;
           return;
         }
@@ -222,8 +219,30 @@ public:
         time_to_start_stopped = std::nullopt;
       }
 
+      if (is_object_stopped && collision_state == CollisionState::IGNORE) {
+        return;
+      }
+
       // Compare time to collision and vehicle
       if (collision_point) {
+        auto isVehicleType = [](const uint8_t label) {
+          return label == ObjectClassification::MOTORCYCLE ||
+                 label == ObjectClassification::BICYCLE;
+        };
+        if (
+          isVehicleType(classification) && ego_crosswalk_passage_direction &&
+          collision_point->crosswalk_passage_direction) {
+          double direction_diff = std::abs(std::fmod(
+            collision_point->crosswalk_passage_direction.value() -
+              ego_crosswalk_passage_direction.value(),
+            M_PI_2));
+          direction_diff = std::min(direction_diff, M_PI_2 - direction_diff);
+          if (direction_diff < planner_param.vehicle_object_cross_angle_threshold) {
+            collision_state = CollisionState::IGNORE;
+            return;
+          }
+        }
+
         // Check if ego will pass first
         const double ego_pass_first_additional_margin =
           collision_state == CollisionState::EGO_PASS_FIRST
@@ -268,7 +287,8 @@ public:
       const rclcpp::Time & now, const bool is_ego_yielding, const bool has_traffic_light,
       const std::optional<CollisionPoint> & collision_point, const uint8_t classification,
       const PlannerParam & planner_param, const lanelet::BasicPolygon2d & crosswalk_polygon,
-      const Polygon2d & attention_area)
+      const Polygon2d & attention_area,
+      const std::optional<double> & ego_crosswalk_passage_direction)
     {
       // update current uuids
       current_uuids_.push_back(uuid);
@@ -292,7 +312,7 @@ public:
       // update object state
       objects.at(uuid).transitState(
         now, position, vel, is_ego_yielding, collision_point, planner_param, crosswalk_polygon,
-        is_object_away_from_path);
+        is_object_away_from_path, ego_crosswalk_passage_direction);
       objects.at(uuid).collision_point = collision_point;
       objects.at(uuid).position = position;
       objects.at(uuid).classification = classification;

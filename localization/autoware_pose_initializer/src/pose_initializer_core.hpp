@@ -15,7 +15,7 @@
 #ifndef POSE_INITIALIZER_CORE_HPP_
 #define POSE_INITIALIZER_CORE_HPP_
 
-#include <autoware/component_interface_specs/localization.hpp>
+#include <autoware/component_interface_specs_universe/localization.hpp>
 #include <autoware/component_interface_utils/rclcpp.hpp>
 #include <autoware/universe_utils/ros/diagnostics_interface.hpp>
 #include <autoware/universe_utils/ros/logger_level_configure.hpp>
@@ -41,8 +41,8 @@ public:
 
 private:
   using ServiceException = autoware::component_interface_utils::ServiceException;
-  using Initialize = autoware::component_interface_specs::localization::Initialize;
-  using State = autoware::component_interface_specs::localization::InitializationState;
+  using Initialize = autoware::component_interface_specs_universe::localization::Initialize;
+  using State = autoware::component_interface_specs_universe::localization::InitializationState;
   using PoseWithCovarianceStamped = geometry_msgs::msg::PoseWithCovarianceStamped;
 
   rclcpp::CallbackGroup::SharedPtr group_srv_;
