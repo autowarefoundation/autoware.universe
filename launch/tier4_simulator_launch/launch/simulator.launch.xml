@@ -219,7 +219,7 @@
     <!-- 'pose_only' mode publishes the pose topic as an alternative to ndt_localizer. 'full_motion' mode publishes the odometry and acceleration topics as an alternative to localization modules. -->
     <let name="motion_publish_mode" value="pose_only" if="$(eval '&quot;$(var localization_sim_mode)&quot;==&quot;pose_twist_estimator&quot;')"/>
     <let name="motion_publish_mode" value="full_motion" unless="$(eval '&quot;$(var localization_sim_mode)&quot;==&quot;pose_twist_estimator&quot;')"/>
-    <include file="$(find-pkg-share simple_planning_simulator)/launch/simple_planning_simulator.launch.py">
+    <include file="$(find-pkg-share autoware_simple_planning_simulator)/launch/simple_planning_simulator.launch.py">
       <arg name="vehicle_info_param_file" value="$(var vehicle_info_param_file)"/>
       <arg name="simulator_model_param_file" value="$(var simulator_model)"/>
       <arg name="initial_engage_state" value="$(var initial_engage_state)"/>
