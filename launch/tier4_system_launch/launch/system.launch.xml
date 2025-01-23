@@ -53,7 +53,7 @@
 
     <!-- Duplicated Node Checker -->
     <group>
-      <include file="$(find-pkg-share duplicated_node_checker)/launch/duplicated_node_checker.launch.xml">
+      <include file="$(find-pkg-share autoware_duplicated_node_checker)/launch/duplicated_node_checker.launch.xml">
         <arg name="config_file" value="$(var duplicated_node_checker_param_path)"/>
       </include>
     </group>
