@@ -122,6 +122,7 @@ struct GoalPlannerParameters
   struct BezierParking
   {
     double pull_over_azimuth_threshold;
+    double after_shift_straight_distance;
   } bezier_parking;
 
   // stop condition
