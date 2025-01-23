@@ -20,7 +20,7 @@
 #include <iostream>
 #include <limits>
 
-namespace autoware::simulator::dummy_perception_publisher::signed_distance_function
+namespace autoware::dummy_perception_publisher
 {
 
 double AbstractSignedDistanceFunction::getSphereTracingDist(
@@ -89,4 +89,4 @@ size_t CompositeSDF::nearest_sdf_index(double x, double y) const
   return idx_min;
 }
 
-}  // namespace autoware::simulator::dummy_perception_publisher::signed_distance_function
+}  // namespace autoware::dummy_perception_publisher

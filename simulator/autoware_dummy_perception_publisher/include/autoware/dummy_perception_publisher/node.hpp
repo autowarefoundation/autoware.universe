@@ -41,7 +41,7 @@
 #include <random>
 #include <vector>
 
-namespace autoware::simulator::dummy_perception_publisher
+namespace autoware::dummy_perception_publisher
 {
 struct ObjectInfo
 {
@@ -141,6 +141,6 @@ public:
   ~DummyPerceptionPublisherNode() {}
 };
 
-}  // namespace autoware::simulator::dummy_perception_publisher
+}  // namespace autoware::dummy_perception_publisher
 
 #endif  // AUTOWARE__DUMMY_PERCEPTION_PUBLISHER__NODE_HPP_

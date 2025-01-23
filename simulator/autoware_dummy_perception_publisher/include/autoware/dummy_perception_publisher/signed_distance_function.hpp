@@ -23,7 +23,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware::simulator::dummy_perception_publisher::signed_distance_function
+namespace autoware::dummy_perception_publisher
 {
 
 class AbstractSignedDistanceFunction
@@ -69,6 +69,6 @@ private:
   std::vector<std::shared_ptr<AbstractSignedDistanceFunction>> sdf_ptrs_;
 };
 
-}  // namespace autoware::simulator::dummy_perception_publisher::signed_distance_function
+}  // namespace autoware::dummy_perception_publisher
 
 #endif  // AUTOWARE__DUMMY_PERCEPTION_PUBLISHER__SIGNED_DISTANCE_FUNCTION_HPP_

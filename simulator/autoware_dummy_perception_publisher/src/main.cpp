@@ -22,7 +22,7 @@ int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
   rclcpp::spin(std::make_shared<
-               autoware::simulator::dummy_perception_publisher::DummyPerceptionPublisherNode>());
+               autoware::dummy_perception_publisher::DummyPerceptionPublisherNode>());
   rclcpp::shutdown();
 
   return 0;

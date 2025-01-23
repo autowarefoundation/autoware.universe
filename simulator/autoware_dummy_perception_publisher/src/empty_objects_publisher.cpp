@@ -19,7 +19,7 @@
 #include <memory>
 #include <utility>
 
-namespace autoware::simulator::dummy_perception_publisher
+namespace autoware::dummy_perception_publisher
 {
 
 class EmptyObjectsPublisher : public rclcpp::Node
@@ -48,13 +48,13 @@ private:
   }
 };
 
-}  // namespace autoware::simulator::dummy_perception_publisher
+}  // namespace autoware::dummy_perception_publisher
 
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
   rclcpp::spin(
-    std::make_shared<autoware::simulator::dummy_perception_publisher::EmptyObjectsPublisher>());
+    std::make_shared<autoware::dummy_perception_publisher::EmptyObjectsPublisher>());
   rclcpp::shutdown();
   return 0;
 }

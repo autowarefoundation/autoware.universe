@@ -35,7 +35,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware::simulator::dummy_perception_publisher
+namespace autoware::dummy_perception_publisher
 {
 
 using autoware_perception_msgs::msg::TrackedObject;
@@ -432,4 +432,4 @@ void DummyPerceptionPublisherNode::objectCallback(
   }
 }
 
-}  // namespace autoware::simulator::dummy_perception_publisher
+}  // namespace autoware::dummy_perception_publisher
