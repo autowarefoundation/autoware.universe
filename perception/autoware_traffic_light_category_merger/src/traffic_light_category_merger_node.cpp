@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "traffic_light_category_merger.hpp"
+#include "traffic_light_category_merger_node.hpp"
 
 #include <memory>
 #include <string>
