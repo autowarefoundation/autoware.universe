@@ -31,7 +31,7 @@ using autoware::vehicle_info_utils::VehicleInfoUtils;
 
 ControlPerformanceAnalysisNode::ControlPerformanceAnalysisNode(
   const rclcpp::NodeOptions & node_options)
-: Node("autoware_control_performance_analysis", node_options)
+: Node("control_performance_analysis", node_options)
 {
   using std::placeholders::_1;
 
