@@ -1,4 +1,4 @@
-// Copyright 2024 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware/universe_utils/ros/polling_subscriber.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
+#include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
@@ -30,6 +31,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_metric_msgs/msg/metric.hpp>
 #include <tier4_metric_msgs/msg/metric_array.hpp>
+#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <deque>
 #include <optional>
@@ -39,6 +41,9 @@
 namespace control_diagnostics
 {
 using autoware::universe_utils::Accumulator;
+using autoware::universe_utils::LineString2d;
+using autoware::universe_utils::Point2d;
+using autoware::vehicle_info_utils::VehicleInfo;
 using autoware_planning_msgs::msg::Trajectory;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
@@ -48,6 +53,7 @@ using autoware_planning_msgs::msg::LaneletRoute;
 using geometry_msgs::msg::AccelWithCovarianceStamped;
 using MetricMsg = tier4_metric_msgs::msg::Metric;
 using MetricArrayMsg = tier4_metric_msgs::msg::MetricArray;
+using tier4_planning_msgs::msg::PathWithLaneId;
 
 /**
  * @brief Node for control evaluation
@@ -64,8 +70,9 @@ public:
   void AddGoalLongitudinalDeviationMetricMsg(const Pose & ego_pose);
   void AddGoalLateralDeviationMetricMsg(const Pose & ego_pose);
   void AddGoalYawDeviationMetricMsg(const Pose & ego_pose);
+  void AddBoundaryDistanceMetricMsg(const PathWithLaneId & behavior_path, const Pose & ego_pose);
 
-  void AddLaneletMetricMsg(const Pose & ego_pose);
+  void AddLaneletInfoMsg(const Pose & ego_pose);
   void AddKinematicStateMetricMsg(
     const Odometry & odom, const AccelWithCovarianceStamped & accel_stamped);
 
@@ -84,6 +91,8 @@ private:
   autoware::universe_utils::InterProcessPollingSubscriber<
     LaneletMapBin, autoware::universe_utils::polling_policy::Newest>
     vector_map_subscriber_{this, "~/input/vector_map", rclcpp::QoS{1}.transient_local()};
+  autoware::universe_utils::InterProcessPollingSubscriber<PathWithLaneId> behavior_path_subscriber_{
+    this, "~/input/behavior_path"};
 
   rclcpp::Publisher<autoware_internal_debug_msgs::msg::Float64Stamped>::SharedPtr
     processing_time_pub_;
@@ -106,6 +115,7 @@ private:
     metric_accumulators_;  // 3(min, max, mean) * metric_size
 
   MetricArrayMsg metrics_msg_;
+  VehicleInfo vehicle_info_;
   autoware::route_handler::RouteHandler route_handler_;
   rclcpp::TimerBase::SharedPtr timer_;
   std::optional<AccelWithCovarianceStamped> prev_acc_stamped_{std::nullopt};
