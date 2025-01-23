@@ -27,6 +27,7 @@
 #include <lanelet2_core/Forward.h>
 
 #include <cstddef>
+#include <vector>
 namespace control_diagnostics
 {
 namespace metrics

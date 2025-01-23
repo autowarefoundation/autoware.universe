@@ -18,6 +18,7 @@
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 
+#include <vector>
 namespace control_diagnostics
 {
 namespace metrics
