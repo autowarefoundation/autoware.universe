@@ -89,27 +89,40 @@ __global__ void transformPointsKernel(
 }
 
 __global__ void cropBoxKernel(
-  InputPointType * __restrict__ d_points, uint32_t * output_mask, int num_points, float min_x,
-  float min_y, float min_z, float max_x, float max_y, float max_z)
+  InputPointType * __restrict__ d_points, std::uint32_t * __restrict__ output_mask, int num_points,
+  const CropBoxParameters * __restrict__ crop_box_parameters_ptr, int num_crop_boxes)
 {
-  int idx = blockIdx.x * blockDim.x + threadIdx.x;
-  if (idx < num_points) {
+  for (int idx = blockIdx.x * blockDim.x + threadIdx.x; idx < num_points;
+       idx += blockDim.x * gridDim.x) {
     const float x = d_points[idx].x;
     const float y = d_points[idx].y;
     const float z = d_points[idx].z;
 
-    output_mask[idx] =
-      (x <= min_x || x >= max_x) || (y <= min_y || y >= max_y) || (z <= min_z || z >= max_z);
+    std::uint32_t mask = 1;
+
+    for (int i = 0; i < num_crop_boxes; i++) {
+      const CropBoxParameters & crop_box_parameters = crop_box_parameters_ptr[i];
+      const float & min_x = crop_box_parameters.min_x;
+      const float & min_y = crop_box_parameters.min_y;
+      const float & min_z = crop_box_parameters.min_z;
+      const float & max_x = crop_box_parameters.max_x;
+      const float & max_y = crop_box_parameters.max_y;
+      const float & max_z = crop_box_parameters.max_z;
+      mask &=
+        (x <= min_x || x >= max_x) || (y <= min_y || y >= max_y) || (z <= min_z || z >= max_z);
+    }
+
+    output_mask[idx] = mask;
   }
 }
 
 __global__ void combineMasksKernel(
-  const uint32_t * __restrict__ mask1, const uint32_t * __restrict__ mask2,
-  const uint32_t * __restrict__ mask3, int num_points, uint32_t * output_mask)
+  const uint32_t * __restrict__ mask1, const uint32_t * __restrict__ mask2, int num_points,
+  uint32_t * __restrict__ output_mask)
 {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   if (idx < num_points) {
-    output_mask[idx] = mask1[idx] & mask2[idx] & mask3[idx];
+    output_mask[idx] = mask1[idx] & mask2[idx];
   }
 }
 
@@ -341,6 +354,13 @@ CudaPointcloudPreprocessor::CudaPointcloudPreprocessor()
   point_fields_.push_back(intensity_field);
   point_fields_.push_back(return_type_field);
   point_fields_.push_back(channel_field);
+
+  cudaStreamCreate(&stream_);
+
+  int num_sm;
+  cudaDeviceGetAttribute(&num_sm, cudaDevAttrMultiProcessorCount, 0);
+  max_blocks_per_grid_ = 4 * num_sm;  // used for strided loops
+
   cudaMemPoolProps pool_props;
   memset(&pool_props, 0, sizeof(cudaMemPoolProps));
   pool_props.allocType = cudaMemAllocationTypePinned;
@@ -359,11 +379,10 @@ CudaPointcloudPreprocessor::CudaPointcloudPreprocessor()
 }
 
 void CudaPointcloudPreprocessor::setCropBoxParameters(
-  const CropBoxParameters & self_crop_box_parameters,
-  const CropBoxParameters & mirror_crop_box_parameters)
+  const std::vector<CropBoxParameters> & crop_box_parameters)
 {
-  self_crop_box_parameters_ = self_crop_box_parameters;
-  mirror_crop_box_parameters_ = mirror_crop_box_parameters;
+  host_crop_box_structs_ = crop_box_parameters;
+  device_crop_box_structs_ = host_crop_box_structs_;
 }
 
 void CudaPointcloudPreprocessor::setRingOutlierFilterParameters(
@@ -584,8 +603,7 @@ std::unique_ptr<cuda_blackboard::CudaPointCloud2> CudaPointcloudPreprocessor::pr
     max_points_per_ring_ = input_pointcloud_msg.width;
 
     device_transformed_points_.resize(num_input_points);
-    device_self_crop_mask_.resize(num_input_points);
-    device_mirror_crop_mask_.resize(num_input_points);
+    device_crop_mask_.resize(num_input_points);
     device_ring_outlier_mask_.resize(num_input_points);
     device_indices_.resize(num_input_points);
 
@@ -629,49 +647,41 @@ std::unique_ptr<cuda_blackboard::CudaPointCloud2> CudaPointcloudPreprocessor::pr
     thrust::raw_pointer_cast(device_twist_3d_structs_.data());
   InputPointType * device_transformed_points =
     thrust::raw_pointer_cast(device_transformed_points_.data());
-  uint32_t * device_self_crop_mask = thrust::raw_pointer_cast(device_self_crop_mask_.data());
-  uint32_t * device_mirror_crop_mask = thrust::raw_pointer_cast(device_mirror_crop_mask_.data());
+  std::uint32_t * device_crop_mask = thrust::raw_pointer_cast(device_crop_mask_.data());
   uint32_t * device_ring_outlier_mask = thrust::raw_pointer_cast(device_ring_outlier_mask_.data());
   uint32_t * device_indices = thrust::raw_pointer_cast(device_indices_.data());
 
-  const int threadsPerBlock = 256;
-  const int blocksPerGrid = (num_input_points + threadsPerBlock - 1) / threadsPerBlock;
+  const int blocks_per_grid = (num_input_points + threads_per_block_ - 1) / threads_per_block_;
 
-  transformPointsKernel<<<blocksPerGrid, threadsPerBlock>>>(
+  transformPointsKernel<<<blocks_per_grid, threads_per_block_, 0, stream_>>>(
     device_input_points, device_transformed_points, num_input_points, transform_struct);
 
-  cropBoxKernel<<<blocksPerGrid, threadsPerBlock>>>(
-    device_transformed_points, device_self_crop_mask, num_input_points,
-    self_crop_box_parameters_.min_x, self_crop_box_parameters_.min_y,
-    self_crop_box_parameters_.min_z, self_crop_box_parameters_.max_x,
-    self_crop_box_parameters_.max_y, self_crop_box_parameters_.max_z);
-
-  cropBoxKernel<<<blocksPerGrid, threadsPerBlock>>>(
-    device_transformed_points, device_mirror_crop_mask, num_input_points,
-    mirror_crop_box_parameters_.min_x, mirror_crop_box_parameters_.min_y,
-    mirror_crop_box_parameters_.min_z, mirror_crop_box_parameters_.max_x,
-    mirror_crop_box_parameters_.max_y, mirror_crop_box_parameters_.max_z);
+  int crop_box_blocks_per_grid = std::min(blocks_per_grid, max_blocks_per_grid_);
+  cropBoxKernel<<<crop_box_blocks_per_grid, threads_per_block_, 0, stream_>>>(
+    device_transformed_points, device_crop_mask, num_input_points,
+    thrust::raw_pointer_cast(device_crop_box_structs_.data()), host_crop_box_structs_.size());
 
   if (use_3d_undistortion_ && device_twist_3d_structs_.size() > 0) {
-    undistort3dKernel<<<blocksPerGrid, threadsPerBlock>>>(
+    undistort3dKernel<<<blocks_per_grid, threads_per_block_, 0, stream_>>>(
       device_transformed_points, num_input_points, device_twist_3d_structs,
       device_twist_3d_structs_.size());
   } else if (!use_3d_undistortion_ && device_twist_2d_structs_.size() > 0) {
-    undistort2dKernel<<<blocksPerGrid, threadsPerBlock>>>(
+    undistort2dKernel<<<blocks_per_grid, threads_per_block_, 0, stream_>>>(
       device_transformed_points, num_input_points, device_twist_2d_structs,
       device_twist_2d_structs_.size());
   }
 
-  ringOutlierFilterKernel<<<blocksPerGrid, threadsPerBlock>>>(
+  ringOutlierFilterKernel<<<blocks_per_grid, threads_per_block_, 0, stream_>>>(
     device_transformed_points, device_ring_outlier_mask, max_rings_, max_points_per_ring_,
     ring_outlier_parameters_.distance_ratio,
     ring_outlier_parameters_.object_length_threshold *
       ring_outlier_parameters_.object_length_threshold,
     ring_outlier_parameters_.num_points_threshold);
 
-  combineMasksKernel<<<blocksPerGrid, threadsPerBlock>>>(
-    device_self_crop_mask, device_mirror_crop_mask, device_ring_outlier_mask, num_input_points,
-    device_ring_outlier_mask);
+  combineMasksKernel<<<blocks_per_grid, threads_per_block_, 0, stream_>>>(
+    device_crop_mask, device_ring_outlier_mask, num_input_points, device_ring_outlier_mask);
+
+  cudaStreamSynchronize(stream_);
 
   thrust::inclusive_scan(
     thrust::device, device_ring_outlier_mask, device_ring_outlier_mask + num_input_points,
@@ -683,7 +693,7 @@ std::unique_ptr<cuda_blackboard::CudaPointCloud2> CudaPointcloudPreprocessor::pr
     cudaMemcpyDeviceToHost);
 
   if (num_output_points > 0) {
-    extractInputPointsToOutputPoints_indicesKernel<<<blocksPerGrid, threadsPerBlock>>>(
+    extractInputPointsToOutputPoints_indicesKernel<<<blocks_per_grid, threads_per_block_>>>(
       device_transformed_points, device_ring_outlier_mask, device_indices, num_input_points,
       reinterpret_cast<OutputPointType *>(output_pointcloud_ptr_->data.get()));
   }

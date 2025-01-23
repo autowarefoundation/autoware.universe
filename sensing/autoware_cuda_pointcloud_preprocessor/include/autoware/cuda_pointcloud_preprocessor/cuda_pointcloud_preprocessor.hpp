@@ -74,12 +74,12 @@ struct TransformStruct
 
 struct CropBoxParameters
 {
-  float min_x{std::nanf("")};
-  float max_x{std::nanf("")};
-  float min_y{std::nanf("")};
-  float max_y{std::nanf("")};
-  float min_z{std::nanf("")};
-  float max_z{std::nanf("")};
+  float min_x;
+  float max_x;
+  float min_y;
+  float max_y;
+  float min_z;
+  float max_z;
 };
 
 struct RingOutlierFilterParameters
@@ -115,9 +115,7 @@ public:
   CudaPointcloudPreprocessor();
   ~CudaPointcloudPreprocessor() = default;
 
-  void setCropBoxParameters(
-    const CropBoxParameters & self_crop_box_parameters,
-    const CropBoxParameters & mirror_crop_box_parameters);
+  void setCropBoxParameters(const std::vector<CropBoxParameters> & crop_box_parameters);
   void setRingOutlierFilterParameters(const RingOutlierFilterParameters & ring_outlier_parameters);
   void set3DUndistortion(bool value);
 
@@ -151,15 +149,20 @@ private:
   std::vector<sensor_msgs::msg::PointField> point_fields_{};
   std::unique_ptr<cuda_blackboard::CudaPointCloud2> output_pointcloud_ptr_{};
 
+  cudaStream_t stream_;
+  int max_blocks_per_grid_{};
+  const int threads_per_block_{256};
   cudaMemPool_t device_memory_pool_;
   thrust::device_vector<InputPointType> device_transformed_points_{};
   thrust::device_vector<OutputPointType> device_output_points_{};
-  thrust::device_vector<uint32_t> device_self_crop_mask_{};
-  thrust::device_vector<uint32_t> device_mirror_crop_mask_{};
-  thrust::device_vector<uint32_t> device_ring_outlier_mask_{};
-  thrust::device_vector<uint32_t> device_indices_{};
+  thrust::device_vector<std::uint32_t> device_crop_mask_{};
+  thrust::device_vector<std::uint32_t> device_ring_outlier_mask_{};
+  thrust::device_vector<std::uint32_t> device_indices_{};
   thrust::device_vector<TwistStruct2D> device_twist_2d_structs_{};
   thrust::device_vector<TwistStruct3D> device_twist_3d_structs_{};
+
+  thrust::device_vector<CropBoxParameters> host_crop_box_structs_{};
+  thrust::device_vector<CropBoxParameters> device_crop_box_structs_{};
 };
 
 }  // namespace autoware::cuda_pointcloud_preprocessor

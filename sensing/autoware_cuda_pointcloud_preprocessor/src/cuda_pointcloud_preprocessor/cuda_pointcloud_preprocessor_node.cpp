@@ -52,20 +52,35 @@ CudaPointcloudPreprocessorNode::CudaPointcloudPreprocessorNode(
   ring_outlier_filter_parameters.num_points_threshold =
     declare_parameter<int>("num_points_threshold");
 
-  CropBoxParameters self_crop_box_parameters, mirror_crop_box_parameters;
-  self_crop_box_parameters.min_x = declare_parameter<float>("self_crop.min_x");
-  self_crop_box_parameters.min_y = declare_parameter<float>("self_crop.min_y");
-  self_crop_box_parameters.min_z = declare_parameter<float>("self_crop.min_z");
-  self_crop_box_parameters.max_x = declare_parameter<float>("self_crop.max_x");
-  self_crop_box_parameters.max_y = declare_parameter<float>("self_crop.max_y");
-  self_crop_box_parameters.max_z = declare_parameter<float>("self_crop.max_z");
+  const auto crop_box_min_x_vector = declare_parameter<std::vector<double>>("crop_box.min_x");
+  const auto crop_box_min_y_vector = declare_parameter<std::vector<double>>("crop_box.min_y");
+  const auto crop_box_min_z_vector = declare_parameter<std::vector<double>>("crop_box.min_z");
 
-  mirror_crop_box_parameters.min_x = declare_parameter<float>("mirror_crop.min_x");
-  mirror_crop_box_parameters.min_y = declare_parameter<float>("mirror_crop.min_y");
-  mirror_crop_box_parameters.min_z = declare_parameter<float>("mirror_crop.min_z");
-  mirror_crop_box_parameters.max_x = declare_parameter<float>("mirror_crop.max_x");
-  mirror_crop_box_parameters.max_y = declare_parameter<float>("mirror_crop.max_y");
-  mirror_crop_box_parameters.max_z = declare_parameter<float>("mirror_crop.max_z");
+  const auto crop_box_max_x_vector = declare_parameter<std::vector<double>>("crop_box.max_x");
+  const auto crop_box_max_y_vector = declare_parameter<std::vector<double>>("crop_box.max_y");
+  const auto crop_box_max_z_vector = declare_parameter<std::vector<double>>("crop_box.max_z");
+
+  if (
+    crop_box_min_x_vector.size() != crop_box_min_y_vector.size() ||
+    crop_box_min_x_vector.size() != crop_box_min_z_vector.size() ||
+    crop_box_min_x_vector.size() != crop_box_max_x_vector.size() ||
+    crop_box_min_x_vector.size() != crop_box_max_y_vector.size() ||
+    crop_box_min_x_vector.size() != crop_box_max_z_vector.size()) {
+    throw std::runtime_error("Crop box parameters must have the same size");
+  }
+
+  std::vector<CropBoxParameters> crop_box_parameters;
+
+  for (std::size_t i = 0; i < crop_box_min_x_vector.size(); i++) {
+    CropBoxParameters parameters;
+    parameters.min_x = crop_box_min_x_vector[i];
+    parameters.min_y = crop_box_min_y_vector[i];
+    parameters.min_z = crop_box_min_z_vector[i];
+    parameters.max_x = crop_box_max_x_vector[i];
+    parameters.max_y = crop_box_max_y_vector[i];
+    parameters.max_z = crop_box_max_z_vector[i];
+    crop_box_parameters.push_back(parameters);
+  }
 
   bool use_3d_undistortion = declare_parameter<bool>("use_3d_distortion_correction");
   bool use_imu = declare_parameter<bool>("use_imu");
@@ -92,8 +107,7 @@ CudaPointcloudPreprocessorNode::CudaPointcloudPreprocessorNode(
 
   cuda_pointcloud_preprocessor_ = std::make_unique<CudaPointcloudPreprocessor>();
   cuda_pointcloud_preprocessor_->setRingOutlierFilterParameters(ring_outlier_filter_parameters);
-  cuda_pointcloud_preprocessor_->setCropBoxParameters(
-    self_crop_box_parameters, mirror_crop_box_parameters);
+  cuda_pointcloud_preprocessor_->setCropBoxParameters(crop_box_parameters);
   cuda_pointcloud_preprocessor_->set3DUndistortion(use_3d_undistortion);
 
   // initialize debug tool
