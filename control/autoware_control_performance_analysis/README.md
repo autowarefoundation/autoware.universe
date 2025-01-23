@@ -35,8 +35,8 @@ Error acceleration calculations are made based on the velocity calculations abov
 
 ### Output topics
 
-| Name                                    | Type                                                     | Description                                         |
-| --------------------------------------- | -------------------------------------------------------- | --------------------------------------------------- |
+| Name                                    | Type                                                              | Description                                         |
+| --------------------------------------- | ----------------------------------------------------------------- | --------------------------------------------------- |
 | `/control_performance/performance_vars` | autoware_control_performance_analysis::msg::ErrorStamped          | The result of the performance analysis.             |
 | `/control_performance/driving_status`   | autoware_control_performance_analysis::msg::DrivingMonitorStamped | Driving status (acceleration, jerk etc.) monitoring |
 
