@@ -6,10 +6,10 @@
 
 ## Input topics
 
-| Name                       | Type                                           | Description                   |
-| -------------------------- | ---------------------------------------------- | ----------------------------- |
-| `input/car_signals`        | tier4_perception_msgs::msg::TrafficLightArray  | Car TLs classification        |
-| `input/pedestrian_signals` | tier4_perception_msgs::msg::TrafficLightArray  | Pedestrian TLs classification |
+| Name                       | Type                                          | Description                   |
+| -------------------------- | --------------------------------------------- | ----------------------------- |
+| `input/car_signals`        | tier4_perception_msgs::msg::TrafficLightArray | Car TLs classification        |
+| `input/pedestrian_signals` | tier4_perception_msgs::msg::TrafficLightArray | Pedestrian TLs classification |
 
 ## Output topics
 
