@@ -273,6 +273,7 @@ DecisionResult IntersectionModule::modifyPathVelocityDetail(PathWithLaneId * pat
       const auto closest_idx = intersection_stoplines.closest_idx;
       const std::string evasive_diag = generateEgoRiskEvasiveDiagnosis(
         *path, closest_idx, time_distance_array, too_late_detect_objects, misjudge_objects);
+      debug_data_.too_late_stop_wall_pose = path->points.at(default_stopline_idx).point.pose;
       return OverPassJudge{safety_diag, evasive_diag};
     }
     return OverPassJudge{
