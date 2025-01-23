@@ -1,4 +1,4 @@
-// Copyright 2024 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,6 +14,9 @@
 
 #include "autoware/control_evaluator/control_evaluator_node.hpp"
 
+#include "autoware/control_evaluator/metrics/metrics_utils.hpp"
+
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <nlohmann/json.hpp>
@@ -29,7 +32,8 @@
 namespace control_diagnostics
 {
 ControlEvaluatorNode::ControlEvaluatorNode(const rclcpp::NodeOptions & node_options)
-: Node("control_evaluator", node_options)
+: Node("control_evaluator", node_options),
+  vehicle_info_(autoware::vehicle_info_utils::VehicleInfoUtils(*this).getVehicleInfo())
 {
   using std::placeholders::_1;
 
@@ -136,17 +140,9 @@ void ControlEvaluatorNode::AddMetricMsg(const Metric & metric, const double & me
   }
 }
 
-void ControlEvaluatorNode::AddLaneletMetricMsg(const Pose & ego_pose)
+void ControlEvaluatorNode::AddLaneletInfoMsg(const Pose & ego_pose)
 {
-  const auto current_lanelets = [&]() {
-    lanelet::ConstLanelet closest_route_lanelet;
-    route_handler_.getClosestLaneletWithinRoute(ego_pose, &closest_route_lanelet);
-    const auto shoulder_lanelets = route_handler_.getShoulderLaneletsAtPose(ego_pose);
-    lanelet::ConstLanelets closest_lanelets{closest_route_lanelet};
-    closest_lanelets.insert(
-      closest_lanelets.end(), shoulder_lanelets.begin(), shoulder_lanelets.end());
-    return closest_lanelets;
-  }();
+  const auto current_lanelets = metrics::utils::get_current_lanes(route_handler_, ego_pose);
   const auto arc_coordinates = lanelet::utils::getArcCoordinates(current_lanelets, ego_pose);
   lanelet::ConstLanelet current_lane;
   lanelet::utils::query::getClosestLanelet(current_lanelets, ego_pose, &current_lane);
@@ -170,6 +166,43 @@ void ControlEvaluatorNode::AddLaneletMetricMsg(const Pose & ego_pose)
     metric_msg.name = base_name + "t";
     metric_msg.value = std::to_string(arc_coordinates.distance);
     metrics_msg_.metric_array.push_back(metric_msg);
+  }
+}
+
+void ControlEvaluatorNode::AddBoundaryDistanceMetricMsg(
+  const PathWithLaneId & behavior_path, const Pose & ego_pose)
+{
+  const auto current_lanelets = metrics::utils::get_current_lanes(route_handler_, ego_pose);
+  lanelet::ConstLanelet current_lane;
+  lanelet::utils::query::getClosestLanelet(current_lanelets, ego_pose, &current_lane);
+  const auto local_vehicle_footprint = vehicle_info_.createFootprint();
+  const auto current_vehicle_footprint =
+    transformVector(local_vehicle_footprint, autoware::universe_utils::pose2transform(ego_pose));
+
+  if (behavior_path.left_bound.size() >= 1) {
+    LineString2d left_boundary;
+    for (const auto & p : behavior_path.left_bound) left_boundary.push_back(Point2d(p.x, p.y));
+    double distance_to_left_boundary =
+      metrics::utils::calc_distance_to_line(current_vehicle_footprint, left_boundary);
+
+    if (metrics::utils::is_point_left_of_line(ego_pose.position, behavior_path.left_bound)) {
+      distance_to_left_boundary *= -1.0;
+    }
+    const Metric metric_left = Metric::left_boundary_distance;
+    AddMetricMsg(metric_left, distance_to_left_boundary);
+  }
+
+  if (behavior_path.right_bound.size() >= 1) {
+    LineString2d right_boundary;
+    for (const auto & p : behavior_path.right_bound) right_boundary.push_back(Point2d(p.x, p.y));
+    double distance_to_right_boundary =
+      metrics::utils::calc_distance_to_line(current_vehicle_footprint, right_boundary);
+
+    if (!metrics::utils::is_point_left_of_line(ego_pose.position, behavior_path.right_bound)) {
+      distance_to_right_boundary *= -1.0;
+    }
+    const Metric metric_right = Metric::right_boundary_distance;
+    AddMetricMsg(metric_right, distance_to_right_boundary);
   }
 }
 
@@ -260,6 +293,7 @@ void ControlEvaluatorNode::onTimer()
   const auto traj = traj_sub_.takeData();
   const auto odom = odometry_sub_.takeData();
   const auto acc = accel_sub_.takeData();
+  const auto behavior_path = behavior_path_subscriber_.takeData();
 
   // calculate deviation metrics
   if (odom && traj && !traj->points.empty()) {
@@ -271,8 +305,7 @@ void ControlEvaluatorNode::onTimer()
   getRouteData();
   if (odom && route_handler_.isHandlerReady()) {
     const Pose ego_pose = odom->pose.pose;
-    AddLaneletMetricMsg(ego_pose);
-
+    AddLaneletInfoMsg(ego_pose);
     AddGoalLongitudinalDeviationMetricMsg(ego_pose);
     AddGoalLateralDeviationMetricMsg(ego_pose);
     AddGoalYawDeviationMetricMsg(ego_pose);
@@ -280,6 +313,11 @@ void ControlEvaluatorNode::onTimer()
 
   if (odom && acc) {
     AddKinematicStateMetricMsg(*odom, *acc);
+  }
+
+  if (odom && behavior_path) {
+    const Pose ego_pose = odom->pose.pose;
+    AddBoundaryDistanceMetricMsg(*behavior_path, ego_pose);
   }
 
   // Publish metrics
