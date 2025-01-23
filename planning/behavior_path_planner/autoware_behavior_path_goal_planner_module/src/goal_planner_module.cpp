@@ -1650,12 +1650,20 @@ PathWithLaneId GoalPlannerModule::generateStopPath(
     return PathWithLaneId{};
   }
 
-  // extend previous module path to generate reference path for stop path
+  // Generate reference_path to extend the previous path.
+  // If pull_over_path is ARC_BACKWARD, generate path to the start_pose of the pull_over_path,
+  // otherwise, generate path to the goal_pose.
+  const auto & pull_over_path_opt = context_data.pull_over_path_opt;
   const auto reference_path = std::invoke([&]() -> PathWithLaneId {
     const auto s_current = lanelet::utils::getArcCoordinates(current_lanes, current_pose).length;
     const double s_start = std::max(0.0, s_current - common_parameters.backward_path_length);
+    const bool is_arc_backward =
+      pull_over_path_opt.has_value() &&
+      pull_over_path_opt.value().type() == PullOverPlannerType::ARC_BACKWARD;
+    const Pose path_end_pose =
+      is_arc_backward ? pull_over_path_opt.value().start_pose() : route_handler->getGoalPose();
     const double s_end = std::clamp(
-      lanelet::utils::getArcCoordinates(current_lanes, route_handler->getGoalPose()).length,
+      lanelet::utils::getArcCoordinates(current_lanes, path_end_pose).length,
       s_current + std::numeric_limits<double>::epsilon(),
       s_current + common_parameters.forward_path_length);
     return route_handler->getCenterLinePath(current_lanes, s_start, s_end, true);
@@ -1685,8 +1693,8 @@ PathWithLaneId GoalPlannerModule::generateStopPath(
   //     difference between the outer and inner sides)
   // 4. feasible stop
   const auto stop_pose_opt = std::invoke([&]() -> std::optional<Pose> {
-    if (context_data.pull_over_path_opt)
-      return std::make_optional<Pose>(context_data.pull_over_path_opt.value().start_pose());
+    if (pull_over_path_opt)
+      return std::make_optional<Pose>(pull_over_path_opt.value().start_pose());
     if (context_data.lane_parking_response.closest_start_pose)
       return context_data.lane_parking_response.closest_start_pose;
     return decel_pose;
