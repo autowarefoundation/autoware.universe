@@ -211,11 +211,11 @@ system/autoware_component_monitor/** baris@leodrive.ai memin@leodrive.ai yavuz@l
 system/autoware_default_adapi/** isamu.takagi@tier4.jp ryohsuke.mitsudome@tier4.jp yukihiro.saito@tier4.jp
 system/autoware_processing_time_checker/** kosuke.takeuchi@tier4.jp takayuki.murooka@tier4.jp
 system/autoware_bluetooth_monitor/** fumihito.ito@tier4.jp junya.sasaki@tier4.jp
-system/component_state_monitor/** isamu.takagi@tier4.jp
+system/autoware_component_state_monitor/** isamu.takagi@tier4.jp junya.sasaki@tier4.jp
 system/default_ad_api_helpers/ad_api_adaptors/** isamu.takagi@tier4.jp ryohsuke.mitsudome@tier4.jp yukihiro.saito@tier4.jp
 system/default_ad_api_helpers/ad_api_visualizers/** isamu.takagi@tier4.jp ryohsuke.mitsudome@tier4.jp yukihiro.saito@tier4.jp
 system/default_ad_api_helpers/automatic_pose_initializer/** isamu.takagi@tier4.jp ryohsuke.mitsudome@tier4.jp yukihiro.saito@tier4.jp
-system/diagnostic_graph_aggregator/** isamu.takagi@tier4.jp
+system/autoware_diagnostic_graph_aggregator/** isamu.takagi@tier4.jp junya.sasaki@tier4.jp
 system/diagnostic_graph_utils/** isamu.takagi@tier4.jp
 system/autoware_dummy_diag_publisher/** fumihito.ito@tier4.jp tetsuhiro.kawaguchi@tier4.jp
 system/dummy_infrastructure/** ryohsuke.mitsudome@tier4.jp
@@ -224,9 +224,9 @@ system/hazard_status_converter/** isamu.takagi@tier4.jp
 system/mrm_comfortable_stop_operator/** makoto.kurihara@tier4.jp tomohito.ando@tier4.jp
 system/mrm_emergency_stop_operator/** makoto.kurihara@tier4.jp tomohito.ando@tier4.jp
 system/mrm_handler/** makoto.kurihara@tier4.jp ryuta.kambe@tier4.jp tetsuhiro.kawaguchi@tier4.jp
-system/system_diagnostic_monitor/** isamu.takagi@tier4.jp
+system/autoware_system_diagnostic_monitor/** isamu.takagi@tier4.jp junya.sasaki@tier4.jp
 system/system_monitor/** fumihito.ito@tier4.jp tetsuhiro.kawaguchi@tier4.jp
-system/topic_state_monitor/** ryohsuke.mitsudome@tier4.jp
+system/autoware_topic_state_monitor/** ryohsuke.mitsudome@tier4.jp junya.sasaki@tier4.jp
 system/velodyne_monitor/** fumihito.ito@tier4.jp
 tools/reaction_analyzer/** berkay@leodrive.ai
 vehicle/autoware_accel_brake_map_calibrator/** eiki.nagata.2@tier4.jp taiki.tanaka@tier4.jp takeshi.miura@tier4.jp tomoya.kimura@tier4.jp

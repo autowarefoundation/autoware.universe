@@ -72,7 +72,7 @@
 
     <!-- Component State Monitor -->
     <group>
-      <include file="$(find-pkg-share component_state_monitor)/launch/component_state_monitor.launch.py">
+      <include file="$(find-pkg-share autoware_component_state_monitor)/launch/component_state_monitor.launch.py">
         <arg name="mode" value="$(var run_mode)"/>
         <arg name="file" value="$(var component_state_monitor_topic_path)"/>
       </include>
@@ -92,7 +92,7 @@
 
     <!-- Diagnostic Graph Aggregator -->
     <group>
-      <include file="$(find-pkg-share system_diagnostic_monitor)/launch/system_diagnostic_monitor.launch.xml">
+      <include file="$(find-pkg-share autoware_system_diagnostic_monitor)/launch/system_diagnostic_monitor.launch.xml">
         <arg name="param_file" value="$(var diagnostic_graph_aggregator_param_path)"/>
         <arg name="graph_file" value="$(var diagnostic_graph_aggregator_graph_path)"/>
       </include>
