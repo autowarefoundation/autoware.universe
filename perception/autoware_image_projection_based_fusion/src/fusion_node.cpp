@@ -20,6 +20,7 @@
 #include <Eigen/Geometry>
 #include <autoware/image_projection_based_fusion/utils/utils.hpp>
 
+#include <autoware_internal_debug_msgs/msg/float64_stamped.hpp>
 #include <tier4_perception_msgs/msg/detected_object_with_feature.hpp>
 
 #include <boost/optional.hpp>
@@ -253,12 +254,12 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::exportProcess()
         std::chrono::nanoseconds(
           (this->get_clock()->now() - cached_det3d_msg_ptr_->header.stamp).nanoseconds()))
         .count();
-    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/cyclic_time_ms", cyclic_time_ms);
-    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/processing_time_ms",
       processing_time_ms + stop_watch_ptr_->toc("processing_time", true));
-    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/pipeline_latency_ms", pipeline_latency_ms);
     processing_time_ms = 0;
   }
@@ -353,9 +354,9 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::subCallback(
       // add timestamp interval for debug
       if (debug_internal_pub_) {
         double timestamp_interval_ms = (matched_stamp - timestamp_nsec) / 1e6;
-        debug_internal_pub_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+        debug_internal_pub_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
           "debug/roi" + std::to_string(roi_i) + "/timestamp_interval_ms", timestamp_interval_ms);
-        debug_internal_pub_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+        debug_internal_pub_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
           "debug/roi" + std::to_string(roi_i) + "/timestamp_interval_offset_ms",
           timestamp_interval_ms - det2d.input_offset_ms);
       }
@@ -418,9 +419,9 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::roiCallback(
 
       if (debug_internal_pub_) {
         double timestamp_interval_ms = (timestamp_nsec - cached_det3d_msg_timestamp_) / 1e6;
-        debug_internal_pub_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+        debug_internal_pub_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
           "debug/roi" + std::to_string(roi_i) + "/timestamp_interval_ms", timestamp_interval_ms);
-        debug_internal_pub_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+        debug_internal_pub_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
           "debug/roi" + std::to_string(roi_i) + "/timestamp_interval_offset_ms",
           timestamp_interval_ms - det2d.input_offset_ms);
       }
