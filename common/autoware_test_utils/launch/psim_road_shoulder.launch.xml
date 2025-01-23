@@ -3,7 +3,7 @@
   <!-- Essential parameters -->
   <arg name="vehicle_model" default="sample_vehicle" description="vehicle model name"/>
   <arg name="sensor_model" default="awsim_sensor_kit" description="sensor model name"/>
-  <arg name="rviz_config" default="$(find-pkg-share autoware_test_utils)/rviz/psim_test_map.rviz" description="rviz config"/>
+  <arg name="rviz_config" default="$(find-pkg-share autoware_launch)/rviz/autoware_test_utils.rviz" description="rviz config"/>
   <arg name="use_sim_time" default="true"/>
 
   <include file="$(find-pkg-share autoware_launch)/launch/planning_simulator.launch.xml">

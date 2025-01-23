@@ -53,7 +53,7 @@
 
     <!-- Duplicated Node Checker -->
     <group>
-      <include file="$(find-pkg-share duplicated_node_checker)/launch/duplicated_node_checker.launch.xml">
+      <include file="$(find-pkg-share autoware_duplicated_node_checker)/launch/duplicated_node_checker.launch.xml">
         <arg name="config_file" value="$(var duplicated_node_checker_param_path)"/>
       </include>
     </group>
@@ -80,12 +80,12 @@
 
     <!-- MRM Operator -->
     <group>
-      <include file="$(find-pkg-share mrm_comfortable_stop_operator)/launch/mrm_comfortable_stop_operator.launch.py">
+      <include file="$(find-pkg-share autoware_mrm_comfortable_stop_operator)/launch/mrm_comfortable_stop_operator.launch.py">
         <arg name="config_file" value="$(var mrm_comfortable_stop_operator_param_path)"/>
       </include>
     </group>
     <group>
-      <include file="$(find-pkg-share mrm_emergency_stop_operator)/launch/mrm_emergency_stop_operator.launch.py">
+      <include file="$(find-pkg-share autoware_mrm_emergency_stop_operator)/launch/mrm_emergency_stop_operator.launch.py">
         <arg name="config_file" value="$(var mrm_emergency_stop_operator_param_path)"/>
       </include>
     </group>
@@ -105,7 +105,7 @@
 
     <!-- MRM Handler -->
     <group>
-      <include file="$(find-pkg-share mrm_handler)/launch/mrm_handler.launch.xml">
+      <include file="$(find-pkg-share autoware_mrm_handler)/launch/mrm_handler.launch.xml">
         <arg name="config_file" value="$(var mrm_handler_param_path)"/>
       </include>
     </group>
@@ -113,7 +113,7 @@
 
   <!-- Dummy Diag Publisher -->
   <group if="$(var launch_dummy_diag_publisher)">
-    <include file="$(find-pkg-share dummy_diag_publisher)/launch/dummy_diag_publisher.launch.xml">
+    <include file="$(find-pkg-share autoware_dummy_diag_publisher)/launch/dummy_diag_publisher.launch.xml">
       <arg name="config_file" value="$(var dummy_diag_publisher_param_path)"/>
       <arg name="extra_config_file_sensor" value="$(var sensor_launch_pkg)/config/dummy_diag_publisher/sensor_kit.param.yaml"/>
       <arg name="launch_rqt_reconfigure" value="$(var launch_rqt_reconfigure)"/>
