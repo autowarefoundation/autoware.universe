@@ -11,12 +11,15 @@
 // CONDITIONS OF ANY KIND, either express or implied. See the License for the specific language
 // governing permissions and limitations under the License.
 
-#include "mrm_handler/mrm_handler_core.hpp"
+#include "autoware/mrm_handler/mrm_handler_core.hpp"
 
 #include <chrono>
 #include <memory>
 #include <string>
 #include <utility>
+
+namespace autoware::mrm_handler
+{
 
 MrmHandler::MrmHandler(const rclcpp::NodeOptions & options) : Node("mrm_handler", options)
 {
@@ -583,5 +586,7 @@ bool MrmHandler::isArrivedAtGoal()
   return state->mode == OperationModeState::STOP;
 }
 
+}  // namespace autoware::mrm_handler
+
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(MrmHandler)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::mrm_handler::MrmHandler)
