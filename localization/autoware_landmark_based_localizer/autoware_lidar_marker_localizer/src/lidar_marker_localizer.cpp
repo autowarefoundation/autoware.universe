@@ -125,7 +125,7 @@ LidarMarkerLocalizer::LidarMarkerLocalizer(const rclcpp::NodeOptions & node_opti
   tf_listener_ = std::make_shared<tf2_ros::TransformListener>(*tf_buffer_, this, false);
 
   diagnostics_interface_.reset(
-    new autoware::universe_utils::DiagnosticInterface(this, "marker_detection_status"));
+    new autoware::universe_utils::DiagnosticsInterface(this, "marker_detection_status"));
 }
 
 void LidarMarkerLocalizer::initialize_diagnostics()
@@ -361,6 +361,12 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
 
   // Check that the leaf size is not too small, given the size of the data
   const int bin_num = static_cast<int>((max_x - min_x) / param_.resolution + 1);
+
+  if (bin_num < static_cast<int>(param_.intensity_pattern.size())) {
+    RCLCPP_WARN_STREAM_THROTTLE(
+      this->get_logger(), *this->get_clock(), 1000, "bin_num is too small!");
+    return std::vector<landmark_manager::Landmark>{};
+  }
 
   // initialize variables
   std::vector<int> vote(bin_num, 0);

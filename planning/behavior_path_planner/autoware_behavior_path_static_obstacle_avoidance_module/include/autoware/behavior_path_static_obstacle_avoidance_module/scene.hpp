@@ -17,6 +17,7 @@
 
 #include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
 #include "autoware/behavior_path_planner_common/interface/scene_module_visitor.hpp"
+#include "autoware/behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/data_structs.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/helper.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/shift_line_generator.hpp"
@@ -46,7 +47,8 @@ public:
     const std::string & name, rclcpp::Node & node, std::shared_ptr<AvoidanceParameters> parameters,
     const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
     std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
-      objects_of_interest_marker_interface_ptr_map);
+      objects_of_interest_marker_interface_ptr_map,
+    const std::shared_ptr<PlanningFactorInterface> & planning_factor_interface);
 
   CandidateOutput planCandidate() const override;
   BehaviorModuleOutput plan() override;
@@ -131,9 +133,10 @@ private:
       }
 
       if (finish_distance > -1.0e-03) {
-        steering_factor_interface_.set(
-          {left_shift.start_pose, left_shift.finish_pose}, {start_distance, finish_distance},
-          SteeringFactor::LEFT, SteeringFactor::TURNING, "");
+        planning_factor_interface_->add(
+          start_distance, finish_distance, left_shift.start_pose, left_shift.finish_pose,
+          PlanningFactor::SHIFT_LEFT,
+          utils::path_safety_checker::to_safety_factor_array(debug_data_.collision_check));
       }
     }
 
@@ -151,9 +154,10 @@ private:
       }
 
       if (finish_distance > -1.0e-03) {
-        steering_factor_interface_.set(
-          {right_shift.start_pose, right_shift.finish_pose}, {start_distance, finish_distance},
-          SteeringFactor::RIGHT, SteeringFactor::TURNING, "");
+        planning_factor_interface_->add(
+          start_distance, finish_distance, right_shift.start_pose, right_shift.finish_pose,
+          PlanningFactor::SHIFT_RIGHT,
+          utils::path_safety_checker::to_safety_factor_array(debug_data_.collision_check));
       }
     }
   }
