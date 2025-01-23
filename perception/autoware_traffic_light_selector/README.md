@@ -20,4 +20,6 @@
 
 ## Node parameters
 
+{{json_to_markdown("perception/autoware_traffic_light_selector/schema/traffic_light_selector.schema.json")}}
+
 N/A
