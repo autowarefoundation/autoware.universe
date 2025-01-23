@@ -33,7 +33,8 @@ __host__ __device__ __forceinline__ double convertCharToProbability(const std::u
 
 __host__ __device__ __forceinline__ std::uint8_t convertProbabilityToChar(const double value)
 {
-  return static_cast<std::uint8_t>(value * 255.0);
+  return static_cast<std::uint8_t>(std::max(0.0, std::min(1.0, value)) * 255.0);
+  ;
 }
 
 __host__ __device__ __forceinline__ double logOddsFusion(const double p1, const double p2)
@@ -43,7 +44,7 @@ __host__ __device__ __forceinline__ double logOddsFusion(const double p1, const 
   const double p1_norm = std::max(EPSILON_PROB, std::min(1.0 - EPSILON_PROB, p1));
   log_odds += std::log(p1_norm / (1.0 - p1_norm));
 
-  const double p2_norm = std::max(EPSILON_PROB, std::min(1.0 - EPSILON_PROB, p1));
+  const double p2_norm = std::max(EPSILON_PROB, std::min(1.0 - EPSILON_PROB, p2));
   log_odds += std::log(p2_norm / (1.0 - p2_norm));
 
   return 1.0 / (1.0 + std::exp(-log_odds));
