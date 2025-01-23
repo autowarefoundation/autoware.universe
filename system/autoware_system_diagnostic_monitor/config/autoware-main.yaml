@@ -1,11 +1,11 @@
 files:
-  - { path: $(find-pkg-share system_diagnostic_monitor)/config/map.yaml }
-  - { path: $(find-pkg-share system_diagnostic_monitor)/config/localization.yaml }
-  - { path: $(find-pkg-share system_diagnostic_monitor)/config/planning.yaml }
-  - { path: $(find-pkg-share system_diagnostic_monitor)/config/perception.yaml }
-  - { path: $(find-pkg-share system_diagnostic_monitor)/config/control.yaml }
-  - { path: $(find-pkg-share system_diagnostic_monitor)/config/vehicle.yaml }
-  - { path: $(find-pkg-share system_diagnostic_monitor)/config/system.yaml }
+  - { path: $(dirname)/map.yaml }
+  - { path: $(dirname)/localization.yaml }
+  - { path: $(dirname)/planning.yaml }
+  - { path: $(dirname)/perception.yaml }
+  - { path: $(dirname)/control.yaml }
+  - { path: $(dirname)/vehicle.yaml }
+  - { path: $(dirname)/system.yaml }
 
 units:
   - path: /autoware/modes/stop
