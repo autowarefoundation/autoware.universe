@@ -1,4 +1,4 @@
-// Copyright 2025 Tier IV, Inc.
+// Copyright 2020 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@
 #include <string>
 #include <vector>
 
-namespace autoware::system_monitor::cpu_monitor
+namespace autoware::system_monitor
 {
 
 /**
@@ -176,6 +176,6 @@ protected:
   virtual void publishCpuUsage(tier4_external_api_msgs::msg::CpuUsage usage);
 };
 
-}  // namespace autoware::system_monitor::cpu_monitor
+}  // namespace autoware::system_monitor
 
 #endif  // AUTOWARE__SYSTEM_MONITOR__CPU_MONITOR__CPU_MONITOR_BASE_HPP_

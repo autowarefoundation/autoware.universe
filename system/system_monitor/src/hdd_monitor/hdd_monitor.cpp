@@ -1,4 +1,4 @@
-// Copyright 2025 Autoware Foundation
+// Copyright 2020 Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -38,7 +38,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware::system_monitor::hdd_monitor
+namespace autoware::system_monitor
 {
 
 namespace bp = boost::process;
@@ -928,7 +928,7 @@ int HddMonitor::unmountDevice(std::string & device)
   return responses[0];
 }
 
-}  // namespace autoware::system_monitor::hdd_monitor
+}  // namespace autoware::system_monitor
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(autoware::system_monitor::hdd_monitor::HddMonitor)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::system_monitor::HddMonitor)

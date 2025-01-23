@@ -1,4 +1,4 @@
-// Copyright 2025 Autoware Foundation
+// Copyright 2020 Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
 #include <netlink/genl/ctrl.h>
 #include <netlink/genl/genl.h>
 
-namespace autoware::system_monitor::net_monitor
+namespace autoware::system_monitor
 {
 
 NL80211::NL80211() : bitrate_(0.0), initialized_(false), socket_(nullptr), id_(-1), cb_(nullptr)
@@ -210,4 +210,4 @@ void NL80211::shutdown()
   initialized_ = false;
 }
 
-}  // namespace autoware::system_monitor::net_monitor
+}  // namespace autoware::system_monitor

@@ -1,4 +1,4 @@
-// Copyright 2025 Tier IV, Inc.
+// Copyright 2020 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@
 #include <string>
 #include <thread>
 
-namespace autoware::system_monitor::ntp_monitor
+namespace autoware::system_monitor
 {
 
 class NTPMonitor : public rclcpp::Node
@@ -105,6 +105,6 @@ protected:
     {DiagStatus::OK, "OK"}, {DiagStatus::WARN, "high"}, {DiagStatus::ERROR, "too high"}};
 };
 
-}  // namespace autoware::system_monitor::ntp_monitor
+}  // namespace autoware::system_monitor
 
 #endif  // AUTOWARE__SYSTEM_MONITOR__NTP_MONITOR__NTP_MONITOR_HPP_

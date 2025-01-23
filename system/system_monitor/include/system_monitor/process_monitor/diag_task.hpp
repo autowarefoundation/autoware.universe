@@ -1,4 +1,4 @@
-// Copyright 2025 Tier IV, Inc.
+// Copyright 2020 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
 
 #include <string>
 
-namespace autoware::system_monitor::process_monitor
+namespace autoware::system_monitor
 {
 
 /**
@@ -118,6 +118,6 @@ private:
   struct ProcessInfo info_;    //!< @brief Struct for storing process information
 };
 
-}  // namespace autoware::system_monitor::process_monitor
+}  // namespace autoware::system_monitor
 
 #endif  // AUTOWARE__SYSTEM_MONITOR__PROCESS_MONITOR__DIAG_TASK_HPP_

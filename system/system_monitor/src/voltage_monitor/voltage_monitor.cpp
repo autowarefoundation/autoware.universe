@@ -1,4 +1,4 @@
-// Copyright 2025 Autoware Foundation
+// Copyright 2022 Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware::system_monitor::voltage_monitor
+namespace autoware::system_monitor
 {
 
 namespace bp = boost::process;
@@ -208,7 +208,7 @@ void VoltageMonitor::update()
   updater_.force_update();
 }
 
-}  // namespace autoware::system_monitor::voltage_monitor
+}  // namespace autoware::system_monitor
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(autoware::system_monitor::voltage_monitor::VoltageMonitor)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::system_monitor::VoltageMonitor)

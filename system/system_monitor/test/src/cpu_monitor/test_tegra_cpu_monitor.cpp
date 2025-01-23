@@ -1,4 +1,4 @@
-// Copyright 2025 Tier IV, Inc.
+// Copyright 2020 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@
 #include <string>
 #include <vector>
 
-namespace autoware::system_monitor::cpu_monitor
+namespace autoware::system_monitor
 {
 
 static constexpr const char * TEST_FILE = "test";
@@ -675,7 +675,7 @@ TEST_F(CPUMonitorTestSuite, dummyCPUMonitorTest)
   monitor->update();
 }
 
-}  // namespace autoware::system_monitor::cpu_monitor
+}  // namespace autoware::system_monitor
 
 int main(int argc, char ** argv)
 {

@@ -1,4 +1,4 @@
-// Copyright 2025 Autoware Foundation
+// Copyright 2020 Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@
 #include <string>
 #include <vector>
 
-namespace autoware::system_monitor::gpu_monitor
+namespace autoware::system_monitor
 {
 
 GPUMonitor::GPUMonitor(const rclcpp::NodeOptions & options) : GPUMonitorBase("gpu_monitor", options)
@@ -495,7 +495,7 @@ bool GPUMonitor::getSupportedGPUClocks(
   return true;
 }
 
-}  // namespace autoware::system_monitor::gpu_monitor
+}  // namespace autoware::system_monitor
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(autoware::system_monitor::gpu_monitor::GPUMonitor)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::system_monitor::GPUMonitor)

@@ -1,4 +1,4 @@
-// Copyright 2025 Tier IV, Inc.
+// Copyright 2020 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,7 +29,7 @@
 #include <string>
 #include <vector>
 
-namespace autoware::system_monitor::hdd_monitor
+namespace autoware::system_monitor
 {
 
 /**
@@ -394,6 +394,6 @@ protected:
     {DiagStatus::OK, "OK"}, {DiagStatus::WARN, "not connected"}, {DiagStatus::ERROR, "unused"}};
 };
 
-}  // namespace autoware::system_monitor::hdd_monitor
+}  // namespace autoware::system_monitor
 
 #endif  // AUTOWARE__SYSTEM_MONITOR__HDD_MONITOR__HDD_MONITOR_HPP_

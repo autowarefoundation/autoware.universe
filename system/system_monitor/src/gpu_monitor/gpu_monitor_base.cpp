@@ -1,4 +1,4 @@
-// Copyright 2025 Autoware Foundation
+// Copyright 2020 Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -23,7 +23,7 @@
 
 #include <string>
 
-namespace autoware::system_monitor::gpu_monitor
+namespace autoware::system_monitor
 {
 
 GPUMonitorBase::GPUMonitorBase(const std::string & node_name, const rclcpp::NodeOptions & options)
@@ -81,4 +81,4 @@ void GPUMonitorBase::checkFrequency(diagnostic_updater::DiagnosticStatusWrapper 
   RCLCPP_INFO_ONCE(get_logger(), "GPUMonitorBase::checkFrequency not implemented.");
 }
 
-}  // namespace autoware::system_monitor::gpu_monitor
+}  // namespace autoware::system_monitor

@@ -1,4 +1,4 @@
-// Copyright 2025 Tier IV, Inc.
+// Copyright 2020 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
 
 #include <string>
 
-namespace autoware::system_monitor::cpu_monitor
+namespace autoware::system_monitor
 {
 
 class CPUMonitor : public CPUMonitorBase
@@ -53,6 +53,6 @@ protected:
     diagnostic_updater::DiagnosticStatusWrapper & stat) override;  // NOLINT(runtime/references)
 };
 
-}  // namespace autoware::system_monitor::cpu_monitor
+}  // namespace autoware::system_monitor
 
 #endif  // AUTOWARE__SYSTEM_MONITOR__CPU_MONITOR__ARM_CPU_MONITOR_HPP_

@@ -1,4 +1,4 @@
-// Copyright 2025 Tier IV, Inc.
+// Copyright 2020 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@
 #include <map>
 #include <string>
 
-namespace autoware::system_monitor::hdd_reader
+namespace autoware::system_monitor
 {
 
 /**
@@ -138,6 +138,6 @@ struct UnmountDeviceInfo
  */
 typedef std::map<std::string, HddInfo> HddInfoList;
 
-}  // namespace autoware::system_monitor::hdd_reader
+}  // namespace autoware::system_monitor
 
 #endif  // AUTOWARE__SYSTEM_MONITOR__HDD_READER__HDD_READER_HPP_

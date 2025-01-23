@@ -1,4 +1,4 @@
-// Copyright 2025 Tier IV, Inc.
+// Copyright 2020 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@
 #include <map>
 #include <string>
 
-namespace autoware::system_monitor::mem_monitor
+namespace autoware::system_monitor
 {
 
 class MemMonitor : public rclcpp::Node
@@ -81,6 +81,6 @@ protected:
     {DiagStatus::OK, "OK"}, {DiagStatus::WARN, "high load"}, {DiagStatus::ERROR, "very high load"}};
 };
 
-}  // namespace autoware::system_monitor::mem_monitor
+}  // namespace autoware::system_monitor
 
 #endif  // AUTOWARE__SYSTEM_MONITOR__MEM_MONITOR__MEM_MONITOR_HPP_

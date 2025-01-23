@@ -1,4 +1,4 @@
-// Copyright 2025 Autoware Foundation
+// Copyright 2020 Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@
 #include <string>
 #include <vector>
 
-namespace autoware::system_monitor::net_monitor
+namespace autoware::system_monitor
 {
 
 static constexpr const char * DOCKER_ENV = "/.dockerenv";
@@ -187,7 +187,7 @@ TEST_F(NetMonitorTestSuite, usageInvalidDeviceParameterTest)
   ASSERT_STREQ(status.message.c_str(), "invalid device parameter");
 }
 
-}  // namespace autoware::system_monitor::net_monitor
+}  // namespace autoware::system_monitor
 
 int main(int argc, char ** argv)
 {

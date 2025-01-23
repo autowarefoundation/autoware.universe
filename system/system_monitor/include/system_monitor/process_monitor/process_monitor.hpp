@@ -1,4 +1,4 @@
-// Copyright 2025 Tier IV, Inc.
+// Copyright 2020 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@
 #include <string>
 #include <vector>
 
-namespace autoware::system_monitor::process_monitor
+namespace autoware::system_monitor
 {
 
 namespace bp = boost::process;
@@ -140,6 +140,6 @@ protected:
   rclcpp::CallbackGroup::SharedPtr timer_callback_group_;  //!< @brief Callback Group
 };
 
-}  // namespace autoware::system_monitor::process_monitor
+}  // namespace autoware::system_monitor
 
 #endif  // AUTOWARE__SYSTEM_MONITOR__PROCESS_MONITOR__PROCESS_MONITOR_HPP_

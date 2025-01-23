@@ -1,4 +1,4 @@
-// Copyright 2025 Autoware Foundation
+// Copyright 2022 Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,7 +22,7 @@
 #include <cstring>
 #include <string>
 
-namespace autoware::system_monitor::traffic_reader
+namespace autoware::system_monitor
 {
 
 /**
@@ -93,4 +93,4 @@ int main(int argc, char ** argv)
   return EXIT_SUCCESS;
 }
 
-}  // namespace autoware::system_monitor::traffic_reader
+}  // namespace autoware::system_monitor

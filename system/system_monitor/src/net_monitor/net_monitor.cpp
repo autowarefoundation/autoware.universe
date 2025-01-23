@@ -1,4 +1,4 @@
-// Copyright 2025 Autoware Foundation
+// Copyright 2020 Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@
 #include <linux/if_link.h>
 #include <linux/sockios.h>
 
-namespace autoware::system_monitor::net_monitor
+namespace autoware::system_monitor
 {
 
 NetMonitor::NetMonitor(const rclcpp::NodeOptions & options)
@@ -879,7 +879,7 @@ bool NetSnmp::read_value_from_proc(
   }
 }
 
-}  // namespace autoware::system_monitor::net_monitor
+}  // namespace autoware::system_monitor
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(autoware::system_monitor::net_monitor::NetMonitor)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::system_monitor::NetMonitor)

@@ -1,4 +1,4 @@
-// Copyright 2025 Tier IV, Inc.
+// Copyright 2020 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@
    : ((X) & nvmlClocksThrottleReasonDisplayClockSetting)       ? "DisplayClockSetting"       \
                                                                : "UNKNOWN")
 
-namespace autoware::system_monitor::gpu_monitor
+namespace autoware::system_monitor
 {
 
 /**
@@ -160,6 +160,6 @@ protected:
     {DiagStatus::OK, "OK"}, {DiagStatus::WARN, "unsupported clock"}};
 };
 
-}  // namespace autoware::system_monitor::gpu_monitor
+}  // namespace autoware::system_monitor
 
 #endif  // AUTOWARE__SYSTEM_MONITOR__GPU_MONITOR__NVML_GPU_MONITOR_HPP_

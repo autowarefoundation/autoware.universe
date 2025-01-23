@@ -1,4 +1,4 @@
-// Copyright 2025 The Autoware Contributors
+// Copyright 2022 The Autoware Contributors
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@
 #include <thread>
 #include <vector>
 
-namespace autoware::system_monitor::traffic_reader
+namespace autoware::system_monitor
 {
 
 namespace local = boost::asio::local;
@@ -110,6 +110,6 @@ protected:
   traffic_reader_service::Result result_;                       //!< @brief Result of nethogs
 };
 
-}  // namespace autoware::system_monitor::traffic_reader
+}  // namespace autoware::system_monitor
 
 #endif  // AUTOWARE__SYSTEM_MONITOR__TRAFFIC_READER__TRAFFIC_READER_SERVICE_HPP_

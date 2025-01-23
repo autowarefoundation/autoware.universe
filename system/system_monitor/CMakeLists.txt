@@ -147,42 +147,42 @@ target_link_libraries(hdd_reader ${Boost_LIBRARIES} ${LIBRARIES})
 target_link_libraries(traffic_reader ${Boost_LIBRARIES} ${LIBRARIES})
 
 rclcpp_components_register_node(cpu_monitor_lib
-  PLUGIN "CPUMonitor"
+  PLUGIN "autoware::system_monitor::CPUMonitor"
   EXECUTABLE cpu_monitor
 )
 
 rclcpp_components_register_node(hdd_monitor_lib
-  PLUGIN "HddMonitor"
+  PLUGIN "autoware::system_monitor::HddMonitor"
   EXECUTABLE hdd_monitor
 )
 
 rclcpp_components_register_node(mem_monitor_lib
-  PLUGIN "MemMonitor"
+  PLUGIN "autoware::system_monitor::MemMonitor"
   EXECUTABLE mem_monitor
 )
 
 rclcpp_components_register_node(net_monitor_lib
-  PLUGIN "NetMonitor"
+  PLUGIN "autoware::system_monitor::NetMonitor"
   EXECUTABLE net_monitor
 )
 
 rclcpp_components_register_node(ntp_monitor_lib
-  PLUGIN "NTPMonitor"
+  PLUGIN "autoware::system_monitor::NTPMonitor"
   EXECUTABLE ntp_monitor
 )
 
 rclcpp_components_register_node(process_monitor_lib
-  PLUGIN "ProcessMonitor"
+  PLUGIN "autoware::system_monitor::ProcessMonitor"
   EXECUTABLE process_monitor
 )
 
 rclcpp_components_register_node(gpu_monitor_lib
-  PLUGIN "GPUMonitor"
+  PLUGIN "autoware::system_monitor::GPUMonitor"
   EXECUTABLE gpu_monitor
 )
 
 rclcpp_components_register_node(voltage_monitor_lib
-  PLUGIN "VoltageMonitor"
+  PLUGIN "autoware::system_monitor::VoltageMonitor"
   EXECUTABLE voltage_monitor
 )
 

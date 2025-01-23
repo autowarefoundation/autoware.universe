@@ -1,4 +1,4 @@
-// Copyright 2025 Tier IV, Inc.
+// Copyright 2020 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,7 +24,7 @@
 
 #include <string>
 
-namespace autoware::system_monitor::gpu_monitor
+namespace autoware::system_monitor
 {
 
 class GPUMonitor : public GPUMonitorBase
@@ -37,6 +37,6 @@ public:
   explicit GPUMonitor(const rclcpp::NodeOptions & options);
 };
 
-}  // namespace autoware::system_monitor::gpu_monitor
+}  // namespace autoware::system_monitor
 
 #endif  // AUTOWARE__SYSTEM_MONITOR__GPU_MONITOR__UNKNOWN_GPU_MONITOR_HPP_
