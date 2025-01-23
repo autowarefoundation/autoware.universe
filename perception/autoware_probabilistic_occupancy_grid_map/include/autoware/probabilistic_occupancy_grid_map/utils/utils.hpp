@@ -56,7 +56,7 @@ bool transformPointcloud(
   const sensor_msgs::msg::PointCloud2 & input, const tf2_ros::Buffer & tf2,
   const std::string & target_frame, sensor_msgs::msg::PointCloud2 & output);
 
-bool transformPointcloud(
+bool transformPointcloudAsync(
   CudaPointCloud2 & input, const tf2_ros::Buffer & tf2, const std::string & target_frame);
 
 Eigen::Matrix4f getTransformMatrix(const geometry_msgs::msg::Pose & pose);

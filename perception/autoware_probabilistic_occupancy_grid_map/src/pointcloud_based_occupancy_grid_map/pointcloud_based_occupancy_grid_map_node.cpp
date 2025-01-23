@@ -140,6 +140,9 @@ PointcloudBasedOccupancyGridMapNode::PointcloudBasedOccupancyGridMapNode(
       time_keeper_ = std::make_shared<autoware::universe_utils::TimeKeeper>(time_keeper);
     }
   }
+
+  cudaStreamCreate(&raw_pointcloud_.stream);
+  cudaStreamCreate(&obstacle_pointcloud_.stream);
 }
 
 void PointcloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw(
@@ -153,8 +156,8 @@ void PointcloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw(
     stop_watch_ptr_->toc("processing_time", true);
   }
 
-  raw_pointcloud_.fromROSMsg(*input_raw_msg);
-  obstacle_pointcloud_.fromROSMsg(*input_obstacle_msg);
+  raw_pointcloud_.fromROSMsgAsync(*input_raw_msg);
+  obstacle_pointcloud_.fromROSMsgAsync(*input_obstacle_msg);
 
   // if scan_origin_frame_ is "", replace it with raw_pointcloud_.header.frame_id
   if (scan_origin_frame_.empty()) {
@@ -165,12 +168,12 @@ void PointcloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw(
   if (use_height_filter_) {
     // Make sure that the frame is base_link
     if (raw_pointcloud_.header.frame_id != base_link_frame_) {
-      if (!utils::transformPointcloud(raw_pointcloud_, *tf2_, base_link_frame_)) {
+      if (!utils::transformPointcloudAsync(raw_pointcloud_, *tf2_, base_link_frame_)) {
         return;
       }
     }
     if (input_obstacle_msg->header.frame_id != base_link_frame_) {
-      if (!utils::transformPointcloud(obstacle_pointcloud_, *tf2_, base_link_frame_)) {
+      if (!utils::transformPointcloudAsync(obstacle_pointcloud_, *tf2_, base_link_frame_)) {
         return;
       }
     }
@@ -213,6 +216,8 @@ void PointcloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw(
     std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
     if (time_keeper_)
       inner_st_ptr = std::make_unique<ScopedTimeTrack>("publish_occupancy_grid_map", *time_keeper_);
+
+    occupancy_grid_map_ptr_->copyDeviceCostmapToHost();
 
     // publish
     occupancy_grid_map_pub_->publish(OccupancyGridMapToMsgPtr(

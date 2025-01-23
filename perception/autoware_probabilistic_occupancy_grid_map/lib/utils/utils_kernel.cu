@@ -268,12 +268,12 @@ __global__ void copyMapRegionKernel(
 
 void transformPointCloudLaunch(
   std::uint8_t * points, std::size_t num_points, std::size_t points_step,
-  const Eigen::Matrix3f & rotation, const Eigen::Vector3f & translation)
+  const Eigen::Matrix3f & rotation, const Eigen::Vector3f & translation, cudaStream_t stream)
 {
   // Launch kernel
   int threads_per_block = 256;
   int num_blocks = (num_points + threads_per_block - 1) / threads_per_block;
-  transformPointCloudKernel<<<num_blocks, threads_per_block>>>(
+  transformPointCloudKernel<<<num_blocks, threads_per_block, 0, stream>>>(
     points, num_points, points_step, rotation, translation);
 }
 

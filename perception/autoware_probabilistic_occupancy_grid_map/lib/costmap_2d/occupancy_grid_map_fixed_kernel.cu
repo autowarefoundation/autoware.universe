@@ -29,12 +29,14 @@ namespace costmap_2d::map_fixed
 static constexpr float RANGE_DISCRETIZATION_RESOLUTION = 0.001f;
 
 __global__ void prepareTensorKernel(
-  const float * input_pointcloud, const std::size_t num_points, const std::size_t points_step,
-  const std::size_t angle_bins, const std::size_t range_bins, const float min_height,
-  const float max_height, const float min_angle, const float angle_increment_inv,
-  const float range_resolution_inv, const Eigen::Matrix3f * rotation_map,
-  const Eigen::Vector3f * translation_map, const Eigen::Matrix3f * rotation_scan,
-  const Eigen::Vector3f * translation_scan, std::uint64_t * points_tensor)
+  const float * __restrict__ input_pointcloud, const std::size_t num_points,
+  const std::size_t points_step, const std::size_t angle_bins, const std::size_t range_bins,
+  const float min_height, const float max_height, const float min_angle,
+  const float angle_increment_inv, const float range_resolution_inv,
+  const Eigen::Matrix3f * __restrict__ rotation_map,
+  const Eigen::Vector3f * __restrict__ translation_map,
+  const Eigen::Matrix3f * __restrict__ rotation_scan,
+  const Eigen::Vector3f * __restrict__ translation_scan, std::uint64_t * __restrict__ points_tensor)
 {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   if (idx >= num_points) {
@@ -82,10 +84,11 @@ __global__ void prepareTensorKernel(
 }
 
 __global__ void fillEmptySpaceKernel(
-  const std::uint64_t * points_tensor, const std::size_t angle_bins, const std::size_t range_bins,
-  const float map_resolution_inv, const float scan_origin_x, const float scan_origin_y,
-  const float map_origin_x, const float map_origin_y, const int num_cells_x, const int num_cells_y,
-  std::uint8_t empty_value, std::uint8_t * costmap_tensor)
+  const std::uint64_t * __restrict__ points_tensor, const std::size_t angle_bins,
+  const std::size_t range_bins, const float map_resolution_inv, const float scan_origin_x,
+  const float scan_origin_y, const float map_origin_x, const float map_origin_y,
+  const int num_cells_x, const int num_cells_y, std::uint8_t empty_value,
+  std::uint8_t * __restrict__ costmap_tensor)
 {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   if (idx >= angle_bins * range_bins) return;
@@ -116,11 +119,13 @@ __global__ void fillEmptySpaceKernel(
 }
 
 __global__ void fillUnknownSpaceKernel(
-  const std::uint64_t * raw_points_tensor, const std::uint64_t * obstacle_points_tensor,
-  const float distance_margin, const std::size_t angle_bins, const std::size_t range_bins,
-  const float map_resolution_inv, const float scan_origin_x, const float scan_origin_y,
-  const float map_origin_x, const float map_origin_y, const int num_cells_x, const int num_cells_y,
-  std::uint8_t free_space_value, std::uint8_t no_information_value, std::uint8_t * costmap_tensor)
+  const std::uint64_t * __restrict__ raw_points_tensor,
+  const std::uint64_t * __restrict__ obstacle_points_tensor, const float distance_margin,
+  const std::size_t angle_bins, const std::size_t range_bins, const float map_resolution_inv,
+  const float scan_origin_x, const float scan_origin_y, const float map_origin_x,
+  const float map_origin_y, const int num_cells_x, const int num_cells_y,
+  std::uint8_t free_space_value, std::uint8_t no_information_value,
+  std::uint8_t * __restrict__ costmap_tensor)
 {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   if (idx >= angle_bins * range_bins) return;
@@ -253,10 +258,10 @@ __global__ void fillUnknownSpaceKernel(
 }
 
 __global__ void fillObstaclesKernel(
-  const std::uint64_t * obstacle_points_tensor, const float distance_margin,
+  const std::uint64_t * __restrict__ obstacle_points_tensor, const float distance_margin,
   const std::size_t angle_bins, const std::size_t range_bins, const float map_resolution_inv,
   const float map_origin_x, const float map_origin_y, const int num_cells_x, const int num_cells_y,
-  std::uint8_t obstacle_value, std::uint8_t * costmap_tensor)
+  std::uint8_t obstacle_value, std::uint8_t * __restrict__ costmap_tensor)
 {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   if (idx >= angle_bins * range_bins) return;

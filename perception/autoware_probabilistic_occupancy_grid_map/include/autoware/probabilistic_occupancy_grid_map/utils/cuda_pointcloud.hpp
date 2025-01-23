@@ -24,7 +24,7 @@
 class CudaPointCloud2 : public sensor_msgs::msg::PointCloud2
 {
 public:
-  void fromROSMsg(const sensor_msgs::msg::PointCloud2 & msg)
+  void fromROSMsgAsync(const sensor_msgs::msg::PointCloud2 & msg)
   {
     // cSpell: ignore knzo25
     // NOTE(knzo25): replace this with the cuda blackboard later
@@ -42,10 +42,11 @@ public:
       data = autoware::cuda_utils::make_unique<std::uint8_t[]>(capacity_);
     }
 
-    cudaMemcpy(data.get(), msg.data.data(), msg.data.size(), cudaMemcpyHostToDevice);
+    cudaMemcpyAsync(data.get(), msg.data.data(), msg.data.size(), cudaMemcpyHostToDevice, stream);
   }
 
   autoware::cuda_utils::CudaUniquePtr<std::uint8_t[]> data;
+  cudaStream_t stream;
 
 private:
   std::size_t capacity_{0};

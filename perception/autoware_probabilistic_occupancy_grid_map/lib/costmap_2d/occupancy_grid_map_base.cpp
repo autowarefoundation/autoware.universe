@@ -202,5 +202,12 @@ OccupancyGridMapInterface::getDeviceCostmap() const
   return device_costmap_;
 }
 
+void OccupancyGridMapInterface::copyDeviceCostmapToHost() const
+{
+  cudaMemcpy(
+    costmap_, device_costmap_.get(), getSizeInCellsX() * getSizeInCellsY() * sizeof(std::uint8_t),
+    cudaMemcpyDeviceToHost);
+}
+
 }  // namespace costmap_2d
 }  // namespace autoware::occupancy_grid_map

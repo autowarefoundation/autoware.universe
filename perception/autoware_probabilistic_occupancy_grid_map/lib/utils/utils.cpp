@@ -47,7 +47,7 @@ bool transformPointcloud(
   return true;
 }
 
-bool transformPointcloud(
+bool transformPointcloudAsync(
   CudaPointCloud2 & input, const tf2_ros::Buffer & tf2, const std::string & target_frame)
 {
   geometry_msgs::msg::TransformStamped tf_stamped;
@@ -66,7 +66,8 @@ bool transformPointcloud(
   Eigen::Matrix3f rotation = tf_matrix.block<3, 3>(0, 0);
   Eigen::Vector3f translation = tf_matrix.block<3, 1>(0, 3);
   transformPointCloudLaunch(
-    input.data.get(), input.width * input.height, input.point_step, rotation, translation);
+    input.data.get(), input.width * input.height, input.point_step, rotation, translation,
+    input.stream);
   input.header.frame_id = target_frame;
   return true;
 }

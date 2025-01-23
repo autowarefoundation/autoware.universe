@@ -104,6 +104,8 @@ public:
 
   const autoware::cuda_utils::CudaUniquePtr<std::uint8_t[]> & getDeviceCostmap() const;
 
+  void copyDeviceCostmapToHost() const;
+
 protected:
   rclcpp::Logger logger_{rclcpp::get_logger("pointcloud_based_occupancy_grid_map")};
   rclcpp::Clock clock_{RCL_ROS_TIME};
