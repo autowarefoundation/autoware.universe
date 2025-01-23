@@ -214,6 +214,7 @@ public:
     bool passed_first_pass_judge{false};
     bool passed_second_pass_judge{false};
     std::optional<geometry_msgs::msg::Pose> absence_traffic_light_creep_wall{std::nullopt};
+    std::optional<geometry_msgs::msg::Pose> too_late_stop_wall_pose{std::nullopt};
 
     std::optional<std::vector<lanelet::CompoundPolygon3d>> attention_area{std::nullopt};
     std::optional<std::vector<lanelet::CompoundPolygon3d>> occlusion_attention_area{std::nullopt};

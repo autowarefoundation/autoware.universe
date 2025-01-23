@@ -1211,9 +1211,12 @@ CandidateOutput StaticObstacleAvoidanceModule::planCandidate() const
   const uint16_t planning_factor_direction = std::invoke([&output]() {
     return output.lateral_shift > 0.0 ? PlanningFactor::SHIFT_LEFT : PlanningFactor::SHIFT_RIGHT;
   });
+
   planning_factor_interface_->add(
     output.start_distance_to_path_change, output.finish_distance_to_path_change, sl_front.start,
-    sl_back.end, planning_factor_direction, SafetyFactorArray{}, true, 0.0, output.lateral_shift);
+    sl_back.end, planning_factor_direction,
+    utils::path_safety_checker::to_safety_factor_array(debug_data_.collision_check), true, 0.0,
+    output.lateral_shift);
 
   output.path_candidate = shifted_path.path;
   return output;

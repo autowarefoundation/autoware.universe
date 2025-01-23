@@ -36,10 +36,10 @@ ROIs detected from YOLOX will be selected by a combination of `expect/rois`. At 
 
 ### Output
 
-| Name                  | Type                                               | Description                  |
-| --------------------- | -------------------------------------------------- | ---------------------------- |
-| `~/output/rois`       | `tier4_perception_msgs::msg::TrafficLightRoiArray` | The detected accurate rois   |
-| `~/debug/exe_time_ms` | `tier4_debug_msgs::msg::Float32Stamped`            | The time taken for inference |
+| Name                  | Type                                                | Description                  |
+| --------------------- | --------------------------------------------------- | ---------------------------- |
+| `~/output/rois`       | `tier4_perception_msgs::msg::TrafficLightRoiArray`  | The detected accurate rois   |
+| `~/debug/exe_time_ms` | `autoware_internal_debug_msgs::msg::Float32Stamped` | The time taken for inference |
 
 ## Parameters
 
