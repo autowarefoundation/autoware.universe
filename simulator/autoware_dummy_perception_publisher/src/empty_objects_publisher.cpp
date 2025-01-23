@@ -53,8 +53,7 @@ private:
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(
-    std::make_shared<autoware::dummy_perception_publisher::EmptyObjectsPublisher>());
+  rclcpp::spin(std::make_shared<autoware::dummy_perception_publisher::EmptyObjectsPublisher>());
   rclcpp::shutdown();
   return 0;
 }
