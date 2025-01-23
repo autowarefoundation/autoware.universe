@@ -10,7 +10,6 @@
 | -------------------------- | ---------------------------------------------- | ----------------------------- |
 | `input/car_signals`        | tier4_perception_msgs::msg::TrafficLightArray  | Car TLs classification        |
 | `input/pedestrian_signals` | tier4_perception_msgs::msg::TrafficLightArray  | Pedestrian TLs classification |
-| `input/expect_rois`        | autoware_perception_msgs::TrafficLightRoiArray | expected TL ROIs              |
 
 ## Output topics
 
