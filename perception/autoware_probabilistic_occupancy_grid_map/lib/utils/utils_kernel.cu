@@ -249,9 +249,9 @@ __global__ void transformPointCloudKernel(
 
 __global__ void copyMapRegionKernel(
   const std::uint8_t * source_map, unsigned int sm_lower_left_x, unsigned int sm_lower_left_y,
-  unsigned int sm_size_x, std::uint8_t * dest_map, unsigned int dm_lower_left_x,
-  unsigned int dm_lower_left_y, unsigned int dm_size_x, unsigned int region_size_x,
-  unsigned int region_size_y)
+  unsigned int sm_size_x, unsigned int sm_size_y, std::uint8_t * dest_map,
+  unsigned int dm_lower_left_x, unsigned int dm_lower_left_y, unsigned int dm_size_x,
+  unsigned int dm_size_y, unsigned int region_size_x, unsigned int region_size_y)
 {
   const int idx = blockIdx.x * blockDim.x + threadIdx.x;
   if (idx >= region_size_x * region_size_y) return;
@@ -264,7 +264,9 @@ __global__ void copyMapRegionKernel(
   const int dm_index =
     dm_lower_left_y * dm_size_x + dm_lower_left_x + region_y * dm_size_x + region_x;
 
-  dest_map[dm_index] = source_map[sm_index];
+  if (sm_index < sm_size_x * sm_size_y && dm_index < dm_size_x * dm_size_y) {
+    dest_map[dm_index] = source_map[sm_index];
+  }
 }
 
 void transformPointCloudLaunch(
@@ -280,17 +282,18 @@ void transformPointCloudLaunch(
 
 void copyMapRegionLaunch(
   const std::uint8_t * source_map, unsigned int sm_lower_left_x, unsigned int sm_lower_left_y,
-  unsigned int sm_size_x, std::uint8_t * dest_map, unsigned int dm_lower_left_x,
-  unsigned int dm_lower_left_y, unsigned int dm_size_x, unsigned int region_size_x,
-  unsigned int region_size_y, cudaStream_t stream)
+  unsigned int sm_size_x, unsigned int sm_size_y, std::uint8_t * dest_map,
+  unsigned int dm_lower_left_x, unsigned int dm_lower_left_y, unsigned int dm_size_x,
+  unsigned int dm_size_y, unsigned int region_size_x, unsigned int region_size_y,
+  cudaStream_t stream)
 {
   const int threads_per_block = 256;
   const int num_blocks =
     (region_size_x * region_size_y + threads_per_block - 1) / threads_per_block;
 
   copyMapRegionKernel<<<num_blocks, threads_per_block, 0, stream>>>(
-    source_map, sm_lower_left_x, sm_lower_left_y, sm_size_x, dest_map, dm_lower_left_x,
-    dm_lower_left_y, dm_size_x, region_size_x, region_size_y);
+    source_map, sm_lower_left_x, sm_lower_left_y, sm_size_x, sm_size_y, dest_map, dm_lower_left_x,
+    dm_lower_left_y, dm_size_x, dm_size_y, region_size_x, region_size_y);
 }
 
 }  // namespace utils

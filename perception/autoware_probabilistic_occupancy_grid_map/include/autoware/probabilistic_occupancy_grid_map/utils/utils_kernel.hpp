@@ -37,9 +37,10 @@ void __device__ raytrace(
 
 void copyMapRegionLaunch(
   const std::uint8_t * source_map, unsigned int sm_lower_left_x, unsigned int sm_lower_left_y,
-  unsigned int sm_size_x, std::uint8_t * dest_map, unsigned int dm_lower_left_x,
-  unsigned int dm_lower_left_y, unsigned int dm_size_x, unsigned int region_size_x,
-  unsigned int region_size_y, cudaStream_t stream);
+  unsigned int sm_size_x, unsigned int sm_size_y, std::uint8_t * dest_map,
+  unsigned int dm_lower_left_x, unsigned int dm_lower_left_y, unsigned int dm_size_x,
+  unsigned int dm_size_y, unsigned int region_size_x, unsigned int region_size_y,
+  cudaStream_t stream);
 
 void transformPointCloudLaunch(
   std::uint8_t * points, std::size_t num_points, std::size_t points_step,

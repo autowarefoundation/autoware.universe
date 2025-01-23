@@ -133,8 +133,8 @@ void OccupancyGridMapInterface::updateOrigin(double new_origin_x, double new_ori
 
   if (use_cuda_) {
     copyMapRegionLaunch(
-      device_costmap_.get(), lower_left_x, lower_left_y, size_x_, device_costmap_aux_.get(), 0, 0,
-      cell_size_x, cell_size_x, cell_size_y, stream_);
+      device_costmap_.get(), lower_left_x, lower_left_y, size_x_, size_y_,
+      device_costmap_aux_.get(), 0, 0, cell_size_x, cell_size_y, cell_size_x, cell_size_y, stream_);
 
     cudaMemset(
       device_costmap_.get(), cost_value::NO_INFORMATION, size_x_ * size_y_ * sizeof(std::uint8_t));
@@ -158,11 +158,22 @@ void OccupancyGridMapInterface::updateOrigin(double new_origin_x, double new_ori
   int start_x{lower_left_x - cell_ox};
   int start_y{lower_left_y - cell_oy};
 
+  if (
+    start_x < 0 || start_y < 0 || start_x + cell_size_x > size_x_ ||
+    start_y + cell_size_y > size_y_) {
+    RCLCPP_ERROR(
+      rclcpp::get_logger("pointcloud_based_occupancy_grid_map"),
+      "update coordinates are negative or out of bounds: start.x=%d, start.y=%d, cell_size.x=%d, "
+      "cell_size.y=%d size_x:%d, size_y=%d",
+      start_x, start_y, cell_size_x, cell_size_y, size_x_, size_y_);
+    return;
+  }
+
   // now we want to copy the overlapping information back into the map, but in its new location
   if (use_cuda_) {
     copyMapRegionLaunch(
-      device_costmap_aux_.get(), 0, 0, cell_size_x, device_costmap_.get(), start_x, start_y,
-      size_x_, cell_size_x, cell_size_y, stream_);
+      device_costmap_aux_.get(), 0, 0, cell_size_x, cell_size_y, device_costmap_.get(), start_x,
+      start_y, size_x_, size_y_, cell_size_x, cell_size_y, stream_);
   } else {
     copyMapRegion(
       local_map, 0, 0, cell_size_x, costmap_, start_x, start_y, size_x_, cell_size_x, cell_size_y);
