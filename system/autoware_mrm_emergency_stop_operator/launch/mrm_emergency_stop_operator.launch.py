@@ -30,7 +30,7 @@ def launch_setup(context, *args, **kwargs):
     component = ComposableNode(
         package="autoware_mrm_emergency_stop_operator",
         plugin="autoware::mrm_emergency_stop_operator::MrmEmergencyStopOperator",
-        name="autoware_mrm_emergency_stop_operator",
+        name="mrm_emergency_stop_operator",
         parameters=[
             params,
         ],
@@ -44,7 +44,7 @@ def launch_setup(context, *args, **kwargs):
 
     container = ComposableNodeContainer(
         name="mrm_emergency_stop_operator_container",
-        namespace="autoware_mrm_emergency_stop_operator",
+        namespace="mrm_emergency_stop_operator",
         package="rclcpp_components",
         executable="component_container",
         composable_node_descriptions=[
