@@ -657,9 +657,13 @@ std::unique_ptr<cuda_blackboard::CudaPointCloud2> CudaPointcloudPreprocessor::pr
     device_input_points, device_transformed_points, num_input_points, transform_struct);
 
   int crop_box_blocks_per_grid = std::min(blocks_per_grid, max_blocks_per_grid_);
-  cropBoxKernel<<<crop_box_blocks_per_grid, threads_per_block_, 0, stream_>>>(
-    device_transformed_points, device_crop_mask, num_input_points,
-    thrust::raw_pointer_cast(device_crop_box_structs_.data()), host_crop_box_structs_.size());
+  if (host_crop_box_structs_.size() > 0) {
+    cropBoxKernel<<<crop_box_blocks_per_grid, threads_per_block_, 0, stream_>>>(
+      device_transformed_points, device_crop_mask, num_input_points,
+      thrust::raw_pointer_cast(device_crop_box_structs_.data()), host_crop_box_structs_.size());
+  } else {
+    thrust::fill(thrust::device, device_crop_mask, device_crop_mask + num_input_points, 1);
+  }
 
   if (use_3d_undistortion_ && device_twist_3d_structs_.size() > 0) {
     undistort3dKernel<<<blocks_per_grid, threads_per_block_, 0, stream_>>>(

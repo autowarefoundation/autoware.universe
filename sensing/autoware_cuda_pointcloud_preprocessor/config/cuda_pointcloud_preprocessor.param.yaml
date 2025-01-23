@@ -8,15 +8,9 @@
     object_length_threshold: 0.1
     num_points_threshold: 4
 
-    self_crop.min_x: 1.0
-    self_crop.min_y: 1.0
-    self_crop.min_z: 1.0
-    self_crop.max_x: -1.0
-    self_crop.max_y: -1.0
-    self_crop.max_z: -1.0
-    mirror_crop.min_x: 1.0
-    mirror_crop.min_y: 1.0
-    mirror_crop.min_z: 1.0
-    mirror_crop.max_x: -1.0
-    mirror_crop.max_y: -1.0
-    mirror_crop.max_z: -1.0
+    crop_box.min_x: [1.0]
+    crop_box.min_y: [1.0]
+    crop_box.min_z: [1.0]
+    crop_box.max_x: [-1.0]
+    crop_box.max_y: [-1.0]
+    crop_box.max_z: [-1.0]

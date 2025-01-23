@@ -39,65 +39,35 @@
           "default": "4",
           "minimum": 0
         },
-        "self_crop.min_x": {
-          "type": "number",
-          "description": "minimum x-coordinate value for self cropping in meters",
-          "default": "-1.0"
+        "crop_box.min_x": {
+          "type": "array",
+          "description": "An array in which each elemt is the minimum x value in a crop box",
+          "default": [1.0]
         },
-        "self_crop.min_y": {
-          "type": "number",
-          "description": "minimum y-coordinate value for self cropping in meters",
-          "default": "-1.0"
+        "crop_box.min_y": {
+          "type": "array",
+          "description": "An array in which each elemt is the minimum y value in a crop box",
+          "default": [1.0]
         },
-        "self_crop.min_z": {
-          "type": "number",
-          "description": "minimum z-coordinate value for self cropping in meters",
-          "default": "-1.0"
+        "crop_box.min_z": {
+          "type": "array",
+          "description": "An array in which each elemt is the minimum z value in a crop box",
+          "default": [1.0]
         },
-        "self_crop.max_x": {
-          "type": "number",
-          "description": "maximum x-coordinate value for self cropping in meters",
-          "default": "1.0"
+        "crop_box.max_x": {
+          "type": "array",
+          "description": "An array in which each elemt is the maximum x value in a crop box",
+          "default": [-1.0]
         },
-        "self_crop.max_y": {
-          "type": "number",
-          "description": "maximum y-coordinate value for self cropping in meters",
-          "default": "1.0"
+        "crop_box.max_y": {
+          "type": "array",
+          "description": "An array in which each elemt is the maximum y value in a crop box",
+          "default": [-1.0]
         },
-        "self_crop.max_z": {
-          "type": "number",
-          "description": "maximum z-coordinate value for self cropping in meters",
-          "default": "1.0"
-        },
-        "mirror_crop.min_x": {
-          "type": "number",
-          "description": "minimum x-coordinate value for mirror cropping in meters",
-          "default": "-1.0"
-        },
-        "mirror_crop.min_y": {
-          "type": "number",
-          "description": "minimum y-coordinate value for mirror cropping in meters",
-          "default": "-1.0"
-        },
-        "mirror_crop.min_z": {
-          "type": "number",
-          "description": "minimum z-coordinate value for mirror cropping in meters",
-          "default": "-1.0"
-        },
-        "mirror_crop.max_x": {
-          "type": "number",
-          "description": "maximum x-coordinate value for mirror cropping in meters",
-          "default": "1.0"
-        },
-        "mirror_crop.max_y": {
-          "type": "number",
-          "description": "maximum y-coordinate value for mirror cropping in meters",
-          "default": "1.0"
-        },
-        "mirror_crop.max_z": {
-          "type": "number",
-          "description": "maximum z-coordinate value for mirror cropping in meters",
-          "default": "1.0"
+        "crop_box.max_z": {
+          "type": "array",
+          "description": "An array in which each elemt is the maximum z value in a crop box",
+          "default": [-1.0]
         }
       },
       "required": [
