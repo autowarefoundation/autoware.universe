@@ -33,7 +33,7 @@ __host__ __device__ __forceinline__ double convertCharToProbability(const std::u
 
 __host__ __device__ __forceinline__ std::uint8_t convertProbabilityToChar(const double value)
 {
-  return static_cast<std::uint8_t>(value * 255.0);
+  return static_cast<std::uint8_t>(std::max(0.0, std::min(1.0, value)) * 255.0);;
 }
 
 __host__ __device__ __forceinline__ double logOddsFusion(const double p1, const double p2)
