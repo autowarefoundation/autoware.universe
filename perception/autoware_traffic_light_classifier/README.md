@@ -1,21 +1,32 @@
-# traffic_light_classifier
+# autoware_traffic_light_classifier
 
 ## Purpose
 
-traffic_light_classifier is a package for classifying traffic light labels using cropped image around a traffic light. This package has two classifier models: `cnn_classifier` and `hsv_classifier`.
+`autoware_traffic_light_classifier` is a package for classifying traffic light labels using cropped image around a traffic light. This package has two classifier models: `cnn_classifier` and `hsv_classifier`.
 
 ## Inner-workings / Algorithms
 
+If height and width of `~/input/rois` is `0`, color, shape, and confidence of `~/output/traffic_signals` become `UNKNOWN`, `CIRCLE`, and `0.0`.
+If `~/input/rois` is judged as backlight, color, shape, and confidence of `~/output/traffic_signals` become `UNKNOWN`, `UNKNOWN`, and `0.0`.
+
 ### cnn_classifier
 
-Traffic light labels are classified by EfficientNet-b1 or MobileNet-v2.
-Totally 83400 (58600 for training, 14800 for evaluation and 10000 for test) TIER IV internal images of Japanese traffic lights were used for fine-tuning.
-The information of the models is listed here:
+Traffic light labels are classified by EfficientNet-b1 or MobileNet-v2.  
+We trained classifiers for vehicular signals and pedestrian signals separately.
+For vehicular signals, a total of 83400 (58600 for training, 14800 for evaluation and 10000 for test) TIER IV internal images of Japanese traffic lights were used for fine-tuning.
 
 | Name            | Input Size | Test Accuracy |
 | --------------- | ---------- | ------------- |
 | EfficientNet-b1 | 128 x 128  | 99.76%        |
 | MobileNet-v2    | 224 x 224  | 99.81%        |
+
+For pedestrian signals, a total of 21199 (17860 for training, 2114 for evaluation and 1225 for test) TIER IV internal images of Japanese traffic lights were used for fine-tuning.  
+The information of the models is listed here:
+
+| Name            | Input Size | Test Accuracy |
+| --------------- | ---------- | ------------- |
+| EfficientNet-b1 | 128 x 128  | 97.89%        |
+| MobileNet-v2    | 224 x 224  | 99.10%        |
 
 ### hsv_classifier
 
@@ -52,11 +63,12 @@ These colors and shapes are assigned to the message as follows:
 
 ### Node Parameters
 
-| Name                  | Type  | Description                                                                                                                                                                                                                                                                                                                                                |
-| --------------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `classifier_type`     | int   | if the value is `1`, cnn_classifier is used                                                                                                                                                                                                                                                                                                                |
-| `data_path`           | str   | packages data and artifacts directory path                                                                                                                                                                                                                                                                                                                 |
-| `backlight_threshold` | float | If the intensity get grater than this overwrite with UNKNOWN in corresponding RoI. Note that, if the value is much higher, the node only overwrites in the harsher backlight situations. Therefore, If you wouldn't like to use this feature set this value to `1.0`. The value can be `[0.0, 1.0]`. The confidence of overwritten signal is set to `0.0`. |
+| Name                          | Type   | Description                                                                                                                                                                                                                                                                                                                        |
+| ----------------------------- | ------ | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `classifier_type`             | int    | If the value is `1`, cnn_classifier is used                                                                                                                                                                                                                                                                                        |
+| `data_path`                   | str    | Packages data and artifacts directory path                                                                                                                                                                                                                                                                                         |
+| `backlight_threshold`         | double | If the intensity of light is grater than this threshold, the color and shape of the corresponding ROI will be overwritten with UNKNOWN, and the confidence of the overwritten signal will be set to `0.0`. The value should be set in the range of `[0.0, 1.0]`. If you wouldn't like to use this feature, please set it to `1.0`. |
+| `classify_traffic_light_type` | int    | If the value is `0`, vehicular signals are classified. If the value is `1`, pedestrian signals are classified.                                                                                                                                                                                                                     |
 
 ### Core Parameters
 

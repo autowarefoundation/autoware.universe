@@ -44,7 +44,7 @@
 #include "tf2_msgs/msg/tf_message.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 #include <autoware_control_msgs/msg/detail/control_horizon__struct.hpp>
-#include <tier4_debug_msgs/msg/float64_stamped.hpp>
+#include <autoware_internal_debug_msgs/msg/float64_stamped.hpp>
 
 #include <memory>
 #include <string>
@@ -63,7 +63,7 @@ namespace trajectory_follower_node
 using autoware::universe_utils::StopWatch;
 using autoware_adapi_v1_msgs::msg::OperationModeState;
 using autoware_control_msgs::msg::ControlHorizon;
-using tier4_debug_msgs::msg::Float64Stamped;
+using autoware_internal_debug_msgs::msg::Float64Stamped;
 
 namespace trajectory_follower = ::autoware::motion::control::trajectory_follower;
 
