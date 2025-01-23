@@ -20,7 +20,7 @@
 
 #include <utility>
 
-namespace autoware::motion::control::predicted_path_checker::utils
+namespace autoware::predicted_path_checker
 {
 
 using autoware::motion_utils::findFirstNearestIndexWithSoftConstraints;
@@ -355,15 +355,15 @@ Polygon2d convertObjToPolygon(const PredictedObject & obj)
 {
   Polygon2d object_polygon{};
   if (obj.shape.type == autoware_perception_msgs::msg::Shape::CYLINDER) {
-    object_polygon = utils::convertCylindricalObjectToGeometryPolygon(
+    object_polygon = convertCylindricalObjectToGeometryPolygon(
       obj.kinematics.initial_pose_with_covariance.pose, obj.shape);
   } else if (obj.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     const double & length_m = obj.shape.dimensions.x / 2;
     const double & width_m = obj.shape.dimensions.y / 2;
-    object_polygon = utils::convertBoundingBoxObjectToGeometryPolygon(
+    object_polygon = convertBoundingBoxObjectToGeometryPolygon(
       obj.kinematics.initial_pose_with_covariance.pose, length_m, length_m, width_m);
   } else if (obj.shape.type == autoware_perception_msgs::msg::Shape::POLYGON) {
-    object_polygon = utils::convertPolygonObjectToGeometryPolygon(
+    object_polygon = convertPolygonObjectToGeometryPolygon(
       obj.kinematics.initial_pose_with_covariance.pose, obj.shape);
   } else {
     throw std::runtime_error("Unsupported shape type");
@@ -430,4 +430,4 @@ void getCurrentObjectPose(
       0.0, 0.0, autoware::universe_utils::normalizeRadian(yaw + delta_yaw));
 }
 
-}  // namespace autoware::motion::control::predicted_path_checker::utils
+}  // namespace autoware::predicted_path_checker

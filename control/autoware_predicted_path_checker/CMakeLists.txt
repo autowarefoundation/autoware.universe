@@ -21,7 +21,7 @@ ament_auto_add_library(${PROJECT_NAME} SHARED
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN "autoware::motion::control::predicted_path_checker::PredictedPathCheckerNode"
+  PLUGIN "autoware::predicted_path_checker::PredictedPathCheckerNode"
   EXECUTABLE ${PROJECT_NAME}_node
 )
 

@@ -26,7 +26,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware::motion::control::predicted_path_checker
+namespace autoware::predicted_path_checker
 {
 
 PredictedPathCheckerNode::PredictedPathCheckerNode(const rclcpp::NodeOptions & node_options)
@@ -300,7 +300,7 @@ void PredictedPathCheckerNode::onTimer()
 
     // Check if the vehicle is in the brake distance
 
-    const bool is_in_brake_distance = utils::isInBrakeDistance(
+    const bool is_in_brake_distance = isInBrakeDistance(
       predicted_trajectory_array, stop_idx, relative_velocity, relative_acceleration,
       node_param_.max_deceleration, node_param_.delay_time);
 
@@ -430,7 +430,7 @@ bool PredictedPathCheckerNode::isItDiscretePoint(
   const auto nearest_segment =
     autoware::motion_utils::findNearestSegmentIndex(reference_trajectory, collision_point.pose);
 
-  const auto nearest_point = utils::calcInterpolatedPoint(
+  const auto nearest_point = calcInterpolatedPoint(
     reference_trajectory, collision_point.pose.position, *nearest_segment, false);
 
   const auto distance = autoware::universe_utils::calcDistance2d(
@@ -494,7 +494,7 @@ void PredictedPathCheckerNode::extendTrajectoryPointsArray(TrajectoryPoints & tr
   // collision_point.
   const double extend_distance = vehicle_info_.max_longitudinal_offset_m + node_param_.stop_margin;
   const auto & goal_point = trajectory.back();
-  const auto trajectory_point_extend = utils::getExtendTrajectoryPoint(extend_distance, goal_point);
+  const auto trajectory_point_extend = getExtendTrajectoryPoint(extend_distance, goal_point);
   trajectory.push_back(trajectory_point_extend);
 }
 
@@ -505,14 +505,14 @@ size_t PredictedPathCheckerNode::insertStopPoint(
     autoware::motion_utils::findNearestSegmentIndex(trajectory, collision_point);
 
   const auto nearest_collision_point =
-    utils::calcInterpolatedPoint(trajectory, collision_point, nearest_collision_segment, true);
+    calcInterpolatedPoint(trajectory, collision_point, nearest_collision_segment, true);
 
   const size_t collision_idx = nearest_collision_segment + 1;
 
   trajectory.insert(trajectory.begin() + static_cast<int>(collision_idx), nearest_collision_point);
 
   const auto stop_point =
-    utils::findStopPoint(trajectory, collision_idx, node_param_.stop_margin, vehicle_info_);
+    findStopPoint(trajectory, collision_idx, node_param_.stop_margin, vehicle_info_);
 
   const size_t stop_idx = stop_point.first + 1;
   trajectory.insert(trajectory.begin() + static_cast<int>(stop_idx), stop_point.second);
@@ -549,13 +549,13 @@ void PredictedPathCheckerNode::filterObstacles(
 
   for (auto & object : object_ptr_.get()->objects) {
     // Check is it in front of ego vehicle
-    if (!utils::isFrontObstacle(
+    if (!isFrontObstacle(
           ego_pose, object.kinematics.initial_pose_with_covariance.pose.position)) {
       continue;
     }
 
     // Check is it near to trajectory
-    const double max_length = utils::calcObstacleMaxLength(object.shape);
+    const double max_length = calcObstacleMaxLength(object.shape);
     const size_t seg_idx = autoware::motion_utils::findNearestSegmentIndex(
       traj, object.kinematics.initial_pose_with_covariance.pose.position);
     const auto p_front = autoware::universe_utils::getPoint(traj.at(seg_idx));
@@ -579,14 +579,14 @@ void PredictedPathCheckerNode::filterObstacles(
     }
     PredictedObject filtered_object = object;
     if (use_prediction) {
-      utils::getCurrentObjectPose(filtered_object, object_ptr_.get()->header.stamp, this->now());
+      getCurrentObjectPose(filtered_object, object_ptr_.get()->header.stamp, this->now());
     }
     filtered_objects.objects.push_back(filtered_object);
   }
 }
 
-}  // namespace autoware::motion::control::predicted_path_checker
+}  // namespace autoware::predicted_path_checker
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(
-  autoware::motion::control::predicted_path_checker::PredictedPathCheckerNode)
+  autoware::predicted_path_checker::PredictedPathCheckerNode)

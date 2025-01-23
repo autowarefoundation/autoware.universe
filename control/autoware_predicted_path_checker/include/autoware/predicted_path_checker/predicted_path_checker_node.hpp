@@ -45,7 +45,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware::motion::control::predicted_path_checker
+namespace autoware::predicted_path_checker
 {
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
@@ -177,6 +177,6 @@ private:
   // Diagnostic Updater
   diagnostic_updater::Updater updater_;
 };
-}  // namespace autoware::motion::control::predicted_path_checker
+}  // namespace autoware::predicted_path_checker
 
 #endif  // AUTOWARE__PREDICTED_PATH_CHECKER__PREDICTED_PATH_CHECKER_NODE_HPP_
