@@ -1244,15 +1244,6 @@ void sortPullOverPaths(
         });
     }
 
-    std::stable_sort(
-      std::execution::par, sorted_path_indices.begin(), sorted_path_indices.end(),
-      [&](const size_t a_i, const size_t b_i) {
-        const auto & a = pull_over_path_candidates[a_i];
-        const auto & b = pull_over_path_candidates[b_i];
-        return a.parking_path_curvature_total_derivative() <
-               b.parking_path_curvature_total_derivative();
-      });
-
     // debug print path priority sorted by
     // - efficient_path_order
     // - collision check margin
