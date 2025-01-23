@@ -1,4 +1,4 @@
-# Copyright 2021 Tier IV, Inc.
+# Copyright 2025 Tier IV, Inc.
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ logger = get_logger(__name__)
 @pytest.mark.launch_test
 def generate_test_description():
     test_fault_injection_launch_file = os.path.join(
-        get_package_share_directory("fault_injection"),
+        get_package_share_directory("autoware_fault_injection"),
         "launch",
         "test_fault_injection.launch.xml",
     )
