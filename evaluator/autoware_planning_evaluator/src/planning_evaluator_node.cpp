@@ -34,7 +34,8 @@
 namespace planning_diagnostics
 {
 PlanningEvaluatorNode::PlanningEvaluatorNode(const rclcpp::NodeOptions & node_options)
-: Node("planning_evaluator", node_options)
+: Node("planning_evaluator", node_options),
+  vehicle_info_(autoware::vehicle_info_utils::VehicleInfoUtils(*this).getVehicleInfo())
 {
   using std::placeholders::_1;
   tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
@@ -298,7 +299,8 @@ void PlanningEvaluatorNode::onTrajectory(
   auto start = now();
 
   for (Metric metric : metrics_) {
-    const auto metric_stat = metrics_calculator_.calculate(Metric(metric), *traj_msg);
+    const auto metric_stat = metrics_calculator_.calculate(
+      Metric(metric), *traj_msg, vehicle_info_.vehicle_length_m);
     if (!metric_stat) {
       continue;
     }

@@ -24,7 +24,7 @@
 namespace planning_diagnostics
 {
 std::optional<Accumulator<double>> MetricsCalculator::calculate(
-  const Metric metric, const Trajectory & traj) const
+  const Metric metric, const Trajectory & traj, const double & vehicle_length) const
 {
   // Functions to calculate trajectory metrics
   switch (metric) {
@@ -34,6 +34,8 @@ std::optional<Accumulator<double>> MetricsCalculator::calculate(
       return metrics::calcTrajectoryInterval(traj);
     case Metric::relative_angle:
       return metrics::calcTrajectoryRelativeAngle(traj, parameters.trajectory.min_point_dist_m);
+    case Metric::large_relative_angle:
+      return metrics::calcTrajectoryLargeRelativeAngle(traj, vehicle_length);
     case Metric::length:
       return metrics::calcTrajectoryLength(traj);
     case Metric::duration:

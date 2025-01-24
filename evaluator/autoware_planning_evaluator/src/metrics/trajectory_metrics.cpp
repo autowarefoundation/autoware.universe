@@ -15,6 +15,7 @@
 #include "autoware/planning_evaluator/metrics/trajectory_metrics.hpp"
 
 #include "autoware/planning_evaluator/metrics/metrics_utils.hpp"
+#include "autoware/planning_evaluator/planning_evaluator_node.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
 namespace planning_diagnostics
 {
@@ -76,6 +77,40 @@ Accumulator<double> calcTrajectoryRelativeAngle(
     const double th2 =
       std::atan2(-x3 * std::sin(th) + y3 * std::cos(th), x3 * std::cos(th) + y3 * std::sin(th));
     stat.add(th2);
+  }
+  return stat;
+}
+
+Accumulator<double> calcTrajectoryLargeRelativeAngle(
+  const Trajectory & traj, const double & vehicle_length)
+{
+  Accumulator<double> stat;
+  // We need at least three points to compute relative angle
+  if (traj.points.size() < 2) {
+    return stat;
+  }
+
+  // Resample trajctory points
+  std::vector<TrajectoryPoint> resample_traj_points{};
+  for (size_t idx = 0; idx < traj.points.size(); idx = idx + 3) {
+    resample_traj_points.push_back(traj.points.at(idx));
+  }
+  const auto resample_traj = autoware::motion_utils::convertToTrajectory(resample_traj_points);
+
+  for (size_t base_id = 0; base_id < resample_traj.points.size() - 1; ++base_id) {
+    // Get base pose yaw
+    const double base_yaw = tf2::getYaw(resample_traj.points.at(base_id).pose.orientation);
+    
+    // Get target pose yaw
+    const auto points_distance = vehicle_length / 2;
+    const auto target_pose = autoware::motion_utils::calcLongitudinalOffsetPose(
+      resample_traj.points, base_id, points_distance);
+    const double target_yaw = tf2::getYaw(target_pose->orientation);
+
+    // Calc diff yaw between base pose yaw and target pose yaw
+    const double diff_yaw = autoware::universe_utils::normalizeRadian(target_yaw - base_yaw);
+
+    stat.add(std::abs(diff_yaw));
   }
   return stat;
 }

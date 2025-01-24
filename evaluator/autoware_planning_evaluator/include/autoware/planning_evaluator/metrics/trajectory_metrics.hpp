@@ -15,7 +15,13 @@
 #ifndef AUTOWARE__PLANNING_EVALUATOR__METRICS__TRAJECTORY_METRICS_HPP_
 #define AUTOWARE__PLANNING_EVALUATOR__METRICS__TRAJECTORY_METRICS_HPP_
 
+// #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
+// #include <autoware_vehicle_info_utils/vehicle_info.hpp>
+
 #include "autoware/universe_utils/math/accumulator.hpp"
+#include "autoware/motion_utils/trajectory/trajectory.hpp"
+#include "autoware/motion_utils/trajectory/conversion.hpp"
+#include "autoware/motion_utils/resample/resample.hpp"
 
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "autoware_planning_msgs/msg/trajectory_point.hpp"
@@ -36,6 +42,15 @@ using autoware_planning_msgs::msg::TrajectoryPoint;
  */
 Accumulator<double> calcTrajectoryRelativeAngle(
   const Trajectory & traj, const double min_dist_threshold);
+
+/**
+ * @brief calculate large relative angle metric (angle between successive points)
+ * @param [in] traj input trajectory
+ * @param [in] vehicle_length input vehicle length
+ * @return calculated statistics
+ */
+Accumulator<double> calcTrajectoryLargeRelativeAngle(
+  const Trajectory & traj, const double & vehicle_length);
 
 /**
  * @brief calculate metric for the distance between trajectory points

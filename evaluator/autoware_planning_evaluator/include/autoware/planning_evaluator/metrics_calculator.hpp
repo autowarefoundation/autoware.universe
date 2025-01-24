@@ -44,12 +44,16 @@ public:
 
   MetricsCalculator() = default;
 
+  //中島、↓コメ修正
   /**
    * @brief calculate
    * @param [in] metric Metric enum value
+   * @param [in] traj input trajectory
+   * @param [in] vehicle_length input vehicle length
    * @return string describing the requested metric
    */
-  std::optional<Accumulator<double>> calculate(const Metric metric, const Trajectory & traj) const;
+  std::optional<Accumulator<double>> calculate(
+    const Metric metric, const Trajectory & traj , const double & vehicle_length) const;
   std::optional<Accumulator<double>> calculate(
     const Metric metric, const Pose & base_pose, const Pose & target_pose) const;
 
