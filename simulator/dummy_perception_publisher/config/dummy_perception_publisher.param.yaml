@@ -1,0 +1,11 @@
+/**:
+  ros__parameters:
+    visible_range: 100.0 # m
+    detection_successful_rate: 0.8
+    enable_ray_tracing: true
+    use_object_recognition: true
+    use_base_link_z: true
+    object_centric_pointcloud: false
+    publish_ground_truth: false
+    random_seed: 0
+    use_fixed_random_seed: false
