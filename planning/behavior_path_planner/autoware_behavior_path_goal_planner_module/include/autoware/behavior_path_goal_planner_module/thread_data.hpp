@@ -43,7 +43,8 @@ public:
   void update(
     const PlannerData & planner_data, const ModuleStatus & current_status,
     const BehaviorModuleOutput & upstream_module_output,
-    const std::optional<PullOverPath> & pull_over_path, const PathDecisionState & prev_data);
+    const std::optional<PullOverPath> & pull_over_path, const PathDecisionState & prev_data,
+    const bool trigger_thread_on_approach);
 
   const autoware::universe_utils::LinearRing2d vehicle_footprint_;
   const GoalCandidates goal_candidates_;
@@ -56,6 +57,7 @@ public:
   }
   const std::optional<PullOverPath> & get_pull_over_path() const { return pull_over_path_; }
   const PathDecisionState & get_prev_data() const { return prev_data_; }
+  bool trigger_thread_on_approach() const { return trigger_thread_on_approach_; }
 
 private:
   std::shared_ptr<PlannerData> planner_data_;
@@ -63,6 +65,7 @@ private:
   BehaviorModuleOutput upstream_module_output_;
   std::optional<PullOverPath> pull_over_path_;  //<! pull over path selected by main thread
   PathDecisionState prev_data_;
+  bool trigger_thread_on_approach_{false};
 };
 
 struct LaneParkingResponse

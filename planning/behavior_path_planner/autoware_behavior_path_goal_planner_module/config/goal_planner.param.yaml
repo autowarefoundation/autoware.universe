@@ -69,7 +69,7 @@
           maximum_lateral_jerk: 2.0
           minimum_lateral_jerk: 0.5
           deceleration_interval: 15.0
-          after_shift_straight_distance: 1.5
+          after_shift_straight_distance: 1.0
 
         # parallel parking path
         parallel_parking:
