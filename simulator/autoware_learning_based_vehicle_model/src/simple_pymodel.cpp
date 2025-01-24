@@ -1,4 +1,4 @@
-// Copyright 2024 The Autoware Foundation.
+// Copyright 2025 The Autoware Foundation.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,13 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "learning_based_vehicle_model/simple_pymodel.hpp"
+#include "autoware/learning_based_vehicle_model/simple_pymodel.hpp"
 
 #include <pybind11/embed.h>
 #include <pybind11/stl.h>
 
 #include <string>
 #include <vector>
+
+namespace autoware::simulator::learning_based_vehicle_model
+{
 
 namespace py = pybind11;
 
@@ -110,3 +113,5 @@ void SimplePyModel::mapOutputs(std::vector<char *> signals_vec_names)
   // "map_py_model_outputs_to_sig_vec" is index in "signals_vec_names"
   map_py_model_outputs_to_sig_vec = createConnectionsMap(signals_vec_names, py_model_state_names);
 }
+
+}  // namespace autoware::simulator::learning_based_vehicle_model

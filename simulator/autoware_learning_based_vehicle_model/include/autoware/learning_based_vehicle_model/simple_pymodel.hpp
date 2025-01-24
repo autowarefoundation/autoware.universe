@@ -1,4 +1,4 @@
-// Copyright 2024 The Autoware Foundation.
+// Copyright 2025 The Autoware Foundation.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -13,17 +13,20 @@
 // limitations under the License.
 
 // cspell:ignore pymodel
-#ifndef LEARNING_BASED_VEHICLE_MODEL__SIMPLE_PYMODEL_HPP_
-#define LEARNING_BASED_VEHICLE_MODEL__SIMPLE_PYMODEL_HPP_
+#ifndef AUTOWARE__LEARNING_BASED_VEHICLE_MODEL__SIMPLE_PYMODEL_HPP_
+#define AUTOWARE__LEARNING_BASED_VEHICLE_MODEL__SIMPLE_PYMODEL_HPP_
 
-#include "learning_based_vehicle_model/model_connections_helpers.hpp"
-#include "learning_based_vehicle_model/submodel_interface.hpp"
+#include "autoware/learning_based_vehicle_model/model_connections_helpers.hpp"
+#include "autoware/learning_based_vehicle_model/submodel_interface.hpp"
 
 #include <pybind11/embed.h>
 #include <pybind11/stl.h>
 
 #include <string>
 #include <vector>
+
+namespace autoware::simulator::learning_based_vehicle_model
+{
 
 namespace py = pybind11;
 
@@ -99,4 +102,6 @@ public:
   void mapOutputs(std::vector<char *> signals_vec_names) override;
 };
 
-#endif  // LEARNING_BASED_VEHICLE_MODEL__SIMPLE_PYMODEL_HPP_
+}  // namespace autoware::simulator::learning_based_vehicle_model
+
+#endif  // AUTOWARE__LEARNING_BASED_VEHICLE_MODEL__SIMPLE_PYMODEL_HPP_

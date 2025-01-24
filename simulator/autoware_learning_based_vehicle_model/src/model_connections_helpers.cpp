@@ -1,4 +1,4 @@
-// Copyright 2024 The Autoware Foundation.
+// Copyright 2025 The Autoware Foundation.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,9 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "learning_based_vehicle_model/model_connections_helpers.hpp"
+#include "autoware/learning_based_vehicle_model/model_connections_helpers.hpp"
 
 #include <vector>
+
+namespace autoware::simulator::learning_based_vehicle_model
+{
 
 std::vector<double> fillVectorUsingMap(
   std::vector<double> vector1, std::vector<double> vector2, const std::vector<int> & map,
@@ -48,3 +51,5 @@ std::vector<int> createConnectionsMap(
   }
   return connection_map;
 }
+
+}  // namespace autoware::simulator::learning_based_vehicle_model
