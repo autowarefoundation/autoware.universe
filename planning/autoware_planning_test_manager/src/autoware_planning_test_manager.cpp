@@ -18,7 +18,7 @@
 
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <autoware_planning_msgs/msg/path.hpp>
-#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_internal_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <iostream>
 #include <memory>
@@ -29,7 +29,7 @@ namespace autoware::planning_test_manager
 using autoware_planning_msgs::msg::LaneletRoute;
 using autoware_planning_msgs::msg::Path;
 using autoware_planning_msgs::msg::Trajectory;
-using tier4_planning_msgs::msg::PathWithLaneId;
+using autoware_internal_planning_msgs::msg::PathWithLaneId;
 
 PlanningInterfaceTestManager::PlanningInterfaceTestManager()
 {
@@ -96,7 +96,7 @@ void PlanningInterfaceTestManager::testWithNormalPath(
     const auto path = autoware::test_utils::loadPathWithLaneIdInYaml();
     publishInput(
       target_node, topic_name,
-      autoware::motion_utils::convertToPath<tier4_planning_msgs::msg::PathWithLaneId>(path), 5);
+      autoware::motion_utils::convertToPath<PathWithLaneId>(path), 5);
   } catch (const std::exception & e) {
     std::cerr << e.what() << '\n';
   }
