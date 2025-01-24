@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef VELODYNE_MONITOR__VELODYNE_MONITOR_HPP_
-#define VELODYNE_MONITOR__VELODYNE_MONITOR_HPP_
+#ifndef AUTOWARE__VELODYNE_MONITOR__VELODYNE_MONITOR_HPP_
+#define AUTOWARE__VELODYNE_MONITOR__VELODYNE_MONITOR_HPP_
 
 /**
  * @file velodyne_monitor.hpp
@@ -30,6 +30,9 @@
 
 // Include after diagnostic_updater because it causes errors
 #include <cpprest/http_client.h>
+
+namespace autoware::velodyne_monitor
+{
 
 namespace http = web::http;
 namespace client = web::http::client;
@@ -115,4 +118,6 @@ protected:
     {DiagStatus::OK, "OK"}, {DiagStatus::WARN, "RPM low"}, {DiagStatus::ERROR, "RPM too low"}};
 };
 
-#endif  // VELODYNE_MONITOR__VELODYNE_MONITOR_HPP_
+}  // namespace autoware::velodyne_monitor
+
+#endif  // AUTOWARE__VELODYNE_MONITOR__VELODYNE_MONITOR_HPP_

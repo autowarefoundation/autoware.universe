@@ -17,7 +17,7 @@
  * @brief Velodyne monitor class
  */
 
-#include "velodyne_monitor/velodyne_monitor.hpp"
+#include "autoware/velodyne_monitor/velodyne_monitor.hpp"
 
 #include <boost/algorithm/string/join.hpp>
 
@@ -29,6 +29,9 @@
 
 #define FMT_HEADER_ONLY
 #include <fmt/format.h>
+
+namespace autoware::velodyne_monitor
+{
 
 VelodyneMonitor::VelodyneMonitor(const rclcpp::NodeOptions & options)
 : Node("velodyne_monitor", options), updater_(this)
@@ -231,5 +234,7 @@ float VelodyneMonitor::convertTemperature(int raw)
   return std::sqrt(2.1962e6 + (1.8639 - static_cast<float>(raw) * 5.0 / 4096) / 3.88e-6) - 1481.96;
 }
 
+}  // namespace autoware::velodyne_monitor
+
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(VelodyneMonitor)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::velodyne_monitor::VelodyneMonitor)
