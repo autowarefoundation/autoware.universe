@@ -1,4 +1,4 @@
-# diagnostic_graph_utils
+# autoware_diagnostic_graph_utils
 
 This package is a utility for diagnostic graph published by [diagnostic_graph_aggregator](../diagnostic_graph_aggregator/README.md).
 
@@ -9,5 +9,5 @@ This package is a utility for diagnostic graph published by [diagnostic_graph_ag
 
 ## C++ library
 
-- [DiagGraph](./include/diagnostic_graph_utils/graph.hpp)
-- [DiagGraphSubscription](./include/diagnostic_graph_utils/subscription.hpp)
+- [DiagGraph](./include/autoware/diagnostic_graph_utils/graph.hpp)
+- [DiagGraphSubscription](./include/autoware/diagnostic_graph_utils/subscription.hpp)

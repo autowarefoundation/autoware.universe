@@ -16,7 +16,7 @@
 
 #include <memory>
 
-namespace diagnostic_graph_utils
+namespace autoware::diagnostic_graph_utils
 {
 
 ConverterNode::ConverterNode(const rclcpp::NodeOptions & options) : Node("converter", options)
@@ -38,7 +38,7 @@ void ConverterNode::on_update(DiagGraph::ConstSharedPtr graph)
   pub_array_->publish(array);
 }
 
-}  // namespace diagnostic_graph_utils
+}  // namespace autoware::diagnostic_graph_utils
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(diagnostic_graph_utils::ConverterNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::diagnostic_graph_utils::ConverterNode)

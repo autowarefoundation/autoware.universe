@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DIAGNOSTIC_GRAPH_UTILS__SUBSCRIPTION_HPP_
-#define DIAGNOSTIC_GRAPH_UTILS__SUBSCRIPTION_HPP_
+#ifndef AUTOWARE__DIAGNOSTIC_GRAPH_UTILS__SUBSCRIPTION_HPP_
+#define AUTOWARE__DIAGNOSTIC_GRAPH_UTILS__SUBSCRIPTION_HPP_
 
-#include "diagnostic_graph_utils/graph.hpp"
+#include "autoware/diagnostic_graph_utils/graph.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
 #include <tier4_system_msgs/msg/diag_graph_status.hpp>
 #include <tier4_system_msgs/msg/diag_graph_struct.hpp>
 
-namespace diagnostic_graph_utils
+namespace autoware::diagnostic_graph_utils
 {
 
 class DiagGraphSubscription
@@ -48,6 +48,6 @@ private:
   CallbackType update_callback_;
 };
 
-}  // namespace diagnostic_graph_utils
+}  // namespace autoware::diagnostic_graph_utils
 
-#endif  // DIAGNOSTIC_GRAPH_UTILS__SUBSCRIPTION_HPP_
+#endif  // AUTOWARE__DIAGNOSTIC_GRAPH_UTILS__SUBSCRIPTION_HPP_

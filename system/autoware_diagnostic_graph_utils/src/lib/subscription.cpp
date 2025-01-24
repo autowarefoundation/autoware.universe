@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "diagnostic_graph_utils/subscription.hpp"
+#include "autoware/diagnostic_graph_utils/subscription.hpp"
 
 #include <memory>
 
-namespace diagnostic_graph_utils
+namespace autoware::diagnostic_graph_utils
 {
 
 DiagGraphSubscription::DiagGraphSubscription()
@@ -66,4 +66,4 @@ void DiagGraphSubscription::on_status(const DiagGraphStatus & msg)
   }
 }
 
-}  // namespace diagnostic_graph_utils
+}  // namespace autoware::diagnostic_graph_utils

@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "diagnostic_graph_utils/graph.hpp"
+#include "autoware/diagnostic_graph_utils/graph.hpp"
 
 #include <vector>
 
-namespace diagnostic_graph_utils
+namespace autoware::diagnostic_graph_utils
 {
 
 DiagUnit::DiagnosticStatus DiagNode::create_diagnostic_status() const
@@ -112,4 +112,4 @@ std::vector<DiagLink *> DiagGraph::links() const
   return create_ptrs<DiagLink>(links_);
 }
 
-}  // namespace diagnostic_graph_utils
+}  // namespace autoware::diagnostic_graph_utils

@@ -15,7 +15,7 @@
 #ifndef NODE__LOGGING_HPP_
 #define NODE__LOGGING_HPP_
 
-#include "diagnostic_graph_utils/subscription.hpp"
+#include "autoware/diagnostic_graph_utils/subscription.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -24,7 +24,7 @@
 #include <sstream>
 #include <string>
 
-namespace diagnostic_graph_utils
+namespace autoware::diagnostic_graph_utils
 {
 
 class LoggingNode : public rclcpp::Node
@@ -48,6 +48,6 @@ private:
   bool enable_terminal_log_;
 };
 
-}  // namespace diagnostic_graph_utils
+}  // namespace autoware::diagnostic_graph_utils
 
 #endif  // NODE__LOGGING_HPP_

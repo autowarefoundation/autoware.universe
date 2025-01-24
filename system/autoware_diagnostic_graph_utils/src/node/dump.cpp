@@ -22,7 +22,7 @@
 #include <string>
 #include <vector>
 
-namespace diagnostic_graph_utils
+namespace autoware::diagnostic_graph_utils
 {
 
 DumpNode::DumpNode(const rclcpp::NodeOptions & options) : Node("dump", options)
@@ -131,7 +131,7 @@ void DumpNode::on_update(DiagGraph::ConstSharedPtr graph)
   }
 }
 
-}  // namespace diagnostic_graph_utils
+}  // namespace autoware::diagnostic_graph_utils
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(diagnostic_graph_utils::DumpNode)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::diagnostic_graph_utils::DumpNode)

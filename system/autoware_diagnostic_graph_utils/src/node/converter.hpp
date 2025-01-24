@@ -12,41 +12,32 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef NODE__DUMP_HPP_
-#define NODE__DUMP_HPP_
+#ifndef NODE__CONVERTER_HPP_
+#define NODE__CONVERTER_HPP_
 
-#include "diagnostic_graph_utils/subscription.hpp"
+#include "autoware/diagnostic_graph_utils/subscription.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <string>
-#include <unordered_map>
+#include <diagnostic_msgs/msg/diagnostic_array.hpp>
+#include <diagnostic_msgs/msg/diagnostic_status.hpp>
 
-namespace diagnostic_graph_utils
+namespace autoware::diagnostic_graph_utils
 {
 
-class DumpNode : public rclcpp::Node
+class ConverterNode : public rclcpp::Node
 {
 public:
-  explicit DumpNode(const rclcpp::NodeOptions & options);
+  explicit ConverterNode(const rclcpp::NodeOptions & options);
 
 private:
-  void on_create(DiagGraph::ConstSharedPtr graph);
+  using DiagnosticArray = diagnostic_msgs::msg::DiagnosticArray;
+  using DiagnosticStatus = diagnostic_msgs::msg::DiagnosticStatus;
   void on_update(DiagGraph::ConstSharedPtr graph);
+  rclcpp::Publisher<DiagnosticArray>::SharedPtr pub_array_;
   DiagGraphSubscription sub_graph_;
-
-  struct TableLine
-  {
-    int index;
-    std::string text1;
-    std::string text2;
-  };
-
-  std::unordered_map<DiagUnit *, TableLine> table_;
-  std::string header_;
-  std::string border_;
 };
 
-}  // namespace diagnostic_graph_utils
+}  // namespace autoware::diagnostic_graph_utils
 
-#endif  // NODE__DUMP_HPP_
+#endif  // NODE__CONVERTER_HPP_
