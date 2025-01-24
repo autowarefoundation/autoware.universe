@@ -18,7 +18,7 @@
 #include "rclcpp/time.hpp"
 #include "tf2_ros/transform_broadcaster.h"
 
-#include <kinematic_evaluator/kinematic_evaluator_node.hpp>
+#include <autoware/kinematic_evaluator/kinematic_evaluator_node.hpp>
 
 #include "diagnostic_msgs/msg/diagnostic_array.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
@@ -32,7 +32,7 @@
 #include <utility>
 #include <vector>
 
-using EvalNode = kinematic_diagnostics::KinematicEvaluatorNode;
+using EvalNode = autoware::kinematic_diagnostics::KinematicEvaluatorNode;
 using diagnostic_msgs::msg::DiagnosticArray;
 using nav_msgs::msg::Odometry;
 
@@ -44,7 +44,8 @@ protected:
     rclcpp::init(0, nullptr);
 
     rclcpp::NodeOptions options;
-    const auto share_dir = ament_index_cpp::get_package_share_directory("kinematic_evaluator");
+    const auto share_dir =
+      ament_index_cpp::get_package_share_directory("autoware_kinematic_evaluator");
     options.arguments(
       {"--ros-args", "--params-file", share_dir + "/param/kinematic_evaluator.defaults.yaml"});
 
@@ -70,9 +71,9 @@ protected:
 
   ~EvalTest() override { /*rclcpp::shutdown();*/ }
 
-  void setTargetMetric(kinematic_diagnostics::Metric metric)
+  void setTargetMetric(autoware::kinematic_diagnostics::Metric metric)
   {
-    const auto metric_str = kinematic_diagnostics::metric_to_str.at(metric);
+    const auto metric_str = autoware::kinematic_diagnostics::metric_to_str.at(metric);
     const auto is_target_metric = [metric_str](const auto & status) {
       return status.name == metric_str;
     };
@@ -130,7 +131,7 @@ protected:
 
 TEST_F(EvalTest, TestVelocityStats)
 {
-  setTargetMetric(kinematic_diagnostics::Metric::velocity_stats);
+  setTargetMetric(autoware::kinematic_diagnostics::Metric::velocity_stats);
   Odometry odom = makeOdometry(0.0);
   EXPECT_DOUBLE_EQ(publishOdometryAndGetMetric(odom), 0.0);
   Odometry odom2 = makeOdometry(1.0);

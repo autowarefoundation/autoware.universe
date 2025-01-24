@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef KINEMATIC_EVALUATOR__KINEMATIC_EVALUATOR_NODE_HPP_
-#define KINEMATIC_EVALUATOR__KINEMATIC_EVALUATOR_NODE_HPP_
+#ifndef AUTOWARE__KINEMATIC_EVALUATOR__KINEMATIC_EVALUATOR_NODE_HPP_
+#define AUTOWARE__KINEMATIC_EVALUATOR__KINEMATIC_EVALUATOR_NODE_HPP_
 
+#include "autoware/kinematic_evaluator/metrics_calculator.hpp"
 #include "autoware/universe_utils/math/accumulator.hpp"
-#include "kinematic_evaluator/metrics_calculator.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
@@ -31,7 +31,7 @@
 #include <unordered_map>
 #include <vector>
 
-namespace kinematic_diagnostics
+namespace autoware::kinematic_diagnostics
 {
 using autoware::universe_utils::Accumulator;
 using diagnostic_msgs::msg::DiagnosticArray;
@@ -78,6 +78,6 @@ private:
   std::array<std::deque<Accumulator<double>>, static_cast<size_t>(Metric::SIZE)> metric_stats_;
   std::unordered_map<Metric, Accumulator<double>> metrics_dict_;
 };
-}  // namespace kinematic_diagnostics
+}  // namespace autoware::kinematic_diagnostics
 
-#endif  // KINEMATIC_EVALUATOR__KINEMATIC_EVALUATOR_NODE_HPP_
+#endif  // AUTOWARE__KINEMATIC_EVALUATOR__KINEMATIC_EVALUATOR_NODE_HPP_

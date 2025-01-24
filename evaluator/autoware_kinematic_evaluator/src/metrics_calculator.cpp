@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "kinematic_evaluator/metrics_calculator.hpp"
+#include "autoware/kinematic_evaluator/metrics_calculator.hpp"
 
-#include "kinematic_evaluator/metrics/kinematic_metrics.hpp"
+#include "autoware/kinematic_evaluator/metrics/kinematic_metrics.hpp"
 
-namespace kinematic_diagnostics
+namespace autoware::kinematic_diagnostics
 {
 Accumulator<double> MetricsCalculator::updateStat(
   const Metric metric, const Odometry & odom, const Accumulator<double> stat_prev) const
@@ -31,4 +31,4 @@ Accumulator<double> MetricsCalculator::updateStat(
   }
 }
 
-}  // namespace kinematic_diagnostics
+}  // namespace autoware::kinematic_diagnostics

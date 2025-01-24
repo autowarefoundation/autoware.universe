@@ -12,19 +12,23 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "kinematic_evaluator/metrics/kinematic_metrics.hpp"
+#ifndef AUTOWARE__KINEMATIC_EVALUATOR__PARAMETERS_HPP_
+#define AUTOWARE__KINEMATIC_EVALUATOR__PARAMETERS_HPP_
 
-namespace kinematic_diagnostics
-{
-namespace metrics
-{
+#include "autoware/kinematic_evaluator/metrics/metric.hpp"
 
-Accumulator<double> updateVelocityStats(const double & value, const Accumulator<double> stat_prev)
-{
-  Accumulator<double> stat(stat_prev);
-  stat.add(value);
-  return stat;
-}
+#include <array>
 
-}  // namespace metrics
-}  // namespace kinematic_diagnostics
+namespace autoware::kinematic_diagnostics
+{
+/**
+ * @brief Enumeration of trajectory metrics
+ */
+struct Parameters
+{
+  std::array<bool, static_cast<size_t>(Metric::SIZE)> metrics{};  // default values to false
+};  // struct Parameters
+
+}  // namespace autoware::kinematic_diagnostics
+
+#endif  // AUTOWARE__KINEMATIC_EVALUATOR__PARAMETERS_HPP_

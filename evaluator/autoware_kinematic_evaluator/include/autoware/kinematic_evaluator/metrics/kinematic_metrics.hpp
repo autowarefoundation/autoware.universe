@@ -12,14 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef KINEMATIC_EVALUATOR__METRICS__KINEMATIC_METRICS_HPP_
-#define KINEMATIC_EVALUATOR__METRICS__KINEMATIC_METRICS_HPP_
+#ifndef AUTOWARE__KINEMATIC_EVALUATOR__METRICS__KINEMATIC_METRICS_HPP_
+#define AUTOWARE__KINEMATIC_EVALUATOR__METRICS__KINEMATIC_METRICS_HPP_
 
 #include "autoware/universe_utils/math/accumulator.hpp"
 
 #include <nav_msgs/msg/odometry.hpp>
 
-namespace kinematic_diagnostics
+namespace autoware::kinematic_diagnostics
 {
 namespace metrics
 {
@@ -35,6 +35,6 @@ using nav_msgs::msg::Odometry;
 Accumulator<double> updateVelocityStats(const double & value, const Accumulator<double> stat_prev);
 
 }  // namespace metrics
-}  // namespace kinematic_diagnostics
+}  // namespace autoware::kinematic_diagnostics
 
-#endif  // KINEMATIC_EVALUATOR__METRICS__KINEMATIC_METRICS_HPP_
+#endif  // AUTOWARE__KINEMATIC_EVALUATOR__METRICS__KINEMATIC_METRICS_HPP_

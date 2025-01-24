@@ -12,17 +12,17 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef KINEMATIC_EVALUATOR__METRICS_CALCULATOR_HPP_
-#define KINEMATIC_EVALUATOR__METRICS_CALCULATOR_HPP_
+#ifndef AUTOWARE__KINEMATIC_EVALUATOR__METRICS_CALCULATOR_HPP_
+#define AUTOWARE__KINEMATIC_EVALUATOR__METRICS_CALCULATOR_HPP_
 
+#include "autoware/kinematic_evaluator/metrics/metric.hpp"
+#include "autoware/kinematic_evaluator/parameters.hpp"
 #include "autoware/universe_utils/math/accumulator.hpp"
-#include "kinematic_evaluator/metrics/metric.hpp"
-#include "kinematic_evaluator/parameters.hpp"
 
 #include "geometry_msgs/msg/pose.hpp"
 #include <nav_msgs/msg/odometry.hpp>
 
-namespace kinematic_diagnostics
+namespace autoware::kinematic_diagnostics
 {
 using autoware::universe_utils::Accumulator;
 using nav_msgs::msg::Odometry;
@@ -52,6 +52,6 @@ public:
     const Metric metric, const Odometry & odom, const Accumulator<double> stat_prev) const;
 };  // class MetricsCalculator
 
-}  // namespace kinematic_diagnostics
+}  // namespace autoware::kinematic_diagnostics
 
-#endif  // KINEMATIC_EVALUATOR__METRICS_CALCULATOR_HPP_
+#endif  // AUTOWARE__KINEMATIC_EVALUATOR__METRICS_CALCULATOR_HPP_
