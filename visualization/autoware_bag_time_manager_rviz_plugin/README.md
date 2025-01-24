@@ -1,4 +1,4 @@
-# bag_time_manager_rviz_plugin
+# autoware_bag_time_manager_rviz_plugin
 
 ## Purpose
 

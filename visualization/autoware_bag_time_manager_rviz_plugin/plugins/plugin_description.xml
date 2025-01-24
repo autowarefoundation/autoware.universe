@@ -1,7 +1,7 @@
-<library path="bag_time_manager_rviz_plugin">
+<library path="autoware_bag_time_manager_rviz_plugin">
 
   <class
-    type="rviz_plugins::BagTimeManagerPanel"
+    type="autoware::visualization::bag_time_manager_rviz_plugin::BagTimeManagerPanel"
     base_class_type="rviz_common::Panel">
     <description>Panel that publishes a service to modify its speed.</description>
   </class>
