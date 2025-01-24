@@ -18,7 +18,7 @@
 #include <utility>
 #include <vector>
 
-namespace hazard_status_converter
+namespace autoware::hazard_status_converter
 {
 
 Converter::Converter(const rclcpp::NodeOptions & options) : Node("converter", options)
@@ -125,7 +125,7 @@ void Converter::on_update(DiagGraph::ConstSharedPtr graph)
   pub_hazard_->publish(hazard);
 }
 
-}  // namespace hazard_status_converter
+}  // namespace autoware::hazard_status_converter
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(hazard_status_converter::Converter)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::hazard_status_converter::Converter)

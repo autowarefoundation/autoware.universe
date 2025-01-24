@@ -24,7 +24,7 @@
 
 #include <unordered_set>
 
-namespace hazard_status_converter
+namespace autoware::hazard_status_converter
 {
 
 class Converter : public rclcpp::Node
@@ -48,6 +48,6 @@ private:
   std::unordered_set<DiagUnit *> auto_mode_tree_;
 };
 
-}  // namespace hazard_status_converter
+}  // namespace autoware::hazard_status_converter
 
 #endif  // CONVERTER_HPP_
