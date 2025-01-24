@@ -1,4 +1,4 @@
-# diagnostic_graph_aggregator
+# autoware_diagnostic_graph_aggregator
 
 ## Overview
 

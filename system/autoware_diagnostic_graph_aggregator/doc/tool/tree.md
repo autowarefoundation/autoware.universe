@@ -5,13 +5,13 @@ This tool displays the graph structure of the configuration file in tree format.
 ## Usage
 
 ```bash
-ros2 run diagnostic_graph_aggregator tree <graph-config-path>
+ros2 run autoware_diagnostic_graph_aggregator tree <graph-config-path>
 ```
 
 ## Examples
 
 ```bash
-ros2 run diagnostic_graph_aggregator tree '$(find-pkg-share diagnostic_graph_aggregator)/example/graph/main.yaml'
+ros2 run autoware_diagnostic_graph_aggregator tree '$(find-pkg-share autoware_diagnostic_graph_aggregator)/example/graph/main.yaml'
 ```
 
 ```txt
