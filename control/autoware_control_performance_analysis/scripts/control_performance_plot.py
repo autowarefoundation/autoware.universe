@@ -17,9 +17,9 @@
 import argparse
 import math
 
+from autoware_control_performance_analysis.msg import DrivingMonitorStamped
+from autoware_control_performance_analysis.msg import ErrorStamped
 from autoware_internal_debug_msgs.msg import BoolStamped
-from control_performance_analysis.msg import DrivingMonitorStamped
-from control_performance_analysis.msg import ErrorStamped
 import matplotlib.pyplot as plt
 from nav_msgs.msg import Odometry
 import rclpy

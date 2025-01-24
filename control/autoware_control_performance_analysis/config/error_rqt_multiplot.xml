@@ -36,7 +36,7 @@
                                         <type>0</type>
                                     </scale>
                                     <topic>/control_performance/performance_vars</topic>
-                                    <type>control_performance_analysis/ErrorStamped</type>
+                                    <type>autoware_control_performance_analysis/ErrorStamped</type>
                                 </x_axis>
                                 <y_axis>
                                     <field>error/lateral_error</field>
@@ -49,7 +49,7 @@
                                         <type>0</type>
                                     </scale>
                                     <topic>/control_performance/performance_vars</topic>
-                                    <type>control_performance_analysis/ErrorStamped</type>
+                                    <type>autoware_control_performance_analysis/ErrorStamped</type>
                                 </y_axis>
                             </axes>
                             <color>
@@ -110,7 +110,7 @@
                                         <type>0</type>
                                     </scale>
                                     <topic>/control_performance/performance_vars</topic>
-                                    <type>control_performance_analysis/ErrorStamped</type>
+                                    <type>autoware_control_performance_analysis/ErrorStamped</type>
                                 </x_axis>
                                 <y_axis>
                                     <field>error/error_energy</field>
@@ -123,7 +123,7 @@
                                         <type>0</type>
                                     </scale>
                                     <topic>/control_performance/performance_vars</topic>
-                                    <type>control_performance_analysis/ErrorStamped</type>
+                                    <type>autoware_control_performance_analysis/ErrorStamped</type>
                                 </y_axis>
                             </axes>
                             <color>
@@ -184,7 +184,7 @@
                                         <type>0</type>
                                     </scale>
                                     <topic>/control_performance/performance_vars</topic>
-                                    <type>control_performance_analysis/ErrorStamped</type>
+                                    <type>autoware_control_performance_analysis/ErrorStamped</type>
                                 </x_axis>
                                 <y_axis>
                                     <field>error/lateral_error_velocity</field>
@@ -197,7 +197,7 @@
                                         <type>0</type>
                                     </scale>
                                     <topic>/control_performance/performance_vars</topic>
-                                    <type>control_performance_analysis/ErrorStamped</type>
+                                    <type>autoware_control_performance_analysis/ErrorStamped</type>
                                 </y_axis>
                             </axes>
                             <color>
@@ -260,7 +260,7 @@
                                         <type>0</type>
                                     </scale>
                                     <topic>/control_performance/performance_vars</topic>
-                                    <type>control_performance_analysis/ErrorStamped</type>
+                                    <type>autoware_control_performance_analysis/ErrorStamped</type>
                                 </x_axis>
                                 <y_axis>
                                     <field>error/heading_error</field>
@@ -273,7 +273,7 @@
                                         <type>0</type>
                                     </scale>
                                     <topic>/control_performance/performance_vars</topic>
-                                    <type>control_performance_analysis/ErrorStamped</type>
+                                    <type>autoware_control_performance_analysis/ErrorStamped</type>
                                 </y_axis>
                             </axes>
                             <color>
@@ -334,7 +334,7 @@
                                         <type>0</type>
                                     </scale>
                                     <topic>/control_performance/performance_vars</topic>
-                                    <type>control_performance_analysis/ErrorStamped</type>
+                                    <type>autoware_control_performance_analysis/ErrorStamped</type>
                                 </x_axis>
                                 <y_axis>
                                     <field>error/control_effort_energy</field>
@@ -347,7 +347,7 @@
                                         <type>0</type>
                                     </scale>
                                     <topic>/control_performance/performance_vars</topic>
-                                    <type>control_performance_analysis/ErrorStamped</type>
+                                    <type>autoware_control_performance_analysis/ErrorStamped</type>
                                 </y_axis>
                             </axes>
                             <color>
@@ -408,7 +408,7 @@
                                         <type>0</type>
                                     </scale>
                                     <topic>/control_performance/performance_vars</topic>
-                                    <type>control_performance_analysis/ErrorStamped</type>
+                                    <type>autoware_control_performance_analysis/ErrorStamped</type>
                                 </x_axis>
                                 <y_axis>
                                     <field>error/lateral_error_acceleration</field>
@@ -421,7 +421,7 @@
                                         <type>0</type>
                                     </scale>
                                     <topic>/control_performance/performance_vars</topic>
-                                    <type>control_performance_analysis/ErrorStamped</type>
+                                    <type>autoware_control_performance_analysis/ErrorStamped</type>
                                 </y_axis>
                             </axes>
                             <color>
@@ -484,7 +484,7 @@
                                         <type>0</type>
                                     </scale>
                                     <topic>/control_performance/performance_vars</topic>
-                                    <type>control_performance_analysis/ErrorStamped</type>
+                                    <type>autoware_control_performance_analysis/ErrorStamped</type>
                                 </x_axis>
                                 <y_axis>
                                     <field>error/value_approximation</field>
@@ -497,7 +497,7 @@
                                         <type>0</type>
                                     </scale>
                                     <topic>/control_performance/performance_vars</topic>
-                                    <type>control_performance_analysis/ErrorStamped</type>
+                                    <type>autoware_control_performance_analysis/ErrorStamped</type>
                                 </y_axis>
                             </axes>
                             <color>
@@ -558,7 +558,7 @@
                                         <type>0</type>
                                     </scale>
                                     <topic>/control_performance/performance_vars</topic>
-                                    <type>control_performance_analysis/ErrorStamped</type>
+                                    <type>autoware_control_performance_analysis/ErrorStamped</type>
                                 </x_axis>
                                 <y_axis>
                                     <field>error/curvature_estimate</field>
@@ -571,7 +571,7 @@
                                         <type>0</type>
                                     </scale>
                                     <topic>/control_performance/performance_vars</topic>
-                                    <type>control_performance_analysis/ErrorStamped</type>
+                                    <type>autoware_control_performance_analysis/ErrorStamped</type>
                                 </y_axis>
                             </axes>
                             <color>

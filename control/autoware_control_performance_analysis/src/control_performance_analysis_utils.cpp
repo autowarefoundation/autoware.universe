@@ -1,4 +1,4 @@
-// Copyright 2021 - 2022 Tier IV, Inc., Leo Drive Teknoloji A.Ş.
+// Copyright 2021 - 2025 Tier IV, Inc., Leo Drive Teknoloji A.Ş.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "control_performance_analysis/control_performance_analysis_utils.hpp"
+#include "autoware/control_performance_analysis/control_performance_analysis_utils.hpp"
 
 #include <algorithm>
 
-namespace control_performance_analysis
+namespace autoware::control_performance_analysis
 {
 namespace utils
 {
@@ -26,4 +26,4 @@ double determinant(std::array<double, 2> const & a, std::array<double, 2> const 
 }
 
 }  // namespace utils
-}  // namespace control_performance_analysis
+}  // namespace autoware::control_performance_analysis

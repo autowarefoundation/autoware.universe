@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(control_performance_analysis)
+project(autoware_control_performance_analysis)
 
 find_package(autoware_cmake REQUIRED)
 autoware_package()
@@ -19,7 +19,7 @@ find_package(rosidl_default_generators REQUIRED)
 find_package(std_msgs REQUIRED)
 
 rosidl_generate_interfaces(
-        control_performance_analysis
+        ${PROJECT_NAME}
         "msg/Error.msg"
         "msg/ErrorStamped.msg"
         "msg/DrivingMonitorStamped.msg"
@@ -40,12 +40,12 @@ ament_auto_add_library(
 
 if(${rosidl_cmake_VERSION} VERSION_LESS 2.5.0)
     rosidl_target_interfaces(control_performance_analysis_node
-            control_performance_analysis "rosidl_typesupport_cpp")
+            ${PROJECT_NAME} "rosidl_typesupport_cpp")
     rosidl_target_interfaces(control_performance_analysis_core
-            control_performance_analysis "rosidl_typesupport_cpp")
+            ${PROJECT_NAME} "rosidl_typesupport_cpp")
 else()
     rosidl_get_typesupport_target(
-            cpp_typesupport_target control_performance_analysis "rosidl_typesupport_cpp")
+            cpp_typesupport_target ${PROJECT_NAME} "rosidl_typesupport_cpp")
     target_link_libraries(control_performance_analysis_node "${cpp_typesupport_target}")
     target_link_libraries(control_performance_analysis_core "${cpp_typesupport_target}")
 
@@ -58,8 +58,8 @@ target_link_libraries(
 
 rclcpp_components_register_node(
         control_performance_analysis_node
-        PLUGIN "control_performance_analysis::ControlPerformanceAnalysisNode"
-        EXECUTABLE control_performance_analysis_exe
+        PLUGIN "autoware::control_performance_analysis::ControlPerformanceAnalysisNode"
+        EXECUTABLE ${PROJECT_NAME}_node
 )
 
 ament_auto_package(
