@@ -549,7 +549,7 @@ protected:
     if (stop_pose_.has_value()) {
       planning_factor_interface_->add(
         path.points, getEgoPose(), stop_pose_.value().pose, PlanningFactor::STOP,
-        SafetyFactorArray{});
+        SafetyFactorArray{}, true, 0.0, 0.0, stop_pose_.value().detail);
       return;
     }
 
@@ -559,7 +559,7 @@ protected:
 
     planning_factor_interface_->add(
       path.points, getEgoPose(), slow_pose_.value().pose, PlanningFactor::SLOW_DOWN,
-      SafetyFactorArray{});
+      SafetyFactorArray{}, true, 0.0, 0.0, slow_pose_.value().detail);
   }
 
   void setDrivableLanes(const std::vector<DrivableLanes> & drivable_lanes);
