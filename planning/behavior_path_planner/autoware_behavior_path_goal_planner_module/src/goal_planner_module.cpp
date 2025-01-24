@@ -532,24 +532,9 @@ void LaneParkingPlanner::bezier_planning_helper(
       sorted_indices.push_back(i);
     }
   }
-  const double vehicle_width = planner_data->parameters.vehicle_width;
-  const bool left_side_parking = parameters_.parking_policy == ParkingPolicy::LEFT_SIDE;
-  const auto pull_over_lanes = goal_planner_utils::getPullOverLanes(
-    *(planner_data->route_handler), left_side_parking, parameters_.backward_goal_search_length,
-    parameters_.forward_goal_search_length);
-  const auto objects_extraction_polygon = goal_planner_utils::generateObjectExtractionPolygon(
-    pull_over_lanes, left_side_parking, parameters_.detection_bound_offset,
-    parameters_.margin_from_boundary + parameters_.max_lateral_offset + vehicle_width);
-
-  PredictedObjects dynamic_target_objects{};
-  for (const auto & object : planner_data->dynamic_object->objects) {
-    const auto object_polygon = universe_utils::toPolygon2d(object);
-    if (
-      objects_extraction_polygon.has_value() &&
-      boost::geometry::intersects(object_polygon, objects_extraction_polygon.value())) {
-      dynamic_target_objects.objects.push_back(object);
-    }
-  }
+  const auto dynamic_target_objects = goal_planner_utils::extract_dynamic_objects(
+    *(planner_data->dynamic_object), *(planner_data->route_handler), parameters_,
+    planner_data->parameters.vehicle_width);
   const auto static_target_objects = utils::path_safety_checker::filterObjectsByVelocity(
     dynamic_target_objects, parameters_.th_moving_object_velocity);
   sortPullOverPaths(
@@ -637,24 +622,9 @@ void FreespaceParkingPlanner::onTimer()
     return;
   }
 
-  const double vehicle_width = local_planner_data->parameters.vehicle_width;
-  const bool left_side_parking = parameters.parking_policy == ParkingPolicy::LEFT_SIDE;
-  const auto pull_over_lanes = goal_planner_utils::getPullOverLanes(
-    *(local_planner_data->route_handler), left_side_parking, parameters.backward_goal_search_length,
-    parameters.forward_goal_search_length);
-  const auto objects_extraction_polygon = goal_planner_utils::generateObjectExtractionPolygon(
-    pull_over_lanes, left_side_parking, parameters.detection_bound_offset,
-    parameters.margin_from_boundary + parameters.max_lateral_offset + vehicle_width);
-
-  PredictedObjects dynamic_target_objects{};
-  for (const auto & object : local_planner_data->dynamic_object->objects) {
-    const auto object_polygon = universe_utils::toPolygon2d(object);
-    if (
-      objects_extraction_polygon.has_value() &&
-      boost::geometry::intersects(object_polygon, objects_extraction_polygon.value())) {
-      dynamic_target_objects.objects.push_back(object);
-    }
-  }
+  const auto dynamic_target_objects = goal_planner_utils::extract_dynamic_objects(
+    *(local_planner_data->dynamic_object), *(local_planner_data->route_handler), parameters,
+    local_planner_data->parameters.vehicle_width);
   const auto static_target_objects = utils::path_safety_checker::filterObjectsByVelocity(
     dynamic_target_objects, parameters.th_moving_object_velocity);
 
@@ -749,37 +719,20 @@ void GoalPlannerModule::updateData()
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
-  // extract static and dynamic objects in extraction polygon for path collision check
-  const auto & p = parameters_;
-  const auto & rh = *(planner_data_->route_handler);
-  const auto objects = *(planner_data_->dynamic_object);
-  const double vehicle_width = planner_data_->parameters.vehicle_width;
-  const auto pull_over_lanes = goal_planner_utils::getPullOverLanes(
-    rh, left_side_parking_, p->backward_goal_search_length, p->forward_goal_search_length);
-  const auto objects_extraction_polygon = goal_planner_utils::generateObjectExtractionPolygon(
-    pull_over_lanes, left_side_parking_, p->detection_bound_offset,
-    p->margin_from_boundary + p->max_lateral_offset + vehicle_width);
-  if (objects_extraction_polygon.has_value()) {
-    debug_data_.objects_extraction_polygon = objects_extraction_polygon.value();
-  }
-  PredictedObjects dynamic_target_objects{};
-  for (const auto & object : objects.objects) {
-    const auto object_polygon = universe_utils::toPolygon2d(object);
-    if (
-      objects_extraction_polygon.has_value() &&
-      boost::geometry::intersects(object_polygon, objects_extraction_polygon.value())) {
-      dynamic_target_objects.objects.push_back(object);
-    }
-  }
-  const auto static_target_objects = utils::path_safety_checker::filterObjectsByVelocity(
-    dynamic_target_objects, p->th_moving_object_velocity);
-
   // update goal searcher and generate goal candidates
   if (goal_candidates_.empty()) {
     goal_candidates_ = generateGoalCandidates();
   }
 
-  auto [lane_parking_response, freespace_parking_response] = syncWithThreads();
+  /*
+  const Pose & current_pose = planner_data_->self_odometry->pose.pose;
+  const Pose goal_pose = planner_data_->route_handler->getOriginalGoalPose();
+  // check if goal_pose is in current_lanes or neighboring road lanes
+  const lanelet::ConstLanelets current_lanes =
+    utils::getCurrentLanesFromPath(getPreviousModuleOutput().reference_path, planner_data_);
+  const double self_to_goal_arc_length =
+    utils::getSignedDistance(current_pose, goal_pose, current_lanes);
+  */
 
   if (getCurrentStatus() == ModuleStatus::IDLE && !isExecutionRequested()) {
     return;
@@ -810,11 +763,19 @@ void GoalPlannerModule::updateData()
     ego_predicted_path_params_, objects_filtering_params_, safety_check_params_);
   debug_data_.collision_check = collision_check_map;
   // update to latest state
+  // extract static and dynamic objects in extraction polygon for path collision check
+  const auto dynamic_target_objects = goal_planner_utils::extract_dynamic_objects(
+    *(planner_data_->dynamic_object), *(planner_data_->route_handler), *parameters_,
+    planner_data_->parameters.vehicle_width);
+  const auto static_target_objects = utils::path_safety_checker::filterObjectsByVelocity(
+    dynamic_target_objects, parameters_->th_moving_object_velocity);
+
   path_decision_controller_.transit_state(
     found_pull_over_path, clock_->now(), static_target_objects, dynamic_target_objects,
     modified_goal_pose, planner_data_, occupancy_grid_map_, is_current_safe, *parameters_,
     goal_searcher_, isActivated(), pull_over_path_recv, debug_data_.ego_polygons_expanded);
 
+  auto [lane_parking_response, freespace_parking_response] = syncWithThreads();
   if (context_data_) {
     context_data_.value().update(
       path_decision_controller_.get_current_state().is_stable_safe, static_target_objects,

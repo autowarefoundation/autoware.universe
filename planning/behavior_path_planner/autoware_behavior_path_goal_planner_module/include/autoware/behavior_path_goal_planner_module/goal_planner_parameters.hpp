@@ -88,6 +88,7 @@ struct GoalPlannerParameters
 
   // pull over general params
   double pull_over_minimum_request_length{0.0};
+  double pull_over_prepare_length{0.0};
   double pull_over_velocity{0.0};
   double pull_over_minimum_velocity{0.0};
   double decide_path_distance{0.0};

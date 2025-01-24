@@ -831,4 +831,29 @@ std::optional<Pose> calcClosestPose(
   return closest_pose;
 }
 
+autoware_perception_msgs::msg::PredictedObjects extract_dynamic_objects(
+  const autoware_perception_msgs::msg::PredictedObjects & original_objects,
+  const route_handler::RouteHandler & route_handler, const GoalPlannerParameters & parameters,
+  const double vehicle_width)
+{
+  const bool left_side_parking = parameters.parking_policy == ParkingPolicy::LEFT_SIDE;
+  const auto pull_over_lanes = goal_planner_utils::getPullOverLanes(
+    route_handler, left_side_parking, parameters.backward_goal_search_length,
+    parameters.forward_goal_search_length);
+  const auto objects_extraction_polygon = goal_planner_utils::generateObjectExtractionPolygon(
+    pull_over_lanes, left_side_parking, parameters.detection_bound_offset,
+    parameters.margin_from_boundary + parameters.max_lateral_offset + vehicle_width);
+
+  PredictedObjects dynamic_target_objects{};
+  for (const auto & object : original_objects.objects) {
+    const auto object_polygon = universe_utils::toPolygon2d(object);
+    if (
+      objects_extraction_polygon.has_value() &&
+      boost::geometry::intersects(object_polygon, objects_extraction_polygon.value())) {
+      dynamic_target_objects.objects.push_back(object);
+    }
+  }
+  return dynamic_target_objects;
+}
+
 }  // namespace autoware::behavior_path_planner::goal_planner_utils

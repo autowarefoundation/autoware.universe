@@ -185,6 +185,11 @@ std::optional<Pose> calcRefinedGoal(
 std::optional<Pose> calcClosestPose(
   const lanelet::ConstLineString3d line, const Point & query_point);
 
+autoware_perception_msgs::msg::PredictedObjects extract_dynamic_objects(
+  const autoware_perception_msgs::msg::PredictedObjects & original_objects,
+  const route_handler::RouteHandler & route_handler, const GoalPlannerParameters & parameters,
+  const double vehicle_width);
+
 }  // namespace autoware::behavior_path_planner::goal_planner_utils
 
 #endif  // AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__UTIL_HPP_

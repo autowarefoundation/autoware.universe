@@ -139,6 +139,7 @@ GoalPlannerParameters GoalPlannerModuleManager::initGoalPlannerParameters(
     const std::string ns = base_ns + "pull_over.";
     p.pull_over_minimum_request_length =
       node->declare_parameter<double>(ns + "minimum_request_length");
+    p.pull_over_prepare_length = node->declare_parameter<double>(ns + "pull_over_prepare_length");
     p.pull_over_velocity = node->declare_parameter<double>(ns + "pull_over_velocity");
     p.pull_over_minimum_velocity =
       node->declare_parameter<double>(ns + "pull_over_minimum_velocity");
