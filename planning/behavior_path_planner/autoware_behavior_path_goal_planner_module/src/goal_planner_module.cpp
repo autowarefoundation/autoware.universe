@@ -615,29 +615,11 @@ void GoalPlannerModule::updateData()
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   // extract static and dynamic objects in extraction polygon for path collision check
-  const auto & p = parameters_;
-  const auto & rh = *(planner_data_->route_handler);
-  const auto objects = *(planner_data_->dynamic_object);
-  const double vehicle_width = planner_data_->parameters.vehicle_width;
-  const auto pull_over_lanes = goal_planner_utils::getPullOverLanes(
-    rh, left_side_parking_, p->backward_goal_search_length, p->forward_goal_search_length);
-  const auto objects_extraction_polygon = goal_planner_utils::generateObjectExtractionPolygon(
-    pull_over_lanes, left_side_parking_, p->detection_bound_offset,
-    p->margin_from_boundary + p->max_lateral_offset + vehicle_width);
-  if (objects_extraction_polygon.has_value()) {
-    debug_data_.objects_extraction_polygon = objects_extraction_polygon.value();
-  }
-  PredictedObjects dynamic_target_objects{};
-  for (const auto & object : objects.objects) {
-    const auto object_polygon = universe_utils::toPolygon2d(object);
-    if (
-      objects_extraction_polygon.has_value() &&
-      boost::geometry::intersects(object_polygon, objects_extraction_polygon.value())) {
-      dynamic_target_objects.objects.push_back(object);
-    }
-  }
+  const auto dynamic_target_objects = goal_planner_utils::extract_dynamic_objects(
+    *(planner_data_->dynamic_object), *(planner_data_->route_handler), *parameters_,
+    planner_data_->parameters.vehicle_width);
   const auto static_target_objects = utils::path_safety_checker::filterObjectsByVelocity(
-    dynamic_target_objects, p->th_moving_object_velocity);
+    dynamic_target_objects, parameters_->th_moving_object_velocity);
 
   // update goal searcher and generate goal candidates
   if (goal_candidates_.empty()) {
@@ -753,39 +735,9 @@ bool GoalPlannerModule::isExecutionRequested() const
   // check if goal_pose is in current_lanes or neighboring road lanes
   const lanelet::ConstLanelets current_lanes =
     utils::getCurrentLanesFromPath(getPreviousModuleOutput().reference_path, planner_data_);
-  const auto getNeighboringLane =
-    [&](const lanelet::ConstLanelet & lane) -> std::optional<lanelet::ConstLanelet> {
-    return left_side_parking_ ? route_handler->getLeftLanelet(lane, false, true)
-                              : route_handler->getRightLanelet(lane, false, true);
-  };
-  lanelet::ConstLanelets goal_check_lanes = current_lanes;
-  for (const auto & lane : current_lanes) {
-    auto neighboring_lane = getNeighboringLane(lane);
-    while (neighboring_lane) {
-      goal_check_lanes.push_back(neighboring_lane.value());
-      neighboring_lane = getNeighboringLane(neighboring_lane.value());
-    }
-  }
-  const bool goal_is_in_current_segment_lanes = std::any_of(
-    goal_check_lanes.begin(), goal_check_lanes.end(), [&](const lanelet::ConstLanelet & lane) {
-      return lanelet::utils::isInLanelet(goal_pose, lane);
-    });
-
-  // check that goal is in current neighbor shoulder lane
-  const bool goal_is_in_current_shoulder_lanes = std::invoke([&]() {
-    for (const auto & lane : current_lanes) {
-      const auto shoulder_lane = left_side_parking_ ? route_handler->getLeftShoulderLanelet(lane)
-                                                    : route_handler->getRightShoulderLanelet(lane);
-      if (shoulder_lane && lanelet::utils::isInLanelet(goal_pose, *shoulder_lane)) {
-        return true;
-      }
-    }
-    return false;
-  });
-
-  // if goal is not in current_lanes and current_shoulder_lanes, do not execute goal_planner,
-  // because goal arc coordinates cannot be calculated.
-  if (!goal_is_in_current_segment_lanes && !goal_is_in_current_shoulder_lanes) {
+  const bool is_goal_reachable = goal_planner_utils::is_goal_reachable_on_path(
+    current_lanes, *(planner_data_->route_handler), left_side_parking_);
+  if (!is_goal_reachable) {
     return false;
   }
 
@@ -793,7 +745,7 @@ bool GoalPlannerModule::isExecutionRequested() const
   // 1) goal_pose is in current_lanes, plan path to the original fixed goal
   // 2) goal_pose is NOT in current_lanes, do not execute goal_planner
   if (!utils::isAllowedGoalModification(route_handler)) {
-    return goal_is_in_current_segment_lanes;
+    return is_goal_reachable;
   }
 
   // if goal arc coordinates can be calculated, check if goal is in request_length
