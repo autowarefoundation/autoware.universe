@@ -33,7 +33,7 @@ Use colcon build and launch in the same way as other packages.
 ```sh
 colcon build
 source install/setup.bash
-ros2 launch system_monitor system_monitor.launch.xml
+ros2 launch autoware_system_monitor system_monitor.launch.xml
 ```
 
 CPU and GPU monitoring method differs depending on platform.<br>
