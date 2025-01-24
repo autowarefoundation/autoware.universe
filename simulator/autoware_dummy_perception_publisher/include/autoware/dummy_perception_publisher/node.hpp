@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DUMMY_PERCEPTION_PUBLISHER__NODE_HPP_
-#define DUMMY_PERCEPTION_PUBLISHER__NODE_HPP_
+#ifndef AUTOWARE__DUMMY_PERCEPTION_PUBLISHER__NODE_HPP_
+#define AUTOWARE__DUMMY_PERCEPTION_PUBLISHER__NODE_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -41,6 +41,8 @@
 #include <random>
 #include <vector>
 
+namespace autoware::dummy_perception_publisher
+{
 struct ObjectInfo
 {
   ObjectInfo(
@@ -139,4 +141,6 @@ public:
   ~DummyPerceptionPublisherNode() {}
 };
 
-#endif  // DUMMY_PERCEPTION_PUBLISHER__NODE_HPP_
+}  // namespace autoware::dummy_perception_publisher
+
+#endif  // AUTOWARE__DUMMY_PERCEPTION_PUBLISHER__NODE_HPP_

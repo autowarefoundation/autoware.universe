@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "dummy_perception_publisher/signed_distance_function.hpp"
+#include "autoware/dummy_perception_publisher/signed_distance_function.hpp"
 
 #include <gtest/gtest.h>
 #include <tf2/LinearMath/Quaternion.h>
@@ -23,7 +23,8 @@
 #include <limits>
 #include <memory>
 
-namespace sdf = signed_distance_function;
+namespace autoware::dummy_perception_publisher
+{
 
 TEST(SignedDistanceFunctionTest, BoxSDF)
 {
@@ -33,7 +34,7 @@ TEST(SignedDistanceFunctionTest, BoxSDF)
     // test with identity transform
     const auto q = tf2::Quaternion(tf2::Vector3(0, 0, 1.0), 0.0);
     const auto tf_global2local = tf2::Transform(q);
-    const auto func = sdf::BoxSDF(1., 2., tf_global2local);
+    const auto func = BoxSDF(1., 2., tf_global2local);
     ASSERT_NEAR(func(0.0, 0.0), -0.5, eps);
     ASSERT_NEAR(func(0.0, 1.0), 0.0, eps);
     ASSERT_NEAR(func(0.0, 1.5), 0.5, eps);
@@ -50,7 +51,7 @@ TEST(SignedDistanceFunctionTest, BoxSDF)
     // test with rotation (90 deg) and translation
     const auto q = tf2::Quaternion(tf2::Vector3(0, 0, 1.0), M_PI * 0.5);
     const auto tf_global2local = tf2::Transform(q, tf2::Vector3(1.0, 1.0, 0.0));
-    const auto func = sdf::BoxSDF(1., 2., tf_global2local);
+    const auto func = BoxSDF(1., 2., tf_global2local);
     ASSERT_NEAR(func(1.0, 1.0), -0.5, eps);
     ASSERT_NEAR(func(0.0, 0.0), 0.5, eps);
 
@@ -63,11 +64,11 @@ TEST(SignedDistanceFunctionTest, CompositeSDF)
   const double eps = 1e-5;
   const auto q_identity = tf2::Quaternion(tf2::Vector3(0, 0, 1.0), 0.0);
   const auto f1 =
-    std::make_shared<sdf::BoxSDF>(1., 1., tf2::Transform(q_identity, tf2::Vector3(0, 0, 0)));
+    std::make_shared<BoxSDF>(1., 1., tf2::Transform(q_identity, tf2::Vector3(0, 0, 0)));
   const auto f2 =
-    std::make_shared<sdf::BoxSDF>(1., 1., tf2::Transform(q_identity, tf2::Vector3(0, 2.0, 0)));
+    std::make_shared<BoxSDF>(1., 1., tf2::Transform(q_identity, tf2::Vector3(0, 2.0, 0)));
   const auto func =
-    sdf::CompositeSDF(std::vector<std::shared_ptr<sdf::AbstractSignedDistanceFunction>>{f1, f2});
+    CompositeSDF(std::vector<std::shared_ptr<AbstractSignedDistanceFunction>>{f1, f2});
   ASSERT_NEAR(func(0.0, 0.9), 0.4, eps);
   ASSERT_NEAR(func(0.0, 1.1), 0.4, eps);
   ASSERT_NEAR(func(0.0, 0.1), -0.4, eps);
@@ -76,6 +77,8 @@ TEST(SignedDistanceFunctionTest, CompositeSDF)
   // ASSERT_NEAR(func.getSphereTracingDist(0.0, 1.0, M_PI * 0.5, eps), 0.5, eps);
   // ASSERT_NEAR(func.getSphereTracingDist(0.0, 1.0, M_PI * -0.5, eps), 0.5, eps);
 }
+
+}  // namespace autoware::dummy_perception_publisher
 
 int main(int argc, char ** argv)
 {

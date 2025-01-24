@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "dummy_perception_publisher/node.hpp"
+#include "autoware/dummy_perception_publisher/node.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -21,7 +21,8 @@
 int main(int argc, char ** argv)
 {
   rclcpp::init(argc, argv);
-  rclcpp::spin(std::make_shared<DummyPerceptionPublisherNode>());
+  rclcpp::spin(
+    std::make_shared<autoware::dummy_perception_publisher::DummyPerceptionPublisherNode>());
   rclcpp::shutdown();
 
   return 0;

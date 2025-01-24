@@ -1,4 +1,4 @@
-// Copyright 2020 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "dummy_perception_publisher/node.hpp"
-#include "dummy_perception_publisher/signed_distance_function.hpp"
+#include "autoware/dummy_perception_publisher/node.hpp"
+#include "autoware/dummy_perception_publisher/signed_distance_function.hpp"
 
 #include <pcl/impl/point_types.hpp>
 
@@ -26,7 +26,7 @@
 #include <memory>
 #include <vector>
 
-namespace
+namespace autoware::dummy_perception_publisher
 {
 
 static constexpr double epsilon = 0.001;
@@ -44,8 +44,6 @@ pcl::PointXYZ getPointWrtBaseLink(
   const auto p_wrt_base = tf_base_link2moved_object(tf2::Vector3(x, y, z));
   return pcl::PointXYZ(p_wrt_base.x(), p_wrt_base.y(), p_wrt_base.z());
 }
-
-}  // namespace
 
 void ObjectCentricPointCloudCreator::create_object_pointcloud(
   const ObjectInfo & obj_info, const tf2::Transform & tf_base_link2map,
@@ -200,13 +198,13 @@ std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> EgoCentricPointCloudCreator::cr
   const std::vector<ObjectInfo> & obj_infos, const tf2::Transform & tf_base_link2map,
   std::mt19937 & random_generator, pcl::PointCloud<pcl::PointXYZ>::Ptr & merged_pointcloud) const
 {
-  std::vector<std::shared_ptr<signed_distance_function::AbstractSignedDistanceFunction>> sdf_ptrs;
+  std::vector<std::shared_ptr<AbstractSignedDistanceFunction>> sdf_ptrs;
   for (const auto & obj_info : obj_infos) {
-    const auto sdf_ptr = std::make_shared<signed_distance_function::BoxSDF>(
+    const auto sdf_ptr = std::make_shared<BoxSDF>(
       obj_info.length, obj_info.width, tf_base_link2map * obj_info.tf_map2moved_object);
     sdf_ptrs.push_back(sdf_ptr);
   }
-  const auto composite_sdf = signed_distance_function::CompositeSDF(sdf_ptrs);
+  const auto composite_sdf = CompositeSDF(sdf_ptrs);
 
   std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> pointclouds(obj_infos.size());
   for (size_t i = 0; i < obj_infos.size(); ++i) {
@@ -261,3 +259,5 @@ std::vector<pcl::PointCloud<pcl::PointXYZ>::Ptr> EgoCentricPointCloudCreator::cr
   }
   return pointclouds;
 }
+
+}  // namespace autoware::dummy_perception_publisher

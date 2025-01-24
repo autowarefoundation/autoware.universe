@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "dummy_perception_publisher/signed_distance_function.hpp"
+#include "autoware/dummy_perception_publisher/signed_distance_function.hpp"
 
 #include <tf2/LinearMath/Vector3.h>
 
@@ -20,7 +20,7 @@
 #include <iostream>
 #include <limits>
 
-namespace signed_distance_function
+namespace autoware::dummy_perception_publisher
 {
 
 double AbstractSignedDistanceFunction::getSphereTracingDist(
@@ -89,4 +89,4 @@ size_t CompositeSDF::nearest_sdf_index(double x, double y) const
   return idx_min;
 }
 
-}  // namespace signed_distance_function
+}  // namespace autoware::dummy_perception_publisher

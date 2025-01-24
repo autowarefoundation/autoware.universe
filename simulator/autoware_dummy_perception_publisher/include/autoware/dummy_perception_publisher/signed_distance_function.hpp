@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DUMMY_PERCEPTION_PUBLISHER__SIGNED_DISTANCE_FUNCTION_HPP_
-#define DUMMY_PERCEPTION_PUBLISHER__SIGNED_DISTANCE_FUNCTION_HPP_
+#ifndef AUTOWARE__DUMMY_PERCEPTION_PUBLISHER__SIGNED_DISTANCE_FUNCTION_HPP_
+#define AUTOWARE__DUMMY_PERCEPTION_PUBLISHER__SIGNED_DISTANCE_FUNCTION_HPP_
 
 #include <tf2/LinearMath/Transform.h>
 
@@ -23,7 +23,7 @@
 #include <utility>
 #include <vector>
 
-namespace signed_distance_function
+namespace autoware::dummy_perception_publisher
 {
 
 class AbstractSignedDistanceFunction
@@ -69,6 +69,6 @@ private:
   std::vector<std::shared_ptr<AbstractSignedDistanceFunction>> sdf_ptrs_;
 };
 
-}  // namespace signed_distance_function
+}  // namespace autoware::dummy_perception_publisher
 
-#endif  // DUMMY_PERCEPTION_PUBLISHER__SIGNED_DISTANCE_FUNCTION_HPP_
+#endif  // AUTOWARE__DUMMY_PERCEPTION_PUBLISHER__SIGNED_DISTANCE_FUNCTION_HPP_
