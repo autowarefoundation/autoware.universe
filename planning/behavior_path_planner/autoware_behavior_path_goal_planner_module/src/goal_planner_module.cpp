@@ -318,18 +318,18 @@ void LaneParkingPlanner::onTimer()
   }
   // end of critical section
   if (!local_request_opt) {
-    RCLCPP_ERROR(logger_, "main thread has not yet set request for LaneParkingPlanner");
+    RCLCPP_DEBUG(logger_, "main thread has not yet set request for LaneParkingPlanner");
     return;
   }
   const auto & local_request = local_request_opt.value();
   const auto & goal_candidates = local_request.goal_candidates_;
   const auto & local_planner_data = local_request.get_planner_data();
-  const auto & current_status = local_request.get_current_status();
   const auto & upstream_module_output = local_request.get_upstream_module_output();
   const auto & pull_over_path_opt = local_request.get_pull_over_path();
   const auto & prev_data = local_request.get_prev_data();
+  const auto trigger_thread_on_approach = local_request.trigger_thread_on_approach();
 
-  if (current_status == ModuleStatus::IDLE) {
+  if (!trigger_thread_on_approach) {
     return;
   }
 
@@ -591,7 +591,7 @@ void FreespaceParkingPlanner::onTimer()
   }
   // end of critical section
   if (!local_request_opt) {
-    RCLCPP_ERROR(logger_, "main thread has not yet set request for FreespaceParkingPlanner");
+    RCLCPP_DEBUG(logger_, "main thread has not yet set request for FreespaceParkingPlanner");
     return;
   }
   const auto & local_request = local_request_opt.value();
@@ -677,7 +677,7 @@ std::pair<LaneParkingResponse, FreespaceParkingResponse> GoalPlannerModule::sync
     // count is affected
     lane_parking_request_.value().update(
       *planner_data_, getCurrentStatus(), getPreviousModuleOutput(), pull_over_path,
-      path_decision_controller_.get_current_state());
+      path_decision_controller_.get_current_state(), trigger_thread_on_approach_);
     // NOTE: RouteHandler holds several shared pointers in it, so just copying PlannerData as
     // value does not adds the reference counts of RouteHandler.lanelet_map_ptr_ and others. Since
     // behavior_path_planner::run() updates
@@ -724,15 +724,26 @@ void GoalPlannerModule::updateData()
     goal_candidates_ = generateGoalCandidates();
   }
 
-  /*
-  const Pose & current_pose = planner_data_->self_odometry->pose.pose;
-  const Pose goal_pose = planner_data_->route_handler->getOriginalGoalPose();
-  // check if goal_pose is in current_lanes or neighboring road lanes
   const lanelet::ConstLanelets current_lanes =
     utils::getCurrentLanesFromPath(getPreviousModuleOutput().reference_path, planner_data_);
-  const double self_to_goal_arc_length =
-    utils::getSignedDistance(current_pose, goal_pose, current_lanes);
-  */
+
+  if (
+    !trigger_thread_on_approach_ &&
+    utils::isAllowedGoalModification(planner_data_->route_handler) &&
+    goal_planner_utils::is_goal_reachable_on_path(
+      current_lanes, *(planner_data_->route_handler), left_side_parking_)) {
+    const double self_to_goal_arc_length = utils::getSignedDistance(
+      planner_data_->self_odometry->pose.pose, planner_data_->route_handler->getOriginalGoalPose(),
+      current_lanes);
+    if (self_to_goal_arc_length < parameters_->pull_over_prepare_length) {
+      trigger_thread_on_approach_ = true;
+      [[maybe_unused]] const auto send_only_request = syncWithThreads();
+      RCLCPP_INFO(
+        getLogger(), "start preparing goal candidates once for goal ahead of %f meter",
+        self_to_goal_arc_length);
+      return;
+    }
+  }
 
   if (getCurrentStatus() == ModuleStatus::IDLE && !isExecutionRequested()) {
     return;
@@ -849,39 +860,9 @@ bool GoalPlannerModule::isExecutionRequested() const
   // check if goal_pose is in current_lanes or neighboring road lanes
   const lanelet::ConstLanelets current_lanes =
     utils::getCurrentLanesFromPath(getPreviousModuleOutput().reference_path, planner_data_);
-  const auto getNeighboringLane =
-    [&](const lanelet::ConstLanelet & lane) -> std::optional<lanelet::ConstLanelet> {
-    return left_side_parking_ ? route_handler->getLeftLanelet(lane, false, true)
-                              : route_handler->getRightLanelet(lane, false, true);
-  };
-  lanelet::ConstLanelets goal_check_lanes = current_lanes;
-  for (const auto & lane : current_lanes) {
-    auto neighboring_lane = getNeighboringLane(lane);
-    while (neighboring_lane) {
-      goal_check_lanes.push_back(neighboring_lane.value());
-      neighboring_lane = getNeighboringLane(neighboring_lane.value());
-    }
-  }
-  const bool goal_is_in_current_segment_lanes = std::any_of(
-    goal_check_lanes.begin(), goal_check_lanes.end(), [&](const lanelet::ConstLanelet & lane) {
-      return lanelet::utils::isInLanelet(goal_pose, lane);
-    });
-
-  // check that goal is in current neighbor shoulder lane
-  const bool goal_is_in_current_shoulder_lanes = std::invoke([&]() {
-    for (const auto & lane : current_lanes) {
-      const auto shoulder_lane = left_side_parking_ ? route_handler->getLeftShoulderLanelet(lane)
-                                                    : route_handler->getRightShoulderLanelet(lane);
-      if (shoulder_lane && lanelet::utils::isInLanelet(goal_pose, *shoulder_lane)) {
-        return true;
-      }
-    }
-    return false;
-  });
-
-  // if goal is not in current_lanes and current_shoulder_lanes, do not execute goal_planner,
-  // because goal arc coordinates cannot be calculated.
-  if (!goal_is_in_current_segment_lanes && !goal_is_in_current_shoulder_lanes) {
+  const bool is_goal_reachable = goal_planner_utils::is_goal_reachable_on_path(
+    current_lanes, *(planner_data_->route_handler), left_side_parking_);
+  if (!is_goal_reachable) {
     return false;
   }
 
@@ -889,7 +870,7 @@ bool GoalPlannerModule::isExecutionRequested() const
   // 1) goal_pose is in current_lanes, plan path to the original fixed goal
   // 2) goal_pose is NOT in current_lanes, do not execute goal_planner
   if (!utils::isAllowedGoalModification(route_handler)) {
-    return goal_is_in_current_segment_lanes;
+    return is_goal_reachable;
   }
 
   // if goal arc coordinates can be calculated, check if goal is in request_length

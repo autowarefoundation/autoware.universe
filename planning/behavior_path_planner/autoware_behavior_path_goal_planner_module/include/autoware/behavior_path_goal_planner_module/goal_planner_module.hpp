@@ -318,6 +318,7 @@ public:
 private:
   std::pair<LaneParkingResponse, FreespaceParkingResponse> syncWithThreads();
 
+  bool trigger_thread_on_approach_{false};
   // NOTE: never access to following variables except in updateData()!!!
   std::mutex lane_parking_mutex_;
   std::optional<LaneParkingRequest> lane_parking_request_;

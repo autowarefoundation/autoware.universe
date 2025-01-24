@@ -856,4 +856,44 @@ autoware_perception_msgs::msg::PredictedObjects extract_dynamic_objects(
   return dynamic_target_objects;
 }
 
+bool is_goal_reachable_on_path(
+  const lanelet::ConstLanelets current_lanes, const route_handler::RouteHandler & route_handler,
+  const bool left_side_parking)
+{
+  const Pose goal_pose = route_handler.getOriginalGoalPose();
+  const auto getNeighboringLane =
+    [&](const lanelet::ConstLanelet & lane) -> std::optional<lanelet::ConstLanelet> {
+    return left_side_parking ? route_handler.getLeftLanelet(lane, false, true)
+                             : route_handler.getRightLanelet(lane, false, true);
+  };
+  lanelet::ConstLanelets goal_check_lanes = current_lanes;
+  for (const auto & lane : current_lanes) {
+    auto neighboring_lane = getNeighboringLane(lane);
+    while (neighboring_lane) {
+      goal_check_lanes.push_back(neighboring_lane.value());
+      neighboring_lane = getNeighboringLane(neighboring_lane.value());
+    }
+  }
+  const bool goal_is_in_current_segment_lanes = std::any_of(
+    goal_check_lanes.begin(), goal_check_lanes.end(), [&](const lanelet::ConstLanelet & lane) {
+      return lanelet::utils::isInLanelet(goal_pose, lane);
+    });
+
+  // check that goal is in current neighbor shoulder lane
+  const bool goal_is_in_current_shoulder_lanes = std::invoke([&]() {
+    for (const auto & lane : current_lanes) {
+      const auto shoulder_lane = left_side_parking ? route_handler.getLeftShoulderLanelet(lane)
+                                                   : route_handler.getRightShoulderLanelet(lane);
+      if (shoulder_lane && lanelet::utils::isInLanelet(goal_pose, *shoulder_lane)) {
+        return true;
+      }
+    }
+    return false;
+  });
+
+  // if goal is not in current_lanes and current_shoulder_lanes, do not execute goal_planner,
+  // because goal arc coordinates cannot be calculated.
+  return goal_is_in_current_segment_lanes || goal_is_in_current_shoulder_lanes;
+}
+
 }  // namespace autoware::behavior_path_planner::goal_planner_utils
