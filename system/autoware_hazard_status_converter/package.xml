@@ -3,7 +3,7 @@
 <package format="3">
   <name>autoware_hazard_status_converter</name>
   <version>0.40.0</version>
-  <description>The hazard_status_converter package</description>
+  <description>The autoware_hazard_status_converter package</description>
   <maintainer email="isamu.takagi@tier4.jp">Takagi, Isamu</maintainer>
   <maintainer email="junya.sasaki@tier4.jp">Junya Sasaki</maintainer>
   <license>Apache License 2.0</license>
