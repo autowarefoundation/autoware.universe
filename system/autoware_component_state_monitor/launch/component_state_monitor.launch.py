@@ -60,7 +60,7 @@ def launch_setup(context, *args, **kwargs):
 
     # create component
     component = ComposableNode(
-        namespace="autoware_component_state_monitor",
+        namespace="component_state_monitor",
         name="component",
         package="autoware_component_state_monitor",
         plugin="autoware::component_state_monitor::StateMonitor",
