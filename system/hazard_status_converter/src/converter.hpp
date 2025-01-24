@@ -15,8 +15,8 @@
 #ifndef CONVERTER_HPP_
 #define CONVERTER_HPP_
 
-#include <autoware/universe_utils/ros/polling_subscriber.hpp>
 #include <autoware/diagnostic_graph_utils/subscription.hpp>
+#include <autoware/universe_utils/ros/polling_subscriber.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_system_msgs/msg/hazard_status_stamped.hpp>
