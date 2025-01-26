@@ -78,6 +78,7 @@ struct DebugData
 
   std::vector<geometry_msgs::msg::Pose> stop_poses;
   std::vector<geometry_msgs::msg::Pose> slow_poses;
+  std::vector<geometry_msgs::msg::Pose> pass_poses;
   std::vector<geometry_msgs::msg::Point> stop_factor_points;
   std::vector<geometry_msgs::msg::Point> crosswalk_polygon;
   std::vector<std::vector<geometry_msgs::msg::Point>> ego_polygons;

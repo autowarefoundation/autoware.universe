@@ -17,8 +17,8 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
-  <exec_depend>automatic_pose_initializer</exec_depend>
   <exec_depend>autoware_ar_tag_based_localizer</exec_depend>
+  <exec_depend>autoware_automatic_pose_initializer</exec_depend>
   <exec_depend>autoware_ekf_localizer</exec_depend>
   <exec_depend>autoware_geo_pose_projector</exec_depend>
   <exec_depend>autoware_gyro_odometer</exec_depend>
