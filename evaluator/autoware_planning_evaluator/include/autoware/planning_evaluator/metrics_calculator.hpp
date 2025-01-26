@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -44,16 +44,15 @@ public:
 
   MetricsCalculator() = default;
 
-  //中島、↓コメ修正
   /**
    * @brief calculate
    * @param [in] metric Metric enum value
    * @param [in] traj input trajectory
-   * @param [in] vehicle_length input vehicle length
+   * @param [in] vehicle_length_m input vehicle length
    * @return string describing the requested metric
    */
   std::optional<Accumulator<double>> calculate(
-    const Metric metric, const Trajectory & traj , const double & vehicle_length) const;
+    const Metric metric, const Trajectory & traj , const double & vehicle_length_m) const;
   std::optional<Accumulator<double>> calculate(
     const Metric metric, const Pose & base_pose, const Pose & target_pose) const;
 

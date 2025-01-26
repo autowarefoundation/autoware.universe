@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -14,9 +14,6 @@
 
 #ifndef AUTOWARE__PLANNING_EVALUATOR__METRICS__TRAJECTORY_METRICS_HPP_
 #define AUTOWARE__PLANNING_EVALUATOR__METRICS__TRAJECTORY_METRICS_HPP_
-
-// #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
-// #include <autoware_vehicle_info_utils/vehicle_info.hpp>
 
 #include "autoware/universe_utils/math/accumulator.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
@@ -46,11 +43,11 @@ Accumulator<double> calcTrajectoryRelativeAngle(
 /**
  * @brief calculate large relative angle metric (angle between successive points)
  * @param [in] traj input trajectory
- * @param [in] vehicle_length input vehicle length
+ * @param [in] vehicle_length_m input vehicle length
  * @return calculated statistics
  */
 Accumulator<double> calcTrajectoryLargeRelativeAngle(
-  const Trajectory & traj, const double & vehicle_length);
+  const Trajectory & traj, const double & vehicle_length_m);
 
 /**
  * @brief calculate metric for the distance between trajectory points
