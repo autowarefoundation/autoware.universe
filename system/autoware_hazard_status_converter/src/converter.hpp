@@ -15,8 +15,8 @@
 #ifndef CONVERTER_HPP_
 #define CONVERTER_HPP_
 
+#include <autoware/diagnostic_graph_utils/subscription.hpp>
 #include <autoware/universe_utils/ros/polling_subscriber.hpp>
-#include <diagnostic_graph_utils/subscription.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_system_msgs/msg/hazard_status_stamped.hpp>
@@ -34,11 +34,11 @@ public:
 
 private:
   using HazardStatusStamped = autoware_system_msgs::msg::HazardStatusStamped;
-  using DiagGraph = diagnostic_graph_utils::DiagGraph;
-  using DiagUnit = diagnostic_graph_utils::DiagUnit;
+  using DiagGraph = autoware::diagnostic_graph_utils::DiagGraph;
+  using DiagUnit = autoware::diagnostic_graph_utils::DiagUnit;
   void on_create(DiagGraph::ConstSharedPtr graph);
   void on_update(DiagGraph::ConstSharedPtr graph);
-  diagnostic_graph_utils::DiagGraphSubscription sub_graph_;
+  autoware::diagnostic_graph_utils::DiagGraphSubscription sub_graph_;
   rclcpp::Publisher<HazardStatusStamped>::SharedPtr pub_hazard_;
   autoware::universe_utils::InterProcessPollingSubscriber<
     tier4_system_msgs::msg::EmergencyHoldingState>

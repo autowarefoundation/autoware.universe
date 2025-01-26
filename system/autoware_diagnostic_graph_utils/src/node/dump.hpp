@@ -12,35 +12,41 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef DIAGNOSTICS_HPP_
-#define DIAGNOSTICS_HPP_
+#ifndef NODE__DUMP_HPP_
+#define NODE__DUMP_HPP_
 
 #include "autoware/diagnostic_graph_utils/subscription.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_adapi_v1_msgs/msg/diag_graph_status.hpp>
-#include <autoware_adapi_v1_msgs/msg/diag_graph_struct.hpp>
+#include <string>
+#include <unordered_map>
 
-namespace autoware::default_adapi
+namespace autoware::diagnostic_graph_utils
 {
 
-class DiagnosticsNode : public rclcpp::Node
+class DumpNode : public rclcpp::Node
 {
 public:
-  explicit DiagnosticsNode(const rclcpp::NodeOptions & options);
+  explicit DumpNode(const rclcpp::NodeOptions & options);
 
 private:
-  using DiagGraph = autoware::diagnostic_graph_utils::DiagGraph;
-  using DiagUnit = autoware::diagnostic_graph_utils::DiagUnit;
-  using DiagLink = autoware::diagnostic_graph_utils::DiagLink;
   void on_create(DiagGraph::ConstSharedPtr graph);
   void on_update(DiagGraph::ConstSharedPtr graph);
-  rclcpp::Publisher<autoware_adapi_v1_msgs::msg::DiagGraphStruct>::SharedPtr pub_struct_;
-  rclcpp::Publisher<autoware_adapi_v1_msgs::msg::DiagGraphStatus>::SharedPtr pub_status_;
-  autoware::diagnostic_graph_utils::DiagGraphSubscription sub_graph_;
+  DiagGraphSubscription sub_graph_;
+
+  struct TableLine
+  {
+    int index;
+    std::string text1;
+    std::string text2;
+  };
+
+  std::unordered_map<DiagUnit *, TableLine> table_;
+  std::string header_;
+  std::string border_;
 };
 
-}  // namespace autoware::default_adapi
+}  // namespace autoware::diagnostic_graph_utils
 
-#endif  // DIAGNOSTICS_HPP_
+#endif  // NODE__DUMP_HPP_
