@@ -46,7 +46,7 @@ Accumulator<double> calcTrajectoryRelativeAngle(
  * @param [in] vehicle_length_m input vehicle length
  * @return calculated statistics
  */
-Accumulator<double> calcTrajectoryLargeRelativeAngle(
+Accumulator<double> calcTrajectoryResampledRelativeAngle(
   const Trajectory & traj, const double & vehicle_length_m);
 
 /**

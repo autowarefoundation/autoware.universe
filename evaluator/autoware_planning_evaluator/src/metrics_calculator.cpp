@@ -34,8 +34,8 @@ std::optional<Accumulator<double>> MetricsCalculator::calculate(
       return metrics::calcTrajectoryInterval(traj);
     case Metric::relative_angle:
       return metrics::calcTrajectoryRelativeAngle(traj, parameters.trajectory.min_point_dist_m);
-    case Metric::large_relative_angle:
-      return metrics::calcTrajectoryLargeRelativeAngle(traj, vehicle_length_m);
+    case Metric::resampled_relative_angle:
+      return metrics::calcTrajectoryResampledRelativeAngle(traj, vehicle_length_m);
     case Metric::length:
       return metrics::calcTrajectoryLength(traj);
     case Metric::duration:
