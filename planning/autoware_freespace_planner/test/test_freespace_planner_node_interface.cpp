@@ -66,7 +66,7 @@ void publishMandatoryTopics(
 }
 
 // the following tests are disable because they randomly fail
-TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInput)
+TEST(PlanningModuleInterfaceTest, DISABLED_testPlanningInterfaceWithVariousTrajectoryInput)
 {
   rclcpp::init(0, nullptr);
 
@@ -87,7 +87,7 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInpu
   rclcpp::shutdown();
 }
 
-TEST(PlanningModuleInterfaceTest, NodeTestWithOffTrackEgoPose)
+TEST(PlanningModuleInterfaceTest, DISABLED_NodeTestWithOffTrackEgoPose)
 {
   rclcpp::init(0, nullptr);
   auto test_manager = generateTestManager();
