@@ -89,13 +89,6 @@ Accumulator<double> calcTrajectoryLargeRelativeAngle(
     return stat;
   }
 
-  // Resample trajctory points
-  std::vector<TrajectoryPoint> resample_traj_points{};
-  for (size_t idx = 0; idx < traj.points.size(); idx = idx + 3) {
-    resample_traj_points.push_back(traj.points.at(idx));
-  }
-  const auto resample_traj = autoware::motion_utils::convertToTrajectory(resample_traj_points);
-
   for (size_t base_id = 0; base_id < resample_traj.points.size() - 1; ++base_id) {
     // Get base pose yaw
     const double base_yaw = tf2::getYaw(resample_traj.points.at(base_id).pose.orientation);
