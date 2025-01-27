@@ -31,4 +31,4 @@ If no point cloud is received or all point clouds have very large stamp differen
 
 ## Node parameters
 
-{{ json_to_markdown("/perception/autoware_traffic_light_occlusion_predictor/schema/traffic_light_occlusion_predictor.schema.json") }}
+{{ json_to_markdown("perception/autoware_traffic_light_occlusion_predictor/schema/traffic_light_occlusion_predictor.schema.json") }}

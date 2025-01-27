@@ -32,9 +32,9 @@
           "default": 0.05
         },
         "max_occlusion_ratio": {
-          "type": "number",
+          "type": "integer",
           "description": "Maximum occlusion ratio for traffic lights.",
-          "default": 50.0
+          "default": 50
         }
       },
       "required": [
