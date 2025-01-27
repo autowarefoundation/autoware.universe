@@ -22,7 +22,9 @@
 
 #include <cmath>
 #include <memory>
+#include <string>
 #include <vector>
+
 namespace autoware::scenario_selector
 {
 using autoware::planning_test_manager::PlanningInterfaceTestManager;
