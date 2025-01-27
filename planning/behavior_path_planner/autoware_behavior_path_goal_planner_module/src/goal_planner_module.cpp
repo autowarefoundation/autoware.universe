@@ -1328,7 +1328,6 @@ void GoalPlannerModule::setOutput(
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   output.reference_path = getPreviousModuleOutput().reference_path;
-  output.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
 
   if (!selected_pull_over_path_with_velocity_opt) {
     // situation : not safe against static objects use stop_path
@@ -1489,7 +1488,6 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsCandidate(
   output.modified_goal = pull_over_output.modified_goal;
   output.path = generateStopPath(context_data, detail);
   output.reference_path = getPreviousModuleOutput().reference_path;
-  output.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
 
   const auto target_drivable_lanes = utils::getNonOverlappingExpandedLanes(
     output.path, generateDrivableLanes(), planner_data_->drivable_area_expansion_parameters);
