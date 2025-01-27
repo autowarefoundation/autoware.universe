@@ -145,7 +145,7 @@ We classify ego behavior at crosswalks into three categories according to the re
 - C. **TTC << TTV**: The ego will pass early enough than the object reach the collision point.
   - No stop planning.
 
-The following figure shows the decision result for each TTC and TTV with the paremeters, `ego_pass_first_margin_x` is `{0}`, `ego_pass_first_margin_y` is `{4}`, `ego_pass_laterfirst_margin_x` is `{0}`, and `ego_pass_first_margin_y` is `{13}`.
+The following figure shows the decision result for each TTC and TTV with the parameters, `ego_pass_first_margin_x` is `{0}`, `ego_pass_first_margin_y` is `{4}`, `ego_pass_later_margin_x` is `{0}`, and `ego_pass_later_margin_y` is `{13}`.
 
 <div align="center">
     <table>
