@@ -38,6 +38,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <deque>
+#include <execution>
 #include <functional>
 #include <limits>
 #include <map>
@@ -935,7 +936,7 @@ void sortPullOverPaths(
 
   // Sort pull_over_path_candidates based on the order in goal_candidates
   std::stable_sort(
-    sorted_path_indices.begin(), sorted_path_indices.end(),
+    std::execution::par, sorted_path_indices.begin(), sorted_path_indices.end(),
     [&](const size_t a_i, const size_t b_i) {
       const auto & a = pull_over_path_candidates[a_i];
       const auto & b = pull_over_path_candidates[b_i];
@@ -987,7 +988,7 @@ void sortPullOverPaths(
 
     // sorts in descending order so the item with larger margin comes first
     std::stable_sort(
-      sorted_path_indices.begin(), sorted_path_indices.end(),
+      std::execution::par, sorted_path_indices.begin(), sorted_path_indices.end(),
       [&](const size_t a_i, const size_t b_i) {
         const auto & a = pull_over_path_candidates[a_i];
         const auto & b = pull_over_path_candidates[b_i];
@@ -1022,7 +1023,7 @@ void sortPullOverPaths(
 
     // NOTE: this is just partition sort based on curvature threshold within each sub partitions
     std::stable_sort(
-      sorted_path_indices.begin(), sorted_path_indices.end(),
+      std::execution::par, sorted_path_indices.begin(), sorted_path_indices.end(),
       [&](const size_t a_i, const size_t b_i) {
         const auto & a = pull_over_path_candidates[a_i];
         const auto & b = pull_over_path_candidates[b_i];
@@ -1043,7 +1044,7 @@ void sortPullOverPaths(
     // the collision check margin and curvature priority.
     if (parameters.path_priority == "efficient_path") {
       std::stable_sort(
-        sorted_path_indices.begin(), sorted_path_indices.end(),
+        std::execution::par, sorted_path_indices.begin(), sorted_path_indices.end(),
         [&](const size_t a_i, const size_t b_i) {
           // if any of following conditions are met, sort by path type priority
           // - both are soft margin
@@ -1077,7 +1078,7 @@ void sortPullOverPaths(
      */
     if (parameters.path_priority == "efficient_path") {
       std::stable_sort(
-        sorted_path_indices.begin(), sorted_path_indices.end(),
+        std::execution::par, sorted_path_indices.begin(), sorted_path_indices.end(),
         [&](const size_t a_i, const size_t b_i) {
           const auto & a = pull_over_path_candidates[a_i];
           const auto & b = pull_over_path_candidates[b_i];
@@ -1199,6 +1200,7 @@ void GoalPlannerModule::setOutput(
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   output.reference_path = getPreviousModuleOutput().reference_path;
+  output.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
 
   if (!selected_pull_over_path_with_velocity_opt) {
     // situation : not safe against static objects use stop_path
@@ -1351,7 +1353,22 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsCandidate(
 
   // if pull over path candidates generation is not finished, use previous module output
   if (context_data.lane_parking_response.pull_over_path_candidates.empty()) {
-    return getPreviousModuleOutput();
+    // return getPreviousModuleOutput();
+    BehaviorModuleOutput output{};
+    // const BehaviorModuleOutput pull_over_output = planPullOverAsOutput(context_data);
+    // output.modified_goal = pull_over_output.modified_goal;
+    output.path = generateStopPath(context_data, "no path candidate");
+    output.reference_path = getPreviousModuleOutput().reference_path;
+    output.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
+
+    const auto target_drivable_lanes = utils::getNonOverlappingExpandedLanes(
+      output.path, generateDrivableLanes(), planner_data_->drivable_area_expansion_parameters);
+
+    DrivableAreaInfo current_drivable_area_info{};
+    current_drivable_area_info.drivable_lanes = target_drivable_lanes;
+    output.drivable_area_info = utils::combineDrivableAreaInfo(
+      current_drivable_area_info, getPreviousModuleOutput().drivable_area_info);
+    return output;
   }
 
   BehaviorModuleOutput output{};
@@ -1386,7 +1403,22 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsOutput(PullOverContextData
 
   // if pull over path candidates generation is not finished, use previous module output
   if (context_data.lane_parking_response.pull_over_path_candidates.empty()) {
-    return getPreviousModuleOutput();
+    // return getPreviousModuleOutput();
+    BehaviorModuleOutput output{};
+    // const BehaviorModuleOutput pull_over_output = planPullOverAsOutput(context_data);
+    // output.modified_goal = pull_over_output.modified_goal;
+    output.path = generateStopPath(context_data, "no path candidate");
+    output.reference_path = getPreviousModuleOutput().reference_path;
+    output.turn_signal_info = getPreviousModuleOutput().turn_signal_info;
+
+    const auto target_drivable_lanes = utils::getNonOverlappingExpandedLanes(
+      output.path, generateDrivableLanes(), planner_data_->drivable_area_expansion_parameters);
+
+    DrivableAreaInfo current_drivable_area_info{};
+    current_drivable_area_info.drivable_lanes = target_drivable_lanes;
+    output.drivable_area_info = utils::combineDrivableAreaInfo(
+      current_drivable_area_info, getPreviousModuleOutput().drivable_area_info);
+    return output;
   }
 
   /**
