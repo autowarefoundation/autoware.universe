@@ -64,7 +64,7 @@ void publishMandatoryTopics(
     test_target_node, "/localization/kinematic_state", autoware::test_utils::makeOdometry());
   test_manager->publishInput(
     test_target_node, "velocity_smoother/input/external_velocity_limit_mps",
-    tier4_planning_msgs::msg::VelocityLimit{});
+    autoware_internal_planning_msgs::msg::VelocityLimit{});
   test_manager->publishInput(
     test_target_node, "velocity_smoother/input/operation_mode_state",
     autoware_adapi_v1_msgs::msg::OperationModeState{});

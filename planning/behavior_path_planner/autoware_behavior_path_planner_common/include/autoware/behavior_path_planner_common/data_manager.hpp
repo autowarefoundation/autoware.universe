@@ -65,8 +65,8 @@ using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
 using tier4_planning_msgs::msg::LateralOffset;
 using PlanResult = PathWithLaneId::SharedPtr;
+using autoware_internal_planning_msgs::msg::VelocityLimit;
 using lanelet::TrafficLight;
-using tier4_planning_msgs::msg::VelocityLimit;
 using unique_identifier_msgs::msg::UUID;
 
 struct TrafficSignalStamped
