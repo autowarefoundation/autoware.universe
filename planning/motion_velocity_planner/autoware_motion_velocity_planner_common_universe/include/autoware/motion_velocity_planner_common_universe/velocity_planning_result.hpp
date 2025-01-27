@@ -18,8 +18,8 @@
 #include <autoware/motion_utils/marker/virtual_wall_marker_creator.hpp>
 
 #include <geometry_msgs/msg/point.hpp>
-#include <tier4_planning_msgs/msg/velocity_limit.hpp>
-#include <tier4_planning_msgs/msg/velocity_limit_clear_command.hpp>
+#include <autoware_internal_planning_msgs/msg/velocity_limit.hpp>
+#include <autoware_internal_planning_msgs/msg/velocity_limit_clear_command.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <string>
@@ -44,8 +44,8 @@ struct VelocityPlanningResult
 {
   std::vector<geometry_msgs::msg::Point> stop_points{};
   std::vector<SlowdownInterval> slowdown_intervals{};
-  std::optional<tier4_planning_msgs::msg::VelocityLimit> velocity_limit{std::nullopt};
-  std::optional<tier4_planning_msgs::msg::VelocityLimitClearCommand> velocity_limit_clear_command{
+  std::optional<autoware_internal_planning_msgs::msg::VelocityLimit> velocity_limit{std::nullopt};
+  std::optional<autoware_internal_planning_msgs::msg::VelocityLimitClearCommand> velocity_limit_clear_command{
     std::nullopt};
 };
 }  // namespace autoware::motion_velocity_planner
