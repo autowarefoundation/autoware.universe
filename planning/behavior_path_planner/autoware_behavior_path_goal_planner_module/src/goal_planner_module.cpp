@@ -1512,21 +1512,7 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsOutput(PullOverContextData
 
   // if pull over path candidates generation is not finished, use previous module output
   if (context_data.lane_parking_response.pull_over_path_candidates.empty()) {
-    // return getPreviousModuleOutput();
-    BehaviorModuleOutput output{};
-    // const BehaviorModuleOutput pull_over_output = planPullOverAsOutput(context_data);
-    // output.modified_goal = pull_over_output.modified_goal;
-    output.path = generateStopPath(context_data, "no path candidate");
-    output.reference_path = getPreviousModuleOutput().reference_path;
-
-    const auto target_drivable_lanes = utils::getNonOverlappingExpandedLanes(
-      output.path, generateDrivableLanes(), planner_data_->drivable_area_expansion_parameters);
-
-    DrivableAreaInfo current_drivable_area_info{};
-    current_drivable_area_info.drivable_lanes = target_drivable_lanes;
-    output.drivable_area_info = utils::combineDrivableAreaInfo(
-      current_drivable_area_info, getPreviousModuleOutput().drivable_area_info);
-    return output;
+    return getPreviousModuleOutput();
   }
 
   /**
