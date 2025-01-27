@@ -99,7 +99,7 @@ Accumulator<double> calcTrajectoryLargeRelativeAngle(
   for (size_t base_id = 0; base_id < resample_traj.points.size() - 1; ++base_id) {
     // Get base pose yaw
     const double base_yaw = tf2::getYaw(resample_traj.points.at(base_id).pose.orientation);
-    
+
     // Get target pose yaw
     const auto points_distance = vehicle_length / 2;
     const auto target_pose = autoware::motion_utils::calcLongitudinalOffsetPose(

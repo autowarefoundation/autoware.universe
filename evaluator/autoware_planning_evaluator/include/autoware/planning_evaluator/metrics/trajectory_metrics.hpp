@@ -15,10 +15,10 @@
 #ifndef AUTOWARE__PLANNING_EVALUATOR__METRICS__TRAJECTORY_METRICS_HPP_
 #define AUTOWARE__PLANNING_EVALUATOR__METRICS__TRAJECTORY_METRICS_HPP_
 
-#include "autoware/universe_utils/math/accumulator.hpp"
-#include "autoware/motion_utils/trajectory/trajectory.hpp"
-#include "autoware/motion_utils/trajectory/conversion.hpp"
 #include "autoware/motion_utils/resample/resample.hpp"
+#include "autoware/motion_utils/trajectory/conversion.hpp"
+#include "autoware/motion_utils/trajectory/trajectory.hpp"
+#include "autoware/universe_utils/math/accumulator.hpp"
 
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "autoware_planning_msgs/msg/trajectory_point.hpp"

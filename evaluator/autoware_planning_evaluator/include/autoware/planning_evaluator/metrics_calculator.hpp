@@ -52,7 +52,7 @@ public:
    * @return string describing the requested metric
    */
   std::optional<Accumulator<double>> calculate(
-    const Metric metric, const Trajectory & traj , const double & vehicle_length_m) const;
+    const Metric metric, const Trajectory & traj, const double & vehicle_length_m) const;
   std::optional<Accumulator<double>> calculate(
     const Metric metric, const Pose & base_pose, const Pose & target_pose) const;
 

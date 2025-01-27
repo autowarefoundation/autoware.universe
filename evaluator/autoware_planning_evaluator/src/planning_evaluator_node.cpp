@@ -299,8 +299,8 @@ void PlanningEvaluatorNode::onTrajectory(
   auto start = now();
 
   for (Metric metric : metrics_) {
-    const auto metric_stat = metrics_calculator_.calculate(
-      Metric(metric), *traj_msg, vehicle_info_.vehicle_length_m);
+    const auto metric_stat =
+      metrics_calculator_.calculate(Metric(metric), *traj_msg, vehicle_info_.vehicle_length_m);
     if (!metric_stat) {
       continue;
     }

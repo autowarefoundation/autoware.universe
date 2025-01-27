@@ -21,9 +21,10 @@
 #include "tf2_ros/buffer.h"
 #include "tf2_ros/transform_listener.h"
 
+#include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
+
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "autoware_planning_msgs/msg/trajectory_point.hpp"
-#include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 #include "geometry_msgs/msg/transform_stamped.hpp"
 #include <nav_msgs/msg/odometry.hpp>
 
