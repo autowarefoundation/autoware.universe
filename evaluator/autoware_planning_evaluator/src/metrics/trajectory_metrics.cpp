@@ -84,10 +84,6 @@ Accumulator<double> calcTrajectoryLargeRelativeAngle(
   const Trajectory & traj, const double & vehicle_length)
 {
   Accumulator<double> stat;
-  // We need at least three points to compute relative angle
-  if (traj.points.size() < 2) {
-    return stat;
-  }
 
   for (size_t base_id = 0; base_id < resample_traj.points.size() - 1; ++base_id) {
     // Get base pose yaw
