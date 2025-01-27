@@ -615,29 +615,11 @@ void GoalPlannerModule::updateData()
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   // extract static and dynamic objects in extraction polygon for path collision check
-  const auto & p = parameters_;
-  const auto & rh = *(planner_data_->route_handler);
-  const auto objects = *(planner_data_->dynamic_object);
-  const double vehicle_width = planner_data_->parameters.vehicle_width;
-  const auto pull_over_lanes = goal_planner_utils::getPullOverLanes(
-    rh, left_side_parking_, p->backward_goal_search_length, p->forward_goal_search_length);
-  const auto objects_extraction_polygon = goal_planner_utils::generateObjectExtractionPolygon(
-    pull_over_lanes, left_side_parking_, p->detection_bound_offset,
-    p->margin_from_boundary + p->max_lateral_offset + vehicle_width);
-  if (objects_extraction_polygon.has_value()) {
-    debug_data_.objects_extraction_polygon = objects_extraction_polygon.value();
-  }
-  PredictedObjects dynamic_target_objects{};
-  for (const auto & object : objects.objects) {
-    const auto object_polygon = universe_utils::toPolygon2d(object);
-    if (
-      objects_extraction_polygon.has_value() &&
-      boost::geometry::intersects(object_polygon, objects_extraction_polygon.value())) {
-      dynamic_target_objects.objects.push_back(object);
-    }
-  }
+  const auto dynamic_target_objects = goal_planner_utils::extract_dynamic_objects(
+    *(planner_data_->dynamic_object), *(planner_data_->route_handler), *parameters_,
+    planner_data_->parameters.vehicle_width);
   const auto static_target_objects = utils::path_safety_checker::filterObjectsByVelocity(
-    dynamic_target_objects, p->th_moving_object_velocity);
+    dynamic_target_objects, parameters_->th_moving_object_velocity);
 
   // update goal searcher and generate goal candidates
   if (goal_candidates_.empty()) {
@@ -753,39 +735,9 @@ bool GoalPlannerModule::isExecutionRequested() const
   // check if goal_pose is in current_lanes or neighboring road lanes
   const lanelet::ConstLanelets current_lanes =
     utils::getCurrentLanesFromPath(getPreviousModuleOutput().reference_path, planner_data_);
-  const auto getNeighboringLane =
-    [&](const lanelet::ConstLanelet & lane) -> std::optional<lanelet::ConstLanelet> {
-    return left_side_parking_ ? route_handler->getLeftLanelet(lane, false, true)
-                              : route_handler->getRightLanelet(lane, false, true);
-  };
-  lanelet::ConstLanelets goal_check_lanes = current_lanes;
-  for (const auto & lane : current_lanes) {
-    auto neighboring_lane = getNeighboringLane(lane);
-    while (neighboring_lane) {
-      goal_check_lanes.push_back(neighboring_lane.value());
-      neighboring_lane = getNeighboringLane(neighboring_lane.value());
-    }
-  }
-  const bool goal_is_in_current_segment_lanes = std::any_of(
-    goal_check_lanes.begin(), goal_check_lanes.end(), [&](const lanelet::ConstLanelet & lane) {
-      return lanelet::utils::isInLanelet(goal_pose, lane);
-    });
-
-  // check that goal is in current neighbor shoulder lane
-  const bool goal_is_in_current_shoulder_lanes = std::invoke([&]() {
-    for (const auto & lane : current_lanes) {
-      const auto shoulder_lane = left_side_parking_ ? route_handler->getLeftShoulderLanelet(lane)
-                                                    : route_handler->getRightShoulderLanelet(lane);
-      if (shoulder_lane && lanelet::utils::isInLanelet(goal_pose, *shoulder_lane)) {
-        return true;
-      }
-    }
-    return false;
-  });
-
-  // if goal is not in current_lanes and current_shoulder_lanes, do not execute goal_planner,
-  // because goal arc coordinates cannot be calculated.
-  if (!goal_is_in_current_segment_lanes && !goal_is_in_current_shoulder_lanes) {
+  const bool is_goal_reachable = goal_planner_utils::is_goal_reachable_on_path(
+    current_lanes, *(planner_data_->route_handler), left_side_parking_);
+  if (!is_goal_reachable) {
     return false;
   }
 
@@ -793,7 +745,7 @@ bool GoalPlannerModule::isExecutionRequested() const
   // 1) goal_pose is in current_lanes, plan path to the original fixed goal
   // 2) goal_pose is NOT in current_lanes, do not execute goal_planner
   if (!utils::isAllowedGoalModification(route_handler)) {
-    return goal_is_in_current_segment_lanes;
+    return is_goal_reachable;
   }
 
   // if goal arc coordinates can be calculated, check if goal is in request_length
@@ -1650,12 +1602,20 @@ PathWithLaneId GoalPlannerModule::generateStopPath(
     return PathWithLaneId{};
   }
 
-  // extend previous module path to generate reference path for stop path
+  // Generate reference_path to extend the previous path.
+  // If pull_over_path is ARC_BACKWARD, generate path to the start_pose of the pull_over_path,
+  // otherwise, generate path to the goal_pose.
+  const auto & pull_over_path_opt = context_data.pull_over_path_opt;
   const auto reference_path = std::invoke([&]() -> PathWithLaneId {
     const auto s_current = lanelet::utils::getArcCoordinates(current_lanes, current_pose).length;
     const double s_start = std::max(0.0, s_current - common_parameters.backward_path_length);
+    const bool is_arc_backward =
+      pull_over_path_opt.has_value() &&
+      pull_over_path_opt.value().type() == PullOverPlannerType::ARC_BACKWARD;
+    const Pose path_end_pose =
+      is_arc_backward ? pull_over_path_opt.value().start_pose() : route_handler->getGoalPose();
     const double s_end = std::clamp(
-      lanelet::utils::getArcCoordinates(current_lanes, route_handler->getGoalPose()).length,
+      lanelet::utils::getArcCoordinates(current_lanes, path_end_pose).length,
       s_current + std::numeric_limits<double>::epsilon(),
       s_current + common_parameters.forward_path_length);
     return route_handler->getCenterLinePath(current_lanes, s_start, s_end, true);
@@ -1685,8 +1645,8 @@ PathWithLaneId GoalPlannerModule::generateStopPath(
   //     difference between the outer and inner sides)
   // 4. feasible stop
   const auto stop_pose_opt = std::invoke([&]() -> std::optional<Pose> {
-    if (context_data.pull_over_path_opt)
-      return std::make_optional<Pose>(context_data.pull_over_path_opt.value().start_pose());
+    if (pull_over_path_opt)
+      return std::make_optional<Pose>(pull_over_path_opt.value().start_pose());
     if (context_data.lane_parking_response.closest_start_pose)
       return context_data.lane_parking_response.closest_start_pose;
     return decel_pose;
