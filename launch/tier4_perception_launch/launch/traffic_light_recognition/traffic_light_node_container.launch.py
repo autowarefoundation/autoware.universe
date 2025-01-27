@@ -205,6 +205,7 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
             )
         ),
     )
+    # cspell: ignore semseg
     whole_img_detector_loader = LoadComposableNodes(
         composable_node_descriptions=[
             ComposableNode(
@@ -240,7 +241,7 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
                 ],
                 remappings=[
                     ("~/in/image", camera_arguments["input/image"]),
-                    ("~/out/objects", "ml_deteted/rois"),
+                    ("~/out/objects", "ml_detected/rois"),
                 ],
                 extra_arguments=[
                     {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
@@ -257,7 +258,7 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
                     }
                 ],
                 remappings=[
-                    ("input/detected_rois", "ml_deteted/rois"),
+                    ("input/detected_rois", "ml_detected/rois"),
                     ("input/rough_rois", "rough/rois"),
                     ("input/expect_rois", "expect/rois"),
                     ("input/camera_info", camera_arguments["input/camera_info"]),
