@@ -16,8 +16,8 @@
 #define OBSTACLE_CRUISE_MODULE_HPP_
 
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
-#include "autoware/motion_velocity_planner_common/polygon_utils.hpp"
-#include "autoware/motion_velocity_planner_common/utils.hpp"
+#include "autoware/motion_velocity_planner_common_universe/polygon_utils.hpp"
+#include "autoware/motion_velocity_planner_common_universe/utils.hpp"
 #include "autoware/universe_utils/ros/parameter.hpp"
 #include "autoware/universe_utils/ros/update_param.hpp"
 #include "autoware/universe_utils/ros/uuid_helper.hpp"
@@ -32,8 +32,8 @@
 #include "types.hpp"
 
 #include <autoware/motion_utils/marker/virtual_wall_marker_creator.hpp>
-#include <autoware/motion_velocity_planner_common/plugin_module_interface.hpp>
-#include <autoware/motion_velocity_planner_common/velocity_planning_result.hpp>
+#include <autoware/motion_velocity_planner_common_universe/plugin_module_interface.hpp>
+#include <autoware/motion_velocity_planner_common_universe/velocity_planning_result.hpp>
 #include <autoware/objects_of_interest_marker_interface/objects_of_interest_marker_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -99,7 +99,7 @@ std::vector<PredictedPath> resample_highest_confidence_predicted_paths(
 }
 
 VelocityLimitClearCommand create_velocity_limit_clear_command(
-  const rclcpp::Time & current_time, const std::string & module_name)
+  const rclcpp::Time & current_time, [[maybe_unused]] const std::string & module_name)
 {
   VelocityLimitClearCommand msg;
   msg.stamp = current_time;
@@ -190,7 +190,7 @@ public:
     [[maybe_unused]] const auto cruise_traj_points = cruise_planner_->plan_cruise(
       planner_data, ego_trajectory_points, cruise_obstacles, debug_data_ptr_,
       result.velocity_limit);
-    metrics_manager_.calculate_metrics("PlannerInterface", "cruise", planner_data);
+    metrics_manager_.calculate_metrics("PlannerInterface", "cruise");
 
     // clear velocity limit if necessary
     if (result.velocity_limit) {

@@ -17,8 +17,8 @@
 
 #include "autoware/motion_utils/marker/marker_helper.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
-#include "autoware/motion_velocity_planner_common/polygon_utils.hpp"
-#include "autoware/motion_velocity_planner_common/utils.hpp"
+#include "autoware/motion_velocity_planner_common_universe/polygon_utils.hpp"
+#include "autoware/motion_velocity_planner_common_universe/utils.hpp"
 #include "autoware/signal_processing/lowpass_filter_1d.hpp"
 #include "autoware/universe_utils/ros/parameter.hpp"
 #include "autoware/universe_utils/ros/update_param.hpp"
@@ -31,8 +31,8 @@
 #include "types.hpp"
 
 #include <autoware/motion_utils/marker/virtual_wall_marker_creator.hpp>
-#include <autoware/motion_velocity_planner_common/plugin_module_interface.hpp>
-#include <autoware/motion_velocity_planner_common/velocity_planning_result.hpp>
+#include <autoware/motion_velocity_planner_common_universe/plugin_module_interface.hpp>
+#include <autoware/motion_velocity_planner_common_universe/velocity_planning_result.hpp>
 #include <autoware/objects_of_interest_marker_interface/objects_of_interest_marker_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -178,7 +178,7 @@ double calc_deceleration_velocity_from_distance_to_target(
 }
 
 VelocityLimitClearCommand create_velocity_limit_clear_command(
-  const rclcpp::Time & current_time, const std::string & module_name)
+  const rclcpp::Time & current_time, [[maybe_unused]] const std::string & module_name)
 {
   VelocityLimitClearCommand msg;
   msg.stamp = current_time;
@@ -273,7 +273,7 @@ public:
     result.slowdown_intervals = plan_slow_down(
       planner_data, ego_trajectory_points, slow_down_obstacles, result.velocity_limit,
       planner_data->vehicle_info_);
-    metrics_manager_.calculate_metrics("PlannerInterface", "cruise", planner_data);
+    metrics_manager_.calculate_metrics("PlannerInterface", "cruise");
 
     // clear velocity limit if necessary
     if (result.velocity_limit) {
@@ -373,8 +373,8 @@ private:
       const double dist_from_obj_poly_to_traj_poly =
         object->get_dist_to_traj_poly(decimated_traj_polys);
       const auto slow_down_obstacle = create_slow_down_obstacle_for_predicted_object(
-        odometry, traj_points, decimated_traj_points, decimated_traj_polys_with_lat_margin, object,
-        predicted_objects_stamp, dist_from_obj_poly_to_traj_poly, vehicle_info);
+        traj_points, decimated_traj_polys_with_lat_margin, object, predicted_objects_stamp,
+        dist_from_obj_poly_to_traj_poly);
       if (slow_down_obstacle) {
         slow_down_obstacles.push_back(*slow_down_obstacle);
         continue;
@@ -384,17 +384,16 @@ private:
     prev_slow_down_object_obstacles_ = slow_down_obstacles;
 
     RCLCPP_DEBUG(
-      logger_, "The number of output obstacles of filter_slow_down_obstacles is %d",
+      logger_, "The number of output obstacles of filter_slow_down_obstacles is %ld",
       slow_down_obstacles.size());
     return slow_down_obstacles;
   }
 
   std::optional<SlowDownObstacle> create_slow_down_obstacle_for_predicted_object(
-    const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
-    const std::vector<TrajectoryPoint> & decimated_traj_points,
+    const std::vector<TrajectoryPoint> & traj_points,
     const std::vector<Polygon2d> & decimated_traj_polys_with_lat_margin,
     const std::shared_ptr<PlannerData::Object> object, const rclcpp::Time & predicted_objects_stamp,
-    const double dist_from_obj_poly_to_traj_poly, const VehicleInfo & vehicle_info)
+    const double dist_from_obj_poly_to_traj_poly)
   {
     autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 

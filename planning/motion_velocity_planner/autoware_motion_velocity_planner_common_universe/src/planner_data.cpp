@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/motion_velocity_planner_common/planner_data.hpp"
+#include "autoware/motion_velocity_planner_common_universe/planner_data.hpp"
 
-#include "autoware/motion_velocity_planner_common/polygon_utils.hpp"
-#include "autoware/motion_velocity_planner_common/utils.hpp"
+#include "autoware/motion_velocity_planner_common_universe/polygon_utils.hpp"
+#include "autoware/motion_velocity_planner_common_universe/utils.hpp"
 #include "autoware/object_recognition_utils/predicted_path_utils.hpp"
 #include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
 

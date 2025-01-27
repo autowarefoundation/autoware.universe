@@ -29,9 +29,7 @@ class MetricsManager
 public:
   void init() { metrics_.clear(); }
 
-  void calculate_metrics(
-    const std::string & module_name, const std::string & reason,
-    const std::shared_ptr<const PlannerData> planner_data)
+  void calculate_metrics(const std::string & module_name, const std::string & reason)
   {
     // Create status
     {

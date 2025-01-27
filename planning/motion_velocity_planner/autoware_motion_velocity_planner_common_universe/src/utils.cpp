@@ -12,12 +12,12 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/motion_velocity_planner_common/utils.hpp"
+#include "autoware/motion_velocity_planner_common_universe/utils.hpp"
 
 #include "autoware/motion_utils/resample/resample.hpp"
 #include "autoware/motion_utils/trajectory/conversion.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
-#include "autoware/motion_velocity_planner_common/planner_data.hpp"
+#include "autoware/motion_velocity_planner_common_universe/planner_data.hpp"
 #include "autoware/universe_utils/ros/marker_helper.hpp"
 
 #include <boost/geometry.hpp>

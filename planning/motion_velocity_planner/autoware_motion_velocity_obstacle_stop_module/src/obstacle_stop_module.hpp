@@ -18,8 +18,8 @@
 #include "autoware/motion_utils/marker/marker_helper.hpp"
 #include "autoware/motion_utils/trajectory/conversion.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
-#include "autoware/motion_velocity_planner_common/polygon_utils.hpp"
-#include "autoware/motion_velocity_planner_common/utils.hpp"
+#include "autoware/motion_velocity_planner_common_universe/polygon_utils.hpp"
+#include "autoware/motion_velocity_planner_common_universe/utils.hpp"
 #include "autoware/object_recognition_utils/predicted_path_utils.hpp"
 #include "autoware/universe_utils/ros/parameter.hpp"
 #include "autoware/universe_utils/ros/update_param.hpp"
@@ -32,8 +32,8 @@
 #include "types.hpp"
 
 #include <autoware/motion_utils/marker/virtual_wall_marker_creator.hpp>
-#include <autoware/motion_velocity_planner_common/plugin_module_interface.hpp>
-#include <autoware/motion_velocity_planner_common/velocity_planning_result.hpp>
+#include <autoware/motion_velocity_planner_common_universe/plugin_module_interface.hpp>
+#include <autoware/motion_velocity_planner_common_universe/velocity_planning_result.hpp>
 #include <autoware/objects_of_interest_marker_interface/objects_of_interest_marker_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
 
