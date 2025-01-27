@@ -100,7 +100,7 @@
 
     <!-- Hazard Status Converter -->
     <group>
-      <include file="$(find-pkg-share hazard_status_converter)/launch/hazard_status_converter.launch.xml"/>
+      <include file="$(find-pkg-share autoware_hazard_status_converter)/launch/hazard_status_converter.launch.xml"/>
     </group>
 
     <!-- MRM Handler -->

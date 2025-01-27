@@ -80,7 +80,7 @@ ros2 launch autoware_diagnostic_graph_aggregator example-edit.launch.xml
 ## Debug tools
 
 - [tree](./doc/tool/tree.md)
-- [diagnostic_graph_utils](../diagnostic_graph_utils/README.md)
+- [autoware_diagnostic_graph_utils](../autoware_diagnostic_graph_utils/README.md)
 
 ## Graph file format
 
