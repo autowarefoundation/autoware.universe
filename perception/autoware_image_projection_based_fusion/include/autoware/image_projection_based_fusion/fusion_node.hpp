@@ -81,6 +81,7 @@ private:
     const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_camera_info_msg,
     const std::size_t camera_id);
 
+  void init_strategy();
   void manage_collector_list();
   void manage_concatenated_status_map(const double & current_timestam);
 
@@ -90,6 +91,7 @@ private:
 
   bool debug_mode_{false};
 
+  std::size_t rois_number_;
   // timer
   double timeout_sec_{};
 

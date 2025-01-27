@@ -56,15 +56,15 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
 : Node(node_name, options), tf_buffer_(this->get_clock()), tf_listener_(tf_buffer_)
 {
   // set rois_number
-  const auto rois_number = static_cast<std::size_t>(declare_parameter<int32_t>("rois_number"));
-  if (rois_number < 1) {
+  rois_number_ = static_cast<std::size_t>(declare_parameter<int32_t>("rois_number"));
+  if (rois_number_ < 1) {
     RCLCPP_ERROR(
-      this->get_logger(), "minimum rois_number is 1. current rois_number is %zu", rois_number);
+      this->get_logger(), "minimum rois_number_ is 1. current rois_number_ is %zu", rois_number_);
   }
-  if (rois_number > 8) {
+  if (rois_number_ > 8) {
     RCLCPP_WARN(
       this->get_logger(),
-      "Current rois_number is %zu. Large rois number may cause performance issue.", rois_number);
+      "Current rois_number_ is %zu. Large rois number may cause performance issue.", rois_number_);
   }
 
   // Set parameters
@@ -73,10 +73,10 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
   std::vector<std::string> input_rois_topics;
   std::vector<std::string> input_camera_info_topics;
 
-  input_rois_topics.resize(rois_number);
-  input_camera_info_topics.resize(rois_number);
+  input_rois_topics.resize(rois_number_);
+  input_camera_info_topics.resize(rois_number_);
 
-  for (std::size_t roi_i = 0; roi_i < rois_number; ++roi_i) {
+  for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
     input_rois_topics.at(roi_i) = declare_parameter<std::string>(
       "input/rois" + std::to_string(roi_i),
       "/perception/object_recognition/detection/rois" + std::to_string(roi_i));
@@ -87,8 +87,8 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
   }
 
   // subscribe camera info
-  camera_info_subs_.resize(rois_number);
-  for (std::size_t roi_i = 0; roi_i < rois_number; ++roi_i) {
+  camera_info_subs_.resize(rois_number_);
+  for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
     std::function<void(const sensor_msgs::msg::CameraInfo::ConstSharedPtr msg)> fnc =
       std::bind(&FusionNode::camera_info_callback, this, std::placeholders::_1, roi_i);
     camera_info_subs_.at(roi_i) = this->create_subscription<sensor_msgs::msg::CameraInfo>(
@@ -96,8 +96,8 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
   }
 
   // subscribe rois
-  rois_subs_.resize(rois_number);
-  for (std::size_t roi_i = 0; roi_i < rois_number; ++roi_i) {
+  rois_subs_.resize(rois_number_);
+  for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
     std::function<void(const typename Msg2D::ConstSharedPtr msg)> roi_callback =
       std::bind(&FusionNode::roi_callback, this, std::placeholders::_1, roi_i);
     rois_subs_.at(roi_i) = this->create_subscription<Msg2D>(
@@ -111,7 +111,7 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
     this->create_subscription<Msg3D>("input", rclcpp::QoS(1).best_effort(), sub_callback);
 
   // initialization on each 2d detections
-  set_det2d_status(rois_number);
+  set_det2d_status(rois_number_);
 
   // parameters for approximation grid
   approx_grid_cell_w_size_ = declare_parameter<float>("approximation_grid_cell_width");
@@ -126,25 +126,13 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
   filter_scope_max_z_ = declare_parameter<double>("filter_scope_max_z");
 
   matching_strategy_ = declare_parameter<std::string>("matching_strategy.type");
-  if (matching_strategy_ == "naive") {
-    fusion_matching_strategy_ = std::make_unique<NaiveMatchingStrategy<Msg3D, Msg2D, ExportObj>>(
-      std::dynamic_pointer_cast<FusionNode>(shared_from_this()), rois_number);
-  } else if (matching_strategy_ == "advanced") {
-    fusion_matching_strategy_ = std::make_unique<AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>>(
-      std::dynamic_pointer_cast<FusionNode>(shared_from_this()), rois_number);
-    // subscribe diagnostics
-    sub_diag_ = this->create_subscription<diagnostic_msgs::msg::DiagnosticArray>(
-      "/diagnostics", 10, std::bind(&FusionNode::diagnostic_callback, this, std::placeholders::_1));
-  } else {
-    throw std::runtime_error("Matching strategy must be 'advanced' or 'naive'");
-  }
 
   // debugger
   debug_mode_ = declare_parameter<bool>("debug_mode");
   if (debug_mode_) {
     std::vector<std::string> input_camera_topics;
-    input_camera_topics.resize(rois_number);
-    for (std::size_t roi_i = 0; roi_i < rois_number; ++roi_i) {
+    input_camera_topics.resize(rois_number_);
+    for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
       input_camera_topics.at(roi_i) = declare_parameter<std::string>(
         "input/image" + std::to_string(roi_i),
         "/sensing/camera/camera" + std::to_string(roi_i) + "/image_rect_color");
@@ -152,7 +140,7 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
     auto image_buffer_size =
       static_cast<std::size_t>(declare_parameter<int32_t>("image_buffer_size"));
     debugger_ =
-      std::make_shared<Debugger>(this, rois_number, image_buffer_size, input_camera_topics);
+      std::make_shared<Debugger>(this, rois_number_, image_buffer_size, input_camera_topics);
 
     // input topic timing publisher
     debug_internal_pub_ =
@@ -180,43 +168,61 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
-void FusionNode<Msg3D, Msg2D, ExportObj>::set_det2d_status(std::size_t rois_number)
+void FusionNode<Msg3D, Msg2D, ExportObj>::init_strategy()
+{
+  if (matching_strategy_ == "naive") {
+    fusion_matching_strategy_ = std::make_unique<NaiveMatchingStrategy<Msg3D, Msg2D, ExportObj>>(
+      std::dynamic_pointer_cast<FusionNode>(shared_from_this()), rois_number_);
+  } else if (matching_strategy_ == "advanced") {
+    fusion_matching_strategy_ = std::make_unique<AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>>(
+      std::dynamic_pointer_cast<FusionNode>(shared_from_this()), rois_number_);
+    // subscribe diagnostics
+    sub_diag_ = this->create_subscription<diagnostic_msgs::msg::DiagnosticArray>(
+      "/diagnostics", 10, std::bind(&FusionNode::diagnostic_callback, this, std::placeholders::_1));
+  } else {
+    throw std::runtime_error("Matching strategy must be 'advanced' or 'naive'");
+  }
+}
+
+template <class Msg3D, class Msg2D, class ExportObj>
+void FusionNode<Msg3D, Msg2D, ExportObj>::set_det2d_status(std::size_t rois_number_)
 {
   // camera offset settings
-  std::vector<double> input_offset_ms = declare_parameter<std::vector<double>>("input_offset_ms");
-  if (!input_offset_ms.empty() && rois_number > input_offset_ms.size()) {
-    throw std::runtime_error("The number of offsets does not match the number of topics.");
-  }
+  // std::vector<double> input_offset_ms =
+  // declare_parameter<std::vector<double>>("input_offset_ms"); if (!input_offset_ms.empty() &&
+  // rois_number_ > input_offset_ms.size()) {
+  //   throw std::runtime_error("The number of offsets does not match the number of topics.");
+  // }
 
   // camera projection settings
   std::vector<bool> point_project_to_unrectified_image =
     declare_parameter<std::vector<bool>>("point_project_to_unrectified_image");
-  if (rois_number > point_project_to_unrectified_image.size()) {
+  if (rois_number_ > point_project_to_unrectified_image.size()) {
     throw std::runtime_error(
       "The number of point_project_to_unrectified_image does not match the number of rois "
       "topics.");
   }
   std::vector<bool> approx_camera_projection =
     declare_parameter<std::vector<bool>>("approximate_camera_projection");
-  if (rois_number != approx_camera_projection.size()) {
+  if (rois_number_ != approx_camera_projection.size()) {
     const std::size_t current_size = approx_camera_projection.size();
     RCLCPP_WARN(
       get_logger(),
       "The number of elements in approximate_camera_projection should be the same as in "
-      "rois_number. "
-      "It has %zu elements.",
-      current_size);
-    if (current_size < rois_number) {
-      approx_camera_projection.resize(rois_number);
-      for (std::size_t i = current_size; i < rois_number; i++) {
+      "rois_number_. "
+      "It has %zu elements. But rois_number_ is %zu",
+      current_size, rois_number_);
+    if (current_size < rois_number_) {
+      approx_camera_projection.resize(rois_number_);
+      for (std::size_t i = current_size; i < rois_number_; i++) {
         approx_camera_projection.at(i) = true;
       }
     }
   }
 
   // 2d detection status initialization
-  det2d_list_.resize(rois_number);
-  for (std::size_t roi_i = 0; roi_i < rois_number; ++roi_i) {
+  det2d_list_.resize(rois_number_);
+  for (std::size_t roi_i = 0; roi_i < rois_number_; ++roi_i) {
     det2d_list_.at(roi_i).id = roi_i;
     det2d_list_.at(roi_i).project_to_unrectified_image =
       point_project_to_unrectified_image.at(roi_i);
@@ -278,6 +284,10 @@ template <class Msg3D, class Msg2D, class ExportObj>
 void FusionNode<Msg3D, Msg2D, ExportObj>::sub_callback(
   const typename Msg3D::ConstSharedPtr det3d_msg)
 {
+  if (!fusion_matching_strategy_) {
+    init_strategy();
+  }
+
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
   stop_watch_ptr_->toc("processing_time", true);
@@ -345,6 +355,10 @@ template <class Msg3D, class Msg2D, class ExportObj>
 void FusionNode<Msg3D, Msg2D, ExportObj>::roi_callback(
   const typename Msg2D::ConstSharedPtr det2d_msg, const std::size_t roi_i)
 {
+  if (!fusion_matching_strategy_) {
+    init_strategy();
+  }
+
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
