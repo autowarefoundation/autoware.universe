@@ -56,9 +56,9 @@ protected:
     const auto autoware_test_utils_dir =
       ament_index_cpp::get_package_share_directory("autoware_test_utils");
     options.arguments(
-      {"--ros-args", "-p", "output_metrics:=false",
-       "--params-file", share_dir + "/config/planning_evaluator.param.yaml",
-       "--params-file", autoware_test_utils_dir + "/config/test_vehicle_info.param.yaml"});
+      {"--ros-args", "-p", "output_metrics:=false", "--params-file",
+       share_dir + "/config/planning_evaluator.param.yaml", "--params-file",
+       autoware_test_utils_dir + "/config/test_vehicle_info.param.yaml"});
 
     dummy_node = std::make_shared<rclcpp::Node>("planning_evaluator_test_node");
     eval_node = std::make_shared<EvalNode>(options);
@@ -121,7 +121,7 @@ protected:
     return t;
   }
 
-    Trajectory makeTrajectory(const std::vector<std::tuple<double, double, double>> & traj)
+  Trajectory makeTrajectory(const std::vector<std::tuple<double, double, double>> & traj)
   {
     Trajectory t;
     t.header.frame_id = "map";
