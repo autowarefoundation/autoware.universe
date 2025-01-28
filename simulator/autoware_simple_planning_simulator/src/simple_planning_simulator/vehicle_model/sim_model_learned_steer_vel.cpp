@@ -14,7 +14,7 @@
 
 #include "autoware/simple_planning_simulator/vehicle_model/sim_model_learned_steer_vel.hpp"
 
-#include "learning_based_vehicle_model/interconnected_model.hpp"
+#include "autoware/learning_based_vehicle_model/interconnected_model.hpp"
 
 #include <algorithm>
 #include <string>
