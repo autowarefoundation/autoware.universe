@@ -214,12 +214,9 @@ GoalCandidates GoalSearcher::search(const std::shared_ptr<const PlannerData> & p
         (transformed_vehicle_footprint.at(vehicle_info_utils::VehicleInfo::FrontLeftIndex) +
          transformed_vehicle_footprint.at(vehicle_info_utils::VehicleInfo::FrontRightIndex)) /
         2.0;
-      lanelet::ConstLanelet vehicle_front_closest_lanelet;
-      lanelet::utils::query::getClosestLanelet(
-        pull_over_lanes, search_pose, &vehicle_front_closest_lanelet);
+      const auto pull_over_lanelet = lanelet::utils::combineLaneletsShape(pull_over_lanes);
       const auto vehicle_front_pose_for_bound_opt = goal_planner_utils::calcClosestPose(
-        left_side_parking_ ? vehicle_front_closest_lanelet.leftBound()
-                           : vehicle_front_closest_lanelet.rightBound(),
+        left_side_parking_ ? pull_over_lanelet.leftBound() : pull_over_lanelet.rightBound(),
         autoware::universe_utils::createPoint(
           vehicle_front_midpoint.x(), vehicle_front_midpoint.y(), search_pose.position.z));
       if (!vehicle_front_pose_for_bound_opt) {
