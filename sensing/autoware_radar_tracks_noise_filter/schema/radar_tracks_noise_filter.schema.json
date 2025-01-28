@@ -1,14 +1,14 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "radar_tracks_noise_filter parameters",
+  "title": "autoware_radar_tracks_noise_filter parameters",
   "type": "object",
   "definitions": {
-    "radar_tracks_noise_filter": {
+    "autoware_radar_tracks_noise_filter": {
       "type": "object",
       "properties": {
         "velocity_y_threshold": {
           "type": "number",
-          "description": "If y-axis velocity of RadarTrack is more than `velocity_y_threshold`, it treats as noise objects.",
+          "description": "If the y-axis velocity of a RadarTrack exceeds `velocity_y_threshold`, it is treated as a noise object.",
           "default": 7.0
         }
       },
@@ -21,7 +21,7 @@
       "type": "object",
       "properties": {
         "ros__parameters": {
-          "$ref": "#/definitions/velocity_y_threshold"
+          "$ref": "#/definitions/autoware_radar_tracks_noise_filter"
         }
       },
       "required": ["ros__parameters"],
