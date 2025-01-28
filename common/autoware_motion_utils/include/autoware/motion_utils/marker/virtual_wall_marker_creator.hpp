@@ -29,12 +29,13 @@ namespace autoware::motion_utils
 {
 
 /// @brief type of virtual wall associated with different marker styles and namespace
-enum VirtualWallType { stop, slowdown, deadline };
+enum VirtualWallType { stop, slowdown, deadline, pass };
 /// @brief virtual wall to be visualized in rviz
 struct VirtualWall
 {
   geometry_msgs::msg::Pose pose{};
   std::string text{};
+  std::string detail{};
   std::string ns{};
   VirtualWallType style = stop;
   double longitudinal_offset{};
