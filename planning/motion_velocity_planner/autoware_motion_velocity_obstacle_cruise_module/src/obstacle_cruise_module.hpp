@@ -292,29 +292,31 @@ private:
         continue;
       }
 
-      // 2. precise filtering
+      // 2. precise filtering for cruise
       const auto cruise_obstacle = create_cruise_obstacle(
         odometry, traj_points, decimated_traj_points, decimated_traj_polys, object,
         predicted_objects_stamp, object->get_dist_to_traj_poly(decimated_traj_polys),
         is_driving_forward, vehicle_info, trajectory_polygon_collision_check);
       if (cruise_obstacle) {
         cruise_obstacles.push_back(*cruise_obstacle);
+        continue;
       }
-    }
-    if (obstacle_filtering_param_.enable_yield) {
-      // TODO(murooka) apply rough filtering to here
-      const auto yield_obstacles = find_yield_cruise_obstacles(
-        odometry, objects, predicted_objects_stamp, traj_points, vehicle_info);
-      if (yield_obstacles) {
-        for (const auto & y : yield_obstacles.value()) {
-          // Check if there is no member with the same UUID in cruise_obstacles
-          auto it = std::find_if(
-            cruise_obstacles.begin(), cruise_obstacles.end(),
-            [&y](const auto & c) { return y.uuid == c.uuid; });
 
-          // If no matching UUID found, insert yield obstacle into cruise_obstacles
-          if (it == cruise_obstacles.end()) {
-            cruise_obstacles.push_back(y);
+      // 3. precise filtering for yield cruise
+      if (obstacle_filtering_param_.enable_yield) {
+        const auto yield_obstacles = find_yield_cruise_obstacles(
+          odometry, objects, predicted_objects_stamp, traj_points, vehicle_info);
+        if (yield_obstacles) {
+          for (const auto & y : yield_obstacles.value()) {
+            // Check if there is no member with the same UUID in cruise_obstacles
+            auto it = std::find_if(
+              cruise_obstacles.begin(), cruise_obstacles.end(),
+              [&y](const auto & c) { return y.uuid == c.uuid; });
+
+            // If no matching UUID found, insert yield obstacle into cruise_obstacles
+            if (it == cruise_obstacles.end()) {
+              cruise_obstacles.push_back(y);
+            }
           }
         }
       }
