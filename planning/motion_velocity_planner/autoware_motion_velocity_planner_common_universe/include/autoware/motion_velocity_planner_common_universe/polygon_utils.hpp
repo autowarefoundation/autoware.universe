@@ -1,4 +1,4 @@
-// Copyright 2022 TIER IV, Inc.
+// Copyright 2025 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON__POLYGON_UTILS_HPP_
-#define AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON__POLYGON_UTILS_HPP_
+#ifndef AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON_UNIVERSE__POLYGON_UTILS_HPP_
+#define AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON_UNIVERSE__POLYGON_UTILS_HPP_
 
 #include "autoware/universe_utils/geometry/boost_geometry.hpp"
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
@@ -79,4 +79,4 @@ std::vector<Polygon2d> create_one_step_polygons(
 }  // namespace polygon_utils
 }  // namespace autoware::motion_velocity_planner
 
-#endif  // AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON__POLYGON_UTILS_HPP_
+#endif  // AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON_UNIVERSE__POLYGON_UTILS_HPP_

@@ -1,4 +1,4 @@
-// Copyright 2022 TIER IV, Inc.
+// Copyright 2025 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON__UTILS_HPP_
-#define AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON__UTILS_HPP_
+#ifndef AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON_UNIVERSE__UTILS_HPP_
+#define AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON_UNIVERSE__UTILS_HPP_
 
 #include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
@@ -24,9 +24,6 @@
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
-
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
 
 #include <limits>
 #include <memory>
@@ -45,10 +42,6 @@ using autoware_planning_msgs::msg::TrajectoryPoint;
 using nav_msgs::msg::Odometry;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
-
-namespace bg = boost::geometry;
-
-using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
 
 std::vector<TrajectoryPoint> decimate_trajectory_points_from_ego(
   const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & current_pose,
@@ -138,4 +131,4 @@ double calc_possible_min_dist_from_obj_to_traj_poly(
   const std::vector<TrajectoryPoint> & traj_points, const VehicleInfo & vehicle_info);
 }  // namespace autoware::motion_velocity_planner::utils
 
-#endif  // AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON__UTILS_HPP_
+#endif  // AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON_UNIVERSE__UTILS_HPP_
