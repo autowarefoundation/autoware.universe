@@ -42,6 +42,8 @@ public:
     cruise_planning_param_ = cruise_planning_param;
   }
 
+  virtual ~CruisePlannerInterface() = default;
+
   virtual std::vector<TrajectoryPoint> plan_cruise(
     const std::shared_ptr<const PlannerData> planner_data,
     const std::vector<TrajectoryPoint> & stop_traj_points,
