@@ -288,7 +288,7 @@ When vehicle odometry information is faulty, it is possible that the MPC fails t
 
 ## Parameters
 
-{{ json_to_markdown("/control/autoware_autonomous_emergency_braking/schema/autonomous_emergency_braking.schema.json") }}
+{{ json_to_markdown("control/autoware_autonomous_emergency_braking/schema/autonomous_emergency_braking.schema.json") }}
 
 ## Limitations
 
