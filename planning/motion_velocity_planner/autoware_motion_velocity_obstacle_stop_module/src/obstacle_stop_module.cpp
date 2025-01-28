@@ -269,7 +269,7 @@ std::vector<StopObstacle> ObstacleStopModule::filter_stop_obstacle_for_predicted
 
   std::vector<StopObstacle> stop_obstacles;
   for (const auto & object : objects) {
-    autoware::universe_utils::ScopedTimeTrack st("for_each_object", *time_keeper_);
+    autoware::universe_utils::ScopedTimeTrack st_for_each_object("for_each_object", *time_keeper_);
 
     // 1. rough filtering
     // 1.1. Check if the obstacle is in front of the ego.
@@ -290,13 +290,15 @@ std::vector<StopObstacle> ObstacleStopModule::filter_stop_obstacle_for_predicted
 
     // 2. precise filtering
     const auto & decimated_traj_polys = [&]() {
-      autoware::universe_utils::ScopedTimeTrack st("get_decimated_traj_polys", *time_keeper_);
+      autoware::universe_utils::ScopedTimeTrack st_get_decimated_traj_polys(
+        "get_decimated_traj_polys", *time_keeper_);
       return get_decimated_traj_polys(
         traj_points, current_pose, vehicle_info, ego_nearest_dist_threshold,
         ego_nearest_yaw_threshold, trajectory_polygon_collision_check);
     }();
     const double dist_from_obj_to_traj_poly = [&]() {
-      autoware::universe_utils::ScopedTimeTrack st("get_dist_to_traj_poly", *time_keeper_);
+      autoware::universe_utils::ScopedTimeTrack st_get_dist_to_traj_poly(
+        "get_dist_to_traj_poly", *time_keeper_);
       return object->get_dist_to_traj_poly(decimated_traj_polys);
     }();
 
