@@ -1,4 +1,4 @@
-//NOLINTBEGIN
+// NOLINTBEGIN
 /***********************************************************************
  * Software License Agreement (BSD License)
  *
@@ -2466,4 +2466,4 @@ public:
 
 /** @} */  // end of grouping
 }  // namespace nanoflann
-//NOLINTEND
+// NOLINTEND
