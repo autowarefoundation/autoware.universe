@@ -14,7 +14,9 @@
 
 #include "autoware/trajectory/point.hpp"
 
-#include "autoware/trajectory/detail/utils.hpp"
+#include "autoware/trajectory/detail/helpers.hpp"
+#include "autoware/trajectory/interpolator/cubic_spline.hpp"
+#include "autoware/trajectory/interpolator/linear.hpp"
 
 #include <Eigen/Core>
 #include <rclcpp/logging.hpp>
@@ -22,6 +24,7 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#include <memory>
 #include <vector>
 
 namespace autoware::trajectory
@@ -29,12 +32,43 @@ namespace autoware::trajectory
 
 using PointType = geometry_msgs::msg::Point;
 
+Trajectory<PointType>::Trajectory()
+: x_interpolator_(std::make_shared<interpolator::CubicSpline>()),
+  y_interpolator_(std::make_shared<interpolator::CubicSpline>()),
+  z_interpolator_(std::make_shared<interpolator::Linear>())
+{
+}
+
+Trajectory<PointType>::Trajectory(const Trajectory & rhs)
+: x_interpolator_(rhs.x_interpolator_->clone()),
+  y_interpolator_(rhs.y_interpolator_->clone()),
+  z_interpolator_(rhs.z_interpolator_->clone()),
+  bases_(rhs.bases_),
+  start_(rhs.start_),
+  end_(rhs.end_)
+{
+}
+
+Trajectory<PointType> & Trajectory<PointType>::operator=(const Trajectory & rhs)
+{
+  if (this != &rhs) {
+    x_interpolator_ = rhs.x_interpolator_->clone();
+    y_interpolator_ = rhs.y_interpolator_->clone();
+    z_interpolator_ = rhs.z_interpolator_->clone();
+    bases_ = rhs.bases_;
+    start_ = rhs.start_;
+    end_ = rhs.end_;
+  }
+  return *this;
+}
+
 bool Trajectory<PointType>::build(const std::vector<PointType> & points)
 {
   std::vector<double> xs;
   std::vector<double> ys;
   std::vector<double> zs;
 
+  bases_.clear();
   bases_.emplace_back(0.0);
   xs.emplace_back(points[0].x);
   ys.emplace_back(points[0].y);
@@ -68,6 +102,14 @@ double Trajectory<PointType>::clamp(const double & s, bool show_warning) const
       length());
   }
   return std::clamp(s, 0.0, length()) + start_;
+}
+
+std::vector<double> Trajectory<PointType>::get_internal_bases() const
+{
+  auto bases = detail::crop_bases(bases_, start_, end_);
+  std::transform(
+    bases.begin(), bases.end(), bases.begin(), [this](const double & s) { return s - start_; });
+  return bases;
 }
 
 double Trajectory<PointType>::length() const
@@ -112,16 +154,12 @@ double Trajectory<PointType>::curvature(double s) const
 
 std::vector<PointType> Trajectory<PointType>::restore(const size_t & min_points) const
 {
-  auto bases = detail::crop_bases(bases_, start_, end_);
+  auto bases = get_internal_bases();
   bases = detail::fill_bases(bases, min_points);
   std::vector<PointType> points;
   points.reserve(bases.size());
   for (const auto & s : bases) {
-    PointType p;
-    p.x = x_interpolator_->compute(s);
-    p.y = y_interpolator_->compute(s);
-    p.z = z_interpolator_->compute(s);
-    points.emplace_back(p);
+    points.emplace_back(compute(s));
   }
   return points;
 }
