@@ -506,27 +506,29 @@ void LaneParkingPlanner::bezier_planning_helper(
 {
   autoware::universe_utils::StopWatch timer;
   timer.tic("bezier");
+  std::vector<PullOverPath> path_candidates_all;
   for (const auto & goal_candidate : goal_candidates) {
     auto bezier_pull_over_paths = bezier_pull_over_planner_->plans(
-      goal_candidate, path_candidates.size(), planner_data, upstream_module_output);
+      goal_candidate, path_candidates_all.size(), planner_data, upstream_module_output);
     std::copy(
       std::make_move_iterator(bezier_pull_over_paths.begin()),
-      std::make_move_iterator(bezier_pull_over_paths.end()), std::back_inserter(path_candidates));
+      std::make_move_iterator(bezier_pull_over_paths.end()),
+      std::back_inserter(path_candidates_all));
   }
   RCLCPP_INFO(
-    getLogger(), "there are %lu bezier paths (calculated in %f [sec])", path_candidates.size(),
+    getLogger(), "there are %lu bezier paths (calculated in %f [sec])", path_candidates_all.size(),
     timer.toc("bezier"));
 
   sorted_indices_opt = std::vector<size_t>();
   auto & sorted_indices = sorted_indices_opt.value();
-  sorted_indices.reserve(path_candidates.size());
+  sorted_indices.reserve(path_candidates_all.size());
 
   std::unordered_map<int, GoalCandidate> goal_candidate_map;
   for (const auto & goal_candidate : goal_candidates) {
     goal_candidate_map[goal_candidate.id] = goal_candidate;
   }
-  for (size_t i = 0; i < path_candidates.size(); ++i) {
-    const auto & path = path_candidates[i];
+  for (size_t i = 0; i < path_candidates_all.size(); ++i) {
+    const auto & path = path_candidates_all[i];
     const auto goal_candidate_it = goal_candidate_map.find(path.goal_id());
     if (goal_candidate_it != goal_candidate_map.end() && goal_candidate_it->second.is_safe) {
       sorted_indices.push_back(i);
@@ -538,15 +540,14 @@ void LaneParkingPlanner::bezier_planning_helper(
   const auto static_target_objects = utils::path_safety_checker::filterObjectsByVelocity(
     dynamic_target_objects, parameters_.th_moving_object_velocity);
   sortPullOverPaths(
-    planner_data, parameters_, path_candidates, goal_candidates, static_target_objects, getLogger(),
-    sorted_indices);
+    planner_data, parameters_, path_candidates_all, goal_candidates, static_target_objects,
+    getLogger(), sorted_indices);
 
-  const auto clip_size = std::min<size_t>(path_candidates.size(), 100);
-  const auto path_candidates_tmp = std::move(path_candidates);
+  const auto clip_size = std::min<size_t>(path_candidates_all.size(), 100);
   // take upto 100 elements
   sorted_indices.resize(clip_size);
   for (const auto sorted_index : sorted_indices) {
-    path_candidates.push_back(path_candidates_tmp[sorted_index]);
+    path_candidates.push_back(path_candidates_all[sorted_index]);
   }
   sorted_indices.clear();
   // now path_candidates are sorted from 0 to 100
