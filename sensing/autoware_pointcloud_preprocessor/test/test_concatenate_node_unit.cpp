@@ -28,9 +28,13 @@
 #include <gtest/gtest.h>
 #include <tf2_ros/static_transform_broadcaster.h>
 
+#include <algorithm>
 #include <chrono>
 #include <memory>
+#include <string>
 #include <thread>
+#include <unordered_map>
+#include <vector>
 
 class ConcatenateCloudTest : public ::testing::Test
 {
@@ -41,9 +45,9 @@ protected:
     // Instead of "input_topics", other parameters are not used.
     // They just helps to setup the concatenate node
     node_options.parameter_overrides(
-      {{"debug_mode", false},
+      {{"use_cuda", false},
+       {"debug_mode", false},
        {"has_static_tf_only", false},
-       {"rosbag_replay", false},
        {"rosbag_length", 0.0},
        {"maximum_queue_size", 5},
        {"timeout_sec", 0.2},
@@ -55,16 +59,16 @@ protected:
        {"input_twist_topic_type", "twist"},
        {"input_topics", std::vector<std::string>{"lidar_top", "lidar_left", "lidar_right"}},
        {"output_frame", "base_link"},
-       {"lidar_timestamp_offsets", std::vector<double>{0.0, 0.04, 0.08}},
-       {"lidar_timestamp_noise_window", std::vector<double>{0.01, 0.01, 0.01}}});
+       {"matching_strategy.type", "advanced"},
+       {"matching_strategy.lidar_timestamp_offsets", std::vector<double>{0.0, 0.04, 0.08}},
+       {"matching_strategy.lidar_timestamp_noise_window", std::vector<double>{0.01, 0.01, 0.01}}});
 
     concatenate_node_ = std::make_shared<
       autoware::pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent>(
       node_options);
     combine_cloud_handler_ = std::make_shared<
       autoware::pointcloud_preprocessor::CombineCloudHandler<sensor_msgs::msg::PointCloud2>>(
-      *concatenate_node_, std::vector<std::string>{"lidar_top", "lidar_left", "lidar_right"},
-      "base_link", true, true, true, false);
+      *concatenate_node_, "base_link", true, true, true, false);
 
     collector_ = std::make_shared<
       autoware::pointcloud_preprocessor::CloudCollector<sensor_msgs::msg::PointCloud2>>(
@@ -291,12 +295,37 @@ TEST_F(ConcatenateCloudTest, TestComputeTransformToAdjustForOldTimestamp)
 
 //////////////////////////////// Test cloud_collector ////////////////////////////////
 
-TEST_F(ConcatenateCloudTest, TestSetAndGetReferenceTimeStampBoundary)
+TEST_F(ConcatenateCloudTest, TestSetAndGetNaiveCollectorInfo)
 {
-  double reference_timestamp = 10.0;
-  double noise_window = 0.1;
-  collector_->set_reference_timestamp(reference_timestamp, noise_window);
-  auto [min, max] = collector_->get_reference_timestamp_boundary();
+  auto naive_info = std::make_shared<autoware::pointcloud_preprocessor::NaiveCollectorInfo>();
+  naive_info->timestamp = 15.0;
+
+  collector_->set_info(naive_info);
+  auto collector_info_new = collector_->get_info();
+
+  auto naive_info_new =
+    std::dynamic_pointer_cast<autoware::pointcloud_preprocessor::NaiveCollectorInfo>(
+      collector_info_new);
+  ASSERT_NE(naive_info_new, nullptr) << "Collector info is not of type NaiveCollectorInfo";
+
+  EXPECT_DOUBLE_EQ(naive_info_new->timestamp, 15.0);
+}
+
+TEST_F(ConcatenateCloudTest, TestSetAndGetAdvancedCollectorInfo)
+{
+  auto advanced_info = std::make_shared<autoware::pointcloud_preprocessor::AdvancedCollectorInfo>();
+  advanced_info->timestamp = 10.0;
+  advanced_info->noise_window = 0.1;
+  collector_->set_info(advanced_info);
+  auto collector_info_new = collector_->get_info();
+  auto advanced_info_new =
+    std::dynamic_pointer_cast<autoware::pointcloud_preprocessor::AdvancedCollectorInfo>(
+      collector_info_new);
+  ASSERT_NE(advanced_info_new, nullptr) << "Collector info is not of type AdvancedCollectorInfo";
+
+  // Validate the values
+  auto min = advanced_info_new->timestamp - advanced_info_new->noise_window;
+  auto max = advanced_info_new->timestamp + advanced_info_new->noise_window;
   EXPECT_DOUBLE_EQ(min, 9.9);
   EXPECT_DOUBLE_EQ(max, 10.1);
 }
@@ -448,13 +477,6 @@ TEST_F(ConcatenateCloudTest, TestConcatenateClouds)
   EXPECT_FLOAT_EQ(right_timestamp.seconds(), topic_to_original_stamp_map["lidar_right"]);
 }
 
-TEST_F(ConcatenateCloudTest, TestDeleteCollector)
-{
-  concatenate_node_->add_cloud_collector(collector_);
-  concatenate_node_->delete_collector(*collector_);
-  EXPECT_TRUE(concatenate_node_->get_cloud_collectors<sensor_msgs::msg::PointCloud2>().empty());
-}
-
 TEST_F(ConcatenateCloudTest, TestProcessSingleCloud)
 {
   concatenate_node_->add_cloud_collector(collector_);
@@ -468,6 +490,8 @@ TEST_F(ConcatenateCloudTest, TestProcessSingleCloud)
 
   auto topic_to_cloud_map = collector_->get_topic_to_cloud_map();
   EXPECT_EQ(topic_to_cloud_map["lidar_top"], top_pointcloud_ptr);
+  EXPECT_FALSE(collector_->concatenate_finished());
+  concatenate_node_->manage_collector_list();
   EXPECT_FALSE(concatenate_node_->get_cloud_collectors<sensor_msgs::msg::PointCloud2>().empty());
 
   // Sleep for timeout seconds (200 ms)
@@ -475,6 +499,8 @@ TEST_F(ConcatenateCloudTest, TestProcessSingleCloud)
   rclcpp::spin_some(concatenate_node_);
 
   // Collector should concatenate and publish the pointcloud, also delete itself.
+  EXPECT_TRUE(collector_->concatenate_finished());
+  concatenate_node_->manage_collector_list();
   EXPECT_TRUE(concatenate_node_->get_cloud_collectors<sensor_msgs::msg::PointCloud2>().empty());
 }
 
@@ -503,6 +529,8 @@ TEST_F(ConcatenateCloudTest, TestProcessMultipleCloud)
   collector_->process_pointcloud("lidar_left", left_pointcloud_ptr);
   collector_->process_pointcloud("lidar_right", right_pointcloud_ptr);
 
+  EXPECT_TRUE(collector_->concatenate_finished());
+  concatenate_node_->manage_collector_list();
   EXPECT_TRUE(concatenate_node_->get_cloud_collectors<sensor_msgs::msg::PointCloud2>().empty());
 }
 

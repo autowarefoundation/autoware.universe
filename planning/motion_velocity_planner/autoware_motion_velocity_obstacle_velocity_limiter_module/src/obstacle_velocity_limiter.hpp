@@ -19,7 +19,7 @@
 #include "parameters.hpp"
 #include "types.hpp"
 
-#include <autoware/motion_velocity_planner_common/velocity_planning_result.hpp>
+#include <autoware/motion_velocity_planner_common_universe/velocity_planning_result.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
@@ -56,7 +56,7 @@ void calculateSteeringAngles(TrajectoryPoints & trajectory, const double wheel_b
 /// @param[in] min_vel minimum velocity for an object to be masked
 /// @return polygon masks around dynamic objects
 multi_polygon_t createPolygonMasks(
-  const autoware_perception_msgs::msg::PredictedObjects & dynamic_obstacles, const double buffer,
+  const std::vector<PlannerData::Object> & dynamic_obstacles, const double buffer,
   const double min_vel);
 
 /// @brief create footprint polygons from projection lines

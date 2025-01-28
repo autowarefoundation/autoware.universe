@@ -62,36 +62,26 @@ StartPlannerModule::StartPlannerModule(
   const std::shared_ptr<StartPlannerParameters> & parameters,
   const std::unordered_map<std::string, std::shared_ptr<RTCInterface>> & rtc_interface_ptr_map,
   std::unordered_map<std::string, std::shared_ptr<ObjectsOfInterestMarkerInterface>> &
-    objects_of_interest_marker_interface_ptr_map)
-: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map},  // NOLINT
+    objects_of_interest_marker_interface_ptr_map,
+  const std::shared_ptr<PlanningFactorInterface> planning_factor_interface)
+: SceneModuleInterface{name, node, rtc_interface_ptr_map, objects_of_interest_marker_interface_ptr_map, planning_factor_interface},  // NOLINT
   parameters_{parameters},
   vehicle_info_{autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo()},
   is_freespace_planner_cb_running_{false}
 {
-  lane_departure_checker_ = std::make_shared<LaneDepartureChecker>(time_keeper_);
-  lane_departure_checker_->setVehicleInfo(vehicle_info_);
-  autoware::lane_departure_checker::Param lane_departure_checker_params{};
-  lane_departure_checker_params.footprint_extra_margin =
-    parameters->lane_departure_check_expansion_margin;
-
-  lane_departure_checker_->setParam(lane_departure_checker_params);
-
   // set enabled planner
   if (parameters_->enable_shift_pull_out) {
-    start_planners_.push_back(
-      std::make_shared<ShiftPullOut>(node, *parameters, lane_departure_checker_, time_keeper_));
+    start_planners_.push_back(std::make_shared<ShiftPullOut>(node, *parameters, time_keeper_));
   }
   if (parameters_->enable_geometric_pull_out) {
-    start_planners_.push_back(
-      std::make_shared<GeometricPullOut>(node, *parameters, lane_departure_checker_, time_keeper_));
+    start_planners_.push_back(std::make_shared<GeometricPullOut>(node, *parameters, time_keeper_));
   }
   if (start_planners_.empty()) {
     RCLCPP_ERROR(getLogger(), "Not found enabled planner");
   }
 
   if (parameters_->enable_freespace_planner) {
-    freespace_planner_ =
-      std::make_unique<FreespacePullOut>(node, *parameters, vehicle_info_, time_keeper_);
+    freespace_planner_ = std::make_unique<FreespacePullOut>(node, *parameters);
     const auto freespace_planner_period_ns = rclcpp::Rate(1.0).period();
     freespace_planner_timer_cb_group_ =
       node.create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
@@ -100,9 +90,6 @@ StartPlannerModule::StartPlannerModule(
       std::bind(&StartPlannerModule::onFreespacePlannerTimer, this),
       freespace_planner_timer_cb_group_);
   }
-
-  steering_factor_interface_.init(PlanningBehavior::START_PLANNER);
-  velocity_factor_interface_.init(PlanningBehavior::START_PLANNER);
 }
 
 void StartPlannerModule::onFreespacePlannerTimer()
@@ -743,9 +730,9 @@ BehaviorModuleOutput StartPlannerModule::plan()
 
   setDrivableAreaInfo(output);
 
-  setVelocityFactor(output.path);
+  set_longitudinal_planning_factor(output.path);
 
-  const auto steering_factor_direction = getSteeringFactorDirection(output);
+  const auto planning_factor_direction = getPlanningFactorDirection(output);
 
   if (status_.driving_forward) {
     const double start_distance = autoware::motion_utils::calcSignedArcLength(
@@ -755,9 +742,9 @@ BehaviorModuleOutput StartPlannerModule::plan()
       path.points, planner_data_->self_odometry->pose.pose.position,
       status_.pull_out_path.end_pose.position);
     updateRTCStatus(start_distance, finish_distance);
-    steering_factor_interface_.set(
-      {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose},
-      {start_distance, finish_distance}, steering_factor_direction, SteeringFactor::TURNING, "");
+    planning_factor_interface_->add(
+      start_distance, finish_distance, status_.pull_out_path.start_pose,
+      status_.pull_out_path.end_pose, planning_factor_direction, SafetyFactorArray{});
     setDebugData();
     return output;
   }
@@ -765,9 +752,9 @@ BehaviorModuleOutput StartPlannerModule::plan()
     path.points, planner_data_->self_odometry->pose.pose.position,
     status_.pull_out_path.start_pose.position);
   updateRTCStatus(0.0, distance);
-  steering_factor_interface_.set(
-    {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose}, {0.0, distance},
-    steering_factor_direction, SteeringFactor::TURNING, "");
+  planning_factor_interface_->add(
+    0.0, distance, status_.pull_out_path.start_pose, status_.pull_out_path.end_pose,
+    planning_factor_direction, SafetyFactorArray{});
 
   setDebugData();
 
@@ -850,7 +837,7 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
 
   setDrivableAreaInfo(output);
 
-  const auto steering_factor_direction = getSteeringFactorDirection(output);
+  const auto planning_factor_direction = getPlanningFactorDirection(output);
 
   if (status_.driving_forward) {
     const double start_distance = autoware::motion_utils::calcSignedArcLength(
@@ -860,10 +847,9 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
       stop_path.points, planner_data_->self_odometry->pose.pose.position,
       status_.pull_out_path.end_pose.position);
     updateRTCStatus(start_distance, finish_distance);
-    steering_factor_interface_.set(
-      {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose},
-      {start_distance, finish_distance}, steering_factor_direction, SteeringFactor::APPROACHING,
-      "");
+    planning_factor_interface_->add(
+      start_distance, finish_distance, status_.pull_out_path.start_pose,
+      status_.pull_out_path.end_pose, planning_factor_direction, SafetyFactorArray{});
     setDebugData();
 
     return output;
@@ -872,9 +858,9 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
     stop_path.points, planner_data_->self_odometry->pose.pose.position,
     status_.pull_out_path.start_pose.position);
   updateRTCStatus(0.0, distance);
-  steering_factor_interface_.set(
-    {status_.pull_out_path.start_pose, status_.pull_out_path.end_pose}, {0.0, distance},
-    steering_factor_direction, SteeringFactor::APPROACHING, "");
+  planning_factor_interface_->add(
+    0.0, distance, status_.pull_out_path.start_pose, status_.pull_out_path.end_pose,
+    planning_factor_direction, SafetyFactorArray{});
 
   setDebugData();
 
@@ -908,16 +894,6 @@ void StartPlannerModule::planWithPriority(
 
   if (start_pose_candidates.empty()) return;
 
-  auto get_accumulated_debug_stream = [](const std::vector<PlannerDebugData> & debug_data_vector) {
-    std::stringstream ss;
-    if (debug_data_vector.empty()) return ss;
-    ss << debug_data_vector.front().header_str();
-    for (const auto & debug_data : debug_data_vector) {
-      ss << debug_data.str();
-    }
-    return ss;
-  };
-
   const PriorityOrder order_priority =
     determinePriorityOrder(search_priority, start_pose_candidates.size());
 
@@ -932,20 +908,13 @@ void StartPlannerModule::planWithPriority(
               collision_check_margin, debug_data_vector)) {
           debug_data_.selected_start_pose_candidate_index = index;
           debug_data_.margin_for_start_pose_candidate = collision_check_margin;
-          if (parameters_->print_debug_info) {
-            const auto ss = get_accumulated_debug_stream(debug_data_vector);
-            DEBUG_PRINT("\nPull out path search results:\n%s", ss.str().c_str());
-          }
+          set_planner_evaluation_table(debug_data_vector);
           return;
         }
       }
     }
   }
-
-  if (parameters_->print_debug_info) {
-    const auto ss = get_accumulated_debug_stream(debug_data_vector);
-    DEBUG_PRINT("\nPull out path search results:\n%s", ss.str().c_str());
-  }
+  set_planner_evaluation_table(debug_data_vector);
   updateStatusIfNoSafePathFound();
 }
 
@@ -986,17 +955,16 @@ bool StartPlannerModule::findPullOutPath(
   const bool backward_is_unnecessary = backwards_distance < epsilon;
 
   planner->setCollisionCheckMargin(collision_check_margin);
-  planner->setPlannerData(planner_data_);
   PlannerDebugData debug_data{
-    planner->getPlannerType(), {}, collision_check_margin, backwards_distance};
+    planner->getPlannerType(), backwards_distance, collision_check_margin, {}};
 
-  const auto pull_out_path = planner->plan(start_pose_candidate, goal_pose, debug_data);
+  const auto pull_out_path =
+    planner->plan(start_pose_candidate, goal_pose, planner_data_, debug_data);
   debug_data_vector.push_back(debug_data);
   // If no path is found, return false
   if (!pull_out_path) {
     return false;
   }
-
   if (backward_is_unnecessary) {
     updateStatusWithCurrentPath(*pull_out_path, start_pose_candidate, planner->getPlannerType());
     return true;
@@ -1595,12 +1563,9 @@ std::optional<PullOutStatus> StartPlannerModule::planFreespacePath(
 
   for (const auto & p : center_line_path.points) {
     const Pose end_pose = p.point.pose;
-    freespace_planner_->setPlannerData(planner_data);
-    PlannerDebugData debug_data{freespace_planner_->getPlannerType(), {}, 0.0, 0.0};
-    auto freespace_path = freespace_planner_->plan(current_pose, end_pose, debug_data);
-    DEBUG_PRINT(
-      "\nFreespace Pull out path search results\n%s%s", debug_data.header_str().c_str(),
-      debug_data.str().c_str());
+    PlannerDebugData debug_data{freespace_planner_->getPlannerType(), 0.0, 0.0, {}};
+    auto freespace_path =
+      freespace_planner_->plan(current_pose, end_pose, planner_data, debug_data);
     if (!freespace_path) {
       continue;
     }
@@ -1641,6 +1606,83 @@ void StartPlannerModule::setDrivableAreaInfo(BehaviorModuleOutput & output) cons
       return;
     }
   }
+}
+
+std::string StartPlannerModule::create_planner_evaluation_table(
+  const std::vector<PlannerDebugData> & planner_debug_data_vector) const
+{
+  if (planner_debug_data_vector.empty()) {
+    return "";
+  }
+
+  const std::string header_planner_type = "Planner type ";
+  const std::string header_required_margin = "Required margin [m]";
+  const std::string header_backward_distance = "Backward distance [m]";
+  const std::string header_condition_eval = "Condition";
+
+  std::ostringstream oss;
+  oss << "-----------------------------------------------------------------------------------------"
+         "----------------"
+      << "\n";
+  oss << "| " << std::left << header_planner_type << " | " << header_required_margin << " | "
+      << header_backward_distance << " | " << header_condition_eval << " \n";
+  oss << "-----------------------------------------------------------------------------------------"
+         "----------------"
+      << "\n";
+
+  for (const auto & d : planner_debug_data_vector) {
+    const std::string pt_str = PlannerDebugData::to_planner_type_name(d.planner_type);
+    const std::string rm_str =
+      PlannerDebugData::double_to_str(d.required_margin, 1) + "                                   ";
+    const std::string bd_str = PlannerDebugData::double_to_str(d.backward_distance, 1) +
+                               "                                      ";
+
+    if (d.conditions_evaluation.empty()) {
+      oss << "| " << std::left << pt_str << " | " << rm_str << " | " << bd_str << " | "
+          << "Unexpected empty condition evaluation"
+          << " \n";
+    } else {
+      for (size_t i = 0; i < d.conditions_evaluation.size(); ++i) {
+        const std::string cond_with_index =
+          "#" + std::to_string(i + 1) + ": " + d.conditions_evaluation[i];
+
+        oss << "| " << std::left << pt_str << " | " << rm_str << " | " << bd_str << " | "
+            << cond_with_index << " \n";
+      }
+    }
+  }
+
+  return oss.str();
+}
+
+void StartPlannerModule::set_planner_evaluation_table(
+  const std::vector<PlannerDebugData> & debug_data_vector)
+{
+  planner_evaluation_table_.clear();
+  if (debug_data_vector.empty()) {
+    return;
+  }
+
+  planner_evaluation_table_ = create_planner_evaluation_table(debug_data_vector);
+}
+
+void StartPlannerModule::acceptVisitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const
+{
+  if (visitor) {
+    visitor->visitStartPlannerModule(this);
+  }
+}
+
+void SceneModuleVisitor::visitStartPlannerModule(const StartPlannerModule * module) const
+{
+  auto debug_msg = std::make_shared<autoware_internal_debug_msgs::msg::StringStamped>();
+  auto debug_info = module->get_planner_evaluation_table();
+  if (debug_info.empty()) return;
+
+  debug_msg->stamp = rclcpp::Clock{RCL_ROS_TIME}.now();
+  debug_msg->data = debug_info;
+
+  start_planner_visitor_ = debug_msg;
 }
 
 void StartPlannerModule::setDebugData()

@@ -23,6 +23,7 @@
 
 // ROS includes
 #include "cloud_collector.hpp"
+#include "collector_matching_strategy.hpp"
 #include "combine_cloud_handler.hpp"
 
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
@@ -30,14 +31,14 @@
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <point_cloud_msg_wrapper/point_cloud_msg_wrapper.hpp>
 
+#include <autoware_internal_debug_msgs/msg/int32_stamped.hpp>
+#include <autoware_internal_debug_msgs/msg/string_stamped.hpp>
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
-#include <tier4_debug_msgs/msg/int32_stamped.hpp>
-#include <tier4_debug_msgs/msg/string_stamped.hpp>
 
 #include <message_filters/pass_through.h>
 #include <message_filters/subscriber.h>
@@ -66,13 +67,14 @@ public:
   template <typename PointCloudMessage>
   void publish_clouds_postprocess(
     const ConcatenatedCloudResult<PointCloudMessage> & concatenated_cloud_result,
-    double reference_timestamp_min, double reference_timestamp_max);
+    std::shared_ptr<CollectorInfoBase> collector_info);
 
   template <typename PointCloudMessage>
   void publish_clouds(
     ConcatenatedCloudResult<PointCloudMessage> && concatenated_cloud_result,
-    double reference_timestamp_min, double reference_timestamp_max);
+    std::shared_ptr<CollectorInfoBase> collector_info);
 
+  void manage_collector_list();
   template <typename PointCloudMessage>
   void delete_collector(CloudCollector<PointCloudMessage> & cloud_collector);
 
@@ -86,9 +88,9 @@ private:
   struct Parameters
   {
     bool use_cuda;
+    bool use_naive_approach;
     bool debug_mode;
     bool has_static_tf_only;
-    bool rosbag_replay;
     double rosbag_length;
     int maximum_queue_size;
     double timeout_sec;
@@ -100,29 +102,30 @@ private:
     std::string input_twist_topic_type;
     std::vector<std::string> input_topics;
     std::string output_frame;
-    std::vector<double> lidar_timestamp_offsets;
-    std::vector<double> lidar_timestamp_noise_window;
+    std::string matching_strategy;
   } params_;
 
   double current_concatenate_cloud_timestamp_{0.0};
   double latest_concatenate_cloud_timestamp_{0.0};
   bool drop_previous_but_late_pointcloud_{false};
   bool publish_pointcloud_{false};
-  double diagnostic_reference_timestamp_min_{0.0};
-  double diagnostic_reference_timestamp_max_{0.0};
+  bool is_concatenated_cloud_empty_{false};
+  std::shared_ptr<CollectorInfoBase> diagnostic_collector_info_;
   std::unordered_map<std::string, double> diagnostic_topic_to_original_stamp_map_;
 
   std::shared_ptr<CombineCloudHandlerBase> combine_cloud_handler_;
   std::list<std::shared_ptr<CloudCollector<sensor_msgs::msg::PointCloud2>>> cloud_collectors_;
+  std::unique_ptr<CollectorMatchingStrategy<sensor_msgs::msg::PointCloud2>>
+    collector_matching_strategy_;
 
 #ifdef USE_CUDA
   std::list<std::shared_ptr<CloudCollector<cuda_blackboard::CudaPointCloud2>>>
     cuda_cloud_collectors_;
+  std::unique_ptr<CollectorMatchingStrategy<cuda_blackboard::CudaPointCloud2>>
+    cuda_collector_matching_strategy_;
 #endif
 
   std::mutex cloud_collectors_mutex_;
-  std::unordered_map<std::string, double> topic_to_offset_map_;
-  std::unordered_map<std::string, double> topic_to_noise_window_map_;
 
   // default postfix name for synchronized pointcloud
   static constexpr const char * default_sync_topic_postfix = "_synchronized";

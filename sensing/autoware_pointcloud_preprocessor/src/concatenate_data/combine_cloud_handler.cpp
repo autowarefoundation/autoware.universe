@@ -29,8 +29,12 @@
 #endif
 
 #include <algorithm>
+#include <deque>
+#include <functional>
 #include <memory>
 #include <string>
+#include <unordered_map>
+#include <utility>
 #include <vector>
 
 #ifdef USE_CUDA
@@ -66,11 +70,10 @@ namespace autoware::pointcloud_preprocessor
 {
 
 CombineCloudHandlerBase::CombineCloudHandlerBase(
-  rclcpp::Node & node, std::vector<std::string> input_topics, std::string output_frame,
-  bool is_motion_compensated, bool publish_synchronized_pointcloud,
-  bool keep_input_frame_in_synchronized_pointcloud, bool has_static_tf_only)
+  rclcpp::Node & node, std::string output_frame, bool is_motion_compensated,
+  bool publish_synchronized_pointcloud, bool keep_input_frame_in_synchronized_pointcloud,
+  bool has_static_tf_only)
 : node_(node),
-  input_topics_(input_topics),
   output_frame_(output_frame),
   is_motion_compensated_(is_motion_compensated),
   publish_synchronized_pointcloud_(publish_synchronized_pointcloud),
@@ -207,11 +210,11 @@ Eigen::Matrix4f CombineCloudHandlerBase::compute_transform_to_adjust_for_old_tim
 }
 
 CombineCloudHandler<sensor_msgs::msg::PointCloud2>::CombineCloudHandler(
-  rclcpp::Node & node, std::vector<std::string> input_topics, std::string output_frame,
-  bool is_motion_compensated, bool publish_synchronized_pointcloud,
-  bool keep_input_frame_in_synchronized_pointcloud, bool has_static_tf_only)
+  rclcpp::Node & node, std::string output_frame, bool is_motion_compensated,
+  bool publish_synchronized_pointcloud, bool keep_input_frame_in_synchronized_pointcloud,
+  bool has_static_tf_only)
 : CombineCloudHandlerBase(
-    node, input_topics, output_frame, is_motion_compensated, publish_synchronized_pointcloud,
+    node, output_frame, is_motion_compensated, publish_synchronized_pointcloud,
     keep_input_frame_in_synchronized_pointcloud, has_static_tf_only)
 {
 }
@@ -386,12 +389,13 @@ CombineCloudHandler<sensor_msgs::msg::PointCloud2>::combine_pointclouds(
 #ifdef USE_CUDA
 
 CombineCloudHandler<cuda_blackboard::CudaPointCloud2>::CombineCloudHandler(
-  rclcpp::Node & node, std::vector<std::string> input_topics, std::string output_frame,
+  rclcpp::Node & node, const std::vector<std::string> & input_topics, std::string output_frame,
   bool is_motion_compensated, bool publish_synchronized_pointcloud,
   bool keep_input_frame_in_synchronized_pointcloud, bool has_static_tf_only)
 : CombineCloudHandlerBase(
-    node, input_topics, output_frame, is_motion_compensated, publish_synchronized_pointcloud,
-    keep_input_frame_in_synchronized_pointcloud, has_static_tf_only)
+    node, output_frame, is_motion_compensated, publish_synchronized_pointcloud,
+    keep_input_frame_in_synchronized_pointcloud, has_static_tf_only),
+  input_topics_(input_topics)
 {
   for (const auto & topic : input_topics_) {
     CudaConcatStruct cuda_concat_struct;

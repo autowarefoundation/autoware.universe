@@ -16,7 +16,6 @@
 
 #include <deque>
 #include <memory>
-#include <mutex>
 #include <optional>
 #include <string>
 #include <unordered_map>
@@ -81,7 +80,6 @@ class CombineCloudHandlerBase
 protected:
   rclcpp::Node & node_;
 
-  std::vector<std::string> input_topics_;
   std::string output_frame_;
   bool is_motion_compensated_;
   bool publish_synchronized_pointcloud_;
@@ -102,9 +100,9 @@ protected:
 
 public:
   CombineCloudHandlerBase(
-    rclcpp::Node & node, std::vector<std::string> input_topics, std::string output_frame,
-    bool is_motion_compensated, bool publish_synchronized_pointcloud,
-    bool keep_input_frame_in_synchronized_pointcloud, bool has_static_tf_only);
+    rclcpp::Node & node, std::string output_frame, bool is_motion_compensated,
+    bool publish_synchronized_pointcloud, bool keep_input_frame_in_synchronized_pointcloud,
+    bool has_static_tf_only);
 
   virtual ~CombineCloudHandlerBase() = default;
 
@@ -144,9 +142,9 @@ protected:
 
 public:
   CombineCloudHandler(
-    rclcpp::Node & node, std::vector<std::string> input_topics, std::string output_frame,
-    bool is_motion_compensated, bool publish_synchronized_pointcloud,
-    bool keep_input_frame_in_synchronized_pointcloud, bool has_static_tf_only);
+    rclcpp::Node & node, std::string output_frame, bool is_motion_compensated,
+    bool publish_synchronized_pointcloud, bool keep_input_frame_in_synchronized_pointcloud,
+    bool has_static_tf_only);
 
   ConcatenatedCloudResult<sensor_msgs::msg::PointCloud2> combine_pointclouds(
     std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::ConstSharedPtr> &
@@ -166,6 +164,7 @@ protected:
     std::size_t max_pointcloud_size_{0};
   };
 
+  std::vector<std::string> input_topics_;
   std::unordered_map<std::string, CudaConcatStruct> cuda_concat_struct_map_;
   std::unique_ptr<cuda_blackboard::CudaPointCloud2> concatenated_cloud_ptr;
   std::size_t max_concat_pointcloud_size_{0};
@@ -173,13 +172,12 @@ protected:
 
 public:
   CombineCloudHandler(
-    rclcpp::Node & node, std::vector<std::string> input_topics, std::string output_frame,
+    rclcpp::Node & node, const std::vector<std::string> & input_topics, std::string output_frame,
     bool is_motion_compensated, bool publish_synchronized_pointcloud,
     bool keep_input_frame_in_synchronized_pointcloud, bool has_static_tf_only);
 
   void allocate_pointclouds();
 
-public:
   ConcatenatedCloudResult<cuda_blackboard::CudaPointCloud2> combine_pointclouds(
     std::unordered_map<std::string, cuda_blackboard::CudaPointCloud2::ConstSharedPtr> &
       topic_to_cloud_map);

@@ -196,6 +196,8 @@ PidLongitudinalController::PidLongitudinalController(
     m_slope_source = SlopeSource::TRAJECTORY_PITCH;
   } else if (slope_source == "trajectory_adaptive") {
     m_slope_source = SlopeSource::TRAJECTORY_ADAPTIVE;
+  } else if (slope_source == "trajectory_goal_adaptive") {
+    m_slope_source = SlopeSource::TRAJECTORY_GOAL_ADAPTIVE;
   } else {
     RCLCPP_ERROR(logger_, "Slope source is not valid. Using raw_pitch option as default");
     m_slope_source = SlopeSource::RAW_PITCH;
@@ -212,9 +214,9 @@ PidLongitudinalController::PidLongitudinalController(
       : node.declare_parameter<double>("ego_nearest_yaw_threshold");  // [rad]
 
   // subscriber, publisher
-  m_pub_slope = node.create_publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>(
+  m_pub_slope = node.create_publisher<autoware_internal_debug_msgs::msg::Float32MultiArrayStamped>(
     "~/output/slope_angle", rclcpp::QoS{1});
-  m_pub_debug = node.create_publisher<tier4_debug_msgs::msg::Float32MultiArrayStamped>(
+  m_pub_debug = node.create_publisher<autoware_internal_debug_msgs::msg::Float32MultiArrayStamped>(
     "~/output/longitudinal_diagnostic", rclcpp::QoS{1});
   m_pub_virtual_wall_marker = node.create_publisher<MarkerArray>("~/virtual_wall", 1);
 
@@ -529,21 +531,30 @@ PidLongitudinalController::ControlData PidLongitudinalController::getControlData
   // NOTE: getPitchByTraj() calculates the pitch angle as defined in
   // ../media/slope_definition.drawio.svg while getPitchByPose() is not, so `raw_pitch` is reversed
   const double raw_pitch = (-1.0) * longitudinal_utils::getPitchByPose(current_pose.orientation);
+  m_lpf_pitch->filter(raw_pitch);
   const double traj_pitch = longitudinal_utils::getPitchByTraj(
     control_data.interpolated_traj, control_data.target_idx, m_wheel_base);
 
   if (m_slope_source == SlopeSource::RAW_PITCH) {
-    control_data.slope_angle = m_lpf_pitch->filter(raw_pitch);
+    control_data.slope_angle = m_lpf_pitch->getValue();
   } else if (m_slope_source == SlopeSource::TRAJECTORY_PITCH) {
     control_data.slope_angle = traj_pitch;
-  } else if (m_slope_source == SlopeSource::TRAJECTORY_ADAPTIVE) {
+  } else if (
+    m_slope_source == SlopeSource::TRAJECTORY_ADAPTIVE ||
+    m_slope_source == SlopeSource::TRAJECTORY_GOAL_ADAPTIVE) {
     // if velocity is high, use target idx for slope, otherwise, use raw_pitch
-    if (control_data.current_motion.vel > m_adaptive_trajectory_velocity_th) {
-      control_data.slope_angle = traj_pitch;
-      m_lpf_pitch->filter(raw_pitch);
-    } else {
-      control_data.slope_angle = m_lpf_pitch->filter(raw_pitch);
-    }
+    const bool is_vel_slow = control_data.current_motion.vel < m_adaptive_trajectory_velocity_th &&
+                             m_slope_source == SlopeSource::TRAJECTORY_ADAPTIVE;
+
+    const double goal_dist = autoware::motion_utils::calcSignedArcLength(
+      control_data.interpolated_traj.points, current_pose.position,
+      control_data.interpolated_traj.points.size() - 1);
+    const bool is_close_to_trajectory_end =
+      goal_dist < m_wheel_base && m_slope_source == SlopeSource::TRAJECTORY_GOAL_ADAPTIVE;
+
+    control_data.slope_angle =
+      (is_close_to_trajectory_end || is_vel_slow) ? m_lpf_pitch->getValue() : traj_pitch;
+
     if (m_previous_slope_angle.has_value()) {
       constexpr double gravity_const = 9.8;
       control_data.slope_angle = std::clamp(
@@ -551,13 +562,13 @@ PidLongitudinalController::ControlData PidLongitudinalController::getControlData
         m_previous_slope_angle.value() + m_min_jerk * control_data.dt / gravity_const,
         m_previous_slope_angle.value() + m_max_jerk * control_data.dt / gravity_const);
     }
+    m_previous_slope_angle = control_data.slope_angle;
   } else {
     RCLCPP_ERROR_THROTTLE(
       logger_, *clock_, 3000, "Slope source is not valid. Using raw_pitch option as default");
-    control_data.slope_angle = m_lpf_pitch->filter(raw_pitch);
+    control_data.slope_angle = m_lpf_pitch->getValue();
   }
 
-  m_previous_slope_angle = control_data.slope_angle;
   updatePitchDebugValues(control_data.slope_angle, traj_pitch, raw_pitch, m_lpf_pitch->getValue());
 
   return control_data;
@@ -920,7 +931,7 @@ void PidLongitudinalController::publishDebugData(
   m_debug_values.setValues(DebugValues::TYPE::ACC_CMD_PUBLISHED, ctrl_cmd.acc);
 
   // publish debug values
-  tier4_debug_msgs::msg::Float32MultiArrayStamped debug_msg{};
+  autoware_internal_debug_msgs::msg::Float32MultiArrayStamped debug_msg{};
   debug_msg.stamp = clock_->now();
   for (const auto & v : m_debug_values.getValues()) {
     debug_msg.data.push_back(static_cast<decltype(debug_msg.data)::value_type>(v));
@@ -928,7 +939,7 @@ void PidLongitudinalController::publishDebugData(
   m_pub_debug->publish(debug_msg);
 
   // slope angle
-  tier4_debug_msgs::msg::Float32MultiArrayStamped slope_msg{};
+  autoware_internal_debug_msgs::msg::Float32MultiArrayStamped slope_msg{};
   slope_msg.stamp = clock_->now();
   slope_msg.data.push_back(
     static_cast<decltype(slope_msg.data)::value_type>(control_data.slope_angle));

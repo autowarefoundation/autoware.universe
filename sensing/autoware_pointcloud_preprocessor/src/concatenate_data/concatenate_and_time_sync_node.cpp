@@ -14,6 +14,7 @@
 
 #include "autoware/pointcloud_preprocessor/concatenate_data/concatenate_and_time_sync_node.hpp"
 
+#include "autoware/pointcloud_preprocessor/concatenate_data/cloud_collector.hpp"
 #include "autoware/pointcloud_preprocessor/utility/memory.hpp"
 
 #include <pcl_ros/transforms.hpp>
@@ -22,7 +23,9 @@
 
 #include <algorithm>
 #include <iomanip>
+#include <list>
 #include <memory>
+#include <optional>
 #include <sstream>
 #include <string>
 #include <utility>
@@ -47,7 +50,6 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
   params_.use_cuda = declare_parameter<bool>("use_cuda");
   params_.debug_mode = declare_parameter<bool>("debug_mode");
   params_.has_static_tf_only = declare_parameter<bool>("has_static_tf_only");
-  params_.rosbag_replay = declare_parameter<bool>("rosbag_replay");
   params_.rosbag_length = declare_parameter<double>("rosbag_length");
   params_.maximum_queue_size = static_cast<size_t>(declare_parameter<int>("maximum_queue_size"));
   params_.timeout_sec = declare_parameter<double>("timeout_sec");
@@ -63,10 +65,6 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
   params_.input_twist_topic_type = declare_parameter<std::string>("input_twist_topic_type");
   params_.input_topics = declare_parameter<std::vector<std::string>>("input_topics");
   params_.output_frame = declare_parameter<std::string>("output_frame");
-  params_.lidar_timestamp_offsets =
-    declare_parameter<std::vector<double>>("lidar_timestamp_offsets");
-  params_.lidar_timestamp_noise_window =
-    declare_parameter<std::vector<double>>("lidar_timestamp_noise_window");
 
 #ifndef USE_CUDA
   if (use_cuda) {
@@ -84,24 +82,24 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
   if (params_.output_frame.empty()) {
     throw std::runtime_error("Need an 'output_frame' parameter to be set before continuing.");
   }
-  if (params_.lidar_timestamp_offsets.size() != params_.input_topics.size()) {
-    throw std::runtime_error(
-      "The number of topics does not match the number of timestamp offsets.");
-  }
-  if (params_.lidar_timestamp_noise_window.size() != params_.input_topics.size()) {
-    throw std::runtime_error(
-      "The number of topics does not match the number of timestamp noise window.");
-  }
 
-  for (size_t i = 0; i < params_.input_topics.size(); i++) {
-    topic_to_offset_map_[params_.input_topics[i]] = params_.lidar_timestamp_offsets[i];
-    topic_to_noise_window_map_[params_.input_topics[i]] = params_.lidar_timestamp_noise_window[i];
-  }
+  params_.matching_strategy = declare_parameter<std::string>("matching_strategy.type");
 
   // Publishers
   if (!params_.use_cuda) {
     concatenated_cloud_publisher_ = this->create_publisher<sensor_msgs::msg::PointCloud2>(
       "output", rclcpp::SensorDataQoS().keep_last(params_.maximum_queue_size));
+
+    if (params_.matching_strategy == "naive") {
+      collector_matching_strategy_ =
+        std::make_unique<NaiveMatchingStrategy<sensor_msgs::msg::PointCloud2>>(*this);
+    } else if (params_.matching_strategy == "advanced") {
+      collector_matching_strategy_ =
+        std::make_unique<AdvancedMatchingStrategy<sensor_msgs::msg::PointCloud2>>(
+          *this, params_.input_topics);
+    } else {
+      throw std::runtime_error("Matching strategy must be 'advanced' or 'naive'");
+    }
 
     // Transformed Raw PointCloud2 Publisher to publish the transformed pointcloud
     if (params_.publish_synchronized_pointcloud) {
@@ -120,6 +118,17 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
     cuda_concatenated_cloud_publisher_ =
       std::make_shared<cuda_blackboard::CudaBlackboardPublisher<cuda_blackboard::CudaPointCloud2>>(
         *this, "output");
+
+    if (params_.matching_strategy == "naive") {
+      cuda_collector_matching_strategy_ =
+        std::make_unique<NaiveMatchingStrategy<cuda_blackboard::CudaPointCloud2>>(*this);
+    } else if (params_.matching_strategy == "advanced") {
+      cuda_collector_matching_strategy_ =
+        std::make_unique<AdvancedMatchingStrategy<cuda_blackboard::CudaPointCloud2>>(
+          *this, params_.input_topics);
+    } else {
+      throw std::runtime_error("Matching strategy must be 'advanced' or 'naive'");
+    }
 
     for (auto & topic : params_.input_topics) {
       std::string new_topic =
@@ -172,7 +181,7 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
 
     // Combine cloud handler
     combine_cloud_handler_ = std::make_shared<CombineCloudHandler<sensor_msgs::msg::PointCloud2>>(
-      *this, params_.input_topics, params_.output_frame, params_.is_motion_compensated,
+      *this, params_.output_frame, params_.is_motion_compensated,
       params_.publish_synchronized_pointcloud, params_.keep_input_frame_in_synchronized_pointcloud,
       params_.has_static_tf_only);
   }
@@ -247,6 +256,8 @@ bool PointCloudConcatenateDataSynchronizerComponent::cloud_callback_preprocess(
   const typename PointCloudMessage::ConstSharedPtr & input_ptr, const std::string & topic_name)
 {
   stop_watch_ptr_->toc("processing_time", true);
+  manage_collector_list();
+
   if (!utils::is_data_layout_compatible_with_point_xyzirc(*input_ptr)) {
     RCLCPP_ERROR(
       get_logger(), "The pointcloud layout is not compatible with PointXYZIRC. Aborting");
@@ -279,6 +290,8 @@ bool PointCloudConcatenateDataSynchronizerComponent::cloud_callback_preprocess(
 void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_ptr, const std::string & topic_name)
 {
+  double cloud_arrival_time = this->get_clock()->now().seconds();
+
   if (!cloud_callback_preprocess<sensor_msgs::msg::PointCloud2>(input_ptr, topic_name)) {
     return;
   }
@@ -287,28 +300,28 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
   std::unique_lock<std::mutex> cloud_collectors_lock(cloud_collectors_mutex_);
 
   // For each callback, check whether there is a exist collector that matches this cloud
-  bool collector_found = false;
+  std::optional<std::shared_ptr<CloudCollector<sensor_msgs::msg::PointCloud2>>> cloud_collector =
+    std::nullopt;
+  MatchingParams matching_params;
+  matching_params.topic_name = topic_name;
+  matching_params.cloud_arrival_time = cloud_arrival_time;
+  matching_params.cloud_timestamp = rclcpp::Time(input_ptr->header.stamp).seconds();
 
   if (!cloud_collectors_.empty()) {
-    for (const auto & cloud_collector : cloud_collectors_) {
-      auto [reference_timestamp_min, reference_timestamp_max] =
-        cloud_collector->get_reference_timestamp_boundary();
+    cloud_collector =
+      collector_matching_strategy_->match_cloud_to_collector(cloud_collectors_, matching_params);
+  }
 
-      if (
-        rclcpp::Time(input_ptr->header.stamp).seconds() - topic_to_offset_map_[topic_name] <
-          reference_timestamp_max + topic_to_noise_window_map_[topic_name] &&
-        rclcpp::Time(input_ptr->header.stamp).seconds() - topic_to_offset_map_[topic_name] >
-          reference_timestamp_min - topic_to_noise_window_map_[topic_name]) {
-        cloud_collectors_lock.unlock();
-        cloud_collector->process_pointcloud(topic_name, input_ptr);
-        collector_found = true;
-        break;
-      }
+  bool process_success = false;
+  if (cloud_collector.has_value()) {
+    auto collector = cloud_collector.value();
+    if (collector) {
+      cloud_collectors_lock.unlock();
+      process_success = cloud_collector.value()->process_pointcloud(topic_name, input_ptr);
     }
   }
 
-  // if the point cloud didn't find a matching collector, create a new one.
-  if (!collector_found) {
+  if (!process_success) {
     auto combine_cloud_handler =
       std::dynamic_pointer_cast<CombineCloudHandler<sensor_msgs::msg::PointCloud2>>(
         combine_cloud_handler_);
@@ -318,10 +331,9 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
 
     cloud_collectors_.push_back(new_cloud_collector);
     cloud_collectors_lock.unlock();
-    new_cloud_collector->set_reference_timestamp(
-      rclcpp::Time(input_ptr->header.stamp).seconds() - topic_to_offset_map_[topic_name],
-      topic_to_noise_window_map_[topic_name]);
-    new_cloud_collector->process_pointcloud(topic_name, input_ptr);
+
+    collector_matching_strategy_->set_collector_info(new_cloud_collector, matching_params);
+    (void)new_cloud_collector->process_pointcloud(topic_name, input_ptr);
   }
 }
 
@@ -330,7 +342,9 @@ void PointCloudConcatenateDataSynchronizerComponent::cuda_cloud_callback(
   const cuda_blackboard::CudaPointCloud2::ConstSharedPtr & input_ptr,
   const std::string & topic_name)
 {
-  if (!cloud_callback_preprocess<cuda_blackboard::CudaPointCloud2>(input_ptr, topic_name)) {
+  double cloud_arrival_time = this->get_clock()->now().seconds();
+
+  if (!cloud_callback_preprocess<sensor_msgs::msg::PointCloud2>(input_ptr, topic_name)) {
     return;
   }
 
@@ -338,28 +352,28 @@ void PointCloudConcatenateDataSynchronizerComponent::cuda_cloud_callback(
   std::unique_lock<std::mutex> cloud_collectors_lock(cloud_collectors_mutex_);
 
   // For each callback, check whether there is a exist collector that matches this cloud
-  bool collector_found = false;
+  std::optional<std::shared_ptr<CloudCollector<cuda_blackboard::CudaPointCloud2>>> cloud_collector =
+    std::nullopt;
+  MatchingParams matching_params;
+  matching_params.topic_name = topic_name;
+  matching_params.cloud_arrival_time = cloud_arrival_time;
+  matching_params.cloud_timestamp = rclcpp::Time(input_ptr->header.stamp).seconds();
 
   if (!cuda_cloud_collectors_.empty()) {
-    for (const auto & cuda_cloud_collector : cuda_cloud_collectors_) {
-      auto [reference_timestamp_min, reference_timestamp_max] =
-        cuda_cloud_collector->get_reference_timestamp_boundary();
+    cloud_collector = cuda_collector_matching_strategy_->match_cloud_to_collector(
+      cuda_cloud_collectors_, matching_params);
+  }
 
-      if (
-        rclcpp::Time(input_ptr->header.stamp).seconds() - topic_to_offset_map_[topic_name] <
-          reference_timestamp_max + topic_to_noise_window_map_[topic_name] &&
-        rclcpp::Time(input_ptr->header.stamp).seconds() - topic_to_offset_map_[topic_name] >
-          reference_timestamp_min - topic_to_noise_window_map_[topic_name]) {
-        cloud_collectors_lock.unlock();
-        cuda_cloud_collector->process_pointcloud(topic_name, input_ptr);
-        collector_found = true;
-        break;
-      }
+  bool process_success = false;
+  if (cloud_collector.has_value()) {
+    auto collector = cloud_collector.value();
+    if (collector) {
+      cloud_collectors_lock.unlock();
+      process_success = cloud_collector.value()->process_pointcloud(topic_name, input_ptr);
     }
   }
 
-  // if the point cloud didn't find a matching collector, create a new one.
-  if (!collector_found) {
+  if (!process_success) {
     auto combine_cloud_handler =
       std::dynamic_pointer_cast<CombineCloudHandler<cuda_blackboard::CudaPointCloud2>>(
         combine_cloud_handler_);
@@ -369,12 +383,12 @@ void PointCloudConcatenateDataSynchronizerComponent::cuda_cloud_callback(
 
     cuda_cloud_collectors_.push_back(new_cloud_collector);
     cloud_collectors_lock.unlock();
-    new_cloud_collector->set_reference_timestamp(
-      rclcpp::Time(input_ptr->header.stamp).seconds() - topic_to_offset_map_[topic_name],
-      topic_to_noise_window_map_[topic_name]);
-    new_cloud_collector->process_pointcloud(topic_name, input_ptr);
+
+    cuda_collector_matching_strategy_->set_collector_info(new_cloud_collector, matching_params);
+    (void)new_cloud_collector->process_pointcloud(topic_name, input_ptr);
   }
 }
+
 #endif
 
 void PointCloudConcatenateDataSynchronizerComponent::twist_callback(
@@ -395,20 +409,28 @@ bool PointCloudConcatenateDataSynchronizerComponent::publish_clouds_preprocess(
 {
   // should never come to this state.
   if (concatenated_cloud_result.concatenate_cloud_ptr == nullptr) {
-    RCLCPP_ERROR(this->get_logger(), "Concatenate cloud is a nullptr.");
+    RCLCPP_ERROR(this->get_logger(), "Concatenated cloud is a nullptr.");
     return false;
   }
+
+  if (
+    concatenated_cloud_result.concatenate_cloud_ptr->width *
+      concatenated_cloud_result.concatenate_cloud_ptr->height ==
+    0) {
+    RCLCPP_ERROR(this->get_logger(), "Concatenated cloud is an empty pointcloud.");
+    is_concatenated_cloud_empty_ = true;
+  }
+
   current_concatenate_cloud_timestamp_ =
     rclcpp::Time(concatenated_cloud_result.concatenate_cloud_ptr->header.stamp).seconds();
 
   if (
     current_concatenate_cloud_timestamp_ < latest_concatenate_cloud_timestamp_ &&
     !params_.publish_previous_but_late_pointcloud) {
-    // Check if we're in rosbag replay mode and the time difference is close to the rosbag length
+    // Publish the cloud if the rosbag replays in loop
     if (
-      params_.rosbag_replay &&
-      (latest_concatenate_cloud_timestamp_ - current_concatenate_cloud_timestamp_ >
-       params_.rosbag_length)) {
+      latest_concatenate_cloud_timestamp_ - current_concatenate_cloud_timestamp_ >
+      params_.rosbag_length) {
       publish_pointcloud_ = true;  // Force publishing in this case
     } else {
       drop_previous_but_late_pointcloud_ = true;  // Otherwise, drop the late pointcloud
@@ -424,10 +446,10 @@ bool PointCloudConcatenateDataSynchronizerComponent::publish_clouds_preprocess(
 template <typename PointCloudMessage>
 void PointCloudConcatenateDataSynchronizerComponent::publish_clouds_postprocess(
   const ConcatenatedCloudResult<PointCloudMessage> & concatenated_cloud_result,
-  double reference_timestamp_min, double reference_timestamp_max)
+  std::shared_ptr<CollectorInfoBase> collector_info)
 {
-  diagnostic_reference_timestamp_min_ = reference_timestamp_min;
-  diagnostic_reference_timestamp_max_ = reference_timestamp_max;
+  diagnostic_collector_info_ = collector_info;
+
   diagnostic_topic_to_original_stamp_map_ = concatenated_cloud_result.topic_to_original_stamp_map;
   diagnostic_updater_.force_update();
 
@@ -435,14 +457,14 @@ void PointCloudConcatenateDataSynchronizerComponent::publish_clouds_postprocess(
   if (debug_publisher_) {
     const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
     const double processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
-    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/cyclic_time_ms", cyclic_time_ms);
-    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/processing_time_ms", processing_time_ms);
 
     for (const auto & [topic, stamp] : concatenated_cloud_result.topic_to_original_stamp_map) {
       const auto pipeline_latency_ms = (this->get_clock()->now().seconds() - stamp) * 1000;
-      debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+      debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
         "debug" + topic + "/pipeline_latency_ms", pipeline_latency_ms);
     }
   }
@@ -451,7 +473,7 @@ void PointCloudConcatenateDataSynchronizerComponent::publish_clouds_postprocess(
 template <>
 void PointCloudConcatenateDataSynchronizerComponent::publish_clouds<sensor_msgs::msg::PointCloud2>(
   ConcatenatedCloudResult<sensor_msgs::msg::PointCloud2> && concatenated_cloud_result,
-  double reference_timestamp_min, double reference_timestamp_max)
+  std::shared_ptr<CollectorInfoBase> collector_info)
 {
   if (!publish_clouds_preprocess<sensor_msgs::msg::PointCloud2>(concatenated_cloud_result)) {
     return;
@@ -485,29 +507,7 @@ void PointCloudConcatenateDataSynchronizerComponent::publish_clouds<sensor_msgs:
     }
   }
 
-  publish_clouds_postprocess(
-    concatenated_cloud_result, reference_timestamp_min, reference_timestamp_max);
-}
-
-template <>
-void PointCloudConcatenateDataSynchronizerComponent::delete_collector(
-  CloudCollector<sensor_msgs::msg::PointCloud2> & cloud_collector)
-{
-  // protect cloud collectors list
-  std::lock_guard<std::mutex> cloud_collectors_lock(cloud_collectors_mutex_);
-
-  // change this to something else
-  auto it = std::find_if(
-    cloud_collectors_.begin(), cloud_collectors_.end(),
-    [&cloud_collector](
-      const std::shared_ptr<CloudCollector<sensor_msgs::msg::PointCloud2>> & collector) {
-      return collector.get() == &cloud_collector;
-    });
-  if (it != cloud_collectors_.end()) {
-    cloud_collectors_.erase(it);
-  } else {
-    throw std::runtime_error("Try to delete a cloud_collector that is not in the cloud_collectors");
-  }
+  publish_clouds_postprocess(concatenated_cloud_result, collector_info);
 }
 
 #ifdef USE_CUDA
@@ -516,7 +516,7 @@ template <>
 void PointCloudConcatenateDataSynchronizerComponent::publish_clouds<
   cuda_blackboard::CudaPointCloud2>(
   ConcatenatedCloudResult<cuda_blackboard::CudaPointCloud2> && concatenated_cloud_result,
-  double reference_timestamp_min, double reference_timestamp_max)
+  std::shared_ptr<CollectorInfoBase> collector_info)
 {
   if (!publish_clouds_preprocess<cuda_blackboard::CudaPointCloud2>(concatenated_cloud_result)) {
     return;
@@ -548,8 +548,7 @@ void PointCloudConcatenateDataSynchronizerComponent::publish_clouds<
     }
   }
 
-  publish_clouds_postprocess(
-    concatenated_cloud_result, reference_timestamp_min, reference_timestamp_max);
+  publish_clouds_postprocess(concatenated_cloud_result, collector_info);
 
   auto combine_cloud_handler =
     std::dynamic_pointer_cast<CombineCloudHandler<cuda_blackboard::CudaPointCloud2>>(
@@ -558,28 +557,20 @@ void PointCloudConcatenateDataSynchronizerComponent::publish_clouds<
   combine_cloud_handler->allocate_pointclouds();
 }
 
-template <>
-void PointCloudConcatenateDataSynchronizerComponent::delete_collector(
-  CloudCollector<cuda_blackboard::CudaPointCloud2> & cuda_cloud_collector)
+#endif
+
+void PointCloudConcatenateDataSynchronizerComponent::manage_collector_list()
 {
-  // protect cloud collectors list
   std::lock_guard<std::mutex> cloud_collectors_lock(cloud_collectors_mutex_);
 
-  // change this to something else
-  auto it = std::find_if(
-    cuda_cloud_collectors_.begin(), cuda_cloud_collectors_.end(),
-    [&cuda_cloud_collector](
-      const std::shared_ptr<CloudCollector<cuda_blackboard::CudaPointCloud2>> & collector) {
-      return collector.get() == &cuda_cloud_collector;
-    });
-  if (it != cuda_cloud_collectors_.end()) {
-    cuda_cloud_collectors_.erase(it);
-  } else {
-    throw std::runtime_error("Try to delete a cloud_collector that is not in the cloud_collectors");
+  for (auto it = cloud_collectors_.begin(); it != cloud_collectors_.end();) {
+    if ((*it)->concatenate_finished()) {
+      it = cloud_collectors_.erase(it);  // Erase and move the iterator to the next element
+    } else {
+      ++it;  // Move to the next element
+    }
   }
 }
-
-#endif
 
 std::string PointCloudConcatenateDataSynchronizerComponent::format_timestamp(double timestamp)
 {
@@ -593,50 +584,70 @@ void PointCloudConcatenateDataSynchronizerComponent::check_concat_status(
 {
   if (publish_pointcloud_ || drop_previous_but_late_pointcloud_) {
     stat.add(
-      "concatenated cloud timestamp", format_timestamp(current_concatenate_cloud_timestamp_));
-    stat.add("reference timestamp min", format_timestamp(diagnostic_reference_timestamp_min_));
-    stat.add("reference timestamp max", format_timestamp(diagnostic_reference_timestamp_max_));
+      "concatenated_cloud_timestamp", format_timestamp(current_concatenate_cloud_timestamp_));
+
+    if (
+      auto naive_info = std::dynamic_pointer_cast<NaiveCollectorInfo>(diagnostic_collector_info_)) {
+      stat.add("first_cloud_arrival_timestamp", format_timestamp(naive_info->timestamp));
+    } else if (
+      auto advanced_info =
+        std::dynamic_pointer_cast<AdvancedCollectorInfo>(diagnostic_collector_info_)) {
+      stat.add(
+        "reference_timestamp_min",
+        format_timestamp(advanced_info->timestamp - advanced_info->noise_window));
+      stat.add(
+        "reference_timestamp_max",
+        format_timestamp(advanced_info->timestamp + advanced_info->noise_window));
+    }
 
     bool topic_miss = false;
 
-    int concatenated_cloud_status = 1;  // Status of concatenated cloud, 1: success, 0: failure
+    bool concatenation_success = true;
     for (const auto & topic : params_.input_topics) {
-      int cloud_status = 1;  // Status of each lidar's pointcloud
+      bool input_cloud_concatenated = true;
       if (
         diagnostic_topic_to_original_stamp_map_.find(topic) !=
         diagnostic_topic_to_original_stamp_map_.end()) {
         stat.add(
-          topic + " timestamp", format_timestamp(diagnostic_topic_to_original_stamp_map_[topic]));
+          topic + "/timestamp", format_timestamp(diagnostic_topic_to_original_stamp_map_[topic]));
       } else {
         topic_miss = true;
-        concatenated_cloud_status = 0;
-        cloud_status = 0;
+        concatenation_success = false;
+        input_cloud_concatenated = false;
       }
-      stat.add(topic, cloud_status);
+      stat.add(topic + "/is_concatenated", input_cloud_concatenated);
     }
 
-    stat.add("concatenate status", concatenated_cloud_status);
+    stat.add("cloud_concatenation_success", concatenation_success);
 
     int8_t level = diagnostic_msgs::msg::DiagnosticStatus::OK;
     std::string message = "Concatenated pointcloud is published and include all topics";
 
-    if (topic_miss && drop_previous_but_late_pointcloud_) {
-      level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
-      message =
-        "Concatenated pointcloud is missing some topics and is not published because it arrived "
-        "too late.";
-    } else if (drop_previous_but_late_pointcloud_) {
-      level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
-      message = "Concatenated pointcloud is not published as it is too late";
-    } else if (topic_miss) {
-      level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
-      message = "Concatenated pointcloud is published but miss some topics";
+    if (drop_previous_but_late_pointcloud_) {
+      if (topic_miss) {
+        level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+        message =
+          "Concatenated pointcloud misses some topics and is not published because it arrived "
+          "too late";
+      } else {
+        level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+        message = "Concatenated pointcloud is not published as it is too late";
+      }
+    } else {
+      if (is_concatenated_cloud_empty_) {
+        level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+        message = "Concatenated pointcloud is empty";
+      } else if (topic_miss) {
+        level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+        message = "Concatenated pointcloud is published but misses some topics";
+      }
     }
 
     stat.summary(level, message);
 
     publish_pointcloud_ = false;
     drop_previous_but_late_pointcloud_ = false;
+    is_concatenated_cloud_empty_ = false;
   } else {
     const int8_t level = diagnostic_msgs::msg::DiagnosticStatus::OK;
     const std::string message =

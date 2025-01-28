@@ -29,6 +29,29 @@ class PointCloudConcatenateDataSynchronizerComponent;
 template <typename PointCloudMessage>
 class CombineCloudHandler;
 
+struct CollectorInfoBase
+{
+  virtual ~CollectorInfoBase() = default;
+};
+
+struct NaiveCollectorInfo : public CollectorInfoBase
+{
+  double timestamp;
+
+  explicit NaiveCollectorInfo(double timestamp = 0.0) : timestamp(timestamp) {}
+};
+
+struct AdvancedCollectorInfo : public CollectorInfoBase
+{
+  double timestamp;
+  double noise_window;
+
+  explicit AdvancedCollectorInfo(double timestamp = 0.0, double noise_window = 0.0)
+  : timestamp(timestamp), noise_window(noise_window)
+  {
+  }
+};
+
 template <typename PointCloudMessage>
 class CloudCollector
 {
@@ -37,10 +60,8 @@ public:
     std::shared_ptr<PointCloudConcatenateDataSynchronizerComponent> && ros2_parent_node,
     std::shared_ptr<CombineCloudHandler<PointCloudMessage>> & combine_cloud_handler,
     int num_of_clouds, double timeout_sec, bool debug_mode);
-
-  void set_reference_timestamp(double timestamp, double noise_window);
-  std::tuple<double, double> get_reference_timestamp_boundary();
-  void process_pointcloud(
+  bool topic_exists(const std::string & topic_name);
+  bool process_pointcloud(
     const std::string & topic_name, typename PointCloudMessage::ConstSharedPtr cloud);
   void concatenate_callback();
 
@@ -50,6 +71,12 @@ public:
   std::unordered_map<std::string, typename PointCloudMessage::ConstSharedPtr>
   get_topic_to_cloud_map();
 
+  [[nodiscard]] bool concatenate_finished() const;
+
+  void set_info(std::shared_ptr<CollectorInfoBase> collector_info);
+  [[nodiscard]] std::shared_ptr<CollectorInfoBase> get_info() const;
+  void show_debug_message();
+
 private:
   std::shared_ptr<PointCloudConcatenateDataSynchronizerComponent> ros2_parent_node_;
   std::shared_ptr<CombineCloudHandler<PointCloudMessage>> combine_cloud_handler_;
@@ -57,9 +84,10 @@ private:
   std::unordered_map<std::string, typename PointCloudMessage::ConstSharedPtr> topic_to_cloud_map_;
   uint64_t num_of_clouds_;
   double timeout_sec_;
-  double reference_timestamp_min_{0.0};
-  double reference_timestamp_max_{0.0};
   bool debug_mode_;
+  bool concatenate_finished_{false};
+  std::mutex concatenate_mutex_;
+  std::shared_ptr<CollectorInfoBase> collector_info_;
 };
 
 }  // namespace autoware::pointcloud_preprocessor

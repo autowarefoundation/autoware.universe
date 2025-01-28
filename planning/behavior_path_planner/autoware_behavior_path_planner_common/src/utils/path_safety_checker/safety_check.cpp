@@ -883,4 +883,18 @@ double calculateRoughDistanceToObjects(
   return min_distance;
 }
 
+tier4_planning_msgs::msg::SafetyFactorArray to_safety_factor_array(
+  const CollisionCheckDebugMap & debug_map)
+{
+  tier4_planning_msgs::msg::SafetyFactorArray safety_factors;
+  for (const auto & [uuid, data] : debug_map) {
+    tier4_planning_msgs::msg::SafetyFactor safety_factor;
+    safety_factor.type = tier4_planning_msgs::msg::SafetyFactor::OBJECT;
+    safety_factor.is_safe = data.is_safe;
+    safety_factor.object_id = autoware::universe_utils::toUUIDMsg(uuid);
+    safety_factor.points.push_back(data.current_obj_pose.position);
+    safety_factors.factors.push_back(safety_factor);
+  }
+  return safety_factors;
+}
 }  // namespace autoware::behavior_path_planner::utils::path_safety_checker
