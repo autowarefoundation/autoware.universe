@@ -23,18 +23,12 @@
           "type": "boolean",
           "description": "Whether to work in Approximate Synchronization Mode.",
           "default": false
-        },
-        "perform_group_fusion": {
-          "type": "boolean",
-          "description": "Whether to perform Group Fusion.",
-          "default": false
         }
       },
       "required": [
         "camera_namespaces",
         "message_lifespan",
-        "approximate_sync",
-        "perform_group_fusion"
+        "approximate_sync"
       ],
       "additionalProperties": false
     }
