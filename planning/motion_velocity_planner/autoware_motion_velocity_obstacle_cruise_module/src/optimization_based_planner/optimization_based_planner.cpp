@@ -112,6 +112,8 @@ std::vector<TrajectoryPoint> OptimizationBasedPlanner::plan_cruise(
   const std::vector<TrajectoryPoint> & stop_traj_points,
   const std::vector<CruiseObstacle> & obstacles,
   [[maybe_unused]] std::shared_ptr<DebugData> debug_data_ptr,
+  [[maybe_unused]] std::unique_ptr<autoware::planning_factor_interface::PlanningFactorInterface> &
+    planning_factor_interface,
   [[maybe_unused]] std::optional<VelocityLimit> & velocity_limit)
 {
   // Create Time Vector defined by resampling time interval

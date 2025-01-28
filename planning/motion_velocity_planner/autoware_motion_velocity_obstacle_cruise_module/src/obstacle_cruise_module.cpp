@@ -171,7 +171,8 @@ VelocityPlanningResult ObstacleCruiseModule::plan(
   // plan cruise
   VelocityPlanningResult result;
   [[maybe_unused]] const auto cruise_traj_points = cruise_planner_->plan_cruise(
-    planner_data, raw_trajectory_points, cruise_obstacles, debug_data_ptr_, result.velocity_limit);
+    planner_data, raw_trajectory_points, cruise_obstacles, debug_data_ptr_,
+    planning_factor_interface_, result.velocity_limit);
   metrics_manager_.calculate_metrics("PlannerInterface", "cruise");
 
   // clear velocity limit if necessary
@@ -359,6 +360,9 @@ void ObstacleCruiseModule::publish_debug_info()
 
   // 6. processing time
   processing_time_publisher_->publish(create_float64_stamped(clock_->now(), stop_watch_.toc()));
+
+  // 7. planning factor
+  planning_factor_interface_->publish();
 }
 
 std::optional<CruiseObstacle> ObstacleCruiseModule::create_cruise_obstacle(

@@ -20,6 +20,8 @@
 #include "type_alias.hpp"
 #include "types.hpp"
 
+#include <autoware/planning_factor_interface/planning_factor_interface.hpp>
+
 #include <memory>
 #include <string>
 #include <unordered_map>
@@ -44,6 +46,8 @@ public:
     const std::shared_ptr<const PlannerData> planner_data,
     const std::vector<TrajectoryPoint> & stop_traj_points,
     const std::vector<CruiseObstacle> & obstacles, std::shared_ptr<DebugData> debug_data_ptr,
+    std::unique_ptr<autoware::planning_factor_interface::PlanningFactorInterface> &
+      planning_factor_interface,
     std::optional<VelocityLimit> & velocity_limit) = 0;
 
   virtual void update_parameters(const std::vector<rclcpp::Parameter> & parameters) = 0;

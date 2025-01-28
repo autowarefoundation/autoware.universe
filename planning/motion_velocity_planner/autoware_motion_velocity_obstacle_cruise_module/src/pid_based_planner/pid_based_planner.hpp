@@ -62,6 +62,8 @@ public:
     const std::shared_ptr<const PlannerData> planner_data,
     const std::vector<TrajectoryPoint> & stop_traj_points,
     const std::vector<CruiseObstacle> & obstacles, std::shared_ptr<DebugData> debug_data_ptr,
+    std::unique_ptr<autoware::planning_factor_interface::PlanningFactorInterface> &
+      planning_factor_interface,
     std::optional<VelocityLimit> & velocity_limit) override;
 
   void update_parameters(const std::vector<rclcpp::Parameter> & parameters) override;
@@ -81,7 +83,10 @@ private:
   std::vector<TrajectoryPoint> plan_cruise_trajectory(
     const std::shared_ptr<const PlannerData> planner_data,
     const std::vector<TrajectoryPoint> & stop_traj_points,
-    std::shared_ptr<DebugData> debug_data_ptr, std::optional<VelocityLimit> & velocity_limit,
+    std::shared_ptr<DebugData> debug_data_ptr,
+    std::unique_ptr<autoware::planning_factor_interface::PlanningFactorInterface> &
+      planning_factor_interface,
+    std::optional<VelocityLimit> & velocity_limit,
     const std::optional<CruiseObstacleInfo> & cruise_obstacle_info);
 
   // velocity limit based planner

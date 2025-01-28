@@ -43,6 +43,8 @@ public:
     const std::shared_ptr<const PlannerData> planner_data,
     const std::vector<TrajectoryPoint> & stop_traj_points,
     const std::vector<CruiseObstacle> & obstacles, std::shared_ptr<DebugData> debug_data_ptr,
+    std::unique_ptr<autoware::planning_factor_interface::PlanningFactorInterface> &
+      planning_factor_interface,
     std::optional<VelocityLimit> & velocity_limit) override;
 
   void update_parameters(

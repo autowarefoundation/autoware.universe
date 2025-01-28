@@ -602,6 +602,13 @@ std::vector<SlowdownInterval> ObstacleSlowDownModule::plan_slow_down(
         slow_down_traj_points.at(slow_down_wall_idx).pose, "obstacle slow down", clock_->now(), i,
         abs_ego_offset, "", planner_data->is_driving_forward);
       autoware::universe_utils::appendMarkerArray(markers, &debug_data_ptr_->slow_down_wall_marker);
+
+      // update planning factor
+      planning_factor_interface_->add(
+        slow_down_traj_points, planner_data->current_odometry.pose.pose,
+        slow_down_traj_points.at(*slow_down_start_idx).pose,
+        slow_down_traj_points.at(*slow_down_end_idx).pose, PlanningFactor::SLOW_DOWN,
+        SafetyFactorArray{}, planner_data->is_driving_forward, stable_slow_down_vel);
     }
 
     // add debug virtual wall
@@ -716,6 +723,9 @@ void ObstacleSlowDownModule::publish_debug_info()
 
   // 6. processing time
   processing_time_publisher_->publish(create_float64_stamped(clock_->now(), stop_watch_.toc()));
+
+  // 7. planning factor
+  planning_factor_interface_->publish();
 }
 
 bool ObstacleSlowDownModule::is_slow_down_obstacle(const uint8_t label) const

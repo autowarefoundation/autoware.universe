@@ -174,6 +174,8 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::plan_cruise(
   const std::shared_ptr<const PlannerData> planner_data,
   const std::vector<TrajectoryPoint> & stop_traj_points,
   const std::vector<CruiseObstacle> & obstacles, std::shared_ptr<DebugData> debug_data_ptr,
+  std::unique_ptr<autoware::planning_factor_interface::PlanningFactorInterface> &
+    planning_factor_interface,
   std::optional<VelocityLimit> & velocity_limit)
 {
   cruise_planning_debug_info_.reset();
@@ -184,7 +186,8 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::plan_cruise(
 
   // plan cruise
   const auto cruise_traj_points = plan_cruise_trajectory(
-    planner_data, stop_traj_points, debug_data_ptr, velocity_limit, cruise_obstacle_info);
+    planner_data, stop_traj_points, debug_data_ptr, planning_factor_interface, velocity_limit,
+    cruise_obstacle_info);
 
   prev_traj_points_ = cruise_traj_points;
   return cruise_traj_points;
@@ -316,6 +319,8 @@ std::optional<PIDBasedPlanner::CruiseObstacleInfo> PIDBasedPlanner::calc_obstacl
 std::vector<TrajectoryPoint> PIDBasedPlanner::plan_cruise_trajectory(
   const std::shared_ptr<const PlannerData> planner_data,
   const std::vector<TrajectoryPoint> & stop_traj_points, std::shared_ptr<DebugData> debug_data_ptr,
+  std::unique_ptr<autoware::planning_factor_interface::PlanningFactorInterface> &
+    planning_factor_interface,
   std::optional<VelocityLimit> & velocity_limit,
   const std::optional<CruiseObstacleInfo> & cruise_obstacle_info)
 {
@@ -352,13 +357,9 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::plan_cruise_trajectory(
       // cruise obstacle
       debug_data_ptr->obstacles_to_cruise.push_back(cruise_obstacle_info->obstacle);
 
-      /*
-      // TODO(murooka)
-      planning_factor_interface_->add(
+      planning_factor_interface->add(
         stop_traj_points, planner_data->current_odometry.pose.pose,
-      stop_traj_points.at(wall_idx).pose, tier4_planning_msgs::msg::PlanningFactor::NONE,
-        tier4_planning_msgs::msg::SafetyFactorArray{});
-      */
+        stop_traj_points.at(wall_idx).pose, PlanningFactor::NONE, SafetyFactorArray{});
     }
 
     // do cruise planning

@@ -841,8 +841,11 @@ std::optional<geometry_msgs::msg::Point> ObstacleStopModule::calc_stop_point(
   autoware::universe_utils::appendMarkerArray(markers, &debug_data_ptr_->stop_wall_marker);
   debug_data_ptr_->obstacles_to_stop.push_back(*determined_stop_obstacle);
 
-  // Publish Stop Reason
+  // update planning factor
   const auto stop_pose = output_traj_points.at(*zero_vel_idx).pose;
+  planning_factor_interface_->add(
+    output_traj_points, planner_data->current_odometry.pose.pose, stop_pose, PlanningFactor::STOP,
+    SafetyFactorArray{});
 
   // Store stop reason debug data
   metrics_manager_.calculate_metrics(
@@ -939,6 +942,9 @@ void ObstacleStopModule::publish_debug_info()
 
   // 6. processing time
   processing_time_publisher_->publish(create_float64_stamped(clock_->now(), stop_watch_.toc()));
+
+  // 7. planning factor
+  planning_factor_interface_->publish();
 }
 
 double ObstacleStopModule::calc_collision_time_margin(
