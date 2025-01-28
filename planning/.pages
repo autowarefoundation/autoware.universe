@@ -63,6 +63,9 @@ nav:
     - 'Motion Velocity Planner':
       - 'About Motion Velocity Planner': planning/motion_velocity_planner/autoware_motion_velocity_planner_node_universe/
       - 'Available Modules':
+        - 'Obstacle Stop': planning/motion_velocity_planner/autoware_motion_velocity_obstacle_stop_module/
+        - 'Obstacle Slow Down': planning/motion_velocity_planner/autoware_motion_velocity_obstacle_slow_down_module/
+        - 'Obstacle Cruise': planning/motion_velocity_planner/autoware_motion_velocity_obstacle_cruise_module/
         - 'Dynamic Obstacle Stop': planning/motion_velocity_planner/autoware_motion_velocity_dynamic_obstacle_stop_module/
         - 'Out of Lane': planning/motion_velocity_planner/autoware_motion_velocity_out_of_lane_module/
         - 'Obstacle Velocity Limiter': planning/motion_velocity_planner/autoware_motion_velocity_obstacle_velocity_limiter_module/
