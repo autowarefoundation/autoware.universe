@@ -407,40 +407,46 @@ autoware::motion_velocity_planner::TrajectoryPoints MotionVelocityPlannerNode::s
 }
 
 autoware_planning_msgs::msg::Trajectory MotionVelocityPlannerNode::generate_trajectory(
-  autoware::motion_velocity_planner::TrajectoryPoints input_trajectory_points,
+  const autoware::motion_velocity_planner::TrajectoryPoints & input_trajectory_points,
   std::map<std::string, double> & processing_times)
 {
   universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
   autoware_planning_msgs::msg::Trajectory output_trajectory_msg;
   output_trajectory_msg.points = {input_trajectory_points.begin(), input_trajectory_points.end()};
-  if (smooth_velocity_before_planning_) {
-    stop_watch.tic("smooth");
-    input_trajectory_points = smooth_trajectory(input_trajectory_points, planner_data_);
-    processing_times["velocity_smoothing"] = stop_watch.toc("smooth");
-  }
+
+  stop_watch.tic("smooth");
+  const auto smoothed_trajectory_points = [&]() {
+    if (smooth_velocity_before_planning_) {
+      return smooth_trajectory(input_trajectory_points, planner_data_);
+    }
+    return input_trajectory_points;
+  }();
+  processing_times["velocity_smoothing"] = stop_watch.toc("smooth");
+
   stop_watch.tic("resample");
-  TrajectoryPoints resampled_trajectory;
+  TrajectoryPoints resampled_smoothed_trajectory_points;
   // skip points that are too close together to make computation easier
-  if (!input_trajectory_points.empty()) {
-    resampled_trajectory.push_back(input_trajectory_points.front());
+  if (!resampled_smoothed_trajectory_points.empty()) {
+    resampled_smoothed_trajectory_points.push_back(smoothed_trajectory_points.front());
     constexpr auto min_interval_squared = 0.5 * 0.5;  // TODO(Maxime): change to a parameter
-    for (auto i = 1UL; i < input_trajectory_points.size(); ++i) {
-      const auto & p = input_trajectory_points[i];
+    for (auto i = 1UL; i < smoothed_trajectory_points.size(); ++i) {
+      const auto & p = smoothed_trajectory_points[i];
       const auto dist_to_prev_point =
-        universe_utils::calcSquaredDistance2d(resampled_trajectory.back(), p);
+        universe_utils::calcSquaredDistance2d(resampled_smoothed_trajectory_points.back(), p);
       if (dist_to_prev_point > min_interval_squared) {
-        resampled_trajectory.push_back(p);
+        resampled_smoothed_trajectory_points.push_back(p);
       }
     }
   }
   processing_times["resample"] = stop_watch.toc("resample");
   stop_watch.tic("calculate_time_from_start");
   motion_utils::calculate_time_from_start(
-    resampled_trajectory, planner_data_.current_odometry.pose.pose.position);
+    resampled_smoothed_trajectory_points, planner_data_.current_odometry.pose.pose.position);
   processing_times["calculate_time_from_start"] = stop_watch.toc("calculate_time_from_start");
   stop_watch.tic("plan_velocities");
   const auto planning_results = planner_manager_.plan_velocities(
-    resampled_trajectory, std::make_shared<const PlannerData>(planner_data_));
+    input_trajectory_points, resampled_smoothed_trajectory_points,
+    std::make_shared<const PlannerData>(planner_data_));
   processing_times["plan_velocities"] = stop_watch.toc("plan_velocities");
 
   for (const auto & planning_result : planning_results) {

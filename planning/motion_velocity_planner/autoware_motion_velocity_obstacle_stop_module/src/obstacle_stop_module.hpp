@@ -15,14 +15,9 @@
 #ifndef OBSTACLE_STOP_MODULE_HPP_
 #define OBSTACLE_STOP_MODULE_HPP_
 
-#include "autoware/motion_utils/marker/marker_helper.hpp"
-#include "autoware/motion_utils/trajectory/conversion.hpp"
-#include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/motion_velocity_planner_common_universe/polygon_utils.hpp"
 #include "autoware/motion_velocity_planner_common_universe/utils.hpp"
 #include "autoware/object_recognition_utils/predicted_path_utils.hpp"
-#include "autoware/universe_utils/ros/parameter.hpp"
-#include "autoware/universe_utils/ros/update_param.hpp"
 #include "autoware/universe_utils/system/stop_watch.hpp"
 #include "autoware/universe_utils/system/time_keeper.hpp"
 #include "metrics_manager.hpp"
@@ -31,7 +26,6 @@
 #include "type_alias.hpp"
 #include "types.hpp"
 
-#include <autoware/motion_utils/marker/virtual_wall_marker_creator.hpp>
 #include <autoware/motion_velocity_planner_common_universe/plugin_module_interface.hpp>
 #include <autoware/motion_velocity_planner_common_universe/velocity_planning_result.hpp>
 #include <autoware/objects_of_interest_marker_interface/objects_of_interest_marker_interface.hpp>
@@ -54,7 +48,8 @@ public:
   std::string get_module_name() const override { return module_name_; }
 
   VelocityPlanningResult plan(
-    const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
+    const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & raw_trajectory_points,
+    const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & smoothed_trajectory_points,
     const std::shared_ptr<const PlannerData> planner_data) override;
 
 private:

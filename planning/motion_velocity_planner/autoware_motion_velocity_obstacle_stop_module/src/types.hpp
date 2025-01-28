@@ -18,26 +18,15 @@
 #include "autoware/motion_utils/marker/marker_helper.hpp"
 #include "autoware/motion_utils/resample/resample.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
-#include "autoware/motion_velocity_planner_common_universe/utils.hpp"
-#include "autoware/object_recognition_utils/predicted_path_utils.hpp"
-#include "autoware/universe_utils/ros/parameter.hpp"
-#include "autoware/universe_utils/ros/update_param.hpp"
-#include "autoware/universe_utils/system/stop_watch.hpp"
 #include "type_alias.hpp"
 
-#include <autoware/objects_of_interest_marker_interface/objects_of_interest_marker_interface.hpp>
-
-#include <algorithm>
 #include <memory>
 #include <string>
-#include <unordered_map>
 #include <utility>
 #include <vector>
 
 namespace autoware::motion_velocity_planner
 {
-using autoware::universe_utils::getOrDeclareParameter;
-
 struct StopObstacle
 {
   StopObstacle(

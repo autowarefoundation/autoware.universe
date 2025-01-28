@@ -147,7 +147,7 @@ private:
     const autoware::motion_velocity_planner::TrajectoryPoints & trajectory_points,
     const autoware::motion_velocity_planner::PlannerData & planner_data) const;
   autoware_planning_msgs::msg::Trajectory generate_trajectory(
-    autoware::motion_velocity_planner::TrajectoryPoints input_trajectory_points,
+    const autoware::motion_velocity_planner::TrajectoryPoints & input_trajectory_points,
     std::map<std::string, double> & processing_times);
 
   std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;

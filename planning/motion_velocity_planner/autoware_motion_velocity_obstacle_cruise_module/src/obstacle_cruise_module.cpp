@@ -14,7 +14,10 @@
 
 #include "obstacle_cruise_module.hpp"
 
+#include "autoware/universe_utils/ros/uuid_helper.hpp"
+
 #include <autoware/motion_utils/distance/distance.hpp>
+#include <autoware/motion_utils/marker/virtual_wall_marker_creator.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/ros/parameter.hpp>
@@ -146,7 +149,9 @@ void ObstacleCruiseModule::update_parameters(const std::vector<rclcpp::Parameter
 }
 
 VelocityPlanningResult ObstacleCruiseModule::plan(
-  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & raw_trajectory_points,
+  [[maybe_unused]] const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> &
+    smoothed_trajectory_points,
   const std::shared_ptr<const PlannerData> planner_data)
 {
   autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
@@ -159,14 +164,14 @@ VelocityPlanningResult ObstacleCruiseModule::plan(
   // filter obstacles of predicted objects
   const auto cruise_obstacles = filter_cruise_obstacle_for_predicted_object(
     planner_data->current_odometry, planner_data->ego_nearest_dist_threshold,
-    planner_data->ego_nearest_yaw_threshold, ego_trajectory_points, planner_data->objects,
+    planner_data->ego_nearest_yaw_threshold, raw_trajectory_points, planner_data->objects,
     rclcpp::Time(planner_data->predicted_objects_header.stamp), planner_data->is_driving_forward,
     planner_data->vehicle_info_, planner_data->trajectory_polygon_collision_check);
 
   // plan cruise
   VelocityPlanningResult result;
   [[maybe_unused]] const auto cruise_traj_points = cruise_planner_->plan_cruise(
-    planner_data, ego_trajectory_points, cruise_obstacles, debug_data_ptr_, result.velocity_limit);
+    planner_data, raw_trajectory_points, cruise_obstacles, debug_data_ptr_, result.velocity_limit);
   metrics_manager_.calculate_metrics("PlannerInterface", "cruise");
 
   // clear velocity limit if necessary

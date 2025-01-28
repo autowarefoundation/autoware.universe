@@ -18,6 +18,8 @@
 #include "type_alias.hpp"
 #include "types.hpp"
 
+#include <autoware/universe_utils/ros/parameter.hpp>
+
 #include <string>
 #include <unordered_map>
 #include <vector>

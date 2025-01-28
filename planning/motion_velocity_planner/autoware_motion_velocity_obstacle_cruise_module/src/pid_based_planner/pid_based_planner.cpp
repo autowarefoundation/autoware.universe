@@ -353,6 +353,7 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::plan_cruise_trajectory(
       debug_data_ptr->obstacles_to_cruise.push_back(cruise_obstacle_info->obstacle);
 
       /*
+      // TODO(murooka)
       planning_factor_interface_->add(
         stop_traj_points, planner_data->current_odometry.pose.pose,
       stop_traj_points.at(wall_idx).pose, tier4_planning_msgs::msg::PlanningFactor::NONE,

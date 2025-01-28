@@ -15,10 +15,14 @@
 #include "obstacle_slow_down_module.hpp"
 
 #include <autoware/motion_utils/distance/distance.hpp>
+#include <autoware/motion_utils/marker/marker_helper.hpp>
+#include <autoware/motion_utils/marker/virtual_wall_marker_creator.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware/signal_processing/lowpass_filter_1d.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/ros/parameter.hpp>
 #include <autoware/universe_utils/ros/update_param.hpp>
+#include <autoware/universe_utils/ros/uuid_helper.hpp>
 
 #include <algorithm>
 #include <iostream>
@@ -229,7 +233,9 @@ void ObstacleSlowDownModule::update_parameters(const std::vector<rclcpp::Paramet
 }
 
 VelocityPlanningResult ObstacleSlowDownModule::plan(
-  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & raw_trajectory_points,
+  [[maybe_unused]] const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> &
+    smoothed_trajectory_points,
   const std::shared_ptr<const PlannerData> planner_data)
 {
   autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
@@ -240,19 +246,19 @@ VelocityPlanningResult ObstacleSlowDownModule::plan(
   decimated_traj_polys_ = std::nullopt;
 
   const auto decimated_traj_points = utils::decimate_trajectory_points_from_ego(
-    ego_trajectory_points, planner_data->current_odometry.pose.pose,
+    raw_trajectory_points, planner_data->current_odometry.pose.pose,
     planner_data->ego_nearest_dist_threshold, planner_data->ego_nearest_yaw_threshold,
     planner_data->trajectory_polygon_collision_check.decimate_trajectory_step_length, 0.0);
 
   const auto slow_down_obstacles = filter_slow_down_obstacle_for_predicted_object(
     planner_data->current_odometry, planner_data->ego_nearest_dist_threshold,
-    planner_data->ego_nearest_yaw_threshold, ego_trajectory_points, decimated_traj_points,
+    planner_data->ego_nearest_yaw_threshold, raw_trajectory_points, decimated_traj_points,
     planner_data->objects, rclcpp::Time(planner_data->predicted_objects_header.stamp),
     planner_data->vehicle_info_, planner_data->trajectory_polygon_collision_check);
 
   VelocityPlanningResult result;
   result.slowdown_intervals = plan_slow_down(
-    planner_data, ego_trajectory_points, slow_down_obstacles, result.velocity_limit,
+    planner_data, raw_trajectory_points, slow_down_obstacles, result.velocity_limit,
     planner_data->vehicle_info_);
   metrics_manager_.calculate_metrics("PlannerInterface", "cruise");
 

@@ -15,6 +15,8 @@
 #include "obstacle_stop_module.hpp"
 
 #include <autoware/motion_utils/distance/distance.hpp>
+#include <autoware/motion_utils/marker/virtual_wall_marker_creator.hpp>
+#include <autoware/motion_utils/trajectory/conversion.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware/universe_utils/ros/parameter.hpp>
@@ -194,7 +196,9 @@ void ObstacleStopModule::update_parameters(const std::vector<rclcpp::Parameter> 
 }
 
 VelocityPlanningResult ObstacleStopModule::plan(
-  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & raw_trajectory_points,
+  [[maybe_unused]] const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> &
+    smoothed_trajectory_points,
   const std::shared_ptr<const PlannerData> planner_data)
 {
   autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
@@ -217,7 +221,7 @@ VelocityPlanningResult ObstacleStopModule::plan(
 
   // 2. pre-process
   const auto decimated_traj_points = utils::decimate_trajectory_points_from_ego(
-    ego_trajectory_points, planner_data->current_odometry.pose.pose,
+    raw_trajectory_points, planner_data->current_odometry.pose.pose,
     planner_data->ego_nearest_dist_threshold, planner_data->ego_nearest_yaw_threshold,
     planner_data->trajectory_polygon_collision_check.decimate_trajectory_step_length,
     stop_planning_param_.stop_margin);
@@ -226,7 +230,7 @@ VelocityPlanningResult ObstacleStopModule::plan(
   const auto stop_obstacles_for_predicted_object = filter_stop_obstacle_for_predicted_object(
     planner_data->current_odometry, planner_data->ego_nearest_dist_threshold,
     planner_data->ego_nearest_yaw_threshold,
-    rclcpp::Time(planner_data->predicted_objects_header.stamp), ego_trajectory_points,
+    rclcpp::Time(planner_data->predicted_objects_header.stamp), raw_trajectory_points,
     decimated_traj_points, planner_data->objects, planner_data->is_driving_forward,
     planner_data->vehicle_info_, dist_to_bumper, planner_data->trajectory_polygon_collision_check);
 
@@ -240,7 +244,7 @@ VelocityPlanningResult ObstacleStopModule::plan(
 
   // 6. plan stop
   const auto stop_point =
-    plan_stop(planner_data, ego_trajectory_points, stop_obstacles, dist_to_bumper);
+    plan_stop(planner_data, raw_trajectory_points, stop_obstacles, dist_to_bumper);
 
   // 7. publish messages for debugging
   publish_debug_info();
@@ -733,14 +737,6 @@ double ObstacleStopModule::calc_desired_stop_margin(
   if (closest_behavior_stop_idx) {
     const double closest_behavior_stop_dist_on_ref_traj =
       autoware::motion_utils::calcSignedArcLength(traj_points, 0, *closest_behavior_stop_idx);
-    /*
-    for (int i = 0; i < std::min(10, static_cast<int>(traj_points.size()) - 1); ++i) {
-      std::cerr << traj_points.at(static_cast<size_t>(i)).longitudinal_velocity_mps << " ";
-    }
-    std::cerr << std::endl;
-    std::cerr << closest_behavior_stop_dist_on_ref_traj << " " << dist_to_collide_on_ref_traj <<
-    std::endl;
-    */
     const double stop_dist_diff =
       closest_behavior_stop_dist_on_ref_traj - (dist_to_collide_on_ref_traj - stop_margin_on_curve);
     if (0.0 < stop_dist_diff && stop_dist_diff < stop_margin_on_curve) {
