@@ -15,7 +15,7 @@
 
   <!-- ML parameters -->
   <arg name="whole_image_detector_model_path" default="/home/autoware/autoware_data"/>
-  <arg name="whole_image_detector_model_name" default="tlr_car_ped_yolox_s_960_960_batch_1.onnx"/>
+  <arg name="whole_image_detector_model_name" default="yolox_s_car_ped_tl_detector_960_960_batch_1.onnx"/>
   <arg name="fine_detector_param_path" default="$(find-pkg-share autoware_traffic_light_fine_detector)/config/traffic_light_fine_detector.param.yaml"/>
   <arg name="car_classifier_param_path" default="$(find-pkg-share autoware_traffic_light_classifier)/config/car_traffic_light_classifier.param.yaml"/>
   <arg name="pedestrian_classifier_param_path" default="$(find-pkg-share autoware_traffic_light_classifier)/config/pedestrian_traffic_light_classifier.param.yaml"/>
