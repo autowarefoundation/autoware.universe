@@ -164,7 +164,8 @@ polygon_t createObjectPolygon(
 /// @param [in] min_velocity objects with velocity lower will be ignored
 /// @return polygons of the objects
 multi_polygon_t createObjectPolygons(
-  const std::vector<PlannerData::Object> & objects, const double buffer, const double min_velocity);
+  const std::vector<std::shared_ptr<PlannerData::Object>> & objects, const double buffer,
+  const double min_velocity);
 
 /// @brief add obstacles obtained from sensors to the given Obstacles object
 /// @param[out] obstacles Obstacles object in which to add the sensor obstacles

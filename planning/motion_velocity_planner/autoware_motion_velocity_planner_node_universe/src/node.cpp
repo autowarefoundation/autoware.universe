@@ -82,6 +82,10 @@ MotionVelocityPlannerNode::MotionVelocityPlannerNode(const rclcpp::NodeOptions &
   // Publishers
   trajectory_pub_ =
     this->create_publisher<autoware_planning_msgs::msg::Trajectory>("~/output/trajectory", 1);
+  velocity_limit_pub_ = this->create_publisher<VelocityLimit>(
+    "~/output/velocity_limit", rclcpp::QoS{1}.transient_local());
+  clear_velocity_limit_pub_ = this->create_publisher<VelocityLimitClearCommand>(
+    "~/output/clear_velocity_limit", rclcpp::QoS{1}.transient_local());
   processing_time_publisher_ =
     this->create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "~/debug/processing_time_ms", 1);
@@ -95,6 +99,17 @@ MotionVelocityPlannerNode::MotionVelocityPlannerNode(const rclcpp::NodeOptions &
   planner_data_.ego_nearest_dist_threshold =
     declare_parameter<double>("ego_nearest_dist_threshold");
   planner_data_.ego_nearest_yaw_threshold = declare_parameter<double>("ego_nearest_yaw_threshold");
+
+  planner_data_.trajectory_polygon_collision_check.decimate_trajectory_step_length =
+    declare_parameter<double>("trajectory_polygon_collision_check.decimate_trajectory_step_length");
+  planner_data_.trajectory_polygon_collision_check.goal_extended_trajectory_length =
+    declare_parameter<double>("trajectory_polygon_collision_check.goal_extended_trajectory_length");
+  planner_data_.trajectory_polygon_collision_check.enable_to_consider_current_pose =
+    declare_parameter<bool>(
+      "trajectory_polygon_collision_check.consider_current_pose.enable_to_consider_current_pose");
+  planner_data_.trajectory_polygon_collision_check.time_to_convergence = declare_parameter<double>(
+    "trajectory_polygon_collision_check.consider_current_pose.time_to_convergence");
+
   // set velocity smoother param
   set_velocity_smoother_params();
 
@@ -131,7 +146,8 @@ void MotionVelocityPlannerNode::on_unload_plugin(
 
 // NOTE: argument planner_data must not be referenced for multithreading
 bool MotionVelocityPlannerNode::update_planner_data(
-  std::map<std::string, double> & processing_times)
+  std::map<std::string, double> & processing_times,
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & input_traj_points)
 {
   auto clock = *get_clock();
   auto is_ready = true;
@@ -180,6 +196,14 @@ bool MotionVelocityPlannerNode::update_planner_data(
   is_ready &= check_with_log(
     planner_data_.velocity_smoother_, "Waiting for the initialization of the velocity smoother");
   processing_times["update_planner_data.smoother"] = sw.toc(true);
+
+  // is driving forward
+  const auto is_driving_forward =
+    autoware::motion_utils::isDrivingForwardWithTwist(input_traj_points);
+  if (is_driving_forward) {
+    planner_data_.is_driving_forward = is_driving_forward.value();
+  }
+  processing_times["update_planner_data.is_driving_forward"] = sw.toc(true);
 
   // optional data
   const auto traffic_signals_ptr = sub_traffic_signals_.takeData();
@@ -269,7 +293,7 @@ void MotionVelocityPlannerNode::on_trajectory(
   std::map<std::string, double> processing_times;
   stop_watch.tic("Total");
 
-  if (!update_planner_data(processing_times)) {
+  if (!update_planner_data(processing_times, input_trajectory_msg->points)) {
     return;
   }
   processing_times["update_planner_data"] = stop_watch.toc(true);
@@ -424,6 +448,12 @@ autoware_planning_msgs::msg::Trajectory MotionVelocityPlannerNode::generate_traj
       insert_stop(output_trajectory_msg, stop_point);
     for (const auto & slowdown_interval : planning_result.slowdown_intervals)
       insert_slowdown(output_trajectory_msg, slowdown_interval);
+    if (planning_result.velocity_limit) {
+      velocity_limit_pub_->publish(*planning_result.velocity_limit);
+    }
+    if (planning_result.velocity_limit_clear_command) {
+      clear_velocity_limit_pub_->publish(*planning_result.velocity_limit_clear_command);
+    }
   }
 
   return output_trajectory_msg;
@@ -442,6 +472,19 @@ rcl_interfaces::msg::SetParametersResult MotionVelocityPlannerNode::on_set_param
   updateParam(parameters, "smooth_velocity_before_planning", smooth_velocity_before_planning_);
   updateParam(parameters, "ego_nearest_dist_threshold", planner_data_.ego_nearest_dist_threshold);
   updateParam(parameters, "ego_nearest_yaw_threshold", planner_data_.ego_nearest_yaw_threshold);
+  updateParam(
+    parameters, "trajectory_polygon_collision_check.decimate_trajectory_step_length",
+    planner_data_.trajectory_polygon_collision_check.decimate_trajectory_step_length);
+  updateParam(
+    parameters, "trajectory_polygon_collision_check.goal_extended_trajectory_length",
+    planner_data_.trajectory_polygon_collision_check.goal_extended_trajectory_length);
+  updateParam(
+    parameters,
+    "trajectory_polygon_collision_check.consider_current_pose.enable_to_consider_current_pose",
+    planner_data_.trajectory_polygon_collision_check.enable_to_consider_current_pose);
+  updateParam(
+    parameters, "trajectory_polygon_collision_check.consider_current_pose.time_to_convergence",
+    planner_data_.trajectory_polygon_collision_check.time_to_convergence);
 
   // set_velocity_smoother_params(); TODO(Maxime): fix update parameters of the velocity smoother
 
