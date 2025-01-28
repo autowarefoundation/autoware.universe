@@ -20,6 +20,7 @@ ament_auto_find_build_dependencies()
 
 ament_auto_add_library(trajectory_evaluator_node SHARED
   src/trajectory_evaluator_node.cpp
+  src/trajectory_evaluator.cpp
 )
 
 rclcpp_components_register_node(trajectory_evaluator_node
