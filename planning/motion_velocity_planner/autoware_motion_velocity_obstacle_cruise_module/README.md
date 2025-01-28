@@ -1,4 +1,4 @@
-s# Obstacle Cruise
+# Obstacle Cruise
 
 ## Role
 
@@ -115,4 +115,4 @@ Orange sphere which is an obstacle for cruise is visualized by `obstacles_to_cru
 
 Orange wall which means a safe distance to cruise if the ego's front meets the wall is visualized in the `~/debug/cruise/virtual_wall` topic.
 
-![cruise_visualization](../docs/cruise_visualization.png)
+![cruise_visualization](./docs/cruise_visualization.png)

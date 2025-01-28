@@ -49,4 +49,4 @@ Yellow sphere which is an obstacle for slow_down is visualized by `obstacles_to_
 
 Yellow wall which means a safe distance to slow_down if the ego's front meets the wall is visualized in the `~/debug/slow_down/virtual_wall` topic.
 
-![slow_down_visualization](../docs/slow_down_visualization.png)
+![slow_down_visualization](./docs/slow_down_visualization.png)

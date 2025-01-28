@@ -65,13 +65,13 @@ Note that if a new stop obstacle appears and the previous closest obstacle remov
 
 Green polygons which is a detection area is visualized by `detection_polygons` in the `~/debug/marker` topic.
 
-![detection_area](../docs/detection_area.png)
+![detection_area](./docs/detection_area.png)
 
 ### Collision points
 
 Red points which are collision points with obstacle are visualized by `*_collision_points` for each behavior in the `~/debug/marker` topic.
 
-![collision_point](../docs/collision_point.png)
+![collision_point](./docs/collision_point.png)
 
 ### Obstacle for stop
 
@@ -79,4 +79,4 @@ Red sphere which is an obstacle for stop is visualized by `obstacles_to_stop` in
 
 Red wall which means a safe distance to stop if the ego's front meets the wall is visualized in the `~/virtual_wall` topic.
 
-![stop_visualization](../docs/stop_visualization.png)
+![stop_visualization](./docs/stop_visualization.png)
