@@ -53,42 +53,42 @@ public:
     const std::shared_ptr<const PlannerData> planner_data) override;
 
 private:
-  std::string module_name_;
-  rclcpp::Clock::SharedPtr clock_;
+  std::string module_name_{};
+  rclcpp::Clock::SharedPtr clock_{};
 
   // ros parameters
-  bool ignore_crossing_obstacle_;
-  bool suppress_sudden_stop_;
-  CommonParam common_param_;
-  StopPlanningParam stop_planning_param_;
-  ObstacleFilteringParam obstacle_filtering_param_;
+  bool ignore_crossing_obstacle_{};
+  bool suppress_sudden_stop_{};
+  CommonParam common_param_{};
+  StopPlanningParam stop_planning_param_{};
+  ObstacleFilteringParam obstacle_filtering_param_{};
 
   // module publisher
-  rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr debug_stop_planning_info_pub_;
-  rclcpp::Publisher<MetricArray>::SharedPtr metrics_pub_;
+  rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr debug_stop_planning_info_pub_{};
+  rclcpp::Publisher<MetricArray>::SharedPtr metrics_pub_{};
   rclcpp::Publisher<autoware::universe_utils::ProcessingTimeDetail>::SharedPtr
-    processing_time_detail_pub_;
+    processing_time_detail_pub_{};
 
   // interface publisher
   std::unique_ptr<autoware::objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface>
-    objects_of_interest_marker_interface_;
+    objects_of_interest_marker_interface_{};
 
   // internal variables
-  mutable StopPlanningDebugInfo stop_planning_debug_info_;
-  mutable std::shared_ptr<DebugData> debug_data_ptr_;
+  mutable StopPlanningDebugInfo stop_planning_debug_info_{};
+  mutable std::shared_ptr<DebugData> debug_data_ptr_{};
   std::vector<StopObstacle> prev_closest_stop_obstacles_{};
-  std::vector<StopObstacle> prev_stop_obstacles_;
-  MetricsManager metrics_manager_;
+  std::vector<StopObstacle> prev_stop_obstacles_{};
+  MetricsManager metrics_manager_{};
   // previous trajectory and distance to stop
   // NOTE: Previous trajectory is memorized to deal with nearest index search for overlapping or
   // crossing lanes.
   std::optional<std::pair<std::vector<TrajectoryPoint>, double>> prev_stop_distance_info_{
     std::nullopt};
-  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch_;
+  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch_{};
   mutable std::unordered_map<double, std::vector<Polygon2d>> trajectory_polygon_for_inside_map_{};
   mutable std::optional<std::vector<Polygon2d>> trajectory_polygon_for_outside_{std::nullopt};
   mutable std::optional<std::vector<Polygon2d>> decimated_traj_polys_{std::nullopt};
-  mutable std::shared_ptr<universe_utils::TimeKeeper> time_keeper_;
+  mutable std::shared_ptr<universe_utils::TimeKeeper> time_keeper_{};
 
   std::vector<Polygon2d> get_trajectory_polygon_for_inside(
     const std::vector<TrajectoryPoint> & decimated_traj_points, const VehicleInfo & vehicle_info,

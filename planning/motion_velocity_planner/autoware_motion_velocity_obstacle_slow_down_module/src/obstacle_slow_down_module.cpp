@@ -225,11 +225,9 @@ void ObstacleSlowDownModule::init(rclcpp::Node & node, const std::string & modul
   time_keeper_ = std::make_shared<universe_utils::TimeKeeper>(processing_time_detail_pub_);
 }
 
-void ObstacleSlowDownModule::update_parameters(const std::vector<rclcpp::Parameter> & parameters)
+void ObstacleSlowDownModule::update_parameters(
+  [[maybe_unused]] const std::vector<rclcpp::Parameter> & parameters)
 {
-  common_param_.update_parameters(parameters);
-  slow_down_planning_param_.update_parameters(parameters);
-  obstacle_filtering_param_.update_parameters(parameters);
 }
 
 VelocityPlanningResult ObstacleSlowDownModule::plan(

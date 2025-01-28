@@ -60,7 +60,7 @@ private:
     const std::vector<TrajectoryPoint> & stop_traj_points,
     const std::vector<TrajectoryPoint> & prev_traj_points);
 
-  bool checkHasReachedGoal(
+  static bool checkHasReachedGoal(
     const std::shared_ptr<const PlannerData> planner_data,
     const std::vector<TrajectoryPoint> & stop_traj_points);
 
@@ -77,7 +77,7 @@ private:
   std::optional<SBoundaries> getSBoundariesForOnTrajectoryObject(
     const std::vector<TrajectoryPoint> & traj_points,
     const std::shared_ptr<const PlannerData> planner_data, const std::vector<double> & time_vec,
-    const double safety_distance, const CruiseObstacle & object, const double traj_length);
+    const double safety_distance, const CruiseObstacle & object, const double traj_length) const;
 
   std::optional<SBoundaries> getSBoundariesForOffTrajectoryObject(
     const std::vector<TrajectoryPoint> & traj_points,
@@ -89,14 +89,14 @@ private:
     const std::vector<TrajectoryPoint> & stop_traj_points,
     const polygon_utils::PointWithStamp & point);
 
-  std::optional<double> calcTrajectoryLengthFromCurrentPose(
+  static std::optional<double> calcTrajectoryLengthFromCurrentPose(
     const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & ego_pose,
     const std::shared_ptr<const PlannerData> planner_data);
 
   geometry_msgs::msg::Pose transformBaseLink2Center(
     const geometry_msgs::msg::Pose & pose_base_link);
 
-  std::optional<VelocityOptimizer::OptimizationResult> processOptimizedResult(
+  static std::optional<VelocityOptimizer::OptimizationResult> processOptimizedResult(
     const double v0, const VelocityOptimizer::OptimizationResult & opt_result, const double offset);
 
   void publishDebugTrajectory(

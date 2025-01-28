@@ -41,14 +41,14 @@ using autoware::universe_utils::getOrDeclareParameter;
 
 struct CommonParam
 {
-  double max_accel;
-  double min_accel;
-  double max_jerk;
-  double min_jerk;
-  double limit_max_accel;
-  double limit_min_accel;
-  double limit_max_jerk;
-  double limit_min_jerk;
+  double max_accel{};
+  double min_accel{};
+  double max_jerk{};
+  double min_jerk{};
+  double limit_max_accel{};
+  double limit_min_accel{};
+  double limit_max_jerk{};
+  double limit_min_jerk{};
 
   CommonParam() = default;
   explicit CommonParam(rclcpp::Node & node)
@@ -62,30 +62,29 @@ struct CommonParam
     limit_max_jerk = getOrDeclareParameter<double>(node, "limit.max_jerk");
     limit_min_jerk = getOrDeclareParameter<double>(node, "limit.min_jerk");
   }
-  void update_parameters([[maybe_unused]] const std::vector<rclcpp::Parameter> & parameters) {}
 };
 
 struct ObstacleFilteringParam
 {
-  bool use_pointcloud;
-  std::vector<uint8_t> inside_stop_object_types;
-  std::vector<uint8_t> outside_stop_object_types;
+  bool use_pointcloud{};
+  std::vector<uint8_t> inside_stop_object_types{};
+  std::vector<uint8_t> outside_stop_object_types{};
 
-  double obstacle_velocity_threshold_to_stop;
-  double obstacle_velocity_threshold_from_stop;
+  double obstacle_velocity_threshold_to_stop{};
+  double obstacle_velocity_threshold_from_stop{};
 
-  double max_lat_margin;
-  double max_lat_margin_against_unknown;
+  double max_lat_margin{};
+  double max_lat_margin_against_unknown{};
 
-  double min_velocity_to_reach_collision_point;
-  double stop_obstacle_hold_time_threshold;
+  double min_velocity_to_reach_collision_point{};
+  double stop_obstacle_hold_time_threshold{};
 
-  double outside_max_lat_time_margin;
-  int outside_num_of_predicted_paths;
-  double outside_pedestrian_deceleration_rate;
-  double outside_bicycle_deceleration_rate;
+  double outside_max_lat_time_margin{};
+  int outside_num_of_predicted_paths{};
+  double outside_pedestrian_deceleration_rate{};
+  double outside_bicycle_deceleration_rate{};
 
-  double crossing_obstacle_collision_time_margin;
+  double crossing_obstacle_collision_time_margin{};
 
   ObstacleFilteringParam() = default;
   explicit ObstacleFilteringParam(rclcpp::Node & node)
@@ -124,27 +123,25 @@ struct ObstacleFilteringParam
     crossing_obstacle_collision_time_margin = getOrDeclareParameter<double>(
       node, "obstacle_stop.obstacle_filtering.crossing_obstacle.collision_time_margin");
   }
-
-  void update_parameters([[maybe_unused]] const std::vector<rclcpp::Parameter> & parameters) {}
 };
 
 struct StopPlanningParam
 {
-  double stop_margin;
-  double terminal_stop_margin;
-  double min_behavior_stop_margin;
-  double hold_stop_velocity_threshold;
-  double hold_stop_distance_threshold;
-  bool enable_approaching_on_curve;
-  double additional_stop_margin_on_curve;
-  double min_stop_margin_on_curve;
+  double stop_margin{};
+  double terminal_stop_margin{};
+  double min_behavior_stop_margin{};
+  double hold_stop_velocity_threshold{};
+  double hold_stop_distance_threshold{};
+  bool enable_approaching_on_curve{};
+  double additional_stop_margin_on_curve{};
+  double min_stop_margin_on_curve{};
 
   struct ObjectTypeSpecificParams
   {
-    double limit_min_acc;
-    double sudden_object_acc_threshold;
-    double sudden_object_dist_threshold;
-    bool abandon_to_stop;
+    double limit_min_acc{};
+    double sudden_object_acc_threshold{};
+    double sudden_object_dist_threshold{};
+    bool abandon_to_stop{};
   };
   std::unordered_map<uint8_t, std::string> object_types_maps = {
     {ObjectClassification::UNKNOWN, "unknown"}, {ObjectClassification::CAR, "car"},
@@ -154,7 +151,7 @@ struct StopPlanningParam
   std::unordered_map<std::string, ObjectTypeSpecificParams> object_type_specific_param_map;
 
   StopPlanningParam() = default;
-  explicit StopPlanningParam(rclcpp::Node & node, const CommonParam & common_param)
+  StopPlanningParam(rclcpp::Node & node, const CommonParam & common_param)
   {
     stop_margin = getOrDeclareParameter<double>(node, "obstacle_stop.stop_planning.stop_margin");
     terminal_stop_margin =
@@ -194,8 +191,6 @@ struct StopPlanningParam
       }
     }
   }
-
-  void update_parameters([[maybe_unused]] const std::vector<rclcpp::Parameter> & parameters) {}
 
   std::string get_param_type(const ObjectClassification label)
   {

@@ -16,8 +16,8 @@
 #define AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON_UNIVERSE__PLANNER_DATA_HPP_
 
 #include <autoware/motion_utils/distance/distance.hpp>
-#include <autoware/motion_velocity_planner_common_universe/collision_checker.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware/motion_velocity_planner_common_universe/collision_checker.hpp>
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <autoware/velocity_smoother/smoother/smoother_base.hpp>

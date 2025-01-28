@@ -543,7 +543,7 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::plan_cruise_with_trajectory(
 }
 
 std::vector<TrajectoryPoint> PIDBasedPlanner::get_acceleration_limited_trajectory(
-  const std::vector<TrajectoryPoint> traj_points, const geometry_msgs::msg::Pose & start_pose,
+  const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & start_pose,
   const double v0, const double a0, const double target_acc, const double target_jerk_ratio,
   const std::shared_ptr<const PlannerData> planner_data) const
 {

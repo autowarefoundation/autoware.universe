@@ -43,23 +43,23 @@ struct CruiseObstacle
     is_yield_obstacle(arg_is_yield_obstacle)
   {
   }
-  std::string uuid;
-  rclcpp::Time stamp;
-  geometry_msgs::msg::Pose pose;  // interpolated with the current stamp
-  double velocity;                // longitudinal velocity against ego's trajectory
-  double lat_velocity;            // lateral velocity against ego's trajectory
+  std::string uuid{};
+  rclcpp::Time stamp{};
+  geometry_msgs::msg::Pose pose{};  // interpolated with the current stamp
+  double velocity{};                // longitudinal velocity against ego's trajectory
+  double lat_velocity{};            // lateral velocity against ego's trajectory
 
-  std::vector<polygon_utils::PointWithStamp> collision_points;  // time-series collision points
-  bool is_yield_obstacle;
+  std::vector<polygon_utils::PointWithStamp> collision_points{};  // time-series collision points
+  bool is_yield_obstacle{};
 };
 
 struct DebugData
 {
   DebugData() = default;
-  std::vector<std::shared_ptr<PlannerData::Object>> intentionally_ignored_obstacles;
-  std::vector<CruiseObstacle> obstacles_to_cruise;
-  std::vector<Polygon2d> decimated_traj_polys;
-  MarkerArray cruise_wall_marker;
+  std::vector<std::shared_ptr<PlannerData::Object>> intentionally_ignored_obstacles{};
+  std::vector<CruiseObstacle> obstacles_to_cruise{};
+  std::vector<Polygon2d> decimated_traj_polys{};
+  MarkerArray cruise_wall_marker{};
 };
 
 }  // namespace autoware::motion_velocity_planner

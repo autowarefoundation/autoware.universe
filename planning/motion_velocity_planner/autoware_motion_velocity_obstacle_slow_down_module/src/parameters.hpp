@@ -30,14 +30,14 @@ using autoware::universe_utils::getOrDeclareParameter;
 
 struct CommonParam
 {
-  double max_accel;
-  double min_accel;
-  double max_jerk;
-  double min_jerk;
-  double limit_max_accel;
-  double limit_min_accel;
-  double limit_max_jerk;
-  double limit_min_jerk;
+  double max_accel{};
+  double min_accel{};
+  double max_jerk{};
+  double min_jerk{};
+  double limit_max_accel{};
+  double limit_min_accel{};
+  double limit_max_jerk{};
+  double limit_min_jerk{};
 
   CommonParam() = default;
   explicit CommonParam(rclcpp::Node & node)
@@ -51,19 +51,18 @@ struct CommonParam
     limit_max_jerk = getOrDeclareParameter<double>(node, "limit.max_jerk");
     limit_min_jerk = getOrDeclareParameter<double>(node, "limit.min_jerk");
   }
-  void update_parameters([[maybe_unused]] const std::vector<rclcpp::Parameter> & parameters) {}
 };
 
 struct ObstacleFilteringParam
 {
-  std::vector<uint8_t> object_types;
+  std::vector<uint8_t> object_types{};
 
-  double min_lat_margin;
-  double max_lat_margin;
-  double lat_hysteresis_margin;
+  double min_lat_margin{};
+  double max_lat_margin{};
+  double lat_hysteresis_margin{};
 
-  int successive_num_to_entry_slow_down_condition;
-  int successive_num_to_exit_slow_down_condition;
+  int successive_num_to_entry_slow_down_condition{};
+  int successive_num_to_exit_slow_down_condition{};
 
   ObstacleFilteringParam() = default;
   explicit ObstacleFilteringParam(rclcpp::Node & node)
@@ -81,23 +80,21 @@ struct ObstacleFilteringParam
     successive_num_to_exit_slow_down_condition = getOrDeclareParameter<int>(
       node, "obstacle_slow_down.obstacle_filtering.successive_num_to_exit_slow_down_condition");
   }
-
-  void update_parameters([[maybe_unused]] const std::vector<rclcpp::Parameter> & parameters) {}
 };
 
 struct SlowDownPlanningParam
 {
-  double slow_down_min_acc;
-  double slow_down_min_jerk;
+  double slow_down_min_acc{};
+  double slow_down_min_jerk{};
 
-  double lpf_gain_slow_down_vel;
-  double lpf_gain_lat_dist;
-  double lpf_gain_dist_to_slow_down;
+  double lpf_gain_slow_down_vel{};
+  double lpf_gain_lat_dist{};
+  double lpf_gain_dist_to_slow_down{};
 
-  double time_margin_on_target_velocity;
+  double time_margin_on_target_velocity{};
 
-  double moving_object_speed_threshold;
-  double moving_object_hysteresis_range;
+  double moving_object_speed_threshold{};
+  double moving_object_hysteresis_range{};
 
   std::vector<std::string> obstacle_labels{"default"};
   std::vector<std::string> obstacle_moving_classification{"static", "moving"};
@@ -158,8 +155,6 @@ struct SlowDownPlanningParam
       }
     }
   }
-
-  void update_parameters([[maybe_unused]] const std::vector<rclcpp::Parameter> & parameters) {}
 
   std::string get_param_type(const ObjectClassification label) const
   {

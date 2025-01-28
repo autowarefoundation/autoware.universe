@@ -64,10 +64,10 @@ protected:
   CommonParam common_param_;
   CruisePlanningParam cruise_planning_param_;
 
-  double calc_distance_to_collisionPoint(
+  static double calc_distance_to_collisionPoint(
     const std::vector<TrajectoryPoint> & traj_points,
     const std::shared_ptr<const PlannerData> planner_data,
-    const geometry_msgs::msg::Point & collision_point) const
+    const geometry_msgs::msg::Point & collision_point)
   {
     const double offset = planner_data->is_driving_forward
                             ? std::abs(planner_data->vehicle_info_.max_longitudinal_offset_m)

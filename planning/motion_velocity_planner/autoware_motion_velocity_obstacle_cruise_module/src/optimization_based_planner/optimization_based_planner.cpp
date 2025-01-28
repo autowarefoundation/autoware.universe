@@ -522,7 +522,7 @@ std::optional<SBoundaries> OptimizationBasedPlanner::getSBoundaries(
 std::optional<SBoundaries> OptimizationBasedPlanner::getSBoundariesForOnTrajectoryObject(
   const std::vector<TrajectoryPoint> & traj_points,
   const std::shared_ptr<const PlannerData> planner_data, const std::vector<double> & time_vec,
-  const double safety_distance, const CruiseObstacle & object, const double traj_length)
+  const double safety_distance, const CruiseObstacle & object, const double traj_length) const
 {
   const double & min_object_accel_for_rss = cruise_planning_param_.min_object_accel_for_rss;
 

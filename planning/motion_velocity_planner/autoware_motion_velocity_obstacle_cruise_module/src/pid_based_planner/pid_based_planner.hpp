@@ -70,7 +70,7 @@ public:
 
 private:
   Float32MultiArrayStamped get_cruise_planning_debug_message(
-    const rclcpp::Time & current_time) const
+    const rclcpp::Time & current_time) const override
   {
     return cruise_planning_debug_info_.convert_to_message(current_time);
   }
@@ -100,7 +100,7 @@ private:
     const std::vector<TrajectoryPoint> & stop_traj_points,
     const CruiseObstacleInfo & cruise_obstacle_info);
   std::vector<TrajectoryPoint> get_acceleration_limited_trajectory(
-    const std::vector<TrajectoryPoint> traj_points, const geometry_msgs::msg::Pose & start_pose,
+    const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & start_pose,
     const double v0, const double a0, const double target_acc, const double target_jerk_ratio,
     const std::shared_ptr<const PlannerData> planner_data) const;
 

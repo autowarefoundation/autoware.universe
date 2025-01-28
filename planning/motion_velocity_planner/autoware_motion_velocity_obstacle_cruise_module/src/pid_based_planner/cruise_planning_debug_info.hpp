@@ -58,7 +58,7 @@ public:
    * @param [in] type the TYPE enum for which to get the index
    * @return index of the type
    */
-  int getIndex(const TYPE type) const { return static_cast<int>(type); }
+  static int getIndex(const TYPE type) { return static_cast<int>(type); }
 
   /**
    * @brief get all the debug values as an std::array

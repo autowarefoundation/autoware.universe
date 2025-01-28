@@ -37,14 +37,14 @@ using autoware::universe_utils::getOrDeclareParameter;
 
 struct CommonParam
 {
-  double max_accel;
-  double min_accel;
-  double max_jerk;
-  double min_jerk;
-  double limit_max_accel;
-  double limit_min_accel;
-  double limit_max_jerk;
-  double limit_min_jerk;
+  double max_accel{};
+  double min_accel{};
+  double max_jerk{};
+  double min_jerk{};
+  double limit_max_accel{};
+  double limit_min_accel{};
+  double limit_max_jerk{};
+  double limit_min_jerk{};
 
   CommonParam() = default;
   explicit CommonParam(rclcpp::Node & node)
@@ -58,34 +58,33 @@ struct CommonParam
     limit_max_jerk = getOrDeclareParameter<double>(node, "limit.max_jerk");
     limit_min_jerk = getOrDeclareParameter<double>(node, "limit.min_jerk");
   }
-  void update_parameters([[maybe_unused]] const std::vector<rclcpp::Parameter> & parameters) {}
 };
 
 struct ObstacleFilteringParam
 {
-  std::vector<uint8_t> inside_object_types;
-  std::vector<uint8_t> outside_object_types;
-  // bool use_pointcloud;
+  std::vector<uint8_t> inside_object_types{};
+  std::vector<uint8_t> outside_object_types{};
+  // bool use_pointcloud{};
 
-  double max_lat_margin;
+  double max_lat_margin{};
 
-  double crossing_obstacle_velocity_threshold;
-  double crossing_obstacle_traj_angle_threshold;
+  double crossing_obstacle_velocity_threshold{};
+  double crossing_obstacle_traj_angle_threshold{};
 
-  double outside_obstacle_velocity_threshold;
-  double ego_obstacle_overlap_time_threshold;
-  double max_prediction_time_for_collision_check;
-  double max_lateral_time_margin;
-  int num_of_predicted_paths_for_outside_cruise_obstacle;
+  double outside_obstacle_velocity_threshold{};
+  double ego_obstacle_overlap_time_threshold{};
+  double max_prediction_time_for_collision_check{};
+  double max_lateral_time_margin{};
+  int num_of_predicted_paths_for_outside_cruise_obstacle{};
 
-  bool enable_yield;
-  double yield_lat_distance_threshold;
-  double max_lat_dist_between_obstacles;
-  double max_obstacles_collision_time;
-  double stopped_obstacle_velocity_threshold;
+  bool enable_yield{};
+  double yield_lat_distance_threshold{};
+  double max_lat_dist_between_obstacles{};
+  double max_obstacles_collision_time{};
+  double stopped_obstacle_velocity_threshold{};
 
-  double obstacle_velocity_threshold_from_cruise;
-  double obstacle_velocity_threshold_to_cruise;
+  double obstacle_velocity_threshold_from_cruise{};
+  double obstacle_velocity_threshold_to_cruise{};
 
   ObstacleFilteringParam() = default;
   explicit ObstacleFilteringParam(rclcpp::Node & node)
@@ -133,16 +132,14 @@ struct ObstacleFilteringParam
     obstacle_velocity_threshold_to_cruise = getOrDeclareParameter<double>(
       node, "obstacle_cruise.obstacle_filtering.obstacle_velocity_threshold_to_cruise");
   }
-
-  void update_parameters([[maybe_unused]] const std::vector<rclcpp::Parameter> & parameters) {}
 };
 
 struct CruisePlanningParam
 {
-  double idling_time;
-  double min_ego_accel_for_rss;
-  double min_object_accel_for_rss;
-  double safe_distance_margin;
+  double idling_time{};
+  double min_ego_accel_for_rss{};
+  double min_object_accel_for_rss{};
+  double safe_distance_margin{};
 
   CruisePlanningParam() = default;
   explicit CruisePlanningParam(rclcpp::Node & node)
@@ -156,8 +153,6 @@ struct CruisePlanningParam
     safe_distance_margin =
       getOrDeclareParameter<double>(node, "obstacle_cruise.cruise_planning.safe_distance_margin");
   }
-
-  void update_parameters([[maybe_unused]] const std::vector<rclcpp::Parameter> & parameters) {}
 };
 }  // namespace autoware::motion_velocity_planner
 

@@ -189,10 +189,6 @@ void ObstacleStopModule::update_parameters(const std::vector<rclcpp::Parameter> 
   updateParam(
     parameters, "obstacle_stop.option.ignore_crossing_obstacle", ignore_crossing_obstacle_);
   updateParam(parameters, "obstacle_stop.option.suppress_sudden_stop", suppress_sudden_stop_);
-
-  common_param_.update_parameters(parameters);
-  stop_planning_param_.update_parameters(parameters);
-  obstacle_filtering_param_.update_parameters(parameters);
 }
 
 VelocityPlanningResult ObstacleStopModule::plan(

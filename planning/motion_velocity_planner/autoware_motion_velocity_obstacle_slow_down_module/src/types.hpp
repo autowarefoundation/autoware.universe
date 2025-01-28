@@ -43,16 +43,16 @@ struct SlowDownObstacle
     classification(object_classification)
   {
   }
-  std::string uuid;
-  rclcpp::Time stamp;
-  geometry_msgs::msg::Pose pose;  // interpolated with the current stamp
-  double velocity;                // longitudinal velocity against ego's trajectory
-  double lat_velocity;            // lateral velocity against ego's trajectory
+  std::string uuid{};
+  rclcpp::Time stamp{};
+  geometry_msgs::msg::Pose pose{};  // interpolated with the current stamp
+  double velocity{};                // longitudinal velocity against ego's trajectory
+  double lat_velocity{};            // lateral velocity against ego's trajectory
 
-  double dist_to_traj_poly;  // for efficient calculation
-  geometry_msgs::msg::Point front_collision_point;
-  geometry_msgs::msg::Point back_collision_point;
-  ObjectClassification classification;
+  double dist_to_traj_poly{};  // for efficient calculation
+  geometry_msgs::msg::Point front_collision_point{};
+  geometry_msgs::msg::Point back_collision_point{};
+  ObjectClassification classification{};
 };
 
 struct SlowDownOutput
@@ -77,13 +77,13 @@ struct SlowDownOutput
     }
   }
 
-  std::string uuid;
-  double target_vel;
-  double feasible_target_vel;
-  double dist_from_obj_poly_to_traj_poly;
+  std::string uuid{};
+  double target_vel{};
+  double feasible_target_vel{};
+  double dist_from_obj_poly_to_traj_poly{};
   std::optional<geometry_msgs::msg::Pose> start_point{std::nullopt};
   std::optional<geometry_msgs::msg::Pose> end_point{std::nullopt};
-  bool is_obstacle_moving;
+  bool is_obstacle_moving{};
 };
 
 struct SlowDownConditionCounter
@@ -127,17 +127,17 @@ struct SlowDownConditionCounter
   void reset(const std::string & uuid) { counter_.emplace(uuid, 0); }
 
   // NOTE: positive is for meeting entering condition, and negative is for exiting.
-  std::unordered_map<std::string, int> counter_;
-  std::vector<std::string> current_uuids_;
+  std::unordered_map<std::string, int> counter_{};
+  std::vector<std::string> current_uuids_{};
 };
 
 struct DebugData
 {
   DebugData() = default;
-  std::vector<SlowDownObstacle> obstacles_to_slow_down;
-  std::vector<Polygon2d> decimated_traj_polys;
-  MarkerArray slow_down_debug_wall_marker;
-  MarkerArray slow_down_wall_marker;
+  std::vector<SlowDownObstacle> obstacles_to_slow_down{};
+  std::vector<Polygon2d> decimated_traj_polys{};
+  MarkerArray slow_down_debug_wall_marker{};
+  MarkerArray slow_down_wall_marker{};
 };
 }  // namespace autoware::motion_velocity_planner
 
