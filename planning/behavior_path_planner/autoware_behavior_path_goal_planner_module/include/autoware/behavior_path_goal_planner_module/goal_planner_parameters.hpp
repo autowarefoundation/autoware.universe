@@ -88,6 +88,7 @@ struct GoalPlannerParameters
 
   // pull over general params
   double pull_over_minimum_request_length{0.0};
+  double pull_over_prepare_length{0.0};
   double pull_over_velocity{0.0};
   double pull_over_minimum_velocity{0.0};
   double decide_path_distance{0.0};
@@ -118,6 +119,12 @@ struct GoalPlannerParameters
   PlannerCommonParam freespace_parking_common_parameters{};
   AstarParam astar_parameters{};
   RRTStarParam rrt_star_parameters{};
+
+  struct BezierParking
+  {
+    double pull_over_angle_threshold;
+    double after_shift_straight_distance;
+  } bezier_parking;
 
   // stop condition
   double maximum_deceleration_for_stop{0.0};
