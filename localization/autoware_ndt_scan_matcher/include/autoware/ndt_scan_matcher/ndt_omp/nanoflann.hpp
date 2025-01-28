@@ -1,3 +1,4 @@
+//NOLINTBEGIN
 /***********************************************************************
  * Software License Agreement (BSD License)
  *
@@ -41,7 +42,6 @@
  *   - [Online README](https://github.com/jlblancoc/nanoflann)
  *   - [C++ API documentation](https://jlblancoc.github.io/nanoflann/)
  */
-
 #pragma once
 
 #include <algorithm>
@@ -2466,3 +2466,4 @@ public:
 
 /** @} */  // end of grouping
 }  // namespace nanoflann
+//NOLINTEND

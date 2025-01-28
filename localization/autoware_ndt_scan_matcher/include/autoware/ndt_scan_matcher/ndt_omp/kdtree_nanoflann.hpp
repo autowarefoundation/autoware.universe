@@ -49,10 +49,11 @@
 #include <pcl/filters/boost.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/kdtree/kdtree_flann.h>
-#include <pcl/pcl_macros.h>
 #include <pcl/point_types.h>
 
+#include <memory>
 #include <vector>
+
 template <typename PointT>
 class KdTreeNanoflann
 {
@@ -62,7 +63,7 @@ class KdTreeNanoflann
   struct PointCloudNanoflann
   {
     PointCloudPtr cloud_;
-    PointCloudNanoflann(PointCloudPtr cloud) { cloud_ = cloud; }
+    explicit PointCloudNanoflann(PointCloudPtr cloud) { cloud_ = cloud; }
 
     // Must return the number of data points
     inline size_t kdtree_get_point_count() const { return cloud_->size(); }
