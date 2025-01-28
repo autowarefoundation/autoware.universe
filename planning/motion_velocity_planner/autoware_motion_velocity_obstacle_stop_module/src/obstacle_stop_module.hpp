@@ -158,8 +158,7 @@ private:
 
   // ros parameters
   bool ignore_crossing_obstacle_;
-  bool suppress_sudden_obstacle_stop_;
-  bool consider_outside_obstacle_;
+  bool suppress_sudden_stop_;
   CommonParam common_param_;
   StopPlanningParam stop_planning_param_;
   ObstacleFilteringParam obstacle_filtering_param_;

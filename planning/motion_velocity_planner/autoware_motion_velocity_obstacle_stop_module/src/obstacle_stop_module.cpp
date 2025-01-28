@@ -55,10 +55,8 @@ void ObstacleStopModule::init(rclcpp::Node & node, const std::string & module_na
   // ros parameters
   ignore_crossing_obstacle_ =
     getOrDeclareParameter<bool>(node, "obstacle_stop.option.ignore_crossing_obstacle");
-  suppress_sudden_obstacle_stop_ =
-    getOrDeclareParameter<bool>(node, "obstacle_stop.option.suppress_sudden_obstacle_stop");
-  consider_outside_obstacle_ =
-    getOrDeclareParameter<bool>(node, "obstacle_stop.option.consider_outside_obstacle");
+  suppress_sudden_stop_ =
+    getOrDeclareParameter<bool>(node, "obstacle_stop.option.suppress_sudden_stop");
 
   common_param_ = CommonParam(node);
   stop_planning_param_ = StopPlanningParam(node, common_param_);
@@ -96,11 +94,7 @@ void ObstacleStopModule::update_parameters(const std::vector<rclcpp::Parameter> 
 
   updateParam(
     parameters, "obstacle_stop.option.ignore_crossing_obstacle", ignore_crossing_obstacle_);
-  updateParam(
-    parameters, "obstacle_stop.option.suppress_sudden_obstacle_stop",
-    suppress_sudden_obstacle_stop_);
-  updateParam(
-    parameters, "obstacle_stop.option.consider_outside_obstacle", consider_outside_obstacle_);
+  updateParam(parameters, "obstacle_stop.option.suppress_sudden_stop", suppress_sudden_stop_);
 
   common_param_.update_parameters(parameters);
   stop_planning_param_.update_parameters(parameters);
@@ -394,10 +388,6 @@ std::optional<StopObstacle> ObstacleStopModule::filter_outside_stop_obstacle_for
   const VehicleInfo & vehicle_info, const double dist_to_bumper,
   const TrajectoryPolygonCollisionCheck & trajectory_polygon_collision_check) const
 {
-  if (!consider_outside_obstacle_) {
-    return std::nullopt;
-  }
-
   autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   const auto & object_id =
@@ -674,7 +664,7 @@ std::optional<double> ObstacleStopModule::calc_candidate_zero_vel_dist(
   const double dist_to_collide_on_ref_traj, const double desired_stop_margin)
 {
   double candidate_zero_vel_dist = std::max(0.0, dist_to_collide_on_ref_traj - desired_stop_margin);
-  if (suppress_sudden_obstacle_stop_) {
+  if (suppress_sudden_stop_) {
     const auto acceptable_stop_acc = [&]() -> std::optional<double> {
       if (stop_planning_param_.get_param_type(stop_obstacle.classification) == "default") {
         return common_param_.limit_min_accel;

@@ -3,8 +3,7 @@
     obstacle_stop:
       option:
         ignore_crossing_obstacle: true
-        suppress_sudden_obstacle_stop: false
-        consider_outside_obstacle: false
+        suppress_sudden_stop: true
 
       stop_planning:
         stop_margin : 5.0 # longitudinal margin to obstacle [m]
@@ -47,13 +46,13 @@
 
           outside:
             unknown: false
-            car: true
-            truck: true
-            bus: true
-            trailer: true
-            motorcycle: true
-            bicycle: true
-            pedestrian: true
+            car: false
+            truck: false
+            bus: false
+            trailer: false
+            motorcycle: false
+            bicycle: false
+            pedestrian: false
 
         # hysteresis for velocity
         obstacle_velocity_threshold_to_stop : 3.0 # stop planning is executed to the obstacle whose velocity is less than this value [m/s]
@@ -66,10 +65,10 @@
         stop_obstacle_hold_time_threshold : 1.0 # maximum time for holding closest stop obstacle
 
         outside_obstacle:
-          max_lateral_time_margin: 4.0 # time threshold of lateral margin between the obstacles and ego's footprint [s]
-          num_of_predicted_paths: 3 # number of the highest confidence predicted path to check collision between obstacle and ego
+          max_lateral_time_margin: 4.5 # time threshold of lateral margin between the obstacles and ego's footprint [s]
+          num_of_predicted_paths: 1 # number of the highest confidence predicted path to check collision between obstacle and ego
           pedestrian_deceleration_rate: 0.5 # planner perceives pedestrians will stop with this rate to avoid unnecessary stops [m/ss]
           bicycle_deceleration_rate: 0.5 # planner perceives bicycles will stop with this rate to avoid unnecessary stops [m/ss]
 
         crossing_obstacle:
-          collision_time_margin : 4.0 # time threshold of collision between obstacle adn ego for cruise or stop [s]
+          collision_time_margin : 1.0 # time threshold of collision between obstacle adn ego for cruise or stop [s]
