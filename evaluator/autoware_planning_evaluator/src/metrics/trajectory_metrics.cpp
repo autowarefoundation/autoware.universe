@@ -92,7 +92,7 @@ Accumulator<double> calcTrajectoryResampledRelativeAngle(
     // Get base pose yaw
     const double base_yaw = tf2::getYaw(traj.points.at(base_id).pose.orientation);
 
-    for (size_t i = base_id; i < arc_length.size() - 1; ++i) {
+    for (size_t i = base_id; i < arc_length.size(); ++i) {
       if (arc_length[i] >= arc_length[base_id] + resample_offset) {
         // Get target pose yaw
         const double target_yaw = tf2::getYaw(traj.points.at(i).pose.orientation);

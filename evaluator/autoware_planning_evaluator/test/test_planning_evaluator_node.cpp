@@ -1,4 +1,4 @@
-// Copyright 2024 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -53,9 +53,12 @@ protected:
     rclcpp::NodeOptions options;
     const auto share_dir =
       ament_index_cpp::get_package_share_directory("autoware_planning_evaluator");
+    const auto autoware_test_utils_dir =
+      ament_index_cpp::get_package_share_directory("autoware_test_utils");
     options.arguments(
-      {"--ros-args", "--params-file", share_dir + "/config/planning_evaluator.param.yaml", "-p",
-       "output_metrics:=false"});
+      {"--ros-args", "-p", "output_metrics:=false",
+       "--params-file", share_dir + "/config/planning_evaluator.param.yaml",
+       "--params-file", autoware_test_utils_dir + "/config/test_vehicle_info.param.yaml"});
 
     dummy_node = std::make_shared<rclcpp::Node>("planning_evaluator_test_node");
     eval_node = std::make_shared<EvalNode>(options);
@@ -113,6 +116,25 @@ protected:
     for (const std::pair<double, double> & point : traj) {
       p.pose.position.x = point.first;
       p.pose.position.y = point.second;
+      t.points.push_back(p);
+    }
+    return t;
+  }
+
+    Trajectory makeTrajectory(const std::vector<std::tuple<double, double, double>> & traj)
+  {
+    Trajectory t;
+    t.header.frame_id = "map";
+    TrajectoryPoint p;
+    for (const std::tuple<double, double, double> & point : traj) {
+      p.pose.position.x = std::get<0>(point);
+      p.pose.position.y = std::get<1>(point);
+      tf2::Quaternion q;
+      q.setRPY(0.0, 0.0, std::get<2>(point));
+      p.pose.orientation.x = q.x();
+      p.pose.orientation.y = q.y();
+      p.pose.orientation.z = q.z();
+      p.pose.orientation.w = q.w();
       t.points.push_back(p);
     }
     return t;
@@ -248,6 +270,15 @@ TEST_F(EvalTest, TestRelativeAngle)
   p.pose.position.y = 2.0;
   t.points.push_back(p);
   EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), 0.0);
+}
+
+TEST_F(EvalTest, TestResampledRelativeAngle)
+{
+  setTargetMetric(planning_diagnostics::Metric::resampled_relative_angle);
+  Trajectory t = makeTrajectory({{0.0, 0.0, 0.0}, {3.0, 0.0, 0.0}});
+  EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), 0.0);
+  t = makeTrajectory({{0.0, 0.0, 0.0}, {3.0, 3.0, M_PI_4}});
+  EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), M_PI_4);
 }
 
 TEST_F(EvalTest, TestLength)
