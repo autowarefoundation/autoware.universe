@@ -28,7 +28,7 @@ using MetricMsg = tier4_metric_msgs::msg::Metric;
 class TrajectoryEvaluatorTests : public ::testing::Test
 {
 protected:
-  void simulateEgoVehicle(
+  void simulate_ego_vehicle(
     const autoware_planning_msgs::msg::Trajectory & trajectory,
     std::vector<trajectory_evaluator::TrajectoryWithTimestamp> & trajectory_history,
     std::vector<trajectory_evaluator::TimeErrorData> & time_errors, MetricArrayMsg & metrics_msg)
@@ -74,7 +74,7 @@ protected:
     }
   }
 
-  autoware_planning_msgs::msg::Trajectory generateLinearTrajectory(
+  autoware_planning_msgs::msg::Trajectory generate_linear_trajectory(
     double length, int num_points, double velocity, std::string case_type)
   {
     autoware_planning_msgs::msg::Trajectory trajectory;
@@ -115,7 +115,7 @@ TEST_F(TrajectoryEvaluatorTests, TestLinearTrajectory)
   int num_points = 50;
   double velocity = 5.0;
 
-  auto trajectory = generateLinearTrajectory(length, num_points, velocity, "constant");
+  auto trajectory = generate_linear_trajectory(length, num_points, velocity, "constant");
 
   std::vector<trajectory_evaluator::TrajectoryWithTimestamp> trajectory_history;
   std::vector<trajectory_evaluator::TimeErrorData> time_errors;
@@ -129,7 +129,7 @@ TEST_F(TrajectoryEvaluatorTests, TestLinearTrajectory)
     std::make_shared<autoware_planning_msgs::msg::Trajectory>(trajectory),
     std::make_shared<nav_msgs::msg::Odometry>(initial_odom), trajectory_history, 10);
 
-  simulateEgoVehicle(trajectory, trajectory_history, time_errors, metrics_msg);
+  simulate_ego_vehicle(trajectory, trajectory_history, time_errors, metrics_msg);
 
   ASSERT_FALSE(time_errors.empty());
 
@@ -144,7 +144,7 @@ TEST_F(TrajectoryEvaluatorTests, TestStop)
   int num_points = 50;
   double velocity = 5.0;
 
-  auto trajectory = generateLinearTrajectory(length, num_points, velocity, "stopped");
+  auto trajectory = generate_linear_trajectory(length, num_points, velocity, "stopped");
 
   std::vector<trajectory_evaluator::TrajectoryWithTimestamp> trajectory_history;
   std::vector<trajectory_evaluator::TimeErrorData> time_errors;
@@ -158,7 +158,7 @@ TEST_F(TrajectoryEvaluatorTests, TestStop)
     std::make_shared<autoware_planning_msgs::msg::Trajectory>(trajectory),
     std::make_shared<nav_msgs::msg::Odometry>(initial_odom), trajectory_history, 10);
 
-  simulateEgoVehicle(trajectory, trajectory_history, time_errors, metrics_msg);
+  simulate_ego_vehicle(trajectory, trajectory_history, time_errors, metrics_msg);
 
   ASSERT_TRUE(time_errors.empty());
 }
@@ -169,7 +169,7 @@ TEST_F(TrajectoryEvaluatorTests, TestAccelerating)
   int num_points = 50;
   double velocity = 5.0;
 
-  auto trajectory = generateLinearTrajectory(length, num_points, velocity, "accelerating");
+  auto trajectory = generate_linear_trajectory(length, num_points, velocity, "accelerating");
 
   std::vector<trajectory_evaluator::TrajectoryWithTimestamp> trajectory_history;
   std::vector<trajectory_evaluator::TimeErrorData> time_errors;
@@ -183,7 +183,7 @@ TEST_F(TrajectoryEvaluatorTests, TestAccelerating)
     std::make_shared<autoware_planning_msgs::msg::Trajectory>(trajectory),
     std::make_shared<nav_msgs::msg::Odometry>(initial_odom), trajectory_history, 10);
 
-  simulateEgoVehicle(trajectory, trajectory_history, time_errors, metrics_msg);
+  simulate_ego_vehicle(trajectory, trajectory_history, time_errors, metrics_msg);
 
   ASSERT_FALSE(time_errors.empty());
 
@@ -198,7 +198,7 @@ TEST_F(TrajectoryEvaluatorTests, TestDecelerating)
   int num_points = 50;
   double velocity = 5.0;
 
-  auto trajectory = generateLinearTrajectory(length, num_points, velocity, "decelerating");
+  auto trajectory = generate_linear_trajectory(length, num_points, velocity, "decelerating");
 
   std::vector<trajectory_evaluator::TrajectoryWithTimestamp> trajectory_history;
   std::vector<trajectory_evaluator::TimeErrorData> time_errors;
@@ -212,7 +212,7 @@ TEST_F(TrajectoryEvaluatorTests, TestDecelerating)
     std::make_shared<autoware_planning_msgs::msg::Trajectory>(trajectory),
     std::make_shared<nav_msgs::msg::Odometry>(initial_odom), trajectory_history, 10);
 
-  simulateEgoVehicle(trajectory, trajectory_history, time_errors, metrics_msg);
+  simulate_ego_vehicle(trajectory, trajectory_history, time_errors, metrics_msg);
 
   ASSERT_FALSE(time_errors.empty());
   for (const auto & error : time_errors) {
