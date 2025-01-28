@@ -17,6 +17,7 @@
 
 #include "autoware/behavior_path_planner_common/data_manager.hpp"
 #include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
+#include "autoware/universe_utils/ros/debug_publisher.hpp"
 #include "autoware/universe_utils/ros/logger_level_configure.hpp"
 #include "planner_manager.hpp"
 
@@ -72,6 +73,7 @@ using tier4_planning_msgs::msg::RerouteAvailability;
 using tier4_planning_msgs::msg::Scenario;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
+using DebugPublisher = autoware::universe_utils::DebugPublisher;
 
 class BehaviorPathPlannerNode : public rclcpp::Node
 {
@@ -186,6 +188,7 @@ private:
   // debug
   rclcpp::Publisher<AvoidanceDebugMsgArray>::SharedPtr debug_avoidance_msg_array_publisher_;
   rclcpp::Publisher<MarkerArray>::SharedPtr debug_turn_signal_info_publisher_;
+  std::unique_ptr<DebugPublisher> debug_start_planner_evaluation_table_publisher_ptr_;
 
   /**
    * @brief publish reroute availability

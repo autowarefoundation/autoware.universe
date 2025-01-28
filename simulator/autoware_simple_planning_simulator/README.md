@@ -64,7 +64,7 @@ The purpose of this simulator is for the integration test of planning and contro
 - `DELAY_STEER_ACC_GEARED`
 - `DELAY_STEER_ACC_GEARED_WO_FALL_GUARD`
 - `DELAY_STEER_MAP_ACC_GEARED`: applies 1D dynamics and time delay to the steering and acceleration commands. The simulated acceleration is determined by a value converted through the provided acceleration map. This model is valuable for an accurate simulation with acceleration deviations in a real vehicle.
-- `LEARNED_STEER_VEL`: launches learned python models. More about this [here](../learning_based_vehicle_model).
+- `LEARNED_STEER_VEL`: launches learned python models. More about this [here](../autoware_learning_based_vehicle_model).
 
 The following models receive `ACTUATION_CMD` generated from `raw_vehicle_cmd_converter`. Therefore, when these models are selected, the `raw_vehicle_cmd_converter` is also launched.
 
