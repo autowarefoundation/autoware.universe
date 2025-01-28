@@ -426,7 +426,7 @@ autoware_planning_msgs::msg::Trajectory MotionVelocityPlannerNode::generate_traj
   stop_watch.tic("resample");
   TrajectoryPoints resampled_smoothed_trajectory_points;
   // skip points that are too close together to make computation easier
-  if (!resampled_smoothed_trajectory_points.empty()) {
+  if (!smoothed_trajectory_points.empty()) {
     resampled_smoothed_trajectory_points.push_back(smoothed_trajectory_points.front());
     constexpr auto min_interval_squared = 0.5 * 0.5;  // TODO(Maxime): change to a parameter
     for (auto i = 1UL; i < smoothed_trajectory_points.size(); ++i) {

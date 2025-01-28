@@ -622,10 +622,6 @@ std::vector<SlowdownInterval> ObstacleSlowDownModule::plan_slow_down(
 
     // Add debug data
     debug_data_ptr_->obstacles_to_slow_down.push_back(obstacle);
-    // if (!debug_data_ptr_->stop_metrics.has_value()) {
-    //   debug_data_ptr_->slow_down_metrics =
-    //     makeMetrics("PlannerInterface", "slow_down", planner_data);
-    // }
 
     // update prev_slow_down_output_
     new_prev_slow_down_output.push_back(SlowDownOutput{
