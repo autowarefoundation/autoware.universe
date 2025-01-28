@@ -30,6 +30,8 @@ set(${PROJECT_NAME}_src
 set(${PROJECT_NAME}_lib
   lib/association/association.cpp
   lib/association/mu_successive_shortest_path/mu_ssp.cpp
+  lib/object_model/types.cpp
+  lib/object_model/shapes.cpp
   lib/tracker/motion_model/motion_model_base.cpp
   lib/tracker/motion_model/bicycle_motion_model.cpp
   # cspell: ignore ctrv
