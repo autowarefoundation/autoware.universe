@@ -1,9 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Parameters for Centerpoint ML model",
+  "title": "autoware_lidar_centerpoints Parameters",
   "type": "object",
   "definitions": {
-    "centerpoint_ml_package": {
+    "centerpoint_ml_package ": {
       "type": "object",
       "properties": {
         "model_params": {
@@ -12,45 +12,72 @@
           "properties": {
             "class_names": {
               "type": "array",
-              "description": "An array of class names will be predicted.",
+              "description": "List of class names for model outputs.",
               "default": ["CAR", "TRUCK", "BUS", "BICYCLE", "PEDESTRIAN"],
               "uniqueItems": true
             },
             "point_feature_size": {
               "type": "integer",
-              "description": "A number of channels of point feature layer.",
+              "description": "Number of features per point in the point cloud.",
               "default": 4
             },
             "max_voxel_size": {
               "type": "integer",
-              "description": "A maximum size of voxel grid.",
+              "description": "Maximum number of voxels.",
               "default": 40000
             },
             "point_cloud_range": {
               "type": "array",
-              "description": "An array of distance ranges of each class, this must have same length with `class_names`.",
+              "description": "Detection range [min_x, min_y, min_z, max_x, max_y, max_z] in meters.",
+              "items": {
+                "type": "number"
+              },
               "default": [-76.8, -76.8, -4.0, 76.8, 76.8, 6.0]
             },
             "voxel_size": {
               "type": "array",
-              "description": "An array of voxel grid sizes for PointPainting, this must have same length with `paint_class_names`.",
+              "description": "Size of each voxel [x, y, z] in meters.",
+              "items": {
+                "type": "number"
+              },
               "default": [0.32, 0.32, 10.0]
             },
-            "down_sample_factor": {
+            "downsample_factor": {
               "type": "integer",
-              "description": "A scale factor of downsampling points",
-              "default": 1,
-              "minimum": 1
+              "description": "Downsample factor for coordinates.",
+              "default": 1
             },
             "encoder_in_feature_size": {
               "type": "integer",
-              "description": "A size of encoder input feature channels.",
+              "description": "Number of input features to the encoder.",
               "default": 9
+            },
+            "has_variance": {
+              "type": "boolean",
+              "description": "True if the model outputs pose variance as well as pose for each bounding box.",
+              "default": false
+            },
+            "has_twist": {
+              "type": "boolean",
+              "description": "True if the model outputs velocity as well as pose for each bounding box.",
+              "default": false
             }
-          }
+          },
+          "required": [
+            "class_names",
+            "point_feature_size",
+            "max_voxel_size",
+            "point_cloud_range",
+            "voxel_size",
+            "downsample_factor",
+            "encoder_in_feature_size",
+            "has_variance",
+            "has_twist"
+          ]
         }
       },
-      "required": ["model_params"]
+      "required": ["model_params"],
+      "additionalProperties": false
     }
   },
   "properties": {
@@ -61,8 +88,10 @@
           "$ref": "#/definitions/centerpoint_ml_package"
         }
       },
-      "required": ["ros__parameters"]
+      "required": ["ros__parameters"],
+      "additionalProperties": false
     }
   },
-  "required": ["/**"]
+  "required": ["/**"],
+  "additionalProperties": false
 }
