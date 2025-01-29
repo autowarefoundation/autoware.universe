@@ -87,6 +87,7 @@ protected:
       dummy_node, "/planning_evaluator/input/modified_goal", 1);
 
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(dummy_node);
+    vehicle_info_ = autoware::vehicle_info_utils::VehicleInfoUtils(*eval_node).getVehicleInfo();
     publishEgoPose(0.0, 0.0, 0.0);
   }
 
@@ -236,6 +237,9 @@ protected:
   rclcpp::Subscription<MetricArrayMsg>::SharedPtr metric_sub_;
   // TF broadcaster
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
+
+public:
+  autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
 };
 
 TEST_F(EvalTest, TestCurvature)
@@ -276,9 +280,10 @@ TEST_F(EvalTest, TestRelativeAngle)
 TEST_F(EvalTest, TestResampledRelativeAngle)
 {
   setTargetMetric(planning_diagnostics::Metric::resampled_relative_angle);
-  Trajectory t = makeTrajectory({{0.0, 0.0, 0.0}, {3.0, 0.0, 0.0}});
+  Trajectory t = makeTrajectory({{0.0, 0.0, 0.0}, {vehicle_info_.vehicle_length_m, 0.0, 0.0}});
   EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), 0.0);
-  t = makeTrajectory({{0.0, 0.0, 0.0}, {3.0, 3.0, M_PI_4}});
+  t = makeTrajectory(
+    {{0.0, 0.0, 0.0}, {vehicle_info_.vehicle_length_m, vehicle_info_.vehicle_length_m, M_PI_4}});
   EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), M_PI_4);
 }
 

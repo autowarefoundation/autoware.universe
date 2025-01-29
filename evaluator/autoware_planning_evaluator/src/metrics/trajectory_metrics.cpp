@@ -16,6 +16,9 @@
 
 #include "autoware/planning_evaluator/metrics/metrics_utils.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
+
+#include <algorithm>
+
 namespace planning_diagnostics
 {
 namespace metrics
@@ -92,14 +95,19 @@ Accumulator<double> calcTrajectoryResampledRelativeAngle(
     // Get base pose yaw
     const double base_yaw = tf2::getYaw(traj.points.at(base_id).pose.orientation);
 
-    for (size_t i = base_id; i < arc_length.size(); ++i) {
-      if (arc_length[i] >= arc_length[base_id] + resample_offset) {
+    for (size_t target_id = base_id; target_id < arc_length.size(); ++target_id) {
+      if (arc_length[target_id] >= arc_length[base_id] + resample_offset) {
         // Get target pose yaw
-        const double target_yaw = tf2::getYaw(traj.points.at(i).pose.orientation);
+        const double front_target_yaw = tf2::getYaw(traj.points.at(target_id).pose.orientation);
+        const double back_target_yaw = tf2::getYaw(traj.points.at(target_id - 1).pose.orientation);
 
         // Calc diff yaw between base pose yaw and target pose yaw
-        const double diff_yaw = autoware::universe_utils::normalizeRadian(target_yaw - base_yaw);
-        stat.add(std::abs(diff_yaw));
+        const double front_diff_yaw =
+          autoware::universe_utils::normalizeRadian(front_target_yaw - base_yaw);
+        const double back_diff_yaw =
+          autoware::universe_utils::normalizeRadian(back_target_yaw - base_yaw);
+
+        stat.add(std::abs(std::max(front_diff_yaw, back_diff_yaw)));
         break;
       }
     }
