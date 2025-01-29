@@ -84,9 +84,11 @@ public:
    */
   InterpolatedArray & operator=(const InterpolatedArray & other)
   {
-    bases_ = other.bases_;
-    values_ = other.values_;
-    interpolator_ = other.interpolator_->clone();
+    if (this != &other) {
+      bases_ = other.bases_;
+      values_ = other.values_;
+      interpolator_ = other.interpolator_->clone();
+    }
     return *this;
   }
 

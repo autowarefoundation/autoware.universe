@@ -29,9 +29,9 @@ namespace autoware::trajectory
  */
 struct ShiftInterval
 {
-  double start{0.0};   ///< Start position of the shift interval.
-  double end{0.0};     ///< End position of the shift interval.
-  double length{0.0};  ///< Length of the shift to be applied.
+  double start{0.0};           ///< Start position of the shift interval.
+  double end{0.0};             ///< End position of the shift interval.
+  double lateral_offset{0.0};  ///< Length of the shift to be applied.
 };
 
 /**

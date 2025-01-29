@@ -67,7 +67,7 @@ int main()
 
     autoware::trajectory::ShiftInterval shift_interval;
     shift_interval.end = -1.0;
-    shift_interval.length = 0.5;
+    shift_interval.lateral_offset = 0.5;
 
     auto shifted_trajectory = autoware::trajectory::shift(*trajectory, shift_interval);
 
@@ -99,7 +99,7 @@ int main()
     autoware::trajectory::ShiftInterval shift_interval;
     shift_interval.start = trajectory->length() / 4.0;
     shift_interval.end = trajectory->length() * 3.0 / 4.0;
-    shift_interval.length = 0.5;
+    shift_interval.lateral_offset = 0.5;
     auto shifted_trajectory = autoware::trajectory::shift(*trajectory, shift_interval);
 
     for (double s = 0.0; s < shifted_trajectory.length(); s += 0.01) {
@@ -130,7 +130,7 @@ int main()
     autoware::trajectory::ShiftInterval shift_interval;
     shift_interval.start = trajectory->length() * 3.0 / 4.0;
     shift_interval.end = trajectory->length() / 4.0;
-    shift_interval.length = 0.5;
+    shift_interval.lateral_offset = 0.5;
     auto shifted_trajectory = autoware::trajectory::shift(*trajectory, shift_interval);
 
     for (double s = 0.0; s < shifted_trajectory.length(); s += 0.01) {
@@ -161,12 +161,12 @@ int main()
     autoware::trajectory::ShiftInterval shift_interval1;
     shift_interval1.start = trajectory->length() / 4.0;
     shift_interval1.end = trajectory->length() * 2.0 / 4.0;
-    shift_interval1.length = 0.5;
+    shift_interval1.lateral_offset = 0.5;
 
     autoware::trajectory::ShiftInterval shift_interval2;
     shift_interval2.start = trajectory->length() * 2.0 / 4.0;
     shift_interval2.end = trajectory->length() * 3.0 / 4.0;
-    shift_interval2.length = -0.5;
+    shift_interval2.lateral_offset = -0.5;
 
     auto shifted_trajectory =
       autoware::trajectory::shift(*trajectory, {shift_interval1, shift_interval2});

@@ -231,7 +231,7 @@ void shift_impl(
   // lateral shift
   if (shift_interval.end <= 0.0) {
     for (size_t i = 0; i < bases.size(); ++i) {
-      shift_lengths->at(i) += shift_interval.length;
+      shift_lengths->at(i) += shift_interval.lateral_offset;
     }
     return;
   }
@@ -240,8 +240,8 @@ void shift_impl(
   const bool shift_direction = shift_interval.end > shift_interval.start;
   // Calculate base lengths
   auto [base_lon, base_lat] = calc_base_lengths(
-    shift_arc_length,       //
-    shift_interval.length,  //
+    shift_arc_length,               //
+    shift_interval.lateral_offset,  //
     shift_parameters);
 
   auto cubic_spline =
