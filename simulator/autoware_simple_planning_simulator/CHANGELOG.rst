@@ -1,6 +1,35 @@
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Changelog for package simple_planning_simulator
+Changelog for package autoware_simple_planning_simulator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat: apply `autoware\_` prefix for `learning_based_vehicle_model` (`#9991 <https://github.com/autowarefoundation/autoware.universe/issues/9991>`_)
+* feat: apply `autoware\_` prefix for `simple_planning_simulator` (`#9995 <https://github.com/autowarefoundation/autoware.universe/issues/9995>`_)
+  * feat(simple_planning_simulator): apply `autoware\_` prefix (see below):
+  Note:
+  * In this commit, I did not organize a folder structure.
+  The folder structure will be organized in the next some commits.
+  * The changes will follow the Autoware's guideline as below:
+  - https://autowarefoundation.github.io/autoware-documentation/main/contributing/coding-guidelines/ros-nodes/directory-structure/#package-folder
+  * rename(simple_planning_simulator): move headers under `include/autoware`:
+  * Fixes due to this changes for .hpp/.cpp files will be applied in the next commit
+  * fix(simple_planning_simulator): fix include header paths
+  * To follow the previous commit
+  * rename: `simple_planning_simulator` => `autoware_simple_planning_simulator`
+  * bug(autoware_simple_planning_simulator): fix missing changes
+  * style(pre-commit): autofix
+  * bug(autoware_simple_planning_simulator): fix errors in build and tests
+  * I had to run after `rm -rf install build`, ... sorry
+  * style(pre-commit): autofix
+  * Fixed NOLINT
+  * Added NOLINT
+  * Fixed to autoware_simple_planning_simulator
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+  Co-authored-by: Shintaro Sakoda <shintaro.sakoda@tier4.jp>
+* Contributors: Fumiya Watanabe, Junya Sasaki
 
 0.40.0 (2024-12-12)
 -------------------

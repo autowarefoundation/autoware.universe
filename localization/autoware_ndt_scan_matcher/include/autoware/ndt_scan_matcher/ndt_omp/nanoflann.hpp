@@ -2467,4 +2467,4 @@ public:
 
 /** @} */  // end of grouping
 }  // namespace nanoflann
-//NOLINTEND
+// NOLINTEND

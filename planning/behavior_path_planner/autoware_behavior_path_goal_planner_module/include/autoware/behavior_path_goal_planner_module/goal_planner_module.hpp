@@ -18,6 +18,7 @@
 #include "autoware/behavior_path_goal_planner_module/decision_state.hpp"
 #include "autoware/behavior_path_goal_planner_module/fixed_goal_planner_base.hpp"
 #include "autoware/behavior_path_goal_planner_module/goal_planner_parameters.hpp"
+#include "autoware/behavior_path_goal_planner_module/pull_over_planner/bezier_pull_over.hpp"
 #include "autoware/behavior_path_goal_planner_module/pull_over_planner/freespace_pull_over.hpp"
 #include "autoware/behavior_path_goal_planner_module/thread_data.hpp"
 #include "autoware/behavior_path_planner_common/utils/parking_departure/common_module_data.hpp"
@@ -86,8 +87,8 @@ struct PullOverContextData
   explicit PullOverContextData(
     const bool is_stable_safe_path, const PredictedObjects & static_objects,
     const PredictedObjects & dynamic_objects, const PathDecisionState & prev_state,
-    const bool is_stopped, const LaneParkingResponse & lane_parking_response,
-    const FreespaceParkingResponse & freespace_parking_response)
+    const bool is_stopped, LaneParkingResponse && lane_parking_response,
+    FreespaceParkingResponse && freespace_parking_response)
   : is_stable_safe_path(is_stable_safe_path),
     static_target_objects(static_objects),
     dynamic_target_objects(dynamic_objects),
@@ -112,8 +113,8 @@ struct PullOverContextData
   void update(
     const bool is_stable_safe_path_, const PredictedObjects static_target_objects_,
     const PredictedObjects dynamic_target_objects_, const PathDecisionState prev_state_for_debug_,
-    const bool is_stopped_, const LaneParkingResponse & lane_parking_response_,
-    const FreespaceParkingResponse & freespace_parking_response_)
+    const bool is_stopped_, LaneParkingResponse && lane_parking_response_,
+    FreespaceParkingResponse && freespace_parking_response_)
   {
     is_stable_safe_path = is_stable_safe_path_;
     static_target_objects = static_target_objects_;
@@ -196,6 +197,21 @@ private:
     original_upstream_module_output_;  //<! upstream_module_output used for generating last
                                        // pull_over_path_candidates(only updated when new candidates
                                        // are generated)
+  std::shared_ptr<BezierPullOver> bezier_pull_over_planner_;
+  const double pull_over_angle_threshold;
+
+  bool switch_bezier_{false};
+  void normal_pullover_planning_helper(
+    const std::shared_ptr<PlannerData> planner_data, const GoalCandidates & goal_candidates,
+    const BehaviorModuleOutput & upstream_module_output,
+    const lanelet::ConstLanelets current_lanelets, std::optional<Pose> & closest_start_pose,
+    std::vector<PullOverPath> & path_candidates);
+  void bezier_planning_helper(
+    const std::shared_ptr<PlannerData> planner_data, const GoalCandidates & goal_candidates,
+    const BehaviorModuleOutput & upstream_module_output,
+    const lanelet::ConstLanelets current_lanelets, std::optional<Pose> & closest_start_pose,
+    std::vector<PullOverPath> & path_candidates,
+    std::optional<std::vector<size_t>> & sorted_indices) const;
 };
 
 class FreespaceParkingPlanner
@@ -302,6 +318,7 @@ public:
 private:
   std::pair<LaneParkingResponse, FreespaceParkingResponse> syncWithThreads();
 
+  bool trigger_thread_on_approach_{false};
   // NOTE: never access to following variables except in updateData()!!!
   std::mutex lane_parking_mutex_;
   std::optional<LaneParkingRequest> lane_parking_request_;
@@ -433,7 +450,8 @@ private:
   std::optional<PullOverPath> selectPullOverPath(
     const PullOverContextData & context_data,
     const std::vector<PullOverPath> & pull_over_path_candidates,
-    const GoalCandidates & goal_candidates) const;
+    const GoalCandidates & goal_candidates,
+    const std::optional<std::vector<size_t>> sorted_bezier_indices_opt) const;
 
   // lanes and drivable area
   std::vector<DrivableLanes> generateDrivableLanes() const;

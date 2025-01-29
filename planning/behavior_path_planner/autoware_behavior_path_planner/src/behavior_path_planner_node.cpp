@@ -20,6 +20,7 @@
 #include <autoware/universe_utils/ros/update_param.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 
+#include <autoware_internal_debug_msgs/msg/string_stamped.hpp>
 #include <tier4_planning_msgs/msg/path_change_module_id.hpp>
 
 #include <memory>
@@ -30,6 +31,7 @@ namespace autoware::behavior_path_planner
 {
 using autoware::vehicle_info_utils::VehicleInfoUtils;
 using tier4_planning_msgs::msg::PathChangeModuleId;
+using DebugStringMsg = autoware_internal_debug_msgs::msg::StringStamped;
 
 BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & node_options)
 : Node("behavior_path_planner", node_options),
@@ -55,8 +57,12 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
     create_publisher<PoseWithUuidStamped>("~/output/modified_goal", durable_qos);
   reroute_availability_publisher_ =
     create_publisher<RerouteAvailability>("~/output/is_reroute_available", 1);
+
   debug_avoidance_msg_array_publisher_ =
     create_publisher<AvoidanceDebugMsgArray>("~/debug/avoidance_debug_message_array", 1);
+
+  debug_start_planner_evaluation_table_publisher_ptr_ =
+    std::make_unique<DebugPublisher>(this, "~/debug/start_planner_evaluation_table");
 
   debug_turn_signal_info_publisher_ = create_publisher<MarkerArray>("~/debug/turn_signal_info", 1);
 
@@ -607,6 +613,11 @@ void BehaviorPathPlannerNode::publishSceneModuleDebugMsg(
   const auto avoidance_debug_message = debug_messages_data_ptr->getAvoidanceModuleDebugMsg();
   if (avoidance_debug_message) {
     debug_avoidance_msg_array_publisher_->publish(*avoidance_debug_message);
+  }
+  const auto start_planner_debug_message = debug_messages_data_ptr->getStartPlannerModuleDebugMsg();
+  if (start_planner_debug_message) {
+    debug_start_planner_evaluation_table_publisher_ptr_->publish<DebugStringMsg>(
+      "start_planner_evaluation_table", *(start_planner_debug_message));
   }
 }
 

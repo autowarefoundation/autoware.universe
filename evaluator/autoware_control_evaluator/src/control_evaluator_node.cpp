@@ -244,6 +244,47 @@ void ControlEvaluatorNode::AddKinematicStateMetricMsg(
   return;
 }
 
+void ControlEvaluatorNode::AddSteeringMetricMsg(const SteeringReport & steering_status)
+{
+  // steering angle
+  double cur_steering_angle = steering_status.steering_tire_angle;
+  const double cur_t = static_cast<double>(steering_status.stamp.sec) +
+                       static_cast<double>(steering_status.stamp.nanosec) * 1e-9;
+  AddMetricMsg(Metric::steering_angle, cur_steering_angle);
+
+  if (!prev_steering_angle_timestamp_.has_value()) {
+    prev_steering_angle_timestamp_ = cur_t;
+    prev_steering_angle_ = cur_steering_angle;
+    return;
+  }
+
+  // d_t
+  const double dt = cur_t - prev_steering_angle_timestamp_.value();
+  if (dt < std::numeric_limits<double>::epsilon()) {
+    prev_steering_angle_timestamp_ = cur_t;
+    prev_steering_angle_ = cur_steering_angle;
+    return;
+  }
+
+  // steering rate
+  const double steering_rate = (cur_steering_angle - prev_steering_angle_.value()) / dt;
+  AddMetricMsg(Metric::steering_rate, steering_rate);
+
+  // steering acceleration
+  if (!prev_steering_rate_.has_value()) {
+    prev_steering_angle_timestamp_ = cur_t;
+    prev_steering_angle_ = cur_steering_angle;
+    prev_steering_rate_ = steering_rate;
+    return;
+  }
+  const double steering_acceleration = (steering_rate - prev_steering_rate_.value()) / dt;
+  AddMetricMsg(Metric::steering_acceleration, steering_acceleration);
+
+  prev_steering_angle_timestamp_ = cur_t;
+  prev_steering_angle_ = cur_steering_angle;
+  prev_steering_rate_ = steering_rate;
+}
+
 void ControlEvaluatorNode::AddLateralDeviationMetricMsg(
   const Trajectory & traj, const Point & ego_point)
 {
@@ -294,6 +335,7 @@ void ControlEvaluatorNode::onTimer()
   const auto odom = odometry_sub_.takeData();
   const auto acc = accel_sub_.takeData();
   const auto behavior_path = behavior_path_subscriber_.takeData();
+  const auto steering_status = steering_sub_.takeData();
 
   // calculate deviation metrics
   if (odom && traj && !traj->points.empty()) {
@@ -318,6 +360,10 @@ void ControlEvaluatorNode::onTimer()
   if (odom && behavior_path) {
     const Pose ego_pose = odom->pose.pose;
     AddBoundaryDistanceMetricMsg(*behavior_path, ego_pose);
+  }
+
+  if (steering_status) {
+    AddSteeringMetricMsg(*steering_status);
   }
 
   // Publish metrics
