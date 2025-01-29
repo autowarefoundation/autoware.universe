@@ -52,7 +52,7 @@
 #ifndef AUTOWARE__NDT_SCAN_MATCHER__NDT_OMP__MULTI_VOXEL_GRID_COVARIANCE_OMP_H_
 #define AUTOWARE__NDT_SCAN_MATCHER__NDT_OMP__MULTI_VOXEL_GRID_COVARIANCE_OMP_H_
 
-// cspell:ignore Magnusson, Okorn, evecs, evals, covar, eigvalue, futs
+// cspell:ignore Magnusson, Okorn, evecs, evals, covar, eigvalue, futs, nanoflann
 #include "autoware/ndt_scan_matcher/ndt_omp/kdtree_nanoflann.hpp"
 
 #include <Eigen/Cholesky>

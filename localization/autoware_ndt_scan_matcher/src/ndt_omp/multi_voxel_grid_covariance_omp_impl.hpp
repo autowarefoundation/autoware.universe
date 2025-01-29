@@ -52,7 +52,7 @@
 #ifndef NDT_OMP__MULTI_VOXEL_GRID_COVARIANCE_OMP_IMPL_HPP_
 #define NDT_OMP__MULTI_VOXEL_GRID_COVARIANCE_OMP_IMPL_HPP_
 
-// cspell:ignore evecs, evals, covar, eigvalue, futs
+// cspell:ignore evecs, evals, covar, eigvalue, futs, nanoflann, dists
 
 #include "autoware/ndt_scan_matcher/ndt_omp/multi_voxel_grid_covariance_omp.h"
 
