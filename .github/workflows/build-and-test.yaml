@@ -4,11 +4,11 @@ on:
   push:
     branches:
       - main
-  workflow_dispatch:
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.run_id }}
-  cancel-in-progress: true
+  # Ensures sequential execution of this workflow
+  group: ${{ github.workflow }}
+  cancel-in-progress: false
 
 env:
   CC: /usr/lib/ccache/gcc

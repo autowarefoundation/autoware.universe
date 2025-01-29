@@ -31,7 +31,7 @@ std::unique_ptr<SceneModuleInterface> GoalPlannerModuleManager::createNewSceneMo
 {
   return std::make_unique<GoalPlannerModule>(
     name_, *node_, parameters_, rtc_interface_ptr_map_,
-    objects_of_interest_marker_interface_ptr_map_);
+    objects_of_interest_marker_interface_ptr_map_, planning_factor_interface_);
 }
 
 GoalPlannerParameters GoalPlannerModuleManager::initGoalPlannerParameters(
@@ -139,6 +139,7 @@ GoalPlannerParameters GoalPlannerModuleManager::initGoalPlannerParameters(
     const std::string ns = base_ns + "pull_over.";
     p.pull_over_minimum_request_length =
       node->declare_parameter<double>(ns + "minimum_request_length");
+    p.pull_over_prepare_length = node->declare_parameter<double>(ns + "pull_over_prepare_length");
     p.pull_over_velocity = node->declare_parameter<double>(ns + "pull_over_velocity");
     p.pull_over_minimum_velocity =
       node->declare_parameter<double>(ns + "pull_over_minimum_velocity");
@@ -264,6 +265,15 @@ GoalPlannerParameters GoalPlannerModuleManager::initGoalPlannerParameters(
       node->declare_parameter<double>(ns + "max_planning_time");
     p.rrt_star_parameters.neighbor_radius = node->declare_parameter<double>(ns + "neighbor_radius");
     p.rrt_star_parameters.margin = node->declare_parameter<double>(ns + "margin");
+  }
+
+  // bezier parking
+  {
+    const std::string ns = base_ns + "pull_over.bezier_parking.";
+    p.bezier_parking.pull_over_angle_threshold =
+      node->declare_parameter<double>(ns + "pull_over_angle_threshold");
+    p.bezier_parking.after_shift_straight_distance =
+      node->declare_parameter<double>(ns + "after_shift_straight_distance");
   }
 
   // stop condition

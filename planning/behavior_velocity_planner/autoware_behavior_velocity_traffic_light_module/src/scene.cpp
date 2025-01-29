@@ -43,8 +43,11 @@ namespace autoware::behavior_velocity_planner
 TrafficLightModule::TrafficLightModule(
   const int64_t lane_id, const lanelet::TrafficLight & traffic_light_reg_elem,
   lanelet::ConstLanelet lane, const PlannerParam & planner_param, const rclcpp::Logger logger,
-  const rclcpp::Clock::SharedPtr clock)
-: SceneModuleInterface(lane_id, logger, clock),
+  const rclcpp::Clock::SharedPtr clock,
+  const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+  const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
+    planning_factor_interface)
+: SceneModuleInterfaceWithRTC(lane_id, logger, clock, time_keeper, planning_factor_interface),
   lane_id_(lane_id),
   traffic_light_reg_elem_(traffic_light_reg_elem),
   lane_(lane),
@@ -52,7 +55,6 @@ TrafficLightModule::TrafficLightModule(
   debug_data_(),
   is_prev_state_stop_(false)
 {
-  velocity_factor_.init(PlanningBehavior::TRAFFIC_SIGNAL);
   planner_param_ = planner_param;
 }
 
@@ -291,9 +293,11 @@ tier4_planning_msgs::msg::PathWithLaneId TrafficLightModule::insertStopPose(
   size_t insert_index = insert_target_point_idx;
   planning_utils::insertVelocity(modified_path, target_point_with_lane_id, 0.0, insert_index);
 
-  velocity_factor_.set(
+  planning_factor_interface_->add(
     modified_path.points, planner_data_->current_odometry->pose,
-    target_point_with_lane_id.point.pose, VelocityFactor::UNKNOWN);
+    target_point_with_lane_id.point.pose, target_point_with_lane_id.point.pose,
+    tier4_planning_msgs::msg::PlanningFactor::STOP, tier4_planning_msgs::msg::SafetyFactorArray{},
+    true /*is_driving_forward*/, 0.0, 0.0 /*shift distance*/, "");
 
   return modified_path;
 }
