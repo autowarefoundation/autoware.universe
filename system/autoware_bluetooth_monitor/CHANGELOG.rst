@@ -1,6 +1,30 @@
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Changelog for package bluetooth_monitor
+Changelog for package autoware_bluetooth_monitor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat: apply `autoware\_` prefix for `bluetooth_monitor` (`#9960 <https://github.com/autowarefoundation/autoware.universe/issues/9960>`_)
+  * feat(bluetooth_monitor): apply `autoware\_` prefix (see below):
+  * In this commit, I did not organize a folder structure.
+  The folder structure will be organized in the next some commits.
+  * The changes will follow the Autoware's guideline as below:
+  - https://autowarefoundation.github.io/autoware-documentation/main/contributing/coding-guidelines/ros-nodes/directory-structure/#package-folder
+  * rename(bluetooth_monitor): move headers under `include/autoware`:
+  * Fixes due to this changes for .hpp/.cpp files will be applied in the next commit
+  * fix(bluetooth_monitor): fix include paths
+  * To follow the previous commit
+  * bug(bluetooth_monitor): fix a missing prefix bug
+  * rename: `bluetooth_monitor` => `autoware_bluetooth_monitor`
+  * style(pre-commit): autofix
+  * bug(autoware_bluetooth_monitor): revert wrongly updated copyrights
+  * bug(autoware_bluetooth_monitor): `autoware\_` prefix is not needed here
+  * update: `CODEOWNERS`
+  * update(autoware_bluetooth_monitor): `README.md`
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* Contributors: Fumiya Watanabe, Junya Sasaki
 
 0.40.0 (2024-12-12)
 -------------------

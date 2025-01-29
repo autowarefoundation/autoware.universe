@@ -2,6 +2,41 @@
 Changelog for package autoware_behavior_path_start_planner_module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(start_planner): visualize planner evaluation table in rviz (`#10029 <https://github.com/autowarefoundation/autoware.universe/issues/10029>`_)
+  visualize planner evaluation table in rviz
+* fix(start_planner, goal_planner): refactor lane departure checker initialization (`#9944 <https://github.com/autowarefoundation/autoware.universe/issues/9944>`_)
+* feat(planning_factor)!: remove velocity_factor, steering_factor and introduce planning_factor (`#9927 <https://github.com/autowarefoundation/autoware.universe/issues/9927>`_)
+  Co-authored-by: Satoshi OTA <44889564+satoshi-ota@users.noreply.github.com>
+  Co-authored-by: Ryohsuke Mitsudome <43976834+mitsudome-r@users.noreply.github.com>
+  Co-authored-by: satoshi-ota <satoshi.ota928@gmail.com>
+* test(start_planner): disable GenerateValidFreespacePullOutPath test (`#9937 <https://github.com/autowarefoundation/autoware.universe/issues/9937>`_)
+* test(autoware_behavior_path_start_planner_module):  add test helper and implement unit tests for FreespacePullOut (`#9832 <https://github.com/autowarefoundation/autoware.universe/issues/9832>`_)
+  * refactor(autoware_behavior_path_start_planner_module): remove unnecessary time_keeper parameter from pull-out planners
+  * refactor(autoware_behavior_path_start_planner_module): remove TimeKeeper parameter from pull-out planners
+  * refactor(lane_departure_checker): improve LaneDepartureChecker initialization and parameter handling
+  * refactor(planner): add planner_data parameter to plan methods in pull out planners
+  * refactor(autoware_behavior_path_start_planner_module): remove LaneDepartureChecker dependency from pull-out planners
+  ---------
+* refactor(lane_departure_checker): improve LaneDepartureChecker initialization and parameter handling (`#9791 <https://github.com/autowarefoundation/autoware.universe/issues/9791>`_)
+  * refactor(lane_departure_checker): improve LaneDepartureChecker initialization and parameter handling
+  ---------
+* refactor(autoware_behavior_path_start_planner_module): remove unnecessary time_keeper parameter from pull-out planners (`#9827 <https://github.com/autowarefoundation/autoware.universe/issues/9827>`_)
+  * refactor(autoware_behavior_path_start_planner_module): remove unnecessary time_keeper parameter from pull-out planners
+  ---------
+* fix(behavior_path_planner): add freespace_planning_algorithms dependency (`#9800 <https://github.com/autowarefoundation/autoware.universe/issues/9800>`_)
+* test(autoware_behavior_path_start_planner_module): add unit tests for shift shift pull out planner (`#9776 <https://github.com/autowarefoundation/autoware.universe/issues/9776>`_)
+  feat(behavior_path_planner): add unit tests for ShiftPullOut path planning
+* refactor(autoware_behavior_path_start_planner_module): add data_structs.cpp and init method for StartPlannerParameters (`#9736 <https://github.com/autowarefoundation/autoware.universe/issues/9736>`_)
+  feat(autoware_behavior_path_start_planner_module): add data_structs.cpp and init method for StartPlannerParameters
+* test(autoware_behavior_path_start_planner_module): add unit tests for geometric shift pull out planner (`#9640 <https://github.com/autowarefoundation/autoware.universe/issues/9640>`_)
+  * feat(behavior_path_planner): add unit tests for geometric pull-out planner and improve collision check
+  * feat(behavior_path_planner): add boolean parameter for divide_pull_out_path and update tests
+  ---------
+* Contributors: Fumiya Watanabe, Kyoichi Sugahara, Mamoru Sobue, Takayuki Murooka
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

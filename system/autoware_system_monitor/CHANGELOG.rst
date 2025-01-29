@@ -1,6 +1,26 @@
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Changelog for package system_monitor
+Changelog for package autoware_system_monitor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat: apply `autoware\_` prefix for `system_monitor` (`#10017 <https://github.com/autowarefoundation/autoware.universe/issues/10017>`_)
+  * feat(system_monitor): apply `autoware\_` prefix (see below):
+  * The `system_monitor` operates independently from other modules in `autoware.universe`, so the `autoware\_` prefix is added only to the package name.
+  * The `autoware::` namespace is not used because C language does not support namespaces.
+  * Headers are not moved under `include/autoware` to maintain compatibility for use outside the `autoware` context.
+  * For users utilizing this package within `autoware.universe`, only the package name includes the `autoware\_` prefix.
+  This approach explains the unique namespacing and naming conventions for `system_monitor` compared to other packages.
+  * bug(system_monitor): fix missing package name update
+  * rename: `system_monitor` => `autoware_system_monitor`
+  * style(pre-commit): autofix
+  * update: `CODEOWNERS`
+  * bug(autoware_system_monitor): apply missing fix
+  * update: `CODEOWNERS`
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* Contributors: Fumiya Watanabe, Junya Sasaki
 
 0.40.0 (2024-12-12)
 -------------------

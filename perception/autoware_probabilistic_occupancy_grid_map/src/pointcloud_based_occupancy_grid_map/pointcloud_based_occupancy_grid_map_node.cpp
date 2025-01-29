@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2024 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -85,26 +85,27 @@ PointcloudBasedOccupancyGridMapNode::PointcloudBasedOccupancyGridMapNode(
   const std::string updater_type = this->declare_parameter<std::string>("updater_type");
   if (updater_type == "binary_bayes_filter") {
     occupancy_grid_map_updater_ptr_ = std::make_unique<OccupancyGridMapBBFUpdater>(
-      map_length / map_resolution, map_length / map_resolution, map_resolution);
+      true, map_length / map_resolution, map_length / map_resolution, map_resolution);
   } else {
     RCLCPP_WARN(
       get_logger(),
       "specified occupancy grid map updater type [%s] is not found, use binary_bayes_filter",
       updater_type.c_str());
     occupancy_grid_map_updater_ptr_ = std::make_unique<OccupancyGridMapBBFUpdater>(
-      map_length / map_resolution, map_length / map_resolution, map_resolution);
+      true, map_length / map_resolution, map_length / map_resolution, map_resolution);
   }
   occupancy_grid_map_updater_ptr_->initRosParam(*this);
 
   const std::string grid_map_type = this->declare_parameter<std::string>("grid_map_type");
+
   if (grid_map_type == "OccupancyGridMapProjectiveBlindSpot") {
     occupancy_grid_map_ptr_ = std::make_unique<OccupancyGridMapProjectiveBlindSpot>(
-      occupancy_grid_map_updater_ptr_->getSizeInCellsX(),
+      true, occupancy_grid_map_updater_ptr_->getSizeInCellsX(),
       occupancy_grid_map_updater_ptr_->getSizeInCellsY(),
       occupancy_grid_map_updater_ptr_->getResolution());
   } else if (grid_map_type == "OccupancyGridMapFixedBlindSpot") {
     occupancy_grid_map_ptr_ = std::make_unique<OccupancyGridMapFixedBlindSpot>(
-      occupancy_grid_map_updater_ptr_->getSizeInCellsX(),
+      true, occupancy_grid_map_updater_ptr_->getSizeInCellsX(),
       occupancy_grid_map_updater_ptr_->getSizeInCellsY(),
       occupancy_grid_map_updater_ptr_->getResolution());
   } else {
@@ -113,7 +114,7 @@ PointcloudBasedOccupancyGridMapNode::PointcloudBasedOccupancyGridMapNode(
       "specified occupancy grid map type [%s] is not found, use OccupancyGridMapFixedBlindSpot",
       grid_map_type.c_str());
     occupancy_grid_map_ptr_ = std::make_unique<OccupancyGridMapFixedBlindSpot>(
-      occupancy_grid_map_updater_ptr_->getSizeInCellsX(),
+      true, occupancy_grid_map_updater_ptr_->getSizeInCellsX(),
       occupancy_grid_map_updater_ptr_->getSizeInCellsY(),
       occupancy_grid_map_updater_ptr_->getResolution());
   }
@@ -139,6 +140,9 @@ PointcloudBasedOccupancyGridMapNode::PointcloudBasedOccupancyGridMapNode(
       time_keeper_ = std::make_shared<autoware::universe_utils::TimeKeeper>(time_keeper);
     }
   }
+
+  cudaStreamCreate(&raw_pointcloud_.stream);
+  cudaStreamCreate(&obstacle_pointcloud_.stream);
 }
 
 void PointcloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw(
@@ -151,30 +155,27 @@ void PointcloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw(
   if (stop_watch_ptr_) {
     stop_watch_ptr_->toc("processing_time", true);
   }
-  // if scan_origin_frame_ is "", replace it with input_raw_msg->header.frame_id
-  if (scan_origin_frame_.empty()) {
-    scan_origin_frame_ = input_raw_msg->header.frame_id;
-  }
 
-  PointCloud2 trans_input_raw{}, trans_input_obstacle{};
-  bool is_raw_transformed = false;
-  bool is_obstacle_transformed = false;
+  raw_pointcloud_.fromROSMsgAsync(*input_raw_msg);
+  obstacle_pointcloud_.fromROSMsgAsync(*input_obstacle_msg);
+
+  // if scan_origin_frame_ is "", replace it with raw_pointcloud_.header.frame_id
+  if (scan_origin_frame_.empty()) {
+    scan_origin_frame_ = raw_pointcloud_.header.frame_id;
+  }
 
   // Prepare for applying height filter
   if (use_height_filter_) {
     // Make sure that the frame is base_link
-    if (input_raw_msg->header.frame_id != base_link_frame_) {
-      if (!utils::transformPointcloud(*input_raw_msg, *tf2_, base_link_frame_, trans_input_raw)) {
+    if (raw_pointcloud_.header.frame_id != base_link_frame_) {
+      if (!utils::transformPointcloudAsync(raw_pointcloud_, *tf2_, base_link_frame_)) {
         return;
       }
-      is_raw_transformed = true;
     }
     if (input_obstacle_msg->header.frame_id != base_link_frame_) {
-      if (!utils::transformPointcloud(
-            *input_obstacle_msg, *tf2_, base_link_frame_, trans_input_obstacle)) {
+      if (!utils::transformPointcloudAsync(obstacle_pointcloud_, *tf2_, base_link_frame_)) {
         return;
       }
-      is_obstacle_transformed = true;
     }
     occupancy_grid_map_ptr_->setHeightLimit(min_height_, max_height_);
   } else {
@@ -182,32 +183,16 @@ void PointcloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw(
       -std::numeric_limits<double>::infinity(), std::numeric_limits<double>::infinity());
   }
 
-  const PointCloud2::ConstSharedPtr input_raw_use =
-    is_raw_transformed ? std::make_shared<PointCloud2>(trans_input_raw) : input_raw_msg;
-  const PointCloud2::ConstSharedPtr input_obstacle_use =
-    is_obstacle_transformed ? std::make_shared<PointCloud2>(trans_input_obstacle)
-                            : input_obstacle_msg;
-
-  // Filter obstacle pointcloud by raw pointcloud
-  PointCloud2 input_obstacle_pc_common{};
-  bool use_input_obstacle_pc_common = false;
-  if (filter_obstacle_pointcloud_by_raw_pointcloud_) {
-    if (utils::extractCommonPointCloud(
-          *input_obstacle_use, *input_raw_use, input_obstacle_pc_common)) {
-      use_input_obstacle_pc_common = true;
-    }
-  }
-
   // Get from map to sensor frame pose
   Pose robot_pose{};
   Pose gridmap_origin{};
   Pose scan_origin{};
   try {
-    robot_pose = utils::getPose(input_raw_msg->header.stamp, *tf2_, base_link_frame_, map_frame_);
+    robot_pose = utils::getPose(raw_pointcloud_.header.stamp, *tf2_, base_link_frame_, map_frame_);
     gridmap_origin =
-      utils::getPose(input_raw_msg->header.stamp, *tf2_, gridmap_origin_frame_, map_frame_);
+      utils::getPose(raw_pointcloud_.header.stamp, *tf2_, gridmap_origin_frame_, map_frame_);
     scan_origin =
-      utils::getPose(input_raw_msg->header.stamp, *tf2_, scan_origin_frame_, map_frame_);
+      utils::getPose(raw_pointcloud_.header.stamp, *tf2_, scan_origin_frame_, map_frame_);
   } catch (tf2::TransformException & ex) {
     RCLCPP_WARN_STREAM(get_logger(), ex.what());
     return;
@@ -224,15 +209,15 @@ void PointcloudBasedOccupancyGridMapNode::onPointcloudWithObstacleAndRaw(
       gridmap_origin.position.x - occupancy_grid_map_ptr_->getSizeInMetersX() / 2,
       gridmap_origin.position.y - occupancy_grid_map_ptr_->getSizeInMetersY() / 2);
     occupancy_grid_map_ptr_->updateWithPointCloud(
-      *input_raw_use,
-      (use_input_obstacle_pc_common ? input_obstacle_pc_common : *input_obstacle_use), robot_pose,
-      scan_origin);
+      raw_pointcloud_, obstacle_pointcloud_, robot_pose, scan_origin);
   }
 
   if (enable_single_frame_mode_) {
     std::unique_ptr<ScopedTimeTrack> inner_st_ptr;
     if (time_keeper_)
       inner_st_ptr = std::make_unique<ScopedTimeTrack>("publish_occupancy_grid_map", *time_keeper_);
+
+    occupancy_grid_map_ptr_->copyDeviceCostmapToHost();
 
     // publish
     occupancy_grid_map_pub_->publish(OccupancyGridMapToMsgPtr(
