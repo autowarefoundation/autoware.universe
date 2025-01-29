@@ -18,7 +18,6 @@
 
 #include "autoware/behavior_velocity_planner_common/scene_module_interface.hpp"
 #include "autoware/behavior_velocity_planner_common/utilization/util.hpp"
-#include "autoware/motion_utils/factor/velocity_factor_interface.hpp"
 #include "autoware/trajectory/path_point_with_lane_id.hpp"
 
 #include <Eigen/Core>
@@ -30,6 +29,7 @@
 
 #include <lanelet2_core/LaneletMap.h>
 
+#include <memory>
 #include <optional>
 #include <utility>
 
@@ -68,7 +68,10 @@ public:
   StopLineModule(
     const int64_t module_id, lanelet::ConstLineString3d stop_line,
     const PlannerParam & planner_param, const rclcpp::Logger & logger,
-    const rclcpp::Clock::SharedPtr clock);
+    const rclcpp::Clock::SharedPtr clock,
+    const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+    const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
+      planning_factor_interface);
 
   bool modifyPathVelocity(PathWithLaneId * path) override;
 
@@ -94,10 +97,6 @@ public:
   void updateStateAndStoppedTime(
     State * state, std::optional<rclcpp::Time> * stopped_time, const rclcpp::Time & now,
     const double & distance_to_stop_point, const bool & is_vehicle_stopped) const;
-
-  static void updateVelocityFactor(
-    autoware::motion_utils::VelocityFactorInterface * velocity_factor, const State & state,
-    const double & distance_to_stop_point);
 
   void updateDebugData(
     DebugData * debug_data, const geometry_msgs::msg::Pose & stop_pose, const State & state) const;

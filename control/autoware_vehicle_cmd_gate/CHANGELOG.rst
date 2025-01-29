@@ -2,6 +2,13 @@
 Changelog for package autoware_vehicle_cmd_gate
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_vehicle_cmd_gate)!: tier4-debug_msgs changed to autoware_internal_debug_msgs in autoware_vehicle_cmd_gate (`#9856 <https://github.com/autowarefoundation/autoware.universe/issues/9856>`_)
+* feat(autoware_component_interface_specs_universe!): rename package (`#9753 <https://github.com/autowarefoundation/autoware.universe/issues/9753>`_)
+* Contributors: Fumiya Watanabe, Ryohsuke Mitsudome, Vishal Chauhan
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0
