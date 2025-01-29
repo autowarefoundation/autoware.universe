@@ -1,5 +1,5 @@
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Changelog for package fault_injection
+Changelog for package autoware_fault_injection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 0.41.0 (2025-01-29)

@@ -1,5 +1,5 @@
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Changelog for package system_monitor
+Changelog for autoware_package system_monitor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 0.41.0 (2025-01-29)
