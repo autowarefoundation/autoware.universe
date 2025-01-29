@@ -2,6 +2,13 @@
 Changelog for package autoware_trajectory_follower_base
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat: tier4_debug_msgs changed to autoware_internal_msgs in files con… (`#9852 <https://github.com/autowarefoundation/autoware.universe/issues/9852>`_)
+  feat: tier4_debug_msgs changed to autoware_internal_msgs in files control/autoware_trajectory_follower_base
+* Contributors: Fumiya Watanabe, Vishal Chauhan
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

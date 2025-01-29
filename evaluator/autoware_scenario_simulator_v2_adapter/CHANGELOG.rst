@@ -2,6 +2,26 @@
 Changelog for package scenario_simulator_v2_adapter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat: apply `autoware\_` prefix for `scenario_simulator_v2_adapter` (`#9957 <https://github.com/autowarefoundation/autoware.universe/issues/9957>`_)
+  * feat(autoware_scenario_simulator_v2_adapter): apply `autoware\_` prefix (see below):
+  * In this commit, I did not organize a folder structure.
+  The folder structure will be organized in the next some commits.
+  * The changes will follow the Autoware's guideline as below:
+  - https://autowarefoundation.github.io/autoware-documentation/main/contributing/coding-guidelines/ros-nodes/directory-structure/#package-folder
+  * rename(scenario_simulator_v2_adapter): move headers under `include/autoware`:
+  * Fixes due to this changes for .hpp/.cpp files will be applied in the next commit
+  * fix(scenario_simulator_v2_adapter): fix include paths
+  * To follow the previous commit
+  * rename: `scenario_simulator_v2_adapter` => `autoware_scenario_simulator_v2_adapter`
+  * bug(autoware_scenario_simulator_v2_adapter): revert wrongly updated copyrights
+  * bug(autoware_scenario_simulator_v2_adapter): `autoware\_` prefix is not needed here
+  * bug(autoware_scenario_simulator_v2_adapter): wrong package name in launch side
+  ---------
+* Contributors: Fumiya Watanabe, Junya Sasaki
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0
