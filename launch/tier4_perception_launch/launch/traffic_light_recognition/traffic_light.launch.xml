@@ -53,7 +53,7 @@
   </group>
 
   <group if="$(eval &quot;'$(var ml_detection_model_type)'=='whole_image_detection_model'&quot;)">
-    <include file="$(find-pkg-share autoware_traffic_light_category_merger)/launch/traffic_light_category_merger.launch.xml">
+    <include file="$(find-pkg-share tier4_perception_launch)/launch/traffic_light_recognition/traffic_light_category_merger.launch.py">
       <arg name="all_camera_namespaces" value="$(var all_camera_namespaces)"/>
     </include>
   </group>
