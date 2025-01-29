@@ -48,8 +48,7 @@ NaiveMatchingStrategy<Msg3D, Msg2D, ExportObj>::NaiveMatchingStrategy(
     id_to_offset_map_[i] = rois_timestamp_offsets[i];
   }
 
-  RCLCPP_INFO(
-    ros2_parent_node_->get_logger(), "Utilize advanced matching strategy for fusion nodes.");
+  RCLCPP_INFO(ros2_parent_node_->get_logger(), "Utilize naive matching strategy for fusion nodes.");
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
@@ -67,8 +66,9 @@ NaiveMatchingStrategy<Msg3D, Msg2D, ExportObj>::match_rois_to_collector(
       if (auto naive_info = std::dynamic_pointer_cast<NaiveCollectorInfo>(info)) {
         double time_difference = std::abs(params->rois_timestamp - naive_info->timestamp);
         if (
-          !smallest_time_difference ||
-          (time_difference < smallest_time_difference && time_difference < naive_info->threshold)) {
+          !smallest_time_difference.has_value() ||
+          (time_difference < smallest_time_difference.value() &&
+           time_difference < naive_info->threshold)) {
           smallest_time_difference = time_difference;
           closest_collector = fusion_collector;
         }
@@ -97,8 +97,9 @@ NaiveMatchingStrategy<Msg3D, Msg2D, ExportObj>::match_det3d_to_collector(
       if (auto naive_info = std::dynamic_pointer_cast<NaiveCollectorInfo>(info)) {
         double time_difference = std::abs(params->det3d_timestamp - naive_info->timestamp);
         if (
-          !smallest_time_difference ||
-          (time_difference < smallest_time_difference && time_difference < naive_info->threshold)) {
+          !smallest_time_difference.has_value() ||
+          (time_difference < smallest_time_difference.value() &&
+           time_difference < naive_info->threshold)) {
           smallest_time_difference = time_difference;
           closest_collector = fusion_collector;
         }
@@ -226,7 +227,7 @@ void AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::set_collector_info(
   } else if (
     auto rois_matching_params = std::dynamic_pointer_cast<RoisMatchingParams>(matching_params)) {
     auto info = std::make_shared<AdvancedCollectorInfo>(
-      rois_matching_params->rois_timestamp - id_to_offset_map_[rois_matching_params->rois_id],
+      rois_matching_params->rois_timestamp - id_to_offset_map_.at(rois_matching_params->rois_id),
       id_to_noise_window_map_[rois_matching_params->rois_id]);
     collector->set_info(info);
   }
@@ -251,6 +252,7 @@ double AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::get_offset(
     }
   }
 
+  // std::cout << "Offset: " << offset << std::endl;
   return offset;
 }
 

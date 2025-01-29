@@ -12,11 +12,11 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <iomanip>
 #define EIGEN_MPL2_ONLY
 
-#include "autoware/image_projection_based_fusion/fusion_node.hpp"
-
 #include "autoware/image_projection_based_fusion/fusion_collector.hpp"
+#include "autoware/image_projection_based_fusion/fusion_node.hpp"
 #include "autoware/image_projection_based_fusion/fusion_types.hpp"
 
 #include <Eigen/Core>
@@ -33,6 +33,7 @@
 #include <optional>
 #include <string>
 #include <unordered_map>
+#include <utility>
 #include <vector>
 
 #ifdef ROS_DISTRO_GALACTIC
@@ -125,6 +126,9 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
   filter_scope_min_z_ = declare_parameter<double>("filter_scope_min_z");
   filter_scope_max_z_ = declare_parameter<double>("filter_scope_max_z");
 
+  rosbag_length_ = declare_parameter<double>("rosbag_length");
+  publish_previous_but_late_output_msg_ =
+    declare_parameter<bool>("publish_previous_but_late_output_msg");
   matching_strategy_ = declare_parameter<std::string>("matching_strategy.type");
 
   // debugger
@@ -165,6 +169,10 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
     stop_watch_ptr_->tic("cyclic_time");
     stop_watch_ptr_->tic("processing_time");
   }
+
+  // Diagnostic Updater
+  diagnostic_updater_.setHardwareID(node_name + "_checker");
+  diagnostic_updater_.add(node_name + "fusion_status", this, &FusionNode::check_fusion_status);
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
@@ -187,13 +195,6 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::init_strategy()
 template <class Msg3D, class Msg2D, class ExportObj>
 void FusionNode<Msg3D, Msg2D, ExportObj>::set_det2d_status(std::size_t rois_number_)
 {
-  // camera offset settings
-  // std::vector<double> input_offset_ms =
-  // declare_parameter<std::vector<double>>("input_offset_ms"); if (!input_offset_ms.empty() &&
-  // rois_number_ > input_offset_ms.size()) {
-  //   throw std::runtime_error("The number of offsets does not match the number of topics.");
-  // }
-
   // camera projection settings
   std::vector<bool> point_project_to_unrectified_image =
     declare_parameter<std::vector<bool>>("point_project_to_unrectified_image");
@@ -227,7 +228,6 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::set_det2d_status(std::size_t rois_numb
     det2d_list_.at(roi_i).project_to_unrectified_image =
       point_project_to_unrectified_image.at(roi_i);
     det2d_list_.at(roi_i).approximate_camera_projection = approx_camera_projection.at(roi_i);
-    // det2d_list_.at(roi_i).input_offset_ms = input_offset_ms.at(roi_i);
   }
 }
 
@@ -255,11 +255,35 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::preprocess(Msg3D & output_msg __attrib
 
 template <class Msg3D, class Msg2D, class ExportObj>
 void FusionNode<Msg3D, Msg2D, ExportObj>::export_process(
-  typename Msg3D::SharedPtr & output_det3d_msg)
+  typename Msg3D::SharedPtr & output_det3d_msg,
+  std::unordered_map<std::size_t, double> id_to_stamp_map,
+  std::shared_ptr<FusionCollectorInfoBase> collector_info)
 {
   ExportObj output_msg;
   postprocess(*(output_det3d_msg), output_msg);
-  publish(output_msg);
+
+  current_output_msg_timestamp_ = rclcpp::Time(output_msg.header.stamp).seconds();
+  if (
+    current_output_msg_timestamp_ < latest_output_msg_timestamp_ &&
+    !publish_previous_but_late_output_msg_) {
+    // Publish the output msg if the rosbag replays in loop
+    if (latest_output_msg_timestamp_ - current_output_msg_timestamp_ > rosbag_length_) {
+      publish_output_msg_ = true;  // Force publishing in this case
+    } else {
+      drop_previous_but_late_output_msg_ = true;  // Otherwise, drop the late output msg
+    }
+  } else {
+    // Publish pointcloud if timestamps are valid or the condition doesn't apply
+    publish_output_msg_ = true;
+  }
+
+  if (publish_output_msg_) {
+    publish(output_msg);
+  }
+
+  diagnostic_collector_info_ = std::move(collector_info);
+  diagnostic_id_to_stamp_map_ = std::move(id_to_stamp_map);
+  diagnostic_updater_.force_update();
 
   // add processing time for debug
   if (debug_publisher_) {
@@ -300,7 +324,7 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::sub_callback(
   // For each callback, check whether there is a exist collector that matches this cloud
   std::optional<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>> fusion_collector =
     std::nullopt;
-  std::shared_ptr<Det3dMatchingParams> matching_params;
+  auto matching_params = std::make_shared<Det3dMatchingParams>();
   matching_params->det3d_timestamp = det3d_timestamp;
 
   if (!fusion_collectors_.empty()) {
@@ -319,7 +343,8 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::sub_callback(
 
   if (!process_success) {
     auto new_fusion_collector = std::make_shared<FusionCollector<Msg3D, Msg2D, ExportObj>>(
-      std::dynamic_pointer_cast<FusionNode>(shared_from_this()), timeout_sec_, debug_mode_);
+      std::dynamic_pointer_cast<FusionNode>(shared_from_this()), timeout_sec_, det2d_list_,
+      debug_mode_);
 
     fusion_collectors_.push_back(new_fusion_collector);
     fusion_collectors_lock.unlock();
@@ -369,7 +394,8 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::roi_callback(
   std::unique_lock<std::mutex> fusion_collectors_lock(fusion_collectors_mutex_);
 
   auto rois_timestamp = rclcpp::Time(det2d_msg->header.stamp).seconds();
-  std::shared_ptr<RoisMatchingParams> matching_params;
+  auto matching_params = std::make_shared<RoisMatchingParams>();
+  matching_params->rois_id = roi_i;
   matching_params->rois_timestamp = rois_timestamp;
 
   // For each callback, check whether there is a exist collector that matches this cloud
@@ -392,7 +418,8 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::roi_callback(
 
   if (!process_success) {
     auto new_fusion_collector = std::make_shared<FusionCollector<Msg3D, Msg2D, ExportObj>>(
-      std::dynamic_pointer_cast<FusionNode>(shared_from_this()), timeout_sec_, debug_mode_);
+      std::dynamic_pointer_cast<FusionNode>(shared_from_this()), timeout_sec_, det2d_list_,
+      debug_mode_);
 
     fusion_collectors_.push_back(new_fusion_collector);
     fusion_collectors_lock.unlock();
@@ -423,7 +450,7 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::diagnostic_callback(
 {
   for (const auto & status : diagnostic_msg->status) {
     // Filter for the concatenate_and_time_sync_node diagnostic message
-    if (status.name == "concatenate_and_time_sync_node: concat_status") {
+    if (status.name == "concatenate_data: /sensing/lidar/concatenate_data_status") {
       RCLCPP_INFO(get_logger(), "Processing concatenation status diagnostic message...");
 
       // Temporary map to hold key-value pairs for this status
@@ -436,6 +463,7 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::diagnostic_callback(
         // If the key is the concatenated cloud timestamp, try to parse it
         if (value.key == "concatenated_cloud_timestamp") {
           try {
+            // concatenate_timestamp_opt = std::round(std::stod(value.value) * 1000.0) / 1000.0;
             concatenate_timestamp_opt = std::stod(value.value);
           } catch (const std::exception & e) {
             RCLCPP_ERROR(get_logger(), "Error parsing concatenated cloud timestamp: %s", e.what());
@@ -461,6 +489,7 @@ template <class Msg3D, class Msg2D, class ExportObj>
 void FusionNode<Msg3D, Msg2D, ExportObj>::manage_concatenated_status_map(
   const double & current_timestamp)
 {
+  // TOOD(vivid): there might be a better way to do this
   // Clean up old entries from concatenated_status_map_
   double threshold = 1.0;  // second
   auto it = concatenated_status_map_.begin();
@@ -510,11 +539,115 @@ template <class Msg3D, class Msg2D, class ExportObj>
 std::optional<std::unordered_map<std::string, std::string>>
 FusionNode<Msg3D, Msg2D, ExportObj>::find_concatenation_status(double timestamp)
 {
+  // timestamp = std::round(timestamp * 1000.0) / 1000.0;
+  // for (const auto& outer_pair : concatenated_status_map_) {
+  //   double outer_key = outer_pair.first;
+  //   std::cout << "Outer Key (double): " << format_timestamp(outer_key) << std::endl;
+  // }
+
   auto it = concatenated_status_map_.find(timestamp);
   if (it != concatenated_status_map_.end()) {
+    // std::cout << "Found the concatenated status for timestamp: " << format_timestamp(timestamp)
+    //           << std::endl;
     return it->second;
   }
+  // std::cout << "Could not find the concatenated status for timestamp: "
+  //           << format_timestamp(timestamp) << std::endl;
   return std::nullopt;
+}
+
+template <class Msg3D, class Msg2D, class ExportObj>
+std::string FusionNode<Msg3D, Msg2D, ExportObj>::format_timestamp(double timestamp)
+{
+  std::ostringstream oss;
+  oss << std::fixed << std::setprecision(9) << timestamp;
+  return oss.str();
+}
+
+template <class Msg3D, class Msg2D, class ExportObj>
+void FusionNode<Msg3D, Msg2D, ExportObj>::show_diagnostic_message(
+  std::unordered_map<std::size_t, double> id_to_stamp_map,
+  std::shared_ptr<FusionCollectorInfoBase> collector_info)
+{
+  det3d_fused_ = false;
+  diagnostic_collector_info_ = std::move(collector_info);
+  diagnostic_id_to_stamp_map_ = std::move(id_to_stamp_map);
+  diagnostic_updater_.force_update();
+}
+
+template <class Msg3D, class Msg2D, class ExportObj>
+void FusionNode<Msg3D, Msg2D, ExportObj>::check_fusion_status(
+  diagnostic_updater::DiagnosticStatusWrapper & stat)
+{
+  if (publish_output_msg_ || drop_previous_but_late_output_msg_ || !det3d_fused_) {
+    stat.add("det3d/is_fused", det3d_fused_);
+    if (det3d_fused_) {
+      stat.add("fused_timestamp", format_timestamp(current_output_msg_timestamp_));
+    }
+
+    if (
+      auto naive_info = std::dynamic_pointer_cast<NaiveCollectorInfo>(diagnostic_collector_info_)) {
+      stat.add("first_input_arrival_timestamp", format_timestamp(naive_info->timestamp));
+    } else if (
+      auto advanced_info =
+        std::dynamic_pointer_cast<AdvancedCollectorInfo>(diagnostic_collector_info_)) {
+      stat.add(
+        "reference_timestamp_min",
+        format_timestamp(advanced_info->timestamp - advanced_info->noise_window));
+      stat.add(
+        "reference_timestamp_max",
+        format_timestamp(advanced_info->timestamp + advanced_info->noise_window));
+    }
+
+    bool rois_miss = false;
+
+    bool fusion_success = true;
+    for (std::size_t id = 0; id < rois_number_; ++id) {
+      bool input_rois_fused = true;
+      if (diagnostic_id_to_stamp_map_.find(id) != diagnostic_id_to_stamp_map_.end()) {
+        stat.add(
+          "rois" + std::to_string(id) + "/timestamp",
+          format_timestamp(diagnostic_id_to_stamp_map_[id]));
+      } else {
+        rois_miss = true;
+        fusion_success = false;
+        input_rois_fused = false;
+      }
+      stat.add("rois" + std::to_string(id) + "/is_fused", input_rois_fused);
+    }
+
+    stat.add("fusion_success", fusion_success);
+
+    int8_t level = diagnostic_msgs::msg::DiagnosticStatus::OK;
+    std::string message = "Fused output is published and include all rois and det3d msg";
+
+    if (drop_previous_but_late_output_msg_) {
+      if (rois_miss) {
+        level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+        message =
+          "Fused output msg misses some rois and is not published because it arrived "
+          "too late";
+      } else {
+        level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+        message = "Fused output msg is not published as it is too late";
+      }
+    } else {
+      if (rois_miss) {
+        level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+        message = "Fused output msg is published but misses some rois";
+      }
+    }
+
+    stat.summary(level, message);
+
+    publish_output_msg_ = false;
+    drop_previous_but_late_output_msg_ = false;
+    det3d_fused_ = true;
+  } else {
+    const int8_t level = diagnostic_msgs::msg::DiagnosticStatus::OK;
+    const std::string message = "Fusion node launch successfully, but waiting for input pointcloud";
+    stat.summary(level, message);
+  }
 }
 
 // Explicit instantiation for the supported types

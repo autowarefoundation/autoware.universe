@@ -37,7 +37,7 @@ struct Det2dStatus
   // camera index
   std::size_t id = 0;
   // camera projection
-  std::unique_ptr<CameraProjection> camera_projector_ptr;
+  std::shared_ptr<CameraProjection> camera_projector_ptr;
   bool project_to_unrectified_image = false;
   bool approximate_camera_projection = false;
 };
@@ -75,7 +75,7 @@ class FusionCollector
 public:
   FusionCollector(
     std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> && ros2_parent_node, double timeout_sec,
-    bool debug_mode);
+    const std::vector<Det2dStatus<Msg2D>> & det2d_list, bool debug_mode);
   bool process_msg_3d(const typename Msg3D::ConstSharedPtr msg_3d);
   bool process_rois(const std::size_t & roi_id, const typename Msg2D::ConstSharedPtr det2d_msg);
   void fusion_callback();
@@ -88,14 +88,15 @@ public:
   bool ready_to_fuse();
   bool rois_exists(const std::size_t & rois_id);
   bool det3d_exists();
+  void show_debug_message();
 
 private:
   std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> ros2_parent_node_;
   rclcpp::TimerBase::SharedPtr timer_;
+  double timeout_sec_;
   typename Msg3D::ConstSharedPtr det3d_msg_{nullptr};
   std::vector<Det2dStatus<Msg2D>> det2d_list_;
   std::unordered_map<std::size_t, typename Msg2D::ConstSharedPtr> id_to_roi_map_;
-  double timeout_sec_;
   double rois_number_;
   bool debug_mode_;
   bool fusion_finished_{false};

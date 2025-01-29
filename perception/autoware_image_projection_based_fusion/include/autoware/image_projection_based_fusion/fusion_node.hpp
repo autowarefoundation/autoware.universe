@@ -24,10 +24,11 @@
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
 #include <autoware/universe_utils/system/time_keeper.hpp>
+#include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_perception_msgs/msg/detected_objects.hpp>
-#include <diagnostic_msgs/msg/detail/diagnostic_array__struct.hpp>
+#include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <sensor_msgs/msg/camera_info.hpp>
 #include <sensor_msgs/msg/image.hpp>
@@ -71,9 +72,15 @@ public:
   virtual void fuse_on_single_image(
     const Msg3D & input_msg, const Det2dStatus<Msg2D> & det2d, const Msg2D & input_roi_msg,
     Msg3D & output_msg) = 0;
-  void export_process(typename Msg3D::SharedPtr & output_det3d_msg);
+  void export_process(
+    typename Msg3D::SharedPtr & output_det3d_msg,
+    std::unordered_map<std::size_t, double> id_to_stamp_map,
+    std::shared_ptr<FusionCollectorInfoBase> collector_info);
   std::optional<std::unordered_map<std::string, std::string>> find_concatenation_status(
     double timestamp);
+  void show_diagnostic_message(
+    std::unordered_map<std::size_t, double> id_to_stamp_map,
+    std::shared_ptr<FusionCollectorInfoBase> collector_info);
 
 private:
   // Common process methods
@@ -84,6 +91,9 @@ private:
   void init_strategy();
   void manage_collector_list();
   void manage_concatenated_status_map(const double & current_timestam);
+
+  static std::string format_timestamp(double timestamp);
+  void check_fusion_status(diagnostic_updater::DiagnosticStatusWrapper & stat);
 
   // camera projection
   float approx_grid_cell_w_size_;
@@ -108,6 +118,18 @@ private:
 
   // timestamp: (key, value)
   std::unordered_map<double, std::unordered_map<std::string, std::string>> concatenated_status_map_;
+
+  diagnostic_updater::Updater diagnostic_updater_{this};
+  std::shared_ptr<FusionCollectorInfoBase> diagnostic_collector_info_;
+  std::unordered_map<std::size_t, double> diagnostic_id_to_stamp_map_;
+
+  double current_output_msg_timestamp_{0.0};
+  double latest_output_msg_timestamp_{0.0};
+  double rosbag_length_{10.0};
+  bool publish_previous_but_late_output_msg_{false};
+  bool drop_previous_but_late_output_msg_{false};
+  bool publish_output_msg_{false};
+  bool det3d_fused_{true};
 
 protected:
   void set_det2d_status(std::size_t rois_number);
