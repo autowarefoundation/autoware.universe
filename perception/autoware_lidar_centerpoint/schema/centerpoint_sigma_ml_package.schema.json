@@ -1,98 +1,97 @@
 {
-    "$schema": "http://json-schema.org/draft-07/schema#",
-    "title": "autoware_lidar_centerpoints Parameters",
-    "type": "object",
-    "definitions": {
-      "Centerpoint_sigma_ml_package": {
-        "type": "object",
-        "properties": {
-          "model_params": {
-            "type": "object",
-            "description": "Parameters for model configuration.",
-            "properties": {
-              "class_names": {
-                "type": "array",
-                "description": "List of class names for model outputs.",
-                "default": ["CAR", "TRUCK", "BUS", "BICYCLE", "PEDESTRIAN"],
-                "uniqueItems": true
-              },
-              "point_feature_size": {
-                "type": "integer",
-                "description": "Number of features per point in the point cloud.",
-                "default": 4
-              },
-              "max_voxel_size": {
-                "type": "integer",
-                "description": "Maximum number of voxels.",
-                "default": 40000
-              },
-              "point_cloud_range": {
-                "type": "array",
-                "description": "Detection range [min_x, min_y, min_z, max_x, max_y, max_z] in meters.",
-                "items": {
-                  "type": "number"
-                },
-                "default": [-76.8, -76.8, -4.0, 76.8, 76.8, 6.0]
-              },
-              "voxel_size": {
-                "type": "array",
-                "description": "Size of each voxel [x, y, z] in meters.",
-                "items": {
-                  "type": "number"
-                },
-                "default": [0.32, 0.32, 10.0]
-              },
-              "downsample_factor": {
-                "type": "integer",
-                "description": "Downsample factor for coordinates.",
-                "default": 1
-              },
-              "encoder_in_feature_size": {
-                "type": "integer",
-                "description": "Number of input features to the encoder.",
-                "default": 9
-              },
-              "has_variance": {
-                "type": "boolean",
-                "description": "True if the model outputs pose variance as well as pose for each bounding box.",
-                "default": false
-              },
-              "has_twist": {
-                "type": "boolean",
-                "description": "True if the model outputs velocity as well as pose for each bounding box.",
-                "default": false
-              }
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "autoware_lidar_centerpoints Parameters",
+  "type": "object",
+  "definitions": {
+    "Centerpoint_sigma_ml_package": {
+      "type": "object",
+      "properties": {
+        "model_params": {
+          "type": "object",
+          "description": "Parameters for model configuration.",
+          "properties": {
+            "class_names": {
+              "type": "array",
+              "description": "List of class names for model outputs.",
+              "default": ["CAR", "TRUCK", "BUS", "BICYCLE", "PEDESTRIAN"],
+              "uniqueItems": true
             },
-            "required": [
-              "class_names",
-              "point_feature_size",
-              "max_voxel_size",
-              "point_cloud_range",
-              "voxel_size",
-              "downsample_factor",
-              "encoder_in_feature_size",
-              "has_variance",
-              "has_twist"
-            ]
-          }
-        },
-        "required": ["model_params"],
-        "additionalProperties": false
-      }
-    },
-    "properties": {
-      "/**": {
-        "type": "object",
-        "properties": {
-          "ros__parameters": {
-            "$ref": "#/definitions/Centerpoint_sigma_ml_package"
-          }
-        },
-        "required": ["ros__parameters"],
-        "additionalProperties": false
-      }
-    },
-    "required": ["/**"],
-    "additionalProperties": false
-  }
-  
+            "point_feature_size": {
+              "type": "integer",
+              "description": "Number of features per point in the point cloud.",
+              "default": 4
+            },
+            "max_voxel_size": {
+              "type": "integer",
+              "description": "Maximum number of voxels.",
+              "default": 40000
+            },
+            "point_cloud_range": {
+              "type": "array",
+              "description": "Detection range [min_x, min_y, min_z, max_x, max_y, max_z] in meters.",
+              "items": {
+                "type": "number"
+              },
+              "default": [-76.8, -76.8, -4.0, 76.8, 76.8, 6.0]
+            },
+            "voxel_size": {
+              "type": "array",
+              "description": "Size of each voxel [x, y, z] in meters.",
+              "items": {
+                "type": "number"
+              },
+              "default": [0.32, 0.32, 10.0]
+            },
+            "downsample_factor": {
+              "type": "integer",
+              "description": "Downsample factor for coordinates.",
+              "default": 1
+            },
+            "encoder_in_feature_size": {
+              "type": "integer",
+              "description": "Number of input features to the encoder.",
+              "default": 9
+            },
+            "has_variance": {
+              "type": "boolean",
+              "description": "True if the model outputs pose variance as well as pose for each bounding box.",
+              "default": false
+            },
+            "has_twist": {
+              "type": "boolean",
+              "description": "True if the model outputs velocity as well as pose for each bounding box.",
+              "default": false
+            }
+          },
+          "required": [
+            "class_names",
+            "point_feature_size",
+            "max_voxel_size",
+            "point_cloud_range",
+            "voxel_size",
+            "downsample_factor",
+            "encoder_in_feature_size",
+            "has_variance",
+            "has_twist"
+          ]
+        }
+      },
+      "required": ["model_params"],
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/Centerpoint_sigma_ml_package"
+        }
+      },
+      "required": ["ros__parameters"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["/**"],
+  "additionalProperties": false
+}
