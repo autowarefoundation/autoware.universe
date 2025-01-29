@@ -83,9 +83,9 @@ void SimModelDelaySteerVel::update(const double & dt)
   delayed_input(IDX_U::STEER_DES) = steer_input_queue_.front();
   steer_input_queue_.pop_front();
   // do not use deadzone_delta_steer (Steer IF does not exist in this model)
+  const double prev_vx = state_(IDX::VX);
   updateRungeKutta(dt, delayed_input);
-  current_ax_ = (input_(IDX_U::VX_DES) - prev_vx_) / dt;
-  prev_vx_ = input_(IDX_U::VX_DES);
+  current_ax_ = (state_(IDX::VX) - prev_vx) / dt;
 }
 
 void SimModelDelaySteerVel::initializeInputQueue(const double & dt)
