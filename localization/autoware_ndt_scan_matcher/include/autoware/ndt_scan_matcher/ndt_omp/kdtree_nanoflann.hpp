@@ -41,6 +41,9 @@
  *************************************************************************/
 #ifndef AUTOWARE__NDT_SCAN_MATCHER__NDT_OMP__KDTREE_NANOFLANN_HPP_
 #define AUTOWARE__NDT_SCAN_MATCHER__NDT_OMP__KDTREE_NANOFLANN_HPP_
+
+// cspell:ignore nanoflann, dists
+
 #include "autoware/ndt_scan_matcher/ndt_omp/nanoflann.hpp"
 
 #include <pcl/pcl_macros.h>

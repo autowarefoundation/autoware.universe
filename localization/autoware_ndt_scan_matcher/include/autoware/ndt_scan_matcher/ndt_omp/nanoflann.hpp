@@ -1,3 +1,4 @@
+/* cspell:disable */
 //NOLINTBEGIN
 /***********************************************************************
  * Software License Agreement (BSD License)
