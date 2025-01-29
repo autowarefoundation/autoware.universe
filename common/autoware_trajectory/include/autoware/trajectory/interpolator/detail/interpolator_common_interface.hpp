@@ -167,7 +167,7 @@ public:
       throw std::runtime_error(
         "Interpolator has not been built.");  // This Exception should not be thrown.
     }
-    double clamped_s = validate_compute_input(s);
+    const double clamped_s = validate_compute_input(s);
     return compute_impl(clamped_s);
   }
 };

@@ -85,7 +85,7 @@ trajectory::Trajectory<PointType> shift(
   for (size_t i = 0; i < bases.size(); ++i) {
     shifted_points.emplace_back(reference_trajectory.compute(bases.at(i)));
     double azimuth = reference_trajectory.azimuth(bases.at(i));
-    double shift_length = shift_lengths.at(i);
+    const double shift_length = shift_lengths.at(i);
     detail::to_point(shifted_points.back()).x += std::sin(azimuth) * shift_length;
     detail::to_point(shifted_points.back()).y -= std::cos(azimuth) * shift_length;
   }

@@ -29,12 +29,12 @@ std::optional<double> crossed_with_constraint_impl(
   Eigen::Vector2d line_dir = line_end - line_start;
 
   for (size_t i = 1; i < bases.size(); ++i) {
-    Eigen::Vector2d p0 = trajectory_compute(bases.at(i - 1));
-    Eigen::Vector2d p1 = trajectory_compute(bases.at(i));
+    const Eigen::Vector2d p0 = trajectory_compute(bases.at(i - 1));
+    const Eigen::Vector2d p1 = trajectory_compute(bases.at(i));
 
     Eigen::Vector2d segment_dir = p1 - p0;
 
-    double det = segment_dir.x() * line_dir.y() - segment_dir.y() * line_dir.x();
+    const double det = segment_dir.x() * line_dir.y() - segment_dir.y() * line_dir.x();
 
     if (std::abs(det) < 1e-10) {
       continue;
@@ -42,8 +42,9 @@ std::optional<double> crossed_with_constraint_impl(
 
     Eigen::Vector2d p0_to_line_start = line_start - p0;
 
-    double t = (p0_to_line_start.x() * line_dir.y() - p0_to_line_start.y() * line_dir.x()) / det;
-    double u =
+    const double t =
+      (p0_to_line_start.x() * line_dir.y() - p0_to_line_start.y() * line_dir.x()) / det;
+    const double u =
       (p0_to_line_start.x() * segment_dir.y() - p0_to_line_start.y() * segment_dir.x()) / det;
 
     if (t >= 0.0 && t <= 1.0 && u >= 0.0 && u <= 1.0) {

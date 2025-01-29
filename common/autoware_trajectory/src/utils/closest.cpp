@@ -29,13 +29,13 @@ std::optional<double> closest_with_constraint_impl(
   std::vector<double> lengths_from_start_points;
 
   for (size_t i = 1; i < bases.size(); ++i) {
-    Eigen::Vector2d p0 = trajectory_compute(bases.at(i - 1));
-    Eigen::Vector2d p1 = trajectory_compute(bases.at(i));
+    const Eigen::Vector2d p0 = trajectory_compute(bases.at(i - 1));
+    const Eigen::Vector2d p1 = trajectory_compute(bases.at(i));
 
-    Eigen::Vector2d v = p1 - p0;
-    Eigen::Vector2d w = point - p0;
-    double c1 = w.dot(v);
-    double c2 = v.dot(v);
+    const Eigen::Vector2d v = p1 - p0;
+    const Eigen::Vector2d w = point - p0;
+    const double c1 = w.dot(v);
+    const double c2 = v.dot(v);
     double length_from_start_point = NAN;
     double distance_from_segment = NAN;
     if (c1 <= 0) {

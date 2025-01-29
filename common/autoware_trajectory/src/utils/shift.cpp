@@ -35,11 +35,11 @@ std::pair<std::vector<double>, std::vector<double>> get_base_lengths_without_acc
   const double total_shift_length = shift_length;
 
   // Prepare base longitudinal positions
-  std::vector<double> base_longitudinal = {
+  const std::vector<double> base_longitudinal = {
     0.0, 0.25 * total_arc_length, 0.75 * total_arc_length, total_arc_length};
 
   // Prepare base lateral positions
-  std::vector<double> base_lateral = {
+  const std::vector<double> base_lateral = {
     0.0, 1.0 / 12.0 * total_shift_length, 11.0 / 12.0 * total_shift_length, total_shift_length};
 
   return {base_longitudinal, base_lateral};
@@ -70,10 +70,10 @@ std::pair<std::vector<double>, std::vector<double>> get_base_lengths_without_acc
   const double segment_s2 = std::min(segment_s1 + 2.0 * v1 * t + 2.0 * a * t * t, total_arc_length);
 
   // Prepare base longitudinal positions
-  std::vector<double> base_longitudinal = {0.0, segment_s1, segment_s2, total_arc_length};
+  const std::vector<double> base_longitudinal = {0.0, segment_s1, segment_s2, total_arc_length};
 
   // Prepare base lateral positions (simple division approach as original)
-  std::vector<double> base_lateral = {
+  const std::vector<double> base_lateral = {
     0.0, 1.0 / 12.0 * total_shift_length, 11.0 / 12.0 * total_shift_length, total_shift_length};
 
   return {base_longitudinal, base_lateral};
@@ -216,9 +216,10 @@ std::pair<std::vector<double>, std::vector<double>> calc_base_lengths(
                   lateral_jerk * accel_time2_jerk);
 
   // Construct the output vectors
-  std::vector<double> base_lon = {0.0,        segment_s1, segment_s2, segment_s3,
-                                  segment_s5, segment_s6, segment_s7};
-  std::vector<double> base_lat = {0.0, shift_l1, shift_l2, shift_l3, shift_l5, shift_l6, shift_l7};
+  const std::vector<double> base_lon = {0.0,        segment_s1, segment_s2, segment_s3,
+                                        segment_s5, segment_s6, segment_s7};
+  const std::vector<double> base_lat = {0.0,      shift_l1, shift_l2, shift_l3,
+                                        shift_l5, shift_l6, shift_l7};
 
   return {base_lon, base_lat};
 }
@@ -235,8 +236,8 @@ void shift_impl(
     return;
   }
 
-  double shift_arc_length = std::abs(shift_interval.end - shift_interval.start);
-  bool shift_direction = shift_interval.end > shift_interval.start;
+  const double shift_arc_length = std::abs(shift_interval.end - shift_interval.start);
+  const bool shift_direction = shift_interval.end > shift_interval.start;
   // Calculate base lengths
   auto [base_lon, base_lat] = calc_base_lengths(
     shift_arc_length,       //

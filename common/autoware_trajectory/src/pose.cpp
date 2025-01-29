@@ -83,24 +83,26 @@ void Trajectory<PointType>::align_orientation_with_trajectory_direction()
 {
   std::vector<geometry_msgs::msg::Quaternion> aligned_orientations;
   for (const auto & s : bases_) {
-    double azimuth = this->azimuth(s);
-    double elevation = this->elevation(s);
-    geometry_msgs::msg::Quaternion current_orientation = orientation_interpolator_->compute(s);
+    const double azimuth = this->azimuth(s);
+    const double elevation = this->elevation(s);
+    const geometry_msgs::msg::Quaternion current_orientation =
+      orientation_interpolator_->compute(s);
     tf2::Quaternion current_orientation_tf2(
       current_orientation.x, current_orientation.y, current_orientation.z, current_orientation.w);
     current_orientation_tf2.normalize();
-    tf2::Vector3 x_axis(1.0, 0.0, 0.0);
-    tf2::Vector3 current_x_axis = tf2::quatRotate(current_orientation_tf2, x_axis);
+    const tf2::Vector3 x_axis(1.0, 0.0, 0.0);
+    const tf2::Vector3 current_x_axis = tf2::quatRotate(current_orientation_tf2, x_axis);
 
-    tf2::Vector3 desired_x_axis(
+    const tf2::Vector3 desired_x_axis(
       std::cos(elevation) * std::cos(azimuth), std::cos(elevation) * std::sin(azimuth),
       std::sin(elevation));
-    tf2::Vector3 rotation_axis = current_x_axis.cross(desired_x_axis).normalized();
-    double dot_product = current_x_axis.dot(desired_x_axis);
-    double rotation_angle = std::acos(dot_product);
+    const tf2::Vector3 rotation_axis = current_x_axis.cross(desired_x_axis).normalized();
+    const double dot_product = current_x_axis.dot(desired_x_axis);
+    const double rotation_angle = std::acos(dot_product);
 
-    tf2::Quaternion delta_q(rotation_axis, rotation_angle);
-    tf2::Quaternion aligned_orientation_tf2 = (delta_q * current_orientation_tf2).normalized();
+    const tf2::Quaternion delta_q(rotation_axis, rotation_angle);
+    const tf2::Quaternion aligned_orientation_tf2 =
+      (delta_q * current_orientation_tf2).normalized();
 
     geometry_msgs::msg::Quaternion aligned_orientation;
     aligned_orientation.x = aligned_orientation_tf2.x();
@@ -110,7 +112,7 @@ void Trajectory<PointType>::align_orientation_with_trajectory_direction()
 
     aligned_orientations.emplace_back(aligned_orientation);
   }
-  bool success = orientation_interpolator_->build(bases_, aligned_orientations);
+  const bool success = orientation_interpolator_->build(bases_, aligned_orientations);
   if (!success) {
     throw std::runtime_error(
       "Failed to build orientation interpolator.");  // This Exception should not be thrown.

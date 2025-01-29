@@ -75,8 +75,8 @@ bool Trajectory<PointType>::build(const std::vector<PointType> & points)
   zs.emplace_back(points[0].z);
 
   for (size_t i = 1; i < points.size(); ++i) {
-    Eigen::Vector2d p0(points[i - 1].x, points[i - 1].y);
-    Eigen::Vector2d p1(points[i].x, points[i].y);
+    const Eigen::Vector2d p0(points[i - 1].x, points[i - 1].y);
+    const Eigen::Vector2d p1(points[i].x, points[i].y);
     bases_.emplace_back(bases_.back() + (p1 - p0).norm());
     xs.emplace_back(points[i].x);
     ys.emplace_back(points[i].y);
@@ -130,25 +130,25 @@ PointType Trajectory<PointType>::compute(double s) const
 double Trajectory<PointType>::azimuth(double s) const
 {
   s = clamp(s, true);
-  double dx = x_interpolator_->compute_first_derivative(s);
-  double dy = y_interpolator_->compute_first_derivative(s);
+  const double dx = x_interpolator_->compute_first_derivative(s);
+  const double dy = y_interpolator_->compute_first_derivative(s);
   return std::atan2(dy, dx);
 }
 
 double Trajectory<PointType>::elevation(double s) const
 {
   s = clamp(s, true);
-  double dz = z_interpolator_->compute_first_derivative(s);
+  const double dz = z_interpolator_->compute_first_derivative(s);
   return std::atan2(dz, 1.0);
 }
 
 double Trajectory<PointType>::curvature(double s) const
 {
   s = clamp(s, true);
-  double dx = x_interpolator_->compute_first_derivative(s);
-  double ddx = x_interpolator_->compute_second_derivative(s);
-  double dy = y_interpolator_->compute_first_derivative(s);
-  double ddy = y_interpolator_->compute_second_derivative(s);
+  const double dx = x_interpolator_->compute_first_derivative(s);
+  const double ddx = x_interpolator_->compute_second_derivative(s);
+  const double dy = y_interpolator_->compute_first_derivative(s);
+  const double ddy = y_interpolator_->compute_second_derivative(s);
   return std::abs(dx * ddy - dy * ddx) / std::pow(dx * dx + dy * dy, 1.5);
 }
 

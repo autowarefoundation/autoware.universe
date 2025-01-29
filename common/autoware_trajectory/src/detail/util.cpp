@@ -66,7 +66,7 @@ std::vector<double> crop_bases(
   }
 
   // Copy all points within the range [start, end]
-  for (double i : x) {
+  for (const double i : x) {
     if (i >= start && i <= end) {
       result.push_back(i);
     }
