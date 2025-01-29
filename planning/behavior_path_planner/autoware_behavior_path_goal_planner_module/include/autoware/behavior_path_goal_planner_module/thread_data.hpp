@@ -33,9 +33,11 @@ class LaneParkingRequest
 public:
   LaneParkingRequest(
     const autoware::universe_utils::LinearRing2d & vehicle_footprint,
-    const GoalCandidates & goal_candidates, const BehaviorModuleOutput & upstream_module_output)
+    const GoalCandidates & goal_candidates, const BehaviorModuleOutput & upstream_module_output,
+    const bool use_bus_stop_area)
   : vehicle_footprint_(vehicle_footprint),
     goal_candidates_(goal_candidates),
+    use_bus_stop_area_(use_bus_stop_area),
     upstream_module_output_(upstream_module_output)
   {
   }
@@ -48,6 +50,7 @@ public:
 
   const autoware::universe_utils::LinearRing2d vehicle_footprint_;
   const GoalCandidates goal_candidates_;
+  const bool use_bus_stop_area_;
 
   const std::shared_ptr<PlannerData> & get_planner_data() const { return planner_data_; }
   const ModuleStatus & get_current_status() const { return current_status_; }

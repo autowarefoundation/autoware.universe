@@ -30,7 +30,8 @@ class GoalSearcher : public GoalSearcherBase
 public:
   GoalSearcher(const GoalPlannerParameters & parameters, const LinearRing2d & vehicle_footprint);
 
-  GoalCandidates search(const std::shared_ptr<const PlannerData> & planner_data) override;
+  GoalCandidates search(
+    const std::shared_ptr<const PlannerData> & planner_data, const bool use_bus_stop_area) override;
   void update(
     GoalCandidates & goal_candidates,
     const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
