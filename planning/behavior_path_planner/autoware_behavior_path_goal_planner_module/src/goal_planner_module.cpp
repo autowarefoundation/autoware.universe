@@ -2239,17 +2239,6 @@ bool GoalPlannerModule::isCrossingPossible(const PullOverPath & pull_over_path) 
   return isCrossingPossible(start_pose, end_pose, lanes);
 }
 
-/*
-void GoalPlannerModule::updateSafetyCheckTargetObjectsData(
-  const PredictedObjects & filtered_objects, const TargetObjectsOnLane & target_objects_on_lane,
-  const std::vector<PoseWithVelocityStamped> & ego_predicted_path) const
-{
-  goal_planner_data_.filtered_objects = filtered_objects;
-  goal_planner_data_.target_objects_on_lane = target_objects_on_lane;
-  goal_planner_data_.ego_predicted_path = ego_predicted_path;
-}
-*/
-
 static std::vector<utils::path_safety_checker::ExtendedPredictedObject> filterObjectsByWithinPolicy(
   const std::shared_ptr<const PredictedObjects> & objects,
   const lanelet::ConstLanelets & target_lanes, const ObjectsFilteringParams & params)
@@ -2534,18 +2523,6 @@ void GoalPlannerModule::setDebugData(const PullOverContextData & context_data)
       add(createPoseMarkerArray(
         debug_poses.at(i), "debug_pose_" + std::to_string(i), 0, 0.3, 0.3, 0.3));
     }
-  }
-
-  // safety check
-  if (goal_planner_data_.ego_predicted_path.size() > 0) {
-    const auto & ego_predicted_path = utils::path_safety_checker::convertToPredictedPath(
-      goal_planner_data_.ego_predicted_path, ego_predicted_path_params_.time_resolution);
-    add(createPredictedPathMarkerArray(
-      ego_predicted_path, vehicle_info_, "ego_predicted_path_goal_planner", 0, 0.0, 0.5, 0.9));
-  }
-  if (goal_planner_data_.filtered_objects.objects.size() > 0) {
-    add(createObjectsMarkerArray(
-      goal_planner_data_.filtered_objects, "filtered_objects", 0, 0.0, 0.5, 0.9));
   }
 
   auto collision_check = debug_data_.collision_check;

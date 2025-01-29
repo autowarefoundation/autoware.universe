@@ -332,8 +332,6 @@ private:
   std::optional<FreespaceParkingRequest> freespace_parking_request_;
   FreespaceParkingResponse freespace_parking_response_;
 
-  mutable StartGoalPlannerData goal_planner_data_;
-
   std::unique_ptr<FixedGoalPlannerBase> fixed_goal_planner_;
 
   // goal searcher
