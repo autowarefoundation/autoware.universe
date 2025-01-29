@@ -2,8 +2,8 @@
 Changelog for package bluetooth_monitor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.41.0 (2025-01-29)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * feat: apply `autoware\_` prefix for `bluetooth_monitor` (`#9960 <https://github.com/autowarefoundation/autoware.universe/issues/9960>`_)
   * feat(bluetooth_monitor): apply `autoware\_` prefix (see below):

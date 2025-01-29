@@ -2,8 +2,8 @@
 Changelog for package autoware_lidar_marker_localizer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.41.0 (2025-01-29)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * fix(autoware_lidar_marker_localization): fix segmentation fault (`#8943 <https://github.com/autowarefoundation/autoware.universe/issues/8943>`_)
   * fix segmentation fault

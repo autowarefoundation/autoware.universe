@@ -2,8 +2,8 @@
 Changelog for package autoware_behavior_velocity_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.41.0 (2025-01-29)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * feat(behavior_velocity_planner): remove virtual traffic light dependency from behavior_velocity_planner and behavior_velocity_planner_common (`#9746 <https://github.com/autowarefoundation/autoware.universe/issues/9746>`_)
   * feat: remove-virtual-traffic-light-dependency-from-plugin-manager

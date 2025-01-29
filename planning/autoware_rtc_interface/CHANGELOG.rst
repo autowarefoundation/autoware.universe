@@ -2,8 +2,8 @@
 Changelog for package autoware_rtc_interface
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.41.0 (2025-01-29)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * fix(autoware_rtc_interface): fix bugprone-branch-clone (`#9698 <https://github.com/autowarefoundation/autoware.universe/issues/9698>`_)
 * Contributors: Fumiya Watanabe, kobayu858

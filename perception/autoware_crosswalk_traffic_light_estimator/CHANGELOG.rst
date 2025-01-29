@@ -2,8 +2,8 @@
 Changelog for package autoware_crosswalk_traffic_light_estimator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.41.0 (2025-01-29)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * feat(autoware_crosswalk_traffic_light_estimator)!: tier4_debug_msgs changes to autoware_internal_debug_msgs in autoware_crosswalk_traffic_light_estimator (`#9870 <https://github.com/autowarefoundation/autoware.universe/issues/9870>`_)
 * chore(autoware_crosswalk_traffic_light_estimator): fix docs (`#9822 <https://github.com/autowarefoundation/autoware.universe/issues/9822>`_)

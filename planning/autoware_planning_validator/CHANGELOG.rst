@@ -2,8 +2,8 @@
 Changelog for package autoware_planning_validator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.41.0 (2025-01-29)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * feat(autoware_planning_validator)!: tier4_debug_msgs changed to autoware_internal_debug_msgs in autoware_planning_validator (`#9911 <https://github.com/autowarefoundation/autoware.universe/issues/9911>`_)
   feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in files planning/autoware_planning_validator

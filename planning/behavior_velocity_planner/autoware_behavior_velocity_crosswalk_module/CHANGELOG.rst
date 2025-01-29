@@ -2,8 +2,8 @@
 Changelog for package autoware_behavior_velocity_crosswalk_module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.41.0 (2025-01-29)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * docs(crosswalk): fix file add miss (`#10028 <https://github.com/autowarefoundation/autoware.universe/issues/10028>`_)
 * docs(crosswalk): update ttc vs ttv docs (`#10025 <https://github.com/autowarefoundation/autoware.universe/issues/10025>`_)

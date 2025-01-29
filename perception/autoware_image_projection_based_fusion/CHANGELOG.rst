@@ -2,8 +2,8 @@
 Changelog for package autoware_image_projection_based_fusion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.41.0 (2025-01-29)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * feat(autoware_image_projection_based_fusion)!: tier4_debug-msgs changed to autoware_internal_debug_msgs in autoware_image_projection_based_fusion (`#9877 <https://github.com/autowarefoundation/autoware.universe/issues/9877>`_)
 * fix(image_projection_based_fusion):  revise message publishers (`#9865 <https://github.com/autowarefoundation/autoware.universe/issues/9865>`_)

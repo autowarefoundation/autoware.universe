@@ -2,8 +2,8 @@
 Changelog for package autoware_kinematic_evaluator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.41.0 (2025-01-29)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * feat: apply `autoware\_` prefix for `evaluator/kinematic_evaluator` (`#9936 <https://github.com/autowarefoundation/autoware.universe/issues/9936>`_)
 * Contributors: Fumiya Watanabe, Junya Sasaki

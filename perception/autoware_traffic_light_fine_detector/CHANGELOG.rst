@@ -2,8 +2,8 @@
 Changelog for package autoware_traffic_light_fine_detector
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.41.0 (2025-01-29)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * feat(traffic_light_fine_detector)!: tier4_debug_msgs changed to autoware_internal_debug_msgs in traffic_light_fine_detector (`#9900 <https://github.com/autowarefoundation/autoware.universe/issues/9900>`_)
 * chore(autoware_traffic_light_fine_detector): modify docs and related params (`#9818 <https://github.com/autowarefoundation/autoware.universe/issues/9818>`_)

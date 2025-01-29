@@ -2,8 +2,8 @@
 Changelog for package scenario_simulator_v2_adapter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.41.0 (2025-01-29)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * feat: apply `autoware\_` prefix for `scenario_simulator_v2_adapter` (`#9957 <https://github.com/autowarefoundation/autoware.universe/issues/9957>`_)
   * feat(autoware_scenario_simulator_v2_adapter): apply `autoware\_` prefix (see below):

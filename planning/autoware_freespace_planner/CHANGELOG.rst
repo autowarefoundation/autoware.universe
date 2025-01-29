@@ -2,8 +2,8 @@
 Changelog for package autoware_freespace_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.41.0 (2025-01-29)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * feat(autoware_freespace_planner): tier4_debug_msgs changed to autoware_internal_debug_msgs in autoware_freespace_planner (`#9903 <https://github.com/autowarefoundation/autoware.universe/issues/9903>`_)
   feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in flies  planning/autoware_freespace_planner

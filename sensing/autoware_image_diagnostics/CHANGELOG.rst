@@ -2,8 +2,8 @@
 Changelog for package autoware_image_diagnostics
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.41.0 (2025-01-29)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * feat(autoware_image_diagnostics): tier4_debug_msgs changed to autoware_internal_debug_msgs in autoware_image_diagnostics (`#9918 <https://github.com/autowarefoundation/autoware.universe/issues/9918>`_)
   feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in files sensing/autoware_image_diagnostics

@@ -2,8 +2,8 @@
 Changelog for package mrm_comfortable_stop_operator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.41.0 (2025-01-29)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * feat: apply `autoware\_` prefix for `mrm_comfortable_stop_operator` (`#10011 <https://github.com/autowarefoundation/autoware.universe/issues/10011>`_)
   * feat(mrm_comfortable_stop_operator): apply `autoware\_` prefix (see below):

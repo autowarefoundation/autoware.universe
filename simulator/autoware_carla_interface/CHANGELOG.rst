@@ -2,8 +2,8 @@
 Changelog for package autoware_carla_interface
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.41.0 (2025-01-29)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * fix(autoware_carla_interface): fix lidar topic name (`#9645 <https://github.com/autowarefoundation/autoware.universe/issues/9645>`_)
 * Contributors: Fumiya Watanabe, Maxime CLEMENT

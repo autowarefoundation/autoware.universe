@@ -2,8 +2,8 @@
 Changelog for package autoware_control_evaluator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.41.0 (2025-01-29)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * feat(autoware_control_evaluator): add new steering metrics (`#10012 <https://github.com/autowarefoundation/autoware.universe/issues/10012>`_)
 * feat(autoware_control_evaluator): add new boundary_distance metrics (`#9984 <https://github.com/autowarefoundation/autoware.universe/issues/9984>`_)

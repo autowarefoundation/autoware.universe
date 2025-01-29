@@ -2,8 +2,8 @@
 Changelog for package autoware_gyro_odometer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.41.0 (2025-01-29)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * refactor(autoware_universe_utils): add missing 's' in the class of diagnostics_interface (`#9777 <https://github.com/autowarefoundation/autoware.universe/issues/9777>`_)
 * feat!: move diagnostics_module from localization_util to unverse_utils (`#9714 <https://github.com/autowarefoundation/autoware.universe/issues/9714>`_)

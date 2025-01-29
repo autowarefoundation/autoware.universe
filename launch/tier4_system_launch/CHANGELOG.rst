@@ -2,8 +2,8 @@
 Changelog for package tier4_system_launch
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.41.0 (2025-01-29)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * feat: apply `autoware` prefix for `component_state_monitor` and its dependencies (`#9961 <https://github.com/autowarefoundation/autoware.universe/issues/9961>`_)
 * feat: apply `autoware\_` prefix for `hazard_status_converter` (`#9971 <https://github.com/autowarefoundation/autoware.universe/issues/9971>`_)

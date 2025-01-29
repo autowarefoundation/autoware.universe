@@ -2,8 +2,8 @@
 Changelog for package autoware_dummy_infrastructure
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.41.0 (2025-01-29)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * feat: apply `autoware\_` prefix for `dummy_infrastructure` (`#9969 <https://github.com/autowarefoundation/autoware.universe/issues/9969>`_)
   * feat(dummy_infrastructure): apply `autoware\_` prefix (see below):

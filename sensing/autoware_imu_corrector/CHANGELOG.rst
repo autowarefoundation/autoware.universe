@@ -2,8 +2,8 @@
 Changelog for package autoware_imu_corrector
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.41.0 (2025-01-29)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * fix(imu_corrector): remove non-periodic publish to /diagnostics topic (`#9951 <https://github.com/autowarefoundation/autoware.universe/issues/9951>`_)
   fix(imu_corrector): remove force_update() in timer callback

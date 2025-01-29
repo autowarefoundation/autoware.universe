@@ -2,8 +2,8 @@
 Changelog for package autoware_tensorrt_yolox
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.41.0 (2025-01-29)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * feat(autoware_tensorrt_yolox)!: tier4_debug_msgs changed to autoware_internal_debug_msgs in autoware_tensorrt_yolox (`#9898 <https://github.com/autowarefoundation/autoware.universe/issues/9898>`_)
 * feat(tensorrt_yolox): add launch for tlr model (`#9828 <https://github.com/autowarefoundation/autoware.universe/issues/9828>`_)

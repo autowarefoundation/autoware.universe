@@ -2,8 +2,8 @@
 Changelog for package localization_evaluator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.41.0 (2025-01-29)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * feat: apply `autoware\_` prefix for `evaluator/localization_evaluator` (`#9954 <https://github.com/autowarefoundation/autoware.universe/issues/9954>`_)
   * feat(localization_evaluator): apply `autoware\_` prefix (see below):

@@ -2,8 +2,8 @@
 Changelog for package autoware_behavior_path_goal_planner_module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.41.0 (2025-01-29)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * feat(goal_planner): introduce bezier based pullover for bus stop area (`#10027 <https://github.com/autowarefoundation/autoware.universe/issues/10027>`_)
 * fix(goal_planner): fix waiting approval path of backward parking (`#10015 <https://github.com/autowarefoundation/autoware.universe/issues/10015>`_)

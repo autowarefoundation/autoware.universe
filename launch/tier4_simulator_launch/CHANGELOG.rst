@@ -2,8 +2,8 @@
 Changelog for package tier4_simulator_launch
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.41.0 (2025-01-29)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * feat: apply `autoware\_` prefix for `dummy_perception_publisher` (`#9987 <https://github.com/autowarefoundation/autoware.universe/issues/9987>`_)
 * fix(tier4_simulator_launch): fix a wrong package name: `fault_injection` => `autoware_fault_injection`  (`#10014 <https://github.com/autowarefoundation/autoware.universe/issues/10014>`_)

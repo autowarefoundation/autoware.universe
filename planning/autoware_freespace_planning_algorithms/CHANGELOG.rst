@@ -2,8 +2,8 @@
 Changelog for package autoware_freespace_planning_algorithms
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.41.0 (2025-01-29)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * fix(autoware_freespace_planning_algorithms): fix bugprone-errors (`#9670 <https://github.com/autowarefoundation/autoware.universe/issues/9670>`_)
   * fix: bugprone-error

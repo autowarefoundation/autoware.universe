@@ -2,8 +2,8 @@
 Changelog for package autoware_probabilistic_occupancy_grid_map
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.41.0 (2025-01-29)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * feat(autoware_probabilistic_occupancy_grid_map): cuda accelerated implementation (`#9542 <https://github.com/autowarefoundation/autoware.universe/issues/9542>`_)
   * feat: implemented a cuda accelerated ogm

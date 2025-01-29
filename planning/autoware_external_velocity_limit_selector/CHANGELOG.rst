@@ -2,8 +2,8 @@
 Changelog for package autoware_external_velocity_limit_selector
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.41.0 (2025-01-29)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in fil… (`#9902 <https://github.com/autowarefoundation/autoware.universe/issues/9902>`_)
   feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in files planning/autoware_external_velocity_limit_selector

@@ -2,8 +2,8 @@
 Changelog for package autoware_detected_object_validation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.41.0 (2025-01-29)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * feat(autoware_detected_object_validation): add height filter in lanelet filtering (`#10003 <https://github.com/autowarefoundation/autoware.universe/issues/10003>`_)
   * feat: add height filter param

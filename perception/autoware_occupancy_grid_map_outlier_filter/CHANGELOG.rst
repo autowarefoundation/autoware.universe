@@ -2,8 +2,8 @@
 Changelog for package autoware_occupancy_grid_map_outlier_filter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.41.0 (2025-01-29)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * feat(autoware_occupancy_grid_map_outlier_filter): tier4_debug_msgs changed to autoware_internal_debug_msgs in fil… (`#9894 <https://github.com/autowarefoundation/autoware.universe/issues/9894>`_)
   feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in files  perception/autoware_occupancy_grid_map_outlier_filter

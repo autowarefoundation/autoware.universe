@@ -2,8 +2,8 @@
 Changelog for package autoware_obstacle_stop_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.41.0 (2025-01-29)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * feat(autoware_obstacle_stop_planner)!: tier4_debug_msgs changed to autoware_internal_debug_msgs in autoware_obstacle_stop_planner (`#9906 <https://github.com/autowarefoundation/autoware.universe/issues/9906>`_)
   feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in files planning/autoware_obstacle_stop_planner

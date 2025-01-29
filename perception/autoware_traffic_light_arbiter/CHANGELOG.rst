@@ -2,8 +2,8 @@
 Changelog for package autoware_traffic_light_arbiter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.41.0 (2025-01-29)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * feat(autoware_traffic_light_arbiter): add current time validation (`#9747 <https://github.com/autowarefoundation/autoware.universe/issues/9747>`_)
   * add current time validation

@@ -2,8 +2,8 @@
 Changelog for package duplicated_node_checker
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.41.0 (2025-01-29)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * feat: apply `autoware\_` prefix for `duplicated_node_checker` (`#9970 <https://github.com/autowarefoundation/autoware.universe/issues/9970>`_)
   * feat(duplicated_node_checker): apply `autoware\_` prefix (see below):
