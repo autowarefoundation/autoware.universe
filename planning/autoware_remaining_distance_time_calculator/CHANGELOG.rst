@@ -2,6 +2,18 @@
 Changelog for package autoware_remaining_distance_time_calculator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(remaining_distance_time_calculator): integrate generate_parameter_library (`#8826 <https://github.com/autowarefoundation/autoware.universe/issues/8826>`_)
+  * add parameter description
+  * use parameter listener
+  * supress deprecated error
+  * change scope of compile option to private
+  ---------
+* feat(remaining_distance_time_calculator): skip calculation during parking (`#9013 <https://github.com/autowarefoundation/autoware.universe/issues/9013>`_)
+* Contributors: Fumiya Watanabe, Ismet Atabay, Mitsuhiro Sakamoto
+
 0.40.0 (2024-12-12)
 -------------------
 * Revert "chore(package.xml): bump version to 0.39.0 (`#9587 <https://github.com/autowarefoundation/autoware.universe/issues/9587>`_)"

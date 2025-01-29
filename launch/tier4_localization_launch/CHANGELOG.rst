@@ -2,6 +2,14 @@
 Changelog for package tier4_localization_launch
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat: apply `autoware\_` prefix for `default_ad_api_helpers` (`#9965 <https://github.com/autowarefoundation/autoware.universe/issues/9965>`_)
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+  Co-authored-by: Takagi, Isamu <isamu.takagi@tier4.jp>
+* Contributors: Fumiya Watanabe, Junya Sasaki
+
 0.40.0 (2024-12-12)
 -------------------
 * Revert "chore(package.xml): bump version to 0.39.0 (`#9587 <https://github.com/autowarefoundation/autoware.universe/issues/9587>`_)"

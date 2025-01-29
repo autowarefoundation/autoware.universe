@@ -2,6 +2,12 @@
 Changelog for package autoware_learning_based_vehicle_model
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat: apply `autoware\_` prefix for `learning_based_vehicle_model` (`#9991 <https://github.com/autowarefoundation/autoware.universe/issues/9991>`_)
+* Contributors: Fumiya Watanabe, Junya Sasaki
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0
