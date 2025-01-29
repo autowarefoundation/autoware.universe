@@ -90,7 +90,7 @@ trajectory::Trajectory<PointType> shift(
     detail::to_point(shifted_points.back()).y -= std::cos(azimuth) * shift_length;
   }
   auto shifted_trajectory = reference_trajectory;
-  bool valid = shifted_trajectory.build(shifted_points);
+  const bool valid = shifted_trajectory.build(shifted_points);
   if (!valid) {
     throw std::runtime_error(
       "Failed to build shifted trajectory");  // This Exception should not be thrown.
