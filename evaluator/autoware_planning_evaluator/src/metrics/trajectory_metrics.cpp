@@ -103,11 +103,11 @@ Accumulator<double> calcTrajectoryResampledRelativeAngle(
 
         // Calc diff yaw between base pose yaw and target pose yaw
         const double front_diff_yaw =
-          autoware::universe_utils::normalizeRadian(front_target_yaw - base_yaw);
+          std::abs(autoware::universe_utils::normalizeRadian(front_target_yaw - base_yaw));
         const double back_diff_yaw =
-          autoware::universe_utils::normalizeRadian(back_target_yaw - base_yaw);
+          std::abs(autoware::universe_utils::normalizeRadian(back_target_yaw - base_yaw));
 
-        stat.add(std::abs(std::max(front_diff_yaw, back_diff_yaw)));
+        stat.add(std::max(front_diff_yaw, back_diff_yaw));
         break;
       }
     }
