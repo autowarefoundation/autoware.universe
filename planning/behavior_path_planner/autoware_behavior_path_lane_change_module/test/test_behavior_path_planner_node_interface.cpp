@@ -70,7 +70,7 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithOffTrackEgoPose)
   EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
 
   ASSERT_NO_THROW_WITH_ERROR_MSG(
-    test_manager->testWithOffTrackOdometries(test_target_node, input_odometry_topic));
+    test_manager->testWithOffTrackOdometry(test_target_node, input_odometry_topic));
 
   rclcpp::shutdown();
 }

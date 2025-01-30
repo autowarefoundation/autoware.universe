@@ -123,7 +123,7 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithOffTrackEgoPose)
 
   // test for trajectory with empty/one point/overlapping point
   ASSERT_NO_THROW_WITH_ERROR_MSG(
-    test_manager->testWithOffTrackOdometries(test_target_node, input_odometry_topic));
+    test_manager->testWithOffTrackOdometry(test_target_node, input_odometry_topic));
 
   rclcpp::shutdown();
 }

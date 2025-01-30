@@ -94,5 +94,5 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithOffTrackEgoPose)
   EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
 
   // test for trajectory with empty/one point/overlapping point
-  ASSERT_NO_THROW(test_manager->testWithOffTrackOdometries(test_target_node, input_odometry_topic));
+  ASSERT_NO_THROW(test_manager->testWithOffTrackOdometry(test_target_node, input_odometry_topic));
 }

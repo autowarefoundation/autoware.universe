@@ -98,7 +98,7 @@ public:
   void testWithOffTrackInitialPoses(
     rclcpp::Node::SharedPtr target_node, const std::string & topic_name);
 
-  void testWithOffTrackOdometries(
+  void testWithOffTrackOdometry(
     rclcpp::Node::SharedPtr target_node, const std::string & topic_name);
 
   void resetReceivedTopicNum() { received_topic_num_ = 0; }

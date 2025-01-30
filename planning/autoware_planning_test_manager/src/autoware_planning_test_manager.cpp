@@ -116,7 +116,7 @@ void PlanningInterfaceTestManager::testWithOffTrackInitialPoses(
   }
 }
 
-void PlanningInterfaceTestManager::testWithOffTrackOdometries(
+void PlanningInterfaceTestManager::testWithOffTrackOdometry(
   rclcpp::Node::SharedPtr target_node, const std::string & topic_name)
 {
   for (const auto & deviation : {0.0, 1.0, 10.0, 100.0}) {
