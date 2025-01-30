@@ -368,6 +368,10 @@ GoalPlannerParameters GoalPlannerModuleManager::initGoalPlannerParameters(
   {
     p.safety_check_params.enable_safety_check =
       node->declare_parameter<bool>(safety_check_ns + "enable_safety_check");
+    // NOTE(soblin): remove safety_check_params.enable_safety_check because it does not make sense
+    if (!p.safety_check_params.enable_safety_check) {
+      throw std::domain_error("goal_planner never works without safety check");
+    }
     p.safety_check_params.keep_unsafe_time =
       node->declare_parameter<double>(safety_check_ns + "keep_unsafe_time");
     p.safety_check_params.method = node->declare_parameter<std::string>(safety_check_ns + "method");
@@ -786,9 +790,6 @@ void GoalPlannerModuleManager::updateModuleParams(
   // SafetyCheckParams
   const std::string safety_check_ns = path_safety_check_ns + "safety_check_params.";
   {
-    updateParam<bool>(
-      parameters, safety_check_ns + "enable_safety_check",
-      p->safety_check_params.enable_safety_check);
     updateParam<double>(
       parameters, safety_check_ns + "keep_unsafe_time", p->safety_check_params.keep_unsafe_time);
     updateParam<std::string>(parameters, safety_check_ns + "method", p->safety_check_params.method);

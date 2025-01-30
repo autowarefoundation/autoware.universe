@@ -57,22 +57,18 @@ PathDecisionState PathDecisionStateController::get_next_state(
   auto next_state = current_state_;
 
   // update safety
-  if (!parameters.safety_check_params.enable_safety_check) {
-    next_state.is_stable_safe = true;
-  } else {
-    if (is_current_safe) {
-      if (!next_state.safe_start_time) {
-        next_state.safe_start_time = now;
-        next_state.is_stable_safe = false;
-      } else {
-        next_state.is_stable_safe =
-          ((now - next_state.safe_start_time.value()).seconds() >
-           parameters.safety_check_params.keep_unsafe_time);
-      }
-    } else {
-      next_state.safe_start_time = std::nullopt;
+  if (is_current_safe) {
+    if (!next_state.safe_start_time) {
+      next_state.safe_start_time = now;
       next_state.is_stable_safe = false;
+    } else {
+      next_state.is_stable_safe =
+        ((now - next_state.safe_start_time.value()).seconds() >
+         parameters.safety_check_params.keep_unsafe_time);
     }
+  } else {
+    next_state.safe_start_time = std::nullopt;
+    next_state.is_stable_safe = false;
   }
 
   // Once this function returns true, it will continue to return true thereafter
@@ -87,10 +83,9 @@ PathDecisionState PathDecisionStateController::get_next_state(
   }
 
   const auto & pull_over_path = pull_over_path_opt.value();
-  const bool enable_safety_check = parameters.safety_check_params.enable_safety_check;
   // If it is dangerous against dynamic objects before approval, do not determine the path.
   // This eliminates a unsafe path to be approved
-  if (enable_safety_check && !next_state.is_stable_safe && !is_activated) {
+  if (!next_state.is_stable_safe && !is_activated) {
     RCLCPP_DEBUG(
       logger_,
       "[DecidingPathStatus]: NOT_DECIDED. path is not safe against dynamic objects before "
@@ -132,7 +127,7 @@ PathDecisionState PathDecisionStateController::get_next_state(
       return next_state;
     }
 
-    if (enable_safety_check && !next_state.is_stable_safe) {
+    if (!next_state.is_stable_safe) {
       RCLCPP_DEBUG(
         logger_,
         "[DecidingPathStatus]: DECIDING->NOT_DECIDED. path is not safe against dynamic objects");
