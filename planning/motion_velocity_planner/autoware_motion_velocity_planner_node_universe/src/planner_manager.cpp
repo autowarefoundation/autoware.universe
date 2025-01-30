@@ -94,12 +94,14 @@ std::shared_ptr<MetricArray> MotionVelocityPlannerManager::get_metrics(
 }
 
 std::vector<VelocityPlanningResult> MotionVelocityPlannerManager::plan_velocities(
-  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & raw_trajectory_points,
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & smoothed_trajectory_points,
   const std::shared_ptr<const PlannerData> planner_data)
 {
   std::vector<VelocityPlanningResult> results;
   for (auto & plugin : loaded_plugins_) {
-    VelocityPlanningResult res = plugin->plan(ego_trajectory_points, planner_data);
+    VelocityPlanningResult res =
+      plugin->plan(raw_trajectory_points, smoothed_trajectory_points, planner_data);
     results.push_back(res);
 
     plugin->publish_planning_factor();
