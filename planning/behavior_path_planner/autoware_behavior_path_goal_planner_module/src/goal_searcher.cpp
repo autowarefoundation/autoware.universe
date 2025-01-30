@@ -100,7 +100,8 @@ GoalSearcher::GoalSearcher(
 {
 }
 
-GoalCandidates GoalSearcher::search(const std::shared_ptr<const PlannerData> & planner_data)
+GoalCandidates GoalSearcher::search(
+  const std::shared_ptr<const PlannerData> & planner_data, const bool use_bus_stop_area)
 {
   GoalCandidates goal_candidates{};
 
@@ -118,7 +119,7 @@ GoalCandidates GoalSearcher::search(const std::shared_ptr<const PlannerData> & p
   const double forward_length = parameters_.forward_goal_search_length;
   const double backward_length = parameters_.backward_goal_search_length;
   const double margin_from_boundary = parameters_.margin_from_boundary;
-  const bool use_bus_stop_area = parameters_.bus_stop_area.use_bus_stop_area;
+
   const double lateral_offset_interval = use_bus_stop_area
                                            ? parameters_.bus_stop_area.lateral_offset_interval
                                            : parameters_.lateral_offset_interval;

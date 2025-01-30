@@ -47,7 +47,8 @@ public:
   virtual ~GoalSearcherBase() = default;
 
   MultiPolygon2d getAreaPolygons() const { return area_polygons_; }
-  virtual GoalCandidates search(const std::shared_ptr<const PlannerData> & planner_data) = 0;
+  virtual GoalCandidates search(
+    const std::shared_ptr<const PlannerData> & planner_data, const bool use_bus_stop_area) = 0;
   virtual void update(
     [[maybe_unused]] GoalCandidates & goal_candidates,
     [[maybe_unused]] const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,

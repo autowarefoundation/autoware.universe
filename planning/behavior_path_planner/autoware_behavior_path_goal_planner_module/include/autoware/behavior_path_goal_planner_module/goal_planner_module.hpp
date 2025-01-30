@@ -338,6 +338,8 @@ private:
   std::shared_ptr<GoalSearcherBase> goal_searcher_;
   GoalCandidates goal_candidates_{};
 
+  bool use_bus_stop_area_{false};
+
   // NOTE: this is latest occupancy_grid_map pointer which the local planner_data on
   // onFreespaceParkingTimer thread storage may point to while calculation.
   // onTimer/onFreespaceParkingTimer and their callees MUST NOT use this
@@ -362,7 +364,7 @@ private:
   mutable GoalPlannerDebugData debug_data_;
 
   // goal seach
-  GoalCandidates generateGoalCandidates() const;
+  GoalCandidates generateGoalCandidates(const bool use_bus_stop_area) const;
 
   /*
    * state transitions and plan function used in each state

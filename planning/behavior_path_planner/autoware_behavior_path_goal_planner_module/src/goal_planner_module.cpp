@@ -319,6 +319,7 @@ void LaneParkingPlanner::onTimer()
   const auto & pull_over_path_opt = local_request.get_pull_over_path();
   const auto & prev_data = local_request.get_prev_data();
   const auto trigger_thread_on_approach = local_request.trigger_thread_on_approach();
+  const auto use_bus_stop_area = local_request.use_bus_stop_area_;
 
   if (!trigger_thread_on_approach) {
     return;
@@ -385,7 +386,7 @@ void LaneParkingPlanner::onTimer()
   std::vector<PullOverPath> path_candidates{};
   std::optional<Pose> closest_start_pose{};
   std::optional<std::vector<size_t>> sorted_indices_opt{std::nullopt};
-  if (parameters_.bus_stop_area.use_bus_stop_area && switch_bezier_) {
+  if (use_bus_stop_area && switch_bezier_) {
     bezier_planning_helper(
       local_planner_data, goal_candidates, upstream_module_output, current_lanes,
       closest_start_pose, path_candidates, sorted_indices_opt);
@@ -658,7 +659,7 @@ std::pair<LaneParkingResponse, FreespaceParkingResponse> GoalPlannerModule::sync
     std::lock_guard<std::mutex> guard(lane_parking_mutex_);
     if (!lane_parking_request_) {
       lane_parking_request_.emplace(
-        vehicle_footprint_, goal_candidates_, getPreviousModuleOutput());
+        vehicle_footprint_, goal_candidates_, getPreviousModuleOutput(), use_bus_stop_area_);
     }
     // NOTE: for the above reasons, PlannerManager/behavior_path_planner_node ensure that
     // planner_data_ is not nullptr, so it is OK to copy as value
@@ -713,7 +714,19 @@ void GoalPlannerModule::updateData()
 
   // update goal searcher and generate goal candidates
   if (goal_candidates_.empty()) {
-    goal_candidates_ = generateGoalCandidates();
+    const auto pull_over_lanes = goal_planner_utils::getPullOverLanes(
+      *(planner_data_->route_handler), left_side_parking_, parameters_.backward_goal_search_length,
+      parameters_.forward_goal_search_length);
+    const auto bus_stop_area_polygons = goal_planner_utils::getBusStopAreaPolygons(pull_over_lanes);
+    use_bus_stop_area_ =
+      parameters_.bus_stop_area.use_bus_stop_area &&
+      std::any_of(
+        bus_stop_area_polygons.begin(), bus_stop_area_polygons.end(), [&](const auto & area) {
+          const auto & goal_position = planner_data_->route_handler->getOriginalGoalPose().position;
+          return boost::geometry::within(
+            universe_utils::Point2d{goal_position.x, goal_position.y}, area);
+        });
+    goal_candidates_ = generateGoalCandidates(use_bus_stop_area_);
   }
 
   const lanelet::ConstLanelets current_lanes =
@@ -982,14 +995,14 @@ bool GoalPlannerModule::canReturnToLaneParking(const PullOverContextData & conte
   return true;
 }
 
-GoalCandidates GoalPlannerModule::generateGoalCandidates() const
+GoalCandidates GoalPlannerModule::generateGoalCandidates(const bool use_bus_stop_area) const
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   // calculate goal candidates
   const auto & route_handler = planner_data_->route_handler;
   if (utils::isAllowedGoalModification(route_handler)) {
-    return goal_searcher_->search(planner_data_);
+    return goal_searcher_->search(planner_data_, use_bus_stop_area);
   }
 
   // NOTE:
