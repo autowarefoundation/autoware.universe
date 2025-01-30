@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__DECISION_STATE_HPP_
 #define AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__DECISION_STATE_HPP_
 
-#include "autoware/behavior_path_goal_planner_module/goal_searcher_base.hpp"
+#include "autoware/behavior_path_goal_planner_module/goal_searcher.hpp"
 #include "autoware/behavior_path_goal_planner_module/pull_over_planner/pull_over_planner_base.hpp"
 #include "autoware/behavior_path_planner_common/utils/occupancy_grid_based_collision_detector/occupancy_grid_based_collision_detector.hpp"
 
@@ -56,7 +56,7 @@ public:
     const std::shared_ptr<const PlannerData> planner_data,
     const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
     const bool is_current_safe, const GoalPlannerParameters & parameters,
-    const std::shared_ptr<GoalSearcherBase> goal_searcher, const bool is_activated,
+    const GoalSearcher & goal_searcher, const bool is_activated,
     const std::optional<PullOverPath> & pull_over_path,
     std::vector<autoware::universe_utils::Polygon2d> & ego_polygons_expanded);
 
@@ -77,7 +77,7 @@ private:
     const std::shared_ptr<const PlannerData> planner_data,
     const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
     const bool is_current_safe, const GoalPlannerParameters & parameters,
-    const std::shared_ptr<GoalSearcherBase> goal_searcher, const bool is_activated,
+    const GoalSearcher & goal_searcher, const bool is_activated,
     const std::optional<PullOverPath> & pull_over_path_opt,
     std::vector<autoware::universe_utils::Polygon2d> & ego_polygons_expanded) const;
 };

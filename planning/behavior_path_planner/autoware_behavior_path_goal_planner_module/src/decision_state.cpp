@@ -32,7 +32,7 @@ void PathDecisionStateController::transit_state(
   const std::shared_ptr<const PlannerData> planner_data,
   const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
   const bool is_current_safe, const GoalPlannerParameters & parameters,
-  const std::shared_ptr<GoalSearcherBase> goal_searcher, const bool is_activated,
+  const GoalSearcher & goal_searcher, const bool is_activated,
   const std::optional<PullOverPath> & pull_over_path,
   std::vector<autoware::universe_utils::Polygon2d> & ego_polygons_expanded)
 {
@@ -50,7 +50,7 @@ PathDecisionState PathDecisionStateController::get_next_state(
   const std::shared_ptr<const PlannerData> planner_data,
   const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
   const bool is_current_safe, const GoalPlannerParameters & parameters,
-  const std::shared_ptr<GoalSearcherBase> goal_searcher, const bool is_activated,
+  const GoalSearcher & goal_searcher, const bool is_activated,
   const std::optional<PullOverPath> & pull_over_path_opt,
   std::vector<autoware::universe_utils::Polygon2d> & ego_polygons_expanded) const
 {
@@ -105,7 +105,7 @@ PathDecisionState PathDecisionStateController::get_next_state(
 
     // check goal pose collision
     if (
-      modified_goal_opt && !goal_searcher->isSafeGoalWithMarginScaleFactor(
+      modified_goal_opt && !goal_searcher.isSafeGoalWithMarginScaleFactor(
                              modified_goal_opt.value(), hysteresis_factor, occupancy_grid_map,
                              planner_data, static_target_objects)) {
       RCLCPP_DEBUG(logger_, "[DecidingPathStatus]: DECIDING->NOT_DECIDED. goal is not safe");
