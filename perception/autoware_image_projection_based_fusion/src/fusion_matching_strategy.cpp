@@ -86,7 +86,7 @@ template <class Msg3D, class Msg2D, class ExportObj>
 std::optional<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>>
 NaiveMatchingStrategy<Msg3D, Msg2D, ExportObj>::match_det3d_to_collector(
   const std::list<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>> & fusion_collectors,
-  const std::shared_ptr<Det3dMatchingParams> & params) const
+  const std::shared_ptr<Det3dMatchingParams> & params)
 {
   std::optional<double> smallest_time_difference = std::nullopt;
   std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>> closest_collector = nullptr;
@@ -188,7 +188,7 @@ template <class Msg3D, class Msg2D, class ExportObj>
 std::optional<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>>
 AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::match_det3d_to_collector(
   const std::list<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>> & fusion_collectors,
-  const std::shared_ptr<Det3dMatchingParams> & params) const
+  const std::shared_ptr<Det3dMatchingParams> & params)
 {
   auto concatenated_status = ros2_parent_node_->find_concatenation_status(params->det3d_timestamp);
 
@@ -236,24 +236,113 @@ void AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::set_collector_info(
 template <class Msg3D, class Msg2D, class ExportObj>
 double AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::get_offset(
   const double & det3d_timestamp,
-  const std::optional<std::unordered_map<std::string, std::string>> & concatenated_status) const
+  const std::optional<std::unordered_map<std::string, std::string>> & concatenated_status)
 {
   double offset = 0.0;
+
   if (concatenated_status) {
-    auto status_map = concatenated_status.value();  // Retrieve the inner map
+    const auto & status_map = concatenated_status.value();
+
     if (
-      status_map["cloud_concatenation_success"] == "False" &&
-      det3d_timestamp > std::stod(status_map["reference_timestamp_max"])) {
-      // The defined earliest pointcloud is missed in the concatenation of pointcloud
-      offset = det3d_timestamp - (std::stod(status_map["reference_timestamp_min"]) +
-                                  (std::stod(status_map["reference_timestamp_max"]) -
-                                   std::stod(status_map["reference_timestamp_min"])) /
-                                    2);
+      status_map.find("cloud_concatenation_success") != status_map.end() &&
+      status_map.find("reference_timestamp_min") != status_map.end() &&
+      status_map.find("reference_timestamp_max") != status_map.end()) {
+      bool concatenation_success = (status_map.at("cloud_concatenation_success") == "True");
+
+      if (
+        !concatenation_success &&
+        det3d_timestamp > std::stod(status_map.at("reference_timestamp_max"))) {
+        // The defined earliest pointcloud is missed in the concatenation
+        double reference_min = std::stod(status_map.at("reference_timestamp_min"));
+        double reference_max = std::stod(status_map.at("reference_timestamp_max"));
+        offset = det3d_timestamp - (reference_min + (reference_max - reference_min) / 2);
+      } else if (!database_created_ && concatenation_success) {
+        // Ensure "cloud_concatenated_timestamp" key exists before accessing
+        if (status_map.find("concatenated_cloud_timestamp") != status_map.end()) {
+          double concatenated_cloud_timestamp =
+            std::stod(status_map.at("concatenated_cloud_timestamp"));
+          update_fractional_timestamp_set(concatenated_cloud_timestamp);
+          success_status_counter_++;
+          offset = 0.0;
+
+          if (success_status_counter_ > success_threshold) {
+            database_created_ = true;
+          }
+        }
+      }
+    }
+  } else {
+    RCLCPP_WARN(
+      ros2_parent_node_->get_logger(),
+      "If concatenated_status is missing, find the offset using the timestamp difference");
+    // If concatenated_status is missing, find the offset using the timestamp difference
+    if (database_created_) {
+      offset = compute_offset(det3d_timestamp);
+      RCLCPP_WARN(ros2_parent_node_->get_logger(), "Use database and find offset: %f", offset);
+
+    } else {
+      offset = 0.0;
     }
   }
 
-  // std::cout << "Offset: " << offset << std::endl;
   return offset;
+}
+
+template <class Msg3D, class Msg2D, class ExportObj>
+double AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::extract_fractional(double timestamp)
+{
+  return fmod(timestamp, 1.0);
+}
+
+template <class Msg3D, class Msg2D, class ExportObj>
+void AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::update_fractional_timestamp_set(
+  double timestamp)
+{
+  double fractional_part = extract_fractional(timestamp);
+
+  // Check if the new timestamp belongs to an existing element within noise tolerance
+  for (auto existing_timestamp : fractional_timestamp_set_) {
+    if (std::abs(fractional_part - existing_timestamp) < det3d_noise_window_ * 2) {
+      existing_timestamp = (existing_timestamp + fractional_part) / 2;
+      return;  // If it belongs to an existing group, average the timestamp
+    }
+  }
+
+  fractional_timestamp_set_.insert(fractional_part);
+}
+
+template <class Msg3D, class Msg2D, class ExportObj>
+double AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::compute_offset(double input_timestamp)
+{
+  if (fractional_timestamp_set_.empty()) {
+    return 0.0;
+  }
+
+  double fractional_part = extract_fractional(input_timestamp);
+  double expected_timestamp = -1.0;
+
+  // Check if input timestamp is within an existing timestamp ± noise_tolerance
+  for (const auto & timestamp : fractional_timestamp_set_) {
+    if (
+      fractional_part >= timestamp - det3d_noise_window_ &&
+      fractional_part < timestamp + det3d_noise_window_) {
+      return 0.0;  // If within range, offset is zero
+    }
+  }
+
+  // Find the closest timestamp ≤ fractional_part
+  auto it = fractional_timestamp_set_.lower_bound(fractional_part);
+  if (it == fractional_timestamp_set_.end()) {
+    --it;
+    expected_timestamp = floor(input_timestamp) + *it;
+  } else if (it == fractional_timestamp_set_.begin()) {
+    // **If `new_timestamp` is smaller than all stored timestamps, use the largest timestamp**
+    expected_timestamp = floor(input_timestamp) - 1 + *fractional_timestamp_set_.rbegin();
+  } else {
+    --it;
+    expected_timestamp = floor(input_timestamp) + *it;
+  }
+  return input_timestamp - expected_timestamp;
 }
 
 // pointpainting fusion

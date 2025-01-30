@@ -22,6 +22,7 @@
 #include <list>
 #include <memory>
 #include <optional>
+#include <set>
 #include <string>
 #include <unordered_map>
 
@@ -68,7 +69,7 @@ public:
   [[nodiscard]] virtual std::optional<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>>
   match_det3d_to_collector(
     const std::list<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>> & fusion_collectors,
-    const std::shared_ptr<Det3dMatchingParams> & params) const = 0;
+    const std::shared_ptr<Det3dMatchingParams> & params) = 0;
   virtual void set_collector_info(
     std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>> & collector,
     const std::shared_ptr<MatchingParamsBase> & matching_params) = 0;
@@ -90,7 +91,7 @@ public:
   [[nodiscard]] std::optional<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>>
   match_det3d_to_collector(
     const std::list<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>> & fusion_collectors,
-    const std::shared_ptr<Det3dMatchingParams> & params) const override;
+    const std::shared_ptr<Det3dMatchingParams> & params) override;
 
   void set_collector_info(
     std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>> & collector,
@@ -118,24 +119,27 @@ public:
   [[nodiscard]] std::optional<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>>
   match_det3d_to_collector(
     const std::list<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>> & fusion_collectors,
-    const std::shared_ptr<Det3dMatchingParams> & params) const override;
+    const std::shared_ptr<Det3dMatchingParams> & params) override;
   void set_collector_info(
     std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>> & collector,
     const std::shared_ptr<MatchingParamsBase> & matching_params) override;
 
   double get_offset(
     const double & det3d_timestamp,
-    const std::optional<std::unordered_map<std::string, std::string>> & concatenated_status) const;
+    const std::optional<std::unordered_map<std::string, std::string>> & concatenated_status);
+
+  double extract_fractional(double timestamp);
+  void update_fractional_timestamp_set(double new_timestamp);
+  double compute_offset(double input_timestamp);
 
 private:
   std::unordered_map<std::size_t, double> id_to_offset_map_;
   std::unordered_map<std::size_t, double> id_to_noise_window_map_;
   double det3d_noise_window_;
   std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> ros2_parent_node_;
+  std::set<double> fractional_timestamp_set_;  // Use set to store unique fractional timestamps
+  int success_status_counter_{0};
+  static constexpr int success_threshold{100};
+  bool database_created_{false};
 };
-
-template <class Msg3D, class Msg2D, class ExportObj>
-std::shared_ptr<FusionMatchingStrategy<Msg3D, Msg2D, ExportObj>> parse_matching_strategy(
-  rclcpp::Node & node);
-
 }  // namespace autoware::image_projection_based_fusion

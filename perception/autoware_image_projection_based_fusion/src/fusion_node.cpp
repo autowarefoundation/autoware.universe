@@ -451,8 +451,6 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::diagnostic_callback(
   for (const auto & status : diagnostic_msg->status) {
     // Filter for the concatenate_and_time_sync_node diagnostic message
     if (status.name == "concatenate_data: /sensing/lidar/concatenate_data_status") {
-      RCLCPP_INFO(get_logger(), "Processing concatenation status diagnostic message...");
-
       // Temporary map to hold key-value pairs for this status
       std::unordered_map<std::string, std::string> key_value_map;
       std::optional<double> concatenate_timestamp_opt;
@@ -539,20 +537,10 @@ template <class Msg3D, class Msg2D, class ExportObj>
 std::optional<std::unordered_map<std::string, std::string>>
 FusionNode<Msg3D, Msg2D, ExportObj>::find_concatenation_status(double timestamp)
 {
-  // timestamp = std::round(timestamp * 1000.0) / 1000.0;
-  // for (const auto& outer_pair : concatenated_status_map_) {
-  //   double outer_key = outer_pair.first;
-  //   std::cout << "Outer Key (double): " << format_timestamp(outer_key) << std::endl;
-  // }
-
   auto it = concatenated_status_map_.find(timestamp);
   if (it != concatenated_status_map_.end()) {
-    // std::cout << "Found the concatenated status for timestamp: " << format_timestamp(timestamp)
-    //           << std::endl;
     return it->second;
   }
-  // std::cout << "Could not find the concatenated status for timestamp: "
-  //           << format_timestamp(timestamp) << std::endl;
   return std::nullopt;
 }
 
