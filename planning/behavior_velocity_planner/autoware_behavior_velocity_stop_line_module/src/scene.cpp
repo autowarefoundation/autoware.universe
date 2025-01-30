@@ -15,6 +15,8 @@
 #include "scene.hpp"
 
 #include "autoware/behavior_velocity_planner_common/utilization/util.hpp"
+#include "autoware/trajectory/utils/closest.hpp"
+#include "autoware/trajectory/utils/crossed.hpp"
 
 #include <rclcpp/logging.hpp>
 
@@ -30,8 +32,8 @@ namespace autoware::behavior_velocity_planner
 StopLineModule::StopLineModule(
   const int64_t module_id, lanelet::ConstLineString3d stop_line, const PlannerParam & planner_param,
   const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock,
-  const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
-  const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
+  const std::shared_ptr<universe_utils::TimeKeeper> & time_keeper,
+  const std::shared_ptr<planning_factor_interface::PlanningFactorInterface> &
     planning_factor_interface)
 : SceneModuleInterface(module_id, logger, clock, time_keeper, planning_factor_interface),
   stop_line_(std::move(stop_line)),
@@ -58,7 +60,7 @@ bool StopLineModule::modifyPathVelocity(PathWithLaneId * path)
     return true;
   }
 
-  trajectory->longitudinal_velocity_mps.range(*stop_point, trajectory->length()).set(0.0);
+  trajectory->longitudinal_velocity_mps().range(*stop_point, trajectory->length()).set(0.0);
 
   path->points = trajectory->restore();
 
@@ -83,7 +85,7 @@ std::pair<double, std::optional<double>> StopLineModule::getEgoAndStopPoint(
   const Trajectory & trajectory, const geometry_msgs::msg::Pose & ego_pose,
   const State & state) const
 {
-  const double ego_s = trajectory.closest(ego_pose.position);
+  const double ego_s = autoware::trajectory::closest(trajectory, ego_pose);
   std::optional<double> stop_point_s;
 
   switch (state) {
@@ -94,16 +96,16 @@ std::pair<double, std::optional<double>> StopLineModule::getEgoAndStopPoint(
 
       // Calculate intersection with stop line
       const auto trajectory_stop_line_intersection =
-        trajectory.crossed(stop_line.front(), stop_line.back());
+        autoware::trajectory::crossed(trajectory, stop_line);
 
       // If no collision found, do nothing
-      if (!trajectory_stop_line_intersection) {
+      if (trajectory_stop_line_intersection.size() == 0) {
         stop_point_s = std::nullopt;
         break;
       }
 
       stop_point_s =
-        *trajectory_stop_line_intersection -
+        trajectory_stop_line_intersection.at(0) -
         (base_link2front + planner_param_.stop_margin);  // consider vehicle length and stop margin
 
       if (*stop_point_s < 0.0) {

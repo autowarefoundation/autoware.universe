@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// clang-format off
-#ifndef AUTOWARE__TRAJECTORY__DETAIL__INTERPOLATED_ARRAY_HPP_  // NOLINT
-#define AUTOWARE__TRAJECTORY__DETAIL__INTERPOLATED_ARRAY_HPP_  // NOLINT
-// clang-format on
+#ifndef AUTOWARE__TRAJECTORY__DETAIL__INTERPOLATED_ARRAY_HPP_
+#define AUTOWARE__TRAJECTORY__DETAIL__INTERPOLATED_ARRAY_HPP_
 
+#include "autoware/trajectory/detail/logging.hpp"
 #include "autoware/trajectory/interpolator/interpolator.hpp"
 
 #include <Eigen/Core>
@@ -85,9 +84,11 @@ public:
    */
   InterpolatedArray & operator=(const InterpolatedArray & other)
   {
-    bases_ = other.bases_;
-    values_ = other.values_;
-    interpolator_ = other.interpolator_->clone();
+    if (this != &other) {
+      bases_ = other.bases_;
+      values_ = other.values_;
+      interpolator_ = other.interpolator_->clone();
+    }
     return *this;
   }
 
@@ -152,9 +153,11 @@ public:
       // Set the values in the specified range
       std::fill(values.begin() + start_index, values.begin() + end_index + 1, value);
 
-      parent_.interpolator_->build(bases, values);
-
-      // return *this;
+      bool success = parent_.interpolator_->build(bases, values);
+      if (!success) {
+        throw std::runtime_error(
+          "Failed to build interpolator.");  // This Exception should not be thrown.
+      }
     }
   };
 
@@ -168,9 +171,8 @@ public:
   {
     if (start < this->start() || end > this->end()) {
       RCLCPP_WARN(
-        rclcpp::get_logger("InterpolatedArray"),
-        "The range [%f, %f] is out of the array range [%f, %f]", start, end, this->start(),
-        this->end());
+        get_logger(), "The range [%f, %f] is out of the array range [%f, %f]", start, end,
+        this->start(), this->end());
       start = std::max(start, this->start());
       end = std::min(end, this->end());
     }
@@ -185,7 +187,11 @@ public:
   InterpolatedArray & operator=(const T & value)
   {
     std::fill(values_.begin(), values_.end(), value);
-    interpolator_->build(bases_, values_);
+    bool success = interpolator_->build(bases_, values_);
+    if (!success) {
+      throw std::runtime_error(
+        "Failed to build interpolator.");  // This Exception should not be thrown.
+    }
     return *this;
   }
 
@@ -208,6 +214,4 @@ public:
 
 }  // namespace autoware::trajectory::detail
 
-// clang-format off
-#endif  // AUTOWARE__TRAJECTORY__DETAIL__INTERPOLATED_ARRAY_HPP_  // NOLINT
-// clang-format on
+#endif  // AUTOWARE__TRAJECTORY__DETAIL__INTERPOLATED_ARRAY_HPP_
