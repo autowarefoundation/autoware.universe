@@ -21,6 +21,8 @@ on:
 
 jobs:
   clang-tidy-differential:
+    permissions:
+      pull-requests: write
     if: ${{ inputs.run-condition }}
     runs-on: ${{ inputs.runner }}
     container: ${{ inputs.container }}${{ inputs.container-suffix }}
