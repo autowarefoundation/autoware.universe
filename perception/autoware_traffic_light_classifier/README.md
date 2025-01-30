@@ -52,11 +52,8 @@ These colors and shapes are assigned to the message as follows:
 
 ### Node Parameters
 
-| Name                  | Type  | Description                                                                                                                                                                                                                                                                                                                                                |
-| --------------------- | ----- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `classifier_type`     | int   | if the value is `1`, cnn_classifier is used                                                                                                                                                                                                                                                                                                                |
-| `data_path`           | str   | packages data and artifacts directory path                                                                                                                                                                                                                                                                                                                 |
-| `backlight_threshold` | float | If the intensity get grater than this overwrite with UNKNOWN in corresponding RoI. Note that, if the value is much higher, the node only overwrites in the harsher backlight situations. Therefore, If you wouldn't like to use this feature set this value to `1.0`. The value can be `[0.0, 1.0]`. The confidence of overwritten signal is set to `0.0`. |
+{{ json_to_markdown("perception/autoware_traffic_light_classifier/schema/car_traffic_light_classifier.schema.json") }}
+{{ json_to_markdown("perception/autoware_traffic_light_classifier/schema/pedestrian_traffic_light_classifier.schema.json") }}
 
 ### Core Parameters
 
