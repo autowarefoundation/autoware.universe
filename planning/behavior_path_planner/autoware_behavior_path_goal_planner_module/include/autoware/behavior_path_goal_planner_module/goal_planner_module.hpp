@@ -336,7 +336,7 @@ private:
 
   // goal searcher
   std::optional<GoalSearcher> goal_searcher_{};
-  std::optional<GoalCandidates> goal_candidates_{};
+  GoalCandidates goal_candidates_{};
 
   bool use_bus_stop_area_{false};
 
