@@ -193,7 +193,7 @@
           <param from="$(var common_param_path)"/>
           <param from="$(var vehicle_param_file)"/>
           <param from="$(var nearest_search_param_path)"/>
-          <param from="$(find-pkg-share autoware_obstacle_cruise_planner)/config/obstacle_cruise_planner.param.yaml"/>
+          <param from="$(var obstacle_cruise_planner_param_path)"/>
           <!-- composable node config -->
           <extra_arg name="use_intra_process_comms" value="false"/>
         </composable_node>
