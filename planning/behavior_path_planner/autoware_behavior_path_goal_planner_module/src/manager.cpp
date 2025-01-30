@@ -106,7 +106,6 @@ GoalPlannerParameters GoalPlannerModuleManager::initGoalPlannerParameters(
   // object recognition
   {
     const std::string ns = base_ns + "object_recognition.";
-    p.use_object_recognition = node->declare_parameter<bool>(ns + "use_object_recognition");
     p.object_recognition_collision_check_soft_margins =
       node->declare_parameter<std::vector<double>>(ns + "collision_check_soft_margins");
     p.object_recognition_collision_check_hard_margins =
@@ -513,7 +512,6 @@ void GoalPlannerModuleManager::updateModuleParams(
   {
     const std::string ns = base_ns + "object_recognition.";
 
-    updateParam<bool>(parameters, ns + "use_object_recognition", p->use_object_recognition);
     updateParam(
       parameters, ns + "object_recognition_collision_check_max_extra_stopping_margin",
       p->object_recognition_collision_check_max_extra_stopping_margin);

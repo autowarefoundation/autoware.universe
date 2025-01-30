@@ -444,12 +444,10 @@ bool GoalSearcher::checkCollision(
     }
   }
 
-  if (parameters_.use_object_recognition) {
-    if (utils::checkCollisionBetweenFootprintAndObjects(
-          vehicle_footprint_, pose, objects,
-          parameters_.object_recognition_collision_check_hard_margins.back())) {
-      return true;
-    }
+  if (utils::checkCollisionBetweenFootprintAndObjects(
+        vehicle_footprint_, pose, objects,
+        parameters_.object_recognition_collision_check_hard_margins.back())) {
+    return true;
   }
   return false;
 }
