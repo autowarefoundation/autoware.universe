@@ -761,13 +761,6 @@ void GoalPlannerModule::updateData()
       ? std::make_optional<PullOverPath>(context_data_.value().pull_over_path_opt.value())
       : std::nullopt;
 
-  const auto modified_goal_pose = [&]() -> std::optional<GoalCandidate> {
-    if (!pull_over_path_recv) {
-      return std::nullopt;
-    }
-    return pull_over_path_recv.value().modified_goal();
-  }();
-
   // save "old" state
   const auto prev_decision_state = path_decision_controller_.get_current_state();
   const auto [is_current_safe, collision_check_map] =
@@ -782,9 +775,9 @@ void GoalPlannerModule::updateData()
     dynamic_target_objects, parameters_.th_moving_object_velocity);
 
   path_decision_controller_.transit_state(
-    found_pull_over_path, clock_->now(), static_target_objects, dynamic_target_objects,
-    modified_goal_pose, planner_data_, occupancy_grid_map_, is_current_safe, parameters_,
-    goal_searcher, isActivated(), pull_over_path_recv, debug_data_.ego_polygons_expanded);
+    pull_over_path_recv, clock_->now(), static_target_objects, dynamic_target_objects,
+    planner_data_, occupancy_grid_map_, is_current_safe, parameters_, goal_searcher,
+    debug_data_.ego_polygons_expanded);
 
   auto [lane_parking_response, freespace_parking_response] = syncWithThreads();
   if (context_data_) {
