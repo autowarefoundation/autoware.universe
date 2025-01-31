@@ -172,7 +172,7 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
 
   // Diagnostic Updater
   diagnostic_updater_.setHardwareID(node_name + "_checker");
-  diagnostic_updater_.add(node_name + "fusion_status", this, &FusionNode::check_fusion_status);
+  diagnostic_updater_.add(node_name + "_status", this, &FusionNode::check_fusion_status);
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
@@ -312,6 +312,14 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::sub_callback(
     init_strategy();
   }
 
+  if (debug_mode_) {
+    auto arrive_time = this->get_clock()->now().seconds();
+    RCLCPP_ERROR(
+      this->get_logger(), " det3d's timestamp: %lf arrive time: %lf seconds, latency: %lf",
+      rclcpp::Time(det3d_msg->header.stamp).seconds(), arrive_time,
+      arrive_time - rclcpp::Time(det3d_msg->header.stamp).seconds());
+  }
+
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
   stop_watch_ptr_->toc("processing_time", true);
@@ -343,8 +351,8 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::sub_callback(
 
   if (!process_success) {
     auto new_fusion_collector = std::make_shared<FusionCollector<Msg3D, Msg2D, ExportObj>>(
-      std::dynamic_pointer_cast<FusionNode>(shared_from_this()), timeout_sec_, det2d_list_,
-      debug_mode_);
+      std::dynamic_pointer_cast<FusionNode>(shared_from_this()), timeout_sec_, rois_number_,
+      det2d_list_, debug_mode_);
 
     fusion_collectors_.push_back(new_fusion_collector);
     fusion_collectors_lock.unlock();
@@ -384,6 +392,13 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::roi_callback(
     init_strategy();
   }
 
+  if (debug_mode_) {
+    auto arrive_time = this->get_clock()->now().seconds();
+    RCLCPP_ERROR(
+      this->get_logger(), " rois %zu timestamp: %lf arrive time: %lf seconds, latency: %lf", roi_i,
+      rclcpp::Time(det2d_msg->header.stamp).seconds(), arrive_time,
+      arrive_time - rclcpp::Time(det2d_msg->header.stamp).seconds());
+  }
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
@@ -418,8 +433,8 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::roi_callback(
 
   if (!process_success) {
     auto new_fusion_collector = std::make_shared<FusionCollector<Msg3D, Msg2D, ExportObj>>(
-      std::dynamic_pointer_cast<FusionNode>(shared_from_this()), timeout_sec_, det2d_list_,
-      debug_mode_);
+      std::dynamic_pointer_cast<FusionNode>(shared_from_this()), timeout_sec_, rois_number_,
+      det2d_list_, debug_mode_);
 
     fusion_collectors_.push_back(new_fusion_collector);
     fusion_collectors_lock.unlock();
@@ -472,9 +487,9 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::diagnostic_callback(
       // Ensure a valid timestamp was parsed before storing
       if (concatenate_timestamp_opt.has_value()) {
         concatenated_status_map_[concatenate_timestamp_opt.value()] = key_value_map;
-        RCLCPP_INFO(
-          get_logger(), "Stored concatenation status for timestamp: %.9f",
-          concatenate_timestamp_opt.value());
+        // RCLCPP_INFO(
+        //   get_logger(), "Stored concatenation status for timestamp: %.9f",
+        //   concatenate_timestamp_opt.value());
       } else {
         RCLCPP_WARN(
           get_logger(), "Missing or invalid concatenated cloud timestamp, status not stored.");
@@ -590,6 +605,10 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::check_fusion_status(
     bool rois_miss = false;
 
     bool fusion_success = true;
+    if (!det3d_fused_) {
+      fusion_success = false;
+    }
+
     for (std::size_t id = 0; id < rois_number_; ++id) {
       bool input_rois_fused = true;
       if (diagnostic_id_to_stamp_map_.find(id) != diagnostic_id_to_stamp_map_.end()) {

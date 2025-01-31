@@ -75,7 +75,7 @@ class FusionCollector
 public:
   FusionCollector(
     std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> && ros2_parent_node, double timeout_sec,
-    const std::vector<Det2dStatus<Msg2D>> & det2d_list, bool debug_mode);
+    std::size_t rois_number, const std::vector<Det2dStatus<Msg2D>> & det2d_list, bool debug_mode);
   bool process_msg_3d(const typename Msg3D::ConstSharedPtr msg_3d);
   bool process_rois(const std::size_t & roi_id, const typename Msg2D::ConstSharedPtr det2d_msg);
   void fusion_callback();
@@ -94,10 +94,10 @@ private:
   std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> ros2_parent_node_;
   rclcpp::TimerBase::SharedPtr timer_;
   double timeout_sec_;
+  std::size_t rois_number_;
   typename Msg3D::ConstSharedPtr det3d_msg_{nullptr};
   std::vector<Det2dStatus<Msg2D>> det2d_list_;
   std::unordered_map<std::size_t, typename Msg2D::ConstSharedPtr> id_to_roi_map_;
-  double rois_number_;
   bool debug_mode_;
   bool fusion_finished_{false};
   std::mutex fusion_mutex_;

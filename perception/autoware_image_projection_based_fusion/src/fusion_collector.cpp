@@ -31,9 +31,10 @@ namespace autoware::image_projection_based_fusion
 template <class Msg3D, class Msg2D, class ExportObj>
 FusionCollector<Msg3D, Msg2D, ExportObj>::FusionCollector(
   std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> && ros2_parent_node, double timeout_sec,
-  const std::vector<Det2dStatus<Msg2D>> & det2d_list, bool debug_mode)
+  std::size_t rois_number, const std::vector<Det2dStatus<Msg2D>> & det2d_list, bool debug_mode)
 : ros2_parent_node_(std::move(ros2_parent_node)),
   timeout_sec_(timeout_sec),
+  rois_number_(rois_number),
   det2d_list_(det2d_list),
   debug_mode_(debug_mode)
 {
