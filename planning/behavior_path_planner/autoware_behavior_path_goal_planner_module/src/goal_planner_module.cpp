@@ -79,11 +79,6 @@ GoalPlannerModule::GoalPlannerModule(
   is_lane_parking_cb_running_{false},
   is_freespace_parking_cb_running_{false}
 {
-  // TODO(soblin): remove safety_check_params.enable_safety_check because it does not make sense
-  if (!parameters_.safety_check_params.enable_safety_check) {
-    throw std::domain_error("goal_planner never works without safety check");
-  }
-
   occupancy_grid_map_ = std::make_shared<OccupancyGridBasedCollisionDetector>();
 
   // planner when goal modification is not allowed
