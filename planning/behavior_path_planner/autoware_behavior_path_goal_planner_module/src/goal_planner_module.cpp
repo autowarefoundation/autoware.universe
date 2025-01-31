@@ -1702,7 +1702,7 @@ PathWithLaneId GoalPlannerModule::generateStopPath(
   const PullOverContextData & context_data, const std::string & detail) const
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
-  assert(!goal_searcher_);
+  assert(goal_searcher_);
   const auto & goal_searcher = goal_searcher_.value();
 
   const auto & route_handler = planner_data_->route_handler;
