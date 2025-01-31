@@ -84,18 +84,18 @@ Accumulator<double> calcTrajectoryRelativeAngle(
 }
 
 Accumulator<double> calcTrajectoryResampledRelativeAngle(
-  const Trajectory & traj, const double & vehicle_length_m)
+  const Trajectory & traj, const double vehicle_length_m)
 {
   Accumulator<double> stat;
 
   const auto resample_offset = vehicle_length_m / 2;
   const auto arc_length =
     autoware::motion_utils::calcSignedArcLengthPartialSum(traj.points, 0, traj.points.size());
-  for (size_t base_id = 0; base_id < arc_length.size() - 1; ++base_id) {
+  for (size_t base_id = 0; base_id + 1 < arc_length.size(); ++base_id) {
     // Get base pose yaw
     const double base_yaw = tf2::getYaw(traj.points.at(base_id).pose.orientation);
 
-    for (size_t target_id = base_id; target_id < arc_length.size(); ++target_id) {
+    for (size_t target_id = base_id + 1; target_id < arc_length.size(); ++target_id) {
       if (arc_length[target_id] >= arc_length[base_id] + resample_offset) {
         // Get target pose yaw
         const double front_target_yaw = tf2::getYaw(traj.points.at(target_id).pose.orientation);

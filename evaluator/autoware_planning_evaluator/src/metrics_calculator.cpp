@@ -24,7 +24,7 @@
 namespace planning_diagnostics
 {
 std::optional<Accumulator<double>> MetricsCalculator::calculate(
-  const Metric metric, const Trajectory & traj, const double & vehicle_length_m) const
+  const Metric metric, const Trajectory & traj, const double vehicle_length_m) const
 {
   // Functions to calculate trajectory metrics
   switch (metric) {

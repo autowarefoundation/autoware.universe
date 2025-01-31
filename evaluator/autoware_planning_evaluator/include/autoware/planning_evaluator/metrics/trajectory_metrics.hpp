@@ -47,7 +47,7 @@ Accumulator<double> calcTrajectoryRelativeAngle(
  * @return calculated statistics
  */
 Accumulator<double> calcTrajectoryResampledRelativeAngle(
-  const Trajectory & traj, const double & vehicle_length_m);
+  const Trajectory & traj, const double vehicle_length_m);
 
 /**
  * @brief calculate metric for the distance between trajectory points
