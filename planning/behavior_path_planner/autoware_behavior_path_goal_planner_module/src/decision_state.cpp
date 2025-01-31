@@ -26,32 +26,27 @@ namespace autoware::behavior_path_planner
 using autoware::motion_utils::calcSignedArcLength;
 
 void PathDecisionStateController::transit_state(
-  const bool found_pull_over_path, const rclcpp::Time & now,
+  const std::optional<PullOverPath> & pull_over_path_opt, const rclcpp::Time & now,
   const PredictedObjects & static_target_objects, const PredictedObjects & dynamic_target_objects,
-  const std::optional<GoalCandidate> modified_goal_opt,
   const std::shared_ptr<const PlannerData> planner_data,
   const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
   const bool is_current_safe, const GoalPlannerParameters & parameters,
-  const GoalSearcher & goal_searcher, const bool is_activated,
-  const std::optional<PullOverPath> & pull_over_path,
+  const GoalSearcher & goal_searcher,
   std::vector<autoware::universe_utils::Polygon2d> & ego_polygons_expanded)
 {
   const auto next_state = get_next_state(
-    found_pull_over_path, now, static_target_objects, dynamic_target_objects, modified_goal_opt,
-    planner_data, occupancy_grid_map, is_current_safe, parameters, goal_searcher, is_activated,
-    pull_over_path, ego_polygons_expanded);
+    pull_over_path_opt, now, static_target_objects, dynamic_target_objects, planner_data,
+    occupancy_grid_map, is_current_safe, parameters, goal_searcher, ego_polygons_expanded);
   current_state_ = next_state;
 }
 
 PathDecisionState PathDecisionStateController::get_next_state(
-  const bool found_pull_over_path, const rclcpp::Time & now,
+  const std::optional<PullOverPath> & pull_over_path_opt, const rclcpp::Time & now,
   const PredictedObjects & static_target_objects, const PredictedObjects & dynamic_target_objects,
-  const std::optional<GoalCandidate> modified_goal_opt,
   const std::shared_ptr<const PlannerData> planner_data,
   const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
   const bool is_current_safe, const GoalPlannerParameters & parameters,
-  const GoalSearcher & goal_searcher, const bool is_activated,
-  const std::optional<PullOverPath> & pull_over_path_opt,
+  const GoalSearcher & goal_searcher,
   std::vector<autoware::universe_utils::Polygon2d> & ego_polygons_expanded) const
 {
   auto next_state = current_state_;
@@ -77,7 +72,7 @@ PathDecisionState PathDecisionStateController::get_next_state(
   }
 
   // if path is not safe, not decided
-  if (!found_pull_over_path || !pull_over_path_opt) {
+  if (!pull_over_path_opt) {
     next_state.state = PathDecisionState::DecisionKind::NOT_DECIDED;
     return next_state;
   }
@@ -85,7 +80,7 @@ PathDecisionState PathDecisionStateController::get_next_state(
   const auto & pull_over_path = pull_over_path_opt.value();
   // If it is dangerous against dynamic objects before approval, do not determine the path.
   // This eliminates a unsafe path to be approved
-  if (!next_state.is_stable_safe && !is_activated) {
+  if (!next_state.is_stable_safe) {
     RCLCPP_DEBUG(
       logger_,
       "[DecidingPathStatus]: NOT_DECIDED. path is not safe against dynamic objects before "
@@ -98,11 +93,11 @@ PathDecisionState PathDecisionStateController::get_next_state(
   if (current_state_.state == PathDecisionState::DecisionKind::DECIDING) {
     const double hysteresis_factor = 0.9;
 
+    const auto & modified_goal = pull_over_path.modified_goal();
     // check goal pose collision
-    if (
-      modified_goal_opt && !goal_searcher.isSafeGoalWithMarginScaleFactor(
-                             modified_goal_opt.value(), hysteresis_factor, occupancy_grid_map,
-                             planner_data, static_target_objects)) {
+    if (!goal_searcher.isSafeGoalWithMarginScaleFactor(
+          modified_goal, hysteresis_factor, occupancy_grid_map, planner_data,
+          static_target_objects)) {
       RCLCPP_DEBUG(logger_, "[DecidingPathStatus]: DECIDING->NOT_DECIDED. goal is not safe");
       next_state.state = PathDecisionState::DecisionKind::NOT_DECIDED;
       next_state.deciding_start_time = std::nullopt;
