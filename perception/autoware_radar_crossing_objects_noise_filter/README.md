@@ -67,4 +67,4 @@ To filter the objects crossing to ego vehicle, this package filter the objects a
 
 ### Parameters
 
-{{ json_to_markdown("/perception/autoware_radar_crossing_objects_noise_filter/schema/radar_crossing_objects_noise_filter.schema.json") }}
+{{ json_to_markdown("perception/autoware_radar_crossing_objects_noise_filter/schema/radar_crossing_objects_noise_filter.schema.json") }}
