@@ -64,13 +64,15 @@ public:
    * @param planner_param Planning parameters.
    * @param logger Logger for output messages.
    * @param clock Shared clock instance.
+   * @param time_keeper Time keeper for the module.
+   * @param planning_factor_interface Planning factor interface.
    */
   StopLineModule(
     const int64_t module_id, lanelet::ConstLineString3d stop_line,
     const PlannerParam & planner_param, const rclcpp::Logger & logger,
     const rclcpp::Clock::SharedPtr clock,
-    const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
-    const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
+    const std::shared_ptr<universe_utils::TimeKeeper> & time_keeper,
+    const std::shared_ptr<planning_factor_interface::PlanningFactorInterface> &
       planning_factor_interface);
 
   bool modifyPathVelocity(PathWithLaneId * path) override;

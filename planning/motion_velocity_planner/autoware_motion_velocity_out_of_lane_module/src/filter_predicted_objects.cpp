@@ -108,7 +108,7 @@ autoware_perception_msgs::msg::PredictedObjects filter_predicted_objects(
   autoware_perception_msgs::msg::PredictedObjects filtered_objects;
   filtered_objects.header = planner_data.predicted_objects_header;
   for (const auto & object : planner_data.objects) {
-    const auto & predicted_object = object.predicted_object;
+    const auto & predicted_object = object->predicted_object;
     const auto is_pedestrian =
       std::find_if(
         predicted_object.classification.begin(), predicted_object.classification.end(),
