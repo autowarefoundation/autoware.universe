@@ -40,14 +40,16 @@ namespace bg = boost::geometry;
 BlindSpotModule::BlindSpotModule(
   const int64_t module_id, const int64_t lane_id, const TurnDirection turn_direction,
   const std::shared_ptr<const PlannerData> planner_data, const PlannerParam & planner_param,
-  const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock)
-: SceneModuleInterface(module_id, logger, clock),
+  const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock,
+  const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+  const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
+    planning_factor_interface)
+: SceneModuleInterfaceWithRTC(module_id, logger, clock, time_keeper, planning_factor_interface),
   lane_id_(lane_id),
   planner_param_{planner_param},
   turn_direction_(turn_direction),
   is_over_pass_judge_line_(false)
 {
-  velocity_factor_.init(PlanningBehavior::REAR_CHECK);
   sibling_straight_lanelet_ = getSiblingStraightLanelet(
     planner_data->route_handler_->getLaneletMapPtr()->laneletLayer.get(lane_id_),
     planner_data->route_handler_->getRoutingGraphPtr());
@@ -101,8 +103,9 @@ BlindSpotDecision BlindSpotModule::modifyPathVelocityDetail(PathWithLaneId * pat
   }
 
   if (!blind_spot_lanelets_) {
+    const auto lane_ids_upto_intersection = find_lane_ids_upto(input_path, lane_id_);
     const auto blind_spot_lanelets = generateBlindSpotLanelets(
-      planner_data_->route_handler_, turn_direction_, lane_id_, input_path,
+      planner_data_->route_handler_, turn_direction_, lane_ids_upto_intersection,
       planner_param_.ignore_width_from_center_line, planner_param_.adjacent_extend_width,
       planner_param_.opposite_adjacent_extend_width);
     if (!blind_spot_lanelets.empty()) {
@@ -177,27 +180,6 @@ bool BlindSpotModule::modifyPathVelocity(PathWithLaneId * path)
   reactRTCApproval(decision, path);
 
   return true;
-}
-
-static std::optional<size_t> getFirstPointIntersectsLineByFootprint(
-  const lanelet::ConstLineString2d & line, const InterpolatedPathInfo & interpolated_path_info,
-  const autoware::universe_utils::LinearRing2d & footprint, const double vehicle_length)
-{
-  const auto & path_ip = interpolated_path_info.path;
-  const auto [lane_start, lane_end] = interpolated_path_info.lane_id_interval.value();
-  const size_t vehicle_length_idx = static_cast<size_t>(vehicle_length / interpolated_path_info.ds);
-  const size_t start =
-    static_cast<size_t>(std::max<int>(0, static_cast<int>(lane_start) - vehicle_length_idx));
-  const auto line2d = line.basicLineString();
-  for (auto i = start; i <= lane_end; ++i) {
-    const auto & base_pose = path_ip.points.at(i).point.pose;
-    const auto path_footprint = autoware::universe_utils::transformVector(
-      footprint, autoware::universe_utils::pose2transform(base_pose));
-    if (bg::intersects(path_footprint, line2d)) {
-      return std::make_optional<size_t>(i);
-    }
-  }
-  return std::nullopt;
 }
 
 static std::optional<size_t> getDuplicatedPointIdx(
