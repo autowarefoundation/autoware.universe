@@ -15,7 +15,10 @@
 #include "autoware/probabilistic_occupancy_grid_map/updater/log_odds_bayes_filter_updater.hpp"
 
 #include "autoware/probabilistic_occupancy_grid_map/cost_value/cost_value.hpp"
+
+#ifdef USE_CUDA
 #include "autoware/probabilistic_occupancy_grid_map/updater/log_odds_bayes_filter_updater_kernel.hpp"
+#endif
 
 #include <algorithm>
 
