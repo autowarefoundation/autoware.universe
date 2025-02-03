@@ -22,7 +22,7 @@ include_directories(
     ${grid_map_ros_INCLUDE_DIRS}
 )
 
-if (${CUDA_FOUND})
+if(${CUDA_FOUND})
   include_directories(
     SYSTEM
       ${CUDA_INCLUDE_DIRS}
@@ -120,7 +120,7 @@ rclcpp_components_register_node(laserscan_based_occupancy_grid_map
 )
 
 
-if (${CUDA_FOUND})
+if(${CUDA_FOUND})
   install(
     TARGETS ${PROJECT_NAME}_cuda
     DESTINATION lib
