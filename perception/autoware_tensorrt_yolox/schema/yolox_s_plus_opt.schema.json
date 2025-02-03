@@ -53,6 +53,8 @@
         },
         "score_threshold": {
           "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
           "description": "Threshold for object existence probability. Objects with scores below this value are ignored.",
           "default": 0.35
         },
