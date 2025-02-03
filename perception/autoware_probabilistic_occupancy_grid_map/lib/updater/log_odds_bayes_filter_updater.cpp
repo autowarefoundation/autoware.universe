@@ -69,10 +69,16 @@ bool OccupancyGridMapLOBFUpdater::update(
     throw std::runtime_error("The CUDA setting of the updater and the map do not match.");
   }
 
+#ifdef USE_CUDA
   if (use_cuda_) {
     applyLOBFLaunch(
       single_frame_occupancy_grid_map.getDeviceCostmap().get(), cost_value::NO_INFORMATION,
       getSizeInCellsX() * getSizeInCellsY(), device_costmap_.get(), stream_);
+#else
+  if (use_cuda_) {
+    RCLCPP_ERROR(logger_, "The code was compiled without cuda.");
+    return false;
+#endif
   } else {
     for (unsigned int x = 0; x < getSizeInCellsX(); x++) {
       for (unsigned int y = 0; y < getSizeInCellsY(); y++) {
