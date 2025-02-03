@@ -18,12 +18,16 @@ endif()
 include_directories(
   include
   SYSTEM
-    ${CUDA_INCLUDE_DIRS}
     ${EIGEN3_INCLUDE_DIR}
     ${grid_map_ros_INCLUDE_DIRS}
 )
 
 if (${CUDA_FOUND})
+  include_directories(
+    SYSTEM
+      ${CUDA_INCLUDE_DIRS}
+  )
+
   # cSpell: ignore expt
   list(APPEND CUDA_NVCC_FLAGS --expt-relaxed-constexpr -diag-suppress 20012 --compiler-options -fPIC)
   set(CUDA_SEPARABLE_COMPILATION ON)
