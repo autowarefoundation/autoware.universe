@@ -15,11 +15,10 @@
 #ifndef AUTOWARE__TRAJECTORY__POSE_HPP_
 #define AUTOWARE__TRAJECTORY__POSE_HPP_
 
-#include "autoware/trajectory/interpolator/cubic_spline.hpp"
 #include "autoware/trajectory/interpolator/interpolator.hpp"
-#include "autoware/trajectory/interpolator/spherical_linear.hpp"
 #include "autoware/trajectory/point.hpp"
 
+#include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/quaternion.hpp>
 
 #include <memory>
@@ -43,7 +42,20 @@ protected:
     orientation_interpolator_;  //!< Interpolator for orientations
 
 public:
+  Trajectory();
+  ~Trajectory() override = default;
+  Trajectory(const Trajectory & rhs);
+  Trajectory(Trajectory && rhs) = default;
+  Trajectory & operator=(const Trajectory & rhs);
+  Trajectory & operator=(Trajectory && rhs) = default;
+
   bool build(const std::vector<PointType> & points);
+
+  /**
+   * @brief Get the internal bases(arc lengths) of the trajectory
+   * @return Vector of bases(arc lengths)
+   */
+  [[nodiscard]] std::vector<double> get_internal_bases() const override;
 
   /**
    * @brief Compute the pose on the trajectory at a given s value
@@ -69,13 +81,7 @@ public:
     std::unique_ptr<Trajectory> trajectory_;
 
   public:
-    Builder()
-    {
-      trajectory_ = std::make_unique<Trajectory>();
-      set_xy_interpolator<interpolator::CubicSpline>();
-      set_z_interpolator<interpolator::Linear>();
-      set_orientation_interpolator<interpolator::SphericalLinear>();
-    }
+    Builder() : trajectory_(std::make_unique<Trajectory>()) {}
 
     template <class InterpolatorType, class... Args>
     Builder & set_xy_interpolator(Args &&... args)

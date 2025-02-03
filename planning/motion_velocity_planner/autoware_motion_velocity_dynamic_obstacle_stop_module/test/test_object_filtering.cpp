@@ -14,7 +14,7 @@
 
 #include "../src/object_filtering.hpp"
 
-#include <autoware/motion_velocity_planner_common/planner_data.hpp>
+#include <autoware/motion_velocity_planner_common_universe/planner_data.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
 
 #include <autoware_perception_msgs/msg/detail/object_classification__struct.hpp>
@@ -205,7 +205,7 @@ TEST(TestObjectFiltering, isUnavoidable)
 TEST(TestObjectFiltering, filterPredictedObjects)
 {
   using autoware::motion_velocity_planner::dynamic_obstacle_stop::filter_predicted_objects;
-  std::vector<autoware::motion_velocity_planner::PlannerData::Object> objects;
+  std::vector<std::shared_ptr<autoware::motion_velocity_planner::PlannerData::Object>> objects;
   autoware::motion_velocity_planner::dynamic_obstacle_stop::EgoData ego_data;
   autoware::motion_velocity_planner::dynamic_obstacle_stop::PlannerParam params;
   double hysteresis{};
