@@ -60,6 +60,8 @@
         },
         "nms_threshold": {
           "type": "number",
+          "minimum": 0.0,
+          "maximum": 1.0,
           "description": "Threshold value for Non-Maximum Suppression (NMS).",
           "default": 0.7
         },
