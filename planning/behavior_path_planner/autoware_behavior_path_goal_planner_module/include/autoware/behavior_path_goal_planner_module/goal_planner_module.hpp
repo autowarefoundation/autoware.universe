@@ -335,8 +335,10 @@ private:
   std::unique_ptr<FixedGoalPlannerBase> fixed_goal_planner_;
 
   // goal searcher
-  std::shared_ptr<GoalSearcherBase> goal_searcher_;
+  std::optional<GoalSearcher> goal_searcher_{};
   GoalCandidates goal_candidates_{};
+
+  bool use_bus_stop_area_{false};
 
   // NOTE: this is latest occupancy_grid_map pointer which the local planner_data on
   // onFreespaceParkingTimer thread storage may point to while calculation.
@@ -362,7 +364,8 @@ private:
   mutable GoalPlannerDebugData debug_data_;
 
   // goal seach
-  GoalCandidates generateGoalCandidates() const;
+  GoalCandidates generateGoalCandidates(
+    GoalSearcher & goal_searcher, const bool use_bus_stop_area) const;
 
   /*
    * state transitions and plan function used in each state
@@ -431,7 +434,6 @@ private:
   std::optional<PullOverPath> selectPullOverPath(
     const PullOverContextData & context_data,
     const std::vector<PullOverPath> & pull_over_path_candidates,
-    const GoalCandidates & goal_candidates,
     const std::optional<std::vector<size_t>> sorted_bezier_indices_opt) const;
 
   // lanes and drivable area

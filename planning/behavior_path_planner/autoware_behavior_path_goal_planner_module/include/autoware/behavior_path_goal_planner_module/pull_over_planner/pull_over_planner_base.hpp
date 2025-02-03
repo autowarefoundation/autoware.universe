@@ -14,8 +14,8 @@
 
 #pragma once
 
+#include "autoware/behavior_path_goal_planner_module/goal_candidate.hpp"
 #include "autoware/behavior_path_goal_planner_module/goal_planner_parameters.hpp"
-#include "autoware/behavior_path_goal_planner_module/goal_searcher_base.hpp"
 #include "autoware/behavior_path_planner_common/data_manager.hpp"
 
 #include <geometry_msgs/msg/pose_stamped.hpp>
