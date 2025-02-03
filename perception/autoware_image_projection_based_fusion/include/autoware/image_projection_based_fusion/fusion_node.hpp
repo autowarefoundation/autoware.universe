@@ -103,7 +103,8 @@ private:
 
   std::size_t rois_number_;
   // timer
-  double timeout_sec_{};
+  double msg3d_timeout_sec_{};
+  double rois_timeout_sec_{};
 
   std::vector<typename rclcpp::Subscription<Msg2D>::SharedPtr> rois_subs_;
   std::vector<rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr> camera_info_subs_;

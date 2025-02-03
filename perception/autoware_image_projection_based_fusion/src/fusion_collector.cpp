@@ -31,11 +31,13 @@ namespace autoware::image_projection_based_fusion
 template <class Msg3D, class Msg2D, class ExportObj>
 FusionCollector<Msg3D, Msg2D, ExportObj>::FusionCollector(
   std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> && ros2_parent_node, double timeout_sec,
-  std::size_t rois_number, const std::vector<Det2dStatus<Msg2D>> & det2d_list, bool debug_mode)
+  std::size_t rois_number, const std::vector<Det2dStatus<Msg2D>> & det2d_list, bool is_3d,
+  bool debug_mode)
 : ros2_parent_node_(std::move(ros2_parent_node)),
   timeout_sec_(timeout_sec),
   rois_number_(rois_number),
   det2d_list_(det2d_list),
+  is_3d_(is_3d),
   debug_mode_(debug_mode)
 {
   const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -64,7 +66,7 @@ std::shared_ptr<FusionCollectorInfoBase> FusionCollector<Msg3D, Msg2D, ExportObj
 
 template <class Msg3D, class Msg2D, class ExportObj>
 bool FusionCollector<Msg3D, Msg2D, ExportObj>::process_msg_3d(
-  const typename Msg3D::ConstSharedPtr msg_3d)
+  const typename Msg3D::ConstSharedPtr msg_3d, double msg_3d_timeout)
 {
   std::lock_guard<std::mutex> fusion_lock(fusion_mutex_);
   if (fusion_finished_) return false;
@@ -79,6 +81,18 @@ bool FusionCollector<Msg3D, Msg2D, ExportObj>::process_msg_3d(
   det3d_msg_ = msg_3d;
   if (ready_to_fuse()) {
     fusion_callback();
+  } else {
+    if (!is_3d_) {
+      const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+        std::chrono::duration<double>(msg_3d_timeout));
+      try {
+        set_period(period_ns.count());
+      } catch (rclcpp::exceptions::RCLError & ex) {
+        RCLCPP_WARN_THROTTLE(
+          ros2_parent_node_->get_logger(), *ros2_parent_node_->get_clock(), 5000, "%s", ex.what());
+      }
+      timer_->reset();
+    }
   }
 
   return true;
@@ -211,6 +225,23 @@ void FusionCollector<Msg3D, Msg2D, ExportObj>::show_debug_message()
   log_stream << "]\n";
 
   RCLCPP_INFO(ros2_parent_node_->get_logger(), "%s", log_stream.str().c_str());
+}
+
+template <class Msg3D, class Msg2D, class ExportObj>
+void FusionCollector<Msg3D, Msg2D, ExportObj>::set_period(const int64_t new_period)
+{
+  if (!timer_) {
+    return;
+  }
+  int64_t old_period = 0;
+  rcl_ret_t ret = rcl_timer_get_period(timer_->get_timer_handle().get(), &old_period);
+  if (ret != RCL_RET_OK) {
+    rclcpp::exceptions::throw_from_rcl_error(ret, "Couldn't get old period");
+  }
+  ret = rcl_timer_exchange_period(timer_->get_timer_handle().get(), new_period, &old_period);
+  if (ret != RCL_RET_OK) {
+    rclcpp::exceptions::throw_from_rcl_error(ret, "Couldn't exchange_period");
+  }
 }
 
 // Explicit instantiation for the supported types

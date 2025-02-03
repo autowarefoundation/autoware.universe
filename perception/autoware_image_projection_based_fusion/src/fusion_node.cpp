@@ -69,7 +69,8 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
   }
 
   // Set parameters
-  timeout_sec_ = declare_parameter<double>("timeout_sec");
+  msg3d_timeout_sec_ = declare_parameter<double>("msg3d_timeout_sec");
+  rois_timeout_sec_ = declare_parameter<double>("rois_timeout_sec");
 
   std::vector<std::string> input_rois_topics;
   std::vector<std::string> input_camera_info_topics;
@@ -345,20 +346,20 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::sub_callback(
     auto collector = fusion_collector.value();
     if (collector) {
       fusion_collectors_lock.unlock();
-      process_success = fusion_collector.value()->process_msg_3d(det3d_msg);
+      process_success = fusion_collector.value()->process_msg_3d(det3d_msg, msg3d_timeout_sec_);
     }
   }
 
   if (!process_success) {
     auto new_fusion_collector = std::make_shared<FusionCollector<Msg3D, Msg2D, ExportObj>>(
-      std::dynamic_pointer_cast<FusionNode>(shared_from_this()), timeout_sec_, rois_number_,
-      det2d_list_, debug_mode_);
+      std::dynamic_pointer_cast<FusionNode>(shared_from_this()), msg3d_timeout_sec_, rois_number_,
+      det2d_list_, true, debug_mode_);
 
     fusion_collectors_.push_back(new_fusion_collector);
     fusion_collectors_lock.unlock();
 
     fusion_matching_strategy_->set_collector_info(new_fusion_collector, matching_params);
-    (void)new_fusion_collector->process_msg_3d(det3d_msg);
+    (void)new_fusion_collector->process_msg_3d(det3d_msg, msg3d_timeout_sec_);
   }
 
   // TODO(vivid): check the logic of clearing debugger.
@@ -433,8 +434,8 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::roi_callback(
 
   if (!process_success) {
     auto new_fusion_collector = std::make_shared<FusionCollector<Msg3D, Msg2D, ExportObj>>(
-      std::dynamic_pointer_cast<FusionNode>(shared_from_this()), timeout_sec_, rois_number_,
-      det2d_list_, debug_mode_);
+      std::dynamic_pointer_cast<FusionNode>(shared_from_this()), rois_timeout_sec_, rois_number_,
+      det2d_list_, false, debug_mode_);
 
     fusion_collectors_.push_back(new_fusion_collector);
     fusion_collectors_lock.unlock();

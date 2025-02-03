@@ -75,8 +75,9 @@ class FusionCollector
 public:
   FusionCollector(
     std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> && ros2_parent_node, double timeout_sec,
-    std::size_t rois_number, const std::vector<Det2dStatus<Msg2D>> & det2d_list, bool debug_mode);
-  bool process_msg_3d(const typename Msg3D::ConstSharedPtr msg_3d);
+    std::size_t rois_number, const std::vector<Det2dStatus<Msg2D>> & det2d_list, bool is_3d,
+    bool debug_mode);
+  bool process_msg_3d(const typename Msg3D::ConstSharedPtr msg_3d, double msg_3d_timeout);
   bool process_rois(const std::size_t & roi_id, const typename Msg2D::ConstSharedPtr det2d_msg);
   void fusion_callback();
 
@@ -89,6 +90,7 @@ public:
   bool rois_exists(const std::size_t & rois_id);
   bool det3d_exists();
   void show_debug_message();
+  void set_period(const int64_t new_period);
 
 private:
   std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> ros2_parent_node_;
@@ -98,6 +100,7 @@ private:
   typename Msg3D::ConstSharedPtr det3d_msg_{nullptr};
   std::vector<Det2dStatus<Msg2D>> det2d_list_;
   std::unordered_map<std::size_t, typename Msg2D::ConstSharedPtr> id_to_roi_map_;
+  bool is_3d_;
   bool debug_mode_;
   bool fusion_finished_{false};
   std::mutex fusion_mutex_;

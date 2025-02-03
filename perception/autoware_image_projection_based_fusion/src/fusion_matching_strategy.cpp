@@ -89,7 +89,8 @@ NaiveMatchingStrategy<Msg3D, Msg2D, ExportObj>::match_det3d_to_collector(
   const std::shared_ptr<Det3dMatchingParams> & params)
 {
   std::optional<double> smallest_time_difference = std::nullopt;
-  std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>> closest_collector = nullptr;
+  std::optional<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>> closest_collector =
+    std::nullopt;
 
   for (const auto & fusion_collector : fusion_collectors) {
     if (!fusion_collector->det3d_exists()) {
@@ -107,10 +108,7 @@ NaiveMatchingStrategy<Msg3D, Msg2D, ExportObj>::match_det3d_to_collector(
     }
   }
 
-  if (closest_collector != nullptr) {
-    return closest_collector;
-  }
-  return std::nullopt;
+  return closest_collector;
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
