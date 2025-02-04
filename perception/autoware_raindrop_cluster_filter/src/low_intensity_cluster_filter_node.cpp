@@ -22,6 +22,8 @@
 
 #include <pcl_conversions/pcl_conversions.h>
 
+#include <memory>
+
 namespace autoware::low_intensity_cluster_filter
 {
 LowIntensityClusterFilter::LowIntensityClusterFilter(const rclcpp::NodeOptions & node_options)
@@ -112,9 +114,9 @@ void LowIntensityClusterFilter::objectCallback(
   if (debug_publisher_ptr_ && stop_watch_ptr_) {
     const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
     const double processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
-    debug_publisher_ptr_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    debug_publisher_ptr_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/cyclic_time_ms", cyclic_time_ms);
-    debug_publisher_ptr_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    debug_publisher_ptr_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/processing_time_ms", processing_time_ms);
   }
 }

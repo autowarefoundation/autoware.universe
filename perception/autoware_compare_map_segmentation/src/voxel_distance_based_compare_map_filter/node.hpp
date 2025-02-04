@@ -25,26 +25,25 @@
 #include <memory>
 #include <string>
 #include <utility>
-#include <vector>
 
 namespace autoware::compare_map_segmentation
 {
 
-typedef typename pcl::Filter<pcl::PointXYZ>::PointCloud PointCloud;
-typedef typename PointCloud::Ptr PointCloudPtr;
-typedef typename PointCloud::ConstPtr PointCloudConstPtr;
+using FilteredPointCloud = typename pcl::Filter<pcl::PointXYZ>::PointCloud;
+using FilteredPointCloudPtr = typename FilteredPointCloud::Ptr;
+using FilteredPointCloudConstPtr = typename FilteredPointCloud::ConstPtr;
 
 class VoxelDistanceBasedStaticMapLoader : public VoxelGridStaticMapLoader
 {
 private:
-  PointCloudConstPtr map_ptr_;
+  FilteredPointCloudConstPtr map_ptr_;
   pcl::search::Search<pcl::PointXYZ>::Ptr tree_;
 
 public:
   explicit VoxelDistanceBasedStaticMapLoader(
     rclcpp::Node * node, double leaf_size, double downsize_ratio_z_axis,
-    std::string * tf_map_input_frame, std::mutex * mutex)
-  : VoxelGridStaticMapLoader(node, leaf_size, downsize_ratio_z_axis, tf_map_input_frame, mutex)
+    std::string * tf_map_input_frame)
+  : VoxelGridStaticMapLoader(node, leaf_size, downsize_ratio_z_axis, tf_map_input_frame)
   {
     RCLCPP_INFO(logger_, "VoxelDistanceBasedStaticMapLoader initialized.\n");
   }
@@ -56,15 +55,14 @@ class VoxelDistanceBasedDynamicMapLoader : public VoxelGridDynamicMapLoader
 {
 protected:
 private:
-  PointCloudConstPtr map_ptr_;
+  FilteredPointCloudConstPtr map_ptr_;
   /* data */
 public:
   explicit VoxelDistanceBasedDynamicMapLoader(
     rclcpp::Node * node, double leaf_size, double downsize_ratio_z_axis,
-    std::string * tf_map_input_frame, std::mutex * mutex,
-    rclcpp::CallbackGroup::SharedPtr main_callback_group)
+    std::string * tf_map_input_frame, rclcpp::CallbackGroup::SharedPtr main_callback_group)
   : VoxelGridDynamicMapLoader(
-      node, leaf_size, downsize_ratio_z_axis, tf_map_input_frame, mutex, main_callback_group)
+      node, leaf_size, downsize_ratio_z_axis, tf_map_input_frame, main_callback_group)
   {
     RCLCPP_INFO(logger_, "VoxelDistanceBasedDynamicMapLoader initialized.\n");
   }
@@ -80,7 +78,7 @@ public:
     pcl::fromROSMsg(map_cell_to_add.pointcloud, map_cell_pc_tmp);
 
     VoxelGridPointXYZ map_cell_voxel_grid_tmp;
-    PointCloudPtr map_cell_downsampled_pc_ptr_tmp;
+    FilteredPointCloudPtr map_cell_downsampled_pc_ptr_tmp;
 
     auto map_cell_voxel_input_tmp_ptr =
       std::make_shared<pcl::PointCloud<pcl::PointXYZ>>(map_cell_pc_tmp);
@@ -117,17 +115,16 @@ public:
     current_voxel_grid_list_item.map_cell_kdtree = tree_tmp;
 
     // add
-    (*mutex_ptr_).lock();
+    std::lock_guard<std::mutex> lock(dynamic_map_loader_mutex_);
     current_voxel_grid_dict_.insert({map_cell_to_add.cell_id, current_voxel_grid_list_item});
-    (*mutex_ptr_).unlock();
   }
 };
 
 class VoxelDistanceBasedCompareMapFilterComponent : public autoware::pointcloud_preprocessor::Filter
 {
 protected:
-  virtual void filter(
-    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output);
+  void filter(
+    const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output) override;
 
   void input_target_callback(const PointCloud2ConstPtr map);
 

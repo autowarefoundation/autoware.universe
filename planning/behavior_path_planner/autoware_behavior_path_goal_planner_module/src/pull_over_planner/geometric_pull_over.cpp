@@ -26,11 +26,15 @@
 namespace autoware::behavior_path_planner
 {
 GeometricPullOver::GeometricPullOver(
-  rclcpp::Node & node, const GoalPlannerParameters & parameters,
-  const LaneDepartureChecker & lane_departure_checker, const bool is_forward)
+  rclcpp::Node & node, const GoalPlannerParameters & parameters, const bool is_forward)
 : PullOverPlannerBase{node, parameters},
   parallel_parking_parameters_{parameters.parallel_parking_parameters},
-  lane_departure_checker_{lane_departure_checker},
+  lane_departure_checker_{[&]() {
+    auto lane_departure_checker_params = lane_departure_checker::Param{};
+    lane_departure_checker_params.footprint_extra_margin =
+      parameters.lane_departure_check_expansion_margin;
+    return LaneDepartureChecker{lane_departure_checker_params, vehicle_info_};
+  }()},
   is_forward_{is_forward},
   left_side_parking_{parameters.parking_policy == ParkingPolicy::LEFT_SIDE}
 {
@@ -40,7 +44,7 @@ GeometricPullOver::GeometricPullOver(
 std::optional<PullOverPath> GeometricPullOver::plan(
   const GoalCandidate & modified_goal_pose, const size_t id,
   const std::shared_ptr<const PlannerData> planner_data,
-  [[maybe_unused]] const BehaviorModuleOutput & previous_module_output)
+  [[maybe_unused]] const BehaviorModuleOutput & upstream_module_output)
 {
   const auto & route_handler = planner_data->route_handler;
 
@@ -55,7 +59,6 @@ std::optional<PullOverPath> GeometricPullOver::plan(
   if (road_lanes.empty() || pull_over_lanes.empty()) {
     return {};
   }
-  const auto lanes = utils::combineLanelets(road_lanes, pull_over_lanes);
 
   const auto & p = parallel_parking_parameters_;
   const double max_steer_angle =
@@ -69,17 +72,16 @@ std::optional<PullOverPath> GeometricPullOver::plan(
     return {};
   }
 
+  const auto departure_check_lane = goal_planner_utils::createDepartureCheckLanelet(
+    pull_over_lanes, *planner_data->route_handler, left_side_parking_);
   const auto arc_path = planner_.getArcPath();
 
   // check lane departure with road and shoulder lanes
-  if (lane_departure_checker_.checkPathWillLeaveLane(lanes, arc_path)) return {};
+  if (lane_departure_checker_.checkPathWillLeaveLane({departure_check_lane}, arc_path)) return {};
 
   auto pull_over_path_opt = PullOverPath::create(
     getPlannerType(), id, planner_.getPaths(), planner_.getStartPose(), modified_goal_pose,
     planner_.getPairsTerminalVelocityAndAccel());
-  if (!pull_over_path_opt) {
-    return {};
-  }
-  return pull_over_path_opt.value();
+  return pull_over_path_opt;
 }
 }  // namespace autoware::behavior_path_planner

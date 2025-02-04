@@ -21,6 +21,7 @@
 #include <pcl/search/kdtree.h>
 #include <pcl/segmentation/segment_differences.h>
 
+#include <memory>
 #include <vector>
 
 namespace autoware::compare_map_segmentation
@@ -29,7 +30,7 @@ namespace autoware::compare_map_segmentation
 bool VoxelBasedApproximateStaticMapLoader::is_close_to_map(
   const pcl::PointXYZ & point, [[maybe_unused]] const double distance_threshold)
 {
-  if (voxel_map_ptr_ == NULL) {
+  if (voxel_map_ptr_ == nullptr) {
     return false;
   }
   const int index =
@@ -55,7 +56,7 @@ bool VoxelBasedApproximateDynamicMapLoader::is_close_to_map(
   if (static_cast<size_t>(map_grid_index) >= current_voxel_grid_array_.size()) {
     return false;
   }
-  if (current_voxel_grid_array_.at(map_grid_index) != NULL) {
+  if (current_voxel_grid_array_.at(map_grid_index) != nullptr) {
     const int index = current_voxel_grid_array_.at(map_grid_index)
                         ->map_cell_voxel_grid.getCentroidIndexAt(
                           current_voxel_grid_array_.at(map_grid_index)
@@ -95,11 +96,10 @@ VoxelBasedApproximateCompareMapFilterComponent::VoxelBasedApproximateCompareMapF
     rclcpp::CallbackGroup::SharedPtr main_callback_group;
     main_callback_group = this->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
     voxel_based_approximate_map_loader_ = std::make_unique<VoxelBasedApproximateDynamicMapLoader>(
-      this, distance_threshold_, downsize_ratio_z_axis, &tf_input_frame_, &mutex_,
-      main_callback_group);
+      this, distance_threshold_, downsize_ratio_z_axis, &tf_input_frame_, main_callback_group);
   } else {
     voxel_based_approximate_map_loader_ = std::make_unique<VoxelBasedApproximateStaticMapLoader>(
-      this, distance_threshold_, downsize_ratio_z_axis, &tf_input_frame_, &mutex_);
+      this, distance_threshold_, downsize_ratio_z_axis, &tf_input_frame_);
   }
 }
 
@@ -141,9 +141,9 @@ void VoxelBasedApproximateCompareMapFilterComponent::filter(
   if (debug_publisher_) {
     const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
     const double processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
-    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/cyclic_time_ms", cyclic_time_ms);
-    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/processing_time_ms", processing_time_ms);
   }
 }

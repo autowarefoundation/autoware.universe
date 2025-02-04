@@ -33,7 +33,9 @@
 #include <algorithm>
 #include <limits>
 #include <memory>
+#include <set>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace
@@ -380,9 +382,8 @@ PathWithLaneId refinePathForGoal(
         search_radius_range, search_rad_range, filtered_path, goal, goal_lane_id,
         &path_with_goal)) {
     return path_with_goal;
-  } else {
-    return filtered_path;
   }
+  return filtered_path;
 }
 
 bool isInLanelets(const Pose & pose, const lanelet::ConstLanelets & lanes)
@@ -441,9 +442,8 @@ bool isEgoOutOfRoute(
       RCLCPP_WARN_STREAM(
         rclcpp::get_logger("behavior_path_planner").get_child("util"), "ego pose is beyond goal");
       return true;
-    } else {
-      return false;
     }
+    return false;
   }
 
   // If ego vehicle is out of the closest lanelet, return true
@@ -466,11 +466,7 @@ bool isEgoOutOfRoute(
     return false;
   });
 
-  if (!is_in_shoulder_lane && !is_in_road_lane) {
-    return true;
-  }
-
-  return false;
+  return !is_in_shoulder_lane && !is_in_road_lane;
 }
 
 bool isEgoWithinOriginalLane(
@@ -1063,8 +1059,19 @@ lanelet::ConstLanelets getCurrentLanes(const std::shared_ptr<const PlannerData> 
 lanelet::ConstLanelets getCurrentLanesFromPath(
   const PathWithLaneId & path, const std::shared_ptr<const PlannerData> & planner_data)
 {
+  if (path.points.empty() || !planner_data) {
+    return {};
+  }
+
   const auto & route_handler = planner_data->route_handler;
-  const auto & current_pose = planner_data->self_odometry->pose.pose;
+  const auto & self_odometry = planner_data->self_odometry;
+
+  if (!route_handler || !self_odometry) {
+    return {};
+  }
+
+  const auto & current_pose = self_odometry->pose.pose;
+
   const auto & p = planner_data->parameters;
 
   std::set<lanelet::Id> lane_ids;
@@ -1348,8 +1355,9 @@ lanelet::ConstLanelets getBackwardLanelets(
 }
 
 lanelet::ConstLanelets calcLaneAroundPose(
-  const std::shared_ptr<RouteHandler> route_handler, const Pose & pose, const double forward_length,
-  const double backward_length, const double dist_threshold, const double yaw_threshold)
+  const std::shared_ptr<RouteHandler> & route_handler, const Pose & pose,
+  const double forward_length, const double backward_length, const double dist_threshold,
+  const double yaw_threshold)
 {
   lanelet::ConstLanelet current_lane;
   if (!route_handler->getClosestLaneletWithConstrainsWithinRoute(

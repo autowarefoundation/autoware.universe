@@ -15,21 +15,22 @@
 #ifndef AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__UTIL_HPP_
 #define AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__UTIL_HPP_
 
-#include "autoware/behavior_path_goal_planner_module/goal_searcher_base.hpp"
+#include "autoware/behavior_path_goal_planner_module/goal_candidate.hpp"
 #include "autoware/behavior_path_goal_planner_module/pull_over_planner/pull_over_planner_base.hpp"
 
 #include <autoware/lane_departure_checker/lane_departure_checker.hpp>
 
-#include "visualization_msgs/msg/detail/marker_array__struct.hpp"
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_perception_msgs/msg/predicted_path.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
 #include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
+#include <visualization_msgs/msg/marker_array.hpp>
 
 #include <lanelet2_core/Forward.h>
 
 #include <map>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -175,6 +176,24 @@ lanelet::Points3d combineLanePoints(
 lanelet::Lanelet createDepartureCheckLanelet(
   const lanelet::ConstLanelets & pull_over_lanes, const route_handler::RouteHandler & route_handler,
   const bool left_side_parking);
+
+std::optional<Pose> calcRefinedGoal(
+  const Pose & goal_pose, const std::shared_ptr<RouteHandler> route_handler,
+  const bool left_side_parking, const double vehicle_width, const double base_link2front,
+  const double base_link2rear, const GoalPlannerParameters & parameters);
+
+std::optional<Pose> calcClosestPose(
+  const lanelet::ConstLineString3d line, const Point & query_point);
+
+autoware_perception_msgs::msg::PredictedObjects extract_dynamic_objects(
+  const autoware_perception_msgs::msg::PredictedObjects & original_objects,
+  const route_handler::RouteHandler & route_handler, const GoalPlannerParameters & parameters,
+  const double vehicle_width);
+
+bool is_goal_reachable_on_path(
+  const lanelet::ConstLanelets current_lanes, const route_handler::RouteHandler & route_handler,
+  const bool left_side_parking);
+
 }  // namespace autoware::behavior_path_planner::goal_planner_utils
 
 #endif  // AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__UTIL_HPP_

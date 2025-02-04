@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -22,13 +22,15 @@
 
 #include "autoware_perception_msgs/msg/predicted_objects.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
-#include "diagnostic_msgs/msg/diagnostic_array.hpp"
 #include "geometry_msgs/msg/transform_stamped.hpp"
+#include <tier4_metric_msgs/msg/metric_array.hpp>
 
 #include "boost/lexical_cast.hpp"
 
+#include <iostream>
 #include <memory>
 #include <string>
+#include <tuple>
 #include <utility>
 #include <vector>
 
@@ -37,7 +39,7 @@ using Trajectory = autoware_planning_msgs::msg::Trajectory;
 using TrajectoryPoint = autoware_planning_msgs::msg::TrajectoryPoint;
 using Objects = autoware_perception_msgs::msg::PredictedObjects;
 using autoware_planning_msgs::msg::PoseWithUuidStamped;
-using diagnostic_msgs::msg::DiagnosticArray;
+using MetricArrayMsg = tier4_metric_msgs::msg::MetricArray;
 using nav_msgs::msg::Odometry;
 
 constexpr double epsilon = 1e-6;
@@ -52,8 +54,12 @@ protected:
     rclcpp::NodeOptions options;
     const auto share_dir =
       ament_index_cpp::get_package_share_directory("autoware_planning_evaluator");
+    const auto autoware_test_utils_dir =
+      ament_index_cpp::get_package_share_directory("autoware_test_utils");
     options.arguments(
-      {"--ros-args", "--params-file", share_dir + "/config/planning_evaluator.param.yaml"});
+      {"--ros-args", "-p", "output_metrics:=false", "--params-file",
+       share_dir + "/config/planning_evaluator.param.yaml", "--params-file",
+       autoware_test_utils_dir + "/config/test_vehicle_info.param.yaml"});
 
     dummy_node = std::make_shared<rclcpp::Node>("planning_evaluator_test_node");
     eval_node = std::make_shared<EvalNode>(options);
@@ -81,22 +87,24 @@ protected:
       dummy_node, "/planning_evaluator/input/modified_goal", 1);
 
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(dummy_node);
+    vehicle_info_ = autoware::vehicle_info_utils::VehicleInfoUtils(*eval_node).getVehicleInfo();
     publishEgoPose(0.0, 0.0, 0.0);
   }
 
   ~EvalTest() override { rclcpp::shutdown(); }
 
-  void setTargetMetric(planning_diagnostics::Metric metric)
+  void setTargetMetric(planning_diagnostics::Metric metric, const std::string & postfix = "/mean")
   {
     const auto metric_str = planning_diagnostics::metric_to_str.at(metric);
-    const auto is_target_metric = [metric_str](const auto & status) {
-      return status.name == metric_str;
+    const auto is_target_metric = [metric_str, postfix](const auto & metric) {
+      return metric.name == metric_str + postfix;
     };
-    metric_sub_ = rclcpp::create_subscription<DiagnosticArray>(
-      dummy_node, "/planning_evaluator/metrics", 1, [=](const DiagnosticArray::ConstSharedPtr msg) {
-        const auto it = std::find_if(msg->status.begin(), msg->status.end(), is_target_metric);
-        if (it != msg->status.end()) {
-          metric_value_ = boost::lexical_cast<double>(it->values[2].value);
+    metric_sub_ = rclcpp::create_subscription<MetricArrayMsg>(
+      dummy_node, "/planning_evaluator/metrics", 1, [=](const MetricArrayMsg::ConstSharedPtr msg) {
+        const auto it =
+          std::find_if(msg->metric_array.begin(), msg->metric_array.end(), is_target_metric);
+        if (it != msg->metric_array.end()) {
+          metric_value_ = boost::lexical_cast<double>(it->value);
           metric_updated_ = true;
         }
       });
@@ -110,6 +118,25 @@ protected:
     for (const std::pair<double, double> & point : traj) {
       p.pose.position.x = point.first;
       p.pose.position.y = point.second;
+      t.points.push_back(p);
+    }
+    return t;
+  }
+
+  Trajectory makeTrajectory(const std::vector<std::tuple<double, double, double>> & traj)
+  {
+    Trajectory t;
+    t.header.frame_id = "map";
+    TrajectoryPoint p;
+    for (const std::tuple<double, double, double> & point : traj) {
+      p.pose.position.x = std::get<0>(point);
+      p.pose.position.y = std::get<1>(point);
+      tf2::Quaternion q;
+      q.setRPY(0.0, 0.0, std::get<2>(point));
+      p.pose.orientation.x = q.x();
+      p.pose.orientation.y = q.y();
+      p.pose.orientation.z = q.z();
+      p.pose.orientation.w = q.w();
       t.points.push_back(p);
     }
     return t;
@@ -207,9 +234,12 @@ protected:
   rclcpp::Publisher<Objects>::SharedPtr objects_pub_;
   rclcpp::Publisher<PoseWithUuidStamped>::SharedPtr modified_goal_pub_;
   rclcpp::Publisher<Odometry>::SharedPtr odom_pub_;
-  rclcpp::Subscription<DiagnosticArray>::SharedPtr metric_sub_;
+  rclcpp::Subscription<MetricArrayMsg>::SharedPtr metric_sub_;
   // TF broadcaster
   std::unique_ptr<tf2_ros::TransformBroadcaster> tf_broadcaster_;
+
+public:
+  autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
 };
 
 TEST_F(EvalTest, TestCurvature)
@@ -245,6 +275,16 @@ TEST_F(EvalTest, TestRelativeAngle)
   p.pose.position.y = 2.0;
   t.points.push_back(p);
   EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), 0.0);
+}
+
+TEST_F(EvalTest, TestResampledRelativeAngle)
+{
+  setTargetMetric(planning_diagnostics::Metric::resampled_relative_angle);
+  Trajectory t = makeTrajectory({{0.0, 0.0, 0.0}, {vehicle_info_.vehicle_length_m, 0.0, 0.0}});
+  EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), 0.0);
+  t = makeTrajectory(
+    {{0.0, 0.0, 0.0}, {vehicle_info_.vehicle_length_m, vehicle_info_.vehicle_length_m, M_PI_4}});
+  EXPECT_DOUBLE_EQ(publishTrajectoryAndGetMetric(t), M_PI_4);
 }
 
 TEST_F(EvalTest, TestLength)

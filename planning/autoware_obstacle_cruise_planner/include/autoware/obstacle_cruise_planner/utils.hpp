@@ -93,6 +93,7 @@ size_t getIndexWithLongitudinalOffset(
   }
   return 0;
 }
+
 }  // namespace obstacle_cruise_utils
 
 #endif  // AUTOWARE__OBSTACLE_CRUISE_PLANNER__UTILS_HPP_

@@ -1,4 +1,4 @@
-// Copyright 2024 TIER IV, Inc.
+// Copyright 2025 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -36,6 +36,21 @@ double calcYawDeviation(const Trajectory & traj, const Pose & pose)
   const size_t nearest_index = autoware::motion_utils::findNearestIndex(traj.points, pose.position);
   return std::abs(
     autoware::universe_utils::calcYawDeviation(traj.points[nearest_index].pose, pose));
+}
+
+double calcLongitudinalDeviation(const Pose & base_pose, const Point & target_point)
+{
+  return std::abs(autoware::universe_utils::calcLongitudinalDeviation(base_pose, target_point));
+}
+
+double calcLateralDeviation(const Pose & base_pose, const Point & target_point)
+{
+  return std::abs(autoware::universe_utils::calcLateralDeviation(base_pose, target_point));
+}
+
+double calcYawDeviation(const Pose & base_pose, const Pose & target_pose)
+{
+  return std::abs(autoware::universe_utils::calcYawDeviation(base_pose, target_pose));
 }
 
 }  // namespace metrics
