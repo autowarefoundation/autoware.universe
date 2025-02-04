@@ -19,7 +19,8 @@
 
 #include <vector>
 
-using Trajectory = autoware::trajectory::Trajectory<autoware_internal_planning_msgs::msg::PathPointWithLaneId>;
+using Trajectory =
+  autoware::trajectory::Trajectory<autoware_internal_planning_msgs::msg::PathPointWithLaneId>;
 
 autoware_internal::msg::PathPointWithLaneId path_point_with_lane_id(
   double x, double y, uint8_t lane_id)
