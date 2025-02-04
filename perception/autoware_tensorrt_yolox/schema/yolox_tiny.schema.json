@@ -55,6 +55,8 @@
           "type": "number",
           "description": "Threshold for object detection scores. Objects with scores below this value are ignored.",
           "default": 0.35
+          "minimum": 0.0,
+          "maximum": 1.0,
         },
         "nms_threshold": {
           "type": "number",
