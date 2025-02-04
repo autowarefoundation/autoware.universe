@@ -14392,41 +14392,55 @@ This node publishes when each car and pedestrian <code>traffic_signals</code> is
 <table>
 <thead>
 <tr>
-<th>Parameter</th>
+<th>Name</th>
 <th>Type</th>
 <th>Description</th>
+<th>Default</th>
+<th>Range</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>azimuth_occlusion_resolution_deg</code></td>
-<td>double</td>
-<td>azimuth resolution of LiDAR point cloud (degree)</td>
+<td>azimuth_occlusion_resolution_deg</td>
+<td>float</td>
+<td>Azimuth resolution of LiDAR point cloud (degree).</td>
+<td>0.15</td>
+<td>N/A</td>
 </tr>
 <tr>
-<td><code>elevation_occlusion_resolution_deg</code></td>
-<td>double</td>
-<td>elevation resolution of LiDAR point cloud (degree)</td>
+<td>elevation_occlusion_resolution_deg</td>
+<td>float</td>
+<td>Elevation resolution of LiDAR point cloud (degree).</td>
+<td>0.08</td>
+<td>N/A</td>
 </tr>
 <tr>
-<td><code>max_valid_pt_dist</code></td>
-<td>double</td>
-<td>The points within this distance would be used for calculation</td>
+<td>max_valid_pt_dist</td>
+<td>float</td>
+<td>The points within this distance would be used for calculation.</td>
+<td>50</td>
+<td>N/A</td>
 </tr>
 <tr>
-<td><code>max_image_cloud_delay</code></td>
-<td>double</td>
-<td>The maximum delay between LiDAR point cloud and camera image</td>
+<td>max_image_cloud_delay</td>
+<td>float</td>
+<td>The maximum delay between LiDAR point cloud and camera image.</td>
+<td>0.5</td>
+<td>N/A</td>
 </tr>
 <tr>
-<td><code>max_wait_t</code></td>
-<td>double</td>
-<td>The maximum time waiting for the LiDAR point cloud</td>
+<td>max_wait_t</td>
+<td>float</td>
+<td>The maximum time waiting for the LiDAR point cloud.</td>
+<td>0.05</td>
+<td>N/A</td>
 </tr>
 <tr>
-<td><code>max_occlusion_ratio</code></td>
-<td>int</td>
-<td>The maximum occlusion ratio for setting signal as unknown</td>
+<td>max_occlusion_ratio</td>
+<td>integer</td>
+<td>Maximum occlusion ratio for traffic lights.</td>
+<td>50</td>
+<td>N/A</td>
 </tr>
 </tbody>
 </table></div>
