@@ -14409,22 +14409,33 @@ When the ego vehicle turn right, the surrounding objects have left circular moti
 </li>
 </ul>
 <h3 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">#</a></h3>
-<ul>
-<li><code>angle_threshold</code> (double) [rad]<ul>
-<li>Default parameter is 1.0472.</li>
-</ul>
-</li>
-</ul>
-<p>This parameter is the angle threshold to filter. It has condition that 0 &lt; <code>angle_threshold</code> &lt; pi / 2. If the crossing angle is larger than this parameter, it can be a candidate for noise object. In other words, if it is smaller than this parameter, it is a filtered object.
-If this parameter is set smaller, more objects are considered noise. In detail, see algorithm chapter.</p>
-<ul>
-<li><code>velocity_threshold</code> (double) [m/s]<ul>
-<li>Default parameter is 3.0.</li>
-</ul>
-</li>
-</ul>
-<p>This parameter is the velocity threshold to filter. If velocity of an object is larger than this parameter, it can be a candidate for noise object. In other words, if velocity of an object is smaller than this parameter, it is a filtered object.
-If this parameter is set smaller, more objects are considered noise. In detail, see algorithm chapter.</p></div>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+<th>Range</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>angle_threshold</td>
+<td>float</td>
+<td>Angle threshold to filter noise objects. Must satisfy 0 &lt; angle_threshold &lt; pi/2. If the crossing angle is larger than this parameter, it can be a candidate for a noise object. If smaller, it is a filtered object. A smaller value filters more objects as noise.</td>
+<td>1.221</td>
+<td>&gt;0.0<br>&lt;1.5708</td>
+</tr>
+<tr>
+<td>velocity_threshold</td>
+<td>float</td>
+<td>Velocity threshold to filter noise objects. If the velocity of an object is larger than this parameter, it can be a candidate for a noise object. If smaller, it is a filtered object. A smaller value filters more objects as noise.</td>
+<td>1.5</td>
+<td>≥0.0</td>
+</tr>
+</tbody>
+</table></div>
 
 
 
