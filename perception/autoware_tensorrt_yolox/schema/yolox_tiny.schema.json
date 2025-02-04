@@ -62,6 +62,8 @@
           "type": "number",
           "description": "Threshold for Non-Maximum Suppression (NMS). Detections with IoU above this value are ignored.",
           "default": 0.7
+          "minimum": 0.0,
+          "maximum": 1.0,
         },
         "precision": {
           "type": "string",
