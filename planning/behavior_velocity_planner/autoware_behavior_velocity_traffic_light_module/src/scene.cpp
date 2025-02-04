@@ -213,7 +213,8 @@ bool TrafficLightModule::isPassthrough(const double & signed_arc_length) const
     delay_response_time);
 
   const bool distance_stoppable = pass_judge_line_distance < signed_arc_length;
-  const bool slow_velocity = planner_data_->current_velocity->twist.linear.x < 2.0;
+  const bool slow_velocity =
+    planner_data_->current_velocity->twist.linear.x < planner_param_.yellow_light_stop_velocity;
   const bool stoppable = distance_stoppable || slow_velocity;
   const bool reachable = signed_arc_length < reachable_distance;
 
