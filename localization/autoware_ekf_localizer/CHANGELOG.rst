@@ -2,6 +2,26 @@
 Changelog for package autoware_ekf_localizer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* revert: revert "feat(autoware_ekf_localizer)!: porting from universe to core (`#9978 <https://github.com/autowarefoundation/autoware.universe/issues/9978>`_)" (`#10004 <https://github.com/autowarefoundation/autoware.universe/issues/10004>`_)
+  This reverts commit 037c315fbee69bb5923ec10bb8e8e70f890725ea.
+* feat(autoware_ekf_localizer)!: porting from universe to core (`#9978 <https://github.com/autowarefoundation/autoware.universe/issues/9978>`_)
+  * feat: delete ekf_localizer files
+  * doc: Modify ekf_localizer directory links
+  * ci: remove ekf_localizer from the codecov target list
+  ---------
+* feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in fies localization/autoware_ekf_localizer (`#9860 <https://github.com/autowarefoundation/autoware.universe/issues/9860>`_)
+  Co-authored-by: SakodaShintaro <shintaro.sakoda@tier4.jp>
+* feat(ekf_localizer): check whether the initialpose has been set (`#9787 <https://github.com/autowarefoundation/autoware.universe/issues/9787>`_)
+  * check set intialpose
+  * update png
+  * style(pre-commit): autofix
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* Contributors: Fumiya Watanabe, Motz, Ryohsuke Mitsudome, Vishal Chauhan, Yamato Ando
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

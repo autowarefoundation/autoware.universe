@@ -2,6 +2,30 @@
 Changelog for package autoware_occupancy_grid_map_outlier_filter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_occupancy_grid_map_outlier_filter): tier4_debug_msgs changed to autoware_internal_debug_msgs in fil… (`#9894 <https://github.com/autowarefoundation/autoware.universe/issues/9894>`_)
+  feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in files  perception/autoware_occupancy_grid_map_outlier_filter
+  Co-authored-by: Ryohsuke Mitsudome <43976834+mitsudome-r@users.noreply.github.com>
+* fix(perception): fix perception docs (`#9766 <https://github.com/autowarefoundation/autoware.universe/issues/9766>`_)
+  * fix: fix perception docs
+  * fix: fix missing parameter in schema
+  * Update perception/autoware_object_merger/schema/data_association_matrix.schema.json
+  Co-authored-by: Taekjin LEE <technolojin@gmail.com>
+  * Update perception/autoware_object_merger/schema/data_association_matrix.schema.json
+  Co-authored-by: Taekjin LEE <technolojin@gmail.com>
+  * Update perception/autoware_object_merger/schema/data_association_matrix.schema.json
+  Co-authored-by: Taekjin LEE <technolojin@gmail.com>
+  * Update perception/autoware_object_merger/schema/data_association_matrix.schema.json
+  Co-authored-by: Taekjin LEE <technolojin@gmail.com>
+  * style(pre-commit): autofix
+  * chore: seperate paramters for different nodes
+  ---------
+  Co-authored-by: Taekjin LEE <technolojin@gmail.com>
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* Contributors: Fumiya Watanabe, Vishal Chauhan, Yi-Hsiang Fang (Vivid)
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

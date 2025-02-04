@@ -11,14 +11,13 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
-//
+
 #define EIGEN_MPL2_ONLY
 
 #include "multi_object_tracker_node.hpp"
 
+#include "autoware/multi_object_tracker/object_model/shapes.hpp"
 #include "autoware/multi_object_tracker/uncertainty/uncertainty_processor.hpp"
-#include "autoware/multi_object_tracker/utils/utils.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -38,34 +37,6 @@
 #include <utility>
 #include <vector>
 
-namespace
-{
-// Function to get the transform between two frames
-boost::optional<geometry_msgs::msg::Transform> getTransformAnonymous(
-  const tf2_ros::Buffer & tf_buffer, const std::string & source_frame_id,
-  const std::string & target_frame_id, const rclcpp::Time & time)
-{
-  try {
-    // Check if the frames are ready
-    std::string errstr;  // This argument prevents error msg from being displayed in the terminal.
-    if (!tf_buffer.canTransform(
-          target_frame_id, source_frame_id, tf2::TimePointZero, tf2::Duration::zero(), &errstr)) {
-      return boost::none;
-    }
-
-    // Lookup the transform
-    geometry_msgs::msg::TransformStamped self_transform_stamped;
-    self_transform_stamped = tf_buffer.lookupTransform(
-      /*target*/ target_frame_id, /*src*/ source_frame_id, time,
-      rclcpp::Duration::from_seconds(0.5));
-    return self_transform_stamped.transform;
-  } catch (tf2::TransformException & ex) {
-    RCLCPP_WARN_STREAM(rclcpp::get_logger("multi_object_tracker"), ex.what());
-    return boost::none;
-  }
-}
-}  // namespace
-
 namespace autoware::multi_object_tracker
 {
 using Label = autoware_perception_msgs::msg::ObjectClassification;
@@ -73,8 +44,6 @@ using LabelType = autoware_perception_msgs::msg::ObjectClassification::_label_ty
 
 MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
 : rclcpp::Node("multi_object_tracker", node_options),
-  tf_buffer_(this->get_clock()),
-  tf_listener_(tf_buffer_),
   last_published_time_(this->now()),
   last_updated_time_(this->now())
 {
@@ -88,14 +57,18 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   double publish_rate = declare_parameter<double>("publish_rate");  // [hz]
   world_frame_id_ = declare_parameter<std::string>("world_frame_id");
   bool enable_delay_compensation{declare_parameter<bool>("enable_delay_compensation")};
-  enable_odometry_uncertainty_ = declare_parameter<bool>("consider_odometry_uncertainty");
+  bool enable_odometry_uncertainty = declare_parameter<bool>("consider_odometry_uncertainty");
 
   declare_parameter("selected_input_channels", std::vector<std::string>());
   std::vector<std::string> selected_input_channels =
     get_parameter("selected_input_channels").as_string_array();
 
   // ROS interface - Publisher
-  tracked_objects_pub_ = create_publisher<TrackedObjects>("output", rclcpp::QoS{1});
+  tracked_objects_pub_ =
+    create_publisher<autoware_perception_msgs::msg::TrackedObjects>("output", rclcpp::QoS{1});
+
+  // Odometry manager
+  odometry_ = std::make_shared<Odometry>(*this, world_frame_id_, enable_odometry_uncertainty);
 
   // ROS interface - Input channels
   // Get input channels
@@ -143,15 +116,10 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   }
 
   // Initialize input manager
-  input_manager_ = std::make_unique<InputManager>(*this);
+  input_manager_ = std::make_unique<InputManager>(*this, odometry_);
   input_manager_->init(input_channels_);  // Initialize input manager, set subscriptions
   input_manager_->setTriggerFunction(
     std::bind(&MultiObjectTracker::onTrigger, this));  // Set trigger function
-
-  // Create tf timer
-  auto cti = std::make_shared<tf2_ros::CreateTimerROS>(
-    this->get_node_base_interface(), this->get_node_timers_interface());
-  tf_buffer_.setCreateTimerInterface(cti);
 
   // Create ROS time based timer.
   // If the delay compensation is enabled, the timer is used to publish the output at the correct
@@ -239,18 +207,18 @@ void MultiObjectTracker::onTrigger()
 
   // process start
   last_updated_time_ = current_time;
-  const rclcpp::Time latest_time(objects_list.back().second.header.stamp);
+  const rclcpp::Time latest_time(objects_list.back().header.stamp);
   debugger_->startMeasurementTime(this->now(), latest_time);
-  // run process for each DetectedObjects
+  // run process for each DynamicObject
   for (const auto & objects_data : objects_list) {
-    runProcess(objects_data.second, objects_data.first);
+    runProcess(objects_data);
   }
   // process end
   debugger_->endMeasurementTime(this->now());
 
   // Publish without delay compensation
   if (!publish_timer_) {
-    const auto latest_object_time = rclcpp::Time(objects_list.back().second.header.stamp);
+    const auto latest_object_time = rclcpp::Time(objects_list.back().header.stamp);
     checkAndPublish(latest_object_time);
   }
 }
@@ -278,62 +246,17 @@ void MultiObjectTracker::onTimer()
   if (should_publish) checkAndPublish(current_time);
 }
 
-void MultiObjectTracker::runProcess(
-  const DetectedObjects & input_objects, const uint & channel_index)
+void MultiObjectTracker::runProcess(const types::DynamicObjectList & detected_objects)
 {
   // Get the time of the measurement
   const rclcpp::Time measurement_time =
-    rclcpp::Time(input_objects.header.stamp, this->now().get_clock_type());
+    rclcpp::Time(detected_objects.header.stamp, this->now().get_clock_type());
 
-  // Get the transform of the self frame
-  const auto self_transform =
-    getTransformAnonymous(tf_buffer_, "base_link", world_frame_id_, measurement_time);
+  // Get the self transform
+  const auto self_transform = odometry_->getTransform(measurement_time);
   if (!self_transform) {
     return;
   }
-
-  // Transform the objects to the world frame
-  DetectedObjects transformed_objects;
-  if (!autoware::object_recognition_utils::transformObjects(
-        input_objects, world_frame_id_, tf_buffer_, transformed_objects)) {
-    return;
-  }
-
-  // the object uncertainty
-  if (enable_odometry_uncertainty_) {
-    // Create a modeled odometry message
-    nav_msgs::msg::Odometry odometry;
-    odometry.header.stamp = measurement_time + rclcpp::Duration::from_seconds(0.001);
-
-    // set odometry pose from self_transform
-    auto & odom_pose = odometry.pose.pose;
-    odom_pose.position.x = self_transform->translation.x;
-    odom_pose.position.y = self_transform->translation.y;
-    odom_pose.position.z = self_transform->translation.z;
-    odom_pose.orientation = self_transform->rotation;
-
-    // set odometry twist
-    auto & odom_twist = odometry.twist.twist;
-    odom_twist.linear.x = 10.0;  // m/s
-    odom_twist.linear.y = 0.1;   // m/s
-    odom_twist.angular.z = 0.1;  // rad/s
-
-    // model the uncertainty
-    auto & odom_pose_cov = odometry.pose.covariance;
-    odom_pose_cov[0] = 0.1;      // x-x
-    odom_pose_cov[7] = 0.1;      // y-y
-    odom_pose_cov[35] = 0.0001;  // yaw-yaw
-
-    auto & odom_twist_cov = odometry.twist.covariance;
-    odom_twist_cov[0] = 2.0;     // x-x [m^2/s^2]
-    odom_twist_cov[7] = 0.2;     // y-y [m^2/s^2]
-    odom_twist_cov[35] = 0.001;  // yaw-yaw [rad^2/s^2]
-
-    // Add the odometry uncertainty to the object uncertainty
-    uncertainty::addOdometryUncertainty(odometry, transformed_objects);
-  }
-  // Normalize the object uncertainty
-  uncertainty::normalizeUncertainty(transformed_objects);
 
   /* prediction */
   processor_->predict(measurement_time);
@@ -342,7 +265,6 @@ void MultiObjectTracker::runProcess(
   std::unordered_map<int, int> direct_assignment, reverse_assignment;
   {
     const auto & list_tracker = processor_->getListTracker();
-    const auto & detected_objects = transformed_objects;
     // global nearest neighbor
     Eigen::MatrixXd score_matrix = association_->calcScoreMatrix(
       detected_objects, list_tracker);  // row : tracker, col : measurement
@@ -350,19 +272,19 @@ void MultiObjectTracker::runProcess(
 
     // Collect debug information - tracker list, existence probabilities, association results
     debugger_->collectObjectInfo(
-      measurement_time, processor_->getListTracker(), channel_index, transformed_objects,
-      direct_assignment, reverse_assignment);
+      measurement_time, processor_->getListTracker(), detected_objects, direct_assignment,
+      reverse_assignment);
   }
 
   /* tracker update */
-  processor_->update(transformed_objects, *self_transform, direct_assignment, channel_index);
+  processor_->update(detected_objects, *self_transform, direct_assignment);
 
   /* tracker pruning */
   processor_->prune(measurement_time);
 
   /* spawn new tracker */
-  if (input_manager_->isChannelSpawnEnabled(channel_index)) {
-    processor_->spawn(transformed_objects, *self_transform, reverse_assignment, channel_index);
+  if (input_manager_->isChannelSpawnEnabled(detected_objects.channel_index)) {
+    processor_->spawn(detected_objects, reverse_assignment);
   }
 }
 
@@ -387,7 +309,7 @@ void MultiObjectTracker::publish(const rclcpp::Time & time) const
     return;
   }
   // Create output msg
-  TrackedObjects output_msg, tentative_objects_msg;
+  autoware_perception_msgs::msg::TrackedObjects output_msg;
   output_msg.header.frame_id = world_frame_id_;
   processor_->getTrackedObjects(time, output_msg);
 
@@ -399,7 +321,7 @@ void MultiObjectTracker::publish(const rclcpp::Time & time) const
   debugger_->endPublishTime(this->now(), time);
 
   if (debugger_->shouldPublishTentativeObjects()) {
-    TrackedObjects tentative_output_msg;
+    autoware_perception_msgs::msg::TrackedObjects tentative_output_msg;
     tentative_output_msg.header.frame_id = world_frame_id_;
     processor_->getTentativeObjects(time, tentative_output_msg);
     debugger_->publishTentativeObjects(tentative_output_msg);
