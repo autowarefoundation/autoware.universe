@@ -179,7 +179,7 @@ TEST_F(TrajectoryTest, crop)
 TEST_F(TrajectoryTest, find_interval)
 {
   auto intervals = autoware::trajectory::find_intervals(
-    *trajectory, [](const tier4_planning_msgs::msg::PathPointWithLaneId & point) {
+    *trajectory, [](const autoware_internal_planning_msgs::msg::PathPointWithLaneId & point) {
       return point.lane_ids[0] == 1;
     });
   EXPECT_EQ(intervals.size(), 1);

@@ -31,7 +31,7 @@ MutablePoint3d to_point(autoware_planning_msgs::msg::PathPoint & p)
   return {p.pose.position.x, p.pose.position.y, p.pose.position.z};
 }
 
-MutablePoint3d to_point(tier4_planning_msgs::msg::PathPointWithLaneId & p)
+MutablePoint3d to_point(autoware_internal_planning_msgs::msg::PathPointWithLaneId & p)
 {
   return {p.point.pose.position.x, p.point.pose.position.y, p.point.pose.position.z};
 }
@@ -56,7 +56,7 @@ ImmutablePoint3d to_point(const autoware_planning_msgs::msg::PathPoint & p)
   return {p.pose.position.x, p.pose.position.y, p.pose.position.z};
 }
 
-ImmutablePoint3d to_point(const tier4_planning_msgs::msg::PathPointWithLaneId & p)
+ImmutablePoint3d to_point(const autoware_internal_planning_msgs::msg::PathPointWithLaneId & p)
 {
   return {p.point.pose.position.x, p.point.pose.position.y, p.point.pose.position.z};
 }
