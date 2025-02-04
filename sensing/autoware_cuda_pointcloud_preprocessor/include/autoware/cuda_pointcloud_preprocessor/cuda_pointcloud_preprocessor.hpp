@@ -29,10 +29,31 @@
 #include <thrust/device_vector.h>
 
 #include <cmath>
+#include <cstdint>
 #include <deque>
 
 namespace autoware::cuda_pointcloud_preprocessor
 {
+
+void organizeLaunch(
+  const InputPointType * __restrict__ input_points, std::uint32_t * index_tensor,
+  std::int32_t * ring_indexes, std::int32_t initial_max_rings, std::int32_t * output_max_rings,
+  std::int32_t initial_max_points_per_ring, std::int32_t * output_max_points_per_ring,
+  int num_points, cudaStream_t & stream);
+
+std::size_t querySortWorkspace(
+  int num_items, int num_segments, int * d_offsets, std::uint32_t * d_keys_in,
+  std::uint32_t * d_keys_out);
+
+void sortLaunch(
+  int num_items, int num_segments, int * d_offsets, std::uint32_t * d_keys_in,
+  std::uint32_t * d_keys_out, std::uint8_t * d_temp_storage, std::size_t temp_storage_bytes,
+  cudaStream_t & stream);  // e.g., [-, -, -, -, -, -, -]
+
+void gatherLaunch(
+  const InputPointType * __restrict__ input_points, const std::uint32_t * __restrict__ index_tensor,
+  InputPointType * __restrict__ output_points, int num_rings, int max_points_per_ring,
+  cudaStream_t & stream);
 
 struct TwistStruct2D
 {

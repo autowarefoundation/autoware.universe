@@ -18,6 +18,7 @@
 #include <Eigen/Core>
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
+#include <cub/cub.cuh>
 
 #include <cuda_runtime.h>
 #include <tf2/utils.h>
@@ -25,6 +26,7 @@
 #include <thrust/host_vector.h>
 #include <thrust/reduce.h>
 #include <thrust/scan.h>
+// #include <cub/device/device_segmented_radix_sort.cuh>
 
 namespace autoware::cuda_pointcloud_preprocessor
 {
@@ -68,6 +70,108 @@ __host__ __device__ Eigen::Matrix4f transformationMatrixFromVelocity(
   transformation.block<3, 1>(0, 3) = translation;
 
   return transformation;
+}
+
+__global__ void organizeKernel(
+  const InputPointType * __restrict__ input_points, std::uint32_t * index_tensor,
+  std::int32_t * ring_indexes, std::int32_t initial_max_rings, std::int32_t * output_max_rings,
+  std::int32_t initial_max_points_per_ring, std::int32_t * output_max_points_per_ring,
+  int num_points)
+{
+  int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  if (idx >= num_points) {
+    return;
+  }
+
+  auto ring = input_points[idx].channel;
+
+  if (ring >= initial_max_rings) {
+    atomicMax(output_max_rings, ring);
+    return;
+  }
+
+  int next_offset = atomicAdd(&ring_indexes[ring], 1);
+
+  if (next_offset >= initial_max_points_per_ring) {
+    atomicMax(output_max_points_per_ring, next_offset);
+    return;
+  }
+
+  index_tensor[ring * initial_max_points_per_ring + next_offset] = idx;
+}
+
+void organizeLaunch(
+  const InputPointType * __restrict__ input_points, std::uint32_t * index_tensor,
+  std::int32_t * ring_indexes, std::int32_t initial_max_rings, std::int32_t * output_max_rings,
+  std::int32_t initial_max_points_per_ring, std::int32_t * output_max_points_per_ring,
+  int num_points, cudaStream_t & stream)
+{
+  int threads_per_block = 256;
+  int blocks_per_grid = (num_points + threads_per_block - 1) / threads_per_block;
+  organizeKernel<<<blocks_per_grid, threads_per_block>>>(
+    input_points, index_tensor, ring_indexes, initial_max_rings, output_max_rings,
+    initial_max_points_per_ring, output_max_points_per_ring, num_points);
+}
+
+std::size_t querySortWorkspace(
+  int num_items, int num_segments, int * d_offsets, std::uint32_t * d_keys_in,
+  std::uint32_t * d_keys_out)
+{
+  // Determine temporary device storage requirements
+  void * d_temp_storage = nullptr;
+  size_t temp_storage_bytes = 0;
+  cub::DeviceSegmentedRadixSort::SortKeys(
+    d_temp_storage, temp_storage_bytes, d_keys_in, d_keys_out, num_items, num_segments, d_offsets,
+    d_offsets + 1);
+
+  return temp_storage_bytes;
+}
+
+void sortLaunch(
+  int num_items, int num_segments, int * d_offsets, std::uint32_t * d_keys_in,
+  std::uint32_t * d_keys_out, std::uint8_t * d_temp_storage, std::size_t temp_storage_bytes,
+  cudaStream_t & stream)
+{
+  // Allocate temporary storage
+  // cudaMalloc(&d_temp_storage, temp_storage_bytes);
+
+  // Run sorting operation
+  cub::DeviceSegmentedRadixSort::SortKeys(
+    reinterpret_cast<void *>(d_temp_storage), temp_storage_bytes, d_keys_in, d_keys_out, num_items,
+    num_segments, d_offsets, d_offsets + 1, 0, sizeof(std::uint32_t) * 8, stream);
+}
+
+__global__ void gatherKernel(
+  const InputPointType * __restrict__ input_points, const std::uint32_t * __restrict__ index_tensor,
+  InputPointType * __restrict__ output_points, int num_rings, int max_points_per_ring)
+{
+  const int idx = blockIdx.x * blockDim.x + threadIdx.x;
+  if (idx >= num_rings * max_points_per_ring) {
+    return;
+  }
+
+  const int ring = idx / max_points_per_ring;
+  const int point = idx % max_points_per_ring;
+
+  const std::uint32_t input_idx = index_tensor[ring * max_points_per_ring + point];
+
+  if (input_idx < std::numeric_limits<std::uint32_t>::max()) {
+    output_points[ring * max_points_per_ring + point] = input_points[input_idx];
+  } else {
+    output_points[ring * max_points_per_ring + point].distance = 0.0f;
+  }
+}
+
+void gatherLaunch(
+  const InputPointType * __restrict__ input_points, const std::uint32_t * __restrict__ index_tensor,
+  InputPointType * __restrict__ output_points, int num_rings, int max_points_per_ring,
+  cudaStream_t & stream)
+{
+  int threads_per_block = 256;
+  int blocks_per_grid =
+    (num_rings * max_points_per_ring + threads_per_block - 1) / threads_per_block;
+  gatherKernel<<<blocks_per_grid, threads_per_block, 0, stream>>>(
+    input_points, index_tensor, output_points, num_rings, max_points_per_ring);
 }
 
 __global__ void transformPointsKernel(

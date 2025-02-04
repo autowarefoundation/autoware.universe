@@ -81,8 +81,17 @@ private:
     const std::string & target_frame, const std::string & source_frame,
     tf2::Transform * tf2_transform_ptr);
 
+  void estimatePointcloudRingInfo(
+    const sensor_msgs::msg::PointCloud2::ConstSharedPtr input_pointcloud_msg_ptr);
+
+  bool orderPointcloud(
+    const sensor_msgs::msg::PointCloud2::ConstSharedPtr input_pointcloud_msg_ptr);
+
   // Callback
-  void pointcloudCallback(const std::shared_ptr<const cuda_blackboard::CudaPointCloud2> cuda_msg);
+  void pointcloudCallback(
+    const sensor_msgs::msg::PointCloud2::ConstSharedPtr input_pointcloud_msg_ptr);
+  void cudaPointcloudCallback(
+    const std::shared_ptr<const cuda_blackboard::CudaPointCloud2> cuda_msg);
   void twistCallback(
     const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr pointcloud_msg);
   void imuCallback(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg);
@@ -94,18 +103,55 @@ private:
   std::deque<geometry_msgs::msg::TwistWithCovarianceStamped> twist_queue_;
   std::deque<geometry_msgs::msg::Vector3Stamped> angular_velocity_queue_;
 
+  std::size_t num_rings_{0};
+  std::size_t max_points_per_ring_{0};
+  std::vector<std::size_t> next_ring_index_;
+
   // Subscriber
   rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr twist_sub_{};
   rclcpp::Subscription<sensor_msgs::msg::Imu>::SharedPtr imu_sub_{};
+  rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr pointcloud_sub_{};
+
+  cuda_blackboard::CudaUniquePtr<InputPointType[]> points_device_;
+  cuda_blackboard::CudaUniquePtr<InputPointType[]> organized_points_device_;
+  cuda_blackboard::CudaUniquePtr<std::int32_t[]> ring_index_device_;
+  cuda_blackboard::CudaUniquePtr<std::uint32_t[]> indexes_tensor_device_;
+  cuda_blackboard::CudaUniquePtr<std::uint32_t[]> sorted_indexes_tensor_device_;
+  cuda_blackboard::CudaUniquePtr<std::int32_t[]> segment_offsets_device_;
+  cuda_blackboard::CudaUniquePtr<std::int32_t> max_rings_device_;
+  cuda_blackboard::CudaUniquePtr<std::int32_t> max_points_per_ring_device_;
+
+  cuda_blackboard::CudaUniquePtr<std::uint8_t[]> sort_workspace_device_;
+  std::size_t sort_workspace_bytes_{0};
+
+  std::int32_t test_num_rings_{0};
+  std::int32_t test_max_points_per_ring_{0};
+  cudaStream_t stream_;
+  std::int32_t capacity_{0};
+
+  cuda_blackboard::HostUniquePtr<autoware::point_types::PointXYZIRCAEDT[]> host_buffer_;
+  // cuda_blackboard::CudaUniquePtr<std::uint8_t[]> device_buffer_; TODO(knzo25) replaced by a
+  // CudaPointCloud
+  std::shared_ptr<cuda_blackboard::CudaPointCloud2> input_pointcloud_ptr_;
 
   // CUDA pub & sub
   std::unique_ptr<cuda_blackboard::CudaBlackboardPublisher<cuda_blackboard::CudaPointCloud2>> pub_;
-  std::unique_ptr<cuda_blackboard::CudaBlackboardSubscriber<cuda_blackboard::CudaPointCloud2>> sub_;
+  // std::unique_ptr<cuda_blackboard::CudaBlackboardSubscriber<cuda_blackboard::CudaPointCloud2>>
+  // sub_;
 
   std::unique_ptr<CudaPointcloudPreprocessor> cuda_pointcloud_preprocessor_;
 
   std::unique_ptr<autoware::universe_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
   std::unique_ptr<autoware::universe_utils::DebugPublisher> debug_publisher_;
+
+  double organize_time_cuda_ms_{0.0};
+  double copy_time_cuda_ms_{0.0};
+
+  double organize_time_ms_{0.0};
+  double copy_time_ms_{0.0};
+  double processing_time_ms_{0.0};
+  double kernel_time_ms_{0.0};
+  int iteration_{0};
 };
 
 }  // namespace autoware::cuda_pointcloud_preprocessor
