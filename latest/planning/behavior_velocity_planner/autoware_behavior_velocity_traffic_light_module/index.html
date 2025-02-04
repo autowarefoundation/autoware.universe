@@ -14336,10 +14336,10 @@ This module is designed for rule-based velocity decision that is easy for develo
 <li>
 <p>When vehicle current velocity is</p>
 <ul>
-<li>higher than 2.0m/s ⇒ pass judge(using next slide formula)</li>
+<li>higher than <code>yellow_light_stop_velocity</code> m/s ⇒ pass judge(using next slide formula)</li>
 </ul>
 <ul>
-<li>lower than 2.0m/s ⇒ stop</li>
+<li>lower than <code>yellow_light_stop_velocity</code> m/s ⇒ stop</li>
 </ul>
 </li>
 <li>
@@ -14419,6 +14419,11 @@ This module is designed for rule-based velocity decision that is easy for develo
 <td><code>yellow_lamp_period</code></td>
 <td>double</td>
 <td>[s] time for yellow lamp</td>
+</tr>
+<tr>
+<td><code>yellow_light_stop_velocity</code></td>
+<td>double</td>
+<td>[m/s] velocity threshold for always stopping at a yellow light.</td>
 </tr>
 <tr>
 <td><code>enable_pass_judge</code></td>
