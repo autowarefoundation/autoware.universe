@@ -12,10 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #include "autoware/trajectory/path_point_with_lane_id.hpp"
+#include "autoware/trajectory/utils/closest.hpp"
+#include "autoware/trajectory/utils/crossed.hpp"
+#include "autoware/trajectory/utils/find_intervals.hpp"
+#include "lanelet2_core/primitives/LineString.h"
 
 #include <gtest/gtest.h>
 
-#include <iostream>
 #include <vector>
 
 using Trajectory = autoware::trajectory::Trajectory<tier4_planning_msgs::msg::PathPointWithLaneId>;
@@ -70,7 +73,8 @@ TEST_F(TrajectoryTest, compute)
 {
   double length = trajectory->length();
 
-  trajectory->longitudinal_velocity_mps.range(trajectory->length() / 3.0, trajectory->length())
+  trajectory->longitudinal_velocity_mps()
+    .range(trajectory->length() / 3.0, trajectory->length())
     .set(10.0);
   auto point = trajectory->compute(length / 2.0);
 
@@ -85,8 +89,8 @@ TEST_F(TrajectoryTest, compute)
 
 TEST_F(TrajectoryTest, manipulate_velocity)
 {
-  trajectory->longitudinal_velocity_mps = 10.0;
-  trajectory->longitudinal_velocity_mps
+  trajectory->longitudinal_velocity_mps() = 10.0;
+  trajectory->longitudinal_velocity_mps()
     .range(trajectory->length() / 3, 2.0 * trajectory->length() / 3)
     .set(5.0);
   auto point1 = trajectory->compute(0.0);
@@ -115,43 +119,22 @@ TEST_F(TrajectoryTest, curvature)
 TEST_F(TrajectoryTest, restore)
 {
   using autoware::trajectory::Trajectory;
-  trajectory->longitudinal_velocity_mps.range(4.0, trajectory->length()).set(5.0);
-  {
-    auto points = static_cast<Trajectory<geometry_msgs::msg::Point> &>(*trajectory).restore(0);
-    EXPECT_EQ(10, points.size());
-  }
-
-  {
-    auto points = static_cast<Trajectory<geometry_msgs::msg::Pose> &>(*trajectory).restore(0);
-    EXPECT_EQ(10, points.size());
-  }
-
-  {
-    auto points =
-      static_cast<Trajectory<autoware_planning_msgs::msg::PathPoint> &>(*trajectory).restore(0);
-    EXPECT_EQ(11, points.size());
-  }
-
-  {
-    auto points = trajectory->restore(0);
-    EXPECT_EQ(11, points.size());
-  }
+  trajectory->longitudinal_velocity_mps().range(4.0, trajectory->length()).set(5.0);
+  auto points = trajectory->restore(0);
+  EXPECT_EQ(11, points.size());
 }
 
 TEST_F(TrajectoryTest, crossed)
 {
-  geometry_msgs::msg::Pose pose1;
-  pose1.position.x = 0.0;
-  pose1.position.y = 10.0;
-  geometry_msgs::msg::Pose pose2;
-  pose2.position.x = 10.0;
-  pose2.position.y = 0.0;
+  lanelet::LineString2d line_string;
+  line_string.push_back(lanelet::Point3d(lanelet::InvalId, 0.0, 10.0, 0.0));
+  line_string.push_back(lanelet::Point3d(lanelet::InvalId, 10.0, 0.0, 0.0));
 
-  auto crossed_point = trajectory->crossed(pose1, pose2);
-  EXPECT_TRUE(crossed_point.has_value());
+  auto crossed_point = autoware::trajectory::crossed(*trajectory, line_string);
+  ASSERT_EQ(crossed_point.size(), 1);
 
-  EXPECT_LT(0.0, *crossed_point);
-  EXPECT_LT(*crossed_point, trajectory->length());
+  EXPECT_LT(0.0, crossed_point.at(0));
+  EXPECT_LT(crossed_point.at(0), trajectory->length());
 }
 
 TEST_F(TrajectoryTest, closest)
@@ -160,9 +143,7 @@ TEST_F(TrajectoryTest, closest)
   pose.position.x = 5.0;
   pose.position.y = 5.0;
 
-  std::cerr << "Closest: " << trajectory->closest(pose) << std::endl;
-
-  auto closest_pose = trajectory->compute(trajectory->closest(pose));
+  auto closest_pose = trajectory->compute(autoware::trajectory::closest(*trajectory, pose));
 
   double distance = std::hypot(
     closest_pose.point.pose.position.x - pose.position.x,
@@ -192,4 +173,16 @@ TEST_F(TrajectoryTest, crop)
   EXPECT_EQ(end_point_expect.point.pose.position.x, end_point_actual.point.pose.position.x);
   EXPECT_EQ(end_point_expect.point.pose.position.y, end_point_actual.point.pose.position.y);
   EXPECT_EQ(end_point_expect.lane_ids[0], end_point_actual.lane_ids[0]);
+}
+
+TEST_F(TrajectoryTest, find_interval)
+{
+  auto intervals = autoware::trajectory::find_intervals(
+    *trajectory, [](const tier4_planning_msgs::msg::PathPointWithLaneId & point) {
+      return point.lane_ids[0] == 1;
+    });
+  EXPECT_EQ(intervals.size(), 1);
+  EXPECT_LT(0, intervals[0].start);
+  EXPECT_LT(intervals[0].start, intervals[0].end);
+  EXPECT_NEAR(intervals[0].end, trajectory->length(), 0.1);
 }
