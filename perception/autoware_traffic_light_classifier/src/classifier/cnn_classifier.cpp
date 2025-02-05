@@ -51,7 +51,7 @@ CNNClassifier::CNNClassifier(rclcpp::Node * node_ptr) : node_ptr_(node_ptr)
   readLabelfile(label_file_path, labels_);
 
   classifier_ = std::make_unique<autoware::tensorrt_classifier::TrtClassifier>(
-    model_file_path, precision, batch_config, mean_, std_);
+    model_file_path, precision, mean_, std_);
   if (node_ptr_->declare_parameter<bool>("build_only")) {
     RCLCPP_INFO(node_ptr_->get_logger(), "TensorRT engine is built and shutdown node.");
     rclcpp::shutdown();

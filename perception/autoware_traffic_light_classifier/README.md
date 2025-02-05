@@ -63,7 +63,7 @@ These colors and shapes are assigned to the message as follows:
 
 ### Node Parameters
 
-{{ json_to_markdown("perception/autoware_traffic_light_classifier/schema/car_traffic_light_classifier.schema.json") }}
+{{ json_to_markdown("perception/autoware_traffic_light_classifier/schema/car_traffic_light_classifier.schema.json") }}  
 {{ json_to_markdown("perception/autoware_traffic_light_classifier/schema/pedestrian_traffic_light_classifier.schema.json") }}
 
 ### Core Parameters
