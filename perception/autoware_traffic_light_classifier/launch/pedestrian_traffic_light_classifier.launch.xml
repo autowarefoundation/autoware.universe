@@ -8,9 +8,9 @@
     default="$(find-pkg-share autoware_traffic_light_classifier)/config/pedestrian_traffic_light_classifier.param.yaml"
     description="classifier param path"
   />
-  <arg name="traffic_light_classifier_model_path" default="$(var data_path)/traffic_light_classifier" description=""/>
-  <arg name="pedestrian_traffic_light_classifier_label_name" default="lamp_labels_ped.txt" description=""/>
-  <arg name="pedestrian_traffic_light_classifier_model_name" default="ped_traffic_light_classifier_mobilenetv2_batch_6" description=""/>
+  <arg name="traffic_light_classifier_model_path" default="$(var data_path)/traffic_light_classifier" description="path to pedestrian onnx model and label"/>
+  <arg name="pedestrian_traffic_light_classifier_label_name" default="lamp_labels_ped.txt" description="pedestrian label name"/>
+  <arg name="pedestrian_traffic_light_classifier_model_name" default="ped_traffic_light_classifier_mobilenetv2_batch_6" description="pedestrian onnx model name"/>
   <arg name="build_only" default="false" description="exit after trt engine is built"/>
 
   <node pkg="autoware_traffic_light_classifier" exec="traffic_light_classifier_node" name="traffic_light_classifier" output="screen">

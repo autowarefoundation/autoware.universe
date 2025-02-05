@@ -44,7 +44,7 @@
         },
         "backlight_threshold": {
           "type": "number",
-          "description": "Threshold value for backlight detection.",
+          "description": "If the intensity get grater than this overwrite with UNKNOWN in corresponding RoI. Note that, if the value is much higher, the node only overwrites in the harsher backlight situations. Therefore, If you wouldn't like to use this feature set this value to `1.0`. The value can be `[0.0, 1.0]`. The confidence of overwritten signal is set to `0.0`.",
           "default": 0.85
         },
         "classifier_type": {
