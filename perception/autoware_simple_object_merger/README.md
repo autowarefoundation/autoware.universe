@@ -40,4 +40,4 @@ Input topics is defined by the parameter of `input_topics` (List[string]). The t
 
 ### Parameters
 
-{{ json_to_markdown("/perception/autoware_simple_object_merger/schema/autoware_simple_object_merger.schema.json") }}
+{{ json_to_markdown("perception/autoware_simple_object_merger/schema/autoware_simple_object_merger.schema.json") }}
