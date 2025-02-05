@@ -75,14 +75,7 @@ These colors and shapes are assigned to the message as follows:
 
 #### cnn_classifier
 
-| Name                    | Type            | Description                          |
-| ----------------------- | --------------- | ------------------------------------ |
-| `classifier_label_path` | str             | path to the model file               |
-| `classifier_model_path` | str             | path to the label file               |
-| `classifier_precision`  | str             | TensorRT precision, `fp16` or `int8` |
-| `classifier_mean`       | vector\<double> | 3-channel input image mean           |
-| `classifier_std`        | vector\<double> | 3-channel input image std            |
-| `apply_softmax`         | bool            | whether or not apply softmax         |
+Including [this section](#car_traffic_light_classifier)
 
 #### hsv_classifier
 
