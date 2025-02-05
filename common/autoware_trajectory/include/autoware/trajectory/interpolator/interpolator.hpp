@@ -73,7 +73,7 @@ public:
    */
   [[nodiscard]] double compute_first_derivative(const double & s) const
   {
-    double clamped_s = this->validate_compute_input(s);
+    const double clamped_s = this->validate_compute_input(s);
     return compute_first_derivative_impl(clamped_s);
   }
 
@@ -85,7 +85,7 @@ public:
    */
   [[nodiscard]] double compute_second_derivative(const double & s) const
   {
-    double clamped_s = this->validate_compute_input(s);
+    const double clamped_s = this->validate_compute_input(s);
     return compute_second_derivative_impl(clamped_s);
   }
 

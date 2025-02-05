@@ -2,6 +2,12 @@
 Changelog for package autoware_smart_mpc_trajectory_follower
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in fil… (`#9851 <https://github.com/autowarefoundation/autoware.universe/issues/9851>`_)
+* Contributors: Fumiya Watanabe, Vishal Chauhan
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0
