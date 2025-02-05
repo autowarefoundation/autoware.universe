@@ -37,13 +37,14 @@ CloudCollector::CloudCollector(
   timeout_sec_(timeout_sec),
   debug_mode_(debug_mode)
 {
+  status_ = CollectorStatus::Processing;
   const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
     std::chrono::duration<double>(timeout_sec_));
 
   timer_ =
     rclcpp::create_timer(ros2_parent_node_, ros2_parent_node_->get_clock(), period_ns, [this]() {
       std::lock_guard<std::mutex> concatenate_lock(concatenate_mutex_);
-      if (concatenate_finished_) return;
+      if (status_ == CollectorStatus::Finished) return;
       concatenate_callback();
     });
 }
@@ -67,17 +68,33 @@ bool CloudCollector::process_pointcloud(
   const std::string & topic_name, sensor_msgs::msg::PointCloud2::SharedPtr cloud)
 {
   std::lock_guard<std::mutex> concatenate_lock(concatenate_mutex_);
-  if (concatenate_finished_) return false;
-
-  // Check if the map already contains an entry for the same topic. This shouldn't happen if the
-  // parameter 'lidar_timestamp_noise_window' is set correctly.
-  if (topic_to_cloud_map_.find(topic_name) != topic_to_cloud_map_.end()) {
-    RCLCPP_WARN_STREAM_THROTTLE(
-      ros2_parent_node_->get_logger(), *ros2_parent_node_->get_clock(),
-      std::chrono::milliseconds(10000).count(),
-      "Topic '" << topic_name
-                << "' already exists in the collector. Check the timestamp of the pointcloud.");
+  if (status_ == CollectorStatus::Finished) {
+    return false;
   }
+  if (status_ == CollectorStatus::Idle) {
+    // Add first pointcloud to the collector, restart the timer
+    status_ = CollectorStatus::Processing;
+    const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+      std::chrono::duration<double>(timeout_sec_));
+    try {
+      set_period(period_ns.count());
+    } catch (rclcpp::exceptions::RCLError & ex) {
+      RCLCPP_WARN_THROTTLE(
+        ros2_parent_node_->get_logger(), *ros2_parent_node_->get_clock(), 5000, "%s", ex.what());
+    }
+    timer_->reset();
+  } else if (status_ == CollectorStatus::Processing) {
+    // Check if the map already contains an entry for the same topic. This shouldn't happen if the
+    // parameter 'lidar_timestamp_noise_window' is set correctly.
+    if (topic_to_cloud_map_.find(topic_name) != topic_to_cloud_map_.end()) {
+      RCLCPP_WARN_STREAM_THROTTLE(
+        ros2_parent_node_->get_logger(), *ros2_parent_node_->get_clock(),
+        std::chrono::milliseconds(10000).count(),
+        "Topic '" << topic_name
+                  << "' already exists in the collector. Check the timestamp of the pointcloud.");
+    }
+  }
+
   topic_to_cloud_map_[topic_name] = cloud;
   if (topic_to_cloud_map_.size() == num_of_clouds_) {
     concatenate_callback();
@@ -86,9 +103,25 @@ bool CloudCollector::process_pointcloud(
   return true;
 }
 
-bool CloudCollector::concatenate_finished() const
+void CloudCollector::set_period(const int64_t new_period)
 {
-  return concatenate_finished_;
+  if (!timer_) {
+    return;
+  }
+  int64_t old_period = 0;
+  rcl_ret_t ret = rcl_timer_get_period(timer_->get_timer_handle().get(), &old_period);
+  if (ret != RCL_RET_OK) {
+    rclcpp::exceptions::throw_from_rcl_error(ret, "Couldn't get old period");
+  }
+  ret = rcl_timer_exchange_period(timer_->get_timer_handle().get(), new_period, &old_period);
+  if (ret != RCL_RET_OK) {
+    rclcpp::exceptions::throw_from_rcl_error(ret, "Couldn't exchange_period");
+  }
+}
+
+CollectorStatus CloudCollector::get_status() const
+{
+  return status_;
 }
 
 void CloudCollector::concatenate_callback()
@@ -105,7 +138,7 @@ void CloudCollector::concatenate_callback()
 
   ros2_parent_node_->publish_clouds(std::move(concatenated_cloud_result), collector_info_);
 
-  concatenate_finished_ = true;
+  status_ = CollectorStatus::Finished;
 }
 
 ConcatenatedCloudResult CloudCollector::concatenate_pointclouds(
@@ -151,6 +184,19 @@ void CloudCollector::show_debug_message()
   log_stream << "]\n";
 
   RCLCPP_INFO(ros2_parent_node_->get_logger(), "%s", log_stream.str().c_str());
+}
+
+void CloudCollector::reset()
+{
+  std::lock_guard<std::mutex> lock(concatenate_mutex_);
+
+  status_ = CollectorStatus::Idle;  // Reset status to Idle
+  topic_to_cloud_map_.clear();
+  collector_info_ = nullptr;
+
+  if (timer_ && !timer_->is_canceled()) {
+    timer_->cancel();
+  }
 }
 
 }  // namespace autoware::pointcloud_preprocessor

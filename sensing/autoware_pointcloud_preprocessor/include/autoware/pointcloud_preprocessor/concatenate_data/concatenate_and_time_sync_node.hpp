@@ -92,6 +92,7 @@ private:
   std::list<std::shared_ptr<CloudCollector>> cloud_collectors_;
   std::unique_ptr<CollectorMatchingStrategy> collector_matching_strategy_;
   std::mutex cloud_collectors_mutex_;
+  static constexpr const int collectors_threshold = 10;
 
   // default postfix name for synchronized pointcloud
   static constexpr const char * default_sync_topic_postfix = "_synchronized";

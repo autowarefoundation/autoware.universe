@@ -230,20 +230,36 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
     auto collector = cloud_collector.value();
     if (collector) {
       cloud_collectors_lock.unlock();
-      process_success = cloud_collector.value()->process_pointcloud(topic_name, input_ptr);
+      process_success = collector->process_pointcloud(topic_name, input_ptr);
     }
   }
 
+  // Didn't find matched collector, create a new collector
   if (!process_success) {
-    auto new_cloud_collector = std::make_shared<CloudCollector>(
-      std::dynamic_pointer_cast<PointCloudConcatenateDataSynchronizerComponent>(shared_from_this()),
-      combine_cloud_handler_, params_.input_topics.size(), params_.timeout_sec, params_.debug_mode);
+    // Reuse the collector if the status is IDLE
+    std::shared_ptr<CloudCollector> selected_collector = nullptr;
 
-    cloud_collectors_.push_back(new_cloud_collector);
+    for (auto & collector : cloud_collectors_) {
+      if (collector->get_status() == CollectorStatus::Idle) {
+        selected_collector = collector;
+        break;
+      }
+    }
+
+    if (!selected_collector) {
+      // If no idle collector exists, create a new collector
+      selected_collector = std::make_shared<CloudCollector>(
+        std::dynamic_pointer_cast<PointCloudConcatenateDataSynchronizerComponent>(
+          shared_from_this()),
+        combine_cloud_handler_, params_.input_topics.size(), params_.timeout_sec,
+        params_.debug_mode);
+
+      cloud_collectors_.push_back(selected_collector);
+    }
+
     cloud_collectors_lock.unlock();
-
-    collector_matching_strategy_->set_collector_info(new_cloud_collector, matching_params);
-    (void)new_cloud_collector->process_pointcloud(topic_name, input_ptr);
+    collector_matching_strategy_->set_collector_info(selected_collector, matching_params);
+    (void)selected_collector->process_pointcloud(topic_name, input_ptr);
   }
 }
 
@@ -321,8 +337,7 @@ void PointCloudConcatenateDataSynchronizerComponent::publish_clouds(
     }
   }
 
-  diagnostic_collector_info_ = collector_info;
-
+  diagnostic_collector_info_ = std::move(collector_info);
   diagnostic_topic_to_original_stamp_map_ = concatenated_cloud_result.topic_to_original_stamp_map;
   diagnostic_updater_.force_update();
 
@@ -347,12 +362,18 @@ void PointCloudConcatenateDataSynchronizerComponent::manage_collector_list()
 {
   std::lock_guard<std::mutex> cloud_collectors_lock(cloud_collectors_mutex_);
 
-  for (auto it = cloud_collectors_.begin(); it != cloud_collectors_.end();) {
-    if ((*it)->concatenate_finished()) {
-      it = cloud_collectors_.erase(it);  // Erase and move the iterator to the next element
-    } else {
-      ++it;  // Move to the next element
+  for (auto & collector : cloud_collectors_) {
+    if (collector->get_status() == CollectorStatus::Finished) {
+      collector->reset();
     }
+  }
+
+  if (cloud_collectors_.size() > collectors_threshold) {
+    RCLCPP_WARN_STREAM_THROTTLE(
+      get_logger(), *get_clock(), 1000,
+      "The number of cloud collectors (" << cloud_collectors_.size() << ") exceeds the threshold ("
+                                         << collectors_threshold
+                                         << "), be careful if it keeps increasing.");
   }
 }
 
