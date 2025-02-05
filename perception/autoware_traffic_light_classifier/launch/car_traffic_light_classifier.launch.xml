@@ -2,7 +2,11 @@
   <arg name="input/image" default="~/image_raw"/>
   <arg name="input/rois" default="~/rois"/>
   <arg name="output/traffic_signals" default="classified/traffic_signals"/>
-  <arg name="traffic_light_classifier_param_path" default="$(find-pkg-share autoware_traffic_light_classifier)/config/traffic_light_classifier.param.yaml" description="classifier param path"/>
+  <arg name="data_path" default="$(env HOME)/autoware_data" description="packages data and artifacts directory path"/>
+  <arg name="traffic_light_classifier_param_path" default="$(find-pkg-share autoware_traffic_light_classifier)/config/car_traffic_light_classifier.param.yaml" description="classifier param path"/>
+  <arg name="traffic_light_classifier_model_path" default="$(var data_path)/traffic_light_classifier" description="path to car onnx model and label"/>
+  <arg name="car_traffic_light_classifier_label_name" default="lamp_labels.txt" description="car label name"/>
+  <arg name="car_traffic_light_classifier_model_name" default="traffic_light_classifier_mobilenetv2_batch_6" description="car onnx model name"/>
   <arg name="build_only" default="false" description="exit after trt engine is built"/>
 
   <node pkg="autoware_traffic_light_classifier" exec="traffic_light_classifier_node" name="traffic_light_classifier" output="screen">
