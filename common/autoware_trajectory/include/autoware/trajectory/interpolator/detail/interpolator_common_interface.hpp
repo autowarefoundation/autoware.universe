@@ -35,6 +35,7 @@ class InterpolatorCommonInterface
 {
 protected:
   std::vector<double> bases_;  ///< bases values for the interpolation.
+  bool is_built_{false};       ///< flag indicating whether the interpolator has been built.
 
   /**
    * @brief Get the start of the interpolation range.
@@ -124,7 +125,7 @@ public:
    * @param values The values to interpolate.
    * @return True if the interpolator was built successfully, false otherwise.
    */
-  bool build(const std::vector<double> & bases, const std::vector<T> & values)
+  [[nodiscard]] bool build(const std::vector<double> & bases, const std::vector<T> & values)
   {
     if (bases.size() != values.size()) {
       return false;
@@ -133,8 +134,16 @@ public:
       return false;
     }
     build_impl(bases, values);
+    is_built_ = true;
     return true;
   }
+
+  /**
+   * @brief Check if the interpolator has been built.
+   *
+   * @return True if the interpolator has been built, false otherwise.
+   */
+  [[nodiscard]] bool is_built() const { return is_built_; }
 
   /**
    * @brief Get the minimum number of required points for the interpolator.
@@ -150,10 +159,15 @@ public:
    *
    * @param s The point at which to compute the interpolated value.
    * @return The interpolated value.
+   * @throw std::runtime_error if the interpolator has not been built.
    */
   [[nodiscard]] T compute(const double & s) const
   {
-    double clamped_s = validate_compute_input(s);
+    if (!is_built_) {
+      throw std::runtime_error(
+        "Interpolator has not been built.");  // This Exception should not be thrown.
+    }
+    const double clamped_s = validate_compute_input(s);
     return compute_impl(clamped_s);
   }
 };

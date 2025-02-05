@@ -45,12 +45,14 @@ namespace autoware::motion_planning
 {
 ObstacleStopPlannerDebugNode::ObstacleStopPlannerDebugNode(
   rclcpp::Node * node, const double base_link2front)
-: node_(node), base_link2front_(base_link2front)
+: node_(node),
+  base_link2front_(base_link2front),
+  planning_factor_interface_{
+    std::make_unique<autoware::planning_factor_interface::PlanningFactorInterface>(
+      node, "obstacle_stop_planner")}
 {
   virtual_wall_pub_ = node_->create_publisher<MarkerArray>("~/virtual_wall", 1);
   debug_viz_pub_ = node_->create_publisher<MarkerArray>("~/debug/marker", 1);
-  velocity_factor_pub_ =
-    node_->create_publisher<VelocityFactorArray>("/planning/velocity_factors/obstacle_stop", 1);
   pub_debug_values_ =
     node_->create_publisher<Float32MultiArrayStamped>("~/obstacle_stop/debug_values", 1);
 }
@@ -189,8 +191,13 @@ void ObstacleStopPlannerDebugNode::publish()
   debug_viz_pub_->publish(visualization_msg);
 
   /* publish stop reason for autoware api */
-  const auto velocity_factor_msg = makeVelocityFactorArray();
-  velocity_factor_pub_->publish(velocity_factor_msg);
+  if (stop_pose_ptr_) {
+    planning_factor_interface_->add(
+      std::numeric_limits<float>::quiet_NaN(), *stop_pose_ptr_,
+      tier4_planning_msgs::msg::PlanningFactor::STOP, tier4_planning_msgs::msg::SafetyFactorArray{},
+      true /*is_driving_forward*/, 0.0, 0.0 /*shift distance*/, "");
+  }
+  planning_factor_interface_->publish();
 
   // publish debug values
   Float32MultiArrayStamped debug_msg{};
@@ -490,25 +497,6 @@ MarkerArray ObstacleStopPlannerDebugNode::makeVisualizationMarker()
   }
 
   return msg;
-}
-
-VelocityFactorArray ObstacleStopPlannerDebugNode::makeVelocityFactorArray()
-{
-  VelocityFactorArray velocity_factor_array;
-  velocity_factor_array.header.frame_id = "map";
-  velocity_factor_array.header.stamp = node_->now();
-
-  if (stop_pose_ptr_) {
-    using distance_type = VelocityFactor::_distance_type;
-    VelocityFactor velocity_factor;
-    velocity_factor.behavior = PlanningBehavior::ROUTE_OBSTACLE;
-    velocity_factor.pose = *stop_pose_ptr_;
-    velocity_factor.distance = std::numeric_limits<distance_type>::quiet_NaN();
-    velocity_factor.status = VelocityFactor::UNKNOWN;
-    velocity_factor.detail = std::string();
-    velocity_factor_array.factors.push_back(velocity_factor);
-  }
-  return velocity_factor_array;
 }
 
 }  // namespace autoware::motion_planning

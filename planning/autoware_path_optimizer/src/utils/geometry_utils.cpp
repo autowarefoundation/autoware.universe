@@ -51,7 +51,7 @@ geometry_msgs::msg::Point getStartPoint(
 {
   const size_t segment_idx = autoware::motion_utils::findNearestSegmentIndex(bound, point);
   const auto & curr_seg_point = bound.at(segment_idx);
-  const auto & next_seg_point = bound.at(segment_idx);
+  const auto & next_seg_point = bound.at(segment_idx + 1);
   const Eigen::Vector2d first_to_target{point.x - curr_seg_point.x, point.y - curr_seg_point.y};
   const Eigen::Vector2d first_to_second{
     next_seg_point.x - curr_seg_point.x, next_seg_point.y - curr_seg_point.y};
