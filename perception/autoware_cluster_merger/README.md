@@ -25,7 +25,7 @@ The clusters of merged topics are simply concatenated from clusters of input top
 
 ## Parameters
 
-{{ json_to_markdown("/perception/autoware_cluster_merger/schema/cluster_merger.schema.json") }}
+{{ json_to_markdown("perception/autoware_cluster_merger/schema/cluster_merger.schema.json") }}
 
 ## Assumptions / Known limits
 
