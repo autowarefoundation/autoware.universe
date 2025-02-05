@@ -227,9 +227,7 @@ def generate_launch_description():
     # traffic_light_classifier
     add_launch_arg(
         "car_classifier_param_path",
-        os.path.join(
-            classifier_share_dir, "config", "car_traffic_light_classifier.param.yaml"
-        ),
+        os.path.join(classifier_share_dir, "config", "car_traffic_light_classifier.param.yaml"),
     )
     add_launch_arg(
         "pedestrian_classifier_param_path",
