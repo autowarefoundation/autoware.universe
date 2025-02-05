@@ -36,6 +36,10 @@ list(APPEND CUDA_NVCC_FLAGS "--expt-relaxed-constexpr -diag-suppress 20012") # c
 
 cuda_add_library(cuda_pointcloud_preprocessor_lib SHARED
   src/cuda_pointcloud_preprocessor/cuda_pointcloud_preprocessor.cu
+  src/cuda_pointcloud_preprocessor/common_kernels.cu
+  src/cuda_pointcloud_preprocessor/organize_kernels.cu
+  src/cuda_pointcloud_preprocessor/outlier_kernels.cu
+  src/cuda_pointcloud_preprocessor/undistort_kernels.cu
 )
 
 target_link_libraries(cuda_pointcloud_preprocessor_lib

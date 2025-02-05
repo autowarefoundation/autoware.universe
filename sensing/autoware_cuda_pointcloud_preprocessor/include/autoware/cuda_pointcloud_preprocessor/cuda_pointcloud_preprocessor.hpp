@@ -16,6 +16,7 @@
 #define AUTOWARE__CUDA_POINTCLOUD_PREPROCESSOR__CUDA_POINTCLOUD_PREPROCESSOR_HPP_
 
 #include "autoware/cuda_pointcloud_preprocessor/point_types.hpp"
+#include "autoware/cuda_pointcloud_preprocessor/types.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
@@ -28,87 +29,11 @@
 
 #include <thrust/device_vector.h>
 
-#include <cmath>
 #include <cstdint>
 #include <deque>
 
 namespace autoware::cuda_pointcloud_preprocessor
 {
-
-struct TwistStruct2D
-{
-  float cum_x;
-  float cum_y;
-  float cum_theta;
-  float cum_cos_theta;
-  float cum_sin_theta;
-  std::uint32_t last_stamp_nsec;  // relative to the start of the pointcloud
-  std::uint32_t stamp_nsec;       // relative to the start of the pointcloud
-  float v_x;
-  float v_theta;
-};
-
-struct TwistStruct3D
-{
-  float cum_transform_buffer[16];
-  std::uint32_t last_stamp_nsec;  // relative to the start of the pointcloud
-  std::uint32_t stamp_nsec;       // relative to the start of the pointcloud
-  float v[3];
-  float w[3];
-};
-
-struct TransformStruct
-{
-  float x;
-  float y;
-  float z;
-  float m11;
-  float m12;
-  float m13;
-  float m21;
-  float m22;
-  float m23;
-  float m31;
-  float m32;
-  float m33;
-};
-
-struct CropBoxParameters
-{
-  float min_x;
-  float max_x;
-  float min_y;
-  float max_y;
-  float min_z;
-  float max_z;
-};
-
-struct RingOutlierFilterParameters
-{
-  float distance_ratio{std::nanf("")};
-  float object_length_threshold{std::nanf("")};
-  std::size_t num_points_threshold{0};
-};
-
-template <typename T>
-class MemoryPoolAllocator
-{
-public:
-  using value_type = T;
-  MemoryPoolAllocator(cudaMemPool_t pool) : m_pool(pool) {}
-
-  T * allocate(std::size_t n)
-  {
-    void * ptr = nullptr;
-    cudaMallocFromPoolAsync(&ptr, n * sizeof(T), m_pool, cudaStreamDefault);
-    return static_cast<T *>(ptr);
-  }
-
-  void deallocate(T * ptr, std::size_t) { cudaFreeAsync(ptr, cudaStreamDefault); }
-
-protected:
-  cudaMemPool_t m_pool;
-};
 
 class CudaPointcloudPreprocessor
 {
@@ -130,20 +55,6 @@ public:
     const std::uint32_t first_point_rel_stamp_nsec);
 
 private:
-  void setupTwist2DStructs(
-    const std::deque<geometry_msgs::msg::TwistWithCovarianceStamped> & twist_queue,
-    const std::deque<geometry_msgs::msg::Vector3Stamped> & angular_velocity_queue,
-    const std::uint64_t pointcloud_stamp_nsec, const std::uint32_t first_point_rel_stamp_nsec);
-
-  void setupTwist3DStructs(
-    const std::deque<geometry_msgs::msg::TwistWithCovarianceStamped> & twist_queue,
-    const std::deque<geometry_msgs::msg::Vector3Stamped> & angular_velocity_queue,
-    const std::uint64_t pointcloud_stamp_nsec, const std::uint32_t first_point_rel_stamp_nsec);
-
-  std::size_t querySortWorkspace(
-    int num_items, int num_segments, int * offsets_device, std::uint32_t * keys_in_device,
-    std::uint32_t * keys_out_device);
-
   void organizePointcloud();
 
   CropBoxParameters self_crop_box_parameters_{};
@@ -185,11 +96,8 @@ private:
   thrust::device_vector<std::uint32_t> device_indices_{};
   thrust::device_vector<TwistStruct2D> device_twist_2d_structs_{};
   thrust::device_vector<TwistStruct3D> device_twist_3d_structs_{};
-
   thrust::device_vector<CropBoxParameters> host_crop_box_structs_{};
   thrust::device_vector<CropBoxParameters> device_crop_box_structs_{};
-  std::vector<TwistStruct2D> host_twist_2d_structs_;
-  std::vector<TwistStruct3D> host_twist_3d_structs_;
 };
 
 }  // namespace autoware::cuda_pointcloud_preprocessor
