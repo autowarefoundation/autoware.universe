@@ -37,8 +37,12 @@ CloudCollector::CloudCollector(
   timeout_sec_(timeout_sec),
   debug_mode_(debug_mode)
 {
+<<<<<<< HEAD
   status_ = CollectorStatus::Idle;
 
+=======
+  status_ = CollectorStatus::Processing;
+>>>>>>> 2f0ff334eb (feat: reuse collectors)
   const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
     std::chrono::duration<double>(timeout_sec_));
 
