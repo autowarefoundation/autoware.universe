@@ -127,7 +127,7 @@ private:
 
   bool insertStopPoint(
     const std::optional<geometry_msgs::msg::Pose> stop_point,
-    tier4_planning_msgs::msg::PathWithLaneId & path);
+    tier4_planning_msgs::msg::PathWithLaneId & path, const double stop_point_velocity = 0.0);
 
   void insertVelocityForState(
     const std::optional<DynamicObstacle> & dynamic_obstacle, const PlannerData planner_data,
@@ -148,9 +148,9 @@ private:
     const DynamicObstacle & dynamic_obstacle, const geometry_msgs::msg::Pose & current_pose,
     const float approaching_vel, const float approach_margin, PathWithLaneId & output_path);
 
-  void applyMaxJerkLimit(
+  double calcMaxJerkLimitedVelocity(
     const geometry_msgs::msg::Pose & current_pose, const float current_vel, const float current_acc,
-    PathWithLaneId & path) const;
+    PathWithLaneId & path, const geometry_msgs::msg::Pose & stop_point) const;
 
   /**
    * @brief Creates a virtual line segment that is perpendicular to the ego vehicle and that passes
