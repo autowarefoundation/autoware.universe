@@ -334,11 +334,9 @@ __global__ void ringOutlierFilterKernel(
   const float y = left_point.y - right_point.y;
   const float z = left_point.z - right_point.z;
 
-  output_mask[j * max_points_per_ring + i] =
-    ((walk_size > num_points_threshold) ||
-     (x * x + y * y + z * z >= object_length_threshold_squared))
-      ? 1
-      : 0;
+  output_mask[j * max_points_per_ring + i] = static_cast<std::uint32_t>(
+    (walk_size > num_points_threshold) ||
+    (x * x + y * y + z * z >= object_length_threshold_squared));
 }
 
 __global__ void transformPointTypeKernel(
