@@ -39,10 +39,8 @@ CNNClassifier::CNNClassifier(rclcpp::Node * node_ptr) : node_ptr_(node_ptr)
   model_file_path = node_ptr_->declare_parameter<std::string>("classifier_model_path");
   // ros param does not support loading std::vector<float>
   // we have to load std::vector<double> and transfer to std::vector<float>
-  auto mean_d =
-    node_ptr->declare_parameter<std::vector<double>>("classifier_mean");
-  auto std_d =
-    node_ptr->declare_parameter<std::vector<double>>("classifier_std");
+  auto mean_d = node_ptr->declare_parameter<std::vector<double>>("classifier_mean");
+  auto std_d = node_ptr->declare_parameter<std::vector<double>>("classifier_std");
   mean_ = std::vector<float>(mean_d.begin(), mean_d.end());
   std_ = std::vector<float>(std_d.begin(), std_d.end());
   if (mean_.size() != 3 || std_.size() != 3) {
