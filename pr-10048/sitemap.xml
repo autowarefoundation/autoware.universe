@@ -36,7 +36,7 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/common/autoware_component_interface_specs/</loc>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/common/autoware_component_interface_specs_universe/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
@@ -81,11 +81,6 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/common/autoware_kalman_filter/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
          <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/common/autoware_motion_utils/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
@@ -101,17 +96,7 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/common/autoware_osqp_interface/design/osqp_interface-design/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
          <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/common/autoware_path_distance_calculator/Readme/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/common/autoware_point_types/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
@@ -122,11 +107,6 @@
     </url>
     <url>
          <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/common/autoware_pyplot/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/common/autoware_qp_interface/design/qp_interface-design/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
@@ -196,6 +176,11 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/control/autoware_control_performance_analysis/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
          <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/control/autoware_control_validator/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
@@ -241,6 +226,11 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/control/autoware_predicted_path_checker/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
          <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/control/autoware_pure_pursuit/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
@@ -276,17 +266,22 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/control/control_performance_analysis/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/control/predicted_path_checker/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
          <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/evaluator/autoware_control_evaluator/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/evaluator/autoware_kinematic_evaluator/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/evaluator/autoware_localization_evaluator/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/evaluator/autoware_perception_online_evaluator/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
@@ -296,22 +291,7 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/evaluator/kinematic_evaluator/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/evaluator/localization_evaluator/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/evaluator/perception_online_evaluator/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/evaluator/scenario_simulator_v2_adapter/</loc>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/evaluator/autoware_scenario_simulator_v2_adapter/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
@@ -397,11 +377,6 @@
     </url>
     <url>
          <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/localization/autoware_localization_error_monitor/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/localization/autoware_localization_util/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
@@ -841,7 +816,7 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/planning/autoware_mission_planner/</loc>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/planning/autoware_mission_planner_universe/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
@@ -891,6 +866,11 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/planning/autoware_planning_factor_interface/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
          <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/planning/autoware_planning_test_manager/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
@@ -922,11 +902,6 @@
     </url>
     <url>
          <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/planning/autoware_scenario_selector/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/planning/autoware_static_centerline_generator/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
@@ -1076,6 +1051,11 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/planning/behavior_velocity_planner/autoware_behavior_velocity_rtc_interface/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
          <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/planning/behavior_velocity_planner/autoware_behavior_velocity_run_out_module/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
@@ -1116,6 +1096,21 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/planning/motion_velocity_planner/autoware_motion_velocity_obstacle_cruise_module/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/planning/motion_velocity_planner/autoware_motion_velocity_obstacle_slow_down_module/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/planning/motion_velocity_planner/autoware_motion_velocity_obstacle_stop_module/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
          <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/planning/motion_velocity_planner/autoware_motion_velocity_obstacle_velocity_limiter_module/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
@@ -1126,7 +1121,7 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/planning/motion_velocity_planner/autoware_motion_velocity_planner_node/</loc>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/planning/motion_velocity_planner/autoware_motion_velocity_planner_node_universe/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
@@ -1186,7 +1181,7 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/sensing/autoware_pointcloud_preprocessor/docs/blockage_diag/</loc>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/sensing/autoware_pointcloud_preprocessor/docs/blockage-diag/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
@@ -1291,27 +1286,32 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/simulator/dummy_perception_publisher/</loc>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/simulator/autoware_dummy_perception_publisher/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/simulator/fault_injection/</loc>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/simulator/autoware_fault_injection/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/simulator/learning_based_vehicle_model/</loc>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/simulator/autoware_learning_based_vehicle_model/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/simulator/simple_planning_simulator/</loc>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/simulator/autoware_simple_planning_simulator/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/simulator/simple_planning_simulator/docs/actuation_cmd_sim/</loc>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/simulator/autoware_simple_planning_simulator/docs/actuation_cmd_sim/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/simulator/autoware_vehicle_door_simulator/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
@@ -1321,12 +1321,17 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/simulator/vehicle_door_simulator/</loc>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_bluetooth_monitor/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
          <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_component_monitor/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_component_state_monitor/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
@@ -1371,227 +1376,212 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_default_adapi_helpers/autoware_adapi_adaptors/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_default_adapi_helpers/autoware_automatic_pose_initializer/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_diagnostic_graph_aggregator/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_diagnostic_graph_aggregator/doc/format/graph/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_diagnostic_graph_aggregator/doc/format/path/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_diagnostic_graph_aggregator/doc/format/unit/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_diagnostic_graph_aggregator/doc/format/unit/and/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_diagnostic_graph_aggregator/doc/format/unit/const/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_diagnostic_graph_aggregator/doc/format/unit/diag/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_diagnostic_graph_aggregator/doc/format/unit/link/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_diagnostic_graph_aggregator/doc/format/unit/or/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_diagnostic_graph_aggregator/doc/format/unit/remap/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_diagnostic_graph_aggregator/doc/tool/tree/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_diagnostic_graph_utils/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_diagnostic_graph_utils/doc/node/converter/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_diagnostic_graph_utils/doc/node/dump/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_dummy_diag_publisher/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_dummy_infrastructure/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_duplicated_node_checker/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_mrm_comfortable_stop_operator/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_mrm_emergency_stop_operator/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_mrm_handler/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
          <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_processing_time_checker/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/bluetooth_monitor/</loc>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_system_diagnostic_monitor/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/component_state_monitor/</loc>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_system_monitor/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/default_ad_api_helpers/ad_api_adaptors/</loc>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_system_monitor/docs/class_diagrams/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/default_ad_api_helpers/automatic_pose_initializer/</loc>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_system_monitor/docs/hdd_reader/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/diagnostic_graph_aggregator/</loc>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_system_monitor/docs/msr_reader/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/diagnostic_graph_aggregator/doc/format/edit/</loc>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_system_monitor/docs/ros_parameters/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/diagnostic_graph_aggregator/doc/format/graph/</loc>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_system_monitor/docs/seq_diagrams/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/diagnostic_graph_aggregator/doc/format/path/</loc>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_system_monitor/docs/topics_cpu_monitor/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/diagnostic_graph_aggregator/doc/format/unit/</loc>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_system_monitor/docs/topics_gpu_monitor/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/diagnostic_graph_aggregator/doc/format/edit/remove/</loc>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_system_monitor/docs/topics_hdd_monitor/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/diagnostic_graph_aggregator/doc/format/unit/and/</loc>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_system_monitor/docs/topics_mem_monitor/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/diagnostic_graph_aggregator/doc/format/unit/const/</loc>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_system_monitor/docs/topics_net_monitor/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/diagnostic_graph_aggregator/doc/format/unit/diag/</loc>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_system_monitor/docs/topics_ntp_monitor/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/diagnostic_graph_aggregator/doc/format/unit/link/</loc>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_system_monitor/docs/topics_process_monitor/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/diagnostic_graph_aggregator/doc/format/unit/or/</loc>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_system_monitor/docs/topics_voltage_monitor/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/diagnostic_graph_aggregator/doc/format/unit/remap/</loc>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_system_monitor/docs/traffic_reader/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/diagnostic_graph_aggregator/doc/tool/tree/</loc>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_topic_relay_controller/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/diagnostic_graph_utils/</loc>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_topic_state_monitor/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/diagnostic_graph_utils/doc/node/converter/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/diagnostic_graph_utils/doc/node/dump/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/dummy_diag_publisher/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/dummy_infrastructure/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/duplicated_node_checker/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/mrm_comfortable_stop_operator/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/mrm_emergency_stop_operator/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/mrm_handler/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/system_diagnostic_monitor/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/system_monitor/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/system_monitor/docs/class_diagrams/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/system_monitor/docs/hdd_reader/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/system_monitor/docs/msr_reader/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/system_monitor/docs/ros_parameters/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/system_monitor/docs/seq_diagrams/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/system_monitor/docs/topics_cpu_monitor/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/system_monitor/docs/topics_gpu_monitor/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/system_monitor/docs/topics_hdd_monitor/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/system_monitor/docs/topics_mem_monitor/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/system_monitor/docs/topics_net_monitor/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/system_monitor/docs/topics_ntp_monitor/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/system_monitor/docs/topics_process_monitor/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/system_monitor/docs/topics_voltage_monitor/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/system_monitor/docs/traffic_reader/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/topic_state_monitor/</loc>
-         <lastmod>2025-02-05</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/velodyne_monitor/</loc>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/system/autoware_velodyne_monitor/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
@@ -1621,6 +1611,11 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/visualization/autoware_bag_time_manager_rviz_plugin/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
          <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/visualization/autoware_overlay_rviz_plugin/autoware_mission_details_overlay_rviz_plugin/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
@@ -1631,12 +1626,12 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/visualization/autoware_perception_rviz_plugin/</loc>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/visualization/autoware_overlay_rviz_plugin/autoware_string_stamped_overlay_rviz_plugin/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/visualization/bag_time_manager_rviz_plugin/</loc>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/visualization/autoware_perception_rviz_plugin/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
@@ -1657,6 +1652,11 @@
     </url>
     <url>
          <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/visualization/tier4_localization_rviz_plugin/</loc>
+         <lastmod>2025-02-05</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10048/visualization/tier4_planning_factor_rviz_plugin/</loc>
          <lastmod>2025-02-05</lastmod>
          <changefreq>daily</changefreq>
     </url>
