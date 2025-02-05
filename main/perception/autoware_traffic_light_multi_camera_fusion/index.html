@@ -14313,31 +14313,34 @@
 <table>
 <thead>
 <tr>
-<th>Parameter</th>
+<th>Name</th>
 <th>Type</th>
 <th>Description</th>
+<th>Default</th>
+<th>Range</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>camera_namespaces</code></td>
-<td>vector\<string></string></td>
-<td>Camera Namespaces to be fused</td>
+<td>camera_namespaces</td>
+<td>array</td>
+<td>Camera namespaces to be fused.</td>
+<td>[]</td>
+<td>N/A</td>
 </tr>
 <tr>
-<td><code>message_lifespan</code></td>
-<td>double</td>
-<td>The maximum timestamp span to be fused</td>
+<td>message_lifespan</td>
+<td>float</td>
+<td>The maximum timestamp span to be fused.</td>
+<td>0.0</td>
+<td>N/A</td>
 </tr>
 <tr>
-<td><code>approximate_sync</code></td>
-<td>bool</td>
-<td>Whether work in Approximate Synchronization Mode</td>
-</tr>
-<tr>
-<td><code>perform_group_fusion</code></td>
-<td>bool</td>
-<td>Whether perform Group Fusion</td>
+<td>approximate_sync</td>
+<td>boolean</td>
+<td>Whether to work in Approximate Synchronization Mode.</td>
+<td>False</td>
+<td>N/A</td>
 </tr>
 </tbody>
 </table></div>
