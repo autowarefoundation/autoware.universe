@@ -35,26 +35,6 @@
 namespace autoware::cuda_pointcloud_preprocessor
 {
 
-void organizeLaunch(
-  const InputPointType * __restrict__ input_points, std::uint32_t * index_tensor,
-  std::int32_t * ring_indexes, std::int32_t initial_max_rings, std::int32_t * output_max_rings,
-  std::int32_t initial_max_points_per_ring, std::int32_t * output_max_points_per_ring,
-  int num_points, cudaStream_t & stream);
-
-std::size_t querySortWorkspace(
-  int num_items, int num_segments, int * d_offsets, std::uint32_t * d_keys_in,
-  std::uint32_t * d_keys_out);
-
-void sortLaunch(
-  int num_items, int num_segments, int * d_offsets, std::uint32_t * d_keys_in,
-  std::uint32_t * d_keys_out, std::uint8_t * d_temp_storage, std::size_t temp_storage_bytes,
-  cudaStream_t & stream);  // e.g., [-, -, -, -, -, -, -]
-
-void gatherLaunch(
-  const InputPointType * __restrict__ input_points, const std::uint32_t * __restrict__ index_tensor,
-  InputPointType * __restrict__ output_points, int num_rings, int max_points_per_ring,
-  cudaStream_t & stream);
-
 struct TwistStruct2D
 {
   float cum_x;
@@ -62,8 +42,8 @@ struct TwistStruct2D
   float cum_theta;
   float cum_cos_theta;
   float cum_sin_theta;
-  uint32_t last_stamp_nsec;  // relative to the start of the pointcloud
-  uint32_t stamp_nsec;       // relative to the start of the pointcloud
+  std::uint32_t last_stamp_nsec;  // relative to the start of the pointcloud
+  std::uint32_t stamp_nsec;       // relative to the start of the pointcloud
   float v_x;
   float v_theta;
 };
@@ -71,8 +51,8 @@ struct TwistStruct2D
 struct TwistStruct3D
 {
   float cum_transform_buffer[16];
-  uint32_t last_stamp_nsec;  // relative to the start of the pointcloud
-  uint32_t stamp_nsec;       // relative to the start of the pointcloud
+  std::uint32_t last_stamp_nsec;  // relative to the start of the pointcloud
+  std::uint32_t stamp_nsec;       // relative to the start of the pointcloud
   float v[3];
   float w[3];
 };
@@ -143,29 +123,38 @@ public:
   void preallocateOutput();
 
   std::unique_ptr<cuda_blackboard::CudaPointCloud2> process(
-    const cuda_blackboard::CudaPointCloud2 & input_pointcloud_msg,
+    const sensor_msgs::msg::PointCloud2::ConstSharedPtr input_pointcloud_msg_ptr,
     const geometry_msgs::msg::TransformStamped & transform_msg,
     const std::deque<geometry_msgs::msg::TwistWithCovarianceStamped> & twist_queue,
-    const std::deque<geometry_msgs::msg::Vector3Stamped> & angular_velocity_queue);
+    const std::deque<geometry_msgs::msg::Vector3Stamped> & angular_velocity_queue,
+    const std::uint32_t first_point_rel_stamp_nsec);
 
 private:
   void setupTwist2DStructs(
-    const cuda_blackboard::CudaPointCloud2 & input_pointcloud_msg,
     const std::deque<geometry_msgs::msg::TwistWithCovarianceStamped> & twist_queue,
-    const std::deque<geometry_msgs::msg::Vector3Stamped> & angular_velocity_queue);
+    const std::deque<geometry_msgs::msg::Vector3Stamped> & angular_velocity_queue,
+    const std::uint64_t pointcloud_stamp_nsec, const std::uint32_t first_point_rel_stamp_nsec);
 
   void setupTwist3DStructs(
-    const cuda_blackboard::CudaPointCloud2 & input_pointcloud_msg,
     const std::deque<geometry_msgs::msg::TwistWithCovarianceStamped> & twist_queue,
-    const std::deque<geometry_msgs::msg::Vector3Stamped> & angular_velocity_queue);
+    const std::deque<geometry_msgs::msg::Vector3Stamped> & angular_velocity_queue,
+    const std::uint64_t pointcloud_stamp_nsec, const std::uint32_t first_point_rel_stamp_nsec);
+
+  std::size_t querySortWorkspace(
+    int num_items, int num_segments, int * offsets_device, std::uint32_t * keys_in_device,
+    std::uint32_t * keys_out_device);
+
+  void organizePointcloud();
 
   CropBoxParameters self_crop_box_parameters_{};
   CropBoxParameters mirror_crop_box_parameters_{};
   RingOutlierFilterParameters ring_outlier_parameters_{};
   bool use_3d_undistortion_{false};
 
-  int max_rings_{};
+  int num_rings_{};
   int max_points_per_ring_{};
+  std::size_t num_raw_points_{};
+  std::size_t num_organized_points_{};
 
   std::vector<sensor_msgs::msg::PointField> point_fields_{};
   std::unique_ptr<cuda_blackboard::CudaPointCloud2> output_pointcloud_ptr_{};
@@ -174,6 +163,21 @@ private:
   int max_blocks_per_grid_{};
   const int threads_per_block_{256};
   cudaMemPool_t device_memory_pool_;
+
+  // Organizing buffers
+  thrust::device_vector<InputPointType> device_input_points_;
+  thrust::device_vector<InputPointType> device_organized_points_;
+  thrust::device_vector<std::int32_t> device_ring_index_;
+  thrust::device_vector<std::uint32_t> device_indexes_tensor_;
+  thrust::device_vector<std::uint32_t> device_sorted_indexes_tensor_;
+  thrust::device_vector<std::int32_t> device_segment_offsets_;
+  thrust::device_vector<std::int32_t> device_max_ring_;
+  thrust::device_vector<std::int32_t> device_max_points_per_ring_;
+
+  thrust::device_vector<std::uint8_t> device_sort_workspace_;
+  std::size_t sort_workspace_bytes_{0};
+
+  // Pointcloud preprocessing buffers
   thrust::device_vector<InputPointType> device_transformed_points_{};
   thrust::device_vector<OutputPointType> device_output_points_{};
   thrust::device_vector<std::uint32_t> device_crop_mask_{};
@@ -184,6 +188,8 @@ private:
 
   thrust::device_vector<CropBoxParameters> host_crop_box_structs_{};
   thrust::device_vector<CropBoxParameters> device_crop_box_structs_{};
+  std::vector<TwistStruct2D> host_twist_2d_structs_;
+  std::vector<TwistStruct3D> host_twist_3d_structs_;
 };
 
 }  // namespace autoware::cuda_pointcloud_preprocessor

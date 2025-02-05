@@ -54,14 +54,6 @@ target_include_directories(cuda_pointcloud_preprocessor_lib SYSTEM PRIVATE
 )
 
 # Targets
-ament_auto_add_library(cuda_organized_pointcloud_adapter SHARED
-  src/cuda_organized_pointcloud_adapter/cuda_organized_pointcloud_adapter_node.cpp
-)
-
-target_link_libraries(cuda_organized_pointcloud_adapter
-  ${CUDA_LIBRARIES}
-)
-
 ament_auto_add_library(cuda_pointcloud_preprocessor SHARED
   src/cuda_pointcloud_preprocessor/cuda_pointcloud_preprocessor_node.cpp
 )
@@ -69,11 +61,6 @@ ament_auto_add_library(cuda_pointcloud_preprocessor SHARED
 target_link_libraries(cuda_pointcloud_preprocessor
   ${CUDA_LIBRARIES}
   cuda_pointcloud_preprocessor_lib
-)
-
-rclcpp_components_register_node(cuda_organized_pointcloud_adapter
-  PLUGIN "autoware::cuda_organized_pointcloud_adapter::CudaOrganizedPointcloudAdapterNode"
-  EXECUTABLE cuda_organized_pointcloud_adapter_node
 )
 
 rclcpp_components_register_node(cuda_pointcloud_preprocessor

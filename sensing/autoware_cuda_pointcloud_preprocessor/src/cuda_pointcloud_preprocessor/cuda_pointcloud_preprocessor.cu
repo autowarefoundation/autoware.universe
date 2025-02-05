@@ -23,10 +23,8 @@
 #include <cuda_runtime.h>
 #include <tf2/utils.h>
 #include <thrust/execution_policy.h>
-#include <thrust/host_vector.h>
 #include <thrust/reduce.h>
 #include <thrust/scan.h>
-// #include <cub/device/device_segmented_radix_sort.cuh>
 
 namespace autoware::cuda_pointcloud_preprocessor
 {
@@ -100,47 +98,6 @@ __global__ void organizeKernel(
   index_tensor[ring * initial_max_points_per_ring + next_offset] = idx;
 }
 
-void organizeLaunch(
-  const InputPointType * __restrict__ input_points, std::uint32_t * index_tensor,
-  std::int32_t * ring_indexes, std::int32_t initial_max_rings, std::int32_t * output_max_rings,
-  std::int32_t initial_max_points_per_ring, std::int32_t * output_max_points_per_ring,
-  int num_points, cudaStream_t & stream)
-{
-  int threads_per_block = 256;
-  int blocks_per_grid = (num_points + threads_per_block - 1) / threads_per_block;
-  organizeKernel<<<blocks_per_grid, threads_per_block>>>(
-    input_points, index_tensor, ring_indexes, initial_max_rings, output_max_rings,
-    initial_max_points_per_ring, output_max_points_per_ring, num_points);
-}
-
-std::size_t querySortWorkspace(
-  int num_items, int num_segments, int * d_offsets, std::uint32_t * d_keys_in,
-  std::uint32_t * d_keys_out)
-{
-  // Determine temporary device storage requirements
-  void * d_temp_storage = nullptr;
-  size_t temp_storage_bytes = 0;
-  cub::DeviceSegmentedRadixSort::SortKeys(
-    d_temp_storage, temp_storage_bytes, d_keys_in, d_keys_out, num_items, num_segments, d_offsets,
-    d_offsets + 1);
-
-  return temp_storage_bytes;
-}
-
-void sortLaunch(
-  int num_items, int num_segments, int * d_offsets, std::uint32_t * d_keys_in,
-  std::uint32_t * d_keys_out, std::uint8_t * d_temp_storage, std::size_t temp_storage_bytes,
-  cudaStream_t & stream)
-{
-  // Allocate temporary storage
-  // cudaMalloc(&d_temp_storage, temp_storage_bytes);
-
-  // Run sorting operation
-  cub::DeviceSegmentedRadixSort::SortKeys(
-    reinterpret_cast<void *>(d_temp_storage), temp_storage_bytes, d_keys_in, d_keys_out, num_items,
-    num_segments, d_offsets, d_offsets + 1, 0, sizeof(std::uint32_t) * 8, stream);
-}
-
 __global__ void gatherKernel(
   const InputPointType * __restrict__ input_points, const std::uint32_t * __restrict__ index_tensor,
   InputPointType * __restrict__ output_points, int num_rings, int max_points_per_ring)
@@ -160,18 +117,6 @@ __global__ void gatherKernel(
   } else {
     output_points[ring * max_points_per_ring + point].distance = 0.0f;
   }
-}
-
-void gatherLaunch(
-  const InputPointType * __restrict__ input_points, const std::uint32_t * __restrict__ index_tensor,
-  InputPointType * __restrict__ output_points, int num_rings, int max_points_per_ring,
-  cudaStream_t & stream)
-{
-  int threads_per_block = 256;
-  int blocks_per_grid =
-    (num_rings * max_points_per_ring + threads_per_block - 1) / threads_per_block;
-  gatherKernel<<<blocks_per_grid, threads_per_block, 0, stream>>>(
-    input_points, index_tensor, output_points, num_rings, max_points_per_ring);
 }
 
 __global__ void transformPointsKernel(
@@ -221,8 +166,8 @@ __global__ void cropBoxKernel(
 }
 
 __global__ void combineMasksKernel(
-  const uint32_t * __restrict__ mask1, const uint32_t * __restrict__ mask2, int num_points,
-  uint32_t * __restrict__ output_mask)
+  const std::uint32_t * __restrict__ mask1, const std::uint32_t * __restrict__ mask2,
+  int num_points, std::uint32_t * __restrict__ output_mask)
 {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   if (idx < num_points) {
@@ -231,7 +176,7 @@ __global__ void combineMasksKernel(
 }
 
 __global__ void extractInputPointIndicesKernel(
-  InputPointType * input_points, uint32_t * masks, uint32_t * indices, int num_points,
+  InputPointType * input_points, std::uint32_t * masks, std::uint32_t * indices, int num_points,
   InputPointType * output_points)
 {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -241,7 +186,7 @@ __global__ void extractInputPointIndicesKernel(
 }
 
 __global__ void extractOutputPointIndicesKernel(
-  OutputPointType * input_points, uint32_t * masks, uint32_t * indices, int num_points,
+  OutputPointType * input_points, std::uint32_t * masks, std::uint32_t * indices, int num_points,
   OutputPointType * output_points)
 {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -251,7 +196,7 @@ __global__ void extractOutputPointIndicesKernel(
 }
 
 __global__ void extractInputPointsToOutputPoints_indicesKernel(
-  InputPointType * input_points, uint32_t * masks, uint32_t * indices, int num_points,
+  InputPointType * input_points, std::uint32_t * masks, std::uint32_t * indices, int num_points,
   OutputPointType * output_points)
 {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -340,8 +285,9 @@ __global__ void undistort3dKernel(
 }
 
 __global__ void ringOutlierFilterKernel(
-  const InputPointType * d_points, uint32_t * output_mask, int num_rings, int max_points_per_ring,
-  float distance_ratio, float object_length_threshold_squared, int num_points_threshold)
+  const InputPointType * d_points, std::uint32_t * output_mask, int num_rings,
+  int max_points_per_ring, float distance_ratio, float object_length_threshold_squared,
+  int num_points_threshold)
 {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   int j = idx / max_points_per_ring;
@@ -476,10 +422,73 @@ CudaPointcloudPreprocessor::CudaPointcloudPreprocessor()
   cudaMemPoolCreate(&device_memory_pool_, &pool_props);
   MemoryPoolAllocator<TwistStruct2D> allocator_2d(device_memory_pool_);
   MemoryPoolAllocator<TwistStruct3D> allocator_3d(device_memory_pool_);
+  MemoryPoolAllocator<std::int32_t> allocator_int32(device_memory_pool_);
+  MemoryPoolAllocator<std::uint32_t> allocator_uint32(device_memory_pool_);
+  MemoryPoolAllocator<std::uint8_t> allocator_uint8(device_memory_pool_);
+  MemoryPoolAllocator<InputPointType> allocator_points(device_memory_pool_);
+
   device_twist_2d_structs_ =
     thrust::device_vector<TwistStruct2D, MemoryPoolAllocator<TwistStruct2D>>(allocator_2d);
   device_twist_3d_structs_ =
     thrust::device_vector<TwistStruct3D, MemoryPoolAllocator<TwistStruct3D>>(allocator_3d);
+
+  num_rings_ = 1;
+  max_points_per_ring_ = 1;
+  num_organized_points_ = num_rings_ * max_points_per_ring_;
+  device_ring_index_ =
+    thrust::device_vector<std::int32_t, MemoryPoolAllocator<std::int32_t>>(allocator_int32);
+  device_ring_index_.resize(num_rings_);
+
+  device_indexes_tensor_ =
+    thrust::device_vector<std::uint32_t, MemoryPoolAllocator<std::uint32_t>>(allocator_uint32);
+  device_sorted_indexes_tensor_ =
+    thrust::device_vector<std::uint32_t, MemoryPoolAllocator<std::uint32_t>>(allocator_uint32);
+
+  device_indexes_tensor_.resize(num_organized_points_);
+  device_sorted_indexes_tensor_.resize(num_organized_points_);
+
+  device_segment_offsets_ =
+    thrust::device_vector<std::int32_t, MemoryPoolAllocator<std::int32_t>>(allocator_int32);
+  device_segment_offsets_.resize(num_rings_ + 1);
+  device_segment_offsets_[0] = 0;
+  device_segment_offsets_[1] = 1;
+
+  device_max_ring_ =
+    thrust::device_vector<std::int32_t, MemoryPoolAllocator<std::int32_t>>(allocator_int32);
+  device_max_ring_.resize(1);
+
+  device_max_points_per_ring_ =
+    thrust::device_vector<std::int32_t, MemoryPoolAllocator<std::int32_t>>(allocator_int32);
+  device_max_points_per_ring_.resize(1);
+
+  device_input_points_ =
+    thrust::device_vector<InputPointType, MemoryPoolAllocator<InputPointType>>(allocator_points);
+  device_organized_points_ =
+    thrust::device_vector<InputPointType, MemoryPoolAllocator<InputPointType>>(allocator_points);
+  device_organized_points_.resize(num_organized_points_);
+
+  cudaMemsetAsync(
+    thrust::raw_pointer_cast(device_max_ring_.data()), 0, sizeof(std::int32_t), stream_);
+  cudaMemsetAsync(
+    thrust::raw_pointer_cast(device_max_points_per_ring_.data()), 0, sizeof(std::int32_t), stream_);
+  cudaMemsetAsync(
+    thrust::raw_pointer_cast(device_indexes_tensor_.data()), 0x255, sizeof(std::uint32_t), stream_);
+
+  sort_workspace_bytes_ = querySortWorkspace(
+    num_rings_ * max_points_per_ring_, num_rings_,
+    thrust::raw_pointer_cast(device_segment_offsets_.data()),
+    thrust::raw_pointer_cast(device_indexes_tensor_.data()),
+    thrust::raw_pointer_cast(device_sorted_indexes_tensor_.data()));
+
+  device_sort_workspace_ =
+    thrust::device_vector<std::uint8_t, MemoryPoolAllocator<std::uint8_t>>(allocator_uint8);
+
+  device_transformed_points_.resize(num_organized_points_);
+  device_crop_mask_.resize(num_organized_points_);
+  device_ring_outlier_mask_.resize(num_organized_points_);
+  device_indices_.resize(num_organized_points_);
+
+  preallocateOutput();
 }
 
 void CudaPointcloudPreprocessor::setCropBoxParameters(
@@ -504,58 +513,51 @@ void CudaPointcloudPreprocessor::preallocateOutput()
 {
   output_pointcloud_ptr_ = std::make_unique<cuda_blackboard::CudaPointCloud2>();
   output_pointcloud_ptr_->data = cuda_blackboard::make_unique<std::uint8_t[]>(
-    max_rings_ * max_points_per_ring_ * sizeof(OutputPointType));
+    num_rings_ * max_points_per_ring_ * sizeof(OutputPointType));
 }
 
 void CudaPointcloudPreprocessor::setupTwist2DStructs(
-  const cuda_blackboard::CudaPointCloud2 & input_pointcloud_msg,
   const std::deque<geometry_msgs::msg::TwistWithCovarianceStamped> & twist_queue,
-  const std::deque<geometry_msgs::msg::Vector3Stamped> & angular_velocity_queue)
+  const std::deque<geometry_msgs::msg::Vector3Stamped> & angular_velocity_queue,
+  const std::uint64_t pointcloud_stamp_nsec, const std::uint32_t first_point_rel_stamp_nsec)
 {
-  const InputPointType * device_input_points =
-    reinterpret_cast<const InputPointType *>(input_pointcloud_msg.data.get());
-  InputPointType first_point;
-  cudaMemcpy(&first_point, &device_input_points[0], sizeof(InputPointType), cudaMemcpyDeviceToHost);
+  host_twist_2d_structs_.clear();
+  host_twist_2d_structs_.reserve(twist_queue.size() + angular_velocity_queue.size());
 
   // Twist preprocessing
-
-  uint64_t pointcloud_stamp_nsec = 1'000'000'000 * input_pointcloud_msg.header.stamp.sec +
-                                   input_pointcloud_msg.header.stamp.nanosec;
-
-  thrust::host_vector<TwistStruct2D> host_twist_structs;
-
   float cum_x = 0;
   float cum_y = 0;
   float cum_theta = 0;
   // All time stamps from now on are in nsec from the "beginning of the pointcloud"
-  uint32_t last_stamp_nsec = first_point.time_stamp;
+  std::uint32_t last_stamp_nsec = first_point_rel_stamp_nsec;
 
   std::size_t twist_index = 0;
   std::size_t angular_velocity_index = 0;
 
   for (; twist_index < twist_queue.size() ||
          angular_velocity_index < angular_velocity_queue.size();) {
-    uint64_t twist_stamp, input_twist_global_stamp_nsec, angular_velocity_global_stamp_nsec;
+    std::uint64_t twist_stamp, input_twist_global_stamp_nsec, angular_velocity_global_stamp_nsec;
     float v_x, v_theta;
 
     if (twist_index < twist_queue.size()) {
       input_twist_global_stamp_nsec =
-        1'000'000'000 * static_cast<uint64_t>(twist_queue[twist_index].header.stamp.sec) +
-        static_cast<uint64_t>(twist_queue[twist_index].header.stamp.nanosec);
+        1'000'000'000 * static_cast<std::uint64_t>(twist_queue[twist_index].header.stamp.sec) +
+        static_cast<std::uint64_t>(twist_queue[twist_index].header.stamp.nanosec);
       v_x = twist_queue[twist_index].twist.twist.linear.x;
     } else {
-      input_twist_global_stamp_nsec = std::numeric_limits<uint64_t>::max();
+      input_twist_global_stamp_nsec = std::numeric_limits<std::uint64_t>::max();
       v_x = 0.0;
     }
 
     if (angular_velocity_index < angular_velocity_queue.size()) {
       angular_velocity_global_stamp_nsec =
-        1'000'000'000 *
-          static_cast<uint64_t>(angular_velocity_queue[angular_velocity_index].header.stamp.sec) +
-        static_cast<uint64_t>(angular_velocity_queue[angular_velocity_index].header.stamp.nanosec);
+        1'000'000'000 * static_cast<std::uint64_t>(
+                          angular_velocity_queue[angular_velocity_index].header.stamp.sec) +
+        static_cast<std::uint64_t>(
+          angular_velocity_queue[angular_velocity_index].header.stamp.nanosec);
       v_theta = angular_velocity_queue[angular_velocity_index].vector.z;
     } else {
-      angular_velocity_global_stamp_nsec = std::numeric_limits<uint64_t>::max();
+      angular_velocity_global_stamp_nsec = std::numeric_limits<std::uint64_t>::max();
       v_theta = 0.0;
     }
 
@@ -575,15 +577,16 @@ void CudaPointcloudPreprocessor::setupTwist2DStructs(
     twist.cum_y = cum_y;
     twist.cum_theta = cum_theta;
 
-    uint64_t twist_global_stamp_nsec = twist_stamp;
+    std::uint64_t twist_global_stamp_nsec = twist_stamp;
     assert(twist_global_stamp_nsec > pointcloud_stamp_nsec);  // by construction
-    uint32_t twist_from_pointcloud_start_nsec = twist_global_stamp_nsec - pointcloud_stamp_nsec;
+    std::uint32_t twist_from_pointcloud_start_nsec =
+      twist_global_stamp_nsec - pointcloud_stamp_nsec;
 
     twist.stamp_nsec = twist_from_pointcloud_start_nsec;
     twist.v_x = v_x;
     twist.v_theta = v_theta;
     twist.last_stamp_nsec = last_stamp_nsec;
-    host_twist_structs.push_back(twist);
+    host_twist_2d_structs_.push_back(twist);
 
     double dt_seconds = 1e-9 * (twist.stamp_nsec - last_stamp_nsec);
     last_stamp_nsec = twist.stamp_nsec;
@@ -594,44 +597,39 @@ void CudaPointcloudPreprocessor::setupTwist2DStructs(
   }
 
   // Copy to device
-  device_twist_2d_structs_ = host_twist_structs;
+  device_twist_2d_structs_.resize(host_twist_2d_structs_.size());
+  cudaMemcpyAsync(
+    thrust::raw_pointer_cast(device_twist_2d_structs_.data()), host_twist_2d_structs_.data(),
+    host_twist_2d_structs_.size() * sizeof(TwistStruct2D), cudaMemcpyHostToDevice, stream_);
 }
 
 void CudaPointcloudPreprocessor::setupTwist3DStructs(
-  const cuda_blackboard::CudaPointCloud2 & input_pointcloud_msg,
   const std::deque<geometry_msgs::msg::TwistWithCovarianceStamped> & twist_queue,
-  const std::deque<geometry_msgs::msg::Vector3Stamped> & angular_velocity_queue)
+  const std::deque<geometry_msgs::msg::Vector3Stamped> & angular_velocity_queue,
+  const std::uint64_t pointcloud_stamp_nsec, const std::uint32_t first_point_rel_stamp_nsec)
 {
-  const InputPointType * device_input_points =
-    reinterpret_cast<const InputPointType *>(input_pointcloud_msg.data.get());
-  InputPointType first_point;
-  cudaMemcpy(&first_point, &device_input_points[0], sizeof(InputPointType), cudaMemcpyDeviceToHost);
-
   // Twist preprocessing
-
-  uint64_t pointcloud_stamp_nsec = 1'000'000'000 * input_pointcloud_msg.header.stamp.sec +
-                                   input_pointcloud_msg.header.stamp.nanosec;
-
-  thrust::host_vector<TwistStruct3D> host_twist_structs;
+  host_twist_3d_structs_.clear();
+  host_twist_3d_structs_.reserve(twist_queue.size() + angular_velocity_queue.size());
 
   Eigen::Matrix4f cum_transform = Eigen::Matrix4f::Identity();
   Eigen::Vector3f v = Eigen::Vector3f::Zero();
   Eigen::Vector3f w = Eigen::Vector3f::Zero();
 
   // All time stamps from now on are in nsec from the "beginning of the pointcloud"
-  uint32_t last_stamp_nsec = first_point.time_stamp;
+  std::uint32_t last_stamp_nsec = first_point_rel_stamp_nsec;
 
   std::size_t twist_index = 0;
   std::size_t angular_velocity_index = 0;
 
   for (; twist_index < twist_queue.size() ||
          angular_velocity_index < angular_velocity_queue.size();) {
-    uint64_t twist_stamp, input_twist_global_stamp_nsec, angular_velocity_global_stamp_nsec;
+    std::uint64_t twist_stamp, input_twist_global_stamp_nsec, angular_velocity_global_stamp_nsec;
 
     if (twist_index < twist_queue.size()) {
       input_twist_global_stamp_nsec =
-        1'000'000'000 * static_cast<uint64_t>(twist_queue[twist_index].header.stamp.sec) +
-        static_cast<uint64_t>(twist_queue[twist_index].header.stamp.nanosec);
+        1'000'000'000 * static_cast<std::uint64_t>(twist_queue[twist_index].header.stamp.sec) +
+        static_cast<std::uint64_t>(twist_queue[twist_index].header.stamp.nanosec);
       v.x() = twist_queue[twist_index].twist.twist.linear.x;
       v.y() = twist_queue[twist_index].twist.twist.linear.y;
       v.z() = twist_queue[twist_index].twist.twist.linear.z;
@@ -642,14 +640,15 @@ void CudaPointcloudPreprocessor::setupTwist3DStructs(
 
     if (angular_velocity_index < angular_velocity_queue.size()) {
       angular_velocity_global_stamp_nsec =
-        1'000'000'000 *
-          static_cast<uint64_t>(angular_velocity_queue[angular_velocity_index].header.stamp.sec) +
-        static_cast<uint64_t>(angular_velocity_queue[angular_velocity_index].header.stamp.nanosec);
+        1'000'000'000 * static_cast<std::uint64_t>(
+                          angular_velocity_queue[angular_velocity_index].header.stamp.sec) +
+        static_cast<std::uint64_t>(
+          angular_velocity_queue[angular_velocity_index].header.stamp.nanosec);
       w.x() = angular_velocity_queue[angular_velocity_index].vector.x;
       w.y() = angular_velocity_queue[angular_velocity_index].vector.y;
       w.z() = angular_velocity_queue[angular_velocity_index].vector.z;
     } else {
-      angular_velocity_global_stamp_nsec = std::numeric_limits<uint64_t>::max();
+      angular_velocity_global_stamp_nsec = std::numeric_limits<std::uint64_t>::max();
       w = Eigen::Vector3f::Zero();
     }
 
@@ -671,15 +670,16 @@ void CudaPointcloudPreprocessor::setupTwist3DStructs(
     Eigen::Map<Eigen::Vector3f> w_map(twist.w);
     cum_transform_buffer_map = cum_transform;
 
-    uint64_t twist_global_stamp_nsec = twist_stamp;
+    std::uint64_t twist_global_stamp_nsec = twist_stamp;
     assert(twist_global_stamp_nsec > pointcloud_stamp_nsec);  // by construction
-    uint32_t twist_from_pointcloud_start_nsec = twist_global_stamp_nsec - pointcloud_stamp_nsec;
+    std::uint32_t twist_from_pointcloud_start_nsec =
+      twist_global_stamp_nsec - pointcloud_stamp_nsec;
 
     twist.stamp_nsec = twist_from_pointcloud_start_nsec;
     v_map = v;
     w_map = w;
     twist.last_stamp_nsec = last_stamp_nsec;
-    host_twist_structs.push_back(twist);
+    host_twist_3d_structs_.push_back(twist);
 
     double dt_seconds = 1e-9 * (twist.stamp_nsec - last_stamp_nsec);
     last_stamp_nsec = twist.stamp_nsec;
@@ -689,30 +689,154 @@ void CudaPointcloudPreprocessor::setupTwist3DStructs(
   }
 
   // Copy to device
-  device_twist_3d_structs_ = host_twist_structs;
+  device_twist_3d_structs_.resize(host_twist_3d_structs_.size());
+  cudaMemcpyAsync(
+    thrust::raw_pointer_cast(device_twist_3d_structs_.data()), host_twist_3d_structs_.data(),
+    host_twist_3d_structs_.size() * sizeof(TwistStruct3D), cudaMemcpyHostToDevice, stream_);
+}
+
+std::size_t CudaPointcloudPreprocessor::querySortWorkspace(
+  int num_items, int num_segments, int * offsets_device, std::uint32_t * keys_in_device,
+  std::uint32_t * keys_out_device)
+{
+  // Determine temporary device storage requirements
+  void * temp_storage = nullptr;
+  size_t temp_storage_bytes = 0;
+  cub::DeviceSegmentedRadixSort::SortKeys(
+    temp_storage, temp_storage_bytes, keys_in_device, keys_out_device, num_items, num_segments,
+    offsets_device, offsets_device + 1);
+
+  return temp_storage_bytes;
+}
+
+void CudaPointcloudPreprocessor::organizePointcloud()
+{
+  cudaMemsetAsync(
+    thrust::raw_pointer_cast(device_ring_index_.data()), 0, num_rings_ * sizeof(std::int32_t),
+    stream_);
+  cudaMemsetAsync(
+    thrust::raw_pointer_cast(device_indexes_tensor_.data()), 0xFF,
+    num_organized_points_ * sizeof(std::uint32_t), stream_);
+
+  if (num_raw_points_ == 0) {
+    return;
+  }
+
+  const int raw_points_blocks_per_grid =
+    (num_raw_points_ + threads_per_block_ - 1) / threads_per_block_;
+
+  organizeKernel<<<raw_points_blocks_per_grid, threads_per_block_, 0, stream_>>>(
+    thrust::raw_pointer_cast(device_input_points_.data()),
+    thrust::raw_pointer_cast(device_indexes_tensor_.data()),
+    thrust::raw_pointer_cast(device_ring_index_.data()), num_rings_,
+    thrust::raw_pointer_cast(device_max_ring_.data()), max_points_per_ring_,
+    thrust::raw_pointer_cast(device_max_points_per_ring_.data()), num_raw_points_);
+
+  std::int32_t max_ring_value;
+  std::int32_t max_points_per_ring;
+
+  cudaMemcpyAsync(
+    &max_ring_value, thrust::raw_pointer_cast(device_max_ring_.data()), sizeof(std::int32_t),
+    cudaMemcpyDeviceToHost, stream_);
+  cudaMemcpyAsync(
+    &max_points_per_ring, thrust::raw_pointer_cast(device_max_points_per_ring_.data()),
+    sizeof(std::int32_t), cudaMemcpyDeviceToHost, stream_);
+  cudaStreamSynchronize(stream_);
+
+  if (max_ring_value >= num_rings_ || max_points_per_ring > max_points_per_ring_) {
+    num_rings_ = max_ring_value + 1;
+    max_points_per_ring_ = std::max((max_points_per_ring + 511) / 512 * 512, 512);
+    num_organized_points_ = num_rings_ * max_points_per_ring_;
+
+    device_ring_index_.resize(num_rings_);
+    device_indexes_tensor_.resize(num_organized_points_);
+    device_sorted_indexes_tensor_.resize(num_organized_points_);
+    device_segment_offsets_.resize(num_rings_ + 1);
+    device_organized_points_.resize(num_organized_points_);
+
+    device_transformed_points_.resize(num_organized_points_);
+    device_crop_mask_.resize(num_organized_points_);
+    device_ring_outlier_mask_.resize(num_organized_points_);
+    device_indices_.resize(num_organized_points_);
+
+    preallocateOutput();
+
+    std::vector<std::int32_t> segment_offsets_host(num_rings_ + 1);
+    for (std::size_t i = 0; i < num_rings_ + 1; i++) {
+      segment_offsets_host[i] = i * max_points_per_ring_;
+    }
+
+    cudaMemcpyAsync(
+      thrust::raw_pointer_cast(device_segment_offsets_.data()), segment_offsets_host.data(),
+      (num_rings_ + 1) * sizeof(std::int32_t), cudaMemcpyHostToDevice, stream_);
+
+    cudaMemsetAsync(
+      thrust::raw_pointer_cast(device_ring_index_.data()), 0, num_rings_ * sizeof(std::int32_t),
+      stream_);
+    cudaMemsetAsync(
+      thrust::raw_pointer_cast(device_indexes_tensor_.data()), 0xFF,
+      num_organized_points_ * sizeof(std::int32_t), stream_);
+
+    sort_workspace_bytes_ = querySortWorkspace(
+      num_organized_points_, num_rings_, thrust::raw_pointer_cast(device_segment_offsets_.data()),
+      thrust::raw_pointer_cast(device_indexes_tensor_.data()),
+      thrust::raw_pointer_cast(device_sorted_indexes_tensor_.data()));
+    device_sort_workspace_.resize(sort_workspace_bytes_);
+
+    organizeKernel<<<raw_points_blocks_per_grid, threads_per_block_, 0, stream_>>>(
+      thrust::raw_pointer_cast(device_input_points_.data()),
+      thrust::raw_pointer_cast(device_indexes_tensor_.data()),
+      thrust::raw_pointer_cast(device_ring_index_.data()), num_rings_,
+      thrust::raw_pointer_cast(device_max_ring_.data()), max_points_per_ring_,
+      thrust::raw_pointer_cast(device_max_points_per_ring_.data()), num_raw_points_);
+  }
+
+  if (num_organized_points_ == num_rings_) {
+    cudaMemcpyAsync(
+      thrust::raw_pointer_cast(device_sorted_indexes_tensor_.data()),
+      thrust::raw_pointer_cast(device_indexes_tensor_.data()),
+      num_organized_points_ * sizeof(std::uint32_t), cudaMemcpyDeviceToDevice, stream_);
+  } else {
+    cub::DeviceSegmentedRadixSort::SortKeys(
+      reinterpret_cast<void *>(thrust::raw_pointer_cast(device_sort_workspace_.data())),
+      sort_workspace_bytes_, thrust::raw_pointer_cast(device_indexes_tensor_.data()),
+      thrust::raw_pointer_cast(device_sorted_indexes_tensor_.data()), num_organized_points_,
+      num_rings_, thrust::raw_pointer_cast(device_segment_offsets_.data()),
+      thrust::raw_pointer_cast(device_segment_offsets_.data()) + 1, 0, sizeof(std::uint32_t) * 8,
+      stream_);
+  }
+
+  const int organized_points_blocks_per_grid =
+    (num_organized_points_ + threads_per_block_ - 1) / threads_per_block_;
+  gatherKernel<<<organized_points_blocks_per_grid, threads_per_block_, 0, stream_>>>(
+    thrust::raw_pointer_cast(device_input_points_.data()),
+    thrust::raw_pointer_cast(device_sorted_indexes_tensor_.data()),
+    thrust::raw_pointer_cast(device_organized_points_.data()), num_rings_, max_points_per_ring_);
 }
 
 std::unique_ptr<cuda_blackboard::CudaPointCloud2> CudaPointcloudPreprocessor::process(
-  const cuda_blackboard::CudaPointCloud2 & input_pointcloud_msg,
+  const sensor_msgs::msg::PointCloud2::ConstSharedPtr input_pointcloud_msg_ptr,
   const geometry_msgs::msg::TransformStamped & transform_msg,
   const std::deque<geometry_msgs::msg::TwistWithCovarianceStamped> & twist_queue,
-  const std::deque<geometry_msgs::msg::Vector3Stamped> & angular_velocity_queue)
+  const std::deque<geometry_msgs::msg::Vector3Stamped> & angular_velocity_queue,
+  const std::uint32_t first_point_rel_stamp_nsec)
 {
-  auto frame_id = input_pointcloud_msg.header.frame_id;
+  auto frame_id = input_pointcloud_msg_ptr->header.frame_id;
+  num_raw_points_ = input_pointcloud_msg_ptr->width * input_pointcloud_msg_ptr->height;
+  num_organized_points_ = num_rings_ * max_points_per_ring_;
 
-  auto num_input_points = input_pointcloud_msg.width * input_pointcloud_msg.height;
-  if (
-    input_pointcloud_msg.width * input_pointcloud_msg.height > max_rings_ * max_points_per_ring_) {
-    max_rings_ = input_pointcloud_msg.height;
-    max_points_per_ring_ = input_pointcloud_msg.width;
-
-    device_transformed_points_.resize(num_input_points);
-    device_crop_mask_.resize(num_input_points);
-    device_ring_outlier_mask_.resize(num_input_points);
-    device_indices_.resize(num_input_points);
-
-    preallocateOutput();
+  if (num_raw_points_ > device_input_points_.size()) {
+    std::size_t new_capacity = (num_raw_points_ + 1024) / 1024 * 1024;
+    device_input_points_.resize(new_capacity);
   }
+
+  cudaMemcpyAsync(
+    thrust::raw_pointer_cast(device_input_points_.data()), input_pointcloud_msg_ptr->data.data(),
+    num_raw_points_ * sizeof(InputPointType), cudaMemcpyHostToDevice, stream_);
+
+  cudaStreamSynchronize(stream_);
+
+  organizePointcloud();
 
   tf2::Quaternion rotation_quaternion(
     transform_msg.transform.rotation.x, transform_msg.transform.rotation.y,
@@ -735,14 +859,18 @@ std::unique_ptr<cuda_blackboard::CudaPointCloud2> CudaPointcloudPreprocessor::pr
   transform_struct.m33 = static_cast<float>(rotation_matrix[2][2]);
 
   // Twist preprocessing
-  const InputPointType * device_input_points =
-    reinterpret_cast<const InputPointType *>(input_pointcloud_msg.data.get());
+  std::uint64_t pointcloud_stamp_nsec = 1'000'000'000 * input_pointcloud_msg_ptr->header.stamp.sec +
+                                        input_pointcloud_msg_ptr->header.stamp.nanosec;
 
   if (use_3d_undistortion_) {
-    setupTwist3DStructs(input_pointcloud_msg, twist_queue, angular_velocity_queue);
+    setupTwist3DStructs(
+      twist_queue, angular_velocity_queue, pointcloud_stamp_nsec, first_point_rel_stamp_nsec);
   } else {
-    setupTwist2DStructs(input_pointcloud_msg, twist_queue, angular_velocity_queue);
+    setupTwist2DStructs(
+      twist_queue, angular_velocity_queue, pointcloud_stamp_nsec, first_point_rel_stamp_nsec);
   }
+
+  // check_error(frame_id, "After setup");
 
   // Obtain raw pointers for the kernels
   TwistStruct2D * device_twist_2d_structs =
@@ -752,59 +880,63 @@ std::unique_ptr<cuda_blackboard::CudaPointCloud2> CudaPointcloudPreprocessor::pr
   InputPointType * device_transformed_points =
     thrust::raw_pointer_cast(device_transformed_points_.data());
   std::uint32_t * device_crop_mask = thrust::raw_pointer_cast(device_crop_mask_.data());
-  uint32_t * device_ring_outlier_mask = thrust::raw_pointer_cast(device_ring_outlier_mask_.data());
-  uint32_t * device_indices = thrust::raw_pointer_cast(device_indices_.data());
+  std::uint32_t * device_ring_outlier_mask =
+    thrust::raw_pointer_cast(device_ring_outlier_mask_.data());
+  std::uint32_t * device_indices = thrust::raw_pointer_cast(device_indices_.data());
 
-  const int blocks_per_grid = (num_input_points + threads_per_block_ - 1) / threads_per_block_;
+  const int blocks_per_grid = (num_organized_points_ + threads_per_block_ - 1) / threads_per_block_;
 
   transformPointsKernel<<<blocks_per_grid, threads_per_block_, 0, stream_>>>(
-    device_input_points, device_transformed_points, num_input_points, transform_struct);
+    thrust::raw_pointer_cast(device_organized_points_.data()), device_transformed_points,
+    num_organized_points_, transform_struct);
 
   int crop_box_blocks_per_grid = std::min(blocks_per_grid, max_blocks_per_grid_);
   if (host_crop_box_structs_.size() > 0) {
     cropBoxKernel<<<crop_box_blocks_per_grid, threads_per_block_, 0, stream_>>>(
-      device_transformed_points, device_crop_mask, num_input_points,
+      device_transformed_points, device_crop_mask, num_organized_points_,
       thrust::raw_pointer_cast(device_crop_box_structs_.data()), host_crop_box_structs_.size());
   } else {
-    thrust::fill(thrust::device, device_crop_mask, device_crop_mask + num_input_points, 1);
+    thrust::fill(thrust::device, device_crop_mask, device_crop_mask + num_organized_points_, 1);
   }
 
   if (use_3d_undistortion_ && device_twist_3d_structs_.size() > 0) {
     undistort3dKernel<<<blocks_per_grid, threads_per_block_, 0, stream_>>>(
-      device_transformed_points, num_input_points, device_twist_3d_structs,
+      device_transformed_points, num_organized_points_, device_twist_3d_structs,
       device_twist_3d_structs_.size());
   } else if (!use_3d_undistortion_ && device_twist_2d_structs_.size() > 0) {
     undistort2dKernel<<<blocks_per_grid, threads_per_block_, 0, stream_>>>(
-      device_transformed_points, num_input_points, device_twist_2d_structs,
+      device_transformed_points, num_organized_points_, device_twist_2d_structs,
       device_twist_2d_structs_.size());
   }
 
   ringOutlierFilterKernel<<<blocks_per_grid, threads_per_block_, 0, stream_>>>(
-    device_transformed_points, device_ring_outlier_mask, max_rings_, max_points_per_ring_,
+    device_transformed_points, device_ring_outlier_mask, num_rings_, max_points_per_ring_,
     ring_outlier_parameters_.distance_ratio,
     ring_outlier_parameters_.object_length_threshold *
       ring_outlier_parameters_.object_length_threshold,
     ring_outlier_parameters_.num_points_threshold);
 
   combineMasksKernel<<<blocks_per_grid, threads_per_block_, 0, stream_>>>(
-    device_crop_mask, device_ring_outlier_mask, num_input_points, device_ring_outlier_mask);
-
-  cudaStreamSynchronize(stream_);
+    device_crop_mask, device_ring_outlier_mask, num_organized_points_, device_ring_outlier_mask);
 
   thrust::inclusive_scan(
-    thrust::device, device_ring_outlier_mask, device_ring_outlier_mask + num_input_points,
+    thrust::device, device_ring_outlier_mask, device_ring_outlier_mask + num_organized_points_,
     device_indices);
 
-  uint32_t num_output_points;
-  cudaMemcpy(
-    &num_output_points, device_indices + num_input_points - 1, sizeof(uint32_t),
-    cudaMemcpyDeviceToHost);
+  std::uint32_t num_output_points;
+  cudaMemcpyAsync(
+    &num_output_points, device_indices + num_organized_points_ - 1, sizeof(std::uint32_t),
+    cudaMemcpyDeviceToHost, stream_);
+  cudaStreamSynchronize(stream_);
 
   if (num_output_points > 0) {
-    extractInputPointsToOutputPoints_indicesKernel<<<blocks_per_grid, threads_per_block_>>>(
-      device_transformed_points, device_ring_outlier_mask, device_indices, num_input_points,
+    extractInputPointsToOutputPoints_indicesKernel<<<
+      blocks_per_grid, threads_per_block_, 0, stream_>>>(
+      device_transformed_points, device_ring_outlier_mask, device_indices, num_organized_points_,
       reinterpret_cast<OutputPointType *>(output_pointcloud_ptr_->data.get()));
   }
+
+  cudaStreamSynchronize(stream_);
 
   // Copy the transformed points back
   output_pointcloud_ptr_->row_step = num_output_points * sizeof(OutputPointType);
@@ -813,9 +945,9 @@ std::unique_ptr<cuda_blackboard::CudaPointCloud2> CudaPointcloudPreprocessor::pr
 
   output_pointcloud_ptr_->fields = point_fields_;
   output_pointcloud_ptr_->is_dense = true;
-  output_pointcloud_ptr_->is_bigendian = input_pointcloud_msg.is_bigendian;
+  output_pointcloud_ptr_->is_bigendian = input_pointcloud_msg_ptr->is_bigendian;
   output_pointcloud_ptr_->point_step = sizeof(OutputPointType);
-  output_pointcloud_ptr_->header.stamp = input_pointcloud_msg.header.stamp;
+  output_pointcloud_ptr_->header.stamp = input_pointcloud_msg_ptr->header.stamp;
 
   return std::move(output_pointcloud_ptr_);
 }
