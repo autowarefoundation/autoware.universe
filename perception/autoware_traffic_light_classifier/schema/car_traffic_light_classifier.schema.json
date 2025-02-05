@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "autoware_traffic_light_classifier paramter",
+  "title": "autoware_traffic_light_classifier parameter",
   "type": "object",
   "definitions": {
     "car_traffic_light_classifier": {
