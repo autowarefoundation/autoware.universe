@@ -25,11 +25,11 @@ namespace autoware::traffic_light
 TrafficLightClassifierNodelet::TrafficLightClassifierNodelet(const rclcpp::NodeOptions & options)
 : Node("traffic_light_classifier_node", options)
 {
-  classify_traffic_light_type_ = this->declare_parameter("classify_traffic_light_type", 0);
+  classify_traffic_light_type_ = this->declare_parameter<int>("classify_traffic_light_type");
 
   using std::placeholders::_1;
   using std::placeholders::_2;
-  is_approximate_sync_ = this->declare_parameter("approximate_sync", false);
+  is_approximate_sync_ = this->declare_parameter<bool>("approximate_sync");
   backlight_threshold_ = this->declare_parameter<double>("backlight_threshold");
 
   if (is_approximate_sync_) {
@@ -49,8 +49,7 @@ TrafficLightClassifierNodelet::TrafficLightClassifierNodelet(const rclcpp::NodeO
   timer_ = rclcpp::create_timer(
     this, get_clock(), 100ms, std::bind(&TrafficLightClassifierNodelet::connectCb, this));
 
-  int classifier_type = this->declare_parameter(
-    "classifier_type", static_cast<int>(TrafficLightClassifierNodelet::ClassifierType::HSVFilter));
+  int classifier_type = this->declare_parameter<int>("classifier_type");
   if (classifier_type == TrafficLightClassifierNodelet::ClassifierType::HSVFilter) {
     classifier_ptr_ = std::make_shared<ColorClassifier>(this);
   } else if (classifier_type == TrafficLightClassifierNodelet::ClassifierType::CNN) {
