@@ -14,6 +14,7 @@
 
 #include "autoware/cuda_pointcloud_preprocessor/cuda_pointcloud_preprocessor_node.hpp"
 
+#include "autoware/cuda_pointcloud_preprocessor/memory.hpp"
 #include "autoware/cuda_pointcloud_preprocessor/point_types.hpp"
 
 #include <autoware/point_types/types.hpp>
@@ -207,6 +208,11 @@ void CudaPointcloudPreprocessorNode::imuCallback(
 void CudaPointcloudPreprocessorNode::pointcloudCallback(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr input_pointcloud_msg_ptr)
 {
+  if (!is_data_layout_compatible_with_point_xyzircaedt(input_pointcloud_msg_ptr->fields)) {
+    RCLCPP_ERROR(
+      get_logger(), "Input pointcloud data layout is not compatible with PointXYZIRCAEDT");
+  }
+
   static_assert(
     sizeof(InputPointType) == sizeof(autoware::point_types::PointXYZIRCAEDT),
     "PointStruct and PointXYZIRCAEDT must have the same size");
