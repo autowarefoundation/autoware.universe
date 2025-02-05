@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__UTIL_HPP_
 #define AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__UTIL_HPP_
 
-#include "autoware/behavior_path_goal_planner_module/goal_searcher_base.hpp"
+#include "autoware/behavior_path_goal_planner_module/goal_candidate.hpp"
 #include "autoware/behavior_path_goal_planner_module/pull_over_planner/pull_over_planner_base.hpp"
 
 #include <autoware/lane_departure_checker/lane_departure_checker.hpp>
@@ -184,6 +184,15 @@ std::optional<Pose> calcRefinedGoal(
 
 std::optional<Pose> calcClosestPose(
   const lanelet::ConstLineString3d line, const Point & query_point);
+
+autoware_perception_msgs::msg::PredictedObjects extract_dynamic_objects(
+  const autoware_perception_msgs::msg::PredictedObjects & original_objects,
+  const route_handler::RouteHandler & route_handler, const GoalPlannerParameters & parameters,
+  const double vehicle_width);
+
+bool is_goal_reachable_on_path(
+  const lanelet::ConstLanelets current_lanes, const route_handler::RouteHandler & route_handler,
+  const bool left_side_parking);
 
 }  // namespace autoware::behavior_path_planner::goal_planner_utils
 

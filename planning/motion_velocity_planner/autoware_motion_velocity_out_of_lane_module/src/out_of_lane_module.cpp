@@ -24,7 +24,7 @@
 
 #include <autoware/motion_utils/trajectory/interpolation.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
-#include <autoware/motion_velocity_planner_common/planner_data.hpp>
+#include <autoware/motion_velocity_planner_common_universe/planner_data.hpp>
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware/traffic_light_utils/traffic_light_utils.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
@@ -58,7 +58,10 @@ void OutOfLaneModule::init(rclcpp::Node & node, const std::string & module_name)
   logger_ = node.get_logger();
   clock_ = node.get_clock();
   init_parameters(node);
-  velocity_factor_interface_.init(motion_utils::PlanningBehavior::ROUTE_OBSTACLE);
+
+  planning_factor_interface_ =
+    std::make_unique<autoware::planning_factor_interface::PlanningFactorInterface>(
+      &node, "out_of_lane");
 
   debug_publisher_ =
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/" + ns_ + "/debug_markers", 1);
@@ -66,8 +69,9 @@ void OutOfLaneModule::init(rclcpp::Node & node, const std::string & module_name)
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/" + ns_ + "/virtual_walls", 1);
   processing_diag_publisher_ = std::make_shared<universe_utils::ProcessingTimePublisher>(
     &node, "~/debug/" + ns_ + "/processing_time_ms_diag");
-  processing_time_publisher_ = node.create_publisher<tier4_debug_msgs::msg::Float64Stamped>(
-    "~/debug/" + ns_ + "/processing_time_ms", 1);
+  processing_time_publisher_ =
+    node.create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>(
+      "~/debug/" + ns_ + "/processing_time_ms", 1);
 }
 void OutOfLaneModule::init_parameters(rclcpp::Node & node)
 {
@@ -144,22 +148,23 @@ void OutOfLaneModule::update_parameters(const std::vector<rclcpp::Parameter> & p
 
 void OutOfLaneModule::limit_trajectory_size(
   out_of_lane::EgoData & ego_data,
-  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & smoothed_trajectory_points,
   const double max_arc_length)
 {
   ego_data.first_trajectory_idx =
-    motion_utils::findNearestSegmentIndex(ego_trajectory_points, ego_data.pose.position);
+    motion_utils::findNearestSegmentIndex(smoothed_trajectory_points, ego_data.pose.position);
   ego_data.longitudinal_offset_to_first_trajectory_index =
     motion_utils::calcLongitudinalOffsetToSegment(
-      ego_trajectory_points, ego_data.first_trajectory_idx, ego_data.pose.position);
+      smoothed_trajectory_points, ego_data.first_trajectory_idx, ego_data.pose.position);
   auto l = -ego_data.longitudinal_offset_to_first_trajectory_index;
-  ego_data.trajectory_points.push_back(ego_trajectory_points[ego_data.first_trajectory_idx]);
-  for (auto i = ego_data.first_trajectory_idx + 1; i < ego_trajectory_points.size(); ++i) {
-    l += universe_utils::calcDistance2d(ego_trajectory_points[i - 1], ego_trajectory_points[i]);
+  ego_data.trajectory_points.push_back(smoothed_trajectory_points[ego_data.first_trajectory_idx]);
+  for (auto i = ego_data.first_trajectory_idx + 1; i < smoothed_trajectory_points.size(); ++i) {
+    l += universe_utils::calcDistance2d(
+      smoothed_trajectory_points[i - 1], smoothed_trajectory_points[i]);
     if (l >= max_arc_length) {
       break;
     }
-    ego_data.trajectory_points.push_back(ego_trajectory_points[i]);
+    ego_data.trajectory_points.push_back(smoothed_trajectory_points[i]);
   }
 }
 
@@ -209,7 +214,9 @@ out_of_lane::OutOfLaneData prepare_out_of_lane_data(const out_of_lane::EgoData &
 }
 
 VelocityPlanningResult OutOfLaneModule::plan(
-  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
+  [[maybe_unused]] const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> &
+    raw_trajectory_points,
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & smoothed_trajectory_points,
   const std::shared_ptr<const PlannerData> planner_data)
 {
   VelocityPlanningResult result;
@@ -219,7 +226,7 @@ VelocityPlanningResult OutOfLaneModule::plan(
   stopwatch.tic("preprocessing");
   out_of_lane::EgoData ego_data;
   ego_data.pose = planner_data->current_odometry.pose.pose;
-  limit_trajectory_size(ego_data, ego_trajectory_points, params_.max_arc_length);
+  limit_trajectory_size(ego_data, smoothed_trajectory_points, params_.max_arc_length);
   out_of_lane::calculate_min_stop_and_slowdown_distances(
     ego_data, *planner_data, previous_slowdown_pose_);
   prepare_stop_lines_rtree(ego_data, *planner_data, params_.max_arc_length);
@@ -309,15 +316,9 @@ VelocityPlanningResult OutOfLaneModule::plan(
         slowdown_pose->position, slowdown_pose->position, slowdown_velocity);
     }
 
-    const auto is_approaching =
-      motion_utils::calcSignedArcLength(
-        ego_trajectory_points, ego_data.pose.position, slowdown_pose->position) > 0.1 &&
-      planner_data->current_odometry.twist.twist.linear.x > 0.1;
-    const auto status = is_approaching ? motion_utils::VelocityFactor::APPROACHING
-                                       : motion_utils::VelocityFactor::STOPPED;
-    velocity_factor_interface_.set(
-      ego_trajectory_points, ego_data.pose, *slowdown_pose, status, "out_of_lane");
-    result.velocity_factor = velocity_factor_interface_.get();
+    planning_factor_interface_->add(
+      smoothed_trajectory_points, ego_data.pose, *slowdown_pose, PlanningFactor::SLOW_DOWN,
+      SafetyFactorArray{});
     virtual_wall_marker_creator.add_virtual_walls(
       out_of_lane::debug::create_virtual_walls(*slowdown_pose, slowdown_velocity == 0.0, params_));
     virtual_wall_publisher_->publish(virtual_wall_marker_creator.create_markers(clock_->now()));
@@ -349,7 +350,7 @@ VelocityPlanningResult OutOfLaneModule::plan(
   processing_times["publish_markers"] = pub_markers_us / 1000;
   processing_times["Total"] = total_time_us / 1000;
   processing_diag_publisher_->publish(processing_times);
-  tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
+  autoware_internal_debug_msgs::msg::Float64Stamped processing_time_msg;
   processing_time_msg.stamp = clock_->now();
   processing_time_msg.data = processing_times["Total"];
   processing_time_publisher_->publish(processing_time_msg);

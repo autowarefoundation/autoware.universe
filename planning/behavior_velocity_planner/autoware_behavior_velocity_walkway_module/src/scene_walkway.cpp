@@ -18,6 +18,7 @@
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 
 #include <cmath>
+#include <memory>
 #include <utility>
 
 namespace autoware::behavior_velocity_planner
@@ -32,15 +33,16 @@ using autoware::universe_utils::getPose;
 WalkwayModule::WalkwayModule(
   const int64_t module_id, const lanelet::LaneletMapPtr & lanelet_map_ptr,
   const PlannerParam & planner_param, const bool use_regulatory_element,
-  const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock)
-: SceneModuleInterface(module_id, logger, clock),
+  const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock,
+  const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+  const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
+    planning_factor_interface)
+: SceneModuleInterface(module_id, logger, clock, time_keeper, planning_factor_interface),
   module_id_(module_id),
   state_(State::APPROACH),
   planner_param_(planner_param),
   use_regulatory_element_(use_regulatory_element)
 {
-  velocity_factor_.init(PlanningBehavior::SIDEWALK);
-
   if (use_regulatory_element_) {
     const auto reg_elem_ptr = std::dynamic_pointer_cast<const lanelet::autoware::Crosswalk>(
       lanelet_map_ptr->regulatoryElementLayer.get(module_id));
@@ -119,9 +121,10 @@ bool WalkwayModule::modifyPathVelocity(PathWithLaneId * path)
     }
 
     /* get stop point and stop factor */
-    velocity_factor_.set(
-      path->points, planner_data_->current_odometry->pose, stop_pose.value(),
-      VelocityFactor::UNKNOWN);
+    planning_factor_interface_->add(
+      path->points, planner_data_->current_odometry->pose, stop_pose.value(), stop_pose.value(),
+      tier4_planning_msgs::msg::PlanningFactor::STOP, tier4_planning_msgs::msg::SafetyFactorArray{},
+      true /*is_driving_forward*/, 0.0 /*velocity*/, 0.0 /*shift distance*/, "walkway_stop");
 
     // use arc length to identify if ego vehicle is in front of walkway stop or not.
     const double signed_arc_dist_to_stop_point =

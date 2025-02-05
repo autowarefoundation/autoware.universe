@@ -51,11 +51,7 @@ CNNClassifier::CNNClassifier(rclcpp::Node * node_ptr) : node_ptr_(node_ptr)
   }
 
   readLabelfile(label_file_path, labels_);
-  nvinfer1::Dims input_dim = autoware::tensorrt_common::get_input_dims(model_file_path);
-  assert(input_dim.d[0] > 0);
-  batch_size_ = input_dim.d[0];
 
-  autoware::tensorrt_common::BatchConfig batch_config{batch_size_, batch_size_, batch_size_};
   classifier_ = std::make_unique<autoware::tensorrt_classifier::TrtClassifier>(
     model_file_path, precision, batch_config, mean_, std_);
   if (node_ptr_->declare_parameter<bool>("build_only")) {
