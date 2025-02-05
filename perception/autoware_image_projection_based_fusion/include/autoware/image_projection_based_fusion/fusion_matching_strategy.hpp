@@ -37,11 +37,11 @@ struct MatchingParamsBase
   virtual ~MatchingParamsBase() = default;
 };
 
-struct Det3dMatchingParams : public MatchingParamsBase
+struct Msg3dMatchingParams : public MatchingParamsBase
 {
-  double det3d_timestamp;
+  double msg3d_timestamp;
 
-  explicit Det3dMatchingParams(double det3d_timestamp = 0.0) : det3d_timestamp(det3d_timestamp) {}
+  explicit Msg3dMatchingParams(double msg3d_timestamp = 0.0) : msg3d_timestamp(msg3d_timestamp) {}
 };
 
 struct RoisMatchingParams : public MatchingParamsBase
@@ -67,9 +67,9 @@ public:
     const std::shared_ptr<RoisMatchingParams> & params) const = 0;
 
   [[nodiscard]] virtual std::optional<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>>
-  match_det3d_to_collector(
+  match_msg3d_to_collector(
     const std::list<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>> & fusion_collectors,
-    const std::shared_ptr<Det3dMatchingParams> & params) = 0;
+    const std::shared_ptr<Msg3dMatchingParams> & params) = 0;
   virtual void set_collector_info(
     std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>> & collector,
     const std::shared_ptr<MatchingParamsBase> & matching_params) = 0;
@@ -81,7 +81,7 @@ class NaiveMatchingStrategy : public FusionMatchingStrategy<Msg3D, Msg2D, Export
 public:
   explicit NaiveMatchingStrategy(
     std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> && ros2_parent_node,
-    std::size_t rois_number);
+    const std::size_t rois_number);
 
   [[nodiscard]] std::optional<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>>
   match_rois_to_collector(
@@ -89,9 +89,9 @@ public:
     const std::shared_ptr<RoisMatchingParams> & params) const override;
 
   [[nodiscard]] std::optional<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>>
-  match_det3d_to_collector(
+  match_msg3d_to_collector(
     const std::list<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>> & fusion_collectors,
-    const std::shared_ptr<Det3dMatchingParams> & params) override;
+    const std::shared_ptr<Msg3dMatchingParams> & params) override;
 
   void set_collector_info(
     std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>> & collector,
@@ -109,7 +109,7 @@ class AdvancedMatchingStrategy : public FusionMatchingStrategy<Msg3D, Msg2D, Exp
 public:
   explicit AdvancedMatchingStrategy(
     std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> && ros2_parent_node,
-    std::size_t rois_number);
+    const std::size_t rois_number);
 
   [[nodiscard]] std::optional<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>>
   match_rois_to_collector(
@@ -117,15 +117,15 @@ public:
     const std::shared_ptr<RoisMatchingParams> & params) const override;
 
   [[nodiscard]] std::optional<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>>
-  match_det3d_to_collector(
+  match_msg3d_to_collector(
     const std::list<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>> & fusion_collectors,
-    const std::shared_ptr<Det3dMatchingParams> & params) override;
+    const std::shared_ptr<Msg3dMatchingParams> & params) override;
   void set_collector_info(
     std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>> & collector,
     const std::shared_ptr<MatchingParamsBase> & matching_params) override;
 
   double get_offset(
-    const double & det3d_timestamp,
+    const double & msg3d_timestamp,
     const std::optional<std::unordered_map<std::string, std::string>> & concatenated_status);
 
   double extract_fractional(double timestamp);

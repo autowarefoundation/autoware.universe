@@ -31,12 +31,12 @@ namespace autoware::image_projection_based_fusion
 template <class Msg3D, class Msg2D, class ExportObj>
 FusionCollector<Msg3D, Msg2D, ExportObj>::FusionCollector(
   std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> && ros2_parent_node, double timeout_sec,
-  std::size_t rois_number, const std::vector<Det2dStatus<Msg2D>> & det2d_list, bool is_3d,
+  std::size_t rois_number, const std::vector<Det2dStatus<Msg2D>> & det2d_status_list, bool is_3d,
   bool debug_mode)
 : ros2_parent_node_(std::move(ros2_parent_node)),
   timeout_sec_(timeout_sec),
   rois_number_(rois_number),
-  det2d_list_(det2d_list),
+  det2d_status_list_(det2d_status_list),
   is_3d_(is_3d),
   debug_mode_(debug_mode)
 {
@@ -71,14 +71,14 @@ bool FusionCollector<Msg3D, Msg2D, ExportObj>::process_msg_3d(
   std::lock_guard<std::mutex> fusion_lock(fusion_mutex_);
   if (fusion_finished_) return false;
 
-  if (det3d_msg_ != nullptr) {
+  if (msg3d_ != nullptr) {
     RCLCPP_WARN_STREAM_THROTTLE(
       ros2_parent_node_->get_logger(), *ros2_parent_node_->get_clock(),
       std::chrono::milliseconds(10000).count(),
       "Pointcloud already exists in the collector. Check the timestamp of the pointcloud.");
   }
 
-  det3d_msg_ = msg_3d;
+  msg3d_ = msg_3d;
   if (ready_to_fuse()) {
     fusion_callback();
   } else {
@@ -100,18 +100,18 @@ bool FusionCollector<Msg3D, Msg2D, ExportObj>::process_msg_3d(
 
 template <class Msg3D, class Msg2D, class ExportObj>
 bool FusionCollector<Msg3D, Msg2D, ExportObj>::process_rois(
-  const std::size_t & roi_id, const typename Msg2D::ConstSharedPtr det2d_msg)
+  const std::size_t & rois_id, const typename Msg2D::ConstSharedPtr det2d_msg)
 {
   std::lock_guard<std::mutex> fusion_lock(fusion_mutex_);
   if (fusion_finished_) return false;
 
-  if (id_to_roi_map_.find(roi_id) != id_to_roi_map_.end()) {
+  if (id_to_rois_map_.find(rois_id) != id_to_rois_map_.end()) {
     RCLCPP_WARN_STREAM_THROTTLE(
       ros2_parent_node_->get_logger(), *ros2_parent_node_->get_clock(),
       std::chrono::milliseconds(10000).count(),
-      "ROIS '" << roi_id << "' already exists in the collector. Check the timestamp of the rois.");
+      "ROIs '" << rois_id << "' already exists in the collector. Check the timestamp of the rois.");
   }
-  id_to_roi_map_[roi_id] = det2d_msg;
+  id_to_rois_map_[rois_id] = det2d_msg;
   if (ready_to_fuse()) {
     fusion_callback();
   }
@@ -122,7 +122,7 @@ bool FusionCollector<Msg3D, Msg2D, ExportObj>::process_rois(
 template <class Msg3D, class Msg2D, class ExportObj>
 bool FusionCollector<Msg3D, Msg2D, ExportObj>::ready_to_fuse()
 {
-  return id_to_roi_map_.size() == rois_number_ && det3d_msg_ != nullptr;
+  return id_to_rois_map_.size() == rois_number_ && msg3d_ != nullptr;
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
@@ -143,11 +143,11 @@ void FusionCollector<Msg3D, Msg2D, ExportObj>::fusion_callback()
   timer_->cancel();
 
   std::unordered_map<std::size_t, double> id_to_stamp_map;
-  for (const auto & [roi_id, roi_msg] : id_to_roi_map_) {
+  for (const auto & [roi_id, roi_msg] : id_to_rois_map_) {
     id_to_stamp_map[roi_id] = rclcpp::Time(roi_msg->header.stamp).seconds();
   }
 
-  if (!det3d_msg_) {
+  if (!msg3d_) {
     RCLCPP_WARN(
       ros2_parent_node_->get_logger(),
       "The Det3d message is not in the fusion collector, so the fusion process will be skipped.");
@@ -157,18 +157,18 @@ void FusionCollector<Msg3D, Msg2D, ExportObj>::fusion_callback()
     return;
   }
 
-  typename Msg3D::SharedPtr output_det3d_msg = std::make_shared<Msg3D>(*det3d_msg_);
+  typename Msg3D::SharedPtr output_det3d_msg = std::make_shared<Msg3D>(*msg3d_);
   ros2_parent_node_->preprocess(*output_det3d_msg);
 
-  for (const auto & [roi_id, roi_msg] : id_to_roi_map_) {
-    if (det2d_list_[roi_id].camera_projector_ptr == nullptr) {
+  for (const auto & [roi_id, roi_msg] : id_to_rois_map_) {
+    if (det2d_status_list_[roi_id].camera_projector_ptr == nullptr) {
       RCLCPP_WARN_THROTTLE(
         ros2_parent_node_->get_logger(), *ros2_parent_node_->get_clock(), 5000,
         "no camera info. id is %zu", roi_id);
       continue;
     }
     ros2_parent_node_->fuse_on_single_image(
-      *det3d_msg_, det2d_list_[roi_id], *roi_msg, *output_det3d_msg);
+      *msg3d_, det2d_status_list_[roi_id], *roi_msg, *output_det3d_msg);
   }
 
   ros2_parent_node_->export_process(output_det3d_msg, id_to_stamp_map, fusion_collector_info_);
@@ -178,13 +178,13 @@ void FusionCollector<Msg3D, Msg2D, ExportObj>::fusion_callback()
 template <class Msg3D, class Msg2D, class ExportObj>
 bool FusionCollector<Msg3D, Msg2D, ExportObj>::rois_exists(const std::size_t & rois_id)
 {
-  return id_to_roi_map_.find(rois_id) != id_to_roi_map_.end();
+  return id_to_rois_map_.find(rois_id) != id_to_rois_map_.end();
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
-bool FusionCollector<Msg3D, Msg2D, ExportObj>::det3d_exists()
+bool FusionCollector<Msg3D, Msg2D, ExportObj>::msg3d_exists()
 {
-  return det3d_msg_ != nullptr;
+  return msg3d_ != nullptr;
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
@@ -209,14 +209,14 @@ void FusionCollector<Msg3D, Msg2D, ExportObj>::show_debug_message()
   }
 
   log_stream << "Time until trigger: " << (time_until_trigger.count() / 1e9) << " seconds\n";
-  if (det3d_msg_) {
-    log_stream << "Det3d msg: [" << rclcpp::Time(det3d_msg_->header.stamp).seconds() << "]\n";
+  if (msg3d_) {
+    log_stream << "Det3d msg: [" << rclcpp::Time(msg3d_->header.stamp).seconds() << "]\n";
   } else {
     log_stream << "Det3d msg: [Is empty]\n";
   }
   log_stream << "ROIs: [";
   std::string separator = "";
-  for (const auto & [id, rois] : id_to_roi_map_) {
+  for (const auto & [id, rois] : id_to_rois_map_) {
     log_stream << separator;
     log_stream << "[rois " << id << ", " << rclcpp::Time(rois->header.stamp).seconds() << "]";
     separator = ", ";

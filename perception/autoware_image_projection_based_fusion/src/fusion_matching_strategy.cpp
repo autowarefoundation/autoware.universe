@@ -22,6 +22,7 @@
 
 #include <cmath>
 #include <cstddef>
+#include <limits>
 #include <list>
 #include <memory>
 #include <string>
@@ -33,18 +34,26 @@ namespace autoware::image_projection_based_fusion
 
 template <class Msg3D, class Msg2D, class ExportObj>
 NaiveMatchingStrategy<Msg3D, Msg2D, ExportObj>::NaiveMatchingStrategy(
-  std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> && ros2_parent_node, std::size_t rois_number)
+  std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> && ros2_parent_node,
+  const std::size_t rois_number)
 : ros2_parent_node_(std::move(ros2_parent_node))
 {
+  if (!ros2_parent_node_) {
+    throw std::runtime_error("ros2_parent_node is nullptr in NaiveMatchingStrategy constructor.");
+  }
+
   auto rois_timestamp_offsets =
     ros2_parent_node_->template declare_parameter<std::vector<double>>("rois_timestamp_offsets");
   threshold_ = ros2_parent_node_->template declare_parameter<double>("matching_strategy.threshold");
 
   if (rois_timestamp_offsets.size() != rois_number) {
-    throw std::runtime_error("The number of rois does not match the number of timestamp offsets.");
+    throw std::runtime_error(
+      "Mismatch: rois_number (" + std::to_string(rois_number) +
+      ") does not match rois_timestamp_offsets size (" +
+      std::to_string(rois_timestamp_offsets.size()) + ").");
   }
 
-  for (size_t i = 0; i < rois_number; i++) {
+  for (std::size_t i = 0; i < rois_number; i++) {
     id_to_offset_map_[i] = rois_timestamp_offsets[i];
   }
 
@@ -57,18 +66,16 @@ NaiveMatchingStrategy<Msg3D, Msg2D, ExportObj>::match_rois_to_collector(
   const std::list<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>> & fusion_collectors,
   const std::shared_ptr<RoisMatchingParams> & params) const
 {
-  std::optional<double> smallest_time_difference = std::nullopt;
+  double smallest_time_difference = std::numeric_limits<double>::max();
   std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>> closest_collector = nullptr;
 
   for (const auto & fusion_collector : fusion_collectors) {
     if (!fusion_collector->rois_exists(params->rois_id)) {
-      auto info = fusion_collector->get_info();
-      if (auto naive_info = std::dynamic_pointer_cast<NaiveCollectorInfo>(info)) {
+      if (
+        auto naive_info =
+          std::dynamic_pointer_cast<NaiveCollectorInfo>(fusion_collector->get_info())) {
         double time_difference = std::abs(params->rois_timestamp - naive_info->timestamp);
-        if (
-          !smallest_time_difference.has_value() ||
-          (time_difference < smallest_time_difference.value() &&
-           time_difference < naive_info->threshold)) {
+        if (time_difference < smallest_time_difference && time_difference < naive_info->threshold) {
           smallest_time_difference = time_difference;
           closest_collector = fusion_collector;
         }
@@ -76,31 +83,26 @@ NaiveMatchingStrategy<Msg3D, Msg2D, ExportObj>::match_rois_to_collector(
     }
   }
 
-  if (closest_collector != nullptr) {
-    return closest_collector;
-  }
-  return std::nullopt;
+  return closest_collector;  // Implicitly returns std::nullopt if closest_collector is nullptr
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
 std::optional<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>>
-NaiveMatchingStrategy<Msg3D, Msg2D, ExportObj>::match_det3d_to_collector(
+NaiveMatchingStrategy<Msg3D, Msg2D, ExportObj>::match_msg3d_to_collector(
   const std::list<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>> & fusion_collectors,
-  const std::shared_ptr<Det3dMatchingParams> & params)
+  const std::shared_ptr<Msg3dMatchingParams> & params)
 {
-  std::optional<double> smallest_time_difference = std::nullopt;
-  std::optional<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>> closest_collector =
-    std::nullopt;
+  double smallest_time_difference = std::numeric_limits<double>::max();
+  std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>> closest_collector = nullptr;
 
   for (const auto & fusion_collector : fusion_collectors) {
-    if (!fusion_collector->det3d_exists()) {
-      auto info = fusion_collector->get_info();
-      if (auto naive_info = std::dynamic_pointer_cast<NaiveCollectorInfo>(info)) {
-        double time_difference = std::abs(params->det3d_timestamp - naive_info->timestamp);
-        if (
-          !smallest_time_difference.has_value() ||
-          (time_difference < smallest_time_difference.value() &&
-           time_difference < naive_info->threshold)) {
+    if (!fusion_collector->msg3d_exists()) {
+      if (
+        auto naive_info =
+          std::dynamic_pointer_cast<NaiveCollectorInfo>(fusion_collector->get_info())) {
+        double time_difference = std::abs(params->msg3d_timestamp - naive_info->timestamp);
+
+        if (time_difference < smallest_time_difference && time_difference < naive_info->threshold) {
           smallest_time_difference = time_difference;
           closest_collector = fusion_collector;
         }
@@ -108,7 +110,7 @@ NaiveMatchingStrategy<Msg3D, Msg2D, ExportObj>::match_det3d_to_collector(
     }
   }
 
-  return closest_collector;
+  return closest_collector;  // Implicitly returns std::nullopt if closest_collector is nullptr
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
@@ -116,25 +118,44 @@ void NaiveMatchingStrategy<Msg3D, Msg2D, ExportObj>::set_collector_info(
   std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>> & collector,
   const std::shared_ptr<MatchingParamsBase> & matching_params)
 {
+  if (!matching_params) {
+    RCLCPP_ERROR(ros2_parent_node_->get_logger(), "matching_params is nullptr!");
+    return;
+  }
+
   if (
-    auto det3d_matching_params = std::dynamic_pointer_cast<Det3dMatchingParams>(matching_params)) {
+    auto det3d_matching_params = std::dynamic_pointer_cast<Msg3dMatchingParams>(matching_params)) {
     auto info =
-      std::make_shared<NaiveCollectorInfo>(det3d_matching_params->det3d_timestamp, threshold_);
+      std::make_shared<NaiveCollectorInfo>(det3d_matching_params->msg3d_timestamp, threshold_);
     collector->set_info(info);
+
   } else if (
     auto rois_matching_params = std::dynamic_pointer_cast<RoisMatchingParams>(matching_params)) {
+    auto offset_it = id_to_offset_map_.find(rois_matching_params->rois_id);
+    if (offset_it == id_to_offset_map_.end()) {
+      RCLCPP_ERROR(
+        ros2_parent_node_->get_logger(), "Missing offset for rois_id: %zu",
+        rois_matching_params->rois_id);
+      return;
+    }
+
     auto info = std::make_shared<NaiveCollectorInfo>(
-      rois_matching_params->rois_timestamp - id_to_offset_map_.at(rois_matching_params->rois_id),
-      threshold_);
+      rois_matching_params->rois_timestamp - offset_it->second, threshold_);
     collector->set_info(info);
   }
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
 AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::AdvancedMatchingStrategy(
-  std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> && ros2_parent_node, std::size_t rois_number)
+  std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> && ros2_parent_node,
+  const std::size_t rois_number)
 : ros2_parent_node_(std::move(ros2_parent_node))
 {
+  if (!ros2_parent_node_) {
+    throw std::runtime_error(
+      "ros2_parent_node is nullptr in AdvancedMatchingStrategy constructor.");
+  }
+
   auto rois_timestamp_offsets =
     ros2_parent_node_->template declare_parameter<std::vector<double>>("rois_timestamp_offsets");
   det3d_noise_window_ =
@@ -144,11 +165,16 @@ AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::AdvancedMatchingStrategy(
       "matching_strategy.rois_timestamp_noise_window");
 
   if (rois_timestamp_offsets.size() != rois_number) {
-    throw std::runtime_error("The number of rois does not match the number of timestamp offsets.");
+    throw std::runtime_error(
+      "Mismatch: rois_number (" + std::to_string(rois_number) +
+      ") does not match rois_timestamp_offsets size (" +
+      std::to_string(rois_timestamp_offsets.size()) + ").");
   }
   if (rois_timestamp_noise_window.size() != rois_number) {
     throw std::runtime_error(
-      "The number of rois does not match the number of timestamp noise window.");
+      "Mismatch: rois_number (" + std::to_string(rois_number) +
+      ") does not match rois_timestamp_noise_window size (" +
+      std::to_string(rois_timestamp_noise_window.size()) + ").");
   }
 
   for (size_t i = 0; i < rois_number; i++) {
@@ -166,15 +192,29 @@ AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::match_rois_to_collector(
   const std::list<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>> & fusion_collectors,
   const std::shared_ptr<RoisMatchingParams> & params) const
 {
+  auto offset_it = id_to_offset_map_.find(params->rois_id);
+  auto noise_it = id_to_noise_window_map_.find(params->rois_id);
+
+  if (offset_it == id_to_offset_map_.end() || noise_it == id_to_noise_window_map_.end()) {
+    RCLCPP_ERROR(
+      ros2_parent_node_->get_logger(), "Missing offset or noise window for rois_id: %zu",
+      params->rois_id);
+    return std::nullopt;
+  }
+
+  double adjusted_timestamp = params->rois_timestamp - offset_it->second;
+  double noise_window = noise_it->second;
+
   for (const auto & fusion_collector : fusion_collectors) {
-    auto info = fusion_collector->get_info();
-    if (auto advanced_info = std::dynamic_pointer_cast<AdvancedCollectorInfo>(info)) {
-      auto reference_timestamp_min = advanced_info->timestamp - advanced_info->noise_window;
-      auto reference_timestamp_max = advanced_info->timestamp + advanced_info->noise_window;
-      double time = params->rois_timestamp - id_to_offset_map_.at(params->rois_id);
+    if (
+      auto advanced_info =
+        std::dynamic_pointer_cast<AdvancedCollectorInfo>(fusion_collector->get_info())) {
+      double reference_timestamp_min = advanced_info->timestamp - advanced_info->noise_window;
+      double reference_timestamp_max = advanced_info->timestamp + advanced_info->noise_window;
+
       if (
-        time < reference_timestamp_max + id_to_noise_window_map_.at(params->rois_id) &&
-        time > reference_timestamp_min - id_to_noise_window_map_.at(params->rois_id)) {
+        adjusted_timestamp < reference_timestamp_max + noise_window &&
+        adjusted_timestamp > reference_timestamp_min - noise_window) {
         return fusion_collector;
       }
     }
@@ -184,23 +224,25 @@ AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::match_rois_to_collector(
 
 template <class Msg3D, class Msg2D, class ExportObj>
 std::optional<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>>
-AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::match_det3d_to_collector(
+AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::match_msg3d_to_collector(
   const std::list<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>> & fusion_collectors,
-  const std::shared_ptr<Det3dMatchingParams> & params)
+  const std::shared_ptr<Msg3dMatchingParams> & params)
 {
-  auto concatenated_status = ros2_parent_node_->find_concatenation_status(params->det3d_timestamp);
+  auto concatenated_status = ros2_parent_node_->find_concatenation_status(params->msg3d_timestamp);
 
-  // TODO(vivid): double check this logic and fix the name
-  double offset = get_offset(params->det3d_timestamp, concatenated_status);
+  double offset = get_offset(params->msg3d_timestamp, concatenated_status);
+  double adjusted_timestamp = params->msg3d_timestamp - offset;
 
   for (const auto & fusion_collector : fusion_collectors) {
-    auto info = fusion_collector->get_info();
-    if (auto advanced_info = std::dynamic_pointer_cast<AdvancedCollectorInfo>(info)) {
-      auto reference_timestamp_min = advanced_info->timestamp - advanced_info->noise_window;
-      auto reference_timestamp_max = advanced_info->timestamp + advanced_info->noise_window;
+    if (
+      auto advanced_info =
+        std::dynamic_pointer_cast<AdvancedCollectorInfo>(fusion_collector->get_info())) {
+      double reference_timestamp_min = advanced_info->timestamp - advanced_info->noise_window;
+      double reference_timestamp_max = advanced_info->timestamp + advanced_info->noise_window;
+
       if (
-        params->det3d_timestamp - offset < reference_timestamp_max + det3d_noise_window_ &&
-        params->det3d_timestamp - offset > reference_timestamp_min - det3d_noise_window_) {
+        adjusted_timestamp < reference_timestamp_max + det3d_noise_window_ &&
+        adjusted_timestamp > reference_timestamp_min - det3d_noise_window_) {
         return fusion_collector;
       }
     }
@@ -213,73 +255,89 @@ void AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::set_collector_info(
   std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>> & collector,
   const std::shared_ptr<MatchingParamsBase> & matching_params)
 {
+  if (!matching_params) {
+    RCLCPP_ERROR(ros2_parent_node_->get_logger(), "matching_params is nullptr!");
+    return;
+  }
+
   if (
-    auto det3d_matching_params = std::dynamic_pointer_cast<Det3dMatchingParams>(matching_params)) {
+    auto det3d_matching_params = std::dynamic_pointer_cast<Msg3dMatchingParams>(matching_params)) {
     auto concatenated_status =
-      ros2_parent_node_->find_concatenation_status(det3d_matching_params->det3d_timestamp);
-    double offset = get_offset(det3d_matching_params->det3d_timestamp, concatenated_status);
+      ros2_parent_node_->find_concatenation_status(det3d_matching_params->msg3d_timestamp);
+    double offset = get_offset(det3d_matching_params->msg3d_timestamp, concatenated_status);
 
     auto info = std::make_shared<AdvancedCollectorInfo>(
-      det3d_matching_params->det3d_timestamp - offset, det3d_noise_window_);
+      det3d_matching_params->msg3d_timestamp - offset, det3d_noise_window_);
     collector->set_info(info);
   } else if (
     auto rois_matching_params = std::dynamic_pointer_cast<RoisMatchingParams>(matching_params)) {
+    auto offset_it = id_to_offset_map_.find(rois_matching_params->rois_id);
+    auto noise_it = id_to_noise_window_map_.find(rois_matching_params->rois_id);
+
+    if (offset_it == id_to_offset_map_.end() || noise_it == id_to_noise_window_map_.end()) {
+      RCLCPP_ERROR(
+        ros2_parent_node_->get_logger(), "Missing offset or noise window for rois_id: %zu",
+        rois_matching_params->rois_id);
+      return;
+    }
+
     auto info = std::make_shared<AdvancedCollectorInfo>(
-      rois_matching_params->rois_timestamp - id_to_offset_map_.at(rois_matching_params->rois_id),
-      id_to_noise_window_map_[rois_matching_params->rois_id]);
+      rois_matching_params->rois_timestamp - offset_it->second, noise_it->second);
     collector->set_info(info);
   }
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
 double AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::get_offset(
-  const double & det3d_timestamp,
+  const double & msg3d_timestamp,
   const std::optional<std::unordered_map<std::string, std::string>> & concatenated_status)
 {
   double offset = 0.0;
 
-  if (concatenated_status) {
+  if (concatenated_status.has_value()) {
     const auto & status_map = concatenated_status.value();
 
+    // Find required keys in the map
+    auto concat_success_it = status_map.find("cloud_concatenation_success");
+    auto ref_min_it = status_map.find("reference_timestamp_min");
+    auto ref_max_it = status_map.find("reference_timestamp_max");
+
     if (
-      status_map.find("cloud_concatenation_success") != status_map.end() &&
-      status_map.find("reference_timestamp_min") != status_map.end() &&
-      status_map.find("reference_timestamp_max") != status_map.end()) {
-      bool concatenation_success = (status_map.at("cloud_concatenation_success") == "True");
+      concat_success_it != status_map.end() && ref_min_it != status_map.end() &&
+      ref_max_it != status_map.end()) {
+      bool concatenation_success = (concat_success_it->second == "True");
 
-      if (
-        !concatenation_success &&
-        det3d_timestamp > std::stod(status_map.at("reference_timestamp_max"))) {
-        // The defined earliest pointcloud is missed in the concatenation
-        double reference_min = std::stod(status_map.at("reference_timestamp_min"));
-        double reference_max = std::stod(status_map.at("reference_timestamp_max"));
-        offset = det3d_timestamp - (reference_min + (reference_max - reference_min) / 2);
-      } else if (!database_created_ && concatenation_success) {
-        // Ensure "cloud_concatenated_timestamp" key exists before accessing
-        if (status_map.find("concatenated_cloud_timestamp") != status_map.end()) {
-          double concatenated_cloud_timestamp =
-            std::stod(status_map.at("concatenated_cloud_timestamp"));
-          update_fractional_timestamp_set(concatenated_cloud_timestamp);
-          success_status_counter_++;
-          offset = 0.0;
+      try {
+        double reference_min = std::stod(ref_min_it->second);
+        double reference_max = std::stod(ref_max_it->second);
 
-          if (success_status_counter_ > success_threshold) {
-            database_created_ = true;
+        if (!concatenation_success && msg3d_timestamp > reference_max) {
+          offset = msg3d_timestamp - (reference_min + (reference_max - reference_min) / 2);
+        } else if (!database_created_ && concatenation_success) {
+          auto concat_cloud_it = status_map.find("concatenated_cloud_timestamp");
+          if (concat_cloud_it != status_map.end()) {
+            double concatenated_cloud_timestamp = std::stod(concat_cloud_it->second);
+            update_fractional_timestamp_set(concatenated_cloud_timestamp);
+            success_status_counter_++;
+            offset = 0.0;
+
+            if (success_status_counter_ > success_threshold) {
+              database_created_ = true;
+            }
           }
         }
+      } catch (const std::exception & e) {
+        RCLCPP_ERROR(ros2_parent_node_->get_logger(), "Failed to parse timestamp: %s", e.what());
       }
     }
   } else {
-    RCLCPP_WARN(
+    RCLCPP_DEBUG(
       ros2_parent_node_->get_logger(),
-      "If concatenated_status is missing, find the offset using the timestamp difference");
-    // If concatenated_status is missing, find the offset using the timestamp difference
-    if (database_created_) {
-      offset = compute_offset(det3d_timestamp);
-      RCLCPP_WARN(ros2_parent_node_->get_logger(), "Use database and find offset: %f", offset);
+      "Concatenated_status is missing, finding offset using timestamp difference");
 
-    } else {
-      offset = 0.0;
+    if (database_created_) {
+      offset = compute_offset(msg3d_timestamp);
+      RCLCPP_DEBUG(ros2_parent_node_->get_logger(), "Using database, computed offset: %f", offset);
     }
   }
 

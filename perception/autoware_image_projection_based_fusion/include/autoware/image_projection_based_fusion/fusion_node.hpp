@@ -86,11 +86,11 @@ private:
   // Common process methods
   void camera_info_callback(
     const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_camera_info_msg,
-    const std::size_t camera_id);
+    const std::size_t rois_id);
 
   void init_strategy();
   void manage_collector_list();
-  void manage_concatenated_status_map(const double & current_timestam);
+  void manage_concatenated_status_map(double current_timestam);
 
   static std::string format_timestamp(double timestamp);
   void check_fusion_status(diagnostic_updater::DiagnosticStatusWrapper & stat);
@@ -130,15 +130,15 @@ private:
   bool publish_previous_but_late_output_msg_{false};
   bool drop_previous_but_late_output_msg_{false};
   bool publish_output_msg_{false};
-  bool det3d_fused_{true};
+  bool msg3d_fused_{true};
 
 protected:
-  void set_det2d_status(std::size_t rois_number);
+  void initialize_det2d_status(std::size_t rois_number);
 
   // callback for main subscription
-  void sub_callback(const typename Msg3D::ConstSharedPtr det3d_msg);
-  // callback for roi subscription
-  void roi_callback(const typename Msg2D::ConstSharedPtr det2d_msg, const std::size_t roi_i);
+  void sub_callback(const typename Msg3D::ConstSharedPtr msg3d);
+  // callback for rois subscription
+  void rois_callback(const typename Msg2D::ConstSharedPtr det2d_msg, const std::size_t rois_id);
 
   void diagnostic_callback(const diagnostic_msgs::msg::DiagnosticArray::SharedPtr diagnostic_msg);
 
@@ -151,10 +151,10 @@ protected:
   tf2_ros::TransformListener tf_listener_;
 
   // 2d detection management
-  std::vector<Det2dStatus<Msg2D>> det2d_list_;
+  std::vector<Det2dStatus<Msg2D>> det2d_status_list_;
 
   // 3d detection subscription
-  typename rclcpp::Subscription<Msg3D>::SharedPtr det3d_sub_;
+  typename rclcpp::Subscription<Msg3D>::SharedPtr msg3d_sub_;
   rclcpp::Subscription<diagnostic_msgs::msg::DiagnosticArray>::SharedPtr sub_diag_;
 
   // parameters for out_of_scope filter

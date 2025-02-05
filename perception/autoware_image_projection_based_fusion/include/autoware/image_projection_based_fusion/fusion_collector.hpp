@@ -1,4 +1,4 @@
-// Copyright 2024 TIER IV, Inc.
+// Copyright 2025 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -35,11 +35,11 @@ template <class Msg2D>
 struct Det2dStatus
 {
   // camera index
-  std::size_t id = 0;
+  std::size_t id{0};
   // camera projection
-  std::shared_ptr<CameraProjection> camera_projector_ptr;
-  bool project_to_unrectified_image = false;
-  bool approximate_camera_projection = false;
+  std::shared_ptr<CameraProjection> camera_projector_ptr{nullptr};
+  bool project_to_unrectified_image{false};
+  bool approximate_camera_projection{false};
 };
 
 struct FusionCollectorInfoBase
@@ -75,7 +75,7 @@ class FusionCollector
 public:
   FusionCollector(
     std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> && ros2_parent_node, double timeout_sec,
-    std::size_t rois_number, const std::vector<Det2dStatus<Msg2D>> & det2d_list, bool is_3d,
+    std::size_t rois_number, const std::vector<Det2dStatus<Msg2D>> & det2d_status_list, bool is_3d,
     bool debug_mode);
   bool process_msg_3d(const typename Msg3D::ConstSharedPtr msg_3d, double msg_3d_timeout);
   bool process_rois(const std::size_t & roi_id, const typename Msg2D::ConstSharedPtr det2d_msg);
@@ -88,7 +88,7 @@ public:
   // void show_debug_message();
   bool ready_to_fuse();
   bool rois_exists(const std::size_t & rois_id);
-  bool det3d_exists();
+  bool msg3d_exists();
   void show_debug_message();
   void set_period(const int64_t new_period);
 
@@ -97,9 +97,9 @@ private:
   rclcpp::TimerBase::SharedPtr timer_;
   double timeout_sec_;
   std::size_t rois_number_;
-  typename Msg3D::ConstSharedPtr det3d_msg_{nullptr};
-  std::vector<Det2dStatus<Msg2D>> det2d_list_;
-  std::unordered_map<std::size_t, typename Msg2D::ConstSharedPtr> id_to_roi_map_;
+  typename Msg3D::ConstSharedPtr msg3d_{nullptr};
+  std::vector<Det2dStatus<Msg2D>> det2d_status_list_;
+  std::unordered_map<std::size_t, typename Msg2D::ConstSharedPtr> id_to_rois_map_;
   bool is_3d_;
   bool debug_mode_;
   bool fusion_finished_{false};
