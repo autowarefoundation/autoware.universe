@@ -170,11 +170,11 @@ void setupTwist2DStructs(
 
   std::size_t twist_index = 0;
   std::size_t angular_velocity_index = 0;
+  float v_x{0.f}, v_theta{0.f};
 
   for (; twist_index < twist_queue.size() ||
          angular_velocity_index < angular_velocity_queue.size();) {
     std::uint64_t twist_stamp, input_twist_global_stamp_nsec, angular_velocity_global_stamp_nsec;
-    float v_x, v_theta;
 
     if (twist_index < twist_queue.size()) {
       input_twist_global_stamp_nsec =
@@ -183,7 +183,6 @@ void setupTwist2DStructs(
       v_x = twist_queue[twist_index].twist.twist.linear.x;
     } else {
       input_twist_global_stamp_nsec = std::numeric_limits<std::uint64_t>::max();
-      v_x = 0.0;
     }
 
     if (angular_velocity_index < angular_velocity_queue.size()) {
@@ -195,7 +194,6 @@ void setupTwist2DStructs(
       v_theta = angular_velocity_queue[angular_velocity_index].vector.z;
     } else {
       angular_velocity_global_stamp_nsec = std::numeric_limits<std::uint64_t>::max();
-      v_theta = 0.0;
     }
 
     if (input_twist_global_stamp_nsec < angular_velocity_global_stamp_nsec) {
