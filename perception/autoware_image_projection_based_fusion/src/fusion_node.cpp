@@ -262,6 +262,11 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::camera_info_callback(
       *input_camera_info_msg, approx_grid_cell_w_size_, approx_grid_cell_h_size_,
       det2d_status.project_to_unrectified_image, det2d_status.approximate_camera_projection);
     det2d_status.camera_projector_ptr->initialize();
+
+    std::unique_lock<std::mutex> fusion_collectors_lock(fusion_collectors_mutex_);
+    for (auto & collector : fusion_collectors_) {
+      collector->add_camera_projection(rois_id, det2d_status.camera_projector_ptr);
+    }
   }
 }
 

@@ -96,6 +96,8 @@ public:
   void show_debug_message();
   void reset();
   void set_period(const std::chrono::nanoseconds period);
+  void add_camera_projection(
+    std::size_t rois_id, std::shared_ptr<CameraProjection> camera_projector_ptr);
 
 private:
   std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> ros2_parent_node_;

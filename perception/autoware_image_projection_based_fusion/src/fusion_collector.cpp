@@ -165,12 +165,11 @@ void FusionCollector<Msg3D, Msg2D, ExportObj>::fusion_callback()
   }
 
   if (!msg3d_) {
-    RCLCPP_WARN(
+    RCLCPP_DEBUG(
       ros2_parent_node_->get_logger(),
       "The input 3D message is not in the fusion collector, so the fusion process will be "
       "skipped.");
     status_ = CollectorStatus::Finished;
-    // TODO(vivid): call another functino to show the message on diagnostic.
     ros2_parent_node_->show_diagnostic_message(id_to_stamp_map, fusion_collector_info_);
     return;
   }
@@ -282,6 +281,14 @@ void FusionCollector<Msg3D, Msg2D, ExportObj>::reset()
   if (timer_ && !timer_->is_canceled()) {
     timer_->cancel();
   }
+}
+
+template <class Msg3D, class Msg2D, class ExportObj>
+void FusionCollector<Msg3D, Msg2D, ExportObj>::add_camera_projection(
+  std::size_t rois_id, std::shared_ptr<CameraProjection> camera_projector_ptr)
+{
+  std::lock_guard<std::mutex> lock(fusion_mutex_);
+  det2d_status_list_[rois_id].camera_projector_ptr = camera_projector_ptr;
 }
 
 // Explicit instantiation for the supported types
