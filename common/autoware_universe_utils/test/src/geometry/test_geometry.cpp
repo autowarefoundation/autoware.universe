@@ -13,24 +13,24 @@
 // limitations under the License.
 
 #include "autoware/universe_utils/geometry/boost_geometry.hpp"
+#include "autoware/universe_utils/geometry/buffer.hpp"
 #include "autoware/universe_utils/geometry/ear_clipping.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware/universe_utils/geometry/polygon_clip.hpp"
 #include "autoware/universe_utils/geometry/random_concave_polygon.hpp"
 #include "autoware/universe_utils/geometry/random_convex_polygon.hpp"
 #include "autoware/universe_utils/geometry/sat_2d.hpp"
-#include "autoware/universe_utils/geometry/buffer.hpp"
 #include "autoware/universe_utils/math/unit_conversion.hpp"
 #include "autoware/universe_utils/system/stop_watch.hpp"
 
 #include <geometry_msgs/msg/point32.hpp>
 
+#include <boost/geometry.hpp>
 #include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/algorithms/difference.hpp>
 #include <boost/geometry/algorithms/distance.hpp>
 #include <boost/geometry/algorithms/union.hpp>
 #include <boost/geometry/io/wkt/write.hpp>
-#include <boost/geometry.hpp>
 
 #include <gtest/gtest.h>
 
@@ -2445,13 +2445,13 @@ bool polygon_equal(
     std::vector<autoware::universe_utils::Polygon2d> diff;
     boost::geometry::difference(A, B, diff);
     double area_diff = 0.0;
-    for (const auto& poly : diff) {
-        area_diff += boost::geometry::area(poly);
+    for (const auto & poly : diff) {
+      area_diff += boost::geometry::area(poly);
     }
-    if (area_diff/boost::geometry::area(A)*100 < 1e-1) {
+    if (area_diff / boost::geometry::area(A) * 100 < 1e-1) {
       return true;
     } else {
-      std::printf("Area Difference: %2.8f%% \n", area_diff/boost::geometry::area(A)*100);
+      std::printf("Area Difference: %2.8f%% \n", area_diff / boost::geometry::area(A) * 100);
       return false;
     }
   }
@@ -2460,7 +2460,8 @@ bool polygon_equal(
   double min_distance = std::numeric_limits<double>::max();
 
   for (int i = 0; i < m; ++i) {
-    double dist = boost::geometry::distance(outer_A[0], outer_B[i]) + boost::geometry::distance(outer_A[1], outer_B[i+1]);
+    double dist = boost::geometry::distance(outer_A[0], outer_B[i]) +
+                  boost::geometry::distance(outer_A[1], outer_B[i + 1]);
     if (dist < min_distance) {
       min_distance = dist;
       start_index_B = i;
@@ -2517,18 +2518,18 @@ bool polygon_equal_vector(
     double customArea = 0.0;
     double boostArea = 0.0;
 
-    for (const auto& polygon : customPolygons) {
-        customArea += boost::geometry::area(polygon);
+    for (const auto & polygon : customPolygons) {
+      customArea += boost::geometry::area(polygon);
     }
 
-    for (const auto& polygon : boostPolygons) {
-        boostArea += boost::geometry::area(polygon);
+    for (const auto & polygon : boostPolygons) {
+      boostArea += boost::geometry::area(polygon);
     }
 
     if (std::abs(customArea - boostArea) < 1) {
-        return true;
+      return true;
     } else {
-        return false;
+      return false;
     }
   }
 
