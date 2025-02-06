@@ -18,8 +18,8 @@
 #include <boost/geometry/algorithms/simplify.hpp>
 #include <boost/geometry/algorithms/within.hpp>
 
-#include <set>
 #include <limits>
+#include <set>
 #include <utility>
 #include <vector>
 
