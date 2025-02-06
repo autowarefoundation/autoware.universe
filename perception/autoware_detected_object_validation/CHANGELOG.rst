@@ -2,6 +2,94 @@
 Changelog for package autoware_detected_object_validation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_detected_object_validation): add height filter in lanelet filtering (`#10003 <https://github.com/autowarefoundation/autoware.universe/issues/10003>`_)
+  * feat: add height filter param
+  * feat: use ego base height
+  * fix: build error
+  * feat: add lanelet filter test
+  * feat: add height filter test
+  * docs: update README and lanelet filter
+  * fix: do not getTransform when flag is off
+  ---------
+* feat(autoware_detected_object_validation): tier4_debug_msgs changed to autoware_internal_debug_msgs in fil… (`#9871 <https://github.com/autowarefoundation/autoware.universe/issues/9871>`_)
+  feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in files perception/autoware_detected_object_validation
+  Co-authored-by: Ryohsuke Mitsudome <43976834+mitsudome-r@users.noreply.github.com>
+* feat(autoware_detected_object_validation): set validate distance in the obstacle pointcloud based validator  (`#9663 <https://github.com/autowarefoundation/autoware.universe/issues/9663>`_)
+  * chore: add validate_max_distance_m parameter for obstacle_pointcloud_based_validator
+  * chore: optimize object distance validation in obstacle_pointcloud_validator
+  * chore: add validate_max_distance_m parameter for obstacle_pointcloud_based_validator
+  ---------
+* Contributors: Fumiya Watanabe, Taekjin LEE, Vishal Chauhan, Yoshi Ri
+
+0.40.0 (2024-12-12)
+-------------------
+* Merge branch 'main' into release-0.40.0
+* Revert "chore(package.xml): bump version to 0.39.0 (`#9587 <https://github.com/autowarefoundation/autoware.universe/issues/9587>`_)"
+  This reverts commit c9f0f2688c57b0f657f5c1f28f036a970682e7f5.
+* fix: fix ticket links in CHANGELOG.rst (`#9588 <https://github.com/autowarefoundation/autoware.universe/issues/9588>`_)
+* chore(package.xml): bump version to 0.39.0 (`#9587 <https://github.com/autowarefoundation/autoware.universe/issues/9587>`_)
+  * chore(package.xml): bump version to 0.39.0
+  * fix: fix ticket links in CHANGELOG.rst
+  * fix: remove unnecessary diff
+  ---------
+  Co-authored-by: Yutaka Kondo <yutaka.kondo@youtalk.jp>
+* fix: fix ticket links in CHANGELOG.rst (`#9588 <https://github.com/autowarefoundation/autoware.universe/issues/9588>`_)
+* fix(cpplint): include what you use - perception (`#9569 <https://github.com/autowarefoundation/autoware.universe/issues/9569>`_)
+* feat(object_lanelet_filter): add configurable margin for object lanel… (`#9240 <https://github.com/autowarefoundation/autoware.universe/issues/9240>`_)
+  * feat(object_lanelet_filter): add configurable margin for object lanelet filter
+  modified:   perception/autoware_detected_object_validation/src/lanelet_filter/lanelet_filter.cpp
+  * feat(object_lanelet_filter): add condition to check wheter polygon is empty in debug mode
+  * feat(object_lanelet_filter): fix cppcheck
+  * fix: brig back missing type definition
+  * feat: add stop watch for processing time in object lanelet filter
+  * feat(object_lanelet_filter): remove extra comment line
+  * feat(_object_lanelet_filter): udpate readme
+  * style(pre-commit): autofix
+  * Update perception/autoware_detected_object_validation/src/lanelet_filter/debug.cpp
+  Co-authored-by: Shintaro Tomie <58775300+Shin-kyoto@users.noreply.github.com>
+  * style(pre-commit): autofix
+  ---------
+  Co-authored-by: Sebastian Zęderowski <szederowski@autonomous-systems.pl>
+  Co-authored-by: Taekjin LEE <taekjin.lee@tier4.jp>
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+  Co-authored-by: Shintaro Tomie <58775300+Shin-kyoto@users.noreply.github.com>
+* 0.39.0
+* update changelog
+* Merge commit '6a1ddbd08bd' into release-0.39.0
+* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/autowarefoundation/autoware.universe/issues/9304>`_)
+* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/autowarefoundation/autoware.universe/issues/9304>`_)
+* fix(autoware_detected_object_validation): fix bugprone-incorrect-roundings (`#9220 <https://github.com/autowarefoundation/autoware.universe/issues/9220>`_)
+  fix: bugprone-incorrect-roundings
+* fix(autoware_detected_object_validation): fix clang-diagnostic-error (`#9215 <https://github.com/autowarefoundation/autoware.universe/issues/9215>`_)
+  fix: clang-c-error
+* chore(package.xml): bump version to 0.38.0 (`#9266 <https://github.com/autowarefoundation/autoware.universe/issues/9266>`_) (`#9284 <https://github.com/autowarefoundation/autoware.universe/issues/9284>`_)
+  * unify package.xml version to 0.37.0
+  * remove system_monitor/CHANGELOG.rst
+  * add changelog
+  * 0.38.0
+  ---------
+* Contributors: Esteve Fernandez, Fumiya Watanabe, M. Fatih Cırıt, Ryohsuke Mitsudome, Sebastian Zęderowski, Yutaka Kondo, kobayu858
+
+0.39.0 (2024-11-25)
+-------------------
+* Merge commit '6a1ddbd08bd' into release-0.39.0
+* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/autowarefoundation/autoware.universe/issues/9304>`_)
+* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/autowarefoundation/autoware.universe/issues/9304>`_)
+* fix(autoware_detected_object_validation): fix bugprone-incorrect-roundings (`#9220 <https://github.com/autowarefoundation/autoware.universe/issues/9220>`_)
+  fix: bugprone-incorrect-roundings
+* fix(autoware_detected_object_validation): fix clang-diagnostic-error (`#9215 <https://github.com/autowarefoundation/autoware.universe/issues/9215>`_)
+  fix: clang-c-error
+* chore(package.xml): bump version to 0.38.0 (`#9266 <https://github.com/autowarefoundation/autoware.universe/issues/9266>`_) (`#9284 <https://github.com/autowarefoundation/autoware.universe/issues/9284>`_)
+  * unify package.xml version to 0.37.0
+  * remove system_monitor/CHANGELOG.rst
+  * add changelog
+  * 0.38.0
+  ---------
+* Contributors: Esteve Fernandez, Yutaka Kondo, kobayu858
+
 0.38.0 (2024-11-08)
 -------------------
 * unify package.xml version to 0.37.0

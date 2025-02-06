@@ -2,6 +2,145 @@
 Changelog for package autoware_behavior_path_goal_planner_module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(goal_planner): introduce bezier based pullover for bus stop area (`#10027 <https://github.com/autowarefoundation/autoware.universe/issues/10027>`_)
+* fix(goal_planner): fix waiting approval path of backward parking (`#10015 <https://github.com/autowarefoundation/autoware.universe/issues/10015>`_)
+* refactor(goal_planner): divide extract_dynamic_object/is_goal_in_lanes util function (`#10019 <https://github.com/autowarefoundation/autoware.universe/issues/10019>`_)
+* fix(start_planner, goal_planner): refactor lane departure checker initialization (`#9944 <https://github.com/autowarefoundation/autoware.universe/issues/9944>`_)
+* feat(planning_factor)!: remove velocity_factor, steering_factor and introduce planning_factor (`#9927 <https://github.com/autowarefoundation/autoware.universe/issues/9927>`_)
+  Co-authored-by: Satoshi OTA <44889564+satoshi-ota@users.noreply.github.com>
+  Co-authored-by: Ryohsuke Mitsudome <43976834+mitsudome-r@users.noreply.github.com>
+  Co-authored-by: satoshi-ota <satoshi.ota928@gmail.com>
+* fix(goal_planner): fix geometric pull over (`#9932 <https://github.com/autowarefoundation/autoware.universe/issues/9932>`_)
+* test(autoware_behavior_path_start_planner_module):  add test helper and implement unit tests for FreespacePullOut (`#9832 <https://github.com/autowarefoundation/autoware.universe/issues/9832>`_)
+  * refactor(autoware_behavior_path_start_planner_module): remove unnecessary time_keeper parameter from pull-out planners
+  * refactor(autoware_behavior_path_start_planner_module): remove TimeKeeper parameter from pull-out planners
+  * refactor(lane_departure_checker): improve LaneDepartureChecker initialization and parameter handling
+  * refactor(planner): add planner_data parameter to plan methods in pull out planners
+  * refactor(autoware_behavior_path_start_planner_module): remove LaneDepartureChecker dependency from pull-out planners
+  ---------
+* feat(goal_planner): update lateral_deviation_thresh from `0.3` to `0.1` (`#9850 <https://github.com/autowarefoundation/autoware.universe/issues/9850>`_)
+  * fix(goal_planner): Update lateral_deviation_thresh from 0.3 to 0.1
+  * unified hasDeviatedFrom{Last|Current}PreviousModulePath
+  * style(pre-commit): autofix
+  * hasDeviatedFromPath argument modification
+  * style(pre-commit): autofix
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* feat(goal_planner): cut stop path to goal (`#9829 <https://github.com/autowarefoundation/autoware.universe/issues/9829>`_)
+* refactor(lane_departure_checker): improve LaneDepartureChecker initialization and parameter handling (`#9791 <https://github.com/autowarefoundation/autoware.universe/issues/9791>`_)
+  * refactor(lane_departure_checker): improve LaneDepartureChecker initialization and parameter handling
+  ---------
+* fix(goal_planner): fix usage of last_previous_module_output (`#9811 <https://github.com/autowarefoundation/autoware.universe/issues/9811>`_)
+* fix(behavior_path_planner): add freespace_planning_algorithms dependency (`#9800 <https://github.com/autowarefoundation/autoware.universe/issues/9800>`_)
+* chore(autoware_test_utils): update test map (`#9664 <https://github.com/autowarefoundation/autoware.universe/issues/9664>`_)
+* refactor(goal_planner): divide sort function (`#9650 <https://github.com/autowarefoundation/autoware.universe/issues/9650>`_)
+* perf(goal_planner): remove unnecessary call to setMap on freespace planning (`#9644 <https://github.com/autowarefoundation/autoware.universe/issues/9644>`_)
+* feat(goal_planner): add bezier based pull over planner (`#9642 <https://github.com/autowarefoundation/autoware.universe/issues/9642>`_)
+* feat(goal_planner): divide Planners to isolated threads (`#9514 <https://github.com/autowarefoundation/autoware.universe/issues/9514>`_)
+* Contributors: Fumiya Watanabe, Kazunori-Nakajima, Kosuke Takeuchi, Kyoichi Sugahara, Mamoru Sobue, Takayuki Murooka
+
+0.40.0 (2024-12-12)
+-------------------
+* Merge branch 'main' into release-0.40.0
+* Revert "chore(package.xml): bump version to 0.39.0 (`#9587 <https://github.com/autowarefoundation/autoware.universe/issues/9587>`_)"
+  This reverts commit c9f0f2688c57b0f657f5c1f28f036a970682e7f5.
+* feat(behavior_path_planner): add detail text to virutal wall (`#9600 <https://github.com/autowarefoundation/autoware.universe/issues/9600>`_)
+  * feat(behavior_path_planner): add detail text to virutal wall
+  * goal is far
+  * pull over start pose is far
+  * fix lc build
+  * fix build
+  * Update planning/behavior_path_planner/autoware_behavior_path_goal_planner_module/src/goal_planner_module.cpp
+  ---------
+* fix: fix ticket links in CHANGELOG.rst (`#9588 <https://github.com/autowarefoundation/autoware.universe/issues/9588>`_)
+* fix(goal_planner): fix isStopped judgement (`#9585 <https://github.com/autowarefoundation/autoware.universe/issues/9585>`_)
+  * fix(goal_planner): fix isStopped judgement
+  * fix typo
+  ---------
+* chore(package.xml): bump version to 0.39.0 (`#9587 <https://github.com/autowarefoundation/autoware.universe/issues/9587>`_)
+  * chore(package.xml): bump version to 0.39.0
+  * fix: fix ticket links in CHANGELOG.rst
+  * fix: remove unnecessary diff
+  ---------
+  Co-authored-by: Yutaka Kondo <yutaka.kondo@youtalk.jp>
+* fix: fix ticket links in CHANGELOG.rst (`#9588 <https://github.com/autowarefoundation/autoware.universe/issues/9588>`_)
+* feat(goal_planner): check opposite lane for lane departure_check (`#9460 <https://github.com/autowarefoundation/autoware.universe/issues/9460>`_)
+  * feat(goal_planner): check opposite lane for lane departure_check
+  * refactor getMostInnerLane
+  ---------
+* refactor(goal_planner): improve log message and change level (`#9562 <https://github.com/autowarefoundation/autoware.universe/issues/9562>`_)
+  Co-authored-by: Yukinari Hisaki <42021302+yhisaki@users.noreply.github.com>
+* fix(cpplint): include what you use - planning (`#9570 <https://github.com/autowarefoundation/autoware.universe/issues/9570>`_)
+* refactor(goal_planner): move PathDecisionController implementation to a different file (`#9523 <https://github.com/autowarefoundation/autoware.universe/issues/9523>`_)
+  refactor(goal_planner): move decision_state implementation
+* refactor(goal_planner): move unnecessary member functions (`#9522 <https://github.com/autowarefoundation/autoware.universe/issues/9522>`_)
+* fix(autoware_freespace_planner, autoware_freespace_planning_algorithms): modify freespace planner to use node clock instead of system clock (`#9152 <https://github.com/autowarefoundation/autoware.universe/issues/9152>`_)
+  * Modified the autoware_freespace_planner and autoware_freespace_planning_algorithms packages to use the node clock instead of rclcpp detached clock. This allows the module to make use of sim time. Previously during simulation the parking trajectory would have system time in trajectory header messages causing downstream issues like non-clearance of trajectory buffers in motion planning based on elapsed time.
+  * style(pre-commit): autofix
+  * Updated the freespace planner instantiation call in the path planning modules
+  * style(pre-commit): autofix
+  * Updated tests for the utility functions
+  * style(pre-commit): autofix
+  ---------
+  Co-authored-by: Steven Brills <sbrills@oshkoshcorp.com>
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* fix(goal_planner): fix multiple lane ids of shift pull over (`#9360 <https://github.com/autowarefoundation/autoware.universe/issues/9360>`_)
+  fix vel
+* fix(goal_planner): remove stop reason (`#9365 <https://github.com/autowarefoundation/autoware.universe/issues/9365>`_)
+* 0.39.0
+* update changelog
+* Merge commit '6a1ddbd08bd' into release-0.39.0
+* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/autowarefoundation/autoware.universe/issues/9304>`_)
+* fix(goal_planner): use departure_check_lane for path (`#9423 <https://github.com/autowarefoundation/autoware.universe/issues/9423>`_)
+* refactor(goal_planner): rename shoulder_lane to pull_over_lane (`#9422 <https://github.com/autowarefoundation/autoware.universe/issues/9422>`_)
+* feat(goal_planner): do not insert shift end pose on pull over lane to path (`#9361 <https://github.com/autowarefoundation/autoware.universe/issues/9361>`_)
+* feat(goal_planner): remove unnecessary member from ThreadSafeData (`#9393 <https://github.com/autowarefoundation/autoware.universe/issues/9393>`_)
+* feat(goal_planner): move goal_candidates from ThreadSafeData to GoalPlannerData (`#9292 <https://github.com/autowarefoundation/autoware.universe/issues/9292>`_)
+* feat(goal_planner): output velocity factor (`#9348 <https://github.com/autowarefoundation/autoware.universe/issues/9348>`_)
+* refactor(bpp): rework steering factor interface (`#9325 <https://github.com/autowarefoundation/autoware.universe/issues/9325>`_)
+  * refactor(bpp): rework steering factor interface
+  * refactor(soa): rework steering factor interface
+  * refactor(AbLC): rework steering factor interface
+  * refactor(doa): rework steering factor interface
+  * refactor(lc): rework steering factor interface
+  * refactor(gp): rework steering factor interface
+  * refactor(sp): rework steering factor interface
+  * refactor(sbp): rework steering factor interface
+  * refactor(ss): rework steering factor interface
+  ---------
+* refactor(goal_planner): remove reference_goal_pose getter/setter (`#9270 <https://github.com/autowarefoundation/autoware.universe/issues/9270>`_)
+* feat(goal_planner): safety check with only parking path (`#9293 <https://github.com/autowarefoundation/autoware.universe/issues/9293>`_)
+* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/autowarefoundation/autoware.universe/issues/9304>`_)
+* chore(package.xml): bump version to 0.38.0 (`#9266 <https://github.com/autowarefoundation/autoware.universe/issues/9266>`_) (`#9284 <https://github.com/autowarefoundation/autoware.universe/issues/9284>`_)
+  * unify package.xml version to 0.37.0
+  * remove system_monitor/CHANGELOG.rst
+  * add changelog
+  * 0.38.0
+  ---------
+* feat(goal_planner): sort candidate path only when num to avoid is different (`#9271 <https://github.com/autowarefoundation/autoware.universe/issues/9271>`_)
+* fix(autoware_behavior_path_goal_planner_module): fix cppcheck unreadVariable (`#9192 <https://github.com/autowarefoundation/autoware.universe/issues/9192>`_)
+* Contributors: Esteve Fernandez, Fumiya Watanabe, Kosuke Takeuchi, M. Fatih Cırıt, Mamoru Sobue, Ryohsuke Mitsudome, Ryuta Kambe, Satoshi OTA, Yutaka Kondo, stevenbrills
+
+0.39.0 (2024-11-25)
+-------------------
+* Merge commit '6a1ddbd08bd' into release-0.39.0
+* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/autowarefoundation/autoware.universe/issues/9304>`_)
+* refactor(goal_planner): remove reference_goal_pose getter/setter (`#9270 <https://github.com/autowarefoundation/autoware.universe/issues/9270>`_)
+* feat(goal_planner): safety check with only parking path (`#9293 <https://github.com/autowarefoundation/autoware.universe/issues/9293>`_)
+* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/autowarefoundation/autoware.universe/issues/9304>`_)
+* chore(package.xml): bump version to 0.38.0 (`#9266 <https://github.com/autowarefoundation/autoware.universe/issues/9266>`_) (`#9284 <https://github.com/autowarefoundation/autoware.universe/issues/9284>`_)
+  * unify package.xml version to 0.37.0
+  * remove system_monitor/CHANGELOG.rst
+  * add changelog
+  * 0.38.0
+  ---------
+* feat(goal_planner): sort candidate path only when num to avoid is different (`#9271 <https://github.com/autowarefoundation/autoware.universe/issues/9271>`_)
+* fix(autoware_behavior_path_goal_planner_module): fix cppcheck unreadVariable (`#9192 <https://github.com/autowarefoundation/autoware.universe/issues/9192>`_)
+* Contributors: Esteve Fernandez, Kosuke Takeuchi, Mamoru Sobue, Ryuta Kambe, Yutaka Kondo
+
 0.38.0 (2024-11-08)
 -------------------
 * unify package.xml version to 0.37.0

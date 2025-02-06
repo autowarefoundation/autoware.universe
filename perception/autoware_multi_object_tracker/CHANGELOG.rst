@@ -2,6 +2,150 @@
 Changelog for package autoware_multi_object_tracker
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(multi_object_tracker): integrate odometry and transform processes (`#9912 <https://github.com/autowarefoundation/autoware.universe/issues/9912>`_)
+  * feat: Add odometry processor to multi-object tracker
+  * refactor: Refactor Odometry class for improved code organization and readability
+  * feat: Refactor Odometry class for improved code organization and readability
+  * refactor: Transform objects to world coordinate in Odometry class
+  refactor: Transform objects to world coordinate in Odometry class
+  refactor: Update Odometry class to get transform from tf with source frame ID
+  feat: Update Odometry class to get transform from tf with source frame ID
+  fix: move necessare tr2 header
+  * Revert "refactor: Transform objects to world coordinate in Odometry class"
+  This reverts commit efca28a40105f80deb09d57b55cb6f9d83ffda2c.
+  * refactor: Remove unnecessary tf2 headers from tracker models
+  * fix: move transform obtainer to odometry class
+  * refactor: Update Odometry class to get transform from tf with source frame ID
+  * refactor: Transform objects to world coordinate in Odometry class
+  * refactor: remove transformObjects from shapes
+  * refactor: Update Odometry class to use 'updateFromTf' instead of 'setOdometryFromTf'
+  * refactor: Update Odometry class to use 'updateFromTf' instead of 'setOdometryFromTf'
+  * refactor: Update InputManager to include Odometry in constructor
+  * refactor: Move odometry.cpp to lib folder
+  * move object transform to input stream
+  * refactor: Add enable_odometry_uncertainty parameter to Odometry constructor
+  * refactor: Update Odometry class to return optional Odometry from getOdometryFromTf
+  * refactor: Update Odometry class to use tf_cache\_ for storing and retrieving transforms
+  * refactor: Update Odometry class to use tf_cache\_ for storing and retrieving transforms
+  * refactor: bring odometry covariance modeler into odometry class
+  * refactor: Remove redundant code for updating tf cache in Odometry::updateTfCache
+  * refactor: Update runProcess parameter name to detected_objects
+  ---------
+* feat: tier4_debug_msgs to autoware_internal_debug_msgs in files  perc… (`#9879 <https://github.com/autowarefoundation/autoware.universe/issues/9879>`_)
+  feat: tier4_debug_msgs to autoware_internal_debug_msgs in files  perception/autoware_multi_object_tracker
+* chore(autoware_multi_object_tracker): fix autoware univserse documentation page (`#9772 <https://github.com/autowarefoundation/autoware.universe/issues/9772>`_)
+  * feat: Add descriptions for confidence thresholds in multi_object_tracker_node schema
+  * feat: Update multi_object_tracker_node schema with confidence threshold descriptions
+  ---------
+* refactor(autoware_multi_object_tracker): define a new internal object class (`#9706 <https://github.com/autowarefoundation/autoware.universe/issues/9706>`_)
+  * feat: Add dynamic_object.hpp to object_model directory
+  * chore: Update autoware_perception_msgs include statements in association.hpp and dynamic_object.hpp
+  * fix: replace object message type to the DynamicObject type
+  * chore: Update autoware_perception_msgs include statements in association.hpp and dynamic_object.hpp
+  * chore: add channel index to the DynamicObjects
+  * Revert "chore: add channel index to the DynamicObjects"
+  This reverts commit c7e73f08a8d17b5b085dd330dbf187aabbec6879.
+  * fix: replace trackedobject in the process
+  * fix: Replace transformObjects with shapes::transformObjects for object transformation
+  * chore: add channel index to the DynamicObjects
+  * feat: separate shape related functions
+  * chore: clean up utils.hpp
+  * chore: Update function signatures to use DynamicObjectList instead of DynamicObjects
+  * chore: Add channel index to DynamicObject and DynamicObjectList
+  * chore: Refactor processor and debugger classes to remove channel_index parameter
+  * chore: Refactor multiple_vehicle_tracker.cpp and debugger.cpp
+  * Refactor object tracker classes to remove self_transform parameter
+  * Refactor object tracker classes to use shapes namespace for shape-related functions
+  * Refactor object tracker classes to use types.hpp for object model types
+  * Refactor object tracker classes to remove unused utils.hpp
+  * Refactor object tracker classes to use types.hpp for object model types
+  * chore: rename to types.cpp
+  * rename getDynamicObject to toDynamicObject
+  * Update perception/autoware_multi_object_tracker/lib/object_model/shapes.cpp
+  Co-authored-by: Yukihiro Saito <yukky.saito@gmail.com>
+  ---------
+  Co-authored-by: Yukihiro Saito <yukky.saito@gmail.com>
+* fix(autoware_multi_object_tracker): fix bugprone-errors (`#9651 <https://github.com/autowarefoundation/autoware.universe/issues/9651>`_)
+  fix: bugprone-errors
+* refactor(autoware_multi_object_tracker): add configurable tracker parameters (`#9621 <https://github.com/autowarefoundation/autoware.universe/issues/9621>`_)
+  * refactor(autoware_multi_object_tracker): add configurable tracker parameters
+  * style(pre-commit): autofix
+  * refactor(autoware_multi_object_tracker): remove default values from parameter declarations
+  * refactor(autoware_multi_object_tracker): update schema file
+  * style(pre-commit): autofix
+  * Update perception/autoware_multi_object_tracker/src/processor/processor.cpp
+  * Update perception/autoware_multi_object_tracker/src/processor/processor.cpp
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+  Co-authored-by: Taekjin LEE <technolojin@gmail.com>
+* Contributors: Fumiya Watanabe, Taekjin LEE, Vishal Chauhan, jakor97, kobayu858
+
+0.40.0 (2024-12-12)
+-------------------
+* Merge branch 'main' into release-0.40.0
+* Revert "chore(package.xml): bump version to 0.39.0 (`#9587 <https://github.com/autowarefoundation/autoware.universe/issues/9587>`_)"
+  This reverts commit c9f0f2688c57b0f657f5c1f28f036a970682e7f5.
+* fix: fix ticket links in CHANGELOG.rst (`#9588 <https://github.com/autowarefoundation/autoware.universe/issues/9588>`_)
+* chore(package.xml): bump version to 0.39.0 (`#9587 <https://github.com/autowarefoundation/autoware.universe/issues/9587>`_)
+  * chore(package.xml): bump version to 0.39.0
+  * fix: fix ticket links in CHANGELOG.rst
+  * fix: remove unnecessary diff
+  ---------
+  Co-authored-by: Yutaka Kondo <yutaka.kondo@youtalk.jp>
+* fix: fix ticket links in CHANGELOG.rst (`#9588 <https://github.com/autowarefoundation/autoware.universe/issues/9588>`_)
+* fix(autoware_multi_object_tracker): measure latency with latest detection update time (`#9533 <https://github.com/autowarefoundation/autoware.universe/issues/9533>`_)
+  * fix: measure latency with latest detection update time
+  * fix: remove duplicated current_time
+  ---------
+* fix(cpplint): include what you use - perception (`#9569 <https://github.com/autowarefoundation/autoware.universe/issues/9569>`_)
+* ci(pre-commit): autoupdate (`#8949 <https://github.com/autowarefoundation/autoware.universe/issues/8949>`_)
+  Co-authored-by: M. Fatih Cırıt <mfc@autoware.org>
+* fix(autoware_multi_object_tracker): fix clang-diagnostic-unused-private-field (`#9491 <https://github.com/autowarefoundation/autoware.universe/issues/9491>`_)
+* 0.39.0
+* update changelog
+* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/autowarefoundation/autoware.universe/issues/9304>`_)
+* feat(autoware_multi_object_tracker): new function to add odometry uncertainty (`#9139 <https://github.com/autowarefoundation/autoware.universe/issues/9139>`_)
+  * feat: add Odometry uncertainty to object tracking
+  * feat: Add odometry heading uncertainty to object pose covariance
+  feat: Rotate object pose covariance matrix to account for yaw uncertainty
+  Rotate the object pose covariance matrix in the uncertainty_processor.cpp file to account for the yaw uncertainty. This ensures that the covariance matrix accurately represents the position uncertainty of the object.
+  Refactor the code to rotate the covariance matrix using Eigen's Rotation2D class. The yaw uncertainty is added to the y-y element of the rotated covariance matrix. Finally, update the object_pose_cov array with the updated covariance values.
+  Closes `#123 <https://github.com/autowarefoundation/autoware.universe/issues/123>`_
+  * feat: Add odometry motion uncertainty to object pose covariance
+  refactoring
+  * feat: Update ego twist uncertainty to the object velocity uncertainty
+  * feat: update object twist covariance by odometry yaw rate uncertainty
+  * feat: move uncertainty modeling to input side
+  * feat: add option to select odometry uncertainty
+  * refactor: rename consider_odometry_uncertainty to enable_odometry_uncertainty
+  * fix: transform to world first, add odometry covariance later
+  style(pre-commit): autofix
+  * feat: Add odometry heading uncertainty to object pose covariance
+  ---------
+* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/autowarefoundation/autoware.universe/issues/9304>`_)
+* chore(package.xml): bump version to 0.38.0 (`#9266 <https://github.com/autowarefoundation/autoware.universe/issues/9266>`_) (`#9284 <https://github.com/autowarefoundation/autoware.universe/issues/9284>`_)
+  * unify package.xml version to 0.37.0
+  * remove system_monitor/CHANGELOG.rst
+  * add changelog
+  * 0.38.0
+  ---------
+* Contributors: Esteve Fernandez, Fumiya Watanabe, M. Fatih Cırıt, Ryohsuke Mitsudome, Taekjin LEE, Yutaka Kondo, awf-autoware-bot[bot], kobayu858
+
+0.39.0 (2024-11-25)
+-------------------
+* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/autowarefoundation/autoware.universe/issues/9304>`_)
+* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/autowarefoundation/autoware.universe/issues/9304>`_)
+* chore(package.xml): bump version to 0.38.0 (`#9266 <https://github.com/autowarefoundation/autoware.universe/issues/9266>`_) (`#9284 <https://github.com/autowarefoundation/autoware.universe/issues/9284>`_)
+  * unify package.xml version to 0.37.0
+  * remove system_monitor/CHANGELOG.rst
+  * add changelog
+  * 0.38.0
+  ---------
+* Contributors: Esteve Fernandez, Yutaka Kondo
+
 0.38.0 (2024-11-08)
 -------------------
 * unify package.xml version to 0.37.0

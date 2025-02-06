@@ -14,6 +14,7 @@
 
 #include "perception.hpp"
 
+#include <unordered_map>
 #include <vector>
 
 namespace autoware::default_adapi
@@ -49,9 +50,8 @@ uint8_t PerceptionNode::mapping(
   }
 }
 
-void PerceptionNode::object_recognize(
-  const autoware::component_interface_specs::perception::ObjectRecognition::Message::ConstSharedPtr
-    msg)
+void PerceptionNode::object_recognize(const autoware::component_interface_specs_universe::
+                                        perception::ObjectRecognition::Message::ConstSharedPtr msg)
 {
   DynamicObjectArray::Message objects;
   objects.header = msg->header;

@@ -28,8 +28,12 @@
 
 #include <tf2/utils.h>
 
+#include <algorithm>
 #include <cmath>
 #include <limits>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace autoware::behavior_path_planner::utils::path_safety_checker
 {
@@ -622,13 +626,15 @@ std::vector<Polygon2d> get_collided_polygons(
 
     // check intersects
     if (boost::geometry::intersects(ego_polygon, obj_polygon)) {
-      debug.unsafe_reason = "overlap_polygon";
+      if (collided_polygons.empty()) {
+        debug.unsafe_reason = "overlap_polygon";
+        debug.expected_ego_pose = ego_pose;
+        debug.expected_obj_pose = obj_pose;
+        debug.extended_ego_polygon = ego_polygon;
+        debug.extended_obj_polygon = obj_polygon;
+      }
       collided_polygons.push_back(obj_polygon);
 
-      debug.expected_ego_pose = ego_pose;
-      debug.expected_obj_pose = obj_pose;
-      debug.extended_ego_polygon = ego_polygon;
-      debug.extended_obj_polygon = obj_polygon;
       continue;
     }
 
@@ -676,14 +682,17 @@ std::vector<Polygon2d> get_collided_polygons(
 
     // check intersects with extended polygon
     if (boost::geometry::intersects(extended_ego_polygon, extended_obj_polygon)) {
-      debug.unsafe_reason = "overlap_extended_polygon";
+      if (collided_polygons.empty()) {
+        debug.unsafe_reason = "overlap_extended_polygon";
+        debug.rss_longitudinal = rss_dist;
+        debug.inter_vehicle_distance = min_lon_length;
+        debug.expected_ego_pose = ego_pose;
+        debug.expected_obj_pose = obj_pose;
+        debug.extended_ego_polygon = extended_ego_polygon;
+        debug.extended_obj_polygon = extended_obj_polygon;
+        debug.is_front = is_object_front;
+      }
       collided_polygons.push_back(obj_polygon);
-
-      debug.rss_longitudinal = rss_dist;
-      debug.inter_vehicle_distance = min_lon_length;
-      debug.extended_ego_polygon = extended_ego_polygon;
-      debug.extended_obj_polygon = extended_obj_polygon;
-      debug.is_front = is_object_front;
     }
   }
 
@@ -874,4 +883,18 @@ double calculateRoughDistanceToObjects(
   return min_distance;
 }
 
+tier4_planning_msgs::msg::SafetyFactorArray to_safety_factor_array(
+  const CollisionCheckDebugMap & debug_map)
+{
+  tier4_planning_msgs::msg::SafetyFactorArray safety_factors;
+  for (const auto & [uuid, data] : debug_map) {
+    tier4_planning_msgs::msg::SafetyFactor safety_factor;
+    safety_factor.type = tier4_planning_msgs::msg::SafetyFactor::OBJECT;
+    safety_factor.is_safe = data.is_safe;
+    safety_factor.object_id = autoware::universe_utils::toUUIDMsg(uuid);
+    safety_factor.points.push_back(data.current_obj_pose.position);
+    safety_factors.factors.push_back(safety_factor);
+  }
+  return safety_factors;
+}
 }  // namespace autoware::behavior_path_planner::utils::path_safety_checker

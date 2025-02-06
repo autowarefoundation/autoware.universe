@@ -2,6 +2,544 @@
 Changelog for package autoware_behavior_path_lane_change_module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* docs(lane_change): update lane change documentation (`#9949 <https://github.com/autowarefoundation/autoware.universe/issues/9949>`_)
+  * update lane change requirements documentation
+  * remove unused function getNumToPreferredLane
+  * update candidate path generation documentation
+  * update prepare phase and lane changing phase documentation
+  * update longitudinal acceleration sampling documentation
+  * add prepare duration sampling documentation
+  * update candidate path validity and safety documentation
+  * fix formatting
+  * update image and fix formatting
+  * add overtaking turn lane documentation
+  * Update planning/behavior_path_planner/autoware_behavior_path_lane_change_module/README.md
+  Co-authored-by: Maxime CLEMENT <78338830+maxime-clem@users.noreply.github.com>
+  * Update planning/behavior_path_planner/autoware_behavior_path_lane_change_module/README.md
+  Co-authored-by: Maxime CLEMENT <78338830+maxime-clem@users.noreply.github.com>
+  * Update planning/behavior_path_planner/autoware_behavior_path_lane_change_module/README.md
+  Co-authored-by: Maxime CLEMENT <78338830+maxime-clem@users.noreply.github.com>
+  * Update planning/behavior_path_planner/autoware_behavior_path_lane_change_module/README.md
+  Co-authored-by: Maxime CLEMENT <78338830+maxime-clem@users.noreply.github.com>
+  * add LC global flowchart to documentation
+  * Update planning/behavior_path_planner/autoware_behavior_path_lane_change_module/README.md
+  Co-authored-by: Zulfaqar Azmi <93502286+zulfaqar-azmi-t4@users.noreply.github.com>
+  * Update planning/behavior_path_planner/autoware_behavior_path_lane_change_module/README.md
+  Co-authored-by: Zulfaqar Azmi <93502286+zulfaqar-azmi-t4@users.noreply.github.com>
+  * reorganize lane change documentation
+  * fix section title
+  * add global flowchart description
+  * add warning
+  * apply pre-commit checks
+  * fix spelling
+  * edit some descriptions
+  ---------
+  Co-authored-by: Maxime CLEMENT <78338830+maxime-clem@users.noreply.github.com>
+  Co-authored-by: Zulfaqar Azmi <93502286+zulfaqar-azmi-t4@users.noreply.github.com>
+* docs(lane_change): object filtering description (`#9947 <https://github.com/autowarefoundation/autoware.universe/issues/9947>`_)
+  * docs(lane_change): object filtering description
+  * Move section up
+  * Update planning/behavior_path_planner/autoware_behavior_path_lane_change_module/README.md
+  Co-authored-by: mkquda <168697710+mkquda@users.noreply.github.com>
+  * Update planning/behavior_path_planner/autoware_behavior_path_lane_change_module/README.md
+  Co-authored-by: mkquda <168697710+mkquda@users.noreply.github.com>
+  ---------
+  Co-authored-by: mkquda <168697710+mkquda@users.noreply.github.com>
+* refactor(behavior_path_planner): common test functions (`#9963 <https://github.com/autowarefoundation/autoware.universe/issues/9963>`_)
+  * feat: common test code in behavior_path_planner
+  * deal with other modules
+  * fix typo
+  * update
+  ---------
+* refactor(lane_change): add missing safety check parameter  (`#9928 <https://github.com/autowarefoundation/autoware.universe/issues/9928>`_)
+  * refactor(lane_change): parameterize incoming object yaw threshold
+  * Readme
+  * Update planning/behavior_path_planner/autoware_behavior_path_lane_change_module/src/manager.cpp
+  Co-authored-by: Maxime CLEMENT <78338830+maxime-clem@users.noreply.github.com>
+  * Add missing parameters
+  * missing dot
+  * Update planning/behavior_path_planner/autoware_behavior_path_lane_change_module/README.md
+  Co-authored-by: mkquda <168697710+mkquda@users.noreply.github.com>
+  * update readme
+  ---------
+  Co-authored-by: Maxime CLEMENT <78338830+maxime-clem@users.noreply.github.com>
+  Co-authored-by: mkquda <168697710+mkquda@users.noreply.github.com>
+* feat(planning_factor)!: remove velocity_factor, steering_factor and introduce planning_factor (`#9927 <https://github.com/autowarefoundation/autoware.universe/issues/9927>`_)
+  Co-authored-by: Satoshi OTA <44889564+satoshi-ota@users.noreply.github.com>
+  Co-authored-by: Ryohsuke Mitsudome <43976834+mitsudome-r@users.noreply.github.com>
+  Co-authored-by: satoshi-ota <satoshi.ota928@gmail.com>
+* feat(lane_change): ensure path generation doesn't exceed time limit (`#9908 <https://github.com/autowarefoundation/autoware.universe/issues/9908>`_)
+  * add time limit for lane change candidate path generation
+  * apply time limit for frenet method as well
+  * ensure param update value is valid
+  * fix param update initial value
+  * fix spelling
+  * fix param update initial values
+  ---------
+* feat(lane_change_module): add update paramter function for non defined paramters (`#9887 <https://github.com/autowarefoundation/autoware.universe/issues/9887>`_)
+  * feat(lane_change_module): add new parameters for collision check and delay lane change functionality
+  * feat(lane_change_module): add validation for longitudinal and lateral acceleration sampling parameters
+  * feat(lane_change): update parameter handling and add lateral acceleration mapping
+  ---------
+* feat(lane_change): using frenet planner to generate lane change path when ego near terminal (`#9767 <https://github.com/autowarefoundation/autoware.universe/issues/9767>`_)
+  * frenet planner
+  * minor refactoring
+  * adding parameter
+  * Add diff th param
+  * limit curvature for prepare segment
+  * minor refactoring
+  * print average curvature
+  * refactor
+  * filter the path directly
+  * fix some conflicts
+  * include curvature smoothing
+  * document
+  * fix image folder
+  * image size
+  * doxygen
+  * add debug for state
+  * use sign function instead
+  * rename argument
+  * readme
+  * fix failed test due to empty value
+  * add additional note
+  * fix conflict
+  ---------
+* feat(lane_change): append candidate path index to metric debug table (`#9885 <https://github.com/autowarefoundation/autoware.universe/issues/9885>`_)
+  add candidate path index to metrics debug table
+* docs(lane_change): fix broken link (`#9892 <https://github.com/autowarefoundation/autoware.universe/issues/9892>`_)
+* docs(lane_change): explaining cancel and abort process (`#9845 <https://github.com/autowarefoundation/autoware.universe/issues/9845>`_)
+  * docs(lane_change): explaining cancel and abort process
+  * slight fix in formatting
+  * rephrase sentence
+  * rephrase and replace image for cancel
+  * Cancel explanations and limitations
+  * revise abort figure
+  * revise flow chart
+  * rephase sentence
+  * minor fix
+  * finish up
+  * offers change to reduces for negative connotation
+  * minor fix
+  * move limitation all the way down
+  * precommit
+  * equation mistake
+  * Update planning/behavior_path_planner/autoware_behavior_path_lane_change_module/README.md
+  Co-authored-by: Maxime CLEMENT <78338830+maxime-clem@users.noreply.github.com>
+  * Update planning/behavior_path_planner/autoware_behavior_path_lane_change_module/README.md
+  Co-authored-by: Maxime CLEMENT <78338830+maxime-clem@users.noreply.github.com>
+  * rename subheading
+  ---------
+  Co-authored-by: Maxime CLEMENT <78338830+maxime-clem@users.noreply.github.com>
+* refactor(lane_change): refactor transit failure function (`#9835 <https://github.com/autowarefoundation/autoware.universe/issues/9835>`_)
+  * refactor(lane_change): refactor transit failure function
+  * fixed failed scenario
+  * remove is abort from debug
+  * set is abort state
+  * add comments for clarity
+  * include what you use.
+  ---------
+* feat(lane_change): implement terminal lane change feature (`#9592 <https://github.com/autowarefoundation/autoware.universe/issues/9592>`_)
+  * implement function to compute terminal lane change path
+  * push terminal path to candidate paths if no other valid candidate path is found
+  * use terminal path in LC interface planWaitingApproval function
+  * set lane changing longitudinal accel to zero for terminal lc path
+  * rename function
+  * chore: rename codeowners file
+  * remove unused member variable prev_approved_path\_
+  * refactor stop point insertion for terminal lc path
+  * add flag to enable/disable terminal path feature
+  * update README
+  * add parameter to configure stop point placement
+  * compute terminal path only when near terminal start
+  * add option to disable feature near goal
+  * set default flag value to false
+  * add documentation for terminal lane change path
+  * ensure actual prepare duration is always above minimum prepare duration threshold
+  * explicitly return std::nullopt
+  * Update planning/behavior_path_planner/autoware_behavior_path_lane_change_module/src/scene.cpp
+  Co-authored-by: Zulfaqar Azmi <93502286+zulfaqar-azmi-t4@users.noreply.github.com>
+  * fix assignment
+  * fix spelling
+  * fix merge errors
+  ---------
+  Co-authored-by: tomoya.kimura <tomoya.kimura@tier4.jp>
+  Co-authored-by: Zulfaqar Azmi <93502286+zulfaqar-azmi-t4@users.noreply.github.com>
+* feat(lane_change): add text display for candidate path sampling metrics (`#9810 <https://github.com/autowarefoundation/autoware.universe/issues/9810>`_)
+  * display candidate path sampling metrics on rviz
+  * rename struct
+  ---------
+* feat(lane_change): revise current lane objects filtering (`#9785 <https://github.com/autowarefoundation/autoware.universe/issues/9785>`_)
+  * consider stopped front objects
+  * simplify computation of dist to front current lane object
+  * add flag to enable/disable keeping distance from front stopped vehicle
+  * fix object filtering test
+  ---------
+* refactor(lane_change): replace sstream to fmt for marker's text (`#9775 <https://github.com/autowarefoundation/autoware.universe/issues/9775>`_)
+* feat(lane_change): add info text to virtual wall (`#9783 <https://github.com/autowarefoundation/autoware.universe/issues/9783>`_)
+  * specify reason for lane change stop line
+  * add stop reason for incoming rear object
+  ---------
+* fix(lane_change): add metrics to valid paths visualization (`#9737 <https://github.com/autowarefoundation/autoware.universe/issues/9737>`_)
+  * fix(lane_change): add metrics to valid paths visualization
+  * fix cpp-check error
+  ---------
+* refactor(lane_change): separate path-related function to utils/path (`#9633 <https://github.com/autowarefoundation/autoware.universe/issues/9633>`_)
+  * refactor(lane_change): separate path-related function to utils/path
+  * remove old terminal lane change computation
+  * doxygen comments
+  * remove frenet planner header
+  * minor refactoring by throwing instead
+  * minor refactoring
+  * fix docstring and remove redundant argument
+  * get logger in header
+  * add docstring
+  * rename function is_colliding
+  * Fix failing test
+  * fix for failing scenario caused by prepare velocity
+  * fix error message
+  ---------
+* fix(lane_change): fix prepare length too short at low speed (RT1-8909) (`#9735 <https://github.com/autowarefoundation/autoware.universe/issues/9735>`_)
+  fix prepare length too short at low speed (RT1-8909)
+* refactor(lane_change): separate structs to different folders (`#9625 <https://github.com/autowarefoundation/autoware.universe/issues/9625>`_)
+* fix(lane_change): remove overlapping preceding lanes (`#9526 <https://github.com/autowarefoundation/autoware.universe/issues/9526>`_)
+  * fix(lane_change): remove overlapping preceding lanes
+  * fix cpp check
+  * start searching disconnected lanes directly
+  * just remove starting from overlapped found
+  * return non reversed lanes
+  * fix precommit
+  ---------
+* Contributors: Fumiya Watanabe, Kyoichi Sugahara, Mamoru Sobue, Takayuki Murooka, Zulfaqar Azmi, mkquda
+
+0.40.0 (2024-12-12)
+-------------------
+* Merge branch 'main' into release-0.40.0
+* Revert "chore(package.xml): bump version to 0.39.0 (`#9587 <https://github.com/autowarefoundation/autoware.universe/issues/9587>`_)"
+  This reverts commit c9f0f2688c57b0f657f5c1f28f036a970682e7f5.
+* feat(behavior_path_planner): add detail text to virutal wall (`#9600 <https://github.com/autowarefoundation/autoware.universe/issues/9600>`_)
+  * feat(behavior_path_planner): add detail text to virutal wall
+  * goal is far
+  * pull over start pose is far
+  * fix lc build
+  * fix build
+  * Update planning/behavior_path_planner/autoware_behavior_path_goal_planner_module/src/goal_planner_module.cpp
+  ---------
+* fix: fix ticket links in CHANGELOG.rst (`#9588 <https://github.com/autowarefoundation/autoware.universe/issues/9588>`_)
+* fix(lane_change): check obj predicted path when filtering (`#9385 <https://github.com/autowarefoundation/autoware.universe/issues/9385>`_)
+  * RT1-8537 check object's predicted path when filtering
+  * use ranges view in get_line_string_paths
+  * check only vehicle type predicted path
+  * Refactor naming
+  * fix grammatical
+  * Update planning/behavior_path_planner/autoware_behavior_path_lane_change_module/src/utils/utils.cpp
+  Co-authored-by: Maxime CLEMENT <78338830+maxime-clem@users.noreply.github.com>
+  * precommit and grammar fix
+  ---------
+  Co-authored-by: Maxime CLEMENT <78338830+maxime-clem@users.noreply.github.com>
+* chore(package.xml): bump version to 0.39.0 (`#9587 <https://github.com/autowarefoundation/autoware.universe/issues/9587>`_)
+  * chore(package.xml): bump version to 0.39.0
+  * fix: fix ticket links in CHANGELOG.rst
+  * fix: remove unnecessary diff
+  ---------
+  Co-authored-by: Yutaka Kondo <yutaka.kondo@youtalk.jp>
+* fix: fix ticket links in CHANGELOG.rst (`#9588 <https://github.com/autowarefoundation/autoware.universe/issues/9588>`_)
+* feat(lane_change): reduce prepare duration when blinker has been activated (`#9185 <https://github.com/autowarefoundation/autoware.universe/issues/9185>`_)
+  * add minimum prepare duration parameter
+  * reduce prepare duration according to signal activation time
+  * chore: update CODEOWNERS (`#9203 <https://github.com/autowarefoundation/autoware.universe/issues/9203>`_)
+  Co-authored-by: github-actions <github-actions@github.com>
+  * refactor(time_utils): prefix package and namespace with autoware (`#9173 <https://github.com/autowarefoundation/autoware.universe/issues/9173>`_)
+  * refactor(time_utils): prefix package and namespace with autoware
+  * refactor(time_utils): prefix package and namespace with autoware
+  * style(pre-commit): autofix
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+  * feat(rtc_interface): add requested field (`#9202 <https://github.com/autowarefoundation/autoware.universe/issues/9202>`_)
+  * add requested feature
+  * Update planning/autoware_rtc_interface/test/test_rtc_interface.cpp
+  Co-authored-by: Satoshi OTA <44889564+satoshi-ota@users.noreply.github.com>
+  ---------
+  Co-authored-by: Satoshi OTA <44889564+satoshi-ota@users.noreply.github.com>
+  * fix(mpc_lateral_controller): correctly resample the MPC trajectory yaws (`#9199 <https://github.com/autowarefoundation/autoware.universe/issues/9199>`_)
+  * fix(bpp): prevent accessing nullopt (`#9204 <https://github.com/autowarefoundation/autoware.universe/issues/9204>`_)
+  fix(bpp): calcDistanceToRedTrafficLight null
+  * refactor(autoware_map_based_prediction): split pedestrian and bicycle predictor (`#9201 <https://github.com/autowarefoundation/autoware.universe/issues/9201>`_)
+  * refactor: grouping functions
+  * refactor: grouping parameters
+  * refactor: rename member road_users_history to road_users_history\_
+  * refactor: separate util functions
+  * refactor: Add predictor_vru.cpp and utils.cpp to map_based_prediction_node
+  * refactor: Add explicit template instantiation for removeOldObjectsHistory function
+  * refactor: Add tf2_geometry_msgs to data_structure
+  * refactor: Remove unused variables and functions in map_based_prediction_node.cpp
+  * Update perception/autoware_map_based_prediction/include/map_based_prediction/predictor_vru.hpp
+  * Apply suggestions from code review
+  * style(pre-commit): autofix
+  ---------
+  Co-authored-by: Mamoru Sobue <hilo.soblin@gmail.com>
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+  * refactor(ndt_scan_matcher, ndt_omp): move ndt_omp into ndt_scan_matcher (`#8912 <https://github.com/autowarefoundation/autoware.universe/issues/8912>`_)
+  * Moved ndt_omp into ndt_scan_matcher
+  * Added Copyright
+  * style(pre-commit): autofix
+  * Fixed include
+  * Fixed cast style
+  * Fixed include
+  * Fixed honorific title
+  * Fixed honorific title
+  * style(pre-commit): autofix
+  * Fixed include hierarchy
+  * style(pre-commit): autofix
+  * Fixed include hierarchy
+  * style(pre-commit): autofix
+  * Fixed hierarchy
+  * Fixed NVTP to NVTL
+  * Added cspell:ignore
+  * Fixed miss spell
+  * style(pre-commit): autofix
+  * Fixed include
+  * Renamed applyFilter
+  * Moved ***_impl.hpp from include/ to src/
+  * style(pre-commit): autofix
+  * Fixed variable scope
+  * Fixed to pass by reference
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+  * feat(autoware_test_utils): add traffic light msgs parser (`#9177 <https://github.com/autowarefoundation/autoware.universe/issues/9177>`_)
+  * modify implementation to compute and keep actual prepare duration in transient data
+  * if LC path is approved, set prepare duration in transient data from approved path prepare duration
+  * change default value of LC param min_prepare_duration
+  * Update planning/behavior_path_planner/autoware_behavior_path_lane_change_module/src/utils/utils.cpp
+  Co-authored-by: Zulfaqar Azmi <93502286+zulfaqar-azmi-t4@users.noreply.github.com>
+  * add function to set signal activation time, add docstring for function calc_actual_prepare_duration
+  * check for zero value max_acc to avoid division by zero
+  * chore: rename codeowners file
+  * chore: rename codeowners file
+  * chore: rename codeowners file
+  * allow decelerating in lane changing phase near terminal
+  * fix spelling
+  * fix units
+  * allow decelerating in lane changing phase near terminal
+  * Update planning/behavior_path_planner/autoware_behavior_path_lane_change_module/README.md
+  Co-authored-by: Maxime CLEMENT <78338830+maxime-clem@users.noreply.github.com>
+  * run pre-commit check
+  * fix spelling
+  * fix format
+  * allow decelerating in lane changing phase near terminal
+  * Update planning/behavior_path_planner/autoware_behavior_path_lane_change_module/README.md
+  Co-authored-by: Maxime CLEMENT <78338830+maxime-clem@users.noreply.github.com>
+  * run pre-commit check
+  * fix spelling
+  * fix format
+  ---------
+  Co-authored-by: awf-autoware-bot[bot] <94889083+awf-autoware-bot[bot]@users.noreply.github.com>
+  Co-authored-by: github-actions <github-actions@github.com>
+  Co-authored-by: Esteve Fernandez <33620+esteve@users.noreply.github.com>
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+  Co-authored-by: Go Sakayori <go-sakayori@users.noreply.github.com>
+  Co-authored-by: Satoshi OTA <44889564+satoshi-ota@users.noreply.github.com>
+  Co-authored-by: Maxime CLEMENT <78338830+maxime-clem@users.noreply.github.com>
+  Co-authored-by: Shumpei Wakabayashi <42209144+shmpwk@users.noreply.github.com>
+  Co-authored-by: Taekjin LEE <taekjin.lee@tier4.jp>
+  Co-authored-by: Mamoru Sobue <hilo.soblin@gmail.com>
+  Co-authored-by: SakodaShintaro <shintaro.sakoda@tier4.jp>
+  Co-authored-by: Zulfaqar Azmi <93502286+zulfaqar-azmi-t4@users.noreply.github.com>
+  Co-authored-by: tomoya.kimura <tomoya.kimura@tier4.jp>
+* feat(lane_changing): improve computation of lane changing acceleration (`#9545 <https://github.com/autowarefoundation/autoware.universe/issues/9545>`_)
+  * allow decelerating in lane changing phase near terminal
+  * Update planning/behavior_path_planner/autoware_behavior_path_lane_change_module/README.md
+  Co-authored-by: Maxime CLEMENT <78338830+maxime-clem@users.noreply.github.com>
+  * run pre-commit check
+  * fix spelling
+  * fix format
+  ---------
+  Co-authored-by: Maxime CLEMENT <78338830+maxime-clem@users.noreply.github.com>
+* fix(cpplint): include what you use - planning (`#9570 <https://github.com/autowarefoundation/autoware.universe/issues/9570>`_)
+* refactor(test_utils): return parser as optional (`#9391 <https://github.com/autowarefoundation/autoware.universe/issues/9391>`_)
+  Co-authored-by: Mamoru Sobue <hilo.soblin@gmail.com>
+* fix(lane_change): cap ego's predicted path velocity (RT1-8505) (`#9341 <https://github.com/autowarefoundation/autoware.universe/issues/9341>`_)
+  * fix(lane_change): cap ego's predicted path velocity (RT1-8505)
+  * properly cap based on 0.0 instead of min lc vel
+  * fix build error
+  ---------
+* fix(autoware_behavior_path_lane_change_module): fix clang-diagnostic-unused-variable (`#9401 <https://github.com/autowarefoundation/autoware.universe/issues/9401>`_)
+* feat(lane_change): improve delay lane change logic (`#9480 <https://github.com/autowarefoundation/autoware.universe/issues/9480>`_)
+  * implement function to check if lane change delay is required
+  * refactor function isParkedObject
+  * refactor delay lane change parameters
+  * update lc param yaml
+  * separate target lane leading objects based on behavior (RT1-8532)
+  * fixed overlapped filtering and lanes debug marker
+  * combine filteredObjects function
+  * renaming functions and type
+  * update some logic to check is stopped
+  * rename expanded to stopped_outside_boundary
+  * Include docstring
+  * rename stopped_outside_boundary → stopped_at_bound
+  * Update planning/behavior_path_planner/autoware_behavior_path_planner_common/include/autoware/behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp
+  Co-authored-by: mkquda <168697710+mkquda@users.noreply.github.com>
+  * Update planning/behavior_path_planner/autoware_behavior_path_planner_common/include/autoware/behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp
+  Co-authored-by: mkquda <168697710+mkquda@users.noreply.github.com>
+  * spell-check
+  * add docstring for function is_delay_lane_change
+  * remove unused functions
+  * fix spelling
+  * add delay parameters to README
+  * add documentation for delay lane change behavior
+  * Update planning/behavior_path_planner/autoware_behavior_path_lane_change_module/src/utils/utils.cpp
+  Co-authored-by: Zulfaqar Azmi <93502286+zulfaqar-azmi-t4@users.noreply.github.com>
+  * Update planning/behavior_path_planner/autoware_behavior_path_lane_change_module/src/utils/utils.cpp
+  Co-authored-by: Zulfaqar Azmi <93502286+zulfaqar-azmi-t4@users.noreply.github.com>
+  * Update planning/behavior_path_planner/autoware_behavior_path_lane_change_module/src/utils/utils.cpp
+  Co-authored-by: Zulfaqar Azmi <93502286+zulfaqar-azmi-t4@users.noreply.github.com>
+  * run pre-commit checks
+  * only check for delay lc if feature is enabled
+  ---------
+  Co-authored-by: Zulfaqar Azmi <zulfaqar.azmi@tier4.jp>
+  Co-authored-by: Zulfaqar Azmi <93502286+zulfaqar-azmi-t4@users.noreply.github.com>
+* fix(autoware_behavior_path_lane_change_module): fix clang-diagnostic-error (`#9402 <https://github.com/autowarefoundation/autoware.universe/issues/9402>`_)
+* fix(autoware_behavior_path_lane_change_module): fix clang-diagnostic-overloaded-virtual (`#9400 <https://github.com/autowarefoundation/autoware.universe/issues/9400>`_)
+* feat(lane_change): parse predicted objects for lane change test (RT1-8251) (`#9256 <https://github.com/autowarefoundation/autoware.universe/issues/9256>`_)
+  * RT1-8251 parse predicted objects
+  * fix pre-commit and build error
+  * add additional test and fix test failure
+  * fix lint_cmake failure
+  * use expect instead
+  * Update planning/behavior_path_planner/autoware_behavior_path_lane_change_module/test/test_lane_change_scene.cpp
+  Co-authored-by: mkquda <168697710+mkquda@users.noreply.github.com>
+  ---------
+  Co-authored-by: mkquda <168697710+mkquda@users.noreply.github.com>
+* refactor(lane_change): refactor lane change parameters (`#9403 <https://github.com/autowarefoundation/autoware.universe/issues/9403>`_)
+  * refactor lane change parameters
+  * update lane change param yaml
+  * update lane change README
+  * regroup some parameters
+  * run pre-commit prettier step
+  * Update planning/behavior_path_planner/autoware_behavior_path_lane_change_module/include/autoware/behavior_path_lane_change_module/utils/parameters.hpp
+  Co-authored-by: Zulfaqar Azmi <93502286+zulfaqar-azmi-t4@users.noreply.github.com>
+  * Update planning/behavior_path_planner/autoware_behavior_path_lane_change_module/README.md
+  Co-authored-by: Zulfaqar Azmi <93502286+zulfaqar-azmi-t4@users.noreply.github.com>
+  * Update planning/behavior_path_planner/autoware_behavior_path_lane_change_module/README.md
+  Co-authored-by: Zulfaqar Azmi <93502286+zulfaqar-azmi-t4@users.noreply.github.com>
+  * apply pre-commit checks
+  ---------
+  Co-authored-by: Zulfaqar Azmi <93502286+zulfaqar-azmi-t4@users.noreply.github.com>
+* 0.39.0
+* update changelog
+* Merge commit '6a1ddbd08bd' into release-0.39.0
+* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/autowarefoundation/autoware.universe/issues/9304>`_)
+* refactor(lane_change): separate target lane leading based on obj behavior (`#9372 <https://github.com/autowarefoundation/autoware.universe/issues/9372>`_)
+  * separate target lane leading objects based on behavior (RT1-8532)
+  * fixed overlapped filtering and lanes debug marker
+  * combine filteredObjects function
+  * renaming functions and type
+  * update some logic to check is stopped
+  * rename expanded to stopped_outside_boundary
+  * Include docstring
+  * rename stopped_outside_boundary → stopped_at_bound
+  * Update planning/behavior_path_planner/autoware_behavior_path_planner_common/include/autoware/behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp
+  Co-authored-by: mkquda <168697710+mkquda@users.noreply.github.com>
+  * Update planning/behavior_path_planner/autoware_behavior_path_planner_common/include/autoware/behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp
+  Co-authored-by: mkquda <168697710+mkquda@users.noreply.github.com>
+  * spell-check
+  ---------
+  Co-authored-by: mkquda <168697710+mkquda@users.noreply.github.com>
+* feat(lane_change): output velocity factor (`#9349 <https://github.com/autowarefoundation/autoware.universe/issues/9349>`_)
+* refactor(lane_change): refactor extended object safety check (`#9322 <https://github.com/autowarefoundation/autoware.universe/issues/9322>`_)
+  * refactor LC extended object collision check code
+  * Update planning/behavior_path_planner/autoware_behavior_path_lane_change_module/src/scene.cpp
+  Co-authored-by: Zulfaqar Azmi <93502286+zulfaqar-azmi-t4@users.noreply.github.com>
+  ---------
+  Co-authored-by: Zulfaqar Azmi <93502286+zulfaqar-azmi-t4@users.noreply.github.com>
+* refactor(bpp): rework steering factor interface (`#9325 <https://github.com/autowarefoundation/autoware.universe/issues/9325>`_)
+  * refactor(bpp): rework steering factor interface
+  * refactor(soa): rework steering factor interface
+  * refactor(AbLC): rework steering factor interface
+  * refactor(doa): rework steering factor interface
+  * refactor(lc): rework steering factor interface
+  * refactor(gp): rework steering factor interface
+  * refactor(sp): rework steering factor interface
+  * refactor(sbp): rework steering factor interface
+  * refactor(ss): rework steering factor interface
+  ---------
+* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/autowarefoundation/autoware.universe/issues/9304>`_)
+* refactor(lane_change): remove std::optional from lanes polygon (`#9288 <https://github.com/autowarefoundation/autoware.universe/issues/9288>`_)
+* fix(lane_change): extending lane change path for multiple lane change (RT1-8427) (`#9268 <https://github.com/autowarefoundation/autoware.universe/issues/9268>`_)
+  * RT1-8427 extending lc path for multiple lc
+  * Update planning/behavior_path_planner/autoware_behavior_path_lane_change_module/src/scene.cpp
+  Co-authored-by: mkquda <168697710+mkquda@users.noreply.github.com>
+  ---------
+  Co-authored-by: mkquda <168697710+mkquda@users.noreply.github.com>
+* chore(package.xml): bump version to 0.38.0 (`#9266 <https://github.com/autowarefoundation/autoware.universe/issues/9266>`_) (`#9284 <https://github.com/autowarefoundation/autoware.universe/issues/9284>`_)
+  * unify package.xml version to 0.37.0
+  * remove system_monitor/CHANGELOG.rst
+  * add changelog
+  * 0.38.0
+  ---------
+* fix(lane_change): correct computation of maximum lane changing length threshold (`#9279 <https://github.com/autowarefoundation/autoware.universe/issues/9279>`_)
+  fix computation of maximum lane changing length threshold
+* refactor(lane_change): revert "remove std::optional from lanes polygon" (`#9272 <https://github.com/autowarefoundation/autoware.universe/issues/9272>`_)
+  Revert "refactor(lane_change): remove std::optional from lanes polygon (`#9267 <https://github.com/autowarefoundation/autoware.universe/issues/9267>`_)"
+  This reverts commit 0c70ea8793985c6aae90f851eeffdd2561fe04b3.
+* refactor(lane_change): remove std::optional from lanes polygon (`#9267 <https://github.com/autowarefoundation/autoware.universe/issues/9267>`_)
+* fix(lane_change): enable cancel when ego in turn direction lane (`#9124 <https://github.com/autowarefoundation/autoware.universe/issues/9124>`_)
+  * RT0-33893 add checks from prev intersection
+  * fix shadow variable
+  * fix logic
+  * update readme
+  * refactor get_ego_footprint
+  ---------
+* test(bpp_common): add unit test for safety check (`#9223 <https://github.com/autowarefoundation/autoware.universe/issues/9223>`_)
+  * add test for object collision
+  * add test for more functions
+  * add docstring
+  * fix lane change
+  ---------
+* Contributors: Esteve Fernandez, Fumiya Watanabe, Go Sakayori, Kosuke Takeuchi, M. Fatih Cırıt, Ryohsuke Mitsudome, Satoshi OTA, Yutaka Kondo, Zulfaqar Azmi, kobayu858, mkquda
+
+0.39.0 (2024-11-25)
+-------------------
+* Merge commit '6a1ddbd08bd' into release-0.39.0
+* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/autowarefoundation/autoware.universe/issues/9304>`_)
+* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/autowarefoundation/autoware.universe/issues/9304>`_)
+* refactor(lane_change): remove std::optional from lanes polygon (`#9288 <https://github.com/autowarefoundation/autoware.universe/issues/9288>`_)
+* fix(lane_change): extending lane change path for multiple lane change (RT1-8427) (`#9268 <https://github.com/autowarefoundation/autoware.universe/issues/9268>`_)
+  * RT1-8427 extending lc path for multiple lc
+  * Update planning/behavior_path_planner/autoware_behavior_path_lane_change_module/src/scene.cpp
+  Co-authored-by: mkquda <168697710+mkquda@users.noreply.github.com>
+  ---------
+  Co-authored-by: mkquda <168697710+mkquda@users.noreply.github.com>
+* chore(package.xml): bump version to 0.38.0 (`#9266 <https://github.com/autowarefoundation/autoware.universe/issues/9266>`_) (`#9284 <https://github.com/autowarefoundation/autoware.universe/issues/9284>`_)
+  * unify package.xml version to 0.37.0
+  * remove system_monitor/CHANGELOG.rst
+  * add changelog
+  * 0.38.0
+  ---------
+* fix(lane_change): correct computation of maximum lane changing length threshold (`#9279 <https://github.com/autowarefoundation/autoware.universe/issues/9279>`_)
+  fix computation of maximum lane changing length threshold
+* refactor(lane_change): revert "remove std::optional from lanes polygon" (`#9272 <https://github.com/autowarefoundation/autoware.universe/issues/9272>`_)
+  Revert "refactor(lane_change): remove std::optional from lanes polygon (`#9267 <https://github.com/autowarefoundation/autoware.universe/issues/9267>`_)"
+  This reverts commit 0c70ea8793985c6aae90f851eeffdd2561fe04b3.
+* refactor(lane_change): remove std::optional from lanes polygon (`#9267 <https://github.com/autowarefoundation/autoware.universe/issues/9267>`_)
+* fix(lane_change): enable cancel when ego in turn direction lane (`#9124 <https://github.com/autowarefoundation/autoware.universe/issues/9124>`_)
+  * RT0-33893 add checks from prev intersection
+  * fix shadow variable
+  * fix logic
+  * update readme
+  * refactor get_ego_footprint
+  ---------
+* test(bpp_common): add unit test for safety check (`#9223 <https://github.com/autowarefoundation/autoware.universe/issues/9223>`_)
+  * add test for object collision
+  * add test for more functions
+  * add docstring
+  * fix lane change
+  ---------
+* Contributors: Esteve Fernandez, Go Sakayori, Yutaka Kondo, Zulfaqar Azmi, mkquda
+
 0.38.0 (2024-11-08)
 -------------------
 * unify package.xml version to 0.37.0

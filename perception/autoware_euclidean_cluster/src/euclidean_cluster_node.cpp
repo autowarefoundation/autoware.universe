@@ -16,6 +16,7 @@
 
 #include "autoware/euclidean_cluster/utils.hpp"
 
+#include <memory>
 #include <vector>
 
 namespace autoware::euclidean_cluster
@@ -77,11 +78,11 @@ void EuclideanClusterNode::onPointCloud(
       std::chrono::duration<double, std::milli>(
         std::chrono::nanoseconds((this->get_clock()->now() - output.header.stamp).nanoseconds()))
         .count();
-    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/cyclic_time_ms", cyclic_time_ms);
-    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/processing_time_ms", processing_time_ms);
-    debug_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/pipeline_latency_ms", pipeline_latency_ms);
   }
 }

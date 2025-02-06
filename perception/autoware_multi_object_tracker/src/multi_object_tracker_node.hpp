@@ -20,6 +20,8 @@
 #define MULTI_OBJECT_TRACKER_NODE_HPP_
 
 #include "autoware/multi_object_tracker/association/association.hpp"
+#include "autoware/multi_object_tracker/object_model/types.hpp"
+#include "autoware/multi_object_tracker/odometry.hpp"
 #include "autoware/multi_object_tracker/tracker/model/tracker_base.hpp"
 #include "debugger/debugger.hpp"
 #include "processor/input_manager.hpp"
@@ -55,10 +57,6 @@
 namespace autoware::multi_object_tracker
 {
 
-using DetectedObject = autoware_perception_msgs::msg::DetectedObject;
-using DetectedObjects = autoware_perception_msgs::msg::DetectedObjects;
-using TrackedObjects = autoware_perception_msgs::msg::TrackedObjects;
-
 class MultiObjectTracker : public rclcpp::Node
 {
 public:
@@ -66,10 +64,9 @@ public:
 
 private:
   // ROS interface
-  rclcpp::Publisher<TrackedObjects>::SharedPtr tracked_objects_pub_;
-  rclcpp::Subscription<DetectedObjects>::SharedPtr detected_object_sub_;
-  tf2_ros::Buffer tf_buffer_;
-  tf2_ros::TransformListener tf_listener_;
+  rclcpp::Publisher<autoware_perception_msgs::msg::TrackedObjects>::SharedPtr tracked_objects_pub_;
+  rclcpp::Subscription<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr
+    detected_object_sub_;
 
   // debugger
   std::unique_ptr<TrackerDebugger> debugger_;
@@ -90,6 +87,7 @@ private:
 
   // input manager
   std::unique_ptr<InputManager> input_manager_;
+  std::shared_ptr<Odometry> odometry_;
 
   std::vector<InputChannel> input_channels_{};
   size_t input_channel_size_{};
@@ -97,10 +95,9 @@ private:
   // callback functions
   void onTimer();
   void onTrigger();
-  void onMessage(const ObjectsList & objects_list);
 
   // publish processes
-  void runProcess(const DetectedObjects & input_objects, const uint & channel_index);
+  void runProcess(const types::DynamicObjectList & detected_objects);
   void checkAndPublish(const rclcpp::Time & time);
   void publish(const rclcpp::Time & time) const;
   inline bool shouldTrackerPublish(const std::shared_ptr<const Tracker> tracker) const;

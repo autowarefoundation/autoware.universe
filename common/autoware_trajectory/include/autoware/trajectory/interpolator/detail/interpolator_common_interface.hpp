@@ -12,10 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// clang-format off
-#ifndef AUTOWARE__TRAJECTORY__INTERPOLATOR__DETAIL__INTERPOLATOR_COMMON_INTERFACE_HPP_  // NOLINT
-#define AUTOWARE__TRAJECTORY__INTERPOLATOR__DETAIL__INTERPOLATOR_COMMON_INTERFACE_HPP_  // NOLINT
-// clang-format on
+#ifndef AUTOWARE__TRAJECTORY__INTERPOLATOR__DETAIL__INTERPOLATOR_COMMON_INTERFACE_HPP_
+#define AUTOWARE__TRAJECTORY__INTERPOLATOR__DETAIL__INTERPOLATOR_COMMON_INTERFACE_HPP_
 
 #include <Eigen/Dense>
 #include <rclcpp/logging.hpp>
@@ -37,6 +35,7 @@ class InterpolatorCommonInterface
 {
 protected:
   std::vector<double> bases_;  ///< bases values for the interpolation.
+  bool is_built_{false};       ///< flag indicating whether the interpolator has been built.
 
   /**
    * @brief Get the start of the interpolation range.
@@ -74,17 +73,33 @@ protected:
    * Checks that the interpolator has been built and that the input value is within range.
    *
    * @param s The input value.
-   * @throw std::runtime_error if the interpolator has not been built.
+   * @return The input value, clamped to the range of the interpolator.
    */
-  void validate_compute_input(const double & s) const
+  [[nodiscard]] double validate_compute_input(const double & s) const
   {
     if (s < start() || s > end()) {
       RCLCPP_WARN(
         rclcpp::get_logger("Interpolator"),
         "Input value %f is outside the range of the interpolator [%f, %f].", s, start(), end());
     }
+    return std::clamp(s, start(), end());
   }
 
+  /**
+   * @brief Get the index of the interval containing the input value.
+   *
+   * This method determines the index of the interval in the bases array that contains the given
+   * value. It assumes that the bases array is sorted in ascending order.
+   *
+   * If `end_inclusive` is true and the input value matches the end of the bases array,
+   * the method returns the index of the second-to-last interval.
+   *
+   * @param s The input value for which to find the interval index.
+   * @param end_inclusive Whether to include the end value in the last interval. Defaults to true.
+   * @return The index of the interval containing the input value.
+   *
+   * @throw std::out_of_range if the input value is outside the range of the bases array.
+   */
   [[nodiscard]] int32_t get_index(const double & s, bool end_inclusive = true) const
   {
     if (end_inclusive && s == end()) {
@@ -96,6 +111,13 @@ protected:
   }
 
 public:
+  InterpolatorCommonInterface() = default;
+  virtual ~InterpolatorCommonInterface() = default;
+  InterpolatorCommonInterface(const InterpolatorCommonInterface & other) = default;
+  InterpolatorCommonInterface & operator=(const InterpolatorCommonInterface & other) = default;
+  InterpolatorCommonInterface(InterpolatorCommonInterface && other) noexcept = default;
+  InterpolatorCommonInterface & operator=(InterpolatorCommonInterface && other) noexcept = default;
+
   /**
    * @brief Build the interpolator with the given bases and values.
    *
@@ -103,7 +125,7 @@ public:
    * @param values The values to interpolate.
    * @return True if the interpolator was built successfully, false otherwise.
    */
-  bool build(const std::vector<double> & bases, const std::vector<T> & values)
+  [[nodiscard]] bool build(const std::vector<double> & bases, const std::vector<T> & values)
   {
     if (bases.size() != values.size()) {
       return false;
@@ -112,8 +134,16 @@ public:
       return false;
     }
     build_impl(bases, values);
+    is_built_ = true;
     return true;
   }
+
+  /**
+   * @brief Check if the interpolator has been built.
+   *
+   * @return True if the interpolator has been built, false otherwise.
+   */
+  [[nodiscard]] bool is_built() const { return is_built_; }
 
   /**
    * @brief Get the minimum number of required points for the interpolator.
@@ -129,15 +159,18 @@ public:
    *
    * @param s The point at which to compute the interpolated value.
    * @return The interpolated value.
+   * @throw std::runtime_error if the interpolator has not been built.
    */
   [[nodiscard]] T compute(const double & s) const
   {
-    validate_compute_input(s);
-    return compute_impl(s);
+    if (!is_built_) {
+      throw std::runtime_error(
+        "Interpolator has not been built.");  // This Exception should not be thrown.
+    }
+    const double clamped_s = validate_compute_input(s);
+    return compute_impl(clamped_s);
   }
 };
 }  // namespace autoware::trajectory::interpolator::detail
 
-// clang-format off
-#endif  // AUTOWARE__TRAJECTORY__INTERPOLATOR__DETAIL__INTERPOLATOR_COMMON_INTERFACE_HPP_  // NOLINT
-// clang-format on
+#endif  // AUTOWARE__TRAJECTORY__INTERPOLATOR__DETAIL__INTERPOLATOR_COMMON_INTERFACE_HPP_

@@ -17,9 +17,9 @@
 
 #include "utils.hpp"
 
-#include <autoware/behavior_velocity_planner_common/scene_module_interface.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/state_machine.hpp>
+#include <autoware/behavior_velocity_rtc_interface/scene_module_interface_with_rtc.hpp>
 #include <autoware_lanelet2_extension/regulatory_elements/no_stopping_area.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -31,7 +31,7 @@
 
 namespace autoware::behavior_velocity_planner
 {
-class NoStoppingAreaModule : public SceneModuleInterface
+class NoStoppingAreaModule : public SceneModuleInterfaceWithRTC
 {
 public:
   struct PlannerParam
@@ -57,9 +57,12 @@ public:
     const int64_t module_id, const int64_t lane_id,
     const lanelet::autoware::NoStoppingArea & no_stopping_area_reg_elem,
     const PlannerParam & planner_param, const rclcpp::Logger & logger,
-    const rclcpp::Clock::SharedPtr clock);
+    const rclcpp::Clock::SharedPtr clock,
+    const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+    const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
+      planning_factor_interface);
 
-  bool modifyPathVelocity(PathWithLaneId * path, StopReason * stop_reason) override;
+  bool modifyPathVelocity(PathWithLaneId * path) override;
 
   visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
   autoware::motion_utils::VirtualWalls createVirtualWalls() override;

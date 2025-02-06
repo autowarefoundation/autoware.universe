@@ -338,7 +338,8 @@ void IntersectionModuleManager::launchNewModules(
     }
     const auto new_module = std::make_shared<IntersectionModule>(
       module_id, lane_id, planner_data_, intersection_param_, associative_ids, turn_direction,
-      has_traffic_light, node_, logger_.get_child("intersection_module"), clock_);
+      has_traffic_light, node_, logger_.get_child("intersection_module"), clock_, time_keeper_,
+      planning_factor_interface_);
     generateUUID(module_id);
     /* set RTC status as non_occluded status initially */
     const UUID uuid = getUUID(new_module->getModuleId());
@@ -353,14 +354,14 @@ void IntersectionModuleManager::launchNewModules(
   }
 }
 
-std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
+std::function<bool(const std::shared_ptr<SceneModuleInterfaceWithRTC> &)>
 IntersectionModuleManager::getModuleExpiredFunction(
   const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto lane_set = planning_utils::getLaneletsOnPath(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
-  return [this, lane_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
+  return [lane_set](const std::shared_ptr<SceneModuleInterfaceWithRTC> & scene_module) {
     const auto intersection_module = std::dynamic_pointer_cast<IntersectionModule>(scene_module);
     const auto & associative_ids = intersection_module->getAssociativeIds();
     for (const auto & lane : lane_set) {
@@ -526,7 +527,8 @@ void MergeFromPrivateModuleManager::launchNewModules(
           planning_utils::getAssociativeIntersectionLanelets(ll, lanelet_map, routing_graph);
         registerModule(std::make_shared<MergeFromPrivateRoadModule>(
           module_id, lane_id, planner_data_, merge_from_private_area_param_, associative_ids,
-          logger_.get_child("merge_from_private_road_module"), clock_));
+          logger_.get_child("merge_from_private_road_module"), clock_, time_keeper_,
+          planning_factor_interface_));
         continue;
       }
     } else {
@@ -540,7 +542,8 @@ void MergeFromPrivateModuleManager::launchNewModules(
             planning_utils::getAssociativeIntersectionLanelets(ll, lanelet_map, routing_graph);
           registerModule(std::make_shared<MergeFromPrivateRoadModule>(
             module_id, lane_id, planner_data_, merge_from_private_area_param_, associative_ids,
-            logger_.get_child("merge_from_private_road_module"), clock_));
+            logger_.get_child("merge_from_private_road_module"), clock_, time_keeper_,
+            planning_factor_interface_));
           continue;
         }
       }
@@ -555,7 +558,7 @@ MergeFromPrivateModuleManager::getModuleExpiredFunction(
   const auto lane_set = planning_utils::getLaneletsOnPath(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
-  return [this, lane_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
+  return [lane_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
     const auto merge_from_private_module =
       std::dynamic_pointer_cast<MergeFromPrivateRoadModule>(scene_module);
     const auto & associative_ids = merge_from_private_module->getAssociativeIds();

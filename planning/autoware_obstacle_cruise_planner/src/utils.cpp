@@ -17,6 +17,10 @@
 #include "autoware/object_recognition_utils/predicted_path_utils.hpp"
 #include "autoware/universe_utils/ros/marker_helper.hpp"
 
+#include <limits>
+#include <string>
+#include <vector>
+
 namespace obstacle_cruise_utils
 {
 namespace
@@ -88,7 +92,7 @@ PoseWithStamp getCurrentObjectPose(
     getCurrentObjectPoseFromPredictedPaths(predicted_paths, obj_base_time, current_time);
 
   if (!interpolated_pose) {
-    RCLCPP_WARN(
+    RCLCPP_DEBUG(
       rclcpp::get_logger("ObstacleCruisePlanner"), "Failed to find the interpolated obstacle pose");
     return PoseWithStamp{obj_base_time, pose};
   }
@@ -113,4 +117,5 @@ std::vector<StopObstacle> getClosestStopObstacles(const std::vector<StopObstacle
   }
   return candidates;
 }
+
 }  // namespace obstacle_cruise_utils

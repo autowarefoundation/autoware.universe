@@ -2,6 +2,161 @@
 Changelog for package autoware_motion_utils
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* chore(planning): move package directory for planning factor interface (`#9948 <https://github.com/autowarefoundation/autoware.universe/issues/9948>`_)
+  * chore: add new package for planning factor interface
+  * chore(surround_obstacle_checker): update include file
+  * chore(obstacle_stop_planner): update include file
+  * chore(obstacle_cruise_planner): update include file
+  * chore(motion_velocity_planner): update include file
+  * chore(bpp): update include file
+  * chore(bvp-common): update include file
+  * chore(blind_spot): update include file
+  * chore(crosswalk): update include file
+  * chore(detection_area): update include file
+  * chore(intersection): update include file
+  * chore(no_drivable_area): update include file
+  * chore(no_stopping_area): update include file
+  * chore(occlusion_spot): update include file
+  * chore(run_out): update include file
+  * chore(speed_bump): update include file
+  * chore(stop_line): update include file
+  * chore(template_module): update include file
+  * chore(traffic_light): update include file
+  * chore(vtl): update include file
+  * chore(walkway): update include file
+  * chore(motion_utils): remove factor interface
+  ---------
+* feat(motion_utils): add detail and pass type to VirtualWall (`#9940 <https://github.com/autowarefoundation/autoware.universe/issues/9940>`_)
+* fix(autoware_motion_utils): remove clang compiler error (`#9713 <https://github.com/autowarefoundation/autoware.universe/issues/9713>`_)
+* feat(motion_utils): add planning factor interface (`#9676 <https://github.com/autowarefoundation/autoware.universe/issues/9676>`_)
+  * feat(motion_utils): add planning factor interface
+  * fix: use extern template
+  * fix: define function in header
+  ---------
+* Contributors: Fumiya Watanabe, Mamoru Sobue, Ryuta Kambe, Satoshi OTA
+
+0.40.0 (2024-12-12)
+-------------------
+* Merge branch 'main' into release-0.40.0
+* Revert "chore(package.xml): bump version to 0.39.0 (`#9587 <https://github.com/autowarefoundation/autoware.universe/issues/9587>`_)"
+  This reverts commit c9f0f2688c57b0f657f5c1f28f036a970682e7f5.
+* fix: fix ticket links in CHANGELOG.rst (`#9588 <https://github.com/autowarefoundation/autoware.universe/issues/9588>`_)
+* chore(package.xml): bump version to 0.39.0 (`#9587 <https://github.com/autowarefoundation/autoware.universe/issues/9587>`_)
+  * chore(package.xml): bump version to 0.39.0
+  * fix: fix ticket links in CHANGELOG.rst
+  * fix: remove unnecessary diff
+  ---------
+  Co-authored-by: Yutaka Kondo <yutaka.kondo@youtalk.jp>
+* fix: fix ticket links in CHANGELOG.rst (`#9588 <https://github.com/autowarefoundation/autoware.universe/issues/9588>`_)
+* fix(cpplint): include what you use - common (`#9564 <https://github.com/autowarefoundation/autoware.universe/issues/9564>`_)
+* 0.39.0
+* update changelog
+* Merge commit '6a1ddbd08bd' into release-0.39.0
+* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/autowarefoundation/autoware.universe/issues/9304>`_)
+* refactor(factor): move steering factor interface to motion utils (`#9337 <https://github.com/autowarefoundation/autoware.universe/issues/9337>`_)
+* feat(behavior_velocity_stop_line): replace autoware_motion_utils to autoware_trajectory (`#9299 <https://github.com/autowarefoundation/autoware.universe/issues/9299>`_)
+  * feat(behavior_velocity_stop_line): replace autoware_motion_utils to autoware_trajectory
+  * update
+  ---------
+* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/autowarefoundation/autoware.universe/issues/9304>`_)
+* chore(package.xml): bump version to 0.38.0 (`#9266 <https://github.com/autowarefoundation/autoware.universe/issues/9266>`_) (`#9284 <https://github.com/autowarefoundation/autoware.universe/issues/9284>`_)
+  * unify package.xml version to 0.37.0
+  * remove system_monitor/CHANGELOG.rst
+  * add changelog
+  * 0.38.0
+  ---------
+* feat(autoware_trajectory): move trajectory_container from autoware_motion_utils to a new package (`#9253 <https://github.com/autowarefoundation/autoware.universe/issues/9253>`_)
+  * create trajectory container package
+  * update
+  * update
+  * style(pre-commit): autofix
+  * update codeowner
+  * update
+  * fix cmake
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* feat(autoware_motion_utils): add new trajectory class (`#8693 <https://github.com/autowarefoundation/autoware.universe/issues/8693>`_)
+  * feat(autoware_motion_utils): add interpolator
+  * use int32_t instead of int
+  * use int32_t instead of int
+  * use int32_t instead of int
+  * add const as much as possible and use `at()` in `vector`
+  * fix directory name
+  * refactor code and add example
+  * update
+  * remove unused include
+  * refactor code
+  * add clone function
+  * fix stairstep
+  * make constructor to public
+  * feat(autoware_motion_utils): add trajectory class
+  * Update CMakeLists.txt
+  * fix
+  * fix package.xml
+  * update crop
+  * revert crtp change
+  * update package.xml
+  * updating...
+  * update
+  * solve build problem
+  * style(pre-commit): autofix
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* Contributors: Esteve Fernandez, Fumiya Watanabe, M. Fatih Cırıt, Ryohsuke Mitsudome, Satoshi OTA, Yukinari Hisaki, Yutaka Kondo
+
+0.39.0 (2024-11-25)
+-------------------
+* Merge commit '6a1ddbd08bd' into release-0.39.0
+* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/autowarefoundation/autoware.universe/issues/9304>`_)
+* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/autowarefoundation/autoware.universe/issues/9304>`_)
+* chore(package.xml): bump version to 0.38.0 (`#9266 <https://github.com/autowarefoundation/autoware.universe/issues/9266>`_) (`#9284 <https://github.com/autowarefoundation/autoware.universe/issues/9284>`_)
+  * unify package.xml version to 0.37.0
+  * remove system_monitor/CHANGELOG.rst
+  * add changelog
+  * 0.38.0
+  ---------
+* feat(autoware_trajectory): move trajectory_container from autoware_motion_utils to a new package (`#9253 <https://github.com/autowarefoundation/autoware.universe/issues/9253>`_)
+  * create trajectory container package
+  * update
+  * update
+  * style(pre-commit): autofix
+  * update codeowner
+  * update
+  * fix cmake
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* feat(autoware_motion_utils): add new trajectory class (`#8693 <https://github.com/autowarefoundation/autoware.universe/issues/8693>`_)
+  * feat(autoware_motion_utils): add interpolator
+  * use int32_t instead of int
+  * use int32_t instead of int
+  * use int32_t instead of int
+  * add const as much as possible and use `at()` in `vector`
+  * fix directory name
+  * refactor code and add example
+  * update
+  * remove unused include
+  * refactor code
+  * add clone function
+  * fix stairstep
+  * make constructor to public
+  * feat(autoware_motion_utils): add trajectory class
+  * Update CMakeLists.txt
+  * fix
+  * fix package.xml
+  * update crop
+  * revert crtp change
+  * update package.xml
+  * updating...
+  * update
+  * solve build problem
+  * style(pre-commit): autofix
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* Contributors: Esteve Fernandez, Yukinari Hisaki, Yutaka Kondo
+
 0.38.0 (2024-11-08)
 -------------------
 * unify package.xml version to 0.37.0
