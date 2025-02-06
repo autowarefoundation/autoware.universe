@@ -74,12 +74,6 @@ bool CloudCollector<MsgTraits>::topic_exists(const std::string & topic_name)
 }
 
 template <typename MsgTraits>
-bool CloudCollector<MsgTraits>::concatenate_finished() const
-{
-  return concatenate_finished_;
-}
-
-template <typename MsgTraits>
 bool CloudCollector<MsgTraits>::process_pointcloud(
   const std::string & topic_name, typename MsgTraits::PointCloudMessage::ConstSharedPtr cloud)
 {
@@ -101,6 +95,12 @@ bool CloudCollector<MsgTraits>::process_pointcloud(
   }
 
   return true;
+}
+
+template <typename MsgTraits>
+bool CloudCollector<MsgTraits>::concatenate_finished() const
+{
+  return concatenate_finished_;
 }
 
 template <typename MsgTraits>
