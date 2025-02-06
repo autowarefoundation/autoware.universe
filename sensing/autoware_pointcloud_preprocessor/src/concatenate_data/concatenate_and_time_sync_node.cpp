@@ -163,10 +163,10 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
 
   if (!params_.use_cuda) {
     for (const std::string & topic : params_.input_topics) {
-      std::function<void(const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg)> callback =
-        std::bind(
-          &PointCloudConcatenateDataSynchronizerComponent::cloud_callback, this,
-          std::placeholders::_1, topic);
+      auto callback = [&](const sensor_msgs::msg::PointCloud2::ConstSharedPtr msg) {
+        this->cloud_callback<sensor_msgs::msg::PointCloud2>(
+          msg, topic, cloud_collectors_, collector_matching_strategy_);
+      };
 
       auto pointcloud_sub = this->create_subscription<sensor_msgs::msg::PointCloud2>(
         topic, rclcpp::SensorDataQoS().keep_last(params_.maximum_queue_size), callback);
@@ -189,10 +189,10 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
 #ifdef USE_CUDA
   if (params_.use_cuda) {
     for (const std::string & topic : params_.input_topics) {
-      std::function<void(const cuda_blackboard::CudaPointCloud2::ConstSharedPtr msg)> callback =
-        std::bind(
-          &PointCloudConcatenateDataSynchronizerComponent::cuda_cloud_callback, this,
-          std::placeholders::_1, topic);
+      auto callback = [&](const cuda_blackboard::CudaPointCloud2::ConstSharedPtr msg) {
+        this->cloud_callback<cuda_blackboard::CudaPointCloud2>(
+          msg, topic, cuda_cloud_collectors_, cuda_collector_matching_strategy_);
+      };
 
       auto cuda_pointcloud_sub = std::make_shared<
         cuda_blackboard::CudaBlackboardSubscriber<cuda_blackboard::CudaPointCloud2>>(
@@ -287,12 +287,15 @@ bool PointCloudConcatenateDataSynchronizerComponent::cloud_callback_preprocess(
   return true;
 }
 
+template <typename PointCloudMessage>
 void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
-  const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_ptr, const std::string & topic_name)
+  const typename PointCloudMessage::ConstSharedPtr & input_ptr, const std::string & topic_name,
+  std::list<std::shared_ptr<CloudCollector<PointCloudMessage>>> & cloud_collectors,
+  std::unique_ptr<CollectorMatchingStrategy<PointCloudMessage>> & collector_matching_strategy)
 {
   double cloud_arrival_time = this->get_clock()->now().seconds();
 
-  if (!cloud_callback_preprocess<sensor_msgs::msg::PointCloud2>(input_ptr, topic_name)) {
+  if (!cloud_callback_preprocess<PointCloudMessage>(input_ptr, topic_name)) {
     return;
   }
 
@@ -300,8 +303,7 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
   std::unique_lock<std::mutex> cloud_collectors_lock(cloud_collectors_mutex_);
 
   // For each callback, check whether there is a exist collector that matches this cloud
-  std::optional<std::shared_ptr<CloudCollector<sensor_msgs::msg::PointCloud2>>> cloud_collector =
-    std::nullopt;
+  std::optional<std::shared_ptr<CloudCollector<PointCloudMessage>>> cloud_collector = std::nullopt;
   MatchingParams matching_params;
   matching_params.topic_name = topic_name;
   matching_params.cloud_arrival_time = cloud_arrival_time;
@@ -309,7 +311,7 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
 
   if (!cloud_collectors_.empty()) {
     cloud_collector =
-      collector_matching_strategy_->match_cloud_to_collector(cloud_collectors_, matching_params);
+      collector_matching_strategy->match_cloud_to_collector(cloud_collectors, matching_params);
   }
 
   bool process_success = false;
@@ -323,21 +325,20 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
 
   if (!process_success) {
     auto combine_cloud_handler =
-      std::dynamic_pointer_cast<CombineCloudHandler<sensor_msgs::msg::PointCloud2>>(
-        combine_cloud_handler_);
-    auto new_cloud_collector = std::make_shared<CloudCollector<sensor_msgs::msg::PointCloud2>>(
+      std::dynamic_pointer_cast<CombineCloudHandler<PointCloudMessage>>(combine_cloud_handler_);
+    auto new_cloud_collector = std::make_shared<CloudCollector<PointCloudMessage>>(
       std::dynamic_pointer_cast<PointCloudConcatenateDataSynchronizerComponent>(shared_from_this()),
       combine_cloud_handler, params_.input_topics.size(), params_.timeout_sec, params_.debug_mode);
 
-    cloud_collectors_.push_back(new_cloud_collector);
+    cloud_collectors.push_back(new_cloud_collector);
     cloud_collectors_lock.unlock();
 
-    collector_matching_strategy_->set_collector_info(new_cloud_collector, matching_params);
+    collector_matching_strategy->set_collector_info(new_cloud_collector, matching_params);
     (void)new_cloud_collector->process_pointcloud(topic_name, input_ptr);
   }
 }
 
-#ifdef USE_CUDA
+/* #ifdef USE_CUDA
 void PointCloudConcatenateDataSynchronizerComponent::cuda_cloud_callback(
   const cuda_blackboard::CudaPointCloud2::ConstSharedPtr & input_ptr,
   const std::string & topic_name)
@@ -389,7 +390,7 @@ void PointCloudConcatenateDataSynchronizerComponent::cuda_cloud_callback(
   }
 }
 
-#endif
+#endif */
 
 void PointCloudConcatenateDataSynchronizerComponent::twist_callback(
   const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr input)
@@ -470,18 +471,18 @@ void PointCloudConcatenateDataSynchronizerComponent::publish_clouds_postprocess(
   }
 }
 
-template <>
-void PointCloudConcatenateDataSynchronizerComponent::publish_clouds<sensor_msgs::msg::PointCloud2>(
-  ConcatenatedCloudResult<sensor_msgs::msg::PointCloud2> && concatenated_cloud_result,
+template <typename PointCloudMessage>
+void PointCloudConcatenateDataSynchronizerComponent::publish_clouds(
+  ConcatenatedCloudResult<PointCloudMessage> && concatenated_cloud_result,
   std::shared_ptr<CollectorInfoBase> collector_info)
 {
-  if (!publish_clouds_preprocess<sensor_msgs::msg::PointCloud2>(concatenated_cloud_result)) {
+  if (!publish_clouds_preprocess<PointCloudMessage>(concatenated_cloud_result)) {
     return;
   }
 
   if (publish_pointcloud_) {
     latest_concatenate_cloud_timestamp_ = current_concatenate_cloud_timestamp_;
-    auto concatenate_pointcloud_output = std::make_unique<sensor_msgs::msg::PointCloud2>(
+    auto concatenate_pointcloud_output = std::make_unique<PointCloudMessage>(
       std::move(*concatenated_cloud_result.concatenate_cloud_ptr));
     concatenated_cloud_publisher_->publish(std::move(concatenate_pointcloud_output));
 
@@ -494,7 +495,7 @@ void PointCloudConcatenateDataSynchronizerComponent::publish_clouds<sensor_msgs:
         if (
           (*concatenated_cloud_result.topic_to_transformed_cloud_map).find(topic) !=
           (*concatenated_cloud_result.topic_to_transformed_cloud_map).end()) {
-          auto transformed_cloud_output = std::make_unique<sensor_msgs::msg::PointCloud2>(
+          auto transformed_cloud_output = std::make_unique<PointCloudMessage>(
             *(*concatenated_cloud_result.topic_to_transformed_cloud_map).at(topic));
           topic_to_transformed_cloud_publisher_map_[topic]->publish(
             std::move(transformed_cloud_output));
@@ -687,6 +688,18 @@ void PointCloudConcatenateDataSynchronizerComponent::add_cloud_collector(
 #endif
 
 }  // namespace autoware::pointcloud_preprocessor
+
+template void autoware::pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent::
+  publish_clouds<sensor_msgs::msg::PointCloud2>(
+    autoware::pointcloud_preprocessor::ConcatenatedCloudResult<sensor_msgs::msg::PointCloud2> &&,
+    std::shared_ptr<autoware::pointcloud_preprocessor::CollectorInfoBase>);
+
+#ifdef USE_CUDA
+template void autoware::pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent::
+  publish_clouds<cuda_blackboard::CudaPointCloud2>(
+    autoware::pointcloud_preprocessor::ConcatenatedCloudResult<cuda_blackboard::CudaPointCloud2> &&,
+    std::shared_ptr<autoware::pointcloud_preprocessor::CollectorInfoBase>);
+#endif
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(

@@ -54,8 +54,23 @@
 
 namespace autoware::pointcloud_preprocessor
 {
+
+template <typename PointCloudMessage>
+struct Helper
+{
+  using publisher_type = rclcpp::Publisher<PointCloudMessage>;
+};
+
+template <>
+struct Helper<cuda_blackboard::CudaPointCloud2>
+{
+  using publisher_type = cuda_blackboard::CudaBlackboardPublisher<cuda_blackboard::CudaPointCloud2>;
+};
+
 class PointCloudConcatenateDataSynchronizerComponent : public rclcpp::Node
 {
+  using safdasfdf = Helper<cuda_blackboard::CudaPointCloud2>::publisher_type;
+
 public:
   explicit PointCloudConcatenateDataSynchronizerComponent(const rclcpp::NodeOptions & node_options);
   ~PointCloudConcatenateDataSynchronizerComponent() override = default;
@@ -73,6 +88,14 @@ public:
   void publish_clouds(
     ConcatenatedCloudResult<PointCloudMessage> && concatenated_cloud_result,
     std::shared_ptr<CollectorInfoBase> collector_info);
+
+  /* std::shared_ptr<Helper<cuda_blackboard::CudaPointCloud2>::publisher_type> test; */
+
+  /* template <typename PointCloudMessage>
+  void publish_clouds_helper(
+    ConcatenatedCloudResult<PointCloudMessage> && concatenated_cloud_result,
+    std::shared_ptr<CollectorInfoBase> collector_info,
+    std::shared_ptr<typename Helper<PointCloudMessage>::publisher_type> & publisher); */
 
   void manage_collector_list();
   template <typename PointCloudMessage>
@@ -149,6 +172,7 @@ private:
     std::shared_ptr<cuda_blackboard::CudaBlackboardPublisher<cuda_blackboard::CudaPointCloud2>>>
     topic_to_transformed_cuda_cloud_publisher_map_;
 #endif
+
   rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr concatenated_cloud_publisher_;
   std::unordered_map<std::string, rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr>
     topic_to_transformed_cloud_publisher_map_;
@@ -161,15 +185,11 @@ private:
   bool cloud_callback_preprocess(
     const typename PointCloudMessage::ConstSharedPtr & input_ptr, const std::string & topic_name);
 
+  template <typename PointCloudMessage>
   void cloud_callback(
-    const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_ptr,
-    const std::string & topic_name);
-
-#ifdef USE_CUDA
-  void cuda_cloud_callback(
-    const cuda_blackboard::CudaPointCloud2::ConstSharedPtr & input_ptr,
-    const std::string & topic_name);
-#endif
+    const typename PointCloudMessage::ConstSharedPtr & input_ptr, const std::string & topic_name,
+    std::list<std::shared_ptr<CloudCollector<PointCloudMessage>>> & cloud_collectors,
+    std::unique_ptr<CollectorMatchingStrategy<PointCloudMessage>> & collector_matching_strategy);
 
   void twist_callback(const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr input);
   void odom_callback(const nav_msgs::msg::Odometry::ConstSharedPtr input);

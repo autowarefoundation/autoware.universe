@@ -16,6 +16,8 @@
 
 #include <autoware/point_types/types.hpp>
 
+#include <vector>
+
 namespace autoware::pointcloud_preprocessor::utils
 {
 bool is_data_layout_compatible_with_point_xyzi(

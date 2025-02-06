@@ -25,7 +25,6 @@
 
 #include <memory>
 #include <string>
-#include <tuple>
 #include <unordered_map>
 #include <utility>
 
@@ -116,6 +115,7 @@ void CloudCollector<PointCloudMessage>::concatenate_callback()
   auto concatenated_cloud_result = concatenate_pointclouds(topic_to_cloud_map_);
 
   ros2_parent_node_->publish_clouds(std::move(concatenated_cloud_result), collector_info_);
+  combine_cloud_handler_->allocate_pointclouds();
 
   concatenate_finished_ = true;
 }

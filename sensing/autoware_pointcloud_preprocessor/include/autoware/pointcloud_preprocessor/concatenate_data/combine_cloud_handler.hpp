@@ -58,8 +58,8 @@ struct ConcatenatedCloudResult;
 template <>
 struct ConcatenatedCloudResult<sensor_msgs::msg::PointCloud2>
 {
-  sensor_msgs::msg::PointCloud2::SharedPtr concatenate_cloud_ptr{nullptr};
-  std::optional<std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr>>
+  sensor_msgs::msg::PointCloud2::UniquePtr concatenate_cloud_ptr{nullptr};
+  std::optional<std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::UniquePtr>>
     topic_to_transformed_cloud_map;
   std::unordered_map<std::string, double> topic_to_original_stamp_map;
 };
@@ -114,6 +114,8 @@ public:
   Eigen::Matrix4f compute_transform_to_adjust_for_old_timestamp(
     const rclcpp::Time & old_stamp, const rclcpp::Time & new_stamp);
 
+  virtual void allocate_pointclouds() {}
+
   std::deque<geometry_msgs::msg::TwistStamped> get_twist_queue();
 };
 
@@ -132,13 +134,13 @@ class CombineCloudHandler<sensor_msgs::msg::PointCloud2> : public CombineCloudHa
 protected:
   static void convert_to_xyzirc_cloud(
     const typename sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_cloud,
-    typename sensor_msgs::msg::PointCloud2::SharedPtr & xyzirc_cloud);
+    typename sensor_msgs::msg::PointCloud2::UniquePtr & xyzirc_cloud);
 
   void correct_pointcloud_motion(
-    const std::shared_ptr<sensor_msgs::msg::PointCloud2> & transformed_cloud_ptr,
+    const std::unique_ptr<sensor_msgs::msg::PointCloud2> & transformed_cloud_ptr,
     const std::vector<rclcpp::Time> & pc_stamps,
     std::unordered_map<rclcpp::Time, Eigen::Matrix4f, RclcppTimeHash> & transform_memo,
-    std::shared_ptr<sensor_msgs::msg::PointCloud2> transformed_delay_compensated_cloud_ptr);
+    std::unique_ptr<sensor_msgs::msg::PointCloud2> & transformed_delay_compensated_cloud_ptr);
 
 public:
   CombineCloudHandler(
@@ -176,11 +178,11 @@ public:
     bool is_motion_compensated, bool publish_synchronized_pointcloud,
     bool keep_input_frame_in_synchronized_pointcloud, bool has_static_tf_only);
 
-  void allocate_pointclouds();
-
   ConcatenatedCloudResult<cuda_blackboard::CudaPointCloud2> combine_pointclouds(
     std::unordered_map<std::string, cuda_blackboard::CudaPointCloud2::ConstSharedPtr> &
       topic_to_cloud_map);
+
+  void allocate_pointclouds() override;
 };
 
 #endif

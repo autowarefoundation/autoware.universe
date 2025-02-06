@@ -221,7 +221,7 @@ CombineCloudHandler<sensor_msgs::msg::PointCloud2>::CombineCloudHandler(
 
 void CombineCloudHandler<sensor_msgs::msg::PointCloud2>::convert_to_xyzirc_cloud(
   const typename sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_cloud,
-  typename sensor_msgs::msg::PointCloud2::SharedPtr & xyzirc_cloud)
+  typename sensor_msgs::msg::PointCloud2::UniquePtr & xyzirc_cloud)
 {
   xyzirc_cloud->header = input_cloud->header;
 
@@ -275,10 +275,10 @@ void CombineCloudHandler<sensor_msgs::msg::PointCloud2>::convert_to_xyzirc_cloud
 }
 
 void CombineCloudHandler<sensor_msgs::msg::PointCloud2>::correct_pointcloud_motion(
-  const std::shared_ptr<sensor_msgs::msg::PointCloud2> & transformed_cloud_ptr,
+  const std::unique_ptr<sensor_msgs::msg::PointCloud2> & transformed_cloud_ptr,
   const std::vector<rclcpp::Time> & pc_stamps,
   std::unordered_map<rclcpp::Time, Eigen::Matrix4f, RclcppTimeHash> & transform_memo,
-  std::shared_ptr<sensor_msgs::msg::PointCloud2> transformed_delay_compensated_cloud_ptr)
+  std::unique_ptr<sensor_msgs::msg::PointCloud2> & transformed_delay_compensated_cloud_ptr)
 {
   Eigen::Matrix4f adjust_to_old_data_transform = Eigen::Matrix4f::Identity();
   rclcpp::Time current_cloud_stamp = rclcpp::Time(transformed_cloud_ptr->header.stamp);
@@ -300,7 +300,6 @@ void CombineCloudHandler<sensor_msgs::msg::PointCloud2>::correct_pointcloud_moti
     adjust_to_old_data_transform, *transformed_cloud_ptr, *transformed_delay_compensated_cloud_ptr);
 }
 
-/* template<> */
 ConcatenatedCloudResult<sensor_msgs::msg::PointCloud2>
 CombineCloudHandler<sensor_msgs::msg::PointCloud2>::combine_pointclouds(
   std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::ConstSharedPtr> &
@@ -319,7 +318,7 @@ CombineCloudHandler<sensor_msgs::msg::PointCloud2>::combine_pointclouds(
 
   // Before combining the pointclouds, initialize and reserve space for the concatenated pointcloud
   concatenate_cloud_result.concatenate_cloud_ptr =
-    std::make_shared<sensor_msgs::msg::PointCloud2>();
+    std::make_unique<sensor_msgs::msg::PointCloud2>();
 
   // Reserve space based on the total size of the pointcloud data to speed up the concatenation
   // process
@@ -331,23 +330,23 @@ CombineCloudHandler<sensor_msgs::msg::PointCloud2>::combine_pointclouds(
 
   for (const auto & [topic, cloud] : topic_to_cloud_map) {
     // convert to XYZIRC pointcloud if pointcloud is not empty
-    auto xyzirc_cloud = std::make_shared<sensor_msgs::msg::PointCloud2>();
+    auto xyzirc_cloud = std::make_unique<sensor_msgs::msg::PointCloud2>();
     convert_to_xyzirc_cloud(cloud, xyzirc_cloud);
 
-    auto transformed_cloud_ptr = std::make_shared<sensor_msgs::msg::PointCloud2>();
+    auto transformed_cloud_ptr = std::make_unique<sensor_msgs::msg::PointCloud2>();
     managed_tf_buffer_->transformPointcloud(output_frame_, *xyzirc_cloud, *transformed_cloud_ptr);
 
     concatenate_cloud_result.topic_to_original_stamp_map[topic] =
       rclcpp::Time(cloud->header.stamp).seconds();
 
     // compensate pointcloud
-    std::shared_ptr<sensor_msgs::msg::PointCloud2> transformed_delay_compensated_cloud_ptr;
+    std::unique_ptr<sensor_msgs::msg::PointCloud2> transformed_delay_compensated_cloud_ptr;
     if (is_motion_compensated_) {
-      transformed_delay_compensated_cloud_ptr = std::make_shared<sensor_msgs::msg::PointCloud2>();
+      transformed_delay_compensated_cloud_ptr = std::make_unique<sensor_msgs::msg::PointCloud2>();
       correct_pointcloud_motion(
         transformed_cloud_ptr, pc_stamps, transform_memo, transformed_delay_compensated_cloud_ptr);
     } else {
-      transformed_delay_compensated_cloud_ptr = transformed_cloud_ptr;
+      transformed_delay_compensated_cloud_ptr = std::move(transformed_cloud_ptr);
     }
 
     pcl::concatenatePointCloud(
@@ -358,13 +357,13 @@ CombineCloudHandler<sensor_msgs::msg::PointCloud2>::combine_pointclouds(
       if (!concatenate_cloud_result.topic_to_transformed_cloud_map) {
         // Initialize the map if it is not present
         concatenate_cloud_result.topic_to_transformed_cloud_map =
-          std::unordered_map<std::string, typename sensor_msgs::msg::PointCloud2::SharedPtr>();
+          std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::UniquePtr>();
       }
       // convert to original sensor frame if necessary
       bool need_transform_to_sensor_frame = (cloud->header.frame_id != output_frame_);
       if (keep_input_frame_in_synchronized_pointcloud_ && need_transform_to_sensor_frame) {
         auto transformed_cloud_ptr_in_sensor_frame =
-          std::make_shared<sensor_msgs::msg::PointCloud2>();
+          std::make_unique<sensor_msgs::msg::PointCloud2>();
         managed_tf_buffer_->transformPointcloud(
           cloud->header.frame_id, *transformed_delay_compensated_cloud_ptr,
           *transformed_cloud_ptr_in_sensor_frame);
@@ -372,12 +371,12 @@ CombineCloudHandler<sensor_msgs::msg::PointCloud2>::combine_pointclouds(
         transformed_cloud_ptr_in_sensor_frame->header.frame_id = cloud->header.frame_id;
 
         (*concatenate_cloud_result.topic_to_transformed_cloud_map)[topic] =
-          transformed_cloud_ptr_in_sensor_frame;
+          std::move(transformed_cloud_ptr_in_sensor_frame);
       } else {
         transformed_delay_compensated_cloud_ptr->header.stamp = oldest_stamp;
         transformed_delay_compensated_cloud_ptr->header.frame_id = output_frame_;
         (*concatenate_cloud_result.topic_to_transformed_cloud_map)[topic] =
-          transformed_delay_compensated_cloud_ptr;
+          std::move(transformed_delay_compensated_cloud_ptr);
       }
     }
   }
@@ -494,10 +493,6 @@ CombineCloudHandler<cuda_blackboard::CudaPointCloud2>::combine_pointclouds(
     transform_struct.m33 = transform(2, 2);
 
     auto & stream = cuda_concat_struct_map_[topic].stream;
-
-    cudaMemset(output_points + concatenated_start_index, 222, num_points);
-
-    // Apply the kernel to the pointclouds
     transform_launch(
       reinterpret_cast<PointTypeStruct *>(cloud->data.get()), num_points, transform_struct,
       output_points + concatenated_start_index, stream);
