@@ -40,11 +40,11 @@ private:
   void preprocess(DetectedObjects & output_msg) override;
 
   void fuse_on_single_image(
-    const DetectedObjects & input_object_msg, const Det2dStatus<RoiMsgType> & det2d,
-    const RoiMsgType & input_roi_msg, DetectedObjects & output_object_msg) override;
+    const DetectedObjects & input_object_msg, const Det2dStatus<RoiMsgType> & det2d_status,
+    const RoiMsgType & input_rois_msg, DetectedObjects & output_object_msg) override;
 
   std::map<std::size_t, DetectedObjectWithFeature> generateDetectedObjectRoIs(
-    const DetectedObjects & input_object_msg, const Det2dStatus<RoiMsgType> & det2d,
+    const DetectedObjects & input_object_msg, const Det2dStatus<RoiMsgType> & det2d_status,
     const Eigen::Affine3d & object2camera_affine);
 
   void fuseObjectsOnImage(

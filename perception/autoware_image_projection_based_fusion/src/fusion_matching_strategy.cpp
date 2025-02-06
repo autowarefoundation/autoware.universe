@@ -112,9 +112,9 @@ void NaiveMatchingStrategy<Msg3D, Msg2D, ExportObj>::set_collector_info(
   }
 
   if (
-    auto det3d_matching_params = std::dynamic_pointer_cast<Msg3dMatchingParams>(matching_params)) {
+    auto msg3d_matching_params = std::dynamic_pointer_cast<Msg3dMatchingParams>(matching_params)) {
     auto info =
-      std::make_shared<NaiveCollectorInfo>(det3d_matching_params->msg3d_timestamp, threshold_);
+      std::make_shared<NaiveCollectorInfo>(msg3d_matching_params->msg3d_timestamp, threshold_);
     collector->set_info(info);
 
   } else if (
@@ -144,8 +144,8 @@ AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::AdvancedMatchingStrategy(
       "ros2_parent_node is nullptr in AdvancedMatchingStrategy constructor.");
   }
 
-  det3d_noise_window_ =
-    ros2_parent_node_->template declare_parameter<double>("matching_strategy.det3d_noise_window");
+  msg3d_noise_window_ =
+    ros2_parent_node_->template declare_parameter<double>("matching_strategy.msg3d_noise_window");
   auto rois_timestamp_noise_window =
     ros2_parent_node_->template declare_parameter<std::vector<double>>(
       "matching_strategy.rois_timestamp_noise_window");
@@ -221,8 +221,8 @@ AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::match_msg3d_to_collector(
       double reference_timestamp_max = advanced_info->timestamp + advanced_info->noise_window;
 
       if (
-        adjusted_timestamp < reference_timestamp_max + det3d_noise_window_ &&
-        adjusted_timestamp > reference_timestamp_min - det3d_noise_window_) {
+        adjusted_timestamp < reference_timestamp_max + msg3d_noise_window_ &&
+        adjusted_timestamp > reference_timestamp_min - msg3d_noise_window_) {
         return fusion_collector;
       }
     }
@@ -241,13 +241,13 @@ void AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::set_collector_info(
   }
 
   if (
-    auto det3d_matching_params = std::dynamic_pointer_cast<Msg3dMatchingParams>(matching_params)) {
+    auto msg3d_matching_params = std::dynamic_pointer_cast<Msg3dMatchingParams>(matching_params)) {
     auto concatenated_status =
-      ros2_parent_node_->find_concatenation_status(det3d_matching_params->msg3d_timestamp);
-    double offset = get_offset(det3d_matching_params->msg3d_timestamp, concatenated_status);
+      ros2_parent_node_->find_concatenation_status(msg3d_matching_params->msg3d_timestamp);
+    double offset = get_offset(msg3d_matching_params->msg3d_timestamp, concatenated_status);
 
     auto info = std::make_shared<AdvancedCollectorInfo>(
-      det3d_matching_params->msg3d_timestamp - offset, det3d_noise_window_);
+      msg3d_matching_params->msg3d_timestamp - offset, msg3d_noise_window_);
     collector->set_info(info);
   } else if (
     auto rois_matching_params = std::dynamic_pointer_cast<RoisMatchingParams>(matching_params)) {
@@ -338,7 +338,7 @@ void AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::update_fractional_timest
 
   // Check if the new timestamp belongs to an existing element within noise tolerance
   for (auto existing_timestamp : fractional_timestamp_set_) {
-    if (std::abs(fractional_part - existing_timestamp) < det3d_noise_window_ * 2) {
+    if (std::abs(fractional_part - existing_timestamp) < msg3d_noise_window_ * 2) {
       existing_timestamp = (existing_timestamp + fractional_part) / 2;
       return;  // If it belongs to an existing group, average the timestamp
     }
@@ -360,8 +360,8 @@ double AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::compute_offset(double 
   // Check if input timestamp is within an existing timestamp ± noise_tolerance
   for (const auto & timestamp : fractional_timestamp_set_) {
     if (
-      fractional_part >= timestamp - det3d_noise_window_ &&
-      fractional_part < timestamp + det3d_noise_window_) {
+      fractional_part >= timestamp - msg3d_noise_window_ &&
+      fractional_part < timestamp + msg3d_noise_window_) {
       return 0.0;  // If within range, offset is zero
     }
   }

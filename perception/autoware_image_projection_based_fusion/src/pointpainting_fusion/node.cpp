@@ -258,7 +258,7 @@ void PointPaintingFusionNode::preprocess(PointCloudMsgType & painted_pointcloud_
 
 void PointPaintingFusionNode::fuse_on_single_image(
   __attribute__((unused)) const PointCloudMsgType & input_pointcloud_msg,
-  const Det2dStatus<RoiMsgType> & det2d, const RoiMsgType & input_roi_msg,
+  const Det2dStatus<RoiMsgType> & det2d_status, const RoiMsgType & input_rois_msg,
   PointCloudMsgType & painted_pointcloud_msg)
 {
   if (painted_pointcloud_msg.data.empty() || painted_pointcloud_msg.fields.empty()) {
@@ -267,7 +267,7 @@ void PointPaintingFusionNode::fuse_on_single_image(
     return;
   }
 
-  auto num_bbox = (input_roi_msg.feature_objects).size();
+  auto num_bbox = (input_rois_msg.feature_objects).size();
   if (num_bbox == 0) {
     return;
   }
@@ -283,8 +283,8 @@ void PointPaintingFusionNode::fuse_on_single_image(
   Eigen::Affine3f lidar2cam_affine;
   {
     const auto transform_stamped_optional = getTransformStamped(
-      tf_buffer_, /*target*/ input_roi_msg.header.frame_id,
-      /*source*/ painted_pointcloud_msg.header.frame_id, input_roi_msg.header.stamp);
+      tf_buffer_, /*target*/ input_rois_msg.header.frame_id,
+      /*source*/ painted_pointcloud_msg.header.frame_id, input_rois_msg.header.stamp);
     if (!transform_stamped_optional) {
       return;
     }
@@ -312,7 +312,7 @@ dc   | dc dc dc  dc ||zc|
                      |dc|
    **/
 
-  auto objects = input_roi_msg.feature_objects;
+  auto objects = input_rois_msg.feature_objects;
   int iterations = painted_pointcloud_msg.data.size() / painted_pointcloud_msg.point_step;
   // iterate points
   // Requires 'OMP_NUM_THREADS=N'
@@ -336,13 +336,13 @@ dc   | dc dc dc  dc ||zc|
       p_y = point_camera.y();
       p_z = point_camera.z();
 
-      if (det2d.camera_projector_ptr->isOutsideHorizontalView(p_x, p_z)) {
+      if (det2d_status.camera_projector_ptr->isOutsideHorizontalView(p_x, p_z)) {
         continue;
       }
 
       // project
       Eigen::Vector2d projected_point;
-      if (det2d.camera_projector_ptr->calcImageProjectedPoint(
+      if (det2d_status.camera_projector_ptr->calcImageProjectedPoint(
             cv::Point3d(p_x, p_y, p_z), projected_point)) {
         // iterate 2d bbox
         for (const auto & feature_object : objects) {
@@ -371,7 +371,7 @@ dc   | dc dc dc  dc ||zc|
       if (time_keeper_)
         inner_st_ptr = std::make_unique<ScopedTimeTrack>("publish debug message", *time_keeper_);
 
-      for (const auto & feature_object : input_roi_msg.feature_objects) {
+      for (const auto & feature_object : input_rois_msg.feature_objects) {
         debug_image_rois.push_back(feature_object.feature.roi);
       }
 
@@ -381,7 +381,7 @@ dc   | dc dc dc  dc ||zc|
 
       debugger_->image_rois_ = debug_image_rois;
       debugger_->obstacle_points_ = debug_image_points;
-      debugger_->publishImage(det2d.id, input_roi_msg.header.stamp);
+      debugger_->publishImage(det2d_status.id, input_rois_msg.header.stamp);
     }
   }
 }

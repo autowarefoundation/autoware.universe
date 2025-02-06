@@ -136,7 +136,7 @@ private:
   std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> ros2_parent_node_;
   std::unordered_map<std::size_t, double> id_to_offset_map_;
   std::unordered_map<std::size_t, double> id_to_noise_window_map_;
-  double det3d_noise_window_;
+  double msg3d_noise_window_;
   std::set<double> fractional_timestamp_set_;  // Use set to store unique fractional timestamps
   int success_status_counter_{0};
   static constexpr int success_threshold{100};

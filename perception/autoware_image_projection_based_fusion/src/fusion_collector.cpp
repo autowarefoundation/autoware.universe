@@ -72,7 +72,7 @@ bool FusionCollector<Msg3D, Msg2D, ExportObj>::process_msg3d(
   if (status_ == CollectorStatus::Finished) return false;
 
   if (status_ == CollectorStatus::Idle) {
-    // Add det3d to the collector, restart the timer
+    // Add msg3d to the collector, restart the timer
     status_ = CollectorStatus::Processing;
     is_first_msg3d_ = true;
     const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -105,17 +105,17 @@ bool FusionCollector<Msg3D, Msg2D, ExportObj>::process_msg3d(
 
 template <class Msg3D, class Msg2D, class ExportObj>
 bool FusionCollector<Msg3D, Msg2D, ExportObj>::process_rois(
-  const std::size_t & rois_id, const typename Msg2D::ConstSharedPtr det2d_msg, double det2d_timeout)
+  const std::size_t & rois_id, const typename Msg2D::ConstSharedPtr rois_msg, double rois_timeout)
 {
   std::lock_guard<std::mutex> fusion_lock(fusion_mutex_);
   if (status_ == CollectorStatus::Finished) return false;
 
   if (status_ == CollectorStatus::Idle) {
-    // Add det2d to the collector, restart the timer
+    // Add rois_msg to the collector, restart the timer
     status_ = CollectorStatus::Processing;
     is_first_msg3d_ = false;
     const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
-      std::chrono::duration<double>(det2d_timeout));
+      std::chrono::duration<double>(rois_timeout));
     set_period(period_ns);
     timer_->reset();
   } else if (status_ == CollectorStatus::Processing) {
@@ -128,7 +128,7 @@ bool FusionCollector<Msg3D, Msg2D, ExportObj>::process_rois(
     }
   }
 
-  id_to_rois_map_[rois_id] = det2d_msg;
+  id_to_rois_map_[rois_id] = rois_msg;
   if (ready_to_fuse()) {
     fusion_callback();
   }
@@ -160,14 +160,15 @@ void FusionCollector<Msg3D, Msg2D, ExportObj>::fusion_callback()
   timer_->cancel();
 
   std::unordered_map<std::size_t, double> id_to_stamp_map;
-  for (const auto & [roi_id, roi_msg] : id_to_rois_map_) {
-    id_to_stamp_map[roi_id] = rclcpp::Time(roi_msg->header.stamp).seconds();
+  for (const auto & [rois_id, rois_msg] : id_to_rois_map_) {
+    id_to_stamp_map[rois_id] = rclcpp::Time(rois_msg->header.stamp).seconds();
   }
 
   if (!msg3d_) {
     RCLCPP_WARN(
       ros2_parent_node_->get_logger(),
-      "The Det3d message is not in the fusion collector, so the fusion process will be skipped.");
+      "The input 3D message is not in the fusion collector, so the fusion process will be "
+      "skipped.");
     status_ = CollectorStatus::Finished;
     // TODO(vivid): call another functino to show the message on diagnostic.
     ros2_parent_node_->show_diagnostic_message(id_to_stamp_map, fusion_collector_info_);
@@ -177,15 +178,15 @@ void FusionCollector<Msg3D, Msg2D, ExportObj>::fusion_callback()
   typename Msg3D::SharedPtr output_det3d_msg = std::make_shared<Msg3D>(*msg3d_);
   ros2_parent_node_->preprocess(*output_det3d_msg);
 
-  for (const auto & [roi_id, roi_msg] : id_to_rois_map_) {
-    if (det2d_status_list_[roi_id].camera_projector_ptr == nullptr) {
+  for (const auto & [rois_id, rois_msg] : id_to_rois_map_) {
+    if (det2d_status_list_[rois_id].camera_projector_ptr == nullptr) {
       RCLCPP_WARN_THROTTLE(
         ros2_parent_node_->get_logger(), *ros2_parent_node_->get_clock(), 5000,
-        "no camera info. id is %zu", roi_id);
+        "no camera info. id is %zu", rois_id);
       continue;
     }
     ros2_parent_node_->fuse_on_single_image(
-      *msg3d_, det2d_status_list_[roi_id], *roi_msg, *output_det3d_msg);
+      *msg3d_, det2d_status_list_[rois_id], *rois_msg, *output_det3d_msg);
   }
 
   ros2_parent_node_->export_process(output_det3d_msg, id_to_stamp_map, fusion_collector_info_);
@@ -227,12 +228,12 @@ void FusionCollector<Msg3D, Msg2D, ExportObj>::show_debug_message()
 
   log_stream << "Time until trigger: " << (time_until_trigger.count() / 1e9) << " seconds\n";
   if (msg3d_) {
-    log_stream << "Det3d msg: [" << rclcpp::Time(msg3d_->header.stamp).seconds() << "]\n";
+    log_stream << "Msg3d: [" << rclcpp::Time(msg3d_->header.stamp).seconds() << "]\n";
   } else {
-    log_stream << "Det3d msg: [Is empty]\n";
+    log_stream << "Msg3d: [Is empty]\n";
   }
   log_stream << "ROIs: [";
-  std::string separator = "";
+  std::string separator;
   for (const auto & [id, rois] : id_to_rois_map_) {
     log_stream << separator;
     log_stream << "[rois " << id << ", " << rclcpp::Time(rois->header.stamp).seconds() << "]";

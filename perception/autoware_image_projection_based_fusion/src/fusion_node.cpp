@@ -407,7 +407,7 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::sub_callback(const typename Msg3D::Con
 
 template <class Msg3D, class Msg2D, class ExportObj>
 void FusionNode<Msg3D, Msg2D, ExportObj>::rois_callback(
-  const typename Msg2D::ConstSharedPtr det2d_msg, const std::size_t rois_id)
+  const typename Msg2D::ConstSharedPtr rois_msg, const std::size_t rois_id)
 {
   if (!fusion_matching_strategy_) {
     init_strategy();
@@ -417,8 +417,8 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::rois_callback(
     auto arrive_time = this->get_clock()->now().seconds();
     RCLCPP_DEBUG(
       this->get_logger(), " rois %zu timestamp: %lf arrive time: %lf seconds, latency: %lf",
-      rois_id, rclcpp::Time(det2d_msg->header.stamp).seconds(), arrive_time,
-      arrive_time - rclcpp::Time(det2d_msg->header.stamp).seconds());
+      rois_id, rclcpp::Time(rois_msg->header.stamp).seconds(), arrive_time,
+      arrive_time - rclcpp::Time(rois_msg->header.stamp).seconds());
   }
 
   std::unique_ptr<ScopedTimeTrack> st_ptr;
@@ -431,7 +431,7 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::rois_callback(
   // Lock fusion collectors list
   std::unique_lock<std::mutex> fusion_collectors_lock(fusion_collectors_mutex_);
 
-  auto rois_timestamp = rclcpp::Time(det2d_msg->header.stamp).seconds();
+  auto rois_timestamp = rclcpp::Time(rois_msg->header.stamp).seconds();
   auto matching_params = std::make_shared<RoisMatchingParams>();
   matching_params->rois_id = rois_id;
   matching_params->rois_timestamp = rois_timestamp;
@@ -445,7 +445,7 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::rois_callback(
   bool process_success = false;
   if (fusion_collector && fusion_collector.value()) {
     fusion_collectors_lock.unlock();
-    process_success = fusion_collector.value()->process_rois(rois_id, det2d_msg, rois_timeout_sec_);
+    process_success = fusion_collector.value()->process_rois(rois_id, rois_msg, rois_timeout_sec_);
   }
 
   // Didn't find matched collector, create a new collector
@@ -471,7 +471,7 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::rois_callback(
 
     fusion_collectors_lock.unlock();
     fusion_matching_strategy_->set_collector_info(selected_collector, matching_params);
-    (void)selected_collector->process_rois(rois_id, det2d_msg, rois_timeout_sec_);
+    (void)selected_collector->process_rois(rois_id, rois_msg, rois_timeout_sec_);
   }
 
   if (debugger_) {
@@ -652,7 +652,7 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::check_fusion_status(
     stat.add("fusion_success", fusion_success);
 
     int8_t level = diagnostic_msgs::msg::DiagnosticStatus::OK;
-    std::string message = "Fused output is published and include all rois and det3d msg";
+    std::string message = "Fused output is published and include all rois and msg3d";
 
     if (drop_previous_but_late_output_msg_) {
       level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;

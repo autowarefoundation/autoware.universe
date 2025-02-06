@@ -81,8 +81,8 @@ public:
     bool debug_mode);
   bool process_msg3d(const typename Msg3D::ConstSharedPtr msg3d, double msg3d_timeout);
   bool process_rois(
-    const std::size_t & rois_id, const typename Msg2D::ConstSharedPtr det2d_msg,
-    double det2d_timeout);
+    const std::size_t & rois_id, const typename Msg2D::ConstSharedPtr rois_msg,
+    double rois_timeout);
   void fusion_callback();
 
   [[nodiscard]] CollectorStatus get_status() const;

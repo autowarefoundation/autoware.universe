@@ -70,8 +70,8 @@ public:
 
   virtual void preprocess(Msg3D & output_msg);
   virtual void fuse_on_single_image(
-    const Msg3D & input_msg, const Det2dStatus<Msg2D> & det2d, const Msg2D & input_roi_msg,
-    Msg3D & output_msg) = 0;
+    const Msg3D & input_msg3d, const Det2dStatus<Msg2D> & det2d_status,
+    const Msg2D & input_rois_msg, Msg3D & output_msg) = 0;
   void export_process(
     typename Msg3D::SharedPtr & output_det3d_msg,
     std::unordered_map<std::size_t, double> id_to_stamp_map,
@@ -138,7 +138,7 @@ protected:
   // callback for main subscription
   void sub_callback(const typename Msg3D::ConstSharedPtr msg3d);
   // callback for rois subscription
-  void rois_callback(const typename Msg2D::ConstSharedPtr det2d_msg, const std::size_t rois_id);
+  void rois_callback(const typename Msg2D::ConstSharedPtr rois_msg, const std::size_t rois_id);
 
   void diagnostic_callback(const diagnostic_msgs::msg::DiagnosticArray::SharedPtr diagnostic_msg);
 

@@ -1,12 +1,13 @@
 /**:
   ros__parameters:
-    rois_timestamp_offsets: [0.06167, 0.011167, 0.045, 0.02833, 0.07833, 0.095]
-    timeout_sec: 0.070
-    # match_threshold_ms: 50.0
+    # cloud timestamp: 0.069
+    # rois timestamp: 0.064, 0.014, 0.059, 0.043, 0.092, 0.011
+    rois_timestamp_offsets: [0.095, 0.045, 0.09, 0.074, 0.023, 0.042]
+    rois_timeout_sec: 1.0
+    msg3d_timeout_sec: 0.2
     image_buffer_size: 15
     # projection setting for each ROI whether unrectify image
     point_project_to_unrectified_image: [false, false, false, false, false, false]
-    debug_mode: false
     filter_scope_min_x: -100.0
     filter_scope_min_y: -100.0
     filter_scope_min_z: -100.0
@@ -21,8 +22,16 @@
     approximation_grid_cell_height: 1.0
 
     # debug parameters
+    debug_mode: false
+    collector_debug_mode: false
     publish_processing_time_detail: false
+
+    publish_previous_but_late_output_msg: false
+    rosbag_length: 10.0
+    # matching strategy
     matching_strategy:
       type: advanced
-      det3d_noise_window: 0.01
-      rois_timestamp_noise_window: [0.005, 0.005, 0.005, 0.005, 0.005, 0.005]
+      msg3d_noise_window: 0.02
+      rois_timestamp_noise_window: [0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
+      # type: naive
+      # threshold: 0.05

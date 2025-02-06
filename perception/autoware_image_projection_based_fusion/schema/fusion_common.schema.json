@@ -100,9 +100,9 @@
               "minimum": 0.0,
               "maximum": 0.1
             },
-            "det3d_noise_window": {
+            "msg3d_noise_window": {
               "type": "number",
-              "description": "det3d noise window in seconds.",
+              "description": "msg3d noise window in seconds.",
               "default": 0.001,
               "minimum": 0.0
             },
@@ -125,12 +125,12 @@
                   "properties": { "type": { "const": "naive" } },
                   "required": ["threshold"],
                   "not": {
-                    "required": ["det3d_noise_window", "rois_timestamp_noise_window"]
+                    "required": ["msg3d_noise_window", "rois_timestamp_noise_window"]
                   }
                 },
                 {
                   "properties": { "type": { "const": "advanced" } },
-                  "required": ["det3d_noise_window", "rois_timestamp_noise_window"],
+                  "required": ["msg3d_noise_window", "rois_timestamp_noise_window"],
                   "not": {
                     "required": ["threshold"]
                   }
