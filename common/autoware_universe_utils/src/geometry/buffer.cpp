@@ -14,7 +14,7 @@
 
 #include "autoware/universe_utils/geometry/buffer.hpp"
 
-#include "autoware/universe_utils/geometry/temp_polygon_clip.hpp"
+#include "autoware/universe_utils/geometry/polygon_clip.hpp"
 #include "autoware/universe_utils/system/stop_watch.hpp"
 
 #include <iostream>

@@ -30,6 +30,7 @@ ament_auto_add_library(autoware_universe_utils SHARED
   src/system/time_keeper.cpp
   src/geometry/ear_clipping.cpp
   src/geometry/polygon_clip.cpp
+  src/geometry/buffer.cpp
 )
 
 target_link_libraries(autoware_universe_utils

@@ -16,7 +16,7 @@
 #define AUTOWARE__UNIVERSE_UTILS__GEOMETRY__BUFFER_HPP_
 
 #include "autoware/universe_utils/geometry/boost_geometry.hpp"
-#include "autoware/universe_utils/geometry/temp_polygon_clip.hpp"
+#include "autoware/universe_utils/geometry/polygon_clip.hpp"
 
 #include <boost/geometry/algorithms/buffer.hpp>
 #include <boost/geometry/algorithms/correct.hpp>
