@@ -73,14 +73,6 @@ struct GoalPlannerDebugData
   utils::path_safety_checker::CollisionCheckDebugMap collision_check{};
 };
 
-struct LastApprovalData
-{
-  LastApprovalData(rclcpp::Time time, Pose pose) : time(time), pose(pose) {}
-
-  rclcpp::Time time{};
-  Pose pose{};
-};
-
 struct PullOverContextData
 {
   PullOverContextData() = delete;
@@ -352,7 +344,7 @@ private:
   std::optional<PullOverContextData> context_data_{std::nullopt};
   // path_decision_controller is updated in updateData(), and used in plan()
   PathDecisionStateController path_decision_controller_{getLogger()};
-  std::unique_ptr<LastApprovalData> last_approval_data_{nullptr};
+  std::optional<rclcpp::Time> decided_time_{};
 
   // approximate distance from the start point to the end point of pull_over.
   // this is used as an assumed value to decelerate, etc., before generating the actual path.
