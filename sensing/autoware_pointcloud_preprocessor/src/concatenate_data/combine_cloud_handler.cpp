@@ -14,6 +14,8 @@
 
 #include "autoware/pointcloud_preprocessor/concatenate_data/combine_cloud_handler.hpp"
 
+#include "autoware/pointcloud_preprocessor/concatenate_data/traits.hpp"
+
 #ifdef USE_CUDA
 #include "autoware/pointcloud_preprocessor/concatenate_data/combine_cloud_handler_kernel.hpp"
 #endif
@@ -209,19 +211,19 @@ Eigen::Matrix4f CombineCloudHandlerBase::compute_transform_to_adjust_for_old_tim
   return transformation_matrix;
 }
 
-CombineCloudHandler<sensor_msgs::msg::PointCloud2>::CombineCloudHandler(
-  rclcpp::Node & node, std::string output_frame, bool is_motion_compensated,
-  bool publish_synchronized_pointcloud, bool keep_input_frame_in_synchronized_pointcloud,
-  bool has_static_tf_only)
+CombineCloudHandler<PointCloud2Traits>::CombineCloudHandler(
+  rclcpp::Node & node, [[maybe_unused]] const std::vector<std::string> & input_topics,
+  std::string output_frame, bool is_motion_compensated, bool publish_synchronized_pointcloud,
+  bool keep_input_frame_in_synchronized_pointcloud, bool has_static_tf_only)
 : CombineCloudHandlerBase(
     node, output_frame, is_motion_compensated, publish_synchronized_pointcloud,
     keep_input_frame_in_synchronized_pointcloud, has_static_tf_only)
 {
 }
 
-void CombineCloudHandler<sensor_msgs::msg::PointCloud2>::convert_to_xyzirc_cloud(
-  const typename sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_cloud,
-  typename sensor_msgs::msg::PointCloud2::UniquePtr & xyzirc_cloud)
+void CombineCloudHandler<PointCloud2Traits>::convert_to_xyzirc_cloud(
+  const typename PointCloud2Traits::PointCloudMessage::ConstSharedPtr & input_cloud,
+  typename PointCloud2Traits::PointCloudMessage::UniquePtr & xyzirc_cloud)
 {
   xyzirc_cloud->header = input_cloud->header;
 
@@ -274,11 +276,11 @@ void CombineCloudHandler<sensor_msgs::msg::PointCloud2>::convert_to_xyzirc_cloud
   }
 }
 
-void CombineCloudHandler<sensor_msgs::msg::PointCloud2>::correct_pointcloud_motion(
-  const std::unique_ptr<sensor_msgs::msg::PointCloud2> & transformed_cloud_ptr,
+void CombineCloudHandler<PointCloud2Traits>::correct_pointcloud_motion(
+  const std::unique_ptr<PointCloud2Traits::PointCloudMessage> & transformed_cloud_ptr,
   const std::vector<rclcpp::Time> & pc_stamps,
   std::unordered_map<rclcpp::Time, Eigen::Matrix4f, RclcppTimeHash> & transform_memo,
-  std::unique_ptr<sensor_msgs::msg::PointCloud2> & transformed_delay_compensated_cloud_ptr)
+  std::unique_ptr<PointCloud2Traits::PointCloudMessage> & transformed_delay_compensated_cloud_ptr)
 {
   Eigen::Matrix4f adjust_to_old_data_transform = Eigen::Matrix4f::Identity();
   rclcpp::Time current_cloud_stamp = rclcpp::Time(transformed_cloud_ptr->header.stamp);
@@ -300,12 +302,12 @@ void CombineCloudHandler<sensor_msgs::msg::PointCloud2>::correct_pointcloud_moti
     adjust_to_old_data_transform, *transformed_cloud_ptr, *transformed_delay_compensated_cloud_ptr);
 }
 
-ConcatenatedCloudResult<sensor_msgs::msg::PointCloud2>
-CombineCloudHandler<sensor_msgs::msg::PointCloud2>::combine_pointclouds(
-  std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::ConstSharedPtr> &
+ConcatenatedCloudResult<PointCloud2Traits>
+CombineCloudHandler<PointCloud2Traits>::combine_pointclouds(
+  std::unordered_map<std::string, PointCloud2Traits::PointCloudMessage::ConstSharedPtr> &
     topic_to_cloud_map)
 {
-  ConcatenatedCloudResult<sensor_msgs::msg::PointCloud2> concatenate_cloud_result;
+  ConcatenatedCloudResult<PointCloud2Traits> concatenate_cloud_result;
 
   std::vector<rclcpp::Time> pc_stamps;
   for (const auto & [topic, cloud] : topic_to_cloud_map) {
@@ -387,7 +389,7 @@ CombineCloudHandler<sensor_msgs::msg::PointCloud2>::combine_pointclouds(
 
 #ifdef USE_CUDA
 
-CombineCloudHandler<cuda_blackboard::CudaPointCloud2>::CombineCloudHandler(
+CombineCloudHandler<CudaPointCloud2Traits>::CombineCloudHandler(
   rclcpp::Node & node, const std::vector<std::string> & input_topics, std::string output_frame,
   bool is_motion_compensated, bool publish_synchronized_pointcloud,
   bool keep_input_frame_in_synchronized_pointcloud, bool has_static_tf_only)
@@ -403,7 +405,7 @@ CombineCloudHandler<cuda_blackboard::CudaPointCloud2>::CombineCloudHandler(
   }
 }
 
-void CombineCloudHandler<cuda_blackboard::CudaPointCloud2>::allocate_pointclouds()
+void CombineCloudHandler<CudaPointCloud2Traits>::allocate_pointclouds()
 {
   std::lock_guard<std::mutex> lock(mutex_);
 
@@ -419,12 +421,13 @@ void CombineCloudHandler<cuda_blackboard::CudaPointCloud2>::allocate_pointclouds
     max_concat_pointcloud_size_ * input_topics_.size());
 }
 
-ConcatenatedCloudResult<cuda_blackboard::CudaPointCloud2>
-CombineCloudHandler<cuda_blackboard::CudaPointCloud2>::combine_pointclouds(
-  std::unordered_map<std::string, cuda_blackboard::CudaPointCloud2::ConstSharedPtr> &
+ConcatenatedCloudResult<CudaPointCloud2Traits>
+CombineCloudHandler<CudaPointCloud2Traits>::combine_pointclouds(
+  std::unordered_map<
+    std::string, typename CudaPointCloud2Traits::PointCloudMessage::ConstSharedPtr> &
     topic_to_cloud_map)
 {
-  ConcatenatedCloudResult<cuda_blackboard::CudaPointCloud2> concatenate_cloud_result;
+  ConcatenatedCloudResult<CudaPointCloud2Traits> concatenate_cloud_result;
   std::lock_guard<std::mutex> lock(mutex_);
 
   std::vector<rclcpp::Time> pc_stamps;
@@ -595,9 +598,9 @@ CombineCloudHandler<cuda_blackboard::CudaPointCloud2>::combine_pointclouds(
 }  // namespace autoware::pointcloud_preprocessor
 
 template class autoware::pointcloud_preprocessor::CombineCloudHandler<
-  sensor_msgs::msg::PointCloud2>;
+  autoware::pointcloud_preprocessor::PointCloud2Traits>;
 
 #ifdef USE_CUDA
 template class autoware::pointcloud_preprocessor::CombineCloudHandler<
-  cuda_blackboard::CudaPointCloud2>;
+  autoware::pointcloud_preprocessor::CudaPointCloud2Traits>;
 #endif

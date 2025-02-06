@@ -86,7 +86,6 @@ def generate_test_description():
             ],
             parameters=[
                 {
-                    "use_cuda": False,
                     "debug_mode": False,
                     "has_static_tf_only": False,
                     "rosbag_length": 0.0,

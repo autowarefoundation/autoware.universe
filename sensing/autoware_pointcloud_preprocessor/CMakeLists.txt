@@ -134,6 +134,11 @@ rclcpp_components_register_node(pointcloud_preprocessor_filter
   PLUGIN "autoware::pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent"
   EXECUTABLE concatenate_and_time_sync_node)
 
+# ========== (CUDA) Concatenate and Sync data ==========
+rclcpp_components_register_node(pointcloud_preprocessor_filter
+  PLUGIN "autoware::pointcloud_preprocessor::CudaPointCloudConcatenateDataSynchronizerComponent"
+  EXECUTABLE cuda_concatenate_and_time_sync_node)
+
 # ========== CropBox ==========
 rclcpp_components_register_node(pointcloud_preprocessor_filter
   PLUGIN "autoware::pointcloud_preprocessor::CropBoxFilterComponent"

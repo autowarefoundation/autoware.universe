@@ -16,6 +16,7 @@
 
 #include "autoware/pointcloud_preprocessor/concatenate_data/combine_cloud_handler.hpp"
 #include "autoware/pointcloud_preprocessor/concatenate_data/concatenate_and_time_sync_node.hpp"
+#include "autoware/pointcloud_preprocessor/concatenate_data/traits.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -31,11 +32,12 @@
 namespace autoware::pointcloud_preprocessor
 {
 
-template <typename PointCloudMessage>
-CloudCollector<PointCloudMessage>::CloudCollector(
-  std::shared_ptr<PointCloudConcatenateDataSynchronizerComponent> && ros2_parent_node,
-  std::shared_ptr<CombineCloudHandler<PointCloudMessage>> & combine_cloud_handler,
-  int num_of_clouds, double timeout_sec, bool debug_mode)
+template <typename MsgTraits>
+CloudCollector<MsgTraits>::CloudCollector(
+  std::shared_ptr<PointCloudConcatenateDataSynchronizerComponentTemplated<MsgTraits>> &&
+    ros2_parent_node,
+  std::shared_ptr<CombineCloudHandler<MsgTraits>> & combine_cloud_handler, int num_of_clouds,
+  double timeout_sec, bool debug_mode)
 : ros2_parent_node_(std::move(ros2_parent_node)),
   combine_cloud_handler_(combine_cloud_handler),
   num_of_clouds_(num_of_clouds),
@@ -53,33 +55,33 @@ CloudCollector<PointCloudMessage>::CloudCollector(
     });
 }
 
-template <typename PointCloudMessage>
-void CloudCollector<PointCloudMessage>::set_info(std::shared_ptr<CollectorInfoBase> collector_info)
+template <typename MsgTraits>
+void CloudCollector<MsgTraits>::set_info(std::shared_ptr<CollectorInfoBase> collector_info)
 {
   collector_info_ = std::move(collector_info);
 }
 
-template <typename PointCloudMessage>
-std::shared_ptr<CollectorInfoBase> CloudCollector<PointCloudMessage>::get_info() const
+template <typename MsgTraits>
+std::shared_ptr<CollectorInfoBase> CloudCollector<MsgTraits>::get_info() const
 {
   return collector_info_;
 }
 
-template <typename PointCloudMessage>
-bool CloudCollector<PointCloudMessage>::topic_exists(const std::string & topic_name)
+template <typename MsgTraits>
+bool CloudCollector<MsgTraits>::topic_exists(const std::string & topic_name)
 {
   return topic_to_cloud_map_.find(topic_name) != topic_to_cloud_map_.end();
 }
 
-template <typename PointCloudMessage>
-bool CloudCollector<PointCloudMessage>::concatenate_finished() const
+template <typename MsgTraits>
+bool CloudCollector<MsgTraits>::concatenate_finished() const
 {
   return concatenate_finished_;
 }
 
-template <typename PointCloudMessage>
-bool CloudCollector<PointCloudMessage>::process_pointcloud(
-  const std::string & topic_name, typename PointCloudMessage::ConstSharedPtr cloud)
+template <typename MsgTraits>
+bool CloudCollector<MsgTraits>::process_pointcloud(
+  const std::string & topic_name, typename MsgTraits::PointCloudMessage::ConstSharedPtr cloud)
 {
   std::lock_guard<std::mutex> concatenate_lock(concatenate_mutex_);
   if (concatenate_finished_) return false;
@@ -101,8 +103,8 @@ bool CloudCollector<PointCloudMessage>::process_pointcloud(
   return true;
 }
 
-template <typename PointCloudMessage>
-void CloudCollector<PointCloudMessage>::concatenate_callback()
+template <typename MsgTraits>
+void CloudCollector<MsgTraits>::concatenate_callback()
 {
   if (debug_mode_) {
     show_debug_message();
@@ -120,23 +122,23 @@ void CloudCollector<PointCloudMessage>::concatenate_callback()
   concatenate_finished_ = true;
 }
 
-template <typename PointCloudMessage>
-ConcatenatedCloudResult<PointCloudMessage>
-CloudCollector<PointCloudMessage>::concatenate_pointclouds(
-  std::unordered_map<std::string, typename PointCloudMessage::ConstSharedPtr> topic_to_cloud_map)
+template <typename MsgTraits>
+ConcatenatedCloudResult<MsgTraits> CloudCollector<MsgTraits>::concatenate_pointclouds(
+  std::unordered_map<std::string, typename MsgTraits::PointCloudMessage::ConstSharedPtr>
+    topic_to_cloud_map)
 {
   return combine_cloud_handler_->combine_pointclouds(topic_to_cloud_map);
 }
 
-template <typename PointCloudMessage>
-std::unordered_map<std::string, typename PointCloudMessage::ConstSharedPtr>
-CloudCollector<PointCloudMessage>::get_topic_to_cloud_map()
+template <typename MsgTraits>
+std::unordered_map<std::string, typename MsgTraits::PointCloudMessage::ConstSharedPtr>
+CloudCollector<MsgTraits>::get_topic_to_cloud_map()
 {
   return topic_to_cloud_map_;
 }
 
-template <typename PointCloudMessage>
-void CloudCollector<PointCloudMessage>::show_debug_message()
+template <typename MsgTraits>
+void CloudCollector<MsgTraits>::show_debug_message()
 {
   auto time_until_trigger = timer_->time_until_trigger();
   std::stringstream log_stream;
@@ -171,8 +173,10 @@ void CloudCollector<PointCloudMessage>::show_debug_message()
 
 }  // namespace autoware::pointcloud_preprocessor
 
-template class autoware::pointcloud_preprocessor::CloudCollector<sensor_msgs::msg::PointCloud2>;
+template class autoware::pointcloud_preprocessor::CloudCollector<
+  autoware::pointcloud_preprocessor::PointCloud2Traits>;
 
 #ifdef USE_CUDA
-template class autoware::pointcloud_preprocessor::CloudCollector<cuda_blackboard::CudaPointCloud2>;
+template class autoware::pointcloud_preprocessor::CloudCollector<
+  autoware::pointcloud_preprocessor::CudaPointCloud2Traits>;
 #endif

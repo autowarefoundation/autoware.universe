@@ -36,17 +36,22 @@
 #include <unordered_map>
 #include <vector>
 
+using autoware::pointcloud_preprocessor::CloudCollector;
+using autoware::pointcloud_preprocessor::CombineCloudHandler;
+using autoware::pointcloud_preprocessor::PointCloud2Traits;
+using autoware::pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent;
+
 class ConcatenateCloudTest : public ::testing::Test
 {
 protected:
   void SetUp() override
   {
+    std::vector<std::string> input_topics{"lidar_top", "lidar_left", "lidar_right"};
     rclcpp::NodeOptions node_options;
     // Instead of "input_topics", other parameters are not used.
     // They just helps to setup the concatenate node
     node_options.parameter_overrides(
-      {{"use_cuda", false},
-       {"debug_mode", false},
+      {{"debug_mode", false},
        {"has_static_tf_only", false},
        {"rosbag_length", 0.0},
        {"maximum_queue_size", 5},
@@ -57,23 +62,19 @@ protected:
        {"publish_previous_but_late_pointcloud", false},
        {"synchronized_pointcloud_postfix", "pointcloud"},
        {"input_twist_topic_type", "twist"},
-       {"input_topics", std::vector<std::string>{"lidar_top", "lidar_left", "lidar_right"}},
+       {"input_topics", input_topics},
        {"output_frame", "base_link"},
        {"matching_strategy.type", "advanced"},
        {"matching_strategy.lidar_timestamp_offsets", std::vector<double>{0.0, 0.04, 0.08}},
        {"matching_strategy.lidar_timestamp_noise_window", std::vector<double>{0.01, 0.01, 0.01}}});
 
-    concatenate_node_ = std::make_shared<
-      autoware::pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent>(
-      node_options);
-    combine_cloud_handler_ = std::make_shared<
-      autoware::pointcloud_preprocessor::CombineCloudHandler<sensor_msgs::msg::PointCloud2>>(
-      *concatenate_node_, "base_link", true, true, true, false);
+    concatenate_node_ =
+      std::make_shared<PointCloudConcatenateDataSynchronizerComponent>(node_options);
+    combine_cloud_handler_ = std::make_shared<CombineCloudHandler<PointCloud2Traits>>(
+      *concatenate_node_, input_topics, "base_link", true, true, true, false);
 
-    collector_ = std::make_shared<
-      autoware::pointcloud_preprocessor::CloudCollector<sensor_msgs::msg::PointCloud2>>(
-      std::dynamic_pointer_cast<
-        autoware::pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent>(
+    collector_ = std::make_shared<CloudCollector<PointCloud2Traits>>(
+      std::dynamic_pointer_cast<PointCloudConcatenateDataSynchronizerComponent>(
         concatenate_node_->shared_from_this()),
       combine_cloud_handler_, number_of_pointcloud, timeout_sec, collector_debug_mode);
 
@@ -171,13 +172,9 @@ protected:
     generate_transform_msg("base_link", "lidar_right", 1.0, 1.0, 3.0, 0.278, 0.717, 0.441, 0.453);
   }
 
-  std::shared_ptr<autoware::pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent>
-    concatenate_node_;
-  std::shared_ptr<
-    autoware::pointcloud_preprocessor::CombineCloudHandler<sensor_msgs::msg::PointCloud2>>
-    combine_cloud_handler_;
-  std::shared_ptr<autoware::pointcloud_preprocessor::CloudCollector<sensor_msgs::msg::PointCloud2>>
-    collector_;
+  std::shared_ptr<PointCloudConcatenateDataSynchronizerComponent> concatenate_node_;
+  std::shared_ptr<CombineCloudHandler<PointCloud2Traits>> combine_cloud_handler_;
+  std::shared_ptr<CloudCollector<PointCloud2Traits>> collector_;
   std::shared_ptr<tf2_ros::StaticTransformBroadcaster> tf_broadcaster_;
 
   static constexpr int32_t timestamp_seconds{10};
@@ -492,7 +489,7 @@ TEST_F(ConcatenateCloudTest, TestProcessSingleCloud)
   EXPECT_EQ(topic_to_cloud_map["lidar_top"], top_pointcloud_ptr);
   EXPECT_FALSE(collector_->concatenate_finished());
   concatenate_node_->manage_collector_list();
-  EXPECT_FALSE(concatenate_node_->get_cloud_collectors<sensor_msgs::msg::PointCloud2>().empty());
+  EXPECT_FALSE(concatenate_node_->get_cloud_collectors().empty());
 
   // Sleep for timeout seconds (200 ms)
   std::this_thread::sleep_for(std::chrono::milliseconds(200));
@@ -501,7 +498,7 @@ TEST_F(ConcatenateCloudTest, TestProcessSingleCloud)
   // Collector should concatenate and publish the pointcloud, also delete itself.
   EXPECT_TRUE(collector_->concatenate_finished());
   concatenate_node_->manage_collector_list();
-  EXPECT_TRUE(concatenate_node_->get_cloud_collectors<sensor_msgs::msg::PointCloud2>().empty());
+  EXPECT_TRUE(concatenate_node_->get_cloud_collectors().empty());
 }
 
 TEST_F(ConcatenateCloudTest, TestProcessMultipleCloud)
@@ -531,7 +528,7 @@ TEST_F(ConcatenateCloudTest, TestProcessMultipleCloud)
 
   EXPECT_TRUE(collector_->concatenate_finished());
   concatenate_node_->manage_collector_list();
-  EXPECT_TRUE(concatenate_node_->get_cloud_collectors<sensor_msgs::msg::PointCloud2>().empty());
+  EXPECT_TRUE(concatenate_node_->get_cloud_collectors().empty());
 }
 
 int main(int argc, char ** argv)

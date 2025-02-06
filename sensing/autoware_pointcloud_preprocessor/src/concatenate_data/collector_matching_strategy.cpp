@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "autoware/pointcloud_preprocessor/concatenate_data/cloud_collector.hpp"
+#include "autoware/pointcloud_preprocessor/concatenate_data/traits.hpp"
 
 #include <autoware/pointcloud_preprocessor/concatenate_data/collector_matching_strategy.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -26,20 +27,20 @@
 namespace autoware::pointcloud_preprocessor
 {
 
-template <typename PointCloudMessage>
-NaiveMatchingStrategy<PointCloudMessage>::NaiveMatchingStrategy(rclcpp::Node & node)
+template <typename MsgTraits>
+NaiveMatchingStrategy<MsgTraits>::NaiveMatchingStrategy(rclcpp::Node & node)
 {
   RCLCPP_INFO(node.get_logger(), "Utilize naive matching strategy");
 }
 
-template <typename PointCloudMessage>
-std::optional<std::shared_ptr<CloudCollector<PointCloudMessage>>>
-NaiveMatchingStrategy<PointCloudMessage>::match_cloud_to_collector(
-  const std::list<std::shared_ptr<CloudCollector<PointCloudMessage>>> & cloud_collectors,
+template <typename MsgTraits>
+std::optional<std::shared_ptr<CloudCollector<MsgTraits>>>
+NaiveMatchingStrategy<MsgTraits>::match_cloud_to_collector(
+  const std::list<std::shared_ptr<CloudCollector<MsgTraits>>> & cloud_collectors,
   const MatchingParams & params) const
 {
   std::optional<double> smallest_time_difference = std::nullopt;
-  std::shared_ptr<CloudCollector<PointCloudMessage>> closest_collector = nullptr;
+  std::shared_ptr<CloudCollector<MsgTraits>> closest_collector = nullptr;
 
   for (const auto & cloud_collector : cloud_collectors) {
     if (!cloud_collector->topic_exists(params.topic_name)) {
@@ -60,10 +61,9 @@ NaiveMatchingStrategy<PointCloudMessage>::match_cloud_to_collector(
   return std::nullopt;
 }
 
-template <typename PointCloudMessage>
-void NaiveMatchingStrategy<PointCloudMessage>::set_collector_info(
-  std::shared_ptr<CloudCollector<PointCloudMessage>> & collector,
-  const MatchingParams & matching_params)
+template <typename MsgTraits>
+void NaiveMatchingStrategy<MsgTraits>::set_collector_info(
+  std::shared_ptr<CloudCollector<MsgTraits>> & collector, const MatchingParams & matching_params)
 {
   auto info = std::make_shared<NaiveCollectorInfo>(matching_params.cloud_arrival_time);
   collector->set_info(info);
@@ -95,10 +95,10 @@ AdvancedMatchingStrategy<PointCloudMessage>::AdvancedMatchingStrategy(
   RCLCPP_INFO(node.get_logger(), "Utilize advanced matching strategy");
 }
 
-template <typename PointCloudMessage>
-std::optional<std::shared_ptr<CloudCollector<PointCloudMessage>>>
-AdvancedMatchingStrategy<PointCloudMessage>::match_cloud_to_collector(
-  const std::list<std::shared_ptr<CloudCollector<PointCloudMessage>>> & cloud_collectors,
+template <typename MsgTraits>
+std::optional<std::shared_ptr<CloudCollector<MsgTraits>>>
+AdvancedMatchingStrategy<MsgTraits>::match_cloud_to_collector(
+  const std::list<std::shared_ptr<CloudCollector<MsgTraits>>> & cloud_collectors,
   const MatchingParams & params) const
 {
   for (const auto & cloud_collector : cloud_collectors) {
@@ -117,10 +117,9 @@ AdvancedMatchingStrategy<PointCloudMessage>::match_cloud_to_collector(
   return std::nullopt;
 }
 
-template <typename PointCloudMessage>
-void AdvancedMatchingStrategy<PointCloudMessage>::set_collector_info(
-  std::shared_ptr<CloudCollector<PointCloudMessage>> & collector,
-  const MatchingParams & matching_params)
+template <typename MsgTraits>
+void AdvancedMatchingStrategy<MsgTraits>::set_collector_info(
+  std::shared_ptr<CloudCollector<MsgTraits>> & collector, const MatchingParams & matching_params)
 {
   auto info = std::make_shared<AdvancedCollectorInfo>(
     matching_params.cloud_timestamp - topic_to_offset_map_.at(matching_params.topic_name),
@@ -131,13 +130,13 @@ void AdvancedMatchingStrategy<PointCloudMessage>::set_collector_info(
 }  // namespace autoware::pointcloud_preprocessor
 
 template class autoware::pointcloud_preprocessor::NaiveMatchingStrategy<
-  sensor_msgs::msg::PointCloud2>;
+  autoware::pointcloud_preprocessor::PointCloud2Traits>;
 template class autoware::pointcloud_preprocessor::AdvancedMatchingStrategy<
-  sensor_msgs::msg::PointCloud2>;
+  autoware::pointcloud_preprocessor::PointCloud2Traits>;
 
 #ifdef USE_CUDA
 template class autoware::pointcloud_preprocessor::NaiveMatchingStrategy<
-  cuda_blackboard::CudaPointCloud2>;
+  autoware::pointcloud_preprocessor::CudaPointCloud2Traits>;
 template class autoware::pointcloud_preprocessor::AdvancedMatchingStrategy<
-  cuda_blackboard::CudaPointCloud2>;
+  autoware::pointcloud_preprocessor::CudaPointCloud2Traits>;
 #endif

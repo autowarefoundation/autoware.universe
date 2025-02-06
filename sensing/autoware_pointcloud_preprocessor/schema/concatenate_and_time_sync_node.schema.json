@@ -6,11 +6,6 @@
     "concatenate_and_time_sync_node": {
       "type": "object",
       "properties": {
-        "use_cuda": {
-          "type": "boolean",
-          "default": false,
-          "description": "Flag to the use of cuda for concatenation."
-        },
         "debug_mode": {
           "type": "boolean",
           "default": false,
@@ -136,7 +131,6 @@
         }
       },
       "required": [
-        "use_cuda",
         "debug_mode",
         "has_static_tf_only",
         "rosbag_length",
