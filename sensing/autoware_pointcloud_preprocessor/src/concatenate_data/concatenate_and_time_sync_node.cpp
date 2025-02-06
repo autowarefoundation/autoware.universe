@@ -229,9 +229,12 @@ PointCloudConcatenateDataSynchronizerComponentTemplated<MsgTraits>::replace_sync
 }
 
 template <typename MsgTraits>
-bool PointCloudConcatenateDataSynchronizerComponentTemplated<MsgTraits>::cloud_callback_preprocess(
-  const typename PointCloudMessage::ConstSharedPtr & input_ptr, const std::string & topic_name)
+void PointCloudConcatenateDataSynchronizerComponentTemplated<MsgTraits>::cloud_callback(
+  const typename MsgTraits::PointCloudMessage::ConstSharedPtr & input_ptr,
+  const std::string & topic_name)
 {
+  double cloud_arrival_time = this->get_clock()->now().seconds();
+
   stop_watch_ptr_->toc("processing_time", true);
   manage_collector_list();
 
@@ -245,7 +248,7 @@ bool PointCloudConcatenateDataSynchronizerComponentTemplated<MsgTraits>::cloud_c
         "The pointcloud layout is compatible with PointXYZI. You may be using legacy code/data");
     }
 
-    return false;
+    return;
   }
 
   if (params_.debug_mode) {
@@ -259,20 +262,6 @@ bool PointCloudConcatenateDataSynchronizerComponentTemplated<MsgTraits>::cloud_c
   if (input_ptr->width * input_ptr->height == 0) {
     RCLCPP_WARN_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), 1000, "Empty sensor points!");
-  }
-
-  return true;
-}
-
-template <typename MsgTraits>
-void PointCloudConcatenateDataSynchronizerComponentTemplated<MsgTraits>::cloud_callback(
-  const typename MsgTraits::PointCloudMessage::ConstSharedPtr & input_ptr,
-  const std::string & topic_name)
-{
-  double cloud_arrival_time = this->get_clock()->now().seconds();
-
-  if (!cloud_callback_preprocess(input_ptr, topic_name)) {
-    return;
   }
 
   // protect cloud collectors list
@@ -330,13 +319,14 @@ void PointCloudConcatenateDataSynchronizerComponentTemplated<MsgTraits>::odom_ca
 }
 
 template <typename MsgTraits>
-bool PointCloudConcatenateDataSynchronizerComponentTemplated<MsgTraits>::publish_clouds_preprocess(
-  const ConcatenatedCloudResult<MsgTraits> & concatenated_cloud_result)
+void PointCloudConcatenateDataSynchronizerComponentTemplated<MsgTraits>::publish_clouds(
+  ConcatenatedCloudResult<MsgTraits> && concatenated_cloud_result,
+  std::shared_ptr<CollectorInfoBase> collector_info)
 {
   // should never come to this state.
   if (concatenated_cloud_result.concatenate_cloud_ptr == nullptr) {
     RCLCPP_ERROR(this->get_logger(), "Concatenated cloud is a nullptr.");
-    return false;
+    return;
   }
 
   if (
@@ -364,45 +354,6 @@ bool PointCloudConcatenateDataSynchronizerComponentTemplated<MsgTraits>::publish
   } else {
     // Publish pointcloud if timestamps are valid or the condition doesn't apply
     publish_pointcloud_ = true;
-  }
-
-  return true;
-}
-
-template <typename MsgTraits>
-void PointCloudConcatenateDataSynchronizerComponentTemplated<MsgTraits>::publish_clouds_postprocess(
-  const ConcatenatedCloudResult<MsgTraits> & concatenated_cloud_result,
-  std::shared_ptr<CollectorInfoBase> collector_info)
-{
-  diagnostic_collector_info_ = collector_info;
-
-  diagnostic_topic_to_original_stamp_map_ = concatenated_cloud_result.topic_to_original_stamp_map;
-  diagnostic_updater_.force_update();
-
-  // add processing time for debug
-  if (debug_publisher_) {
-    const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
-    const double processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
-    debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
-      "debug/cyclic_time_ms", cyclic_time_ms);
-    debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
-      "debug/processing_time_ms", processing_time_ms);
-
-    for (const auto & [topic, stamp] : concatenated_cloud_result.topic_to_original_stamp_map) {
-      const auto pipeline_latency_ms = (this->get_clock()->now().seconds() - stamp) * 1000;
-      debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
-        "debug" + topic + "/pipeline_latency_ms", pipeline_latency_ms);
-    }
-  }
-}
-
-template <typename MsgTraits>
-void PointCloudConcatenateDataSynchronizerComponentTemplated<MsgTraits>::publish_clouds(
-  ConcatenatedCloudResult<MsgTraits> && concatenated_cloud_result,
-  std::shared_ptr<CollectorInfoBase> collector_info)
-{
-  if (!publish_clouds_preprocess(concatenated_cloud_result)) {
-    return;
   }
 
   if (publish_pointcloud_) {
@@ -433,7 +384,26 @@ void PointCloudConcatenateDataSynchronizerComponentTemplated<MsgTraits>::publish
     }
   }
 
-  publish_clouds_postprocess(concatenated_cloud_result, collector_info);
+  diagnostic_collector_info_ = collector_info;
+
+  diagnostic_topic_to_original_stamp_map_ = concatenated_cloud_result.topic_to_original_stamp_map;
+  diagnostic_updater_.force_update();
+
+  // add processing time for debug
+  if (debug_publisher_) {
+    const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
+    const double processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
+    debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
+      "debug/cyclic_time_ms", cyclic_time_ms);
+    debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
+      "debug/processing_time_ms", processing_time_ms);
+
+    for (const auto & [topic, stamp] : concatenated_cloud_result.topic_to_original_stamp_map) {
+      const auto pipeline_latency_ms = (this->get_clock()->now().seconds() - stamp) * 1000;
+      debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
+        "debug" + topic + "/pipeline_latency_ms", pipeline_latency_ms);
+    }
+  }
 }
 
 template <typename MsgTraits>

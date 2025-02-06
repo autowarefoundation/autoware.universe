@@ -413,11 +413,11 @@ void CombineCloudHandler<CudaPointCloud2Traits>::allocate_pointclouds()
     auto & concat_struct = cuda_concat_struct_map_[topic];
     concat_struct.cloud_ptr = std::make_unique<cuda_blackboard::CudaPointCloud2>();
     concat_struct.cloud_ptr->data =
-      cuda_blackboard::make_unique<std::uint8_t[]>(concat_struct.max_pointcloud_size_);
+      cuda_blackboard::make_unique<std::uint8_t[]>(concat_struct.max_pointcloud_size);
   }
 
-  concatenated_cloud_ptr = std::make_unique<cuda_blackboard::CudaPointCloud2>();
-  concatenated_cloud_ptr->data = cuda_blackboard::make_unique<std::uint8_t[]>(
+  concatenated_cloud_ptr_ = std::make_unique<cuda_blackboard::CudaPointCloud2>();
+  concatenated_cloud_ptr_->data = cuda_blackboard::make_unique<std::uint8_t[]>(
     max_concat_pointcloud_size_ * input_topics_.size());
 }
 
@@ -452,14 +452,14 @@ CombineCloudHandler<CudaPointCloud2Traits>::combine_pointclouds(
 
   const auto point_fields = topic_to_cloud_map.begin()->second->fields;
 
-  if (total_data_size > max_concat_pointcloud_size_ || !concatenated_cloud_ptr) {
+  if (total_data_size > max_concat_pointcloud_size_ || !concatenated_cloud_ptr_) {
     max_concat_pointcloud_size_ = (total_data_size + 1024) / 1024 * 1024;
-    concatenated_cloud_ptr = std::make_unique<cuda_blackboard::CudaPointCloud2>();
-    concatenated_cloud_ptr->data = cuda_blackboard::make_unique<std::uint8_t[]>(
+    concatenated_cloud_ptr_ = std::make_unique<cuda_blackboard::CudaPointCloud2>();
+    concatenated_cloud_ptr_->data = cuda_blackboard::make_unique<std::uint8_t[]>(
       max_concat_pointcloud_size_ * input_topics_.size());
   }
 
-  concatenate_cloud_result.concatenate_cloud_ptr = std::move(concatenated_cloud_ptr);
+  concatenate_cloud_result.concatenate_cloud_ptr = std::move(concatenated_cloud_ptr_);
 
   PointTypeStruct * output_points =
     reinterpret_cast<PointTypeStruct *>(concatenate_cloud_result.concatenate_cloud_ptr->data.get());
@@ -528,8 +528,8 @@ CombineCloudHandler<CudaPointCloud2Traits>::combine_pointclouds(
 
       auto & concat_struct = cuda_concat_struct_map_[topic];
 
-      if (data_size > concat_struct.max_pointcloud_size_ || !concat_struct.cloud_ptr) {
-        concat_struct.max_pointcloud_size_ = (data_size + 1024) / 1024 * 1024;
+      if (data_size > concat_struct.max_pointcloud_size || !concat_struct.cloud_ptr) {
+        concat_struct.max_pointcloud_size = (data_size + 1024) / 1024 * 1024;
         concat_struct.cloud_ptr = std::make_unique<cuda_blackboard::CudaPointCloud2>();
         concat_struct.cloud_ptr->data = cuda_blackboard::make_unique<std::uint8_t[]>(data_size);
       }

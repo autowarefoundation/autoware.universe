@@ -145,15 +145,15 @@ class CombineCloudHandler<CudaPointCloud2Traits> : public CombineCloudHandlerBas
 {
 protected:
   struct CudaConcatStruct
-  {  // TODO(knzo25): notation
+  {
     cudaStream_t stream;
     std::unique_ptr<CudaPointCloud2Traits::PointCloudMessage> cloud_ptr;
-    std::size_t max_pointcloud_size_{0};
+    std::size_t max_pointcloud_size{0};
   };
 
   std::vector<std::string> input_topics_;
   std::unordered_map<std::string, CudaConcatStruct> cuda_concat_struct_map_;
-  std::unique_ptr<CudaPointCloud2Traits::PointCloudMessage> concatenated_cloud_ptr;
+  std::unique_ptr<CudaPointCloud2Traits::PointCloudMessage> concatenated_cloud_ptr_;
   std::size_t max_concat_pointcloud_size_{0};
   std::mutex mutex_;
 

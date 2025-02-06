@@ -68,13 +68,6 @@ public:
     const rclcpp::NodeOptions & node_options);
   ~PointCloudConcatenateDataSynchronizerComponentTemplated() override = default;
 
-  bool publish_clouds_preprocess(
-    const ConcatenatedCloudResult<MsgTraits> & concatenated_cloud_result);
-
-  void publish_clouds_postprocess(
-    const ConcatenatedCloudResult<MsgTraits> & concatenated_cloud_result,
-    std::shared_ptr<CollectorInfoBase> collector_info);
-
   void publish_clouds(
     ConcatenatedCloudResult<MsgTraits> && concatenated_cloud_result,
     std::shared_ptr<CollectorInfoBase> collector_info);
@@ -138,9 +131,6 @@ private:
   diagnostic_updater::Updater diagnostic_updater_{this};
 
   void initialize();
-
-  bool cloud_callback_preprocess(
-    const typename PointCloudMessage::ConstSharedPtr & input_ptr, const std::string & topic_name);
 
   void cloud_callback(
     const typename PointCloudMessage::ConstSharedPtr & input_ptr, const std::string & topic_name);
