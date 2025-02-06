@@ -72,6 +72,18 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
   msg3d_timeout_sec_ = declare_parameter<double>("msg3d_timeout_sec");
   rois_timeout_sec_ = declare_parameter<double>("rois_timeout_sec");
 
+  auto rois_timestamp_offsets = declare_parameter<std::vector<double>>("rois_timestamp_offsets");
+  if (rois_timestamp_offsets.size() != rois_number_) {
+    throw std::runtime_error(
+      "Mismatch: rois_number (" + std::to_string(rois_number_) +
+      ") does not match rois_timestamp_offsets size (" +
+      std::to_string(rois_timestamp_offsets.size()) + ").");
+  }
+
+  for (std::size_t i = 0; i < rois_number_; i++) {
+    id_to_offset_map_[i] = rois_timestamp_offsets[i];
+  }
+
   std::vector<std::string> input_rois_topics;
   std::vector<std::string> input_camera_info_topics;
 
@@ -157,6 +169,7 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
     debug_internal_pub_ =
       std::make_unique<autoware::universe_utils::DebugPublisher>(this, get_name());
   }
+  collector_debug_mode_ = declare_parameter<bool>("collector_debug_mode");
 
   // time keeper
   bool use_time_keeper = declare_parameter<bool>("publish_processing_time_detail");
@@ -187,10 +200,10 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::init_strategy()
 {
   if (matching_strategy_ == "naive") {
     fusion_matching_strategy_ = std::make_unique<NaiveMatchingStrategy<Msg3D, Msg2D, ExportObj>>(
-      std::dynamic_pointer_cast<FusionNode>(shared_from_this()), rois_number_);
+      std::dynamic_pointer_cast<FusionNode>(shared_from_this()), id_to_offset_map_);
   } else if (matching_strategy_ == "advanced") {
     fusion_matching_strategy_ = std::make_unique<AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>>(
-      std::dynamic_pointer_cast<FusionNode>(shared_from_this()), rois_number_);
+      std::dynamic_pointer_cast<FusionNode>(shared_from_this()), id_to_offset_map_);
     // subscribe diagnostics
     sub_diag_ = this->create_subscription<diagnostic_msgs::msg::DiagnosticArray>(
       "/diagnostics", 10, std::bind(&FusionNode::diagnostic_callback, this, std::placeholders::_1));
@@ -321,7 +334,7 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::sub_callback(const typename Msg3D::Con
   }
 
   // Debug logging for message latency
-  if (debug_mode_) {
+  if (collector_debug_mode_) {
     auto arrive_time = this->get_clock()->now().seconds();
     auto msg3d_stamp = rclcpp::Time(msg3d->header.stamp).seconds();
     RCLCPP_DEBUG(
@@ -353,25 +366,33 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::sub_callback(const typename Msg3D::Con
   bool process_success = false;
   if (fusion_collector && fusion_collector.value()) {
     fusion_collectors_lock.unlock();  // Unlock before processing
-    process_success = fusion_collector.value()->process_msg_3d(msg3d, msg3d_timeout_sec_);
+    process_success = fusion_collector.value()->process_msg3d(msg3d, msg3d_timeout_sec_);
   }
 
-  // If no matching collector, create a new one
+  // Didn't find matched collector, create a new collector
   if (!process_success) {
-    auto new_fusion_collector = std::make_shared<FusionCollector<Msg3D, Msg2D, ExportObj>>(
-      std::dynamic_pointer_cast<FusionNode>(shared_from_this()), msg3d_timeout_sec_, rois_number_,
-      det2d_status_list_, true, debug_mode_);
+    std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>> selected_collector = nullptr;
 
-    fusion_collectors_.emplace_back(new_fusion_collector);
+    // Reuse the collector if the status is IDLE
+    for (auto & collector : fusion_collectors_) {
+      if (collector->get_status() == CollectorStatus::Idle) {
+        selected_collector = collector;
+        break;
+      }
+    }
+
+    if (!selected_collector) {
+      // If no idle collector exists, create a new collector
+      selected_collector = std::make_shared<FusionCollector<Msg3D, Msg2D, ExportObj>>(
+        std::dynamic_pointer_cast<FusionNode>(shared_from_this()), rois_number_, det2d_status_list_,
+        collector_debug_mode_);
+
+      fusion_collectors_.emplace_back(selected_collector);
+    }
+
     fusion_collectors_lock.unlock();
-
-    fusion_matching_strategy_->set_collector_info(new_fusion_collector, matching_params);
-    (void)new_fusion_collector->process_msg_3d(msg3d, msg3d_timeout_sec_);
-  }
-
-  // TODO(vivid): check the logic of clearing debugger.
-  if (debugger_) {
-    debugger_->clear();
+    fusion_matching_strategy_->set_collector_info(selected_collector, matching_params);
+    (void)selected_collector->process_msg3d(msg3d, msg3d_timeout_sec_);
   }
 
   if (matching_strategy_ == "advanced") {
@@ -379,17 +400,9 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::sub_callback(const typename Msg3D::Con
     manage_concatenated_status_map(msg3d_timestamp);
   }
 
-  // // add timestamp interval for debug
-  // if (debug_internal_pub_) {
-  //   double timestamp_interval_ms = (matched_stamp - timestamp_nsec) / 1e6;
-  //   debug_internal_pub_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
-  //     "debug/roi" + std::to_string(roi_i) + "/timestamp_interval_ms", timestamp_interval_ms);
-  //   debug_internal_pub_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
-  //     "debug/roi" + std::to_string(roi_i) + "/timestamp_interval_offset_ms",
-  //     timestamp_interval_ms - det2d.input_offset_ms);
-  // }
-
-  // processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
+  if (debugger_) {
+    debugger_->clear();
+  }
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
@@ -400,7 +413,7 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::rois_callback(
     init_strategy();
   }
 
-  if (debug_mode_) {
+  if (collector_debug_mode_) {
     auto arrive_time = this->get_clock()->now().seconds();
     RCLCPP_DEBUG(
       this->get_logger(), " rois %zu timestamp: %lf arrive time: %lf seconds, latency: %lf",
@@ -432,35 +445,38 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::rois_callback(
   bool process_success = false;
   if (fusion_collector && fusion_collector.value()) {
     fusion_collectors_lock.unlock();
-    process_success = fusion_collector.value()->process_rois(rois_id, det2d_msg);
+    process_success = fusion_collector.value()->process_rois(rois_id, det2d_msg, rois_timeout_sec_);
   }
 
+  // Didn't find matched collector, create a new collector
   if (!process_success) {
-    auto new_fusion_collector = std::make_shared<FusionCollector<Msg3D, Msg2D, ExportObj>>(
-      std::dynamic_pointer_cast<FusionNode>(shared_from_this()), rois_timeout_sec_, rois_number_,
-      det2d_status_list_, false, debug_mode_);
+    std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>> selected_collector = nullptr;
 
-    fusion_collectors_.emplace_back(new_fusion_collector);
+    // Reuse the collector if the status is IDLE
+    for (auto & collector : fusion_collectors_) {
+      if (collector->get_status() == CollectorStatus::Idle) {
+        selected_collector = collector;
+        break;
+      }
+    }
+
+    if (!selected_collector) {
+      // If no idle collector exists, create a new collector
+      selected_collector = std::make_shared<FusionCollector<Msg3D, Msg2D, ExportObj>>(
+        std::dynamic_pointer_cast<FusionNode>(shared_from_this()), rois_number_, det2d_status_list_,
+        collector_debug_mode_);
+
+      fusion_collectors_.emplace_back(selected_collector);
+    }
+
     fusion_collectors_lock.unlock();
-
-    fusion_matching_strategy_->set_collector_info(new_fusion_collector, matching_params);
-    (void)new_fusion_collector->process_rois(rois_id, det2d_msg);
+    fusion_matching_strategy_->set_collector_info(selected_collector, matching_params);
+    (void)selected_collector->process_rois(rois_id, det2d_msg, rois_timeout_sec_);
   }
 
   if (debugger_) {
     debugger_->clear();
   }
-
-  // if (debug_internal_pub_) {
-  //       double timestamp_interval_ms = (timestamp_nsec - cached_det3d_msg_timestamp_) / 1e6;
-  //       debug_internal_pub_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
-  //         "debug/roi" + std::to_string(roi_i) + "/timestamp_interval_ms", timestamp_interval_ms);
-  //       debug_internal_pub_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
-  //         "debug/roi" + std::to_string(roi_i) + "/timestamp_interval_offset_ms",
-  //         timestamp_interval_ms - det2d.input_offset_ms);
-  // }
-
-  // processing_time_ms = processing_time_ms + stop_watch_ptr_->toc("processing_time", true);
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
@@ -545,12 +561,18 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::manage_collector_list()
 {
   std::lock_guard<std::mutex> collectors_lock(fusion_collectors_mutex_);
 
-  for (auto it = fusion_collectors_.begin(); it != fusion_collectors_.end();) {
-    if ((*it)->fusion_finished()) {
-      it = fusion_collectors_.erase(it);  // Erase and move the iterator to the next element
-    } else {
-      ++it;  // Move to the next element
+  for (auto & collector : fusion_collectors_) {
+    if (collector->get_status() == CollectorStatus::Finished) {
+      collector->reset();
     }
+  }
+
+  if (fusion_collectors_.size() > collectors_threshold) {
+    RCLCPP_WARN_STREAM_THROTTLE(
+      get_logger(), *get_clock(), 1000,
+      "The number of cloud collectors (" << fusion_collectors_.size() << ") exceeds the threshold ("
+                                         << collectors_threshold
+                                         << "), be careful if it keeps increasing.");
   }
 }
 
@@ -641,6 +663,9 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::check_fusion_status(
     } else if (rois_miss) {
       level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
       message = "Fused output msg is published but misses some ROIs";
+    } else if (!msg3d_fused_) {
+      level = diagnostic_msgs::msg::DiagnosticStatus::ERROR;
+      message = "Fused output msg is not published as msg3d is missed";
     }
 
     stat.summary(level, message);
@@ -653,6 +678,19 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::check_fusion_status(
     stat.summary(
       diagnostic_msgs::msg::DiagnosticStatus::OK,
       "Fusion node launched successfully, but waiting for input pointcloud");
+  }
+
+  // debug
+  if (debug_internal_pub_) {
+    for (std::size_t rois_id = 0; rois_id < rois_number_; ++rois_id) {
+      auto rois_timestamp = diagnostic_id_to_stamp_map_[rois_id];
+      auto timestamp_interval_ms = rois_timestamp - current_output_msg_timestamp_;
+      debug_internal_pub_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
+        "debug/roi" + std::to_string(rois_id) + "/timestamp_interval_ms", timestamp_interval_ms);
+      debug_internal_pub_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
+        "debug/roi" + std::to_string(rois_id) + "/timestamp_interval_offset_ms",
+        timestamp_interval_ms - id_to_offset_map_[rois_id] * 1000);
+    }
   }
 }
 

@@ -30,23 +30,23 @@ namespace autoware::image_projection_based_fusion
 
 template <class Msg3D, class Msg2D, class ExportObj>
 FusionCollector<Msg3D, Msg2D, ExportObj>::FusionCollector(
-  std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> && ros2_parent_node, double timeout_sec,
-  std::size_t rois_number, const std::vector<Det2dStatus<Msg2D>> & det2d_status_list, bool is_3d,
-  bool debug_mode)
+  std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> && ros2_parent_node, std::size_t rois_number,
+  const std::vector<Det2dStatus<Msg2D>> & det2d_status_list, bool debug_mode)
 : ros2_parent_node_(std::move(ros2_parent_node)),
-  timeout_sec_(timeout_sec),
   rois_number_(rois_number),
   det2d_status_list_(det2d_status_list),
-  is_3d_(is_3d),
   debug_mode_(debug_mode)
 {
+  status_ = CollectorStatus::Idle;
+
+  auto init_timeout_sec = 1.0;  // This will be overwritten when input come
   const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
-    std::chrono::duration<double>(timeout_sec_));
+    std::chrono::duration<double>(init_timeout_sec));
 
   timer_ =
     rclcpp::create_timer(ros2_parent_node_, ros2_parent_node_->get_clock(), period_ns, [this]() {
       std::lock_guard<std::mutex> fusion_lock(fusion_mutex_);
-      if (fusion_finished_) return;
+      if (status_ == CollectorStatus::Finished) return;
       fusion_callback();
     });
 }
@@ -65,34 +65,39 @@ std::shared_ptr<FusionCollectorInfoBase> FusionCollector<Msg3D, Msg2D, ExportObj
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
-bool FusionCollector<Msg3D, Msg2D, ExportObj>::process_msg_3d(
-  const typename Msg3D::ConstSharedPtr msg_3d, double msg_3d_timeout)
+bool FusionCollector<Msg3D, Msg2D, ExportObj>::process_msg3d(
+  const typename Msg3D::ConstSharedPtr msg3d, double msg3d_timeout)
 {
   std::lock_guard<std::mutex> fusion_lock(fusion_mutex_);
-  if (fusion_finished_) return false;
+  if (status_ == CollectorStatus::Finished) return false;
 
-  if (msg3d_ != nullptr) {
-    RCLCPP_WARN_STREAM_THROTTLE(
-      ros2_parent_node_->get_logger(), *ros2_parent_node_->get_clock(),
-      std::chrono::milliseconds(10000).count(),
-      "Pointcloud already exists in the collector. Check the timestamp of the pointcloud.");
-  }
+  if (status_ == CollectorStatus::Idle) {
+    // Add det3d to the collector, restart the timer
+    status_ = CollectorStatus::Processing;
+    is_first_msg3d_ = true;
+    const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+      std::chrono::duration<double>(msg3d_timeout));
+    set_period(period_ns);
+    timer_->reset();
+  } else if (status_ == CollectorStatus::Processing) {
+    if (msg3d_ != nullptr) {
+      RCLCPP_WARN_STREAM_THROTTLE(
+        ros2_parent_node_->get_logger(), *ros2_parent_node_->get_clock(),
+        std::chrono::milliseconds(10000).count(),
+        "Msg3d already exists in the collector. Check the timestamp of the msg3d.");
+    }
 
-  msg3d_ = msg_3d;
-  if (ready_to_fuse()) {
-    fusion_callback();
-  } else {
-    if (!is_3d_) {
+    if (!is_first_msg3d_) {
       const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
-        std::chrono::duration<double>(msg_3d_timeout));
-      try {
-        set_period(period_ns.count());
-      } catch (rclcpp::exceptions::RCLError & ex) {
-        RCLCPP_WARN_THROTTLE(
-          ros2_parent_node_->get_logger(), *ros2_parent_node_->get_clock(), 5000, "%s", ex.what());
-      }
+        std::chrono::duration<double>(msg3d_timeout));
+      set_period(period_ns);
       timer_->reset();
     }
+  }
+
+  msg3d_ = msg3d;
+  if (ready_to_fuse()) {
+    fusion_callback();
   }
 
   return true;
@@ -100,17 +105,29 @@ bool FusionCollector<Msg3D, Msg2D, ExportObj>::process_msg_3d(
 
 template <class Msg3D, class Msg2D, class ExportObj>
 bool FusionCollector<Msg3D, Msg2D, ExportObj>::process_rois(
-  const std::size_t & rois_id, const typename Msg2D::ConstSharedPtr det2d_msg)
+  const std::size_t & rois_id, const typename Msg2D::ConstSharedPtr det2d_msg, double det2d_timeout)
 {
   std::lock_guard<std::mutex> fusion_lock(fusion_mutex_);
-  if (fusion_finished_) return false;
+  if (status_ == CollectorStatus::Finished) return false;
 
-  if (id_to_rois_map_.find(rois_id) != id_to_rois_map_.end()) {
-    RCLCPP_WARN_STREAM_THROTTLE(
-      ros2_parent_node_->get_logger(), *ros2_parent_node_->get_clock(),
-      std::chrono::milliseconds(10000).count(),
-      "ROIs '" << rois_id << "' already exists in the collector. Check the timestamp of the rois.");
+  if (status_ == CollectorStatus::Idle) {
+    // Add det2d to the collector, restart the timer
+    status_ = CollectorStatus::Processing;
+    is_first_msg3d_ = false;
+    const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
+      std::chrono::duration<double>(det2d_timeout));
+    set_period(period_ns);
+    timer_->reset();
+  } else if (status_ == CollectorStatus::Processing) {
+    if (id_to_rois_map_.find(rois_id) != id_to_rois_map_.end()) {
+      RCLCPP_WARN_STREAM_THROTTLE(
+        ros2_parent_node_->get_logger(), *ros2_parent_node_->get_clock(),
+        std::chrono::milliseconds(10000).count(),
+        "ROIs '" << rois_id
+                 << "' already exists in the collector. Check the timestamp of the rois.");
+    }
   }
+
   id_to_rois_map_[rois_id] = det2d_msg;
   if (ready_to_fuse()) {
     fusion_callback();
@@ -126,9 +143,9 @@ bool FusionCollector<Msg3D, Msg2D, ExportObj>::ready_to_fuse()
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
-bool FusionCollector<Msg3D, Msg2D, ExportObj>::fusion_finished() const
+CollectorStatus FusionCollector<Msg3D, Msg2D, ExportObj>::get_status() const
 {
-  return fusion_finished_;
+  return status_;
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
@@ -151,7 +168,7 @@ void FusionCollector<Msg3D, Msg2D, ExportObj>::fusion_callback()
     RCLCPP_WARN(
       ros2_parent_node_->get_logger(),
       "The Det3d message is not in the fusion collector, so the fusion process will be skipped.");
-    fusion_finished_ = true;
+    status_ = CollectorStatus::Finished;
     // TODO(vivid): call another functino to show the message on diagnostic.
     ros2_parent_node_->show_diagnostic_message(id_to_stamp_map, fusion_collector_info_);
     return;
@@ -172,7 +189,7 @@ void FusionCollector<Msg3D, Msg2D, ExportObj>::fusion_callback()
   }
 
   ros2_parent_node_->export_process(output_det3d_msg, id_to_stamp_map, fusion_collector_info_);
-  fusion_finished_ = true;
+  status_ = CollectorStatus::Finished;
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
@@ -228,19 +245,41 @@ void FusionCollector<Msg3D, Msg2D, ExportObj>::show_debug_message()
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
-void FusionCollector<Msg3D, Msg2D, ExportObj>::set_period(const int64_t new_period)
+void FusionCollector<Msg3D, Msg2D, ExportObj>::set_period(const std::chrono::nanoseconds period)
 {
-  if (!timer_) {
-    return;
+  try {
+    const auto new_period = period.count();
+    if (!timer_) {
+      return;
+    }
+    int64_t old_period = 0;
+    rcl_ret_t ret = rcl_timer_get_period(timer_->get_timer_handle().get(), &old_period);
+    if (ret != RCL_RET_OK) {
+      rclcpp::exceptions::throw_from_rcl_error(ret, "Couldn't get old period");
+    }
+    ret = rcl_timer_exchange_period(timer_->get_timer_handle().get(), new_period, &old_period);
+    if (ret != RCL_RET_OK) {
+      rclcpp::exceptions::throw_from_rcl_error(ret, "Couldn't exchange_period");
+    }
+  } catch (rclcpp::exceptions::RCLError & ex) {
+    RCLCPP_WARN_THROTTLE(
+      ros2_parent_node_->get_logger(), *ros2_parent_node_->get_clock(), 5000, "%s", ex.what());
   }
-  int64_t old_period = 0;
-  rcl_ret_t ret = rcl_timer_get_period(timer_->get_timer_handle().get(), &old_period);
-  if (ret != RCL_RET_OK) {
-    rclcpp::exceptions::throw_from_rcl_error(ret, "Couldn't get old period");
-  }
-  ret = rcl_timer_exchange_period(timer_->get_timer_handle().get(), new_period, &old_period);
-  if (ret != RCL_RET_OK) {
-    rclcpp::exceptions::throw_from_rcl_error(ret, "Couldn't exchange_period");
+}
+
+template <class Msg3D, class Msg2D, class ExportObj>
+void FusionCollector<Msg3D, Msg2D, ExportObj>::reset()
+{
+  std::lock_guard<std::mutex> lock(fusion_mutex_);
+
+  status_ = CollectorStatus::Idle;  // Reset status to Idle
+  id_to_rois_map_.clear();
+  msg3d_ = nullptr;
+  fusion_collector_info_ = nullptr;
+  is_first_msg3d_ = false;
+
+  if (timer_ && !timer_->is_canceled()) {
+    timer_->cancel();
   }
 }
 

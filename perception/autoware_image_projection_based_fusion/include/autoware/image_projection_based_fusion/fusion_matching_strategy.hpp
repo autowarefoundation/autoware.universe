@@ -81,7 +81,7 @@ class NaiveMatchingStrategy : public FusionMatchingStrategy<Msg3D, Msg2D, Export
 public:
   explicit NaiveMatchingStrategy(
     std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> && ros2_parent_node,
-    const std::size_t rois_number);
+    const std::unordered_map<std::size_t, double> & id_to_offset_map);
 
   [[nodiscard]] std::optional<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>>
   match_rois_to_collector(
@@ -98,9 +98,9 @@ public:
     const std::shared_ptr<MatchingParamsBase> & matching_params) override;
 
 private:
+  std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> ros2_parent_node_;
   std::unordered_map<std::size_t, double> id_to_offset_map_;
   double threshold_;
-  std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> ros2_parent_node_;
 };
 
 template <class Msg3D, class Msg2D, class ExportObj>
@@ -109,7 +109,7 @@ class AdvancedMatchingStrategy : public FusionMatchingStrategy<Msg3D, Msg2D, Exp
 public:
   explicit AdvancedMatchingStrategy(
     std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> && ros2_parent_node,
-    const std::size_t rois_number);
+    const std::unordered_map<std::size_t, double> & id_to_offset_map);
 
   [[nodiscard]] std::optional<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>>
   match_rois_to_collector(
@@ -133,10 +133,10 @@ public:
   double compute_offset(double input_timestamp);
 
 private:
+  std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> ros2_parent_node_;
   std::unordered_map<std::size_t, double> id_to_offset_map_;
   std::unordered_map<std::size_t, double> id_to_noise_window_map_;
   double det3d_noise_window_;
-  std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> ros2_parent_node_;
   std::set<double> fractional_timestamp_set_;  // Use set to store unique fractional timestamps
   int success_status_counter_{0};
   static constexpr int success_threshold{100};

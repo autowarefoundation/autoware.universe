@@ -100,6 +100,7 @@ private:
   float approx_grid_cell_h_size_;
 
   bool debug_mode_{false};
+  bool collector_debug_mode_{false};
 
   std::size_t rois_number_;
   // timer
@@ -113,9 +114,7 @@ private:
   std::mutex fusion_collectors_mutex_;
   std::list<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>> fusion_collectors_;
 
-  std::unordered_map<std::size_t, double> id_to_noise_window_map_;
   std::unordered_map<std::size_t, double> id_to_offset_map_;
-  double cloud_noise_window_;
 
   // timestamp: (key, value)
   std::unordered_map<double, std::unordered_map<std::string, std::string>> concatenated_status_map_;
@@ -131,6 +130,7 @@ private:
   bool drop_previous_but_late_output_msg_{false};
   bool publish_output_msg_{false};
   bool msg3d_fused_{true};
+  static constexpr const int collectors_threshold = 20;
 
 protected:
   void initialize_det2d_status(std::size_t rois_number);

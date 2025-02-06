@@ -69,19 +69,23 @@ struct AdvancedCollectorInfo : public FusionCollectorInfoBase
   }
 };
 
+enum class CollectorStatus { Idle, Processing, Finished };
+
 template <class Msg3D, class Msg2D, class ExportObj>
 class FusionCollector
 {
 public:
   FusionCollector(
-    std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> && ros2_parent_node, double timeout_sec,
-    std::size_t rois_number, const std::vector<Det2dStatus<Msg2D>> & det2d_status_list, bool is_3d,
+    std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> && ros2_parent_node,
+    std::size_t rois_number, const std::vector<Det2dStatus<Msg2D>> & det2d_status_list,
     bool debug_mode);
-  bool process_msg_3d(const typename Msg3D::ConstSharedPtr msg_3d, double msg_3d_timeout);
-  bool process_rois(const std::size_t & roi_id, const typename Msg2D::ConstSharedPtr det2d_msg);
+  bool process_msg3d(const typename Msg3D::ConstSharedPtr msg3d, double msg3d_timeout);
+  bool process_rois(
+    const std::size_t & rois_id, const typename Msg2D::ConstSharedPtr det2d_msg,
+    double det2d_timeout);
   void fusion_callback();
 
-  [[nodiscard]] bool fusion_finished() const;
+  [[nodiscard]] CollectorStatus get_status() const;
 
   void set_info(std::shared_ptr<FusionCollectorInfoBase> collector_info);
   [[nodiscard]] std::shared_ptr<FusionCollectorInfoBase> get_info() const;
@@ -90,21 +94,21 @@ public:
   bool rois_exists(const std::size_t & rois_id);
   bool msg3d_exists();
   void show_debug_message();
-  void set_period(const int64_t new_period);
+  void reset();
+  void set_period(const std::chrono::nanoseconds period);
 
 private:
   std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> ros2_parent_node_;
   rclcpp::TimerBase::SharedPtr timer_;
-  double timeout_sec_;
   std::size_t rois_number_;
   typename Msg3D::ConstSharedPtr msg3d_{nullptr};
   std::vector<Det2dStatus<Msg2D>> det2d_status_list_;
   std::unordered_map<std::size_t, typename Msg2D::ConstSharedPtr> id_to_rois_map_;
-  bool is_3d_;
+  bool is_first_msg3d_{false};
   bool debug_mode_;
-  bool fusion_finished_{false};
   std::mutex fusion_mutex_;
   std::shared_ptr<FusionCollectorInfoBase> fusion_collector_info_;
+  CollectorStatus status_;
 };
 
 }  // namespace autoware::image_projection_based_fusion

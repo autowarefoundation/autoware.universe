@@ -26,6 +26,7 @@
 #include <list>
 #include <memory>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
@@ -35,27 +36,14 @@ namespace autoware::image_projection_based_fusion
 template <class Msg3D, class Msg2D, class ExportObj>
 NaiveMatchingStrategy<Msg3D, Msg2D, ExportObj>::NaiveMatchingStrategy(
   std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> && ros2_parent_node,
-  const std::size_t rois_number)
-: ros2_parent_node_(std::move(ros2_parent_node))
+  const std::unordered_map<std::size_t, double> & id_to_offset_map)
+: ros2_parent_node_(std::move(ros2_parent_node)), id_to_offset_map_(id_to_offset_map)
 {
   if (!ros2_parent_node_) {
     throw std::runtime_error("ros2_parent_node is nullptr in NaiveMatchingStrategy constructor.");
   }
 
-  auto rois_timestamp_offsets =
-    ros2_parent_node_->template declare_parameter<std::vector<double>>("rois_timestamp_offsets");
   threshold_ = ros2_parent_node_->template declare_parameter<double>("matching_strategy.threshold");
-
-  if (rois_timestamp_offsets.size() != rois_number) {
-    throw std::runtime_error(
-      "Mismatch: rois_number (" + std::to_string(rois_number) +
-      ") does not match rois_timestamp_offsets size (" +
-      std::to_string(rois_timestamp_offsets.size()) + ").");
-  }
-
-  for (std::size_t i = 0; i < rois_number; i++) {
-    id_to_offset_map_[i] = rois_timestamp_offsets[i];
-  }
 
   RCLCPP_INFO(ros2_parent_node_->get_logger(), "Utilize naive matching strategy for fusion nodes.");
 }
@@ -148,28 +136,21 @@ void NaiveMatchingStrategy<Msg3D, Msg2D, ExportObj>::set_collector_info(
 template <class Msg3D, class Msg2D, class ExportObj>
 AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::AdvancedMatchingStrategy(
   std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> && ros2_parent_node,
-  const std::size_t rois_number)
-: ros2_parent_node_(std::move(ros2_parent_node))
+  const std::unordered_map<std::size_t, double> & id_to_offset_map)
+: ros2_parent_node_(std::move(ros2_parent_node)), id_to_offset_map_(id_to_offset_map)
 {
   if (!ros2_parent_node_) {
     throw std::runtime_error(
       "ros2_parent_node is nullptr in AdvancedMatchingStrategy constructor.");
   }
 
-  auto rois_timestamp_offsets =
-    ros2_parent_node_->template declare_parameter<std::vector<double>>("rois_timestamp_offsets");
   det3d_noise_window_ =
     ros2_parent_node_->template declare_parameter<double>("matching_strategy.det3d_noise_window");
   auto rois_timestamp_noise_window =
     ros2_parent_node_->template declare_parameter<std::vector<double>>(
       "matching_strategy.rois_timestamp_noise_window");
 
-  if (rois_timestamp_offsets.size() != rois_number) {
-    throw std::runtime_error(
-      "Mismatch: rois_number (" + std::to_string(rois_number) +
-      ") does not match rois_timestamp_offsets size (" +
-      std::to_string(rois_timestamp_offsets.size()) + ").");
-  }
+  auto rois_number = id_to_offset_map_.size();
   if (rois_timestamp_noise_window.size() != rois_number) {
     throw std::runtime_error(
       "Mismatch: rois_number (" + std::to_string(rois_number) +
@@ -178,7 +159,6 @@ AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::AdvancedMatchingStrategy(
   }
 
   for (size_t i = 0; i < rois_number; i++) {
-    id_to_offset_map_[i] = rois_timestamp_offsets[i];
     id_to_noise_window_map_[i] = rois_timestamp_noise_window[i];
   }
 
