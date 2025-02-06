@@ -21,7 +21,6 @@
 
 #include <pcl_conversions/pcl_conversions.h>
 
-#include <algorithm>
 #include <iomanip>
 #include <list>
 #include <memory>
@@ -79,11 +78,14 @@ PointCloudConcatenateDataSynchronizerComponentTemplated<MsgTraits>::
 
   params_.matching_strategy = declare_parameter<std::string>("matching_strategy.type");
 
-  // Diagnostic Updater
-  diagnostic_updater_.setHardwareID("concatenate_data_checker");
-  diagnostic_updater_.add(
-    "concat_status", this,
-    &PointCloudConcatenateDataSynchronizerComponentTemplated<MsgTraits>::check_concat_status);
+  if (params_.matching_strategy == "naive") {
+    collector_matching_strategy_ = std::make_unique<NaiveMatchingStrategy<MsgTraits>>(*this);
+  } else if (params_.matching_strategy == "advanced") {
+    collector_matching_strategy_ =
+      std::make_unique<AdvancedMatchingStrategy<MsgTraits>>(*this, params_.input_topics);
+  } else {
+    throw std::runtime_error("Matching strategy must be 'advanced' or 'naive'");
+  }
 
   // Implementation independant subscribers
   if (params_.is_motion_compensated) {
@@ -105,20 +107,17 @@ PointCloudConcatenateDataSynchronizerComponentTemplated<MsgTraits>::
     }
   }
 
-  if (params_.matching_strategy == "naive") {
-    collector_matching_strategy_ = std::make_unique<NaiveMatchingStrategy<MsgTraits>>(*this);
-  } else if (params_.matching_strategy == "advanced") {
-    collector_matching_strategy_ =
-      std::make_unique<AdvancedMatchingStrategy<MsgTraits>>(*this, params_.input_topics);
-  } else {
-    throw std::runtime_error("Matching strategy must be 'advanced' or 'naive'");
-  }
-
   // Combine cloud handler
   combine_cloud_handler_ = std::make_shared<CombineCloudHandler<MsgTraits>>(
     *this, params_.input_topics, params_.output_frame, params_.is_motion_compensated,
     params_.publish_synchronized_pointcloud, params_.keep_input_frame_in_synchronized_pointcloud,
     params_.has_static_tf_only);
+
+  // Diagnostic Updater
+  diagnostic_updater_.setHardwareID("concatenate_data_checker");
+  diagnostic_updater_.add(
+    "concat_status", this,
+    &PointCloudConcatenateDataSynchronizerComponentTemplated<MsgTraits>::check_concat_status);
 
   initialize();
 }
@@ -233,9 +232,8 @@ void PointCloudConcatenateDataSynchronizerComponentTemplated<MsgTraits>::cloud_c
   const typename MsgTraits::PointCloudMessage::ConstSharedPtr & input_ptr,
   const std::string & topic_name)
 {
-  double cloud_arrival_time = this->get_clock()->now().seconds();
-
   stop_watch_ptr_->toc("processing_time", true);
+  double cloud_arrival_time = this->get_clock()->now().seconds();
   manage_collector_list();
 
   if (!utils::is_data_layout_compatible_with_point_xyzirc(*input_ptr)) {
@@ -298,9 +296,6 @@ void PointCloudConcatenateDataSynchronizerComponentTemplated<MsgTraits>::cloud_c
 
     cloud_collectors_.push_back(new_cloud_collector);
     cloud_collectors_lock.unlock();
-
-    collector_matching_strategy_->set_collector_info(new_cloud_collector, matching_params);
-    (void)new_cloud_collector->process_pointcloud(topic_name, input_ptr);
   }
 }
 
