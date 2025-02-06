@@ -19,6 +19,9 @@
 #include <boost/geometry/algorithms/within.hpp>
 
 #include <set>
+#include <limits>
+#include <utility>
+#include <vector>
 
 namespace autoware::universe_utils
 {
