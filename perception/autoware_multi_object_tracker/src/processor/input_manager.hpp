@@ -15,9 +15,11 @@
 #ifndef PROCESSOR__INPUT_MANAGER_HPP_
 #define PROCESSOR__INPUT_MANAGER_HPP_
 
+#include "autoware/multi_object_tracker/object_model/types.hpp"
+#include "autoware/multi_object_tracker/odometry.hpp"
 #include "rclcpp/rclcpp.hpp"
 
-#include "autoware_perception_msgs/msg/detected_objects.hpp"
+#include <autoware_perception_msgs/msg/detected_objects.hpp>
 
 #include <deque>
 #include <functional>
@@ -28,8 +30,7 @@
 
 namespace autoware::multi_object_tracker
 {
-using DetectedObjects = autoware_perception_msgs::msg::DetectedObjects;
-using ObjectsList = std::vector<std::pair<uint, DetectedObjects>>;
+using ObjectsList = std::vector<types::DynamicObjectList>;
 
 struct InputChannel
 {
@@ -42,7 +43,7 @@ struct InputChannel
 class InputStream
 {
 public:
-  explicit InputStream(rclcpp::Node & node, uint & index);
+  explicit InputStream(rclcpp::Node & node, uint & index, std::shared_ptr<Odometry> odometry);
 
   void init(const InputChannel & input_channel);
 
@@ -75,6 +76,7 @@ public:
 private:
   rclcpp::Node & node_;
   uint index_;
+  std::shared_ptr<Odometry> odometry_;
 
   std::string input_topic_;
   std::string long_name_;
@@ -82,11 +84,10 @@ private:
   bool is_spawn_enabled_{};
 
   size_t que_size_{30};
-  std::deque<DetectedObjects> objects_que_;
+  std::deque<types::DynamicObjectList> objects_que_;
 
   std::function<void(const uint &)> func_trigger_;
 
-  // bool is_time_initialized_{false};
   int initial_count_{0};
   double latency_mean_{};
   double latency_var_{};
@@ -100,7 +101,7 @@ private:
 class InputManager
 {
 public:
-  explicit InputManager(rclcpp::Node & node);
+  InputManager(rclcpp::Node & node, std::shared_ptr<Odometry> odometry);
   void init(const std::vector<InputChannel> & input_channels);
 
   void setTriggerFunction(std::function<void()> func_trigger) { func_trigger_ = func_trigger; }
@@ -115,7 +116,10 @@ public:
 
 private:
   rclcpp::Node & node_;
-  std::vector<rclcpp::Subscription<DetectedObjects>::SharedPtr> sub_objects_array_{};
+  std::shared_ptr<Odometry> odometry_;
+
+  std::vector<rclcpp::Subscription<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr>
+    sub_objects_array_{};
 
   bool is_initialized_{false};
   rclcpp::Time latest_exported_object_time_;

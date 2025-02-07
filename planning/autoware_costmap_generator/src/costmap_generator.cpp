@@ -51,6 +51,7 @@
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <autoware_lanelet2_extension/visualization/visualization.hpp>
 #include <pcl_ros/transforms.hpp>
+#include <rclcpp/clock.hpp>
 #include <rclcpp/logging.hpp>
 #include <tf2_eigen/tf2_eigen.hpp>
 
@@ -68,14 +69,15 @@ namespace
 
 // Copied from scenario selector
 geometry_msgs::msg::PoseStamped::ConstSharedPtr getCurrentPose(
-  const tf2_ros::Buffer & tf_buffer, const rclcpp::Logger & logger)
+  const tf2_ros::Buffer & tf_buffer, const rclcpp::Logger & logger,
+  const rclcpp::Clock::SharedPtr clock)
 {
   geometry_msgs::msg::TransformStamped tf_current_pose;
 
   try {
     tf_current_pose = tf_buffer.lookupTransform("map", "base_link", tf2::TimePointZero);
   } catch (tf2::TransformException & ex) {
-    RCLCPP_ERROR(logger, "%s", ex.what());
+    RCLCPP_ERROR_THROTTLE(logger, *clock, 5000, "%s", ex.what());
     return nullptr;
   }
 
@@ -174,7 +176,8 @@ CostmapGenerator::CostmapGenerator(const rclcpp::NodeOptions & node_options)
     create_publisher<autoware::universe_utils::ProcessingTimeDetail>("processing_time", 1);
   time_keeper_ = std::make_shared<autoware::universe_utils::TimeKeeper>(pub_processing_time_);
   pub_processing_time_ms_ =
-    this->create_publisher<tier4_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
+    this->create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>(
+      "~/debug/processing_time_ms", 1);
 
   // Timer
   const auto period_ns = rclcpp::Rate(param_->update_rate).period();
@@ -253,7 +256,7 @@ void CostmapGenerator::update_data()
 
 void CostmapGenerator::set_current_pose()
 {
-  current_pose_ = getCurrentPose(tf_buffer_, this->get_logger());
+  current_pose_ = getCurrentPose(tf_buffer_, this->get_logger(), this->get_clock());
 }
 
 void CostmapGenerator::onTimer()
@@ -267,7 +270,7 @@ void CostmapGenerator::onTimer()
 
   if (!isActive()) {
     // Publish ProcessingTime
-    tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
+    autoware_internal_debug_msgs::msg::Float64Stamped processing_time_msg;
     processing_time_msg.stamp = get_clock()->now();
     processing_time_msg.data = stop_watch.toc();
     pub_processing_time_ms_->publish(processing_time_msg);
@@ -483,7 +486,7 @@ void CostmapGenerator::publishCostmap(
   pub_costmap_->publish(*out_gridmap_msg);
 
   // Publish ProcessingTime
-  tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
+  autoware_internal_debug_msgs::msg::Float64Stamped processing_time_msg;
   processing_time_msg.stamp = get_clock()->now();
   processing_time_msg.data = stop_watch.toc();
   pub_processing_time_ms_->publish(processing_time_msg);

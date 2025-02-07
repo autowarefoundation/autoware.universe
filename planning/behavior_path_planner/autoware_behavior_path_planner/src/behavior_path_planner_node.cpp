@@ -20,6 +20,7 @@
 #include <autoware/universe_utils/ros/update_param.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 
+#include <autoware_internal_debug_msgs/msg/string_stamped.hpp>
 #include <tier4_planning_msgs/msg/path_change_module_id.hpp>
 
 #include <memory>
@@ -30,9 +31,12 @@ namespace autoware::behavior_path_planner
 {
 using autoware::vehicle_info_utils::VehicleInfoUtils;
 using tier4_planning_msgs::msg::PathChangeModuleId;
+using DebugStringMsg = autoware_internal_debug_msgs::msg::StringStamped;
 
 BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & node_options)
-: Node("behavior_path_planner", node_options)
+: Node("behavior_path_planner", node_options),
+  planning_factor_interface_{
+    std::make_unique<PlanningFactorInterface>(this, "behavior_path_planner")}
 {
   using std::placeholders::_1;
   using std::chrono_literals::operator""ms;
@@ -51,12 +55,14 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   const auto durable_qos = rclcpp::QoS(1).transient_local();
   modified_goal_publisher_ =
     create_publisher<PoseWithUuidStamped>("~/output/modified_goal", durable_qos);
-  pub_steering_factors_ =
-    create_publisher<SteeringFactorArray>("/planning/steering_factor/intersection", 1);
   reroute_availability_publisher_ =
     create_publisher<RerouteAvailability>("~/output/is_reroute_available", 1);
+
   debug_avoidance_msg_array_publisher_ =
     create_publisher<AvoidanceDebugMsgArray>("~/debug/avoidance_debug_message_array", 1);
+
+  debug_start_planner_evaluation_table_publisher_ptr_ =
+    std::make_unique<DebugPublisher>(this, "~/debug/start_planner_evaluation_table");
 
   debug_turn_signal_info_publisher_ = create_publisher<MarkerArray>("~/debug/turn_signal_info", 1);
 
@@ -114,8 +120,6 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
       planner_data_->parameters.base_link2front, turn_signal_intersection_search_distance,
       turn_signal_search_time, turn_signal_intersection_angle_threshold_deg);
   }
-
-  steering_factor_interface_.init(PlanningBehavior::INTERSECTION);
 
   // Start timer
   {
@@ -463,33 +467,22 @@ void BehaviorPathPlannerNode::publish_steering_factor(
   const auto [intersection_flag, approaching_intersection_flag] =
     planner_data->turn_signal_decider.getIntersectionTurnSignalFlag();
   if (intersection_flag || approaching_intersection_flag) {
-    const uint16_t steering_factor_direction = std::invoke([&turn_signal]() {
-      if (turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
-        return SteeringFactor::LEFT;
-      }
-      return SteeringFactor::RIGHT;
-    });
-
     const auto [intersection_pose, intersection_distance] =
       planner_data->turn_signal_decider.getIntersectionPoseAndDistance();
 
-    steering_factor_interface_.set(
-      {intersection_pose, intersection_pose}, {intersection_distance, intersection_distance},
-      steering_factor_direction, SteeringFactor::TURNING, "");
-  } else {
-    steering_factor_interface_.reset();
+    const uint16_t planning_factor_direction = std::invoke([&turn_signal]() {
+      if (turn_signal.command == TurnIndicatorsCommand::ENABLE_LEFT) {
+        return PlanningFactor::TURN_LEFT;
+      }
+      return PlanningFactor::TURN_RIGHT;
+    });
+
+    planning_factor_interface_->add(
+      intersection_distance, intersection_distance, intersection_pose, intersection_pose,
+      planning_factor_direction, SafetyFactorArray{});
   }
 
-  autoware_adapi_v1_msgs::msg::SteeringFactorArray steering_factor_array;
-  steering_factor_array.header.frame_id = "map";
-  steering_factor_array.header.stamp = this->now();
-
-  const auto steering_factor = steering_factor_interface_.get();
-  if (steering_factor.behavior != PlanningBehavior::UNKNOWN) {
-    steering_factor_array.factors.emplace_back(steering_factor);
-  }
-
-  pub_steering_factors_->publish(steering_factor_array);
+  planning_factor_interface_->publish();
 }
 
 void BehaviorPathPlannerNode::publish_reroute_availability() const
@@ -620,6 +613,11 @@ void BehaviorPathPlannerNode::publishSceneModuleDebugMsg(
   const auto avoidance_debug_message = debug_messages_data_ptr->getAvoidanceModuleDebugMsg();
   if (avoidance_debug_message) {
     debug_avoidance_msg_array_publisher_->publish(*avoidance_debug_message);
+  }
+  const auto start_planner_debug_message = debug_messages_data_ptr->getStartPlannerModuleDebugMsg();
+  if (start_planner_debug_message) {
+    debug_start_planner_evaluation_table_publisher_ptr_->publish<DebugStringMsg>(
+      "start_planner_evaluation_table", *(start_planner_debug_message));
   }
 }
 

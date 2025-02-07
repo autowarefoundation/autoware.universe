@@ -2,6 +2,42 @@
 Changelog for package autoware_motion_utils
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* chore(planning): move package directory for planning factor interface (`#9948 <https://github.com/autowarefoundation/autoware.universe/issues/9948>`_)
+  * chore: add new package for planning factor interface
+  * chore(surround_obstacle_checker): update include file
+  * chore(obstacle_stop_planner): update include file
+  * chore(obstacle_cruise_planner): update include file
+  * chore(motion_velocity_planner): update include file
+  * chore(bpp): update include file
+  * chore(bvp-common): update include file
+  * chore(blind_spot): update include file
+  * chore(crosswalk): update include file
+  * chore(detection_area): update include file
+  * chore(intersection): update include file
+  * chore(no_drivable_area): update include file
+  * chore(no_stopping_area): update include file
+  * chore(occlusion_spot): update include file
+  * chore(run_out): update include file
+  * chore(speed_bump): update include file
+  * chore(stop_line): update include file
+  * chore(template_module): update include file
+  * chore(traffic_light): update include file
+  * chore(vtl): update include file
+  * chore(walkway): update include file
+  * chore(motion_utils): remove factor interface
+  ---------
+* feat(motion_utils): add detail and pass type to VirtualWall (`#9940 <https://github.com/autowarefoundation/autoware.universe/issues/9940>`_)
+* fix(autoware_motion_utils): remove clang compiler error (`#9713 <https://github.com/autowarefoundation/autoware.universe/issues/9713>`_)
+* feat(motion_utils): add planning factor interface (`#9676 <https://github.com/autowarefoundation/autoware.universe/issues/9676>`_)
+  * feat(motion_utils): add planning factor interface
+  * fix: use extern template
+  * fix: define function in header
+  ---------
+* Contributors: Fumiya Watanabe, Mamoru Sobue, Ryuta Kambe, Satoshi OTA
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0
