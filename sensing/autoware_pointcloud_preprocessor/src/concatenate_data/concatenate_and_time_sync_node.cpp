@@ -406,7 +406,7 @@ void PointCloudConcatenateDataSynchronizerComponent::manage_collector_list()
       RCLCPP_WARN_STREAM(
         get_logger(), "Reset the oldest collector because the number of collectors ("
                         << num_processing_collectors << ") exceeds the limit ("
-                        << collectors_threshold << "). Oldest timestamp: ");
+                        << collectors_threshold << ").");
       (*min_it)->reset();
     }
   }
