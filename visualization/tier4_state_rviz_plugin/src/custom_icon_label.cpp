@@ -65,7 +65,7 @@ void CustomIconLabel::paintEvent(QPaintEvent *)
 
   // Draw background circle
   QPainterPath path;
-  path.addEllipse(width() / 2 - radius, height() / 2 - radius, diameter, diameter);
+  path.addEllipse(width() / 2.0 - radius, height() / 2.0 - radius, diameter, diameter);
   painter.setPen(Qt::NoPen);
   painter.setBrush(backgroundColor);
   painter.drawPath(path);

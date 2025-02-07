@@ -60,7 +60,7 @@ void NoStoppingAreaModuleManager::launchNewModules(
       // assign 1 no stopping area for each module
       registerModule(std::make_shared<NoStoppingAreaModule>(
         module_id, lane_id, *m.first, planner_param_, logger_.get_child("no_stopping_area_module"),
-        clock_));
+        clock_, time_keeper_, planning_factor_interface_));
       generateUUID(module_id);
       updateRTCStatus(
         getUUID(module_id), true, State::WAITING_FOR_EXECUTION,
@@ -69,16 +69,17 @@ void NoStoppingAreaModuleManager::launchNewModules(
   }
 }
 
-std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
+std::function<bool(const std::shared_ptr<SceneModuleInterfaceWithRTC> &)>
 NoStoppingAreaModuleManager::getModuleExpiredFunction(
   const tier4_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto no_stopping_area_id_set = planning_utils::getRegElemIdSetOnPath<NoStoppingArea>(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
-  return [no_stopping_area_id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
-    return no_stopping_area_id_set.count(scene_module->getModuleId()) == 0;
-  };
+  return
+    [no_stopping_area_id_set](const std::shared_ptr<SceneModuleInterfaceWithRTC> & scene_module) {
+      return no_stopping_area_id_set.count(scene_module->getModuleId()) == 0;
+    };
 }
 
 }  // namespace autoware::behavior_velocity_planner

@@ -192,8 +192,8 @@ void CrosswalkModuleManager::launchNewModules(const PathWithLaneId & path)
     // NOTE: module_id is always a lane id so that isModuleRegistered works correctly in the case
     //       where both regulatory element and non-regulatory element crosswalks exist.
     registerModule(std::make_shared<CrosswalkModule>(
-      node_, road_lanelet_id, crosswalk_lanelet_id, reg_elem_id, lanelet_map_ptr, p, logger,
-      clock_));
+      node_, road_lanelet_id, crosswalk_lanelet_id, reg_elem_id, lanelet_map_ptr, p, logger, clock_,
+      time_keeper_, planning_factor_interface_));
     generateUUID(crosswalk_lanelet_id);
     updateRTCStatus(
       getUUID(crosswalk_lanelet_id), true, State::WAITING_FOR_EXECUTION,
@@ -216,7 +216,7 @@ void CrosswalkModuleManager::launchNewModules(const PathWithLaneId & path)
   }
 }
 
-std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
+std::function<bool(const std::shared_ptr<SceneModuleInterfaceWithRTC> &)>
 CrosswalkModuleManager::getModuleExpiredFunction(const PathWithLaneId & path)
 {
   const auto rh = planner_data_->route_handler_;
@@ -233,7 +233,7 @@ CrosswalkModuleManager::getModuleExpiredFunction(const PathWithLaneId & path)
     crosswalk_id_set.insert(crosswalk.first->crosswalkLanelet().id());
   }
 
-  return [crosswalk_id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
+  return [crosswalk_id_set](const std::shared_ptr<SceneModuleInterfaceWithRTC> & scene_module) {
     return crosswalk_id_set.count(scene_module->getModuleId()) == 0;
   };
 }

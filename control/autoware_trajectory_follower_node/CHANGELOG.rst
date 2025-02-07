@@ -2,6 +2,20 @@
 Changelog for package autoware_trajectory_follower_node
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in fil… (`#9853 <https://github.com/autowarefoundation/autoware.universe/issues/9853>`_)
+  feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in files control/autoware_trajectory_follower_node
+* fix: remove unnecessary parameters (`#9935 <https://github.com/autowarefoundation/autoware.universe/issues/9935>`_)
+* chore(trajectory_follower_node): fix typos (`#9707 <https://github.com/autowarefoundation/autoware.universe/issues/9707>`_)
+* feat(pid_longitudinal_controller): update plotjuggler settings (`#9703 <https://github.com/autowarefoundation/autoware.universe/issues/9703>`_)
+* feat(pid_longitudinal_controller): remove trans/rot deviation validation since the control_validator has the same feature (`#9675 <https://github.com/autowarefoundation/autoware.universe/issues/9675>`_)
+  * feat(pid_longitudinal_controller): remove trans/rot deviation validation since the control_validator has the same feature
+  * fix test
+  ---------
+* Contributors: Fumiya Watanabe, Kosuke Takeuchi, Takayuki Murooka, Vishal Chauhan, Yuki TAKAGI
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

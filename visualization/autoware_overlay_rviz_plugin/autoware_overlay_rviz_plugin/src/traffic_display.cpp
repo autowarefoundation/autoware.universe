@@ -83,9 +83,6 @@ void TrafficDisplay::drawTrafficLightIndicator(QPainter & painter, const QRectF 
         painter.drawEllipse(circleRect);
         break;
       case 4:
-        painter.setBrush(tl_gray_);
-        painter.drawEllipse(circleRect);
-        break;
       default:
         painter.setBrush(tl_gray_);
         painter.drawEllipse(circleRect);

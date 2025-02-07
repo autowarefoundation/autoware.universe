@@ -2,6 +2,13 @@
 Changelog for package tier4_state_rviz_plugin
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* fix(tier4_state_rviz_plugin): fix bugprone-integer-division (`#9628 <https://github.com/autowarefoundation/autoware.universe/issues/9628>`_)
+  fix: bugprone-integer-division
+* Contributors: Fumiya Watanabe, kobayu858
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

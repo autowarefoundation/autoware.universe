@@ -125,7 +125,7 @@ void CustomSegmentedButtonItem::paintEvent(QPaintEvent *)
   }
 
   QPainterPath path;
-  double radius = (height() - 2) / 2;
+  double radius = (height() - 2.0) / 2.0;
 
   path.setFillRule(Qt::WindingFill);
   if (isFirstButton) {

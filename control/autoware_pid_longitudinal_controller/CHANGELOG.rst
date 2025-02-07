@@ -2,6 +2,27 @@
 Changelog for package autoware_pid_longitudinal_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* fix: remove unnecessary parameters (`#9935 <https://github.com/autowarefoundation/autoware.universe/issues/9935>`_)
+* feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in fil… (`#9848 <https://github.com/autowarefoundation/autoware.universe/issues/9848>`_)
+  feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in files control/autoware_pid_longitudinal_controller
+* feat(pid_longitudinal_controller): add new slope compensation mode trajectory_goal_adaptive (`#9705 <https://github.com/autowarefoundation/autoware.universe/issues/9705>`_)
+* feat(pid_longitudinal_controller): add virtual wall for dry steering and emergency (`#9685 <https://github.com/autowarefoundation/autoware.universe/issues/9685>`_)
+  * feat(pid_longitudinal_controller): add virtual wall for dry steering and emergency
+  * fix
+  ---------
+* feat(pid_longitudinal_controller): remove trans/rot deviation validation since the control_validator has the same feature (`#9675 <https://github.com/autowarefoundation/autoware.universe/issues/9675>`_)
+  * feat(pid_longitudinal_controller): remove trans/rot deviation validation since the control_validator has the same feature
+  * fix test
+  ---------
+* feat(pid_longitudinal_controller): add smooth_stop mode in debug_values (`#9681 <https://github.com/autowarefoundation/autoware.universe/issues/9681>`_)
+* feat(pid_longitudinal_controller): update trajectory_adaptive; add debug_values, adopt rate limit fillter (`#9656 <https://github.com/autowarefoundation/autoware.universe/issues/9656>`_)
+* fix(autoware_pid_longitudinal_controller): fix bugprone-branch-clone (`#9629 <https://github.com/autowarefoundation/autoware.universe/issues/9629>`_)
+  fix: bugprone-branch-clone
+* Contributors: Fumiya Watanabe, Takayuki Murooka, Vishal Chauhan, Yuki TAKAGI, kobayu858
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0
