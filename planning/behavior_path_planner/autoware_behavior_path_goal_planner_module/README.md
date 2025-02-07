@@ -2,15 +2,13 @@
 
 ## Purpose / Role
 
-Plan path around the goal.
-
-- Arrive at the designated goal.
-- Modify the goal to avoid obstacles or to pull over at the side of the lane.
+goal_planner generates a smooth path toward the goal and additionnlly searches for safe path and goa to execute dynamic pull_over on the road shoulders lanes following the traffic rules.
 
 ## Design
 
-If goal modification is not allowed, park at the designated fixed goal. (`fixed_goal_planner` in the figure below)
-When allowed, park in accordance with the specified policy(e.g pull over on left/right side of the lane). (`rough_goal_planner` in the figure below). Currently rough goal planner only support pull_over feature, but it would be desirable to be able to accommodate various parking policies in the future.
+If goal modification is not allowed, just park at the designated fixed goal using `fixed_goal_planner`.
+
+If allowed, `rough_goal_planner` works to park around the vacant spots in the shoulder lanes around the goal by executing pull_over toward left or right side of the road lanes.
 
 ```plantuml
 @startuml
@@ -28,8 +26,6 @@ package goal_planner{
         package freespace_parking <<Rectangle>>{
             class FreeSpacePullOver {}
         }
-
-        class GoalSearcher {}
 
         struct GoalCandidates {}
         struct PullOverPath{}
@@ -62,7 +58,6 @@ package freespace_planning_algorithms
 ShiftPullOver --|> PullOverPlannerBase
 GeometricPullOver --|> PullOverPlannerBase
 FreeSpacePullOver --|> PullOverPlannerBase
-GoalSearcher --|> GoalSearcherBase
 DefaultFixedPlanner --|> FixedGoalPlannerBase
 
 PathShifter --o ShiftPullOver
@@ -71,29 +66,26 @@ AstarSearch --o FreeSpacePullOver
 RRTStar --o FreeSpacePullOver
 
 PullOverPlannerBase --o GoalPlannerModule
-GoalSearcherBase --o GoalPlannerModule
 FixedGoalPlannerBase --o GoalPlannerModule
 
 PullOverPath --o PullOverPlannerBase
-GoalCandidates --o GoalSearcherBase
 
 @enduml
 ```
 
-## start condition
+## trigger condition
 
 ### fixed_goal_planner
 
-This is a very simple function that plans a smooth path to a specified goal. This function does not require approval and always runs with the other modules.
+`fixed_goal_planner` just plans a smooth path to the designated goal.
 _NOTE: this planner does not perform the several features described below, such as "goal search", "collision check", "safety check", etc._
 
-Executed when both conditions are met.
+`fixed_goal_planner` is used when both conditions are met.
 
 - Route is set with `allow_goal_modification=false`. This is the default.
-- The goal is set in the normal lane. In other words, it is NOT `road_shoulder`.
-- Ego-vehicle exists in the same lane sequence as the goal.
+- The goal is set on `road` lanes.
 
-If the target path contains a goal, modify the points of the path so that the path and the goal are connected smoothly. This process will change the shape of the path by the distance of `refine_goal_search_radius_range` from the goal. Note that this logic depends on the interpolation algorithm that will be executed in a later module (at the moment it uses spline interpolation), so it needs to be updated in the future.
+If the path given to goal_planner covers the goal, `fixed_goal_planner` smoothly connects the goal and the path points around the goal within the radius of `refine_goal_search_radius_range` using spline interpolation.
 
 ![path_goal_refinement](./images/path_goal_refinement.drawio.svg)
 
@@ -103,25 +95,21 @@ If the target path contains a goal, modify the points of the path so that the pa
 
 #### pull over on road lane
 
-- The distance between the goal and ego-vehicle is shorter than `pull_over_minimum_request_length`.
-- Route is set with `allow_goal_modification=true` .
+`rough_goal_planner` is triggered following the [behavior_path_planner scene module interface](https://autowarefoundation.github.io/autoware.universe/main/planning/behavior_path_planner/autoware_behavior_path_planner/docs/behavior_path_planner_manager_design/) namely through `isExecutionRequested` function and it returns true when following two conditions are met.
+
+- The distance between the goal and ego get shorter than `pull_over_minimum_request_length`.
+- Route is set with `allow_goal_modification=true` or is on a `road_shoulder` type lane.
   - We can set this option with [SetRoute](https://github.com/autowarefoundation/autoware_adapi_msgs/blob/main/autoware_adapi_v1_msgs/routing/srv/SetRoute.srv#L2) api service.
   - We support `2D Rough Goal Pose` with the key bind `r` in RViz, but in the future there will be a panel of tools to manipulate various Route API from RViz.
-- The terminal point of the current path is in the same lane sequence as the goal. If goal is on the road shoulder, then it is in the adjacent road lane sequence.
 
 <img src="https://user-images.githubusercontent.com/39142679/237929950-989ca6c3-d48c-4bb5-81e5-e8d6a38911aa.png" width="600">
-
-#### pull over on shoulder lane
-
-- The distance between the goal and ego-vehicle is shorter than `pull_over_minimum_request_length`.
-- Goal is set in the `road_shoulder`.
 
 <img src="https://user-images.githubusercontent.com/39142679/237929941-2ce26ea5-c84d-4d17-8cdc-103f5246db90.png" width="600">
 
 ## finish condition
 
-- The distance to the goal from your vehicle is lower than threshold (default: < `1m`).
-- The ego-vehicle is stopped.
+- The distance to the goal from ego is lower than threshold (default: < `1m`).
+- Ego is stopped.
   - The speed is lower than threshold (default: < `0.01m/s`).
 
 ## General parameters for goal_planner
@@ -135,33 +123,38 @@ If the target path contains a goal, modify the points of the path so that the pa
 
 ## **Goal Search**
 
-To realize pull over even when an obstacle exists near the original goal, a collision free area is searched within a certain range around the original goal. The goal found will be published as `/planning/scenario_planning/modified_goal`.
+To execute safe pull over in the presence of parked vehicles and other obstacles, collision free areas are searched within a certain range around the original goal. The selected best goal pose will be published as `/planning/scenario_planning/modified_goal`.
 
 [goal search video](https://user-images.githubusercontent.com/39142679/188359594-c6724e3e-1cb7-4051-9a18-8d2c67d4dee9.mp4)
 
-1. The original goal is set, and the refined goal pose is obtained by moving in the direction normal to the lane center line and keeping `margin_from_boundary` from the edge of the lane.
-   ![refined_goal](./images/goal_planner-refined_goal.drawio.svg)
+First, the original(designated) goal is provided, and a refined goal pose is obtained so that it is at least `margin_from_boundary` offset from the edge of the lane.
+![refined_goal](./images/goal_planner-refined_goal.drawio.svg)
 
-2. Using `refined_goal` as the base goal, search for candidate goals in the range of `-forward_goal_search_length` to `backward_goal_search_length` in the longitudinal direction and `longitudinal_margin` to `longitudinal_margin+max_lateral_offset` in th lateral direction based on refined_goal.
-   ![goal_candidates](./images/goal_planner-goal_candidates.drawio.svg)
+Second, goal candidates are searched in the interval of [`-forward_goal_search_length`, `backward_goal_search_length`] in the longitudinal direction and in the interval of [`longitudinal_margin`,`longitudinal_margin+max_lateral_offset`] in the lateral direction centered around the refined goal.
+![goal_candidates](./images/goal_planner-goal_candidates.drawio.svg)
 
-3. Each candidate goal is prioritized and a path is generated for each planner for each goal. The priority of a candidate goal is determined by its distance from the base goal. The ego vehicle tries to park for the highest possible goal. The distance is determined by the selected policy. In case `minimum_longitudinal_distance`, sort with smaller longitudinal distances taking precedence over smaller lateral distances. In case `minimum_weighted_distance`, sort with the sum of weighted lateral distance and longitudinal distance. This means the distance is calculated by `longitudinal_distance + lateral_cost*lateral_distance`
-   ![goal_distance](./images/goal_planner-goal_distance.drawio.svg)
-   The following figure is an example of minimum_weighted_distance.​ The white number indicates the goal candidate priority, and the smaller the number, the higher the priority. the 0 goal indicates the base goal.
-   ![goal_priority_rviz_with_goal](./images/goal_priority_with_goal.png)
-   ![goal_priority_rviz](./images/goal_priority_rviz.png)
+Each goal candidate is prioritized and pull over paths are generated by each planner for each goal candidate. The priority of a goal candidate is determined by a sort policy using several distance metrics from the refined goal.
 
-4. If the footprint in each goal candidate is within `object_recognition_collision_check_margin` of that of the object, it is determined to be unsafe. These goals are not selected. If `use_occupancy_grid_for_goal_search` is enabled, collision detection on the grid is also performed with `occupancy_grid_collision_check_margin`.
+The `minimum_longitudinal_distance` policy sorts the goal candidates to assign higher priority to goal with smaller longitudinal distance and then auxiliary to goal with smaller lateral distance, to prioritize goal candidates that are close to the original goal.
 
-Red goals candidates in the image indicate unsafe ones.
+The `minimum_weighted_distance` policy sorts the goal candidates by the weighted sum of lateral distance and longitudinal distance `longitudinal_distance + lateral_cost*lateral_distance`.
+![goal_distance](./images/goal_planner-goal_distance.drawio.svg)
 
-![is_safe](./images/goal_planner-is_safe.drawio.svg)
+The following figure is an example of minimum_weighted_distance.​ The white number indicates the goal candidate priority, and the smaller the number, the higher the priority. the 0 goal indicates the original refined goal.
+![goal_priority_rviz_with_goal](./images/goal_priority_with_goal.png)
 
-It is possible to keep `longitudinal_margin` in the longitudinal direction apart from the collision margin for obstacles from the goal candidate. This is intended to provide natural spacing for parking and efficient departure.
+To achieve a goal pose which is easy to start the maneuvering after arrival, the goal candidate pose is aligned so that ego front becomes parallel to the shoulder lane edge at that pose.
+
+![goal_pose_align](./images/goal_planner-goal-pose-correct.drawio.svg)
+
+If the footprint in each goal candidate is within `object_recognition_collision_check_margin` from one of the parked object, or the longitudinal distance to one of the parked objects from that goal candidate is less than `longitudinal_margin`, it is determined to be unsafe. These goals are not selected. If `use_occupancy_grid_for_goal_search` is enabled, collision detection on the grid is also performed with `occupancy_grid_collision_check_margin`.
+
+Red goals candidates in the below figure indicate unsafe ones.
 
 ![longitudinal_margin](./images/goal_planner-longitudinal_margin.drawio.svg)
+![is_safe](./images/goal_planner-is_safe.drawio.svg)
 
-Also, if `prioritize_goals_before_objects` is enabled, To arrive at each goal, the number of objects that need to be avoided in the target range is counted, and those with the lowest number are given priority.
+Also, if `prioritize_goals_before_objects` is enabled, the number of objects that need to be avoided before reaching the goal is counted, and the goal candidate with the number are prioritized.
 
 The images represent a count of objects to be avoided at each range, with priority given to those with the lowest number, regardless of the aforementioned distances.
 
