@@ -190,6 +190,7 @@ ConcatenatedCloudResult CombineCloudHandler::combine_pointclouds(
   ConcatenatedCloudResult concatenate_cloud_result;
 
   std::vector<rclcpp::Time> pc_stamps;
+  pc_stamps.reserve(topic_to_cloud_map.size());
   for (const auto & [topic, cloud] : topic_to_cloud_map) {
     pc_stamps.emplace_back(cloud->header.stamp);
   }

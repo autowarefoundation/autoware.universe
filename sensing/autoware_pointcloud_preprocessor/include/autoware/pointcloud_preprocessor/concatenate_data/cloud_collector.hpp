@@ -69,7 +69,7 @@ public:
   std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr>
   get_topic_to_cloud_map();
 
-  [[nodiscard]] CollectorStatus get_status() const;
+  [[nodiscard]] CollectorStatus get_status();
 
   void set_info(std::shared_ptr<CollectorInfoBase> collector_info);
   [[nodiscard]] std::shared_ptr<CollectorInfoBase> get_info() const;
