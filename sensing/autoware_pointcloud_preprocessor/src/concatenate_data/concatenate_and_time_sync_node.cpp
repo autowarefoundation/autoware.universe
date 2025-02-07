@@ -364,40 +364,49 @@ void PointCloudConcatenateDataSynchronizerComponent::manage_collector_list()
 {
   std::lock_guard<std::mutex> cloud_collectors_lock(cloud_collectors_mutex_);
 
+  int num_processing_collectors = 0;
+
   for (auto & collector : cloud_collectors_) {
     if (collector->get_status() == CollectorStatus::Finished) {
       collector->reset();
     }
+
+    if (collector->get_status() == CollectorStatus::Processing) {
+      num_processing_collectors++;
+    }
   }
 
-  if (cloud_collectors_.size() >= collectors_threshold) {
+  if (num_processing_collectors >= collectors_threshold) {
     auto min_it = cloud_collectors_.end();
-    double min_timestamp = std::numeric_limits<double>::max();
+    constexpr double k_max_timestamp = std::numeric_limits<double>::max();
+    double min_timestamp = k_max_timestamp;
 
     for (auto it = cloud_collectors_.begin(); it != cloud_collectors_.end(); ++it) {
-      auto info = (*it)->get_info();
-      double timestamp = std::numeric_limits<double>::max();
-      if (auto naive_info = std::dynamic_pointer_cast<NaiveCollectorInfo>(info)) {
-        timestamp = naive_info->timestamp;
-      } else if (auto advanced_info = std::dynamic_pointer_cast<AdvancedCollectorInfo>(info)) {
-        timestamp = advanced_info->timestamp;
-      } else {
-        continue;
-      }
+      if ((*it)->get_status() == CollectorStatus::Processing) {
+        auto info = (*it)->get_info();
+        double timestamp = k_max_timestamp;
 
-      // Update the iterator pointing to the collector with the smallest timestamp
-      if (timestamp < min_timestamp) {
-        min_timestamp = timestamp;
-        min_it = it;
+        if (auto naive_info = std::dynamic_pointer_cast<NaiveCollectorInfo>(info)) {
+          timestamp = naive_info->timestamp;
+        } else if (auto advanced_info = std::dynamic_pointer_cast<AdvancedCollectorInfo>(info)) {
+          timestamp = advanced_info->timestamp;
+        } else {
+          continue;
+        }
+
+        if (timestamp < min_timestamp) {
+          min_timestamp = timestamp;
+          min_it = it;
+        }
       }
     }
 
     // Reset the collector with the oldest timestamp if found
     if (min_it != cloud_collectors_.end()) {
       RCLCPP_WARN_STREAM(
-        get_logger(),
-        "Reset the oldest collector because the number of collectors is larger than the limit:  %d"
-          << collectors_threshold);
+        get_logger(), "Reset the oldest collector because the number of collectors ("
+                        << num_processing_collectors << ") exceeds the limit ("
+                        << collectors_threshold << "). Oldest timestamp: ");
       (*min_it)->reset();
     }
   }
