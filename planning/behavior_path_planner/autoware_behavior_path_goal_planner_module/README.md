@@ -2,7 +2,7 @@
 
 ## Purpose / Role
 
-goal_planner generates a smooth path toward the goal and additionnlly searches for safe path and goa to execute dynamic pull_over on the road shoulders lanes following the traffic rules.
+goal_planner generates a smooth path toward the goal and additionally searches for safe path and goa to execute dynamic pull_over on the road shoulders lanes following the traffic rules.
 
 ## Design
 
@@ -26,6 +26,8 @@ package goal_planner{
         package freespace_parking <<Rectangle>>{
             class FreeSpacePullOver {}
         }
+
+        class GoalSearcher {}
 
         struct GoalCandidates {}
         struct PullOverPath{}
@@ -58,6 +60,7 @@ package freespace_planning_algorithms
 ShiftPullOver --|> PullOverPlannerBase
 GeometricPullOver --|> PullOverPlannerBase
 FreeSpacePullOver --|> PullOverPlannerBase
+GoalSearcher --|> GoalSearcherBase
 DefaultFixedPlanner --|> FixedGoalPlannerBase
 
 PathShifter --o ShiftPullOver
@@ -66,9 +69,11 @@ AstarSearch --o FreeSpacePullOver
 RRTStar --o FreeSpacePullOver
 
 PullOverPlannerBase --o GoalPlannerModule
+GoalSearcherBase --o GoalPlannerModule
 FixedGoalPlannerBase --o GoalPlannerModule
 
 PullOverPath --o PullOverPlannerBase
+GoalCandidates --o GoalSearcherBase
 
 @enduml
 ```
