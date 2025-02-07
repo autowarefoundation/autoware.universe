@@ -403,10 +403,10 @@ void PointCloudConcatenateDataSynchronizerComponent::manage_collector_list()
 
     // Reset the collector with the oldest timestamp if found
     if (min_it != cloud_collectors_.end()) {
-      RCLCPP_WARN_STREAM(
-        get_logger(), "Reset the oldest collector because the number of collectors ("
-                        << num_processing_collectors << ") exceeds the limit ("
-                        << collectors_threshold << ").");
+      RCLCPP_WARN_STREAM_THROTTLE(
+        this->get_logger(), *this->get_clock(), 1000,
+        "Reset the oldest collector because the number of collectors ("
+          << num_processing_collectors << ") exceeds the limit (" << collectors_threshold << ").");
       (*min_it)->reset();
     }
   }
