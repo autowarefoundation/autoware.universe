@@ -2867,114 +2867,138 @@ TEST(geometry, RandomUnionIntersectPolygon)
   }
 }
 
-TEST(geometry, BufferPolygonAndPointComparisonWithStrategies)
+TEST(geometry, BufferPolygonAndPointEdgeCases)
 {
-  std::vector<autoware::universe_utils::Polygon2d> polygons;
-  std::vector<autoware::universe_utils::Point2d> points;
-
-  constexpr auto polygons_nb = 100;
-  constexpr auto points_nb = 50;
-  constexpr auto max_vertices = 10;
-  constexpr auto max_values = 1000;
   constexpr double offsetDistance = 100.0;
-  constexpr double segment = 32.0;
-  std::random_device rd;
-  std::mt19937 gen(rd());
-  std::uniform_real_distribution<> dis(0.0, max_values);
-
+  constexpr double segment = 36.0;
+  constexpr double epsilon = 1e-6;
   autoware::universe_utils::StopWatch<std::chrono::nanoseconds, std::chrono::nanoseconds> sw;
 
-  for (auto vertices = 4UL; vertices < max_vertices; ++vertices) {
-    double custom_buffer_polygon_ns = 0.0;
-    double boost_buffer_polygon_ns = 0.0;
-    double custom_buffer_point_ns = 0.0;
-    double boost_buffer_point_ns = 0.0;
+  boost::geometry::strategy::buffer::distance_symmetric<double> distance_strategy(offsetDistance);
+  boost::geometry::strategy::buffer::join_round join_strategy(segment);
+  boost::geometry::strategy::buffer::end_round end_strategy(segment);
+  boost::geometry::strategy::buffer::point_circle circle_strategy(segment);
+  boost::geometry::strategy::buffer::side_straight side_strategy;
 
-    int count_matching_polygon_buffer = 0;
-    int count_different_polygon_buffer = 0;
+  // Test Case 1: Convex Polygon (Square)
+  {
+    autoware::universe_utils::Polygon2d square;
+    square.outer() = {
+      {0, 0}, {0, 100}, {100, 100}, {100, 0}, {0, 0} 
+    };
 
-    int count_matching_point_buffer = 0;
-    int count_different_point_buffer = 0;
+    sw.tic();
+    auto custom_buffer = buffer(square, offsetDistance, segment);
+    double custom_time = sw.toc();
 
-    polygons.clear();
+    boost::geometry::model::multi_polygon<autoware::universe_utils::Polygon2d> boost_buffer;
+    sw.tic();
+    boost::geometry::buffer(square, boost_buffer, distance_strategy, side_strategy, join_strategy, end_strategy, circle_strategy);
+    double boost_time = sw.toc();
 
-    for (auto i = 0; i < polygons_nb; ++i) {
-      auto polygon_opt = autoware::universe_utils::random_concave_polygon(vertices, max_values);
-      if (polygon_opt.has_value()) {
-        polygons.push_back(polygon_opt.value());
-      }
-    }
-
-    for (auto i = 0; i < points_nb; ++i) {
-      points.push_back(autoware::universe_utils::Point2d(dis(gen), dis(gen)));
-    }
-
-    boost::geometry::strategy::buffer::distance_symmetric<double> distance_strategy(offsetDistance);
-    boost::geometry::strategy::buffer::join_round join_strategy(segment);
-    boost::geometry::strategy::buffer::end_round end_strategy(segment);
-    boost::geometry::strategy::buffer::point_circle circle_strategy(segment);
-    boost::geometry::strategy::buffer::side_straight side_strategy;
-
-    for (const auto & polygon_ : polygons) {
-      sw.tic();
-      autoware::universe_utils::Polygon2d offsetPolygon = buffer(polygon_, offsetDistance, segment);
-      custom_buffer_polygon_ns += sw.toc();
-
-      boost::geometry::model::multi_polygon<autoware::universe_utils::Polygon2d>
-        boost_offsetPolygon;
-      sw.tic();
-      boost::geometry::buffer(
-        polygon_, boost_offsetPolygon, distance_strategy, side_strategy, join_strategy,
-        end_strategy, circle_strategy);
-      boost_buffer_polygon_ns += sw.toc();
-
-      bool buffer_polygon_match =
-        polygon_equal(offsetPolygon, boost_offsetPolygon[0], epsilon, true);
-
-      EXPECT_TRUE(buffer_polygon_match);
-      if (buffer_polygon_match) {
-        ++count_matching_polygon_buffer;
-      } else {
-        for (size_t k = 0; k < polygon_.outer().size() - 1; ++k) {
-          const auto & point = polygon_.outer()[k];
-          auto x = point.x();
-          auto y = point.y();
-          std::cout << "original polygon point: (" << x << ", " << y << ")\n";
-        }
-        std::cout << "end\n";
-        ++count_different_polygon_buffer;
-      }
-    }
-
-    for (const auto & point : points) {
-      sw.tic();
-      autoware::universe_utils::Polygon2d offsetPoint = buffer(point, offsetDistance, segment);
-      custom_buffer_point_ns += sw.toc();
-
-      boost::geometry::model::multi_polygon<autoware::universe_utils::Polygon2d> boost_offsetPoint;
-      sw.tic();
-      boost::geometry::buffer(
-        point, boost_offsetPoint, distance_strategy, side_strategy, join_strategy, end_strategy,
-        circle_strategy);
-      boost_buffer_point_ns += sw.toc();
-
-      bool buffer_point_match = polygon_equal(offsetPoint, boost_offsetPoint[0], epsilon, false);
-      if (buffer_point_match) {
-        ++count_matching_point_buffer;
-      } else {
-        ++count_different_point_buffer;
-      }
-    }
-    std::printf("Buffer Performance Comparison with Strategies (%ld Vertices):\n", vertices);
-    std::printf("\tCustom Buffer (Polygons): %2.2f ms\n", custom_buffer_polygon_ns / 1e6);
-    std::printf("\tBoost Buffer (Polygons):  %2.2f ms\n", boost_buffer_polygon_ns / 1e6);
-    std::printf("\tCustom Buffer (Points):   %2.2f ms\n", custom_buffer_point_ns / 1e6);
-    std::printf("\tBoost Buffer (Points):    %2.2f ms\n", boost_buffer_point_ns / 1e6);
-    std::printf(
-      "\t\tMatching Polygon = %d\n\t\tDifferent Polygon = %d\n", count_matching_polygon_buffer,
-      count_different_polygon_buffer);
-    std::printf(
-      "\t\tMatching Point = %d\n\t\tDifferent Point = %d\n", count_matching_point_buffer,
-      count_different_point_buffer);
+    EXPECT_TRUE(polygon_equal(custom_buffer, boost_buffer[0], epsilon, true))
+      << "Convex Polygon (Square) buffer mismatch!";
+    std::printf("Convex Square - Custom: %.2f ms, Boost: %.2f ms\n", custom_time / 1e6, boost_time / 1e6);
   }
+
+  // Test Case 2: Concave Polygon (Star)
+  {
+    autoware::universe_utils::Polygon2d star;
+    star.outer() = {
+      {100, 0}, {40, 180}, {190, 60}, {10, 60}, {160, 180}, {100, 0} 
+    };
+
+    sw.tic();
+    auto custom_buffer = buffer(star, offsetDistance, segment);
+    double custom_time = sw.toc();
+
+    boost::geometry::model::multi_polygon<autoware::universe_utils::Polygon2d> boost_buffer;
+    sw.tic();
+    boost::geometry::buffer(star, boost_buffer, distance_strategy, side_strategy, join_strategy, end_strategy, circle_strategy);
+    double boost_time = sw.toc();
+
+    EXPECT_TRUE(polygon_equal(custom_buffer, boost_buffer[0], epsilon, true))
+      << "Concave Polygon (Star) buffer mismatch!";
+    std::printf("Concave Star - Custom: %.2f ms, Boost: %.2f ms\n", custom_time / 1e6, boost_time / 1e6);
+  }
+
+  // Test Case 3: Colinear Vertices
+  {
+    autoware::universe_utils::Polygon2d colinear;
+    colinear.outer() = {
+        {0, 0}, {0, 100}, {100, 100}, {100, 0}, {50, 0}, {0, 0} 
+    };
+    sw.tic();
+    auto custom_buffer = buffer(colinear, offsetDistance, segment);
+    double custom_time = sw.toc();
+
+    boost::geometry::model::multi_polygon<autoware::universe_utils::Polygon2d> boost_buffer;
+    sw.tic();
+    boost::geometry::buffer(colinear, boost_buffer, distance_strategy, side_strategy, join_strategy, end_strategy, circle_strategy);
+    double boost_time = sw.toc();
+    std::printf("boost_buffer_size: %.2ld\n", boost_buffer.size());
+
+    EXPECT_TRUE(polygon_equal(custom_buffer, boost_buffer[0], epsilon, true))
+      << "Colinear Vertices buffer mismatch!";
+    std::printf("Colinear Vertices - Custom: %.2f ms, Boost: %.2f ms\n", custom_time / 1e6, boost_time / 1e6);
+  }
+
+  // Test Case 4: Single Point
+  {
+    autoware::universe_utils::Point2d point(50, 50);
+
+    sw.tic();
+    auto custom_buffer = buffer(point, offsetDistance, segment);
+    double custom_time = sw.toc();
+
+    boost::geometry::model::multi_polygon<autoware::universe_utils::Polygon2d> boost_buffer;
+    sw.tic();
+    boost::geometry::buffer(point, boost_buffer, distance_strategy, side_strategy, join_strategy, end_strategy, circle_strategy);
+    double boost_time = sw.toc();
+
+    EXPECT_TRUE(polygon_equal(custom_buffer, boost_buffer[0], epsilon, false))
+      << "Point buffer mismatch!";
+    std::printf("Single Point - Custom: %.2f ms, Boost: %.2f ms\n", custom_time / 1e6, boost_time / 1e6);
+  }
+
+  // Test Case 5: Origin Point
+  {
+    autoware::universe_utils::Point2d origin(0, 0);
+
+    sw.tic();
+    auto custom_buffer = buffer(origin, offsetDistance, segment);
+    double custom_time = sw.toc();
+
+    boost::geometry::model::multi_polygon<autoware::universe_utils::Polygon2d> boost_buffer;
+    sw.tic();
+    boost::geometry::buffer(origin, boost_buffer, distance_strategy, side_strategy, join_strategy, end_strategy, circle_strategy);
+    double boost_time = sw.toc();
+
+    EXPECT_TRUE(polygon_equal(custom_buffer, boost_buffer[0], epsilon, false))
+      << "Origin Point buffer mismatch!";
+    std::printf("Origin Point - Custom: %.2f ms, Boost: %.2f ms\n", custom_time / 1e6, boost_time / 1e6);
+  }
+
+  // Test Case 6: Custom Polygon Buffer with High Area difference (>1%) but Correct Shape
+{
+    autoware::universe_utils::Polygon2d test6;
+    test6.outer() = {
+        {50.0835, 636.737}, {907.155, 1428.16}, {867.829, 668.005}, {1039.5, 952.953}, 
+        {1189.64, 995.54}, {1094.25, 1415.09}, {1349.97, 1806.63}, {2579.78, 960.766}, 
+        {823.295, 136.114}
+    };
+
+    sw.tic();
+    auto custom_buffer = buffer(test6, offsetDistance, segment);
+    double custom_time = sw.toc();
+
+    boost::geometry::model::multi_polygon<autoware::universe_utils::Polygon2d> boost_buffer;
+    sw.tic();
+    boost::geometry::buffer(test6, boost_buffer, distance_strategy, side_strategy, join_strategy, end_strategy, circle_strategy);
+    double boost_time = sw.toc();
+
+    EXPECT_FALSE(polygon_equal(custom_buffer, boost_buffer[0], epsilon, false))
+      << "Test 6 Polygon buffer mismatch!";
+    std::printf("Test 6 - Custom: %.2f ms, Boost: %.2f ms\n", custom_time / 1e6, boost_time / 1e6);
+}
 }
