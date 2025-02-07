@@ -65,11 +65,10 @@ std::shared_ptr<FusionCollectorInfoBase> FusionCollector<Msg3D, Msg2D, ExportObj
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
-bool FusionCollector<Msg3D, Msg2D, ExportObj>::process_msg3d(
+void FusionCollector<Msg3D, Msg2D, ExportObj>::process_msg3d(
   const typename Msg3D::ConstSharedPtr msg3d, double msg3d_timeout)
 {
   std::lock_guard<std::mutex> fusion_lock(fusion_mutex_);
-  if (status_ == CollectorStatus::Finished) return false;
 
   if (status_ == CollectorStatus::Idle) {
     // Add msg3d to the collector, restart the timer
@@ -99,16 +98,13 @@ bool FusionCollector<Msg3D, Msg2D, ExportObj>::process_msg3d(
   if (ready_to_fuse()) {
     fusion_callback();
   }
-
-  return true;
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
-bool FusionCollector<Msg3D, Msg2D, ExportObj>::process_rois(
+void FusionCollector<Msg3D, Msg2D, ExportObj>::process_rois(
   const std::size_t & rois_id, const typename Msg2D::ConstSharedPtr rois_msg, double rois_timeout)
 {
   std::lock_guard<std::mutex> fusion_lock(fusion_mutex_);
-  if (status_ == CollectorStatus::Finished) return false;
 
   if (status_ == CollectorStatus::Idle) {
     // Add rois_msg to the collector, restart the timer
@@ -132,8 +128,6 @@ bool FusionCollector<Msg3D, Msg2D, ExportObj>::process_rois(
   if (ready_to_fuse()) {
     fusion_callback();
   }
-
-  return true;
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
@@ -143,8 +137,9 @@ bool FusionCollector<Msg3D, Msg2D, ExportObj>::ready_to_fuse()
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
-CollectorStatus FusionCollector<Msg3D, Msg2D, ExportObj>::get_status() const
+CollectorStatus FusionCollector<Msg3D, Msg2D, ExportObj>::get_status()
 {
+  std::lock_guard<std::mutex> fusion_lock(fusion_mutex_);
   return status_;
 }
 

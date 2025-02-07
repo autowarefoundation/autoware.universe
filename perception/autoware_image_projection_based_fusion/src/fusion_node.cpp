@@ -28,6 +28,7 @@
 #include <boost/optional.hpp>
 
 #include <cmath>
+#include <limits>
 #include <list>
 #include <memory>
 #include <optional>
@@ -329,6 +330,19 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::export_process(
 
     processing_time_ms = 0;
   }
+
+  // debug
+  if (debug_internal_pub_) {
+    for (std::size_t rois_id = 0; rois_id < rois_number_; ++rois_id) {
+      auto rois_timestamp = diagnostic_id_to_stamp_map_[rois_id];
+      auto timestamp_interval_ms = (rois_timestamp - current_output_msg_timestamp_) * 1000;
+      debug_internal_pub_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
+        "debug/roi" + std::to_string(rois_id) + "/timestamp_interval_ms", timestamp_interval_ms);
+      debug_internal_pub_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
+        "debug/roi" + std::to_string(rois_id) + "/timestamp_interval_offset_ms",
+        timestamp_interval_ms - id_to_offset_map_[rois_id] * 1000);
+    }
+  }
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
@@ -353,12 +367,13 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::sub_callback(const typename Msg3D::Con
 
   manage_collector_list();
 
+  std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>> selected_collector = nullptr;
   // Lock fusion collectors list
   std::unique_lock<std::mutex> fusion_collectors_lock(fusion_collectors_mutex_);
 
   auto msg3d_timestamp = rclcpp::Time(msg3d->header.stamp).seconds();
-  // For each callback, check whether there is a exist collector that matches this cloud
 
+  // Create matching parameters
   auto matching_params = std::make_shared<Msg3dMatchingParams>();
   matching_params->msg3d_timestamp = msg3d_timestamp;
 
@@ -368,17 +383,13 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::sub_callback(const typename Msg3D::Con
       ? fusion_matching_strategy_->match_msg3d_to_collector(fusion_collectors_, matching_params)
       : std::nullopt;
 
-  bool process_success = false;
   if (fusion_collector && fusion_collector.value()) {
-    fusion_collectors_lock.unlock();  // Unlock before processing
-    process_success = fusion_collector.value()->process_msg3d(msg3d, msg3d_timeout_sec_);
+    selected_collector = fusion_collector.value();
   }
 
-  // Didn't find matched collector, create a new collector
-  if (!process_success) {
-    std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>> selected_collector = nullptr;
-
-    // Reuse the collector if the status is IDLE
+  // If no suitable collector was found, find or create a new collector
+  if (!selected_collector || selected_collector->get_status() == CollectorStatus::Finished) {
+    // Check for an idle collector
     for (auto & collector : fusion_collectors_) {
       if (collector->get_status() == CollectorStatus::Idle) {
         selected_collector = collector;
@@ -387,7 +398,7 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::sub_callback(const typename Msg3D::Con
     }
 
     if (!selected_collector) {
-      // If no idle collector exists, create a new collector
+      // Create a new collector if no idle collector is found
       selected_collector = std::make_shared<FusionCollector<Msg3D, Msg2D, ExportObj>>(
         std::dynamic_pointer_cast<FusionNode>(shared_from_this()), rois_number_, det2d_status_list_,
         collector_debug_mode_);
@@ -395,10 +406,14 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::sub_callback(const typename Msg3D::Con
       fusion_collectors_.emplace_back(selected_collector);
     }
 
-    fusion_collectors_lock.unlock();
+    // Set collector info before processing
     fusion_matching_strategy_->set_collector_info(selected_collector, matching_params);
-    (void)selected_collector->process_msg3d(msg3d, msg3d_timeout_sec_);
   }
+
+  // Unlock the mutex here safely before processing the message
+  fusion_collectors_lock.unlock();
+
+  selected_collector->process_msg3d(msg3d, msg3d_timeout_sec_);
 
   if (matching_strategy_ == "advanced") {
     // remove outdated messages in the concatenated map
@@ -433,31 +448,30 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::rois_callback(
 
   manage_collector_list();
 
+  std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>> selected_collector = nullptr;
   // Lock fusion collectors list
   std::unique_lock<std::mutex> fusion_collectors_lock(fusion_collectors_mutex_);
 
   auto rois_timestamp = rclcpp::Time(rois_msg->header.stamp).seconds();
+
+  // Create matching parameters
   auto matching_params = std::make_shared<RoisMatchingParams>();
   matching_params->rois_id = rois_id;
   matching_params->rois_timestamp = rois_timestamp;
 
-  // Try to find an existing FusionCollector that matches this ROI
+  // Try to find an existing FusionCollector that matches this message
   auto fusion_collector =
     !fusion_collectors_.empty()
       ? fusion_matching_strategy_->match_rois_to_collector(fusion_collectors_, matching_params)
       : std::nullopt;
 
-  bool process_success = false;
   if (fusion_collector && fusion_collector.value()) {
-    fusion_collectors_lock.unlock();
-    process_success = fusion_collector.value()->process_rois(rois_id, rois_msg, rois_timeout_sec_);
+    selected_collector = fusion_collector.value();
   }
 
-  // Didn't find matched collector, create a new collector
-  if (!process_success) {
-    std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>> selected_collector = nullptr;
-
-    // Reuse the collector if the status is IDLE
+  // If no suitable collector was found, find or create a new collector
+  if (!selected_collector || selected_collector->get_status() == CollectorStatus::Finished) {
+    // Check for an idle collector
     for (auto & collector : fusion_collectors_) {
       if (collector->get_status() == CollectorStatus::Idle) {
         selected_collector = collector;
@@ -466,7 +480,7 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::rois_callback(
     }
 
     if (!selected_collector) {
-      // If no idle collector exists, create a new collector
+      // Create a new collector if no idle collector is found
       selected_collector = std::make_shared<FusionCollector<Msg3D, Msg2D, ExportObj>>(
         std::dynamic_pointer_cast<FusionNode>(shared_from_this()), rois_number_, det2d_status_list_,
         collector_debug_mode_);
@@ -474,10 +488,14 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::rois_callback(
       fusion_collectors_.emplace_back(selected_collector);
     }
 
-    fusion_collectors_lock.unlock();
+    // Set collector info before processing
     fusion_matching_strategy_->set_collector_info(selected_collector, matching_params);
-    (void)selected_collector->process_rois(rois_id, rois_msg, rois_timeout_sec_);
   }
+
+  // Unlock the mutex here safely before processing the message
+  fusion_collectors_lock.unlock();
+
+  selected_collector->process_rois(rois_id, rois_msg, rois_timeout_sec_);
 
   if (debugger_) {
     debugger_->clear();
@@ -566,18 +584,51 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::manage_collector_list()
 {
   std::lock_guard<std::mutex> collectors_lock(fusion_collectors_mutex_);
 
+  int num_processing_collectors = 0;
+
   for (auto & collector : fusion_collectors_) {
     if (collector->get_status() == CollectorStatus::Finished) {
       collector->reset();
     }
+
+    if (collector->get_status() == CollectorStatus::Processing) {
+      num_processing_collectors++;
+    }
   }
 
-  if (fusion_collectors_.size() > collectors_threshold) {
-    RCLCPP_WARN_STREAM_THROTTLE(
-      get_logger(), *get_clock(), 1000,
-      "The number of cloud collectors (" << fusion_collectors_.size() << ") exceeds the threshold ("
-                                         << collectors_threshold
-                                         << "), be careful if it keeps increasing.");
+  if (num_processing_collectors >= collectors_threshold) {
+    auto min_it = fusion_collectors_.end();
+    constexpr double k_max_timestamp = std::numeric_limits<double>::max();
+    double min_timestamp = k_max_timestamp;
+
+    for (auto it = fusion_collectors_.begin(); it != fusion_collectors_.end(); ++it) {
+      if ((*it)->get_status() == CollectorStatus::Processing) {
+        auto info = (*it)->get_info();
+        double timestamp = k_max_timestamp;
+
+        if (auto naive_info = std::dynamic_pointer_cast<NaiveCollectorInfo>(info)) {
+          timestamp = naive_info->timestamp;
+        } else if (auto advanced_info = std::dynamic_pointer_cast<AdvancedCollectorInfo>(info)) {
+          timestamp = advanced_info->timestamp;
+        } else {
+          continue;
+        }
+
+        if (timestamp < min_timestamp) {
+          min_timestamp = timestamp;
+          min_it = it;
+        }
+      }
+    }
+
+    // Reset the collector with the oldest timestamp if found
+    if (min_it != fusion_collectors_.end()) {
+      RCLCPP_WARN_STREAM(
+        get_logger(), "Reset the oldest collector because the number of collectors ("
+                        << num_processing_collectors << ") exceeds the limit ("
+                        << collectors_threshold << ").");
+      (*min_it)->reset();
+    }
   }
 }
 
@@ -683,19 +734,6 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::check_fusion_status(
     stat.summary(
       diagnostic_msgs::msg::DiagnosticStatus::OK,
       "Fusion node launched successfully, but waiting for input pointcloud");
-  }
-
-  // debug
-  if (debug_internal_pub_) {
-    for (std::size_t rois_id = 0; rois_id < rois_number_; ++rois_id) {
-      auto rois_timestamp = diagnostic_id_to_stamp_map_[rois_id];
-      auto timestamp_interval_ms = rois_timestamp - current_output_msg_timestamp_;
-      debug_internal_pub_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
-        "debug/roi" + std::to_string(rois_id) + "/timestamp_interval_ms", timestamp_interval_ms);
-      debug_internal_pub_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
-        "debug/roi" + std::to_string(rois_id) + "/timestamp_interval_offset_ms",
-        timestamp_interval_ms - id_to_offset_map_[rois_id] * 1000);
-    }
   }
 }
 
