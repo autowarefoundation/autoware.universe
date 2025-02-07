@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/pointcloud_preprocessor/concatenate_data/combine_cloud_handler_kernel.hpp"
+#include "autoware/pointcloud_preprocessor/concatenate_data/cuda_combine_cloud_handler_kernel.hpp"
 
 #include <cuda_runtime.h>
 

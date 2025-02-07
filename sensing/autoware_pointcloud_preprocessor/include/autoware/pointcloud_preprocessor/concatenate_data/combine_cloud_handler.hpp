@@ -107,6 +107,11 @@ template <typename MsgTraits>
 class CombineCloudHandler : public CombineCloudHandlerBase
 {
 public:
+  CombineCloudHandler(
+    rclcpp::Node & node, const std::vector<std::string> & input_topics, std::string output_frame,
+    bool is_motion_compensated, bool publish_synchronized_pointcloud,
+    bool keep_input_frame_in_synchronized_pointcloud, bool has_static_tf_only);
+
   ConcatenatedCloudResult<MsgTraits> combine_pointclouds(
     std::unordered_map<std::string, typename MsgTraits::PointCloudMessage::ConstSharedPtr> &
       topic_to_cloud_map);
@@ -129,48 +134,20 @@ protected:
 
 public:
   CombineCloudHandler(
-    rclcpp::Node & node, const std::vector<std::string> & input_topics, std::string output_frame,
-    bool is_motion_compensated, bool publish_synchronized_pointcloud,
-    bool keep_input_frame_in_synchronized_pointcloud, bool has_static_tf_only);
+    rclcpp::Node & node, [[maybe_unused]] const std::vector<std::string> & input_topics,
+    std::string output_frame, bool is_motion_compensated, bool publish_synchronized_pointcloud,
+    bool keep_input_frame_in_synchronized_pointcloud, bool has_static_tf_only)
+  : CombineCloudHandlerBase(
+      node, output_frame, is_motion_compensated, publish_synchronized_pointcloud,
+      keep_input_frame_in_synchronized_pointcloud, has_static_tf_only)
+  {
+  }
 
   ConcatenatedCloudResult<PointCloud2Traits> combine_pointclouds(
     std::unordered_map<std::string, typename PointCloud2Traits::PointCloudMessage::ConstSharedPtr> &
       topic_to_cloud_map);
 };
 
-#ifdef USE_CUDA
-
-template <>
-class CombineCloudHandler<CudaPointCloud2Traits> : public CombineCloudHandlerBase
-{
-protected:
-  struct CudaConcatStruct
-  {
-    cudaStream_t stream;
-    std::unique_ptr<CudaPointCloud2Traits::PointCloudMessage> cloud_ptr;
-    std::size_t max_pointcloud_size{0};
-  };
-
-  std::vector<std::string> input_topics_;
-  std::unordered_map<std::string, CudaConcatStruct> cuda_concat_struct_map_;
-  std::unique_ptr<CudaPointCloud2Traits::PointCloudMessage> concatenated_cloud_ptr_;
-  std::size_t max_concat_pointcloud_size_{0};
-  std::mutex mutex_;
-
-public:
-  CombineCloudHandler(
-    rclcpp::Node & node, const std::vector<std::string> & input_topics, std::string output_frame,
-    bool is_motion_compensated, bool publish_synchronized_pointcloud,
-    bool keep_input_frame_in_synchronized_pointcloud, bool has_static_tf_only);
-
-  ConcatenatedCloudResult<CudaPointCloud2Traits> combine_pointclouds(
-    std::unordered_map<
-      std::string, typename CudaPointCloud2Traits::PointCloudMessage::ConstSharedPtr> &
-      topic_to_cloud_map);
-
-  void allocate_pointclouds() override;
-};
-
-#endif
-
 }  // namespace autoware::pointcloud_preprocessor
+
+// #include "autoware/pointcloud_preprocessor/concatenate_data/combine_cloud_handler.ipp"

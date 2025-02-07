@@ -5,15 +5,18 @@ find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 # Suppress CGAL warning
-set(CGAL_DATA_DIR ".")
+#set(CGAL_DATA_DIR ".")
 
 find_package(OpenCV REQUIRED)
 find_package(Eigen3 REQUIRED)
 find_package(Sophus REQUIRED)
 find_package(Boost REQUIRED)
 find_package(PCL REQUIRED)
-find_package(CGAL REQUIRED COMPONENTS Core)
+#find_package(CGAL REQUIRED COMPONENTS Core)
 find_package(CUDA)
+
+
+add_compile_options(-frounding-math)
 
 if(${CUDA_FOUND})
   add_definitions(-DUSE_CUDA)
@@ -72,7 +75,7 @@ ament_target_dependencies(faster_voxel_grid_downsample_filter
 )
 
 cuda_add_library(pointcloud_preprocessor_filter_cuda SHARED
-  src/concatenate_data/combine_cloud_handler_kernel.cu
+  src/concatenate_data/cuda_combine_cloud_handler_kernel.cu
 )
 
 target_include_directories(pointcloud_preprocessor_filter_cuda PUBLIC
@@ -85,6 +88,11 @@ ament_auto_add_library(pointcloud_preprocessor_filter SHARED
   src/concatenate_data/cloud_collector.cpp
   src/concatenate_data/collector_matching_strategy.cpp
   src/concatenate_data/concatenate_pointclouds.cpp
+  # TODO(knzo25): move to another package
+  src/concatenate_data/cuda_concatenate_and_time_sync_node.cpp
+  src/concatenate_data/cuda_combine_cloud_handler.cpp
+  src/concatenate_data/cuda_cloud_collector.cpp
+  src/concatenate_data/cuda_collector_matching_strategy.cpp
   src/crop_box_filter/crop_box_filter_node.cpp
   src/time_synchronizer/time_synchronizer_node.cpp
   src/downsample_filter/voxel_grid_downsample_filter_node.cpp
@@ -103,9 +111,9 @@ ament_auto_add_library(pointcloud_preprocessor_filter SHARED
   src/distortion_corrector/distortion_corrector.cpp
   src/distortion_corrector/distortion_corrector_node.cpp
   src/blockage_diag/blockage_diag_node.cpp
-  src/polygon_remover/polygon_remover.cpp
-  src/vector_map_filter/vector_map_inside_area_filter_node.cpp
-  src/utility/geometry.cpp
+  #src/polygon_remover/polygon_remover.cpp
+  #src/vector_map_filter/vector_map_inside_area_filter_node.cpp
+  #src/utility/geometry.cpp
 )
 
 target_link_libraries(pointcloud_preprocessor_filter
@@ -221,8 +229,8 @@ rclcpp_components_register_node(pointcloud_preprocessor_filter
   PLUGIN "autoware::pointcloud_preprocessor::PolygonRemoverComponent"
   EXECUTABLE polygon_remover_node)
 
-set(CGAL_DO_NOT_WARN_ABOUT_CMAKE_BUILD_TYPE TRUE)
-target_link_libraries(polygon_remover_node gmp CGAL CGAL::CGAL CGAL::CGAL_Core)
+#set(CGAL_DO_NOT_WARN_ABOUT_CMAKE_BUILD_TYPE TRUE)
+#target_link_libraries(polygon_remover_node gmp CGAL CGAL::CGAL CGAL::CGAL_Core)
 
 # ========== Vector Map Inside Area Filter ===========
 rclcpp_components_register_node(pointcloud_preprocessor_filter
@@ -261,9 +269,9 @@ if(BUILD_TESTING)
 
   ament_lint_auto_find_test_dependencies()
 
-  ament_add_gtest(test_utilities
-    test/test_utilities.cpp
-  )
+  #ament_add_gtest(test_utilities
+  #  test/test_utilities.cpp
+  #)
 
   ament_add_gtest(test_distortion_corrector_node
     test/test_distortion_corrector_node.cpp
@@ -273,7 +281,7 @@ if(BUILD_TESTING)
     test/test_concatenate_node_unit.cpp
   )
 
-  target_link_libraries(test_utilities pointcloud_preprocessor_filter)
+  #target_link_libraries(test_utilities pointcloud_preprocessor_filter)
   target_link_libraries(test_distortion_corrector_node pointcloud_preprocessor_filter)
   target_link_libraries(test_concatenate_node_unit pointcloud_preprocessor_filter)
 

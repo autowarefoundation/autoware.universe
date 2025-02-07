@@ -14,8 +14,6 @@
 
 #pragma once
 
-#include "cloud_collector.hpp"
-
 #include <rclcpp/node.hpp>
 
 #include <sensor_msgs/msg/point_cloud2.hpp>
@@ -29,6 +27,10 @@
 
 namespace autoware::pointcloud_preprocessor
 {
+
+// Forward declaration of templated class
+template <typename MsgTraits>
+class CloudCollector;
 
 struct MatchingParams
 {
@@ -87,3 +89,5 @@ template <typename MsgTraits>
 std::shared_ptr<CollectorMatchingStrategy<MsgTraits>> parse_matching_strategy(rclcpp::Node & node);
 
 }  // namespace autoware::pointcloud_preprocessor
+
+#include "autoware/pointcloud_preprocessor/concatenate_data/collector_matching_strategy.ipp"

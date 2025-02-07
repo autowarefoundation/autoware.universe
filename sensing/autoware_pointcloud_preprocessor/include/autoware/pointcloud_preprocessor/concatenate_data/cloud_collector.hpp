@@ -96,3 +96,5 @@ private:
 };
 
 }  // namespace autoware::pointcloud_preprocessor
+
+#include "autoware/pointcloud_preprocessor/concatenate_data/cloud_collector.ipp"

@@ -12,12 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/pointcloud_preprocessor/concatenate_data/combine_cloud_handler.hpp"
-
 #include "autoware/pointcloud_preprocessor/concatenate_data/traits.hpp"
 
 #include <pcl_ros/transforms.hpp>
-
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <algorithm>
@@ -170,6 +167,16 @@ Eigen::Matrix4f CombineCloudHandlerBase::compute_transform_to_adjust_for_old_tim
   transformation_matrix(1, 1) = cos_yaw;
 
   return transformation_matrix;
+}
+
+CombineCloudHandler<PointCloud2Traits>::CombineCloudHandler(
+  rclcpp::Node & node, [[maybe_unused]] const std::vector<std::string> & input_topics,
+  std::string output_frame, bool is_motion_compensated, bool publish_synchronized_pointcloud,
+  bool keep_input_frame_in_synchronized_pointcloud, bool has_static_tf_only)
+: CombineCloudHandlerBase(
+    node, output_frame, is_motion_compensated, publish_synchronized_pointcloud,
+    keep_input_frame_in_synchronized_pointcloud, has_static_tf_only)
+{
 }
 
 void CombineCloudHandler<PointCloud2Traits>::convert_to_xyzirc_cloud(

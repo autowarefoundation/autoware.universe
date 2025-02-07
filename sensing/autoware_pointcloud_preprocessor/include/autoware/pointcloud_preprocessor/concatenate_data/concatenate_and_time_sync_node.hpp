@@ -25,6 +25,7 @@
 #include "cloud_collector.hpp"
 #include "collector_matching_strategy.hpp"
 #include "combine_cloud_handler.hpp"
+#include "cuda_traits.hpp"
 #include "traits.hpp"
 
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
@@ -46,12 +47,6 @@
 #include <message_filters/sync_policies/approximate_time.h>
 #include <message_filters/sync_policies/exact_time.h>
 #include <message_filters/synchronizer.h>
-
-#ifdef USE_CUDA
-#include <cuda_blackboard/cuda_blackboard_publisher.hpp>
-#include <cuda_blackboard/cuda_blackboard_subscriber.hpp>
-#include <cuda_blackboard/cuda_pointcloud2.hpp>
-#endif
 
 namespace autoware::pointcloud_preprocessor
 {
@@ -155,18 +150,6 @@ public:
   ~PointCloudConcatenateDataSynchronizerComponent() override = default;
 };
 
-#ifdef USE_CUDA
-class CudaPointCloudConcatenateDataSynchronizerComponent
-: public PointCloudConcatenateDataSynchronizerComponentTemplated<CudaPointCloud2Traits>
-{
-public:
-  explicit CudaPointCloudConcatenateDataSynchronizerComponent(
-    const rclcpp::NodeOptions & node_options)
-  : PointCloudConcatenateDataSynchronizerComponentTemplated<CudaPointCloud2Traits>(node_options)
-  {
-  }
-  ~CudaPointCloudConcatenateDataSynchronizerComponent() override = default;
-};
-#endif
-
 }  // namespace autoware::pointcloud_preprocessor
+
+#include "autoware/pointcloud_preprocessor/concatenate_data/concatenate_and_time_sync_node.ipp"
