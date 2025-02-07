@@ -64,13 +64,10 @@ bool CloudCollector::topic_exists(const std::string & topic_name)
   return topic_to_cloud_map_.find(topic_name) != topic_to_cloud_map_.end();
 }
 
-bool CloudCollector::process_pointcloud(
+void CloudCollector::process_pointcloud(
   const std::string & topic_name, sensor_msgs::msg::PointCloud2::SharedPtr cloud)
 {
   std::lock_guard<std::mutex> concatenate_lock(concatenate_mutex_);
-  if (status_ == CollectorStatus::Finished) {
-    return false;
-  }
   if (status_ == CollectorStatus::Idle) {
     // Add first pointcloud to the collector, restart the timer
     status_ = CollectorStatus::Processing;
@@ -99,8 +96,6 @@ bool CloudCollector::process_pointcloud(
   if (topic_to_cloud_map_.size() == num_of_clouds_) {
     concatenate_callback();
   }
-
-  return true;
 }
 
 void CloudCollector::set_period(const int64_t new_period)
@@ -119,8 +114,9 @@ void CloudCollector::set_period(const int64_t new_period)
   }
 }
 
-CollectorStatus CloudCollector::get_status() const
+CollectorStatus CloudCollector::get_status()
 {
+  std::lock_guard<std::mutex> concatenate_lock(concatenate_mutex_);
   return status_;
 }
 

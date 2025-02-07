@@ -59,7 +59,7 @@ public:
     std::shared_ptr<CombineCloudHandler> & combine_cloud_handler, int num_of_clouds,
     double timeout_sec, bool debug_mode);
   bool topic_exists(const std::string & topic_name);
-  bool process_pointcloud(
+  void process_pointcloud(
     const std::string & topic_name, sensor_msgs::msg::PointCloud2::SharedPtr cloud);
   void concatenate_callback();
 
@@ -69,7 +69,7 @@ public:
   std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr>
   get_topic_to_cloud_map();
 
-  [[nodiscard]] CollectorStatus get_status() const;
+  [[nodiscard]] CollectorStatus get_status();
 
   void set_info(std::shared_ptr<CollectorInfoBase> collector_info);
   [[nodiscard]] std::shared_ptr<CollectorInfoBase> get_info() const;
