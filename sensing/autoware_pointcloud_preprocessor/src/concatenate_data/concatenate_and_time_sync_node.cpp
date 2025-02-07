@@ -22,6 +22,7 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <iomanip>
+#include <limits>
 #include <list>
 #include <memory>
 #include <optional>
@@ -369,12 +370,36 @@ void PointCloudConcatenateDataSynchronizerComponent::manage_collector_list()
     }
   }
 
-  if (cloud_collectors_.size() > collectors_threshold) {
-    RCLCPP_WARN_STREAM_THROTTLE(
-      get_logger(), *get_clock(), 1000,
-      "The number of cloud collectors (" << cloud_collectors_.size() << ") exceeds the threshold ("
-                                         << collectors_threshold
-                                         << "), be careful if it keeps increasing.");
+  if (cloud_collectors_.size() >= collectors_threshold) {
+    auto min_it = cloud_collectors_.end();
+    double min_timestamp = std::numeric_limits<double>::max();
+
+    for (auto it = cloud_collectors_.begin(); it != cloud_collectors_.end(); ++it) {
+      auto info = (*it)->get_info();
+      double timestamp = std::numeric_limits<double>::max();
+      if (auto naive_info = std::dynamic_pointer_cast<NaiveCollectorInfo>(info)) {
+        timestamp = naive_info->timestamp;
+      } else if (auto advanced_info = std::dynamic_pointer_cast<AdvancedCollectorInfo>(info)) {
+        timestamp = advanced_info->timestamp;
+      } else {
+        continue;
+      }
+
+      // Update the iterator pointing to the collector with the smallest timestamp
+      if (timestamp < min_timestamp) {
+        min_timestamp = timestamp;
+        min_it = it;
+      }
+    }
+
+    // Reset the collector with the oldest timestamp if found
+    if (min_it != cloud_collectors_.end()) {
+      RCLCPP_WARN_STREAM(
+        get_logger(),
+        "Reset the oldest collector because the number of collectors is larger than the limit:  %d"
+          << collectors_threshold);
+      (*min_it)->reset();
+    }
   }
 }
 
