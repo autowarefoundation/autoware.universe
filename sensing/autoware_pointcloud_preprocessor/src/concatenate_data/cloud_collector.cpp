@@ -74,14 +74,6 @@ bool CloudCollector::process_pointcloud(
   if (status_ == CollectorStatus::Idle) {
     // Add first pointcloud to the collector, restart the timer
     status_ = CollectorStatus::Processing;
-    const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
-      std::chrono::duration<double>(timeout_sec_));
-    try {
-      set_period(period_ns.count());
-    } catch (rclcpp::exceptions::RCLError & ex) {
-      RCLCPP_WARN_THROTTLE(
-        ros2_parent_node_->get_logger(), *ros2_parent_node_->get_clock(), 5000, "%s", ex.what());
-    }
     timer_->reset();
   } else if (status_ == CollectorStatus::Processing) {
     // Check if the map already contains an entry for the same topic. This shouldn't happen if the
@@ -101,22 +93,6 @@ bool CloudCollector::process_pointcloud(
   }
 
   return true;
-}
-
-void CloudCollector::set_period(const int64_t new_period)
-{
-  if (!timer_) {
-    return;
-  }
-  int64_t old_period = 0;
-  rcl_ret_t ret = rcl_timer_get_period(timer_->get_timer_handle().get(), &old_period);
-  if (ret != RCL_RET_OK) {
-    rclcpp::exceptions::throw_from_rcl_error(ret, "Couldn't get old period");
-  }
-  ret = rcl_timer_exchange_period(timer_->get_timer_handle().get(), new_period, &old_period);
-  if (ret != RCL_RET_OK) {
-    rclcpp::exceptions::throw_from_rcl_error(ret, "Couldn't exchange_period");
-  }
 }
 
 CollectorStatus CloudCollector::get_status() const

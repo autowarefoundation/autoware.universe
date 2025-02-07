@@ -75,7 +75,6 @@ public:
   [[nodiscard]] std::shared_ptr<CollectorInfoBase> get_info() const;
   void show_debug_message();
   void reset();
-  void set_period(const int64_t new_period);
 
 private:
   std::shared_ptr<PointCloudConcatenateDataSynchronizerComponent> ros2_parent_node_;
