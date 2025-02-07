@@ -1,4 +1,4 @@
-// Copyright 2023 TIER IV, Inc.
+// Copyright 2025 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 #include <list>
 #include <memory>
-#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -91,7 +90,6 @@ private:
   std::shared_ptr<CombineCloudHandler> combine_cloud_handler_;
   std::list<std::shared_ptr<CloudCollector>> cloud_collectors_;
   std::unique_ptr<CollectorMatchingStrategy> collector_matching_strategy_;
-  std::mutex cloud_collectors_mutex_;
   bool init_collector_list_ = false;
   static constexpr const int num_of_collectors = 3;
 

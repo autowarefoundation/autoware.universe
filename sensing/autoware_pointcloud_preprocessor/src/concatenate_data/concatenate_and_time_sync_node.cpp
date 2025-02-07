@@ -227,10 +227,9 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
       this->get_logger(), *this->get_clock(), 1000, "Empty sensor points!");
   }
 
-  // protect cloud collectors list
-  std::unique_lock<std::mutex> cloud_collectors_lock(cloud_collectors_mutex_);
+  std::shared_ptr<CloudCollector> selected_collector = nullptr;
 
-  // For each callback, check whether there is a exist collector that matches this cloud
+  // Try to find a matching collector
   std::optional<std::shared_ptr<CloudCollector>> cloud_collector = std::nullopt;
   MatchingParams matching_params;
   matching_params.topic_name = topic_name;
@@ -242,20 +241,13 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
       collector_matching_strategy_->match_cloud_to_collector(cloud_collectors_, matching_params);
   }
 
-  bool process_success = false;
-  if (cloud_collector.has_value()) {
-    auto collector = cloud_collector.value();
-    if (collector) {
-      cloud_collectors_lock.unlock();
-      process_success = collector->process_pointcloud(topic_name, input_ptr);
-    }
+  if (cloud_collector.has_value() && cloud_collector.value()) {
+      selected_collector = cloud_collector.value();
   }
 
   // Didn't find matched collector
-  if (!process_success) {
+  if (!selected_collector || selected_collector->get_status() == CollectorStatus::Finished) {
     // Reuse the collector if the status is IDLE
-    std::shared_ptr<CloudCollector> selected_collector = nullptr;
-
     auto it = std::find_if(
       cloud_collectors_.begin(), cloud_collectors_.end(),
       [](const auto & collector) { return collector->get_status() == CollectorStatus::Idle; });
@@ -263,15 +255,16 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
     if (it != cloud_collectors_.end()) {
       selected_collector = *it;
     }
-    cloud_collectors_lock.unlock();
+
     if (selected_collector) {
       collector_matching_strategy_->set_collector_info(selected_collector, matching_params);
-      (void)selected_collector->process_pointcloud(topic_name, input_ptr);
     } else {
       // Handle case where no suitable collector is found
       RCLCPP_WARN(get_logger(), "No available CloudCollector in IDLE state.");
+      return;
     }
   }
+  selected_collector->process_pointcloud(topic_name, input_ptr);
 }
 
 void PointCloudConcatenateDataSynchronizerComponent::twist_callback(
