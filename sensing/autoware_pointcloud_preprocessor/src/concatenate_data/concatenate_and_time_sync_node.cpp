@@ -239,11 +239,12 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
     // Reuse the collector if the status is IDLE
     std::shared_ptr<CloudCollector> selected_collector = nullptr;
 
-    for (auto & collector : cloud_collectors_) {
-      if (collector->get_status() == CollectorStatus::Idle) {
-        selected_collector = collector;
-        break;
-      }
+    auto it = std::find_if(
+      cloud_collectors_.begin(), cloud_collectors_.end(),
+      [](const auto & collector) { return collector->get_status() == CollectorStatus::Idle; });
+
+    if (it != cloud_collectors_.end()) {
+      selected_collector = *it;
     }
 
     if (!selected_collector) {
