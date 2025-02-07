@@ -42,6 +42,8 @@ TrafficLightModuleManager::TrafficLightModuleManager(rclcpp::Node & node)
   planner_param_.enable_pass_judge = getOrDeclareParameter<bool>(node, ns + ".enable_pass_judge");
   planner_param_.yellow_lamp_period =
     getOrDeclareParameter<double>(node, ns + ".yellow_lamp_period");
+  planner_param_.yellow_light_stop_velocity =
+    getOrDeclareParameter<double>(node, ns + ".yellow_light_stop_velocity");
   pub_tl_state_ = node.create_publisher<autoware_perception_msgs::msg::TrafficLightGroup>(
     "~/output/traffic_signal", 1);
 }

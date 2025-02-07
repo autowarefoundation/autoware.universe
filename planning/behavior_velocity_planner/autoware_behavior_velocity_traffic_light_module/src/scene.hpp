@@ -61,6 +61,7 @@ public:
     double stop_margin;
     double tl_state_timeout;
     double yellow_lamp_period;
+    double yellow_light_stop_velocity;
     double stop_time_hysteresis;
     bool enable_pass_judge;
   };
