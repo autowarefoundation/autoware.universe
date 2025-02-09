@@ -34,7 +34,7 @@ TrafficLightCategoryMergerNode::TrafficLightCategoryMergerNode(
   using std::placeholders::_2;
   sync_.registerCallback(std::bind(&TrafficLightCategoryMergerNode::signalsCallback, this, _1, _2));
   pub_traffic_light_signals_ =
-    create_publisher<TrafficLightArray>("output/traffic_light_signals", rclcpp::QoS{1});
+    create_publisher<TrafficLightArray>("output/traffic_signals", rclcpp::QoS{1});
 }
 
 void TrafficLightCategoryMergerNode::signalsCallback(
