@@ -205,7 +205,7 @@ TEST(TestObjectFiltering, isUnavoidable)
 TEST(TestObjectFiltering, filterPredictedObjects)
 {
   using autoware::motion_velocity_planner::dynamic_obstacle_stop::filter_predicted_objects;
-  std::vector<autoware::motion_velocity_planner::PlannerData::Object> objects;
+  std::vector<std::shared_ptr<autoware::motion_velocity_planner::PlannerData::Object>> objects;
   autoware::motion_velocity_planner::dynamic_obstacle_stop::EgoData ego_data;
   autoware::motion_velocity_planner::dynamic_obstacle_stop::PlannerParam params;
   double hysteresis{};

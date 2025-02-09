@@ -33,6 +33,8 @@
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
+#include <tier4_planning_msgs/msg/velocity_limit.hpp>
+#include <tier4_planning_msgs/msg/velocity_limit_clear_command.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <tf2_ros/buffer.h>
@@ -50,6 +52,8 @@ using autoware_map_msgs::msg::LaneletMapBin;
 using autoware_motion_velocity_planner_node_universe::srv::LoadPlugin;
 using autoware_motion_velocity_planner_node_universe::srv::UnloadPlugin;
 using autoware_planning_msgs::msg::Trajectory;
+using tier4_planning_msgs::msg::VelocityLimit;
+using tier4_planning_msgs::msg::VelocityLimitClearCommand;
 using TrajectoryPoints = std::vector<autoware_planning_msgs::msg::TrajectoryPoint>;
 
 class MotionVelocityPlannerNode : public rclcpp::Node
@@ -92,6 +96,8 @@ private:
 
   // publishers
   rclcpp::Publisher<autoware_planning_msgs::msg::Trajectory>::SharedPtr trajectory_pub_;
+  rclcpp::Publisher<VelocityLimit>::SharedPtr velocity_limit_pub_;
+  rclcpp::Publisher<VelocityLimitClearCommand>::SharedPtr clear_velocity_limit_pub_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_viz_pub_;
   autoware::universe_utils::ProcessingTimePublisher processing_diag_publisher_{
     this, "~/debug/processing_time_ms_diag"};
@@ -128,7 +134,9 @@ private:
   // function
   /// @brief update the PlannerData instance with the latest messages received
   /// @return false if some data is not available
-  bool update_planner_data(std::map<std::string, double> & processing_times);
+  bool update_planner_data(
+    std::map<std::string, double> & processing_times,
+    const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & input_traj_points);
   void insert_stop(
     autoware_planning_msgs::msg::Trajectory & trajectory,
     const geometry_msgs::msg::Point & stop_point) const;
@@ -139,7 +147,7 @@ private:
     const autoware::motion_velocity_planner::TrajectoryPoints & trajectory_points,
     const autoware::motion_velocity_planner::PlannerData & planner_data) const;
   autoware_planning_msgs::msg::Trajectory generate_trajectory(
-    autoware::motion_velocity_planner::TrajectoryPoints input_trajectory_points,
+    const autoware::motion_velocity_planner::TrajectoryPoints & input_trajectory_points,
     std::map<std::string, double> & processing_times);
 
   std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;

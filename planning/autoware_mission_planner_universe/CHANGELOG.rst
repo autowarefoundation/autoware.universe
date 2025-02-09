@@ -2,6 +2,12 @@
 Changelog for package autoware_mission_planner_universe
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_mission_planner)!: feat(autoware_mission_planner_universe)!: add _universe suffix to package name (`#9941 <https://github.com/autowarefoundation/autoware.universe/issues/9941>`_)
+* Contributors: Fumiya Watanabe, Ryohsuke Mitsudome
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

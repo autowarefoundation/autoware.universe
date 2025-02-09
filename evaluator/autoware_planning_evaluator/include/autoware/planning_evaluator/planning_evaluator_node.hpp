@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -24,6 +24,7 @@
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware/universe_utils/ros/polling_subscriber.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
+#include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 
 #include "autoware_perception_msgs/msg/predicted_objects.hpp"
 #include "autoware_planning_msgs/msg/pose_with_uuid_stamped.hpp"
@@ -44,6 +45,7 @@
 namespace planning_diagnostics
 {
 using autoware::universe_utils::Accumulator;
+using autoware::vehicle_info_utils::VehicleInfo;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_planning_msgs::msg::PoseWithUuidStamped;
 using autoware_planning_msgs::msg::Trajectory;
@@ -167,6 +169,7 @@ private:
     metric_accumulators_;  // 3(min, max, mean) * metric_size
 
   rclcpp::TimerBase::SharedPtr timer_;
+  VehicleInfo vehicle_info_;
   std::optional<AccelWithCovarianceStamped> prev_acc_stamped_{std::nullopt};
 };
 }  // namespace planning_diagnostics

@@ -1,6 +1,29 @@
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Changelog for package duplicated_node_checker
+Changelog for package autoware_duplicated_node_checker
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat: apply `autoware\_` prefix for `duplicated_node_checker` (`#9970 <https://github.com/autowarefoundation/autoware.universe/issues/9970>`_)
+  * feat(duplicated_node_checker): apply `autoware\_` prefix (see below):
+  Note:
+  * In this commit, I did not organize a folder structure.
+  The folder structure will be organized in the next some commits.
+  * The changes will follow the Autoware's guideline as below:
+  - https://autowarefoundation.github.io/autoware-documentation/main/contributing/coding-guidelines/ros-nodes/directory-structure/#package-folder
+  * rename(duplicated_node_checker): move a header under `include/autoware`:
+  * Fixes due to this changes for .hpp/.cpp files will be applied in the next commit
+  * fix(duplicated_node_checker): fix include header path
+  * To follow the previous commit
+  * rename: `duplicated_node_checker` => `autoware_duplicated_node_checker`
+  * style(pre-commit): autofix
+  * bug(autoware_duplicated_node_checker): revert wrongly updated copyrights
+  * update(autoware_duplicated_node_checker): `README.md`
+  * update: `CODEOWNERS`
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* Contributors: Fumiya Watanabe, Junya Sasaki
 
 0.40.0 (2024-12-12)
 -------------------

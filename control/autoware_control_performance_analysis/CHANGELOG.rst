@@ -2,6 +2,37 @@
 Changelog for package autoware_control_performance_analysis
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat: apply `autoware\_` prefix for `control_performance_analysis` (`#9982 <https://github.com/autowarefoundation/autoware.universe/issues/9982>`_)
+  * feat(control_performance_analysis): apply `autoware\_` prefix (see below):
+  Note:
+  * In this commit, I did not organize a folder structure.
+  The folder structure will be organized in the next some commits.
+  * The changes will follow the Autoware's guideline as below:
+  - https://autowarefoundation.github.io/autoware-documentation/main/contributing/coding-guidelines/ros-nodes/directory-structure/#package-folder
+  * rename(control_performance_analysis): move headers under `include/autoware`:
+  * Fixes due to this changes for .hpp/.cpp files will be applied in the next commit
+  * fix(control_performance_analysis): fix include paths
+  * To follow the previous commit
+  * rename: `control_performance_analysis` => `autoware_control_performance_analysis`
+  * style(pre-commit): autofix
+  * bug(autoware_control_performance_analysis): fix inconsistent namespacing
+  * style(pre-commit): autofix
+  * update(autoware_control_performance_analysis): `README.md`
+  * bug(autoware_control_performance_analysis): fix critical bugs that contaminate topic name
+  * style(pre-commit): autofix
+  * fix: update package name for error_rqt_multiplot.xml
+  * fix: update package name for control_performance_plot.py
+  * docs(autoware_control_performance_analysis): update package name in README and CHANGELOG.rst
+  * style(pre-commit): autofix
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+  Co-authored-by: Ryohsuke Mitsudome <ryohsuke.mitsudome@tier4.jp>
+  Co-authored-by: SakodaShintaro <shintaro.sakoda@tier4.jp>
+* Contributors: Fumiya Watanabe, Junya Sasaki
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

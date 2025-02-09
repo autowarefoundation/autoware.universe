@@ -1,6 +1,26 @@
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Changelog for package fault_injection
+Changelog for package autoware_fault_injection
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat: apply `autoware\_` prefix for `fault_injection` (`#9989 <https://github.com/autowarefoundation/autoware.universe/issues/9989>`_)
+  * feat(fault_injection): apply `autoware\_` prefix (see below):
+  Note:
+  * In this commit, I did not organize a folder structure.
+  The folder structure will be organized in the next some commits.
+  * The changes will follow the Autoware's guideline as below:
+  - https://autowarefoundation.github.io/autoware-documentation/main/contributing/coding-guidelines/ros-nodes/directory-structure/#package-folder
+  * rename(fault_injection): move headers under `include/autoware`:
+  * Fixes due to this changes for .hpp/.cpp files will be applied in the next commit
+  * fix(fault_injection): fix include header paths
+  * To follow the previous commit
+  * rename: `fault_injection` => `autoware_fault_injection`
+  * Fixed exec_depend
+  ---------
+  Co-authored-by: SakodaShintaro <shintaro.sakoda@tier4.jp>
+* Contributors: Fumiya Watanabe, Junya Sasaki
 
 0.40.0 (2024-12-12)
 -------------------
