@@ -21,7 +21,7 @@
     
     
       
-        <title>The `autoware_traffic_light_selector` Package - Autoware Universe Documentation</title>
+        <title>Index - Autoware Universe Documentation</title>
       
     
     
@@ -77,7 +77,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#the-autoware_traffic_light_selector-package" class="md-skip">
+        <a href="#overview" class="md-skip">
           Skip to content
         </a>
       
@@ -116,7 +116,7 @@
         <div class="md-header__topic" data-md-component="header-topic">
           <span class="md-ellipsis">
             
-              The `autoware_traffic_light_selector` Package
+              Index
             
           </span>
         </div>
@@ -14294,8 +14294,6 @@
   
   
   
-    
-  
   
     <label class="md-nav__title" for="__toc">
       <span class="md-nav__icon md-icon"></span>
@@ -14349,9 +14347,11 @@
   
 
 
-<div><h1 id="the-autoware_traffic_light_selector-package">The <code>autoware_traffic_light_selector</code> Package<a class="headerlink" href="#the-autoware_traffic_light_selector-package" title="Permanent link">#</a></h1>
+  <h1>Index</h1>
+
+<div><p><code>autoware_traffic_light_selector</code></p>
 <h2 id="overview">Overview<a class="headerlink" href="#overview" title="Permanent link">#</a></h2>
-<p><code>autoware_traffic_light_selector</code> selects the interest traffic light from the list of detected traffic lights by deep learning neural network (DNN) based on the expect ROIs and rough ROIs information and then assign traffic_light_id for them.</p>
+<p><code>autoware_traffic_light_selector</code> selects the interest traffic light from the list of accurately detected traffic lights by something (e.g. deep learning neural network) based on the expect ROIs and rough ROIs information and then assign traffic_light_id for them.</p>
 <h2 id="input-topics">Input topics<a class="headerlink" href="#input-topics" title="Permanent link">#</a></h2>
 <table>
 <thead>
@@ -14365,7 +14365,7 @@
 <tr>
 <td><code>input/detected_rois</code></td>
 <td>tier4_perception_msgs::msg::DetectedObjectsWithFeature</td>
-<td>detected traffic light by DNN</td>
+<td>accurately detected traffic light</td>
 </tr>
 <tr>
 <td><code>input/rough_rois</code></td>
@@ -14390,9 +14390,9 @@
 </thead>
 <tbody>
 <tr>
-<td><code>output/traffic_light_rois</code></td>
+<td><code>output/traffic_rois</code></td>
 <td>tier4_perception_msgs::TrafficLightRoiArray</td>
-<td>detected traffic light of interest</td>
+<td>detected traffic light of interest with id</td>
 </tr>
 </tbody>
 </table>
@@ -14416,8 +14416,7 @@
 <td>≥-1.0<br>≤1.0</td>
 </tr>
 </tbody>
-</table>
-<p>N/A</p></div>
+</table></div>
 
 
 
