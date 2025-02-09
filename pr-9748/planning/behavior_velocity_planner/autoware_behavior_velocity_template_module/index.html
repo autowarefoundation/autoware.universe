@@ -9154,6 +9154,12 @@
         
           
         
+          
+        
+          
+        
+          
+        
       
       
         <label class="md-nav__link" for="__nav_8_6_7_2" id="__nav_8_6_7_2_label" tabindex="0">
@@ -9167,6 +9173,48 @@
           Available Modules
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../motion_velocity_planner/autoware_motion_velocity_obstacle_stop_module/" class="md-nav__link">
+        Obstacle Stop
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../motion_velocity_planner/autoware_motion_velocity_obstacle_slow_down_module/" class="md-nav__link">
+        Obstacle Slow Down
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../motion_velocity_planner/autoware_motion_velocity_obstacle_cruise_module/" class="md-nav__link">
+        Obstacle Cruise
+      </a>
+    </li>
+  
+
+            
           
             
               
@@ -11739,10 +11787,6 @@
         
           
         
-          
-        
-          
-        
       
       
         <label class="md-nav__link" for="__nav_11_6_2_1" id="__nav_11_6_2_1_label" tabindex="0">
@@ -11756,20 +11800,6 @@
           Format
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../system/autoware_diagnostic_graph_aggregator/doc/format/edit/" class="md-nav__link">
-        Edit
-      </a>
-    </li>
-  
-
-            
           
             
               
@@ -11826,61 +11856,7 @@
       
         
       
-      <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_11_6_2_1_5" >
-      
-      
-        
-          
-        
-      
-      
-        <label class="md-nav__link" for="__nav_11_6_2_1_5" id="__nav_11_6_2_1_5_label" tabindex="0">
-          Edit
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <nav class="md-nav" data-md-level="5" aria-labelledby="__nav_11_6_2_1_5_label" aria-expanded="false">
-        <label class="md-nav__title" for="__nav_11_6_2_1_5">
-          <span class="md-nav__icon md-icon"></span>
-          Edit
-        </label>
-        <ul class="md-nav__list" data-md-scrollfix>
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../../system/autoware_diagnostic_graph_aggregator/doc/format/edit/remove/" class="md-nav__link">
-        Remove
-      </a>
-    </li>
-  
-
-            
-          
-        </ul>
-      </nav>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-      
-      
-      
-        
-      
-      <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_11_6_2_1_6" >
+      <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_11_6_2_1_4" >
       
       
         
@@ -11898,13 +11874,13 @@
         
       
       
-        <label class="md-nav__link" for="__nav_11_6_2_1_6" id="__nav_11_6_2_1_6_label" tabindex="0">
+        <label class="md-nav__link" for="__nav_11_6_2_1_4" id="__nav_11_6_2_1_4_label" tabindex="0">
           Unit
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="5" aria-labelledby="__nav_11_6_2_1_6_label" aria-expanded="false">
-        <label class="md-nav__title" for="__nav_11_6_2_1_6">
+      <nav class="md-nav" data-md-level="5" aria-labelledby="__nav_11_6_2_1_4_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_11_6_2_1_4">
           <span class="md-nav__icon md-icon"></span>
           Unit
         </label>
@@ -14411,13 +14387,13 @@
 </ul>
 <h4 id="launchnewmodules-method"><code>launchNewModules()</code> Method<a class="headerlink" href="#launchnewmodules-method" title="Permanent link">#</a></h4>
 <ul>
-<li>This is a private method that takes an argument of type <code>tier4_planning_msgs::msg::PathWithLaneId</code>.</li>
+<li>This is a private method that takes an argument of type <code>autoware_internal_planning_msgs::msg::PathWithLaneId</code>.</li>
 <li>It is responsible for launching new modules based on the provided path information (PathWithLaneId). The implementation of this method involves initializing and configuring modules specific to your behavior velocity planner by using the <code>TemplateModule</code> class.</li>
 <li>In the provided source code, it initializes a <code>module_id</code> to 0 and checks if a module with the same ID is already registered. If not, it registers a new <code>TemplateModule</code> with the module ID. Note that each module managed by the <code>TemplateModuleManager</code> should have a unique ID. The template code registers a single module, so the <code>module_id</code> is set as 0 for simplicity.</li>
 </ul>
 <h4 id="getmoduleexpiredfunction-method"><code>getModuleExpiredFunction()</code> Method<a class="headerlink" href="#getmoduleexpiredfunction-method" title="Permanent link">#</a></h4>
 <ul>
-<li>This is a private method that takes an argument of type <code>tier4_planning_msgs::msg::PathWithLaneId</code>.</li>
+<li>This is a private method that takes an argument of type <code>autoware_internal_planning_msgs::msg::PathWithLaneId</code>.</li>
 <li>It returns a <code>std::function&lt;bool(const std::shared_ptr&lt;SceneModuleInterface&gt;&amp;)&gt;</code>. This function is used by the behavior velocity planner to determine whether a particular module has expired or not based on the given path.</li>
 <li>The implementation of this method is expected to return a function that can be used to check the expiration status of modules.</li>
 </ul>

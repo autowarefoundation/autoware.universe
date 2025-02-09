@@ -9154,6 +9154,12 @@
         
           
         
+          
+        
+          
+        
+          
+        
       
       
         <label class="md-nav__link" for="__nav_8_6_7_2" id="__nav_8_6_7_2_label" tabindex="0">
@@ -9167,6 +9173,48 @@
           Available Modules
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../planning/motion_velocity_planner/autoware_motion_velocity_obstacle_stop_module/" class="md-nav__link">
+        Obstacle Stop
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../planning/motion_velocity_planner/autoware_motion_velocity_obstacle_slow_down_module/" class="md-nav__link">
+        Obstacle Slow Down
+      </a>
+    </li>
+  
+
+            
+          
+            
+              
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../planning/motion_velocity_planner/autoware_motion_velocity_obstacle_cruise_module/" class="md-nav__link">
+        Obstacle Cruise
+      </a>
+    </li>
+  
+
+            
           
             
               
@@ -11739,10 +11787,6 @@
         
           
         
-          
-        
-          
-        
       
       
         <label class="md-nav__link" for="__nav_11_6_2_1" id="__nav_11_6_2_1_label" tabindex="0">
@@ -11756,20 +11800,6 @@
           Format
         </label>
         <ul class="md-nav__list" data-md-scrollfix>
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../system/autoware_diagnostic_graph_aggregator/doc/format/edit/" class="md-nav__link">
-        Edit
-      </a>
-    </li>
-  
-
-            
           
             
               
@@ -11826,61 +11856,7 @@
       
         
       
-      <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_11_6_2_1_5" >
-      
-      
-        
-          
-        
-      
-      
-        <label class="md-nav__link" for="__nav_11_6_2_1_5" id="__nav_11_6_2_1_5_label" tabindex="0">
-          Edit
-          <span class="md-nav__icon md-icon"></span>
-        </label>
-      
-      <nav class="md-nav" data-md-level="5" aria-labelledby="__nav_11_6_2_1_5_label" aria-expanded="false">
-        <label class="md-nav__title" for="__nav_11_6_2_1_5">
-          <span class="md-nav__icon md-icon"></span>
-          Edit
-        </label>
-        <ul class="md-nav__list" data-md-scrollfix>
-          
-            
-              
-  
-  
-  
-    <li class="md-nav__item">
-      <a href="../../system/autoware_diagnostic_graph_aggregator/doc/format/edit/remove/" class="md-nav__link">
-        Remove
-      </a>
-    </li>
-  
-
-            
-          
-        </ul>
-      </nav>
-    </li>
-  
-
-            
-          
-            
-              
-  
-  
-  
-    
-    <li class="md-nav__item md-nav__item--nested">
-      
-      
-      
-      
-        
-      
-      <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_11_6_2_1_6" >
+      <input class="md-nav__toggle md-toggle md-toggle--indeterminate" type="checkbox" id="__nav_11_6_2_1_4" >
       
       
         
@@ -11898,13 +11874,13 @@
         
       
       
-        <label class="md-nav__link" for="__nav_11_6_2_1_6" id="__nav_11_6_2_1_6_label" tabindex="0">
+        <label class="md-nav__link" for="__nav_11_6_2_1_4" id="__nav_11_6_2_1_4_label" tabindex="0">
           Unit
           <span class="md-nav__icon md-icon"></span>
         </label>
       
-      <nav class="md-nav" data-md-level="5" aria-labelledby="__nav_11_6_2_1_6_label" aria-expanded="false">
-        <label class="md-nav__title" for="__nav_11_6_2_1_6">
+      <nav class="md-nav" data-md-level="5" aria-labelledby="__nav_11_6_2_1_4_label" aria-expanded="false">
+        <label class="md-nav__title" for="__nav_11_6_2_1_4">
           <span class="md-nav__icon md-icon"></span>
           Unit
         </label>
@@ -14387,31 +14363,34 @@
 <table>
 <thead>
 <tr>
-<th>Parameter</th>
+<th>Name</th>
 <th>Type</th>
 <th>Description</th>
+<th>Default</th>
+<th>Range</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>camera_namespaces</code></td>
-<td>vector\<string></string></td>
-<td>Camera Namespaces to be fused</td>
+<td>camera_namespaces</td>
+<td>array</td>
+<td>Camera namespaces to be fused.</td>
+<td>[]</td>
+<td>N/A</td>
 </tr>
 <tr>
-<td><code>message_lifespan</code></td>
-<td>double</td>
-<td>The maximum timestamp span to be fused</td>
+<td>message_lifespan</td>
+<td>float</td>
+<td>The maximum timestamp span to be fused.</td>
+<td>0.0</td>
+<td>N/A</td>
 </tr>
 <tr>
-<td><code>approximate_sync</code></td>
-<td>bool</td>
-<td>Whether work in Approximate Synchronization Mode</td>
-</tr>
-<tr>
-<td><code>perform_group_fusion</code></td>
-<td>bool</td>
-<td>Whether perform Group Fusion</td>
+<td>approximate_sync</td>
+<td>boolean</td>
+<td>Whether to work in Approximate Synchronization Mode.</td>
+<td>False</td>
+<td>N/A</td>
 </tr>
 </tbody>
 </table></div>
