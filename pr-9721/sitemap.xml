@@ -751,6 +751,11 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
+         <loc>https://autowarefoundation.github.io/autoware.universe/pr-9721/perception/autoware_traffic_light_category_merger/</loc>
+         <lastmod>2025-02-09</lastmod>
+         <changefreq>daily</changefreq>
+    </url>
+    <url>
          <loc>https://autowarefoundation.github.io/autoware.universe/pr-9721/perception/autoware_traffic_light_classifier/</loc>
          <lastmod>2025-02-09</lastmod>
          <changefreq>daily</changefreq>
