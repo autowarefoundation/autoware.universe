@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef UTILS_HPP_
-#define UTILS_HPP_
+#ifndef TRAFFIC_LIGHT_SELECTOR_NODE_UTILS_HPP_
+#define TRAFFIC_LIGHT_SELECTOR_NODE_UTILS_HPP_
 
 #include <opencv2/core/types.hpp>
 #include <opencv2/opencv.hpp>
@@ -70,4 +70,4 @@ cv::Mat shiftAndPaddingImage(cv::Mat & img, int dx, int dy);
 }  // namespace utils
 }  // namespace autoware::traffic_light
 
-#endif  // UTILS_HPP_
+#endif  // TRAFFIC_LIGHT_SELECTOR_NODE_UTILS_HPP_
