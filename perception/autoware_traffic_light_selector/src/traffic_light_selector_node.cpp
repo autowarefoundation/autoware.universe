@@ -55,7 +55,7 @@ TrafficLightSelectorNode::TrafficLightSelectorNode(const rclcpp::NodeOptions & n
     std::bind(&TrafficLightSelectorNode::cameraInfoCallback, this, _1));
   // Publisher
   pub_traffic_light_rois_ =
-    create_publisher<TrafficLightRoiArray>("output/traffict_rois", rclcpp::QoS{1});
+    create_publisher<TrafficLightRoiArray>("output/traffic_rois", rclcpp::QoS{1});
 }
 
 void TrafficLightSelectorNode::cameraInfoCallback(
