@@ -137,8 +137,8 @@ TEST(trajectory, validateNonSharpAngle_DefaultThreshold)
 TEST(trajectory, validateNonSharpAngle_SetThreshold)
 {
   using autoware::motion_utils::validateNonSharpAngle;
-  using autoware_utils::pi;
   using autoware_planning_msgs::msg::TrajectoryPoint;
+  using autoware_utils::pi;
 
   TrajectoryPoint p1;
   p1.pose = createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
@@ -1302,8 +1302,8 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromIndex_quatInterpolation)
 {
   using autoware::motion_utils::calcArcLength;
   using autoware::motion_utils::calcLongitudinalOffsetPose;
-  using autoware_utils::deg2rad;
   using autoware_planning_msgs::msg::TrajectoryPoint;
+  using autoware_utils::deg2rad;
 
   Trajectory traj{};
 
@@ -1388,8 +1388,8 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromIndex_quatSphericalInterpolation)
 {
   using autoware::motion_utils::calcArcLength;
   using autoware::motion_utils::calcLongitudinalOffsetPose;
-  using autoware_utils::deg2rad;
   using autoware_planning_msgs::msg::TrajectoryPoint;
+  using autoware_utils::deg2rad;
 
   Trajectory traj{};
 
@@ -1567,9 +1567,9 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromPoint_quatInterpolation)
   using autoware::motion_utils::calcArcLength;
   using autoware::motion_utils::calcLongitudinalOffsetPose;
   using autoware::motion_utils::calcLongitudinalOffsetToSegment;
+  using autoware_planning_msgs::msg::TrajectoryPoint;
   using autoware_utils::create_point;
   using autoware_utils::deg2rad;
-  using autoware_planning_msgs::msg::TrajectoryPoint;
 
   Trajectory traj{};
 
@@ -1641,9 +1641,9 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromPoint_quatSphericalInterpolation)
   using autoware::motion_utils::calcArcLength;
   using autoware::motion_utils::calcLongitudinalOffsetPose;
   using autoware::motion_utils::calcLongitudinalOffsetToSegment;
+  using autoware_planning_msgs::msg::TrajectoryPoint;
   using autoware_utils::create_point;
   using autoware_utils::deg2rad;
-  using autoware_planning_msgs::msg::TrajectoryPoint;
 
   Trajectory traj{};
 
@@ -5289,8 +5289,8 @@ TEST(trajectory, cropBackwardPoints)
   }
 
   {  // Backward length is longer than points arc length.
-    const auto cropped_traj_points = cropBackwardPoints(
-      traj.points, autoware_utils::create_point(8.5, 8.5, 0.0), 8, 10.0);
+    const auto cropped_traj_points =
+      cropBackwardPoints(traj.points, autoware_utils::create_point(8.5, 8.5, 0.0), 8, 10.0);
     EXPECT_EQ(cropped_traj_points.size(), static_cast<size_t>(10));
   }
 
@@ -5421,8 +5421,8 @@ TEST(trajectory, calcYawDeviation)
 TEST(trajectory, isTargetPointFront)
 {
   using autoware::motion_utils::isTargetPointFront;
-  using autoware_utils::create_point;
   using autoware_planning_msgs::msg::TrajectoryPoint;
+  using autoware_utils::create_point;
 
   // Generate test trajectory
   const auto trajectory = generateTestTrajectory<Trajectory>(10, 1.0);

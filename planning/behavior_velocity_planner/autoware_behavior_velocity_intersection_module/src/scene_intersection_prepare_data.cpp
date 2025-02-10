@@ -19,10 +19,10 @@
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>  // for planning_utils::
 #include <autoware/interpolation/spline_interpolation_points_2d.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
-#include <autoware_utils/geometry/geometry.hpp>
 #include <autoware_lanelet2_extension/regulatory_elements/road_marking.hpp>  // for lanelet::autoware::RoadMarking
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
+#include <autoware_utils/geometry/geometry.hpp>
 
 #include <boost/geometry/algorithms/intersection.hpp>
 #include <boost/geometry/algorithms/within.hpp>

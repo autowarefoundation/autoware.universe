@@ -57,8 +57,7 @@ TrajectoryPoint calcInterpolatedPoint(
   TrajectoryPoint interpolated_point{};
 
   // pose interpolation
-  interpolated_point.pose =
-    autoware_utils::calc_interpolated_pose(curr_pt, next_pt, clamped_ratio);
+  interpolated_point.pose = autoware_utils::calc_interpolated_pose(curr_pt, next_pt, clamped_ratio);
 
   // twist interpolation
   if (use_zero_order_hold_for_twist) {

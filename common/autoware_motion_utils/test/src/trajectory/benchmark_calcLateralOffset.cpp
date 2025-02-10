@@ -22,9 +22,9 @@
 
 namespace
 {
+using autoware_planning_msgs::msg::Trajectory;
 using autoware_utils::create_point;
 using autoware_utils::create_quaternion_from_rpy;
-using autoware_planning_msgs::msg::Trajectory;
 
 geometry_msgs::msg::Pose createPose(
   double x, double y, double z, double roll, double pitch, double yaw)

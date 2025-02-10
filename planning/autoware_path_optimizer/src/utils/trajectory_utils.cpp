@@ -52,7 +52,7 @@ double get_longitudinal_velocity(const autoware::path_optimizer::ReferencePoint 
 {
   return p.longitudinal_velocity_mps;
 }
-}  // namespace autoware::universe_utils
+}  // namespace autoware_utils
 
 namespace autoware::path_optimizer
 {
@@ -164,8 +164,8 @@ std::vector<ReferencePoint> resampleReferencePoints(
     if (i == 0) {
       query_keys.push_back(0.0);
     } else {
-      const double delta_arc_length = autoware_utils::calc_distance2d(
-        resampled_ref_points.at(i), resampled_ref_points.at(i - 1));
+      const double delta_arc_length =
+        autoware_utils::calc_distance2d(resampled_ref_points.at(i), resampled_ref_points.at(i - 1));
       const double key = query_keys.back() + delta_arc_length;
       if (base_keys.back() < key) {
         break;

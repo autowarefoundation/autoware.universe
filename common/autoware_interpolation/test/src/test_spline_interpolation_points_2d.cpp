@@ -200,8 +200,8 @@ TEST(spline_interpolation, SplineInterpolationPoints2d)
 
 TEST(spline_interpolation, SplineInterpolationPoints2dPolymorphism)
 {
-  using autoware_utils::create_point;
   using autoware_planning_msgs::msg::TrajectoryPoint;
+  using autoware_utils::create_point;
 
   std::vector<geometry_msgs::msg::Point> points;
   points.push_back(create_point(-2.0, -10.0, 0.0));

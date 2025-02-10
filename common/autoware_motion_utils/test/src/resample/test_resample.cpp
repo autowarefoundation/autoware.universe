@@ -28,15 +28,15 @@
 
 namespace
 {
-using autoware_utils::create_point;
-using autoware_utils::create_quaternion_from_rpy;
-using autoware_utils::transform_point;
 using autoware_internal_planning_msgs::msg::PathPointWithLaneId;
 using autoware_internal_planning_msgs::msg::PathWithLaneId;
 using autoware_planning_msgs::msg::Path;
 using autoware_planning_msgs::msg::PathPoint;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
+using autoware_utils::create_point;
+using autoware_utils::create_quaternion_from_rpy;
+using autoware_utils::transform_point;
 
 constexpr double epsilon = 1e-6;
 
@@ -2678,8 +2678,8 @@ TEST(resample_trajectory, resample_trajectory_by_vector)
     }
 
     // Change the last point orientation
-    traj.points.back() = generateTestTrajectoryPoint(
-      9.0, 0.0, 0.0, autoware_utils::pi / 3.0, 3.0, 1.0, 0.01, 0.5);
+    traj.points.back() =
+      generateTestTrajectoryPoint(9.0, 0.0, 0.0, autoware_utils::pi / 3.0, 3.0, 1.0, 0.01, 0.5);
     {
       const auto resampled_path = resampleTrajectory(traj, resampled_arclength);
       for (size_t i = 0; i < resampled_path.points.size() - 1; ++i) {
@@ -3140,8 +3140,8 @@ TEST(resample_trajectory, resample_trajectory_by_same_interval)
     }
 
     // Change the last point orientation
-    traj.points.back() = generateTestTrajectoryPoint(
-      9.0, 0.0, 0.0, autoware_utils::pi / 3.0, 3.0, 1.0, 0.01, 0.5);
+    traj.points.back() =
+      generateTestTrajectoryPoint(9.0, 0.0, 0.0, autoware_utils::pi / 3.0, 3.0, 1.0, 0.01, 0.5);
     {
       const auto resampled_path = resampleTrajectory(traj, 1.0);
       for (size_t i = 0; i < resampled_path.points.size() - 1; ++i) {

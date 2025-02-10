@@ -22,9 +22,9 @@
 
 namespace
 {
-using autoware_utils::create_point;
 using autoware_internal_planning_msgs::msg::PathPointWithLaneId;
 using autoware_internal_planning_msgs::msg::PathWithLaneId;
+using autoware_utils::create_point;
 
 geometry_msgs::msg::Pose createPose(
   double x, double y, double z, double roll, double pitch, double yaw)

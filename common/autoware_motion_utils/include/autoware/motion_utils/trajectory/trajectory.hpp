@@ -358,8 +358,8 @@ std::optional<size_t> findNearestIndex(
       continue;
     }
 
-    const auto yaw = autoware_utils::calc_yaw_deviation(
-      autoware_utils::get_pose(points.at(i)), pose);
+    const auto yaw =
+      autoware_utils::calc_yaw_deviation(autoware_utils::get_pose(points.at(i)), pose);
     if (std::fabs(yaw) > max_yaw) {
       continue;
     }
@@ -2092,8 +2092,8 @@ size_t findFirstNearestIndexWithSoftConstraints(
     for (size_t i = 0; i < points.size(); ++i) {
       const auto squared_dist =
         autoware_utils::calc_squared_distance2d(points.at(i), pose.position);
-      const auto yaw = autoware_utils::calc_yaw_deviation(
-        autoware_utils::get_pose(points.at(i)), pose);
+      const auto yaw =
+        autoware_utils::calc_yaw_deviation(autoware_utils::get_pose(points.at(i)), pose);
 
       if (squared_dist_threshold < squared_dist || yaw_threshold < std::abs(yaw)) {
         if (is_within_constraints) {
