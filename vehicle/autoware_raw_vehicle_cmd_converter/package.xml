@@ -25,8 +25,8 @@
   <depend>autoware_control_msgs</depend>
   <depend>autoware_internal_debug_msgs</depend>
   <depend>autoware_interpolation</depend>
-  <depend>autoware_vehicle_msgs</depend>
   <depend>autoware_universe_utils</depend>
+  <depend>autoware_vehicle_msgs</depend>
   <depend>geometry_msgs</depend>
   <depend>nav_msgs</depend>
   <depend>rclcpp</depend>
