@@ -746,7 +746,7 @@ void GoalPlannerModule::updateData()
     }
   }
 
-  if (getCurrentStatus() == ModuleStatus::IDLE && !isExecutionRequested()) {
+  if (getCurrentStatus() == ModuleStatus::IDLE) {
     return;
   }
 
@@ -778,29 +778,37 @@ void GoalPlannerModule::updateData()
     pull_over_path_recv, clock_->now(), static_target_objects, dynamic_target_objects,
     planner_data_, occupancy_grid_map_, is_current_safe, parameters_, goal_searcher,
     debug_data_.ego_polygons_expanded);
+  const auto new_decision_state = path_decision_controller_.get_current_state();
 
   auto [lane_parking_response, freespace_parking_response] = syncWithThreads();
+
+  // NOTE: currently occupancy_grid_map_ must be used after syncWithThreads
+  goal_searcher.update(goal_candidates_, occupancy_grid_map_, planner_data_, static_target_objects);
+
   if (context_data_) {
     context_data_.value().update(
-      path_decision_controller_.get_current_state().is_stable_safe, static_target_objects,
-      dynamic_target_objects, prev_decision_state,
+      new_decision_state.is_stable_safe, static_target_objects, dynamic_target_objects,
+      prev_decision_state,
       isStopped(
         odometry_buffer_stopped_, planner_data_->self_odometry, parameters_.th_stopped_time,
         parameters_.th_stopped_velocity),
       std::move(lane_parking_response), std::move(freespace_parking_response));
   } else {
     context_data_.emplace(
-      path_decision_controller_.get_current_state().is_stable_safe, static_target_objects,
-      dynamic_target_objects, prev_decision_state,
+      new_decision_state.is_stable_safe, static_target_objects, dynamic_target_objects,
+      prev_decision_state,
       isStopped(
         odometry_buffer_stopped_, planner_data_->self_odometry, parameters_.th_stopped_time,
         parameters_.th_stopped_velocity),
       std::move(lane_parking_response), std::move(freespace_parking_response));
   }
-  const auto & ctx_data = context_data_.value();
-  goal_searcher.update(
-    goal_candidates_, occupancy_grid_map_, planner_data_, ctx_data.static_target_objects);
   auto & ctx_data_mut = context_data_.value();
+
+  if (!decided_time_ && new_decision_state.state == PathDecisionState::DecisionKind::DECIDED) {
+    decided_time_ = clock_->now();
+    // TODO(soblin): do not "plan" in updateData
+    if (ctx_data_mut.pull_over_path_opt) decideVelocity(ctx_data_mut.pull_over_path_opt.value());
+  }
 
   if (!isActivated()) {
     return;
@@ -814,13 +822,6 @@ void GoalPlannerModule::updateData()
       }
     }
   }
-
-  if (!last_approval_data_) {
-    last_approval_data_ =
-      std::make_unique<LastApprovalData>(clock_->now(), planner_data_->self_odometry->pose.pose);
-    // TODO(soblin): do not "plan" in updateData
-    if (ctx_data_mut.pull_over_path_opt) decideVelocity(ctx_data_mut.pull_over_path_opt.value());
-  }
 }
 
 void GoalPlannerModule::processOnExit()
@@ -829,7 +830,6 @@ void GoalPlannerModule::processOnExit()
   resetPathReference();
   debug_marker_.markers.clear();
   context_data_ = std::nullopt;
-  last_approval_data_.reset();
 }
 
 bool GoalPlannerModule::isExecutionRequested() const
@@ -1850,7 +1850,7 @@ bool GoalPlannerModule::hasFinishedCurrentPath(const PullOverContextData & ctx_d
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
-  if (!last_approval_data_) {
+  if (!decided_time_) {
     return false;
   }
 
@@ -1860,10 +1860,10 @@ bool GoalPlannerModule::hasFinishedCurrentPath(const PullOverContextData & ctx_d
 
   // check if enough time has passed since last approval
   // this is necessary to give turn signal for enough time
-  const bool has_passed_enough_time_from_approval =
-    (clock_->now() - last_approval_data_->time).seconds() >
+  const bool has_passed_enough_time_from_decided =
+    (clock_->now() - decided_time_.value()).seconds() >
     planner_data_->parameters.turn_signal_search_time;
-  if (!has_passed_enough_time_from_approval) {
+  if (!has_passed_enough_time_from_decided) {
     return false;
   }
 
