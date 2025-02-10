@@ -2,6 +2,9 @@
 Changelog for package autoware_pose_covariance_modifier
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.1 (2025-02-10)
+-------------------
+
 0.41.0 (2025-01-29)
 -------------------
 * revert: revert "feat(autoware_ekf_localizer)!: porting from universe to core (`#9978 <https://github.com/autowarefoundation/autoware.universe/issues/9978>`_)" (`#10004 <https://github.com/autowarefoundation/autoware.universe/issues/10004>`_)

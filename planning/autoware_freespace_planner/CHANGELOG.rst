@@ -2,6 +2,9 @@
 Changelog for package autoware_freespace_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.1 (2025-02-10)
+-------------------
+
 0.41.0 (2025-01-29)
 -------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
