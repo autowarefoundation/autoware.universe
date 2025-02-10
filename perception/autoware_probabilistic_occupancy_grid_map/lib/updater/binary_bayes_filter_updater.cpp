@@ -116,7 +116,6 @@ bool OccupancyGridMapBBFUpdater::update(
       "The code was compiled without cuda.");
     return false;
 #endif
-
   } else {
     for (unsigned int x = 0; x < getSizeInCellsX(); x++) {
       for (unsigned int y = 0; y < getSizeInCellsY(); y++) {
