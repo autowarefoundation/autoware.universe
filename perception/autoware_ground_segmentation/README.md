@@ -30,13 +30,11 @@ Detail description of each ground segmentation algorithm is in the following lin
 | `~/output/points` | `sensor_msgs::msg::PointCloud2` | filtered points |
 
 ## Parameters
+
 {{ json_to_markdown("perception/autoware_ground_segmentation/schema/ground_segmentation.schema.json") }}
 {{ json_to_markdown("perception/autoware_ground_segmentation/schema/ransac_ground_filter.schema.json") }}
 {{ json_to_markdown("perception/autoware_ground_segmentation/schema/ray_ground_filter.schema.json") }}
 {{ json_to_markdown("perception/autoware_ground_segmentation/schema/scan_ground_filter.schema.json") }}
-
-
-
 
 ## Assumptions / Known limits
 
