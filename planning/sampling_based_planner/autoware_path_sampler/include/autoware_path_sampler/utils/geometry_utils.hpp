@@ -19,6 +19,7 @@
 #include "autoware/interpolation/spline_interpolation.hpp"
 #include "autoware/interpolation/spline_interpolation_points_2d.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware_path_sampler/common_structs.hpp"
 #include "autoware_path_sampler/type_alias.hpp"
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"

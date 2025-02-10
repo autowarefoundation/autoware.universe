@@ -21,6 +21,7 @@
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/geometry/pose_deviation.hpp>
 #include <autoware/universe_utils/math/normalization.hpp>
 #include <autoware_test_utils/autoware_test_utils.hpp>
 #include <rclcpp/clock.hpp>
