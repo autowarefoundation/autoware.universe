@@ -22,7 +22,7 @@
 
 #include <autoware/lane_departure_checker/lane_departure_checker.hpp>
 
-#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_internal_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <memory>
 
@@ -33,18 +33,20 @@ class GeometricPullOut : public PullOutPlannerBase
 public:
   explicit GeometricPullOut(
     rclcpp::Node & node, const StartPlannerParameters & parameters,
-    const std::shared_ptr<autoware::lane_departure_checker::LaneDepartureChecker>
-      lane_departure_checker,
-    std::shared_ptr<universe_utils::TimeKeeper> time_keeper);
+    std::shared_ptr<universe_utils::TimeKeeper> time_keeper =
+      std::make_shared<universe_utils::TimeKeeper>());
 
   PlannerType getPlannerType() const override { return PlannerType::GEOMETRIC; };
   std::optional<PullOutPath> plan(
     const Pose & start_pose, const Pose & goal_pose,
+    const std::shared_ptr<const PlannerData> & planner_data,
     PlannerDebugData & planner_debug_data) override;
 
   GeometricParallelParking planner_;
   ParallelParkingParameters parallel_parking_parameters_;
   std::shared_ptr<autoware::lane_departure_checker::LaneDepartureChecker> lane_departure_checker_;
+
+  friend class TestGeometricPullOut;
 };
 }  // namespace autoware::behavior_path_planner
 

@@ -2,6 +2,166 @@
 Changelog for package tier4_simulator_launch
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat: apply `autoware\_` prefix for `dummy_perception_publisher` (`#9987 <https://github.com/autowarefoundation/autoware.universe/issues/9987>`_)
+* fix(tier4_simulator_launch): fix a wrong package name: `fault_injection` => `autoware_fault_injection`  (`#10014 <https://github.com/autowarefoundation/autoware.universe/issues/10014>`_)
+* feat: apply `autoware\_` prefix for `scenario_simulator_v2_adapter` (`#9957 <https://github.com/autowarefoundation/autoware.universe/issues/9957>`_)
+  * feat(autoware_scenario_simulator_v2_adapter): apply `autoware\_` prefix (see below):
+  * In this commit, I did not organize a folder structure.
+  The folder structure will be organized in the next some commits.
+  * The changes will follow the Autoware's guideline as below:
+  - https://autowarefoundation.github.io/autoware-documentation/main/contributing/coding-guidelines/ros-nodes/directory-structure/#package-folder
+  * rename(scenario_simulator_v2_adapter): move headers under `include/autoware`:
+  * Fixes due to this changes for .hpp/.cpp files will be applied in the next commit
+  * fix(scenario_simulator_v2_adapter): fix include paths
+  * To follow the previous commit
+  * rename: `scenario_simulator_v2_adapter` => `autoware_scenario_simulator_v2_adapter`
+  * bug(autoware_scenario_simulator_v2_adapter): revert wrongly updated copyrights
+  * bug(autoware_scenario_simulator_v2_adapter): `autoware\_` prefix is not needed here
+  * bug(autoware_scenario_simulator_v2_adapter): wrong package name in launch side
+  ---------
+* feat: apply `autoware\_` prefix for `simple_planning_simulator` (`#9995 <https://github.com/autowarefoundation/autoware.universe/issues/9995>`_)
+  * feat(simple_planning_simulator): apply `autoware\_` prefix (see below):
+  Note:
+  * In this commit, I did not organize a folder structure.
+  The folder structure will be organized in the next some commits.
+  * The changes will follow the Autoware's guideline as below:
+  - https://autowarefoundation.github.io/autoware-documentation/main/contributing/coding-guidelines/ros-nodes/directory-structure/#package-folder
+  * rename(simple_planning_simulator): move headers under `include/autoware`:
+  * Fixes due to this changes for .hpp/.cpp files will be applied in the next commit
+  * fix(simple_planning_simulator): fix include header paths
+  * To follow the previous commit
+  * rename: `simple_planning_simulator` => `autoware_simple_planning_simulator`
+  * bug(autoware_simple_planning_simulator): fix missing changes
+  * style(pre-commit): autofix
+  * bug(autoware_simple_planning_simulator): fix errors in build and tests
+  * I had to run after `rm -rf install build`, ... sorry
+  * style(pre-commit): autofix
+  * Fixed NOLINT
+  * Added NOLINT
+  * Fixed to autoware_simple_planning_simulator
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+  Co-authored-by: Shintaro Sakoda <shintaro.sakoda@tier4.jp>
+* feat: apply `autoware\_` prefix for `vehicle_door_simulator` (`#9997 <https://github.com/autowarefoundation/autoware.universe/issues/9997>`_)
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* feat: apply `autoware\_` prefix for `fault_injection` (`#9989 <https://github.com/autowarefoundation/autoware.universe/issues/9989>`_)
+  * feat(fault_injection): apply `autoware\_` prefix (see below):
+  Note:
+  * In this commit, I did not organize a folder structure.
+  The folder structure will be organized in the next some commits.
+  * The changes will follow the Autoware's guideline as below:
+  - https://autowarefoundation.github.io/autoware-documentation/main/contributing/coding-guidelines/ros-nodes/directory-structure/#package-folder
+  * rename(fault_injection): move headers under `include/autoware`:
+  * Fixes due to this changes for .hpp/.cpp files will be applied in the next commit
+  * fix(fault_injection): fix include header paths
+  * To follow the previous commit
+  * rename: `fault_injection` => `autoware_fault_injection`
+  * Fixed exec_depend
+  ---------
+  Co-authored-by: SakodaShintaro <shintaro.sakoda@tier4.jp>
+* fix(launch): fix missing changes for launch (`#10007 <https://github.com/autowarefoundation/autoware.universe/issues/10007>`_)
+  bug(launch): fix missing changes for following PRs:
+  * https://github.com/autowarefoundation/autoware.universe/pull/9956
+  * https://github.com/autowarefoundation/autoware.universe/pull/9970
+* fix(tier4_simulator_launch): add use_validator argument to simulator launch (`#9634 <https://github.com/autowarefoundation/autoware.universe/issues/9634>`_)
+  * feat: add use_validator argument to simulator launch
+  * feat: set variables explicitly
+  ---------
+* Contributors: Fumiya Watanabe, Junya Sasaki, Taekjin LEE
+
+0.40.0 (2024-12-12)
+-------------------
+* Merge branch 'main' into release-0.40.0
+* Revert "chore(package.xml): bump version to 0.39.0 (`#9587 <https://github.com/autowarefoundation/autoware.universe/issues/9587>`_)"
+  This reverts commit c9f0f2688c57b0f657f5c1f28f036a970682e7f5.
+* fix: fix ticket links in CHANGELOG.rst (`#9588 <https://github.com/autowarefoundation/autoware.universe/issues/9588>`_)
+* chore(package.xml): bump version to 0.39.0 (`#9587 <https://github.com/autowarefoundation/autoware.universe/issues/9587>`_)
+  * chore(package.xml): bump version to 0.39.0
+  * fix: fix ticket links in CHANGELOG.rst
+  * fix: remove unnecessary diff
+  ---------
+  Co-authored-by: Yutaka Kondo <yutaka.kondo@youtalk.jp>
+* fix: fix ticket links in CHANGELOG.rst (`#9588 <https://github.com/autowarefoundation/autoware.universe/issues/9588>`_)
+* refactor(vehicle_velocity_converter)!: prefix package and namespace with autoware (`#8967 <https://github.com/autowarefoundation/autoware.universe/issues/8967>`_)
+  * add autoware prefix
+  * fix conflict
+  ---------
+  Co-authored-by: Yamato Ando <yamato.ando@gmail.com>
+* 0.39.0
+* update changelog
+* Merge commit '6a1ddbd08bd' into release-0.39.0
+* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/autowarefoundation/autoware.universe/issues/9304>`_)
+* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/autowarefoundation/autoware.universe/issues/9304>`_)
+* feat(tier4_metric_msgs): apply tier4_metric_msgs for scenario_simulator_v2_adapter, control_evaluator, planning_evaluator, autonomous_emergency_braking, obstacle_cruise_planner, motion_velocity_planner, processing_time_checker (`#9180 <https://github.com/autowarefoundation/autoware.universe/issues/9180>`_)
+  * first commit
+  * fix building errs.
+  * change diagnostic messages to metric messages for publishing decision.
+  * fix bug about motion_velocity_planner
+  * change the diagnostic msg to metric msg in autoware_obstacle_cruise_planner.
+  * tmp save for planning_evaluator
+  * change the topic to which metrics published to.
+  * fix typo.
+  * remove unnesessary publishing of metrics.
+  * mke planning_evaluator publish msg of MetricArray instead of Diags.
+  * update aeb with metric type for decision.
+  * fix some bug
+  * remove autoware_evaluator_utils package.
+  * remove diagnostic_msgs dependency of planning_evaluator
+  * use metric_msgs for autoware_processing_time_checker.
+  * rewrite diagnostic_convertor to scenario_simulator_v2_adapter, supporting metric_msgs.
+  * pre-commit and fix typo
+  * publish metrics even if there is no metric in the MetricArray.
+  * modify the metric name of processing_time.
+  * update unit test for test_planning/control_evaluator
+  * manual pre-commit
+  ---------
+* chore(package.xml): bump version to 0.38.0 (`#9266 <https://github.com/autowarefoundation/autoware.universe/issues/9266>`_) (`#9284 <https://github.com/autowarefoundation/autoware.universe/issues/9284>`_)
+  * unify package.xml version to 0.37.0
+  * remove system_monitor/CHANGELOG.rst
+  * add changelog
+  * 0.38.0
+  ---------
+* Contributors: Esteve Fernandez, Fumiya Watanabe, Kem (TiankuiXian), Masaki Baba, Ryohsuke Mitsudome, Yutaka Kondo
+
+0.39.0 (2024-11-25)
+-------------------
+* Merge commit '6a1ddbd08bd' into release-0.39.0
+* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/autowarefoundation/autoware.universe/issues/9304>`_)
+* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/autowarefoundation/autoware.universe/issues/9304>`_)
+* feat(tier4_metric_msgs): apply tier4_metric_msgs for scenario_simulator_v2_adapter, control_evaluator, planning_evaluator, autonomous_emergency_braking, obstacle_cruise_planner, motion_velocity_planner, processing_time_checker (`#9180 <https://github.com/autowarefoundation/autoware.universe/issues/9180>`_)
+  * first commit
+  * fix building errs.
+  * change diagnostic messages to metric messages for publishing decision.
+  * fix bug about motion_velocity_planner
+  * change the diagnostic msg to metric msg in autoware_obstacle_cruise_planner.
+  * tmp save for planning_evaluator
+  * change the topic to which metrics published to.
+  * fix typo.
+  * remove unnesessary publishing of metrics.
+  * mke planning_evaluator publish msg of MetricArray instead of Diags.
+  * update aeb with metric type for decision.
+  * fix some bug
+  * remove autoware_evaluator_utils package.
+  * remove diagnostic_msgs dependency of planning_evaluator
+  * use metric_msgs for autoware_processing_time_checker.
+  * rewrite diagnostic_convertor to scenario_simulator_v2_adapter, supporting metric_msgs.
+  * pre-commit and fix typo
+  * publish metrics even if there is no metric in the MetricArray.
+  * modify the metric name of processing_time.
+  * update unit test for test_planning/control_evaluator
+  * manual pre-commit
+  ---------
+* chore(package.xml): bump version to 0.38.0 (`#9266 <https://github.com/autowarefoundation/autoware.universe/issues/9266>`_) (`#9284 <https://github.com/autowarefoundation/autoware.universe/issues/9284>`_)
+  * unify package.xml version to 0.37.0
+  * remove system_monitor/CHANGELOG.rst
+  * add changelog
+  * 0.38.0
+  ---------
+* Contributors: Esteve Fernandez, Kem (TiankuiXian), Yutaka Kondo
+
 0.38.0 (2024-11-08)
 -------------------
 * unify package.xml version to 0.37.0

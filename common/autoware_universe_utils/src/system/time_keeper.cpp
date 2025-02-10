@@ -19,8 +19,10 @@
 
 #include <fmt/format.h>
 
+#include <memory>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 namespace autoware::universe_utils
 {

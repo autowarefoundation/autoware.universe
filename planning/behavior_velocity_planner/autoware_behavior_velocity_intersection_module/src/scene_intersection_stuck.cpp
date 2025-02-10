@@ -26,6 +26,10 @@
 #include <lanelet2_core/geometry/LineString.h>
 #include <lanelet2_core/geometry/Point.h>
 
+#include <algorithm>
+#include <string>
+#include <vector>
+
 namespace
 {
 lanelet::LineString3d getLineStringFromArcLength(
@@ -119,7 +123,7 @@ namespace autoware::behavior_velocity_planner
 namespace bg = boost::geometry;
 
 std::optional<StuckStop> IntersectionModule::isStuckStatus(
-  const tier4_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_internal_planning_msgs::msg::PathWithLaneId & path,
   const IntersectionStopLines & intersection_stoplines, const PathLanelets & path_lanelets) const
 {
   const auto closest_idx = intersection_stoplines.closest_idx;
@@ -304,7 +308,7 @@ bool IntersectionModule::checkStuckVehicleInIntersection(const PathLanelets & pa
 }
 
 std::optional<YieldStuckStop> IntersectionModule::isYieldStuckStatus(
-  const tier4_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_internal_planning_msgs::msg::PathWithLaneId & path,
   const InterpolatedPathInfo & interpolated_path_info,
   const IntersectionStopLines & intersection_stoplines) const
 {

@@ -24,6 +24,7 @@
 #include <tf2/utils.h>
 
 #include <string>
+#include <vector>
 
 namespace autoware::behavior_velocity_planner
 {

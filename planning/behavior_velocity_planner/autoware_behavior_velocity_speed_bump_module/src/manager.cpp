@@ -53,7 +53,8 @@ SpeedBumpModuleManager::SpeedBumpModuleManager(rclcpp::Node & node)
     static_cast<float>(getOrDeclareParameter<double>(node, ns + ".max_speed"));
 }
 
-void SpeedBumpModuleManager::launchNewModules(const tier4_planning_msgs::msg::PathWithLaneId & path)
+void SpeedBumpModuleManager::launchNewModules(
+  const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
   for (const auto & speed_bump_with_lane_id : planning_utils::getRegElemMapOnPath<SpeedBump>(
          path, planner_data_->route_handler_->getLaneletMapPtr(),
@@ -63,14 +64,14 @@ void SpeedBumpModuleManager::launchNewModules(const tier4_planning_msgs::msg::Pa
     if (!isModuleRegistered(module_id)) {
       registerModule(std::make_shared<SpeedBumpModule>(
         module_id, lane_id, *speed_bump_with_lane_id.first, planner_param_,
-        logger_.get_child("speed_bump_module"), clock_));
+        logger_.get_child("speed_bump_module"), clock_, time_keeper_, planning_factor_interface_));
     }
   }
 }
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 SpeedBumpModuleManager::getModuleExpiredFunction(
-  const tier4_planning_msgs::msg::PathWithLaneId & path)
+  const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto speed_bump_id_set = planning_utils::getRegElemIdSetOnPath<SpeedBump>(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);

@@ -46,8 +46,13 @@
 #include <algorithm>
 #include <chrono>
 #include <cmath>
+#include <deque>
 #include <functional>
 #include <limits>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 
 namespace autoware::map_based_prediction
 {
@@ -665,9 +670,9 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
   if (stop_watch_ptr_) {
     const auto processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
     const auto cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
-    processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    processing_time_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/cyclic_time_ms", cyclic_time_ms);
-    processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    processing_time_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/processing_time_ms", processing_time_ms);
   }
 }
@@ -691,7 +696,7 @@ void MapBasedPredictionNode::updateObjectData(TrackedObject & object)
 
   if (
     object.kinematics.orientation_availability ==
-    autoware_perception_msgs::msg::DetectedObjectKinematics::AVAILABLE) {
+    autoware_perception_msgs::msg::TrackedObjectKinematics::AVAILABLE) {
     return;
   }
 
@@ -712,7 +717,7 @@ void MapBasedPredictionNode::updateObjectData(TrackedObject & object)
   if (abs_object_speed < min_abs_speed) return;
 
   switch (object.kinematics.orientation_availability) {
-    case autoware_perception_msgs::msg::DetectedObjectKinematics::SIGN_UNKNOWN: {
+    case autoware_perception_msgs::msg::TrackedObjectKinematics::SIGN_UNKNOWN: {
       const auto original_yaw =
         tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
       // flip the angle

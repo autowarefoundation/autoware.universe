@@ -114,7 +114,6 @@ public:
 
   // method to check if the cell is empty
   inline bool isEmpty() const { return point_list_.empty(); }
-  inline int getPointNum() const { return static_cast<int>(point_list_.size()); }
 
   // index of the cell
   int grid_idx_;

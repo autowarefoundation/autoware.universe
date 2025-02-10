@@ -19,6 +19,8 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
+#include <autoware_internal_planning_msgs/msg/path_point_with_lane_id.hpp>
+#include <autoware_internal_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_planning_msgs/msg/lanelet_primitive.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
@@ -30,8 +32,6 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <rosgraph_msgs/msg/clock.hpp>
 #include <tf2_msgs/msg/tf_message.hpp>
-#include <tier4_planning_msgs/msg/path_point_with_lane_id.hpp>
-#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_planning_msgs/msg/scenario.hpp>
 
 #include <lanelet2_io/Io.h>
@@ -48,14 +48,14 @@
 namespace autoware::test_utils
 {
 using autoware_adapi_v1_msgs::msg::OperationModeState;
+using autoware_internal_planning_msgs::msg::PathPointWithLaneId;
+using autoware_internal_planning_msgs::msg::PathWithLaneId;
 using autoware_map_msgs::msg::LaneletMapBin;
 using autoware_planning_msgs::msg::LaneletPrimitive;
 using autoware_planning_msgs::msg::LaneletRoute;
 using autoware_planning_msgs::msg::LaneletSegment;
 using autoware_planning_msgs::msg::Path;
 using autoware_planning_msgs::msg::Trajectory;
-using tier4_planning_msgs::msg::PathPointWithLaneId;
-using tier4_planning_msgs::msg::PathWithLaneId;
 using RouteSections = std::vector<autoware_planning_msgs::msg::LaneletSegment>;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
@@ -213,15 +213,21 @@ LaneletMapBin make_map_bin_msg(
   const std::string & absolute_path, const double center_line_resolution = 5.0);
 
 /**
- * @brief Creates a LaneletMapBin message using a predefined Lanelet2 map file.
+ * @brief Creates a LaneletMapBin message using a Lanelet2 map file.
  *
- * This function loads a lanelet2_map.osm from the test_map folder in the
- * autoware_test_utils package, overwrites the centerline with a resolution of 5.0,
+ * This function loads a specified map file from the test_map folder in the
+ * specified package (or autoware_test_utils if no package is specified),
+ * overwrites the centerline with a resolution of 5.0,
  * and converts the map to a LaneletMapBin message.
  *
+ * @param package_name The name of the package containing the map file. If empty, defaults to
+ * "autoware_test_utils".
+ * @param map_filename The name of the map file (e.g. "lanelet2_map.osm")
  * @return A LaneletMapBin message containing the map data.
  */
-LaneletMapBin makeMapBinMsg();
+LaneletMapBin makeMapBinMsg(
+  const std::string & package_name = "autoware_test_utils",
+  const std::string & map_filename = "lanelet2_map.osm");
 
 /**
  * @brief Creates an Odometry message with a specified shift.

@@ -43,10 +43,13 @@
 #include <pcl/segmentation/extract_clusters.h>
 #include <tf2/utils.h>
 
+#include <algorithm>
 #include <cmath>
 #include <functional>
 #include <limits>
+#include <memory>
 #include <optional>
+#include <string>
 #include <vector>
 #ifdef ROS_DISTRO_GALACTIC
 #include <tf2_eigen/tf2_eigen.h>

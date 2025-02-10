@@ -15,13 +15,13 @@
 #ifndef AUTOWARE__MAP_LOADER__LANELET2_MAP_LOADER_NODE_HPP_
 #define AUTOWARE__MAP_LOADER__LANELET2_MAP_LOADER_NODE_HPP_
 
-#include <autoware/component_interface_specs/map.hpp>
+#include <autoware/component_interface_specs_universe/map.hpp>
 #include <autoware/component_interface_utils/rclcpp.hpp>
 #include <autoware_lanelet2_extension/version.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
-#include <tier4_map_msgs/msg/map_projector_info.hpp>
+#include <autoware_map_msgs/msg/map_projector_info.hpp>
 
 #include <lanelet2_projection/UTM.h>
 
@@ -40,13 +40,13 @@ public:
 
   static lanelet::LaneletMapPtr load_map(
     const std::string & lanelet2_filename,
-    const tier4_map_msgs::msg::MapProjectorInfo & projector_info);
+    const autoware_map_msgs::msg::MapProjectorInfo & projector_info);
   static autoware_map_msgs::msg::LaneletMapBin create_map_bin_msg(
     const lanelet::LaneletMapPtr map, const std::string & lanelet2_filename,
     const rclcpp::Time & now);
 
 private:
-  using MapProjectorInfo = autoware::component_interface_specs::map::MapProjectorInfo;
+  using MapProjectorInfo = autoware::component_interface_specs_universe::map::MapProjectorInfo;
 
   void on_map_projector_info(const MapProjectorInfo::Message::ConstSharedPtr msg);
 

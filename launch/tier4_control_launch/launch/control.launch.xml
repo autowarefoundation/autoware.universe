@@ -51,7 +51,7 @@
     <group>
       <!-- set a control container to run all required components in the same process -->
       <node_container pkg="rclcpp_components" exec="$(var container_executable)" name="control_container" namespace="">
-        <composable_node pkg="glog_component" plugin="GlogComponent" name="glog_control_container_component"/>
+        <composable_node pkg="autoware_glog_component" plugin="autoware::glog_component::GlogComponent" name="glog_control_container_component"/>
         <!-- shift decider -->
         <composable_node pkg="autoware_shift_decider" plugin="autoware::shift_decider::ShiftDecider" name="autoware_shift_decider">
           <remap from="input/control_cmd" to="/control/trajectory_follower/control_cmd"/>
@@ -177,7 +177,7 @@
     <group>
       <!-- set a control check container to run all control checker components in the same process -->
       <node_container pkg="rclcpp_components" exec="$(var container_executable)" name="control_check_container" namespace="">
-        <composable_node pkg="glog_component" plugin="GlogComponent" name="glog_control_check_container_component"/>
+        <composable_node pkg="autoware_glog_component" plugin="autoware::glog_component::GlogComponent" name="glog_control_check_container_component"/>
       </node_container>
 
       <!-- lane departure checker -->
@@ -257,7 +257,7 @@
       <!-- predicted path checker -->
       <group if="$(var launch_predicted_path_checker)">
         <load_composable_node target="/control/control_check_container">
-          <composable_node pkg="predicted_path_checker" plugin="autoware::motion::control::predicted_path_checker::PredictedPathCheckerNode" name="predicted_path_checker">
+          <composable_node pkg="autoware_predicted_path_checker" plugin="autoware::predicted_path_checker::PredictedPathCheckerNode" name="predicted_path_checker">
             <remap from="~/input/objects" to="/perception/object_recognition/objects"/>
             <remap from="~/input/reference_trajectory" to="/planning/scenario_planning/trajectory"/>
             <remap from="~/input/current_accel" to="/localization/acceleration"/>

@@ -2,6 +2,117 @@
 Changelog for package autoware_behavior_path_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(start_planner): visualize planner evaluation table in rviz (`#10029 <https://github.com/autowarefoundation/autoware.universe/issues/10029>`_)
+  visualize planner evaluation table in rviz
+* feat(autoware_planning_test_manager): remove dependency of tier4_planning_msgs::msg::LateralOffset (`#9967 <https://github.com/autowarefoundation/autoware.universe/issues/9967>`_)
+  * feat(autoware_planning_test_manager): remove dependency of tier4_planning_msgs::msg::LateralOffset
+  * fix
+  ---------
+* refactor(behavior_path_planner): common test functions (`#9963 <https://github.com/autowarefoundation/autoware.universe/issues/9963>`_)
+  * feat: common test code in behavior_path_planner
+  * deal with other modules
+  * fix typo
+  * update
+  ---------
+* chore(planning): move package directory for planning factor interface (`#9948 <https://github.com/autowarefoundation/autoware.universe/issues/9948>`_)
+  * chore: add new package for planning factor interface
+  * chore(surround_obstacle_checker): update include file
+  * chore(obstacle_stop_planner): update include file
+  * chore(obstacle_cruise_planner): update include file
+  * chore(motion_velocity_planner): update include file
+  * chore(bpp): update include file
+  * chore(bvp-common): update include file
+  * chore(blind_spot): update include file
+  * chore(crosswalk): update include file
+  * chore(detection_area): update include file
+  * chore(intersection): update include file
+  * chore(no_drivable_area): update include file
+  * chore(no_stopping_area): update include file
+  * chore(occlusion_spot): update include file
+  * chore(run_out): update include file
+  * chore(speed_bump): update include file
+  * chore(stop_line): update include file
+  * chore(template_module): update include file
+  * chore(traffic_light): update include file
+  * chore(vtl): update include file
+  * chore(walkway): update include file
+  * chore(motion_utils): remove factor interface
+  ---------
+* feat(planning_factor)!: remove velocity_factor, steering_factor and introduce planning_factor (`#9927 <https://github.com/autowarefoundation/autoware.universe/issues/9927>`_)
+  Co-authored-by: Satoshi OTA <44889564+satoshi-ota@users.noreply.github.com>
+  Co-authored-by: Ryohsuke Mitsudome <43976834+mitsudome-r@users.noreply.github.com>
+  Co-authored-by: satoshi-ota <satoshi.ota928@gmail.com>
+* fix(planning): text revisions (`#9886 <https://github.com/autowarefoundation/autoware.universe/issues/9886>`_)
+  * fix(planning): text revisions
+  * style(pre-commit): autofix
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* docs(bpp): revise explanation for Failure modules (`#9863 <https://github.com/autowarefoundation/autoware.universe/issues/9863>`_)
+* feat(behavior_path_planner): use autoware internal stamped messages (`#9750 <https://github.com/autowarefoundation/autoware.universe/issues/9750>`_)
+  * feat(behavior_path_planner): use autoware internal stamped messages
+  * fix universe_utils
+  ---------
+* Contributors: Atto Armoo, Fumiya Watanabe, Kyoichi Sugahara, Mamoru Sobue, Satoshi OTA, Takayuki Murooka, Zulfaqar Azmi
+
+0.40.0 (2024-12-12)
+-------------------
+* Merge branch 'main' into release-0.40.0
+* Revert "chore(package.xml): bump version to 0.39.0 (`#9587 <https://github.com/autowarefoundation/autoware.universe/issues/9587>`_)"
+  This reverts commit c9f0f2688c57b0f657f5c1f28f036a970682e7f5.
+* fix: fix ticket links in CHANGELOG.rst (`#9588 <https://github.com/autowarefoundation/autoware.universe/issues/9588>`_)
+* chore(package.xml): bump version to 0.39.0 (`#9587 <https://github.com/autowarefoundation/autoware.universe/issues/9587>`_)
+  * chore(package.xml): bump version to 0.39.0
+  * fix: fix ticket links in CHANGELOG.rst
+  * fix: remove unnecessary diff
+  ---------
+  Co-authored-by: Yutaka Kondo <yutaka.kondo@youtalk.jp>
+* fix: fix ticket links in CHANGELOG.rst (`#9588 <https://github.com/autowarefoundation/autoware.universe/issues/9588>`_)
+* fix(cpplint): include what you use - planning (`#9570 <https://github.com/autowarefoundation/autoware.universe/issues/9570>`_)
+* fix(bpp)!: remove stop reason (`#9449 <https://github.com/autowarefoundation/autoware.universe/issues/9449>`_)
+  fix(bpp): remove stop reason
+* 0.39.0
+* update changelog
+* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/autowarefoundation/autoware.universe/issues/9304>`_)
+* feat(bpp): add velocity interface (`#9344 <https://github.com/autowarefoundation/autoware.universe/issues/9344>`_)
+  * feat(bpp): add velocity interface
+  * fix(adapi): subscribe additional velocity factors
+  ---------
+* refactor(factor): move steering factor interface to motion utils (`#9337 <https://github.com/autowarefoundation/autoware.universe/issues/9337>`_)
+* refactor(bpp): rework steering factor interface (`#9325 <https://github.com/autowarefoundation/autoware.universe/issues/9325>`_)
+  * refactor(bpp): rework steering factor interface
+  * refactor(soa): rework steering factor interface
+  * refactor(AbLC): rework steering factor interface
+  * refactor(doa): rework steering factor interface
+  * refactor(lc): rework steering factor interface
+  * refactor(gp): rework steering factor interface
+  * refactor(sp): rework steering factor interface
+  * refactor(sbp): rework steering factor interface
+  * refactor(ss): rework steering factor interface
+  ---------
+* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/autowarefoundation/autoware.universe/issues/9304>`_)
+* chore(package.xml): bump version to 0.38.0 (`#9266 <https://github.com/autowarefoundation/autoware.universe/issues/9266>`_) (`#9284 <https://github.com/autowarefoundation/autoware.universe/issues/9284>`_)
+  * unify package.xml version to 0.37.0
+  * remove system_monitor/CHANGELOG.rst
+  * add changelog
+  * 0.38.0
+  ---------
+* Contributors: Esteve Fernandez, Fumiya Watanabe, M. Fatih Cırıt, Ryohsuke Mitsudome, Satoshi OTA, Yutaka Kondo
+
+0.39.0 (2024-11-25)
+-------------------
+* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/autowarefoundation/autoware.universe/issues/9304>`_)
+* fix: fix ticket links to point to https://github.com/autowarefoundation/autoware.universe (`#9304 <https://github.com/autowarefoundation/autoware.universe/issues/9304>`_)
+* chore(package.xml): bump version to 0.38.0 (`#9266 <https://github.com/autowarefoundation/autoware.universe/issues/9266>`_) (`#9284 <https://github.com/autowarefoundation/autoware.universe/issues/9284>`_)
+  * unify package.xml version to 0.37.0
+  * remove system_monitor/CHANGELOG.rst
+  * add changelog
+  * 0.38.0
+  ---------
+* Contributors: Esteve Fernandez, Yutaka Kondo
+
 0.38.0 (2024-11-08)
 -------------------
 * unify package.xml version to 0.37.0

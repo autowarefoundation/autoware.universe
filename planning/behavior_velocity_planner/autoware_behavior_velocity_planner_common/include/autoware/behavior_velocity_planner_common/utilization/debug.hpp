@@ -17,25 +17,23 @@
 
 #include <rclcpp/time.hpp>
 
+#include <autoware_internal_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/polygon.hpp>
-#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <string>
 #include <vector>
 
-namespace autoware::behavior_velocity_planner
-{
-namespace debug
+namespace autoware::behavior_velocity_planner::debug
 {
 visualization_msgs::msg::MarkerArray createPolygonMarkerArray(
   const geometry_msgs::msg::Polygon & polygon, const std::string & ns, const int64_t module_id,
   const rclcpp::Time & now, const double x, const double y, const double z, const double r,
   const double g, const double b);
 visualization_msgs::msg::MarkerArray createPathMarkerArray(
-  const tier4_planning_msgs::msg::PathWithLaneId & path, const std::string & ns,
+  const autoware_internal_planning_msgs::msg::PathWithLaneId & path, const std::string & ns,
   const int64_t lane_id, const rclcpp::Time & now, const double x, const double y, const double z,
   const double r, const double g, const double b);
 visualization_msgs::msg::MarkerArray createObjectsMarkerArray(
@@ -46,6 +44,6 @@ visualization_msgs::msg::MarkerArray createPointsMarkerArray(
   const std::vector<geometry_msgs::msg::Point> & points, const std::string & ns,
   const int64_t module_id, const rclcpp::Time & now, const double x, const double y, const double z,
   const double r, const double g, const double b);
-}  // namespace debug
-}  // namespace autoware::behavior_velocity_planner
+}  // namespace autoware::behavior_velocity_planner::debug
+
 #endif  // AUTOWARE__BEHAVIOR_VELOCITY_PLANNER_COMMON__UTILIZATION__DEBUG_HPP_

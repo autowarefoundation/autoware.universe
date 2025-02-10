@@ -25,6 +25,11 @@
 #include <geometry_msgs/msg/pose.h>
 #include <gtest/gtest.h>
 
+#include <limits>
+#include <memory>
+#include <utility>
+#include <vector>
+
 using autoware::freespace_planner::FreespacePlannerNode;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;

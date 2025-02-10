@@ -80,7 +80,7 @@ void OccupancyGridBasedCollisionDetector::setMap(const nav_msgs::msg::OccupancyG
   for (uint32_t i = 0; i < height; i++) {
     is_obstacle_table.at(i).resize(width);
     for (uint32_t j = 0; j < width; j++) {
-      const int cost = costmap_.data[i * width + j];
+      const int cost = costmap_.data[i * width + j];  // NOLINT
 
       if (cost < 0 || param_.obstacle_threshold <= cost) {
         is_obstacle_table[i][j] = true;
@@ -173,7 +173,8 @@ bool OccupancyGridBasedCollisionDetector::detectCollision(
 }
 
 bool OccupancyGridBasedCollisionDetector::hasObstacleOnPath(
-  const tier4_planning_msgs::msg::PathWithLaneId & path, const bool check_out_of_range) const
+  const autoware_internal_planning_msgs::msg::PathWithLaneId & path,
+  const bool check_out_of_range) const
 {
   for (const auto & p : path.points) {
     const auto pose_local = global2local(costmap_, p.point.pose);

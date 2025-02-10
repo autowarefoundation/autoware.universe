@@ -20,6 +20,8 @@
 #include <autoware/universe_utils/geometry/geometry.hpp>
 
 #include <limits>
+#include <string>
+#include <vector>
 
 namespace autoware::behavior_velocity_planner::virtual_traffic_light
 {
@@ -84,7 +86,7 @@ geometry_msgs::msg::Point convertToGeomPoint(const autoware::universe_utils::Poi
   return geom_p;
 }
 
-void insertStopVelocityFromStart(tier4_planning_msgs::msg::PathWithLaneId * path)
+void insertStopVelocityFromStart(autoware_internal_planning_msgs::msg::PathWithLaneId * path)
 {
   for (auto & p : path->points) {
     p.point.longitudinal_velocity_mps = 0.0;
@@ -93,7 +95,7 @@ void insertStopVelocityFromStart(tier4_planning_msgs::msg::PathWithLaneId * path
 
 std::optional<size_t> insertStopVelocityAtCollision(
   const SegmentIndexWithPoint & collision, const double offset,
-  tier4_planning_msgs::msg::PathWithLaneId * path)
+  autoware_internal_planning_msgs::msg::PathWithLaneId * path)
 {
   const auto collision_offset = autoware::motion_utils::calcLongitudinalOffsetToSegment(
     path->points, collision.index, collision.point);

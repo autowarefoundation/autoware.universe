@@ -24,7 +24,7 @@ This ros package enables communication between Autoware and CARLA for autonomous
 
 1. Download maps (y-axis inverted version) to arbitrary location
 2. Change names and create the map folder (example: Town01) inside `autoware_map`. (`point_cloud/Town01.pcd` -> `autoware_map/Town01/pointcloud_map.pcd`, `vector_maps/lanelet2/Town01.osm`-> `autoware_map/Town01/lanelet2_map.osm`)
-3. Create `map_projector_info.yaml` on the folder and add `projector_type: local` on the first line.
+3. Create `map_projector_info.yaml` on the folder and add `projector_type: Local` on the first line.
 
 ### Build
 
