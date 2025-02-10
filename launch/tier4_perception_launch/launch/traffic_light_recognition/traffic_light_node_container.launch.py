@@ -207,6 +207,7 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
             )
         ),
     )
+
     # cspell: ignore semseg
     whole_img_detector_loader = LoadComposableNodes(
         composable_node_descriptions=[
@@ -228,12 +229,6 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
                             [
                                 LaunchConfiguration("whole_image_detector_model_path"),
                                 "car_ped_tl_detector_labels.txt",
-                            ]
-                        ),
-                        "color_map_path": PathJoinSubstitution(
-                            [
-                                LaunchConfiguration("whole_image_detector_model_path"),
-                                "semseg_color_map.csv",
                             ]
                         ),
                         "build_only": False,
@@ -320,7 +315,8 @@ def generate_launch_description():
         "fine_detector_param_path",
         os.path.join(fine_detector_share_dir, "config", "traffic_light_fine_detector.param.yaml"),
     )
-    # traffic_light_detector
+
+    # whole image (traffic light) detector by yolox
     add_launch_arg(
         "whole_image_detector_model_path", os.path.expandvars("$HOME/autoware_data/tensorrt_yolox")
     )
