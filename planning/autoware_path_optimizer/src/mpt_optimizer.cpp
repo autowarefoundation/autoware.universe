@@ -156,7 +156,7 @@ double calcLateralDistToBounds(
     if (intersect_point) {
       const bool is_point_left = isLeft(pose, *intersect_point);
       const double dist_to_bound =
-        autoware::universe_utils::calcDistance2d(pose.position, *intersect_point) *
+        autoware_utils::calc_distance2d(pose.position, *intersect_point) *
         (is_point_left ? 1.0 : -1.0);
 
       // the bound which is closest to the centerline will be chosen
@@ -693,7 +693,7 @@ void MPTOptimizer::updateDeltaArcLength(std::vector<ReferencePoint> & ref_points
     ref_points.at(i).delta_arc_length =
       (i == ref_points.size() - 1)
         ? 0.0
-        : autoware::universe_utils::calcDistance2d(ref_points.at(i + 1), ref_points.at(i));
+        : autoware_utils::calc_distance2d(ref_points.at(i + 1), ref_points.at(i));
   }
 }
 
@@ -706,7 +706,7 @@ void MPTOptimizer::updateExtraPoints(std::vector<ReferencePoint> & ref_points) c
     const auto front_wheel_pos =
       trajectory_utils::getNearestPosition(ref_points, i, vehicle_info_.wheel_base_m);
 
-    const bool are_too_close_points = autoware::universe_utils::calcDistance2d(
+    const bool are_too_close_points = autoware_utils::calc_distance2d(
                                         front_wheel_pos, ref_points.at(i).pose.position) < 1e-03;
     const auto front_wheel_yaw = are_too_close_points
                                    ? ref_points.at(i).getYaw()
@@ -773,10 +773,10 @@ void MPTOptimizer::updateExtraPoints(std::vector<ReferencePoint> & ref_points) c
     if (prev_ref_points_ptr_ && !prev_ref_points_ptr_->empty()) {
       for (int i = 0; i < static_cast<int>(ref_points.size()); ++i) {
         const size_t prev_idx = trajectory_utils::findEgoIndex(
-          *prev_ref_points_ptr_, autoware::universe_utils::getPose(ref_points.at(i)),
+          *prev_ref_points_ptr_, autoware_utils::get_pose(ref_points.at(i)),
           ego_nearest_param_);
 
-        const double dist_to_prev = autoware::universe_utils::calcDistance2d(
+        const double dist_to_prev = autoware_utils::calc_distance2d(
           ref_points.at(i), prev_ref_points_ptr_->at(prev_idx));
         if (max_dist_threshold < dist_to_prev) {
           continue;
@@ -1077,7 +1077,7 @@ void MPTOptimizer::avoidSuddenSteering(
     return;
   }
   const size_t prev_ego_idx = trajectory_utils::findEgoIndex(
-    *prev_ref_points_ptr_, autoware::universe_utils::getPose(ref_points.front()),
+    *prev_ref_points_ptr_, autoware_utils::get_pose(ref_points.front()),
     ego_nearest_param_);
 
   const double max_bound_fixing_length = ego_vel * mpt_param_.max_bound_fixing_time;
@@ -1125,7 +1125,7 @@ void MPTOptimizer::updateVehicleBounds(
         collision_check_pose.position.y - ref_point.pose.position.y,
         collision_check_pose.position.x - ref_point.pose.position.x);
       const double offset_y =
-        -autoware::universe_utils::calcDistance2d(ref_point, collision_check_pose) *
+        -autoware_utils::calc_distance2d(ref_point, collision_check_pose) *
         std::sin(tmp_yaw - collision_check_yaw);
 
       const auto vehicle_bounds_pose =
