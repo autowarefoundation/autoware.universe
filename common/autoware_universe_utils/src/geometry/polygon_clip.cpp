@@ -63,7 +63,6 @@ void visit(std::vector<LinkedVertex> & vertices, std::size_t index)
 bool is_inside(const LinkedVertex & v, const ExtendedPolygon & poly)
 {
   bool contains = false;
-  int32_t winding_num = 0;
   constexpr double tolerance = 1e-9;
 
   std::size_t vertexIndex = poly.first;
@@ -83,12 +82,6 @@ bool is_inside(const LinkedVertex & v, const ExtendedPolygon & poly)
         vertexIndex = next_index;
         next_index = poly.vertices[vertexIndex].next.value_or(poly.first);
         continue;
-      }
-
-      if (vertex.x < next.x - tolerance) {
-        winding_num += 1;
-      } else if (vertex.x > next.x + tolerance) {
-        winding_num -= 1;
       }
     }
 
