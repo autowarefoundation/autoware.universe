@@ -16,8 +16,6 @@
 
 #include <cuda_runtime.h>
 
-#include <cstdio>
-
 namespace autoware::pointcloud_preprocessor
 {
 
@@ -47,10 +45,10 @@ void transform_launch(
   const PointTypeStruct * input_points, int num_points, TransformStruct transform,
   PointTypeStruct * output_points, cudaStream_t & stream)
 {
-  int threadsPerBlock = 256;
-  int blocksPerGrid = (num_points + threadsPerBlock - 1) / threadsPerBlock;
+  constexpr int threads_per_block = 256;
+  const int block_per_grid = (num_points + block_per_grid - 1) / threads_per_block;
 
-  transform_kernel<<<blocksPerGrid, threadsPerBlock, 0, stream>>>(
+  transform_kernel<<<block_per_grid, threads_per_block, 0, stream>>>(
     input_points, num_points, transform, output_points);
 }
 

@@ -41,15 +41,12 @@ CloudCollector<MsgTraits>::CloudCollector(
   const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
     std::chrono::duration<double>(timeout_sec_));
 
-  RCLCPP_WARN(ros2_parent_node_->get_logger(), "Creating timer with timeout=%f", timeout_sec_);
   timer_ =
     rclcpp::create_timer(ros2_parent_node_, ros2_parent_node_->get_clock(), period_ns, [this]() {
       std::lock_guard<std::mutex> concatenate_lock(concatenate_mutex_);
       if (concatenate_finished_) return;
       concatenate_callback();
     });
-
-  RCLCPP_WARN(ros2_parent_node_->get_logger(), "Created timer with timeout=%f", timeout_sec_);
 }
 
 template <typename MsgTraits>
@@ -109,17 +106,11 @@ void CloudCollector<MsgTraits>::concatenate_callback()
 
   // All pointclouds are received or the timer has timed out, cancel the timer and concatenate the
   // pointclouds in the collector.
-  RCLCPP_WARN(ros2_parent_node_->get_logger(), "Going to cancel timer with timeout=%f", timeout_sec_);
   timer_->cancel();
-  RCLCPP_WARN(ros2_parent_node_->get_logger(), "Cancelled timer with timeout=%f", timeout_sec_);
 
   auto concatenated_cloud_result = concatenate_pointclouds(topic_to_cloud_map_);
 
-  RCLCPP_WARN(ros2_parent_node_->get_logger(), "Concatenated pointcloud with timeout=%f", timeout_sec_);
-
   ros2_parent_node_->publish_clouds(std::move(concatenated_cloud_result), collector_info_);
-
-  RCLCPP_WARN(ros2_parent_node_->get_logger(), "Published pointcloud with timeout=%f", timeout_sec_);
 
   combine_cloud_handler_->allocate_pointclouds();
 

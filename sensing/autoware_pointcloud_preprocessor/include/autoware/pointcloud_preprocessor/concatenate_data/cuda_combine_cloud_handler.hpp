@@ -15,7 +15,7 @@
 #pragma once
 
 #include "autoware/pointcloud_preprocessor/concatenate_data/combine_cloud_handler.hpp"
-#include "cuda_traits.hpp"
+#include "autoware/pointcloud_preprocessor/concatenate_data/cuda_traits.hpp"
 
 namespace autoware::pointcloud_preprocessor
 {
@@ -31,7 +31,6 @@ protected:
     std::size_t max_pointcloud_size{0};
   };
 
-  std::vector<std::string> input_topics_;
   std::unordered_map<std::string, CudaConcatStruct> cuda_concat_struct_map_;
   std::unique_ptr<CudaPointCloud2Traits::PointCloudMessage> concatenated_cloud_ptr_;
   std::size_t max_concat_pointcloud_size_{0};

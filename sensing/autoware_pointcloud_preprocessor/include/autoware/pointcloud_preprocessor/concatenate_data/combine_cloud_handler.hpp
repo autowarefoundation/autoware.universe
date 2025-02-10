@@ -61,9 +61,37 @@ struct ConcatenatedCloudResult
 
 class CombineCloudHandlerBase
 {
+public:
+  CombineCloudHandlerBase(
+    rclcpp::Node & node, const std::vector<std::string> & input_topics, std::string output_frame,
+    bool is_motion_compensated, bool publish_synchronized_pointcloud,
+    bool keep_input_frame_in_synchronized_pointcloud, bool has_static_tf_only)
+  : node_(node),
+    input_topics_(input_topics),
+    output_frame_(output_frame),
+    is_motion_compensated_(is_motion_compensated),
+    publish_synchronized_pointcloud_(publish_synchronized_pointcloud),
+    keep_input_frame_in_synchronized_pointcloud_(keep_input_frame_in_synchronized_pointcloud),
+    managed_tf_buffer_(std::make_unique<autoware::universe_utils::ManagedTransformBuffer>(
+      &node_, has_static_tf_only))
+  {
+  }
+
+  void process_twist(
+    const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr & twist_msg);
+
+  void process_odometry(const nav_msgs::msg::Odometry::ConstSharedPtr & input);
+
+  std::deque<geometry_msgs::msg::TwistStamped> get_twist_queue();
+
+  Eigen::Matrix4f compute_transform_to_adjust_for_old_timestamp(
+    const rclcpp::Time & old_stamp, const rclcpp::Time & new_stamp);
+
+  virtual void allocate_pointclouds() = 0;
+
 protected:
   rclcpp::Node & node_;
-
+  std::vector<std::string> input_topics_;
   std::string output_frame_;
   bool is_motion_compensated_;
   bool publish_synchronized_pointcloud_;
@@ -71,7 +99,32 @@ protected:
   std::unique_ptr<autoware::universe_utils::ManagedTransformBuffer> managed_tf_buffer_{nullptr};
 
   std::deque<geometry_msgs::msg::TwistStamped> twist_queue_;
+};
 
+template <typename MsgTraits>
+class CombineCloudHandler;
+
+template <>
+class CombineCloudHandler<PointCloud2Traits> : public CombineCloudHandlerBase
+{
+public:
+  CombineCloudHandler(
+    rclcpp::Node & node, const std::vector<std::string> & input_topics, std::string output_frame,
+    bool is_motion_compensated, bool publish_synchronized_pointcloud,
+    bool keep_input_frame_in_synchronized_pointcloud, bool has_static_tf_only)
+  : CombineCloudHandlerBase(
+      node, input_topics, output_frame, is_motion_compensated, publish_synchronized_pointcloud,
+      keep_input_frame_in_synchronized_pointcloud, has_static_tf_only)
+  {
+  }
+
+  ConcatenatedCloudResult<PointCloud2Traits> combine_pointclouds(
+    std::unordered_map<std::string, typename PointCloud2Traits::PointCloudMessage::ConstSharedPtr> &
+      topic_to_cloud_map);
+
+  void allocate_pointclouds() override {};
+
+protected:
   /// @brief RclcppTimeHash structure defines a custom hash function for the rclcpp::Time type by
   /// using its nanoseconds representation as the hash value.
   struct RclcppTimeHash
@@ -82,45 +135,6 @@ protected:
     }
   };
 
-public:
-  CombineCloudHandlerBase(
-    rclcpp::Node & node, std::string output_frame, bool is_motion_compensated,
-    bool publish_synchronized_pointcloud, bool keep_input_frame_in_synchronized_pointcloud,
-    bool has_static_tf_only);
-
-  virtual ~CombineCloudHandlerBase() = default;
-
-  void process_twist(
-    const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr & twist_msg);
-
-  void process_odometry(const nav_msgs::msg::Odometry::ConstSharedPtr & input);
-
-  Eigen::Matrix4f compute_transform_to_adjust_for_old_timestamp(
-    const rclcpp::Time & old_stamp, const rclcpp::Time & new_stamp);
-
-  virtual void allocate_pointclouds() {}
-
-  std::deque<geometry_msgs::msg::TwistStamped> get_twist_queue();
-};
-
-template <typename MsgTraits>
-class CombineCloudHandler : public CombineCloudHandlerBase
-{
-public:
-  CombineCloudHandler(
-    rclcpp::Node & node, const std::vector<std::string> & input_topics, std::string output_frame,
-    bool is_motion_compensated, bool publish_synchronized_pointcloud,
-    bool keep_input_frame_in_synchronized_pointcloud, bool has_static_tf_only);
-
-  ConcatenatedCloudResult<MsgTraits> combine_pointclouds(
-    std::unordered_map<std::string, typename MsgTraits::PointCloudMessage::ConstSharedPtr> &
-      topic_to_cloud_map);
-};
-
-template <>
-class CombineCloudHandler<PointCloud2Traits> : public CombineCloudHandlerBase
-{
-protected:
   static void convert_to_xyzirc_cloud(
     const typename PointCloud2Traits::PointCloudMessage::ConstSharedPtr & input_cloud,
     typename PointCloud2Traits::PointCloudMessage::UniquePtr & xyzirc_cloud);
@@ -131,23 +145,6 @@ protected:
     std::unordered_map<rclcpp::Time, Eigen::Matrix4f, RclcppTimeHash> & transform_memo,
     std::unique_ptr<PointCloud2Traits::PointCloudMessage> &
       transformed_delay_compensated_cloud_ptr);
-
-public:
-  CombineCloudHandler(
-    rclcpp::Node & node, [[maybe_unused]] const std::vector<std::string> & input_topics,
-    std::string output_frame, bool is_motion_compensated, bool publish_synchronized_pointcloud,
-    bool keep_input_frame_in_synchronized_pointcloud, bool has_static_tf_only)
-  : CombineCloudHandlerBase(
-      node, output_frame, is_motion_compensated, publish_synchronized_pointcloud,
-      keep_input_frame_in_synchronized_pointcloud, has_static_tf_only)
-  {
-  }
-
-  ConcatenatedCloudResult<PointCloud2Traits> combine_pointclouds(
-    std::unordered_map<std::string, typename PointCloud2Traits::PointCloudMessage::ConstSharedPtr> &
-      topic_to_cloud_map);
 };
 
 }  // namespace autoware::pointcloud_preprocessor
-
-// #include "autoware/pointcloud_preprocessor/concatenate_data/combine_cloud_handler.ipp"

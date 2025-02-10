@@ -37,9 +37,4 @@ public:
   ~CudaPointCloudConcatenateDataSynchronizerComponent() override = default;
 };
 
-// extern template class
-// PointCloudConcatenateDataSynchronizerComponentTemplated<CudaPointCloud2Traits>;
-
-// template class PointCloudConcatenateDataSynchronizerComponentTemplated<CudaPointCloud2Traits>;
-
 }  // namespace autoware::pointcloud_preprocessor

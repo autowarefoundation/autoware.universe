@@ -107,6 +107,7 @@ PointCloudConcatenateDataSynchronizerComponentTemplated<MsgTraits>::
     }
   }
 
+
   // Combine cloud handler
   combine_cloud_handler_ = std::make_shared<CombineCloudHandler<MsgTraits>>(
     *this, params_.input_topics, params_.output_frame, params_.is_motion_compensated,
@@ -118,6 +119,8 @@ PointCloudConcatenateDataSynchronizerComponentTemplated<MsgTraits>::
   diagnostic_updater_.add(
     "concat_status", this,
     &PointCloudConcatenateDataSynchronizerComponentTemplated<MsgTraits>::check_concat_status);
+
+  initialize();
 }
 
 template <typename MsgTraits>
@@ -157,7 +160,6 @@ void PointCloudConcatenateDataSynchronizerComponentTemplated<MsgTraits>::cloud_c
   const typename MsgTraits::PointCloudMessage::ConstSharedPtr & input_ptr,
   const std::string & topic_name)
 {
-  RCLCPP_WARN(get_logger(), "PointCloudConcatenateDataSynchronizerComponentTemplated::cloud_callback | topic_name: %s", topic_name.c_str());
   stop_watch_ptr_->toc("processing_time", true);
   double cloud_arrival_time = this->get_clock()->now().seconds();
   manage_collector_list();
@@ -213,12 +215,10 @@ void PointCloudConcatenateDataSynchronizerComponentTemplated<MsgTraits>::cloud_c
   }
 
   if (!process_success) {
-    auto combine_cloud_handler =
-      std::dynamic_pointer_cast<CombineCloudHandler<MsgTraits>>(combine_cloud_handler_);
     auto new_cloud_collector = std::make_shared<CloudCollector<MsgTraits>>(
       std::dynamic_pointer_cast<PointCloudConcatenateDataSynchronizerComponentTemplated<MsgTraits>>(
         shared_from_this()),
-      combine_cloud_handler, params_.input_topics.size(), params_.timeout_sec, params_.debug_mode);
+      combine_cloud_handler_, params_.input_topics.size(), params_.timeout_sec, params_.debug_mode);
 
     cloud_collectors_.push_back(new_cloud_collector);
     cloud_collectors_lock.unlock();
@@ -282,9 +282,7 @@ void PointCloudConcatenateDataSynchronizerComponentTemplated<MsgTraits>::publish
 
   if (publish_pointcloud_) {
     latest_concatenate_cloud_timestamp_ = current_concatenate_cloud_timestamp_;
-    auto concatenate_pointcloud_output = std::make_unique<typename MsgTraits::PointCloudMessage>(
-      std::move(*concatenated_cloud_result.concatenate_cloud_ptr));
-    concatenated_cloud_publisher_->publish(std::move(concatenate_pointcloud_output));
+    concatenated_cloud_publisher_->publish(std::move(concatenated_cloud_result.concatenate_cloud_ptr));
 
     // publish transformed raw pointclouds
     if (
@@ -295,8 +293,7 @@ void PointCloudConcatenateDataSynchronizerComponentTemplated<MsgTraits>::publish
         if (
           (*concatenated_cloud_result.topic_to_transformed_cloud_map).find(topic) !=
           (*concatenated_cloud_result.topic_to_transformed_cloud_map).end()) {
-          auto transformed_cloud_output = std::make_unique<typename MsgTraits::PointCloudMessage>(
-            *(*concatenated_cloud_result.topic_to_transformed_cloud_map).at(topic));
+          auto transformed_cloud_output = std::move((*concatenated_cloud_result.topic_to_transformed_cloud_map).at(topic));
           topic_to_transformed_cloud_publisher_map_[topic]->publish(
             std::move(transformed_cloud_output));
         } else {

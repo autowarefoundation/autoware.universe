@@ -19,17 +19,9 @@
 #include "autoware/pointcloud_preprocessor/concatenate_data/cuda_traits.hpp"
 #include "autoware/pointcloud_preprocessor/utility/memory.hpp"
 
-#include <pcl_ros/transforms.hpp>
-
-#include <pcl_conversions/pcl_conversions.h>
-
-#include <iomanip>
-#include <list>
 #include <memory>
-#include <optional>
 #include <sstream>
 #include <string>
-#include <utility>
 #include <vector>
 
 namespace autoware::pointcloud_preprocessor
@@ -76,12 +68,6 @@ void PointCloudConcatenateDataSynchronizerComponentTemplated<CudaPointCloud2Trai
 template class autoware::pointcloud_preprocessor::
   PointCloudConcatenateDataSynchronizerComponentTemplated<
     autoware::pointcloud_preprocessor::CudaPointCloud2Traits>;
-
-/* template void autoware::pointcloud_preprocessor::
-  PointCloudConcatenateDataSynchronizerComponentTemplated<
-    autoware::pointcloud_preprocessor::CudaPointCloud2Traits>::cloud_callback(const typename
-  autoware::pointcloud_preprocessor::CudaPointCloud2Traits::PointCloudMessage::ConstSharedPtr &
-  input_ptr, const std::string & topic_name); */
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(

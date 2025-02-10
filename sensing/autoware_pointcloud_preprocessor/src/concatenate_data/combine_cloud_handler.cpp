@@ -32,20 +32,6 @@
 namespace autoware::pointcloud_preprocessor
 {
 
-CombineCloudHandlerBase::CombineCloudHandlerBase(
-  rclcpp::Node & node, std::string output_frame, bool is_motion_compensated,
-  bool publish_synchronized_pointcloud, bool keep_input_frame_in_synchronized_pointcloud,
-  bool has_static_tf_only)
-: node_(node),
-  output_frame_(output_frame),
-  is_motion_compensated_(is_motion_compensated),
-  publish_synchronized_pointcloud_(publish_synchronized_pointcloud),
-  keep_input_frame_in_synchronized_pointcloud_(keep_input_frame_in_synchronized_pointcloud),
-  managed_tf_buffer_(
-    std::make_unique<autoware::universe_utils::ManagedTransformBuffer>(&node_, has_static_tf_only))
-{
-}
-
 void CombineCloudHandlerBase::process_twist(
   const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr & twist_msg)
 {

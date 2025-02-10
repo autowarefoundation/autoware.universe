@@ -18,18 +18,12 @@
 #include "autoware/pointcloud_preprocessor/concatenate_data/cuda_traits.hpp"
 
 #include <cuda_blackboard/cuda_pointcloud2.hpp>
-#include <pcl_ros/transforms.hpp>
 
 #include <cuda_runtime.h>
-#include <pcl_conversions/pcl_conversions.h>
 
-#include <algorithm>
-#include <deque>
-#include <functional>
 #include <memory>
 #include <string>
 #include <unordered_map>
-#include <utility>
 #include <vector>
 
 #define CHECK_OFFSET(structure1, structure2, field)             \
@@ -65,9 +59,8 @@ CombineCloudHandler<CudaPointCloud2Traits>::CombineCloudHandler(
   bool is_motion_compensated, bool publish_synchronized_pointcloud,
   bool keep_input_frame_in_synchronized_pointcloud, bool has_static_tf_only)
 : CombineCloudHandlerBase(
-    node, output_frame, is_motion_compensated, publish_synchronized_pointcloud,
-    keep_input_frame_in_synchronized_pointcloud, has_static_tf_only),
-  input_topics_(input_topics)
+    node, input_topics, output_frame, is_motion_compensated, publish_synchronized_pointcloud,
+    keep_input_frame_in_synchronized_pointcloud, has_static_tf_only)
 {
   for (const auto & topic : input_topics_) {
     CudaConcatStruct cuda_concat_struct;

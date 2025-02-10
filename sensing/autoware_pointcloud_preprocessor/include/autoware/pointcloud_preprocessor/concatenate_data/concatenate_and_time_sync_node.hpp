@@ -102,7 +102,7 @@ private:
   std::shared_ptr<CollectorInfoBase> diagnostic_collector_info_;
   std::unordered_map<std::string, double> diagnostic_topic_to_original_stamp_map_;
 
-  std::shared_ptr<CombineCloudHandlerBase> combine_cloud_handler_;
+  std::shared_ptr<CombineCloudHandler<MsgTraits>> combine_cloud_handler_;
   std::list<std::shared_ptr<CloudCollector<MsgTraits>>> cloud_collectors_;
   std::unique_ptr<CollectorMatchingStrategy<MsgTraits>> collector_matching_strategy_;
 
