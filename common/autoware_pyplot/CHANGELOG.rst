@@ -2,6 +2,12 @@
 Changelog for package autoware_pyplot
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_test_utils): add visualization (`#9603 <https://github.com/autowarefoundation/autoware.universe/issues/9603>`_)
+* Contributors: Fumiya Watanabe, Mamoru Sobue
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

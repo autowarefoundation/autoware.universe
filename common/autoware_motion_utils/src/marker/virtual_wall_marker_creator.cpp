@@ -63,10 +63,16 @@ visualization_msgs::msg::MarkerArray VirtualWallMarkerCreator::create_markers(
       case deadline:
         create_fn = autoware::motion_utils::createDeadLineVirtualWallMarker;
         break;
+      case pass:
+        create_fn = autoware::motion_utils::createIntendedPassVirtualMarker;
+        break;
     }
+    const auto wall_text = virtual_wall.detail.empty()
+                             ? virtual_wall.text
+                             : virtual_wall.text + "(" + virtual_wall.detail + ")";
     auto markers = create_fn(
-      virtual_wall.pose, virtual_wall.text, now, 0, virtual_wall.longitudinal_offset,
-      virtual_wall.ns, virtual_wall.is_driving_forward);
+      virtual_wall.pose, wall_text, now, 0, virtual_wall.longitudinal_offset, virtual_wall.ns,
+      virtual_wall.is_driving_forward);
     for (auto & marker : markers.markers) {
       marker.id = static_cast<int>(marker_count_per_namespace_[marker.ns].current++);
       marker_array.markers.push_back(marker);

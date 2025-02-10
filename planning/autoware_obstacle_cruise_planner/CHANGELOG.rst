@@ -2,6 +2,47 @@
 Changelog for package autoware_obstacle_cruise_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_obstacle_cruise_planner)!: tier4_debug_msgs changed to autoware_internal_debug_msgs in autoware_obstacle_cruise_planner (`#9905 <https://github.com/autowarefoundation/autoware.universe/issues/9905>`_)
+  feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in files planning/autoware_obstacle_cruise_planner
+* chore(planning): move package directory for planning factor interface (`#9948 <https://github.com/autowarefoundation/autoware.universe/issues/9948>`_)
+  * chore: add new package for planning factor interface
+  * chore(surround_obstacle_checker): update include file
+  * chore(obstacle_stop_planner): update include file
+  * chore(obstacle_cruise_planner): update include file
+  * chore(motion_velocity_planner): update include file
+  * chore(bpp): update include file
+  * chore(bvp-common): update include file
+  * chore(blind_spot): update include file
+  * chore(crosswalk): update include file
+  * chore(detection_area): update include file
+  * chore(intersection): update include file
+  * chore(no_drivable_area): update include file
+  * chore(no_stopping_area): update include file
+  * chore(occlusion_spot): update include file
+  * chore(run_out): update include file
+  * chore(speed_bump): update include file
+  * chore(stop_line): update include file
+  * chore(template_module): update include file
+  * chore(traffic_light): update include file
+  * chore(vtl): update include file
+  * chore(walkway): update include file
+  * chore(motion_utils): remove factor interface
+  ---------
+* feat(planning_factor)!: remove velocity_factor, steering_factor and introduce planning_factor (`#9927 <https://github.com/autowarefoundation/autoware.universe/issues/9927>`_)
+  Co-authored-by: Satoshi OTA <44889564+satoshi-ota@users.noreply.github.com>
+  Co-authored-by: Ryohsuke Mitsudome <43976834+mitsudome-r@users.noreply.github.com>
+  Co-authored-by: satoshi-ota <satoshi.ota928@gmail.com>
+* docs(obstacle_cruise_planner): add supplemental figures (`#9154 <https://github.com/autowarefoundation/autoware.universe/issues/9154>`_)
+  * add behavior determination flowchart
+  * add cruise planning block diagram
+  * style(pre-commit): autofix
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* Contributors: Fumiya Watanabe, Mamoru Sobue, Mitsuhiro Sakamoto, Satoshi OTA, Vishal Chauhan
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

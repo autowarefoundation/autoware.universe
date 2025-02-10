@@ -17,8 +17,7 @@
   <arg name="input/rois7" default="rois7"/>
   <arg name="input/camera_info7" default="/camera_info7"/>
   <arg name="input/pointcloud" default="/perception/object_recognition/detection/pointcloud_map_filtered/pointcloud"/>
-  <arg name="output/pointcloud" default="roi_pointcloud_fusion/output/pointcloud"/>
-  <arg name="output_clusters" default="output_clusters"/>
+  <arg name="output/clusters" default="output/clusters"/>
   <arg name="debug/clusters" default="roi_pointcloud_fusion/debug/clusters"/>
   <arg name="param_path" default="$(find-pkg-share autoware_image_projection_based_fusion)/config/roi_pointcloud_fusion.param.yaml"/>
   <arg name="sync_param_path" default="$(find-pkg-share autoware_image_projection_based_fusion)/config/fusion_common.param.yaml"/>
@@ -39,8 +38,7 @@
       <param from="$(var param_path)"/>
       <param from="$(var sync_param_path)"/>
       <remap from="input" to="$(var input/pointcloud)"/>
-      <remap from="output" to="$(var output/pointcloud)"/>
-      <remap from="output_clusters" to="$(var output_clusters)"/>
+      <remap from="output" to="$(var output/clusters)"/>
       <remap from="debug/clusters" to="$(var debug/clusters)"/>
 
       <!-- rois, camera and info -->
