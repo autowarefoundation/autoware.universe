@@ -33,7 +33,8 @@ TrafficLightSelectorNode::TrafficLightSelectorNode(const rclcpp::NodeOptions & n
   detected_rois_sub_(this, "input/detected_rois", rclcpp::QoS{1}.get_rmw_qos_profile()),
   rough_rois_sub_(this, "input/rough_rois", rclcpp::QoS{1}.get_rmw_qos_profile()),
   expected_rois_sub_(this, "input/expect_rois", rclcpp::QoS{1}.get_rmw_qos_profile()),
-  sync_(SyncPolicy(10), detected_rois_sub_, rough_rois_sub_, expected_rois_sub_)
+  sync_(SyncPolicy(10), detected_rois_sub_, rough_rois_sub_, expected_rois_sub_),
+  camera_info_subscribed_(false)
 {
   {
     stop_watch_ptr_ =
@@ -61,13 +62,14 @@ TrafficLightSelectorNode::TrafficLightSelectorNode(const rclcpp::NodeOptions & n
 void TrafficLightSelectorNode::cameraInfoCallback(
   const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_msg)
 {
+  std::lock_guard<std::mutex> lock(mutex_);
   if (camera_info_subscribed_) {
     return;
   }
-  RCLCPP_INFO(get_logger(), "camera_info received");
   image_width_ = input_msg->width;
   image_height_ = input_msg->height;
   camera_info_subscribed_ = true;
+  RCLCPP_INFO(get_logger(), "camera_info received");
 }
 
 void TrafficLightSelectorNode::objectsCallback(
@@ -76,9 +78,11 @@ void TrafficLightSelectorNode::objectsCallback(
   const TrafficLightRoiArray::ConstSharedPtr & expected_rois_msg)
 {
   stop_watch_ptr_->toc("processing_time", true);
+  mutex_.lock();
   if (!camera_info_subscribed_) {
     return;
   }
+  mutex_.unlock();
   std::map<int, sensor_msgs::msg::RegionOfInterest> rough_rois_map;
   for (const auto & roi : rough_rois_msg->rois) {
     rough_rois_map[roi.traffic_light_id] = roi.roi;
