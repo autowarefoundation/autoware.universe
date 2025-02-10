@@ -15,6 +15,7 @@
 #include <autoware/behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <autoware/motion_utils/resample/resample.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <algorithm>

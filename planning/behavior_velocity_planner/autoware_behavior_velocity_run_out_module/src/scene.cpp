@@ -22,6 +22,7 @@
 #include <autoware/motion_utils/distance/distance.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/geometry/pose_deviation.hpp>
 #include <autoware/universe_utils/ros/uuid_helper.hpp>
 
 #include <boost/geometry/algorithms/intersection.hpp>
