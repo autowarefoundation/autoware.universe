@@ -14,18 +14,18 @@
 
 #include "autoware/motion_utils/marker/marker_helper.hpp"
 
-#include "autoware/universe_utils/ros/marker_helper.hpp"
+#include "autoware_utils/ros/marker_helper.hpp"
 
-#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware_utils/geometry/geometry.hpp>
 
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <string>
 
-using autoware::universe_utils::createDefaultMarker;
-using autoware::universe_utils::createDeletedDefaultMarker;
-using autoware::universe_utils::createMarkerColor;
-using autoware::universe_utils::createMarkerScale;
+using autoware_utils::create_default_marker;
+using autoware_utils::create_deleted_default_marker;
+using autoware_utils::create_marker_color;
+using autoware_utils::create_marker_scale;
 using visualization_msgs::msg::MarkerArray;
 
 namespace
@@ -40,9 +40,9 @@ inline visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray(
 
   // Virtual Wall
   {
-    auto marker = createDefaultMarker(
+    auto marker = create_default_marker(
       "map", now, ns_prefix + "virtual_wall", id, visualization_msgs::msg::Marker::CUBE,
-      createMarkerScale(0.1, 5.0, 2.0), color);
+      create_marker_scale(0.1, 5.0, 2.0), color);
 
     marker.pose = vehicle_front_pose;
     marker.pose.position.z += 1.0;
@@ -52,9 +52,9 @@ inline visualization_msgs::msg::MarkerArray createVirtualWallMarkerArray(
 
   // Factor Text
   {
-    auto marker = createDefaultMarker(
+    auto marker = create_default_marker(
       "map", now, ns_prefix + "factor_text", id, visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
-      createMarkerScale(0.0, 0.0, 1.0 /*font size*/), createMarkerColor(1.0, 1.0, 1.0, 1.0));
+      create_marker_scale(0.0, 0.0, 1.0 /*font size*/), create_marker_color(1.0, 1.0, 1.0, 1.0));
 
     marker.pose = vehicle_front_pose;
     marker.pose.position.z += 2.0;
@@ -73,13 +73,13 @@ inline visualization_msgs::msg::MarkerArray createDeletedVirtualWallMarkerArray(
 
   // Virtual Wall
   {
-    auto marker = createDeletedDefaultMarker(now, ns_prefix + "virtual_wall", id);
+    auto marker = create_deleted_default_marker(now, ns_prefix + "virtual_wall", id);
     marker_array.markers.push_back(marker);
   }
 
   // Factor Text
   {
-    auto marker = createDeletedDefaultMarker(now, ns_prefix + "factor_text", id);
+    auto marker = create_deleted_default_marker(now, ns_prefix + "factor_text", id);
     marker_array.markers.push_back(marker);
   }
 
@@ -95,9 +95,9 @@ inline visualization_msgs::msg::MarkerArray createIntendedPassArrowMarkerArray(
 
   // Arrow
   {
-    auto marker = createDefaultMarker(
+    auto marker = create_default_marker(
       "map", now, ns_prefix + "direction", id, visualization_msgs::msg::Marker::ARROW,
-      createMarkerScale(2.5 /*length*/, 0.15 /*width*/, 1.0 /*height*/), color);
+      create_marker_scale(2.5 /*length*/, 0.15 /*width*/, 1.0 /*height*/), color);
 
     marker.pose = vehicle_front_pose;
 
@@ -106,9 +106,9 @@ inline visualization_msgs::msg::MarkerArray createIntendedPassArrowMarkerArray(
 
   // Factor Text
   {
-    auto marker = createDefaultMarker(
+    auto marker = create_default_marker(
       "map", now, ns_prefix + "factor_text", id, visualization_msgs::msg::Marker::TEXT_VIEW_FACING,
-      createMarkerScale(0.0, 0.0, 0.4 /*font size*/), createMarkerColor(1.0, 1.0, 1.0, 1.0));
+      create_marker_scale(0.0, 0.0, 0.4 /*font size*/), create_marker_color(1.0, 1.0, 1.0, 1.0));
 
     marker.pose = vehicle_front_pose;
     marker.pose.position.z += 2.0;
@@ -129,11 +129,11 @@ visualization_msgs::msg::MarkerArray createStopVirtualWallMarker(
   const int32_t id, const double longitudinal_offset, const std::string & ns_prefix,
   const bool is_driving_forward)
 {
-  const auto pose_with_offset = autoware::universe_utils::calcOffsetPose(
+  const auto pose_with_offset = autoware_utils::calc_offset_pose(
     pose, longitudinal_offset * (is_driving_forward ? 1.0 : -1.0), 0.0, 0.0);
   return createVirtualWallMarkerArray(
     pose_with_offset, module_name, ns_prefix + "stop_", now, id,
-    createMarkerColor(1.0, 0.0, 0.0, 0.5));
+    create_marker_color(1.0, 0.0, 0.0, 0.5));
 }
 
 visualization_msgs::msg::MarkerArray createSlowDownVirtualWallMarker(
@@ -141,11 +141,11 @@ visualization_msgs::msg::MarkerArray createSlowDownVirtualWallMarker(
   const int32_t id, const double longitudinal_offset, const std::string & ns_prefix,
   const bool is_driving_forward)
 {
-  const auto pose_with_offset = autoware::universe_utils::calcOffsetPose(
+  const auto pose_with_offset = autoware_utils::calc_offset_pose(
     pose, longitudinal_offset * (is_driving_forward ? 1.0 : -1.0), 0.0, 0.0);
   return createVirtualWallMarkerArray(
     pose_with_offset, module_name, ns_prefix + "slow_down_", now, id,
-    createMarkerColor(1.0, 1.0, 0.0, 0.5));
+    create_marker_color(1.0, 1.0, 0.0, 0.5));
 }
 
 visualization_msgs::msg::MarkerArray createDeadLineVirtualWallMarker(
@@ -153,11 +153,11 @@ visualization_msgs::msg::MarkerArray createDeadLineVirtualWallMarker(
   const int32_t id, const double longitudinal_offset, const std::string & ns_prefix,
   const bool is_driving_forward)
 {
-  const auto pose_with_offset = autoware::universe_utils::calcOffsetPose(
+  const auto pose_with_offset = autoware_utils::calc_offset_pose(
     pose, longitudinal_offset * (is_driving_forward ? 1.0 : -1.0), 0.0, 0.0);
   return createVirtualWallMarkerArray(
     pose_with_offset, module_name, ns_prefix + "dead_line_", now, id,
-    createMarkerColor(0.0, 1.0, 0.0, 0.5));
+    create_marker_color(0.0, 1.0, 0.0, 0.5));
 }
 
 visualization_msgs::msg::MarkerArray createIntendedPassVirtualMarker(
@@ -165,11 +165,11 @@ visualization_msgs::msg::MarkerArray createIntendedPassVirtualMarker(
   const int32_t id, const double longitudinal_offset, const std::string & ns_prefix,
   const bool is_driving_forward)
 {
-  const auto pose_with_offset = autoware::universe_utils::calcOffsetPose(
+  const auto pose_with_offset = autoware_utils::calc_offset_pose(
     pose, longitudinal_offset * (is_driving_forward ? 1.0 : -1.0), 0.0, 0.0);
   return createIntendedPassArrowMarkerArray(
     pose_with_offset, module_name, ns_prefix + "intended_pass_", now, id,
-    createMarkerColor(0.77, 0.77, 0.77, 0.5));
+    create_marker_color(0.77, 0.77, 0.77, 0.5));
 }
 
 visualization_msgs::msg::MarkerArray createDeletedStopVirtualWallMarker(

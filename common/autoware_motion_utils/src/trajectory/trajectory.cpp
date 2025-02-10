@@ -637,7 +637,7 @@ void calculate_time_from_start(
     const auto velocity = std::max(min_velocity, from.longitudinal_velocity_mps);
     if (velocity != 0.0) {
       auto & to = trajectory[idx];
-      const auto t = universe_utils::calcDistance2d(from, to) / velocity;
+      const auto t = autoware_utils::calc_distance2d(from, to) / velocity;
       to.time_from_start = rclcpp::Duration::from_seconds(t) + from.time_from_start;
     }
   }

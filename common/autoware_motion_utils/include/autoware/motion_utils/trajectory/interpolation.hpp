@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY__INTERPOLATION_HPP_
 #define AUTOWARE__MOTION_UTILS__TRAJECTORY__INTERPOLATION_HPP_
 
-#include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware_utils/geometry/geometry.hpp"
 
 #include "autoware_internal_planning_msgs/msg/path_with_lane_id.hpp"
 #include "autoware_planning_msgs/msg/trajectory.hpp"
@@ -73,22 +73,22 @@ geometry_msgs::msg::Pose calcInterpolatedPose(const T & points, const double tar
   }
 
   if (points.size() < 2 || target_length < 0.0) {
-    return autoware::universe_utils::getPose(points.front());
+    return autoware_utils::get_pose(points.front());
   }
 
   double accumulated_length = 0;
   for (size_t i = 0; i < points.size() - 1; ++i) {
-    const auto & curr_pose = autoware::universe_utils::getPose(points.at(i));
-    const auto & next_pose = autoware::universe_utils::getPose(points.at(i + 1));
-    const double length = autoware::universe_utils::calcDistance3d(curr_pose, next_pose);
+    const auto & curr_pose = autoware_utils::get_pose(points.at(i));
+    const auto & next_pose = autoware_utils::get_pose(points.at(i + 1));
+    const double length = autoware_utils::calc_distance3d(curr_pose, next_pose);
     if (accumulated_length + length > target_length) {
       const double ratio = (target_length - accumulated_length) / std::max(length, 1e-6);
-      return autoware::universe_utils::calcInterpolatedPose(curr_pose, next_pose, ratio);
+      return autoware_utils::calc_interpolated_pose(curr_pose, next_pose, ratio);
     }
     accumulated_length += length;
   }
 
-  return autoware::universe_utils::getPose(points.back());
+  return autoware_utils::get_pose(points.back());
 }
 
 }  // namespace autoware::motion_utils
