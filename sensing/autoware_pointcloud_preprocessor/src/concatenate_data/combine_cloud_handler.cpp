@@ -288,9 +288,14 @@ CombineCloudHandler<PointCloud2Traits>::combine_pointclouds(
       transformed_delay_compensated_cloud_ptr = std::move(transformed_cloud_ptr);
     }
 
-    pcl::concatenatePointCloud(
-      *concatenate_cloud_result.concatenate_cloud_ptr, *transformed_delay_compensated_cloud_ptr,
-      *concatenate_cloud_result.concatenate_cloud_ptr);
+    if (
+      transformed_delay_compensated_cloud_ptr->width *
+        transformed_delay_compensated_cloud_ptr->height >
+      0) {
+      pcl::concatenatePointCloud(
+        *concatenate_cloud_result.concatenate_cloud_ptr, *transformed_delay_compensated_cloud_ptr,
+        *concatenate_cloud_result.concatenate_cloud_ptr);
+    }
 
     if (publish_synchronized_pointcloud_) {
       if (!concatenate_cloud_result.topic_to_transformed_cloud_map) {
