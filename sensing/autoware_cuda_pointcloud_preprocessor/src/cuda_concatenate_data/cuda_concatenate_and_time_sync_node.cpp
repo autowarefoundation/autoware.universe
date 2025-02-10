@@ -12,11 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/pointcloud_preprocessor/concatenate_data/cuda_concatenate_and_time_sync_node.hpp"
+#include "autoware/cuda_pointcloud_preprocessor/cuda_concatenate_data/cuda_concatenate_and_time_sync_node.hpp"
 
-#include "autoware/pointcloud_preprocessor/concatenate_data/cloud_collector.hpp"
-#include "autoware/pointcloud_preprocessor/concatenate_data/concatenate_and_time_sync_node.hpp"
-#include "autoware/pointcloud_preprocessor/concatenate_data/cuda_traits.hpp"
+#include "autoware/cuda_pointcloud_preprocessor/cuda_concatenate_data/cuda_cloud_collector.hpp"
+#include "autoware/cuda_pointcloud_preprocessor/cuda_concatenate_data/cuda_traits.hpp"
 #include "autoware/pointcloud_preprocessor/utility/memory.hpp"
 
 #include <memory>
@@ -71,4 +70,4 @@ template class autoware::pointcloud_preprocessor::
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(
-  autoware::pointcloud_preprocessor::CudaPointCloudConcatenateDataSynchronizerComponent)
+  autoware::cuda_pointcloud_preprocessor::CudaPointCloudConcatenateDataSynchronizerComponent)

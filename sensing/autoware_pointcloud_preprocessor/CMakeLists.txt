@@ -13,13 +13,6 @@ find_package(Sophus REQUIRED)
 find_package(Boost REQUIRED)
 find_package(PCL REQUIRED)
 find_package(CGAL REQUIRED COMPONENTS Core)
-find_package(CUDA)
-
-if(${CUDA_FOUND})
-  add_definitions(-DUSE_CUDA)
-else()
-  message("CUDA wat not found. Disabling CUDA-dependent functionalities")
-endif()
 
 include_directories(
   include
@@ -71,25 +64,32 @@ ament_target_dependencies(faster_voxel_grid_downsample_filter
   sensor_msgs
 )
 
-cuda_add_library(pointcloud_preprocessor_filter_cuda SHARED
-  src/concatenate_data/cuda_combine_cloud_handler_kernel.cu
-)
-
-target_include_directories(pointcloud_preprocessor_filter_cuda PUBLIC
-  ${cuda_blackboard_INCLUDE_DIRS}
-)
-
-ament_auto_add_library(pointcloud_preprocessor_filter SHARED
+add_library(concatenate_data SHARED
   src/concatenate_data/concatenate_and_time_sync_node.cpp
   src/concatenate_data/combine_cloud_handler.cpp
   src/concatenate_data/cloud_collector.cpp
   src/concatenate_data/collector_matching_strategy.cpp
   src/concatenate_data/concatenate_pointclouds.cpp
-  # TODO(knzo25): move to another package
-  src/concatenate_data/cuda_concatenate_and_time_sync_node.cpp
-  src/concatenate_data/cuda_combine_cloud_handler.cpp
-  src/concatenate_data/cuda_cloud_collector.cpp
-  src/concatenate_data/cuda_collector_matching_strategy.cpp
+)
+
+target_include_directories(concatenate_data PUBLIC
+  "$<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>"
+  "$<INSTALL_INTERFACE:include/${PROJECT_NAME}>"
+)
+
+ament_target_dependencies(concatenate_data
+  SYSTEM
+  pcl_conversions
+  rclcpp
+  sensor_msgs
+  tf2_ros
+  autoware_universe_utils
+  pcl_ros
+  autoware_point_types
+)
+
+ament_auto_add_library(pointcloud_preprocessor_filter SHARED
+
   src/crop_box_filter/crop_box_filter_node.cpp
   src/time_synchronizer/time_synchronizer_node.cpp
   src/downsample_filter/voxel_grid_downsample_filter_node.cpp
@@ -115,8 +115,8 @@ ament_auto_add_library(pointcloud_preprocessor_filter SHARED
 
 target_link_libraries(pointcloud_preprocessor_filter
   pointcloud_preprocessor_filter_base
-  pointcloud_preprocessor_filter_cuda
   faster_voxel_grid_downsample_filter
+  concatenate_data
   ${Boost_LIBRARIES}
   ${CUDA_LIBRARIES}
   ${OpenCV_LIBRARIES}
@@ -138,11 +138,6 @@ rclcpp_components_register_node(pointcloud_preprocessor_filter
 rclcpp_components_register_node(pointcloud_preprocessor_filter
   PLUGIN "autoware::pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent"
   EXECUTABLE concatenate_and_time_sync_node)
-
-# ========== (CUDA) Concatenate and Sync data ==========
-rclcpp_components_register_node(pointcloud_preprocessor_filter
-  PLUGIN "autoware::pointcloud_preprocessor::CudaPointCloudConcatenateDataSynchronizerComponent"
-  EXECUTABLE cuda_concatenate_and_time_sync_node)
 
 # ========== CropBox ==========
 rclcpp_components_register_node(pointcloud_preprocessor_filter
@@ -243,6 +238,13 @@ install(
 
 install(
   TARGETS faster_voxel_grid_downsample_filter EXPORT export_${PROJECT_NAME}
+  ARCHIVE DESTINATION lib
+  LIBRARY DESTINATION lib
+  RUNTIME DESTINATION bin
+)
+
+install(
+  TARGETS concatenate_data EXPORT export_${PROJECT_NAME}
   ARCHIVE DESTINATION lib
   LIBRARY DESTINATION lib
   RUNTIME DESTINATION bin

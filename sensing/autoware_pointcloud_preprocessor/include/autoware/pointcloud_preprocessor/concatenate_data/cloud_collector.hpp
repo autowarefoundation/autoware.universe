@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include "cuda_combine_cloud_handler.hpp"
+#include "combine_cloud_handler.hpp"
 
 #include <memory>
 #include <string>

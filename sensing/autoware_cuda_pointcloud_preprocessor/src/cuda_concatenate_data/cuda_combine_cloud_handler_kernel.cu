@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/pointcloud_preprocessor/concatenate_data/cuda_combine_cloud_handler_kernel.hpp"
+#include "autoware/cuda_pointcloud_preprocessor/cuda_concatenate_data/cuda_combine_cloud_handler_kernel.hpp"
 
 #include <cuda_runtime.h>
 
@@ -46,7 +46,7 @@ void transform_launch(
   PointTypeStruct * output_points, cudaStream_t & stream)
 {
   constexpr int threads_per_block = 256;
-  const int block_per_grid = (num_points + block_per_grid - 1) / threads_per_block;
+  const int block_per_grid = (num_points + threads_per_block - 1) / threads_per_block;
 
   transform_kernel<<<block_per_grid, threads_per_block, 0, stream>>>(
     input_points, num_points, transform, output_points);

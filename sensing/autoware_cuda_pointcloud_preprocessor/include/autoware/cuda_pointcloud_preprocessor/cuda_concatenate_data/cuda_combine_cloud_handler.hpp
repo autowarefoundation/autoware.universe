@@ -14,8 +14,8 @@
 
 #pragma once
 
+#include "autoware/cuda_pointcloud_preprocessor/cuda_concatenate_data/cuda_traits.hpp"
 #include "autoware/pointcloud_preprocessor/concatenate_data/combine_cloud_handler.hpp"
-#include "autoware/pointcloud_preprocessor/concatenate_data/cuda_traits.hpp"
 
 namespace autoware::pointcloud_preprocessor
 {

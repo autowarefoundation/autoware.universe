@@ -12,12 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__POINTCLOUD_PREPROCESSOR__CONCATENATE_DATA__CUDA_COMBINE_CLOUD_HANDLER_KERNEL_HPP_
-#define AUTOWARE__POINTCLOUD_PREPROCESSOR__CONCATENATE_DATA__CUDA_COMBINE_CLOUD_HANDLER_KERNEL_HPP_
+#ifndef AUTOWARE__CUDA_POINTCLOUD_PREPROCESSOR__CUDA_CONCATENATE_DATA__CUDA_COMBINE_CLOUD_HANDLER_KERNEL_HPP_
+#define AUTOWARE__CUDA_POINTCLOUD_PREPROCESSOR__CUDA_CONCATENATE_DATA__CUDA_COMBINE_CLOUD_HANDLER_KERNEL_HPP_
 
-#ifdef USE_CUDA
 #include <cuda_runtime.h>
-#endif
 
 #include <cstdint>
 
@@ -50,12 +48,10 @@ struct PointTypeStruct
   std::uint16_t channel;
 };
 
-#ifdef USE_CUDA
 void transform_launch(
   const PointTypeStruct * input_points, int num_points, TransformStruct transform,
   PointTypeStruct * output_points, cudaStream_t & stream);
-#endif
 
 }  // namespace autoware::pointcloud_preprocessor
 
-#endif  // AUTOWARE__POINTCLOUD_PREPROCESSOR__CONCATENATE_DATA__CUDA_COMBINE_CLOUD_HANDLER_KERNEL_HPP_
+#endif  // AUTOWARE__CUDA_POINTCLOUD_PREPROCESSOR__CUDA_CONCATENATE_DATA__CUDA_COMBINE_CLOUD_HANDLER_KERNEL_HPP_

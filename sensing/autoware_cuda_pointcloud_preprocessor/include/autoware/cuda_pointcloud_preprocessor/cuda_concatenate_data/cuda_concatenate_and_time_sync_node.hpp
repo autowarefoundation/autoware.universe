@@ -14,27 +14,29 @@
 
 #pragma once
 
+#include "autoware/cuda_pointcloud_preprocessor/cuda_concatenate_data/cuda_traits.hpp"
 #include "autoware/pointcloud_preprocessor/concatenate_data/concatenate_and_time_sync_node.hpp"
-#include "autoware/pointcloud_preprocessor/concatenate_data/cuda_traits.hpp"
 
 #include <cuda_blackboard/cuda_blackboard_publisher.hpp>
 #include <cuda_blackboard/cuda_blackboard_subscriber.hpp>
 #include <cuda_blackboard/cuda_pointcloud2.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-namespace autoware::pointcloud_preprocessor
+namespace autoware::cuda_pointcloud_preprocessor
 {
 
 class CudaPointCloudConcatenateDataSynchronizerComponent
-: public PointCloudConcatenateDataSynchronizerComponentTemplated<CudaPointCloud2Traits>
+: public autoware::pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponentTemplated<
+    autoware::pointcloud_preprocessor::CudaPointCloud2Traits>
 {
 public:
   explicit CudaPointCloudConcatenateDataSynchronizerComponent(
     const rclcpp::NodeOptions & node_options)
-  : PointCloudConcatenateDataSynchronizerComponentTemplated<CudaPointCloud2Traits>(node_options)
+  : autoware::pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponentTemplated<
+      autoware::pointcloud_preprocessor::CudaPointCloud2Traits>(node_options)
   {
   }
   ~CudaPointCloudConcatenateDataSynchronizerComponent() override = default;
 };
 
-}  // namespace autoware::pointcloud_preprocessor
+}  // namespace autoware::cuda_pointcloud_preprocessor

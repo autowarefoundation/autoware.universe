@@ -25,7 +25,6 @@
 #include "cloud_collector.hpp"
 #include "collector_matching_strategy.hpp"
 #include "combine_cloud_handler.hpp"
-#include "cuda_traits.hpp"
 #include "traits.hpp"
 
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
