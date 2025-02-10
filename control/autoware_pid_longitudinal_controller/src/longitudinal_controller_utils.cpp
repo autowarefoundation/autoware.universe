@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "autoware/pid_longitudinal_controller/longitudinal_controller_utils.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
 
 #include "tf2/LinearMath/Matrix3x3.h"
 #include "tf2/LinearMath/Quaternion.h"
