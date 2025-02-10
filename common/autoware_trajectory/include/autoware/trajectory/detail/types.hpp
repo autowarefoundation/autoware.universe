@@ -19,10 +19,10 @@
 
 #include <Eigen/Core>
 
+#include <autoware_internal_planning_msgs/msg/path_point_with_lane_id.hpp>
 #include <autoware_planning_msgs/msg/path_point.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/pose.hpp>
-#include <tier4_planning_msgs/msg/path_point_with_lane_id.hpp>
 
 namespace autoware::trajectory::detail
 {
@@ -63,13 +63,13 @@ struct ImmutablePoint3d : ImmutablePoint2d
 MutablePoint3d to_point(geometry_msgs::msg::Point & p);
 MutablePoint3d to_point(geometry_msgs::msg::Pose & p);
 MutablePoint3d to_point(autoware_planning_msgs::msg::PathPoint & p);
-MutablePoint3d to_point(tier4_planning_msgs::msg::PathPointWithLaneId & p);
+MutablePoint3d to_point(autoware_internal_planning_msgs::msg::PathPointWithLaneId & p);
 MutablePoint2d to_point(lanelet::BasicPoint2d & p);
 
 ImmutablePoint3d to_point(const geometry_msgs::msg::Point & p);
 ImmutablePoint3d to_point(const geometry_msgs::msg::Pose & p);
 ImmutablePoint3d to_point(const autoware_planning_msgs::msg::PathPoint & p);
-ImmutablePoint3d to_point(const tier4_planning_msgs::msg::PathPointWithLaneId & p);
+ImmutablePoint3d to_point(const autoware_internal_planning_msgs::msg::PathPointWithLaneId & p);
 ImmutablePoint2d to_point(const lanelet::BasicPoint2d & p);
 
 }  // namespace autoware::trajectory::detail

@@ -31,7 +31,7 @@ std::shared_ptr<PlanningInterfaceTestManager> generateTestManager()
   auto test_manager = std::make_shared<PlanningInterfaceTestManager>();
 
   // set subscriber with topic name: behavior_path_planner → test_node_
-  test_manager->subscribeOutput<tier4_planning_msgs::msg::PathWithLaneId>(
+  test_manager->subscribeOutput<autoware_internal_planning_msgs::msg::PathWithLaneId>(
     "behavior_path_planner/output/path");
 
   return test_manager;

@@ -746,7 +746,7 @@ void GoalPlannerModule::updateData()
     }
   }
 
-  if (getCurrentStatus() == ModuleStatus::IDLE && !isExecutionRequested()) {
+  if (getCurrentStatus() == ModuleStatus::IDLE) {
     return;
   }
 
