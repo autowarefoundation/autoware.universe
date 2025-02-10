@@ -213,7 +213,8 @@ bool TrafficLightModule::isPassthrough(const double & signed_arc_length) const
     delay_response_time);
 
   const bool distance_stoppable = pass_judge_line_distance < signed_arc_length;
-  const bool slow_velocity = planner_data_->current_velocity->twist.linear.x < 2.0;
+  const bool slow_velocity =
+    planner_data_->current_velocity->twist.linear.x < planner_param_.yellow_light_stop_velocity;
   const bool stoppable = distance_stoppable || slow_velocity;
   const bool reachable = signed_arc_length < reachable_distance;
 
@@ -274,11 +275,11 @@ bool TrafficLightModule::isTrafficSignalTimedOut() const
   return false;
 }
 
-tier4_planning_msgs::msg::PathWithLaneId TrafficLightModule::insertStopPose(
-  const tier4_planning_msgs::msg::PathWithLaneId & input, const size_t & insert_target_point_idx,
-  const Eigen::Vector2d & target_point)
+autoware_internal_planning_msgs::msg::PathWithLaneId TrafficLightModule::insertStopPose(
+  const autoware_internal_planning_msgs::msg::PathWithLaneId & input,
+  const size_t & insert_target_point_idx, const Eigen::Vector2d & target_point)
 {
-  tier4_planning_msgs::msg::PathWithLaneId modified_path;
+  autoware_internal_planning_msgs::msg::PathWithLaneId modified_path;
   modified_path = input;
 
   // Create stop pose

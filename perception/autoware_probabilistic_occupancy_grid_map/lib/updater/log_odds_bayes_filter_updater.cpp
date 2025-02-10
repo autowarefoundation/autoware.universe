@@ -80,8 +80,8 @@ bool OccupancyGridMapLOBFUpdater::update(
 #else
   if (use_cuda_) {
     RCLCPP_ERROR(logger_, "The code was compiled without cuda.");
-    return false;
-#endif
+    retur
+
   } else {
     for (unsigned int x = 0; x < getSizeInCellsX(); x++) {
       for (unsigned int y = 0; y < getSizeInCellsY(); y++) {
