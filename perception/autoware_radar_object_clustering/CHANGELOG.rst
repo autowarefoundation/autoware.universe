@@ -2,6 +2,9 @@
 Changelog for package autoware_radar_object_clustering
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.41.0 (2025-01-29)
 -------------------
 

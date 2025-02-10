@@ -2,6 +2,11 @@
 Changelog for package autoware_map_height_fitter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* fix(autoware_map_height_fitter): find PCL package after autoware_package() is called (`#10070 <https://github.com/youtalk/autoware.universe/issues/10070>`_)
+* Contributors: Ryohsuke Mitsudome
+
 0.41.0 (2025-01-29)
 -------------------
 

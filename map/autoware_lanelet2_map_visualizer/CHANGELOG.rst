@@ -3,6 +3,9 @@ Changelog for package autoware_lanelet2_map_visualizer
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
 
+Forthcoming
+-----------
+
 0.41.0 (2025-01-29)
 -------------------
 

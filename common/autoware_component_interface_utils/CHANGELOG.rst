@@ -2,6 +2,9 @@
 Changelog for package autoware_component_interface_utils
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+
 0.41.0 (2025-01-29)
 -------------------
 
