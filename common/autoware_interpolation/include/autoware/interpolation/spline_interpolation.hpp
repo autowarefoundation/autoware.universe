@@ -16,7 +16,7 @@
 #define AUTOWARE__INTERPOLATION__SPLINE_INTERPOLATION_HPP_
 
 #include "autoware/interpolation/interpolation_utils.hpp"
-#include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware_utils/geometry/geometry.hpp"
 
 #include <Eigen/Core>
 
