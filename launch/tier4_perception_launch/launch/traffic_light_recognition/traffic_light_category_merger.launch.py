@@ -32,7 +32,7 @@ def create_traffic_light_category_merger(namespace):
     arguments = {
         "input/car_signals": "classified/car/traffic_signals",
         "input/pedestrian_signals": "classified/pedestrian/traffic_signals",
-        "output/traffic_light_signals": f"/perception/traffic_light_recognition/{namespace}/classification/traffic_signals",
+        "output/traffic_signals": f"/perception/traffic_light_recognition/{namespace}/classification/traffic_signals",
     }.items()
 
     group = GroupAction(

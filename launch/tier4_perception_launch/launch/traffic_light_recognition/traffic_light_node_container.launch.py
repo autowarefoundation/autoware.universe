@@ -25,6 +25,7 @@ from launch.conditions import IfCondition
 from launch.conditions import UnlessCondition
 from launch.substitutions import LaunchConfiguration
 from launch.substitutions import PathJoinSubstitution
+from launch.substitutions import TextSubstitution
 from launch.substitutions import PythonExpression
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import LoadComposableNodes
@@ -68,6 +69,7 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
         "output/traffic_signals": f"/perception/traffic_light_recognition/{namespace}/classification/traffic_signals",
         "output/car/traffic_signals": f"/perception/traffic_light_recognition/{namespace}/classification/car/traffic_signals",
         "output/pedestrian/traffic_signals": f"/perception/traffic_light_recognition/{namespace}/classification/pedestrian/traffic_signals",
+        "output/debug": f"/perception/traffic_light_recognition/{namespace}/detection/rois/debug",
     }
 
     def create_parameter_dict(*args):
@@ -219,20 +221,19 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
                         "model_path": PathJoinSubstitution(
                             [
                                 LaunchConfiguration("whole_image_detector_model_path"),
-                                "tensorrt_yolox",
                                 LaunchConfiguration("whole_image_detector_model_name"),
                             ]
                         ),
                         "label_path": PathJoinSubstitution(
                             [
                                 LaunchConfiguration("whole_image_detector_model_path"),
-                                "tensorrt_yolox/car_ped_tl_detector_labels.txt",
+                                "car_ped_tl_detector_labels.txt",
                             ]
                         ),
                         "color_map_path": PathJoinSubstitution(
                             [
                                 LaunchConfiguration("whole_image_detector_model_path"),
-                                "tensorrt_yolox/semseg_color_map.csv",
+                                "semseg_color_map.csv",
                             ]
                         ),
                         "build_only": False,
@@ -242,6 +243,10 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
                 remappings=[
                     ("~/in/image", camera_arguments["input/image"]),
                     ("~/out/objects", "ml_detected/rois"),
+                    ("~/out/image", camera_arguments["output/debug"] + "/image"),
+                    ("~/out/image/compressed", camera_arguments["output/debug"] + "/image/compressed"),
+                    ("~/out/image/compressedDepth", camera_arguments["output/debug"] + "/image/compressedDepth"),
+                    ("~/out/image/theora", camera_arguments["output/debug"] + "/image/theora"),
                 ],
                 extra_arguments=[
                     {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
@@ -262,7 +267,7 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
                     ("input/rough_rois", "rough/rois"),
                     ("input/expect_rois", "expect/rois"),
                     ("input/camera_info", camera_arguments["input/camera_info"]),
-                    ("output/traffic_light_rois", camera_arguments["output/rois"]),
+                    ("output/traffic_rois", camera_arguments["output/rois"]),
                 ],
             ),
         ],
@@ -310,7 +315,7 @@ def generate_launch_description():
         os.path.join(fine_detector_share_dir, "config", "traffic_light_fine_detector.param.yaml"),
     )
     # traffic_light_detector
-    add_launch_arg("whole_image_detector_model_path", "$HOME/autoware_data")
+    add_launch_arg("whole_image_detector_model_path", os.path.expandvars("$HOME/autoware_data/tensorrt_yolox"))
     add_launch_arg("whole_image_detector_model_name", "tlr_car_ped_yolox_s_960_960_batch_1")
     add_launch_arg(
         "whole_image_detector_param_path",
