@@ -1671,22 +1671,14 @@ std::vector<geometry_msgs::msg::Point> calcBound(
              : postProcess(bound, path, planner_data, drivable_lanes, is_left, is_driving_forward);
   };
 
-  // Step2. if there is no drivable area defined by polygon, return original drivable bound.
-  if (!enable_expanding_hatched_road_markings && !enable_expanding_intersection_areas) {
-    return post_process(removeOverlapPoints(to_ros_point(bound_points)), skip_post_process);
-  }
-
-  // Step3.if there are hatched road markings, expand drivable bound with the polygon.
+  // if there is no drivable area defined by polygon, return original drivable bound.
+  // if there are hatched road markings, expand drivable bound with the polygon.
+  // if there are intersection areas, expand drivable bound with the polygon.
   if (enable_expanding_hatched_road_markings) {
     bound_points = getBoundWithHatchedRoadMarkings(bound_points, route_handler);
   }
 
-  if (!enable_expanding_intersection_areas) {
-    return post_process(removeOverlapPoints(to_ros_point(bound_points)), skip_post_process);
-  }
-
-  // Step4. if there are intersection areas, expand drivable bound with the polygon.
-  {
+  if (enable_expanding_intersection_areas) {
     bound_points =
       getBoundWithIntersectionAreas(bound_points, route_handler, drivable_lanes, is_left);
   }
