@@ -59,7 +59,8 @@ private:
   message_filters::Subscriber<TrafficLightRoiArray> expected_rois_sub_;
   message_filters::Subscriber<sensor_msgs::msg::CameraInfo> camera_info_sub_;
   typedef message_filters::sync_policies::ApproximateTime<
-    DetectedObjectsWithFeature, TrafficLightRoiArray, TrafficLightRoiArray, sensor_msgs::msg::CameraInfo>
+    DetectedObjectsWithFeature, TrafficLightRoiArray, TrafficLightRoiArray,
+    sensor_msgs::msg::CameraInfo>
     SyncPolicy;
   typedef message_filters::Synchronizer<SyncPolicy> Sync;
   Sync sync_;

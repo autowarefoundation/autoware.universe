@@ -50,7 +50,8 @@ TrafficLightSelectorNode::TrafficLightSelectorNode(const rclcpp::NodeOptions & n
   using std::placeholders::_2;
   using std::placeholders::_3;
   using std::placeholders::_4;
-  sync_.registerCallback(std::bind(&TrafficLightSelectorNode::objectsCallback, this, _1, _2, _3, _4));
+  sync_.registerCallback(
+    std::bind(&TrafficLightSelectorNode::objectsCallback, this, _1, _2, _3, _4));
 
   // Publisher
   pub_traffic_light_rois_ =
