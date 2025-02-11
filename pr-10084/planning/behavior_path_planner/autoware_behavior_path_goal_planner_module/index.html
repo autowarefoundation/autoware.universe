@@ -14609,8 +14609,9 @@
 <li><em>bezier</em> based path planning</li>
 </ul>
 <p>depending on the situation and configuration. If <code>use_bus_stop_area</code> is true and the goal is on a BusStopArea regulatory element and the estimated pull over angle(the difference of pose between the shift start and shift end) is larger than <code>bezier_parking.pull_over_angle_threshold</code>, <a href="https://autowarefoundation.github.io/autoware.universe/main/planning/sampling_based_planner/autoware_bezier_sampler/"><em>bezier</em> based path planner</a> works to generate path candidates. Otherwise <a href="https://autowarefoundation.github.io/autoware.universe/main/planning/behavior_path_planner/autoware_behavior_path_planner_common/docs/behavior_path_planner_path_generation_design/"><em>shift</em> based path planner</a> works. <em>bezier</em> based path planner tends to generate more natural paths on a curved lane than <em>shift</em> based path planner, so it is used if the shift requires a certain amount of pose rotation.</p>
+<p>The overall flow is as follows.</p>
 <p><img alt="threads.png" src="images/goal_planner-threads.drawio.svg"></p>
-<p>The main thread and the each thread communicate by sending <em>request</em> and <em>response</em> respectively. The main thread sends latest main thread data as <code>LaneParkingRequest/FreespaceParkingRequest</code> and each thread sets <code>LaneParkingResponse/FreespaceParkingResponse</code> as the output when it's finished.</p>
+<p>The main thread and the each thread communicate by sending <em>request</em> and <em>response</em> respectively. The main thread sends latest main thread data as <code>LaneParkingRequest/FreespaceParkingRequest</code> and each thread sets <code>LaneParkingResponse/FreespaceParkingResponse</code> as the output when it's finished. The bluish blocks on the flow diagram are the <em>critical section</em>.</p>
 <p>While</p>
 <ul>
 <li>there are no path candidates, or</li>
@@ -14755,8 +14756,8 @@
 </tbody>
 </table>
 <h3 id="geometric-parallel-parking"><strong>geometric parallel parking</strong><a class="headerlink" href="#geometric-parallel-parking" title="Permanent link">#</a></h3>
-<p>This method generate two arc paths with discontinuous curvature. It stops twice in the middle of the path to do dry steering. There are two path generation methods: forward and backward.
-See also <a href="https://www.sciencedirect.com/science/article/pii/S1474667015347431">[1]</a> for details of the algorithm. There is also <a href="https://github.com/kosuke55/geometric-parallel-parking">a simple python implementation</a>.</p>
+<p>This method generate two arc paths with discontinuous curvature. It stops twice in the middle of the path to do <a href="https://en.wikipedia.org/wiki/Dry_steering">dry steering</a>. There are two path generation methods: forward and backward.</p>
+<p>See also <a href="https://www.sciencedirect.com/science/article/pii/S1474667015347431">[1]</a> for details of the algorithm. There is also <a href="https://github.com/kosuke55/geometric-parallel-parking">a simple python implementation</a>.</p>
 <h4 id="parameters-geometric-parallel-parking">Parameters geometric parallel parking<a class="headerlink" href="#parameters-geometric-parallel-parking" title="Permanent link">#</a></h4>
 <table>
 <thead>
@@ -14906,8 +14907,12 @@ See also <a href="https://www.sciencedirect.com/science/article/pii/S14746670153
 </table>
 <p>See <a href="../autoware_freespace_planner/README.md">freespace_planner</a> for other parameters.</p>
 <h3 id="bezier-parking">bezier parking<a class="headerlink" href="#bezier-parking" title="Permanent link">#</a></h3>
+<p><em>shift</em> based path planner tends to generate unnatural path when the shift lane is curved as illustrated below.</p>
+<p><img src="./images/bad_shift_path.png" width="600"></p>
+<p><em>bezier</em> based path planner interpolates the shift path start and end pose using tbe bezier curve for a several combination of parameters, to obtain a better result through the later selection process. In the below screenshot the goal is on a BusStopArea and <code>use_bus_stop_area</code> is set to true, so <em>bezier</em> planner is triggered instead. Internally, goal<em>planner first tries to use _shift</em> planner, and if it turns out that the shift start and end is not parallel, it switches to <em>bezier</em> planner from the next process.</p>
+<p><img src="./images/bezier_path.png" width="600"></p>
 <h2 id="collision-check-for-path-generation"><strong>collision check for path generation</strong><a class="headerlink" href="#collision-check-for-path-generation" title="Permanent link">#</a></h2>
-<p>To select a safe one from the path candidates, a collision check with obstacles is performed.</p>
+<p>To select a safe one from the path candidates, collision is checked against parked objects for each path.</p>
 <h3 id="occupancy-grid-based-collision-check"><strong>occupancy grid based collision check</strong><a class="headerlink" href="#occupancy-grid-based-collision-check" title="Permanent link">#</a></h3>
 <p>Generate footprints from ego-vehicle path points and determine obstacle collision from the value of occupancy_grid of the corresponding cell.</p>
 <h4 id="parameters-for-occupancy-grid-based-collision-check">Parameters for occupancy grid based collision check<a class="headerlink" href="#parameters-for-occupancy-grid-based-collision-check" title="Permanent link">#</a></h4>
@@ -14967,8 +14972,7 @@ See also <a href="https://www.sciencedirect.com/science/article/pii/S14746670153
 </tbody>
 </table>
 <h3 id="object-recognition-based-collision-check"><strong>object recognition based collision check</strong><a class="headerlink" href="#object-recognition-based-collision-check" title="Permanent link">#</a></h3>
-<p>A collision decision is made for each of the path candidates, and a collision-free path is selected.
-There are three main margins at this point.</p>
+<p>collision is checked for each of the path candidates. There are three margins for this purpose.</p>
 <ul>
 <li><code>object_recognition_collision_check_margin</code> is margin in all directions of ego.</li>
 <li>In the forward direction, a margin is added by the braking distance calculated from the current speed and maximum deceleration. The maximum distance is The maximum value of the distance is suppressed by the <code>object_recognition_collision_check_max_extra_stopping_margin</code></li>
@@ -15192,7 +15196,6 @@ This method integrates the footprints of egos and objects at a given time and ch
 </table>
 <h2 id="path-deciding"><strong>path deciding</strong><a class="headerlink" href="#path-deciding" title="Permanent link">#</a></h2>
 <p>When <code>decide_path_distance</code> closer to the start of the pull over, if it is collision-free at that time and safe for the predicted path of the objects, it transitions to DECIDING. If it is safe for a certain period of time, it moves to DECIDED.</p>
-<p><img alt="path_deciding" src="images/goal_planner-deciding_path.drawio.svg"></p>
 <h2 id="unimplemented-parts-limitations">Unimplemented parts / limitations<a class="headerlink" href="#unimplemented-parts-limitations" title="Permanent link">#</a></h2>
 <ul>
 <li>Only shift pull over can be executed concurrently with other modules</li>
