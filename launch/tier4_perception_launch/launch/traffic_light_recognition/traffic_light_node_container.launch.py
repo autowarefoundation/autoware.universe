@@ -69,6 +69,7 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
         "output/traffic_signals": f"/perception/traffic_light_recognition/{namespace}/classification/traffic_signals",
         "output/car/traffic_signals": f"/perception/traffic_light_recognition/{namespace}/classification/car/traffic_signals",
         "output/pedestrian/traffic_signals": f"/perception/traffic_light_recognition/{namespace}/classification/pedestrian/traffic_signals",
+        "output/traffic_signals": f"/perception/traffic_light_recognition/{namespace}/classification/traffic_signals",
         "output/debug": f"/perception/traffic_light_recognition/{namespace}/detection/rois/debug",
     }
 
@@ -269,6 +270,18 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
                     ("input/expect_rois", "expect/rois"),
                     ("input/camera_info", camera_arguments["input/camera_info"]),
                     ("output/traffic_rois", camera_arguments["output/rois"]),
+                ],
+            ),
+            ComposableNode(
+                package="autoware_traffic_light_category_merger",
+                plugin="autoware::traffic_light::TrafficLightCategoryMergerNode",
+                name="traffic_light_category_merger",
+                namespace=f"{namespace}/classification",
+                parameters=[],
+                remappings=[
+                    ("input/car_signals", "classified/car/traffic_signals"),
+                    ("input/pedestrian_signals", "classified/pedestrian/traffic_signals"),
+                    ("output/traffic_signals", camera_arguments["output/traffic_signals"]),
                 ],
             ),
         ],
