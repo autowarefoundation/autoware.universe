@@ -662,20 +662,15 @@ std::optional<size_t> getOverlappedLaneletId(const std::vector<DrivableLanes> & 
     return {};
   }
 
-  size_t overlapped_idx = lanes.size();
   for (size_t i = 0; i < lanes.size() - 2; ++i) {
     for (size_t j = i + 2; j < lanes.size(); ++j) {
       if (overlaps(lanes.at(i), lanes.at(j))) {
-        overlapped_idx = std::min(overlapped_idx, j);
+        return j;
       }
     }
   }
 
-  if (overlapped_idx == lanes.size()) {
-    return {};
-  }
-
-  return overlapped_idx;
+  return {};
 }
 
 std::vector<DrivableLanes> cutOverlappedLanes(
