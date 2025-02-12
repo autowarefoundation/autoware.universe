@@ -76,7 +76,8 @@ TrafficLightArbiter::TrafficLightArbiter(const rclcpp::NodeOptions & options)
   external_priority_ = this->declare_parameter<bool>("external_priority");
   enable_signal_matching_ = this->declare_parameter<bool>("enable_signal_matching")
 
-  if (enable_signal_matching_) {
+                              if (enable_signal_matching_)
+  {
     signal_match_validator_ = std::make_unique<SignalMatchValidator>();
     signal_match_validator_->setExternalPriority(external_priority_);
   }
