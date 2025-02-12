@@ -88,7 +88,8 @@ private:
     const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_camera_info_msg,
     const std::size_t rois_id);
 
-  void init_strategy();
+  void initialize_strategy();
+  void initialize_collector_list();
   void manage_collector_list();
   void manage_concatenated_status_map(double current_timestam);
 
@@ -130,7 +131,8 @@ private:
   bool drop_previous_but_late_output_msg_{false};
   bool publish_output_msg_{false};
   bool msg3d_fused_{true};
-  static constexpr const int collectors_threshold = 20;
+  static constexpr const int num_of_collectors = 10;
+  bool init_collector_list_{false};
 
 protected:
   void initialize_det2d_status(std::size_t rois_number);
