@@ -22,6 +22,7 @@
 #include <autoware_lanelet2_extension/regulatory_elements/road_marking.hpp>  // for lanelet::autoware::RoadMarking
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
+#include <autoware_utils/geometry/geometry.hpp>
 
 #include <boost/geometry/algorithms/intersection.hpp>
 #include <boost/geometry/algorithms/within.hpp>
@@ -38,11 +39,11 @@
 #include <utility>
 #include <vector>
 
-namespace autoware::universe_utils
+namespace autoware_utils
 {
 
 template <>
-inline geometry_msgs::msg::Point getPoint(const lanelet::ConstPoint3d & p)
+inline geometry_msgs::msg::Point get_point(const lanelet::ConstPoint3d & p)
 {
   geometry_msgs::msg::Point point;
   point.x = p.x();
@@ -51,7 +52,7 @@ inline geometry_msgs::msg::Point getPoint(const lanelet::ConstPoint3d & p)
   return point;
 }
 
-}  // namespace autoware::universe_utils
+}  // namespace autoware_utils
 
 namespace
 {

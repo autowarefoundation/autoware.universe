@@ -15,10 +15,10 @@
 #ifndef AUTOWARE__MOTION_UTILS__TRAJECTORY__TRAJECTORY_HPP_
 #define AUTOWARE__MOTION_UTILS__TRAJECTORY__TRAJECTORY_HPP_
 
-#include "autoware/universe_utils/geometry/geometry.hpp"
-#include "autoware/universe_utils/geometry/pose_deviation.hpp"
-#include "autoware/universe_utils/math/constants.hpp"
-#include "autoware/universe_utils/system/backtrace.hpp"
+#include "autoware_utils/geometry/geometry.hpp"
+#include "autoware_utils/geometry/pose_deviation.hpp"
+#include "autoware_utils/math/constants.hpp"
+#include "autoware_utils/system/backtrace.hpp"
 
 #include <Eigen/Geometry>
 #include <rclcpp/logging.hpp>
@@ -51,7 +51,7 @@ template <class T>
 void validateNonEmpty(const T & points)
 {
   if (points.empty()) {
-    autoware::universe_utils::print_backtrace();
+    autoware_utils::print_backtrace();
     throw std::invalid_argument("[autoware_motion_utils] validateNonEmpty(): Points is empty.");
   }
 }
@@ -73,22 +73,22 @@ extern template void validateNonEmpty<std::vector<autoware_planning_msgs::msg::T
 template <class T>
 void validateNonSharpAngle(
   const T & point1, const T & point2, const T & point3,
-  const double angle_threshold = autoware::universe_utils::pi / 4)
+  const double angle_threshold = autoware_utils::pi / 4)
 {
-  const auto p1 = autoware::universe_utils::getPoint(point1);
-  const auto p2 = autoware::universe_utils::getPoint(point2);
-  const auto p3 = autoware::universe_utils::getPoint(point3);
+  const auto p1 = autoware_utils::get_point(point1);
+  const auto p2 = autoware_utils::get_point(point2);
+  const auto p3 = autoware_utils::get_point(point3);
 
   const std::vector vec_1to2 = {p2.x - p1.x, p2.y - p1.y, p2.z - p1.z};
   const std::vector vec_3to2 = {p2.x - p3.x, p2.y - p3.y, p2.z - p3.z};
   const auto product = std::inner_product(vec_1to2.begin(), vec_1to2.end(), vec_3to2.begin(), 0.0);
 
-  const auto dist_1to2 = autoware::universe_utils::calcDistance3d(p1, p2);
-  const auto dist_3to2 = autoware::universe_utils::calcDistance3d(p3, p2);
+  const auto dist_1to2 = autoware_utils::calc_distance3d(p1, p2);
+  const auto dist_3to2 = autoware_utils::calc_distance3d(p3, p2);
 
   constexpr double epsilon = 1e-3;
   if (std::cos(angle_threshold) < product / dist_1to2 / dist_3to2 + epsilon) {
-    autoware::universe_utils::print_backtrace();
+    autoware_utils::print_backtrace();
     throw std::invalid_argument(
       "[autoware_motion_utils] validateNonSharpAngle(): Too sharp angle.");
   }
@@ -107,10 +107,10 @@ std::optional<bool> isDrivingForward(const T & points)
   }
 
   // check the first point direction
-  const auto & first_pose = autoware::universe_utils::getPose(points.at(0));
-  const auto & second_pose = autoware::universe_utils::getPose(points.at(1));
+  const auto & first_pose = autoware_utils::get_pose(points.at(0));
+  const auto & second_pose = autoware_utils::get_pose(points.at(1));
 
-  return autoware::universe_utils::isDrivingForward(first_pose, second_pose);
+  return autoware_utils::is_driving_forward(first_pose, second_pose);
 }
 
 extern template std::optional<bool>
@@ -136,10 +136,10 @@ std::optional<bool> isDrivingForwardWithTwist(const T & points_with_twist)
     return std::nullopt;
   }
   if (points_with_twist.size() == 1) {
-    if (0.0 < autoware::universe_utils::getLongitudinalVelocity(points_with_twist.front())) {
+    if (0.0 < autoware_utils::get_longitudinal_velocity(points_with_twist.front())) {
       return true;
     }
-    if (0.0 > autoware::universe_utils::getLongitudinalVelocity(points_with_twist.front())) {
+    if (0.0 > autoware_utils::get_longitudinal_velocity(points_with_twist.front())) {
       return false;
     }
     return std::nullopt;
@@ -183,8 +183,8 @@ T removeOverlapPoints(const T & points, const size_t start_idx = 0)
 
   constexpr double eps = 1.0E-08;
   for (size_t i = start_idx + 1; i < points.size(); ++i) {
-    const auto prev_p = autoware::universe_utils::getPoint(dst.back());
-    const auto curr_p = autoware::universe_utils::getPoint(points.at(i));
+    const auto prev_p = autoware_utils::get_point(dst.back());
+    const auto curr_p = autoware_utils::get_point(points.at(i));
     if (std::abs(prev_p.x - curr_p.x) < eps && std::abs(prev_p.y - curr_p.y) < eps) {
       continue;
     }
@@ -300,7 +300,7 @@ size_t findNearestIndex(const T & points, const geometry_msgs::msg::Point & poin
   size_t min_idx = 0;
 
   for (size_t i = 0; i < points.size(); ++i) {
-    const auto dist = autoware::universe_utils::calcSquaredDistance2d(points.at(i), point);
+    const auto dist = autoware_utils::calc_squared_distance2d(points.at(i), point);
     if (dist < min_dist) {
       min_dist = dist;
       min_idx = i;
@@ -353,13 +353,13 @@ std::optional<size_t> findNearestIndex(
   size_t min_idx = 0;
 
   for (size_t i = 0; i < points.size(); ++i) {
-    const auto squared_dist = autoware::universe_utils::calcSquaredDistance2d(points.at(i), pose);
+    const auto squared_dist = autoware_utils::calc_squared_distance2d(points.at(i), pose);
     if (squared_dist > max_squared_dist || squared_dist >= min_squared_dist) {
       continue;
     }
 
-    const auto yaw = autoware::universe_utils::calcYawDeviation(
-      autoware::universe_utils::getPose(points.at(i)), pose);
+    const auto yaw =
+      autoware_utils::calc_yaw_deviation(autoware_utils::get_pose(points.at(i)), pose);
     if (std::fabs(yaw) > max_yaw) {
       continue;
     }
@@ -411,7 +411,7 @@ double calcLongitudinalOffsetToSegment(
       "[autoware_motion_utils] " + std::string(__func__) +
       ": Failed to calculate longitudinal offset because the given segment index is out of the "
       "points size.");
-    autoware::universe_utils::print_backtrace();
+    autoware_utils::print_backtrace();
     if (throw_exception) {
       throw std::out_of_range(error_message);
     }
@@ -439,7 +439,7 @@ double calcLongitudinalOffsetToSegment(
     const std::string error_message(
       "[autoware_motion_utils] " + std::string(__func__) +
       ": Longitudinal offset calculation is not supported for the same points.");
-    autoware::universe_utils::print_backtrace();
+    autoware_utils::print_backtrace();
     if (throw_exception) {
       throw std::runtime_error(error_message);
     }
@@ -450,8 +450,8 @@ double calcLongitudinalOffsetToSegment(
     return std::nan("");
   }
 
-  const auto p_front = autoware::universe_utils::getPoint(overlap_removed_points.at(seg_idx));
-  const auto p_back = autoware::universe_utils::getPoint(overlap_removed_points.at(seg_idx + 1));
+  const auto p_front = autoware_utils::get_point(overlap_removed_points.at(seg_idx));
+  const auto p_back = autoware_utils::get_point(overlap_removed_points.at(seg_idx + 1));
 
   const Eigen::Vector3d segment_vec{p_back.x - p_front.x, p_back.y - p_front.y, 0};
   const Eigen::Vector3d target_vec{p_target.x - p_front.x, p_target.y - p_front.y, 0};
@@ -602,7 +602,7 @@ double calcLateralOffset(
     const std::string error_message(
       "[autoware_motion_utils] " + std::string(__func__) +
       ": Lateral offset calculation is not supported for the same points.");
-    autoware::universe_utils::print_backtrace();
+    autoware_utils::print_backtrace();
     if (throw_exception) {
       throw std::runtime_error(error_message);
     }
@@ -617,8 +617,8 @@ double calcLateralOffset(
   const auto p_front_idx = (p_indices > seg_idx) ? seg_idx : p_indices;
   const auto p_back_idx = p_front_idx + 1;
 
-  const auto p_front = autoware::universe_utils::getPoint(overlap_removed_points.at(p_front_idx));
-  const auto p_back = autoware::universe_utils::getPoint(overlap_removed_points.at(p_back_idx));
+  const auto p_front = autoware_utils::get_point(overlap_removed_points.at(p_front_idx));
+  const auto p_back = autoware_utils::get_point(overlap_removed_points.at(p_back_idx));
 
   const Eigen::Vector3d segment_vec{p_back.x - p_front.x, p_back.y - p_front.y, 0.0};
   const Eigen::Vector3d target_vec{p_target.x - p_front.x, p_target.y - p_front.y, 0.0};
@@ -675,7 +675,7 @@ double calcLateralOffset(
     const std::string error_message(
       "[autoware_motion_utils] " + std::string(__func__) +
       ": Lateral offset calculation is not supported for the same points.");
-    autoware::universe_utils::print_backtrace();
+    autoware_utils::print_backtrace();
     if (throw_exception) {
       throw std::runtime_error(error_message);
     }
@@ -727,7 +727,7 @@ double calcSignedArcLength(const T & points, const size_t src_idx, const size_t 
 
   double dist_sum = 0.0;
   for (size_t i = src_idx; i < dst_idx; ++i) {
-    dist_sum += autoware::universe_utils::calcDistance2d(points.at(i), points.at(i + 1));
+    dist_sum += autoware_utils::calc_distance2d(points.at(i), points.at(i + 1));
   }
   return dist_sum;
 }
@@ -775,7 +775,7 @@ std::vector<double> calcSignedArcLengthPartialSum(
   double dist_sum = 0.0;
   partial_dist.push_back(dist_sum);
   for (size_t i = src_idx; i < dst_idx - 1; ++i) {
-    dist_sum += autoware::universe_utils::calcDistance2d(points.at(i), points.at(i + 1));
+    dist_sum += autoware_utils::calc_distance2d(points.at(i), points.at(i + 1));
     partial_dist.push_back(dist_sum);
   }
   return partial_dist;
@@ -963,10 +963,10 @@ std::vector<double> calcCurvature(const T & points)
   }
 
   for (size_t i = 1; i < points.size() - 1; ++i) {
-    const auto p1 = autoware::universe_utils::getPoint(points.at(i - 1));
-    const auto p2 = autoware::universe_utils::getPoint(points.at(i));
-    const auto p3 = autoware::universe_utils::getPoint(points.at(i + 1));
-    curvature_vec.at(i) = (autoware::universe_utils::calcCurvature(p1, p2, p3));
+    const auto p1 = autoware_utils::get_point(points.at(i - 1));
+    const auto p2 = autoware_utils::get_point(points.at(i));
+    const auto p3 = autoware_utils::get_point(points.at(i + 1));
+    curvature_vec.at(i) = (autoware_utils::calc_curvature(p1, p2, p3));
   }
   curvature_vec.at(0) = curvature_vec.at(1);
   curvature_vec.at(curvature_vec.size() - 1) = curvature_vec.at(curvature_vec.size() - 2);
@@ -1003,24 +1003,24 @@ std::vector<std::pair<double, std::pair<double, double>>> calcCurvatureAndSegmen
   curvature_and_segment_length_vec.reserve(points.size());
   curvature_and_segment_length_vec.emplace_back(0.0, std::make_pair(0.0, 0.0));
   for (size_t i = 1; i < points.size() - 1; ++i) {
-    const auto p1 = autoware::universe_utils::getPoint(points.at(i - 1));
-    const auto p2 = autoware::universe_utils::getPoint(points.at(i));
-    const auto p3 = autoware::universe_utils::getPoint(points.at(i + 1));
-    const double curvature = autoware::universe_utils::calcCurvature(p1, p2, p3);
+    const auto p1 = autoware_utils::get_point(points.at(i - 1));
+    const auto p2 = autoware_utils::get_point(points.at(i));
+    const auto p3 = autoware_utils::get_point(points.at(i + 1));
+    const double curvature = autoware_utils::calc_curvature(p1, p2, p3);
 
     // The first point has only the next point, so put the distance to that point.
     // In other words, assign the first segment length at the second point to the
     // second_segment_length at the first point.
     if (i == 1) {
       curvature_and_segment_length_vec.at(0).second.second =
-        autoware::universe_utils::calcDistance2d(p1, p2);
+        autoware_utils::calc_distance2d(p1, p2);
     }
 
     // The second_segment_length of the previous point and the first segment length of the current
     // point are equal.
     const std::pair<double, double> arc_length{
       curvature_and_segment_length_vec.back().second.second,
-      autoware::universe_utils::calcDistance2d(p2, p3)};
+      autoware_utils::calc_distance2d(p2, p3)};
 
     curvature_and_segment_length_vec.emplace_back(curvature, arc_length);
   }
@@ -1100,7 +1100,7 @@ std::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
       "[autoware_motion_utils] " + std::string(__func__) +
       " error: The given source index is out of the points size. Failed to calculate longitudinal "
       "offset.");
-    autoware::universe_utils::print_backtrace();
+    autoware_utils::print_backtrace();
     if (throw_exception) {
       throw std::out_of_range(error_message);
     }
@@ -1116,7 +1116,7 @@ std::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
   }
 
   if (src_idx + 1 == points.size() && offset == 0.0) {
-    return autoware::universe_utils::getPoint(points.at(src_idx));
+    return autoware_utils::get_point(points.at(src_idx));
   }
 
   if (offset < 0.0) {
@@ -1132,12 +1132,12 @@ std::optional<geometry_msgs::msg::Point> calcLongitudinalOffsetPoint(
     const auto & p_front = points.at(i);
     const auto & p_back = points.at(i + 1);
 
-    const auto dist_segment = autoware::universe_utils::calcDistance2d(p_front, p_back);
+    const auto dist_segment = autoware_utils::calc_distance2d(p_front, p_back);
     dist_sum += dist_segment;
 
     const auto dist_res = offset - dist_sum;
     if (dist_res <= 0.0) {
-      return autoware::universe_utils::calcInterpolatedPoint(
+      return autoware_utils::calc_interpolated_point(
         p_back, p_front, std::abs(dist_res / dist_segment));
     }
   }
@@ -1231,7 +1231,7 @@ std::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
       "[autoware_motion_utils] " + std::string(__func__) +
       " error: The given source index is out of the points size. Failed to calculate longitudinal "
       "offset.");
-    autoware::universe_utils::print_backtrace();
+    autoware_utils::print_backtrace();
     if (throw_exception) {
       throw std::out_of_range(error_message);
     }
@@ -1245,7 +1245,7 @@ std::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
   }
 
   if (src_idx + 1 == points.size() && offset == 0.0) {
-    return autoware::universe_utils::getPose(points.at(src_idx));
+    return autoware_utils::get_pose(points.at(src_idx));
   }
 
   if (offset < 0.0) {
@@ -1258,12 +1258,12 @@ std::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
       const auto & p_front = reverse_points.at(i);
       const auto & p_back = reverse_points.at(i + 1);
 
-      const auto dist_segment = autoware::universe_utils::calcDistance2d(p_front, p_back);
+      const auto dist_segment = autoware_utils::calc_distance2d(p_front, p_back);
       dist_sum += dist_segment;
 
       const auto dist_res = -offset - dist_sum;
       if (dist_res <= 0.0) {
-        return autoware::universe_utils::calcInterpolatedPose(
+        return autoware_utils::calc_interpolated_pose(
           p_back, p_front, std::abs(dist_res / dist_segment),
           set_orientation_from_position_direction);
       }
@@ -1275,12 +1275,12 @@ std::optional<geometry_msgs::msg::Pose> calcLongitudinalOffsetPose(
       const auto & p_front = points.at(i);
       const auto & p_back = points.at(i + 1);
 
-      const auto dist_segment = autoware::universe_utils::calcDistance2d(p_front, p_back);
+      const auto dist_segment = autoware_utils::calc_distance2d(p_front, p_back);
       dist_sum += dist_segment;
 
       const auto dist_res = offset - dist_sum;
       if (dist_res <= 0.0) {
-        return autoware::universe_utils::calcInterpolatedPose(
+        return autoware_utils::calc_interpolated_pose(
           p_front, p_back, 1.0 - std::abs(dist_res / dist_segment),
           set_orientation_from_position_direction);
       }
@@ -1380,8 +1380,8 @@ std::optional<size_t> insertTargetPoint(
     return {};
   }
 
-  const auto p_front = autoware::universe_utils::getPoint(points.at(seg_idx));
-  const auto p_back = autoware::universe_utils::getPoint(points.at(seg_idx + 1));
+  const auto p_front = autoware_utils::get_point(points.at(seg_idx));
+  const auto p_back = autoware_utils::get_point(points.at(seg_idx + 1));
 
   try {
     validateNonSharpAngle(p_front, p_target, p_back);
@@ -1391,9 +1391,9 @@ std::optional<size_t> insertTargetPoint(
   }
 
   const auto overlap_with_front =
-    autoware::universe_utils::calcDistance2d(p_target, p_front) < overlap_threshold;
+    autoware_utils::calc_distance2d(p_target, p_front) < overlap_threshold;
   const auto overlap_with_back =
-    autoware::universe_utils::calcDistance2d(p_target, p_back) < overlap_threshold;
+    autoware_utils::calc_distance2d(p_target, p_back) < overlap_threshold;
 
   const auto is_driving_forward = isDrivingForward(points);
   if (!is_driving_forward) {
@@ -1403,31 +1403,31 @@ std::optional<size_t> insertTargetPoint(
   geometry_msgs::msg::Pose target_pose;
   {
     const auto p_base = is_driving_forward.value() ? p_back : p_front;
-    const auto pitch = autoware::universe_utils::calcElevationAngle(p_target, p_base);
-    const auto yaw = autoware::universe_utils::calcAzimuthAngle(p_target, p_base);
+    const auto pitch = autoware_utils::calc_elevation_angle(p_target, p_base);
+    const auto yaw = autoware_utils::calc_azimuth_angle(p_target, p_base);
 
     target_pose.position = p_target;
-    target_pose.orientation = autoware::universe_utils::createQuaternionFromRPY(0.0, pitch, yaw);
+    target_pose.orientation = autoware_utils::create_quaternion_from_rpy(0.0, pitch, yaw);
   }
 
   auto p_insert = points.at(seg_idx);
-  autoware::universe_utils::setPose(target_pose, p_insert);
+  autoware_utils::set_pose(target_pose, p_insert);
 
   geometry_msgs::msg::Pose base_pose;
   {
     const auto p_base = is_driving_forward.value() ? p_front : p_back;
-    const auto pitch = autoware::universe_utils::calcElevationAngle(p_base, p_target);
-    const auto yaw = autoware::universe_utils::calcAzimuthAngle(p_base, p_target);
+    const auto pitch = autoware_utils::calc_elevation_angle(p_base, p_target);
+    const auto yaw = autoware_utils::calc_azimuth_angle(p_base, p_target);
 
-    base_pose.position = autoware::universe_utils::getPoint(p_base);
-    base_pose.orientation = autoware::universe_utils::createQuaternionFromRPY(0.0, pitch, yaw);
+    base_pose.position = autoware_utils::get_point(p_base);
+    base_pose.orientation = autoware_utils::create_quaternion_from_rpy(0.0, pitch, yaw);
   }
 
   if (!overlap_with_front && !overlap_with_back) {
     if (is_driving_forward.value()) {
-      autoware::universe_utils::setPose(base_pose, points.at(seg_idx));
+      autoware_utils::set_pose(base_pose, points.at(seg_idx));
     } else {
-      autoware::universe_utils::setPose(base_pose, points.at(seg_idx + 1));
+      autoware_utils::set_pose(base_pose, points.at(seg_idx + 1));
     }
     points.insert(points.begin() + seg_idx + 1, p_insert);
     return seg_idx + 1;
@@ -1561,9 +1561,9 @@ std::optional<size_t> insertTargetPoint(
   const double target_length =
     insert_point_length - calcSignedArcLength(points, src_segment_idx, *segment_idx);
   const double ratio = std::clamp(target_length / segment_length, 0.0, 1.0);
-  const auto p_target = autoware::universe_utils::calcInterpolatedPoint(
-    autoware::universe_utils::getPoint(points.at(*segment_idx)),
-    autoware::universe_utils::getPoint(points.at(*segment_idx + 1)), ratio);
+  const auto p_target = autoware_utils::calc_interpolated_point(
+    autoware_utils::get_point(points.at(*segment_idx)),
+    autoware_utils::get_point(points.at(*segment_idx + 1)), ratio);
 
   return insertTargetPoint(*segment_idx, p_target, points, overlap_threshold);
 }
@@ -1667,7 +1667,7 @@ std::optional<size_t> insertStopPoint(
   }
 
   for (size_t i = *stop_idx; i < points_with_twist.size(); ++i) {
-    autoware::universe_utils::setLongitudinalVelocity(0.0, points_with_twist.at(i));
+    autoware_utils::set_longitudinal_velocity(0.0, points_with_twist.at(i));
   }
 
   return stop_idx;
@@ -1709,9 +1709,9 @@ std::optional<size_t> insertStopPoint(
 
   double accumulated_length = 0;
   for (size_t i = 0; i < points_with_twist.size() - 1; ++i) {
-    const auto curr_pose = autoware::universe_utils::getPose(points_with_twist.at(i));
-    const auto next_pose = autoware::universe_utils::getPose(points_with_twist.at(i + 1));
-    const double length = autoware::universe_utils::calcDistance2d(curr_pose, next_pose);
+    const auto curr_pose = autoware_utils::get_pose(points_with_twist.at(i));
+    const auto next_pose = autoware_utils::get_pose(points_with_twist.at(i + 1));
+    const double length = autoware_utils::calc_distance2d(curr_pose, next_pose);
     if (accumulated_length + length + overlap_threshold > distance_to_stop_point) {
       const double insert_length = distance_to_stop_point - accumulated_length;
       return insertStopPoint(i, insert_length, points_with_twist, overlap_threshold);
@@ -1771,7 +1771,7 @@ std::optional<size_t> insertStopPoint(
   }
 
   for (size_t i = *stop_idx; i < points_with_twist.size(); ++i) {
-    autoware::universe_utils::setLongitudinalVelocity(0.0, points_with_twist.at(i));
+    autoware_utils::set_longitudinal_velocity(0.0, points_with_twist.at(i));
   }
 
   return stop_idx;
@@ -1818,7 +1818,7 @@ std::optional<size_t> insertStopPoint(
   }
 
   for (size_t i = insert_idx.value(); i < points_with_twist.size(); ++i) {
-    autoware::universe_utils::setLongitudinalVelocity(0.0, points_with_twist.at(i));
+    autoware_utils::set_longitudinal_velocity(0.0, points_with_twist.at(i));
   }
 
   return insert_idx;
@@ -1858,8 +1858,8 @@ std::optional<size_t> insertDecelPoint(
 
   for (size_t i = insert_idx.value(); i < points_with_twist.size(); ++i) {
     const auto & original_velocity =
-      autoware::universe_utils::getLongitudinalVelocity(points_with_twist.at(i));
-    autoware::universe_utils::setLongitudinalVelocity(
+      autoware_utils::get_longitudinal_velocity(points_with_twist.at(i));
+    autoware_utils::set_longitudinal_velocity(
       std::min(original_velocity, velocity), points_with_twist.at(i));
   }
 
@@ -1882,30 +1882,30 @@ void insertOrientation(T & points, const bool is_driving_forward)
 {
   if (is_driving_forward) {
     for (size_t i = 0; i < points.size() - 1; ++i) {
-      const auto & src_point = autoware::universe_utils::getPoint(points.at(i));
-      const auto & dst_point = autoware::universe_utils::getPoint(points.at(i + 1));
-      const double pitch = autoware::universe_utils::calcElevationAngle(src_point, dst_point);
-      const double yaw = autoware::universe_utils::calcAzimuthAngle(src_point, dst_point);
-      autoware::universe_utils::setOrientation(
-        autoware::universe_utils::createQuaternionFromRPY(0.0, pitch, yaw), points.at(i));
+      const auto & src_point = autoware_utils::get_point(points.at(i));
+      const auto & dst_point = autoware_utils::get_point(points.at(i + 1));
+      const double pitch = autoware_utils::calc_elevation_angle(src_point, dst_point);
+      const double yaw = autoware_utils::calc_azimuth_angle(src_point, dst_point);
+      autoware_utils::set_orientation(
+        autoware_utils::create_quaternion_from_rpy(0.0, pitch, yaw), points.at(i));
       if (i == points.size() - 2) {
         // Terminal orientation is same as the point before it
-        autoware::universe_utils::setOrientation(
-          autoware::universe_utils::getPose(points.at(i)).orientation, points.at(i + 1));
+        autoware_utils::set_orientation(
+          autoware_utils::get_pose(points.at(i)).orientation, points.at(i + 1));
       }
     }
   } else {
     for (size_t i = points.size() - 1; i >= 1; --i) {
-      const auto & src_point = autoware::universe_utils::getPoint(points.at(i));
-      const auto & dst_point = autoware::universe_utils::getPoint(points.at(i - 1));
-      const double pitch = autoware::universe_utils::calcElevationAngle(src_point, dst_point);
-      const double yaw = autoware::universe_utils::calcAzimuthAngle(src_point, dst_point);
-      autoware::universe_utils::setOrientation(
-        autoware::universe_utils::createQuaternionFromRPY(0.0, pitch, yaw), points.at(i));
+      const auto & src_point = autoware_utils::get_point(points.at(i));
+      const auto & dst_point = autoware_utils::get_point(points.at(i - 1));
+      const double pitch = autoware_utils::calc_elevation_angle(src_point, dst_point);
+      const double yaw = autoware_utils::calc_azimuth_angle(src_point, dst_point);
+      autoware_utils::set_orientation(
+        autoware_utils::create_quaternion_from_rpy(0.0, pitch, yaw), points.at(i));
     }
     // Initial orientation is same as the point after it
-    autoware::universe_utils::setOrientation(
-      autoware::universe_utils::getPose(points.at(1)).orientation, points.at(0));
+    autoware_utils::set_orientation(
+      autoware_utils::get_pose(points.at(1)).orientation, points.at(0));
   }
 }
 
@@ -1931,14 +1931,14 @@ template <class T>
 void removeFirstInvalidOrientationPoints(T & points, const double max_yaw_diff = M_PI_2)
 {
   for (auto itr = points.begin(); std::next(itr) != points.end();) {
-    const auto p1 = autoware::universe_utils::getPose(*itr);
-    const auto p2 = autoware::universe_utils::getPose(*std::next(itr));
+    const auto p1 = autoware_utils::get_pose(*itr);
+    const auto p2 = autoware_utils::get_pose(*std::next(itr));
     const double yaw1 = tf2::getYaw(p1.orientation);
     const double yaw2 = tf2::getYaw(p2.orientation);
 
     if (
-      max_yaw_diff < std::abs(autoware::universe_utils::normalizeRadian(yaw1 - yaw2)) ||
-      !autoware::universe_utils::isDrivingForward(p1, p2)) {
+      max_yaw_diff < std::abs(autoware_utils::normalize_radian(yaw1 - yaw2)) ||
+      !autoware_utils::is_driving_forward(p1, p2)) {
       points.erase(std::next(itr));
       return;
     } else {
@@ -2091,9 +2091,9 @@ size_t findFirstNearestIndexWithSoftConstraints(
     bool is_within_constraints = false;
     for (size_t i = 0; i < points.size(); ++i) {
       const auto squared_dist =
-        autoware::universe_utils::calcSquaredDistance2d(points.at(i), pose.position);
-      const auto yaw = autoware::universe_utils::calcYawDeviation(
-        autoware::universe_utils::getPose(points.at(i)), pose);
+        autoware_utils::calc_squared_distance2d(points.at(i), pose.position);
+      const auto yaw =
+        autoware_utils::calc_yaw_deviation(autoware_utils::get_pose(points.at(i)), pose);
 
       if (squared_dist_threshold < squared_dist || yaw_threshold < std::abs(yaw)) {
         if (is_within_constraints) {
@@ -2124,7 +2124,7 @@ size_t findFirstNearestIndexWithSoftConstraints(
     bool is_within_constraints = false;
     for (size_t i = 0; i < points.size(); ++i) {
       const auto squared_dist =
-        autoware::universe_utils::calcSquaredDistance2d(points.at(i), pose.position);
+        autoware_utils::calc_squared_distance2d(points.at(i), pose.position);
 
       if (squared_dist_threshold < squared_dist) {
         if (is_within_constraints) {
@@ -2303,7 +2303,7 @@ T cropForwardPoints(
   double sum_length =
     -autoware::motion_utils::calcLongitudinalOffsetToSegment(points, target_seg_idx, target_pos);
   for (size_t i = target_seg_idx + 1; i < points.size(); ++i) {
-    sum_length += autoware::universe_utils::calcDistance2d(points.at(i), points.at(i - 1));
+    sum_length += autoware_utils::calc_distance2d(points.at(i), points.at(i - 1));
     if (forward_length < sum_length) {
       const size_t end_idx = i;
       return T{points.begin(), points.begin() + end_idx};
@@ -2343,7 +2343,7 @@ T cropBackwardPoints(
   double sum_length =
     -autoware::motion_utils::calcLongitudinalOffsetToSegment(points, target_seg_idx, target_pos);
   for (int i = target_seg_idx; 0 < i; --i) {
-    sum_length -= autoware::universe_utils::calcDistance2d(points.at(i), points.at(i - 1));
+    sum_length -= autoware_utils::calc_distance2d(points.at(i), points.at(i - 1));
     if (sum_length < -backward_length) {
       const size_t begin_idx = i;
       return T{points.begin() + begin_idx, points.end()};
@@ -2442,7 +2442,7 @@ double calcYawDeviation(
     const std::string error_message(
       "[autoware_motion_utils] " + std::string(__func__) +
       " Given points size is less than 2. Failed to calculate yaw deviation.");
-    autoware::universe_utils::print_backtrace();
+    autoware_utils::print_backtrace();
     if (throw_exception) {
       throw std::runtime_error(error_message);
     }
@@ -2455,12 +2455,12 @@ double calcYawDeviation(
 
   const size_t seg_idx = findNearestSegmentIndex(overlap_removed_points, pose.position);
 
-  const double path_yaw = autoware::universe_utils::calcAzimuthAngle(
-    autoware::universe_utils::getPoint(overlap_removed_points.at(seg_idx)),
-    autoware::universe_utils::getPoint(overlap_removed_points.at(seg_idx + 1)));
+  const double path_yaw = autoware_utils::calc_azimuth_angle(
+    autoware_utils::get_point(overlap_removed_points.at(seg_idx)),
+    autoware_utils::get_point(overlap_removed_points.at(seg_idx + 1)));
   const double pose_yaw = tf2::getYaw(pose.orientation);
 
-  return autoware::universe_utils::normalizeRadian(pose_yaw - path_yaw);
+  return autoware_utils::normalize_radian(pose_yaw - path_yaw);
 }
 
 extern template double calcYawDeviation<std::vector<autoware_planning_msgs::msg::PathPoint>>(

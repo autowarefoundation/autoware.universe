@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "autoware/interpolation/spline_interpolation.hpp"
-#include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware_utils/geometry/geometry.hpp"
 
 #include <gtest/gtest.h>
 

@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "autoware/motion_utils/trajectory/path_with_lane_id.hpp"
-#include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware_utils/geometry/geometry.hpp"
 
 #include <gtest/gtest.h>
 
@@ -22,16 +22,16 @@
 
 namespace
 {
-using autoware::universe_utils::createPoint;
 using autoware_internal_planning_msgs::msg::PathPointWithLaneId;
 using autoware_internal_planning_msgs::msg::PathWithLaneId;
+using autoware_utils::create_point;
 
 geometry_msgs::msg::Pose createPose(
   double x, double y, double z, double roll, double pitch, double yaw)
 {
   geometry_msgs::msg::Pose p;
-  p.position = createPoint(x, y, z);
-  p.orientation = autoware::universe_utils::createQuaternionFromRPY(roll, pitch, yaw);
+  p.position = create_point(x, y, z);
+  p.orientation = autoware_utils::create_quaternion_from_rpy(roll, pitch, yaw);
   return p;
 }
 
@@ -110,9 +110,9 @@ TEST(path_with_lane_id, findNearestIndexFromLaneId)
     for (size_t i = 0; i < 10; ++i) {
       modified_path.points.at(i).lane_ids = {100};
     }
-    EXPECT_EQ(findNearestIndexFromLaneId(modified_path, createPoint(2.4, 1.3, 0.0), 100), 2U);
+    EXPECT_EQ(findNearestIndexFromLaneId(modified_path, create_point(2.4, 1.3, 0.0), 100), 2U);
     EXPECT_EQ(
-      findNearestSegmentIndexFromLaneId(modified_path, createPoint(2.4, 1.3, 0.0), 100), 2U);
+      findNearestSegmentIndexFromLaneId(modified_path, create_point(2.4, 1.3, 0.0), 100), 2U);
   }
 
   {
@@ -120,9 +120,9 @@ TEST(path_with_lane_id, findNearestIndexFromLaneId)
     for (size_t i = 3; i < 6; ++i) {
       modified_path.points.at(i).lane_ids = {100};
     }
-    EXPECT_EQ(findNearestIndexFromLaneId(modified_path, createPoint(4.1, 0.3, 0.0), 100), 4U);
+    EXPECT_EQ(findNearestIndexFromLaneId(modified_path, create_point(4.1, 0.3, 0.0), 100), 4U);
     EXPECT_EQ(
-      findNearestSegmentIndexFromLaneId(modified_path, createPoint(4.1, 0.3, 0.0), 100), 4U);
+      findNearestSegmentIndexFromLaneId(modified_path, create_point(4.1, 0.3, 0.0), 100), 4U);
   }
 
   {
@@ -130,9 +130,9 @@ TEST(path_with_lane_id, findNearestIndexFromLaneId)
     for (size_t i = 8; i < 9; ++i) {
       modified_path.points.at(i).lane_ids = {100};
     }
-    EXPECT_EQ(findNearestIndexFromLaneId(modified_path, createPoint(8.5, -0.5, 0.0), 100), 8U);
+    EXPECT_EQ(findNearestIndexFromLaneId(modified_path, create_point(8.5, -0.5, 0.0), 100), 8U);
     EXPECT_EQ(
-      findNearestSegmentIndexFromLaneId(modified_path, createPoint(8.5, -0.5, 0.0), 100), 8U);
+      findNearestSegmentIndexFromLaneId(modified_path, create_point(8.5, -0.5, 0.0), 100), 8U);
   }
 
   // Nearest is not within range
@@ -141,23 +141,23 @@ TEST(path_with_lane_id, findNearestIndexFromLaneId)
     for (size_t i = 3; i < 9; ++i) {
       modified_path.points.at(i).lane_ids = {100};
     }
-    EXPECT_EQ(findNearestIndexFromLaneId(modified_path, createPoint(2.4, 1.3, 0.0), 100), 2U);
+    EXPECT_EQ(findNearestIndexFromLaneId(modified_path, create_point(2.4, 1.3, 0.0), 100), 2U);
     EXPECT_EQ(
-      findNearestSegmentIndexFromLaneId(modified_path, createPoint(2.4, 1.3, 0.0), 100), 2U);
+      findNearestSegmentIndexFromLaneId(modified_path, create_point(2.4, 1.3, 0.0), 100), 2U);
   }
 
   // Path does not contain lane_id.
   {
-    EXPECT_EQ(findNearestIndexFromLaneId(path, createPoint(2.4, 1.3, 0.0), 100), 2U);
-    EXPECT_EQ(findNearestSegmentIndexFromLaneId(path, createPoint(2.4, 1.3, 0.0), 100), 2U);
+    EXPECT_EQ(findNearestIndexFromLaneId(path, create_point(2.4, 1.3, 0.0), 100), 2U);
+    EXPECT_EQ(findNearestSegmentIndexFromLaneId(path, create_point(2.4, 1.3, 0.0), 100), 2U);
   }
 
   // Empty points
   EXPECT_THROW(
-    findNearestIndexFromLaneId(PathWithLaneId{}, createPoint(2.4, 1.3, 0.0), 100),
+    findNearestIndexFromLaneId(PathWithLaneId{}, create_point(2.4, 1.3, 0.0), 100),
     std::invalid_argument);
   EXPECT_THROW(
-    findNearestSegmentIndexFromLaneId(PathWithLaneId{}, createPoint(2.4, 1.3, 0.0), 100),
+    findNearestSegmentIndexFromLaneId(PathWithLaneId{}, create_point(2.4, 1.3, 0.0), 100),
     std::invalid_argument);
 }
 

@@ -14,7 +14,7 @@
 
 #include "autoware/interpolation/spline_interpolation.hpp"
 #include "autoware/interpolation/spline_interpolation_points_2d.hpp"
-#include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware_utils/geometry/geometry.hpp"
 
 #include <gtest/gtest.h>
 
@@ -27,15 +27,15 @@ using autoware::interpolation::SplineInterpolationPoints2d;
 
 TEST(spline_interpolation, splineYawFromPoints)
 {
-  using autoware::universe_utils::createPoint;
+  using autoware_utils::create_point;
 
   {  // straight
     std::vector<geometry_msgs::msg::Point> points;
-    points.push_back(createPoint(0.0, 0.0, 0.0));
-    points.push_back(createPoint(1.0, 1.5, 0.0));
-    points.push_back(createPoint(2.0, 3.0, 0.0));
-    points.push_back(createPoint(3.0, 4.5, 0.0));
-    points.push_back(createPoint(4.0, 6.0, 0.0));
+    points.push_back(create_point(0.0, 0.0, 0.0));
+    points.push_back(create_point(1.0, 1.5, 0.0));
+    points.push_back(create_point(2.0, 3.0, 0.0));
+    points.push_back(create_point(3.0, 4.5, 0.0));
+    points.push_back(create_point(4.0, 6.0, 0.0));
 
     const std::vector<double> ans{0.9827937, 0.9827937, 0.9827937, 0.9827937, 0.9827937};
 
@@ -47,11 +47,11 @@ TEST(spline_interpolation, splineYawFromPoints)
 
   {  // curve
     std::vector<geometry_msgs::msg::Point> points;
-    points.push_back(createPoint(-2.0, -10.0, 0.0));
-    points.push_back(createPoint(2.0, 1.5, 0.0));
-    points.push_back(createPoint(3.0, 3.0, 0.0));
-    points.push_back(createPoint(5.0, 10.0, 0.0));
-    points.push_back(createPoint(10.0, 12.5, 0.0));
+    points.push_back(create_point(-2.0, -10.0, 0.0));
+    points.push_back(create_point(2.0, 1.5, 0.0));
+    points.push_back(create_point(3.0, 3.0, 0.0));
+    points.push_back(create_point(5.0, 10.0, 0.0));
+    points.push_back(create_point(10.0, 12.5, 0.0));
 
     const std::vector<double> ans{1.368174, 0.961318, 1.086098, 0.938357, 0.278594};
     const auto yaws = autoware::interpolation::splineYawFromPoints(points);
@@ -62,15 +62,15 @@ TEST(spline_interpolation, splineYawFromPoints)
 
   {  // size of base_keys is 1 (infeasible to interpolate)
     std::vector<geometry_msgs::msg::Point> points;
-    points.push_back(createPoint(1.0, 0.0, 0.0));
+    points.push_back(create_point(1.0, 0.0, 0.0));
 
     EXPECT_THROW(autoware::interpolation::splineYawFromPoints(points), std::logic_error);
   }
 
   {  // straight: size of base_keys is 2 (edge case in the implementation)
     std::vector<geometry_msgs::msg::Point> points;
-    points.push_back(createPoint(1.0, 0.0, 0.0));
-    points.push_back(createPoint(2.0, 1.5, 0.0));
+    points.push_back(create_point(1.0, 0.0, 0.0));
+    points.push_back(create_point(2.0, 1.5, 0.0));
 
     const std::vector<double> ans{0.9827937, 0.9827937};
 
@@ -82,9 +82,9 @@ TEST(spline_interpolation, splineYawFromPoints)
 
   {  // straight: size of base_keys is 3 (edge case in the implementation)
     std::vector<geometry_msgs::msg::Point> points;
-    points.push_back(createPoint(1.0, 0.0, 0.0));
-    points.push_back(createPoint(2.0, 1.5, 0.0));
-    points.push_back(createPoint(3.0, 3.0, 0.0));
+    points.push_back(create_point(1.0, 0.0, 0.0));
+    points.push_back(create_point(2.0, 1.5, 0.0));
+    points.push_back(create_point(3.0, 3.0, 0.0));
 
     const std::vector<double> ans{0.9827937, 0.9827937, 0.9827937};
 
@@ -97,15 +97,15 @@ TEST(spline_interpolation, splineYawFromPoints)
 
 TEST(spline_interpolation, SplineInterpolationPoints2d)
 {
-  using autoware::universe_utils::createPoint;
+  using autoware_utils::create_point;
 
   // curve
   std::vector<geometry_msgs::msg::Point> points;
-  points.push_back(createPoint(-2.0, -10.0, 0.0));
-  points.push_back(createPoint(2.0, 1.5, 0.0));
-  points.push_back(createPoint(3.0, 3.0, 0.0));
-  points.push_back(createPoint(5.0, 10.0, 0.0));
-  points.push_back(createPoint(10.0, 12.5, 0.0));
+  points.push_back(create_point(-2.0, -10.0, 0.0));
+  points.push_back(create_point(2.0, 1.5, 0.0));
+  points.push_back(create_point(3.0, 3.0, 0.0));
+  points.push_back(create_point(5.0, 10.0, 0.0));
+  points.push_back(create_point(10.0, 12.5, 0.0));
 
   SplineInterpolationPoints2d s(points);
 
@@ -194,19 +194,19 @@ TEST(spline_interpolation, SplineInterpolationPoints2d)
 
   // size of base_keys is 1 (infeasible to interpolate)
   std::vector<geometry_msgs::msg::Point> single_points;
-  single_points.push_back(createPoint(1.0, 0.0, 0.0));
+  single_points.push_back(create_point(1.0, 0.0, 0.0));
   EXPECT_THROW(SplineInterpolationPoints2d{single_points}, std::logic_error);
 }
 
 TEST(spline_interpolation, SplineInterpolationPoints2dPolymorphism)
 {
-  using autoware::universe_utils::createPoint;
   using autoware_planning_msgs::msg::TrajectoryPoint;
+  using autoware_utils::create_point;
 
   std::vector<geometry_msgs::msg::Point> points;
-  points.push_back(createPoint(-2.0, -10.0, 0.0));
-  points.push_back(createPoint(2.0, 1.5, 0.0));
-  points.push_back(createPoint(3.0, 3.0, 0.0));
+  points.push_back(create_point(-2.0, -10.0, 0.0));
+  points.push_back(create_point(2.0, 1.5, 0.0));
+  points.push_back(create_point(3.0, 3.0, 0.0));
 
   std::vector<TrajectoryPoint> trajectory_points;
   for (const auto & p : points) {

@@ -15,8 +15,8 @@
 #include "autoware/motion_utils/trajectory/conversion.hpp"
 #include "autoware/motion_utils/trajectory/interpolation.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
-#include "autoware/universe_utils/geometry/boost_geometry.hpp"
-#include "autoware/universe_utils/math/unit_conversion.hpp"
+#include "autoware_utils/geometry/boost_geometry.hpp"
+#include "autoware_utils/math/unit_conversion.hpp"
 
 #include <gtest/gtest.h>
 #include <gtest/internal/gtest-port.h>
@@ -27,13 +27,13 @@
 
 namespace
 {
-using autoware::universe_utils::createPoint;
-using autoware::universe_utils::createQuaternionFromRPY;
-using autoware::universe_utils::transformPoint;
 using autoware_internal_planning_msgs::msg::PathPointWithLaneId;
 using autoware_internal_planning_msgs::msg::PathWithLaneId;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
+using autoware_utils::create_point;
+using autoware_utils::create_quaternion_from_rpy;
+using autoware_utils::transform_point;
 
 constexpr double epsilon = 1e-6;
 
@@ -41,8 +41,8 @@ geometry_msgs::msg::Pose createPose(
   double x, double y, double z, double roll, double pitch, double yaw)
 {
   geometry_msgs::msg::Pose p;
-  p.position = createPoint(x, y, z);
-  p.orientation = createQuaternionFromRPY(roll, pitch, yaw);
+  p.position = create_point(x, y, z);
+  p.orientation = create_quaternion_from_rpy(roll, pitch, yaw);
   return p;
 }
 
