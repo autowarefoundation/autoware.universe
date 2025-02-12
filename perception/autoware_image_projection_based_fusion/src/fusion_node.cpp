@@ -46,8 +46,6 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 
-static double processing_time_ms = 0;
-
 namespace autoware::image_projection_based_fusion
 {
 using autoware::universe_utils::ScopedTimeTrack;
@@ -335,12 +333,9 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::export_process(
     debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/cyclic_time_ms", cyclic_time_ms);
     debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
-      "debug/processing_time_ms",
-      processing_time_ms + stop_watch_ptr_->toc("processing_time", true));
+      "debug/processing_time_ms", stop_watch_ptr_->toc("processing_time", true));
     debug_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/pipeline_latency_ms", pipeline_latency_ms);
-
-    processing_time_ms = 0;
   }
 
   // debug
@@ -379,8 +374,8 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::sub_callback(const typename Msg3D::Con
 
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
-  stop_watch_ptr_->toc("processing_time", true);
 
+  stop_watch_ptr_->toc("processing_time", true);
   manage_collector_list();
 
   std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>> selected_collector = nullptr;
@@ -455,8 +450,6 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::rois_callback(
 
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
-
-  stop_watch_ptr_->toc("processing_time", true);
 
   manage_collector_list();
 
