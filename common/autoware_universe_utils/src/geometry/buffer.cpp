@@ -28,8 +28,6 @@ namespace offset_buffer
 
 Polygon2d dissolve(const Polygon2d & polygon)
 {
-  StopWatch<std::chrono::nanoseconds, std::chrono::nanoseconds> sw;
-
   auto extended_poly = polygon_clip::create_extended_polygon(polygon);
 
   auto polygon_vector = polygon_clip::construct_self_intersecting_polygons(extended_poly);
@@ -38,8 +36,8 @@ Polygon2d dissolve(const Polygon2d & polygon)
 }
 
 void create_arc(
-  Polygon2d & vertices, const Point2d & center, double radius, const Point2d & end_vertex,
-  const Point2d & start_vertex_next, double segments)
+  Polygon2d & vertices, const Point2d & center, const double radius, const Point2d & end_vertex,
+  const Point2d & start_vertex_next, const double segments)
 {
   const double PI2 = M_PI * 2;
   double start_angle =
@@ -49,46 +47,45 @@ void create_arc(
   if (start_angle < 0) start_angle += PI2;
   if (end_angle < 0) end_angle += PI2;
 
-  double angle_diff =
+  const double angle_diff =
     ((start_angle > end_angle) ? (start_angle - end_angle) : (start_angle + PI2 - end_angle));
-  if (angle_diff < 0) angle_diff += PI2;
 
   int dynamic_segments = static_cast<int>(segments * (angle_diff / PI2));
   if (dynamic_segments < 1) dynamic_segments = 1;
 
-  double segment_angle = angle_diff / dynamic_segments;
+  const double segment_angle = angle_diff / dynamic_segments;
 
   for (int i = 0; i <= dynamic_segments; ++i) {
-    double angle = end_angle + i * segment_angle;
-    double x = center.x() + radius * cos(angle);
-    double y = center.y() + radius * sin(angle);
+    const double angle = end_angle + i * segment_angle;
+    const double x = center.x() + radius * cos(angle);
+    const double y = center.y() + radius * sin(angle);
 
     vertices.outer().push_back(Point2d(x, y));
   }
 }
 
 void offset_segment(
-  Polygon2d & vertices, const Point2d & v1, const Point2d & v2, const Point2d & next_vertex,
-  double dist, double segments)
+  Polygon2d& vertices, const Point2d& v1, const Point2d& v2, const Point2d& next_vertex,
+  const double dist, const double segments)
 {
   // Calculate direction and normals
-  double dx = v2.x() - v1.x();
-  double dy = v2.y() - v1.y();
+  const double dx = v2.x() - v1.x();
+  const double dy = v2.y() - v1.y();
 
-  double length = std::sqrt(dx * dx + dy * dy);
-  double normal_x = -dy / length;
-  double normal_y = dx / length;
+  const double length = std::sqrt(dx * dx + dy * dy);
+  const double normal_x = -dy / length;
+  const double normal_y = dx / length;
 
-  Point2d offset_v1(v1.x() - normal_x * dist, v1.y() - normal_y * dist);
-  Point2d offset_v2(v2.x() - normal_x * dist, v2.y() - normal_y * dist);
+  const Point2d offset_v1(v1.x() - normal_x * dist, v1.y() - normal_y * dist);
+  const Point2d offset_v2(v2.x() - normal_x * dist, v2.y() - normal_y * dist);
 
-  double next_dx = next_vertex.x() - v2.x();
-  double next_dy = next_vertex.y() - v2.y();
-  double length_next = std::sqrt(next_dx * next_dx + next_dy * next_dy);
-  double normal_x_next = -next_dy / length_next;
-  double normal_y_next = next_dx / length_next;
-  Point2d offset_v1next(v2.x() - normal_x_next * dist, v2.y() - normal_y_next * dist);
-  Point2d offset_v2next(
+  const double next_dx = next_vertex.x() - v2.x();
+  const double next_dy = next_vertex.y() - v2.y();
+  const double length_next = std::sqrt(next_dx * next_dx + next_dy * next_dy);
+  const double normal_x_next = -next_dy / length_next;
+  const double normal_y_next = next_dx / length_next;
+  const Point2d offset_v1next(v2.x() - normal_x_next * dist, v2.y() - normal_y_next * dist);
+  const Point2d offset_v2next(
     next_vertex.x() - normal_x_next * dist, next_vertex.y() - normal_y_next * dist);
 
   double current_angle = atan2(dy, dx);
