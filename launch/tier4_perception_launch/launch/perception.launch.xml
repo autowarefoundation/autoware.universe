@@ -175,6 +175,9 @@
         <arg name="use_multithread" value="true"/>
         <arg name="pointcloud_container_name" value="$(var pointcloud_container_name)"/>
         <arg name="input/pointcloud" value="$(var perception_pointcloud)"/>
+        <arg name="obstacle_segmentation_ground_segmentation_param_path" value="$(var obstacle_segmentation_ground_segmentation_param_path)"/>
+        <arg name="use_single_frame_filter" value="$(var use_single_frame_filter)"/>
+        <arg name="use_time_series_filter" value="$(var use_time_series_filter)"/>
       </include>
     </group>
 
