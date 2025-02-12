@@ -28,4 +28,5 @@ If the node receives no route information, it looks at them within a radius of `
 | `~/debug/markers` | visualization_msgs::msg::MarkerArray             | markers which show a line that combines from camera to each traffic light |
 
 ## Node parameters
+
 {{ json_to_markdown("perception/autoware_traffic_light_map_based_detector/schema/traffic_light_map_based_detector.schema.json") }}
