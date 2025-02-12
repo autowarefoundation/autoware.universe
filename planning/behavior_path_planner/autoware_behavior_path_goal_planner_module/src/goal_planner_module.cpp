@@ -1441,7 +1441,9 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsCandidate(
 
   // if pull over path candidates generation is not finished, use previous module output
   if (context_data.lane_parking_response.pull_over_path_candidates.empty()) {
-    return getPreviousModuleOutput();
+    auto stop_path = getPreviousModuleOutput();
+    stop_path.path = generateStopPath(context_data, detail);
+    return stop_path;
   }
 
   BehaviorModuleOutput output{};
@@ -1712,11 +1714,13 @@ PathWithLaneId GoalPlannerModule::generateStopPath(
   // calculate search start offset pose from the closest goal candidate pose with
   // approximate_pull_over_distance_ ego vehicle decelerates to this position. or if no feasible
   // stop point is found, stop at this position.
-  const auto closest_goal_candidate =
-    goal_searcher.getClosetGoalCandidateAlongLanes(goal_candidates_, planner_data_);
+  const auto closest_searched_goal_candidate =
+    goal_searcher.getClosestGoalCandidateAlongLanes(goal_candidates_, planner_data_);
+  const auto closest_goal_candidate = closest_searched_goal_candidate
+                                        ? closest_searched_goal_candidate.value().goal_pose
+                                        : route_handler->getOriginalGoalPose();
   const auto decel_pose = calcLongitudinalOffsetPose(
-    extended_prev_path.points, closest_goal_candidate.goal_pose.position,
-    -approximate_pull_over_distance_);
+    extended_prev_path.points, closest_goal_candidate.position, -approximate_pull_over_distance_);
 
   // if not approved stop road lane.
   // stop point priority is
@@ -2041,12 +2045,18 @@ double GoalPlannerModule::calcSignedArcLengthFromEgo(
 void GoalPlannerModule::deceleratePath(PullOverPath & pull_over_path) const
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+  assert(goal_searcher_);
+  const auto & goal_searcher = goal_searcher_.value();
 
   // decelerate before the search area start
-  const auto closest_goal_candidate =
-    goal_searcher_->getClosetGoalCandidateAlongLanes(goal_candidates_, planner_data_);
+  const auto & route_handler = planner_data_->route_handler;
+  const auto closest_searched_goal_candidate =
+    goal_searcher.getClosestGoalCandidateAlongLanes(goal_candidates_, planner_data_);
+  const auto closest_goal_candidate = closest_searched_goal_candidate
+                                        ? closest_searched_goal_candidate.value().goal_pose
+                                        : route_handler->getOriginalGoalPose();
   const auto decel_pose = calcLongitudinalOffsetPose(
-    pull_over_path.full_path().points, closest_goal_candidate.goal_pose.position,
+    pull_over_path.full_path().points, closest_goal_candidate.position,
     -approximate_pull_over_distance_);
   auto & first_path = pull_over_path.partial_paths().front();
   if (decel_pose) {
