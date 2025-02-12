@@ -48,21 +48,23 @@ void OccupancyGridMapBBFUpdater::initRosParam(rclcpp::Node & node)
   v_ratio_ = node.declare_parameter<double>("v_ratio");
 
 #ifdef USE_CUDA
-  device_probability_matrix_ =
-    autoware::cuda_utils::make_unique<float[]>(Index::NUM_STATES * Index::NUM_STATES);
+  if (use_cuda_) {
+    device_probability_matrix_ =
+      autoware::cuda_utils::make_unique<float[]>(Index::NUM_STATES * Index::NUM_STATES);
 
-  std::vector<float> probability_matrix_vector;
-  probability_matrix_vector.resize(Index::NUM_STATES * Index::NUM_STATES);
+    std::vector<float> probability_matrix_vector;
+    probability_matrix_vector.resize(Index::NUM_STATES * Index::NUM_STATES);
 
-  for (size_t j = 0; j < Index::NUM_STATES; j++) {
-    for (size_t i = 0; i < Index::NUM_STATES; i++) {
-      probability_matrix_vector[j * Index::NUM_STATES + i] = probability_matrix_(j, i);
+    for (size_t j = 0; j < Index::NUM_STATES; j++) {
+      for (size_t i = 0; i < Index::NUM_STATES; i++) {
+        probability_matrix_vector[j * Index::NUM_STATES + i] = probability_matrix_(j, i);
+      }
     }
-  }
 
-  cudaMemcpyAsync(
-    device_probability_matrix_.get(), probability_matrix_vector.data(),
-    sizeof(float) * Index::NUM_STATES * Index::NUM_STATES, cudaMemcpyHostToDevice, stream_);
+    cudaMemcpyAsync(
+      device_probability_matrix_.get(), probability_matrix_vector.data(),
+      sizeof(float) * Index::NUM_STATES * Index::NUM_STATES, cudaMemcpyHostToDevice, stream_);
+  }
 #endif
 }
 
