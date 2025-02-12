@@ -43,7 +43,7 @@ ROIs detected from YOLOX will be selected by a combination of `expect/rois`. At 
 
 ## Parameters
 
-{{ json_to_markdown("perception/autoware_traffic_light_fine_detector/schema/traffic_light_fine_detector.schema.json") }}                           |
+{{ json_to_markdown("perception/autoware_traffic_light_fine_detector/schema/traffic_light_fine_detector.schema.json") }} |
 
 ## Assumptions / Known limits
 
