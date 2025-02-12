@@ -76,11 +76,6 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/latest/common/autoware_interpolation/</loc>
-         <lastmod>2025-02-12</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
          <loc>https://autowarefoundation.github.io/autoware.universe/latest/common/autoware_motion_utils/</loc>
          <lastmod>2025-02-12</lastmod>
          <changefreq>daily</changefreq>
