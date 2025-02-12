@@ -1446,8 +1446,72 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsCandidate(
     return stop_path;
   }
 
+  BehaviorModuleOutput pull_over_output{};
+  // if pull over path candidates generation is not finished, use previous module output
+  auto pull_over_path_with_velocity_opt = context_data.pull_over_path_opt;
+  const bool is_freespace =
+    pull_over_path_with_velocity_opt &&
+    pull_over_path_with_velocity_opt.value().type() == PullOverPlannerType::FREESPACE;
+  const std::optional<GoalCandidate> modified_goal_opt =
+    pull_over_path_with_velocity_opt
+      ? std::make_optional<GoalCandidate>(pull_over_path_with_velocity_opt.value().modified_goal())
+      : std::nullopt;
+  const auto & last_path_update_time = context_data.last_path_update_time;
+  if (
+    path_decision_controller_.get_current_state().state ==
+      PathDecisionState::DecisionKind::NOT_DECIDED &&
+    !is_freespace &&
+    needPathUpdate(
+      planner_data_->self_odometry->pose.pose, 1.0 /*path_update_duration*/, clock_->now(),
+      modified_goal_opt, last_path_update_time, parameters_)) {
+    // if the final path is not decided and enough time has passed since last path update,
+    // select safe path from lane parking pull over path candidates
+    // and set it to thread_safe_data_
+    RCLCPP_INFO(getLogger(), "Update pull over path candidates");
+
+    context_data.pull_over_path_opt = std::nullopt;
+    context_data.last_path_update_time = std::nullopt;
+    context_data.last_path_idx_increment_time = std::nullopt;
+
+    // Select a path that is as safe as possible and has a high priority.
+    const auto & pull_over_path_candidates =
+      context_data.lane_parking_response.pull_over_path_candidates;
+    const auto lane_pull_over_path_opt = selectPullOverPath(
+      context_data, pull_over_path_candidates,
+      context_data.lane_parking_response.sorted_bezier_indices_opt);
+
+    // update thread_safe_data_
+    const auto & pull_over_path_opt =
+      lane_pull_over_path_opt ? lane_pull_over_path_opt
+                              : context_data.freespace_parking_response.freespace_pull_over_path;
+    if (pull_over_path_opt) {
+      const auto & pull_over_path = pull_over_path_opt.value();
+      /** TODO(soblin): since thread_safe_data::pull_over_path was used as a global variable,
+       * old code was setting deceleration to thread_safe_data::pull_over_path and setOutput()
+       * accessed to the velocity profile in thread_safe_data::pull_over_path, which is a very
+       * bad usage of member variable
+       *
+       * set this selected pull_over_path to ThreadSafeData, but actually RoadParking thread
+       * does not use pull_over_path, but only FreespaceParking thread use this selected
+       * pull_over_path. As the next action item, only set this selected pull_over_path to only
+       * FreespaceThreadSafeData.
+       */
+      context_data.pull_over_path_opt = pull_over_path;
+      context_data.last_path_update_time = clock_->now();
+      context_data.last_path_idx_increment_time = std::nullopt;
+
+      RCLCPP_DEBUG(
+        getLogger(), "selected pull over path: path_id: %ld, goal_id: %ld", pull_over_path.id(),
+        pull_over_path.modified_goal().id);
+    }
+  }
+
+  if (pull_over_path_with_velocity_opt) {
+    path_candidate_ =
+      std::make_shared<PathWithLaneId>(pull_over_path_with_velocity_opt.value().full_path());
+  }
+
   BehaviorModuleOutput output{};
-  const BehaviorModuleOutput pull_over_output = planPullOverAsOutput(context_data);
   output.modified_goal = pull_over_output.modified_goal;
   output.path = generateStopPath(context_data, detail);
   output.reference_path = getPreviousModuleOutput().reference_path;
