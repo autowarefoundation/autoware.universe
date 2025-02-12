@@ -39,9 +39,8 @@ CloudCollector::CloudCollector(
 {
   status_ = CollectorStatus::Idle;
 
-  double temp_timeout_sec = 1.0;  // This will be overwritten when the first cloud comes
   const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
-    std::chrono::duration<double>(temp_timeout_sec));
+    std::chrono::duration<double>(timeout_sec_));
 
   timer_ =
     rclcpp::create_timer(ros2_parent_node_, ros2_parent_node_->get_clock(), period_ns, [this]() {
@@ -49,6 +48,8 @@ CloudCollector::CloudCollector(
       if (status_ == CollectorStatus::Finished) return;
       concatenate_callback();
     });
+
+  timer_->cancel();
 }
 
 void CloudCollector::set_info(std::shared_ptr<CollectorInfoBase> collector_info)
@@ -73,6 +74,7 @@ bool CloudCollector::process_pointcloud(
   if (status_ == CollectorStatus::Finished) {
     return false;
   }
+
   if (status_ == CollectorStatus::Idle) {
     // Add first pointcloud to the collector, restart the timer
     status_ = CollectorStatus::Processing;
@@ -105,8 +107,6 @@ CollectorStatus CloudCollector::get_status()
 
 void CloudCollector::concatenate_callback()
 {
-  if (topic_to_cloud_map_.size() == 0) return;
-
   if (debug_mode_) {
     show_debug_message();
   }
