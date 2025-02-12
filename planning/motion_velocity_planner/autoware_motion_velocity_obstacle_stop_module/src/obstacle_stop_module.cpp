@@ -100,16 +100,6 @@ std::vector<PredictedPath> resample_highest_confidence_predicted_paths(
   return resampled_paths;
 }
 
-template <class T>
-std::vector<T> concat_vectors(
-  const std::vector<T> & first_vector, const std::vector<T> & second_vector)
-{
-  std::vector<T> concatenated_vector;
-  concatenated_vector.insert(concatenated_vector.end(), first_vector.begin(), first_vector.end());
-  concatenated_vector.insert(concatenated_vector.end(), second_vector.begin(), second_vector.end());
-  return concatenated_vector;
-}
-
 double calc_dist_to_bumper(const bool is_driving_forward, const VehicleInfo & vehicle_info)
 {
   if (is_driving_forward) {
@@ -235,8 +225,7 @@ VelocityPlanningResult ObstacleStopModule::plan(
     std::vector<StopObstacle>{};  // filter_stop_obstacle_for_point_cloud();
 
   // 5. concat stop obstacles by predicted objects and point cloud
-  const auto stop_obstacles = stop_obstacles_for_predicted_object;
-  concat_vectors(stop_obstacles_for_predicted_object, stop_obstacles_for_point_cloud);
+  const std::vector<StopObstacle> stop_obstacles = autoware::motion_velocity_planner::utils::concat_vectors(std::move(stop_obstacles_for_predicted_object), std::move(stop_obstacles_for_point_cloud));
 
   // 6. plan stop
   const auto stop_point =

@@ -72,6 +72,20 @@ struct PlannerData
   {
   public:
     Object() = default;
+    Object(
+      const rclcpp::Time & arg_stamp,
+      const std::optional<geometry_msgs::msg::Point> & stop_collision_point,
+      const std::optional<geometry_msgs::msg::Point> & slow_down_front_collision_point,
+      const std::optional<geometry_msgs::msg::Point> & slow_down_back_collision_point,
+      const double ego_to_obstacle_distance, const double lat_dist_from_obstacle_to_traj)
+    : stamp(arg_stamp),
+      ego_to_obstacle_distance(ego_to_obstacle_distance),
+      lat_dist_from_obstacle_to_traj(lat_dist_from_obstacle_to_traj),
+      stop_collision_point(stop_collision_point),
+      slow_down_front_collision_point(slow_down_front_collision_point),
+      slow_down_back_collision_point(slow_down_back_collision_point) 
+    {
+    }
     explicit Object(const autoware_perception_msgs::msg::PredictedObject & arg_predicted_object)
     : predicted_object(arg_predicted_object)
     {
@@ -89,6 +103,15 @@ struct PlannerData
     double get_lat_vel_relative_to_traj(const std::vector<TrajectoryPoint> & traj_points) const;
     geometry_msgs::msg::Pose get_predicted_pose(
       const rclcpp::Time & current_stamp, const rclcpp::Time & predicted_object_stamp) const;
+
+    // for PointCloud
+    rclcpp::Time stamp;
+    double ego_to_obstacle_distance;
+    double lat_dist_from_obstacle_to_traj;
+
+    std::optional<geometry_msgs::msg::Point> stop_collision_point;
+    std::optional<geometry_msgs::msg::Point> slow_down_front_collision_point;
+    std::optional<geometry_msgs::msg::Point> slow_down_back_collision_point;
 
   private:
     void calc_vel_relative_to_traj(const std::vector<TrajectoryPoint> & traj_points) const;
