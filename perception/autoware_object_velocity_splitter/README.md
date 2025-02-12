@@ -18,8 +18,5 @@ This package can split DetectedObjects into two messages by object's speed.
   - Objects with high speed
 
 ### Parameters
-
-- `velocity_threshold` (double) [m/s]
-  - Default parameter is 3.0
-
-This parameter is velocity threshold to split objects
+ 
+ -{{ json_to_markdown("perception/autoware_object_velocity_splitter/schema/object_velocity_splitter.schema.json") }}
