@@ -62,7 +62,15 @@ NaiveMatchingStrategy<Msg3D, Msg2D, ExportObj>::match_rois_to_collector(
       if (
         auto naive_info =
           std::dynamic_pointer_cast<NaiveCollectorInfo>(fusion_collector->get_info())) {
-        double time_difference = std::abs(params->rois_timestamp - naive_info->timestamp);
+        auto offset_it = id_to_offset_map_.find(params->rois_id);
+        if (offset_it == id_to_offset_map_.end()) {
+          RCLCPP_ERROR(
+            ros2_parent_node_->get_logger(), "Missing offset for rois_id: %zu", params->rois_id);
+          continue;
+        }
+
+        double time_difference =
+          std::abs(params->rois_timestamp - naive_info->timestamp - offset_it->second);
         if (time_difference < smallest_time_difference && time_difference < naive_info->threshold) {
           smallest_time_difference = time_difference;
           closest_collector = fusion_collector;
