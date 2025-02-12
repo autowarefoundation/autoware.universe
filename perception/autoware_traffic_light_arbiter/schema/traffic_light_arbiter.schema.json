@@ -6,6 +6,11 @@
     "traffic_light_arbiter": {
       "type": "object",
       "properties": {
+        "external_delay_tolerance": {
+          "type": "number",
+          "description": "The duration in seconds an external message is considered valid for merging in comparison with current time.",
+          "default": 5.0
+        },
         "external_time_tolerance": {
           "type": "number",
           "description": "The duration in seconds an external message is considered valid for merging.",
@@ -28,6 +33,7 @@
         }
       },
       "required": [
+        "external_delay_tolerance",
         "external_time_tolerance",
         "perception_time_tolerance",
         "external_priority",
