@@ -33,7 +33,8 @@ TrafficLightSelectorNode::TrafficLightSelectorNode(const rclcpp::NodeOptions & n
   detected_rois_sub_(this, "input/detected_rois", rclcpp::QoS{1}.get_rmw_qos_profile()),
   rough_rois_sub_(this, "input/rough_rois", rclcpp::QoS{1}.get_rmw_qos_profile()),
   expected_rois_sub_(this, "input/expect_rois", rclcpp::QoS{1}.get_rmw_qos_profile()),
-  sync_(SyncPolicy(10), detected_rois_sub_, rough_rois_sub_, expected_rois_sub_)
+  camera_info_sub_(this, "input/camera_info", rclcpp::SensorDataQoS().get_rmw_qos_profile()),
+  sync_(SyncPolicy(10), detected_rois_sub_, rough_rois_sub_, expected_rois_sub_, camera_info_sub_)
 {
   {
     stop_watch_ptr_ =
@@ -48,37 +49,24 @@ TrafficLightSelectorNode::TrafficLightSelectorNode(const rclcpp::NodeOptions & n
   using std::placeholders::_1;
   using std::placeholders::_2;
   using std::placeholders::_3;
-  sync_.registerCallback(std::bind(&TrafficLightSelectorNode::objectsCallback, this, _1, _2, _3));
+  using std::placeholders::_4;
+  sync_.registerCallback(
+    std::bind(&TrafficLightSelectorNode::objectsCallback, this, _1, _2, _3, _4));
 
-  camera_info_sub_ = create_subscription<sensor_msgs::msg::CameraInfo>(
-    "input/camera_info", rclcpp::SensorDataQoS(),
-    std::bind(&TrafficLightSelectorNode::cameraInfoCallback, this, _1));
   // Publisher
   pub_traffic_light_rois_ =
     create_publisher<TrafficLightRoiArray>("output/traffic_rois", rclcpp::QoS{1});
 }
 
-void TrafficLightSelectorNode::cameraInfoCallback(
-  const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_msg)
-{
-  if (camera_info_subscribed_) {
-    return;
-  }
-  RCLCPP_INFO(get_logger(), "camera_info received");
-  image_width_ = input_msg->width;
-  image_height_ = input_msg->height;
-  camera_info_subscribed_ = true;
-}
-
 void TrafficLightSelectorNode::objectsCallback(
   const DetectedObjectsWithFeature::ConstSharedPtr & detected_traffic_light_msg,
   const TrafficLightRoiArray::ConstSharedPtr & rough_rois_msg,
-  const TrafficLightRoiArray::ConstSharedPtr & expected_rois_msg)
+  const TrafficLightRoiArray::ConstSharedPtr & expected_rois_msg,
+  const sensor_msgs::msg::CameraInfo::ConstSharedPtr & camera_info_msg)
 {
   stop_watch_ptr_->toc("processing_time", true);
-  if (!camera_info_subscribed_) {
-    return;
-  }
+  uint32_t image_width = camera_info_msg->width;
+  uint32_t image_height = camera_info_msg->height;
   std::map<int, sensor_msgs::msg::RegionOfInterest> rough_rois_map;
   for (const auto & roi : rough_rois_msg->rois) {
     rough_rois_map[roi.traffic_light_id] = roi.roi;
@@ -99,9 +87,9 @@ void TrafficLightSelectorNode::objectsCallback(
     expect_rois.push_back(expected_roi.roi);
   }
   cv::Mat expect_roi_img =
-    utils::createBinaryImageFromRois(expect_rois, cv::Size(image_width_, image_height_));
+    utils::createBinaryImageFromRois(expect_rois, cv::Size(image_width, image_height));
   cv::Mat det_roi_img =
-    utils::createBinaryImageFromRois(det_rois, cv::Size(image_width_, image_height_));
+    utils::createBinaryImageFromRois(det_rois, cv::Size(image_width, image_height));
   // for (const auto expect_roi : expect_rois) {
   for (const auto & expect_traffic_roi : expected_rois_msg->rois) {
     const auto & expect_roi = expect_traffic_roi.roi;
@@ -135,10 +123,10 @@ void TrafficLightSelectorNode::objectsCallback(
       // fit top lef corner of detected roi to inside of image
       detected_roi_shifted.x_offset = std::clamp(
         static_cast<int>(detected_roi.feature.roi.x_offset) - det_roi_shift_x, 0,
-        static_cast<int>(image_width_ - detected_roi.feature.roi.width));
+        static_cast<int>(image_width - detected_roi.feature.roi.width));
       detected_roi_shifted.y_offset = std::clamp(
         static_cast<int>(detected_roi.feature.roi.y_offset) - det_roi_shift_y, 0,
-        static_cast<int>(image_height_ - detected_roi.feature.roi.height));
+        static_cast<int>(image_height - detected_roi.feature.roi.height));
 
       double iou = utils::getGenIoU(expect_roi.roi, detected_roi_shifted);
       if (iou > max_iou) {
