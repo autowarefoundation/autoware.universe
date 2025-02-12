@@ -562,16 +562,13 @@ std::set<int64_t> getLaneIdSetOnPath(
 
 std::vector<int64_t> getSortedLaneIdsFromPath(const PathWithLaneId & path)
 {
-  std::vector<int64_t> sorted_lane_ids;
+  std::unordered_set<int64_t> sorted_lane_ids;
   for (const auto & path_points : path.points) {
-    for (const auto lane_id : path_points.lane_ids)
-      if (
-        std::find(sorted_lane_ids.begin(), sorted_lane_ids.end(), lane_id) ==
-        sorted_lane_ids.end()) {
-        sorted_lane_ids.emplace_back(lane_id);
-      }
+    for (const auto lane_id : path_points.lane_ids) {
+      sorted_lane_ids.insert(lane_id);
+    }
   }
-  return sorted_lane_ids;
+  return std::vector<int64_t>(sorted_lane_ids.begin(), sorted_lane_ids.end());
 }
 
 std::vector<int64_t> getSubsequentLaneIdsSetOnPath(
