@@ -109,6 +109,22 @@ std::vector<TrajectoryPoint> decimate_trajectory_points_from_ego(
   }
   return extended_traj_points_from_ego;
 }
+geometry_msgs::msg::Point toGeomPoint(const pcl::PointXYZ & point)
+{
+  geometry_msgs::msg::Point geom_point;
+  geom_point.x = point.x;
+  geom_point.y = point.y;
+  geom_point.z = point.z;
+  return geom_point;
+}
+
+geometry_msgs::msg::Point toGeomPoint(const autoware::universe_utils::Point2d & point)
+{
+  geometry_msgs::msg::Point geom_point;
+  geom_point.x = point.x();
+  geom_point.y = point.y();
+  return geom_point;
+}
 
 std::vector<uint8_t> get_target_object_type(rclcpp::Node & node, const std::string & param_prefix)
 {

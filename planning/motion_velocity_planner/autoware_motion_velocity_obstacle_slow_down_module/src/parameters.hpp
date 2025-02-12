@@ -15,6 +15,7 @@
 #ifndef PARAMETERS_HPP_
 #define PARAMETERS_HPP_
 
+#include "autoware/motion_utils/trajectory/conversion.hpp"
 #include "type_alias.hpp"
 #include "types.hpp"
 
@@ -53,13 +54,56 @@ struct CommonParam
   }
 };
 
+struct EgoNearestParam
+{
+  EgoNearestParam() = default;
+  explicit EgoNearestParam(rclcpp::Node & node)
+  {
+    dist_threshold = node.declare_parameter<double>("ego_nearest_dist_threshold");
+    yaw_threshold = node.declare_parameter<double>("ego_nearest_yaw_threshold");
+  }
+
+  size_t findIndex(
+    const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & pose) const
+  {
+    return autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
+      traj_points, pose, dist_threshold, yaw_threshold);
+  }
+
+  size_t findSegmentIndex(
+    const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & pose) const
+  {
+    return autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      traj_points, pose, dist_threshold, yaw_threshold);
+  }
+
+  double dist_threshold;
+  double yaw_threshold;
+};
+
 struct ObstacleFilteringParam
 {
+  struct PointcloudObstacleFilteringParam
+  {
+    double pointcloud_voxel_grid_x{};
+    double pointcloud_voxel_grid_y{};
+    double pointcloud_voxel_grid_z{};
+    double pointcloud_cluster_tolerance{};
+    double pointcloud_min_cluster_size{};
+    double pointcloud_max_cluster_size{};
+  };
+
+  PointcloudObstacleFilteringParam pointcloud_obstacle_filtering_param;
   std::vector<uint8_t> object_types{};
+
+  bool enable_slow_down_planning;
+  bool use_pointcloud_for_slow_down;
 
   double min_lat_margin{};
   double max_lat_margin{};
   double lat_hysteresis_margin{};
+  double max_lat_margin_for_stop_against_unknown{};
+  double max_lat_margin_for_slow_down{};
 
   int successive_num_to_entry_slow_down_condition{};
   int successive_num_to_exit_slow_down_condition{};
@@ -67,6 +111,10 @@ struct ObstacleFilteringParam
   ObstacleFilteringParam() = default;
   explicit ObstacleFilteringParam(rclcpp::Node & node)
   {
+    enable_slow_down_planning =
+      getOrDeclareParameter<bool>(node, "common.enable_slow_down_planning");
+    use_pointcloud_for_slow_down =
+      getOrDeclareParameter<bool>(node, "common.slow_down_obstacle_type.pointcloud");
     object_types =
       utils::get_target_object_type(node, "obstacle_slow_down.obstacle_filtering.object_type.");
     min_lat_margin =
@@ -79,6 +127,23 @@ struct ObstacleFilteringParam
       node, "obstacle_slow_down.obstacle_filtering.successive_num_to_entry_slow_down_condition");
     successive_num_to_exit_slow_down_condition = getOrDeclareParameter<int>(
       node, "obstacle_slow_down.obstacle_filtering.successive_num_to_exit_slow_down_condition");
+
+    pointcloud_obstacle_filtering_param.pointcloud_voxel_grid_x =
+      getOrDeclareParameter<double>(node, "behavior_determination.pointcloud_voxel_grid_x");
+    pointcloud_obstacle_filtering_param.pointcloud_voxel_grid_y =
+      getOrDeclareParameter<double>(node, "behavior_determination.pointcloud_voxel_grid_y");
+    pointcloud_obstacle_filtering_param.pointcloud_voxel_grid_z =
+      getOrDeclareParameter<double>(node, "behavior_determination.pointcloud_voxel_grid_z");
+    pointcloud_obstacle_filtering_param.pointcloud_cluster_tolerance =
+      getOrDeclareParameter<double>(node, "behavior_determination.pointcloud_cluster_tolerance");
+    pointcloud_obstacle_filtering_param.pointcloud_min_cluster_size =
+      getOrDeclareParameter<double>(node, "behavior_determination.pointcloud_min_cluster_size");
+    pointcloud_obstacle_filtering_param.pointcloud_max_cluster_size =
+      getOrDeclareParameter<double>(node, "behavior_determination.pointcloud_max_cluster_size");
+    max_lat_margin_for_stop_against_unknown = getOrDeclareParameter<double>(
+      node, "behavior_determination.stop.max_lat_margin_against_unknown");
+    max_lat_margin_for_slow_down =
+      getOrDeclareParameter<double>(node, "behavior_determination.slow_down.max_lat_margin");
   }
 };
 
