@@ -70,10 +70,10 @@ namespace autoware
 TrafficLightArbiter::TrafficLightArbiter(const rclcpp::NodeOptions & options)
 : Node("traffic_light_arbiter", options)
 {
-  external_time_tolerance_ = this->declare_parameter<double>("external_time_tolerance", 5.0);
-  perception_time_tolerance_ = this->declare_parameter<double>("perception_time_tolerance", 1.0);
-  external_priority_ = this->declare_parameter<bool>("external_priority", false);
-  enable_signal_matching_ = this->declare_parameter<bool>("enable_signal_matching", false);
+  external_time_tolerance_ = this->declare_parameter<double>("external_time_tolerance");
+  perception_time_tolerance_ = this->declare_parameter<double>("perception_time_tolerance");
+  external_priority_ = this->declare_parameter<bool>("external_priority");
+  enable_signal_matching_ = this->declare_parameter<bool>("enable_signal_matching");
 
   if (enable_signal_matching_) {
     signal_match_validator_ = std::make_unique<SignalMatchValidator>();
