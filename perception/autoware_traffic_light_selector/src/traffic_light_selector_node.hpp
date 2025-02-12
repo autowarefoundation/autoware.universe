@@ -57,25 +57,23 @@ private:
   message_filters::Subscriber<DetectedObjectsWithFeature> detected_rois_sub_;
   message_filters::Subscriber<TrafficLightRoiArray> rough_rois_sub_;
   message_filters::Subscriber<TrafficLightRoiArray> expected_rois_sub_;
+  message_filters::Subscriber<sensor_msgs::msg::CameraInfo> camera_info_sub_;
   typedef message_filters::sync_policies::ApproximateTime<
-    DetectedObjectsWithFeature, TrafficLightRoiArray, TrafficLightRoiArray>
+    DetectedObjectsWithFeature, TrafficLightRoiArray, TrafficLightRoiArray,
+    sensor_msgs::msg::CameraInfo>
     SyncPolicy;
   typedef message_filters::Synchronizer<SyncPolicy> Sync;
   Sync sync_;
   void objectsCallback(
     const DetectedObjectsWithFeature::ConstSharedPtr & detected_rois_msg,
     const TrafficLightRoiArray::ConstSharedPtr & rough_rois_msg,
-    const TrafficLightRoiArray::ConstSharedPtr & expect_rois_msg);
+    const TrafficLightRoiArray::ConstSharedPtr & expect_rois_msg,
+    const sensor_msgs::msg::CameraInfo::ConstSharedPtr & camera_info_msg);
 
-  void cameraInfoCallback(const sensor_msgs::msg::CameraInfo::ConstSharedPtr input_msg);
   // Publisher
   rclcpp::Publisher<TrafficLightRoiArray>::SharedPtr pub_traffic_light_rois_;
-  // Subscribe camera_info to get width and height of image
-  rclcpp::Subscription<sensor_msgs::msg::CameraInfo>::SharedPtr camera_info_sub_;
-  bool camera_info_subscribed_;
-  uint32_t image_width_{1280};
-  uint32_t image_height_{960};
-  double max_iou_threshold_{0.0};
+
+  double max_iou_threshold_;
 
   std::unique_ptr<autoware::universe_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
   std::unique_ptr<autoware::universe_utils::DebugPublisher> debug_publisher_;
