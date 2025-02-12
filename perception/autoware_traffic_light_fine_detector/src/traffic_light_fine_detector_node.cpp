@@ -62,14 +62,14 @@ TrafficLightFineDetectorNode::TrafficLightFineDetectorNode(const rclcpp::NodeOpt
   std::string model_path = declare_parameter("fine_detector_model_path", "");
   std::string label_path = declare_parameter("fine_detector_label_path", "");
   std::string precision = declare_parameter("fine_detector_precision", "fp32");
-  const uint8_t gpu_id = declare_parameter("gpu_id", 0);
+  const uint8_t gpu_id = declare_parameter("gpu_id");
   // Objects with a score lower than this value will be ignored.
   // This threshold will be ignored if specified model contains EfficientNMS_TRT module in it
-  score_thresh_ = declare_parameter("fine_detector_score_thresh", 0.3);
+  score_thresh_ = declare_parameter("fine_detector_score_thresh");
   // Detection results will be ignored if IoU over this value.
   // This threshold will be ignored if specified model contains EfficientNMS_TRT module in it
-  float nms_threshold = declare_parameter("fine_detector_nms_thresh", 0.65);
-  is_approximate_sync_ = this->declare_parameter<bool>("approximate_sync", false);
+  float nms_threshold = declare_parameter("fine_detector_nms_thresh");
+  is_approximate_sync_ = this->declare_parameter<bool>("approximate_sync");
 
   if (!readLabelFile(label_path, tlr_label_id_, num_class)) {
     RCLCPP_ERROR(this->get_logger(), "Could not find tlr id");
