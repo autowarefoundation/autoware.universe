@@ -65,7 +65,7 @@ void create_arc(
 }
 
 void offset_segment(
-  Polygon2d& vertices, const Point2d& v1, const Point2d& v2, const Point2d& next_vertex,
+  Polygon2d & vertices, const Point2d & v1, const Point2d & v2, const Point2d & next_vertex,
   const double dist, const double segments)
 {
   // Calculate direction and normals
