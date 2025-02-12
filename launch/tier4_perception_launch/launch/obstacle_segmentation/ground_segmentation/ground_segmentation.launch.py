@@ -44,8 +44,12 @@ class GroundSegmentationPipeline:
             "/perception/obstacle_segmentation/single_frame/pointcloud"
         )
         self.output_topic = "/perception/obstacle_segmentation/pointcloud"
-        self.use_single_frame_filter = self.ground_segmentation_param["use_single_frame_filter"]
-        self.use_time_series_filter = self.ground_segmentation_param["use_time_series_filter"]
+        self.use_single_frame_filter = LaunchConfiguration("use_single_frame_filter").perform(
+            self.context
+        )
+        self.use_time_series_filter = LaunchConfiguration("use_time_series_filter").perform(
+            self.context
+        )
 
     def get_vehicle_info(self):
         # TODO(TIER IV): Use Parameter Substitution after we drop Galactic support
