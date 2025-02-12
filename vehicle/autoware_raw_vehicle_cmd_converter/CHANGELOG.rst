@@ -2,6 +2,23 @@
 Changelog for package autoware_raw_vehicle_cmd_converter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_raw_vehicle_cmd_converter)!: tier4_debug_msgs changed to autoware_internal_debug_msgs in autoware_raw_vehicle_cmd_converter (`#9924 <https://github.com/autowarefoundation/autoware.universe/issues/9924>`_)
+  feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in files vehicle/autoware_raw_vehicle_cmd_converter
+  Co-authored-by: Ryohsuke Mitsudome <43976834+mitsudome-r@users.noreply.github.com>
+* fix(raw_veihicle_converter): fix too long line (`#9716 <https://github.com/autowarefoundation/autoware.universe/issues/9716>`_)
+* feat(raw_vehicle_cmd_converter): add vehicle adaptor  (`#8782 <https://github.com/autowarefoundation/autoware.universe/issues/8782>`_)
+  * feat(raw_vehicle_cmd_converter): add vehicle adaptor
+  sub operation status
+  * feat(raw_vehicle_cmd_converter): publish vehicle adaptor output
+  * use control horizon
+  * revert carla
+  * update docs
+  ---------
+* Contributors: Fumiya Watanabe, Kosuke Takeuchi, Vishal Chauhan
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0
