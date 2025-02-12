@@ -2,6 +2,29 @@
 Changelog for package autoware_crosswalk_traffic_light_estimator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_crosswalk_traffic_light_estimator)!: tier4_debug_msgs changes to autoware_internal_debug_msgs in autoware_crosswalk_traffic_light_estimator (`#9870 <https://github.com/autowarefoundation/autoware.universe/issues/9870>`_)
+* chore(autoware_crosswalk_traffic_light_estimator): fix docs (`#9822 <https://github.com/autowarefoundation/autoware.universe/issues/9822>`_)
+  * fix docs
+  * fix docs
+  * add tlr output image
+  * modify sentense
+  * modify sentense
+  * refactor readme
+  * fix docs
+  * fix
+  * style(pre-commit): autofix
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* feat(autoware_crosswalk_traffic_light_estimator): overwrite invalid detection result (`#9667 <https://github.com/autowarefoundation/autoware.universe/issues/9667>`_)
+  * add code in order to check invalid detection
+  * style(pre-commit): autofix
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* Contributors: Fumiya Watanabe, Masato Saeki, Vishal Chauhan
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

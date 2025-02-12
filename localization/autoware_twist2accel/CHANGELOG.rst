@@ -2,6 +2,15 @@
 Changelog for package autoware_twist2accel
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* chore(autoware_twist2accel): remove an unused dependency (`#9881 <https://github.com/autowarefoundation/autoware.universe/issues/9881>`_)
+  Removed an unused dependency
+* feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in files localization/autoware_twist2accel (`#9868 <https://github.com/autowarefoundation/autoware.universe/issues/9868>`_)
+  Co-authored-by: SakodaShintaro <shintaro.sakoda@tier4.jp>
+* Contributors: Fumiya Watanabe, SakodaShintaro, Vishal Chauhan
+
 0.40.0 (2024-12-12)
 -------------------
 * Revert "chore(package.xml): bump version to 0.39.0 (`#9587 <https://github.com/autowarefoundation/autoware.universe/issues/9587>`_)"

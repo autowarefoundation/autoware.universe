@@ -25,7 +25,7 @@ namespace autoware::motion_utils
 {
 
 std::optional<std::pair<size_t, size_t>> getPathIndexRangeWithLaneId(
-  const tier4_planning_msgs::msg::PathWithLaneId & path, const int64_t target_lane_id)
+  const autoware_internal_planning_msgs::msg::PathWithLaneId & path, const int64_t target_lane_id)
 {
   size_t start_idx = 0;  // NOTE: to prevent from maybe-uninitialized error
   size_t end_idx = 0;    // NOTE: to prevent from maybe-uninitialized error
@@ -56,8 +56,8 @@ std::optional<std::pair<size_t, size_t>> getPathIndexRangeWithLaneId(
 }
 
 size_t findNearestIndexFromLaneId(
-  const tier4_planning_msgs::msg::PathWithLaneId & path, const geometry_msgs::msg::Point & pos,
-  const int64_t lane_id)
+  const autoware_internal_planning_msgs::msg::PathWithLaneId & path,
+  const geometry_msgs::msg::Point & pos, const int64_t lane_id)
 {
   const auto opt_range = getPathIndexRangeWithLaneId(path, lane_id);
   if (opt_range) {
@@ -66,7 +66,7 @@ size_t findNearestIndexFromLaneId(
 
     validateNonEmpty(path.points);
 
-    const auto sub_points = std::vector<tier4_planning_msgs::msg::PathPointWithLaneId>{
+    const auto sub_points = std::vector<autoware_internal_planning_msgs::msg::PathPointWithLaneId>{
       path.points.begin() + start_idx, path.points.begin() + end_idx + 1};
     validateNonEmpty(sub_points);
 
@@ -77,8 +77,8 @@ size_t findNearestIndexFromLaneId(
 }
 
 size_t findNearestSegmentIndexFromLaneId(
-  const tier4_planning_msgs::msg::PathWithLaneId & path, const geometry_msgs::msg::Point & pos,
-  const int64_t lane_id)
+  const autoware_internal_planning_msgs::msg::PathWithLaneId & path,
+  const geometry_msgs::msg::Point & pos, const int64_t lane_id)
 {
   const size_t nearest_idx = findNearestIndexFromLaneId(path, pos, lane_id);
 
@@ -99,8 +99,8 @@ size_t findNearestSegmentIndexFromLaneId(
 }
 
 // NOTE: rear_to_cog is supposed to be positive
-tier4_planning_msgs::msg::PathWithLaneId convertToRearWheelCenter(
-  const tier4_planning_msgs::msg::PathWithLaneId & path, const double rear_to_cog,
+autoware_internal_planning_msgs::msg::PathWithLaneId convertToRearWheelCenter(
+  const autoware_internal_planning_msgs::msg::PathWithLaneId & path, const double rear_to_cog,
   const bool enable_last_point_compensation)
 {
   auto cog_path = path;
@@ -116,15 +116,15 @@ tier4_planning_msgs::msg::PathWithLaneId convertToRearWheelCenter(
 
     // apply beta to CoG pose
     geometry_msgs::msg::Pose cog_pose_with_beta;
-    cog_pose_with_beta.position = autoware::universe_utils::getPoint(path.points.at(i));
+    cog_pose_with_beta.position = autoware_utils::get_point(path.points.at(i));
     cog_pose_with_beta.orientation =
-      autoware::universe_utils::createQuaternionFromYaw(yaw_vec.at(i) - beta);
+      autoware_utils::create_quaternion_from_yaw(yaw_vec.at(i) - beta);
 
     const auto rear_pose =
-      autoware::universe_utils::calcOffsetPose(cog_pose_with_beta, -rear_to_cog, 0.0, 0.0);
+      autoware_utils::calc_offset_pose(cog_pose_with_beta, -rear_to_cog, 0.0, 0.0);
 
     // update pose
-    autoware::universe_utils::setPose(rear_pose, cog_path.points.at(i));
+    autoware_utils::set_pose(rear_pose, cog_path.points.at(i));
   }
 
   // compensate for the last pose

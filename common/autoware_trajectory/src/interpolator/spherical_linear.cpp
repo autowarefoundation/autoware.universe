@@ -41,8 +41,8 @@ geometry_msgs::msg::Quaternion SphericalLinear::compute_impl(const double & s) c
   const double t = (s - x0) / (x1 - x0);
 
   // Convert quaternions to Eigen vectors for calculation
-  Eigen::Quaterniond q0(y0.w, y0.x, y0.y, y0.z);
-  Eigen::Quaterniond q1(y1.w, y1.x, y1.y, y1.z);
+  const Eigen::Quaterniond q0(y0.w, y0.x, y0.y, y0.z);
+  const Eigen::Quaterniond q1(y1.w, y1.x, y1.y, y1.z);
 
   // Perform Slerp
   Eigen::Quaterniond q_slerp = q0.slerp(t, q1);
