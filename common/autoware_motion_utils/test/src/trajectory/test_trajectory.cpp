@@ -14,8 +14,8 @@
 
 #include "autoware/motion_utils/trajectory/conversion.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
-#include "autoware/universe_utils/geometry/boost_geometry.hpp"
-#include "autoware/universe_utils/math/unit_conversion.hpp"
+#include "autoware_utils/geometry/boost_geometry.hpp"
+#include "autoware_utils/math/unit_conversion.hpp"
 
 #include <gtest/gtest.h>
 #include <gtest/internal/gtest-port.h>
@@ -29,9 +29,9 @@ namespace
 {
 using autoware_planning_msgs::msg::Trajectory;
 using TrajectoryPointArray = std::vector<autoware_planning_msgs::msg::TrajectoryPoint>;
-using autoware::universe_utils::createPoint;
-using autoware::universe_utils::createQuaternionFromRPY;
-using autoware::universe_utils::transformPoint;
+using autoware_utils::create_point;
+using autoware_utils::create_quaternion_from_rpy;
+using autoware_utils::transform_point;
 
 constexpr double epsilon = 1e-6;
 
@@ -39,8 +39,8 @@ geometry_msgs::msg::Pose createPose(
   double x, double y, double z, double roll, double pitch, double yaw)
 {
   geometry_msgs::msg::Pose p;
-  p.position = createPoint(x, y, z);
-  p.orientation = createQuaternionFromRPY(roll, pitch, yaw);
+  p.position = create_point(x, y, z);
+  p.orientation = create_quaternion_from_rpy(roll, pitch, yaw);
   return p;
 }
 
@@ -137,8 +137,8 @@ TEST(trajectory, validateNonSharpAngle_DefaultThreshold)
 TEST(trajectory, validateNonSharpAngle_SetThreshold)
 {
   using autoware::motion_utils::validateNonSharpAngle;
-  using autoware::universe_utils::pi;
   using autoware_planning_msgs::msg::TrajectoryPoint;
+  using autoware_utils::pi;
 
   TrajectoryPoint p1;
   p1.pose = createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
@@ -317,24 +317,24 @@ TEST(trajectory, findNearestIndex_Pos_StraightTrajectory)
     findNearestIndex(Trajectory{}.points, geometry_msgs::msg::Point{}), std::invalid_argument);
 
   // Start point
-  EXPECT_EQ(findNearestIndex(traj.points, createPoint(0.0, 0.0, 0.0)), 0U);
+  EXPECT_EQ(findNearestIndex(traj.points, create_point(0.0, 0.0, 0.0)), 0U);
 
   // End point
-  EXPECT_EQ(findNearestIndex(traj.points, createPoint(9.0, 0.0, 0.0)), 9U);
+  EXPECT_EQ(findNearestIndex(traj.points, create_point(9.0, 0.0, 0.0)), 9U);
 
   // Boundary conditions
-  EXPECT_EQ(findNearestIndex(traj.points, createPoint(0.5, 0.0, 0.0)), 0U);
-  EXPECT_EQ(findNearestIndex(traj.points, createPoint(0.51, 0.0, 0.0)), 1U);
+  EXPECT_EQ(findNearestIndex(traj.points, create_point(0.5, 0.0, 0.0)), 0U);
+  EXPECT_EQ(findNearestIndex(traj.points, create_point(0.51, 0.0, 0.0)), 1U);
 
   // Point before start point
-  EXPECT_EQ(findNearestIndex(traj.points, createPoint(-4.0, 5.0, 0.0)), 0U);
+  EXPECT_EQ(findNearestIndex(traj.points, create_point(-4.0, 5.0, 0.0)), 0U);
 
   // Point after end point
-  EXPECT_EQ(findNearestIndex(traj.points, createPoint(100.0, -3.0, 0.0)), 9U);
+  EXPECT_EQ(findNearestIndex(traj.points, create_point(100.0, -3.0, 0.0)), 9U);
 
   // Random cases
-  EXPECT_EQ(findNearestIndex(traj.points, createPoint(2.4, 1.3, 0.0)), 2U);
-  EXPECT_EQ(findNearestIndex(traj.points, createPoint(4.0, 0.0, 0.0)), 4U);
+  EXPECT_EQ(findNearestIndex(traj.points, create_point(2.4, 1.3, 0.0)), 2U);
+  EXPECT_EQ(findNearestIndex(traj.points, create_point(4.0, 0.0, 0.0)), 4U);
 }
 
 TEST(trajectory, findNearestIndex_Pos_CurvedTrajectory)
@@ -344,7 +344,7 @@ TEST(trajectory, findNearestIndex_Pos_CurvedTrajectory)
   const auto traj = generateTestTrajectory<Trajectory>(10, 1.0, 0.0, 0.0, 0.1);
 
   // Random cases
-  EXPECT_EQ(findNearestIndex(traj.points, createPoint(5.1, 3.4, 0.0)), 6U);
+  EXPECT_EQ(findNearestIndex(traj.points, create_point(5.1, 3.4, 0.0)), 6U);
 }
 
 TEST(trajectory, findNearestIndex_Pose_NoThreshold)
@@ -434,32 +434,32 @@ TEST(trajectory, findNearestSegmentIndex)
     std::invalid_argument);
 
   // Start point
-  EXPECT_EQ(findNearestSegmentIndex(traj.points, createPoint(0.0, 0.0, 0.0)), 0U);
+  EXPECT_EQ(findNearestSegmentIndex(traj.points, create_point(0.0, 0.0, 0.0)), 0U);
 
   // End point
-  EXPECT_EQ(findNearestSegmentIndex(traj.points, createPoint(9.0, 0.0, 0.0)), 8U);
+  EXPECT_EQ(findNearestSegmentIndex(traj.points, create_point(9.0, 0.0, 0.0)), 8U);
 
   // Boundary conditions
-  EXPECT_EQ(findNearestSegmentIndex(traj.points, createPoint(1.0, 0.0, 0.0)), 0U);
-  EXPECT_EQ(findNearestSegmentIndex(traj.points, createPoint(1.1, 0.0, 0.0)), 1U);
+  EXPECT_EQ(findNearestSegmentIndex(traj.points, create_point(1.0, 0.0, 0.0)), 0U);
+  EXPECT_EQ(findNearestSegmentIndex(traj.points, create_point(1.1, 0.0, 0.0)), 1U);
 
   // Point before start point
-  EXPECT_EQ(findNearestSegmentIndex(traj.points, createPoint(-4.0, 5.0, 0.0)), 0U);
+  EXPECT_EQ(findNearestSegmentIndex(traj.points, create_point(-4.0, 5.0, 0.0)), 0U);
 
   // Point after end point
-  EXPECT_EQ(findNearestSegmentIndex(traj.points, createPoint(100.0, -3.0, 0.0)), 8U);
+  EXPECT_EQ(findNearestSegmentIndex(traj.points, create_point(100.0, -3.0, 0.0)), 8U);
 
   // Random cases
-  EXPECT_EQ(findNearestSegmentIndex(traj.points, createPoint(2.4, 1.0, 0.0)), 2U);
-  EXPECT_EQ(findNearestSegmentIndex(traj.points, createPoint(4.0, 0.0, 0.0)), 3U);
+  EXPECT_EQ(findNearestSegmentIndex(traj.points, create_point(2.4, 1.0, 0.0)), 2U);
+  EXPECT_EQ(findNearestSegmentIndex(traj.points, create_point(4.0, 0.0, 0.0)), 3U);
 
   // Two nearest trajectory points are not the edges of the nearest segment.
   std::vector<geometry_msgs::msg::Point> sparse_points{
-    createPoint(0.0, 0.0, 0.0),
-    createPoint(10.0, 0.0, 0.0),
-    createPoint(11.0, 0.0, 0.0),
+    create_point(0.0, 0.0, 0.0),
+    create_point(10.0, 0.0, 0.0),
+    create_point(11.0, 0.0, 0.0),
   };
-  EXPECT_EQ(findNearestSegmentIndex(sparse_points, createPoint(9.0, 1.0, 0.0)), 0U);
+  EXPECT_EQ(findNearestSegmentIndex(sparse_points, create_point(9.0, 1.0, 0.0)), 0U);
 }
 
 TEST(trajectory, calcLongitudinalOffsetToSegment_StraightTrajectory)
@@ -487,7 +487,7 @@ TEST(trajectory, calcLongitudinalOffsetToSegment_StraightTrajectory)
   // Same close points in trajectory
   {
     const auto invalid_traj = generateTestTrajectory<Trajectory>(10, 0.0);
-    const auto p = createPoint(3.0, 0.0, 0.0);
+    const auto p = create_point(3.0, 0.0, 0.0);
     EXPECT_THROW(
       calcLongitudinalOffsetToSegment(invalid_traj.points, 3, p, throw_exception),
       std::runtime_error);
@@ -495,21 +495,21 @@ TEST(trajectory, calcLongitudinalOffsetToSegment_StraightTrajectory)
 
   // Same point
   EXPECT_NEAR(
-    calcLongitudinalOffsetToSegment(traj.points, 3, createPoint(3.0, 0.0, 0.0)), 0.0, epsilon);
+    calcLongitudinalOffsetToSegment(traj.points, 3, create_point(3.0, 0.0, 0.0)), 0.0, epsilon);
 
   // Point before start point
   EXPECT_NEAR(
-    calcLongitudinalOffsetToSegment(traj.points, 6, createPoint(-3.9, 3.0, 0.0)), -9.9, epsilon);
+    calcLongitudinalOffsetToSegment(traj.points, 6, create_point(-3.9, 3.0, 0.0)), -9.9, epsilon);
 
   // Point after start point
   EXPECT_NEAR(
-    calcLongitudinalOffsetToSegment(traj.points, 7, createPoint(13.3, -10.0, 0.0)), 6.3, epsilon);
+    calcLongitudinalOffsetToSegment(traj.points, 7, create_point(13.3, -10.0, 0.0)), 6.3, epsilon);
 
   // Random cases
   EXPECT_NEAR(
-    calcLongitudinalOffsetToSegment(traj.points, 2, createPoint(4.3, 7.0, 0.0)), 2.3, epsilon);
+    calcLongitudinalOffsetToSegment(traj.points, 2, create_point(4.3, 7.0, 0.0)), 2.3, epsilon);
   EXPECT_NEAR(
-    calcLongitudinalOffsetToSegment(traj.points, 8, createPoint(1.0, 3.0, 0.0)), -7, epsilon);
+    calcLongitudinalOffsetToSegment(traj.points, 8, create_point(1.0, 3.0, 0.0)), -7, epsilon);
 }
 
 TEST(trajectory, calcLongitudinalOffsetToSegment_CurveTrajectory)
@@ -520,7 +520,7 @@ TEST(trajectory, calcLongitudinalOffsetToSegment_CurveTrajectory)
 
   // Random cases
   EXPECT_NEAR(
-    calcLongitudinalOffsetToSegment(traj.points, 2, createPoint(2.0, 0.5, 0.0)), 0.083861449,
+    calcLongitudinalOffsetToSegment(traj.points, 2, create_point(2.0, 0.5, 0.0)), 0.083861449,
     epsilon);
 }
 
@@ -547,22 +547,22 @@ TEST(trajectory, calcLateralOffset)
   // Same close points in trajectory
   {
     const auto invalid_traj = generateTestTrajectory<Trajectory>(10, 0.0);
-    const auto p = createPoint(3.0, 0.0, 0.0);
+    const auto p = create_point(3.0, 0.0, 0.0);
     EXPECT_THROW(calcLateralOffset(invalid_traj.points, p, throw_exception), std::runtime_error);
   }
 
   // Point on trajectory
-  EXPECT_NEAR(calcLateralOffset(traj.points, createPoint(3.1, 0.0, 0.0)), 0.0, epsilon);
+  EXPECT_NEAR(calcLateralOffset(traj.points, create_point(3.1, 0.0, 0.0)), 0.0, epsilon);
 
   // Point before start point
-  EXPECT_NEAR(calcLateralOffset(traj.points, createPoint(-3.9, 3.0, 0.0)), 3.0, epsilon);
+  EXPECT_NEAR(calcLateralOffset(traj.points, create_point(-3.9, 3.0, 0.0)), 3.0, epsilon);
 
   // Point after start point
-  EXPECT_NEAR(calcLateralOffset(traj.points, createPoint(13.3, -10.0, 0.0)), -10.0, epsilon);
+  EXPECT_NEAR(calcLateralOffset(traj.points, create_point(13.3, -10.0, 0.0)), -10.0, epsilon);
 
   // Random cases
-  EXPECT_NEAR(calcLateralOffset(traj.points, createPoint(4.3, 7.0, 0.0)), 7.0, epsilon);
-  EXPECT_NEAR(calcLateralOffset(traj.points, createPoint(1.0, -3.0, 0.0)), -3.0, epsilon);
+  EXPECT_NEAR(calcLateralOffset(traj.points, create_point(4.3, 7.0, 0.0)), 7.0, epsilon);
+  EXPECT_NEAR(calcLateralOffset(traj.points, create_point(1.0, -3.0, 0.0)), -3.0, epsilon);
 }
 
 TEST(trajectory, calcLateralOffset_without_segment_idx)
@@ -590,7 +590,7 @@ TEST(trajectory, calcLateralOffset_without_segment_idx)
   // Same close points in trajectory
   {
     const auto invalid_traj = generateTestTrajectory<Trajectory>(10, 0.0);
-    const auto p = createPoint(3.0, 0.0, 0.0);
+    const auto p = create_point(3.0, 0.0, 0.0);
     EXPECT_THROW(
       calcLateralOffset(invalid_traj.points, p, static_cast<size_t>(2), throw_exception),
       std::runtime_error);
@@ -601,28 +601,28 @@ TEST(trajectory, calcLateralOffset_without_segment_idx)
 
   // Point on trajectory
   EXPECT_NEAR(
-    calcLateralOffset(traj.points, createPoint(3.1, 0.0, 0.0), static_cast<size_t>(3)), 0.0,
+    calcLateralOffset(traj.points, create_point(3.1, 0.0, 0.0), static_cast<size_t>(3)), 0.0,
     epsilon);
 
   // Point before start point
   EXPECT_NEAR(
-    calcLateralOffset(traj.points, createPoint(-3.9, 3.0, 0.0), static_cast<size_t>(0)), 3.0,
+    calcLateralOffset(traj.points, create_point(-3.9, 3.0, 0.0), static_cast<size_t>(0)), 3.0,
     epsilon);
 
   // Point after start point
   EXPECT_NEAR(
-    calcLateralOffset(traj.points, createPoint(13.3, -10.0, 0.0), static_cast<size_t>(8)), -10.0,
+    calcLateralOffset(traj.points, create_point(13.3, -10.0, 0.0), static_cast<size_t>(8)), -10.0,
     epsilon);
 
   // Random cases
   EXPECT_NEAR(
-    calcLateralOffset(traj.points, createPoint(4.3, 7.0, 0.0), static_cast<size_t>(4)), 7.0,
+    calcLateralOffset(traj.points, create_point(4.3, 7.0, 0.0), static_cast<size_t>(4)), 7.0,
     epsilon);
   EXPECT_NEAR(
-    calcLateralOffset(traj.points, createPoint(1.0, -3.0, 0.0), static_cast<size_t>(0)), -3.0,
+    calcLateralOffset(traj.points, create_point(1.0, -3.0, 0.0), static_cast<size_t>(0)), -3.0,
     epsilon);
   EXPECT_NEAR(
-    calcLateralOffset(traj.points, createPoint(1.0, -3.0, 0.0), static_cast<size_t>(1)), -3.0,
+    calcLateralOffset(traj.points, create_point(1.0, -3.0, 0.0), static_cast<size_t>(1)), -3.0,
     epsilon);
 }
 
@@ -633,8 +633,8 @@ TEST(trajectory, calcLateralOffset_CurveTrajectory)
   const auto traj = generateTestTrajectory<Trajectory>(10, 1.0, 0.0, 0.0, 0.1);
 
   // Random cases
-  EXPECT_NEAR(calcLateralOffset(traj.points, createPoint(2.0, 0.5, 0.0)), 0.071386083, epsilon);
-  EXPECT_NEAR(calcLateralOffset(traj.points, createPoint(5.0, 1.0, 0.0)), -1.366602819, epsilon);
+  EXPECT_NEAR(calcLateralOffset(traj.points, create_point(2.0, 0.5, 0.0)), 0.071386083, epsilon);
+  EXPECT_NEAR(calcLateralOffset(traj.points, create_point(5.0, 1.0, 0.0)), -1.366602819, epsilon);
 }
 
 TEST(trajectory, calcSignedArcLengthFromIndexToIndex)
@@ -670,23 +670,23 @@ TEST(trajectory, calcSignedArcLengthFromPointToIndex)
   EXPECT_DOUBLE_EQ(calcSignedArcLength(Trajectory{}.points, {}, {}), 0.0);
 
   // Same point
-  EXPECT_NEAR(calcSignedArcLength(traj.points, createPoint(3.0, 0.0, 0.0), 3), 0, epsilon);
+  EXPECT_NEAR(calcSignedArcLength(traj.points, create_point(3.0, 0.0, 0.0), 3), 0, epsilon);
 
   // Forward
-  EXPECT_NEAR(calcSignedArcLength(traj.points, createPoint(0.0, 0.0, 0.0), 3), 3, epsilon);
+  EXPECT_NEAR(calcSignedArcLength(traj.points, create_point(0.0, 0.0, 0.0), 3), 3, epsilon);
 
   // Backward
-  EXPECT_NEAR(calcSignedArcLength(traj.points, createPoint(9.0, 0.0, 0.0), 5), -4, epsilon);
+  EXPECT_NEAR(calcSignedArcLength(traj.points, create_point(9.0, 0.0, 0.0), 5), -4, epsilon);
 
   // Point before start point
-  EXPECT_NEAR(calcSignedArcLength(traj.points, createPoint(-3.9, 3.0, 0.0), 6), 9.9, epsilon);
+  EXPECT_NEAR(calcSignedArcLength(traj.points, create_point(-3.9, 3.0, 0.0), 6), 9.9, epsilon);
 
   // Point after end point
-  EXPECT_NEAR(calcSignedArcLength(traj.points, createPoint(13.3, -10.0, 0.0), 7), -6.3, epsilon);
+  EXPECT_NEAR(calcSignedArcLength(traj.points, create_point(13.3, -10.0, 0.0), 7), -6.3, epsilon);
 
   // Random cases
-  EXPECT_NEAR(calcSignedArcLength(traj.points, createPoint(1.0, 3.0, 0.0), 9), 8, epsilon);
-  EXPECT_NEAR(calcSignedArcLength(traj.points, createPoint(4.3, 7.0, 0.0), 2), -2.3, epsilon);
+  EXPECT_NEAR(calcSignedArcLength(traj.points, create_point(1.0, 3.0, 0.0), 9), 8, epsilon);
+  EXPECT_NEAR(calcSignedArcLength(traj.points, create_point(4.3, 7.0, 0.0), 2), -2.3, epsilon);
 }
 
 TEST(trajectory, calcSignedArcLengthFromIndexToPoint)
@@ -699,23 +699,23 @@ TEST(trajectory, calcSignedArcLengthFromIndexToPoint)
   EXPECT_DOUBLE_EQ(calcSignedArcLength(Trajectory{}.points, {}, {}), 0.0);
 
   // Same point
-  EXPECT_NEAR(calcSignedArcLength(traj.points, 3, createPoint(3.0, 0.0, 0.0)), 0, epsilon);
+  EXPECT_NEAR(calcSignedArcLength(traj.points, 3, create_point(3.0, 0.0, 0.0)), 0, epsilon);
 
   // Forward
-  EXPECT_NEAR(calcSignedArcLength(traj.points, 0, createPoint(3.0, 0.0, 0.0)), 3, epsilon);
+  EXPECT_NEAR(calcSignedArcLength(traj.points, 0, create_point(3.0, 0.0, 0.0)), 3, epsilon);
 
   // Backward
-  EXPECT_NEAR(calcSignedArcLength(traj.points, 9, createPoint(5.0, 0.0, 0.0)), -4, epsilon);
+  EXPECT_NEAR(calcSignedArcLength(traj.points, 9, create_point(5.0, 0.0, 0.0)), -4, epsilon);
 
   // Point before start point
-  EXPECT_NEAR(calcSignedArcLength(traj.points, 6, createPoint(-3.9, 3.0, 0.0)), -9.9, epsilon);
+  EXPECT_NEAR(calcSignedArcLength(traj.points, 6, create_point(-3.9, 3.0, 0.0)), -9.9, epsilon);
 
   // Point after end point
-  EXPECT_NEAR(calcSignedArcLength(traj.points, 7, createPoint(13.3, -10.0, 0.0)), 6.3, epsilon);
+  EXPECT_NEAR(calcSignedArcLength(traj.points, 7, create_point(13.3, -10.0, 0.0)), 6.3, epsilon);
 
   // Random cases
-  EXPECT_NEAR(calcSignedArcLength(traj.points, 1, createPoint(9.0, 3.0, 0.0)), 8, epsilon);
-  EXPECT_NEAR(calcSignedArcLength(traj.points, 4, createPoint(1.7, 7.0, 0.0)), -2.3, epsilon);
+  EXPECT_NEAR(calcSignedArcLength(traj.points, 1, create_point(9.0, 3.0, 0.0)), 8, epsilon);
+  EXPECT_NEAR(calcSignedArcLength(traj.points, 4, create_point(1.7, 7.0, 0.0)), -2.3, epsilon);
 }
 
 TEST(trajectory, calcSignedArcLengthFromPointToPoint)
@@ -729,54 +729,54 @@ TEST(trajectory, calcSignedArcLengthFromPointToPoint)
 
   // Same point
   {
-    const auto p = createPoint(3.0, 0.0, 0.0);
+    const auto p = create_point(3.0, 0.0, 0.0);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p, p), 0, epsilon);
   }
 
   // Forward
   {
-    const auto p1 = createPoint(0.0, 0.0, 0.0);
-    const auto p2 = createPoint(3.0, 1.0, 0.0);
+    const auto p1 = create_point(0.0, 0.0, 0.0);
+    const auto p2 = create_point(3.0, 1.0, 0.0);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p1, p2), 3, epsilon);
   }
 
   // Backward
   {
-    const auto p1 = createPoint(8.0, 0.0, 0.0);
-    const auto p2 = createPoint(9.0, 0.0, 0.0);
+    const auto p1 = create_point(8.0, 0.0, 0.0);
+    const auto p2 = create_point(9.0, 0.0, 0.0);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p1, p2), 1, epsilon);
   }
 
   // Point before start point
   {
-    const auto p1 = createPoint(-3.9, 3.0, 0.0);
-    const auto p2 = createPoint(6.0, -10.0, 0.0);
+    const auto p1 = create_point(-3.9, 3.0, 0.0);
+    const auto p2 = create_point(6.0, -10.0, 0.0);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p1, p2), 9.9, epsilon);
   }
 
   // Point after end point
   {
-    const auto p1 = createPoint(7.0, -5.0, 0.0);
-    const auto p2 = createPoint(13.3, -10.0, 0.0);
+    const auto p1 = create_point(7.0, -5.0, 0.0);
+    const auto p2 = create_point(13.3, -10.0, 0.0);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p1, p2), 6.3, epsilon);
   }
 
   // Point before start point and after end point
   {
-    const auto p1 = createPoint(-4.3, 10.0, 0.0);
-    const auto p2 = createPoint(13.8, -1.0, 0.0);
+    const auto p1 = create_point(-4.3, 10.0, 0.0);
+    const auto p2 = create_point(13.8, -1.0, 0.0);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p1, p2), 18.1, epsilon);
   }
 
   // Random cases
   {
-    const auto p1 = createPoint(1.0, 3.0, 0.0);
-    const auto p2 = createPoint(9.0, -1.0, 0.0);
+    const auto p1 = create_point(1.0, 3.0, 0.0);
+    const auto p2 = create_point(9.0, -1.0, 0.0);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p1, p2), 8, epsilon);
   }
   {
-    const auto p1 = createPoint(4.3, 7.0, 0.0);
-    const auto p2 = createPoint(2.0, 3.0, 0.0);
+    const auto p1 = create_point(4.3, 7.0, 0.0);
+    const auto p2 = create_point(2.0, 3.0, 0.0);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p1, p2), -2.3, epsilon);
   }
 }
@@ -1011,7 +1011,7 @@ TEST(trajectory, calcDistanceToForwardStopPoint_DistThreshold)
 TEST(trajectory, calcDistanceToForwardStopPoint_YawThreshold)
 {
   using autoware::motion_utils::calcDistanceToForwardStopPoint;
-  using autoware::universe_utils::deg2rad;
+  using autoware_utils::deg2rad;
 
   const auto max_d = std::numeric_limits<double>::max();
   auto traj_input = generateTestTrajectory<Trajectory>(100, 1.0, 3.0);
@@ -1065,7 +1065,7 @@ TEST(trajectory, calcLongitudinalOffsetPointFromIndex)
   using autoware::motion_utils::calcArcLength;
   using autoware::motion_utils::calcLongitudinalOffsetPoint;
   using autoware::motion_utils::calcSignedArcLength;
-  using autoware::universe_utils::getPoint;
+  using autoware_utils::get_point;
 
   const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
   const auto total_length = calcArcLength(traj.points);
@@ -1079,7 +1079,7 @@ TEST(trajectory, calcLongitudinalOffsetPointFromIndex)
 
   // Found Pose(forward)
   for (size_t i = 0; i < traj.points.size(); ++i) {
-    double x_ans = getPoint(traj.points.at(i)).x;
+    double x_ans = get_point(traj.points.at(i)).x;
 
     const auto d_back = calcSignedArcLength(traj.points, i, traj.points.size() - 1);
 
@@ -1097,7 +1097,7 @@ TEST(trajectory, calcLongitudinalOffsetPointFromIndex)
 
   // Found Pose(backward)
   for (size_t i = 0; i < traj.points.size(); ++i) {
-    double x_ans = getPoint(traj.points.at(i)).x;
+    double x_ans = get_point(traj.points.at(i)).x;
 
     const auto d_front = calcSignedArcLength(traj.points, i, 0);
 
@@ -1141,8 +1141,8 @@ TEST(trajectory, calcLongitudinalOffsetPointFromPoint)
   using autoware::motion_utils::calcArcLength;
   using autoware::motion_utils::calcLongitudinalOffsetPoint;
   using autoware::motion_utils::calcSignedArcLength;
-  using autoware::universe_utils::createPoint;
-  using autoware::universe_utils::getPoint;
+  using autoware_utils::create_point;
+  using autoware_utils::get_point;
 
   const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
   const auto total_length = calcArcLength(traj.points);
@@ -1155,7 +1155,7 @@ TEST(trajectory, calcLongitudinalOffsetPointFromPoint)
     constexpr double lateral_deviation = 0.5;
     double x_ans = x_start;
 
-    const auto p_src = createPoint(x_start, lateral_deviation, 0.0);
+    const auto p_src = create_point(x_start, lateral_deviation, 0.0);
     const auto d_back = calcSignedArcLength(traj.points, p_src, traj.points.size() - 1);
 
     for (double len = 0.0; len < d_back + epsilon; len += 0.1) {
@@ -1175,7 +1175,7 @@ TEST(trajectory, calcLongitudinalOffsetPointFromPoint)
     constexpr double lateral_deviation = 0.5;
     double x_ans = x_start;
 
-    const auto p_src = createPoint(x_start, lateral_deviation, 0.0);
+    const auto p_src = create_point(x_start, lateral_deviation, 0.0);
     const auto d_front = calcSignedArcLength(traj.points, p_src, 0);
 
     for (double len = 0.0; d_front - epsilon < len; len -= 0.1) {
@@ -1192,7 +1192,7 @@ TEST(trajectory, calcLongitudinalOffsetPointFromPoint)
 
   // No found
   {
-    const auto p_src = createPoint(0.0, 0.0, 0.0);
+    const auto p_src = create_point(0.0, 0.0, 0.0);
     const auto p_out = calcLongitudinalOffsetPoint(traj.points, p_src, total_length + 1.0);
 
     EXPECT_EQ(p_out, std::nullopt);
@@ -1200,7 +1200,7 @@ TEST(trajectory, calcLongitudinalOffsetPointFromPoint)
 
   // No found
   {
-    const auto p_src = createPoint(9.0, 0.0, 0.0);
+    const auto p_src = create_point(9.0, 0.0, 0.0);
     const auto p_out = calcLongitudinalOffsetPoint(traj.points, p_src, -total_length - 1.0);
 
     EXPECT_EQ(p_out, std::nullopt);
@@ -1219,7 +1219,7 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromIndex)
   using autoware::motion_utils::calcArcLength;
   using autoware::motion_utils::calcLongitudinalOffsetPose;
   using autoware::motion_utils::calcSignedArcLength;
-  using autoware::universe_utils::getPoint;
+  using autoware_utils::get_point;
 
   const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
   const auto total_length = calcArcLength(traj.points);
@@ -1233,7 +1233,7 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromIndex)
 
   // Found Pose(forward)
   for (size_t i = 0; i < traj.points.size(); ++i) {
-    double x_ans = getPoint(traj.points.at(i)).x;
+    double x_ans = get_point(traj.points.at(i)).x;
 
     const auto d_back = calcSignedArcLength(traj.points, i, traj.points.size() - 1);
 
@@ -1255,7 +1255,7 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromIndex)
 
   // Found Pose(backward)
   for (size_t i = 0; i < traj.points.size(); ++i) {
-    double x_ans = getPoint(traj.points.at(i)).x;
+    double x_ans = get_point(traj.points.at(i)).x;
 
     const auto d_front = calcSignedArcLength(traj.points, i, 0);
 
@@ -1302,8 +1302,8 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromIndex_quatInterpolation)
 {
   using autoware::motion_utils::calcArcLength;
   using autoware::motion_utils::calcLongitudinalOffsetPose;
-  using autoware::universe_utils::deg2rad;
   using autoware_planning_msgs::msg::TrajectoryPoint;
+  using autoware_utils::deg2rad;
 
   Trajectory traj{};
 
@@ -1326,7 +1326,7 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromIndex_quatInterpolation)
   // Found pose(forward)
   for (double len = 0.0; len < total_length; len += 0.1) {
     const auto p_out = calcLongitudinalOffsetPose(traj.points, 0, len);
-    const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(45.0));
+    const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(45.0));
 
     EXPECT_NE(p_out, std::nullopt);
     EXPECT_NEAR(p_out.value().position.x, len * std::cos(deg2rad(45.0)), epsilon);
@@ -1341,7 +1341,7 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromIndex_quatInterpolation)
   // Found pose(backward)
   for (double len = total_length; 0.0 < len; len -= 0.1) {
     const auto p_out = calcLongitudinalOffsetPose(traj.points, 1, -len);
-    const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(45.0));
+    const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(45.0));
 
     EXPECT_NE(p_out, std::nullopt);
     EXPECT_NEAR(p_out.value().position.x, 1.0 - len * std::cos(deg2rad(45.0)), epsilon);
@@ -1356,7 +1356,7 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromIndex_quatInterpolation)
   // Boundary condition
   {
     const auto p_out = calcLongitudinalOffsetPose(traj.points, 0, total_length);
-    const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+    const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
 
     EXPECT_NE(p_out, std::nullopt);
     EXPECT_NEAR(p_out.value().position.x, 1.0, epsilon);
@@ -1371,7 +1371,7 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromIndex_quatInterpolation)
   // Boundary condition
   {
     const auto p_out = calcLongitudinalOffsetPose(traj.points, 1, 0.0);
-    const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+    const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
 
     EXPECT_NE(p_out, std::nullopt);
     EXPECT_NEAR(p_out.value().position.x, 1.0, epsilon);
@@ -1388,8 +1388,8 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromIndex_quatSphericalInterpolation)
 {
   using autoware::motion_utils::calcArcLength;
   using autoware::motion_utils::calcLongitudinalOffsetPose;
-  using autoware::universe_utils::deg2rad;
   using autoware_planning_msgs::msg::TrajectoryPoint;
+  using autoware_utils::deg2rad;
 
   Trajectory traj{};
 
@@ -1415,7 +1415,7 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromIndex_quatSphericalInterpolation)
     // ratio between two points
     const auto ratio = len / total_length;
     const auto ans_quat =
-      createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(45.0 - 45.0 * ratio));
+      create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(45.0 - 45.0 * ratio));
 
     EXPECT_NE(p_out, std::nullopt);
     EXPECT_NEAR(p_out.value().position.x, len * std::cos(deg2rad(45.0)), epsilon);
@@ -1433,7 +1433,7 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromIndex_quatSphericalInterpolation)
     // ratio between two points
     const auto ratio = len / total_length;
     const auto ans_quat =
-      createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(45.0 * ratio));
+      create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(45.0 * ratio));
 
     EXPECT_NE(p_out, std::nullopt);
     EXPECT_NEAR(p_out.value().position.x, 1.0 - len * std::cos(deg2rad(45.0)), epsilon);
@@ -1448,7 +1448,7 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromIndex_quatSphericalInterpolation)
   // Boundary condition
   {
     const auto p_out = calcLongitudinalOffsetPose(traj.points, 0, total_length, false);
-    const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+    const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
 
     EXPECT_NE(p_out, std::nullopt);
     EXPECT_NEAR(p_out.value().position.x, 1.0, epsilon);
@@ -1463,7 +1463,7 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromIndex_quatSphericalInterpolation)
   // Boundary condition
   {
     const auto p_out = calcLongitudinalOffsetPose(traj.points, 1, 0.0, false);
-    const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+    const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
 
     EXPECT_NE(p_out, std::nullopt);
     EXPECT_NEAR(p_out.value().position.x, 1.0, epsilon);
@@ -1481,8 +1481,8 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromPoint)
   using autoware::motion_utils::calcArcLength;
   using autoware::motion_utils::calcLongitudinalOffsetPose;
   using autoware::motion_utils::calcSignedArcLength;
-  using autoware::universe_utils::createPoint;
-  using autoware::universe_utils::getPoint;
+  using autoware_utils::create_point;
+  using autoware_utils::get_point;
 
   const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
   const auto total_length = calcArcLength(traj.points);
@@ -1495,7 +1495,7 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromPoint)
     constexpr double lateral_deviation = 0.5;
     double x_ans = x_start;
 
-    const auto p_src = createPoint(x_start, lateral_deviation, 0.0);
+    const auto p_src = create_point(x_start, lateral_deviation, 0.0);
     const auto d_back = calcSignedArcLength(traj.points, p_src, traj.points.size() - 1);
 
     for (double len = 0.0; len < d_back + epsilon; len += 0.1) {
@@ -1519,7 +1519,7 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromPoint)
     constexpr double lateral_deviation = 0.5;
     double x_ans = x_start;
 
-    const auto p_src = createPoint(x_start, lateral_deviation, 0.0);
+    const auto p_src = create_point(x_start, lateral_deviation, 0.0);
     const auto d_front = calcSignedArcLength(traj.points, p_src, 0);
 
     for (double len = 0.0; d_front - epsilon < len; len -= 0.1) {
@@ -1540,7 +1540,7 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromPoint)
 
   // No found
   {
-    const auto p_src = createPoint(0.0, 0.0, 0.0);
+    const auto p_src = create_point(0.0, 0.0, 0.0);
     const auto p_out = calcLongitudinalOffsetPose(traj.points, p_src, total_length + 1.0);
 
     EXPECT_EQ(p_out, std::nullopt);
@@ -1548,7 +1548,7 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromPoint)
 
   // No found
   {
-    const auto p_src = createPoint(9.0, 0.0, 0.0);
+    const auto p_src = create_point(9.0, 0.0, 0.0);
     const auto p_out = calcLongitudinalOffsetPose(traj.points, p_src, -total_length - 1.0);
 
     EXPECT_EQ(p_out, std::nullopt);
@@ -1567,9 +1567,9 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromPoint_quatInterpolation)
   using autoware::motion_utils::calcArcLength;
   using autoware::motion_utils::calcLongitudinalOffsetPose;
   using autoware::motion_utils::calcLongitudinalOffsetToSegment;
-  using autoware::universe_utils::createPoint;
-  using autoware::universe_utils::deg2rad;
   using autoware_planning_msgs::msg::TrajectoryPoint;
+  using autoware_utils::create_point;
+  using autoware_utils::deg2rad;
 
   Trajectory traj{};
 
@@ -1593,14 +1593,14 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromPoint_quatInterpolation)
   for (double len_start = 0.0; len_start < total_length; len_start += 0.1) {
     constexpr double deviation = 0.1;
 
-    const auto p_src = createPoint(
+    const auto p_src = create_point(
       len_start * std::cos(deg2rad(45.0)) + deviation,
       len_start * std::sin(deg2rad(45.0)) - deviation, 0.0);
     const auto src_offset = calcLongitudinalOffsetToSegment(traj.points, 0, p_src);
 
     for (double len = -src_offset; len < total_length - src_offset; len += 0.1) {
       const auto p_out = calcLongitudinalOffsetPose(traj.points, p_src, len);
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(45.0));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(45.0));
 
       EXPECT_NE(p_out, std::nullopt);
       EXPECT_NEAR(
@@ -1619,11 +1619,11 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromPoint_quatInterpolation)
   {
     constexpr double deviation = 0.1;
 
-    const auto p_src = createPoint(1.0 + deviation, 1.0 - deviation, 0.0);
+    const auto p_src = create_point(1.0 + deviation, 1.0 - deviation, 0.0);
     const auto src_offset = calcLongitudinalOffsetToSegment(traj.points, 0, p_src);
 
     const auto p_out = calcLongitudinalOffsetPose(traj.points, p_src, total_length - src_offset);
-    const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+    const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
 
     EXPECT_NE(p_out, std::nullopt);
     EXPECT_NEAR(p_out.value().position.x, 1.0, epsilon);
@@ -1641,9 +1641,9 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromPoint_quatSphericalInterpolation)
   using autoware::motion_utils::calcArcLength;
   using autoware::motion_utils::calcLongitudinalOffsetPose;
   using autoware::motion_utils::calcLongitudinalOffsetToSegment;
-  using autoware::universe_utils::createPoint;
-  using autoware::universe_utils::deg2rad;
   using autoware_planning_msgs::msg::TrajectoryPoint;
+  using autoware_utils::create_point;
+  using autoware_utils::deg2rad;
 
   Trajectory traj{};
 
@@ -1667,7 +1667,7 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromPoint_quatSphericalInterpolation)
   for (double len_start = 0.0; len_start < total_length; len_start += 0.1) {
     constexpr double deviation = 0.1;
 
-    const auto p_src = createPoint(
+    const auto p_src = create_point(
       len_start * std::cos(deg2rad(45.0)) + deviation,
       len_start * std::sin(deg2rad(45.0)) - deviation, 0.0);
     const auto src_offset = calcLongitudinalOffsetToSegment(traj.points, 0, p_src);
@@ -1677,7 +1677,7 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromPoint_quatSphericalInterpolation)
       // ratio between two points
       const auto ratio = (src_offset + len) / total_length;
       const auto ans_quat =
-        createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(45.0 - 45.0 * ratio));
+        create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(45.0 - 45.0 * ratio));
 
       EXPECT_NE(p_out, std::nullopt);
       EXPECT_NEAR(
@@ -1696,12 +1696,12 @@ TEST(trajectory, calcLongitudinalOffsetPoseFromPoint_quatSphericalInterpolation)
   {
     constexpr double deviation = 0.1;
 
-    const auto p_src = createPoint(1.0 + deviation, 1.0 - deviation, 0.0);
+    const auto p_src = create_point(1.0 + deviation, 1.0 - deviation, 0.0);
     const auto src_offset = calcLongitudinalOffsetToSegment(traj.points, 0, p_src);
 
     const auto p_out =
       calcLongitudinalOffsetPose(traj.points, p_src, total_length - src_offset, false);
-    const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+    const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
 
     EXPECT_NE(p_out, std::nullopt);
     EXPECT_NEAR(p_out.value().position.x, 1.0, epsilon);
@@ -1719,10 +1719,10 @@ TEST(trajectory, insertTargetPoint)
   using autoware::motion_utils::calcArcLength;
   using autoware::motion_utils::findNearestSegmentIndex;
   using autoware::motion_utils::insertTargetPoint;
-  using autoware::universe_utils::calcDistance2d;
-  using autoware::universe_utils::createPoint;
-  using autoware::universe_utils::deg2rad;
-  using autoware::universe_utils::getPose;
+  using autoware_utils::calc_distance2d;
+  using autoware_utils::create_point;
+  using autoware_utils::deg2rad;
+  using autoware_utils::get_pose;
 
   const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
   const auto total_length = calcArcLength(traj.points);
@@ -1731,7 +1731,7 @@ TEST(trajectory, insertTargetPoint)
   for (double x_start = 0.5; x_start < total_length; x_start += 1.0) {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(x_start, 0.0, 0.0);
+    const auto p_target = create_point(x_start, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(base_idx, p_target, traj_out.points);
 
@@ -1740,12 +1740,12 @@ TEST(trajectory, insertTargetPoint)
     EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -1756,8 +1756,8 @@ TEST(trajectory, insertTargetPoint)
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -1769,7 +1769,7 @@ TEST(trajectory, insertTargetPoint)
   for (double x_start = 0.0; x_start < total_length; x_start += 1.0) {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(x_start + 1.1e-3, 0.0, 0.0);
+    const auto p_target = create_point(x_start + 1.1e-3, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(base_idx, p_target, traj_out.points);
 
@@ -1778,12 +1778,12 @@ TEST(trajectory, insertTargetPoint)
     EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -1794,8 +1794,8 @@ TEST(trajectory, insertTargetPoint)
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -1807,7 +1807,7 @@ TEST(trajectory, insertTargetPoint)
   for (double x_start = 0.25; x_start < total_length; x_start += 1.0) {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(x_start, 0.25 * std::tan(deg2rad(60.0)), 0.0);
+    const auto p_target = create_point(x_start, 0.25 * std::tan(deg2rad(60.0)), 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(base_idx, p_target, traj_out.points);
 
@@ -1816,12 +1816,12 @@ TEST(trajectory, insertTargetPoint)
     EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(-30.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(-30.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -1832,8 +1832,8 @@ TEST(trajectory, insertTargetPoint)
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(60.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(60.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -1845,7 +1845,7 @@ TEST(trajectory, insertTargetPoint)
   for (double x_start = 0.0; x_start < total_length - 1.0 + epsilon; x_start += 1.0) {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(x_start + 1e-4, 0.0, 0.0);
+    const auto p_target = create_point(x_start + 1e-4, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(base_idx, p_target, traj_out.points);
 
@@ -1854,7 +1854,7 @@ TEST(trajectory, insertTargetPoint)
     EXPECT_EQ(traj_out.points.size(), traj.points.size());
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
   }
 
@@ -1862,7 +1862,7 @@ TEST(trajectory, insertTargetPoint)
   for (double x_start = 1.0; x_start < total_length + epsilon; x_start += 1.0) {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(x_start - 1e-4, 0.0, 0.0);
+    const auto p_target = create_point(x_start - 1e-4, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(base_idx, p_target, traj_out.points);
 
@@ -1871,7 +1871,7 @@ TEST(trajectory, insertTargetPoint)
     EXPECT_EQ(traj_out.points.size(), traj.points.size());
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
   }
 
@@ -1879,7 +1879,7 @@ TEST(trajectory, insertTargetPoint)
   {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(-1.0, 0.0, 0.0);
+    const auto p_target = create_point(-1.0, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(base_idx, p_target, traj_out.points);
 
@@ -1890,7 +1890,7 @@ TEST(trajectory, insertTargetPoint)
   {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(10.0, 0.0, 0.0);
+    const auto p_target = create_point(10.0, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(base_idx, p_target, traj_out.points);
 
@@ -1901,7 +1901,7 @@ TEST(trajectory, insertTargetPoint)
   {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(4.0, 10.0, 0.0);
+    const auto p_target = create_point(4.0, 10.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(base_idx, p_target, traj_out.points);
 
@@ -1913,7 +1913,7 @@ TEST(trajectory, insertTargetPoint)
     auto traj_out = traj;
 
     const size_t segment_idx = 9U;
-    const auto p_target = createPoint(10.0, 0.0, 0.0);
+    const auto p_target = create_point(10.0, 0.0, 0.0);
     const auto insert_idx = insertTargetPoint(segment_idx, p_target, traj_out.points);
 
     EXPECT_EQ(insert_idx, std::nullopt);
@@ -1932,23 +1932,23 @@ TEST(trajectory, insertTargetPoint_Reverse)
   using autoware::motion_utils::calcArcLength;
   using autoware::motion_utils::findNearestSegmentIndex;
   using autoware::motion_utils::insertTargetPoint;
-  using autoware::universe_utils::calcDistance2d;
-  using autoware::universe_utils::createPoint;
-  using autoware::universe_utils::createQuaternionFromYaw;
-  using autoware::universe_utils::deg2rad;
-  using autoware::universe_utils::getPose;
+  using autoware_utils::calc_distance2d;
+  using autoware_utils::create_point;
+  using autoware_utils::create_quaternion_from_yaw;
+  using autoware_utils::deg2rad;
+  using autoware_utils::get_pose;
 
   constexpr double overlap_threshold = 1e-4;
   auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
   for (size_t i = 0; i < traj.points.size(); ++i) {
-    traj.points.at(i).pose.orientation = createQuaternionFromYaw(autoware::universe_utils::pi);
+    traj.points.at(i).pose.orientation = create_quaternion_from_yaw(autoware_utils::pi);
   }
   const auto total_length = calcArcLength(traj.points);
 
   for (double x_start = 0.0; x_start < total_length; x_start += 1.0) {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(x_start + 1.1e-4, 0.0, 0.0);
+    const auto p_target = create_point(x_start + 1.1e-4, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx =
       insertTargetPoint(base_idx, p_target, traj_out.points, overlap_threshold);
@@ -1959,12 +1959,12 @@ TEST(trajectory, insertTargetPoint_Reverse)
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
       EXPECT_TRUE(
-        calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > overlap_threshold);
+        calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > overlap_threshold);
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(180));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(180));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -1975,8 +1975,8 @@ TEST(trajectory, insertTargetPoint_Reverse)
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(180));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(180));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -1990,10 +1990,10 @@ TEST(trajectory, insertTargetPoint_OverlapThreshold)
   using autoware::motion_utils::calcArcLength;
   using autoware::motion_utils::findNearestSegmentIndex;
   using autoware::motion_utils::insertTargetPoint;
-  using autoware::universe_utils::calcDistance2d;
-  using autoware::universe_utils::createPoint;
-  using autoware::universe_utils::deg2rad;
-  using autoware::universe_utils::getPose;
+  using autoware_utils::calc_distance2d;
+  using autoware_utils::create_point;
+  using autoware_utils::deg2rad;
+  using autoware_utils::get_pose;
 
   constexpr double overlap_threshold = 1e-4;
   const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
@@ -2003,7 +2003,7 @@ TEST(trajectory, insertTargetPoint_OverlapThreshold)
   for (double x_start = 0.0; x_start < total_length; x_start += 1.0) {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(x_start + 1.1e-4, 0.0, 0.0);
+    const auto p_target = create_point(x_start + 1.1e-4, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx =
       insertTargetPoint(base_idx, p_target, traj_out.points, overlap_threshold);
@@ -2014,12 +2014,12 @@ TEST(trajectory, insertTargetPoint_OverlapThreshold)
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
       EXPECT_TRUE(
-        calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > overlap_threshold);
+        calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > overlap_threshold);
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -2030,8 +2030,8 @@ TEST(trajectory, insertTargetPoint_OverlapThreshold)
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -2043,7 +2043,7 @@ TEST(trajectory, insertTargetPoint_OverlapThreshold)
   for (double x_start = 0.0; x_start < total_length - 1.0 + epsilon; x_start += 1.0) {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(x_start + 1e-5, 0.0, 0.0);
+    const auto p_target = create_point(x_start + 1e-5, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx =
       insertTargetPoint(base_idx, p_target, traj_out.points, overlap_threshold);
@@ -2054,7 +2054,7 @@ TEST(trajectory, insertTargetPoint_OverlapThreshold)
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
       EXPECT_TRUE(
-        calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > overlap_threshold);
+        calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > overlap_threshold);
     }
   }
 
@@ -2062,7 +2062,7 @@ TEST(trajectory, insertTargetPoint_OverlapThreshold)
   for (double x_start = 1.0; x_start < total_length + epsilon; x_start += 1.0) {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(x_start - 1e-5, 0.0, 0.0);
+    const auto p_target = create_point(x_start - 1e-5, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx =
       insertTargetPoint(base_idx, p_target, traj_out.points, overlap_threshold);
@@ -2073,7 +2073,7 @@ TEST(trajectory, insertTargetPoint_OverlapThreshold)
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
       EXPECT_TRUE(
-        calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > overlap_threshold);
+        calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > overlap_threshold);
     }
   }
 }
@@ -2083,10 +2083,10 @@ TEST(trajectory, insertTargetPoint_Length)
   using autoware::motion_utils::calcArcLength;
   using autoware::motion_utils::findNearestSegmentIndex;
   using autoware::motion_utils::insertTargetPoint;
-  using autoware::universe_utils::calcDistance2d;
-  using autoware::universe_utils::createPoint;
-  using autoware::universe_utils::deg2rad;
-  using autoware::universe_utils::getPose;
+  using autoware_utils::calc_distance2d;
+  using autoware_utils::create_point;
+  using autoware_utils::deg2rad;
+  using autoware_utils::get_pose;
 
   const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
   const auto total_length = calcArcLength(traj.points);
@@ -2095,7 +2095,7 @@ TEST(trajectory, insertTargetPoint_Length)
   for (double x_start = 0.5; x_start < total_length; x_start += 1.0) {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(x_start, 0.0, 0.0);
+    const auto p_target = create_point(x_start, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(x_start, p_target, traj_out.points);
 
@@ -2104,12 +2104,12 @@ TEST(trajectory, insertTargetPoint_Length)
     EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -2120,8 +2120,8 @@ TEST(trajectory, insertTargetPoint_Length)
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -2133,7 +2133,7 @@ TEST(trajectory, insertTargetPoint_Length)
   for (double x_start = 0.0; x_start < total_length; x_start += 1.0) {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(x_start + 1.1e-3, 0.0, 0.0);
+    const auto p_target = create_point(x_start + 1.1e-3, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(x_start + 1.1e-3, p_target, traj_out.points);
 
@@ -2142,12 +2142,12 @@ TEST(trajectory, insertTargetPoint_Length)
     EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -2158,8 +2158,8 @@ TEST(trajectory, insertTargetPoint_Length)
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -2171,7 +2171,7 @@ TEST(trajectory, insertTargetPoint_Length)
   {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(9.0, 0.0, 0.0);
+    const auto p_target = create_point(9.0, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(9.0, p_target, traj_out.points);
 
@@ -2180,12 +2180,12 @@ TEST(trajectory, insertTargetPoint_Length)
     EXPECT_EQ(traj_out.points.size(), traj.points.size());
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -2196,8 +2196,8 @@ TEST(trajectory, insertTargetPoint_Length)
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -2209,7 +2209,7 @@ TEST(trajectory, insertTargetPoint_Length)
   for (double x_start = 0.25; x_start < total_length; x_start += 1.0) {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(x_start, 0.25 * std::tan(deg2rad(60.0)), 0.0);
+    const auto p_target = create_point(x_start, 0.25 * std::tan(deg2rad(60.0)), 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(x_start, p_target, traj_out.points);
 
@@ -2218,12 +2218,12 @@ TEST(trajectory, insertTargetPoint_Length)
     EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(-30.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(-30.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -2234,8 +2234,8 @@ TEST(trajectory, insertTargetPoint_Length)
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(60.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(60.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -2247,7 +2247,7 @@ TEST(trajectory, insertTargetPoint_Length)
   for (double x_start = 0.0; x_start < total_length - 1.0 + epsilon; x_start += 1.0) {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(x_start + 1e-4, 0.0, 0.0);
+    const auto p_target = create_point(x_start + 1e-4, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(x_start + 1e-4, p_target, traj_out.points);
 
@@ -2256,7 +2256,7 @@ TEST(trajectory, insertTargetPoint_Length)
     EXPECT_EQ(traj_out.points.size(), traj.points.size());
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
   }
 
@@ -2264,7 +2264,7 @@ TEST(trajectory, insertTargetPoint_Length)
   for (double x_start = 1.0; x_start < total_length + epsilon; x_start += 1.0) {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(x_start - 1e-4, 0.0, 0.0);
+    const auto p_target = create_point(x_start - 1e-4, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(x_start - 1e-4, p_target, traj_out.points);
 
@@ -2273,7 +2273,7 @@ TEST(trajectory, insertTargetPoint_Length)
     EXPECT_EQ(traj_out.points.size(), traj.points.size());
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
   }
 
@@ -2281,7 +2281,7 @@ TEST(trajectory, insertTargetPoint_Length)
   {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(-1.0, 0.0, 0.0);
+    const auto p_target = create_point(-1.0, 0.0, 0.0);
     const auto insert_idx = insertTargetPoint(-1.0, p_target, traj_out.points);
 
     EXPECT_EQ(insert_idx, std::nullopt);
@@ -2291,7 +2291,7 @@ TEST(trajectory, insertTargetPoint_Length)
   {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(10.0, 0.0, 0.0);
+    const auto p_target = create_point(10.0, 0.0, 0.0);
     const auto insert_idx = insertTargetPoint(10.0, p_target, traj_out.points);
 
     EXPECT_EQ(insert_idx, std::nullopt);
@@ -2301,7 +2301,7 @@ TEST(trajectory, insertTargetPoint_Length)
   {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(4.0, 10.0, 0.0);
+    const auto p_target = create_point(4.0, 10.0, 0.0);
     const auto insert_idx = insertTargetPoint(4.0, p_target, traj_out.points);
 
     EXPECT_EQ(insert_idx, std::nullopt);
@@ -2321,10 +2321,10 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point)
   using autoware::motion_utils::calcArcLength;
   using autoware::motion_utils::findNearestSegmentIndex;
   using autoware::motion_utils::insertTargetPoint;
-  using autoware::universe_utils::calcDistance2d;
-  using autoware::universe_utils::createPoint;
-  using autoware::universe_utils::deg2rad;
-  using autoware::universe_utils::getPose;
+  using autoware_utils::calc_distance2d;
+  using autoware_utils::create_point;
+  using autoware_utils::deg2rad;
+  using autoware_utils::get_pose;
 
   const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
   const auto total_length = calcArcLength(traj.points);
@@ -2333,7 +2333,7 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point)
   for (double x_start = 0.5; x_start < total_length; x_start += 1.0) {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(x_start, 0.0, 0.0);
+    const auto p_target = create_point(x_start, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(0, x_start, traj_out.points);
 
@@ -2342,12 +2342,12 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point)
     EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -2358,8 +2358,8 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point)
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -2371,7 +2371,7 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point)
   for (double x_start = 0.0; x_start < total_length; x_start += 1.0) {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(x_start + 1.1e-3, 0.0, 0.0);
+    const auto p_target = create_point(x_start + 1.1e-3, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(0, x_start + 1.1e-3, traj_out.points);
 
@@ -2380,12 +2380,12 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point)
     EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -2396,8 +2396,8 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point)
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -2409,7 +2409,7 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point)
   {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(9.0, 0.0, 0.0);
+    const auto p_target = create_point(9.0, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(0, 9.0, traj_out.points);
 
@@ -2418,12 +2418,12 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point)
     EXPECT_EQ(traj_out.points.size(), traj.points.size());
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -2434,8 +2434,8 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point)
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -2447,7 +2447,7 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point)
   for (double x_start = 0.0; x_start < total_length - 1.0 + epsilon; x_start += 1.0) {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(x_start + 1e-4, 0.0, 0.0);
+    const auto p_target = create_point(x_start + 1e-4, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(0, x_start + 1e-4, traj_out.points);
 
@@ -2456,7 +2456,7 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point)
     EXPECT_EQ(traj_out.points.size(), traj.points.size());
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
   }
 
@@ -2464,7 +2464,7 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point)
   for (double x_start = 1.0; x_start < total_length + epsilon; x_start += 1.0) {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(x_start - 1e-4, 0.0, 0.0);
+    const auto p_target = create_point(x_start - 1e-4, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(0, x_start - 1e-4, traj_out.points);
 
@@ -2473,7 +2473,7 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point)
     EXPECT_EQ(traj_out.points.size(), traj.points.size());
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
   }
 
@@ -2507,10 +2507,10 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point_Non_Zero_Start_Id
   using autoware::motion_utils::calcArcLength;
   using autoware::motion_utils::findNearestSegmentIndex;
   using autoware::motion_utils::insertTargetPoint;
-  using autoware::universe_utils::calcDistance2d;
-  using autoware::universe_utils::createPoint;
-  using autoware::universe_utils::deg2rad;
-  using autoware::universe_utils::getPose;
+  using autoware_utils::calc_distance2d;
+  using autoware_utils::create_point;
+  using autoware_utils::deg2rad;
+  using autoware_utils::get_pose;
 
   const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
 
@@ -2519,7 +2519,7 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point_Non_Zero_Start_Id
     auto traj_out = traj;
 
     const size_t start_idx = 2;
-    const auto p_target = createPoint(x_start + 2.0, 0.0, 0.0);
+    const auto p_target = create_point(x_start + 2.0, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(start_idx, x_start, traj_out.points);
 
@@ -2528,12 +2528,12 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point_Non_Zero_Start_Id
     EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -2544,8 +2544,8 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point_Non_Zero_Start_Id
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -2559,7 +2559,7 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point_Non_Zero_Start_Id
     const double x_start = 1.0 - 1e-2;
 
     const size_t start_idx = 8;
-    const auto p_target = createPoint(9.0 - 1e-2, 0.0, 0.0);
+    const auto p_target = create_point(9.0 - 1e-2, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(start_idx, x_start, traj_out.points);
 
@@ -2568,12 +2568,12 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point_Non_Zero_Start_Id
     EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -2584,8 +2584,8 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point_Non_Zero_Start_Id
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -2599,7 +2599,7 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point_Non_Zero_Start_Id
     const double x_start = 1.0;
 
     const size_t start_idx = 8;
-    const auto p_target = createPoint(9.0, 0.0, 0.0);
+    const auto p_target = create_point(9.0, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(start_idx, x_start, traj_out.points);
 
@@ -2608,12 +2608,12 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point_Non_Zero_Start_Id
     EXPECT_EQ(traj_out.points.size(), traj.points.size());
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -2624,8 +2624,8 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point_Non_Zero_Start_Id
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -2639,7 +2639,7 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point_Non_Zero_Start_Id
     const double x_start = 4.0;
 
     const size_t start_idx = 5;
-    const auto p_target = createPoint(9.0, 0.0, 0.0);
+    const auto p_target = create_point(9.0, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(start_idx, x_start, traj_out.points);
 
@@ -2648,12 +2648,12 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point_Non_Zero_Start_Id
     EXPECT_EQ(traj_out.points.size(), traj.points.size());
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -2664,8 +2664,8 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point_Non_Zero_Start_Id
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -2679,7 +2679,7 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point_Non_Zero_Start_Id
     const double x_start = 0.0;
 
     const size_t start_idx = 0;
-    const auto p_target = createPoint(0.0, 0.0, 0.0);
+    const auto p_target = create_point(0.0, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(start_idx, x_start, traj_out.points);
 
@@ -2688,12 +2688,12 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point_Non_Zero_Start_Id
     EXPECT_EQ(traj_out.points.size(), traj.points.size());
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -2704,8 +2704,8 @@ TEST(trajectory, insertTargetPoint_Length_Without_Target_Point_Non_Zero_Start_Id
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -2737,10 +2737,10 @@ TEST(trajectory, insertTargetPoint_Negative_Length_Without_Target_Point_Non_Zero
   using autoware::motion_utils::calcArcLength;
   using autoware::motion_utils::findNearestSegmentIndex;
   using autoware::motion_utils::insertTargetPoint;
-  using autoware::universe_utils::calcDistance2d;
-  using autoware::universe_utils::createPoint;
-  using autoware::universe_utils::deg2rad;
-  using autoware::universe_utils::getPose;
+  using autoware_utils::calc_distance2d;
+  using autoware_utils::create_point;
+  using autoware_utils::deg2rad;
+  using autoware_utils::get_pose;
 
   const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
 
@@ -2749,7 +2749,7 @@ TEST(trajectory, insertTargetPoint_Negative_Length_Without_Target_Point_Non_Zero
     auto traj_out = traj;
 
     const size_t start_idx = 7;
-    const auto p_target = createPoint(7.0 + x_start, 0.0, 0.0);
+    const auto p_target = create_point(7.0 + x_start, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(start_idx, x_start, traj_out.points);
 
@@ -2758,12 +2758,12 @@ TEST(trajectory, insertTargetPoint_Negative_Length_Without_Target_Point_Non_Zero
     EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -2774,8 +2774,8 @@ TEST(trajectory, insertTargetPoint_Negative_Length_Without_Target_Point_Non_Zero
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -2789,7 +2789,7 @@ TEST(trajectory, insertTargetPoint_Negative_Length_Without_Target_Point_Non_Zero
     const double x_start = -1.0 - 1e-2;
 
     const size_t start_idx = 8;
-    const auto p_target = createPoint(7.0 - 1e-2, 0.0, 0.0);
+    const auto p_target = create_point(7.0 - 1e-2, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(start_idx, x_start, traj_out.points);
 
@@ -2798,12 +2798,12 @@ TEST(trajectory, insertTargetPoint_Negative_Length_Without_Target_Point_Non_Zero
     EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -2814,8 +2814,8 @@ TEST(trajectory, insertTargetPoint_Negative_Length_Without_Target_Point_Non_Zero
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -2829,7 +2829,7 @@ TEST(trajectory, insertTargetPoint_Negative_Length_Without_Target_Point_Non_Zero
     const double x_start = -1.0;
 
     const size_t start_idx = 8;
-    const auto p_target = createPoint(7.0, 0.0, 0.0);
+    const auto p_target = create_point(7.0, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(start_idx, x_start, traj_out.points);
 
@@ -2838,12 +2838,12 @@ TEST(trajectory, insertTargetPoint_Negative_Length_Without_Target_Point_Non_Zero
     EXPECT_EQ(traj_out.points.size(), traj.points.size());
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -2854,8 +2854,8 @@ TEST(trajectory, insertTargetPoint_Negative_Length_Without_Target_Point_Non_Zero
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -2869,7 +2869,7 @@ TEST(trajectory, insertTargetPoint_Negative_Length_Without_Target_Point_Non_Zero
     const double x_start = -5.0;
 
     const size_t start_idx = 5;
-    const auto p_target = createPoint(0.0, 0.0, 0.0);
+    const auto p_target = create_point(0.0, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(start_idx, x_start, traj_out.points);
 
@@ -2878,12 +2878,12 @@ TEST(trajectory, insertTargetPoint_Negative_Length_Without_Target_Point_Non_Zero
     EXPECT_EQ(traj_out.points.size(), traj.points.size());
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -2894,8 +2894,8 @@ TEST(trajectory, insertTargetPoint_Negative_Length_Without_Target_Point_Non_Zero
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -2924,10 +2924,10 @@ TEST(trajectory, insertTargetPoint_Length_from_a_pose)
   using autoware::motion_utils::calcArcLength;
   using autoware::motion_utils::findNearestSegmentIndex;
   using autoware::motion_utils::insertTargetPoint;
-  using autoware::universe_utils::calcDistance2d;
-  using autoware::universe_utils::createPoint;
-  using autoware::universe_utils::deg2rad;
-  using autoware::universe_utils::getPose;
+  using autoware_utils::calc_distance2d;
+  using autoware_utils::create_point;
+  using autoware_utils::deg2rad;
+  using autoware_utils::get_pose;
 
   const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
   const auto total_length = calcArcLength(traj.points);
@@ -2937,7 +2937,7 @@ TEST(trajectory, insertTargetPoint_Length_from_a_pose)
     auto traj_out = traj;
 
     const geometry_msgs::msg::Pose src_pose = createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-    const auto p_target = createPoint(x_start, 0.0, 0.0);
+    const auto p_target = create_point(x_start, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(src_pose, x_start, traj_out.points);
 
@@ -2946,12 +2946,12 @@ TEST(trajectory, insertTargetPoint_Length_from_a_pose)
     EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -2962,8 +2962,8 @@ TEST(trajectory, insertTargetPoint_Length_from_a_pose)
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -2980,7 +2980,7 @@ TEST(trajectory, insertTargetPoint_Length_from_a_pose)
 
       const geometry_msgs::msg::Pose src_pose =
         createPose(src_pose_x, src_pose_y, 0.0, 0.0, 0.0, 0.0);
-      const auto p_target = createPoint(src_pose_x + x_start, 0.0, 0.0);
+      const auto p_target = create_point(src_pose_x + x_start, 0.0, 0.0);
       const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
       const auto insert_idx = insertTargetPoint(src_pose, x_start, traj_out.points);
 
@@ -2989,12 +2989,12 @@ TEST(trajectory, insertTargetPoint_Length_from_a_pose)
       EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
 
       for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-        EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+        EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
       }
 
       {
-        const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-        const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+        const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+        const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
         EXPECT_EQ(p_insert.position.x, p_target.x);
         EXPECT_EQ(p_insert.position.y, p_target.y);
         EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -3005,8 +3005,8 @@ TEST(trajectory, insertTargetPoint_Length_from_a_pose)
       }
 
       {
-        const auto p_base = getPose(traj_out.points.at(base_idx));
-        const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+        const auto p_base = get_pose(traj_out.points.at(base_idx));
+        const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
         EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
         EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
         EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -3024,7 +3024,7 @@ TEST(trajectory, insertTargetPoint_Length_from_a_pose)
 
       const geometry_msgs::msg::Pose src_pose =
         createPose(src_pose_x, src_pose_y, 0.0, 0.0, 0.0, 0.0);
-      const auto p_target = createPoint(src_pose_x + x_start, 0.0, 0.0);
+      const auto p_target = create_point(src_pose_x + x_start, 0.0, 0.0);
       const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
       const auto insert_idx = insertTargetPoint(src_pose, x_start, traj_out.points);
 
@@ -3033,7 +3033,7 @@ TEST(trajectory, insertTargetPoint_Length_from_a_pose)
       EXPECT_EQ(traj_out.points.size(), traj.points.size());
 
       for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-        EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+        EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
       }
     }
   }
@@ -3047,7 +3047,7 @@ TEST(trajectory, insertTargetPoint_Length_from_a_pose)
 
       const geometry_msgs::msg::Pose src_pose =
         createPose(src_pose_x, src_pose_y, 0.0, 0.0, 0.0, 0.0);
-      const auto p_target = createPoint(src_pose_x + x_start, 0.0, 0.0);
+      const auto p_target = create_point(src_pose_x + x_start, 0.0, 0.0);
       const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
       const auto insert_idx = insertTargetPoint(src_pose, x_start, traj_out.points);
 
@@ -3056,12 +3056,12 @@ TEST(trajectory, insertTargetPoint_Length_from_a_pose)
       EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
 
       for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-        EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+        EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
       }
 
       {
-        const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-        const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+        const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+        const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
         EXPECT_EQ(p_insert.position.x, p_target.x);
         EXPECT_EQ(p_insert.position.y, p_target.y);
         EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -3072,8 +3072,8 @@ TEST(trajectory, insertTargetPoint_Length_from_a_pose)
       }
 
       {
-        const auto p_base = getPose(traj_out.points.at(base_idx));
-        const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+        const auto p_base = get_pose(traj_out.points.at(base_idx));
+        const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
         EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
         EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
         EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -3091,7 +3091,7 @@ TEST(trajectory, insertTargetPoint_Length_from_a_pose)
 
       const geometry_msgs::msg::Pose src_pose =
         createPose(src_pose_x, src_pose_y, 0.0, 0.0, 0.0, 0.0);
-      const auto p_target = createPoint(src_pose_x + x_start, 0.0, 0.0);
+      const auto p_target = create_point(src_pose_x + x_start, 0.0, 0.0);
       const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
       const auto insert_idx = insertTargetPoint(src_pose, x_start, traj_out.points);
 
@@ -3100,12 +3100,12 @@ TEST(trajectory, insertTargetPoint_Length_from_a_pose)
       EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
 
       for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-        EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+        EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
       }
 
       {
-        const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-        const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+        const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+        const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
         EXPECT_EQ(p_insert.position.x, p_target.x);
         EXPECT_EQ(p_insert.position.y, p_target.y);
         EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -3116,8 +3116,8 @@ TEST(trajectory, insertTargetPoint_Length_from_a_pose)
       }
 
       {
-        const auto p_base = getPose(traj_out.points.at(base_idx));
-        const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+        const auto p_base = get_pose(traj_out.points.at(base_idx));
+        const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
         EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
         EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
         EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -3157,7 +3157,7 @@ TEST(trajectory, insertTargetPoint_Length_from_a_pose)
     const geometry_msgs::msg::Pose src_pose =
       createPose(src_pose_x, src_pose_y, 0.0, 0.0, 0.0, 0.0);
     const double x_start = -src_pose_x;
-    const auto p_target = createPoint(src_pose_x + x_start, 0.0, 0.0);
+    const auto p_target = create_point(src_pose_x + x_start, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(src_pose, x_start, traj_out.points);
 
@@ -3166,12 +3166,12 @@ TEST(trajectory, insertTargetPoint_Length_from_a_pose)
     EXPECT_EQ(traj_out.points.size(), traj.points.size());
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -3182,8 +3182,8 @@ TEST(trajectory, insertTargetPoint_Length_from_a_pose)
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -3199,7 +3199,7 @@ TEST(trajectory, insertTargetPoint_Length_from_a_pose)
     const geometry_msgs::msg::Pose src_pose =
       createPose(src_pose_x, src_pose_y, 0.0, 0.0, 0.0, 0.0);
     const double x_start = 0.0;
-    const auto p_target = createPoint(src_pose_x + x_start, 0.0, 0.0);
+    const auto p_target = create_point(src_pose_x + x_start, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertTargetPoint(src_pose, x_start, traj_out.points);
 
@@ -3208,12 +3208,12 @@ TEST(trajectory, insertTargetPoint_Length_from_a_pose)
     EXPECT_EQ(traj_out.points.size(), traj.points.size());
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -3224,8 +3224,8 @@ TEST(trajectory, insertTargetPoint_Length_from_a_pose)
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -3276,10 +3276,10 @@ TEST(trajectory, insertStopPoint_from_a_source_index)
   using autoware::motion_utils::calcArcLength;
   using autoware::motion_utils::findNearestSegmentIndex;
   using autoware::motion_utils::insertStopPoint;
-  using autoware::universe_utils::calcDistance2d;
-  using autoware::universe_utils::createPoint;
-  using autoware::universe_utils::deg2rad;
-  using autoware::universe_utils::getPose;
+  using autoware_utils::calc_distance2d;
+  using autoware_utils::create_point;
+  using autoware_utils::deg2rad;
+  using autoware_utils::get_pose;
 
   const auto traj = generateTestTrajectory<Trajectory>(10, 1.0, 10.0);
 
@@ -3288,7 +3288,7 @@ TEST(trajectory, insertStopPoint_from_a_source_index)
     auto traj_out = traj;
 
     const size_t start_idx = 2;
-    const auto p_target = createPoint(x_start + 2.0, 0.0, 0.0);
+    const auto p_target = create_point(x_start + 2.0, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertStopPoint(start_idx, x_start, traj_out.points);
 
@@ -3297,7 +3297,7 @@ TEST(trajectory, insertStopPoint_from_a_source_index)
     EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
       if (i < insert_idx.value()) {
         EXPECT_NEAR(traj_out.points.at(i).longitudinal_velocity_mps, 10.0, epsilon);
       } else {
@@ -3306,8 +3306,8 @@ TEST(trajectory, insertStopPoint_from_a_source_index)
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -3318,8 +3318,8 @@ TEST(trajectory, insertStopPoint_from_a_source_index)
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -3333,7 +3333,7 @@ TEST(trajectory, insertStopPoint_from_a_source_index)
     const double x_start = 1.0 - 1e-2;
 
     const size_t start_idx = 8;
-    const auto p_target = createPoint(9.0 - 1e-2, 0.0, 0.0);
+    const auto p_target = create_point(9.0 - 1e-2, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertStopPoint(start_idx, x_start, traj_out.points);
 
@@ -3342,7 +3342,7 @@ TEST(trajectory, insertStopPoint_from_a_source_index)
     EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
       if (i < insert_idx.value()) {
         EXPECT_NEAR(traj_out.points.at(i).longitudinal_velocity_mps, 10.0, epsilon);
       } else {
@@ -3351,8 +3351,8 @@ TEST(trajectory, insertStopPoint_from_a_source_index)
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -3363,8 +3363,8 @@ TEST(trajectory, insertStopPoint_from_a_source_index)
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -3378,7 +3378,7 @@ TEST(trajectory, insertStopPoint_from_a_source_index)
     const double x_start = 1.0;
 
     const size_t start_idx = 8;
-    const auto p_target = createPoint(9.0, 0.0, 0.0);
+    const auto p_target = create_point(9.0, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertStopPoint(start_idx, x_start, traj_out.points);
 
@@ -3387,7 +3387,7 @@ TEST(trajectory, insertStopPoint_from_a_source_index)
     EXPECT_EQ(traj_out.points.size(), traj.points.size());
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
       if (i < insert_idx.value()) {
         EXPECT_NEAR(traj_out.points.at(i).longitudinal_velocity_mps, 10.0, epsilon);
       } else {
@@ -3396,8 +3396,8 @@ TEST(trajectory, insertStopPoint_from_a_source_index)
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -3408,8 +3408,8 @@ TEST(trajectory, insertStopPoint_from_a_source_index)
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -3423,7 +3423,7 @@ TEST(trajectory, insertStopPoint_from_a_source_index)
     const double x_start = 4.0;
 
     const size_t start_idx = 5;
-    const auto p_target = createPoint(9.0, 0.0, 0.0);
+    const auto p_target = create_point(9.0, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertStopPoint(start_idx, x_start, traj_out.points);
 
@@ -3432,7 +3432,7 @@ TEST(trajectory, insertStopPoint_from_a_source_index)
     EXPECT_EQ(traj_out.points.size(), traj.points.size());
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
       if (i < insert_idx.value()) {
         EXPECT_NEAR(traj_out.points.at(i).longitudinal_velocity_mps, 10.0, epsilon);
       } else {
@@ -3441,8 +3441,8 @@ TEST(trajectory, insertStopPoint_from_a_source_index)
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -3453,8 +3453,8 @@ TEST(trajectory, insertStopPoint_from_a_source_index)
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -3468,7 +3468,7 @@ TEST(trajectory, insertStopPoint_from_a_source_index)
     const double x_start = 0.0;
 
     const size_t start_idx = 0;
-    const auto p_target = createPoint(0.0, 0.0, 0.0);
+    const auto p_target = create_point(0.0, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertStopPoint(start_idx, x_start, traj_out.points);
 
@@ -3477,7 +3477,7 @@ TEST(trajectory, insertStopPoint_from_a_source_index)
     EXPECT_EQ(traj_out.points.size(), traj.points.size());
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
       if (i < insert_idx.value()) {
         EXPECT_NEAR(traj_out.points.at(i).longitudinal_velocity_mps, 10.0, epsilon);
       } else {
@@ -3486,8 +3486,8 @@ TEST(trajectory, insertStopPoint_from_a_source_index)
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -3498,8 +3498,8 @@ TEST(trajectory, insertStopPoint_from_a_source_index)
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -3531,10 +3531,10 @@ TEST(trajectory, insertStopPoint_from_front_point)
   using autoware::motion_utils::calcArcLength;
   using autoware::motion_utils::findNearestSegmentIndex;
   using autoware::motion_utils::insertStopPoint;
-  using autoware::universe_utils::calcDistance2d;
-  using autoware::universe_utils::createPoint;
-  using autoware::universe_utils::deg2rad;
-  using autoware::universe_utils::getPose;
+  using autoware_utils::calc_distance2d;
+  using autoware_utils::create_point;
+  using autoware_utils::deg2rad;
+  using autoware_utils::get_pose;
 
   const auto traj = generateTestTrajectory<Trajectory>(10, 1.0, 10.0);
 
@@ -3542,7 +3542,7 @@ TEST(trajectory, insertStopPoint_from_front_point)
   for (double x_start = 0.5; x_start < 5.0; x_start += 1.0) {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(x_start + 2.0, 0.0, 0.0);
+    const auto p_target = create_point(x_start + 2.0, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertStopPoint(x_start + 2.0, traj_out.points);
 
@@ -3551,7 +3551,7 @@ TEST(trajectory, insertStopPoint_from_front_point)
     EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
       if (i < insert_idx.value()) {
         EXPECT_NEAR(traj_out.points.at(i).longitudinal_velocity_mps, 10.0, epsilon);
       } else {
@@ -3560,8 +3560,8 @@ TEST(trajectory, insertStopPoint_from_front_point)
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -3572,8 +3572,8 @@ TEST(trajectory, insertStopPoint_from_front_point)
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -3586,7 +3586,7 @@ TEST(trajectory, insertStopPoint_from_front_point)
     auto traj_out = traj;
     const double x_start = 1.0 - 1e-2;
 
-    const auto p_target = createPoint(9.0 - 1e-2, 0.0, 0.0);
+    const auto p_target = create_point(9.0 - 1e-2, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertStopPoint(8.0 + x_start, traj_out.points);
 
@@ -3595,7 +3595,7 @@ TEST(trajectory, insertStopPoint_from_front_point)
     EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
       if (i < insert_idx.value()) {
         EXPECT_NEAR(traj_out.points.at(i).longitudinal_velocity_mps, 10.0, epsilon);
       } else {
@@ -3604,8 +3604,8 @@ TEST(trajectory, insertStopPoint_from_front_point)
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -3616,8 +3616,8 @@ TEST(trajectory, insertStopPoint_from_front_point)
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -3629,7 +3629,7 @@ TEST(trajectory, insertStopPoint_from_front_point)
   {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(9.0, 0.0, 0.0);
+    const auto p_target = create_point(9.0, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertStopPoint(9.0, traj_out.points);
 
@@ -3638,7 +3638,7 @@ TEST(trajectory, insertStopPoint_from_front_point)
     EXPECT_EQ(traj_out.points.size(), traj.points.size());
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
       if (i < insert_idx.value()) {
         EXPECT_NEAR(traj_out.points.at(i).longitudinal_velocity_mps, 10.0, epsilon);
       } else {
@@ -3647,8 +3647,8 @@ TEST(trajectory, insertStopPoint_from_front_point)
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -3659,8 +3659,8 @@ TEST(trajectory, insertStopPoint_from_front_point)
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -3673,7 +3673,7 @@ TEST(trajectory, insertStopPoint_from_front_point)
     auto traj_out = traj;
     const double x_start = 0.0;
 
-    const auto p_target = createPoint(0.0, 0.0, 0.0);
+    const auto p_target = create_point(0.0, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertStopPoint(x_start, traj_out.points);
 
@@ -3682,7 +3682,7 @@ TEST(trajectory, insertStopPoint_from_front_point)
     EXPECT_EQ(traj_out.points.size(), traj.points.size());
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
       if (i < insert_idx.value()) {
         EXPECT_NEAR(traj_out.points.at(i).longitudinal_velocity_mps, 10.0, epsilon);
       } else {
@@ -3691,8 +3691,8 @@ TEST(trajectory, insertStopPoint_from_front_point)
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -3703,8 +3703,8 @@ TEST(trajectory, insertStopPoint_from_front_point)
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -3728,10 +3728,10 @@ TEST(trajectory, insertStopPoint_from_a_pose)
   using autoware::motion_utils::calcArcLength;
   using autoware::motion_utils::findNearestSegmentIndex;
   using autoware::motion_utils::insertStopPoint;
-  using autoware::universe_utils::calcDistance2d;
-  using autoware::universe_utils::createPoint;
-  using autoware::universe_utils::deg2rad;
-  using autoware::universe_utils::getPose;
+  using autoware_utils::calc_distance2d;
+  using autoware_utils::create_point;
+  using autoware_utils::deg2rad;
+  using autoware_utils::get_pose;
 
   const auto traj = generateTestTrajectory<Trajectory>(10, 1.0, 10.0);
   const auto total_length = calcArcLength(traj.points);
@@ -3741,7 +3741,7 @@ TEST(trajectory, insertStopPoint_from_a_pose)
     auto traj_out = traj;
 
     const geometry_msgs::msg::Pose src_pose = createPose(0.0, 0.0, 0.0, 0.0, 0.0, 0.0);
-    const auto p_target = createPoint(x_start, 0.0, 0.0);
+    const auto p_target = create_point(x_start, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertStopPoint(src_pose, x_start, traj_out.points);
 
@@ -3750,7 +3750,7 @@ TEST(trajectory, insertStopPoint_from_a_pose)
     EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
       if (i < insert_idx.value()) {
         EXPECT_NEAR(traj_out.points.at(i).longitudinal_velocity_mps, 10.0, epsilon);
       } else {
@@ -3759,8 +3759,8 @@ TEST(trajectory, insertStopPoint_from_a_pose)
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -3771,8 +3771,8 @@ TEST(trajectory, insertStopPoint_from_a_pose)
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -3789,7 +3789,7 @@ TEST(trajectory, insertStopPoint_from_a_pose)
 
       const geometry_msgs::msg::Pose src_pose =
         createPose(src_pose_x, src_pose_y, 0.0, 0.0, 0.0, 0.0);
-      const auto p_target = createPoint(src_pose_x + x_start, 0.0, 0.0);
+      const auto p_target = create_point(src_pose_x + x_start, 0.0, 0.0);
       const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
       const auto insert_idx = insertStopPoint(src_pose, x_start, traj_out.points);
 
@@ -3798,7 +3798,7 @@ TEST(trajectory, insertStopPoint_from_a_pose)
       EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
 
       for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-        EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+        EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
         if (i < insert_idx.value()) {
           EXPECT_NEAR(traj_out.points.at(i).longitudinal_velocity_mps, 10.0, epsilon);
         } else {
@@ -3807,8 +3807,8 @@ TEST(trajectory, insertStopPoint_from_a_pose)
       }
 
       {
-        const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-        const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+        const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+        const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
         EXPECT_EQ(p_insert.position.x, p_target.x);
         EXPECT_EQ(p_insert.position.y, p_target.y);
         EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -3819,8 +3819,8 @@ TEST(trajectory, insertStopPoint_from_a_pose)
       }
 
       {
-        const auto p_base = getPose(traj_out.points.at(base_idx));
-        const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+        const auto p_base = get_pose(traj_out.points.at(base_idx));
+        const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
         EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
         EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
         EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -3838,7 +3838,7 @@ TEST(trajectory, insertStopPoint_from_a_pose)
 
       const geometry_msgs::msg::Pose src_pose =
         createPose(src_pose_x, src_pose_y, 0.0, 0.0, 0.0, 0.0);
-      const auto p_target = createPoint(src_pose_x + x_start, 0.0, 0.0);
+      const auto p_target = create_point(src_pose_x + x_start, 0.0, 0.0);
       const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
       const auto insert_idx = insertStopPoint(src_pose, x_start, traj_out.points);
 
@@ -3847,7 +3847,7 @@ TEST(trajectory, insertStopPoint_from_a_pose)
       EXPECT_EQ(traj_out.points.size(), traj.points.size());
 
       for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-        EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+        EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
         if (i < insert_idx.value()) {
           EXPECT_NEAR(traj_out.points.at(i).longitudinal_velocity_mps, 10.0, epsilon);
         } else {
@@ -3866,7 +3866,7 @@ TEST(trajectory, insertStopPoint_from_a_pose)
 
       const geometry_msgs::msg::Pose src_pose =
         createPose(src_pose_x, src_pose_y, 0.0, 0.0, 0.0, 0.0);
-      const auto p_target = createPoint(src_pose_x + x_start, 0.0, 0.0);
+      const auto p_target = create_point(src_pose_x + x_start, 0.0, 0.0);
       const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
       const auto insert_idx = insertStopPoint(src_pose, x_start, traj_out.points);
 
@@ -3875,7 +3875,7 @@ TEST(trajectory, insertStopPoint_from_a_pose)
       EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
 
       for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-        EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+        EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
         if (i < insert_idx.value()) {
           EXPECT_NEAR(traj_out.points.at(i).longitudinal_velocity_mps, 10.0, epsilon);
         } else {
@@ -3884,8 +3884,8 @@ TEST(trajectory, insertStopPoint_from_a_pose)
       }
 
       {
-        const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-        const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+        const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+        const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
         EXPECT_EQ(p_insert.position.x, p_target.x);
         EXPECT_EQ(p_insert.position.y, p_target.y);
         EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -3896,8 +3896,8 @@ TEST(trajectory, insertStopPoint_from_a_pose)
       }
 
       {
-        const auto p_base = getPose(traj_out.points.at(base_idx));
-        const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+        const auto p_base = get_pose(traj_out.points.at(base_idx));
+        const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
         EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
         EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
         EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -3915,7 +3915,7 @@ TEST(trajectory, insertStopPoint_from_a_pose)
 
       const geometry_msgs::msg::Pose src_pose =
         createPose(src_pose_x, src_pose_y, 0.0, 0.0, 0.0, 0.0);
-      const auto p_target = createPoint(src_pose_x + x_start, 0.0, 0.0);
+      const auto p_target = create_point(src_pose_x + x_start, 0.0, 0.0);
       const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
       const auto insert_idx = insertStopPoint(src_pose, x_start, traj_out.points);
 
@@ -3924,7 +3924,7 @@ TEST(trajectory, insertStopPoint_from_a_pose)
       EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
 
       for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-        EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+        EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
         if (i < insert_idx.value()) {
           EXPECT_NEAR(traj_out.points.at(i).longitudinal_velocity_mps, 10.0, epsilon);
         } else {
@@ -3933,8 +3933,8 @@ TEST(trajectory, insertStopPoint_from_a_pose)
       }
 
       {
-        const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-        const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+        const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+        const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
         EXPECT_EQ(p_insert.position.x, p_target.x);
         EXPECT_EQ(p_insert.position.y, p_target.y);
         EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -3945,8 +3945,8 @@ TEST(trajectory, insertStopPoint_from_a_pose)
       }
 
       {
-        const auto p_base = getPose(traj_out.points.at(base_idx));
-        const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+        const auto p_base = get_pose(traj_out.points.at(base_idx));
+        const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
         EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
         EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
         EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -3986,7 +3986,7 @@ TEST(trajectory, insertStopPoint_from_a_pose)
     const geometry_msgs::msg::Pose src_pose =
       createPose(src_pose_x, src_pose_y, 0.0, 0.0, 0.0, 0.0);
     const double x_start = -src_pose_x;
-    const auto p_target = createPoint(src_pose_x + x_start, 0.0, 0.0);
+    const auto p_target = create_point(src_pose_x + x_start, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertStopPoint(src_pose, x_start, traj_out.points);
 
@@ -3995,7 +3995,7 @@ TEST(trajectory, insertStopPoint_from_a_pose)
     EXPECT_EQ(traj_out.points.size(), traj.points.size());
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
       if (i < insert_idx.value()) {
         EXPECT_NEAR(traj_out.points.at(i).longitudinal_velocity_mps, 10.0, epsilon);
       } else {
@@ -4004,8 +4004,8 @@ TEST(trajectory, insertStopPoint_from_a_pose)
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -4016,8 +4016,8 @@ TEST(trajectory, insertStopPoint_from_a_pose)
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -4033,7 +4033,7 @@ TEST(trajectory, insertStopPoint_from_a_pose)
     const geometry_msgs::msg::Pose src_pose =
       createPose(src_pose_x, src_pose_y, 0.0, 0.0, 0.0, 0.0);
     const double x_start = 0.0;
-    const auto p_target = createPoint(src_pose_x + x_start, 0.0, 0.0);
+    const auto p_target = create_point(src_pose_x + x_start, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertStopPoint(src_pose, x_start, traj_out.points);
 
@@ -4042,7 +4042,7 @@ TEST(trajectory, insertStopPoint_from_a_pose)
     EXPECT_EQ(traj_out.points.size(), traj.points.size());
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
       if (i < insert_idx.value()) {
         EXPECT_NEAR(traj_out.points.at(i).longitudinal_velocity_mps, 10.0, epsilon);
       } else {
@@ -4051,8 +4051,8 @@ TEST(trajectory, insertStopPoint_from_a_pose)
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -4063,8 +4063,8 @@ TEST(trajectory, insertStopPoint_from_a_pose)
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -4114,10 +4114,10 @@ TEST(trajectory, insertStopPoint_with_pose_and_segment_index)
   using autoware::motion_utils::calcArcLength;
   using autoware::motion_utils::findNearestSegmentIndex;
   using autoware::motion_utils::insertStopPoint;
-  using autoware::universe_utils::calcDistance2d;
-  using autoware::universe_utils::createPoint;
-  using autoware::universe_utils::deg2rad;
-  using autoware::universe_utils::getPose;
+  using autoware_utils::calc_distance2d;
+  using autoware_utils::create_point;
+  using autoware_utils::deg2rad;
+  using autoware_utils::get_pose;
 
   const auto traj = generateTestTrajectory<Trajectory>(10, 1.0, 3.0);
   const auto total_length = calcArcLength(traj.points);
@@ -4126,7 +4126,7 @@ TEST(trajectory, insertStopPoint_with_pose_and_segment_index)
   for (double x_start = 0.5; x_start < total_length; x_start += 1.0) {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(x_start, 0.0, 0.0);
+    const auto p_target = create_point(x_start, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertStopPoint(base_idx, p_target, traj_out.points);
 
@@ -4135,7 +4135,7 @@ TEST(trajectory, insertStopPoint_with_pose_and_segment_index)
     EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
 
     for (size_t i = 0; i < insert_idx.value(); ++i) {
@@ -4146,8 +4146,8 @@ TEST(trajectory, insertStopPoint_with_pose_and_segment_index)
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -4158,8 +4158,8 @@ TEST(trajectory, insertStopPoint_with_pose_and_segment_index)
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -4171,7 +4171,7 @@ TEST(trajectory, insertStopPoint_with_pose_and_segment_index)
   for (double x_start = 0.0; x_start < total_length; x_start += 1.0) {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(x_start + 1.1e-3, 0.0, 0.0);
+    const auto p_target = create_point(x_start + 1.1e-3, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertStopPoint(base_idx, p_target, traj_out.points);
 
@@ -4180,7 +4180,7 @@ TEST(trajectory, insertStopPoint_with_pose_and_segment_index)
     EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
     for (size_t i = 0; i < insert_idx.value(); ++i) {
       EXPECT_NEAR(traj_out.points.at(i).longitudinal_velocity_mps, 3.0, epsilon);
@@ -4190,8 +4190,8 @@ TEST(trajectory, insertStopPoint_with_pose_and_segment_index)
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -4202,8 +4202,8 @@ TEST(trajectory, insertStopPoint_with_pose_and_segment_index)
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -4215,7 +4215,7 @@ TEST(trajectory, insertStopPoint_with_pose_and_segment_index)
   for (double x_start = 0.25; x_start < total_length; x_start += 1.0) {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(x_start, 0.25 * std::tan(deg2rad(60.0)), 0.0);
+    const auto p_target = create_point(x_start, 0.25 * std::tan(deg2rad(60.0)), 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertStopPoint(base_idx, p_target, traj_out.points);
 
@@ -4224,7 +4224,7 @@ TEST(trajectory, insertStopPoint_with_pose_and_segment_index)
     EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
     for (size_t i = 0; i < insert_idx.value(); ++i) {
       EXPECT_NEAR(traj_out.points.at(i).longitudinal_velocity_mps, 3.0, epsilon);
@@ -4234,8 +4234,8 @@ TEST(trajectory, insertStopPoint_with_pose_and_segment_index)
     }
 
     {
-      const auto p_insert = getPose(traj_out.points.at(insert_idx.value()));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(-30.0));
+      const auto p_insert = get_pose(traj_out.points.at(insert_idx.value()));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(-30.0));
       EXPECT_EQ(p_insert.position.x, p_target.x);
       EXPECT_EQ(p_insert.position.y, p_target.y);
       EXPECT_EQ(p_insert.position.z, p_target.z);
@@ -4246,8 +4246,8 @@ TEST(trajectory, insertStopPoint_with_pose_and_segment_index)
     }
 
     {
-      const auto p_base = getPose(traj_out.points.at(base_idx));
-      const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(60.0));
+      const auto p_base = get_pose(traj_out.points.at(base_idx));
+      const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(60.0));
       EXPECT_NEAR(p_base.orientation.x, ans_quat.x, epsilon);
       EXPECT_NEAR(p_base.orientation.y, ans_quat.y, epsilon);
       EXPECT_NEAR(p_base.orientation.z, ans_quat.z, epsilon);
@@ -4259,7 +4259,7 @@ TEST(trajectory, insertStopPoint_with_pose_and_segment_index)
   for (double x_start = 0.0; x_start < total_length - 1.0 + epsilon; x_start += 1.0) {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(x_start + 1e-4, 0.0, 0.0);
+    const auto p_target = create_point(x_start + 1e-4, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertStopPoint(base_idx, p_target, traj_out.points);
 
@@ -4268,7 +4268,7 @@ TEST(trajectory, insertStopPoint_with_pose_and_segment_index)
     EXPECT_EQ(traj_out.points.size(), traj.points.size());
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
     for (size_t i = 0; i < insert_idx.value(); ++i) {
       EXPECT_NEAR(traj_out.points.at(i).longitudinal_velocity_mps, 3.0, epsilon);
@@ -4282,7 +4282,7 @@ TEST(trajectory, insertStopPoint_with_pose_and_segment_index)
   for (double x_start = 1.0; x_start < total_length + epsilon; x_start += 1.0) {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(x_start - 1e-4, 0.0, 0.0);
+    const auto p_target = create_point(x_start - 1e-4, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertStopPoint(base_idx, p_target, traj_out.points);
 
@@ -4291,7 +4291,7 @@ TEST(trajectory, insertStopPoint_with_pose_and_segment_index)
     EXPECT_EQ(traj_out.points.size(), traj.points.size());
 
     for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-      EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+      EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
     }
     for (size_t i = 0; i < insert_idx.value(); ++i) {
       EXPECT_NEAR(traj_out.points.at(i).longitudinal_velocity_mps, 3.0, epsilon);
@@ -4305,7 +4305,7 @@ TEST(trajectory, insertStopPoint_with_pose_and_segment_index)
   {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(-1.0, 0.0, 0.0);
+    const auto p_target = create_point(-1.0, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertStopPoint(base_idx, p_target, traj_out.points);
 
@@ -4316,7 +4316,7 @@ TEST(trajectory, insertStopPoint_with_pose_and_segment_index)
   {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(10.0, 0.0, 0.0);
+    const auto p_target = create_point(10.0, 0.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertStopPoint(base_idx, p_target, traj_out.points);
 
@@ -4327,7 +4327,7 @@ TEST(trajectory, insertStopPoint_with_pose_and_segment_index)
   {
     auto traj_out = traj;
 
-    const auto p_target = createPoint(4.0, 10.0, 0.0);
+    const auto p_target = create_point(4.0, 10.0, 0.0);
     const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
     const auto insert_idx = insertStopPoint(base_idx, p_target, traj_out.points);
 
@@ -4339,7 +4339,7 @@ TEST(trajectory, insertStopPoint_with_pose_and_segment_index)
     auto traj_out = traj;
 
     const size_t segment_idx = 9U;
-    const auto p_target = createPoint(10.0, 0.0, 0.0);
+    const auto p_target = create_point(10.0, 0.0, 0.0);
     const auto insert_idx = insertStopPoint(segment_idx, p_target, traj_out.points);
 
     EXPECT_EQ(insert_idx, std::nullopt);
@@ -4358,9 +4358,9 @@ TEST(trajectory, insertDecelPoint_from_a_point)
   using autoware::motion_utils::calcArcLength;
   using autoware::motion_utils::findNearestSegmentIndex;
   using autoware::motion_utils::insertDecelPoint;
-  using autoware::universe_utils::calcDistance2d;
-  using autoware::universe_utils::createPoint;
-  using autoware::universe_utils::getLongitudinalVelocity;
+  using autoware_utils::calc_distance2d;
+  using autoware_utils::create_point;
+  using autoware_utils::get_longitudinal_velocity;
 
   const auto traj = generateTestTrajectory<Trajectory>(10, 1.0, 10.0);
   const auto total_length = calcArcLength(traj.points);
@@ -4370,8 +4370,8 @@ TEST(trajectory, insertDecelPoint_from_a_point)
   {
     for (double x_start = 0.5; x_start < total_length; x_start += 1.0) {
       auto traj_out = traj;
-      const geometry_msgs::msg::Point src_point = createPoint(0.0, 0.0, 0.0);
-      const auto p_target = createPoint(x_start, 0.0, 0.0);
+      const geometry_msgs::msg::Point src_point = create_point(0.0, 0.0, 0.0);
+      const auto p_target = create_point(x_start, 0.0, 0.0);
       const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
       const auto insert_idx = insertDecelPoint(src_point, x_start, decel_velocity, traj_out.points);
 
@@ -4380,11 +4380,11 @@ TEST(trajectory, insertDecelPoint_from_a_point)
       EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
 
       for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-        EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+        EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
         if (i < insert_idx.value()) {
-          EXPECT_NEAR(getLongitudinalVelocity(traj_out.points.at(i)), 10.0, epsilon);
+          EXPECT_NEAR(get_longitudinal_velocity(traj_out.points.at(i)), 10.0, epsilon);
         } else {
-          EXPECT_NEAR(getLongitudinalVelocity(traj_out.points.at(i)), decel_velocity, epsilon);
+          EXPECT_NEAR(get_longitudinal_velocity(traj_out.points.at(i)), decel_velocity, epsilon);
         }
       }
     }
@@ -4396,8 +4396,8 @@ TEST(trajectory, insertDecelPoint_from_a_point)
     const double src_point_y = 3.0;
     for (double x_start = 0.5; x_start < total_length - src_point_x; x_start += 1.0) {
       auto traj_out = traj;
-      const geometry_msgs::msg::Point src_point = createPoint(src_point_x, src_point_y, 0.0);
-      const auto p_target = createPoint(src_point_x + x_start, 0.0, 0.0);
+      const geometry_msgs::msg::Point src_point = create_point(src_point_x, src_point_y, 0.0);
+      const auto p_target = create_point(src_point_x + x_start, 0.0, 0.0);
       const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
       const auto insert_idx = insertDecelPoint(src_point, x_start, decel_velocity, traj_out.points);
 
@@ -4406,11 +4406,11 @@ TEST(trajectory, insertDecelPoint_from_a_point)
       EXPECT_EQ(traj_out.points.size(), traj.points.size() + 1);
 
       for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-        EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+        EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
         if (i < insert_idx.value()) {
-          EXPECT_NEAR(getLongitudinalVelocity(traj_out.points.at(i)), 10.0, epsilon);
+          EXPECT_NEAR(get_longitudinal_velocity(traj_out.points.at(i)), 10.0, epsilon);
         } else {
-          EXPECT_NEAR(getLongitudinalVelocity(traj_out.points.at(i)), decel_velocity, epsilon);
+          EXPECT_NEAR(get_longitudinal_velocity(traj_out.points.at(i)), decel_velocity, epsilon);
         }
       }
     }
@@ -4422,8 +4422,8 @@ TEST(trajectory, insertDecelPoint_from_a_point)
     const double src_point_y = 3.0;
     for (double x_start = 1e-3; x_start < total_length - src_point_x; x_start += 1.0) {
       auto traj_out = traj;
-      const geometry_msgs::msg::Point src_point = createPoint(src_point_x, src_point_y, 0.0);
-      const auto p_target = createPoint(src_point_x + x_start, 0.0, 0.0);
+      const geometry_msgs::msg::Point src_point = create_point(src_point_x, src_point_y, 0.0);
+      const auto p_target = create_point(src_point_x + x_start, 0.0, 0.0);
       const size_t base_idx = findNearestSegmentIndex(traj.points, p_target);
       const auto insert_idx = insertDecelPoint(src_point, x_start, decel_velocity, traj_out.points);
 
@@ -4432,11 +4432,11 @@ TEST(trajectory, insertDecelPoint_from_a_point)
       EXPECT_EQ(traj_out.points.size(), traj.points.size());
 
       for (size_t i = 0; i < traj_out.points.size() - 1; ++i) {
-        EXPECT_TRUE(calcDistance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
+        EXPECT_TRUE(calc_distance2d(traj_out.points.at(i), traj_out.points.at(i + 1)) > 1e-3);
         if (i < insert_idx.value()) {
-          EXPECT_NEAR(getLongitudinalVelocity(traj_out.points.at(i)), 10.0, epsilon);
+          EXPECT_NEAR(get_longitudinal_velocity(traj_out.points.at(i)), 10.0, epsilon);
         } else {
-          EXPECT_NEAR(getLongitudinalVelocity(traj_out.points.at(i)), decel_velocity, epsilon);
+          EXPECT_NEAR(get_longitudinal_velocity(traj_out.points.at(i)), decel_velocity, epsilon);
         }
       }
     }
@@ -4447,7 +4447,7 @@ TEST(trajectory, findFirstNearestIndexWithSoftConstraints)
 {
   using autoware::motion_utils::findFirstNearestIndexWithSoftConstraints;
   using autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints;
-  using autoware::universe_utils::pi;
+  using autoware_utils::pi;
 
   const auto traj = generateTestTrajectory<Trajectory>(10, 1.0);
 
@@ -4980,60 +4980,60 @@ TEST(trajectory, calcSignedArcLengthFromPointAndSegmentIndexToPointAndSegmentInd
 
   // Same point
   {
-    const auto p = createPoint(3.0, 0.0, 0.0);
+    const auto p = create_point(3.0, 0.0, 0.0);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p, 2, p, 2), 0, epsilon);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p, 3, p, 3), 0, epsilon);
   }
 
   // Forward
   {
-    const auto p1 = createPoint(0.0, 0.0, 0.0);
-    const auto p2 = createPoint(3.0, 1.0, 0.0);
+    const auto p1 = create_point(0.0, 0.0, 0.0);
+    const auto p2 = create_point(3.0, 1.0, 0.0);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 0, p2, 2), 3, epsilon);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 0, p2, 3), 3, epsilon);
   }
 
   // Backward
   {
-    const auto p1 = createPoint(9.0, 0.0, 0.0);
-    const auto p2 = createPoint(8.0, 0.0, 0.0);
+    const auto p1 = create_point(9.0, 0.0, 0.0);
+    const auto p2 = create_point(8.0, 0.0, 0.0);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 8, p2, 7), -1, epsilon);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 8, p2, 8), -1, epsilon);
   }
 
   // Point before start point
   {
-    const auto p1 = createPoint(-3.9, 3.0, 0.0);
-    const auto p2 = createPoint(6.0, -10.0, 0.0);
+    const auto p1 = create_point(-3.9, 3.0, 0.0);
+    const auto p2 = create_point(6.0, -10.0, 0.0);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 0, p2, 5), 9.9, epsilon);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 0, p2, 6), 9.9, epsilon);
   }
 
   // Point after end point
   {
-    const auto p1 = createPoint(7.0, -5.0, 0.0);
-    const auto p2 = createPoint(13.3, -10.0, 0.0);
+    const auto p1 = create_point(7.0, -5.0, 0.0);
+    const auto p2 = create_point(13.3, -10.0, 0.0);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 6, p2, 8), 6.3, epsilon);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 7, p2, 8), 6.3, epsilon);
   }
 
   // Point before start point and after end point
   {
-    const auto p1 = createPoint(-4.3, 10.0, 0.0);
-    const auto p2 = createPoint(13.8, -1.0, 0.0);
+    const auto p1 = create_point(-4.3, 10.0, 0.0);
+    const auto p2 = create_point(13.8, -1.0, 0.0);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 0, p2, 8), 18.1, epsilon);
   }
 
   // Random cases
   {
-    const auto p1 = createPoint(1.0, 3.0, 0.0);
-    const auto p2 = createPoint(9.0, -1.0, 0.0);
+    const auto p1 = create_point(1.0, 3.0, 0.0);
+    const auto p2 = create_point(9.0, -1.0, 0.0);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 0, p2, 8), 8, epsilon);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 1, p2, 8), 8, epsilon);
   }
   {
-    const auto p1 = createPoint(4.3, 7.0, 0.0);
-    const auto p2 = createPoint(2.0, 3.0, 0.0);
+    const auto p1 = create_point(4.3, 7.0, 0.0);
+    const auto p2 = create_point(2.0, 3.0, 0.0);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 4, p2, 2), -2.3, epsilon);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 4, p2, 1), -2.3, epsilon);
   }
@@ -5050,15 +5050,15 @@ TEST(trajectory, calcSignedArcLengthFromPointAndSegmentIndexToPointIndex)
 
   // Same point
   {
-    const auto p = createPoint(3.0, 0.0, 0.0);
+    const auto p = create_point(3.0, 0.0, 0.0);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p, 2, 3), 0, epsilon);
     EXPECT_NEAR(calcSignedArcLength(traj.points, 3, p, 3), 0, epsilon);
   }
 
   // Forward
   {
-    const auto p1 = createPoint(0.0, 0.0, 0.0);
-    const auto p2 = createPoint(3.0, 1.0, 0.0);
+    const auto p1 = create_point(0.0, 0.0, 0.0);
+    const auto p2 = create_point(3.0, 1.0, 0.0);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 0, 3), 3, epsilon);
     EXPECT_NEAR(calcSignedArcLength(traj.points, 0, p2, 2), 3, epsilon);
     EXPECT_NEAR(calcSignedArcLength(traj.points, 0, p2, 3), 3, epsilon);
@@ -5066,8 +5066,8 @@ TEST(trajectory, calcSignedArcLengthFromPointAndSegmentIndexToPointIndex)
 
   // Backward
   {
-    const auto p1 = createPoint(9.0, 0.0, 0.0);
-    const auto p2 = createPoint(8.0, 0.0, 0.0);
+    const auto p1 = create_point(9.0, 0.0, 0.0);
+    const auto p2 = create_point(8.0, 0.0, 0.0);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 8, 8), -1, epsilon);
     EXPECT_NEAR(calcSignedArcLength(traj.points, 8, p2, 7), 0, epsilon);
     EXPECT_NEAR(calcSignedArcLength(traj.points, 8, p2, 8), 0, epsilon);
@@ -5075,43 +5075,43 @@ TEST(trajectory, calcSignedArcLengthFromPointAndSegmentIndexToPointIndex)
 
   // Point before start point
   {
-    const auto p1 = createPoint(-3.9, 3.0, 0.0);
+    const auto p1 = create_point(-3.9, 3.0, 0.0);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 0, 6), 9.9, epsilon);
   }
 
   // Point after end point
   {
-    const auto p2 = createPoint(13.3, -10.0, 0.0);
+    const auto p2 = create_point(13.3, -10.0, 0.0);
     EXPECT_NEAR(calcSignedArcLength(traj.points, 7, p2, 8), 6.3, epsilon);
   }
 
   // Start point
   {
-    const auto p1 = createPoint(0.0, 3.0, 0.0);
-    const auto p2 = createPoint(5.3, -10.0, 0.0);
+    const auto p1 = create_point(0.0, 3.0, 0.0);
+    const auto p2 = create_point(5.3, -10.0, 0.0);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 0, 5), 5, epsilon);
     EXPECT_NEAR(calcSignedArcLength(traj.points, 0, p2, 5), 5.3, epsilon);
   }
 
   // Point after end point
   {
-    const auto p1 = createPoint(7.3, -5.0, 0.0);
-    const auto p2 = createPoint(9.0, -10.0, 0.0);
+    const auto p1 = create_point(7.3, -5.0, 0.0);
+    const auto p2 = create_point(9.0, -10.0, 0.0);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 7, 9), 1.7, epsilon);
     EXPECT_NEAR(calcSignedArcLength(traj.points, 7, p2, 8), 2.0, epsilon);
   }
 
   // Random cases
   {
-    const auto p1 = createPoint(1.0, 3.0, 0.0);
-    const auto p2 = createPoint(9.0, -1.0, 0.0);
+    const auto p1 = create_point(1.0, 3.0, 0.0);
+    const auto p2 = create_point(9.0, -1.0, 0.0);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 0, 9), 8, epsilon);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 1, 9), 8, epsilon);
     EXPECT_NEAR(calcSignedArcLength(traj.points, 1, p2, 8), 8, epsilon);
   }
   {
-    const auto p1 = createPoint(4.3, 7.0, 0.0);
-    const auto p2 = createPoint(2.3, 3.0, 0.0);
+    const auto p1 = create_point(4.3, 7.0, 0.0);
+    const auto p2 = create_point(2.3, 3.0, 0.0);
     EXPECT_NEAR(calcSignedArcLength(traj.points, p1, 4, 2), -2.3, epsilon);
     EXPECT_NEAR(calcSignedArcLength(traj.points, 4, p2, 2), -1.7, epsilon);
     EXPECT_NEAR(calcSignedArcLength(traj.points, 4, p2, 1), -1.7, epsilon);
@@ -5253,25 +5253,25 @@ TEST(trajectory, cropForwardPoints)
 
   {  // Normal case
     const auto cropped_traj_points =
-      cropForwardPoints(traj.points, autoware::universe_utils::createPoint(1.5, 1.5, 0.0), 1, 4.8);
+      cropForwardPoints(traj.points, autoware_utils::create_point(1.5, 1.5, 0.0), 1, 4.8);
     EXPECT_EQ(cropped_traj_points.size(), static_cast<size_t>(7));
   }
 
   {  // Forward length is longer than points arc length.
     const auto cropped_traj_points =
-      cropForwardPoints(traj.points, autoware::universe_utils::createPoint(1.5, 1.5, 0.0), 1, 10.0);
+      cropForwardPoints(traj.points, autoware_utils::create_point(1.5, 1.5, 0.0), 1, 10.0);
     EXPECT_EQ(cropped_traj_points.size(), static_cast<size_t>(10));
   }
 
   {  // Point is on the previous segment
     const auto cropped_traj_points =
-      cropForwardPoints(traj.points, autoware::universe_utils::createPoint(1.0, 1.0, 0.0), 0, 2.5);
+      cropForwardPoints(traj.points, autoware_utils::create_point(1.0, 1.0, 0.0), 0, 2.5);
     EXPECT_EQ(cropped_traj_points.size(), static_cast<size_t>(4));
   }
 
   {  // Point is on the next segment
     const auto cropped_traj_points =
-      cropForwardPoints(traj.points, autoware::universe_utils::createPoint(1.0, 1.0, 0.0), 1, 2.5);
+      cropForwardPoints(traj.points, autoware_utils::create_point(1.0, 1.0, 0.0), 1, 2.5);
     EXPECT_EQ(cropped_traj_points.size(), static_cast<size_t>(4));
   }
 }
@@ -5284,25 +5284,25 @@ TEST(trajectory, cropBackwardPoints)
 
   {  // Normal case
     const auto cropped_traj_points =
-      cropBackwardPoints(traj.points, autoware::universe_utils::createPoint(8.5, 8.5, 0.0), 8, 4.8);
+      cropBackwardPoints(traj.points, autoware_utils::create_point(8.5, 8.5, 0.0), 8, 4.8);
     EXPECT_EQ(cropped_traj_points.size(), static_cast<size_t>(6));
   }
 
   {  // Backward length is longer than points arc length.
-    const auto cropped_traj_points = cropBackwardPoints(
-      traj.points, autoware::universe_utils::createPoint(8.5, 8.5, 0.0), 8, 10.0);
+    const auto cropped_traj_points =
+      cropBackwardPoints(traj.points, autoware_utils::create_point(8.5, 8.5, 0.0), 8, 10.0);
     EXPECT_EQ(cropped_traj_points.size(), static_cast<size_t>(10));
   }
 
   {  // Point is on the previous segment
     const auto cropped_traj_points =
-      cropBackwardPoints(traj.points, autoware::universe_utils::createPoint(8.0, 8.0, 0.0), 7, 2.5);
+      cropBackwardPoints(traj.points, autoware_utils::create_point(8.0, 8.0, 0.0), 7, 2.5);
     EXPECT_EQ(cropped_traj_points.size(), static_cast<size_t>(4));
   }
 
   {  // Point is on the next segment
     const auto cropped_traj_points =
-      cropBackwardPoints(traj.points, autoware::universe_utils::createPoint(8.0, 8.0, 0.0), 8, 2.5);
+      cropBackwardPoints(traj.points, autoware_utils::create_point(8.0, 8.0, 0.0), 8, 2.5);
     EXPECT_EQ(cropped_traj_points.size(), static_cast<size_t>(4));
   }
 }
@@ -5315,25 +5315,25 @@ TEST(trajectory, cropPoints)
 
   {  // Normal case
     const auto cropped_traj_points =
-      cropPoints(traj.points, autoware::universe_utils::createPoint(3.5, 3.5, 0.0), 3, 2.3, 1.2);
+      cropPoints(traj.points, autoware_utils::create_point(3.5, 3.5, 0.0), 3, 2.3, 1.2);
     EXPECT_EQ(cropped_traj_points.size(), static_cast<size_t>(3));
   }
 
   {  // Length is longer than points arc length.
     const auto cropped_traj_points =
-      cropPoints(traj.points, autoware::universe_utils::createPoint(3.5, 3.5, 0.0), 3, 10.0, 10.0);
+      cropPoints(traj.points, autoware_utils::create_point(3.5, 3.5, 0.0), 3, 10.0, 10.0);
     EXPECT_EQ(cropped_traj_points.size(), static_cast<size_t>(10));
   }
 
   {  // Point is on the previous segment
     const auto cropped_traj_points =
-      cropPoints(traj.points, autoware::universe_utils::createPoint(3.0, 3.0, 0.0), 2, 2.2, 1.9);
+      cropPoints(traj.points, autoware_utils::create_point(3.0, 3.0, 0.0), 2, 2.2, 1.9);
     EXPECT_EQ(cropped_traj_points.size(), static_cast<size_t>(4));
   }
 
   {  // Point is on the next segment
     const auto cropped_traj_points =
-      cropPoints(traj.points, autoware::universe_utils::createPoint(3.0, 3.0, 0.0), 3, 2.2, 1.9);
+      cropPoints(traj.points, autoware_utils::create_point(3.0, 3.0, 0.0), 3, 2.2, 1.9);
     EXPECT_EQ(cropped_traj_points.size(), static_cast<size_t>(4));
   }
 }
@@ -5358,7 +5358,7 @@ TEST(Trajectory, removeFirstInvalidOrientationPoints)
       EXPECT_EQ(traj.points.at(i), modified_traj.points.at(i));
       const double yaw1 = tf2::getYaw(modified_traj.points.at(i).pose.orientation);
       const double yaw2 = tf2::getYaw(modified_traj.points.at(i + 1).pose.orientation);
-      const double yaw_diff = std::abs(autoware::universe_utils::normalizeRadian(yaw1 - yaw2));
+      const double yaw_diff = std::abs(autoware_utils::normalize_radian(yaw1 - yaw2));
       EXPECT_LE(yaw_diff, max_yaw_diff);
     }
   };
@@ -5421,62 +5421,62 @@ TEST(trajectory, calcYawDeviation)
 TEST(trajectory, isTargetPointFront)
 {
   using autoware::motion_utils::isTargetPointFront;
-  using autoware::universe_utils::createPoint;
   using autoware_planning_msgs::msg::TrajectoryPoint;
+  using autoware_utils::create_point;
 
   // Generate test trajectory
   const auto trajectory = generateTestTrajectory<Trajectory>(10, 1.0);
 
   // Front point is base
   {
-    const auto base_point = createPoint(5.0, 0.0, 0.0);
-    const auto target_point = createPoint(1.0, 0.0, 0.0);
+    const auto base_point = create_point(5.0, 0.0, 0.0);
+    const auto target_point = create_point(1.0, 0.0, 0.0);
 
     EXPECT_FALSE(isTargetPointFront(trajectory.points, base_point, target_point));
   }
 
   // Front point is target
   {
-    const auto base_point = createPoint(1.0, 0.0, 0.0);
-    const auto target_point = createPoint(3.0, 0.0, 0.0);
+    const auto base_point = create_point(1.0, 0.0, 0.0);
+    const auto target_point = create_point(3.0, 0.0, 0.0);
 
     EXPECT_TRUE(isTargetPointFront(trajectory.points, base_point, target_point));
   }
 
   // boundary condition
   {
-    const auto base_point = createPoint(1.0, 0.0, 0.0);
-    const auto target_point = createPoint(1.0, 0.0, 0.0);
+    const auto base_point = create_point(1.0, 0.0, 0.0);
+    const auto target_point = create_point(1.0, 0.0, 0.0);
 
     EXPECT_FALSE(isTargetPointFront(trajectory.points, base_point, target_point));
   }
 
   // before the start point
   {
-    const auto base_point = createPoint(1.0, 0.0, 0.0);
-    const auto target_point = createPoint(-3.0, 0.0, 0.0);
+    const auto base_point = create_point(1.0, 0.0, 0.0);
+    const auto target_point = create_point(-3.0, 0.0, 0.0);
 
     EXPECT_FALSE(isTargetPointFront(trajectory.points, base_point, target_point));
   }
 
   {
-    const auto base_point = createPoint(-5.0, 0.0, 0.0);
-    const auto target_point = createPoint(1.0, 0.0, 0.0);
+    const auto base_point = create_point(-5.0, 0.0, 0.0);
+    const auto target_point = create_point(1.0, 0.0, 0.0);
 
     EXPECT_TRUE(isTargetPointFront(trajectory.points, base_point, target_point));
   }
 
   // after the end point
   {
-    const auto base_point = createPoint(10.0, 0.0, 0.0);
-    const auto target_point = createPoint(3.0, 0.0, 0.0);
+    const auto base_point = create_point(10.0, 0.0, 0.0);
+    const auto target_point = create_point(3.0, 0.0, 0.0);
 
     EXPECT_FALSE(isTargetPointFront(trajectory.points, base_point, target_point));
   }
 
   {
-    const auto base_point = createPoint(2.0, 0.0, 0.0);
-    const auto target_point = createPoint(14.0, 0.0, 0.0);
+    const auto base_point = create_point(2.0, 0.0, 0.0);
+    const auto target_point = create_point(14.0, 0.0, 0.0);
 
     EXPECT_TRUE(isTargetPointFront(trajectory.points, base_point, target_point));
   }
@@ -5484,8 +5484,8 @@ TEST(trajectory, isTargetPointFront)
   // empty point
   {
     const Trajectory traj;
-    const auto base_point = createPoint(2.0, 0.0, 0.0);
-    const auto target_point = createPoint(5.0, 0.0, 0.0);
+    const auto base_point = create_point(2.0, 0.0, 0.0);
+    const auto target_point = create_point(5.0, 0.0, 0.0);
     EXPECT_FALSE(isTargetPointFront(traj.points, base_point, target_point));
   }
 
@@ -5494,22 +5494,22 @@ TEST(trajectory, isTargetPointFront)
     const double threshold = 3.0;
 
     {
-      const auto base_point = createPoint(5.0, 0.0, 0.0);
-      const auto target_point = createPoint(3.0, 0.0, 0.0);
+      const auto base_point = create_point(5.0, 0.0, 0.0);
+      const auto target_point = create_point(3.0, 0.0, 0.0);
 
       EXPECT_FALSE(isTargetPointFront(trajectory.points, base_point, target_point, threshold));
     }
 
     {
-      const auto base_point = createPoint(1.0, 0.0, 0.0);
-      const auto target_point = createPoint(4.0, 0.0, 0.0);
+      const auto base_point = create_point(1.0, 0.0, 0.0);
+      const auto target_point = create_point(4.0, 0.0, 0.0);
 
       EXPECT_FALSE(isTargetPointFront(trajectory.points, base_point, target_point, threshold));
     }
 
     {
-      const auto base_point = createPoint(1.0, 0.0, 0.0);
-      const auto target_point = createPoint(4.1, 0.0, 0.0);
+      const auto base_point = create_point(1.0, 0.0, 0.0);
+      const auto target_point = create_point(4.1, 0.0, 0.0);
 
       EXPECT_TRUE(isTargetPointFront(trajectory.points, base_point, target_point, threshold));
     }

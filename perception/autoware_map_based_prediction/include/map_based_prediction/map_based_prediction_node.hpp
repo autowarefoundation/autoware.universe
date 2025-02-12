@@ -71,8 +71,8 @@ struct hash<lanelet::routing::LaneletPath>
 }  // namespace std
 namespace autoware::map_based_prediction
 {
+using autoware_internal_debug_msgs::msg::StringStamped;
 using autoware_planning_msgs::msg::TrajectoryPoint;
-using tier4_debug_msgs::msg::StringStamped;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
 
 class MapBasedPredictionNode : public rclcpp::Node
@@ -116,9 +116,6 @@ private:
   std::shared_ptr<PredictorVru> predictor_vru_;
 
   ////// Parameters
-
-  // Object Parameters
-  bool enable_delay_compensation_;
 
   //// Vehicle Parameters
   // Lanelet Parameters
@@ -174,10 +171,6 @@ private:
   // Object process
   PredictedObject convertToPredictedObject(const TrackedObject & tracked_object);
   void updateObjectData(TrackedObject & object);
-  geometry_msgs::msg::Pose compensateTimeDelay(
-    const geometry_msgs::msg::Pose & delayed_pose, const geometry_msgs::msg::Twist & twist,
-    const double dt) const;
-
   //// Vehicle process
   // Lanelet process
   LaneletsData getCurrentLanelets(const TrackedObject & object);

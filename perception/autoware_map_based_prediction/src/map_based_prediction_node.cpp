@@ -364,7 +364,6 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
     google::InitGoogleLogging("map_based_prediction_node");
     google::InstallFailureSignalHandler();
   }
-  enable_delay_compensation_ = declare_parameter<bool>("enable_delay_compensation");
   prediction_time_horizon_.vehicle = declare_parameter<double>("prediction_time_horizon.vehicle");
   prediction_time_horizon_.pedestrian =
     declare_parameter<double>("prediction_time_horizon.pedestrian");
@@ -670,9 +669,9 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
   if (stop_watch_ptr_) {
     const auto processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
     const auto cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
-    processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    processing_time_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/cyclic_time_ms", cyclic_time_ms);
-    processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    processing_time_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/processing_time_ms", processing_time_ms);
   }
 }
@@ -1244,42 +1243,6 @@ Maneuver MapBasedPredictionNode::predictObjectManeuverByLatDiffDistance(
   }
 
   return Maneuver::LANE_FOLLOW;
-}
-
-geometry_msgs::msg::Pose MapBasedPredictionNode::compensateTimeDelay(
-  const geometry_msgs::msg::Pose & delayed_pose, const geometry_msgs::msg::Twist & twist,
-  const double dt) const
-{
-  if (!enable_delay_compensation_) {
-    return delayed_pose;
-  }
-
-  /*  == Nonlinear model ==
-   *
-   * x_{k+1}   = x_k + vx_k * cos(yaw_k) * dt - vy_k * sin(yaw_k) * dt
-   * y_{k+1}   = y_k + vx_k * sin(yaw_k) * dt + vy_k * cos(yaw_k) * dt
-   * yaw_{k+1} = yaw_k + (wz_k) * dt
-   *
-   */
-
-  const double vx = twist.linear.x;
-  const double vy = twist.linear.y;
-  const double wz = twist.angular.z;
-  const double prev_yaw = tf2::getYaw(delayed_pose.orientation);
-  const double prev_x = delayed_pose.position.x;
-  const double prev_y = delayed_pose.position.y;
-  const double prev_z = delayed_pose.position.z;
-
-  const double curr_x = prev_x + vx * std::cos(prev_yaw) * dt - vy * std::sin(prev_yaw) * dt;
-  const double curr_y = prev_y + vx * std::sin(prev_yaw) * dt + vy * std::cos(prev_yaw) * dt;
-  const double curr_z = prev_z;
-  const double curr_yaw = prev_yaw + wz * dt;
-
-  geometry_msgs::msg::Pose current_pose;
-  current_pose.position = autoware::universe_utils::createPoint(curr_x, curr_y, curr_z);
-  current_pose.orientation = autoware::universe_utils::createQuaternionFromYaw(curr_yaw);
-
-  return current_pose;
 }
 
 double MapBasedPredictionNode::calcRightLateralOffset(

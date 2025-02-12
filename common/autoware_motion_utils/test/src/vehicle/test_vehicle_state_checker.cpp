@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "autoware/motion_utils/vehicle/vehicle_state_checker.hpp"
-#include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware_utils/geometry/geometry.hpp"
 #include "test_vehicle_state_checker_helper.hpp"
 
 #include <rclcpp/rclcpp.hpp>
@@ -34,9 +34,9 @@ constexpr double STOP_DURATION_THRESHOLD_1000_MS = 1.0;
 
 using autoware::motion_utils::VehicleArrivalChecker;
 using autoware::motion_utils::VehicleStopChecker;
-using autoware::universe_utils::createPoint;
-using autoware::universe_utils::createQuaternion;
-using autoware::universe_utils::createTranslation;
+using autoware_utils::create_point;
+using autoware_utils::create_quaternion;
+using autoware_utils::create_translation;
 using nav_msgs::msg::Odometry;
 
 class CheckerNode : public rclcpp::Node
@@ -78,8 +78,8 @@ public:
       Odometry odometry;
       odometry.header.stamp = now;
       odometry.pose.pose = pose;
-      odometry.twist.twist.linear = createTranslation(0.0, 0.0, 0.0);
-      odometry.twist.twist.angular = createTranslation(0.0, 0.0, 0.0);
+      odometry.twist.twist.linear = create_translation(0.0, 0.0, 0.0);
+      odometry.twist.twist.angular = create_translation(0.0, 0.0, 0.0);
       this->pub_odom_->publish(odometry);
 
       rclcpp::WallRate(10).sleep();
@@ -99,10 +99,10 @@ public:
 
       Odometry odometry;
       odometry.header.stamp = now;
-      odometry.pose.pose.position = createPoint(0.0, 0.0, 0.0);
-      odometry.pose.pose.orientation = createQuaternion(0.0, 0.0, 0.0, 1.0);
-      odometry.twist.twist.linear = createTranslation(0.0, 0.0, 0.0);
-      odometry.twist.twist.angular = createTranslation(0.0, 0.0, 0.0);
+      odometry.pose.pose.position = create_point(0.0, 0.0, 0.0);
+      odometry.pose.pose.orientation = create_quaternion(0.0, 0.0, 0.0, 1.0);
+      odometry.twist.twist.linear = create_translation(0.0, 0.0, 0.0);
+      odometry.twist.twist.angular = create_translation(0.0, 0.0, 0.0);
       this->pub_odom_->publish(odometry);
 
       rclcpp::WallRate(10).sleep();
@@ -122,12 +122,12 @@ public:
 
       Odometry odometry;
       odometry.header.stamp = now;
-      odometry.pose.pose.position = createPoint(0.0, 0.0, 0.0);
-      odometry.pose.pose.orientation = createQuaternion(0.0, 0.0, 0.0, 1.0);
+      odometry.pose.pose.position = create_point(0.0, 0.0, 0.0);
+      odometry.pose.pose.orientation = create_quaternion(0.0, 0.0, 0.0, 1.0);
       odometry.twist.twist.linear = time_diff.seconds() < publish_duration / 2.0
-                                      ? createTranslation(1.0, 0.0, 0.0)
-                                      : createTranslation(0.0, 0.0, 0.0);
-      odometry.twist.twist.angular = createTranslation(0.0, 0.0, 0.0);
+                                      ? create_translation(1.0, 0.0, 0.0)
+                                      : create_translation(0.0, 0.0, 0.0);
+      odometry.twist.twist.angular = create_translation(0.0, 0.0, 0.0);
       this->pub_odom_->publish(odometry);
 
       rclcpp::WallRate(10).sleep();
@@ -147,10 +147,10 @@ public:
 
       Odometry odometry;
       odometry.header.stamp = now - rclcpp::Duration(15, 0);  // 15 seconds old data
-      odometry.pose.pose.position = createPoint(0.0, 0.0, 0.0);
-      odometry.pose.pose.orientation = createQuaternion(0.0, 0.0, 0.0, 1.0);
-      odometry.twist.twist.linear = createTranslation(0.0, 0.0, 0.0);
-      odometry.twist.twist.angular = createTranslation(0.0, 0.0, 0.0);
+      odometry.pose.pose.position = create_point(0.0, 0.0, 0.0);
+      odometry.pose.pose.orientation = create_quaternion(0.0, 0.0, 0.0, 1.0);
+      odometry.twist.twist.linear = create_translation(0.0, 0.0, 0.0);
+      odometry.twist.twist.angular = create_translation(0.0, 0.0, 0.0);
       this->pub_odom_->publish(odometry);
 
       rclcpp::WallRate(10).sleep();
@@ -407,12 +407,12 @@ TEST(vehicle_arrival_checker, isVehicleStoppedAtStopPoint)
       std::thread(std::bind(&rclcpp::executors::SingleThreadedExecutor::spin, &executor));
 
     geometry_msgs::msg::Pose odom_pose;
-    odom_pose.position = createPoint(10.0, 0.0, 0.0);
-    odom_pose.orientation = createQuaternion(0.0, 0.0, 0.0, 1.0);
+    odom_pose.position = create_point(10.0, 0.0, 0.0);
+    odom_pose.orientation = create_quaternion(0.0, 0.0, 0.0, 1.0);
 
     geometry_msgs::msg::Pose goal_pose;
-    goal_pose.position = createPoint(10.0, 0.0, 0.0);
-    goal_pose.orientation = createQuaternion(0.0, 0.0, 0.0, 1.0);
+    goal_pose.position = create_point(10.0, 0.0, 0.0);
+    goal_pose.orientation = create_quaternion(0.0, 0.0, 0.0, 1.0);
 
     manager->pub_traj_->publish(generateTrajectoryWithStopPoint(goal_pose));
     manager->publishStoppedOdometry(odom_pose, ODOMETRY_HISTORY_500_MS);
@@ -452,12 +452,12 @@ TEST(vehicle_arrival_checker, isVehicleStoppedAtStopPoint)
       std::thread(std::bind(&rclcpp::executors::SingleThreadedExecutor::spin, &executor));
 
     geometry_msgs::msg::Pose odom_pose;
-    odom_pose.position = createPoint(0.0, 0.0, 0.0);
-    odom_pose.orientation = createQuaternion(0.0, 0.0, 0.0, 1.0);
+    odom_pose.position = create_point(0.0, 0.0, 0.0);
+    odom_pose.orientation = create_quaternion(0.0, 0.0, 0.0, 1.0);
 
     geometry_msgs::msg::Pose goal_pose;
-    goal_pose.position = createPoint(10.0, 0.0, 0.0);
-    goal_pose.orientation = createQuaternion(0.0, 0.0, 0.0, 1.0);
+    goal_pose.position = create_point(10.0, 0.0, 0.0);
+    goal_pose.orientation = create_quaternion(0.0, 0.0, 0.0, 1.0);
 
     manager->pub_traj_->publish(generateTrajectoryWithStopPoint(goal_pose));
     manager->publishStoppedOdometry(odom_pose, ODOMETRY_HISTORY_500_MS);
@@ -497,12 +497,12 @@ TEST(vehicle_arrival_checker, isVehicleStoppedAtStopPoint)
       std::thread(std::bind(&rclcpp::executors::SingleThreadedExecutor::spin, &executor));
 
     geometry_msgs::msg::Pose odom_pose;
-    odom_pose.position = createPoint(10.0, 0.0, 0.0);
-    odom_pose.orientation = createQuaternion(0.0, 0.0, 0.0, 1.0);
+    odom_pose.position = create_point(10.0, 0.0, 0.0);
+    odom_pose.orientation = create_quaternion(0.0, 0.0, 0.0, 1.0);
 
     geometry_msgs::msg::Pose goal_pose;
-    goal_pose.position = createPoint(10.0, 0.0, 0.0);
-    goal_pose.orientation = createQuaternion(0.0, 0.0, 0.0, 1.0);
+    goal_pose.position = create_point(10.0, 0.0, 0.0);
+    goal_pose.orientation = create_quaternion(0.0, 0.0, 0.0, 1.0);
 
     manager->pub_traj_->publish(generateTrajectoryWithoutStopPoint(goal_pose));
     manager->publishStoppedOdometry(odom_pose, ODOMETRY_HISTORY_500_MS);
