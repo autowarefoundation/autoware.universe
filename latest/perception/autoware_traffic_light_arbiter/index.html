@@ -14342,19 +14342,6 @@
     Parameters
   </a>
   
-    <nav class="md-nav" aria-label="Parameters">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#core-parameters" class="md-nav__link">
-    Core Parameters
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
 </li>
       
     </ul>
@@ -14483,46 +14470,51 @@ The table below outlines how the matching process determines the output based on
 </tbody>
 </table>
 <h2 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">#</a></h2>
-<h3 id="core-parameters">Core Parameters<a class="headerlink" href="#core-parameters" title="Permanent link">#</a></h3>
 <table>
 <thead>
 <tr>
 <th>Name</th>
 <th>Type</th>
-<th>Default Value</th>
 <th>Description</th>
+<th>Default</th>
+<th>Range</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<td><code>external_delay_tolerance</code></td>
-<td>double</td>
-<td>5.0</td>
-<td>The duration in seconds an external message is considered valid for merging in comparison with current time</td>
+<td>external_delay_tolerance</td>
+<td>float</td>
+<td>The duration in seconds an external message is considered valid for merging in comparison with current time.</td>
+<td>5</td>
+<td>N/A</td>
 </tr>
 <tr>
-<td><code>external_time_tolerance</code></td>
-<td>double</td>
-<td>5.0</td>
-<td>The duration in seconds an external message is considered valid for merging in comparison with a timestamp of perception message</td>
+<td>external_time_tolerance</td>
+<td>float</td>
+<td>The duration in seconds an external message is considered valid for merging.</td>
+<td>5</td>
+<td>N/A</td>
 </tr>
 <tr>
-<td><code>perception_time_tolerance</code></td>
-<td>double</td>
-<td>1.0</td>
-<td>The duration in seconds a perception message is considered valid for merging in comparison with a timestamp of external message</td>
+<td>perception_time_tolerance</td>
+<td>float</td>
+<td>The duration in seconds a perception message is considered valid for merging.</td>
+<td>1</td>
+<td>N/A</td>
 </tr>
 <tr>
-<td><code>external_priority</code></td>
-<td>bool</td>
-<td>false</td>
-<td>Whether or not externals signals take precedence over perception-based ones. If false, the merging uses confidence as a criteria</td>
+<td>external_priority</td>
+<td>boolean</td>
+<td>Whether or not external signals take precedence over perception-based ones. If false, the merging uses confidence as a criteria.</td>
+<td>0</td>
+<td>N/A</td>
 </tr>
 <tr>
-<td><code>enable_signal_matching</code></td>
-<td>bool</td>
-<td>false</td>
-<td>Decide whether to validate the match between perception signals and external signals. If set to true, verify that the colors match and only publish them if they are identical</td>
+<td>enable_signal_matching</td>
+<td>boolean</td>
+<td>Decide whether to validate the match between perception signals and external signals. If set to true, verify that the colors match and only publish them if they are identical.</td>
+<td>0</td>
+<td>N/A</td>
 </tr>
 </tbody>
 </table></div>
