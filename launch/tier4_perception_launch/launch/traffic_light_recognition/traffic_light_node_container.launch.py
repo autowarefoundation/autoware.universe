@@ -26,7 +26,6 @@ from launch.conditions import UnlessCondition
 from launch.substitutions import LaunchConfiguration
 from launch.substitutions import PathJoinSubstitution
 from launch.substitutions import PythonExpression
-from launch.substitutions import TextSubstitution
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import LoadComposableNodes
 from launch_ros.actions import PushRosNamespace
@@ -69,7 +68,6 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
         "output/traffic_signals": f"/perception/traffic_light_recognition/{namespace}/classification/traffic_signals",
         "output/car/traffic_signals": f"/perception/traffic_light_recognition/{namespace}/classification/car/traffic_signals",
         "output/pedestrian/traffic_signals": f"/perception/traffic_light_recognition/{namespace}/classification/pedestrian/traffic_signals",
-        "output/traffic_signals": f"/perception/traffic_light_recognition/{namespace}/classification/traffic_signals",
         "output/debug": f"/perception/traffic_light_recognition/{namespace}/detection/rois/debug",
     }
 
