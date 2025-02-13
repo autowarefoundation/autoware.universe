@@ -76,16 +76,6 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/main/common/autoware_motion_utils/</loc>
-         <lastmod>2025-02-13</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/main/common/autoware_motion_utils/docs/vehicle/vehicle/</loc>
-         <lastmod>2025-02-13</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
          <loc>https://autowarefoundation.github.io/autoware.universe/main/common/autoware_object_recognition_utils/</loc>
          <lastmod>2025-02-13</lastmod>
          <changefreq>daily</changefreq>
