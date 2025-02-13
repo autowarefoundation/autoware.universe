@@ -28,16 +28,15 @@
 #include <autoware/motion_velocity_planner_common_universe/velocity_planning_result.hpp>
 #include <autoware/objects_of_interest_marker_interface/objects_of_interest_marker_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
-
 #include <tf2_eigen/tf2_eigen.hpp>
-#include <tf2_ros/buffer.h>
 
 #include <pcl/common/transforms.h>
-#include <pcl_conversions/pcl_conversions.h>
 #include <pcl/filters/voxel_grid.h>
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/segmentation/euclidean_cluster_comparator.h>
 #include <pcl/segmentation/extract_clusters.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <tf2_ros/buffer.h>
 
 #include <algorithm>
 #include <iostream>
@@ -98,9 +97,9 @@ private:
   mutable std::optional<std::vector<Polygon2d>> decimated_traj_polys_{std::nullopt};
 
   std::vector<PlannerData::Object> convertToObstacles(
-  const Odometry & odometry, const PlannerData::Pointcloud & pointcloud,
-  const std::vector<TrajectoryPoint> & traj_points, const std_msgs::msg::Header & traj_header,
-  const VehicleInfo & vehicle_info);
+    const Odometry & odometry, const PlannerData::Pointcloud & pointcloud,
+    const std::vector<TrajectoryPoint> & traj_points, const std_msgs::msg::Header & traj_header,
+    const VehicleInfo & vehicle_info);
   std::vector<SlowDownObstacle> filter_slow_down_obstacle_for_predicted_object(
     const Odometry & odometry, const double ego_nearest_dist_threshold,
     const double ego_nearest_yaw_threshold, const std::vector<TrajectoryPoint> & traj_points,
@@ -111,20 +110,17 @@ private:
   std::vector<SlowDownObstacle> filter_slow_down_obstacle_for_point_cloud(
     const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
     const std::vector<TrajectoryPoint> & decimated_traj_points,
-    const PlannerData::Pointcloud & point_cloud,
-    const VehicleInfo & vehicle_info,
+    const PlannerData::Pointcloud & point_cloud, const VehicleInfo & vehicle_info,
     const TrajectoryPolygonCollisionCheck & trajectory_polygon_collision_check,
-    const std_msgs::msg::Header& header);
+    const std_msgs::msg::Header & header);
   std::optional<SlowDownObstacle> create_slow_down_obstacle_for_predicted_object(
     const std::vector<TrajectoryPoint> & traj_points,
     const std::vector<Polygon2d> & decimated_traj_polys_with_lat_margin,
     const std::shared_ptr<PlannerData::Object> object, const rclcpp::Time & predicted_objects_stamp,
     const double dist_from_obj_poly_to_traj_poly);
   std::optional<SlowDownObstacle> create_slow_down_obstacle_for_point_cloud(
-    const PlannerData::Object & obstacle,
-    double lat_dist_from_obstacle_to_traj,
-    double lon_vel_relative_to_traj,
-    double lat_vel_relative_to_traj);
+    const PlannerData::Object & obstacle, double lat_dist_from_obstacle_to_traj,
+    double lon_vel_relative_to_traj, double lat_vel_relative_to_traj);
   std::vector<SlowdownInterval> plan_slow_down(
     const std::shared_ptr<const PlannerData> planner_data,
     const std::vector<TrajectoryPoint> & traj_points,

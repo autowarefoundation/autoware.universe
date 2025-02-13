@@ -229,7 +229,9 @@ VelocityPlanningResult ObstacleStopModule::plan(
     planner_data->vehicle_info_, dist_to_bumper, planner_data->trajectory_polygon_collision_check);
 
   // 5. concat stop obstacles by predicted objects and point cloud
-  const std::vector<StopObstacle> stop_obstacles = autoware::motion_velocity_planner::utils::concat_vectors(std::move(stop_obstacles_for_predicted_object), std::move(stop_obstacles_for_point_cloud));
+  const std::vector<StopObstacle> stop_obstacles =
+    autoware::motion_velocity_planner::utils::concat_vectors(
+      std::move(stop_obstacles_for_predicted_object), std::move(stop_obstacles_for_point_cloud));
 
   // 6. plan stop
   const auto stop_point =
@@ -376,15 +378,9 @@ std::vector<StopObstacle> ObstacleStopModule::filter_stop_obstacle_for_point_clo
   const auto & p = behavior_determination_param_;
 
   // calculated decimated trajectory points and trajectory polygon
-  const auto decimated_traj_polys =
-  polygon_utils::create_one_step_polygons(
-      decimated_traj_points,
-      vehicle_info_,
-      odometry.pose.pose,
-      tp.enable_to_consider_current_pose,
-      tp.time_to_convergence,
-      tp.decimate_trajectory_step_length
-  );
+  const auto decimated_traj_polys = polygon_utils::create_one_step_polygons(
+    decimated_traj_points, vehicle_info_, odometry.pose.pose, tp.enable_to_consider_current_pose,
+    tp.time_to_convergence, tp.decimate_trajectory_step_length);
 
   debug_data_ptr_->detection_polygons = decimated_traj_polys;
 

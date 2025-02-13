@@ -258,7 +258,7 @@ std::optional<double> calcDistanceToFrontVehicle(
 std::vector<PlannerData::Object> ObstacleSlowDownModule::convertToObstacles(
   const Odometry & odometry, const PlannerData::Pointcloud & pointcloud,
   const std::vector<TrajectoryPoint> & traj_points, const std_msgs::msg::Header & traj_header,
-  const VehicleInfo& vehicle_info)
+  const VehicleInfo & vehicle_info)
 {
   stop_watch_.tic(__func__);
 
@@ -280,19 +280,18 @@ std::vector<PlannerData::Object> ObstacleSlowDownModule::convertToObstacles(
     tf2::Duration tf_duration(std::chrono::milliseconds(500));
 
     transform_stamped = tf_buffer_->lookupTransform(
-      traj_header.frame_id, pointcloud.pointcloud.header.frame_id,
-      tf_time_point, tf_duration);
+      traj_header.frame_id, pointcloud.pointcloud.header.frame_id, tf_time_point, tf_duration);
   } catch (tf2::TransformException & ex) {
     RCLCPP_ERROR_STREAM(
       logger_, "Failed to look up transform from " << traj_header.frame_id << " to "
-                                                        << pointcloud.pointcloud.header.frame_id);
+                                                   << pointcloud.pointcloud.header.frame_id);
     transform_stamped = std::nullopt;
   }
 
   if (!pointcloud.pointcloud.empty() && transform_stamped) {
     // 1. transform pointcloud
-    pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud_ptr = 
-    std::make_shared<pcl::PointCloud<pcl::PointXYZ>>(pointcloud.pointcloud);
+    pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud_ptr =
+      std::make_shared<pcl::PointCloud<pcl::PointXYZ>>(pointcloud.pointcloud);
     const Eigen::Matrix4f transform =
       tf2::transformToEigen(transform_stamped.value().transform).matrix().cast<float>();
     pcl::transformPointCloud(*pointcloud_ptr, *pointcloud_ptr, transform);
@@ -371,8 +370,9 @@ std::vector<PlannerData::Object> ObstacleSlowDownModule::convertToObstacles(
 
       if (stop_collision_point || slow_down_front_collision_point) {
         target_obstacles.emplace_back(
-          rclcpp::Time(pointcloud.pointcloud.header.stamp), stop_collision_point, slow_down_front_collision_point,
-          slow_down_back_collision_point, ego_to_obstacle_distance, lat_dist_from_obstacle_to_traj);
+          rclcpp::Time(pointcloud.pointcloud.header.stamp), stop_collision_point,
+          slow_down_front_collision_point, slow_down_back_collision_point, ego_to_obstacle_distance,
+          lat_dist_from_obstacle_to_traj);
       }
     }
   }
@@ -403,19 +403,21 @@ VelocityPlanningResult ObstacleSlowDownModule::plan(
     planner_data->ego_nearest_dist_threshold, planner_data->ego_nearest_yaw_threshold,
     planner_data->trajectory_polygon_collision_check.decimate_trajectory_step_length, 0.0);
 
-  const auto slow_down_obstacles_for_predicted_object = filter_slow_down_obstacle_for_predicted_object(
-    planner_data->current_odometry, planner_data->ego_nearest_dist_threshold,
-    planner_data->ego_nearest_yaw_threshold, raw_trajectory_points, decimated_traj_points,
-    planner_data->objects, rclcpp::Time(planner_data->predicted_objects_header.stamp),
-    planner_data->vehicle_info_, planner_data->trajectory_polygon_collision_check);
+  const auto slow_down_obstacles_for_predicted_object =
+    filter_slow_down_obstacle_for_predicted_object(
+      planner_data->current_odometry, planner_data->ego_nearest_dist_threshold,
+      planner_data->ego_nearest_yaw_threshold, raw_trajectory_points, decimated_traj_points,
+      planner_data->objects, rclcpp::Time(planner_data->predicted_objects_header.stamp),
+      planner_data->vehicle_info_, planner_data->trajectory_polygon_collision_check);
 
   const auto slow_down_obstacles_for_point_cloud = filter_slow_down_obstacle_for_point_cloud(
     planner_data->current_odometry, raw_trajectory_points, decimated_traj_points,
-    planner_data->no_ground_pointcloud,
-    planner_data->vehicle_info_, planner_data->trajectory_polygon_collision_check,
-    planner_data->predicted_objects_header);
-    
-  const auto slow_down_obstacles = autoware::motion_velocity_planner::utils::concat_vectors(std::move(slow_down_obstacles_for_predicted_object), std::move(slow_down_obstacles_for_point_cloud));
+    planner_data->no_ground_pointcloud, planner_data->vehicle_info_,
+    planner_data->trajectory_polygon_collision_check, planner_data->predicted_objects_header);
+
+  const auto slow_down_obstacles = autoware::motion_velocity_planner::utils::concat_vectors(
+    std::move(slow_down_obstacles_for_predicted_object),
+    std::move(slow_down_obstacles_for_point_cloud));
 
   VelocityPlanningResult result;
   result.slowdown_intervals = plan_slow_down(
@@ -510,14 +512,12 @@ ObstacleSlowDownModule::filter_slow_down_obstacle_for_predicted_object(
   return slow_down_obstacles;
 }
 
-std::vector<SlowDownObstacle>
-ObstacleSlowDownModule::filter_slow_down_obstacle_for_point_cloud(
+std::vector<SlowDownObstacle> ObstacleSlowDownModule::filter_slow_down_obstacle_for_point_cloud(
   const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
   const std::vector<TrajectoryPoint> & decimated_traj_points,
-  const PlannerData::Pointcloud & point_cloud,
-  const VehicleInfo & vehicle_info,
+  const PlannerData::Pointcloud & point_cloud, const VehicleInfo & vehicle_info,
   const TrajectoryPolygonCollisionCheck & trajectory_polygon_collision_check,
-  const std_msgs::msg::Header& header)
+  const std_msgs::msg::Header & header)
 {
   autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
@@ -534,7 +534,8 @@ ObstacleSlowDownModule::filter_slow_down_obstacle_for_point_cloud(
   debug_data_ptr_->decimated_traj_polys = decimated_traj_polys_with_lat_margin;
 
   // Get Objects
-  std::vector<PlannerData::Object> objects = convertToObstacles(odometry, point_cloud, traj_points, header, vehicle_info);
+  std::vector<PlannerData::Object> objects =
+    convertToObstacles(odometry, point_cloud, traj_points, header, vehicle_info);
   // slow down
   std::vector<SlowDownObstacle> slow_down_obstacles;
   for (const auto & object : objects) {
@@ -547,11 +548,9 @@ ObstacleSlowDownModule::filter_slow_down_obstacle_for_point_cloud(
     }
 
     // 1.2. Check if the rough lateral distance is smaller than the threshold.
-    const double min_lat_dist_to_traj_poly =
-      utils::calc_possible_min_dist_from_obj_to_traj_poly(
-        std::make_shared<autoware::motion_velocity_planner::PlannerData::Object>(object), 
-        traj_points, 
-        vehicle_info);
+    const double min_lat_dist_to_traj_poly = utils::calc_possible_min_dist_from_obj_to_traj_poly(
+      std::make_shared<autoware::motion_velocity_planner::PlannerData::Object>(object), traj_points,
+      vehicle_info);
 
     if (obstacle_filtering_param_.max_lat_margin < min_lat_dist_to_traj_poly) {
       continue;
@@ -559,11 +558,9 @@ ObstacleSlowDownModule::filter_slow_down_obstacle_for_point_cloud(
 
     // 2. precise filtering
     const auto slow_down_obstacle = create_slow_down_obstacle_for_point_cloud(
-      object,
-      object.get_dist_to_traj_lateral(traj_points), 
+      object, object.get_dist_to_traj_lateral(traj_points),
       object.get_lon_vel_relative_to_traj(traj_points),
-      object.get_lat_vel_relative_to_traj(traj_points)
-    );
+      object.get_lat_vel_relative_to_traj(traj_points));
     if (slow_down_obstacle) {
       slow_down_obstacles.push_back(*slow_down_obstacle);
       continue;
@@ -576,7 +573,6 @@ ObstacleSlowDownModule::filter_slow_down_obstacle_for_point_cloud(
     slow_down_obstacles.size());
   return slow_down_obstacles;
 }
-
 
 std::optional<SlowDownObstacle>
 ObstacleSlowDownModule::create_slow_down_obstacle_for_predicted_object(
@@ -716,9 +712,12 @@ ObstacleSlowDownModule::create_slow_down_obstacle_for_predicted_object(
 }
 
 std::optional<SlowDownObstacle> ObstacleSlowDownModule::create_slow_down_obstacle_for_point_cloud(
-  const PlannerData::Object & obstacle, double lat_dist_from_obstacle_to_traj, double lon_vel_relative_to_traj, double lat_vel_relative_to_traj)
+  const PlannerData::Object & obstacle, double lat_dist_from_obstacle_to_traj,
+  double lon_vel_relative_to_traj, double lat_vel_relative_to_traj)
 {
-  if (!(obstacle_filtering_param_.enable_slow_down_planning && obstacle_filtering_param_.use_pointcloud_for_slow_down && obstacle.slow_down_front_collision_point)) {
+  if (!(obstacle_filtering_param_.enable_slow_down_planning &&
+        obstacle_filtering_param_.use_pointcloud_for_slow_down &&
+        obstacle.slow_down_front_collision_point)) {
     return std::nullopt;
   }
 
@@ -730,12 +729,16 @@ std::optional<SlowDownObstacle> ObstacleSlowDownModule::create_slow_down_obstacl
   const auto & obj_uuid_str = autoware::universe_utils::toHexString(obj_uuid);
 
   return SlowDownObstacle{
-    obj_uuid_str, obstacle.stamp, obstacle.predicted_object.classification.at(0), // multiple classifications exist, so unclear which one to choose
+    obj_uuid_str,
+    obstacle.stamp,
+    obstacle.predicted_object.classification.at(
+      0),  // multiple classifications exist, so unclear which one to choose
     obstacle.get_predicted_pose(obstacle.stamp, obstacle.stamp),
     lon_vel_relative_to_traj,
     lat_vel_relative_to_traj,
-    lat_dist_from_obstacle_to_traj, front_collision_point, back_collision_point
-  };
+    lat_dist_from_obstacle_to_traj,
+    front_collision_point,
+    back_collision_point};
 }
 
 std::vector<SlowdownInterval> ObstacleSlowDownModule::plan_slow_down(

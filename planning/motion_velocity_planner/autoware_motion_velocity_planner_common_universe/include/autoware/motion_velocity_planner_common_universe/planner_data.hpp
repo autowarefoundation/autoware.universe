@@ -83,7 +83,7 @@ struct PlannerData
       lat_dist_from_obstacle_to_traj(lat_dist_from_obstacle_to_traj),
       stop_collision_point(stop_collision_point),
       slow_down_front_collision_point(slow_down_front_collision_point),
-      slow_down_back_collision_point(slow_down_back_collision_point) 
+      slow_down_back_collision_point(slow_down_back_collision_point)
     {
     }
     explicit Object(const autoware_perception_msgs::msg::PredictedObject & arg_predicted_object)

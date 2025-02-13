@@ -15,10 +15,10 @@
 #ifndef PARAMETERS_HPP_
 #define PARAMETERS_HPP_
 
+#include "autoware/motion_utils/trajectory/conversion.hpp"
 #include "type_alias.hpp"
 #include "types.hpp"
 
-#include "autoware/motion_utils/trajectory/conversion.hpp"
 #include <autoware/universe_utils/ros/parameter.hpp>
 
 #include <string>
@@ -43,14 +43,22 @@ struct BehaviourDeterminationParam
   BehaviourDeterminationParam() = default;
   explicit BehaviourDeterminationParam(rclcpp::Node & node)
   {
-    pointcloud_voxel_grid_x = getOrDeclareParameter<double>(node, "behavior_determination.pointcloud_voxel_grid_x");
-    pointcloud_voxel_grid_y = getOrDeclareParameter<double>(node, "behavior_determination.pointcloud_voxel_grid_y");
-    pointcloud_voxel_grid_z = getOrDeclareParameter<double>(node, "behavior_determination.pointcloud_voxel_grid_z");
-    pointcloud_cluster_tolerance = getOrDeclareParameter<double>(node, "behavior_determination.pointcloud_cluster_tolerance");
-    pointcloud_min_cluster_size = getOrDeclareParameter<double>(node, "behavior_determination.pointcloud_min_cluster_size");
-    pointcloud_max_cluster_size = getOrDeclareParameter<double>(node, "behavior_determination.pointcloud_max_cluster_size");
-    max_lat_margin_for_stop_against_unknown = getOrDeclareParameter<double>(node, "behavior_determination.stop.max_lat_margin_against_unknown");
-    max_lat_margin_for_slow_down = getOrDeclareParameter<double>(node, "behavior_determination.slow_down.max_lat_margin");
+    pointcloud_voxel_grid_x =
+      getOrDeclareParameter<double>(node, "behavior_determination.pointcloud_voxel_grid_x");
+    pointcloud_voxel_grid_y =
+      getOrDeclareParameter<double>(node, "behavior_determination.pointcloud_voxel_grid_y");
+    pointcloud_voxel_grid_z =
+      getOrDeclareParameter<double>(node, "behavior_determination.pointcloud_voxel_grid_z");
+    pointcloud_cluster_tolerance =
+      getOrDeclareParameter<double>(node, "behavior_determination.pointcloud_cluster_tolerance");
+    pointcloud_min_cluster_size =
+      getOrDeclareParameter<double>(node, "behavior_determination.pointcloud_min_cluster_size");
+    pointcloud_max_cluster_size =
+      getOrDeclareParameter<double>(node, "behavior_determination.pointcloud_max_cluster_size");
+    max_lat_margin_for_stop_against_unknown = getOrDeclareParameter<double>(
+      node, "behavior_determination.stop.max_lat_margin_against_unknown");
+    max_lat_margin_for_slow_down =
+      getOrDeclareParameter<double>(node, "behavior_determination.slow_down.max_lat_margin");
   }
 };
 
@@ -123,8 +131,10 @@ struct ObstacleFilteringParam
   ObstacleFilteringParam() = default;
   explicit ObstacleFilteringParam(rclcpp::Node & node)
   {
-    enable_slow_down_planning = getOrDeclareParameter<bool>(node, "common.enable_slow_down_planning");
-    use_pointcloud_for_slow_down = getOrDeclareParameter<bool>(node, "common.slow_down_obstacle_type.pointcloud");
+    enable_slow_down_planning =
+      getOrDeclareParameter<bool>(node, "common.enable_slow_down_planning");
+    use_pointcloud_for_slow_down =
+      getOrDeclareParameter<bool>(node, "common.slow_down_obstacle_type.pointcloud");
     object_types =
       utils::get_target_object_type(node, "obstacle_slow_down.obstacle_filtering.object_type.");
     min_lat_margin =
