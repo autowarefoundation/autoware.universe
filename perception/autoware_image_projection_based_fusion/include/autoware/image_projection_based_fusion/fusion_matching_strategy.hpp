@@ -124,7 +124,7 @@ public:
     std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>> & collector,
     const std::shared_ptr<MatchingParamsBase> & matching_params) override;
 
-  double get_offset(
+  double get_concatenated_offset(
     const double & msg3d_timestamp,
     const std::optional<std::unordered_map<std::string, std::string>> & concatenated_status);
 

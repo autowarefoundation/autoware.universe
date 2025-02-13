@@ -16,7 +16,6 @@
 
 #include "autoware/image_projection_based_fusion/fusion_collector.hpp"
 #include "autoware/image_projection_based_fusion/fusion_matching_strategy.hpp"
-// TODO(vivid): maybe we should move this to different node.hpp
 #include "autoware/image_projection_based_fusion/fusion_types.hpp"
 
 #include <autoware/image_projection_based_fusion/camera_projection.hpp>

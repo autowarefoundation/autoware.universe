@@ -89,15 +89,14 @@ public:
 
   void set_info(std::shared_ptr<FusionCollectorInfoBase> collector_info);
   [[nodiscard]] std::shared_ptr<FusionCollectorInfoBase> get_info() const;
-  // void show_debug_message();
   bool ready_to_fuse();
   bool rois_exists(const std::size_t & rois_id);
   bool msg3d_exists();
-  void show_debug_message();
-  void reset();
-  void set_period(const std::chrono::nanoseconds period);
   void add_camera_projection(
     std::size_t rois_id, std::shared_ptr<CameraProjection> camera_projector_ptr);
+  void set_period(const std::chrono::nanoseconds period);
+  void reset();
+  void show_debug_message();
 
 private:
   std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> ros2_parent_node_;

@@ -200,43 +200,11 @@ bool FusionCollector<Msg3D, Msg2D, ExportObj>::msg3d_exists()
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
-void FusionCollector<Msg3D, Msg2D, ExportObj>::show_debug_message()
+void FusionCollector<Msg3D, Msg2D, ExportObj>::add_camera_projection(
+  std::size_t rois_id, std::shared_ptr<CameraProjection> camera_projector_ptr)
 {
-  auto time_until_trigger = timer_->time_until_trigger();
-  std::stringstream log_stream;
-  log_stream << std::fixed << std::setprecision(6);
-  log_stream << "Collector's fusion callback time: "
-             << ros2_parent_node_->get_clock()->now().seconds() << " seconds\n";
-
-  if (
-    auto advanced_info = std::dynamic_pointer_cast<AdvancedCollectorInfo>(fusion_collector_info_)) {
-    log_stream << "Advanced strategy:\n Fusion collector's reference time min: "
-               << advanced_info->timestamp - advanced_info->noise_window
-               << " to max: " << advanced_info->timestamp + advanced_info->noise_window
-               << " seconds\n";
-  } else if (
-    auto naive_info = std::dynamic_pointer_cast<NaiveCollectorInfo>(fusion_collector_info_)) {
-    log_stream << "Naive strategy:\n Fusino collector's timestamp: " << naive_info->timestamp
-               << " seconds\n";
-  }
-
-  log_stream << "Time until trigger: " << (time_until_trigger.count() / 1e9) << " seconds\n";
-  if (msg3d_) {
-    log_stream << "Msg3d: [" << rclcpp::Time(msg3d_->header.stamp).seconds() << "]\n";
-  } else {
-    log_stream << "Msg3d: [Is empty]\n";
-  }
-  log_stream << "ROIs: [";
-  std::string separator;
-  for (const auto & [id, rois] : id_to_rois_map_) {
-    log_stream << separator;
-    log_stream << "[rois " << id << ", " << rclcpp::Time(rois->header.stamp).seconds() << "]";
-    separator = ", ";
-  }
-
-  log_stream << "]\n";
-
-  RCLCPP_INFO(ros2_parent_node_->get_logger(), "%s", log_stream.str().c_str());
+  std::lock_guard<std::mutex> lock(fusion_mutex_);
+  det2d_status_list_[rois_id].camera_projector_ptr = camera_projector_ptr;
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
@@ -279,11 +247,43 @@ void FusionCollector<Msg3D, Msg2D, ExportObj>::reset()
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
-void FusionCollector<Msg3D, Msg2D, ExportObj>::add_camera_projection(
-  std::size_t rois_id, std::shared_ptr<CameraProjection> camera_projector_ptr)
+void FusionCollector<Msg3D, Msg2D, ExportObj>::show_debug_message()
 {
-  std::lock_guard<std::mutex> lock(fusion_mutex_);
-  det2d_status_list_[rois_id].camera_projector_ptr = camera_projector_ptr;
+  auto time_until_trigger = timer_->time_until_trigger();
+  std::stringstream log_stream;
+  log_stream << std::fixed << std::setprecision(6);
+  log_stream << "Collector's fusion callback time: "
+             << ros2_parent_node_->get_clock()->now().seconds() << " seconds\n";
+
+  if (
+    auto advanced_info = std::dynamic_pointer_cast<AdvancedCollectorInfo>(fusion_collector_info_)) {
+    log_stream << "Advanced strategy:\n Fusion collector's reference time min: "
+               << advanced_info->timestamp - advanced_info->noise_window
+               << " to max: " << advanced_info->timestamp + advanced_info->noise_window
+               << " seconds\n";
+  } else if (
+    auto naive_info = std::dynamic_pointer_cast<NaiveCollectorInfo>(fusion_collector_info_)) {
+    log_stream << "Naive strategy:\n Fusino collector's timestamp: " << naive_info->timestamp
+               << " seconds\n";
+  }
+
+  log_stream << "Time until trigger: " << (time_until_trigger.count() / 1e9) << " seconds\n";
+  if (msg3d_) {
+    log_stream << "Msg3d: [" << rclcpp::Time(msg3d_->header.stamp).seconds() << "]\n";
+  } else {
+    log_stream << "Msg3d: [Is empty]\n";
+  }
+  log_stream << "ROIs: [";
+  std::string separator;
+  for (const auto & [id, rois] : id_to_rois_map_) {
+    log_stream << separator;
+    log_stream << "[rois " << id << ", " << rclcpp::Time(rois->header.stamp).seconds() << "]";
+    separator = ", ";
+  }
+
+  log_stream << "]\n";
+
+  RCLCPP_INFO(ros2_parent_node_->get_logger(), "%s", log_stream.str().c_str());
 }
 
 // Explicit instantiation for the supported types

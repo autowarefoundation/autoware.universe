@@ -218,7 +218,7 @@ AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::match_msg3d_to_collector(
 {
   auto concatenated_status = ros2_parent_node_->find_concatenation_status(params->msg3d_timestamp);
 
-  double offset = get_offset(params->msg3d_timestamp, concatenated_status);
+  double offset = get_concatenated_offset(params->msg3d_timestamp, concatenated_status);
   double adjusted_timestamp = params->msg3d_timestamp - offset;
 
   for (const auto & fusion_collector : fusion_collectors) {
@@ -252,7 +252,8 @@ void AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::set_collector_info(
     auto msg3d_matching_params = std::dynamic_pointer_cast<Msg3dMatchingParams>(matching_params)) {
     auto concatenated_status =
       ros2_parent_node_->find_concatenation_status(msg3d_matching_params->msg3d_timestamp);
-    double offset = get_offset(msg3d_matching_params->msg3d_timestamp, concatenated_status);
+    double offset =
+      get_concatenated_offset(msg3d_matching_params->msg3d_timestamp, concatenated_status);
 
     auto info = std::make_shared<AdvancedCollectorInfo>(
       msg3d_matching_params->msg3d_timestamp - offset, msg3d_noise_window_);
@@ -276,10 +277,11 @@ void AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::set_collector_info(
 }
 
 template <class Msg3D, class Msg2D, class ExportObj>
-double AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::get_offset(
+double AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::get_concatenated_offset(
   const double & msg3d_timestamp,
   const std::optional<std::unordered_map<std::string, std::string>> & concatenated_status)
 {
+  bool concatenation_success = false;
   double offset = 0.0;
 
   if (concatenated_status.has_value()) {
@@ -287,14 +289,17 @@ double AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::get_offset(
 
     // Find required keys in the map
     auto concat_success_it = status_map.find("cloud_concatenation_success");
+
+    if (concat_success_it != status_map.end()) {
+      concatenation_success = (concat_success_it->second == "True");
+      if (concatenation_success && database_created_) {
+        return offset;  // 0.0
+      }
+    }
+
     auto ref_min_it = status_map.find("reference_timestamp_min");
     auto ref_max_it = status_map.find("reference_timestamp_max");
-
-    if (
-      concat_success_it != status_map.end() && ref_min_it != status_map.end() &&
-      ref_max_it != status_map.end()) {
-      bool concatenation_success = (concat_success_it->second == "True");
-
+    if (ref_min_it != status_map.end() && ref_max_it != status_map.end()) {
       try {
         double reference_min = std::stod(ref_min_it->second);
         double reference_max = std::stod(ref_max_it->second);
@@ -319,13 +324,11 @@ double AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::get_offset(
       }
     }
   } else {
-    RCLCPP_DEBUG(
-      ros2_parent_node_->get_logger(),
-      "Concatenated_status is missing, finding offset using timestamp difference");
-
     if (database_created_) {
       offset = compute_offset(msg3d_timestamp);
       RCLCPP_DEBUG(ros2_parent_node_->get_logger(), "Using database, computed offset: %f", offset);
+    } else {
+      offset = 0.0;  // Database not created yet, expect the concatenation is successful
     }
   }
 
