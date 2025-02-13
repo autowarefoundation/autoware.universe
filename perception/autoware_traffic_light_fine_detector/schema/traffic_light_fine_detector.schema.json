@@ -1,6 +1,6 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "autoware_traffic_light_fine_detector paramter",
+  "title": "autoware_traffic_light_fine_detector parameter",
   "type": "object",
   "definitions": {
     "traffic_light_fine_detectors": {

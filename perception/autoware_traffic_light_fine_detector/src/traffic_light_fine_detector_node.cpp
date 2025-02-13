@@ -68,7 +68,7 @@ TrafficLightFineDetectorNode::TrafficLightFineDetectorNode(const rclcpp::NodeOpt
   score_thresh_ = this->declare_parameter<double>("fine_detector_score_thresh");
   // Detection results will be ignored if IoU over this value.
   // This threshold will be ignored if specified model contains EfficientNMS_TRT module in it
-  float nms_threshold = this->declare_parameter<double>("fine_detector_nms_thresh");
+  float nms_threshold = this->declare_parameter<float>("fine_detector_nms_thresh");
   is_approximate_sync_ = this->declare_parameter<bool>("approximate_sync");
 
   if (!readLabelFile(label_path, tlr_label_id_, num_class)) {
