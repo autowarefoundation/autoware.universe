@@ -18,7 +18,6 @@ include_directories(
   include
   SYSTEM
   ${Boost_INCLUDE_DIRS}
-  ${CUDA_INCLUDE_DIRS}
   ${PCL_INCLUDE_DIRS}
   ${EIGEN3_INCLUDE_DIRS}
   ${Sophus_INCLUDE_DIRS}
@@ -118,7 +117,6 @@ target_link_libraries(pointcloud_preprocessor_filter
   faster_voxel_grid_downsample_filter
   concatenate_data
   ${Boost_LIBRARIES}
-  ${CUDA_LIBRARIES}
   ${OpenCV_LIBRARIES}
   ${Sophus_LIBRARIES}
   ${PCL_LIBRARIES}
