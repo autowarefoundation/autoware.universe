@@ -744,7 +744,8 @@ BehaviorModuleOutput StartPlannerModule::plan()
     updateRTCStatus(start_distance, finish_distance);
     planning_factor_interface_->add(
       start_distance, finish_distance, status_.pull_out_path.start_pose,
-      status_.pull_out_path.end_pose, planning_factor_direction, SafetyFactorArray{});
+      status_.pull_out_path.end_pose, planning_factor_direction,
+      utils::path_safety_checker::to_safety_factor_array(debug_data_.collision_check));
     setDebugData();
     return output;
   }
@@ -754,7 +755,8 @@ BehaviorModuleOutput StartPlannerModule::plan()
   updateRTCStatus(0.0, distance);
   planning_factor_interface_->add(
     0.0, distance, status_.pull_out_path.start_pose, status_.pull_out_path.end_pose,
-    planning_factor_direction, SafetyFactorArray{});
+    planning_factor_direction,
+    utils::path_safety_checker::to_safety_factor_array(debug_data_.collision_check));
 
   setDebugData();
 
@@ -849,7 +851,8 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
     updateRTCStatus(start_distance, finish_distance);
     planning_factor_interface_->add(
       start_distance, finish_distance, status_.pull_out_path.start_pose,
-      status_.pull_out_path.end_pose, planning_factor_direction, SafetyFactorArray{});
+      status_.pull_out_path.end_pose, planning_factor_direction,
+      utils::path_safety_checker::to_safety_factor_array(debug_data_.collision_check));
     setDebugData();
 
     return output;
@@ -860,7 +863,8 @@ BehaviorModuleOutput StartPlannerModule::planWaitingApproval()
   updateRTCStatus(0.0, distance);
   planning_factor_interface_->add(
     0.0, distance, status_.pull_out_path.start_pose, status_.pull_out_path.end_pose,
-    planning_factor_direction, SafetyFactorArray{});
+    planning_factor_direction,
+    utils::path_safety_checker::to_safety_factor_array(debug_data_.collision_check));
 
   setDebugData();
 
@@ -894,16 +898,6 @@ void StartPlannerModule::planWithPriority(
 
   if (start_pose_candidates.empty()) return;
 
-  auto get_accumulated_debug_stream = [](const std::vector<PlannerDebugData> & debug_data_vector) {
-    std::stringstream ss;
-    if (debug_data_vector.empty()) return ss;
-    ss << debug_data_vector.front().header_str();
-    for (const auto & debug_data : debug_data_vector) {
-      ss << debug_data.str();
-    }
-    return ss;
-  };
-
   const PriorityOrder order_priority =
     determinePriorityOrder(search_priority, start_pose_candidates.size());
 
@@ -918,20 +912,13 @@ void StartPlannerModule::planWithPriority(
               collision_check_margin, debug_data_vector)) {
           debug_data_.selected_start_pose_candidate_index = index;
           debug_data_.margin_for_start_pose_candidate = collision_check_margin;
-          if (parameters_->print_debug_info) {
-            const auto ss = get_accumulated_debug_stream(debug_data_vector);
-            DEBUG_PRINT("\nPull out path search results:\n%s", ss.str().c_str());
-          }
+          set_planner_evaluation_table(debug_data_vector);
           return;
         }
       }
     }
   }
-
-  if (parameters_->print_debug_info) {
-    const auto ss = get_accumulated_debug_stream(debug_data_vector);
-    DEBUG_PRINT("\nPull out path search results:\n%s", ss.str().c_str());
-  }
+  set_planner_evaluation_table(debug_data_vector);
   updateStatusIfNoSafePathFound();
 }
 
@@ -973,7 +960,7 @@ bool StartPlannerModule::findPullOutPath(
 
   planner->setCollisionCheckMargin(collision_check_margin);
   PlannerDebugData debug_data{
-    planner->getPlannerType(), {}, collision_check_margin, backwards_distance};
+    planner->getPlannerType(), backwards_distance, collision_check_margin, {}};
 
   const auto pull_out_path =
     planner->plan(start_pose_candidate, goal_pose, planner_data_, debug_data);
@@ -1580,12 +1567,9 @@ std::optional<PullOutStatus> StartPlannerModule::planFreespacePath(
 
   for (const auto & p : center_line_path.points) {
     const Pose end_pose = p.point.pose;
-    PlannerDebugData debug_data{freespace_planner_->getPlannerType(), {}, 0.0, 0.0};
+    PlannerDebugData debug_data{freespace_planner_->getPlannerType(), 0.0, 0.0, {}};
     auto freespace_path =
       freespace_planner_->plan(current_pose, end_pose, planner_data, debug_data);
-    DEBUG_PRINT(
-      "\nFreespace Pull out path search results\n%s%s", debug_data.header_str().c_str(),
-      debug_data.str().c_str());
     if (!freespace_path) {
       continue;
     }
@@ -1626,6 +1610,83 @@ void StartPlannerModule::setDrivableAreaInfo(BehaviorModuleOutput & output) cons
       return;
     }
   }
+}
+
+std::string StartPlannerModule::create_planner_evaluation_table(
+  const std::vector<PlannerDebugData> & planner_debug_data_vector) const
+{
+  if (planner_debug_data_vector.empty()) {
+    return "";
+  }
+
+  const std::string header_planner_type = "Planner type ";
+  const std::string header_required_margin = "Required margin [m]";
+  const std::string header_backward_distance = "Backward distance [m]";
+  const std::string header_condition_eval = "Condition";
+
+  std::ostringstream oss;
+  oss << "-----------------------------------------------------------------------------------------"
+         "----------------"
+      << "\n";
+  oss << "| " << std::left << header_planner_type << " | " << header_required_margin << " | "
+      << header_backward_distance << " | " << header_condition_eval << " \n";
+  oss << "-----------------------------------------------------------------------------------------"
+         "----------------"
+      << "\n";
+
+  for (const auto & d : planner_debug_data_vector) {
+    const std::string pt_str = PlannerDebugData::to_planner_type_name(d.planner_type);
+    const std::string rm_str =
+      PlannerDebugData::double_to_str(d.required_margin, 1) + "                                   ";
+    const std::string bd_str = PlannerDebugData::double_to_str(d.backward_distance, 1) +
+                               "                                      ";
+
+    if (d.conditions_evaluation.empty()) {
+      oss << "| " << std::left << pt_str << " | " << rm_str << " | " << bd_str << " | "
+          << "Unexpected empty condition evaluation"
+          << " \n";
+    } else {
+      for (size_t i = 0; i < d.conditions_evaluation.size(); ++i) {
+        const std::string cond_with_index =
+          "#" + std::to_string(i + 1) + ": " + d.conditions_evaluation[i];
+
+        oss << "| " << std::left << pt_str << " | " << rm_str << " | " << bd_str << " | "
+            << cond_with_index << " \n";
+      }
+    }
+  }
+
+  return oss.str();
+}
+
+void StartPlannerModule::set_planner_evaluation_table(
+  const std::vector<PlannerDebugData> & debug_data_vector)
+{
+  planner_evaluation_table_.clear();
+  if (debug_data_vector.empty()) {
+    return;
+  }
+
+  planner_evaluation_table_ = create_planner_evaluation_table(debug_data_vector);
+}
+
+void StartPlannerModule::acceptVisitor(const std::shared_ptr<SceneModuleVisitor> & visitor) const
+{
+  if (visitor) {
+    visitor->visitStartPlannerModule(this);
+  }
+}
+
+void SceneModuleVisitor::visitStartPlannerModule(const StartPlannerModule * module) const
+{
+  auto debug_msg = std::make_shared<autoware_internal_debug_msgs::msg::StringStamped>();
+  auto debug_info = module->get_planner_evaluation_table();
+  if (debug_info.empty()) return;
+
+  debug_msg->stamp = rclcpp::Clock{RCL_ROS_TIME}.now();
+  debug_msg->data = debug_info;
+
+  start_planner_visitor_ = debug_msg;
 }
 
 void StartPlannerModule::setDebugData()

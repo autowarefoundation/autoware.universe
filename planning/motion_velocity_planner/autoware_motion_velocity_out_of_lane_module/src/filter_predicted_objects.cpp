@@ -17,6 +17,7 @@
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/traffic_light_utils/traffic_light_utils.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 
 #include <boost/geometry/algorithms/detail/intersects/interface.hpp>
 #include <boost/geometry/algorithms/intersects.hpp>
@@ -108,7 +109,7 @@ autoware_perception_msgs::msg::PredictedObjects filter_predicted_objects(
   autoware_perception_msgs::msg::PredictedObjects filtered_objects;
   filtered_objects.header = planner_data.predicted_objects_header;
   for (const auto & object : planner_data.objects) {
-    const auto & predicted_object = object.predicted_object;
+    const auto & predicted_object = object->predicted_object;
     const auto is_pedestrian =
       std::find_if(
         predicted_object.classification.begin(), predicted_object.classification.end(),
