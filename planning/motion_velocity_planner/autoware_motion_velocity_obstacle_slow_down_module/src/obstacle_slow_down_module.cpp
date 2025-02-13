@@ -487,8 +487,6 @@ ObstacleSlowDownModule::filter_slow_down_obstacle_for_predicted_object(
       continue;
     }
 
-    // the above can be done once before calling this function
-
     // 2. precise filtering
     const auto & decimated_traj_polys = get_decimated_traj_polys(
       traj_points, current_pose, vehicle_info, ego_nearest_dist_threshold,
@@ -732,7 +730,7 @@ std::optional<SlowDownObstacle> ObstacleSlowDownModule::create_slow_down_obstacl
   const auto & obj_uuid_str = autoware::universe_utils::toHexString(obj_uuid);
 
   return SlowDownObstacle{
-    obj_uuid_str, obstacle.stamp, obstacle.predicted_object.classification.at(0),
+    obj_uuid_str, obstacle.stamp, obstacle.predicted_object.classification.at(0), // multiple classifications exist, so unclear which one to choose
     obstacle.get_predicted_pose(obstacle.stamp, obstacle.stamp),
     lon_vel_relative_to_traj,
     lat_vel_relative_to_traj,
