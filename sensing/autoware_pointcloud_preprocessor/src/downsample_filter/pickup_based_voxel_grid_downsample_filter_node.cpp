@@ -93,9 +93,13 @@ void PickupBasedVoxelGridDownsampleFilterComponent::filter(
   voxel_map.reserve(input->data.size() / input->point_step);
 
   constexpr float large_num_offset = 100000.0;
-  const float inverse_voxel_size_x = 1.0 / voxel_size_x_;
-  const float inverse_voxel_size_y = 1.0 / voxel_size_y_;
-  const float inverse_voxel_size_z = 1.0 / voxel_size_z_;
+  const float inverse_voxel_size_x = (voxel_size_x_ > 0) ? (1.0f / voxel_size_x_) : 0.0f;
+  const float inverse_voxel_size_y = (voxel_size_y_ > 0) ? (1.0f / voxel_size_y_) : 0.0f;
+  const float inverse_voxel_size_z = (voxel_size_z_ > 0) ? (1.0f / voxel_size_z_) : 0.0f;
+
+  if (voxel_size_x_ <= 0 || voxel_size_y_ <= 0 || voxel_size_z_ <= 0) {
+      RCLCPP_DEBUG(get_logger(), "Some voxel sizes are 0. Those axes will not be used for downsampling.");
+  }
 
   const int x_offset = input->fields[pcl::getFieldIndex(*input, "x")].offset;
   const int y_offset = input->fields[pcl::getFieldIndex(*input, "y")].offset;
