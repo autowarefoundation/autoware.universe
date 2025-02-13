@@ -210,41 +210,56 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
       this->get_logger(), *this->get_clock(), 1000, "Empty sensor points!");
   }
 
-  // protect cloud collectors list
-  std::unique_lock<std::mutex> cloud_collectors_lock(cloud_collectors_mutex_);
+  std::shared_ptr<CloudCollector> selected_collector = nullptr;
+  {
+    // protect cloud collectors list
+    std::unique_lock<std::mutex> cloud_collectors_lock(cloud_collectors_mutex_);
 
-  // For each callback, check whether there is a exist collector that matches this cloud
-  std::optional<std::shared_ptr<CloudCollector>> cloud_collector = std::nullopt;
-  MatchingParams matching_params;
-  matching_params.topic_name = topic_name;
-  matching_params.cloud_arrival_time = cloud_arrival_time;
-  matching_params.cloud_timestamp = rclcpp::Time(input_ptr->header.stamp).seconds();
+    // Try to find a matching collector
+    std::optional<std::shared_ptr<CloudCollector>> cloud_collector = std::nullopt;
+    MatchingParams matching_params;
+    matching_params.topic_name = topic_name;
+    matching_params.cloud_arrival_time = cloud_arrival_time;
+    matching_params.cloud_timestamp = rclcpp::Time(input_ptr->header.stamp).seconds();
 
-  if (!cloud_collectors_.empty()) {
-    cloud_collector =
-      collector_matching_strategy_->match_cloud_to_collector(cloud_collectors_, matching_params);
-  }
-
-  bool process_success = false;
-  if (cloud_collector.has_value()) {
-    auto collector = cloud_collector.value();
-    if (collector) {
-      cloud_collectors_lock.unlock();
-      process_success = cloud_collector.value()->process_pointcloud(topic_name, input_ptr);
+    if (!cloud_collectors_.empty()) {
+      cloud_collector =
+        collector_matching_strategy_->match_cloud_to_collector(cloud_collectors_, matching_params);
     }
-  }
 
-  if (!process_success) {
-    auto new_cloud_collector = std::make_shared<CloudCollector>(
-      std::dynamic_pointer_cast<PointCloudConcatenateDataSynchronizerComponent>(shared_from_this()),
-      combine_cloud_handler_, params_.input_topics.size(), params_.timeout_sec, params_.debug_mode);
+    if (cloud_collector.has_value() && cloud_collector.value()) {
+      selected_collector = cloud_collector.value();
+    }
 
-    cloud_collectors_.push_back(new_cloud_collector);
+    // If no suitable collector was found, find or create a new collector
+    if (!selected_collector || selected_collector->get_status() == CollectorStatus::Finished) {
+      // Check for an idle collector
+      for (auto & collector : cloud_collectors_) {
+        if (collector->get_status() == CollectorStatus::Idle) {
+          selected_collector = collector;
+          break;
+        }
+      }
+
+      if (!selected_collector) {
+        // If no idle collector exists, create a new one
+        selected_collector = std::make_shared<CloudCollector>(
+          std::dynamic_pointer_cast<PointCloudConcatenateDataSynchronizerComponent>(
+            shared_from_this()),
+          combine_cloud_handler_, params_.input_topics.size(), params_.timeout_sec,
+          params_.debug_mode);
+
+        cloud_collectors_.push_back(selected_collector);
+      }
+
+      // Set collector info
+      collector_matching_strategy_->set_collector_info(selected_collector, matching_params);
+    }
+
+    // Unlock the mutex before calling process_pointcloud()
     cloud_collectors_lock.unlock();
-
-    collector_matching_strategy_->set_collector_info(new_cloud_collector, matching_params);
-    (void)new_cloud_collector->process_pointcloud(topic_name, input_ptr);
   }
+  selected_collector->process_pointcloud(topic_name, input_ptr);
 }
 
 void PointCloudConcatenateDataSynchronizerComponent::twist_callback(
@@ -321,8 +336,7 @@ void PointCloudConcatenateDataSynchronizerComponent::publish_clouds(
     }
   }
 
-  diagnostic_collector_info_ = collector_info;
-
+  diagnostic_collector_info_ = std::move(collector_info);
   diagnostic_topic_to_original_stamp_map_ = concatenated_cloud_result.topic_to_original_stamp_map;
   diagnostic_updater_.force_update();
 
@@ -347,12 +361,18 @@ void PointCloudConcatenateDataSynchronizerComponent::manage_collector_list()
 {
   std::lock_guard<std::mutex> cloud_collectors_lock(cloud_collectors_mutex_);
 
-  for (auto it = cloud_collectors_.begin(); it != cloud_collectors_.end();) {
-    if ((*it)->concatenate_finished()) {
-      it = cloud_collectors_.erase(it);  // Erase and move the iterator to the next element
-    } else {
-      ++it;  // Move to the next element
+  for (auto & collector : cloud_collectors_) {
+    if (collector->get_status() == CollectorStatus::Finished) {
+      collector->reset();
     }
+  }
+
+  if (cloud_collectors_.size() > collectors_threshold) {
+    RCLCPP_WARN_STREAM_THROTTLE(
+      get_logger(), *get_clock(), 1000,
+      "The number of cloud collectors (" << cloud_collectors_.size() << ") exceeds the threshold ("
+                                         << collectors_threshold
+                                         << "), be careful if it keeps increasing.");
   }
 }
 
