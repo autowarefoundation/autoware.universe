@@ -732,12 +732,15 @@ void append_target_ref_to_candidate(
   const auto lc_end_idx =
     motion_utils::findNearestIndex(target_lane_ref_path, lc_end_pose.position);
   auto & candidate_path = frenet_candidate.path.points;
+  const auto & points = target_lane_ref_path;
   if (target_lane_ref_path.size() <= lc_end_idx + 2) {
+    for (const auto & pt : points | ranges::views::drop(lc_end_idx + 1)) {
+      candidate_path.push_back(pt);
+    }
     return;
   }
   const auto add_size = target_lane_ref_path.size() - (lc_end_idx + 1);
   candidate_path.reserve(candidate_path.size() + add_size);
-  const auto & points = target_lane_ref_path;
   for (const auto & [p2, p3] : ranges::views::zip(
          points | ranges::views::drop(lc_end_idx + 1),
          points | ranges::views::drop(lc_end_idx + 2))) {
