@@ -59,16 +59,16 @@ TrafficLightFineDetectorNode::TrafficLightFineDetectorNode(const rclcpp::NodeOpt
   using std::placeholders::_2;
   using std::placeholders::_3;
 
-  std::string model_path = declare_parameter("fine_detector_model_path", "");
-  std::string label_path = declare_parameter("fine_detector_label_path", "");
-  std::string precision = declare_parameter("fine_detector_precision", "fp32");
-  const uint8_t gpu_id = declare_parameter("gpu_id");
+  std::string model_path = this->declare_parameter<std::string>("fine_detector_model_path");
+  std::string label_path = this->declare_parameter<std::string>("fine_detector_label_path");
+  std::string precision = this->declare_parameter<std::string>("fine_detector_precision");
+  const uint8_t gpu_id = this->declare_parameter<uint8_t>("gpu_id");
   // Objects with a score lower than this value will be ignored.
   // This threshold will be ignored if specified model contains EfficientNMS_TRT module in it
-  score_thresh_ = declare_parameter("fine_detector_score_thresh");
+  score_thresh_ = this->declare_parameter<double>("fine_detector_score_thresh");
   // Detection results will be ignored if IoU over this value.
   // This threshold will be ignored if specified model contains EfficientNMS_TRT module in it
-  float nms_threshold = declare_parameter("fine_detector_nms_thresh");
+  float nms_threshold = this->declare_parameter<double>("fine_detector_nms_thresh");
   is_approximate_sync_ = this->declare_parameter<bool>("approximate_sync");
 
   if (!readLabelFile(label_path, tlr_label_id_, num_class)) {
@@ -113,7 +113,7 @@ TrafficLightFineDetectorNode::TrafficLightFineDetectorNode(const rclcpp::NodeOpt
     sync_->registerCallback(std::bind(&TrafficLightFineDetectorNode::callback, this, _1, _2, _3));
   }
 
-  if (declare_parameter("build_only", false)) {
+  if (this->declare_parameter<bool>("build_only")) {
     RCLCPP_INFO(get_logger(), "TensorRT engine is built and shutdown node.");
     rclcpp::shutdown();
   }
