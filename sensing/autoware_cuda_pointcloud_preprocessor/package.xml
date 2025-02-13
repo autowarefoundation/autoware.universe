@@ -11,15 +11,15 @@
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
   <depend>autoware_point_types</depend>
+  <depend>autoware_pointcloud_preprocessor</depend>
   <depend>autoware_universe_utils</depend>
   <depend>cuda_blackboard</depend>
-  <depend>pcl_conversions</depend>
-  <depend>pcl_ros</depend>
+  <depend>diagnostic_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
-  <depend>sophus</depend>
   <depend>tf2</depend>
+  <depend>tf2_msgs</depend>
   <depend>tier4_debug_msgs</depend>
 
   <test_depend>ament_clang_format</test_depend>

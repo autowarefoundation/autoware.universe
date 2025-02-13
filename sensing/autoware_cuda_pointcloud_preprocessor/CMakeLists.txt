@@ -3,7 +3,6 @@ project(autoware_cuda_pointcloud_preprocessor)
 
 find_package(ament_cmake_auto REQUIRED)
 find_package(CUDA)
-find_package(PCL REQUIRED)
 
 if(NOT ${CUDA_FOUND})
   message(WARNING "cuda was not found, so the autoware_cuda_pointcloud_preprocessor package will not be built.")
@@ -43,19 +42,23 @@ cuda_add_library(cuda_pointcloud_preprocessor_lib SHARED
 )
 
 target_link_libraries(cuda_pointcloud_preprocessor_lib
-  ${PCL_LIBRARIES}
+  ${autoware_pointcloud_preprocessor_TARGETS}
 )
 
 target_include_directories(cuda_pointcloud_preprocessor_lib SYSTEM PRIVATE
+  ${autoware_pointcloud_preprocessor_INCLUDE_DIRS}
   ${autoware_point_types_INCLUDE_DIRS}
   ${cuda_blackboard_INCLUDE_DIRS}
+  ${diagnostic_msgs_INCLUDE_DIRS}
   ${geometry_msgs_INCLUDE_DIRS}
-  ${nebula_common_INCLUDE_DIRS}
   ${rclcpp_INCLUDE_DIRS}
+  ${rclcpp_components_INCLUDE_DIRS}
   ${rcl_interfaces_INCLUDE_DIRS}
   ${sensor_msgs_INCLUDE_DIRS}
   ${tf2_INCLUDE_DIRS}
+  ${tf2_msgs_INCLUDE_DIRS}
 )
+
 
 # Targets
 ament_auto_add_library(cuda_pointcloud_preprocessor SHARED
