@@ -16,6 +16,7 @@
 
 #include "autoware/motion_utils/trajectory/interpolation.hpp"
 #include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware/universe_utils/geometry/pose_deviation.hpp"
 
 #include <algorithm>
 #include <limits>
