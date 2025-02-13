@@ -25,6 +25,7 @@
 #include "cloud_collector.hpp"
 #include "collector_matching_strategy.hpp"
 #include "combine_cloud_handler.hpp"
+#include "traits.hpp"
 
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
@@ -48,17 +49,29 @@
 
 namespace autoware::pointcloud_preprocessor
 {
-class PointCloudConcatenateDataSynchronizerComponent : public rclcpp::Node
+
+template <typename MsgTraits>
+class PointCloudConcatenateDataSynchronizerComponentTemplated : public rclcpp::Node
 {
 public:
-  explicit PointCloudConcatenateDataSynchronizerComponent(const rclcpp::NodeOptions & node_options);
-  ~PointCloudConcatenateDataSynchronizerComponent() override = default;
+  using PointCloudMessage = typename MsgTraits::PointCloudMessage;
+  using PublisherType = typename MsgTraits::PublisherType;
+  using SubscriberType = typename MsgTraits::SubscriberType;
+
+  explicit PointCloudConcatenateDataSynchronizerComponentTemplated(
+    const rclcpp::NodeOptions & node_options);
+  ~PointCloudConcatenateDataSynchronizerComponentTemplated() override = default;
+
   void publish_clouds(
-    ConcatenatedCloudResult && concatenated_cloud_result,
+    ConcatenatedCloudResult<MsgTraits> && concatenated_cloud_result,
     std::shared_ptr<CollectorInfoBase> collector_info);
+
   void manage_collector_list();
-  std::list<std::shared_ptr<CloudCollector>> get_cloud_collectors();
-  void add_cloud_collector(const std::shared_ptr<CloudCollector> & collector);
+  void delete_collector(CloudCollector<MsgTraits> & cloud_collector);
+
+  std::list<std::shared_ptr<CloudCollector<MsgTraits>>> get_cloud_collectors();
+
+  void add_cloud_collector(const std::shared_ptr<CloudCollector<MsgTraits>> & collector);
 
 private:
   struct Parameters
@@ -88,30 +101,34 @@ private:
   std::shared_ptr<CollectorInfoBase> diagnostic_collector_info_;
   std::unordered_map<std::string, double> diagnostic_topic_to_original_stamp_map_;
 
-  std::shared_ptr<CombineCloudHandler> combine_cloud_handler_;
-  std::list<std::shared_ptr<CloudCollector>> cloud_collectors_;
-  std::unique_ptr<CollectorMatchingStrategy> collector_matching_strategy_;
+  std::shared_ptr<CombineCloudHandler<MsgTraits>> combine_cloud_handler_;
+  std::list<std::shared_ptr<CloudCollector<MsgTraits>>> cloud_collectors_;
+  std::unique_ptr<CollectorMatchingStrategy<MsgTraits>> collector_matching_strategy_;
+
   std::mutex cloud_collectors_mutex_;
 
   // default postfix name for synchronized pointcloud
   static constexpr const char * default_sync_topic_postfix = "_synchronized";
 
   // subscribers
-  std::vector<rclcpp::Subscription<sensor_msgs::msg::PointCloud2>::SharedPtr> pointcloud_subs_;
+  std::vector<std::shared_ptr<SubscriberType>> pointcloud_subs_;
   rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr twist_sub_;
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odom_sub_;
 
   // publishers
-  rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr concatenated_cloud_publisher_;
-  std::unordered_map<std::string, rclcpp::Publisher<sensor_msgs::msg::PointCloud2>::SharedPtr>
+  std::shared_ptr<PublisherType> concatenated_cloud_publisher_;
+  std::unordered_map<std::string, std::shared_ptr<PublisherType>>
     topic_to_transformed_cloud_publisher_map_;
   std::unique_ptr<autoware::universe_utils::DebugPublisher> debug_publisher_;
 
   std::unique_ptr<autoware::universe_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
   diagnostic_updater::Updater diagnostic_updater_{this};
 
+  void initialize();
+
   void cloud_callback(
-    const sensor_msgs::msg::PointCloud2::SharedPtr & input_ptr, const std::string & topic_name);
+    const typename PointCloudMessage::ConstSharedPtr & input_ptr, const std::string & topic_name);
+
   void twist_callback(const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr input);
   void odom_callback(const nav_msgs::msg::Odometry::ConstSharedPtr input);
 
@@ -121,4 +138,17 @@ private:
     const std::string & original_topic_name, const std::string & postfix);
 };
 
+class PointCloudConcatenateDataSynchronizerComponent
+: public PointCloudConcatenateDataSynchronizerComponentTemplated<PointCloud2Traits>
+{
+public:
+  explicit PointCloudConcatenateDataSynchronizerComponent(const rclcpp::NodeOptions & node_options)
+  : PointCloudConcatenateDataSynchronizerComponentTemplated<PointCloud2Traits>(node_options)
+  {
+  }
+  ~PointCloudConcatenateDataSynchronizerComponent() override = default;
+};
+
 }  // namespace autoware::pointcloud_preprocessor
+
+#include "autoware/pointcloud_preprocessor/concatenate_data/concatenate_and_time_sync_node.ipp"
