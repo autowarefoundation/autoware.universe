@@ -28,6 +28,8 @@
 #include <autoware/motion_velocity_planner_common_universe/velocity_planning_result.hpp>
 #include <autoware/objects_of_interest_marker_interface/objects_of_interest_marker_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
+
+#include <tf2_ros/buffer.h>
 #include <tf2_eigen/tf2_eigen.hpp>
 
 #include <pcl/common/transforms.h>
@@ -36,7 +38,6 @@
 #include <pcl/segmentation/euclidean_cluster_comparator.h>
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl_conversions/pcl_conversions.h>
-#include <tf2_ros/buffer.h>
 
 #include <algorithm>
 #include <iostream>
@@ -96,7 +97,7 @@ private:
   mutable std::shared_ptr<universe_utils::TimeKeeper> time_keeper_;
   mutable std::optional<std::vector<Polygon2d>> decimated_traj_polys_{std::nullopt};
 
-  std::vector<PlannerData::Object> convertToObstacles(
+  std::vector<PlannerData::Object> convert_to_obstacles(
     const Odometry & odometry, const PlannerData::Pointcloud & pointcloud,
     const std::vector<TrajectoryPoint> & traj_points, const std_msgs::msg::Header & traj_header,
     const VehicleInfo & vehicle_info);

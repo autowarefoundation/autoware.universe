@@ -39,6 +39,42 @@ namespace autoware::motion_velocity_planner
 {
 using autoware::universe_utils::getOrDeclareParameter;
 
+struct BehaviourDeterminationParam
+{
+  double pointcloud_voxel_grid_x{};
+  double pointcloud_voxel_grid_y{};
+  double pointcloud_voxel_grid_z{};
+  double pointcloud_cluster_tolerance{};
+  double pointcloud_min_cluster_size{};
+  double pointcloud_max_cluster_size{};
+  double max_lat_margin_for_stop;
+  double max_lat_margin_for_stop_against_unknown{};
+  double max_lat_margin_for_slow_down{};
+
+  BehaviourDeterminationParam() = default;
+  explicit BehaviourDeterminationParam(rclcpp::Node & node)
+  {
+    pointcloud_voxel_grid_x =
+      getOrDeclareParameter<double>(node, "behavior_determination.pointcloud_voxel_grid_x");
+    pointcloud_voxel_grid_y =
+      getOrDeclareParameter<double>(node, "behavior_determination.pointcloud_voxel_grid_y");
+    pointcloud_voxel_grid_z =
+      getOrDeclareParameter<double>(node, "behavior_determination.pointcloud_voxel_grid_z");
+    pointcloud_cluster_tolerance =
+      getOrDeclareParameter<double>(node, "behavior_determination.pointcloud_cluster_tolerance");
+    pointcloud_min_cluster_size =
+      getOrDeclareParameter<double>(node, "behavior_determination.pointcloud_min_cluster_size");
+    pointcloud_max_cluster_size =
+      getOrDeclareParameter<double>(node, "behavior_determination.pointcloud_max_cluster_size");
+    max_lat_margin_for_stop = 
+     getOrDeclareParameter<double>(node, "behavior_determination.stop.max_lat_margin");
+    max_lat_margin_for_stop_against_unknown = getOrDeclareParameter<double>(
+      node, "behavior_determination.stop.max_lat_margin_against_unknown");
+    max_lat_margin_for_slow_down =
+      getOrDeclareParameter<double>(node, "behavior_determination.slow_down.max_lat_margin");
+  }
+};
+
 struct CommonParam
 {
   double max_accel{};
@@ -62,6 +98,33 @@ struct CommonParam
     limit_max_jerk = getOrDeclareParameter<double>(node, "limit.max_jerk");
     limit_min_jerk = getOrDeclareParameter<double>(node, "limit.min_jerk");
   }
+};
+
+struct EgoNearestParam
+{
+  EgoNearestParam() = default;
+  explicit EgoNearestParam(rclcpp::Node & node)
+  {
+    dist_threshold = node.declare_parameter<double>("ego_nearest_dist_threshold");
+    yaw_threshold = node.declare_parameter<double>("ego_nearest_yaw_threshold");
+  }
+
+  size_t findIndex(
+    const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & pose) const
+  {
+    return autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
+      traj_points, pose, dist_threshold, yaw_threshold);
+  }
+
+  size_t findSegmentIndex(
+    const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & pose) const
+  {
+    return autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      traj_points, pose, dist_threshold, yaw_threshold);
+  }
+
+  double dist_threshold;
+  double yaw_threshold;
 };
 
 struct ObstacleFilteringParam

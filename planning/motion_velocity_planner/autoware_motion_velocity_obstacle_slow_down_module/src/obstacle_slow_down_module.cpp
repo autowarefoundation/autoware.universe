@@ -255,7 +255,7 @@ std::optional<double> calcDistanceToFrontVehicle(
   return ego_to_obstacle_distance;
 }
 
-std::vector<PlannerData::Object> ObstacleSlowDownModule::convertToObstacles(
+std::vector<PlannerData::Object> ObstacleSlowDownModule::convert_to_obstacles(
   const Odometry & odometry, const PlannerData::Pointcloud & pointcloud,
   const std::vector<TrajectoryPoint> & traj_points, const std_msgs::msg::Header & traj_header,
   const VehicleInfo & vehicle_info)
@@ -535,7 +535,7 @@ std::vector<SlowDownObstacle> ObstacleSlowDownModule::filter_slow_down_obstacle_
 
   // Get Objects
   std::vector<PlannerData::Object> objects =
-    convertToObstacles(odometry, point_cloud, traj_points, header, vehicle_info);
+    convert_to_obstacles(odometry, point_cloud, traj_points, header, vehicle_info);
   // slow down
   std::vector<SlowDownObstacle> slow_down_obstacles;
   for (const auto & object : objects) {
