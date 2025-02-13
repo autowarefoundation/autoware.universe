@@ -3,7 +3,6 @@ project(autoware_cuda_pointcloud_preprocessor)
 
 find_package(ament_cmake_auto REQUIRED)
 find_package(CUDA)
-find_package(PCL REQUIRED)
 
 if(NOT ${CUDA_FOUND})
   message(WARNING "cuda was not found, so the autoware_cuda_pointcloud_preprocessor package will not be built.")
@@ -42,7 +41,6 @@ cuda_add_library(cuda_pointcloud_preprocessor_lib SHARED
 )
 
 target_link_libraries(cuda_pointcloud_preprocessor_lib
-  ${PCL_LIBRARIES}
   ${autoware_pointcloud_preprocessor_TARGETS}
 )
 
