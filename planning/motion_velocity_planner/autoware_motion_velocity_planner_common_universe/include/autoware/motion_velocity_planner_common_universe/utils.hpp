@@ -43,6 +43,15 @@ using nav_msgs::msg::Odometry;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 
+template <class T>
+std::vector<T> concat_vectors(std::vector<T> first_vector, std::vector<T> second_vector)
+{
+  first_vector.insert(
+    first_vector.end(), std::make_move_iterator(second_vector.begin()),
+    std::make_move_iterator(second_vector.end()));
+  return first_vector;
+}
+
 std::vector<TrajectoryPoint> decimate_trajectory_points_from_ego(
   const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & current_pose,
   const double ego_nearest_dist_threshold, const double ego_nearest_yaw_threshold,
