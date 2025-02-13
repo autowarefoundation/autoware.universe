@@ -132,7 +132,6 @@ MapBasedDetector::MapBasedDetector(const rclcpp::NodeOptions & node_options)
 {
   using std::placeholders::_1;
 
-  // parameter declaration needs default values: are 0.0 goof defaults for this?
   config_.max_vibration_pitch = declare_parameter<double>("max_vibration_pitch");
   config_.max_vibration_yaw = declare_parameter<double>("max_vibration_yaw");
   config_.max_vibration_height = declare_parameter<double>("max_vibration_height");

@@ -36,6 +36,16 @@
           "description": "Maximum detection range in meters. Must be positive.",
           "default": 200.0
         },
+        "min_timestamp_offset": {
+          "type": "number",
+          "description": "Minimum timestamp offset when searching for corresponding tf.",
+          "default": -0.3
+        },
+        "max_timestamp_offset": {
+          "type": "number",
+          "description": "Maximum timestamp offset when searching for corresponding tf.",
+          "default": 0.0
+        },
         "timestamp_sample_len": {
           "type": "number",
           "description": "Sampling length between min_timestamp_offset and max_timestamp_offset.",
@@ -59,6 +69,8 @@
         "max_vibration_width",
         "max_vibration_depth",
         "max_detection_range",
+        "min_timestamp_offset",
+        "max_timestamp_offset",
         "timestamp_sample_len",
         "car_traffic_light_max_angle_range",
         "pedestrian_traffic_light_max_angle_range"
