@@ -287,7 +287,7 @@
       <arg name="input/camera7/image" value="$(var input/camera7/image)"/>
       <arg name="input/camera7/info" value="$(var input/camera7/info)"/>
       <arg name="input/camera7/rois" value="$(var input/camera7/rois)"/>
-      <arg name="input/pointcloud_map/pointcloud" value="$(var pointcloud_filter/output/pointcloud)"/>
+      <arg name="input/pointcloud_map_filter/pointcloud" value="$(var pointcloud_filter/output/pointcloud)"/>
       <arg name="input/obstacle_segmentation/pointcloud" value="$(var input/obstacle_segmentation/pointcloud)"/>
       <arg name="input/lidar_ml/objects" value="$(var lidar_ml_detector/output/objects)"/>
       <arg name="input/lidar_rule/objects" value="$(var camera_lidar_rule_detector/output/objects)"/>

@@ -50,16 +50,16 @@
   <arg name="output/objects" default="objects"/>
 
   <!-- internal interfaces -->
-  <let name="camera_roi_fusion/input/objects" value="$(var input/lidar_ml/objects)"/>
-  <let name="camera_roi_fusion/output/objects" value="$(var lidar_detection_model_type)/roi_fusion/objects"/>
-
-  <let name="validator/input/objects" value="$(var camera_roi_fusion/output/objects)"/>
+  <let name="validator/input/objects" value="$(var input/lidar_ml/objects)"/>
   <let name="validator/input/obstacle_pointcloud" value="$(var input/pointcloud_map/pointcloud)" if="$(var use_pointcloud_map)"/>
   <let name="validator/input/obstacle_pointcloud" value="$(var input/obstacle_segmentation/pointcloud)" unless="$(var use_pointcloud_map)"/>
   <let name="validator/output/objects" value="$(var lidar_detection_model_type)/validation/objects"/>
 
-  <let name="merger1/input/objects0" value="$(var validator/output/objects)" if="$(var use_validator)"/>
-  <let name="merger1/input/objects0" value="$(var input/lidar_ml/objects)" unless="$(var use_validator)"/>
+  <let name="camera_roi_fusion/input/objects" value="$(var validator/output/objects)" if="$(var use_validator)"/>
+  <let name="camera_roi_fusion/input/objects" value="$(var input/lidar_ml/objects)" unless="$(var use_validator)"/>
+  <let name="camera_roi_fusion/output/objects" value="$(var lidar_detection_model_type)/roi_fusion/objects"/>
+
+  <let name="merger1/input/objects0" value="$(var camera_roi_fusion/output/objects)"/>
   <let name="merger1/input/objects1" value="$(var input/lidar_rule/objects)"/>
   <let name="merger1/output/objects" value="$(var output/objects)" if="$(var without_dbt_and_filter)"/>
   <let name="merger1/output/objects" value="$(var lidar_detection_model_type)_roi_cluster_fusion/objects" unless="$(var without_dbt_and_filter)"/>
@@ -72,6 +72,16 @@
   <let name="filter/input/objects" value="$(var merger2/output/objects)" if="$(var use_detection_by_tracker)"/>
   <let name="filter/input/objects" value="$(var merger1/output/objects)" unless="$(var use_detection_by_tracker)"/>
   <let name="filter/output/objects" value="$(var output/objects)"/>
+
+  <!-- Validator -->
+  <group if="$(var use_validator)">
+    <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/filter/object_validator.launch.xml">
+      <arg name="input/obstacle_pointcloud" value="$(var validator/input/obstacle_pointcloud)"/>
+      <arg name="input/objects" value="$(var validator/input/objects)"/>
+      <arg name="output/objects" value="$(var validator/output/objects)"/>
+      <arg name="objects_validation_method" value="$(var objects_validation_method)"/>
+    </include>
+  </group>
 
   <!-- Camera ROI fusion -->
   <group>
@@ -104,16 +114,6 @@
       <arg name="input/objects" value="$(var camera_roi_fusion/input/objects)"/>
       <arg name="output/objects" value="$(var camera_roi_fusion/output/objects)"/>
       <arg name="param_path" value="$(var roi_detected_object_fusion_param_path)"/>
-    </include>
-  </group>
-
-  <!-- Validator -->
-  <group if="$(var use_validator)">
-    <include file="$(find-pkg-share tier4_perception_launch)/launch/object_recognition/detection/filter/object_validator.launch.xml">
-      <arg name="input/obstacle_pointcloud" value="$(var validator/input/obstacle_pointcloud)"/>
-      <arg name="input/objects" value="$(var validator/input/objects)"/>
-      <arg name="output/objects" value="$(var validator/output/objects)"/>
-      <arg name="objects_validation_method" value="$(var objects_validation_method)"/>
     </include>
   </group>
 
