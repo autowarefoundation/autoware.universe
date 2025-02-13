@@ -132,19 +132,19 @@ MapBasedDetector::MapBasedDetector(const rclcpp::NodeOptions & node_options)
 {
   using std::placeholders::_1;
 
-  config_.max_vibration_pitch = declare_parameter<double>("max_vibration_pitch");
-  config_.max_vibration_yaw = declare_parameter<double>("max_vibration_yaw");
-  config_.max_vibration_height = declare_parameter<double>("max_vibration_height");
-  config_.max_vibration_width = declare_parameter<double>("max_vibration_width");
-  config_.max_vibration_depth = declare_parameter<double>("max_vibration_depth");
-  config_.min_timestamp_offset = declare_parameter<double>("min_timestamp_offset");
-  config_.max_timestamp_offset = declare_parameter<double>("max_timestamp_offset");
-  config_.timestamp_sample_len = declare_parameter<double>("timestamp_sample_len");
-  config_.max_detection_range = declare_parameter<double>("max_detection_range");
+  config_.max_vibration_pitch = this->declare_parameter<double>("max_vibration_pitch");
+  config_.max_vibration_yaw = this->declare_parameter<double>("max_vibration_yaw");
+  config_.max_vibration_height = this->declare_parameter<double>("max_vibration_height");
+  config_.max_vibration_width = this->declare_parameter<double>("max_vibration_width");
+  config_.max_vibration_depth = this->declare_parameter<double>("max_vibration_depth");
+  config_.min_timestamp_offset = this->declare_parameter<double>("min_timestamp_offset");
+  config_.max_timestamp_offset = this->declare_parameter<double>("max_timestamp_offset");
+  config_.timestamp_sample_len = this->declare_parameter<double>("timestamp_sample_len");
+  config_.max_detection_range = this->declare_parameter<double>("max_detection_range");
   config_.car_traffic_light_max_angle_range =
-    declare_parameter<double>("car_traffic_light_max_angle_range");
+    this->declare_parameter<double>("car_traffic_light_max_angle_range");
   config_.pedestrian_traffic_light_max_angle_range =
-    declare_parameter<double>("pedestrian_traffic_light_max_angle_range");
+    this->declare_parameter<double>("pedestrian_traffic_light_max_angle_range");
 
   if (config_.max_detection_range <= 0) {
     RCLCPP_ERROR_STREAM(
