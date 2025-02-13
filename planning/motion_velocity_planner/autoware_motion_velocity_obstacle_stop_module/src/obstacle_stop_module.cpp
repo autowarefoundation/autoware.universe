@@ -149,10 +149,12 @@ void ObstacleStopModule::init(rclcpp::Node & node, const std::string & module_na
   ego_nearest_param_ = EgoNearestParam(node);
   stop_planning_param_ = StopPlanningParam(node, common_param_);
   obstacle_filtering_param_ = ObstacleFilteringParam(node);
-  use_pointcloud_for_stop_ = getOrDeclareParameter<bool>(node, "common.stop_obstacle_type.pointcloud");
+  use_pointcloud_for_stop_ =
+    getOrDeclareParameter<bool>(node, "common.stop_obstacle_type.pointcloud");
 
   enable_debug_info_ = getOrDeclareParameter<double>(node, "common.enable_debug_info");
-  enable_calculation_time_info_ = getOrDeclareParameter<bool>(node, "common.enable_calculation_time_info");
+  enable_calculation_time_info_ =
+    getOrDeclareParameter<bool>(node, "common.enable_calculation_time_info");
 
   // common publisher
   processing_time_publisher_ =
@@ -209,7 +211,6 @@ std::optional<double> calcDistanceToFrontVehicle(
   return ego_to_obstacle_distance;
 }
 
-
 VelocityPlanningResult ObstacleStopModule::plan(
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & raw_trajectory_points,
   [[maybe_unused]] const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> &
@@ -251,10 +252,8 @@ VelocityPlanningResult ObstacleStopModule::plan(
 
   // 4. filter obstacles of point cloud
   const auto stop_obstacles_for_point_cloud = filter_stop_obstacle_for_point_cloud(
-    planner_data->current_odometry,
-    raw_trajectory_points,
-    decimated_traj_points, planner_data->no_ground_pointcloud,
-    planner_data->vehicle_info_,
+    planner_data->current_odometry, raw_trajectory_points, decimated_traj_points,
+    planner_data->no_ground_pointcloud, planner_data->vehicle_info_,
     planner_data->trajectory_polygon_collision_check, planner_data->predicted_objects_header);
 
   // 5. concat stop obstacles by predicted objects and point cloud
@@ -524,8 +523,7 @@ std::vector<StopObstacle> ObstacleStopModule::filter_stop_obstacle_for_predicted
 }
 
 std::vector<StopObstacle> ObstacleStopModule::filter_stop_obstacle_for_point_cloud(
-  const Odometry & odometry,
-  const std::vector<TrajectoryPoint> & traj_points,
+  const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
   const std::vector<TrajectoryPoint> & decimated_traj_points,
   const PlannerData::Pointcloud & point_cloud, const VehicleInfo & vehicle_info,
   const TrajectoryPolygonCollisionCheck & trajectory_polygon_collision_check,
@@ -533,14 +531,15 @@ std::vector<StopObstacle> ObstacleStopModule::filter_stop_obstacle_for_point_clo
 {
   autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
-  const auto & tp = trajectory_polygon_collision_check; 
+  const auto & tp = trajectory_polygon_collision_check;
 
-  auto obstacles = convert_to_obstacles(odometry, point_cloud, decimated_traj_points, header, vehicle_info);
+  auto obstacles =
+    convert_to_obstacles(odometry, point_cloud, decimated_traj_points, header, vehicle_info);
 
   // calculated decimated trajectory points and trajectory polygon
   const auto decimated_traj_polys = polygon_utils::create_one_step_polygons(
-    decimated_traj_points, vehicle_info, odometry.pose.pose, 0.0, tp.enable_to_consider_current_pose,
-    tp.time_to_convergence, tp.decimate_trajectory_step_length);
+    decimated_traj_points, vehicle_info, odometry.pose.pose, 0.0,
+    tp.enable_to_consider_current_pose, tp.time_to_convergence, tp.decimate_trajectory_step_length);
 
   debug_data_ptr_->decimated_traj_polys = decimated_traj_polys;
 
@@ -571,7 +570,9 @@ std::vector<StopObstacle> ObstacleStopModule::filter_stop_obstacle_for_point_clo
     const auto min_lat_dist_to_traj_poly =
       std::abs(lat_dist_from_obstacle_to_traj) - vehicle_info.vehicle_width_m;
 
-    if (min_lat_dist_to_traj_poly < behavior_determination_param_.max_lat_margin_for_stop_against_unknown) {
+    if (
+      min_lat_dist_to_traj_poly <
+      behavior_determination_param_.max_lat_margin_for_stop_against_unknown) {
       auto stop_obstacle = *itr;
       stop_obstacle.dist_to_collide_on_decimated_traj = autoware::motion_utils::calcSignedArcLength(
         decimated_traj_points, 0, stop_obstacle.collision_point);
@@ -581,8 +582,10 @@ std::vector<StopObstacle> ObstacleStopModule::filter_stop_obstacle_for_point_clo
     ++itr;
   }
 
-  stop_pc_obstacle_history_ = autoware::motion_velocity_planner::utils::concat_vectors(std::move(stop_pc_obstacle_history_), stop_obstacles);
-  stop_obstacles = autoware::motion_velocity_planner::utils::concat_vectors(std::move(stop_obstacles), std::move(past_stop_obstacles));
+  stop_pc_obstacle_history_ = autoware::motion_velocity_planner::utils::concat_vectors(
+    std::move(stop_pc_obstacle_history_), stop_obstacles);
+  stop_obstacles = autoware::motion_velocity_planner::utils::concat_vectors(
+    std::move(stop_obstacles), std::move(past_stop_obstacles));
 
   const double calculation_time = stop_watch_.toc(__func__);
   RCLCPP_INFO_EXPRESSION(

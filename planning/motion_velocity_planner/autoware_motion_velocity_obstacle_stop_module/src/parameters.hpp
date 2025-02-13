@@ -66,8 +66,8 @@ struct BehaviourDeterminationParam
       getOrDeclareParameter<double>(node, "behavior_determination.pointcloud_min_cluster_size");
     pointcloud_max_cluster_size =
       getOrDeclareParameter<double>(node, "behavior_determination.pointcloud_max_cluster_size");
-    max_lat_margin_for_stop = 
-     getOrDeclareParameter<double>(node, "behavior_determination.stop.max_lat_margin");
+    max_lat_margin_for_stop =
+      getOrDeclareParameter<double>(node, "behavior_determination.stop.max_lat_margin");
     max_lat_margin_for_stop_against_unknown = getOrDeclareParameter<double>(
       node, "behavior_determination.stop.max_lat_margin_against_unknown");
     max_lat_margin_for_slow_down =

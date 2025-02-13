@@ -30,8 +30,6 @@
 #include <autoware/motion_velocity_planner_common_universe/velocity_planning_result.hpp>
 #include <autoware/objects_of_interest_marker_interface/objects_of_interest_marker_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
-
-#include <tf2_ros/buffer.h>
 #include <tf2_eigen/tf2_eigen.hpp>
 
 #include <pcl/common/transforms.h>
@@ -40,6 +38,7 @@
 #include <pcl/segmentation/euclidean_cluster_comparator.h>
 #include <pcl/segmentation/extract_clusters.h>
 #include <pcl_conversions/pcl_conversions.h>
+#include <tf2_ros/buffer.h>
 
 #include <algorithm>
 #include <memory>
@@ -95,7 +94,7 @@ private:
   mutable std::shared_ptr<DebugData> debug_data_ptr_{};
   std::vector<StopObstacle> prev_closest_stop_obstacles_{};
   std::vector<StopObstacle> prev_stop_obstacles_{};
-  
+
   // PointCloud-based stop obstacle history
   std::vector<StopObstacle> stop_pc_obstacle_history_;
 
@@ -112,9 +111,9 @@ private:
   mutable std::shared_ptr<universe_utils::TimeKeeper> time_keeper_{};
 
   std::vector<PlannerData::Object> convert_to_obstacles(
-  const Odometry & odometry, const PlannerData::Pointcloud & pointcloud,
-  const std::vector<TrajectoryPoint> & traj_points, const std_msgs::msg::Header & traj_header,
-  const VehicleInfo & vehicle_info);
+    const Odometry & odometry, const PlannerData::Pointcloud & pointcloud,
+    const std::vector<TrajectoryPoint> & traj_points, const std_msgs::msg::Header & traj_header,
+    const VehicleInfo & vehicle_info);
 
   std::vector<Polygon2d> get_trajectory_polygon_for_inside(
     const std::vector<TrajectoryPoint> & decimated_traj_points, const VehicleInfo & vehicle_info,
@@ -136,10 +135,9 @@ private:
     const std::vector<std::shared_ptr<PlannerData::Object>> & objects,
     const bool is_driving_forward, const VehicleInfo & vehicle_info, const double dist_to_bumper,
     const TrajectoryPolygonCollisionCheck & trajectory_polygon_collision_check);
-  
+
   std::vector<StopObstacle> filter_stop_obstacle_for_point_cloud(
-    const Odometry & odometry,
-    const std::vector<TrajectoryPoint> & traj_points,
+    const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
     const std::vector<TrajectoryPoint> & decimated_traj_points,
     const PlannerData::Pointcloud & point_cloud, const VehicleInfo & vehicle_info,
     const TrajectoryPolygonCollisionCheck & trajectory_polygon_collision_check,
