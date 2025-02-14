@@ -14,6 +14,9 @@
 
 #include "reaction_analyzer_node.hpp"
 
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/geometry/pose_deviation.hpp>
+
 #include <functional>
 #include <map>
 #include <memory>
