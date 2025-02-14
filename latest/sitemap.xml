@@ -111,11 +111,6 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/latest/common/autoware_testing/design/autoware_testing-design/</loc>
-         <lastmod>2025-02-14</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
          <loc>https://autowarefoundation.github.io/autoware.universe/latest/common/autoware_traffic_light_recognition_marker_publisher/Readme/</loc>
          <lastmod>2025-02-14</lastmod>
          <changefreq>daily</changefreq>
