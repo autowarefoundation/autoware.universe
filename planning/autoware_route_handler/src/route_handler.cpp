@@ -69,11 +69,10 @@ bool exists(const std::vector<LaneletPrimitive> & primitives, const int64_t & id
   return false;
 }
 
-template <typename T>
-bool exists(const std::vector<T> & vectors, const T & item)
+bool exists(const lanelet::ConstLanelets & vectors, const lanelet::ConstLanelet & item)
 {
   for (const auto & i : vectors) {
-    if (i == item) {
+    if (i.id() == item.id()) {
       return true;
     }
   }
