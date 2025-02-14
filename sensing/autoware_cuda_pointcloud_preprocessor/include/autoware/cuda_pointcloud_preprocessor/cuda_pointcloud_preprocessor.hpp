@@ -38,12 +38,14 @@ namespace autoware::cuda_pointcloud_preprocessor
 class CudaPointcloudPreprocessor
 {
 public:
+  enum class UndistortionType { Invalid, Undistortion2D, Undistortion3D };
+
   CudaPointcloudPreprocessor();
   ~CudaPointcloudPreprocessor() = default;
 
   void setCropBoxParameters(const std::vector<CropBoxParameters> & crop_box_parameters);
   void setRingOutlierFilterParameters(const RingOutlierFilterParameters & ring_outlier_parameters);
-  void set3DUndistortion(bool value);
+  void setUndistortionType(const UndistortionType & undistortion_type);
 
   void preallocateOutput();
 
@@ -60,7 +62,7 @@ private:
   CropBoxParameters self_crop_box_parameters_{};
   CropBoxParameters mirror_crop_box_parameters_{};
   RingOutlierFilterParameters ring_outlier_parameters_{};
-  bool use_3d_undistortion_{false};
+  UndistortionType undistortion_type_{UndistortionType::Invalid};
 
   int num_rings_{};
   int max_points_per_ring_{};

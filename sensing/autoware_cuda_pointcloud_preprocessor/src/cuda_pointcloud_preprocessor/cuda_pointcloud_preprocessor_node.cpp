@@ -112,10 +112,14 @@ CudaPointcloudPreprocessorNode::CudaPointcloudPreprocessorNode(
       sub_options);
   }
 
+  CudaPointcloudPreprocessor::UndistortionType undistortion_type =
+    use_3d_undistortion ? CudaPointcloudPreprocessor::UndistortionType::Undistortion3D
+                        : CudaPointcloudPreprocessor::UndistortionType::Undistortion2D;
+
   cuda_pointcloud_preprocessor_ = std::make_unique<CudaPointcloudPreprocessor>();
   cuda_pointcloud_preprocessor_->setRingOutlierFilterParameters(ring_outlier_filter_parameters);
   cuda_pointcloud_preprocessor_->setCropBoxParameters(crop_box_parameters);
-  cuda_pointcloud_preprocessor_->set3DUndistortion(use_3d_undistortion);
+  cuda_pointcloud_preprocessor_->setUndistortionType(undistortion_type);
 
   // initialize debug tool
   {

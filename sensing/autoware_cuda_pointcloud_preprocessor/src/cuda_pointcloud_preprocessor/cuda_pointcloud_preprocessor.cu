@@ -182,9 +182,13 @@ void CudaPointcloudPreprocessor::setRingOutlierFilterParameters(
   ring_outlier_parameters_ = ring_outlier_parameters;
 }
 
-void CudaPointcloudPreprocessor::set3DUndistortion(bool use_3d_undistortion)
+void CudaPointcloudPreprocessor::setUndistortionType(const UndistortionType & undistortion_type)
 {
-  use_3d_undistortion_ = use_3d_undistortion;
+  if (undistortion_type == UndistortionType::Invalid) {
+    throw std::runtime_error("Invalid undistortion type");
+  }
+
+  undistortion_type_ = undistortion_type;
 }
 
 void CudaPointcloudPreprocessor::preallocateOutput()
@@ -351,14 +355,16 @@ std::unique_ptr<cuda_blackboard::CudaPointCloud2> CudaPointcloudPreprocessor::pr
   std::uint64_t pointcloud_stamp_nsec = 1'000'000'000 * input_pointcloud_msg_ptr->header.stamp.sec +
                                         input_pointcloud_msg_ptr->header.stamp.nanosec;
 
-  if (use_3d_undistortion_) {
+  if (undistortion_type_ == UndistortionType::Undistortion3D) {
     setupTwist3DStructs(
       twist_queue, angular_velocity_queue, pointcloud_stamp_nsec, first_point_rel_stamp_nsec,
       device_twist_3d_structs_, stream_);
-  } else {
+  } else if (undistortion_type_ == UndistortionType::Undistortion2D) {
     setupTwist2DStructs(
       twist_queue, angular_velocity_queue, pointcloud_stamp_nsec, first_point_rel_stamp_nsec,
       device_twist_2d_structs_, stream_);
+  } else {
+    throw std::runtime_error("Invalid undistortion type");
   }
 
   // Obtain raw pointers for the kernels
@@ -389,11 +395,13 @@ std::unique_ptr<cuda_blackboard::CudaPointCloud2> CudaPointcloudPreprocessor::pr
     thrust::fill(thrust::device, device_crop_mask, device_crop_mask + num_organized_points_, 1);
   }
 
-  if (use_3d_undistortion_ && device_twist_3d_structs_.size() > 0) {
+  if (
+    undistortion_type_ == UndistortionType::Undistortion3D && device_twist_3d_structs_.size() > 0) {
     undistort3dLaunch(
       device_transformed_points, num_organized_points_, device_twist_3d_structs,
       device_twist_3d_structs_.size(), threads_per_block_, blocks_per_grid, stream_);
-  } else if (!use_3d_undistortion_ && device_twist_2d_structs_.size() > 0) {
+  } else if (
+    undistortion_type_ == UndistortionType::Undistortion2D && device_twist_2d_structs_.size() > 0) {
     undistort2dLaunch(
       device_transformed_points, num_organized_points_, device_twist_2d_structs,
       device_twist_2d_structs_.size(), threads_per_block_, blocks_per_grid, stream_);
