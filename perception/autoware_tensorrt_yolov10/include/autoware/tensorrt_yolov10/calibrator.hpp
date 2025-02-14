@@ -53,6 +53,9 @@
 #include <string>
 #include <vector>
 
+#include <cstdio>
+#include <iostream>
+
 namespace autoware::tensorrt_yolov10
 {
 class ImageStream
