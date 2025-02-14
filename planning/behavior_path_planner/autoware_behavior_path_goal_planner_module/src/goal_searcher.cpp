@@ -256,18 +256,23 @@ GoalCandidates GoalSearcher::search(
         (transformed_vehicle_footprint.at(vehicle_info_utils::VehicleInfo::FrontLeftIndex) +
          transformed_vehicle_footprint.at(vehicle_info_utils::VehicleInfo::FrontRightIndex)) /
         2.0;
+      const auto vehicle_rear_midpoint =
+        (transformed_vehicle_footprint.at(vehicle_info_utils::VehicleInfo::RearLeftIndex) +
+         transformed_vehicle_footprint.at(vehicle_info_utils::VehicleInfo::RearRightIndex)) /
+        2.0;
+      const auto vehicle_center_point = (vehicle_front_midpoint + vehicle_rear_midpoint) / 2.0;
       const auto pull_over_lanelet = lanelet::utils::combineLaneletsShape(pull_over_lanes_);
-      const auto vehicle_front_pose_for_bound_opt = goal_planner_utils::calcClosestPose(
+      const auto vehicle_center_pose_for_bound_opt = goal_planner_utils::calcClosestPose(
         left_side_parking_ ? pull_over_lanelet.leftBound() : pull_over_lanelet.rightBound(),
         autoware::universe_utils::createPoint(
-          vehicle_front_midpoint.x(), vehicle_front_midpoint.y(), search_pose.position.z));
-      if (!vehicle_front_pose_for_bound_opt) {
+          vehicle_center_point.x(), vehicle_center_point.y(), search_pose.position.z));
+      if (!vehicle_center_pose_for_bound_opt) {
         continue;
       }
-      const auto & vehicle_front_pose_for_bound = vehicle_front_pose_for_bound_opt.value();
+      const auto & vehicle_center_pose_for_bound = vehicle_center_pose_for_bound_opt.value();
       GoalCandidate goal_candidate{};
       goal_candidate.goal_pose = search_pose;
-      goal_candidate.goal_pose.orientation = vehicle_front_pose_for_bound.orientation;
+      goal_candidate.goal_pose.orientation = vehicle_center_pose_for_bound.orientation;
       goal_candidate.lateral_offset = dy;
       goal_candidate.id = goal_id;
       goal_id++;
