@@ -203,6 +203,7 @@ void setupTwist2DStructs(
       twist_stamp = angular_velocity_global_stamp_nsec;
       angular_velocity_index++;
     } else {
+      twist_stamp = input_twist_global_stamp_nsec;
       twist_index++;
       angular_velocity_index++;
     }
