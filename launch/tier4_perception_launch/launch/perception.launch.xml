@@ -116,7 +116,7 @@
   />
   <arg
     name="pedestrian_traffic_light_classifier_model_name"
-    default="ped_traffic_light_classifier_mobilenetv2_batch_4"
+    default="ped_traffic_light_classifier_mobilenetv2_batch_6"
     description="options: `ped_traffic_light_classifier_mobilenetv2_batch_*` or `ped_traffic_light_classifier_efficientNet_b1_batch_*`. The batch number must be either one of 1, 4, 6"
   />
 
