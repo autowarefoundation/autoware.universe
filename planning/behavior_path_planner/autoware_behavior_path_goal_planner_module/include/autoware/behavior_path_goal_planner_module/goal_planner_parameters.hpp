@@ -77,7 +77,6 @@ struct GoalPlannerParameters
   int obstacle_threshold{0};
 
   // object recognition
-  bool use_object_recognition{false};
   std::vector<double> object_recognition_collision_check_soft_margins{};
   std::vector<double> object_recognition_collision_check_hard_margins{};
   double object_recognition_collision_check_max_extra_stopping_margin{0.0};

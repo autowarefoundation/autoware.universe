@@ -53,23 +53,23 @@ struct PlannerParam
 
 struct EgoData
 {
-  TrajectoryPoints trajectory;
+  TrajectoryPoints trajectory{};
   size_t first_trajectory_idx{};
-  double longitudinal_offset_to_first_trajectory_idx;  // [m]
-  geometry_msgs::msg::Pose pose;
-  autoware::universe_utils::MultiPolygon2d trajectory_footprints;
-  Rtree rtree;
-  std::optional<geometry_msgs::msg::Pose> earliest_stop_pose;
+  double longitudinal_offset_to_first_trajectory_idx{};  // [m]
+  geometry_msgs::msg::Pose pose{};
+  autoware::universe_utils::MultiPolygon2d trajectory_footprints{};
+  Rtree rtree{};
+  std::optional<geometry_msgs::msg::Pose> earliest_stop_pose{};
 };
 
 /// @brief debug data
 struct DebugData
 {
-  autoware::universe_utils::MultiPolygon2d obstacle_footprints;
+  autoware::universe_utils::MultiPolygon2d obstacle_footprints{};
   size_t prev_dynamic_obstacles_nb{};
-  autoware::universe_utils::MultiPolygon2d ego_footprints;
+  autoware::universe_utils::MultiPolygon2d ego_footprints{};
   size_t prev_ego_footprints_nb{};
-  std::optional<geometry_msgs::msg::Pose> stop_pose;
+  std::optional<geometry_msgs::msg::Pose> stop_pose{};
   size_t prev_collisions_nb{};
   double z{};
   void reset_data()
@@ -82,8 +82,8 @@ struct DebugData
 
 struct Collision
 {
-  geometry_msgs::msg::Point point;
-  std::string object_uuid;
+  geometry_msgs::msg::Point point{};
+  std::string object_uuid{};
 };
 }  // namespace autoware::motion_velocity_planner::dynamic_obstacle_stop
 
