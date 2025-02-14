@@ -75,6 +75,9 @@
   <arg name="camera_info7" default="/sensing/camera/camera7/camera_info"/>
   <arg name="detection_rois7" default="/perception/object_recognition/detection/rois7"/>
   <arg name="image_number" default="6" description="choose image raw number(1-8)"/>
+  <arg name="pointcloud_container_name" default="pointcloud_container"/>
+
+  <!-- Pipeline junctions -->
   <arg name="use_vector_map" default="true" description="use vector map in prediction"/>
   <arg name="use_pointcloud_map" default="true" description="use pointcloud map in detection"/>
   <arg name="use_low_height_cropbox" default="true" description="use low height crop filter in the euclidean clustering"/>
@@ -88,10 +91,11 @@
     default="false"
     description="if use_empty_dynamic_object_publisher:=true, /perception/object_recognition/objects topic has an empty DynamicObjectArray"
   />
-  <arg name="pointcloud_container_name" default="pointcloud_container"/>
   <arg name="use_object_validator" default="true" description="use obstacle_pointcloud based object validator"/>
   <arg name="objects_validation_method" default="obstacle_pointcloud" description="options: `obstacle_pointcloud` or `occupancy_grid`"/>
   <arg name="use_perception_online_evaluator" default="false" description="use perception online evaluator"/>
+  <arg name="use_obstacle_segmentation_single_frame_filter" description="use single frame filter at the ground segmentation"/>
+  <arg name="use_obstacle_segmentation_time_series_filter" description="use time series filter at the ground segmentation"/>
 
   <!-- Traffic light recognition parameters -->
   <arg name="use_traffic_light_recognition" default="false"/>
@@ -171,14 +175,20 @@
         <arg name="use_multithread" value="true"/>
         <arg name="pointcloud_container_name" value="$(var pointcloud_container_name)"/>
         <arg name="input/pointcloud" value="$(var perception_pointcloud)"/>
+        <arg name="obstacle_segmentation_ground_segmentation_param_path" value="$(var obstacle_segmentation_ground_segmentation_param_path)"/>
+        <arg name="use_single_frame_filter" value="$(var use_obstacle_segmentation_single_frame_filter)"/>
+        <arg name="use_time_series_filter" value="$(var use_obstacle_segmentation_time_series_filter)"/>
       </include>
     </group>
 
     <!-- Occupancy grid map module -->
     <group>
       <push-ros-namespace namespace="occupancy_grid_map"/>
+      <let name="unfiltered_obstacle_pointcloud" value="/perception/obstacle_segmentation/pointcloud"/>
+      <let name="unfiltered_obstacle_pointcloud" value="/perception/obstacle_segmentation/single_frame/pointcloud" if="$(var use_obstacle_segmentation_single_frame_filter)"/>
+      <let name="unfiltered_obstacle_pointcloud" value="/perception/obstacle_segmentation/single_frame/pointcloud" if="$(var use_obstacle_segmentation_time_series_filter)"/>
       <include file="$(find-pkg-share tier4_perception_launch)/launch/occupancy_grid_map/probabilistic_occupancy_grid_map.launch.xml">
-        <arg name="input/obstacle_pointcloud" value="/perception/obstacle_segmentation/single_frame/pointcloud"/>
+        <arg name="input/obstacle_pointcloud" value="$(var unfiltered_obstacle_pointcloud)"/>
         <arg name="input/raw_pointcloud" value="$(var perception_pointcloud)"/>
         <arg name="output" value="/perception/occupancy_grid_map/map"/>
         <arg name="use_intra_process" value="true"/>
