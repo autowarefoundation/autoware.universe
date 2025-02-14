@@ -64,8 +64,47 @@ struct CommonParam
   }
 };
 
+struct EgoNearestParam
+{
+  EgoNearestParam() = default;
+  explicit EgoNearestParam(rclcpp::Node & node)
+  {
+    dist_threshold = node.declare_parameter<double>("ego_nearest_dist_threshold");
+    yaw_threshold = node.declare_parameter<double>("ego_nearest_yaw_threshold");
+  }
+
+  size_t findIndex(
+    const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & pose) const
+  {
+    return autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
+      traj_points, pose, dist_threshold, yaw_threshold);
+  }
+
+  size_t findSegmentIndex(
+    const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & pose) const
+  {
+    return autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
+      traj_points, pose, dist_threshold, yaw_threshold);
+  }
+
+  double dist_threshold;
+  double yaw_threshold;
+};
+
 struct ObstacleFilteringParam
 {
+  struct PointcloudObstacleFilteringParam
+  {
+    double pointcloud_voxel_grid_x{};
+    double pointcloud_voxel_grid_y{};
+    double pointcloud_voxel_grid_z{};
+    double pointcloud_cluster_tolerance{};
+    double pointcloud_min_cluster_size{};
+    double pointcloud_max_cluster_size{};
+  };
+
+  PointcloudObstacleFilteringParam pointcloud_obstacle_filtering_param;
+
   bool use_pointcloud{};
   std::vector<uint8_t> inside_stop_object_types{};
   std::vector<uint8_t> outside_stop_object_types{};
@@ -75,6 +114,10 @@ struct ObstacleFilteringParam
 
   double max_lat_margin{};
   double max_lat_margin_against_unknown{};
+
+  double max_lat_margin_for_stop{};
+  double max_lat_margin_for_stop_against_unknown{};
+  double max_lat_margin_for_slow_down{};
 
   double min_velocity_to_reach_collision_point{};
   double stop_obstacle_hold_time_threshold{};
@@ -89,12 +132,31 @@ struct ObstacleFilteringParam
   ObstacleFilteringParam() = default;
   explicit ObstacleFilteringParam(rclcpp::Node & node)
   {
+    pointcloud_obstacle_filtering_param.pointcloud_voxel_grid_x =
+      getOrDeclareParameter<double>(node, "obstacle_filtering.pointcloud.pointcloud_voxel_grid_x");
+    pointcloud_obstacle_filtering_param.pointcloud_voxel_grid_y =
+      getOrDeclareParameter<double>(node, "obstacle_filtering.pointcloud.pointcloud_voxel_grid_y");
+    pointcloud_obstacle_filtering_param.pointcloud_voxel_grid_z =
+      getOrDeclareParameter<double>(node, "obstacle_filtering.pointcloud.pointcloud_voxel_grid_z");
+    pointcloud_obstacle_filtering_param.pointcloud_cluster_tolerance =
+      getOrDeclareParameter<double>(
+        node, "obstacle_filtering.pointcloud.pointcloud_cluster_tolerance");
+    pointcloud_obstacle_filtering_param.pointcloud_min_cluster_size = getOrDeclareParameter<double>(
+      node, "obstacle_filtering.pointcloud.pointcloud_min_cluster_size");
+    pointcloud_obstacle_filtering_param.pointcloud_max_cluster_size = getOrDeclareParameter<double>(
+      node, "obstacle_filtering.pointcloud.pointcloud_max_cluster_size");
+    use_pointcloud =
+      getOrDeclareParameter<bool>(node, "obstacle_stop.obstacle_filtering.object_type.pointcloud");
+    max_lat_margin_for_stop =
+      getOrDeclareParameter<double>(node, "obstacle_filtering.stop.max_lat_margin");
+    max_lat_margin_for_stop_against_unknown =
+      getOrDeclareParameter<double>(node, "obstacle_filtering.stop.max_lat_margin_against_unknown");
+    max_lat_margin_for_slow_down =
+      getOrDeclareParameter<double>(node, "obstacle_filtering.slow_down.max_lat_margin");
     inside_stop_object_types =
       utils::get_target_object_type(node, "obstacle_stop.obstacle_filtering.object_type.inside.");
     outside_stop_object_types =
       utils::get_target_object_type(node, "obstacle_stop.obstacle_filtering.object_type.outside.");
-    use_pointcloud =
-      getOrDeclareParameter<bool>(node, "obstacle_stop.obstacle_filtering.object_type.pointcloud");
 
     obstacle_velocity_threshold_to_stop = getOrDeclareParameter<double>(
       node, "obstacle_stop.obstacle_filtering.obstacle_velocity_threshold_to_stop");
