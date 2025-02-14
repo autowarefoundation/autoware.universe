@@ -16,7 +16,6 @@
 #define AUTOWARE__CUDA_POINTCLOUD_PREPROCESSOR__ORGANIZE_KERNELS_HPP_
 
 #include "autoware/cuda_pointcloud_preprocessor/point_types.hpp"
-#include "autoware/cuda_pointcloud_preprocessor/types.hpp"
 
 #include <cuda_runtime.h>
 
