@@ -291,7 +291,8 @@ std::vector<PlannerData::Object> ObstacleSlowDownModule::convert_to_obstacles(
       std::optional<geometry_msgs::msg::Point> slow_down_back_collision_point = std::nullopt;
 
       for (const auto & index : cluster_indices.indices) {
-        const auto obstacle_point = autoware::motion_velocity_planner::utils::toGeomPoint(filtered_points_ptr->points[index]);
+        const auto obstacle_point =
+          autoware::motion_velocity_planner::utils::toGeomPoint(filtered_points_ptr->points[index]);
         const auto current_lat_dist_from_obstacle_to_traj =
           autoware::motion_utils::calcLateralOffset(traj_points, obstacle_point);
         const auto min_lat_dist_to_traj_poly =
@@ -361,12 +362,11 @@ VelocityPlanningResult ObstacleSlowDownModule::plan(
     planner_data->ego_nearest_dist_threshold, planner_data->ego_nearest_yaw_threshold,
     planner_data->trajectory_polygon_collision_check.decimate_trajectory_step_length, 0.0);
 
-  auto slow_down_obstacles_for_predicted_object =
-    filter_slow_down_obstacle_for_predicted_object(
-      planner_data->current_odometry, planner_data->ego_nearest_dist_threshold,
-      planner_data->ego_nearest_yaw_threshold, raw_trajectory_points, decimated_traj_points,
-      planner_data->objects, rclcpp::Time(planner_data->predicted_objects_header.stamp),
-      planner_data->vehicle_info_, planner_data->trajectory_polygon_collision_check);
+  auto slow_down_obstacles_for_predicted_object = filter_slow_down_obstacle_for_predicted_object(
+    planner_data->current_odometry, planner_data->ego_nearest_dist_threshold,
+    planner_data->ego_nearest_yaw_threshold, raw_trajectory_points, decimated_traj_points,
+    planner_data->objects, rclcpp::Time(planner_data->predicted_objects_header.stamp),
+    planner_data->vehicle_info_, planner_data->trajectory_polygon_collision_check);
 
   auto slow_down_obstacles_for_point_cloud = filter_slow_down_obstacle_for_point_cloud(
     planner_data->current_odometry, raw_trajectory_points, decimated_traj_points,

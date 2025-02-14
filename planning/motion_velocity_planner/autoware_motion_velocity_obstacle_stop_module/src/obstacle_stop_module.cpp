@@ -315,7 +315,8 @@ std::vector<PlannerData::Object> ObstacleStopModule::convert_to_obstacles(
       std::optional<geometry_msgs::msg::Point> slow_down_back_collision_point = std::nullopt;
 
       for (const auto & index : cluster_indices.indices) {
-        const auto obstacle_point = autoware::motion_velocity_planner::utils::toGeomPoint(filtered_points_ptr->points[index]);
+        const auto obstacle_point =
+          autoware::motion_velocity_planner::utils::toGeomPoint(filtered_points_ptr->points[index]);
         const auto current_lat_dist_from_obstacle_to_traj =
           autoware::motion_utils::calcLateralOffset(traj_points, obstacle_point);
         const auto min_lat_dist_to_traj_poly =
