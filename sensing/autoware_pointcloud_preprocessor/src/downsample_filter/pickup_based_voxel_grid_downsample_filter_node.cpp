@@ -72,6 +72,10 @@ PickupBasedVoxelGridDownsampleFilterComponent::PickupBasedVoxelGridDownsampleFil
   voxel_size_x_ = declare_parameter<float>("voxel_size_x");
   voxel_size_y_ = declare_parameter<float>("voxel_size_y");
   voxel_size_z_ = declare_parameter<float>("voxel_size_z");
+  if (voxel_size_x_ <= 0.0f || voxel_size_y_ <= 0.0f || voxel_size_z_ <= 0.0f) {
+    RCLCPP_ERROR("Invalid voxel sizes. They must be positive.");
+    rclcpp::shutdown();
+  }
 
   using std::placeholders::_1;
   set_param_res_ = this->add_on_set_parameters_callback(
@@ -90,6 +94,7 @@ void PickupBasedVoxelGridDownsampleFilterComponent::filter(
   // std::unordered_map<VoxelKey, size_t, VoxelKeyHash, VoxelKeyEqual> voxel_map;
   robin_hood::unordered_map<VoxelKey, size_t, VoxelKeyHash, VoxelKeyEqual> voxel_map;
 
+  if (input->data.empty()) return;
   voxel_map.reserve(input->data.size() / input->point_step);
 
   constexpr float large_num_offset = 100000.0;
