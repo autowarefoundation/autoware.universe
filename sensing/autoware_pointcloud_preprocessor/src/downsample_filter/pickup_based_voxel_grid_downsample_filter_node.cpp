@@ -72,6 +72,10 @@ PickupBasedVoxelGridDownsampleFilterComponent::PickupBasedVoxelGridDownsampleFil
   voxel_size_x_ = declare_parameter<float>("voxel_size_x");
   voxel_size_y_ = declare_parameter<float>("voxel_size_y");
   voxel_size_z_ = declare_parameter<float>("voxel_size_z");
+  if (voxel_size_x_ <= 0.0f || voxel_size_y_ <= 0.0f || voxel_size_z_ <= 0.0f) {
+    RCLCPP_ERROR("Some voxel sizes are 0. Those axes will not be used for downsampling.");
+    rclcpp::shutdown();
+  }
 
   using std::placeholders::_1;
   set_param_res_ = this->add_on_set_parameters_callback(
@@ -94,15 +98,9 @@ void PickupBasedVoxelGridDownsampleFilterComponent::filter(
 
   constexpr float large_num_offset = 100000.0;
   constexpr float max_inverse = 2000.0f;
-  const float inverse_voxel_size_x = (voxel_size_x_ > 0.0f) ? (1.0f / voxel_size_x_) : max_inverse;
-  const float inverse_voxel_size_y = (voxel_size_y_ > 0.0f) ? (1.0f / voxel_size_y_) : max_inverse;
-  const float inverse_voxel_size_z = (voxel_size_z_ > 0.0f) ? (1.0f / voxel_size_z_) : max_inverse;
-
-  if (voxel_size_x_ <= 0.0f || voxel_size_y_ <= 0.0f || voxel_size_z_ <= 0.0f) {
-    RCLCPP_ERROR_STREAM_THROTTLE(
-      get_logger(), *get_clock(), 1000,
-      "Some voxel sizes are 0. Those axes will not be used for downsampling.");
-  }
+  const float inverse_voxel_size_x = 1.0f / voxel_size_x_;
+  const float inverse_voxel_size_y = 1.0f / voxel_size_y_;
+  const float inverse_voxel_size_z = 1.0f / voxel_size_z_;
 
   const int x_offset = input->fields[pcl::getFieldIndex(*input, "x")].offset;
   const int y_offset = input->fields[pcl::getFieldIndex(*input, "y")].offset;
