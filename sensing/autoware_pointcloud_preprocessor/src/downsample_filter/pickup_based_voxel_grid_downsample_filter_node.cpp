@@ -97,7 +97,6 @@ void PickupBasedVoxelGridDownsampleFilterComponent::filter(
   voxel_map.reserve(input->data.size() / input->point_step);
 
   constexpr float large_num_offset = 100000.0;
-  constexpr float max_inverse = 2000.0f;
   const float inverse_voxel_size_x = 1.0f / voxel_size_x_;
   const float inverse_voxel_size_y = 1.0f / voxel_size_y_;
   const float inverse_voxel_size_z = 1.0f / voxel_size_z_;
