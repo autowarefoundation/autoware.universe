@@ -10,6 +10,7 @@
   <maintainer email="isamu.takagi@tier4.jp">Takagi, Isamu</maintainer>
   <maintainer email="fumiya.watanabe@tier4.jp">Fumiya Watanabe</maintainer>
   <maintainer email="mamoru.sobue@tier4.jp">Mamoru Sobue</maintainer>
+  <maintainer email="lxg19892021@gmail.com">Xingang Liu</maintainer>
 
   <license>Apache License 2.0</license>
 
@@ -31,6 +32,7 @@
   <depend>autoware_planning_msgs</depend>
   <depend>autoware_route_handler</depend>
   <depend>autoware_universe_utils</depend>
+  <depend>autoware_utils</depend>
   <depend>autoware_vehicle_info_utils</depend>
   <depend>autoware_velocity_smoother</depend>
   <depend>diagnostic_msgs</depend>
