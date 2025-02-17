@@ -30,6 +30,8 @@
   <depend>tf2_ros</depend>
   <depend>visualization_msgs</depend>
 
+  <exec_depend>autoware_global_parameter_loader</exec_depend>
+
   <test_depend>ament_cmake_ros</test_depend>
   <test_depend>ament_index_python</test_depend>
   <test_depend>ament_lint_auto</test_depend>
