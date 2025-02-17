@@ -15,6 +15,7 @@
 
   <depend>autoware_test_utils</depend>
   <depend>autoware_universe_utils</depend>
+  <depend>cgal</depend>
   <depend>cv_bridge</depend>
   <depend>geometry_msgs</depend>
   <depend>libopencv-dev</depend>
