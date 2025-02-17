@@ -48,14 +48,7 @@ This feature breaks the generality of the graph and may be changed to a plugin o
 | publisher      | `/system/operation_mode/availability` | `tier4_system_msgs/msg/OperationModeAvailability` | Operation mode availability.       |
 
 ## Parameters
-
-| Parameter Name                    | Data Type | Description                                |
-| --------------------------------- | --------- | ------------------------------------------ |
-| `graph_file`                      | `string`  | Path of the config file.                   |
-| `rate`                            | `double`  | Rate of aggregation and topic publication. |
-| `input_qos_depth`                 | `uint`    | QoS depth of input array topic.            |
-| `graph_qos_depth`                 | `uint`    | QoS depth of output graph topic.           |
-| `use_operation_mode_availability` | `bool`    | Use operation mode availability publisher. |
+{{ json_to_markdown("system/diagnostic_graph_aggregator/schema/default.schema.json") }}
 
 ## Examples
 
