@@ -72,10 +72,6 @@ PickupBasedVoxelGridDownsampleFilterComponent::PickupBasedVoxelGridDownsampleFil
   voxel_size_x_ = declare_parameter<float>("voxel_size_x");
   voxel_size_y_ = declare_parameter<float>("voxel_size_y");
   voxel_size_z_ = declare_parameter<float>("voxel_size_z");
-  if (voxel_size_x_ <= 0.0f || voxel_size_y_ <= 0.0f || voxel_size_z_ <= 0.0f) {
-    RCLCPP_ERROR("Invalid voxel sizes. They must be positive.");
-    rclcpp::shutdown();
-  }
 
   using std::placeholders::_1;
   set_param_res_ = this->add_on_set_parameters_callback(
