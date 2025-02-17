@@ -1446,6 +1446,8 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsCandidate(
     return stop_path;
   }
 
+  // NOTE: following block is intentionally duty to refactor only necesary block from
+  // planAsCandidate/planAsOutput/setOutput
   BehaviorModuleOutput pull_over_output{};
   {
     auto pull_over_path_with_velocity_opt = context_data.pull_over_path_opt;
@@ -1505,8 +1507,6 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsCandidate(
 
     // set output and status
     {
-      pull_over_output.reference_path = getPreviousModuleOutput().reference_path;
-
       if (!pull_over_path_with_velocity_opt) {
         // situation : not safe against static objects use stop_path
         // TODO(soblin): goal_candidates_.empty() is impossible
@@ -1514,7 +1514,6 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsCandidate(
           context_data, (goal_candidates_.empty() ? "no goal candidate" : "no static safe path"));
         RCLCPP_INFO_THROTTLE(
           getLogger(), *clock_, 5000, "Not found safe pull_over path, generate stop path");
-        setDrivableAreaInfo(context_data, pull_over_output);
       } else {
         const auto & pull_over_path = pull_over_path_with_velocity_opt.value();
         if (!context_data.is_stable_safe_path && isActivated()) {
@@ -1535,24 +1534,6 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsCandidate(
         }
 
         setModifiedGoal(context_data, pull_over_output);
-        setDrivableAreaInfo(context_data, pull_over_output);
-
-        // set hazard and turn signal
-        if (
-          path_decision_controller_.get_current_state().state ==
-            PathDecisionState::DecisionKind::DECIDED &&
-          isActivated()) {
-          setTurnSignalInfo(context_data, pull_over_output);
-        }
-      }
-    }
-
-    // return to lane parking if it is possible
-    if (is_freespace && canReturnToLaneParking(context_data)) {
-      if (pull_over_path_with_velocity_opt) {
-        context_data.pull_over_path_opt = pull_over_path_with_velocity_opt;
-        context_data.last_path_update_time = clock_->now();
-        context_data.last_path_idx_increment_time = std::nullopt;
       }
     }
 
