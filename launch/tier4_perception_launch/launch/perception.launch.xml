@@ -35,6 +35,7 @@
   <arg name="occupancy_grid_map_updater"/>
   <arg name="occupancy_grid_map_updater_param_path"/>
   <arg name="traffic_light_arbiter_param_path"/>
+  <arg name="traffic_light_multi_camera_fusion_param_path"/>
   <arg name="lidar_detection_model"/>
 
   <!-- ML model parameters -->
@@ -310,6 +311,7 @@
         <arg name="fusion_only" value="$(var traffic_light_recognition/fusion_only)"/>
         <arg name="all_camera_namespaces" value="$(var all_traffic_light_camera)"/>
         <arg name="traffic_light_arbiter_param_path" value="$(var traffic_light_arbiter_param_path)"/>
+        <arg name="traffic_light_multi_camera_fusion_param_path" value="$(var traffic_light_multi_camera_fusion_param_path)"/>
         <arg name="traffic_light_fine_detector_model_path" value="$(var traffic_light_fine_detector_model_path)"/>
         <arg name="traffic_light_fine_detector_model_name" value="$(var traffic_light_fine_detector_model_name)"/>
         <arg name="traffic_light_classifier_model_path" value="$(var traffic_light_classifier_model_path)"/>

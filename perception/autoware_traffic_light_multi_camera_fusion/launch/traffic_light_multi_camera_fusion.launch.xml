@@ -7,6 +7,6 @@
   <node pkg="autoware_traffic_light_multi_camera_fusion" exec="traffic_light_multi_camera_fusion_node" name="traffic_light_multi_camera_fusion" output="screen">
     <remap from="~/input/vector_map" to="$(var input/vector_map)"/>
     <remap from="~/output/traffic_signals" to="$(var output/traffic_signals)"/>
-    <param from="$(var param_path)"/>
+    <param from="$(var param_path)" allow_substs="true"/>
   </node>
 </launch>
