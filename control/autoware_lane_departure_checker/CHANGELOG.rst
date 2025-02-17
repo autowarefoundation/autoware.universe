@@ -2,6 +2,19 @@
 Changelog for package autoware_lane_departure_checker
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* refactor(lane_departure_checker): improve LaneDepartureChecker initialization and parameter handling (`#9791 <https://github.com/autowarefoundation/autoware.universe/issues/9791>`_)
+  * refactor(lane_departure_checker): improve LaneDepartureChecker initialization and parameter handling
+  ---------
+* feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in fil… (`#9846 <https://github.com/autowarefoundation/autoware.universe/issues/9846>`_)
+  * feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in files ontrol/autoware_mpc_lateral_controller
+  * style(pre-commit): autofix
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* Contributors: Fumiya Watanabe, Kyoichi Sugahara, Vishal Chauhan
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

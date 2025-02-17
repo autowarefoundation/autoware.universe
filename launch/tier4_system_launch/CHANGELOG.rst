@@ -2,6 +2,81 @@
 Changelog for package tier4_system_launch
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat: apply `autoware` prefix for `component_state_monitor` and its dependencies (`#9961 <https://github.com/autowarefoundation/autoware.universe/issues/9961>`_)
+* feat: apply `autoware\_` prefix for `hazard_status_converter` (`#9971 <https://github.com/autowarefoundation/autoware.universe/issues/9971>`_)
+* feat: apply `autoware\_` prefix for `system_monitor` (`#10017 <https://github.com/autowarefoundation/autoware.universe/issues/10017>`_)
+  * feat(system_monitor): apply `autoware\_` prefix (see below):
+  * The `system_monitor` operates independently from other modules in `autoware.universe`, so the `autoware\_` prefix is added only to the package name.
+  * The `autoware::` namespace is not used because C language does not support namespaces.
+  * Headers are not moved under `include/autoware` to maintain compatibility for use outside the `autoware` context.
+  * For users utilizing this package within `autoware.universe`, only the package name includes the `autoware\_` prefix.
+  This approach explains the unique namespacing and naming conventions for `system_monitor` compared to other packages.
+  * bug(system_monitor): fix missing package name update
+  * rename: `system_monitor` => `autoware_system_monitor`
+  * style(pre-commit): autofix
+  * update: `CODEOWNERS`
+  * bug(autoware_system_monitor): apply missing fix
+  * update: `CODEOWNERS`
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* feat: apply `autoware\_` prefix for `mrm_comfortable_stop_operator` (`#10011 <https://github.com/autowarefoundation/autoware.universe/issues/10011>`_)
+  * feat(mrm_comfortable_stop_operator): apply `autoware\_` prefix (see below):
+  Note:
+  * In this commit, I did not organize a folder structure.
+  The folder structure will be organized in the next some commits.
+  * The changes will follow the Autoware's guideline as below:
+  - https://autowarefoundation.github.io/autoware-documentation/main/contributing/coding-guidelines/ros-nodes/directory-structure/#package-folder
+  * rename(mrm_comfortable_stop_operator): move a header under `include/autoware`
+  * Fixes due to this changes for .hpp/.cpp files will be applied in the next commit
+  * fix(mrm_comfortable_stop_operator): fix include header path
+  * To follow the previous commit
+  * rename: `mrm_comfortable_stop_operator` => `autoware_mrm_comfortable_stop_operator`
+  * update: `CODEOWNERS`
+  ---------
+* feat: apply `autoware\_` prefix for `mrm_emergency_stop_operator` (`#9973 <https://github.com/autowarefoundation/autoware.universe/issues/9973>`_)
+  * feat(mrm_emergency_stop_operator): apply `autoware\_` prefix (see below):
+  Note:
+  * In this commit, I did not organize a folder structure.
+  The folder structure will be organized in the next some commits.
+  * The changes will follow the Autoware's guideline as below:
+  - https://autowarefoundation.github.io/autoware-documentation/main/contributing/coding-guidelines/ros-nodes/directory-structure/#package-folder
+  * rename(mrm_emergency_stop_operator): move a header under `include/autoware`:
+  * Fixes due to this changes for .hpp/.cpp files will be applied in the next commit
+  * fix(mrm_emergency_stop_operator): fix include header path
+  * To follow the previous commit
+  * rename: `mrm_emergency_stop_operator` => `autoware_mrm_emergency_stop_operator`
+  * bug(autoware_mrm_emergency_stop_operator): revert wrongly updated copyrights
+  * bug(tier4_system_launch): fix a missing `autoware\_` for `mrm_emergency_stop_operator`
+  * bug(autoware_mrm_emergency_stop_operator): fix critical bugs that contaminate topic names
+  ---------
+* feat: apply `autoware\_` prefix for `mrm_handler` (`#9974 <https://github.com/autowarefoundation/autoware.universe/issues/9974>`_)
+  * feat(mrm_handler): apply `autoware\_` prefix (see below):
+  Note:
+  * In this commit, I did not organize a folder structure.
+  The folder structure will be organized in the next some commits.
+  * The changes will follow the Autoware's guideline as below:
+  - https://autowarefoundation.github.io/autoware-documentation/main/contributing/coding-guidelines/ros-nodes/directory-structure/#package-folder
+  * rename(mrm_handler): move a header under `include/autoware`:
+  * Fixes due to this changes for .hpp/.cpp files will be applied in the next commit
+  * fix(mrm_handler): fix include header path
+  * To follow the previous commit
+  * rename: `mrm_handler` => `autoware_mrm_handler`
+  * bug(tier4_system_launch): fix a missing `autoware\_` for `mrm_handler`
+  * bug(mrm_handler): revert wrongly updated copyrights
+  * update(mrm_handler): `README.md`
+  * bug(autoware_mrm_handler): fix a critical bug that contaminates topic name
+  ---------
+* fix(launch): fix missing changes for launch (`#10007 <https://github.com/autowarefoundation/autoware.universe/issues/10007>`_)
+  bug(launch): fix missing changes for following PRs:
+  * https://github.com/autowarefoundation/autoware.universe/pull/9956
+  * https://github.com/autowarefoundation/autoware.universe/pull/9970
+* fix(tier4_system_launch): add autoware prefix to dummy diag publisher launcher (`#9959 <https://github.com/autowarefoundation/autoware.universe/issues/9959>`_)
+  fix: add autoare\_ to dummy_diag_publisher
+* Contributors: Fumiya Watanabe, Junya Sasaki, TetsuKawa
+
 0.40.0 (2024-12-12)
 -------------------
 * Revert "chore(package.xml): bump version to 0.39.0 (`#9587 <https://github.com/autowarefoundation/autoware.universe/issues/9587>`_)"
