@@ -31,7 +31,11 @@ autoware_map_msgs::msg::MapProjectorInfo load_info_from_lanelet2_map(const std::
   lanelet::projection::MGRSProjector projector{};
   const lanelet::LaneletMapPtr map = lanelet::load(filename, projector, &errors);
   if (!errors.empty()) {
-    throw std::runtime_error("Error occurred while loading lanelet2 map");
+    std::string error_message = "Error occurred while loading lanelet2 map:\n";
+    for (const auto & err : errors) {
+      error_message += "- " + err + "\n";
+    }
+    throw std::runtime_error(error_message);
   }
 
   // If the lat & lon values in all the points of lanelet2 map are all zeros,
