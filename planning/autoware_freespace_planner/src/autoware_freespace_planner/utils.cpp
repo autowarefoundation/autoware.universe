@@ -15,6 +15,8 @@
 #include "autoware/freespace_planner/utils.hpp"
 
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/geometry/pose_deviation.hpp>
 
 #include <deque>
 #include <vector>

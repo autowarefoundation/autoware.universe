@@ -17,6 +17,7 @@
 #include <autoware/motion_utils/marker/marker_helper.hpp>
 #include <autoware/motion_utils/resample/resample.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/geometry/pose_deviation.hpp>
 #include <autoware/universe_utils/math/unit_conversion.hpp>
 #include <tf2_eigen/tf2_eigen.hpp>
 
