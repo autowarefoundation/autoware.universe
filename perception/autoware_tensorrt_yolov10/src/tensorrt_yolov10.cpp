@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "cuda_utils/cuda_check_error.hpp"
-#include "cuda_utils/cuda_unique_ptr.hpp"
+#include "autoware/cuda_utils/cuda_check_error.hpp"
+#include "autoware/cuda_utils/cuda_unique_ptr.hpp"
 
 #include <autoware/tensorrt_yolov10/calibrator.hpp>
 #include <autoware/tensorrt_yolov10/preprocess.hpp>
@@ -111,11 +111,15 @@ std::vector<std::string> loadImageList(const std::string & filename, const std::
 namespace autoware::tensorrt_yolov10
 {
 TrtYolov10::TrtYolov10(
-  const std::string & model_path, const std::string & precision, const int num_class,
-  const float score_threshold, const tensorrt_common::BuildConfig build_config,
-  const bool use_gpu_preprocess, const uint8_t gpu_id, std::string calibration_image_list_path,
-  const double norm_factor, [[maybe_unused]] const std::string & cache_dir,
-  const tensorrt_common::BatchConfig & batch_config, const size_t max_workspace_size)
+    TrtCommonConfig & trt_config, 
+    const int num_class,
+    const float score_threshold,
+    const bool use_gpu_preprocess,
+    const uint8_t gpu_id,
+    std::string calibration_image_list_path,
+    const double norm_factor,
+    [[maybe_unused]] const std::string & cache_dir,
+    const CalibrationConfig & calib_config)
 : gpu_id_(gpu_id), is_gpu_initialized_(false)
 {
   if (!setCudaDeviceId(gpu_id_)) {
@@ -129,12 +133,28 @@ TrtYolov10::TrtYolov10(
   src_width_ = -1;
   src_height_ = -1;
   norm_factor_ = norm_factor;
-  batch_size_ = batch_config[2];
   multitask_ = 0;
   stream_ = makeCudaStream();
 
-  if (precision == "int8") {
-    if (build_config.clip_value <= 0.0) {
+  trt_common_ = std::make_unique<TrtConvCalib>(trt_config);
+
+  const auto network_input_dims = trt_common_->getTensorShape(0);
+  batch_size_ = network_input_dims.d[0];
+  const auto input_channel = network_input_dims.d[1];
+  const auto input_height = network_input_dims.d[2];
+  const auto input_width = network_input_dims.d[3];
+
+  auto profile_dims_ptr = std::make_unique<std::vector<autoware::tensorrt_common::ProfileDims>>();
+
+  std::vector<autoware::tensorrt_common::ProfileDims> profile_dims{
+    autoware::tensorrt_common::ProfileDims(
+      0, {4, {batch_size_, input_channel, input_height, input_width}},
+      {4, {batch_size_, input_channel, input_height, input_width}},
+      {4, {batch_size_, input_channel, input_height, input_width}})};
+  *profile_dims_ptr = profile_dims;
+
+  if (trt_config.precision == "int8") {
+    if (calib_config.clip_value <= 0.0) {
       if (calibration_image_list_path.empty()) {
         throw std::runtime_error(
           "calibration_image_list_path should be passed to generate int8 engine "
@@ -145,19 +165,17 @@ TrtYolov10::TrtYolov10(
       calibration_image_list_path = "";
     }
 
-    int max_batch_size = batch_size_;
-    nvinfer1::Dims input_dims = tensorrt_common::get_input_dims(model_path);
     std::vector<std::string> calibration_images;
     if (calibration_image_list_path != "") {
       calibration_images = loadImageList(calibration_image_list_path, "");
     }
-    tensorrt_yolov10::ImageStream stream(max_batch_size, input_dims, calibration_images);
-    fs::path calibration_table{model_path};
+    tensorrt_yolov10::ImageStream stream(batch_size_, network_input_dims, calibration_images);
+    fs::path calibration_table{trt_config.onnx_path};
     std::string ext = "";
-    if (build_config.calib_type_str == "Entropy") {
+    if (calib_config.calib_type_str == "Entropy") {
       ext = "EntropyV2-";
     } else if (
-      build_config.calib_type_str == "Legacy" || build_config.calib_type_str == "Percentile") {
+      calib_config.calib_type_str == "Legacy" || calib_config.calib_type_str == "Percentile") {
       ext = "Legacy-";
     } else {
       ext = "MinMax-";
@@ -165,17 +183,17 @@ TrtYolov10::TrtYolov10(
 
     ext += "calibration.table";
     calibration_table.replace_extension(ext);
-    fs::path histogram_table{model_path};
+    fs::path histogram_table{trt_config.onnx_path};
     ext = "histogram.table";
     histogram_table.replace_extension(ext);
 
     std::unique_ptr<nvinfer1::IInt8Calibrator> calibrator;
-    if (build_config.calib_type_str == "Entropy") {
+    if (calib_config.calib_type_str == "Entropy") {
       calibrator.reset(
         new tensorrt_yolov10::Int8EntropyCalibrator(stream, calibration_table, norm_factor_));
 
     } else if (
-      build_config.calib_type_str == "Legacy" || build_config.calib_type_str == "Percentile") {
+      calib_config.calib_type_str == "Legacy" || calib_config.calib_type_str == "Percentile") {
       const double quantile = 0.999999;
       const double cutoff = 0.999999;
       calibrator.reset(new tensorrt_yolov10::Int8LegacyCalibrator(
@@ -184,32 +202,30 @@ TrtYolov10::TrtYolov10(
       calibrator.reset(
         new tensorrt_yolov10::Int8MinMaxCalibrator(stream, calibration_table, norm_factor_));
     }
-    trt_common_ = std::make_unique<tensorrt_common::TrtCommon>(
-      model_path, precision, std::move(calibrator), batch_config, max_workspace_size, build_config);
+    if (!trt_common_->setupWithCalibrator(
+          std::move(calibrator), calib_config, std::move((profile_dims_ptr)))) {
+      throw std::runtime_error("Failed to setup TensorRT engine with calibrator");
+    }
+
   } else {
-    trt_common_ = std::make_unique<tensorrt_common::TrtCommon>(
-      model_path, precision, nullptr, batch_config, max_workspace_size, build_config);
+    if (!trt_common_->setup(std::move(profile_dims_ptr))) {
+      throw std::runtime_error("Failed to setup TensorRT engine");
+    }
   }
-  trt_common_->setup();
 
-  if (!trt_common_->isInitialized()) {
-    return;
-  }
-  num_class_ = num_class;
-  score_threshold_ = score_threshold;
-
+  
   // GPU memory allocation
-  const auto input_dims = trt_common_->getBindingDimensions(0);
+  const auto input_dims = trt_common_->getTensorShape(0);
   const auto input_size =
     std::accumulate(input_dims.d + 1, input_dims.d + input_dims.nbDims, 1, std::multiplies<int>());
 
-  const auto output_dims = trt_common_->getBindingDimensions(1);
-  input_d_ = cuda_utils::make_unique<float[]>(batch_config[2] * input_size);
+  const auto output_dims = trt_common_->getTensorShape(1);
+  input_d_ = cuda_utils::make_unique<float[]>(batch_size_ * input_size);
   max_detections_ = output_dims.d[1];
   out_elem_num_ = std::accumulate(
     output_dims.d + 1, output_dims.d + output_dims.nbDims, 1, std::multiplies<int>());
-  out_elem_num_ = out_elem_num_ * batch_config[2];
-  out_elem_num_per_batch_ = static_cast<int>(out_elem_num_ / batch_config[2]);
+  out_elem_num_ = out_elem_num_ * batch_size_;
+  out_elem_num_per_batch_ = static_cast<int>(out_elem_num_ / batch_size_);
   out_d_ = cuda_utils::make_unique<float[]>(out_elem_num_);
   out_h_ = cuda_utils::make_unique_host<float[]>(out_elem_num_, cudaHostAllocPortable);
 
@@ -318,10 +334,6 @@ bool TrtYolov10::doInference(const std::vector<cv::Mat> & images, ObjectArrays &
     return false;
   }
 
-  if (!trt_common_->isInitialized()) {
-    return false;
-  }
-
   std::vector<float> input_data(640 * 640 * 3);
   preprocess(images, input_data);
   CHECK_CUDA_ERROR(cudaMemcpy(
@@ -335,7 +347,12 @@ bool TrtYolov10::feedforward(const std::vector<cv::Mat> & images, ObjectArrays &
   //   PRINT_DEBUG_INFO
   std::vector<void *> buffers = {input_d_.get(), out_d_.get()};
 
-  trt_common_->enqueueV2(buffers.data(), *stream_, nullptr);
+//   trt_common_->enqueueV2(buffers.data(), *stream_, nullptr);
+
+  if (!trt_common_->setTensorsAddresses(buffers)) {
+    return false;
+  }
+  trt_common_->enqueueV3(*stream_);
 
   //   printf("out_elem_num_:%d\n", (int)out_elem_num_);
   CHECK_CUDA_ERROR(cudaMemcpyAsync(

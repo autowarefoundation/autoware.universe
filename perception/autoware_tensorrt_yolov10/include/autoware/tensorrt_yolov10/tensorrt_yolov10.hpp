@@ -16,8 +16,9 @@
 #define AUTOWARE__TENSORRT_YOLOV10__TENSORRT_YOLOV10_HPP_
 
 #include <autoware/tensorrt_common/tensorrt_common.hpp>
-#include <cuda_utils/cuda_unique_ptr.hpp>
-#include <cuda_utils/stream_unique_ptr.hpp>
+#include <autoware/tensorrt_common/tensorrt_conv_calib.hpp>
+#include <autoware/cuda_utils/cuda_unique_ptr.hpp>
+#include <autoware/cuda_utils/stream_unique_ptr.hpp>
 #include <opencv2/opencv.hpp>
 
 #include <memory>
@@ -26,10 +27,10 @@
 
 namespace autoware::tensorrt_yolov10
 {
-using cuda_utils::CudaUniquePtr;
-using cuda_utils::CudaUniquePtrHost;
-using cuda_utils::makeCudaStream;
-using cuda_utils::StreamUniquePtr;
+using autoware::cuda_utils::CudaUniquePtr;
+using autoware::cuda_utils::CudaUniquePtrHost;
+using autoware::cuda_utils::makeCudaStream;
+using autoware::cuda_utils::StreamUniquePtr;
 
 struct Object
 {
@@ -43,19 +44,28 @@ struct Object
 
 using ObjectArray = std::vector<Object>;
 using ObjectArrays = std::vector<ObjectArray>;
+using autoware::tensorrt_common::CalibrationConfig;
+using autoware::tensorrt_common::NetworkIOPtr;
+using autoware::tensorrt_common::ProfileDimsPtr;
+using autoware::tensorrt_common::Profiler;
+using autoware::tensorrt_common::TrtCommon;
+using autoware::tensorrt_common::TrtCommonConfig;
+using autoware::tensorrt_common::TrtConvCalib;
 
 class TrtYolov10
 {
 public:
   TrtYolov10(
-    const std::string & model_path, const std::string & precision, const int num_class = 8,
+    TrtCommonConfig & trt_config, 
+    const int num_class = 8,
     const float score_threshold = 0.8,
-    const tensorrt_common::BuildConfig build_config = tensorrt_common::BuildConfig(),
-    const bool use_gpu_preprocess = false, const uint8_t gpu_id = 0,
-    std::string calibration_image_list_file = std::string(), const double norm_factor = 1.0,
+    const bool use_gpu_preprocess = false,
+    const uint8_t gpu_id = 0,
+    std::string calibration_image_list_path = std::string(),
+    const double norm_factor = 1.0,
     [[maybe_unused]] const std::string & cache_dir = "",
-    const tensorrt_common::BatchConfig & batch_config = {1, 1, 1},
-    const size_t max_workspace_size = (1 << 30));
+    const CalibrationConfig & calib_config = CalibrationConfig()
+    );
 
   ~TrtYolov10();
 
@@ -100,7 +110,7 @@ public:
 
   bool feedforward(const std::vector<cv::Mat> & images, ObjectArrays & objects);
 
-  std::unique_ptr<tensorrt_common::TrtCommon> trt_common_;
+  std::unique_ptr<TrtConvCalib> trt_common_;
 
   std::vector<float> input_h_;
   CudaUniquePtr<float[]> input_d_;

@@ -48,7 +48,10 @@ TrtYolov10Node::TrtYolov10Node(const rclcpp::NodeOptions & node_options)
   const uint8_t gpu_id = this->declare_parameter<uint8_t>("gpu_id", 0);
   const std::string label_path = this->declare_parameter<std::string>("label_path");
 
-  trt_yolov10_ = std::make_unique<tensorrt_yolov10::TrtYolov10>(model_path, precision);
+  TrtCommonConfig trt_config(
+    model_path, precision, "", (1ULL << 30U));
+
+  trt_yolov10_ = std::make_unique<tensorrt_yolov10::TrtYolov10>(trt_config);
 
   if (!readLabelFile(label_path)) {
     RCLCPP_ERROR(this->get_logger(), "Could not find label file");

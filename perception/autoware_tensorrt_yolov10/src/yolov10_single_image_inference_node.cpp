@@ -53,7 +53,8 @@ public:
       declare_parameter("output_image_path", p.string() + "_detect" + ext);
 
     printf("model_path:%s,output_image_path:%s\n", model_path.c_str(), output_image_path.c_str());
-    auto trt_yolov10 = std::make_unique<tensorrt_yolov10::TrtYolov10>(model_path, precision);
+    TrtCommonConfig trt_config(model_path, precision, "", (1ULL << 30U));
+    auto trt_yolov10 = std::make_unique<tensorrt_yolov10::TrtYolov10>(trt_config);
     auto image = cv::imread(image_path);
     tensorrt_yolov10::ObjectArrays objects;
 
