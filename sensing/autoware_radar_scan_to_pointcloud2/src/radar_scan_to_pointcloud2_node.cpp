@@ -106,7 +106,7 @@ RadarScanToPointcloud2Node::RadarScanToPointcloud2Node(const rclcpp::NodeOptions
   node_param_.publish_amplitude_pointcloud =
     declare_parameter<bool>("publish_amplitude_pointcloud");
   node_param_.publish_doppler_pointcloud = declare_parameter<bool>("publish_doppler_pointcloud");
-  node_param_.max_queue_size = declare_parameter<long>("max_queue_size");
+  node_param_.max_queue_size = declare_parameter<int64_t>("max_queue_size");
 
   // Subscriber
   sub_radar_ = create_subscription<RadarScan>(
