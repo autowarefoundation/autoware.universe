@@ -16,7 +16,7 @@
 
 #include "autoware/behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
-#include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware_utils/geometry/geometry.hpp"
 #include "autoware_lanelet2_extension/utility/query.hpp"
 
 #include <autoware_planning_msgs/msg/path_point.hpp>
@@ -50,9 +50,9 @@ size_t calcPointIndexFromSegmentIndex(
   const size_t next_point_idx = seg_idx + 1;
 
   const double prev_dist =
-    autoware::universe_utils::calcDistance2d(point, points.at(prev_point_idx));
+    autoware_utils::calc_distance2d(point, points.at(prev_point_idx));
   const double next_dist =
-    autoware::universe_utils::calcDistance2d(point, points.at(next_point_idx));
+    autoware_utils::calc_distance2d(point, points.at(next_point_idx));
 
   if (prev_dist < next_dist) {
     return prev_point_idx;
@@ -66,7 +66,7 @@ PathPoint getLerpPathPointWithLaneId(const PathPoint p0, const PathPoint p1, con
 {
   auto lerp = [](const double a, const double b, const double t) { return a + t * (b - a); };
   PathPoint p;
-  p.pose = autoware::universe_utils::calcInterpolatedPose(p0, p1, ratio);
+  p.pose = autoware_utils::calc_interpolated_pose(p0, p1, ratio);
   const double v = lerp(p0.longitudinal_velocity_mps, p1.longitudinal_velocity_mps, ratio);
   p.longitudinal_velocity_mps = static_cast<float>(v);
   return p;
@@ -88,7 +88,7 @@ geometry_msgs::msg::Pose transformRelCoordinate2D(
   res.position.y = ((-1.0) * std::sin(yaw) * trans_p.x) + (std::cos(yaw) * trans_p.y);
   res.position.z = target.position.z - origin.position.z;
   res.orientation =
-    autoware::universe_utils::createQuaternionFromYaw(tf2::getYaw(target.orientation) - yaw);
+    autoware_utils::create_quaternion_from_yaw(tf2::getYaw(target.orientation) - yaw);
 
   return res;
 }
@@ -98,8 +98,8 @@ geometry_msgs::msg::Pose transformRelCoordinate2D(
 namespace autoware::behavior_velocity_planner::planning_utils
 {
 using autoware::motion_utils::calcSignedArcLength;
-using autoware::universe_utils::calcDistance2d;
-using autoware::universe_utils::calcOffsetPose;
+using autoware_utils::calcDistance2d;
+using autoware_utils::calcOffsetPose;
 using autoware_planning_msgs::msg::PathPoint;
 
 size_t calcSegmentIndexFromPointIndex(
@@ -312,7 +312,7 @@ geometry_msgs::msg::Pose getAheadPose(
   for (size_t i = start_idx; i < path.points.size() - 1; ++i) {
     const geometry_msgs::msg::Pose p0 = path.points.at(i).point.pose;
     const geometry_msgs::msg::Pose p1 = path.points.at(i + 1).point.pose;
-    curr_dist += autoware::universe_utils::calcDistance2d(p0, p1);
+    curr_dist += autoware_utils::calc_distance2d(p0, p1);
     if (curr_dist > ahead_dist) {
       const double dl = std::max(curr_dist - prev_dist, 0.0001 /* avoid 0 divide */);
       const double w_p0 = (curr_dist - ahead_dist) / dl;
@@ -625,7 +625,7 @@ std::optional<geometry_msgs::msg::Pose> insertDecelPoint(
     output.points.at(i).point.longitudinal_velocity_mps =
       std::min(original_velocity, target_velocity);
   }
-  return autoware::universe_utils::getPose(output.points.at(insert_idx.value()));
+  return autoware_utils::get_pose(output.points.at(insert_idx.value()));
 }
 
 // TODO(murooka): remove this function for u-turn and crossing-path
@@ -641,7 +641,7 @@ std::optional<geometry_msgs::msg::Pose> insertStopPoint(
     return {};
   }
 
-  return autoware::universe_utils::getPose(output.points.at(insert_idx.value()));
+  return autoware_utils::get_pose(output.points.at(insert_idx.value()));
 }
 
 std::optional<geometry_msgs::msg::Pose> insertStopPoint(
@@ -654,7 +654,7 @@ std::optional<geometry_msgs::msg::Pose> insertStopPoint(
     return {};
   }
 
-  return autoware::universe_utils::getPose(output.points.at(insert_idx.value()));
+  return autoware_utils::get_pose(output.points.at(insert_idx.value()));
 }
 
 std::set<lanelet::Id> getAssociativeIntersectionLanelets(
