@@ -7,12 +7,9 @@
       "type": "object",
       "properties": {
         "camera_namespaces": {
-          "type": "array",
+          "type": "string",
           "description": "Camera namespaces to be fused.",
-          "items": {
-            "type": "string"
-          },
-          "default": []
+          "default": "[]"
         },
         "message_lifespan": {
           "type": "number",
