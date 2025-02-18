@@ -75,7 +75,7 @@ RadarThresholdFilterNode::RadarThresholdFilterNode(const rclcpp::NodeOptions & n
   node_param_.is_z_filter = declare_parameter<bool>("node_params.is_z_filter");
   node_param_.z_min = declare_parameter<double>("node_params.z_min");
   node_param_.z_max = declare_parameter<double>("node_params.z_max");
-  node_param_.max_queue_size = declare_parameter<long>("node_params.max_queue_size");
+  node_param_.max_queue_size = declare_parameter<int64_t>("node_params.max_queue_size");
 
   // Subscriber
   sub_radar_ = create_subscription<RadarScan>(
