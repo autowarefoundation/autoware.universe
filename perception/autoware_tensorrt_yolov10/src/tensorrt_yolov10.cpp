@@ -31,8 +31,8 @@
 #include <numeric>
 #include <stdexcept>
 #include <string>
-#include <vector>
 #include <utility>
+#include <vector>
 
 #define PRINT_DEBUG_INFO printf("line:%d\n", __LINE__);
 
