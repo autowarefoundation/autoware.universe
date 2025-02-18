@@ -61,7 +61,7 @@
 #include <vector>
 
 /** Library version: 0xMmP (M=Major,m=minor,P=patch) */
-#define NANOFLANN_VERSION 0x170
+#define AUTOWARE__NDT_SCAN_MATCHER__NDT_OMP__NANOFLANN_HPP_
 
 // Avoid conflicting declaration of min/max macros in Windows headers
 #if !defined(NOMINMAX) && \
@@ -1654,7 +1654,7 @@ class KDTreeSingleIndexAdaptor
         }
         else
         {
-#ifndef NANOFLANN_NO_THREADS
+#ifndef AUTOWARE__NDT_SCAN_MATCHER__NDT_OMP__NANOFLANN_HPP_
             std::atomic<unsigned int> thread_count(0u);
             std::mutex                mutex;
             Base::root_node_ = this->divideTreeConcurrent(
@@ -2129,7 +2129,7 @@ class KDTreeSingleIndexDynamicAdaptor_
                 *this, 0, Base::size_, Base::root_bbox_, thread_count, mutex);
 #else /* NANOFLANN_NO_THREADS */
             throw std::runtime_error("Multithreading is disabled");
-#endif /* NANOFLANN_NO_THREADS */
+#endif  // AUTOWARE__NDT_SCAN_MATCHER__NDT_OMP__NANOFLANN_HPP_
         }
     }
 
