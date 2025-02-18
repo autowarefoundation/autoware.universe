@@ -6,11 +6,6 @@
     "autoware_traffic_light_multi_camera_fusion": {
       "type": "object",
       "properties": {
-        "camera_namespaces": {
-          "type": "string",
-          "description": "Camera namespaces to be fused.",
-          "default": "[]"
-        },
         "message_lifespan": {
           "type": "number",
           "description": "The maximum timestamp span to be fused.",

@@ -1,5 +1,4 @@
 /**:
   ros__parameters:
-    camera_namespaces: $(var all_traffic_light_camera)
     message_lifespan: 0.09
     approximate_sync: false
