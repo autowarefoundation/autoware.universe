@@ -15,10 +15,10 @@
 #ifndef AUTOWARE__TENSORRT_YOLOV10__TENSORRT_YOLOV10_HPP_
 #define AUTOWARE__TENSORRT_YOLOV10__TENSORRT_YOLOV10_HPP_
 
-#include <autoware/tensorrt_common/tensorrt_common.hpp>
-#include <autoware/tensorrt_common/tensorrt_conv_calib.hpp>
 #include <autoware/cuda_utils/cuda_unique_ptr.hpp>
 #include <autoware/cuda_utils/stream_unique_ptr.hpp>
+#include <autoware/tensorrt_common/tensorrt_common.hpp>
+#include <autoware/tensorrt_common/tensorrt_conv_calib.hpp>
 #include <opencv2/opencv.hpp>
 
 #include <memory>
@@ -56,16 +56,11 @@ class TrtYolov10
 {
 public:
   TrtYolov10(
-    TrtCommonConfig & trt_config, 
-    const int num_class = 8,
-    const float score_threshold = 0.8,
-    const bool use_gpu_preprocess = false,
-    const uint8_t gpu_id = 0,
-    std::string calibration_image_list_path = std::string(),
-    const double norm_factor = 1.0,
+    TrtCommonConfig & trt_config, const int num_class = 8, const float score_threshold = 0.8,
+    const bool use_gpu_preprocess = false, const uint8_t gpu_id = 0,
+    std::string calibration_image_list_path = std::string(), const double norm_factor = 1.0,
     [[maybe_unused]] const std::string & cache_dir = "",
-    const CalibrationConfig & calib_config = CalibrationConfig()
-    );
+    const CalibrationConfig & calib_config = CalibrationConfig());
 
   ~TrtYolov10();
 

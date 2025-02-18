@@ -15,7 +15,7 @@
 #include <autoware/tensorrt_yolov10/tensorrt_yolov10.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <cstdio> 
+#include <cstdio>
 
 #if (defined(_MSC_VER) or (defined(__GNUC__) and (7 <= __GNUC_MAJOR__)))
 #include <filesystem>
