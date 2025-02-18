@@ -14,12 +14,12 @@
 
 #include "autoware/route_handler/route_handler.hpp"
 
-#include <autoware_utils/geometry/geometry.hpp>
 #include <autoware_lanelet2_extension/io/autoware_osm_parser.hpp>
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/route_checker.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
+#include <autoware_utils/geometry/geometry.hpp>
 #include <autoware_utils/math/normalization.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -50,12 +50,12 @@ namespace autoware::route_handler
 {
 namespace
 {
-using autoware_utils::create_point;
-using autoware_utils::create_quaternion_from_yaw;
 using autoware_internal_planning_msgs::msg::PathPointWithLaneId;
 using autoware_internal_planning_msgs::msg::PathWithLaneId;
 using autoware_planning_msgs::msg::LaneletPrimitive;
 using autoware_planning_msgs::msg::Path;
+using autoware_utils::create_point;
+using autoware_utils::create_quaternion_from_yaw;
 using geometry_msgs::msg::Pose;
 using lanelet::utils::to2D;
 
@@ -114,9 +114,7 @@ PathWithLaneId removeOverlappingPoints(const PathWithLaneId & input_path)
     }
 
     constexpr double min_dist = 0.001;
-    if (
-      autoware_utils::calc_distance3d(filtered_path.points.back().point, pt.point) <
-      min_dist) {
+    if (autoware_utils::calc_distance3d(filtered_path.points.back().point, pt.point) < min_dist) {
       filtered_path.points.back().lane_ids.push_back(pt.lane_ids.front());
       filtered_path.points.back().point.longitudinal_velocity_mps = std::min(
         pt.point.longitudinal_velocity_mps,

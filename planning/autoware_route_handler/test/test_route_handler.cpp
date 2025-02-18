@@ -89,8 +89,7 @@ TEST_F(TestRouteHandler, getClosestRouteLaneletFromLaneletWhenOverlappingRoute)
 
   lanelet::ConstLanelet reference_lanelet;
   reference_pose.position = autoware_utils::create_point(3730.88, 73735.3, 0);
-  reference_pose.orientation =
-    autoware_utils::create_quaternion(0, 0, -0.504626, 0.863338);
+  reference_pose.orientation = autoware_utils::create_quaternion(0, 0, -0.504626, 0.863338);
   const auto found_reference_lanelet =
     route_handler_->getClosestLaneletWithinRoute(reference_pose, &reference_lanelet);
   ASSERT_TRUE(found_reference_lanelet);
