@@ -17,7 +17,7 @@
           "default": false
         }
       },
-      "required": ["camera_namespaces", "message_lifespan", "approximate_sync"],
+      "required": ["message_lifespan", "approximate_sync"],
       "additionalProperties": false
     }
   },
