@@ -50,10 +50,10 @@ namespace autoware::behavior_velocity_planner
 
 using autoware::objects_of_interest_marker_interface::ColorName;
 using autoware::objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface;
-using autoware_utils::DebugPublisher;
-using autoware_utils::StopWatch;
 using autoware_internal_debug_msgs::msg::Float64Stamped;
 using autoware_internal_planning_msgs::msg::PathWithLaneId;
+using autoware_utils::DebugPublisher;
+using autoware_utils::StopWatch;
 using builtin_interfaces::msg::Time;
 using unique_identifier_msgs::msg::UUID;
 
