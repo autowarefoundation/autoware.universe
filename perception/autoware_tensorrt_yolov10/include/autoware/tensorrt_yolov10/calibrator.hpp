@@ -48,13 +48,12 @@
 #include <assert.h>
 
 #include <algorithm>
+#include <cstdio>
 #include <fstream>
+#include <iostream>
 #include <iterator>
 #include <string>
 #include <vector>
-
-#include <cstdio>
-#include <iostream>
 
 namespace autoware::tensorrt_yolov10
 {

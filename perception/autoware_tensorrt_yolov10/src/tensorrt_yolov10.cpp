@@ -111,15 +111,10 @@ std::vector<std::string> loadImageList(const std::string & filename, const std::
 namespace autoware::tensorrt_yolov10
 {
 TrtYolov10::TrtYolov10(
-    TrtCommonConfig & trt_config, 
-    const int num_class,
-    const float score_threshold,
-    const bool use_gpu_preprocess,
-    const uint8_t gpu_id,
-    std::string calibration_image_list_path,
-    const double norm_factor,
-    [[maybe_unused]] const std::string & cache_dir,
-    const CalibrationConfig & calib_config)
+  TrtCommonConfig & trt_config, const int num_class, const float score_threshold,
+  const bool use_gpu_preprocess, const uint8_t gpu_id, std::string calibration_image_list_path,
+  const double norm_factor, [[maybe_unused]] const std::string & cache_dir,
+  const CalibrationConfig & calib_config)
 : gpu_id_(gpu_id), is_gpu_initialized_(false)
 {
   if (!setCudaDeviceId(gpu_id_)) {
@@ -213,7 +208,6 @@ TrtYolov10::TrtYolov10(
     }
   }
 
-  
   // GPU memory allocation
   const auto input_dims = trt_common_->getTensorShape(0);
   const auto input_size =
@@ -347,7 +341,7 @@ bool TrtYolov10::feedforward(const std::vector<cv::Mat> & images, ObjectArrays &
   //   PRINT_DEBUG_INFO
   std::vector<void *> buffers = {input_d_.get(), out_d_.get()};
 
-//   trt_common_->enqueueV2(buffers.data(), *stream_, nullptr);
+  //   trt_common_->enqueueV2(buffers.data(), *stream_, nullptr);
 
   if (!trt_common_->setTensorsAddresses(buffers)) {
     return false;
