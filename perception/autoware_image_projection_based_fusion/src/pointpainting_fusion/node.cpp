@@ -234,8 +234,7 @@ void PointPaintingFusionNode::preprocess(PointCloudMsgType & painted_pointcloud_
   sensor_msgs::PointCloud2Iterator<float> iter_painted_z(painted_pointcloud_msg, "z");
   for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(tmp, "x"), iter_y(tmp, "y"),
        iter_z(tmp, "z");
-       iter_x != iter_x.end();
-       ++iter_x, ++iter_y, ++iter_z, ++iter_painted_x, ++iter_painted_y, ++iter_painted_z) {
+       iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z) {
     if (
       *iter_x <= pointcloud_range.at(0) || *iter_x >= pointcloud_range.at(3) ||
       *iter_y <= pointcloud_range.at(1) || *iter_y >= pointcloud_range.at(4)) {
@@ -245,6 +244,9 @@ void PointPaintingFusionNode::preprocess(PointCloudMsgType & painted_pointcloud_
       *iter_painted_y = *iter_y;
       *iter_painted_z = *iter_z;
       j += painted_point_step;
+      ++iter_painted_x;
+      ++iter_painted_y;
+      ++iter_painted_z;
     }
   }
 

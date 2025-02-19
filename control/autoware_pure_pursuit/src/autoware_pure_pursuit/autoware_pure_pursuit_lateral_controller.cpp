@@ -34,6 +34,7 @@
 #include "autoware/pure_pursuit/util/planning_utils.hpp"
 #include "autoware/pure_pursuit/util/tf_utils.hpp"
 
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 
 #include <algorithm>

@@ -548,7 +548,7 @@ void GoalSearcher::createAreaPolygons(
   }
 }
 
-GoalCandidate GoalSearcher::getClosetGoalCandidateAlongLanes(
+std::optional<GoalCandidate> GoalSearcher::getClosestGoalCandidateAlongLanes(
   const GoalCandidates & goal_candidates,
   const std::shared_ptr<const PlannerData> & planner_data) const
 {

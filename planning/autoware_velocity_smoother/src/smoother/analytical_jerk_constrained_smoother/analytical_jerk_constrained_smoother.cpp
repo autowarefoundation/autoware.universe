@@ -16,6 +16,7 @@
 
 #include "autoware/motion_utils/resample/resample.hpp"
 #include "autoware/motion_utils/trajectory/conversion.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
 #include "autoware/velocity_smoother/trajectory_utils.hpp"
 
 #include <algorithm>

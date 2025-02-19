@@ -20,6 +20,7 @@
 
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/geometry/pose_deviation.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_perception_msgs/msg/predicted_path.hpp>

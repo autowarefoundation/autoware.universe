@@ -40,9 +40,6 @@ def create_traffic_light_map_based_detector(namespace, context):
         "input/camera_info": f"/sensing/camera/{namespace}/camera_info",
         "expect/rois": "expect/rois",
         "output/rois": output_rois,
-        # This parameter should be configured differently for each camera considering their delay.
-        "min_timestamp_offset": "-0.3",
-        "max_timestamp_offset": "0.0",
     }.items()
 
     group = GroupAction(
