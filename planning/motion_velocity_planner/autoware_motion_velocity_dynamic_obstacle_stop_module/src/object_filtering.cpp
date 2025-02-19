@@ -17,6 +17,8 @@
 #include "types.hpp"
 
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/geometry/pose_deviation.hpp>
 
 #include <geometry_msgs/msg/detail/pose__struct.hpp>
 
@@ -96,12 +98,12 @@ bool is_unavoidable(
 };
 
 std::vector<autoware_perception_msgs::msg::PredictedObject> filter_predicted_objects(
-  const std::vector<PlannerData::Object> & objects, const EgoData & ego_data,
+  const std::vector<std::shared_ptr<PlannerData::Object>> & objects, const EgoData & ego_data,
   const PlannerParam & params, const double hysteresis)
 {
   std::vector<autoware_perception_msgs::msg::PredictedObject> filtered_objects;
   for (const auto & object : objects) {
-    const auto & predicted_object = object.predicted_object;
+    const auto & predicted_object = object->predicted_object;
     const auto is_not_too_slow =
       predicted_object.kinematics.initial_twist_with_covariance.twist.linear.x >=
       params.minimum_object_velocity;

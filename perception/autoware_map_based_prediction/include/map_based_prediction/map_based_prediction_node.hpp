@@ -117,9 +117,6 @@ private:
 
   ////// Parameters
 
-  // Object Parameters
-  bool enable_delay_compensation_;
-
   //// Vehicle Parameters
   // Lanelet Parameters
   double dist_threshold_for_searching_lanelet_;
@@ -174,10 +171,6 @@ private:
   // Object process
   PredictedObject convertToPredictedObject(const TrackedObject & tracked_object);
   void updateObjectData(TrackedObject & object);
-  geometry_msgs::msg::Pose compensateTimeDelay(
-    const geometry_msgs::msg::Pose & delayed_pose, const geometry_msgs::msg::Twist & twist,
-    const double dt) const;
-
   //// Vehicle process
   // Lanelet process
   LaneletsData getCurrentLanelets(const TrackedObject & object);

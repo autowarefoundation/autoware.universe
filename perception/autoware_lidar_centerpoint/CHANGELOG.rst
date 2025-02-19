@@ -2,6 +2,47 @@
 Changelog for package autoware_lidar_centerpoint
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* refactor(autoware_tensorrt_common): multi-TensorRT compatibility & tensorrt_common as unified lib for all perception components (`#9762 <https://github.com/autowarefoundation/autoware.universe/issues/9762>`_)
+  * refactor(autoware_tensorrt_common): multi-TensorRT compatibility & tensorrt_common as unified lib for all perception components
+  * style(pre-commit): autofix
+  * style(autoware_tensorrt_common): linting
+  * style(autoware_lidar_centerpoint): typo
+  Co-authored-by: Kenzo Lobos Tsunekawa <kenzo.lobos@tier4.jp>
+  * docs(autoware_tensorrt_common): grammar
+  Co-authored-by: Kenzo Lobos Tsunekawa <kenzo.lobos@tier4.jp>
+  * fix(autoware_lidar_transfusion): reuse cast variable
+  * fix(autoware_tensorrt_common): remove deprecated inference API
+  * style(autoware_tensorrt_common): grammar
+  Co-authored-by: Kenzo Lobos Tsunekawa <kenzo.lobos@tier4.jp>
+  * style(autoware_tensorrt_common): grammar
+  Co-authored-by: Kenzo Lobos Tsunekawa <kenzo.lobos@tier4.jp>
+  * fix(autoware_tensorrt_common): const pointer
+  * fix(autoware_tensorrt_common): remove unused method declaration
+  * style(pre-commit): autofix
+  * refactor(autoware_tensorrt_common): readability
+  Co-authored-by: Kotaro Uetake <60615504+ktro2828@users.noreply.github.com>
+  * fix(autoware_tensorrt_common): return if layer not registered
+  * refactor(autoware_tensorrt_common): readability
+  Co-authored-by: Kotaro Uetake <60615504+ktro2828@users.noreply.github.com>
+  * fix(autoware_tensorrt_common): rename struct
+  * style(pre-commit): autofix
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+  Co-authored-by: Kenzo Lobos Tsunekawa <kenzo.lobos@tier4.jp>
+  Co-authored-by: Kotaro Uetake <60615504+ktro2828@users.noreply.github.com>
+* feat(lidar_centerpoint, pointpainting): add diag publisher for max voxel size (`#9720 <https://github.com/autowarefoundation/autoware.universe/issues/9720>`_)
+* fix(autoware_lidar_centerpoint): fixed rounding errors that caused illegal memory access (`#9795 <https://github.com/autowarefoundation/autoware.universe/issues/9795>`_)
+  fix: fixed rounding errors that caused illegal memory address
+* feat(autoware_lidar_centerpoint): process front voxels first (`#9608 <https://github.com/autowarefoundation/autoware.universe/issues/9608>`_)
+  * feat: optimize voxel indexing in preprocess_kernel.cu
+  * fix: remove redundant index check
+  * fix: modify voxel index for better memory access
+  ---------
+* Contributors: Amadeusz Szymko, Fumiya Watanabe, Kenzo Lobos Tsunekawa, Taekjin LEE, kminoda
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

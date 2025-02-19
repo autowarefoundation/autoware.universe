@@ -135,7 +135,9 @@ void ObstacleVelocityLimiterModule::update_parameters(
 }
 
 VelocityPlanningResult ObstacleVelocityLimiterModule::plan(
-  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
+  [[maybe_unused]] const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> &
+    raw_trajectory_points,
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & smoothed_trajectory_points,
   const std::shared_ptr<const PlannerData> planner_data)
 {
   autoware::universe_utils::StopWatch<std::chrono::microseconds> stopwatch;
@@ -143,14 +145,14 @@ VelocityPlanningResult ObstacleVelocityLimiterModule::plan(
   VelocityPlanningResult result;
   stopwatch.tic("preprocessing");
   const auto ego_idx = autoware::motion_utils::findNearestIndex(
-    ego_trajectory_points, planner_data->current_odometry.pose.pose);
+    smoothed_trajectory_points, planner_data->current_odometry.pose.pose);
   if (!ego_idx) {
     RCLCPP_WARN_THROTTLE(
       logger_, *clock_, rcutils_duration_value_t(1000),
       "Cannot calculate ego index on the trajectory");
     return result;
   }
-  auto original_traj_points = ego_trajectory_points;
+  auto original_traj_points = smoothed_trajectory_points;
   if (preprocessing_params_.calculate_steering_angles)
     obstacle_velocity_limiter::calculateSteeringAngles(
       original_traj_points, projection_params_.wheel_base);
