@@ -21,6 +21,7 @@
 #include <lanelet2_io/Io.h>
 #include <lanelet2_projection/UTM.h>
 
+#include <sstream>
 #include <string>
 
 namespace autoware::map_projection_loader
@@ -31,7 +32,12 @@ autoware_map_msgs::msg::MapProjectorInfo load_info_from_lanelet2_map(const std::
   lanelet::projection::MGRSProjector projector{};
   const lanelet::LaneletMapPtr map = lanelet::load(filename, projector, &errors);
   if (!errors.empty()) {
-    throw std::runtime_error("Error occurred while loading lanelet2 map");
+    std::stringstream ss;
+    ss << "Error occurred while loading lanelet2 map:\n";
+    for (const auto & err : errors) {
+      ss << "- " << err << "\n";
+    }
+    throw std::runtime_error(ss.str());
   }
 
   // If the lat & lon values in all the points of lanelet2 map are all zeros,
