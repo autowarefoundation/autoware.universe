@@ -15,6 +15,7 @@
 
   <depend>autoware_test_utils</depend>
   <depend>autoware_universe_utils</depend>
+  <depend>cgal</depend>
   <depend>cv_bridge</depend>
   <depend>geometry_msgs</depend>
   <depend>libopencv-dev</depend>
@@ -22,6 +23,7 @@
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
   <depend>sensor_msgs</depend>
+  <depend>sophus</depend>
   <depend>tier4_perception_msgs</depend>
   <build_depend>autoware_cmake</build_depend>
   <test_depend>ament_lint_auto</test_depend>
