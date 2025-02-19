@@ -23,7 +23,6 @@
 
 #include <memory>
 
-// dummy change
 namespace autoware::visualization::bag_time_manager_rviz_plugin
 {
 BagTimeManagerPanel::BagTimeManagerPanel(QWidget * parent) : rviz_common::Panel(parent)
