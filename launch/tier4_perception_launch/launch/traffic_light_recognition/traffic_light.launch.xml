@@ -56,13 +56,12 @@
 
   <!-- traffic_light_multi_camera_fusion -->
   <group>
-    <node pkg="autoware_traffic_light_multi_camera_fusion" exec="traffic_light_multi_camera_fusion_node" name="traffic_light_multi_camera_fusion" output="screen">
-      <param name="camera_namespaces" value="$(var all_camera_namespaces)"/>
-      <param name="message_lifespan" value="0.09"/>
-      <param name="approximate_sync" value="false"/>
-      <remap from="~/input/vector_map" to="/map/vector_map"/>
-      <remap from="~/output/traffic_signals" to="$(var internal/traffic_signals)"/>
-    </node>
+    <include file="$(find-pkg-share autoware_traffic_light_multi_camera_fusion)/launch/traffic_light_multi_camera_fusion.launch.xml">
+      <arg name="camera_namespaces" value="$(var all_camera_namespaces)"/>
+      <arg name="param_path" value="$(var traffic_light_multi_camera_fusion_param_path)"/>
+      <arg name="input/vector_map" value="/map/vector_map"/>
+      <arg name="output/traffic_signals" value="$(var internal/traffic_signals)"/>
+    </include>
   </group>
 
   <!-- V2X fusion -->
