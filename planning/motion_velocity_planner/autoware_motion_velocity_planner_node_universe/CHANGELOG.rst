@@ -2,6 +2,13 @@
 Changelog for package autoware_motion_velocity_planner_node_universe
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.2 (2025-02-19)
+-------------------
+* chore(motion_velocity_planner_universe): fix build depends (`#10122 <https://github.com/autowarefoundation/autoware.universe/issues/10122>`_) (`#10139 <https://github.com/autowarefoundation/autoware.universe/issues/10139>`_)
+* chore(motion_velocity_planner_universe): fix build depends (`#10122 <https://github.com/autowarefoundation/autoware.universe/issues/10122>`_)
+* chore: bump version to 0.41.1 (`#10088 <https://github.com/autowarefoundation/autoware.universe/issues/10088>`_)
+* Contributors: Mamoru Sobue, Mete Fatih Cırıt, Ryohsuke Mitsudome
+
 0.41.1 (2025-02-10)
 -------------------
 
