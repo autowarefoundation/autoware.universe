@@ -15,10 +15,10 @@
 #include "autoware/velocity_smoother/node.hpp"
 
 #include "autoware/motion_utils/marker/marker_helper.hpp"
-#include "autoware_utils/ros/update_param.hpp"
 #include "autoware/velocity_smoother/smoother/jerk_filtered_smoother.hpp"
 #include "autoware/velocity_smoother/smoother/l2_pseudo_jerk_smoother.hpp"
 #include "autoware/velocity_smoother/smoother/linf_pseudo_jerk_smoother.hpp"
+#include "autoware_utils/ros/update_param.hpp"
 
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 
@@ -50,10 +50,9 @@ VelocitySmootherNode::VelocitySmootherNode(const rclcpp::NodeOptions & node_opti
 
   // create time_keeper and its publisher
   // NOTE: This has to be called before setupSmoother to pass the time_keeper to the smoother.
-  debug_processing_time_detail_ = create_publisher<autoware_utils::ProcessingTimeDetail>(
-    "~/debug/processing_time_detail_ms", 1);
-  time_keeper_ =
-    std::make_shared<autoware_utils::TimeKeeper>(debug_processing_time_detail_);
+  debug_processing_time_detail_ =
+    create_publisher<autoware_utils::ProcessingTimeDetail>("~/debug/processing_time_detail_ms", 1);
+  time_keeper_ = std::make_shared<autoware_utils::TimeKeeper>(debug_processing_time_detail_);
 
   // create smoother
   setupSmoother(wheelbase_);
@@ -99,8 +98,7 @@ VelocitySmootherNode::VelocitySmootherNode(const rclcpp::NodeOptions & node_opti
   clock_ = get_clock();
 
   logger_configure_ = std::make_unique<autoware_utils::LoggerLevelConfigure>(this);
-  published_time_publisher_ =
-    std::make_unique<autoware_utils::PublishedTimePublisher>(this);
+  published_time_publisher_ = std::make_unique<autoware_utils::PublishedTimePublisher>(this);
 }
 
 void VelocitySmootherNode::setupSmoother(const double wheelbase)
@@ -1075,8 +1073,7 @@ double VelocitySmootherNode::calcTravelDistance() const
   const auto closest_point = calcProjectedTrajectoryPointFromEgo(prev_output_);
 
   if (prev_closest_point_) {
-    const double travel_dist =
-      autoware_utils::calc_distance2d(*prev_closest_point_, closest_point);
+    const double travel_dist = autoware_utils::calc_distance2d(*prev_closest_point_, closest_point);
     return travel_dist;
   }
 

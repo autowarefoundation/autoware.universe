@@ -61,10 +61,10 @@ namespace autoware::velocity_smoother
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
-using autoware_utils::DiagnosticsInterface;
 using autoware_adapi_v1_msgs::msg::OperationModeState;
 using autoware_internal_debug_msgs::msg::Float32Stamped;
 using autoware_internal_debug_msgs::msg::Float64Stamped;
+using autoware_utils::DiagnosticsInterface;
 using geometry_msgs::msg::AccelWithCovarianceStamped;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;
@@ -270,8 +270,7 @@ private:
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_closest_jerk_;
   rclcpp::Publisher<Float64Stamped>::SharedPtr debug_calculation_time_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_closest_max_velocity_;
-  rclcpp::Publisher<autoware_utils::ProcessingTimeDetail>::SharedPtr
-    debug_processing_time_detail_;
+  rclcpp::Publisher<autoware_utils::ProcessingTimeDetail>::SharedPtr debug_processing_time_detail_;
 
   // For Jerk Filtered Algorithm Debug
   rclcpp::Publisher<Trajectory>::SharedPtr pub_forward_filtered_trajectory_;
