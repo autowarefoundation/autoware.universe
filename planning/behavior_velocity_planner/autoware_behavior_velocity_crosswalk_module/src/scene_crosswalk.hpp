@@ -51,7 +51,7 @@ namespace autoware::behavior_velocity_planner
 {
 namespace bg = boost::geometry;
 using autoware::universe_utils::Polygon2d;
-using autoware::universe_utils::StopWatch;
+using autoware_utils::StopWatch;
 using autoware_internal_planning_msgs::msg::PathWithLaneId;
 using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::PredictedObject;
@@ -355,7 +355,7 @@ public:
     const std::optional<int64_t> & reg_elem_id, const lanelet::LaneletMapPtr & lanelet_map_ptr,
     const PlannerParam & planner_param, const rclcpp::Logger & logger,
     const rclcpp::Clock::SharedPtr clock,
-    const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+    const std::shared_ptr<autoware_utils::TimeKeeper> time_keeper,
     const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
       planning_factor_interface);
 

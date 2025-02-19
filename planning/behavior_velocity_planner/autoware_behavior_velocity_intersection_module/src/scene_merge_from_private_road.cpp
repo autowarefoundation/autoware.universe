@@ -43,7 +43,7 @@ MergeFromPrivateRoadModule::MergeFromPrivateRoadModule(
   [[maybe_unused]] std::shared_ptr<const PlannerData> planner_data,
   const PlannerParam & planner_param, const std::set<lanelet::Id> & associative_ids,
   const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock,
-  const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+  const std::shared_ptr<autoware_utils::TimeKeeper> time_keeper,
   const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
     planning_factor_interface)
 : SceneModuleInterface(module_id, logger, clock, time_keeper, planning_factor_interface),
