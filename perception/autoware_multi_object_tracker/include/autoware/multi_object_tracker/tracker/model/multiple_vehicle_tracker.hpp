@@ -36,8 +36,7 @@ private:
   VehicleTracker big_vehicle_tracker_;
 
 public:
-  MultipleVehicleTracker(
-    const rclcpp::Time & time, const types::DynamicObject & object, const size_t channel_size);
+  MultipleVehicleTracker(const rclcpp::Time & time, const types::DynamicObject & object);
 
   bool predict(const rclcpp::Time & time) override;
   bool measure(

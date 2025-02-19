@@ -37,16 +37,6 @@ private:
 
   double velocity_deviation_threshold_;
 
-  types::DynamicObject object_;
-  double z_;
-
-  struct BoundingBox
-  {
-    double length;
-    double width;
-    double height;
-  };
-  BoundingBox bounding_box_;
   Eigen::Vector2d tracking_offset_;
 
   BicycleMotionModel motion_model_;
@@ -55,7 +45,7 @@ private:
 public:
   VehicleTracker(
     const object_model::ObjectModel & object_model, const rclcpp::Time & time,
-    const types::DynamicObject & object, const size_t channel_size);
+    const types::DynamicObject & object);
 
   bool predict(const rclcpp::Time & time) override;
   bool measure(
