@@ -16,9 +16,9 @@
 #define UTILS_HPP_
 
 #include <autoware/behavior_velocity_planner_common/utilization/arc_lane_util.hpp>
-#include <autoware_lanelet2_extension/regulatory_elements/virtual_traffic_light.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware_lanelet2_extension/regulatory_elements/virtual_traffic_light.hpp>
 
 #include <autoware_internal_planning_msgs/msg/path_with_lane_id.hpp>
 #include <tier4_v2x_msgs/msg/key_value.hpp>

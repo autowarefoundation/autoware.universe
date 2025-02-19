@@ -15,8 +15,8 @@
 #ifndef AUTOWARE__VELOCITY_SMOOTHER__SMOOTHER__SMOOTHER_BASE_HPP_
 #define AUTOWARE__VELOCITY_SMOOTHER__SMOOTHER__SMOOTHER_BASE_HPP_
 
-#include "autoware_utils/system/time_keeper.hpp"
 #include "autoware/velocity_smoother/resample.hpp"
+#include "autoware_utils/system/time_keeper.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include "autoware_planning_msgs/msg/trajectory_point.hpp"

@@ -17,9 +17,9 @@
 
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/osqp_interface/osqp_interface.hpp"
+#include "autoware/velocity_smoother/smoother/smoother_base.hpp"
 #include "autoware_utils/geometry/geometry.hpp"
 #include "autoware_utils/system/time_keeper.hpp"
-#include "autoware/velocity_smoother/smoother/smoother_base.hpp"
 
 #include "autoware_planning_msgs/msg/trajectory_point.hpp"
 
