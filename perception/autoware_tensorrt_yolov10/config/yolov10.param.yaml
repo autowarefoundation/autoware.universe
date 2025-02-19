@@ -22,7 +22,7 @@
       PEDESTRIAN : true
       ANIMAL: true
 
-    image_path: "$(var data_path)/tensorrt_yolov10/000000000307.jpg" 
+    image_path: "$(var data_path)/tensorrt_yolov10/000000000307.jpg"
     model_path: "$(var data_path)/tensorrt_yolov10/$(var model_name).onnx" # The onnx file name for YOLOX model.
     label_path: "$(var data_path)/tensorrt_yolov10/label.txt" # The label file path for YOLOX model.
     color_map_path: "$(var data_path)/tensorrt_yolov10/semseg_color_map.csv"
