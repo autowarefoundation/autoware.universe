@@ -97,8 +97,8 @@ namespace autoware::behavior_velocity_planner::planning_utils
 {
 using autoware::motion_utils::calcSignedArcLength;
 using autoware_planning_msgs::msg::PathPoint;
-using autoware_utils::calcDistance2d;
-using autoware_utils::calcOffsetPose;
+using autoware_utils::calc_distance2d;
+using autoware_utils::calc_offset_pose;
 
 size_t calcSegmentIndexFromPointIndex(
   const std::vector<autoware_internal_planning_msgs::msg::PathPointWithLaneId> & points,
@@ -125,7 +125,7 @@ size_t calcSegmentIndexFromPointIndex(
 Point2d calculateOffsetPoint2d(
   const geometry_msgs::msg::Pose & pose, const double offset_x, const double offset_y)
 {
-  return to_bg2d(calcOffsetPose(pose, offset_x, offset_y, 0.0));
+  return to_bg2d(calc_offset_pose(pose, offset_x, offset_y, 0.0));
 }
 
 bool createDetectionAreaPolygons(
@@ -163,7 +163,7 @@ bool createDetectionAreaPolygons(
   if (dist_to_nearest > eps) {
     // interpolate ego point
     const auto & pp = path.points;
-    const double ds = calcDistance2d(pp.at(target_seg_idx), pp.at(target_seg_idx + 1));
+    const double ds = calc_distance2d(pp.at(target_seg_idx), pp.at(target_seg_idx + 1));
     const double dist_to_target_seg =
       calcSignedArcLength(path.points, target_seg_idx, target_pose.position, target_seg_idx);
     const double ratio = dist_to_target_seg / ds;
@@ -184,7 +184,7 @@ bool createDetectionAreaPolygons(
   LineString2d right_outer_bound = {calculateOffsetPoint2d(p0.pose, min_len, -offset_right - eps)};
   for (size_t s = first_idx; s <= max_index; s++) {
     const auto p1 = path.points.at(s).point;
-    const double ds = calcDistance2d(p0, p1);
+    const double ds = calc_distance2d(p0, p1);
     dist_sum += ds;
     length += ds;
     // calculate the distance that obstacles can move until ego reach the trajectory point
@@ -274,7 +274,7 @@ void insertVelocity(
   int max_idx =
     std::min(static_cast<int>(insert_index + 1), static_cast<int>(path.points.size() - 1));
   for (int i = min_idx; i <= max_idx; i++) {
-    if (calcDistance2d(path.points.at(static_cast<size_t>(i)), path_point) < min_distance) {
+    if (calc_distance2d(path.points.at(static_cast<size_t>(i)), path_point) < min_distance) {
       path.points.at(i).point.longitudinal_velocity_mps = v;
       already_has_path_point = true;
       insert_index = static_cast<size_t>(i);
