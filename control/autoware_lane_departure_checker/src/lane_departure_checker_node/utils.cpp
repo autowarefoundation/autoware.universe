@@ -144,7 +144,7 @@ std::vector<LinearRing2d> createVehicleFootprints(
   std::vector<LinearRing2d> vehicle_footprints;
   for (const auto & p : trajectory) {
     vehicle_footprints.push_back(
-      transformVector(local_vehicle_footprint, autoware::universe_utils::pose2transform(p.pose)));
+      autoware::universe_utils::transformVector(local_vehicle_footprint, autoware::universe_utils::pose2transform(p.pose)));
   }
 
   return vehicle_footprints;
@@ -160,7 +160,7 @@ std::vector<LinearRing2d> createVehicleFootprints(
   // Create vehicle footprint on each Path point
   std::vector<LinearRing2d> vehicle_footprints;
   for (const auto & p : path.points) {
-    vehicle_footprints.push_back(transformVector(
+    vehicle_footprints.push_back(autoware::universe_utils::transformVector(
       local_vehicle_footprint, autoware::universe_utils::pose2transform(p.point.pose)));
   }
 

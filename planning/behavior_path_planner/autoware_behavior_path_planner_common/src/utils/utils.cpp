@@ -119,7 +119,7 @@ bool checkCollisionBetweenFootprintAndObjects(
   const PredictedObjects & dynamic_objects, const double margin)
 {
   const auto vehicle_footprint =
-    transformVector(local_vehicle_footprint, autoware::universe_utils::pose2transform(ego_pose));
+    autoware::universe_utils::transformVector(local_vehicle_footprint, autoware::universe_utils::pose2transform(ego_pose));
 
   for (const auto & object : dynamic_objects.objects) {
     const auto obj_polygon = autoware::universe_utils::toPolygon2d(object);

@@ -18,6 +18,7 @@
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 
 #include <autoware_planning_msgs/msg/trajectory.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/transform_stamped.hpp>
 #include <geometry_msgs/msg/twist.hpp>
