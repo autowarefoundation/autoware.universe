@@ -15,12 +15,12 @@
 #ifndef AUTOWARE__UNIVERSE_UTILS__GEOMETRY__BOOST_GEOMETRY_HPP_
 #define AUTOWARE__UNIVERSE_UTILS__GEOMETRY__BOOST_GEOMETRY_HPP_
 
+#include <autoware_utils/geometry/boost_geometry.hpp>
+
 #include <boost/geometry/core/cs.hpp>
 #include <boost/geometry/geometries/geometries.hpp>
 #include <boost/geometry/geometries/register/point.hpp>
 #include <boost/geometry/geometries/register/ring.hpp>
-
-#include <autoware_utils/geometry/boost_geometry.hpp>
 
 #define EIGEN_MPL2_ONLY
 #include <Eigen/Core>

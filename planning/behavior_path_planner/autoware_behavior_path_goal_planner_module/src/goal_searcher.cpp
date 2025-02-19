@@ -223,8 +223,8 @@ GoalCandidates GoalSearcher::search(
     for (double dy = 0; dy <= max_lateral_offset; dy += lateral_offset_interval) {
       search_pose = calcOffsetPose(original_search_pose, 0, sign * dy, 0);
 
-      const auto transformed_vehicle_footprint =
-        autoware::universe_utils::transformVector(vehicle_footprint_, autoware::universe_utils::pose2transform(search_pose));
+      const auto transformed_vehicle_footprint = autoware::universe_utils::transformVector(
+        vehicle_footprint_, autoware::universe_utils::pose2transform(search_pose));
 
       if (
         parameters_.bus_stop_area.use_bus_stop_area &&
@@ -324,8 +324,8 @@ void GoalSearcher::countObjectsToAvoid(
   // count number of objects to avoid
   for (const auto & object : objects.objects) {
     for (const auto & p : current_center_line_path.points) {
-      const auto transformed_vehicle_footprint =
-        autoware::universe_utils::transformVector(vehicle_footprint_, autoware::universe_utils::pose2transform(p.point.pose));
+      const auto transformed_vehicle_footprint = autoware::universe_utils::transformVector(
+        vehicle_footprint_, autoware::universe_utils::pose2transform(p.point.pose));
       const auto obj_polygon = autoware::universe_utils::toPolygon2d(object);
       const double distance = boost::geometry::distance(obj_polygon, transformed_vehicle_footprint);
       if (distance > parameters_.object_recognition_collision_check_hard_margins.back()) {

@@ -259,8 +259,8 @@ bool DefaultPlanner::is_goal_valid(
   }
 
   const auto local_vehicle_footprint = vehicle_info_.createFootprint();
-  autoware::universe_utils::LinearRing2d goal_footprint =
-    autoware::universe_utils::transformVector(local_vehicle_footprint, autoware::universe_utils::pose2transform(goal));
+  autoware::universe_utils::LinearRing2d goal_footprint = autoware::universe_utils::transformVector(
+    local_vehicle_footprint, autoware::universe_utils::pose2transform(goal));
   pub_goal_footprint_marker_->publish(visualize_debug_footprint(goal_footprint));
   const auto polygon_footprint = convert_linear_ring_to_polygon(goal_footprint);
 

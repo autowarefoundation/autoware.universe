@@ -17,7 +17,6 @@
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
-
 #include <autoware/universe_utils/ros/marker_helper.hpp>
 #include <autoware/universe_utils/ros/uuid_helper.hpp>
 
