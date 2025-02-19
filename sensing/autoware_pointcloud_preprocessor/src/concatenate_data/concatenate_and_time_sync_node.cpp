@@ -229,7 +229,7 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
 
   std::shared_ptr<CloudCollector> selected_collector = nullptr;
 
-  // Try to find a matching collector
+  // For each callback, check whether there is a exist collector that matches this cloud
   std::optional<std::shared_ptr<CloudCollector>> cloud_collector = std::nullopt;
   MatchingParams matching_params;
   matching_params.topic_name = topic_name;
@@ -364,8 +364,6 @@ void PointCloudConcatenateDataSynchronizerComponent::publish_clouds(
 
 void PointCloudConcatenateDataSynchronizerComponent::manage_collector_list()
 {
-  std::lock_guard<std::mutex> cloud_collectors_lock(cloud_collectors_mutex_);
-
   int num_processing_collectors = 0;
 
   for (auto & collector : cloud_collectors_) {
