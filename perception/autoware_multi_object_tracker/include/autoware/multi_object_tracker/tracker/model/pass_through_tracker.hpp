@@ -30,14 +30,12 @@ namespace autoware::multi_object_tracker
 class PassThroughTracker : public Tracker
 {
 private:
-  types::DynamicObject object_;
   types::DynamicObject prev_observed_object_;
   rclcpp::Logger logger_;
   rclcpp::Time last_update_time_;
 
 public:
-  PassThroughTracker(
-    const rclcpp::Time & time, const types::DynamicObject & object, const size_t channel_size);
+  PassThroughTracker(const rclcpp::Time & time, const types::DynamicObject & object);
   bool predict(const rclcpp::Time & time) override;
   bool measure(
     const types::DynamicObject & object, const rclcpp::Time & time,
