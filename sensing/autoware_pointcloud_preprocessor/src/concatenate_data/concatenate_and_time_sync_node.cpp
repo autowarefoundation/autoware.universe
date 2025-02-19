@@ -242,7 +242,7 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
   }
 
   if (cloud_collector.has_value() && cloud_collector.value()) {
-      selected_collector = cloud_collector.value();
+    selected_collector = cloud_collector.value();
   }
 
   // Didn't find matched collector
