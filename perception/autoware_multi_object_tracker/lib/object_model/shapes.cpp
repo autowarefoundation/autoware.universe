@@ -67,11 +67,9 @@ double get2dIoU(
 {
   static const double MIN_AREA = 1e-6;
 
-  const auto source_polygon = autoware_utils::to_polygon2d(
-    source_object.kinematics.pose_with_covariance.pose, source_object.shape);
+  const auto source_polygon = autoware_utils::to_polygon2d(source_object.pose, source_object.shape);
   if (boost::geometry::area(source_polygon) < MIN_AREA) return 0.0;
-  const auto target_polygon = autoware_utils::to_polygon2d(
-    target_object.kinematics.pose_with_covariance.pose, target_object.shape);
+  const auto target_polygon = autoware_utils::to_polygon2d(target_object.pose, target_object.shape);
   if (boost::geometry::area(target_polygon) < MIN_AREA) return 0.0;
 
   const double intersection_area = getIntersectionArea(source_polygon, target_polygon);
@@ -111,18 +109,16 @@ bool convertConvexHullToBoundingBox(
   }
 
   // calc new center
-  const Eigen::Vector2d center{
-    input_object.kinematics.pose_with_covariance.pose.position.x,
-    input_object.kinematics.pose_with_covariance.pose.position.y};
-  const auto yaw = tf2::getYaw(input_object.kinematics.pose_with_covariance.pose.orientation);
+  const Eigen::Vector2d center{input_object.pose.position.x, input_object.pose.position.y};
+  const auto yaw = tf2::getYaw(input_object.pose.orientation);
   const Eigen::Matrix2d R_inv = Eigen::Rotation2Dd(-yaw).toRotationMatrix();
   const Eigen::Vector2d new_local_center{(max_x + min_x) / 2.0, (max_y + min_y) / 2.0};
   const Eigen::Vector2d new_center = center + R_inv.transpose() * new_local_center;
 
   // set output parameters
   output_object = input_object;
-  output_object.kinematics.pose_with_covariance.pose.position.x = new_center.x();
-  output_object.kinematics.pose_with_covariance.pose.position.y = new_center.y();
+  output_object.pose.position.x = new_center.x();
+  output_object.pose.position.y = new_center.y();
 
   output_object.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
   output_object.shape.dimensions.x = max_x - min_x;
@@ -135,7 +131,7 @@ bool convertConvexHullToBoundingBox(
 bool getMeasurementYaw(
   const types::DynamicObject & object, const double & predicted_yaw, double & measurement_yaw)
 {
-  measurement_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
+  measurement_yaw = tf2::getYaw(object.pose.orientation);
 
   // check orientation sign is known or not, and fix the limiting delta yaw
   double limiting_delta_yaw = M_PI_2;
@@ -298,8 +294,8 @@ void calcAnchorPointOffset(
   // offset input object
   const Eigen::Matrix2d R = Eigen::Rotation2Dd(yaw).toRotationMatrix();
   const Eigen::Vector2d rotated_offset = R * tracking_offset;
-  offset_object.kinematics.pose_with_covariance.pose.position.x += rotated_offset.x();
-  offset_object.kinematics.pose_with_covariance.pose.position.y += rotated_offset.y();
+  offset_object.pose.position.x += rotated_offset.x();
+  offset_object.pose.position.y += rotated_offset.y();
 }
 
 }  // namespace shapes
