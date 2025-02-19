@@ -12,6 +12,7 @@
   <arg name="use_crosswalk_traffic_light_estimator" default="true" description="output pedestrian's traffic light signals"/>
   <arg name="crosswalk_traffic_light_estimator_param_file" default="$(find-pkg-share autoware_crosswalk_traffic_light_estimator)/config/crosswalk_traffic_light_estimator.param.yaml"/>
   <arg name="all_camera_namespaces" default="[camera6, camera7]"/>
+  <arg name="traffic_light_multi_camera_fusion_param_path" default="$(find-pkg-share autoware_traffic_light_multi_camera_fusion)/config/traffic_light_multi_camera_fusion.param.yaml" />
 
   <!-- ML parameters -->
   <arg name="whole_image_detector_model_path" default="$(find-pkg-share autoware_tensorrt_yolox)/data"/>
