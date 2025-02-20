@@ -33,26 +33,26 @@
 #include <stack>
 #include <vector>
 
-namespace autoware::universe_utils
+namespace autoware_utils
 {
 template <>
-geometry_msgs::msg::Point getPoint(const autoware::path_optimizer::ReferencePoint & p)
+geometry_msgs::msg::Point get_point(const autoware::path_optimizer::ReferencePoint & p)
 {
   return p.pose.position;
 }
 
 template <>
-geometry_msgs::msg::Pose getPose(const autoware::path_optimizer::ReferencePoint & p)
+geometry_msgs::msg::Pose get_pose(const autoware::path_optimizer::ReferencePoint & p)
 {
   return p.pose;
 }
 
 template <>
-double getLongitudinalVelocity(const autoware::path_optimizer::ReferencePoint & p)
+double get_longitudinal_velocity(const autoware::path_optimizer::ReferencePoint & p)
 {
   return p.longitudinal_velocity_mps;
 }
-}  // namespace autoware::universe_utils
+}  // namespace autoware_utils
 
 namespace autoware::path_optimizer
 {
@@ -152,7 +152,7 @@ std::vector<ReferencePoint> resampleReferencePoints(
       base_keys.push_back(0.0);
     } else {
       const double delta_arc_length =
-        autoware::universe_utils::calcDistance2d(ref_points.at(i), ref_points.at(i - 1));
+        autoware_utils::calc_distance2d(ref_points.at(i), ref_points.at(i - 1));
       base_keys.push_back(base_keys.back() + delta_arc_length);
     }
 
@@ -164,8 +164,8 @@ std::vector<ReferencePoint> resampleReferencePoints(
     if (i == 0) {
       query_keys.push_back(0.0);
     } else {
-      const double delta_arc_length = autoware::universe_utils::calcDistance2d(
-        resampled_ref_points.at(i), resampled_ref_points.at(i - 1));
+      const double delta_arc_length =
+        autoware_utils::calc_distance2d(resampled_ref_points.at(i), resampled_ref_points.at(i - 1));
       const double key = query_keys.back() + delta_arc_length;
       if (base_keys.back() < key) {
         break;

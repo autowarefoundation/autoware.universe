@@ -2,6 +2,47 @@
 Changelog for package tier4_perception_launch
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat: apply `autoware\_` prefix for `dummy_perception_publisher` (`#9987 <https://github.com/autowarefoundation/autoware.universe/issues/9987>`_)
+* fix(launch): fix missing changes for launch (`#10007 <https://github.com/autowarefoundation/autoware.universe/issues/10007>`_)
+  bug(launch): fix missing changes for following PRs:
+  * https://github.com/autowarefoundation/autoware.universe/pull/9956
+  * https://github.com/autowarefoundation/autoware.universe/pull/9970
+* fix(tier4_perception_launch): rearrange roi based cluster pipeline (`#9938 <https://github.com/autowarefoundation/autoware.universe/issues/9938>`_)
+* fix(image_projection_based_fusion):  revise message publishers (`#9865 <https://github.com/autowarefoundation/autoware.universe/issues/9865>`_)
+  * refactor: fix condition for publishing painted pointcloud message
+  * fix: publish output revised
+  * feat: fix condition for publishing painted pointcloud message
+  * feat: roi-pointclout  fusion - publish empty image even when there is no target roi
+  * fix: remap output topic for clusters in roi_pointcloud_fusion
+  * style(pre-commit): autofix
+  * feat: fix condition for publishing painted pointcloud message
+  * feat: Add debug publisher for internal debugging
+  * feat: remove !! pointer to bool conversion
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* feat(autoware_object_merger, autoware_tracking_object_merger): enable anonymized node names to be configurable (`#9733 <https://github.com/autowarefoundation/autoware.universe/issues/9733>`_)
+  feat: enable anonymized node names to be configurable
+* refactor(tier4_perception_launch): refactoring detection launchers (`#9611 <https://github.com/autowarefoundation/autoware.universe/issues/9611>`_)
+  * feat: Update object detection launch files to include input and output arguments
+  The object detection launch files have been updated to include input and output arguments for better flexibility and modularity. This allows for easier integration with other components and improves the overall performance of the system.
+  ```
+  * feat: Update object detection launch files to include input and output arguments
+  * refactor: Update object detection launch files for better readability
+  * Update object detection launch files to include clustering output argument
+  * fix: pass ns argument to the lidar_rule_detector
+  * refactor: make euclidean_cluster not to use use_pointcloud_container and mark explicitly
+  ---------
+* fix(tier4_perception_launch): update multi-channel subscribing channel name to lidar_detection_model_type (`#9624 <https://github.com/autowarefoundation/autoware.universe/issues/9624>`_)
+  * feat: update object detection channels in tracking.launch.xml
+  The object detection channels in the `tracking.launch.xml` file have been updated to include the lidar detection model type.
+  * feat: support even the validator is not used
+  add variable use_validator to the tracking launch and determine the subscribing channel depends on the use_validator value
+  ---------
+* Contributors: Fumiya Watanabe, Junya Sasaki, Taekjin LEE, badai nguyen
+
 0.40.0 (2024-12-12)
 -------------------
 * Revert "chore(package.xml): bump version to 0.39.0 (`#9587 <https://github.com/autowarefoundation/autoware.universe/issues/9587>`_)"

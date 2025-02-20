@@ -25,5 +25,4 @@ ament_auto_package(INSTALL_TO_SHARE
   test_map
   test_data
   launch
-  rviz
 )

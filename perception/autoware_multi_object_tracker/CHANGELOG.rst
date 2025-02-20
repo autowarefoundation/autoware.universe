@@ -2,6 +2,87 @@
 Changelog for package autoware_multi_object_tracker
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(multi_object_tracker): integrate odometry and transform processes (`#9912 <https://github.com/autowarefoundation/autoware.universe/issues/9912>`_)
+  * feat: Add odometry processor to multi-object tracker
+  * refactor: Refactor Odometry class for improved code organization and readability
+  * feat: Refactor Odometry class for improved code organization and readability
+  * refactor: Transform objects to world coordinate in Odometry class
+  refactor: Transform objects to world coordinate in Odometry class
+  refactor: Update Odometry class to get transform from tf with source frame ID
+  feat: Update Odometry class to get transform from tf with source frame ID
+  fix: move necessare tr2 header
+  * Revert "refactor: Transform objects to world coordinate in Odometry class"
+  This reverts commit efca28a40105f80deb09d57b55cb6f9d83ffda2c.
+  * refactor: Remove unnecessary tf2 headers from tracker models
+  * fix: move transform obtainer to odometry class
+  * refactor: Update Odometry class to get transform from tf with source frame ID
+  * refactor: Transform objects to world coordinate in Odometry class
+  * refactor: remove transformObjects from shapes
+  * refactor: Update Odometry class to use 'updateFromTf' instead of 'setOdometryFromTf'
+  * refactor: Update Odometry class to use 'updateFromTf' instead of 'setOdometryFromTf'
+  * refactor: Update InputManager to include Odometry in constructor
+  * refactor: Move odometry.cpp to lib folder
+  * move object transform to input stream
+  * refactor: Add enable_odometry_uncertainty parameter to Odometry constructor
+  * refactor: Update Odometry class to return optional Odometry from getOdometryFromTf
+  * refactor: Update Odometry class to use tf_cache\_ for storing and retrieving transforms
+  * refactor: Update Odometry class to use tf_cache\_ for storing and retrieving transforms
+  * refactor: bring odometry covariance modeler into odometry class
+  * refactor: Remove redundant code for updating tf cache in Odometry::updateTfCache
+  * refactor: Update runProcess parameter name to detected_objects
+  ---------
+* feat: tier4_debug_msgs to autoware_internal_debug_msgs in files  perc… (`#9879 <https://github.com/autowarefoundation/autoware.universe/issues/9879>`_)
+  feat: tier4_debug_msgs to autoware_internal_debug_msgs in files  perception/autoware_multi_object_tracker
+* chore(autoware_multi_object_tracker): fix autoware univserse documentation page (`#9772 <https://github.com/autowarefoundation/autoware.universe/issues/9772>`_)
+  * feat: Add descriptions for confidence thresholds in multi_object_tracker_node schema
+  * feat: Update multi_object_tracker_node schema with confidence threshold descriptions
+  ---------
+* refactor(autoware_multi_object_tracker): define a new internal object class (`#9706 <https://github.com/autowarefoundation/autoware.universe/issues/9706>`_)
+  * feat: Add dynamic_object.hpp to object_model directory
+  * chore: Update autoware_perception_msgs include statements in association.hpp and dynamic_object.hpp
+  * fix: replace object message type to the DynamicObject type
+  * chore: Update autoware_perception_msgs include statements in association.hpp and dynamic_object.hpp
+  * chore: add channel index to the DynamicObjects
+  * Revert "chore: add channel index to the DynamicObjects"
+  This reverts commit c7e73f08a8d17b5b085dd330dbf187aabbec6879.
+  * fix: replace trackedobject in the process
+  * fix: Replace transformObjects with shapes::transformObjects for object transformation
+  * chore: add channel index to the DynamicObjects
+  * feat: separate shape related functions
+  * chore: clean up utils.hpp
+  * chore: Update function signatures to use DynamicObjectList instead of DynamicObjects
+  * chore: Add channel index to DynamicObject and DynamicObjectList
+  * chore: Refactor processor and debugger classes to remove channel_index parameter
+  * chore: Refactor multiple_vehicle_tracker.cpp and debugger.cpp
+  * Refactor object tracker classes to remove self_transform parameter
+  * Refactor object tracker classes to use shapes namespace for shape-related functions
+  * Refactor object tracker classes to use types.hpp for object model types
+  * Refactor object tracker classes to remove unused utils.hpp
+  * Refactor object tracker classes to use types.hpp for object model types
+  * chore: rename to types.cpp
+  * rename getDynamicObject to toDynamicObject
+  * Update perception/autoware_multi_object_tracker/lib/object_model/shapes.cpp
+  Co-authored-by: Yukihiro Saito <yukky.saito@gmail.com>
+  ---------
+  Co-authored-by: Yukihiro Saito <yukky.saito@gmail.com>
+* fix(autoware_multi_object_tracker): fix bugprone-errors (`#9651 <https://github.com/autowarefoundation/autoware.universe/issues/9651>`_)
+  fix: bugprone-errors
+* refactor(autoware_multi_object_tracker): add configurable tracker parameters (`#9621 <https://github.com/autowarefoundation/autoware.universe/issues/9621>`_)
+  * refactor(autoware_multi_object_tracker): add configurable tracker parameters
+  * style(pre-commit): autofix
+  * refactor(autoware_multi_object_tracker): remove default values from parameter declarations
+  * refactor(autoware_multi_object_tracker): update schema file
+  * style(pre-commit): autofix
+  * Update perception/autoware_multi_object_tracker/src/processor/processor.cpp
+  * Update perception/autoware_multi_object_tracker/src/processor/processor.cpp
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+  Co-authored-by: Taekjin LEE <technolojin@gmail.com>
+* Contributors: Fumiya Watanabe, Taekjin LEE, Vishal Chauhan, jakor97, kobayu858
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

@@ -269,6 +269,7 @@ void PredictorVru::setLaneletMap(std::shared_ptr<lanelet::LaneletMap> lanelet_ma
   const auto all_lanelets = lanelet::utils::query::laneletLayer(lanelet_map_ptr_);
   const auto crosswalks = lanelet::utils::query::crosswalkLanelets(all_lanelets);
   const auto walkways = lanelet::utils::query::walkwayLanelets(all_lanelets);
+  crosswalks_.clear();
   crosswalks_.insert(crosswalks_.end(), crosswalks.begin(), crosswalks.end());
   crosswalks_.insert(crosswalks_.end(), walkways.begin(), walkways.end());
 

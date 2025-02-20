@@ -7,8 +7,7 @@ autoware_package()
 find_package(pluginlib REQUIRED)
 
 ament_auto_add_library(control_evaluator_node SHARED
-  src/control_evaluator_node.cpp
-  src/metrics/deviation_metrics.cpp
+  DIRECTORY src
 )
 
 rclcpp_components_register_node(control_evaluator_node

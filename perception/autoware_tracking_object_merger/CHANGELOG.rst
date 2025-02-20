@@ -2,6 +2,18 @@
 Changelog for package autoware_tracking_object_merger
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_tracking_object_merger)!: tier4_debug_msgs changed to autoware_internal_debug_msgs in autoware_tracking_object_merger (`#9899 <https://github.com/autowarefoundation/autoware.universe/issues/9899>`_)
+* feat(autoware_object_merger, autoware_tracking_object_merger): enable anonymized node names to be configurable (`#9733 <https://github.com/autowarefoundation/autoware.universe/issues/9733>`_)
+  feat: enable anonymized node names to be configurable
+* fix(autoware_tracking_object_merger): fix bugprone-branch-clone (`#9662 <https://github.com/autowarefoundation/autoware.universe/issues/9662>`_)
+  * fix: bugprone-error
+  * fix: fmt
+  ---------
+* Contributors: Fumiya Watanabe, Taekjin LEE, Vishal Chauhan, kobayu858
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

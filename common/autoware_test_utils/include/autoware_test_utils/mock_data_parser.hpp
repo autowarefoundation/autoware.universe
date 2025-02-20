@@ -19,6 +19,7 @@
 #include <builtin_interfaces/msg/time.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
+#include <autoware_internal_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_perception_msgs/msg/tracked_objects.hpp>
 #include <autoware_perception_msgs/msg/traffic_light_group_array.hpp>
@@ -29,7 +30,6 @@
 #include <geometry_msgs/msg/pose_with_covariance.hpp>
 #include <geometry_msgs/msg/twist_with_covariance.hpp>
 #include <nav_msgs/msg/odometry.hpp>
-#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <yaml-cpp/yaml.h>
 
@@ -56,9 +56,12 @@ using autoware_perception_msgs::msg::TrafficLightElement;
 using autoware_perception_msgs::msg::TrafficLightGroup;
 using autoware_perception_msgs::msg::TrafficLightGroupArray;
 
+using autoware_internal_planning_msgs::msg::PathPointWithLaneId;
+using autoware_internal_planning_msgs::msg::PathWithLaneId;
 using autoware_planning_msgs::msg::LaneletPrimitive;
 using autoware_planning_msgs::msg::LaneletRoute;
 using autoware_planning_msgs::msg::LaneletSegment;
+using autoware_planning_msgs::msg::PathPoint;
 using builtin_interfaces::msg::Duration;
 using builtin_interfaces::msg::Time;
 using geometry_msgs::msg::Accel;
@@ -71,8 +74,6 @@ using geometry_msgs::msg::Twist;
 using geometry_msgs::msg::TwistWithCovariance;
 using nav_msgs::msg::Odometry;
 using std_msgs::msg::Header;
-using tier4_planning_msgs::msg::PathPointWithLaneId;
-using tier4_planning_msgs::msg::PathWithLaneId;
 using unique_identifier_msgs::msg::UUID;
 
 /**
@@ -96,6 +97,9 @@ Duration parse(const YAML::Node & node);
 
 template <>
 Time parse(const YAML::Node & node);
+
+template <>
+Point parse(const YAML::Node & node);
 
 template <>
 std::vector<Point> parse(const YAML::Node & node);
@@ -144,6 +148,15 @@ std::vector<PathPointWithLaneId> parse(const YAML::Node & node);
 
 template <>
 UUID parse(const YAML::Node & node);
+
+template <>
+PathPoint parse(const YAML::Node & node);
+
+template <>
+PathPointWithLaneId parse(const YAML::Node & node);
+
+template <>
+PathWithLaneId parse(const YAML::Node & node);
 
 template <>
 PredictedPath parse(const YAML::Node & node);

@@ -213,6 +213,13 @@ autoware::motion_utils::VirtualWalls CrosswalkModule::createVirtualWalls()
     wall.pose = calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
     virtual_walls.push_back(wall);
   }
+  wall.style = autoware::motion_utils::VirtualWallType::pass;
+  wall.text += debug_data_.virtual_wall_suffix;
+  for (const auto & p : debug_data_.pass_poses) {
+    wall.pose = calcOffsetPose(p, debug_data_.base_link2front, 0.0, 0.0);
+    virtual_walls.push_back(wall);
+  }
+
   return virtual_walls;
 }
 

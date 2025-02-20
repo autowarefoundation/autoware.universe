@@ -45,7 +45,7 @@ Accumulator<double> calcLateralDeviation(const Trajectory & ref, const Trajector
  * @param [in] base_pose base pose
  * @return calculated statistics
  */
-Accumulator<double> calcLateralTrajectoryDisplacement(
+Accumulator<double> calcLocalLateralTrajectoryDisplacement(
   const Trajectory & prev, const Trajectory & traj, const Pose & base_pose);
 
 /**

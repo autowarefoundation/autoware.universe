@@ -34,8 +34,7 @@ using autoware::universe_utils::getOrDeclareParameter;
 using lanelet::autoware::DetectionArea;
 
 DetectionAreaModuleManager::DetectionAreaModuleManager(rclcpp::Node & node)
-: SceneModuleManagerInterfaceWithRTC(
-    node, getModuleName(), getEnableRTC(node, std::string(getModuleName()) + ".enable_rtc"))
+: SceneModuleManagerInterface(node, getModuleName())
 {
   const std::string ns(DetectionAreaModuleManager::getModuleName());
   planner_param_.stop_margin = getOrDeclareParameter<double>(node, ns + ".stop_margin");
@@ -53,7 +52,7 @@ DetectionAreaModuleManager::DetectionAreaModuleManager(rclcpp::Node & node)
 }
 
 void DetectionAreaModuleManager::launchNewModules(
-  const tier4_planning_msgs::msg::PathWithLaneId & path)
+  const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
   for (const auto & detection_area_with_lane_id :
        planning_utils::getRegElemMapOnPath<DetectionArea>(
@@ -65,18 +64,15 @@ void DetectionAreaModuleManager::launchNewModules(
     if (!isModuleRegistered(module_id)) {
       registerModule(std::make_shared<DetectionAreaModule>(
         module_id, lane_id, *detection_area_with_lane_id.first, planner_param_,
-        logger_.get_child("detection_area_module"), clock_));
-      generateUUID(module_id);
-      updateRTCStatus(
-        getUUID(module_id), true, State::WAITING_FOR_EXECUTION,
-        std::numeric_limits<double>::lowest(), path.header.stamp);
+        logger_.get_child("detection_area_module"), clock_, time_keeper_,
+        planning_factor_interface_));
     }
   }
 }
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 DetectionAreaModuleManager::getModuleExpiredFunction(
-  const tier4_planning_msgs::msg::PathWithLaneId & path)
+  const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto detection_area_id_set = planning_utils::getRegElemIdSetOnPath<DetectionArea>(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);

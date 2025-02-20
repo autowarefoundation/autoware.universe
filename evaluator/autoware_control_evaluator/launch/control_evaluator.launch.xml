@@ -5,6 +5,8 @@
   <arg name="input/trajectory" default="/planning/scenario_planning/trajectory"/>
   <arg name="input/vector_map" default="/map/vector_map"/>
   <arg name="input/route" default="/planning/mission_planning/route"/>
+  <arg name="input/behavior_path" default="/planning/scenario_planning/lane_driving/behavior_planning/path_with_lane_id"/>
+  <arg name="input/steering_status" default="/vehicle/status/steering_status"/>
 
   <!-- control evaluator -->
   <group>
@@ -15,6 +17,8 @@
       <remap from="~/input/trajectory" to="$(var input/trajectory)"/>
       <remap from="~/input/vector_map" to="$(var input/vector_map)"/>
       <remap from="~/input/route" to="$(var input/route)"/>
+      <remap from="~/input/behavior_path" to="$(var input/behavior_path)"/>
+      <remap from="~/input/steering_status" to="$(var input/steering_status)"/>
     </node>
   </group>
 </launch>

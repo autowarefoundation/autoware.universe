@@ -117,20 +117,20 @@ OcclusionSpotModuleManager::OcclusionSpotModuleManager(rclcpp::Node & node)
 }
 
 void OcclusionSpotModuleManager::launchNewModules(
-  const tier4_planning_msgs::msg::PathWithLaneId & path)
+  const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
   if (path.points.empty()) return;
   // general
   if (!isModuleRegistered(module_id_)) {
     registerModule(std::make_shared<OcclusionSpotModule>(
-      module_id_, planner_data_, planner_param_, logger_.get_child("occlusion_spot_module"),
-      clock_));
+      module_id_, planner_data_, planner_param_, logger_.get_child("occlusion_spot_module"), clock_,
+      time_keeper_, planning_factor_interface_));
   }
 }
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 OcclusionSpotModuleManager::getModuleExpiredFunction(
-  const tier4_planning_msgs::msg::PathWithLaneId & path)
+  const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
   return [path]([[maybe_unused]] const std::shared_ptr<SceneModuleInterface> & scene_module) {
     return false;

@@ -2,6 +2,31 @@
 Changelog for package tier4_control_launch
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat: apply `autoware\_` prefix for `predicted_path_checker` (`#9985 <https://github.com/autowarefoundation/autoware.universe/issues/9985>`_)
+  * feat(predicted_path_checker): apply `autoware\_` prefix (see below):
+  Note:
+  * In this commit, I did not organize a folder structure.
+  The folder structure will be organized in the next some commits.
+  * The changes will follow the Autoware's guideline as below:
+  - https://autowarefoundation.github.io/autoware-documentation/main/contributing/coding-guidelines/ros-nodes/directory-structure/#package-folder
+  * rename(predicted_path_checker): move headers under `include/autoware`
+  * Fixes due to this changes for .hpp/.cpp files will be applied in the next commit
+  * fix(predicted_path_checker): fix include header paths
+  * To follow the previous commit
+  * rename: `predicted_path_checker` => `autoware_predicted_path_checker`
+  * style(pre-commit): autofix
+  * bug(autoware_predicted_path_checker): fix inconsistent namespacings
+  * bug(autoware_predicted_path_checker): do not change node name
+  * This might contaminate topic name
+  * style(pre-commit): autofix
+  * bug(tier4_control_launch): fix wrong package/plugin names
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* Contributors: Fumiya Watanabe, Junya Sasaki
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

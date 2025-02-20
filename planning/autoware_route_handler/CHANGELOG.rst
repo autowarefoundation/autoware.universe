@@ -2,6 +2,15 @@
 Changelog for package autoware_route_handler
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* fix(autoware_route_handler): fix bugprone-exception-escape (`#9738 <https://github.com/autowarefoundation/autoware.universe/issues/9738>`_)
+  * fix: bugprone-error
+  * fix: add include
+  ---------
+* Contributors: Fumiya Watanabe, kobayu858
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

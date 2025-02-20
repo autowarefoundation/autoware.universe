@@ -2,6 +2,12 @@
 Changelog for package autoware_goal_distance_calculator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_goal_distance_calculator)!:  tier4_debug_msgs to autoware_internal_debug_msgs for autoware_goal_distance_calculator (`#9833 <https://github.com/autowarefoundation/autoware.universe/issues/9833>`_)
+* Contributors: Fumiya Watanabe, Vishal Chauhan
+
 0.40.0 (2024-12-12)
 -------------------
 * Revert "chore(package.xml): bump version to 0.39.0 (`#9587 <https://github.com/autowarefoundation/autoware.universe/issues/9587>`_)"

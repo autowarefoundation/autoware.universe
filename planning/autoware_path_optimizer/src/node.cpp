@@ -79,8 +79,7 @@ std::vector<double> calcSegmentLengthVector(const std::vector<TrajectoryPoint> &
 {
   std::vector<double> segment_length_vector;
   for (size_t i = 0; i < points.size() - 1; ++i) {
-    const double segment_length =
-      autoware::universe_utils::calcDistance2d(points.at(i), points.at(i + 1));
+    const double segment_length = autoware_utils::calc_distance2d(points.at(i), points.at(i + 1));
     segment_length_vector.push_back(segment_length);
   }
   return segment_length_vector;

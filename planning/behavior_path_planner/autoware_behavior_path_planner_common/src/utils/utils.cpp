@@ -19,6 +19,7 @@
 #include <autoware/motion_utils/resample/resample.hpp>
 #include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
+#include <autoware/universe_utils/geometry/pose_deviation.hpp>
 #include <autoware/universe_utils/math/unit_conversion.hpp>
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
@@ -41,7 +42,7 @@
 namespace
 {
 double calcInterpolatedZ(
-  const tier4_planning_msgs::msg::PathWithLaneId & input,
+  const autoware_internal_planning_msgs::msg::PathWithLaneId & input,
   const geometry_msgs::msg::Point target_pos, const size_t seg_idx)
 {
   const double closest_to_target_dist = autoware::motion_utils::calcSignedArcLength(
@@ -60,7 +61,7 @@ double calcInterpolatedZ(
 }
 
 double calcInterpolatedVelocity(
-  const tier4_planning_msgs::msg::PathWithLaneId & input, const size_t seg_idx)
+  const autoware_internal_planning_msgs::msg::PathWithLaneId & input, const size_t seg_idx)
 {
   const double seg_dist =
     autoware::motion_utils::calcSignedArcLength(input.points, seg_idx, seg_idx + 1);
@@ -204,8 +205,9 @@ double calcLongitudinalDistanceFromEgoToObjects(
 }
 
 std::optional<size_t> findIndexOutOfGoalSearchRange(
-  const std::vector<tier4_planning_msgs::msg::PathPointWithLaneId> & points, const Pose & goal,
-  const int64_t goal_lane_id, const double max_dist = std::numeric_limits<double>::max())
+  const std::vector<autoware_internal_planning_msgs::msg::PathPointWithLaneId> & points,
+  const Pose & goal, const int64_t goal_lane_id,
+  const double max_dist = std::numeric_limits<double>::max())
 {
   if (points.empty()) {
     return std::nullopt;

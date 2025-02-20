@@ -2,6 +2,9 @@
 Changelog for package autoware_pcl_extensions
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+
 0.40.0 (2024-12-12)
 -------------------
 * Revert "chore(package.xml): bump version to 0.39.0 (`#9587 <https://github.com/autowarefoundation/autoware.universe/issues/9587>`_)"

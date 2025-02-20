@@ -22,11 +22,11 @@
 #include <autoware/universe_utils/system/stop_watch.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_internal_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <geometry_msgs/msg/point.hpp>
 #include <nav_msgs/msg/occupancy_grid.hpp>
-#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <boost/optional.hpp>
 
@@ -48,7 +48,10 @@ public:
   OcclusionSpotModule(
     const int64_t module_id, const std::shared_ptr<const PlannerData> & planner_data,
     const PlannerParam & planner_param, const rclcpp::Logger & logger,
-    const rclcpp::Clock::SharedPtr clock);
+    const rclcpp::Clock::SharedPtr clock,
+    const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+    const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
+      planning_factor_interface);
 
   /**
    * @brief plan occlusion spot velocity at unknown area in occupancy grid

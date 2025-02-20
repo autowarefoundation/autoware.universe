@@ -36,7 +36,8 @@
 namespace autoware::velocity_smoother
 {
 VelocitySmootherNode::VelocitySmootherNode(const rclcpp::NodeOptions & node_options)
-: Node("velocity_smoother", node_options)
+: Node("velocity_smoother", node_options),
+  diagnostics_interface_(std::make_unique<DiagnosticsInterface>(this, "velocity_smoother"))
 {
   using std::placeholders::_1;
 
@@ -63,7 +64,6 @@ VelocitySmootherNode::VelocitySmootherNode(const rclcpp::NodeOptions & node_opti
   pub_velocity_limit_ = create_publisher<VelocityLimit>(
     "~/output/current_velocity_limit_mps", rclcpp::QoS{1}.transient_local());
   pub_dist_to_stopline_ = create_publisher<Float32Stamped>("~/distance_to_stopline", 1);
-  pub_over_stop_velocity_ = create_publisher<StopSpeedExceeded>("~/stop_speed_exceeded", 1);
   sub_current_trajectory_ = create_subscription<Trajectory>(
     "~/input/trajectory", 1, std::bind(&VelocitySmootherNode::onCurrentTrajectory, this, _1));
 
@@ -444,6 +444,7 @@ void VelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstSharedPtr 
   RCLCPP_DEBUG(get_logger(), "========================= run start =========================");
   stop_watch_.tic();
 
+  diagnostics_interface_->clear();
   base_traj_raw_ptr_ = msg;
 
   // receive data
@@ -524,6 +525,10 @@ void VelocitySmootherNode::onCurrentTrajectory(const Trajectory::ConstSharedPtr 
 
   // Publish Calculation Time
   publishStopWatchTime();
+
+  // Publish diagnostics
+  diagnostics_interface_->publish(now());
+
   RCLCPP_DEBUG(get_logger(), "========================== run() end ==========================\n\n");
 }
 
@@ -906,12 +911,8 @@ void VelocitySmootherNode::overwriteStopPoint(
       input_stop_vel, output_stop_vel, over_stop_velocity_warn_thr_);
   }
 
-  {
-    StopSpeedExceeded msg{};
-    msg.stamp = this->now();
-    msg.stop_speed_exceeded = is_stop_velocity_exceeded;
-    pub_over_stop_velocity_->publish(msg);
-  }
+  diagnostics_interface_->add_key_value(
+    "The velocity on the stop point is larger than 0.", is_stop_velocity_exceeded);
 }
 
 void VelocitySmootherNode::applyExternalVelocityLimit(TrajectoryPoints & traj) const

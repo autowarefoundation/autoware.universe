@@ -13,8 +13,6 @@
 
         # For the Lanelet2 map with no explicit stop lines
         stop_distance_from_crosswalk: 3.5 # [m] make stop line away from crosswalk
-        # For the case where the crosswalk width is very wide
-        far_object_threshold: 10.0 # [m] If objects cross X meters behind the stop line, the stop position is determined according to the object position (stop_distance_from_object meters before the object).
         # For the case where the stop position is determined according to the object position.
         stop_distance_from_object_preferred: 3.0 # [m]
         stop_distance_from_object_limit: 3.0 # [m]

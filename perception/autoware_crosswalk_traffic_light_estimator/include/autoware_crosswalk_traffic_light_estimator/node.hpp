@@ -19,10 +19,10 @@
 #include <autoware/universe_utils/system/stop_watch.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_internal_debug_msgs/msg/float64_stamped.hpp>
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_perception_msgs/msg/traffic_light_group_array.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
-#include <tier4_debug_msgs/msg/float64_stamped.hpp>
 
 #include <lanelet2_core/Attribute.h>
 #include <lanelet2_core/LaneletMap.h>
@@ -41,9 +41,9 @@ namespace autoware::crosswalk_traffic_light_estimator
 
 using autoware::universe_utils::DebugPublisher;
 using autoware::universe_utils::StopWatch;
+using autoware_internal_debug_msgs::msg::Float64Stamped;
 using autoware_map_msgs::msg::LaneletMapBin;
 using autoware_planning_msgs::msg::LaneletRoute;
-using tier4_debug_msgs::msg::Float64Stamped;
 using TrafficSignal = autoware_perception_msgs::msg::TrafficLightGroup;
 using TrafficSignalArray = autoware_perception_msgs::msg::TrafficLightGroupArray;
 using TrafficSignalElement = autoware_perception_msgs::msg::TrafficLightElement;
@@ -96,6 +96,8 @@ private:
     const lanelet::Id & id, const TrafficLightIdMap & traffic_light_id_map) const;
 
   void removeDuplicateIds(TrafficSignalArray & signal_array) const;
+
+  bool isInvalidDetectionStatus(const TrafficSignal & signal) const;
 
   // Node param
   bool use_last_detect_color_;

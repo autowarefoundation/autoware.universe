@@ -21,6 +21,7 @@
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/path_smoother/common_structs.hpp"
 #include "autoware/path_smoother/type_alias.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
 
 #include <Eigen/Core>
 

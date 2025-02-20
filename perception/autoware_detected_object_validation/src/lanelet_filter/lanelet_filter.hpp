@@ -35,6 +35,7 @@
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
 
+#include <limits>
 #include <memory>
 #include <string>
 #include <utility>
@@ -88,6 +89,7 @@ private:
   tf2_ros::TransformListener tf_listener_;
 
   utils::FilterTargetLabel filter_target_;
+  double ego_base_height_ = 0.0;
   struct FilterSettings
   {
     bool polygon_overlap_filter;
@@ -96,6 +98,9 @@ private:
     double lanelet_direction_filter_object_speed_threshold;
     bool debug;
     double lanelet_extra_margin;
+    bool use_height_threshold;
+    double max_height_threshold = std::numeric_limits<double>::infinity();
+    double min_height_threshold = -std::numeric_limits<double>::infinity();
   } filter_settings_;
 
   bool filterObject(

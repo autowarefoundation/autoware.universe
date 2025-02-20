@@ -35,7 +35,7 @@ using geometry_msgs::msg::Pose;
 using nav_msgs::msg::Odometry;
 using RouteSections = std::vector<autoware_planning_msgs::msg::LaneletSegment>;
 
-Pose createPoseFromLaneID(
+inline Pose createPoseFromLaneID(
   const lanelet::Id & lane_id, const std::string & package_name = "autoware_test_utils",
   const std::string & map_filename = "lanelet2_map.osm")
 {
@@ -70,7 +70,7 @@ Pose createPoseFromLaneID(
 
 // Function to create a route from given start and goal lanelet ids
 // start pose and goal pose are set to the middle of the lanelet
-LaneletRoute makeBehaviorRouteFromLaneId(
+inline LaneletRoute makeBehaviorRouteFromLaneId(
   const int & start_lane_id, const int & goal_lane_id,
   const std::string & package_name = "autoware_test_utils",
   const std::string & map_filename = "lanelet2_map.osm")
@@ -119,7 +119,7 @@ LaneletRoute makeBehaviorRouteFromLaneId(
   return route;
 }
 
-Odometry makeInitialPoseFromLaneId(const lanelet::Id & lane_id)
+inline Odometry makeInitialPoseFromLaneId(const lanelet::Id & lane_id)
 {
   Odometry current_odometry;
   current_odometry.pose.pose = createPoseFromLaneID(lane_id);

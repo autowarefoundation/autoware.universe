@@ -2,6 +2,24 @@
 Changelog for package autoware_test_utils
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_component_interface_specs_universe!): rename package (`#9753 <https://github.com/autowarefoundation/autoware.universe/issues/9753>`_)
+* feat(autoware_planning_test_manager): remove dependency of tier4_planning_msgs::msg::LateralOffset (`#9967 <https://github.com/autowarefoundation/autoware.universe/issues/9967>`_)
+  * feat(autoware_planning_test_manager): remove dependency of tier4_planning_msgs::msg::LateralOffset
+  * fix
+  ---------
+* chore(autoware_test_utils): move rviz config to autoware_launch (`#9925 <https://github.com/autowarefoundation/autoware.universe/issues/9925>`_)
+* feat(autoware_test_utils): add visualization and yaml dumper for PathWithLaneId (`#9841 <https://github.com/autowarefoundation/autoware.universe/issues/9841>`_)
+* chore(autoware_test_utils): update test map (`#9664 <https://github.com/autowarefoundation/autoware.universe/issues/9664>`_)
+* feat(autoware_test_utils): add visualization (`#9603 <https://github.com/autowarefoundation/autoware.universe/issues/9603>`_)
+* refactor(autoware_test_utils): enhance makeMapBinMsg to accept package name and map filename parameters (`#9617 <https://github.com/autowarefoundation/autoware.universe/issues/9617>`_)
+  * feat: enhance makeMapBinMsg to accept package name and map filename parameters
+  * feat: set default package name to 'autoware_test_utils' in makeMapBinMsg and related functions
+  ---------
+* Contributors: Fumiya Watanabe, Kyoichi Sugahara, Mamoru Sobue, Ryohsuke Mitsudome, Takayuki Murooka
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

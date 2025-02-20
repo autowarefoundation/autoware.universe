@@ -26,10 +26,10 @@
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_internal_debug_msgs/msg/float64_stamped.hpp>
 #include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <diagnostic_msgs/msg/diagnostic_array.hpp>
 #include <nav_msgs/msg/odometry.hpp>
-#include <tier4_debug_msgs/msg/float64_stamped.hpp>
 
 #include <memory>
 #include <string>
@@ -37,13 +37,13 @@
 namespace autoware::planning_validator
 {
 using autoware::universe_utils::StopWatch;
+using autoware_internal_debug_msgs::msg::Float64Stamped;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
 using autoware_planning_validator::msg::PlanningValidatorStatus;
 using diagnostic_updater::DiagnosticStatusWrapper;
 using diagnostic_updater::Updater;
 using nav_msgs::msg::Odometry;
-using tier4_debug_msgs::msg::Float64Stamped;
 
 struct ValidationParams
 {

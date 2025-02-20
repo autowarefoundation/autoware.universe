@@ -2,6 +2,31 @@
 Changelog for package autoware_behavior_velocity_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(behavior_velocity_planner): remove virtual traffic light dependency from behavior_velocity_planner and behavior_velocity_planner_common (`#9746 <https://github.com/autowarefoundation/autoware.universe/issues/9746>`_)
+  * feat: remove-virtual-traffic-light-dependency-from-plugin-manager
+  * build passed
+  * fix test
+  * fix test
+  * fix
+  * fix typo
+  ---------
+* feat(behavior_velocity_modules): add node test (`#9790 <https://github.com/autowarefoundation/autoware.universe/issues/9790>`_)
+  * feat(behavior_velocity_crosswalk): add node test
+  * fix
+  * feat(behavior_velocity_xxx_module): add node test
+  * fix
+  * fix
+  * fix
+  * fix
+  * change directory tests -> test
+  ---------
+* refactor(behavior_velocity_planner): independent of plugin packages (`#9760 <https://github.com/autowarefoundation/autoware.universe/issues/9760>`_)
+* feat(behavior_velocity_planner): remove unnecessary tier4_api_msgs (`#9692 <https://github.com/autowarefoundation/autoware.universe/issues/9692>`_)
+* Contributors: Fumiya Watanabe, Takayuki Murooka
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

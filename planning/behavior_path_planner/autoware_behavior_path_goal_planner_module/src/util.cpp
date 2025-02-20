@@ -831,4 +831,69 @@ std::optional<Pose> calcClosestPose(
   return closest_pose;
 }
 
+autoware_perception_msgs::msg::PredictedObjects extract_dynamic_objects(
+  const autoware_perception_msgs::msg::PredictedObjects & original_objects,
+  const route_handler::RouteHandler & route_handler, const GoalPlannerParameters & parameters,
+  const double vehicle_width)
+{
+  const bool left_side_parking = parameters.parking_policy == ParkingPolicy::LEFT_SIDE;
+  const auto pull_over_lanes = goal_planner_utils::getPullOverLanes(
+    route_handler, left_side_parking, parameters.backward_goal_search_length,
+    parameters.forward_goal_search_length);
+  const auto objects_extraction_polygon = goal_planner_utils::generateObjectExtractionPolygon(
+    pull_over_lanes, left_side_parking, parameters.detection_bound_offset,
+    parameters.margin_from_boundary + parameters.max_lateral_offset + vehicle_width);
+
+  PredictedObjects dynamic_target_objects{};
+  for (const auto & object : original_objects.objects) {
+    const auto object_polygon = universe_utils::toPolygon2d(object);
+    if (
+      objects_extraction_polygon.has_value() &&
+      boost::geometry::intersects(object_polygon, objects_extraction_polygon.value())) {
+      dynamic_target_objects.objects.push_back(object);
+    }
+  }
+  return dynamic_target_objects;
+}
+
+bool is_goal_reachable_on_path(
+  const lanelet::ConstLanelets current_lanes, const route_handler::RouteHandler & route_handler,
+  const bool left_side_parking)
+{
+  const Pose goal_pose = route_handler.getOriginalGoalPose();
+  const auto getNeighboringLane =
+    [&](const lanelet::ConstLanelet & lane) -> std::optional<lanelet::ConstLanelet> {
+    return left_side_parking ? route_handler.getLeftLanelet(lane, false, true)
+                             : route_handler.getRightLanelet(lane, false, true);
+  };
+  lanelet::ConstLanelets goal_check_lanes = current_lanes;
+  for (const auto & lane : current_lanes) {
+    auto neighboring_lane = getNeighboringLane(lane);
+    while (neighboring_lane) {
+      goal_check_lanes.push_back(neighboring_lane.value());
+      neighboring_lane = getNeighboringLane(neighboring_lane.value());
+    }
+  }
+  const bool goal_is_in_current_segment_lanes = std::any_of(
+    goal_check_lanes.begin(), goal_check_lanes.end(), [&](const lanelet::ConstLanelet & lane) {
+      return lanelet::utils::isInLanelet(goal_pose, lane);
+    });
+
+  // check that goal is in current neighbor shoulder lane
+  const bool goal_is_in_current_shoulder_lanes = std::invoke([&]() {
+    for (const auto & lane : current_lanes) {
+      const auto shoulder_lane = left_side_parking ? route_handler.getLeftShoulderLanelet(lane)
+                                                   : route_handler.getRightShoulderLanelet(lane);
+      if (shoulder_lane && lanelet::utils::isInLanelet(goal_pose, *shoulder_lane)) {
+        return true;
+      }
+    }
+    return false;
+  });
+
+  // if goal is not in current_lanes and current_shoulder_lanes, do not execute goal_planner,
+  // because goal arc coordinates cannot be calculated.
+  return goal_is_in_current_segment_lanes || goal_is_in_current_shoulder_lanes;
+}
+
 }  // namespace autoware::behavior_path_planner::goal_planner_utils

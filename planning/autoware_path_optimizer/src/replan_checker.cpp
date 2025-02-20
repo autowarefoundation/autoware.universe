@@ -79,7 +79,7 @@ bool ReplanChecker::isResetRequired(const PlannerData & planner_data) const
 
     // ego pose is lost or new ego pose is designated in simulation
     const double delta_dist =
-      autoware::universe_utils::calcDistance2d(p.ego_pose, prev_ego_pose_ptr_->position);
+      autoware_utils::calc_distance2d(p.ego_pose, prev_ego_pose_ptr_->position);
     if (max_ego_moving_dist_ < delta_dist) {
       RCLCPP_DEBUG(
         logger_,
@@ -206,7 +206,7 @@ bool ReplanChecker::isPathGoalChanged(
   }
 
   const double goal_moving_dist =
-    autoware::universe_utils::calcDistance2d(p.traj_points.back(), prev_traj_points.back());
+    autoware_utils::calc_distance2d(p.traj_points.back(), prev_traj_points.back());
   if (goal_moving_dist < max_goal_moving_dist_) {
     return false;
   }

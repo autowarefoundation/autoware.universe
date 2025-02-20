@@ -21,6 +21,7 @@
 #include <gtest/gtest.h>
 
 #include <memory>
+#include <string>
 #include <vector>
 
 using autoware::planning_test_manager::PlanningInterfaceTestManager;
@@ -29,9 +30,8 @@ using autoware::velocity_smoother::VelocitySmootherNode;
 std::shared_ptr<PlanningInterfaceTestManager> generateTestManager()
 {
   auto test_manager = std::make_shared<PlanningInterfaceTestManager>();
-  test_manager->setTrajectorySubscriber("velocity_smoother/output/trajectory");
-  test_manager->setTrajectoryInputTopicName("velocity_smoother/input/trajectory");
-  test_manager->setOdometryTopicName("/localization/kinematic_state");
+  test_manager->subscribeOutput<autoware_planning_msgs::msg::Trajectory>(
+    "velocity_smoother/output/trajectory");
   return test_manager;
 }
 
@@ -60,12 +60,17 @@ void publishMandatoryTopics(
   rclcpp::Node::SharedPtr test_target_node)
 {
   // publish necessary topics from test_manager
-  test_manager->publishOdometry(test_target_node, "/localization/kinematic_state");
-  test_manager->publishMaxVelocity(
-    test_target_node, "velocity_smoother/input/external_velocity_limit_mps");
-  test_manager->publishOperationModeState(
-    test_target_node, "velocity_smoother/input/operation_mode_state");
-  test_manager->publishAcceleration(test_target_node, "velocity_smoother/input/acceleration");
+  test_manager->publishInput(
+    test_target_node, "/localization/kinematic_state", autoware::test_utils::makeOdometry());
+  test_manager->publishInput(
+    test_target_node, "velocity_smoother/input/external_velocity_limit_mps",
+    tier4_planning_msgs::msg::VelocityLimit{});
+  test_manager->publishInput(
+    test_target_node, "velocity_smoother/input/operation_mode_state",
+    autoware_adapi_v1_msgs::msg::OperationModeState{});
+  test_manager->publishInput(
+    test_target_node, "velocity_smoother/input/acceleration",
+    geometry_msgs::msg::AccelWithCovarianceStamped{});
 }
 
 TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInput)
@@ -76,12 +81,15 @@ TEST(PlanningModuleInterfaceTest, testPlanningInterfaceWithVariousTrajectoryInpu
 
   publishMandatoryTopics(test_manager, test_target_node);
 
+  const std::string input_trajectory_topic = "velocity_smoother/output/trajectory";
+
   // test for normal trajectory
-  ASSERT_NO_THROW(test_manager->testWithNominalTrajectory(test_target_node));
+  ASSERT_NO_THROW(test_manager->testWithNormalTrajectory(test_target_node, input_trajectory_topic));
   EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
 
   // test for trajectory with empty/one point/overlapping point
-  ASSERT_NO_THROW(test_manager->testWithAbnormalTrajectory(test_target_node));
+  ASSERT_NO_THROW(
+    test_manager->testWithAbnormalTrajectory(test_target_node, input_trajectory_topic));
 
   rclcpp::shutdown();
 }
@@ -94,11 +102,14 @@ TEST(PlanningModuleInterfaceTest, NodeTestWithOffTrackEgoPose)
 
   publishMandatoryTopics(test_manager, test_target_node);
 
+  const std::string input_trajectory_topic = "velocity_smoother/output/trajectory";
+  const std::string input_odometry_topic = "/localization/kinematic_state";
+
   // test for normal trajectory
-  ASSERT_NO_THROW(test_manager->testWithNominalTrajectory(test_target_node));
+  ASSERT_NO_THROW(test_manager->testWithNormalTrajectory(test_target_node, input_trajectory_topic));
   EXPECT_GE(test_manager->getReceivedTopicNum(), 1);
 
-  ASSERT_NO_THROW(test_manager->testTrajectoryWithInvalidEgoPose(test_target_node));
+  ASSERT_NO_THROW(test_manager->testWithOffTrackOdometry(test_target_node, input_odometry_topic));
 
   rclcpp::shutdown();
 }

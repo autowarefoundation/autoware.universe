@@ -2,6 +2,14 @@
 Changelog for package autoware_path_sampler
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(sampling_based_planner)!: tier4_debug_msgs changed to autoware_internal_debug_msgs in sampling_based_planner (`#9916 <https://github.com/autowarefoundation/autoware.universe/issues/9916>`_)
+* feat(motion_planning): use StringStamped in autoware_internal_debug_msgs (`#9742 <https://github.com/autowarefoundation/autoware.universe/issues/9742>`_)
+  feat(motion planning): use StringStamped in autoware_internal_debug_msgs
+* Contributors: Fumiya Watanabe, Takayuki Murooka, Vishal Chauhan
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

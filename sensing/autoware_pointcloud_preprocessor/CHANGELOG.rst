@@ -2,6 +2,155 @@
 Changelog for package autoware_pointcloud_preprocessor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_pointcloud_preprocessor): redesign concatenate and time sync node (`#8300 <https://github.com/autowarefoundation/autoware.universe/issues/8300>`_)
+  * chore: rebase main
+  * chore: solve conflicts
+  * chore: fix cpp check
+  * chore: add diagnostics readme
+  * chore: update figure
+  * chore: upload jitter.png and add old design link
+  * chore: add the link to the tool for analyzing timestamp
+  * fix: fix bug that timer didn't cancel
+  * chore: fix logic for logging
+  * Update sensing/autoware_pointcloud_preprocessor/docs/concatenate-data.md
+  Co-authored-by: Max Schmeller <6088931+mojomex@users.noreply.github.com>
+  * Update sensing/autoware_pointcloud_preprocessor/src/concatenate_data/combine_cloud_handler.cpp
+  Co-authored-by: Max Schmeller <6088931+mojomex@users.noreply.github.com>
+  * Update sensing/autoware_pointcloud_preprocessor/schema/cocatenate_and_time_sync_node.schema.json
+  Co-authored-by: Max Schmeller <6088931+mojomex@users.noreply.github.com>
+  * Update sensing/autoware_pointcloud_preprocessor/schema/cocatenate_and_time_sync_node.schema.json
+  Co-authored-by: Max Schmeller <6088931+mojomex@users.noreply.github.com>
+  * Update sensing/autoware_pointcloud_preprocessor/src/concatenate_data/combine_cloud_handler.cpp
+  Co-authored-by: Max Schmeller <6088931+mojomex@users.noreply.github.com>
+  * Update sensing/autoware_pointcloud_preprocessor/src/concatenate_data/combine_cloud_handler.cpp
+  Co-authored-by: Max Schmeller <6088931+mojomex@users.noreply.github.com>
+  * chore: remove distortion corrector related changes
+  * feat: add managed tf buffer
+  * chore: fix filename
+  * chore: add explanataion for maximum queue size
+  * chore: add explanation for timeout_sec
+  * chore: fix schema's explanation
+  * chore: fix description for twist and odom
+  * chore: remove license that are not used
+  * chore: change guard to prama once
+  * chore: default value change to string
+  * Update sensing/autoware_pointcloud_preprocessor/test/test_concatenate_node_unit.cpp
+  Co-authored-by: Max Schmeller <6088931+mojomex@users.noreply.github.com>
+  * Update sensing/autoware_pointcloud_preprocessor/test/test_concatenate_node_unit.cpp
+  Co-authored-by: Max Schmeller <6088931+mojomex@users.noreply.github.com>
+  * Update sensing/autoware_pointcloud_preprocessor/test/test_concatenate_node_unit.cpp
+  Co-authored-by: Max Schmeller <6088931+mojomex@users.noreply.github.com>
+  * Update sensing/autoware_pointcloud_preprocessor/test/test_concatenate_node_unit.cpp
+  Co-authored-by: Max Schmeller <6088931+mojomex@users.noreply.github.com>
+  * style(pre-commit): autofix
+  * chore: clang-tidy style for static constexpr
+  * chore: remove unused vector header
+  * chore: fix naming concatenated_cloud_publisher
+  * chore: fix namimg diagnostic_updater\_
+  * chore: specify parameter in comment
+  * chore: change RCLCPP_WARN to RCLCPP_WARN_STREAM_THROTTLE
+  * chore: add comment for cancelling timer
+  * chore: Simplify loop structure for topic-to-cloud mapping
+  * chore: fix spell errors
+  * chore: fix more spell error
+  * chore: rename mutex and lock
+  * chore: const reference for string parameter
+  * chore: add explaination for RclcppTimeHash\_
+  * chore: change the concatenate node to parent node
+  * chore: clean processOdometry and processTwist
+  * chore: change twist shared pointer queue to twist queue
+  * chore: refactor compensate pointcloud to function
+  * chore: reallocate memory for concatenate_cloud_ptr
+  * chore: remove new to make shared
+  * chore: dis to distance
+  * chore: refacotr poitncloud_sub
+  * chore: return early return but throw runtime error
+  * chore: replace #define DEFAULT_SYNC_TOPIC_POSTFIX with member variable
+  * chore: fix spell error
+  * chore: remove redundant function call
+  * chore: replace conplex tuple to structure
+  * chore: use reference instead of a pointer to conveys node
+  * chore: fix camel to snake case
+  * chore: fix logic of publish synchronized pointcloud
+  * chore: fix cpp check
+  * chore: remove logging and throw error directly
+  * chore: fix clangd warnings
+  * chore: fix json schema
+  * chore: fix clangd warning
+  * chore: remove unused variable
+  * chore: fix launcher
+  * chore: fix clangd warning
+  * chore: ensure thread safety
+  * style(pre-commit): autofix
+  * chore: clean code
+  * chore: add parameters for handling rosbag replay in loops
+  * chore: fix diagonistic
+  * chore: reduce copy operation
+  * chore: reserve space for concatenated pointcloud
+  * chore: fix clangd error
+  * chore: fix pipeline latency
+  * chore: add debug mode
+  * chore: refactor convert_to_xyzirc_cloud function
+  * chore: fix json schema
+  * chore: fix logging output
+  * chore: fix the output order of the debug mode
+  * chore: fix pipeline latency output
+  * chore: clean code
+  * chore: set some parameters to false in testing
+  * chore: fix default value for schema
+  * chore: fix diagnostic msgs
+  * chore: fix parameter for sample ros bag
+  * chore: update readme
+  * chore: fix empty pointcloud
+  * chore: remove duplicated logic
+  * chore: fix logic for handling empty pointcloud
+  * chore: clean code
+  * chore: remove rosbag_replay parameter
+  * chore: remove nodelet cpp
+  * chore: clang tidy warning
+  * feat: add naive approach for unsynchronized pointclouds
+  * chore: add more explanations in docs for naive approach
+  * feat: refactor naive method and fix the multithreading issue
+  * chore: set parameter to naive
+  * chore: fix parameter
+  * chore: fix readme
+  * Update sensing/autoware_pointcloud_preprocessor/docs/concatenate-data.md
+  Co-authored-by: Max Schmeller <6088931+mojomex@users.noreply.github.com>
+  * Update sensing/autoware_pointcloud_preprocessor/docs/concatenate-data.md
+  Co-authored-by: Max Schmeller <6088931+mojomex@users.noreply.github.com>
+  * style(pre-commit): autofix
+  * feat: remove mutually exclusive approaches
+  * chore: fix spell error
+  * chore: remove unused variable
+  * refactor: refactor collectorInfo to polymorphic
+  * chore: fix variable name
+  * chore: fix figure and diagnostic msg in readme
+  * chroe: refactor collectorinfo structure
+  * chore: revert wrong file changes
+  * chore: improve message
+  * chore: remove unused input topics
+  * chore: change to explicit check
+  * chore: tier4 debug msgs to autoware internal debug msgs
+  * chore: update documentation
+  ---------
+  Co-authored-by: Max Schmeller <6088931+mojomex@users.noreply.github.com>
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* feat(autoware_pointcloud_preprocessor): tier4_debug_msgs changed to autoware_internal_debug_msgs in autoware_pointcloud_preprocessor (`#9920 <https://github.com/autowarefoundation/autoware.universe/issues/9920>`_)
+  feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in files sensing/autoware_pointcloud_preprocessor
+* fix(autoware_pointcloud_preprocessor): fix autoware pointcloud preprocessor docs (`#9765 <https://github.com/autowarefoundation/autoware.universe/issues/9765>`_)
+  * fix downsample and passthrough
+  * fix: fix blockage-diag docs that page is not shown
+  ---------
+* fix(autoware_pointcloud_preprocessor): fix image display in distortion corrector (`#9761 <https://github.com/autowarefoundation/autoware.universe/issues/9761>`_)
+  fix: fix image display
+* fix(autoware_pointcloud_preprocessor): remove unused function mask() (`#9751 <https://github.com/autowarefoundation/autoware.universe/issues/9751>`_)
+* fix: enable to copy all information in pickup based pointcloud downsampler (`#9686 <https://github.com/autowarefoundation/autoware.universe/issues/9686>`_)
+  enable to copy all information in downsampler
+* Contributors: Fumiya Watanabe, Ryuta Kambe, Vishal Chauhan, Yi-Hsiang Fang (Vivid), Yoshi Ri
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0
