@@ -14,6 +14,8 @@
 
 #include "autoware/predicted_path_checker/utils.hpp"
 
+#include <autoware/universe_utils/geometry/geometry.hpp>
+
 #include <boost/format.hpp>
 #include <boost/geometry/algorithms/convex_hull.hpp>
 #include <boost/geometry/strategies/agnostic/hull_graham_andrew.hpp>

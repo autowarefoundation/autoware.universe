@@ -15,6 +15,7 @@
 #include <autoware/behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <autoware/motion_utils/resample/resample.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <algorithm>
@@ -23,8 +24,8 @@
 namespace autoware::behavior_velocity_planner
 {
 bool splineInterpolate(
-  const tier4_planning_msgs::msg::PathWithLaneId & input, const double interval,
-  tier4_planning_msgs::msg::PathWithLaneId & output, const rclcpp::Logger & logger)
+  const autoware_internal_planning_msgs::msg::PathWithLaneId & input, const double interval,
+  autoware_internal_planning_msgs::msg::PathWithLaneId & output, const rclcpp::Logger & logger)
 {
   if (input.points.size() < 2) {
     RCLCPP_DEBUG(logger, "Do not interpolate because path size is 1.");

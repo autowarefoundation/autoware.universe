@@ -19,6 +19,7 @@
 
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
 #include <autoware/motion_utils/marker/virtual_wall_marker_creator.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 
 #include <lanelet2_core/geometry/Polygon.h>
 

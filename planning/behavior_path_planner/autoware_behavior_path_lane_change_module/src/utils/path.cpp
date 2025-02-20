@@ -195,7 +195,7 @@ FrenetState init_frenet_state(
 
 std::optional<SamplingParameters> init_sampling_parameters(
   const CommonDataPtr & common_data_ptr, const LaneChangePhaseMetrics & prepare_metrics,
-  const FrenetState & initial_state, const Spline2D & ref_spline, const Pose & lc_start_pose)
+  const FrenetState & initial_state, const Spline2D & ref_spline)
 {
   const auto & trajectory = common_data_ptr->lc_param_ptr->trajectory;
   const auto min_lc_vel = trajectory.min_lane_changing_velocity;
@@ -206,15 +206,11 @@ std::optional<SamplingParameters> init_sampling_parameters(
   const auto final_velocity =
     std::max(min_lc_vel, prepare_metrics.velocity + prepare_metrics.sampled_lon_accel * duration);
   const auto lc_length = duration * (prepare_metrics.velocity + final_velocity) * 0.5;
-  const auto target_s = initial_state.position.s + lc_length;
-  const auto initial_yaw = tf2::getYaw(lc_start_pose.orientation);
-  const auto target_lat_vel =
-    (1.0 - ref_spline.curvature(target_s + 1e-3) * initial_state.position.d) *
-    std::tan(initial_yaw - ref_spline.yaw(target_s));
-
-  if (std::isnan(target_lat_vel)) {
-    return std::nullopt;
-  }
+  const auto target_s = std::min(ref_spline.lastS(), initial_state.position.s + lc_length);
+  // for smooth lateral motion we want a constant lateral acceleration profile
+  // this means starting from a 0 lateral velocity and setting a positive target lateral velocity
+  const auto max_lat_vel = duration * max_lateral_acc;
+  const auto target_lat_vel = std::min(max_lat_vel, initial_state.position.d / duration);
 
   SamplingParameters sampling_parameters;
   const auto & safety = common_data_ptr->lc_param_ptr->safety;
@@ -222,9 +218,8 @@ std::optional<SamplingParameters> init_sampling_parameters(
   sampling_parameters.parameters.emplace_back();
   sampling_parameters.parameters.back().target_duration = duration;
   sampling_parameters.parameters.back().target_state.position = {target_s, 0.0};
-  // TODO(Maxime): not sure if we should use curvature at initial or target s
   sampling_parameters.parameters.back().target_state.lateral_velocity =
-    sign<double>(common_data_ptr->direction) * target_lat_vel;
+    std::copysign(target_lat_vel, sign<double>(common_data_ptr->direction));
   sampling_parameters.parameters.back().target_state.lateral_acceleration = 0.0;
   sampling_parameters.parameters.back().target_state.longitudinal_velocity = final_velocity;
   sampling_parameters.parameters.back().target_state.longitudinal_acceleration =
@@ -571,8 +566,8 @@ std::vector<lane_change::TrajectoryGroup> generate_frenet_candidates(
       initial_state.lateral_velocity, initial_state.longitudinal_acceleration,
       initial_state.lateral_acceleration);
 
-    const auto sampling_parameters_opt = init_sampling_parameters(
-      common_data_ptr, metric, initial_state, reference_spline, lc_start_pose);
+    const auto sampling_parameters_opt =
+      init_sampling_parameters(common_data_ptr, metric, initial_state, reference_spline);
 
     if (!sampling_parameters_opt) {
       continue;
@@ -732,12 +727,15 @@ void append_target_ref_to_candidate(
   const auto lc_end_idx =
     motion_utils::findNearestIndex(target_lane_ref_path, lc_end_pose.position);
   auto & candidate_path = frenet_candidate.path.points;
+  const auto & points = target_lane_ref_path;
   if (target_lane_ref_path.size() <= lc_end_idx + 2) {
+    for (const auto & pt : points | ranges::views::drop(lc_end_idx + 1)) {
+      candidate_path.push_back(pt);
+    }
     return;
   }
   const auto add_size = target_lane_ref_path.size() - (lc_end_idx + 1);
   candidate_path.reserve(candidate_path.size() + add_size);
-  const auto & points = target_lane_ref_path;
   for (const auto & [p2, p3] : ranges::views::zip(
          points | ranges::views::drop(lc_end_idx + 1),
          points | ranges::views::drop(lc_end_idx + 2))) {

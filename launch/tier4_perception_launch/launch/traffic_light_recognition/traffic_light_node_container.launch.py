@@ -97,7 +97,7 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
                 plugin="autoware::traffic_light::TrafficLightClassifierNodelet",
                 name="car_traffic_light_classifier",
                 namespace="classification",
-                parameters=[car_traffic_light_classifier_model_param],
+                parameters=[car_traffic_light_classifier_model_param, {"build_only": False}],
                 remappings=[
                     ("~/input/image", camera_arguments["input/image"]),
                     ("~/input/rois", camera_arguments["output/rois"]),
@@ -112,7 +112,7 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
                 plugin="autoware::traffic_light::TrafficLightClassifierNodelet",
                 name="pedestrian_traffic_light_classifier",
                 namespace="classification",
-                parameters=[pedestrian_traffic_light_classifier_model_param],
+                parameters=[pedestrian_traffic_light_classifier_model_param, {"build_only": False}],
                 remappings=[
                     ("~/input/image", camera_arguments["input/image"]),
                     ("~/input/rois", camera_arguments["output/rois"]),
@@ -179,7 +179,7 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
                 plugin="autoware::traffic_light::TrafficLightFineDetectorNode",
                 name="traffic_light_fine_detector",
                 namespace=f"{namespace}/detection",
-                parameters=[fine_detector_model_param],
+                parameters=[fine_detector_model_param, {"build_only": False}],
                 remappings=[
                     ("~/input/image", camera_arguments["input/image"]),
                     ("~/input/rois", "rough/rois"),
@@ -227,16 +227,14 @@ def generate_launch_description():
     # traffic_light_classifier
     add_launch_arg(
         "car_classifier_param_path",
-        os.path.join(
-            classifier_share_dir, "config", "car_traffic_light_classifier_efficientNet.param.yaml"
-        ),
+        os.path.join(classifier_share_dir, "config", "car_traffic_light_classifier.param.yaml"),
     )
     add_launch_arg(
         "pedestrian_classifier_param_path",
         os.path.join(
             classifier_share_dir,
             "config",
-            "pedestrian_traffic_light_classifier_efficientNet.param.yaml",
+            "pedestrian_traffic_light_classifier.param.yaml",
         ),
     )
 

@@ -1185,7 +1185,7 @@ bool NormalLaneChange::get_path_using_frenet(
       if (check_candidate_path_safety(*candidate_path_opt, target_objects)) {
         RCLCPP_DEBUG(
           logger_, "Found safe path after %lu candidate(s). Total time: %2.2f[us]",
-          frenet_candidates.size(), stop_watch_.toc("__func__"));
+          frenet_candidates.size(), stop_watch_.toc(__func__));
         utils::lane_change::append_target_ref_to_candidate(
           *candidate_path_opt, common_data_ptr_->lc_param_ptr->frenet.th_curvature_smoothing);
         candidate_paths.push_back(*candidate_path_opt);

@@ -24,8 +24,8 @@
 #include "autoware/behavior_path_planner_common/utils/parking_departure/common_module_data.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 
+#include <autoware_internal_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_vehicle_msgs/msg/hazard_lights_command.hpp>
-#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <lanelet2_core/Forward.h>
 
@@ -71,14 +71,6 @@ struct GoalPlannerDebugData
   lanelet::ConstLanelet expanded_pull_over_lane_between_ego{};
   Polygon2d objects_extraction_polygon{};
   utils::path_safety_checker::CollisionCheckDebugMap collision_check{};
-};
-
-struct LastApprovalData
-{
-  LastApprovalData(rclcpp::Time time, Pose pose) : time(time), pose(pose) {}
-
-  rclcpp::Time time{};
-  Pose pose{};
 };
 
 struct PullOverContextData
@@ -352,7 +344,7 @@ private:
   std::optional<PullOverContextData> context_data_{std::nullopt};
   // path_decision_controller is updated in updateData(), and used in plan()
   PathDecisionStateController path_decision_controller_{getLogger()};
-  std::unique_ptr<LastApprovalData> last_approval_data_{nullptr};
+  std::optional<rclcpp::Time> decided_time_{};
 
   // approximate distance from the start point to the end point of pull_over.
   // this is used as an assumed value to decelerate, etc., before generating the actual path.

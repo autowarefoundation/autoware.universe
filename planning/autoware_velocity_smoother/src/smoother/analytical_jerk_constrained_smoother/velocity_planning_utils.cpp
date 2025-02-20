@@ -15,6 +15,7 @@
 #include "autoware/velocity_smoother/smoother/analytical_jerk_constrained_smoother/velocity_planning_utils.hpp"
 
 #include "autoware/interpolation/linear_interpolation.hpp"
+#include "autoware/universe_utils/geometry/geometry.hpp"
 
 #include <algorithm>
 #include <vector>
