@@ -336,7 +336,6 @@ std::optional<StopObstacle> ObstacleStopModule::create_stop_obstacle_for_point_c
   const geometry_msgs::msg::Point & stop_point) const
 {
   if (!use_pointcloud_) {
-    std::cout << "!use_pointcloud_\n";
     return std::nullopt;
   }
 
