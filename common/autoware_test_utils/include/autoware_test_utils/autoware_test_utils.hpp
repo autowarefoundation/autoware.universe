@@ -32,7 +32,7 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <rosgraph_msgs/msg/clock.hpp>
 #include <tf2_msgs/msg/tf_message.hpp>
-#include <tier4_planning_msgs/msg/scenario.hpp>
+#include <autoware_internal_planning_msgs/msg/scenario.hpp>
 
 #include <lanelet2_io/Io.h>
 
@@ -63,7 +63,7 @@ using geometry_msgs::msg::PoseStamped;
 using nav_msgs::msg::OccupancyGrid;
 using nav_msgs::msg::Odometry;
 using tf2_msgs::msg::TFMessage;
-using tier4_planning_msgs::msg::Scenario;
+using autoware_internal_planning_msgs::msg::Scenario;
 
 /**
  * @brief Creates a Pose message with the specified position and orientation.
