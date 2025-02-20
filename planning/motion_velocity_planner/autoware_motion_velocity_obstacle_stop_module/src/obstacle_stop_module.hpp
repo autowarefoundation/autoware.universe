@@ -90,7 +90,7 @@ private:
   std::vector<StopObstacle> prev_stop_obstacles_{};
 
   // PointCloud-based stop obstacle history
-  std::vector<StopObstacle> stop_pc_obstacle_history_;
+  std::vector<StopObstacle> stop_pointcloud_obstacle_history_;
 
   MetricsManager metrics_manager_{};
   // previous trajectory and distance to stop

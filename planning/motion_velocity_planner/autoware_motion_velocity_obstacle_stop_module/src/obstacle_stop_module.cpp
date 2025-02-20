@@ -309,7 +309,7 @@ std::vector<geometry_msgs::msg::Point> ObstacleStopModule::convert_point_cloud_t
         continue;
       }
       const auto current_ego_to_obstacle_distance =
-        autoware::motion_velocity_planner::utils::calcDistanceToFrontVehicle(
+        autoware::motion_velocity_planner::utils::calc_distance_to_front_object(
           traj_points, ego_idx, obstacle_point);
       if (!current_ego_to_obstacle_distance) {
         continue;
@@ -474,13 +474,13 @@ std::vector<StopObstacle> ObstacleStopModule::filter_stop_obstacle_for_point_clo
   }
 
   std::vector<StopObstacle> past_stop_obstacles;
-  for (auto itr = stop_pc_obstacle_history_.begin(); itr != stop_pc_obstacle_history_.end();) {
+  for (auto itr = stop_pointcloud_obstacle_history_.begin(); itr != stop_pointcloud_obstacle_history_.end();) {
     rclcpp::Time odom_time(odometry.header.stamp.sec, odometry.header.stamp.nanosec);
     rclcpp::Time itr_time(itr->stamp);
 
     const double elapsed_time = (odom_time - itr_time).seconds();
     if (elapsed_time >= obstacle_filtering_param_.stop_obstacle_hold_time_threshold) {
-      itr = stop_pc_obstacle_history_.erase(itr);
+      itr = stop_pointcloud_obstacle_history_.erase(itr);
       continue;
     }
 
@@ -499,8 +499,8 @@ std::vector<StopObstacle> ObstacleStopModule::filter_stop_obstacle_for_point_clo
     ++itr;
   }
 
-  stop_pc_obstacle_history_ = autoware::motion_velocity_planner::utils::concat_vectors(
-    std::move(stop_pc_obstacle_history_), stop_obstacles);
+  stop_pointcloud_obstacle_history_ = autoware::motion_velocity_planner::utils::concat_vectors(
+    std::move(stop_pointcloud_obstacle_history_), stop_obstacles);
   stop_obstacles = autoware::motion_velocity_planner::utils::concat_vectors(
     std::move(stop_obstacles), std::move(past_stop_obstacles));
 

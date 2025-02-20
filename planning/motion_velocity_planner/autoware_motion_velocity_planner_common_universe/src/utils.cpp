@@ -126,7 +126,7 @@ geometry_msgs::msg::Point to_geometry_point(const autoware::universe_utils::Poin
   return geom_point;
 }
 
-std::optional<double> calcDistanceToFrontVehicle(
+std::optional<double> calc_distance_to_front_object(
   const std::vector<TrajectoryPoint> & traj_points, const size_t ego_idx,
   const geometry_msgs::msg::Point & obstacle_pos)
 {

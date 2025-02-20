@@ -69,12 +69,10 @@ struct ObstacleFilteringParam
   PointcloudObstacleFilteringParam pointcloud_obstacle_filtering_param;
   std::vector<uint8_t> object_types{};
 
-  bool use_pointcloud_for_slow_down;
+  bool use_pointcloud;
 
   double min_lat_margin{};
   double max_lat_margin{};
-
-  double max_lat_margin_against_unknown{};
 
   double lat_hysteresis_margin{};
 
@@ -84,7 +82,7 @@ struct ObstacleFilteringParam
   ObstacleFilteringParam() = default;
   explicit ObstacleFilteringParam(rclcpp::Node & node)
   {
-    use_pointcloud_for_slow_down = getOrDeclareParameter<bool>(
+    use_pointcloud = getOrDeclareParameter<bool>(
       node, "obstacle_slow_down.obstacle_filtering.object_type.pointcloud");
     object_types =
       utils::get_target_object_type(node, "obstacle_slow_down.obstacle_filtering.object_type.");
@@ -92,8 +90,6 @@ struct ObstacleFilteringParam
       getOrDeclareParameter<double>(node, "obstacle_slow_down.obstacle_filtering.min_lat_margin");
     max_lat_margin =
       getOrDeclareParameter<double>(node, "obstacle_slow_down.obstacle_filtering.max_lat_margin");
-    max_lat_margin_against_unknown = getOrDeclareParameter<double>(
-      node, "obstacle_stop.obstacle_filtering.max_lat_margin_against_unknown");
 
     lat_hysteresis_margin = getOrDeclareParameter<double>(
       node, "obstacle_slow_down.obstacle_filtering.lat_hysteresis_margin");
