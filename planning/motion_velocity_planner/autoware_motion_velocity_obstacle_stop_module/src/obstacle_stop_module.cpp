@@ -353,14 +353,14 @@ std::optional<StopObstacle> ObstacleStopModule::create_stop_obstacle_for_point_c
   unknown_object_classification.label = ObjectClassification::UNKNOWN;
   unknown_object_classification.probability = 1.0;
 
-  const geometry_msgs::msg::Pose uninitialised_pose;
-  const double unitialised_lon_vel = 0.;
+  const geometry_msgs::msg::Pose unconfigured_pose;
+  const double unconfigured_lon_vel = 0.;
 
   return StopObstacle{
     obj_uuid_str, stamp,
     unknown_object_classification,  // Since the obstacle is obtained from the point-cloud, the type
                                     // is UNKNOWN
-    uninitialised_pose, bounding_box_shape, unitialised_lon_vel, stop_point,
+    unconfigured_pose, bounding_box_shape, unconfigured_lon_vel, stop_point,
     dist_to_collide_on_traj};
 }
 

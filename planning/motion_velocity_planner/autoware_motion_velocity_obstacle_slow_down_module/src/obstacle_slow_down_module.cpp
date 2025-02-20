@@ -648,18 +648,18 @@ std::optional<SlowDownObstacle> ObstacleSlowDownModule::create_slow_down_obstacl
   unknown_object_classification.label = ObjectClassification::UNKNOWN;
   unknown_object_classification.probability = 1.0;
 
-  const geometry_msgs::msg::Pose uninitialised_pose;
+  const geometry_msgs::msg::Pose unconfigured_pose;
 
-  const double uninitialised_lon_velocity = 0.;
-  const double uninitialised_lat_velocity = 0.;
+  const double unconfigured_lon_velocity = 0.;
+  const double unconfigured_lat_velocity = 0.;
 
   return SlowDownObstacle{
     obj_uuid_str,
     stamp,
     unknown_object_classification,
-    uninitialised_pose,
-    uninitialised_lon_velocity,
-    uninitialised_lat_velocity,
+    unconfigured_pose,
+    unconfigured_lon_velocity,
+    unconfigured_lat_velocity,
     lat_dist_to_traj,
     front_collision_point,
     back_collision_point};
