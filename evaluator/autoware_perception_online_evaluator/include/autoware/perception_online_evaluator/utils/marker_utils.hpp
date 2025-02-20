@@ -15,6 +15,7 @@
 #ifndef AUTOWARE__PERCEPTION_ONLINE_EVALUATOR__UTILS__MARKER_UTILS_HPP_
 #define AUTOWARE__PERCEPTION_ONLINE_EVALUATOR__UTILS__MARKER_UTILS_HPP_
 
+#include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info.hpp>
 
 #include "autoware_perception_msgs/msg/predicted_objects.hpp"
