@@ -1928,6 +1928,22 @@ bool RouteHandler::planPathLaneletsBetweenCheckpoints(
         }
       }
     }
+    if (getClosestLaneletWithinRoute(goal_checkpoint, &closest_lanelet)) {
+      if (std::find(candidates.begin(), candidates.end(), closest_lanelet) != candidates.end()) {
+        if (lanelet::utils::isInLanelet(goal_checkpoint, closest_lanelet)) {
+          std::stringstream preferred_lanelets_str;
+          for (const auto & preferred_lanelet : preferred_lanelets_) {
+            preferred_lanelets_str << preferred_lanelet.id() << ", ";
+          }
+          RCLCPP_WARN(
+            logger_,
+            "Failed to find reroute on previous preferred lanelets %s, but on previous route "
+            "segment %ld still",
+            preferred_lanelets_str.str().c_str(), closest_lanelet.id());
+          return closest_lanelet;
+        }
+      }
+    }
     return std::nullopt;
   };
   if (auto closest_lanelet = findGoalClosestPreferredLanelet()) {

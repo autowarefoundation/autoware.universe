@@ -22,6 +22,7 @@
 #include <pcl_conversions/pcl_conversions.h>
 
 #include <iomanip>
+#include <limits>
 #include <list>
 #include <memory>
 #include <optional>
@@ -178,10 +179,26 @@ std::string PointCloudConcatenateDataSynchronizerComponent::replace_sync_topic_n
   return replaced_topic_name;
 }
 
+void PointCloudConcatenateDataSynchronizerComponent::initialize_collector_list()
+{
+  // Initialize collector list
+  for (size_t i = 0; i < num_of_collectors; ++i) {
+    cloud_collectors_.emplace_back(std::make_shared<CloudCollector>(
+      std::dynamic_pointer_cast<PointCloudConcatenateDataSynchronizerComponent>(shared_from_this()),
+      combine_cloud_handler_, params_.input_topics.size(), params_.timeout_sec,
+      params_.debug_mode));
+  }
+  init_collector_list_ = true;
+}
+
 void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
   const sensor_msgs::msg::PointCloud2::SharedPtr & input_ptr, const std::string & topic_name)
 {
   stop_watch_ptr_->toc("processing_time", true);
+  if (!init_collector_list_) {
+    initialize_collector_list();
+  }
+
   double cloud_arrival_time = this->get_clock()->now().seconds();
   manage_collector_list();
 
@@ -230,20 +247,30 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
     auto collector = cloud_collector.value();
     if (collector) {
       cloud_collectors_lock.unlock();
-      process_success = cloud_collector.value()->process_pointcloud(topic_name, input_ptr);
+      process_success = collector->process_pointcloud(topic_name, input_ptr);
     }
   }
 
+  // Didn't find matched collector
   if (!process_success) {
-    auto new_cloud_collector = std::make_shared<CloudCollector>(
-      std::dynamic_pointer_cast<PointCloudConcatenateDataSynchronizerComponent>(shared_from_this()),
-      combine_cloud_handler_, params_.input_topics.size(), params_.timeout_sec, params_.debug_mode);
+    // Reuse the collector if the status is IDLE
+    std::shared_ptr<CloudCollector> selected_collector = nullptr;
 
-    cloud_collectors_.push_back(new_cloud_collector);
+    auto it = std::find_if(
+      cloud_collectors_.begin(), cloud_collectors_.end(),
+      [](const auto & collector) { return collector->get_status() == CollectorStatus::Idle; });
+
+    if (it != cloud_collectors_.end()) {
+      selected_collector = *it;
+    }
     cloud_collectors_lock.unlock();
-
-    collector_matching_strategy_->set_collector_info(new_cloud_collector, matching_params);
-    (void)new_cloud_collector->process_pointcloud(topic_name, input_ptr);
+    if (selected_collector) {
+      collector_matching_strategy_->set_collector_info(selected_collector, matching_params);
+      (void)selected_collector->process_pointcloud(topic_name, input_ptr);
+    } else {
+      // Handle case where no suitable collector is found
+      RCLCPP_WARN(get_logger(), "No available CloudCollector in IDLE state.");
+    }
   }
 }
 
@@ -321,8 +348,7 @@ void PointCloudConcatenateDataSynchronizerComponent::publish_clouds(
     }
   }
 
-  diagnostic_collector_info_ = collector_info;
-
+  diagnostic_collector_info_ = std::move(collector_info);
   diagnostic_topic_to_original_stamp_map_ = concatenated_cloud_result.topic_to_original_stamp_map;
   diagnostic_updater_.force_update();
 
@@ -347,11 +373,51 @@ void PointCloudConcatenateDataSynchronizerComponent::manage_collector_list()
 {
   std::lock_guard<std::mutex> cloud_collectors_lock(cloud_collectors_mutex_);
 
-  for (auto it = cloud_collectors_.begin(); it != cloud_collectors_.end();) {
-    if ((*it)->concatenate_finished()) {
-      it = cloud_collectors_.erase(it);  // Erase and move the iterator to the next element
-    } else {
-      ++it;  // Move to the next element
+  int num_processing_collectors = 0;
+
+  for (auto & collector : cloud_collectors_) {
+    if (collector->get_status() == CollectorStatus::Finished) {
+      collector->reset();
+    }
+
+    if (collector->get_status() == CollectorStatus::Processing) {
+      num_processing_collectors++;
+    }
+  }
+
+  if (num_processing_collectors == num_of_collectors) {
+    auto min_it = cloud_collectors_.end();
+    constexpr double k_max_timestamp = std::numeric_limits<double>::max();
+    double min_timestamp = k_max_timestamp;
+
+    for (auto it = cloud_collectors_.begin(); it != cloud_collectors_.end(); ++it) {
+      if ((*it)->get_status() == CollectorStatus::Processing) {
+        auto info = (*it)->get_info();
+        double timestamp = k_max_timestamp;
+
+        if (auto naive_info = std::dynamic_pointer_cast<NaiveCollectorInfo>(info)) {
+          timestamp = naive_info->timestamp;
+        } else if (auto advanced_info = std::dynamic_pointer_cast<AdvancedCollectorInfo>(info)) {
+          timestamp = advanced_info->timestamp;
+        } else {
+          continue;
+        }
+
+        if (timestamp < min_timestamp) {
+          min_timestamp = timestamp;
+          min_it = it;
+        }
+      }
+    }
+
+    // Reset the collector with the oldest timestamp if found
+    if (min_it != cloud_collectors_.end()) {
+      RCLCPP_WARN_STREAM_THROTTLE(
+        this->get_logger(), *this->get_clock(), 1000,
+        "Reset the oldest collector because the number of processing collectors ("
+          << num_processing_collectors << ") is equal to the limit of (" << num_of_collectors
+          << ").");
+      (*min_it)->reset();
     }
   }
 }
