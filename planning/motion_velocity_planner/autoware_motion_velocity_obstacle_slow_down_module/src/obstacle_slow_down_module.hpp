@@ -113,10 +113,8 @@ private:
     const std::shared_ptr<PlannerData::Object> object, const rclcpp::Time & predicted_objects_stamp,
     const double dist_from_obj_poly_to_traj_poly);
   std::optional<SlowDownObstacle> create_slow_down_obstacle_for_point_cloud(
-    const rclcpp::Time & stamp,
-    const geometry_msgs::msg::Point & front_collision_point,
-    const geometry_msgs::msg::Point & back_collision_point,
-    const double lat_dist_to_traj);
+    const rclcpp::Time & stamp, const geometry_msgs::msg::Point & front_collision_point,
+    const geometry_msgs::msg::Point & back_collision_point, const double lat_dist_to_traj);
   std::vector<SlowdownInterval> plan_slow_down(
     const std::shared_ptr<const PlannerData> planner_data,
     const std::vector<TrajectoryPoint> & traj_points,

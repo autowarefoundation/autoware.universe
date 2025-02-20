@@ -474,7 +474,8 @@ std::vector<StopObstacle> ObstacleStopModule::filter_stop_obstacle_for_point_clo
   }
 
   std::vector<StopObstacle> past_stop_obstacles;
-  for (auto itr = stop_pointcloud_obstacle_history_.begin(); itr != stop_pointcloud_obstacle_history_.end();) {
+  for (auto itr = stop_pointcloud_obstacle_history_.begin();
+       itr != stop_pointcloud_obstacle_history_.end();) {
     rclcpp::Time odom_time(odometry.header.stamp.sec, odometry.header.stamp.nanosec);
     rclcpp::Time itr_time(itr->stamp);
 

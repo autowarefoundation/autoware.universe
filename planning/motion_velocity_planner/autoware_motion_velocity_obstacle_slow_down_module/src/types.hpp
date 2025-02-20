@@ -34,10 +34,11 @@ struct SlowDownPointData
   double lat_dist_to_traj{0};
 
   SlowDownPointData(
-    const std::optional<geometry_msgs::msg::Point>& front_point,
-    const std::optional<geometry_msgs::msg::Point>& back_point,
-    double lat_dist_to_traj)
-  : front(front_point), back(back_point), lat_dist_to_traj(lat_dist_to_traj) {}
+    const std::optional<geometry_msgs::msg::Point> & front_point,
+    const std::optional<geometry_msgs::msg::Point> & back_point, double lat_dist_to_traj)
+  : front(front_point), back(back_point), lat_dist_to_traj(lat_dist_to_traj)
+  {
+  }
 };
 struct SlowDownObstacle
 {

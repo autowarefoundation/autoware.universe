@@ -242,7 +242,7 @@ ObstacleSlowDownModule::convert_point_cloud_to_slow_down_points(
   autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   const auto & p = obstacle_filtering_param_;
-  
+
   std::vector<autoware::motion_velocity_planner::SlowDownPointData> slow_down_points;
 
   // 1. transform pointcloud
@@ -310,7 +310,8 @@ ObstacleSlowDownModule::convert_point_cloud_to_slow_down_points(
 
     if (slow_down_front_collision_point) {
       slow_down_points.emplace_back(
-        slow_down_front_collision_point, slow_down_back_collision_point, lat_dist_from_obstacle_to_traj);
+        slow_down_front_collision_point, slow_down_back_collision_point,
+        lat_dist_from_obstacle_to_traj);
     }
   }
 
@@ -463,9 +464,8 @@ std::vector<SlowDownObstacle> ObstacleSlowDownModule::filter_slow_down_obstacle_
   debug_data_ptr_->decimated_traj_polys = decimated_traj_polys_with_lat_margin;
 
   // Get Objects
-  const std::vector<autoware::motion_velocity_planner::SlowDownPointData>
-    slow_down_points_data =
-      convert_point_cloud_to_slow_down_points(point_cloud, traj_points, vehicle_info, ego_idx);
+  const std::vector<autoware::motion_velocity_planner::SlowDownPointData> slow_down_points_data =
+    convert_point_cloud_to_slow_down_points(point_cloud, traj_points, vehicle_info, ego_idx);
 
   // slow down
   std::vector<SlowDownObstacle> slow_down_obstacles;
@@ -477,11 +477,8 @@ std::vector<SlowDownObstacle> ObstacleSlowDownModule::filter_slow_down_obstacle_
     const auto & back_collision_point = slow_down_point_data.back.value_or(front_collision_point);
 
     const auto slow_down_obstacle = create_slow_down_obstacle_for_point_cloud(
-      rclcpp::Time(point_cloud.pointcloud.header.stamp),
-      front_collision_point,
-      back_collision_point,
-      slow_down_point_data.lat_dist_to_traj
-    );
+      rclcpp::Time(point_cloud.pointcloud.header.stamp), front_collision_point,
+      back_collision_point, slow_down_point_data.lat_dist_to_traj);
 
     if (slow_down_obstacle) {
       slow_down_obstacles.push_back(*slow_down_obstacle);
@@ -633,10 +630,8 @@ ObstacleSlowDownModule::create_slow_down_obstacle_for_predicted_object(
 }
 
 std::optional<SlowDownObstacle> ObstacleSlowDownModule::create_slow_down_obstacle_for_point_cloud(
-  const rclcpp::Time & stamp,
-  const geometry_msgs::msg::Point & front_collision_point,
-  const geometry_msgs::msg::Point & back_collision_point,
-  const double lat_dist_to_traj)
+  const rclcpp::Time & stamp, const geometry_msgs::msg::Point & front_collision_point,
+  const geometry_msgs::msg::Point & back_collision_point, const double lat_dist_to_traj)
 {
   if (!obstacle_filtering_param_.use_pointcloud) {
     return std::nullopt;
