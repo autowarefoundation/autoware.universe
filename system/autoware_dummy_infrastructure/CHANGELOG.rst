@@ -2,6 +2,31 @@
 Changelog for package autoware_dummy_infrastructure
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat: apply `autoware\_` prefix for `dummy_infrastructure` (`#9969 <https://github.com/autowarefoundation/autoware.universe/issues/9969>`_)
+  * feat(dummy_infrastructure): apply `autoware\_` prefix (see below):
+  Note:
+  * In this commit, I did not organize a folder structure.
+  The folder structure will be organized in the next some commits.
+  * The changes will follow the Autoware's guideline as below:
+  - https://autowarefoundation.github.io/autoware-documentation/main/contributing/coding-guidelines/ros-nodes/directory-structure/#package-folder
+  * rename(dummy_infrastructure): move a header under `include/autoware`
+  * Fixes due to this changes for .hpp/.cpp files will be applied in the next commit
+  * fix(dummy_infrastructure): fix include header path
+  * To follow the previous commit
+  * rename: `dummy_infrastructure` => `autoware_dummy_infrastructure`
+  * bug(autoware_dummy_infrastructure): revert wrongly updated copyrights
+  * update(autoware_dummy_infrastructure): `README.md`
+  * update: `CODEOWNERS`
+  * fix(autoware_dummy_infrastructure): fix package name in CHANGELOG.rst
+  * docs(autoware_dummy_infrastructure): fix package name in README and package description
+  ---------
+  Co-authored-by: Ryohsuke Mitsudome <ryohsuke.mitsudome@tier4.jp>
+  Co-authored-by: Ryohsuke Mitsudome <43976834+mitsudome-r@users.noreply.github.com>
+* Contributors: Fumiya Watanabe, Junya Sasaki
+
 0.40.0 (2024-12-12)
 -------------------
 * Revert "chore(package.xml): bump version to 0.39.0 (`#9587 <https://github.com/autowarefoundation/autoware.universe/issues/9587>`_)"

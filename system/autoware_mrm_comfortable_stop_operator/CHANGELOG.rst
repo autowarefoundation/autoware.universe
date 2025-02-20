@@ -1,6 +1,25 @@
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Changelog for package mrm_comfortable_stop_operator
+Changelog for package autoware_mrm_comfortable_stop_operator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat: apply `autoware\_` prefix for `mrm_comfortable_stop_operator` (`#10011 <https://github.com/autowarefoundation/autoware.universe/issues/10011>`_)
+  * feat(mrm_comfortable_stop_operator): apply `autoware\_` prefix (see below):
+  Note:
+  * In this commit, I did not organize a folder structure.
+  The folder structure will be organized in the next some commits.
+  * The changes will follow the Autoware's guideline as below:
+  - https://autowarefoundation.github.io/autoware-documentation/main/contributing/coding-guidelines/ros-nodes/directory-structure/#package-folder
+  * rename(mrm_comfortable_stop_operator): move a header under `include/autoware`
+  * Fixes due to this changes for .hpp/.cpp files will be applied in the next commit
+  * fix(mrm_comfortable_stop_operator): fix include header path
+  * To follow the previous commit
+  * rename: `mrm_comfortable_stop_operator` => `autoware_mrm_comfortable_stop_operator`
+  * update: `CODEOWNERS`
+  ---------
+* Contributors: Fumiya Watanabe, Junya Sasaki
 
 0.40.0 (2024-12-12)
 -------------------

@@ -1,6 +1,27 @@
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Changelog for package mrm_emergency_stop_operator
+Changelog for package autoware_mrm_emergency_stop_operator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat: apply `autoware\_` prefix for `mrm_emergency_stop_operator` (`#9973 <https://github.com/autowarefoundation/autoware.universe/issues/9973>`_)
+  * feat(mrm_emergency_stop_operator): apply `autoware\_` prefix (see below):
+  Note:
+  * In this commit, I did not organize a folder structure.
+  The folder structure will be organized in the next some commits.
+  * The changes will follow the Autoware's guideline as below:
+  - https://autowarefoundation.github.io/autoware-documentation/main/contributing/coding-guidelines/ros-nodes/directory-structure/#package-folder
+  * rename(mrm_emergency_stop_operator): move a header under `include/autoware`:
+  * Fixes due to this changes for .hpp/.cpp files will be applied in the next commit
+  * fix(mrm_emergency_stop_operator): fix include header path
+  * To follow the previous commit
+  * rename: `mrm_emergency_stop_operator` => `autoware_mrm_emergency_stop_operator`
+  * bug(autoware_mrm_emergency_stop_operator): revert wrongly updated copyrights
+  * bug(tier4_system_launch): fix a missing `autoware\_` for `mrm_emergency_stop_operator`
+  * bug(autoware_mrm_emergency_stop_operator): fix critical bugs that contaminate topic names
+  ---------
+* Contributors: Fumiya Watanabe, Junya Sasaki
 
 0.40.0 (2024-12-12)
 -------------------

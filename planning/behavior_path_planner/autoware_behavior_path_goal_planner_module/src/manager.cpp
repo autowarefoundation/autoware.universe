@@ -106,7 +106,6 @@ GoalPlannerParameters GoalPlannerModuleManager::initGoalPlannerParameters(
   // object recognition
   {
     const std::string ns = base_ns + "object_recognition.";
-    p.use_object_recognition = node->declare_parameter<bool>(ns + "use_object_recognition");
     p.object_recognition_collision_check_soft_margins =
       node->declare_parameter<std::vector<double>>(ns + "collision_check_soft_margins");
     p.object_recognition_collision_check_hard_margins =
@@ -139,6 +138,7 @@ GoalPlannerParameters GoalPlannerModuleManager::initGoalPlannerParameters(
     const std::string ns = base_ns + "pull_over.";
     p.pull_over_minimum_request_length =
       node->declare_parameter<double>(ns + "minimum_request_length");
+    p.pull_over_prepare_length = node->declare_parameter<double>(ns + "pull_over_prepare_length");
     p.pull_over_velocity = node->declare_parameter<double>(ns + "pull_over_velocity");
     p.pull_over_minimum_velocity =
       node->declare_parameter<double>(ns + "pull_over_minimum_velocity");
@@ -266,6 +266,15 @@ GoalPlannerParameters GoalPlannerModuleManager::initGoalPlannerParameters(
     p.rrt_star_parameters.margin = node->declare_parameter<double>(ns + "margin");
   }
 
+  // bezier parking
+  {
+    const std::string ns = base_ns + "pull_over.bezier_parking.";
+    p.bezier_parking.pull_over_angle_threshold =
+      node->declare_parameter<double>(ns + "pull_over_angle_threshold");
+    p.bezier_parking.after_shift_straight_distance =
+      node->declare_parameter<double>(ns + "after_shift_straight_distance");
+  }
+
   // stop condition
   {
     p.maximum_deceleration_for_stop =
@@ -359,6 +368,10 @@ GoalPlannerParameters GoalPlannerModuleManager::initGoalPlannerParameters(
   {
     p.safety_check_params.enable_safety_check =
       node->declare_parameter<bool>(safety_check_ns + "enable_safety_check");
+    // NOTE(soblin): remove safety_check_params.enable_safety_check because it does not make sense
+    if (!p.safety_check_params.enable_safety_check) {
+      throw std::domain_error("goal_planner never works without safety check");
+    }
     p.safety_check_params.keep_unsafe_time =
       node->declare_parameter<double>(safety_check_ns + "keep_unsafe_time");
     p.safety_check_params.method = node->declare_parameter<std::string>(safety_check_ns + "method");
@@ -503,7 +516,6 @@ void GoalPlannerModuleManager::updateModuleParams(
   {
     const std::string ns = base_ns + "object_recognition.";
 
-    updateParam<bool>(parameters, ns + "use_object_recognition", p->use_object_recognition);
     updateParam(
       parameters, ns + "object_recognition_collision_check_max_extra_stopping_margin",
       p->object_recognition_collision_check_max_extra_stopping_margin);
@@ -778,9 +790,6 @@ void GoalPlannerModuleManager::updateModuleParams(
   // SafetyCheckParams
   const std::string safety_check_ns = path_safety_check_ns + "safety_check_params.";
   {
-    updateParam<bool>(
-      parameters, safety_check_ns + "enable_safety_check",
-      p->safety_check_params.enable_safety_check);
     updateParam<double>(
       parameters, safety_check_ns + "keep_unsafe_time", p->safety_check_params.keep_unsafe_time);
     updateParam<std::string>(parameters, safety_check_ns + "method", p->safety_check_params.method);

@@ -1,6 +1,31 @@
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Changelog for package perception_online_evaluator
+Changelog for package autoware_perception_online_evaluator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat: apply `autoware\_` prefix for `perception_online_evaluator` (`#9956 <https://github.com/autowarefoundation/autoware.universe/issues/9956>`_)
+  * feat(perception_online_evaluator): apply `autoware\_` prefix (see below):
+  * In this commit, I did not organize a folder structure.
+  The folder structure will be organized in the next some commits.
+  * The changes will follow the Autoware's guideline as below:
+  - https://autowarefoundation.github.io/autoware-documentation/main/contributing/coding-guidelines/ros-nodes/directory-structure/#package-folder
+  * bug(perception_online_evaluator): remove duplicated properties
+  * It seems the `motion_evaluator` is defined and used in the `autoware_planning_evaluator`
+  * rename(perception_online_evaluator): move headers under `include/autoware`:
+  * Fixes due to this changes for .hpp/.cpp files will be applied in the next commit
+  * fix(perception_online_evaluator): fix include paths
+  * To follow the previous commit
+  * rename: `perception_online_evaluator` => `autoware_perception_online_evaluator`
+  * style(pre-commit): autofix
+  * bug(autoware_perception_online_evaluator): revert wrongly updated copyright
+  * bug(autoware_perception_online_evaluator): `autoware\_` prefix is not needed here
+  * update: `CODEOWNERS`
+  * bug(autoware_perception_online_evaluator): fix a wrong package name
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* Contributors: Fumiya Watanabe, Junya Sasaki
 
 0.40.0 (2024-12-12)
 -------------------
