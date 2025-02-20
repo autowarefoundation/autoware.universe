@@ -2,6 +2,12 @@
 Changelog for package tier4_adapi_rviz_plugin
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat: operation mode debug panel (`#8933 <https://github.com/autowarefoundation/autoware.universe/issues/8933>`_)
+* Contributors: Fumiya Watanabe, Takagi, Isamu
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

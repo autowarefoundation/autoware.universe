@@ -95,14 +95,14 @@ LaserscanBasedOccupancyGridMapNode::LaserscanBasedOccupancyGridMapNode(
   const std::string updater_type = this->declare_parameter<std::string>("updater_type");
   if (updater_type == "binary_bayes_filter") {
     occupancy_grid_map_updater_ptr_ = std::make_shared<OccupancyGridMapBBFUpdater>(
-      map_length / map_resolution, map_width / map_resolution, map_resolution);
+      false, map_length / map_resolution, map_width / map_resolution, map_resolution);
   } else {
     RCLCPP_WARN(
       get_logger(),
       "specified occupancy grid map updater type [%s] is not found, use binary_bayes_filter",
       updater_type.c_str());
     occupancy_grid_map_updater_ptr_ = std::make_shared<OccupancyGridMapBBFUpdater>(
-      map_length / map_resolution, map_width / map_resolution, map_resolution);
+      false, map_length / map_resolution, map_width / map_resolution, map_resolution);
   }
   occupancy_grid_map_updater_ptr_->initRosParam(*this);
 

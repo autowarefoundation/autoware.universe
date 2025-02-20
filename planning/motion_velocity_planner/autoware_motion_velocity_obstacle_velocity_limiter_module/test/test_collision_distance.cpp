@@ -394,7 +394,7 @@ TEST(TestCollisionDistance, createObjPolygons)
   using autoware_perception_msgs::msg::PredictedObject;
   using autoware_perception_msgs::msg::PredictedObjects;
 
-  std::vector<PlannerData::Object> objects;
+  std::vector<std::shared_ptr<PlannerData::Object>> objects;
 
   auto polygons = createObjectPolygons(objects, 0.0, 0.0);
   EXPECT_TRUE(polygons.empty());
@@ -407,7 +407,7 @@ TEST(TestCollisionDistance, createObjPolygons)
   object1.kinematics.initial_twist_with_covariance.twist.linear.x = 0.0;
   object1.shape.dimensions.x = 1.0;
   object1.shape.dimensions.y = 1.0;
-  objects.push_back(PlannerData::Object(object1));
+  objects.push_back(std::make_shared<PlannerData::Object>(object1));
 
   polygons = createObjectPolygons(objects, 0.0, 1.0);
   EXPECT_TRUE(polygons.empty());
@@ -434,7 +434,7 @@ TEST(TestCollisionDistance, createObjPolygons)
   object2.kinematics.initial_twist_with_covariance.twist.linear.x = 2.0;
   object2.shape.dimensions.x = 2.0;
   object2.shape.dimensions.y = 1.0;
-  objects.push_back(PlannerData::Object(object2));
+  objects.push_back(std::make_shared<PlannerData::Object>(object2));
 
   polygons = createObjectPolygons(objects, 0.0, 2.0);
   ASSERT_EQ(polygons.size(), 1ul);

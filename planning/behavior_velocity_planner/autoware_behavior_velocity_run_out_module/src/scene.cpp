@@ -22,6 +22,7 @@
 #include <autoware/motion_utils/distance/distance.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/geometry/pose_deviation.hpp>
 #include <autoware/universe_utils/ros/uuid_helper.hpp>
 
 #include <boost/geometry/algorithms/intersection.hpp>
@@ -181,11 +182,6 @@ bool RunOutModule::modifyPathVelocity(PathWithLaneId * path)
       debug_ptr_->pushStopPose(autoware::universe_utils::calcOffsetPose(
         *last_stop_point_, planner_param_.vehicle_param.base_to_front, 0, 0));
     }
-  }
-
-  // apply max jerk limit if the ego can't stop with specified max jerk and acc
-  if (planner_param_.slow_down_limit.enable) {
-    applyMaxJerkLimit(current_pose, current_vel, current_acc, *path);
   }
 
   publishDebugValue(extended_smoothed_path, filtered_obstacles, dynamic_obstacle, current_pose);
@@ -745,7 +741,7 @@ std::optional<geometry_msgs::msg::Pose> RunOutModule::calcStopPoint(
 
 bool RunOutModule::insertStopPoint(
   const std::optional<geometry_msgs::msg::Pose> stop_point,
-  tier4_planning_msgs::msg::PathWithLaneId & path)
+  autoware_internal_planning_msgs::msg::PathWithLaneId & path, const double stop_point_velocity)
 {
   // no stop point
   if (!stop_point) {
@@ -766,10 +762,10 @@ bool RunOutModule::insertStopPoint(
   }
 
   // to PathPointWithLaneId
-  tier4_planning_msgs::msg::PathPointWithLaneId stop_point_with_lane_id;
+  autoware_internal_planning_msgs::msg::PathPointWithLaneId stop_point_with_lane_id;
   stop_point_with_lane_id = path.points.at(nearest_seg_idx);
   stop_point_with_lane_id.point.pose = *stop_point;
-  planning_utils::insertVelocity(path, stop_point_with_lane_id, 0.0, insert_idx);
+  planning_utils::insertVelocity(path, stop_point_with_lane_id, stop_point_velocity, insert_idx);
 
   planning_factor_interface_->add(
     path.points, planner_data_->current_odometry->pose, stop_point.value(), stop_point.value(),
@@ -855,7 +851,14 @@ bool RunOutModule::insertStoppingVelocity(
 {
   stopping_point =
     calcStopPoint(dynamic_obstacle, output_path, current_pose, current_vel, current_acc);
-  return insertStopPoint(stopping_point, output_path);
+
+  // apply max jerk limit if the ego can't stop with specified max jerk and acc
+  double stop_point_velocity = 0.0;
+  if (planner_param_.slow_down_limit.enable) {
+    stop_point_velocity = calcMaxJerkLimitedVelocity(
+      current_pose, current_vel, current_acc, output_path, *stopping_point);
+  }
+  return insertStopPoint(stopping_point, output_path, stop_point_velocity);
 }
 
 void RunOutModule::insertApproachingVelocity(
@@ -894,33 +897,26 @@ void RunOutModule::insertApproachingVelocity(
 
   // to PathPointWithLaneId
   // use lane id of point behind inserted point
-  tier4_planning_msgs::msg::PathPointWithLaneId stop_point_with_lane_id;
+  autoware_internal_planning_msgs::msg::PathPointWithLaneId stop_point_with_lane_id;
   stop_point_with_lane_id = output_path.points.at(nearest_seg_idx_stop);
   stop_point_with_lane_id.point.pose = *stop_point;
 
   planning_utils::insertVelocity(output_path, stop_point_with_lane_id, 0.0, insert_idx_stop);
 }
 
-void RunOutModule::applyMaxJerkLimit(
+double RunOutModule::calcMaxJerkLimitedVelocity(
   const geometry_msgs::msg::Pose & current_pose, const float current_vel, const float current_acc,
-  PathWithLaneId & path) const
+  PathWithLaneId & path, const geometry_msgs::msg::Pose & stop_point) const
 {
-  const auto stop_point_idx = run_out_utils::findFirstStopPointIdx(path.points);
-  if (!stop_point_idx) {
-    return;
-  }
-
-  const auto stop_point = path.points.at(stop_point_idx.value()).point.pose.position;
-  const auto dist_to_stop_point =
-    autoware::motion_utils::calcSignedArcLength(path.points, current_pose.position, stop_point);
+  const auto dist_to_stop_point = autoware::motion_utils::calcSignedArcLength(
+    path.points, current_pose.position, stop_point.position);
 
   // calculate desired velocity with limited jerk
   const auto jerk_limited_vel = planning_utils::calcDecelerationVelocityFromDistanceToTarget(
     planner_param_.slow_down_limit.max_jerk, planner_param_.slow_down_limit.max_acc, current_acc,
     current_vel, dist_to_stop_point);
 
-  // overwrite velocity with limited velocity
-  run_out_utils::insertPathVelocityFromIndex(stop_point_idx.value(), jerk_limited_vel, path.points);
+  return jerk_limited_vel;
 }
 
 std::vector<DynamicObstacle> RunOutModule::excludeObstaclesCrossingEgoCutLine(
