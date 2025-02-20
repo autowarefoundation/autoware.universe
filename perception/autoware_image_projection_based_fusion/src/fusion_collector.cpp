@@ -263,7 +263,7 @@ void FusionCollector<Msg3D, Msg2D, ExportObj>::show_debug_message()
                << " seconds\n";
   } else if (
     auto naive_info = std::dynamic_pointer_cast<NaiveCollectorInfo>(fusion_collector_info_)) {
-    log_stream << "Naive strategy:\n Fusino collector's timestamp: " << naive_info->timestamp
+    log_stream << "Naive strategy:\n Fusion collector's timestamp: " << naive_info->timestamp
                << " seconds\n";
   }
 

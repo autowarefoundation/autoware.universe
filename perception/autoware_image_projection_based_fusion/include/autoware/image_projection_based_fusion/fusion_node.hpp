@@ -90,7 +90,7 @@ private:
   void initialize_strategy();
   void initialize_collector_list();
   void manage_collector_list();
-  void manage_concatenated_status_map(double current_timestam);
+  void manage_concatenated_status_map(double current_timestamp);
 
   static std::string format_timestamp(double timestamp);
   void check_fusion_status(diagnostic_updater::DiagnosticStatusWrapper & stat);

@@ -2,7 +2,7 @@
 
 ## Purpose
 
-The `autoware_image_projection_based_fusion` package is designed to enhance obstacle detection accuracy by integrating information from both image-based and LiDAR-based perception. It fuses detected obstacles—such as bounding boxes or segmentations—from 2D images with 3D point clouds or other obstacle representations, including bounding boxes, clusters, or segmentations. This fusion helps to refine obstacle classification and detection in autonomous driving applications.
+The `autoware_image_projection_based_fusion` package is designed to enhance obstacle detection accuracy by integrating information from both image-based and LiDAR-based perception. It fuses detected obstacles — such as bounding boxes — from 2D images with 3D point clouds or other obstacle representations, including bounding boxes or clusters,. This fusion helps to refine obstacle classification and detection in autonomous driving applications.
 
 ### Fusion algorithms
 
