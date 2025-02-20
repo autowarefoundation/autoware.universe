@@ -1,3 +1,4 @@
 /**:
   ros__parameters:
-    rate: 10.0
+    rate: 30.0
+    stop_hold_acceleration: -1.5

@@ -20,6 +20,7 @@
 #include <autoware_control_msgs/msg/control.hpp>
 #include <autoware_vehicle_msgs/msg/gear_command.hpp>
 #include <autoware_vehicle_msgs/msg/hazard_lights_command.hpp>
+#include <autoware_vehicle_msgs/msg/steering_report.hpp>
 #include <autoware_vehicle_msgs/msg/turn_indicators_command.hpp>
 
 namespace autoware::stop_mode_publisher
@@ -28,6 +29,7 @@ namespace autoware::stop_mode_publisher
 using autoware_control_msgs::msg::Control;
 using autoware_vehicle_msgs::msg::GearCommand;
 using autoware_vehicle_msgs::msg::HazardLightsCommand;
+using autoware_vehicle_msgs::msg::SteeringReport;
 using autoware_vehicle_msgs::msg::TurnIndicatorsCommand;
 
 class StopModePublisher : public rclcpp::Node
@@ -36,12 +38,18 @@ public:
   explicit StopModePublisher(const rclcpp::NodeOptions & options);
 
 private:
-  void on_timer();
+  void publish_control_command();
+  void publish_trigger_command();
   rclcpp::TimerBase::SharedPtr timer_;
   rclcpp::Publisher<Control>::SharedPtr pub_control_;
   rclcpp::Publisher<GearCommand>::SharedPtr pub_gear_;
   rclcpp::Publisher<TurnIndicatorsCommand>::SharedPtr pub_turn_indicators_;
   rclcpp::Publisher<HazardLightsCommand>::SharedPtr pub_hazard_lights_;
+  rclcpp::Subscription<SteeringReport>::SharedPtr sub_steering_;
+
+  SteeringReport current_steering_;
+
+  double stop_hold_acceleration_;
 };
 
 }  // namespace autoware::stop_mode_publisher
