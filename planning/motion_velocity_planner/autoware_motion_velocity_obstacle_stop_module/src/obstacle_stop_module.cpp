@@ -22,6 +22,7 @@
 #include <autoware/universe_utils/ros/parameter.hpp>
 #include <autoware/universe_utils/ros/update_param.hpp>
 #include <autoware/universe_utils/ros/uuid_helper.hpp>
+
 #include <autoware_perception_msgs/msg/detail/shape__struct.hpp>
 
 #include <algorithm>
@@ -296,8 +297,8 @@ std::vector<geometry_msgs::msg::Point> ObstacleStopModule::convert_point_cloud_t
     std::optional<geometry_msgs::msg::Point> stop_collision_point = std::nullopt;
 
     for (const auto & index : cluster_indices.indices) {
-      const auto obstacle_point =
-        autoware::motion_velocity_planner::utils::to_geometry_point(filtered_points_ptr->points[index]);
+      const auto obstacle_point = autoware::motion_velocity_planner::utils::to_geometry_point(
+        filtered_points_ptr->points[index]);
       const auto current_lat_dist_from_obstacle_to_traj =
         autoware::motion_utils::calcLateralOffset(traj_points, obstacle_point);
       const auto min_lat_dist_to_traj_poly =
@@ -331,7 +332,8 @@ std::vector<geometry_msgs::msg::Point> ObstacleStopModule::convert_point_cloud_t
 }
 
 std::optional<StopObstacle> ObstacleStopModule::create_stop_obstacle_for_point_cloud(
-  const std::vector<TrajectoryPoint> & traj_points, const rclcpp::Time & stamp, const geometry_msgs::msg::Point& stop_point) const
+  const std::vector<TrajectoryPoint> & traj_points, const rclcpp::Time & stamp,
+  const geometry_msgs::msg::Point & stop_point) const
 {
   if (!use_pointcloud_) {
     std::cout << "!use_pointcloud_\n";
@@ -358,8 +360,7 @@ std::optional<StopObstacle> ObstacleStopModule::create_stop_obstacle_for_point_c
     obj_uuid_str, stamp,
     unknown_object_classification,  // Since the obstacle is obtained from the point-cloud, the type
                                     // is UNKNOWN
-    uninitialised_pose, bounding_box_shape,
-    unitialised_lon_vel, stop_point,
+    uninitialised_pose, bounding_box_shape, unitialised_lon_vel, stop_point,
     dist_to_collide_on_traj};
 }
 
@@ -449,7 +450,7 @@ std::vector<StopObstacle> ObstacleStopModule::filter_stop_obstacle_for_point_clo
   const auto & tp = trajectory_polygon_collision_check;
 
   const std::vector<geometry_msgs::msg::Point> stop_points =
-  convert_point_cloud_to_stop_points(point_cloud, decimated_traj_points, vehicle_info, ego_idx);
+    convert_point_cloud_to_stop_points(point_cloud, decimated_traj_points, vehicle_info, ego_idx);
 
   // calculated decimated trajectory points and trajectory polygon
   const auto decimated_traj_polys = polygon_utils::create_one_step_polygons(
@@ -459,7 +460,7 @@ std::vector<StopObstacle> ObstacleStopModule::filter_stop_obstacle_for_point_clo
   debug_data_ptr_->decimated_traj_polys = decimated_traj_polys;
 
   const auto & stop_obstacle_stamp = rclcpp::Time(point_cloud.pointcloud.header.stamp);
-  
+
   // determine ego's behavior from stop
   std::vector<StopObstacle> stop_obstacles;
   for (const auto & stop_point : stop_points) {

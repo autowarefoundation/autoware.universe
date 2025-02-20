@@ -188,9 +188,8 @@ private:
     const TrajectoryPolygonCollisionCheck & trajectory_polygon_collision_check) const;
 
   std::optional<StopObstacle> create_stop_obstacle_for_point_cloud(
-    const std::vector<TrajectoryPoint> & traj_points,
-    const rclcpp::Time & stamp,
-    const geometry_msgs::msg::Point& stop_point) const;
+    const std::vector<TrajectoryPoint> & traj_points, const rclcpp::Time & stamp,
+    const geometry_msgs::msg::Point & stop_point) const;
 
   std::optional<std::pair<geometry_msgs::msg::Point, double>>
   create_collision_point_for_outside_stop_obstacle(

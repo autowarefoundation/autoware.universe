@@ -84,8 +84,8 @@ struct ObstacleFilteringParam
   ObstacleFilteringParam() = default;
   explicit ObstacleFilteringParam(rclcpp::Node & node)
   {
-    use_pointcloud_for_slow_down =
-      getOrDeclareParameter<bool>(node, "obstacle_slow_down.obstacle_filtering.object_type.pointcloud");
+    use_pointcloud_for_slow_down = getOrDeclareParameter<bool>(
+      node, "obstacle_slow_down.obstacle_filtering.object_type.pointcloud");
     object_types =
       utils::get_target_object_type(node, "obstacle_slow_down.obstacle_filtering.object_type.");
     min_lat_margin =
