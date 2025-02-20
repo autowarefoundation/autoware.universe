@@ -22,8 +22,8 @@ using geometry_msgs::msg::Point;
 
 using std_msgs::msg::ColorRGBA;
 
-using autoware::universe_utils::createDefaultMarker;
-using autoware::universe_utils::createMarkerScale;
+using autoware_utils::create_default_marker;
+using autoware_utils::create_marker_scale;
 
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
@@ -36,9 +36,9 @@ Marker createArrowMarker(
   const double head_width = 0.5 * arrow_length;
   const double head_height = 0.5 * arrow_length;
 
-  Marker marker = createDefaultMarker(
+  Marker marker = create_default_marker(
     "map", rclcpp::Clock{RCL_ROS_TIME}.now(), name + "_arrow", id, Marker::ARROW,
-    createMarkerScale(line_width, head_width, head_height), data.color);
+    create_marker_scale(line_width, head_width, head_height), data.color);
 
   const double height = 0.5 * data.shape.dimensions.z;
 
@@ -58,9 +58,9 @@ Marker createCircleMarker(
   const size_t id, const ObjectMarkerData & data, const std::string & name, const double radius,
   const double height_offset, const double line_width)
 {
-  Marker marker = createDefaultMarker(
+  Marker marker = create_default_marker(
     "map", rclcpp::Clock{RCL_ROS_TIME}.now(), name, id, Marker::LINE_STRIP,
-    createMarkerScale(line_width, 0.0, 0.0), data.color);
+    create_marker_scale(line_width, 0.0, 0.0), data.color);
 
   const double height = 0.5 * data.shape.dimensions.z;
 
@@ -68,9 +68,9 @@ Marker createCircleMarker(
   for (size_t i = 0; i < num_points; ++i) {
     Point point;
     const double ratio = static_cast<double>(i) / static_cast<double>(num_points);
-    const double theta = 2 * autoware::universe_utils::pi * ratio;
-    point.x = data.pose.position.x + radius * autoware::universe_utils::cos(theta);
-    point.y = data.pose.position.y + radius * autoware::universe_utils::sin(theta);
+    const double theta = 2 * autoware_utils::pi * ratio;
+    point.x = data.pose.position.x + radius * autoware_utils::cos(theta);
+    point.y = data.pose.position.y + radius * autoware_utils::sin(theta);
     point.z = data.pose.position.z + height + height_offset;
     marker.points.push_back(point);
   }
@@ -83,9 +83,9 @@ visualization_msgs::msg::Marker createNameTextMarker(
   const size_t id, const ObjectMarkerData & data, const std::string & name,
   const double height_offset, const double text_size)
 {
-  Marker marker = createDefaultMarker(
+  Marker marker = create_default_marker(
     "map", rclcpp::Clock{RCL_ROS_TIME}.now(), name + "_name_text", id, Marker::TEXT_VIEW_FACING,
-    createMarkerScale(0.0, 0.0, text_size), coloring::getGray(data.color.a));
+    create_marker_scale(0.0, 0.0, text_size), coloring::getGray(data.color.a));
 
   marker.text = name;
 
