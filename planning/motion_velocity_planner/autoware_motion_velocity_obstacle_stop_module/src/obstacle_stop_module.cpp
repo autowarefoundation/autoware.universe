@@ -26,6 +26,7 @@
 #include <autoware_perception_msgs/msg/detail/shape__struct.hpp>
 
 #include <algorithm>
+#include <limits>
 #include <map>
 #include <memory>
 #include <string>

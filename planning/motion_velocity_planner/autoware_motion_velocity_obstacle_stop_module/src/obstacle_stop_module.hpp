@@ -41,7 +41,6 @@
 #include <tf2_ros/buffer.h>
 
 #include <algorithm>
-#include <limits>
 #include <memory>
 #include <string>
 #include <unordered_map>
