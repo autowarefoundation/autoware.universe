@@ -20,12 +20,12 @@
 #include <remaining_distance_time_calculator_parameters.hpp>
 
 #include <autoware_internal_msgs/msg/mission_remaining_distance_time.hpp>
+#include <autoware_internal_planning_msgs/msg/scenario.hpp>
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/vector3.hpp>
 #include <nav_msgs/msg/odometry.hpp>
-#include <autoware_internal_planning_msgs/msg/scenario.hpp>
 #include <tier4_planning_msgs/msg/velocity_limit.hpp>
 
 #include <lanelet2_core/Forward.h>

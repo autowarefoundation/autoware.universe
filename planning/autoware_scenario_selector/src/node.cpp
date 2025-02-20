@@ -196,8 +196,9 @@ void ScenarioSelectorNode::updateCurrentScenario()
                             ? autoware_internal_planning_msgs::msg::Scenario::PARKING
                             : current_scenario_;
     } else if (isCurrentParking()) {
-      current_scenario_ = isSwitchToLaneDriving() ? autoware_internal_planning_msgs::msg::Scenario::LANEDRIVING
-                                                  : current_scenario_;
+      current_scenario_ = isSwitchToLaneDriving()
+                            ? autoware_internal_planning_msgs::msg::Scenario::LANEDRIVING
+                            : current_scenario_;
     }
   }
 
@@ -478,8 +479,8 @@ ScenarioSelectorNode::ScenarioSelectorNode(const rclcpp::NodeOptions & node_opti
       this, "input/operation_mode_state", rclcpp::QoS{1});
 
   // Output
-  pub_scenario_ =
-    this->create_publisher<autoware_internal_planning_msgs::msg::Scenario>("output/scenario", rclcpp::QoS{1});
+  pub_scenario_ = this->create_publisher<autoware_internal_planning_msgs::msg::Scenario>(
+    "output/scenario", rclcpp::QoS{1});
   pub_trajectory_ = this->create_publisher<autoware_planning_msgs::msg::Trajectory>(
     "output/trajectory", rclcpp::QoS{1});
 
