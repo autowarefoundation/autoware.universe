@@ -35,11 +35,13 @@ public:
 
 private:
   double get_delta_time();
+  Control filter_command(const Control & msg);
 
   rclcpp::Node & node_;
   VehicleCmdFilter nominal_filter_;
   VehicleCmdFilter transition_filter_;
   VehicleStatus vehicle_status_;
+  bool enable_command_limit_filter_;
   bool transition_flag_;
   std::optional<rclcpp::Time> prev_time_;
 };

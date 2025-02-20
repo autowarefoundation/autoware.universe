@@ -30,9 +30,11 @@ VehicleStatus::VehicleStatus(rclcpp::Node & node) : node_(node), vehicle_stop_ch
     "/localization/acceleration", 1,
     [this](AccelWithCovarianceStamped::SharedPtr msg) { current_acceleration_ = *msg; });
   sub_steering_ = node.create_subscription<SteeringReport>(
-    "input/steering", 1, [this](SteeringReport::SharedPtr msg) { current_steering_ = *msg; });
+    "/vehicle/status/steering_status", 1,
+    [this](SteeringReport::SharedPtr msg) { current_steering_ = *msg; });
   sub_control_mode_ = node.create_subscription<ControlModeReport>(
-    "/control_mode", 1, [this](ControlModeReport::SharedPtr msg) { current_control_mode_ = *msg; });
+    "/vehicle/status/control_mode", 1,
+    [this](ControlModeReport::SharedPtr msg) { current_control_mode_ = *msg; });
 }
 
 bool VehicleStatus::is_autoware_control_enabled() const

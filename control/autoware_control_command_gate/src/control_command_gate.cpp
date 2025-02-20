@@ -20,6 +20,8 @@
 #include "command/source.hpp"
 #include "command/subscription.hpp"
 
+#include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
+
 #include <memory>
 #include <string>
 #include <utility>
@@ -68,8 +70,13 @@ ControlCmdGate::ControlCmdGate(const rclcpp::NodeOptions & options)
   params.warn_duration_ = declare_parameter<double>("diag_timeout_warn_duration");
   params.error_duration_ = declare_parameter<double>("diag_timeout_error_duration");
 
-  const auto nominal_filter_params = declare_filter_params(*this, "nominal_filter.");
-  const auto transition_filter_params = declare_filter_params(*this, "transition_filter.");
+  auto nominal_filter_params = declare_filter_params(*this, "nominal_filter.");
+  auto transition_filter_params = declare_filter_params(*this, "transition_filter.");
+  {
+    const auto info = autoware::vehicle_info_utils::VehicleInfoUtils(*this).getVehicleInfo();
+    nominal_filter_params.wheel_base = info.wheel_base_m;
+    transition_filter_params.wheel_base = info.wheel_base_m;
+  }
 
   const auto inputs = declare_parameter<std::vector<std::string>>("inputs");
   if (std::find(inputs.begin(), inputs.end(), builtin) != inputs.end()) {

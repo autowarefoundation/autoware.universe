@@ -22,6 +22,8 @@ namespace autoware::control_command_gate
 CommandFilter::CommandFilter(std::unique_ptr<CommandOutput> && output, rclcpp::Node & node)
 : CommandBridge(std::move(output)), node_(node), vehicle_status_(node)
 {
+  // TODO(Takagi, Isamu): This may be replaced by removing this class from the pipeline.
+  enable_command_limit_filter_ = node_.declare_parameter<bool>("enable_command_limit_filter");
   transition_flag_ = false;
 }
 
@@ -52,14 +54,11 @@ double CommandFilter::get_delta_time()
   return delta_time;
 }
 
-void CommandFilter::on_control(const Control & msg)
+Control CommandFilter::filter_command(const Control & msg)
 {
   const auto dt = get_delta_time();
-  const auto is_autoware_control_enabled = vehicle_status_.is_autoware_control_enabled();
-  const auto is_vehicle_stopped = vehicle_status_.is_vehicle_stopped();
   const auto current_steering = vehicle_status_.get_current_steering();
   const auto current_velocity = vehicle_status_.get_current_velocity();
-  const auto current_status_command = vehicle_status_.get_actual_status_as_command();
 
   IsFilterActivated is_filter_activated;
   Control out = msg;
@@ -67,15 +66,16 @@ void CommandFilter::on_control(const Control & msg)
   nominal_filter_.setCurrentSpeed(current_velocity);
   transition_filter_.setCurrentSpeed(current_velocity);
 
-  // Apply transition_filter when transiting from MANUAL to AUTO.
-  VehicleCmdFilter & filter = transition_flag_ ? transition_filter_ : nominal_filter_;
+  const auto & filter = transition_flag_ ? transition_filter_ : nominal_filter_;
   filter.filterAll(dt, current_steering, out, is_filter_activated);
 
   // set prev value for both to keep consistency over switching:
   // Actual steer, vel, acc should be considered in manual mode to prevent sudden motion when
   // switching from manual to autonomous
+  const auto is_autoware_control_enabled = vehicle_status_.is_autoware_control_enabled();
+  const auto is_vehicle_stopped = vehicle_status_.is_vehicle_stopped();
+  const auto current_status_command = vehicle_status_.get_actual_status_as_command();
   Control prev_command = is_autoware_control_enabled ? out : current_status_command;
-
   if (is_vehicle_stopped) {
     prev_command.longitudinal = out.longitudinal;
   }
@@ -93,6 +93,12 @@ void CommandFilter::on_control(const Control & msg)
   // is_filter_activated_pub_->publish(is_filter_activated);
   // publishMarkers(is_filter_activated);
 
+  return out;
+}
+
+void CommandFilter::on_control(const Control & msg)
+{
+  const auto out = enable_command_limit_filter_ ? filter_command(msg) : msg;
   CommandBridge::on_control(out);
 }
 
