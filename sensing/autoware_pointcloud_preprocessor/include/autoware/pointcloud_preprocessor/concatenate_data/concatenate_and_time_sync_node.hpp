@@ -92,6 +92,8 @@ private:
   std::list<std::shared_ptr<CloudCollector>> cloud_collectors_;
   std::unique_ptr<CollectorMatchingStrategy> collector_matching_strategy_;
   std::mutex cloud_collectors_mutex_;
+  bool init_collector_list_ = false;
+  static constexpr const int num_of_collectors = 3;
 
   // default postfix name for synchronized pointcloud
   static constexpr const char * default_sync_topic_postfix = "_synchronized";
@@ -119,6 +121,7 @@ private:
   void check_concat_status(diagnostic_updater::DiagnosticStatusWrapper & stat);
   std::string replace_sync_topic_name_postfix(
     const std::string & original_topic_name, const std::string & postfix);
+  void initialize_collector_list();
 };
 
 }  // namespace autoware::pointcloud_preprocessor
