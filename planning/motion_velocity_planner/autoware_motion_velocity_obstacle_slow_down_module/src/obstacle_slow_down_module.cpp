@@ -23,6 +23,7 @@
 #include <autoware/universe_utils/ros/parameter.hpp>
 #include <autoware/universe_utils/ros/update_param.hpp>
 #include <autoware/universe_utils/ros/uuid_helper.hpp>
+#include <autoware/universe_utils/ros/marker_helper.hpp>
 
 #include <algorithm>
 #include <iostream>
