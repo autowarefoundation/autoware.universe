@@ -188,7 +188,7 @@ void CommandModeDeciderBase::on_request_mrm(
     return;
   }
 
-  target_mrm = mode;
+  target_mrm_ = mode;
   res->status.success = true;
 
   update_command_mode();
