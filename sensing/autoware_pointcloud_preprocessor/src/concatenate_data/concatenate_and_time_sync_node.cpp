@@ -328,10 +328,6 @@ void PointCloudConcatenateDataSynchronizerComponent::publish_clouds(
     publish_pointcloud_ = true;
   }
 
-  diagnostic_collector_info_ = std::move(collector_info);
-  diagnostic_topic_to_original_stamp_map_ = concatenated_cloud_result.topic_to_original_stamp_map;
-  diagnostic_updater_.force_update();
-
   if (publish_pointcloud_) {
     latest_concatenate_cloud_timestamp_ = current_concatenate_cloud_timestamp_;
     auto concatenate_pointcloud_output = std::make_unique<sensor_msgs::msg::PointCloud2>(
