@@ -137,8 +137,8 @@ bool QuickCumsumCudaPlugin::supportsFormatCombination(
   const std::int32_t INPUT_FEATURES_INDEX = 0;
   const std::int32_t INPUT_GEOM_FEATURES_INDEX = 1;
   const std::int32_t INPUT_INTERVAL_LENGTH_INDEX = 2;
-  const std::int32_t INPUT_INTERVAL_START_INDEX = 3;
-  const std::int32_t OUTPUT_INDEX = 4;
+  const std::int32_t INPUT_INTERVAL_START_INDEX = 3;  // cppcheck-suppress unreadVariable
+  const std::int32_t OUTPUT_INDEX = 4;                // cppcheck-suppress unreadVariable
 
   switch (pos) {
     case INPUT_FEATURES_INDEX:
