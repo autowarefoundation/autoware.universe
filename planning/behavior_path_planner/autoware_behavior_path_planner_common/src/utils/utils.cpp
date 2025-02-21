@@ -118,8 +118,8 @@ bool checkCollisionBetweenFootprintAndObjects(
   const autoware::universe_utils::LinearRing2d & local_vehicle_footprint, const Pose & ego_pose,
   const PredictedObjects & dynamic_objects, const double margin)
 {
-  const auto vehicle_footprint =
-    transformVector(local_vehicle_footprint, autoware::universe_utils::pose2transform(ego_pose));
+  const auto vehicle_footprint = autoware::universe_utils::transformVector(
+    local_vehicle_footprint, autoware::universe_utils::pose2transform(ego_pose));
 
   for (const auto & object : dynamic_objects.objects) {
     const auto obj_polygon = autoware::universe_utils::toPolygon2d(object);

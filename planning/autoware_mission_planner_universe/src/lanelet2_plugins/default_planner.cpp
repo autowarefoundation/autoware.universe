@@ -207,6 +207,13 @@ bool DefaultPlanner::check_goal_footprint_inside_lanes(
     boost::geometry::correct(poly);
     ego_lanes.push_back(poly);
   }
+  // If the goal is on the very beginning of the closest_lanelet_to_goal, baselink ~ rear part of
+  // ego footprint is outside of it. To tolerate it, add previous lanelet
+  for (const auto & ll : route_handler_.getPreviousLanelets(closest_lanelet_to_goal)) {
+    boost::geometry::convert(ll.polygon2d().basicPolygon(), poly);
+    boost::geometry::correct(poly);
+    ego_lanes.push_back(poly);
+  }
 
   // check if goal footprint is in the ego lane
   universe_utils::MultiPolygon2d difference;
@@ -259,8 +266,8 @@ bool DefaultPlanner::is_goal_valid(
   }
 
   const auto local_vehicle_footprint = vehicle_info_.createFootprint();
-  autoware::universe_utils::LinearRing2d goal_footprint =
-    transformVector(local_vehicle_footprint, autoware::universe_utils::pose2transform(goal));
+  autoware::universe_utils::LinearRing2d goal_footprint = autoware::universe_utils::transformVector(
+    local_vehicle_footprint, autoware::universe_utils::pose2transform(goal));
   pub_goal_footprint_marker_->publish(visualize_debug_footprint(goal_footprint));
   const auto polygon_footprint = convert_linear_ring_to_polygon(goal_footprint);
 
