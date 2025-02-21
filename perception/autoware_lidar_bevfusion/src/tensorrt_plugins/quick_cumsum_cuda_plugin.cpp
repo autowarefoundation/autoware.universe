@@ -132,7 +132,7 @@ bool QuickCumsumCudaPlugin::supportsFormatCombination(
   std::int32_t num_outputs) noexcept
 {
   PLUGIN_ASSERT(num_inputs == 4 && num_outputs == 1 && pos < num_inputs + num_outputs);
-  bool valid;
+  bool valid = false;
 
   const std::int32_t INPUT_FEATURES_INDEX = 0;
   const std::int32_t INPUT_GEOM_FEATURES_INDEX = 1;

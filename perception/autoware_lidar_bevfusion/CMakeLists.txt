@@ -109,8 +109,8 @@ if(TRT_AVAIL AND CUDA_AVAIL AND CUDNN_AVAIL AND SPCONV_AVAIL)
     src/tensorrt_plugins/plugin_utils.cpp
     src/tensorrt_plugins/quick_cumsum_cuda_plugin.cpp
     src/tensorrt_plugins/quick_cumsum_cuda_plugin_creator.cpp
-    src/tensorrt_plugins/get_indice_pairs_implicit_gemm_plugin_creator.cpp
-    src/tensorrt_plugins/get_indice_pairs_implicit_gemm_plugin.cpp
+    src/tensorrt_plugins/get_indices_pairs_implicit_gemm_plugin_creator.cpp
+    src/tensorrt_plugins/get_indices_pairs_implicit_gemm_plugin.cpp
     src/tensorrt_plugins/implicit_gemm_plugin_creator.cpp
     src/tensorrt_plugins/implicit_gemm_plugin.cpp
 

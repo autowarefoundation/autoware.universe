@@ -44,7 +44,7 @@ ImplicitGemmPluginCreator::ImplicitGemmPluginCreator()
   plugin_attributes_.emplace_back(
     nvinfer1::PluginField("act_beta", nullptr, PluginFieldType::kFLOAT32, 1));
   plugin_attributes_.emplace_back(
-    nvinfer1::PluginField("is_subm", nullptr, PluginFieldType::kINT32, 1));
+    nvinfer1::PluginField("is_subm", nullptr, PluginFieldType::kINT32, 1));  // cSpell:ignore subm
   plugin_attributes_.emplace_back(
     nvinfer1::PluginField("is_train", nullptr, PluginFieldType::kINT32, 1));
   plugin_attributes_.emplace_back(

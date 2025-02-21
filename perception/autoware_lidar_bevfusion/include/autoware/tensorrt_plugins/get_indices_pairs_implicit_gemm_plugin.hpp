@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__TENSORRT_PLUGINS__GET_INDICE_PAIRS_IMPLICIT_GEMM_PLUGIN_HPP_
-#define AUTOWARE__TENSORRT_PLUGINS__GET_INDICE_PAIRS_IMPLICIT_GEMM_PLUGIN_HPP_
+#ifndef AUTOWARE__TENSORRT_PLUGINS__GET_INDICES_PAIRS_IMPLICIT_GEMM_PLUGIN_HPP_
+#define AUTOWARE__TENSORRT_PLUGINS__GET_INDICES_PAIRS_IMPLICIT_GEMM_PLUGIN_HPP_
 
 #include <NvInferRuntime.h>
 #include <NvInferRuntimePlugin.h>
@@ -25,17 +25,17 @@
 #include <string>
 #include <vector>
 
-constexpr char const * const kGET_INDICE_PAIRS_IMPLICIT_GEMM_PLUGIN_NAME{
-  "GetIndicePairsImplicitGemm"};
-constexpr char const * const kGET_INDICE_PAIRS_IMPLICIT_GEMM_PLUGIN_VERSION{"1"};
-constexpr char const * const kGET_INDICE_PAIRS_IMPLICIT_GEMM_PLUGIN_NAMESPACE{""};
+constexpr char const * const kGET_INDICES_PAIRS_IMPLICIT_GEMM_PLUGIN_NAME{
+  "GetIndicePairsImplicitGemm"};  // cSpell:ignore Indice
+constexpr char const * const kGET_INDICES_PAIRS_IMPLICIT_GEMM_PLUGIN_VERSION{"1"};
+constexpr char const * const kGET_INDICES_PAIRS_IMPLICIT_GEMM_PLUGIN_NAMESPACE{""};
 
 namespace nvinfer1
 {
 namespace plugin
 {
 
-struct GetIndicePairsImplicitGemmParameters
+struct GetIndicesPairsImplicitGemmParameters
 {
   std::int32_t batch_size;
   std::int32_t algo;
@@ -46,7 +46,7 @@ struct GetIndicePairsImplicitGemmParameters
   std::vector<std::int32_t> padding;
   std::vector<std::int32_t> spatial_shape;
   std::vector<std::int32_t> stride;
-  std::int32_t subm;
+  std::int32_t subm;  // cSpell:ignore subm
   std::int32_t transpose;
 
   nvinfer1::Dims dilation_dims;
@@ -57,16 +57,16 @@ struct GetIndicePairsImplicitGemmParameters
   nvinfer1::Dims stride_dims;
 };
 
-class GetIndicePairsImplicitGemmPlugin : public IPluginV3,
-                                         public IPluginV3OneCore,
-                                         public IPluginV3OneBuild,
-                                         public IPluginV3OneRuntime
+class GetIndicesPairsImplicitGemmPlugin : public IPluginV3,
+                                          public IPluginV3OneCore,
+                                          public IPluginV3OneBuild,
+                                          public IPluginV3OneRuntime
 {
 public:
-  GetIndicePairsImplicitGemmPlugin(
-    const std::string & name, GetIndicePairsImplicitGemmParameters const & params);
+  GetIndicesPairsImplicitGemmPlugin(
+    const std::string & name, GetIndicesPairsImplicitGemmParameters const & params);
 
-  ~GetIndicePairsImplicitGemmPlugin() override = default;
+  ~GetIndicesPairsImplicitGemmPlugin() override = default;
 
   // IPluginV3 Methods
 
@@ -126,10 +126,10 @@ private:
   void initFieldsToSerialize();
 
   // upper bound of number of output indices. needed to bound memory usage.
-  static constexpr int out_inds_num_limit_{256000};
+  static constexpr int out_indices_num_limit_{256000};
 
   std::string layer_name_;
-  GetIndicePairsImplicitGemmParameters params_;
+  GetIndicesPairsImplicitGemmParameters params_;
   std::vector<nvinfer1::PluginField> data_to_serialize_;
   nvinfer1::PluginFieldCollection fc_to_serialize_;
 };
@@ -137,4 +137,4 @@ private:
 }  // namespace plugin
 }  // namespace nvinfer1
 
-#endif  // AUTOWARE__TENSORRT_PLUGINS__GET_INDICE_PAIRS_IMPLICIT_GEMM_PLUGIN_HPP_
+#endif  // AUTOWARE__TENSORRT_PLUGINS__GET_INDICES_PAIRS_IMPLICIT_GEMM_PLUGIN_HPP_

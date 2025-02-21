@@ -68,7 +68,7 @@ private:
   cudaStream_t stream_;
 
   tv::Tensor hash_key_value_;
-  tv::Tensor point_indice_data_;
+  tv::Tensor point_indices_data_;
   tv::Tensor points_voxel_id_;
 };
 }  // namespace autoware::lidar_bevfusion

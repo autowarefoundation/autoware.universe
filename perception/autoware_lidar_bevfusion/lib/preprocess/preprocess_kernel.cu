@@ -33,7 +33,7 @@
 
 #include <autoware/cuda_utils/cuda_check_error.hpp>
 
-#include <spconvlib/spconv/csrc/sparse/all/ops3d/Point2Voxel.h>
+#include <spconvlib/spconv/csrc/sparse/all/ops3d/Point2Voxel.h>  // cSpell:ignore spconvlib
 
 #include <cstddef>
 #include <cstdint>
@@ -48,7 +48,7 @@ PreprocessCuda::PreprocessCuda(
 {
   if (allocate_buffers) {
     hash_key_value_ = tv::empty({config.cloud_capacity_ * 2}, tv::custom128, 0);
-    point_indice_data_ = tv::empty({config.cloud_capacity_}, tv::int64, 0);
+    point_indices_data_ = tv::empty({config.cloud_capacity_}, tv::int64, 0);
     points_voxel_id_ = tv::empty({config.cloud_capacity_}, tv::int64, 0);
   }
 }
@@ -134,7 +134,7 @@ std::size_t PreprocessCuda::generateVoxels(
 
   auto p2v_res = Point2VoxelGPU3D::point_to_voxel_hash_static(
     pc, voxels_padded, indices_padded_no_batch, num_points_per_voxel_tensor, hash_key_value_,
-    point_indice_data_, points_voxel_id_, vsize_xyz, grid_size, grid_stride, coors_range, true,
+    point_indices_data_, points_voxel_id_, vsize_xyz, grid_size, grid_stride, coors_range, true,
     false, reinterpret_cast<std::uintptr_t>(stream_));
 
   std::size_t real_num_voxels = static_cast<std::size_t>(std::get<0>(p2v_res).dim(0));

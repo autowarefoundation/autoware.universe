@@ -18,7 +18,7 @@
 #include <NvInferRuntime.h>
 #include <NvInferRuntimePlugin.h>
 #include <cuda_runtime.h>
-#include <spconvlib/spconv/csrc/sparse/convops/gemmops/GemmTunerSimple.h>
+#include <spconvlib/spconv/csrc/sparse/convops/gemmops/GemmTunerSimple.h>  // cSpell:ignore spconvlib
 #include <spconvlib/spconv/csrc/sparse/convops/spops/ConvGemmOps.h>
 
 #include <array>
@@ -42,7 +42,7 @@ struct ImplicitGemmParameters
 {
   float act_alpha;
   float act_beta;
-  std::int64_t is_subm;
+  std::int64_t is_subm;  // cSpell:ignore subm
   std::int64_t is_train;
   float output_add_scale;
   float output_scale;
@@ -129,8 +129,8 @@ private:
   std::vector<nvinfer1::PluginField> data_to_serialize_;
   nvinfer1::PluginFieldCollection fc_to_serialize_;
 
-  std::unique_ptr<ConvTunerSimple> tunner_fp32_ptr_{};
-  std::unique_ptr<ConvTunerSimple> tunner_fp16_ptr_{};
+  std::unique_ptr<ConvTunerSimple> tuner_fp32_ptr_{};
+  std::unique_ptr<ConvTunerSimple> tuner_fp16_ptr_{};
 };
 
 }  // namespace plugin

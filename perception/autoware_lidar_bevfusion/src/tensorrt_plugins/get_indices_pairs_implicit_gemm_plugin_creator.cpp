@@ -12,9 +12,9 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/tensorrt_plugins//get_indice_pairs_implicit_gemm_plugin_creator.hpp"
+#include "autoware/tensorrt_plugins/get_indices_pairs_implicit_gemm_plugin_creator.hpp"
 
-#include "autoware/tensorrt_plugins//get_indice_pairs_implicit_gemm_plugin.hpp"
+#include "autoware/tensorrt_plugins//get_indices_pairs_implicit_gemm_plugin.hpp"
 #include "autoware/tensorrt_plugins/plugin_utils.hpp"
 
 #include <NvInferRuntimePlugin.h>
@@ -32,14 +32,10 @@ namespace nvinfer1
 namespace plugin
 {
 
-REGISTER_TENSORRT_PLUGIN(GetIndicePairsImplicitGemmPluginCreator);
+REGISTER_TENSORRT_PLUGIN(GetIndicesPairsImplicitGemmPluginCreator);
 
-GetIndicePairsImplicitGemmPluginCreator::GetIndicePairsImplicitGemmPluginCreator()
+GetIndicesPairsImplicitGemmPluginCreator::GetIndicesPairsImplicitGemmPluginCreator()
 {
-  std::cout << "GetIndicePairsImplicitGemmPluginCreator::GetIndicePairsImplicitGemmPluginCreator"
-            << std::endl
-            << std::flush;
-
   plugin_attributes_.clear();
   plugin_attributes_.emplace_back(
     nvinfer1::PluginField("algo", nullptr, PluginFieldType::kINT32, 1));
@@ -60,7 +56,7 @@ GetIndicePairsImplicitGemmPluginCreator::GetIndicePairsImplicitGemmPluginCreator
   plugin_attributes_.emplace_back(
     nvinfer1::PluginField("stride", nullptr, PluginFieldType::kINT32, 3));
   plugin_attributes_.emplace_back(
-    nvinfer1::PluginField("subm", nullptr, PluginFieldType::kINT32, 1));
+    nvinfer1::PluginField("subm", nullptr, PluginFieldType::kINT32, 1));  // cSpell:ignore subm
   plugin_attributes_.emplace_back(
     nvinfer1::PluginField("transpose", nullptr, PluginFieldType::kINT32, 1));
 
@@ -69,13 +65,13 @@ GetIndicePairsImplicitGemmPluginCreator::GetIndicePairsImplicitGemmPluginCreator
 }
 
 nvinfer1::PluginFieldCollection const *
-GetIndicePairsImplicitGemmPluginCreator::getFieldNames() noexcept
+GetIndicesPairsImplicitGemmPluginCreator::getFieldNames() noexcept
 {
   // This is only used in the build phase.
   return &fc_;
 }
 
-IPluginV3 * GetIndicePairsImplicitGemmPluginCreator::createPlugin(
+IPluginV3 * GetIndicesPairsImplicitGemmPluginCreator::createPlugin(
   char const * name, PluginFieldCollection const * fc, TensorRTPhase phase) noexcept
 {
   // The build phase and the deserialization phase are handled differently.
@@ -87,7 +83,7 @@ IPluginV3 * GetIndicePairsImplicitGemmPluginCreator::createPlugin(
 
       PLUGIN_VALIDATE(num_fields == 11);
 
-      GetIndicePairsImplicitGemmParameters parameters;
+      GetIndicesPairsImplicitGemmParameters parameters;
 
       for (std::int32_t i{0}; i < num_fields; ++i) {
         const std::string attr_name = fields[i].name;
@@ -287,8 +283,8 @@ IPluginV3 * GetIndicePairsImplicitGemmPluginCreator::createPlugin(
       ss << "transpose: " << parameters.transpose;
       logDebug(ss.str().c_str());
 
-      GetIndicePairsImplicitGemmPlugin * const plugin{
-        new GetIndicePairsImplicitGemmPlugin{std::string(name), parameters}};
+      GetIndicesPairsImplicitGemmPlugin * const plugin{
+        new GetIndicesPairsImplicitGemmPlugin{std::string(name), parameters}};
       return plugin;
     } catch (std::exception const & e) {
       caughtError(e);
@@ -304,12 +300,12 @@ IPluginV3 * GetIndicePairsImplicitGemmPluginCreator::createPlugin(
       char const * attr_name = fields[0].name;
       PLUGIN_VALIDATE(!strcmp(attr_name, "parameters"));
       PLUGIN_VALIDATE(fields[0].type == nvinfer1::PluginFieldType::kUNKNOWN);
-      PLUGIN_VALIDATE(fields[0].length == sizeof(GetIndicePairsImplicitGemmParameters));
-      GetIndicePairsImplicitGemmParameters params{
-        *(static_cast<GetIndicePairsImplicitGemmParameters const *>(fields[0].data))};
+      PLUGIN_VALIDATE(fields[0].length == sizeof(GetIndicesPairsImplicitGemmParameters));
+      GetIndicesPairsImplicitGemmParameters params{
+        *(static_cast<GetIndicesPairsImplicitGemmParameters const *>(fields[0].data))};
 
-      GetIndicePairsImplicitGemmPlugin * const plugin{
-        new GetIndicePairsImplicitGemmPlugin{std::string(name), params}};
+      GetIndicesPairsImplicitGemmPlugin * const plugin{
+        new GetIndicesPairsImplicitGemmPlugin{std::string(name), params}};
       return plugin;
     } catch (std::exception const & e) {
       caughtError(e);

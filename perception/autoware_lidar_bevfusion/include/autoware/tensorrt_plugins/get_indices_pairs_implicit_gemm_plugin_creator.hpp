@@ -12,10 +12,10 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__TENSORRT_PLUGINS__GET_INDICE_PAIRS_IMPLICIT_GEMM_PLUGIN_CREATOR_HPP_
-#define AUTOWARE__TENSORRT_PLUGINS__GET_INDICE_PAIRS_IMPLICIT_GEMM_PLUGIN_CREATOR_HPP_
+#ifndef AUTOWARE__TENSORRT_PLUGINS__GET_INDICES_PAIRS_IMPLICIT_GEMM_PLUGIN_CREATOR_HPP_
+#define AUTOWARE__TENSORRT_PLUGINS__GET_INDICES_PAIRS_IMPLICIT_GEMM_PLUGIN_CREATOR_HPP_
 
-#include "autoware/tensorrt_plugins/get_indice_pairs_implicit_gemm_plugin.hpp"
+#include "autoware/tensorrt_plugins/get_indices_pairs_implicit_gemm_plugin.hpp"
 
 #include <NvInferRuntime.h>
 
@@ -27,26 +27,26 @@ namespace plugin
 {
 
 // Plugin factory class.
-class GetIndicePairsImplicitGemmPluginCreator : public nvinfer1::IPluginCreatorV3One
+class GetIndicesPairsImplicitGemmPluginCreator : public nvinfer1::IPluginCreatorV3One
 {
 public:
-  GetIndicePairsImplicitGemmPluginCreator();
+  GetIndicesPairsImplicitGemmPluginCreator();
 
-  ~GetIndicePairsImplicitGemmPluginCreator() override = default;
+  ~GetIndicesPairsImplicitGemmPluginCreator() override = default;
 
   char const * getPluginNamespace() const noexcept override
   {
-    return kGET_INDICE_PAIRS_IMPLICIT_GEMM_PLUGIN_NAMESPACE;
+    return kGET_INDICES_PAIRS_IMPLICIT_GEMM_PLUGIN_NAMESPACE;
   }
 
   char const * getPluginName() const noexcept override
   {
-    return kGET_INDICE_PAIRS_IMPLICIT_GEMM_PLUGIN_NAME;
+    return kGET_INDICES_PAIRS_IMPLICIT_GEMM_PLUGIN_NAME;
   }
 
   char const * getPluginVersion() const noexcept override
   {
-    return kGET_INDICE_PAIRS_IMPLICIT_GEMM_PLUGIN_VERSION;
+    return kGET_INDICES_PAIRS_IMPLICIT_GEMM_PLUGIN_VERSION;
   }
 
   nvinfer1::PluginFieldCollection const * getFieldNames() noexcept override;
@@ -62,4 +62,4 @@ private:
 }  // namespace plugin
 }  // namespace nvinfer1
 
-#endif  // AUTOWARE__TENSORRT_PLUGINS__GET_INDICE_PAIRS_IMPLICIT_GEMM_PLUGIN_CREATOR_HPP_
+#endif  // AUTOWARE__TENSORRT_PLUGINS__GET_INDICES_PAIRS_IMPLICIT_GEMM_PLUGIN_CREATOR_HPP_

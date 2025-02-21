@@ -12,13 +12,13 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/tensorrt_plugins/get_indice_pairs_implicit_gemm_plugin.hpp"
+#include "autoware/tensorrt_plugins/get_indices_pairs_implicit_gemm_plugin.hpp"
 
 #include "autoware/tensorrt_plugins/plugin_utils.hpp"
 
 #include <NvInferRuntime.h>
 #include <NvInferRuntimePlugin.h>
-#include <spconvlib/spconv/csrc/sparse/all/SpconvOps.h>
+#include <spconvlib/spconv/csrc/sparse/all/SpconvOps.h>  // cSpell:ignore spconvlib
 #include <spconvlib/spconv/csrc/sparse/alloc/StaticAllocator.h>
 #include <spconvlib/spconv/csrc/sparse/convops/SimpleExternalSpconvMatmul.h>
 #include <spconvlib/spconv/csrc/sparse/convops/gemmops/GemmTunerSimple.h>
@@ -36,21 +36,21 @@
 #include <tuple>
 #include <vector>
 
-// GetIndicePairsImplicitGemm
+// GetIndicesPairsImplicitGemm
 
 namespace nvinfer1
 {
 namespace plugin
 {
 
-GetIndicePairsImplicitGemmPlugin::GetIndicePairsImplicitGemmPlugin(
-  const std::string & name, GetIndicePairsImplicitGemmParameters const & params)
+GetIndicesPairsImplicitGemmPlugin::GetIndicesPairsImplicitGemmPlugin(
+  const std::string & name, GetIndicesPairsImplicitGemmParameters const & params)
 : layer_name_{name}, params_{params}
 {
   initFieldsToSerialize();
 }
 
-void GetIndicePairsImplicitGemmPlugin::initFieldsToSerialize()
+void GetIndicesPairsImplicitGemmPlugin::initFieldsToSerialize()
 {
   data_to_serialize_.clear();
   data_to_serialize_.emplace_back("batch_size", &params_.batch_size, PluginFieldType::kINT32, 1);
@@ -65,14 +65,15 @@ void GetIndicePairsImplicitGemmPlugin::initFieldsToSerialize()
   data_to_serialize_.emplace_back(
     "spatial_shape_dims", &params_.spatial_shape_dims, PluginFieldType::kDIMS, 1);
   data_to_serialize_.emplace_back("stride_dims", &params_.stride_dims, PluginFieldType::kDIMS, 1);
-  data_to_serialize_.emplace_back("subm", &params_.subm, PluginFieldType::kINT32, 1);
+  data_to_serialize_.emplace_back(
+    "subm", &params_.subm, PluginFieldType::kINT32, 1);  // cSpell:ignore subm
   data_to_serialize_.emplace_back("transpose", &params_.transpose, PluginFieldType::kINT32, 1);
 
   fc_to_serialize_.nbFields = data_to_serialize_.size();
   fc_to_serialize_.fields = data_to_serialize_.data();
 }
 
-IPluginCapability * GetIndicePairsImplicitGemmPlugin::getCapabilityInterface(
+IPluginCapability * GetIndicesPairsImplicitGemmPlugin::getCapabilityInterface(
   PluginCapabilityType type) noexcept
 {
   try {
@@ -90,10 +91,10 @@ IPluginCapability * GetIndicePairsImplicitGemmPlugin::getCapabilityInterface(
   return nullptr;
 }
 
-IPluginV3 * GetIndicePairsImplicitGemmPlugin::clone() noexcept
+IPluginV3 * GetIndicesPairsImplicitGemmPlugin::clone() noexcept
 {
   try {
-    IPluginV3 * const plugin{new GetIndicePairsImplicitGemmPlugin{layer_name_, params_}};
+    IPluginV3 * const plugin{new GetIndicesPairsImplicitGemmPlugin{layer_name_, params_}};
     return plugin;
   } catch (std::exception const & e) {
     caughtError(e);
@@ -101,27 +102,27 @@ IPluginV3 * GetIndicePairsImplicitGemmPlugin::clone() noexcept
   return nullptr;
 }
 
-char const * GetIndicePairsImplicitGemmPlugin::getPluginName() const noexcept
+char const * GetIndicesPairsImplicitGemmPlugin::getPluginName() const noexcept
 {
-  return kGET_INDICE_PAIRS_IMPLICIT_GEMM_PLUGIN_NAME;
+  return kGET_INDICES_PAIRS_IMPLICIT_GEMM_PLUGIN_NAME;
 }
 
-char const * GetIndicePairsImplicitGemmPlugin::getPluginVersion() const noexcept
+char const * GetIndicesPairsImplicitGemmPlugin::getPluginVersion() const noexcept
 {
-  return kGET_INDICE_PAIRS_IMPLICIT_GEMM_PLUGIN_VERSION;
+  return kGET_INDICES_PAIRS_IMPLICIT_GEMM_PLUGIN_VERSION;
 }
 
-char const * GetIndicePairsImplicitGemmPlugin::getPluginNamespace() const noexcept
+char const * GetIndicesPairsImplicitGemmPlugin::getPluginNamespace() const noexcept
 {
-  return kGET_INDICE_PAIRS_IMPLICIT_GEMM_PLUGIN_NAMESPACE;
+  return kGET_INDICES_PAIRS_IMPLICIT_GEMM_PLUGIN_NAMESPACE;
 }
 
-std::int32_t GetIndicePairsImplicitGemmPlugin::getNbOutputs() const noexcept
+std::int32_t GetIndicesPairsImplicitGemmPlugin::getNbOutputs() const noexcept
 {
   return 5;
 }
 
-std::int32_t GetIndicePairsImplicitGemmPlugin::configurePlugin(
+std::int32_t GetIndicesPairsImplicitGemmPlugin::configurePlugin(
   DynamicPluginTensorDesc const * in, std::int32_t num_inputs, DynamicPluginTensorDesc const * out,
   std::int32_t num_outputs) noexcept
 {
@@ -158,7 +159,7 @@ std::int32_t GetIndicePairsImplicitGemmPlugin::configurePlugin(
   return 0;
 }
 
-bool GetIndicePairsImplicitGemmPlugin::supportsFormatCombination(
+bool GetIndicesPairsImplicitGemmPlugin::supportsFormatCombination(
   std::int32_t pos, DynamicPluginTensorDesc const * in_out, std::int32_t num_inputs,
   std::int32_t num_outputs) noexcept
 {
@@ -170,7 +171,7 @@ bool GetIndicePairsImplicitGemmPlugin::supportsFormatCombination(
     in_out[pos].desc.type == nvinfer1::DataType::kINT32);
 }
 
-std::int32_t GetIndicePairsImplicitGemmPlugin::getOutputDataTypes(
+std::int32_t GetIndicesPairsImplicitGemmPlugin::getOutputDataTypes(
   DataType * output_types, std::int32_t num_outputs, DataType const * input_types,
   std::int32_t num_inputs) const noexcept
 {
@@ -186,7 +187,7 @@ std::int32_t GetIndicePairsImplicitGemmPlugin::getOutputDataTypes(
   return 0;
 }
 
-std::int32_t GetIndicePairsImplicitGemmPlugin::getOutputShapes(
+std::int32_t GetIndicesPairsImplicitGemmPlugin::getOutputShapes(
   DimsExprs const * inputs, std::int32_t num_inputs,
   [[maybe_unused]] DimsExprs const * shape_inputs, [[maybe_unused]] std::int32_t num_shape_inputs,
   DimsExprs * outputs, std::int32_t num_outputs, IExprBuilder & expr_builder) noexcept
@@ -222,22 +223,22 @@ std::int32_t GetIndicePairsImplicitGemmPlugin::getOutputShapes(
 
     outputs[0].nbDims = 2;
     outputs[0].d[0] =
-      expr_builder.declareSizeTensor(4, *opt_value, *expr_builder.constant(out_inds_num_limit_));
+      expr_builder.declareSizeTensor(4, *opt_value, *expr_builder.constant(out_indices_num_limit_));
     outputs[0].d[1] = inputs[0].d[1];
 
     outputs[1].nbDims = 2;
     outputs[1].d[0] = expr_builder.constant(kernel_volume);
     outputs[1].d[1] =
-      expr_builder.declareSizeTensor(4, *opt_value, *expr_builder.constant(out_inds_num_limit_));
+      expr_builder.declareSizeTensor(4, *opt_value, *expr_builder.constant(out_indices_num_limit_));
 
     outputs[2].nbDims = 2;
     outputs[2].d[0] =
-      expr_builder.declareSizeTensor(4, *opt_value, *expr_builder.constant(out_inds_num_limit_));
+      expr_builder.declareSizeTensor(4, *opt_value, *expr_builder.constant(out_indices_num_limit_));
     outputs[2].d[1] = expr_builder.constant(1);
 
     outputs[3].nbDims = 1;
     outputs[3].d[0] =
-      expr_builder.declareSizeTensor(4, *opt_value, *expr_builder.constant(out_inds_num_limit_));
+      expr_builder.declareSizeTensor(4, *opt_value, *expr_builder.constant(out_indices_num_limit_));
   }
 
   // num_activate_out
@@ -246,7 +247,7 @@ std::int32_t GetIndicePairsImplicitGemmPlugin::getOutputShapes(
   return 0;
 }
 
-std::int32_t GetIndicePairsImplicitGemmPlugin::enqueue(
+std::int32_t GetIndicesPairsImplicitGemmPlugin::enqueue(
   PluginTensorDesc const * input_desc, [[maybe_unused]] PluginTensorDesc const * output_desc,
   void const * const * inputs, void * const * outputs, [[maybe_unused]] void * workspace,
   cudaStream_t stream) noexcept
@@ -257,7 +258,7 @@ std::int32_t GetIndicePairsImplicitGemmPlugin::enqueue(
   const bool is_subm = params_.subm;
   const bool direct_table = true;
   const bool use_direct_table = direct_table && !is_subm;
-  const int static_num_act_in = out_inds_num_limit_;
+  const int static_num_act_in = out_indices_num_limit_;
 
   std::vector<int> ksize(params_.ksize.begin(), params_.ksize.end());
   std::vector<int> stride(params_.stride.begin(), params_.stride.end());
@@ -274,20 +275,17 @@ std::int32_t GetIndicePairsImplicitGemmPlugin::enqueue(
   bool use_int64_hash_k =
     out_spatial_volume >= static_cast<std::int64_t>(std::numeric_limits<int>::max());
 
-  int kernel_volume = 1;
-  for (const auto & ksize : params_.ksize) {
-    kernel_volume *= ksize;
-  }
+  int kernel_volume =
+    std::accumulate(params_.ksize.begin(), params_.ksize.end(), 1, std::multiplies<int>());
 
   auto max_act_out_theory = SpconvOps::get_handcrafted_max_act_out(
     input_desc[0].dims.d[0], ksize, stride, padding, dilation);
 
   auto ws_tensors = SpconvOps::get_indice_gen_tensors_from_workspace(
-    reinterpret_cast<std::uint8_t *>(workspace), kernel_volume, out_inds_num_limit_,
-    is_subm ? out_inds_num_limit_ : out_inds_num_limit_, max_act_out_theory, is_subm,
-    use_int64_hash_k, use_direct_table);
+    reinterpret_cast<std::uint8_t *>(workspace), kernel_volume, out_indices_num_limit_,
+    out_indices_num_limit_, max_act_out_theory, is_subm, use_int64_hash_k, use_direct_table);
 
-  int pair_fwd_size_padded = is_subm ? input_desc[0].dims.d[0] : out_inds_num_limit_;
+  int pair_fwd_size_padded = is_subm ? input_desc[0].dims.d[0] : out_indices_num_limit_;
   tv::Tensor pair_fwd_padded =
     tv::from_blob(outputs[1], {kernel_volume, pair_fwd_size_padded}, tv::int32, 0);
 
@@ -300,7 +298,7 @@ std::int32_t GetIndicePairsImplicitGemmPlugin::enqueue(
   tv::Tensor mask_argsort_fwd_padded =
     tv::from_blob(outputs[3], {mask_count, pair_fwd_size_padded}, tv::int32, 0);
   tv::Tensor out_inds = tv::from_blob(
-    outputs[0], {is_subm ? input_desc[0].dims.d[0] : out_inds_num_limit_, 4}, tv::int32, 0);
+    outputs[0], {is_subm ? input_desc[0].dims.d[0] : out_indices_num_limit_, 4}, tv::int32, 0);
   tv::Tensor indices_kernel_num = tv::zeros({kernel_volume}, tv::int32, 0);
 
   tv::Tensor input_indices = tv::from_blob(inputs[0], {input_desc[0].dims.d[0], 4}, tv::int32, 0);
@@ -317,13 +315,15 @@ std::int32_t GetIndicePairsImplicitGemmPlugin::enqueue(
     ws_tensors.insert({SPCONV_ALLOC_PAIR_MASK, pair_mask_fwd_padded});
     ws_tensors.insert({SPCONV_ALLOC_MASK_ARG_SORT, mask_argsort_fwd_padded});
     ws_tensors.insert({SPCONV_ALLOC_OUT_INDICES, out_inds});
-    ws_tensors.insert({SPCONV_ALLOC_INDICE_NUM_PER_LOC, indices_kernel_num});
+    ws_tensors.insert(
+      {SPCONV_ALLOC_INDICE_NUM_PER_LOC, indices_kernel_num});  // cSpell:ignore INDICE
     StaticAllocator alloc(ws_tensors);
 
+    // cSpell:ignore indice
     pair_res = SpconvOps::get_indice_pairs_implicit_gemm(
       alloc, input_indices, params_.batch_size, input_dims, static_cast<int>(params_.algo), ksize,
       stride, padding, dilation, {0, 0, 0}, params_.subm, params_.transpose, false /*is_train*/,
-      reinterpret_cast<std::uintptr_t>(stream), out_inds_num_limit_, tv::CUDAKernelTimer(false),
+      reinterpret_cast<std::uintptr_t>(stream), out_indices_num_limit_, tv::CUDAKernelTimer(false),
       use_direct_table);
 
   } else {
@@ -341,14 +341,16 @@ std::int32_t GetIndicePairsImplicitGemmPlugin::enqueue(
     ws_tensors.insert({SPCONV_ALLOC_MASK_ARG_SORT_BWD, mask_argsort_bwd_padded});
 
     ws_tensors.insert({SPCONV_ALLOC_OUT_INDICES, out_inds});
-    ws_tensors.insert({SPCONV_ALLOC_INDICE_NUM_PER_LOC, indices_kernel_num});
+    ws_tensors.insert(
+      {SPCONV_ALLOC_INDICE_NUM_PER_LOC, indices_kernel_num});  // cSpell:ignore INDICE
 
     StaticAllocator alloc(ws_tensors);
 
+    // cSpell:ignore indice
     pair_res = SpconvOps::get_indice_pairs_implicit_gemm(
       alloc, input_indices, params_.batch_size, input_dims, static_cast<int>(params_.algo), ksize,
       stride, padding, dilation, {0, 0, 0}, params_.subm, params_.transpose, false /*is_train*/,
-      reinterpret_cast<std::uintptr_t>(stream), out_inds_num_limit_, tv::CUDAKernelTimer(false),
+      reinterpret_cast<std::uintptr_t>(stream), out_indices_num_limit_, tv::CUDAKernelTimer(false),
       use_direct_table);
   }
 
@@ -361,25 +363,25 @@ std::int32_t GetIndicePairsImplicitGemmPlugin::enqueue(
   return status;
 }
 
-std::int32_t GetIndicePairsImplicitGemmPlugin::onShapeChange(
+std::int32_t GetIndicesPairsImplicitGemmPlugin::onShapeChange(
   [[maybe_unused]] PluginTensorDesc const * in, [[maybe_unused]] std::int32_t num_inputs,
   [[maybe_unused]] PluginTensorDesc const * out, [[maybe_unused]] std::int32_t num_outputs) noexcept
 {
   return 0;
 }
 
-IPluginV3 * GetIndicePairsImplicitGemmPlugin::attachToContext(
+IPluginV3 * GetIndicesPairsImplicitGemmPlugin::attachToContext(
   [[maybe_unused]] IPluginResourceContext * context) noexcept
 {
   return clone();
 }
 
-PluginFieldCollection const * GetIndicePairsImplicitGemmPlugin::getFieldsToSerialize() noexcept
+PluginFieldCollection const * GetIndicesPairsImplicitGemmPlugin::getFieldsToSerialize() noexcept
 {
   return &fc_to_serialize_;
 }
 
-std::size_t GetIndicePairsImplicitGemmPlugin::getWorkspaceSize(
+std::size_t GetIndicesPairsImplicitGemmPlugin::getWorkspaceSize(
   [[maybe_unused]] DynamicPluginTensorDesc const * inputs, [[maybe_unused]] std::int32_t num_inputs,
   [[maybe_unused]] DynamicPluginTensorDesc const * outputs,
   [[maybe_unused]] std::int32_t num_outputs) const noexcept
@@ -404,14 +406,12 @@ std::size_t GetIndicePairsImplicitGemmPlugin::getWorkspaceSize(
   bool use_int64_hash_k =
     out_spatial_volume >= static_cast<std::int64_t>(std::numeric_limits<int>::max());
 
-  int kernel_volume = 1;
-  for (const auto & ksize : params_.ksize) {
-    kernel_volume *= ksize;
-  }
+  int kernel_volume =
+    std::accumulate(params_.ksize.begin(), params_.ksize.end(), 1, std::multiplies<int>());
 
   // query workspace size.
   int workspace_size = SpconvOps::get_indice_gen_workspace_size(
-    kernel_volume, out_inds_num_limit_, out_inds_num_limit_, out_inds_num_limit_, is_subm,
+    kernel_volume, out_indices_num_limit_, out_indices_num_limit_, out_indices_num_limit_, is_subm,
     use_int64_hash_k, use_direct_table);
 
   return static_cast<std::size_t>(workspace_size);

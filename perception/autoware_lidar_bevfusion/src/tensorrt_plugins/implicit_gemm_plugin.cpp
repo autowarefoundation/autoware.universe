@@ -18,7 +18,7 @@
 
 #include <NvInferRuntime.h>
 #include <NvInferRuntimePlugin.h>
-#include <spconvlib/spconv/csrc/sparse/all/SpconvOps.h>
+#include <spconvlib/spconv/csrc/sparse/all/SpconvOps.h>  // cSpell:ignore spconvlib
 #include <spconvlib/spconv/csrc/sparse/alloc/StaticAllocator.h>
 #include <spconvlib/spconv/csrc/sparse/convops/SimpleExternalSpconvMatmul.h>
 #include <spconvlib/spconv/csrc/sparse/convops/spops/ConvGemmOps.h>
@@ -52,8 +52,9 @@ ImplicitGemmPlugin::ImplicitGemmPlugin(
   initFieldsToSerialize();
 
   arch_ = ConvGemmOps::get_compute_capability();
-  tunner_fp16_ptr_ = std::make_unique<ConvTunerSimple>(ConvMain::get_all_conv_algo_desp());
-  tunner_fp32_ptr_ = std::make_unique<ConvTunerSimple>(ConvMain::get_all_conv_algo_desp());
+  tuner_fp16_ptr_ =
+    std::make_unique<ConvTunerSimple>(ConvMain::get_all_conv_algo_desp());  // cSpell:ignore desp
+  tuner_fp32_ptr_ = std::make_unique<ConvTunerSimple>(ConvMain::get_all_conv_algo_desp());
 }
 
 void ImplicitGemmPlugin::initFieldsToSerialize()
@@ -62,7 +63,8 @@ void ImplicitGemmPlugin::initFieldsToSerialize()
   data_to_serialize_.emplace_back("act_alpha", &params_.act_alpha, PluginFieldType::kFLOAT32, 1);
   data_to_serialize_.emplace_back("act_alpha", &params_.act_beta, PluginFieldType::kFLOAT32, 1);
 
-  data_to_serialize_.emplace_back("is_subm", &params_.is_subm, PluginFieldType::kINT32, 1);
+  data_to_serialize_.emplace_back(
+    "is_subm", &params_.is_subm, PluginFieldType::kINT32, 1);  // cSpell:ignore subm
   data_to_serialize_.emplace_back("is_train", &params_.is_train, PluginFieldType::kINT32, 1);
 
   data_to_serialize_.emplace_back(
@@ -288,10 +290,10 @@ std::int32_t ImplicitGemmPlugin::enqueue(
     {SPCONV_ALLOC_OUT_FEATURES, out_features}};
   StaticAllocator alloc2(tensor_dict);
 
-  auto & tunner_ptr = dtype == tv::float32 ? tunner_fp32_ptr_ : tunner_fp16_ptr_;
+  auto & tuner_ptr = dtype == tv::float32 ? tuner_fp32_ptr_ : tuner_fp16_ptr_;
 
   auto conv_run_status = ConvGemmOps::implicit_gemm(
-    alloc2, *tunner_ptr, input_features, weights, pair_fwd, pair_mask_splits, mask_argsort_splits,
+    alloc2, *tuner_ptr, input_features, weights, pair_fwd, pair_mask_splits, mask_argsort_splits,
     num_act_out, mask_tensor, arch_, false, params_.is_subm,
     reinterpret_cast<std::uintptr_t>(stream), tv::CUDAKernelTimer(false), true, false, tv::Tensor(),
     0.0, 0.0, tv::gemm::Activation::kNone, false, 1.0, tv::Tensor(), tv::Tensor(), 0.0, -1);
