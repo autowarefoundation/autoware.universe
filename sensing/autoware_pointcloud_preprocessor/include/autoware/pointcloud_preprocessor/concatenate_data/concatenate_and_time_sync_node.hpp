@@ -120,6 +120,7 @@ private:
   std::string replace_sync_topic_name_postfix(
     const std::string & original_topic_name, const std::string & postfix);
   void initialize_collector_list();
+  std::list<std::shared_ptr<CloudCollector>>::iterator find_and_reset_oldest_collector();
 };
 
 }  // namespace autoware::pointcloud_preprocessor
