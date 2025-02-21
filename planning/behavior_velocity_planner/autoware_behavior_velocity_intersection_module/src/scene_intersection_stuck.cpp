@@ -17,6 +17,7 @@
 
 #include <autoware/behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>  // for toGeomPoly
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 
 #include <boost/geometry/algorithms/correct.hpp>

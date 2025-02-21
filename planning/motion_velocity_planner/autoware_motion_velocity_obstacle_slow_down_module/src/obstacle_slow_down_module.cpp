@@ -20,6 +20,7 @@
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/signal_processing/lowpass_filter_1d.hpp>
 #include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware/universe_utils/ros/marker_helper.hpp>
 #include <autoware/universe_utils/ros/parameter.hpp>
 #include <autoware/universe_utils/ros/update_param.hpp>
 #include <autoware/universe_utils/ros/uuid_helper.hpp>
