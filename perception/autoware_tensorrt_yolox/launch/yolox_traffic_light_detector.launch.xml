@@ -2,9 +2,11 @@
 <launch>
   <arg name="input/image" default="/sensing/camera/camera6/image_raw"/>
   <arg name="output/objects" default="/perception/traffic_light_recognition/camera6/detection/rois"/>
-  <arg name="model_name" default="yolox_s_car_ped_tl_detector_960_960_batch_1" description="model name for traffic light detection"/>
   <arg name="data_path" default="$(env HOME)/autoware_data" description="packages data and artifacts directory path"/>
-  <arg name="yolox_param_path" default="$(find-pkg-share autoware_tensorrt_yolox)/config/yolox_traffic_light_detector.param.yaml"/>
+  <arg name="model_path" default="$(var data_path)/tensorrt_yolox" description="model path for traffic light detection"/>
+  <arg name="model_name" default="yolox_s_car_ped_tl_detector_960_960_batch_1.onnx" description="model name for traffic light detection"/>
+  <arg name="label_name" default="car_ped_tl_detector_labels.txt" description="label name for traffic light detection"/>
+  <arg name="param_path" default="$(find-pkg-share autoware_tensorrt_yolox)/config/yolox_traffic_light_detector.param.yaml"/>
   <arg name="use_decompress" default="true" description="use image decompress"/>
   <arg name="build_only" default="false" description="exit after trt engine is built"/>
 
@@ -18,7 +20,9 @@
   <node pkg="autoware_tensorrt_yolox" exec="autoware_tensorrt_yolox_node_exe" name="tensorrt_yolox_traffic_light_detector" output="screen">
     <remap from="~/in/image" to="$(var input/image)"/>
     <remap from="~/out/objects" to="$(var output/objects)"/>
-    <param from="$(var yolox_param_path)" allow_substs="true"/>
+    <param from="$(var param_path)" allow_substs="true"/>
+    <param name="model_path" value="$(var model_path)/$(var model_name)"/>
+    <param name="label_path" value="$(var model_path)/$(var label_name)"/>
     <param name="build_only" value="$(var build_only)"/>
   </node>
 </launch>
