@@ -55,7 +55,7 @@
       <include file="$(find-pkg-share autoware_control_command_gate)/launch/control_command_gate.launch.xml"/>
     </group>
     <group if="$(var use_control_command_gate)">
-      <include file="$(find-pkg-share autoware_stop_mode_publisher)/launch/stop_mode_publisher.launch.xml"/>
+      <include file="$(find-pkg-share autoware_stop_mode_operator)/launch/stop_mode_operator.launch.xml"/>
     </group>
 
     <group>
