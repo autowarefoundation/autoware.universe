@@ -4,11 +4,7 @@
   <arg name="expect/rois" default="~/expect/rois"/>
   <arg name="output/rois" default="~/output/rois"/>
   <arg name="data_path" default="$(env HOME)/autoware_data" description="packages data and artifacts directory path"/>
-  <arg
-    name="param_path"
-    default="$(find-pkg-share autoware_traffic_light_fine_detector)/config/traffic_light_fine_detector.param.yaml"
-    description="fine detector param path"
-  />
+  <arg name="param_path" default="$(find-pkg-share autoware_traffic_light_fine_detector)/config/traffic_light_fine_detector.param.yaml" description="fine detector param path"/>
   <arg name="model_path" default="$(var data_path)/traffic_light_fine_detector" description="path to fine detector onnx model and label"/>
   <arg name="label_name" default="tlr_labels.txt" description="fine detector label name"/>
   <arg name="model_name" default="tlr_car_ped_yolox_s_batch_6.onnx" description="fine detector onnx model name"/>

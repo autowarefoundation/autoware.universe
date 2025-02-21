@@ -120,8 +120,8 @@
       <arg name="output/traffic_signals" value="$(var output/traffic_signals)"/>
       <arg name="param_file" value="$(var crosswalk_traffic_light_estimator_param_path)"/>
     </include>
-  </group> 
-  
+  </group>
+
   <!-- traffic light status visualizer on rviz -->
   <group>
     <include file="$(find-pkg-share autoware_traffic_light_visualization)/launch/traffic_light_map_visualizer.launch.xml"/>

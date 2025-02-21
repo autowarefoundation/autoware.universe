@@ -90,7 +90,9 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
         allow_substs=True,
     )
     pedestrian_traffic_light_classifier_param = ParameterFile(
-        param_file=LaunchConfiguration("pedestrian_traffic_light_classifier_param_path").perform(context),
+        param_file=LaunchConfiguration("pedestrian_traffic_light_classifier_param_path").perform(
+            context
+        ),
         allow_substs=True,
     )
     traffic_light_roi_visualizer_param = ParameterFile(
@@ -104,28 +106,52 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
 
     # ML model parameters
     whole_image_detector_label_path = PathJoinSubstitution(
-        [LaunchConfiguration("whole_image_detector/model_path"), LaunchConfiguration("whole_image_detector/label_name")]
+        [
+            LaunchConfiguration("whole_image_detector/model_path"),
+            LaunchConfiguration("whole_image_detector/label_name"),
+        ]
     )
     whole_image_detector_model_path = PathJoinSubstitution(
-        [LaunchConfiguration("whole_image_detector/model_path"), LaunchConfiguration("whole_image_detector/model_name")]
+        [
+            LaunchConfiguration("whole_image_detector/model_path"),
+            LaunchConfiguration("whole_image_detector/model_name"),
+        ]
     )
     fine_detector_label_path = PathJoinSubstitution(
-        [LaunchConfiguration("fine_detector/model_path"), LaunchConfiguration("fine_detector/label_name")]
+        [
+            LaunchConfiguration("fine_detector/model_path"),
+            LaunchConfiguration("fine_detector/label_name"),
+        ]
     )
     fine_detector_model_path = PathJoinSubstitution(
-        [LaunchConfiguration("fine_detector/model_path"), LaunchConfiguration("fine_detector/model_name")]
+        [
+            LaunchConfiguration("fine_detector/model_path"),
+            LaunchConfiguration("fine_detector/model_name"),
+        ]
     )
     car_classifier_label_path = PathJoinSubstitution(
-        [LaunchConfiguration("classifier/model_path"), LaunchConfiguration("classifier/car/label_name")]
+        [
+            LaunchConfiguration("classifier/model_path"),
+            LaunchConfiguration("classifier/car/label_name"),
+        ]
     )
     car_classifier_model_path = PathJoinSubstitution(
-        [LaunchConfiguration("classifier/model_path"), LaunchConfiguration("classifier/car/model_name")]
+        [
+            LaunchConfiguration("classifier/model_path"),
+            LaunchConfiguration("classifier/car/model_name"),
+        ]
     )
     pedestrian_classifier_label_path = PathJoinSubstitution(
-        [LaunchConfiguration("classifier/model_path"), LaunchConfiguration("classifier/pedestrian/label_name")]
+        [
+            LaunchConfiguration("classifier/model_path"),
+            LaunchConfiguration("classifier/pedestrian/label_name"),
+        ]
     )
     pedestrian_classifier_model_path = PathJoinSubstitution(
-        [LaunchConfiguration("classifier/model_path"), LaunchConfiguration("classifier/pedestrian/model_name")]
+        [
+            LaunchConfiguration("classifier/model_path"),
+            LaunchConfiguration("classifier/pedestrian/model_name"),
+        ]
     )
 
     container = ComposableNodeContainer(
@@ -145,7 +171,7 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
                         "build_only": False,
                         "label_path": car_classifier_label_path,
                         "model_path": car_classifier_model_path,
-                    }
+                    },
                 ],
                 remappings=[
                     ("~/input/image", camera_arguments["input/image"]),
@@ -167,7 +193,7 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
                         "build_only": False,
                         "label_path": pedestrian_classifier_label_path,
                         "model_path": pedestrian_classifier_model_path,
-                    }
+                    },
                 ],
                 remappings=[
                     ("~/input/image", camera_arguments["input/image"]),
@@ -280,7 +306,7 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
                         "build_only": False,
                         "label_path": whole_image_detector_label_path,
                         "model_path": whole_image_detector_model_path,
-                    }
+                    },
                 ],
                 remappings=[
                     ("~/in/image", camera_arguments["input/image"]),
