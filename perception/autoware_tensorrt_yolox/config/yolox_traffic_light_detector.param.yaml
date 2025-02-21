@@ -2,8 +2,6 @@
 /**:
   ros__parameters:
 
-    model_path: "$(var data_path)/tensorrt_yolox/$(var model_name).onnx"
-    label_path: "$(var data_path)/tensorrt_yolox/car_ped_tl_detector_labels.txt"
     score_threshold: 0.35
     nms_threshold: 0.7
 
