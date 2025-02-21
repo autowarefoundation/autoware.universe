@@ -15,6 +15,7 @@
 #include "occluded_crosswalk.hpp"
 
 #include <autoware/grid_map_utils/polygon_iterator.hpp>
+#include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <grid_map_ros/GridMapRosConverter.hpp>
 
 #include <lanelet2_core/primitives/Polygon.h>
