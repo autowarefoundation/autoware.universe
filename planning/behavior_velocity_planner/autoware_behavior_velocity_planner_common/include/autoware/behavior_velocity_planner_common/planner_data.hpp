@@ -29,7 +29,7 @@
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <std_msgs/msg/header.hpp>
-#include <tier4_planning_msgs/msg/velocity_limit.hpp>
+#include <autoware_internal_planning_msgs/msg/velocity_limit.hpp>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -62,7 +62,7 @@ struct PlannerData
 
   std::map<lanelet::Id, TrafficSignalStamped> traffic_light_id_map_raw_;
   std::map<lanelet::Id, TrafficSignalStamped> traffic_light_id_map_last_observed_;
-  std::optional<tier4_planning_msgs::msg::VelocityLimit> external_velocity_limit;
+  std::optional<autoware_internal_planning_msgs::msg::VelocityLimit> external_velocity_limit;
 
   bool is_simulation = false;
 

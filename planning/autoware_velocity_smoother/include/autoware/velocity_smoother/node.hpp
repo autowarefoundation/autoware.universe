@@ -46,7 +46,7 @@
 #include "autoware_planning_msgs/msg/trajectory_point.hpp"
 #include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
-#include "tier4_planning_msgs/msg/velocity_limit.hpp"  // temporary
+#include "autoware_internal_planning_msgs/msg/velocity_limit.hpp"  // temporary
 #include "visualization_msgs/msg/marker_array.hpp"
 
 #include <iostream>
@@ -69,7 +69,7 @@ using geometry_msgs::msg::AccelWithCovarianceStamped;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;
 using nav_msgs::msg::Odometry;
-using tier4_planning_msgs::msg::VelocityLimit;  // temporary
+using autoware_internal_planning_msgs::msg::VelocityLimit;  // temporary
 using visualization_msgs::msg::MarkerArray;
 
 struct Motion
