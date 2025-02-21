@@ -64,15 +64,14 @@ LidarBEVFusionNode::LidarBEVFusionNode(const rclcpp::NodeOptions & options)
     to_float_vector(this->declare_parameter<std::vector<double>>("voxel_size", descriptor));
 
   // Camera branch parameters
-  // cSpell:ignore dbound xbound ybound zbound
-  const auto dbound =
-    to_float_vector(this->declare_parameter<std::vector<double>>("dbound", descriptor));
-  const auto xbound =
-    to_float_vector(this->declare_parameter<std::vector<double>>("xbound", descriptor));
-  const auto ybound =
-    to_float_vector(this->declare_parameter<std::vector<double>>("ybound", descriptor));
-  const auto zbound =
-    to_float_vector(this->declare_parameter<std::vector<double>>("zbound", descriptor));
+  const auto d_bound =
+    to_float_vector(this->declare_parameter<std::vector<double>>("d_bound", descriptor));
+  const auto x_bound =
+    to_float_vector(this->declare_parameter<std::vector<double>>("x_bound", descriptor));
+  const auto y_bound =
+    to_float_vector(this->declare_parameter<std::vector<double>>("y_bound", descriptor));
+  const auto z_bound =
+    to_float_vector(this->declare_parameter<std::vector<double>>("z_bound", descriptor));
   const auto num_cameras = this->declare_parameter<std::int64_t>("num_cameras", descriptor);
   const auto raw_image_height =
     this->declare_parameter<std::int64_t>("raw_image_height", descriptor);
@@ -129,9 +128,9 @@ LidarBEVFusionNode::LidarBEVFusionNode(const rclcpp::NodeOptions & options)
 
   BEVFusionConfig config(
     sensor_fusion_, plugins_path, out_size_factor, cloud_capacity, max_points_per_voxel, voxels_num,
-    point_cloud_range, voxel_size, dbound, xbound, ybound, zbound, num_cameras, raw_image_height,
-    raw_image_width, img_aug_scale_x, img_aug_scale_y, roi_height, roi_width, features_height,
-    features_width, num_depth_features, num_proposals, circle_nms_dist_threshold,
+    point_cloud_range, voxel_size, d_bound, x_bound, y_bound, z_bound, num_cameras,
+    raw_image_height, raw_image_width, img_aug_scale_x, img_aug_scale_y, roi_height, roi_width,
+    features_height, features_width, num_depth_features, num_proposals, circle_nms_dist_threshold,
     yaw_norm_thresholds, score_threshold);
 
   const auto allow_remapping_by_area_matrix = this->declare_parameter<std::vector<std::int64_t>>(

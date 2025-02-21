@@ -29,9 +29,9 @@ namespace autoware::lidar_bevfusion
 
 Tensor4D create_frustum(const BEVFusionConfig & config)
 {
-  const float dbound_start = config.dbound_[0];
-  const float dbound_end = config.dbound_[1];
-  const float dbound_step = config.dbound_[2];
+  const float dbound_start = config.d_bound_[0];
+  const float dbound_end = config.d_bound_[1];
+  const float dbound_step = config.d_bound_[2];
   const int roi_height = static_cast<int>(config.roi_height_);            // Image height
   const int roi_width = static_cast<int>(config.roi_width_);              // Image width
   const int features_height = static_cast<int>(config.features_height_);  // Feature height
@@ -83,7 +83,7 @@ Tensor5D get_geometry(
   const Tensor4D & frustum,             // [D, H, W, 3]
   const Tensor3D & camera2lidar_rots,   // [N, 3, 3]
   const Tensor2D & camera2lidar_trans,  // [N, 3]
-  const Tensor3D & intrins_inverse,     // [N, 3, 3]
+  const Tensor3D & intrinsics_inverse,  // [N, 3, 3]
   const Tensor3D & post_rots_inverse,   // [N, 3, 3]
   const Tensor2D & post_trans           // [N, 3]
 )
@@ -106,7 +106,8 @@ Tensor5D get_geometry(
   Tensor5D points = frustum_broadcast - post_trans_broadcast;
 
   // Unsqueeze points to [N, D, H, W, 3, 1]
-  Tensor6D points_unsqueezed = points.reshape(Eigen::array<Eigen::Index, 6>{N, D, H, W, 3, 1});
+  Tensor6D points_unsqueezed =
+    points.reshape(Eigen::array<Eigen::Index, 6>{N, D, H, W, 3, 1});  // cSpell: unsqueezed
 
   Tensor5D points_rotated(N, D, H, W, 3);
 
@@ -142,11 +143,11 @@ Tensor5D get_geometry(
     Eigen::array<Eigen::Index, 5>{0, 0, 0, 0, 2}, Eigen::array<Eigen::Index, 5>{N, D, H, W, 1}) =
     points_z;
 
-  Tensor3D combine(intrins_inverse.dimensions());
+  Tensor3D combine(intrinsics_inverse.dimensions());
 
   for (Eigen::Index camera_index = 0; camera_index < N; camera_index++) {
     Tensor2D camera2lidar_rot = camera2lidar_rots.chip(camera_index, 0);
-    Tensor2D intrins_inv = intrins_inverse.chip(camera_index, 0);
+    Tensor2D intrins_inv = intrinsics_inverse.chip(camera_index, 0);
 
     Eigen::array<Eigen::IndexPair<int>, 1> contract_dims = {Eigen::IndexPair<int>(1, 0)};
 
@@ -176,11 +177,10 @@ Tensor5D get_geometry(
     points_transformed.reshape(Eigen::array<Eigen::Index, 5>{N, D, H, W, 3});
 
   // Add camera2lidar_trans
-  Tensor5D camera2lidar_trans_broacast =
+  Tensor5D camera2lidar_trans_broadcast =
     camera2lidar_trans.reshape(Eigen::array<Eigen::Index, 5>{N, 1, 1, 1, 3})
       .broadcast(Eigen::array<Eigen::Index, 5>{1, D, H, W, 1});
-  ;
-  Tensor5D points_final = points_squeezed_final + camera2lidar_trans_broacast;
+  Tensor5D points_final = points_squeezed_final + camera2lidar_trans_broadcast;
 
   return points_final;
 }
@@ -195,14 +195,14 @@ std::tuple<
     const Tensor5D& geom_feats_input,
     const BEVFusionConfig & config)
 {
-  Eigen::Vector3f dx(config.xbound_[2], config.ybound_[2], config.zbound_[2]);
+  Eigen::Vector3f dx(config.x_bound_[2], config.y_bound_[2], config.z_bound_[2]);
   Eigen::Vector3f bx(
-    config.xbound_[0] + config.xbound_[2] / 2.0, config.ybound_[0] + config.ybound_[2] / 2.0,
-    config.zbound_[0] + config.zbound_[2] / 2.0);
+    config.x_bound_[0] + config.x_bound_[2] / 2.0, config.y_bound_[0] + config.y_bound_[2] / 2.0,
+    config.z_bound_[0] + config.z_bound_[2] / 2.0);
   Eigen::Vector3i nx(
-    static_cast<int>((config.xbound_[1] - config.xbound_[0]) / config.xbound_[2]),
-    static_cast<int>((config.ybound_[1] - config.ybound_[0]) / config.ybound_[2]),
-    static_cast<int>((config.zbound_[1] - config.zbound_[0]) / config.zbound_[2]));
+    static_cast<int>((config.x_bound_[1] - config.x_bound_[0]) / config.x_bound_[2]),
+    static_cast<int>((config.y_bound_[1] - config.y_bound_[0]) / config.y_bound_[2]),
+    static_cast<int>((config.z_bound_[1] - config.z_bound_[0]) / config.z_bound_[2]));
 
   // Get dimensions
   Eigen::Index N = geom_feats_input.dimension(0);
@@ -319,7 +319,7 @@ precompute_features(
 
   Tensor3D camera2lidar_rotations(config.num_cameras_, 3, 3);
   Tensor2D camera2lidar_translations(config.num_cameras_, 3);
-  Tensor3D intrins_inverse(config.num_cameras_, 3, 3);
+  Tensor3D intrinsics_inverse(config.num_cameras_, 3, 3);
   Tensor3D post_rots_inverse(config.num_cameras_, 3, 3);
   Tensor2D post_trans(config.num_cameras_, 3);
 
@@ -354,7 +354,7 @@ precompute_features(
 
     camera2lidar_rotations.chip(camera_id, 0) = camera2lidar_rot_tensor;
     camera2lidar_translations.chip(camera_id, 0) = camera2lidar_trans_tensor;
-    intrins_inverse.chip(camera_id, 0) = intrins_inv_tensor;
+    intrinsics_inverse.chip(camera_id, 0) = intrins_inv_tensor;
     post_rots_inverse.chip(camera_id, 0) = post_rots_inv_tensor;
     post_trans.chip(camera_id, 0) = post_trans_tensor;
   }
@@ -363,7 +363,7 @@ precompute_features(
     frustum,                    // [D, H, W, 3]
     camera2lidar_rotations,     // [N, 3, 3]
     camera2lidar_translations,  // [N, 3]
-    intrins_inverse,            // [N, 3, 3]
+    intrinsics_inverse,         // [N, 3, 3]
     post_rots_inverse,          // [N, 3, 3]
     post_trans                  // [N, 3]
   );

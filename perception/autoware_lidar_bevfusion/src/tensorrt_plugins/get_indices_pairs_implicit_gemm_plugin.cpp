@@ -297,7 +297,7 @@ std::int32_t GetIndicesPairsImplicitGemmPlugin::enqueue(
     tv::from_blob(outputs[2], {mask_count, pair_fwd_size_padded}, tv::int32, 0);
   tv::Tensor mask_argsort_fwd_padded =
     tv::from_blob(outputs[3], {mask_count, pair_fwd_size_padded}, tv::int32, 0);
-  tv::Tensor out_inds = tv::from_blob(
+  tv::Tensor out_indices = tv::from_blob(
     outputs[0], {is_subm ? input_desc[0].dims.d[0] : out_indices_num_limit_, 4}, tv::int32, 0);
   tv::Tensor indices_kernel_num = tv::zeros({kernel_volume}, tv::int32, 0);
 
@@ -309,12 +309,12 @@ std::int32_t GetIndicesPairsImplicitGemmPlugin::enqueue(
   ctx.set_cuda_stream_int(reinterpret_cast<std::uintptr_t>(stream));
 
   if (is_subm) {
-    out_inds.copy_(input_indices, ctx);
+    out_indices.copy_(input_indices, ctx);
 
     ws_tensors.insert({SPCONV_ALLOC_PAIR_FWD, pair_fwd_padded});
     ws_tensors.insert({SPCONV_ALLOC_PAIR_MASK, pair_mask_fwd_padded});
     ws_tensors.insert({SPCONV_ALLOC_MASK_ARG_SORT, mask_argsort_fwd_padded});
-    ws_tensors.insert({SPCONV_ALLOC_OUT_INDICES, out_inds});
+    ws_tensors.insert({SPCONV_ALLOC_OUT_INDICES, out_indices});
     ws_tensors.insert(
       {SPCONV_ALLOC_INDICE_NUM_PER_LOC, indices_kernel_num});  // cSpell:ignore INDICE
     StaticAllocator alloc(ws_tensors);
@@ -340,7 +340,7 @@ std::int32_t GetIndicesPairsImplicitGemmPlugin::enqueue(
     ws_tensors.insert({SPCONV_ALLOC_MASK_ARG_SORT, mask_argsort_fwd_padded});
     ws_tensors.insert({SPCONV_ALLOC_MASK_ARG_SORT_BWD, mask_argsort_bwd_padded});
 
-    ws_tensors.insert({SPCONV_ALLOC_OUT_INDICES, out_inds});
+    ws_tensors.insert({SPCONV_ALLOC_OUT_INDICES, out_indices});
     ws_tensors.insert(
       {SPCONV_ALLOC_INDICE_NUM_PER_LOC, indices_kernel_num});  // cSpell:ignore INDICE
 

@@ -27,14 +27,13 @@ namespace autoware::lidar_bevfusion
 class BEVFusionConfig
 {
 public:
-  // cSpell:ignore dbound, xbound, ybound, zbound
   BEVFusionConfig(
     const bool sensor_fusion, const std::string & plugins_path, const std::int64_t out_size_factor,
     const std::int64_t cloud_capacity, const std::int64_t max_points_per_voxel,
     const std::vector<std::int64_t> & voxels_num, const std::vector<float> & point_cloud_range,
-    const std::vector<float> & voxel_size, const std::vector<float> & dbound,
-    const std::vector<float> & xbound, const std::vector<float> & ybound,
-    const std::vector<float> & zbound, const std::int64_t num_cameras,
+    const std::vector<float> & voxel_size, const std::vector<float> & d_bound,
+    const std::vector<float> & x_bound, const std::vector<float> & y_bound,
+    const std::vector<float> & z_bound, const std::int64_t num_cameras,
     const std::int64_t raw_image_height, const std::int64_t raw_image_width,
     const float img_aug_scale_x, const float img_aug_scale_y, const std::int64_t roi_height,
     const std::int64_t roi_width, const std::int64_t features_height,
@@ -71,11 +70,11 @@ public:
       voxel_y_size_ = voxel_size[1];
       voxel_z_size_ = voxel_size[2];
     }
-    if (dbound.size() == 3 && xbound.size() == 3 && ybound.size() == 3 && zbound.size() == 3) {
-      dbound_ = dbound;
-      xbound_ = xbound;
-      ybound_ = ybound;
-      zbound_ = zbound;
+    if (d_bound.size() == 3 && x_bound.size() == 3 && y_bound.size() == 3 && z_bound.size() == 3) {
+      d_bound_ = d_bound;
+      x_bound_ = x_bound;
+      y_bound_ = y_bound;
+      z_bound_ = z_bound;
     }
 
     num_cameras_ = num_cameras;
@@ -150,10 +149,10 @@ public:
   std::int64_t grid_z_size_{};
 
   // Camera branch parameters
-  std::vector<float> dbound_{};
-  std::vector<float> xbound_{};
-  std::vector<float> ybound_{};
-  std::vector<float> zbound_{};
+  std::vector<float> d_bound_{};
+  std::vector<float> x_bound_{};
+  std::vector<float> y_bound_{};
+  std::vector<float> z_bound_{};
 
   std::int64_t num_cameras_{};
   std::int64_t raw_image_height_{};

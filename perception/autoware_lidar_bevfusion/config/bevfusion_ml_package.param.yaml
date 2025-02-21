@@ -8,10 +8,10 @@
     out_size_factor: 8
     max_points_per_voxel: 10
 
-    dbound: [1.0, 166.2, 1.4]
-    xbound: [-122.4, 122.4, 0.68]
-    ybound: [-122.4, 122.4, 0.68]
-    zbound: [-10.0, 10.0, 20.0]
+    d_bound: [1.0, 166.2, 1.4]
+    x_bound: [-122.4, 122.4, 0.68]
+    y_bound: [-122.4, 122.4, 0.68]
+    z_bound: [-10.0, 10.0, 20.0]
     num_cameras: 6
     raw_image_height: 1080
     raw_image_width: 1440
