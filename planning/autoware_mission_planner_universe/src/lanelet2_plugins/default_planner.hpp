@@ -17,6 +17,7 @@
 
 #include <autoware/mission_planner_universe/mission_planner_plugin.hpp>
 #include <autoware/route_handler/route_handler.hpp>
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 
