@@ -30,6 +30,15 @@
 #include <autoware/motion_velocity_planner_common_universe/velocity_planning_result.hpp>
 #include <autoware/objects_of_interest_marker_interface/objects_of_interest_marker_interface.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <tf2_eigen/tf2_eigen.hpp>
+
+#include <pcl/common/transforms.h>
+#include <pcl/filters/voxel_grid.h>
+#include <pcl/kdtree/kdtree_flann.h>
+#include <pcl/segmentation/euclidean_cluster_comparator.h>
+#include <pcl/segmentation/extract_clusters.h>
+#include <pcl_conversions/pcl_conversions.h>
+#include <tf2_ros/buffer.h>
 
 #include <algorithm>
 #include <memory>
@@ -59,6 +68,7 @@ private:
   // ros parameters
   bool ignore_crossing_obstacle_{};
   bool suppress_sudden_stop_{};
+  bool use_pointcloud_{false};
   CommonParam common_param_{};
   StopPlanningParam stop_planning_param_{};
   ObstacleFilteringParam obstacle_filtering_param_{};
@@ -78,6 +88,10 @@ private:
   mutable std::shared_ptr<DebugData> debug_data_ptr_{};
   std::vector<StopObstacle> prev_closest_stop_obstacles_{};
   std::vector<StopObstacle> prev_stop_obstacles_{};
+
+  // PointCloud-based stop obstacle history
+  std::vector<StopObstacle> stop_pointcloud_obstacle_history_;
+
   MetricsManager metrics_manager_{};
   // previous trajectory and distance to stop
   // NOTE: Previous trajectory is memorized to deal with nearest index search for overlapping or
@@ -89,6 +103,10 @@ private:
   mutable std::optional<std::vector<Polygon2d>> trajectory_polygon_for_outside_{std::nullopt};
   mutable std::optional<std::vector<Polygon2d>> decimated_traj_polys_{std::nullopt};
   mutable std::shared_ptr<universe_utils::TimeKeeper> time_keeper_{};
+
+  std::vector<geometry_msgs::msg::Point> convert_point_cloud_to_stop_points(
+    const PlannerData::Pointcloud & pointcloud, const std::vector<TrajectoryPoint> & traj_points,
+    const VehicleInfo & vehicle_info, size_t ego_idx);
 
   std::vector<Polygon2d> get_trajectory_polygon_for_inside(
     const std::vector<TrajectoryPoint> & decimated_traj_points, const VehicleInfo & vehicle_info,
@@ -110,6 +128,12 @@ private:
     const std::vector<std::shared_ptr<PlannerData::Object>> & objects,
     const bool is_driving_forward, const VehicleInfo & vehicle_info, const double dist_to_bumper,
     const TrajectoryPolygonCollisionCheck & trajectory_polygon_collision_check);
+
+  std::vector<StopObstacle> filter_stop_obstacle_for_point_cloud(
+    const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
+    const std::vector<TrajectoryPoint> & decimated_traj_points,
+    const PlannerData::Pointcloud & point_cloud, const VehicleInfo & vehicle_info,
+    const TrajectoryPolygonCollisionCheck & trajectory_polygon_collision_check, size_t ego_idx);
 
   std::optional<geometry_msgs::msg::Point> plan_stop(
     const std::shared_ptr<const PlannerData> planner_data,
@@ -162,6 +186,11 @@ private:
     const double dist_from_obj_poly_to_traj_poly, const bool is_driving_forward,
     const VehicleInfo & vehicle_info, const double dist_to_bumper,
     const TrajectoryPolygonCollisionCheck & trajectory_polygon_collision_check) const;
+
+  std::optional<StopObstacle> create_stop_obstacle_for_point_cloud(
+    const std::vector<TrajectoryPoint> & traj_points, const rclcpp::Time & stamp,
+    const geometry_msgs::msg::Point & stop_point) const;
+
   std::optional<std::pair<geometry_msgs::msg::Point, double>>
   create_collision_point_for_outside_stop_obstacle(
     const Odometry & odometry, const std::vector<TrajectoryPoint> & traj_points,
