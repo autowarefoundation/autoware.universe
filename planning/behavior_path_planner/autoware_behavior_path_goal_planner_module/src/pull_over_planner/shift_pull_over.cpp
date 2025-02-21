@@ -200,6 +200,7 @@ std::optional<PullOverPath> ShiftPullOver::generatePullOverPath(
   PathShifter path_shifter{};
   path_shifter.setPath(processed_prev_module_path.value());
   ShiftLine shift_line{};
+  if (!shift_start_pose) return std::nullopt;
   shift_line.start = *shift_start_pose;
   shift_line.end = shift_end_pose;
   shift_line.end_shift_length = shift_end_road_to_target_distance;
