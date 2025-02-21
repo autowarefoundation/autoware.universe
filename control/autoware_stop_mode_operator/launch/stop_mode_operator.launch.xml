@@ -1,6 +1,6 @@
 <launch>
-  <arg name="config" default="$(find-pkg-share autoware_stop_mode_publisher)/config/default.param.yaml"/>
-  <node pkg="autoware_stop_mode_publisher" exec="stop_mode_publisher_node">
+  <arg name="config" default="$(find-pkg-share autoware_stop_mode_operator)/config/default.param.yaml"/>
+  <node pkg="autoware_stop_mode_operator" exec="stop_mode_operator_node">
     <param from="$(var config)"/>
     <remap from="~/control" to="/control/control_command_gate/inputs/stop/control"/>
     <remap from="~/gear" to="/control/control_command_gate/inputs/stop/gear"/>

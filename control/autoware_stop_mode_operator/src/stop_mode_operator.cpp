@@ -12,13 +12,13 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#include "stop_mode_publisher.hpp"
+#include "stop_mode_operator.hpp"
 
-namespace autoware::stop_mode_publisher
+namespace autoware::stop_mode_operator
 {
 
-StopModePublisher::StopModePublisher(const rclcpp::NodeOptions & options)
-: Node("stop_mode_publisher", options)
+StopModeOperator::StopModeOperator(const rclcpp::NodeOptions & options)
+: Node("stop_mode_operator", options)
 {
   stop_hold_acceleration_ = declare_parameter<double>("stop_hold_acceleration");
 
@@ -40,7 +40,7 @@ StopModePublisher::StopModePublisher(const rclcpp::NodeOptions & options)
   publish_trigger_command();
 }
 
-void StopModePublisher::publish_control_command()
+void StopModeOperator::publish_control_command()
 {
   // TODO(Takagi, Isamu): stationary steering
   Control control;
@@ -52,7 +52,7 @@ void StopModePublisher::publish_control_command()
   pub_control_->publish(control);
 }
 
-void StopModePublisher::publish_trigger_command()
+void StopModeOperator::publish_trigger_command()
 {
   const auto stamp = now();
 
@@ -72,7 +72,7 @@ void StopModePublisher::publish_trigger_command()
   pub_hazard_lights_->publish(hazard_lights);
 }
 
-}  // namespace autoware::stop_mode_publisher
+}  // namespace autoware::stop_mode_operator
 
 #include <rclcpp_components/register_node_macro.hpp>
-RCLCPP_COMPONENTS_REGISTER_NODE(autoware::stop_mode_publisher::StopModePublisher)
+RCLCPP_COMPONENTS_REGISTER_NODE(autoware::stop_mode_operator::StopModeOperator)

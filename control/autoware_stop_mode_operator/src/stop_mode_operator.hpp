@@ -12,8 +12,8 @@
 //  See the License for the specific language governing permissions and
 //  limitations under the License.
 
-#ifndef STOP_MODE_PUBLISHER_HPP_
-#define STOP_MODE_PUBLISHER_HPP_
+#ifndef STOP_MODE_OPERATOR_HPP_
+#define STOP_MODE_OPERATOR_HPP_
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -23,7 +23,7 @@
 #include <autoware_vehicle_msgs/msg/steering_report.hpp>
 #include <autoware_vehicle_msgs/msg/turn_indicators_command.hpp>
 
-namespace autoware::stop_mode_publisher
+namespace autoware::stop_mode_operator
 {
 
 using autoware_control_msgs::msg::Control;
@@ -32,10 +32,10 @@ using autoware_vehicle_msgs::msg::HazardLightsCommand;
 using autoware_vehicle_msgs::msg::SteeringReport;
 using autoware_vehicle_msgs::msg::TurnIndicatorsCommand;
 
-class StopModePublisher : public rclcpp::Node
+class StopModeOperator : public rclcpp::Node
 {
 public:
-  explicit StopModePublisher(const rclcpp::NodeOptions & options);
+  explicit StopModeOperator(const rclcpp::NodeOptions & options);
 
 private:
   void publish_control_command();
@@ -52,6 +52,6 @@ private:
   double stop_hold_acceleration_;
 };
 
-}  // namespace autoware::stop_mode_publisher
+}  // namespace autoware::stop_mode_operator
 
-#endif  // STOP_MODE_PUBLISHER_HPP_
+#endif  // STOP_MODE_OPERATOR_HPP_
