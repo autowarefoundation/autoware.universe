@@ -49,7 +49,7 @@ public:
     const int64_t module_id, const std::shared_ptr<const PlannerData> & planner_data,
     const PlannerParam & planner_param, const rclcpp::Logger & logger,
     const rclcpp::Clock::SharedPtr clock,
-    const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+    const std::shared_ptr<autoware_utils::TimeKeeper> time_keeper,
     const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
       planning_factor_interface);
 
@@ -64,7 +64,7 @@ public:
 private:
   // Parameter
   PlannerParam param_;
-  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch_;
+  autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch_;
   std::vector<lanelet::BasicPolygon2d> partition_lanelets_;
 
 protected:
