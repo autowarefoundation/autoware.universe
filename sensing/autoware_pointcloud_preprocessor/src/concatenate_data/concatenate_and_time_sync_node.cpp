@@ -148,13 +148,13 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
   hardware_id_stream << this->get_fully_qualified_name() << "_checker";
   std::string hardware_id = hardware_id_stream.str();
 
-  std::ostringstream diagnositic_name_stream;
-  diagnositic_name_stream << this->get_fully_qualified_name() << "_status";
-  std::string diagnositic_name = diagnositic_name_stream.str();
+  std::ostringstream diagnostic_name_stream;
+  diagnostic_name_stream << this->get_fully_qualified_name() << "_status";
+  std::string diagnostic_name = diagnostic_name_stream.str();
 
   diagnostic_updater_.setHardwareID(hardware_id);
   diagnostic_updater_.add(
-    diagnositic_name, this, &PointCloudConcatenateDataSynchronizerComponent::check_concat_status);
+    diagnostic_name, this, &PointCloudConcatenateDataSynchronizerComponent::check_concat_status);
 }
 
 std::string PointCloudConcatenateDataSynchronizerComponent::replace_sync_topic_name_postfix(
