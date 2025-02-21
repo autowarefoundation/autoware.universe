@@ -1446,7 +1446,7 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsCandidate(
     return stop_path;
   }
 
-  // NOTE: following block is intentionally duty to refactor only necesary block from
+  // NOTE: following block is intentionally dirty to refactor and extract only necessary codes in
   // planAsCandidate/planAsOutput/setOutput
   BehaviorModuleOutput pull_over_output{};
   {
