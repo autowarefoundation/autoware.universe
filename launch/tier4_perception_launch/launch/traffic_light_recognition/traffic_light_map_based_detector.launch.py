@@ -32,7 +32,7 @@ def create_traffic_light_map_based_detector(namespace, context):
 
     output_rois = (
         "rough/rois"
-        if IfCondition(LaunchConfiguration("enable_fine_detection")).evaluate(context)
+        if IfCondition(LaunchConfiguration("use_ml_detector")).evaluate(context)
         else f"/perception/traffic_light_recognition/{namespace}/detection/rois"
     )
 
@@ -87,9 +87,9 @@ def generate_launch_description():
 
     add_launch_arg("all_camera_namespaces", "[camera6, camera7]")
     add_launch_arg(
-        "enable_fine_detection",
+        "use_ml_detector",
         "True",
-        "If True, output_topic will be for fine detector, otherwise for classifier",
+        "If True, output_topic will be for ml detector, otherwise for classifier",
     )
 
     return launch.LaunchDescription(
