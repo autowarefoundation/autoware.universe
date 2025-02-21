@@ -229,7 +229,7 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
 
   std::shared_ptr<CloudCollector> selected_collector = nullptr;
 
-  // For each callback, check whether there is a exist collector that matches this cloud
+  // For each callback, check whether there is an existing collector that matches this cloud
   std::optional<std::shared_ptr<CloudCollector>> cloud_collector = std::nullopt;
   MatchingParams matching_params;
   matching_params.topic_name = topic_name;
@@ -260,7 +260,7 @@ void PointCloudConcatenateDataSynchronizerComponent::cloud_callback(
         selected_collector = *oldest_it;
       } else {
         // Handle case where no suitable collector is found
-        RCLCPP_WARN(get_logger(), "No available CloudCollector in IDLE state.");
+        RCLCPP_ERROR(get_logger(), "No available CloudCollector in IDLE state.");
         return;
       }
     }
