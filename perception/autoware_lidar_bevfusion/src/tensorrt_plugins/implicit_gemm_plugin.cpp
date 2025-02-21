@@ -52,7 +52,8 @@ ImplicitGemmPlugin::ImplicitGemmPlugin(
   initFieldsToSerialize();
 
   arch_ = ConvGemmOps::get_compute_capability();
-  tunner_ptr_ = std::make_unique<ConvTunerSimple>(ConvMain::get_all_conv_algo_desp());
+  tunner_fp16_ptr_ = std::make_unique<ConvTunerSimple>(ConvMain::get_all_conv_algo_desp());
+  tunner_fp32_ptr_ = std::make_unique<ConvTunerSimple>(ConvMain::get_all_conv_algo_desp());
 }
 
 void ImplicitGemmPlugin::initFieldsToSerialize()
@@ -163,9 +164,13 @@ bool ImplicitGemmPlugin::supportsFormatCombination(
 
   switch (pos) {
     case INOUT_IN_FEATURES_INDEX:
+      supported &=
+        (in_out[pos].desc.type == nvinfer1::DataType::kFLOAT ||
+         in_out[pos].desc.type == nvinfer1::DataType::kHALF);
+      break;
     case INOUT_FILTERS_INDEX:
     case INOUT_OUT_FEATURES_INDEX:
-      supported &= in_out[pos].desc.type == nvinfer1::DataType::kFLOAT;
+      supported &= in_out[pos].desc.type == in_out[INOUT_IN_FEATURES_INDEX].desc.type;
       break;
     case INOUT_PAIR_FWD_INDEX:
     case INOUT_PAIR_MASK_FWD_SPLITS_INDEX:
@@ -223,15 +228,24 @@ std::int32_t ImplicitGemmPlugin::enqueue(
   std::int64_t num_act_out = input_desc[INOUT_PAIR_FWD_INDEX].dims.d[1];
   std::int64_t num_out_features = input_desc[INOUT_FILTERS_INDEX].dims.d[0];
 
+  auto in_features_type = input_desc[INOUT_IN_FEATURES_INDEX].type;
+  [[maybe_unused]] auto filters_type = input_desc[INOUT_FILTERS_INDEX].type;
+  [[maybe_unused]] auto out_features_type = input_desc[INOUT_OUT_FEATURES_INDEX].type;
+
+  assert(in_features_type == filters_type);
+  assert(in_features_type == out_features_type);
+
+  auto dtype = in_features_type == DataType::kFLOAT ? tv::float32 : tv::float16;
+
   tv::Tensor input_features =
-    tv::from_blob(inputs[INOUT_IN_FEATURES_INDEX], {num_act_in, num_in_features}, tv::float32, 0);
+    tv::from_blob(inputs[INOUT_IN_FEATURES_INDEX], {num_act_in, num_in_features}, dtype, 0);
 
   tv::Tensor weights = tv::from_blob(
     inputs[INOUT_FILTERS_INDEX],
     {input_desc[INOUT_FILTERS_INDEX].dims.d[0], input_desc[INOUT_FILTERS_INDEX].dims.d[1],
      input_desc[INOUT_FILTERS_INDEX].dims.d[2], input_desc[INOUT_FILTERS_INDEX].dims.d[3],
      input_desc[INOUT_FILTERS_INDEX].dims.d[4]},
-    tv::float32, 0);
+    dtype, 0);
 
   tv::Tensor pair_fwd = tv::from_blob(
     inputs[INOUT_PAIR_FWD_INDEX],
@@ -255,8 +269,7 @@ std::int32_t ImplicitGemmPlugin::enqueue(
     input_desc[INOUT_MASK_ARGSORT_FWD_SPLITS_INDEX].dims.d[0]);
   PLUGIN_ASSERT(input_desc[INOUT_MASK_ARGSORT_FWD_SPLITS_INDEX].dims.nbDims == 1);
 
-  tv::Tensor out_features =
-    tv::from_blob(outputs[0], {num_act_out, num_out_features}, tv::float32, 0);
+  tv::Tensor out_features = tv::from_blob(outputs[0], {num_act_out, num_out_features}, dtype, 0);
 
   tv::Tensor mask_tensor = tv::zeros({1}, tv::uint32, -1);
 
@@ -275,11 +288,13 @@ std::int32_t ImplicitGemmPlugin::enqueue(
     {SPCONV_ALLOC_OUT_FEATURES, out_features}};
   StaticAllocator alloc2(tensor_dict);
 
+  auto & tunner_ptr = dtype == tv::float32 ? tunner_fp32_ptr_ : tunner_fp16_ptr_;
+
   auto conv_run_status = ConvGemmOps::implicit_gemm(
-    alloc2, *tunner_ptr_, input_features, weights, pair_fwd, pair_mask_splits, mask_argsort_splits,
+    alloc2, *tunner_ptr, input_features, weights, pair_fwd, pair_mask_splits, mask_argsort_splits,
     num_act_out, mask_tensor, arch_, false, params_.is_subm,
     reinterpret_cast<std::uintptr_t>(stream), tv::CUDAKernelTimer(false), true, false, tv::Tensor(),
-    0.0, 0.0, tv::gemm::Activation::kNone, false, 1.0, tv::Tensor(), tv::Tensor(), 0.0, 0);
+    0.0, 0.0, tv::gemm::Activation::kNone, false, 1.0, tv::Tensor(), tv::Tensor(), 0.0, -1);
 
   return 0;
 }

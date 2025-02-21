@@ -129,7 +129,8 @@ private:
   std::vector<nvinfer1::PluginField> data_to_serialize_;
   nvinfer1::PluginFieldCollection fc_to_serialize_;
 
-  std::unique_ptr<ConvTunerSimple> tunner_ptr_{};
+  std::unique_ptr<ConvTunerSimple> tunner_fp32_ptr_{};
+  std::unique_ptr<ConvTunerSimple> tunner_fp16_ptr_{};
 };
 
 }  // namespace plugin
