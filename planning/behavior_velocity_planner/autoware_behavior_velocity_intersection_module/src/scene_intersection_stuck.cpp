@@ -17,6 +17,7 @@
 
 #include <autoware/behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>  // for toGeomPoly
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 
 #include <boost/geometry/algorithms/correct.hpp>
@@ -123,7 +124,7 @@ namespace autoware::behavior_velocity_planner
 namespace bg = boost::geometry;
 
 std::optional<StuckStop> IntersectionModule::isStuckStatus(
-  const tier4_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_internal_planning_msgs::msg::PathWithLaneId & path,
   const IntersectionStopLines & intersection_stoplines, const PathLanelets & path_lanelets) const
 {
   const auto closest_idx = intersection_stoplines.closest_idx;
@@ -308,7 +309,7 @@ bool IntersectionModule::checkStuckVehicleInIntersection(const PathLanelets & pa
 }
 
 std::optional<YieldStuckStop> IntersectionModule::isYieldStuckStatus(
-  const tier4_planning_msgs::msg::PathWithLaneId & path,
+  const autoware_internal_planning_msgs::msg::PathWithLaneId & path,
   const InterpolatedPathInfo & interpolated_path_info,
   const IntersectionStopLines & intersection_stoplines) const
 {

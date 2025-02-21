@@ -19,6 +19,7 @@
 
 #include <autoware/motion_utils/trajectory/interpolation.hpp>
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
+#include <autoware/universe_utils/geometry/pose_deviation.hpp>
 
 #include <boost/geometry/algorithms/distance.hpp>
 
