@@ -97,7 +97,8 @@ void publishMandatoryTopics(
     autoware::test_utils::makeCostMapMsg());
   test_manager->publishInput(
     test_target_node, "behavior_path_planner/input/scenario",
-    autoware::test_utils::makeScenarioMsg(tier4_planning_msgs::msg::Scenario::LANEDRIVING));
+    autoware::test_utils::makeScenarioMsg(
+      autoware_internal_planning_msgs::msg::Scenario::LANEDRIVING));
   test_manager->publishInput(
     test_target_node, "behavior_path_planner/input/vector_map",
     autoware::test_utils::makeMapBinMsg());
