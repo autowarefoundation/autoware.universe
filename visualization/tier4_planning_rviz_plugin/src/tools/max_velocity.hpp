@@ -63,7 +63,8 @@ private Q_SLOTS:
   void updateVisualization();
 
 protected:
-  void processMessage(const autoware_internal_planning_msgs::msg::VelocityLimit::ConstSharedPtr msg_ptr);
+  void processMessage(
+    const autoware_internal_planning_msgs::msg::VelocityLimit::ConstSharedPtr msg_ptr);
   jsk_rviz_plugins::OverlayObject::Ptr overlay_;
   rviz_common::properties::ColorProperty * property_text_color_;
   rviz_common::properties::IntProperty * property_left_;

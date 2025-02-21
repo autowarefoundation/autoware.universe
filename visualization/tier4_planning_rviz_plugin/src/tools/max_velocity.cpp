@@ -116,9 +116,10 @@ void MaxVelocityDisplay::subscribe()
   std::string topic_name = property_topic_name_->getStdString();
   if (topic_name.length() > 0 && topic_name != "/") {
     rclcpp::Node::SharedPtr raw_node = context_->getRosNodeAbstraction().lock()->get_raw_node();
-    max_vel_sub_ = raw_node->create_subscription<autoware_internal_planning_msgs::msg::VelocityLimit>(
-      topic_name, rclcpp::QoS{1}.transient_local(),
-      std::bind(&MaxVelocityDisplay::processMessage, this, std::placeholders::_1));
+    max_vel_sub_ =
+      raw_node->create_subscription<autoware_internal_planning_msgs::msg::VelocityLimit>(
+        topic_name, rclcpp::QoS{1}.transient_local(),
+        std::bind(&MaxVelocityDisplay::processMessage, this, std::placeholders::_1));
   }
 }
 

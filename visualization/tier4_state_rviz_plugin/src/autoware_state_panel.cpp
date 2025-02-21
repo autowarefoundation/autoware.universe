@@ -149,8 +149,9 @@ void AutowareStatePanel::onInitialize()
   client_emergency_stop_ = raw_node_->create_client<tier4_external_api_msgs::srv::SetEmergency>(
     "/api/autoware/set/emergency");
 
-  pub_velocity_limit_ = raw_node_->create_publisher<autoware_internal_planning_msgs::msg::VelocityLimit>(
-    "/planning/scenario_planning/max_velocity_default", rclcpp::QoS{1}.transient_local());
+  pub_velocity_limit_ =
+    raw_node_->create_publisher<autoware_internal_planning_msgs::msg::VelocityLimit>(
+      "/planning/scenario_planning/max_velocity_default", rclcpp::QoS{1}.transient_local());
 
   QObject::connect(segmented_button, &CustomSegmentedButton::buttonClicked, this, [this](int id) {
     const QList<QAbstractButton *> buttons = segmented_button->getButtonGroup()->buttons();

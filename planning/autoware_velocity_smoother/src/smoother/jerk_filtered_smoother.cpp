@@ -449,8 +449,8 @@ TrajectoryPoints JerkFilteredSmoother::mergeFilteredTrajectory(
       merged.at(i).longitudinal_velocity_mps = current_vel;
       merged.at(i).acceleration_mps2 = current_acc;
 
-      const double ds = autoware_utils::calc_distance2d(
-        forward_filtered.at(i + 1), forward_filtered.at(i));
+      const double ds =
+        autoware_utils::calc_distance2d(forward_filtered.at(i + 1), forward_filtered.at(i));
       const double max_dt =
         std::pow(6.0 * ds / std::fabs(j_min), 1.0 / 3.0);  // assuming v0 = a0 = 0.
       const double dt = std::min(ds / std::max(current_vel, 1.0e-6), max_dt);

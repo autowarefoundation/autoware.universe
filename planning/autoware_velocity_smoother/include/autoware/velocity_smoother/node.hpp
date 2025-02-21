@@ -18,6 +18,13 @@
 #include "autoware/motion_utils/trajectory/conversion.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/osqp_interface/osqp_interface.hpp"
+#include "autoware/velocity_smoother/resample.hpp"
+#include "autoware/velocity_smoother/smoother/analytical_jerk_constrained_smoother/analytical_jerk_constrained_smoother.hpp"
+#include "autoware/velocity_smoother/smoother/jerk_filtered_smoother.hpp"
+#include "autoware/velocity_smoother/smoother/l2_pseudo_jerk_smoother.hpp"
+#include "autoware/velocity_smoother/smoother/linf_pseudo_jerk_smoother.hpp"
+#include "autoware/velocity_smoother/smoother/smoother_base.hpp"
+#include "autoware/velocity_smoother/trajectory_utils.hpp"
 #include "autoware_utils/geometry/geometry.hpp"
 #include "autoware_utils/math/unit_conversion.hpp"
 #include "autoware_utils/ros/diagnostics_interface.hpp"
@@ -26,13 +33,6 @@
 #include "autoware_utils/ros/self_pose_listener.hpp"
 #include "autoware_utils/system/stop_watch.hpp"
 #include "autoware_utils/system/time_keeper.hpp"
-#include "autoware/velocity_smoother/resample.hpp"
-#include "autoware/velocity_smoother/smoother/analytical_jerk_constrained_smoother/analytical_jerk_constrained_smoother.hpp"
-#include "autoware/velocity_smoother/smoother/jerk_filtered_smoother.hpp"
-#include "autoware/velocity_smoother/smoother/l2_pseudo_jerk_smoother.hpp"
-#include "autoware/velocity_smoother/smoother/linf_pseudo_jerk_smoother.hpp"
-#include "autoware/velocity_smoother/smoother/smoother_base.hpp"
-#include "autoware/velocity_smoother/trajectory_utils.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2/utils.h"
 #include "tf2_ros/transform_listener.h"
@@ -42,11 +42,11 @@
 #include "autoware_adapi_v1_msgs/msg/operation_mode_state.hpp"
 #include "autoware_internal_debug_msgs/msg/float32_stamped.hpp"
 #include "autoware_internal_debug_msgs/msg/float64_stamped.hpp"
+#include "autoware_internal_planning_msgs/msg/velocity_limit.hpp"  // temporary
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "autoware_planning_msgs/msg/trajectory_point.hpp"
 #include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
-#include "autoware_internal_planning_msgs/msg/velocity_limit.hpp"  // temporary
 #include "visualization_msgs/msg/marker_array.hpp"
 
 #include <iostream>
@@ -61,15 +61,15 @@ namespace autoware::velocity_smoother
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
-using autoware_utils::DiagnosticsInterface;
 using autoware_adapi_v1_msgs::msg::OperationModeState;
 using autoware_internal_debug_msgs::msg::Float32Stamped;
 using autoware_internal_debug_msgs::msg::Float64Stamped;
+using autoware_internal_planning_msgs::msg::VelocityLimit;  // temporary
+using autoware_utils::DiagnosticsInterface;
 using geometry_msgs::msg::AccelWithCovarianceStamped;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;
 using nav_msgs::msg::Odometry;
-using autoware_internal_planning_msgs::msg::VelocityLimit;  // temporary
 using visualization_msgs::msg::MarkerArray;
 
 struct Motion
@@ -270,8 +270,7 @@ private:
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_closest_jerk_;
   rclcpp::Publisher<Float64Stamped>::SharedPtr debug_calculation_time_;
   rclcpp::Publisher<Float32Stamped>::SharedPtr debug_closest_max_velocity_;
-  rclcpp::Publisher<autoware_utils::ProcessingTimeDetail>::SharedPtr
-    debug_processing_time_detail_;
+  rclcpp::Publisher<autoware_utils::ProcessingTimeDetail>::SharedPtr debug_processing_time_detail_;
 
   // For Jerk Filtered Algorithm Debug
   rclcpp::Publisher<Trajectory>::SharedPtr pub_forward_filtered_trajectory_;

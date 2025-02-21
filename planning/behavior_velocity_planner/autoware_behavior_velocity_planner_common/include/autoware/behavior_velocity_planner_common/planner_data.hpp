@@ -20,6 +20,7 @@
 #include "autoware/velocity_smoother/smoother/smoother_base.hpp"
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 
+#include <autoware_internal_planning_msgs/msg/velocity_limit.hpp>
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_perception_msgs/msg/traffic_light_group_array.hpp>
@@ -29,7 +30,6 @@
 #include <nav_msgs/msg/occupancy_grid.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <std_msgs/msg/header.hpp>
-#include <autoware_internal_planning_msgs/msg/velocity_limit.hpp>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>

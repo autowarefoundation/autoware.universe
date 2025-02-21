@@ -110,7 +110,8 @@ void MrmComfortableStopOperator::publishVelocityLimit() const
 
 void MrmComfortableStopOperator::publishVelocityLimitClearCommand() const
 {
-  auto velocity_limit_clear_command = autoware_internal_planning_msgs::msg::VelocityLimitClearCommand();
+  auto velocity_limit_clear_command =
+    autoware_internal_planning_msgs::msg::VelocityLimitClearCommand();
   velocity_limit_clear_command.stamp = this->now();
   velocity_limit_clear_command.command = true;
   velocity_limit_clear_command.sender = "mrm_comfortable_stop_operator";
