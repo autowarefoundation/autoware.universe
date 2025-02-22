@@ -105,10 +105,6 @@ bool path_footprint_exceeds_target_lane_bound(
   const double margin = 0.1);
 
 std::vector<DrivableLanes> generateDrivableLanes(
-  const std::vector<DrivableLanes> & original_drivable_lanes, const RouteHandler & route_handler,
-  const lanelet::ConstLanelets & current_lanes, const lanelet::ConstLanelets & lane_change_lanes);
-
-std::vector<DrivableLanes> generateDrivableLanes(
   const RouteHandler & route_handler, const lanelet::ConstLanelets & current_lanes,
   const lanelet::ConstLanelets & lane_change_lanes);
 
