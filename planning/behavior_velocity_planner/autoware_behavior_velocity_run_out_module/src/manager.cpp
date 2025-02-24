@@ -25,7 +25,7 @@ namespace autoware::behavior_velocity_planner
 {
 using autoware::universe_utils::getOrDeclareParameter;
 RunOutModuleManager::RunOutModuleManager(rclcpp::Node & node)
-: SceneModuleManagerInterface(node, getModuleName())
+: SceneModuleManagerInterface(node, get_module_name())
 {
   // Vehicle Parameters
   {
@@ -39,7 +39,7 @@ RunOutModuleManager::RunOutModuleManager(rclcpp::Node & node)
     p.left_overhang = vehicle_info.left_overhang_m;
   }
 
-  const std::string ns(RunOutModuleManager::getModuleName());
+  const std::string ns(RunOutModuleManager::get_module_name());
 
   {
     auto & p = planner_param_.smoother;
@@ -146,7 +146,7 @@ RunOutModuleManager::RunOutModuleManager(rclcpp::Node & node)
   setDynamicObstacleCreator(node, debug_ptr_);
 }
 
-void RunOutModuleManager::launchNewModules(
+void RunOutModuleManager::launch_new_modules(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
   if (path.points.empty()) {
@@ -154,8 +154,8 @@ void RunOutModuleManager::launchNewModules(
   }
 
   constexpr int64_t module_id = 0;
-  if (!isModuleRegistered(module_id)) {
-    registerModule(std::make_shared<RunOutModule>(
+  if (!is_module_registered(module_id)) {
+    register_module(std::make_shared<RunOutModule>(
       module_id, planner_data_, planner_param_, logger_.get_child("run_out_module"),
       std::move(dynamic_obstacle_creator_), debug_ptr_, clock_, time_keeper_,
       planning_factor_interface_));
@@ -163,7 +163,7 @@ void RunOutModuleManager::launchNewModules(
 }
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
-RunOutModuleManager::getModuleExpiredFunction(
+RunOutModuleManager::get_module_expired_function(
   [[maybe_unused]] const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
   return []([[maybe_unused]] const std::shared_ptr<SceneModuleInterface> & scene_module) -> bool {

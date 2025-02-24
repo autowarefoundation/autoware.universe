@@ -322,7 +322,7 @@ struct PlannerData
       route_handler, path, turn_signal_info, current_pose, current_vel, parameters, debug_data);
   }
 
-  std::optional<TrafficSignalStamped> getTrafficSignal(const int64_t id) const
+  std::optional<TrafficSignalStamped> get_traffic_signal(const int64_t id) const
   {
     if (traffic_light_id_map.count(id) == 0) {
       return std::nullopt;
@@ -346,7 +346,7 @@ struct PlannerData
   }
 
   template <class T>
-  size_t findEgoSegmentIndex(const std::vector<T> & points) const
+  size_t find_ego_segment_index(const std::vector<T> & points) const
   {
     return autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
       points, self_odometry->pose.pose, parameters.ego_nearest_dist_threshold,

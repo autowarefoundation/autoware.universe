@@ -33,7 +33,7 @@ using namespace std::literals::string_literals;
 namespace autoware::behavior_velocity_planner
 {
 
-autoware::motion_utils::VirtualWalls VirtualTrafficLightModule::createVirtualWalls()
+autoware::motion_utils::VirtualWalls VirtualTrafficLightModule::create_virtual_walls()
 {
   autoware::motion_utils::VirtualWalls virtual_walls;
   autoware::motion_utils::VirtualWall wall;
@@ -54,7 +54,7 @@ autoware::motion_utils::VirtualWalls VirtualTrafficLightModule::createVirtualWal
   return virtual_walls;
 }
 
-visualization_msgs::msg::MarkerArray VirtualTrafficLightModule::createDebugMarkerArray()
+visualization_msgs::msg::MarkerArray VirtualTrafficLightModule::create_debug_marker_array()
 {
   visualization_msgs::msg::MarkerArray debug_marker_array;
 

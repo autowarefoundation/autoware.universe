@@ -692,7 +692,7 @@ PathPointWithLaneId insert_stop_point(const double length, PathWithLaneId & path
   const size_t original_size = path.points.size();
 
   // insert stop point
-  const auto insert_idx = autoware::motion_utils::insert_stop_point(length, path.points);
+  const auto insert_idx = autoware::motion_utils::insertStopPoint(length, path.points);
   if (!insert_idx) {
     return PathPointWithLaneId();
   }

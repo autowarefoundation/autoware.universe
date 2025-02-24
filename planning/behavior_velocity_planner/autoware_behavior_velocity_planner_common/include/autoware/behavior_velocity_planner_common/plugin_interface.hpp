@@ -31,10 +31,10 @@ public:
   virtual ~PluginInterface() = default;
   virtual void init(rclcpp::Node & node) = 0;
   virtual void plan(autoware_internal_planning_msgs::msg::PathWithLaneId * path) = 0;
-  virtual void updateSceneModuleInstances(
+  virtual void update_scene_module_instances(
     const std::shared_ptr<const PlannerData> & planner_data,
     const autoware_internal_planning_msgs::msg::PathWithLaneId & path) = 0;
-  virtual const char * getModuleName() = 0;
+  virtual const char * get_module_name() = 0;
 };
 
 }  // namespace autoware::behavior_velocity_planner

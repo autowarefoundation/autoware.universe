@@ -556,7 +556,7 @@ MarkerArray createDrivableBounds(
   return msg;
 }
 
-MarkerArray createDebugMarkerArray(
+MarkerArray create_debug_marker_array(
   const BehaviorModuleOutput & output, const AvoidancePlanningData & data,
   const PathShifter & shifter, const DebugData & debug,
   const std::shared_ptr<AvoidanceParameters> & parameters)

@@ -212,7 +212,7 @@ std::vector<TrajectoryPoint> EBPathSmoother::smoothTrajectory(
   const double backward_traj_length = common_param_.output_backward_traj_length;
 
   const size_t ego_seg_idx =
-    trajectory_utils::findEgoSegmentIndex(traj_points, ego_pose, ego_nearest_param_);
+    trajectory_utils::find_ego_segment_index(traj_points, ego_pose, ego_nearest_param_);
   const auto cropped_traj_points = autoware::motion_utils::cropPoints(
     traj_points, ego_pose.position, ego_seg_idx, forward_traj_length, backward_traj_length);
 

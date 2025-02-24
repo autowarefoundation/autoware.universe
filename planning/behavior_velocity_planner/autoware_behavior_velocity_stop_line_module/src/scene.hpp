@@ -75,7 +75,7 @@ public:
     const std::shared_ptr<planning_factor_interface::PlanningFactorInterface> &
       planning_factor_interface);
 
-  bool modifyPathVelocity(PathWithLaneId * path) override;
+  bool modify_path_velocity(PathWithLaneId * path) override;
 
   /**
    * @brief Calculate ego position and stop point.
@@ -103,11 +103,11 @@ public:
   void updateDebugData(
     DebugData * debug_data, const geometry_msgs::msg::Pose & stop_pose, const State & state) const;
 
-  visualization_msgs::msg::MarkerArray createDebugMarkerArray() override
+  visualization_msgs::msg::MarkerArray create_debug_marker_array() override
   {
     return visualization_msgs::msg::MarkerArray{};
   }
-  autoware::motion_utils::VirtualWalls createVirtualWalls() override;
+  autoware::motion_utils::VirtualWalls create_virtual_walls() override;
 
 private:
   const lanelet::ConstLineString3d stop_line_;  ///< Stop line geometry.

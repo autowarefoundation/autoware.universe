@@ -29,9 +29,9 @@ using autoware::universe_utils::getOrDeclareParameter;
 using lanelet::TrafficSign;
 
 StopLineModuleManager::StopLineModuleManager(rclcpp::Node & node)
-: SceneModuleManagerInterface(node, getModuleName()), planner_param_()
+: SceneModuleManagerInterface(node, get_module_name()), planner_param_()
 {
-  const std::string ns(StopLineModuleManager::getModuleName());
+  const std::string ns(StopLineModuleManager::get_module_name());
   auto & p = planner_param_;
   p.stop_margin = getOrDeclareParameter<double>(node, ns + ".stop_margin");
   p.hold_stop_margin_distance =
@@ -75,14 +75,14 @@ std::set<int64_t> StopLineModuleManager::getStopLineIdSetOnPath(
   return stop_line_id_set;
 }
 
-void StopLineModuleManager::launchNewModules(
+void StopLineModuleManager::launch_new_modules(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
   for (const auto & stop_line_with_lane_id :
        getStopLinesWithLaneIdOnPath(path, planner_data_->route_handler_->getLaneletMapPtr())) {
     const auto module_id = stop_line_with_lane_id.first.id();
-    if (!isModuleRegistered(module_id)) {
-      registerModule(std::make_shared<StopLineModule>(
+    if (!is_module_registered(module_id)) {
+      register_module(std::make_shared<StopLineModule>(
         module_id, stop_line_with_lane_id.first, planner_param_,
         logger_.get_child("stop_line_module"), clock_, time_keeper_, planning_factor_interface_));
     }
@@ -90,14 +90,14 @@ void StopLineModuleManager::launchNewModules(
 }
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
-StopLineModuleManager::getModuleExpiredFunction(
+StopLineModuleManager::get_module_expired_function(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
   const auto stop_line_id_set =
     getStopLineIdSetOnPath(path, planner_data_->route_handler_->getLaneletMapPtr());
 
   return [stop_line_id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
-    return stop_line_id_set.count(scene_module->getModuleId()) == 0;
+    return stop_line_id_set.count(scene_module->get_module_id()) == 0;
   };
 }
 

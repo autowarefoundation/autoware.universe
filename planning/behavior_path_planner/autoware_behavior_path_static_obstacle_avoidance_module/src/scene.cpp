@@ -836,7 +836,7 @@ bool StaticObstacleAvoidanceModule::isSafePath(
   const auto ego_predicted_path_params =
     std::make_shared<utils::path_safety_checker::EgoPredictedPathParams>(
       parameters_->ego_predicted_path_params);
-  const size_t ego_seg_idx = planner_data_->findEgoSegmentIndex(shifted_path.path.points);
+  const size_t ego_seg_idx = planner_data_->find_ego_segment_index(shifted_path.path.points);
   const auto ego_predicted_path_for_front_object = utils::path_safety_checker::createPredictedPath(
     ego_predicted_path_params, shifted_path.path.points, getEgoPose(), getEgoSpeed(), ego_seg_idx,
     true, limit_to_max_velocity);
@@ -975,7 +975,7 @@ auto StaticObstacleAvoidanceModule::getTurnSignal(
 
   const auto is_large_deviation = [this](const auto & path) {
     constexpr double threshold = 1.0;
-    const auto current_seg_idx = planner_data_->findEgoSegmentIndex(path.points);
+    const auto current_seg_idx = planner_data_->find_ego_segment_index(path.points);
     const auto lateral_deviation =
       autoware::motion_utils::calcLateralOffset(path.points, getEgoPosition(), current_seg_idx);
     return std::abs(lateral_deviation) > threshold;
@@ -1055,7 +1055,7 @@ auto StaticObstacleAvoidanceModule::getTurnSignal(
 
   update_ignore_signal(target_shift_line.id, is_ignore);
 
-  const auto current_seg_idx = planner_data_->findEgoSegmentIndex(spline_shift_path.path.points);
+  const auto current_seg_idx = planner_data_->find_ego_segment_index(spline_shift_path.path.points);
   return planner_data_->turn_signal_decider.overwrite_turn_signal(
     spline_shift_path.path, getEgoPose(), current_seg_idx, original_signal, new_signal,
     planner_data_->parameters.ego_nearest_dist_threshold,
@@ -1469,7 +1469,7 @@ void StaticObstacleAvoidanceModule::updateData()
   // update interest objects data
   for (const auto & [uuid, data] : debug_data_.collision_check) {
     const auto color = data.is_safe ? ColorName::GREEN : ColorName::RED;
-    setObjectsOfInterestData(data.current_obj_pose, data.obj_shape, color);
+    set_objects_of_interest_data(data.current_obj_pose, data.obj_shape, color);
   }
 
   safe_ = avoid_data_.safe;
@@ -1579,7 +1579,7 @@ void StaticObstacleAvoidanceModule::updateDebugMarker(
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
   debug_marker_.markers.clear();
-  debug_marker_ = utils::static_obstacle_avoidance::createDebugMarkerArray(
+  debug_marker_ = utils::static_obstacle_avoidance::create_debug_marker_array(
     output, data, shifter, debug, parameters_);
 }
 

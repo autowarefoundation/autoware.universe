@@ -214,7 +214,7 @@ using autoware::universe_utils::createMarkerColor;
 using autoware::universe_utils::createMarkerOrientation;
 using autoware::universe_utils::createMarkerScale;
 
-visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray()
+visualization_msgs::msg::MarkerArray IntersectionModule::create_debug_marker_array()
 {
   visualization_msgs::msg::MarkerArray debug_marker_array;
 
@@ -407,7 +407,7 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
   return debug_marker_array;
 }
 
-autoware::motion_utils::VirtualWalls IntersectionModule::createVirtualWalls()
+autoware::motion_utils::VirtualWalls IntersectionModule::create_virtual_walls()
 {
   autoware::motion_utils::VirtualWalls virtual_walls;
   autoware::motion_utils::VirtualWall wall;
@@ -457,7 +457,7 @@ autoware::motion_utils::VirtualWalls IntersectionModule::createVirtualWalls()
   return virtual_walls;
 }
 
-visualization_msgs::msg::MarkerArray MergeFromPrivateRoadModule::createDebugMarkerArray()
+visualization_msgs::msg::MarkerArray MergeFromPrivateRoadModule::create_debug_marker_array()
 {
   visualization_msgs::msg::MarkerArray debug_marker_array;
 
@@ -474,7 +474,7 @@ visualization_msgs::msg::MarkerArray MergeFromPrivateRoadModule::createDebugMark
   return debug_marker_array;
 }
 
-autoware::motion_utils::VirtualWalls MergeFromPrivateRoadModule::createVirtualWalls()
+autoware::motion_utils::VirtualWalls MergeFromPrivateRoadModule::create_virtual_walls()
 {
   autoware::motion_utils::VirtualWalls virtual_walls;
   const auto state = state_machine_.get_state();

@@ -187,7 +187,7 @@ MarkerArray makeSlicePolygonMarker(
 }
 }  // namespace
 
-MarkerArray OcclusionSpotModule::createDebugMarkerArray()
+MarkerArray OcclusionSpotModule::create_debug_marker_array()
 {
   const auto now = this->clock_->now();
   MarkerArray debug_marker_array;
@@ -214,7 +214,7 @@ MarkerArray OcclusionSpotModule::createDebugMarkerArray()
   return debug_marker_array;
 }
 
-autoware::motion_utils::VirtualWalls OcclusionSpotModule::createVirtualWalls()
+autoware::motion_utils::VirtualWalls OcclusionSpotModule::create_virtual_walls()
 {
   autoware::motion_utils::VirtualWalls virtual_walls;
   autoware::motion_utils::VirtualWall wall;

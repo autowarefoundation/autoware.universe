@@ -138,7 +138,7 @@ std::optional<PathWithLaneId> generateFeasibleStopPath(
   }
 
   // set stop point
-  const auto stop_idx = autoware::motion_utils::insert_stop_point(
+  const auto stop_idx = autoware::motion_utils::insertStopPoint(
     planner_data->self_odometry->pose.pose, *min_stop_distance, current_path.points);
 
   if (!stop_idx) {

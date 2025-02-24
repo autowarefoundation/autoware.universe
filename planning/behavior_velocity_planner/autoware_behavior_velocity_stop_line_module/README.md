@@ -30,7 +30,7 @@ This module is activated when there is a stop line in a target lane.
 
 ```plantuml
 @startuml
-title modifyPathVelocity
+title modify_path_velocity
 start
 
 :find collision between path and stop_line;

@@ -472,7 +472,7 @@ BehaviorModuleOutput NormalLaneChange::generateOutput()
 
   const auto turn_signal_info =
     get_turn_signal(getEgoPose(), status_.lane_change_path.info.lane_changing_end);
-  const auto current_seg_idx = planner_data_->findEgoSegmentIndex(output.path.points);
+  const auto current_seg_idx = planner_data_->find_ego_segment_index(output.path.points);
   output.turn_signal_info = planner_data_->turn_signal_decider.overwrite_turn_signal(
     output.path, getEgoPose(), current_seg_idx, prev_module_output_.turn_signal_info,
     turn_signal_info, planner_data_->parameters.ego_nearest_dist_threshold,

@@ -49,10 +49,10 @@ public:
     const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
       planning_factor_interface);
 
-  bool modifyPathVelocity(PathWithLaneId * path) override;
+  bool modify_path_velocity(PathWithLaneId * path) override;
 
-  visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
-  autoware::motion_utils::VirtualWalls createVirtualWalls() override;
+  visualization_msgs::msg::MarkerArray create_debug_marker_array() override;
+  autoware::motion_utils::VirtualWalls create_virtual_walls() override;
 
 private:
   const int64_t module_id_;

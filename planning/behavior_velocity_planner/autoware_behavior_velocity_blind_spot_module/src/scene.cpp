@@ -170,7 +170,7 @@ void BlindSpotModule::reactRTCApproval(const BlindSpotDecision & decision, PathW
     decision);
 }
 
-bool BlindSpotModule::modifyPathVelocity(PathWithLaneId * path)
+bool BlindSpotModule::modify_path_velocity(PathWithLaneId * path)
 {
   debug_data_ = DebugData();
 

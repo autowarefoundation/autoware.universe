@@ -67,7 +67,7 @@ void RunOutModule::setPlannerParam(const PlannerParam & planner_param)
   planner_param_ = planner_param;
 }
 
-bool RunOutModule::modifyPathVelocity(PathWithLaneId * path)
+bool RunOutModule::modify_path_velocity(PathWithLaneId * path)
 {
   // timer starts
   const auto t_start = std::chrono::system_clock::now();

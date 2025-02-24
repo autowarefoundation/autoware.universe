@@ -55,7 +55,7 @@ NoStoppingAreaModule::NoStoppingAreaModule(
   state_machine_.set_margin_time(planner_param_.state_clear_time);
 }
 
-bool NoStoppingAreaModule::modifyPathVelocity(PathWithLaneId * path)
+bool NoStoppingAreaModule::modify_path_velocity(PathWithLaneId * path)
 {
   // Store original path
   const auto original_path = *path;
@@ -170,7 +170,7 @@ bool NoStoppingAreaModule::check_stuck_vehicles_in_no_stopping_area(
     }
     const auto obj_v = std::fabs(object.kinematics.initial_twist_with_covariance.twist.linear.x);
     if (obj_v > planner_param_.stuck_vehicle_vel_thr) {
-      setObjectsOfInterestData(
+      set_objects_of_interest_data(
         object.kinematics.initial_pose_with_covariance.pose, object.shape, ColorName::GREEN);
       continue;  // not stop vehicle
     }
@@ -179,7 +179,7 @@ bool NoStoppingAreaModule::check_stuck_vehicles_in_no_stopping_area(
     const bool is_in_stuck_area = !bg::disjoint(obj_footprint, poly);
     if (is_in_stuck_area) {
       RCLCPP_DEBUG(logger_, "stuck vehicle found.");
-      setObjectsOfInterestData(
+      set_objects_of_interest_data(
         object.kinematics.initial_pose_with_covariance.pose, object.shape, ColorName::RED);
       for (const auto & p : obj_footprint.outer()) {
         geometry_msgs::msg::Point point;

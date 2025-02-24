@@ -49,7 +49,7 @@ DetectionAreaModule::DetectionAreaModule(
 {
 }
 
-bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path)
+bool DetectionAreaModule::modify_path_velocity(PathWithLaneId * path)
 {
   // Store original path
   const auto original_path = *path;
@@ -72,7 +72,7 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path)
 
   // Get self pose
   const auto & self_pose = planner_data_->current_odometry->pose;
-  const size_t current_seg_idx = findEgoSegmentIndex(path->points);
+  const size_t current_seg_idx = find_ego_segment_index(path->points);
 
   // Get stop point
   const auto stop_point = arc_lane_utils::create_target_point(
@@ -90,7 +90,7 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path)
   auto modified_stop_pose = stop_pose;
   size_t modified_stop_line_seg_idx = stop_line_seg_idx;
 
-  const auto is_stopped = planner_data_->isVehicleStopped(0.0);
+  const auto is_stopped = planner_data_->is_vehicle_stopped(0.0);
   const auto stop_dist = calcSignedArcLength(
     path->points, self_pose.position, current_seg_idx, stop_pose.position, stop_line_seg_idx);
 

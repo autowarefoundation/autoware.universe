@@ -84,7 +84,7 @@ std::pair<double, geometry_msgs::msg::Point> WalkwayModule::getStopLine(
   return std::make_pair(dist_ego_to_stop, p_stop_line);
 }
 
-bool WalkwayModule::modifyPathVelocity(PathWithLaneId * path)
+bool WalkwayModule::modify_path_velocity(PathWithLaneId * path)
 {
   const auto & base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
 
@@ -134,7 +134,7 @@ bool WalkwayModule::modifyPathVelocity(PathWithLaneId * path)
     debug_data_.stop_judge_range = distance_threshold;
 
     const auto stop_at_stop_point = signed_arc_dist_to_stop_point < distance_threshold &&
-                                    planner_data_->isVehicleStopped(planner_param_.stop_duration);
+                                    planner_data_->is_vehicle_stopped(planner_param_.stop_duration);
 
     if (stop_at_stop_point) {
       // If ego vehicle is after walkway stop and stopped then move to stop state
@@ -149,7 +149,7 @@ bool WalkwayModule::modifyPathVelocity(PathWithLaneId * path)
   }
 
   if (state_ == State::STOP) {
-    if (planner_data_->isVehicleStopped()) {
+    if (planner_data_->is_vehicle_stopped()) {
       state_ = State::SURPASSED;
     }
   }

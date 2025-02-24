@@ -58,7 +58,7 @@ TrafficLightModule::TrafficLightModule(
   planner_param_ = planner_param;
 }
 
-bool TrafficLightModule::modifyPathVelocity(PathWithLaneId * path)
+bool TrafficLightModule::modify_path_velocity(PathWithLaneId * path)
 {
   debug_data_ = DebugData();
   debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
@@ -244,7 +244,7 @@ bool TrafficLightModule::isPassthrough(const double & signed_arc_length) const
 bool TrafficLightModule::findValidTrafficSignal(TrafficSignalStamped & valid_traffic_signal) const
 {
   // get traffic signal associated with the regulatory element id
-  const auto traffic_signal_stamped_opt = planner_data_->getTrafficSignal(
+  const auto traffic_signal_stamped_opt = planner_data_->get_traffic_signal(
     traffic_light_reg_elem_.id(), false /* traffic light module does not keep last observation */);
   if (!traffic_signal_stamped_opt) {
     RCLCPP_WARN_STREAM_ONCE(

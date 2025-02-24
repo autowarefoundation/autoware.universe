@@ -123,7 +123,7 @@ protected:
 
   void publishObjectsOfInterestMarker();
 
-  void deleteExpiredModules(
+  void delete_expired_modules(
     const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
 
   static bool getEnableRTC(rclcpp::Node & node, const std::string & param_name)
@@ -143,15 +143,15 @@ protected:
 };
 
 extern template size_t
-SceneModuleManagerInterface<SceneModuleInterfaceWithRTC>::findEgoSegmentIndex(
+SceneModuleManagerInterface<SceneModuleInterfaceWithRTC>::find_ego_segment_index(
   const std::vector<autoware_internal_planning_msgs::msg::PathPointWithLaneId> & points) const;
 extern template void
-SceneModuleManagerInterface<SceneModuleInterfaceWithRTC>::updateSceneModuleInstances(
+SceneModuleManagerInterface<SceneModuleInterfaceWithRTC>::update_scene_module_instances(
   const std::shared_ptr<const PlannerData> & planner_data,
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path);
-extern template void SceneModuleManagerInterface<SceneModuleInterfaceWithRTC>::modifyPathVelocity(
+extern template void SceneModuleManagerInterface<SceneModuleInterfaceWithRTC>::modify_path_velocity(
   autoware_internal_planning_msgs::msg::PathWithLaneId * path);
-extern template void SceneModuleManagerInterface<SceneModuleInterfaceWithRTC>::registerModule(
+extern template void SceneModuleManagerInterface<SceneModuleInterfaceWithRTC>::register_module(
   const std::shared_ptr<SceneModuleInterfaceWithRTC> & scene_module);
 }  // namespace autoware::behavior_velocity_planner
 

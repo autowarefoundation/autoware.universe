@@ -205,7 +205,7 @@ CrosswalkModule::CrosswalkModule(
     "~/debug/collision_info", 1);
 }
 
-bool CrosswalkModule::modifyPathVelocity(PathWithLaneId * path)
+bool CrosswalkModule::modify_path_velocity(PathWithLaneId * path)
 {
   if (path->points.size() < 2) {
     RCLCPP_DEBUG(logger_, "Do not interpolate because path size is less than 2.");
@@ -1073,7 +1073,7 @@ std::optional<StopFactor> CrosswalkModule::checkStopForStuckVehicles(
         return {};
       }
 
-      setObjectsOfInterestData(obj_pose, object.shape, ColorName::RED);
+      set_objects_of_interest_data(obj_pose, object.shape, ColorName::RED);
       return createStopFactor(*feasible_stop_pose, {obj_pose.position});
     }
   }
@@ -1125,7 +1125,7 @@ void CrosswalkModule::updateObjectState(
   const bool is_ego_yielding = [&]() {
     const auto has_reached_stop_point = dist_ego_to_stop < planner_param_.stop_position_threshold;
 
-    return planner_data_->isVehicleStopped(planner_param_.timeout_ego_stop_for_yield) &&
+    return planner_data_->is_vehicle_stopped(planner_param_.timeout_ego_stop_for_yield) &&
            has_reached_stop_point;
   }();
 
@@ -1176,7 +1176,7 @@ void CrosswalkModule::updateObjectState(
       }
     };
 
-    setObjectsOfInterestData(
+    set_objects_of_interest_data(
       object.kinematics.initial_pose_with_covariance.pose, object.shape,
       getLabelColor(collision_state));
   }
@@ -1191,7 +1191,7 @@ bool CrosswalkModule::isRedSignalForPedestrians() const
 
   for (const auto & traffic_lights_reg_elem : traffic_lights_reg_elems) {
     const auto traffic_signal_stamped_opt =
-      planner_data_->getTrafficSignal(traffic_lights_reg_elem->id());
+      planner_data_->get_traffic_signal(traffic_lights_reg_elem->id());
     if (!traffic_signal_stamped_opt) {
       continue;
     }
@@ -1376,7 +1376,7 @@ void CrosswalkModule::planStop(
 bool CrosswalkModule::checkRestartSuppression(
   const PathWithLaneId & ego_path, const std::optional<StopFactor> & stop_factor) const
 {
-  if (!planner_data_->isVehicleStopped()) {
+  if (!planner_data_->is_vehicle_stopped()) {
     return false;
   }
 

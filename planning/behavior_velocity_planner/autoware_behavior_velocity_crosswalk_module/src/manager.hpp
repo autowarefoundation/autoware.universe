@@ -41,15 +41,15 @@ class CrosswalkModuleManager : public SceneModuleManagerInterfaceWithRTC
 public:
   explicit CrosswalkModuleManager(rclcpp::Node & node);
 
-  const char * getModuleName() override { return "crosswalk"; }
+  const char * get_module_name() override { return "crosswalk"; }
 
 private:
   CrosswalkModule::PlannerParam crosswalk_planner_param_{};
 
-  void launchNewModules(const PathWithLaneId & path) override;
+  void launch_new_modules(const PathWithLaneId & path) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterfaceWithRTC> &)>
-  getModuleExpiredFunction(const PathWithLaneId & path) override;
+  get_module_expired_function(const PathWithLaneId & path) override;
 };
 
 class CrosswalkModulePlugin : public PluginWrapper<CrosswalkModuleManager>

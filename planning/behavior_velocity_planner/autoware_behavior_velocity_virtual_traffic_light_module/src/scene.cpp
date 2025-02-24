@@ -99,7 +99,7 @@ VirtualTrafficLightModule::VirtualTrafficLightModule(
   logger_ = logger_.get_child((map_data_.instrument_type + "_" + map_data_.instrument_id).c_str());
 }
 
-bool VirtualTrafficLightModule::modifyPathVelocity(PathWithLaneId * path)
+bool VirtualTrafficLightModule::modify_path_velocity(PathWithLaneId * path)
 {
   // Initialize
   setInfrastructureCommand({});
@@ -192,7 +192,7 @@ bool VirtualTrafficLightModule::modifyPathVelocity(PathWithLaneId * path)
     RCLCPP_DEBUG(logger_, "finalization isn't completed");
     insertStopVelocityAtEndLine(path, end_line_idx);
 
-    if (isNearAnyEndLine(end_line_idx) && planner_data_->isVehicleStopped()) {
+    if (isNearAnyEndLine(end_line_idx) && planner_data_->is_vehicle_stopped()) {
       state_ = State::FINALIZING;
     }
   }
@@ -251,7 +251,7 @@ bool VirtualTrafficLightModule::isBeforeStartLine(const size_t end_line_idx)
     module_data_.path.points, collision->point, collision->index);
 
   const auto & ego_pose = planner_data_->current_odometry->pose;
-  const size_t ego_seg_idx = findEgoSegmentIndex(module_data_.path.points);
+  const size_t ego_seg_idx = find_ego_segment_index(module_data_.path.points);
   const auto signed_arc_length = autoware::motion_utils::calcSignedArcLength(
                                    module_data_.path.points, ego_pose.position, ego_seg_idx,
                                    collision->point, collision_seg_idx) -
@@ -274,7 +274,7 @@ bool VirtualTrafficLightModule::isBeforeStopLine(const size_t end_line_idx)
     module_data_.path.points, collision->point, collision->index);
 
   const auto & ego_pose = planner_data_->current_odometry->pose;
-  const size_t ego_seg_idx = findEgoSegmentIndex(module_data_.path.points);
+  const size_t ego_seg_idx = find_ego_segment_index(module_data_.path.points);
   const auto signed_arc_length = autoware::motion_utils::calcSignedArcLength(
                                    module_data_.path.points, ego_pose.position, ego_seg_idx,
                                    collision->point, collision_seg_idx) -
@@ -302,7 +302,7 @@ bool VirtualTrafficLightModule::isAfterAnyEndLine(const size_t end_line_idx)
     module_data_.path.points, collision->point, collision->index);
 
   const auto & ego_pose = planner_data_->current_odometry->pose;
-  const size_t ego_seg_idx = findEgoSegmentIndex(module_data_.path.points);
+  const size_t ego_seg_idx = find_ego_segment_index(module_data_.path.points);
   const auto signed_arc_length = autoware::motion_utils::calcSignedArcLength(
                                    module_data_.path.points, ego_pose.position, ego_seg_idx,
                                    collision->point, collision_seg_idx) -
@@ -323,7 +323,7 @@ bool VirtualTrafficLightModule::isNearAnyEndLine(const size_t end_line_idx)
     module_data_.path.points, collision->point, collision->index);
 
   const auto & ego_pose = planner_data_->current_odometry->pose;
-  const size_t ego_seg_idx = findEgoSegmentIndex(module_data_.path.points);
+  const size_t ego_seg_idx = find_ego_segment_index(module_data_.path.points);
   const auto signed_arc_length = autoware::motion_utils::calcSignedArcLength(
                                    module_data_.path.points, ego_pose.position, ego_seg_idx,
                                    collision->point, collision_seg_idx) -
@@ -380,7 +380,7 @@ void VirtualTrafficLightModule::insertStopVelocityAtStopLine(
     stop_pose = planner_data_->current_odometry->pose;
   } else {
     const auto & ego_pose = planner_data_->current_odometry->pose;
-    const size_t ego_seg_idx = findEgoSegmentIndex(path->points);
+    const size_t ego_seg_idx = find_ego_segment_index(path->points);
     const size_t collision_seg_idx = planning_utils::calc_segment_index_from_point_index(
       path->points, collision->point, collision->index);
 
@@ -388,7 +388,7 @@ void VirtualTrafficLightModule::insertStopVelocityAtStopLine(
       autoware::motion_utils::calcSignedArcLength(
         path->points, ego_pose.position, ego_seg_idx, collision.value().point, collision_seg_idx) +
       offset;
-    const auto is_stopped = planner_data_->isVehicleStopped();
+    const auto is_stopped = planner_data_->is_vehicle_stopped();
 
     if (stop_distance < planner_param_.hold_stop_margin_distance && is_stopped) {
       SegmentIndexWithPoint new_collision;

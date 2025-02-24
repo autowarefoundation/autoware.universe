@@ -195,7 +195,7 @@ visualization_msgs::msg::MarkerArray createCrosswalkMarkers(
 }
 }  // namespace
 
-autoware::motion_utils::VirtualWalls CrosswalkModule::createVirtualWalls()
+autoware::motion_utils::VirtualWalls CrosswalkModule::create_virtual_walls()
 {
   autoware::motion_utils::VirtualWalls virtual_walls;
   autoware::motion_utils::VirtualWall wall;
@@ -223,7 +223,7 @@ autoware::motion_utils::VirtualWalls CrosswalkModule::createVirtualWalls()
   return virtual_walls;
 }
 
-visualization_msgs::msg::MarkerArray CrosswalkModule::createDebugMarkerArray()
+visualization_msgs::msg::MarkerArray CrosswalkModule::create_debug_marker_array()
 {
   visualization_msgs::msg::MarkerArray debug_marker_array;
 

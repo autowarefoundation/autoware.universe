@@ -93,7 +93,7 @@ IntersectionModule::IntersectionModule(
       "~/debug/intersection/object_ttc", 1);
 }
 
-bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path)
+bool IntersectionModule::modify_path_velocity(PathWithLaneId * path)
 {
   debug_data_ = DebugData();
 
@@ -257,7 +257,7 @@ DecisionResult IntersectionModule::modifyPathVelocityDetail(PathWithLaneId * pat
     if (!object_info->unsafe_info()) {
       continue;
     }
-    setObjectsOfInterestData(
+    set_objects_of_interest_data(
       object_info->predicted_object().kinematics.initial_pose_with_covariance.pose,
       object_info->predicted_object().shape, ColorName::RED);
   }
@@ -352,7 +352,7 @@ DecisionResult IntersectionModule::modifyPathVelocityDetail(PathWithLaneId * pat
       const bool approached_dist_stopline =
         (std::fabs(dist_stopline) < planner_param_.common.stopline_overshoot_margin);
       const bool over_stopline = (dist_stopline < 0.0);
-      const bool is_stopped_duration = planner_data_->isVehicleStopped(duration);
+      const bool is_stopped_duration = planner_data_->is_vehicle_stopped(duration);
       if (over_stopline || (is_stopped_duration && approached_dist_stopline)) {
         state_machine.set_state(StateMachine::State::GO);
       }
@@ -363,7 +363,7 @@ DecisionResult IntersectionModule::modifyPathVelocityDetail(PathWithLaneId * pat
     const bool approached_dist_stopline =
       (std::fabs(dist_stopline) < planner_param_.common.stopline_overshoot_margin);
     const bool over_stopline = (dist_stopline < -planner_param_.common.stopline_overshoot_margin);
-    const bool is_stopped = planner_data_->isVehicleStopped(duration);
+    const bool is_stopped = planner_data_->is_vehicle_stopped(duration);
     return over_stopline || (is_stopped && approached_dist_stopline);
   };
 
@@ -1277,7 +1277,7 @@ void IntersectionModule::updateTrafficSignalObservation()
   }
   const auto [tl_id, point] = tl_id_and_point_.value();
   const auto tl_info_opt =
-    planner_data_->getTrafficSignal(tl_id, true /* traffic light module keeps last observation*/);
+    planner_data_->get_traffic_signal(tl_id, true /* traffic light module keeps last observation*/);
   if (!tl_info_opt) {
     // the info of this traffic light is not available
     return;

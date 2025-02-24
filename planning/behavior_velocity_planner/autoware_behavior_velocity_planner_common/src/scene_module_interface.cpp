@@ -37,7 +37,7 @@ SceneModuleInterface::SceneModuleInterface(
 {
 }
 
-size_t SceneModuleInterface::findEgoSegmentIndex(
+size_t SceneModuleInterface::find_ego_segment_index(
   const std::vector<autoware_internal_planning_msgs::msg::PathPointWithLaneId> & points) const
 {
   const auto & p = planner_data_;
@@ -47,15 +47,15 @@ size_t SceneModuleInterface::findEgoSegmentIndex(
 
 template SceneModuleManagerInterface<SceneModuleInterface>::SceneModuleManagerInterface(
   rclcpp::Node & node, [[maybe_unused]] const char * module_name);
-template size_t SceneModuleManagerInterface<SceneModuleInterface>::findEgoSegmentIndex(
+template size_t SceneModuleManagerInterface<SceneModuleInterface>::find_ego_segment_index(
   const std::vector<autoware_internal_planning_msgs::msg::PathPointWithLaneId> & points) const;
-template void SceneModuleManagerInterface<SceneModuleInterface>::updateSceneModuleInstances(
+template void SceneModuleManagerInterface<SceneModuleInterface>::update_scene_module_instances(
   const std::shared_ptr<const PlannerData> & planner_data,
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path);
-template void SceneModuleManagerInterface<SceneModuleInterface>::modifyPathVelocity(
+template void SceneModuleManagerInterface<SceneModuleInterface>::modify_path_velocity(
   autoware_internal_planning_msgs::msg::PathWithLaneId * path);
-template void SceneModuleManagerInterface<SceneModuleInterface>::deleteExpiredModules(
+template void SceneModuleManagerInterface<SceneModuleInterface>::delete_expired_modules(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path);
-template void SceneModuleManagerInterface<SceneModuleInterface>::registerModule(
+template void SceneModuleManagerInterface<SceneModuleInterface>::register_module(
   const std::shared_ptr<SceneModuleInterface> & scene_module);
 }  // namespace autoware::behavior_velocity_planner

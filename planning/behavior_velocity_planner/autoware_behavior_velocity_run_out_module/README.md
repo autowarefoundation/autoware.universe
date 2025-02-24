@@ -16,7 +16,7 @@ This module is activated if `launch_run_out` becomes true
 
 ```plantuml
 @startuml
-title modifyPathVelocity
+title modify_path_velocity
 start
 
 partition "Preprocess path" {

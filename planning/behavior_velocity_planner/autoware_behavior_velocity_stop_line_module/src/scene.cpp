@@ -43,7 +43,7 @@ StopLineModule::StopLineModule(
 {
 }
 
-bool StopLineModule::modifyPathVelocity(PathWithLaneId * path)
+bool StopLineModule::modify_path_velocity(PathWithLaneId * path)
 {
   auto trajectory =
     trajectory::Trajectory<autoware_internal_planning_msgs::msg::PathPointWithLaneId>::Builder{}
@@ -72,7 +72,7 @@ bool StopLineModule::modifyPathVelocity(PathWithLaneId * path)
     true /*is_driving_forward*/, 0.0, 0.0 /*shift distance*/, "stopline");
 
   updateStateAndStoppedTime(
-    &state_, &stopped_time_, clock_->now(), *stop_point - ego_s, planner_data_->isVehicleStopped());
+    &state_, &stopped_time_, clock_->now(), *stop_point - ego_s, planner_data_->is_vehicle_stopped());
 
   geometry_msgs::msg::Pose stop_pose = trajectory->compute(*stop_point).point.pose;
 

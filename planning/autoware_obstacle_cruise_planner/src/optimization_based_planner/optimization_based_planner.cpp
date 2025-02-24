@@ -120,7 +120,7 @@ std::vector<TrajectoryPoint> OptimizationBasedPlanner::generateCruiseTrajectory(
   }
 
   // Get the nearest point on the trajectory
-  const size_t closest_idx = findEgoSegmentIndex(stop_traj_points, planner_data.ego_pose);
+  const size_t closest_idx = find_ego_segment_index(stop_traj_points, planner_data.ego_pose);
 
   // Compute maximum velocity
   double v_max = 0.0;

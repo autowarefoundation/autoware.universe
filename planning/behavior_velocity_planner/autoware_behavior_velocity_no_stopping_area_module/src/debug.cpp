@@ -128,7 +128,7 @@ visualization_msgs::msg::MarkerArray create_lanelet_info_marker_array(
 }
 }  // namespace
 
-visualization_msgs::msg::MarkerArray NoStoppingAreaModule::createDebugMarkerArray()
+visualization_msgs::msg::MarkerArray NoStoppingAreaModule::create_debug_marker_array()
 {
   visualization_msgs::msg::MarkerArray debug_marker_array;
   const rclcpp::Time now = clock_->now();
@@ -159,7 +159,7 @@ visualization_msgs::msg::MarkerArray NoStoppingAreaModule::createDebugMarkerArra
   return debug_marker_array;
 }
 
-autoware::motion_utils::VirtualWalls NoStoppingAreaModule::createVirtualWalls()
+autoware::motion_utils::VirtualWalls NoStoppingAreaModule::create_virtual_walls()
 {
   autoware::motion_utils::VirtualWalls virtual_walls;
   autoware::motion_utils::VirtualWall wall;

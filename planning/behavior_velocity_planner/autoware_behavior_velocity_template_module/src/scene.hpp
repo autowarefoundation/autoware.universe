@@ -43,7 +43,7 @@ public:
    * @param path A pointer to the path containing points to be modified.
    * @return [bool] wether the path velocity was modified or not.
    */
-  bool modifyPathVelocity(PathWithLaneId * path) override;
+  bool modify_path_velocity(PathWithLaneId * path) override;
 
   /**
    * @brief Create a visualization of debug markers.
@@ -53,7 +53,7 @@ public:
    *
    * @return A `visualization_msgs::msg::MarkerArray` containing debug markers.
    */
-  visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
+  visualization_msgs::msg::MarkerArray create_debug_marker_array() override;
 
   /**
    * @brief Create virtual walls for the scene.
@@ -64,7 +64,7 @@ public:
    * @return A `autoware::motion_utils::VirtualWalls` object representing virtual walls in the
    * scene.
    */
-  autoware::motion_utils::VirtualWalls createVirtualWalls() override;
+  autoware::motion_utils::VirtualWalls create_virtual_walls() override;
 };
 
 }  // namespace autoware::behavior_velocity_planner

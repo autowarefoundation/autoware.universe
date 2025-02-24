@@ -389,7 +389,7 @@ void BehaviorPathPlannerNode::run()
   // backward.
   const auto current_pose = planner_data_->self_odometry->pose.pose;
   if (!path->points.empty()) {
-    const size_t current_seg_idx = planner_data_->findEgoSegmentIndex(path->points);
+    const size_t current_seg_idx = planner_data_->find_ego_segment_index(path->points);
     path->points = autoware::motion_utils::cropPoints(
       path->points, current_pose.position, current_seg_idx,
       planner_data_->parameters.forward_path_length,

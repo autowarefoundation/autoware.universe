@@ -189,7 +189,7 @@ visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArray
   return visualization_marker_array;
 }
 
-autoware::motion_utils::VirtualWalls RunOutDebug::createVirtualWalls()
+autoware::motion_utils::VirtualWalls RunOutDebug::create_virtual_walls()
 {
   autoware::motion_utils::VirtualWalls virtual_walls;
   autoware::motion_utils::VirtualWall wall;
@@ -361,14 +361,14 @@ void RunOutDebug::setHeight(const double height)
 }
 
 // scene module
-visualization_msgs::msg::MarkerArray RunOutModule::createDebugMarkerArray()
+visualization_msgs::msg::MarkerArray RunOutModule::create_debug_marker_array()
 {
   return debug_ptr_->createVisualizationMarkerArray();
 }
 
-autoware::motion_utils::VirtualWalls RunOutModule::createVirtualWalls()
+autoware::motion_utils::VirtualWalls RunOutModule::create_virtual_walls()
 {
-  return debug_ptr_->createVirtualWalls();
+  return debug_ptr_->create_virtual_walls();
 }
 
 }  // namespace autoware::behavior_velocity_planner

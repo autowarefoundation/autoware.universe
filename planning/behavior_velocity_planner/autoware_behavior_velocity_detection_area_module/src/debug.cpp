@@ -138,7 +138,7 @@ visualization_msgs::msg::MarkerArray createCorrespondenceMarkerArray(
 }
 }  // namespace
 
-visualization_msgs::msg::MarkerArray DetectionAreaModule::createDebugMarkerArray()
+visualization_msgs::msg::MarkerArray DetectionAreaModule::create_debug_marker_array()
 {
   visualization_msgs::msg::MarkerArray wall_marker;
   const rclcpp::Time now = clock_->now();
@@ -171,7 +171,7 @@ visualization_msgs::msg::MarkerArray DetectionAreaModule::createDebugMarkerArray
   return wall_marker;
 }
 
-autoware::motion_utils::VirtualWalls DetectionAreaModule::createVirtualWalls()
+autoware::motion_utils::VirtualWalls DetectionAreaModule::create_virtual_walls()
 {
   autoware::motion_utils::VirtualWalls virtual_walls;
   autoware::motion_utils::VirtualWall wall;

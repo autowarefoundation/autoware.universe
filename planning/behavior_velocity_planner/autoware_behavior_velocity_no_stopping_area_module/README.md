@@ -33,7 +33,7 @@ This module allows developers to design vehicle velocity in `no_stopping_area` m
 
 ```plantuml
 @startuml
-title modifyPathVelocity
+title modify_path_velocity
 start
 
 if (ego path has "no stopping area" ?) then (yes)

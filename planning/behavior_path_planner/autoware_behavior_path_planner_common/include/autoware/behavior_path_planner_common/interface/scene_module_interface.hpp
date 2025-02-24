@@ -508,7 +508,7 @@ protected:
     }
   }
 
-  void setObjectsOfInterestData(
+  void set_objects_of_interest_data(
     const geometry_msgs::msg::Pose & obj_pose,
     const autoware_perception_msgs::msg::Shape & obj_shape, const ColorName & color_name)
   {

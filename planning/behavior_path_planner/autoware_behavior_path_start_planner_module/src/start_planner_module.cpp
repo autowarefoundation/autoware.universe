@@ -1401,7 +1401,7 @@ TurnSignalInfo StartPlannerModule::calcTurnSignalInfo()
   ignore_signal_ = update_ignore_signal(closest_lanelet.id(), is_ignore);
 
   const auto original_signal = getPreviousModuleOutput().turn_signal_info;
-  const auto current_seg_idx = planner_data_->findEgoSegmentIndex(path.points);
+  const auto current_seg_idx = planner_data_->find_ego_segment_index(path.points);
   const auto output_turn_signal_info = planner_data_->turn_signal_decider.use_prior_turn_signal(
     path, current_pose, current_seg_idx, original_signal, new_signal,
     planner_data_->parameters.ego_nearest_dist_threshold,
@@ -1434,7 +1434,7 @@ bool StartPlannerModule::isSafePath() const
     /*forward_only_in_route*/ true);
 
   // for ego predicted path
-  const size_t ego_seg_idx = planner_data_->findEgoSegmentIndex(pull_out_path.points);
+  const size_t ego_seg_idx = planner_data_->find_ego_segment_index(pull_out_path.points);
   const std::pair<double, double> terminal_velocity_and_accel =
     utils::parking_departure::getPairsTerminalVelocityAndAccel(
       status_.pull_out_path.pairs_terminal_velocity_and_accel, status_.current_path_idx);
@@ -1860,7 +1860,7 @@ void StartPlannerModule::setDebugData()
     // set objects of interest
     for (const auto & [uuid, data] : debug_data_.collision_check) {
       const auto color = data.is_safe ? ColorName::GREEN : ColorName::RED;
-      setObjectsOfInterestData(data.current_obj_pose, data.obj_shape, color);
+      set_objects_of_interest_data(data.current_obj_pose, data.obj_shape, color);
     }
 
     initializeCollisionCheckDebugMap(debug_data_.collision_check);

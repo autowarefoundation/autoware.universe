@@ -85,7 +85,7 @@ OcclusionSpotModule::OcclusionSpotModule(
   }
 }
 
-bool OcclusionSpotModule::modifyPathVelocity(PathWithLaneId * path)
+bool OcclusionSpotModule::modify_path_velocity(PathWithLaneId * path)
 {
   if (param_.is_show_processing_time) stop_watch_.tic("total_processing_time");
   debug_data_.resetData();
@@ -133,7 +133,7 @@ bool OcclusionSpotModule::modifyPathVelocity(PathWithLaneId * path)
     }
   }
   DEBUG_PRINT(show_time, "apply velocity [ms]: ", stop_watch_.toc("processing_time", true));
-  const size_t ego_seg_idx = findEgoSegmentIndex(predicted_path.points);
+  const size_t ego_seg_idx = find_ego_segment_index(predicted_path.points);
   if (!utils::buildDetectionAreaPolygon(
         debug_data_.detection_area_polygons, predicted_path, ego_pose, ego_seg_idx, param_)) {
     return true;  // path point is not enough

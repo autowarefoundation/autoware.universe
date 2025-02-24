@@ -158,7 +158,7 @@ The maximum slowdown velocity is calculated from the below parameters of ego cur
 
 ```plantuml
 @startuml
-title modifyPathVelocity (Occupancy/PredictedObject)
+title modify_path_velocity (Occupancy/PredictedObject)
 start
 
 partition process_path {
@@ -230,7 +230,7 @@ stop
 
 ```plantuml
 @startuml
-title modifyPathVelocity
+title modify_path_velocity
 start
 
 partition process_path {
@@ -282,7 +282,7 @@ stop
 
 ```plantuml
 @startuml
-title modifyPathVelocity For Occupancy
+title modify_path_velocity For Occupancy
 start
 
 partition process_path {

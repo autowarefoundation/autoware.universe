@@ -196,7 +196,7 @@ protected:
       traj_points, ego_pose, p.dist_threshold, p.yaw_threshold);
   }
 
-  size_t findEgoSegmentIndex(
+  size_t find_ego_segment_index(
     const std::vector<TrajectoryPoint> & traj_points,
     const geometry_msgs::msg::Pose & ego_pose) const
   {

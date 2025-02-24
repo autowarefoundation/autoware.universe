@@ -79,7 +79,7 @@ static std::optional<lanelet::ConstLanelet> getFirstConflictingLanelet(
   return std::nullopt;
 }
 
-bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path)
+bool MergeFromPrivateRoadModule::modify_path_velocity(PathWithLaneId * path)
 {
   debug_data_ = DebugData();
 
@@ -165,7 +165,7 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path)
 
     if (
       signed_arc_dist_to_stop_point < planner_param_.stop_distance_threshold &&
-      planner_data_->isVehicleStopped(planner_param_.stop_duration_sec)) {
+      planner_data_->is_vehicle_stopped(planner_param_.stop_duration_sec)) {
       state_machine_.set_state(StateMachine::State::GO);
       if (signed_arc_dist_to_stop_point < -planner_param_.stop_distance_threshold) {
         RCLCPP_ERROR(logger_, "Failed to stop near stop line but ego stopped. Change state to GO");
