@@ -20,15 +20,14 @@
 
 namespace autoware::motion_velocity_planner
 {
-CollisionChecker::CollisionChecker(autoware::universe_utils::MultiPolygon2d trajectory_footprints)
+CollisionChecker::CollisionChecker(autoware_utils::MultiPolygon2d trajectory_footprints)
 : trajectory_footprints_(std::move(trajectory_footprints))
 {
   std::vector<RtreeNode> nodes;
   nodes.reserve(trajectory_footprints_.size());
   for (auto i = 0UL; i < trajectory_footprints_.size(); ++i) {
     nodes.emplace_back(
-      boost::geometry::return_envelope<autoware::universe_utils::Box2d>(trajectory_footprints_[i]),
-      i);
+      boost::geometry::return_envelope<autoware_utils::Box2d>(trajectory_footprints_[i]), i);
   }
   rtree_ = std::make_shared<Rtree>(nodes.begin(), nodes.end());
 }
@@ -38,7 +37,7 @@ std::vector<Collision> CollisionChecker::get_collisions(const Geometry & geometr
 {
   std::vector<Collision> collisions;
   std::vector<RtreeNode> approximate_results;
-  autoware::universe_utils::MultiPoint2d intersections;
+  autoware_utils::MultiPoint2d intersections;
   ;
   rtree_->query(bgi::intersects(geometry), std::back_inserter(approximate_results));
   for (const auto & result : approximate_results) {
@@ -54,21 +53,18 @@ std::vector<Collision> CollisionChecker::get_collisions(const Geometry & geometr
   return collisions;
 }
 
-template std::vector<Collision> CollisionChecker::get_collisions<autoware::universe_utils::Point2d>(
-  const autoware::universe_utils::Point2d & geometry) const;
-template std::vector<Collision> CollisionChecker::get_collisions<autoware::universe_utils::Line2d>(
-  const autoware::universe_utils::Line2d & geometry) const;
-template std::vector<Collision>
-CollisionChecker::get_collisions<autoware::universe_utils::MultiPolygon2d>(
-  const autoware::universe_utils::MultiPolygon2d & geometry) const;
+template std::vector<Collision> CollisionChecker::get_collisions<autoware_utils::Point2d>(
+  const autoware_utils::Point2d & geometry) const;
+template std::vector<Collision> CollisionChecker::get_collisions<autoware_utils::Line2d>(
+  const autoware_utils::Line2d & geometry) const;
+template std::vector<Collision> CollisionChecker::get_collisions<autoware_utils::MultiPolygon2d>(
+  const autoware_utils::MultiPolygon2d & geometry) const;
 
 // @warn Multi geometries usually lead to very inefficient queries
-template std::vector<Collision>
-CollisionChecker::get_collisions<autoware::universe_utils::MultiPoint2d>(
-  const autoware::universe_utils::MultiPoint2d & geometry) const;
-template std::vector<Collision>
-CollisionChecker::get_collisions<autoware::universe_utils::MultiLineString2d>(
-  const autoware::universe_utils::MultiLineString2d & geometry) const;
-template std::vector<Collision> CollisionChecker::get_collisions<
-  autoware::universe_utils::Polygon2d>(const autoware::universe_utils::Polygon2d & geometry) const;
+template std::vector<Collision> CollisionChecker::get_collisions<autoware_utils::MultiPoint2d>(
+  const autoware_utils::MultiPoint2d & geometry) const;
+template std::vector<Collision> CollisionChecker::get_collisions<autoware_utils::MultiLineString2d>(
+  const autoware_utils::MultiLineString2d & geometry) const;
+template std::vector<Collision> CollisionChecker::get_collisions<autoware_utils::Polygon2d>(
+  const autoware_utils::Polygon2d & geometry) const;
 }  // namespace autoware::motion_velocity_planner

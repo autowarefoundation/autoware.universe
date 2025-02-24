@@ -17,8 +17,8 @@
 
 #include "autoware/motion_velocity_planner_common_universe/polygon_utils.hpp"
 #include "autoware/motion_velocity_planner_common_universe/utils.hpp"
-#include "autoware/universe_utils/system/stop_watch.hpp"
-#include "autoware/universe_utils/system/time_keeper.hpp"
+#include "autoware_utils/system/stop_watch.hpp"
+#include "autoware_utils/system/time_keeper.hpp"
 #include "cruise_planner_interface.hpp"
 #include "metrics_manager.hpp"
 #include "optimization_based_planner/optimization_based_planner.hpp"
@@ -68,19 +68,18 @@ private:
   rclcpp::Publisher<MetricArray>::SharedPtr metrics_pub_;
   std::unique_ptr<autoware::objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface>
     objects_of_interest_marker_interface_;
-  rclcpp::Publisher<autoware::universe_utils::ProcessingTimeDetail>::SharedPtr
-    processing_time_detail_pub_;
+  rclcpp::Publisher<autoware_utils::ProcessingTimeDetail>::SharedPtr processing_time_detail_pub_;
 
   // cruise planner
   std::unique_ptr<CruisePlannerInterface> cruise_planner_;
 
   // internal variables
-  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch_;
+  autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch_;
   std::vector<CruiseObstacle> prev_cruise_object_obstacles_;
   mutable std::shared_ptr<DebugData> debug_data_ptr_;
   bool need_to_clear_velocity_limit_{false};
   MetricsManager metrics_manager_;
-  mutable std::shared_ptr<universe_utils::TimeKeeper> time_keeper_;
+  mutable std::shared_ptr<autoware_utils::TimeKeeper> time_keeper_;
 
   std::unique_ptr<CruisePlannerInterface> create_cruise_planner(rclcpp::Node & node) const;
   std::vector<CruiseObstacle> filter_cruise_obstacle_for_predicted_object(

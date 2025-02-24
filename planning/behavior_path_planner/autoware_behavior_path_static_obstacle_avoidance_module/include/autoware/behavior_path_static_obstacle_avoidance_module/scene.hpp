@@ -184,9 +184,9 @@ private:
     }
 
     if (candidate_registered) {
-      uuid_map_.at("left") = generateUUID();
-      uuid_map_.at("right") = generateUUID();
-      candidate_uuid_ = generateUUID();
+      uuid_map_.at("left") = generate_uuid();
+      uuid_map_.at("right") = generate_uuid();
+      candidate_uuid_ = generate_uuid();
     }
   }
 

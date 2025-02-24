@@ -14,9 +14,9 @@
 
 #include "autoware/scenario_selector/node.hpp"
 
-#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
+#include <autoware_utils/geometry/geometry.hpp>
 
 #include <lanelet2_core/geometry/BoundingBox.h>
 #include <lanelet2_core/geometry/Lanelet.h>
@@ -349,19 +349,19 @@ void ScenarioSelectorNode::updateData()
     stop_watch.tic();
   }
   {
-    auto msg = sub_parking_state_->takeData();
+    auto msg = sub_parking_state_->take_data();
     is_parking_completed_ = msg ? msg->data : is_parking_completed_;
   }
 
   {
-    auto msgs = sub_odom_->takeData();
+    auto msgs = sub_odom_->take_data();
     for (const auto & msg : msgs) {
       onOdom(msg);
     }
   }
 
   {
-    auto msg = sub_operation_mode_state_->takeData();
+    auto msg = sub_operation_mode_state_->take_data();
     if (msg) operation_mode_state_ = msg;
   }
 }
@@ -488,8 +488,7 @@ ScenarioSelectorNode::ScenarioSelectorNode(const rclcpp::NodeOptions & node_opti
 
   timer_ = rclcpp::create_timer(
     this, get_clock(), period_ns, std::bind(&ScenarioSelectorNode::onTimer, this));
-  published_time_publisher_ =
-    std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
+  published_time_publisher_ = std::make_unique<autoware_utils::PublishedTimePublisher>(this);
   pub_processing_time_ = this->create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>(
     "~/debug/processing_time_ms", 1);
 }

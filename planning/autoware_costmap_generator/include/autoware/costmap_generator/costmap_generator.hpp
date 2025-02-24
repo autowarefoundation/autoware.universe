@@ -49,11 +49,11 @@
 #include "autoware/costmap_generator/utils/points_to_costmap.hpp"
 #include "costmap_generator_node_parameters.hpp"
 
-#include <autoware/universe_utils/ros/polling_subscriber.hpp>
-#include <autoware/universe_utils/ros/processing_time_publisher.hpp>
-#include <autoware/universe_utils/system/stop_watch.hpp>
-#include <autoware/universe_utils/system/time_keeper.hpp>
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_utils/ros/polling_subscriber.hpp>
+#include <autoware_utils/ros/processing_time_publisher.hpp>
+#include <autoware_utils/system/stop_watch.hpp>
+#include <autoware_utils/system/time_keeper.hpp>
 #include <grid_map_ros/GridMapRosConverter.hpp>
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -94,21 +94,21 @@ private:
   sensor_msgs::msg::PointCloud2::ConstSharedPtr points_;
 
   grid_map::GridMap costmap_;
-  std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper_;
+  std::shared_ptr<autoware_utils::TimeKeeper> time_keeper_;
 
   rclcpp::Publisher<grid_map_msgs::msg::GridMap>::SharedPtr pub_costmap_;
   rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr pub_occupancy_grid_;
-  rclcpp::Publisher<autoware::universe_utils::ProcessingTimeDetail>::SharedPtr pub_processing_time_;
+  rclcpp::Publisher<autoware_utils::ProcessingTimeDetail>::SharedPtr pub_processing_time_;
   rclcpp::Publisher<autoware_internal_debug_msgs::msg::Float64Stamped>::SharedPtr
     pub_processing_time_ms_;
 
   rclcpp::Subscription<autoware_map_msgs::msg::LaneletMapBin>::SharedPtr sub_lanelet_bin_map_;
-  autoware::universe_utils::InterProcessPollingSubscriber<sensor_msgs::msg::PointCloud2>
-    sub_points_{this, "~/input/points_no_ground", autoware::universe_utils::SingleDepthSensorQoS()};
-  autoware::universe_utils::InterProcessPollingSubscriber<PredictedObjects> sub_objects_{
+  autoware_utils::InterProcessPollingSubscriber<sensor_msgs::msg::PointCloud2> sub_points_{
+    this, "~/input/points_no_ground", autoware_utils::single_depth_sensor_qos()};
+  autoware_utils::InterProcessPollingSubscriber<PredictedObjects> sub_objects_{
     this, "~/input/objects"};
-  autoware::universe_utils::InterProcessPollingSubscriber<tier4_planning_msgs::msg::Scenario>
-    sub_scenario_{this, "~/input/scenario"};
+  autoware_utils::InterProcessPollingSubscriber<tier4_planning_msgs::msg::Scenario> sub_scenario_{
+    this, "~/input/scenario"};
 
   rclcpp::TimerBase::SharedPtr timer_;
 
@@ -191,7 +191,7 @@ private:
   grid_map::Matrix generateCombinedCostmap();
 
   /// \brief measure processing time
-  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
+  autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
 
   friend class ::TestCostmapGenerator;
 };

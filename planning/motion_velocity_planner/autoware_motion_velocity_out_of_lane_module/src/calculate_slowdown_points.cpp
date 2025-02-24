@@ -19,7 +19,7 @@
 
 #include <autoware/motion_utils/trajectory/interpolation.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
-#include <autoware/universe_utils/geometry/boost_geometry.hpp>
+#include <autoware_utils/geometry/boost_geometry.hpp>
 
 #include <autoware_planning_msgs/msg/trajectory_point.hpp>
 #include <geometry_msgs/msg/pose.hpp>
@@ -38,7 +38,7 @@ namespace autoware::motion_velocity_planner::out_of_lane
 
 std::optional<geometry_msgs::msg::Pose> calculate_last_avoiding_pose(
   const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & trajectory,
-  const universe_utils::Polygon2d & footprint, const lanelet::BasicPolygons2d & polygons_to_avoid,
+  const autoware_utils::Polygon2d & footprint, const lanelet::BasicPolygons2d & polygons_to_avoid,
   const double min_arc_length, const double max_arc_length, const double precision)
 {
   geometry_msgs::msg::Pose interpolated_pose{};
@@ -68,7 +68,7 @@ std::optional<geometry_msgs::msg::Pose> calculate_last_avoiding_pose(
 
 std::optional<geometry_msgs::msg::Pose> calculate_pose_ahead_of_collision(
   const EgoData & ego_data, const OutOfLanePoint & point_to_avoid,
-  const universe_utils::Polygon2d & footprint, const double precision)
+  const autoware_utils::Polygon2d & footprint, const double precision)
 {
   const auto first_avoid_arc_length = motion_utils::calcSignedArcLength(
     ego_data.trajectory_points, 0UL, point_to_avoid.trajectory_index);

@@ -17,7 +17,7 @@
 #include "autoware/motion_velocity_planner_common_universe/polygon_utils.hpp"
 #include "autoware/motion_velocity_planner_common_universe/utils.hpp"
 #include "autoware/object_recognition_utils/predicted_path_utils.hpp"
-#include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
+#include "autoware_utils/geometry/boost_polygon_utils.hpp"
 
 #include "autoware_perception_msgs/msg/predicted_path.hpp"
 
@@ -69,11 +69,11 @@ std::optional<geometry_msgs::msg::Pose> get_predicted_object_pose_from_predicted
 }  // namespace
 
 double PlannerData::Object::get_dist_to_traj_poly(
-  const std::vector<autoware::universe_utils::Polygon2d> & decimated_traj_polys) const
+  const std::vector<autoware_utils::Polygon2d> & decimated_traj_polys) const
 {
   if (!dist_to_traj_poly) {
     const auto & obj_pose = predicted_object.kinematics.initial_pose_with_covariance.pose;
-    const auto obj_poly = autoware::universe_utils::toPolygon2d(obj_pose, predicted_object.shape);
+    const auto obj_poly = autoware_utils::to_polygon2d(obj_pose, predicted_object.shape);
     dist_to_traj_poly = std::numeric_limits<double>::max();
     for (const auto & traj_poly : decimated_traj_polys) {
       const double current_dist_to_traj_poly = bg::distance(traj_poly, obj_poly);
@@ -134,8 +134,7 @@ void PlannerData::Object::calc_vel_relative_to_traj(
 
   const double traj_yaw = tf2::getYaw(nearest_traj_point.pose.orientation);
   const double obj_yaw = tf2::getYaw(obj_pose.orientation);
-  const Eigen::Rotation2Dd R_ego_to_obstacle(
-    autoware::universe_utils::normalizeRadian(obj_yaw - traj_yaw));
+  const Eigen::Rotation2Dd R_ego_to_obstacle(autoware_utils::normalize_radian(obj_yaw - traj_yaw));
 
   // Calculate the trajectory direction and the vector from the trajectory to the obstacle
   const Eigen::Vector2d traj_direction(std::cos(traj_yaw), std::sin(traj_yaw));

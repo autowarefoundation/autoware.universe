@@ -32,7 +32,7 @@ void PathDecisionStateController::transit_state(
   const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
   const bool is_current_safe, const GoalPlannerParameters & parameters,
   const GoalSearcher & goal_searcher,
-  std::vector<autoware::universe_utils::Polygon2d> & ego_polygons_expanded)
+  std::vector<autoware_utils::Polygon2d> & ego_polygons_expanded)
 {
   const auto next_state = get_next_state(
     pull_over_path_opt, now, static_target_objects, dynamic_target_objects, planner_data,
@@ -47,7 +47,7 @@ PathDecisionState PathDecisionStateController::get_next_state(
   const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
   const bool is_current_safe, const GoalPlannerParameters & parameters,
   const GoalSearcher & goal_searcher,
-  std::vector<autoware::universe_utils::Polygon2d> & ego_polygons_expanded) const
+  std::vector<autoware_utils::Polygon2d> & ego_polygons_expanded) const
 {
   auto next_state = current_state_;
 

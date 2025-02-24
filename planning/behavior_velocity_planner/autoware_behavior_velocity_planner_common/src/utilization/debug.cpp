@@ -14,15 +14,15 @@
 
 #include <autoware/behavior_velocity_planner_common/utilization/debug.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
-#include <autoware/universe_utils/ros/marker_helper.hpp>
+#include <autoware_utils/ros/marker_helper.hpp>
 
 #include <string>
 #include <vector>
 namespace autoware::behavior_velocity_planner::debug
 {
-using autoware::universe_utils::createDefaultMarker;
-using autoware::universe_utils::createMarkerColor;
-using autoware::universe_utils::createMarkerScale;
+using autoware_utils::create_default_marker;
+using autoware_utils::create_marker_color;
+using autoware_utils::create_marker_scale;
 
 visualization_msgs::msg::MarkerArray createPolygonMarkerArray(
   const geometry_msgs::msg::Polygon & polygon, const std::string & ns, const int64_t module_id,
@@ -31,10 +31,11 @@ visualization_msgs::msg::MarkerArray createPolygonMarkerArray(
 {
   visualization_msgs::msg::MarkerArray msg;
   {
-    auto marker = createDefaultMarker(
+    auto marker = create_default_marker(
       "map", now, ns, static_cast<int32_t>(module_id), visualization_msgs::msg::Marker::LINE_STRIP,
-      createMarkerScale(static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)),
-      createMarkerColor(static_cast<float>(r), static_cast<float>(g), static_cast<float>(b), 0.8f));
+      create_marker_scale(static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)),
+      create_marker_color(
+        static_cast<float>(r), static_cast<float>(g), static_cast<float>(b), 0.8f));
     marker.lifetime = rclcpp::Duration::from_seconds(0.3);
 
     for (const auto & p : polygon.points) {
@@ -63,21 +64,21 @@ visualization_msgs::msg::MarkerArray createPathMarkerArray(
   for (size_t i = 0; i < path.points.size(); ++i) {
     const auto & p = path.points.at(i);
 
-    auto marker = createDefaultMarker(
+    auto marker = create_default_marker(
       "map", now, ns, static_cast<int32_t>(planning_utils::bitShift(lane_id) + i),
       visualization_msgs::msg::Marker::ARROW,
-      createMarkerScale(static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)),
-      createMarkerColor(
+      create_marker_scale(static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)),
+      create_marker_color(
         static_cast<float>(r), static_cast<float>(g), static_cast<float>(b), 0.999f));
     marker.lifetime = rclcpp::Duration::from_seconds(0.3);
     marker.pose = p.point.pose;
 
     if (std::find(p.lane_ids.begin(), p.lane_ids.end(), lane_id) != p.lane_ids.end()) {
       // if p.lane_ids has lane_id
-      marker.color = createMarkerColor(
+      marker.color = create_marker_color(
         static_cast<float>(r), static_cast<float>(g), static_cast<float>(b), 0.999f);
     } else {
-      marker.color = createMarkerColor(0.5, 0.5, 0.5, 0.999);
+      marker.color = create_marker_color(0.5, 0.5, 0.5, 0.999);
     }
     msg.markers.push_back(marker);
   }
@@ -91,9 +92,9 @@ visualization_msgs::msg::MarkerArray createObjectsMarkerArray(
 {
   visualization_msgs::msg::MarkerArray msg;
 
-  auto marker = createDefaultMarker(
-    "map", now, ns, 0, visualization_msgs::msg::Marker::CUBE, createMarkerScale(3.0, 1.0, 1.0),
-    createMarkerColor(static_cast<float>(r), static_cast<float>(g), static_cast<float>(b), 0.8f));
+  auto marker = create_default_marker(
+    "map", now, ns, 0, visualization_msgs::msg::Marker::CUBE, create_marker_scale(3.0, 1.0, 1.0),
+    create_marker_color(static_cast<float>(r), static_cast<float>(g), static_cast<float>(b), 0.8f));
   marker.lifetime = rclcpp::Duration::from_seconds(1.0);
 
   for (size_t i = 0; i < objects.objects.size(); ++i) {
@@ -114,9 +115,10 @@ visualization_msgs::msg::MarkerArray createPointsMarkerArray(
 {
   visualization_msgs::msg::MarkerArray msg;
 
-  auto marker = createDefaultMarker(
-    "map", now, ns, 0, visualization_msgs::msg::Marker::SPHERE, createMarkerScale(x, y, z),
-    createMarkerColor(static_cast<float>(r), static_cast<float>(g), static_cast<float>(b), 0.999f));
+  auto marker = create_default_marker(
+    "map", now, ns, 0, visualization_msgs::msg::Marker::SPHERE, create_marker_scale(x, y, z),
+    create_marker_color(
+      static_cast<float>(r), static_cast<float>(g), static_cast<float>(b), 0.999f));
   marker.lifetime = rclcpp::Duration::from_seconds(0.3);
   for (size_t i = 0; i < points.size(); ++i) {
     marker.id = static_cast<int32_t>(i + planning_utils::bitShift(module_id));

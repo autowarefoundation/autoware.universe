@@ -17,10 +17,10 @@
 #include <autoware/behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <autoware/motion_utils/trajectory/path_with_lane_id.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
-#include <autoware/universe_utils/ros/wait_for_param.hpp>
-#include <autoware/universe_utils/transform/transforms.hpp>
 #include <autoware/velocity_smoother/smoother/analytical_jerk_constrained_smoother/analytical_jerk_constrained_smoother.hpp>
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_utils/ros/wait_for_param.hpp>
+#include <autoware_utils/transform/transforms.hpp>
 
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
@@ -106,9 +106,8 @@ BehaviorVelocityPlannerNode::BehaviorVelocityPlannerNode(const rclcpp::NodeOptio
     planner_manager_.launchScenePlugin(*this, name);
   }
 
-  logger_configure_ = std::make_unique<autoware::universe_utils::LoggerLevelConfigure>(this);
-  published_time_publisher_ =
-    std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
+  logger_configure_ = std::make_unique<autoware_utils::LoggerLevelConfigure>(this);
+  published_time_publisher_ = std::make_unique<autoware_utils::PublishedTimePublisher>(this);
 }
 
 void BehaviorVelocityPlannerNode::onLoadPlugin(
@@ -155,7 +154,7 @@ void BehaviorVelocityPlannerNode::processNoGroundPointCloud(
   Eigen::Affine3f affine = tf2::transformToEigen(transform.transform).cast<float>();
   pcl::PointCloud<pcl::PointXYZ>::Ptr pc_transformed(new pcl::PointCloud<pcl::PointXYZ>);
   if (!pc.empty()) {
-    autoware::universe_utils::transformPointCloud(pc, *pc_transformed, affine);
+    autoware_utils::transform_pointcloud(pc, *pc_transformed, affine);
   }
 
   planner_data_.no_ground_pointcloud = pc_transformed;
@@ -237,7 +236,7 @@ bool BehaviorVelocityPlannerNode::processData(rclcpp::Clock clock)
   };
 
   const auto & getData = [&logData](auto & dest, auto & sub, const std::string & data_type = "") {
-    const auto temp = sub.takeData();
+    const auto temp = sub.take_data();
     if (temp) {
       dest = temp;
       return true;
@@ -250,7 +249,7 @@ bool BehaviorVelocityPlannerNode::processData(rclcpp::Clock clock)
   is_ready &= getData(planner_data_.predicted_objects, sub_predicted_objects_, "predicted_objects");
   is_ready &= getData(planner_data_.occupancy_grid, sub_occupancy_grid_, "occupancy_grid");
 
-  const auto odometry = sub_vehicle_odometry_.takeData();
+  const auto odometry = sub_vehicle_odometry_.take_data();
   if (odometry) {
     processOdometry(odometry);
   } else {
@@ -258,7 +257,7 @@ bool BehaviorVelocityPlannerNode::processData(rclcpp::Clock clock)
     is_ready = false;
   }
 
-  const auto no_ground_pointcloud = sub_no_ground_pointcloud_.takeData();
+  const auto no_ground_pointcloud = sub_no_ground_pointcloud_.take_data();
   if (no_ground_pointcloud) {
     processNoGroundPointCloud(no_ground_pointcloud);
   } else {
@@ -266,18 +265,18 @@ bool BehaviorVelocityPlannerNode::processData(rclcpp::Clock clock)
     is_ready = false;
   }
 
-  const auto map_data = sub_lanelet_map_.takeData();
+  const auto map_data = sub_lanelet_map_.take_data();
   if (map_data) {
     planner_data_.route_handler_ = std::make_shared<route_handler::RouteHandler>(*map_data);
   }
 
   // planner_data_.external_velocity_limit is std::optional type variable.
-  const auto external_velocity_limit = sub_external_velocity_limit_.takeData();
+  const auto external_velocity_limit = sub_external_velocity_limit_.take_data();
   if (external_velocity_limit) {
     planner_data_.external_velocity_limit = *external_velocity_limit;
   }
 
-  const auto traffic_signals = sub_traffic_signals_.takeData();
+  const auto traffic_signals = sub_traffic_signals_.take_data();
   if (traffic_signals) processTrafficSignals(traffic_signals);
 
   return is_ready;

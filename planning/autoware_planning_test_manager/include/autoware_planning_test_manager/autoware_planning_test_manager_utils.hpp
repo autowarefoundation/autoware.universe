@@ -15,8 +15,8 @@
 #ifndef AUTOWARE_PLANNING_TEST_MANAGER__AUTOWARE_PLANNING_TEST_MANAGER_UTILS_HPP_
 #define AUTOWARE_PLANNING_TEST_MANAGER__AUTOWARE_PLANNING_TEST_MANAGER_UTILS_HPP_
 #include <autoware/route_handler/route_handler.hpp>
-#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware_test_utils/autoware_test_utils.hpp>
+#include <autoware_utils/geometry/geometry.hpp>
 
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <geometry_msgs/msg/pose.hpp>
@@ -62,8 +62,8 @@ inline Pose createPoseFromLaneID(
   // calculate middle pose
   geometry_msgs::msg::Pose middle_pose;
   middle_pose.position = middle_pos;
-  const double yaw = autoware::universe_utils::calcAzimuthAngle(middle_pos, next_middle_pos);
-  middle_pose.orientation = autoware::universe_utils::createQuaternionFromYaw(yaw);
+  const double yaw = autoware_utils::calc_azimuth_angle(middle_pos, next_middle_pos);
+  middle_pose.orientation = autoware_utils::create_quaternion_from_yaw(yaw);
 
   return middle_pose;
 }

@@ -16,7 +16,7 @@
 #define TYPES_HPP_
 
 #include <autoware/route_handler/route_handler.hpp>
-#include <autoware/universe_utils/geometry/boost_geometry.hpp>
+#include <autoware_utils/geometry/boost_geometry.hpp>
 
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_planning_msgs/msg/trajectory.hpp>
@@ -81,14 +81,14 @@ struct PlannerParam
 namespace bgi = boost::geometry::index;
 struct StopLine
 {
-  universe_utils::LineString2d stop_line;
+  autoware_utils::LineString2d stop_line;
   lanelet::ConstLanelets lanelets;
 };
-using StopLineNode = std::pair<universe_utils::Box2d, StopLine>;
+using StopLineNode = std::pair<autoware_utils::Box2d, StopLine>;
 using StopLinesRtree = bgi::rtree<StopLineNode, bgi::rstar<16>>;
-using OutAreaNode = std::pair<universe_utils::Box2d, size_t>;
+using OutAreaNode = std::pair<autoware_utils::Box2d, size_t>;
 using OutAreaRtree = bgi::rtree<OutAreaNode, bgi::rstar<16>>;
-using LaneletNode = std::pair<universe_utils::Box2d, size_t>;
+using LaneletNode = std::pair<autoware_utils::Box2d, size_t>;
 using OutLaneletRtree = bgi::rtree<LaneletNode, bgi::rstar<16>>;
 
 /// @brief data related to the ego vehicle
@@ -119,7 +119,7 @@ struct EgoData
 struct OutOfLanePoint
 {
   size_t trajectory_index;
-  universe_utils::MultiPolygon2d out_overlaps;
+  autoware_utils::MultiPolygon2d out_overlaps;
   std::set<double> collision_times;
   std::optional<double> min_object_arrival_time;
   std::optional<double> max_object_arrival_time;

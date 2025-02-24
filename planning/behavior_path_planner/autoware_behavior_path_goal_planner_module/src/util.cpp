@@ -18,10 +18,10 @@
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "autoware_lanelet2_extension/regulatory_elements/bus_stop_area.hpp"
 
-#include <autoware/universe_utils/ros/marker_helper.hpp>
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
+#include <autoware_utils/ros/marker_helper.hpp>
 #include <magic_enum.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -43,12 +43,12 @@
 namespace autoware::behavior_path_planner::goal_planner_utils
 {
 
-using autoware::universe_utils::calcDistance2d;
-using autoware::universe_utils::calcOffsetPose;
-using autoware::universe_utils::createDefaultMarker;
-using autoware::universe_utils::createMarkerColor;
-using autoware::universe_utils::createMarkerScale;
-using autoware::universe_utils::createPoint;
+using autoware_utils::calc_distance2d;
+using autoware_utils::calc_offset_pose;
+using autoware_utils::create_default_marker;
+using autoware_utils::create_marker_color;
+using autoware_utils::create_marker_scale;
+using autoware_utils::create_point;
 
 lanelet::ConstLanelets getPullOverLanes(
   const RouteHandler & route_handler, const bool left_side, const double backward_distance,
@@ -111,12 +111,12 @@ lanelet::ConstLanelets generateBetweenEgoAndExpandedPullOverLanes(
   const double ego_length_to_front = wheel_base + front_overhang;
   const double ego_width_to_front =
     !left_side ? (-wheel_tread / 2.0 - side_overhang) : (wheel_tread / 2.0 + side_overhang);
-  autoware::universe_utils::Point2d front_edge_local{ego_length_to_front, ego_width_to_front};
-  const auto front_edge_glob = autoware::universe_utils::transformPoint(
-    front_edge_local, autoware::universe_utils::pose2transform(ego_pose));
+  autoware_utils::Point2d front_edge_local{ego_length_to_front, ego_width_to_front};
+  const auto front_edge_glob =
+    autoware_utils::transform_point(front_edge_local, autoware_utils::pose2transform(ego_pose));
   geometry_msgs::msg::Pose ego_front_pose;
   ego_front_pose.position =
-    createPoint(front_edge_glob.x(), front_edge_glob.y(), ego_pose.position.z);
+    create_point(front_edge_glob.x(), front_edge_glob.y(), ego_pose.position.z);
 
   // ==========================================================================================
   // NOTE: the point which is on the right side of a directed line has negative distance
@@ -142,9 +142,9 @@ std::optional<Polygon2d> generateObjectExtractionPolygon(
     const auto & bound = left_side ? lane.leftBound() : lane.rightBound();
     for (const auto & p : bound) {
       Pose pose{};
-      pose.position = createPoint(p.x(), p.y(), p.z());
+      pose.position = create_point(p.x(), p.y(), p.z());
       if (std::any_of(base_boundary_poses.begin(), base_boundary_poses.end(), [&](const auto & p) {
-            return calcDistance2d(p.position, pose.position) < 0.1;
+            return calc_distance2d(p.position, pose.position) < 0.1;
           })) {
         continue;
       }
@@ -159,8 +159,8 @@ std::optional<Polygon2d> generateObjectExtractionPolygon(
   for (auto it = base_boundary_poses.begin(); it != std::prev(base_boundary_poses.end()); ++it) {
     const auto & p = it->position;
     const auto & next_p = std::next(it)->position;
-    const double yaw = autoware::universe_utils::calcAzimuthAngle(p, next_p);
-    it->orientation = autoware::universe_utils::createQuaternionFromYaw(yaw);
+    const double yaw = autoware_utils::calc_azimuth_angle(p, next_p);
+    it->orientation = autoware_utils::create_quaternion_from_yaw(yaw);
   }
   base_boundary_poses.back().orientation =
     base_boundary_poses[base_boundary_poses.size() - 2].orientation;
@@ -170,8 +170,8 @@ std::optional<Polygon2d> generateObjectExtractionPolygon(
   std::vector<Point> inner_boundary_points{};
   const double outer_direction_sign = left_side ? 1.0 : -1.0;
   for (const auto & base_pose : base_boundary_poses) {
-    const Pose outer_pose = calcOffsetPose(base_pose, 0, outer_direction_sign * outer_offset, 0);
-    const Pose inner_pose = calcOffsetPose(base_pose, 0, -outer_direction_sign * inner_offset, 0);
+    const Pose outer_pose = calc_offset_pose(base_pose, 0, outer_direction_sign * outer_offset, 0);
+    const Pose inner_pose = calc_offset_pose(base_pose, 0, -outer_direction_sign * inner_offset, 0);
     outer_boundary_points.push_back(outer_pose.position);
     inner_boundary_points.push_back(inner_pose.position);
   }
@@ -192,7 +192,7 @@ std::optional<Polygon2d> generateObjectExtractionPolygon(
       p_line.push_back(p2);
       bool intersection_found = false;
       for (size_t j = i + 2; j < bound.size() - 1; j++) {
-        const double distance = autoware::universe_utils::calcDistance2d(bound.at(i), bound.at(j));
+        const double distance = autoware_utils::calc_distance2d(bound.at(i), bound.at(j));
         if (distance > INTERSECTION_CHECK_DISTANCE) {
           break;
         }
@@ -234,14 +234,14 @@ std::optional<Polygon2d> generateObjectExtractionPolygon(
   std::vector<Point> reversed_right_boundary_points = right_boundary_points;
   std::reverse(reversed_right_boundary_points.begin(), reversed_right_boundary_points.end());
   for (const auto & left_point : left_boundary_points) {
-    autoware::universe_utils::Point2d point{left_point.x, left_point.y};
+    autoware_utils::Point2d point{left_point.x, left_point.y};
     polygon.outer().push_back(point);
   }
   for (const auto & right_point : reversed_right_boundary_points) {
-    autoware::universe_utils::Point2d point{right_point.x, right_point.y};
+    autoware_utils::Point2d point{right_point.x, right_point.y};
     polygon.outer().push_back(point);
   }
-  autoware::universe_utils::Point2d first_point{
+  autoware_utils::Point2d first_point{
     left_boundary_points.front().x, left_boundary_points.front().y};
   polygon.outer().push_back(first_point);
 
@@ -338,7 +338,7 @@ bool checkObjectsCollision(
 
   std::vector<Polygon2d> obj_polygons;
   for (const auto & object : target_objects.objects) {
-    obj_polygons.push_back(autoware::universe_utils::toPolygon2d(object));
+    obj_polygons.push_back(autoware_utils::to_polygon2d(object));
   }
 
   /* Expand ego collision check polygon
@@ -360,7 +360,7 @@ bool checkObjectsCollision(
       extra_stopping_margin,
       std::abs(curvatures.at(i) * std::pow(p.point.longitudinal_velocity_mps, 2)));
 
-    const auto ego_polygon = autoware::universe_utils::toFootprint(
+    const auto ego_polygon = autoware_utils::to_footprint(
       p.point.pose,
       behavior_path_parameters.base_link2front + collision_check_margin + extra_stopping_margin,
       behavior_path_parameters.base_link2rear + collision_check_margin,
@@ -377,17 +377,17 @@ bool checkObjectsCollision(
 }
 
 MarkerArray createPullOverAreaMarkerArray(
-  const autoware::universe_utils::MultiPolygon2d area_polygons,
-  const std_msgs::msg::Header & header, const std_msgs::msg::ColorRGBA & color, const double z)
+  const autoware_utils::MultiPolygon2d area_polygons, const std_msgs::msg::Header & header,
+  const std_msgs::msg::ColorRGBA & color, const double z)
 {
   MarkerArray marker_array{};
   for (size_t i = 0; i < area_polygons.size(); ++i) {
-    Marker marker = createDefaultMarker(
+    Marker marker = create_default_marker(
       header.frame_id, header.stamp, "pull_over_area_" + std::to_string(i), i,
-      visualization_msgs::msg::Marker::LINE_STRIP, createMarkerScale(0.1, 0.0, 0.0), color);
+      visualization_msgs::msg::Marker::LINE_STRIP, create_marker_scale(0.1, 0.0, 0.0), color);
     const auto & poly = area_polygons.at(i);
     for (const auto & p : poly.outer()) {
-      marker.points.push_back(createPoint(p.x(), p.y(), z));
+      marker.points.push_back(create_point(p.x(), p.y(), z));
     }
 
     marker_array.markers.push_back(marker);
@@ -402,9 +402,9 @@ MarkerArray createPosesMarkerArray(
   MarkerArray msg{};
   int32_t i = 0;
   for (const auto & pose : poses) {
-    Marker marker = autoware::universe_utils::createDefaultMarker(
+    Marker marker = autoware_utils::create_default_marker(
       "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, i, Marker::ARROW,
-      createMarkerScale(0.5, 0.25, 0.25), color);
+      create_marker_scale(0.5, 0.25, 0.25), color);
     marker.pose = pose;
     marker.id = i++;
     msg.markers.push_back(marker);
@@ -419,10 +419,10 @@ MarkerArray createGoalPriorityTextsMarkerArray(
   MarkerArray msg{};
   int32_t i = 0;
   for (const auto & pose : poses) {
-    Marker marker = createDefaultMarker(
+    Marker marker = create_default_marker(
       "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, i, Marker::TEXT_VIEW_FACING,
-      createMarkerScale(0.3, 0.3, 0.3), color);
-    marker.pose = calcOffsetPose(pose, 0, 0, 1.0);
+      create_marker_scale(0.3, 0.3, 0.3), color);
+    marker.pose = calc_offset_pose(pose, 0, 0, 1.0);
     marker.id = i;
     marker.text = std::to_string(i);
     msg.markers.push_back(marker);
@@ -439,10 +439,10 @@ MarkerArray createNumObjectsToAvoidTextsMarkerArray(
   int32_t i = 0;
   for (const auto & goal_candidate : goal_candidates) {
     const Pose & pose = goal_candidate.goal_pose;
-    Marker marker = createDefaultMarker(
+    Marker marker = create_default_marker(
       "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, i, Marker::TEXT_VIEW_FACING,
-      createMarkerScale(0.3, 0.3, 0.3), color);
-    marker.pose = calcOffsetPose(pose, -0.5, 0, 1.0);
+      create_marker_scale(0.3, 0.3, 0.3), color);
+    marker.pose = calc_offset_pose(pose, -0.5, 0, 1.0);
     marker.id = i;
     marker.text = std::to_string(goal_candidate.num_objects_to_avoid);
     msg.markers.push_back(marker);
@@ -468,13 +468,13 @@ MarkerArray createGoalCandidatesMarkerArray(
   auto marker_array = createPosesMarkerArray(pose_vector, "goal_candidates", color);
   for (const auto & text_marker :
        createGoalPriorityTextsMarkerArray(
-         pose_vector, "goal_candidates_priority", createMarkerColor(1.0, 1.0, 1.0, 0.999))
+         pose_vector, "goal_candidates_priority", create_marker_color(1.0, 1.0, 1.0, 0.999))
          .markers) {
     marker_array.markers.push_back(text_marker);
   }
   for (const auto & text_marker : createNumObjectsToAvoidTextsMarkerArray(
                                     safe_goal_candidates, "goal_candidates_num_objects_to_avoid",
-                                    createMarkerColor(0.5, 0.5, 0.5, 0.999))
+                                    create_marker_color(0.5, 0.5, 0.5, 0.999))
                                     .markers) {
     marker_array.markers.push_back(text_marker);
   }
@@ -487,11 +487,11 @@ MarkerArray createLaneletPolygonMarkerArray(
   const std::string & ns, const std_msgs::msg::ColorRGBA & color)
 {
   visualization_msgs::msg::MarkerArray marker_array{};
-  auto marker = createDefaultMarker(
+  auto marker = create_default_marker(
     header.frame_id, header.stamp, ns, 0, visualization_msgs::msg::Marker::LINE_STRIP,
-    createMarkerScale(0.1, 0.0, 0.0), color);
+    create_marker_scale(0.1, 0.0, 0.0), color);
   for (const auto & p : polygon) {
-    marker.points.push_back(createPoint(p.x(), p.y(), p.z()));
+    marker.points.push_back(create_point(p.x(), p.y(), p.z()));
   }
   marker_array.markers.push_back(marker);
   return marker_array;
@@ -506,7 +506,7 @@ double calcLateralDeviationBetweenPaths(
       reference_path.points, target_point.point.pose.position);
     lateral_deviation = std::max(
       lateral_deviation,
-      std::abs(autoware::universe_utils::calcLateralDeviation(
+      std::abs(autoware_utils::calc_lateral_deviation(
         reference_path.points[nearest_index].point.pose, target_point.point.pose.position)));
   }
   return lateral_deviation;
@@ -535,7 +535,7 @@ std::optional<PathWithLaneId> cropPath(const PathWithLaneId & path, const Pose &
   const double offset =
     autoware::motion_utils::calcSignedArcLength(path.points, end_idx, end_pose.position);
   projected_point.point.pose =
-    autoware::universe_utils::calcOffsetPose(clipped_points.back().point.pose, offset, 0, 0);
+    autoware_utils::calc_offset_pose(clipped_points.back().point.pose, offset, 0, 0);
   clipped_points.push_back(projected_point);
   auto clipped_path = path;
   clipped_path.points = clipped_points;
@@ -550,8 +550,7 @@ PathWithLaneId cropForwardPoints(
 
   double sum_length = 0;
   for (size_t i = target_seg_idx + 1; i < points.size(); ++i) {
-    const double seg_length =
-      autoware::universe_utils::calcDistance2d(points.at(i), points.at(i - 1));
+    const double seg_length = autoware_utils::calc_distance2d(points.at(i), points.at(i - 1));
     if (forward_length < sum_length + seg_length) {
       const auto cropped_points =
         std::vector<PathPointWithLaneId>{points.begin() + target_seg_idx, points.begin() + i};
@@ -561,7 +560,7 @@ PathWithLaneId cropForwardPoints(
       // add precise end pose to cropped points
       const double remaining_length = forward_length - sum_length;
       const Pose precise_end_pose =
-        calcOffsetPose(cropped_path.points.back().point.pose, remaining_length, 0, 0);
+        calc_offset_pose(cropped_path.points.back().point.pose, remaining_length, 0, 0);
       if (remaining_length < 0.1) {
         // if precise_end_pose is too close, replace the last point
         cropped_path.points.back().point.pose = precise_end_pose;
@@ -600,8 +599,8 @@ PathWithLaneId extendPath(
   const double lateral_shift_from_reference_path =
     autoware::motion_utils::calcLateralOffset(reference_path.points, target_terminal_pose.position);
   for (auto & p : clipped_path.points) {
-    p.point.pose = autoware::universe_utils::calcOffsetPose(
-      p.point.pose, 0, lateral_shift_from_reference_path, 0);
+    p.point.pose =
+      autoware_utils::calc_offset_pose(p.point.pose, 0, lateral_shift_from_reference_path, 0);
   }
 
   auto extended_path = target_path;
@@ -613,10 +612,10 @@ PathWithLaneId extendPath(
   const auto start_point =
     std::find_if(clipped_path.points.begin(), clipped_path.points.end(), [&](const auto & p) {
       const bool is_forward =
-        autoware::universe_utils::inverseTransformPoint(p.point.pose.position, target_terminal_pose)
-          .x > 0.0;
-      const bool is_close = autoware::universe_utils::calcDistance2d(
-                              p.point.pose.position, target_terminal_pose.position) < 0.1;
+        autoware_utils::inverse_transform_point(p.point.pose.position, target_terminal_pose).x >
+        0.0;
+      const bool is_close =
+        autoware_utils::calc_distance2d(p.point.pose.position, target_terminal_pose.position) < 0.1;
       return is_forward && !is_close;
     });
   std::copy(start_point, clipped_path.points.end(), std::back_inserter(extended_path.points));
@@ -646,8 +645,7 @@ std::vector<Polygon2d> createPathFootPrints(
   std::vector<Polygon2d> footprints;
   for (const auto & point : path.points) {
     const auto & pose = point.point.pose;
-    footprints.push_back(
-      autoware::universe_utils::toFootprint(pose, base_to_front, base_to_rear, width));
+    footprints.push_back(autoware_utils::to_footprint(pose, base_to_front, base_to_rear, width));
   }
   return footprints;
 }
@@ -797,7 +795,7 @@ std::optional<Pose> calcRefinedGoal(
   const double offset_from_center_line =
     sign * (distance_from_bound.value() + parameters.margin_from_boundary);
 
-  const auto refined_goal_pose = calcOffsetPose(center_pose, 0, -offset_from_center_line, 0);
+  const auto refined_goal_pose = calc_offset_pose(center_pose, 0, -offset_from_center_line, 0);
 
   return refined_goal_pose;
 }
@@ -846,7 +844,7 @@ autoware_perception_msgs::msg::PredictedObjects extract_dynamic_objects(
 
   PredictedObjects dynamic_target_objects{};
   for (const auto & object : original_objects.objects) {
-    const auto object_polygon = universe_utils::toPolygon2d(object);
+    const auto object_polygon = autoware_utils::to_polygon2d(object);
     if (
       objects_extraction_polygon.has_value() &&
       boost::geometry::intersects(object_polygon, objects_extraction_polygon.value())) {

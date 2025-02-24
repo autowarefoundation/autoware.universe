@@ -20,9 +20,9 @@
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/motion_velocity_planner_common_universe/utils.hpp"
 #include "autoware/object_recognition_utils/predicted_path_utils.hpp"
-#include "autoware/universe_utils/ros/parameter.hpp"
-#include "autoware/universe_utils/ros/update_param.hpp"
-#include "autoware/universe_utils/system/stop_watch.hpp"
+#include "autoware_utils/ros/parameter.hpp"
+#include "autoware_utils/ros/update_param.hpp"
+#include "autoware_utils/system/stop_watch.hpp"
 #include "type_alias.hpp"
 #include "types.hpp"
 
@@ -37,7 +37,7 @@
 
 namespace autoware::motion_velocity_planner
 {
-using autoware::universe_utils::getOrDeclareParameter;
+using autoware_utils::get_or_declare_parameter;
 
 struct CommonParam
 {
@@ -53,14 +53,14 @@ struct CommonParam
   CommonParam() = default;
   explicit CommonParam(rclcpp::Node & node)
   {
-    max_accel = getOrDeclareParameter<double>(node, "normal.max_acc");
-    min_accel = getOrDeclareParameter<double>(node, "normal.min_acc");
-    max_jerk = getOrDeclareParameter<double>(node, "normal.max_jerk");
-    min_jerk = getOrDeclareParameter<double>(node, "normal.min_jerk");
-    limit_max_accel = getOrDeclareParameter<double>(node, "limit.max_acc");
-    limit_min_accel = getOrDeclareParameter<double>(node, "limit.min_acc");
-    limit_max_jerk = getOrDeclareParameter<double>(node, "limit.max_jerk");
-    limit_min_jerk = getOrDeclareParameter<double>(node, "limit.min_jerk");
+    max_accel = get_or_declare_parameter<double>(node, "normal.max_acc");
+    min_accel = get_or_declare_parameter<double>(node, "normal.min_acc");
+    max_jerk = get_or_declare_parameter<double>(node, "normal.max_jerk");
+    min_jerk = get_or_declare_parameter<double>(node, "normal.min_jerk");
+    limit_max_accel = get_or_declare_parameter<double>(node, "limit.max_acc");
+    limit_min_accel = get_or_declare_parameter<double>(node, "limit.min_acc");
+    limit_max_jerk = get_or_declare_parameter<double>(node, "limit.max_jerk");
+    limit_min_jerk = get_or_declare_parameter<double>(node, "limit.min_jerk");
   }
 };
 
@@ -93,34 +93,34 @@ struct ObstacleFilteringParam
       utils::get_target_object_type(node, "obstacle_stop.obstacle_filtering.object_type.inside.");
     outside_stop_object_types =
       utils::get_target_object_type(node, "obstacle_stop.obstacle_filtering.object_type.outside.");
-    use_pointcloud =
-      getOrDeclareParameter<bool>(node, "obstacle_stop.obstacle_filtering.object_type.pointcloud");
+    use_pointcloud = get_or_declare_parameter<bool>(
+      node, "obstacle_stop.obstacle_filtering.object_type.pointcloud");
 
-    obstacle_velocity_threshold_to_stop = getOrDeclareParameter<double>(
+    obstacle_velocity_threshold_to_stop = get_or_declare_parameter<double>(
       node, "obstacle_stop.obstacle_filtering.obstacle_velocity_threshold_to_stop");
-    obstacle_velocity_threshold_from_stop = getOrDeclareParameter<double>(
+    obstacle_velocity_threshold_from_stop = get_or_declare_parameter<double>(
       node, "obstacle_stop.obstacle_filtering.obstacle_velocity_threshold_from_stop");
 
     max_lat_margin =
-      getOrDeclareParameter<double>(node, "obstacle_stop.obstacle_filtering.max_lat_margin");
-    max_lat_margin_against_unknown = getOrDeclareParameter<double>(
+      get_or_declare_parameter<double>(node, "obstacle_stop.obstacle_filtering.max_lat_margin");
+    max_lat_margin_against_unknown = get_or_declare_parameter<double>(
       node, "obstacle_stop.obstacle_filtering.max_lat_margin_against_unknown");
 
-    min_velocity_to_reach_collision_point = getOrDeclareParameter<double>(
+    min_velocity_to_reach_collision_point = get_or_declare_parameter<double>(
       node, "obstacle_stop.obstacle_filtering.min_velocity_to_reach_collision_point");
-    stop_obstacle_hold_time_threshold = getOrDeclareParameter<double>(
+    stop_obstacle_hold_time_threshold = get_or_declare_parameter<double>(
       node, "obstacle_stop.obstacle_filtering.stop_obstacle_hold_time_threshold");
 
-    outside_max_lat_time_margin = getOrDeclareParameter<double>(
+    outside_max_lat_time_margin = get_or_declare_parameter<double>(
       node, "obstacle_stop.obstacle_filtering.outside_obstacle.max_lateral_time_margin");
-    outside_num_of_predicted_paths = getOrDeclareParameter<int>(
+    outside_num_of_predicted_paths = get_or_declare_parameter<int>(
       node, "obstacle_stop.obstacle_filtering.outside_obstacle.num_of_predicted_paths");
-    outside_pedestrian_deceleration_rate = getOrDeclareParameter<double>(
+    outside_pedestrian_deceleration_rate = get_or_declare_parameter<double>(
       node, "obstacle_stop.obstacle_filtering.outside_obstacle.pedestrian_deceleration_rate");
-    outside_bicycle_deceleration_rate = getOrDeclareParameter<double>(
+    outside_bicycle_deceleration_rate = get_or_declare_parameter<double>(
       node, "obstacle_stop.obstacle_filtering.outside_obstacle.bicycle_deceleration_rate");
 
-    crossing_obstacle_collision_time_margin = getOrDeclareParameter<double>(
+    crossing_obstacle_collision_time_margin = get_or_declare_parameter<double>(
       node, "obstacle_stop.obstacle_filtering.crossing_obstacle.collision_time_margin");
   }
 };
@@ -153,35 +153,35 @@ struct StopPlanningParam
   StopPlanningParam() = default;
   StopPlanningParam(rclcpp::Node & node, const CommonParam & common_param)
   {
-    stop_margin = getOrDeclareParameter<double>(node, "obstacle_stop.stop_planning.stop_margin");
+    stop_margin = get_or_declare_parameter<double>(node, "obstacle_stop.stop_planning.stop_margin");
     terminal_stop_margin =
-      getOrDeclareParameter<double>(node, "obstacle_stop.stop_planning.terminal_stop_margin");
-    min_behavior_stop_margin =
-      getOrDeclareParameter<double>(node, "obstacle_stop.stop_planning.min_behavior_stop_margin");
-    hold_stop_velocity_threshold = getOrDeclareParameter<double>(
+      get_or_declare_parameter<double>(node, "obstacle_stop.stop_planning.terminal_stop_margin");
+    min_behavior_stop_margin = get_or_declare_parameter<double>(
+      node, "obstacle_stop.stop_planning.min_behavior_stop_margin");
+    hold_stop_velocity_threshold = get_or_declare_parameter<double>(
       node, "obstacle_stop.stop_planning.hold_stop_velocity_threshold");
-    hold_stop_distance_threshold = getOrDeclareParameter<double>(
+    hold_stop_distance_threshold = get_or_declare_parameter<double>(
       node, "obstacle_stop.stop_planning.hold_stop_distance_threshold");
-    enable_approaching_on_curve = getOrDeclareParameter<bool>(
+    enable_approaching_on_curve = get_or_declare_parameter<bool>(
       node, "obstacle_stop.stop_planning.stop_on_curve.enable_approaching");
-    additional_stop_margin_on_curve = getOrDeclareParameter<double>(
+    additional_stop_margin_on_curve = get_or_declare_parameter<double>(
       node, "obstacle_stop.stop_planning.stop_on_curve.additional_stop_margin");
-    min_stop_margin_on_curve = getOrDeclareParameter<double>(
+    min_stop_margin_on_curve = get_or_declare_parameter<double>(
       node, "obstacle_stop.stop_planning.stop_on_curve.min_stop_margin");
 
     const std::string param_prefix = "obstacle_stop.stop_planning.object_type_specified_params.";
     const auto object_types =
-      getOrDeclareParameter<std::vector<std::string>>(node, param_prefix + "types");
+      get_or_declare_parameter<std::vector<std::string>>(node, param_prefix + "types");
 
     for (const auto & type_str : object_types) {
       if (type_str != "default") {
         ObjectTypeSpecificParams param{
-          getOrDeclareParameter<double>(node, param_prefix + type_str + ".limit_min_acc"),
-          getOrDeclareParameter<double>(
+          get_or_declare_parameter<double>(node, param_prefix + type_str + ".limit_min_acc"),
+          get_or_declare_parameter<double>(
             node, param_prefix + type_str + ".sudden_object_acc_threshold"),
-          getOrDeclareParameter<double>(
+          get_or_declare_parameter<double>(
             node, param_prefix + type_str + ".sudden_object_dist_threshold"),
-          getOrDeclareParameter<bool>(node, param_prefix + type_str + ".abandon_to_stop")};
+          get_or_declare_parameter<bool>(node, param_prefix + type_str + ".abandon_to_stop")};
 
         param.sudden_object_acc_threshold =
           std::min(param.sudden_object_acc_threshold, common_param.limit_min_accel);

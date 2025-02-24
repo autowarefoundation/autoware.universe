@@ -18,7 +18,7 @@
 #include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "autoware/behavior_path_start_planner_module/util.hpp"
-#include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
+#include "autoware_utils/geometry/boost_polygon_utils.hpp"
 
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 
@@ -27,8 +27,8 @@
 #include <utility>
 
 using autoware::motion_utils::findNearestIndex;
-using autoware::universe_utils::calcDistance2d;
-using autoware::universe_utils::calcOffsetPose;
+using autoware_utils::calc_distance2d;
+using autoware_utils::calc_offset_pose;
 using lanelet::utils::getArcCoordinates;
 namespace autoware::behavior_path_planner
 {
@@ -36,7 +36,7 @@ using start_planner_utils::getPullOutLanes;
 
 GeometricPullOut::GeometricPullOut(
   rclcpp::Node & node, const StartPlannerParameters & parameters,
-  std::shared_ptr<universe_utils::TimeKeeper> time_keeper)
+  std::shared_ptr<autoware_utils::TimeKeeper> time_keeper)
 : PullOutPlannerBase{node, parameters, time_keeper},
   parallel_parking_parameters_{parameters.parallel_parking_parameters}
 {

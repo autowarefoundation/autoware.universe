@@ -90,7 +90,7 @@ std::optional<InterpolatedPathInfo> generateInterpolatedPathInfo(
 
 std::optional<size_t> getFirstPointIntersectsLineByFootprint(
   const lanelet::ConstLineString2d & line, const InterpolatedPathInfo & interpolated_path_info,
-  const autoware::universe_utils::LinearRing2d & footprint, const double vehicle_length)
+  const autoware_utils::LinearRing2d & footprint, const double vehicle_length)
 {
   const auto & path_ip = interpolated_path_info.path;
   const auto [lane_start, lane_end] = interpolated_path_info.lane_id_interval.value();
@@ -100,8 +100,8 @@ std::optional<size_t> getFirstPointIntersectsLineByFootprint(
   const auto line2d = line.basicLineString();
   for (auto i = start; i <= lane_end; ++i) {
     const auto & base_pose = path_ip.points.at(i).point.pose;
-    const auto path_footprint = autoware::universe_utils::transformVector(
-      footprint, autoware::universe_utils::pose2transform(base_pose));
+    const auto path_footprint =
+      autoware_utils::transform_vector(footprint, autoware_utils::pose2transform(base_pose));
     if (boost::geometry::intersects(path_footprint, line2d)) {
       return std::make_optional<size_t>(i);
     }

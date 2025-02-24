@@ -18,8 +18,8 @@
 #include "autoware/motion_velocity_planner_common_universe/polygon_utils.hpp"
 #include "autoware/motion_velocity_planner_common_universe/utils.hpp"
 #include "autoware/object_recognition_utils/predicted_path_utils.hpp"
-#include "autoware/universe_utils/system/stop_watch.hpp"
-#include "autoware/universe_utils/system/time_keeper.hpp"
+#include "autoware_utils/system/stop_watch.hpp"
+#include "autoware_utils/system/time_keeper.hpp"
 #include "metrics_manager.hpp"
 #include "parameters.hpp"
 #include "stop_planning_debug_info.hpp"
@@ -66,8 +66,7 @@ private:
   // module publisher
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr debug_stop_planning_info_pub_{};
   rclcpp::Publisher<MetricArray>::SharedPtr metrics_pub_{};
-  rclcpp::Publisher<autoware::universe_utils::ProcessingTimeDetail>::SharedPtr
-    processing_time_detail_pub_{};
+  rclcpp::Publisher<autoware_utils::ProcessingTimeDetail>::SharedPtr processing_time_detail_pub_{};
 
   // interface publisher
   std::unique_ptr<autoware::objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface>
@@ -84,11 +83,11 @@ private:
   // crossing lanes.
   std::optional<std::pair<std::vector<TrajectoryPoint>, double>> prev_stop_distance_info_{
     std::nullopt};
-  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch_{};
+  autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch_{};
   mutable std::unordered_map<double, std::vector<Polygon2d>> trajectory_polygon_for_inside_map_{};
   mutable std::optional<std::vector<Polygon2d>> trajectory_polygon_for_outside_{std::nullopt};
   mutable std::optional<std::vector<Polygon2d>> decimated_traj_polys_{std::nullopt};
-  mutable std::shared_ptr<universe_utils::TimeKeeper> time_keeper_{};
+  mutable std::shared_ptr<autoware_utils::TimeKeeper> time_keeper_{};
 
   std::vector<Polygon2d> get_trajectory_polygon_for_inside(
     const std::vector<TrajectoryPoint> & decimated_traj_points, const VehicleInfo & vehicle_info,
