@@ -34,9 +34,7 @@ The node outputs `UserDefinedValue` messages that are converted from the receive
     - `/planning/planning_evaluator/metrics/metricA/y`
 
 ## Parameters
-
 {{ json_to_markdown("evaluator/scenario_simulator_v2_adapter/schema/scenario_simulator_v2_adapter.schema.json") }}
-
 ## Assumptions / Known limits
 
 Values in the `Metric` objects of a `MetricArray` are assumed to be of type `double`.
