@@ -20,9 +20,9 @@
 #include <autoware/interpolation/spline_interpolation.hpp>
 #include <autoware/motion_utils/resample/resample.hpp>
 #include <autoware/motion_utils/trajectory/interpolation.hpp>
-#include <autoware_utils/geometry/geometry.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
+#include <autoware_utils/geometry/geometry.hpp>
 
 #include <tf2/utils.h>
 
@@ -50,8 +50,7 @@ std::vector<double> calcPathArcLengthArray(
   out.push_back(sum);
 
   for (size_t i = bounded_start + 1; i < bounded_end; ++i) {
-    sum += autoware_utils::calc_distance2d(
-      path.points.at(i).point, path.points.at(i - 1).point);
+    sum += autoware_utils::calc_distance2d(path.points.at(i).point, path.points.at(i - 1).point);
     out.push_back(sum);
   }
   return out;
@@ -335,8 +334,7 @@ std::vector<Pose> interpolatePose(
 
   std::vector<Pose> interpolated_poses{};  // output
 
-  const double distance =
-    autoware_utils::calc_distance2d(start_pose.position, end_pose.position);
+  const double distance = autoware_utils::calc_distance2d(start_pose.position, end_pose.position);
   const std::vector<double> base_s{0.0, distance};
   const std::vector<double> base_x{start_pose.position.x, end_pose.position.x};
   const std::vector<double> base_y{start_pose.position.y, end_pose.position.y};

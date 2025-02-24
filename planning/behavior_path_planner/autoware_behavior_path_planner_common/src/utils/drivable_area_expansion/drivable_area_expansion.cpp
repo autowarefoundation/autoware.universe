@@ -57,8 +57,8 @@ void reuse_previous_poses(
   const auto ego_is_behind =
     prev_poses.size() > 1 &&
     autoware::motion_utils::calcLongitudinalOffsetToSegment(prev_poses, 0, ego_point) < 0.0;
-  const auto ego_is_far = !prev_poses.empty() && autoware_utils::calc_distance2d(
-                                                   ego_point, prev_poses.front()) < 0.0;
+  const auto ego_is_far =
+    !prev_poses.empty() && autoware_utils::calc_distance2d(ego_point, prev_poses.front()) < 0.0;
   // make sure the reused points are not behind the current original drivable area
   LineString2d left_bound;
   LineString2d right_bound;
@@ -299,11 +299,10 @@ void expand_bound(
   for (auto idx = 1LU; idx < bound.size(); ++idx) {
     bool is_intersecting = false;
     for (auto succ_idx = idx + 1; succ_idx < bound.size(); ++succ_idx) {
-      const auto intersection = autoware_utils::intersect(
-        bound[idx - 1], bound[idx], bound[succ_idx - 1], bound[succ_idx]);
+      const auto intersection =
+        autoware_utils::intersect(bound[idx - 1], bound[idx], bound[succ_idx - 1], bound[succ_idx]);
       if (
-        intersection &&
-        autoware_utils::calc_distance2d(*intersection, bound[idx - 1]) > 1e-3 &&
+        intersection && autoware_utils::calc_distance2d(*intersection, bound[idx - 1]) > 1e-3 &&
         autoware_utils::calc_distance2d(*intersection, bound[idx]) > 1e-3) {
         idx = succ_idx;
         is_intersecting = true;

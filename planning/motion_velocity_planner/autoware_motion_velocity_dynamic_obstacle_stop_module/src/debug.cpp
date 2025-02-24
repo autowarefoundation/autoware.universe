@@ -85,8 +85,7 @@ std::vector<visualization_msgs::msg::Marker> make_collision_markers(
 }
 
 std::vector<visualization_msgs::msg::Marker> make_polygon_markers(
-  const autoware_utils::MultiPolygon2d & footprints, const std::string & ns,
-  const double z)
+  const autoware_utils::MultiPolygon2d & footprints, const std::string & ns, const double z)
 {
   std::vector<visualization_msgs::msg::Marker> markers;
   visualization_msgs::msg::Marker marker;

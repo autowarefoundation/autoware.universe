@@ -17,9 +17,9 @@
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
 #include <autoware/motion_utils/marker/marker_helper.hpp>
 #include <autoware/motion_utils/marker/virtual_wall_marker_creator.hpp>
+#include <autoware_lanelet2_extension/regulatory_elements/speed_bump.hpp>
 #include <autoware_utils/geometry/geometry.hpp>
 #include <autoware_utils/ros/marker_helper.hpp>
-#include <autoware_lanelet2_extension/regulatory_elements/speed_bump.hpp>
 
 #include <vector>
 

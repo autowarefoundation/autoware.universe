@@ -32,8 +32,8 @@ using autoware::behavior_path_planner::ObjectParameter;
 
 void AvoidanceByLaneChangeModuleManager::init(rclcpp::Node * node)
 {
-  using autoware_utils::get_or_declare_parameter;
   using autoware_perception_msgs::msg::ObjectClassification;
+  using autoware_utils::get_or_declare_parameter;
 
   // init manager interface
   initInterface(node, {"left", "right"});
@@ -49,8 +49,8 @@ void AvoidanceByLaneChangeModuleManager::init(rclcpp::Node * node)
     const std::string ns = "avoidance_by_lane_change.";
     p.execute_object_longitudinal_margin =
       get_or_declare_parameter<double>(*node, ns + "execute_object_longitudinal_margin");
-    p.execute_only_when_lane_change_finish_before_object =
-      get_or_declare_parameter<bool>(*node, ns + "execute_only_when_lane_change_finish_before_object");
+    p.execute_only_when_lane_change_finish_before_object = get_or_declare_parameter<bool>(
+      *node, ns + "execute_only_when_lane_change_finish_before_object");
   }
 
   // general params
@@ -66,7 +66,8 @@ void AvoidanceByLaneChangeModuleManager::init(rclcpp::Node * node)
   {
     const auto get_object_param = [&](std::string && ns) {
       ObjectParameter param{};
-      param.moving_speed_threshold = get_or_declare_parameter<double>(*node, ns + "th_moving_speed");
+      param.moving_speed_threshold =
+        get_or_declare_parameter<double>(*node, ns + "th_moving_speed");
       param.moving_time_threshold = get_or_declare_parameter<double>(*node, ns + "th_moving_time");
       param.max_expand_ratio = get_or_declare_parameter<double>(*node, ns + "max_expand_ratio");
       param.envelope_buffer_margin =
@@ -75,8 +76,8 @@ void AvoidanceByLaneChangeModuleManager::init(rclcpp::Node * node)
         get_or_declare_parameter<double>(*node, ns + "lateral_margin.soft_margin");
       param.lateral_hard_margin =
         get_or_declare_parameter<double>(*node, ns + "lateral_margin.hard_margin");
-      param.lateral_hard_margin_for_parked_vehicle =
-        get_or_declare_parameter<double>(*node, ns + "lateral_margin.hard_margin_for_parked_vehicle");
+      param.lateral_hard_margin_for_parked_vehicle = get_or_declare_parameter<double>(
+        *node, ns + "lateral_margin.hard_margin_for_parked_vehicle");
       return param;
     };
 
@@ -137,8 +138,8 @@ void AvoidanceByLaneChangeModuleManager::init(rclcpp::Node * node)
   {
     const std::string ns = "avoidance.target_filtering.avoidance_for_ambiguous_vehicle.";
     p.policy_ambiguous_vehicle = get_or_declare_parameter<std::string>(*node, ns + "policy");
-    p.wait_and_see_target_behaviors =
-      get_or_declare_parameter<std::vector<std::string>>(*node, ns + "wait_and_see.target_behaviors");
+    p.wait_and_see_target_behaviors = get_or_declare_parameter<std::vector<std::string>>(
+      *node, ns + "wait_and_see.target_behaviors");
     p.wait_and_see_th_closest_distance =
       get_or_declare_parameter<double>(*node, ns + "wait_and_see.th_closest_distance");
     p.time_threshold_for_ambiguous_vehicle =

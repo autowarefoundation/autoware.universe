@@ -139,8 +139,8 @@ bool checkObjectsCollision(
 
 // debug
 MarkerArray createPullOverAreaMarkerArray(
-  const autoware_utils::MultiPolygon2d area_polygons,
-  const std_msgs::msg::Header & header, const std_msgs::msg::ColorRGBA & color, const double z);
+  const autoware_utils::MultiPolygon2d area_polygons, const std_msgs::msg::Header & header,
+  const std_msgs::msg::ColorRGBA & color, const double z);
 MarkerArray createPosesMarkerArray(
   const std::vector<Pose> & poses, std::string && ns, const std_msgs::msg::ColorRGBA & color);
 MarkerArray createTextsMarkerArray(

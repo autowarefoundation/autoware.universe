@@ -149,8 +149,10 @@ rcl_interfaces::msg::SetParametersResult PathSampler::onParam(
 {
   using autoware_utils::update_param;
 
-  update_param(parameters, "constraints.hard.max_curvature", params_.constraints.hard.max_curvature);
-  update_param(parameters, "constraints.hard.min_curvature", params_.constraints.hard.min_curvature);
+  update_param(
+    parameters, "constraints.hard.max_curvature", params_.constraints.hard.max_curvature);
+  update_param(
+    parameters, "constraints.hard.min_curvature", params_.constraints.hard.min_curvature);
   update_param(
     parameters, "constraints.hard.min_distance_from_obstacles",
     params_.constraints.hard.min_dist_from_obstacles);
@@ -160,7 +162,8 @@ rcl_interfaces::msg::SetParametersResult PathSampler::onParam(
   update_param(
     parameters, "constraints.soft.lateral_deviation_weight",
     params_.constraints.soft.lateral_deviation_weight);
-  update_param(parameters, "constraints.soft.length_weight", params_.constraints.soft.length_weight);
+  update_param(
+    parameters, "constraints.soft.length_weight", params_.constraints.soft.length_weight);
   update_param(
     parameters, "constraints.soft.curvature_weight", params_.constraints.soft.curvature_weight);
   update_param(parameters, "sampling.enable_frenet", params_.sampling.enable_frenet);

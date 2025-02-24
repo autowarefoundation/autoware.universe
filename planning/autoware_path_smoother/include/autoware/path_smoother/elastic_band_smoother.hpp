@@ -82,8 +82,7 @@ private:
 
   // interface subscriber
   rclcpp::Subscription<Path>::SharedPtr path_sub_;
-  autoware_utils::InterProcessPollingSubscriber<Odometry> odom_sub_{
-    this, "~/input/odometry"};
+  autoware_utils::InterProcessPollingSubscriber<Odometry> odom_sub_{this, "~/input/odometry"};
 
   // debug publisher
   rclcpp::Publisher<Trajectory>::SharedPtr debug_extended_traj_pub_;

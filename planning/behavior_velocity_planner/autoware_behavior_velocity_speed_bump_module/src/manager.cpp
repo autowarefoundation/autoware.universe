@@ -15,9 +15,9 @@
 #include "manager.hpp"
 
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
-#include <autoware_utils/ros/parameter.hpp>
 #include <autoware_lanelet2_extension/regulatory_elements/speed_bump.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
+#include <autoware_utils/ros/parameter.hpp>
 
 #include <tf2/utils.h>
 
@@ -37,7 +37,8 @@ SpeedBumpModuleManager::SpeedBumpModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterface(node, getModuleName())
 {
   std::string ns(SpeedBumpModuleManager::getModuleName());
-  planner_param_.slow_start_margin = get_or_declare_parameter<double>(node, ns + ".slow_start_margin");
+  planner_param_.slow_start_margin =
+    get_or_declare_parameter<double>(node, ns + ".slow_start_margin");
   planner_param_.slow_end_margin = get_or_declare_parameter<double>(node, ns + ".slow_end_margin");
   planner_param_.print_debug_info = get_or_declare_parameter<bool>(node, ns + ".print_debug_info");
 

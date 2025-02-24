@@ -55,7 +55,8 @@ void StartPlannerModuleManager::updateModuleParams(
     update_param<double>(parameters, ns + "th_arrived_distance", p->th_arrived_distance);
     update_param<double>(parameters, ns + "th_stopped_velocity", p->th_stopped_velocity);
     update_param<double>(parameters, ns + "th_stopped_time", p->th_stopped_time);
-    update_param<double>(parameters, ns + "prepare_time_before_start", p->prepare_time_before_start);
+    update_param<double>(
+      parameters, ns + "prepare_time_before_start", p->prepare_time_before_start);
     update_param<double>(
       parameters, ns + "th_distance_to_middle_of_the_road", p->th_distance_to_middle_of_the_road);
     update_param<bool>(parameters, ns + "skip_rear_vehicle_check", p->skip_rear_vehicle_check);
@@ -67,7 +68,8 @@ void StartPlannerModuleManager::updateModuleParams(
     update_param<double>(
       parameters, ns + "collision_check_margin_from_front_object",
       p->collision_check_margin_from_front_object);
-    update_param<double>(parameters, ns + "th_moving_object_velocity", p->th_moving_object_velocity);
+    update_param<double>(
+      parameters, ns + "th_moving_object_velocity", p->th_moving_object_velocity);
     const std::string obj_types_ns = ns + "object_types_to_check_for_path_generation.";
     {
       update_param<bool>(
@@ -95,7 +97,8 @@ void StartPlannerModuleManager::updateModuleParams(
         parameters, obj_types_ns + "check_pedestrian",
         p->object_types_to_check_for_path_generation.check_pedestrian);
     }
-    update_param<double>(parameters, ns + "center_line_path_interval", p->center_line_path_interval);
+    update_param<double>(
+      parameters, ns + "center_line_path_interval", p->center_line_path_interval);
     update_param<bool>(parameters, ns + "enable_shift_pull_out", p->enable_shift_pull_out);
     update_param<double>(
       parameters, ns + "shift_collision_check_distance_from_end",
@@ -220,7 +223,8 @@ void StartPlannerModuleManager::updateModuleParams(
       parameters, ns + "use_informed_sampling", p->rrt_star_parameters.use_informed_sampling);
     update_param<double>(
       parameters, ns + "max_planning_time", p->rrt_star_parameters.max_planning_time);
-    update_param<double>(parameters, ns + "neighbor_radius", p->rrt_star_parameters.neighbor_radius);
+    update_param<double>(
+      parameters, ns + "neighbor_radius", p->rrt_star_parameters.neighbor_radius);
     update_param<double>(parameters, ns + "margin", p->rrt_star_parameters.margin);
   }
 

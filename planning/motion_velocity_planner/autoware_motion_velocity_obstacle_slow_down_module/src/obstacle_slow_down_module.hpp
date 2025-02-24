@@ -72,8 +72,7 @@ private:
   // module publisher
   rclcpp::Publisher<MetricArray>::SharedPtr metrics_pub_;
   rclcpp::Publisher<Float32MultiArrayStamped>::SharedPtr debug_slow_down_planning_info_pub_;
-  rclcpp::Publisher<autoware_utils::ProcessingTimeDetail>::SharedPtr
-    processing_time_detail_pub_;
+  rclcpp::Publisher<autoware_utils::ProcessingTimeDetail>::SharedPtr processing_time_detail_pub_;
 
   // interface publisher
   std::unique_ptr<autoware::objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface>

@@ -55,11 +55,11 @@ using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;
 namespace grid_utils
 {
+using autoware_perception_msgs::msg::PredictedObject;
+using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_utils::LineString2d;
 using autoware_utils::Point2d;
 using autoware_utils::Polygon2d;
-using autoware_perception_msgs::msg::PredictedObject;
-using autoware_perception_msgs::msg::PredictedObjects;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::TransformStamped;
 using nav_msgs::msg::MapMetaData;

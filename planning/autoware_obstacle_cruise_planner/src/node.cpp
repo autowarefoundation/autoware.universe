@@ -590,8 +590,7 @@ ObstacleCruisePlannerNode::ObstacleCruisePlannerNode(const rclcpp::NodeOptions &
     std::bind(&ObstacleCruisePlannerNode::onParam, this, std::placeholders::_1));
 
   logger_configure_ = std::make_unique<autoware_utils::LoggerLevelConfigure>(this);
-  published_time_publisher_ =
-    std::make_unique<autoware_utils::PublishedTimePublisher>(this);
+  published_time_publisher_ = std::make_unique<autoware_utils::PublishedTimePublisher>(this);
 }
 
 ObstacleCruisePlannerNode::PlanningAlgorithm ObstacleCruisePlannerNode::getPlanningAlgorithmType(
@@ -610,8 +609,7 @@ rcl_interfaces::msg::SetParametersResult ObstacleCruisePlannerNode::onParam(
 {
   planner_ptr_->onParam(parameters);
 
-  autoware_utils::update_param<bool>(
-    parameters, "common.enable_debug_info", enable_debug_info_);
+  autoware_utils::update_param<bool>(parameters, "common.enable_debug_info", enable_debug_info_);
   autoware_utils::update_param<bool>(
     parameters, "common.enable_calculation_time_info", enable_calculation_time_info_);
 
@@ -787,20 +785,19 @@ std::vector<Polygon2d> ObstacleCruisePlannerNode::createOneStepPolygons(
       if (i == 0 && traj_points.at(i).longitudinal_velocity_mps > 1e-3) {
         boost::geometry::append(
           idx_poly,
-          autoware_utils::to_footprint(pose, front_length, rear_length, vehicle_width)
-            .outer());
+          autoware_utils::to_footprint(pose, front_length, rear_length, vehicle_width).outer());
         boost::geometry::append(
-          idx_poly, autoware_utils::from_msg(
-                      autoware_utils::calc_offset_pose(
-                        pose, front_length, vehicle_width * 0.5 + lat_margin, 0.0)
-                        .position)
-                      .to_2d());
+          idx_poly,
+          autoware_utils::from_msg(autoware_utils::calc_offset_pose(
+                                     pose, front_length, vehicle_width * 0.5 + lat_margin, 0.0)
+                                     .position)
+            .to_2d());
         boost::geometry::append(
-          idx_poly, autoware_utils::from_msg(
-                      autoware_utils::calc_offset_pose(
-                        pose, front_length, -vehicle_width * 0.5 - lat_margin, 0.0)
-                        .position)
-                      .to_2d());
+          idx_poly,
+          autoware_utils::from_msg(autoware_utils::calc_offset_pose(
+                                     pose, front_length, -vehicle_width * 0.5 - lat_margin, 0.0)
+                                     .position)
+            .to_2d());
       } else {
         boost::geometry::append(
           idx_poly, autoware_utils::to_footprint(
@@ -839,8 +836,7 @@ std::vector<Obstacle> ObstacleCruisePlannerNode::convertToObstacles(
 
   std::vector<Obstacle> target_obstacles;
   for (const auto & predicted_object : objects.objects) {
-    const auto & object_id =
-      autoware_utils::to_hex_string(predicted_object.object_id).substr(0, 4);
+    const auto & object_id = autoware_utils::to_hex_string(predicted_object.object_id).substr(0, 4);
 
     // brkay54: When use_prediction is true, we observed wrong orientation for the object in
     // scenario simulator.
@@ -1998,8 +1994,7 @@ void ObstacleCruisePlannerNode::checkConsistency(
     const auto predicted_object_itr = std::find_if(
       predicted_objects.objects.begin(), predicted_objects.objects.end(),
       [&prev_closest_stop_obstacle](const PredictedObject & po) {
-        return autoware_utils::to_hex_string(po.object_id) ==
-               prev_closest_stop_obstacle.uuid;
+        return autoware_utils::to_hex_string(po.object_id) == prev_closest_stop_obstacle.uuid;
       });
     // If previous closest obstacle disappear from the perception result, do nothing anymore.
     if (predicted_object_itr == predicted_objects.objects.end()) {
@@ -2205,16 +2200,14 @@ void ObstacleCruisePlannerNode::publishDebugMarker() const
 
         marker.points.push_back(
           autoware_utils::create_point(current_point.x(), current_point.y(), 0.0));
-        marker.points.push_back(
-          autoware_utils::create_point(next_point.x(), next_point.y(), 0.0));
+        marker.points.push_back(autoware_utils::create_point(next_point.x(), next_point.y(), 0.0));
       }
     }
     debug_marker.markers.push_back(marker);
   }
 
   // slow down debug wall marker
-  autoware_utils::append_marker_array(
-    debug_data_ptr_->slow_down_debug_wall_marker, &debug_marker);
+  autoware_utils::append_marker_array(debug_data_ptr_->slow_down_debug_wall_marker, &debug_marker);
 
   debug_marker_pub_->publish(debug_marker);
 

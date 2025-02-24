@@ -21,8 +21,8 @@
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 
 #include <autoware/motion_utils/trajectory/path_shift.hpp>
-#include <autoware_utils/system/stop_watch.hpp>
 #include <autoware_frenet_planner/frenet_planner.hpp>
+#include <autoware_utils/system/stop_watch.hpp>
 #include <range/v3/action/insert.hpp>
 #include <range/v3/action/remove_if.hpp>
 #include <range/v3/algorithm.hpp>
@@ -158,8 +158,8 @@ std::optional<double> exceed_yaw_threshold(
 
   const auto & p1 = std::prev(prepare.end() - 1)->point.pose;
   const auto & p2 = std::next(lane_changing.begin())->point.pose;
-  const auto yaw_diff_rad = std::abs(autoware_utils::normalize_radian(
-    tf2::getYaw(p1.orientation) - tf2::getYaw(p2.orientation)));
+  const auto yaw_diff_rad = std::abs(
+    autoware_utils::normalize_radian(tf2::getYaw(p1.orientation) - tf2::getYaw(p2.orientation)));
   if (yaw_diff_rad > yaw_th_rad) {
     return yaw_diff_rad;
   }
@@ -742,8 +742,7 @@ void append_target_ref_to_candidate(
     const auto point1 = autoware_utils::get_point(candidate_path.back().point.pose);
     const auto point2 = autoware_utils::get_point(p2);
     const auto point3 = autoware_utils::get_point(p3);
-    const auto curvature =
-      std::abs(autoware_utils::calc_curvature(point1, point2, point3));
+    const auto curvature = std::abs(autoware_utils::calc_curvature(point1, point2, point3));
     if (curvature < th_curvature_smoothing) {
       candidate_path.push_back(p2);
     }

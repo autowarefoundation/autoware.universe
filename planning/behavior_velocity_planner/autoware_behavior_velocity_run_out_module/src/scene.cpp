@@ -313,8 +313,8 @@ std::optional<DynamicObstacle> RunOutModule::findNearestCollisionObstacle(
 float RunOutModule::calcCollisionPositionOfVehicleSide(
   const geometry_msgs::msg::Point & point, const geometry_msgs::msg::Pose & base_pose) const
 {
-  const auto vehicle_front_pose = autoware_utils::calc_offset_pose(
-    base_pose, planner_param_.vehicle_param.base_to_front, 0, 0);
+  const auto vehicle_front_pose =
+    autoware_utils::calc_offset_pose(base_pose, planner_param_.vehicle_param.base_to_front, 0, 0);
   const auto longitudinal_offset_from_front =
     std::abs(autoware_utils::calc_longitudinal_deviation(vehicle_front_pose, point));
 
@@ -376,10 +376,10 @@ std::vector<DynamicObstacle> RunOutModule::excludeObstaclesOnEgoPath(
     }
     const auto object_position = o.pose.position;
     const auto closest_ego_pose = path.points.at(*idx).point.pose;
-    const auto vehicle_left_pose = autoware_utils::calc_offset_pose(
-      closest_ego_pose, 0, vehicle_with_with_margin_halved, 0);
-    const auto vehicle_right_pose = autoware_utils::calc_offset_pose(
-      closest_ego_pose, 0, -vehicle_with_with_margin_halved, 0);
+    const auto vehicle_left_pose =
+      autoware_utils::calc_offset_pose(closest_ego_pose, 0, vehicle_with_with_margin_halved, 0);
+    const auto vehicle_right_pose =
+      autoware_utils::calc_offset_pose(closest_ego_pose, 0, -vehicle_with_with_margin_halved, 0);
     const double signed_distance_from_left =
       autoware_utils::calc_lateral_deviation(vehicle_left_pose, object_position);
     const double signed_distance_from_right =

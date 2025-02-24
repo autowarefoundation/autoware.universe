@@ -20,8 +20,8 @@
 #include "autoware/signal_processing/lowpass_filter_1d.hpp"
 #include "autoware_utils/geometry/boost_polygon_utils.hpp"
 
-#include <autoware_utils/geometry/geometry.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
+#include <autoware_utils/geometry/geometry.hpp>
 
 #include <boost/geometry/algorithms/buffer.hpp>
 #include <boost/geometry/algorithms/convex_hull.hpp>
@@ -79,13 +79,11 @@ void appendObjectMarker(MarkerArray & marker_array, const geometry_msgs::msg::Po
 }
 
 void appendExtractedPolygonMarker(
-  MarkerArray & marker_array, const autoware_utils::Polygon2d & obj_poly,
-  const double obj_z)
+  MarkerArray & marker_array, const autoware_utils::Polygon2d & obj_poly, const double obj_z)
 {
   auto marker = autoware_utils::create_default_marker(
     "map", rclcpp::Clock{RCL_ROS_TIME}.now(), "extracted_polygons", marker_array.markers.size(),
-    visualization_msgs::msg::Marker::LINE_STRIP,
-    autoware_utils::create_marker_scale(0.1, 0.0, 0.0),
+    visualization_msgs::msg::Marker::LINE_STRIP, autoware_utils::create_marker_scale(0.1, 0.0, 0.0),
     autoware_utils::create_marker_color(1.0, 0.5, 0.6, 0.8));
 
   // NOTE: obj_poly.outer() has already duplicated points to close the polygon.
@@ -206,8 +204,7 @@ double calcDistanceToPath(
     const double target_yaw = tf2::getYaw(points.at(target_idx).orientation);
     const double angle_to_target_pos =
       autoware_utils::calc_azimuth_angle(points.at(target_idx).position, target_pos);
-    const double diff_yaw =
-      autoware_utils::normalize_radian(angle_to_target_pos - target_yaw);
+    const double diff_yaw = autoware_utils::normalize_radian(angle_to_target_pos - target_yaw);
 
     if (
       (target_idx == 0 && (diff_yaw < -M_PI_2 || M_PI_2 < diff_yaw)) ||
@@ -224,10 +221,9 @@ bool isLeft(
   const geometry_msgs::msg::Point & target_pos, const size_t target_idx)
 {
   const double target_yaw = tf2::getYaw(path_points.at(target_idx).point.pose.orientation);
-  const double angle_to_target_pos = autoware_utils::calc_azimuth_angle(
-    path_points.at(target_idx).point.pose.position, target_pos);
-  const double diff_yaw =
-    autoware_utils::normalize_radian(angle_to_target_pos - target_yaw);
+  const double angle_to_target_pos =
+    autoware_utils::calc_azimuth_angle(path_points.at(target_idx).point.pose.position, target_pos);
+  const double diff_yaw = autoware_utils::normalize_radian(angle_to_target_pos - target_yaw);
 
   if (0 < diff_yaw) {
     return true;
@@ -315,10 +311,8 @@ size_t getNearestIndexFromSegmentIndex(
   const std::vector<geometry_msgs::msg::Pose> & points, const size_t seg_idx,
   const geometry_msgs::msg::Point & target_pos)
 {
-  const double first_dist =
-    autoware_utils::calc_distance2d(points.at(seg_idx), target_pos);
-  const double second_dist =
-    autoware_utils::calc_distance2d(points.at(seg_idx + 1), target_pos);
+  const double first_dist = autoware_utils::calc_distance2d(points.at(seg_idx), target_pos);
+  const double second_dist = autoware_utils::calc_distance2d(points.at(seg_idx + 1), target_pos);
   if (first_dist < second_dist) {
     return seg_idx;
   }
@@ -1716,8 +1710,8 @@ DynamicObstacleAvoidanceModule::calcEgoPathBasedDynamicObstaclePolygon(
     // Check if the object polygon intersects with the ego_lat_feasible_path.
     if (intersect_result) {
       const auto & [bound_seg_idx, intersect_point] = *intersect_result;
-      const double lon_offset = autoware_utils::calc_distance2d(
-        obj_inner_bound_poses.at(bound_seg_idx), intersect_point);
+      const double lon_offset =
+        autoware_utils::calc_distance2d(obj_inner_bound_poses.at(bound_seg_idx), intersect_point);
 
       const auto obj_inner_bound_start_idx_opt =
         autoware::motion_utils::insertTargetPoint(bound_seg_idx, lon_offset, obj_inner_bound_poses);
@@ -1901,15 +1895,14 @@ DynamicObstacleAvoidanceModule::calcEgoPathReservePoly(const PathWithLaneId & eg
 
   autoware_utils::LineString2d ego_path_lines;
   for (const auto & path_point : ego_path.points) {
-    ego_path_lines.push_back(
-      autoware_utils::from_msg(path_point.point.pose.position).to_2d());
+    ego_path_lines.push_back(autoware_utils::from_msg(path_point.point.pose.position).to_2d());
   }
 
-  auto calcReservePoly = [&ego_path_lines](
-                           const strategy::distance_asymmetric<double> path_expand_strategy,
-                           const strategy::distance_asymmetric<double> steer_expand_strategy,
-                           const std::vector<geometry_msgs::msg::Point> & outer_body_path)
-    -> autoware_utils::Polygon2d {
+  auto calcReservePoly =
+    [&ego_path_lines](
+      const strategy::distance_asymmetric<double> path_expand_strategy,
+      const strategy::distance_asymmetric<double> steer_expand_strategy,
+      const std::vector<geometry_msgs::msg::Point> & outer_body_path) -> autoware_utils::Polygon2d {
     // reserve area based on the reference path
     autoware_utils::MultiPolygon2d path_poly;
     boost::geometry::buffer(

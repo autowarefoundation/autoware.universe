@@ -581,8 +581,7 @@ bool ObstacleStopModule::is_inside_stop_obstacle_velocity(
 {
   const bool is_prev_object_stop =
     utils::get_obstacle_from_uuid(
-      prev_stop_obstacles_,
-      autoware_utils::to_hex_string(object->predicted_object.object_id))
+      prev_stop_obstacles_, autoware_utils::to_hex_string(object->predicted_object.object_id))
       .has_value();
 
   if (is_prev_object_stop) {
@@ -664,8 +663,7 @@ std::optional<StopObstacle> ObstacleStopModule::filter_outside_stop_obstacle_for
 {
   autoware_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
-  const auto & object_id =
-    autoware_utils::to_hex_string(object->predicted_object.object_id);
+  const auto & object_id = autoware_utils::to_hex_string(object->predicted_object.object_id);
 
   // 1. filter by label
   const uint8_t obj_label = object->predicted_object.classification.at(0).label;
@@ -770,8 +768,7 @@ ObstacleStopModule::create_collision_point_for_outside_stop_obstacle(
   const bool is_driving_forward, const VehicleInfo & vehicle_info, const double dist_to_bumper,
   const double decimate_trajectory_step_length) const
 {
-  const auto & object_id =
-    autoware_utils::to_hex_string(object->predicted_object.object_id);
+  const auto & object_id = autoware_utils::to_hex_string(object->predicted_object.object_id);
 
   std::vector<size_t> collision_index;
   const auto collision_points = polygon_utils::get_collision_points(
@@ -1264,8 +1261,7 @@ double ObstacleStopModule::calc_margin_from_obstacle_on_curve(
       return boost::geometry::distance(ego_straight_segment, object_polygon);
     };
   const auto resampled_short_traj_points = resample_trajectory_points(short_traj_points, 0.5);
-  const auto object_polygon =
-    autoware_utils::to_polygon2d(stop_obstacle.pose, stop_obstacle.shape);
+  const auto object_polygon = autoware_utils::to_polygon2d(stop_obstacle.pose, stop_obstacle.shape);
   const auto collision_idx = [&]() -> std::optional<size_t> {
     for (size_t i = 0; i < resampled_short_traj_points.size(); ++i) {
       const double dist_to_obj = calculate_distance_from_straight_ego_path(

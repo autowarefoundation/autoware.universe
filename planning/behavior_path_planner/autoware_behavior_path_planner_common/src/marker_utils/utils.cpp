@@ -252,7 +252,8 @@ MarkerArray createShiftGradMarkerArray(
     std::ostringstream string_stream;
     string_stream << "Grad:" << grad.at(i);
     marker.text = string_stream.str();
-    marker.pose = calc_offset_pose(reference.points.at(i).point.pose, 0.0, shift_distance.at(i), 0.0);
+    marker.pose =
+      calc_offset_pose(reference.points.at(i).point.pose, 0.0, shift_distance.at(i), 0.0);
     marker.id = i;
 
     msg.markers.push_back(marker);
@@ -354,7 +355,8 @@ MarkerArray createDrivableLanesMarkerArray(
     [&ns, &i](const auto & lanelet, const auto r, const auto g, const auto b) {
       auto marker = create_default_marker(
         "map", rclcpp::Clock{RCL_ROS_TIME}.now(), ns, bitShift(lanelet.id()) + i++,
-        Marker::LINE_STRIP, create_marker_scale(0.1, 0.0, 0.0), create_marker_color(r, g, b, 0.999));
+        Marker::LINE_STRIP, create_marker_scale(0.1, 0.0, 0.0),
+        create_marker_color(r, g, b, 0.999));
 
       if (lanelet.polygon3d().empty()) {
         return marker;
@@ -431,14 +433,17 @@ MarkerArray showPolygon(const CollisionCheckDebugMap & obj_debug_vec, std::strin
   const auto now = rclcpp::Clock{RCL_ROS_TIME}.now();
 
   constexpr float line_scale_val{0.2};
-  const auto line_marker_scale = create_marker_scale(line_scale_val, line_scale_val, line_scale_val);
+  const auto line_marker_scale =
+    create_marker_scale(line_scale_val, line_scale_val, line_scale_val);
 
   auto default_line_marker = [&](const auto & color = colors::green()) {
-    return create_default_marker("map", now, ns, ++id, Marker::LINE_STRIP, line_marker_scale, color);
+    return create_default_marker(
+      "map", now, ns, ++id, Marker::LINE_STRIP, line_marker_scale, color);
   };
 
   constexpr float text_scale_val{1.5};
-  const auto text_marker_scale = create_marker_scale(text_scale_val, text_scale_val, text_scale_val);
+  const auto text_marker_scale =
+    create_marker_scale(text_scale_val, text_scale_val, text_scale_val);
 
   auto default_text_marker = [&]() {
     return create_default_marker(

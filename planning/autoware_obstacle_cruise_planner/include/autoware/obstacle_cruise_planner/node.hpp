@@ -173,8 +173,7 @@ private:
 
   // subscriber
   rclcpp::Subscription<Trajectory>::SharedPtr traj_sub_;
-  autoware_utils::InterProcessPollingSubscriber<Odometry> ego_odom_sub_{
-    this, "~/input/odometry"};
+  autoware_utils::InterProcessPollingSubscriber<Odometry> ego_odom_sub_{this, "~/input/odometry"};
   autoware_utils::InterProcessPollingSubscriber<PredictedObjects> objects_sub_{
     this, "~/input/objects"};
   autoware_utils::InterProcessPollingSubscriber<PointCloud2> pointcloud_sub_{

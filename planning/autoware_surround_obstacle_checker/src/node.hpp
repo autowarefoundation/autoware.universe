@@ -100,8 +100,8 @@ private:
   // publisher and subscriber
   autoware_utils::InterProcessPollingSubscriber<nav_msgs::msg::Odometry> sub_odometry_{
     this, "~/input/odometry"};
-  autoware_utils::InterProcessPollingSubscriber<sensor_msgs::msg::PointCloud2>
-    sub_pointcloud_{this, "~/input/pointcloud", autoware_utils::single_depth_sensor_qos()};
+  autoware_utils::InterProcessPollingSubscriber<sensor_msgs::msg::PointCloud2> sub_pointcloud_{
+    this, "~/input/pointcloud", autoware_utils::single_depth_sensor_qos()};
   autoware_utils::InterProcessPollingSubscriber<PredictedObjects> sub_dynamic_objects_{
     this, "~/input/objects"};
   rclcpp::Publisher<VelocityLimitClearCommand>::SharedPtr pub_clear_velocity_limit_;

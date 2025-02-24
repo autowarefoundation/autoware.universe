@@ -18,10 +18,10 @@
 #include <autoware/behavior_path_planner_common/utils/utils.hpp>
 #include <autoware/interpolation/spline_interpolation.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
-#include <autoware_utils/geometry/geometry.hpp>
-#include <autoware_utils/math/unit_conversion.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
+#include <autoware_utils/geometry/geometry.hpp>
+#include <autoware_utils/math/unit_conversion.hpp>
 
 #include <boost/geometry/algorithms/within.hpp>
 
@@ -34,12 +34,12 @@
 #include <utility>
 #include <vector>
 
+using autoware_internal_planning_msgs::msg::PathWithLaneId;
 using autoware_utils::calc_distance2d;
 using autoware_utils::calc_offset_pose;
 using autoware_utils::inverse_transform_point;
 using autoware_utils::normalize_radian;
 using autoware_utils::transform_pose;
-using autoware_internal_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using lanelet::utils::getArcCoordinates;

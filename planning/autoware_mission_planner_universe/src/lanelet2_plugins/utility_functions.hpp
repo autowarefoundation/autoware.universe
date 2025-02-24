@@ -44,8 +44,7 @@ bool exists(const std::vector<T> & vectors, const T & item)
   return false;
 }
 
-autoware_utils::Polygon2d convert_linear_ring_to_polygon(
-  autoware_utils::LinearRing2d footprint);
+autoware_utils::Polygon2d convert_linear_ring_to_polygon(autoware_utils::LinearRing2d footprint);
 void insert_marker_array(
   visualization_msgs::msg::MarkerArray * a1, const visualization_msgs::msg::MarkerArray & a2);
 

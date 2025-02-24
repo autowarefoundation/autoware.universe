@@ -32,12 +32,12 @@
 #include <autoware/motion_utils/trajectory/interpolation.hpp>
 #include <autoware/motion_utils/trajectory/path_with_lane_id.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
-#include <autoware_utils/geometry/boost_polygon_utils.hpp>
-#include <autoware_utils/geometry/geometry.hpp>
-#include <autoware_utils/system/stop_watch.hpp>
 #include <autoware_frenet_planner/frenet_planner.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
+#include <autoware_utils/geometry/boost_polygon_utils.hpp>
+#include <autoware_utils/geometry/geometry.hpp>
+#include <autoware_utils/system/stop_watch.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info.hpp>
 #include <range/v3/action/remove_if.hpp>
 #include <range/v3/algorithm.hpp>
@@ -70,12 +70,12 @@
 namespace autoware::behavior_path_planner::utils::lane_change
 {
 using autoware::route_handler::RouteHandler;
-using autoware_utils::LineString2d;
-using autoware_utils::Point2d;
-using autoware_utils::Polygon2d;
 using autoware_internal_planning_msgs::msg::PathWithLaneId;
 using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::PredictedObjects;
+using autoware_utils::LineString2d;
+using autoware_utils::Point2d;
+using autoware_utils::Polygon2d;
 using behavior_path_planner::lane_change::PathType;
 using geometry_msgs::msg::Pose;
 
@@ -713,8 +713,7 @@ bool is_ahead_of_ego(
   const auto & current_footprint = common_data_ptr->transient_data.current_footprint.outer();
   auto ego_min_dist_to_end = std::numeric_limits<double>::max();
   for (const auto & ego_edge_point : current_footprint) {
-    const auto ego_edge =
-      autoware_utils::create_point(ego_edge_point.x(), ego_edge_point.y(), 0.0);
+    const auto ego_edge = autoware_utils::create_point(ego_edge_point.x(), ego_edge_point.y(), 0.0);
     const auto dist_to_end = autoware::motion_utils::calcSignedArcLength(
       path.points, ego_edge, path.points.back().point.pose.position);
     ego_min_dist_to_end = std::min(dist_to_end, ego_min_dist_to_end);

@@ -38,7 +38,8 @@ OcclusionSpotModuleManager::OcclusionSpotModuleManager(rclcpp::Node & node)
   auto & pp = planner_param_;
   // for detection type
   {
-    const std::string method = get_or_declare_parameter<std::string>(node, ns + ".detection_method");
+    const std::string method =
+      get_or_declare_parameter<std::string>(node, ns + ".detection_method");
     if (method == "occupancy_grid") {  // module id 0
       pp.detection_method = DETECTION_METHOD::OCCUPANCY_GRID;
       module_id_ = DETECTION_METHOD::OCCUPANCY_GRID;
@@ -80,18 +81,22 @@ OcclusionSpotModuleManager::OcclusionSpotModuleManager(rclcpp::Node & node)
     get_or_declare_parameter<double>(node, ns + ".threshold.detection_area_offset");
   pp.detection_area_length =
     get_or_declare_parameter<double>(node, ns + ".threshold.detection_area_length");
-  pp.stuck_vehicle_vel = get_or_declare_parameter<double>(node, ns + ".threshold.stuck_vehicle_vel");
-  pp.lateral_distance_thr = get_or_declare_parameter<double>(node, ns + ".threshold.lateral_distance");
+  pp.stuck_vehicle_vel =
+    get_or_declare_parameter<double>(node, ns + ".threshold.stuck_vehicle_vel");
+  pp.lateral_distance_thr =
+    get_or_declare_parameter<double>(node, ns + ".threshold.lateral_distance");
   pp.dist_thr = get_or_declare_parameter<double>(node, ns + ".threshold.search_dist");
   pp.angle_thr = get_or_declare_parameter<double>(node, ns + ".threshold.search_angle");
 
   // ego additional velocity config
   pp.v.safety_ratio = get_or_declare_parameter<double>(node, ns + ".motion.safety_ratio");
   pp.v.safe_margin = get_or_declare_parameter<double>(node, ns + ".motion.safe_margin");
-  pp.v.max_slow_down_jerk = get_or_declare_parameter<double>(node, ns + ".motion.max_slow_down_jerk");
+  pp.v.max_slow_down_jerk =
+    get_or_declare_parameter<double>(node, ns + ".motion.max_slow_down_jerk");
   pp.v.max_slow_down_accel =
     get_or_declare_parameter<double>(node, ns + ".motion.max_slow_down_accel");
-  pp.v.non_effective_jerk = get_or_declare_parameter<double>(node, ns + ".motion.non_effective_jerk");
+  pp.v.non_effective_jerk =
+    get_or_declare_parameter<double>(node, ns + ".motion.non_effective_jerk");
   pp.v.non_effective_accel =
     get_or_declare_parameter<double>(node, ns + ".motion.non_effective_acceleration");
   pp.v.min_allowed_velocity =

@@ -41,8 +41,8 @@ namespace autoware::behavior_velocity_planner
 {
 
 using autoware::rtc_interface::RTCInterface;
-using autoware_utils::get_or_declare_parameter;
 using autoware_internal_planning_msgs::msg::PathWithLaneId;
+using autoware_utils::get_or_declare_parameter;
 using builtin_interfaces::msg::Time;
 using tier4_rtc_msgs::msg::Module;
 using tier4_rtc_msgs::msg::State;

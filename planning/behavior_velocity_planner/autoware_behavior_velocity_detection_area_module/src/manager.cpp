@@ -15,8 +15,8 @@
 #include "manager.hpp"
 
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
-#include <autoware_utils/ros/parameter.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
+#include <autoware_utils/ros/parameter.hpp>
 
 #include <tf2/utils.h>
 
@@ -39,10 +39,12 @@ DetectionAreaModuleManager::DetectionAreaModuleManager(rclcpp::Node & node)
   const std::string ns(DetectionAreaModuleManager::getModuleName());
   planner_param_.stop_margin = get_or_declare_parameter<double>(node, ns + ".stop_margin");
   planner_param_.use_dead_line = get_or_declare_parameter<bool>(node, ns + ".use_dead_line");
-  planner_param_.dead_line_margin = get_or_declare_parameter<double>(node, ns + ".dead_line_margin");
+  planner_param_.dead_line_margin =
+    get_or_declare_parameter<double>(node, ns + ".dead_line_margin");
   planner_param_.use_pass_judge_line =
     get_or_declare_parameter<bool>(node, ns + ".use_pass_judge_line");
-  planner_param_.state_clear_time = get_or_declare_parameter<double>(node, ns + ".state_clear_time");
+  planner_param_.state_clear_time =
+    get_or_declare_parameter<double>(node, ns + ".state_clear_time");
   planner_param_.hold_stop_margin_distance =
     get_or_declare_parameter<double>(node, ns + ".hold_stop_margin_distance");
   planner_param_.distance_to_judge_over_stop_line =

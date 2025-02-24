@@ -20,8 +20,8 @@
 #include <autoware/behavior_velocity_planner_common/utilization/path_utilization.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
-#include <autoware_utils/geometry/geometry.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
+#include <autoware_utils/geometry/geometry.hpp>
 
 #include <boost/geometry/algorithms/correct.hpp>
 #include <boost/geometry/algorithms/intersects.hpp>
@@ -147,8 +147,8 @@ std::optional<size_t> getFirstPointInsidePolygonByFootprint(
   const auto area_2d = lanelet::utils::to2D(polygon).basicPolygon();
   for (auto i = start; i <= lane_end; ++i) {
     const auto & base_pose = path_ip.points.at(i).point.pose;
-    const auto path_footprint = autoware_utils::transform_vector(
-      footprint, autoware_utils::pose2transform(base_pose));
+    const auto path_footprint =
+      autoware_utils::transform_vector(footprint, autoware_utils::pose2transform(base_pose));
     if (bg::intersects(path_footprint, area_2d)) {
       return std::make_optional<size_t>(i);
     }
@@ -171,8 +171,8 @@ getFirstPointInsidePolygonsByFootprint(
 
   for (size_t i = start; i <= lane_end; ++i) {
     const auto & pose = path_ip.points.at(i).point.pose;
-    const auto path_footprint = autoware_utils::transform_vector(
-      footprint, autoware_utils::pose2transform(pose));
+    const auto path_footprint =
+      autoware_utils::transform_vector(footprint, autoware_utils::pose2transform(pose));
     for (size_t j = 0; j < polygons.size(); ++j) {
       const auto area_2d = lanelet::utils::to2D(polygons.at(j)).basicPolygon();
       const bool is_in_polygon = bg::intersects(area_2d, path_footprint);

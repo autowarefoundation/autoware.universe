@@ -61,7 +61,8 @@ void DynamicObstacleStopModule::init(rclcpp::Node & node, const std::string & mo
   using autoware_utils::get_or_declare_parameter;
   auto & p = params_;
   p.extra_object_width = get_or_declare_parameter<double>(node, ns_ + ".extra_object_width");
-  p.minimum_object_velocity = get_or_declare_parameter<double>(node, ns_ + ".minimum_object_velocity");
+  p.minimum_object_velocity =
+    get_or_declare_parameter<double>(node, ns_ + ".minimum_object_velocity");
   p.stop_distance_buffer = get_or_declare_parameter<double>(node, ns_ + ".stop_distance_buffer");
   p.time_horizon = get_or_declare_parameter<double>(node, ns_ + ".time_horizon");
   p.hysteresis = get_or_declare_parameter<double>(node, ns_ + ".hysteresis");

@@ -42,8 +42,7 @@ geometry_msgs::msg::Quaternion createQuaternionFacingToTrajectory(
   const auto nearest_idx = autoware::motion_utils::findNearestIndex(path_points, point);
   const auto & nearest_pose = path_points.at(nearest_idx).point.pose;
 
-  const auto longitudinal_offset =
-    autoware_utils::calc_longitudinal_deviation(nearest_pose, point);
+  const auto longitudinal_offset = autoware_utils::calc_longitudinal_deviation(nearest_pose, point);
   const auto vertical_point =
     autoware_utils::calc_offset_pose(nearest_pose, longitudinal_offset, 0, 0).position;
   const auto azimuth_angle = autoware_utils::calc_azimuth_angle(point, vertical_point);
@@ -60,8 +59,7 @@ std::vector<geometry_msgs::msg::Pose> createPredictedPath(
   std::vector<geometry_msgs::msg::Pose> path_points;
   for (size_t i = 0; i < path_size; i++) {
     const float travel_dist = max_velocity_mps * time_step * i;
-    const auto predicted_pose =
-      autoware_utils::calc_offset_pose(initial_pose, travel_dist, 0, 0);
+    const auto predicted_pose = autoware_utils::calc_offset_pose(initial_pose, travel_dist, 0, 0);
     path_points.emplace_back(predicted_pose);
   }
 
@@ -464,8 +462,7 @@ std::vector<DynamicObstacle> DynamicObstacleCreatorForPoints::createDynamicObsta
     DynamicObstacle dynamic_obstacle;
 
     // create pose facing the direction of the lane
-    dynamic_obstacle.pose.position =
-      autoware_utils::create_point(point.x, point.y, point.z);
+    dynamic_obstacle.pose.position = autoware_utils::create_point(point.x, point.y, point.z);
     dynamic_obstacle.pose.orientation = createQuaternionFacingToTrajectory(
       dynamic_obstacle_data_.path.points, dynamic_obstacle.pose.position);
 

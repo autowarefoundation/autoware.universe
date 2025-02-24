@@ -18,9 +18,9 @@
 #include "autoware/behavior_velocity_crosswalk_module/util.hpp"
 
 #include <autoware/behavior_velocity_rtc_interface/scene_module_interface_with_rtc.hpp>
+#include <autoware_lanelet2_extension/regulatory_elements/crosswalk.hpp>
 #include <autoware_utils/geometry/boost_geometry.hpp>
 #include <autoware_utils/system/stop_watch.hpp>
-#include <autoware_lanelet2_extension/regulatory_elements/crosswalk.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_internal_debug_msgs/msg/string_stamped.hpp>
@@ -50,13 +50,13 @@
 namespace autoware::behavior_velocity_planner
 {
 namespace bg = boost::geometry;
-using autoware_utils::Polygon2d;
-using autoware_utils::StopWatch;
 using autoware_internal_planning_msgs::msg::PathWithLaneId;
 using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::TrafficLightElement;
+using autoware_utils::Polygon2d;
+using autoware_utils::StopWatch;
 using lanelet::autoware::Crosswalk;
 
 namespace
@@ -295,8 +295,7 @@ public:
 
       const bool is_object_away_from_path =
         !attention_area.outer().empty() &&
-        boost::geometry::distance(
-          autoware_utils::from_msg(position).to_2d(), attention_area) > 0.5;
+        boost::geometry::distance(autoware_utils::from_msg(position).to_2d(), attention_area) > 0.5;
 
       // add new object
       if (objects.count(uuid) == 0) {

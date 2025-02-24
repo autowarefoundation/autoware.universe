@@ -227,8 +227,7 @@ std::pair<double, size_t> calcMaxRelativeAngles(const Trajectory & trajectory)
     const auto angle_b = autoware_utils::calc_azimuth_angle(p2, p3);
 
     // convert relative angle to [-pi ~ pi]
-    const auto relative_angle =
-      std::abs(autoware_utils::normalize_radian(angle_b - angle_a));
+    const auto relative_angle = std::abs(autoware_utils::normalize_radian(angle_b - angle_a));
 
     takeBigger(max_relative_angles, max_index, std::abs(relative_angle), i);
   }

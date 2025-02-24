@@ -42,10 +42,10 @@ namespace autoware::motion_planning
 using autoware::motion_utils::calcDecelDistWithJerkAndAccConstraints;
 using autoware::motion_utils::findFirstNearestIndexWithSoftConstraints;
 using autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints;
-using autoware_utils::calc_distance2d;
-using autoware_utils::get_rpy;
 using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
+using autoware_utils::calc_distance2d;
+using autoware_utils::get_rpy;
 
 std::optional<std::pair<double, double>> calcFeasibleMarginAndVelocity(
   const SlowDownParam & slow_down_param, const double dist_baselink_to_obstacle,
@@ -334,40 +334,35 @@ void createOneStepPolygon(
   {  // base step
     appendPointToPolygon(
       polygon,
-      autoware_utils::calc_offset_pose(base_step_pose, longitudinal_offset, width, 0.0)
-        .position);
+      autoware_utils::calc_offset_pose(base_step_pose, longitudinal_offset, width, 0.0).position);
     appendPointToPolygon(
       polygon,
-      autoware_utils::calc_offset_pose(base_step_pose, longitudinal_offset, -width, 0.0)
-        .position);
+      autoware_utils::calc_offset_pose(base_step_pose, longitudinal_offset, -width, 0.0).position);
     appendPointToPolygon(
-      polygon, autoware_utils::calc_offset_pose(base_step_pose, -rear_overhang, -width, 0.0)
-                 .position);
+      polygon,
+      autoware_utils::calc_offset_pose(base_step_pose, -rear_overhang, -width, 0.0).position);
     appendPointToPolygon(
-      polygon, autoware_utils::calc_offset_pose(base_step_pose, -rear_overhang, width, 0.0)
-                 .position);
+      polygon,
+      autoware_utils::calc_offset_pose(base_step_pose, -rear_overhang, width, 0.0).position);
   }
 
   {  // next step
     appendPointToPolygon(
       polygon,
-      autoware_utils::calc_offset_pose(next_step_pose, longitudinal_offset, width, 0.0)
-        .position);
+      autoware_utils::calc_offset_pose(next_step_pose, longitudinal_offset, width, 0.0).position);
     appendPointToPolygon(
       polygon,
-      autoware_utils::calc_offset_pose(next_step_pose, longitudinal_offset, -width, 0.0)
-        .position);
+      autoware_utils::calc_offset_pose(next_step_pose, longitudinal_offset, -width, 0.0).position);
     appendPointToPolygon(
-      polygon, autoware_utils::calc_offset_pose(next_step_pose, -rear_overhang, -width, 0.0)
-                 .position);
+      polygon,
+      autoware_utils::calc_offset_pose(next_step_pose, -rear_overhang, -width, 0.0).position);
     appendPointToPolygon(
-      polygon, autoware_utils::calc_offset_pose(next_step_pose, -rear_overhang, width, 0.0)
-                 .position);
+      polygon,
+      autoware_utils::calc_offset_pose(next_step_pose, -rear_overhang, width, 0.0).position);
   }
 
-  polygon = autoware_utils::is_clockwise(polygon)
-              ? polygon
-              : autoware_utils::inverse_clockwise(polygon);
+  polygon =
+    autoware_utils::is_clockwise(polygon) ? polygon : autoware_utils::inverse_clockwise(polygon);
 
   boost::geometry::convex_hull(polygon, hull_polygon);
 }

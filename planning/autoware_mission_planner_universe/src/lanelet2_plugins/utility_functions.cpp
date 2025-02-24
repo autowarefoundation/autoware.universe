@@ -27,8 +27,7 @@
 
 namespace autoware::mission_planner_universe::lanelet2
 {
-autoware_utils::Polygon2d convert_linear_ring_to_polygon(
-  autoware_utils::LinearRing2d footprint)
+autoware_utils::Polygon2d convert_linear_ring_to_polygon(autoware_utils::LinearRing2d footprint)
 {
   autoware_utils::Polygon2d footprint_polygon;
   boost::geometry::append(footprint_polygon.outer(), footprint[0]);

@@ -98,7 +98,8 @@ void OutOfLaneModule::init_parameters(rclcpp::Node & node)
   pp.min_decision_duration = get_or_declare_parameter<double>(node, ns_ + ".action.min_duration");
   pp.lon_dist_buffer =
     get_or_declare_parameter<double>(node, ns_ + ".action.longitudinal_distance_buffer");
-  pp.lat_dist_buffer = get_or_declare_parameter<double>(node, ns_ + ".action.lateral_distance_buffer");
+  pp.lat_dist_buffer =
+    get_or_declare_parameter<double>(node, ns_ + ".action.lateral_distance_buffer");
   pp.slow_velocity = get_or_declare_parameter<double>(node, ns_ + ".action.slowdown.velocity");
   pp.stop_dist_threshold =
     get_or_declare_parameter<double>(node, ns_ + ".action.stop.distance_threshold");

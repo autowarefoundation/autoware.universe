@@ -36,10 +36,10 @@ void SceneModuleManagerInterface::initInterface(
       config_.enable_rtc = get_or_declare_parameter<bool>(*node, ns + "enable_rtc");
     }
 
-    config_.enable_simultaneous_execution_as_approved_module =
-      get_or_declare_parameter<bool>(*node, ns + "enable_simultaneous_execution_as_approved_module");
-    config_.enable_simultaneous_execution_as_candidate_module =
-      get_or_declare_parameter<bool>(*node, ns + "enable_simultaneous_execution_as_candidate_module");
+    config_.enable_simultaneous_execution_as_approved_module = get_or_declare_parameter<bool>(
+      *node, ns + "enable_simultaneous_execution_as_approved_module");
+    config_.enable_simultaneous_execution_as_candidate_module = get_or_declare_parameter<bool>(
+      *node, ns + "enable_simultaneous_execution_as_candidate_module");
   }
 
   // init rtc configuration

@@ -66,8 +66,7 @@ class RouteSelector : public rclcpp::Node
 {
 public:
   explicit RouteSelector(const rclcpp::NodeOptions & options);
-  void publish_processing_time(
-    autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch);
+  void publish_processing_time(autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch);
 
 private:
   using WaypointRequest = SetWaypointRoute::Request::SharedPtr;

@@ -106,8 +106,7 @@ PathOptimizer::PathOptimizer(const rclcpp::NodeOptions & node_options)
   debug_calculation_time_float_pub_ =
     create_publisher<Float64Stamped>("~/debug/processing_time_ms", 1);
   debug_processing_time_detail_pub_ =
-    create_publisher<autoware_utils::ProcessingTimeDetail>(
-      "~/debug/processing_time_detail_ms", 1);
+    create_publisher<autoware_utils::ProcessingTimeDetail>("~/debug/processing_time_detail_ms", 1);
 
   {  // parameters
     // parameter for option
@@ -137,8 +136,7 @@ PathOptimizer::PathOptimizer(const rclcpp::NodeOptions & node_options)
     traj_param_ = TrajectoryParam(this);
   }
 
-  time_keeper_ =
-    std::make_shared<autoware_utils::TimeKeeper>(debug_processing_time_detail_pub_);
+  time_keeper_ = std::make_shared<autoware_utils::TimeKeeper>(debug_processing_time_detail_pub_);
 
   // create core algorithm pointers with parameter declaration
   replan_checker_ptr_ = std::make_shared<ReplanChecker>(this, ego_nearest_param_);
@@ -158,8 +156,7 @@ PathOptimizer::PathOptimizer(const rclcpp::NodeOptions & node_options)
     std::bind(&PathOptimizer::onParam, this, std::placeholders::_1));
 
   logger_configure_ = std::make_unique<autoware_utils::LoggerLevelConfigure>(this);
-  published_time_publisher_ =
-    std::make_unique<autoware_utils::PublishedTimePublisher>(this);
+  published_time_publisher_ = std::make_unique<autoware_utils::PublishedTimePublisher>(this);
 }
 
 rcl_interfaces::msg::SetParametersResult PathOptimizer::onParam(

@@ -25,11 +25,11 @@
 #include <autoware/behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp>
 #include <autoware/behavior_path_planner_common/utils/path_utils.hpp>
 #include <autoware/route_handler/route_handler.hpp>
-#include <autoware_utils/geometry/boost_geometry.hpp>
 #include <autoware_lanelet2_extension/io/autoware_osm_parser.hpp>
 #include <autoware_lanelet2_extension/projection/mgrs_projector.hpp>
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <autoware_test_utils/mock_data_parser.hpp>
+#include <autoware_utils/geometry/boost_geometry.hpp>
 
 #include <autoware_internal_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
@@ -138,8 +138,7 @@ void plot_goal_candidate(
 void plot_goal_candidates(
   matplotlibcpp17::axes::Axes & axes, const GoalCandidates & goals,
   const std::map<size_t, size_t> & goal_id2prio,
-  const autoware_utils::LinearRing2d & local_footprint,
-  const std::string & color = "green")
+  const autoware_utils::LinearRing2d & local_footprint, const std::string & color = "green")
 {
   for (const auto & goal : goals) {
     const auto it = goal_id2prio.find(goal.id);
@@ -676,8 +675,8 @@ int main(int argc, char ** argv)
       plot_goal_candidate(ax1, filtered_path.modified_goal(), prio, footprint, color);
       plot_path_with_lane_id(ax2, filtered_path.full_path(), color, "most prio", 2.0);
       for (const auto & path_point : filtered_path.full_path().points) {
-        const auto pose_footprint = transformVector(
-          footprint, autoware_utils::pose2transform(path_point.point.pose));
+        const auto pose_footprint =
+          transformVector(footprint, autoware_utils::pose2transform(path_point.point.pose));
         plot_footprint(ax2, pose_footprint, "blue");
       }
     } else if (i % 50 == 0) {

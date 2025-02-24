@@ -416,8 +416,7 @@ double PlannerInterface::calculateMarginFromObstacleOnCurve(
       return boost::geometry::distance(ego_straight_segment, object_polygon);
     };
   const auto resampled_short_traj_points = resampleTrajectoryPoints(short_traj_points, 0.5);
-  const auto object_polygon =
-    autoware_utils::to_polygon2d(stop_obstacle.pose, stop_obstacle.shape);
+  const auto object_polygon = autoware_utils::to_polygon2d(stop_obstacle.pose, stop_obstacle.shape);
   const auto collision_idx = [&]() -> std::optional<size_t> {
     for (size_t i = 0; i < resampled_short_traj_points.size(); ++i) {
       const double dist_to_obj = calculate_distance_from_straight_ego_path(
@@ -605,15 +604,13 @@ std::vector<TrajectoryPoint> PlannerInterface::generateSlowDownTrajectory(
       const auto markers = autoware::motion_utils::createSlowDownVirtualWallMarker(
         slow_down_traj_points.at(*slow_down_start_idx).pose, "obstacle slow down start",
         planner_data.current_time, i * 2, abs_ego_offset, "", planner_data.is_driving_forward);
-      autoware_utils::append_marker_array(
-        markers, &debug_data_ptr_->slow_down_debug_wall_marker);
+      autoware_utils::append_marker_array(markers, &debug_data_ptr_->slow_down_debug_wall_marker);
     }
     if (slow_down_end_idx) {
       const auto markers = autoware::motion_utils::createSlowDownVirtualWallMarker(
         slow_down_traj_points.at(*slow_down_end_idx).pose, "obstacle slow down end",
         planner_data.current_time, i * 2 + 1, abs_ego_offset, "", planner_data.is_driving_forward);
-      autoware_utils::append_marker_array(
-        markers, &debug_data_ptr_->slow_down_debug_wall_marker);
+      autoware_utils::append_marker_array(markers, &debug_data_ptr_->slow_down_debug_wall_marker);
     }
 
     // Add debug data

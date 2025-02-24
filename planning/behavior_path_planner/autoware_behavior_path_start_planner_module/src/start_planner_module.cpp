@@ -271,8 +271,7 @@ bool StartPlannerModule::hasFinishedBackwardDriving() const
 {
   // check ego car is close enough to pull out start pose and stopped
   const auto current_pose = planner_data_->self_odometry->pose.pose;
-  const auto distance =
-    autoware_utils::calc_distance2d(current_pose, status_.pull_out_start_pose);
+  const auto distance = autoware_utils::calc_distance2d(current_pose, status_.pull_out_start_pose);
 
   const bool is_near = distance < parameters_->th_arrived_distance;
   const double ego_vel = utils::l2Norm(planner_data_->self_odometry->twist.twist.linear);
@@ -1186,7 +1185,8 @@ PathWithLaneId StartPlannerModule::calcBackwardPathFromStartPose() const
 
   // shift all path points laterally to align with the start pose
   for (auto & path_point : path.points) {
-    path_point.point.pose = calc_offset_pose(path_point.point.pose, 0, arc_position_pose.distance, 0);
+    path_point.point.pose =
+      calc_offset_pose(path_point.point.pose, 0, arc_position_pose.distance, 0);
   }
 
   return path;
@@ -1332,8 +1332,8 @@ bool StartPlannerModule::hasFinishedCurrentPath()
   const auto current_path = getCurrentPath();
   const auto current_path_end = current_path.points.back();
   const auto self_pose = planner_data_->self_odometry->pose.pose;
-  const bool is_near_target = autoware_utils::calc_distance2d(
-                                current_path_end, self_pose) < parameters_->th_arrived_distance;
+  const bool is_near_target =
+    autoware_utils::calc_distance2d(current_path_end, self_pose) < parameters_->th_arrived_distance;
 
   return is_near_target && isStopped();
 }

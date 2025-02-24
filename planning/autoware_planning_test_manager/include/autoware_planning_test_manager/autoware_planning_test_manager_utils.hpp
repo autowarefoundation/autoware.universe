@@ -15,8 +15,8 @@
 #ifndef AUTOWARE_PLANNING_TEST_MANAGER__AUTOWARE_PLANNING_TEST_MANAGER_UTILS_HPP_
 #define AUTOWARE_PLANNING_TEST_MANAGER__AUTOWARE_PLANNING_TEST_MANAGER_UTILS_HPP_
 #include <autoware/route_handler/route_handler.hpp>
-#include <autoware_utils/geometry/geometry.hpp>
 #include <autoware_test_utils/autoware_test_utils.hpp>
+#include <autoware_utils/geometry/geometry.hpp>
 
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <geometry_msgs/msg/pose.hpp>

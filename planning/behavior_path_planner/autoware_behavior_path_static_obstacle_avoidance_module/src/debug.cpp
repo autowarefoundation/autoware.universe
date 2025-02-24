@@ -530,8 +530,8 @@ MarkerArray createDrivableBounds(
   // right bound
   {
     auto marker = create_default_marker(
-      "map", current_time, ns + "_right", 0L, Marker::LINE_STRIP, create_marker_scale(0.4, 0.0, 0.0),
-      create_marker_color(r, g, b, 0.999));
+      "map", current_time, ns + "_right", 0L, Marker::LINE_STRIP,
+      create_marker_scale(0.4, 0.0, 0.0), create_marker_color(r, g, b, 0.999));
 
     for (const auto & p : data.right_bound) {
       marker.points.push_back(p);

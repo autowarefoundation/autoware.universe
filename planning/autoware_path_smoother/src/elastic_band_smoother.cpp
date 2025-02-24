@@ -109,8 +109,7 @@ ElasticBandSmoother::ElasticBandSmoother(const rclcpp::NodeOptions & node_option
     std::bind(&ElasticBandSmoother::onParam, this, std::placeholders::_1));
 
   logger_configure_ = std::make_unique<autoware_utils::LoggerLevelConfigure>(this);
-  published_time_publisher_ =
-    std::make_unique<autoware_utils::PublishedTimePublisher>(this);
+  published_time_publisher_ = std::make_unique<autoware_utils::PublishedTimePublisher>(this);
 }
 
 rcl_interfaces::msg::SetParametersResult ElasticBandSmoother::onParam(

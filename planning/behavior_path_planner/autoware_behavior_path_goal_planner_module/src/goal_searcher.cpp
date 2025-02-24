@@ -17,12 +17,12 @@
 #include "autoware/behavior_path_goal_planner_module/util.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_utils.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
-#include "autoware_utils/geometry/boost_polygon_utils.hpp"
 #include "autoware_lanelet2_extension/regulatory_elements/bus_stop_area.hpp"
 #include "autoware_lanelet2_extension/regulatory_elements/no_parking_area.hpp"
 #include "autoware_lanelet2_extension/regulatory_elements/no_stopping_area.hpp"
 #include "autoware_lanelet2_extension/utility/query.hpp"
 #include "autoware_lanelet2_extension/utility/utilities.hpp"
+#include "autoware_utils/geometry/boost_polygon_utils.hpp"
 
 #include <autoware_vehicle_info_utils/vehicle_info.hpp>
 
@@ -532,7 +532,8 @@ void GoalSearcher::createAreaPolygons(
 
     const double right_front_offset =
       left_side_parking_ ? -vehicle_width / 2 - max_lateral_offset : -vehicle_width / 2;
-    const Point p_right_front = calc_offset_pose(p, base_link2front, right_front_offset, 0).position;
+    const Point p_right_front =
+      calc_offset_pose(p, base_link2front, right_front_offset, 0).position;
     appendPointToPolygon(footprint, p_right_front);
 
     const double right_back_offset =

@@ -31,7 +31,8 @@ PlannerParam PlannerParam::init(rclcpp::Node & node, const std::string & ns)
     get_or_declare_parameter<double>(node, ns + ".backward_detection_length");
   param.ignore_width_from_center_line =
     get_or_declare_parameter<double>(node, ns + ".ignore_width_from_center_line");
-  param.adjacent_extend_width = get_or_declare_parameter<double>(node, ns + ".adjacent_extend_width");
+  param.adjacent_extend_width =
+    get_or_declare_parameter<double>(node, ns + ".adjacent_extend_width");
   param.opposite_adjacent_extend_width =
     get_or_declare_parameter<double>(node, ns + ".opposite_adjacent_extend_width");
   param.max_future_movement_time =

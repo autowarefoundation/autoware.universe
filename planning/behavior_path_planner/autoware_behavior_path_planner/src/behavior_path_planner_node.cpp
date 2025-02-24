@@ -130,8 +130,7 @@ BehaviorPathPlannerNode::BehaviorPathPlannerNode(const rclcpp::NodeOptions & nod
   }
 
   logger_configure_ = std::make_unique<autoware_utils::LoggerLevelConfigure>(this);
-  published_time_publisher_ =
-    std::make_unique<autoware_utils::PublishedTimePublisher>(this);
+  published_time_publisher_ = std::make_unique<autoware_utils::PublishedTimePublisher>(this);
 }
 
 std::vector<std::string> BehaviorPathPlannerNode::getWaitingApprovalModules()
@@ -510,10 +509,8 @@ void BehaviorPathPlannerNode::publish_turn_signal_debug_data(const TurnSignalDeb
   constexpr double scale_y = 1.0;
   constexpr double scale_z = 1.0;
   const auto scale = autoware_utils::create_marker_scale(scale_x, scale_y, scale_z);
-  const auto desired_section_color =
-    autoware_utils::create_marker_color(0.0, 1.0, 0.0, 0.999);
-  const auto required_section_color =
-    autoware_utils::create_marker_color(1.0, 0.0, 1.0, 0.999);
+  const auto desired_section_color = autoware_utils::create_marker_color(0.0, 1.0, 0.0, 0.999);
+  const auto required_section_color = autoware_utils::create_marker_color(1.0, 0.0, 1.0, 0.999);
 
   // intersection turn signal info
   {

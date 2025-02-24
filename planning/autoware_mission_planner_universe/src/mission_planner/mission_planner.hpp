@@ -70,8 +70,7 @@ class MissionPlanner : public rclcpp::Node
 {
 public:
   explicit MissionPlanner(const rclcpp::NodeOptions & options);
-  void publish_processing_time(
-    autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch);
+  void publish_processing_time(autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch);
 
 private:
   ArrivalChecker arrival_checker_;
@@ -92,8 +91,8 @@ private:
   rclcpp::Subscription<PoseWithUuidStamped>::SharedPtr sub_modified_goal_;
   rclcpp::Subscription<Odometry>::SharedPtr sub_odometry_;
   rclcpp::Subscription<OperationModeState>::SharedPtr sub_operation_mode_state_;
-  autoware_utils::InterProcessPollingSubscriber<RerouteAvailability>
-    sub_reroute_availability_{this, "~/input/reroute_availability"};
+  autoware_utils::InterProcessPollingSubscriber<RerouteAvailability> sub_reroute_availability_{
+    this, "~/input/reroute_availability"};
 
   rclcpp::Subscription<LaneletMapBin>::SharedPtr sub_vector_map_;
   rclcpp::Publisher<MarkerArray>::SharedPtr pub_marker_;

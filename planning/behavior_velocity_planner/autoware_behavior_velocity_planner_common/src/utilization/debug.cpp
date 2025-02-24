@@ -34,7 +34,8 @@ visualization_msgs::msg::MarkerArray createPolygonMarkerArray(
     auto marker = create_default_marker(
       "map", now, ns, static_cast<int32_t>(module_id), visualization_msgs::msg::Marker::LINE_STRIP,
       create_marker_scale(static_cast<float>(x), static_cast<float>(y), static_cast<float>(z)),
-      create_marker_color(static_cast<float>(r), static_cast<float>(g), static_cast<float>(b), 0.8f));
+      create_marker_color(
+        static_cast<float>(r), static_cast<float>(g), static_cast<float>(b), 0.8f));
     marker.lifetime = rclcpp::Duration::from_seconds(0.3);
 
     for (const auto & p : polygon.points) {
@@ -116,7 +117,8 @@ visualization_msgs::msg::MarkerArray createPointsMarkerArray(
 
   auto marker = create_default_marker(
     "map", now, ns, 0, visualization_msgs::msg::Marker::SPHERE, create_marker_scale(x, y, z),
-    create_marker_color(static_cast<float>(r), static_cast<float>(g), static_cast<float>(b), 0.999f));
+    create_marker_color(
+      static_cast<float>(r), static_cast<float>(g), static_cast<float>(b), 0.999f));
   marker.lifetime = rclcpp::Duration::from_seconds(0.3);
   for (size_t i = 0; i < points.size(); ++i) {
     marker.id = static_cast<int32_t>(i + planning_utils::bitShift(module_id));

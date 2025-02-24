@@ -32,9 +32,8 @@ class LaneParkingRequest
 {
 public:
   LaneParkingRequest(
-    const autoware_utils::LinearRing2d & vehicle_footprint,
-    const GoalCandidates & goal_candidates, const BehaviorModuleOutput & upstream_module_output,
-    const bool use_bus_stop_area)
+    const autoware_utils::LinearRing2d & vehicle_footprint, const GoalCandidates & goal_candidates,
+    const BehaviorModuleOutput & upstream_module_output, const bool use_bus_stop_area)
   : vehicle_footprint_(vehicle_footprint),
     goal_candidates_(goal_candidates),
     use_bus_stop_area_(use_bus_stop_area),
@@ -83,8 +82,8 @@ class FreespaceParkingRequest
 public:
   FreespaceParkingRequest(
     const GoalPlannerParameters & parameters,
-    const autoware_utils::LinearRing2d & vehicle_footprint,
-    const GoalCandidates & goal_candidates, const PlannerData & planner_data)
+    const autoware_utils::LinearRing2d & vehicle_footprint, const GoalCandidates & goal_candidates,
+    const PlannerData & planner_data)
   : parameters_(parameters),
     vehicle_footprint_(vehicle_footprint),
     goal_candidates_(goal_candidates)

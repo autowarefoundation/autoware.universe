@@ -36,10 +36,12 @@ TrafficLightModuleManager::TrafficLightModuleManager(rclcpp::Node & node)
 {
   const std::string ns(TrafficLightModuleManager::getModuleName());
   planner_param_.stop_margin = get_or_declare_parameter<double>(node, ns + ".stop_margin");
-  planner_param_.tl_state_timeout = get_or_declare_parameter<double>(node, ns + ".tl_state_timeout");
+  planner_param_.tl_state_timeout =
+    get_or_declare_parameter<double>(node, ns + ".tl_state_timeout");
   planner_param_.stop_time_hysteresis =
     get_or_declare_parameter<double>(node, ns + ".stop_time_hysteresis");
-  planner_param_.enable_pass_judge = get_or_declare_parameter<bool>(node, ns + ".enable_pass_judge");
+  planner_param_.enable_pass_judge =
+    get_or_declare_parameter<bool>(node, ns + ".enable_pass_judge");
   planner_param_.yellow_lamp_period =
     get_or_declare_parameter<double>(node, ns + ".yellow_lamp_period");
   planner_param_.yellow_light_stop_velocity =

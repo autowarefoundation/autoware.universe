@@ -59,14 +59,10 @@ geometry_msgs::msg::Polygon create_execution_area(
   const double backward_lon_offset = -base_to_rear;
   const double lat_offset = width / 2.0 + additional_lat_offset;
 
-  const auto p1 =
-    autoware_utils::calc_offset_pose(pose, forward_lon_offset, lat_offset, 0.0);
-  const auto p2 =
-    autoware_utils::calc_offset_pose(pose, forward_lon_offset, -lat_offset, 0.0);
-  const auto p3 =
-    autoware_utils::calc_offset_pose(pose, backward_lon_offset, -lat_offset, 0.0);
-  const auto p4 =
-    autoware_utils::calc_offset_pose(pose, backward_lon_offset, lat_offset, 0.0);
+  const auto p1 = autoware_utils::calc_offset_pose(pose, forward_lon_offset, lat_offset, 0.0);
+  const auto p2 = autoware_utils::calc_offset_pose(pose, forward_lon_offset, -lat_offset, 0.0);
+  const auto p3 = autoware_utils::calc_offset_pose(pose, backward_lon_offset, -lat_offset, 0.0);
+  const auto p4 = autoware_utils::calc_offset_pose(pose, backward_lon_offset, lat_offset, 0.0);
   geometry_msgs::msg::Polygon polygon;
 
   polygon.points.push_back(create_point32(p1));

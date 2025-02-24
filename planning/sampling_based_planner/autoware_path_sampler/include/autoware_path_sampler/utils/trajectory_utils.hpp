@@ -19,10 +19,10 @@
 #include "autoware/interpolation/spline_interpolation.hpp"
 #include "autoware/interpolation/spline_interpolation_points_2d.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
-#include "autoware_utils/geometry/geometry.hpp"
 #include "autoware_path_sampler/common_structs.hpp"
 #include "autoware_path_sampler/type_alias.hpp"
 #include "autoware_sampler_common/structures.hpp"
+#include "autoware_utils/geometry/geometry.hpp"
 #include "eigen3/Eigen/Core"
 
 #include "autoware_planning_msgs/msg/path_point.hpp"

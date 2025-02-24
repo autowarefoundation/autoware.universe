@@ -19,8 +19,8 @@
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/motion_velocity_planner_common_universe/collision_checker.hpp>
 #include <autoware/route_handler/route_handler.hpp>
-#include <autoware_utils/geometry/boost_polygon_utils.hpp>
 #include <autoware/velocity_smoother/smoother/smoother_base.hpp>
+#include <autoware_utils/geometry/boost_polygon_utils.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>

@@ -28,8 +28,8 @@ namespace autoware::behavior_path_planner
 {
 void StaticObstacleAvoidanceModuleManager::init(rclcpp::Node * node)
 {
-  using autoware_utils::get_or_declare_parameter;
   using autoware_perception_msgs::msg::ObjectClassification;
+  using autoware_utils::get_or_declare_parameter;
 
   // init manager interface
   initInterface(node, {"left", "right"});
@@ -42,8 +42,8 @@ void StaticObstacleAvoidanceModuleManager::init(rclcpp::Node * node)
 void StaticObstacleAvoidanceModuleManager::updateModuleParams(
   const std::vector<rclcpp::Parameter> & parameters)
 {
-  using autoware_utils::update_param;
   using autoware_perception_msgs::msg::ObjectClassification;
+  using autoware_utils::update_param;
 
   auto p = parameters_;
 
@@ -166,7 +166,8 @@ void StaticObstacleAvoidanceModuleManager::updateModuleParams(
   {
     const std::string ns = "avoidance.avoidance.lateral.";
     update_param<double>(parameters, ns + "th_avoid_execution", p->lateral_execution_threshold);
-    update_param<double>(parameters, ns + "th_small_shift_length", p->lateral_small_shift_threshold);
+    update_param<double>(
+      parameters, ns + "th_small_shift_length", p->lateral_small_shift_threshold);
     update_param<double>(
       parameters, ns + "soft_drivable_bound_margin", p->soft_drivable_bound_margin);
     update_param<double>(
@@ -281,7 +282,8 @@ void StaticObstacleAvoidanceModuleManager::updateModuleParams(
       parameters, ns + "enable_detection_area_marker", p->enable_detection_area_marker);
     update_param<bool>(
       parameters, ns + "enable_drivable_bound_marker", p->enable_drivable_bound_marker);
-    update_param<bool>(parameters, ns + "enable_safety_check_marker", p->enable_safety_check_marker);
+    update_param<bool>(
+      parameters, ns + "enable_safety_check_marker", p->enable_safety_check_marker);
     update_param<bool>(parameters, ns + "enable_shift_line_marker", p->enable_shift_line_marker);
     update_param<bool>(parameters, ns + "enable_lane_marker", p->enable_lane_marker);
     update_param<bool>(parameters, ns + "enable_misc_marker", p->enable_misc_marker);

@@ -15,8 +15,8 @@
 #include "path_utils.hpp"
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
-#include <autoware_utils/geometry/geometry.hpp>
 #include <autoware_test_utils/autoware_test_utils.hpp>
+#include <autoware_utils/geometry/geometry.hpp>
 #include <rclcpp/clock.hpp>
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp/time.hpp>

@@ -58,8 +58,7 @@ geometry_msgs::msg::Point32 createPoint32(const double x, const double y, const 
   return p;
 }
 
-geometry_msgs::msg::Polygon toMsg(
-  const autoware_utils::Polygon2d & polygon, const double z)
+geometry_msgs::msg::Polygon toMsg(const autoware_utils::Polygon2d & polygon, const double z)
 {
   geometry_msgs::msg::Polygon ret;
   for (const auto & p : polygon.outer()) {
@@ -1115,7 +1114,8 @@ double getRoadShoulderDistance(
       }
       {
         const auto p2 =
-          calc_offset_pose(p_tmp, 0.0, (isOnRight(object) ? -0.5 : 0.5) * envelope_polygon_width, 0.0)
+          calc_offset_pose(
+            p_tmp, 0.0, (isOnRight(object) ? -0.5 : 0.5) * envelope_polygon_width, 0.0)
             .position;
         const auto opt_intersect =
           autoware_utils::intersect(p1.second, p2, bound.at(i - 1), bound.at(i));
@@ -1345,7 +1345,8 @@ std::vector<std::pair<double, Point>> calcEnvelopeOverhangDistance(
     const auto point = autoware_utils::create_point(p.x(), p.y(), 0.0);
     // TODO(someone): search around first position where the ego should avoid the object.
     const auto idx = autoware::motion_utils::findNearestIndex(path.points, point);
-    const auto lateral = calc_lateral_deviation(autoware_utils::get_pose(path.points.at(idx)), point);
+    const auto lateral =
+      calc_lateral_deviation(autoware_utils::get_pose(path.points.at(idx)), point);
     overhang_points.emplace_back(lateral, point);
   }
   std::sort(overhang_points.begin(), overhang_points.end(), [&](const auto & a, const auto & b) {
@@ -1455,8 +1456,7 @@ std::vector<DrivableAreaInfo::Obstacle> generateObstaclePolygonsForDrivableArea(
     // generate obstacle polygon
     const double diff_poly_buffer =
       object.avoid_margin.value() - object_parameter.envelope_buffer_margin - vehicle_width / 2.0;
-    const auto obj_poly =
-      autoware_utils::expand_polygon(object.envelope_poly, diff_poly_buffer);
+    const auto obj_poly = autoware_utils::expand_polygon(object.envelope_poly, diff_poly_buffer);
     obstacles_for_drivable_area.push_back({object.getPose(), obj_poly, !isOnRight(object)});
   }
   return obstacles_for_drivable_area;

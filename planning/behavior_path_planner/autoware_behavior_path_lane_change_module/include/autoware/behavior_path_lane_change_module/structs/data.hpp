@@ -35,12 +35,12 @@
 
 namespace autoware::behavior_path_planner::lane_change
 {
+using autoware_utils::Polygon2d;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
 using nav_msgs::msg::Odometry;
 using route_handler::Direction;
 using route_handler::RouteHandler;
-using autoware_utils::Polygon2d;
 using utils::path_safety_checker::ExtendedPredictedObjects;
 
 enum class States {

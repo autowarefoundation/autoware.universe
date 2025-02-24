@@ -62,35 +62,32 @@ private:
     trigger_sub_path_with_lane_id_;
 
   // polling subscribers
-  autoware_utils::InterProcessPollingSubscriber<
-    autoware_perception_msgs::msg::PredictedObjects>
+  autoware_utils::InterProcessPollingSubscriber<autoware_perception_msgs::msg::PredictedObjects>
     sub_predicted_objects_{this, "~/input/dynamic_objects"};
 
   autoware_utils::InterProcessPollingSubscriber<sensor_msgs::msg::PointCloud2>
     sub_no_ground_pointcloud_{
       this, "~/input/no_ground_pointcloud", autoware_utils::single_depth_sensor_qos()};
 
-  autoware_utils::InterProcessPollingSubscriber<nav_msgs::msg::Odometry>
-    sub_vehicle_odometry_{this, "~/input/vehicle_odometry"};
+  autoware_utils::InterProcessPollingSubscriber<nav_msgs::msg::Odometry> sub_vehicle_odometry_{
+    this, "~/input/vehicle_odometry"};
 
-  autoware_utils::InterProcessPollingSubscriber<
-    geometry_msgs::msg::AccelWithCovarianceStamped>
+  autoware_utils::InterProcessPollingSubscriber<geometry_msgs::msg::AccelWithCovarianceStamped>
     sub_acceleration_{this, "~/input/accel"};
 
   autoware_utils::InterProcessPollingSubscriber<
     autoware_perception_msgs::msg::TrafficLightGroupArray>
     sub_traffic_signals_{this, "~/input/traffic_signals"};
 
-  autoware_utils::InterProcessPollingSubscriber<nav_msgs::msg::OccupancyGrid>
-    sub_occupancy_grid_{this, "~/input/occupancy_grid"};
+  autoware_utils::InterProcessPollingSubscriber<nav_msgs::msg::OccupancyGrid> sub_occupancy_grid_{
+    this, "~/input/occupancy_grid"};
 
   autoware_utils::InterProcessPollingSubscriber<
     LaneletMapBin, autoware_utils::polling_policy::Newest>
     sub_lanelet_map_{this, "~/input/vector_map", rclcpp::QoS{1}.transient_local()};
 
-  autoware_utils::InterProcessPollingSubscriber<VelocityLimit>
-    sub_external_velocity_limit_{
-      this, "~/input/external_velocity_limit_mps", rclcpp::QoS{1}.transient_local()};
+  autoware_utils::InterProcessPollingSubscriber<VelocityLimit> sub_external_velocity_limit_{
+    this, "~/input/external_velocity_limit_mps", rclcpp::QoS{1}.transient_local()};
 
   void onTrigger(
     const autoware_internal_planning_msgs::msg::PathWithLaneId::ConstSharedPtr input_path_msg);

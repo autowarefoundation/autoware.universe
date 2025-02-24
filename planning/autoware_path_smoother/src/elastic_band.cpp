@@ -443,8 +443,7 @@ std::optional<std::vector<TrajectoryPoint>> EBPathSmoother::convertOptimizedPoin
     }
 
     auto eb_traj_point = traj_points.at(i);
-    eb_traj_point.pose =
-      autoware_utils::calc_offset_pose(eb_traj_point.pose, 0.0, lat_offset, 0.0);
+    eb_traj_point.pose = autoware_utils::calc_offset_pose(eb_traj_point.pose, 0.0, lat_offset, 0.0);
     eb_traj_points.push_back(eb_traj_point);
   }
 

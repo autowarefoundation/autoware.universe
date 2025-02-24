@@ -29,11 +29,11 @@
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "autoware_utils/geometry/boost_polygon_utils.hpp"
 
-#include <autoware_utils/math/normalization.hpp>
-#include <autoware_utils/system/stop_watch.hpp>
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
+#include <autoware_utils/math/normalization.hpp>
+#include <autoware_utils/system/stop_watch.hpp>
 #include <magic_enum.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -467,8 +467,7 @@ void LaneParkingPlanner::normal_pullover_planning_helper(
       parameters_.bus_stop_area.use_bus_stop_area &&
       std::fabs(autoware_utils::normalize_radian(
         autoware_utils::get_rpy(original_pose).z -
-        autoware_utils::get_rpy(closest_start_pose.value()).z)) >
-        pull_over_angle_threshold) {
+        autoware_utils::get_rpy(closest_start_pose.value()).z)) > pull_over_angle_threshold) {
       // reset and try bezier next time
       switch_bezier_ = true;
       path_candidates.clear();
@@ -2548,8 +2547,7 @@ void GoalPlannerModule::setDebugData(const PullOverContextData & context_data)
         (i + 1) % debug_data_.objects_extraction_polygon.outer().size());
       marker.points.push_back(
         autoware_utils::create_point(current_point.x(), current_point.y(), ego_z));
-      marker.points.push_back(
-        autoware_utils::create_point(next_point.x(), next_point.y(), ego_z));
+      marker.points.push_back(autoware_utils::create_point(next_point.x(), next_point.y(), ego_z));
     }
 
     debug_marker_.markers.push_back(marker);

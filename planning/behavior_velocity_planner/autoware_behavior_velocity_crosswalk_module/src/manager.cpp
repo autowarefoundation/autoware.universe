@@ -38,7 +38,8 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
 
   // for crosswalk parameters
   auto & cp = crosswalk_planner_param_;
-  cp.show_processing_time = get_or_declare_parameter<bool>(node, ns + ".common.show_processing_time");
+  cp.show_processing_time =
+    get_or_declare_parameter<bool>(node, ns + ".common.show_processing_time");
 
   // param for input data
   cp.traffic_light_state_timeout =
@@ -47,8 +48,8 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
   // param for stop position
   cp.stop_distance_from_crosswalk =
     get_or_declare_parameter<double>(node, ns + ".stop_position.stop_distance_from_crosswalk");
-  cp.stop_distance_from_object_preferred =
-    get_or_declare_parameter<double>(node, ns + ".stop_position.stop_distance_from_object_preferred");
+  cp.stop_distance_from_object_preferred = get_or_declare_parameter<double>(
+    node, ns + ".stop_position.stop_distance_from_object_preferred");
   cp.stop_distance_from_object_limit =
     get_or_declare_parameter<double>(node, ns + ".stop_position.stop_distance_from_object_limit");
   cp.stop_position_threshold =
@@ -67,10 +68,12 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
   // param for ego velocity
   cp.min_slow_down_velocity =
     get_or_declare_parameter<double>(node, ns + ".slow_down.min_slow_down_velocity");
-  cp.max_slow_down_jerk = get_or_declare_parameter<double>(node, ns + ".slow_down.max_slow_down_jerk");
+  cp.max_slow_down_jerk =
+    get_or_declare_parameter<double>(node, ns + ".slow_down.max_slow_down_jerk");
   cp.max_slow_down_accel =
     get_or_declare_parameter<double>(node, ns + ".slow_down.max_slow_down_accel");
-  cp.no_relax_velocity = get_or_declare_parameter<double>(node, ns + ".slow_down.no_relax_velocity");
+  cp.no_relax_velocity =
+    get_or_declare_parameter<double>(node, ns + ".slow_down.no_relax_velocity");
 
   // param for stuck vehicle
   cp.enable_stuck_check_in_intersection =
@@ -81,7 +84,8 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
     get_or_declare_parameter<double>(node, ns + ".stuck_vehicle.max_stuck_vehicle_lateral_offset");
   cp.required_clearance =
     get_or_declare_parameter<double>(node, ns + ".stuck_vehicle.required_clearance");
-  cp.min_acc_for_stuck_vehicle = get_or_declare_parameter<double>(node, ns + ".stuck_vehicle.min_acc");
+  cp.min_acc_for_stuck_vehicle =
+    get_or_declare_parameter<double>(node, ns + ".stuck_vehicle.min_acc");
   cp.max_jerk_for_stuck_vehicle =
     get_or_declare_parameter<double>(node, ns + ".stuck_vehicle.max_jerk");
   cp.min_jerk_for_stuck_vehicle =
@@ -143,7 +147,8 @@ CrosswalkModuleManager::CrosswalkModuleManager(rclcpp::Node & node)
     get_or_declare_parameter<float>(node, ns + ".occlusion.slow_down_velocity");
   cp.occlusion_time_buffer = get_or_declare_parameter<double>(node, ns + ".occlusion.time_buffer");
   cp.occlusion_min_size = get_or_declare_parameter<double>(node, ns + ".occlusion.min_size");
-  cp.occlusion_free_space_max = get_or_declare_parameter<int>(node, ns + ".occlusion.free_space_max");
+  cp.occlusion_free_space_max =
+    get_or_declare_parameter<int>(node, ns + ".occlusion.free_space_max");
   cp.occlusion_occupied_min = get_or_declare_parameter<int>(node, ns + ".occlusion.occupied_min");
   cp.occlusion_ignore_with_traffic_light =
     get_or_declare_parameter<bool>(node, ns + ".occlusion.ignore_with_traffic_light");

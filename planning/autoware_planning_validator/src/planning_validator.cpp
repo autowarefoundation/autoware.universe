@@ -45,8 +45,7 @@ PlanningValidator::PlanningValidator(const rclcpp::NodeOptions & options)
   setupParameters();
 
   logger_configure_ = std::make_unique<autoware_utils::LoggerLevelConfigure>(this);
-  published_time_publisher_ =
-    std::make_unique<autoware_utils::PublishedTimePublisher>(this);
+  published_time_publisher_ = std::make_unique<autoware_utils::PublishedTimePublisher>(this);
 }
 
 void PlanningValidator::setupParameters()
@@ -469,8 +468,8 @@ bool PlanningValidator::checkValidDistanceDeviation(const Trajectory & trajector
   const auto idx = autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
     trajectory.points, current_kinematics_->pose.pose);
 
-  validation_status_.distance_deviation = autoware_utils::calc_distance2d(
-    trajectory.points.at(idx), current_kinematics_->pose.pose);
+  validation_status_.distance_deviation =
+    autoware_utils::calc_distance2d(trajectory.points.at(idx), current_kinematics_->pose.pose);
 
   if (validation_status_.distance_deviation > validation_params_.distance_deviation_threshold) {
     return false;

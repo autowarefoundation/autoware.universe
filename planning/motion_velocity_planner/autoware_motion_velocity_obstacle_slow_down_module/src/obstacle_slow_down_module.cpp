@@ -791,15 +791,13 @@ std::vector<SlowdownInterval> ObstacleSlowDownModule::plan_slow_down(
       const auto markers = autoware::motion_utils::createSlowDownVirtualWallMarker(
         slow_down_traj_points.at(*slow_down_start_idx).pose, "obstacle slow down start",
         clock_->now(), i * 2, abs_ego_offset, "", planner_data->is_driving_forward);
-      autoware_utils::append_marker_array(
-        markers, &debug_data_ptr_->slow_down_debug_wall_marker);
+      autoware_utils::append_marker_array(markers, &debug_data_ptr_->slow_down_debug_wall_marker);
     }
     if (slow_down_end_idx) {
       const auto markers = autoware::motion_utils::createSlowDownVirtualWallMarker(
         slow_down_traj_points.at(*slow_down_end_idx).pose, "obstacle slow down end", clock_->now(),
         i * 2 + 1, abs_ego_offset, "", planner_data->is_driving_forward);
-      autoware_utils::append_marker_array(
-        markers, &debug_data_ptr_->slow_down_debug_wall_marker);
+      autoware_utils::append_marker_array(markers, &debug_data_ptr_->slow_down_debug_wall_marker);
     }
 
     // Add debug data
@@ -858,8 +856,7 @@ void ObstacleSlowDownModule::publish_debug_info()
   }
 
   // 1.2. slow down debug wall marker
-  autoware_utils::append_marker_array(
-    debug_data_ptr_->slow_down_debug_wall_marker, &debug_marker);
+  autoware_utils::append_marker_array(debug_data_ptr_->slow_down_debug_wall_marker, &debug_marker);
 
   // 1.3. detection area
   auto decimated_traj_polys_marker = autoware_utils::create_default_marker(

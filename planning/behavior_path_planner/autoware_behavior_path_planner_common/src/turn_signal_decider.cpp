@@ -20,11 +20,11 @@
 #include <autoware/motion_utils/resample/resample.hpp>
 #include <autoware/motion_utils/trajectory/path_with_lane_id.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <autoware_utils/geometry/geometry.hpp>
 #include <autoware_utils/math/normalization.hpp>
 #include <autoware_utils/math/unit_conversion.hpp>
-#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
-#include <autoware_lanelet2_extension/utility/utilities.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -601,8 +601,7 @@ geometry_msgs::msg::Pose TurnSignalDecider::get_required_end_point(
   for (size_t i = 0; i < resampled_centerline.size(); ++i) {
     const double yaw = tf2::getYaw(resampled_centerline.at(i).orientation);
     const double yaw_diff = autoware_utils::normalize_radian(yaw - terminal_yaw);
-    if (
-      std::fabs(yaw_diff) < autoware_utils::deg2rad(intersection_angle_threshold_deg_)) {
+    if (std::fabs(yaw_diff) < autoware_utils::deg2rad(intersection_angle_threshold_deg_)) {
       return resampled_centerline.at(i);
     }
   }
