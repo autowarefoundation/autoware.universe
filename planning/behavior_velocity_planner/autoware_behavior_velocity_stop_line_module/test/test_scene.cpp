@@ -75,7 +75,7 @@ protected:
 
     module_ = std::make_shared<StopLineModule>(
       1, stop_line_, planner_param_, rclcpp::get_logger("test_logger"), clock_,
-      std::make_shared<autoware::universe_utils::TimeKeeper>(),
+      std::make_shared<autoware_utils::TimeKeeper>(),
       std::make_shared<autoware::planning_factor_interface::PlanningFactorInterface>(
         node_.get(), "test_stopline"));
 

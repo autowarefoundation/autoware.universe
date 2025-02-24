@@ -55,7 +55,7 @@ using autoware::behavior_path_planner::utils::path_safety_checker::ObjectsFilter
 using autoware::behavior_path_planner::utils::path_safety_checker::PoseWithVelocityStamped;
 using autoware::behavior_path_planner::utils::path_safety_checker::SafetyCheckParams;
 using autoware::behavior_path_planner::utils::path_safety_checker::TargetObjectsOnLane;
-using autoware::universe_utils::Polygon2d;
+using autoware_utils::Polygon2d;
 
 struct FreespacePlannerDebugData
 {
@@ -303,7 +303,7 @@ private:
   const SafetyCheckParams safety_check_params_ = parameters_.safety_check_params;
 
   const autoware::vehicle_info_utils::VehicleInfo vehicle_info_;
-  const autoware::universe_utils::LinearRing2d vehicle_footprint_;
+  const autoware_utils::LinearRing2d vehicle_footprint_;
 
   const bool left_side_parking_;
 

@@ -40,7 +40,7 @@ using autoware::behavior_path_planner::utils::path_safety_checker::CollisionChec
 using autoware::behavior_path_planner::utils::path_safety_checker::CollisionCheckDebugPair;
 using autoware::behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObject;
 using autoware::behavior_path_planner::utils::path_safety_checker::ExtendedPredictedObjects;
-using autoware::universe_utils::Polygon2d;
+using autoware_utils::Polygon2d;
 using autoware_internal_planning_msgs::msg::PathWithLaneId;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::PredictedPath;

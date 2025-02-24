@@ -18,7 +18,7 @@
 #include "autoware/motion_utils/trajectory/conversion.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/motion_velocity_planner_common_universe/planner_data.hpp"
-#include "autoware/universe_utils/ros/marker_helper.hpp"
+#include "autoware_utils/ros/marker_helper.hpp"
 
 #include <boost/geometry.hpp>
 
@@ -37,7 +37,7 @@ TrajectoryPoint extend_trajectory_point(
   const double extend_distance, const TrajectoryPoint & goal_point, const bool is_driving_forward)
 {
   TrajectoryPoint extended_trajectory_point;
-  extended_trajectory_point.pose = autoware::universe_utils::calcOffsetPose(
+  extended_trajectory_point.pose = autoware_utils::calc_offset_pose(
     goal_point.pose, extend_distance * (is_driving_forward ? 1.0 : -1.0), 0.0, 0.0);
   extended_trajectory_point.longitudinal_velocity_mps = goal_point.longitudinal_velocity_mps;
   extended_trajectory_point.lateral_velocity_mps = goal_point.lateral_velocity_mps;
@@ -152,10 +152,10 @@ visualization_msgs::msg::Marker get_object_marker(
 {
   const auto current_time = rclcpp::Clock().now();
 
-  auto marker = autoware::universe_utils::createDefaultMarker(
+  auto marker = autoware_utils::create_default_marker(
     "map", current_time, ns, idx, visualization_msgs::msg::Marker::SPHERE,
-    autoware::universe_utils::createMarkerScale(2.0, 2.0, 2.0),
-    autoware::universe_utils::createMarkerColor(r, g, b, 0.8));
+    autoware_utils::create_marker_scale(2.0, 2.0, 2.0),
+    autoware_utils::create_marker_color(r, g, b, 0.8));
 
   marker.pose = obj_pose;
 
