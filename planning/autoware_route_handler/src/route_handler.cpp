@@ -128,7 +128,7 @@ PathWithLaneId removeOverlappingPoints(const PathWithLaneId & input_path)
   return filtered_path;
 }
 
-std::string toString(const geometry_msgs::msg::Pose & pose)
+std::string to_string(const geometry_msgs::msg::Pose & pose)
 {
   std::stringstream ss;
   ss << "(" << pose.position.x << ", " << pose.position.y << "," << pose.position.z << ")";
@@ -1898,8 +1898,8 @@ bool RouteHandler::planPathLaneletsBetweenCheckpoints(
     RCLCPP_WARN_STREAM(
       logger_, "Failed to find current lanelet."
                  << std::endl
-                 << " - start checkpoint: " << toString(start_checkpoint) << std::endl
-                 << " - goal checkpoint: " << toString(goal_checkpoint) << std::endl);
+                 << " - start checkpoint: " << to_string(start_checkpoint) << std::endl
+                 << " - goal checkpoint: " << to_string(goal_checkpoint) << std::endl);
     return false;
   }
 
@@ -1951,8 +1951,8 @@ bool RouteHandler::planPathLaneletsBetweenCheckpoints(
       RCLCPP_WARN_STREAM(
         logger_, "Failed to find closest lanelet."
                    << std::endl
-                   << " - start checkpoint: " << toString(start_checkpoint) << std::endl
-                   << " - goal checkpoint: " << toString(goal_checkpoint) << std::endl);
+                   << " - start checkpoint: " << to_string(start_checkpoint) << std::endl
+                   << " - goal checkpoint: " << to_string(goal_checkpoint) << std::endl);
       return false;
     }
   }
@@ -1978,8 +1978,8 @@ bool RouteHandler::planPathLaneletsBetweenCheckpoints(
       RCLCPP_ERROR_STREAM(
         logger_, "Failed to find a proper route!"
                    << std::endl
-                   << " - start checkpoint: " << toString(start_checkpoint) << std::endl
-                   << " - goal checkpoint: " << toString(goal_checkpoint) << std::endl
+                   << " - start checkpoint: " << to_string(start_checkpoint) << std::endl
+                   << " - goal checkpoint: " << to_string(goal_checkpoint) << std::endl
                    << " - start lane id: " << st_llt.id() << std::endl
                    << " - goal lane id: " << goal_lanelet.id() << std::endl);
       continue;

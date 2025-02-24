@@ -78,7 +78,7 @@ TEST(BehaviorTrafficLightModuleUtilsTest, findNearestCollisionPoint)
   }
 }
 
-TEST(BehaviorTrafficLightModuleUtilsTest, createTargetPoint)
+TEST(BehaviorTrafficLightModuleUtilsTest, create_target_point)
 {
   const auto pose = geometry_msgs::build<geometry_msgs::msg::Pose>()
                       .position(createPoint(0.0, 0.0, 0.0))
@@ -88,7 +88,7 @@ TEST(BehaviorTrafficLightModuleUtilsTest, createTargetPoint)
   {
     constexpr double offset = 1.75;
     LineString2d line = {{5.5, -1.0}, {5.5, 1.0}};
-    const auto output = createTargetPoint(PathWithLaneId{}, line, offset);
+    const auto output = create_target_point(PathWithLaneId{}, line, offset);
 
     EXPECT_FALSE(output.has_value());
   }
@@ -96,7 +96,7 @@ TEST(BehaviorTrafficLightModuleUtilsTest, createTargetPoint)
   {
     constexpr double offset = 1.75;
     LineString2d line = {{5.5, -1.0}, {5.5, 1.0}};
-    const auto output = createTargetPoint(path, line, offset);
+    const auto output = create_target_point(path, line, offset);
 
     EXPECT_TRUE(output.has_value());
     EXPECT_EQ(output.value().first, size_t(4));
@@ -107,7 +107,7 @@ TEST(BehaviorTrafficLightModuleUtilsTest, createTargetPoint)
   {
     constexpr double offset = -1.75;
     LineString2d line = {{5.5, -1.0}, {5.5, 1.0}};
-    const auto output = createTargetPoint(path, line, offset);
+    const auto output = create_target_point(path, line, offset);
 
     EXPECT_TRUE(output.has_value());
     EXPECT_EQ(output.value().first, size_t(8));
@@ -118,7 +118,7 @@ TEST(BehaviorTrafficLightModuleUtilsTest, createTargetPoint)
   {
     constexpr double offset = 1.75;
     LineString2d line = {{5.5, 2.0}, {5.5, 1.0}};
-    const auto output = createTargetPoint(path, line, offset);
+    const auto output = create_target_point(path, line, offset);
 
     EXPECT_FALSE(output.has_value());
   }

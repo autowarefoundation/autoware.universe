@@ -104,7 +104,7 @@ bool is_stoppable(
     ego_data.current_velocity, ego_data.current_acceleration, ego_data.max_stop_acc,
     ego_data.max_stop_jerk, ego_data.delay_response_time);
   const double signed_arc_length =
-    arc_lane_utils::calcSignedDistance(self_pose, line_pose.position);
+    arc_lane_utils::calc_signed_distance(self_pose, line_pose.position);
   const bool distance_stoppable = stoppable_distance < signed_arc_length;
   const bool slow_velocity = ego_data.current_velocity < 2.0;
   // ego vehicle is high speed and can't stop before stop line -> GO
@@ -138,7 +138,7 @@ Polygon2d generate_ego_no_stopping_area_lane_polygon(
   constexpr double interpolation_interval = 0.5;
   bool is_in_area = false;
   autoware_internal_planning_msgs::msg::PathWithLaneId interpolated_path;
-  if (!splineInterpolate(path, interpolation_interval, interpolated_path, logger)) {
+  if (!spline_interpolate(path, interpolation_interval, interpolated_path, logger)) {
     return ego_area;
   }
   const auto & pp = interpolated_path.points;

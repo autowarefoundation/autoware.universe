@@ -88,7 +88,7 @@ private:
   std::vector<geometry_msgs::msg::Point> createVehiclePolygon(
     const geometry_msgs::msg::Pose & base_pose) const;
 
-  std::vector<DynamicObstacle> checkCollisionWithObstacles(
+  std::vector<DynamicObstacle> check_collisionWithObstacles(
     const std::vector<DynamicObstacle> & dynamic_obstacles,
     const std::vector<geometry_msgs::msg::Point> & poly, const float travel_time,
     const std::vector<std::pair<int64_t, lanelet::ConstLanelet>> & crosswalk_lanelets) const;
@@ -101,21 +101,21 @@ private:
     const std::vector<PredictedPath> & predicted_paths, const float travel_time,
     const float velocity_mps) const;
 
-  bool checkCollisionWithShape(
+  bool check_collisionWithShape(
     const Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range, const Shape & shape,
     const std::vector<std::pair<int64_t, lanelet::ConstLanelet>> & crosswalk_lanelets,
     std::vector<geometry_msgs::msg::Point> & collision_points) const;
 
-  bool checkCollisionWithCylinder(
+  bool check_collisionWithCylinder(
     const Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range, const float radius,
     std::vector<geometry_msgs::msg::Point> & collision_points) const;
 
-  bool checkCollisionWithBoundingBox(
+  bool check_collisionWithBoundingBox(
     const Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range,
     const geometry_msgs::msg::Vector3 & dimension,
     std::vector<geometry_msgs::msg::Point> & collision_points) const;
 
-  bool checkCollisionWithPolygon() const;
+  bool check_collisionWithPolygon() const;
 
   std::vector<geometry_msgs::msg::Point> createBoundingBoxForRangedPoints(
     const PoseWithRange & pose_with_range, const float x_offset, const float y_offset) const;

@@ -110,7 +110,7 @@ bool OcclusionSpotModule::modifyPathVelocity(PathWithLaneId * path)
   utils::clipPathByLength(*path, clipped_path, param_.detection_area_length);
   PathWithLaneId path_interpolated;
   //! never change this interpolation interval(will affect module accuracy)
-  splineInterpolate(clipped_path, 1.0, path_interpolated, logger_);
+  spline_interpolate(clipped_path, 1.0, path_interpolated, logger_);
   const geometry_msgs::msg::Point start_point = path_interpolated.points.at(0).point.pose.position;
   const auto ego_segment_idx = autoware::motion_utils::findNearestSegmentIndex(
     path_interpolated.points, ego_pose, param_.dist_thr, param_.angle_thr);
@@ -127,7 +127,7 @@ bool OcclusionSpotModule::modifyPathVelocity(PathWithLaneId * path)
   if (param_.pass_judge == utils::PASS_JUDGE::CURRENT_VELOCITY) {
     predicted_path = utils::applyVelocityToPath(path_interpolated, param_.v.v_ego);
   } else if (param_.pass_judge == utils::PASS_JUDGE::SMOOTH_VELOCITY) {
-    if (!smoothPath(path_interpolated, predicted_path, planner_data_)) {
+    if (!smooth_path(path_interpolated, predicted_path, planner_data_)) {
       predicted_path = utils::applyVelocityToPath(path_interpolated, param_.v.v_ego);
       // use current ego velocity in path if optimization failure
     }

@@ -223,7 +223,7 @@ pcl::PointCloud<pcl::PointXYZ> extractLateralNearestPoints(
 {
   // interpolate path points with given interval
   PathWithLaneId interpolated_path;
-  if (!splineInterpolate(
+  if (!spline_interpolate(
         path, interval, interpolated_path, rclcpp::get_logger("dynamic_obstacle_creator"))) {
     return input_points;
   }

@@ -102,7 +102,7 @@ visualization_msgs::msg::MarkerArray BlindSpotModule::createDebugMarkerArray()
   }
 
   appendMarkerArray(
-    debug::createObjectsMarkerArray(
+    debug::create_objects_marker_array(
       debug_data_.conflicting_targets, "conflicting_targets", module_id_, now, 0.99, 0.4, 0.0),
     &debug_marker_array, now);
 

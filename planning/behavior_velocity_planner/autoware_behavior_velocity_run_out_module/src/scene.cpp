@@ -91,7 +91,7 @@ bool RunOutModule::modifyPathVelocity(PathWithLaneId * path)
 
   // smooth velocity of the path to calculate time to collision accurately
   PathWithLaneId extended_smoothed_path;
-  if (!smoothPath(trim_path, extended_smoothed_path, planner_data_)) {
+  if (!smooth_path(trim_path, extended_smoothed_path, planner_data_)) {
     return true;
   }
 
@@ -237,7 +237,7 @@ std::optional<DynamicObstacle> RunOutModule::detectCollision(
     debug_ptr_->pushTravelTimeTexts(travel_time, p2.pose, /* lateral_offset */ 3.0);
 
     auto obstacles_collision =
-      checkCollisionWithObstacles(dynamic_obstacles, vehicle_poly, travel_time, crosswalk_lanelets);
+      check_collisionWithObstacles(dynamic_obstacles, vehicle_poly, travel_time, crosswalk_lanelets);
     if (obstacles_collision.empty()) {
       continue;
     }
@@ -416,7 +416,7 @@ std::vector<DynamicObstacle> RunOutModule::excludeObstaclesOnEgoPath(
   return obstacles_outside_of_path;
 }
 
-std::vector<DynamicObstacle> RunOutModule::checkCollisionWithObstacles(
+std::vector<DynamicObstacle> RunOutModule::check_collisionWithObstacles(
   const std::vector<DynamicObstacle> & dynamic_obstacles,
   const std::vector<geometry_msgs::msg::Point> & poly, const float travel_time,
   const std::vector<std::pair<int64_t, lanelet::ConstLanelet>> & crosswalk_lanelets) const
@@ -438,7 +438,7 @@ std::vector<DynamicObstacle> RunOutModule::checkCollisionWithObstacles(
       *predicted_obstacle_pose_min_vel, *predicted_obstacle_pose_max_vel};
 
     std::vector<geometry_msgs::msg::Point> collision_points;
-    const bool collision_detected = checkCollisionWithShape(
+    const bool collision_detected = check_collisionWithShape(
       bg_poly_vehicle, pose_with_range, obstacle.shape, crosswalk_lanelets, collision_points);
 
     if (!collision_detected) {
@@ -496,7 +496,7 @@ std::optional<geometry_msgs::msg::Pose> RunOutModule::calcPredictedObstaclePose(
   return predicted_path.back();
 }
 
-bool RunOutModule::checkCollisionWithShape(
+bool RunOutModule::check_collisionWithShape(
   const Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range, const Shape & shape,
   const std::vector<std::pair<int64_t, lanelet::ConstLanelet>> & crosswalk_lanelets,
   std::vector<geometry_msgs::msg::Point> & collision_points) const
@@ -504,17 +504,17 @@ bool RunOutModule::checkCollisionWithShape(
   bool collision_detected = false;
   switch (shape.type) {
     case Shape::CYLINDER:
-      collision_detected = checkCollisionWithCylinder(
+      collision_detected = check_collisionWithCylinder(
         vehicle_polygon, pose_with_range, shape.dimensions.x / 2.0, collision_points);
       break;
 
     case Shape::BOUNDING_BOX:
-      collision_detected = checkCollisionWithBoundingBox(
+      collision_detected = check_collisionWithBoundingBox(
         vehicle_polygon, pose_with_range, shape.dimensions, collision_points);
       break;
 
     case Shape::POLYGON:
-      collision_detected = checkCollisionWithPolygon();
+      collision_detected = check_collisionWithPolygon();
       break;
 
     default:
@@ -541,7 +541,7 @@ bool RunOutModule::checkCollisionWithShape(
   return collision_detected;
 }
 
-bool RunOutModule::checkCollisionWithCylinder(
+bool RunOutModule::check_collisionWithCylinder(
   const Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range, const float radius,
   std::vector<geometry_msgs::msg::Point> & collision_points) const
 {
@@ -606,7 +606,7 @@ std::vector<geometry_msgs::msg::Point> RunOutModule::createBoundingBoxForRangedP
   return poly;
 }
 
-bool RunOutModule::checkCollisionWithBoundingBox(
+bool RunOutModule::check_collisionWithBoundingBox(
   const Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range,
   const geometry_msgs::msg::Vector3 & dimension,
   std::vector<geometry_msgs::msg::Point> & collision_points) const
@@ -637,7 +637,7 @@ bool RunOutModule::checkCollisionWithBoundingBox(
   return true;
 }
 
-bool RunOutModule::checkCollisionWithPolygon() const
+bool RunOutModule::check_collisionWithPolygon() const
 {
   RCLCPP_WARN_STREAM(logger_, "detection for POLYGON type is not implemented yet.");
 

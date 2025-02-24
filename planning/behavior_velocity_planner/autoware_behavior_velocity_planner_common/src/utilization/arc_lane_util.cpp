@@ -56,7 +56,7 @@ geometry_msgs::msg::Point operator*(const geometry_msgs::msg::Point & p, const d
 namespace autoware::behavior_velocity_planner::arc_lane_utils
 {
 
-double calcSignedDistance(const geometry_msgs::msg::Pose & p1, const geometry_msgs::msg::Point & p2)
+double calc_signed_distance(const geometry_msgs::msg::Pose & p1, const geometry_msgs::msg::Point & p2)
 {
   Eigen::Affine3d map2p1;
   tf2::fromMsg(p1, map2p1);
@@ -66,7 +66,7 @@ double calcSignedDistance(const geometry_msgs::msg::Pose & p1, const geometry_ms
 
 // calculate one collision point between the line (from p1 to p2) and the line (from p3 to p4)
 
-std::optional<geometry_msgs::msg::Point> checkCollision(
+std::optional<geometry_msgs::msg::Point> check_collision(
   const geometry_msgs::msg::Point & p1, const geometry_msgs::msg::Point & p2,
   const geometry_msgs::msg::Point & p3, const geometry_msgs::msg::Point & p4)
 {
@@ -88,23 +88,23 @@ std::optional<geometry_msgs::msg::Point> checkCollision(
   return p1 * (1.0 - t1) + p2 * t1;
 }
 
-std::optional<PathIndexWithOffset> findOffsetSegment(
+std::optional<PathIndexWithOffset> find_offset_segment(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path, const size_t index,
   const double offset)
 {
   if (offset >= 0) {
-    return findForwardOffsetSegment(path, index, offset);
+    return find_forward_offset_segment(path, index, offset);
   }
 
-  return findBackwardOffsetSegment(path, index, -offset);
+  return find_backward_offset_segment(path, index, -offset);
 }
 
-std::optional<PathIndexWithPose> createTargetPoint(
+std::optional<PathIndexWithPose> create_target_point(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path, const LineString2d & stop_line,
   const double margin, const double vehicle_offset)
 {
   // Find collision segment
-  const auto collision_segment = findCollisionSegment(path, stop_line);
+  const auto collision_segment = find_collision_segment(path, stop_line);
   if (!collision_segment) {
     // No collision
     return {};
@@ -115,13 +115,13 @@ std::optional<PathIndexWithPose> createTargetPoint(
   const double offset_length = -(margin + vehicle_offset);
 
   // Find offset segment
-  const auto offset_segment = findOffsetSegment(path, *collision_segment, offset_length);
+  const auto offset_segment = find_offset_segment(path, *collision_segment, offset_length);
   if (!offset_segment) {
     // No enough path length
     return {};
   }
 
-  const auto target_pose = calcTargetPose(path, *offset_segment);
+  const auto target_pose = calc_target_pose(path, *offset_segment);
 
   const auto front_idx = offset_segment->first;
   return std::make_pair(front_idx, target_pose);

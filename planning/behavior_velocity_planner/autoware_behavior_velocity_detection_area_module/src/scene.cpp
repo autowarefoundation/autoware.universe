@@ -75,7 +75,7 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path)
   const size_t current_seg_idx = findEgoSegmentIndex(path->points);
 
   // Get stop point
-  const auto stop_point = arc_lane_utils::createTargetPoint(
+  const auto stop_point = arc_lane_utils::create_target_point(
     original_path, stop_line, planner_param_.stop_margin,
     planner_data_->vehicle_info_.max_longitudinal_offset_m);
   if (!stop_point) {
@@ -121,7 +121,7 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path)
   // Force ignore objects after dead_line
   if (planner_param_.use_dead_line) {
     // Use '-' for margin because it's the backward distance from stop line
-    const auto dead_line_point = arc_lane_utils::createTargetPoint(
+    const auto dead_line_point = arc_lane_utils::create_target_point(
       original_path, stop_line, -planner_param_.dead_line_margin,
       planner_data_->vehicle_info_.max_longitudinal_offset_m);
 

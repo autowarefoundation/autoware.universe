@@ -75,10 +75,10 @@ private:
   void createAreaPolygons(
     std::vector<Pose> original_search_poses,
     const std::shared_ptr<const PlannerData> & planner_data);
-  bool checkCollision(
+  bool check_collision(
     const Pose & pose, const PredictedObjects & objects,
     const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map) const;
-  bool checkCollisionWithLongitudinalDistance(
+  bool check_collisionWithLongitudinalDistance(
     const Pose & ego_pose, const PredictedObjects & objects,
     const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
     const std::shared_ptr<const PlannerData> & planner_data) const;

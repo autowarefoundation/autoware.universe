@@ -195,7 +195,7 @@ Result<IntersectionModule::BasicData, InternalError> IntersectionModule::prepare
   const auto interpolated_path_info_opt = util::generateInterpolatedPath(
     lane_id_, associative_ids_, *path, planner_param_.common.path_interpolation_ds, logger_);
   if (!interpolated_path_info_opt) {
-    return make_err<IntersectionModule::BasicData, InternalError>("splineInterpolate failed");
+    return make_err<IntersectionModule::BasicData, InternalError>("spline_interpolate failed");
   }
 
   const auto & interpolated_path_info = interpolated_path_info_opt.value();

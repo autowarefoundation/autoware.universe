@@ -1219,9 +1219,9 @@ StopPoint ObstacleStopPlannerNode::searchInsertPoint(
                                            : stop_param.max_longitudinal_margin;
 
   const auto max_dist_stop_point =
-    createTargetPoint(idx, max_longitudinal_margin, base_trajectory, dist_remain);
+    create_target_point(idx, max_longitudinal_margin, base_trajectory, dist_remain);
   const auto min_dist_stop_point =
-    createTargetPoint(idx, stop_param.min_longitudinal_margin, base_trajectory, dist_remain);
+    create_target_point(idx, stop_param.min_longitudinal_margin, base_trajectory, dist_remain);
 
   // check if stop point is already inserted by behavior planner
   bool is_inserted_already_stop_point = false;
@@ -1241,7 +1241,7 @@ StopPoint ObstacleStopPlannerNode::searchInsertPoint(
   return stop_point;
 }
 
-StopPoint ObstacleStopPlannerNode::createTargetPoint(
+StopPoint ObstacleStopPlannerNode::create_target_point(
   const int idx, const double margin, const TrajectoryPoints & base_trajectory,
   const double dist_remain)
 {

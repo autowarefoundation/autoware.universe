@@ -2411,8 +2411,8 @@ void GoalPlannerModule::setDebugData(const PullOverContextData & context_data)
   using autoware::universe_utils::createDefaultMarker;
   using autoware::universe_utils::createMarkerColor;
   using autoware::universe_utils::createMarkerScale;
-  using marker_utils::createObjectsMarkerArray;
-  using marker_utils::createPathMarkerArray;
+  using marker_utils::create_objects_marker_array;
+  using marker_utils::create_path_marker_array;
   using marker_utils::createPoseMarkerArray;
   using marker_utils::createPredictedPathMarkerArray;
   using marker_utils::showPolygon;
@@ -2460,7 +2460,7 @@ void GoalPlannerModule::setDebugData(const PullOverContextData & context_data)
   }
 
   // Visualize previous module output
-  add(createPathMarkerArray(
+  add(create_path_marker_array(
     getPreviousModuleOutput().path, "previous_module_path", 0, 1.0, 0.0, 0.0));
 
   // Visualize path and related pose
@@ -2470,14 +2470,14 @@ void GoalPlannerModule::setDebugData(const PullOverContextData & context_data)
       createPoseMarkerArray(pull_over_path.start_pose(), "pull_over_start_pose", 0, 0.3, 0.3, 0.9));
     add(createPoseMarkerArray(
       pull_over_path.modified_goal_pose(), "pull_over_end_pose", 0, 0.3, 0.3, 0.9));
-    add(createPathMarkerArray(pull_over_path.full_path(), "full_path", 0, 0.0, 0.5, 0.9));
-    add(createPathMarkerArray(pull_over_path.getCurrentPath(), "current_path", 0, 0.9, 0.5, 0.0));
+    add(create_path_marker_array(pull_over_path.full_path(), "full_path", 0, 0.0, 0.5, 0.9));
+    add(create_path_marker_array(pull_over_path.getCurrentPath(), "current_path", 0, 0.9, 0.5, 0.0));
 
     // visualize each partial path
     for (size_t i = 0; i < pull_over_path.partial_paths().size(); ++i) {
       const auto & partial_path = pull_over_path.partial_paths().at(i);
       add(
-        createPathMarkerArray(partial_path, "partial_path_" + std::to_string(i), 0, 0.9, 0.5, 0.9));
+        create_path_marker_array(partial_path, "partial_path_" + std::to_string(i), 0, 0.9, 0.5, 0.9));
     }
 
     auto marker = autoware::universe_utils::createDefaultMarker(

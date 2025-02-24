@@ -78,7 +78,7 @@ std::optional<InterpolatedPathInfo> generateInterpolatedPathInfo(
 {
   constexpr double ds = 0.2;
   InterpolatedPathInfo interpolated_path_info;
-  if (!splineInterpolate(input_path, ds, interpolated_path_info.path, logger)) {
+  if (!spline_interpolate(input_path, ds, interpolated_path_info.path, logger)) {
     return std::nullopt;
   }
   interpolated_path_info.ds = ds;

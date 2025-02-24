@@ -44,7 +44,7 @@ Polygon2d toFootprintPolygon(const PredictedObject & object, const double scale 
   const Pose & obj_pose = object.kinematics.initial_pose_with_covariance.pose;
   Polygon2d obj_footprint = autoware::universe_utils::toPolygon2d(object);
   // upscale foot print for noise
-  obj_footprint = upScalePolygon(obj_pose.position, obj_footprint, scale);
+  obj_footprint = up_scale_polygon(obj_pose.position, obj_footprint, scale);
   return obj_footprint;
 }
 

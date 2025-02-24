@@ -381,7 +381,7 @@ void GoalSearcher::update(
     const Pose goal_pose = goal_candidate.goal_pose;
 
     // check collision with footprint
-    if (checkCollision(goal_pose, objects, occupancy_grid_map)) {
+    if (check_collision(goal_pose, objects, occupancy_grid_map)) {
       goal_candidate.is_safe = false;
       continue;
     }
@@ -391,7 +391,7 @@ void GoalSearcher::update(
     const auto target_objects = goal_planner_utils::filterObjectsByLateralDistance(
       goal_pose, planner_data->parameters.vehicle_width, objects,
       parameters_.object_recognition_collision_check_hard_margins.back(), filter_inside);
-    if (checkCollisionWithLongitudinalDistance(
+    if (check_collisionWithLongitudinalDistance(
           goal_pose, target_objects, occupancy_grid_map, planner_data)) {
       goal_candidate.is_safe = false;
       continue;
@@ -413,7 +413,7 @@ bool GoalSearcher::isSafeGoalWithMarginScaleFactor(
   const double margin =
     parameters_.object_recognition_collision_check_hard_margins.back() * margin_scale_factor;
 
-  if (utils::checkCollisionBetweenFootprintAndObjects(
+  if (utils::check_collisionBetweenFootprintAndObjects(
         vehicle_footprint_, goal_pose, objects, margin)) {
     return false;
   }
@@ -422,7 +422,7 @@ bool GoalSearcher::isSafeGoalWithMarginScaleFactor(
   constexpr bool filter_inside = true;
   const auto target_objects = goal_planner_utils::filterObjectsByLateralDistance(
     goal_pose, planner_data->parameters.vehicle_width, objects, margin, filter_inside);
-  if (checkCollisionWithLongitudinalDistance(
+  if (check_collisionWithLongitudinalDistance(
         goal_pose, target_objects, occupancy_grid_map, planner_data)) {
     return false;
   }
@@ -430,7 +430,7 @@ bool GoalSearcher::isSafeGoalWithMarginScaleFactor(
   return true;
 }
 
-bool GoalSearcher::checkCollision(
+bool GoalSearcher::check_collision(
   const Pose & pose, const PredictedObjects & objects,
   const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map) const
 {
@@ -444,7 +444,7 @@ bool GoalSearcher::checkCollision(
     }
   }
 
-  if (utils::checkCollisionBetweenFootprintAndObjects(
+  if (utils::check_collisionBetweenFootprintAndObjects(
         vehicle_footprint_, pose, objects,
         parameters_.object_recognition_collision_check_hard_margins.back())) {
     return true;
@@ -452,7 +452,7 @@ bool GoalSearcher::checkCollision(
   return false;
 }
 
-bool GoalSearcher::checkCollisionWithLongitudinalDistance(
+bool GoalSearcher::check_collisionWithLongitudinalDistance(
   const Pose & ego_pose, const PredictedObjects & objects,
   const std::shared_ptr<OccupancyGridBasedCollisionDetector> occupancy_grid_map,
   const std::shared_ptr<const PlannerData> & planner_data) const

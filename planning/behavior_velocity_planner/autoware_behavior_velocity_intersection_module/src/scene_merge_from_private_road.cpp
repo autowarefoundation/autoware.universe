@@ -50,7 +50,7 @@ MergeFromPrivateRoadModule::MergeFromPrivateRoadModule(
   associative_ids_(associative_ids)
 {
   planner_param_ = planner_param;
-  state_machine_.setState(StateMachine::State::STOP);
+  state_machine_.set_state(StateMachine::State::STOP);
 }
 
 static std::optional<lanelet::ConstLanelet> getFirstConflictingLanelet(
@@ -85,9 +85,9 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path)
 
   const auto input_path = *path;
 
-  StateMachine::State current_state = state_machine_.getState();
+  StateMachine::State current_state = state_machine_.get_state();
   RCLCPP_DEBUG(
-    logger_, "lane_id = %ld, state = %s", lane_id_, StateMachine::toString(current_state).c_str());
+    logger_, "lane_id = %ld, state = %s", lane_id_, StateMachine::to_string(current_state).c_str());
 
   /* get current pose */
   geometry_msgs::msg::Pose current_pose = planner_data_->current_odometry->pose;
@@ -100,7 +100,7 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path)
   const auto interpolated_path_info_opt = util::generateInterpolatedPath(
     lane_id_, associative_ids_, *path, planner_param_.path_interpolation_ds, logger_);
   if (!interpolated_path_info_opt) {
-    RCLCPP_DEBUG_SKIPFIRST_THROTTLE(logger_, *clock_, 1000 /* ms */, "splineInterpolate failed");
+    RCLCPP_DEBUG_SKIPFIRST_THROTTLE(logger_, *clock_, 1000 /* ms */, "spline_interpolate failed");
     RCLCPP_DEBUG(logger_, "===== plan end =====");
     return false;
   }
@@ -149,7 +149,7 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path)
   debug_data_.stop_point_pose = path->points.at(stopline_idx).point.pose;
 
   /* set stop speed */
-  if (state_machine_.getState() == StateMachine::State::STOP) {
+  if (state_machine_.get_state() == StateMachine::State::STOP) {
     constexpr double v = 0.0;
     planning_utils::setVelocityFromIndex(stopline_idx, v, path);
 
@@ -166,7 +166,7 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path)
     if (
       signed_arc_dist_to_stop_point < planner_param_.stop_distance_threshold &&
       planner_data_->isVehicleStopped(planner_param_.stop_duration_sec)) {
-      state_machine_.setState(StateMachine::State::GO);
+      state_machine_.set_state(StateMachine::State::GO);
       if (signed_arc_dist_to_stop_point < -planner_param_.stop_distance_threshold) {
         RCLCPP_ERROR(logger_, "Failed to stop near stop line but ego stopped. Change state to GO");
       }

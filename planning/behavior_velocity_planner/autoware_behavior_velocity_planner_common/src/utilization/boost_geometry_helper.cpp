@@ -37,7 +37,7 @@ Polygon2d lines2polygon(const LineString2d & left_line, const LineString2d & rig
   return polygon;
 }
 
-Polygon2d upScalePolygon(
+Polygon2d up_scale_polygon(
   const geometry_msgs::msg::Point & position, const Polygon2d & polygon, const double scale)
 {
   Polygon2d transformed_polygon;

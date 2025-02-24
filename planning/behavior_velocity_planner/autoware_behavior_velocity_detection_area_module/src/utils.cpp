@@ -160,7 +160,7 @@ bool has_enough_braking_distance(
     return true;
   }
 
-  return arc_lane_utils::calcSignedDistance(self_pose, line_pose.position) >
+  return arc_lane_utils::calc_signed_distance(self_pose, line_pose.position) >
          pass_judge_line_distance;
 }
 

@@ -138,20 +138,20 @@ visualization_msgs::msg::MarkerArray NoStoppingAreaModule::createDebugMarkerArra
 
   if (!debug_data_.stuck_points.empty()) {
     appendMarkerArray(
-      debug::createPointsMarkerArray(
+      debug::create_points_marker_array(
         debug_data_.stuck_points, "stuck_points", module_id_, now, 0.3, 0.3, 0.3, 1.0, 1.0, 0.0),
       &debug_marker_array, now);
   }
   if (!debug_data_.stuck_vehicle_detect_area.points.empty()) {
     appendMarkerArray(
-      debug::createPolygonMarkerArray(
+      debug::create_polygon_marker_array(
         debug_data_.stuck_vehicle_detect_area, "stuck_vehicle_detect_area", module_id_, now, 0.1,
         0.1, 0.1, 1.0, 1.0, 0.0),
       &debug_marker_array, now);
   }
   if (!debug_data_.stop_line_detect_area.points.empty()) {
     appendMarkerArray(
-      debug::createPolygonMarkerArray(
+      debug::create_polygon_marker_array(
         debug_data_.stop_line_detect_area, "stop_line_detect_area", module_id_, now, 0.1, 0.1, 0.1,
         1.0, 1.0, 0.0),
       &debug_marker_array, now);

@@ -101,12 +101,12 @@ std::optional<size_t> insertStopVelocityAtCollision(
     path->points, collision.index, collision.point);
 
   const auto offset_segment =
-    arc_lane_utils::findOffsetSegment(*path, collision.index, offset + collision_offset);
+    arc_lane_utils::find_offset_segment(*path, collision.index, offset + collision_offset);
   if (!offset_segment) {
     return {};
   }
 
-  const auto interpolated_pose = arc_lane_utils::calcTargetPose(*path, *offset_segment);
+  const auto interpolated_pose = arc_lane_utils::calc_target_pose(*path, *offset_segment);
 
   if (offset_segment->second < 0) {
     insertStopVelocityFromStart(path);

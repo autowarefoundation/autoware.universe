@@ -154,7 +154,7 @@ visualization_msgs::msg::MarkerArray DetectionAreaModule::createDebugMarkerArray
       createCorrespondenceMarkerArray(detection_area_reg_elem_, now, marker_color), &wall_marker);
 
     appendMarkerArray(
-      debug::createPointsMarkerArray(
+      debug::create_points_marker_array(
         debug_data_.obstacle_points, "obstacles", module_id_, now, 0.6, 0.6, 0.6, 1.0, 0.0, 0.0),
       &wall_marker, now);
   } else {

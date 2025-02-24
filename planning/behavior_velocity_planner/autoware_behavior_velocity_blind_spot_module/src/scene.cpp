@@ -132,11 +132,11 @@ BlindSpotDecision BlindSpotModule::modifyPathVelocityDetail(PathWithLaneId * pat
   const auto collision_obstacle = isCollisionDetected(
     blind_spot_lanelets, path->points.at(critical_stopline_idx).point.pose, detection_area,
     ego_time_to_reach_stop_line);
-  state_machine_.setStateWithMarginTime(
+  state_machine_.set_state_with_margin_time(
     collision_obstacle.has_value() ? StateMachine::State::STOP : StateMachine::State::GO,
     logger_.get_child("state_machine"), *clock_);
 
-  if (state_machine_.getState() == StateMachine::State::STOP) {
+  if (state_machine_.get_state() == StateMachine::State::STOP) {
     return Unsafe{stop_line_idx, collision_obstacle};
   }
 
@@ -343,7 +343,7 @@ std::optional<OverPassJudge> BlindSpotModule::isOverPassJudge(
   /* if current_state = GO, and current_pose is over judge_line, ignore planning. */
   if (planner_param_.use_pass_judge_line) {
     const double eps = 1e-1;  // to prevent hunting
-    if (const auto current_state = state_machine_.getState();
+    if (const auto current_state = state_machine_.get_state();
         current_state == StateMachine::State::GO &&
         distance_until_stop + eps < pass_judge_line_dist) {
       return OverPassJudge{"over the pass judge line. no plan needed."};

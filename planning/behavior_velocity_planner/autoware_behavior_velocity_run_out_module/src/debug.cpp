@@ -47,7 +47,7 @@ RunOutDebug::TextWithPosition createDebugText(
   return text_with_position;
 }
 
-visualization_msgs::msg::MarkerArray createPolygonMarkerArray(
+visualization_msgs::msg::MarkerArray create_polygon_marker_array(
   const std::vector<std::vector<geometry_msgs::msg::Point>> & poly, const rclcpp::Time & time,
   const std::string & ns, const geometry_msgs::msg::Vector3 & scale,
   const std_msgs::msg::ColorRGBA & color, const double height)
@@ -249,7 +249,7 @@ visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArray
 
   if (!predicted_obstacle_polygons_.empty()) {
     appendMarkerArray(
-      createPolygonMarkerArray(
+      create_polygon_marker_array(
         predicted_obstacle_polygons_, current_time, "predicted_obstacle_polygons",
         createMarkerScale(0.02, 0.0, 0.0), createMarkerColor(1.0, 1.0, 0.0, 0.999), height_),
       &msg);
@@ -257,7 +257,7 @@ visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArray
 
   if (!collision_obstacle_polygons_.empty()) {
     appendMarkerArray(
-      createPolygonMarkerArray(
+      create_polygon_marker_array(
         collision_obstacle_polygons_, current_time, "collision_obstacle_polygons",
         createMarkerScale(0.04, 0.0, 0.0), createMarkerColor(1.0, 0.0, 0.0, 0.999), height_),
       &msg);
@@ -265,7 +265,7 @@ visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArray
 
   if (!detection_area_polygons_.empty()) {
     appendMarkerArray(
-      createPolygonMarkerArray(
+      create_polygon_marker_array(
         detection_area_polygons_, current_time, "detection_area_polygons",
         createMarkerScale(0.04, 0.0, 0.0), createMarkerColor(0.0, 0.0, 1.0, 0.999), height_),
       &msg);
@@ -273,7 +273,7 @@ visualization_msgs::msg::MarkerArray RunOutDebug::createVisualizationMarkerArray
 
   if (!mandatory_detection_area_polygons_.empty()) {
     appendMarkerArray(
-      createPolygonMarkerArray(
+      create_polygon_marker_array(
         mandatory_detection_area_polygons_, current_time, "mandatory_detection_area_polygons",
         createMarkerScale(0.04, 0.0, 0.0), createMarkerColor(1.0, 1.0, 0.0, 0.999), height_),
       &msg);

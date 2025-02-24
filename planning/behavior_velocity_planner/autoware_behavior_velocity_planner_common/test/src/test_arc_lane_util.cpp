@@ -39,7 +39,7 @@ geometry_msgs::msg::Point createPoint(const double x, const double y, const doub
 }
 }  // namespace
 
-TEST(findCollisionSegment, nominal)
+TEST(find_collision_segment, nominal)
 {
   /**
    * find forward collision segment by stop line
@@ -53,13 +53,13 @@ TEST(findCollisionSegment, nominal)
   LineString2d stop_line;
   stop_line.emplace_back(Point2d(3.5, 3.0));
   stop_line.emplace_back(Point2d(3.5, -3.0));
-  auto segment = arc_lane_utils::findCollisionSegment(path, stop_line);
+  auto segment = arc_lane_utils::find_collision_segment(path, stop_line);
   EXPECT_EQ(segment->first, static_cast<size_t>(3));
   EXPECT_DOUBLE_EQ(segment->second.x, 3.5);
   EXPECT_DOUBLE_EQ(segment->second.y, 0.0);
 }
 
-TEST(findOffsetSegment, case_forward_offset_segment)
+TEST(find_offset_segment, case_forward_offset_segment)
 {
   auto path = test::generatePath(0.0, 0.0, 5.0, 0.0, 6);
   /**
@@ -74,7 +74,7 @@ TEST(findOffsetSegment, case_forward_offset_segment)
   {
     double offset_length = 1.0;
     const auto offset_segment =
-      arc_lane_utils::findOffsetSegment(path, collision_segment, offset_length);
+      arc_lane_utils::find_offset_segment(path, collision_segment, offset_length);
     const auto front_idx = offset_segment->first;
     EXPECT_EQ(front_idx, static_cast<size_t>(4));
     EXPECT_DOUBLE_EQ(offset_segment->second, 0.5);
@@ -83,12 +83,12 @@ TEST(findOffsetSegment, case_forward_offset_segment)
   {
     double offset_length = INFINITY;
     const auto offset_segment =
-      arc_lane_utils::findOffsetSegment(path, collision_segment, offset_length);
+      arc_lane_utils::find_offset_segment(path, collision_segment, offset_length);
     EXPECT_FALSE(offset_segment);
   }
 }
 
-TEST(findOffsetSegment, case_backward_offset_segment)
+TEST(find_offset_segment, case_backward_offset_segment)
 {
   auto path = test::generatePath(0.0, 0.0, 5.0, 0.0, 6);
   /**
@@ -103,7 +103,7 @@ TEST(findOffsetSegment, case_backward_offset_segment)
   {
     double offset_length = -1.0;
     const auto offset_segment =
-      arc_lane_utils::findOffsetSegment(path, collision_segment, offset_length);
+      arc_lane_utils::find_offset_segment(path, collision_segment, offset_length);
     const auto front_idx = offset_segment->first;
     EXPECT_EQ(front_idx, static_cast<size_t>(2));
     EXPECT_DOUBLE_EQ(offset_segment->second, 0.5);
@@ -112,14 +112,14 @@ TEST(findOffsetSegment, case_backward_offset_segment)
   {
     double offset_length = -INFINITY;
     const auto offset_segment =
-      arc_lane_utils::findOffsetSegment(path, collision_segment, offset_length);
+      arc_lane_utils::find_offset_segment(path, collision_segment, offset_length);
     EXPECT_FALSE(offset_segment);
   }
 }
 
-TEST(checkCollision, various_cases)
+TEST(check_collision, various_cases)
 {
-  using autoware::behavior_velocity_planner::arc_lane_utils::checkCollision;
+  using autoware::behavior_velocity_planner::arc_lane_utils::check_collision;
   constexpr double epsilon = 1e-6;
 
   {  // normal case with collision
@@ -128,7 +128,7 @@ TEST(checkCollision, various_cases)
     const auto p3 = createPoint(0.0, -1.0, 0.0);
     const auto p4 = createPoint(0.0, 2.0, 0.0);
 
-    const auto collision = checkCollision(p1, p2, p3, p4);
+    const auto collision = check_collision(p1, p2, p3, p4);
     EXPECT_NE(collision, std::nullopt);
     EXPECT_NEAR(collision->x, 0.0, epsilon);
     EXPECT_NEAR(collision->y, 0.0, epsilon);
@@ -141,7 +141,7 @@ TEST(checkCollision, various_cases)
     const auto p3 = createPoint(0.0, -1.0, 0.0);
     const auto p4 = createPoint(0.0, 2.0, 0.0);
 
-    const auto collision = checkCollision(p1, p2, p3, p4);
+    const auto collision = check_collision(p1, p2, p3, p4);
     EXPECT_EQ(collision, std::nullopt);
   }
 
@@ -151,7 +151,7 @@ TEST(checkCollision, various_cases)
     const auto p3 = createPoint(0.0, 1.0, 0.0);
     const auto p4 = createPoint(0.0, 2.0, 0.0);
 
-    const auto collision = checkCollision(p1, p2, p3, p4);
+    const auto collision = check_collision(p1, p2, p3, p4);
     EXPECT_EQ(collision, std::nullopt);
   }
 
@@ -161,7 +161,7 @@ TEST(checkCollision, various_cases)
     const auto p3 = createPoint(0.0, 0.0, 0.0);
     const auto p4 = createPoint(0.0, 0.0, 0.0);
 
-    const auto collision = checkCollision(p1, p2, p3, p4);
+    const auto collision = check_collision(p1, p2, p3, p4);
     EXPECT_EQ(collision, std::nullopt);
   }
 
@@ -171,7 +171,7 @@ TEST(checkCollision, various_cases)
     const auto p3 = createPoint(-1.0, 0.0, 0.0);
     const auto p4 = createPoint(2.0, 0.0, 0.0);
 
-    const auto collision = checkCollision(p1, p2, p3, p4);
+    const auto collision = check_collision(p1, p2, p3, p4);
     EXPECT_EQ(collision, std::nullopt);
   }
 
@@ -181,7 +181,7 @@ TEST(checkCollision, various_cases)
     const auto p3 = createPoint(0.0, 0.0, 0.0);
     const auto p4 = createPoint(0.0, 2.0, 0.0);
 
-    const auto collision = checkCollision(p1, p2, p3, p4);
+    const auto collision = check_collision(p1, p2, p3, p4);
     EXPECT_NE(collision, std::nullopt);
     EXPECT_NEAR(collision->x, 0.0, epsilon);
     EXPECT_NEAR(collision->y, 0.0, epsilon);
@@ -194,7 +194,7 @@ TEST(checkCollision, various_cases)
     const auto p3 = createPoint(0.0, 0.0, 0.0);
     const auto p4 = createPoint(0.0, 1.0, 0.0);
 
-    const auto collision = checkCollision(p1, p2, p3, p4);
+    const auto collision = check_collision(p1, p2, p3, p4);
     EXPECT_NE(collision, std::nullopt);
     EXPECT_NEAR(collision->x, 0.0, epsilon);
     EXPECT_NEAR(collision->y, 0.0, epsilon);
@@ -207,7 +207,7 @@ TEST(checkCollision, various_cases)
     const auto p3 = createPoint(0.0, -1.0, 0.0);
     const auto p4 = createPoint(0.0, 0.0, 0.0);
 
-    const auto collision = checkCollision(p1, p2, p3, p4);
+    const auto collision = check_collision(p1, p2, p3, p4);
     EXPECT_NE(collision, std::nullopt);
     EXPECT_NEAR(collision->x, 0.0, epsilon);
     EXPECT_NEAR(collision->y, 0.0, epsilon);
@@ -220,7 +220,7 @@ TEST(checkCollision, various_cases)
     const auto p3 = createPoint(0.0, -1.0, 0.0);
     const auto p4 = createPoint(0.0, 1.0, 0.0);
 
-    const auto collision = checkCollision(p1, p2, p3, p4);
+    const auto collision = check_collision(p1, p2, p3, p4);
     EXPECT_NE(collision, std::nullopt);
     EXPECT_NEAR(collision->x, 0.0, epsilon);
     EXPECT_NEAR(collision->y, 0.0, epsilon);
@@ -233,7 +233,7 @@ TEST(checkCollision, various_cases)
     const auto p3 = createPoint(0.0, -1.0, 0.0);
     const auto p4 = createPoint(0.0, 1.0, 0.0);
 
-    const auto collision = checkCollision(p1, p2, p3, p4);
+    const auto collision = check_collision(p1, p2, p3, p4);
     EXPECT_NE(collision, std::nullopt);
     EXPECT_NEAR(collision->x, 0.0, epsilon);
     EXPECT_NEAR(collision->y, 0.0, epsilon);

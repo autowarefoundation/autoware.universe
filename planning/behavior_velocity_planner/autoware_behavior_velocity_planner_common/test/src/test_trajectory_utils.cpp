@@ -25,9 +25,9 @@
 
 #include <memory>
 
-TEST(smoothPath, nominal)
+TEST(smooth_path, nominal)
 {
-  using autoware::behavior_velocity_planner::smoothPath;
+  using autoware::behavior_velocity_planner::smooth_path;
   using autoware_internal_planning_msgs::msg::PathPointWithLaneId;
   using autoware_internal_planning_msgs::msg::PathWithLaneId;
 
@@ -93,7 +93,7 @@ TEST(smoothPath, nominal)
   PathWithLaneId out_path;
 
   // Execute smoothing
-  auto result = smoothPath(in_path, out_path, planner_data);
+  auto result = smooth_path(in_path, out_path, planner_data);
 
   // Check results
   EXPECT_TRUE(result);

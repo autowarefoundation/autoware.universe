@@ -77,7 +77,7 @@ std::optional<SegmentIndexWithPoint> findLastCollisionBeforeEndLine(
     const auto & p1 = autoware::universe_utils::getPoint(points.at(i));
     const auto & p2 = autoware::universe_utils::getPoint(points.at(i - 1));
     const auto collision_point =
-      arc_lane_utils::checkCollision(p1, p2, target_line_p1, target_line_p2);
+      arc_lane_utils::check_collision(p1, p2, target_line_p1, target_line_p2);
 
     if (collision_point) {
       return SegmentIndexWithPoint{i, collision_point.value()};

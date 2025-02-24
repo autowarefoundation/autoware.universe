@@ -146,7 +146,7 @@ Changelog for package autoware_behavior_path_start_planner_module
 * fix(autoware_behavior_path_planner): align the parameters with launcher (`#8790 <https://github.com/autowarefoundation/autoware.universe/issues/8790>`_)
   parameters in behavior_path_planner aligned
 * fix(autoware_behavior_path_start_planner_module): fix unusedFunction (`#8709 <https://github.com/autowarefoundation/autoware.universe/issues/8709>`_)
-  * fix:checkCollisionBetweenPathFootprintsAndObjects
+  * fix:check_collisionBetweenPathFootprintsAndObjects
   * fix:add const
   * fix:unusedFunction
   ---------

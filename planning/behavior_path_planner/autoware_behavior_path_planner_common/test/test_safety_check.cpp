@@ -534,9 +534,9 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, checkSafetyWithIntegralPredictedPolygo
     ego_predicted_path, vehicle_info, objects, true, params, debug_map));
 }
 
-TEST(BehaviorPathPlanningSafetyUtilsTest, checkCollision)
+TEST(BehaviorPathPlanningSafetyUtilsTest, check_collision)
 {
-  using autoware::behavior_path_planner::utils::path_safety_checker::checkCollision;
+  using autoware::behavior_path_planner::utils::path_safety_checker::check_collision;
   using autoware::behavior_path_planner::utils::path_safety_checker::get_collided_polygons;
 
   auto planned_path = autoware::test_utils::generateTrajectory<PathWithLaneId>(3, 1.0);
@@ -565,7 +565,7 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, checkCollision)
   CollisionCheckDebug debug;
 
   {
-    EXPECT_FALSE(checkCollision(
+    EXPECT_FALSE(check_collision(
       planned_path, predicted_ego_path, target_object, object_path, common_parameters,
       rss_parameters, hysteresis_factor, yaw_difference_th, debug));
     auto collide_polygon = get_collided_polygons(
@@ -579,7 +579,7 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, checkCollision)
     auto collide_polygon = get_collided_polygons(
       planned_path, predicted_ego_path, target_object, object_path, vehicle_info, rss_parameters,
       hysteresis_factor, max_velocity_limit, yaw_difference_th, debug);
-    EXPECT_TRUE(checkCollision(
+    EXPECT_TRUE(check_collision(
       planned_path, predicted_ego_path, target_object, object_path, common_parameters,
       rss_parameters, hysteresis_factor, yaw_difference_th, debug));
     EXPECT_TRUE(collide_polygon.empty());
@@ -588,7 +588,7 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, checkCollision)
     target_object.initial_pose = createPose(10.0, 4.0, 0.0, 0.0, 0.0, 0.0);
     object_path =
       create_predicted_path_with_polygon(createPose(10.0, 4.0, 0.0, 0.0, 0.0, 0.0), 1.0);
-    EXPECT_TRUE(checkCollision(
+    EXPECT_TRUE(check_collision(
       planned_path, predicted_ego_path, target_object, object_path, common_parameters,
       rss_parameters, hysteresis_factor, yaw_difference_th, debug));
     auto collide_polygon = get_collided_polygons(
@@ -601,7 +601,7 @@ TEST(BehaviorPathPlanningSafetyUtilsTest, checkCollision)
     target_object.initial_pose = createPose(10.0, 4.0, 0.0, 0.0, 0.0, 0.0);
     object_path =
       create_predicted_path_with_polygon(createPose(10.0, 4.0, 0.0, 0.0, 0.0, 0.0), 1.0);
-    EXPECT_TRUE(checkCollision(
+    EXPECT_TRUE(check_collision(
       planned_path, predicted_ego_path, target_object, object_path, common_parameters,
       rss_parameters, hysteresis_factor, yaw_difference_th, debug));
     auto collide_polygon = get_collided_polygons(

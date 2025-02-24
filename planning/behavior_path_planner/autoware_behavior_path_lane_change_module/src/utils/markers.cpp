@@ -297,7 +297,7 @@ MarkerArray createDebugMarkerArray(
   };
 
   if (!scene_debug_data.execution_area.points.empty()) {
-    add(createPolygonMarkerArray(
+    add(create_polygon_marker_array(
       scene_debug_data.execution_area, "execution_area", 0, 0.16, 1.0, 0.69, 0.1));
   }
 

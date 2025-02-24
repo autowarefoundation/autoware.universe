@@ -48,7 +48,7 @@ bool PullOutPlannerBase::isPullOutPathCollided(
       pull_out_path, collision_check_distance_from_end);
   if (!collision_check_section_path) return true;
 
-  return utils::checkCollisionBetweenPathFootprintsAndObjects(
+  return utils::check_collisionBetweenPathFootprintsAndObjects(
     vehicle_footprint_, collision_check_section_path.value(), pull_out_lane_stop_objects,
     collision_check_margin_);
 };

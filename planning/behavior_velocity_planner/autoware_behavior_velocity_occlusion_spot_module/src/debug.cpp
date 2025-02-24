@@ -207,7 +207,7 @@ MarkerArray OcclusionSpotModule::createDebugMarkerArray()
   }
   if (!debug_data_.occlusion_points.empty()) {
     appendMarkerArray(
-      debug::createPointsMarkerArray(
+      debug::create_points_marker_array(
         debug_data_.occlusion_points, "occlusion", module_id_, now, 0.5, 0.5, 0.5, 1.0, 0.0, 0.0),
       &debug_marker_array, now);
   }

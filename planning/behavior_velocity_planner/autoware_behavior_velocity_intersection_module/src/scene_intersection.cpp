@@ -62,28 +62,28 @@ IntersectionModule::IntersectionModule(
   occlusion_uuid_(autoware::universe_utils::generateUUID())
 {
   {
-    collision_state_machine_.setMarginTime(
+    collision_state_machine_.set_margin_time(
       planner_param_.collision_detection.collision_detection_hold_time);
   }
   {
-    before_creep_state_machine_.setMarginTime(
+    before_creep_state_machine_.set_margin_time(
       planner_param_.occlusion.temporal_stop_time_before_peeking);
-    before_creep_state_machine_.setState(StateMachine::State::STOP);
+    before_creep_state_machine_.set_state(StateMachine::State::STOP);
   }
   {
-    occlusion_stop_state_machine_.setMarginTime(
+    occlusion_stop_state_machine_.set_margin_time(
       planner_param_.occlusion.occlusion_detection_hold_time);
-    occlusion_stop_state_machine_.setState(StateMachine::State::GO);
+    occlusion_stop_state_machine_.set_state(StateMachine::State::GO);
   }
   {
-    temporal_stop_before_attention_state_machine_.setMarginTime(
+    temporal_stop_before_attention_state_machine_.set_margin_time(
       planner_param_.occlusion.occlusion_detection_hold_time);
-    temporal_stop_before_attention_state_machine_.setState(StateMachine::State::STOP);
+    temporal_stop_before_attention_state_machine_.set_state(StateMachine::State::STOP);
   }
   {
-    static_occlusion_timeout_state_machine_.setMarginTime(
+    static_occlusion_timeout_state_machine_.set_margin_time(
       planner_param_.occlusion.static_occlusion_with_traffic_light_timeout);
-    static_occlusion_timeout_state_machine_.setState(StateMachine::State::STOP);
+    static_occlusion_timeout_state_machine_.set_state(StateMachine::State::STOP);
   }
 
   ego_ttc_pub_ = node.create_publisher<autoware_internal_debug_msgs::msg::Float64MultiArrayStamped>(
@@ -320,11 +320,11 @@ DecisionResult IntersectionModule::modifyPathVelocityDetail(PathWithLaneId * pat
     return yield_stuck;
   }
 
-  collision_state_machine_.setStateWithMarginTime(
+  collision_state_machine_.set_state_with_margin_time(
     has_collision ? StateMachine::State::STOP : StateMachine::State::GO,
     logger_.get_child("collision state_machine"), *clock_);
   const bool has_collision_with_margin =
-    collision_state_machine_.getState() == StateMachine::State::STOP;
+    collision_state_machine_.get_state() == StateMachine::State::STOP;
 
   if (is_prioritized) {
     return FullyPrioritized{
@@ -354,9 +354,9 @@ DecisionResult IntersectionModule::modifyPathVelocityDetail(PathWithLaneId * pat
       const bool over_stopline = (dist_stopline < 0.0);
       const bool is_stopped_duration = planner_data_->isVehicleStopped(duration);
       if (over_stopline || (is_stopped_duration && approached_dist_stopline)) {
-        state_machine.setState(StateMachine::State::GO);
+        state_machine.set_state(StateMachine::State::GO);
       }
-      return state_machine.getState() == StateMachine::State::GO;
+      return state_machine.get_state() == StateMachine::State::GO;
     };
   auto stoppedAtPosition = [&](const size_t pos, const double duration) {
     const double dist_stopline = fromEgoDist(pos);
@@ -420,13 +420,13 @@ DecisionResult IntersectionModule::modifyPathVelocityDetail(PathWithLaneId * pat
       is_static_occlusion;
     if (has_collision_with_margin) {
       // if collision is detected, timeout is reset
-      static_occlusion_timeout_state_machine_.setState(StateMachine::State::STOP);
+      static_occlusion_timeout_state_machine_.set_state(StateMachine::State::STOP);
     } else if (is_stuck_by_static_occlusion) {
-      static_occlusion_timeout_state_machine_.setStateWithMarginTime(
+      static_occlusion_timeout_state_machine_.set_state_with_margin_time(
         StateMachine::State::GO, logger_.get_child("static_occlusion"), *clock_);
     }
     const bool release_static_occlusion_stuck =
-      (static_occlusion_timeout_state_machine_.getState() == StateMachine::State::GO);
+      (static_occlusion_timeout_state_machine_.get_state() == StateMachine::State::GO);
     if (!has_collision_with_margin && release_static_occlusion_stuck) {
       return Safe{closest_idx, collision_stopline_idx, occlusion_stopline_idx, occlusion_diag};
     }
@@ -437,8 +437,8 @@ DecisionResult IntersectionModule::modifyPathVelocityDetail(PathWithLaneId * pat
     const std::optional<double> static_occlusion_timeout =
       is_stuck_by_static_occlusion
         ? std::make_optional<double>(
-            max_timeout - static_occlusion_timeout_state_machine_.getDuration() -
-            occlusion_stop_state_machine_.getDuration())
+            max_timeout - static_occlusion_timeout_state_machine_.get_duration() -
+            occlusion_stop_state_machine_.get_duration())
         : (is_static_occlusion ? std::make_optional<double>(max_timeout) : std::nullopt);
     if (has_collision_with_margin) {
       return OccludedCollisionStop{

@@ -51,8 +51,8 @@ NoStoppingAreaModule::NoStoppingAreaModule(
   planner_param_(planner_param),
   debug_data_()
 {
-  state_machine_.setState(StateMachine::State::GO);
-  state_machine_.setMarginTime(planner_param_.state_clear_time);
+  state_machine_.set_state(StateMachine::State::GO);
+  state_machine_.set_margin_time(planner_param_.state_clear_time);
 }
 
 bool NoStoppingAreaModule::modifyPathVelocity(PathWithLaneId * path)
@@ -78,7 +78,7 @@ bool NoStoppingAreaModule::modifyPathVelocity(PathWithLaneId * path)
     setSafe(true);
     return true;
   }
-  const auto stop_point = arc_lane_utils::createTargetPoint(
+  const auto stop_point = arc_lane_utils::create_target_point(
     original_path, stop_line.value(), planner_param_.stop_margin,
     planner_data_->vehicle_info_.max_longitudinal_offset_m);
   if (!stop_point) {
@@ -91,7 +91,7 @@ bool NoStoppingAreaModule::modifyPathVelocity(PathWithLaneId * path)
   if (planning_utils::isOverLine(
         original_path, current_pose->pose, stop_pose, planner_param_.dead_line_margin)) {
     // ego can't stop in front of no stopping area -> GO or OR
-    state_machine_.setState(StateMachine::State::GO);
+    state_machine_.set_state(StateMachine::State::GO);
     setSafe(true);
     return true;
   }
@@ -126,16 +126,16 @@ bool NoStoppingAreaModule::modifyPathVelocity(PathWithLaneId * path)
     is_entry_prohibited_by_stuck_vehicle || is_entry_prohibited_by_stop_line;
   if (!no_stopping_area::is_stoppable(
         pass_judge_, current_pose->pose, stop_point->second, ego_data, logger_, *clock_)) {
-    state_machine_.setState(StateMachine::State::GO);
+    state_machine_.set_state(StateMachine::State::GO);
     setSafe(true);
     return false;
   }
 
-  state_machine_.setStateWithMarginTime(
+  state_machine_.set_state_with_margin_time(
     is_entry_prohibited ? StateMachine::State::STOP : StateMachine::State::GO,
     logger_.get_child("state_machine"), *clock_);
 
-  setSafe(state_machine_.getState() != StateMachine::State::STOP);
+  setSafe(state_machine_.get_state() != StateMachine::State::STOP);
   if (!isActivated()) {
     // ----------------stop reason and stop point--------------------------
     no_stopping_area::insert_stop_point(*path, *stop_point);
@@ -151,7 +151,7 @@ bool NoStoppingAreaModule::modifyPathVelocity(PathWithLaneId * path)
         0.0 /*shift distance*/, "");
     }
 
-  } else if (state_machine_.getState() == StateMachine::State::GO) {
+  } else if (state_machine_.get_state() == StateMachine::State::GO) {
     // reset pass judge if current state is go
     pass_judge_.is_stoppable = true;
     pass_judge_.pass_judged = false;

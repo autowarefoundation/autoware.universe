@@ -32,7 +32,7 @@ public:
     STOP = 0,
     GO,
   };
-  static std::string toString(const State & state)
+  static std::string to_string(const State & state)
   {
     if (state == State::STOP) {
       return "STOP";
@@ -48,7 +48,7 @@ public:
     margin_time_ = 0.0;
     duration_ = 0.0;
   }
-  void setStateWithMarginTime(State state, rclcpp::Logger logger, rclcpp::Clock & clock)
+  void set_state_with_margin_time(State state, rclcpp::Logger logger, rclcpp::Clock & clock)
   {
     /* same state request */
     if (state_ == state) {
@@ -79,10 +79,10 @@ public:
     RCLCPP_ERROR(logger, "Unsuitable state. ignore request.");
   }
 
-  void setMarginTime(const double t) { margin_time_ = t; }
-  void setState(State state) { state_ = state; }
-  State getState() const { return state_; }
-  double getDuration() const { return duration_; }
+  void set_margin_time(const double t) { margin_time_ = t; }
+  void set_state(State state) { state_ = state; }
+  State get_state() const { return state_; }
+  double get_duration() const { return duration_; }
 
 private:
   State state_;                               //! current state

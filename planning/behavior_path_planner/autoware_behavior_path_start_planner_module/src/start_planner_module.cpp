@@ -1227,7 +1227,7 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoseCandidates(
       back_path_from_start_pose.points, start_pose.position, -back_distance);
     if (!backed_pose) continue;
 
-    if (utils::checkCollisionBetweenFootprintAndObjects(
+    if (utils::check_collisionBetweenFootprintAndObjects(
           local_vehicle_footprint, *backed_pose, front_stop_objects_in_pull_out_lanes,
           parameters_->collision_check_margin_from_front_object))
       continue;
@@ -1245,7 +1245,7 @@ std::vector<Pose> StartPlannerModule::searchPullOutStartPoseCandidates(
       continue;
     }
 
-    if (utils::checkCollisionBetweenFootprintAndObjects(
+    if (utils::check_collisionBetweenFootprintAndObjects(
           local_vehicle_footprint, *backed_pose, stop_objects_in_pull_out_lanes,
           parameters_->collision_check_margins.back())) {
       break;  // poses behind this has a collision, so break.
@@ -1697,8 +1697,8 @@ void StartPlannerModule::setDebugData()
   using lanelet::visualization::laneletsAsTriangleMarkerArray;
   using marker_utils::addFootprintMarker;
   using marker_utils::createFootprintMarkerArray;
-  using marker_utils::createObjectsMarkerArray;
-  using marker_utils::createPathMarkerArray;
+  using marker_utils::create_objects_marker_array;
+  using marker_utils::create_path_marker_array;
   using marker_utils::createPoseMarkerArray;
   using marker_utils::createPredictedPathMarkerArray;
   using marker_utils::showPolygon;
@@ -1735,9 +1735,9 @@ void StartPlannerModule::setDebugData()
     createFootprintMarkerArray(
       debug_data_.refined_start_pose, vehicle_info_, "refined_start_pose", 0, 0.9, 0.9, 0.3),
     debug_marker_);
-  add(createPathMarkerArray(getFullPath(), "full_path", 0, 0.0, 0.5, 0.9), debug_marker_);
+  add(create_path_marker_array(getFullPath(), "full_path", 0, 0.0, 0.5, 0.9), debug_marker_);
   add(
-    createPathMarkerArray(status_.backward_path, "backward_driving_path", 0, 0.0, 0.9, 0.0),
+    create_path_marker_array(status_.backward_path, "backward_driving_path", 0, 0.0, 0.9, 0.0),
     debug_marker_);
 
   // visualize collision_check_end_pose and footprint
@@ -1836,7 +1836,7 @@ void StartPlannerModule::setDebugData()
 
     if (!debug_data_.filtered_objects.objects.empty()) {
       add(
-        createObjectsMarkerArray(
+        create_objects_marker_array(
           debug_data_.filtered_objects, "filtered_objects", 0, 0.0, 0.5, 0.9),
         info_marker_);
     }

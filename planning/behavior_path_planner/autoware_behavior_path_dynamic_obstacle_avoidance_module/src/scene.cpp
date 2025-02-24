@@ -951,11 +951,11 @@ LatFeasiblePaths DynamicObstacleAvoidanceModule::generateLateralFeasiblePaths(
   }
 
   autoware::universe_utils::appendMarkerArray(
-    marker_utils::createPointsMarkerArray(
+    marker_utils::create_points_marker_array(
       ego_lat_feasible_paths.left_path, "ego_lat_feasible_left_path", 0, 0.6, 0.9, 0.9),
     &debug_marker_);
   autoware::universe_utils::appendMarkerArray(
-    marker_utils::createPointsMarkerArray(
+    marker_utils::create_points_marker_array(
       ego_lat_feasible_paths.right_path, "ego_lat_feasible_right_path", 0, 0.6, 0.9, 0.9),
     &debug_marker_);
 
