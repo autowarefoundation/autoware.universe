@@ -315,7 +315,7 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
   const PathWithLaneId & ego_path, const PathWithLaneId & sparse_resample_path,
   const geometry_msgs::msg::Point & first_path_point_on_crosswalk,
   const geometry_msgs::msg::Point & last_path_point_on_crosswalk,
-  const std::optional<geometry_msgs::msg::Pose> & default_stop_pose_opt)
+  const std::optional<geometry_msgs::msg::Pose> & default_stop_pose)
 {
   const auto & ego_pos = planner_data_->current_odometry->pose.position;
 
@@ -329,8 +329,8 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
   // Update object state
   // This exceptional handling should be done in update(), but is compromised by history
   const double dist_default_stop =
-    default_stop_pose_opt.has_value()
-      ? calcSignedArcLength(ego_path.points, ego_pos, default_stop_pose_opt->position)
+  default_stop_pose.has_value()
+      ? calcSignedArcLength(ego_path.points, ego_pos, default_stop_pose->position)
       : 0.0;
   updateObjectState(
     dist_default_stop, sparse_resample_path, crosswalk_attention_range, attention_area);
@@ -362,7 +362,7 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
   }
 
   const auto decided_stop_pose_opt =
-    calcStopPose(ego_path, dist_nearest_cp.value(), default_stop_pose_opt);
+    calcStopPose(ego_path, dist_nearest_cp.value(), default_stop_pose);
   if (!decided_stop_pose_opt.has_value()) {
     return {};
   }
@@ -651,7 +651,7 @@ std::pair<double, double> CrosswalkModule::clampAttentionRangeByNeighborCrosswal
 }
 
 std::optional<double> CrosswalkModule::findEgoPassageDirectionAlongPath(
-  const PathWithLaneId & path) const
+  const PathWithLaneId & sparse_resample_path) const
 {
   auto findIntersectPoint =
     [&](const lanelet::ConstLineString3d line) -> std::optional<geometry_msgs::msg::Point> {
@@ -659,9 +659,9 @@ std::optional<double> CrosswalkModule::findEgoPassageDirectionAlongPath(
       autoware_utils::create_point(line.front().x(), line.front().y(), line.front().z());
     const auto line_end =
       autoware_utils::create_point(line.back().x(), line.back().y(), line.back().z());
-    for (unsigned i = 0; i < path.points.size() - 1; ++i) {
-      const auto & start = path.points.at(i).point.pose.position;
-      const auto & end = path.points.at(i + 1).point.pose.position;
+    for (unsigned i = 0; i < sparse_resample_path.points.size() - 1; ++i) {
+      const auto & start = sparse_resample_path.points.at(i).point.pose.position;
+      const auto & end = sparse_resample_path.points.at(i + 1).point.pose.position;
       if (const auto intersect =
             autoware_utils::intersect(line_start, line_end, start, end);
           intersect.has_value()) {
