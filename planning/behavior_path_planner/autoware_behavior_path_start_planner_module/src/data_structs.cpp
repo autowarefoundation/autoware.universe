@@ -38,7 +38,8 @@ StartPlannerParameters StartPlannerParameters::init(rclcpp::Node & node)
       get_or_declare_parameter<double>(node, ns + "prepare_time_before_start");
     p.th_distance_to_middle_of_the_road =
       get_or_declare_parameter<double>(node, ns + "th_distance_to_middle_of_the_road");
-    p.skip_rear_vehicle_check = get_or_declare_parameter<bool>(node, ns + "skip_rear_vehicle_check");
+    p.skip_rear_vehicle_check =
+      get_or_declare_parameter<bool>(node, ns + "skip_rear_vehicle_check");
     p.extra_width_margin_for_rear_obstacle =
       get_or_declare_parameter<double>(node, ns + "extra_width_margin_for_rear_obstacle");
     p.collision_check_margins =
@@ -128,7 +129,8 @@ StartPlannerParameters StartPlannerParameters::init(rclcpp::Node & node)
   // freespace planner general params
   {
     const std::string ns = "start_planner.freespace_planner.";
-    p.enable_freespace_planner = get_or_declare_parameter<bool>(node, ns + "enable_freespace_planner");
+    p.enable_freespace_planner =
+      get_or_declare_parameter<bool>(node, ns + "enable_freespace_planner");
     p.freespace_planner_algorithm =
       get_or_declare_parameter<std::string>(node, ns + "freespace_planner_algorithm");
     p.end_pose_search_start_distance =
@@ -182,7 +184,8 @@ StartPlannerParameters StartPlannerParameters::init(rclcpp::Node & node)
   //   freespace planner rrtstar
   {
     const std::string ns = "start_planner.freespace_planner.rrtstar.";
-    p.rrt_star_parameters.enable_update = get_or_declare_parameter<bool>(node, ns + "enable_update");
+    p.rrt_star_parameters.enable_update =
+      get_or_declare_parameter<bool>(node, ns + "enable_update");
     p.rrt_star_parameters.use_informed_sampling =
       get_or_declare_parameter<bool>(node, ns + "use_informed_sampling");
     p.rrt_star_parameters.max_planning_time =
@@ -280,8 +283,8 @@ StartPlannerParameters StartPlannerParameters::init(rclcpp::Node & node)
       get_or_declare_parameter<double>(node, safety_check_ns + "forward_path_length");
     p.safety_check_params.publish_debug_marker =
       get_or_declare_parameter<bool>(node, safety_check_ns + "publish_debug_marker");
-    p.safety_check_params.collision_check_yaw_diff_threshold =
-      get_or_declare_parameter<double>(node, safety_check_ns + "collision_check_yaw_diff_threshold");
+    p.safety_check_params.collision_check_yaw_diff_threshold = get_or_declare_parameter<double>(
+      node, safety_check_ns + "collision_check_yaw_diff_threshold");
   }
   // RSSparams
   {

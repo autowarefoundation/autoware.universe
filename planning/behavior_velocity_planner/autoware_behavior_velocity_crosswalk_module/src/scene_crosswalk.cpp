@@ -98,8 +98,7 @@ Polygon2d createMultiStepPolygon(
 {
   Polygon2d multi_step_polygon{};
   for (size_t i = start_idx; i <= end_idx; ++i) {
-    offsetPolygon2d(
-      autoware_utils::get_pose(obj_path_points.at(i)), polygon, multi_step_polygon);
+    offsetPolygon2d(autoware_utils::get_pose(obj_path_points.at(i)), polygon, multi_step_polygon);
   }
 
   Polygon2d hull_multi_step_polygon{};
@@ -329,7 +328,7 @@ std::optional<StopFactor> CrosswalkModule::checkStopForCrosswalkUsers(
   // Update object state
   // This exceptional handling should be done in update(), but is compromised by history
   const double dist_default_stop =
-  default_stop_pose.has_value()
+    default_stop_pose.has_value()
       ? calcSignedArcLength(ego_path.points, ego_pos, default_stop_pose->position)
       : 0.0;
   updateObjectState(
@@ -662,8 +661,7 @@ std::optional<double> CrosswalkModule::findEgoPassageDirectionAlongPath(
     for (unsigned i = 0; i < sparse_resample_path.points.size() - 1; ++i) {
       const auto & start = sparse_resample_path.points.at(i).point.pose.position;
       const auto & end = sparse_resample_path.points.at(i + 1).point.pose.position;
-      if (const auto intersect =
-            autoware_utils::intersect(line_start, line_end, start, end);
+      if (const auto intersect = autoware_utils::intersect(line_start, line_end, start, end);
           intersect.has_value()) {
         return intersect;
       }
@@ -694,8 +692,7 @@ std::optional<double> CrosswalkModule::findObjectPassageDirectionAlongVehicleLan
     for (unsigned i = 0; i < path.path.size() - 1; ++i) {
       const auto & start = path.path.at(i).position;
       const auto & end = path.path.at(i + 1).position;
-      if (const auto intersect =
-            autoware_utils::intersect(line_start, line_end, start, end);
+      if (const auto intersect = autoware_utils::intersect(line_start, line_end, start, end);
           intersect.has_value()) {
         return std::make_optional(std::make_pair(i, intersect.value()));
       }

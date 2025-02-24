@@ -57,9 +57,9 @@ std::vector<T> getAllKeys(const std::unordered_map<T, S> & map)
 
 namespace autoware::behavior_path_planner
 {
-using autoware_utils::Polygon2d;
 using autoware_internal_planning_msgs::msg::PathWithLaneId;
 using autoware_perception_msgs::msg::PredictedPath;
+using autoware_utils::Polygon2d;
 
 struct MinMaxValue
 {

@@ -626,8 +626,7 @@ void MPTOptimizer::updateOrientation(
 {
   const auto yaw_vec = ref_points_spline.getSplineInterpolatedYaws();
   for (size_t i = 0; i < ref_points.size(); ++i) {
-    ref_points.at(i).pose.orientation =
-      autoware_utils::create_quaternion_from_yaw(yaw_vec.at(i));
+    ref_points.at(i).pose.orientation = autoware_utils::create_quaternion_from_yaw(yaw_vec.at(i));
   }
 }
 
@@ -708,10 +707,10 @@ void MPTOptimizer::updateExtraPoints(std::vector<ReferencePoint> & ref_points) c
 
     const bool are_too_close_points =
       autoware_utils::calc_distance2d(front_wheel_pos, ref_points.at(i).pose.position) < 1e-03;
-    const auto front_wheel_yaw = are_too_close_points
-                                   ? ref_points.at(i).getYaw()
-                                   : autoware_utils::calc_azimuth_angle(
-                                       ref_points.at(i).pose.position, front_wheel_pos);
+    const auto front_wheel_yaw =
+      are_too_close_points
+        ? ref_points.at(i).getYaw()
+        : autoware_utils::calc_azimuth_angle(ref_points.at(i).pose.position, front_wheel_pos);
     ref_points.at(i).alpha =
       autoware_utils::normalize_radian(front_wheel_yaw - ref_points.at(i).getYaw());
   }

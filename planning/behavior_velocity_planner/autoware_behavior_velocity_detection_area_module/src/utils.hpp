@@ -15,8 +15,8 @@
 #ifndef UTILS_HPP_
 #define UTILS_HPP_
 
-#include <autoware_utils/geometry/boost_geometry.hpp>
 #include <autoware_lanelet2_extension/regulatory_elements/detection_area.hpp>
+#include <autoware_utils/geometry/boost_geometry.hpp>
 #include <rclcpp/time.hpp>
 
 #include <geometry_msgs/msg/pose.hpp>

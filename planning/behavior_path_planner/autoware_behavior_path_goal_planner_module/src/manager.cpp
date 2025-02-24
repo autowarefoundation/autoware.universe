@@ -564,7 +564,8 @@ void GoalPlannerModuleManager::updateModuleParams(
   // forward parallel parking forward
   {
     const std::string ns = base_ns + "pull_over.parallel_parking.forward.";
-    update_param<bool>(parameters, ns + "enable_arc_forward_parking", p->enable_arc_forward_parking);
+    update_param<bool>(
+      parameters, ns + "enable_arc_forward_parking", p->enable_arc_forward_parking);
     update_param<double>(
       parameters, ns + "after_forward_parking_straight_distance",
       p->parallel_parking_parameters.after_forward_parking_straight_distance);
@@ -669,7 +670,8 @@ void GoalPlannerModuleManager::updateModuleParams(
       parameters, ns + "use_informed_sampling", p->rrt_star_parameters.use_informed_sampling);
     update_param<double>(
       parameters, ns + "max_planning_time", p->rrt_star_parameters.max_planning_time);
-    update_param<double>(parameters, ns + "neighbor_radius", p->rrt_star_parameters.neighbor_radius);
+    update_param<double>(
+      parameters, ns + "neighbor_radius", p->rrt_star_parameters.neighbor_radius);
     update_param<double>(parameters, ns + "margin", p->rrt_star_parameters.margin);
   }
 
@@ -792,7 +794,8 @@ void GoalPlannerModuleManager::updateModuleParams(
   {
     update_param<double>(
       parameters, safety_check_ns + "keep_unsafe_time", p->safety_check_params.keep_unsafe_time);
-    update_param<std::string>(parameters, safety_check_ns + "method", p->safety_check_params.method);
+    update_param<std::string>(
+      parameters, safety_check_ns + "method", p->safety_check_params.method);
     update_param<double>(
       parameters, safety_check_ns + "hysteresis_factor_expand_rate",
       p->safety_check_params.hysteresis_factor_expand_rate);

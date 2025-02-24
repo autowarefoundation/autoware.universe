@@ -31,8 +31,8 @@
 
 namespace autoware::behavior_path_planner
 {
-using autoware_utils::LinearRing2d;
 using autoware_internal_planning_msgs::msg::PathWithLaneId;
+using autoware_utils::LinearRing2d;
 using geometry_msgs::msg::Pose;
 
 class PullOutPlannerBase

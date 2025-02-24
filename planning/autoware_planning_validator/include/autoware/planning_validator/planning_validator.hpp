@@ -16,10 +16,10 @@
 #define AUTOWARE__PLANNING_VALIDATOR__PLANNING_VALIDATOR_HPP_
 
 #include "autoware/planning_validator/debug_marker.hpp"
+#include "autoware_planning_validator/msg/planning_validator_status.hpp"
 #include "autoware_utils/ros/logger_level_configure.hpp"
 #include "autoware_utils/ros/polling_subscriber.hpp"
 #include "autoware_utils/system/stop_watch.hpp"
-#include "autoware_planning_validator/msg/planning_validator_status.hpp"
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 
 #include <autoware_utils/ros/published_time_publisher.hpp>
@@ -36,11 +36,11 @@
 
 namespace autoware::planning_validator
 {
-using autoware_utils::StopWatch;
 using autoware_internal_debug_msgs::msg::Float64Stamped;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
 using autoware_planning_validator::msg::PlanningValidatorStatus;
+using autoware_utils::StopWatch;
 using diagnostic_updater::DiagnosticStatusWrapper;
 using diagnostic_updater::Updater;
 using nav_msgs::msg::Odometry;

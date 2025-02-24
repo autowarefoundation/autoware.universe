@@ -17,8 +17,8 @@
 
 #include <autoware/behavior_velocity_planner_common/planner_data.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/arc_lane_util.hpp>
-#include <autoware_utils/geometry/boost_geometry.hpp>
 #include <autoware_lanelet2_extension/regulatory_elements/no_stopping_area.hpp>
+#include <autoware_utils/geometry/boost_geometry.hpp>
 #include <rclcpp/logger.hpp>
 
 #include <autoware_internal_planning_msgs/msg/path_with_lane_id.hpp>

@@ -241,20 +241,19 @@ std::vector<Polygon2d> create_one_step_polygons(
       if (i == 0 && traj_points.at(i).longitudinal_velocity_mps > 1e-3) {
         boost::geometry::append(
           idx_poly,
-          autoware_utils::to_footprint(pose, front_length, rear_length, vehicle_width)
-            .outer());
+          autoware_utils::to_footprint(pose, front_length, rear_length, vehicle_width).outer());
         boost::geometry::append(
-          idx_poly, autoware_utils::from_msg(
-                      autoware_utils::calc_offset_pose(
-                        pose, front_length, vehicle_width * 0.5 + lat_margin, 0.0)
-                        .position)
-                      .to_2d());
+          idx_poly,
+          autoware_utils::from_msg(autoware_utils::calc_offset_pose(
+                                     pose, front_length, vehicle_width * 0.5 + lat_margin, 0.0)
+                                     .position)
+            .to_2d());
         boost::geometry::append(
-          idx_poly, autoware_utils::from_msg(
-                      autoware_utils::calc_offset_pose(
-                        pose, front_length, -vehicle_width * 0.5 - lat_margin, 0.0)
-                        .position)
-                      .to_2d());
+          idx_poly,
+          autoware_utils::from_msg(autoware_utils::calc_offset_pose(
+                                     pose, front_length, -vehicle_width * 0.5 - lat_margin, 0.0)
+                                     .position)
+            .to_2d());
       } else {
         boost::geometry::append(
           idx_poly, autoware_utils::to_footprint(

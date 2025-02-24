@@ -119,10 +119,8 @@ private:
 
   autoware_utils::InterProcessPollingSubscriber<OccupancyGrid> occupancy_grid_sub_{
     this, "~/input/occupancy_grid"};
-  autoware_utils::InterProcessPollingSubscriber<Scenario> scenario_sub_{
-    this, "~/input/scenario"};
-  autoware_utils::InterProcessPollingSubscriber<
-    Odometry, autoware_utils::polling_policy::All>
+  autoware_utils::InterProcessPollingSubscriber<Scenario> scenario_sub_{this, "~/input/scenario"};
+  autoware_utils::InterProcessPollingSubscriber<Odometry, autoware_utils::polling_policy::All>
     odom_sub_{this, "~/input/odometry", rclcpp::QoS{100}};
 
   rclcpp::TimerBase::SharedPtr timer_;

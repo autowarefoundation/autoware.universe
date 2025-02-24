@@ -17,11 +17,11 @@
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 
 #include <autoware/motion_utils/resample/resample.hpp>
-#include <autoware_utils/geometry/boost_polygon_utils.hpp>
-#include <autoware_utils/math/unit_conversion.hpp>
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
+#include <autoware_utils/geometry/boost_polygon_utils.hpp>
+#include <autoware_utils/math/unit_conversion.hpp>
 
 #include <boost/geometry/algorithms/is_valid.hpp>
 
@@ -253,8 +253,7 @@ std::optional<std::pair<size_t, geometry_msgs::msg::Point>> intersectBound(
   const size_t end_idx = static_cast<size_t>(std::min(
     static_cast<int>(bound.size()) - 1, static_cast<int>(std::max(seg_idx1, seg_idx2)) + 1 + 5));
   for (int i = start_idx; i < static_cast<int>(end_idx); ++i) {
-    const auto intersect_point =
-      autoware_utils::intersect(p1, p2, bound.at(i), bound.at(i + 1));
+    const auto intersect_point = autoware_utils::intersect(p1, p2, bound.at(i), bound.at(i + 1));
     if (intersect_point) {
       std::pair<size_t, geometry_msgs::msg::Point> result;
       result.first = static_cast<size_t>(i);
@@ -1485,17 +1484,16 @@ std::vector<geometry_msgs::msg::Point> postProcess(
     return original_bound;
   }
 
-  const auto addPoints =
-    [](const lanelet::ConstLineString3d & points, std::vector<geometry_msgs::msg::Point> & bound) {
-      for (const auto & bound_p : points) {
-        const auto cp = lanelet::utils::conversion::toGeomMsgPt(bound_p);
-        if (
-          bound.empty() ||
-          autoware_utils::calc_distance2d(cp, bound.back()) > overlap_threshold) {
-          bound.push_back(cp);
-        }
+  const auto addPoints = [](
+                           const lanelet::ConstLineString3d & points,
+                           std::vector<geometry_msgs::msg::Point> & bound) {
+    for (const auto & bound_p : points) {
+      const auto cp = lanelet::utils::conversion::toGeomMsgPt(bound_p);
+      if (bound.empty() || autoware_utils::calc_distance2d(cp, bound.back()) > overlap_threshold) {
+        bound.push_back(cp);
       }
-    };
+    }
+  };
 
   const auto has_overlap =
     [&](const lanelet::ConstLanelet & lane, const lanelet::ConstLanelets & ignore_lanelets = {}) {
@@ -1595,17 +1593,14 @@ std::vector<geometry_msgs::msg::Point> postProcess(
   // Insert middle points
   for (size_t i = start_idx + 1; i <= goal_idx; ++i) {
     const auto & next_point = tmp_bound.at(i);
-    const double dist =
-      autoware_utils::calc_distance2d(processed_bound.back(), next_point);
+    const double dist = autoware_utils::calc_distance2d(processed_bound.back(), next_point);
     if (dist > overlap_threshold) {
       processed_bound.push_back(next_point);
     }
   }
 
   // Insert a goal point
-  if (
-    autoware_utils::calc_distance2d(processed_bound.back(), goal_point) >
-    overlap_threshold) {
+  if (autoware_utils::calc_distance2d(processed_bound.back(), goal_point) > overlap_threshold) {
     processed_bound.push_back(goal_point);
   }
 

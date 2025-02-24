@@ -106,13 +106,12 @@ private:
     this, "~/input/occupancy_grid_map"};
   autoware_utils::InterProcessPollingSubscriber<OccupancyGrid> costmap_subscriber_{
     this, "~/input/costmap"};
-  autoware_utils::InterProcessPollingSubscriber<TrafficLightGroupArray>
-    traffic_signals_subscriber_{this, "~/input/traffic_signals"};
+  autoware_utils::InterProcessPollingSubscriber<TrafficLightGroupArray> traffic_signals_subscriber_{
+    this, "~/input/traffic_signals"};
   autoware_utils::InterProcessPollingSubscriber<LateralOffset> lateral_offset_subscriber_{
     this, "~/input/lateral_offset"};
-  autoware_utils::InterProcessPollingSubscriber<OperationModeState>
-    operation_mode_subscriber_{
-      this, "/system/operation_mode/state", rclcpp::QoS{1}.transient_local()};
+  autoware_utils::InterProcessPollingSubscriber<OperationModeState> operation_mode_subscriber_{
+    this, "/system/operation_mode/state", rclcpp::QoS{1}.transient_local()};
   autoware_utils::InterProcessPollingSubscriber<tier4_planning_msgs::msg::VelocityLimit>
     external_limit_max_velocity_subscriber_{this, "/planning/scenario_planning/max_velocity"};
 

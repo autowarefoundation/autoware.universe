@@ -17,10 +17,10 @@
 #include "autoware/motion_utils/resample/resample.hpp"
 #include "autoware/motion_utils/trajectory/conversion.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
-#include "autoware_utils/geometry/geometry.hpp"
-#include "autoware_utils/math/unit_conversion.hpp"
 #include "autoware/velocity_smoother/resample.hpp"
 #include "autoware/velocity_smoother/trajectory_utils.hpp"
+#include "autoware_utils/geometry/geometry.hpp"
+#include "autoware_utils/math/unit_conversion.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -274,8 +274,7 @@ TrajectoryPoints SmootherBase::applySteeringRateLimit(
     const auto mean_vel =
       (output.at(i).longitudinal_velocity_mps + output.at(i + 1).longitudinal_velocity_mps) / 2.0;
     const auto target_mean_vel =
-      mean_vel *
-      (autoware_utils::deg2rad(base_param_.max_steering_angle_rate) / steer_rate);
+      mean_vel * (autoware_utils::deg2rad(base_param_.max_steering_angle_rate) / steer_rate);
 
     for (size_t k = 0; k < 2; k++) {
       auto & velocity = output.at(i + k).longitudinal_velocity_mps;

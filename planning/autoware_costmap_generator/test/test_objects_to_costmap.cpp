@@ -100,17 +100,17 @@ PredictedObject ObjectsToCostMapTest::get_object(
 
   object.shape.type = autoware_perception_msgs::msg::Shape::POLYGON;
 
-  object.shape.footprint.points.emplace_back(toPoint32(
-    autoware_utils::calc_offset_pose(pose, -0.5 * dimension.x, -0.5 * dimension.y, 0.0)));
+  object.shape.footprint.points.emplace_back(
+    toPoint32(autoware_utils::calc_offset_pose(pose, -0.5 * dimension.x, -0.5 * dimension.y, 0.0)));
 
-  object.shape.footprint.points.emplace_back(toPoint32(
-    autoware_utils::calc_offset_pose(pose, -0.5 * dimension.x, 0.5 * dimension.y, 0.0)));
+  object.shape.footprint.points.emplace_back(
+    toPoint32(autoware_utils::calc_offset_pose(pose, -0.5 * dimension.x, 0.5 * dimension.y, 0.0)));
 
-  object.shape.footprint.points.emplace_back(toPoint32(
-    autoware_utils::calc_offset_pose(pose, 0.5 * dimension.x, 0.5 * dimension.y, 0.0)));
+  object.shape.footprint.points.emplace_back(
+    toPoint32(autoware_utils::calc_offset_pose(pose, 0.5 * dimension.x, 0.5 * dimension.y, 0.0)));
 
-  object.shape.footprint.points.emplace_back(toPoint32(
-    autoware_utils::calc_offset_pose(pose, 0.5 * dimension.x, -0.5 * dimension.y, 0.0)));
+  object.shape.footprint.points.emplace_back(
+    toPoint32(autoware_utils::calc_offset_pose(pose, 0.5 * dimension.x, -0.5 * dimension.y, 0.0)));
 
   return object;
 }

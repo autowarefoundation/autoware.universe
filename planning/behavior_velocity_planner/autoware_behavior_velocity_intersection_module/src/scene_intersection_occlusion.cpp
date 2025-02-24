@@ -326,8 +326,7 @@ IntersectionModule::OcclusionType IntersectionModule::detectOcclusion(
     for (auto i = lane_start_idx + 1; i <= lane_end_idx; i++) {
       const auto path_linestring_point = path_ip.points.at(i).point.pose.position;
       if (
-        autoware_utils::calc_distance2d(
-          prev_path_linestring_point, path_linestring_point) <
+        autoware_utils::calc_distance2d(prev_path_linestring_point, path_linestring_point) <
         1.0 /* rough tick for computational cost */) {
         continue;
       }
@@ -442,8 +441,7 @@ IntersectionModule::OcclusionType IntersectionModule::detectOcclusion(
     nearest_occlusion_point.visible_end.x, nearest_occlusion_point.visible_end.y);
   bg::correct(ego_occlusion_triangle);
   for (const auto & attention_object_info : object_info_manager_.allObjects()) {
-    const auto obj_poly =
-      autoware_utils::to_polygon2d(attention_object_info->predicted_object());
+    const auto obj_poly = autoware_utils::to_polygon2d(attention_object_info->predicted_object());
     if (bg::intersects(obj_poly, ego_occlusion_triangle)) {
       debug_data_.static_occlusion = false;
       return DynamicallyOccluded{min_dist};

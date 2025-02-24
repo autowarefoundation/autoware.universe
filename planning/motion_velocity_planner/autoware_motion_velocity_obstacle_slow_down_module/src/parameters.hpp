@@ -69,10 +69,10 @@ struct ObstacleFilteringParam
   {
     object_types =
       utils::get_target_object_type(node, "obstacle_slow_down.obstacle_filtering.object_type.");
-    min_lat_margin =
-      get_or_declare_parameter<double>(node, "obstacle_slow_down.obstacle_filtering.min_lat_margin");
-    max_lat_margin =
-      get_or_declare_parameter<double>(node, "obstacle_slow_down.obstacle_filtering.max_lat_margin");
+    min_lat_margin = get_or_declare_parameter<double>(
+      node, "obstacle_slow_down.obstacle_filtering.min_lat_margin");
+    max_lat_margin = get_or_declare_parameter<double>(
+      node, "obstacle_slow_down.obstacle_filtering.max_lat_margin");
     lat_hysteresis_margin = get_or_declare_parameter<double>(
       node, "obstacle_slow_down.obstacle_filtering.lat_hysteresis_margin");
     successive_num_to_entry_slow_down_condition = get_or_declare_parameter<int>(

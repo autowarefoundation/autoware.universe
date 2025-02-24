@@ -146,12 +146,12 @@ struct CruisePlanningParam
   {
     idling_time =
       get_or_declare_parameter<double>(node, "obstacle_cruise.cruise_planning.idling_time");
-    min_ego_accel_for_rss =
-      get_or_declare_parameter<double>(node, "obstacle_cruise.cruise_planning.min_ego_accel_for_rss");
+    min_ego_accel_for_rss = get_or_declare_parameter<double>(
+      node, "obstacle_cruise.cruise_planning.min_ego_accel_for_rss");
     min_object_accel_for_rss = get_or_declare_parameter<double>(
       node, "obstacle_cruise.cruise_planning.min_object_accel_for_rss");
-    safe_distance_margin =
-      get_or_declare_parameter<double>(node, "obstacle_cruise.cruise_planning.safe_distance_margin");
+    safe_distance_margin = get_or_declare_parameter<double>(
+      node, "obstacle_cruise.cruise_planning.safe_distance_margin");
   }
 };
 }  // namespace autoware::motion_velocity_planner

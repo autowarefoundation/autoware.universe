@@ -128,7 +128,8 @@ size_t add_stop_line_markers(
     for (const auto & ll : lanelets) {
       debug_marker.points.clear();
       for (const auto & p : ll.polygon2d().basicPolygon()) {
-        debug_marker.points.push_back(autoware_utils::create_marker_position(p.x(), p.y(), z + 0.5));
+        debug_marker.points.push_back(
+          autoware_utils::create_marker_position(p.x(), p.y(), z + 0.5));
       }
       debug_marker.points.push_back(debug_marker.points.front());
       debug_marker_array.markers.push_back(debug_marker);

@@ -45,12 +45,12 @@ using autoware::motion_utils::calcLongitudinalOffsetToSegment;
 using autoware::motion_utils::calcSignedArcLength;
 using autoware::motion_utils::findFirstNearestIndexWithSoftConstraints;
 using autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints;
+using autoware_perception_msgs::msg::PredictedObject;
 using autoware_utils::calc_distance2d;
 using autoware_utils::create_point;
 using autoware_utils::get_point;
 using autoware_utils::get_pose;
 using autoware_utils::get_rpy;
-using autoware_perception_msgs::msg::PredictedObject;
 
 ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & node_options)
 : Node("obstacle_stop_planner", node_options)
@@ -246,8 +246,7 @@ ObstacleStopPlannerNode::ObstacleStopPlannerNode(const rclcpp::NodeOptions & nod
     createSubscriptionOptions(this));
 
   logger_configure_ = std::make_unique<autoware_utils::LoggerLevelConfigure>(this);
-  published_time_publisher_ =
-    std::make_unique<autoware_utils::PublishedTimePublisher>(this);
+  published_time_publisher_ = std::make_unique<autoware_utils::PublishedTimePublisher>(this);
 }
 
 void ObstacleStopPlannerNode::onPointCloud(const PointCloud2::ConstSharedPtr input_msg)

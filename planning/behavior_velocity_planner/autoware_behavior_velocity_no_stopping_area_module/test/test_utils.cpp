@@ -15,8 +15,8 @@
 #include "../src/utils.hpp"
 
 #include <autoware/behavior_velocity_planner_common/planner_data.hpp>
-#include <autoware_utils/geometry/boost_geometry.hpp>
 #include <autoware_test_utils/autoware_test_utils.hpp>
+#include <autoware_utils/geometry/boost_geometry.hpp>
 #include <rclcpp/clock.hpp>
 #include <rclcpp/logger.hpp>
 

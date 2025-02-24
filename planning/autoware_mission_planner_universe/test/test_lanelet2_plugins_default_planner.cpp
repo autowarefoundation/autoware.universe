@@ -14,9 +14,9 @@
 
 #include <../src/lanelet2_plugins/default_planner.hpp>
 #include <ament_index_cpp/get_package_share_directory.hpp>
+#include <autoware_test_utils/autoware_test_utils.hpp>
 #include <autoware_utils/geometry/boost_geometry.hpp>
 #include <autoware_utils/geometry/geometry.hpp>
-#include <autoware_test_utils/autoware_test_utils.hpp>
 
 #include <boost/geometry/io/wkt/write.hpp>
 
@@ -33,9 +33,9 @@
 #include <string>
 #include <vector>
 
+using autoware_planning_msgs::msg::LaneletRoute;
 using autoware_utils::calc_offset_pose;
 using autoware_utils::create_quaternion_from_rpy;
-using autoware_planning_msgs::msg::LaneletRoute;
 using geometry_msgs::msg::Pose;
 using RoutePoints = std::vector<geometry_msgs::msg::Pose>;
 

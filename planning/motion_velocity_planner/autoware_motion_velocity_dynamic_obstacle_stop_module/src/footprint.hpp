@@ -45,8 +45,7 @@ autoware_utils::Polygon2d make_forward_footprint(
 /// @param [in] pose projection pose
 /// @return footprint projected to the given pose
 autoware_utils::Polygon2d project_to_pose(
-  const autoware_utils::Polygon2d & base_footprint,
-  const geometry_msgs::msg::Pose & pose);
+  const autoware_utils::Polygon2d & base_footprint, const geometry_msgs::msg::Pose & pose);
 /// @brief create the rtree indexing the ego footprint along the trajectory
 /// @param [inout] ego_data ego data with its trajectory and the rtree to populate
 /// @param [in] params parameters

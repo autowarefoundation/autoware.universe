@@ -17,8 +17,8 @@
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
-#include <autoware_utils/geometry/geometry.hpp>
 #include <autoware_test_utils/autoware_test_utils.hpp>
+#include <autoware_utils/geometry/geometry.hpp>
 
 #include <geometry_msgs/msg/detail/pose__struct.hpp>
 

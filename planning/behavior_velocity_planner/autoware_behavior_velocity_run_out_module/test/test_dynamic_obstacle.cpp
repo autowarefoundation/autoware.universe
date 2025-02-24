@@ -19,11 +19,11 @@
 #include "utils.hpp"
 
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware_test_utils/autoware_test_utils.hpp>
 #include <autoware_utils/geometry/boost_geometry.hpp>
 #include <autoware_utils/geometry/geometry.hpp>
 #include <autoware_utils/geometry/pose_deviation.hpp>
 #include <autoware_utils/math/normalization.hpp>
-#include <autoware_test_utils/autoware_test_utils.hpp>
 #include <rclcpp/clock.hpp>
 #include <rclcpp/duration.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -46,9 +46,9 @@
 #include <string>
 #include <vector>
 
+using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_utils::Point2d;
 using autoware_utils::Polygon2d;
-using autoware_perception_msgs::msg::ObjectClassification;
 using geometry_msgs::msg::Point;
 using Polygons2d = std::vector<Polygon2d>;
 
@@ -304,8 +304,7 @@ TEST_F(TestDynamicObstacleMethods, testCalculateLateralNearestPoint)
     const auto p = path.at(i);
     const auto curr_nearest_point = lateral_nearest_points.at(i);
     auto deviation = std::abs(autoware_utils::calc_lateral_deviation(
-      p.point.pose,
-      autoware_utils::create_point(curr_nearest_point.x, curr_nearest_point.y, 0)));
+      p.point.pose, autoware_utils::create_point(curr_nearest_point.x, curr_nearest_point.y, 0)));
     EXPECT_DOUBLE_EQ(deviation, 0.0);
   }
 

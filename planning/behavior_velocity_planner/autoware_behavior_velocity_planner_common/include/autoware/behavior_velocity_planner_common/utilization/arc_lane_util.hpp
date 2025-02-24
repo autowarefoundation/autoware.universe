@@ -40,9 +40,8 @@ inline geometry_msgs::msg::Point convertToGeomPoint(const autoware_utils::Point2
 
 namespace arc_lane_utils
 {
-using PathIndexWithPose = std::pair<size_t, geometry_msgs::msg::Pose>;  // front index, pose
-using PathIndexWithPoint2d =
-  std::pair<size_t, autoware_utils::Point2d>;                   // front index, point2d
+using PathIndexWithPose = std::pair<size_t, geometry_msgs::msg::Pose>;    // front index, pose
+using PathIndexWithPoint2d = std::pair<size_t, autoware_utils::Point2d>;  // front index, point2d
 using PathIndexWithPoint = std::pair<size_t, geometry_msgs::msg::Point>;  // front index, point2d
 using PathIndexWithOffset = std::pair<size_t, double>;                    // front index, offset
 
@@ -60,8 +59,7 @@ std::optional<PathIndexWithPoint> findCollisionSegment(
   const geometry_msgs::msg::Point & stop_line_p2)
 {
   for (size_t i = 0; i < path.points.size() - 1; ++i) {
-    const auto & p1 =
-      autoware_utils::get_point(path.points.at(i));  // Point before collision point
+    const auto & p1 = autoware_utils::get_point(path.points.at(i));  // Point before collision point
     const auto & p2 =
       autoware_utils::get_point(path.points.at(i + 1));  // Point after collision point
 
@@ -117,8 +115,7 @@ std::optional<PathIndexWithOffset> findBackwardOffsetSegment(
   double sum_length = 0.0;
   const auto start = static_cast<std::int32_t>(base_idx) - 1;
   for (std::int32_t i = start; i >= 0; --i) {
-    sum_length +=
-      autoware_utils::calc_distance2d(path.points.at(i), path.points.at(i + 1));
+    sum_length += autoware_utils::calc_distance2d(path.points.at(i), path.points.at(i + 1));
 
     // If it's over offset point, return front index and remain offset length
     /**

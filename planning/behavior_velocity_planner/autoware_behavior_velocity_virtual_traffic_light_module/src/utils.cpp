@@ -33,8 +33,7 @@ tier4_v2x_msgs::msg::KeyValue createKeyValue(const std::string & key, const std:
   return tier4_v2x_msgs::build<tier4_v2x_msgs::msg::KeyValue>().key(key).value(value);
 }
 
-autoware_utils::LineString3d toAutowarePoints(
-  const lanelet::ConstLineString3d & line_string)
+autoware_utils::LineString3d toAutowarePoints(const lanelet::ConstLineString3d & line_string)
 {
   autoware_utils::LineString3d output;
   for (const auto & p : line_string) {
@@ -62,8 +61,7 @@ std::vector<autoware_utils::LineString3d> toAutowarePoints(
   return output;
 }
 
-autoware_utils::Point3d calcCenter(
-  const autoware_utils::LineString3d & line_string)
+autoware_utils::Point3d calcCenter(const autoware_utils::LineString3d & line_string)
 {
   const auto p1 = line_string.front();
   const auto p2 = line_string.back();

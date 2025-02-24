@@ -34,10 +34,6 @@ namespace autoware::behavior_velocity_planner
 namespace run_out_utils
 {
 namespace bg = boost::geometry;
-using autoware_utils::Box2d;
-using autoware_utils::LineString2d;
-using autoware_utils::Point2d;
-using autoware_utils::Polygon2d;
 using autoware::vehicle_info_utils::VehicleInfo;
 using autoware_internal_debug_msgs::msg::Float32Stamped;
 using autoware_internal_planning_msgs::msg::PathWithLaneId;
@@ -45,6 +41,10 @@ using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::Shape;
 using autoware_planning_msgs::msg::PathPoint;
+using autoware_utils::Box2d;
+using autoware_utils::LineString2d;
+using autoware_utils::Point2d;
+using autoware_utils::Polygon2d;
 using PathPointsWithLaneId = std::vector<autoware_internal_planning_msgs::msg::PathPointWithLaneId>;
 struct CommonParam
 {

@@ -26,12 +26,12 @@
 #include <memory>
 #include <string>
 
-using autoware_utils::Point2d;
 using autoware_internal_planning_msgs::msg::PathPointWithLaneId;
 using autoware_internal_planning_msgs::msg::PathWithLaneId;
 using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_planning_msgs::msg::Trajectory;
+using autoware_utils::Point2d;
 using ObjectClassification = autoware_perception_msgs::msg::ObjectClassification;
 using autoware::behavior_path_planner::PlannerData;
 using autoware_planning_msgs::msg::LaneletRoute;

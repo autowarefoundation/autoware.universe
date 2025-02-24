@@ -68,8 +68,7 @@ private:
   rclcpp::Publisher<MetricArray>::SharedPtr metrics_pub_;
   std::unique_ptr<autoware::objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface>
     objects_of_interest_marker_interface_;
-  rclcpp::Publisher<autoware_utils::ProcessingTimeDetail>::SharedPtr
-    processing_time_detail_pub_;
+  rclcpp::Publisher<autoware_utils::ProcessingTimeDetail>::SharedPtr processing_time_detail_pub_;
 
   // cruise planner
   std::unique_ptr<CruisePlannerInterface> cruise_planner_;

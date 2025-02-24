@@ -100,8 +100,8 @@ std::optional<size_t> getFirstPointIntersectsLineByFootprint(
   const auto line2d = line.basicLineString();
   for (auto i = start; i <= lane_end; ++i) {
     const auto & base_pose = path_ip.points.at(i).point.pose;
-    const auto path_footprint = autoware_utils::transform_vector(
-      footprint, autoware_utils::pose2transform(base_pose));
+    const auto path_footprint =
+      autoware_utils::transform_vector(footprint, autoware_utils::pose2transform(base_pose));
     if (boost::geometry::intersects(path_footprint, line2d)) {
       return std::make_optional<size_t>(i);
     }

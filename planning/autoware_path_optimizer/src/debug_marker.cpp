@@ -56,8 +56,7 @@ MarkerArray getFootprintsMarkerArray(
     const double base_to_rear = vehicle_info.rear_overhang_m;
 
     marker.points.push_back(
-      autoware_utils::calc_offset_pose(traj_point.pose, base_to_front, base_to_left, 0.0)
-        .position);
+      autoware_utils::calc_offset_pose(traj_point.pose, base_to_front, base_to_left, 0.0).position);
     marker.points.push_back(
       autoware_utils::calc_offset_pose(traj_point.pose, base_to_front, -base_to_right, 0.0)
         .position);
@@ -65,8 +64,7 @@ MarkerArray getFootprintsMarkerArray(
       autoware_utils::calc_offset_pose(traj_point.pose, -base_to_rear, -base_to_right, 0.0)
         .position);
     marker.points.push_back(
-      autoware_utils::calc_offset_pose(traj_point.pose, -base_to_rear, base_to_left, 0.0)
-        .position);
+      autoware_utils::calc_offset_pose(traj_point.pose, -base_to_rear, base_to_left, 0.0).position);
     marker.points.push_back(marker.points.front());
 
     marker_array.markers.push_back(marker);
@@ -207,8 +205,7 @@ MarkerArray getVehicleCircleLinesMarkerArray(
     const double yaw_dev = ref_point.optimized_kinematic_state.yaw;
 
     // apply lateral and yaw deviation
-    auto pose_with_deviation =
-      autoware_utils::calc_offset_pose(ref_point.pose, 0.0, lat_dev, 0.0);
+    auto pose_with_deviation = autoware_utils::calc_offset_pose(ref_point.pose, 0.0, lat_dev, 0.0);
     pose_with_deviation.orientation =
       autoware_utils::create_quaternion_from_yaw(ref_point.getYaw() + yaw_dev);
 
@@ -220,8 +217,7 @@ MarkerArray getVehicleCircleLinesMarkerArray(
       const double base_to_right =
         (vehicle_info.wheel_tread_m / 2.0) + vehicle_info.right_overhang_m;
       const double base_to_left = (vehicle_info.wheel_tread_m / 2.0) + vehicle_info.left_overhang_m;
-      const auto ub =
-        autoware_utils::calc_offset_pose(base_pose, 0.0, base_to_left, 0.0).position;
+      const auto ub = autoware_utils::calc_offset_pose(base_pose, 0.0, base_to_left, 0.0).position;
       const auto lb =
         autoware_utils::calc_offset_pose(base_pose, 0.0, -base_to_right, 0.0).position;
 
@@ -289,8 +285,8 @@ MarkerArray getVehicleCirclesMarkerArray(
       const double offset = vehicle_circle_longitudinal_offsets.at(v_idx);
 
       auto marker = create_default_marker(
-        "map", rclcpp::Clock().now(), ns, id, Marker::LINE_STRIP, create_marker_scale(0.05, 0.0, 0.0),
-        create_marker_color(r, g, b, 0.8));
+        "map", rclcpp::Clock().now(), ns, id, Marker::LINE_STRIP,
+        create_marker_scale(0.05, 0.0, 0.0), create_marker_color(r, g, b, 0.8));
       marker.lifetime = rclcpp::Duration::from_seconds(1.5);
       marker.pose = autoware_utils::calc_offset_pose(mpt_traj_point.pose, offset, 0.0, 0.0);
 
@@ -361,11 +357,9 @@ visualization_msgs::msg::MarkerArray getFootprintByDrivableAreaMarkerArray(
   marker.points.push_back(
     autoware_utils::calc_offset_pose(stop_pose, base_to_front, base_to_left, 0.0).position);
   marker.points.push_back(
-    autoware_utils::calc_offset_pose(stop_pose, base_to_front, -base_to_right, 0.0)
-      .position);
+    autoware_utils::calc_offset_pose(stop_pose, base_to_front, -base_to_right, 0.0).position);
   marker.points.push_back(
-    autoware_utils::calc_offset_pose(stop_pose, -base_to_rear, -base_to_right, 0.0)
-      .position);
+    autoware_utils::calc_offset_pose(stop_pose, -base_to_rear, -base_to_right, 0.0).position);
   marker.points.push_back(
     autoware_utils::calc_offset_pose(stop_pose, -base_to_rear, base_to_left, 0.0).position);
   marker.points.push_back(marker.points.front());

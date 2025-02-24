@@ -86,8 +86,8 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
     }
 
     // lateral acceleration map
-    const auto lateral_acc_velocity =
-      get_or_declare_parameter<std::vector<double>>(*node, parameter("lateral_acceleration.velocity"));
+    const auto lateral_acc_velocity = get_or_declare_parameter<std::vector<double>>(
+      *node, parameter("lateral_acceleration.velocity"));
     const auto min_lateral_acc = get_or_declare_parameter<std::vector<double>>(
       *node, parameter("lateral_acceleration.min_values"));
     const auto max_lateral_acc = get_or_declare_parameter<std::vector<double>>(
@@ -111,35 +111,38 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
     get_or_declare_parameter<double>(*node, parameter("min_length_for_turn_signal_activation"));
 
   // lane change regulations
-  p.regulate_on_crosswalk = get_or_declare_parameter<bool>(*node, parameter("regulation.crosswalk"));
+  p.regulate_on_crosswalk =
+    get_or_declare_parameter<bool>(*node, parameter("regulation.crosswalk"));
   p.regulate_on_intersection =
     get_or_declare_parameter<bool>(*node, parameter("regulation.intersection"));
   p.regulate_on_traffic_light =
     get_or_declare_parameter<bool>(*node, parameter("regulation.traffic_light"));
 
   // ego vehicle stuck detection
-  p.th_stop_velocity = get_or_declare_parameter<double>(*node, parameter("stuck_detection.velocity"));
+  p.th_stop_velocity =
+    get_or_declare_parameter<double>(*node, parameter("stuck_detection.velocity"));
   p.th_stop_time = get_or_declare_parameter<double>(*node, parameter("stuck_detection.stop_time"));
 
   // safety
   {
     p.safety.enable_loose_check_for_cancel =
       get_or_declare_parameter<bool>(*node, parameter("safety_check.allow_loose_check_for_cancel"));
-    p.safety.enable_target_lane_bound_check =
-      get_or_declare_parameter<bool>(*node, parameter("safety_check.enable_target_lane_bound_check"));
+    p.safety.enable_target_lane_bound_check = get_or_declare_parameter<bool>(
+      *node, parameter("safety_check.enable_target_lane_bound_check"));
     p.safety.th_stopped_object_velocity = get_or_declare_parameter<double>(
       *node, parameter("safety_check.stopped_object_velocity_threshold"));
     p.safety.lane_expansion_left_offset =
       get_or_declare_parameter<double>(*node, parameter("safety_check.lane_expansion.left_offset"));
-    p.safety.lane_expansion_right_offset =
-      get_or_declare_parameter<double>(*node, parameter("safety_check.lane_expansion.right_offset"));
+    p.safety.lane_expansion_right_offset = get_or_declare_parameter<double>(
+      *node, parameter("safety_check.lane_expansion.right_offset"));
 
     // collision check
     p.safety.collision_check.enable_for_prepare_phase_in_general_lanes =
       get_or_declare_parameter<bool>(
         *node, parameter("collision_check.enable_for_prepare_phase.general_lanes"));
-    p.safety.collision_check.enable_for_prepare_phase_in_intersection = get_or_declare_parameter<bool>(
-      *node, parameter("collision_check.enable_for_prepare_phase.intersection"));
+    p.safety.collision_check.enable_for_prepare_phase_in_intersection =
+      get_or_declare_parameter<bool>(
+        *node, parameter("collision_check.enable_for_prepare_phase.intersection"));
     p.safety.collision_check.enable_for_prepare_phase_in_turns = get_or_declare_parameter<bool>(
       *node, parameter("collision_check.enable_for_prepare_phase.turns"));
     p.safety.collision_check.check_current_lane =
@@ -148,8 +151,8 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
       get_or_declare_parameter<bool>(*node, parameter("collision_check.check_other_lanes"));
     p.safety.collision_check.use_all_predicted_paths =
       get_or_declare_parameter<bool>(*node, parameter("collision_check.use_all_predicted_paths"));
-    p.safety.collision_check.prediction_time_resolution =
-      get_or_declare_parameter<double>(*node, parameter("collision_check.prediction_time_resolution"));
+    p.safety.collision_check.prediction_time_resolution = get_or_declare_parameter<double>(
+      *node, parameter("collision_check.prediction_time_resolution"));
     p.safety.collision_check.th_yaw_diff =
       get_or_declare_parameter<double>(*node, parameter("collision_check.yaw_diff_threshold"));
     p.safety.collision_check.th_incoming_object_yaw =
@@ -169,10 +172,10 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
         get_or_declare_parameter<double>(*node, parameter(prefix + ".rear_vehicle_reaction_time"));
       params.rear_vehicle_safety_time_margin = get_or_declare_parameter<double>(
         *node, parameter(prefix + ".rear_vehicle_safety_time_margin"));
-      params.lateral_distance_max_threshold =
-        get_or_declare_parameter<double>(*node, parameter(prefix + ".lateral_distance_max_threshold"));
-      params.extended_polygon_policy =
-        get_or_declare_parameter<std::string>(*node, parameter(prefix + ".extended_polygon_policy"));
+      params.lateral_distance_max_threshold = get_or_declare_parameter<double>(
+        *node, parameter(prefix + ".lateral_distance_max_threshold"));
+      params.extended_polygon_policy = get_or_declare_parameter<std::string>(
+        *node, parameter(prefix + ".extended_polygon_policy"));
     };
     set_rss_params(p.safety.rss_params, "safety_check.execution");
     set_rss_params(p.safety.rss_params_for_parked, "safety_check.parked");
@@ -184,9 +187,12 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
     p.safety.target_object_types.check_car = get_or_declare_parameter<bool>(*node, ns + "car");
     p.safety.target_object_types.check_truck = get_or_declare_parameter<bool>(*node, ns + "truck");
     p.safety.target_object_types.check_bus = get_or_declare_parameter<bool>(*node, ns + "bus");
-    p.safety.target_object_types.check_trailer = get_or_declare_parameter<bool>(*node, ns + "trailer");
-    p.safety.target_object_types.check_unknown = get_or_declare_parameter<bool>(*node, ns + "unknown");
-    p.safety.target_object_types.check_bicycle = get_or_declare_parameter<bool>(*node, ns + "bicycle");
+    p.safety.target_object_types.check_trailer =
+      get_or_declare_parameter<bool>(*node, ns + "trailer");
+    p.safety.target_object_types.check_unknown =
+      get_or_declare_parameter<bool>(*node, ns + "unknown");
+    p.safety.target_object_types.check_bicycle =
+      get_or_declare_parameter<bool>(*node, ns + "bicycle");
     p.safety.target_object_types.check_motorcycle =
       get_or_declare_parameter<bool>(*node, ns + "motorcycle");
     p.safety.target_object_types.check_pedestrian =
@@ -195,11 +201,12 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
 
   // lane change parameters
   p.time_limit = get_or_declare_parameter<double>(*node, parameter("time_limit"));
-  p.backward_lane_length = get_or_declare_parameter<double>(*node, parameter("backward_lane_length"));
+  p.backward_lane_length =
+    get_or_declare_parameter<double>(*node, parameter("backward_lane_length"));
   p.backward_length_buffer_for_end_of_lane =
     get_or_declare_parameter<double>(*node, parameter("backward_length_buffer_for_end_of_lane"));
-  p.backward_length_buffer_for_blocking_object =
-    get_or_declare_parameter<double>(*node, parameter("backward_length_buffer_for_blocking_object"));
+  p.backward_length_buffer_for_blocking_object = get_or_declare_parameter<double>(
+    *node, parameter("backward_length_buffer_for_blocking_object"));
   p.backward_length_from_intersection =
     get_or_declare_parameter<double>(*node, parameter("backward_length_from_intersection"));
   p.enable_stopped_vehicle_buffer =
@@ -222,7 +229,8 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
 
   // trajectory generation near terminal using frenet planner
   p.frenet.enable = get_or_declare_parameter<bool>(*node, parameter("frenet.enable"));
-  p.frenet.th_yaw_diff_deg = get_or_declare_parameter<double>(*node, parameter("frenet.th_yaw_diff"));
+  p.frenet.th_yaw_diff_deg =
+    get_or_declare_parameter<double>(*node, parameter("frenet.th_yaw_diff"));
   p.frenet.th_curvature_smoothing =
     get_or_declare_parameter<double>(*node, parameter("frenet.th_curvature_smoothing"));
 
@@ -249,8 +257,7 @@ LCParamPtr LaneChangeModuleManager::set_params(rclcpp::Node * node, const std::s
     get_or_declare_parameter<double>(*node, parameter("finish_judge_lateral_threshold"));
   const auto finish_judge_lateral_angle_deviation =
     get_or_declare_parameter<double>(*node, parameter("finish_judge_lateral_angle_deviation"));
-  p.th_finish_judge_yaw_diff =
-    autoware_utils::deg2rad(finish_judge_lateral_angle_deviation);
+  p.th_finish_judge_yaw_diff = autoware_utils::deg2rad(finish_judge_lateral_angle_deviation);
 
   // debug marker
   p.publish_debug_marker = get_or_declare_parameter<bool>(*node, parameter("publish_debug_marker"));

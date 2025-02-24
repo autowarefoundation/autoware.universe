@@ -16,8 +16,8 @@
 
 #include "autoware/behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
-#include "autoware_utils/geometry/geometry.hpp"
 #include "autoware_lanelet2_extension/utility/query.hpp"
+#include "autoware_utils/geometry/geometry.hpp"
 
 #include <autoware_planning_msgs/msg/path_point.hpp>
 
@@ -49,10 +49,8 @@ size_t calcPointIndexFromSegmentIndex(
   const size_t prev_point_idx = seg_idx;
   const size_t next_point_idx = seg_idx + 1;
 
-  const double prev_dist =
-    autoware_utils::calc_distance2d(point, points.at(prev_point_idx));
-  const double next_dist =
-    autoware_utils::calc_distance2d(point, points.at(next_point_idx));
+  const double prev_dist = autoware_utils::calc_distance2d(point, points.at(prev_point_idx));
+  const double next_dist = autoware_utils::calc_distance2d(point, points.at(next_point_idx));
 
   if (prev_dist < next_dist) {
     return prev_point_idx;
@@ -98,9 +96,9 @@ geometry_msgs::msg::Pose transformRelCoordinate2D(
 namespace autoware::behavior_velocity_planner::planning_utils
 {
 using autoware::motion_utils::calcSignedArcLength;
+using autoware_planning_msgs::msg::PathPoint;
 using autoware_utils::calc_distance2d;
 using autoware_utils::calc_offset_pose;
-using autoware_planning_msgs::msg::PathPoint;
 
 size_t calcSegmentIndexFromPointIndex(
   const std::vector<autoware_internal_planning_msgs::msg::PathPointWithLaneId> & points,

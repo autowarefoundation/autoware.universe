@@ -134,8 +134,7 @@ void PlannerData::Object::calc_vel_relative_to_traj(
 
   const double traj_yaw = tf2::getYaw(nearest_traj_point.pose.orientation);
   const double obj_yaw = tf2::getYaw(obj_pose.orientation);
-  const Eigen::Rotation2Dd R_ego_to_obstacle(
-    autoware_utils::normalize_radian(obj_yaw - traj_yaw));
+  const Eigen::Rotation2Dd R_ego_to_obstacle(autoware_utils::normalize_radian(obj_yaw - traj_yaw));
 
   // Calculate the trajectory direction and the vector from the trajectory to the obstacle
   const Eigen::Vector2d traj_direction(std::cos(traj_yaw), std::sin(traj_yaw));

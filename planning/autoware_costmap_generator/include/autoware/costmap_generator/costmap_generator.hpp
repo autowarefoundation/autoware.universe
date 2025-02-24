@@ -49,11 +49,11 @@
 #include "autoware/costmap_generator/utils/points_to_costmap.hpp"
 #include "costmap_generator_node_parameters.hpp"
 
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <autoware_utils/ros/polling_subscriber.hpp>
 #include <autoware_utils/ros/processing_time_publisher.hpp>
 #include <autoware_utils/system/stop_watch.hpp>
 #include <autoware_utils/system/time_keeper.hpp>
-#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <grid_map_ros/GridMapRosConverter.hpp>
 #include <grid_map_ros/grid_map_ros.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -103,12 +103,12 @@ private:
     pub_processing_time_ms_;
 
   rclcpp::Subscription<autoware_map_msgs::msg::LaneletMapBin>::SharedPtr sub_lanelet_bin_map_;
-  autoware_utils::InterProcessPollingSubscriber<sensor_msgs::msg::PointCloud2>
-    sub_points_{this, "~/input/points_no_ground", autoware_utils::single_depth_sensor_qos()};
+  autoware_utils::InterProcessPollingSubscriber<sensor_msgs::msg::PointCloud2> sub_points_{
+    this, "~/input/points_no_ground", autoware_utils::single_depth_sensor_qos()};
   autoware_utils::InterProcessPollingSubscriber<PredictedObjects> sub_objects_{
     this, "~/input/objects"};
-  autoware_utils::InterProcessPollingSubscriber<tier4_planning_msgs::msg::Scenario>
-    sub_scenario_{this, "~/input/scenario"};
+  autoware_utils::InterProcessPollingSubscriber<tier4_planning_msgs::msg::Scenario> sub_scenario_{
+    this, "~/input/scenario"};
 
   rclcpp::TimerBase::SharedPtr timer_;
 

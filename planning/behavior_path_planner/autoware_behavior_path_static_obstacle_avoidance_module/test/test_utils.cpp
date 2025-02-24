@@ -17,8 +17,8 @@
 #include "autoware/behavior_path_static_obstacle_avoidance_module/helper.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/type_alias.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/utils.hpp"
-#include "autoware_utils/math/unit_conversion.hpp"
 #include "autoware_test_utils/autoware_test_utils.hpp"
+#include "autoware_utils/math/unit_conversion.hpp"
 
 #include <autoware_perception_msgs/msg/object_classification.hpp>
 #include <autoware_perception_msgs/msg/shape.hpp>
@@ -334,8 +334,8 @@ TEST(TestUtils, isNoNeedAvoidanceBehavior)
                        .footprint(geometry_msgs::msg::Polygon{})
                        .dimensions(create_vector3(2.8284271247461901, 1.41421356237309505, 2.0));
 
-  auto object_data =
-    create_test_object(object_pose, create_vector3(0.0, 0.0, 0.0), shape, ObjectClassification::CAR);
+  auto object_data = create_test_object(
+    object_pose, create_vector3(0.0, 0.0, 0.0), shape, ObjectClassification::CAR);
 
   // object is NOT avoidable. but there is possibility that the ego has to avoid it.
   {

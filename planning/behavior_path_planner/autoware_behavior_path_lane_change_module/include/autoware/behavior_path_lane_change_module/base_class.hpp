@@ -41,8 +41,8 @@ namespace autoware::behavior_path_planner
 {
 using autoware::behavior_path_planner::PoseWithDetailOpt;
 using autoware::route_handler::Direction;
-using autoware_utils::StopWatch;
 using autoware_internal_planning_msgs::msg::PathWithLaneId;
+using autoware_utils::StopWatch;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;

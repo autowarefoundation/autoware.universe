@@ -66,8 +66,7 @@ bool isTargetObjectFront(
   const geometry_msgs::msg::Pose & ego_pose, const Polygon2d & obj_polygon,
   const double base_to_front)
 {
-  const auto ego_offset_pose =
-    autoware_utils::calc_offset_pose(ego_pose, base_to_front, 0.0, 0.0);
+  const auto ego_offset_pose = autoware_utils::calc_offset_pose(ego_pose, base_to_front, 0.0, 0.0);
 
   // check all edges in the polygon
   const auto & obj_polygon_outer = obj_polygon.outer();
@@ -118,9 +117,8 @@ Polygon2d createExtendedPolygon(
   appendPointToPolygon(polygon, p3.position);
   appendPointToPolygon(polygon, p4.position);
   appendPointToPolygon(polygon, p1.position);
-  return autoware_utils::is_clockwise(polygon)
-           ? polygon
-           : autoware_utils::inverse_clockwise(polygon);
+  return autoware_utils::is_clockwise(polygon) ? polygon
+                                               : autoware_utils::inverse_clockwise(polygon);
 }
 
 Polygon2d createExtendedPolygon(
@@ -177,9 +175,8 @@ Polygon2d createExtendedPolygon(
   appendPointToPolygon(polygon, p3.position);
   appendPointToPolygon(polygon, p4.position);
   appendPointToPolygon(polygon, p1.position);
-  return autoware_utils::is_clockwise(polygon)
-           ? polygon
-           : autoware_utils::inverse_clockwise(polygon);
+  return autoware_utils::is_clockwise(polygon) ? polygon
+                                               : autoware_utils::inverse_clockwise(polygon);
 }
 
 Polygon2d create_extended_polygon_along_path(
@@ -218,8 +215,8 @@ Polygon2d create_extended_polygon_along_path(
   Polygon2d polygon;
 
   {
-    const auto p_offset = autoware_utils::calc_offset_pose(
-      base_link_pose, backward_lon_offset, lat_offset, 0.0);
+    const auto p_offset =
+      autoware_utils::calc_offset_pose(base_link_pose, backward_lon_offset, lat_offset, 0.0);
     appendPointToPolygon(polygon, p_offset.position);
   }
 
@@ -230,14 +227,14 @@ Polygon2d create_extended_polygon_along_path(
   }
 
   {
-    const auto p_offset = autoware_utils::calc_offset_pose(
-      lon_offset_pose.value(), base_to_front, lat_offset, 0.0);
+    const auto p_offset =
+      autoware_utils::calc_offset_pose(lon_offset_pose.value(), base_to_front, lat_offset, 0.0);
     appendPointToPolygon(polygon, p_offset.position);
   }
 
   {
-    const auto p_offset = autoware_utils::calc_offset_pose(
-      lon_offset_pose.value(), base_to_front, -lat_offset, 0.0);
+    const auto p_offset =
+      autoware_utils::calc_offset_pose(lon_offset_pose.value(), base_to_front, -lat_offset, 0.0);
     appendPointToPolygon(polygon, p_offset.position);
   }
 
@@ -248,20 +245,19 @@ Polygon2d create_extended_polygon_along_path(
   }
 
   {
-    const auto p_offset = autoware_utils::calc_offset_pose(
-      base_link_pose, backward_lon_offset, -lat_offset, 0.0);
+    const auto p_offset =
+      autoware_utils::calc_offset_pose(base_link_pose, backward_lon_offset, -lat_offset, 0.0);
     appendPointToPolygon(polygon, p_offset.position);
   }
 
   {
-    const auto p_offset = autoware_utils::calc_offset_pose(
-      base_link_pose, backward_lon_offset, lat_offset, 0.0);
+    const auto p_offset =
+      autoware_utils::calc_offset_pose(base_link_pose, backward_lon_offset, lat_offset, 0.0);
     appendPointToPolygon(polygon, p_offset.position);
   }
 
-  return autoware_utils::is_clockwise(polygon)
-           ? polygon
-           : autoware_utils::inverse_clockwise(polygon);
+  return autoware_utils::is_clockwise(polygon) ? polygon
+                                               : autoware_utils::inverse_clockwise(polygon);
 }
 
 std::vector<Polygon2d> createExtendedPolygonsFromPoseWithVelocityStamped(
@@ -277,8 +273,7 @@ std::vector<Polygon2d> createExtendedPolygonsFromPoseWithVelocityStamped(
     const double base_to_rear = vehicle_info.rear_overhang_m + backward_margin;
     const double width = vehicle_info.vehicle_width_m + lat_margin * 2;
 
-    const auto polygon =
-      autoware_utils::to_footprint(pose, base_to_front, base_to_rear, width);
+    const auto polygon = autoware_utils::to_footprint(pose, base_to_front, base_to_rear, width);
     polygons.push_back(polygon);
   }
 
@@ -373,8 +368,7 @@ get_interpolated_pose_with_velocity_and_polygon_stamped(
   const auto & pose = interpolation_result->pose;
   const auto & velocity = interpolation_result->velocity;
 
-  const auto ego_polygon =
-    autoware_utils::to_footprint(pose, base_to_front, base_to_rear, width);
+  const auto ego_polygon = autoware_utils::to_footprint(pose, base_to_front, base_to_rear, width);
 
   return PoseWithVelocityAndPolygonStamped{current_time, pose, velocity, ego_polygon};
 }

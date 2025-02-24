@@ -17,9 +17,9 @@
 #include "autoware_utils/geometry/boost_geometry.hpp"
 
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <autoware_utils/math/unit_conversion.hpp>
 #include <autoware_utils/ros/parameter.hpp>
-#include <autoware_lanelet2_extension/utility/utilities.hpp>
 
 #include <tier4_v2x_msgs/msg/infrastructure_command_array.hpp>
 
@@ -70,8 +70,7 @@ void VirtualTrafficLightModuleManager::launchNewModules(
 {
   autoware_utils::LineString2d ego_path_linestring;
   for (const auto & path_point : path.points) {
-    ego_path_linestring.push_back(
-      autoware_utils::from_msg(path_point.point.pose.position).to_2d());
+    ego_path_linestring.push_back(autoware_utils::from_msg(path_point.point.pose.position).to_2d());
   }
 
   for (const auto & m : planning_utils::getRegElemMapOnPath<VirtualTrafficLight>(

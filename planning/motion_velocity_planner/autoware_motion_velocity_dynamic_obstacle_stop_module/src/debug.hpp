@@ -39,8 +39,7 @@ std::vector<visualization_msgs::msg::Marker> make_collision_markers(
   const ObjectStopDecisionMap & object_map, const std::string & ns, const double z,
   const rclcpp::Time & now);
 std::vector<visualization_msgs::msg::Marker> make_polygon_markers(
-  const autoware_utils::MultiPolygon2d & footprints, const std::string & ns,
-  const double z);
+  const autoware_utils::MultiPolygon2d & footprints, const std::string & ns, const double z);
 }  // namespace autoware::motion_velocity_planner::dynamic_obstacle_stop::debug
 
 #endif  // DEBUG_HPP_

@@ -106,8 +106,8 @@ visualization_msgs::msg::MarkerArray createCrosswalkMarkers(
   for (size_t i = 0; i < debug_data.ego_polygons.size(); ++i) {
     const auto & points = debug_data.ego_polygons.at(i);
     auto marker = create_default_marker(
-      "map", now, "vehicle polygon", uid + i, Marker::LINE_STRIP, create_marker_scale(0.1, 0.0, 0.0),
-      create_marker_color(1.0, 1.0, 0.0, 0.999));
+      "map", now, "vehicle polygon", uid + i, Marker::LINE_STRIP,
+      create_marker_scale(0.1, 0.0, 0.0), create_marker_color(1.0, 1.0, 0.0, 0.999));
     marker.points = points;
     // marker.points.push_back(marker.points.front());
     msg.markers.push_back(marker);

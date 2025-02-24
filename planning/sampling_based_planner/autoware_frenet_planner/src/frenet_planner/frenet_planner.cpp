@@ -202,8 +202,7 @@ void calculateCartesian(
       pose.position.x = trajectory.points[i].x();
       pose.position.y = trajectory.points[i].y();
       pose.position.z = 0.0;
-      pose.orientation =
-        autoware_utils::create_quaternion_from_rpy(0.0, 0.0, trajectory.yaws[i]);
+      pose.orientation = autoware_utils::create_quaternion_from_rpy(0.0, 0.0, trajectory.yaws[i]);
       trajectory.poses.push_back(pose);
     }
   }

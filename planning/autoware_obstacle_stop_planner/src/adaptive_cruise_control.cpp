@@ -449,8 +449,7 @@ void AdaptiveCruiseController::calculateProjectedVelocityFromObject(
                 object.kinematics.initial_twist_with_covariance.twist.linear.y,
                 object.kinematics.initial_twist_with_covariance.twist.linear.x);
 
-  *velocity =
-    obj_vel_norm * std::cos(autoware_utils::normalize_radian(obj_vel_yaw - traj_yaw));
+  *velocity = obj_vel_norm * std::cos(autoware_utils::normalize_radian(obj_vel_yaw - traj_yaw));
   debug_values_.data.at(DBGVAL::ESTIMATED_VEL_OBJ) = *velocity;
 }
 

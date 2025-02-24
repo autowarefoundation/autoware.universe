@@ -16,9 +16,9 @@
 #include "autoware/behavior_path_planner_common/marker_utils/utils.hpp"
 
 #include <autoware/behavior_path_lane_change_module/utils/markers.hpp>
+#include <autoware_lanelet2_extension/visualization/visualization.hpp>
 #include <autoware_utils/geometry/geometry.hpp>
 #include <autoware_utils/ros/marker_helper.hpp>
-#include <autoware_lanelet2_extension/visualization/visualization.hpp>
 #include <magic_enum.hpp>
 
 #include <autoware_internal_planning_msgs/msg/path_with_lane_id.hpp>
@@ -65,8 +65,8 @@ MarkerArray showAllValidLaneChangePath(
     const auto & color = colors.at(idx);
     const auto & points = lc_path.path.points;
     auto marker = create_default_marker(
-      "map", current_time, ns_with_idx, ++id, Marker::LINE_STRIP, create_marker_scale(0.1, 0.1, 0.0),
-      color);
+      "map", current_time, ns_with_idx, ++id, Marker::LINE_STRIP,
+      create_marker_scale(0.1, 0.1, 0.0), color);
     marker.points.reserve(points.size());
 
     for (const auto & point : points) {

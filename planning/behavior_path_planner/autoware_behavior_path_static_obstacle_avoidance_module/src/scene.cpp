@@ -24,10 +24,10 @@
 #include "autoware/behavior_path_static_obstacle_avoidance_module/debug.hpp"
 #include "autoware/behavior_path_static_obstacle_avoidance_module/utils.hpp"
 
-#include <autoware_utils/geometry/geometry.hpp>
-#include <autoware_utils/system/time_keeper.hpp>
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
+#include <autoware_utils/geometry/geometry.hpp>
+#include <autoware_utils/system/time_keeper.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -186,7 +186,8 @@ bool StaticObstacleAvoidanceModule::canTransitSuccessState()
 
     constexpr double THRESHOLD = 1.0;
     const auto is_further_than_threshold =
-      calc_distance2d(getEgoPose(), autoware_utils::get_pose(data.reference_path.points.back())) > THRESHOLD;
+      calc_distance2d(getEgoPose(), autoware_utils::get_pose(data.reference_path.points.back())) >
+      THRESHOLD;
     if (is_further_than_threshold && arrived_path_end_) {
       RCLCPP_WARN(getLogger(), "Reach path end point. Exit.");
       return true;
@@ -847,8 +848,7 @@ bool StaticObstacleAvoidanceModule::isSafePath(
   for (const auto & object : safety_check_target_objects) {
     auto current_debug_data = utils::path_safety_checker::createObjectDebug(object);
 
-    const auto obj_polygon =
-      autoware_utils::to_polygon2d(object.initial_pose, object.shape);
+    const auto obj_polygon = autoware_utils::to_polygon2d(object.initial_pose, object.shape);
 
     const auto is_object_front = utils::path_safety_checker::isTargetObjectFront(
       getEgoPose(), obj_polygon, p.vehicle_info.max_longitudinal_offset_m);
@@ -926,8 +926,8 @@ PathWithLaneId StaticObstacleAvoidanceModule::extendBackwardLength(
   size_t clip_idx = 0;
   double accumulated_length = 0.0;
   for (size_t i = prev_ego_idx.value(); i > 0; i--) {
-    accumulated_length += autoware_utils::calc_distance2d(
-      previous_path.points.at(i - 1), previous_path.points.at(i));
+    accumulated_length +=
+      autoware_utils::calc_distance2d(previous_path.points.at(i - 1), previous_path.points.at(i));
     if (accumulated_length > backward_length) {
       clip_idx = i;
       break;

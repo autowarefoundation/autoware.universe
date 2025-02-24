@@ -26,8 +26,8 @@
 
 namespace autoware::behavior_path_planner
 {
-using autoware_utils::get_or_declare_parameter;
 using autoware_perception_msgs::msg::ObjectClassification;
+using autoware_utils::get_or_declare_parameter;
 
 AvoidanceParameters getParameter(rclcpp::Node * node)
 {
@@ -57,7 +57,8 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
   {
     const auto get_object_param = [&](std::string && ns) {
       ObjectParameter param{};
-      param.moving_speed_threshold = get_or_declare_parameter<double>(*node, ns + "th_moving_speed");
+      param.moving_speed_threshold =
+        get_or_declare_parameter<double>(*node, ns + "th_moving_speed");
       param.moving_time_threshold = get_or_declare_parameter<double>(*node, ns + "th_moving_time");
       param.max_expand_ratio = get_or_declare_parameter<double>(*node, ns + "max_expand_ratio");
       param.envelope_buffer_margin =
@@ -66,9 +67,10 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
         get_or_declare_parameter<double>(*node, ns + "lateral_margin.soft_margin");
       param.lateral_hard_margin =
         get_or_declare_parameter<double>(*node, ns + "lateral_margin.hard_margin");
-      param.lateral_hard_margin_for_parked_vehicle =
-        get_or_declare_parameter<double>(*node, ns + "lateral_margin.hard_margin_for_parked_vehicle");
-      param.longitudinal_margin = get_or_declare_parameter<double>(*node, ns + "longitudinal_margin");
+      param.lateral_hard_margin_for_parked_vehicle = get_or_declare_parameter<double>(
+        *node, ns + "lateral_margin.hard_margin_for_parked_vehicle");
+      param.longitudinal_margin =
+        get_or_declare_parameter<double>(*node, ns + "longitudinal_margin");
       param.th_error_eclipse_long_radius =
         get_or_declare_parameter<double>(*node, ns + "th_error_eclipse_long_radius");
       return param;
@@ -140,8 +142,8 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
   {
     const std::string ns = "avoidance.target_filtering.avoidance_for_ambiguous_vehicle.";
     p.policy_ambiguous_vehicle = get_or_declare_parameter<std::string>(*node, ns + "policy");
-    p.wait_and_see_target_behaviors =
-      get_or_declare_parameter<std::vector<std::string>>(*node, ns + "wait_and_see.target_behaviors");
+    p.wait_and_see_target_behaviors = get_or_declare_parameter<std::vector<std::string>>(
+      *node, ns + "wait_and_see.target_behaviors");
     p.wait_and_see_th_closest_distance =
       get_or_declare_parameter<double>(*node, ns + "wait_and_see.th_closest_distance");
     p.time_threshold_for_ambiguous_vehicle =
@@ -219,8 +221,8 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
       get_or_declare_parameter<double>(*node, ns + "min_velocity");
     p.ego_predicted_path_params.max_velocity =
       get_or_declare_parameter<double>(*node, ns + "max_velocity");
-    p.ego_predicted_path_params.acceleration =
-      get_or_declare_parameter<double>(*node, "avoidance.constraints.longitudinal.max_acceleration");
+    p.ego_predicted_path_params.acceleration = get_or_declare_parameter<double>(
+      *node, "avoidance.constraints.longitudinal.max_acceleration");
     p.ego_predicted_path_params.time_horizon_for_front_object =
       get_or_declare_parameter<double>(*node, ns + "time_horizon_for_front_object");
     p.ego_predicted_path_params.time_horizon_for_rear_object =
@@ -259,10 +261,12 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
       get_or_declare_parameter<double>(*node, ns + "soft_drivable_bound_margin");
     p.hard_drivable_bound_margin =
       get_or_declare_parameter<double>(*node, ns + "hard_drivable_bound_margin");
-    p.lateral_execution_threshold = get_or_declare_parameter<double>(*node, ns + "th_avoid_execution");
+    p.lateral_execution_threshold =
+      get_or_declare_parameter<double>(*node, ns + "th_avoid_execution");
     p.lateral_small_shift_threshold =
       get_or_declare_parameter<double>(*node, ns + "th_small_shift_length");
-    p.max_right_shift_length = get_or_declare_parameter<double>(*node, ns + "max_right_shift_length");
+    p.max_right_shift_length =
+      get_or_declare_parameter<double>(*node, ns + "max_right_shift_length");
     p.max_left_shift_length = get_or_declare_parameter<double>(*node, ns + "max_left_shift_length");
     p.max_deviation_from_lane =
       get_or_declare_parameter<double>(*node, ns + "max_deviation_from_lane");
@@ -284,7 +288,8 @@ AvoidanceParameters getParameter(rclcpp::Node * node)
     p.buf_slow_down_speed = get_or_declare_parameter<double>(*node, ns + "buf_slow_down_speed");
     p.nominal_avoidance_speed =
       get_or_declare_parameter<double>(*node, ns + "nominal_avoidance_speed");
-    p.consider_front_overhang = get_or_declare_parameter<bool>(*node, ns + "consider_front_overhang");
+    p.consider_front_overhang =
+      get_or_declare_parameter<bool>(*node, ns + "consider_front_overhang");
     p.consider_rear_overhang = get_or_declare_parameter<bool>(*node, ns + "consider_rear_overhang");
   }
 

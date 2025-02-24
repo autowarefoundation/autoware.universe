@@ -327,8 +327,7 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::planCruise(
         stop_traj_points.at(wall_idx).pose, wall_reason_string, planner_data.current_time, 0);
       // NOTE: use a different color from slow down one to visualize cruise and slow down
       // separately.
-      markers.markers.front().color =
-        autoware_utils::create_marker_color(1.0, 0.6, 0.1, 0.5);
+      markers.markers.front().color = autoware_utils::create_marker_color(1.0, 0.6, 0.1, 0.5);
       autoware_utils::append_marker_array(markers, &debug_data_ptr_->cruise_wall_marker);
 
       // cruise obstacle

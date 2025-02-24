@@ -174,8 +174,7 @@ void clipPathByLength(
   double length_sum = 0;
   clipped.points.emplace_back(path.points.front());
   for (int i = 1; i < static_cast<int>(path.points.size()); i++) {
-    length_sum +=
-      autoware_utils::calc_distance2d(path.points.at(i - 1), path.points.at(i));
+    length_sum += autoware_utils::calc_distance2d(path.points.at(i - 1), path.points.at(i));
     if (length_sum > max_length) return;
     clipped.points.emplace_back(path.points.at(i));
   }
@@ -404,8 +403,8 @@ bool generatePossibleCollisionsFromGridMap(
       param.detection_area.min_occlusion_spot_size);
     if (param.is_show_occlusion) {
       for (const auto & op : occlusion_spot_positions) {
-        Point p = autoware_utils::create_point(
-          op[0], op[1], path.points.at(0).point.pose.position.z);
+        Point p =
+          autoware_utils::create_point(op[0], op[1], path.points.at(0).point.pose.position.z);
         debug_data.occlusion_points.emplace_back(p);
       }
     }

@@ -18,10 +18,10 @@
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "autoware_lanelet2_extension/regulatory_elements/bus_stop_area.hpp"
 
-#include <autoware_utils/ros/marker_helper.hpp>
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
+#include <autoware_utils/ros/marker_helper.hpp>
 #include <magic_enum.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -112,8 +112,8 @@ lanelet::ConstLanelets generateBetweenEgoAndExpandedPullOverLanes(
   const double ego_width_to_front =
     !left_side ? (-wheel_tread / 2.0 - side_overhang) : (wheel_tread / 2.0 + side_overhang);
   autoware_utils::Point2d front_edge_local{ego_length_to_front, ego_width_to_front};
-  const auto front_edge_glob = autoware_utils::transform_point(
-    front_edge_local, autoware_utils::pose2transform(ego_pose));
+  const auto front_edge_glob =
+    autoware_utils::transform_point(front_edge_local, autoware_utils::pose2transform(ego_pose));
   geometry_msgs::msg::Pose ego_front_pose;
   ego_front_pose.position =
     create_point(front_edge_glob.x(), front_edge_glob.y(), ego_pose.position.z);
@@ -377,8 +377,8 @@ bool checkObjectsCollision(
 }
 
 MarkerArray createPullOverAreaMarkerArray(
-  const autoware_utils::MultiPolygon2d area_polygons,
-  const std_msgs::msg::Header & header, const std_msgs::msg::ColorRGBA & color, const double z)
+  const autoware_utils::MultiPolygon2d area_polygons, const std_msgs::msg::Header & header,
+  const std_msgs::msg::ColorRGBA & color, const double z)
 {
   MarkerArray marker_array{};
   for (size_t i = 0; i < area_polygons.size(); ++i) {
@@ -550,8 +550,7 @@ PathWithLaneId cropForwardPoints(
 
   double sum_length = 0;
   for (size_t i = target_seg_idx + 1; i < points.size(); ++i) {
-    const double seg_length =
-      autoware_utils::calc_distance2d(points.at(i), points.at(i - 1));
+    const double seg_length = autoware_utils::calc_distance2d(points.at(i), points.at(i - 1));
     if (forward_length < sum_length + seg_length) {
       const auto cropped_points =
         std::vector<PathPointWithLaneId>{points.begin() + target_seg_idx, points.begin() + i};
@@ -600,8 +599,8 @@ PathWithLaneId extendPath(
   const double lateral_shift_from_reference_path =
     autoware::motion_utils::calcLateralOffset(reference_path.points, target_terminal_pose.position);
   for (auto & p : clipped_path.points) {
-    p.point.pose = autoware_utils::calc_offset_pose(
-      p.point.pose, 0, lateral_shift_from_reference_path, 0);
+    p.point.pose =
+      autoware_utils::calc_offset_pose(p.point.pose, 0, lateral_shift_from_reference_path, 0);
   }
 
   auto extended_path = target_path;
@@ -613,10 +612,10 @@ PathWithLaneId extendPath(
   const auto start_point =
     std::find_if(clipped_path.points.begin(), clipped_path.points.end(), [&](const auto & p) {
       const bool is_forward =
-        autoware_utils::inverse_transform_point(p.point.pose.position, target_terminal_pose)
-          .x > 0.0;
-      const bool is_close = autoware_utils::calc_distance2d(
-                              p.point.pose.position, target_terminal_pose.position) < 0.1;
+        autoware_utils::inverse_transform_point(p.point.pose.position, target_terminal_pose).x >
+        0.0;
+      const bool is_close =
+        autoware_utils::calc_distance2d(p.point.pose.position, target_terminal_pose.position) < 0.1;
       return is_forward && !is_close;
     });
   std::copy(start_point, clipped_path.points.end(), std::back_inserter(extended_path.points));
@@ -646,8 +645,7 @@ std::vector<Polygon2d> createPathFootPrints(
   std::vector<Polygon2d> footprints;
   for (const auto & point : path.points) {
     const auto & pose = point.point.pose;
-    footprints.push_back(
-      autoware_utils::to_footprint(pose, base_to_front, base_to_rear, width));
+    footprints.push_back(autoware_utils::to_footprint(pose, base_to_front, base_to_rear, width));
   }
   return footprints;
 }

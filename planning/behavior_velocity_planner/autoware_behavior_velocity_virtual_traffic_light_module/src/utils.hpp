@@ -41,8 +41,7 @@ struct SegmentIndexWithOffset
 
 tier4_v2x_msgs::msg::KeyValue createKeyValue(const std::string & key, const std::string & value);
 
-autoware_utils::LineString3d toAutowarePoints(
-  const lanelet::ConstLineString3d & line_string);
+autoware_utils::LineString3d toAutowarePoints(const lanelet::ConstLineString3d & line_string);
 
 std::optional<autoware_utils::LineString3d> toAutowarePoints(
   const lanelet::Optional<lanelet::ConstLineString3d> & line_string);
@@ -50,8 +49,7 @@ std::optional<autoware_utils::LineString3d> toAutowarePoints(
 std::vector<autoware_utils::LineString3d> toAutowarePoints(
   const lanelet::ConstLineStrings3d & line_strings);
 
-autoware_utils::Point3d calcCenter(
-  const autoware_utils::LineString3d & line_string);
+autoware_utils::Point3d calcCenter(const autoware_utils::LineString3d & line_string);
 
 geometry_msgs::msg::Pose calcHeadPose(
   const geometry_msgs::msg::Pose & base_link_pose, const double base_link_to_front);
@@ -66,8 +64,7 @@ std::optional<size_t> insertStopVelocityAtCollision(
 
 template <class T>
 std::optional<SegmentIndexWithPoint> findLastCollisionBeforeEndLine(
-  const T & points, const autoware_utils::LineString3d & target_line,
-  const size_t end_line_idx)
+  const T & points, const autoware_utils::LineString3d & target_line, const size_t end_line_idx)
 {
   const auto target_line_p1 = convertToGeomPoint(target_line.at(0));
   const auto target_line_p2 = convertToGeomPoint(target_line.at(1));
