@@ -14,15 +14,15 @@
 
 #include <autoware/behavior_velocity_planner_common/utilization/debug.hpp>
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
-#include <autoware/universe_utils/ros/marker_helper.hpp>
+#include <autoware_utils/ros/marker_helper.hpp>
 
 #include <string>
 #include <vector>
 namespace autoware::behavior_velocity_planner::debug
 {
-using autoware::universe_utils::createDefaultMarker;
-using autoware::universe_utils::createMarkerColor;
-using autoware::universe_utils::createMarkerScale;
+using autoware_utils::createDefaultMarker;
+using autoware_utils::createMarkerColor;
+using autoware_utils::createMarkerScale;
 
 visualization_msgs::msg::MarkerArray create_polygon_marker_array(
   const geometry_msgs::msg::Polygon & polygon, const std::string & ns, const int64_t module_id,
