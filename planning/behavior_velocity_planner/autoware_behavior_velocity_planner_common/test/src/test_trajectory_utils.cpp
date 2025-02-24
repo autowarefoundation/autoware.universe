@@ -77,7 +77,7 @@ TEST(smooth_path, nominal)
 
   planner_data->velocity_smoother_ =
     std::make_shared<autoware::velocity_smoother::JerkFilteredSmoother>(
-      *node, std::make_shared<autoware_utils::TimeKeeper>());
+      *node, std::make_shared<autoware::universe_utils::TimeKeeper>());
 
   // Input path
   PathWithLaneId in_path;

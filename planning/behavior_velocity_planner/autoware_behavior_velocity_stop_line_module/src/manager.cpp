@@ -33,10 +33,10 @@ StopLineModuleManager::StopLineModuleManager(rclcpp::Node & node)
 {
   const std::string ns(StopLineModuleManager::get_module_name());
   auto & p = planner_param_;
-  p.stop_margin = getOrDeclareParameter<double>(node, ns + ".stop_margin");
+  p.stop_margin = get_or_declare_parameter<double>(node, ns + ".stop_margin");
   p.hold_stop_margin_distance =
-    getOrDeclareParameter<double>(node, ns + ".hold_stop_margin_distance");
-  p.stop_duration_sec = getOrDeclareParameter<double>(node, ns + ".stop_duration_sec");
+    get_or_declare_parameter<double>(node, ns + ".hold_stop_margin_distance");
+  p.stop_duration_sec = get_or_declare_parameter<double>(node, ns + ".stop_duration_sec");
 }
 
 std::vector<StopLineWithLaneId> StopLineModuleManager::get_stop_lines_with_lane_id_on_path(

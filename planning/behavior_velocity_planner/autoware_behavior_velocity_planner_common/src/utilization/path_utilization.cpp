@@ -77,7 +77,7 @@ autoware_planning_msgs::msg::Path interpolate_path(
       v.push_back(path_point.longitudinal_velocity_mps);
       if (idx != 0) {
         const auto path_point_prev = path.points.at(idx - 1);
-        s += autoware_utils::calcDistance2d(path_point_prev.pose, path_point.pose);
+        s += autoware_utils::calc_distance2d(path_point_prev.pose, path_point.pose);
       }
       if (s > path_len) {
         break;

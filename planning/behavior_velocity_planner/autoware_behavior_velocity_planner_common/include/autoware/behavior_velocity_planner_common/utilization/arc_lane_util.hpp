@@ -61,9 +61,9 @@ std::optional<PathIndexWithPoint> find_collision_segment(
 {
   for (size_t i = 0; i < path.points.size() - 1; ++i) {
     const auto & p1 =
-      autoware_utils::getPoint(path.points.at(i));  // Point before collision point
+      autoware_utils::get_point(path.points.at(i));  // Point before collision point
     const auto & p2 =
-      autoware_utils::getPoint(path.points.at(i + 1));  // Point after collision point
+      autoware_utils::get_point(path.points.at(i + 1));  // Point after collision point
 
     const auto collision_point = check_collision(p1, p2, stop_line_p1, stop_line_p2);
 
@@ -92,7 +92,7 @@ std::optional<PathIndexWithOffset> find_forward_offset_segment(
   double sum_length = 0.0;
   for (size_t i = base_idx; i < path.points.size() - 1; ++i) {
     const double segment_length =
-      autoware_utils::calcDistance2d(path.points.at(i), path.points.at(i + 1));
+      autoware_utils::calc_distance2d(path.points.at(i), path.points.at(i + 1));
 
     // If it's over offset point, return front index and remain offset length
     /**
@@ -118,7 +118,7 @@ std::optional<PathIndexWithOffset> find_backward_offset_segment(
   const auto start = static_cast<std::int32_t>(base_idx) - 1;
   for (std::int32_t i = start; i >= 0; --i) {
     sum_length +=
-      autoware_utils::calcDistance2d(path.points.at(i), path.points.at(i + 1));
+      autoware_utils::calc_distance2d(path.points.at(i), path.points.at(i + 1));
 
     // If it's over offset point, return front index and remain offset length
     /**
@@ -146,13 +146,13 @@ std::optional<PathIndexWithOffset> find_offset_segment(
     return find_forward_offset_segment(
       path, collision_idx,
       offset_length +
-        autoware_utils::calcDistance2d(path.points.at(collision_idx), collision_point));
+        autoware_utils::calc_distance2d(path.points.at(collision_idx), collision_point));
   }
 
   return find_backward_offset_segment(
     path, collision_idx + 1,
     -offset_length +
-      autoware_utils::calcDistance2d(path.points.at(collision_idx + 1), collision_point));
+      autoware_utils::calc_distance2d(path.points.at(collision_idx + 1), collision_point));
 }
 
 std::optional<PathIndexWithOffset> find_offset_segment(
@@ -186,8 +186,8 @@ geometry_msgs::msg::Pose calc_target_pose(const T & path, const PathIndexWithOff
   target_pose.position.x = target_point_2d.x();
   target_pose.position.y = target_point_2d.y();
   target_pose.position.z = interpolated_z;
-  const double yaw = autoware_utils::calcAzimuthAngle(p_front, p_back);
-  target_pose.orientation = autoware_utils::createQuaternionFromYaw(yaw);
+  const double yaw = autoware_utils::calc_azimuth_angle(p_front, p_back);
+  target_pose.orientation = autoware_utils::create_quaternion_from_yaw(yaw);
   return target_pose;
 }
 
