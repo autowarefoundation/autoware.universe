@@ -207,7 +207,7 @@ bool TrafficLightModule::isPassthrough(const double & signed_arc_length) const
 
   // Calculate distance until ego vehicle decide not to stop,
   // taking into account the jerk and acceleration.
-  const double pass_judge_line_distance = planning_utils::calcJudgeLineDistWithJerkLimit(
+  const double pass_judge_line_distance = planning_utils::calc_judge_line_dist_with_jerk_limit(
     planner_data_->current_velocity->twist.linear.x,
     planner_data_->current_acceleration->accel.accel.linear.x, max_acc, max_jerk,
     delay_response_time);
@@ -292,7 +292,7 @@ autoware_internal_planning_msgs::msg::PathWithLaneId TrafficLightModule::insertS
 
   // Insert stop pose into path or replace with zero velocity
   size_t insert_index = insert_target_point_idx;
-  planning_utils::insertVelocity(modified_path, target_point_with_lane_id, 0.0, insert_index);
+  planning_utils::insert_velocity(modified_path, target_point_with_lane_id, 0.0, insert_index);
 
   planning_factor_interface_->add(
     modified_path.points, planner_data_->current_odometry->pose,

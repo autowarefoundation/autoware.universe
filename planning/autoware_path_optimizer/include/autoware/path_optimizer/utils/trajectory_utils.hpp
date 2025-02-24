@@ -207,7 +207,7 @@ std::optional<size_t> updateFrontPointForFix(
   return front_point_idx_for_fix;
 }
 
-void insertStopPoint(
+void insert_stop_point(
   std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & input_stop_pose,
   const size_t stop_seg_idx);
 }  // namespace trajectory_utils

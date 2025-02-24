@@ -73,7 +73,7 @@ using autoware::behavior_velocity_planner::DynamicObstacleCreatorForObject;
 using autoware::behavior_velocity_planner::DynamicObstacleCreatorForObjectWithoutPath;
 using autoware::behavior_velocity_planner::DynamicObstacleCreatorForPoints;
 using autoware::behavior_velocity_planner::DynamicObstacleParam;
-using autoware::behavior_velocity_planner::isAheadOf;
+using autoware::behavior_velocity_planner::is_ahead_of;
 using autoware::behavior_velocity_planner::PointCloud2;
 using autoware::behavior_velocity_planner::RunOutDebug;
 using autoware::behavior_velocity_planner::selectLateralNearestPoints;
@@ -165,7 +165,7 @@ TEST_F(TestDynamicObstacleMethods, testCreateQuaternionFacingToTrajectory)
     EXPECT_DOUBLE_EQ(yaw, M_PI_2);
     geometry_msgs::msg::Pose geom_base_point;
     geom_base_point.position = base_point.point.pose.position;
-    EXPECT_TRUE(isAheadOf(point, geom_base_point));
+    EXPECT_TRUE(is_ahead_of(point, geom_base_point));
   }
 
   {
@@ -180,7 +180,7 @@ TEST_F(TestDynamicObstacleMethods, testCreateQuaternionFacingToTrajectory)
     EXPECT_DOUBLE_EQ(std::abs(yaw), M_PI_2);
     geometry_msgs::msg::Pose geom_base_point;
     geom_base_point.position = base_point.point.pose.position;
-    EXPECT_TRUE(isAheadOf(point, geom_base_point));
+    EXPECT_TRUE(is_ahead_of(point, geom_base_point));
   }
 }
 

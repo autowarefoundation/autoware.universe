@@ -161,7 +161,7 @@ void NoDrivableLaneModule::handle_approaching_state(PathWithLaneId * path)
     autoware::universe_utils::getPoint(path->points.at(target_point_idx).point);
 
   const auto & op_stop_pose =
-    planning_utils::insertStopPoint(stop_point, target_segment_idx, *path);
+    planning_utils::insert_stop_point(stop_point, target_segment_idx, *path);
 
   // Get stop point and stop factor
   {
@@ -211,7 +211,7 @@ void NoDrivableLaneModule::handle_inside_no_drivable_lane_state(PathWithLaneId *
   const size_t current_seg_idx = findEgoSegmentIndex(path->points);
 
   // Insert stop point
-  planning_utils::insertStopPoint(current_point, current_seg_idx, *path);
+  planning_utils::insert_stop_point(current_point, current_seg_idx, *path);
 
   // Get stop point and stop factor
   {
@@ -251,7 +251,7 @@ void NoDrivableLaneModule::handle_stopped_state(PathWithLaneId * path)
   ego_pos_on_path.index = findEgoSegmentIndex(path->points);
 
   // Insert stop pose
-  planning_utils::insertStopPoint(ego_pos_on_path.pose.position, ego_pos_on_path.index, *path);
+  planning_utils::insert_stop_point(ego_pos_on_path.pose.position, ego_pos_on_path.index, *path);
 
   // Get stop point and stop factor
   {

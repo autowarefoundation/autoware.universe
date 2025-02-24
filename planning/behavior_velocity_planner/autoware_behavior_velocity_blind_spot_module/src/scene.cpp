@@ -93,7 +93,7 @@ BlindSpotDecision BlindSpotModule::modifyPathVelocityDetail(PathWithLaneId * pat
     planner_data_->ego_nearest_yaw_threshold);
   const auto stop_line_idx =
     closest_idx > default_stopline_idx ? critical_stopline_idx : default_stopline_idx;
-  const auto stop_line_pose = planning_utils::getAheadPose(
+  const auto stop_line_pose = planning_utils::get_ahead_pose(
     stop_line_idx, planner_data_->vehicle_info_.max_longitudinal_offset_m, input_path);
 
   const auto is_over_pass_judge = isOverPassJudge(input_path, stop_line_pose);
@@ -216,7 +216,7 @@ static std::optional<size_t> insertPointIndex(
   size_t insert_idx = closest_idx;
   autoware_internal_planning_msgs::msg::PathPointWithLaneId inserted_point =
     inout_path->points.at(closest_idx);
-  if (planning_utils::isAheadOf(in_pose, inout_path->points.at(closest_idx).point.pose)) {
+  if (planning_utils::is_ahead_of(in_pose, inout_path->points.at(closest_idx).point.pose)) {
     ++insert_idx;
   } else {
     // copy with velocity from prior point
@@ -327,7 +327,7 @@ std::optional<OverPassJudge> BlindSpotModule::isOverPassJudge(
   const auto & current_pose = planner_data_->current_odometry->pose;
 
   /* set judge line dist */
-  const double pass_judge_line_dist = planning_utils::calcJudgeLineDistWithAccLimit(
+  const double pass_judge_line_dist = planning_utils::calc_judge_line_dist_with_acc_limit(
     planner_data_->current_velocity->twist.linear.x, planner_data_->max_stop_acceleration_threshold,
     planner_data_->delay_response_time);
   const auto ego_segment_idx =

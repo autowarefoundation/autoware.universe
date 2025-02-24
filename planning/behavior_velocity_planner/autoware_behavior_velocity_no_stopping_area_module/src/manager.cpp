@@ -49,7 +49,7 @@ NoStoppingAreaModuleManager::NoStoppingAreaModuleManager(rclcpp::Node & node)
 void NoStoppingAreaModuleManager::launchNewModules(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
-  for (const auto & m : planning_utils::getRegElemMapOnPath<NoStoppingArea>(
+  for (const auto & m : planning_utils::get_reg_elem_map_on_path<NoStoppingArea>(
          path, planner_data_->route_handler_->getLaneletMapPtr(),
          planner_data_->current_odometry->pose)) {
     // Use lanelet_id to unregister module when the route is changed
@@ -73,7 +73,7 @@ std::function<bool(const std::shared_ptr<SceneModuleInterfaceWithRTC> &)>
 NoStoppingAreaModuleManager::getModuleExpiredFunction(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
-  const auto no_stopping_area_id_set = planning_utils::getRegElemIdSetOnPath<NoStoppingArea>(
+  const auto no_stopping_area_id_set = planning_utils::get_reg_elem_id_set_on_path<NoStoppingArea>(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
   return

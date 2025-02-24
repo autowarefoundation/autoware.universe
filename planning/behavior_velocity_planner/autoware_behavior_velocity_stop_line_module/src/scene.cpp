@@ -91,7 +91,7 @@ std::pair<double, std::optional<double>> StopLineModule::getEgoAndStopPoint(
   switch (state) {
     case State::APPROACH: {
       const double base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
-      const LineString2d stop_line = planning_utils::extendLine(
+      const LineString2d stop_line = planning_utils::extend_line(
         stop_line_[0], stop_line_[1], planner_data_->stop_line_extend_length);
 
       // Calculate intersection with stop line

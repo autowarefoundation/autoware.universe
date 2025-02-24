@@ -115,7 +115,7 @@ bool WalkwayModule::modifyPathVelocity(PathWithLaneId * path)
       return false;
     }
 
-    const auto inserted_pose = planning_utils::insertStopPoint(stop_pose->position, *path);
+    const auto inserted_pose = planning_utils::insert_stop_point(stop_pose->position, *path);
     if (inserted_pose) {
       debug_data_.stop_poses.push_back(inserted_pose.value());
     }

@@ -370,7 +370,7 @@ void ObstacleStopPlannerNode::onTrigger(const Trajectory::ConstSharedPtr input_m
   }
 
   // insert slow-down-section/stop-point
-  insertVelocity(
+  insert_velocity(
     output_trajectory_points, planner_data, input_msg->header, vehicle_info, current_acc,
     current_vel, stop_param);
 
@@ -987,7 +987,7 @@ void ObstacleStopPlannerNode::searchPredictedObject(
   }
 }
 
-void ObstacleStopPlannerNode::insertVelocity(
+void ObstacleStopPlannerNode::insert_velocity(
   TrajectoryPoints & output, PlannerData & planner_data,
   [[maybe_unused]] const Header & trajectory_header, const VehicleInfo & vehicle_info,
   const double current_acc, const double current_vel, const StopParam & stop_param)
@@ -1063,14 +1063,14 @@ void ObstacleStopPlannerNode::insertVelocity(
             node_param_.ego_nearest_yaw_threshold);
           current_stop_pos.point.pose = ego_pos_on_path.value();
 
-          insertStopPoint(current_stop_pos, output, planner_data.stop_reason_diag);
+          insert_stop_point(current_stop_pos, output, planner_data.stop_reason_diag);
 
           debug_ptr_->pushPose(getPose(stop_point.point), PoseType::TargetStop);
           debug_ptr_->pushPose(getPose(current_stop_pos.point), PoseType::Stop);
         }
 
       } else {
-        insertStopPoint(stop_point, output, planner_data.stop_reason_diag);
+        insert_stop_point(stop_point, output, planner_data.stop_reason_diag);
 
         debug_ptr_->pushPose(getPose(stop_point.point), PoseType::TargetStop);
         debug_ptr_->pushPose(getPose(stop_point.point), PoseType::Stop);

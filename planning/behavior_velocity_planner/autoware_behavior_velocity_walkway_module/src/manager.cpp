@@ -65,7 +65,7 @@ void WalkwayModuleManager::launchNewModules(const PathWithLaneId & path)
       planning_factor_interface_));
   };
 
-  const auto crosswalk_leg_elem_map = planning_utils::getRegElemMapOnPath<Crosswalk>(
+  const auto crosswalk_leg_elem_map = planning_utils::get_reg_elem_map_on_path<Crosswalk>(
     path, rh->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
   for (const auto & crosswalk : crosswalk_leg_elem_map) {
@@ -90,7 +90,7 @@ WalkwayModuleManager::getModuleExpiredFunction(const PathWithLaneId & path)
   walkway_id_set = getCrosswalkIdSetOnPath(
     planner_data_->current_odometry->pose, path, rh->getLaneletMapPtr(), rh->getOverallGraphPtr());
 
-  const auto crosswalk_leg_elem_map = planning_utils::getRegElemMapOnPath<Crosswalk>(
+  const auto crosswalk_leg_elem_map = planning_utils::get_reg_elem_map_on_path<Crosswalk>(
     path, rh->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
   for (const auto & crosswalk : crosswalk_leg_elem_map) {

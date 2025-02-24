@@ -132,7 +132,7 @@ auto calcStopPointAndInsertIndex(
   LineString2d stop_line;
 
   for (size_t i = 0; i < lanelet_stop_lines.size() - 1; ++i) {
-    stop_line = planning_utils::extendLine(
+    stop_line = planning_utils::extend_line(
       lanelet_stop_lines[i], lanelet_stop_lines[i + 1], stop_line_extend_length);
 
     // Calculate stop pose and insert index,

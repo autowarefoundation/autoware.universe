@@ -77,7 +77,7 @@ TEST(NoStoppingAreaTest, isTargetStuckVehicleType)
   }
 }
 
-TEST(NoStoppingAreaTest, insertStopPoint)
+TEST(NoStoppingAreaTest, insert_stop_point)
 {
   using autoware::behavior_velocity_planner::no_stopping_area::insert_stop_point;
   constexpr auto nb_points = 10;

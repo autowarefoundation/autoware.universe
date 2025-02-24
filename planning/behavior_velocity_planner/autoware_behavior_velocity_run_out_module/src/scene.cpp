@@ -58,7 +58,7 @@ RunOutModule::RunOutModule(
 {
   if (planner_param.run_out.use_partition_lanelet) {
     const lanelet::LaneletMapConstPtr & ll = planner_data->route_handler_->getLaneletMapPtr();
-    planning_utils::getAllPartitionLanelets(ll, partition_lanelets_);
+    planning_utils::get_all_partition_lanelets(ll, partition_lanelets_);
   }
 }
 
@@ -161,7 +161,7 @@ bool RunOutModule::modifyPathVelocity(PathWithLaneId * path)
   if (planner_param_.approaching.enable) {
     // after a certain amount of time has elapsed since the ego stopped,
     // approach the obstacle with slow velocity
-    insertVelocityForState(
+    insert_velocityForState(
       dynamic_obstacle, *planner_data_, planner_param_, extended_smoothed_path, *path);
   } else {
     // just insert zero velocity for stopping
@@ -176,7 +176,7 @@ bool RunOutModule::modifyPathVelocity(PathWithLaneId * path)
 
     const bool is_maintain_stop_point = should_maintain_stop_point(is_stopping_point_inserted);
     if (is_maintain_stop_point) {
-      insertStopPoint(last_stop_point_, *path);
+      insert_stop_point(last_stop_point_, *path);
       // debug
       debug_ptr_->setAccelReason(RunOutDebug::AccelReason::STOP);
       debug_ptr_->pushStopPose(autoware::universe_utils::calcOffsetPose(
@@ -739,7 +739,7 @@ std::optional<geometry_msgs::msg::Pose> RunOutModule::calcStopPoint(
   return stop_point;
 }
 
-bool RunOutModule::insertStopPoint(
+bool RunOutModule::insert_stop_point(
   const std::optional<geometry_msgs::msg::Pose> stop_point,
   autoware_internal_planning_msgs::msg::PathWithLaneId & path, const double stop_point_velocity)
 {
@@ -757,7 +757,7 @@ bool RunOutModule::insertStopPoint(
   // if stop point is ahead of the end of the path, don't insert
   if (
     insert_idx == path.points.size() - 1 &&
-    planning_utils::isAheadOf(*stop_point, path.points.at(insert_idx).point.pose)) {
+    planning_utils::is_ahead_of(*stop_point, path.points.at(insert_idx).point.pose)) {
     return false;
   }
 
@@ -765,7 +765,7 @@ bool RunOutModule::insertStopPoint(
   autoware_internal_planning_msgs::msg::PathPointWithLaneId stop_point_with_lane_id;
   stop_point_with_lane_id = path.points.at(nearest_seg_idx);
   stop_point_with_lane_id.point.pose = *stop_point;
-  planning_utils::insertVelocity(path, stop_point_with_lane_id, stop_point_velocity, insert_idx);
+  planning_utils::insert_velocity(path, stop_point_with_lane_id, stop_point_velocity, insert_idx);
 
   planning_factor_interface_->add(
     path.points, planner_data_->current_odometry->pose, stop_point.value(), stop_point.value(),
@@ -775,7 +775,7 @@ bool RunOutModule::insertStopPoint(
   return true;
 }
 
-void RunOutModule::insertVelocityForState(
+void RunOutModule::insert_velocityForState(
   const std::optional<DynamicObstacle> & dynamic_obstacle, const PlannerData planner_data,
   const PlannerParam & planner_param, const PathWithLaneId & smoothed_path,
   PathWithLaneId & output_path)
@@ -858,7 +858,7 @@ bool RunOutModule::insertStoppingVelocity(
     stop_point_velocity = calcMaxJerkLimitedVelocity(
       current_pose, current_vel, current_acc, output_path, *stopping_point);
   }
-  return insertStopPoint(stopping_point, output_path, stop_point_velocity);
+  return insert_stop_point(stopping_point, output_path, stop_point_velocity);
 }
 
 void RunOutModule::insertApproachingVelocity(
@@ -901,7 +901,7 @@ void RunOutModule::insertApproachingVelocity(
   stop_point_with_lane_id = output_path.points.at(nearest_seg_idx_stop);
   stop_point_with_lane_id.point.pose = *stop_point;
 
-  planning_utils::insertVelocity(output_path, stop_point_with_lane_id, 0.0, insert_idx_stop);
+  planning_utils::insert_velocity(output_path, stop_point_with_lane_id, 0.0, insert_idx_stop);
 }
 
 double RunOutModule::calcMaxJerkLimitedVelocity(
@@ -912,7 +912,7 @@ double RunOutModule::calcMaxJerkLimitedVelocity(
     path.points, current_pose.position, stop_point.position);
 
   // calculate desired velocity with limited jerk
-  const auto jerk_limited_vel = planning_utils::calcDecelerationVelocityFromDistanceToTarget(
+  const auto jerk_limited_vel = planning_utils::calc_deceleration_velocity_from_distance_to_target(
     planner_param_.slow_down_limit.max_jerk, planner_param_.slow_down_limit.max_acc, current_acc,
     current_vel, dist_to_stop_point);
 
@@ -967,7 +967,7 @@ std::vector<DynamicObstacle> RunOutModule::excludeObstaclesOutSideOfPartition(
 
   // extract partitions within detection distance
   BasicPolygons2d close_partitions;
-  planning_utils::extractClosePartition(
+  planning_utils::extract_close_partition(
     current_pose.position, partition_lanelets_, close_partitions,
     planner_param_.run_out.detection_distance);
 

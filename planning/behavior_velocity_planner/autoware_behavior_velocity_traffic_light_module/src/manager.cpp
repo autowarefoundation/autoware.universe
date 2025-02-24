@@ -88,7 +88,7 @@ void TrafficLightModuleManager::modifyPathVelocity(
 void TrafficLightModuleManager::launchNewModules(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
-  for (const auto & traffic_light_reg_elem : planning_utils::getRegElemMapOnPath<TrafficLight>(
+  for (const auto & traffic_light_reg_elem : planning_utils::get_reg_elem_map_on_path<TrafficLight>(
          path, planner_data_->route_handler_->getLaneletMapPtr(),
          planner_data_->current_odometry->pose)) {
     const auto stop_line = traffic_light_reg_elem.first->stopLine();
@@ -119,7 +119,7 @@ std::function<bool(const std::shared_ptr<SceneModuleInterfaceWithRTC> &)>
 TrafficLightModuleManager::getModuleExpiredFunction(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
-  const auto lanelet_id_set = planning_utils::getLaneletIdSetOnPath<TrafficLight>(
+  const auto lanelet_id_set = planning_utils::get_lanelet_id_set_on_path<TrafficLight>(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
   return [this, lanelet_id_set](

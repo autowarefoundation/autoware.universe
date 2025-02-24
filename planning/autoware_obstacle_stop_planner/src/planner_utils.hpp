@@ -69,7 +69,7 @@ std::optional<std::pair<size_t, TrajectoryPoint>> getBackwardInsertPointFromBase
 std::optional<std::pair<size_t, double>> findNearestFrontIndex(
   const size_t start_idx, const TrajectoryPoints & trajectory, const Point & point);
 
-void insertStopPoint(
+void insert_stop_point(
   const StopPoint & stop_point, TrajectoryPoints & output, DiagnosticStatus & stop_reason_diag);
 
 bool isInFrontOfTargetPoint(const Pose & pose, const Point & point);

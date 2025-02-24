@@ -827,7 +827,7 @@ std::optional<geometry_msgs::msg::Point> ObstacleStopModule::calc_stop_point(
 
   // insert stop point
   const auto zero_vel_idx =
-    autoware::motion_utils::insertStopPoint(0, *determined_zero_vel_dist, output_traj_points);
+    autoware::motion_utils::insert_stop_point(0, *determined_zero_vel_dist, output_traj_points);
   if (!zero_vel_idx) {
     return std::nullopt;
   }

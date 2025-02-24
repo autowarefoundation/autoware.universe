@@ -200,7 +200,7 @@ void CrosswalkModuleManager::launchNewModules(const PathWithLaneId & path)
       std::numeric_limits<double>::lowest(), path.header.stamp);
   };
 
-  const auto crosswalk_reg_elem_map = planning_utils::getRegElemMapOnPath<Crosswalk>(
+  const auto crosswalk_reg_elem_map = planning_utils::get_reg_elem_map_on_path<Crosswalk>(
     path, rh->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
   for (const auto & crosswalk : crosswalk_reg_elem_map) {
@@ -226,7 +226,7 @@ CrosswalkModuleManager::getModuleExpiredFunction(const PathWithLaneId & path)
   crosswalk_id_set = getCrosswalkIdSetOnPath(
     planner_data_->current_odometry->pose, path, rh->getLaneletMapPtr(), rh->getOverallGraphPtr());
 
-  const auto crosswalk_reg_elem_map = planning_utils::getRegElemMapOnPath<Crosswalk>(
+  const auto crosswalk_reg_elem_map = planning_utils::get_reg_elem_map_on_path<Crosswalk>(
     path, rh->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
   for (const auto & crosswalk : crosswalk_reg_elem_map) {

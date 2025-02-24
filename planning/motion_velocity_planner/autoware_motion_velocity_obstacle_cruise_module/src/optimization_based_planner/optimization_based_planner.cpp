@@ -267,7 +267,7 @@ std::vector<TrajectoryPoint> OptimizationBasedPlanner::plan_cruise(
   output.back().longitudinal_velocity_mps = 0.0;  // terminal velocity is zero
 
   // Insert Closest Stop Point
-  autoware::motion_utils::insertStopPoint(0, closest_stop_dist, output);
+  autoware::motion_utils::insert_stop_point(0, closest_stop_dist, output);
 
   prev_output_ = output;
   return output;

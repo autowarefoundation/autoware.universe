@@ -185,7 +185,7 @@ pcl::PointCloud<pcl::PointXYZ> applyVoxelGridFilter(
 pcl::PointCloud<pcl::PointXYZ> applyVoxelGridFilter(
   const sensor_msgs::msg::PointCloud2 & input_points);
 
-bool isAheadOf(
+bool is_ahead_of(
   const geometry_msgs::msg::Point & target_point, const geometry_msgs::msg::Pose & base_pose);
 
 pcl::PointCloud<pcl::PointXYZ> extractObstaclePointsWithinPolygon(

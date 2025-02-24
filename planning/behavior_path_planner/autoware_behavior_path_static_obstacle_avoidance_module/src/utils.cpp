@@ -1510,7 +1510,7 @@ lanelet::ConstLanelets getExtendLanes(
   return extend_lanelets;
 }
 
-void insertDecelPoint(
+void insert_decel_point(
   const Point & p_src, const double offset, const double velocity, PathWithLaneId & path,
   PoseWithDetailOpt & p_out)
 {
@@ -1532,14 +1532,14 @@ void insertDecelPoint(
     return;
   }
 
-  const auto insertVelocity = [&insert_idx](PathWithLaneId & path, const float v) {
+  const auto insert_velocity = [&insert_idx](PathWithLaneId & path, const float v) {
     for (size_t i = insert_idx.value(); i < path.points.size(); ++i) {
       const auto & original_velocity = path.points.at(i).point.longitudinal_velocity_mps;
       path.points.at(i).point.longitudinal_velocity_mps = std::min(original_velocity, v);
     }
   };
 
-  insertVelocity(path, velocity);
+  insert_velocity(path, velocity);
 
   p_out = PoseWithDetail(getPose(path.points.at(insert_idx.value())));
 }

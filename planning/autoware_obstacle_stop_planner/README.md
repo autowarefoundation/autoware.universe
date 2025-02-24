@@ -127,7 +127,7 @@ stopped due to other factors.
 
 ```plantuml
 @startuml
-title insertStopPoint
+title insert_stop_point
 start
 
 

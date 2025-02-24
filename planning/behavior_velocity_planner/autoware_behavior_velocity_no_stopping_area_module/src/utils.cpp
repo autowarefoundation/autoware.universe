@@ -60,7 +60,7 @@ void insert_stop_point(
   stop_point_with_lane_id.point.longitudinal_velocity_mps = 0.0;
 
   // Insert stop point or replace with zero velocity
-  planning_utils::insertVelocity(path, stop_point_with_lane_id, 0.0, insert_idx);
+  planning_utils::insert_velocity(path, stop_point_with_lane_id, 0.0, insert_idx);
 }
 
 std::optional<LineString2d> generate_stop_line(
@@ -100,7 +100,7 @@ bool is_stoppable(
   const rclcpp::Logger & logger, rclcpp::Clock & clock)
 {
   // compute pass_judge_line_distance
-  const double stoppable_distance = planning_utils::calcJudgeLineDistWithJerkLimit(
+  const double stoppable_distance = planning_utils::calc_judge_line_dist_with_jerk_limit(
     ego_data.current_velocity, ego_data.current_acceleration, ego_data.max_stop_acc,
     ego_data.max_stop_jerk, ego_data.delay_response_time);
   const double signed_arc_length =
@@ -199,7 +199,7 @@ Polygon2d generate_ego_no_stopping_area_lane_polygon(
     ++ego_area_end_idx;
   }
 
-  ego_area = planning_utils::generatePathPolygon(
+  ego_area = planning_utils::generate_path_polygon(
     interpolated_path, ego_area_start_idx, ego_area_end_idx, path_expand_width);
   return ego_area;
 }
@@ -253,7 +253,7 @@ std::optional<LineString2d> get_stop_line_geometry2d(
   const auto & stop_line = no_stopping_area_reg_elem.stopLine();
   if (stop_line && stop_line->size() >= 2) {
     // get stop line from map
-    return planning_utils::extendLine(
+    return planning_utils::extend_line(
       stop_line.value()[0], stop_line.value()[1], stop_line_extend_length);
   }
   return generate_stop_line(

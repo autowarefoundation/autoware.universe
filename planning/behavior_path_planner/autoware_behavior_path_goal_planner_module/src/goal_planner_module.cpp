@@ -56,7 +56,7 @@ using autoware::behavior_path_planner::utils::parking_departure::calcFeasibleDec
 using autoware::motion_utils::calcLongitudinalOffsetPose;
 using autoware::motion_utils::calcSignedArcLength;
 using autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints;
-using autoware::motion_utils::insertDecelPoint;
+using autoware::motion_utils::insert_decel_point;
 using autoware::universe_utils::calcDistance2d;
 using autoware::universe_utils::calcOffsetPose;
 using autoware::universe_utils::createMarkerColor;
@@ -1798,7 +1798,7 @@ PathWithLaneId GoalPlannerModule::generateFeasibleStopPath(
   auto stop_path = path;
   const auto & current_pose = planner_data_->self_odometry->pose.pose;
   const auto stop_idx =
-    autoware::motion_utils::insertStopPoint(current_pose, *min_stop_distance, stop_path.points);
+    autoware::motion_utils::insert_stop_point(current_pose, *min_stop_distance, stop_path.points);
   if (stop_idx) {
     stop_pose_ = PoseWithDetail(stop_path.points.at(*stop_idx).point.pose, detail);
   }
@@ -2105,7 +2105,7 @@ void GoalPlannerModule::decelerateForTurnSignal(const Pose & stop_pose, PathWith
     if (*min_decel_distance < distance_from_ego) {
       point.point.longitudinal_velocity_mps = decel_vel;
     } else {
-      insertDecelPoint(current_pose.position, *min_decel_distance, decel_vel, path.points);
+      insert_decel_point(current_pose.position, *min_decel_distance, decel_vel, path.points);
     }
   }
 
@@ -2114,7 +2114,7 @@ void GoalPlannerModule::decelerateForTurnSignal(const Pose & stop_pose, PathWith
     planner_data_, parameters_.maximum_deceleration, parameters_.maximum_jerk, 0.0);
 
   if (min_stop_distance && *min_stop_distance < stop_point_length) {
-    utils::insertStopPoint(stop_point_length, path);
+    utils::insert_stop_point(stop_point_length, path);
   }
 }
 
@@ -2134,7 +2134,7 @@ void GoalPlannerModule::decelerateBeforeSearchStart(
       calcSignedArcLengthFromEgo(path, search_start_offset_pose);
     const double distance_to_decel =
       std::max(*min_decel_distance, distance_to_search_start - approximate_pull_over_distance_);
-    insertDecelPoint(current_pose.position, distance_to_decel, pull_over_velocity, path.points);
+    insert_decel_point(current_pose.position, distance_to_decel, pull_over_velocity, path.points);
   }
 }
 

@@ -145,13 +145,13 @@ bool MergeFromPrivateRoadModule::modifyPathVelocity(PathWithLaneId * path)
   }
   const auto stopline_idx = stopline_idx_opt.value();
 
-  debug_data_.virtual_wall_pose = planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
+  debug_data_.virtual_wall_pose = planning_utils::get_ahead_pose(stopline_idx, baselink2front, *path);
   debug_data_.stop_point_pose = path->points.at(stopline_idx).point.pose;
 
   /* set stop speed */
   if (state_machine_.get_state() == StateMachine::State::STOP) {
     constexpr double v = 0.0;
-    planning_utils::setVelocityFromIndex(stopline_idx, v, path);
+    planning_utils::set_velocity_from_index(stopline_idx, v, path);
 
     /* get stop point and stop factor */
     const auto & stop_pose = path->points.at(stopline_idx).point.pose;

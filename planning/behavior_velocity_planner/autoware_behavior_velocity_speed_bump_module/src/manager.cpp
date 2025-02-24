@@ -56,7 +56,7 @@ SpeedBumpModuleManager::SpeedBumpModuleManager(rclcpp::Node & node)
 void SpeedBumpModuleManager::launchNewModules(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
-  for (const auto & speed_bump_with_lane_id : planning_utils::getRegElemMapOnPath<SpeedBump>(
+  for (const auto & speed_bump_with_lane_id : planning_utils::get_reg_elem_map_on_path<SpeedBump>(
          path, planner_data_->route_handler_->getLaneletMapPtr(),
          planner_data_->current_odometry->pose)) {
     const auto lane_id = speed_bump_with_lane_id.second.id();
@@ -73,7 +73,7 @@ std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 SpeedBumpModuleManager::getModuleExpiredFunction(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
-  const auto speed_bump_id_set = planning_utils::getRegElemIdSetOnPath<SpeedBump>(
+  const auto speed_bump_id_set = planning_utils::get_reg_elem_id_set_on_path<SpeedBump>(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
   return [speed_bump_id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {

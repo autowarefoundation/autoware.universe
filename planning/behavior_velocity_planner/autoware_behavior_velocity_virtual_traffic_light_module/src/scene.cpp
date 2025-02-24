@@ -247,7 +247,7 @@ bool VirtualTrafficLightModule::isBeforeStartLine(const size_t end_line_idx)
   if (!collision) {
     return false;
   }
-  const size_t collision_seg_idx = planning_utils::calcSegmentIndexFromPointIndex(
+  const size_t collision_seg_idx = planning_utils::calc_segment_index_from_point_index(
     module_data_.path.points, collision->point, collision->index);
 
   const auto & ego_pose = planner_data_->current_odometry->pose;
@@ -270,7 +270,7 @@ bool VirtualTrafficLightModule::isBeforeStopLine(const size_t end_line_idx)
   if (!collision) {
     return false;
   }
-  const size_t collision_seg_idx = planning_utils::calcSegmentIndexFromPointIndex(
+  const size_t collision_seg_idx = planning_utils::calc_segment_index_from_point_index(
     module_data_.path.points, collision->point, collision->index);
 
   const auto & ego_pose = planner_data_->current_odometry->pose;
@@ -298,7 +298,7 @@ bool VirtualTrafficLightModule::isAfterAnyEndLine(const size_t end_line_idx)
   if (!collision) {
     return false;
   }
-  const size_t collision_seg_idx = planning_utils::calcSegmentIndexFromPointIndex(
+  const size_t collision_seg_idx = planning_utils::calc_segment_index_from_point_index(
     module_data_.path.points, collision->point, collision->index);
 
   const auto & ego_pose = planner_data_->current_odometry->pose;
@@ -319,7 +319,7 @@ bool VirtualTrafficLightModule::isNearAnyEndLine(const size_t end_line_idx)
   if (!collision) {
     return false;
   }
-  const size_t collision_seg_idx = planning_utils::calcSegmentIndexFromPointIndex(
+  const size_t collision_seg_idx = planning_utils::calc_segment_index_from_point_index(
     module_data_.path.points, collision->point, collision->index);
 
   const auto & ego_pose = planner_data_->current_odometry->pose;
@@ -381,7 +381,7 @@ void VirtualTrafficLightModule::insertStopVelocityAtStopLine(
   } else {
     const auto & ego_pose = planner_data_->current_odometry->pose;
     const size_t ego_seg_idx = findEgoSegmentIndex(path->points);
-    const size_t collision_seg_idx = planning_utils::calcSegmentIndexFromPointIndex(
+    const size_t collision_seg_idx = planning_utils::calc_segment_index_from_point_index(
       path->points, collision->point, collision->index);
 
     const auto stop_distance =

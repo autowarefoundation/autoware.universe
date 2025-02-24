@@ -125,12 +125,12 @@ private:
     const geometry_msgs::msg::Pose & current_pose, const float current_vel,
     const float current_acc) const;
 
-  bool insertStopPoint(
+  bool insert_stop_point(
     const std::optional<geometry_msgs::msg::Pose> stop_point,
     autoware_internal_planning_msgs::msg::PathWithLaneId & path,
     const double stop_point_velocity = 0.0);
 
-  void insertVelocityForState(
+  void insert_velocityForState(
     const std::optional<DynamicObstacle> & dynamic_obstacle, const PlannerData planner_data,
     const PlannerParam & planner_param, const PathWithLaneId & smoothed_path,
     PathWithLaneId & output_path);

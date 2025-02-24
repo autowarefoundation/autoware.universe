@@ -430,7 +430,7 @@ private:
     const geometry_msgs::msg::Point & first_path_point_on_crosswalk,
     const geometry_msgs::msg::Point & last_path_point_on_crosswalk);
 
-  void insertDecelPointWithDebugInfo(
+  void insert_decel_pointWithDebugInfo(
     const geometry_msgs::msg::Point & stop_point, const float target_velocity,
     PathWithLaneId & output) const;
 

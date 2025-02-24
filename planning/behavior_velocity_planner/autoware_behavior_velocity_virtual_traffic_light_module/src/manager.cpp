@@ -74,7 +74,7 @@ void VirtualTrafficLightModuleManager::launchNewModules(
       autoware::universe_utils::fromMsg(path_point.point.pose.position).to_2d());
   }
 
-  for (const auto & m : planning_utils::getRegElemMapOnPath<VirtualTrafficLight>(
+  for (const auto & m : planning_utils::get_reg_elem_map_on_path<VirtualTrafficLight>(
          path, planner_data_->route_handler_->getLaneletMapPtr(),
          planner_data_->current_odometry->pose)) {
     const auto stop_line_opt = m.first->getStopLine();
@@ -104,7 +104,7 @@ std::function<bool(const std::shared_ptr<VirtualTrafficLightModule> &)>
 VirtualTrafficLightModuleManager::getModuleExpiredFunction(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
-  const auto id_set = planning_utils::getLaneletIdSetOnPath<VirtualTrafficLight>(
+  const auto id_set = planning_utils::get_lanelet_id_set_on_path<VirtualTrafficLight>(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
   return [id_set](const std::shared_ptr<VirtualTrafficLightModule> & scene_module) {

@@ -308,7 +308,7 @@ void IntersectionModuleManager::launchNewModules(
   const auto lanelet_map = planner_data_->route_handler_->getLaneletMapPtr();
 
   const auto lanelets =
-    planning_utils::getLaneletsOnPath(path, lanelet_map, planner_data_->current_odometry->pose);
+    planning_utils::get_lanelets_on_path(path, lanelet_map, planner_data_->current_odometry->pose);
   // run occlusion detection only in the first intersection
   for (size_t i = 0; i < lanelets.size(); i++) {
     const auto ll = lanelets.at(i);
@@ -328,7 +328,7 @@ void IntersectionModuleManager::launchNewModules(
     }
 
     const auto associative_ids =
-      planning_utils::getAssociativeIntersectionLanelets(ll, lanelet_map, routing_graph);
+      planning_utils::get_associative_intersection_lanelets(ll, lanelet_map, routing_graph);
     bool has_traffic_light = false;
     if (const auto tl_reg_elems = ll.regulatoryElementsAs<lanelet::TrafficLight>();
         tl_reg_elems.size() != 0) {
@@ -358,7 +358,7 @@ std::function<bool(const std::shared_ptr<SceneModuleInterfaceWithRTC> &)>
 IntersectionModuleManager::getModuleExpiredFunction(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
-  const auto lane_set = planning_utils::getLaneletsOnPath(
+  const auto lane_set = planning_utils::get_lanelets_on_path(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
   return [lane_set](const std::shared_ptr<SceneModuleInterfaceWithRTC> & scene_module) {
@@ -490,7 +490,7 @@ void MergeFromPrivateModuleManager::launchNewModules(
   const auto lanelet_map = planner_data_->route_handler_->getLaneletMapPtr();
 
   const auto lanelets =
-    planning_utils::getLaneletsOnPath(path, lanelet_map, planner_data_->current_odometry->pose);
+    planning_utils::get_lanelets_on_path(path, lanelet_map, planner_data_->current_odometry->pose);
   for (size_t i = 0; i < lanelets.size(); i++) {
     const auto ll = lanelets.at(i);
     const auto lane_id = ll.id();
@@ -524,7 +524,7 @@ void MergeFromPrivateModuleManager::launchNewModules(
       const std::string next_lane_location = next_lane.attributeOr("location", "else");
       if (next_lane_location != "private") {
         const auto associative_ids =
-          planning_utils::getAssociativeIntersectionLanelets(ll, lanelet_map, routing_graph);
+          planning_utils::get_associative_intersection_lanelets(ll, lanelet_map, routing_graph);
         registerModule(std::make_shared<MergeFromPrivateRoadModule>(
           module_id, lane_id, planner_data_, merge_from_private_area_param_, associative_ids,
           logger_.get_child("merge_from_private_road_module"), clock_, time_keeper_,
@@ -539,7 +539,7 @@ void MergeFromPrivateModuleManager::launchNewModules(
         const std::string conflicting_attr = conflicting_lanelet.attributeOr("location", "else");
         if (conflicting_attr == "urban") {
           const auto associative_ids =
-            planning_utils::getAssociativeIntersectionLanelets(ll, lanelet_map, routing_graph);
+            planning_utils::get_associative_intersection_lanelets(ll, lanelet_map, routing_graph);
           registerModule(std::make_shared<MergeFromPrivateRoadModule>(
             module_id, lane_id, planner_data_, merge_from_private_area_param_, associative_ids,
             logger_.get_child("merge_from_private_road_module"), clock_, time_keeper_,
@@ -555,7 +555,7 @@ std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 MergeFromPrivateModuleManager::getModuleExpiredFunction(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
-  const auto lane_set = planning_utils::getLaneletsOnPath(
+  const auto lane_set = planning_utils::get_lanelets_on_path(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
   return [lane_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {

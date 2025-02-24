@@ -478,7 +478,7 @@ void PathOptimizer::applyInputVelocity(
       return true;
     }();
     if (is_stop_point_inside_trajectory) {
-      trajectory_utils::insertStopPoint(output_traj_points, input_stop_pose, *stop_seg_idx);
+      trajectory_utils::insert_stop_point(output_traj_points, input_stop_pose, *stop_seg_idx);
     }
   }
 }
@@ -635,7 +635,7 @@ std::vector<TrajectoryPoint> PathOptimizer::extendTrajectory(
           resampled_traj_points, input_stop_pose, ego_nearest_param_);
 
         // calculate and insert stop pose on output trajectory
-        trajectory_utils::insertStopPoint(resampled_traj_points, input_stop_pose, stop_seg_idx);
+        trajectory_utils::insert_stop_point(resampled_traj_points, input_stop_pose, stop_seg_idx);
       }
     }
   }

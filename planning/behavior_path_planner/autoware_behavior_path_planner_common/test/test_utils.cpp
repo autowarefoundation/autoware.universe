@@ -351,19 +351,19 @@ TEST_F(BehaviorPathPlanningUtilTest, getDistanceToCrosswalk)
   }
 }
 
-TEST_F(BehaviorPathPlanningUtilTest, insertStopPoint)
+TEST_F(BehaviorPathPlanningUtilTest, insert_stop_point)
 {
-  using autoware::behavior_path_planner::utils::insertStopPoint;
+  using autoware::behavior_path_planner::utils::insert_stop_point;
 
   {
     const double length = 100.0;
     auto path = generateTrajectory<PathWithLaneId>(10, 1.0, 1.0);
-    EXPECT_DOUBLE_EQ(insertStopPoint(length, path).point.pose.position.x, 0.0);
+    EXPECT_DOUBLE_EQ(insert_stop_point(length, path).point.pose.position.x, 0.0);
   }
   {
     const double length = 5.0;
     auto path = generateTrajectory<PathWithLaneId>(10, 1.0, 1.0);
-    EXPECT_DOUBLE_EQ(insertStopPoint(length, path).point.pose.position.x, 5.0);
+    EXPECT_DOUBLE_EQ(insert_stop_point(length, path).point.pose.position.x, 5.0);
   }
 }
 

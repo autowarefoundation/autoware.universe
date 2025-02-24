@@ -208,7 +208,7 @@ private:
     PlannerData & planner_data, const Header & trajectory_header, const VehicleInfo & vehicle_info,
     const StopParam & stop_param);
 
-  void insertVelocity(
+  void insert_velocity(
     TrajectoryPoints & trajectory, PlannerData & planner_data, const Header & trajectory_header,
     const VehicleInfo & vehicle_info, const double current_acc, const double current_vel,
     const StopParam & stop_param);

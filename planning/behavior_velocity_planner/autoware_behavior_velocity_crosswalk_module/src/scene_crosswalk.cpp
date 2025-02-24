@@ -497,11 +497,11 @@ std::pair<double, double> CrosswalkModule::getAttentionRange(
     std::max(0.0, clamped_near_attention_range), std::max(0.0, clamped_far_attention_range));
 }
 
-void CrosswalkModule::insertDecelPointWithDebugInfo(
+void CrosswalkModule::insert_decel_pointWithDebugInfo(
   const geometry_msgs::msg::Point & stop_point, const float target_velocity,
   PathWithLaneId & output) const
 {
-  const auto stop_pose = planning_utils::insertDecelPoint(stop_point, output, target_velocity);
+  const auto stop_pose = planning_utils::insert_decel_point(stop_point, output, target_velocity);
   if (!stop_pose) {
     return;
   }
@@ -529,7 +529,7 @@ float CrosswalkModule::calcTargetVelocity(
 
   const auto ego_acc = planner_data_->current_acceleration->accel.accel.linear.x;
   const auto dist_deceleration = calcSignedArcLength(ego_path.points, ego_pos, stop_point);
-  const auto feasible_velocity = planning_utils::calcDecelerationVelocityFromDistanceToTarget(
+  const auto feasible_velocity = planning_utils::calc_deceleration_velocity_from_distance_to_target(
     max_jerk, max_accel, ego_acc, ego_vel, dist_deceleration);
 
   constexpr double margin_velocity = 0.5;  // 1.8 km/h
@@ -860,7 +860,7 @@ void CrosswalkModule::applySlowDown(
       calcLongitudinalOffsetPoint(ego_path.points, ego_pos, safety_slow_point_range);
 
     if (p_safety_slow.has_value()) {
-      insertDecelPointWithDebugInfo(p_safety_slow.value(), safety_slow_down_speed, output);
+      insert_decel_pointWithDebugInfo(p_safety_slow.value(), safety_slow_down_speed, output);
       slowdown_pose.emplace();
       slowdown_pose->position = p_safety_slow.value();
     }
@@ -1336,7 +1336,7 @@ void CrosswalkModule::planGo(
   }
   // Plan slow down
   const auto target_velocity = calcTargetVelocity(stop_factor->stop_pose.position, ego_path);
-  insertDecelPointWithDebugInfo(
+  insert_decel_pointWithDebugInfo(
     stop_factor->stop_pose.position,
     std::max(planner_param_.min_slow_down_velocity, target_velocity), ego_path);
 }
@@ -1365,7 +1365,7 @@ void CrosswalkModule::planStop(
   }
 
   // Plan stop
-  insertDecelPointWithDebugInfo(stop_factor->stop_pose.position, 0.0, ego_path);
+  insert_decel_pointWithDebugInfo(stop_factor->stop_pose.position, 0.0, ego_path);
   planning_factor_interface_->add(
     ego_path.points, planner_data_->current_odometry->pose, stop_factor->stop_pose,
     stop_factor->stop_pose, tier4_planning_msgs::msg::PlanningFactor::STOP,

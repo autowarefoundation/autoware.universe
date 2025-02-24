@@ -166,7 +166,7 @@ lanelet::ConstLanelets getExtendLanes(
  * @param target path.
  * @param insert point.
  */
-void insertDecelPoint(
+void insert_decel_point(
   const Point & p_src, const double offset, const double velocity, PathWithLaneId & path,
   PoseWithDetailOpt & p_out);
 

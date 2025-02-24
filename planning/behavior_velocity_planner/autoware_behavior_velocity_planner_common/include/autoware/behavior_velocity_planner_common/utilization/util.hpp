@@ -73,27 +73,27 @@ using autoware_perception_msgs::msg::PredictedObjects;
 
 namespace planning_utils
 {
-size_t calcSegmentIndexFromPointIndex(
+size_t calc_segment_index_from_point_index(
   const std::vector<autoware_internal_planning_msgs::msg::PathPointWithLaneId> & points,
   const geometry_msgs::msg::Point & point, const size_t idx);
 
-bool createDetectionAreaPolygons(
+bool create_detection_area_polygons(
   Polygons2d & da_polys, const PathWithLaneId & path, const geometry_msgs::msg::Pose & target_pose,
   const size_t target_seg_idx, const DetectionRange & da_range, const double obstacle_vel_mps,
   const double min_velocity = 1.0);
 
-Point2d calculateOffsetPoint2d(
+Point2d calculate_offset_point2d(
   const geometry_msgs::msg::Pose & pose, const double offset_x, const double offset_y);
 
-void extractClosePartition(
+void extract_close_partition(
   const geometry_msgs::msg::Point position, const BasicPolygons2d & all_partitions,
   BasicPolygons2d & close_partition, const double distance_thresh = 30.0);
 
-void getAllPartitionLanelets(const lanelet::LaneletMapConstPtr & ll, BasicPolygons2d & polys);
+void get_all_partition_lanelets(const lanelet::LaneletMapConstPtr & ll, BasicPolygons2d & polys);
 
-void setVelocityFromIndex(const size_t begin_idx, const double vel, PathWithLaneId * input);
+void set_velocity_from_index(const size_t begin_idx, const double vel, PathWithLaneId * input);
 
-void insertVelocity(
+void insert_velocity(
   PathWithLaneId & path, const PathPointWithLaneId & path_point, const double v,
   size_t & insert_index, const double min_distance = 0.001);
 
@@ -102,31 +102,31 @@ inline int64_t bitShift(int64_t original_id)
   return original_id << (sizeof(int32_t) * 8 / 2);
 }
 
-bool isAheadOf(const geometry_msgs::msg::Pose & target, const geometry_msgs::msg::Pose & origin);
-geometry_msgs::msg::Pose getAheadPose(
+bool is_ahead_of(const geometry_msgs::msg::Pose & target, const geometry_msgs::msg::Pose & origin);
+geometry_msgs::msg::Pose get_ahead_pose(
   const size_t start_idx, const double ahead_dist,
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path);
-Polygon2d generatePathPolygon(
+Polygon2d generate_path_polygon(
   const PathWithLaneId & path, const size_t start_idx, const size_t end_idx, const double width);
 
-double calcJudgeLineDistWithAccLimit(
+double calc_judge_line_dist_with_acc_limit(
   const double velocity, const double max_stop_acceleration, const double delay_response_time);
 
-double calcJudgeLineDistWithJerkLimit(
+double calc_judge_line_dist_with_jerk_limit(
   const double velocity, const double acceleration, const double max_stop_acceleration,
   const double max_stop_jerk, const double delay_response_time);
 
-double calcDecelerationVelocityFromDistanceToTarget(
+double calc_deceleration_velocity_from_distance_to_target(
   const double max_slowdown_jerk, const double max_slowdown_accel, const double current_accel,
   const double current_velocity, const double distance_to_target);
 
-double findReachTime(
+double find_reach_time(
   const double jerk, const double accel, const double velocity, const double distance,
   const double t_min, const double t_max);
 
-std::vector<geometry_msgs::msg::Point> toRosPoints(const PredictedObjects & object);
+std::vector<geometry_msgs::msg::Point> to_ros_points(const PredictedObjects & object);
 
-LineString2d extendLine(
+LineString2d extend_line(
   const lanelet::ConstPoint3d & lanelet_point1, const lanelet::ConstPoint3d & lanelet_point2,
   const double & length);
 
@@ -138,36 +138,36 @@ std::vector<T> concatVector(const std::vector<T> & vec1, const std::vector<T> & 
   return concat_vec;
 }
 
-std::optional<int64_t> getNearestLaneId(
+std::optional<int64_t> get_nearest_lane_id(
   const PathWithLaneId & path, const lanelet::LaneletMapPtr lanelet_map,
   const geometry_msgs::msg::Pose & current_pose);
 
-std::vector<int64_t> getSortedLaneIdsFromPath(const PathWithLaneId & path);
+std::vector<int64_t> get_sorted_lane_ids_from_path(const PathWithLaneId & path);
 
 // return the set of lane_ids in the path after base_lane_id
-std::vector<int64_t> getSubsequentLaneIdsSetOnPath(
+std::vector<int64_t> get_subsequent_lane_ids_set_on_path(
   const PathWithLaneId & path, int64_t base_lane_id);
 
 template <class T>
-std::unordered_map<typename std::shared_ptr<const T>, lanelet::ConstLanelet> getRegElemMapOnPath(
+std::unordered_map<typename std::shared_ptr<const T>, lanelet::ConstLanelet> get_reg_elem_map_on_path(
   const PathWithLaneId & path, const lanelet::LaneletMapPtr lanelet_map,
   const geometry_msgs::msg::Pose & current_pose)
 {
   std::unordered_map<typename std::shared_ptr<const T>, lanelet::ConstLanelet> reg_elem_map_on_path;
 
   // Add current lane id
-  const auto nearest_lane_id = getNearestLaneId(path, lanelet_map, current_pose);
+  const auto nearest_lane_id = get_nearest_lane_id(path, lanelet_map, current_pose);
 
   std::vector<int64_t> unique_lane_ids;
   if (nearest_lane_id) {
     // Add subsequent lane_ids from nearest lane_id
     unique_lane_ids =
-      autoware::behavior_velocity_planner::planning_utils::getSubsequentLaneIdsSetOnPath(
+      autoware::behavior_velocity_planner::planning_utils::get_subsequent_lane_ids_set_on_path(
         path, *nearest_lane_id);
   } else {
     // Add all lane_ids in path
     unique_lane_ids =
-      autoware::behavior_velocity_planner::planning_utils::getSortedLaneIdsFromPath(path);
+      autoware::behavior_velocity_planner::planning_utils::get_sorted_lane_ids_from_path(path);
   }
 
   for (const auto lane_id : unique_lane_ids) {
@@ -182,61 +182,61 @@ std::unordered_map<typename std::shared_ptr<const T>, lanelet::ConstLanelet> get
 }
 
 template <class T>
-std::set<int64_t> getRegElemIdSetOnPath(
+std::set<int64_t> get_reg_elem_id_set_on_path(
   const PathWithLaneId & path, const lanelet::LaneletMapPtr lanelet_map,
   const geometry_msgs::msg::Pose & current_pose)
 {
   std::set<int64_t> reg_elem_id_set;
-  for (const auto & m : getRegElemMapOnPath<const T>(path, lanelet_map, current_pose)) {
+  for (const auto & m : get_reg_elem_map_on_path<const T>(path, lanelet_map, current_pose)) {
     reg_elem_id_set.insert(m.first->id());
   }
   return reg_elem_id_set;
 }
 
 template <class T>
-std::set<int64_t> getLaneletIdSetOnPath(
+std::set<int64_t> get_lanelet_id_set_on_path(
   const PathWithLaneId & path, const lanelet::LaneletMapPtr lanelet_map,
   const geometry_msgs::msg::Pose & current_pose)
 {
   std::set<int64_t> id_set;
-  for (const auto & m : getRegElemMapOnPath<const T>(path, lanelet_map, current_pose)) {
+  for (const auto & m : get_reg_elem_map_on_path<const T>(path, lanelet_map, current_pose)) {
     id_set.insert(m.second.id());
   }
   return id_set;
 }
 
-std::optional<geometry_msgs::msg::Pose> insertDecelPoint(
+std::optional<geometry_msgs::msg::Pose> insert_decel_point(
   const geometry_msgs::msg::Point & stop_point, PathWithLaneId & output,
   const float target_velocity);
 
-std::vector<lanelet::ConstLanelet> getLaneletsOnPath(
+std::vector<lanelet::ConstLanelet> get_lanelets_on_path(
   const PathWithLaneId & path, const lanelet::LaneletMapPtr lanelet_map,
   const geometry_msgs::msg::Pose & current_pose);
 
-std::set<int64_t> getLaneIdSetOnPath(
+std::set<int64_t> get_lane_id_set_on_path(
   const PathWithLaneId & path, const lanelet::LaneletMapPtr lanelet_map,
   const geometry_msgs::msg::Pose & current_pose);
 
-bool isOverLine(
+bool is_over_line(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path,
   const geometry_msgs::msg::Pose & self_pose, const geometry_msgs::msg::Pose & line_pose,
   const double offset = 0.0);
 
-std::optional<geometry_msgs::msg::Pose> insertStopPoint(
+std::optional<geometry_msgs::msg::Pose> insert_stop_point(
   const geometry_msgs::msg::Point & stop_point, PathWithLaneId & output);
 
-std::optional<geometry_msgs::msg::Pose> insertStopPoint(
+std::optional<geometry_msgs::msg::Pose> insert_stop_point(
   const geometry_msgs::msg::Point & stop_point, const size_t stop_seg_idx, PathWithLaneId & output);
 
 /*
   @brief return 'associative' lanes in the intersection. 'associative' means that a lane shares same
   or lane-changeable parent lanes with `lane` and has same turn_direction value.
  */
-std::set<lanelet::Id> getAssociativeIntersectionLanelets(
+std::set<lanelet::Id> get_associative_intersection_lanelets(
   const lanelet::ConstLanelet & lane, const lanelet::LaneletMapPtr lanelet_map,
   const lanelet::routing::RoutingGraphPtr routing_graph);
 
-lanelet::ConstLanelets getConstLaneletsFromIds(
+lanelet::ConstLanelets get_const_lanelets_from_ids(
   const lanelet::LaneletMapConstPtr & map, const std::set<lanelet::Id> & ids);
 
 }  // namespace planning_utils

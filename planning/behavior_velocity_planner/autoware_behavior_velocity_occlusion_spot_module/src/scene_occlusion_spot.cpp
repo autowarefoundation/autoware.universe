@@ -81,7 +81,7 @@ OcclusionSpotModule::OcclusionSpotModule(
   }
   if (param_.use_partition_lanelet) {
     const lanelet::LaneletMapConstPtr & ll = planner_data->route_handler_->getLaneletMapPtr();
-    planning_utils::getAllPartitionLanelets(ll, partition_lanelets_);
+    planning_utils::get_all_partition_lanelets(ll, partition_lanelets_);
   }
 }
 
@@ -100,7 +100,7 @@ bool OcclusionSpotModule::modifyPathVelocity(PathWithLaneId * path)
     param_.v.a_ego = planner_data_->current_acceleration->accel.accel.linear.x;
     param_.v.delay_time = planner_data_->system_delay;
     param_.detection_area_max_length =
-      planning_utils::calcJudgeLineDistWithJerkLimit(
+      planning_utils::calc_judge_line_dist_with_jerk_limit(
         param_.v.v_ego, param_.v.a_ego, param_.v.non_effective_accel, param_.v.non_effective_jerk,
         planner_data_->delay_response_time) +
       param_.detection_area_offset;  // To fill difference between planned and measured acc
@@ -142,7 +142,7 @@ bool OcclusionSpotModule::modifyPathVelocity(PathWithLaneId * path)
   std::vector<utils::PossibleCollisionInfo> possible_collisions;
   // extract only close lanelet
   if (param_.use_partition_lanelet) {
-    planning_utils::extractClosePartition(
+    planning_utils::extract_close_partition(
       ego_pose.position, partition_lanelets_, debug_data_.close_partition);
   }
   DEBUG_PRINT(show_time, "extract[ms]: ", stop_watch_.toc("processing_time", true));

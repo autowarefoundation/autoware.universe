@@ -1906,7 +1906,7 @@ bool NormalLaneChange::is_ego_stuck() const
 void NormalLaneChange::set_stop_pose(
   const double arc_length_to_stop_pose, PathWithLaneId & path, const std::string & reason)
 {
-  const auto stop_point = utils::insertStopPoint(arc_length_to_stop_pose, path);
+  const auto stop_point = utils::insert_stop_point(arc_length_to_stop_pose, path);
   lane_change_stop_pose_ = PoseWithDetailOpt(PoseWithDetail(stop_point.point.pose, reason));
 }
 

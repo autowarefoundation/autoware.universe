@@ -36,20 +36,20 @@
 
 TEST(is_ahead_of, nominal)
 {
-  using autoware::behavior_velocity_planner::planning_utils::isAheadOf;
+  using autoware::behavior_velocity_planner::planning_utils::is_ahead_of;
   geometry_msgs::msg::Pose target = test::generatePose(0);
   geometry_msgs::msg::Pose origin = test::generatePose(1);
-  bool is_ahead = isAheadOf(target, origin);
+  bool is_ahead = is_ahead_of(target, origin);
   EXPECT_FALSE(is_ahead);
   target = test::generatePose(2);
-  is_ahead = isAheadOf(target, origin);
+  is_ahead = is_ahead_of(target, origin);
   EXPECT_TRUE(is_ahead);
 }
 
 TEST(smoothDeceleration, calculateMaxSlowDownVelocity)
 {
   using autoware::behavior_velocity_planner::planning_utils::
-    calcDecelerationVelocityFromDistanceToTarget;
+    calc_deceleration_velocity_from_distance_to_target;
   const double current_accel = 1.0;
   const double current_velocity = 5.0;
   const double max_slow_down_jerk = -1.0;
@@ -59,7 +59,7 @@ TEST(smoothDeceleration, calculateMaxSlowDownVelocity)
     for (int i = -8; i <= 24; i += 8) {
       // arc length in path point
       const double l = i * 1.0;
-      const double v = calcDecelerationVelocityFromDistanceToTarget(
+      const double v = calc_deceleration_velocity_from_distance_to_target(
         max_slow_down_jerk, max_slow_down_accel, current_accel, current_velocity, l);
       // case 0 : behind ego
       if (i == -8) EXPECT_NEAR(v, 5.0, eps);

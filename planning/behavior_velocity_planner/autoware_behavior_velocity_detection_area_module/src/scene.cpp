@@ -84,7 +84,7 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path)
 
   const auto & stop_point_idx = stop_point->first;
   const auto & stop_pose = stop_point->second;
-  const size_t stop_line_seg_idx = planning_utils::calcSegmentIndexFromPointIndex(
+  const size_t stop_line_seg_idx = planning_utils::calc_segment_index_from_point_index(
     path->points, stop_pose.position, stop_point_idx);
 
   auto modified_stop_pose = stop_pose;
@@ -129,7 +129,7 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path)
       const size_t dead_line_point_idx = dead_line_point->first;
       const auto & dead_line_pose = dead_line_point->second;
 
-      const size_t dead_line_seg_idx = planning_utils::calcSegmentIndexFromPointIndex(
+      const size_t dead_line_seg_idx = planning_utils::calc_segment_index_from_point_index(
         path->points, dead_line_pose.position, dead_line_point_idx);
 
       debug_data_.dead_line_poses.push_back(dead_line_pose);
@@ -157,7 +157,7 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path)
   // Ignore objects if braking distance is not enough
   if (planner_param_.use_pass_judge_line) {
     const auto current_velocity = planner_data_->current_velocity->twist.linear.x;
-    const double pass_judge_line_distance = planning_utils::calcJudgeLineDistWithAccLimit(
+    const double pass_judge_line_distance = planning_utils::calc_judge_line_dist_with_acc_limit(
       current_velocity, planner_data_->current_acceleration->accel.accel.linear.x,
       planner_data_->delay_response_time);
     if (
@@ -173,7 +173,7 @@ bool DetectionAreaModule::modifyPathVelocity(PathWithLaneId * path)
 
   // Insert stop point
   state_ = State::STOP;
-  planning_utils::insertStopPoint(modified_stop_pose.position, modified_stop_line_seg_idx, *path);
+  planning_utils::insert_stop_point(modified_stop_pose.position, modified_stop_line_seg_idx, *path);
 
   // For virtual wall
   debug_data_.stop_poses.push_back(stop_point->second);

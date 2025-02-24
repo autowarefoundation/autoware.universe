@@ -317,7 +317,7 @@ std::shared_ptr<PathWithLaneId> generateCenterLinePath(
  * @param path Original path.
  * @return Inserted stop point.
  */
-PathPointWithLaneId insertStopPoint(const double length, PathWithLaneId & path);
+PathPointWithLaneId insert_stop_point(const double length, PathWithLaneId & path);
 
 /**
  * @brief Calculates distance to lane boundary.

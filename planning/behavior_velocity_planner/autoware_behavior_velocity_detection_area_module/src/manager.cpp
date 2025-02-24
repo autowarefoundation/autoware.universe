@@ -55,7 +55,7 @@ void DetectionAreaModuleManager::launchNewModules(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
   for (const auto & detection_area_with_lane_id :
-       planning_utils::getRegElemMapOnPath<DetectionArea>(
+       planning_utils::get_reg_elem_map_on_path<DetectionArea>(
          path, planner_data_->route_handler_->getLaneletMapPtr(),
          planner_data_->current_odometry->pose)) {
     // Use lanelet_id to unregister module when the route is changed
@@ -74,7 +74,7 @@ std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
 DetectionAreaModuleManager::getModuleExpiredFunction(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
-  const auto detection_area_id_set = planning_utils::getRegElemIdSetOnPath<DetectionArea>(
+  const auto detection_area_id_set = planning_utils::get_reg_elem_id_set_on_path<DetectionArea>(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
   return [detection_area_id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {

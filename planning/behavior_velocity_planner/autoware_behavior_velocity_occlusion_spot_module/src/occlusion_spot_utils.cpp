@@ -90,7 +90,7 @@ bool buildDetectionAreaPolygon(
   da_range.right_overhang = p.right_overhang;
   da_range.left_overhang = p.left_overhang;
   slices.clear();
-  return planning_utils::createDetectionAreaPolygons(
+  return planning_utils::create_detection_area_polygons(
     slices, path, target_pose, target_seg_idx, da_range, p.pedestrian_vel);
 }
 

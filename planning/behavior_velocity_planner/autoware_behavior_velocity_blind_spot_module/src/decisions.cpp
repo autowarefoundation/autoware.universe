@@ -96,8 +96,8 @@ void BlindSpotModule::reactRTCApprovalByDecision(
 {
   if (!isActivated()) {
     constexpr double stop_vel = 0.0;
-    planning_utils::setVelocityFromIndex(decision.stop_line_idx, stop_vel, path);
-    debug_data_.virtual_wall_pose = planning_utils::getAheadPose(
+    planning_utils::set_velocity_from_index(decision.stop_line_idx, stop_vel, path);
+    debug_data_.virtual_wall_pose = planning_utils::get_ahead_pose(
       decision.stop_line_idx, planner_data_->vehicle_info_.max_longitudinal_offset_m, *path);
 
     const auto stop_pose = path->points.at(decision.stop_line_idx).point.pose;
@@ -130,8 +130,8 @@ void BlindSpotModule::reactRTCApprovalByDecision(
 {
   if (!isActivated()) {
     constexpr double stop_vel = 0.0;
-    planning_utils::setVelocityFromIndex(decision.stop_line_idx, stop_vel, path);
-    debug_data_.virtual_wall_pose = planning_utils::getAheadPose(
+    planning_utils::set_velocity_from_index(decision.stop_line_idx, stop_vel, path);
+    debug_data_.virtual_wall_pose = planning_utils::get_ahead_pose(
       decision.stop_line_idx, planner_data_->vehicle_info_.max_longitudinal_offset_m, *path);
 
     const auto stop_pose = path->points.at(decision.stop_line_idx).point.pose;
