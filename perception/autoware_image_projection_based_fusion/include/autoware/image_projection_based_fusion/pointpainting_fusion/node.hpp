@@ -50,9 +50,9 @@ public:
 private:
   void preprocess(PointCloudMsgType & pointcloud_msg) override;
 
-  void fuseOnSingleImage(
-    const PointCloudMsgType & input_pointcloud_msg, const Det2dStatus<RoiMsgType> & det2d,
-    const RoiMsgType & input_roi_msg, PointCloudMsgType & painted_pointcloud_msg) override;
+  void fuse_on_single_image(
+    const PointCloudMsgType & input_pointcloud_msg, const Det2dStatus<RoiMsgType> & det2d_status,
+    const RoiMsgType & input_rois_msg, PointCloudMsgType & painted_pointcloud_msg) override;
 
   void postprocess(
     const PointCloudMsgType & painted_pointcloud_msg, DetectedObjects & output_msg) override;
