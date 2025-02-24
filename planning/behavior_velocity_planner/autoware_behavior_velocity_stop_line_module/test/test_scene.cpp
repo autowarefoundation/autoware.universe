@@ -75,7 +75,7 @@ protected:
 
     module_ = std::make_shared<StopLineModule>(
       1, stop_line_, planner_param_, rclcpp::get_logger("test_logger"), clock_,
-      std::make_shared<autoware::universe_utils::TimeKeeper>(),
+      std::make_shared<autoware_utils::TimeKeeper>(),
       std::make_shared<autoware::planning_factor_interface::PlanningFactorInterface>(
         node_.get(), "test_stopline"));
 
@@ -103,14 +103,14 @@ TEST_F(StopLineModuleTest, TestGetEgoAndStopPoint)
 
   // Execute the function
   auto [ego_s, stop_point_s] =
-    module_->getEgoAndStopPoint(trajectory_, ego_pose, StopLineModule::State::APPROACH);
+    module_->get_ego_and_stop_point(trajectory_, ego_pose, StopLineModule::State::APPROACH);
 
   // Verify results
   EXPECT_DOUBLE_EQ(ego_s, 5.0);
   EXPECT_DOUBLE_EQ(stop_point_s.value(), 7.0 - 0.5 - 1.0);
 
   std::tie(ego_s, stop_point_s) =
-    module_->getEgoAndStopPoint(trajectory_, ego_pose, StopLineModule::State::STOPPED);
+    module_->get_ego_and_stop_point(trajectory_, ego_pose, StopLineModule::State::STOPPED);
 
   EXPECT_DOUBLE_EQ(ego_s, 5.0);
   EXPECT_DOUBLE_EQ(stop_point_s.value(), 5.0);
@@ -128,7 +128,7 @@ TEST_F(StopLineModuleTest, TestUpdateStateAndStoppedTime)
   stopped_time = test_start_time;
 
   // Execute the function
-  module_->updateStateAndStoppedTime(
+  module_->update_state_and_stopped_time(
     &state, &stopped_time, test_start_time, distance_to_stop_point, is_vehicle_stopped);
 
   // Verify state transition to STOPPED
@@ -137,7 +137,7 @@ TEST_F(StopLineModuleTest, TestUpdateStateAndStoppedTime)
 
   // Simulate time elapsed to exceed stop duration
   auto now = test_start_time + rclcpp::Duration::from_seconds(3.0);
-  module_->updateStateAndStoppedTime(
+  module_->update_state_and_stopped_time(
     &state, &stopped_time, now, distance_to_stop_point, is_vehicle_stopped);
 
   // Verify state transition to START

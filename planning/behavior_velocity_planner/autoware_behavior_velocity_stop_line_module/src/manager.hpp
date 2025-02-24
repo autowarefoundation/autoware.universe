@@ -43,11 +43,11 @@ public:
 private:
   StopLineModule::PlannerParam planner_param_;
 
-  std::vector<StopLineWithLaneId> getStopLinesWithLaneIdOnPath(
+  std::vector<StopLineWithLaneId> get_stop_lines_with_lane_id_on_path(
     const autoware_internal_planning_msgs::msg::PathWithLaneId & path,
     const lanelet::LaneletMapPtr lanelet_map);
 
-  std::set<int64_t> getStopLineIdSetOnPath(
+  std::set<int64_t> get_stop_line_id_set_on_path(
     const autoware_internal_planning_msgs::msg::PathWithLaneId & path,
     const lanelet::LaneletMapPtr lanelet_map);
 
