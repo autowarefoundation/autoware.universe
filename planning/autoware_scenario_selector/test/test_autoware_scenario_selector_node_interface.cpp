@@ -34,7 +34,7 @@ std::shared_ptr<PlanningInterfaceTestManager> generateTestManager()
   auto test_manager = std::make_shared<PlanningInterfaceTestManager>();
 
   // set subscriber with topic name: scenario_selector → test_node_
-  test_manager->subscribeOutput<tier4_planning_msgs::msg::Scenario>("output/scenario");
+  test_manager->subscribeOutput<autoware_internal_planning_msgs::msg::Scenario>("output/scenario");
 
   return test_manager;
 }
