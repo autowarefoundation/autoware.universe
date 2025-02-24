@@ -134,7 +134,8 @@ void SceneModuleManagerInterfaceWithRTC::delete_expired_modules(
 
 template size_t SceneModuleManagerInterface<SceneModuleInterfaceWithRTC>::find_ego_segment_index(
   const std::vector<autoware_internal_planning_msgs::msg::PathPointWithLaneId> & points) const;
-template void SceneModuleManagerInterface<SceneModuleInterfaceWithRTC>::update_scene_module_instances(
+template void
+SceneModuleManagerInterface<SceneModuleInterfaceWithRTC>::update_scene_module_instances(
   const std::shared_ptr<const PlannerData> & planner_data,
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path);
 template void SceneModuleManagerInterface<SceneModuleInterfaceWithRTC>::modify_path_velocity(

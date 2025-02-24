@@ -364,7 +364,8 @@ autoware_planning_msgs::msg::Path BehaviorVelocityPlannerNode::generatePath(
     filtered_path, forward_path_length_, behavior_output_path_interval_);
 
   // check stop point
-  output_path_msg = autoware::behavior_velocity_planner::filter_stop_path_point(interpolated_path_msg);
+  output_path_msg =
+    autoware::behavior_velocity_planner::filter_stop_path_point(interpolated_path_msg);
 
   output_path_msg.header.frame_id = "map";
   output_path_msg.header.stamp = this->now();

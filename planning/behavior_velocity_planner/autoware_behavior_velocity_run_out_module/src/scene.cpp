@@ -236,8 +236,8 @@ std::optional<DynamicObstacle> RunOutModule::detectCollision(
     debug_ptr_->pushPredictedVehiclePolygons(vehicle_poly);
     debug_ptr_->pushTravelTimeTexts(travel_time, p2.pose, /* lateral_offset */ 3.0);
 
-    auto obstacles_collision =
-      check_collisionWithObstacles(dynamic_obstacles, vehicle_poly, travel_time, crosswalk_lanelets);
+    auto obstacles_collision = check_collisionWithObstacles(
+      dynamic_obstacles, vehicle_poly, travel_time, crosswalk_lanelets);
     if (obstacles_collision.empty()) {
       continue;
     }

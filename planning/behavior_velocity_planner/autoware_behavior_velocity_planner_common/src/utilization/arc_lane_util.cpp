@@ -56,7 +56,8 @@ geometry_msgs::msg::Point operator*(const geometry_msgs::msg::Point & p, const d
 namespace autoware::behavior_velocity_planner::arc_lane_utils
 {
 
-double calc_signed_distance(const geometry_msgs::msg::Pose & p1, const geometry_msgs::msg::Point & p2)
+double calc_signed_distance(
+  const geometry_msgs::msg::Pose & p1, const geometry_msgs::msg::Point & p2)
 {
   Eigen::Affine3d map2p1;
   tf2::fromMsg(p1, map2p1);

@@ -149,7 +149,8 @@ std::vector<int64_t> get_subsequent_lane_ids_set_on_path(
   const PathWithLaneId & path, int64_t base_lane_id);
 
 template <class T>
-std::unordered_map<typename std::shared_ptr<const T>, lanelet::ConstLanelet> get_reg_elem_map_on_path(
+std::unordered_map<typename std::shared_ptr<const T>, lanelet::ConstLanelet>
+get_reg_elem_map_on_path(
   const PathWithLaneId & path, const lanelet::LaneletMapPtr lanelet_map,
   const geometry_msgs::msg::Pose & current_pose)
 {

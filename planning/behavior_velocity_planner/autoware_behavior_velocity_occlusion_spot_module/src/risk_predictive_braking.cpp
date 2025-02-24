@@ -47,7 +47,8 @@ void applySafeVelocityConsideringPossibleCollision(
 
     // safe slow down: consider ego smooth brake
     const double v_safe_slow_down =
-      planning_utils::calc_deceleration_velocity_from_distance_to_target(j_min, a_min, a0, v0, l_obs);
+      planning_utils::calc_deceleration_velocity_from_distance_to_target(
+        j_min, a_min, a0, v0, l_obs);
 
     // TODO(tanaka): consider edge case if ego passed safe margin
     const double v_slow_down = (l_obs < 0 && v0 <= v_safe) ? v_safe : v_safe_slow_down;

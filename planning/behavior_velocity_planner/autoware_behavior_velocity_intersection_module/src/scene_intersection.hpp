@@ -315,9 +315,9 @@ public:
    ***********************************************************
    ***********************************************************
    * @defgroup primary-function [fn] primary functions
-   * the entrypoint of this module is modify_path_velocity() function that calculates safety decision
-   * of latest context and send it to RTC and then react to RTC approval. The reaction to RTC
-   * approval may not be based on the latest decision of this module depending on the auto-mode
+   * the entrypoint of this module is modify_path_velocity() function that calculates safety
+   *decision of latest context and send it to RTC and then react to RTC approval. The reaction to
+   *RTC approval may not be based on the latest decision of this module depending on the auto-mode
    * configuration. For module side it is not visible if the module is operating in auto-mode or
    * manual-module. At first, initializeRTCStatus() is called to reset the safety value of
    * INTERSECTION and INTERSECTION_OCCLUSION. Then modifyPathVelocityDetail() is called to analyze

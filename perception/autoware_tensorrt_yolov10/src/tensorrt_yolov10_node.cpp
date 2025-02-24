@@ -25,8 +25,7 @@
 #include <utility>
 #include <vector>
 
-#define PRINT_DEBUG_INFO printf("line:%d\n",__LINE__);
-
+#define PRINT_DEBUG_INFO printf("line:%d\n", __LINE__);
 
 namespace autoware::tensorrt_yolov10
 {
@@ -45,17 +44,17 @@ TrtYolov10Node::TrtYolov10Node(const rclcpp::NodeOptions & node_options)
   using std::chrono_literals::operator""ms;
 
   const std::string model_path = this->declare_parameter<std::string>("model_path");
-//   const std::string label_path = this->declare_parameter<std::string>("label_path");
-  const std::string precision = this->declare_parameter<std::string>("precision","fp16");
-//   const float score_threshold =
-//     static_cast<float>(this->declare_parameter<double>("score_threshold"));
-//   const int dla_core_id = this->declare_parameter<int>("dla_core_id");
-  const uint8_t gpu_id = this->declare_parameter<uint8_t>("gpu_id",0);
+  //   const std::string label_path = this->declare_parameter<std::string>("label_path");
+  const std::string precision = this->declare_parameter<std::string>("precision", "fp16");
+  //   const float score_threshold =
+  //     static_cast<float>(this->declare_parameter<double>("score_threshold"));
+  //   const int dla_core_id = this->declare_parameter<int>("dla_core_id");
+  const uint8_t gpu_id = this->declare_parameter<uint8_t>("gpu_id", 0);
 
-//   const double norm_factor = 1.0;
+  //   const double norm_factor = 1.0;
   const std::string cache_dir = "";
-//   const tensorrt_common::BatchConfig batch_config{1, 1, 1};
-//   const size_t max_workspace_size = (1 << 30);
+  //   const tensorrt_common::BatchConfig batch_config{1, 1, 1};
+  //   const size_t max_workspace_size = (1 << 30);
 
   trt_yolov10_ = std::make_unique<tensorrt_yolov10::TrtYolov10>(model_path, precision);
 
@@ -80,13 +79,10 @@ void TrtYolov10Node::onConnect()
   if (
     objects_pub_->get_subscription_count() == 0 &&
     objects_pub_->get_intra_process_subscription_count() == 0 &&
-    image_pub_.getNumSubscribers() == 0 ) 
-  {
+    image_pub_.getNumSubscribers() == 0) {
     // printf("no suber who sub from objects_pub_ or image_pub_,shut down image_sub_\n");
     image_sub_.shutdown();
-  } 
-  else if (!image_sub_) 
-  {
+  } else if (!image_sub_) {
     image_sub_ = image_transport::create_subscription(
       this, "~/in/image", std::bind(&TrtYolov10Node::onImage, this, _1), "raw",
       rmw_qos_profile_sensor_data);
@@ -122,7 +118,8 @@ void TrtYolov10Node::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
     object.feature.roi.width = yolov10_object.width;
     object.feature.roi.height = yolov10_object.height;
     object.object.existence_probability = yolov10_object.score;
-    // object.object.classification = object_recognition_utils::toObjectClassifications(label_map_[yolov10_object.type], 1.0f);
+    // object.object.classification =
+    // object_recognition_utils::toObjectClassifications(label_map_[yolov10_object.type], 1.0f);
     out_objects.feature_objects.push_back(object);
     const auto left = std::max(0, static_cast<int>(object.feature.roi.x_offset));
     const auto top = std::max(0, static_cast<int>(object.feature.roi.y_offset));
@@ -133,7 +130,6 @@ void TrtYolov10Node::onImage(const sensor_msgs::msg::Image::ConstSharedPtr msg)
     cv::rectangle(
       in_image_ptr->image, cv::Point(left, top), cv::Point(right, bottom), cv::Scalar(0, 0, 255), 3,
       8, 0);
-
   }
 
   image_pub_.publish(in_image_ptr->toImageMsg());

@@ -1696,9 +1696,9 @@ void StartPlannerModule::setDebugData()
   using autoware::universe_utils::createMarkerScale;
   using lanelet::visualization::laneletsAsTriangleMarkerArray;
   using marker_utils::addFootprintMarker;
-  using marker_utils::createFootprintMarkerArray;
   using marker_utils::create_objects_marker_array;
   using marker_utils::create_path_marker_array;
+  using marker_utils::createFootprintMarkerArray;
   using marker_utils::createPoseMarkerArray;
   using marker_utils::createPredictedPathMarkerArray;
   using marker_utils::showPolygon;

@@ -145,7 +145,8 @@ bool MergeFromPrivateRoadModule::modify_path_velocity(PathWithLaneId * path)
   }
   const auto stopline_idx = stopline_idx_opt.value();
 
-  debug_data_.virtual_wall_pose = planning_utils::get_ahead_pose(stopline_idx, baselink2front, *path);
+  debug_data_.virtual_wall_pose =
+    planning_utils::get_ahead_pose(stopline_idx, baselink2front, *path);
   debug_data_.stop_point_pose = path->points.at(stopline_idx).point.pose;
 
   /* set stop speed */
