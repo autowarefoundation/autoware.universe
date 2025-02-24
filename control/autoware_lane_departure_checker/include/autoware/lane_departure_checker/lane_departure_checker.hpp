@@ -17,7 +17,7 @@
 
 #include "autoware/lane_departure_checker/parameters.hpp"
 
-#include <autoware/universe_utils/system/time_keeper.hpp>
+#include <autoware_utils/system/time_keeper.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 #include <rosidl_runtime_cpp/message_initialization.hpp>
 
@@ -53,16 +53,16 @@ class LaneDepartureChecker
 {
 public:
   explicit LaneDepartureChecker(
-    std::shared_ptr<universe_utils::TimeKeeper> time_keeper =
-      std::make_shared<universe_utils::TimeKeeper>())
+    std::shared_ptr<autoware_utils::TimeKeeper> time_keeper =
+      std::make_shared<autoware_utils::TimeKeeper>())
   : time_keeper_(time_keeper)
   {
   }
 
   LaneDepartureChecker(
     const Param & param, const autoware::vehicle_info_utils::VehicleInfo & vehicle_info,
-    std::shared_ptr<universe_utils::TimeKeeper> time_keeper =
-      std::make_shared<universe_utils::TimeKeeper>())
+    std::shared_ptr<autoware_utils::TimeKeeper> time_keeper =
+      std::make_shared<autoware_utils::TimeKeeper>())
   : param_(param),
     vehicle_info_ptr_(std::make_shared<autoware::vehicle_info_utils::VehicleInfo>(vehicle_info)),
     time_keeper_(time_keeper)
@@ -121,7 +121,7 @@ private:
   lanelet::BasicPolygon2d toBasicPolygon2D(const LinearRing2d & footprint_hull) const;
   autoware::universe_utils::Polygon2d toPolygon2D(const lanelet::BasicPolygon2d & poly) const;
 
-  mutable std::shared_ptr<universe_utils::TimeKeeper> time_keeper_;
+  mutable std::shared_ptr<autoware_utils::TimeKeeper> time_keeper_;
 };
 }  // namespace autoware::lane_departure_checker
 

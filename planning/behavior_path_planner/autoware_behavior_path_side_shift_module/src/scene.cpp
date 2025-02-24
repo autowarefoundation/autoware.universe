@@ -33,8 +33,8 @@ namespace autoware::behavior_path_planner
 using autoware::motion_utils::calcSignedArcLength;
 using autoware::motion_utils::findNearestIndex;
 using autoware::motion_utils::findNearestSegmentIndex;
-using autoware::universe_utils::calcDistance2d;
-using autoware::universe_utils::getPoint;
+using autoware_utils::calc_distance2d;
+using autoware_utils::get_point;
 using geometry_msgs::msg::Point;
 
 SideShiftModule::SideShiftModule(
@@ -199,7 +199,7 @@ void SideShiftModule::updateData()
     double max_dist = 0.0;
     for (const auto & pnt : path_shifter_.getShiftLines()) {
       max_dist =
-        std::max(max_dist, autoware::universe_utils::calcDistance2d(getEgoPose(), pnt.start));
+        std::max(max_dist, autoware_utils::calc_distance2d(getEgoPose(), pnt.start));
     }
     return max_dist;
   }();
@@ -422,7 +422,7 @@ PathWithLaneId SideShiftModule::extendBackwardLength(const PathWithLaneId & orig
   const auto longest_dist_to_shift_point = [&]() {
     double max_dist = 0.0;
     for (const auto & pnt : path_shifter_.getShiftLines()) {
-      max_dist = std::max(max_dist, calcDistance2d(getEgoPose(), pnt.start));
+      max_dist = std::max(max_dist, calc_distance2d(getEgoPose(), pnt.start));
     }
     return max_dist;
   }();
@@ -434,7 +434,7 @@ PathWithLaneId SideShiftModule::extendBackwardLength(const PathWithLaneId & orig
   const auto & prev_reference = getPreviousModuleOutput().path;
   const size_t orig_ego_idx = findNearestIndex(original_path.points, getEgoPose().position);
   const size_t prev_ego_idx =
-    findNearestSegmentIndex(prev_reference.points, getPoint(original_path.points.at(orig_ego_idx)));
+    findNearestSegmentIndex(prev_reference.points, get_point(original_path.points.at(orig_ego_idx)));
 
   size_t clip_idx = 0;
   for (size_t i = 0; i < prev_ego_idx; ++i) {
@@ -467,7 +467,7 @@ void SideShiftModule::setDebugMarkersVisualization() const
   debug_marker_.markers.clear();
 
   const auto add = [this](const MarkerArray & added) {
-    autoware::universe_utils::appendMarkerArray(added, &debug_marker_);
+    autoware_utils::append_marker_array(added, &debug_marker_);
   };
 
   const auto add_shift_line_marker = [this, add](

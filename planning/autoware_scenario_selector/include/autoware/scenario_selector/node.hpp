@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__SCENARIO_SELECTOR__NODE_HPP_
 #define AUTOWARE__SCENARIO_SELECTOR__NODE_HPP_
 
-#include <autoware/universe_utils/ros/published_time_publisher.hpp>
+#include <autoware_utils/ros/published_time_publisher.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
@@ -37,8 +37,8 @@
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
 #include <autoware/route_handler/route_handler.hpp>
-#include <autoware/universe_utils/ros/polling_subscriber.hpp>
-#include <autoware/universe_utils/system/stop_watch.hpp>
+#include <autoware_utils/ros/polling_subscriber.hpp>
+#include <autoware_utils/system/stop_watch.hpp>
 
 #include <tf2_ros/buffer.h>
 #include <tf2_ros/transform_listener.h>
@@ -101,10 +101,10 @@ private:
     pub_processing_time_;
 
   // polling subscribers
-  universe_utils::InterProcessPollingSubscriber<
-    nav_msgs::msg::Odometry, autoware::universe_utils::polling_policy::All>::SharedPtr sub_odom_;
-  universe_utils::InterProcessPollingSubscriber<std_msgs::msg::Bool>::SharedPtr sub_parking_state_;
-  universe_utils::InterProcessPollingSubscriber<
+  autoware_utils::InterProcessPollingSubscriber<
+    nav_msgs::msg::Odometry, autoware_utils::polling_policy::All>::SharedPtr sub_odom_;
+  autoware_utils::InterProcessPollingSubscriber<std_msgs::msg::Bool>::SharedPtr sub_parking_state_;
+  autoware_utils::InterProcessPollingSubscriber<
     autoware_adapi_v1_msgs::msg::OperationModeState>::SharedPtr sub_operation_mode_state_;
 
   autoware_adapi_v1_msgs::msg::OperationModeState::ConstSharedPtr operation_mode_state_;
@@ -118,7 +118,7 @@ private:
   std::deque<geometry_msgs::msg::TwistStamped::ConstSharedPtr> twist_buffer_;
 
   std::shared_ptr<autoware::route_handler::RouteHandler> route_handler_;
-  std::unique_ptr<autoware::universe_utils::PublishedTimePublisher> published_time_publisher_;
+  std::unique_ptr<autoware_utils::PublishedTimePublisher> published_time_publisher_;
 
   // Parameters
   double update_rate_;
@@ -136,7 +136,7 @@ private:
   static constexpr double empty_parking_trajectory_timeout_s = 3.0;
 
   // processing time
-  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
+  autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
 };
 }  // namespace autoware::scenario_selector
 #endif  // AUTOWARE__SCENARIO_SELECTOR__NODE_HPP_

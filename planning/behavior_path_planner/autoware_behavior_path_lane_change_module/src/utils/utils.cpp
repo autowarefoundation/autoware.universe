@@ -22,19 +22,19 @@
 #include "autoware/behavior_path_planner_common/utils/traffic_light_utils.hpp"
 #include "autoware/behavior_path_planner_common/utils/utils.hpp"
 #include "autoware/object_recognition_utils/predicted_path_utils.hpp"
-#include "autoware/universe_utils/math/unit_conversion.hpp"
+#include "autoware_utils/math/unit_conversion.hpp"
 
 // for the geometry types
 #include <autoware/motion_utils/trajectory/path_shift.hpp>
-#include <autoware/universe_utils/geometry/boost_geometry.hpp>
+#include <autoware_utils/geometry/boost_geometry.hpp>
 // for the svg mapper
 #include <autoware/behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp>
 #include <autoware/motion_utils/trajectory/interpolation.hpp>
 #include <autoware/motion_utils/trajectory/path_with_lane_id.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
-#include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
-#include <autoware/universe_utils/geometry/geometry.hpp>
-#include <autoware/universe_utils/system/stop_watch.hpp>
+#include <autoware_utils/geometry/boost_polygon_utils.hpp>
+#include <autoware_utils/geometry/geometry.hpp>
+#include <autoware_utils/system/stop_watch.hpp>
 #include <autoware_frenet_planner/frenet_planner.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
@@ -70,9 +70,9 @@
 namespace autoware::behavior_path_planner::utils::lane_change
 {
 using autoware::route_handler::RouteHandler;
-using autoware::universe_utils::LineString2d;
-using autoware::universe_utils::Point2d;
-using autoware::universe_utils::Polygon2d;
+using autoware_utils::LineString2d;
+using autoware_utils::Point2d;
+using autoware_utils::Polygon2d;
 using autoware_internal_planning_msgs::msg::PathWithLaneId;
 using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::PredictedObjects;
@@ -436,7 +436,7 @@ bool isParkedObject(
 
   const auto & obj_pose = object.initial_pose;
   const auto & obj_shape = object.shape;
-  const auto obj_poly = autoware::universe_utils::toPolygon2d(obj_pose, obj_shape);
+  const auto obj_poly = autoware_utils::to_polygon2d(obj_pose, obj_shape);
   const auto obj_point = obj_pose.position;
 
   double max_dist_to_bound = std::numeric_limits<double>::lowest();
@@ -555,7 +555,7 @@ ExtendedPredictedObject transform(
          t += time_resolution) {
       const auto obj_pose = autoware::object_recognition_utils::calcInterpolatedPose(path, t);
       if (obj_pose) {
-        const auto obj_polygon = autoware::universe_utils::toPolygon2d(*obj_pose, object.shape);
+        const auto obj_polygon = autoware_utils::to_polygon2d(*obj_pose, object.shape);
         extended_object.predicted_paths.at(i).path.emplace_back(
           t, *obj_pose, obj_vel_norm, obj_polygon);
       }
@@ -595,7 +595,7 @@ Polygon2d get_ego_footprint(const Pose & ego_pose, const VehicleInfo & ego_info)
   const auto base_to_rear = ego_info.rear_overhang_m;
   const auto width = ego_info.vehicle_width_m;
 
-  return autoware::universe_utils::toFootprint(ego_pose, base_to_front, base_to_rear, width);
+  return autoware_utils::to_footprint(ego_pose, base_to_front, base_to_rear, width);
 }
 
 Point getEgoFrontVertex(
@@ -603,7 +603,7 @@ Point getEgoFrontVertex(
 {
   const double lon_offset = ego_info.wheel_base_m + ego_info.front_overhang_m;
   const double lat_offset = 0.5 * (left ? ego_info.vehicle_width_m : -ego_info.vehicle_width_m);
-  return autoware::universe_utils::calcOffsetPose(ego_pose, lon_offset, lat_offset, 0.0).position;
+  return autoware_utils::calc_offset_pose(ego_pose, lon_offset, lat_offset, 0.0).position;
 }
 
 bool is_within_intersection(
@@ -714,7 +714,7 @@ bool is_ahead_of_ego(
   auto ego_min_dist_to_end = std::numeric_limits<double>::max();
   for (const auto & ego_edge_point : current_footprint) {
     const auto ego_edge =
-      autoware::universe_utils::createPoint(ego_edge_point.x(), ego_edge_point.y(), 0.0);
+      autoware_utils::create_point(ego_edge_point.x(), ego_edge_point.y(), 0.0);
     const auto dist_to_end = autoware::motion_utils::calcSignedArcLength(
       path.points, ego_edge, path.points.back().point.pose.position);
     ego_min_dist_to_end = std::min(dist_to_end, ego_min_dist_to_end);
@@ -722,7 +722,7 @@ bool is_ahead_of_ego(
 
   auto current_min_dist_to_end = std::numeric_limits<double>::max();
   for (const auto & polygon_p : object.initial_polygon.outer()) {
-    const auto obj_p = autoware::universe_utils::createPoint(polygon_p.x(), polygon_p.y(), 0.0);
+    const auto obj_p = autoware_utils::create_point(polygon_p.x(), polygon_p.y(), 0.0);
     const auto dist_ego_to_obj = autoware::motion_utils::calcSignedArcLength(
       path.points, obj_p, path.points.back().point.pose.position);
     current_min_dist_to_end = std::min(dist_ego_to_obj, current_min_dist_to_end);
@@ -750,7 +750,7 @@ bool is_before_terminal(
   }
 
   for (const auto & polygon_p : object.initial_polygon.outer()) {
-    const auto obj_p = autoware::universe_utils::createPoint(polygon_p.x(), polygon_p.y(), 0.0);
+    const auto obj_p = autoware_utils::create_point(polygon_p.x(), polygon_p.y(), 0.0);
     const auto dist_obj_to_terminal =
       autoware::motion_utils::calcSignedArcLength(path.points, obj_p, terminal_position);
     current_max_dist = std::max(dist_obj_to_terminal, current_max_dist);
@@ -763,10 +763,10 @@ double calc_angle_to_lanelet_segment(const lanelet::ConstLanelets & lanelets, co
   lanelet::ConstLanelet closest_lanelet;
 
   if (!lanelet::utils::query::getClosestLanelet(lanelets, pose, &closest_lanelet)) {
-    return autoware::universe_utils::deg2rad(180);
+    return autoware_utils::deg2rad(180);
   }
   const auto closest_pose = lanelet::utils::getClosestCenterPose(closest_lanelet, pose.position);
-  return std::abs(autoware::universe_utils::calcYawDeviation(closest_pose, pose));
+  return std::abs(autoware_utils::calc_yaw_deviation(closest_pose, pose));
 }
 
 double get_distance_to_next_regulatory_element(
@@ -864,7 +864,7 @@ std::vector<LineString2d> get_line_string_paths(const ExtendedPredictedObject & 
     const auto & path = predicted_path.path;
     line_string.reserve(path.size());
     for (const auto & path_point : path) {
-      const auto point = universe_utils::fromMsg(path_point.pose.position).to_2d();
+      const auto point = autoware_utils::from_msg(path_point.pose.position).to_2d();
       line_string.push_back(point);
     }
 

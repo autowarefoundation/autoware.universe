@@ -25,7 +25,7 @@
 #include <autoware/behavior_path_planner_common/utils/path_safety_checker/safety_check.hpp>
 #include <autoware/behavior_path_planner_common/utils/path_utils.hpp>
 #include <autoware/route_handler/route_handler.hpp>
-#include <autoware/universe_utils/geometry/boost_geometry.hpp>
+#include <autoware_utils/geometry/boost_geometry.hpp>
 #include <autoware_lanelet2_extension/io/autoware_osm_parser.hpp>
 #include <autoware_lanelet2_extension/projection/mgrs_projector.hpp>
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
@@ -89,7 +89,7 @@ std::vector<std::string> g_colors = {
   "#FFFFFF", "#F5F5F5", "#FFFF00", "#9ACD32"};
 
 void plot_footprint(
-  matplotlibcpp17::axes::Axes & axes, const autoware::universe_utils::LinearRing2d & footprint,
+  matplotlibcpp17::axes::Axes & axes, const autoware_utils::LinearRing2d & footprint,
   const std::string & color)
 {
   std::vector<double> xs, ys;
@@ -116,17 +116,17 @@ void plot_lanelet_polygon(matplotlibcpp17::axes::Axes & axes, const lanelet::Bas
 
 void plot_goal_candidate(
   matplotlibcpp17::axes::Axes & axes, const GoalCandidate & goal, const size_t prio,
-  const autoware::universe_utils::LinearRing2d & local_footprint, const std::string & color)
+  const autoware_utils::LinearRing2d & local_footprint, const std::string & color)
 {
   std::vector<double> xs, ys;
   std::vector<double> yaw_cos, yaw_sin;
   const auto goal_footprint =
-    transformVector(local_footprint, autoware::universe_utils::pose2transform(goal.goal_pose));
+    transformVector(local_footprint, autoware_utils::pose2transform(goal.goal_pose));
   plot_footprint(axes, goal_footprint, color);
   xs.push_back(goal.goal_pose.position.x);
   ys.push_back(goal.goal_pose.position.y);
   axes.text(Args(xs.back(), ys.back(), std::to_string(prio)));
-  const double yaw = autoware::universe_utils::getRPY(goal.goal_pose).z;
+  const double yaw = autoware_utils::get_rpy(goal.goal_pose).z;
   yaw_cos.push_back(std::cos(yaw));
   yaw_sin.push_back(std::sin(yaw));
   axes.scatter(Args(xs, ys), Kwargs("color"_a = color));
@@ -138,7 +138,7 @@ void plot_goal_candidate(
 void plot_goal_candidates(
   matplotlibcpp17::axes::Axes & axes, const GoalCandidates & goals,
   const std::map<size_t, size_t> & goal_id2prio,
-  const autoware::universe_utils::LinearRing2d & local_footprint,
+  const autoware_utils::LinearRing2d & local_footprint,
   const std::string & color = "green")
 {
   for (const auto & goal : goals) {
@@ -158,7 +158,7 @@ void plot_path_with_lane_id(
   for (const auto & point : path.points) {
     xs.push_back(point.point.pose.position.x);
     ys.push_back(point.point.pose.position.y);
-    const double yaw = autoware::universe_utils::getRPY(point.point.pose).z;
+    const double yaw = autoware_utils::get_rpy(point.point.pose).z;
     yaw_cos.push_back(std::cos(yaw));
     yaw_sin.push_back(std::sin(yaw));
     axes.scatter(
@@ -677,7 +677,7 @@ int main(int argc, char ** argv)
       plot_path_with_lane_id(ax2, filtered_path.full_path(), color, "most prio", 2.0);
       for (const auto & path_point : filtered_path.full_path().points) {
         const auto pose_footprint = transformVector(
-          footprint, autoware::universe_utils::pose2transform(path_point.point.pose));
+          footprint, autoware_utils::pose2transform(path_point.point.pose));
         plot_footprint(ax2, pose_footprint, "blue");
       }
     } else if (i % 50 == 0) {

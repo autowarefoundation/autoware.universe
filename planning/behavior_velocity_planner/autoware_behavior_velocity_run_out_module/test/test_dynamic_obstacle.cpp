@@ -19,10 +19,10 @@
 #include "utils.hpp"
 
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
-#include <autoware/universe_utils/geometry/boost_geometry.hpp>
-#include <autoware/universe_utils/geometry/geometry.hpp>
-#include <autoware/universe_utils/geometry/pose_deviation.hpp>
-#include <autoware/universe_utils/math/normalization.hpp>
+#include <autoware_utils/geometry/boost_geometry.hpp>
+#include <autoware_utils/geometry/geometry.hpp>
+#include <autoware_utils/geometry/pose_deviation.hpp>
+#include <autoware_utils/math/normalization.hpp>
 #include <autoware_test_utils/autoware_test_utils.hpp>
 #include <rclcpp/clock.hpp>
 #include <rclcpp/duration.hpp>
@@ -46,8 +46,8 @@
 #include <string>
 #include <vector>
 
-using autoware::universe_utils::Point2d;
-using autoware::universe_utils::Polygon2d;
+using autoware_utils::Point2d;
+using autoware_utils::Polygon2d;
 using autoware_perception_msgs::msg::ObjectClassification;
 using geometry_msgs::msg::Point;
 using Polygons2d = std::vector<Polygon2d>;
@@ -160,8 +160,8 @@ TEST_F(TestDynamicObstacleMethods, testCreateQuaternionFacingToTrajectory)
     point.y = -2.0;
 
     const auto quaternion_facing_traj = createQuaternionFacingToTrajectory(path, point);
-    const auto rpy = autoware::universe_utils::getRPY(quaternion_facing_traj);
-    const auto yaw = autoware::universe_utils::normalizeRadian(rpy.z);
+    const auto rpy = autoware_utils::get_rpy(quaternion_facing_traj);
+    const auto yaw = autoware_utils::normalize_radian(rpy.z);
     EXPECT_DOUBLE_EQ(yaw, M_PI_2);
     geometry_msgs::msg::Pose geom_base_point;
     geom_base_point.position = base_point.point.pose.position;
@@ -175,8 +175,8 @@ TEST_F(TestDynamicObstacleMethods, testCreateQuaternionFacingToTrajectory)
     point.y = -0.25;
 
     const auto quaternion_facing_traj = createQuaternionFacingToTrajectory(path, point);
-    const auto rpy = autoware::universe_utils::getRPY(quaternion_facing_traj);
-    const auto yaw = autoware::universe_utils::normalizeRadian(rpy.z);
+    const auto rpy = autoware_utils::get_rpy(quaternion_facing_traj);
+    const auto yaw = autoware_utils::normalize_radian(rpy.z);
     EXPECT_DOUBLE_EQ(std::abs(yaw), M_PI_2);
     geometry_msgs::msg::Pose geom_base_point;
     geom_base_point.position = base_point.point.pose.position;
@@ -303,9 +303,9 @@ TEST_F(TestDynamicObstacleMethods, testCalculateLateralNearestPoint)
   for (size_t i = 0; i < lateral_nearest_points.size(); ++i) {
     const auto p = path.at(i);
     const auto curr_nearest_point = lateral_nearest_points.at(i);
-    auto deviation = std::abs(autoware::universe_utils::calcLateralDeviation(
+    auto deviation = std::abs(autoware_utils::calc_lateral_deviation(
       p.point.pose,
-      autoware::universe_utils::createPoint(curr_nearest_point.x, curr_nearest_point.y, 0)));
+      autoware_utils::create_point(curr_nearest_point.x, curr_nearest_point.y, 0)));
     EXPECT_DOUBLE_EQ(deviation, 0.0);
   }
 

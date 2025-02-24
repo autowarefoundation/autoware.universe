@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON_UNIVERSE__UTILS_HPP_
 #define AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON_UNIVERSE__UTILS_HPP_
 
-#include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware_utils/geometry/geometry.hpp"
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 #include "planner_data.hpp"
 
@@ -33,7 +33,7 @@
 
 namespace autoware::motion_velocity_planner::utils
 {
-using autoware::universe_utils::Polygon2d;
+using autoware_utils::Polygon2d;
 using autoware::vehicle_info_utils::VehicleInfo;
 using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::Shape;
@@ -110,7 +110,7 @@ size_t get_index_with_longitudinal_offset(
   if (longitudinal_offset > 0) {
     for (size_t i = *start_idx; i < points.size() - 1; ++i) {
       const double segment_length =
-        autoware::universe_utils::calcDistance2d(points.at(i), points.at(i + 1));
+        autoware_utils::calc_distance2d(points.at(i), points.at(i + 1));
       sum_length += segment_length;
       if (sum_length >= longitudinal_offset) {
         const double back_length = sum_length - longitudinal_offset;
@@ -127,7 +127,7 @@ size_t get_index_with_longitudinal_offset(
 
   for (size_t i = *start_idx; 0 < i; --i) {
     const double segment_length =
-      autoware::universe_utils::calcDistance2d(points.at(i - 1), points.at(i));
+      autoware_utils::calc_distance2d(points.at(i - 1), points.at(i));
     sum_length += segment_length;
     if (sum_length >= -longitudinal_offset) {
       const double back_length = sum_length + longitudinal_offset;
