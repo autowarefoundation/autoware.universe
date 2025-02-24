@@ -39,17 +39,18 @@ class IntersectionModuleManager : public SceneModuleManagerInterfaceWithRTC
 public:
   explicit IntersectionModuleManager(rclcpp::Node & node);
 
-  const char * getModuleName() override { return "intersection"; }
+  const char * get_module_name() override { return "intersection"; }
 
 private:
   IntersectionModule::PlannerParam intersection_param_;
   // additional for INTERSECTION_OCCLUSION
   RTCInterface occlusion_rtc_interface_;
 
-  void launchNewModules(const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
+  void launch_new_modules(
+    const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterfaceWithRTC> &)>
-  getModuleExpiredFunction(
+  get_module_expired_function(
     const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
 
   bool hasSameParentLaneletAndTurnDirectionWithRegistered(const lanelet::ConstLanelet & lane) const;
@@ -57,8 +58,8 @@ private:
   /* called from SceneModuleInterfaceWithRTC::plan */
   void sendRTC(const Time & stamp) override;
   void setActivation() override;
-  /* called from SceneModuleInterface::updateSceneModuleInstances */
-  void deleteExpiredModules(
+  /* called from SceneModuleInterface::update_scene_module_instances */
+  void delete_expired_modules(
     const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
 
   rclcpp::Publisher<std_msgs::msg::String>::SharedPtr decision_state_pub_;
@@ -71,14 +72,15 @@ class MergeFromPrivateModuleManager : public SceneModuleManagerInterface<>
 public:
   explicit MergeFromPrivateModuleManager(rclcpp::Node & node);
 
-  const char * getModuleName() override { return "merge_from_private"; }
+  const char * get_module_name() override { return "merge_from_private"; }
 
 private:
   MergeFromPrivateRoadModule::PlannerParam merge_from_private_area_param_;
 
-  void launchNewModules(const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
+  void launch_new_modules(
+    const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
 
-  std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
+  std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> get_module_expired_function(
     const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
 
   bool hasSameParentLaneletAndTurnDirectionWithRegistered(const lanelet::ConstLanelet & lane) const;

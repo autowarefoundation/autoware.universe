@@ -19,7 +19,7 @@
 namespace autoware::behavior_velocity_planner
 {
 
-autoware::motion_utils::VirtualWalls StopLineModule::createVirtualWalls()
+autoware::motion_utils::VirtualWalls StopLineModule::create_virtual_walls()
 {
   autoware::motion_utils::VirtualWalls virtual_walls;
 

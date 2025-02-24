@@ -74,7 +74,7 @@ visualization_msgs::msg::MarkerArray createLaneletPolygonsMarkerArray(
 
 }  // namespace
 
-autoware::motion_utils::VirtualWalls BlindSpotModule::createVirtualWalls()
+autoware::motion_utils::VirtualWalls BlindSpotModule::create_virtual_walls()
 {
   autoware::motion_utils::VirtualWalls virtual_walls;
 
@@ -88,7 +88,7 @@ autoware::motion_utils::VirtualWalls BlindSpotModule::createVirtualWalls()
   return virtual_walls;
 }
 
-visualization_msgs::msg::MarkerArray BlindSpotModule::createDebugMarkerArray()
+visualization_msgs::msg::MarkerArray BlindSpotModule::create_debug_marker_array()
 {
   visualization_msgs::msg::MarkerArray debug_marker_array;
 
@@ -102,7 +102,7 @@ visualization_msgs::msg::MarkerArray BlindSpotModule::createDebugMarkerArray()
   }
 
   appendMarkerArray(
-    debug::createObjectsMarkerArray(
+    debug::create_objects_marker_array(
       debug_data_.conflicting_targets, "conflicting_targets", module_id_, now, 0.99, 0.4, 0.0),
     &debug_marker_array, now);
 

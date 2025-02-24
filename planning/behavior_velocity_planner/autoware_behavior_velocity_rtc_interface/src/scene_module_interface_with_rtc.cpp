@@ -50,7 +50,7 @@ void SceneModuleManagerInterfaceWithRTC::plan(
   autoware_internal_planning_msgs::msg::PathWithLaneId * path)
 {
   setActivation();
-  modifyPathVelocity(path);
+  modify_path_velocity(path);
   sendRTC(path->header.stamp);
   publishObjectsOfInterestMarker();
 }
@@ -58,7 +58,7 @@ void SceneModuleManagerInterfaceWithRTC::plan(
 void SceneModuleManagerInterfaceWithRTC::sendRTC(const Time & stamp)
 {
   for (const auto & scene_module : scene_modules_) {
-    const UUID uuid = getUUID(scene_module->getModuleId());
+    const UUID uuid = getUUID(scene_module->get_module_id());
     const auto state = !scene_module->isActivated() && scene_module->isSafe()
                          ? State::WAITING_FOR_EXECUTION
                          : State::RUNNING;
@@ -70,7 +70,7 @@ void SceneModuleManagerInterfaceWithRTC::sendRTC(const Time & stamp)
 void SceneModuleManagerInterfaceWithRTC::setActivation()
 {
   for (const auto & scene_module : scene_modules_) {
-    const UUID uuid = getUUID(scene_module->getModuleId());
+    const UUID uuid = getUUID(scene_module->get_module_id());
     scene_module->setActivation(rtc_interface_.isActivated(uuid));
     scene_module->setRTCEnabled(rtc_interface_.isRTCEnabled(uuid));
   }
@@ -101,30 +101,30 @@ void SceneModuleManagerInterfaceWithRTC::removeUUID(const int64_t & module_id)
 void SceneModuleManagerInterfaceWithRTC::publishObjectsOfInterestMarker()
 {
   for (const auto & scene_module : scene_modules_) {
-    const auto objects = scene_module->getObjectsOfInterestData();
+    const auto objects = scene_module->get_objects_of_interest_data();
     for (const auto & obj : objects) {
       objects_of_interest_marker_interface_.insertObjectData(obj.pose, obj.shape, obj.color);
     }
-    scene_module->clearObjectsOfInterestData();
+    scene_module->clear_objects_of_interest_data();
   }
 
   objects_of_interest_marker_interface_.publishMarkerArray();
 }
 
-void SceneModuleManagerInterfaceWithRTC::deleteExpiredModules(
+void SceneModuleManagerInterfaceWithRTC::delete_expired_modules(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
-  const auto isModuleExpired = getModuleExpiredFunction(path);
+  const auto isModuleExpired = get_module_expired_function(path);
 
   auto itr = scene_modules_.begin();
   while (itr != scene_modules_.end()) {
     if (isModuleExpired(*itr)) {
-      const UUID uuid = getUUID((*itr)->getModuleId());
+      const UUID uuid = getUUID((*itr)->get_module_id());
       updateRTCStatus(
         uuid, (*itr)->isSafe(), State::SUCCEEDED, std::numeric_limits<double>::lowest(),
         clock_->now());
-      removeUUID((*itr)->getModuleId());
-      registered_module_id_set_.erase((*itr)->getModuleId());
+      removeUUID((*itr)->get_module_id());
+      registered_module_id_set_.erase((*itr)->get_module_id());
       itr = scene_modules_.erase(itr);
     } else {
       itr++;
@@ -132,13 +132,14 @@ void SceneModuleManagerInterfaceWithRTC::deleteExpiredModules(
   }
 }
 
-template size_t SceneModuleManagerInterface<SceneModuleInterfaceWithRTC>::findEgoSegmentIndex(
+template size_t SceneModuleManagerInterface<SceneModuleInterfaceWithRTC>::find_ego_segment_index(
   const std::vector<autoware_internal_planning_msgs::msg::PathPointWithLaneId> & points) const;
-template void SceneModuleManagerInterface<SceneModuleInterfaceWithRTC>::updateSceneModuleInstances(
+template void
+SceneModuleManagerInterface<SceneModuleInterfaceWithRTC>::update_scene_module_instances(
   const std::shared_ptr<const PlannerData> & planner_data,
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path);
-template void SceneModuleManagerInterface<SceneModuleInterfaceWithRTC>::modifyPathVelocity(
+template void SceneModuleManagerInterface<SceneModuleInterfaceWithRTC>::modify_path_velocity(
   autoware_internal_planning_msgs::msg::PathWithLaneId * path);
-template void SceneModuleManagerInterface<SceneModuleInterfaceWithRTC>::registerModule(
+template void SceneModuleManagerInterface<SceneModuleInterfaceWithRTC>::register_module(
   const std::shared_ptr<SceneModuleInterfaceWithRTC> & scene_module);
 }  // namespace autoware::behavior_velocity_planner

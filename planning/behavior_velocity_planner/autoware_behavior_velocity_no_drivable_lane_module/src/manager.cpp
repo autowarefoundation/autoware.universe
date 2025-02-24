@@ -25,23 +25,23 @@ namespace autoware::behavior_velocity_planner
 using autoware::universe_utils::getOrDeclareParameter;
 
 NoDrivableLaneModuleManager::NoDrivableLaneModuleManager(rclcpp::Node & node)
-: SceneModuleManagerInterface(node, getModuleName())
+: SceneModuleManagerInterface(node, get_module_name())
 {
-  const std::string ns(NoDrivableLaneModuleManager::getModuleName());
+  const std::string ns(NoDrivableLaneModuleManager::get_module_name());
   planner_param_.stop_margin = getOrDeclareParameter<double>(node, ns + ".stop_margin");
   planner_param_.print_debug_info = getOrDeclareParameter<bool>(node, ns + ".print_debug_info");
 }
 
-void NoDrivableLaneModuleManager::launchNewModules(
+void NoDrivableLaneModuleManager::launch_new_modules(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
-  for (const auto & ll : planning_utils::getLaneletsOnPath(
+  for (const auto & ll : planning_utils::get_lanelets_on_path(
          path, planner_data_->route_handler_->getLaneletMapPtr(),
          planner_data_->current_odometry->pose)) {
     const auto lane_id = ll.id();
     const auto module_id = lane_id;
 
-    if (isModuleRegistered(module_id)) {
+    if (is_module_registered(module_id)) {
       continue;
     }
 
@@ -50,21 +50,21 @@ void NoDrivableLaneModuleManager::launchNewModules(
       continue;
     }
 
-    registerModule(std::make_shared<NoDrivableLaneModule>(
+    register_module(std::make_shared<NoDrivableLaneModule>(
       module_id, lane_id, planner_param_, logger_.get_child("no_drivable_lane_module"), clock_,
       time_keeper_, planning_factor_interface_));
   }
 }
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
-NoDrivableLaneModuleManager::getModuleExpiredFunction(
+NoDrivableLaneModuleManager::get_module_expired_function(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
-  const auto lane_id_set = planning_utils::getLaneIdSetOnPath(
+  const auto lane_id_set = planning_utils::get_lane_id_set_on_path(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
   return [lane_id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
-    return lane_id_set.count(scene_module->getModuleId()) == 0;
+    return lane_id_set.count(scene_module->get_module_id()) == 0;
   };
 }
 

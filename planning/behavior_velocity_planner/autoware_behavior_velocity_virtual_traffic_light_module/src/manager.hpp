@@ -38,16 +38,18 @@ class VirtualTrafficLightModuleManager
 public:
   explicit VirtualTrafficLightModuleManager(rclcpp::Node & node);
 
-  const char * getModuleName() override { return "virtual_traffic_light"; }
+  const char * get_module_name() override { return "virtual_traffic_light"; }
 
 private:
   VirtualTrafficLightModule::PlannerParam planner_param_;
 
-  void modifyPathVelocity(autoware_internal_planning_msgs::msg::PathWithLaneId * path) override;
+  void modify_path_velocity(autoware_internal_planning_msgs::msg::PathWithLaneId * path) override;
 
-  void launchNewModules(const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
+  void launch_new_modules(
+    const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
 
-  std::function<bool(const std::shared_ptr<VirtualTrafficLightModule> &)> getModuleExpiredFunction(
+  std::function<bool(const std::shared_ptr<VirtualTrafficLightModule> &)>
+  get_module_expired_function(
     const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
 
   autoware::universe_utils::InterProcessPollingSubscriber<

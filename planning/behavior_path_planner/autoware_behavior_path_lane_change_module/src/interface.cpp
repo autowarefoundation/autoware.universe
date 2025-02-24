@@ -113,7 +113,7 @@ BehaviorModuleOutput LaneChangeInterface::plan()
   const auto & lane_change_debug = module_type_->getDebugData();
   for (const auto & [uuid, data] : lane_change_debug.collision_check_objects_after_approval) {
     const auto color = data.is_safe ? ColorName::GREEN : ColorName::RED;
-    setObjectsOfInterestData(data.current_obj_pose, data.obj_shape, color);
+    set_objects_of_interest_data(data.current_obj_pose, data.obj_shape, color);
   }
 
   updateSteeringFactorPtr(output);
@@ -159,7 +159,7 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
   const auto & lane_change_debug = module_type_->getDebugData();
   for (const auto & [uuid, data] : lane_change_debug.collision_check_objects) {
     const auto color = data.is_safe ? ColorName::GREEN : ColorName::RED;
-    setObjectsOfInterestData(data.current_obj_pose, data.obj_shape, color);
+    set_objects_of_interest_data(data.current_obj_pose, data.obj_shape, color);
   }
 
   path_reference_ = std::make_shared<PathWithLaneId>(out.reference_path);
@@ -350,8 +350,8 @@ void LaneChangeInterface::updateDebugMarker() const
   if (!parameters_->publish_debug_marker) {
     return;
   }
-  using marker_utils::lane_change_markers::createDebugMarkerArray;
-  debug_marker_ = createDebugMarkerArray(
+  using marker_utils::lane_change_markers::create_debug_marker_array;
+  debug_marker_ = create_debug_marker_array(
     interface_debug_, module_type_->getDebugData(), module_type_->getEgoPose());
 }
 

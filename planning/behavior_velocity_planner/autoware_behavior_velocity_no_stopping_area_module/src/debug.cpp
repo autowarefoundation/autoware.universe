@@ -128,7 +128,7 @@ visualization_msgs::msg::MarkerArray create_lanelet_info_marker_array(
 }
 }  // namespace
 
-visualization_msgs::msg::MarkerArray NoStoppingAreaModule::createDebugMarkerArray()
+visualization_msgs::msg::MarkerArray NoStoppingAreaModule::create_debug_marker_array()
 {
   visualization_msgs::msg::MarkerArray debug_marker_array;
   const rclcpp::Time now = clock_->now();
@@ -138,20 +138,20 @@ visualization_msgs::msg::MarkerArray NoStoppingAreaModule::createDebugMarkerArra
 
   if (!debug_data_.stuck_points.empty()) {
     appendMarkerArray(
-      debug::createPointsMarkerArray(
+      debug::create_points_marker_array(
         debug_data_.stuck_points, "stuck_points", module_id_, now, 0.3, 0.3, 0.3, 1.0, 1.0, 0.0),
       &debug_marker_array, now);
   }
   if (!debug_data_.stuck_vehicle_detect_area.points.empty()) {
     appendMarkerArray(
-      debug::createPolygonMarkerArray(
+      debug::create_polygon_marker_array(
         debug_data_.stuck_vehicle_detect_area, "stuck_vehicle_detect_area", module_id_, now, 0.1,
         0.1, 0.1, 1.0, 1.0, 0.0),
       &debug_marker_array, now);
   }
   if (!debug_data_.stop_line_detect_area.points.empty()) {
     appendMarkerArray(
-      debug::createPolygonMarkerArray(
+      debug::create_polygon_marker_array(
         debug_data_.stop_line_detect_area, "stop_line_detect_area", module_id_, now, 0.1, 0.1, 0.1,
         1.0, 1.0, 0.0),
       &debug_marker_array, now);
@@ -159,7 +159,7 @@ visualization_msgs::msg::MarkerArray NoStoppingAreaModule::createDebugMarkerArra
   return debug_marker_array;
 }
 
-autoware::motion_utils::VirtualWalls NoStoppingAreaModule::createVirtualWalls()
+autoware::motion_utils::VirtualWalls NoStoppingAreaModule::create_virtual_walls()
 {
   autoware::motion_utils::VirtualWalls virtual_walls;
   autoware::motion_utils::VirtualWall wall;

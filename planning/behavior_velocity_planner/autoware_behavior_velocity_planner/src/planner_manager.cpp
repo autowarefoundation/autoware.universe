@@ -40,7 +40,7 @@ void BehaviorVelocityPlannerManager::launchScenePlugin(
 
     // Check if the plugin is already registered.
     for (const auto & running_plugin : scene_manager_plugins_) {
-      if (plugin->getModuleName() == running_plugin->getModuleName()) {
+      if (plugin->get_module_name() == running_plugin->get_module_name()) {
         RCLCPP_WARN_STREAM(node.get_logger(), "The plugin '" << name << "' is already loaded.");
         return;
       }
@@ -60,7 +60,7 @@ void BehaviorVelocityPlannerManager::removeScenePlugin(
   auto it = std::remove_if(
     scene_manager_plugins_.begin(), scene_manager_plugins_.end(),
     [&](const std::shared_ptr<behavior_velocity_planner::PluginInterface> plugin) {
-      return plugin->getModuleName() == name;
+      return plugin->get_module_name() == name;
     });
 
   if (it == scene_manager_plugins_.end()) {
@@ -81,7 +81,7 @@ BehaviorVelocityPlannerManager::planPathVelocity(
   autoware_internal_planning_msgs::msg::PathWithLaneId output_path_msg = input_path_msg;
 
   for (const auto & plugin : scene_manager_plugins_) {
-    plugin->updateSceneModuleInstances(planner_data, input_path_msg);
+    plugin->update_scene_module_instances(planner_data, input_path_msg);
     plugin->plan(&output_path_msg);
   }
 

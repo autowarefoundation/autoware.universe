@@ -40,14 +40,14 @@ class WalkwayModuleManager : public SceneModuleManagerInterface<>
 public:
   explicit WalkwayModuleManager(rclcpp::Node & node);
 
-  const char * getModuleName() override { return "walkway"; }
+  const char * get_module_name() override { return "walkway"; }
 
 private:
   WalkwayModule::PlannerParam walkway_planner_param_{};
 
-  void launchNewModules(const PathWithLaneId & path) override;
+  void launch_new_modules(const PathWithLaneId & path) override;
 
-  std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
+  std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> get_module_expired_function(
     const PathWithLaneId & path) override;
 };
 

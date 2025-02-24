@@ -658,7 +658,7 @@ std::vector<TrajectoryPoint> PathSampler::extendTrajectory(
 
   // prepend the generated trajectory: join it at the start with the reference path
   const size_t start_traj_seg_idx =
-    trajectory_utils::findEgoSegmentIndex(traj_points, start_pose, ego_nearest_param_);
+    trajectory_utils::find_ego_segment_index(traj_points, start_pose, ego_nearest_param_);
   const auto prepended_traj_points = [&]() {
     if (start_traj_seg_idx == 0UL) return traj_points;
     const auto pre_traj =
@@ -670,7 +670,7 @@ std::vector<TrajectoryPoint> PathSampler::extendTrajectory(
   constexpr double joint_traj_length_for_smoothing = 5.0;
   const auto & end_pose = prepended_traj_points.back().pose;
   const size_t end_traj_seg_idx =
-    trajectory_utils::findEgoSegmentIndex(traj_points, end_pose, ego_nearest_param_);
+    trajectory_utils::find_ego_segment_index(traj_points, end_pose, ego_nearest_param_);
   const auto end_upto_traj_point_idx = trajectory_utils::getPointIndexAfter(
     traj_points, end_pose.position, end_traj_seg_idx, joint_traj_length_for_smoothing);
 
@@ -694,11 +694,11 @@ std::vector<TrajectoryPoint> PathSampler::extendTrajectory(
       if (i != 0 && !hasZeroVelocity(traj_points.at(i - 1))) {
         // Here is when current point is 0 velocity, but previous point is not 0 velocity.
         const auto & input_stop_pose = traj_points.at(i).pose;
-        const size_t stop_seg_idx = trajectory_utils::findEgoSegmentIndex(
+        const size_t stop_seg_idx = trajectory_utils::find_ego_segment_index(
           resampled_traj_points, input_stop_pose, ego_nearest_param_);
 
         // calculate and insert stop pose on output trajectory
-        trajectory_utils::insertStopPoint(resampled_traj_points, input_stop_pose, stop_seg_idx);
+        trajectory_utils::insert_stop_point(resampled_traj_points, input_stop_pose, stop_seg_idx);
       }
     }
   }

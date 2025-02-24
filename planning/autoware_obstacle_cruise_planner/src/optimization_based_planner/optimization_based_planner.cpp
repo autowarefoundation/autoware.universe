@@ -120,7 +120,7 @@ std::vector<TrajectoryPoint> OptimizationBasedPlanner::generateCruiseTrajectory(
   }
 
   // Get the nearest point on the trajectory
-  const size_t closest_idx = findEgoSegmentIndex(stop_traj_points, planner_data.ego_pose);
+  const size_t closest_idx = find_ego_segment_index(stop_traj_points, planner_data.ego_pose);
 
   // Compute maximum velocity
   double v_max = 0.0;
@@ -261,7 +261,7 @@ std::vector<TrajectoryPoint> OptimizationBasedPlanner::generateCruiseTrajectory(
   output.back().longitudinal_velocity_mps = 0.0;  // terminal velocity is zero
 
   // Insert Closest Stop Point
-  autoware::motion_utils::insertStopPoint(0, closest_stop_dist, output);
+  autoware::motion_utils::insert_stop_point(0, closest_stop_dist, output);
 
   debug_data_ptr_->cruise_metrics = makeMetrics("OptimizationBasedPlanner", "cruise", planner_data);
   prev_output_ = output;

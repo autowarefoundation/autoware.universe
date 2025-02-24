@@ -102,7 +102,7 @@ universe_utils::LineString2d get_stop_line_geometry2d(
   const lanelet::autoware::DetectionArea & detection_area, const double extend_length)
 {
   const auto stop_line = detection_area.stopLine();
-  return planning_utils::extendLine(stop_line[0], stop_line[1], extend_length);
+  return planning_utils::extend_line(stop_line[0], stop_line[1], extend_length);
 }
 
 std::vector<geometry_msgs::msg::Point> get_obstacle_points(
@@ -160,7 +160,7 @@ bool has_enough_braking_distance(
     return true;
   }
 
-  return arc_lane_utils::calcSignedDistance(self_pose, line_pose.position) >
+  return arc_lane_utils::calc_signed_distance(self_pose, line_pose.position) >
          pass_judge_line_distance;
 }
 

@@ -472,7 +472,7 @@ BehaviorModuleOutput NormalLaneChange::generateOutput()
 
   const auto turn_signal_info =
     get_turn_signal(getEgoPose(), status_.lane_change_path.info.lane_changing_end);
-  const auto current_seg_idx = planner_data_->findEgoSegmentIndex(output.path.points);
+  const auto current_seg_idx = planner_data_->find_ego_segment_index(output.path.points);
   output.turn_signal_info = planner_data_->turn_signal_decider.overwrite_turn_signal(
     output.path, getEgoPose(), current_seg_idx, prev_module_output_.turn_signal_info,
     turn_signal_info, planner_data_->parameters.ego_nearest_dist_threshold,
@@ -1906,7 +1906,7 @@ bool NormalLaneChange::is_ego_stuck() const
 void NormalLaneChange::set_stop_pose(
   const double arc_length_to_stop_pose, PathWithLaneId & path, const std::string & reason)
 {
-  const auto stop_point = utils::insertStopPoint(arc_length_to_stop_pose, path);
+  const auto stop_point = utils::insert_stop_point(arc_length_to_stop_pose, path);
   lane_change_stop_pose_ = PoseWithDetailOpt(PoseWithDetail(stop_point.point.pose, reason));
 }
 

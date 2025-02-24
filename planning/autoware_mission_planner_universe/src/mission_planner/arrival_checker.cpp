@@ -69,7 +69,7 @@ bool ArrivalChecker::is_arrived(const PoseStamped & pose) const
   }
 
   // Check vehicle stopped.
-  return vehicle_stop_checker_.isVehicleStopped(duration_);
+  return vehicle_stop_checker_.is_vehicle_stopped(duration_);
 }
 
 }  // namespace autoware::mission_planner_universe

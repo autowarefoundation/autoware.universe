@@ -32,9 +32,9 @@ using lanelet::TrafficLight;
 
 TrafficLightModuleManager::TrafficLightModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterfaceWithRTC(
-    node, getModuleName(), getEnableRTC(node, std::string(getModuleName()) + ".enable_rtc"))
+    node, get_module_name(), getEnableRTC(node, std::string(get_module_name()) + ".enable_rtc"))
 {
-  const std::string ns(TrafficLightModuleManager::getModuleName());
+  const std::string ns(TrafficLightModuleManager::get_module_name());
   planner_param_.stop_margin = getOrDeclareParameter<double>(node, ns + ".stop_margin");
   planner_param_.tl_state_timeout = getOrDeclareParameter<double>(node, ns + ".tl_state_timeout");
   planner_param_.stop_time_hysteresis =
@@ -48,7 +48,7 @@ TrafficLightModuleManager::TrafficLightModuleManager(rclcpp::Node & node)
     "~/output/traffic_signal", 1);
 }
 
-void TrafficLightModuleManager::modifyPathVelocity(
+void TrafficLightModuleManager::modify_path_velocity(
   autoware_internal_planning_msgs::msg::PathWithLaneId * path)
 {
   visualization_msgs::msg::MarkerArray debug_marker_array;
@@ -60,8 +60,8 @@ void TrafficLightModuleManager::modifyPathVelocity(
   for (const auto & scene_module : scene_modules_) {
     std::shared_ptr<TrafficLightModule> traffic_light_scene_module(
       std::dynamic_pointer_cast<TrafficLightModule>(scene_module));
-    traffic_light_scene_module->setPlannerData(planner_data_);
-    traffic_light_scene_module->modifyPathVelocity(path);
+    traffic_light_scene_module->set_planner_data(planner_data_);
+    traffic_light_scene_module->modify_path_velocity(path);
 
     if (
       traffic_light_scene_module->getFirstRefStopPathPointIndex() <
@@ -71,24 +71,24 @@ void TrafficLightModuleManager::modifyPathVelocity(
       if (
         traffic_light_scene_module->getTrafficLightModuleState() !=
         TrafficLightModule::State::GO_OUT) {
-        tl_state = traffic_light_scene_module->getTrafficSignal();
+        tl_state = traffic_light_scene_module->get_traffic_signal();
       }
     }
-    for (const auto & marker : traffic_light_scene_module->createDebugMarkerArray().markers) {
+    for (const auto & marker : traffic_light_scene_module->create_debug_marker_array().markers) {
       debug_marker_array.markers.push_back(marker);
     }
     virtual_wall_marker_creator_.add_virtual_walls(
-      traffic_light_scene_module->createVirtualWalls());
+      traffic_light_scene_module->create_virtual_walls());
   }
   pub_debug_->publish(debug_marker_array);
   pub_virtual_wall_->publish(virtual_wall_marker_creator_.create_markers(clock_->now()));
   pub_tl_state_->publish(tl_state);
 }
 
-void TrafficLightModuleManager::launchNewModules(
+void TrafficLightModuleManager::launch_new_modules(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
-  for (const auto & traffic_light_reg_elem : planning_utils::getRegElemMapOnPath<TrafficLight>(
+  for (const auto & traffic_light_reg_elem : planning_utils::get_reg_elem_map_on_path<TrafficLight>(
          path, planner_data_->route_handler_->getLaneletMapPtr(),
          planner_data_->current_odometry->pose)) {
     const auto stop_line = traffic_light_reg_elem.first->stopLine();
@@ -103,7 +103,7 @@ void TrafficLightModuleManager::launchNewModules(
     // Use lanelet_id to unregister module when the route is changed
     const auto lane_id = traffic_light_reg_elem.second.id();
     if (!isModuleRegisteredFromExistingAssociatedModule(lane_id)) {
-      registerModule(std::make_shared<TrafficLightModule>(
+      register_module(std::make_shared<TrafficLightModule>(
         lane_id, *(traffic_light_reg_elem.first), traffic_light_reg_elem.second, planner_param_,
         logger_.get_child("traffic_light_module"), clock_, time_keeper_,
         planning_factor_interface_));
@@ -116,10 +116,10 @@ void TrafficLightModuleManager::launchNewModules(
 }
 
 std::function<bool(const std::shared_ptr<SceneModuleInterfaceWithRTC> &)>
-TrafficLightModuleManager::getModuleExpiredFunction(
+TrafficLightModuleManager::get_module_expired_function(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
-  const auto lanelet_id_set = planning_utils::getLaneletIdSetOnPath<TrafficLight>(
+  const auto lanelet_id_set = planning_utils::get_lanelet_id_set_on_path<TrafficLight>(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
   return [this, lanelet_id_set](

@@ -80,7 +80,7 @@ std::optional<size_t> insertPointIndex(
   int insert_idx = closest_idx;
   autoware_internal_planning_msgs::msg::PathPointWithLaneId inserted_point =
     inout_path->points.at(closest_idx);
-  if (planning_utils::isAheadOf(in_pose, inout_path->points.at(closest_idx).point.pose)) {
+  if (planning_utils::is_ahead_of(in_pose, inout_path->points.at(closest_idx).point.pose)) {
     ++insert_idx;
   } else {
     // copy with velocity from prior point
@@ -338,7 +338,7 @@ bool isOverTargetIndex(
 {
   if (closest_idx == target_idx) {
     const geometry_msgs::msg::Pose target_pose = path.points.at(target_idx).point.pose;
-    return planning_utils::isAheadOf(current_pose, target_pose);
+    return planning_utils::is_ahead_of(current_pose, target_pose);
   }
   return static_cast<bool>(closest_idx > target_idx);
 }
@@ -366,7 +366,7 @@ std::optional<InterpolatedPathInfo> generateInterpolatedPath(
   const rclcpp::Logger logger)
 {
   InterpolatedPathInfo interpolated_path_info;
-  if (!splineInterpolate(input_path, ds, interpolated_path_info.path, logger)) {
+  if (!spline_interpolate(input_path, ds, interpolated_path_info.path, logger)) {
     return std::nullopt;
   }
   interpolated_path_info.ds = ds;

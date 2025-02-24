@@ -168,7 +168,7 @@ double getArcLengthToTargetLanelet(
  * objects.
  * @return Has collision or not
  */
-bool checkCollisionWithExtraStoppingMargin(
+bool check_collisionWithExtraStoppingMargin(
   const PathWithLaneId & ego_path, const PredictedObjects & dynamic_objects,
   const double base_to_front, const double base_to_rear, const double width,
   const double maximum_deceleration, const double margin, const double max_stopping_margin);
@@ -177,7 +177,7 @@ bool checkCollisionWithExtraStoppingMargin(
  * @brief Check collision between ego path footprints and objects.
  * @return Has collision or not
  */
-bool checkCollisionBetweenPathFootprintsAndObjects(
+bool check_collisionBetweenPathFootprintsAndObjects(
   const autoware::universe_utils::LinearRing2d & vehicle_footprint, const PathWithLaneId & ego_path,
   const PredictedObjects & dynamic_objects, const double margin);
 
@@ -185,7 +185,7 @@ bool checkCollisionBetweenPathFootprintsAndObjects(
  * @brief Check collision between ego footprints and objects.
  * @return Has collision or not
  */
-bool checkCollisionBetweenFootprintAndObjects(
+bool check_collisionBetweenFootprintAndObjects(
   const autoware::universe_utils::LinearRing2d & vehicle_footprint, const Pose & ego_pose,
   const PredictedObjects & dynamic_objects, const double margin);
 
@@ -317,7 +317,7 @@ std::shared_ptr<PathWithLaneId> generateCenterLinePath(
  * @param path Original path.
  * @return Inserted stop point.
  */
-PathPointWithLaneId insertStopPoint(const double length, PathWithLaneId & path);
+PathPointWithLaneId insert_stop_point(const double length, PathWithLaneId & path);
 
 /**
  * @brief Calculates distance to lane boundary.

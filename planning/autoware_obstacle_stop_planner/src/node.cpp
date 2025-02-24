@@ -370,7 +370,7 @@ void ObstacleStopPlannerNode::onTrigger(const Trajectory::ConstSharedPtr input_m
   }
 
   // insert slow-down-section/stop-point
-  insertVelocity(
+  insert_velocity(
     output_trajectory_points, planner_data, input_msg->header, vehicle_info, current_acc,
     current_vel, stop_param);
 
@@ -987,7 +987,7 @@ void ObstacleStopPlannerNode::searchPredictedObject(
   }
 }
 
-void ObstacleStopPlannerNode::insertVelocity(
+void ObstacleStopPlannerNode::insert_velocity(
   TrajectoryPoints & output, PlannerData & planner_data,
   [[maybe_unused]] const Header & trajectory_header, const VehicleInfo & vehicle_info,
   const double current_acc, const double current_vel, const StopParam & stop_param)
@@ -1063,14 +1063,14 @@ void ObstacleStopPlannerNode::insertVelocity(
             node_param_.ego_nearest_yaw_threshold);
           current_stop_pos.point.pose = ego_pos_on_path.value();
 
-          insertStopPoint(current_stop_pos, output, planner_data.stop_reason_diag);
+          insert_stop_point(current_stop_pos, output, planner_data.stop_reason_diag);
 
           debug_ptr_->pushPose(getPose(stop_point.point), PoseType::TargetStop);
           debug_ptr_->pushPose(getPose(current_stop_pos.point), PoseType::Stop);
         }
 
       } else {
-        insertStopPoint(stop_point, output, planner_data.stop_reason_diag);
+        insert_stop_point(stop_point, output, planner_data.stop_reason_diag);
 
         debug_ptr_->pushPose(getPose(stop_point.point), PoseType::TargetStop);
         debug_ptr_->pushPose(getPose(stop_point.point), PoseType::Stop);
@@ -1219,9 +1219,9 @@ StopPoint ObstacleStopPlannerNode::searchInsertPoint(
                                            : stop_param.max_longitudinal_margin;
 
   const auto max_dist_stop_point =
-    createTargetPoint(idx, max_longitudinal_margin, base_trajectory, dist_remain);
+    create_target_point(idx, max_longitudinal_margin, base_trajectory, dist_remain);
   const auto min_dist_stop_point =
-    createTargetPoint(idx, stop_param.min_longitudinal_margin, base_trajectory, dist_remain);
+    create_target_point(idx, stop_param.min_longitudinal_margin, base_trajectory, dist_remain);
 
   // check if stop point is already inserted by behavior planner
   bool is_inserted_already_stop_point = false;
@@ -1241,7 +1241,7 @@ StopPoint ObstacleStopPlannerNode::searchInsertPoint(
   return stop_point;
 }
 
-StopPoint ObstacleStopPlannerNode::createTargetPoint(
+StopPoint ObstacleStopPlannerNode::create_target_point(
   const int idx, const double margin, const TrajectoryPoints & base_trajectory,
   const double dist_remain)
 {

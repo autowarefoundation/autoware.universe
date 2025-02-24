@@ -13,7 +13,7 @@ This module judges whether the ego should stop in front of the crosswalk in orde
 ```plantuml
 @startuml
 
-title modifyPathVelocity
+title modify_path_velocity
 start
 :getPathEndPointsOnCrosswalk;
 group apply slow down

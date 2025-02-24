@@ -41,7 +41,7 @@ NoDrivableLaneModule::NoDrivableLaneModule(
 {
 }
 
-bool NoDrivableLaneModule::modifyPathVelocity(PathWithLaneId * path)
+bool NoDrivableLaneModule::modify_path_velocity(PathWithLaneId * path)
 {
   if (path->points.empty()) {
     return false;
@@ -161,7 +161,7 @@ void NoDrivableLaneModule::handle_approaching_state(PathWithLaneId * path)
     autoware::universe_utils::getPoint(path->points.at(target_point_idx).point);
 
   const auto & op_stop_pose =
-    planning_utils::insertStopPoint(stop_point, target_segment_idx, *path);
+    planning_utils::insert_stop_point(stop_point, target_segment_idx, *path);
 
   // Get stop point and stop factor
   {
@@ -177,7 +177,7 @@ void NoDrivableLaneModule::handle_approaching_state(PathWithLaneId * path)
     debug_data_.stop_pose = virtual_wall_pose.value();
   }
 
-  const size_t current_seg_idx = findEgoSegmentIndex(path->points);
+  const size_t current_seg_idx = find_ego_segment_index(path->points);
   const auto intersection_segment_idx =
     autoware::motion_utils::findNearestSegmentIndex(path->points, first_intersection_point);
   const double signed_arc_dist_to_intersection_point =
@@ -189,7 +189,7 @@ void NoDrivableLaneModule::handle_approaching_state(PathWithLaneId * path)
   // Move to stopped state if stopped
   if (
     (signed_arc_dist_to_intersection_point <= planner_param_.stop_margin) &&
-    (planner_data_->isVehicleStopped())) {
+    (planner_data_->is_vehicle_stopped())) {
     if (planner_param_.print_debug_info) {
       RCLCPP_INFO(logger_, "APPROACHING -> STOPPED");
       RCLCPP_INFO_STREAM(
@@ -208,10 +208,10 @@ void NoDrivableLaneModule::handle_approaching_state(PathWithLaneId * path)
 void NoDrivableLaneModule::handle_inside_no_drivable_lane_state(PathWithLaneId * path)
 {
   const auto & current_point = planner_data_->current_odometry->pose.position;
-  const size_t current_seg_idx = findEgoSegmentIndex(path->points);
+  const size_t current_seg_idx = find_ego_segment_index(path->points);
 
   // Insert stop point
-  planning_utils::insertStopPoint(current_point, current_seg_idx, *path);
+  planning_utils::insert_stop_point(current_point, current_seg_idx, *path);
 
   // Get stop point and stop factor
   {
@@ -228,7 +228,7 @@ void NoDrivableLaneModule::handle_inside_no_drivable_lane_state(PathWithLaneId *
   }
 
   // Move to stopped state if stopped
-  if (planner_data_->isVehicleStopped()) {
+  if (planner_data_->is_vehicle_stopped()) {
     if (planner_param_.print_debug_info) {
       RCLCPP_INFO(logger_, "APPROACHING -> STOPPED");
     }
@@ -248,10 +248,10 @@ void NoDrivableLaneModule::handle_stopped_state(PathWithLaneId * path)
 
   SegmentIndexWithPose ego_pos_on_path;
   ego_pos_on_path.pose = stopped_pose.value();
-  ego_pos_on_path.index = findEgoSegmentIndex(path->points);
+  ego_pos_on_path.index = find_ego_segment_index(path->points);
 
   // Insert stop pose
-  planning_utils::insertStopPoint(ego_pos_on_path.pose.position, ego_pos_on_path.index, *path);
+  planning_utils::insert_stop_point(ego_pos_on_path.pose.position, ego_pos_on_path.index, *path);
 
   // Get stop point and stop factor
   {

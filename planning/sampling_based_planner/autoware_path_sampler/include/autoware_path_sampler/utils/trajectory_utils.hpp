@@ -128,7 +128,7 @@ size_t findEgoIndex(
 }
 
 template <class T>
-size_t findEgoSegmentIndex(
+size_t find_ego_segment_index(
   const std::vector<T> & points, const geometry_msgs::msg::Pose & ego_pose,
   const EgoNearestParam & ego_nearest_param)
 {
@@ -148,7 +148,7 @@ std::optional<size_t> updateFrontPointForFix(
   const EgoNearestParam & ego_nearest_param)
 {
   // calculate front point to insert in points as a fixed point
-  const size_t front_seg_idx_for_fix = trajectory_utils::findEgoSegmentIndex(
+  const size_t front_seg_idx_for_fix = trajectory_utils::find_ego_segment_index(
     points_for_fix, autoware::universe_utils::getPose(points.front()), ego_nearest_param);
   const size_t front_point_idx_for_fix = front_seg_idx_for_fix;
   const auto & front_fix_point = points_for_fix.at(front_point_idx_for_fix);
@@ -187,7 +187,7 @@ std::optional<size_t> updateFrontPointForFix(
   return front_point_idx_for_fix;
 }
 
-void insertStopPoint(
+void insert_stop_point(
   std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & input_stop_pose,
   const size_t stop_seg_idx);
 }  // namespace trajectory_utils

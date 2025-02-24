@@ -32,13 +32,13 @@ public:
   {
     scene_manager_->plan(path);
   };
-  void updateSceneModuleInstances(
+  void update_scene_module_instances(
     const std::shared_ptr<const PlannerData> & planner_data,
     const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override
   {
-    scene_manager_->updateSceneModuleInstances(planner_data, path);
+    scene_manager_->update_scene_module_instances(planner_data, path);
   }
-  const char * getModuleName() override { return scene_manager_->getModuleName(); }
+  const char * get_module_name() override { return scene_manager_->get_module_name(); }
 
 private:
   std::unique_ptr<T> scene_manager_;

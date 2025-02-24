@@ -68,7 +68,7 @@ std::optional<T> getObjectFromUuid(const std::vector<T> & objects, const std::st
 
 // TODO(murooka) following two functions are copied from behavior_velocity_planner.
 // These should be refactored.
-double findReachTime(
+double find_reach_time(
   const double jerk, const double accel, const double velocity, const double distance,
   const double t_min, const double t_max)
 {
@@ -82,7 +82,7 @@ double findReachTime(
     return j * t * t * t / 6.0 + a * t * t / 2.0 + v * t - d;
   };
   if (f(min, j, a, v, d) > 0 || f(max, j, a, v, d) < 0) {
-    throw std::logic_error("[obstacle_cruise_planner](findReachTime): search range is invalid");
+    throw std::logic_error("[obstacle_cruise_planner](find_reach_time): search range is invalid");
   }
   const double eps = 1e-5;
   const int warn_iter = 100;
@@ -103,13 +103,13 @@ double findReachTime(
     }
     iter++;
     if (iter > warn_iter)
-      std::cerr << "[obstacle_cruise_planner](findReachTime): current iter is over warning"
+      std::cerr << "[obstacle_cruise_planner](find_reach_time): current iter is over warning"
                 << std::endl;
   }
   return t;
 }
 
-double calcDecelerationVelocityFromDistanceToTarget(
+double calc_deceleration_velocity_from_distance_to_target(
   const double max_slowdown_jerk, const double max_slowdown_accel, const double current_accel,
   const double current_velocity, const double distance_to_target)
 {
@@ -136,7 +136,7 @@ double calcDecelerationVelocityFromDistanceToTarget(
   if (d_const_acc_stop < 0) {
     // case0: distance to target is within constant jerk deceleration
     // use binary search instead of solving cubic equation
-    const double t_jerk = findReachTime(j_max, a0, v0, l, 0, t_const_jerk);
+    const double t_jerk = find_reach_time(j_max, a0, v0, l, 0, t_const_jerk);
     const double velocity = vt(t_jerk, j_max, a0, v0);
     return velocity;
   } else {
@@ -323,7 +323,7 @@ std::vector<TrajectoryPoint> PlannerInterface::generateStopTrajectory(
   // Insert stop point
   auto output_traj_points = planner_data.traj_points;
   const auto zero_vel_idx =
-    autoware::motion_utils::insertStopPoint(0, *determined_zero_vel_dist, output_traj_points);
+    autoware::motion_utils::insert_stop_point(0, *determined_zero_vel_dist, output_traj_points);
   if (zero_vel_idx) {
     // virtual wall marker for stop obstacle
     const auto markers = autoware::motion_utils::createStopVirtualWallMarker(
@@ -759,7 +759,7 @@ PlannerInterface::calculateDistanceToSlowDownWithConstraints(
         return std::max(std::sqrt(squared_vel), slow_down_vel);
       }
       // TODO(murooka) Calculate more precisely. Final acceleration should be zero.
-      const double min_feasible_slow_down_vel = calcDecelerationVelocityFromDistanceToTarget(
+      const double min_feasible_slow_down_vel = calc_deceleration_velocity_from_distance_to_target(
         longitudinal_info_.slow_down_min_jerk, longitudinal_info_.slow_down_min_accel,
         planner_data.ego_acc, planner_data.ego_vel, deceleration_dist);
       return min_feasible_slow_down_vel;

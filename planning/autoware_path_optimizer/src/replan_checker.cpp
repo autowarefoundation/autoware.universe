@@ -144,13 +144,13 @@ bool ReplanChecker::isPathAroundEgoChanged(
 
   // calculate ego's lateral offset to previous trajectory points
   const auto prev_ego_seg_idx =
-    trajectory_utils::findEgoSegmentIndex(prev_traj_points, p.ego_pose, ego_nearest_param_);
+    trajectory_utils::find_ego_segment_index(prev_traj_points, p.ego_pose, ego_nearest_param_);
   const double prev_ego_lat_offset = autoware::motion_utils::calcLateralOffset(
     prev_traj_points, p.ego_pose.position, prev_ego_seg_idx);
 
   // calculate ego's lateral offset to current trajectory points
   const auto ego_seg_idx =
-    trajectory_utils::findEgoSegmentIndex(p.traj_points, p.ego_pose, ego_nearest_param_);
+    trajectory_utils::find_ego_segment_index(p.traj_points, p.ego_pose, ego_nearest_param_);
   const double ego_lat_offset =
     autoware::motion_utils::calcLateralOffset(p.traj_points, p.ego_pose.position, ego_seg_idx);
 
@@ -169,7 +169,7 @@ bool ReplanChecker::isPathForwardChanged(
 
   // calculate forward point of previous trajectory points
   const size_t prev_ego_seg_idx =
-    trajectory_utils::findEgoSegmentIndex(prev_traj_points, p.ego_pose, ego_nearest_param_);
+    trajectory_utils::find_ego_segment_index(prev_traj_points, p.ego_pose, ego_nearest_param_);
 
   // check if distance is larger than the threshold
   constexpr double lon_dist_interval = 10.0;

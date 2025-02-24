@@ -34,19 +34,19 @@ TemplateModule::TemplateModule(
 {
 }
 
-visualization_msgs::msg::MarkerArray TemplateModule::createDebugMarkerArray()
+visualization_msgs::msg::MarkerArray TemplateModule::create_debug_marker_array()
 {
   visualization_msgs::msg::MarkerArray ma;
   return ma;
 };
 
-autoware::motion_utils::VirtualWalls TemplateModule::createVirtualWalls()
+autoware::motion_utils::VirtualWalls TemplateModule::create_virtual_walls()
 {
   autoware::motion_utils::VirtualWalls vw;
   return vw;
 }
 
-bool TemplateModule::modifyPathVelocity([[maybe_unused]] PathWithLaneId * path)
+bool TemplateModule::modify_path_velocity([[maybe_unused]] PathWithLaneId * path)
 {
   RCLCPP_INFO_ONCE(logger_, "Template Module is executing!");
   return false;

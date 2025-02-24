@@ -22,7 +22,7 @@ namespace run_out_utils
 {
 using State = StateMachine::State;
 
-std::string StateMachine::toString(const State & state)
+std::string StateMachine::to_string(const State & state)
 {
   switch (state) {
     case State::GO:

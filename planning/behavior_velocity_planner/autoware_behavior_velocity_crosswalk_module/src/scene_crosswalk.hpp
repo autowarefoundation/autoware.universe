@@ -359,10 +359,10 @@ public:
     const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
       planning_factor_interface);
 
-  bool modifyPathVelocity(PathWithLaneId * path) override;
+  bool modify_path_velocity(PathWithLaneId * path) override;
 
-  visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
-  autoware::motion_utils::VirtualWalls createVirtualWalls() override;
+  visualization_msgs::msg::MarkerArray create_debug_marker_array() override;
+  autoware::motion_utils::VirtualWalls create_virtual_walls() override;
 
 private:
   // main functions
@@ -430,7 +430,7 @@ private:
     const geometry_msgs::msg::Point & first_path_point_on_crosswalk,
     const geometry_msgs::msg::Point & last_path_point_on_crosswalk);
 
-  void insertDecelPointWithDebugInfo(
+  void insert_decel_pointWithDebugInfo(
     const geometry_msgs::msg::Point & stop_point, const float target_velocity,
     PathWithLaneId & output) const;
 

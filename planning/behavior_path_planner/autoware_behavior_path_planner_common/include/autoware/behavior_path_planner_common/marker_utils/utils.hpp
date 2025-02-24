@@ -66,7 +66,7 @@ MarkerArray createFootprintMarkerArray(
   const Pose & base_link_pose, const autoware::vehicle_info_utils::VehicleInfo vehicle_info,
   const std::string && ns, const int32_t & id, const float & r, const float & g, const float & b);
 
-MarkerArray createPointsMarkerArray(
+MarkerArray create_points_marker_array(
   const std::vector<Point> & points, const std::string & ns, const int32_t id, const float r,
   const float g, const float b);
 
@@ -74,7 +74,7 @@ MarkerArray createPoseMarkerArray(
   const Pose & pose, std::string && ns, const int32_t & id, const float & r, const float & g,
   const float & b);
 
-MarkerArray createPathMarkerArray(
+MarkerArray create_path_marker_array(
   const PathWithLaneId & path, std::string && ns, const int64_t & lane_id, const float & r,
   const float & g, const float & b);
 
@@ -95,11 +95,11 @@ MarkerArray createLaneletsAreaMarkerArray(
   const std::vector<lanelet::ConstLanelet> & lanelets, std::string && ns, const float & r,
   const float & g, const float & b);
 
-MarkerArray createPolygonMarkerArray(
+MarkerArray create_polygon_marker_array(
   const Polygon & polygon, std::string && ns, const int64_t & lane_id, const float & r,
   const float & g, const float & b, const float & w = 0.3);
 
-MarkerArray createObjectsMarkerArray(
+MarkerArray create_objects_marker_array(
   const PredictedObjects & objects, std::string && ns, const int64_t & lane_id, const float & r,
   const float & g, const float & b);
 

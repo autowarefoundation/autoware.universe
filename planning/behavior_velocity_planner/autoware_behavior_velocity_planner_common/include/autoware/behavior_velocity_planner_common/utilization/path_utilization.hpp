@@ -22,14 +22,14 @@
 
 namespace autoware::behavior_velocity_planner
 {
-bool splineInterpolate(
+bool spline_interpolate(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & input, const double interval,
   autoware_internal_planning_msgs::msg::PathWithLaneId & output, const rclcpp::Logger & logger);
-autoware_planning_msgs::msg::Path interpolatePath(
+autoware_planning_msgs::msg::Path interpolate_path(
   const autoware_planning_msgs::msg::Path & path, const double length, const double interval);
-autoware_planning_msgs::msg::Path filterLitterPathPoint(
+autoware_planning_msgs::msg::Path filter_litter_path_point(
   const autoware_planning_msgs::msg::Path & path);
-autoware_planning_msgs::msg::Path filterStopPathPoint(
+autoware_planning_msgs::msg::Path filter_stop_path_point(
   const autoware_planning_msgs::msg::Path & path);
 }  // namespace autoware::behavior_velocity_planner
 

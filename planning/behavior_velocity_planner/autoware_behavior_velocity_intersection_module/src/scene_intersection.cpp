@@ -62,28 +62,28 @@ IntersectionModule::IntersectionModule(
   occlusion_uuid_(autoware::universe_utils::generateUUID())
 {
   {
-    collision_state_machine_.setMarginTime(
+    collision_state_machine_.set_margin_time(
       planner_param_.collision_detection.collision_detection_hold_time);
   }
   {
-    before_creep_state_machine_.setMarginTime(
+    before_creep_state_machine_.set_margin_time(
       planner_param_.occlusion.temporal_stop_time_before_peeking);
-    before_creep_state_machine_.setState(StateMachine::State::STOP);
+    before_creep_state_machine_.set_state(StateMachine::State::STOP);
   }
   {
-    occlusion_stop_state_machine_.setMarginTime(
+    occlusion_stop_state_machine_.set_margin_time(
       planner_param_.occlusion.occlusion_detection_hold_time);
-    occlusion_stop_state_machine_.setState(StateMachine::State::GO);
+    occlusion_stop_state_machine_.set_state(StateMachine::State::GO);
   }
   {
-    temporal_stop_before_attention_state_machine_.setMarginTime(
+    temporal_stop_before_attention_state_machine_.set_margin_time(
       planner_param_.occlusion.occlusion_detection_hold_time);
-    temporal_stop_before_attention_state_machine_.setState(StateMachine::State::STOP);
+    temporal_stop_before_attention_state_machine_.set_state(StateMachine::State::STOP);
   }
   {
-    static_occlusion_timeout_state_machine_.setMarginTime(
+    static_occlusion_timeout_state_machine_.set_margin_time(
       planner_param_.occlusion.static_occlusion_with_traffic_light_timeout);
-    static_occlusion_timeout_state_machine_.setState(StateMachine::State::STOP);
+    static_occlusion_timeout_state_machine_.set_state(StateMachine::State::STOP);
   }
 
   ego_ttc_pub_ = node.create_publisher<autoware_internal_debug_msgs::msg::Float64MultiArrayStamped>(
@@ -93,7 +93,7 @@ IntersectionModule::IntersectionModule(
       "~/debug/intersection/object_ttc", 1);
 }
 
-bool IntersectionModule::modifyPathVelocity(PathWithLaneId * path)
+bool IntersectionModule::modify_path_velocity(PathWithLaneId * path)
 {
   debug_data_ = DebugData();
 
@@ -257,7 +257,7 @@ DecisionResult IntersectionModule::modifyPathVelocityDetail(PathWithLaneId * pat
     if (!object_info->unsafe_info()) {
       continue;
     }
-    setObjectsOfInterestData(
+    set_objects_of_interest_data(
       object_info->predicted_object().kinematics.initial_pose_with_covariance.pose,
       object_info->predicted_object().shape, ColorName::RED);
   }
@@ -320,11 +320,11 @@ DecisionResult IntersectionModule::modifyPathVelocityDetail(PathWithLaneId * pat
     return yield_stuck;
   }
 
-  collision_state_machine_.setStateWithMarginTime(
+  collision_state_machine_.set_state_with_margin_time(
     has_collision ? StateMachine::State::STOP : StateMachine::State::GO,
     logger_.get_child("collision state_machine"), *clock_);
   const bool has_collision_with_margin =
-    collision_state_machine_.getState() == StateMachine::State::STOP;
+    collision_state_machine_.get_state() == StateMachine::State::STOP;
 
   if (is_prioritized) {
     return FullyPrioritized{
@@ -352,18 +352,18 @@ DecisionResult IntersectionModule::modifyPathVelocityDetail(PathWithLaneId * pat
       const bool approached_dist_stopline =
         (std::fabs(dist_stopline) < planner_param_.common.stopline_overshoot_margin);
       const bool over_stopline = (dist_stopline < 0.0);
-      const bool is_stopped_duration = planner_data_->isVehicleStopped(duration);
+      const bool is_stopped_duration = planner_data_->is_vehicle_stopped(duration);
       if (over_stopline || (is_stopped_duration && approached_dist_stopline)) {
-        state_machine.setState(StateMachine::State::GO);
+        state_machine.set_state(StateMachine::State::GO);
       }
-      return state_machine.getState() == StateMachine::State::GO;
+      return state_machine.get_state() == StateMachine::State::GO;
     };
   auto stoppedAtPosition = [&](const size_t pos, const double duration) {
     const double dist_stopline = fromEgoDist(pos);
     const bool approached_dist_stopline =
       (std::fabs(dist_stopline) < planner_param_.common.stopline_overshoot_margin);
     const bool over_stopline = (dist_stopline < -planner_param_.common.stopline_overshoot_margin);
-    const bool is_stopped = planner_data_->isVehicleStopped(duration);
+    const bool is_stopped = planner_data_->is_vehicle_stopped(duration);
     return over_stopline || (is_stopped && approached_dist_stopline);
   };
 
@@ -420,13 +420,13 @@ DecisionResult IntersectionModule::modifyPathVelocityDetail(PathWithLaneId * pat
       is_static_occlusion;
     if (has_collision_with_margin) {
       // if collision is detected, timeout is reset
-      static_occlusion_timeout_state_machine_.setState(StateMachine::State::STOP);
+      static_occlusion_timeout_state_machine_.set_state(StateMachine::State::STOP);
     } else if (is_stuck_by_static_occlusion) {
-      static_occlusion_timeout_state_machine_.setStateWithMarginTime(
+      static_occlusion_timeout_state_machine_.set_state_with_margin_time(
         StateMachine::State::GO, logger_.get_child("static_occlusion"), *clock_);
     }
     const bool release_static_occlusion_stuck =
-      (static_occlusion_timeout_state_machine_.getState() == StateMachine::State::GO);
+      (static_occlusion_timeout_state_machine_.get_state() == StateMachine::State::GO);
     if (!has_collision_with_margin && release_static_occlusion_stuck) {
       return Safe{closest_idx, collision_stopline_idx, occlusion_stopline_idx, occlusion_diag};
     }
@@ -437,8 +437,8 @@ DecisionResult IntersectionModule::modifyPathVelocityDetail(PathWithLaneId * pat
     const std::optional<double> static_occlusion_timeout =
       is_stuck_by_static_occlusion
         ? std::make_optional<double>(
-            max_timeout - static_occlusion_timeout_state_machine_.getDuration() -
-            occlusion_stop_state_machine_.getDuration())
+            max_timeout - static_occlusion_timeout_state_machine_.get_duration() -
+            occlusion_stop_state_machine_.get_duration())
         : (is_static_occlusion ? std::make_optional<double>(max_timeout) : std::nullopt);
     if (has_collision_with_margin) {
       return OccludedCollisionStop{
@@ -758,9 +758,9 @@ void reactRTCApprovalByDecisionResult(
   if (!rtc_default_approved) {
     // use default_rtc uuid for stuck vehicle detection
     const auto stopline_idx = decision_result.stuck_stopline_idx;
-    planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
+    planning_utils::set_velocity_from_index(stopline_idx, 0.0, path);
     debug_data->collision_stop_wall_pose =
-      planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
+      planning_utils::get_ahead_pose(stopline_idx, baselink2front, *path);
     {
       planning_factor_interface->add(
         path->points, path->points.at(closest_idx).point.pose,
@@ -772,9 +772,9 @@ void reactRTCApprovalByDecisionResult(
   }
   if (!rtc_occlusion_approved && decision_result.occlusion_stopline_idx) {
     const auto occlusion_stopline_idx = decision_result.occlusion_stopline_idx.value();
-    planning_utils::setVelocityFromIndex(occlusion_stopline_idx, 0.0, path);
+    planning_utils::set_velocity_from_index(occlusion_stopline_idx, 0.0, path);
     debug_data->occlusion_stop_wall_pose =
-      planning_utils::getAheadPose(occlusion_stopline_idx, baselink2front, *path);
+      planning_utils::get_ahead_pose(occlusion_stopline_idx, baselink2front, *path);
     {
       planning_factor_interface->add(
         path->points, path->points.at(closest_idx).point.pose,
@@ -805,9 +805,9 @@ void reactRTCApprovalByDecisionResult(
   if (!rtc_default_approved) {
     // use default_rtc uuid for stuck vehicle detection
     const auto stopline_idx = decision_result.stuck_stopline_idx;
-    planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
+    planning_utils::set_velocity_from_index(stopline_idx, 0.0, path);
     debug_data->collision_stop_wall_pose =
-      planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
+      planning_utils::get_ahead_pose(stopline_idx, baselink2front, *path);
     {
       planning_factor_interface->add(
         path->points, path->points.at(closest_idx).point.pose,
@@ -835,9 +835,9 @@ void reactRTCApprovalByDecisionResult(
     rtc_occlusion_approved);
   if (!rtc_default_approved) {
     const auto stopline_idx = decision_result.collision_stopline_idx;
-    planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
+    planning_utils::set_velocity_from_index(stopline_idx, 0.0, path);
     debug_data->collision_stop_wall_pose =
-      planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
+      planning_utils::get_ahead_pose(stopline_idx, baselink2front, *path);
     {
       planning_factor_interface->add(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
@@ -849,9 +849,9 @@ void reactRTCApprovalByDecisionResult(
   }
   if (!rtc_occlusion_approved) {
     const auto stopline_idx = decision_result.occlusion_stopline_idx;
-    planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
+    planning_utils::set_velocity_from_index(stopline_idx, 0.0, path);
     debug_data->occlusion_stop_wall_pose =
-      planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
+      planning_utils::get_ahead_pose(stopline_idx, baselink2front, *path);
     {
       planning_factor_interface->add(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
@@ -879,9 +879,9 @@ void reactRTCApprovalByDecisionResult(
     rtc_occlusion_approved);
   if (!rtc_default_approved) {
     const auto stopline_idx = decision_result.first_stopline_idx;
-    planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
+    planning_utils::set_velocity_from_index(stopline_idx, 0.0, path);
     debug_data->occlusion_first_stop_wall_pose =
-      planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
+      planning_utils::get_ahead_pose(stopline_idx, baselink2front, *path);
     {
       planning_factor_interface->add(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
@@ -896,14 +896,14 @@ void reactRTCApprovalByDecisionResult(
       const size_t occlusion_peeking_stopline = decision_result.occlusion_stopline_idx;
       const size_t closest_idx = decision_result.closest_idx;
       for (size_t i = closest_idx; i < occlusion_peeking_stopline; i++) {
-        planning_utils::setVelocityFromIndex(
+        planning_utils::set_velocity_from_index(
           i, planner_param.occlusion.creep_during_peeking.creep_velocity, path);
       }
     }
     const auto stopline_idx = decision_result.occlusion_stopline_idx;
-    planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
+    planning_utils::set_velocity_from_index(stopline_idx, 0.0, path);
     debug_data->occlusion_stop_wall_pose =
-      planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
+      planning_utils::get_ahead_pose(stopline_idx, baselink2front, *path);
     {
       planning_factor_interface->add(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
@@ -938,13 +938,13 @@ void reactRTCApprovalByDecisionResult(
     if (planner_param.occlusion.creep_during_peeking.enable) {
       const size_t closest_idx = decision_result.closest_idx;
       for (size_t i = closest_idx; i < occlusion_peeking_stopline; i++) {
-        planning_utils::setVelocityFromIndex(
+        planning_utils::set_velocity_from_index(
           i, planner_param.occlusion.creep_during_peeking.creep_velocity, path);
       }
     }
-    planning_utils::setVelocityFromIndex(occlusion_peeking_stopline, 0.0, path);
+    planning_utils::set_velocity_from_index(occlusion_peeking_stopline, 0.0, path);
     debug_data->occlusion_stop_wall_pose =
-      planning_utils::getAheadPose(occlusion_peeking_stopline, baselink2front, *path);
+      planning_utils::get_ahead_pose(occlusion_peeking_stopline, baselink2front, *path);
     debug_data->static_occlusion_with_traffic_light_timeout =
       decision_result.static_occlusion_timeout;
     {
@@ -959,9 +959,9 @@ void reactRTCApprovalByDecisionResult(
   }
   if (!rtc_default_approved) {
     const auto stopline_idx = decision_result.collision_stopline_idx;
-    planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
+    planning_utils::set_velocity_from_index(stopline_idx, 0.0, path);
     debug_data->collision_stop_wall_pose =
-      planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
+      planning_utils::get_ahead_pose(stopline_idx, baselink2front, *path);
     {
       planning_factor_interface->add(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
@@ -989,9 +989,9 @@ void reactRTCApprovalByDecisionResult(
     rtc_occlusion_approved);
   if (!rtc_default_approved) {
     const auto stopline_idx = decision_result.collision_stopline_idx;
-    planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
+    planning_utils::set_velocity_from_index(stopline_idx, 0.0, path);
     debug_data->collision_stop_wall_pose =
-      planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
+      planning_utils::get_ahead_pose(stopline_idx, baselink2front, *path);
     {
       planning_factor_interface->add(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
@@ -1005,9 +1005,9 @@ void reactRTCApprovalByDecisionResult(
     const auto stopline_idx = decision_result.temporal_stop_before_attention_required
                                 ? decision_result.first_attention_stopline_idx
                                 : decision_result.occlusion_stopline_idx;
-    planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
+    planning_utils::set_velocity_from_index(stopline_idx, 0.0, path);
     debug_data->occlusion_stop_wall_pose =
-      planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
+      planning_utils::get_ahead_pose(stopline_idx, baselink2front, *path);
     debug_data->static_occlusion_with_traffic_light_timeout =
       decision_result.static_occlusion_timeout;
     {
@@ -1037,9 +1037,9 @@ void reactRTCApprovalByDecisionResult(
     rtc_occlusion_approved);
   if (!rtc_default_approved) {
     const auto stopline_idx = decision_result.closest_idx;
-    planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
+    planning_utils::set_velocity_from_index(stopline_idx, 0.0, path);
     debug_data->collision_stop_wall_pose =
-      planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
+      planning_utils::get_ahead_pose(stopline_idx, baselink2front, *path);
     {
       planning_factor_interface->add(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
@@ -1052,9 +1052,9 @@ void reactRTCApprovalByDecisionResult(
   }
   if (!rtc_occlusion_approved && decision_result.temporal_stop_before_attention_required) {
     const auto stopline_idx = decision_result.first_attention_area_stopline_idx;
-    planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
+    planning_utils::set_velocity_from_index(stopline_idx, 0.0, path);
     debug_data->occlusion_stop_wall_pose =
-      planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
+      planning_utils::get_ahead_pose(stopline_idx, baselink2front, *path);
     {
       planning_factor_interface->add(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
@@ -1068,11 +1068,11 @@ void reactRTCApprovalByDecisionResult(
     const auto closest_idx = decision_result.closest_idx;
     const auto peeking_limit_line = decision_result.peeking_limit_line_idx;
     for (auto i = closest_idx; i <= peeking_limit_line; ++i) {
-      planning_utils::setVelocityFromIndex(
+      planning_utils::set_velocity_from_index(
         i, planner_param.occlusion.creep_velocity_without_traffic_light, path);
     }
     debug_data->absence_traffic_light_creep_wall =
-      planning_utils::getAheadPose(closest_idx, baselink2front, *path);
+      planning_utils::get_ahead_pose(closest_idx, baselink2front, *path);
   }
   return;
 }
@@ -1090,9 +1090,9 @@ void reactRTCApprovalByDecisionResult(
     "Safe, approval = (default: %d, occlusion: %d)", rtc_default_approved, rtc_occlusion_approved);
   if (!rtc_default_approved) {
     const auto stopline_idx = decision_result.collision_stopline_idx;
-    planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
+    planning_utils::set_velocity_from_index(stopline_idx, 0.0, path);
     debug_data->collision_stop_wall_pose =
-      planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
+      planning_utils::get_ahead_pose(stopline_idx, baselink2front, *path);
     {
       planning_factor_interface->add(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
@@ -1104,9 +1104,9 @@ void reactRTCApprovalByDecisionResult(
   }
   if (!rtc_occlusion_approved) {
     const auto stopline_idx = decision_result.occlusion_stopline_idx;
-    planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
+    planning_utils::set_velocity_from_index(stopline_idx, 0.0, path);
     debug_data->occlusion_stop_wall_pose =
-      planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
+      planning_utils::get_ahead_pose(stopline_idx, baselink2front, *path);
     {
       planning_factor_interface->add(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
@@ -1134,9 +1134,9 @@ void reactRTCApprovalByDecisionResult(
     rtc_occlusion_approved);
   if (!rtc_default_approved) {
     const auto stopline_idx = decision_result.collision_stopline_idx;
-    planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
+    planning_utils::set_velocity_from_index(stopline_idx, 0.0, path);
     debug_data->collision_stop_wall_pose =
-      planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
+      planning_utils::get_ahead_pose(stopline_idx, baselink2front, *path);
     {
       planning_factor_interface->add(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
@@ -1148,9 +1148,9 @@ void reactRTCApprovalByDecisionResult(
   }
   if (!rtc_occlusion_approved) {
     const auto stopline_idx = decision_result.occlusion_stopline_idx;
-    planning_utils::setVelocityFromIndex(stopline_idx, 0.0, path);
+    planning_utils::set_velocity_from_index(stopline_idx, 0.0, path);
     debug_data->occlusion_stop_wall_pose =
-      planning_utils::getAheadPose(stopline_idx, baselink2front, *path);
+      planning_utils::get_ahead_pose(stopline_idx, baselink2front, *path);
     {
       planning_factor_interface->add(
         path->points, path->points.at(decision_result.closest_idx).point.pose,
@@ -1277,7 +1277,7 @@ void IntersectionModule::updateTrafficSignalObservation()
   }
   const auto [tl_id, point] = tl_id_and_point_.value();
   const auto tl_info_opt =
-    planner_data_->getTrafficSignal(tl_id, true /* traffic light module keeps last observation*/);
+    planner_data_->get_traffic_signal(tl_id, true /* traffic light module keeps last observation*/);
   if (!tl_info_opt) {
     // the info of this traffic light is not available
     return;
@@ -1364,7 +1364,7 @@ IntersectionModule::PassJudgeStatus IntersectionModule::isOverPassJudgeLinesStat
   }
   const double baselink2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
   debug_data_.first_pass_judge_wall_pose =
-    planning_utils::getAheadPose(pass_judge_line_idx, baselink2front, path);
+    planning_utils::get_ahead_pose(pass_judge_line_idx, baselink2front, path);
   debug_data_.passed_first_pass_judge = safely_passed_1st_judge_line_time_.has_value();
   const auto second_pass_judge_line_idx_opt = intersection_stoplines.second_pass_judge_line;
   const std::optional<bool> is_over_2nd_pass_judge_line =
@@ -1381,7 +1381,7 @@ IntersectionModule::PassJudgeStatus IntersectionModule::isOverPassJudgeLinesStat
   }
   if (second_pass_judge_line_idx_opt) {
     debug_data_.second_pass_judge_wall_pose =
-      planning_utils::getAheadPose(second_pass_judge_line_idx_opt.value(), baselink2front, path);
+      planning_utils::get_ahead_pose(second_pass_judge_line_idx_opt.value(), baselink2front, path);
   }
   debug_data_.passed_second_pass_judge = safely_passed_2nd_judge_line_time_.has_value();
 

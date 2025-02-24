@@ -51,11 +51,11 @@ NoStoppingAreaModule::NoStoppingAreaModule(
   planner_param_(planner_param),
   debug_data_()
 {
-  state_machine_.setState(StateMachine::State::GO);
-  state_machine_.setMarginTime(planner_param_.state_clear_time);
+  state_machine_.set_state(StateMachine::State::GO);
+  state_machine_.set_margin_time(planner_param_.state_clear_time);
 }
 
-bool NoStoppingAreaModule::modifyPathVelocity(PathWithLaneId * path)
+bool NoStoppingAreaModule::modify_path_velocity(PathWithLaneId * path)
 {
   // Store original path
   const auto original_path = *path;
@@ -78,7 +78,7 @@ bool NoStoppingAreaModule::modifyPathVelocity(PathWithLaneId * path)
     setSafe(true);
     return true;
   }
-  const auto stop_point = arc_lane_utils::createTargetPoint(
+  const auto stop_point = arc_lane_utils::create_target_point(
     original_path, stop_line.value(), planner_param_.stop_margin,
     planner_data_->vehicle_info_.max_longitudinal_offset_m);
   if (!stop_point) {
@@ -88,10 +88,10 @@ bool NoStoppingAreaModule::modifyPathVelocity(PathWithLaneId * path)
   const auto & stop_pose = stop_point->second;
   setDistance(autoware::motion_utils::calcSignedArcLength(
     original_path.points, current_pose->pose.position, stop_pose.position));
-  if (planning_utils::isOverLine(
+  if (planning_utils::is_over_line(
         original_path, current_pose->pose, stop_pose, planner_param_.dead_line_margin)) {
     // ego can't stop in front of no stopping area -> GO or OR
-    state_machine_.setState(StateMachine::State::GO);
+    state_machine_.set_state(StateMachine::State::GO);
     setSafe(true);
     return true;
   }
@@ -126,16 +126,16 @@ bool NoStoppingAreaModule::modifyPathVelocity(PathWithLaneId * path)
     is_entry_prohibited_by_stuck_vehicle || is_entry_prohibited_by_stop_line;
   if (!no_stopping_area::is_stoppable(
         pass_judge_, current_pose->pose, stop_point->second, ego_data, logger_, *clock_)) {
-    state_machine_.setState(StateMachine::State::GO);
+    state_machine_.set_state(StateMachine::State::GO);
     setSafe(true);
     return false;
   }
 
-  state_machine_.setStateWithMarginTime(
+  state_machine_.set_state_with_margin_time(
     is_entry_prohibited ? StateMachine::State::STOP : StateMachine::State::GO,
     logger_.get_child("state_machine"), *clock_);
 
-  setSafe(state_machine_.getState() != StateMachine::State::STOP);
+  setSafe(state_machine_.get_state() != StateMachine::State::STOP);
   if (!isActivated()) {
     // ----------------stop reason and stop point--------------------------
     no_stopping_area::insert_stop_point(*path, *stop_point);
@@ -151,7 +151,7 @@ bool NoStoppingAreaModule::modifyPathVelocity(PathWithLaneId * path)
         0.0 /*shift distance*/, "");
     }
 
-  } else if (state_machine_.getState() == StateMachine::State::GO) {
+  } else if (state_machine_.get_state() == StateMachine::State::GO) {
     // reset pass judge if current state is go
     pass_judge_.is_stoppable = true;
     pass_judge_.pass_judged = false;
@@ -170,7 +170,7 @@ bool NoStoppingAreaModule::check_stuck_vehicles_in_no_stopping_area(
     }
     const auto obj_v = std::fabs(object.kinematics.initial_twist_with_covariance.twist.linear.x);
     if (obj_v > planner_param_.stuck_vehicle_vel_thr) {
-      setObjectsOfInterestData(
+      set_objects_of_interest_data(
         object.kinematics.initial_pose_with_covariance.pose, object.shape, ColorName::GREEN);
       continue;  // not stop vehicle
     }
@@ -179,7 +179,7 @@ bool NoStoppingAreaModule::check_stuck_vehicles_in_no_stopping_area(
     const bool is_in_stuck_area = !bg::disjoint(obj_footprint, poly);
     if (is_in_stuck_area) {
       RCLCPP_DEBUG(logger_, "stuck vehicle found.");
-      setObjectsOfInterestData(
+      set_objects_of_interest_data(
         object.kinematics.initial_pose_with_covariance.pose, object.shape, ColorName::RED);
       for (const auto & p : obj_footprint.outer()) {
         geometry_msgs::msg::Point point;

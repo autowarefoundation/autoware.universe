@@ -101,12 +101,12 @@ double l2Norm(const Vector3 vector)
   return std::sqrt(std::pow(vector.x, 2) + std::pow(vector.y, 2) + std::pow(vector.z, 2));
 }
 
-bool checkCollisionBetweenPathFootprintsAndObjects(
+bool check_collisionBetweenPathFootprintsAndObjects(
   const autoware::universe_utils::LinearRing2d & local_vehicle_footprint,
   const PathWithLaneId & ego_path, const PredictedObjects & dynamic_objects, const double margin)
 {
   for (const auto & p : ego_path.points) {
-    if (checkCollisionBetweenFootprintAndObjects(
+    if (check_collisionBetweenFootprintAndObjects(
           local_vehicle_footprint, p.point.pose, dynamic_objects, margin)) {
       return true;
     }
@@ -114,7 +114,7 @@ bool checkCollisionBetweenPathFootprintsAndObjects(
   return false;
 }
 
-bool checkCollisionBetweenFootprintAndObjects(
+bool check_collisionBetweenFootprintAndObjects(
   const autoware::universe_utils::LinearRing2d & local_vehicle_footprint, const Pose & ego_pose,
   const PredictedObjects & dynamic_objects, const double margin)
 {
@@ -687,7 +687,7 @@ double getSignedDistance(
   return arc_goal.length - arc_current.length;
 }
 
-PathPointWithLaneId insertStopPoint(const double length, PathWithLaneId & path)
+PathPointWithLaneId insert_stop_point(const double length, PathWithLaneId & path)
 {
   const size_t original_size = path.points.size();
 

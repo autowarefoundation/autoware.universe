@@ -162,7 +162,7 @@ void SurroundObstacleCheckerNode::onTimer()
   }
 
   const auto nearest_obstacle = getNearestObstacle();
-  const auto is_vehicle_stopped = vehicle_stop_checker_->isVehicleStopped();
+  const auto is_vehicle_stopped = vehicle_stop_checker_->is_vehicle_stopped();
 
   constexpr double epsilon = 1e-3;
   switch (state_) {

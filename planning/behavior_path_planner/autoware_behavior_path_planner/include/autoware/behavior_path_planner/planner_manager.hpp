@@ -268,7 +268,7 @@ private:
    * @brief stop and unregister the module from manager.
    * @param module.
    */
-  void deleteExpiredModules(SceneModulePtr & module_ptr) const
+  void delete_expired_modules(SceneModulePtr & module_ptr) const
   {
     module_ptr->onExit();
     module_ptr->publishObjectsOfInterestMarker();
@@ -281,7 +281,7 @@ private:
   void clearCandidateModules()
   {
     std::for_each(candidate_module_ptrs_.begin(), candidate_module_ptrs_.end(), [this](auto & m) {
-      deleteExpiredModules(m);
+      delete_expired_modules(m);
     });
     candidate_module_ptrs_.clear();
   }

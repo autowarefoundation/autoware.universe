@@ -46,7 +46,7 @@ MarkerArray createExecutionArea(const geometry_msgs::msg::Polygon & execution_ar
 MarkerArray showExecutionInfo(
   const InterfaceDebug & interface_debug_data, const Debug & scene_debug_data,
   const geometry_msgs::msg::Pose & ego_pose);
-MarkerArray createDebugMarkerArray(
+MarkerArray create_debug_marker_array(
   const InterfaceDebug & interface_debug_data, const Debug & scene_debug_data,
   const geometry_msgs::msg::Pose & ego_pose);
 

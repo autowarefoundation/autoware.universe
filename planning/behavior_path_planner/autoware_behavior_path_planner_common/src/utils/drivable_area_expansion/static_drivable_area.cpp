@@ -1555,7 +1555,7 @@ std::vector<geometry_msgs::msg::Point> postProcess(
   }
 
   const auto start_idx = [&]() {
-    const size_t current_seg_idx = planner_data->findEgoSegmentIndex(path.points);
+    const size_t current_seg_idx = planner_data->find_ego_segment_index(path.points);
     const auto cropped_path_points = autoware::motion_utils::cropPoints(
       path.points, current_pose.position, current_seg_idx,
       planner_data->parameters.forward_path_length,

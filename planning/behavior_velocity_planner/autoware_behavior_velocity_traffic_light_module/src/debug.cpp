@@ -26,13 +26,13 @@
 
 namespace autoware::behavior_velocity_planner
 {
-visualization_msgs::msg::MarkerArray TrafficLightModule::createDebugMarkerArray()
+visualization_msgs::msg::MarkerArray TrafficLightModule::create_debug_marker_array()
 {
   visualization_msgs::msg::MarkerArray debug_marker_array;
   return debug_marker_array;
 }
 
-autoware::motion_utils::VirtualWalls TrafficLightModule::createVirtualWalls()
+autoware::motion_utils::VirtualWalls TrafficLightModule::create_virtual_walls()
 {
   autoware::motion_utils::VirtualWalls virtual_walls;
   autoware::motion_utils::VirtualWall wall;

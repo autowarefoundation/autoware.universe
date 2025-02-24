@@ -77,16 +77,16 @@ IntersectionModule::getOcclusionStatus(
     (previous_prioritized_level_ == TrafficPrioritizedLevel::NOT_PRIORITIZED &&
      traffic_prioritized_level != TrafficPrioritizedLevel::NOT_PRIORITIZED);
   if (transition_to_prioritized) {
-    occlusion_stop_state_machine_.setState(StateMachine::State::GO);
+    occlusion_stop_state_machine_.set_state(StateMachine::State::GO);
   } else {
-    occlusion_stop_state_machine_.setStateWithMarginTime(
+    occlusion_stop_state_machine_.set_state_with_margin_time(
       std::holds_alternative<NotOccluded>(occlusion_status) ? StateMachine::State::GO
                                                             : StateMachine::STOP,
       logger_.get_child("occlusion_stop"), *clock_);
   }
 
   const bool is_occlusion_cleared_with_margin =
-    (occlusion_stop_state_machine_.getState() == StateMachine::State::GO);  // module's detection
+    (occlusion_stop_state_machine_.get_state() == StateMachine::State::GO);  // module's detection
   // distinguish if ego detected occlusion or RTC detects occlusion
   const bool ext_occlusion_requested =
     (is_occlusion_cleared_with_margin && !occlusion_activated_);  // RTC's detection

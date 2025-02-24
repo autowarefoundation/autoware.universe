@@ -188,7 +188,7 @@ bool checkSafetyWithRSS(
  * @param debug The debug information for collision checking.
  * @return True if there is no collision.
  */
-bool checkCollision(
+bool check_collision(
   const PathWithLaneId & planned_path,
   const std::vector<PoseWithVelocityStamped> & predicted_ego_path,
   const ExtendedPredictedObject & target_object,

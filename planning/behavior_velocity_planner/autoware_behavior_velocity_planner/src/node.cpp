@@ -357,14 +357,15 @@ autoware_planning_msgs::msg::Path BehaviorVelocityPlannerNode::generatePath(
 
   // screening
   const auto filtered_path =
-    autoware::behavior_velocity_planner::filterLitterPathPoint(to_path(velocity_planned_path));
+    autoware::behavior_velocity_planner::filter_litter_path_point(to_path(velocity_planned_path));
 
   // interpolation
-  const auto interpolated_path_msg = autoware::behavior_velocity_planner::interpolatePath(
+  const auto interpolated_path_msg = autoware::behavior_velocity_planner::interpolate_path(
     filtered_path, forward_path_length_, behavior_output_path_interval_);
 
   // check stop point
-  output_path_msg = autoware::behavior_velocity_planner::filterStopPathPoint(interpolated_path_msg);
+  output_path_msg =
+    autoware::behavior_velocity_planner::filter_stop_path_point(interpolated_path_msg);
 
   output_path_msg.header.frame_id = "map";
   output_path_msg.header.stamp = this->now();

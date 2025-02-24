@@ -30,7 +30,7 @@ PlannerData::PlannerData(rclcpp::Node & node)
   delay_response_time = node.declare_parameter<double>("delay_response_time");
 }
 
-bool PlannerData::isVehicleStopped(const double stop_duration) const
+bool PlannerData::is_vehicle_stopped(const double stop_duration) const
 {
   if (velocity_buffer.empty()) {
     return false;
@@ -59,7 +59,7 @@ bool PlannerData::isVehicleStopped(const double stop_duration) const
   return true;
 }
 
-std::optional<TrafficSignalStamped> PlannerData::getTrafficSignal(
+std::optional<TrafficSignalStamped> PlannerData::get_traffic_signal(
   const lanelet::Id id, const bool keep_last_observation) const
 {
   const auto & traffic_light_id_map =

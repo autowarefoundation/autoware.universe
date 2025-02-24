@@ -66,19 +66,19 @@ TEST_F(TestStateMachine, testToString)
   using State = autoware::behavior_velocity_planner::run_out_utils::StateMachine::State;
   State state = state_machine_ptr_->getCurrentState();
 
-  auto state_string = state_machine_ptr_->toString(state);
+  auto state_string = state_machine_ptr_->to_string(state);
   EXPECT_EQ(state_string, "GO");
 
   state = State::STOP;
-  state_string = state_machine_ptr_->toString(state);
+  state_string = state_machine_ptr_->to_string(state);
   EXPECT_EQ(state_string, "STOP");
 
   state = State::APPROACH;
-  state_string = state_machine_ptr_->toString(state);
+  state_string = state_machine_ptr_->to_string(state);
   EXPECT_EQ(state_string, "APPROACH");
 
   state = State::UNKNOWN;
-  state_string = state_machine_ptr_->toString(state);
+  state_string = state_machine_ptr_->to_string(state);
   EXPECT_EQ(state_string, "UNKNOWN");
 }
 

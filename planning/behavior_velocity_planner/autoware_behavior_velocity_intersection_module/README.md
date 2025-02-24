@@ -542,7 +542,7 @@ WIP
 
 ```plantuml
 @startuml
-title modifyPathVelocity
+title modify_path_velocity
 start
 
 :get object polygon;

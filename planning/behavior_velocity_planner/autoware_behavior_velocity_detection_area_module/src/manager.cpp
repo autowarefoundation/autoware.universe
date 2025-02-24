@@ -34,9 +34,9 @@ using autoware::universe_utils::getOrDeclareParameter;
 using lanelet::autoware::DetectionArea;
 
 DetectionAreaModuleManager::DetectionAreaModuleManager(rclcpp::Node & node)
-: SceneModuleManagerInterface(node, getModuleName())
+: SceneModuleManagerInterface(node, get_module_name())
 {
-  const std::string ns(DetectionAreaModuleManager::getModuleName());
+  const std::string ns(DetectionAreaModuleManager::get_module_name());
   planner_param_.stop_margin = getOrDeclareParameter<double>(node, ns + ".stop_margin");
   planner_param_.use_dead_line = getOrDeclareParameter<bool>(node, ns + ".use_dead_line");
   planner_param_.dead_line_margin = getOrDeclareParameter<double>(node, ns + ".dead_line_margin");
@@ -51,18 +51,18 @@ DetectionAreaModuleManager::DetectionAreaModuleManager(rclcpp::Node & node)
     getOrDeclareParameter<bool>(node, ns + ".suppress_pass_judge_when_stopping");
 }
 
-void DetectionAreaModuleManager::launchNewModules(
+void DetectionAreaModuleManager::launch_new_modules(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
   for (const auto & detection_area_with_lane_id :
-       planning_utils::getRegElemMapOnPath<DetectionArea>(
+       planning_utils::get_reg_elem_map_on_path<DetectionArea>(
          path, planner_data_->route_handler_->getLaneletMapPtr(),
          planner_data_->current_odometry->pose)) {
     // Use lanelet_id to unregister module when the route is changed
     const auto lane_id = detection_area_with_lane_id.second.id();
     const auto module_id = detection_area_with_lane_id.first->id();
-    if (!isModuleRegistered(module_id)) {
-      registerModule(std::make_shared<DetectionAreaModule>(
+    if (!is_module_registered(module_id)) {
+      register_module(std::make_shared<DetectionAreaModule>(
         module_id, lane_id, *detection_area_with_lane_id.first, planner_param_,
         logger_.get_child("detection_area_module"), clock_, time_keeper_,
         planning_factor_interface_));
@@ -71,14 +71,14 @@ void DetectionAreaModuleManager::launchNewModules(
 }
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
-DetectionAreaModuleManager::getModuleExpiredFunction(
+DetectionAreaModuleManager::get_module_expired_function(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
-  const auto detection_area_id_set = planning_utils::getRegElemIdSetOnPath<DetectionArea>(
+  const auto detection_area_id_set = planning_utils::get_reg_elem_id_set_on_path<DetectionArea>(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
   return [detection_area_id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
-    return detection_area_id_set.count(scene_module->getModuleId()) == 0;
+    return detection_area_id_set.count(scene_module->get_module_id()) == 0;
   };
 }
 

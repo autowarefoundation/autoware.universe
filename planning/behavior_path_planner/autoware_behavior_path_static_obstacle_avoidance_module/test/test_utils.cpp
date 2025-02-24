@@ -812,7 +812,7 @@ TEST(TestUtils, calcShiftLength)
   }
 }
 
-TEST(TestUtils, insertDecelPoint)
+TEST(TestUtils, insert_decel_point)
 {
   // invalid target decel point
   {
@@ -824,7 +824,7 @@ TEST(TestUtils, insertDecelPoint)
     constexpr double velocity = 1.0;
 
     PoseWithDetailOpt p_out{std::nullopt};
-    insertDecelPoint(ego_position, offset, velocity, path, p_out);
+    insert_decel_point(ego_position, offset, velocity, path, p_out);
 
     EXPECT_FALSE(p_out.has_value());
     std::for_each(path.points.begin(), path.points.end(), [](const auto & p) {
@@ -842,7 +842,7 @@ TEST(TestUtils, insertDecelPoint)
     constexpr double velocity = 1.0;
 
     PoseWithDetailOpt p_out{std::nullopt};
-    insertDecelPoint(ego_position, offset, velocity, path, p_out);
+    insert_decel_point(ego_position, offset, velocity, path, p_out);
 
     ASSERT_TRUE(p_out.has_value());
     EXPECT_DOUBLE_EQ(p_out.value().pose.position.x, 6.5);

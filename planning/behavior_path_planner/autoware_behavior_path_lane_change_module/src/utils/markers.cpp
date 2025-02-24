@@ -274,7 +274,7 @@ MarkerArray ShowLaneChangeMetricsInfo(
   return marker_array;
 }
 
-MarkerArray createDebugMarkerArray(
+MarkerArray create_debug_marker_array(
   const InterfaceDebug & interface_debug_data, const Debug & scene_debug_data,
   const geometry_msgs::msg::Pose & ego_pose)
 {
@@ -297,7 +297,7 @@ MarkerArray createDebugMarkerArray(
   };
 
   if (!scene_debug_data.execution_area.points.empty()) {
-    add(createPolygonMarkerArray(
+    add(create_polygon_marker_array(
       scene_debug_data.execution_area, "execution_area", 0, 0.16, 1.0, 0.69, 0.1));
   }
 

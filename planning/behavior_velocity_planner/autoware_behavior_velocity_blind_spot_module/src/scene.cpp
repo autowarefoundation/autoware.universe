@@ -93,7 +93,7 @@ BlindSpotDecision BlindSpotModule::modifyPathVelocityDetail(PathWithLaneId * pat
     planner_data_->ego_nearest_yaw_threshold);
   const auto stop_line_idx =
     closest_idx > default_stopline_idx ? critical_stopline_idx : default_stopline_idx;
-  const auto stop_line_pose = planning_utils::getAheadPose(
+  const auto stop_line_pose = planning_utils::get_ahead_pose(
     stop_line_idx, planner_data_->vehicle_info_.max_longitudinal_offset_m, input_path);
 
   const auto is_over_pass_judge = isOverPassJudge(input_path, stop_line_pose);
@@ -132,11 +132,11 @@ BlindSpotDecision BlindSpotModule::modifyPathVelocityDetail(PathWithLaneId * pat
   const auto collision_obstacle = isCollisionDetected(
     blind_spot_lanelets, path->points.at(critical_stopline_idx).point.pose, detection_area,
     ego_time_to_reach_stop_line);
-  state_machine_.setStateWithMarginTime(
+  state_machine_.set_state_with_margin_time(
     collision_obstacle.has_value() ? StateMachine::State::STOP : StateMachine::State::GO,
     logger_.get_child("state_machine"), *clock_);
 
-  if (state_machine_.getState() == StateMachine::State::STOP) {
+  if (state_machine_.get_state() == StateMachine::State::STOP) {
     return Unsafe{stop_line_idx, collision_obstacle};
   }
 
@@ -170,7 +170,7 @@ void BlindSpotModule::reactRTCApproval(const BlindSpotDecision & decision, PathW
     decision);
 }
 
-bool BlindSpotModule::modifyPathVelocity(PathWithLaneId * path)
+bool BlindSpotModule::modify_path_velocity(PathWithLaneId * path)
 {
   debug_data_ = DebugData();
 
@@ -216,7 +216,7 @@ static std::optional<size_t> insertPointIndex(
   size_t insert_idx = closest_idx;
   autoware_internal_planning_msgs::msg::PathPointWithLaneId inserted_point =
     inout_path->points.at(closest_idx);
-  if (planning_utils::isAheadOf(in_pose, inout_path->points.at(closest_idx).point.pose)) {
+  if (planning_utils::is_ahead_of(in_pose, inout_path->points.at(closest_idx).point.pose)) {
     ++insert_idx;
   } else {
     // copy with velocity from prior point
@@ -327,7 +327,7 @@ std::optional<OverPassJudge> BlindSpotModule::isOverPassJudge(
   const auto & current_pose = planner_data_->current_odometry->pose;
 
   /* set judge line dist */
-  const double pass_judge_line_dist = planning_utils::calcJudgeLineDistWithAccLimit(
+  const double pass_judge_line_dist = planning_utils::calc_judge_line_dist_with_acc_limit(
     planner_data_->current_velocity->twist.linear.x, planner_data_->max_stop_acceleration_threshold,
     planner_data_->delay_response_time);
   const auto ego_segment_idx =
@@ -343,7 +343,7 @@ std::optional<OverPassJudge> BlindSpotModule::isOverPassJudge(
   /* if current_state = GO, and current_pose is over judge_line, ignore planning. */
   if (planner_param_.use_pass_judge_line) {
     const double eps = 1e-1;  // to prevent hunting
-    if (const auto current_state = state_machine_.getState();
+    if (const auto current_state = state_machine_.get_state();
         current_state == StateMachine::State::GO &&
         distance_until_stop + eps < pass_judge_line_dist) {
       return OverPassJudge{"over the pass judge line. no plan needed."};

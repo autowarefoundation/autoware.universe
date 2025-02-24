@@ -768,7 +768,7 @@ void StaticObstacleAvoidanceModule::updateEgoBehavior(
       return;
     }
 
-    insertStopPoint(isBestEffort(parameters_->policy_deceleration), path);
+    insert_stop_point(isBestEffort(parameters_->policy_deceleration), path);
   };
 
   insert_velocity();
@@ -836,7 +836,7 @@ bool StaticObstacleAvoidanceModule::isSafePath(
   const auto ego_predicted_path_params =
     std::make_shared<utils::path_safety_checker::EgoPredictedPathParams>(
       parameters_->ego_predicted_path_params);
-  const size_t ego_seg_idx = planner_data_->findEgoSegmentIndex(shifted_path.path.points);
+  const size_t ego_seg_idx = planner_data_->find_ego_segment_index(shifted_path.path.points);
   const auto ego_predicted_path_for_front_object = utils::path_safety_checker::createPredictedPath(
     ego_predicted_path_params, shifted_path.path.points, getEgoPose(), getEgoSpeed(), ego_seg_idx,
     true, limit_to_max_velocity);
@@ -871,7 +871,7 @@ bool StaticObstacleAvoidanceModule::isSafePath(
                                         : ego_predicted_path_for_rear_object;
 
     for (const auto & obj_path : obj_predicted_paths) {
-      if (!utils::path_safety_checker::checkCollision(
+      if (!utils::path_safety_checker::check_collision(
             shifted_path.path, ego_predicted_path, object, obj_path, p, parameters_->rss_params,
             hysteresis_factor, parameters_->collision_check_yaw_diff_threshold,
             current_debug_data.second)) {
@@ -975,7 +975,7 @@ auto StaticObstacleAvoidanceModule::getTurnSignal(
 
   const auto is_large_deviation = [this](const auto & path) {
     constexpr double threshold = 1.0;
-    const auto current_seg_idx = planner_data_->findEgoSegmentIndex(path.points);
+    const auto current_seg_idx = planner_data_->find_ego_segment_index(path.points);
     const auto lateral_deviation =
       autoware::motion_utils::calcLateralOffset(path.points, getEgoPosition(), current_seg_idx);
     return std::abs(lateral_deviation) > threshold;
@@ -1055,7 +1055,7 @@ auto StaticObstacleAvoidanceModule::getTurnSignal(
 
   update_ignore_signal(target_shift_line.id, is_ignore);
 
-  const auto current_seg_idx = planner_data_->findEgoSegmentIndex(spline_shift_path.path.points);
+  const auto current_seg_idx = planner_data_->find_ego_segment_index(spline_shift_path.path.points);
   return planner_data_->turn_signal_decider.overwrite_turn_signal(
     spline_shift_path.path, getEgoPose(), current_seg_idx, original_signal, new_signal,
     planner_data_->parameters.ego_nearest_dist_threshold,
@@ -1469,7 +1469,7 @@ void StaticObstacleAvoidanceModule::updateData()
   // update interest objects data
   for (const auto & [uuid, data] : debug_data_.collision_check) {
     const auto color = data.is_safe ? ColorName::GREEN : ColorName::RED;
-    setObjectsOfInterestData(data.current_obj_pose, data.obj_shape, color);
+    set_objects_of_interest_data(data.current_obj_pose, data.obj_shape, color);
   }
 
   safe_ = avoid_data_.safe;
@@ -1579,7 +1579,7 @@ void StaticObstacleAvoidanceModule::updateDebugMarker(
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
   debug_marker_.markers.clear();
-  debug_marker_ = utils::static_obstacle_avoidance::createDebugMarkerArray(
+  debug_marker_ = utils::static_obstacle_avoidance::create_debug_marker_array(
     output, data, shifter, debug, parameters_);
 }
 
@@ -1687,7 +1687,7 @@ void StaticObstacleAvoidanceModule::insertReturnDeadLine(
   // If we don't need to consider deceleration constraints, insert a deceleration point
   // and return immediately
   if (!use_constraints_for_decel) {
-    utils::static_obstacle_avoidance::insertDecelPoint(
+    utils::static_obstacle_avoidance::insert_decel_point(
       getEgoPosition(), to_stop_line - parameters_->stop_buffer, 0.0, shifted_path.path,
       stop_pose_);
     return;
@@ -1700,7 +1700,7 @@ void StaticObstacleAvoidanceModule::insertReturnDeadLine(
     return;
   }
 
-  utils::static_obstacle_avoidance::insertDecelPoint(
+  utils::static_obstacle_avoidance::insert_decel_point(
     getEgoPosition(), to_stop_line - parameters_->stop_buffer, 0.0, shifted_path.path, stop_pose_);
 
   // insert slow down speed.
@@ -1760,7 +1760,7 @@ void StaticObstacleAvoidanceModule::insertWaitPoint(
   // If we don't need to consider deceleration constraints, insert a deceleration point
   // and return immediately
   if (!use_constraints_for_decel) {
-    utils::static_obstacle_avoidance::insertDecelPoint(
+    utils::static_obstacle_avoidance::insert_decel_point(
       getEgoPosition(), data.to_stop_line, 0.0, shifted_path.path, stop_pose_);
     return;
   }
@@ -1775,7 +1775,7 @@ void StaticObstacleAvoidanceModule::insertWaitPoint(
 
   // If target object can be stopped for, insert a deceleration point and return
   if (data.stop_target_object.value().is_stoppable) {
-    utils::static_obstacle_avoidance::insertDecelPoint(
+    utils::static_obstacle_avoidance::insert_decel_point(
       getEgoPosition(), data.to_stop_line, 0.0, shifted_path.path, stop_pose_);
     return;
   }
@@ -1783,11 +1783,11 @@ void StaticObstacleAvoidanceModule::insertWaitPoint(
   // If the object cannot be stopped for, calculate a "mild" deceleration distance
   // and insert a deceleration point at that distance
   const auto stop_distance = helper_->getFeasibleDecelDistance(0.0, false);
-  utils::static_obstacle_avoidance::insertDecelPoint(
+  utils::static_obstacle_avoidance::insert_decel_point(
     getEgoPosition(), stop_distance, 0.0, shifted_path.path, stop_pose_);
 }
 
-void StaticObstacleAvoidanceModule::insertStopPoint(
+void StaticObstacleAvoidanceModule::insert_stop_point(
   const bool use_constraints_for_decel, ShiftedPath & shifted_path) const
 {
   universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
@@ -1820,7 +1820,7 @@ void StaticObstacleAvoidanceModule::insertStopPoint(
   // If we don't need to consider deceleration constraints, insert a deceleration point
   // and return immediately
   if (!use_constraints_for_decel) {
-    utils::static_obstacle_avoidance::insertDecelPoint(
+    utils::static_obstacle_avoidance::insert_decel_point(
       getEgoPosition(), stop_distance, 0.0, shifted_path.path, stop_pose_);
     return;
   }
@@ -1832,7 +1832,7 @@ void StaticObstacleAvoidanceModule::insertStopPoint(
   }
 
   constexpr double MARGIN = 1.0;
-  utils::static_obstacle_avoidance::insertDecelPoint(
+  utils::static_obstacle_avoidance::insert_decel_point(
     getEgoPosition(), stop_distance - MARGIN, 0.0, shifted_path.path, stop_pose_);
 }
 
@@ -1919,7 +1919,7 @@ void StaticObstacleAvoidanceModule::insertPrepareVelocity(ShiftedPath & shifted_
   const double current_target_velocity = autoware::motion_utils::calc_feasible_velocity_from_jerk(
     shift_length, helper_->getLateralMinJerkLimit(), distance_to_object);
   if (current_target_velocity < getEgoSpeed() + parameters_->buf_slow_down_speed) {
-    utils::static_obstacle_avoidance::insertDecelPoint(
+    utils::static_obstacle_avoidance::insert_decel_point(
       getEgoPosition(), decel_distance, parameters_->velocity_map.front(), shifted_path.path,
       slow_pose_);
     return;

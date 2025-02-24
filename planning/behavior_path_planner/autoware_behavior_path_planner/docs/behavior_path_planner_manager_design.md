@@ -95,9 +95,9 @@ Sub-manager is registered on the manager with the following function.
  */
 void registerSceneModuleManager(const SceneModuleManagerPtr & manager_ptr)
 {
-  RCLCPP_INFO(logger_, "register %s module", manager_ptr->getModuleName().c_str());
+  RCLCPP_INFO(logger_, "register %s module", manager_ptr->get_module_name().c_str());
   manager_ptrs_.push_back(manager_ptr);
-  processing_time_.emplace(manager_ptr->getModuleName(), 0.0);
+  processing_time_.emplace(manager_ptr->get_module_name(), 0.0);
 }
 ```
 

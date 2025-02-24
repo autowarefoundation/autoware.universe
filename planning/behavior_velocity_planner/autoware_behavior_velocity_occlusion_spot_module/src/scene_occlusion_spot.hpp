@@ -56,10 +56,10 @@ public:
   /**
    * @brief plan occlusion spot velocity at unknown area in occupancy grid
    */
-  bool modifyPathVelocity(PathWithLaneId * path) override;
+  bool modify_path_velocity(PathWithLaneId * path) override;
 
-  visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
-  autoware::motion_utils::VirtualWalls createVirtualWalls() override;
+  visualization_msgs::msg::MarkerArray create_debug_marker_array() override;
+  autoware::motion_utils::VirtualWalls create_virtual_walls() override;
 
 private:
   // Parameter

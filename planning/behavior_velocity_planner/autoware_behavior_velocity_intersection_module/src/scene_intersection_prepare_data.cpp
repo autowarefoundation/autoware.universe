@@ -196,7 +196,7 @@ Result<IntersectionModule::BasicData, InternalError> IntersectionModule::prepare
   const auto interpolated_path_info_opt = util::generateInterpolatedPath(
     lane_id_, associative_ids_, *path, planner_param_.common.path_interpolation_ds, logger_);
   if (!interpolated_path_info_opt) {
-    return make_err<IntersectionModule::BasicData, InternalError>("splineInterpolate failed");
+    return make_err<IntersectionModule::BasicData, InternalError>("spline_interpolate failed");
   }
 
   const auto & interpolated_path_info = interpolated_path_info_opt.value();
@@ -262,7 +262,7 @@ Result<IntersectionModule::BasicData, InternalError> IntersectionModule::prepare
   const auto & first_attention_area_opt = intersection_lanelets.first_attention_area();
   const auto & conflicting_area = intersection_lanelets.conflicting_area();
   const auto lanelets_on_path =
-    planning_utils::getLaneletsOnPath(*path, lanelet_map_ptr, current_pose);
+    planning_utils::get_lanelets_on_path(*path, lanelet_map_ptr, current_pose);
   // see the doc for struct PathLanelets
   const auto path_lanelets_opt = generatePathLanelets(
     lanelets_on_path, interpolated_path_info, first_conflicting_area, conflicting_area,
@@ -325,7 +325,7 @@ std::optional<size_t> IntersectionModule::getStopLineIndexFromMap(
   const auto p_start = stopline.front().front();
   const auto p_end = stopline.front().back();
   const LineString2d extended_stopline =
-    planning_utils::extendLine(p_start, p_end, planner_data_->stop_line_extend_length);
+    planning_utils::extend_line(p_start, p_end, planner_data_->stop_line_extend_length);
 
   for (size_t i = lane_interval.first; i < lane_interval.second; i++) {
     const auto & p_front = path.points.at(i).point.pose.position;
@@ -453,7 +453,7 @@ std::optional<IntersectionStopLines> IntersectionModule::generateIntersectionSto
   // (5) 1st pass judge line position on interpolated path
   const double velocity = planner_data_->current_velocity->twist.linear.x;
   const double acceleration = planner_data_->current_acceleration->accel.accel.linear.x;
-  const double braking_dist = planning_utils::calcJudgeLineDistWithJerkLimit(
+  const double braking_dist = planning_utils::calc_judge_line_dist_with_jerk_limit(
     velocity, acceleration, max_accel, max_jerk, delay_response_time);
   int first_pass_judge_ip_int =
     static_cast<int>(first_footprint_inside_1st_attention_ip) - std::ceil(braking_dist / ds);
@@ -829,7 +829,7 @@ IntersectionLanelets IntersectionModule::generateObjectiveLanelets(
     result.attention_non_preceding_stoplines_.push_back(stopline);
   }
   result.conflicting_ = std::move(conflicting_ex_ego_lanelets);
-  result.adjacent_ = planning_utils::getConstLaneletsFromIds(lanelet_map_ptr, associative_ids_);
+  result.adjacent_ = planning_utils::get_const_lanelets_from_ids(lanelet_map_ptr, associative_ids_);
   // NOTE: occlusion_attention is not inverted here
   // TODO(Mamoru Sobue): apply mergeLaneletsByTopologicalSort for occlusion lanelets as well and
   // then trim part of them based on curvature threshold

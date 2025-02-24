@@ -76,9 +76,9 @@ struct PlannerData
   double delay_response_time;
   double stop_line_extend_length;
 
-  bool isVehicleStopped(const double stop_duration = 0.0) const;
+  bool is_vehicle_stopped(const double stop_duration = 0.0) const;
 
-  std::optional<TrafficSignalStamped> getTrafficSignal(
+  std::optional<TrafficSignalStamped> get_traffic_signal(
     const lanelet::Id id, const bool keep_last_observation = false) const;
 };
 }  // namespace autoware::behavior_velocity_planner

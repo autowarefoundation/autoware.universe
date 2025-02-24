@@ -83,10 +83,10 @@ public:
    * @brief plan go-stop velocity at traffic crossing with collision check between reference path
    * and object predicted path
    */
-  bool modifyPathVelocity(PathWithLaneId * path) override;
+  bool modify_path_velocity(PathWithLaneId * path) override;
 
-  visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
-  std::vector<autoware::motion_utils::VirtualWall> createVirtualWalls() override;
+  visualization_msgs::msg::MarkerArray create_debug_marker_array() override;
+  std::vector<autoware::motion_utils::VirtualWall> create_virtual_walls() override;
 
 private:
   // (semi) const variables

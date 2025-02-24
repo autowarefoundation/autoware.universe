@@ -34,14 +34,15 @@ class DetectionAreaModuleManager : public SceneModuleManagerInterface<>
 public:
   explicit DetectionAreaModuleManager(rclcpp::Node & node);
 
-  const char * getModuleName() override { return "detection_area"; }
+  const char * get_module_name() override { return "detection_area"; }
 
 private:
   DetectionAreaModule::PlannerParam planner_param_;
 
-  void launchNewModules(const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
+  void launch_new_modules(
+    const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
 
-  std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
+  std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> get_module_expired_function(
     const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
 };
 

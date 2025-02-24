@@ -30,16 +30,17 @@ class RunOutModuleManager : public SceneModuleManagerInterface<>
 public:
   explicit RunOutModuleManager(rclcpp::Node & node);
 
-  const char * getModuleName() override { return "run_out"; }
+  const char * get_module_name() override { return "run_out"; }
 
 private:
   run_out_utils::PlannerParam planner_param_;
   std::shared_ptr<RunOutDebug> debug_ptr_;
   std::unique_ptr<DynamicObstacleCreator> dynamic_obstacle_creator_;
 
-  void launchNewModules(const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
+  void launch_new_modules(
+    const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
 
-  std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
+  std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> get_module_expired_function(
     const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
 
   void setDynamicObstacleCreator(rclcpp::Node & node, std::shared_ptr<RunOutDebug> & debug_ptr);

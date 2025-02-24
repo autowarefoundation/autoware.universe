@@ -36,20 +36,20 @@
 
 TEST(is_ahead_of, nominal)
 {
-  using autoware::behavior_velocity_planner::planning_utils::isAheadOf;
+  using autoware::behavior_velocity_planner::planning_utils::is_ahead_of;
   geometry_msgs::msg::Pose target = test::generatePose(0);
   geometry_msgs::msg::Pose origin = test::generatePose(1);
-  bool is_ahead = isAheadOf(target, origin);
+  bool is_ahead = is_ahead_of(target, origin);
   EXPECT_FALSE(is_ahead);
   target = test::generatePose(2);
-  is_ahead = isAheadOf(target, origin);
+  is_ahead = is_ahead_of(target, origin);
   EXPECT_TRUE(is_ahead);
 }
 
 TEST(smoothDeceleration, calculateMaxSlowDownVelocity)
 {
   using autoware::behavior_velocity_planner::planning_utils::
-    calcDecelerationVelocityFromDistanceToTarget;
+    calc_deceleration_velocity_from_distance_to_target;
   const double current_accel = 1.0;
   const double current_velocity = 5.0;
   const double max_slow_down_jerk = -1.0;
@@ -59,7 +59,7 @@ TEST(smoothDeceleration, calculateMaxSlowDownVelocity)
     for (int i = -8; i <= 24; i += 8) {
       // arc length in path point
       const double l = i * 1.0;
-      const double v = calcDecelerationVelocityFromDistanceToTarget(
+      const double v = calc_deceleration_velocity_from_distance_to_target(
         max_slow_down_jerk, max_slow_down_accel, current_accel, current_velocity, l);
       // case 0 : behind ego
       if (i == -8) EXPECT_NEAR(v, 5.0, eps);
@@ -84,7 +84,7 @@ TEST(smoothDeceleration, calculateMaxSlowDownVelocity)
 
 TEST(specialInterpolation, specialInterpolation)
 {
-  using autoware::behavior_velocity_planner::interpolatePath;
+  using autoware::behavior_velocity_planner::interpolate_path;
   using autoware::motion_utils::calcSignedArcLength;
   using autoware::motion_utils::searchZeroVelocityIndex;
   using autoware_planning_msgs::msg::Path;
@@ -107,7 +107,7 @@ TEST(specialInterpolation, specialInterpolation)
 
   const auto calcInterpolatedStopDist = [&](const auto & px, const auto & vx) {
     const auto path = genPath(px, vx);
-    const auto res = interpolatePath(path, length, interval);
+    const auto res = interpolate_path(path, length, interval);
     // DEBUG_PRINT_PATH(path);
     // DEBUG_PRINT_PATH(res);
     return calcSignedArcLength(res.points, 0, *searchZeroVelocityIndex(res.points));
@@ -177,9 +177,9 @@ TEST(specialInterpolation, specialInterpolation)
   }
 }
 
-TEST(filterLitterPathPoint, nominal)
+TEST(filter_litter_path_point, nominal)
 {
-  using autoware::behavior_velocity_planner::filterLitterPathPoint;
+  using autoware::behavior_velocity_planner::filter_litter_path_point;
   using autoware_planning_msgs::msg::Path;
   using autoware_planning_msgs::msg::PathPoint;
 
@@ -199,7 +199,7 @@ TEST(filterLitterPathPoint, nominal)
   const std::vector<double> vx{5.0, 3.5, 3.5, 3.0, 2.5};
 
   const auto path = genPath(px, vx);
-  const auto filtered_path = filterLitterPathPoint(path);
+  const auto filtered_path = filter_litter_path_point(path);
 
   ASSERT_EQ(filtered_path.points.size(), 4U);  // Expected: Points at x = {0.0, 1.0, 2.0, 3.0}
   EXPECT_DOUBLE_EQ(filtered_path.points[0].pose.position.x, 0.0);
@@ -213,9 +213,9 @@ TEST(filterLitterPathPoint, nominal)
   EXPECT_DOUBLE_EQ(filtered_path.points[3].longitudinal_velocity_mps, 2.5);
 }
 
-TEST(filterStopPathPoint, nominal)
+TEST(filter_stop_path_point, nominal)
 {
-  using autoware::behavior_velocity_planner::filterStopPathPoint;
+  using autoware::behavior_velocity_planner::filter_stop_path_point;
   using autoware_planning_msgs::msg::Path;
   using autoware_planning_msgs::msg::PathPoint;
 
@@ -234,7 +234,7 @@ TEST(filterStopPathPoint, nominal)
   const std::vector<double> vx{5.0, 4.0, 0.0, 2.0, 3.0};
 
   const auto path = genPath(px, vx);
-  const auto filtered_path = filterStopPathPoint(path);
+  const auto filtered_path = filter_stop_path_point(path);
 
   ASSERT_EQ(filtered_path.points.size(), 5U);
   EXPECT_DOUBLE_EQ(filtered_path.points[0].longitudinal_velocity_mps, 5.0);

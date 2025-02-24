@@ -44,7 +44,7 @@ Polygon2d toFootprintPolygon(const PredictedObject & object, const double scale 
   const Pose & obj_pose = object.kinematics.initial_pose_with_covariance.pose;
   Polygon2d obj_footprint = autoware::universe_utils::toPolygon2d(object);
   // upscale foot print for noise
-  obj_footprint = upScalePolygon(obj_pose.position, obj_footprint, scale);
+  obj_footprint = up_scale_polygon(obj_pose.position, obj_footprint, scale);
   return obj_footprint;
 }
 
@@ -90,7 +90,7 @@ bool buildDetectionAreaPolygon(
   da_range.right_overhang = p.right_overhang;
   da_range.left_overhang = p.left_overhang;
   slices.clear();
-  return planning_utils::createDetectionAreaPolygons(
+  return planning_utils::create_detection_area_polygons(
     slices, path, target_pose, target_seg_idx, da_range, p.pedestrian_vel);
 }
 

@@ -58,7 +58,7 @@ TrafficLightModule::TrafficLightModule(
   planner_param_ = planner_param;
 }
 
-bool TrafficLightModule::modifyPathVelocity(PathWithLaneId * path)
+bool TrafficLightModule::modify_path_velocity(PathWithLaneId * path)
 {
   debug_data_ = DebugData();
   debug_data_.base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
@@ -207,7 +207,7 @@ bool TrafficLightModule::isPassthrough(const double & signed_arc_length) const
 
   // Calculate distance until ego vehicle decide not to stop,
   // taking into account the jerk and acceleration.
-  const double pass_judge_line_distance = planning_utils::calcJudgeLineDistWithJerkLimit(
+  const double pass_judge_line_distance = planning_utils::calc_judge_line_dist_with_jerk_limit(
     planner_data_->current_velocity->twist.linear.x,
     planner_data_->current_acceleration->accel.accel.linear.x, max_acc, max_jerk,
     delay_response_time);
@@ -244,7 +244,7 @@ bool TrafficLightModule::isPassthrough(const double & signed_arc_length) const
 bool TrafficLightModule::findValidTrafficSignal(TrafficSignalStamped & valid_traffic_signal) const
 {
   // get traffic signal associated with the regulatory element id
-  const auto traffic_signal_stamped_opt = planner_data_->getTrafficSignal(
+  const auto traffic_signal_stamped_opt = planner_data_->get_traffic_signal(
     traffic_light_reg_elem_.id(), false /* traffic light module does not keep last observation */);
   if (!traffic_signal_stamped_opt) {
     RCLCPP_WARN_STREAM_ONCE(
@@ -292,7 +292,7 @@ autoware_internal_planning_msgs::msg::PathWithLaneId TrafficLightModule::insertS
 
   // Insert stop pose into path or replace with zero velocity
   size_t insert_index = insert_target_point_idx;
-  planning_utils::insertVelocity(modified_path, target_point_with_lane_id, 0.0, insert_index);
+  planning_utils::insert_velocity(modified_path, target_point_with_lane_id, 0.0, insert_index);
 
   planning_factor_interface_->add(
     modified_path.points, planner_data_->current_odometry->pose,

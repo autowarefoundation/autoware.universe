@@ -556,17 +556,17 @@ MarkerArray createDrivableBounds(
   return msg;
 }
 
-MarkerArray createDebugMarkerArray(
+MarkerArray create_debug_marker_array(
   const BehaviorModuleOutput & output, const AvoidancePlanningData & data,
   const PathShifter & shifter, const DebugData & debug,
   const std::shared_ptr<AvoidanceParameters> & parameters)
 {
   using autoware::behavior_path_planner::utils::transformToLanelets;
   using lanelet::visualization::laneletsAsTriangleMarkerArray;
+  using marker_utils::create_objects_marker_array;
+  using marker_utils::create_path_marker_array;
+  using marker_utils::create_polygon_marker_array;
   using marker_utils::createLaneletsAreaMarkerArray;
-  using marker_utils::createObjectsMarkerArray;
-  using marker_utils::createPathMarkerArray;
-  using marker_utils::createPolygonMarkerArray;
   using marker_utils::createPoseMarkerArray;
   using marker_utils::createShiftGradMarkerArray;
   using marker_utils::createShiftLengthMarkerArray;
@@ -671,7 +671,7 @@ MarkerArray createDebugMarkerArray(
   if (parameters->enable_detection_area_marker) {
     size_t i = 0;
     for (const auto & detection_area : debug.detection_areas) {
-      add(createPolygonMarkerArray(detection_area, "detection_area", i++, 0.16, 1.0, 0.69, 0.1));
+      add(create_polygon_marker_array(detection_area, "detection_area", i++, 0.16, 1.0, 0.69, 0.1));
     }
   }
 
@@ -693,7 +693,7 @@ MarkerArray createDebugMarkerArray(
 
   // misc
   if (parameters->enable_misc_marker) {
-    add(createPathMarkerArray(path, "centerline_resampled", 0, 0.0, 0.9, 0.5));
+    add(create_path_marker_array(path, "centerline_resampled", 0, 0.0, 0.9, 0.5));
     add(createTurnSignalMarkerArray(output.turn_signal_info, "turn_signal_info"));
   }
 

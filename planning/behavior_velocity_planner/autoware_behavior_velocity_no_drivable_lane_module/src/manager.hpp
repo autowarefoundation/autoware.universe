@@ -34,14 +34,15 @@ class NoDrivableLaneModuleManager : public SceneModuleManagerInterface<>
 public:
   explicit NoDrivableLaneModuleManager(rclcpp::Node & node);
 
-  const char * getModuleName() override { return "no_drivable_lane"; }
+  const char * get_module_name() override { return "no_drivable_lane"; }
 
 private:
   NoDrivableLaneModule::PlannerParam planner_param_;
 
-  void launchNewModules(const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
+  void launch_new_modules(
+    const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
 
-  std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
+  std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> get_module_expired_function(
     const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
 };
 

@@ -547,7 +547,7 @@ void SubPlannerManager::clearApprovedModules()
   std::for_each(approved_module_ptrs_.begin(), approved_module_ptrs_.end(), [this](auto & m) {
     debug_info_.scene_status.emplace_back(
       m, SceneModuleUpdateInfo::Action::DELETE, "From Approved");
-    deleteExpiredModules(m);
+    delete_expired_modules(m);
   });
   approved_module_ptrs_.clear();
 }
@@ -570,7 +570,7 @@ void SubPlannerManager::updateCandidateModules(
   {
     const auto candidate_to_remove = [&](auto & itr) {
       if (!exist(itr, request_modules)) {
-        deleteExpiredModules(itr);
+        delete_expired_modules(itr);
         return true;
       }
       return itr->name() == highest_priority_module->name() &&
@@ -673,12 +673,12 @@ std::pair<SceneModulePtr, BehaviorModuleOutput> SubPlannerManager::runRequestMod
   {
     const auto remove_expired_modules = [this](auto & m) {
       if (m->getCurrentStatus() == ModuleStatus::FAILURE) {
-        deleteExpiredModules(m);
+        delete_expired_modules(m);
         return true;
       }
 
       if (m->getCurrentStatus() == ModuleStatus::SUCCESS) {
-        deleteExpiredModules(m);
+        delete_expired_modules(m);
         return true;
       }
 
@@ -832,7 +832,7 @@ SlotOutput SubPlannerManager::runApprovedModules(
       results.erase(m->name());
       debug_info_.scene_status.emplace_back(
         m, SceneModuleUpdateInfo::Action::DELETE, "From Approved");
-      deleteExpiredModules(m);
+      delete_expired_modules(m);
     });
     approved_module_ptrs_.erase(failed_itr, approved_module_ptrs_.end());
 
@@ -873,7 +873,7 @@ SlotOutput SubPlannerManager::runApprovedModules(
     if ((*success_itr)->getCurrentStatus() == ModuleStatus::SUCCESS) {
       debug_info_.scene_status.emplace_back(
         *success_itr, SceneModuleUpdateInfo::Action::DELETE, "From Approved");
-      deleteExpiredModules(*success_itr);
+      delete_expired_modules(*success_itr);
       success_itr = approved_module_ptrs_.erase(success_itr);
     } else {
       success_itr++;

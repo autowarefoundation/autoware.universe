@@ -14,19 +14,19 @@ The `TemplateModule` class serves as a foundation for creating a scene module wi
 
 - The constructor for `TemplateModule` takes the essential parameters to create a module: `const int64_t module_id`, `const rclcpp::Logger & logger`, and `const rclcpp::Clock::SharedPtr clock`. These parameters are supplied by the `TemplateModuleManager` when registering a new module. Other parameters can be added to the constructor, if required by your specific module implementation.
 
-#### `modifyPathVelocity` Method
+#### `modify_path_velocity` Method
 
 - This method, defined in the `TemplateModule` class, is expected to modify the velocity of the input path based on certain conditions. In the provided code, it logs an informational message once when the template module is executing.
 - The specific logic for velocity modification should be implemented in this method based on the module's requirements.
 
-#### `createDebugMarkerArray` Method
+#### `create_debug_marker_array` Method
 
 - This method, also defined in the `TemplateModule` class, is responsible for creating a visualization of debug markers and returning them as a `visualization_msgs::msg::MarkerArray`. In the provided code, it returns an empty `MarkerArray`.
 - You should implement the logic to generate debug markers specific to your module's functionality.
 
-#### `createVirtualWalls` Method
+#### `create_virtual_walls` Method
 
-- The `createVirtualWalls` method creates virtual walls for the scene and returns them as `autoware::motion_utils::VirtualWalls`. In the provided code, it returns an empty `VirtualWalls` object.
+- The `create_virtual_walls` method creates virtual walls for the scene and returns them as `autoware::motion_utils::VirtualWalls`. In the provided code, it returns an empty `VirtualWalls` object.
 - You should implement the logic to create virtual walls based on your module's requirements.
 
 ## `Manager`
@@ -43,24 +43,24 @@ The managing of your modules is defined in manager.hpp and manager.cpp. The mana
 - This is the constructor of the `TemplateModuleManager` class, and it takes an `rclcpp::Node` reference as a parameter.
 - It initializes a member variable `dummy_parameter_` to 0.0.
 
-#### `getModuleName()` Method
+#### `get_module_name()` Method
 
 - This method is an override of a virtual method from the `SceneModuleManagerInterface` class.
 - It returns a pointer to a constant character string, which is the name of the module. In this case, it returns "template" as the module name.
 
-#### `launchNewModules()` Method
+#### `launch_new_modules()` Method
 
 - This is a private method that takes an argument of type `autoware_internal_planning_msgs::msg::PathWithLaneId`.
 - It is responsible for launching new modules based on the provided path information (PathWithLaneId). The implementation of this method involves initializing and configuring modules specific to your behavior velocity planner by using the `TemplateModule` class.
 - In the provided source code, it initializes a `module_id` to 0 and checks if a module with the same ID is already registered. If not, it registers a new `TemplateModule` with the module ID. Note that each module managed by the `TemplateModuleManager` should have a unique ID. The template code registers a single module, so the `module_id` is set as 0 for simplicity.
 
-#### `getModuleExpiredFunction()` Method
+#### `get_module_expired_function()` Method
 
 - This is a private method that takes an argument of type `autoware_internal_planning_msgs::msg::PathWithLaneId`.
 - It returns a `std::function<bool(const std::shared_ptr<SceneModuleInterface>&)>`. This function is used by the behavior velocity planner to determine whether a particular module has expired or not based on the given path.
 - The implementation of this method is expected to return a function that can be used to check the expiration status of modules.
 
-Please note that the specific functionality of the methods `launchNewModules()` and `getModuleExpiredFunction()` would depend on the details of your behavior velocity modules and how they are intended to be managed within the Autoware system. You would need to implement these methods according to your module's requirements.
+Please note that the specific functionality of the methods `launch_new_modules()` and `get_module_expired_function()` would depend on the details of your behavior velocity modules and how they are intended to be managed within the Autoware system. You would need to implement these methods according to your module's requirements.
 
 ### `TemplateModulePlugin` Class
 
@@ -73,7 +73,7 @@ Please note that the specific functionality of the methods `launchNewModules()` 
 In the following example, we take each point of the path, and multiply it by 2. Essentially duplicating the speed. Note that the velocity smoother will further modify the path speed after all the behavior velocity modules are executed.
 
 ```cpp
-bool TemplateModule::modifyPathVelocity(
+bool TemplateModule::modify_path_velocity(
   [[maybe_unused]] PathWithLaneId * path, [[maybe_unused]] StopReason * stop_reason)
 {
   for (auto & p : path->points) {

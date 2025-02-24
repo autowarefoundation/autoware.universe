@@ -372,7 +372,7 @@ void createOneStepPolygon(
   boost::geometry::convex_hull(polygon, hull_polygon);
 }
 
-void insertStopPoint(
+void insert_stop_point(
   const StopPoint & stop_point, TrajectoryPoints & output, DiagnosticStatus & stop_reason_diag)
 {
   const auto traj_end_idx = output.size() - 1;

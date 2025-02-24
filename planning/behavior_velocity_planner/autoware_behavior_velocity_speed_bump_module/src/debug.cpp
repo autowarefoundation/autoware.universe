@@ -96,7 +96,7 @@ visualization_msgs::msg::MarkerArray createSpeedBumpMarkers(
 }
 }  // namespace
 
-autoware::motion_utils::VirtualWalls SpeedBumpModule::createVirtualWalls()
+autoware::motion_utils::VirtualWalls SpeedBumpModule::create_virtual_walls()
 {
   autoware::motion_utils::VirtualWalls virtual_walls;
   autoware::motion_utils::VirtualWall wall;
@@ -110,7 +110,7 @@ autoware::motion_utils::VirtualWalls SpeedBumpModule::createVirtualWalls()
   return virtual_walls;
 }
 
-visualization_msgs::msg::MarkerArray SpeedBumpModule::createDebugMarkerArray()
+visualization_msgs::msg::MarkerArray SpeedBumpModule::create_debug_marker_array()
 {
   visualization_msgs::msg::MarkerArray debug_marker_array;
 

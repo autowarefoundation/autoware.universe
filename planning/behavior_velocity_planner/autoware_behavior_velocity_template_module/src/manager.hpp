@@ -51,7 +51,7 @@ public:
    *
    * @return A pointer to a constant character string containing the module name.
    */
-  const char * getModuleName() override { return "template"; }
+  const char * get_module_name() override { return "template"; }
 
 private:
   double dummy_parameter_{0.0};
@@ -64,7 +64,8 @@ private:
    *
    * @param path The path with lane ID information to determine module launch.
    */
-  void launchNewModules(const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
+  void launch_new_modules(
+    const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
 
   /**
    * @brief Get a function to check module expiration.
@@ -75,7 +76,7 @@ private:
    * @param path The path with lane ID information for module expiration check.
    * @return A function for checking module expiration.
    */
-  std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
+  std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> get_module_expired_function(
     const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
 };
 

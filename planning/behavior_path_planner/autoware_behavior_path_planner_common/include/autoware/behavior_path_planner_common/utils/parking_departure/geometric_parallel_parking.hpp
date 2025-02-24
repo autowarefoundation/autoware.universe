@@ -78,7 +78,7 @@ public:
     const std::shared_ptr<autoware::lane_departure_checker::LaneDepartureChecker>
       autoware_lane_departure_checker);
   void setParameters(const ParallelParkingParameters & parameters) { parameters_ = parameters; }
-  void setPlannerData(const std::shared_ptr<const PlannerData> & planner_data)
+  void set_planner_data(const std::shared_ptr<const PlannerData> & planner_data)
   {
     planner_data_ = planner_data;
   }

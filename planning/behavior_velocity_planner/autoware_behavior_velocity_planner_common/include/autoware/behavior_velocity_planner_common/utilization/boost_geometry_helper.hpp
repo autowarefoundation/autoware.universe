@@ -72,7 +72,7 @@ LineString2d to_bg2d(const std::vector<T> & vec)
 
 Polygon2d lines2polygon(const LineString2d & left_line, const LineString2d & right_line);
 
-Polygon2d upScalePolygon(
+Polygon2d up_scale_polygon(
   const geometry_msgs::msg::Point & position, const Polygon2d & polygon, const double scale);
 
 geometry_msgs::msg::Polygon toGeomPoly(const Polygon2d & polygon);

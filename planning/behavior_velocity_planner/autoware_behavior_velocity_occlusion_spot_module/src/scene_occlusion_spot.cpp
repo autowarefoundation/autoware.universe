@@ -81,11 +81,11 @@ OcclusionSpotModule::OcclusionSpotModule(
   }
   if (param_.use_partition_lanelet) {
     const lanelet::LaneletMapConstPtr & ll = planner_data->route_handler_->getLaneletMapPtr();
-    planning_utils::getAllPartitionLanelets(ll, partition_lanelets_);
+    planning_utils::get_all_partition_lanelets(ll, partition_lanelets_);
   }
 }
 
-bool OcclusionSpotModule::modifyPathVelocity(PathWithLaneId * path)
+bool OcclusionSpotModule::modify_path_velocity(PathWithLaneId * path)
 {
   if (param_.is_show_processing_time) stop_watch_.tic("total_processing_time");
   debug_data_.resetData();
@@ -100,7 +100,7 @@ bool OcclusionSpotModule::modifyPathVelocity(PathWithLaneId * path)
     param_.v.a_ego = planner_data_->current_acceleration->accel.accel.linear.x;
     param_.v.delay_time = planner_data_->system_delay;
     param_.detection_area_max_length =
-      planning_utils::calcJudgeLineDistWithJerkLimit(
+      planning_utils::calc_judge_line_dist_with_jerk_limit(
         param_.v.v_ego, param_.v.a_ego, param_.v.non_effective_accel, param_.v.non_effective_jerk,
         planner_data_->delay_response_time) +
       param_.detection_area_offset;  // To fill difference between planned and measured acc
@@ -110,7 +110,7 @@ bool OcclusionSpotModule::modifyPathVelocity(PathWithLaneId * path)
   utils::clipPathByLength(*path, clipped_path, param_.detection_area_length);
   PathWithLaneId path_interpolated;
   //! never change this interpolation interval(will affect module accuracy)
-  splineInterpolate(clipped_path, 1.0, path_interpolated, logger_);
+  spline_interpolate(clipped_path, 1.0, path_interpolated, logger_);
   const geometry_msgs::msg::Point start_point = path_interpolated.points.at(0).point.pose.position;
   const auto ego_segment_idx = autoware::motion_utils::findNearestSegmentIndex(
     path_interpolated.points, ego_pose, param_.dist_thr, param_.angle_thr);
@@ -127,13 +127,13 @@ bool OcclusionSpotModule::modifyPathVelocity(PathWithLaneId * path)
   if (param_.pass_judge == utils::PASS_JUDGE::CURRENT_VELOCITY) {
     predicted_path = utils::applyVelocityToPath(path_interpolated, param_.v.v_ego);
   } else if (param_.pass_judge == utils::PASS_JUDGE::SMOOTH_VELOCITY) {
-    if (!smoothPath(path_interpolated, predicted_path, planner_data_)) {
+    if (!smooth_path(path_interpolated, predicted_path, planner_data_)) {
       predicted_path = utils::applyVelocityToPath(path_interpolated, param_.v.v_ego);
       // use current ego velocity in path if optimization failure
     }
   }
   DEBUG_PRINT(show_time, "apply velocity [ms]: ", stop_watch_.toc("processing_time", true));
-  const size_t ego_seg_idx = findEgoSegmentIndex(predicted_path.points);
+  const size_t ego_seg_idx = find_ego_segment_index(predicted_path.points);
   if (!utils::buildDetectionAreaPolygon(
         debug_data_.detection_area_polygons, predicted_path, ego_pose, ego_seg_idx, param_)) {
     return true;  // path point is not enough
@@ -142,7 +142,7 @@ bool OcclusionSpotModule::modifyPathVelocity(PathWithLaneId * path)
   std::vector<utils::PossibleCollisionInfo> possible_collisions;
   // extract only close lanelet
   if (param_.use_partition_lanelet) {
-    planning_utils::extractClosePartition(
+    planning_utils::extract_close_partition(
       ego_pose.position, partition_lanelets_, debug_data_.close_partition);
   }
   DEBUG_PRINT(show_time, "extract[ms]: ", stop_watch_.toc("processing_time", true));

@@ -208,7 +208,7 @@ private:
     PlannerData & planner_data, const Header & trajectory_header, const VehicleInfo & vehicle_info,
     const StopParam & stop_param);
 
-  void insertVelocity(
+  void insert_velocity(
     TrajectoryPoints & trajectory, PlannerData & planner_data, const Header & trajectory_header,
     const VehicleInfo & vehicle_info, const double current_acc, const double current_vel,
     const StopParam & stop_param);
@@ -218,7 +218,7 @@ private:
     PointCloud::Ptr output_points_ptr, const Header & trajectory_header,
     const VehicleInfo & vehicle_info, const StopParam & stop_param);
 
-  StopPoint createTargetPoint(
+  StopPoint create_target_point(
     const int idx, const double margin, const TrajectoryPoints & base_trajectory,
     const double dist_remain);
 

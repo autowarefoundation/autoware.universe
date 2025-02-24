@@ -35,18 +35,19 @@ class TrafficLightModuleManager : public SceneModuleManagerInterfaceWithRTC
 public:
   explicit TrafficLightModuleManager(rclcpp::Node & node);
 
-  const char * getModuleName() override { return "traffic_light"; }
+  const char * get_module_name() override { return "traffic_light"; }
 
 private:
   TrafficLightModule::PlannerParam planner_param_;
 
-  void launchNewModules(const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
-
-  std::function<bool(const std::shared_ptr<SceneModuleInterfaceWithRTC> &)>
-  getModuleExpiredFunction(
+  void launch_new_modules(
     const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
 
-  void modifyPathVelocity(autoware_internal_planning_msgs::msg::PathWithLaneId * path) override;
+  std::function<bool(const std::shared_ptr<SceneModuleInterfaceWithRTC> &)>
+  get_module_expired_function(
+    const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
+
+  void modify_path_velocity(autoware_internal_planning_msgs::msg::PathWithLaneId * path) override;
 
   bool isModuleRegisteredFromRegElement(const lanelet::Id & id, const size_t module_id) const;
 

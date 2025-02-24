@@ -71,7 +71,7 @@ visualization_msgs::msg::MarkerArray createNoDrivableLaneMarkers(
 }
 }  // namespace
 
-autoware::motion_utils::VirtualWalls NoDrivableLaneModule::createVirtualWalls()
+autoware::motion_utils::VirtualWalls NoDrivableLaneModule::create_virtual_walls()
 {
   autoware::motion_utils::VirtualWalls virtual_walls;
 
@@ -91,7 +91,7 @@ autoware::motion_utils::VirtualWalls NoDrivableLaneModule::createVirtualWalls()
   return virtual_walls;
 }
 
-visualization_msgs::msg::MarkerArray NoDrivableLaneModule::createDebugMarkerArray()
+visualization_msgs::msg::MarkerArray NoDrivableLaneModule::create_debug_marker_array()
 {
   visualization_msgs::msg::MarkerArray debug_marker_array;
   const auto now = this->clock_->now();

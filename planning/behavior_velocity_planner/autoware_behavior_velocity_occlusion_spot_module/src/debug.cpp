@@ -187,7 +187,7 @@ MarkerArray makeSlicePolygonMarker(
 }
 }  // namespace
 
-MarkerArray OcclusionSpotModule::createDebugMarkerArray()
+MarkerArray OcclusionSpotModule::create_debug_marker_array()
 {
   const auto now = this->clock_->now();
   MarkerArray debug_marker_array;
@@ -207,14 +207,14 @@ MarkerArray OcclusionSpotModule::createDebugMarkerArray()
   }
   if (!debug_data_.occlusion_points.empty()) {
     appendMarkerArray(
-      debug::createPointsMarkerArray(
+      debug::create_points_marker_array(
         debug_data_.occlusion_points, "occlusion", module_id_, now, 0.5, 0.5, 0.5, 1.0, 0.0, 0.0),
       &debug_marker_array, now);
   }
   return debug_marker_array;
 }
 
-autoware::motion_utils::VirtualWalls OcclusionSpotModule::createVirtualWalls()
+autoware::motion_utils::VirtualWalls OcclusionSpotModule::create_virtual_walls()
 {
   autoware::motion_utils::VirtualWalls virtual_walls;
   autoware::motion_utils::VirtualWall wall;

@@ -80,7 +80,7 @@ MarkerArray createFootprintMarkerArray(
   return msg;
 }
 
-MarkerArray createPointsMarkerArray(
+MarkerArray create_points_marker_array(
   const std::vector<Point> & points, const std::string & ns, const int32_t id, const float r,
   const float g, const float b)
 {
@@ -112,7 +112,7 @@ MarkerArray createPoseMarkerArray(
   return msg;
 }
 
-MarkerArray createPathMarkerArray(
+MarkerArray create_path_marker_array(
   const PathWithLaneId & path, std::string && ns, const int64_t & lane_id, const float & r,
   const float & g, const float & b)
 {
@@ -293,7 +293,7 @@ MarkerArray createLaneletsAreaMarkerArray(
   return msg;
 }
 
-MarkerArray createPolygonMarkerArray(
+MarkerArray create_polygon_marker_array(
   const Polygon & polygon, std::string && ns, const int64_t & lane_id, const float & r,
   const float & g, const float & b, const float & w)
 {
@@ -320,7 +320,7 @@ MarkerArray createPolygonMarkerArray(
   return msg;
 }
 
-MarkerArray createObjectsMarkerArray(
+MarkerArray create_objects_marker_array(
   const PredictedObjects & objects, std::string && ns, const int64_t & lane_id, const float & r,
   const float & g, const float & b)
 {

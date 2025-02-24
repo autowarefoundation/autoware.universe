@@ -47,7 +47,8 @@ void applySafeVelocityConsideringPossibleCollision(
 
     // safe slow down: consider ego smooth brake
     const double v_safe_slow_down =
-      planning_utils::calcDecelerationVelocityFromDistanceToTarget(j_min, a_min, a0, v0, l_obs);
+      planning_utils::calc_deceleration_velocity_from_distance_to_target(
+        j_min, a_min, a0, v0, l_obs);
 
     // TODO(tanaka): consider edge case if ego passed safe margin
     const double v_slow_down = (l_obs < 0 && v0 <= v_safe) ? v_safe : v_safe_slow_down;
@@ -63,7 +64,7 @@ void applySafeVelocityConsideringPossibleCollision(
     possible_collision.obstacle_info.safe_motion.safe_velocity = safe_velocity;
     const auto & pose = possible_collision.collision_with_margin.pose;
     const auto & decel_pose =
-      planning_utils::insertDecelPoint(pose.position, *inout_path, safe_velocity);
+      planning_utils::insert_decel_point(pose.position, *inout_path, safe_velocity);
     if (decel_pose) debug_poses.push_back(decel_pose.value());
   }
 }

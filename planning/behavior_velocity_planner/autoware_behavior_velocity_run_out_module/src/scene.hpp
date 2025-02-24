@@ -52,10 +52,10 @@ public:
     const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
       planning_factor_interface);
 
-  bool modifyPathVelocity(PathWithLaneId * path) override;
+  bool modify_path_velocity(PathWithLaneId * path) override;
 
-  visualization_msgs::msg::MarkerArray createDebugMarkerArray() override;
-  autoware::motion_utils::VirtualWalls createVirtualWalls() override;
+  visualization_msgs::msg::MarkerArray create_debug_marker_array() override;
+  autoware::motion_utils::VirtualWalls create_virtual_walls() override;
 
   void setPlannerParam(const PlannerParam & planner_param);
 
@@ -88,7 +88,7 @@ private:
   std::vector<geometry_msgs::msg::Point> createVehiclePolygon(
     const geometry_msgs::msg::Pose & base_pose) const;
 
-  std::vector<DynamicObstacle> checkCollisionWithObstacles(
+  std::vector<DynamicObstacle> check_collisionWithObstacles(
     const std::vector<DynamicObstacle> & dynamic_obstacles,
     const std::vector<geometry_msgs::msg::Point> & poly, const float travel_time,
     const std::vector<std::pair<int64_t, lanelet::ConstLanelet>> & crosswalk_lanelets) const;
@@ -101,21 +101,21 @@ private:
     const std::vector<PredictedPath> & predicted_paths, const float travel_time,
     const float velocity_mps) const;
 
-  bool checkCollisionWithShape(
+  bool check_collisionWithShape(
     const Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range, const Shape & shape,
     const std::vector<std::pair<int64_t, lanelet::ConstLanelet>> & crosswalk_lanelets,
     std::vector<geometry_msgs::msg::Point> & collision_points) const;
 
-  bool checkCollisionWithCylinder(
+  bool check_collisionWithCylinder(
     const Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range, const float radius,
     std::vector<geometry_msgs::msg::Point> & collision_points) const;
 
-  bool checkCollisionWithBoundingBox(
+  bool check_collisionWithBoundingBox(
     const Polygon2d & vehicle_polygon, const PoseWithRange pose_with_range,
     const geometry_msgs::msg::Vector3 & dimension,
     std::vector<geometry_msgs::msg::Point> & collision_points) const;
 
-  bool checkCollisionWithPolygon() const;
+  bool check_collisionWithPolygon() const;
 
   std::vector<geometry_msgs::msg::Point> createBoundingBoxForRangedPoints(
     const PoseWithRange & pose_with_range, const float x_offset, const float y_offset) const;
@@ -125,12 +125,12 @@ private:
     const geometry_msgs::msg::Pose & current_pose, const float current_vel,
     const float current_acc) const;
 
-  bool insertStopPoint(
+  bool insert_stop_point(
     const std::optional<geometry_msgs::msg::Pose> stop_point,
     autoware_internal_planning_msgs::msg::PathWithLaneId & path,
     const double stop_point_velocity = 0.0);
 
-  void insertVelocityForState(
+  void insert_velocityForState(
     const std::optional<DynamicObstacle> & dynamic_obstacle, const PlannerData planner_data,
     const PlannerParam & planner_param, const PathWithLaneId & smoothed_path,
     PathWithLaneId & output_path);

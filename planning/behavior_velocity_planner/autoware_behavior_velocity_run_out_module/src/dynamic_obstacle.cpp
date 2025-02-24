@@ -112,7 +112,7 @@ pcl::PointCloud<pcl::PointXYZ> applyVoxelGridFilter(
   return output_points;
 }
 
-bool isAheadOf(
+bool is_ahead_of(
   const geometry_msgs::msg::Point & target_point, const geometry_msgs::msg::Pose & base_pose)
 {
   return autoware::universe_utils::calcLongitudinalDeviation(base_pose, target_point) > 0;
@@ -170,7 +170,7 @@ std::vector<pcl::PointCloud<pcl::PointXYZ>> groupPointsWithNearestSegmentIndex(
     // if the point is ahead of end of the path, index should be path.size() - 1
     if (
       nearest_seg_idx == path_points.size() - 2 &&
-      isAheadOf(ros_point, path_points.back().point.pose)) {
+      is_ahead_of(ros_point, path_points.back().point.pose)) {
       points_with_index.back().push_back(p);
       continue;
     }
@@ -223,7 +223,7 @@ pcl::PointCloud<pcl::PointXYZ> extractLateralNearestPoints(
 {
   // interpolate path points with given interval
   PathWithLaneId interpolated_path;
-  if (!splineInterpolate(
+  if (!spline_interpolate(
         path, interval, interpolated_path, rclcpp::get_logger("dynamic_obstacle_creator"))) {
     return input_points;
   }

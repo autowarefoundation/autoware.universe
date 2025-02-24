@@ -268,7 +268,7 @@ void ElasticBandSmoother::applyInputVelocity(
   constexpr double margin_traj_length = 10.0;
   const auto forward_cropped_input_traj_points = [&]() {
     const size_t ego_seg_idx =
-      trajectory_utils::findEgoSegmentIndex(input_traj_points, ego_pose, ego_nearest_param_);
+      trajectory_utils::find_ego_segment_index(input_traj_points, ego_pose, ego_nearest_param_);
     return autoware::motion_utils::cropForwardPoints(
       input_traj_points, ego_pose.position, ego_seg_idx, output_traj_length + margin_traj_length);
   }();
@@ -281,7 +281,7 @@ void ElasticBandSmoother::applyInputVelocity(
       forward_cropped_input_traj_points.begin() + input_traj_start_idx,
       forward_cropped_input_traj_points.end()};
 
-    const size_t nearest_seg_idx = trajectory_utils::findEgoSegmentIndex(
+    const size_t nearest_seg_idx = trajectory_utils::find_ego_segment_index(
       cropped_input_traj_points, output_traj_points.at(i).pose, ego_nearest_param_);
     input_traj_start_idx = nearest_seg_idx;
 
@@ -296,7 +296,7 @@ void ElasticBandSmoother::applyInputVelocity(
   if (stop_idx) {
     const auto & input_stop_pose = forward_cropped_input_traj_points.at(stop_idx.value()).pose;
     // NOTE: autoware::motion_utils::findNearestSegmentIndex is used instead of
-    // trajectory_utils::findEgoSegmentIndex
+    // trajectory_utils::find_ego_segment_index
     //       for the case where input_traj_points is much longer than output_traj_points, and the
     //       former has a stop point but the latter will not have.
     const auto stop_seg_idx = autoware::motion_utils::findNearestSegmentIndex(
@@ -322,7 +322,7 @@ void ElasticBandSmoother::applyInputVelocity(
       return true;
     }();
     if (is_stop_point_inside_trajectory) {
-      trajectory_utils::insertStopPoint(output_traj_points, input_stop_pose, *stop_seg_idx);
+      trajectory_utils::insert_stop_point(output_traj_points, input_stop_pose, *stop_seg_idx);
     }
   }
 
@@ -339,7 +339,7 @@ std::vector<TrajectoryPoint> ElasticBandSmoother::extendTrajectory(
 
   // calculate end idx of optimized points on path points
   const size_t joint_start_traj_seg_idx =
-    trajectory_utils::findEgoSegmentIndex(traj_points, joint_start_pose, ego_nearest_param_);
+    trajectory_utils::find_ego_segment_index(traj_points, joint_start_pose, ego_nearest_param_);
 
   // crop trajectory for extension
   constexpr double joint_traj_max_length_for_smoothing = 15.0;
@@ -378,11 +378,11 @@ std::vector<TrajectoryPoint> ElasticBandSmoother::extendTrajectory(
       if (i != 0 && !hasZeroVelocity(traj_points.at(i - 1))) {
         // Here is when current point is 0 velocity, but previous point is not 0 velocity.
         const auto & input_stop_pose = traj_points.at(i).pose;
-        const size_t stop_seg_idx = trajectory_utils::findEgoSegmentIndex(
+        const size_t stop_seg_idx = trajectory_utils::find_ego_segment_index(
           resampled_traj_points, input_stop_pose, ego_nearest_param_);
 
         // calculate and insert stop pose on output trajectory
-        trajectory_utils::insertStopPoint(resampled_traj_points, input_stop_pose, stop_seg_idx);
+        trajectory_utils::insert_stop_point(resampled_traj_points, input_stop_pose, stop_seg_idx);
       }
     }
   }

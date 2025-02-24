@@ -30,9 +30,9 @@ using autoware::universe_utils::getOrDeclareParameter;
 using lanelet::autoware::Crosswalk;
 
 WalkwayModuleManager::WalkwayModuleManager(rclcpp::Node & node)
-: SceneModuleManagerInterface(node, getModuleName())
+: SceneModuleManagerInterface(node, get_module_name())
 {
-  const std::string ns(WalkwayModuleManager::getModuleName());
+  const std::string ns(WalkwayModuleManager::get_module_name());
 
   // for walkway parameters
   auto & wp = walkway_planner_param_;
@@ -41,7 +41,7 @@ WalkwayModuleManager::WalkwayModuleManager(rclcpp::Node & node)
   wp.stop_duration = getOrDeclareParameter<double>(node, ns + ".stop_duration");
 }
 
-void WalkwayModuleManager::launchNewModules(const PathWithLaneId & path)
+void WalkwayModuleManager::launch_new_modules(const PathWithLaneId & path)
 {
   const auto rh = planner_data_->route_handler_;
 
@@ -52,7 +52,7 @@ void WalkwayModuleManager::launchNewModules(const PathWithLaneId & path)
       return;
     }
 
-    if (isModuleRegistered(lanelet.id())) {
+    if (is_module_registered(lanelet.id())) {
       return;
     }
 
@@ -60,12 +60,12 @@ void WalkwayModuleManager::launchNewModules(const PathWithLaneId & path)
     const auto logger = logger_.get_child("walkway_module");
     const auto lanelet_map_ptr = planner_data_->route_handler_->getLaneletMapPtr();
 
-    registerModule(std::make_shared<WalkwayModule>(
+    register_module(std::make_shared<WalkwayModule>(
       lanelet.id(), lanelet_map_ptr, p, use_regulatory_element, logger, clock_, time_keeper_,
       planning_factor_interface_));
   };
 
-  const auto crosswalk_leg_elem_map = planning_utils::getRegElemMapOnPath<Crosswalk>(
+  const auto crosswalk_leg_elem_map = planning_utils::get_reg_elem_map_on_path<Crosswalk>(
     path, rh->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
   for (const auto & crosswalk : crosswalk_leg_elem_map) {
@@ -81,7 +81,7 @@ void WalkwayModuleManager::launchNewModules(const PathWithLaneId & path)
 }
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
-WalkwayModuleManager::getModuleExpiredFunction(const PathWithLaneId & path)
+WalkwayModuleManager::get_module_expired_function(const PathWithLaneId & path)
 {
   const auto rh = planner_data_->route_handler_;
 
@@ -90,7 +90,7 @@ WalkwayModuleManager::getModuleExpiredFunction(const PathWithLaneId & path)
   walkway_id_set = getCrosswalkIdSetOnPath(
     planner_data_->current_odometry->pose, path, rh->getLaneletMapPtr(), rh->getOverallGraphPtr());
 
-  const auto crosswalk_leg_elem_map = planning_utils::getRegElemMapOnPath<Crosswalk>(
+  const auto crosswalk_leg_elem_map = planning_utils::get_reg_elem_map_on_path<Crosswalk>(
     path, rh->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
   for (const auto & crosswalk : crosswalk_leg_elem_map) {
@@ -98,7 +98,7 @@ WalkwayModuleManager::getModuleExpiredFunction(const PathWithLaneId & path)
   }
 
   return [walkway_id_set](const std::shared_ptr<SceneModuleInterface> & scene_module) {
-    return walkway_id_set.count(scene_module->getModuleId()) == 0;
+    return walkway_id_set.count(scene_module->get_module_id()) == 0;
   };
 }
 }  // namespace autoware::behavior_velocity_planner

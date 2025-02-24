@@ -507,7 +507,7 @@ bool checkSafetyWithRSS(
 
     return std::any_of(
       obj_predicted_paths.begin(), obj_predicted_paths.end(), [&](const auto & obj_path) {
-        const bool has_collision = !utils::path_safety_checker::checkCollision(
+        const bool has_collision = !utils::path_safety_checker::check_collision(
           planned_path, ego_predicted_path, object, obj_path, parameters, rss_params,
           hysteresis_factor, yaw_difference_th, current_debug_data.second);
 
@@ -567,7 +567,7 @@ bool checkSafetyWithIntegralPredictedPolygon(
   return true;
 }
 
-bool checkCollision(
+bool check_collision(
   const PathWithLaneId & planned_path,
   const std::vector<PoseWithVelocityStamped> & predicted_ego_path,
   const ExtendedPredictedObject & target_object,

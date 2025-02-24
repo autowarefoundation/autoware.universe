@@ -31,25 +31,25 @@ namespace autoware::behavior_velocity_planner
 using autoware::universe_utils::getOrDeclareParameter;
 
 TemplateModuleManager::TemplateModuleManager(rclcpp::Node & node)
-: SceneModuleManagerInterface(node, getModuleName())
+: SceneModuleManagerInterface(node, get_module_name())
 {
-  std::string ns(TemplateModuleManager::getModuleName());
+  std::string ns(TemplateModuleManager::get_module_name());
   dummy_parameter_ = getOrDeclareParameter<double>(node, ns + ".dummy");
 }
 
-void TemplateModuleManager::launchNewModules(
+void TemplateModuleManager::launch_new_modules(
   [[maybe_unused]] const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
   int64_t module_id = 0;
-  if (!isModuleRegistered(module_id)) {
-    registerModule(std::make_shared<TemplateModule>(
-      module_id, logger_.get_child(getModuleName()), clock_, time_keeper_,
+  if (!is_module_registered(module_id)) {
+    register_module(std::make_shared<TemplateModule>(
+      module_id, logger_.get_child(get_module_name()), clock_, time_keeper_,
       planning_factor_interface_));
   }
 }
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
-TemplateModuleManager::getModuleExpiredFunction(
+TemplateModuleManager::get_module_expired_function(
   [[maybe_unused]] const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
   return []([[maybe_unused]] const std::shared_ptr<SceneModuleInterface> & scene_module) -> bool {

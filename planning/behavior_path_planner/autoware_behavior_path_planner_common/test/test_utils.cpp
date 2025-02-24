@@ -94,9 +94,9 @@ TEST_F(BehaviorPathPlanningUtilTest, l2Norm)
   EXPECT_DOUBLE_EQ(norm, 3.0);
 }
 
-TEST_F(BehaviorPathPlanningUtilTest, checkCollisionBetweenPathFootprintsAndObjects)
+TEST_F(BehaviorPathPlanningUtilTest, check_collisionBetweenPathFootprintsAndObjects)
 {
-  using autoware::behavior_path_planner::utils::checkCollisionBetweenPathFootprintsAndObjects;
+  using autoware::behavior_path_planner::utils::check_collisionBetweenPathFootprintsAndObjects;
 
   autoware::universe_utils::LinearRing2d base_footprint = {
     Point2d{1.0, 1.0}, Point2d{1.0, -1.0}, Point2d{-1.0, -1.0}, Point2d{-1.0, 1.0},
@@ -114,22 +114,22 @@ TEST_F(BehaviorPathPlanningUtilTest, checkCollisionBetweenPathFootprintsAndObjec
 
   // Condition: no path
   EXPECT_FALSE(
-    checkCollisionBetweenPathFootprintsAndObjects(base_footprint, ego_path, objs, margin));
+    check_collisionBetweenPathFootprintsAndObjects(base_footprint, ego_path, objs, margin));
 
   // Condition: object in front of path
   ego_path = generateTrajectory<PathWithLaneId>(5, 1.0);
   EXPECT_FALSE(
-    checkCollisionBetweenPathFootprintsAndObjects(base_footprint, ego_path, objs, margin));
+    check_collisionBetweenPathFootprintsAndObjects(base_footprint, ego_path, objs, margin));
 
   // Condition: object overlapping path
   ego_path = generateTrajectory<PathWithLaneId>(10, 1.0);
   EXPECT_TRUE(
-    checkCollisionBetweenPathFootprintsAndObjects(base_footprint, ego_path, objs, margin));
+    check_collisionBetweenPathFootprintsAndObjects(base_footprint, ego_path, objs, margin));
 }
 
-TEST_F(BehaviorPathPlanningUtilTest, checkCollisionBetweenFootprintAndObjects)
+TEST_F(BehaviorPathPlanningUtilTest, check_collisionBetweenFootprintAndObjects)
 {
-  using autoware::behavior_path_planner::utils::checkCollisionBetweenFootprintAndObjects;
+  using autoware::behavior_path_planner::utils::check_collisionBetweenFootprintAndObjects;
 
   auto ego_pose = createPose(1.0, 1.0, 0.0, 0.0, 0.0, 0.0);
   autoware::universe_utils::LinearRing2d base_footprint = {
@@ -139,7 +139,7 @@ TEST_F(BehaviorPathPlanningUtilTest, checkCollisionBetweenFootprintAndObjects)
   PredictedObjects objs;
 
   // Condition: no object
-  EXPECT_FALSE(checkCollisionBetweenFootprintAndObjects(base_footprint, ego_pose, objs, margin));
+  EXPECT_FALSE(check_collisionBetweenFootprintAndObjects(base_footprint, ego_pose, objs, margin));
 
   // Condition: no collision
   PredictedObject obj;
@@ -148,13 +148,13 @@ TEST_F(BehaviorPathPlanningUtilTest, checkCollisionBetweenFootprintAndObjects)
   obj.shape.dimensions.y = 2.0;
   obj.kinematics.initial_pose_with_covariance.pose = createPose(9.0, 9.0, 0.0, 0.0, 0.0, 0.0);
   objs.objects.push_back(obj);
-  EXPECT_FALSE(checkCollisionBetweenFootprintAndObjects(base_footprint, ego_pose, objs, margin));
+  EXPECT_FALSE(check_collisionBetweenFootprintAndObjects(base_footprint, ego_pose, objs, margin));
 
   // Condition: collision
   obj.kinematics.initial_pose_with_covariance.pose.position.x = 1.0;
   obj.kinematics.initial_pose_with_covariance.pose.position.y = 1.0;
   objs.objects.push_back(obj);
-  EXPECT_TRUE(checkCollisionBetweenFootprintAndObjects(base_footprint, ego_pose, objs, margin));
+  EXPECT_TRUE(check_collisionBetweenFootprintAndObjects(base_footprint, ego_pose, objs, margin));
 }
 
 TEST_F(BehaviorPathPlanningUtilTest, calcLateralDistanceFromEgoToObject)
@@ -351,19 +351,19 @@ TEST_F(BehaviorPathPlanningUtilTest, getDistanceToCrosswalk)
   }
 }
 
-TEST_F(BehaviorPathPlanningUtilTest, insertStopPoint)
+TEST_F(BehaviorPathPlanningUtilTest, insert_stop_point)
 {
-  using autoware::behavior_path_planner::utils::insertStopPoint;
+  using autoware::behavior_path_planner::utils::insert_stop_point;
 
   {
     const double length = 100.0;
     auto path = generateTrajectory<PathWithLaneId>(10, 1.0, 1.0);
-    EXPECT_DOUBLE_EQ(insertStopPoint(length, path).point.pose.position.x, 0.0);
+    EXPECT_DOUBLE_EQ(insert_stop_point(length, path).point.pose.position.x, 0.0);
   }
   {
     const double length = 5.0;
     auto path = generateTrajectory<PathWithLaneId>(10, 1.0, 1.0);
-    EXPECT_DOUBLE_EQ(insertStopPoint(length, path).point.pose.position.x, 5.0);
+    EXPECT_DOUBLE_EQ(insert_stop_point(length, path).point.pose.position.x, 5.0);
   }
 }
 

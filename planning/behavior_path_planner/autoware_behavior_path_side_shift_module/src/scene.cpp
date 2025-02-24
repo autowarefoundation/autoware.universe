@@ -393,7 +393,7 @@ BehaviorModuleOutput SideShiftModule::adjustDrivableArea(const ShiftedPath & pat
 
   // crop path which is too long here
   auto output_path = path.path;
-  const size_t current_seg_idx = planner_data_->findEgoSegmentIndex(output_path.points);
+  const size_t current_seg_idx = planner_data_->find_ego_segment_index(output_path.points);
   const auto & current_pose = planner_data_->self_odometry->pose.pose;
   output_path.points = autoware::motion_utils::cropPoints(
     output_path.points, current_pose.position, current_seg_idx, p.forward_path_length,

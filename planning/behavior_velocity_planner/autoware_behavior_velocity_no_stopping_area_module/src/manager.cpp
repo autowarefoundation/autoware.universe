@@ -30,9 +30,9 @@ using lanelet::autoware::NoStoppingArea;
 
 NoStoppingAreaModuleManager::NoStoppingAreaModuleManager(rclcpp::Node & node)
 : SceneModuleManagerInterfaceWithRTC(
-    node, getModuleName(), getEnableRTC(node, std::string(getModuleName()) + ".enable_rtc"))
+    node, get_module_name(), getEnableRTC(node, std::string(get_module_name()) + ".enable_rtc"))
 {
-  const std::string ns(NoStoppingAreaModuleManager::getModuleName());
+  const std::string ns(NoStoppingAreaModuleManager::get_module_name());
   auto & pp = planner_param_;
   const auto & vi = autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo();
   pp.state_clear_time = getOrDeclareParameter<double>(node, ns + ".state_clear_time");
@@ -46,19 +46,19 @@ NoStoppingAreaModuleManager::NoStoppingAreaModuleManager(rclcpp::Node & node)
   pp.path_expand_width = vi.vehicle_width_m * 0.5;
 }
 
-void NoStoppingAreaModuleManager::launchNewModules(
+void NoStoppingAreaModuleManager::launch_new_modules(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
-  for (const auto & m : planning_utils::getRegElemMapOnPath<NoStoppingArea>(
+  for (const auto & m : planning_utils::get_reg_elem_map_on_path<NoStoppingArea>(
          path, planner_data_->route_handler_->getLaneletMapPtr(),
          planner_data_->current_odometry->pose)) {
     // Use lanelet_id to unregister module when the route is changed
     const int64_t module_id = m.first->id();
     const int64_t lane_id = m.second.id();
 
-    if (!isModuleRegistered(module_id)) {
+    if (!is_module_registered(module_id)) {
       // assign 1 no stopping area for each module
-      registerModule(std::make_shared<NoStoppingAreaModule>(
+      register_module(std::make_shared<NoStoppingAreaModule>(
         module_id, lane_id, *m.first, planner_param_, logger_.get_child("no_stopping_area_module"),
         clock_, time_keeper_, planning_factor_interface_));
       generateUUID(module_id);
@@ -70,15 +70,15 @@ void NoStoppingAreaModuleManager::launchNewModules(
 }
 
 std::function<bool(const std::shared_ptr<SceneModuleInterfaceWithRTC> &)>
-NoStoppingAreaModuleManager::getModuleExpiredFunction(
+NoStoppingAreaModuleManager::get_module_expired_function(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
-  const auto no_stopping_area_id_set = planning_utils::getRegElemIdSetOnPath<NoStoppingArea>(
+  const auto no_stopping_area_id_set = planning_utils::get_reg_elem_id_set_on_path<NoStoppingArea>(
     path, planner_data_->route_handler_->getLaneletMapPtr(), planner_data_->current_odometry->pose);
 
   return
     [no_stopping_area_id_set](const std::shared_ptr<SceneModuleInterfaceWithRTC> & scene_module) {
-      return no_stopping_area_id_set.count(scene_module->getModuleId()) == 0;
+      return no_stopping_area_id_set.count(scene_module->get_module_id()) == 0;
     };
 }
 

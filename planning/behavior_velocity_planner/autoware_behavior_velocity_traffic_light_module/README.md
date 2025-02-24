@@ -82,7 +82,7 @@ This module is activated when there is traffic light in ego lane.
 
 ```plantuml
 @startuml
-title modifyPathVelocity
+title modify_path_velocity
 start
 
 :calc stop point and insert index;

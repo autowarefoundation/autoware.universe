@@ -214,7 +214,7 @@ using autoware::universe_utils::createMarkerColor;
 using autoware::universe_utils::createMarkerOrientation;
 using autoware::universe_utils::createMarkerScale;
 
-visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray()
+visualization_msgs::msg::MarkerArray IntersectionModule::create_debug_marker_array()
 {
   visualization_msgs::msg::MarkerArray debug_marker_array;
 
@@ -260,7 +260,7 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
 
   if (debug_data_.stuck_vehicle_detect_area) {
     appendMarkerArray(
-      debug::createPolygonMarkerArray(
+      debug::create_polygon_marker_array(
         debug_data_.stuck_vehicle_detect_area.value(), "stuck_vehicle_detect_area", lane_id_, now,
         0.3, 0.0, 0.0, 0.0, 0.5, 0.5),
       &debug_marker_array, now);
@@ -283,7 +283,7 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
 
   if (debug_data_.candidate_collision_ego_lane_polygon) {
     appendMarkerArray(
-      debug::createPolygonMarkerArray(
+      debug::create_polygon_marker_array(
         debug_data_.candidate_collision_ego_lane_polygon.value(),
         "candidate_collision_ego_lane_polygon", module_id_, now, 0.3, 0.0, 0.0, 0.5, 0.0, 0.0),
       &debug_marker_array, now);
@@ -295,43 +295,43 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
   static constexpr auto red = ::red();
   static constexpr auto light_blue = ::light_blue();
   appendMarkerArray(
-    debug::createObjectsMarkerArray(
+    debug::create_objects_marker_array(
       debug_data_.safe_under_traffic_control_targets, "safe_under_traffic_control_targets",
       module_id_, now, std::get<0>(light_blue), std::get<1>(light_blue), std::get<2>(light_blue)),
     &debug_marker_array, now);
 
   appendMarkerArray(
-    debug::createObjectsMarkerArray(
+    debug::create_objects_marker_array(
       debug_data_.unsafe_targets, "unsafe_targets", module_id_, now, std::get<0>(green),
       std::get<1>(green), std::get<2>(green)),
     &debug_marker_array, now);
 
   appendMarkerArray(
-    debug::createObjectsMarkerArray(
+    debug::create_objects_marker_array(
       debug_data_.misjudge_targets, "misjudge_targets", module_id_, now, std::get<0>(yellow),
       std::get<1>(yellow), std::get<2>(yellow)),
     &debug_marker_array, now);
 
   appendMarkerArray(
-    debug::createObjectsMarkerArray(
+    debug::create_objects_marker_array(
       debug_data_.too_late_detect_targets, "too_late_detect_targets", module_id_, now,
       std::get<0>(red), std::get<1>(red), std::get<2>(red)),
     &debug_marker_array, now);
 
   appendMarkerArray(
-    debug::createObjectsMarkerArray(
+    debug::create_objects_marker_array(
       debug_data_.parked_targets, "parked_targets", module_id_, now, std::get<0>(white),
       std::get<1>(white), std::get<2>(white)),
     &debug_marker_array, now);
 
   appendMarkerArray(
-    debug::createObjectsMarkerArray(
+    debug::create_objects_marker_array(
       debug_data_.stuck_targets, "stuck_targets", module_id_, now, std::get<0>(white),
       std::get<1>(white), std::get<2>(white)),
     &debug_marker_array, now);
 
   appendMarkerArray(
-    debug::createObjectsMarkerArray(
+    debug::create_objects_marker_array(
       debug_data_.yield_stuck_targets, "yield_stuck_targets", module_id_, now, std::get<0>(white),
       std::get<1>(white), std::get<2>(white)),
     &debug_marker_array, now);
@@ -359,7 +359,7 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
   for (size_t j = 0; j < debug_data_.occlusion_polygons.size(); ++j) {
     const auto & p = debug_data_.occlusion_polygons.at(j);
     appendMarkerArray(
-      debug::createPolygonMarkerArray(
+      debug::create_polygon_marker_array(
         p, "occlusion_polygons", lane_id_ + j, now, 0.3, 0.0, 0.0, 1.0, 0.0, 0.0),
       &debug_marker_array, now);
   }
@@ -383,7 +383,7 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
     poly.points.push_back(
       geometry_msgs::build<geometry_msgs::msg::Point32>().x(p3.x).y(p3.y).z(p3.z));
     appendMarkerArray(
-      debug::createPolygonMarkerArray(
+      debug::create_polygon_marker_array(
         poly, "nearest_occlusion_triangle", lane_id_, now, 0.3, 0.0, 0.0, std::get<0>(color),
         std::get<1>(color), std::get<2>(color)),
       &debug_marker_array, now);
@@ -407,7 +407,7 @@ visualization_msgs::msg::MarkerArray IntersectionModule::createDebugMarkerArray(
   return debug_marker_array;
 }
 
-autoware::motion_utils::VirtualWalls IntersectionModule::createVirtualWalls()
+autoware::motion_utils::VirtualWalls IntersectionModule::create_virtual_walls()
 {
   autoware::motion_utils::VirtualWalls virtual_walls;
   autoware::motion_utils::VirtualWall wall;
@@ -457,11 +457,11 @@ autoware::motion_utils::VirtualWalls IntersectionModule::createVirtualWalls()
   return virtual_walls;
 }
 
-visualization_msgs::msg::MarkerArray MergeFromPrivateRoadModule::createDebugMarkerArray()
+visualization_msgs::msg::MarkerArray MergeFromPrivateRoadModule::create_debug_marker_array()
 {
   visualization_msgs::msg::MarkerArray debug_marker_array;
 
-  const auto state = state_machine_.getState();
+  const auto state = state_machine_.get_state();
 
   int32_t uid = autoware::behavior_velocity_planner::planning_utils::bitShift(module_id_);
   const auto now = this->clock_->now();
@@ -474,10 +474,10 @@ visualization_msgs::msg::MarkerArray MergeFromPrivateRoadModule::createDebugMark
   return debug_marker_array;
 }
 
-autoware::motion_utils::VirtualWalls MergeFromPrivateRoadModule::createVirtualWalls()
+autoware::motion_utils::VirtualWalls MergeFromPrivateRoadModule::create_virtual_walls()
 {
   autoware::motion_utils::VirtualWalls virtual_walls;
-  const auto state = state_machine_.getState();
+  const auto state = state_machine_.get_state();
   if (state == StateMachine::State::STOP) {
     autoware::motion_utils::VirtualWall wall;
     wall.style = autoware::motion_utils::VirtualWallType::stop;

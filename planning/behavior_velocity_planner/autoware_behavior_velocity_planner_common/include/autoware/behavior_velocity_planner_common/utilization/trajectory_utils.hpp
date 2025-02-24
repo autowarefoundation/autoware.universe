@@ -36,7 +36,7 @@ using geometry_msgs::msg::Quaternion;
 using TrajectoryPointWithIdx = std::pair<TrajectoryPoint, size_t>;
 
 //! smooth path point with lane id starts from ego position on path to the path end
-bool smoothPath(
+bool smooth_path(
   const PathWithLaneId & in_path, PathWithLaneId & out_path,
   const std::shared_ptr<const PlannerData> & planner_data);
 

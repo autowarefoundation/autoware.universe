@@ -569,7 +569,7 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
   //       Start point may change. Spline calculation is required.
   constexpr double tmp_margin = 10.0;
   size_t ego_seg_idx =
-    trajectory_utils::findEgoSegmentIndex(ref_points, p.ego_pose, ego_nearest_param_);
+    trajectory_utils::find_ego_segment_index(ref_points, p.ego_pose, ego_nearest_param_);
   ref_points = autoware::motion_utils::cropPoints(
     ref_points, p.ego_pose.position, ego_seg_idx, forward_traj_length + tmp_margin,
     backward_traj_length + tmp_margin);
@@ -577,7 +577,8 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
   // remove repeated points
   ref_points = trajectory_utils::sanitizePoints(ref_points);
   autoware::interpolation::SplineInterpolationPoints2d ref_points_spline(ref_points);
-  ego_seg_idx = trajectory_utils::findEgoSegmentIndex(ref_points, p.ego_pose, ego_nearest_param_);
+  ego_seg_idx =
+    trajectory_utils::find_ego_segment_index(ref_points, p.ego_pose, ego_nearest_param_);
 
   // 3. calculate orientation and curvature
   updateOrientation(ref_points, ref_points_spline);
@@ -589,7 +590,8 @@ std::vector<ReferencePoint> MPTOptimizer::calcReferencePoints(
     ref_points, p.ego_pose.position, ego_seg_idx, forward_traj_length + tmp_margin,
     backward_traj_length);
   ref_points_spline = autoware::interpolation::SplineInterpolationPoints2d(ref_points);
-  ego_seg_idx = trajectory_utils::findEgoSegmentIndex(ref_points, p.ego_pose, ego_nearest_param_);
+  ego_seg_idx =
+    trajectory_utils::find_ego_segment_index(ref_points, p.ego_pose, ego_nearest_param_);
 
   // 5. update fixed points, and resample
   // NOTE: This must be after backward cropping.

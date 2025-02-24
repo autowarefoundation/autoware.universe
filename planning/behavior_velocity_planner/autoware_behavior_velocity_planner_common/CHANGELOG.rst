@@ -144,7 +144,7 @@ Changelog for package autoware_behavior_velocity_planner_common
 0.38.0 (2024-11-08)
 -------------------
 * unify package.xml version to 0.37.0
-* fix(behavior_velocity_planner_common): fix findOffsetSegment (`#9130 <https://github.com/autowarefoundation/autoware.universe/issues/9130>`_)
+* fix(behavior_velocity_planner_common): fix find_offset_segment (`#9130 <https://github.com/autowarefoundation/autoware.universe/issues/9130>`_)
 * feat(autoware_test_utils): move test_map, add launcher for test_map (`#9045 <https://github.com/autowarefoundation/autoware.universe/issues/9045>`_)
 * test(no_stopping_area): refactor and add tests (`#9009 <https://github.com/autowarefoundation/autoware.universe/issues/9009>`_)
   Co-authored-by: Kosuke Takeuchi <kosuke.tnp@gmail.com>

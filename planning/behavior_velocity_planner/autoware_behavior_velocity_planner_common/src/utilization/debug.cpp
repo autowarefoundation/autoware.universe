@@ -24,7 +24,7 @@ using autoware::universe_utils::createDefaultMarker;
 using autoware::universe_utils::createMarkerColor;
 using autoware::universe_utils::createMarkerScale;
 
-visualization_msgs::msg::MarkerArray createPolygonMarkerArray(
+visualization_msgs::msg::MarkerArray create_polygon_marker_array(
   const geometry_msgs::msg::Polygon & polygon, const std::string & ns, const int64_t module_id,
   const rclcpp::Time & now, const double x, const double y, const double z, const double r,
   const double g, const double b)
@@ -53,7 +53,7 @@ visualization_msgs::msg::MarkerArray createPolygonMarkerArray(
   return msg;
 }
 
-visualization_msgs::msg::MarkerArray createPathMarkerArray(
+visualization_msgs::msg::MarkerArray create_path_marker_array(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path, const std::string & ns,
   const int64_t lane_id, const rclcpp::Time & now, const double x, const double y, const double z,
   const double r, const double g, const double b)
@@ -85,7 +85,7 @@ visualization_msgs::msg::MarkerArray createPathMarkerArray(
   return msg;
 }
 
-visualization_msgs::msg::MarkerArray createObjectsMarkerArray(
+visualization_msgs::msg::MarkerArray create_objects_marker_array(
   const autoware_perception_msgs::msg::PredictedObjects & objects, const std::string & ns,
   const int64_t module_id, const rclcpp::Time & now, const double r, const double g, const double b)
 {
@@ -107,7 +107,7 @@ visualization_msgs::msg::MarkerArray createObjectsMarkerArray(
   return msg;
 }
 
-visualization_msgs::msg::MarkerArray createPointsMarkerArray(
+visualization_msgs::msg::MarkerArray create_points_marker_array(
   const std::vector<geometry_msgs::msg::Point> & points, const std::string & ns,
   const int64_t module_id, const rclcpp::Time & now, const double x, const double y, const double z,
   const double r, const double g, const double b)

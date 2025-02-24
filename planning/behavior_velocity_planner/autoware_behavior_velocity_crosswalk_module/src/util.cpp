@@ -64,19 +64,19 @@ std::vector<std::pair<int64_t, lanelet::ConstLanelet>> getCrosswalksOnPath(
 
   // Add current lane id
   const auto nearest_lane_id =
-    autoware::behavior_velocity_planner::planning_utils::getNearestLaneId(
+    autoware::behavior_velocity_planner::planning_utils::get_nearest_lane_id(
       path, lanelet_map, current_pose);
 
   std::vector<lanelet::Id> unique_lane_ids;
   if (nearest_lane_id) {
     // Add subsequent lane_ids from nearest lane_id
     unique_lane_ids =
-      autoware::behavior_velocity_planner::planning_utils::getSubsequentLaneIdsSetOnPath(
+      autoware::behavior_velocity_planner::planning_utils::get_subsequent_lane_ids_set_on_path(
         path, *nearest_lane_id);
   } else {
     // Add all lane_ids in path
     unique_lane_ids =
-      autoware::behavior_velocity_planner::planning_utils::getSortedLaneIdsFromPath(path);
+      autoware::behavior_velocity_planner::planning_utils::get_sorted_lane_ids_from_path(path);
   }
 
   for (const auto lane_id : unique_lane_ids) {

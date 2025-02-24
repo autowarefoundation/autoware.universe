@@ -44,7 +44,7 @@ class OcclusionSpotModuleManager : public SceneModuleManagerInterface<>
 public:
   explicit OcclusionSpotModuleManager(rclcpp::Node & node);
 
-  const char * getModuleName() override { return "occlusion_spot"; }
+  const char * get_module_name() override { return "occlusion_spot"; }
 
 private:
   enum class ModuleID { OCCUPANCY, OBJECT };
@@ -53,9 +53,10 @@ private:
   PlannerParam planner_param_;
   int64_t module_id_;
 
-  void launchNewModules(const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
+  void launch_new_modules(
+    const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
 
-  std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> getModuleExpiredFunction(
+  std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> get_module_expired_function(
     const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
 };
 

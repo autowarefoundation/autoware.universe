@@ -808,7 +808,7 @@ void DynamicObstacleAvoidanceModule::determineWhetherToAvoidAgainstRegulatedObje
 
     // 2.g. check if the ego is not ahead of the object.
     const double signed_dist_ego_to_obj = [&]() {
-      const size_t ego_seg_idx = planner_data_->findEgoSegmentIndex(input_path.points);
+      const size_t ego_seg_idx = planner_data_->find_ego_segment_index(input_path.points);
       const double lon_offset_ego_to_obj = autoware::motion_utils::calcSignedArcLength(
         input_path.points, getEgoPose().position, ego_seg_idx, lat_lon_offset.nearest_idx);
       if (0 < lon_offset_ego_to_obj) {
@@ -864,7 +864,7 @@ void DynamicObstacleAvoidanceModule::determineWhetherToAvoidAgainstUnregulatedOb
   const auto & input_path = getPreviousModuleOutput().path;
   const auto input_points = toGeometryPoints(input_path.points);  // for efficient computation
 
-  const size_t ego_seg_idx = planner_data_->findEgoSegmentIndex(input_path.points);
+  const size_t ego_seg_idx = planner_data_->find_ego_segment_index(input_path.points);
   for (const auto & object : target_objects_manager_.getValidObjects()) {
     if (getObjectType(object.label) != ObjectType::UNREGULATED) {
       continue;
@@ -951,11 +951,11 @@ LatFeasiblePaths DynamicObstacleAvoidanceModule::generateLateralFeasiblePaths(
   }
 
   autoware::universe_utils::appendMarkerArray(
-    marker_utils::createPointsMarkerArray(
+    marker_utils::create_points_marker_array(
       ego_lat_feasible_paths.left_path, "ego_lat_feasible_left_path", 0, 0.6, 0.9, 0.9),
     &debug_marker_);
   autoware::universe_utils::appendMarkerArray(
-    marker_utils::createPointsMarkerArray(
+    marker_utils::create_points_marker_array(
       ego_lat_feasible_paths.right_path, "ego_lat_feasible_right_path", 0, 0.6, 0.9, 0.9),
     &debug_marker_);
 
@@ -1032,7 +1032,7 @@ TimeWhileCollision DynamicObstacleAvoidanceModule::calcTimeWhileCollision(
 {
   // Set maximum time-to-collision 0 if the object longitudinally overlaps ego.
   // NOTE: This is to avoid objects running right beside ego even if time-to-collision is negative.
-  const size_t ego_seg_idx = planner_data_->findEgoSegmentIndex(ego_path);
+  const size_t ego_seg_idx = planner_data_->find_ego_segment_index(ego_path);
   const double lon_offset_ego_to_obj_idx = autoware::motion_utils::calcSignedArcLength(
     ego_path, getEgoPose().position, ego_seg_idx, lat_lon_offset.nearest_idx);
   const double relative_velocity = getEgoSpeed() - obj_tangent_vel;
@@ -1118,7 +1118,7 @@ bool DynamicObstacleAvoidanceModule::willObjectCutIn(
   }
 
   // Ignore object longitudinally close to the ego
-  const size_t ego_seg_idx = planner_data_->findEgoSegmentIndex(ego_path);
+  const size_t ego_seg_idx = planner_data_->find_ego_segment_index(ego_path);
   const double relative_velocity = getEgoSpeed() - obj_tangent_vel;
   const double lon_offset_ego_to_obj =
     autoware::motion_utils::calcSignedArcLength(

@@ -28,19 +28,19 @@ using namespace autoware::behavior_velocity_planner;                  // NOLINT
 using namespace autoware::behavior_velocity_planner::planning_utils;  // NOLINT
 using autoware_planning_msgs::msg::PathPoint;
 
-TEST(PlanningUtilsTest, calcSegmentIndexFromPointIndex)
+TEST(PlanningUtilsTest, calc_segment_index_from_point_index)
 {
   auto path = test::generatePath(0.0, 0.0, 10.0, 0.0, 10);
   geometry_msgs::msg::Point point;
   point.x = 4.5;
   point.y = 0.0;
 
-  size_t result = calcSegmentIndexFromPointIndex(path.points, point, 4);
+  size_t result = calc_segment_index_from_point_index(path.points, point, 4);
 
   EXPECT_EQ(result, 4);
 }
 
-TEST(PlanningUtilsTest, calculateOffsetPoint2d)
+TEST(PlanningUtilsTest, calculate_offset_point2d)
 {
   geometry_msgs::msg::Pose pose;
   pose.position.x = 0.0;
@@ -51,13 +51,13 @@ TEST(PlanningUtilsTest, calculateOffsetPoint2d)
   double offset_x = 1.0;
   double offset_y = 1.0;
 
-  auto result = calculateOffsetPoint2d(pose, offset_x, offset_y);
+  auto result = calculate_offset_point2d(pose, offset_x, offset_y);
 
   EXPECT_NEAR(result.x(), 1.0, 0.1);
   EXPECT_NEAR(result.y(), 1.0, 0.1);
 }
 
-TEST(PlanningUtilsTest, createDetectionAreaPolygons)
+TEST(PlanningUtilsTest, create_detection_area_polygons)
 {
   // using namespace autoware::behavior_velocity_planner::planning_utils;
 
@@ -95,7 +95,7 @@ TEST(PlanningUtilsTest, createDetectionAreaPolygons)
   target_pose.position.y = 0.0;
 
   // Call the function
-  bool success = createDetectionAreaPolygons(
+  bool success = create_detection_area_polygons(
     da_polys, path, target_pose, target_seg_idx, da_range, obstacle_vel_mps, min_velocity);
 
   // Assert success
@@ -114,21 +114,21 @@ TEST(PlanningUtilsTest, createDetectionAreaPolygons)
   EXPECT_NEAR(polygon.outer()[0].y(), 1.0, 0.1);
 }
 
-// Test for calcJudgeLineDistWithAccLimit
-TEST(PlanningUtilsTest, calcJudgeLineDistWithAccLimit)
+// Test for calc_judge_line_dist_with_acc_limit
+TEST(PlanningUtilsTest, calc_judge_line_dist_with_acc_limit)
 {
   double velocity = 10.0;               // m/s
   double max_stop_acceleration = -3.0;  // m/s^2
   double delay_response_time = 1.0;     // s
 
   double result =
-    calcJudgeLineDistWithAccLimit(velocity, max_stop_acceleration, delay_response_time);
+    calc_judge_line_dist_with_acc_limit(velocity, max_stop_acceleration, delay_response_time);
 
   EXPECT_NEAR(result, 26.67, 0.01);  // Updated expected value
 }
 
-// Test for calcJudgeLineDistWithJerkLimit
-TEST(PlanningUtilsTest, calcJudgeLineDistWithJerkLimit)
+// Test for calc_judge_line_dist_with_jerk_limit
+TEST(PlanningUtilsTest, calc_judge_line_dist_with_jerk_limit)
 {
   double velocity = 10.0;               // m/s
   double acceleration = 0.0;            // m/s^2
@@ -136,14 +136,14 @@ TEST(PlanningUtilsTest, calcJudgeLineDistWithJerkLimit)
   double max_stop_jerk = -1.0;          // m/s^3
   double delay_response_time = 1.0;     // s
 
-  double result = calcJudgeLineDistWithJerkLimit(
+  double result = calc_judge_line_dist_with_jerk_limit(
     velocity, acceleration, max_stop_acceleration, max_stop_jerk, delay_response_time);
 
   EXPECT_GT(result, 0.0);  // The result should be positive
 }
 
-// Test for isAheadOf
-TEST(PlanningUtilsTest, isAheadOf)
+// Test for is_ahead_of
+TEST(PlanningUtilsTest, is_ahead_of)
 {
   geometry_msgs::msg::Pose target;
   geometry_msgs::msg::Pose origin;
@@ -153,26 +153,26 @@ TEST(PlanningUtilsTest, isAheadOf)
   origin.position.y = 0.0;
   origin.orientation = tf2::toMsg(tf2::Quaternion(0, 0, 0, 1));  // No rotation
 
-  EXPECT_TRUE(isAheadOf(target, origin));
+  EXPECT_TRUE(is_ahead_of(target, origin));
 
   target.position.x = -10.0;
-  EXPECT_FALSE(isAheadOf(target, origin));
+  EXPECT_FALSE(is_ahead_of(target, origin));
 }
 
-TEST(PlanningUtilsTest, insertDecelPoint)
+TEST(PlanningUtilsTest, insert_decel_point)
 {
   auto path = test::generatePath(0.0, 0.0, 10.0, 0.0, 10);
   geometry_msgs::msg::Point stop_point;
   stop_point.x = 5.0;
   stop_point.y = 0.0;
 
-  auto stop_pose = insertDecelPoint(stop_point, path, 5.0);
+  auto stop_pose = insert_decel_point(stop_point, path, 5.0);
   ASSERT_TRUE(stop_pose.has_value());
   EXPECT_NEAR(stop_pose->position.x, 5.0, 0.1);
 }
 
-// Test for insertVelocity
-TEST(PlanningUtilsTest, insertVelocity)
+// Test for insert_velocity
+TEST(PlanningUtilsTest, insert_velocity)
 {
   auto path = test::generatePath(0.0, 0.0, 10.0, 0.0, 10);
   autoware_internal_planning_msgs::msg::PathPointWithLaneId path_point;
@@ -181,14 +181,14 @@ TEST(PlanningUtilsTest, insertVelocity)
   path_point.point.longitudinal_velocity_mps = 10.0;
 
   size_t insert_index = 5;
-  insertVelocity(path, path_point, 10.0, insert_index);
+  insert_velocity(path, path_point, 10.0, insert_index);
 
   EXPECT_EQ(path.points.size(), 11);
   EXPECT_NEAR(path.points.at(insert_index).point.longitudinal_velocity_mps, 10.0, 0.1);
 }
 
-// Test for insertStopPoint
-TEST(PlanningUtilsTest, insertStopPoint)
+// Test for insert_stop_point
+TEST(PlanningUtilsTest, insert_stop_point)
 {
   {
     auto path = test::generatePath(0.0, 0.0, 10.0, 0.0, 10);
@@ -196,7 +196,7 @@ TEST(PlanningUtilsTest, insertStopPoint)
     stop_point.x = 5.0;
     stop_point.y = 0.0;
 
-    auto stop_pose = insertStopPoint(stop_point, path);
+    auto stop_pose = insert_stop_point(stop_point, path);
     ASSERT_TRUE(stop_pose.has_value());
     EXPECT_NEAR(stop_pose->position.x, 5.0, 0.1);
   }
@@ -206,14 +206,14 @@ TEST(PlanningUtilsTest, insertStopPoint)
     stop_point.x = 5.0;
     stop_point.y = 0.0;
 
-    auto stop_pose = insertStopPoint(stop_point, 4, path);
+    auto stop_pose = insert_stop_point(stop_point, 4, path);
     ASSERT_TRUE(stop_pose.has_value());
     EXPECT_NEAR(stop_pose->position.x, 5.0, 0.1);
   }
 }
 
-// Test for getAheadPose
-TEST(PlanningUtilsTest, getAheadPose)
+// Test for get_ahead_pose
+TEST(PlanningUtilsTest, get_ahead_pose)
 {
   autoware_internal_planning_msgs::msg::PathWithLaneId path;
   autoware_internal_planning_msgs::msg::PathPointWithLaneId point1;
@@ -228,12 +228,12 @@ TEST(PlanningUtilsTest, getAheadPose)
   path.points.emplace_back(point3);
 
   double ahead_dist = 7.0;
-  auto pose = getAheadPose(0, ahead_dist, path);
+  auto pose = get_ahead_pose(0, ahead_dist, path);
 
   EXPECT_NEAR(pose.position.x, 7.0, 0.1);
 }
 
-TEST(PlanningUtilsTest, calcDecelerationVelocityFromDistanceToTarget)
+TEST(PlanningUtilsTest, calc_deceleration_velocity_from_distance_to_target)
 {
   double max_slowdown_jerk = -1.0;    // m/s^3
   double max_slowdown_accel = -3.0;   // m/s^2
@@ -241,13 +241,13 @@ TEST(PlanningUtilsTest, calcDecelerationVelocityFromDistanceToTarget)
   double current_velocity = 10.0;     // m/s
   double distance_to_target = 100.0;  // m
 
-  double result = calcDecelerationVelocityFromDistanceToTarget(
+  double result = calc_deceleration_velocity_from_distance_to_target(
     max_slowdown_jerk, max_slowdown_accel, current_accel, current_velocity, distance_to_target);
 
   EXPECT_LT(result, current_velocity);
 }
 
-// Test for toRosPoints
+// Test for to_ros_points
 TEST(PlanningUtilsTest, ToRosPoints)
 {
   using autoware_perception_msgs::msg::PredictedObject;
@@ -267,7 +267,7 @@ TEST(PlanningUtilsTest, ToRosPoints)
   obj2.kinematics.initial_pose_with_covariance.pose.position.z = 6.0;
   objects.objects.push_back(obj2);
 
-  auto points = toRosPoints(objects);
+  auto points = to_ros_points(objects);
 
   ASSERT_EQ(points.size(), 2);  // Verify the number of points
   EXPECT_EQ(points[0].x, 1.0);
@@ -278,14 +278,14 @@ TEST(PlanningUtilsTest, ToRosPoints)
   EXPECT_EQ(points[1].z, 6.0);
 }
 
-// Test for extendLine
+// Test for extend_line
 TEST(PlanningUtilsTest, ExtendLine)
 {
   lanelet::ConstPoint3d point1(lanelet::InvalId, 0.0, 0.0, 0.0);
   lanelet::ConstPoint3d point2(lanelet::InvalId, 1.0, 1.0, 0.0);
   double length = 1.0;
 
-  auto extended_line = extendLine(point1, point2, length);
+  auto extended_line = extend_line(point1, point2, length);
 
   ASSERT_EQ(extended_line.size(), 2);  // Verify the line has two points
 
@@ -296,13 +296,13 @@ TEST(PlanningUtilsTest, ExtendLine)
   EXPECT_NEAR(extended_line[1].y(), 1.707, 0.001);
 }
 
-TEST(PlanningUtilsTest, getConstLaneletsFromIds)
+TEST(PlanningUtilsTest, get_const_lanelets_from_ids)
 {
   const auto package_dir = ament_index_cpp::get_package_share_directory("autoware_test_utils");
   lanelet::LaneletMapPtr map =
     autoware::test_utils::loadMap(package_dir + "/test_map/lanelet2_map.osm");
 
-  auto lanelets = getConstLaneletsFromIds(map, {10333, 10310, 10291});
+  auto lanelets = get_const_lanelets_from_ids(map, {10333, 10310, 10291});
 
   EXPECT_EQ(lanelets.size(), 3);
 }

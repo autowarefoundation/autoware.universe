@@ -1375,7 +1375,7 @@ void GoalPlannerModule::setTurnSignalInfo(
 {
   const auto original_signal = getPreviousModuleOutput().turn_signal_info;
   const auto new_signal = calcTurnSignalInfo(context_data);
-  const auto current_seg_idx = planner_data_->findEgoSegmentIndex(output.path.points);
+  const auto current_seg_idx = planner_data_->find_ego_segment_index(output.path.points);
   output.turn_signal_info = planner_data_->turn_signal_decider.overwrite_turn_signal(
     output.path, getEgoPose(), current_seg_idx, original_signal, new_signal,
     planner_data_->parameters.ego_nearest_dist_threshold,
@@ -2210,7 +2210,7 @@ void GoalPlannerModule::decelerateForTurnSignal(const Pose & stop_pose, PathWith
     planner_data_, parameters_.maximum_deceleration, parameters_.maximum_jerk, 0.0);
 
   if (min_stop_distance && *min_stop_distance < stop_point_length) {
-    utils::insertStopPoint(stop_point_length, path);
+    utils::insert_stop_point(stop_point_length, path);
   }
 }
 
@@ -2507,8 +2507,8 @@ void GoalPlannerModule::setDebugData(const PullOverContextData & context_data)
   using autoware::universe_utils::createDefaultMarker;
   using autoware::universe_utils::createMarkerColor;
   using autoware::universe_utils::createMarkerScale;
-  using marker_utils::createObjectsMarkerArray;
-  using marker_utils::createPathMarkerArray;
+  using marker_utils::create_objects_marker_array;
+  using marker_utils::create_path_marker_array;
   using marker_utils::createPoseMarkerArray;
   using marker_utils::createPredictedPathMarkerArray;
   using marker_utils::showPolygon;
@@ -2556,7 +2556,7 @@ void GoalPlannerModule::setDebugData(const PullOverContextData & context_data)
   }
 
   // Visualize previous module output
-  add(createPathMarkerArray(
+  add(create_path_marker_array(
     getPreviousModuleOutput().path, "previous_module_path", 0, 1.0, 0.0, 0.0));
 
   // Visualize path and related pose
@@ -2566,14 +2566,15 @@ void GoalPlannerModule::setDebugData(const PullOverContextData & context_data)
       createPoseMarkerArray(pull_over_path.start_pose(), "pull_over_start_pose", 0, 0.3, 0.3, 0.9));
     add(createPoseMarkerArray(
       pull_over_path.modified_goal_pose(), "pull_over_end_pose", 0, 0.3, 0.3, 0.9));
-    add(createPathMarkerArray(pull_over_path.full_path(), "full_path", 0, 0.0, 0.5, 0.9));
-    add(createPathMarkerArray(pull_over_path.getCurrentPath(), "current_path", 0, 0.9, 0.5, 0.0));
+    add(create_path_marker_array(pull_over_path.full_path(), "full_path", 0, 0.0, 0.5, 0.9));
+    add(
+      create_path_marker_array(pull_over_path.getCurrentPath(), "current_path", 0, 0.9, 0.5, 0.0));
 
     // visualize each partial path
     for (size_t i = 0; i < pull_over_path.partial_paths().size(); ++i) {
       const auto & partial_path = pull_over_path.partial_paths().at(i);
-      add(
-        createPathMarkerArray(partial_path, "partial_path_" + std::to_string(i), 0, 0.9, 0.5, 0.9));
+      add(create_path_marker_array(
+        partial_path, "partial_path_" + std::to_string(i), 0, 0.9, 0.5, 0.9));
     }
 
     auto marker = autoware::universe_utils::createDefaultMarker(
@@ -2619,7 +2620,7 @@ void GoalPlannerModule::setDebugData(const PullOverContextData & context_data)
   // set objects of interest
   for (const auto & [uuid, data] : collision_check) {
     const auto color = data.is_safe ? ColorName::GREEN : ColorName::RED;
-    setObjectsOfInterestData(data.current_obj_pose, data.obj_shape, color);
+    set_objects_of_interest_data(data.current_obj_pose, data.obj_shape, color);
   }
 
   // TODO(Mamoru Sobue): it is not clear where ThreadSafeData::collision_check should be cleared

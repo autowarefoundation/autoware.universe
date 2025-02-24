@@ -79,7 +79,7 @@ protected:
       std::make_shared<autoware::planning_factor_interface::PlanningFactorInterface>(
         node_.get(), "test_stopline"));
 
-    module_->setPlannerData(planner_data_);
+    module_->set_planner_data(planner_data_);
   }
 
   void TearDown() override { rclcpp::shutdown(); }

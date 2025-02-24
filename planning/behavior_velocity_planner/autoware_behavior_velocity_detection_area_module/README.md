@@ -35,7 +35,7 @@ This module is activated when there is a detection area on the target lane.
 
 ```plantuml
 @startuml
-title modifyPathVelocity
+title modify_path_velocity
 start
 
 :get obstacle point cloud in detection area;

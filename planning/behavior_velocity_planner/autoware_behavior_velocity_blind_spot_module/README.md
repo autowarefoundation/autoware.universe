@@ -45,7 +45,7 @@ Once a "stop" is judged, it will not transit to the "go" state until the "go" ju
 
 ```plantuml
 @startuml
-title modifyPathVelocity
+title modify_path_velocity
 start
 
 if (ego is turning right or left ?) then (yes)

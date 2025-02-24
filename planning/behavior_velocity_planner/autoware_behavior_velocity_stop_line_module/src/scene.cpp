@@ -43,7 +43,7 @@ StopLineModule::StopLineModule(
 {
 }
 
-bool StopLineModule::modifyPathVelocity(PathWithLaneId * path)
+bool StopLineModule::modify_path_velocity(PathWithLaneId * path)
 {
   auto trajectory =
     trajectory::Trajectory<autoware_internal_planning_msgs::msg::PathPointWithLaneId>::Builder{}
@@ -72,7 +72,8 @@ bool StopLineModule::modifyPathVelocity(PathWithLaneId * path)
     true /*is_driving_forward*/, 0.0, 0.0 /*shift distance*/, "stopline");
 
   updateStateAndStoppedTime(
-    &state_, &stopped_time_, clock_->now(), *stop_point - ego_s, planner_data_->isVehicleStopped());
+    &state_, &stopped_time_, clock_->now(), *stop_point - ego_s,
+    planner_data_->is_vehicle_stopped());
 
   geometry_msgs::msg::Pose stop_pose = trajectory->compute(*stop_point).point.pose;
 
@@ -91,7 +92,7 @@ std::pair<double, std::optional<double>> StopLineModule::getEgoAndStopPoint(
   switch (state) {
     case State::APPROACH: {
       const double base_link2front = planner_data_->vehicle_info_.max_longitudinal_offset_m;
-      const LineString2d stop_line = planning_utils::extendLine(
+      const LineString2d stop_line = planning_utils::extend_line(
         stop_line_[0], stop_line_[1], planner_data_->stop_line_extend_length);
 
       // Calculate intersection with stop line

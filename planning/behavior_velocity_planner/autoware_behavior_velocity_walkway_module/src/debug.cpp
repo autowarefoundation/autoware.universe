@@ -74,7 +74,7 @@ visualization_msgs::msg::MarkerArray createWalkwayMarkers(
 }
 }  // namespace
 
-autoware::motion_utils::VirtualWalls WalkwayModule::createVirtualWalls()
+autoware::motion_utils::VirtualWalls WalkwayModule::create_virtual_walls()
 {
   autoware::motion_utils::VirtualWalls virtual_walls;
   autoware::motion_utils::VirtualWall wall;
@@ -89,7 +89,7 @@ autoware::motion_utils::VirtualWalls WalkwayModule::createVirtualWalls()
   return virtual_walls;
 }
 
-visualization_msgs::msg::MarkerArray WalkwayModule::createDebugMarkerArray()
+visualization_msgs::msg::MarkerArray WalkwayModule::create_debug_marker_array()
 {
   visualization_msgs::msg::MarkerArray debug_marker_array;
 

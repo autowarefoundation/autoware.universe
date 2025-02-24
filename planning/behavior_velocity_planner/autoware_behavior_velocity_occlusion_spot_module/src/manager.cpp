@@ -32,9 +32,9 @@ using occlusion_spot_utils::DETECTION_METHOD;
 using occlusion_spot_utils::PASS_JUDGE;
 
 OcclusionSpotModuleManager::OcclusionSpotModuleManager(rclcpp::Node & node)
-: SceneModuleManagerInterface(node, getModuleName())
+: SceneModuleManagerInterface(node, get_module_name())
 {
-  const std::string ns(OcclusionSpotModuleManager::getModuleName());
+  const std::string ns(OcclusionSpotModuleManager::get_module_name());
   auto & pp = planner_param_;
   // for detection type
   {
@@ -116,20 +116,20 @@ OcclusionSpotModuleManager::OcclusionSpotModuleManager(rclcpp::Node & node)
   pp.left_overhang = vehicle_info.left_overhang_m;
 }
 
-void OcclusionSpotModuleManager::launchNewModules(
+void OcclusionSpotModuleManager::launch_new_modules(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
   if (path.points.empty()) return;
   // general
-  if (!isModuleRegistered(module_id_)) {
-    registerModule(std::make_shared<OcclusionSpotModule>(
+  if (!is_module_registered(module_id_)) {
+    register_module(std::make_shared<OcclusionSpotModule>(
       module_id_, planner_data_, planner_param_, logger_.get_child("occlusion_spot_module"), clock_,
       time_keeper_, planning_factor_interface_));
   }
 }
 
 std::function<bool(const std::shared_ptr<SceneModuleInterface> &)>
-OcclusionSpotModuleManager::getModuleExpiredFunction(
+OcclusionSpotModuleManager::get_module_expired_function(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
   return [path]([[maybe_unused]] const std::shared_ptr<SceneModuleInterface> & scene_module) {

@@ -58,7 +58,7 @@ auto findNearestCollisionPoint(
   return nearest_collision_point;
 }
 
-auto createTargetPoint(
+auto create_target_point(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & input,
   const LineString2d & stop_line, const double offset)
   -> std::optional<std::pair<size_t, Eigen::Vector2d>>
@@ -132,12 +132,12 @@ auto calcStopPointAndInsertIndex(
   LineString2d stop_line;
 
   for (size_t i = 0; i < lanelet_stop_lines.size() - 1; ++i) {
-    stop_line = planning_utils::extendLine(
+    stop_line = planning_utils::extend_line(
       lanelet_stop_lines[i], lanelet_stop_lines[i + 1], stop_line_extend_length);
 
     // Calculate stop pose and insert index,
     // if there is a collision point between path and stop line
-    const auto output = createTargetPoint(input_path, stop_line, offset);
+    const auto output = create_target_point(input_path, stop_line, offset);
     if (output.has_value()) {
       return output;
     }

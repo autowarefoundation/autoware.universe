@@ -23,7 +23,7 @@
 
 namespace autoware::behavior_velocity_planner
 {
-bool splineInterpolate(
+bool spline_interpolate(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & input, const double interval,
   autoware_internal_planning_msgs::msg::PathWithLaneId & output, const rclcpp::Logger & logger)
 {
@@ -45,7 +45,7 @@ bool splineInterpolate(
  * is the velocity of the closest point for the input "sub-path" which consists of the points before
  * the interpolated point.
  */
-autoware_planning_msgs::msg::Path interpolatePath(
+autoware_planning_msgs::msg::Path interpolate_path(
   const autoware_planning_msgs::msg::Path & path, const double length, const double interval)
 {
   const auto logger{rclcpp::get_logger("behavior_velocity_planner").get_child("path_utilization")};
@@ -123,7 +123,7 @@ autoware_planning_msgs::msg::Path interpolatePath(
   return autoware::motion_utils::resamplePath(path, s_out);
 }
 
-autoware_planning_msgs::msg::Path filterLitterPathPoint(
+autoware_planning_msgs::msg::Path filter_litter_path_point(
   const autoware_planning_msgs::msg::Path & path)
 {
   autoware_planning_msgs::msg::Path filtered_path;
@@ -151,7 +151,7 @@ autoware_planning_msgs::msg::Path filterLitterPathPoint(
 
   return filtered_path;
 }
-autoware_planning_msgs::msg::Path filterStopPathPoint(
+autoware_planning_msgs::msg::Path filter_stop_path_point(
   const autoware_planning_msgs::msg::Path & path)
 {
   autoware_planning_msgs::msg::Path filtered_path = path;
