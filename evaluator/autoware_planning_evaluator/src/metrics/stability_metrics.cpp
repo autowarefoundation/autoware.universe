@@ -98,7 +98,7 @@ Accumulator<double> calcLateralDistance(const Trajectory & traj1, const Trajecto
   return stat;
 }
 
-Accumulator<double> calcTrajectoryLateralDisplacement(
+Accumulator<double> calcLookaheadLateralTrajectoryDisplacement(
   const Trajectory traj1, const Trajectory traj2, const nav_msgs::msg::Odometry & ego_odom,
   const double trajectory_eval_time_s)
 {

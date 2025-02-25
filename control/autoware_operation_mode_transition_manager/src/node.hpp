@@ -18,7 +18,7 @@
 #include "compatibility.hpp"
 #include "state.hpp"
 
-#include <autoware/component_interface_specs/system.hpp>
+#include <autoware/component_interface_specs_universe/system.hpp>
 #include <autoware/component_interface_utils/rclcpp.hpp>
 #include <autoware/universe_utils/ros/polling_subscriber.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -36,9 +36,11 @@ public:
 
 private:
   using ChangeAutowareControlAPI =
-    autoware::component_interface_specs::system::ChangeAutowareControl;
-  using ChangeOperationModeAPI = autoware::component_interface_specs::system::ChangeOperationMode;
-  using OperationModeStateAPI = autoware::component_interface_specs::system::OperationModeState;
+    autoware::component_interface_specs_universe::system::ChangeAutowareControl;
+  using ChangeOperationModeAPI =
+    autoware::component_interface_specs_universe::system::ChangeOperationMode;
+  using OperationModeStateAPI =
+    autoware::component_interface_specs_universe::system::OperationModeState;
   autoware::component_interface_utils::Service<ChangeAutowareControlAPI>::SharedPtr
     srv_autoware_control_;
   autoware::component_interface_utils::Service<ChangeOperationModeAPI>::SharedPtr

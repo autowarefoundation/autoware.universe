@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,7 +34,8 @@
 namespace planning_diagnostics
 {
 PlanningEvaluatorNode::PlanningEvaluatorNode(const rclcpp::NodeOptions & node_options)
-: Node("planning_evaluator", node_options)
+: Node("planning_evaluator", node_options),
+  vehicle_info_(autoware::vehicle_info_utils::VehicleInfoUtils(*this).getVehicleInfo())
 {
   using std::placeholders::_1;
   tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
@@ -59,8 +60,8 @@ PlanningEvaluatorNode::PlanningEvaluatorNode(const rclcpp::NodeOptions & node_op
   output_metrics_ = declare_parameter<bool>("output_metrics");
   ego_frame_str_ = declare_parameter<std::string>("ego_frame");
 
-  processing_time_pub_ =
-    this->create_publisher<tier4_debug_msgs::msg::Float64Stamped>("~/debug/processing_time_ms", 1);
+  processing_time_pub_ = this->create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>(
+    "~/debug/processing_time_ms", 1);
 
   // List of metrics to calculate and publish
   metrics_pub_ = create_publisher<MetricArrayMsg>("~/metrics", 1);
@@ -282,7 +283,7 @@ void PlanningEvaluatorNode::onTimer()
   metrics_msg_ = MetricArrayMsg{};
 
   // Publish ProcessingTime
-  tier4_debug_msgs::msg::Float64Stamped processing_time_msg;
+  autoware_internal_debug_msgs::msg::Float64Stamped processing_time_msg;
   processing_time_msg.stamp = get_clock()->now();
   processing_time_msg.data = stop_watch.toc();
   processing_time_pub_->publish(processing_time_msg);
@@ -298,7 +299,8 @@ void PlanningEvaluatorNode::onTrajectory(
   auto start = now();
 
   for (Metric metric : metrics_) {
-    const auto metric_stat = metrics_calculator_.calculate(Metric(metric), *traj_msg);
+    const auto metric_stat =
+      metrics_calculator_.calculate(Metric(metric), *traj_msg, vehicle_info_.vehicle_length_m);
     if (!metric_stat) {
       continue;
     }

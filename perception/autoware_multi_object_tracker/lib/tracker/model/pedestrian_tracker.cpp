@@ -28,8 +28,6 @@
 #include <autoware/universe_utils/ros/msg_covariance.hpp>
 
 #include <bits/stdc++.h>
-#include <tf2/LinearMath/Matrix3x3.h>
-#include <tf2/LinearMath/Quaternion.h>
 #include <tf2/utils.h>
 
 #ifdef ROS_DISTRO_GALACTIC

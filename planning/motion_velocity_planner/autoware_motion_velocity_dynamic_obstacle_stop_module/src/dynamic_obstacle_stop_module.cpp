@@ -43,7 +43,10 @@ void DynamicObstacleStopModule::init(rclcpp::Node & node, const std::string & mo
   module_name_ = module_name;
   logger_ = node.get_logger().get_child(ns_);
   clock_ = node.get_clock();
-  velocity_factor_interface_.init(autoware::motion_utils::PlanningBehavior::ROUTE_OBSTACLE);
+
+  planning_factor_interface_ =
+    std::make_unique<autoware::planning_factor_interface::PlanningFactorInterface>(
+      &node, "dynamic_obstacle_stop");
 
   debug_publisher_ =
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/" + ns_ + "/debug_markers", 1);
@@ -94,19 +97,21 @@ void DynamicObstacleStopModule::update_parameters(const std::vector<rclcpp::Para
 }
 
 VelocityPlanningResult DynamicObstacleStopModule::plan(
-  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
+  [[maybe_unused]] const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> &
+    raw_trajectory_points,
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & smoothed_trajectory_points,
   const std::shared_ptr<const PlannerData> planner_data)
 {
   VelocityPlanningResult result;
   debug_data_.reset_data();
-  if (ego_trajectory_points.size() < 2) return result;
+  if (smoothed_trajectory_points.size() < 2) return result;
 
   autoware::universe_utils::StopWatch<std::chrono::microseconds> stopwatch;
   stopwatch.tic();
   stopwatch.tic("preprocessing");
   dynamic_obstacle_stop::EgoData ego_data;
   ego_data.pose = planner_data->current_odometry.pose.pose;
-  ego_data.trajectory = ego_trajectory_points;
+  ego_data.trajectory = smoothed_trajectory_points;
   autoware::motion_utils::removeOverlapPoints(ego_data.trajectory);
   ego_data.first_trajectory_idx =
     autoware::motion_utils::findNearestSegmentIndex(ego_data.trajectory, ego_data.pose.position);
@@ -131,7 +136,7 @@ VelocityPlanningResult DynamicObstacleStopModule::plan(
       ? 0.0
       : params_.hysteresis;
   const auto dynamic_obstacles = dynamic_obstacle_stop::filter_predicted_objects(
-    planner_data->predicted_objects, ego_data, params_, hysteresis);
+    planner_data->objects, ego_data, params_, hysteresis);
 
   const auto preprocessing_duration_us = stopwatch.toc("preprocessing");
 
@@ -160,15 +165,9 @@ VelocityPlanningResult DynamicObstacleStopModule::plan(
     debug_data_.stop_pose = stop_pose;
     if (stop_pose) {
       result.stop_points.push_back(stop_pose->position);
-      const auto stop_pose_reached =
-        planner_data->current_odometry.twist.twist.linear.x < 1e-3 &&
-        autoware::universe_utils::calcDistance2d(ego_data.pose, *stop_pose) < 1e-3;
-      velocity_factor_interface_.set(
-        ego_trajectory_points, ego_data.pose, *stop_pose,
-        stop_pose_reached ? autoware::motion_utils::VelocityFactor::STOPPED
-                          : autoware::motion_utils::VelocityFactor::APPROACHING,
-        "dynamic_obstacle_stop");
-      result.velocity_factor = velocity_factor_interface_.get();
+      planning_factor_interface_->add(
+        smoothed_trajectory_points, ego_data.pose, *stop_pose, PlanningFactor::STOP,
+        SafetyFactorArray{});
       create_virtual_walls();
     }
   }

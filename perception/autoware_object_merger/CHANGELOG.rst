@@ -2,6 +2,32 @@
 Changelog for package autoware_object_merger
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_object_merger): tier4_debug_msgs changed to autoware_internal_debug_msgs in fil… (`#9893 <https://github.com/autowarefoundation/autoware.universe/issues/9893>`_)
+  feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in files perception/autoware_object_merger
+  Co-authored-by: Taekjin LEE <taekjin.lee@tier4.jp>
+* fix(perception): fix perception docs (`#9766 <https://github.com/autowarefoundation/autoware.universe/issues/9766>`_)
+  * fix: fix perception docs
+  * fix: fix missing parameter in schema
+  * Update perception/autoware_object_merger/schema/data_association_matrix.schema.json
+  Co-authored-by: Taekjin LEE <technolojin@gmail.com>
+  * Update perception/autoware_object_merger/schema/data_association_matrix.schema.json
+  Co-authored-by: Taekjin LEE <technolojin@gmail.com>
+  * Update perception/autoware_object_merger/schema/data_association_matrix.schema.json
+  Co-authored-by: Taekjin LEE <technolojin@gmail.com>
+  * Update perception/autoware_object_merger/schema/data_association_matrix.schema.json
+  Co-authored-by: Taekjin LEE <technolojin@gmail.com>
+  * style(pre-commit): autofix
+  * chore: seperate paramters for different nodes
+  ---------
+  Co-authored-by: Taekjin LEE <technolojin@gmail.com>
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* feat(autoware_object_merger, autoware_tracking_object_merger): enable anonymized node names to be configurable (`#9733 <https://github.com/autowarefoundation/autoware.universe/issues/9733>`_)
+  feat: enable anonymized node names to be configurable
+* Contributors: Fumiya Watanabe, Taekjin LEE, Vishal Chauhan, Yi-Hsiang Fang (Vivid)
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

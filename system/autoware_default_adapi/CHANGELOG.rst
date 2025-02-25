@@ -2,6 +2,34 @@
 Changelog for package autoware_default_adapi
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat: apply `autoware` prefix for `component_state_monitor` and its dependencies (`#9961 <https://github.com/autowarefoundation/autoware.universe/issues/9961>`_)
+* feat: apply `autoware\_` prefix for `diagnostic_graph_utils` (`#9968 <https://github.com/autowarefoundation/autoware.universe/issues/9968>`_)
+* feat: apply `autoware\_` prefix for `default_ad_api_helpers` (`#9965 <https://github.com/autowarefoundation/autoware.universe/issues/9965>`_)
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+  Co-authored-by: Takagi, Isamu <isamu.takagi@tier4.jp>
+* feat(autoware_component_interface_specs_universe!): rename package (`#9753 <https://github.com/autowarefoundation/autoware.universe/issues/9753>`_)
+* fix(obstacle_stop_planner): migrate planning factor (`#9939 <https://github.com/autowarefoundation/autoware.universe/issues/9939>`_)
+  * fix(obstacle_stop_planner): migrate planning factor
+  * fix(autoware_default_adapi): add coversion map
+  ---------
+* feat(planning_factor)!: remove velocity_factor, steering_factor and introduce planning_factor (`#9927 <https://github.com/autowarefoundation/autoware.universe/issues/9927>`_)
+  Co-authored-by: Satoshi OTA <44889564+satoshi-ota@users.noreply.github.com>
+  Co-authored-by: Ryohsuke Mitsudome <43976834+mitsudome-r@users.noreply.github.com>
+  Co-authored-by: satoshi-ota <satoshi.ota928@gmail.com>
+* feat(autoware_default_adapi): release adapi v1.6.0 (`#9704 <https://github.com/autowarefoundation/autoware.universe/issues/9704>`_)
+  * feat: reject clearing route during autonomous mode
+  * feat: modify check and relay door service
+  * fix door condition
+  * fix error and add option
+  * update v1.6.0
+  ---------
+* fix(autoware_default_adapi): fix bugprone-branch-clone (`#9726 <https://github.com/autowarefoundation/autoware.universe/issues/9726>`_)
+  fix: bugprone-error
+* Contributors: Fumiya Watanabe, Junya Sasaki, Mamoru Sobue, Ryohsuke Mitsudome, Satoshi OTA, Takagi, Isamu, kobayu858
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

@@ -15,10 +15,10 @@
 #include "input_manager.hpp"
 
 #include "autoware/multi_object_tracker/object_model/types.hpp"
-
-#include <autoware/multi_object_tracker/uncertainty/uncertainty_processor.hpp>
+#include "autoware/multi_object_tracker/uncertainty/uncertainty_processor.hpp"
 
 #include <cassert>
+#include <memory>
 #include <utility>
 #include <vector>
 
@@ -27,7 +27,8 @@ namespace autoware::multi_object_tracker
 ///////////////////////////
 /////// InputStream ///////
 ///////////////////////////
-InputStream::InputStream(rclcpp::Node & node, uint & index) : node_(node), index_(index)
+InputStream::InputStream(rclcpp::Node & node, uint & index, std::shared_ptr<Odometry> odometry)
+: node_(node), index_(index), odometry_(odometry)
 {
 }
 
@@ -63,8 +64,21 @@ void InputStream::onMessage(
   types::DynamicObjectList objects_with_uncertainty =
     uncertainty::modelUncertainty(dynamic_objects);
 
+  // Transform the objects to the world frame
+  auto transformed_objects = odometry_->transformObjects(objects_with_uncertainty);
+  if (!transformed_objects) {
+    RCLCPP_WARN(
+      node_.get_logger(), "InputManager::onMessage %s: Failed to transform objects.",
+      long_name_.c_str());
+    return;
+  }
+  dynamic_objects = transformed_objects.value();
+
+  // Normalize the object uncertainty
+  uncertainty::normalizeUncertainty(dynamic_objects);
+
   // Move the objects_with_uncertainty to the objects queue
-  objects_que_.push_back(std::move(objects_with_uncertainty));
+  objects_que_.push_back(std::move(dynamic_objects));
   while (objects_que_.size() > que_size_) {
     objects_que_.pop_front();
   }
@@ -190,7 +204,8 @@ void InputStream::getObjectsOlderThan(
 ////////////////////////////
 /////// InputManager ///////
 ////////////////////////////
-InputManager::InputManager(rclcpp::Node & node) : node_(node)
+InputManager::InputManager(rclcpp::Node & node, std::shared_ptr<Odometry> odometry)
+: node_(node), odometry_(odometry)
 {
   latest_exported_object_time_ = node_.now() - rclcpp::Duration::from_seconds(3.0);
 }
@@ -209,7 +224,7 @@ void InputManager::init(const std::vector<InputChannel> & input_channels)
   bool is_any_spawn_enabled = false;
   for (size_t i = 0; i < input_size_; i++) {
     uint index(i);
-    InputStream input_stream(node_, index);
+    InputStream input_stream(node_, index, odometry_);
     input_stream.init(input_channels[i]);
     input_stream.setTriggerFunction(
       std::bind(&InputManager::onTrigger, this, std::placeholders::_1));

@@ -134,7 +134,7 @@ private:
   rclcpp::Publisher<PoseWithCovarianceStamped>::SharedPtr pub_debug_pose_with_covariance_;
   rclcpp::Publisher<PointCloud2>::SharedPtr pub_marker_pointcloud_;
 
-  std::shared_ptr<autoware::universe_utils::DiagnosticInterface> diagnostics_interface_;
+  std::shared_ptr<autoware::universe_utils::DiagnosticsInterface> diagnostics_interface_;
 
   Param param_;
   bool is_activated_;

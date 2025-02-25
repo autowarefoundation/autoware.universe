@@ -16,6 +16,7 @@
 #define PROCESSOR__INPUT_MANAGER_HPP_
 
 #include "autoware/multi_object_tracker/object_model/types.hpp"
+#include "autoware/multi_object_tracker/odometry.hpp"
 #include "rclcpp/rclcpp.hpp"
 
 #include <autoware_perception_msgs/msg/detected_objects.hpp>
@@ -42,7 +43,7 @@ struct InputChannel
 class InputStream
 {
 public:
-  explicit InputStream(rclcpp::Node & node, uint & index);
+  explicit InputStream(rclcpp::Node & node, uint & index, std::shared_ptr<Odometry> odometry);
 
   void init(const InputChannel & input_channel);
 
@@ -75,6 +76,7 @@ public:
 private:
   rclcpp::Node & node_;
   uint index_;
+  std::shared_ptr<Odometry> odometry_;
 
   std::string input_topic_;
   std::string long_name_;
@@ -99,7 +101,7 @@ private:
 class InputManager
 {
 public:
-  explicit InputManager(rclcpp::Node & node);
+  InputManager(rclcpp::Node & node, std::shared_ptr<Odometry> odometry);
   void init(const std::vector<InputChannel> & input_channels);
 
   void setTriggerFunction(std::function<void()> func_trigger) { func_trigger_ = func_trigger; }
@@ -114,6 +116,8 @@ public:
 
 private:
   rclcpp::Node & node_;
+  std::shared_ptr<Odometry> odometry_;
+
   std::vector<rclcpp::Subscription<autoware_perception_msgs::msg::DetectedObjects>::SharedPtr>
     sub_objects_array_{};
 

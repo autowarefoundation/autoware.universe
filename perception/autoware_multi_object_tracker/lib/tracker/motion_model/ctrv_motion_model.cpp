@@ -27,6 +27,8 @@
 #include <autoware/universe_utils/math/unit_conversion.hpp>
 #include <autoware/universe_utils/ros/msg_covariance.hpp>
 
+#include <tf2/LinearMath/Quaternion.h>
+
 namespace autoware::multi_object_tracker
 {
 // cspell: ignore CTRV

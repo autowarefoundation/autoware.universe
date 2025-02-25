@@ -2,6 +2,76 @@
 Changelog for package tier4_simulator_launch
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat: apply `autoware\_` prefix for `dummy_perception_publisher` (`#9987 <https://github.com/autowarefoundation/autoware.universe/issues/9987>`_)
+* fix(tier4_simulator_launch): fix a wrong package name: `fault_injection` => `autoware_fault_injection`  (`#10014 <https://github.com/autowarefoundation/autoware.universe/issues/10014>`_)
+* feat: apply `autoware\_` prefix for `scenario_simulator_v2_adapter` (`#9957 <https://github.com/autowarefoundation/autoware.universe/issues/9957>`_)
+  * feat(autoware_scenario_simulator_v2_adapter): apply `autoware\_` prefix (see below):
+  * In this commit, I did not organize a folder structure.
+  The folder structure will be organized in the next some commits.
+  * The changes will follow the Autoware's guideline as below:
+  - https://autowarefoundation.github.io/autoware-documentation/main/contributing/coding-guidelines/ros-nodes/directory-structure/#package-folder
+  * rename(scenario_simulator_v2_adapter): move headers under `include/autoware`:
+  * Fixes due to this changes for .hpp/.cpp files will be applied in the next commit
+  * fix(scenario_simulator_v2_adapter): fix include paths
+  * To follow the previous commit
+  * rename: `scenario_simulator_v2_adapter` => `autoware_scenario_simulator_v2_adapter`
+  * bug(autoware_scenario_simulator_v2_adapter): revert wrongly updated copyrights
+  * bug(autoware_scenario_simulator_v2_adapter): `autoware\_` prefix is not needed here
+  * bug(autoware_scenario_simulator_v2_adapter): wrong package name in launch side
+  ---------
+* feat: apply `autoware\_` prefix for `simple_planning_simulator` (`#9995 <https://github.com/autowarefoundation/autoware.universe/issues/9995>`_)
+  * feat(simple_planning_simulator): apply `autoware\_` prefix (see below):
+  Note:
+  * In this commit, I did not organize a folder structure.
+  The folder structure will be organized in the next some commits.
+  * The changes will follow the Autoware's guideline as below:
+  - https://autowarefoundation.github.io/autoware-documentation/main/contributing/coding-guidelines/ros-nodes/directory-structure/#package-folder
+  * rename(simple_planning_simulator): move headers under `include/autoware`:
+  * Fixes due to this changes for .hpp/.cpp files will be applied in the next commit
+  * fix(simple_planning_simulator): fix include header paths
+  * To follow the previous commit
+  * rename: `simple_planning_simulator` => `autoware_simple_planning_simulator`
+  * bug(autoware_simple_planning_simulator): fix missing changes
+  * style(pre-commit): autofix
+  * bug(autoware_simple_planning_simulator): fix errors in build and tests
+  * I had to run after `rm -rf install build`, ... sorry
+  * style(pre-commit): autofix
+  * Fixed NOLINT
+  * Added NOLINT
+  * Fixed to autoware_simple_planning_simulator
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+  Co-authored-by: Shintaro Sakoda <shintaro.sakoda@tier4.jp>
+* feat: apply `autoware\_` prefix for `vehicle_door_simulator` (`#9997 <https://github.com/autowarefoundation/autoware.universe/issues/9997>`_)
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* feat: apply `autoware\_` prefix for `fault_injection` (`#9989 <https://github.com/autowarefoundation/autoware.universe/issues/9989>`_)
+  * feat(fault_injection): apply `autoware\_` prefix (see below):
+  Note:
+  * In this commit, I did not organize a folder structure.
+  The folder structure will be organized in the next some commits.
+  * The changes will follow the Autoware's guideline as below:
+  - https://autowarefoundation.github.io/autoware-documentation/main/contributing/coding-guidelines/ros-nodes/directory-structure/#package-folder
+  * rename(fault_injection): move headers under `include/autoware`:
+  * Fixes due to this changes for .hpp/.cpp files will be applied in the next commit
+  * fix(fault_injection): fix include header paths
+  * To follow the previous commit
+  * rename: `fault_injection` => `autoware_fault_injection`
+  * Fixed exec_depend
+  ---------
+  Co-authored-by: SakodaShintaro <shintaro.sakoda@tier4.jp>
+* fix(launch): fix missing changes for launch (`#10007 <https://github.com/autowarefoundation/autoware.universe/issues/10007>`_)
+  bug(launch): fix missing changes for following PRs:
+  * https://github.com/autowarefoundation/autoware.universe/pull/9956
+  * https://github.com/autowarefoundation/autoware.universe/pull/9970
+* fix(tier4_simulator_launch): add use_validator argument to simulator launch (`#9634 <https://github.com/autowarefoundation/autoware.universe/issues/9634>`_)
+  * feat: add use_validator argument to simulator launch
+  * feat: set variables explicitly
+  ---------
+* Contributors: Fumiya Watanabe, Junya Sasaki, Taekjin LEE
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

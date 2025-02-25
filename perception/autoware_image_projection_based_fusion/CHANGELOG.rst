@@ -2,6 +2,133 @@
 Changelog for package autoware_image_projection_based_fusion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_image_projection_based_fusion)!: tier4_debug-msgs changed to autoware_internal_debug_msgs in autoware_image_projection_based_fusion (`#9877 <https://github.com/autowarefoundation/autoware.universe/issues/9877>`_)
+* fix(image_projection_based_fusion):  revise message publishers (`#9865 <https://github.com/autowarefoundation/autoware.universe/issues/9865>`_)
+  * refactor: fix condition for publishing painted pointcloud message
+  * fix: publish output revised
+  * feat: fix condition for publishing painted pointcloud message
+  * feat: roi-pointclout  fusion - publish empty image even when there is no target roi
+  * fix: remap output topic for clusters in roi_pointcloud_fusion
+  * style(pre-commit): autofix
+  * feat: fix condition for publishing painted pointcloud message
+  * feat: Add debug publisher for internal debugging
+  * feat: remove !! pointer to bool conversion
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* refactor(autoware_tensorrt_common): multi-TensorRT compatibility & tensorrt_common as unified lib for all perception components (`#9762 <https://github.com/autowarefoundation/autoware.universe/issues/9762>`_)
+  * refactor(autoware_tensorrt_common): multi-TensorRT compatibility & tensorrt_common as unified lib for all perception components
+  * style(pre-commit): autofix
+  * style(autoware_tensorrt_common): linting
+  * style(autoware_lidar_centerpoint): typo
+  Co-authored-by: Kenzo Lobos Tsunekawa <kenzo.lobos@tier4.jp>
+  * docs(autoware_tensorrt_common): grammar
+  Co-authored-by: Kenzo Lobos Tsunekawa <kenzo.lobos@tier4.jp>
+  * fix(autoware_lidar_transfusion): reuse cast variable
+  * fix(autoware_tensorrt_common): remove deprecated inference API
+  * style(autoware_tensorrt_common): grammar
+  Co-authored-by: Kenzo Lobos Tsunekawa <kenzo.lobos@tier4.jp>
+  * style(autoware_tensorrt_common): grammar
+  Co-authored-by: Kenzo Lobos Tsunekawa <kenzo.lobos@tier4.jp>
+  * fix(autoware_tensorrt_common): const pointer
+  * fix(autoware_tensorrt_common): remove unused method declaration
+  * style(pre-commit): autofix
+  * refactor(autoware_tensorrt_common): readability
+  Co-authored-by: Kotaro Uetake <60615504+ktro2828@users.noreply.github.com>
+  * fix(autoware_tensorrt_common): return if layer not registered
+  * refactor(autoware_tensorrt_common): readability
+  Co-authored-by: Kotaro Uetake <60615504+ktro2828@users.noreply.github.com>
+  * fix(autoware_tensorrt_common): rename struct
+  * style(pre-commit): autofix
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+  Co-authored-by: Kenzo Lobos Tsunekawa <kenzo.lobos@tier4.jp>
+  Co-authored-by: Kotaro Uetake <60615504+ktro2828@users.noreply.github.com>
+* fix(image_projection_based_fusion): remove mutex (`#9862 <https://github.com/autowarefoundation/autoware.universe/issues/9862>`_)
+  refactor: Refactor fusion_node.hpp and fusion_node.cpp for improved code organization and readability
+* refactor(autoware_image_projection_based_fusion): organize 2d-detection related members (`#9789 <https://github.com/autowarefoundation/autoware.universe/issues/9789>`_)
+  * chore: input_camera_topics\_ is only for debug
+  * feat: fuse main message with cached roi messages in fusion_node.cpp
+  * chore: add comments on each process step, organize methods
+  * feat: Export process method in fusion_node.cpp
+  Export the `exportProcess()` method in `fusion_node.cpp` to handle the post-processing and publishing of the fused messages. This method cancels the timer, performs the necessary post-processing steps, publishes the output message, and resets the flags. It also adds processing time for debugging purposes. This change improves the organization and readability of the code.
+  * feat: Refactor fusion_node.hpp and fusion_node.cpp
+  Refactor the `fusion_node.hpp` and `fusion_node.cpp` files to improve code organization and readability. This includes exporting the `exportProcess()` method in `fusion_node.cpp` to handle post-processing and publishing of fused messages, adding comments on each process step, organizing methods, and fusing the main message with cached ROI messages. These changes enhance the overall quality of the codebase.
+  * Refactor fusion_node.cpp and fusion_node.hpp for improved code organization and readability
+  * Refactor fusion_node.hpp and fusion_node.cpp for improved code organization and readability
+  * feat: Refactor fusion_node.cpp for improved code organization and readability
+  * Refactor fusion_node.cpp for improved code organization and readability
+  * feat: implement mutex per 2d detection process
+  * Refactor fusion_node.hpp and fusion_node.cpp for improved code organization and readability
+  * Refactor fusion_node.hpp and fusion_node.cpp for improved code organization and readability
+  * revise template, inputs first and output at the last
+  * explicit in and out types 1
+  * clarify pointcloud message type
+  * Refactor fusion_node.hpp and fusion_node.cpp for improved code organization and readability
+  * Refactor fusion_node.hpp and fusion_node.cpp for improved code organization and readability
+  * Refactor fusion_node.hpp and fusion_node.cpp for improved code organization and readability
+  * Refactor publisher types in fusion_node.hpp and node.hpp
+  * fix: resolve cppcheck issue shadowVariable
+  * Refactor fusion_node.hpp and fusion_node.cpp for improved code organization and readability
+  * chore: rename Det2dManager to Det2dStatus
+  * revert mutex related changes
+  * refactor: review member and method's access
+  * fix: resolve shadowVariable of 'det2d'
+  * fix missing line
+  * refactor message postprocess and publish methods
+  * publish the main message is common
+  * fix: replace pointcloud message type by the typename
+  * review member access
+  * Refactor fusion_node.hpp and fusion_node.cpp for improved code organization and readability
+  * refactor: fix condition for publishing painted pointcloud message
+  * fix: remove unused variable
+  ---------
+* feat(lidar_centerpoint, pointpainting): add diag publisher for max voxel size (`#9720 <https://github.com/autowarefoundation/autoware.universe/issues/9720>`_)
+* feat(pointpainting_fusion): enable cloud display on image (`#9813 <https://github.com/autowarefoundation/autoware.universe/issues/9813>`_)
+* feat(image_projection_based_fusion): add cache for camera projection (`#9635 <https://github.com/autowarefoundation/autoware.universe/issues/9635>`_)
+  * add camera_projection class and projection cache
+  * style(pre-commit): autofix
+  * fix FOV filtering
+  * style(pre-commit): autofix
+  * remove unused includes
+  * update schema
+  * fix cpplint error
+  * apply suggestion: more simple and effcient computation
+  * correct terminology
+  * style(pre-commit): autofix
+  * fix comments
+  * fix var name
+  Co-authored-by: Taekjin LEE <technolojin@gmail.com>
+  * fix variable names
+  Co-authored-by: Taekjin LEE <technolojin@gmail.com>
+  * fix variable names
+  Co-authored-by: Taekjin LEE <technolojin@gmail.com>
+  * fix variable names
+  Co-authored-by: Taekjin LEE <technolojin@gmail.com>
+  * fix variable names
+  Co-authored-by: Taekjin LEE <technolojin@gmail.com>
+  * fix variable names
+  * fix initialization
+  Co-authored-by: badai nguyen  <94814556+badai-nguyen@users.noreply.github.com>
+  * add verification to point_project_to_unrectified_image when loading
+  Co-authored-by: badai nguyen  <94814556+badai-nguyen@users.noreply.github.com>
+  * chore: add option description to project points to unrectified image
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+  Co-authored-by: Taekjin LEE <technolojin@gmail.com>
+  Co-authored-by: badai nguyen <94814556+badai-nguyen@users.noreply.github.com>
+  Co-authored-by: Taekjin LEE <taekjin.lee@tier4.jp>
+* feat(image_projection_based_fusion): add timekeeper (`#9632 <https://github.com/autowarefoundation/autoware.universe/issues/9632>`_)
+  * add timekeeper
+  * chore: refactor time-keeper position
+  * chore: bring back a missing comment
+  * chore: remove redundant timekeepers
+  ---------
+  Co-authored-by: Taekjin LEE <taekjin.lee@tier4.jp>
+* Contributors: Amadeusz Szymko, Fumiya Watanabe, Masaki Baba, Taekjin LEE, Vishal Chauhan, Yi-Hsiang Fang (Vivid), kminoda
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

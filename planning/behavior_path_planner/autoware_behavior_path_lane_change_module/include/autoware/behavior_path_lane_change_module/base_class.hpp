@@ -28,9 +28,9 @@
 #include <magic_enum.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_internal_planning_msgs/msg/path_with_lane_id.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/twist.hpp>
-#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <memory>
 #include <string>
@@ -42,11 +42,11 @@ namespace autoware::behavior_path_planner
 using autoware::behavior_path_planner::PoseWithDetailOpt;
 using autoware::route_handler::Direction;
 using autoware::universe_utils::StopWatch;
+using autoware_internal_planning_msgs::msg::PathWithLaneId;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
 using lane_change::PathSafetyStatus;
-using tier4_planning_msgs::msg::PathWithLaneId;
 
 class LaneChangeBase
 {
@@ -104,6 +104,8 @@ public:
 
   virtual LaneChangePath getLaneChangePath() const = 0;
 
+  virtual BehaviorModuleOutput getTerminalLaneChangePath() const = 0;
+
   virtual bool isEgoOnPreparePhase() const = 0;
 
   virtual bool isRequiredStop(const bool is_trailing_object) = 0;
@@ -130,7 +132,7 @@ public:
 
   virtual void insert_stop_point(
     [[maybe_unused]] const lanelet::ConstLanelets & lanelets,
-    [[maybe_unused]] PathWithLaneId & path)
+    [[maybe_unused]] PathWithLaneId & path, [[maybe_unused]] const bool is_waiting_approval = false)
   {
   }
 
@@ -233,8 +235,6 @@ public:
   virtual bool is_near_regulatory_element() const = 0;
 
 protected:
-  virtual int getNumToPreferredLane(const lanelet::ConstLanelet & lane) const = 0;
-
   virtual bool isValidPath(const PathWithLaneId & path) const = 0;
 
   virtual bool isAbleToStopSafely() const = 0;
@@ -285,8 +285,7 @@ protected:
   FilteredLanesObjects filtered_objects_{};
   BehaviorModuleOutput prev_module_output_{};
   PoseWithDetailOpt lane_change_stop_pose_{std::nullopt};
-
-  PathWithLaneId prev_approved_path_;
+  mutable std::optional<LaneChangePath> terminal_lane_change_path_{std::nullopt};
 
   int unsafe_hysteresis_count_{0};
   bool is_abort_path_approved_{false};

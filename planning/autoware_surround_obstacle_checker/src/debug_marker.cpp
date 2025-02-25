@@ -67,7 +67,10 @@ SurroundObstacleCheckerDebugNode::SurroundObstacleCheckerDebugNode(
   const double & surround_check_back_distance, const double & surround_check_hysteresis_distance,
   const geometry_msgs::msg::Pose & self_pose, const rclcpp::Clock::SharedPtr clock,
   rclcpp::Node & node)
-: vehicle_info_(vehicle_info),
+: planning_factor_interface_{std::make_unique<
+    autoware::planning_factor_interface::PlanningFactorInterface>(
+    &node, "surround_obstacle_checker")},
+  vehicle_info_(vehicle_info),
   object_label_(object_label),
   surround_check_front_distance_(surround_check_front_distance),
   surround_check_side_distance_(surround_check_side_distance),
@@ -77,8 +80,6 @@ SurroundObstacleCheckerDebugNode::SurroundObstacleCheckerDebugNode(
   clock_(clock)
 {
   debug_viz_pub_ = node.create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/marker", 1);
-  velocity_factor_pub_ =
-    node.create_publisher<VelocityFactorArray>("/planning/velocity_factors/surround_obstacle", 1);
   vehicle_footprint_pub_ = node.create_publisher<PolygonStamped>("~/debug/footprint", 1);
   vehicle_footprint_offset_pub_ =
     node.create_publisher<PolygonStamped>("~/debug/footprint_offset", 1);
@@ -143,8 +144,12 @@ void SurroundObstacleCheckerDebugNode::publish()
   debug_viz_pub_->publish(visualization_msg);
 
   /* publish stop reason for autoware api */
-  const auto velocity_factor_msg = makeVelocityFactorArray();
-  velocity_factor_pub_->publish(velocity_factor_msg);
+  if (stop_pose_ptr_ != nullptr) {
+    planning_factor_interface_->add(
+      0.0, *stop_pose_ptr_, tier4_planning_msgs::msg::PlanningFactor::STOP,
+      tier4_planning_msgs::msg::SafetyFactorArray{});
+  }
+  planning_factor_interface_->publish();
 
   /* reset variables */
   stop_pose_ptr_ = nullptr;
@@ -168,25 +173,6 @@ MarkerArray SurroundObstacleCheckerDebugNode::makeVisualizationMarker()
   }
 
   return msg;
-}
-
-VelocityFactorArray SurroundObstacleCheckerDebugNode::makeVelocityFactorArray()
-{
-  VelocityFactorArray velocity_factor_array;
-  velocity_factor_array.header.frame_id = "map";
-  velocity_factor_array.header.stamp = clock_->now();
-
-  if (stop_pose_ptr_) {
-    using distance_type = VelocityFactor::_distance_type;
-    VelocityFactor velocity_factor;
-    velocity_factor.behavior = PlanningBehavior::SURROUNDING_OBSTACLE;
-    velocity_factor.pose = *stop_pose_ptr_;
-    velocity_factor.distance = std::numeric_limits<distance_type>::quiet_NaN();
-    velocity_factor.status = VelocityFactor::UNKNOWN;
-    velocity_factor.detail = std::string();
-    velocity_factor_array.factors.push_back(velocity_factor);
-  }
-  return velocity_factor_array;
 }
 
 PolygonStamped SurroundObstacleCheckerDebugNode::boostPolygonToPolygonStamped(

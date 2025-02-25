@@ -16,6 +16,7 @@
 #include "util.hpp"
 
 #include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>  // for toPolygon2d
+#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <opencv2/imgproc.hpp>
 
 #include <boost/geometry/algorithms/correct.hpp>

@@ -2,6 +2,15 @@
 Changelog for package tier4_camera_view_rviz_plugin
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* fix(tier4_camera_view_rviz_plugin): fix bugprone-parent-virtual-call (`#9815 <https://github.com/autowarefoundation/autoware.universe/issues/9815>`_)
+  * fix:bugprone-error
+  * fix:fmt
+  ---------
+* Contributors: Fumiya Watanabe, kobayu858
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

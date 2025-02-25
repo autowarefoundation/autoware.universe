@@ -2,6 +2,15 @@
 Changelog for package autoware_scenario_selector
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_scenario_selector): tier4_debug_msgs changed to autoware_internal_debug_msgs in autoware_scenario_selector (`#9914 <https://github.com/autowarefoundation/autoware.universe/issues/9914>`_)
+  feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in files  planning/autoware_scenario_selector
+* fix(autoware_scenario_selector): fix bugprone-branch-clone (`#9699 <https://github.com/autowarefoundation/autoware.universe/issues/9699>`_)
+  fix: bugprone-error
+* Contributors: Fumiya Watanabe, Vishal Chauhan, kobayu858
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

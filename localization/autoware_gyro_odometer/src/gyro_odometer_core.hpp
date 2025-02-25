@@ -80,7 +80,7 @@ private:
   std::deque<geometry_msgs::msg::TwistWithCovarianceStamped> vehicle_twist_queue_;
   std::deque<sensor_msgs::msg::Imu> gyro_queue_;
 
-  std::unique_ptr<autoware::universe_utils::DiagnosticInterface> diagnostics_;
+  std::unique_ptr<autoware::universe_utils::DiagnosticsInterface> diagnostics_;
 };
 
 }  // namespace autoware::gyro_odometer

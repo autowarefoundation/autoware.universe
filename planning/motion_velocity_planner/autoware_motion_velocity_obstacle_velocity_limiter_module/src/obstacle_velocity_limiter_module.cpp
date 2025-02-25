@@ -48,7 +48,6 @@ void ObstacleVelocityLimiterModule::init(rclcpp::Node & node, const std::string 
   projection_params_ = obstacle_velocity_limiter::ProjectionParameters(node);
   obstacle_params_ = obstacle_velocity_limiter::ObstacleParameters(node);
   velocity_params_ = obstacle_velocity_limiter::VelocityParameters(node);
-  velocity_factor_interface_.init(autoware::motion_utils::PlanningBehavior::ROUTE_OBSTACLE);
 
   debug_publisher_ =
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/" + ns_ + "/debug_markers", 1);
@@ -136,7 +135,9 @@ void ObstacleVelocityLimiterModule::update_parameters(
 }
 
 VelocityPlanningResult ObstacleVelocityLimiterModule::plan(
-  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
+  [[maybe_unused]] const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> &
+    raw_trajectory_points,
+  const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & smoothed_trajectory_points,
   const std::shared_ptr<const PlannerData> planner_data)
 {
   autoware::universe_utils::StopWatch<std::chrono::microseconds> stopwatch;
@@ -144,14 +145,14 @@ VelocityPlanningResult ObstacleVelocityLimiterModule::plan(
   VelocityPlanningResult result;
   stopwatch.tic("preprocessing");
   const auto ego_idx = autoware::motion_utils::findNearestIndex(
-    ego_trajectory_points, planner_data->current_odometry.pose.pose);
+    smoothed_trajectory_points, planner_data->current_odometry.pose.pose);
   if (!ego_idx) {
     RCLCPP_WARN_THROTTLE(
       logger_, *clock_, rcutils_duration_value_t(1000),
       "Cannot calculate ego index on the trajectory");
     return result;
   }
-  auto original_traj_points = ego_trajectory_points;
+  auto original_traj_points = smoothed_trajectory_points;
   if (preprocessing_params_.calculate_steering_angles)
     obstacle_velocity_limiter::calculateSteeringAngles(
       original_traj_points, projection_params_.wheel_base);
@@ -170,7 +171,7 @@ VelocityPlanningResult ObstacleVelocityLimiterModule::plan(
   const auto preprocessing_us = stopwatch.toc("preprocessing");
   stopwatch.tic("obstacles");
   obstacle_masks.negative_masks = obstacle_velocity_limiter::createPolygonMasks(
-    planner_data->predicted_objects, obstacle_params_.dynamic_obstacles_buffer,
+    planner_data->objects, obstacle_params_.dynamic_obstacles_buffer,
     obstacle_params_.dynamic_obstacles_min_vel);
   if (obstacle_params_.ignore_on_path)
     obstacle_masks.negative_masks.push_back(obstacle_velocity_limiter::createTrajectoryFootprint(
@@ -189,8 +190,8 @@ VelocityPlanningResult ObstacleVelocityLimiterModule::plan(
       obstacle_masks.positive_mask =
         obstacle_velocity_limiter::createEnvelopePolygon(footprint_polygons);
     obstacle_velocity_limiter::addSensorObstacles(
-      obstacles, planner_data->occupancy_grid, planner_data->no_ground_pointcloud, obstacle_masks,
-      obstacle_params_);
+      obstacles, planner_data->occupancy_grid, planner_data->no_ground_pointcloud.pointcloud,
+      obstacle_masks, obstacle_params_);
   }
   const auto obstacles_us = stopwatch.toc("obstacles");
   autoware::motion_utils::VirtualWalls virtual_walls;

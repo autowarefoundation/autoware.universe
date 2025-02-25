@@ -6,6 +6,7 @@
       - curvature
       - point_interval
       - relative_angle
+      - resampled_relative_angle
       - length
       - duration
       - velocity
@@ -14,7 +15,8 @@
       - lateral_deviation
       - yaw_deviation
       - velocity_deviation
-      - trajectory_lateral_displacement
+      - lateral_trajectory_displacement_local
+      - lateral_trajectory_displacement_lookahead
       - stability
       - stability_frechet
       - obstacle_distance

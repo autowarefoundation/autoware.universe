@@ -2,6 +2,46 @@
 Changelog for package autoware_behavior_path_goal_planner_module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(goal_planner): introduce bezier based pullover for bus stop area (`#10027 <https://github.com/autowarefoundation/autoware.universe/issues/10027>`_)
+* fix(goal_planner): fix waiting approval path of backward parking (`#10015 <https://github.com/autowarefoundation/autoware.universe/issues/10015>`_)
+* refactor(goal_planner): divide extract_dynamic_object/is_goal_in_lanes util function (`#10019 <https://github.com/autowarefoundation/autoware.universe/issues/10019>`_)
+* fix(start_planner, goal_planner): refactor lane departure checker initialization (`#9944 <https://github.com/autowarefoundation/autoware.universe/issues/9944>`_)
+* feat(planning_factor)!: remove velocity_factor, steering_factor and introduce planning_factor (`#9927 <https://github.com/autowarefoundation/autoware.universe/issues/9927>`_)
+  Co-authored-by: Satoshi OTA <44889564+satoshi-ota@users.noreply.github.com>
+  Co-authored-by: Ryohsuke Mitsudome <43976834+mitsudome-r@users.noreply.github.com>
+  Co-authored-by: satoshi-ota <satoshi.ota928@gmail.com>
+* fix(goal_planner): fix geometric pull over (`#9932 <https://github.com/autowarefoundation/autoware.universe/issues/9932>`_)
+* test(autoware_behavior_path_start_planner_module):  add test helper and implement unit tests for FreespacePullOut (`#9832 <https://github.com/autowarefoundation/autoware.universe/issues/9832>`_)
+  * refactor(autoware_behavior_path_start_planner_module): remove unnecessary time_keeper parameter from pull-out planners
+  * refactor(autoware_behavior_path_start_planner_module): remove TimeKeeper parameter from pull-out planners
+  * refactor(lane_departure_checker): improve LaneDepartureChecker initialization and parameter handling
+  * refactor(planner): add planner_data parameter to plan methods in pull out planners
+  * refactor(autoware_behavior_path_start_planner_module): remove LaneDepartureChecker dependency from pull-out planners
+  ---------
+* feat(goal_planner): update lateral_deviation_thresh from `0.3` to `0.1` (`#9850 <https://github.com/autowarefoundation/autoware.universe/issues/9850>`_)
+  * fix(goal_planner): Update lateral_deviation_thresh from 0.3 to 0.1
+  * unified hasDeviatedFrom{Last|Current}PreviousModulePath
+  * style(pre-commit): autofix
+  * hasDeviatedFromPath argument modification
+  * style(pre-commit): autofix
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* feat(goal_planner): cut stop path to goal (`#9829 <https://github.com/autowarefoundation/autoware.universe/issues/9829>`_)
+* refactor(lane_departure_checker): improve LaneDepartureChecker initialization and parameter handling (`#9791 <https://github.com/autowarefoundation/autoware.universe/issues/9791>`_)
+  * refactor(lane_departure_checker): improve LaneDepartureChecker initialization and parameter handling
+  ---------
+* fix(goal_planner): fix usage of last_previous_module_output (`#9811 <https://github.com/autowarefoundation/autoware.universe/issues/9811>`_)
+* fix(behavior_path_planner): add freespace_planning_algorithms dependency (`#9800 <https://github.com/autowarefoundation/autoware.universe/issues/9800>`_)
+* chore(autoware_test_utils): update test map (`#9664 <https://github.com/autowarefoundation/autoware.universe/issues/9664>`_)
+* refactor(goal_planner): divide sort function (`#9650 <https://github.com/autowarefoundation/autoware.universe/issues/9650>`_)
+* perf(goal_planner): remove unnecessary call to setMap on freespace planning (`#9644 <https://github.com/autowarefoundation/autoware.universe/issues/9644>`_)
+* feat(goal_planner): add bezier based pull over planner (`#9642 <https://github.com/autowarefoundation/autoware.universe/issues/9642>`_)
+* feat(goal_planner): divide Planners to isolated threads (`#9514 <https://github.com/autowarefoundation/autoware.universe/issues/9514>`_)
+* Contributors: Fumiya Watanabe, Kazunori-Nakajima, Kosuke Takeuchi, Kyoichi Sugahara, Mamoru Sobue, Takayuki Murooka
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

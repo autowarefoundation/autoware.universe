@@ -66,7 +66,10 @@ ament_target_dependencies(faster_voxel_grid_downsample_filter
 )
 
 ament_auto_add_library(pointcloud_preprocessor_filter SHARED
-  src/concatenate_data/concatenate_and_time_sync_nodelet.cpp
+  src/concatenate_data/concatenate_and_time_sync_node.cpp
+  src/concatenate_data/combine_cloud_handler.cpp
+  src/concatenate_data/cloud_collector.cpp
+  src/concatenate_data/collector_matching_strategy.cpp
   src/concatenate_data/concatenate_pointclouds.cpp
   src/crop_box_filter/crop_box_filter_node.cpp
   src/time_synchronizer/time_synchronizer_node.cpp
@@ -113,7 +116,7 @@ rclcpp_components_register_node(pointcloud_preprocessor_filter
 # ========== Concatenate and Sync data ==========
 rclcpp_components_register_node(pointcloud_preprocessor_filter
   PLUGIN "autoware::pointcloud_preprocessor::PointCloudConcatenateDataSynchronizerComponent"
-  EXECUTABLE concatenate_data_node)
+  EXECUTABLE concatenate_and_time_sync_node)
 
 # ========== CropBox ==========
 rclcpp_components_register_node(pointcloud_preprocessor_filter
@@ -245,8 +248,17 @@ if(BUILD_TESTING)
     test/test_distortion_corrector_node.cpp
   )
 
+  ament_add_gtest(test_concatenate_node_unit
+    test/test_concatenate_node_unit.cpp
+  )
+
   target_link_libraries(test_utilities pointcloud_preprocessor_filter)
   target_link_libraries(test_distortion_corrector_node pointcloud_preprocessor_filter)
+  target_link_libraries(test_concatenate_node_unit pointcloud_preprocessor_filter)
 
+  add_ros_test(
+    test/test_concatenate_node_component.py
+    TIMEOUT "50"
+  )
 
 endif()

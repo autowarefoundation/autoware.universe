@@ -2,6 +2,25 @@
 Changelog for package autoware_mpc_lateral_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in fil… (`#9846 <https://github.com/autowarefoundation/autoware.universe/issues/9846>`_)
+  * feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in files ontrol/autoware_mpc_lateral_controller
+  * style(pre-commit): autofix
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* chore(autoware_mpc_lateral_controller): fix formula description in vehicle_model_bicycle_kinematics.hpp (`#8971 <https://github.com/autowarefoundation/autoware.universe/issues/8971>`_)
+  fix formula description in vehicle_model_bicycle_kinematics.hpp
+* fix(mpc_lateral_controller): prevent unstable steering command while stopped (`#9690 <https://github.com/autowarefoundation/autoware.universe/issues/9690>`_)
+  * modify logic of function isStoppedState
+  * use a constant distance margin instead of wheelbase length
+  * add comment to implementation
+  ---------
+* feat(mpc_lateral_controller): remove trans/rot deviation validation since the control_validator has the same feature (`#9684 <https://github.com/autowarefoundation/autoware.universe/issues/9684>`_)
+* docs: modified minor sign error (`#8140 <https://github.com/autowarefoundation/autoware.universe/issues/8140>`_)
+* Contributors: Autumn60, Fumiya Watanabe, Takayuki Murooka, Vishal Chauhan, Yuki Kimura, mkquda
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

@@ -384,7 +384,6 @@ In addition, the safety check has a time hysteresis, and if the path is judged "
 
 | Name                                 | Unit  | Type   | Description                                                                                              | Default value                |
 | :----------------------------------- | :---- | :----- | :------------------------------------------------------------------------------------------------------- | :--------------------------- |
-| enable_safety_check                  | [-]   | bool   | flag whether to use safety check                                                                         | true                         |
 | method                               | [-]   | string | method for safety check. `RSS` or `integral_predicted_polygon`                                           | `integral_predicted_polygon` |
 | keep_unsafe_time                     | [s]   | double | safety check Hysteresis time. if the path is judged "safe" for the time it is finally treated as "safe". | 3.0                          |
 | check_all_predicted_path             | -     | bool   | Flag to check all predicted paths                                                                        | true                         |
