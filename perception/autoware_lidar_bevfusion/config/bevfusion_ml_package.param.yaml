@@ -17,7 +17,6 @@
     raw_image_width: 1440
     img_aug_scale_x: 0.489
     img_aug_scale_y: 0.489
-    img_aug_offset_y: -262.0
     roi_height: 384
     roi_width: 704
     features_height: 48
