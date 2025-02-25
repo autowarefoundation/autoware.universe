@@ -17,6 +17,8 @@
 
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 
+#include <autoware/universe_utils/geometry/geometry.hpp>
+
 #include "autoware_internal_debug_msgs/msg/float32_stamped.hpp"
 #include "autoware_internal_debug_msgs/msg/float64_stamped.hpp"
 #include "autoware_perception_msgs/msg/predicted_object.hpp"

@@ -66,7 +66,19 @@ struct CommonParam
 
 struct ObstacleFilteringParam
 {
-  bool use_pointcloud{};
+  struct PointcloudObstacleFilteringParam
+  {
+    double pointcloud_voxel_grid_x{};
+    double pointcloud_voxel_grid_y{};
+    double pointcloud_voxel_grid_z{};
+    double pointcloud_cluster_tolerance{};
+    int pointcloud_min_cluster_size{};
+    int pointcloud_max_cluster_size{};
+  };
+
+  PointcloudObstacleFilteringParam pointcloud_obstacle_filtering_param;
+
+  bool use_pointcloud{false};
   std::vector<uint8_t> inside_stop_object_types{};
   std::vector<uint8_t> outside_stop_object_types{};
 
@@ -89,12 +101,25 @@ struct ObstacleFilteringParam
   ObstacleFilteringParam() = default;
   explicit ObstacleFilteringParam(rclcpp::Node & node)
   {
+    pointcloud_obstacle_filtering_param.pointcloud_voxel_grid_x = getOrDeclareParameter<double>(
+      node, "obstacle_stop.obstacle_filtering.pointcloud.pointcloud_voxel_grid_x");
+    pointcloud_obstacle_filtering_param.pointcloud_voxel_grid_y = getOrDeclareParameter<double>(
+      node, "obstacle_stop.obstacle_filtering.pointcloud.pointcloud_voxel_grid_y");
+    pointcloud_obstacle_filtering_param.pointcloud_voxel_grid_z = getOrDeclareParameter<double>(
+      node, "obstacle_stop.obstacle_filtering.pointcloud.pointcloud_voxel_grid_z");
+    pointcloud_obstacle_filtering_param.pointcloud_cluster_tolerance =
+      getOrDeclareParameter<double>(
+        node, "obstacle_stop.obstacle_filtering.pointcloud.pointcloud_cluster_tolerance");
+    pointcloud_obstacle_filtering_param.pointcloud_min_cluster_size = getOrDeclareParameter<int>(
+      node, "obstacle_stop.obstacle_filtering.pointcloud.pointcloud_min_cluster_size");
+    pointcloud_obstacle_filtering_param.pointcloud_max_cluster_size = getOrDeclareParameter<int>(
+      node, "obstacle_stop.obstacle_filtering.pointcloud.pointcloud_max_cluster_size");
+    use_pointcloud =
+      getOrDeclareParameter<bool>(node, "obstacle_stop.obstacle_filtering.object_type.pointcloud");
     inside_stop_object_types =
       utils::get_target_object_type(node, "obstacle_stop.obstacle_filtering.object_type.inside.");
     outside_stop_object_types =
       utils::get_target_object_type(node, "obstacle_stop.obstacle_filtering.object_type.outside.");
-    use_pointcloud =
-      getOrDeclareParameter<bool>(node, "obstacle_stop.obstacle_filtering.object_type.pointcloud");
 
     obstacle_velocity_threshold_to_stop = getOrDeclareParameter<double>(
       node, "obstacle_stop.obstacle_filtering.obstacle_velocity_threshold_to_stop");

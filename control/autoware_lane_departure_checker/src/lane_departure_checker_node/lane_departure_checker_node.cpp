@@ -557,8 +557,8 @@ visualization_msgs::msg::MarkerArray LaneDepartureCheckerNode::createMarkerArray
         const auto p1 = vehicle_footprint.at(i);
         const auto p2 = vehicle_footprint.at(i + 1);
 
-        marker.points.push_back(toMsg(p1.to_3d(base_link_z)));
-        marker.points.push_back(toMsg(p2.to_3d(base_link_z)));
+        marker.points.push_back(autoware::universe_utils::toMsg(p1.to_3d(base_link_z)));
+        marker.points.push_back(autoware::universe_utils::toMsg(p2.to_3d(base_link_z)));
       }
     }
 
