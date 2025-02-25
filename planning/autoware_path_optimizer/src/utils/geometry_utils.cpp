@@ -36,6 +36,34 @@
 #include <stack>
 #include <vector>
 
+namespace autoware_utils_geometry
+{
+
+template <>
+geometry_msgs::msg::Point get_point(const autoware::path_optimizer::ReferencePoint & p)
+{
+  return p.pose.position;
+}
+
+template <>
+geometry_msgs::msg::Pose get_pose(const autoware::path_optimizer::ReferencePoint & p)
+{
+  return p.pose;
+}
+
+}  // namespace autoware_utils_geometry
+
+namespace autoware_utils_planning
+{
+
+template <>
+double get_longitudinal_velocity(const autoware::path_optimizer::ReferencePoint & p)
+{
+  return p.longitudinal_velocity_mps;
+}
+
+}  // namespace autoware_utils_planning
+
 namespace autoware::path_optimizer
 {
 namespace bg = boost::geometry;

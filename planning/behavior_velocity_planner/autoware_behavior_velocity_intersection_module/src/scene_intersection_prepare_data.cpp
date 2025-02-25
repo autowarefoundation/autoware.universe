@@ -40,7 +40,7 @@
 #include <utility>
 #include <vector>
 
-namespace autoware_utils
+namespace autoware_utils_geometry
 {
 
 template <>
@@ -53,7 +53,7 @@ inline geometry_msgs::msg::Point get_point(const lanelet::ConstPoint3d & p)
   return point;
 }
 
-}  // namespace autoware_utils
+}  // namespace autoware_utils_geometry
 
 namespace
 {
