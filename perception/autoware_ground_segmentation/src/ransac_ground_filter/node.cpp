@@ -118,7 +118,8 @@ RANSACGroundFilterComponent::RANSACGroundFilterComponent(const rclcpp::NodeOptio
 
   pcl::console::setVerbosityLevel(pcl::console::L_ALWAYS);
 
-  managed_tf_buffer_ = std::make_unique<managed_transform_buffer::ManagedTransformBuffer>(this);
+  managed_tf_buffer_ =
+    std::make_unique<managed_transform_buffer::ManagedTransformBuffer>(this->get_clock());
 
   bool use_time_keeper = declare_parameter<bool>("publish_processing_time_detail");
   if (use_time_keeper) {
@@ -226,7 +227,9 @@ void RANSACGroundFilterComponent::filter(
   std::scoped_lock lock(mutex_);
   sensor_msgs::msg::PointCloud2::SharedPtr input_transformed_ptr(new sensor_msgs::msg::PointCloud2);
 
-  if (!managed_tf_buffer_->transformPointcloud(base_frame_, *input, *input_transformed_ptr)) {
+  if (!managed_tf_buffer_->transformPointcloud(
+        base_frame_, *input, *input_transformed_ptr, input->header.stamp,
+        rclcpp::Duration::from_seconds(1.0))) {
     RCLCPP_ERROR_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
       "Failed transform from " << base_frame_ << " to " << input->header.frame_id);
@@ -311,7 +314,8 @@ void RANSACGroundFilterComponent::filter(
   sensor_msgs::msg::PointCloud2::SharedPtr no_ground_cloud_transformed_msg_ptr(
     new sensor_msgs::msg::PointCloud2);
   if (!managed_tf_buffer_->transformPointcloud(
-        base_frame_, *no_ground_cloud_msg_ptr, *no_ground_cloud_transformed_msg_ptr)) {
+        base_frame_, *no_ground_cloud_msg_ptr, *no_ground_cloud_transformed_msg_ptr,
+        no_ground_cloud_msg_ptr->header.stamp, rclcpp::Duration::from_seconds(1.0))) {
     RCLCPP_ERROR_STREAM_THROTTLE(
       this->get_logger(), *this->get_clock(), std::chrono::milliseconds(1000).count(),
       "Failed transform from " << base_frame_ << " to "

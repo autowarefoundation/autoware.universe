@@ -88,11 +88,18 @@ void DistortionCorrectorBase::get_imu_transformation(
     return;
   }
 
-  auto msg_imu_to_base_link =
-    managed_tf_buffer_->getTransform<geometry_msgs::msg::TransformStamped>(base_frame, imu_frame);
+  Eigen::Matrix4f eigen_imu_to_base_link;
+  auto eigen_transform = managed_tf_buffer_->getTransform<Eigen::Matrix4f>(
+    base_frame, imu_frame, node_.now(), rclcpp::Duration::from_seconds(1.0));
+  imu_transform_exists_ = eigen_transform.has_value();
+  if (eigen_transform.has_value()) {
+    eigen_imu_to_base_link = eigen_transform.value();
+  }
+  tf2::Transform tf2_imu_to_base_link = convert_matrix_to_transform(eigen_imu_to_base_link);
 
   geometry_imu_to_base_link_ptr_ = std::make_shared<geometry_msgs::msg::TransformStamped>();
-  geometry_imu_to_base_link_ptr_->transform.rotation = msg_imu_to_base_link->transform.rotation;
+  geometry_imu_to_base_link_ptr_->transform.rotation =
+    tf2::toMsg(tf2_imu_to_base_link.getRotation());
 }
 
 void DistortionCorrectorBase::enqueue_imu(const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg)
@@ -429,13 +436,15 @@ void DistortionCorrector2D::set_pointcloud_transform(
     return;
   }
 
-  auto tf2_lidar_to_base_link =
-    managed_tf_buffer_->getTransform<tf2::Transform>(base_frame, lidar_frame);
-  if (tf2_lidar_to_base_link.has_value()) {
-    pointcloud_transform_exists_ = true;
-    tf2_lidar_to_base_link_ = tf2_lidar_to_base_link.value();
-    tf2_base_link_to_lidar_ = tf2_lidar_to_base_link.value().inverse();
+  Eigen::Matrix4f eigen_lidar_to_base_link;
+  auto eigen_transform = managed_tf_buffer_->getTransform<Eigen::Matrix4f>(
+    base_frame, lidar_frame, node_.now(), rclcpp::Duration::from_seconds(1.0));
+  pointcloud_transform_exists_ = eigen_transform.has_value();
+  if (eigen_transform.has_value()) {
+    eigen_lidar_to_base_link = eigen_transform.value();
   }
+  tf2_lidar_to_base_link_ = convert_matrix_to_transform(eigen_lidar_to_base_link);
+  tf2_base_link_to_lidar_ = tf2_lidar_to_base_link_.inverse();
   pointcloud_transform_needed_ = base_frame != lidar_frame && pointcloud_transform_exists_;
 }
 
@@ -446,14 +455,14 @@ void DistortionCorrector3D::set_pointcloud_transform(
     return;
   }
 
-  auto eigen_lidar_to_base_link =
-    managed_tf_buffer_->getTransform<Eigen::Matrix4f>(base_frame, lidar_frame);
-  pointcloud_transform_exists_ = eigen_lidar_to_base_link.has_value();
-  pointcloud_transform_needed_ = base_frame != lidar_frame && pointcloud_transform_exists_;
-  if (pointcloud_transform_needed_) {
-    eigen_lidar_to_base_link_ = eigen_lidar_to_base_link.value();
-    eigen_base_link_to_lidar_ = eigen_lidar_to_base_link.value().inverse();
+  auto eigen_transform = managed_tf_buffer_->getTransform<Eigen::Matrix4f>(
+    base_frame, lidar_frame, node_.now(), rclcpp::Duration::from_seconds(1.0));
+  pointcloud_transform_exists_ = eigen_transform.has_value();
+  if (eigen_transform.has_value()) {
+    eigen_lidar_to_base_link_ = eigen_transform.value();
   }
+  eigen_base_link_to_lidar_ = eigen_lidar_to_base_link_.inverse();
+  pointcloud_transform_needed_ = base_frame != lidar_frame && pointcloud_transform_exists_;
 }
 
 inline void DistortionCorrector2D::undistort_point_implementation(

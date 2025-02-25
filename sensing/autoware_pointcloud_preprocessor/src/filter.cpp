@@ -114,7 +114,8 @@ autoware::pointcloud_preprocessor::Filter::Filter(
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 void autoware::pointcloud_preprocessor::Filter::setupTF()
 {
-  managed_tf_buffer_ = std::make_unique<managed_transform_buffer::ManagedTransformBuffer>(this);
+  managed_tf_buffer_ =
+    std::make_unique<managed_transform_buffer::ManagedTransformBuffer>(this->get_clock());
 }
 
 //////////////////////////////////////////////////////////////////////////////////////////////////////////////////
@@ -269,7 +270,9 @@ void autoware::pointcloud_preprocessor::Filter::input_indices_callback(
     // Convert the cloud into the different frame
     PointCloud2 cloud_transformed;
 
-    if (!managed_tf_buffer_->transformPointcloud(tf_input_frame_, *cloud, cloud_transformed)) {
+    if (!managed_tf_buffer_->transformPointcloud(
+          tf_input_frame_, *cloud, cloud_transformed, cloud->header.stamp,
+          rclcpp::Duration::from_seconds(1.0))) {
       return;
     }
     cloud_tf = std::make_shared<PointCloud2>(cloud_transformed);
@@ -298,8 +301,8 @@ bool autoware::pointcloud_preprocessor::Filter::calculate_transform_matrix(
     this->get_logger(), "[get_transform_matrix] Transforming input dataset from %s to %s.",
     from.header.frame_id.c_str(), target_frame.c_str());
 
-  auto eigen_transform =
-    managed_tf_buffer_->getTransform<Eigen::Matrix4f>(target_frame, from.header.frame_id);
+  auto eigen_transform = managed_tf_buffer_->getTransform<Eigen::Matrix4f>(
+    target_frame, from.header.frame_id, from.header.stamp, rclcpp::Duration::from_seconds(1.0));
   if (!eigen_transform.has_value()) {
     return false;
   }
@@ -322,7 +325,9 @@ bool autoware::pointcloud_preprocessor::Filter::convert_output_costly(
     // Convert the cloud into the different frame
     auto cloud_transformed = std::make_unique<PointCloud2>();
 
-    if (!managed_tf_buffer_->transformPointcloud(tf_output_frame_, *output, *cloud_transformed)) {
+    if (!managed_tf_buffer_->transformPointcloud(
+          tf_output_frame_, *output, *cloud_transformed, output->header.stamp,
+          rclcpp::Duration::from_seconds(1.0))) {
       RCLCPP_ERROR(
         this->get_logger(),
         "[convert_output_costly] Error converting output dataset from %s to %s.",
@@ -343,7 +348,8 @@ bool autoware::pointcloud_preprocessor::Filter::convert_output_costly(
     auto cloud_transformed = std::make_unique<PointCloud2>();
 
     if (!managed_tf_buffer_->transformPointcloud(
-          tf_input_orig_frame_, *output, *cloud_transformed)) {
+          tf_input_orig_frame_, *output, *cloud_transformed, output->header.stamp,
+          rclcpp::Duration::from_seconds(1.0))) {
       return false;
     }
 
