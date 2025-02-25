@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__PERCEPTION_ONLINE_EVALUATOR__UTILS__MARKER_UTILS_HPP_
 #define AUTOWARE__PERCEPTION_ONLINE_EVALUATOR__UTILS__MARKER_UTILS_HPP_
 
-#include <autoware/universe_utils/geometry/boost_geometry.hpp>
+#include <autoware_utils/geometry/boost_geometry.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info.hpp>
 
 #include "autoware_perception_msgs/msg/predicted_objects.hpp"
@@ -31,7 +31,7 @@
 namespace autoware::perception_diagnostics::marker_utils
 {
 
-using autoware::universe_utils::Polygon2d;
+using autoware_utils::Polygon2d;
 using autoware_perception_msgs::msg::PredictedObject;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;

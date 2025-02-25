@@ -14,7 +14,7 @@
 
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/planning_evaluator/metrics/trajectory_metrics.hpp"
-#include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware_utils/geometry/geometry.hpp"
 
 namespace planning_diagnostics
 {
@@ -22,7 +22,7 @@ namespace metrics
 {
 namespace utils
 {
-using autoware::universe_utils::calcDistance2d;
+using autoware_utils::calc_distance2d;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
 using geometry_msgs::msg::Pose;
@@ -34,7 +34,7 @@ size_t getIndexAfterDistance(const Trajectory & traj, const size_t curr_id, cons
 
   size_t target_id = curr_id;
   for (size_t traj_id = curr_id + 1; traj_id < traj.points.size(); ++traj_id) {
-    double current_distance = calcDistance2d(traj.points.at(traj_id), curr_p);
+    double current_distance = calc_distance2d(traj.points.at(traj_id), curr_p);
     if (current_distance >= distance) {
       target_id = traj_id;
       break;
@@ -61,7 +61,7 @@ Trajectory get_lookahead_trajectory(
   auto prev_point_it = curr_point_it;
   while (curr_point_it != traj.points.end() && dist <= max_dist_m && time <= max_time_s) {
     lookahead_traj.points.push_back(*curr_point_it);
-    const auto d = autoware::universe_utils::calcDistance2d(
+    const auto d = autoware_utils::calc_distance2d(
       prev_point_it->pose.position, curr_point_it->pose.position);
     dist += d;
     if (prev_point_it->longitudinal_velocity_mps != 0.0) {
@@ -81,7 +81,7 @@ double calc_lookahead_trajectory_distance(const Trajectory & traj, const Pose & 
   auto curr_point_it = std::next(traj.points.begin(), ego_index);
   auto prev_point_it = curr_point_it;
   for (size_t i = 0; i < traj.points.size(); ++i) {
-    const auto d = autoware::universe_utils::calcDistance2d(
+    const auto d = autoware_utils::calc_distance2d(
       prev_point_it->pose.position, curr_point_it->pose.position);
     dist += d;
     prev_point_it = curr_point_it;
