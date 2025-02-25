@@ -22,10 +22,9 @@
 
   <depend>autoware_behavior_velocity_planner</depend>
   <depend>autoware_behavior_velocity_planner_common</depend>
+  <depend>autoware_internal_planning_msgs</depend>
   <depend>autoware_lanelet2_extension</depend>
   <depend>autoware_motion_utils</depend>
-  <!-- <depend>autoware_planning_msgs</depend> -->
-  <depend>autoware_internal_planning_msgs</depend>
   <depend>autoware_route_handler</depend>
   <depend>autoware_trajectory</depend>
   <depend>eigen</depend>
@@ -34,6 +33,7 @@
   <depend>rclcpp</depend>
   <depend>tf2_geometry_msgs</depend>
   <depend>visualization_msgs</depend>
+  <!-- <depend>autoware_planning_msgs</depend> -->
 
   <test_depend>ament_cmake_ros</test_depend>
   <test_depend>ament_lint_auto</test_depend>
