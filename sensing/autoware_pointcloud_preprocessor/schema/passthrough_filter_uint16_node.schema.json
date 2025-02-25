@@ -1,37 +1,37 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Parameters for Passthrough Filter UInt16 Node",
+  "title": "autoware_pointcloud_preprocesor parameters",
   "type": "object",
   "definitions": {
-    "passthrough_filter_uint16": {
+    "passthrough_filter_uint16_node": {
       "type": "object",
       "properties": {
         "filter_limit_min": {
           "type": "integer",
-          "description": "minimum allowed field value",
-          "default": "0",
+          "description": "Minimum allowed field value.",
+          "default": 0,
           "minimum": 0
         },
         "filter_limit_max": {
           "type": "integer",
-          "description": "maximum allowed field value",
-          "default": "127",
+          "description": "Maximum allowed field value.",
+          "default": 127,
           "minimum": 0
         },
         "filter_field_name": {
           "type": "string",
-          "description": "filtering field name",
+          "description": "Filtering field name.",
           "default": "channel"
         },
         "keep_organized": {
           "type": "boolean",
-          "description": "flag to keep indices structure",
-          "default": "false"
+          "description": "Flag to keep the indices structure intact after filtering.",
+          "default": false
         },
         "filter_limit_negative": {
           "type": "boolean",
-          "description": "flag to return whether the data is inside limit or not",
-          "default": "false"
+          "description": "Flag to determine whether to filter inside or outside the given limits.",
+          "default": false
         }
       },
       "required": [
@@ -49,7 +49,7 @@
       "type": "object",
       "properties": {
         "ros__parameters": {
-          "$ref": "#/definitions/passthrough_filter_uint16"
+          "$ref": "#/definitions/passthrough_filter_uint16_node"
         }
       },
       "required": ["ros__parameters"],

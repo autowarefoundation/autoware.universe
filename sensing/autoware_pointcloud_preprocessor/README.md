@@ -61,6 +61,8 @@ Detail description of each filter's algorithm is in the following links.
 {{ json_to_markdown("sensing/autoware_pointcloud_preprocessor/schema/voxel_grid_downsample_filter_node.schema.json") }}
 {{ json_to_markdown("sensing/autoware_pointcloud_preprocessor/schema/voxel_grid_outlier_filter_node.schema.json") }}
 
+### Discription parameters
+
 | Name               | Type   | Default Value | Description                           |
 | ------------------ | ------ | ------------- | ------------------------------------- |
 | `input_frame`      | string | " "           | input frame id                        |
