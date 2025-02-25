@@ -22,6 +22,7 @@
 #include <vector>
 
 // ROS includes
+#include "agnocast.hpp"
 #include "autoware/point_types/types.hpp"
 
 #include <autoware/universe_utils/ros/managed_transform_buffer.hpp>
@@ -80,7 +81,7 @@ private:
   };
 
   static void convert_to_xyzirc_cloud(
-    const sensor_msgs::msg::PointCloud2::SharedPtr & input_cloud,
+    const agnocast::ipc_shared_ptr<sensor_msgs::msg::PointCloud2> & input_cloud,
     sensor_msgs::msg::PointCloud2::SharedPtr & xyzirc_cloud);
 
   void correct_pointcloud_motion(
@@ -99,7 +100,8 @@ public:
   void process_odometry(const nav_msgs::msg::Odometry::ConstSharedPtr & odometry_msg);
 
   ConcatenatedCloudResult combine_pointclouds(
-    std::unordered_map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr> & topic_to_cloud_map);
+    std::unordered_map<std::string, agnocast::ipc_shared_ptr<sensor_msgs::msg::PointCloud2>> &
+      topic_to_cloud_map);
 
   Eigen::Matrix4f compute_transform_to_adjust_for_old_timestamp(
     const rclcpp::Time & old_stamp, const rclcpp::Time & new_stamp);
