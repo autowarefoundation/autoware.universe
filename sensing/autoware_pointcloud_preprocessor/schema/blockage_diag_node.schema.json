@@ -3,7 +3,7 @@
   "title": "Parameters for Blockage Diag Node",
   "type": "object",
   "definitions": {
-    "blockage_diag": {
+    "blockage_diag_node": {
       "type": "object",
       "properties": {
         "blockage_ratio_threshold": {
@@ -148,7 +148,7 @@
       "type": "object",
       "properties": {
         "ros__parameters": {
-          "$ref": "#/definitions/blockage_diag"
+          "$ref": "#/definitions/blockage_diag_node"
         }
       },
       "required": ["ros__parameters"],
