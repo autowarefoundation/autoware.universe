@@ -563,10 +563,10 @@ MarkerArray create_debug_marker_array(
 {
   using autoware::behavior_path_planner::utils::transformToLanelets;
   using lanelet::visualization::laneletsAsTriangleMarkerArray;
-  using marker_utils::createLaneletsAreaMarkerArray;
   using marker_utils::create_objects_marker_array;
   using marker_utils::create_path_marker_array;
   using marker_utils::create_polygon_marker_array;
+  using marker_utils::createLaneletsAreaMarkerArray;
   using marker_utils::createPoseMarkerArray;
   using marker_utils::createShiftGradMarkerArray;
   using marker_utils::createShiftLengthMarkerArray;

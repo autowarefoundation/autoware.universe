@@ -64,7 +64,8 @@ private:
    *
    * @param path The path with lane ID information to determine module launch.
    */
-  void launch_new_modules(const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
+  void launch_new_modules(
+    const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
 
   /**
    * @brief Get a function to check module expiration.

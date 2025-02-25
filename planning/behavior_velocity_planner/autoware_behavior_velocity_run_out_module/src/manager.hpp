@@ -37,7 +37,8 @@ private:
   std::shared_ptr<RunOutDebug> debug_ptr_;
   std::unique_ptr<DynamicObstacleCreator> dynamic_obstacle_creator_;
 
-  void launch_new_modules(const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
+  void launch_new_modules(
+    const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;
 
   std::function<bool(const std::shared_ptr<SceneModuleInterface> &)> get_module_expired_function(
     const autoware_internal_planning_msgs::msg::PathWithLaneId & path) override;

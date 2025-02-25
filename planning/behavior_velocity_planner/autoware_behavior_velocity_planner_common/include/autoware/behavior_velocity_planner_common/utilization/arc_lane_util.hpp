@@ -160,7 +160,8 @@ std::optional<PathIndexWithOffset> find_offset_segment(
   const double offset);
 
 template <class T>
-geometry_msgs::msg::Pose calc_target_pose(const T & path, const PathIndexWithOffset & offset_segment)
+geometry_msgs::msg::Pose calc_target_pose(
+  const T & path, const PathIndexWithOffset & offset_segment)
 {
   const size_t offset_idx = offset_segment.first;
   const double remain_offset_length = offset_segment.second;

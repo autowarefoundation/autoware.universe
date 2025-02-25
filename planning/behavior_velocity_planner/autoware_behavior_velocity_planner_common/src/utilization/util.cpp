@@ -183,7 +183,8 @@ bool create_detection_area_polygons(
   LineString2d left_inner_bound = {calculate_offset_point2d(p0.pose, min_len, offset_left)};
   LineString2d left_outer_bound = {calculate_offset_point2d(p0.pose, min_len, offset_left + eps)};
   LineString2d right_inner_bound = {calculate_offset_point2d(p0.pose, min_len, -offset_right)};
-  LineString2d right_outer_bound = {calculate_offset_point2d(p0.pose, min_len, -offset_right - eps)};
+  LineString2d right_outer_bound = {
+    calculate_offset_point2d(p0.pose, min_len, -offset_right - eps)};
   for (size_t s = first_idx; s <= max_index; s++) {
     const auto p1 = path.points.at(s).point;
     const double ds = calc_distance2d(p0, p1);
@@ -435,7 +436,8 @@ double find_reach_time(
     }
     iter++;
     if (iter > warn_iter)
-      std::cerr << "[behavior_velocity](find_reach_time): current iter is over warning" << std::endl;
+      std::cerr << "[behavior_velocity](find_reach_time): current iter is over warning"
+                << std::endl;
   }
   // std::cout<<"iter: "<<iter<<std::endl;
   return t;

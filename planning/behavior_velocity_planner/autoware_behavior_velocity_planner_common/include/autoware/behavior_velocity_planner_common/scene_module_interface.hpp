@@ -93,7 +93,10 @@ public:
     planner_data_ = planner_data;
   }
 
-  std::vector<ObjectOfInterest> get_objects_of_interest_data() const { return objects_of_interest_; }
+  std::vector<ObjectOfInterest> get_objects_of_interest_data() const
+  {
+    return objects_of_interest_;
+  }
   void clear_objects_of_interest_data() { objects_of_interest_.clear(); }
 
 protected:
@@ -274,7 +277,8 @@ extern template SceneModuleManagerInterface<SceneModuleInterface>::SceneModuleMa
   rclcpp::Node & node, [[maybe_unused]] const char * module_name);
 extern template size_t SceneModuleManagerInterface<SceneModuleInterface>::find_ego_segment_index(
   const std::vector<autoware_internal_planning_msgs::msg::PathPointWithLaneId> & points) const;
-extern template void SceneModuleManagerInterface<SceneModuleInterface>::update_scene_module_instances(
+extern template void
+SceneModuleManagerInterface<SceneModuleInterface>::update_scene_module_instances(
   const std::shared_ptr<const PlannerData> & planner_data,
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path);
 extern template void SceneModuleManagerInterface<SceneModuleInterface>::modify_path_velocity(
