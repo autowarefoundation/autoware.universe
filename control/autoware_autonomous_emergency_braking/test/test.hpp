@@ -38,7 +38,7 @@ using nav_msgs::msg::Odometry;
 using sensor_msgs::msg::Imu;
 using sensor_msgs::msg::PointCloud2;
 using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
-using autoware::universe_utils::Polygon2d;
+using autoware_utils::Polygon2d;
 using autoware::vehicle_info_utils::VehicleInfo;
 using diagnostic_updater::DiagnosticStatusWrapper;
 using diagnostic_updater::Updater;

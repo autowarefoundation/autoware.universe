@@ -45,7 +45,7 @@
 
 namespace autoware::lane_departure_checker
 {
-using autoware::universe_utils::Segment2d;
+using autoware_utils::Segment2d;
 using autoware_internal_planning_msgs::msg::PathWithLaneId;
 typedef boost::geometry::index::rtree<Segment2d, boost::geometry::index::rstar<16>> SegmentRtree;
 
@@ -78,13 +78,13 @@ public:
   std::vector<std::pair<double, lanelet::Lanelet>> getLaneletsFromPath(
     const lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path) const;
 
-  std::optional<autoware::universe_utils::Polygon2d> getFusedLaneletPolygonForPath(
+  std::optional<autoware_utils::Polygon2d> getFusedLaneletPolygonForPath(
     const lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path) const;
 
   bool updateFusedLaneletPolygonForPath(
     const lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path,
     std::vector<lanelet::Id> & fused_lanelets_id,
-    std::optional<autoware::universe_utils::Polygon2d> & fused_lanelets_polygon) const;
+    std::optional<autoware_utils::Polygon2d> & fused_lanelets_polygon) const;
 
   bool checkPathWillLeaveLane(
     const lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path) const;
@@ -92,12 +92,12 @@ public:
   bool checkPathWillLeaveLane(
     const lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path,
     std::vector<lanelet::Id> & fused_lanelets_id,
-    std::optional<autoware::universe_utils::Polygon2d> & fused_lanelets_polygon) const;
+    std::optional<autoware_utils::Polygon2d> & fused_lanelets_polygon) const;
 
   PathWithLaneId cropPointsOutsideOfLanes(
     const lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path,
     const size_t end_index, std::vector<lanelet::Id> & fused_lanelets_id,
-    std::optional<autoware::universe_utils::Polygon2d> & fused_lanelets_polygon);
+    std::optional<autoware_utils::Polygon2d> & fused_lanelets_polygon);
 
   static bool isOutOfLane(
     const lanelet::ConstLanelets & candidate_lanelets, const LinearRing2d & vehicle_footprint);
@@ -119,7 +119,7 @@ private:
     const SegmentRtree & uncrossable_segments) const;
 
   lanelet::BasicPolygon2d toBasicPolygon2D(const LinearRing2d & footprint_hull) const;
-  autoware::universe_utils::Polygon2d toPolygon2D(const lanelet::BasicPolygon2d & poly) const;
+  autoware_utils::Polygon2d toPolygon2D(const lanelet::BasicPolygon2d & poly) const;
 
   mutable std::shared_ptr<autoware_utils::TimeKeeper> time_keeper_;
 };
