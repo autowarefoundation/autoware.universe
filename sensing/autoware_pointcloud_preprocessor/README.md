@@ -42,6 +42,7 @@ Detail description of each filter's algorithm is in the following links.
 | `~/output/points` | `sensor_msgs::msg::PointCloud2` | filtered points |
 
 ## Parameters
+
 {{ json_to_markdown("sensing/autoware_pointcloud_preprocessor/schema/approximate_downsample_filter_node.schema.json") }}
 {{ json_to_markdown("sensing/autoware_pointcloud_preprocessor/schema/blockage_diag_node.schema.json") }}
 {{ json_to_markdown("sensing/autoware_pointcloud_preprocessor/schema/concatenate_pointclouds.schema.json") }}
@@ -59,7 +60,6 @@ Detail description of each filter's algorithm is in the following links.
 {{ json_to_markdown("sensing/autoware_pointcloud_preprocessor/schema/vector_map_inside_area_filter_node.schema.json") }}
 {{ json_to_markdown("sensing/autoware_pointcloud_preprocessor/schema/voxel_grid_downsample_filter_node.schema.json") }}
 {{ json_to_markdown("sensing/autoware_pointcloud_preprocessor/schema/voxel_grid_outlier_filter_node.schema.json") }}
-
 
 | Name               | Type   | Default Value | Description                           |
 | ------------------ | ------ | ------------- | ------------------------------------- |
