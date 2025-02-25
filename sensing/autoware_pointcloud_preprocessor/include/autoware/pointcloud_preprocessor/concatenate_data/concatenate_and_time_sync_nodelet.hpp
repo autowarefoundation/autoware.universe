@@ -192,4 +192,3 @@ private:
 // clang-format off
 #endif  // AUTOWARE__POINTCLOUD_PREPROCESSOR__CONCATENATE_DATA__CONCATENATE_AND_TIME_SYNC_NODELET_HPP_  // NOLINT
 // clang-format on
-
