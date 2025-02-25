@@ -68,7 +68,8 @@ std::set<int64_t> StopLineModuleManager::get_stop_line_id_set_on_path(
 {
   std::set<int64_t> stop_line_id_set;
 
-  for (const auto & stop_line_with_lane_id : get_stop_lines_with_lane_id_on_path(path, lanelet_map)) {
+  for (const auto & stop_line_with_lane_id :
+       get_stop_lines_with_lane_id_on_path(path, lanelet_map)) {
     stop_line_id_set.insert(stop_line_with_lane_id.first.id());
   }
 
@@ -78,8 +79,8 @@ std::set<int64_t> StopLineModuleManager::get_stop_line_id_set_on_path(
 void StopLineModuleManager::launch_new_modules(
   const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
 {
-  for (const auto & stop_line_with_lane_id :
-       get_stop_lines_with_lane_id_on_path(path, planner_data_->route_handler_->getLaneletMapPtr())) {
+  for (const auto & stop_line_with_lane_id : get_stop_lines_with_lane_id_on_path(
+         path, planner_data_->route_handler_->getLaneletMapPtr())) {
     const auto module_id = stop_line_with_lane_id.first.id();
     if (!is_module_registered(module_id)) {
       register_module(std::make_shared<StopLineModule>(

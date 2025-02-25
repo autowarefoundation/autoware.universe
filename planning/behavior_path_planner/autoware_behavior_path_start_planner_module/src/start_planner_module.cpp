@@ -457,8 +457,8 @@ bool StartPlannerModule::isPreventingRearVehicleFromPassingThrough(const Pose & 
       geometry_msgs::msg::Pose & ego_overhang_point_as_pose,
       const bool ego_is_merging_from_the_left) -> std::optional<std::pair<double, double>> {
     const auto local_vehicle_footprint = vehicle_info_.createFootprint();
-    const auto vehicle_footprint =
-      transformVector(local_vehicle_footprint, autoware::universe_utils::pose2transform(ego_pose));
+    const auto vehicle_footprint = autoware::universe_utils::transformVector(
+      local_vehicle_footprint, autoware::universe_utils::pose2transform(ego_pose));
     double smallest_lateral_gap_between_ego_and_border = std::numeric_limits<double>::max();
     double corresponding_lateral_gap_with_other_lane_bound = std::numeric_limits<double>::max();
 
