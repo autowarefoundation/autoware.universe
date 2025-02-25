@@ -105,9 +105,8 @@ Tensor5D get_geometry(
   // Subtract post_trans from frustum
   Tensor5D points = frustum_broadcast - post_trans_broadcast;
 
-  // Unsqueeze points to [N, D, H, W, 3, 1]
-  Tensor6D points_unsqueezed =
-    points.reshape(Eigen::array<Eigen::Index, 6>{N, D, H, W, 3, 1});  // cSpell: unsqueezed
+  // Unsqueeze points to [N, D, H, W, 3, 1] cSpell: unsqueezed
+  Tensor6D points_unsqueezed = points.reshape(Eigen::array<Eigen::Index, 6>{N, D, H, W, 3, 1});
 
   Tensor5D points_rotated(N, D, H, W, 3);
 
@@ -147,11 +146,11 @@ Tensor5D get_geometry(
 
   for (Eigen::Index camera_index = 0; camera_index < N; camera_index++) {
     Tensor2D camera2lidar_rot = camera2lidar_rots.chip(camera_index, 0);
-    Tensor2D intrins_inv = intrinsics_inverse.chip(camera_index, 0);
+    Tensor2D intrinsics_inverse_aux = intrinsics_inverse.chip(camera_index, 0);
 
     Eigen::array<Eigen::IndexPair<int>, 1> contract_dims = {Eigen::IndexPair<int>(1, 0)};
 
-    Tensor2D combine_sliced = camera2lidar_rot.contract(intrins_inv, contract_dims);
+    Tensor2D combine_sliced = camera2lidar_rot.contract(intrinsics_inverse_aux, contract_dims);
     combine.chip(camera_index, 0) = combine_sliced;
   }
 
@@ -342,19 +341,19 @@ precompute_features(
 
     Matrix3fRowM camera2lidar_rot = camera2lidar.block<3, 3>(0, 0);
     Vector3fRowM camera2lidar_trans = camera2lidar.block<3, 1>(0, 3);
-    Matrix3fRowM intrins_inv = cam2image.inverse().eval().block<3, 3>(0, 0);
+    Matrix3fRowM intrinsics_inverse_matrix = cam2image.inverse().eval().block<3, 3>(0, 0);
     Matrix3fRowM post_rots_inv = img_aug_matrix_inverse.block<3, 3>(0, 0);
     Vector3fRowM post_trans_vec = img_aug_matrix.block<3, 1>(0, 3);
 
     TensorMap2D camera2lidar_rot_tensor(camera2lidar_rot.data(), 3, 3);
     TensorMap1D camera2lidar_trans_tensor(camera2lidar_trans.data(), 3);
-    TensorMap2D intrins_inv_tensor(intrins_inv.data(), 3, 3);
+    TensorMap2D intrinsics_inverse_tensor(intrinsics_inverse_matrix.data(), 3, 3);
     TensorMap2D post_rots_inv_tensor(post_rots_inv.data(), 3, 3);
     TensorMap1D post_trans_tensor(post_trans_vec.data(), 3);
 
     camera2lidar_rotations.chip(camera_id, 0) = camera2lidar_rot_tensor;
     camera2lidar_translations.chip(camera_id, 0) = camera2lidar_trans_tensor;
-    intrinsics_inverse.chip(camera_id, 0) = intrins_inv_tensor;
+    intrinsics_inverse.chip(camera_id, 0) = intrinsics_inverse_tensor;
     post_rots_inverse.chip(camera_id, 0) = post_rots_inv_tensor;
     post_trans.chip(camera_id, 0) = post_trans_tensor;
   }

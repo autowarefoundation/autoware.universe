@@ -59,7 +59,7 @@ Tensor5D get_geometry(
   const Tensor4D & frustum,             // [D, H, W, 3]
   const Tensor3D & camera2lidar_rots,   // [N, 3, 3]
   const Tensor2D & camera2lidar_trans,  // [N, 3]
-  const Tensor3D & intrins_inverse,     // [N, 3, 3]
+  const Tensor3D & intrinsics_inverse,  // [N, 3, 3]
   const Tensor3D & post_rots_inverse,   // [N, 3, 3]
   const Tensor2D & post_trans           // [N, 3]
 );
