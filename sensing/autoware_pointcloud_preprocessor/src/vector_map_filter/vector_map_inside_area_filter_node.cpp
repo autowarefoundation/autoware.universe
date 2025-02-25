@@ -20,7 +20,7 @@
 
 namespace
 {
-autoware::universe_utils::Box2d calcBoundingBox(
+autoware_utils::Box2d calcBoundingBox(
   const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & input_cloud)
 {
   MultiPoint2d candidate_points;
@@ -28,11 +28,11 @@ autoware::universe_utils::Box2d calcBoundingBox(
     candidate_points.emplace_back(p.x, p.y);
   }
 
-  return boost::geometry::return_envelope<autoware::universe_utils::Box2d>(candidate_points);
+  return boost::geometry::return_envelope<autoware_utils::Box2d>(candidate_points);
 }
 
 lanelet::ConstPolygons3d calcIntersectedPolygons(
-  const autoware::universe_utils::Box2d & bounding_box, const lanelet::ConstPolygons3d & polygons)
+  const autoware_utils::Box2d & bounding_box, const lanelet::ConstPolygons3d & polygons)
 {
   lanelet::ConstPolygons3d intersected_polygons;
   for (const auto & polygon : polygons) {

@@ -19,7 +19,7 @@
 
   <depend>autoware_lanelet2_extension</depend>
   <depend>autoware_pointcloud_preprocessor</depend>
-  <depend>autoware_universe_utils</depend>
+  <depend>autoware_utils</depend>
   <depend>libpcl-all-dev</depend>
   <depend>message_filters</depend>
   <depend>nav_msgs</depend>
