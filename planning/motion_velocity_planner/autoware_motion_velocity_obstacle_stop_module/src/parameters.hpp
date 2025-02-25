@@ -101,18 +101,18 @@ struct ObstacleFilteringParam
   ObstacleFilteringParam() = default;
   explicit ObstacleFilteringParam(rclcpp::Node & node)
   {
-    pointcloud_obstacle_filtering_param.pointcloud_voxel_grid_x = getOrDeclareParameter<double>(
+    pointcloud_obstacle_filtering_param.pointcloud_voxel_grid_x = get_or_declare_parameter<double>(
       node, "obstacle_stop.obstacle_filtering.pointcloud.pointcloud_voxel_grid_x");
-    pointcloud_obstacle_filtering_param.pointcloud_voxel_grid_y = getOrDeclareParameter<double>(
+    pointcloud_obstacle_filtering_param.pointcloud_voxel_grid_y = get_or_declare_parameter<double>(
       node, "obstacle_stop.obstacle_filtering.pointcloud.pointcloud_voxel_grid_y");
-    pointcloud_obstacle_filtering_param.pointcloud_voxel_grid_z = getOrDeclareParameter<double>(
+    pointcloud_obstacle_filtering_param.pointcloud_voxel_grid_z = get_or_declare_parameter<double>(
       node, "obstacle_stop.obstacle_filtering.pointcloud.pointcloud_voxel_grid_z");
     pointcloud_obstacle_filtering_param.pointcloud_cluster_tolerance =
-      getOrDeclareParameter<double>(
+      get_or_declare_parameter<double>(
         node, "obstacle_stop.obstacle_filtering.pointcloud.pointcloud_cluster_tolerance");
-    pointcloud_obstacle_filtering_param.pointcloud_min_cluster_size = getOrDeclareParameter<int>(
+    pointcloud_obstacle_filtering_param.pointcloud_min_cluster_size = get_or_declare_parameter<int>(
       node, "obstacle_stop.obstacle_filtering.pointcloud.pointcloud_min_cluster_size");
-    pointcloud_obstacle_filtering_param.pointcloud_max_cluster_size = getOrDeclareParameter<int>(
+    pointcloud_obstacle_filtering_param.pointcloud_max_cluster_size = get_or_declare_parameter<int>(
       node, "obstacle_stop.obstacle_filtering.pointcloud.pointcloud_max_cluster_size");
     use_pointcloud = get_or_declare_parameter<bool>(
       node, "obstacle_stop.obstacle_filtering.object_type.pointcloud");

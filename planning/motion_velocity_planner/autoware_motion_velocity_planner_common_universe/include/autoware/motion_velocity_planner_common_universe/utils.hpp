@@ -44,7 +44,7 @@ using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 
 geometry_msgs::msg::Point to_geometry_point(const pcl::PointXYZ & point);
-geometry_msgs::msg::Point to_geometry_point(const autoware::universe_utils::Point2d & point);
+geometry_msgs::msg::Point to_geometry_point(const autoware_utils::Point2d & point);
 
 std::optional<double> calc_distance_to_front_object(
   const std::vector<TrajectoryPoint> & traj_points, const size_t ego_idx,

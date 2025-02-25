@@ -118,7 +118,7 @@ geometry_msgs::msg::Point to_geometry_point(const pcl::PointXYZ & point)
   return geom_point;
 }
 
-geometry_msgs::msg::Point to_geometry_point(const autoware::universe_utils::Point2d & point)
+geometry_msgs::msg::Point to_geometry_point(const autoware_utils::Point2d & point)
 {
   geometry_msgs::msg::Point geom_point;
   geom_point.x = point.x();

@@ -15,7 +15,6 @@
 #include "scene.hpp"
 
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
-// #include "autoware_utils/autoware_universe_utils.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
