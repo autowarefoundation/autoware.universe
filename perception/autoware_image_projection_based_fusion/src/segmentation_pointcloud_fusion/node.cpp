@@ -151,6 +151,7 @@ void SegmentPointCloudFusionNode::postprocess(
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
+  output_msg = pointcloud_msg;
   output_msg.header = pointcloud_msg.header;
   output_msg.data.clear();
   output_msg.data.resize(pointcloud_msg.data.size());
@@ -165,8 +166,14 @@ void SegmentPointCloudFusionNode::postprocess(
   }
 
   output_msg.data.resize(output_pointcloud_size);
-  output_msg.row_step = output_pointcloud_size / output_msg.height;
-  output_msg.width = output_pointcloud_size / output_msg.point_step / output_msg.height;
+  if (output_msg.height != 0 && output_msg.point_step != 0) {
+    output_msg.row_step = output_pointcloud_size / output_msg.height;
+    output_msg.width = output_pointcloud_size / output_msg.point_step / output_msg.height;
+  } else {
+    RCLCPP_ERROR(this->get_logger(), "output_msg.height or output_msg.point_step is 0");
+    output_msg.row_step = 0;
+    output_msg.width = 0;
+  }
 
   filter_global_offset_set_.clear();
   return;
