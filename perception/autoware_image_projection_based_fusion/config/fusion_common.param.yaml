@@ -1,10 +1,11 @@
 /**:
   ros__parameters:
-    # cloud timestamp: 0.069
-    # rois timestamp: 0.064, 0.014, 0.059, 0.043, 0.092, 0.011
-    rois_timestamp_offsets: [0.095, 0.045, 0.09, 0.074, 0.023, 0.042]
-    rois_timeout_sec: 1.0
-    msg3d_timeout_sec: 0.1
+    # Example of how to set offset parameters
+    # msg3d timestamp: 0.009
+    # rois timestamp:  0.007, 0.056, 0.087, 0.071, 0.024, 0.041
+    rois_timestamp_offsets: [-0.002, 0.047, 0.078, 0.062, 0.015, 0.032]
+    rois_timeout_sec: 0.5
+    msg3d_timeout_sec: 0.05
     image_buffer_size: 15
     # projection setting for each ROI whether unrectify image
     point_project_to_unrectified_image: [false, false, false, false, false, false]
