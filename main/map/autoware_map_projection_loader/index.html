@@ -14240,6 +14240,13 @@
 </li>
         
           <li class="md-nav__item">
+  <a href="#using-localcartesian" class="md-nav__link">
+    Using LocalCartesian
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
   <a href="#using-transversemercator" class="md-nav__link">
     Using TransverseMercator
   </a>
@@ -14328,6 +14335,17 @@ This is necessary information especially when you want to convert from global (g
 <p>If you want to use local cartesian UTM, please specify the map origin as well.</p>
 <div class="highlight"><pre><span></span><code><span class="c1"># map_projector_info.yaml</span>
 <span class="nt">projector_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">LocalCartesianUTM</span>
+<span class="nt">vertical_datum</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">WGS84</span>
+<span class="nt">map_origin</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">latitude</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">35.6762</span><span class="w"> </span><span class="c1"># [deg]</span>
+<span class="w">  </span><span class="nt">longitude</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">139.6503</span><span class="w"> </span><span class="c1"># [deg]</span>
+<span class="w">  </span><span class="nt">altitude</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span><span class="w"> </span><span class="c1"># [m]</span>
+</code></pre></div>
+<h3 id="using-localcartesian">Using LocalCartesian<a class="headerlink" href="#using-localcartesian" title="Permanent link">#</a></h3>
+<p>If you want to use local cartesian WGS84, please specify the map origin as well.</p>
+<p>Currently LocalCartesian can only be used in lanelet2_map_loader, packages like gnss_poser doesn't support it right now.</p>
+<div class="highlight"><pre><span></span><code><span class="c1"># map_projector_info.yaml</span>
+<span class="nt">projector_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">LocalCartesian</span>
 <span class="nt">vertical_datum</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">WGS84</span>
 <span class="nt">map_origin</span><span class="p">:</span>
 <span class="w">  </span><span class="nt">latitude</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">35.6762</span><span class="w"> </span><span class="c1"># [deg]</span>
