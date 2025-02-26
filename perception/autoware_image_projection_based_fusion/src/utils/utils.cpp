@@ -86,7 +86,7 @@ void closest_cluster(
     std::memcpy(&point.y, &cluster.data[i * point_step + y_offset], sizeof(float));
     std::memcpy(&point.z, &cluster.data[i * point_step + z_offset], sizeof(float));
 
-    point_data.distance = autoware::universe_utils::calcDistance2d(center, point);
+    point_data.distance = autoware_utils::calc_distance2d(center, point);
     point_data.orig_index = i;
     points_data.push_back(point_data);
   }

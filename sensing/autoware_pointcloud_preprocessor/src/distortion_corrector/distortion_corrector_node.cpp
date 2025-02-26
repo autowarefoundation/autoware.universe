@@ -29,8 +29,8 @@ DistortionCorrectorComponent::DistortionCorrectorComponent(const rclcpp::NodeOpt
 {
   // initialize debug tool
 
-  using universe_utils::DebugPublisher;
-  using universe_utils::StopWatch;
+  using autoware_utils::DebugPublisher;
+  using autoware_utils::StopWatch;
   stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
   debug_publisher_ = std::make_unique<DebugPublisher>(this, "distortion_corrector");
   stop_watch_ptr_->tic("cyclic_time");
@@ -59,11 +59,11 @@ DistortionCorrectorComponent::DistortionCorrectorComponent(const rclcpp::NodeOpt
   const uint16_t TWIST_QUEUE_SIZE = 100;
 
   // Subscriber
-  twist_sub_ = universe_utils::InterProcessPollingSubscriber<
-    geometry_msgs::msg::TwistWithCovarianceStamped, universe_utils::polling_policy::All>::
+  twist_sub_ = autoware_utils::InterProcessPollingSubscriber<
+    geometry_msgs::msg::TwistWithCovarianceStamped, autoware_utils::polling_policy::All>::
     create_subscription(this, "~/input/twist", rclcpp::QoS(TWIST_QUEUE_SIZE));
-  imu_sub_ = universe_utils::InterProcessPollingSubscriber<
-    sensor_msgs::msg::Imu, universe_utils::polling_policy::All>::
+  imu_sub_ = autoware_utils::InterProcessPollingSubscriber<
+    sensor_msgs::msg::Imu, autoware_utils::polling_policy::All>::
     create_subscription(this, "~/input/imu", rclcpp::QoS(TWIST_QUEUE_SIZE));
   pointcloud_sub_ = this->create_subscription<PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS(),
@@ -89,13 +89,13 @@ void DistortionCorrectorComponent::pointcloud_callback(PointCloud2::UniquePtr po
   }
 
   std::vector<geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr> twist_msgs =
-    twist_sub_->takeData();
+    twist_sub_->take_data();
   for (const auto & msg : twist_msgs) {
     distortion_corrector_->process_twist_message(msg);
   }
 
   if (use_imu_) {
-    std::vector<sensor_msgs::msg::Imu::ConstSharedPtr> imu_msgs = imu_sub_->takeData();
+    std::vector<sensor_msgs::msg::Imu::ConstSharedPtr> imu_msgs = imu_sub_->take_data();
     for (const auto & msg : imu_msgs) {
       distortion_corrector_->process_imu_message(base_frame_, msg);
     }

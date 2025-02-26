@@ -19,8 +19,8 @@
 #include <gtest/gtest.h>
 
 using autoware::test_utils::createPose;
-using autoware::universe_utils::Point2d;
-using autoware::universe_utils::Polygon2d;
+using autoware_utils::Point2d;
+using autoware_utils::Polygon2d;
 
 constexpr auto epsilon = 1e-6;
 
