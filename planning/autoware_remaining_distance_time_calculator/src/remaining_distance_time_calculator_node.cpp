@@ -58,7 +58,7 @@ RemainingDistanceTimeCalculatorNode::RemainingDistanceTimeCalculatorNode(
   sub_planning_velocity_ = create_subscription<tier4_planning_msgs::msg::VelocityLimit>(
     "/planning/scenario_planning/current_max_velocity", qos_transient_local,
     std::bind(&RemainingDistanceTimeCalculatorNode::on_velocity_limit, this, _1));
-  sub_scenario_ = this->create_subscription<tier4_planning_msgs::msg::Scenario>(
+  sub_scenario_ = this->create_subscription<autoware_internal_planning_msgs::msg::Scenario>(
     "~/input/scenario", 1, std::bind(&RemainingDistanceTimeCalculatorNode::on_scenario, this, _1));
 
   pub_mission_remaining_distance_time_ = create_publisher<MissionRemainingDistanceTime>(
@@ -106,7 +106,7 @@ void RemainingDistanceTimeCalculatorNode::on_velocity_limit(
 }
 
 void RemainingDistanceTimeCalculatorNode::on_scenario(
-  const tier4_planning_msgs::msg::Scenario::ConstSharedPtr & msg)
+  const autoware_internal_planning_msgs::msg::Scenario::ConstSharedPtr & msg)
 {
   scenario_ = msg;
   has_received_scenario_ = true;
@@ -119,7 +119,7 @@ void RemainingDistanceTimeCalculatorNode::on_timer()
   }
 
   // check if the scenario is parking or not
-  if (scenario_->current_scenario == tier4_planning_msgs::msg::Scenario::PARKING) {
+  if (scenario_->current_scenario == autoware_internal_planning_msgs::msg::Scenario::PARKING) {
     remaining_distance_ = 0.0;
     remaining_time_ = 0.0;
     publish_mission_remaining_distance_time();
