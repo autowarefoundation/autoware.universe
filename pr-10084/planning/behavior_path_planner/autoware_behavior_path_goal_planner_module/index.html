@@ -14597,9 +14597,9 @@
 </table>
 <h2 id="pull-over"><strong>Pull Over</strong><a class="headerlink" href="#pull-over" title="Permanent link">#</a></h2>
 <p>Since the path candidates generation is time consuming, goal_planner employs two separate threads to generate path candidates in the background and get latest candidates asynchronously. One is <code>LaneParkingThread</code> which plans path candidates on road shoulder lanes and the other is <code>FreespaceParkingThread</code> which plans on freespace area. The normal process of goal_planner is executed on the main thread.</p>
-<p>Although the two threads are running periodically, the primary background process is performed only when following conditions are met in order not to consoume computational resource.</p>
+<p>Although the two threads are running periodically, the primary background process is performed only when following conditions are met in order not to consume computational resource.</p>
 <ul>
-<li>ego has approched the goal within the threshold of <code>pull_over_prepare_length</code></li>
+<li>ego has approached the goal within the threshold of <code>pull_over_prepare_length</code></li>
 <li>upstream module path shape has changed from the one which was sent by the main thread in previous process</li>
 <li>upstream module path shape has changed from the one which was used for path candidates generation in the previous process</li>
 </ul>
@@ -14618,9 +14618,9 @@
 <li>the threads fail to generate candidates, or</li>
 <li>the main thread cannot nail down that the selected candidate is SAFE against dynamic objects(which means the DecisionState is not still <code>DECIDED</code>)</li>
 </ul>
-<p>the main thread inserts a stop pose either at <code>closest_start_pose</code> which is the closeset shift start pose among the path candidates, or at the position which is certain distance before the closest goal candidate.</p>
+<p>the main thread inserts a stop pose either at <code>closest_start_pose</code> which is the closest shift start pose among the path candidates, or at the position which is certain distance before the closest goal candidate.</p>
 <p>Once the main thread finally selected the best pull over path, goal_planner transits to <code>DECIDED</code> state and it sets <code>SAFE</code> as the RTC status(NOTE: this <code>SAFE</code> means that "a safe pull over path has been finally selected".)</p>
-<p>If there are no path candidates or the selected path is not SAFE and thus <code>the LaneParkingThread</code> causes ego to get stuck, the <code>FreespaceParkingThread</code> is triggered by the stuck detection and it starts generating path candidates using <a href="https://autowarefoundation.github.io/autoware.universe/main/planning/autoware_freespace_planning_algorithms/">freespace parking algorithms</a>. If a valid freespace path is found and ego is still stuck, the freespace path is used instea. If the selected lane parking pull over path becomes collision-free again in case the blocking parked objects moved, and the path is continuous from current freespace path, lane parking pull over path is selected again.</p>
+<p>If there are no path candidates or the selected path is not SAFE and thus <code>the LaneParkingThread</code> causes ego to get stuck, the <code>FreespaceParkingThread</code> is triggered by the stuck detection and it starts generating path candidates using <a href="https://autowarefoundation.github.io/autoware.universe/main/planning/autoware_freespace_planning_algorithms/">freespace parking algorithms</a>. If a valid freespace path is found and ego is still stuck, the freespace path is used instead. If the selected lane parking pull over path becomes collision-free again in case the blocking parked objects moved, and the path is continuous from current freespace path, lane parking pull over path is selected again.</p>
 <table>
 <thead>
 <tr>
