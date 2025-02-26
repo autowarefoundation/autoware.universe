@@ -176,8 +176,8 @@ void ControlEvaluatorNode::AddBoundaryDistanceMetricMsg(
   lanelet::ConstLanelet current_lane;
   lanelet::utils::query::getClosestLanelet(current_lanelets, ego_pose, &current_lane);
   const auto local_vehicle_footprint = vehicle_info_.createFootprint();
-  const auto current_vehicle_footprint =
-    transformVector(local_vehicle_footprint, autoware::universe_utils::pose2transform(ego_pose));
+  const auto current_vehicle_footprint = autoware::universe_utils::transformVector(
+    local_vehicle_footprint, autoware::universe_utils::pose2transform(ego_pose));
 
   if (behavior_path.left_bound.size() >= 1) {
     LineString2d left_boundary;

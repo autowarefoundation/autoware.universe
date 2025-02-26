@@ -68,7 +68,7 @@ struct PlannerData
   {
   }
 
-  struct Object
+  class Object
   {
   public:
     Object() = default;
