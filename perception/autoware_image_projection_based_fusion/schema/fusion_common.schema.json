@@ -14,7 +14,7 @@
           },
           "description": "An array of timestamp offsets for each camera [s].",
           "minItems": 2,
-          "default": [0.06167, 0.011167, 0.045, 0.02833, 0.07833, 0.095]
+          "default": [-0.002, 0.047, 0.078, 0.062, 0.015, 0.032]
         },
         "timeout_ms": {
           "type": "number",
