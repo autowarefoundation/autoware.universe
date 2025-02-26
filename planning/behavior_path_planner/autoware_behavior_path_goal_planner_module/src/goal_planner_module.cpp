@@ -1446,8 +1446,104 @@ BehaviorModuleOutput GoalPlannerModule::planPullOverAsCandidate(
     return stop_path;
   }
 
+  // NOTE: following block is intentionally dirty to refactor and extract only necessary codes in
+  // planAsCandidate/planAsOutput/setOutput
+  BehaviorModuleOutput pull_over_output{};
+  {
+    auto pull_over_path_with_velocity_opt = context_data.pull_over_path_opt;
+    const bool is_freespace =
+      pull_over_path_with_velocity_opt &&
+      pull_over_path_with_velocity_opt.value().type() == PullOverPlannerType::FREESPACE;
+    const std::optional<GoalCandidate> modified_goal_opt =
+      pull_over_path_with_velocity_opt ? std::make_optional<GoalCandidate>(
+                                           pull_over_path_with_velocity_opt.value().modified_goal())
+                                       : std::nullopt;
+    const auto & last_path_update_time = context_data.last_path_update_time;
+    if (
+      path_decision_controller_.get_current_state().state ==
+        PathDecisionState::DecisionKind::NOT_DECIDED &&
+      !is_freespace &&
+      needPathUpdate(
+        planner_data_->self_odometry->pose.pose, 1.0 /*path_update_duration*/, clock_->now(),
+        modified_goal_opt, last_path_update_time, parameters_)) {
+      // if the final path is not decided and enough time has passed since last path update,
+      // select safe path from lane parking pull over path candidates
+      // and set it to thread_safe_data_
+      RCLCPP_INFO(getLogger(), "Update pull over path candidates");
+
+      context_data.pull_over_path_opt = std::nullopt;
+      context_data.last_path_update_time = std::nullopt;
+      context_data.last_path_idx_increment_time = std::nullopt;
+
+      // Select a path that is as safe as possible and has a high priority.
+      const auto & pull_over_path_candidates =
+        context_data.lane_parking_response.pull_over_path_candidates;
+      const auto lane_pull_over_path_opt = selectPullOverPath(
+        context_data, pull_over_path_candidates,
+        context_data.lane_parking_response.sorted_bezier_indices_opt);
+
+      // update thread_safe_data_
+      const auto & pull_over_path_opt =
+        lane_pull_over_path_opt ? lane_pull_over_path_opt
+                                : context_data.freespace_parking_response.freespace_pull_over_path;
+      if (pull_over_path_opt) {
+        const auto & pull_over_path = pull_over_path_opt.value();
+        context_data.pull_over_path_opt = pull_over_path;
+        context_data.last_path_update_time = clock_->now();
+        context_data.last_path_idx_increment_time = std::nullopt;
+
+        if (pull_over_path_with_velocity_opt) {
+          auto & pull_over_path_with_velocity = pull_over_path_with_velocity_opt.value();
+          // copy the path for later setOutput()
+          pull_over_path_with_velocity = pull_over_path;
+          // modify the velocity for latest setOutput()
+          deceleratePath(pull_over_path_with_velocity);
+        }
+        RCLCPP_DEBUG(
+          getLogger(), "selected pull over path: path_id: %ld, goal_id: %ld", pull_over_path.id(),
+          pull_over_path.modified_goal().id);
+      }
+    }
+
+    // set output and status
+    {
+      if (!pull_over_path_with_velocity_opt) {
+        // situation : not safe against static objects use stop_path
+        // TODO(soblin): goal_candidates_.empty() is impossible
+        pull_over_output.path = generateStopPath(
+          context_data, (goal_candidates_.empty() ? "no goal candidate" : "no static safe path"));
+        RCLCPP_INFO_THROTTLE(
+          getLogger(), *clock_, 5000, "Not found safe pull_over path, generate stop path");
+      } else {
+        const auto & pull_over_path = pull_over_path_with_velocity_opt.value();
+        if (!context_data.is_stable_safe_path && isActivated()) {
+          // situation : not safe against dynamic objects after approval
+          // insert stop point in current path if ego is able to stop with acceleration and jerk
+          // constraints
+          pull_over_output.path = generateFeasibleStopPath(
+            pull_over_path.getCurrentPath(), "unsafe against dynamic objects");
+          RCLCPP_INFO_THROTTLE(
+            getLogger(), *clock_, 5000, "Not safe against dynamic objects, generate stop path");
+        } else {
+          // situation : (safe against static and dynamic objects) or (safe against static objects
+          // and before approval) don't stop keep stop if not enough time passed, because it takes
+          // time for the trajectory to be reflected
+          auto current_path = pull_over_path.getCurrentPath();
+          keepStoppedWithCurrentPath(context_data, current_path);
+          pull_over_output.path = current_path;
+        }
+
+        setModifiedGoal(context_data, pull_over_output);
+      }
+    }
+
+    if (pull_over_path_with_velocity_opt) {
+      path_candidate_ =
+        std::make_shared<PathWithLaneId>(pull_over_path_with_velocity_opt.value().full_path());
+    }
+  }
+
   BehaviorModuleOutput output{};
-  const BehaviorModuleOutput pull_over_output = planPullOverAsOutput(context_data);
   output.modified_goal = pull_over_output.modified_goal;
   output.path = generateStopPath(context_data, detail);
   output.reference_path = getPreviousModuleOutput().reference_path;

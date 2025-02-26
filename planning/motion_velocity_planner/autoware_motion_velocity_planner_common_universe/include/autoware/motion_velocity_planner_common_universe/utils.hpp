@@ -43,6 +43,22 @@ using nav_msgs::msg::Odometry;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 
+geometry_msgs::msg::Point to_geometry_point(const pcl::PointXYZ & point);
+geometry_msgs::msg::Point to_geometry_point(const autoware::universe_utils::Point2d & point);
+
+std::optional<double> calc_distance_to_front_object(
+  const std::vector<TrajectoryPoint> & traj_points, const size_t ego_idx,
+  const geometry_msgs::msg::Point & obstacle_pos);
+
+template <class T>
+std::vector<T> concat_vectors(std::vector<T> first_vector, std::vector<T> second_vector)
+{
+  first_vector.insert(
+    first_vector.end(), std::make_move_iterator(second_vector.begin()),
+    std::make_move_iterator(second_vector.end()));
+  return first_vector;
+}
+
 std::vector<TrajectoryPoint> decimate_trajectory_points_from_ego(
   const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & current_pose,
   const double ego_nearest_dist_threshold, const double ego_nearest_yaw_threshold,
