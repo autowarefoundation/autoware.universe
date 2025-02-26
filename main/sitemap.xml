@@ -831,11 +831,6 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/main/planning/autoware_planning_test_manager/</loc>
-         <lastmod>2025-02-26</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
          <loc>https://autowarefoundation.github.io/autoware.universe/main/planning/autoware_planning_topic_converter/</loc>
          <lastmod>2025-02-26</lastmod>
          <changefreq>daily</changefreq>
