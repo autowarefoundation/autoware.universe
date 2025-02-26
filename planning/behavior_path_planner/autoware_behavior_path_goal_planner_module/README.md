@@ -189,9 +189,9 @@ The gray numbers represent objects to avoid, and you can see that the goal in fr
 
 Since the path candidates generation is time consuming, goal_planner employs two separate threads to generate path candidates in the background and get latest candidates asynchronously. One is `LaneParkingThread` which plans path candidates on road shoulder lanes and the other is `FreespaceParkingThread` which plans on freespace area. The normal process of goal_planner is executed on the main thread.
 
-Although the two threads are running periodically, the primary background process is performed only when following conditions are met in order not to consoume computational resource.
+Although the two threads are running periodically, the primary background process is performed only when following conditions are met in order not to consume computational resource.
 
-- ego has approched the goal within the threshold of `pull_over_prepare_length`
+- ego has approached the goal within the threshold of `pull_over_prepare_length`
 - upstream module path shape has changed from the one which was sent by the main thread in previous process
 - upstream module path shape has changed from the one which was used for path candidates generation in the previous process
 
@@ -214,11 +214,11 @@ While
 - the threads fail to generate candidates, or
 - the main thread cannot nail down that the selected candidate is SAFE against dynamic objects(which means the DecisionState is not still `DECIDED`)
 
-the main thread inserts a stop pose either at `closest_start_pose` which is the closeset shift start pose among the path candidates, or at the position which is certain distance before the closest goal candidate.
+the main thread inserts a stop pose either at `closest_start_pose` which is the closest shift start pose among the path candidates, or at the position which is certain distance before the closest goal candidate.
 
 Once the main thread finally selected the best pull over path, goal_planner transits to `DECIDED` state and it sets `SAFE` as the RTC status(NOTE: this `SAFE` means that "a safe pull over path has been finally selected".)
 
-If there are no path candidates or the selected path is not SAFE and thus `the LaneParkingThread` causes ego to get stuck, the `FreespaceParkingThread` is triggered by the stuck detection and it starts generating path candidates using [freespace parking algorithms](https://autowarefoundation.github.io/autoware.universe/main/planning/autoware_freespace_planning_algorithms/). If a valid freespace path is found and ego is still stuck, the freespace path is used instea. If the selected lane parking pull over path becomes collision-free again in case the blocking parked objects moved, and the path is continuous from current freespace path, lane parking pull over path is selected again.
+If there are no path candidates or the selected path is not SAFE and thus `the LaneParkingThread` causes ego to get stuck, the `FreespaceParkingThread` is triggered by the stuck detection and it starts generating path candidates using [freespace parking algorithms](https://autowarefoundation.github.io/autoware.universe/main/planning/autoware_freespace_planning_algorithms/). If a valid freespace path is found and ego is still stuck, the freespace path is used instead. If the selected lane parking pull over path becomes collision-free again in case the blocking parked objects moved, and the path is continuous from current freespace path, lane parking pull over path is selected again.
 
 | Name                                  | Unit   | Type   | Description                                                                                                                                                                    | Default value                            |
 | :------------------------------------ | :----- | :----- | :----------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | :--------------------------------------- |
@@ -436,7 +436,7 @@ In addition, the safety check has a time hysteresis, and if the path is judged "
 
 ## **path deciding**
 
-When `decide_path_distance` closer to the start of the pull over, if it is collision-free at that time and safe for the predicted path of the objects, it transitions to DECIDING. If it is safe for a certain period of time, it moves to DECIDED.
+When ego approached the start of the temporarily selected pull over path within the distance of `decide_path_distance`, if it is collision-free at that time and safe against dynamic objects, it transitions to `DECIDING`. And if those conditions hold for a certain period of time, it transitions to `DECIDED` and the selected path is fixed.
 
 ![state_transition](./images/goal_planner-state-transition.drawio.svg)
 
