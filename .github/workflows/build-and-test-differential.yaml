@@ -24,7 +24,7 @@ on:
         type: string
       build-pre-command:
         required: false
-        default: nice -n 19
+        default: ""
         type: string
     secrets:
       codecov-token:
