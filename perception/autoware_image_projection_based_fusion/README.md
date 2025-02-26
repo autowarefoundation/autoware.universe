@@ -21,7 +21,7 @@ The package provides multiple fusion algorithms, each designed for specific use 
 
 ### Step 1: Matching and Creating a Collector
 
-When a point cloud or a set of Regions of Interest (RoIs) arrives, its timestamp is checked, and an offset is subtracted to determine the reference timestamp. The node then searches for an existing collector with the same reference timestamp.
+When a **Msg3d** (Pointcloud/Bounding Box/Cluster) or a set of Regions of Interest (**RoIs**) arrives, its timestamp is checked, and an offset is subtracted to determine the reference timestamp. The node then searches for an existing collector with the same reference timestamp.
 
 - If a matching collector is found, the incoming data is added to it.
 - If no matching collector exists, a new collector is created and initialized with the reference timestamp.
@@ -32,10 +32,10 @@ Once a collector is created, a countdown timer is started. The timeout duration 
 
 The collector will attempt to fuse the collected 3D and 2D data either:
 
-- When both point cloud and RoI data are available, or
+- When both Msg3d and RoI data are available, or
 - When the timer expires.
 
-If no point cloud data is received before the timer expires, the collector will discard the data without performing fusion.
+If no Msg3d is received before the timer expires, the collector will discard the data without performing fusion.
 
 ### Step 3: Fusion Process
 
@@ -72,7 +72,17 @@ If `msg3d` arrives first, the fusion process should proceed as quickly as possib
 
 #### Sensor Offset Considerations
 
-The offset between each camera and the LiDAR is determined by their shutter timing. Users must understand the timing offset between the RoIs and msg3d to ensure accurate fusion. Once you know the offset between the RoIs and msg3d, fill the offsets in the parameter `rois_timestamp_offsets`.
+The offset between each camera and the LiDAR is determined by their shutter timing. To ensure accurate fusion, users must understand the timing offset between the `RoIs` and `msg3d`. Once this offset is known, it should be specified in the parameter `rois_timestamp_offsets`.
+
+In the figure below, the LiDAR completes a full scan from the rear in 100 milliseconds. When the LiDAR scan reaches the area where the camera is facing, the camera is triggered, capturing an image with a corresponding timestamp. The `rois_timestamp_offsets` can then be calculated by subtracting the LiDAR header timestamp from the camera header timestamp. As a result, the `rois_timestamp_offsets` would be `[0.01, 0.026, 0.042, 0.059, 0.076, 0.093]`.
+
+![lidar_camera_sync](./docs/images/lidar_camera_sync.svg)
+
+To check the header timestamp of the msg3d and RoIs, user can easily run
+
+```bash
+ros2 echo [topic] --header field
+```
 
 #### Matching Strategies
 
