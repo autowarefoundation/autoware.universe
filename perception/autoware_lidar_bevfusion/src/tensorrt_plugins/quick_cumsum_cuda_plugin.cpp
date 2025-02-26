@@ -14,7 +14,7 @@
 
 #include "autoware/tensorrt_plugins/quick_cumsum_cuda_plugin.hpp"
 
-#include "autoware/bev_ops/bev_pool_cuda.h"
+#include "autoware/bev_ops/bev_pool_cuda.hpp"
 #include "autoware/tensorrt_plugins/plugin_utils.hpp"
 
 #include <NvInferRuntime.h>

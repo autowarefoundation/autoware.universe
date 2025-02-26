@@ -1,4 +1,6 @@
-// Taken from
+// Copyright (c) OpenMMLab. All rights reserved.
+// Modified from
+// https://github.com/open-mmlab/mmdetection3d/blob/main/projects/BEVFusion/bevfusion/ops/bev_pool/src/bev_pool_cuda.cu
 // https://github.com/mit-han-lab/bevfusion/blob/main/mmdet3d/ops/bev_pool/src/bev_pool_cuda.cu
 // Available under Apache-2.0 license
 
