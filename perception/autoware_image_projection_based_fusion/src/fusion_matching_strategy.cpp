@@ -52,25 +52,26 @@ template <class Msg3D, class Msg2D, class ExportObj>
 std::optional<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>>
 NaiveMatchingStrategy<Msg3D, Msg2D, ExportObj>::match_rois_to_collector(
   const std::list<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>> & fusion_collectors,
-  const std::shared_ptr<RoisMatchingParams> & params) const
+  const std::shared_ptr<RoisMatchingContext> & matching_context) const
 {
   double smallest_time_difference = std::numeric_limits<double>::max();
   std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>> closest_collector = nullptr;
 
   for (const auto & fusion_collector : fusion_collectors) {
-    if (!fusion_collector->rois_exists(params->rois_id)) {
+    if (!fusion_collector->rois_exists(matching_context->rois_id)) {
       if (
         auto naive_info =
           std::dynamic_pointer_cast<NaiveCollectorInfo>(fusion_collector->get_info())) {
-        auto offset_it = id_to_offset_map_.find(params->rois_id);
+        auto offset_it = id_to_offset_map_.find(matching_context->rois_id);
         if (offset_it == id_to_offset_map_.end()) {
           RCLCPP_ERROR(
-            ros2_parent_node_->get_logger(), "Missing offset for rois_id: %zu", params->rois_id);
+            ros2_parent_node_->get_logger(), "Missing offset for rois_id: %zu",
+            matching_context->rois_id);
           continue;
         }
 
         double time_difference =
-          std::abs(params->rois_timestamp - naive_info->timestamp - offset_it->second);
+          std::abs(matching_context->rois_timestamp - naive_info->timestamp - offset_it->second);
         if (time_difference < smallest_time_difference && time_difference < naive_info->threshold) {
           smallest_time_difference = time_difference;
           closest_collector = fusion_collector;
@@ -86,7 +87,7 @@ template <class Msg3D, class Msg2D, class ExportObj>
 std::optional<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>>
 NaiveMatchingStrategy<Msg3D, Msg2D, ExportObj>::match_msg3d_to_collector(
   const std::list<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>> & fusion_collectors,
-  const std::shared_ptr<Msg3dMatchingParams> & params)
+  const std::shared_ptr<Msg3dMatchingContext> & matching_context)
 {
   double smallest_time_difference = std::numeric_limits<double>::max();
   std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>> closest_collector = nullptr;
@@ -96,7 +97,8 @@ NaiveMatchingStrategy<Msg3D, Msg2D, ExportObj>::match_msg3d_to_collector(
       if (
         auto naive_info =
           std::dynamic_pointer_cast<NaiveCollectorInfo>(fusion_collector->get_info())) {
-        double time_difference = std::abs(params->msg3d_timestamp - naive_info->timestamp);
+        double time_difference =
+          std::abs(matching_context->msg3d_timestamp - naive_info->timestamp);
 
         if (time_difference < smallest_time_difference && time_difference < naive_info->threshold) {
           smallest_time_difference = time_difference;
@@ -112,31 +114,32 @@ NaiveMatchingStrategy<Msg3D, Msg2D, ExportObj>::match_msg3d_to_collector(
 template <class Msg3D, class Msg2D, class ExportObj>
 void NaiveMatchingStrategy<Msg3D, Msg2D, ExportObj>::set_collector_info(
   std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>> & collector,
-  const std::shared_ptr<MatchingParamsBase> & matching_params)
+  const std::shared_ptr<MatchingContextBase> & matching_context)
 {
-  if (!matching_params) {
-    RCLCPP_ERROR(ros2_parent_node_->get_logger(), "matching_params is nullptr!");
+  if (!matching_context) {
+    RCLCPP_ERROR(ros2_parent_node_->get_logger(), "matching_context is nullptr!");
     return;
   }
 
   if (
-    auto msg3d_matching_params = std::dynamic_pointer_cast<Msg3dMatchingParams>(matching_params)) {
+    auto msg3d_matching_context =
+      std::dynamic_pointer_cast<Msg3dMatchingContext>(matching_context)) {
     auto info =
-      std::make_shared<NaiveCollectorInfo>(msg3d_matching_params->msg3d_timestamp, threshold_);
+      std::make_shared<NaiveCollectorInfo>(msg3d_matching_context->msg3d_timestamp, threshold_);
     collector->set_info(info);
 
   } else if (
-    auto rois_matching_params = std::dynamic_pointer_cast<RoisMatchingParams>(matching_params)) {
-    auto offset_it = id_to_offset_map_.find(rois_matching_params->rois_id);
+    auto rois_matching_context = std::dynamic_pointer_cast<RoisMatchingContext>(matching_context)) {
+    auto offset_it = id_to_offset_map_.find(rois_matching_context->rois_id);
     if (offset_it == id_to_offset_map_.end()) {
       RCLCPP_ERROR(
         ros2_parent_node_->get_logger(), "Missing offset for rois_id: %zu",
-        rois_matching_params->rois_id);
+        rois_matching_context->rois_id);
       return;
     }
 
     auto info = std::make_shared<NaiveCollectorInfo>(
-      rois_matching_params->rois_timestamp - offset_it->second, threshold_);
+      rois_matching_context->rois_timestamp - offset_it->second, threshold_);
     collector->set_info(info);
   }
 }
@@ -178,19 +181,19 @@ template <class Msg3D, class Msg2D, class ExportObj>
 std::optional<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>>
 AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::match_rois_to_collector(
   const std::list<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>> & fusion_collectors,
-  const std::shared_ptr<RoisMatchingParams> & params) const
+  const std::shared_ptr<RoisMatchingContext> & matching_context) const
 {
-  auto offset_it = id_to_offset_map_.find(params->rois_id);
-  auto noise_it = id_to_noise_window_map_.find(params->rois_id);
+  auto offset_it = id_to_offset_map_.find(matching_context->rois_id);
+  auto noise_it = id_to_noise_window_map_.find(matching_context->rois_id);
 
   if (offset_it == id_to_offset_map_.end() || noise_it == id_to_noise_window_map_.end()) {
     RCLCPP_ERROR(
       ros2_parent_node_->get_logger(), "Missing offset or noise window for rois_id: %zu",
-      params->rois_id);
+      matching_context->rois_id);
     return std::nullopt;
   }
 
-  double adjusted_timestamp = params->rois_timestamp - offset_it->second;
+  double adjusted_timestamp = matching_context->rois_timestamp - offset_it->second;
   double noise_window = noise_it->second;
 
   for (const auto & fusion_collector : fusion_collectors) {
@@ -214,12 +217,13 @@ template <class Msg3D, class Msg2D, class ExportObj>
 std::optional<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>>
 AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::match_msg3d_to_collector(
   const std::list<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>> & fusion_collectors,
-  const std::shared_ptr<Msg3dMatchingParams> & params)
+  const std::shared_ptr<Msg3dMatchingContext> & matching_context)
 {
-  auto concatenated_status = ros2_parent_node_->find_concatenation_status(params->msg3d_timestamp);
+  auto concatenated_status =
+    ros2_parent_node_->find_concatenation_status(matching_context->msg3d_timestamp);
 
-  double offset = get_concatenated_offset(params->msg3d_timestamp, concatenated_status);
-  double adjusted_timestamp = params->msg3d_timestamp - offset;
+  double offset = get_concatenated_offset(matching_context->msg3d_timestamp, concatenated_status);
+  double adjusted_timestamp = matching_context->msg3d_timestamp - offset;
 
   for (const auto & fusion_collector : fusion_collectors) {
     if (
@@ -241,37 +245,38 @@ AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::match_msg3d_to_collector(
 template <class Msg3D, class Msg2D, class ExportObj>
 void AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::set_collector_info(
   std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>> & collector,
-  const std::shared_ptr<MatchingParamsBase> & matching_params)
+  const std::shared_ptr<MatchingContextBase> & matching_context)
 {
-  if (!matching_params) {
-    RCLCPP_ERROR(ros2_parent_node_->get_logger(), "matching_params is nullptr!");
+  if (!matching_context) {
+    RCLCPP_ERROR(ros2_parent_node_->get_logger(), "matching_context is nullptr!");
     return;
   }
 
   if (
-    auto msg3d_matching_params = std::dynamic_pointer_cast<Msg3dMatchingParams>(matching_params)) {
+    auto msg3d_matching_context =
+      std::dynamic_pointer_cast<Msg3dMatchingContext>(matching_context)) {
     auto concatenated_status =
-      ros2_parent_node_->find_concatenation_status(msg3d_matching_params->msg3d_timestamp);
+      ros2_parent_node_->find_concatenation_status(msg3d_matching_context->msg3d_timestamp);
     double offset =
-      get_concatenated_offset(msg3d_matching_params->msg3d_timestamp, concatenated_status);
+      get_concatenated_offset(msg3d_matching_context->msg3d_timestamp, concatenated_status);
 
     auto info = std::make_shared<AdvancedCollectorInfo>(
-      msg3d_matching_params->msg3d_timestamp - offset, msg3d_noise_window_);
+      msg3d_matching_context->msg3d_timestamp - offset, msg3d_noise_window_);
     collector->set_info(info);
   } else if (
-    auto rois_matching_params = std::dynamic_pointer_cast<RoisMatchingParams>(matching_params)) {
-    auto offset_it = id_to_offset_map_.find(rois_matching_params->rois_id);
-    auto noise_it = id_to_noise_window_map_.find(rois_matching_params->rois_id);
+    auto rois_matching_context = std::dynamic_pointer_cast<RoisMatchingContext>(matching_context)) {
+    auto offset_it = id_to_offset_map_.find(rois_matching_context->rois_id);
+    auto noise_it = id_to_noise_window_map_.find(rois_matching_context->rois_id);
 
     if (offset_it == id_to_offset_map_.end() || noise_it == id_to_noise_window_map_.end()) {
       RCLCPP_ERROR(
         ros2_parent_node_->get_logger(), "Missing offset or noise window for rois_id: %zu",
-        rois_matching_params->rois_id);
+        rois_matching_context->rois_id);
       return;
     }
 
     auto info = std::make_shared<AdvancedCollectorInfo>(
-      rois_matching_params->rois_timestamp - offset_it->second, noise_it->second);
+      rois_matching_context->rois_timestamp - offset_it->second, noise_it->second);
     collector->set_info(info);
   }
 }

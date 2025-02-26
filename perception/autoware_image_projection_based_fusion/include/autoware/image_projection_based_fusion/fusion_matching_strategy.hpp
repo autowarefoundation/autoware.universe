@@ -32,24 +32,24 @@ namespace autoware::image_projection_based_fusion
 template <class Msg3D, class Msg2D, class ExportObj>
 class FusionNode;
 
-struct MatchingParamsBase
+struct MatchingContextBase
 {
-  virtual ~MatchingParamsBase() = default;
+  virtual ~MatchingContextBase() = default;
 };
 
-struct Msg3dMatchingParams : public MatchingParamsBase
+struct Msg3dMatchingContext : public MatchingContextBase
 {
   double msg3d_timestamp;
 
-  explicit Msg3dMatchingParams(double msg3d_timestamp = 0.0) : msg3d_timestamp(msg3d_timestamp) {}
+  explicit Msg3dMatchingContext(double msg3d_timestamp = 0.0) : msg3d_timestamp(msg3d_timestamp) {}
 };
 
-struct RoisMatchingParams : public MatchingParamsBase
+struct RoisMatchingContext : public MatchingContextBase
 {
   double rois_timestamp;
   std::size_t rois_id;
 
-  explicit RoisMatchingParams(double rois_timestamp = 0.0, std::size_t rois_id = 0)
+  explicit RoisMatchingContext(double rois_timestamp = 0.0, std::size_t rois_id = 0)
   : rois_timestamp(rois_timestamp), rois_id(rois_id)
   {
   }
@@ -64,15 +64,15 @@ public:
   [[nodiscard]] virtual std::optional<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>>
   match_rois_to_collector(
     const std::list<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>> & fusion_collectors,
-    const std::shared_ptr<RoisMatchingParams> & params) const = 0;
+    const std::shared_ptr<RoisMatchingContext> & matching_context) const = 0;
 
   [[nodiscard]] virtual std::optional<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>>
   match_msg3d_to_collector(
     const std::list<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>> & fusion_collectors,
-    const std::shared_ptr<Msg3dMatchingParams> & params) = 0;
+    const std::shared_ptr<Msg3dMatchingContext> & matching_context) = 0;
   virtual void set_collector_info(
     std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>> & collector,
-    const std::shared_ptr<MatchingParamsBase> & matching_params) = 0;
+    const std::shared_ptr<MatchingContextBase> & matching_context) = 0;
 };
 
 template <class Msg3D, class Msg2D, class ExportObj>
@@ -86,16 +86,16 @@ public:
   [[nodiscard]] std::optional<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>>
   match_rois_to_collector(
     const std::list<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>> & fusion_collectors,
-    const std::shared_ptr<RoisMatchingParams> & params) const override;
+    const std::shared_ptr<RoisMatchingContext> & matching_context) const override;
 
   [[nodiscard]] std::optional<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>>
   match_msg3d_to_collector(
     const std::list<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>> & fusion_collectors,
-    const std::shared_ptr<Msg3dMatchingParams> & params) override;
+    const std::shared_ptr<Msg3dMatchingContext> & matching_context) override;
 
   void set_collector_info(
     std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>> & collector,
-    const std::shared_ptr<MatchingParamsBase> & matching_params) override;
+    const std::shared_ptr<MatchingContextBase> & matching_context) override;
 
 private:
   std::shared_ptr<FusionNode<Msg3D, Msg2D, ExportObj>> ros2_parent_node_;
@@ -114,15 +114,15 @@ public:
   [[nodiscard]] std::optional<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>>
   match_rois_to_collector(
     const std::list<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>> & fusion_collectors,
-    const std::shared_ptr<RoisMatchingParams> & params) const override;
+    const std::shared_ptr<RoisMatchingContext> & matching_context) const override;
 
   [[nodiscard]] std::optional<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>>
   match_msg3d_to_collector(
     const std::list<std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>>> & fusion_collectors,
-    const std::shared_ptr<Msg3dMatchingParams> & params) override;
+    const std::shared_ptr<Msg3dMatchingContext> & matching_context) override;
   void set_collector_info(
     std::shared_ptr<FusionCollector<Msg3D, Msg2D, ExportObj>> & collector,
-    const std::shared_ptr<MatchingParamsBase> & matching_params) override;
+    const std::shared_ptr<MatchingContextBase> & matching_context) override;
 
   double get_concatenated_offset(
     const double & msg3d_timestamp,

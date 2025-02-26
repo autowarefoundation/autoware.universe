@@ -385,13 +385,13 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::sub_callback(const typename Msg3D::Con
   auto msg3d_timestamp = rclcpp::Time(msg3d->header.stamp).seconds();
 
   // Create matching parameters
-  auto matching_params = std::make_shared<Msg3dMatchingParams>();
-  matching_params->msg3d_timestamp = msg3d_timestamp;
+  auto matching_context = std::make_shared<Msg3dMatchingContext>();
+  matching_context->msg3d_timestamp = msg3d_timestamp;
 
   // Try to find an existing FusionCollector that matches this message
   auto fusion_collector =
     !fusion_collectors_.empty()
-      ? fusion_matching_strategy_->match_msg3d_to_collector(fusion_collectors_, matching_params)
+      ? fusion_matching_strategy_->match_msg3d_to_collector(fusion_collectors_, matching_context)
       : std::nullopt;
 
   if (fusion_collector && fusion_collector.value()) {
@@ -411,7 +411,7 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::sub_callback(const typename Msg3D::Con
 
   fusion_collectors_lock.unlock();
   if (selected_collector) {
-    fusion_matching_strategy_->set_collector_info(selected_collector, matching_params);
+    fusion_matching_strategy_->set_collector_info(selected_collector, matching_context);
     selected_collector->process_msg3d(msg3d, msg3d_timeout_sec_);
   } else {
     // Handle case where no suitable collector is found
@@ -460,14 +460,14 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::rois_callback(
   auto rois_timestamp = rclcpp::Time(rois_msg->header.stamp).seconds();
 
   // Create matching parameters
-  auto matching_params = std::make_shared<RoisMatchingParams>();
-  matching_params->rois_id = rois_id;
-  matching_params->rois_timestamp = rois_timestamp;
+  auto matching_context = std::make_shared<RoisMatchingContext>();
+  matching_context->rois_id = rois_id;
+  matching_context->rois_timestamp = rois_timestamp;
 
   // Try to find an existing FusionCollector that matches this message
   auto fusion_collector =
     !fusion_collectors_.empty()
-      ? fusion_matching_strategy_->match_rois_to_collector(fusion_collectors_, matching_params)
+      ? fusion_matching_strategy_->match_rois_to_collector(fusion_collectors_, matching_context)
       : std::nullopt;
 
   if (fusion_collector && fusion_collector.value()) {
@@ -487,7 +487,7 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::rois_callback(
 
   fusion_collectors_lock.unlock();
   if (selected_collector) {
-    fusion_matching_strategy_->set_collector_info(selected_collector, matching_params);
+    fusion_matching_strategy_->set_collector_info(selected_collector, matching_context);
     selected_collector->process_rois(rois_id, rois_msg, rois_timeout_sec_);
   } else {
     // Handle case where no suitable collector is found
