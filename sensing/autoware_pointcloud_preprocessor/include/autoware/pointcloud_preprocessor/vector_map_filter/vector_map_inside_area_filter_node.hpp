@@ -23,6 +23,8 @@
 #include <autoware_lanelet2_extension/utility/query.hpp>
 
 #include <lanelet2_core/geometry/Polygon.h>
+#include <tf2_ros/buffer.h>
+#include <tf2_ros/transform_listener.h>
 
 #include <memory>
 #include <string>

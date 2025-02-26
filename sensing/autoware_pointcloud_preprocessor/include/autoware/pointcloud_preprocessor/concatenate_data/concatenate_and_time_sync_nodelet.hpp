@@ -1,4 +1,4 @@
-// Copyright 2024 TIER IV, Inc.
+// Copyright 2023 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -49,8 +49,8 @@
  *
  */
 
-#ifndef AUTOWARE__POINTCLOUD_PREPROCESSOR__CONCATENATE_DATA__CONCATENATE_POINTCLOUDS_HPP_
-#define AUTOWARE__POINTCLOUD_PREPROCESSOR__CONCATENATE_DATA__CONCATENATE_POINTCLOUDS_HPP_
+#ifndef AUTOWARE__POINTCLOUD_PREPROCESSOR__CONCATENATE_DATA__CONCATENATE_AND_TIME_SYNC_NODELET_HPP_
+#define AUTOWARE__POINTCLOUD_PREPROCESSOR__CONCATENATE_DATA__CONCATENATE_AND_TIME_SYNC_NODELET_HPP_
 
 #include <deque>
 #include <map>
@@ -61,20 +61,22 @@
 #include <vector>
 
 // ROS includes
-#include <autoware/point_types/types.hpp>
+#include "autoware/point_types/types.hpp"
+
 #include <autoware/universe_utils/ros/debug_publisher.hpp>
 #include <autoware/universe_utils/system/stop_watch.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <managed_transform_buffer/managed_transform_buffer.hpp>
 #include <point_cloud_msg_wrapper/point_cloud_msg_wrapper.hpp>
 
-#include <autoware_internal_debug_msgs/msg/int32_stamped.hpp>
-#include <autoware_internal_debug_msgs/msg/string_stamped.hpp>
-#include <autoware_vehicle_msgs/msg/velocity_report.hpp>
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
+#include <geometry_msgs/msg/twist_with_covariance_stamped.hpp>
+#include <nav_msgs/msg/odometry.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
 #include <sensor_msgs/point_cloud2_iterator.hpp>
+#include <tier4_debug_msgs/msg/int32_stamped.hpp>
+#include <tier4_debug_msgs/msg/string_stamped.hpp>
 
 #include <message_filters/pass_through.h>
 #include <message_filters/subscriber.h>
@@ -88,27 +90,29 @@ namespace autoware::pointcloud_preprocessor
 {
 using autoware::point_types::PointXYZIRC;
 using point_cloud_msg_wrapper::PointCloud2Modifier;
-/** \brief @b PointCloudConcatenationComponent is a special form of data
+
+/** \brief @b PointCloudConcatenateDataSynchronizerComponent is a special form of data
  * synchronizer: it listens for a set of input PointCloud messages on the same topic,
  * checks their timestamps, and concatenates their fields together into a single
  * PointCloud output message.
  * \author Radu Bogdan Rusu
  */
-class PointCloudConcatenationComponent : public rclcpp::Node
+class PointCloudConcatenateDataSynchronizerComponent : public rclcpp::Node
 {
 public:
   typedef sensor_msgs::msg::PointCloud2 PointCloud2;
 
   /** \brief constructor. */
-  explicit PointCloudConcatenationComponent(const rclcpp::NodeOptions & node_options);
+  explicit PointCloudConcatenateDataSynchronizerComponent(const rclcpp::NodeOptions & node_options);
 
   /** \brief constructor.
    * \param queue_size the maximum queue size
    */
-  PointCloudConcatenationComponent(const rclcpp::NodeOptions & node_options, int queue_size);
+  PointCloudConcatenateDataSynchronizerComponent(
+    const rclcpp::NodeOptions & node_options, int queue_size);
 
   /** \brief Empty destructor. */
-  virtual ~PointCloudConcatenationComponent() {}
+  virtual ~PointCloudConcatenateDataSynchronizerComponent() {}
 
 private:
   /** \brief The output PointCloud publisher. */
@@ -122,15 +126,22 @@ private:
 
   double timeout_sec_ = 0.1;
 
+  bool publish_synchronized_pointcloud_;
+  bool keep_input_frame_in_synchronized_pointcloud_;
+  std::string synchronized_pointcloud_postfix_;
+
   std::set<std::string> not_subscribed_topic_names_;
 
   /** \brief A vector of subscriber. */
   std::vector<rclcpp::Subscription<PointCloud2>::SharedPtr> filters_;
 
-  rclcpp::Subscription<autoware_vehicle_msgs::msg::VelocityReport>::SharedPtr sub_twist_;
+  rclcpp::Subscription<geometry_msgs::msg::TwistWithCovarianceStamped>::SharedPtr sub_twist_;
+  rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr sub_odom_;
 
   rclcpp::TimerBase::SharedPtr timer_;
   diagnostic_updater::Updater updater_{this};
+
+  const std::string input_twist_topic_type_;
 
   /** \brief Output TF frame the concatenated points should be transformed to. */
   std::string output_frame_;
@@ -150,8 +161,10 @@ private:
   std::vector<double> input_offset_;
   std::map<std::string, double> offset_map_;
 
-  void checkSyncStatus();
-  void combineClouds(sensor_msgs::msg::PointCloud2::SharedPtr & concat_cloud_ptr);
+  Eigen::Matrix4f computeTransformToAdjustForOldTimestamp(
+    const rclcpp::Time & old_stamp, const rclcpp::Time & new_stamp);
+  std::map<std::string, sensor_msgs::msg::PointCloud2::SharedPtr> combineClouds(
+    sensor_msgs::msg::PointCloud2::SharedPtr & concat_cloud_ptr);
   void publish();
 
   void convertToXYZIRCCloud(
@@ -161,9 +174,13 @@ private:
   void cloud_callback(
     const sensor_msgs::msg::PointCloud2::ConstSharedPtr & input_ptr,
     const std::string & topic_name);
+  void twist_callback(const geometry_msgs::msg::TwistWithCovarianceStamped::ConstSharedPtr input);
+  void odom_callback(const nav_msgs::msg::Odometry::ConstSharedPtr input);
   void timer_callback();
 
   void checkConcatStatus(diagnostic_updater::DiagnosticStatusWrapper & stat);
+  std::string replaceSyncTopicNamePostfix(
+    const std::string & original_topic_name, const std::string & postfix);
 
   /** \brief processing time publisher. **/
   std::unique_ptr<autoware::universe_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
@@ -172,4 +189,6 @@ private:
 
 }  // namespace autoware::pointcloud_preprocessor
 
-#endif  // AUTOWARE__POINTCLOUD_PREPROCESSOR__CONCATENATE_DATA__CONCATENATE_POINTCLOUDS_HPP_
+// clang-format off
+#endif  // AUTOWARE__POINTCLOUD_PREPROCESSOR__CONCATENATE_DATA__CONCATENATE_AND_TIME_SYNC_NODELET_HPP_  // NOLINT
+// clang-format on
