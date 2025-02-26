@@ -172,7 +172,8 @@ void LidarTransfusionNode::cloudCallback(const sensor_msgs::msg::PointCloud2::Co
     debug_publisher_ptr_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/processing_time/total_ms", processing_time_ms);
     for (const auto & [topic, time_ms] : proc_timing) {
-      debug_publisher_ptr_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(topic, time_ms);
+      debug_publisher_ptr_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
+        topic, time_ms);
     }
   }
 }

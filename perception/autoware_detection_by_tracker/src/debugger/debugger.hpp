@@ -59,8 +59,7 @@ public:
       "debug/divided_objects", 1);
     processing_time_publisher_ =
       std::make_unique<autoware_utils::DebugPublisher>(node, "detection_by_tracker");
-    stop_watch_ptr_ =
-      std::make_unique<autoware_utils::StopWatch<std::chrono::milliseconds>>();
+    stop_watch_ptr_ = std::make_unique<autoware_utils::StopWatch<std::chrono::milliseconds>>();
     this->startStopWatch();
   }
 

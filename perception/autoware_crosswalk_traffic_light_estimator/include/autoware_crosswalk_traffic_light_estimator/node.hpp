@@ -39,11 +39,11 @@
 namespace autoware::crosswalk_traffic_light_estimator
 {
 
-using autoware_utils::DebugPublisher;
-using autoware_utils::StopWatch;
 using autoware_internal_debug_msgs::msg::Float64Stamped;
 using autoware_map_msgs::msg::LaneletMapBin;
 using autoware_planning_msgs::msg::LaneletRoute;
+using autoware_utils::DebugPublisher;
+using autoware_utils::StopWatch;
 using TrafficSignal = autoware_perception_msgs::msg::TrafficLightGroup;
 using TrafficSignalArray = autoware_perception_msgs::msg::TrafficLightGroupArray;
 using TrafficSignalElement = autoware_perception_msgs::msg::TrafficLightElement;

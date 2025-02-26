@@ -399,8 +399,8 @@ bool ReactionAnalyzerNode::check_ego_init_correctly(
   }
 
   constexpr double deviation_threshold = 0.1;
-  const auto deviation = autoware_utils::calc_pose_deviation(
-    ground_truth_pose_ptr->pose, odometry_ptr->pose.pose);
+  const auto deviation =
+    autoware_utils::calc_pose_deviation(ground_truth_pose_ptr->pose, odometry_ptr->pose.pose);
   const bool is_position_initialized_correctly = deviation.longitudinal < deviation_threshold &&
                                                  deviation.lateral < deviation_threshold &&
                                                  deviation.yaw < deviation_threshold;

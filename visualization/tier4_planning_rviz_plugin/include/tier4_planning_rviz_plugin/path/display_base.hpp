@@ -372,10 +372,9 @@ protected:
       float cumulative_distance = 0.0f;
       for (size_t point_idx = msg_ptr->points.size() - 1; point_idx > 0; point_idx--) {
         const auto & curr_point = autoware_utils::get_pose(msg_ptr->points.at(point_idx));
-        const auto & prev_point =
-          autoware_utils::get_pose(msg_ptr->points.at(point_idx - 1));
-        float distance = std::sqrt(autoware_utils::calc_squared_distance2d(
-          prev_point.position, curr_point.position));
+        const auto & prev_point = autoware_utils::get_pose(msg_ptr->points.at(point_idx - 1));
+        float distance = std::sqrt(
+          autoware_utils::calc_squared_distance2d(prev_point.position, curr_point.position));
         cumulative_distance += distance;
 
         if (cumulative_distance <= property_fade_out_distance_.getFloat()) {
@@ -501,8 +500,7 @@ protected:
         node->setPosition(position);
 
         rviz_rendering::MovableText * text = slope_texts_.at(point_idx);
-        const double slope =
-          autoware_utils::calc_elevation_angle(prev_path_pos, next_path_pos);
+        const double slope = autoware_utils::calc_elevation_angle(prev_path_pos, next_path_pos);
 
         std::stringstream ss;
         ss << std::fixed << std::setprecision(2) << slope;

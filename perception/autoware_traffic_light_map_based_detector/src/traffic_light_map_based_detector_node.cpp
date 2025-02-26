@@ -18,11 +18,11 @@
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
-#include <autoware_utils/math/normalization.hpp>
-#include <autoware_utils/math/unit_conversion.hpp>
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <autoware_lanelet2_extension/visualization/visualization.hpp>
+#include <autoware_utils/math/normalization.hpp>
+#include <autoware_utils/math/unit_conversion.hpp>
 
 #include <lanelet2_core/Exceptions.h>
 #include <lanelet2_core/geometry/Point.h>
@@ -515,11 +515,9 @@ void MapBasedDetector::getVisibleTrafficLights(
     // set different max angle range for ped and car traffic light
     double max_angle_range;
     if (pedestrian_tl_id_.find(traffic_light.id()) != pedestrian_tl_id_.end()) {
-      max_angle_range =
-        autoware_utils::deg2rad(config_.pedestrian_traffic_light_max_angle_range);
+      max_angle_range = autoware_utils::deg2rad(config_.pedestrian_traffic_light_max_angle_range);
     } else {
-      max_angle_range =
-        autoware_utils::deg2rad(config_.car_traffic_light_max_angle_range);
+      max_angle_range = autoware_utils::deg2rad(config_.car_traffic_light_max_angle_range);
     }
     // traffic light bottom left
     const auto & tl_bl = traffic_light.front();

@@ -24,9 +24,9 @@ namespace planning_diagnostics
 {
 namespace metrics
 {
-using autoware_utils::Accumulator;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_planning_msgs::msg::Trajectory;
+using autoware_utils::Accumulator;
 
 /**
  * @brief calculate the distance to the closest obstacle at each point of the trajectory

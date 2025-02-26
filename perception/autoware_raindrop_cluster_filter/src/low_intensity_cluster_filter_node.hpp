@@ -62,8 +62,7 @@ private:
   autoware::detected_object_validation::utils::FilterTargetLabel filter_target_;
 
   // debugger
-  std::unique_ptr<autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_{
-    nullptr};
+  std::unique_ptr<autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_{nullptr};
   std::unique_ptr<autoware_utils::DebugPublisher> debug_publisher_ptr_{nullptr};
 };
 

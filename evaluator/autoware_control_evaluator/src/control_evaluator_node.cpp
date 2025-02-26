@@ -16,9 +16,9 @@
 
 #include "autoware/control_evaluator/metrics/metrics_utils.hpp"
 
-#include <autoware_utils/geometry/geometry.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
+#include <autoware_utils/geometry/geometry.hpp>
 #include <nlohmann/json.hpp>
 
 #include <chrono>

@@ -69,8 +69,7 @@ private:
   rclcpp::CallbackGroup::SharedPtr callback_group_services_;
 
   // Subscriber
-  autoware_utils::InterProcessPollingSubscriber<sensor_msgs::msg::Joy> sub_joy_{
-    this, "input/joy"};
+  autoware_utils::InterProcessPollingSubscriber<sensor_msgs::msg::Joy> sub_joy_{this, "input/joy"};
   autoware_utils::InterProcessPollingSubscriber<nav_msgs::msg::Odometry> sub_odom_{
     this, "input/odometry"};
 

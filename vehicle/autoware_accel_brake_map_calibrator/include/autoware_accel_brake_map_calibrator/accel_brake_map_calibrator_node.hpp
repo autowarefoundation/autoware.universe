@@ -17,11 +17,11 @@
 #ifndef AUTOWARE_ACCEL_BRAKE_MAP_CALIBRATOR__ACCEL_BRAKE_MAP_CALIBRATOR_NODE_HPP_
 #define AUTOWARE_ACCEL_BRAKE_MAP_CALIBRATOR__ACCEL_BRAKE_MAP_CALIBRATOR_NODE_HPP_
 
+#include "autoware_raw_vehicle_cmd_converter/accel_map.hpp"
+#include "autoware_raw_vehicle_cmd_converter/brake_map.hpp"
 #include "autoware_utils/ros/logger_level_configure.hpp"
 #include "autoware_utils/ros/polling_subscriber.hpp"
 #include "autoware_utils/ros/transform_listener.hpp"
-#include "autoware_raw_vehicle_cmd_converter/accel_map.hpp"
-#include "autoware_raw_vehicle_cmd_converter/brake_map.hpp"
 #include "diagnostic_updater/diagnostic_updater.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2/utils.h"
@@ -108,12 +108,11 @@ private:
   rclcpp::Publisher<Float32Stamped>::SharedPtr map_error_ratio_pub_;
   rclcpp::Publisher<CalibrationStatus>::SharedPtr calibration_status_pub_;
 
-  autoware_utils::InterProcessPollingSubscriber<SteeringReport> steer_sub_{
-    this, "~/input/steer"};
-  autoware_utils::InterProcessPollingSubscriber<ActuationStatusStamped>
-    actuation_status_sub_{this, "~/input/actuation_status"};
-  autoware_utils::InterProcessPollingSubscriber<ActuationCommandStamped>
-    actuation_cmd_sub_{this, "~/input/actuation_cmd"};
+  autoware_utils::InterProcessPollingSubscriber<SteeringReport> steer_sub_{this, "~/input/steer"};
+  autoware_utils::InterProcessPollingSubscriber<ActuationStatusStamped> actuation_status_sub_{
+    this, "~/input/actuation_status"};
+  autoware_utils::InterProcessPollingSubscriber<ActuationCommandStamped> actuation_cmd_sub_{
+    this, "~/input/actuation_cmd"};
   autoware_utils::InterProcessPollingSubscriber<VelocityReport> velocity_sub_{
     this, "~/input/velocity"};
 

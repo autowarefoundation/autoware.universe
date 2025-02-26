@@ -81,8 +81,8 @@ private:
   autoware_utils::SelfPoseListener self_pose_listener_{this};
   autoware_utils::InterProcessPollingSubscriber<autoware_planning_msgs::msg::Trajectory>
     sub_trajectory_{this, "input/reference_trajectory"};
-  autoware_utils::InterProcessPollingSubscriber<nav_msgs::msg::Odometry>
-    sub_current_odometry_{this, "input/current_odometry"};
+  autoware_utils::InterProcessPollingSubscriber<nav_msgs::msg::Odometry> sub_current_odometry_{
+    this, "input/current_odometry"};
 
   autoware_planning_msgs::msg::Trajectory::ConstSharedPtr trajectory_;
   nav_msgs::msg::Odometry::ConstSharedPtr current_odometry_;

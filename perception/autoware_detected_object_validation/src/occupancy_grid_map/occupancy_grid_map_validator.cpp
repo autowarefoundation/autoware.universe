@@ -55,8 +55,7 @@ OccupancyGridBasedValidator::OccupancyGridBasedValidator(const rclcpp::NodeOptio
 
   mean_threshold_ = declare_parameter<float>("mean_threshold");
   enable_debug_ = declare_parameter<bool>("enable_debug");
-  published_time_publisher_ =
-    std::make_unique<autoware_utils::PublishedTimePublisher>(this);
+  published_time_publisher_ = std::make_unique<autoware_utils::PublishedTimePublisher>(this);
 }
 
 void OccupancyGridBasedValidator::onObjectsAndOccGrid(
@@ -110,8 +109,8 @@ std::optional<cv::Mat> OccupancyGridBasedValidator::getMask(
   const auto & resolution = occupancy_grid.info.resolution;
   const auto & origin = occupancy_grid.info.origin;
   std::vector<cv::Point> pixel_vertices;
-  Polygon2d poly2d = autoware_utils::to_polygon2d(
-    object.kinematics.pose_with_covariance.pose, object.shape);
+  Polygon2d poly2d =
+    autoware_utils::to_polygon2d(object.kinematics.pose_with_covariance.pose, object.shape);
 
   bool is_polygon_within_image = true;
   for (const auto & p : poly2d.outer()) {

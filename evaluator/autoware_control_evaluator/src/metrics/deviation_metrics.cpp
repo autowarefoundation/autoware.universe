@@ -27,15 +27,13 @@ using autoware_planning_msgs::msg::Trajectory;
 double calcLateralDeviation(const Trajectory & traj, const Point & point)
 {
   const size_t nearest_index = autoware::motion_utils::findNearestIndex(traj.points, point);
-  return std::abs(
-    autoware_utils::calc_lateral_deviation(traj.points[nearest_index].pose, point));
+  return std::abs(autoware_utils::calc_lateral_deviation(traj.points[nearest_index].pose, point));
 }
 
 double calcYawDeviation(const Trajectory & traj, const Pose & pose)
 {
   const size_t nearest_index = autoware::motion_utils::findNearestIndex(traj.points, pose.position);
-  return std::abs(
-    autoware_utils::calc_yaw_deviation(traj.points[nearest_index].pose, pose));
+  return std::abs(autoware_utils::calc_yaw_deviation(traj.points[nearest_index].pose, pose));
 }
 
 double calcLongitudinalDeviation(const Pose & base_pose, const Point & target_point)

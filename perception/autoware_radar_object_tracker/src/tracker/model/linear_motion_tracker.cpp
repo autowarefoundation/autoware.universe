@@ -20,10 +20,10 @@
 
 #include "autoware_radar_object_tracker/tracker/model/linear_motion_tracker.hpp"
 
+#include "autoware_radar_object_tracker/utils/utils.hpp"
 #include "autoware_utils/geometry/boost_polygon_utils.hpp"
 #include "autoware_utils/math/unit_conversion.hpp"
 #include "autoware_utils/ros/msg_covariance.hpp"
-#include "autoware_radar_object_tracker/utils/utils.hpp"
 
 #include <bits/stdc++.h>
 #include <tf2/LinearMath/Matrix3x3.h>
@@ -230,8 +230,8 @@ void LinearMotionTracker::loadDefaultModelParameters(const std::string & path)
   // limitation
   // (TODO): this may be written in another yaml file based on classify result
   const float max_speed_kmph = config["default"]["limit"]["max_speed"].as<float>();  // [km/h]
-  max_vx_ = autoware_utils::kmph2mps(max_speed_kmph);                      // [m/s]
-  max_vy_ = autoware_utils::kmph2mps(max_speed_kmph);                      // [rad/s]
+  max_vx_ = autoware_utils::kmph2mps(max_speed_kmph);                                // [m/s]
+  max_vy_ = autoware_utils::kmph2mps(max_speed_kmph);                                // [rad/s]
 }
 
 bool LinearMotionTracker::predict(const rclcpp::Time & time)

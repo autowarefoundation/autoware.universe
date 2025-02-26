@@ -60,10 +60,10 @@ using trajectory_follower::LongitudinalOutput;
 namespace trajectory_follower_node
 {
 
-using autoware_utils::StopWatch;
 using autoware_adapi_v1_msgs::msg::OperationModeState;
 using autoware_control_msgs::msg::ControlHorizon;
 using autoware_internal_debug_msgs::msg::Float64Stamped;
+using autoware_utils::StopWatch;
 
 namespace trajectory_follower = ::autoware::motion::control::trajectory_follower;
 
@@ -95,12 +95,10 @@ private:
   autoware_utils::InterProcessPollingSubscriber<nav_msgs::msg::Odometry> sub_odometry_{
     this, "~/input/current_odometry"};
 
-  autoware_utils::InterProcessPollingSubscriber<
-    autoware_vehicle_msgs::msg::SteeringReport>
+  autoware_utils::InterProcessPollingSubscriber<autoware_vehicle_msgs::msg::SteeringReport>
     sub_steering_{this, "~/input/current_steering"};
 
-  autoware_utils::InterProcessPollingSubscriber<
-    geometry_msgs::msg::AccelWithCovarianceStamped>
+  autoware_utils::InterProcessPollingSubscriber<geometry_msgs::msg::AccelWithCovarianceStamped>
     sub_accel_{this, "~/input/current_accel"};
 
   autoware_utils::InterProcessPollingSubscriber<OperationModeState> sub_operation_mode_{

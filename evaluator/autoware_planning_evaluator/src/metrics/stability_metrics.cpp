@@ -43,8 +43,7 @@ Accumulator<double> calcFrechetDistance(const Trajectory & traj1, const Trajecto
 
   for (size_t i = 0; i < traj1.points.size(); ++i) {
     for (size_t j = 0; j < traj2.points.size(); ++j) {
-      const double dist =
-        autoware_utils::calc_distance2d(traj1.points[i], traj2.points[j]);
+      const double dist = autoware_utils::calc_distance2d(traj1.points[i], traj2.points[j]);
       if (i > 0 && j > 0) {
         ca(i, j) = std::max(std::min(ca(i - 1, j), std::min(ca(i - 1, j - 1), ca(i, j - 1))), dist);
       } else if (i > 0 /*&& j == 0*/) {

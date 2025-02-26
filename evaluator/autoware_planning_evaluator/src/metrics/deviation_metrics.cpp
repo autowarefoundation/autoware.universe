@@ -39,8 +39,8 @@ Accumulator<double> calcLateralDeviation(const Trajectory & ref, const Trajector
   for (TrajectoryPoint p : traj.points) {
     const size_t nearest_index =
       autoware::motion_utils::findNearestIndex(ref.points, p.pose.position);
-    stat.add(autoware_utils::calc_lateral_deviation(
-      ref.points[nearest_index].pose, p.pose.position));
+    stat.add(
+      autoware_utils::calc_lateral_deviation(ref.points[nearest_index].pose, p.pose.position));
   }
   return stat;
 }

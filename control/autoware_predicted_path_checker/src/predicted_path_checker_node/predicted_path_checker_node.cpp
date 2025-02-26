@@ -435,8 +435,8 @@ bool PredictedPathCheckerNode::isItDiscretePoint(
   const auto nearest_point = calcInterpolatedPoint(
     reference_trajectory, collision_point.pose.position, *nearest_segment, false);
 
-  const auto distance = autoware_utils::calc_distance2d(
-    nearest_point.pose.position, collision_point.pose.position);
+  const auto distance =
+    autoware_utils::calc_distance2d(nearest_point.pose.position, collision_point.pose.position);
 
   const auto yaw_diff =
     std::abs(autoware_utils::calc_yaw_deviation(nearest_point.pose, collision_point.pose));

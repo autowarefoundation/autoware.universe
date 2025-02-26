@@ -45,10 +45,10 @@ namespace autoware::predicted_path_checker
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
-using autoware_utils::Point2d;
-using autoware_utils::Polygon2d;
 using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
+using autoware_utils::Point2d;
+using autoware_utils::Polygon2d;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::TransformStamped;
 using PointArray = std::vector<geometry_msgs::msg::Point>;

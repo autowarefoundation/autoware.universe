@@ -292,8 +292,7 @@ geometry_msgs::msg::Pose create_entity_pose(const EntityParams & entity_params)
 
   tf2::Quaternion entity_q_orientation;
   entity_q_orientation.setRPY(
-    autoware_utils::deg2rad(entity_params.roll),
-    autoware_utils::deg2rad(entity_params.pitch),
+    autoware_utils::deg2rad(entity_params.roll), autoware_utils::deg2rad(entity_params.pitch),
     autoware_utils::deg2rad(entity_params.yaw));
   entity_pose.orientation = tf2::toMsg(entity_q_orientation);
   return entity_pose;
@@ -308,8 +307,7 @@ geometry_msgs::msg::Pose pose_params_to_pose(const PoseParams & pose_params)
 
   tf2::Quaternion pose_q_orientation;
   pose_q_orientation.setRPY(
-    autoware_utils::deg2rad(pose_params.roll),
-    autoware_utils::deg2rad(pose_params.pitch),
+    autoware_utils::deg2rad(pose_params.roll), autoware_utils::deg2rad(pose_params.pitch),
     autoware_utils::deg2rad(pose_params.yaw));
   pose.orientation = tf2::toMsg(pose_q_orientation);
   return pose;
@@ -322,8 +320,7 @@ PointCloud2::SharedPtr create_entity_pointcloud_ptr(
   tf2::Quaternion entity_q_orientation;
 
   entity_q_orientation.setRPY(
-    autoware_utils::deg2rad(entity_params.roll),
-    autoware_utils::deg2rad(entity_params.pitch),
+    autoware_utils::deg2rad(entity_params.roll), autoware_utils::deg2rad(entity_params.pitch),
     autoware_utils::deg2rad(entity_params.yaw));
   tf2::Transform tf(entity_q_orientation);
   const auto origin = tf2::Vector3(entity_params.x, entity_params.y, entity_params.z);

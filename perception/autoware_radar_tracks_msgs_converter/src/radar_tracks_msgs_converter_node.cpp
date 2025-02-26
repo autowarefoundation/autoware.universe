@@ -261,8 +261,8 @@ TrackedObjects RadarTracksMsgsConverterNode::convertRadarTrackToTrackedObjects()
     }
 
     // yaw angle (vehicle heading) is obtained from ground velocity
-    double yaw = autoware_utils::normalize_radian(
-      std::atan2(compensated_velocity.y, compensated_velocity.x));
+    double yaw =
+      autoware_utils::normalize_radian(std::atan2(compensated_velocity.y, compensated_velocity.x));
 
     // kinematics setting
     TrackedObjectKinematics kinematics;

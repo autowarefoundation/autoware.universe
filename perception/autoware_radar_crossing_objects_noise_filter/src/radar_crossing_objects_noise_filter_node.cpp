@@ -124,8 +124,8 @@ rcl_interfaces::msg::SetParametersResult RadarCrossingObjectsNoiseFilterNode::on
 
 bool RadarCrossingObjectsNoiseFilterNode::isNoise(const DetectedObject & object)
 {
-  const double velocity = std::abs(
-    autoware_utils::calc_norm(object.kinematics.twist_with_covariance.twist.linear));
+  const double velocity =
+    std::abs(autoware_utils::calc_norm(object.kinematics.twist_with_covariance.twist.linear));
   const double object_angle = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
   const double object_position_angle = std::atan2(
     object.kinematics.pose_with_covariance.pose.position.y,

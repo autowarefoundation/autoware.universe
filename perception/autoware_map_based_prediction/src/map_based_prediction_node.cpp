@@ -19,15 +19,15 @@
 #include <autoware/interpolation/linear_interpolation.hpp>
 #include <autoware/motion_utils/resample/resample.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
+#include <autoware_lanelet2_extension/utility/query.hpp>
+#include <autoware_lanelet2_extension/utility/utilities.hpp>
+#include <autoware_utils/autoware_utils.hpp>
 #include <autoware_utils/geometry/geometry.hpp>
 #include <autoware_utils/math/constants.hpp>
 #include <autoware_utils/math/normalization.hpp>
 #include <autoware_utils/math/unit_conversion.hpp>
 #include <autoware_utils/ros/uuid_helper.hpp>
-#include <autoware_lanelet2_extension/utility/message_conversion.hpp>
-#include <autoware_lanelet2_extension/utility/query.hpp>
-#include <autoware_lanelet2_extension/utility/utilities.hpp>
-#include <autoware_utils/autoware_utils.hpp>
 
 #include <autoware_perception_msgs/msg/detected_objects.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
@@ -483,10 +483,8 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   if (use_time_publisher) {
     processing_time_publisher_ =
       std::make_unique<autoware_utils::DebugPublisher>(this, "map_based_prediction");
-    published_time_publisher_ =
-      std::make_unique<autoware_utils::PublishedTimePublisher>(this);
-    stop_watch_ptr_ =
-      std::make_unique<autoware_utils::StopWatch<std::chrono::milliseconds>>();
+    published_time_publisher_ = std::make_unique<autoware_utils::PublishedTimePublisher>(this);
+    stop_watch_ptr_ = std::make_unique<autoware_utils::StopWatch<std::chrono::milliseconds>>();
     stop_watch_ptr_->tic("cyclic_time");
     stop_watch_ptr_->tic("processing_time");
   }
@@ -721,13 +719,12 @@ void MapBasedPredictionNode::updateObjectData(TrackedObject & object)
         tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
       // flip the angle
       object.kinematics.pose_with_covariance.pose.orientation =
-        autoware_utils::create_quaternion_from_yaw(
-          autoware_utils::pi + original_yaw);
+        autoware_utils::create_quaternion_from_yaw(autoware_utils::pi + original_yaw);
       break;
     }
     default: {
-      const auto updated_object_yaw = autoware_utils::calc_azimuth_angle(
-        object_pose.position, future_object_pose.position);
+      const auto updated_object_yaw =
+        autoware_utils::calc_azimuth_angle(object_pose.position, future_object_pose.position);
 
       object.kinematics.pose_with_covariance.pose.orientation =
         autoware_utils::create_quaternion_from_yaw(updated_object_yaw);
@@ -766,8 +763,7 @@ void MapBasedPredictionNode::updateRoadUsersHistory(
   single_object_data.future_possible_lanelets = current_lanelets;
   single_object_data.pose = object.kinematics.pose_with_covariance.pose;
   const double object_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
-  single_object_data.pose.orientation =
-    autoware_utils::create_quaternion_from_yaw(object_yaw);
+  single_object_data.pose.orientation = autoware_utils::create_quaternion_from_yaw(object_yaw);
   single_object_data.time_delay = std::fabs((this->get_clock()->now() - header.stamp).seconds());
   single_object_data.twist = object.kinematics.twist_with_covariance.twist;
 

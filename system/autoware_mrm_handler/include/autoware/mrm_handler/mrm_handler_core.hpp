@@ -78,8 +78,7 @@ private:
   // Subscribers without callback
   autoware_utils::InterProcessPollingSubscriber<nav_msgs::msg::Odometry> sub_odom_{
     this, "~/input/odometry"};
-  autoware_utils::InterProcessPollingSubscriber<
-    autoware_vehicle_msgs::msg::ControlModeReport>
+  autoware_utils::InterProcessPollingSubscriber<autoware_vehicle_msgs::msg::ControlModeReport>
     sub_control_mode_{this, "~/input/control_mode"};
   autoware_utils::InterProcessPollingSubscriber<tier4_system_msgs::msg::MrmBehaviorStatus>
     sub_mrm_pull_over_status_{this, "~/input/mrm/pull_over/status"};
@@ -87,8 +86,7 @@ private:
     sub_mrm_comfortable_stop_status_{this, "~/input/mrm/comfortable_stop/status"};
   autoware_utils::InterProcessPollingSubscriber<tier4_system_msgs::msg::MrmBehaviorStatus>
     sub_mrm_emergency_stop_status_{this, "~/input/mrm/emergency_stop/status"};
-  autoware_utils::InterProcessPollingSubscriber<
-    autoware_adapi_v1_msgs::msg::OperationModeState>
+  autoware_utils::InterProcessPollingSubscriber<autoware_adapi_v1_msgs::msg::OperationModeState>
     sub_operation_mode_state_{this, "~/input/api/operation_mode/state"};
   autoware_utils::InterProcessPollingSubscriber<autoware_vehicle_msgs::msg::GearCommand>
     sub_gear_cmd_{this, "~/input/gear"};

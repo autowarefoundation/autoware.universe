@@ -218,8 +218,7 @@ VehicleCmdGate::VehicleCmdGate(const rclcpp::NodeOptions & node_options)
 
   logger_configure_ = std::make_unique<autoware_utils::LoggerLevelConfigure>(this);
 
-  published_time_publisher_ =
-    std::make_unique<autoware_utils::PublishedTimePublisher>(this);
+  published_time_publisher_ = std::make_unique<autoware_utils::PublishedTimePublisher>(this);
 
   // Parameter Callback
   set_param_res_ =

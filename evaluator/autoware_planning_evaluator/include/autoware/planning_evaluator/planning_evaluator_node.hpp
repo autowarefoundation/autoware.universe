@@ -44,12 +44,12 @@
 #include <vector>
 namespace planning_diagnostics
 {
-using autoware_utils::Accumulator;
 using autoware::vehicle_info_utils::VehicleInfo;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_planning_msgs::msg::PoseWithUuidStamped;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
+using autoware_utils::Accumulator;
 using MetricMsg = tier4_metric_msgs::msg::Metric;
 using MetricArrayMsg = tier4_metric_msgs::msg::MetricArray;
 using nav_msgs::msg::Odometry;
@@ -128,16 +128,14 @@ private:
   void onTimer();
 
   // ROS
-  autoware_utils::InterProcessPollingSubscriber<Trajectory> traj_sub_{
-    this, "~/input/trajectory"};
+  autoware_utils::InterProcessPollingSubscriber<Trajectory> traj_sub_{this, "~/input/trajectory"};
   autoware_utils::InterProcessPollingSubscriber<Trajectory> ref_sub_{
     this, "~/input/reference_trajectory"};
   autoware_utils::InterProcessPollingSubscriber<PredictedObjects> objects_sub_{
     this, "~/input/objects"};
   autoware_utils::InterProcessPollingSubscriber<PoseWithUuidStamped> modified_goal_sub_{
     this, "~/input/modified_goal"};
-  autoware_utils::InterProcessPollingSubscriber<Odometry> odometry_sub_{
-    this, "~/input/odometry"};
+  autoware_utils::InterProcessPollingSubscriber<Odometry> odometry_sub_{this, "~/input/odometry"};
   autoware_utils::InterProcessPollingSubscriber<
     LaneletRoute, autoware_utils::polling_policy::Newest>
     route_subscriber_{this, "~/input/route", rclcpp::QoS{1}.transient_local()};

@@ -71,8 +71,8 @@ visualization_msgs::msg::Marker createArrowMarker(
 
   auto marker = create_default_marker(
     "map", rclcpp::Clock{RCL_ROS_TIME}.now(), name + "_arrow", id,
-    visualization_msgs::msg::Marker::ARROW, create_marker_scale(line_width, head_width, head_height),
-    color);
+    visualization_msgs::msg::Marker::ARROW,
+    create_marker_scale(line_width, head_width, head_height), color);
 
   geometry_msgs::msg::Point src, dst;
   src = position;

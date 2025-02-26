@@ -29,10 +29,10 @@ constexpr double epsilon = 1e-06;
 
 namespace
 {
+using autoware_perception_msgs::msg::PredictedPath;
 using autoware_utils::create_point;
 using autoware_utils::create_quaternion_from_rpy;
 using autoware_utils::transform_point;
-using autoware_perception_msgs::msg::PredictedPath;
 
 geometry_msgs::msg::Pose createPose(
   double x, double y, double z, double roll, double pitch, double yaw)

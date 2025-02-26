@@ -44,10 +44,10 @@
 
 namespace autoware::motion::control::autonomous_emergency_braking::utils
 {
-using autoware_utils::Polygon2d;
-using autoware_utils::Polygon3d;
 using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedObjects;
+using autoware_utils::Polygon2d;
+using autoware_utils::Polygon3d;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::TransformStamped;

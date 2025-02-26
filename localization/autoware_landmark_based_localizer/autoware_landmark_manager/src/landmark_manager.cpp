@@ -15,8 +15,8 @@
 #include "autoware/landmark_manager/landmark_manager.hpp"
 
 #include "autoware/localization_util/util_func.hpp"
-#include "autoware_utils/geometry/geometry.hpp"
 #include "autoware_lanelet2_extension/utility/message_conversion.hpp"
+#include "autoware_utils/geometry/geometry.hpp"
 
 #include <Eigen/Core>
 #include <tf2_eigen/tf2_eigen.hpp>

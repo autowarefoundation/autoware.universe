@@ -51,9 +51,7 @@ bool isDrivingForward(const T points_with_twist, size_t target_idx)
   const double first_traj_yaw = tf2::getYaw(first_pose.orientation);
   const double driving_direction_yaw =
     autoware_utils::calc_azimuth_angle(first_pose.position, second_pose.position);
-  if (
-    std::abs(autoware_utils::normalize_radian(first_traj_yaw - driving_direction_yaw)) <
-    M_PI_2) {
+  if (std::abs(autoware_utils::normalize_radian(first_traj_yaw - driving_direction_yaw)) < M_PI_2) {
     return true;
   }
 

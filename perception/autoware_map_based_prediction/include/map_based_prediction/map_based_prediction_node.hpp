@@ -86,8 +86,8 @@ private:
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_markers_;
   rclcpp::Subscription<TrackedObjects>::SharedPtr sub_objects_;
   rclcpp::Subscription<LaneletMapBin>::SharedPtr sub_map_;
-  autoware_utils::InterProcessPollingSubscriber<TrafficLightGroupArray>
-    sub_traffic_signals_{this, "/traffic_signals"};
+  autoware_utils::InterProcessPollingSubscriber<TrafficLightGroupArray> sub_traffic_signals_{
+    this, "/traffic_signals"};
 
   // debug publisher
   std::unique_ptr<autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;

@@ -349,8 +349,7 @@ PredictedPathDeviationMetrics MetricsCalculator::calcPredictedPathDeviationMetri
         const auto history_object = history_object_opt.value();
         const auto history_pose = history_object.kinematics.initial_pose_with_covariance.pose;
         const Pose & p = predicted_path.path[j];
-        const double distance =
-          autoware_utils::calc_distance2d(p.position, history_pose.position);
+        const double distance = autoware_utils::calc_distance2d(p.position, history_pose.position);
         deviation_map_for_paths[uuid][i].push_back(distance);
 
         // Save debug information
@@ -557,8 +556,7 @@ void MetricsCalculator::updateHistoryPath()
         const auto current_pose = object.kinematics.initial_pose_with_covariance.pose;
         const auto prev_pose = prev_object.kinematics.initial_pose_with_covariance.pose;
         const auto velocity =
-          autoware_utils::calc_distance2d(current_pose.position, prev_pose.position) /
-          time_diff;
+          autoware_utils::calc_distance2d(current_pose.position, prev_pose.position) / time_diff;
         if (velocity < parameters_->stopped_velocity_threshold) {
           continue;
         }
@@ -662,8 +660,7 @@ std::vector<Pose> MetricsCalculator::averageFilterPath(
       const double azimuth_to_prev = calc_azimuth_angle((it - 2)->position, (it - 1)->position);
       const double azimuth_to_current = calc_azimuth_angle((it - 1)->position, it->position);
       if (
-        std::abs(autoware_utils::normalize_radian(azimuth_to_prev - azimuth_to_current)) >
-        M_PI_2) {
+        std::abs(autoware_utils::normalize_radian(azimuth_to_prev - azimuth_to_current)) > M_PI_2) {
         it = filtered_path.erase(it);
         continue;
       }

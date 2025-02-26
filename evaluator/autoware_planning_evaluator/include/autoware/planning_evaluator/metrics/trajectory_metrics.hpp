@@ -27,9 +27,9 @@ namespace planning_diagnostics
 {
 namespace metrics
 {
-using autoware_utils::Accumulator;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
+using autoware_utils::Accumulator;
 
 /**
  * @brief calculate relative angle metric (angle between successive points)

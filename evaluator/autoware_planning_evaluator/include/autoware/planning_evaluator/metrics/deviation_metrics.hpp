@@ -24,9 +24,9 @@ namespace planning_diagnostics
 {
 namespace metrics
 {
-using autoware_utils::Accumulator;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
+using autoware_utils::Accumulator;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
 

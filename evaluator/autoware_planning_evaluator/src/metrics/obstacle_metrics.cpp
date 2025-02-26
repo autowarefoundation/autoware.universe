@@ -27,8 +27,8 @@ namespace planning_diagnostics
 {
 namespace metrics
 {
-using autoware_utils::calc_distance2d;
 using autoware_planning_msgs::msg::TrajectoryPoint;
+using autoware_utils::calc_distance2d;
 
 Accumulator<double> calcDistanceToObstacle(
   const PredictedObjects & obstacles, const Trajectory & traj)

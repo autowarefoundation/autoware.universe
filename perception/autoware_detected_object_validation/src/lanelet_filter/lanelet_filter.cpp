@@ -15,10 +15,10 @@
 #include "lanelet_filter.hpp"
 
 #include "autoware/object_recognition_utils/object_recognition_utils.hpp"
-#include "autoware_utils/geometry/geometry.hpp"
-#include "autoware_utils/system/time_keeper.hpp"
 #include "autoware_lanelet2_extension/utility/message_conversion.hpp"
 #include "autoware_lanelet2_extension/utility/query.hpp"
+#include "autoware_utils/geometry/geometry.hpp"
+#include "autoware_utils/system/time_keeper.hpp"
 
 #include <boost/geometry/algorithms/convex_hull.hpp>
 #include <boost/geometry/algorithms/disjoint.hpp>
@@ -84,10 +84,8 @@ ObjectLaneletFilterNode::ObjectLaneletFilterNode(const rclcpp::NodeOptions & nod
 
   debug_publisher_ =
     std::make_unique<autoware_utils::DebugPublisher>(this, "object_lanelet_filter");
-  published_time_publisher_ =
-    std::make_unique<autoware_utils::PublishedTimePublisher>(this);
-  stop_watch_ptr_ =
-    std::make_unique<autoware_utils::StopWatch<std::chrono::milliseconds>>();
+  published_time_publisher_ = std::make_unique<autoware_utils::PublishedTimePublisher>(this);
+  stop_watch_ptr_ = std::make_unique<autoware_utils::StopWatch<std::chrono::milliseconds>>();
   if (filter_settings_.debug) {
     viz_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>(
       "~/debug/marker", rclcpp::QoS{1});
@@ -388,8 +386,7 @@ bool ObjectLaneletFilterNode::isObjectOverlapLanelets(
     const auto footprint = setFootprint(object);
     for (const auto & point : footprint.points) {
       const geometry_msgs::msg::Point32 point_transformed =
-        autoware_utils::transform_point(
-          point, object.kinematics.pose_with_covariance.pose);
+        autoware_utils::transform_point(point, object.kinematics.pose_with_covariance.pose);
       polygon.outer().emplace_back(point_transformed.x, point_transformed.y);
     }
     polygon.outer().push_back(polygon.outer().front());
@@ -407,8 +404,7 @@ bool ObjectLaneletFilterNode::isObjectOverlapLanelets(
     // if object do not have bounding box, check each footprint is inside polygon
     for (const auto & point : object.shape.footprint.points) {
       const geometry_msgs::msg::Point32 point_transformed =
-        autoware_utils::transform_point(
-          point, object.kinematics.pose_with_covariance.pose);
+        autoware_utils::transform_point(point, object.kinematics.pose_with_covariance.pose);
       geometry_msgs::msg::Pose point2d;
       point2d.position.x = point_transformed.x;
       point2d.position.y = point_transformed.y;

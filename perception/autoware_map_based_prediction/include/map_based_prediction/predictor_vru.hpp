@@ -18,8 +18,8 @@
 #include "map_based_prediction/data_structure.hpp"
 #include "map_based_prediction/path_generator.hpp"
 
-#include <autoware_utils/system/time_keeper.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
+#include <autoware_utils/system/time_keeper.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_perception_msgs/msg/tracked_objects.hpp>

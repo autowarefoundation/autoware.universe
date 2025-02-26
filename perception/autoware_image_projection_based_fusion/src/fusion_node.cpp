@@ -145,8 +145,7 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
       std::make_shared<Debugger>(this, rois_number, image_buffer_size, input_camera_topics);
 
     // input topic timing publisher
-    debug_internal_pub_ =
-      std::make_unique<autoware_utils::DebugPublisher>(this, get_name());
+    debug_internal_pub_ = std::make_unique<autoware_utils::DebugPublisher>(this, get_name());
   }
 
   // time keeper
@@ -161,8 +160,7 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
 
   // initialize debug tool
   {
-    stop_watch_ptr_ =
-      std::make_unique<autoware_utils::StopWatch<std::chrono::milliseconds>>();
+    stop_watch_ptr_ = std::make_unique<autoware_utils::StopWatch<std::chrono::milliseconds>>();
     debug_publisher_ = std::make_unique<autoware_utils::DebugPublisher>(this, get_name());
     stop_watch_ptr_->tic("cyclic_time");
     stop_watch_ptr_->tic("processing_time");

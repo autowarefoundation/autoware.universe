@@ -185,8 +185,8 @@ MarkerArray createObjectPolygonMarkerArray(
 
   const double z = object.kinematics.initial_pose_with_covariance.pose.position.z;
   const double height = object.shape.dimensions.z;
-  const auto polygon = autoware_utils::to_polygon2d(
-    object.kinematics.initial_pose_with_covariance.pose, object.shape);
+  const auto polygon =
+    autoware_utils::to_polygon2d(object.kinematics.initial_pose_with_covariance.pose, object.shape);
   for (const auto & p : polygon.outer()) {
     marker.points.push_back(create_point(p.x(), p.y(), z - height / 2));
     marker.points.push_back(create_point(p.x(), p.y(), z + height / 2));

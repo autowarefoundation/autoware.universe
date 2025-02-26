@@ -19,8 +19,8 @@
 #include <autoware_utils/ros/self_pose_listener.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_planning_msgs/msg/path.hpp>
 #include <autoware_internal_debug_msgs/msg/float64_stamped.hpp>
+#include <autoware_planning_msgs/msg/path.hpp>
 
 namespace autoware::path_distance_calculator
 {
@@ -31,8 +31,8 @@ public:
   explicit PathDistanceCalculator(const rclcpp::NodeOptions & options);
 
 private:
-  autoware_utils::InterProcessPollingSubscriber<autoware_planning_msgs::msg::Path>
-    sub_path_{this, "~/input/path"};
+  autoware_utils::InterProcessPollingSubscriber<autoware_planning_msgs::msg::Path> sub_path_{
+    this, "~/input/path"};
   rclcpp::Publisher<autoware_internal_debug_msgs::msg::Float64Stamped>::SharedPtr pub_dist_;
   rclcpp::TimerBase::SharedPtr timer_;
   autoware_utils::SelfPoseListener self_pose_listener_;

@@ -168,8 +168,7 @@ std::vector<std::pair<double, lanelet::Lanelet>> LaneDepartureChecker::getLanele
     lanelet_map_ptr->laneletLayer, footprint_hull_basic_polygon, 0.0);
 }
 
-std::optional<autoware_utils::Polygon2d>
-LaneDepartureChecker::getFusedLaneletPolygonForPath(
+std::optional<autoware_utils::Polygon2d> LaneDepartureChecker::getFusedLaneletPolygonForPath(
   const lanelet::LaneletMapPtr lanelet_map_ptr, const PathWithLaneId & path) const
 {
   autoware_utils::ScopedTimeTrack st(__func__, *time_keeper_);

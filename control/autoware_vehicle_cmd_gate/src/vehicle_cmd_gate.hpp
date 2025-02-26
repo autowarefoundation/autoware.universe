@@ -159,10 +159,10 @@ private:
   // Subscriber for auto
   Commands auto_commands_;
   rclcpp::Subscription<Control>::SharedPtr auto_control_cmd_sub_;
-  autoware_utils::InterProcessPollingSubscriber<TurnIndicatorsCommand>
-    auto_turn_indicator_cmd_sub_{this, "input/auto/turn_indicators_cmd"};
-  autoware_utils::InterProcessPollingSubscriber<HazardLightsCommand>
-    auto_hazard_light_cmd_sub_{this, "input/auto/hazard_lights_cmd"};
+  autoware_utils::InterProcessPollingSubscriber<TurnIndicatorsCommand> auto_turn_indicator_cmd_sub_{
+    this, "input/auto/turn_indicators_cmd"};
+  autoware_utils::InterProcessPollingSubscriber<HazardLightsCommand> auto_hazard_light_cmd_sub_{
+    this, "input/auto/hazard_lights_cmd"};
   autoware_utils::InterProcessPollingSubscriber<GearCommand> auto_gear_cmd_sub_{
     this, "input/auto/gear_cmd"};
   void onAutoCtrlCmd(Control::ConstSharedPtr msg);
@@ -172,8 +172,8 @@ private:
   rclcpp::Subscription<Control>::SharedPtr remote_control_cmd_sub_;
   autoware_utils::InterProcessPollingSubscriber<TurnIndicatorsCommand>
     remote_turn_indicator_cmd_sub_{this, "input/external/turn_indicators_cmd"};
-  autoware_utils::InterProcessPollingSubscriber<HazardLightsCommand>
-    remote_hazard_light_cmd_sub_{this, "input/external/hazard_lights_cmd"};
+  autoware_utils::InterProcessPollingSubscriber<HazardLightsCommand> remote_hazard_light_cmd_sub_{
+    this, "input/external/hazard_lights_cmd"};
   autoware_utils::InterProcessPollingSubscriber<GearCommand> remote_gear_cmd_sub_{
     this, "input/external/gear_cmd"};
   void onRemoteCtrlCmd(Control::ConstSharedPtr msg);

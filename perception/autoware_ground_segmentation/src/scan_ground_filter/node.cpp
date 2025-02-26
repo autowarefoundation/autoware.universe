@@ -28,12 +28,12 @@
 namespace autoware::ground_segmentation
 {
 using autoware::pointcloud_preprocessor::get_param;
+using autoware::vehicle_info_utils::VehicleInfoUtils;
 using autoware_utils::calc_distance3d;
 using autoware_utils::deg2rad;
 using autoware_utils::normalize_degree;
 using autoware_utils::normalize_radian;
 using autoware_utils::ScopedTimeTrack;
-using autoware::vehicle_info_utils::VehicleInfoUtils;
 
 ScanGroundFilterComponent::ScanGroundFilterComponent(const rclcpp::NodeOptions & options)
 : autoware::pointcloud_preprocessor::Filter("ScanGroundFilter", options)

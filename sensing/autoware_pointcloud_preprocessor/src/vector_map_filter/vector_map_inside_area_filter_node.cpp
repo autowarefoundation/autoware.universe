@@ -20,8 +20,7 @@
 
 namespace
 {
-autoware_utils::Box2d calcBoundingBox(
-  const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & input_cloud)
+autoware_utils::Box2d calcBoundingBox(const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & input_cloud)
 {
   MultiPoint2d candidate_points;
   for (const auto & p : input_cloud->points) {

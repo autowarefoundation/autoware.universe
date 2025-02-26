@@ -44,40 +44,35 @@ Polygon2d createOneStepPolygon(
   {  // base step
     appendPointToPolygon(
       polygon,
-      autoware_utils::calc_offset_pose(base_step_pose, longitudinal_offset, width, 0.0)
-        .position);
+      autoware_utils::calc_offset_pose(base_step_pose, longitudinal_offset, width, 0.0).position);
     appendPointToPolygon(
       polygon,
-      autoware_utils::calc_offset_pose(base_step_pose, longitudinal_offset, -width, 0.0)
-        .position);
+      autoware_utils::calc_offset_pose(base_step_pose, longitudinal_offset, -width, 0.0).position);
     appendPointToPolygon(
-      polygon, autoware_utils::calc_offset_pose(base_step_pose, -rear_overhang, -width, 0.0)
-                 .position);
+      polygon,
+      autoware_utils::calc_offset_pose(base_step_pose, -rear_overhang, -width, 0.0).position);
     appendPointToPolygon(
-      polygon, autoware_utils::calc_offset_pose(base_step_pose, -rear_overhang, width, 0.0)
-                 .position);
+      polygon,
+      autoware_utils::calc_offset_pose(base_step_pose, -rear_overhang, width, 0.0).position);
   }
 
   {  // next step
     appendPointToPolygon(
       polygon,
-      autoware_utils::calc_offset_pose(next_step_pose, longitudinal_offset, width, 0.0)
-        .position);
+      autoware_utils::calc_offset_pose(next_step_pose, longitudinal_offset, width, 0.0).position);
     appendPointToPolygon(
       polygon,
-      autoware_utils::calc_offset_pose(next_step_pose, longitudinal_offset, -width, 0.0)
-        .position);
+      autoware_utils::calc_offset_pose(next_step_pose, longitudinal_offset, -width, 0.0).position);
     appendPointToPolygon(
-      polygon, autoware_utils::calc_offset_pose(next_step_pose, -rear_overhang, -width, 0.0)
-                 .position);
+      polygon,
+      autoware_utils::calc_offset_pose(next_step_pose, -rear_overhang, -width, 0.0).position);
     appendPointToPolygon(
-      polygon, autoware_utils::calc_offset_pose(next_step_pose, -rear_overhang, width, 0.0)
-                 .position);
+      polygon,
+      autoware_utils::calc_offset_pose(next_step_pose, -rear_overhang, width, 0.0).position);
   }
 
-  polygon = autoware_utils::is_clockwise(polygon)
-              ? polygon
-              : autoware_utils::inverse_clockwise(polygon);
+  polygon =
+    autoware_utils::is_clockwise(polygon) ? polygon : autoware_utils::inverse_clockwise(polygon);
 
   Polygon2d hull_polygon;
   boost::geometry::convex_hull(polygon, hull_polygon);
@@ -114,8 +109,7 @@ TrajectoryPoint calcInterpolatedPoint(
   TrajectoryPoint interpolated_point{};
 
   // pose interpolation
-  interpolated_point.pose =
-    autoware_utils::calc_interpolated_pose(curr_pt, next_pt, clamped_ratio);
+  interpolated_point.pose = autoware_utils::calc_interpolated_pose(curr_pt, next_pt, clamped_ratio);
 
   // twist interpolation
   if (use_zero_order_hold_for_twist) {
@@ -180,8 +174,8 @@ std::pair<size_t, TrajectoryPoint> findStopPoint(
                      base_point.pose.position.x - next_point.pose.position.x,
                      base_point.pose.position.y - next_point.pose.position.y));
 
-    geometry_msgs::msg::Pose interpolated_pose = autoware_utils::calc_interpolated_pose(
-      base_point.pose, next_point.pose, ratio, false);
+    geometry_msgs::msg::Pose interpolated_pose =
+      autoware_utils::calc_interpolated_pose(base_point.pose, next_point.pose, ratio, false);
     TrajectoryPoint output;
     output.set__pose(interpolated_pose);
     return std::make_pair(stop_segment_idx, output);

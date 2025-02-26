@@ -21,8 +21,8 @@
 #include "diagnostic_updater/diagnostic_updater.hpp"
 
 #include <autoware/signal_processing/lowpass_filter_1d.hpp>
-#include <autoware_utils/system/stop_watch.hpp>
 #include <autoware_control_validator/msg/control_validator_status.hpp>
+#include <autoware_utils/system/stop_watch.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_internal_debug_msgs/msg/float64_stamped.hpp>

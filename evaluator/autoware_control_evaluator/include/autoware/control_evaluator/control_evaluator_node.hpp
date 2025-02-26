@@ -42,11 +42,11 @@
 
 namespace control_diagnostics
 {
+using autoware::vehicle_info_utils::VehicleInfo;
+using autoware_planning_msgs::msg::Trajectory;
 using autoware_utils::Accumulator;
 using autoware_utils::LineString2d;
 using autoware_utils::Point2d;
-using autoware::vehicle_info_utils::VehicleInfo;
-using autoware_planning_msgs::msg::Trajectory;
 using autoware_vehicle_msgs::msg::SteeringReport;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
@@ -83,12 +83,10 @@ public:
   void onTimer();
 
 private:
-  autoware_utils::InterProcessPollingSubscriber<Odometry> odometry_sub_{
-    this, "~/input/odometry"};
+  autoware_utils::InterProcessPollingSubscriber<Odometry> odometry_sub_{this, "~/input/odometry"};
   autoware_utils::InterProcessPollingSubscriber<AccelWithCovarianceStamped> accel_sub_{
     this, "~/input/acceleration"};
-  autoware_utils::InterProcessPollingSubscriber<Trajectory> traj_sub_{
-    this, "~/input/trajectory"};
+  autoware_utils::InterProcessPollingSubscriber<Trajectory> traj_sub_{this, "~/input/trajectory"};
   autoware_utils::InterProcessPollingSubscriber<
     LaneletRoute, autoware_utils::polling_policy::Newest>
     route_subscriber_{this, "~/input/route", rclcpp::QoS{1}.transient_local()};

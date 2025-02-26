@@ -37,10 +37,8 @@ TrafficLightSelectorNode::TrafficLightSelectorNode(const rclcpp::NodeOptions & n
   sync_(SyncPolicy(10), detected_rois_sub_, rough_rois_sub_, expected_rois_sub_, camera_info_sub_)
 {
   {
-    stop_watch_ptr_ =
-      std::make_unique<autoware_utils::StopWatch<std::chrono::milliseconds>>();
-    debug_publisher_ =
-      std::make_unique<autoware_utils::DebugPublisher>(this, this->get_name());
+    stop_watch_ptr_ = std::make_unique<autoware_utils::StopWatch<std::chrono::milliseconds>>();
+    debug_publisher_ = std::make_unique<autoware_utils::DebugPublisher>(this, this->get_name());
     stop_watch_ptr_->tic("cyclic_time");
     stop_watch_ptr_->tic("processing_time");
   }

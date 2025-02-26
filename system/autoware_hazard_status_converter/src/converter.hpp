@@ -40,8 +40,7 @@ private:
   void on_update(DiagGraph::ConstSharedPtr graph);
   autoware::diagnostic_graph_utils::DiagGraphSubscription sub_graph_;
   rclcpp::Publisher<HazardStatusStamped>::SharedPtr pub_hazard_;
-  autoware_utils::InterProcessPollingSubscriber<
-    tier4_system_msgs::msg::EmergencyHoldingState>
+  autoware_utils::InterProcessPollingSubscriber<tier4_system_msgs::msg::EmergencyHoldingState>
     sub_emergency_holding_{this, "~/input/emergency_holding"};
 
   DiagUnit * auto_mode_root_;

@@ -247,7 +247,8 @@ rcl_interfaces::msg::SetParametersResult PerceptionOnlineEvaluatorNode::onParame
     const auto update_object_param = [&p, &parameters](
                                        const auto & semantic, const std::string & ns) {
       auto & config = p->object_parameters.at(semantic);
-      update_param<bool>(parameters, ns + "check_lateral_deviation", config.check_lateral_deviation);
+      update_param<bool>(
+        parameters, ns + "check_lateral_deviation", config.check_lateral_deviation);
       update_param<bool>(parameters, ns + "check_yaw_deviation", config.check_yaw_deviation);
       update_param<bool>(
         parameters, ns + "check_predicted_path_deviation", config.check_predicted_path_deviation);

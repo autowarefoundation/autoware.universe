@@ -118,8 +118,7 @@ Controller::Controller(const rclcpp::NodeOptions & node_options) : Node("control
 
   logger_configure_ = std::make_unique<autoware_utils::LoggerLevelConfigure>(this);
 
-  published_time_publisher_ =
-    std::make_unique<autoware_utils::PublishedTimePublisher>(this);
+  published_time_publisher_ = std::make_unique<autoware_utils::PublishedTimePublisher>(this);
 }
 
 Controller::LateralControllerMode Controller::getLateralControllerMode(

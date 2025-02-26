@@ -42,8 +42,8 @@ public:
 
 private:
   autoware_utils::InterProcessPollingSubscriber<
-    geometry_msgs::msg::TwistWithCovarianceStamped,
-    autoware_utils::polling_policy::All>::SharedPtr twist_sub_;
+    geometry_msgs::msg::TwistWithCovarianceStamped, autoware_utils::polling_policy::All>::SharedPtr
+    twist_sub_;
   autoware_utils::InterProcessPollingSubscriber<
     sensor_msgs::msg::Imu, autoware_utils::polling_policy::All>::SharedPtr imu_sub_;
   rclcpp::Subscription<PointCloud2>::SharedPtr pointcloud_sub_;

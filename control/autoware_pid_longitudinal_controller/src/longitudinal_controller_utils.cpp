@@ -96,8 +96,8 @@ double getPitchByTraj(
 
   const auto [prev_idx, next_idx] = [&]() {
     for (size_t i = start_idx + 1; i < trajectory.points.size(); ++i) {
-      const double dist = autoware_utils::calc_distance3d(
-        trajectory.points.at(start_idx), trajectory.points.at(i));
+      const double dist =
+        autoware_utils::calc_distance3d(trajectory.points.at(start_idx), trajectory.points.at(i));
       if (dist > wheel_base) {
         // calculate pitch from trajectory between rear wheel (nearest) and front center (i)
         return std::make_pair(start_idx, i);

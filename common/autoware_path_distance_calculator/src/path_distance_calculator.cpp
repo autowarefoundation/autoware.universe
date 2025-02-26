@@ -27,8 +27,8 @@ namespace autoware::path_distance_calculator
 PathDistanceCalculator::PathDistanceCalculator(const rclcpp::NodeOptions & options)
 : Node("path_distance_calculator", options), self_pose_listener_(this)
 {
-  pub_dist_ =
-    create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>("~/output/distance", rclcpp::QoS(1));
+  pub_dist_ = create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>(
+    "~/output/distance", rclcpp::QoS(1));
 
   using std::chrono_literals::operator""s;
   timer_ = rclcpp::create_timer(this, get_clock(), 1s, [this]() {

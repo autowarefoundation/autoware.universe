@@ -32,12 +32,12 @@
 
 namespace autoware::lane_departure_checker::utils
 {
-using autoware_utils::LinearRing2d;
-using autoware_utils::MultiPoint2d;
-using autoware_utils::PoseDeviation;
 using autoware_internal_planning_msgs::msg::PathWithLaneId;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
+using autoware_utils::LinearRing2d;
+using autoware_utils::MultiPoint2d;
+using autoware_utils::PoseDeviation;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
 
 /**

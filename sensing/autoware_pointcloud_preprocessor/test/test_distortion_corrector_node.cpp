@@ -884,9 +884,7 @@ TEST_F(DistortionCorrectorTest, TestUndistortPointcloudWithPureRotationalMotion)
 
     // Set the quaternion for the current angle
     tf2::Quaternion quaternion;
-    quaternion.setValue(
-      0, 0, autoware_utils::sin(angle * 0.5f),
-      autoware_utils::cos(angle * 0.5f));
+    quaternion.setValue(0, 0, autoware_utils::sin(angle * 0.5f), autoware_utils::cos(angle * 0.5f));
 
     tf2::Vector3 point(*iter_x, *iter_y, *iter_z);
     tf2::Vector3 rotated_point = tf2::quatRotate(quaternion, point);
@@ -1173,8 +1171,7 @@ TEST_F(DistortionCorrectorTest, TestTryComputeAngleConversionOnVelodynePointclou
     Eigen::Vector3f(1.0f, -1.0f, 1.0f),
     Eigen::Vector3f(0.0f, -2.0f, 1.0f),
   };
-  std::vector<float> velodyne_azimuths = {
-    0.0f, autoware_utils::pi / 4, autoware_utils::pi / 2};
+  std::vector<float> velodyne_azimuths = {0.0f, autoware_utils::pi / 4, autoware_utils::pi / 2};
 
   auto velodyne_pointcloud =
     generate_pointcloud_msg(true, timestamp, velodyne_points, velodyne_azimuths);
@@ -1196,8 +1193,7 @@ TEST_F(DistortionCorrectorTest, TestTryComputeAngleConversionOnHesaiPointcloud)
     Eigen::Vector3f(0.0f, -2.0f, 1.0f),
   };
   std::vector<float> hesai_azimuths = {
-    autoware_utils::pi / 2, autoware_utils::pi * 3 / 4,
-    autoware_utils::pi};
+    autoware_utils::pi / 2, autoware_utils::pi * 3 / 4, autoware_utils::pi};
 
   auto hesai_pointcloud = generate_pointcloud_msg(true, timestamp, hesai_points, hesai_azimuths);
   auto angle_conversion_opt =
@@ -1205,8 +1201,7 @@ TEST_F(DistortionCorrectorTest, TestTryComputeAngleConversionOnHesaiPointcloud)
 
   EXPECT_TRUE(angle_conversion_opt.has_value());
   EXPECT_EQ(angle_conversion_opt->sign, -1);
-  EXPECT_NEAR(
-    angle_conversion_opt->offset_rad, autoware_utils::pi / 2, standard_tolerance);
+  EXPECT_NEAR(angle_conversion_opt->offset_rad, autoware_utils::pi / 2, standard_tolerance);
 }
 
 TEST_F(DistortionCorrectorTest, TestTryComputeAngleConversionCartesianPointcloud)
@@ -1221,8 +1216,7 @@ TEST_F(DistortionCorrectorTest, TestTryComputeAngleConversionCartesianPointcloud
     Eigen::Vector3f(1.0f, 1.0f, 1.0f),
     Eigen::Vector3f(0.0f, 2.0f, 1.0f),
   };
-  std::vector<float> cartesian_azimuths = {
-    0, autoware_utils::pi / 4, autoware_utils::pi / 2};
+  std::vector<float> cartesian_azimuths = {0, autoware_utils::pi / 4, autoware_utils::pi / 2};
 
   auto cartesian_pointcloud =
     generate_pointcloud_msg(true, timestamp, cartesian_points, cartesian_azimuths);
@@ -1246,16 +1240,14 @@ TEST_F(DistortionCorrectorTest, TestTryComputeAngleConversionOnRandomPointcloud)
     Eigen::Vector3f(2.0f, 0.0f, 1.0f),
     Eigen::Vector3f(1.0f, 1.0f, 1.0f),
   };
-  std::vector<float> azimuths = {
-    0, autoware_utils::pi * 3 / 2, autoware_utils::pi * 7 / 4};
+  std::vector<float> azimuths = {0, autoware_utils::pi * 3 / 2, autoware_utils::pi * 7 / 4};
 
   auto pointcloud = generate_pointcloud_msg(true, timestamp, points, azimuths);
   auto angle_conversion_opt = distortion_corrector_2d_->try_compute_angle_conversion(pointcloud);
 
   EXPECT_TRUE(angle_conversion_opt.has_value());
   EXPECT_EQ(angle_conversion_opt->sign, 1);
-  EXPECT_NEAR(
-    angle_conversion_opt->offset_rad, autoware_utils::pi * 3 / 2, standard_tolerance);
+  EXPECT_NEAR(angle_conversion_opt->offset_rad, autoware_utils::pi * 3 / 2, standard_tolerance);
 }
 
 TEST_F(DistortionCorrectorTest, TestTryComputeAngleConversionOnBadAzimuthPointcloud)

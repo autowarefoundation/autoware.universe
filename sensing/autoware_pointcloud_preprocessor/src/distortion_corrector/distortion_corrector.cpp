@@ -233,10 +233,9 @@ std::optional<AngleConversion> DistortionCorrectorBase::try_compute_angle_conver
     }
 
     // restrict the angle difference between [-180, 180] (degrees)
-    float azimuth_diff =
-      std::abs(*next_it_azimuth - *it_azimuth) > autoware_utils::pi
-        ? std::abs(*next_it_azimuth - *it_azimuth) - 2 * autoware_utils::pi
-        : *next_it_azimuth - *it_azimuth;
+    float azimuth_diff = std::abs(*next_it_azimuth - *it_azimuth) > autoware_utils::pi
+                           ? std::abs(*next_it_azimuth - *it_azimuth) - 2 * autoware_utils::pi
+                           : *next_it_azimuth - *it_azimuth;
     float cartesian_rad_diff =
       std::abs(next_cartesian_rad - current_cartesian_rad) > autoware_utils::pi
         ? std::abs(next_cartesian_rad - current_cartesian_rad) - 2 * autoware_utils::pi
@@ -388,8 +387,7 @@ void DistortionCorrector<T>::undistort_pointcloud(
           "updated. "
           "Please change the input pointcloud or set update_azimuth_and_distance to false.");
       }
-      float cartesian_coordinate_azimuth =
-        autoware_utils::opencv_fast_atan2(*it_y, *it_x);
+      float cartesian_coordinate_azimuth = autoware_utils::opencv_fast_atan2(*it_y, *it_x);
       float updated_azimuth = angle_conversion_opt->offset_rad +
                               angle_conversion_opt->sign * cartesian_coordinate_azimuth;
       if (updated_azimuth < 0) {

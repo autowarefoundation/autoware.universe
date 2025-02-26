@@ -15,14 +15,14 @@
 #ifndef AUTOWARE_RAW_VEHICLE_CMD_CONVERTER__NODE_HPP_
 #define AUTOWARE_RAW_VEHICLE_CMD_CONVERTER__NODE_HPP_
 
-#include "autoware_utils/ros/logger_level_configure.hpp"
-#include "autoware_utils/ros/polling_subscriber.hpp"
 #include "autoware_raw_vehicle_cmd_converter/accel_map.hpp"
 #include "autoware_raw_vehicle_cmd_converter/brake_map.hpp"
 #include "autoware_raw_vehicle_cmd_converter/pid.hpp"
 #include "autoware_raw_vehicle_cmd_converter/steer_map.hpp"
 #include "autoware_raw_vehicle_cmd_converter/vehicle_adaptor/vehicle_adaptor.hpp"
 #include "autoware_raw_vehicle_cmd_converter/vgr.hpp"
+#include "autoware_utils/ros/logger_level_configure.hpp"
+#include "autoware_utils/ros/polling_subscriber.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -88,8 +88,7 @@ public:
   rclcpp::Subscription<ActuationStatusStamped>::SharedPtr sub_actuation_status_;
   rclcpp::Subscription<Steering>::SharedPtr sub_steering_;
   // polling subscribers
-  autoware_utils::InterProcessPollingSubscriber<Odometry> sub_odometry_{
-    this, "~/input/odometry"};
+  autoware_utils::InterProcessPollingSubscriber<Odometry> sub_odometry_{this, "~/input/odometry"};
   // polling subscribers for vehicle_adaptor
   autoware_utils::InterProcessPollingSubscriber<AccelWithCovarianceStamped> sub_accel_{
     this, "~/input/accel"};

@@ -377,8 +377,7 @@ std::optional<int32_t> ControlPerformanceAnalysisCore::findCurveRefIdx()
   }
 
   auto fun_distance_cond = [this](auto point_t) {
-    const double dist =
-      autoware_utils::calc_distance2d(point_t.pose, *interpolated_pose_ptr_);
+    const double dist = autoware_utils::calc_distance2d(point_t.pose, *interpolated_pose_ptr_);
     return dist > p_.wheelbase_;
   };
 

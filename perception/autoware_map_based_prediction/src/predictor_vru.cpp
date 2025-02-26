@@ -641,8 +641,7 @@ bool PredictorVru::calcIntentionToCrossWithTrafficSignal(
     return elem_opt ? elem_opt.value().color : TrafficLightElement::UNKNOWN;
   }();
 
-  const auto key =
-    std::make_pair(autoware_utils::to_hex_string(object.object_id), signal_id);
+  const auto key = std::make_pair(autoware_utils::to_hex_string(object.object_id), signal_id);
   if (
     signal_color == TrafficLightElement::GREEN &&
     autoware_utils::calc_norm(object.kinematics.twist_with_covariance.twist.linear) <

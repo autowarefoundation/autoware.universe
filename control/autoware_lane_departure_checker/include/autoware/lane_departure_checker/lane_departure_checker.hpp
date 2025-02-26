@@ -45,8 +45,8 @@
 
 namespace autoware::lane_departure_checker
 {
-using autoware_utils::Segment2d;
 using autoware_internal_planning_msgs::msg::PathWithLaneId;
+using autoware_utils::Segment2d;
 typedef boost::geometry::index::rtree<Segment2d, boost::geometry::index::rstar<16>> SegmentRtree;
 
 class LaneDepartureChecker

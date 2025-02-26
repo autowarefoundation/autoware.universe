@@ -35,10 +35,10 @@
 
 namespace planning_diagnostics
 {
-using autoware_utils::Accumulator;
 using autoware::vehicle_info_utils::VehicleInfo;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
+using autoware_utils::Accumulator;
 
 /**
  * @brief Node for planning evaluation

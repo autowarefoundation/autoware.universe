@@ -81,8 +81,8 @@ CollisionChecker::checkTrajectoryForCollision(
       double distance_to_current = std::numeric_limits<double>::max();
       double distance_to_history = std::numeric_limits<double>::max();
       if (found_collision_at_dynamic_objects) {
-        distance_to_current = autoware_utils::calc_distance2d(
-          p_front, found_collision_at_dynamic_objects.get().first);
+        distance_to_current =
+          autoware_utils::calc_distance2d(p_front, found_collision_at_dynamic_objects.get().first);
       }
       if (found_collision_at_history) {
         distance_to_history =

@@ -390,8 +390,7 @@ bool calcNearestPoseInterp(
   geometry_msgs::msg::Point prev_traj_point;
   prev_traj_point.x = traj.x.at(prev);
   prev_traj_point.y = traj.y.at(prev);
-  const double traj_seg_length =
-    autoware_utils::calc_distance2d(prev_traj_point, next_traj_point);
+  const double traj_seg_length = autoware_utils::calc_distance2d(prev_traj_point, next_traj_point);
   /* if distance between two points are too close */
   if (traj_seg_length < 1.0E-5) {
     nearest_pose->position.x = traj.x.at(*nearest_index);

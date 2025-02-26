@@ -16,12 +16,12 @@
 #include <autoware/autonomous_emergency_braking/utils.hpp>
 #include <autoware/motion_utils/marker/marker_helper.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware_utils/autoware_utils.hpp>
 #include <autoware_utils/geometry/boost_geometry.hpp>
 #include <autoware_utils/geometry/boost_polygon_utils.hpp>
 #include <autoware_utils/geometry/geometry.hpp>
 #include <autoware_utils/ros/marker_helper.hpp>
 #include <autoware_utils/ros/update_param.hpp>
-#include <autoware_utils/autoware_utils.hpp>
 #include <pcl_ros/transforms.hpp>
 #include <rclcpp/node.hpp>
 
@@ -108,34 +108,27 @@ Polygon2d createPolygon(
   const double rear_overhang = vehicle_info.rear_overhang_m;
 
   appendPointToPolygon(
-    polygon,
-    autoware_utils::calc_offset_pose(base_pose, longitudinal_offset, width, 0.0).position);
+    polygon, autoware_utils::calc_offset_pose(base_pose, longitudinal_offset, width, 0.0).position);
   appendPointToPolygon(
     polygon,
     autoware_utils::calc_offset_pose(base_pose, longitudinal_offset, -width, 0.0).position);
   appendPointToPolygon(
-    polygon,
-    autoware_utils::calc_offset_pose(base_pose, -rear_overhang, -width, 0.0).position);
+    polygon, autoware_utils::calc_offset_pose(base_pose, -rear_overhang, -width, 0.0).position);
   appendPointToPolygon(
-    polygon,
-    autoware_utils::calc_offset_pose(base_pose, -rear_overhang, width, 0.0).position);
+    polygon, autoware_utils::calc_offset_pose(base_pose, -rear_overhang, width, 0.0).position);
 
   appendPointToPolygon(
-    polygon,
-    autoware_utils::calc_offset_pose(next_pose, longitudinal_offset, width, 0.0).position);
+    polygon, autoware_utils::calc_offset_pose(next_pose, longitudinal_offset, width, 0.0).position);
   appendPointToPolygon(
     polygon,
     autoware_utils::calc_offset_pose(next_pose, longitudinal_offset, -width, 0.0).position);
   appendPointToPolygon(
-    polygon,
-    autoware_utils::calc_offset_pose(next_pose, -rear_overhang, -width, 0.0).position);
+    polygon, autoware_utils::calc_offset_pose(next_pose, -rear_overhang, -width, 0.0).position);
   appendPointToPolygon(
-    polygon,
-    autoware_utils::calc_offset_pose(next_pose, -rear_overhang, width, 0.0).position);
+    polygon, autoware_utils::calc_offset_pose(next_pose, -rear_overhang, width, 0.0).position);
 
-  polygon = autoware_utils::is_clockwise(polygon)
-              ? polygon
-              : autoware_utils::inverse_clockwise(polygon);
+  polygon =
+    autoware_utils::is_clockwise(polygon) ? polygon : autoware_utils::inverse_clockwise(polygon);
 
   Polygon2d hull_polygon;
   bg::convex_hull(polygon, hull_polygon);
@@ -219,10 +212,8 @@ AEB::AEB(const rclcpp::NodeOptions & node_options)
   timer_ = rclcpp::create_timer(this, this->get_clock(), period_ns, std::bind(&AEB::onTimer, this));
 
   debug_processing_time_detail_pub_ =
-    create_publisher<autoware_utils::ProcessingTimeDetail>(
-      "~/debug/processing_time_detail_ms", 1);
-  time_keeper_ =
-    std::make_shared<autoware_utils::TimeKeeper>(debug_processing_time_detail_pub_);
+    create_publisher<autoware_utils::ProcessingTimeDetail>("~/debug/processing_time_detail_ms", 1);
+  time_keeper_ = std::make_shared<autoware_utils::TimeKeeper>(debug_processing_time_detail_pub_);
 }
 
 rcl_interfaces::msg::SetParametersResult AEB::onParameter(
@@ -705,9 +696,9 @@ Path AEB::generateEgoPath(const double curr_v, const double curr_w)
 
     t += dt;
     path_arc_length += distance_between_points;
-    const auto edge_of_ego_vehicle = autoware_utils::calc_offset_pose(
-                                       current_pose, longitudinal_offset, lateral_offset, 0.0)
-                                       .position;
+    const auto edge_of_ego_vehicle =
+      autoware_utils::calc_offset_pose(current_pose, longitudinal_offset, lateral_offset, 0.0)
+        .position;
 
     const bool basic_path_conditions_satisfied =
       (t > horizon) && (path_arc_length > min_generated_imu_path_length_);
@@ -747,9 +738,7 @@ std::optional<Path> AEB::generateEgoPath(const Trajectory & predicted_traj)
     tf2::doTransform(predicted_traj.points.at(i).pose, map_pose, transform_stamped.value());
 
     // skip points that are too close to the last point in the path
-    if (
-      autoware_utils::calc_distance2d(path.back(), map_pose) <
-      minimum_distance_between_points) {
+    if (autoware_utils::calc_distance2d(path.back(), map_pose) < minimum_distance_between_points) {
       continue;
     }
 

@@ -60,17 +60,14 @@ private:
   autoware_utils::InterProcessPollingSubscriber<
     LaneletMapBin, autoware_utils::polling_policy::Newest>
     sub_lanelet_map_bin_{this, "~/input/lanelet_map_bin", rclcpp::QoS{1}.transient_local()};
-  autoware_utils::InterProcessPollingSubscriber<LaneletRoute> sub_route_{
-    this, "~/input/route"};
+  autoware_utils::InterProcessPollingSubscriber<LaneletRoute> sub_route_{this, "~/input/route"};
   autoware_utils::InterProcessPollingSubscriber<Trajectory> sub_reference_trajectory_{
     this, "~/input/reference_trajectory"};
   autoware_utils::InterProcessPollingSubscriber<Trajectory> sub_predicted_trajectory_{
     this, "~/input/predicted_trajectory"};
-  autoware_utils::InterProcessPollingSubscriber<
-    autoware_adapi_v1_msgs::msg::OperationModeState>
+  autoware_utils::InterProcessPollingSubscriber<autoware_adapi_v1_msgs::msg::OperationModeState>
     sub_operation_mode_{this, "/api/operation_mode/state"};
-  autoware_utils::InterProcessPollingSubscriber<
-    autoware_vehicle_msgs::msg::ControlModeReport>
+  autoware_utils::InterProcessPollingSubscriber<autoware_vehicle_msgs::msg::ControlModeReport>
     sub_control_mode_{this, "/vehicle/status/control_mode"};
 
   // Data Buffer

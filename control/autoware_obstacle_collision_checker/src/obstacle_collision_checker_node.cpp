@@ -65,8 +65,7 @@ ObstacleCollisionCheckerNode::ObstacleCollisionCheckerNode(const rclcpp::NodeOpt
     "input/odometry", 1, std::bind(&ObstacleCollisionCheckerNode::on_odom, this, _1));
 
   // Publisher
-  debug_publisher_ =
-    std::make_shared<autoware_utils::DebugPublisher>(this, "debug/marker");
+  debug_publisher_ = std::make_shared<autoware_utils::DebugPublisher>(this, "debug/marker");
   time_publisher_ = std::make_shared<autoware_utils::ProcessingTimePublisher>(this);
 
   // Diagnostic Updater

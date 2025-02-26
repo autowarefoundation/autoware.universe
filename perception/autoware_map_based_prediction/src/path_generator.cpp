@@ -41,8 +41,7 @@ PathGenerator::PathGenerator(
 {
 }
 
-void PathGenerator::setTimeKeeper(
-  std::shared_ptr<autoware_utils::TimeKeeper> time_keeper_ptr)
+void PathGenerator::setTimeKeeper(std::shared_ptr<autoware_utils::TimeKeeper> time_keeper_ptr)
 {
   time_keeper_ = std::move(time_keeper_ptr);
 }
@@ -73,9 +72,8 @@ PredictedPath PathGenerator::generatePathToTargetPoint(
   const auto arrival_time = pedestrian_to_entry_point.norm() / velocity;
 
   const auto pedestrian_to_entry_point_normalized = pedestrian_to_entry_point.normalized();
-  const auto pedestrian_to_entry_point_orientation =
-    autoware_utils::create_quaternion_from_yaw(std::atan2(
-      pedestrian_to_entry_point_normalized.y(), pedestrian_to_entry_point_normalized.x()));
+  const auto pedestrian_to_entry_point_orientation = autoware_utils::create_quaternion_from_yaw(
+    std::atan2(pedestrian_to_entry_point_normalized.y(), pedestrian_to_entry_point_normalized.x()));
 
   for (double dt = 0.0; dt < arrival_time + ep; dt += sampling_time_interval_) {
     geometry_msgs::msg::Pose world_frame_pose;
@@ -120,9 +118,8 @@ PredictedPath PathGenerator::generatePathForCrosswalkUser(
   const auto arrival_time = pedestrian_to_entry_point.norm() / velocity;
 
   const auto pedestrian_to_entry_point_normalized = pedestrian_to_entry_point.normalized();
-  const auto pedestrian_to_entry_point_orientation =
-    autoware_utils::create_quaternion_from_yaw(std::atan2(
-      pedestrian_to_entry_point_normalized.y(), pedestrian_to_entry_point_normalized.x()));
+  const auto pedestrian_to_entry_point_orientation = autoware_utils::create_quaternion_from_yaw(
+    std::atan2(pedestrian_to_entry_point_normalized.y(), pedestrian_to_entry_point_normalized.x()));
   const auto entry_to_exit_point_normalized = entry_to_exit_point.normalized();
   const auto entry_to_exit_point_orientation = autoware_utils::create_quaternion_from_yaw(
     std::atan2(entry_to_exit_point_normalized.y(), entry_to_exit_point_normalized.x()));
@@ -536,8 +533,8 @@ PosePath PathGenerator::interpolateReferencePath(
     tf2::fromMsg(base_path.at(i).orientation, src_tf);
     base_path_orientation.at(i) = src_tf;
     if (i > 0) {
-      base_path_s.at(i) = base_path_s.at(i - 1) + autoware_utils::calc_distance2d(
-                                                    base_path.at(i - 1), base_path.at(i));
+      base_path_s.at(i) = base_path_s.at(i - 1) +
+                          autoware_utils::calc_distance2d(base_path.at(i - 1), base_path.at(i));
     }
   }
 

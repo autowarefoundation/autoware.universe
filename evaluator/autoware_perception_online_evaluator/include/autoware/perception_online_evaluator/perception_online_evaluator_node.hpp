@@ -36,9 +36,9 @@
 
 namespace autoware::perception_diagnostics
 {
-using autoware_utils::Accumulator;
 using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::PredictedObjects;
+using autoware_utils::Accumulator;
 using nav_msgs::msg::Odometry;
 using TFMessage = tf2_msgs::msg::TFMessage;
 

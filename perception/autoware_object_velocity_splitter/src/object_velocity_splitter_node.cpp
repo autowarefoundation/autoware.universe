@@ -74,8 +74,8 @@ void ObjectVelocitySplitterNode::onObjects(const DetectedObjects::ConstSharedPtr
 
   for (const auto & object : msg->objects) {
     if (
-      std::abs(autoware_utils::calc_norm(
-        object.kinematics.twist_with_covariance.twist.linear)) < node_param_.velocity_threshold) {
+      std::abs(autoware_utils::calc_norm(object.kinematics.twist_with_covariance.twist.linear)) <
+      node_param_.velocity_threshold) {
       low_speed_objects.objects.emplace_back(object);
     } else {
       high_speed_objects.objects.emplace_back(object);

@@ -29,10 +29,10 @@
 
 namespace autoware::radar_fusion_to_detected_object
 {
-using autoware_utils::LinearRing2d;
-using autoware_utils::Point2d;
 using autoware_perception_msgs::msg::DetectedObject;
 using autoware_perception_msgs::msg::DetectedObjects;
+using autoware_utils::LinearRing2d;
+using autoware_utils::Point2d;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::PoseWithCovariance;
 using geometry_msgs::msg::Twist;
@@ -174,12 +174,10 @@ RadarFusionToDetectedObject::filterRadarWithinObject(
 {
   std::vector<RadarInput> outputs{};
 
-  autoware_utils::Point2d object_size{
-    object.shape.dimensions.x, object.shape.dimensions.y};
+  autoware_utils::Point2d object_size{object.shape.dimensions.x, object.shape.dimensions.y};
   LinearRing2d object_box = createObject2dWithMargin(object_size, param_.bounding_box_margin);
   object_box = autoware_utils::transform_vector(
-    object_box,
-    autoware_utils::pose2transform(object.kinematics.pose_with_covariance.pose));
+    object_box, autoware_utils::pose2transform(object.kinematics.pose_with_covariance.pose));
 
   for (const auto & radar : (*radars)) {
     Point2d radar_point{
