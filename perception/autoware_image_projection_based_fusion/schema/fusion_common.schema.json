@@ -9,8 +9,7 @@
         "rois_timestamp_offsets": {
           "type": "array",
           "items": {
-            "type": "number",
-            "minimum": 0.0
+            "type": "number"
           },
           "description": "An array of timestamp offsets for each camera [s].",
           "minItems": 2,
