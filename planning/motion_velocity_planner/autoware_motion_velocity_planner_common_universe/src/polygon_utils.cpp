@@ -150,6 +150,7 @@ std::optional<std::pair<geometry_msgs::msg::Point, double>> get_collision_point(
       max_collision_point = poly_vertex.point;
     }
   }
+  if (!max_collision_point.has_value() || !max_collision_length.has_value()) return std::nullopt;
   return std::make_pair(
     *max_collision_point,
     autoware::motion_utils::calcSignedArcLength(traj_points, 0, collision_info.first) -
