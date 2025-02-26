@@ -23,9 +23,9 @@ on:
         default: ""
         type: string
       build-pre-command:
-        description: Will be prepended to the colcon build command. e.g. "nice -n 19" or "taskset --cpu-list 0-2"
         required: false
         default: nice -n 19
+        type: string
     secrets:
       codecov-token:
         required: true
