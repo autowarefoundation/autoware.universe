@@ -59,10 +59,10 @@
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_internal_debug_msgs/msg/float64_stamped.hpp>
+#include <autoware_internal_planning_msgs/msg/scenario.hpp>
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
-#include <tier4_planning_msgs/msg/scenario.hpp>
 
 #include <grid_map_msgs/msg/grid_map.h>
 #include <message_filters/subscriber.h>
@@ -107,7 +107,8 @@ private:
     sub_points_{this, "~/input/points_no_ground", autoware::universe_utils::SingleDepthSensorQoS()};
   autoware::universe_utils::InterProcessPollingSubscriber<PredictedObjects> sub_objects_{
     this, "~/input/objects"};
-  autoware::universe_utils::InterProcessPollingSubscriber<tier4_planning_msgs::msg::Scenario>
+  autoware::universe_utils::InterProcessPollingSubscriber<
+    autoware_internal_planning_msgs::msg::Scenario>
     sub_scenario_{this, "~/input/scenario"};
 
   rclcpp::TimerBase::SharedPtr timer_;
@@ -120,7 +121,7 @@ private:
   PointsToCostmap points2costmap_{};
   ObjectsToCostmap objects2costmap_;
 
-  tier4_planning_msgs::msg::Scenario::ConstSharedPtr scenario_;
+  autoware_internal_planning_msgs::msg::Scenario::ConstSharedPtr scenario_;
 
   struct LayerName
   {
