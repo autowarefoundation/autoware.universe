@@ -14362,7 +14362,7 @@
 <h2 id="inner-workings-algorithms">Inner Workings / Algorithms<a class="headerlink" href="#inner-workings-algorithms" title="Permanent link">#</a></h2>
 <p><img alt="fusion_algorithm" src="docs/images/fusion_algorithm.drawio.svg"></p>
 <h3 id="step-1-matching-and-creating-a-collector">Step 1: Matching and Creating a Collector<a class="headerlink" href="#step-1-matching-and-creating-a-collector" title="Permanent link">#</a></h3>
-<p>When a point cloud or a set of Regions of Interest (RoIs) arrives, its timestamp is checked, and an offset is subtracted to determine the reference timestamp. The node then searches for an existing collector with the same reference timestamp.</p>
+<p>When a <strong>Msg3d</strong> (Pointcloud/Bounding Box/Cluster) or a set of Regions of Interest (<strong>RoIs</strong>) arrives, its timestamp is checked, and an offset is subtracted to determine the reference timestamp. The node then searches for an existing collector with the same reference timestamp.</p>
 <ul>
 <li>If a matching collector is found, the incoming data is added to it.</li>
 <li>If no matching collector exists, a new collector is created and initialized with the reference timestamp.</li>
@@ -14371,10 +14371,10 @@
 <p>Once a collector is created, a countdown timer is started. The timeout duration depends on which message type arrived first and is defined by either <code>msg3d_timeout_sec</code> (for point clouds / clusters) or <code>rois_timeout_sec</code> (for RoIs).</p>
 <p>The collector will attempt to fuse the collected 3D and 2D data either:</p>
 <ul>
-<li>When both point cloud and RoI data are available, or</li>
+<li>When both Msg3d and RoI data are available, or</li>
 <li>When the timer expires.</li>
 </ul>
-<p>If no point cloud data is received before the timer expires, the collector will discard the data without performing fusion.</p>
+<p>If no Msg3d is received before the timer expires, the collector will discard the data without performing fusion.</p>
 <h3 id="step-3-fusion-process">Step 3: Fusion Process<a class="headerlink" href="#step-3-fusion-process" title="Permanent link">#</a></h3>
 <p>The fusion process consists of three main stages:</p>
 <ol>
@@ -14534,7 +14534,12 @@
 <p>If <code>RoIs</code> arrive earlier, they must wait until <code>msg3d</code> is received. You can adjust the waiting time using the <code>rois_timeout_sec</code> parameter.</p>
 <p>If <code>msg3d</code> arrives first, the fusion process should proceed as quickly as possible, so the waiting time for <code>msg3d</code> (<code>msg3d_timeout_sec</code>) should be kept minimal.</p>
 <h4 id="sensor-offset-considerations">Sensor Offset Considerations<a class="headerlink" href="#sensor-offset-considerations" title="Permanent link">#</a></h4>
-<p>The offset between each camera and the LiDAR is determined by their shutter timing. Users must understand the timing offset between the RoIs and msg3d to ensure accurate fusion. Once you know the offset between the RoIs and msg3d, fill the offsets in the parameter <code>rois_timestamp_offsets</code>.</p>
+<p>The offset between each camera and the LiDAR is determined by their shutter timing. To ensure accurate fusion, users must understand the timing offset between the <code>RoIs</code> and <code>msg3d</code>. Once this offset is known, it should be specified in the parameter <code>rois_timestamp_offsets</code>.</p>
+<p>In the figure below, the LiDAR completes a full scan from the rear in 100 milliseconds. When the LiDAR scan reaches the area where the camera is facing, the camera is triggered, capturing an image with a corresponding timestamp. The <code>rois_timestamp_offsets</code> can then be calculated by subtracting the LiDAR header timestamp from the camera header timestamp. As a result, the <code>rois_timestamp_offsets</code> would be <code>[0.01, 0.026, 0.042, 0.059, 0.076, 0.093]</code>.</p>
+<p><img alt="lidar_camera_sync" src="docs/images/lidar_camera_sync.svg"></p>
+<p>To check the header timestamp of the msg3d and RoIs, user can easily run</p>
+<div class="highlight"><pre><span></span><code>ros2<span class="w"> </span><span class="nb">echo</span><span class="w"> </span><span class="o">[</span>topic<span class="o">]</span><span class="w"> </span>--header<span class="w"> </span>field
+</code></pre></div>
 <h4 id="matching-strategies">Matching Strategies<a class="headerlink" href="#matching-strategies" title="Permanent link">#</a></h4>
 <p>We provide two matching strategies for different scenarios:</p>
 <h5 id="naive-mode">Naive Mode<a class="headerlink" href="#naive-mode" title="Permanent link">#</a></h5>
