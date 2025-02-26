@@ -14,7 +14,7 @@
 
 #include "control_command_gate.hpp"
 
-#include "command/emergency.hpp"
+#include "command/builtin.hpp"
 #include "command/filter.hpp"
 #include "command/publisher.hpp"
 #include "command/source.hpp"
