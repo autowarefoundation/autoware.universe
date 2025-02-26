@@ -105,7 +105,8 @@ Tensor5D get_geometry(
   // Subtract post_trans from frustum
   Tensor5D points = frustum_broadcast - post_trans_broadcast;
 
-  // Unsqueeze points to [N, D, H, W, 3, 1] cSpell: unsqueezed
+  // cSpell:ignore unsqueezed
+  // Unsqueeze points to [N, D, H, W, 3, 1]
   Tensor6D points_unsqueezed = points.reshape(Eigen::array<Eigen::Index, 6>{N, D, H, W, 3, 1});
 
   Tensor5D points_rotated(N, D, H, W, 3);
