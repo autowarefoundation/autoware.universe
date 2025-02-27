@@ -8,27 +8,37 @@ The `autoware_image_projection_based_fusion` package is designed to enhance obst
 
 The package provides multiple fusion algorithms, each designed for specific use cases. Below are the different fusion methods along with their descriptions and detailed documentation links:
 
-| Fusion Name                | Description                                                                                                                                                                                              | Detail                                       |
-| -------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------- |
-| roi_cluster_fusion         | Assigns classification labels to LiDAR-detected clusters by matching them with Regions of Interest (ROIs) from a 2D object detector.                                                                     | [link](./docs/roi-cluster-fusion.md)         |
-| roi_detected_object_fusion | Updates classification labels of detected objects using ROI information from a 2D object detector.                                                                                                       | [link](./docs/roi-detected-object-fusion.md) |
-| pointpainting_fusion       | Augments the point cloud by painting each point with additional information from ROIs of a 2D object detector. The enriched point cloud is then processed by a 3D object detector for improved accuracy. | [link](./docs/pointpainting-fusion.md)       |
-| roi_pointcloud_fusion      | Matching pointcloud with ROIs from a 2D object detector to detect unknown-labeled objects                                                                                                                | [link](./docs/roi-pointcloud-fusion.md)      |
+| Fusion Name                    | Description                                                                                                                                                                                              | Detail                                           |
+| ------------------------------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------ |
+| roi_cluster_fusion             | Assigns classification labels to LiDAR-detected clusters by matching them with Regions of Interest (ROIs) from a 2D object detector.                                                                     | [link](./docs/roi-cluster-fusion.md)             |
+| roi_detected_object_fusion     | Updates classification labels of detected objects using ROI information from a 2D object detector.                                                                                                       | [link](./docs/roi-detected-object-fusion.md)     |
+| pointpainting_fusion           | Augments the point cloud by painting each point with additional information from ROIs of a 2D object detector. The enriched point cloud is then processed by a 3D object detector for improved accuracy. | [link](./docs/pointpainting-fusion.md)           |
+| roi_pointcloud_fusion          | Matching pointcloud with ROIs from a 2D object detector to detect unknown-labeled objects.                                                                                                               | [link](./docs/roi-pointcloud-fusion.md)          |
+| segmentation_pointcloud_fusion | Filtering pointcloud that are belong to less interesting region which is defined by semantic or instance segmentation by 2D image segmentation.                                                          | [link](./docs/segmentation-pointcloud-fusion.md) |
 
 ## Inner Workings / Algorithms
 
 ![fusion_algorithm](./docs/images/fusion_algorithm.drawio.svg)
 
+The fusion process operates on two primary types of input data:
+
+- **Msg3d**: This includes 3D data such as point clouds, bounding boxes, or clusters from LiDAR.
+- **RoIs** (Regions of Interest): These are 2D detections or proposals from camera-based perception modules, such as object detection bounding boxes.
+
+Both inputs come with timestamps, which are crucial for synchronization and fusion. Since sensors operate at different frequencies and may experience network delays, a systematic approach is needed to handle their arrival, align their timestamps, and ensure reliable fusion.
+
+The following steps describe how the node processes these inputs, synchronizes them, and performs multi-sensor fusion.
+
 ### Step 1: Matching and Creating a Collector
 
-When a **Msg3d** (Pointcloud/Bounding Box/Cluster) or a set of Regions of Interest (**RoIs**) arrives, its timestamp is checked, and an offset is subtracted to determine the reference timestamp. The node then searches for an existing collector with the same reference timestamp.
+When a Msg3d or a set of RoIs arrives, its timestamp is checked, and an offset is subtracted to determine the reference timestamp. The node then searches for an existing collector with the same reference timestamp.
 
 - If a matching collector is found, the incoming data is added to it.
 - If no matching collector exists, a new collector is created and initialized with the reference timestamp.
 
 ### Step 2: Triggering the Timer
 
-Once a collector is created, a countdown timer is started. The timeout duration depends on which message type arrived first and is defined by either `msg3d_timeout_sec` (for point clouds / clusters) or `rois_timeout_sec` (for RoIs).
+Once a collector is created, a countdown timer is started. The timeout duration depends on which message type arrived first and is defined by either `msg3d_timeout_sec` for msg3d or `rois_timeout_sec` for RoIs.
 
 The collector will attempt to fuse the collected 3D and 2D data either:
 
@@ -56,13 +66,13 @@ The figure below shows how the input data is fused in different scenarios.
 
 ## Parameters
 
-### Fusion Node Common Parameters
-
 All of the fusion nodes have the common parameters described in the following
 
 {{ json_to_markdown("perception/autoware_image_projection_based_fusion/schema/fusion_common.schema.json") }}
 
 ### Parameter Settings
+
+#### Timeout
 
 The order in which `RoIs` or the `msg3d` message arrives at the fusion node depends on your system and sensor configuration. Since the primary goal is to fuse `2D RoIs` with `msg3d` data, `msg3d` is essential for processing.
 
@@ -70,7 +80,7 @@ If `RoIs` arrive earlier, they must wait until `msg3d` is received. You can adju
 
 If `msg3d` arrives first, the fusion process should proceed as quickly as possible, so the waiting time for `msg3d` (`msg3d_timeout_sec`) should be kept minimal.
 
-#### Sensor Offset Considerations
+#### RoIs Offsets
 
 The offset between each camera and the LiDAR is determined by their shutter timing. To ensure accurate fusion, users must understand the timing offset between the `RoIs` and `msg3d`. Once this offset is known, it should be specified in the parameter `rois_timestamp_offsets`.
 
@@ -94,6 +104,14 @@ User should use this mode if the concatenation node from the Autoware point clou
 If the interval is less than the match threshold, the messages are considered matched.
 ![roi_sync_image1](./docs/images/roi_sync_1.png)
 
+- Example usage:
+
+  ```bash
+  matching_strategy:
+    type: naive
+    threshold: 0.05
+  ```
+
 ##### Advanced Mode
 
 If the concatenation node from the Autoware point cloud preprocessor is being used, enable this mode.
@@ -104,6 +122,15 @@ Instead of using a fixed threshold, this mode requires setting two parameters:
 - `rois_timestamp_noise_window` (a vector)
 
 These parameters enforce stricter matching between the `RoI` messages and `msg3d` input.
+
+- Example usage:
+
+  ```bash
+    matching_strategy:
+      type: advanced
+      msg3d_noise_window: 0.02
+      rois_timestamp_noise_window: [0.01, 0.01, 0.01, 0.01, 0.01, 0.01]
+  ```
 
 #### Approximate camera projection
 
