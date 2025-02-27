@@ -39,7 +39,7 @@ boost::optional<geometry_msgs::msg::Pose> calcInterpolatedPose(
     if (relative_time - epsilon < time_step * path_idx) {
       const double offset = relative_time - time_step * (path_idx - 1);
       const double ratio = std::clamp(offset / time_step, 0.0, 1.0);
-      return autoware::universe_utils::calcInterpolatedPose(prev_pt, pt, ratio, false);
+      return autoware_utils::calc_interpolated_pose(prev_pt, pt, ratio, false);
     }
   }
 
@@ -91,7 +91,7 @@ autoware_perception_msgs::msg::PredictedPath resamplePredictedPath(
 
   // Set Position
   for (size_t i = 0; i < resampled_size; ++i) {
-    const auto p = autoware::universe_utils::createPoint(
+    const auto p = autoware_utils::create_point(
       interpolated_x.at(i), interpolated_y.at(i), interpolated_z.at(i));
     resampled_path.path.at(i).position = p;
     resampled_path.path.at(i).orientation = interpolated_quat.at(i);

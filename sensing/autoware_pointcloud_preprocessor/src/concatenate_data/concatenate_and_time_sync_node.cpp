@@ -39,8 +39,8 @@ PointCloudConcatenateDataSynchronizerComponent::PointCloudConcatenateDataSynchro
 : Node("point_cloud_concatenator_component", node_options)
 {
   // initialize debug tool
-  using autoware::universe_utils::DebugPublisher;
-  using autoware::universe_utils::StopWatch;
+  using autoware_utils::DebugPublisher;
+  using autoware_utils::StopWatch;
   stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
   debug_publisher_ = std::make_unique<DebugPublisher>(this, "concatenate_data_synchronizer");
   stop_watch_ptr_->tic("cyclic_time");

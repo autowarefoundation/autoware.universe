@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__OBJECT_RECOGNITION_UTILS__PREDICTED_PATH_UTILS_HPP_
 #define AUTOWARE__OBJECT_RECOGNITION_UTILS__PREDICTED_PATH_UTILS_HPP_
 
-#include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware_utils/geometry/geometry.hpp"
 
 #include <autoware_perception_msgs/msg/predicted_path.hpp>
 #include <geometry_msgs/msg/pose.hpp>

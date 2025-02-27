@@ -16,7 +16,7 @@
   <depend>autoware_perception_msgs</depend>
   <depend>autoware_point_types</depend>
   <depend>autoware_tensorrt_common</depend>
-  <depend>autoware_universe_utils</depend>
+  <depend>autoware_utils</depend>
   <depend>launch_ros</depend>
   <depend>pcl_ros</depend>
   <depend>rclcpp</depend>

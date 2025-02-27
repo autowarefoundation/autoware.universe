@@ -13,8 +13,8 @@
 // limitations under the License.
 
 #include "autoware/object_recognition_utils/predicted_path_utils.hpp"
-#include "autoware/universe_utils/geometry/geometry.hpp"
-#include "autoware/universe_utils/math/unit_conversion.hpp"
+#include "autoware_utils/geometry/geometry.hpp"
+#include "autoware_utils/math/unit_conversion.hpp"
 
 #include <boost/optional/optional_io.hpp>
 
@@ -22,24 +22,24 @@
 
 #include <vector>
 
-using autoware::universe_utils::Point2d;
-using autoware::universe_utils::Point3d;
+using autoware_utils::Point2d;
+using autoware_utils::Point3d;
 
 constexpr double epsilon = 1e-06;
 
 namespace
 {
-using autoware::universe_utils::createPoint;
-using autoware::universe_utils::createQuaternionFromRPY;
-using autoware::universe_utils::transformPoint;
 using autoware_perception_msgs::msg::PredictedPath;
+using autoware_utils::create_point;
+using autoware_utils::create_quaternion_from_rpy;
+using autoware_utils::transform_point;
 
 geometry_msgs::msg::Pose createPose(
   double x, double y, double z, double roll, double pitch, double yaw)
 {
   geometry_msgs::msg::Pose p;
-  p.position = createPoint(x, y, z);
-  p.orientation = createQuaternionFromRPY(roll, pitch, yaw);
+  p.position = create_point(x, y, z);
+  p.orientation = create_quaternion_from_rpy(roll, pitch, yaw);
   return p;
 }
 
@@ -67,15 +67,15 @@ PredictedPath createTestPredictedPath(
 TEST(predicted_path_utils, testCalcInterpolatedPose)
 {
   using autoware::object_recognition_utils::calcInterpolatedPose;
-  using autoware::universe_utils::createQuaternionFromRPY;
-  using autoware::universe_utils::createQuaternionFromYaw;
-  using autoware::universe_utils::deg2rad;
+  using autoware_utils::create_quaternion_from_rpy;
+  using autoware_utils::create_quaternion_from_yaw;
+  using autoware_utils::deg2rad;
 
   const auto path = createTestPredictedPath(100, 0.1, 1.0);
 
   // Normal Case (same point as the original point)
   {
-    const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+    const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
     for (double t = 0.0; t < 9.0 + 1e-6; t += 1.0) {
       const auto p = calcInterpolatedPose(path, t);
 
@@ -92,7 +92,7 @@ TEST(predicted_path_utils, testCalcInterpolatedPose)
 
   // Normal Case (random case)
   {
-    const auto ans_quat = createQuaternionFromRPY(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
+    const auto ans_quat = create_quaternion_from_rpy(deg2rad(0.0), deg2rad(0.0), deg2rad(0.0));
     for (double t = 0.0; t < 9.0; t += 0.3) {
       const auto p = calcInterpolatedPose(path, t);
 
@@ -133,9 +133,9 @@ TEST(predicted_path_utils, testCalcInterpolatedPose)
 TEST(predicted_path_utils, resamplePredictedPath_by_vector)
 {
   using autoware::object_recognition_utils::resamplePredictedPath;
-  using autoware::universe_utils::createQuaternionFromRPY;
-  using autoware::universe_utils::createQuaternionFromYaw;
-  using autoware::universe_utils::deg2rad;
+  using autoware_utils::create_quaternion_from_rpy;
+  using autoware_utils::create_quaternion_from_yaw;
+  using autoware_utils::deg2rad;
 
   const auto path = createTestPredictedPath(10, 1.0, 1.0);
 
@@ -210,9 +210,9 @@ TEST(predicted_path_utils, resamplePredictedPath_by_vector)
 TEST(predicted_path_utils, resamplePredictedPath_by_sampling_time)
 {
   using autoware::object_recognition_utils::resamplePredictedPath;
-  using autoware::universe_utils::createQuaternionFromRPY;
-  using autoware::universe_utils::createQuaternionFromYaw;
-  using autoware::universe_utils::deg2rad;
+  using autoware_utils::create_quaternion_from_rpy;
+  using autoware_utils::create_quaternion_from_yaw;
+  using autoware_utils::deg2rad;
 
   const auto path = createTestPredictedPath(10, 1.0, 1.0);
 

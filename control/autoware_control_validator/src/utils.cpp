@@ -17,7 +17,7 @@
 #include "autoware/motion_utils/trajectory/conversion.hpp"
 #include "autoware/motion_utils/trajectory/interpolation.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
-#include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware_utils/geometry/geometry.hpp"
 
 #include <vector>
 
@@ -161,7 +161,7 @@ double calc_max_lateral_distance(
     align_trajectory_with_reference_trajectory(reference_trajectory, predicted_trajectory);
   double max_dist = 0;
   for (const auto & point : alined_predicted_trajectory.points) {
-    const auto p0 = autoware::universe_utils::getPoint(point);
+    const auto p0 = autoware_utils::get_point(point);
     // find nearest segment
     const size_t nearest_segment_idx =
       autoware::motion_utils::findNearestSegmentIndex(reference_trajectory.points, p0);
