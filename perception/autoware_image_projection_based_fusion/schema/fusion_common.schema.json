@@ -13,7 +13,7 @@
           },
           "description": "The timestamp offset between each RoIs and the msg3d in seconds.",
           "minItems": 2,
-          "default": [0.059, 0.010, 0.026, 0.042, 0.076, 0.093]
+          "default": [0.059, 0.01, 0.026, 0.042, 0.076, 0.093]
         },
         "rois_timeout_sec": {
           "type": "number",
@@ -119,7 +119,7 @@
             },
             "threshold": {
               "type": "number",
-              "description": "A maximum threshold value to synchronize RoIs from multiple cameras [s].",
+              "description": "A maximum threshold value to synchronize RoIs from multiple cameras in seconds.",
               "default": 0.05,
               "minimum": 0.0,
               "maximum": 0.1
