@@ -84,7 +84,7 @@ If `msg3d` arrives first, the fusion process should proceed as quickly as possib
 
 The offset between each camera and the LiDAR is determined by their shutter timing. To ensure accurate fusion, users must understand the timing offset between the `RoIs` and `msg3d`. Once this offset is known, it should be specified in the parameter `rois_timestamp_offsets`.
 
-In the figure below, the LiDAR completes a full scan from the rear in 100 milliseconds. When the LiDAR scan reaches the area where the camera is facing, the camera is triggered, capturing an image with a corresponding timestamp. The `rois_timestamp_offsets` can then be calculated by subtracting the LiDAR header timestamp from the camera header timestamp. As a result, the `rois_timestamp_offsets` would be `[0.01, 0.026, 0.042, 0.059, 0.076, 0.093]`.
+In the figure below, the LiDAR completes a full scan from the rear in 100 milliseconds. When the LiDAR scan reaches the area where the camera is facing, the camera is triggered, capturing an image with a corresponding timestamp. The `rois_timestamp_offsets` can then be calculated by subtracting the LiDAR header timestamp from the camera header timestamp. As a result, the `rois_timestamp_offsets` would be `[0.059, 0.010, 0.026, 0.42, 0.076, 0.093]`.
 
 ![lidar_camera_sync](./docs/images/lidar_camera_sync.svg)
 

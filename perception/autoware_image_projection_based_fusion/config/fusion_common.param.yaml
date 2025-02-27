@@ -1,9 +1,10 @@
 /**:
   ros__parameters:
-    # Example of how to set offset parameters
-    # msg3d timestamp: 0.009
-    # rois timestamp:  0.007, 0.056, 0.087, 0.071, 0.024, 0.041
-    rois_timestamp_offsets: [-0.002, 0.047, 0.078, 0.062, 0.015, 0.032]
+    # Example of how to set offset parameters (Check the readme for more information)
+    # msg3d's header timestamp: 0.000
+    # rois's header timestamp (camera 0-5):  0.059, 0.010, 0.026, 0.42, 0.076, 0.093
+    # offset = rois_timestamp- msg3d_timestamp
+    rois_timestamp_offsets: [0.059, 0.010, 0.026, 0.42, 0.076, 0.093]
     rois_timeout_sec: 0.5
     msg3d_timeout_sec: 0.05
     image_buffer_size: 15
