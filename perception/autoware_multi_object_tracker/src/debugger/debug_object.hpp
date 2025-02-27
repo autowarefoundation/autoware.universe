@@ -16,7 +16,7 @@
 #define DEBUGGER__DEBUG_OBJECT_HPP_
 
 #include "autoware/multi_object_tracker/tracker/model/tracker_base.hpp"
-#include "autoware/universe_utils/ros/uuid_helper.hpp"
+#include "autoware_utils/ros/uuid_helper.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 

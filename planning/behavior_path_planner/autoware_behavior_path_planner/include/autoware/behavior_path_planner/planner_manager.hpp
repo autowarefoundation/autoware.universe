@@ -18,10 +18,10 @@
 #include "autoware/behavior_path_planner_common/interface/scene_module_interface.hpp"
 #include "autoware/behavior_path_planner_common/interface/scene_module_manager_interface.hpp"
 #include "autoware/behavior_path_planner_common/interface/scene_module_visitor.hpp"
-#include "autoware/universe_utils/ros/debug_publisher.hpp"
-#include "autoware/universe_utils/system/stop_watch.hpp"
+#include "autoware_utils/ros/debug_publisher.hpp"
+#include "autoware_utils/system/stop_watch.hpp"
 
-#include <autoware/universe_utils/system/time_keeper.hpp>
+#include <autoware_utils/system/time_keeper.hpp>
 #include <pluginlib/class_loader.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -41,11 +41,11 @@
 namespace autoware::behavior_path_planner
 {
 
-using autoware::universe_utils::StopWatch;
 using autoware_internal_planning_msgs::msg::PathWithLaneId;
+using autoware_utils::StopWatch;
 using SceneModulePtr = std::shared_ptr<SceneModuleInterface>;
 using SceneModuleManagerPtr = std::shared_ptr<SceneModuleManagerInterface>;
-using DebugPublisher = autoware::universe_utils::DebugPublisher;
+using DebugPublisher = autoware_utils::DebugPublisher;
 using DebugDoubleMsg = autoware_internal_debug_msgs::msg::Float64Stamped;
 using DebugStringMsg = autoware_internal_debug_msgs::msg::StringStamped;
 

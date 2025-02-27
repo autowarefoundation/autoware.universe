@@ -48,7 +48,7 @@
 
 namespace autoware::image_projection_based_fusion
 {
-using autoware::universe_utils::ScopedTimeTrack;
+using autoware_utils::ScopedTimeTrack;
 
 template <class Msg3D, class Msg2D, class ExportObj>
 FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
@@ -165,8 +165,7 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
       std::make_shared<Debugger>(this, rois_number_, image_buffer_size, input_camera_topics);
 
     // input topic timing publisher
-    debug_internal_pub_ =
-      std::make_unique<autoware::universe_utils::DebugPublisher>(this, get_name());
+    debug_internal_pub_ = std::make_unique<autoware_utils::DebugPublisher>(this, get_name());
   }
   collector_debug_mode_ = declare_parameter<bool>("collector_debug_mode");
 
@@ -174,17 +173,16 @@ FusionNode<Msg3D, Msg2D, ExportObj>::FusionNode(
   bool use_time_keeper = declare_parameter<bool>("publish_processing_time_detail");
   if (use_time_keeper) {
     detailed_processing_time_publisher_ =
-      this->create_publisher<autoware::universe_utils::ProcessingTimeDetail>(
+      this->create_publisher<autoware_utils::ProcessingTimeDetail>(
         "~/debug/processing_time_detail_ms", 1);
-    auto time_keeper = autoware::universe_utils::TimeKeeper(detailed_processing_time_publisher_);
-    time_keeper_ = std::make_shared<autoware::universe_utils::TimeKeeper>(time_keeper);
+    auto time_keeper = autoware_utils::TimeKeeper(detailed_processing_time_publisher_);
+    time_keeper_ = std::make_shared<autoware_utils::TimeKeeper>(time_keeper);
   }
 
   // initialize debug tool
   {
-    stop_watch_ptr_ =
-      std::make_unique<autoware::universe_utils::StopWatch<std::chrono::milliseconds>>();
-    debug_publisher_ = std::make_unique<autoware::universe_utils::DebugPublisher>(this, get_name());
+    stop_watch_ptr_ = std::make_unique<autoware_utils::StopWatch<std::chrono::milliseconds>>();
+    debug_publisher_ = std::make_unique<autoware_utils::DebugPublisher>(this, get_name());
     stop_watch_ptr_->tic("cyclic_time");
     stop_watch_ptr_->tic("processing_time");
   }

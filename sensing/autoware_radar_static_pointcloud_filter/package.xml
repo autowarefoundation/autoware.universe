@@ -13,7 +13,7 @@
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>autoware_cmake</buildtool_depend>
 
-  <depend>autoware_universe_utils</depend>
+  <depend>autoware_utils</depend>
   <depend>message_filters</depend>
   <depend>nav_msgs</depend>
   <depend>radar_msgs</depend>

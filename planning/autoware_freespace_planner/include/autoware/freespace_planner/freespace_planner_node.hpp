@@ -31,11 +31,11 @@
 #ifndef AUTOWARE__FREESPACE_PLANNER__FREESPACE_PLANNER_NODE_HPP_
 #define AUTOWARE__FREESPACE_PLANNER__FREESPACE_PLANNER_NODE_HPP_
 
-#include "autoware/universe_utils/ros/logger_level_configure.hpp"
+#include "autoware_utils/ros/logger_level_configure.hpp"
 
 #include <autoware/freespace_planning_algorithms/astar_search.hpp>
 #include <autoware/freespace_planning_algorithms/rrtstar.hpp>
-#include <autoware/universe_utils/ros/polling_subscriber.hpp>
+#include <autoware_utils/ros/polling_subscriber.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -117,12 +117,10 @@ private:
 
   rclcpp::Subscription<LaneletRoute>::SharedPtr route_sub_;
 
-  autoware::universe_utils::InterProcessPollingSubscriber<OccupancyGrid> occupancy_grid_sub_{
+  autoware_utils::InterProcessPollingSubscriber<OccupancyGrid> occupancy_grid_sub_{
     this, "~/input/occupancy_grid"};
-  autoware::universe_utils::InterProcessPollingSubscriber<Scenario> scenario_sub_{
-    this, "~/input/scenario"};
-  autoware::universe_utils::InterProcessPollingSubscriber<
-    Odometry, autoware::universe_utils::polling_policy::All>
+  autoware_utils::InterProcessPollingSubscriber<Scenario> scenario_sub_{this, "~/input/scenario"};
+  autoware_utils::InterProcessPollingSubscriber<Odometry, autoware_utils::polling_policy::All>
     odom_sub_{this, "~/input/odometry", rclcpp::QoS{100}};
 
   rclcpp::TimerBase::SharedPtr timer_;
@@ -205,7 +203,7 @@ private:
 
   TransformStamped getTransform(const std::string & from, const std::string & to);
 
-  std::unique_ptr<autoware::universe_utils::LoggerLevelConfigure> logger_configure_;
+  std::unique_ptr<autoware_utils::LoggerLevelConfigure> logger_configure_;
 
   friend class ::TestFreespacePlanner;
 };
