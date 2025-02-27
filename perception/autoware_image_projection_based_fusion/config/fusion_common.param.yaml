@@ -2,9 +2,9 @@
   ros__parameters:
     # Example of how to set offset parameters (Check the readme for more information), both lidar and camera run in 10 hz.
     # msg3d's header timestamp: 0.000
-    # rois's header timestamp (camera 0-5):  0.059, 0.010, 0.026, 0.42, 0.076, 0.093
+    # rois's header timestamp (camera 0-5):  0.059, 0.010, 0.026, 0.042, 0.076, 0.093
     # offset = rois_timestamp- msg3d_timestamp
-    rois_timestamp_offsets: [0.059, 0.010, 0.026, 0.42, 0.076, 0.093]
+    rois_timestamp_offsets: [0.059, 0.010, 0.026, 0.042, 0.076, 0.093]
     rois_timeout_sec: 0.5
     msg3d_timeout_sec: 0.05
     image_buffer_size: 15
