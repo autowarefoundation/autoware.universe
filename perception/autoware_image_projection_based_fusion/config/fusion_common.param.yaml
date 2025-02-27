@@ -1,6 +1,6 @@
 /**:
   ros__parameters:
-    # Example of how to set offset parameters (Check the readme for more information)
+    # Example of how to set offset parameters (Check the readme for more information), both lidar and camera run in 10 hz.
     # msg3d's header timestamp: 0.000
     # rois's header timestamp (camera 0-5):  0.059, 0.010, 0.026, 0.42, 0.076, 0.093
     # offset = rois_timestamp- msg3d_timestamp
