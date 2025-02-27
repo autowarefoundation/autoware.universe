@@ -11,13 +11,13 @@
           "items": {
             "type": "number"
           },
-          "description": "An array of timestamp offsets for each camera [s].",
+          "description": "The timestamp offset between each RoIs and the msg3d in seconds.",
           "minItems": 2,
-          "default": [-0.002, 0.047, 0.078, 0.062, 0.015, 0.032]
+          "default": [0.059, 0.010, 0.026, 0.042, 0.076, 0.093]
         },
         "rois_timeout_sec": {
           "type": "number",
-          "description": "Timer's timeout duration in seconds when the collector created by rois msg.",
+          "description": "Timer's timeout duration in seconds when the collector created by RoIs msg.",
           "default": 0.5,
           "minimum": 0.001
         },
@@ -37,11 +37,6 @@
           "type": "array",
           "description": "An array of options indicating whether to project point to unrectified image or not.",
           "default": [false, false, false, false, false, false]
-        },
-        "debug_mode": {
-          "type": "boolean",
-          "description": "Whether to debug or not.",
-          "default": false
         },
         "filter_scope_min_x": {
           "type": "number",
@@ -87,6 +82,31 @@
           "type": "number",
           "description": "The height of grid cell used in approximated projection [pixel].",
           "default": 1.0
+        },
+        "debug_mode": {
+          "type": "boolean",
+          "description": "Flag to enable or disable debug message output.",
+          "default": false
+        },
+        "collector_debug_mode": {
+          "type": "boolean",
+          "description": "Flag to enable or disable collector's debug message output.",
+          "default": false
+        },
+        "publish_processing_time_detail": {
+          "type": "boolean",
+          "description": "Flag to publish detail message for processing time.",
+          "default": false
+        },
+        "publish_previous_but_late_output_msg": {
+          "type": "boolean",
+          "description": "Flag to indicate if the current fusion result should be published if its timestamp is earlier than the previous published fusion result.",
+          "default": false
+        },
+        "rosbag_length": {
+          "type": "number",
+          "description": "This value determine if the rosbag has started from the beginning again. The value should be set smaller than the actual length of the bag.",
+          "default": 10.0
         },
         "matching_strategy": {
           "type": "object",
