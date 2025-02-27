@@ -15,12 +15,17 @@
           "minItems": 2,
           "default": [-0.002, 0.047, 0.078, 0.062, 0.015, 0.032]
         },
-        "timeout_ms": {
+        "rois_timeout_sec": {
           "type": "number",
-          "description": "A timeout value can be assigned within a single frame [s].",
-          "default": 0.07,
-          "minimum": 0.001,
-          "maximum": 0.1
+          "description": "Timer's timeout duration in seconds when the collector created by rois msg.",
+          "default": 0.5,
+          "minimum": 0.001
+        },
+        "msg3d_timeout_sec": {
+          "type": "number",
+          "description": "Timer's timeout duration in seconds when the collector received msg3d.",
+          "default": 0.05,
+          "minimum": 0.001
         },
         "image_buffer_size": {
           "type": "integer",
