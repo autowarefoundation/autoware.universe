@@ -189,8 +189,12 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   }
 
   // Debugger
-  debugger_ = std::make_unique<TrackerDebugger>(*this, world_frame_id_, input_channels_config_);
+  debugger_ = std::make_unique<TrackerDebugger>(*this, world_frame_id_,input_channels_config_);
+
   published_time_publisher_ = std::make_unique<autoware_utils::PublishedTimePublisher>(this);
+  // Diagnostics
+  diagnostics_interface_ptr_ =
+  std::make_unique<autoware_utils::DiagnosticsInterface>(this, "multi_object_tracker");
 }
 
 void MultiObjectTracker::onTrigger()
@@ -237,6 +241,17 @@ void MultiObjectTracker::onTimer()
   // in this case, it will perform extrapolate/remove old objects
   const double maximum_publish_interval = publisher_period_ * maximum_publish_interval_ratio;
   should_publish = should_publish || elapsed_time > maximum_publish_interval;
+
+  diagnostics_interface_ptr_->clear();
+  diagnostics_interface_ptr_->add_key_value("elapsed_time", elapsed_time);
+  if (elapsed_time > 500e-3) {
+    std::stringstream message;
+    message << "MultiObjectTracker::onTimer: elapsed_time exceeds its maximum value, "
+            << "which may limit the predition performance.";
+    diagnostics_interface_ptr_->update_level_and_message(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+  }
+  diagnostics_interface_ptr_->publish(current_time);
 
   // Publish with delay compensation to the current time
   if (should_publish) checkAndPublish(current_time);

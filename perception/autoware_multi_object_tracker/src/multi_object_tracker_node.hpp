@@ -22,6 +22,7 @@
 #include "autoware/multi_object_tracker/object_model/types.hpp"
 #include "autoware/multi_object_tracker/odometry.hpp"
 #include "autoware/multi_object_tracker/tracker/model/tracker_base.hpp"
+
 #include "debugger/debugger.hpp"
 #include "processor/input_manager.hpp"
 #include "processor/processor.hpp"
@@ -30,6 +31,7 @@
 
 #include "autoware_perception_msgs/msg/detected_objects.hpp"
 #include "autoware_perception_msgs/msg/tracked_objects.hpp"
+#include <autoware_utils/ros/diagnostics_interface.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 
 #include <tf2/LinearMath/Transform.h>
@@ -68,6 +70,8 @@ private:
   // debugger
   std::unique_ptr<TrackerDebugger> debugger_;
   std::unique_ptr<autoware_utils::PublishedTimePublisher> published_time_publisher_;
+  // diagnostics
+  std::unique_ptr<autoware_utils::DiagnosticsInterface> diagnostics_interface_ptr_;
 
   // publish timer
   rclcpp::TimerBase::SharedPtr publish_timer_;
