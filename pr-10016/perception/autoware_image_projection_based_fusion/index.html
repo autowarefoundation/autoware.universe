@@ -14408,14 +14408,14 @@
 <tr>
 <td>rois_timestamp_offsets</td>
 <td>array</td>
-<td>An array of timestamp offsets for each camera [s].</td>
-<td>[-0.002, 0.047, 0.078, 0.062, 0.015, 0.032]</td>
+<td>The timestamp offset between each RoIs and the msg3d in seconds.</td>
+<td>[0.059, 0.01, 0.026, 0.042, 0.076, 0.093]</td>
 <td>N/A</td>
 </tr>
 <tr>
 <td>rois_timeout_sec</td>
 <td>float</td>
-<td>Timer's timeout duration in seconds when the collector created by rois msg.</td>
+<td>Timer's timeout duration in seconds when the collector created by RoIs msg.</td>
 <td>0.5</td>
 <td>≥0.001</td>
 </tr>
@@ -14438,13 +14438,6 @@
 <td>array</td>
 <td>An array of options indicating whether to project point to unrectified image or not.</td>
 <td>[False, False, False, False, False, False]</td>
-<td>N/A</td>
-</tr>
-<tr>
-<td>debug_mode</td>
-<td>boolean</td>
-<td>Whether to debug or not.</td>
-<td>False</td>
 <td>N/A</td>
 </tr>
 <tr>
@@ -14508,6 +14501,41 @@
 <td>float</td>
 <td>The height of grid cell used in approximated projection [pixel].</td>
 <td>1.0</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>debug_mode</td>
+<td>boolean</td>
+<td>Flag to enable or disable debug message output.</td>
+<td>False</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>collector_debug_mode</td>
+<td>boolean</td>
+<td>Flag to enable or disable collector's debug message output.</td>
+<td>False</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>publish_processing_time_detail</td>
+<td>boolean</td>
+<td>Flag to publish detail message for processing time.</td>
+<td>False</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>publish_previous_but_late_output_msg</td>
+<td>boolean</td>
+<td>Flag to indicate if the current fusion result should be published if its timestamp is earlier than the previous published fusion result.</td>
+<td>False</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>rosbag_length</td>
+<td>float</td>
+<td>This value determine if the rosbag has started from the beginning again. The value should be set smaller than the actual length of the bag.</td>
+<td>10.0</td>
 <td>N/A</td>
 </tr>
 <tr>
