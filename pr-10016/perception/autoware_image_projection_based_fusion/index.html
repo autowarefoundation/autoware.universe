@@ -14413,11 +14413,18 @@
 <td>N/A</td>
 </tr>
 <tr>
-<td>timeout_ms</td>
+<td>rois_timeout_sec</td>
 <td>float</td>
-<td>A timeout value can be assigned within a single frame [s].</td>
-<td>0.07</td>
-<td>≥0.001<br>≤0.1</td>
+<td>Timer's timeout duration in seconds when the collector created by rois msg.</td>
+<td>0.5</td>
+<td>≥0.001</td>
+</tr>
+<tr>
+<td>msg3d_timeout_sec</td>
+<td>float</td>
+<td>Timer's timeout duration in seconds when the collector received msg3d.</td>
+<td>0.05</td>
+<td>≥0.001</td>
 </tr>
 <tr>
 <td>image_buffer_size</td>
