@@ -14340,7 +14340,7 @@
 <span class="n">autoware</span><span class="o">::</span><span class="n">rtc_interface</span><span class="o">::</span><span class="n">RTCInterface</span><span class="w"> </span><span class="n">rtc_interface</span><span class="p">(</span><span class="n">node</span><span class="p">,</span><span class="w"> </span><span class="s">"intersection"</span><span class="p">);</span>
 
 <span class="c1">// Generate UUID</span>
-<span class="k">const</span><span class="w"> </span><span class="n">unique_identifier_msgs</span><span class="o">::</span><span class="n">msg</span><span class="o">::</span><span class="n">UUID</span><span class="w"> </span><span class="n">uuid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">generateUUID</span><span class="p">(</span><span class="n">getModuleId</span><span class="p">());</span>
+<span class="k">const</span><span class="w"> </span><span class="n">unique_identifier_msgs</span><span class="o">::</span><span class="n">msg</span><span class="o">::</span><span class="n">UUID</span><span class="w"> </span><span class="n">uuid</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="n">generate_uuid</span><span class="p">(</span><span class="n">getModuleId</span><span class="p">());</span>
 
 <span class="c1">// Repeat while module is running</span>
 <span class="k">while</span><span class="w"> </span><span class="p">(...)</span><span class="w"> </span><span class="p">{</span>
