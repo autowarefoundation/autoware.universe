@@ -22,16 +22,13 @@
 
   <!-- ML parameters -->
   <arg name="whole_image_detection/model_path"/>
-  <arg name="whole_image_detection/model_name"/>
-  <arg name="whole_image_detection/label_name"/>
+  <arg name="whole_image_detection/label_path"/>
   <arg name="fine_detection/model_path"/>
-  <arg name="fine_detection/model_name"/>
-  <arg name="fine_detection/label_name"/>
-  <arg name="classification/model_path"/>
-  <arg name="classification/car/model_name"/>
-  <arg name="classification/car/label_name"/>
-  <arg name="classification/pedestrian/model_name"/>
-  <arg name="classification/pedestrian/label_name"/>
+  <arg name="fine_detection/label_path"/>
+  <arg name="classification/car/model_path"/>
+  <arg name="classification/car/label_path"/>
+  <arg name="classification/pedestrian/model_path"/>
+  <arg name="classification/pedestrian/label_path"/>
 
   <!-- topic -->
   <arg name="input/vector_map" default="/map/vector_map" description="input vector map topic"/>
@@ -60,16 +57,13 @@
       <arg name="use_high_performance_detection" value="$(var use_high_performance_detection)"/>
       <arg name="high_performance_detection_type" value="$(var high_performance_detection_type)"/>
       <arg name="whole_image_detection/model_path" value="$(var whole_image_detection/model_path)"/>
-      <arg name="whole_image_detection/model_name" value="$(var whole_image_detection/model_name)"/>
-      <arg name="whole_image_detection/label_name" value="$(var whole_image_detection/label_name)"/>
+      <arg name="whole_image_detection/label_path" value="$(var whole_image_detection/label_path)"/>
       <arg name="fine_detection/model_path" value="$(var fine_detection/model_path)"/>
-      <arg name="fine_detection/model_name" value="$(var fine_detection/model_name)"/>
-      <arg name="fine_detection/label_name" value="$(var fine_detection/label_name)"/>
-      <arg name="classification/model_path" value="$(var classification/model_path)"/>
-      <arg name="classification/car/model_name" value="$(var classification/car/model_name)"/>
-      <arg name="classification/car/label_name" value="$(var classification/car/label_name)"/>
-      <arg name="classification/pedestrian/model_name" value="$(var classification/pedestrian/model_name)"/>
-      <arg name="classification/pedestrian/label_name" value="$(var classification/pedestrian/label_name)"/>
+      <arg name="fine_detection/label_path" value="$(var fine_detection/label_path)"/>
+      <arg name="classification/car/model_path" value="$(var classification/car/model_path)"/>
+      <arg name="classification/car/label_path" value="$(var classification/car/label_path)"/>
+      <arg name="classification/pedestrian/model_path" value="$(var classification/pedestrian/model_path)"/>
+      <arg name="classification/pedestrian/label_path" value="$(var classification/pedestrian/label_path)"/>
       <arg name="traffic_light_fine_detector_param_path" value="$(var traffic_light_fine_detector_param_path)"/>
       <arg name="yolox_traffic_light_detector_param_path" value="$(var yolox_traffic_light_detector_param_path)"/>
       <arg name="car_traffic_light_classifier_param_path" value="$(var car_traffic_light_classifier_param_path)"/>

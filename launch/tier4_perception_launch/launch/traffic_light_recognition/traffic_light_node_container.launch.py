@@ -33,6 +33,11 @@ import yaml
 
 
 def launch_setup(context, *args, **kwargs):
+    high_performance_detection_type = LaunchConfiguration("high_performance_detection_type").perform(context)
+    assert high_performance_detection_type in [
+        "whole_image_detection",
+        "fine_detection",
+    ], f"high_performance_detection_type must be either 'whole_image_detection' or 'fine_detection'."
 
     # Load camera namespaces
     camera_namespaces = LaunchConfiguration("camera_namespaces").perform(context)
@@ -102,56 +107,6 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
         allow_substs=True,
     )
 
-    # ML model parameters
-    whole_image_detector_label_path = PathJoinSubstitution(
-        [
-            LaunchConfiguration("whole_image_detection/model_path"),
-            LaunchConfiguration("whole_image_detection/label_name"),
-        ]
-    )
-    whole_image_detector_model_path = PathJoinSubstitution(
-        [
-            LaunchConfiguration("whole_image_detection/model_path"),
-            LaunchConfiguration("whole_image_detection/model_name"),
-        ]
-    )
-    fine_detector_label_path = PathJoinSubstitution(
-        [
-            LaunchConfiguration("fine_detection/model_path"),
-            LaunchConfiguration("fine_detection/label_name"),
-        ]
-    )
-    fine_detector_model_path = PathJoinSubstitution(
-        [
-            LaunchConfiguration("fine_detection/model_path"),
-            LaunchConfiguration("fine_detection/model_name"),
-        ]
-    )
-    car_classifier_label_path = PathJoinSubstitution(
-        [
-            LaunchConfiguration("classification/model_path"),
-            LaunchConfiguration("classification/car/label_name"),
-        ]
-    )
-    car_classifier_model_path = PathJoinSubstitution(
-        [
-            LaunchConfiguration("classification/model_path"),
-            LaunchConfiguration("classification/car/model_name"),
-        ]
-    )
-    pedestrian_classifier_label_path = PathJoinSubstitution(
-        [
-            LaunchConfiguration("classification/model_path"),
-            LaunchConfiguration("classification/pedestrian/label_name"),
-        ]
-    )
-    pedestrian_classifier_model_path = PathJoinSubstitution(
-        [
-            LaunchConfiguration("classification/model_path"),
-            LaunchConfiguration("classification/pedestrian/model_name"),
-        ]
-    )
-
     container = ComposableNodeContainer(
         name="traffic_light_node_container",
         namespace="",
@@ -167,8 +122,8 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
                     car_traffic_light_classifier_param,
                     {
                         "build_only": False,
-                        "label_path": car_classifier_label_path,
-                        "model_path": car_classifier_model_path,
+                        "label_path": LaunchConfiguration("classification/car/label_path"),
+                        "model_path": LaunchConfiguration("classification/car/model_path"),
                     },
                 ],
                 remappings=[
@@ -189,8 +144,8 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
                     pedestrian_traffic_light_classifier_param,
                     {
                         "build_only": False,
-                        "label_path": pedestrian_classifier_label_path,
-                        "model_path": pedestrian_classifier_model_path,
+                        "label_path": LaunchConfiguration("classification/pedestrian/label_path"),
+                        "model_path": LaunchConfiguration("classification/pedestrian/model_path"),
                     },
                 ],
                 remappings=[
@@ -263,8 +218,8 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
                     traffic_light_fine_detector_param,
                     {
                         "build_only": False,
-                        "label_path": fine_detector_label_path,
-                        "model_path": fine_detector_model_path,
+                        "label_path": LaunchConfiguration("fine_detection/label_path"),
+                        "model_path": LaunchConfiguration("fine_detection/model_path"),
                     },
                 ],
                 remappings=[
@@ -302,8 +257,8 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
                     traffic_light_whole_image_detector_param,
                     {
                         "build_only": False,
-                        "label_path": whole_image_detector_label_path,
-                        "model_path": whole_image_detector_model_path,
+                        "label_path": LaunchConfiguration("whole_image_detection/label_path"),
+                        "model_path": LaunchConfiguration("whole_image_detection/model_path"),
                         "color_map_path": "",  # not used
                     },
                 ],
@@ -388,22 +343,19 @@ def generate_launch_description():
 
     # whole image detector by yolox
     add_launch_arg("whole_image_detection/model_path")
-    add_launch_arg("whole_image_detection/model_name")
-    add_launch_arg("whole_image_detection/label_name")
+    add_launch_arg("whole_image_detection/label_path")
     add_launch_arg("yolox_traffic_light_detector_param_path")
 
     # traffic_light_fine_detector
     add_launch_arg("fine_detection/model_path")
-    add_launch_arg("fine_detection/model_name")
-    add_launch_arg("fine_detection/label_name")
+    add_launch_arg("fine_detection/label_path")
     add_launch_arg("traffic_light_fine_detector_param_path")
 
     # traffic_light_classifier
-    add_launch_arg("classification/model_path")
-    add_launch_arg("classification/car/model_name")
-    add_launch_arg("classification/car/label_name")
-    add_launch_arg("classification/pedestrian/model_name")
-    add_launch_arg("classification/pedestrian/label_name")
+    add_launch_arg("classification/car/model_path")
+    add_launch_arg("classification/car/label_path")
+    add_launch_arg("classification/pedestrian/model_path")
+    add_launch_arg("classification/pedestrian/label_path")
     add_launch_arg("car_traffic_light_classifier_param_path")
     add_launch_arg("pedestrian_traffic_light_classifier_param_path")
 
