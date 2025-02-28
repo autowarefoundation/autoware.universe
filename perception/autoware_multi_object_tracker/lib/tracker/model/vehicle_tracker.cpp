@@ -133,7 +133,16 @@ VehicleTracker::VehicleTracker(
 
 bool VehicleTracker::predict(const rclcpp::Time & time)
 {
-  return motion_model_.predictState(time);
+  bool success = motion_model_.predictState(time);
+  if (!success) {
+    return false;
+  }
+  // // update object
+  // object_.pose.position.x = motion_model_.getStateElement(IDX::X);
+  // object_.pose.position.y = motion_.getStateElement(IDX::Y);
+  // object_.pose.orientation = tf2::toMsg(
+  //   Eigen::AngleAxisd(motion_model_.getStateElement(IDX::YAW), Eigen::Vector3d::UnitZ()));
+  return true;
 }
 
 types::DynamicObject VehicleTracker::getUpdatingObject(
@@ -141,18 +150,9 @@ types::DynamicObject VehicleTracker::getUpdatingObject(
 {
   types::DynamicObject updating_object = object;
 
-  // current (predicted) state
-  const double tracked_x = motion_model_.getStateElement(IDX::X);
-  const double tracked_y = motion_model_.getStateElement(IDX::Y);
-  const double tracked_yaw = motion_model_.getStateElement(IDX::YAW);
-
   // get offset measurement
-  const int nearest_corner_index = shapes::getNearestCornerOrSurface(
-    tracked_x, tracked_y, tracked_yaw, object_.shape.dimensions.y, object_.shape.dimensions.x,
-    self_transform);
-  shapes::calcAnchorPointOffset(
-    object_.shape.dimensions.y, object_.shape.dimensions.x, nearest_corner_index, object,
-    tracked_yaw, updating_object, tracking_offset_);
+  const Eigen::Vector2d anchor_vector = shapes::getNearestCornerOrSurface(object, self_transform);
+  shapes::calcAnchorPointOffset(object_, object, anchor_vector, tracking_offset_, updating_object);
 
   return updating_object;
 }

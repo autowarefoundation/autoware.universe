@@ -22,6 +22,7 @@
 #include <autoware_perception_msgs/msg/shape.hpp>
 #include <autoware_perception_msgs/msg/tracked_object.hpp>
 #include <autoware_perception_msgs/msg/tracked_object_kinematics.hpp>
+#include <geometry_msgs/msg/point.hpp>
 #include <geometry_msgs/msg/polygon.hpp>
 #include <geometry_msgs/msg/pose_with_covariance.hpp>
 #include <geometry_msgs/msg/twist_with_covariance.hpp>
@@ -88,6 +89,7 @@ struct DynamicObject
 
   // object extension (size and shape)
   autoware_perception_msgs::msg::Shape shape;
+  geometry_msgs::msg::Point anchor_point;
 };
 
 struct DynamicObjectList
