@@ -140,7 +140,7 @@ void TrackerObjectDebugger::process()
   if (object_data_list_.empty()) return;
 
   // update uuid_int
-  for (auto & object_data : object_data_list_) {
+  for (const auto & object_data : object_data_list_) {
     current_ids_.insert(uuidToInt(object_data.uuid));
   }
 

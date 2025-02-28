@@ -111,7 +111,7 @@ void TrackerProcessor::spawn(
       new_object.channel_index, new_object.existence_probability);
 
     // Update the tracker with the new object
-    if (tracker) list_tracker_.push_back(tracker);
+    list_tracker_.push_back(tracker);
   }
 }
 
