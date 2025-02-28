@@ -19,6 +19,9 @@
     <remap from="~/in/image" to="$(var input/image)"/>
     <remap from="~/out/objects" to="$(var output/objects)"/>
     <param from="$(var yolox_param_path)" allow_substs="true"/>
+    <param name="model_path" value="$(var data_path)/tensorrt_yolox/$(var model_name).onnx"/>
+    <param name="label_path" value="$(var data_path)/tensorrt_yolox/label.txt"/>
+    <param name="color_map_path" value="$(var data_path)/tensorrt_yolox/semseg_color_map.txt"/>
     <param name="build_only" value="$(var build_only)"/>
   </node>
 </launch>

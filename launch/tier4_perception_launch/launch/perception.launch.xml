@@ -111,21 +111,21 @@
   <arg name="use_traffic_light_recognition"/>
   <arg name="traffic_light_recognition/fusion_only"/>
   <arg name="traffic_light_recognition/camera_namespace"/>
-  <arg name="traffic_light_recognition/use_high_performance_detector"/>
-  <arg name="traffic_light_recognition/high_performance_detector_type"/>
+  <arg name="traffic_light_recognition/use_high_performance_detection"/>
+  <arg name="traffic_light_recognition/high_performance_detection_type"/>
 
   <!-- traffic light recognition parameters -->
-  <arg name="traffic_light_recognition/whole_image_detector/model_path"/>
-  <arg name="traffic_light_recognition/whole_image_detector/model_name"/>
-  <arg name="traffic_light_recognition/whole_image_detector/label_name"/>
-  <arg name="traffic_light_recognition/fine_detector/model_path"/>
-  <arg name="traffic_light_recognition/fine_detector/model_name"/>
-  <arg name="traffic_light_recognition/fine_detector/label_name"/>
-  <arg name="traffic_light_recognition/classifier/model_path"/>
-  <arg name="traffic_light_recognition/classifier/car/model_name"/>
-  <arg name="traffic_light_recognition/classifier/car/label_name"/>
-  <arg name="traffic_light_recognition/classifier/pedestrian/model_name"/>
-  <arg name="traffic_light_recognition/classifier/pedestrian/label_name"/>
+  <arg name="traffic_light_recognition/whole_image_detection/model_path"/>
+  <arg name="traffic_light_recognition/whole_image_detection/model_name"/>
+  <arg name="traffic_light_recognition/whole_image_detection/label_name"/>
+  <arg name="traffic_light_recognition/fine_detection/model_path"/>
+  <arg name="traffic_light_recognition/fine_detection/model_name"/>
+  <arg name="traffic_light_recognition/fine_detection/label_name"/>
+  <arg name="traffic_light_recognition/classification/model_path"/>
+  <arg name="traffic_light_recognition/classification/car/model_name"/>
+  <arg name="traffic_light_recognition/classification/car/label_name"/>
+  <arg name="traffic_light_recognition/classification/pedestrian/model_name"/>
+  <arg name="traffic_light_recognition/classification/pedestrian/label_name"/>
 
   <!-- Whether to use detection by tracker -->
   <arg name="use_detection_by_tracker" default="true"/>
@@ -326,19 +326,19 @@
         <arg name="crosswalk_traffic_light_estimator_param_path" value="$(var crosswalk_traffic_light_estimator_param_path)"/>
         <arg name="fusion_only" value="$(var traffic_light_recognition/fusion_only)"/>
         <arg name="camera_namespaces" value="$(var traffic_light_recognition/camera_namespace)"/>
-        <arg name="use_high_performance_detector" value="$(var traffic_light_recognition/use_high_performance_detector)"/>
-        <arg name="high_performance_detector_type" value="$(var traffic_light_recognition/high_performance_detector_type)"/>
-        <arg name="whole_image_detector/model_path" value="$(var traffic_light_recognition/whole_image_detector/model_path)"/>
-        <arg name="whole_image_detector/model_name" value="$(var traffic_light_recognition/whole_image_detector/model_name)"/>
-        <arg name="whole_image_detector/label_name" value="$(var traffic_light_recognition/whole_image_detector/label_name)"/>
-        <arg name="fine_detector/model_path" value="$(var traffic_light_recognition/fine_detector/model_path)"/>
-        <arg name="fine_detector/model_name" value="$(var traffic_light_recognition/fine_detector/model_name)"/>
-        <arg name="fine_detector/label_name" value="$(var traffic_light_recognition/fine_detector/label_name)"/>
-        <arg name="classifier/model_path" value="$(var traffic_light_recognition/classifier/model_path)"/>
-        <arg name="classifier/car/model_name" value="$(var traffic_light_recognition/classifier/car/model_name)"/>
-        <arg name="classifier/car/label_name" value="$(var traffic_light_recognition/classifier/car/label_name)"/>
-        <arg name="classifier/pedestrian/model_name" value="$(var traffic_light_recognition/classifier/pedestrian/model_name)"/>
-        <arg name="classifier/pedestrian/label_name" value="$(var traffic_light_recognition/classifier/pedestrian/label_name)"/>
+        <arg name="use_high_performance_detection" value="$(var traffic_light_recognition/use_high_performance_detection)"/>
+        <arg name="high_performance_detection_type" value="$(var traffic_light_recognition/high_performance_detection_type)"/>
+        <arg name="whole_image_detection/model_path" value="$(var traffic_light_recognition/whole_image_detection/model_path)"/>
+        <arg name="whole_image_detection/model_name" value="$(var traffic_light_recognition/whole_image_detection/model_name)"/>
+        <arg name="whole_image_detection/label_name" value="$(var traffic_light_recognition/whole_image_detection/label_name)"/>
+        <arg name="fine_detection/model_path" value="$(var traffic_light_recognition/fine_detection/model_path)"/>
+        <arg name="fine_detection/model_name" value="$(var traffic_light_recognition/fine_detection/model_name)"/>
+        <arg name="fine_detection/label_name" value="$(var traffic_light_recognition/fine_detection/label_name)"/>
+        <arg name="classification/model_path" value="$(var traffic_light_recognition/classification/model_path)"/>
+        <arg name="classification/car/model_name" value="$(var traffic_light_recognition/classification/car/model_name)"/>
+        <arg name="classification/car/label_name" value="$(var traffic_light_recognition/classification/car/label_name)"/>
+        <arg name="classification/pedestrian/model_name" value="$(var traffic_light_recognition/classification/pedestrian/model_name)"/>
+        <arg name="classification/pedestrian/label_name" value="$(var traffic_light_recognition/classification/pedestrian/label_name)"/>
       </include>
     </group>
   </group>

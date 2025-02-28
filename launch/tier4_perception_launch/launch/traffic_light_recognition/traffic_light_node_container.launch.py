@@ -107,50 +107,50 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
     # ML model parameters
     whole_image_detector_label_path = PathJoinSubstitution(
         [
-            LaunchConfiguration("whole_image_detector/model_path"),
-            LaunchConfiguration("whole_image_detector/label_name"),
+            LaunchConfiguration("whole_image_detection/model_path"),
+            LaunchConfiguration("whole_image_detection/label_name"),
         ]
     )
     whole_image_detector_model_path = PathJoinSubstitution(
         [
-            LaunchConfiguration("whole_image_detector/model_path"),
-            LaunchConfiguration("whole_image_detector/model_name"),
+            LaunchConfiguration("whole_image_detection/model_path"),
+            LaunchConfiguration("whole_image_detection/model_name"),
         ]
     )
     fine_detector_label_path = PathJoinSubstitution(
         [
-            LaunchConfiguration("fine_detector/model_path"),
-            LaunchConfiguration("fine_detector/label_name"),
+            LaunchConfiguration("fine_detection/model_path"),
+            LaunchConfiguration("fine_detection/label_name"),
         ]
     )
     fine_detector_model_path = PathJoinSubstitution(
         [
-            LaunchConfiguration("fine_detector/model_path"),
-            LaunchConfiguration("fine_detector/model_name"),
+            LaunchConfiguration("fine_detection/model_path"),
+            LaunchConfiguration("fine_detection/model_name"),
         ]
     )
     car_classifier_label_path = PathJoinSubstitution(
         [
-            LaunchConfiguration("classifier/model_path"),
-            LaunchConfiguration("classifier/car/label_name"),
+            LaunchConfiguration("classification/model_path"),
+            LaunchConfiguration("classification/car/label_name"),
         ]
     )
     car_classifier_model_path = PathJoinSubstitution(
         [
-            LaunchConfiguration("classifier/model_path"),
-            LaunchConfiguration("classifier/car/model_name"),
+            LaunchConfiguration("classification/model_path"),
+            LaunchConfiguration("classification/car/model_name"),
         ]
     )
     pedestrian_classifier_label_path = PathJoinSubstitution(
         [
-            LaunchConfiguration("classifier/model_path"),
-            LaunchConfiguration("classifier/pedestrian/label_name"),
+            LaunchConfiguration("classification/model_path"),
+            LaunchConfiguration("classification/pedestrian/label_name"),
         ]
     )
     pedestrian_classifier_model_path = PathJoinSubstitution(
         [
-            LaunchConfiguration("classifier/model_path"),
-            LaunchConfiguration("classifier/pedestrian/model_name"),
+            LaunchConfiguration("classification/model_path"),
+            LaunchConfiguration("classification/pedestrian/model_name"),
         ]
     )
 
@@ -285,20 +285,20 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
             PythonExpression(
                 [
                     "'",
-                    LaunchConfiguration("high_performance_detector_type"),
-                    "' == 'fine_detector' ",
+                    LaunchConfiguration("high_performance_detection_type"),
+                    "' == 'fine_detection' ",
                 ]
             )
         ),
     )
 
-    internal_topic = "whole_image/rois"
+    internal_node_name = "traffic_light_whole_image_detector"
     whole_img_detector_loader = LoadComposableNodes(
         composable_node_descriptions=[
             ComposableNode(
                 package="autoware_tensorrt_yolox",
                 plugin="autoware::tensorrt_yolox::TrtYoloXNode",
-                name="traffic_light_whole_image_detector",
+                name=internal_node_name,
                 namespace=f"{namespace}/detection",
                 parameters=[
                     traffic_light_whole_image_detector_param,
@@ -310,17 +310,17 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
                 ],
                 remappings=[
                     ("~/in/image", camera_arguments["input/image"]),
-                    ("~/out/objects", internal_topic),
-                    ("~/out/image", internal_topic + "/debug/image"),
+                    ("~/out/objects", internal_node_name),
+                    ("~/out/image", internal_node_name + "/debug/image"),
                     (
                         "~/out/image/compressed",
-                        internal_topic + "/debug/image/compressed",
+                        internal_node_name + "/debug/image/compressed",
                     ),
                     (
                         "~/out/image/compressedDepth",
-                        internal_topic + "/debug/image/compressedDepth",
+                        internal_node_name + "/debug/image/compressedDepth",
                     ),
-                    ("~/out/image/theora", internal_topic + "/debug/image/theora"),
+                    ("~/out/image/theora", internal_node_name + "/debug/image/theora"),
                 ],
                 extra_arguments=[
                     {"use_intra_process_comms": LaunchConfiguration("use_intra_process")}
@@ -333,7 +333,7 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
                 namespace=f"{namespace}/detection",
                 parameters=[traffic_light_selector_param],
                 remappings=[
-                    ("input/detected_rois", internal_topic),
+                    ("input/detected_rois", internal_node_name),
                     ("input/rough_rois", "rough/rois"),
                     ("input/expect_rois", "expect/rois"),
                     ("input/camera_info", camera_arguments["input/camera_info"]),
@@ -358,8 +358,8 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
             PythonExpression(
                 [
                     "'",
-                    LaunchConfiguration("high_performance_detector_type"),
-                    "' == 'whole_image_detector' ",
+                    LaunchConfiguration("high_performance_detection_type"),
+                    "' == 'whole_image_detection' ",
                 ]
             )
         ),
@@ -384,27 +384,27 @@ def generate_launch_description():
 
     add_launch_arg("enable_image_decompressor")
     add_launch_arg("camera_namespaces")
-    add_launch_arg("use_high_performance_detector")
-    add_launch_arg("high_performance_detector_type")
+    add_launch_arg("use_high_performance_detection")
+    add_launch_arg("high_performance_detection_type")
 
     # whole image detector by yolox
-    add_launch_arg("whole_image_detector/model_path")
-    add_launch_arg("whole_image_detector/model_name")
-    add_launch_arg("whole_image_detector/label_name")
+    add_launch_arg("whole_image_detection/model_path")
+    add_launch_arg("whole_image_detection/model_name")
+    add_launch_arg("whole_image_detection/label_name")
     add_launch_arg("yolox_traffic_light_detector_param_path")
 
     # traffic_light_fine_detector
-    add_launch_arg("fine_detector/model_path")
-    add_launch_arg("fine_detector/model_name")
-    add_launch_arg("fine_detector/label_name")
+    add_launch_arg("fine_detection/model_path")
+    add_launch_arg("fine_detection/model_name")
+    add_launch_arg("fine_detection/label_name")
     add_launch_arg("traffic_light_fine_detector_param_path")
 
     # traffic_light_classifier
-    add_launch_arg("classifier/model_path")
-    add_launch_arg("classifier/car/model_name")
-    add_launch_arg("classifier/car/label_name")
-    add_launch_arg("classifier/pedestrian/model_name")
-    add_launch_arg("classifier/pedestrian/label_name")
+    add_launch_arg("classification/model_path")
+    add_launch_arg("classification/car/model_name")
+    add_launch_arg("classification/car/label_name")
+    add_launch_arg("classification/pedestrian/model_name")
+    add_launch_arg("classification/pedestrian/label_name")
     add_launch_arg("car_traffic_light_classifier_param_path")
     add_launch_arg("pedestrian_traffic_light_classifier_param_path")
 

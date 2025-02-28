@@ -32,12 +32,12 @@ def create_traffic_light_map_based_detector(namespace, context):
 
     output_rois = (
         "rough/rois"
-        if IfCondition(LaunchConfiguration("use_high_performance_detector")).evaluate(context)
+        if IfCondition(LaunchConfiguration("use_high_performance_detection")).evaluate(context)
         else f"/perception/traffic_light_recognition/{namespace}/detection/rois"
     )
 
     each_namespace_param_path = LaunchConfiguration("param_path").perform(context)
-    each_namespace_param_path = each_namespace_param_path.replace("NAMESPACE", namespace)
+    each_namespace_param_path = each_namespace_param_path.replace("TRAFFIC_LIGHT_RECOGNITION_CAMERA_NAMESPACE", namespace)
     arguments = {
         "input/vector_map": LaunchConfiguration("input/vector_map"),
         "input/camera_info": f"/sensing/camera/{namespace}/camera_info",
@@ -93,7 +93,7 @@ def generate_launch_description():
     add_launch_arg("camera_namespaces")
     add_launch_arg("input/vector_map")
     add_launch_arg("input/route")
-    add_launch_arg("use_high_performance_detector")
+    add_launch_arg("use_high_performance_detection")
     add_launch_arg("param_path")
 
     return launch.LaunchDescription(

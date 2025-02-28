@@ -18,7 +18,6 @@
 
 
     # default params of tensorrt_yolox package, only effective for semseg model
-    color_map_path: "$(var data_path)/tensorrt_yolox/semseg_color_map.csv"
     is_roi_overlap_segment: false
     overlap_roi_score_threshold: 0.3
     is_publish_color_mask: false
