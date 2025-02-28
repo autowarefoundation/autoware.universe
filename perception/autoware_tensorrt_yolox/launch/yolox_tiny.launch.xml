@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <launch>
-  <!-- cspell: ignore semseg, finetune  -->
+  <!-- cspell: ignore semseg -->
   <arg name="input/image" default="/sensing/camera/camera0/image_rect_color"/>
   <arg name="output/objects" default="/perception/object_recognition/detection/rois0"/>
   <arg name="model_name" default="yolox-tiny"/>
