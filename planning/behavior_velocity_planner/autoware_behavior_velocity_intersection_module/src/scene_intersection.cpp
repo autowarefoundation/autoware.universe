@@ -19,11 +19,11 @@
 #include <autoware/behavior_velocity_planner_common/utilization/boost_geometry_helper.hpp>  // for toGeomPoly
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
-#include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>  // for toPolygon2d
-#include <autoware/universe_utils/geometry/geometry.hpp>
-#include <autoware/universe_utils/ros/uuid_helper.hpp>
 #include <autoware_lanelet2_extension/regulatory_elements/autoware_traffic_light.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
+#include <autoware_utils/geometry/boost_polygon_utils.hpp>  // for toPolygon2d
+#include <autoware_utils/geometry/geometry.hpp>
+#include <autoware_utils/ros/uuid_helper.hpp>
 
 #include <boost/geometry/algorithms/within.hpp>
 
@@ -50,7 +50,7 @@ IntersectionModule::IntersectionModule(
   const PlannerParam & planner_param, const std::set<lanelet::Id> & associative_ids,
   const std::string & turn_direction, const bool has_traffic_light, rclcpp::Node & node,
   const rclcpp::Logger logger, const rclcpp::Clock::SharedPtr clock,
-  const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+  const std::shared_ptr<autoware_utils::TimeKeeper> time_keeper,
   const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
     planning_factor_interface)
 : SceneModuleInterfaceWithRTC(module_id, logger, clock, time_keeper, planning_factor_interface),
@@ -59,7 +59,7 @@ IntersectionModule::IntersectionModule(
   associative_ids_(associative_ids),
   turn_direction_(turn_direction),
   has_traffic_light_(has_traffic_light),
-  occlusion_uuid_(autoware::universe_utils::generateUUID())
+  occlusion_uuid_(autoware_utils::generate_uuid())
 {
   {
     collision_state_machine_.setMarginTime(

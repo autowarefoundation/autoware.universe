@@ -17,7 +17,7 @@
   <depend>autoware_internal_debug_msgs</depend>
   <depend>autoware_perception_msgs</depend>
   <depend>autoware_tensorrt_common</depend>
-  <depend>autoware_universe_utils</depend>
+  <depend>autoware_utils</depend>
   <depend>libpcl-all-dev</depend>
   <depend>pcl_conversions</depend>
   <depend>rclcpp</depend>

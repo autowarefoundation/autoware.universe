@@ -14,7 +14,7 @@
 
 #include "autoware/mrm_comfortable_stop_operator/mrm_comfortable_stop_operator_core.hpp"
 
-#include <autoware/universe_utils/ros/update_param.hpp>
+#include <autoware_utils/ros/update_param.hpp>
 
 #include <vector>
 
@@ -76,10 +76,10 @@ void MrmComfortableStopOperator::operateComfortableStop(
 rcl_interfaces::msg::SetParametersResult MrmComfortableStopOperator::onParameter(
   const std::vector<rclcpp::Parameter> & parameters)
 {
-  using autoware::universe_utils::updateParam;
-  updateParam<double>(parameters, "min_acceleration", params_.min_acceleration);
-  updateParam<double>(parameters, "max_jerk", params_.max_jerk);
-  updateParam<double>(parameters, "min_jerk", params_.min_jerk);
+  using autoware_utils::update_param;
+  update_param<double>(parameters, "min_acceleration", params_.min_acceleration);
+  update_param<double>(parameters, "max_jerk", params_.max_jerk);
+  update_param<double>(parameters, "min_jerk", params_.min_jerk);
 
   rcl_interfaces::msg::SetParametersResult result;
   result.successful = true;

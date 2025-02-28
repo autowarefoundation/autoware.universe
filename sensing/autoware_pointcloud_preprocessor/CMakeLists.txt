@@ -42,7 +42,7 @@ ament_target_dependencies(pointcloud_preprocessor_filter_base
   rclcpp
   sensor_msgs
   tf2_ros
-  autoware_universe_utils
+  autoware_utils
   pcl_ros
   autoware_point_types
 )
