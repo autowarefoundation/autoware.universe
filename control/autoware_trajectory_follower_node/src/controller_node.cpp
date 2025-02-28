@@ -204,6 +204,9 @@ boost::optional<trajectory_follower::InputData> Controller::createInputData(rclc
 
 void Controller::callbackTimerControl()
 {
+  autoware_control_msgs::msg::Control out;
+  out.stamp = this->now();
+
   // 1. create input data
   const auto input_data = createInputData(*get_clock());
   if (!input_data) {
@@ -239,8 +242,6 @@ void Controller::callbackTimerControl()
   if (isTimeOut(lon_out, lat_out)) return;
 
   // 5. publish control command
-  autoware_control_msgs::msg::Control out;
-  out.stamp = this->now();
   out.lateral = lat_out.control_cmd;
   out.longitudinal = lon_out.control_cmd;
   control_cmd_pub_->publish(out);

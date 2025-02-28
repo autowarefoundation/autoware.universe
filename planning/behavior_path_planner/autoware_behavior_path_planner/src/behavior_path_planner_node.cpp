@@ -300,6 +300,8 @@ bool BehaviorPathPlannerNode::isDataReady()
 
 void BehaviorPathPlannerNode::run()
 {
+  const auto stamp = this->now();
+
   takeData();
 
   if (!isDataReady()) {
@@ -372,6 +374,7 @@ void BehaviorPathPlannerNode::run()
 
   // path handling
   const auto path = getPath(output, planner_data_, planner_manager_);
+  path->header.stamp = stamp;
   // update planner data
   planner_data_->prev_output_path = path;
 
@@ -714,7 +717,6 @@ PathWithLaneId::SharedPtr BehaviorPathPlannerNode::getPath(
   auto path = !output.path.points.empty() ? std::make_shared<PathWithLaneId>(output.path)
                                           : planner_data->prev_output_path;
   path->header = planner_data->route_handler->getRouteHeader();
-  path->header.stamp = this->now();
 
   PathWithLaneId connected_path;
   const auto module_status_ptr_vec = planner_manager->getSceneModuleStatus();
