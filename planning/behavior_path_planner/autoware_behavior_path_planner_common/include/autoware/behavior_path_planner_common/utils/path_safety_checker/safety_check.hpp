@@ -22,11 +22,11 @@
 #include <autoware_utils/geometry/geometry.hpp>
 #include <autoware_utils/geometry/pose_deviation.hpp>
 
+#include <autoware_internal_planning_msgs/msg/planning_factor_array.hpp>
 #include <autoware_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_perception_msgs/msg/predicted_path.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/twist.hpp>
-#include <tier4_planning_msgs/msg/planning_factor_array.hpp>
 
 #include <cmath>
 #include <string>
@@ -286,7 +286,7 @@ CollisionCheckDebugPair createObjectDebug(const ExtendedPredictedObject & obj);
 void updateCollisionCheckDebugMap(
   CollisionCheckDebugMap & debug_map, CollisionCheckDebugPair & object_debug, bool is_safe);
 
-tier4_planning_msgs::msg::SafetyFactorArray to_safety_factor_array(
+autoware_internal_planning_msgs::msg::SafetyFactorArray to_safety_factor_array(
   const CollisionCheckDebugMap & debug_map);
 }  // namespace autoware::behavior_path_planner::utils::path_safety_checker
 
