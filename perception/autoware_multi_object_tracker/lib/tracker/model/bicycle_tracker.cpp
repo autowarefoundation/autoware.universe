@@ -40,36 +40,18 @@
 
 namespace autoware::multi_object_tracker
 {
-
-using Label = autoware_perception_msgs::msg::ObjectClassification;
-
-BicycleTracker::BicycleTracker(
-  const rclcpp::Time & time, const types::DynamicObject & object, const size_t channel_size)
-: Tracker(time, object.classification, channel_size),
-  logger_(rclcpp::get_logger("BicycleTracker")),
-  z_(object.kinematics.pose_with_covariance.pose.position.z)
+BicycleTracker::BicycleTracker(const rclcpp::Time & time, const types::DynamicObject & object)
+: Tracker(time, object), logger_(rclcpp::get_logger("BicycleTracker"))
 {
-  object_ = object;
-
-  // initialize existence probability
-  initializeExistenceProbabilities(object.channel_index, object.existence_probability);
-
-  // OBJECT SHAPE MODEL
-  if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
-    bounding_box_ = {
-      object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
-  } else {
-    bounding_box_ = {
-      object_model_.init_size.length, object_model_.init_size.width,
-      object_model_.init_size.height};  // default value
+  if (object.shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
+    // set default initial size
+    auto & object_extension = object_.shape.dimensions;
+    object_extension.x = object_model_.init_size.length;
+    object_extension.y = object_model_.init_size.width;
+    object_extension.z = object_model_.init_size.height;
   }
   // set maximum and minimum size
-  bounding_box_.length = std::clamp(
-    bounding_box_.length, object_model_.size_limit.length_min, object_model_.size_limit.length_max);
-  bounding_box_.width = std::clamp(
-    bounding_box_.width, object_model_.size_limit.width_min, object_model_.size_limit.width_max);
-  bounding_box_.height = std::clamp(
-    bounding_box_.height, object_model_.size_limit.height_min, object_model_.size_limit.height_max);
+  limitObjectExtension(object_model_);
 
   // Set motion model parameters
   {
@@ -100,11 +82,11 @@ BicycleTracker::BicycleTracker(
   // Set initial state
   {
     using autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
-    const double x = object.kinematics.pose_with_covariance.pose.position.x;
-    const double y = object.kinematics.pose_with_covariance.pose.position.y;
-    const double yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
+    const double x = object.pose.position.x;
+    const double y = object.pose.position.y;
+    const double yaw = tf2::getYaw(object.pose.orientation);
 
-    auto pose_cov = object.kinematics.pose_with_covariance.covariance;
+    auto pose_cov = object.pose_covariance;
     if (!object.kinematics.has_position_covariance) {
       // initial state covariance
       const auto & p0_cov_x = object_model_.initial_covariance.pos_x;
@@ -124,15 +106,15 @@ BicycleTracker::BicycleTracker(
     double vel = 0.0;
     double vel_cov = object_model_.initial_covariance.vel_long;
     if (object.kinematics.has_twist) {
-      vel = object.kinematics.twist_with_covariance.twist.linear.x;
+      vel = object.twist.linear.x;
     }
     if (object.kinematics.has_twist_covariance) {
-      vel_cov = object.kinematics.twist_with_covariance.covariance[XYZRPY_COV_IDX::X_X];
+      vel_cov = object.twist_covariance[XYZRPY_COV_IDX::X_X];
     }
 
     const double slip = 0.0;
     const double slip_cov = object_model_.bicycle_state.init_slip_angle_cov;
-    const double & length = bounding_box_.length;
+    const double & length = object_.shape.dimensions.x;
 
     // initialize motion model
     motion_model_.initialize(time, x, y, yaw, pose_cov, vel, vel_cov, slip, slip_cov, length);
@@ -148,17 +130,7 @@ types::DynamicObject BicycleTracker::getUpdatingObject(
   const types::DynamicObject & object,
   const geometry_msgs::msg::Transform & /*self_transform*/) const
 {
-  types::DynamicObject updating_object = object;
-
-  // OBJECT SHAPE MODEL
-  // convert to bounding box if input is convex shape
-  if (object.shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
-    if (!shapes::convertConvexHullToBoundingBox(object, updating_object)) {
-      updating_object = object;
-    }
-  }
-
-  return updating_object;
+  return object;
 }
 
 bool BicycleTracker::measureWithPose(const types::DynamicObject & object)
@@ -171,23 +143,21 @@ bool BicycleTracker::measureWithPose(const types::DynamicObject & object)
   // update
   bool is_updated = false;
   {
-    const double x = object.kinematics.pose_with_covariance.pose.position.x;
-    const double y = object.kinematics.pose_with_covariance.pose.position.y;
+    const double x = object.pose.position.x;
+    const double y = object.pose.position.y;
     const double yaw = measurement_yaw;
 
     if (is_yaw_available) {
-      is_updated = motion_model_.updateStatePoseHead(
-        x, y, yaw, object.kinematics.pose_with_covariance.covariance);
+      is_updated = motion_model_.updateStatePoseHead(x, y, yaw, object.pose_covariance);
     } else {
-      is_updated =
-        motion_model_.updateStatePose(x, y, object.kinematics.pose_with_covariance.covariance);
+      is_updated = motion_model_.updateStatePose(x, y, object.pose_covariance);
     }
     motion_model_.limitStates();
   }
 
   // position z
   constexpr double gain = 0.1;
-  z_ = (1.0 - gain) * z_ + gain * object.kinematics.pose_with_covariance.pose.position.z;
+  object_.pose.position.z = (1.0 - gain) * object_.pose.position.z + gain * object.pose.position.z;
 
   return is_updated;
 }
@@ -203,29 +173,28 @@ bool BicycleTracker::measureWithShape(const types::DynamicObject & object)
   constexpr double size_max = 30.0;  // [m]
   constexpr double size_min = 0.1;   // [m]
   if (
-    object.shape.dimensions.x > size_max || object.shape.dimensions.y > size_max ||
-    object.shape.dimensions.z > size_max || object.shape.dimensions.x < size_min ||
-    object.shape.dimensions.y < size_min || object.shape.dimensions.z < size_min) {
+    object.shape.dimensions.x > size_max || object.shape.dimensions.x < size_min ||
+    object.shape.dimensions.y > size_max || object.shape.dimensions.y < size_min ||
+    object.shape.dimensions.z > size_max || object.shape.dimensions.z < size_min) {
     return false;
   }
 
   // update object size
   constexpr double gain = 0.1;
   constexpr double gain_inv = 1.0 - gain;
-  bounding_box_.length = gain_inv * bounding_box_.length + gain * object.shape.dimensions.x;
-  bounding_box_.width = gain_inv * bounding_box_.width + gain * object.shape.dimensions.y;
-  bounding_box_.height = gain_inv * bounding_box_.height + gain * object.shape.dimensions.z;
+  auto & object_extension = object_.shape.dimensions;
+  object_extension.x = gain_inv * object_extension.x + gain * object.shape.dimensions.x;
+  object_extension.y = gain_inv * object_extension.y + gain * object.shape.dimensions.y;
+  object_extension.z = gain_inv * object_extension.z + gain * object.shape.dimensions.z;
+
+  // set shape type, which is bounding box
+  object_.shape.type = object.shape.type;
 
   // set maximum and minimum size
-  bounding_box_.length = std::clamp(
-    bounding_box_.length, object_model_.size_limit.length_min, object_model_.size_limit.length_max);
-  bounding_box_.width = std::clamp(
-    bounding_box_.width, object_model_.size_limit.width_min, object_model_.size_limit.width_max);
-  bounding_box_.height = std::clamp(
-    bounding_box_.height, object_model_.size_limit.height_min, object_model_.size_limit.height_max);
+  limitObjectExtension(object_model_);
 
   // update motion model
-  motion_model_.updateExtendedState(bounding_box_.length);
+  motion_model_.updateExtendedState(object_extension.x);
 
   return true;
 }
@@ -234,17 +203,6 @@ bool BicycleTracker::measure(
   const types::DynamicObject & object, const rclcpp::Time & time,
   const geometry_msgs::msg::Transform & self_transform)
 {
-  // keep the latest input object
-  object_ = object;
-
-  // update classification
-  const auto & current_classification = getClassification();
-  if (
-    autoware::object_recognition_utils::getHighestProbLabel(object.classification) ==
-    Label::UNKNOWN) {
-    setClassification(current_classification);
-  }
-
   // check time gap
   const double dt = motion_model_.getDeltaTime(time);
   if (0.01 /*10msec*/ < dt) {
@@ -267,29 +225,20 @@ bool BicycleTracker::getTrackedObject(
   const rclcpp::Time & time, types::DynamicObject & object) const
 {
   object = object_;
-  object.object_id = getUUID();
-  object.classification = getClassification();
-
-  auto & pose_with_cov = object.kinematics.pose_with_covariance;
-  auto & twist_with_cov = object.kinematics.twist_with_covariance;
+  auto & pose = object.pose;
+  auto & pose_cov = object.pose_covariance;
+  auto & twist = object.twist;
+  auto & twist_cov = object.twist_covariance;
 
   // predict from motion model
-  if (!motion_model_.getPredictedState(
-        time, pose_with_cov.pose, pose_with_cov.covariance, twist_with_cov.twist,
-        twist_with_cov.covariance)) {
+  if (!motion_model_.getPredictedState(time, pose, pose_cov, twist, twist_cov)) {
     RCLCPP_WARN(logger_, "BicycleTracker::getTrackedObject: Failed to get predicted state.");
     return false;
   }
 
-  // position
-  pose_with_cov.pose.position.z = z_;
-
   // set shape
-  object.shape.dimensions.x = bounding_box_.length;
-  object.shape.dimensions.y = bounding_box_.width;
-  object.shape.dimensions.z = bounding_box_.height;
-  const auto origin_yaw = tf2::getYaw(object_.kinematics.pose_with_covariance.pose.orientation);
-  const auto ekf_pose_yaw = tf2::getYaw(pose_with_cov.pose.orientation);
+  const auto origin_yaw = tf2::getYaw(object_.pose.orientation);
+  const auto ekf_pose_yaw = tf2::getYaw(pose.orientation);
   object.shape.footprint =
     autoware_utils::rotate_polygon(object.shape.footprint, origin_yaw - ekf_pose_yaw);
 

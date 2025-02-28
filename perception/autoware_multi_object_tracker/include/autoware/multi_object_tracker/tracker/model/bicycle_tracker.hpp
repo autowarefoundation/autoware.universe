@@ -32,27 +32,15 @@ namespace autoware::multi_object_tracker
 class BicycleTracker : public Tracker
 {
 private:
-  types::DynamicObject object_;
   rclcpp::Logger logger_;
 
   object_model::ObjectModel object_model_ = object_model::bicycle;
-
-  double z_;
-
-  struct BoundingBox
-  {
-    double length;
-    double width;
-    double height;
-  };
-  BoundingBox bounding_box_;
 
   BicycleMotionModel motion_model_;
   using IDX = BicycleMotionModel::IDX;
 
 public:
-  BicycleTracker(
-    const rclcpp::Time & time, const types::DynamicObject & object, const size_t channel_size);
+  BicycleTracker(const rclcpp::Time & time, const types::DynamicObject & object);
 
   bool predict(const rclcpp::Time & time) override;
   bool measure(
