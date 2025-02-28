@@ -33,7 +33,9 @@ import yaml
 
 
 def launch_setup(context, *args, **kwargs):
-    high_performance_detection_type = LaunchConfiguration("high_performance_detection_type").perform(context)
+    high_performance_detection_type = LaunchConfiguration(
+        "high_performance_detection_type"
+    ).perform(context)
     assert high_performance_detection_type in [
         "whole_image_detection",
         "fine_detection",
