@@ -18,14 +18,14 @@
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <rclcpp/rclcpp.hpp>
 
-#include <autoware_internal_planning_msgs/msg/path_point_with_lane_id.hpp>
-#include <autoware_planning_msgs/msg/path_point.hpp>
-#include <autoware_planning_msgs/msg/trajectory_point.hpp>
-#include <geometry_msgs/msg/pose.hpp>
 #include <autoware_internal_planning_msgs/msg/control_point.hpp>
+#include <autoware_internal_planning_msgs/msg/path_point_with_lane_id.hpp>
 #include <autoware_internal_planning_msgs/msg/planning_factor.hpp>
 #include <autoware_internal_planning_msgs/msg/planning_factor_array.hpp>
 #include <autoware_internal_planning_msgs/msg/safety_factor_array.hpp>
+#include <autoware_planning_msgs/msg/path_point.hpp>
+#include <autoware_planning_msgs/msg/trajectory_point.hpp>
+#include <geometry_msgs/msg/pose.hpp>
 
 #include <string>
 #include <vector>
@@ -33,11 +33,11 @@
 namespace autoware::planning_factor_interface
 {
 
-using geometry_msgs::msg::Pose;
 using autoware_internal_planning_msgs::msg::ControlPoint;
 using autoware_internal_planning_msgs::msg::PlanningFactor;
 using autoware_internal_planning_msgs::msg::PlanningFactorArray;
 using autoware_internal_planning_msgs::msg::SafetyFactorArray;
+using geometry_msgs::msg::Pose;
 
 class PlanningFactorInterface
 {
