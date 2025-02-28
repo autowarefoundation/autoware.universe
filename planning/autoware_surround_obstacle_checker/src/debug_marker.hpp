@@ -21,7 +21,7 @@
 
 #include <geometry_msgs/msg/polygon_stamped.hpp>
 #include <geometry_msgs/msg/pose.hpp>
-#include <tier4_planning_msgs/msg/planning_factor_array.hpp>
+#include <autoware_internal_planning_msgs/msg/planning_factor_array.hpp>
 #include <visualization_msgs/msg/marker.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
@@ -35,9 +35,9 @@ namespace autoware::surround_obstacle_checker
 
 using autoware::vehicle_info_utils::VehicleInfo;
 using geometry_msgs::msg::PolygonStamped;
-using tier4_planning_msgs::msg::ControlPoint;
-using tier4_planning_msgs::msg::PlanningFactor;
-using tier4_planning_msgs::msg::PlanningFactorArray;
+using autoware_internal_planning_msgs::msg::ControlPoint;
+using autoware_internal_planning_msgs::msg::PlanningFactor;
+using autoware_internal_planning_msgs::msg::PlanningFactorArray;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 
