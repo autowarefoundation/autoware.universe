@@ -304,6 +304,7 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
                         "build_only": False,
                         "label_path": whole_image_detector_label_path,
                         "model_path": whole_image_detector_model_path,
+                        "color_map_path": "",  # not used
                     },
                 ],
                 remappings=[
