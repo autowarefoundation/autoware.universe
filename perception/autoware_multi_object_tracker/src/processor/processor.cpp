@@ -105,8 +105,12 @@ void TrackerProcessor::spawn(
     std::shared_ptr<Tracker> tracker = createNewTracker(new_object, time);
 
     // Initialize existence probabilities
-    tracker->initializeExistenceProbabilities(
-      new_object.channel_index, new_object.existence_probability);
+    if (channel_config.trust_existence_probability) {
+      tracker->initializeExistenceProbabilities(
+        new_object.channel_index, new_object.existence_probability);
+    } else {
+      tracker->initializeExistenceProbabilities(new_object.channel_index, 0.5);
+    }
 
     // Update the tracker with the new object
     list_tracker_.push_back(tracker);
