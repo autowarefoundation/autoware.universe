@@ -37,7 +37,9 @@ def create_traffic_light_map_based_detector(namespace, context):
     )
 
     each_namespace_param_path = LaunchConfiguration("param_path").perform(context)
-    each_namespace_param_path = each_namespace_param_path.replace("TRAFFIC_LIGHT_RECOGNITION_CAMERA_NAMESPACE", namespace)
+    each_namespace_param_path = each_namespace_param_path.replace(
+        "TRAFFIC_LIGHT_RECOGNITION_CAMERA_NAMESPACE", namespace
+    )
     arguments = {
         "input/vector_map": LaunchConfiguration("input/vector_map"),
         "input/camera_info": f"/sensing/camera/{namespace}/camera_info",
