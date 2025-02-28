@@ -1,5 +1,6 @@
 <?xml version="1.0"?>
 <launch>
+  <!-- cspell: ignore semseg, finetune  -->
   <arg name="input/image" default="/sensing/camera/camera6/image_raw"/>
   <arg name="output/objects" default="/perception/traffic_light_recognition/camera6/detection/rois"/>
   <arg name="data_path" default="$(env HOME)/autoware_data" description="packages data and artifacts directory path"/>
@@ -23,6 +24,7 @@
     <param from="$(var param_path)" allow_substs="true"/>
     <param name="model_path" value="$(var model_path)/$(var model_name)"/>
     <param name="label_path" value="$(var model_path)/$(var label_name)"/>
+    <param name="color_map_path" value=""/>
     <param name="build_only" value="$(var build_only)"/>
   </node>
 </launch>
