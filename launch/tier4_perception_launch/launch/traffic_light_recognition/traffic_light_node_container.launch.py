@@ -22,7 +22,6 @@ from launch.actions import SetLaunchConfiguration
 from launch.conditions import IfCondition
 from launch.conditions import UnlessCondition
 from launch.substitutions import LaunchConfiguration
-from launch.substitutions import PathJoinSubstitution
 from launch.substitutions import PythonExpression
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.actions import LoadComposableNodes
@@ -39,7 +38,7 @@ def launch_setup(context, *args, **kwargs):
     assert high_performance_detection_type in [
         "whole_image_detection",
         "fine_detection",
-    ], f"high_performance_detection_type must be either 'whole_image_detection' or 'fine_detection'."
+    ], "high_performance_detection_type must be either 'whole_image_detection' or 'fine_detection'."
 
     # Load camera namespaces
     camera_namespaces = LaunchConfiguration("camera_namespaces").perform(context)
