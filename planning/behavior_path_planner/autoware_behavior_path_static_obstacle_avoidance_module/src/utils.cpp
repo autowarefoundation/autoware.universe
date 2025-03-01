@@ -1489,8 +1489,7 @@ lanelet::ConstLanelets getExtendLanes(
 {
   if (lanelets.empty()) {
     RCLCPP_WARN(
-      rclcpp::get_logger("static_obstacle_avoidance"),
-      "Empty lanelets provided to getExtendLanes");
+      rclcpp::get_logger("static_obstacle_avoidance"), "Empty lanelets provided to getExtendLanes");
     return lanelets;
   }
 

@@ -201,9 +201,10 @@ void StaticObstacleAvoidanceModule::fillFundamentalData(
   AvoidancePlanningData & data, DebugData & debug)
 {
   autoware_utils::ScopedTimeTrack st(__func__, *time_keeper_);
-  
+
   if (getPreviousModuleOutput().reference_path.points.empty()) {
-    RCLCPP_WARN_THROTTLE(getLogger(), *clock_, 5000, "Previous module reference path is empty. Skip processing.");
+    RCLCPP_WARN_THROTTLE(
+      getLogger(), *clock_, 5000, "Previous module reference path is empty. Skip processing.");
     return;
   }
 

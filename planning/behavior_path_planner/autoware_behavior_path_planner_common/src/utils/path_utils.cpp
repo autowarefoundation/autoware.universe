@@ -474,8 +474,8 @@ BehaviorModuleOutput getReferencePath(
 
   if (reference_path.points.empty()) {
     auto clock{rclcpp::Clock{RCL_ROS_TIME}};
-    RCLCPP_WARN_THROTTLE(rclcpp::get_logger("path_utils"), clock, 5000,
-      "Empty reference path detected.");
+    RCLCPP_WARN_THROTTLE(
+      rclcpp::get_logger("path_utils"), clock, 5000, "Empty reference path detected.");
     BehaviorModuleOutput output;
     return output;
   }
