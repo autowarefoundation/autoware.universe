@@ -162,7 +162,14 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
                 package="autoware_traffic_light_visualization",
                 plugin="autoware::traffic_light::TrafficLightRoiVisualizerNode",
                 name="traffic_light_roi_visualizer",
-                parameters=[traffic_light_roi_visualizer_param],
+                parameters=[
+                    traffic_light_roi_visualizer_param,
+                    {
+                        "use_high_performance_detection": LaunchConfiguration(
+                            "use_high_performance_detection"
+                        )
+                    },
+                ],
                 remappings=[
                     ("~/input/image", camera_arguments["input/image"]),
                     ("~/input/rois", camera_arguments["output/rois"]),
