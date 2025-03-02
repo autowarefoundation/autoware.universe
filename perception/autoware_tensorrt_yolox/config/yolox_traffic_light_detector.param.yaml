@@ -16,7 +16,6 @@
     gpu_id: 0 # GPU ID to select CUDA Device
     calibration_image_list_path: "" # Path to a file which contains path to images. Those images will be used for int8 quantization.
 
-
     # default params of tensorrt_yolox package, only effective for semseg model
     is_roi_overlap_segment: false
     overlap_roi_score_threshold: 0.3
