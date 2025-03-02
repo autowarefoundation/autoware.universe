@@ -184,19 +184,6 @@ public:
     const bool & invert_opposite = false) const noexcept;
 
   /**
-   * @brief Searches and return all lanelet (left and right) that shares same linestring
-   * @param the lanelet of interest
-   * @param (optional) flag to search only right side
-   * @param (optional) flag to search only left side
-   * @param (optional) flag to include the lane with opposite direction
-   * @param (optional) flag to invert the opposite lanelet
-   * @return vector of lanelet that is connected via share linestring
-   */
-  lanelet::ConstLanelets getAllSharedLineStringLanelets(
-    const lanelet::ConstLanelet & current_lane, bool is_right = true, bool is_left = true,
-    bool is_opposite = true, const bool & invert_opposite = false) const noexcept;
-
-  /**
    * @brief Check if same-direction lane is available at the right side of the lanelet
    * Searches for any lanes regardless of whether it is lane-changeable or not.
    * Required the linestring to be shared(same line ID) between the lanelets.
