@@ -14,18 +14,17 @@
 
 #include "node.hpp"
 
-#include <autoware_perception_msgs/msg/traffic_light_element.hpp>
-#include <autoware_utils/math/normalization.hpp>
-#include <tf2/LinearMath/Quaternion.h>
-
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/visualization/visualization.hpp>
+#include <autoware_utils/math/normalization.hpp>
 
+#include <autoware_perception_msgs/msg/traffic_light_element.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_projection/UTM.h>
+#include <tf2/LinearMath/Quaternion.h>
 
 #include <string>
 #include <vector>
@@ -35,10 +34,8 @@ namespace autoware::traffic_light::utils
 using autoware_perception_msgs::msg::TrafficLightElement;
 
 std::map<std::string, uint8_t> map_color2msg{
-  {"unknown", TrafficLightElement::UNKNOWN},
-  {"red", TrafficLightElement::RED},
-  {"yellow", TrafficLightElement::AMBER},
-  {"green", TrafficLightElement::GREEN},
+  {"unknown", TrafficLightElement::UNKNOWN}, {"red", TrafficLightElement::RED},
+  {"yellow", TrafficLightElement::AMBER},    {"green", TrafficLightElement::GREEN},
   {"white", TrafficLightElement::WHITE},
 };
 
@@ -77,9 +74,7 @@ uint8_t convertMapshape2Msg(const lanelet::ConstPoint3d & p)
   return msg->second;
 }
 
-bool isCompareColorAndShape(
-  const lanelet::ConstPoint3d & p,
-  const TrafficLightElement & elem)
+bool isCompareColorAndShape(const lanelet::ConstPoint3d & p, const TrafficLightElement & elem)
 {
   uint8_t p_color = convertMapcolor2Msg(p);
   uint8_t p_shape = convertMapshape2Msg(p);
@@ -186,13 +181,14 @@ void lightAsMarker(
     marker->color.b = 0.0f;
   } else {
     RCLCPP_WARN(
-      node_logging->get_logger(), "color does not match 'red', 'green' or 'amber'. so represented by white.");
+      node_logging->get_logger(),
+      "color does not match 'red', 'green' or 'amber'. so represented by white.");
     marker->color.r = 1.0f;
     marker->color.g = 1.0f;
     marker->color.b = 1.0f;
   }
 }
-}  // namespace autoware::traffic_light::util
+}  // namespace autoware::traffic_light::utils
 
 namespace autoware::traffic_light
 {
@@ -217,12 +213,12 @@ void TrafficLightMapVisualizerNode::trafficSignalsCallback(
   visualization_msgs::msg::MarkerArray output_msg;
   const auto current_time = now();
 
-  for (auto aw_tl_reg_elem = aw_tl_reg_elems_.begin(); aw_tl_reg_elem != aw_tl_reg_elems_.end(); aw_tl_reg_elem++) {
+  for (auto aw_tl_reg_elem = aw_tl_reg_elems_.begin(); aw_tl_reg_elem != aw_tl_reg_elems_.end();
+       aw_tl_reg_elem++) {
     // each traffic light, which is not regulatory element
     for (auto light_bulb : (*aw_tl_reg_elem)->lightBulbs()) {
       if (!light_bulb.hasAttribute("traffic_light_id")) {
-        RCLCPP_WARN(
-          get_logger(), "'traffic_light_id' is not exist in 'light_bulbs'.");
+        RCLCPP_WARN(get_logger(), "'traffic_light_id' is not exist in 'light_bulbs'.");
         continue;
       }
 
@@ -231,28 +227,29 @@ void TrafficLightMapVisualizerNode::trafficSignalsCallback(
       for (auto traffic_light : (*aw_tl_reg_elem)->trafficLights()) {
         if (traffic_light.id() == light_bulb.attribute("traffic_light_id")) {
           const auto ls_traffic_light = static_cast<lanelet::ConstLineString3d>(traffic_light);
-          const auto & traffic_light_bl = ls_traffic_light.front(); // bottom left
-          const auto & traffic_light_br = ls_traffic_light.back(); // bottom right
-          yaw = autoware_utils::normalize_radian(
-            std::atan2(traffic_light_br.y() - traffic_light_bl.y(), traffic_light_br.x() - traffic_light_bl.x()));
+          const auto & traffic_light_bl = ls_traffic_light.front();  // bottom left
+          const auto & traffic_light_br = ls_traffic_light.back();   // bottom right
+          yaw = autoware_utils::normalize_radian(std::atan2(
+            traffic_light_br.y() - traffic_light_bl.y(),
+            traffic_light_br.x() - traffic_light_bl.x()));
           break;
         }
       }
       if (yaw == -1.0) {
         RCLCPP_WARN(
-          get_logger(), "same 'traffic_light_id' is not exist between 'refers' and 'light_bulbs' in regulatory element.");
+          get_logger(),
+          "same 'traffic_light_id' is not exist between 'refers' and 'light_bulbs' in regulatory "
+          "element.");
         continue;
       }
 
       // reflection of traffic light recognition results
       for (const auto & input_traffic_signal : input_traffic_signals->traffic_light_groups) {
         if ((*aw_tl_reg_elem)->id() == input_traffic_signal.traffic_light_group_id) {
-
           // each point, which is one light bulb
           for (auto pt : light_bulb) {
             if (!pt.hasAttribute("color")) {
-              RCLCPP_WARN(
-                get_logger(), "'color' is not exist in 'point'.");
+              RCLCPP_WARN(get_logger(), "'color' is not exist in 'point'.");
               continue;
             }
             for (const auto & elem : input_traffic_signal.elements) {
