@@ -14,6 +14,10 @@
 
 #include "node.hpp"
 
+#include <autoware_perception_msgs/msg/traffic_light_element.hpp>
+#include <autoware_utils/math/normalization.hpp>
+#include <tf2/LinearMath/Quaternion.h>
+
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/visualization/visualization.hpp>
@@ -26,31 +30,94 @@
 #include <string>
 #include <vector>
 
-namespace
+namespace autoware::traffic_light::utils
 {
-[[maybe_unused]] void setColor(
-  const double r, const double g, const double b, const double a, std_msgs::msg::ColorRGBA & cl)
+using autoware_perception_msgs::msg::TrafficLightElement;
+
+std::map<std::string, uint8_t> map_color2msg{
+  {"unknown", TrafficLightElement::UNKNOWN},
+  {"red", TrafficLightElement::RED},
+  {"yellow", TrafficLightElement::AMBER},
+  {"green", TrafficLightElement::GREEN},
+  {"white", TrafficLightElement::WHITE},
+};
+
+std::map<std::string, uint8_t> map_shape2msg{
+  {"unknown", TrafficLightElement::UNKNOWN},
+  {"circle", TrafficLightElement::CIRCLE},
+  {"up", TrafficLightElement::UP_ARROW},
+  {"left", TrafficLightElement::LEFT_ARROW},
+  {"right", TrafficLightElement::RIGHT_ARROW},
+  {"up_right", TrafficLightElement::UP_RIGHT_ARROW},
+  {"up_left", TrafficLightElement::UP_LEFT_ARROW},
+  {"down", TrafficLightElement::DOWN_ARROW},
+  {"down_left", TrafficLightElement::DOWN_LEFT_ARROW},
+  {"down_right", TrafficLightElement::DOWN_RIGHT_ARROW},
+  {"cross", TrafficLightElement::CROSS},
+};
+
+uint8_t convertMapcolor2Msg(const lanelet::ConstPoint3d & p)
 {
-  cl.r = r;
-  cl.g = g;
-  cl.b = b;
-  cl.a = a;
+  auto msg = map_color2msg.find(p.attribute("color").value());
+  if (msg == map_color2msg.end()) {
+    return TrafficLightElement::UNKNOWN;
+  }
+  return msg->second;
 }
 
-bool isAttributeValue(
-  const lanelet::ConstPoint3d p, const std::string & attr_str, const std::string & value_str)
+uint8_t convertMapshape2Msg(const lanelet::ConstPoint3d & p)
 {
-  lanelet::Attribute attr = p.attribute(attr_str);
-  if (attr.value().compare(value_str) == 0) {
+  if (!p.hasAttribute("arrow")) {
+    return TrafficLightElement::CIRCLE;
+  }
+  auto msg = map_shape2msg.find(p.attribute("arrow").value());
+  if (msg == map_shape2msg.end()) {
+    return TrafficLightElement::UNKNOWN;
+  }
+  return msg->second;
+}
+
+bool isCompareColorAndShape(
+  const lanelet::ConstPoint3d & p,
+  const TrafficLightElement & elem)
+{
+  uint8_t p_color = convertMapcolor2Msg(p);
+  uint8_t p_shape = convertMapshape2Msg(p);
+
+  if (elem.color == p_color && elem.shape == p_shape) {
     return true;
   }
   return false;
 }
 
+double getArrayDirection(const lanelet::ConstPoint3d & p)
+{
+  std::string arrow = p.attribute("arrow").value();
+  if (arrow == "right") {
+    return 0.0;
+  } else if (arrow == "down_right") {
+    return M_PI_4;
+  } else if (arrow == "down") {
+    return M_PI_2;
+  } else if (arrow == "down_left") {
+    return 3 * M_PI_4;
+  } else if (arrow == "left") {
+    return M_PI;
+  } else if (arrow == "up_left") {
+    return -3 * M_PI_4;
+  } else if (arrow == "up") {
+    return -M_PI_2;
+  } else if (arrow == "up_right") {
+    return -M_PI_4;
+  } else {
+    return 0.0;
+  }
+}
+
 void lightAsMarker(
   const rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr & node_logging,
   lanelet::ConstPoint3d p, visualization_msgs::msg::Marker * marker, const std::string & ns,
-  const rclcpp::Time & current_time)
+  const rclcpp::Time & current_time, const double & yaw)
 {
   if (marker == nullptr) {
     RCLCPP_ERROR_STREAM(node_logging->get_logger(), __FUNCTION__ << ": marker is null pointer!");
@@ -63,45 +130,69 @@ void lightAsMarker(
   marker->ns = ns;
   marker->id = p.id();
   marker->lifetime = rclcpp::Duration::from_seconds(0.2);
-  marker->type = visualization_msgs::msg::Marker::SPHERE;
-  marker->pose.position.x = p.x();
-  marker->pose.position.y = p.y();
-  marker->pose.position.z = p.z();
-  marker->pose.orientation.x = 0.0;
-  marker->pose.orientation.y = 0.0;
-  marker->pose.orientation.z = 0.0;
-  marker->pose.orientation.w = 1.0;
 
-  float s = 0.3;
+  if (!p.hasAttribute("arrow")) {
+    marker->type = visualization_msgs::msg::Marker::SPHERE;
+    marker->pose.position.x = p.x();
+    marker->pose.position.y = p.y();
+    marker->pose.position.z = p.z();
+    marker->pose.orientation.x = 0.0;
+    marker->pose.orientation.y = 0.0;
+    marker->pose.orientation.z = 0.0;
+    marker->pose.orientation.w = 1.0;
 
-  marker->scale.x = s;
-  marker->scale.y = s;
-  marker->scale.z = s;
+    float s = 0.3;
 
-  marker->color.r = 0.0f;
-  marker->color.g = 0.0f;
-  marker->color.b = 0.0f;
+    marker->scale.x = s;
+    marker->scale.y = s;
+    marker->scale.z = s;
+  } else {
+    marker->type = visualization_msgs::msg::Marker::ARROW;
+
+    float length = 0.3;
+
+    const double pitch = getArrayDirection(p);
+    tf2::Quaternion q;
+    q.setRPY(0.0, pitch, yaw);
+
+    marker->pose.position.x = p.x() - (length / 2.0) * std::cos(pitch) * std::cos(yaw);
+    marker->pose.position.y = p.y() - (length / 2.0) * std::cos(pitch) * std::sin(yaw);
+    marker->pose.position.z = p.z() + (length / 2.0) * std::sin(pitch);
+
+    marker->pose.orientation.x = q.x();
+    marker->pose.orientation.y = q.y();
+    marker->pose.orientation.z = q.z();
+    marker->pose.orientation.w = q.w();
+
+    marker->scale.x = length;
+    marker->scale.y = 0.1;
+    marker->scale.z = 0.1;
+  }
+
   marker->color.a = 0.999f;
 
-  if (isAttributeValue(p, "color", "red")) {
+  uint8_t p_color = convertMapcolor2Msg(p);
+  if (p_color == TrafficLightElement::RED) {
     marker->color.r = 1.0f;
     marker->color.g = 0.0f;
     marker->color.b = 0.0f;
-  } else if (isAttributeValue(p, "color", "green")) {
+  } else if (p_color == TrafficLightElement::GREEN) {
     marker->color.r = 0.0f;
     marker->color.g = 1.0f;
     marker->color.b = 0.0f;
-  } else if (isAttributeValue(p, "color", "yellow")) {
+  } else if (p_color == TrafficLightElement::AMBER) {
     marker->color.r = 1.0f;
     marker->color.g = 1.0f;
     marker->color.b = 0.0f;
   } else {
+    RCLCPP_WARN(
+      node_logging->get_logger(), "color does not match 'red', 'green' or 'amber'. so represented by white.");
     marker->color.r = 1.0f;
     marker->color.g = 1.0f;
     marker->color.b = 1.0f;
   }
 }
-}  // namespace
+}  // namespace autoware::traffic_light::util
 
 namespace autoware::traffic_light
 {
@@ -126,64 +217,49 @@ void TrafficLightMapVisualizerNode::trafficSignalsCallback(
   visualization_msgs::msg::MarkerArray output_msg;
   const auto current_time = now();
 
-#if 0
-  for (auto tli = aw_tl_reg_elems_.begin(); tli != aw_tl_reg_elems_.end(); tli++) {
-    for (const auto & lsp : (*tli)->trafficLights()) {
-      if (lsp.isLineString()) { // traffic lights can either polygons or
-                                // linestrings
-        lanelet::ConstLineString3d ls = static_cast<lanelet::ConstLineString3d>(lsp);
-        for (const auto & input_traffic_signal : input_traffic_signals->signals) {
-          if (ls.id() != input_traffic_signal.map_primitive_id) {
-            continue;
-          }
-          visualization_msgs::msg::Marker marker;
-          std_msgs::msg::ColorRGBA color;
-          setColor(1.0f, 1.0f, 1.0f, 0.999f, color);
-          lanelet::visualization::initTrafficLightTriangleMarker(&marker, "traffic_light_triangle");
-          lanelet::visualization::pushTrafficLightTriangleMarker(&marker, ls, color);
-          marker.header.frame_id = "map";
-          marker.header.stamp = current_time;
-          marker.frame_locked = true;
-          marker.lifetime = rclcpp::Duration::from_seconds(0.2);
-          output_msg.markers.push_back(marker);
-        }
-      }
-    }
-  }
-#endif
-
-  for (auto tli = aw_tl_reg_elems_.begin(); tli != aw_tl_reg_elems_.end(); tli++) {
-    for (auto ls : (*tli)->lightBulbs()) {
-      if (!ls.hasAttribute("traffic_light_id")) {
+  for (auto aw_tl_reg_elem = aw_tl_reg_elems_.begin(); aw_tl_reg_elem != aw_tl_reg_elems_.end(); aw_tl_reg_elem++) {
+    // each traffic light, which is not regulatory element
+    for (auto light_bulb : (*aw_tl_reg_elem)->lightBulbs()) {
+      if (!light_bulb.hasAttribute("traffic_light_id")) {
+        RCLCPP_WARN(
+          get_logger(), "'traffic_light_id' is not exist in 'light_bulbs'.");
         continue;
       }
+
+      // get yaw of traffic light
+      double yaw{-1.0};
+      for (auto traffic_light : (*aw_tl_reg_elem)->trafficLights()) {
+        if (traffic_light.id() == light_bulb.attribute("traffic_light_id")) {
+          const auto ls_traffic_light = static_cast<lanelet::ConstLineString3d>(traffic_light);
+          const auto & traffic_light_bl = ls_traffic_light.front(); // bottom left
+          const auto & traffic_light_br = ls_traffic_light.back(); // bottom right
+          yaw = autoware_utils::normalize_radian(
+            std::atan2(traffic_light_br.y() - traffic_light_bl.y(), traffic_light_br.x() - traffic_light_bl.x()));
+          break;
+        }
+      }
+      if (yaw == -1.0) {
+        RCLCPP_WARN(
+          get_logger(), "same 'traffic_light_id' is not exist between 'refers' and 'light_bulbs' in regulatory element.");
+        continue;
+      }
+
+      // reflection of traffic light recognition results
       for (const auto & input_traffic_signal : input_traffic_signals->traffic_light_groups) {
-        if ((*tli)->id() == input_traffic_signal.traffic_light_group_id) {
-          // if (isAttributeValue(ls, "traffic_light_id", input_traffic_signal.map_primitive_id)) {
-          for (auto pt : ls) {
+        if ((*aw_tl_reg_elem)->id() == input_traffic_signal.traffic_light_group_id) {
+
+          // each point, which is one light bulb
+          for (auto pt : light_bulb) {
             if (!pt.hasAttribute("color")) {
+              RCLCPP_WARN(
+                get_logger(), "'color' is not exist in 'point'.");
               continue;
             }
-
             for (const auto & elem : input_traffic_signal.elements) {
               visualization_msgs::msg::Marker marker;
-              if (
-                isAttributeValue(pt, "color", "red") &&
-                elem.color == autoware_perception_msgs::msg::TrafficLightElement::RED) {  // NOLINT
-                lightAsMarker(
-                  get_node_logging_interface(), pt, &marker, "traffic_light", current_time);
-              } else if (  // NOLINT
-                isAttributeValue(pt, "color", "green") &&
-                elem.color == autoware_perception_msgs::msg::TrafficLightElement::GREEN) {
-                lightAsMarker(
-                  get_node_logging_interface(), pt, &marker, "traffic_light", current_time);
-              } else if (  // NOLINT
-                isAttributeValue(pt, "color", "yellow") &&
-                elem.color == autoware_perception_msgs::msg::TrafficLightElement::AMBER) {
-                lightAsMarker(
-                  get_node_logging_interface(), pt, &marker, "traffic_light", current_time);
-              } else {
-                continue;
+              if (utils::isCompareColorAndShape(pt, elem)) {
+                utils::lightAsMarker(
+                  get_node_logging_interface(), pt, &marker, "traffic_light", current_time, yaw);
               }
               output_msg.markers.push_back(marker);
             }
