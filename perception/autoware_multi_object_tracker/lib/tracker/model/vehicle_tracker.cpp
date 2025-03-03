@@ -146,7 +146,8 @@ types::DynamicObject VehicleTracker::getUpdatingObject(
   types::DynamicObject updating_object = object;
 
   // get offset measurement
-  const geometry_msgs::msg::Point anchor_vector = shapes::getNearestCornerOrSurface(object, self_transform);
+  const geometry_msgs::msg::Point anchor_vector =
+    shapes::getNearestCornerOrSurface(object, self_transform);
   shapes::calcAnchorPointOffset(object_, object, anchor_vector, tracking_offset_, updating_object);
 
   return updating_object;
