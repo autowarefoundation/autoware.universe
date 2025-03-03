@@ -15,10 +15,11 @@
   <depend>autoware_grid_map_utils</depend>
   <depend>autoware_lanelet2_extension</depend>
   <depend>autoware_map_msgs</depend>
-  <depend>autoware_universe_utils</depend>
+  <depend>autoware_utils</depend>
   <depend>grid_map_cv</depend>
   <depend>grid_map_pcl</depend>
   <depend>grid_map_ros</depend>
+  <depend>grid_map_rviz_plugin</depend>
   <depend>libpcl-all-dev</depend>
   <depend>pcl_conversions</depend>
   <depend>rclcpp</depend>

@@ -19,7 +19,7 @@
 #include "type_alias.hpp"
 #include "types.hpp"
 
-#include <autoware/universe_utils/ros/parameter.hpp>
+#include <autoware_utils/ros/parameter.hpp>
 
 #include <string>
 #include <unordered_map>
@@ -27,7 +27,7 @@
 
 namespace autoware::motion_velocity_planner
 {
-using autoware::universe_utils::getOrDeclareParameter;
+using autoware_utils::get_or_declare_parameter;
 
 struct CommonParam
 {
@@ -43,14 +43,14 @@ struct CommonParam
   CommonParam() = default;
   explicit CommonParam(rclcpp::Node & node)
   {
-    max_accel = getOrDeclareParameter<double>(node, "normal.max_acc");
-    min_accel = getOrDeclareParameter<double>(node, "normal.min_acc");
-    max_jerk = getOrDeclareParameter<double>(node, "normal.max_jerk");
-    min_jerk = getOrDeclareParameter<double>(node, "normal.min_jerk");
-    limit_max_accel = getOrDeclareParameter<double>(node, "limit.max_acc");
-    limit_min_accel = getOrDeclareParameter<double>(node, "limit.min_acc");
-    limit_max_jerk = getOrDeclareParameter<double>(node, "limit.max_jerk");
-    limit_min_jerk = getOrDeclareParameter<double>(node, "limit.min_jerk");
+    max_accel = get_or_declare_parameter<double>(node, "normal.max_acc");
+    min_accel = get_or_declare_parameter<double>(node, "normal.min_acc");
+    max_jerk = get_or_declare_parameter<double>(node, "normal.max_jerk");
+    min_jerk = get_or_declare_parameter<double>(node, "normal.min_jerk");
+    limit_max_accel = get_or_declare_parameter<double>(node, "limit.max_acc");
+    limit_min_accel = get_or_declare_parameter<double>(node, "limit.min_acc");
+    limit_max_jerk = get_or_declare_parameter<double>(node, "limit.max_jerk");
+    limit_min_jerk = get_or_declare_parameter<double>(node, "limit.min_jerk");
   }
 };
 
@@ -82,34 +82,33 @@ struct ObstacleFilteringParam
   ObstacleFilteringParam() = default;
   explicit ObstacleFilteringParam(rclcpp::Node & node)
   {
-    use_pointcloud = getOrDeclareParameter<bool>(
+    use_pointcloud = get_or_declare_parameter<bool>(
       node, "obstacle_slow_down.obstacle_filtering.object_type.pointcloud");
     object_types =
       utils::get_target_object_type(node, "obstacle_slow_down.obstacle_filtering.object_type.");
-    min_lat_margin =
-      getOrDeclareParameter<double>(node, "obstacle_slow_down.obstacle_filtering.min_lat_margin");
-    max_lat_margin =
-      getOrDeclareParameter<double>(node, "obstacle_slow_down.obstacle_filtering.max_lat_margin");
-
-    lat_hysteresis_margin = getOrDeclareParameter<double>(
+    min_lat_margin = get_or_declare_parameter<double>(
+      node, "obstacle_slow_down.obstacle_filtering.min_lat_margin");
+    max_lat_margin = get_or_declare_parameter<double>(
+      node, "obstacle_slow_down.obstacle_filtering.max_lat_margin");
+    lat_hysteresis_margin = get_or_declare_parameter<double>(
       node, "obstacle_slow_down.obstacle_filtering.lat_hysteresis_margin");
-    successive_num_to_entry_slow_down_condition = getOrDeclareParameter<int>(
+    successive_num_to_entry_slow_down_condition = get_or_declare_parameter<int>(
       node, "obstacle_slow_down.obstacle_filtering.successive_num_to_entry_slow_down_condition");
-    successive_num_to_exit_slow_down_condition = getOrDeclareParameter<int>(
+    successive_num_to_exit_slow_down_condition = get_or_declare_parameter<int>(
       node, "obstacle_slow_down.obstacle_filtering.successive_num_to_exit_slow_down_condition");
 
-    pointcloud_obstacle_filtering_param.pointcloud_voxel_grid_x = getOrDeclareParameter<double>(
+    pointcloud_obstacle_filtering_param.pointcloud_voxel_grid_x = get_or_declare_parameter<double>(
       node, "obstacle_slow_down.obstacle_filtering.pointcloud.pointcloud_voxel_grid_x");
-    pointcloud_obstacle_filtering_param.pointcloud_voxel_grid_y = getOrDeclareParameter<double>(
+    pointcloud_obstacle_filtering_param.pointcloud_voxel_grid_y = get_or_declare_parameter<double>(
       node, "obstacle_slow_down.obstacle_filtering.pointcloud.pointcloud_voxel_grid_y");
-    pointcloud_obstacle_filtering_param.pointcloud_voxel_grid_z = getOrDeclareParameter<double>(
+    pointcloud_obstacle_filtering_param.pointcloud_voxel_grid_z = get_or_declare_parameter<double>(
       node, "obstacle_slow_down.obstacle_filtering.pointcloud.pointcloud_voxel_grid_z");
     pointcloud_obstacle_filtering_param.pointcloud_cluster_tolerance =
-      getOrDeclareParameter<double>(
+      get_or_declare_parameter<double>(
         node, "obstacle_slow_down.obstacle_filtering.pointcloud.pointcloud_cluster_tolerance");
-    pointcloud_obstacle_filtering_param.pointcloud_min_cluster_size = getOrDeclareParameter<int>(
+    pointcloud_obstacle_filtering_param.pointcloud_min_cluster_size = get_or_declare_parameter<int>(
       node, "obstacle_slow_down.obstacle_filtering.pointcloud.pointcloud_min_cluster_size");
-    pointcloud_obstacle_filtering_param.pointcloud_max_cluster_size = getOrDeclareParameter<int>(
+    pointcloud_obstacle_filtering_param.pointcloud_max_cluster_size = get_or_declare_parameter<int>(
       node, "obstacle_slow_down.obstacle_filtering.pointcloud.pointcloud_max_cluster_size");
   }
 };
@@ -147,40 +146,40 @@ struct SlowDownPlanningParam
   SlowDownPlanningParam() = default;
   explicit SlowDownPlanningParam(rclcpp::Node & node)
   {
-    slow_down_min_acc = getOrDeclareParameter<double>(
+    slow_down_min_acc = get_or_declare_parameter<double>(
       node, "obstacle_slow_down.slow_down_planning.slow_down_min_acc");
-    slow_down_min_jerk = getOrDeclareParameter<double>(
+    slow_down_min_jerk = get_or_declare_parameter<double>(
       node, "obstacle_slow_down.slow_down_planning.slow_down_min_jerk");
 
-    lpf_gain_slow_down_vel = getOrDeclareParameter<double>(
+    lpf_gain_slow_down_vel = get_or_declare_parameter<double>(
       node, "obstacle_slow_down.slow_down_planning.lpf_gain_slow_down_vel");
-    lpf_gain_lat_dist = getOrDeclareParameter<double>(
+    lpf_gain_lat_dist = get_or_declare_parameter<double>(
       node, "obstacle_slow_down.slow_down_planning.lpf_gain_lat_dist");
-    lpf_gain_dist_to_slow_down = getOrDeclareParameter<double>(
+    lpf_gain_dist_to_slow_down = get_or_declare_parameter<double>(
       node, "obstacle_slow_down.slow_down_planning.lpf_gain_dist_to_slow_down");
-    time_margin_on_target_velocity = getOrDeclareParameter<double>(
+    time_margin_on_target_velocity = get_or_declare_parameter<double>(
       node, "obstacle_slow_down.slow_down_planning.time_margin_on_target_velocity");
 
-    moving_object_speed_threshold = getOrDeclareParameter<double>(
+    moving_object_speed_threshold = get_or_declare_parameter<double>(
       node, "obstacle_slow_down.slow_down_planning.moving_object_speed_threshold");
-    moving_object_hysteresis_range = getOrDeclareParameter<double>(
+    moving_object_hysteresis_range = get_or_declare_parameter<double>(
       node, "obstacle_slow_down.slow_down_planning.moving_object_hysteresis_range");
 
     const std::string param_prefix =
       "obstacle_slow_down.slow_down_planning.object_type_specified_params.";
     const auto object_types =
-      getOrDeclareParameter<std::vector<std::string>>(node, param_prefix + "types");
+      get_or_declare_parameter<std::vector<std::string>>(node, param_prefix + "types");
 
     for (const auto & type_str : object_types) {
       for (const auto & movement_type : std::vector<std::string>{"moving", "static"}) {
         ObjectTypeSpecificParams param{
-          getOrDeclareParameter<double>(
+          get_or_declare_parameter<double>(
             node, param_prefix + type_str + "." + movement_type + ".min_lat_margin"),
-          getOrDeclareParameter<double>(
+          get_or_declare_parameter<double>(
             node, param_prefix + type_str + "." + movement_type + ".max_lat_margin"),
-          getOrDeclareParameter<double>(
+          get_or_declare_parameter<double>(
             node, param_prefix + type_str + "." + movement_type + ".min_ego_velocity"),
-          getOrDeclareParameter<double>(
+          get_or_declare_parameter<double>(
             node, param_prefix + type_str + "." + movement_type + ".max_ego_velocity")};
 
         object_type_specific_param_map.emplace(type_str + "." + movement_type, param);

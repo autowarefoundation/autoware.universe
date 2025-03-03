@@ -55,10 +55,8 @@
 
   <let name="euclidean_cluster/input/pointcloud" value="$(var segmentation_based_filtered/output/pointcloud)" if="$(var use_image_segmentation_based_filter)"/>
   <let name="euclidean_cluster/input/pointcloud" value="$(var input/pointcloud_map/pointcloud)" unless="$(var use_image_segmentation_based_filter)"/>
-  <let name="clustering/clusters" value="$(var ns)/clustering/clusters"/>
-  <!-- <let name="euclidean_cluster/output/clusters" value="$(var ns)/clustering/euclidean_cluster/clusters" if="$(var use_roi_based_cluster)"/> -->
-  <let name="euclidean_cluster/output/clusters" value="$(var clustering/clusters)"/>
-  <let name="shape_estimation1/input/clusters" value="$(var clustering/clusters)"/>
+  <let name="euclidean_cluster/output/clusters" value="$(var ns)/clustering/clusters"/>
+  <let name="shape_estimation1/input/clusters" value="$(var euclidean_cluster/output/clusters)"/>
   <let name="shape_estimation1/output/objects" value="$(var output/clustering/cluster_objects)"/>
 
   <let name="roi_cluster_fusion/input/clusters" value="$(var euclidean_cluster/output/clusters)"/>
@@ -72,17 +70,8 @@
   <let name="roi_cluster_merger/input/clusters0" value="$(var roi_cluster_fusion/output/clusters)" unless="$(var use_low_intensity_cluster_filter)"/>
   <let name="roi_cluster_merger/output/clusters" value="$(var ns)/clustering/camera_lidar_fusion/merger/clusters"/>
 
-  <let name="shape_estimation2/input/clusters" value="$(var roi_cluster_merger/output/clusters)" if="$(eval &quot;'$(var use_roi_based_cluster)' == 'true'&quot;)"/>
-  <let
-    name="shape_estimation2/input/clusters"
-    value="$(var low_intensity_cluster_filter/output/clusters)"
-    if="$(eval &quot;'$(var use_roi_based_cluster)' == 'false' and '$(var use_low_intensity_cluster_filter)' == 'true'&quot;)"
-  />
-  <let
-    name="shape_estimation2/input/clusters"
-    value="$(var roi_cluster_fusion/output/clusters)"
-    if="$(eval &quot;'$(var use_roi_based_cluster)' == 'false' and '$(var use_low_intensity_cluster_filter)' == 'false'&quot;)"
-  />
+  <let name="shape_estimation2/input/clusters" value="$(var roi_cluster_merger/output/clusters)" if="$(var use_roi_based_cluster)"/>
+  <let name="shape_estimation2/input/clusters" value="$(var roi_cluster_merger/input/clusters0)" unless="$(var use_roi_based_cluster)"/>
   <let name="shape_estimation2/output/objects" value="$(var ns)/clustering/camera_lidar_fusion/objects_with_feature"/>
   <let name="detected_object_feature_remover/input/objects_with_feature" value="$(var shape_estimation2/output/objects)"/>
   <let name="detected_object_feature_remover/output/objects" value="$(var output/rule_detector/objects)"/>
