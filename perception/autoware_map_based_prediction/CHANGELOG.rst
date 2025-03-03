@@ -2,6 +2,13 @@
 Changelog for package autoware_map_based_prediction
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_utils): replace autoware_universe_utils with autoware_utils  (`#10191 <https://github.com/autowarefoundation/autoware.universe/issues/10191>`_)
+* chore(autoware_map_based_prediction): delete unused function and parameter (`#10090 <https://github.com/autowarefoundation/autoware.universe/issues/10090>`_)
+* Contributors: Fumiya Watanabe, Tomoya Kimura, 心刚
+
 0.41.2 (2025-02-19)
 -------------------
 * chore: bump version to 0.41.1 (`#10088 <https://github.com/autowarefoundation/autoware.universe/issues/10088>`_)

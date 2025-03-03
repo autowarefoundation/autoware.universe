@@ -2,6 +2,15 @@
 Changelog for package autoware_perception_rviz_plugin
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+Forthcoming
+-----------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* chore: refine maintainer list (`#10110 <https://github.com/autowarefoundation/autoware.universe/issues/10110>`_)
+  * chore: remove Miura from maintainer
+  * chore: add Taekjin-san to perception_utils package maintainer
+  ---------
+* Contributors: Fumiya Watanabe, Shunsuke Miura
+
 0.41.2 (2025-02-19)
 -------------------
 * chore: bump version to 0.41.1 (`#10088 <https://github.com/autowarefoundation/autoware.universe/issues/10088>`_)
