@@ -110,7 +110,7 @@
   <!-- traffic light recognition options to switch launch function/module -->
   <arg name="use_traffic_light_recognition"/>
   <arg name="traffic_light_recognition/fusion_only"/>
-  <arg name="traffic_light_recognition/camera_namespace"/>
+  <arg name="traffic_light_recognition/camera_namespaces"/>
   <arg name="traffic_light_recognition/use_high_performance_detection"/>
   <arg name="traffic_light_recognition/high_performance_detection_type"/>
 
@@ -322,7 +322,7 @@
         <arg name="traffic_light_arbiter_param_path" value="$(var traffic_light_arbiter_param_path)"/>
         <arg name="crosswalk_traffic_light_estimator_param_path" value="$(var crosswalk_traffic_light_estimator_param_path)"/>
         <arg name="fusion_only" value="$(var traffic_light_recognition/fusion_only)"/>
-        <arg name="camera_namespaces" value="$(var traffic_light_recognition/camera_namespace)"/>
+        <arg name="camera_namespaces" value="$(var traffic_light_recognition/camera_namespaces)"/>
         <arg name="use_high_performance_detection" value="$(var traffic_light_recognition/use_high_performance_detection)"/>
         <arg name="high_performance_detection_type" value="$(var traffic_light_recognition/high_performance_detection_type)"/>
         <arg name="whole_image_detection/model_path" value="$(var traffic_light_recognition/whole_image_detection/model_path)"/>
