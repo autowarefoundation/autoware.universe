@@ -2,8 +2,8 @@
 Changelog for package tier4_simulator_launch
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.42.0 (2025-03-03)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * fix(tier4_simulator_launch): add missing exec_depend (`#10131 <https://github.com/autowarefoundation/autoware.universe/issues/10131>`_)
 * Contributors: Fumiya Watanabe, Takagi, Isamu

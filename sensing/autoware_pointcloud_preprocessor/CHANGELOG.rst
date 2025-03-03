@@ -2,8 +2,8 @@
 Changelog for package autoware_pointcloud_preprocessor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.42.0 (2025-03-03)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * fix(autoware_pointcloud_preprocessor): fix potential double unlock in concatenate node (`#10082 <https://github.com/autowarefoundation/autoware.universe/issues/10082>`_)
   * feat: reuse collectors

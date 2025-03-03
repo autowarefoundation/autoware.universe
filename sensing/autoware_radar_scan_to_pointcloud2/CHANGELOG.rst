@@ -2,8 +2,8 @@
 Changelog for package autoware_radar_scan_to_pointcloud2
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.42.0 (2025-03-03)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * chore: refine maintainer list (`#10110 <https://github.com/autowarefoundation/autoware.universe/issues/10110>`_)
   * chore: remove Miura from maintainer

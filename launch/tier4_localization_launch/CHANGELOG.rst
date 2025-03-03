@@ -2,8 +2,8 @@
 Changelog for package tier4_localization_launch
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.42.0 (2025-03-03)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * fix(tier4_localization_launch): add missing exec_depend (`#10128 <https://github.com/autowarefoundation/autoware.universe/issues/10128>`_)
   * fix(tier4_localization_launch): add missing exec_depend

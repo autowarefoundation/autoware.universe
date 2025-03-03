@@ -2,8 +2,8 @@
 Changelog for package tier4_perception_launch
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.42.0 (2025-03-03)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * chore(tier4_perception_launch): re-order objects_validation process after lidar ml detector (`#10160 <https://github.com/autowarefoundation/autoware.universe/issues/10160>`_)
   * fix: reorder object validator before the merge process

@@ -2,8 +2,8 @@
 Changelog for package autoware_traffic_light_visualization
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.42.0 (2025-03-03)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * feat(tier4_perception_launch): add option for new TL detector model (`#9731 <https://github.com/autowarefoundation/autoware.universe/issues/9731>`_)
   * feat: add traffic_light_detector launch

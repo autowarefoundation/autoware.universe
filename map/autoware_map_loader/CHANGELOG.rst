@@ -2,8 +2,8 @@
 Changelog for package autoware_map_loader
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.42.0 (2025-03-03)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * fix: modify the exec name of autoware_pointcloud_map_loader (`#10054 <https://github.com/autowarefoundation/autoware.universe/issues/10054>`_)
   Fixed exec name

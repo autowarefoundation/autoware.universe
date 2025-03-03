@@ -2,8 +2,8 @@
 Changelog for package autoware_map_projection_loader
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.42.0 (2025-03-03)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * feat(map_loader): add support for local cartesian projection (`#9238 <https://github.com/autowarefoundation/autoware.universe/issues/9238>`_)
   * feat(map_loader): add support for local cartesian projection to lanelet map loader

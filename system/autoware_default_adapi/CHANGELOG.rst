@@ -2,8 +2,8 @@
 Changelog for package autoware_default_adapi
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.42.0 (2025-03-03)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * feat(autoware_default_adapi): allow route clear while vehicle is stopped (`#10158 <https://github.com/autowarefoundation/autoware.universe/issues/10158>`_)
   * feat(autoware_default_adapi): allow route clear while vehicle is stopped

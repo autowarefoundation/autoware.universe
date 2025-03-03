@@ -2,8 +2,8 @@
 Changelog for package autoware_probabilistic_occupancy_grid_map
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.42.0 (2025-03-03)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * feat(autoware_utils): replace autoware_universe_utils with autoware_utils  (`#10191 <https://github.com/autowarefoundation/autoware.universe/issues/10191>`_)
 * chore(autoware_probabilistic_occupancy_grid_map): fixed cuda use on non-cuda settings (`#10099 <https://github.com/autowarefoundation/autoware.universe/issues/10099>`_)

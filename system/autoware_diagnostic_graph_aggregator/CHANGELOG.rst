@@ -2,8 +2,8 @@
 Changelog for package autoware_diagnostic_graph_aggregator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.42.0 (2025-03-03)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * feat(diagnostic_graph_aggregator): remove edit feature (`#10062 <https://github.com/autowarefoundation/autoware.universe/issues/10062>`_)
   Co-authored-by: Junya Sasaki <junya.sasaki@tier4.jp>

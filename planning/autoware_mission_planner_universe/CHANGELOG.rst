@@ -2,8 +2,8 @@
 Changelog for package autoware_mission_planner_universe
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.42.0 (2025-03-03)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * feat(autoware_utils): replace autoware_universe_utils with autoware_utils  (`#10191 <https://github.com/autowarefoundation/autoware.universe/issues/10191>`_)
 * feat(mission_planner): tolerate goal footprint being inside the previous lanelets of closest lanelet (`#10179 <https://github.com/autowarefoundation/autoware.universe/issues/10179>`_)

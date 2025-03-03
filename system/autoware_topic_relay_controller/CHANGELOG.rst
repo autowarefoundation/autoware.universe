@@ -2,8 +2,8 @@
 Changelog for package autoware_topic_relay_controller
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.42.0 (2025-03-03)
+-------------------
 * fix(autoware_topic_relay_controller): fix typo (`#10081 <https://github.com/autowarefoundation/autoware.universe/issues/10081>`_)
   fix typo
 * Contributors: Yutaka Kondo

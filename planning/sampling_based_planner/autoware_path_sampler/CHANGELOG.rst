@@ -2,8 +2,8 @@
 Changelog for package autoware_path_sampler
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.42.0 (2025-03-03)
+-------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
 * feat(autoware_utils): replace autoware_universe_utils with autoware_utils  (`#10191 <https://github.com/autowarefoundation/autoware.universe/issues/10191>`_)
 * fix: add missing includes to autoware_universe_utils (`#10091 <https://github.com/autowarefoundation/autoware.universe/issues/10091>`_)
