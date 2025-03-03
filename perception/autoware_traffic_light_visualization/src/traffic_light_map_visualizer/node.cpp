@@ -64,7 +64,7 @@ uint8_t convertMapcolor2Msg(const lanelet::ConstPoint3d & p)
   return msg->second;
 }
 
-uint8_t convertMapshape2Msg(const lanelet::ConstPoint3d & p)
+uint8_t convertMaparrow2Msg(const lanelet::ConstPoint3d & p)
 {
   if (!p.hasAttribute("arrow")) {
     return TrafficLightElement::CIRCLE;
@@ -79,7 +79,7 @@ uint8_t convertMapshape2Msg(const lanelet::ConstPoint3d & p)
 bool isCompareColorAndShape(const lanelet::ConstPoint3d & p, const TrafficLightElement & elem)
 {
   uint8_t p_color = convertMapcolor2Msg(p);
-  uint8_t p_shape = convertMapshape2Msg(p);
+  uint8_t p_shape = convertMaparrow2Msg(p);
 
   if (elem.color == p_color && elem.shape == p_shape) {
     return true;
