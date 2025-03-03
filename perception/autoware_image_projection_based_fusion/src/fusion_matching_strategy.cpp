@@ -353,10 +353,13 @@ void AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::update_fractional_timest
   double fractional_part = extract_fractional(timestamp);
 
   // Check if the new timestamp belongs to an existing element within noise tolerance
-  for (auto existing_timestamp : fractional_timestamp_set_) {
-    if (std::abs(fractional_part - existing_timestamp) < msg3d_noise_window_ * 2) {
-      existing_timestamp = (existing_timestamp + fractional_part) / 2;
-      return;  // If it belongs to an existing group, average the timestamp
+  for (auto it = fractional_timestamp_set_.begin(); it != fractional_timestamp_set_.end(); ++it) {
+    if (std::abs(fractional_part - *it) < msg3d_noise_window_ * 2) {
+      // If it belongs to an existing group, average the timestamp
+      double updated_value = (*it + fractional_part) / 2;
+      fractional_timestamp_set_.erase(it);
+      fractional_timestamp_set_.insert(updated_value);
+      return;
     }
   }
 
