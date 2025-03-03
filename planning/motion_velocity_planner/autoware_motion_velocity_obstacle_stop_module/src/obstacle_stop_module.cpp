@@ -898,7 +898,7 @@ double ObstacleStopModule::calc_desired_stop_margin(
       return stop_planning_param_.terminal_stop_margin;
     }
     return stop_planning_param_.stop_margin;
-  }();
+  }() + (stop_obstacle.velocity < 0.0) ? stop_planning_param_.stop_margin_opposing_traffic : 0.0;
 
   // calculate stop margin on curve
   const double stop_margin_on_curve = calc_margin_from_obstacle_on_curve(
@@ -915,10 +915,10 @@ double ObstacleStopModule::calc_desired_stop_margin(
     const double stop_dist_diff =
       closest_behavior_stop_dist_on_ref_traj - (dist_to_collide_on_ref_traj - stop_margin_on_curve);
     if (0.0 < stop_dist_diff && stop_dist_diff < stop_margin_on_curve) {
-      return stop_planning_param_.min_behavior_stop_margin;
+      return stop_planning_param_.min_behavior_stop_margin + (stop_obstacle.velocity < 0.0) ? stop_planning_param_.stop_margin_opposing_traffic;
     }
   }
-  return stop_margin_on_curve;
+  return stop_margin_on_curve + (stop_obstacle.velocity < 0.0) ? stop_planning_param_.stop_margin_opposing_traffic;
 }
 
 std::optional<double> ObstacleStopModule::calc_candidate_zero_vel_dist(

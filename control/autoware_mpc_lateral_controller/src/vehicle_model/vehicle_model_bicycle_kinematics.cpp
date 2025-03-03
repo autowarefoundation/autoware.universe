@@ -83,7 +83,7 @@ MPCTrajectory KinematicsBicycleModel::calculatePredictedTrajectoryInWorldCoordin
 
   // create initial state in the world coordinate
   Eigen::VectorXd state_w = [&]() {
-    Eigen::VectorXd state = Eigen::VectorXd::Zero(3);
+    Eigen::VectorXd state = Eigen::VectorXd::Zero(4);
     const auto lateral_error_0 = x0(0);
     const auto yaw_error_0 = x0(1);
     state(0, 0) = t.x.at(0) - std::sin(t.yaw.at(0)) * lateral_error_0;  // world-x
