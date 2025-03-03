@@ -32,13 +32,13 @@ import yaml
 
 
 def launch_setup(context, *args, **kwargs):
-    high_performance_detection_type = LaunchConfiguration(
-        "high_performance_detection_type"
+    high_accuracy_detection_type = LaunchConfiguration(
+        "high_accuracy_detection_type"
     ).perform(context)
-    assert high_performance_detection_type in [
+    assert high_accuracy_detection_type in [
         "whole_image_detection",
         "fine_detection",
-    ], "high_performance_detection_type must be either 'whole_image_detection' or 'fine_detection'."
+    ], "high_accuracy_detection_type must be either 'whole_image_detection' or 'fine_detection'."
 
     # Load camera namespaces
     camera_namespaces = LaunchConfiguration("camera_namespaces").perform(context)
@@ -165,8 +165,8 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
                 parameters=[
                     traffic_light_roi_visualizer_param,
                     {
-                        "use_high_performance_detection": LaunchConfiguration(
-                            "use_high_performance_detection"
+                        "use_high_accuracy_detection": LaunchConfiguration(
+                            "use_high_accuracy_detection"
                         )
                     },
                 ],
@@ -246,7 +246,7 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
             PythonExpression(
                 [
                     "'",
-                    LaunchConfiguration("high_performance_detection_type"),
+                    LaunchConfiguration("high_accuracy_detection_type"),
                     "' == 'fine_detection' ",
                 ]
             )
@@ -320,7 +320,7 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
             PythonExpression(
                 [
                     "'",
-                    LaunchConfiguration("high_performance_detection_type"),
+                    LaunchConfiguration("high_accuracy_detection_type"),
                     "' == 'whole_image_detection' ",
                 ]
             )
@@ -346,8 +346,8 @@ def generate_launch_description():
 
     add_launch_arg("enable_image_decompressor")
     add_launch_arg("camera_namespaces")
-    add_launch_arg("use_high_performance_detection")
-    add_launch_arg("high_performance_detection_type")
+    add_launch_arg("use_high_accuracy_detection")
+    add_launch_arg("high_accuracy_detection_type")
 
     # whole image detector by yolox
     add_launch_arg("whole_image_detection/model_path")
