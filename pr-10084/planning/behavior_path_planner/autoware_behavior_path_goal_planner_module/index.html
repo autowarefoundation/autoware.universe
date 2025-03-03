@@ -14400,7 +14400,7 @@
 
 <div><h1 id="goal-planner-design">Goal Planner design<a class="headerlink" href="#goal-planner-design" title="Permanent link">#</a></h1>
 <h2 id="purpose-role">Purpose / Role<a class="headerlink" href="#purpose-role" title="Permanent link">#</a></h2>
-<p>goal_planner generates a smooth path toward the goal and additionally searches for safe path and goa to execute dynamic pull_over on the road shoulders lanes following the traffic rules.</p>
+<p>goal_planner generates a smooth path toward the goal and additionally searches for safe path and goal to execute dynamic pull_over on the road shoulders lanes following the traffic rules.</p>
 <h2 id="design">Design<a class="headerlink" href="#design" title="Permanent link">#</a></h2>
 <p>If goal modification is not allowed, just park at the designated fixed goal using <code>fixed_goal_planner</code>.</p>
 <p>If allowed, <code>rough_goal_planner</code> works to park around the vacant spots in the shoulder lanes around the goal by executing pull_over toward left or right side of the road lanes.</p>
@@ -14421,7 +14421,7 @@
 <h4 id="pull-over-on-road-lane">pull over on road lane<a class="headerlink" href="#pull-over-on-road-lane" title="Permanent link">#</a></h4>
 <p><code>rough_goal_planner</code> is triggered following the <a href="https://autowarefoundation.github.io/autoware.universe/main/planning/behavior_path_planner/autoware_behavior_path_planner/docs/behavior_path_planner_manager_design/">behavior_path_planner scene module interface</a> namely through <code>isExecutionRequested</code> function and it returns true when following two conditions are met.</p>
 <ul>
-<li>The distance between the goal and ego get shorter than <code>pull_over_minimum_request_length</code>.</li>
+<li>The distance between the goal and ego get shorter than <span class="arithmatex">\(\max\)</span>(<code>pull_over_minimum_request_length</code>, stop distance with decel and jerk constraints).</li>
 <li>Route is set with <code>allow_goal_modification=true</code> or is on a <code>road_shoulder</code> type lane.<ul>
 <li>We can set this option with <a href="https://github.com/autowarefoundation/autoware_adapi_msgs/blob/main/autoware_adapi_v1_msgs/routing/srv/SetRoute.srv#L2">SetRoute</a> api service.</li>
 <li>We support <code>2D Rough Goal Pose</code> with the key bind <code>r</code> in RViz, but in the future there will be a panel of tools to manipulate various Route API from RViz.</li>
@@ -14493,7 +14493,7 @@
 <p><img alt="goal_distance" src="images/goal_planner-goal_distance.drawio.svg"></p>
 <p>The following figure is an example of minimum_weighted_distance.​ The white number indicates the goal candidate priority, and the smaller the number, the higher the priority. the 0 goal indicates the original refined goal.</p>
 <p><img alt="goal_priority_rviz_with_goal" src="images/goal_priority_with_goal.png"></p>
-<p>To achieve a goal pose which is easy to start the maneuvering after arrival, the goal candidate pose is aligned so that ego front becomes parallel to the shoulder lane boundary at that pose.</p>
+<p>To achieve a goal pose which is easy to start the maneuvering after arrival, the goal candidate pose is aligned so that ego center becomes parallel to the shoulder lane boundary at that pose.</p>
 <p><img alt="goal_pose_align" src="images/goal_planner-goal-pose-correct.drawio.svg"></p>
 <p>If the footprint in each goal candidate is within <code>object_recognition_collision_check_margin</code> from one of the parked object, or the longitudinal distance to one of the parked objects from that goal candidate is less than <code>longitudinal_margin</code>, it is determined to be unsafe. These goals are not selected. If <code>use_occupancy_grid_for_goal_search</code> is enabled, collision detection on the grid is also performed with <code>occupancy_grid_collision_check_margin</code>.</p>
 <p>Red goal candidates in the below figure indicate unsafe ones.</p>
@@ -14606,6 +14606,7 @@
 <p><code>LaneParkingThread</code> executes either</p>
 <ul>
 <li><em>shift</em> based path planning</li>
+<li><em>arc forward</em>, <em>arc backward</em> path planning</li>
 <li><em>bezier</em> based path planning</li>
 </ul>
 <p>depending on the situation and configuration. If <code>use_bus_stop_area</code> is true and the goal is on a BusStopArea regulatory element and the estimated pull over angle(the difference of pose between the shift start and shift end) is larger than <code>bezier_parking.pull_over_angle_threshold</code>, <a href="https://autowarefoundation.github.io/autoware.universe/main/planning/sampling_based_planner/autoware_bezier_sampler/"><em>bezier</em> based path planner</a> works to generate path candidates. Otherwise <a href="https://autowarefoundation.github.io/autoware.universe/main/planning/behavior_path_planner/autoware_behavior_path_planner_common/docs/behavior_path_planner_path_generation_design/"><em>shift</em> based path planner</a> works. <em>bezier</em> based path planner tends to generate more natural paths on a curved lane than <em>shift</em> based path planner, so it is used if the shift requires a certain amount of pose rotation.</p>
@@ -14909,7 +14910,7 @@
 <h3 id="bezier-parking">bezier parking<a class="headerlink" href="#bezier-parking" title="Permanent link">#</a></h3>
 <p><em>shift</em> based path planner tends to generate unnatural path when the shift lane is curved as illustrated below.</p>
 <p><img src="./images/bad_shift_path.png" width="600"></p>
-<p><em>bezier</em> based path planner interpolates the shift path start and end pose using tbe bezier curve for a several combination of parameters, to obtain a better result through the later selection process. In the below screenshot the goal is on a BusStopArea and <code>use_bus_stop_area</code> is set to true, so <em>bezier</em> planner is triggered instead. Internally, goal<em>planner first tries to use _shift</em> planner, and if it turns out that the shift start and end is not parallel, it switches to <em>bezier</em> planner from the next process.</p>
+<p><em>bezier</em> based path planner interpolates the shift path start and end pose using tbe bezier curve for a several combination of parameters, to obtain a better result through the later selection process. In the below screenshot the goal is on a BusStopArea and <code>use_bus_stop_area</code> is set to true, so <em>bezier</em> planner is triggered instead. Internally, goal_planner first tries to use <em>shift</em> planner, and if it turns out that the shift start and end is not parallel, it switches to <em>bezier</em> planner from the next process.</p>
 <p><img src="./images/bezier_path.png" width="600"></p>
 <h2 id="collision-check-for-path-generation"><strong>collision check for path generation</strong><a class="headerlink" href="#collision-check-for-path-generation" title="Permanent link">#</a></h2>
 <p>To select a safe one from the path candidates, collision is checked against parked objects for each path.</p>
