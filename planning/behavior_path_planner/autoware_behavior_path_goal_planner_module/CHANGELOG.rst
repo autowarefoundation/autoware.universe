@@ -2,6 +2,40 @@
 Changelog for package autoware_behavior_path_goal_planner_module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.42.0 (2025-03-03)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_utils): replace autoware_universe_utils with autoware_utils  (`#10191 <https://github.com/autowarefoundation/autoware.universe/issues/10191>`_)
+* refactor(goal_planner, QC): remove unused function (`#10195 <https://github.com/autowarefoundation/autoware.universe/issues/10195>`_)
+  refactor(goal_planner): remove unused function
+* refactor(goal_planner): refactor planPullOverAsCandidate (`#10114 <https://github.com/autowarefoundation/autoware.universe/issues/10114>`_)
+* feat(goal_planner): align vehicle center to be parallel to lane boundary (`#10118 <https://github.com/autowarefoundation/autoware.universe/issues/10118>`_)
+* fix(autoware_behavior_path_goal_planner_module): check optional before accessing (`#10182 <https://github.com/autowarefoundation/autoware.universe/issues/10182>`_)
+  Update shift_pull_over.cpp
+* feat(autoware_vehicle_info_utils): replace autoware_universe_utils with autoware_utils (`#10167 <https://github.com/autowarefoundation/autoware.universe/issues/10167>`_)
+* feat(goal_planner): resample path interval for lane departure check accuracy (`#10058 <https://github.com/autowarefoundation/autoware.universe/issues/10058>`_)
+* feat(goal_planner): ensure stop while path candidates are empty (`#10101 <https://github.com/autowarefoundation/autoware.universe/issues/10101>`_)
+* feat!: replace tier4_planning_msgs/PathWithLaneId with autoware_internal_planning_msgs/PathWithLaneId (`#10023 <https://github.com/autowarefoundation/autoware.universe/issues/10023>`_)
+* refactor(goal_planner): fix updateData continuation condition (`#10079 <https://github.com/autowarefoundation/autoware.universe/issues/10079>`_)
+  refactor(goal_planner): fix updateData contiuation condition
+* feat(goal_planner): replace LastApprovalData with the time changed to DECIDED (`#10066 <https://github.com/autowarefoundation/autoware.universe/issues/10066>`_)
+* feat(goal_planner): do not use isActivated() in deciding state transition (`#10056 <https://github.com/autowarefoundation/autoware.universe/issues/10056>`_)
+* refactor(goal_planner): remove enable_safety_check because it is default (`#10052 <https://github.com/autowarefoundation/autoware.universe/issues/10052>`_)
+* refactor(goal_planner): remove use_object_recognition because it is default (`#10050 <https://github.com/autowarefoundation/autoware.universe/issues/10050>`_)
+* fix(goal_planner): fix goal_searcher assert (`#10055 <https://github.com/autowarefoundation/autoware.universe/issues/10055>`_)
+* refactor(goal_planner): refactor goal_searcher and goal_candidates (`#10049 <https://github.com/autowarefoundation/autoware.universe/issues/10049>`_)
+* fix(goal_planner): check usage of bus_stop_area by goal_pose (`#10041 <https://github.com/autowarefoundation/autoware.universe/issues/10041>`_)
+* refactor(goal_planner): make parameters const (`#10043 <https://github.com/autowarefoundation/autoware.universe/issues/10043>`_)
+* Contributors: Fumiya Watanabe, Kosuke Takeuchi, Mamoru Sobue, Ryohsuke Mitsudome, Yukinari Hisaki, 心刚
+
+0.41.2 (2025-02-19)
+-------------------
+* chore: bump version to 0.41.1 (`#10088 <https://github.com/autowarefoundation/autoware.universe/issues/10088>`_)
+* Contributors: Ryohsuke Mitsudome
+
+0.41.1 (2025-02-10)
+-------------------
+
 0.41.0 (2025-01-29)
 -------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
