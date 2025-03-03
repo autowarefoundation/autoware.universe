@@ -171,7 +171,7 @@ enum BBOX_IDX {
  * @param self_transform: Ego vehicle position in map frame
  * @return int index
  */
-Eigen::Vector2d getNearestCornerOrSurface(
+geometry_msgs::msg::Point getNearestCornerOrSurface(
   const types::DynamicObject & object, const geometry_msgs::msg::Transform & self_transform)
 {
   const double x = object.pose.position.x;
@@ -212,19 +212,21 @@ Eigen::Vector2d getNearestCornerOrSurface(
   } else {
     anchor_y = -width / 2.0;
   }
-
-  return Eigen::Vector2d(anchor_x, anchor_y);
+  geometry_msgs::msg::Point anchor_point;
+  anchor_point.x = anchor_x;
+  anchor_point.y = anchor_y;
+  return anchor_point;
 }
 
 void calcAnchorPointOffset(
   const types::DynamicObject & this_object, const types::DynamicObject & input_object,
-  const Eigen::Vector2d anchor_vector, Eigen::Vector2d & tracking_offset,
+  const geometry_msgs::msg::Point anchor_vector, Eigen::Vector2d & tracking_offset,
   types::DynamicObject & offset_object)
 {
   // copy value
   offset_object = input_object;
   // invalid anchor
-  if (anchor_vector.norm() < 1e-6) {
+  if (anchor_vector.x <= 1e-6 && anchor_vector.y <= 1e-6) {
     return;
   }
   double input_yaw = tf2::getYaw(input_object.pose.orientation);
@@ -234,10 +236,10 @@ void calcAnchorPointOffset(
   const double width = this_object.shape.dimensions.y;
 
   // update offset
-  tracking_offset = anchor_vector;
+  tracking_offset = Eigen::Vector2d(anchor_vector.x, anchor_vector.y);
   if (tracking_offset.x() > 0) {
     tracking_offset.x() -= length / 2.0;
-  } else if (anchor_vector.x() < 0) {
+  } else if (tracking_offset.x() < 0) {
     tracking_offset.x() += length / 2.0;
   }
   if (tracking_offset.y() > 0) {
