@@ -23,7 +23,7 @@
   <depend>autoware_component_interface_utils</depend>
   <depend>autoware_map_height_fitter</depend>
   <depend>autoware_motion_utils</depend>
-  <depend>autoware_universe_utils</depend>
+  <depend>autoware_utils</depend>
   <depend>geometry_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>

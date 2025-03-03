@@ -75,10 +75,10 @@
 #include <pcl_msgs/msg/point_indices.h>
 
 // Include tier4 autoware utils
-#include <autoware/universe_utils/ros/debug_publisher.hpp>
-#include <autoware/universe_utils/ros/managed_transform_buffer.hpp>
-#include <autoware/universe_utils/ros/published_time_publisher.hpp>
-#include <autoware/universe_utils/system/stop_watch.hpp>
+#include <autoware_utils/ros/debug_publisher.hpp>
+#include <autoware_utils/ros/managed_transform_buffer.hpp>
+#include <autoware_utils/ros/published_time_publisher.hpp>
+#include <autoware_utils/system/stop_watch.hpp>
 
 namespace autoware::pointcloud_preprocessor
 {
@@ -176,9 +176,9 @@ protected:
   std::mutex mutex_;
 
   /** \brief processing time publisher. **/
-  std::unique_ptr<autoware::universe_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
-  std::unique_ptr<autoware::universe_utils::DebugPublisher> debug_publisher_;
-  std::unique_ptr<autoware::universe_utils::PublishedTimePublisher> published_time_publisher_;
+  std::unique_ptr<autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
+  std::unique_ptr<autoware_utils::DebugPublisher> debug_publisher_;
+  std::unique_ptr<autoware_utils::PublishedTimePublisher> published_time_publisher_;
 
   /** \brief Virtual abstract filter method. To be implemented by every child.
    * \param input the input point cloud dataset.
@@ -238,7 +238,7 @@ protected:
    * versus an exact one (false by default). */
   bool approximate_sync_ = false;
 
-  std::unique_ptr<autoware::universe_utils::ManagedTransformBuffer> managed_tf_buffer_{nullptr};
+  std::unique_ptr<autoware_utils::ManagedTransformBuffer> managed_tf_buffer_{nullptr};
 
   inline bool isValid(
     const PointCloud2ConstPtr & cloud, const std::string & /*topic_name*/ = "input")

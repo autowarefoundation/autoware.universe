@@ -20,7 +20,7 @@
   <depend>autoware_internal_debug_msgs</depend>
   <depend>autoware_localization_util</depend>
   <depend>autoware_map_msgs</depend>
-  <depend>autoware_universe_utils</depend>
+  <depend>autoware_utils</depend>
   <depend>diagnostic_msgs</depend>
   <depend>fmt</depend>
   <depend>geometry_msgs</depend>

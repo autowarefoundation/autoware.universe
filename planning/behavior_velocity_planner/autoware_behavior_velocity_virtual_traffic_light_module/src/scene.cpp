@@ -40,7 +40,7 @@ VirtualTrafficLightModule::VirtualTrafficLightModule(
   const lanelet::autoware::VirtualTrafficLight & reg_elem, lanelet::ConstLanelet lane,
   const PlannerParam & planner_param, const rclcpp::Logger logger,
   const rclcpp::Clock::SharedPtr clock,
-  const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+  const std::shared_ptr<autoware_utils::TimeKeeper> time_keeper,
   const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
     planning_factor_interface)
 : SceneModuleInterface(module_id, logger, clock, time_keeper, planning_factor_interface),
@@ -368,7 +368,7 @@ bool VirtualTrafficLightModule::hasRightOfWay(
 }
 
 void VirtualTrafficLightModule::insertStopVelocityAtStopLine(
-  tier4_planning_msgs::msg::PathWithLaneId * path, const size_t end_line_idx)
+  autoware_internal_planning_msgs::msg::PathWithLaneId * path, const size_t end_line_idx)
 {
   const auto collision =
     findLastCollisionBeforeEndLine(path->points, *map_data_.stop_line, end_line_idx);
@@ -430,7 +430,7 @@ void VirtualTrafficLightModule::insertStopVelocityAtStopLine(
 }
 
 void VirtualTrafficLightModule::insertStopVelocityAtEndLine(
-  tier4_planning_msgs::msg::PathWithLaneId * path, const size_t end_line_idx)
+  autoware_internal_planning_msgs::msg::PathWithLaneId * path, const size_t end_line_idx)
 {
   const auto collision =
     findLastCollisionBeforeEndLine(path->points, map_data_.end_lines, end_line_idx);

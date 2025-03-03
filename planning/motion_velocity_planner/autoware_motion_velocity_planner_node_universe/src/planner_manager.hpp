@@ -49,7 +49,8 @@ public:
   void unload_module_plugin(rclcpp::Node & node, const std::string & name);
   void update_module_parameters(const std::vector<rclcpp::Parameter> & parameters);
   std::vector<VelocityPlanningResult> plan_velocities(
-    const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & ego_trajectory_points,
+    const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & raw_trajectory_points,
+    const std::vector<autoware_planning_msgs::msg::TrajectoryPoint> & smoothed_trajectory_points,
     const std::shared_ptr<const PlannerData> planner_data);
 
   // Metrics

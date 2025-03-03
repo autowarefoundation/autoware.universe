@@ -15,7 +15,7 @@
 
   <depend>autoware_control_msgs</depend>
   <depend>autoware_system_msgs</depend>
-  <depend>autoware_universe_utils</depend>
+  <depend>autoware_utils</depend>
   <depend>autoware_vehicle_msgs</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
