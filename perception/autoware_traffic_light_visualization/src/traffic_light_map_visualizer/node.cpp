@@ -41,7 +41,7 @@ std::map<std::string, uint8_t> map_color2msg{
   {"white", TrafficLightElement::WHITE},
 };
 
-std::map<std::string, uint8_t> map_shape2msg{
+std::map<std::string, uint8_t> map_arrow2msg{
   {"unknown", TrafficLightElement::UNKNOWN},
   {"circle", TrafficLightElement::CIRCLE},
   {"up", TrafficLightElement::UP_ARROW},
@@ -69,8 +69,8 @@ uint8_t convertMaparrow2Msg(const lanelet::ConstPoint3d & p)
   if (!p.hasAttribute("arrow")) {
     return TrafficLightElement::CIRCLE;
   }
-  auto msg = map_shape2msg.find(p.attribute("arrow").value());
-  if (msg == map_shape2msg.end()) {
+  auto msg = map_arrow2msg.find(p.attribute("arrow").value());
+  if (msg == map_arrow2msg.end()) {
     return TrafficLightElement::UNKNOWN;
   }
   return msg->second;
