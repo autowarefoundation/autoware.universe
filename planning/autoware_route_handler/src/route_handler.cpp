@@ -1007,7 +1007,7 @@ lanelet::ConstLanelets RouteHandler::getPreviousLanelets(
 }
 
 std::optional<lanelet::ConstLanelet> RouteHandler::getRightLanelet(
-  const lanelet::ConstLanelet & lanelet, const bool enable_same_root,
+  const lanelet::ConstLanelet & lanelet, [[maybe_unused]] const bool enable_same_root,
   const bool get_shoulder_lane) const
 {
   // right road lanelet of shoulder lanelet
@@ -1036,44 +1036,11 @@ std::optional<lanelet::ConstLanelet> RouteHandler::getRightLanelet(
     return *adjacent_right_lane;
   }
 
-  // same root right lanelet
-  if (!enable_same_root) {
-    return std::nullopt;
-  }
-
-  lanelet::ConstLanelets prev_lanelet;
-  if (!getPreviousLaneletsWithinRoute(lanelet, &prev_lanelet)) {
-    return std::nullopt;
-  }
-
-  lanelet::ConstLanelet next_lanelet;
-  if (!getNextLaneletWithinRoute(lanelet, &next_lanelet)) {
-    for (const auto & lane : getNextLanelets(prev_lanelet.front())) {
-      if (lanelet.rightBound().back().id() == lane.leftBound().back().id()) {
-        return lane;
-      }
-    }
-    return std::nullopt;
-  }
-
-  const auto next_right_lane = getRightLanelet(next_lanelet, false);
-  if (!next_right_lane) {
-    return std::nullopt;
-  }
-
-  for (const auto & lane : getNextLanelets(prev_lanelet.front())) {
-    for (const auto & target_lane : getNextLanelets(lane)) {
-      if (next_right_lane.value().id() == target_lane.id()) {
-        return lane;
-      }
-    }
-  }
-
   return std::nullopt;
 }
 
 std::optional<lanelet::ConstLanelet> RouteHandler::getLeftLanelet(
-  const lanelet::ConstLanelet & lanelet, const bool enable_same_root,
+  const lanelet::ConstLanelet & lanelet, [[maybe_unused]] const bool enable_same_root,
   const bool get_shoulder_lane) const
 {
   // left road lanelet of shoulder lanelet
@@ -1100,39 +1067,6 @@ std::optional<lanelet::ConstLanelet> RouteHandler::getLeftLanelet(
   const auto & adjacent_left_lane = routing_graph_ptr_->adjacentLeft(lanelet);
   if (adjacent_left_lane) {
     return *adjacent_left_lane;
-  }
-
-  // same root right lanelet
-  if (!enable_same_root) {
-    return std::nullopt;
-  }
-
-  lanelet::ConstLanelets prev_lanelet;
-  if (!getPreviousLaneletsWithinRoute(lanelet, &prev_lanelet)) {
-    return std::nullopt;
-  }
-
-  lanelet::ConstLanelet next_lanelet;
-  if (!getNextLaneletWithinRoute(lanelet, &next_lanelet)) {
-    for (const auto & lane : getNextLanelets(prev_lanelet.front())) {
-      if (lanelet.leftBound().back().id() == lane.rightBound().back().id()) {
-        return lane;
-      }
-    }
-    return std::nullopt;
-  }
-
-  const auto next_left_lane = getLeftLanelet(next_lanelet, false);
-  if (!next_left_lane) {
-    return std::nullopt;
-  }
-
-  for (const auto & lane : getNextLanelets(prev_lanelet.front())) {
-    for (const auto & target_lane : getNextLanelets(lane)) {
-      if (next_left_lane.value().id() == target_lane.id()) {
-        return lane;
-      }
-    }
   }
 
   return std::nullopt;
