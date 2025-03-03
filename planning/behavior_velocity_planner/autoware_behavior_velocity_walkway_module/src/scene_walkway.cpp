@@ -16,6 +16,7 @@
 
 #include <autoware/behavior_velocity_planner_common/utilization/util.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware_utils/geometry/geometry.hpp>
 
 #include <cmath>
 #include <memory>
@@ -27,14 +28,14 @@ namespace bg = boost::geometry;
 using autoware::motion_utils::calcLongitudinalOffsetPose;
 using autoware::motion_utils::calcSignedArcLength;
 using autoware::motion_utils::findNearestSegmentIndex;
-using autoware::universe_utils::createPoint;
-using autoware::universe_utils::getPose;
+using autoware_utils::create_point;
+using autoware_utils::get_pose;
 
 WalkwayModule::WalkwayModule(
   const int64_t module_id, const lanelet::LaneletMapPtr & lanelet_map_ptr,
   const PlannerParam & planner_param, const bool use_regulatory_element,
   const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock,
-  const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+  const std::shared_ptr<autoware_utils::TimeKeeper> time_keeper,
   const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
     planning_factor_interface)
 : SceneModuleInterface(module_id, logger, clock, time_keeper, planning_factor_interface),

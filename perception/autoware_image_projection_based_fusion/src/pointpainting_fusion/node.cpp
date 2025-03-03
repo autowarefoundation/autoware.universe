@@ -22,9 +22,9 @@
 #include <autoware/lidar_centerpoint/preprocess/pointcloud_densification.hpp>
 #include <autoware/lidar_centerpoint/ros_utils.hpp>
 #include <autoware/lidar_centerpoint/utils.hpp>
-#include <autoware/universe_utils/geometry/geometry.hpp>
-#include <autoware/universe_utils/math/constants.hpp>
-#include <autoware/universe_utils/system/time_keeper.hpp>
+#include <autoware_utils/geometry/geometry.hpp>
+#include <autoware_utils/math/constants.hpp>
+#include <autoware_utils/system/time_keeper.hpp>
 #include <pcl_ros/transforms.hpp>
 
 #include <omp.h>
@@ -36,7 +36,7 @@
 
 namespace
 {
-using autoware::universe_utils::ScopedTimeTrack;
+using autoware_utils::ScopedTimeTrack;
 
 Eigen::Affine3f _transformToEigen(const geometry_msgs::msg::Transform & t)
 {
@@ -192,7 +192,7 @@ PointPaintingFusionNode::PointPaintingFusionNode(const rclcpp::NodeOptions & opt
   detector_ptr_ = std::make_unique<image_projection_based_fusion::PointPaintingTRT>(
     encoder_param, head_param, densification_param, config);
   diagnostics_interface_ptr_ =
-    std::make_unique<autoware::universe_utils::DiagnosticsInterface>(this, "pointpainting_trt");
+    std::make_unique<autoware_utils::DiagnosticsInterface>(this, "pointpainting_trt");
 
   if (this->declare_parameter("build_only", false)) {
     RCLCPP_INFO(this->get_logger(), "TensorRT engine is built and shutdown node.");
@@ -234,8 +234,7 @@ void PointPaintingFusionNode::preprocess(PointCloudMsgType & painted_pointcloud_
   sensor_msgs::PointCloud2Iterator<float> iter_painted_z(painted_pointcloud_msg, "z");
   for (sensor_msgs::PointCloud2ConstIterator<float> iter_x(tmp, "x"), iter_y(tmp, "y"),
        iter_z(tmp, "z");
-       iter_x != iter_x.end();
-       ++iter_x, ++iter_y, ++iter_z, ++iter_painted_x, ++iter_painted_y, ++iter_painted_z) {
+       iter_x != iter_x.end(); ++iter_x, ++iter_y, ++iter_z) {
     if (
       *iter_x <= pointcloud_range.at(0) || *iter_x >= pointcloud_range.at(3) ||
       *iter_y <= pointcloud_range.at(1) || *iter_y >= pointcloud_range.at(4)) {
@@ -245,6 +244,9 @@ void PointPaintingFusionNode::preprocess(PointCloudMsgType & painted_pointcloud_
       *iter_painted_y = *iter_y;
       *iter_painted_z = *iter_z;
       j += painted_point_step;
+      ++iter_painted_x;
+      ++iter_painted_y;
+      ++iter_painted_z;
     }
   }
 

@@ -16,7 +16,7 @@
 #define AUTOWARE__IMAGE_PROJECTION_BASED_FUSION__ROI_DETECTED_OBJECT_FUSION__NODE_HPP_
 
 #include "autoware/image_projection_based_fusion/fusion_node.hpp"
-#include "autoware/universe_utils/ros/debug_publisher.hpp"
+#include "autoware_utils/ros/debug_publisher.hpp"
 
 #include <autoware/image_projection_based_fusion/utils/utils.hpp>
 

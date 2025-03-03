@@ -44,7 +44,7 @@ TrafficLightModule::TrafficLightModule(
   const int64_t lane_id, const lanelet::TrafficLight & traffic_light_reg_elem,
   lanelet::ConstLanelet lane, const PlannerParam & planner_param, const rclcpp::Logger logger,
   const rclcpp::Clock::SharedPtr clock,
-  const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+  const std::shared_ptr<autoware_utils::TimeKeeper> time_keeper,
   const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
     planning_factor_interface)
 : SceneModuleInterfaceWithRTC(lane_id, logger, clock, time_keeper, planning_factor_interface),
@@ -275,11 +275,11 @@ bool TrafficLightModule::isTrafficSignalTimedOut() const
   return false;
 }
 
-tier4_planning_msgs::msg::PathWithLaneId TrafficLightModule::insertStopPose(
-  const tier4_planning_msgs::msg::PathWithLaneId & input, const size_t & insert_target_point_idx,
-  const Eigen::Vector2d & target_point)
+autoware_internal_planning_msgs::msg::PathWithLaneId TrafficLightModule::insertStopPose(
+  const autoware_internal_planning_msgs::msg::PathWithLaneId & input,
+  const size_t & insert_target_point_idx, const Eigen::Vector2d & target_point)
 {
-  tier4_planning_msgs::msg::PathWithLaneId modified_path;
+  autoware_internal_planning_msgs::msg::PathWithLaneId modified_path;
   modified_path = input;
 
   // Create stop pose

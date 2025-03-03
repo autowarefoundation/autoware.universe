@@ -17,7 +17,7 @@
   <buildtool_depend>eigen3_cmake_module</buildtool_depend>
 
   <depend>autoware_cuda_utils</depend>
-  <depend>autoware_universe_utils</depend>
+  <depend>autoware_utils</depend>
   <depend>grid_map_costmap_2d</depend>
   <depend>grid_map_msgs</depend>
   <depend>grid_map_ros</depend>

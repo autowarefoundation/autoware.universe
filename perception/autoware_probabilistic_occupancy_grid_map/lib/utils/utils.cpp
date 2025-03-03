@@ -14,7 +14,7 @@
 
 #include "autoware/probabilistic_occupancy_grid_map/utils/utils.hpp"
 
-#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware_utils/geometry/geometry.hpp>
 
 #include <string>
 
@@ -47,6 +47,7 @@ bool transformPointcloud(
   return true;
 }
 
+#ifdef USE_CUDA
 bool transformPointcloudAsync(
   CudaPointCloud2 & input, const tf2_ros::Buffer & tf2, const std::string & target_frame)
 {
@@ -71,10 +72,11 @@ bool transformPointcloudAsync(
   input.header.frame_id = target_frame;
   return true;
 }
+#endif
 
 Eigen::Matrix4f getTransformMatrix(const geometry_msgs::msg::Pose & pose)
 {
-  auto transform = autoware::universe_utils::pose2transform(pose);
+  auto transform = autoware_utils::pose2transform(pose);
   Eigen::Matrix4f tf_matrix = tf2::transformToEigen(transform).matrix().cast<float>();
   return tf_matrix;
 }
@@ -117,7 +119,7 @@ geometry_msgs::msg::Pose getPose(
   geometry_msgs::msg::TransformStamped tf_stamped;
   tf_stamped = tf2.lookupTransform(
     target_frame, source_header.frame_id, source_header.stamp, rclcpp::Duration::from_seconds(0.5));
-  pose = autoware::universe_utils::transform2pose(tf_stamped.transform);
+  pose = autoware_utils::transform2pose(tf_stamped.transform);
   return pose;
 }
 
@@ -129,7 +131,7 @@ geometry_msgs::msg::Pose getPose(
   geometry_msgs::msg::TransformStamped tf_stamped;
   tf_stamped =
     tf2.lookupTransform(target_frame, source_frame, stamp, rclcpp::Duration::from_seconds(0.5));
-  pose = autoware::universe_utils::transform2pose(tf_stamped.transform);
+  pose = autoware_utils::transform2pose(tf_stamped.transform);
   return pose;
 }
 

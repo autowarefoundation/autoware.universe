@@ -27,9 +27,9 @@
 
 namespace autoware::behavior_path_planner
 {
-using autoware::universe_utils::LinearRing2d;
+using autoware_utils::LinearRing2d;
 using BasicPolygons2d = std::vector<lanelet::BasicPolygon2d>;
-using autoware::universe_utils::MultiPolygon2d;
+using autoware_utils::MultiPolygon2d;
 
 class GoalSearcher
 {
@@ -49,7 +49,7 @@ public:
 
   // todo(kosuke55): Functions for this specific use should not be in the interface,
   // so it is better to consider interface design when we implement other goal searchers.
-  GoalCandidate getClosetGoalCandidateAlongLanes(
+  std::optional<GoalCandidate> getClosestGoalCandidateAlongLanes(
     const GoalCandidates & goal_candidates,
     const std::shared_ptr<const PlannerData> & planner_data) const;
   bool isSafeGoalWithMarginScaleFactor(

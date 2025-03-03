@@ -21,15 +21,15 @@
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/objects_of_interest_marker_interface/objects_of_interest_marker_interface.hpp>
 #include <autoware/planning_factor_interface/planning_factor_interface.hpp>
-#include <autoware/universe_utils/ros/debug_publisher.hpp>
-#include <autoware/universe_utils/ros/parameter.hpp>
-#include <autoware/universe_utils/system/stop_watch.hpp>
-#include <autoware/universe_utils/system/time_keeper.hpp>
+#include <autoware_utils/ros/debug_publisher.hpp>
+#include <autoware_utils/ros/parameter.hpp>
+#include <autoware_utils/system/stop_watch.hpp>
+#include <autoware_utils/system/time_keeper.hpp>
 #include <builtin_interfaces/msg/time.hpp>
 
 #include <autoware_internal_debug_msgs/msg/float64_stamped.hpp>
+#include <autoware_internal_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_planning_msgs/msg/path.hpp>
-#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <unique_identifier_msgs/msg/uuid.hpp>
 
 #include <memory>
@@ -50,12 +50,12 @@ namespace autoware::behavior_velocity_planner
 
 using autoware::objects_of_interest_marker_interface::ColorName;
 using autoware::objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface;
-using autoware::universe_utils::DebugPublisher;
-using autoware::universe_utils::getOrDeclareParameter;
-using autoware::universe_utils::StopWatch;
 using autoware_internal_debug_msgs::msg::Float64Stamped;
+using autoware_internal_planning_msgs::msg::PathWithLaneId;
+using autoware_utils::DebugPublisher;
+using autoware_utils::get_or_declare_parameter;
+using autoware_utils::StopWatch;
 using builtin_interfaces::msg::Time;
-using tier4_planning_msgs::msg::PathWithLaneId;
 using unique_identifier_msgs::msg::UUID;
 
 struct ObjectOfInterest
@@ -76,7 +76,7 @@ class SceneModuleInterface
 public:
   explicit SceneModuleInterface(
     const int64_t module_id, rclcpp::Logger logger, rclcpp::Clock::SharedPtr clock,
-    const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+    const std::shared_ptr<autoware_utils::TimeKeeper> time_keeper,
     const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
       planning_factor_interface);
   virtual ~SceneModuleInterface() = default;
@@ -102,7 +102,7 @@ protected:
   rclcpp::Clock::SharedPtr clock_;
   std::shared_ptr<const PlannerData> planner_data_;
   std::vector<ObjectOfInterest> objects_of_interest_;
-  mutable std::shared_ptr<universe_utils::TimeKeeper> time_keeper_;
+  mutable std::shared_ptr<autoware_utils::TimeKeeper> time_keeper_;
   std::shared_ptr<planning_factor_interface::PlanningFactorInterface> planning_factor_interface_;
 
   void setObjectsOfInterestData(
@@ -113,7 +113,7 @@ protected:
   }
 
   size_t findEgoSegmentIndex(
-    const std::vector<tier4_planning_msgs::msg::PathPointWithLaneId> & points) const;
+    const std::vector<autoware_internal_planning_msgs::msg::PathPointWithLaneId> & points) const;
 };
 
 template <class T = SceneModuleInterface>
@@ -131,7 +131,7 @@ public:
       is_publish_debug_path_ = node.get_parameter("is_publish_debug_path").as_bool();
     }
     if (is_publish_debug_path_) {
-      pub_debug_path_ = node.create_publisher<tier4_planning_msgs::msg::PathWithLaneId>(
+      pub_debug_path_ = node.create_publisher<autoware_internal_planning_msgs::msg::PathWithLaneId>(
         std::string("~/debug/path_with_lane_id/") + module_name, 1);
     }
     pub_virtual_wall_ = node.create_publisher<visualization_msgs::msg::MarkerArray>(
@@ -141,10 +141,10 @@ public:
 
     processing_time_publisher_ = std::make_shared<DebugPublisher>(&node, "~/debug");
 
-    pub_processing_time_detail_ = node.create_publisher<universe_utils::ProcessingTimeDetail>(
+    pub_processing_time_detail_ = node.create_publisher<autoware_utils::ProcessingTimeDetail>(
       "~/debug/processing_time_detail_ms/" + std::string(module_name), 1);
 
-    time_keeper_ = std::make_shared<universe_utils::TimeKeeper>(pub_processing_time_detail_);
+    time_keeper_ = std::make_shared<autoware_utils::TimeKeeper>(pub_processing_time_detail_);
   }
 
   virtual ~SceneModuleManagerInterface() = default;
@@ -153,7 +153,7 @@ public:
 
   void updateSceneModuleInstances(
     const std::shared_ptr<const PlannerData> & planner_data,
-    const tier4_planning_msgs::msg::PathWithLaneId & path)
+    const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
   {
     planner_data_ = planner_data;
 
@@ -161,12 +161,15 @@ public:
     deleteExpiredModules(path);
   }
 
-  virtual void plan(tier4_planning_msgs::msg::PathWithLaneId * path) { modifyPathVelocity(path); }
+  virtual void plan(autoware_internal_planning_msgs::msg::PathWithLaneId * path)
+  {
+    modifyPathVelocity(path);
+  }
 
 protected:
-  virtual void modifyPathVelocity(tier4_planning_msgs::msg::PathWithLaneId * path)
+  virtual void modifyPathVelocity(autoware_internal_planning_msgs::msg::PathWithLaneId * path)
   {
-    universe_utils::ScopedTimeTrack st(
+    autoware_utils::ScopedTimeTrack st(
       "SceneModuleManagerInterface::modifyPathVelocity", *time_keeper_);
     StopWatch<std::chrono::milliseconds> stop_watch;
     stop_watch.tic("Total");
@@ -188,7 +191,7 @@ protected:
     planning_factor_interface_->publish();
     pub_debug_->publish(debug_marker_array);
     if (is_publish_debug_path_) {
-      tier4_planning_msgs::msg::PathWithLaneId debug_path;
+      autoware_internal_planning_msgs::msg::PathWithLaneId debug_path;
       debug_path.header = path->header;
       debug_path.points = path->points;
       pub_debug_path_->publish(debug_path);
@@ -198,12 +201,14 @@ protected:
       std::string(getModuleName()) + "/processing_time_ms", stop_watch.toc("Total"));
   }
 
-  virtual void launchNewModules(const tier4_planning_msgs::msg::PathWithLaneId & path) = 0;
+  virtual void launchNewModules(
+    const autoware_internal_planning_msgs::msg::PathWithLaneId & path) = 0;
 
   virtual std::function<bool(const std::shared_ptr<T> &)> getModuleExpiredFunction(
-    const tier4_planning_msgs::msg::PathWithLaneId & path) = 0;
+    const autoware_internal_planning_msgs::msg::PathWithLaneId & path) = 0;
 
-  virtual void deleteExpiredModules(const tier4_planning_msgs::msg::PathWithLaneId & path)
+  virtual void deleteExpiredModules(
+    const autoware_internal_planning_msgs::msg::PathWithLaneId & path)
   {
     const auto isModuleExpired = getModuleExpiredFunction(path);
 
@@ -233,7 +238,7 @@ protected:
   }
 
   size_t findEgoSegmentIndex(
-    const std::vector<tier4_planning_msgs::msg::PathPointWithLaneId> & points) const
+    const std::vector<autoware_internal_planning_msgs::msg::PathPointWithLaneId> & points) const
   {
     const auto & p = planner_data_;
     return autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(
@@ -254,27 +259,28 @@ protected:
   rclcpp::Logger logger_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_virtual_wall_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_;
-  rclcpp::Publisher<tier4_planning_msgs::msg::PathWithLaneId>::SharedPtr pub_debug_path_;
+  rclcpp::Publisher<autoware_internal_planning_msgs::msg::PathWithLaneId>::SharedPtr
+    pub_debug_path_;
 
   std::shared_ptr<DebugPublisher> processing_time_publisher_;
 
-  rclcpp::Publisher<universe_utils::ProcessingTimeDetail>::SharedPtr pub_processing_time_detail_;
+  rclcpp::Publisher<autoware_utils::ProcessingTimeDetail>::SharedPtr pub_processing_time_detail_;
 
-  std::shared_ptr<universe_utils::TimeKeeper> time_keeper_;
+  std::shared_ptr<autoware_utils::TimeKeeper> time_keeper_;
 
   std::shared_ptr<planning_factor_interface::PlanningFactorInterface> planning_factor_interface_;
 };
 extern template SceneModuleManagerInterface<SceneModuleInterface>::SceneModuleManagerInterface(
   rclcpp::Node & node, [[maybe_unused]] const char * module_name);
 extern template size_t SceneModuleManagerInterface<SceneModuleInterface>::findEgoSegmentIndex(
-  const std::vector<tier4_planning_msgs::msg::PathPointWithLaneId> & points) const;
+  const std::vector<autoware_internal_planning_msgs::msg::PathPointWithLaneId> & points) const;
 extern template void SceneModuleManagerInterface<SceneModuleInterface>::updateSceneModuleInstances(
   const std::shared_ptr<const PlannerData> & planner_data,
-  const tier4_planning_msgs::msg::PathWithLaneId & path);
+  const autoware_internal_planning_msgs::msg::PathWithLaneId & path);
 extern template void SceneModuleManagerInterface<SceneModuleInterface>::modifyPathVelocity(
-  tier4_planning_msgs::msg::PathWithLaneId * path);
+  autoware_internal_planning_msgs::msg::PathWithLaneId * path);
 extern template void SceneModuleManagerInterface<SceneModuleInterface>::deleteExpiredModules(
-  const tier4_planning_msgs::msg::PathWithLaneId & path);
+  const autoware_internal_planning_msgs::msg::PathWithLaneId & path);
 extern template void SceneModuleManagerInterface<SceneModuleInterface>::registerModule(
   const std::shared_ptr<SceneModuleInterface> & scene_module);
 }  // namespace autoware::behavior_velocity_planner
