@@ -29,7 +29,9 @@
 #include <string>
 #include <vector>
 
-namespace autoware::traffic_light::utils
+namespace autoware::traffic_light
+{
+namespace utils
 {
 using autoware_perception_msgs::msg::TrafficLightElement;
 
@@ -188,10 +190,8 @@ void lightAsMarker(
     marker->color.b = 1.0f;
   }
 }
-}  // namespace autoware::traffic_light::utils
+}  // namespace utils
 
-namespace autoware::traffic_light
-{
 TrafficLightMapVisualizerNode::TrafficLightMapVisualizerNode(
   const rclcpp::NodeOptions & node_options)
 : rclcpp::Node("traffic_light_map_visualizer_node", node_options)
