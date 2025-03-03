@@ -505,7 +505,6 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::diagnostic_callback(
     // Filter for the concatenate_and_time_sync_node diagnostic message
     if (
       status.name == std::string_view("concatenate_data: /sensing/lidar/concatenate_data_status")) {
-      std::unordered_map<std::string, std::string> key_value_map;
       std::optional<double> concatenate_timestamp_opt;
 
       // First pass: Locate concatenated_cloud_timestamp
@@ -521,6 +520,7 @@ void FusionNode<Msg3D, Msg2D, ExportObj>::diagnostic_callback(
 
       // Second pass: Fill key-value map only if timestamp was valid
       if (concatenate_timestamp_opt.has_value()) {
+        std::unordered_map<std::string, std::string> key_value_map;
         for (const auto & value : status.values) {
           key_value_map.emplace(value.key, value.value);
         }

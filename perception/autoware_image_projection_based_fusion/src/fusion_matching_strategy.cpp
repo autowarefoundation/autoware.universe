@@ -286,10 +286,10 @@ double AdvancedMatchingStrategy<Msg3D, Msg2D, ExportObj>::get_concatenated_offse
   const double & msg3d_timestamp,
   const std::optional<std::unordered_map<std::string, std::string>> & concatenated_status)
 {
-  bool concatenation_success = false;
   double offset = 0.0;
 
   if (concatenated_status.has_value()) {
+    bool concatenation_success = false;
     const auto & status_map = concatenated_status.value();
 
     // Find required keys in the map
