@@ -1242,27 +1242,6 @@ lanelet::ConstLanelets RouteHandler::getAllRightSharedLinestringLanelets(
   return linestring_shared;
 }
 
-lanelet::ConstLanelets RouteHandler::getAllSharedLineStringLanelets(
-  const lanelet::ConstLanelet & current_lane, bool is_right, bool is_left, bool is_opposite,
-  const bool & invert_opposite) const noexcept
-{
-  lanelet::ConstLanelets shared{current_lane};
-
-  if (is_right) {
-    const lanelet::ConstLanelets all_right_lanelets =
-      getAllRightSharedLinestringLanelets(current_lane, is_opposite, invert_opposite);
-    shared.insert(shared.end(), all_right_lanelets.begin(), all_right_lanelets.end());
-  }
-
-  if (is_left) {
-    const lanelet::ConstLanelets all_left_lanelets =
-      getAllLeftSharedLinestringLanelets(current_lane, is_opposite, invert_opposite);
-    shared.insert(shared.end(), all_left_lanelets.begin(), all_left_lanelets.end());
-  }
-
-  return shared;
-}
-
 lanelet::Lanelets RouteHandler::getLeftOppositeLanelets(const lanelet::ConstLanelet & lanelet) const
 {
   const auto opposite_candidate_lanelets =
