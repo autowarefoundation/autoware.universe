@@ -37,12 +37,12 @@ bool convertConvexHullToBoundingBox(
 bool getMeasurementYaw(
   const types::DynamicObject & object, const double & predicted_yaw, double & measurement_yaw);
 
-Eigen::Vector2d getNearestCornerOrSurface(
+geometry_msgs::msg::Point getNearestCornerOrSurface(
   const types::DynamicObject & object, const geometry_msgs::msg::Transform & self_transform);
 
 void calcAnchorPointOffset(
   const types::DynamicObject & this_object, const types::DynamicObject & input_object,
-  const Eigen::Vector2d anchor_vector, Eigen::Vector2d & tracking_offset,
+  const geometry_msgs::msg::Point anchor_vector, Eigen::Vector2d & tracking_offset,
   types::DynamicObject & offset_object);
 }  // namespace shapes
 }  // namespace autoware::multi_object_tracker

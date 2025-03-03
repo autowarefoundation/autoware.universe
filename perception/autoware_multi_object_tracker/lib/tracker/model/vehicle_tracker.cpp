@@ -137,11 +137,6 @@ bool VehicleTracker::predict(const rclcpp::Time & time)
   if (!success) {
     return false;
   }
-  // // update object
-  // object_.pose.position.x = motion_model_.getStateElement(IDX::X);
-  // object_.pose.position.y = motion_.getStateElement(IDX::Y);
-  // object_.pose.orientation = tf2::toMsg(
-  //   Eigen::AngleAxisd(motion_model_.getStateElement(IDX::YAW), Eigen::Vector3d::UnitZ()));
   return true;
 }
 
@@ -151,7 +146,7 @@ types::DynamicObject VehicleTracker::getUpdatingObject(
   types::DynamicObject updating_object = object;
 
   // get offset measurement
-  const Eigen::Vector2d anchor_vector = shapes::getNearestCornerOrSurface(object, self_transform);
+  const geometry_msgs::msg::Point anchor_vector = shapes::getNearestCornerOrSurface(object, self_transform);
   shapes::calcAnchorPointOffset(object_, object, anchor_vector, tracking_offset_, updating_object);
 
   return updating_object;

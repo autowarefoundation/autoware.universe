@@ -45,7 +45,7 @@ private:
   int total_no_measurement_count_;
   int total_measurement_count_;
   rclcpp::Time last_update_with_measurement_time_;
-  std::vector<float> existence_probabilities_;  // remove if possible
+  std::vector<float> existence_probabilities_;
   float total_existence_probability_;
 
 public:
