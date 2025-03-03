@@ -26,6 +26,7 @@
 #include <lanelet2_projection/UTM.h>
 #include <tf2/LinearMath/Quaternion.h>
 
+#include <map>
 #include <string>
 #include <vector>
 
