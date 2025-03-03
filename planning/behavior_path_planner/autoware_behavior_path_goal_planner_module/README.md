@@ -2,7 +2,7 @@
 
 ## Purpose / Role
 
-goal_planner generates a smooth path toward the goal and additionally searches for safe path and goa to execute dynamic pull_over on the road shoulders lanes following the traffic rules.
+goal_planner generates a smooth path toward the goal and additionally searches for safe path and goal to execute dynamic pull_over on the road shoulders lanes following the traffic rules.
 
 ## Design
 
@@ -97,7 +97,7 @@ If the path given to goal_planner covers the goal, `fixed_goal_planner` smoothly
 
 `rough_goal_planner` is triggered following the [behavior_path_planner scene module interface](https://autowarefoundation.github.io/autoware.universe/main/planning/behavior_path_planner/autoware_behavior_path_planner/docs/behavior_path_planner_manager_design/) namely through `isExecutionRequested` function and it returns true when following two conditions are met.
 
-- The distance between the goal and ego get shorter than `pull_over_minimum_request_length`.
+- The distance between the goal and ego get shorter than $\max$(`pull_over_minimum_request_length`, stop distance with decel and jerk constraints).
 - Route is set with `allow_goal_modification=true` or is on a `road_shoulder` type lane.
   - We can set this option with [SetRoute](https://github.com/autowarefoundation/autoware_adapi_msgs/blob/main/autoware_adapi_v1_msgs/routing/srv/SetRoute.srv#L2) api service.
   - We support `2D Rough Goal Pose` with the key bind `r` in RViz, but in the future there will be a panel of tools to manipulate various Route API from RViz.
@@ -147,7 +147,7 @@ The following figure is an example of minimum_weighted_distance.​ The white nu
 
 ![goal_priority_rviz_with_goal](./images/goal_priority_with_goal.png)
 
-To achieve a goal pose which is easy to start the maneuvering after arrival, the goal candidate pose is aligned so that ego front becomes parallel to the shoulder lane boundary at that pose.
+To achieve a goal pose which is easy to start the maneuvering after arrival, the goal candidate pose is aligned so that ego center becomes parallel to the shoulder lane boundary at that pose.
 
 ![goal_pose_align](./images/goal_planner-goal-pose-correct.drawio.svg)
 
@@ -198,6 +198,7 @@ Although the two threads are running periodically, the primary background proces
 `LaneParkingThread` executes either
 
 - _shift_ based path planning
+- _arc forward_, _arc backward_ path planning
 - _bezier_ based path planning
 
 depending on the situation and configuration. If `use_bus_stop_area` is true and the goal is on a BusStopArea regulatory element and the estimated pull over angle(the difference of pose between the shift start and shift end) is larger than `bezier_parking.pull_over_angle_threshold`, [_bezier_ based path planner](https://autowarefoundation.github.io/autoware.universe/main/planning/sampling_based_planner/autoware_bezier_sampler/) works to generate path candidates. Otherwise [_shift_ based path planner](https://autowarefoundation.github.io/autoware.universe/main/planning/behavior_path_planner/autoware_behavior_path_planner_common/docs/behavior_path_planner_path_generation_design/) works. _bezier_ based path planner tends to generate more natural paths on a curved lane than _shift_ based path planner, so it is used if the shift requires a certain amount of pose rotation.
@@ -327,7 +328,7 @@ _shift_ based path planner tends to generate unnatural path when the shift lane 
 
 <img src="./images/bad_shift_path.png" width="600">
 
-_bezier_ based path planner interpolates the shift path start and end pose using tbe bezier curve for a several combination of parameters, to obtain a better result through the later selection process. In the below screenshot the goal is on a BusStopArea and `use_bus_stop_area` is set to true, so _bezier_ planner is triggered instead. Internally, goal*planner first tries to use \_shift* planner, and if it turns out that the shift start and end is not parallel, it switches to _bezier_ planner from the next process.
+_bezier_ based path planner interpolates the shift path start and end pose using tbe bezier curve for a several combination of parameters, to obtain a better result through the later selection process. In the below screenshot the goal is on a BusStopArea and `use_bus_stop_area` is set to true, so _bezier_ planner is triggered instead. Internally, goal_planner first tries to use _shift_ planner, and if it turns out that the shift start and end is not parallel, it switches to _bezier_ planner from the next process.
 
 <img src="./images/bezier_path.png" width="600">
 
