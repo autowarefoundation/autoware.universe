@@ -15,6 +15,8 @@
 #ifndef CONVERTER_HPP_
 #define CONVERTER_HPP_
 
+#include "mode_interface.hpp"
+
 #include <autoware/diagnostic_graph_utils/subscription.hpp>
 #include <autoware_utils/ros/polling_subscriber.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -22,6 +24,7 @@
 #include <autoware_system_msgs/msg/hazard_status_stamped.hpp>
 #include <tier4_system_msgs/msg/emergency_holding_state.hpp>
 
+#include <unordered_map>
 #include <unordered_set>
 
 namespace autoware::hazard_status_converter
@@ -43,8 +46,14 @@ private:
   autoware_utils::InterProcessPollingSubscriber<tier4_system_msgs::msg::EmergencyHoldingState>
     sub_emergency_holding_{this, "~/input/emergency_holding"};
 
-  DiagUnit * auto_mode_root_;
-  std::unordered_set<DiagUnit *> auto_mode_tree_;
+  struct ModeSubgraph
+  {
+    DiagUnit * root;
+    std::unordered_set<DiagUnit *> nodes;
+  };
+
+  ModeInterface mode_interface_;
+  std::unordered_map<RootModeStatus::Mode, ModeSubgraph> mode_subgraphs_;
 };
 
 }  // namespace autoware::hazard_status_converter
