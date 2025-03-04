@@ -828,16 +828,16 @@ SetParametersResult BehaviorPathPlannerNode::onSetParam(
       parameters, DrivableAreaExpansionParameters::EGO_EXTRA_WIDTH,
       planner_data_->drivable_area_expansion_parameters.extra_width);
     update_param(
-      parameters, DrivableAreaExpansionParameters::OBJECTS_EXTRA_OFFSET_FRONT,
+      parameters, DrivableAreaExpansionParameters::OBJECTS_SAFE_MARGIN_FRONT,
       planner_data_->drivable_area_expansion_parameters.object_exclusion.front_offset);
     update_param(
-      parameters, DrivableAreaExpansionParameters::OBJECTS_EXTRA_OFFSET_REAR,
+      parameters, DrivableAreaExpansionParameters::OBJECTS_SAFE_MARGIN_REAR,
       planner_data_->drivable_area_expansion_parameters.object_exclusion.rear_offset);
     update_param(
-      parameters, DrivableAreaExpansionParameters::OBJECTS_EXTRA_OFFSET_LEFT,
+      parameters, DrivableAreaExpansionParameters::OBJECTS_SAFE_MARGIN_LEFT,
       planner_data_->drivable_area_expansion_parameters.object_exclusion.left_offset);
     update_param(
-      parameters, DrivableAreaExpansionParameters::OBJECTS_EXTRA_OFFSET_RIGHT,
+      parameters, DrivableAreaExpansionParameters::OBJECTS_SAFE_MARGIN_RIGHT,
       planner_data_->drivable_area_expansion_parameters.object_exclusion.right_offset);
     update_param(
       parameters, DrivableAreaExpansionParameters::STOPPED_OBJ_VEL_THRESH,
