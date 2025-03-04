@@ -53,6 +53,7 @@ struct ValidationParams
   double rolling_back_velocity;
   double over_velocity_ratio;
   double over_velocity_offset;
+  double overrun_stop_point_dist;
   double nominal_latency_threshold;
 };
 
@@ -93,6 +94,9 @@ public:
     const Trajectory & predicted_trajectory, const Trajectory & reference_trajectory) const;
 
   void calc_velocity_deviation_status(
+    const Trajectory & reference_trajectory, const Odometry & kinematics);
+
+  void calc_stop_point_overrun_status(
     const Trajectory & reference_trajectory, const Odometry & kinematics);
 
 private:

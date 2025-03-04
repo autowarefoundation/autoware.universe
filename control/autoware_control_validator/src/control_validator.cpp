@@ -16,6 +16,7 @@
 
 #include "autoware/control_validator/utils.hpp"
 #include "autoware/motion_utils/trajectory/interpolation.hpp"
+#include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 
 #include <nav_msgs/msg/odometry.hpp>
@@ -266,6 +267,37 @@ void ControlValidator::calc_velocity_deviation_status(
     std::abs(status.vehicle_vel) < 0.05) {
     status.is_over_velocity = is_over_velocity;
   }
+}
+
+void ControlValidator::calc_stop_point_overrun_status(
+  const Trajectory & reference_trajectory, const Odometry & kinematics)
+{
+  auto & status = validation_status_;
+  const auto & params = validation_params_;
+
+  status.dist_to_stop = [](const Trajectory & traj, const geometry_msgs::msg::Pose & pose) {
+    const auto stop_idx_opt = autoware::motion_utils::searchZeroVelocityIndex(traj.points);
+
+    const size_t end_idx = stop_idx_opt ? *stop_idx_opt : traj.points.size() - 1;
+    const size_t seg_idx =
+      autoware::motion_utils::findFirstNearestSegmentIndexWithSoftConstraints(traj.points, pose);
+    const double signed_length_on_traj = autoware::motion_utils::calcSignedArcLength(
+      traj.points, pose.position, seg_idx, traj.points.at(end_idx).pose.position,
+      std::min(end_idx, traj.points.size() - 2));
+
+    if (std::isnan(signed_length_on_traj)) {
+      return 0.0;
+    }
+    return signed_length_on_traj;
+  }(reference_trajectory, kinematics.pose.pose);
+
+  status.nearest_trajectory_vel =
+    autoware::motion_utils::calcInterpolatedPoint(reference_trajectory, kinematics.pose.pose)
+      .longitudinal_velocity_mps;
+
+  // NOTE: the same velocity threshold as autoware::motion_utils::searchZeroVelocity
+  status.has_overrun_stop_point =
+    status.dist_to_stop < -params.overrun_stop_point_dist && status.nearest_trajectory_vel < 1e-3;
 }
 
 bool ControlValidator::is_all_valid(const ControlValidatorStatus & s)
