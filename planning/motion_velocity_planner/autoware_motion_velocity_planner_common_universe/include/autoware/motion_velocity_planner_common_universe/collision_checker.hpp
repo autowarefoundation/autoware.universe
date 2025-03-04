@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON_UNIVERSE__COLLISION_CHECKER_HPP_
 #define AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON_UNIVERSE__COLLISION_CHECKER_HPP_
 
-#include <autoware/universe_utils/geometry/boost_geometry.hpp>
+#include <autoware_utils/geometry/boost_geometry.hpp>
 
 #include <boost/geometry/algorithms/envelope.hpp>
 #include <boost/geometry/geometry.hpp>
@@ -28,27 +28,27 @@
 namespace autoware::motion_velocity_planner
 {
 namespace bgi = boost::geometry::index;
-using RtreeNode = std::pair<autoware::universe_utils::Box2d, size_t>;
+using RtreeNode = std::pair<autoware_utils::Box2d, size_t>;
 using Rtree = bgi::rtree<RtreeNode, bgi::rstar<16>>;
 
 /// @brief collision as a trajectory index and corresponding collision points
 struct Collision
 {
   size_t trajectory_index{};
-  autoware::universe_utils::MultiPoint2d collision_points;
+  autoware_utils::MultiPoint2d collision_points;
 };
 
 /// @brief collision checker for a trajectory as a sequence of 2D footprints
 class CollisionChecker
 {
-  const autoware::universe_utils::MultiPolygon2d trajectory_footprints_;
+  const autoware_utils::MultiPolygon2d trajectory_footprints_;
   std::shared_ptr<Rtree> rtree_;
 
 public:
   /// @brief construct the collisions checker
   /// @param trajectory_footprints footprints of the trajectory to be used for collision checking
   /// @details internally, the rtree is built with the packing algorithm
-  explicit CollisionChecker(autoware::universe_utils::MultiPolygon2d trajectory_footprints);
+  explicit CollisionChecker(autoware_utils::MultiPolygon2d trajectory_footprints);
 
   /// @brief efficiently calculate collisions with a geometry
   /// @tparam Geometry boost geometry type

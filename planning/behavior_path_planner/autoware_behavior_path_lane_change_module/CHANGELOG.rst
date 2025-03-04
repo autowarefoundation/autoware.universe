@@ -2,6 +2,62 @@
 Changelog for package autoware_behavior_path_lane_change_module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.42.0 (2025-03-03)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_utils): replace autoware_universe_utils with autoware_utils  (`#10191 <https://github.com/autowarefoundation/autoware.universe/issues/10191>`_)
+* chore(lane_change, QC): remove unused function (`#10188 <https://github.com/autowarefoundation/autoware.universe/issues/10188>`_)
+  chore(lane_change): remove unused function
+* fix(lane_change): remove string literals from stopwatch toc (`#10121 <https://github.com/autowarefoundation/autoware.universe/issues/10121>`_)
+* feat(lane_change): improve the calculation of the target lateral velocity in Frenet frame (`#10078 <https://github.com/autowarefoundation/autoware.universe/issues/10078>`_)
+* fix(lane_change): fix end pose not connected to goal (RT1-9247) (`#10103 <https://github.com/autowarefoundation/autoware.universe/issues/10103>`_)
+* feat!: replace tier4_planning_msgs/PathWithLaneId with autoware_internal_planning_msgs/PathWithLaneId (`#10023 <https://github.com/autowarefoundation/autoware.universe/issues/10023>`_)
+* feat(planning_test_manager): abstract message-specific functions (`#9882 <https://github.com/autowarefoundation/autoware.universe/issues/9882>`_)
+  * abstract message-specific functions
+  * include necessary header
+  * adapt velocity_smoother to new test manager
+  * adapt behavior_velocity_planner to new test manager
+  * adapt path_optimizer to new test manager
+  * fix output subscription
+  * adapt behavior_path_planner to new test manager
+  * adapt scenario_selector to new test manager
+  * adapt freespace_planner to new test manager
+  * adapt planning_validator to new test manager
+  * adapt obstacle_stop_planner to new test manager
+  * adapt obstacle_cruise_planner to new test manager
+  * disable test for freespace_planner
+  * adapt behavior_velocity_crosswalk_module to new test manager
+  * adapt behavior_path_lane_change_module to new test manager
+  * adapt behavior_path_avoidance_by_lane_change_module to new test manager
+  * adapt behavior_path_dynamic_obstacle_avoidance_module to new test manager
+  * adapt behavior_path_external_request_lane_change_module to new test manager
+  * adapt behavior_path_side_shift_module to new test manager
+  * adapt behavior_path_static_obstacle_avoidance_module to new test manager
+  * adapt path_smoother to new test manager
+  * adapt behavior_velocity_blind_spot_module to new test manager
+  * adapt behavior_velocity_detection_area_module to new test manager
+  * adapt behavior_velocity_intersection_module to new test manager
+  * adapt behavior_velocity_no_stopping_area_module to new test manager
+  * adapt behavior_velocity_run_out_module to new test manager
+  * adapt behavior_velocity_stop_line_module to new test manager
+  * adapt behavior_velocity_traffic_light_module to new test manager
+  * adapt behavior_velocity_virtual_traffic_light_module to new test manager
+  * adapt behavior_velocity_walkway_module to new test manager
+  * adapt motion_velocity_planner_node_universe to new test manager
+  * include necessary headers
+  * Odometries -> Odometry
+  ---------
+  Co-authored-by: Takayuki Murooka <takayuki5168@gmail.com>
+* Contributors: Fumiya Watanabe, Mamoru Sobue, Maxime CLEMENT, Mert Çolak, Mitsuhiro Sakamoto, Ryohsuke Mitsudome, Zulfaqar Azmi, 心刚
+
+0.41.2 (2025-02-19)
+-------------------
+* chore: bump version to 0.41.1 (`#10088 <https://github.com/autowarefoundation/autoware.universe/issues/10088>`_)
+* Contributors: Ryohsuke Mitsudome
+
+0.41.1 (2025-02-10)
+-------------------
+
 0.41.0 (2025-01-29)
 -------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base

@@ -2,6 +2,32 @@
 Changelog for package autoware_map_projection_loader
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.42.0 (2025-03-03)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(map_loader): add support for local cartesian projection (`#9238 <https://github.com/autowarefoundation/autoware.universe/issues/9238>`_)
+  * feat(map_loader): add support for local cartesian projection to lanelet map loader
+  * feat(map_loader): udpate readme
+  * feat(map_loader): add support for local cartesian projection
+  * bump autoware_msgs to 1.4.0
+  ---------
+  Co-authored-by: Sebastian Zęderowski <szederowski@autonomous-systems.pl>
+  Co-authored-by: Mete Fatih Cırıt <mfc@autoware.org>
+  Co-authored-by: TaikiYamada4 <129915538+TaikiYamada4@users.noreply.github.com>
+* chore(autoware_map_projection_loader): show map error details (`#10151 <https://github.com/autowarefoundation/autoware.universe/issues/10151>`_)
+  * show map error details
+  * use string stream
+  ---------
+* Contributors: Fumiya Watanabe, Sebastian Zęderowski, Yukinari Hisaki
+
+0.41.2 (2025-02-19)
+-------------------
+* chore: bump version to 0.41.1 (`#10088 <https://github.com/autowarefoundation/autoware.universe/issues/10088>`_)
+* Contributors: Ryohsuke Mitsudome
+
+0.41.1 (2025-02-10)
+-------------------
+
 0.41.0 (2025-01-29)
 -------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
