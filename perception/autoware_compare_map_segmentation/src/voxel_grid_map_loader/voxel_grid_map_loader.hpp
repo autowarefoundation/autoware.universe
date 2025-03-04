@@ -190,12 +190,16 @@ public:
   void onEstimatedPoseCallback(nav_msgs::msg::Odometry::ConstSharedPtr msg);
 
   void timer_callback();
-  bool should_update_map() const;
+  bool should_update_map(
+    const geometry_msgs::msg::Point & current_point, const geometry_msgs::msg::Point & last_point,
+    const double map_update_distance_threshold) const;
   void request_update_map(const geometry_msgs::msg::Point & position);
   bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold) override;
   /** \brief Check if point close to map pointcloud in the */
   bool is_close_to_next_map_grid(
-    const pcl::PointXYZ & point, const int current_map_grid_index, const double distance_threshold);
+    const pcl::PointXYZ & point, const int current_map_grid_index, const double distance_threshold,
+    const double origin_x, const double origin_y, const double map_grid_size_x,
+    const double map_grid_size_y, const int map_grids_x);
 
   inline pcl::PointCloud<pcl::PointXYZ> getCurrentDownsampledMapPc()
   {
@@ -235,6 +239,7 @@ public:
   /** Update loaded map grid array for fast searching*/
   virtual inline void updateVoxelGridArray()
   {
+    std::lock_guard<std::mutex> lock(dynamic_map_loader_mutex_);
     origin_x_ = std::floor((current_position_.value().x - map_loader_radius_) / map_grid_size_x_) *
                   map_grid_size_x_ +
                 origin_x_remainder_;
@@ -253,7 +258,6 @@ public:
 
     current_voxel_grid_array_.assign(
       map_grids_x_ * map_grid_size_y_, std::make_shared<MapGridVoxelInfo>());
-    std::lock_guard<std::mutex> lock(dynamic_map_loader_mutex_);
     for (const auto & kv : current_voxel_grid_dict_) {
       int index = static_cast<int>(
         std::floor((kv.second.min_b_x - origin_x_) / map_grid_size_x_) +
@@ -275,9 +279,11 @@ public:
   virtual inline void addMapCellAndFilter(
     const autoware_map_msgs::msg::PointCloudMapCellWithID & map_cell_to_add)
   {
+    dynamic_map_loader_mutex_.lock();
     map_grid_size_x_ = map_cell_to_add.metadata.max_x - map_cell_to_add.metadata.min_x;
     map_grid_size_y_ = map_cell_to_add.metadata.max_y - map_cell_to_add.metadata.min_y;
     if (map_grid_size_x_ > max_map_grid_size_ || map_grid_size_y_ > max_map_grid_size_) {
+      dynamic_map_loader_mutex_.unlock();
       RCLCPP_ERROR(
         logger_,
         "Map was not split or split map grid size is too large. Split map with grid size smaller "
@@ -287,6 +293,7 @@ public:
 
     origin_x_remainder_ = std::remainder(map_cell_to_add.metadata.min_x, map_grid_size_x_);
     origin_y_remainder_ = std::remainder(map_cell_to_add.metadata.min_y, map_grid_size_y_);
+    dynamic_map_loader_mutex_.unlock();
 
     pcl::PointCloud<pcl::PointXYZ> map_cell_pc_tmp;
     pcl::fromROSMsg(map_cell_to_add.pointcloud, map_cell_pc_tmp);
