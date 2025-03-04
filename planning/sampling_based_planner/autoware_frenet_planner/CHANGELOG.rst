@@ -2,6 +2,49 @@
 Changelog for package autoware_frenet_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.42.0 (2025-03-03)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_utils): replace autoware_universe_utils with autoware_utils  (`#10191 <https://github.com/autowarefoundation/autoware.universe/issues/10191>`_)
+* Contributors: Fumiya Watanabe, 心刚
+
+0.41.2 (2025-02-19)
+-------------------
+* chore: bump version to 0.41.1 (`#10088 <https://github.com/autowarefoundation/autoware.universe/issues/10088>`_)
+* Contributors: Ryohsuke Mitsudome
+
+0.41.1 (2025-02-10)
+-------------------
+
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(lane_change): using frenet planner to generate lane change path when ego near terminal (`#9767 <https://github.com/autowarefoundation/autoware.universe/issues/9767>`_)
+  * frenet planner
+  * minor refactoring
+  * adding parameter
+  * Add diff th param
+  * limit curvature for prepare segment
+  * minor refactoring
+  * print average curvature
+  * refactor
+  * filter the path directly
+  * fix some conflicts
+  * include curvature smoothing
+  * document
+  * fix image folder
+  * image size
+  * doxygen
+  * add debug for state
+  * use sign function instead
+  * rename argument
+  * readme
+  * fix failed test due to empty value
+  * add additional note
+  * fix conflict
+  ---------
+* Contributors: Fumiya Watanabe, Zulfaqar Azmi
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

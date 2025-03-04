@@ -96,7 +96,9 @@
           "minItems": 2,
           "maxItems": 2,
           "items": {
-            "type": "number"
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 360.0
           },
           "default": [0.0, 360.0]
         },

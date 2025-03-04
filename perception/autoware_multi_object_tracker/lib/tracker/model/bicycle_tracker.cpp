@@ -19,19 +19,17 @@
 
 #include "autoware/multi_object_tracker/tracker/model/bicycle_tracker.hpp"
 
-#include "autoware/multi_object_tracker/utils/utils.hpp"
-#include "autoware/object_recognition_utils/object_recognition_utils.hpp"
-#include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
-#include "autoware/universe_utils/math/normalization.hpp"
-#include "autoware/universe_utils/math/unit_conversion.hpp"
-#include "autoware/universe_utils/ros/msg_covariance.hpp"
+#include "autoware/multi_object_tracker/object_model/shapes.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include <autoware/object_recognition_utils/object_recognition_utils.hpp>
+#include <autoware_utils/geometry/boost_polygon_utils.hpp>
+#include <autoware_utils/math/normalization.hpp>
+#include <autoware_utils/math/unit_conversion.hpp>
+#include <autoware_utils/ros/msg_covariance.hpp>
 
 #include <bits/stdc++.h>
-#include <tf2/LinearMath/Matrix3x3.h>
-#include <tf2/LinearMath/Quaternion.h>
 #include <tf2/utils.h>
 
 #ifdef ROS_DISTRO_GALACTIC
@@ -46,9 +44,7 @@ namespace autoware::multi_object_tracker
 using Label = autoware_perception_msgs::msg::ObjectClassification;
 
 BicycleTracker::BicycleTracker(
-  const rclcpp::Time & time, const autoware_perception_msgs::msg::DetectedObject & object,
-  const geometry_msgs::msg::Transform & /*self_transform*/, const size_t channel_size,
-  const uint & channel_index)
+  const rclcpp::Time & time, const types::DynamicObject & object, const size_t channel_size)
 : Tracker(time, object.classification, channel_size),
   logger_(rclcpp::get_logger("BicycleTracker")),
   z_(object.kinematics.pose_with_covariance.pose.position.z)
@@ -56,7 +52,7 @@ BicycleTracker::BicycleTracker(
   object_ = object;
 
   // initialize existence probability
-  initializeExistenceProbabilities(channel_index, object.existence_probability);
+  initializeExistenceProbabilities(object.channel_index, object.existence_probability);
 
   // OBJECT SHAPE MODEL
   if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
@@ -103,7 +99,7 @@ BicycleTracker::BicycleTracker(
 
   // Set initial state
   {
-    using autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
+    using autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
     const double x = object.kinematics.pose_with_covariance.pose.position.x;
     const double y = object.kinematics.pose_with_covariance.pose.position.y;
     const double yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
@@ -148,16 +144,16 @@ bool BicycleTracker::predict(const rclcpp::Time & time)
   return motion_model_.predictState(time);
 }
 
-autoware_perception_msgs::msg::DetectedObject BicycleTracker::getUpdatingObject(
-  const autoware_perception_msgs::msg::DetectedObject & object,
+types::DynamicObject BicycleTracker::getUpdatingObject(
+  const types::DynamicObject & object,
   const geometry_msgs::msg::Transform & /*self_transform*/) const
 {
-  autoware_perception_msgs::msg::DetectedObject updating_object = object;
+  types::DynamicObject updating_object = object;
 
   // OBJECT SHAPE MODEL
   // convert to bounding box if input is convex shape
   if (object.shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
-    if (!utils::convertConvexHullToBoundingBox(object, updating_object)) {
+    if (!shapes::convertConvexHullToBoundingBox(object, updating_object)) {
       updating_object = object;
     }
   }
@@ -165,12 +161,12 @@ autoware_perception_msgs::msg::DetectedObject BicycleTracker::getUpdatingObject(
   return updating_object;
 }
 
-bool BicycleTracker::measureWithPose(const autoware_perception_msgs::msg::DetectedObject & object)
+bool BicycleTracker::measureWithPose(const types::DynamicObject & object)
 {
   // get measurement yaw angle to update
   const double tracked_yaw = motion_model_.getStateElement(IDX::YAW);
   double measurement_yaw = 0.0;
-  bool is_yaw_available = utils::getMeasurementYaw(object, tracked_yaw, measurement_yaw);
+  bool is_yaw_available = shapes::getMeasurementYaw(object, tracked_yaw, measurement_yaw);
 
   // update
   bool is_updated = false;
@@ -196,7 +192,7 @@ bool BicycleTracker::measureWithPose(const autoware_perception_msgs::msg::Detect
   return is_updated;
 }
 
-bool BicycleTracker::measureWithShape(const autoware_perception_msgs::msg::DetectedObject & object)
+bool BicycleTracker::measureWithShape(const types::DynamicObject & object)
 {
   if (object.shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     // do not update shape if the input is not a bounding box
@@ -235,7 +231,7 @@ bool BicycleTracker::measureWithShape(const autoware_perception_msgs::msg::Detec
 }
 
 bool BicycleTracker::measure(
-  const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+  const types::DynamicObject & object, const rclcpp::Time & time,
   const geometry_msgs::msg::Transform & self_transform)
 {
   // keep the latest input object
@@ -260,8 +256,7 @@ bool BicycleTracker::measure(
   }
 
   // update object
-  const autoware_perception_msgs::msg::DetectedObject updating_object =
-    getUpdatingObject(object, self_transform);
+  const types::DynamicObject updating_object = getUpdatingObject(object, self_transform);
   measureWithPose(updating_object);
   measureWithShape(updating_object);
 
@@ -269,9 +264,9 @@ bool BicycleTracker::measure(
 }
 
 bool BicycleTracker::getTrackedObject(
-  const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObject & object) const
+  const rclcpp::Time & time, types::DynamicObject & object) const
 {
-  object = autoware::object_recognition_utils::toTrackedObject(object_);
+  object = object_;
   object.object_id = getUUID();
   object.classification = getClassification();
 
@@ -296,7 +291,7 @@ bool BicycleTracker::getTrackedObject(
   const auto origin_yaw = tf2::getYaw(object_.kinematics.pose_with_covariance.pose.orientation);
   const auto ekf_pose_yaw = tf2::getYaw(pose_with_cov.pose.orientation);
   object.shape.footprint =
-    autoware::universe_utils::rotatePolygon(object.shape.footprint, origin_yaw - ekf_pose_yaw);
+    autoware_utils::rotate_polygon(object.shape.footprint, origin_yaw - ekf_pose_yaw);
 
   return true;
 }

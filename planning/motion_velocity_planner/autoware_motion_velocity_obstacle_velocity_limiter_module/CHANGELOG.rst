@@ -2,6 +2,51 @@
 Changelog for package autoware_motion_velocity_obstacle_velocity_limiter_module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.42.0 (2025-03-03)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_utils): replace autoware_universe_utils with autoware_utils  (`#10191 <https://github.com/autowarefoundation/autoware.universe/issues/10191>`_)
+* feat(motion_velocity_planner): common implementation for motion_velocity_obstacle\_<stop/slow_down/cruise>_module (`#10035 <https://github.com/autowarefoundation/autoware.universe/issues/10035>`_)
+  * feat(motion_velocity_planner): prepare for motion_velocity\_<stop/slow_down/cruise>_module
+  * update launch
+  ---------
+* Contributors: Fumiya Watanabe, Takayuki Murooka, 心刚
+
+0.41.2 (2025-02-19)
+-------------------
+* chore: bump version to 0.41.1 (`#10088 <https://github.com/autowarefoundation/autoware.universe/issues/10088>`_)
+* Contributors: Ryohsuke Mitsudome
+
+0.41.1 (2025-02-10)
+-------------------
+
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(motion_velocity_planner)!: add _universe suffix to autoware_motion_velocity_planner_common and autoware_motion_velocity_planner_node (`#9942 <https://github.com/autowarefoundation/autoware.universe/issues/9942>`_)
+* feat(planning_factor)!: remove velocity_factor, steering_factor and introduce planning_factor (`#9927 <https://github.com/autowarefoundation/autoware.universe/issues/9927>`_)
+  Co-authored-by: Satoshi OTA <44889564+satoshi-ota@users.noreply.github.com>
+  Co-authored-by: Ryohsuke Mitsudome <43976834+mitsudome-r@users.noreply.github.com>
+  Co-authored-by: satoshi-ota <satoshi.ota928@gmail.com>
+* fix(autoware_motion_velocity_obstacle_velocity_limiter_module): remove cppcheck suppressions (`#9843 <https://github.com/autowarefoundation/autoware.universe/issues/9843>`_)
+* feat(motion_velocity_planner): introduce Object/Pointcloud structure in PlannerData (`#9812 <https://github.com/autowarefoundation/autoware.universe/issues/9812>`_)
+  * feat: new object/pointcloud struct in motion velocity planner
+  * update planner_data
+  * modify modules
+  * fix
+  ---------
+* fix(autoware_motion_velocity_obstacle_velocity_limiter_module): fix bugprone-exception-escape (`#9779 <https://github.com/autowarefoundation/autoware.universe/issues/9779>`_)
+  * fix: bugprone-error
+  * fix: cppcheck
+  * fix: cpplint
+  ---------
+* feat(motion_velocity_planner): remove unnecessary tier4_planning_msgs dependency (`#9757 <https://github.com/autowarefoundation/autoware.universe/issues/9757>`_)
+  * feat(motion_velocity_planner): remove unnecessary tier4_planning_msgs dependency
+  * fix
+  ---------
+* feat(motion_velocity_planner): use Float64Stamped in autoware_internal_debug_msgs (`#9745 <https://github.com/autowarefoundation/autoware.universe/issues/9745>`_)
+* Contributors: Fumiya Watanabe, Mamoru Sobue, Ryohsuke Mitsudome, Ryuta Kambe, Takayuki Murooka, kobayu858
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

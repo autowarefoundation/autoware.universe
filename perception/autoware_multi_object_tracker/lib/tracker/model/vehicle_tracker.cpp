@@ -19,19 +19,17 @@
 
 #include "autoware/multi_object_tracker/tracker/model/vehicle_tracker.hpp"
 
-#include "autoware/multi_object_tracker/utils/utils.hpp"
-#include "autoware/object_recognition_utils/object_recognition_utils.hpp"
-#include "autoware/universe_utils/geometry/boost_polygon_utils.hpp"
-#include "autoware/universe_utils/math/normalization.hpp"
-#include "autoware/universe_utils/math/unit_conversion.hpp"
-#include "autoware/universe_utils/ros/msg_covariance.hpp"
+#include "autoware/multi_object_tracker/object_model/shapes.hpp"
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+#include <autoware/object_recognition_utils/object_recognition_utils.hpp>
+#include <autoware_utils/geometry/boost_polygon_utils.hpp>
+#include <autoware_utils/math/normalization.hpp>
+#include <autoware_utils/math/unit_conversion.hpp>
+#include <autoware_utils/ros/msg_covariance.hpp>
 
 #include <bits/stdc++.h>
-#include <tf2/LinearMath/Matrix3x3.h>
-#include <tf2/LinearMath/Quaternion.h>
 #include <tf2/utils.h>
 
 #ifdef ROS_DISTRO_GALACTIC
@@ -47,9 +45,7 @@ using Label = autoware_perception_msgs::msg::ObjectClassification;
 
 VehicleTracker::VehicleTracker(
   const object_model::ObjectModel & object_model, const rclcpp::Time & time,
-  const autoware_perception_msgs::msg::DetectedObject & object,
-  const geometry_msgs::msg::Transform & /*self_transform*/, const size_t channel_size,
-  const uint & channel_index)
+  const types::DynamicObject & object, const size_t channel_size)
 : Tracker(time, object.classification, channel_size),
   object_model_(object_model),
   logger_(rclcpp::get_logger("VehicleTracker")),
@@ -59,20 +55,20 @@ VehicleTracker::VehicleTracker(
   object_ = object;
 
   // initialize existence probability
-  initializeExistenceProbabilities(channel_index, object.existence_probability);
+  initializeExistenceProbabilities(object.channel_index, object.existence_probability);
 
   // velocity deviation threshold
   //   if the predicted velocity is close to the observed velocity,
   //   the observed velocity is used as the measurement.
-  velocity_deviation_threshold_ = autoware::universe_utils::kmph2mps(10);  // [m/s]
+  velocity_deviation_threshold_ = autoware_utils::kmph2mps(10);  // [m/s]
 
   // OBJECT SHAPE MODEL
   if (object.shape.type == autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     bounding_box_ = {
       object.shape.dimensions.x, object.shape.dimensions.y, object.shape.dimensions.z};
   } else {
-    autoware_perception_msgs::msg::DetectedObject bbox_object;
-    if (!utils::convertConvexHullToBoundingBox(object, bbox_object)) {
+    types::DynamicObject bbox_object;
+    if (!shapes::convertConvexHullToBoundingBox(object, bbox_object)) {
       RCLCPP_WARN(
         logger_,
         "VehicleTracker::VehicleTracker: Failed to convert convex hull to bounding "
@@ -122,7 +118,7 @@ VehicleTracker::VehicleTracker(
 
   // Set initial state
   {
-    using autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
+    using autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
     const double x = object.kinematics.pose_with_covariance.pose.position.x;
     const double y = object.kinematics.pose_with_covariance.pose.position.y;
     const double yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
@@ -167,17 +163,16 @@ bool VehicleTracker::predict(const rclcpp::Time & time)
   return motion_model_.predictState(time);
 }
 
-autoware_perception_msgs::msg::DetectedObject VehicleTracker::getUpdatingObject(
-  const autoware_perception_msgs::msg::DetectedObject & object,
-  const geometry_msgs::msg::Transform & self_transform)
+types::DynamicObject VehicleTracker::getUpdatingObject(
+  const types::DynamicObject & object, const geometry_msgs::msg::Transform & self_transform)
 {
-  autoware_perception_msgs::msg::DetectedObject updating_object = object;
+  types::DynamicObject updating_object = object;
 
   // OBJECT SHAPE MODEL
   // convert to bounding box if input is convex shape
-  autoware_perception_msgs::msg::DetectedObject bbox_object = object;
+  types::DynamicObject bbox_object = object;
   if (object.shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
-    if (!utils::convertConvexHullToBoundingBox(object, bbox_object)) {
+    if (!shapes::convertConvexHullToBoundingBox(object, bbox_object)) {
       RCLCPP_WARN(
         logger_,
         "VehicleTracker::getUpdatingObject: Failed to convert convex hull to bounding box.");
@@ -191,16 +186,16 @@ autoware_perception_msgs::msg::DetectedObject VehicleTracker::getUpdatingObject(
   const double tracked_yaw = motion_model_.getStateElement(IDX::YAW);
 
   // get offset measurement
-  const int nearest_corner_index = utils::getNearestCornerOrSurface(
+  const int nearest_corner_index = shapes::getNearestCornerOrSurface(
     tracked_x, tracked_y, tracked_yaw, bounding_box_.width, bounding_box_.length, self_transform);
-  utils::calcAnchorPointOffset(
+  shapes::calcAnchorPointOffset(
     bounding_box_.width, bounding_box_.length, nearest_corner_index, bbox_object, tracked_yaw,
     updating_object, tracking_offset_);
 
   return updating_object;
 }
 
-bool VehicleTracker::measureWithPose(const autoware_perception_msgs::msg::DetectedObject & object)
+bool VehicleTracker::measureWithPose(const types::DynamicObject & object)
 {
   // current (predicted) state
   const double tracked_vel = motion_model_.getStateElement(IDX::VEL);
@@ -242,7 +237,7 @@ bool VehicleTracker::measureWithPose(const autoware_perception_msgs::msg::Detect
   return is_updated;
 }
 
-bool VehicleTracker::measureWithShape(const autoware_perception_msgs::msg::DetectedObject & object)
+bool VehicleTracker::measureWithShape(const types::DynamicObject & object)
 {
   if (object.shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     // do not update shape if the input is not a bounding box
@@ -295,7 +290,7 @@ bool VehicleTracker::measureWithShape(const autoware_perception_msgs::msg::Detec
 }
 
 bool VehicleTracker::measure(
-  const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
+  const types::DynamicObject & object, const rclcpp::Time & time,
   const geometry_msgs::msg::Transform & self_transform)
 {
   // keep the latest input object
@@ -320,8 +315,7 @@ bool VehicleTracker::measure(
   }
 
   // update object
-  const autoware_perception_msgs::msg::DetectedObject updating_object =
-    getUpdatingObject(object, self_transform);
+  const types::DynamicObject updating_object = getUpdatingObject(object, self_transform);
   measureWithPose(updating_object);
   measureWithShape(updating_object);
 
@@ -329,9 +323,9 @@ bool VehicleTracker::measure(
 }
 
 bool VehicleTracker::getTrackedObject(
-  const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObject & object) const
+  const rclcpp::Time & time, types::DynamicObject & object) const
 {
-  object = autoware::object_recognition_utils::toTrackedObject(object_);
+  object = object_;
   object.object_id = getUUID();
   object.classification = getClassification();
 
@@ -356,7 +350,7 @@ bool VehicleTracker::getTrackedObject(
   const auto origin_yaw = tf2::getYaw(object_.kinematics.pose_with_covariance.pose.orientation);
   const auto ekf_pose_yaw = tf2::getYaw(pose_with_cov.pose.orientation);
   object.shape.footprint =
-    autoware::universe_utils::rotatePolygon(object.shape.footprint, origin_yaw - ekf_pose_yaw);
+    autoware_utils::rotate_polygon(object.shape.footprint, origin_yaw - ekf_pose_yaw);
 
   return true;
 }

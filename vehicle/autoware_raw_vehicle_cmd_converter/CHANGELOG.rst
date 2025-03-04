@@ -2,6 +2,38 @@
 Changelog for package autoware_raw_vehicle_cmd_converter
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.42.0 (2025-03-03)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_utils): replace autoware_universe_utils with autoware_utils  (`#10191 <https://github.com/autowarefoundation/autoware.universe/issues/10191>`_)
+* fix: add missing includes to autoware_universe_utils (`#10091 <https://github.com/autowarefoundation/autoware.universe/issues/10091>`_)
+* Contributors: Fumiya Watanabe, Ryohsuke Mitsudome, 心刚
+
+0.41.2 (2025-02-19)
+-------------------
+* chore: bump version to 0.41.1 (`#10088 <https://github.com/autowarefoundation/autoware.universe/issues/10088>`_)
+* Contributors: Ryohsuke Mitsudome
+
+0.41.1 (2025-02-10)
+-------------------
+
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_raw_vehicle_cmd_converter)!: tier4_debug_msgs changed to autoware_internal_debug_msgs in autoware_raw_vehicle_cmd_converter (`#9924 <https://github.com/autowarefoundation/autoware.universe/issues/9924>`_)
+  feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in files vehicle/autoware_raw_vehicle_cmd_converter
+  Co-authored-by: Ryohsuke Mitsudome <43976834+mitsudome-r@users.noreply.github.com>
+* fix(raw_veihicle_converter): fix too long line (`#9716 <https://github.com/autowarefoundation/autoware.universe/issues/9716>`_)
+* feat(raw_vehicle_cmd_converter): add vehicle adaptor  (`#8782 <https://github.com/autowarefoundation/autoware.universe/issues/8782>`_)
+  * feat(raw_vehicle_cmd_converter): add vehicle adaptor
+  sub operation status
+  * feat(raw_vehicle_cmd_converter): publish vehicle adaptor output
+  * use control horizon
+  * revert carla
+  * update docs
+  ---------
+* Contributors: Fumiya Watanabe, Kosuke Takeuchi, Vishal Chauhan
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

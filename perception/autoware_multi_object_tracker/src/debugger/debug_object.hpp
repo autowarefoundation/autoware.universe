@@ -16,7 +16,7 @@
 #define DEBUGGER__DEBUG_OBJECT_HPP_
 
 #include "autoware/multi_object_tracker/tracker/model/tracker_base.hpp"
-#include "autoware/universe_utils/ros/uuid_helper.hpp"
+#include "autoware_utils/ros/uuid_helper.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
@@ -88,8 +88,7 @@ public:
   }
   void collect(
     const rclcpp::Time & message_time, const std::list<std::shared_ptr<Tracker>> & list_tracker,
-    const uint & channel_index,
-    const autoware_perception_msgs::msg::DetectedObjects & detected_objects,
+    const types::DynamicObjectList & detected_objects,
     const std::unordered_map<int, int> & direct_assignment,
     const std::unordered_map<int, int> & reverse_assignment);
 

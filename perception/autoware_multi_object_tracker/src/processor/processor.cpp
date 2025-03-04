@@ -15,10 +15,13 @@
 #include "processor.hpp"
 
 #include "autoware/multi_object_tracker/object_model/object_model.hpp"
+#include "autoware/multi_object_tracker/object_model/shapes.hpp"
+#include "autoware/multi_object_tracker/object_model/types.hpp"
 #include "autoware/multi_object_tracker/tracker/tracker.hpp"
-#include "autoware/object_recognition_utils/object_recognition_utils.hpp"
 
-#include "autoware_perception_msgs/msg/tracked_objects.hpp"
+#include <autoware/object_recognition_utils/object_recognition_utils.hpp>
+
+#include <autoware_perception_msgs/msg/tracked_objects.hpp>
 
 #include <iterator>
 #include <map>
@@ -44,9 +47,9 @@ void TrackerProcessor::predict(const rclcpp::Time & time)
 }
 
 void TrackerProcessor::update(
-  const autoware_perception_msgs::msg::DetectedObjects & detected_objects,
+  const types::DynamicObjectList & detected_objects,
   const geometry_msgs::msg::Transform & self_transform,
-  const std::unordered_map<int, int> & direct_assignment, const uint & channel_index)
+  const std::unordered_map<int, int> & direct_assignment)
 {
   int tracker_idx = 0;
   const auto & time = detected_objects.header.stamp;
@@ -55,8 +58,7 @@ void TrackerProcessor::update(
     if (direct_assignment.find(tracker_idx) != direct_assignment.end()) {  // found
       const auto & associated_object =
         detected_objects.objects.at(direct_assignment.find(tracker_idx)->second);
-      (*(tracker_itr))
-        ->updateWithMeasurement(associated_object, time, self_transform, channel_index);
+      (*(tracker_itr))->updateWithMeasurement(associated_object, time, self_transform);
     } else {  // not found
       (*(tracker_itr))->updateWithoutMeasurement(time);
     }
@@ -64,9 +66,8 @@ void TrackerProcessor::update(
 }
 
 void TrackerProcessor::spawn(
-  const autoware_perception_msgs::msg::DetectedObjects & detected_objects,
-  const geometry_msgs::msg::Transform & self_transform,
-  const std::unordered_map<int, int> & reverse_assignment, const uint & channel_index)
+  const types::DynamicObjectList & detected_objects,
+  const std::unordered_map<int, int> & reverse_assignment)
 {
   const auto & time = detected_objects.header.stamp;
   for (size_t i = 0; i < detected_objects.objects.size(); ++i) {
@@ -74,46 +75,36 @@ void TrackerProcessor::spawn(
       continue;
     }
     const auto & new_object = detected_objects.objects.at(i);
-    std::shared_ptr<Tracker> tracker =
-      createNewTracker(new_object, time, self_transform, channel_index);
+    std::shared_ptr<Tracker> tracker = createNewTracker(new_object, time);
     if (tracker) list_tracker_.push_back(tracker);
   }
 }
 
 std::shared_ptr<Tracker> TrackerProcessor::createNewTracker(
-  const autoware_perception_msgs::msg::DetectedObject & object, const rclcpp::Time & time,
-  const geometry_msgs::msg::Transform & self_transform, const uint & channel_index) const
+  const types::DynamicObject & object, const rclcpp::Time & time) const
 {
   const LabelType label =
     autoware::object_recognition_utils::getHighestProbLabel(object.classification);
   if (config_.tracker_map.count(label) != 0) {
     const auto tracker = config_.tracker_map.at(label);
     if (tracker == "bicycle_tracker")
-      return std::make_shared<BicycleTracker>(
-        time, object, self_transform, config_.channel_size, channel_index);
+      return std::make_shared<BicycleTracker>(time, object, config_.channel_size);
     if (tracker == "big_vehicle_tracker")
       return std::make_shared<VehicleTracker>(
-        object_model::big_vehicle, time, object, self_transform, config_.channel_size,
-        channel_index);
+        object_model::big_vehicle, time, object, config_.channel_size);
     if (tracker == "multi_vehicle_tracker")
-      return std::make_shared<MultipleVehicleTracker>(
-        time, object, self_transform, config_.channel_size, channel_index);
+      return std::make_shared<MultipleVehicleTracker>(time, object, config_.channel_size);
     if (tracker == "normal_vehicle_tracker")
       return std::make_shared<VehicleTracker>(
-        object_model::normal_vehicle, time, object, self_transform, config_.channel_size,
-        channel_index);
+        object_model::normal_vehicle, time, object, config_.channel_size);
     if (tracker == "pass_through_tracker")
-      return std::make_shared<PassThroughTracker>(
-        time, object, self_transform, config_.channel_size, channel_index);
+      return std::make_shared<PassThroughTracker>(time, object, config_.channel_size);
     if (tracker == "pedestrian_and_bicycle_tracker")
-      return std::make_shared<PedestrianAndBicycleTracker>(
-        time, object, self_transform, config_.channel_size, channel_index);
+      return std::make_shared<PedestrianAndBicycleTracker>(time, object, config_.channel_size);
     if (tracker == "pedestrian_tracker")
-      return std::make_shared<PedestrianTracker>(
-        time, object, self_transform, config_.channel_size, channel_index);
+      return std::make_shared<PedestrianTracker>(time, object, config_.channel_size);
   }
-  return std::make_shared<UnknownTracker>(
-    time, object, self_transform, config_.channel_size, channel_index);
+  return std::make_shared<UnknownTracker>(time, object, config_.channel_size);
 }
 
 void TrackerProcessor::prune(const rclcpp::Time & time)
@@ -143,12 +134,12 @@ void TrackerProcessor::removeOverlappedTracker(const rclcpp::Time & time)
 {
   // Iterate through the list of trackers
   for (auto itr1 = list_tracker_.begin(); itr1 != list_tracker_.end(); ++itr1) {
-    autoware_perception_msgs::msg::TrackedObject object1;
+    types::DynamicObject object1;
     if (!(*itr1)->getTrackedObject(time, object1)) continue;
 
     // Compare the current tracker with the remaining trackers
     for (auto itr2 = std::next(itr1); itr2 != list_tracker_.end(); ++itr2) {
-      autoware_perception_msgs::msg::TrackedObject object2;
+      types::DynamicObject object2;
       if (!(*itr2)->getTrackedObject(time, object2)) continue;
 
       // Calculate the distance between the two objects
@@ -164,9 +155,8 @@ void TrackerProcessor::removeOverlappedTracker(const rclcpp::Time & time)
       }
 
       // Check the Intersection over Union (IoU) between the two objects
-      const double min_union_iou_area = 1e-2;
-      const auto iou =
-        autoware::object_recognition_utils::get2dIoU(object1, object2, min_union_iou_area);
+      constexpr double min_union_iou_area = 1e-2;
+      const auto iou = shapes::get2dIoU(object1, object2, min_union_iou_area);
       const auto & label1 = (*itr1)->getHighestProbLabel();
       const auto & label2 = (*itr2)->getHighestProbLabel();
       bool should_delete_tracker1 = false;
@@ -225,13 +215,13 @@ void TrackerProcessor::getTrackedObjects(
   const rclcpp::Time & time, autoware_perception_msgs::msg::TrackedObjects & tracked_objects) const
 {
   tracked_objects.header.stamp = time;
+  types::DynamicObject tracked_object;
   for (const auto & tracker : list_tracker_) {
     // Skip if the tracker is not confident
     if (!isConfidentTracker(tracker)) continue;
     // Get the tracked object, extrapolated to the given time
-    autoware_perception_msgs::msg::TrackedObject tracked_object;
     if (tracker->getTrackedObject(time, tracked_object)) {
-      tracked_objects.objects.push_back(tracked_object);
+      tracked_objects.objects.push_back(toTrackedObjectMsg(tracked_object));
     }
   }
 }
@@ -241,11 +231,11 @@ void TrackerProcessor::getTentativeObjects(
   autoware_perception_msgs::msg::TrackedObjects & tentative_objects) const
 {
   tentative_objects.header.stamp = time;
+  types::DynamicObject tracked_object;
   for (const auto & tracker : list_tracker_) {
     if (!isConfidentTracker(tracker)) {
-      autoware_perception_msgs::msg::TrackedObject tracked_object;
       if (tracker->getTrackedObject(time, tracked_object)) {
-        tentative_objects.objects.push_back(tracked_object);
+        tentative_objects.objects.push_back(toTrackedObjectMsg(tracked_object));
       }
     }
   }

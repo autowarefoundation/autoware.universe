@@ -2,6 +2,68 @@
 Changelog for package autoware_planning_evaluator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.42.0 (2025-03-03)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_utils): replace autoware_universe_utils with autoware_utils  (`#10191 <https://github.com/autowarefoundation/autoware.universe/issues/10191>`_)
+* feat(autoware_planning_evaluator): add resampled_relative_angle metrics (`#10020 <https://github.com/autowarefoundation/autoware.universe/issues/10020>`_)
+  * feat(autoware_planning_evaluator): add new large_relative_angle metrics
+  * fix copyright and vehicle_length_m
+  * style(pre-commit): autofix
+  * del: resample trajectory
+  * del: traj points check
+  * rename msg and speed optimization
+  * style(pre-commit): autofix
+  * add unit_test and fix resample_relative_angle
+  * style(pre-commit): autofix
+  * include tuple to test
+  * target two point, update unit test value
+  * fix abs
+  * fix for loop bag and primitive type
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* Contributors: Fumiya Watanabe, Kazunori-Nakajima, 心刚
+
+0.41.2 (2025-02-19)
+-------------------
+* chore: bump version to 0.41.1 (`#10088 <https://github.com/autowarefoundation/autoware.universe/issues/10088>`_)
+* Contributors: Ryohsuke Mitsudome
+
+0.41.1 (2025-02-10)
+-------------------
+
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in fil… (`#9859 <https://github.com/autowarefoundation/autoware.universe/issues/9859>`_)
+  feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in files evaluator/autoware_planning_evaluator
+* fix(planning_evaluator): update lateral_trajectory_displacement to absolute value (`#9696 <https://github.com/autowarefoundation/autoware.universe/issues/9696>`_)
+  * fix(planning_evaluator): update lateral_trajectory_displacement to absolute value
+  * style(pre-commit): autofix
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* fix(autoware_planning_evaluator): rename lateral deviation metrics (`#9801 <https://github.com/autowarefoundation/autoware.universe/issues/9801>`_)
+  * refactor(planning_evaluator): rename and add lateral trajectory displacement metrics
+  * fix typo
+  ---------
+* feat(planning_evaluator): add evaluation feature of trajectory lateral displacement (`#9718 <https://github.com/autowarefoundation/autoware.universe/issues/9718>`_)
+  * feat(planning_evaluator): add evaluation feature of trajectory lateral displacement
+  * feat(metrics_calculator): implement lookahead trajectory calculation and remove deprecated method
+  * fix(planning_evaluator): rename lateral_trajectory_displacement to trajectory_lateral_displacement for consistency
+  ---------
+* fix(autoware_planning_evaluator): fix bugprone-exception-escape (`#9730 <https://github.com/autowarefoundation/autoware.universe/issues/9730>`_)
+  fix: bugprone-exception-escape
+* feat(planning_evaluator): add lateral trajectory displacement metrics (`#9674 <https://github.com/autowarefoundation/autoware.universe/issues/9674>`_)
+  * feat(planning_evaluator): add nearest pose deviation msg
+  * update comment contents
+  * update variable name
+  * Revert "update variable name"
+  This reverts commit ee427222fcbd2a18ffbc20fecca3ad557f527e37.
+  * move lateral_trajectory_displacement position
+  * prev.dist -> prev_lateral_deviation
+  ---------
+* Contributors: Fumiya Watanabe, Kazunori-Nakajima, Kyoichi Sugahara, Vishal Chauhan, kobayu858
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0
