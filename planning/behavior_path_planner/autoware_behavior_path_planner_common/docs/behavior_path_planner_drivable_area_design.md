@@ -49,7 +49,7 @@ Currently, when clipping left bound or right bound, it can clip the bound more t
 | object_exclusion.safety_margin.front         | [m]   | double       | extra length to add to the front of the ego footprint                                                   | 0.5                          |
 | object_exclusion.safety_margin.rear          | [m]   | double       | extra length to add to the rear of the ego footprint                                                    | 0.5                          |
 | object_exclusion.safety_margin.left          | [m]   | double       | extra length to add to the left of the ego footprint                                                    | 0.5                          |
-| object_exclusion.safety_margin.right         | [m]   | double       | extra length to add to the rear of the ego footprint                                                    | 0.5                          |
+| object_exclusion.safety_margin.right         | [m]   | double       | extra length to add to the right of the ego footprint                                                    | 0.5                          |
 | path_preprocessing.max_arc_length            | [m]   | double       | maximum arc length along the path where the ego footprint is projected (0.0 means no limit)             | 100.0                        |
 | path_preprocessing.resample_interval         | [m]   | double       | fixed interval between resampled path points (0.0 means path points are directly used)                  | 2.0                          |
 | path_preprocessing.reuse_max_deviation       | [m]   | double       | if the path changes by more than this value, the curvatures are recalculated. Otherwise they are reused | 0.5                          |
