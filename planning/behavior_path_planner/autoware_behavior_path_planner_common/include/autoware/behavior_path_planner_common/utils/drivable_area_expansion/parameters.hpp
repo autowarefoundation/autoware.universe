@@ -33,16 +33,16 @@ struct DrivableAreaExpansionParameters
   static constexpr auto EGO_EXTRA_FRONT_OVERHANG = "dynamic_expansion.ego.extra_front_overhang";
   static constexpr auto EGO_EXTRA_WHEELBASE = "dynamic_expansion.ego.extra_wheelbase";
   static constexpr auto EGO_EXTRA_WIDTH = "dynamic_expansion.ego.extra_width";
-  static constexpr auto OBJECTS_EXTRA_OFFSET_FRONT =
-    "dynamic_expansion.object_exclusion.extra_footprint_offset.front";
-  static constexpr auto OBJECTS_EXTRA_OFFSET_REAR =
-    "dynamic_expansion.object_exclusion.extra_footprint_offset.rear";
-  static constexpr auto OBJECTS_EXTRA_OFFSET_LEFT =
-    "dynamic_expansion.object_exclusion.extra_footprint_offset.left";
-  static constexpr auto OBJECTS_EXTRA_OFFSET_RIGHT =
-    "dynamic_expansion.object_exclusion.extra_footprint_offset.right";
+  static constexpr auto OBJECTS_SAFE_MARGIN_FRONT =
+    "dynamic_expansion.object_exclusion.safety_margin.front";
+  static constexpr auto OBJECTS_SAFE_MARGIN_REAR =
+    "dynamic_expansion.object_exclusion.safety_margin.rear";
+  static constexpr auto OBJECTS_SAFE_MARGIN_LEFT =
+    "dynamic_expansion.object_exclusion.safety_margin.left";
+  static constexpr auto OBJECTS_SAFE_MARGIN_RIGHT =
+    "dynamic_expansion.object_exclusion.safety_margin.right";
   static constexpr auto STOPPED_OBJ_VEL_THRESH =
-    "dynamic_expansion.object_exclusion.stopped_object_velocity_threshold";
+    "dynamic_expansion.object_exclusion.th_stopped_object_velocity";
   static constexpr auto MAX_EXP_DIST_PARAM = "dynamic_expansion.max_expansion_distance";
   static constexpr auto RESAMPLE_INTERVAL_PARAM =
     "dynamic_expansion.path_preprocessing.resample_interval";
@@ -121,10 +121,10 @@ struct DrivableAreaExpansionParameters
     object_exclusion.exclude_static = node.declare_parameter<bool>(AVOID_STA_OBJECTS_PARAM);
     object_exclusion.exclude_dynamic = node.declare_parameter<bool>(AVOID_DYN_OBJECTS_PARAM);
     object_exclusion.stopped_obj_vel_th = node.declare_parameter<double>(STOPPED_OBJ_VEL_THRESH);
-    object_exclusion.front_offset = node.declare_parameter<double>(OBJECTS_EXTRA_OFFSET_FRONT);
-    object_exclusion.rear_offset = node.declare_parameter<double>(OBJECTS_EXTRA_OFFSET_REAR);
-    object_exclusion.left_offset = node.declare_parameter<double>(OBJECTS_EXTRA_OFFSET_LEFT);
-    object_exclusion.right_offset = node.declare_parameter<double>(OBJECTS_EXTRA_OFFSET_RIGHT);
+    object_exclusion.front_offset = node.declare_parameter<double>(OBJECTS_SAFE_MARGIN_FRONT);
+    object_exclusion.rear_offset = node.declare_parameter<double>(OBJECTS_SAFE_MARGIN_REAR);
+    object_exclusion.left_offset = node.declare_parameter<double>(OBJECTS_SAFE_MARGIN_LEFT);
+    object_exclusion.right_offset = node.declare_parameter<double>(OBJECTS_SAFE_MARGIN_RIGHT);
     avoid_linestring_types =
       node.declare_parameter<std::vector<std::string>>(AVOID_LINESTRING_TYPES_PARAM);
     avoid_linestring_dist = node.declare_parameter<double>(AVOID_LINESTRING_DIST_PARAM);
