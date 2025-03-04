@@ -61,7 +61,6 @@ Detail description of each filter's algorithm is in the following links.
 {{ json_to_markdown("sensing/autoware_pointcloud_preprocessor/schema/voxel_grid_downsample_filter_node.schema.json") }}
 {{ json_to_markdown("sensing/autoware_pointcloud_preprocessor/schema/voxel_grid_outlier_filter_node.schema.json") }}
 
-
 ## Assumptions / Known limits
 
 `autoware::pointcloud_preprocessor::Filter` is implemented based on pcl_perception [1] because
