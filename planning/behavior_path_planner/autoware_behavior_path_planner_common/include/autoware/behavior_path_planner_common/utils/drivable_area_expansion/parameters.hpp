@@ -50,8 +50,10 @@ struct DrivableAreaExpansionParameters
     "dynamic_expansion.path_preprocessing.max_arc_length";
   static constexpr auto MAX_REUSE_DEVIATION_PARAM =
     "dynamic_expansion.path_preprocessing.reuse_max_deviation";
-  static constexpr auto AVOID_STA_OBJECTS_PARAM = "dynamic_expansion.object_exclusion.exclude_static";
-  static constexpr auto AVOID_DYN_OBJECTS_PARAM = "dynamic_expansion.object_exclusion.exclude_dynamic";
+  static constexpr auto AVOID_STA_OBJECTS_PARAM =
+    "dynamic_expansion.object_exclusion.exclude_static";
+  static constexpr auto AVOID_DYN_OBJECTS_PARAM =
+    "dynamic_expansion.object_exclusion.exclude_dynamic";
   static constexpr auto AVOID_LINESTRING_TYPES_PARAM = "dynamic_expansion.avoid_linestring.types";
   static constexpr auto AVOID_LINESTRING_DIST_PARAM = "dynamic_expansion.avoid_linestring.distance";
   static constexpr auto SMOOTHING_CURVATURE_WINDOW_PARAM =
@@ -83,7 +85,8 @@ struct DrivableAreaExpansionParameters
   double min_bound_interval{};
   bool print_runtime{};
 
-  struct ObjectExclusion{
+  struct ObjectExclusion
+  {
     bool exclude_static{};
     bool exclude_dynamic{};
     double front_offset{};

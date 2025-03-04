@@ -15,7 +15,6 @@
 #include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/footprints.hpp"
 
 #include "autoware/behavior_path_planner_common/utils/drivable_area_expansion/parameters.hpp"
-
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/objects_filtering.hpp"
 
 #include <autoware_utils/geometry/boost_polygon_utils.hpp>
@@ -74,11 +73,14 @@ MultiPolygon2d create_object_footprints(
       continue;
     }
 
-    if (params.object_exclusion.exclude_static && velocity_filter(
-        object.kinematics.initial_twist_with_covariance.twist, -std::numeric_limits<double>::epsilon(),
-        params.object_exclusion.stopped_obj_vel_th)) {
-      footprints.push_back(create_footprint(object.kinematics.initial_pose_with_covariance.pose, base_footprint));
-    } 
+    if (
+      params.object_exclusion.exclude_static &&
+      velocity_filter(
+        object.kinematics.initial_twist_with_covariance.twist,
+        -std::numeric_limits<double>::epsilon(), params.object_exclusion.stopped_obj_vel_th)) {
+      footprints.push_back(
+        create_footprint(object.kinematics.initial_pose_with_covariance.pose, base_footprint));
+    }
   }
   return footprints;
 }
