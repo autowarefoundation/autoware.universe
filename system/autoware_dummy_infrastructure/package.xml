@@ -13,8 +13,10 @@
 
   <build_depend>libboost-dev</build_depend>
 
+  <depend>autoware_utils</depend>
   <depend>rclcpp</depend>
   <depend>rclcpp_components</depend>
+  <depend>tier4_planning_msgs</depend>
   <depend>tier4_v2x_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
