@@ -721,7 +721,7 @@ std::optional<CruiseObstacle> ObstacleCruiseModule::create_yield_cruise_obstacle
   }
 
   if (!is_outside_cruise_obstacle(stopped_object->predicted_object.classification.at(0).label)) {
-    RCLCPP_ERROR(
+    RCLCPP_DEBUG(
       logger_,
       "[Cruise] Ignore yield obstacle (%s) since the corresponding stopped object is not "
       "outside cruise obstacle.",
