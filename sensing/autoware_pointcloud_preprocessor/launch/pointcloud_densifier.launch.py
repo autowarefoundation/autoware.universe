@@ -12,25 +12,27 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
+
+from ament_index_python.packages import get_package_share_directory
 import launch
 from launch.actions import DeclareLaunchArgument
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import ComposableNodeContainer
 from launch_ros.descriptions import ComposableNode
-import os
-from ament_index_python.packages import get_package_share_directory
+
 
 def generate_launch_description():
     """Launch the pointcloud densifier node."""
-    pkg_prefix = get_package_share_directory('autoware_pointcloud_preprocessor')
-    config_file = os.path.join(pkg_prefix, 'config/pointcloud_densifier.param.yaml')
+    pkg_prefix = get_package_share_directory("autoware_pointcloud_preprocessor")
+    config_file = os.path.join(pkg_prefix, "config/pointcloud_densifier.param.yaml")
 
     input_topic = DeclareLaunchArgument(
         "input_topic",
         default_value="/sensing/lidar/concatenated/pointcloud",
         description="Input pointcloud topic",
     )
-    
+
     output_topic = DeclareLaunchArgument(
         "output_topic",
         default_value="/sensing/lidar/densified/pointcloud",
@@ -59,10 +61,12 @@ def generate_launch_description():
         output="screen",
     )
 
-    return launch.LaunchDescription([
-        # Launch arguments
-        input_topic,
-        output_topic,
-        # Nodes
-        container,
-    ])
+    return launch.LaunchDescription(
+        [
+            # Launch arguments
+            input_topic,
+            output_topic,
+            # Nodes
+            container,
+        ]
+    )

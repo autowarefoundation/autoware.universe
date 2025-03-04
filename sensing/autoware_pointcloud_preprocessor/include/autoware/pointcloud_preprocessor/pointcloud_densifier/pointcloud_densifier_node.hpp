@@ -12,16 +12,16 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef POINTCLOUD_DENSIFIER__POINTCLOUD_DENSIFIER_NODE_HPP_
-#define POINTCLOUD_DENSIFIER__POINTCLOUD_DENSIFIER_NODE_HPP_
+#ifndef AUTOWARE__POINTCLOUD_PREPROCESSOR__POINTCLOUD_DENSIFIER__POINTCLOUD_DENSIFIER_NODE_HPP_
+#define AUTOWARE__POINTCLOUD_PREPROCESSOR__POINTCLOUD_DENSIFIER__POINTCLOUD_DENSIFIER_NODE_HPP_
+
+#include "autoware/pointcloud_preprocessor/filter.hpp"
+#include "autoware/pointcloud_preprocessor/pointcloud_densifier/occupancy_grid.hpp"
+#include "autoware/pointcloud_preprocessor/transform_info.hpp"
 
 #include <deque>
 #include <memory>
 #include <string>
-
-#include "autoware/pointcloud_preprocessor/filter.hpp"
-#include "autoware/pointcloud_preprocessor/transform_info.hpp"
-#include "autoware/pointcloud_preprocessor/pointcloud_densifier/occupancy_grid.hpp"
 
 namespace autoware::pointcloud_preprocessor
 {
@@ -39,18 +39,17 @@ protected:
 private:
   sensor_msgs::msg::PointCloud2::SharedPtr filterPointCloudByROI(
     const PointCloud2ConstPtr & input_cloud, const IndicesPtr & indices = nullptr);
-  
+
   void transformAndMergePreviousClouds(
-    const PointCloud2ConstPtr & current_msg,
-    const OccupancyGrid & occupancy_grid,
+    const PointCloud2ConstPtr & current_msg, const OccupancyGrid & occupancy_grid,
     PointCloud2 & combined_cloud);
-    
-  void storeCurrentCloud(
-    const sensor_msgs::msg::PointCloud2::SharedPtr & filtered_cloud);
+
+  void storeCurrentCloud(const sensor_msgs::msg::PointCloud2::SharedPtr & filtered_cloud);
 
   bool isValidTransform(const Eigen::Matrix4d & transform) const;
-  
-  struct DensifierParam {
+
+  struct DensifierParam
+  {
     int num_previous_frames{1};
     double x_min{80.0};
     double x_max{200.0};
@@ -58,12 +57,12 @@ private:
     double y_max{20.0};
     double grid_resolution{0.3};
   } param_;
-  
+
   std::deque<sensor_msgs::msg::PointCloud2::SharedPtr> previous_pointclouds_;
-  
+
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
   std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
-  
+
   OnSetParametersCallbackHandle::SharedPtr set_param_res_;
   rcl_interfaces::msg::SetParametersResult paramCallback(const std::vector<rclcpp::Parameter> & p);
 
@@ -74,4 +73,4 @@ public:
 
 }  // namespace autoware::pointcloud_preprocessor
 
-#endif  // POINTCLOUD_DENSIFIER__POINTCLOUD_DENSIFIER_NODE_HPP_
+#endif  // AUTOWARE__POINTCLOUD_PREPROCESSOR__POINTCLOUD_DENSIFIER__POINTCLOUD_DENSIFIER_NODE_HPP_

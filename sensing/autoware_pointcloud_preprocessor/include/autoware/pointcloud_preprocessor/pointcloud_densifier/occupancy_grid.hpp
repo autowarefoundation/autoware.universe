@@ -15,9 +15,10 @@
 #ifndef AUTOWARE__POINTCLOUD_PREPROCESSOR__POINTCLOUD_DENSIFIER__OCCUPANCY_GRID_HPP_
 #define AUTOWARE__POINTCLOUD_PREPROCESSOR__POINTCLOUD_DENSIFIER__OCCUPANCY_GRID_HPP_
 
-#include <vector>
 #include "sensor_msgs/msg/point_cloud2.hpp"
 #include "sensor_msgs/point_cloud2_iterator.hpp"
+
+#include <vector>
 
 namespace autoware::pointcloud_preprocessor
 {
@@ -25,11 +26,10 @@ namespace autoware::pointcloud_preprocessor
 class OccupancyGrid
 {
 public:
-
   OccupancyGrid(double x_min, double x_max, double y_min, double y_max, double resolution);
-  void updateOccupancy(const sensor_msgs::msg::PointCloud2& cloud);
+  void updateOccupancy(const sensor_msgs::msg::PointCloud2 & cloud);
   bool isOccupied(double x, double y) const;
-  
+
 private:
   double x_min_;
   double x_max_;
@@ -39,10 +39,10 @@ private:
   size_t cols_;
   size_t rows_;
   std::vector<bool> grid_;
-  
+
   size_t index(size_t row, size_t col) const;
 };
 
-} // namespace autoware::pointcloud_preprocessor
+}  // namespace autoware::pointcloud_preprocessor
 
 #endif  // AUTOWARE__POINTCLOUD_PREPROCESSOR__POINTCLOUD_DENSIFIER__OCCUPANCY_GRID_HPP_

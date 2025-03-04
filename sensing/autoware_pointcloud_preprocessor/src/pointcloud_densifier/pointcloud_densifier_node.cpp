@@ -14,11 +14,13 @@
 
 #include "autoware/pointcloud_preprocessor/pointcloud_densifier/pointcloud_densifier_node.hpp"
 
+#include <tf2_eigen/tf2_eigen.hpp>
+
 #include <sensor_msgs/point_cloud2_iterator.hpp>
+#include <tf2_sensor_msgs/tf2_sensor_msgs.hpp>
+
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include <tf2_eigen/tf2_eigen.hpp>  
-#include <tf2_sensor_msgs/tf2_sensor_msgs.hpp>  
 
 #include <memory>
 #include <vector>
@@ -55,7 +57,9 @@ PointCloudDensifierNode::PointCloudDensifierNode(const rclcpp::NodeOptions & opt
       param_.num_previous_frames = 0;
     }
     if (param_.x_min >= param_.x_max || param_.y_min >= param_.y_max) {
-      RCLCPP_ERROR(get_logger(), "Invalid ROI bounds: x_min must be less than x_max, and y_min must be less than y_max");
+      RCLCPP_ERROR(
+        get_logger(),
+        "Invalid ROI bounds: x_min must be less than x_max, and y_min must be less than y_max");
       throw std::invalid_argument("Invalid ROI bounds");
     }
     if (param_.grid_resolution <= 0.0) {
@@ -90,18 +94,17 @@ void PointCloudDensifierNode::faster_filter(
   std::scoped_lock lock(mutex_);
   stop_watch_ptr_->toc("processing_time", true);
 
-  // No need this transformer 
+  // No need this transformer
   (void)transform_info;
 
   auto far_front_pointcloud_ptr = filterPointCloudByROI(input, indices);
-  
+
   // Build occupancy grid from the current filtered cloud
   OccupancyGrid occupancy_grid(
     param_.x_min, param_.x_max, param_.y_min, param_.y_max, param_.grid_resolution);
   occupancy_grid.updateOccupancy(*far_front_pointcloud_ptr);
 
-
-  output = *input;  
+  output = *input;
 
   transformAndMergePreviousClouds(input, occupancy_grid, output);
 
@@ -129,81 +132,76 @@ sensor_msgs::msg::PointCloud2::SharedPtr PointCloudDensifierNode::filterPointClo
   const PointCloud2ConstPtr & input_cloud, const IndicesPtr & indices)
 {
   auto filtered_cloud = std::make_shared<sensor_msgs::msg::PointCloud2>();
-  
+
   filtered_cloud->header = input_cloud->header;
-  filtered_cloud->height = 1;  
+  filtered_cloud->height = 1;
   filtered_cloud->fields = input_cloud->fields;
   filtered_cloud->is_bigendian = input_cloud->is_bigendian;
   filtered_cloud->point_step = input_cloud->point_step;
   filtered_cloud->is_dense = input_cloud->is_dense;
-  
+
   int x_offset = input_cloud->fields[pcl::getFieldIndex(*input_cloud, "x")].offset;
   int y_offset = input_cloud->fields[pcl::getFieldIndex(*input_cloud, "y")].offset;
-  
+
   // Pre-allocate data for the filtered cloud
   filtered_cloud->data.resize(input_cloud->data.size());
   size_t output_size = 0;
-  
+
   if (indices && !indices->empty()) {
     for (const auto & idx : *indices) {
       const size_t data_offset = idx * input_cloud->point_step;
-      
+
       float x, y;
       std::memcpy(&x, &input_cloud->data[data_offset + x_offset], sizeof(float));
       std::memcpy(&y, &input_cloud->data[data_offset + y_offset], sizeof(float));
-      
+
       if (x > param_.x_min && x < param_.x_max && y > param_.y_min && y < param_.y_max) {
         // Copy point data if within ROI
         std::memcpy(
-          &filtered_cloud->data[output_size],
-          &input_cloud->data[data_offset],
-          input_cloud->point_step
-        );
+          &filtered_cloud->data[output_size], &input_cloud->data[data_offset],
+          input_cloud->point_step);
         output_size += input_cloud->point_step;
       }
     }
   } else {
     for (size_t i = 0; i < input_cloud->width * input_cloud->height; ++i) {
       const size_t data_offset = i * input_cloud->point_step;
-      
+
       // Get x,y coordinates
       float x, y;
       std::memcpy(&x, &input_cloud->data[data_offset + x_offset], sizeof(float));
       std::memcpy(&y, &input_cloud->data[data_offset + y_offset], sizeof(float));
-      
+
       if (x > param_.x_min && x < param_.x_max && y > param_.y_min && y < param_.y_max) {
         // Copy point data if within ROI
         std::memcpy(
-          &filtered_cloud->data[output_size],
-          &input_cloud->data[data_offset],
-          input_cloud->point_step
-        );
+          &filtered_cloud->data[output_size], &input_cloud->data[data_offset],
+          input_cloud->point_step);
         output_size += input_cloud->point_step;
       }
     }
   }
-  
+
   // Set width based on actual number of points
   filtered_cloud->width = output_size / filtered_cloud->point_step;
   filtered_cloud->row_step = filtered_cloud->width * filtered_cloud->point_step;
   filtered_cloud->data.resize(output_size);
-  
+
   return filtered_cloud;
 }
 
 void PointCloudDensifierNode::transformAndMergePreviousClouds(
-  const PointCloud2ConstPtr & current_msg,
-  const OccupancyGrid & occupancy_grid,
+  const PointCloud2ConstPtr & current_msg, const OccupancyGrid & occupancy_grid,
   PointCloud2 & combined_cloud)
 {
   int x_offset = current_msg->fields[pcl::getFieldIndex(*current_msg, "x")].offset;
   int y_offset = current_msg->fields[pcl::getFieldIndex(*current_msg, "y")].offset;
-  
-  for (const auto& previous_cloud : previous_pointclouds_) {
+
+  for (const auto & previous_cloud : previous_pointclouds_) {
     if (!previous_cloud || previous_cloud->data.empty()) {
       continue;
     }
-    
+
     geometry_msgs::msg::TransformStamped transform_stamped;
     try {
       tf2::TimePoint current_time_point = tf2::TimePoint(
@@ -213,60 +211,54 @@ void PointCloudDensifierNode::transformAndMergePreviousClouds(
         std::chrono::nanoseconds(previous_cloud->header.stamp.nanosec) +
         std::chrono::seconds(previous_cloud->header.stamp.sec));
       transform_stamped = tf_buffer_->lookupTransform(
-        current_msg->header.frame_id,
-        current_time_point,
-        previous_cloud->header.frame_id,
-        prev_time_point,
-        "map"  
-      );
+        current_msg->header.frame_id, current_time_point, previous_cloud->header.frame_id,
+        prev_time_point, "map");
     } catch (tf2::TransformException & ex) {
       RCLCPP_WARN(get_logger(), "Could not transform point cloud: %s", ex.what());
       continue;
     }
-    
+
     // Validate and obtain the transformation
     Eigen::Isometry3d transform_eigen = tf2::transformToEigen(transform_stamped);
     if (!isValidTransform(transform_eigen.matrix())) {
       RCLCPP_WARN(get_logger(), "Invalid transform matrix, skipping point cloud");
       continue;
     }
-    
+
     // Transform previous point cloud to current frame
     sensor_msgs::msg::PointCloud2 transformed_cloud;
     tf2::doTransform(*previous_cloud, transformed_cloud, transform_stamped);
-    
+
     // Get transformed cloud field offsets
     x_offset = transformed_cloud.fields[pcl::getFieldIndex(transformed_cloud, "x")].offset;
     y_offset = transformed_cloud.fields[pcl::getFieldIndex(transformed_cloud, "y")].offset;
-    
+
     size_t original_size = combined_cloud.data.size();
     combined_cloud.data.resize(original_size + transformed_cloud.data.size());
     size_t output_size = original_size;
-    
+
     // Add previous points only if they fall into occupied grid cells
     for (size_t i = 0; i < transformed_cloud.width; ++i) {
       size_t data_offset = i * transformed_cloud.point_step;
-      
+
       float x, y;
       std::memcpy(&x, &transformed_cloud.data[data_offset + x_offset], sizeof(float));
       std::memcpy(&y, &transformed_cloud.data[data_offset + y_offset], sizeof(float));
-      
+
       if (occupancy_grid.isOccupied(x, y)) {
         std::memcpy(
-          &combined_cloud.data[output_size],
-          &transformed_cloud.data[data_offset],
-          transformed_cloud.point_step
-        );
+          &combined_cloud.data[output_size], &transformed_cloud.data[data_offset],
+          transformed_cloud.point_step);
         output_size += transformed_cloud.point_step;
       }
     }
-    
+
     combined_cloud.data.resize(output_size);
   }
-  
+
   combined_cloud.width = combined_cloud.data.size() / combined_cloud.point_step;
   combined_cloud.row_step = combined_cloud.width * combined_cloud.point_step;
-  combined_cloud.height = 1;  
+  combined_cloud.height = 1;
 }
 
 void PointCloudDensifierNode::storeCurrentCloud(
@@ -280,8 +272,8 @@ void PointCloudDensifierNode::storeCurrentCloud(
 
 bool PointCloudDensifierNode::isValidTransform(const Eigen::Matrix4d & transform) const
 {
-  return transform.allFinite() && 
-         std::abs(transform.determinant() - 1.0) < 1e-3; // Check if it's a proper rigid transformation
+  return transform.allFinite() && std::abs(transform.determinant() - 1.0) <
+                                    1e-3;  // Check if it's a proper rigid transformation
 }
 
 rcl_interfaces::msg::SetParametersResult PointCloudDensifierNode::paramCallback(
@@ -308,7 +300,9 @@ rcl_interfaces::msg::SetParametersResult PointCloudDensifierNode::paramCallback(
   if (update_grid) {
     // Validate grid parameters
     if (new_param.x_min >= new_param.x_max || new_param.y_min >= new_param.y_max) {
-      RCLCPP_ERROR(get_logger(), "Invalid ROI bounds: x_min must be less than x_max, and y_min must be less than y_max");
+      RCLCPP_ERROR(
+        get_logger(),
+        "Invalid ROI bounds: x_min must be less than x_max, and y_min must be less than y_max");
       rcl_interfaces::msg::SetParametersResult result;
       result.successful = false;
       result.reason = "Invalid ROI bounds";

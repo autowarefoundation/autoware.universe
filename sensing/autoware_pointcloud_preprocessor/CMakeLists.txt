@@ -13,7 +13,7 @@ find_package(Sophus REQUIRED)
 find_package(Boost REQUIRED)
 find_package(PCL REQUIRED)
 find_package(CGAL REQUIRED COMPONENTS Core)
-find_package(tf2_sensor_msgs REQUIRED) 
+find_package(tf2_sensor_msgs REQUIRED)
 
 include_directories(
   include
@@ -102,7 +102,7 @@ target_link_libraries(pointcloud_preprocessor_filter
   ${OpenCV_LIBRARIES}
   ${Sophus_LIBRARIES}
   ${PCL_LIBRARIES}
-  ${tf2_sensor_msgs_LIBRARIES} 
+  ${tf2_sensor_msgs_LIBRARIES}
 )
 
 # ========== Time synchronizer ==========
