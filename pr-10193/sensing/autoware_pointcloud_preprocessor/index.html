@@ -14148,7 +14148,7 @@
 
 <div><h1 id="macro-rendering-error"><em>Macro Rendering Error</em><a class="headerlink" href="#macro-rendering-error" title="Permanent link">#</a></h1>
 <p><em>File</em>: <code>sensing/autoware_pointcloud_preprocessor/README.md</code></p>
-<p><em>KeyError</em>: 'default'</p>
+<p><em>FileNotFoundError</em>: [Errno 2] No such file or directory: 'sensing/autoware_pointcloud_preprocessor/schema/lanelet2_map_Filter_node.schema.json'</p>
 <div class="highlight"><pre><span></span><code>Traceback (most recent call last):
   File "/opt/hostedtoolcache/Python/3.8.18/x64/lib/python3.8/site-packages/mkdocs_macros/plugin.py", line 688, in render
     return md_template.render(**page_variables)
@@ -14156,14 +14156,10 @@
     self.environment.handle_exception()
   File "/opt/hostedtoolcache/Python/3.8.18/x64/lib/python3.8/site-packages/jinja2/environment.py", line 942, in handle_exception
     raise rewrite_traceback_stack(source=source)
-  File "&lt;template&gt;", line 47, in top-level template code
-  File "/home/runner/work/autoware.universe/autoware.universe/mkdocs_macros.py", line 72, in json_to_markdown
-    return format_json(data)
-  File "/home/runner/work/autoware.universe/autoware.universe/mkdocs_macros.py", line 63, in format_json
-    markdown_table = tabulate(extract_parameter_info(parameters), headers="keys", tablefmt="github")
-  File "/home/runner/work/autoware.universe/autoware.universe/mkdocs_macros.py", line 52, in extract_parameter_info
-    param["Default"] = v["default"]
-KeyError: 'default'
+  File "&lt;template&gt;", line 52, in top-level template code
+  File "/home/runner/work/autoware.universe/autoware.universe/mkdocs_macros.py", line 70, in json_to_markdown
+    with open(json_schema_file_path) as f:
+FileNotFoundError: [Errno 2] No such file or directory: 'sensing/autoware_pointcloud_preprocessor/schema/lanelet2_map_Filter_node.schema.json'
 </code></pre></div></div>
 
 
