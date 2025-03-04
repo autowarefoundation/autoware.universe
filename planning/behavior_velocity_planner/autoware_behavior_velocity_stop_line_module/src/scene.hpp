@@ -40,7 +40,7 @@ class StopLineModule : public SceneModuleInterface
 public:
   using StopLineWithLaneId = std::pair<lanelet::ConstLineString3d, int64_t>;
   using Trajectory =
-    autoware::trajectory::Trajectory<tier4_planning_msgs::msg::PathPointWithLaneId>;
+    autoware::trajectory::Trajectory<autoware_internal_planning_msgs::msg::PathPointWithLaneId>;
   enum class State { APPROACH, STOPPED, START };
 
   struct DebugData
@@ -71,7 +71,7 @@ public:
     const int64_t module_id, lanelet::ConstLineString3d stop_line,
     const PlannerParam & planner_param, const rclcpp::Logger & logger,
     const rclcpp::Clock::SharedPtr clock,
-    const std::shared_ptr<universe_utils::TimeKeeper> & time_keeper,
+    const std::shared_ptr<autoware_utils::TimeKeeper> & time_keeper,
     const std::shared_ptr<planning_factor_interface::PlanningFactorInterface> &
       planning_factor_interface);
 

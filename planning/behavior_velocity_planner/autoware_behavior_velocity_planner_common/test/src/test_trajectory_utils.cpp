@@ -28,8 +28,8 @@
 TEST(smoothPath, nominal)
 {
   using autoware::behavior_velocity_planner::smoothPath;
-  using tier4_planning_msgs::msg::PathPointWithLaneId;
-  using tier4_planning_msgs::msg::PathWithLaneId;
+  using autoware_internal_planning_msgs::msg::PathPointWithLaneId;
+  using autoware_internal_planning_msgs::msg::PathWithLaneId;
 
   rclcpp::init(0, nullptr);
   rclcpp::NodeOptions options;
@@ -77,7 +77,7 @@ TEST(smoothPath, nominal)
 
   planner_data->velocity_smoother_ =
     std::make_shared<autoware::velocity_smoother::JerkFilteredSmoother>(
-      *node, std::make_shared<autoware::universe_utils::TimeKeeper>());
+      *node, std::make_shared<autoware_utils::TimeKeeper>());
 
   // Input path
   PathWithLaneId in_path;

@@ -20,7 +20,7 @@
 
 #include <rclcpp/logging.hpp>
 
-#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_internal_planning_msgs/msg/path_with_lane_id.hpp>
 
 #include <memory>
 #include <optional>
@@ -32,7 +32,7 @@ namespace autoware::behavior_velocity_planner
 StopLineModule::StopLineModule(
   const int64_t module_id, lanelet::ConstLineString3d stop_line, const PlannerParam & planner_param,
   const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock,
-  const std::shared_ptr<universe_utils::TimeKeeper> & time_keeper,
+  const std::shared_ptr<autoware_utils::TimeKeeper> & time_keeper,
   const std::shared_ptr<planning_factor_interface::PlanningFactorInterface> &
     planning_factor_interface)
 : SceneModuleInterface(module_id, logger, clock, time_keeper, planning_factor_interface),
@@ -46,8 +46,8 @@ StopLineModule::StopLineModule(
 bool StopLineModule::modifyPathVelocity(PathWithLaneId * path)
 {
   auto trajectory =
-    trajectory::Trajectory<tier4_planning_msgs::msg::PathPointWithLaneId>::Builder{}.build(
-      path->points);
+    trajectory::Trajectory<autoware_internal_planning_msgs::msg::PathPointWithLaneId>::Builder{}
+      .build(path->points);
 
   if (!trajectory) {
     return true;
