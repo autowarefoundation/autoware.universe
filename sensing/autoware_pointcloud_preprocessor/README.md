@@ -61,16 +61,6 @@ Detail description of each filter's algorithm is in the following links.
 {{ json_to_markdown("sensing/autoware_pointcloud_preprocessor/schema/voxel_grid_downsample_filter_node.schema.json") }}
 {{ json_to_markdown("sensing/autoware_pointcloud_preprocessor/schema/voxel_grid_outlier_filter_node.schema.json") }}
 
-### Discription parameters
-
-| Name               | Type   | Default Value | Description                           |
-| ------------------ | ------ | ------------- | ------------------------------------- |
-| `input_frame`      | string | " "           | input frame id                        |
-| `output_frame`     | string | " "           | output frame id                       |
-| `max_queue_size`   | int    | 5             | max queue size of input/output topics |
-| `use_indices`      | bool   | false         | flag to use pointcloud indices        |
-| `latched_indices`  | bool   | false         | flag to latch pointcloud indices      |
-| `approximate_sync` | bool   | false         | flag to use approximate sync option   |
 
 ## Assumptions / Known limits
 
