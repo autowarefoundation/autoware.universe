@@ -279,22 +279,21 @@ public:
   virtual inline void addMapCellAndFilter(
     const autoware_map_msgs::msg::PointCloudMapCellWithID & map_cell_to_add)
   {
-    dynamic_map_loader_mutex_.lock();
-    map_grid_size_x_ = map_cell_to_add.metadata.max_x - map_cell_to_add.metadata.min_x;
-    map_grid_size_y_ = map_cell_to_add.metadata.max_y - map_cell_to_add.metadata.min_y;
-    if (map_grid_size_x_ > max_map_grid_size_ || map_grid_size_y_ > max_map_grid_size_) {
-      dynamic_map_loader_mutex_.unlock();
-      RCLCPP_ERROR(
-        logger_,
-        "Map was not split or split map grid size is too large. Split map with grid size smaller "
-        "than %f",
-        max_map_grid_size_);
+    {
+      std::lock_guard<std::mutex> lock(dynamic_map_loader_mutex_);
+      map_grid_size_x_ = map_cell_to_add.metadata.max_x - map_cell_to_add.metadata.min_x;
+      map_grid_size_y_ = map_cell_to_add.metadata.max_y - map_cell_to_add.metadata.min_y;
+      if (map_grid_size_x_ > max_map_grid_size_ || map_grid_size_y_ > max_map_grid_size_) {
+        RCLCPP_ERROR(
+          logger_,
+          "Map was not split or split map grid size is too large. Split map with grid size smaller "
+          "than %f",
+          max_map_grid_size_);
+      }
+
+      origin_x_remainder_ = std::remainder(map_cell_to_add.metadata.min_x, map_grid_size_x_);
+      origin_y_remainder_ = std::remainder(map_cell_to_add.metadata.min_y, map_grid_size_y_);
     }
-
-    origin_x_remainder_ = std::remainder(map_cell_to_add.metadata.min_x, map_grid_size_x_);
-    origin_y_remainder_ = std::remainder(map_cell_to_add.metadata.min_y, map_grid_size_y_);
-    dynamic_map_loader_mutex_.unlock();
-
     pcl::PointCloud<pcl::PointXYZ> map_cell_pc_tmp;
     pcl::fromROSMsg(map_cell_to_add.pointcloud, map_cell_pc_tmp);
 
