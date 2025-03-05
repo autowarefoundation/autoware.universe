@@ -55,4 +55,4 @@ private:
 
 // clang-format off
 #endif  // AUTOWARE__POINTCLOUD_PREPROCESSOR__DOWNSAMPLE_FILTER__ROI_EXCLUDED_VOXEL_GRID_DOWNSAMPLE_FILTER_NODE_HPP_  // NOLINT
-// clang-format on        
+// clang-format on
