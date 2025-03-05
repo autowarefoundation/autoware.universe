@@ -51,8 +51,8 @@ private:
   rcl_interfaces::msg::SetParametersResult paramCallback(
     const std::vector<rclcpp::Parameter> & parameters);
 };
-
 }  // namespace autoware::pointcloud_preprocessor
 
-#endif  // AUTOWARE__POINTCLOUD_PREPROCESSOR__DOWNSAMPLE_FILTER__ROI_EXCLUDED_VOXEL_GRID_DOWNSAMPLE_FILTER_NODE_HPP_
-        // // NOLINT
+// clang-format off
+#endif  // AUTOWARE__POINTCLOUD_PREPROCESSOR__DOWNSAMPLE_FILTER__ROI_EXCLUDED_VOXEL_GRID_DOWNSAMPLE_FILTER_NODE_HPP_  // NOLINT
+// clang-format on        
