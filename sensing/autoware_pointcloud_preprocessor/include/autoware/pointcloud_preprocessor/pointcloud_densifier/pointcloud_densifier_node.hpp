@@ -59,6 +59,9 @@ private:
     double grid_resolution{0.3};
   } param_;
 
+  std::unique_ptr<autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
+  std::unique_ptr<autoware_utils::DebugPublisher> debug_publisher_;
+
   std::deque<sensor_msgs::msg::PointCloud2::SharedPtr> previous_pointclouds_;
 
   std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
