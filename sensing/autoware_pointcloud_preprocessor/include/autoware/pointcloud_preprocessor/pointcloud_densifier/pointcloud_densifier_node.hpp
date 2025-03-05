@@ -22,6 +22,7 @@
 #include <deque>
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace autoware::pointcloud_preprocessor
 {
