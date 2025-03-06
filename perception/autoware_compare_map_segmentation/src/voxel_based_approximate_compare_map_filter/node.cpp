@@ -59,7 +59,7 @@ bool VoxelBasedApproximateDynamicMapLoader::is_close_to_map(
     if (static_cast<size_t>(map_grid_index) >= current_voxel_grid_array_.size()) {
       return false;
     }
-    auto & current_voxel_grid = current_voxel_grid_array_.at(map_grid_index);
+    const auto & current_voxel_grid = current_voxel_grid_array_.at(map_grid_index);
     if (current_voxel_grid == nullptr) {
       return false;
     }

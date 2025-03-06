@@ -75,7 +75,6 @@ bool DistanceBasedStaticMapLoader::is_close_to_map(
 bool DistanceBasedDynamicMapLoader::is_close_to_map(
   const pcl::PointXYZ & point, const double distance_threshold)
 {
-  int map_grid_index;
   std::shared_ptr<pcl::search::Search<pcl::PointXYZ>> map_cell_kdtree;
   {
     std::lock_guard<std::mutex> lock(dynamic_map_loader_mutex_);
@@ -86,14 +85,14 @@ bool DistanceBasedDynamicMapLoader::is_close_to_map(
       return false;
     }
 
-    map_grid_index = static_cast<int>(
+    const int map_grid_index = static_cast<int>(
       std::floor((point.x - origin_x_) / map_grid_size_x_) +
       map_grids_x_ * std::floor((point.y - origin_y_) / map_grid_size_y_));
 
     if (static_cast<size_t>(map_grid_index) >= current_voxel_grid_array_.size()) {
       return false;
     }
-    auto & current_voxel_grid = current_voxel_grid_array_.at(map_grid_index);
+    const auto & current_voxel_grid = current_voxel_grid_array_.at(map_grid_index);
     if (current_voxel_grid == nullptr) {
       return false;
     }
