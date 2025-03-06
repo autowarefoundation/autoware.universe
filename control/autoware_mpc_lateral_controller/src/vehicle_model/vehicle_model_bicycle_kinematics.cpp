@@ -82,30 +82,30 @@ MPCTrajectory KinematicsBicycleModel::calculatePredictedTrajectoryInWorldCoordin
   const auto & t = reference_trajectory;
 
   // create initial state in the world coordinate
-  Eigen::VectorXd state_w = [&]() {
-    Eigen::VectorXd state = Eigen::VectorXd::Zero(3);
+  Eigen::Vector3d state_w = [&]() {
+    Eigen::Vector3d state = Eigen::Vector3d::Zero();
     const auto lateral_error_0 = x0(0);
     const auto yaw_error_0 = x0(1);
-    state(0, 0) = t.x.at(0) - std::sin(t.yaw.at(0)) * lateral_error_0;  // world-x
-    state(1, 0) = t.y.at(0) + std::cos(t.yaw.at(0)) * lateral_error_0;  // world-y
-    state(2, 0) = t.yaw.at(0) + yaw_error_0;                            // world-yaw
+    state(0) = t.x.at(0) - std::sin(t.yaw.at(0)) * lateral_error_0;  // world-x
+    state(1) = t.y.at(0) + std::cos(t.yaw.at(0)) * lateral_error_0;  // world-y
+    state(2) = t.yaw.at(0) + yaw_error_0;                            // world-yaw
     return state;
   }();
 
   // update state in the world coordinate
   const auto updateState = [&](
-                             const Eigen::VectorXd & state_w, const double & input, const double dt,
+                             const Eigen::Vector3d & state_w, const double & input, const double dt,
                              const double velocity) {
     const auto yaw = state_w(2);
 
-    Eigen::VectorXd dstate = Eigen::VectorXd::Zero(4);
+    Eigen::Vector3d dstate = Eigen::Vector3d::Zero();
     dstate(0) = velocity * std::cos(yaw);
     dstate(1) = velocity * std::sin(yaw);
     dstate(2) = velocity * std::tan(input) / m_wheelbase;
 
     // Note: don't do "return state_w + dstate * dt", which does not work due to the lazy evaluation
     // in Eigen.
-    const Eigen::VectorXd next_state = state_w + dstate * dt;
+    const Eigen::Vector3d next_state = state_w + dstate * dt;
     return next_state;
   };
 
