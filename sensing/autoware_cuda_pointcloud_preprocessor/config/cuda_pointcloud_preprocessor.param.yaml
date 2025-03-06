@@ -8,9 +8,9 @@
     object_length_threshold: 0.1
     num_points_threshold: 4
 
-    crop_box.min_x: [1.0]
-    crop_box.min_y: [1.0]
-    crop_box.min_z: [1.0]
-    crop_box.max_x: [-1.0]
-    crop_box.max_y: [-1.0]
-    crop_box.max_z: [-1.0]
+    crop_box.min_x: []
+    crop_box.min_y: []
+    crop_box.min_z: []
+    crop_box.max_x: []
+    crop_box.max_y: []
+    crop_box.max_z: []
