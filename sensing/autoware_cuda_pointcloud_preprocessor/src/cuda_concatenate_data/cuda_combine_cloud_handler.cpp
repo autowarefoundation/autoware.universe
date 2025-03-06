@@ -94,7 +94,11 @@ CombineCloudHandler<CudaPointCloud2Traits>::combine_pointclouds(
   ConcatenatedCloudResult<CudaPointCloud2Traits> concatenate_cloud_result;
   std::lock_guard<std::mutex> lock(mutex_);
 
+  if (topic_to_cloud_map.empty()) return concatenate_cloud_result;
+
   std::vector<rclcpp::Time> pc_stamps;
+  pc_stamps.reserve(topic_to_cloud_map.size());
+
   for (const auto & [topic, cloud] : topic_to_cloud_map) {
     pc_stamps.emplace_back(cloud->header.stamp);
   }
@@ -137,7 +141,7 @@ CombineCloudHandler<CudaPointCloud2Traits>::combine_pointclouds(
     Eigen::Matrix4f transform = Eigen::Matrix4f::Identity();
 
     // Transform if needed
-    managed_tf_buffer_->getTransform(output_frame_, cloud->header.frame_id, transform);
+    managed_tf_buffer_->get_transform(output_frame_, cloud->header.frame_id, transform);
 
     rclcpp::Time current_cloud_stamp = rclcpp::Time(cloud->header.stamp);
 
@@ -209,7 +213,7 @@ CombineCloudHandler<CudaPointCloud2Traits>::combine_pointclouds(
 
       if (keep_input_frame_in_synchronized_pointcloud_ && need_transform_to_sensor_frame) {
         Eigen::Matrix4f transform;
-        managed_tf_buffer_->getTransform(cloud->header.frame_id, output_frame_, transform);
+        managed_tf_buffer_->get_transform(cloud->header.frame_id, output_frame_, transform);
 
         TransformStruct transform_struct;
         transform_struct.translation_x = transform(0, 3);

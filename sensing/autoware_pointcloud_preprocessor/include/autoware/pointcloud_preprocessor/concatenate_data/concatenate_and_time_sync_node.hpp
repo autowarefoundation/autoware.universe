@@ -1,4 +1,4 @@
-// Copyright 2023 TIER IV, Inc.
+// Copyright 2025 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -16,7 +16,6 @@
 
 #include <list>
 #include <memory>
-#include <mutex>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -27,8 +26,8 @@
 #include "combine_cloud_handler.hpp"
 #include "traits.hpp"
 
-#include <autoware/universe_utils/ros/debug_publisher.hpp>
-#include <autoware/universe_utils/system/stop_watch.hpp>
+#include <autoware_utils/ros/debug_publisher.hpp>
+#include <autoware_utils/system/stop_watch.hpp>
 #include <diagnostic_updater/diagnostic_updater.hpp>
 #include <point_cloud_msg_wrapper/point_cloud_msg_wrapper.hpp>
 
@@ -73,6 +72,8 @@ public:
 
   void add_cloud_collector(const std::shared_ptr<CloudCollector<MsgTraits>> & collector);
 
+  void check_concat_status(diagnostic_updater::DiagnosticStatusWrapper & stat);
+
 private:
   struct Parameters
   {
@@ -105,7 +106,8 @@ private:
   std::list<std::shared_ptr<CloudCollector<MsgTraits>>> cloud_collectors_;
   std::unique_ptr<CollectorMatchingStrategy<MsgTraits>> collector_matching_strategy_;
 
-  std::mutex cloud_collectors_mutex_;
+  bool init_collector_list_{false};
+  static constexpr const int num_of_collectors{3};
 
   // default postfix name for synchronized pointcloud
   static constexpr const char * default_sync_topic_postfix = "_synchronized";
@@ -119,9 +121,9 @@ private:
   std::shared_ptr<PublisherType> concatenated_cloud_publisher_;
   std::unordered_map<std::string, std::shared_ptr<PublisherType>>
     topic_to_transformed_cloud_publisher_map_;
-  std::unique_ptr<autoware::universe_utils::DebugPublisher> debug_publisher_;
+  std::unique_ptr<autoware_utils::DebugPublisher> debug_publisher_;
 
-  std::unique_ptr<autoware::universe_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
+  std::unique_ptr<autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_;
   diagnostic_updater::Updater diagnostic_updater_{this};
 
   void initialize();
@@ -133,9 +135,11 @@ private:
   void odom_callback(const nav_msgs::msg::Odometry::ConstSharedPtr input);
 
   static std::string format_timestamp(double timestamp);
-  void check_concat_status(diagnostic_updater::DiagnosticStatusWrapper & stat);
   std::string replace_sync_topic_name_postfix(
     const std::string & original_topic_name, const std::string & postfix);
+  void initialize_collector_list();
+  typename std::list<std::shared_ptr<CloudCollector<MsgTraits>>>::iterator
+  find_and_reset_oldest_collector();
 };
 
 class PointCloudConcatenateDataSynchronizerComponent

@@ -36,6 +36,7 @@ CloudCollector<MsgTraits>::CloudCollector(
   combine_cloud_handler_(combine_cloud_handler),
   num_of_clouds_(num_of_clouds),
   timeout_sec_(timeout_sec),
+  status_(CollectorStatus::Idle),
   debug_mode_(debug_mode)
 {
   const auto period_ns = std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -43,10 +44,11 @@ CloudCollector<MsgTraits>::CloudCollector(
 
   timer_ =
     rclcpp::create_timer(ros2_parent_node_, ros2_parent_node_->get_clock(), period_ns, [this]() {
-      std::lock_guard<std::mutex> concatenate_lock(concatenate_mutex_);
-      if (concatenate_finished_) return;
+      if (status_ == CollectorStatus::Finished) return;
       concatenate_callback();
     });
+
+  timer_->cancel();
 }
 
 template <typename MsgTraits>
@@ -71,8 +73,25 @@ template <typename MsgTraits>
 bool CloudCollector<MsgTraits>::process_pointcloud(
   const std::string & topic_name, typename MsgTraits::PointCloudMessage::ConstSharedPtr cloud)
 {
-  std::lock_guard<std::mutex> concatenate_lock(concatenate_mutex_);
-  if (concatenate_finished_) return false;
+  if (status_ == CollectorStatus::Finished) {
+    return false;
+  }
+
+  if (status_ == CollectorStatus::Idle) {
+    // Add first pointcloud to the collector, restart the timer
+    status_ = CollectorStatus::Processing;
+    timer_->reset();
+  } else if (status_ == CollectorStatus::Processing) {
+    // Check if the map already contains an entry for the same topic. This shouldn't happen if the
+    // parameter 'lidar_timestamp_noise_window' is set correctly.
+    if (topic_to_cloud_map_.find(topic_name) != topic_to_cloud_map_.end()) {
+      RCLCPP_WARN_STREAM_THROTTLE(
+        ros2_parent_node_->get_logger(), *ros2_parent_node_->get_clock(),
+        std::chrono::milliseconds(10000).count(),
+        "Topic '" << topic_name
+                  << "' already exists in the collector. Check the timestamp of the pointcloud.");
+    }
+  }
 
   // Check if the map already contains an entry for the same topic. This shouldn't happen if the
   // parameter 'lidar_timestamp_noise_window' is set correctly.
@@ -92,9 +111,9 @@ bool CloudCollector<MsgTraits>::process_pointcloud(
 }
 
 template <typename MsgTraits>
-bool CloudCollector<MsgTraits>::concatenate_finished() const
+CollectorStatus CloudCollector<MsgTraits>::get_status() const
 {
-  return concatenate_finished_;
+  return status_;
 }
 
 template <typename MsgTraits>
@@ -114,7 +133,7 @@ void CloudCollector<MsgTraits>::concatenate_callback()
 
   combine_cloud_handler_->allocate_pointclouds();
 
-  concatenate_finished_ = true;
+  status_ = CollectorStatus::Finished;
 }
 
 template <typename MsgTraits>
@@ -166,6 +185,18 @@ void CloudCollector<MsgTraits>::show_debug_message()
 
   RCLCPP_WARN(ros2_parent_node_->get_logger(), "end show_debug_message timer with timeout=%f", timeout_sec_);
   RCLCPP_INFO(ros2_parent_node_->get_logger(), "%s", log_stream.str().c_str());
+}
+
+template <typename MsgTraits>
+void CloudCollector<MsgTraits>::reset()
+{
+  status_ = CollectorStatus::Idle;  // Reset status to Idle
+  topic_to_cloud_map_.clear();
+  collector_info_ = nullptr;
+
+  if (timer_ && !timer_->is_canceled()) {
+    timer_->cancel();
+  }
 }
 
 }  // namespace autoware::pointcloud_preprocessor

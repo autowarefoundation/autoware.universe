@@ -1,4 +1,4 @@
-// Copyright 2024 TIER IV, Inc.
+// Copyright 2025 TIER IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ struct AdvancedCollectorInfo : public CollectorInfoBase
   }
 };
 
+enum class CollectorStatus { Idle, Processing, Finished };
 template <typename MsgTraits>
 class CloudCollector
 {
@@ -73,11 +74,12 @@ public:
   std::unordered_map<std::string, typename MsgTraits::PointCloudMessage::ConstSharedPtr>
   get_topic_to_cloud_map();
 
-  [[nodiscard]] bool concatenate_finished() const;
+  [[nodiscard]] CollectorStatus get_status() const;
 
   void set_info(std::shared_ptr<CollectorInfoBase> collector_info);
   [[nodiscard]] std::shared_ptr<CollectorInfoBase> get_info() const;
   void show_debug_message();
+  void reset();
 
 private:
   std::shared_ptr<PointCloudConcatenateDataSynchronizerComponentTemplated<MsgTraits>>
@@ -88,10 +90,9 @@ private:
     topic_to_cloud_map_;
   uint64_t num_of_clouds_;
   double timeout_sec_;
-  bool debug_mode_;
-  bool concatenate_finished_{false};
-  std::mutex concatenate_mutex_;
   std::shared_ptr<CollectorInfoBase> collector_info_;
+  CollectorStatus status_;
+  bool debug_mode_;
 };
 
 }  // namespace autoware::pointcloud_preprocessor

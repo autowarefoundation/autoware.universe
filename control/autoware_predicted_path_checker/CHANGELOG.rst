@@ -1,6 +1,46 @@
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-Changelog for package predicted_path_checker
+Changelog for package autoware_predicted_path_checker
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+0.42.0 (2025-03-03)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_utils): replace autoware_universe_utils with autoware_utils  (`#10191 <https://github.com/autowarefoundation/autoware.universe/issues/10191>`_)
+* fix: add missing includes to autoware_universe_utils (`#10091 <https://github.com/autowarefoundation/autoware.universe/issues/10091>`_)
+* Contributors: Fumiya Watanabe, Ryohsuke Mitsudome, 心刚
+
+0.41.2 (2025-02-19)
+-------------------
+* chore: bump version to 0.41.1 (`#10088 <https://github.com/autowarefoundation/autoware.universe/issues/10088>`_)
+* Contributors: Ryohsuke Mitsudome
+
+0.41.1 (2025-02-10)
+-------------------
+
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat: apply `autoware\_` prefix for `predicted_path_checker` (`#9985 <https://github.com/autowarefoundation/autoware.universe/issues/9985>`_)
+  * feat(predicted_path_checker): apply `autoware\_` prefix (see below):
+  Note:
+  * In this commit, I did not organize a folder structure.
+  The folder structure will be organized in the next some commits.
+  * The changes will follow the Autoware's guideline as below:
+  - https://autowarefoundation.github.io/autoware-documentation/main/contributing/coding-guidelines/ros-nodes/directory-structure/#package-folder
+  * rename(predicted_path_checker): move headers under `include/autoware`
+  * Fixes due to this changes for .hpp/.cpp files will be applied in the next commit
+  * fix(predicted_path_checker): fix include header paths
+  * To follow the previous commit
+  * rename: `predicted_path_checker` => `autoware_predicted_path_checker`
+  * style(pre-commit): autofix
+  * bug(autoware_predicted_path_checker): fix inconsistent namespacings
+  * bug(autoware_predicted_path_checker): do not change node name
+  * This might contaminate topic name
+  * style(pre-commit): autofix
+  * bug(tier4_control_launch): fix wrong package/plugin names
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* Contributors: Fumiya Watanabe, Junya Sasaki
 
 0.40.0 (2024-12-12)
 -------------------

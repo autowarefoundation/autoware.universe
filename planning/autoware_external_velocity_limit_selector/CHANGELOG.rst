@@ -2,6 +2,26 @@
 Changelog for package autoware_external_velocity_limit_selector
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.42.0 (2025-03-03)
+-------------------
+
+0.41.2 (2025-02-19)
+-------------------
+* chore: bump version to 0.41.1 (`#10088 <https://github.com/autowarefoundation/autoware.universe/issues/10088>`_)
+* Contributors: Ryohsuke Mitsudome
+
+0.41.1 (2025-02-10)
+-------------------
+
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in fil… (`#9902 <https://github.com/autowarefoundation/autoware.universe/issues/9902>`_)
+  feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in files planning/autoware_external_velocity_limit_selector
+* test(external_velocity_limit_selector): add node test (`#8944 <https://github.com/autowarefoundation/autoware.universe/issues/8944>`_)
+  add node smoke test
+* Contributors: Fumiya Watanabe, Maxime CLEMENT, Vishal Chauhan
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

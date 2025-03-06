@@ -79,7 +79,6 @@ private:
   const double steer_lim_;       //!< @brief steering limit [rad]
   const double steer_rate_lim_;  //!< @brief steering angular velocity limit [rad/s]
   const double wheelbase_;       //!< @brief vehicle wheelbase length [m]
-  double prev_vx_ = 0.0;
   double current_ax_ = 0.0;
 
   std::deque<double> vx_input_queue_;     //!< @brief buffer for velocity command
