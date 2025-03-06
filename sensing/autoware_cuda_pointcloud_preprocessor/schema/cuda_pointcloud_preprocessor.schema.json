@@ -42,32 +42,32 @@
         "crop_box.min_x": {
           "type": "array",
           "description": "An array in which each element is the minimum x value in a crop box",
-          "default": [1.0]
+          "default": []
         },
         "crop_box.min_y": {
           "type": "array",
           "description": "An array in which each element is the minimum y value in a crop box",
-          "default": [1.0]
+          "default": []
         },
         "crop_box.min_z": {
           "type": "array",
           "description": "An array in which each element is the minimum z value in a crop box",
-          "default": [1.0]
+          "default": []
         },
         "crop_box.max_x": {
           "type": "array",
           "description": "An array in which each element is the maximum x value in a crop box",
-          "default": [-1.0]
+          "default": []
         },
         "crop_box.max_y": {
           "type": "array",
           "description": "An array in which each element is the maximum y value in a crop box",
-          "default": [-1.0]
+          "default": []
         },
         "crop_box.max_z": {
           "type": "array",
           "description": "An array in which each element is the maximum z value in a crop box",
-          "default": [-1.0]
+          "default": []
         }
       },
       "required": [
@@ -77,18 +77,12 @@
         "distance_ratio",
         "object_length_threshold",
         "num_points_threshold",
-        "self_crop.min_x",
-        "self_crop.min_y",
-        "self_crop.min_z",
-        "self_crop.max_x",
-        "self_crop.max_y",
-        "self_crop.max_z",
-        "mirror_crop.min_x",
-        "mirror_crop.min_y",
-        "mirror_crop.min_z",
-        "mirror_crop.max_x",
-        "mirror_crop.max_y",
-        "mirror_crop.max_z"
+        "crop_box.min_x",
+        "crop_box.min_y",
+        "crop_box.min_z",
+        "crop_box.max_x",
+        "crop_box.max_y",
+        "crop_box.max_z"
       ],
       "additionalProperties": false
     }
