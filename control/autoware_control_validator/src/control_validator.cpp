@@ -305,7 +305,7 @@ void ControlValidator::calc_stop_point_overrun_status(
 
   // NOTE: the same velocity threshold as autoware::motion_utils::searchZeroVelocity
   status.has_overrun_stop_point = status.dist_to_stop < -params.overrun_stop_point_dist &&
-                                  status.nearest_trajectory_vel < 1e-3 && status.vehicle_vel > 0.1;
+                                  status.nearest_trajectory_vel < 1e-3 && status.vehicle_vel > 1e-3;
 }
 
 bool ControlValidator::is_all_valid(const ControlValidatorStatus & s)
