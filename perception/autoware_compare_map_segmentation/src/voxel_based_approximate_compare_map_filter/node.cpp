@@ -68,12 +68,7 @@ bool VoxelBasedApproximateDynamicMapLoader::is_close_to_map(
 
   const int index = map_cell_voxel_grid.getCentroidIndexAt(
     map_cell_voxel_grid.getGridCoordinates(point.x, point.y, point.z));
-  if (index == -1) {
-    return false;
-  } else {
-    return true;
-  }
-  return false;
+  return (index != -1);
 }
 
 VoxelBasedApproximateCompareMapFilterComponent::VoxelBasedApproximateCompareMapFilterComponent(

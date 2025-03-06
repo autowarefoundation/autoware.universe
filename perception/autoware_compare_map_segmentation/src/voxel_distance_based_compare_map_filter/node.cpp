@@ -101,11 +101,8 @@ bool VoxelDistanceBasedDynamicMapLoader::is_close_to_map(
     map_cell_voxel_grid = current_voxel_grid_array_.at(map_grid_index)->map_cell_voxel_grid;
     map_cell_kdtree = current_voxel_grid_array_.at(map_grid_index)->map_cell_kdtree;
   }
-  if (is_close_to_neighbor_voxels(
-        point, distance_threshold, map_cell_voxel_grid, map_cell_kdtree)) {
-    return true;
-  }
-  return false;
+  return is_close_to_neighbor_voxels(
+    point, distance_threshold, map_cell_voxel_grid, map_cell_kdtree);
 }
 
 VoxelDistanceBasedCompareMapFilterComponent::VoxelDistanceBasedCompareMapFilterComponent(
