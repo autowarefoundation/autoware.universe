@@ -414,7 +414,7 @@ bool VoxelGridDynamicMapLoader::is_close_to_map(
 }
 void VoxelGridDynamicMapLoader::timer_callback()
 {
-  std::optional<geometry_msgs::msg::Point> current_position = std::nullopt;
+  std::optional<geometry_msgs::msg::Point> current_position;
   {
     std::lock_guard<std::mutex> lock(dynamic_map_loader_mutex_);
     current_position = current_position_;
@@ -434,7 +434,7 @@ void VoxelGridDynamicMapLoader::timer_callback()
 
 bool VoxelGridDynamicMapLoader::should_update_map(
   const geometry_msgs::msg::Point & current_point, const geometry_msgs::msg::Point & last_point,
-  const double map_update_distance_threshold) const
+  const double map_update_distance_threshold)
 {
   if (distance2D(current_point, last_point) > map_update_distance_threshold) {
     return true;

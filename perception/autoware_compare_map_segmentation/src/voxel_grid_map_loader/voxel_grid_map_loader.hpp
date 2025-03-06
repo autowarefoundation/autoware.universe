@@ -190,9 +190,9 @@ public:
   void onEstimatedPoseCallback(nav_msgs::msg::Odometry::ConstSharedPtr msg);
 
   void timer_callback();
-  bool should_update_map(
+  static bool should_update_map(
     const geometry_msgs::msg::Point & current_point, const geometry_msgs::msg::Point & last_point,
-    const double map_update_distance_threshold) const;
+    const double map_update_distance_threshold);
   void request_update_map(const geometry_msgs::msg::Point & position);
   bool is_close_to_map(const pcl::PointXYZ & point, const double distance_threshold) override;
   /** \brief Check if point close to map pointcloud in the */
