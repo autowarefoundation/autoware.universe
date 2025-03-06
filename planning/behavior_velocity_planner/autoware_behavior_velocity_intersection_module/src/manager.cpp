@@ -168,6 +168,15 @@ IntersectionModuleManager::IntersectionModuleManager(rclcpp::Node & node)
         get_or_declare_parameter<bool>(node, ns + ".collision_detection.target_type.unknown");
     }
 
+    {
+      ip.collision_detection.support_by_pointcloud.use_pointcloud = get_or_declare_parameter<bool>(
+        node, ns + ".collision_detection.support_by_pointcloud.enable");
+      ip.collision_detection.support_by_pointcloud.min_range = get_or_declare_parameter<double>(
+        node, ns + ".collision_detection.support_by_pointcloud.range.min");
+      ip.collision_detection.support_by_pointcloud.max_range = get_or_declare_parameter<double>(
+        node, ns + ".collision_detection.support_by_pointcloud.range.max");
+    }
+
     // velocity_profile
     {
       ip.collision_detection.velocity_profile.use_upstream = get_or_declare_parameter<bool>(

@@ -107,6 +107,12 @@ public:
       double collision_detection_hold_time;
       double min_predicted_path_confidence;
       TargetType target_type;
+      struct SupportByPointCloud
+      {
+        bool use_pointcloud;
+        double min_range;
+        double max_range;
+      } support_by_pointcloud;
       struct VelocityProfile
       {
         bool use_upstream;
