@@ -59,6 +59,7 @@ struct ValidationParams
   double velocity_deviation_threshold;
   double distance_deviation_threshold;
   double longitudinal_distance_deviation_threshold;
+  double nominal_latency_threshold;
 
   // parameters
   double forward_trajectory_length_acceleration;
@@ -86,6 +87,7 @@ public:
   bool checkValidDistanceDeviation(const Trajectory & trajectory);
   bool checkValidLongitudinalDistanceDeviation(const Trajectory & trajectory);
   bool checkValidForwardTrajectoryLength(const Trajectory & trajectory);
+  bool checkValidLatency(const Trajectory & trajectory);
 
 private:
   void setupDiag();
