@@ -206,6 +206,9 @@ public:
     pcl::PointCloud<pcl::PointXYZ> output;
     std::lock_guard<std::mutex> lock(dynamic_map_loader_mutex_);
     for (const auto & kv : current_voxel_grid_dict_) {
+      if (kv.second.map_cell_pc_ptr == nullptr) {
+        continue;
+      }
       output = output + *(kv.second.map_cell_pc_ptr);
     }
     return output;
