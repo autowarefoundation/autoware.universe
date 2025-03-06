@@ -75,8 +75,9 @@ __global__ void combineMasksKernel(
 }
 
 __global__ void extractPointsKernel(
-  InputPointType * input_points, std::uint32_t * masks, std::uint32_t * indices, int num_points,
-  OutputPointType * output_points)
+  InputPointType * __restrict__ input_points, std::uint32_t * __restrict__ masks,
+  std::uint32_t * __restrict__ indices, int num_points,
+  OutputPointType * __restrict__ output_points)
 {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
   if (idx < num_points && masks[idx] == 1) {
