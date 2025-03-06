@@ -461,14 +461,14 @@ std::optional<std::vector<CruiseObstacle>> ObstacleCruiseModule::find_yield_crui
       obstacle_filtering_param_.stopped_obstacle_velocity_threshold;
     if (is_moving) {
       const bool is_within_lat_dist_threshold =
-        o->get_dist_to_traj_lateral(traj_points) <
+        std::abs(o->get_dist_to_traj_lateral(traj_points)) <
         obstacle_filtering_param_.yield_lat_distance_threshold;
       if (is_within_lat_dist_threshold) moving_objects.push_back(o);
       return;
     }
     // lat threshold is larger for stopped obstacles
     const bool is_within_lat_dist_threshold =
-      o->get_dist_to_traj_lateral(traj_points) <
+      std::abs(o->get_dist_to_traj_lateral(traj_points)) <
       obstacle_filtering_param_.yield_lat_distance_threshold +
         obstacle_filtering_param_.max_lat_dist_between_obstacles;
     if (is_within_lat_dist_threshold) stopped_objects.push_back(o);
