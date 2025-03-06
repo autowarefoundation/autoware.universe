@@ -165,47 +165,53 @@ void CudaPointcloudPreprocessorNode::twistCallback(
 
   while (!twist_queue_.empty()) {
     // for replay rosbag
-    if (
-      rclcpp::Time(twist_queue_.front().header.stamp) > rclcpp::Time(twist_msg_ptr->header.stamp)) {
-      twist_queue_.pop_front();
-    } else if (  // NOLINT
+    bool backwards_time_jump_detected =
+      rclcpp::Time(twist_queue_.front().header.stamp) > rclcpp::Time(twist_msg_ptr->header.stamp);
+    bool is_queue_longer_than_1s =
       rclcpp::Time(twist_queue_.front().header.stamp) <
-      rclcpp::Time(twist_msg_ptr->header.stamp) - rclcpp::Duration::from_seconds(1.0)) {
+      rclcpp::Time(twist_msg_ptr->header.stamp) - rclcpp::Duration::from_seconds(1.0);
+
+    if (backwards_time_jump_detected) {
+      twist_queue_.clear();
+    } else if (is_queue_longer_than_1s) {
       twist_queue_.pop_front();
+    } else {
+      break;
     }
-    break;
   }
 }
 
 void CudaPointcloudPreprocessorNode::imuCallback(
   const sensor_msgs::msg::Imu::ConstSharedPtr imu_msg)
 {
-  tf2::Transform tf2_imu_link_to_base_link{};
-  getTransform(base_frame_, imu_msg->header.frame_id, &tf2_imu_link_to_base_link);
-  geometry_msgs::msg::TransformStamped::SharedPtr tf_base2imu_ptr =
-    std::make_shared<geometry_msgs::msg::TransformStamped>();
-  tf_base2imu_ptr->transform.rotation = tf2::toMsg(tf2_imu_link_to_base_link.getRotation());
+  tf2::Transform imu_to_base_tf2{};
+  getTransform(base_frame_, imu_msg->header.frame_id, &imu_to_base_tf2);
+  geometry_msgs::msg::TransformStamped imu_to_base_msg;
+  imu_to_base_msg.transform.rotation = tf2::toMsg(imu_to_base_tf2.getRotation());
 
   geometry_msgs::msg::Vector3Stamped angular_velocity;
   angular_velocity.vector = imu_msg->angular_velocity;
 
   geometry_msgs::msg::Vector3Stamped transformed_angular_velocity;
-  tf2::doTransform(angular_velocity, transformed_angular_velocity, *tf_base2imu_ptr);
+  tf2::doTransform(angular_velocity, transformed_angular_velocity, imu_to_base_msg);
   transformed_angular_velocity.header = imu_msg->header;
   angular_velocity_queue_.push_back(transformed_angular_velocity);
 
   while (!angular_velocity_queue_.empty()) {
     // for rosbag replay
-    if (
-      rclcpp::Time(angular_velocity_queue_.front().header.stamp) >
-      rclcpp::Time(imu_msg->header.stamp)) {
-      angular_velocity_queue_.pop_front();
-    } else if (  // NOLINT
+    bool backwards_time_jump_detected = rclcpp::Time(angular_velocity_queue_.front().header.stamp) >
+                                        rclcpp::Time(imu_msg->header.stamp);
+    bool is_queue_longer_than_1s =
       rclcpp::Time(angular_velocity_queue_.front().header.stamp) <
-      rclcpp::Time(imu_msg->header.stamp) - rclcpp::Duration::from_seconds(1.0)) {
+      rclcpp::Time(imu_msg->header.stamp) - rclcpp::Duration::from_seconds(1.0);
+
+    if (backwards_time_jump_detected) {
+      angular_velocity_queue_.clear();
+    } else if (is_queue_longer_than_1s) {
       angular_velocity_queue_.pop_front();
+    } else {
+      break;
     }
-    break;
   }
 }
 
