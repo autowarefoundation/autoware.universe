@@ -28,7 +28,8 @@
 namespace autoware::rviz_plugins
 {
 
-using RosTopicDisplay = rviz_common::RosTopicDisplay<autoware_internal_planning_msgs::msg::PlanningFactorArray>;
+using RosTopicDisplay =
+  rviz_common::RosTopicDisplay<autoware_internal_planning_msgs::msg::PlanningFactorArray>;
 
 class PlanningFactorRvizPlugin
 : public rviz_common::RosTopicDisplay<autoware_internal_planning_msgs::msg::PlanningFactorArray>
