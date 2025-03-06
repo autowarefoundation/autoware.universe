@@ -76,8 +76,13 @@ MPCTrajectory KinematicsBicycleModel::calculatePredictedTrajectoryInWorldCoordin
   const MPCTrajectory & reference_trajectory, const double dt) const
 {
   // Calculate predicted state in world coordinate since there is modeling errors in Frenet
-  // Relative coordinate x = [lat_err, yaw_err, steer]
-  // World coordinate x = [x, y, yaw, steer]
+  // Relative coordinate state = [lat_err, yaw_err, steer]
+  // World coordinate state_w = [x, y, yaw]
+
+  // Note: Ideally, the first-order delay of the steering should be considered, as in the control
+  // model. However, significant accuracy degradation was observed when discretizing with a long dt,
+  // so it has been ignored here. If the accuracy of the discretization improves,an appropriate
+  // model should be considered.
 
   const auto & t = reference_trajectory;
 
