@@ -890,15 +890,19 @@ double ObstacleStopModule::calc_desired_stop_margin(
   const double dist_to_collide_on_ref_traj)
 {
   // calculate default stop margin
-  const double default_stop_margin = [&]() {
-    const auto ref_traj_length =
-      autoware::motion_utils::calcSignedArcLength(traj_points, 0, traj_points.size() - 1);
-    if (dist_to_collide_on_ref_traj > ref_traj_length) {
-      // Use terminal margin (terminal_stop_margin) for obstacle stop
-      return stop_planning_param_.terminal_stop_margin;
-    }
-    return stop_planning_param_.stop_margin;
-  }();
+  const double default_stop_margin =
+    [&]() {
+      const auto ref_traj_length =
+        autoware::motion_utils::calcSignedArcLength(traj_points, 0, traj_points.size() - 1);
+      if (dist_to_collide_on_ref_traj > ref_traj_length) {
+        // Use terminal margin (terminal_stop_margin) for obstacle stop
+        return stop_planning_param_.terminal_stop_margin;
+      }
+      return stop_planning_param_.stop_margin;
+    }() +
+        (stop_obstacle.velocity < 0.0)
+      ? stop_planning_param_.additional_stop_margin_opposing_traffic
+      : 0.0;
 
   // calculate stop margin on curve
   const double stop_margin_on_curve = calc_margin_from_obstacle_on_curve(
@@ -915,10 +919,14 @@ double ObstacleStopModule::calc_desired_stop_margin(
     const double stop_dist_diff =
       closest_behavior_stop_dist_on_ref_traj - (dist_to_collide_on_ref_traj - stop_margin_on_curve);
     if (0.0 < stop_dist_diff && stop_dist_diff < stop_margin_on_curve) {
-      return stop_planning_param_.min_behavior_stop_margin;
+      return stop_planning_param_.min_behavior_stop_margin + (stop_obstacle.velocity < 0.0)
+               ? stop_planning_param_.additional_stop_margin_opposing_traffic
+               : 0.0;
     }
   }
-  return stop_margin_on_curve;
+  return stop_margin_on_curve + (stop_obstacle.velocity < 0.0)
+           ? stop_planning_param_.additional_stop_margin_opposing_traffic
+           : 0.0;
 }
 
 std::optional<double> ObstacleStopModule::calc_candidate_zero_vel_dist(
