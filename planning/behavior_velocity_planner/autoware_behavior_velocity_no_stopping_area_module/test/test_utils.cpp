@@ -15,8 +15,8 @@
 #include "../src/utils.hpp"
 
 #include <autoware/behavior_velocity_planner_common/planner_data.hpp>
-#include <autoware/universe_utils/geometry/boost_geometry.hpp>
 #include <autoware_test_utils/autoware_test_utils.hpp>
+#include <autoware_utils/geometry/boost_geometry.hpp>
 #include <rclcpp/clock.hpp>
 #include <rclcpp/logger.hpp>
 
@@ -225,7 +225,7 @@ TEST(NoStoppingAreaTest, generateEgoNoStoppingAreaLanePolygon)
 {
   using autoware::behavior_velocity_planner::no_stopping_area::
     generate_ego_no_stopping_area_lane_polygon;
-  using autoware::universe_utils::Point2d;
+  using autoware_utils::Point2d;
   geometry_msgs::msg::Pose ego_pose;  // ego at (0,0)
   ego_pose.position.x = 0.0;
   ego_pose.position.y = 0.0;
@@ -250,7 +250,7 @@ TEST(NoStoppingAreaTest, generateEgoNoStoppingAreaLanePolygon)
     const auto lane_poly = generate_ego_no_stopping_area_lane_polygon(
       path, ego_pose, *no_stopping_area_reg_elem, margin, max_polygon_length, path_expand_width,
       logger, clock);
-    autoware::universe_utils::Polygon2d simplified_poly;
+    autoware_utils::Polygon2d simplified_poly;
     EXPECT_FALSE(lane_poly.outer().empty());
     EXPECT_TRUE(lane_poly.inners().empty());
     // simplify the polygon to make it easier to check
@@ -271,7 +271,7 @@ TEST(NoStoppingAreaTest, generateEgoNoStoppingAreaLanePolygon)
     const auto lane_poly = generate_ego_no_stopping_area_lane_polygon(
       path, ego_pose, *no_stopping_area_reg_elem, big_margin, max_polygon_length, path_expand_width,
       logger, clock);
-    autoware::universe_utils::Polygon2d simplified_poly;
+    autoware_utils::Polygon2d simplified_poly;
     EXPECT_FALSE(lane_poly.outer().empty());
     EXPECT_TRUE(lane_poly.inners().empty());
     // simplify the polygon to make it easier to check
@@ -289,7 +289,7 @@ TEST(NoStoppingAreaTest, generateEgoNoStoppingAreaLanePolygon)
     const auto lane_poly = generate_ego_no_stopping_area_lane_polygon(
       path, ego_pose, *no_stopping_area_reg_elem, margin, small_polygon_length, path_expand_width,
       logger, clock);
-    autoware::universe_utils::Polygon2d simplified_poly;
+    autoware_utils::Polygon2d simplified_poly;
     EXPECT_FALSE(lane_poly.outer().empty());
     EXPECT_TRUE(lane_poly.inners().empty());
     // simplify the polygon to make it easier to check
@@ -358,7 +358,7 @@ TEST(NoStoppingAreaTest, checkStopLinesInNoStoppingArea)
 {
   using autoware::behavior_velocity_planner::no_stopping_area::check_stop_lines_in_no_stopping_area;
   autoware_internal_planning_msgs::msg::PathWithLaneId path;
-  autoware::universe_utils::Polygon2d poly;
+  autoware_utils::Polygon2d poly;
   autoware::behavior_velocity_planner::no_stopping_area::DebugData debug_data;
 
   // empty inputs

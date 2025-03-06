@@ -17,7 +17,7 @@
 #include "autoware/planning_validator/utils.hpp"
 
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
-#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware_utils/geometry/geometry.hpp>
 
 #include <memory>
 #include <string>
@@ -44,9 +44,8 @@ PlanningValidator::PlanningValidator(const rclcpp::NodeOptions & options)
 
   setupParameters();
 
-  logger_configure_ = std::make_unique<autoware::universe_utils::LoggerLevelConfigure>(this);
-  published_time_publisher_ =
-    std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
+  logger_configure_ = std::make_unique<autoware_utils::LoggerLevelConfigure>(this);
+  published_time_publisher_ = std::make_unique<autoware_utils::PublishedTimePublisher>(this);
 }
 
 void PlanningValidator::setupParameters()
@@ -194,7 +193,7 @@ void PlanningValidator::onTrajectory(const Trajectory::ConstSharedPtr msg)
   current_trajectory_ = msg;
 
   // receive data
-  current_kinematics_ = sub_kinematics_.takeData();
+  current_kinematics_ = sub_kinematics_.take_data();
 
   if (!isDataReady()) return;
 
@@ -469,8 +468,8 @@ bool PlanningValidator::checkValidDistanceDeviation(const Trajectory & trajector
   const auto idx = autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
     trajectory.points, current_kinematics_->pose.pose);
 
-  validation_status_.distance_deviation = autoware::universe_utils::calcDistance2d(
-    trajectory.points.at(idx), current_kinematics_->pose.pose);
+  validation_status_.distance_deviation =
+    autoware_utils::calc_distance2d(trajectory.points.at(idx), current_kinematics_->pose.pose);
 
   if (validation_status_.distance_deviation > validation_params_.distance_deviation_threshold) {
     return false;
@@ -501,7 +500,7 @@ bool PlanningValidator::checkValidLongitudinalDistanceDeviation(const Trajectory
     // for last, need to remove distance for the last segment.
     if (is_last) {
       const auto size = trajectory.points.size();
-      long_offset -= autoware::universe_utils::calcDistance2d(
+      long_offset -= autoware_utils::calc_distance2d(
         trajectory.points.at(size - 1), trajectory.points.at(size - 2));
     }
 

@@ -2,6 +2,53 @@
 Changelog for package autoware_traffic_light_visualization
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.42.0 (2025-03-03)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(tier4_perception_launch): add option for new TL detector model (`#9731 <https://github.com/autowarefoundation/autoware.universe/issues/9731>`_)
+  * feat: add traffic_light_detector launch
+  fix: tier4 perception launch
+  fix: add multi tlr detector launch
+  fix: tier4 launch
+  fix: tl detector launch
+  fix: data director
+  fix: precision int8
+  chore: revert to fp16
+  feat: remove occlusion and add car ped classification merger
+  fix: launch for multi camera
+  chore: pre-commit
+  fix: update matching score
+  feat: add max_iou_threshold
+  feat: add occlusion unknown classifier
+  * fix: tl detector launch
+  * refactor: traffic_light_launch.xml
+  * fix: remove tl fine detector
+  * fix: refactor
+  * chore: pre-commit
+  * fix: cspelling check
+  * fix: error after rename package
+  * fix: default tl model name
+  * fix: new tlr for multi cameras
+  * modify args
+  * style(pre-commit): autofix
+  * refactor
+  * add category_merger to container
+  * fix args
+  * run pre-commit
+  ---------
+  Co-authored-by: Masato Saeki <78376491+MasatoSaeki@users.noreply.github.com>
+  Co-authored-by: MasatoSaeki <masato.saeki@tier4.jp>
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* Contributors: Fumiya Watanabe, badai nguyen
+
+0.41.2 (2025-02-19)
+-------------------
+* chore: bump version to 0.41.1 (`#10088 <https://github.com/autowarefoundation/autoware.universe/issues/10088>`_)
+* Contributors: Ryohsuke Mitsudome
+
+0.41.1 (2025-02-10)
+-------------------
+
 0.41.0 (2025-01-29)
 -------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base

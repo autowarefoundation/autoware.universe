@@ -19,7 +19,7 @@
 #include "velocity_planning_result.hpp"
 
 #include <autoware/planning_factor_interface/planning_factor_interface.hpp>
-#include <autoware/universe_utils/ros/processing_time_publisher.hpp>
+#include <autoware_utils/ros/processing_time_publisher.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <autoware_internal_debug_msgs/msg/float64_stamped.hpp>
@@ -50,7 +50,7 @@ public:
   rclcpp::Logger logger_ = rclcpp::get_logger("");
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_publisher_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr virtual_wall_publisher_;
-  std::shared_ptr<autoware::universe_utils::ProcessingTimePublisher> processing_diag_publisher_;
+  std::shared_ptr<autoware_utils::ProcessingTimePublisher> processing_diag_publisher_;
   rclcpp::Publisher<autoware_internal_debug_msgs::msg::Float64Stamped>::SharedPtr
     processing_time_publisher_;
   autoware::motion_utils::VirtualWallMarkerCreator virtual_wall_marker_creator{};
