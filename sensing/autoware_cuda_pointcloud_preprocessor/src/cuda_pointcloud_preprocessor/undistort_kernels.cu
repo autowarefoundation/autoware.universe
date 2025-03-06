@@ -64,7 +64,7 @@ __host__ __device__ Eigen::Matrix4f transformationMatrixFromVelocity(
   return transformation;
 }
 
-__global__ void undistort2dKernel(
+__global__ void undistort2DKernel(
   InputPointType * input_points, int num_points, TwistStruct2D * twist_structs, int num_twists)
 {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -101,7 +101,7 @@ __global__ void undistort2dKernel(
   }
 }
 
-__global__ void undistort3dKernel(
+__global__ void undistort3DKernel(
   InputPointType * input_points, int num_points, TwistStruct3D * twist_structs, int num_twists)
 {
   int idx = blockIdx.x * blockDim.x + threadIdx.x;
@@ -136,19 +136,19 @@ __global__ void undistort3dKernel(
   }
 }
 
-void undistort2dLaunch(
+void undistort2DLaunch(
   InputPointType * input_points, int num_points, TwistStruct2D * twist_structs, int num_twists,
   int threads_per_block, int blocks_per_grid, cudaStream_t & stream)
 {
-  undistort2dKernel<<<blocks_per_grid, threads_per_block, 0, stream>>>(
+  undistort2DKernel<<<blocks_per_grid, threads_per_block, 0, stream>>>(
     input_points, num_points, twist_structs, num_twists);
 }
 
-void undistort3dLaunch(
+void undistort3DLaunch(
   InputPointType * input_points, int num_points, TwistStruct3D * twist_structs, int num_twists,
   int threads_per_block, int blocks_per_grid, cudaStream_t & stream)
 {
-  undistort3dKernel<<<blocks_per_grid, threads_per_block, 0, stream>>>(
+  undistort3DKernel<<<blocks_per_grid, threads_per_block, 0, stream>>>(
     input_points, num_points, twist_structs, num_twists);
 }
 

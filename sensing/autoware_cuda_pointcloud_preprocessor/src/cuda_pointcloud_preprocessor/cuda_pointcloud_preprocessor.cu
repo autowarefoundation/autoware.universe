@@ -397,12 +397,12 @@ std::unique_ptr<cuda_blackboard::CudaPointCloud2> CudaPointcloudPreprocessor::pr
 
   if (
     undistortion_type_ == UndistortionType::Undistortion3D && device_twist_3d_structs_.size() > 0) {
-    undistort3dLaunch(
+    undistort3DLaunch(
       device_transformed_points, num_organized_points_, device_twist_3d_structs,
       device_twist_3d_structs_.size(), threads_per_block_, blocks_per_grid, stream_);
   } else if (
     undistortion_type_ == UndistortionType::Undistortion2D && device_twist_2d_structs_.size() > 0) {
-    undistort2dLaunch(
+    undistort2DLaunch(
       device_transformed_points, num_organized_points_, device_twist_2d_structs,
       device_twist_2d_structs_.size(), threads_per_block_, blocks_per_grid, stream_);
   }
