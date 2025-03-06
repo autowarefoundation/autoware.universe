@@ -72,7 +72,6 @@ class CudaPointcloudPreprocessorNode : public rclcpp::Node
 {
 public:
   explicit CudaPointcloudPreprocessorNode(const rclcpp::NodeOptions & node_options);
-  ~CudaPointcloudPreprocessorNode() = default;
 
 private:
   bool getTransform(
