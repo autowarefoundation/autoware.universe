@@ -50,10 +50,9 @@ ControlEvaluatorNode::ControlEvaluatorNode(const rclcpp::NodeOptions & node_opti
   const std::string topic_prefix =
     declare_parameter<std::string>("planning_factor_metrics.topic_prefix");
   for (const auto & module_name : stop_deviation_modules_) {
-    const std::string topic_name = topic_prefix + module_name;
     planning_factors_sub_.emplace(
-      topic_name,
-      autoware_utils::InterProcessPollingSubscriber<PlanningFactorArray>(this, topic_name));
+      module_name,
+      autoware_utils::InterProcessPollingSubscriber<PlanningFactorArray>(this, topic_prefix + module_name));
   }
 
   // Publisher
@@ -397,14 +396,14 @@ void ControlEvaluatorNode::onTimer()
   }
 
   // add planning_factor related metrics
-  for (auto & [planning_factor_module_name, planning_factor_sub_] : planning_factors_sub_) {
+  for (auto & [module_name, planning_factor_sub_] : planning_factors_sub_) {
     const auto planning_factors = planning_factor_sub_.take_data();
     if (!planning_factors || planning_factors->factors.empty()) {
       continue;
     }
 
-    if (odom && stop_deviation_modules_.count(planning_factor_module_name) > 0) {
-      AddStopDeviationMetricMsg(*odom, planning_factors, planning_factor_module_name);
+    if (stop_deviation_modules_.count(module_name) > 0) {
+      AddStopDeviationMetricMsg(planning_factors, module_name);
     }
   }
 
