@@ -96,6 +96,11 @@ public:
   void calc_velocity_deviation_status(
     const Trajectory & reference_trajectory, const Odometry & kinematics);
 
+  /**
+   * @brief Calculate whether the vehicle has overrun a stop point in the trajectory.
+   * @param reference_trajectory Reference trajectory
+   * @param kinematics Current vehicle odometry including pose and twist
+   */
   void calc_stop_point_overrun_status(
     const Trajectory & reference_trajectory, const Odometry & kinematics);
 
