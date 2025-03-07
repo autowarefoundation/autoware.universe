@@ -749,10 +749,8 @@ lanelet::ConstLanelets NormalLaneChange::get_lane_change_lanes(
     return forward_path_length + std::max(signed_distance, 0.0);
   });
 
-  const auto backward_length = lane_change_parameters_->backward_lane_length;
-
   return route_handler->getLaneletSequence(
-    lane_change_lane.value(), getEgoPose(), backward_length, forward_length);
+    lane_change_lane.value(), getEgoPose(), 0.0, forward_length);
 }
 
 bool NormalLaneChange::hasFinishedLaneChange() const
