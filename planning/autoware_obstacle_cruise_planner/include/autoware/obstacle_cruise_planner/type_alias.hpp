@@ -17,6 +17,8 @@
 
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 
+#include <autoware_utils/geometry/geometry.hpp>
+
 #include "autoware_internal_debug_msgs/msg/float32_stamped.hpp"
 #include "autoware_internal_debug_msgs/msg/float64_stamped.hpp"
 #include "autoware_perception_msgs/msg/predicted_object.hpp"
@@ -57,8 +59,8 @@ using tier4_planning_msgs::msg::VelocityLimitClearCommand;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 namespace bg = boost::geometry;
-using autoware::universe_utils::Point2d;
-using autoware::universe_utils::Polygon2d;
+using autoware_utils::Point2d;
+using autoware_utils::Polygon2d;
 
 using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
 

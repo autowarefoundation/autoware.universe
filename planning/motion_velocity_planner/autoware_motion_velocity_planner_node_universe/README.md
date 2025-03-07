@@ -30,10 +30,10 @@ This means that to stop before a wall, a stop point is inserted in the trajector
 
 ## Output topics
 
-| Name                                      | Type                                           | Description                                        |
-| ----------------------------------------- | ---------------------------------------------- | -------------------------------------------------- |
-| `~/output/trajectory`                     | autoware_planning_msgs::msg::Trajectory        | Ego trajectory with updated velocity profile       |
-| `~/output/planning_factors/<MODULE_NAME>` | tier4_planning_msgs::msg::PlanningFactorsArray | factors causing change in the ego velocity profile |
+| Name                                      | Type                                                       | Description                                        |
+| ----------------------------------------- | ---------------------------------------------------------- | -------------------------------------------------- |
+| `~/output/trajectory`                     | autoware_planning_msgs::msg::Trajectory                    | Ego trajectory with updated velocity profile       |
+| `~/output/planning_factors/<MODULE_NAME>` | autoware_internal_planning_msgs::msg::PlanningFactorsArray | factors causing change in the ego velocity profile |
 
 ## Services
 

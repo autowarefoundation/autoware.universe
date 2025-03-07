@@ -16,7 +16,7 @@
 
 #include "autoware/interpolation/linear_interpolation.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
-#include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware_utils/geometry/geometry.hpp"
 
 #include <algorithm>
 #include <limits>
@@ -34,7 +34,7 @@ inline void convertEulerAngleToMonotonic(std::vector<double> & a)
 {
   for (unsigned int i = 1; i < a.size(); ++i) {
     const double da = a[i] - a[i - 1];
-    a[i] = a[i - 1] + autoware::universe_utils::normalizeRadian(da);
+    a[i] = a[i - 1] + autoware_utils::normalize_radian(da);
   }
 }
 
@@ -87,7 +87,7 @@ TrajectoryPoint calcInterpolatedTrajectoryPoint(
   {
     const auto & seg_pt = trajectory.at(seg_idx);
     const auto & next_pt = trajectory.at(seg_idx + 1);
-    traj_p.pose = autoware::universe_utils::calcInterpolatedPose(seg_pt.pose, next_pt.pose, prop);
+    traj_p.pose = autoware_utils::calc_interpolated_pose(seg_pt.pose, next_pt.pose, prop);
     traj_p.longitudinal_velocity_mps = autoware::interpolation::lerp(
       seg_pt.longitudinal_velocity_mps, next_pt.longitudinal_velocity_mps, prop);
     traj_p.acceleration_mps2 =
@@ -110,7 +110,7 @@ TrajectoryPoints extractPathAroundIndex(
   {
     double dist_sum = 0.0;
     for (size_t i = index; i < trajectory.size() - 1; ++i) {
-      dist_sum += autoware::universe_utils::calcDistance2d(trajectory.at(i), trajectory.at(i + 1));
+      dist_sum += autoware_utils::calc_distance2d(trajectory.at(i), trajectory.at(i + 1));
       if (dist_sum > ahead_length) {
         ahead_index = i + 1;
         break;
@@ -123,7 +123,7 @@ TrajectoryPoints extractPathAroundIndex(
   {
     double dist_sum{0.0};
     for (size_t i = index; i != 0; --i) {
-      dist_sum += autoware::universe_utils::calcDistance2d(trajectory.at(i), trajectory[i - 1]);
+      dist_sum += autoware_utils::calc_distance2d(trajectory.at(i), trajectory[i - 1]);
       if (dist_sum > behind_length) {
         behind_index = i - 1;
         break;
@@ -152,7 +152,7 @@ std::vector<double> calcArclengthArray(const TrajectoryPoints & trajectory)
   for (unsigned int i = 1; i < trajectory.size(); ++i) {
     const TrajectoryPoint tp = trajectory.at(i);
     const TrajectoryPoint tp_prev = trajectory.at(i - 1);
-    dist += autoware::universe_utils::calcDistance2d(tp.pose, tp_prev.pose);
+    dist += autoware_utils::calc_distance2d(tp.pose, tp_prev.pose);
     arclength.at(i) = dist;
   }
   return arclength;
@@ -164,7 +164,7 @@ std::vector<double> calcTrajectoryIntervalDistance(const TrajectoryPoints & traj
   for (unsigned int i = 1; i < trajectory.size(); ++i) {
     const TrajectoryPoint tp = trajectory.at(i);
     const TrajectoryPoint tp_prev = trajectory.at(i - 1);
-    const double dist = autoware::universe_utils::calcDistance2d(tp.pose, tp_prev.pose);
+    const double dist = autoware_utils::calc_distance2d(tp.pose, tp_prev.pose);
     intervals.push_back(dist);
   }
   return intervals;
@@ -173,8 +173,8 @@ std::vector<double> calcTrajectoryIntervalDistance(const TrajectoryPoints & traj
 std::vector<double> calcTrajectoryCurvatureFrom3Points(
   const TrajectoryPoints & trajectory, size_t idx_dist)
 {
-  using autoware::universe_utils::calcCurvature;
-  using autoware::universe_utils::getPoint;
+  using autoware_utils::calc_curvature;
+  using autoware_utils::get_point;
 
   if (trajectory.size() < 3) {
     const std::vector<double> k_arr(trajectory.size(), 0.0);
@@ -194,11 +194,11 @@ std::vector<double> calcTrajectoryCurvatureFrom3Points(
 
   for (size_t i = 1; i + 1 < trajectory.size(); i++) {
     double curvature = 0.0;
-    const auto p0 = getPoint(trajectory.at(i - std::min(idx_dist, i)));
-    const auto p1 = getPoint(trajectory.at(i));
-    const auto p2 = getPoint(trajectory.at(i + std::min(idx_dist, trajectory.size() - 1 - i)));
+    const auto p0 = get_point(trajectory.at(i - std::min(idx_dist, i)));
+    const auto p1 = get_point(trajectory.at(i));
+    const auto p2 = get_point(trajectory.at(i + std::min(idx_dist, trajectory.size() - 1 - i)));
     try {
-      curvature = calcCurvature(p0, p1, p2);
+      curvature = calc_curvature(p0, p1, p2);
     } catch (std::exception const & e) {
       // ...code that handles the error...
       RCLCPP_WARN(
@@ -466,7 +466,7 @@ double calcStopDistance(const TrajectoryPoints & trajectory, const size_t closes
 
   // TODO(Horibe): use arc length distance
   const double stop_dist =
-    autoware::universe_utils::calcDistance2d(trajectory.at(*idx), trajectory.at(closest));
+    autoware_utils::calc_distance2d(trajectory.at(*idx), trajectory.at(closest));
 
   return stop_dist;
 }
