@@ -34,7 +34,6 @@
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_metric_msgs/msg/metric.hpp>
 #include <tier4_metric_msgs/msg/metric_array.hpp>
-#include <tier4_planning_msgs/msg/detail/planning_factor_array__struct.hpp>
 #include <tier4_planning_msgs/msg/planning_factor.hpp>
 #include <tier4_planning_msgs/msg/planning_factor_array.hpp>
 
