@@ -299,7 +299,7 @@ autoware_internal_planning_msgs::msg::PathWithLaneId TrafficLightModule::insertS
     target_point_with_lane_id.point.pose, target_point_with_lane_id.point.pose,
     autoware_internal_planning_msgs::msg::PlanningFactor::STOP,
     autoware_internal_planning_msgs::msg::SafetyFactorArray{}, true /*is_driving_forward*/, 0.0,
-    0.0 /*shift distance*/, "");
+    0.0 /*shift distance*/, "traffic_light");
 
   return modified_path;
 }
