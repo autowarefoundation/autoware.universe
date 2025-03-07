@@ -2,6 +2,29 @@
 Changelog for package autoware_behavior_path_planner_common
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.42.0 (2025-03-03)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_utils): replace autoware_universe_utils with autoware_utils  (`#10191 <https://github.com/autowarefoundation/autoware.universe/issues/10191>`_)
+* feat(autoware_vehicle_info_utils): replace autoware_universe_utils with autoware_utils (`#10167 <https://github.com/autowarefoundation/autoware.universe/issues/10167>`_)
+* refactor(bpp_common): refactor calcBound (`#10096 <https://github.com/autowarefoundation/autoware.universe/issues/10096>`_)
+  refactor(bpp_common): refactor caclBound
+* perf(behavior_path_planner): improve getOverlappedLaneletId (`#10094 <https://github.com/autowarefoundation/autoware.universe/issues/10094>`_)
+* fix: add missing includes to autoware_universe_utils (`#10091 <https://github.com/autowarefoundation/autoware.universe/issues/10091>`_)
+* feat!: replace tier4_planning_msgs/PathWithLaneId with autoware_internal_planning_msgs/PathWithLaneId (`#10023 <https://github.com/autowarefoundation/autoware.universe/issues/10023>`_)
+* docs(behaivor_path_planner_common): includes minor corrections (`#10042 <https://github.com/autowarefoundation/autoware.universe/issues/10042>`_)
+  fix(planning): includes minor corrections
+* docs(behavior_path_planner): fix dead link in path_generator (`#10040 <https://github.com/autowarefoundation/autoware.universe/issues/10040>`_)
+* Contributors: Atto Armoo, Fumiya Watanabe, Kosuke Takeuchi, Mamoru Sobue, Ryohsuke Mitsudome, 心刚
+
+0.41.2 (2025-02-19)
+-------------------
+* chore: bump version to 0.41.1 (`#10088 <https://github.com/autowarefoundation/autoware.universe/issues/10088>`_)
+* Contributors: Ryohsuke Mitsudome
+
+0.41.1 (2025-02-10)
+-------------------
+
 0.41.0 (2025-01-29)
 -------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base

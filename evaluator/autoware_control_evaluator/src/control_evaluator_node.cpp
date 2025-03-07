@@ -16,9 +16,9 @@
 
 #include "autoware/control_evaluator/metrics/metrics_utils.hpp"
 
-#include <autoware/universe_utils/geometry/geometry.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
+#include <autoware_utils/geometry/geometry.hpp>
 #include <nlohmann/json.hpp>
 
 #include <chrono>
@@ -109,7 +109,7 @@ void ControlEvaluatorNode::getRouteData()
 {
   // route
   {
-    const auto msg = route_subscriber_.takeData();
+    const auto msg = route_subscriber_.take_data();
     if (msg) {
       if (msg->segments.empty()) {
         RCLCPP_ERROR(get_logger(), "input route is empty. ignored");
@@ -121,7 +121,7 @@ void ControlEvaluatorNode::getRouteData()
 
   // map
   {
-    const auto msg = vector_map_subscriber_.takeData();
+    const auto msg = vector_map_subscriber_.take_data();
     if (msg) {
       route_handler_.setMap(*msg);
     }
@@ -176,8 +176,8 @@ void ControlEvaluatorNode::AddBoundaryDistanceMetricMsg(
   lanelet::ConstLanelet current_lane;
   lanelet::utils::query::getClosestLanelet(current_lanelets, ego_pose, &current_lane);
   const auto local_vehicle_footprint = vehicle_info_.createFootprint();
-  const auto current_vehicle_footprint =
-    transformVector(local_vehicle_footprint, autoware::universe_utils::pose2transform(ego_pose));
+  const auto current_vehicle_footprint = autoware_utils::transform_vector(
+    local_vehicle_footprint, autoware_utils::pose2transform(ego_pose));
 
   if (behavior_path.left_bound.size() >= 1) {
     LineString2d left_boundary;
@@ -330,12 +330,12 @@ void ControlEvaluatorNode::AddGoalYawDeviationMetricMsg(const Pose & ego_pose)
 
 void ControlEvaluatorNode::onTimer()
 {
-  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
-  const auto traj = traj_sub_.takeData();
-  const auto odom = odometry_sub_.takeData();
-  const auto acc = accel_sub_.takeData();
-  const auto behavior_path = behavior_path_subscriber_.takeData();
-  const auto steering_status = steering_sub_.takeData();
+  autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
+  const auto traj = traj_sub_.take_data();
+  const auto odom = odometry_sub_.take_data();
+  const auto acc = accel_sub_.take_data();
+  const auto behavior_path = behavior_path_subscriber_.take_data();
+  const auto steering_status = steering_sub_.take_data();
 
   // calculate deviation metrics
   if (odom && traj && !traj->points.empty()) {

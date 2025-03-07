@@ -2,6 +2,43 @@
 Changelog for package autoware_traffic_light_multi_camera_fusion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.42.0 (2025-03-03)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* chore: refine maintainer list (`#10110 <https://github.com/autowarefoundation/autoware.universe/issues/10110>`_)
+  * chore: remove Miura from maintainer
+  * chore: add Taekjin-san to perception_utils package maintainer
+  ---------
+* chore(traffic_light_multi_camera_fusion): read parameters from yaml file (`#10144 <https://github.com/autowarefoundation/autoware.universe/issues/10144>`_)
+  * chore(traffic_light_multi_camera_fusion): read parameters from yaml file
+  * style(pre-commit): autofix
+  * add all_traffic_light_camera param to launch.xml
+  * fix json schema
+  * remove camera namespace parameter from config file
+  * revert unnecessary change
+  * remove camera_namespaces from required
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* chore(autoware_traffic_light_multi_camera_fusion): created Schema file and updated ReadME file for parameters setting (`#9994 <https://github.com/autowarefoundation/autoware.universe/issues/9994>`_)
+  * feat(autoware_traffic_light_multi_camera_fusion): Created Schema file and updated ReadME file for parameters setting
+  * style(pre-commit): autofix
+  * fix: updated param file , schema and node.cpp file  for traffic_light_multi_camera_fusion as per review comments
+  * style(pre-commit): autofix
+  * Update traffic_light_multi_camera_fusion_node.cpp
+  updated code as per suggestion
+  * style(pre-commit): autofix
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* Contributors: Fumiya Watanabe, Shunsuke Miura, Tomohito ANDO, Vishal Chauhan
+
+0.41.2 (2025-02-19)
+-------------------
+* chore: bump version to 0.41.1 (`#10088 <https://github.com/autowarefoundation/autoware.universe/issues/10088>`_)
+* Contributors: Ryohsuke Mitsudome
+
+0.41.1 (2025-02-10)
+-------------------
+
 0.41.0 (2025-01-29)
 -------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base

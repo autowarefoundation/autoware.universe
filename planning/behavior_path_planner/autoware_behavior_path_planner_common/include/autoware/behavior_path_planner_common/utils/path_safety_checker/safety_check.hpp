@@ -18,15 +18,15 @@
 #include "autoware/behavior_path_planner_common/data_manager.hpp"
 #include "autoware/behavior_path_planner_common/utils/path_safety_checker/path_safety_checker_parameters.hpp"
 
-#include <autoware/universe_utils/geometry/boost_geometry.hpp>
-#include <autoware/universe_utils/geometry/geometry.hpp>
-#include <autoware/universe_utils/geometry/pose_deviation.hpp>
+#include <autoware_utils/geometry/boost_geometry.hpp>
+#include <autoware_utils/geometry/geometry.hpp>
+#include <autoware_utils/geometry/pose_deviation.hpp>
 
+#include <autoware_internal_planning_msgs/msg/planning_factor_array.hpp>
 #include <autoware_perception_msgs/msg/predicted_object.hpp>
 #include <autoware_perception_msgs/msg/predicted_path.hpp>
 #include <geometry_msgs/msg/pose.hpp>
 #include <geometry_msgs/msg/twist.hpp>
-#include <tier4_planning_msgs/msg/planning_factor_array.hpp>
 
 #include <cmath>
 #include <string>
@@ -37,13 +37,13 @@ namespace autoware::behavior_path_planner::utils::path_safety_checker
 {
 
 using autoware::behavior_path_planner::utils::path_safety_checker::CollisionCheckDebug;
-using autoware::universe_utils::calcYawDeviation;
-using autoware::universe_utils::Point2d;
-using autoware::universe_utils::Polygon2d;
 using autoware::vehicle_info_utils::VehicleInfo;
 using autoware_perception_msgs::msg::PredictedObject;
 using autoware_perception_msgs::msg::PredictedPath;
 using autoware_perception_msgs::msg::Shape;
+using autoware_utils::calc_yaw_deviation;
+using autoware_utils::Point2d;
+using autoware_utils::Polygon2d;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
 
@@ -286,7 +286,7 @@ CollisionCheckDebugPair createObjectDebug(const ExtendedPredictedObject & obj);
 void updateCollisionCheckDebugMap(
   CollisionCheckDebugMap & debug_map, CollisionCheckDebugPair & object_debug, bool is_safe);
 
-tier4_planning_msgs::msg::SafetyFactorArray to_safety_factor_array(
+autoware_internal_planning_msgs::msg::SafetyFactorArray to_safety_factor_array(
   const CollisionCheckDebugMap & debug_map);
 }  // namespace autoware::behavior_path_planner::utils::path_safety_checker
 

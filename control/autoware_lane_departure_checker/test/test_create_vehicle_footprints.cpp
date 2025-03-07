@@ -21,10 +21,10 @@
 #include <string>
 #include <vector>
 
-using autoware::universe_utils::LinearRing2d;
 using autoware_internal_planning_msgs::msg::PathPointWithLaneId;
 using autoware_internal_planning_msgs::msg::PathWithLaneId;
 using autoware_planning_msgs::msg::TrajectoryPoint;
+using autoware_utils::LinearRing2d;
 using geometry_msgs::msg::PoseWithCovariance;
 using TrajectoryPoints = std::vector<TrajectoryPoint>;
 

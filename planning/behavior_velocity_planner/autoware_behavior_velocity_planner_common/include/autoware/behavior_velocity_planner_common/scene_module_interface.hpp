@@ -21,10 +21,10 @@
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/objects_of_interest_marker_interface/objects_of_interest_marker_interface.hpp>
 #include <autoware/planning_factor_interface/planning_factor_interface.hpp>
-#include <autoware/universe_utils/ros/debug_publisher.hpp>
-#include <autoware/universe_utils/ros/parameter.hpp>
-#include <autoware/universe_utils/system/stop_watch.hpp>
-#include <autoware/universe_utils/system/time_keeper.hpp>
+#include <autoware_utils/ros/debug_publisher.hpp>
+#include <autoware_utils/ros/parameter.hpp>
+#include <autoware_utils/system/stop_watch.hpp>
+#include <autoware_utils/system/time_keeper.hpp>
 #include <builtin_interfaces/msg/time.hpp>
 
 #include <autoware_internal_debug_msgs/msg/float64_stamped.hpp>
@@ -50,11 +50,11 @@ namespace autoware::behavior_velocity_planner
 
 using autoware::objects_of_interest_marker_interface::ColorName;
 using autoware::objects_of_interest_marker_interface::ObjectsOfInterestMarkerInterface;
-using autoware::universe_utils::DebugPublisher;
-using autoware::universe_utils::getOrDeclareParameter;
-using autoware::universe_utils::StopWatch;
 using autoware_internal_debug_msgs::msg::Float64Stamped;
 using autoware_internal_planning_msgs::msg::PathWithLaneId;
+using autoware_utils::DebugPublisher;
+using autoware_utils::get_or_declare_parameter;
+using autoware_utils::StopWatch;
 using builtin_interfaces::msg::Time;
 using unique_identifier_msgs::msg::UUID;
 
@@ -76,7 +76,7 @@ class SceneModuleInterface
 public:
   explicit SceneModuleInterface(
     const int64_t module_id, rclcpp::Logger logger, rclcpp::Clock::SharedPtr clock,
-    const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+    const std::shared_ptr<autoware_utils::TimeKeeper> time_keeper,
     const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
       planning_factor_interface);
   virtual ~SceneModuleInterface() = default;
@@ -102,7 +102,7 @@ protected:
   rclcpp::Clock::SharedPtr clock_;
   std::shared_ptr<const PlannerData> planner_data_;
   std::vector<ObjectOfInterest> objects_of_interest_;
-  mutable std::shared_ptr<universe_utils::TimeKeeper> time_keeper_;
+  mutable std::shared_ptr<autoware_utils::TimeKeeper> time_keeper_;
   std::shared_ptr<planning_factor_interface::PlanningFactorInterface> planning_factor_interface_;
 
   void setObjectsOfInterestData(
@@ -141,10 +141,10 @@ public:
 
     processing_time_publisher_ = std::make_shared<DebugPublisher>(&node, "~/debug");
 
-    pub_processing_time_detail_ = node.create_publisher<universe_utils::ProcessingTimeDetail>(
+    pub_processing_time_detail_ = node.create_publisher<autoware_utils::ProcessingTimeDetail>(
       "~/debug/processing_time_detail_ms/" + std::string(module_name), 1);
 
-    time_keeper_ = std::make_shared<universe_utils::TimeKeeper>(pub_processing_time_detail_);
+    time_keeper_ = std::make_shared<autoware_utils::TimeKeeper>(pub_processing_time_detail_);
   }
 
   virtual ~SceneModuleManagerInterface() = default;
@@ -169,7 +169,7 @@ public:
 protected:
   virtual void modifyPathVelocity(autoware_internal_planning_msgs::msg::PathWithLaneId * path)
   {
-    universe_utils::ScopedTimeTrack st(
+    autoware_utils::ScopedTimeTrack st(
       "SceneModuleManagerInterface::modifyPathVelocity", *time_keeper_);
     StopWatch<std::chrono::milliseconds> stop_watch;
     stop_watch.tic("Total");
@@ -264,9 +264,9 @@ protected:
 
   std::shared_ptr<DebugPublisher> processing_time_publisher_;
 
-  rclcpp::Publisher<universe_utils::ProcessingTimeDetail>::SharedPtr pub_processing_time_detail_;
+  rclcpp::Publisher<autoware_utils::ProcessingTimeDetail>::SharedPtr pub_processing_time_detail_;
 
-  std::shared_ptr<universe_utils::TimeKeeper> time_keeper_;
+  std::shared_ptr<autoware_utils::TimeKeeper> time_keeper_;
 
   std::shared_ptr<planning_factor_interface::PlanningFactorInterface> planning_factor_interface_;
 };

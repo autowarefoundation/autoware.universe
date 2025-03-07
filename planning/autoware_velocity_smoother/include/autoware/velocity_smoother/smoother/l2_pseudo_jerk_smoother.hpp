@@ -17,9 +17,9 @@
 
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/osqp_interface/osqp_interface.hpp"
-#include "autoware/universe_utils/geometry/geometry.hpp"
-#include "autoware/universe_utils/system/time_keeper.hpp"
 #include "autoware/velocity_smoother/smoother/smoother_base.hpp"
+#include "autoware_utils/geometry/geometry.hpp"
+#include "autoware_utils/system/time_keeper.hpp"
 
 #include "autoware_planning_msgs/msg/trajectory_point.hpp"
 
@@ -41,7 +41,7 @@ public:
   };
 
   explicit L2PseudoJerkSmoother(
-    rclcpp::Node & node, const std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper);
+    rclcpp::Node & node, const std::shared_ptr<autoware_utils::TimeKeeper> time_keeper);
 
   bool apply(
     const double initial_vel, const double initial_acc, const TrajectoryPoints & input,
