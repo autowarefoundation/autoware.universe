@@ -29,7 +29,7 @@
 #include <limits>
 #include <optional>
 #include <string>
-#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace control_diagnostics
@@ -51,8 +51,8 @@ ControlEvaluatorNode::ControlEvaluatorNode(const rclcpp::NodeOptions & node_opti
     declare_parameter<std::string>("planning_factor_metrics.topic_prefix");
   for (const auto & module_name : stop_deviation_modules_) {
     planning_factors_sub_.emplace(
-      module_name,
-      autoware_utils::InterProcessPollingSubscriber<PlanningFactorArray>(this, topic_prefix + module_name));
+      module_name, autoware_utils::InterProcessPollingSubscriber<PlanningFactorArray>(
+                     this, topic_prefix + module_name));
   }
 
   // Publisher

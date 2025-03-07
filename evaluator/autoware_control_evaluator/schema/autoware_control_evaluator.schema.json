@@ -44,9 +44,7 @@
           }
         }
       },
-      "required": [
-        "planning_factor_metrics"
-      ]
+      "required": ["planning_factor_metrics"]
     }
   },
   "properties": {
@@ -57,12 +55,8 @@
           "$ref": "#/definitions/autoware_control_evaluator"
         }
       },
-      "required": [
-        "ros__parameters"
-      ]
+      "required": ["ros__parameters"]
     }
   },
-  "required": [
-    "/**"
-  ]
+  "required": ["/**"]
 }

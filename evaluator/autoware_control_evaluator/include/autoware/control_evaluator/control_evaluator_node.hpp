@@ -40,6 +40,7 @@
 #include <deque>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <unordered_set>
 #include <vector>
 
@@ -118,7 +119,6 @@ private:
 
   // Parameters
   bool output_metrics_;
-  double stop_velocity_threshold_;
 
   // Metric
   const std::vector<Metric> metrics_ = {
