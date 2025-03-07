@@ -19,15 +19,15 @@
 #include <autoware/interpolation/linear_interpolation.hpp>
 #include <autoware/motion_utils/resample/resample.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
-#include <autoware/universe_utils/geometry/geometry.hpp>
-#include <autoware/universe_utils/math/constants.hpp>
-#include <autoware/universe_utils/math/normalization.hpp>
-#include <autoware/universe_utils/math/unit_conversion.hpp>
-#include <autoware/universe_utils/ros/uuid_helper.hpp>
 #include <autoware_lanelet2_extension/utility/message_conversion.hpp>
 #include <autoware_lanelet2_extension/utility/query.hpp>
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <autoware_utils/autoware_utils.hpp>
+#include <autoware_utils/geometry/geometry.hpp>
+#include <autoware_utils/math/constants.hpp>
+#include <autoware_utils/math/normalization.hpp>
+#include <autoware_utils/math/unit_conversion.hpp>
+#include <autoware_utils/ros/uuid_helper.hpp>
 
 #include <autoware_perception_msgs/msg/detected_objects.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
@@ -56,7 +56,7 @@
 
 namespace autoware::map_based_prediction
 {
-using autoware::universe_utils::ScopedTimeTrack;
+using autoware_utils::ScopedTimeTrack;
 
 namespace
 {
@@ -97,7 +97,7 @@ double calcAbsLateralOffset(
   for (size_t i = 0; i < boundary_path.size(); ++i) {
     const double x = boundary_line[i].x();
     const double y = boundary_line[i].y();
-    boundary_path[i] = autoware::universe_utils::createPoint(x, y, 0.0);
+    boundary_path[i] = autoware_utils::create_point(x, y, 0.0);
   }
 
   return std::fabs(autoware::motion_utils::calcLateralOffset(boundary_path, search_pose.position));
@@ -482,21 +482,19 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   // debug publishers
   if (use_time_publisher) {
     processing_time_publisher_ =
-      std::make_unique<autoware::universe_utils::DebugPublisher>(this, "map_based_prediction");
-    published_time_publisher_ =
-      std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
-    stop_watch_ptr_ =
-      std::make_unique<autoware::universe_utils::StopWatch<std::chrono::milliseconds>>();
+      std::make_unique<autoware_utils::DebugPublisher>(this, "map_based_prediction");
+    published_time_publisher_ = std::make_unique<autoware_utils::PublishedTimePublisher>(this);
+    stop_watch_ptr_ = std::make_unique<autoware_utils::StopWatch<std::chrono::milliseconds>>();
     stop_watch_ptr_->tic("cyclic_time");
     stop_watch_ptr_->tic("processing_time");
   }
 
   if (use_time_keeper) {
     detailed_processing_time_publisher_ =
-      this->create_publisher<autoware::universe_utils::ProcessingTimeDetail>(
+      this->create_publisher<autoware_utils::ProcessingTimeDetail>(
         "~/debug/processing_time_detail_ms", 1);
-    auto time_keeper = autoware::universe_utils::TimeKeeper(detailed_processing_time_publisher_);
-    time_keeper_ = std::make_shared<autoware::universe_utils::TimeKeeper>(time_keeper);
+    auto time_keeper = autoware_utils::TimeKeeper(detailed_processing_time_publisher_);
+    time_keeper_ = std::make_shared<autoware_utils::TimeKeeper>(time_keeper);
     path_generator_->setTimeKeeper(time_keeper_);
     predictor_vru_->setTimeKeeper(time_keeper_);
   }
@@ -513,15 +511,15 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
 rcl_interfaces::msg::SetParametersResult MapBasedPredictionNode::onParam(
   const std::vector<rclcpp::Parameter> & parameters)
 {
-  using autoware::universe_utils::updateParam;
+  using autoware_utils::update_param;
 
-  updateParam(parameters, "max_lateral_accel", max_lateral_accel_);
-  updateParam(parameters, "min_acceleration_before_curve", min_acceleration_before_curve_);
-  updateParam(
+  update_param(parameters, "max_lateral_accel", max_lateral_accel_);
+  update_param(parameters, "min_acceleration_before_curve", min_acceleration_before_curve_);
+  update_param(
     parameters, "check_lateral_acceleration_constraints", check_lateral_acceleration_constraints_);
-  updateParam(parameters, "use_vehicle_acceleration", use_vehicle_acceleration_);
-  updateParam(parameters, "speed_limit_multiplier", speed_limit_multiplier_);
-  updateParam(
+  update_param(parameters, "use_vehicle_acceleration", use_vehicle_acceleration_);
+  update_param(parameters, "speed_limit_multiplier", speed_limit_multiplier_);
+  update_param(
     parameters, "acceleration_exponential_half_life", acceleration_exponential_half_life_);
 
   path_generator_->setUseVehicleAcceleration(use_vehicle_acceleration_);
@@ -561,7 +559,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
 
   // take traffic_signal
   {
-    const auto msg = sub_traffic_signals_.takeData();
+    const auto msg = sub_traffic_signals_.take_data();
     if (msg) {
       trafficSignalsCallback(msg);
     }
@@ -576,7 +574,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
   geometry_msgs::msg::TransformStamped::ConstSharedPtr world2map_transform;
   bool is_object_not_in_map_frame = in_objects->header.frame_id != "map";
   if (is_object_not_in_map_frame) {
-    world2map_transform = transform_listener_.getTransform(
+    world2map_transform = transform_listener_.get_transform(
       "map",                        // target
       in_objects->header.frame_id,  // src
       in_objects->header.stamp, rclcpp::Duration::from_seconds(0.1));
@@ -702,7 +700,7 @@ void MapBasedPredictionNode::updateObjectData(TrackedObject & object)
   // Compute yaw angle from the velocity and position of the object
   const auto & object_pose = object.kinematics.pose_with_covariance.pose;
   const auto & object_twist = object.kinematics.twist_with_covariance.twist;
-  const auto future_object_pose = autoware::universe_utils::calcOffsetPose(
+  const auto future_object_pose = autoware_utils::calc_offset_pose(
     object_pose, object_twist.linear.x * 0.1, object_twist.linear.y * 0.1, 0.0);
 
   // assumption: the object vx is much larger than vy
@@ -721,16 +719,15 @@ void MapBasedPredictionNode::updateObjectData(TrackedObject & object)
         tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
       // flip the angle
       object.kinematics.pose_with_covariance.pose.orientation =
-        autoware::universe_utils::createQuaternionFromYaw(
-          autoware::universe_utils::pi + original_yaw);
+        autoware_utils::create_quaternion_from_yaw(autoware_utils::pi + original_yaw);
       break;
     }
     default: {
-      const auto updated_object_yaw = autoware::universe_utils::calcAzimuthAngle(
-        object_pose.position, future_object_pose.position);
+      const auto updated_object_yaw =
+        autoware_utils::calc_azimuth_angle(object_pose.position, future_object_pose.position);
 
       object.kinematics.pose_with_covariance.pose.orientation =
-        autoware::universe_utils::createQuaternionFromYaw(updated_object_yaw);
+        autoware_utils::create_quaternion_from_yaw(updated_object_yaw);
       break;
     }
   }
@@ -757,7 +754,7 @@ void MapBasedPredictionNode::updateRoadUsersHistory(
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
-  std::string object_id = autoware::universe_utils::toHexString(object.object_id);
+  std::string object_id = autoware_utils::to_hex_string(object.object_id);
   const auto current_lanelets = getLanelets(current_lanelets_data);
 
   ObjectData single_object_data;
@@ -766,8 +763,7 @@ void MapBasedPredictionNode::updateRoadUsersHistory(
   single_object_data.future_possible_lanelets = current_lanelets;
   single_object_data.pose = object.kinematics.pose_with_covariance.pose;
   const double object_yaw = tf2::getYaw(object.kinematics.pose_with_covariance.pose.orientation);
-  single_object_data.pose.orientation =
-    autoware::universe_utils::createQuaternionFromYaw(object_yaw);
+  single_object_data.pose.orientation = autoware_utils::create_quaternion_from_yaw(object_yaw);
   single_object_data.time_delay = std::fabs((this->get_clock()->now() - header.stamp).seconds());
   single_object_data.twist = object.kinematics.twist_with_covariance.twist;
 
@@ -845,7 +841,7 @@ std::vector<LaneletPathWithPathInfo> MapBasedPredictionNode::getPredictedReferen
     return search_dist;
   };
 
-  std::string object_id = autoware::universe_utils::toHexString(object.object_id);
+  std::string object_id = autoware_utils::to_hex_string(object.object_id);
   geometry_msgs::msg::Pose object_pose = object.kinematics.pose_with_covariance.pose;
 
   // Step 2. Get possible paths for each lanelet
@@ -1180,7 +1176,7 @@ Maneuver MapBasedPredictionNode::predictObjectManeuverByLatDiffDistance(
   for (const auto & lanelet : prev_lanelets) {
     const double lane_yaw = lanelet::utils::getLaneletAngle(lanelet, prev_pose.position);
     const double delta_yaw = tf2::getYaw(prev_pose.orientation) - lane_yaw;
-    const double normalized_delta_yaw = autoware::universe_utils::normalizeRadian(delta_yaw);
+    const double normalized_delta_yaw = autoware_utils::normalize_radian(delta_yaw);
     if (normalized_delta_yaw < closest_prev_yaw) {
       closest_prev_yaw = normalized_delta_yaw;
       prev_lanelet = lanelet;
@@ -1190,7 +1186,7 @@ Maneuver MapBasedPredictionNode::predictObjectManeuverByLatDiffDistance(
   // Step4. Check if the vehicle has changed lane
   const auto current_lanelet = current_lanelet_data.lanelet;
   const auto current_pose = object_pose;
-  const double dist = autoware::universe_utils::calcDistance2d(prev_pose, current_pose);
+  const double dist = autoware_utils::calc_distance2d(prev_pose, current_pose);
   lanelet::routing::LaneletPaths possible_paths =
     routing_graph_ptr_->possiblePaths(prev_lanelet, dist + 2.0, 0, false);
   bool has_lane_changed = true;
@@ -1252,7 +1248,7 @@ double MapBasedPredictionNode::calcRightLateralOffset(
   for (size_t i = 0; i < boundary_path.size(); ++i) {
     const double x = boundary_line[i].x();
     const double y = boundary_line[i].y();
-    boundary_path[i] = autoware::universe_utils::createPoint(x, y, 0.0);
+    boundary_path[i] = autoware_utils::create_point(x, y, 0.0);
   }
 
   return std::fabs(autoware::motion_utils::calcLateralOffset(boundary_path, search_pose.position));
@@ -1438,7 +1434,7 @@ std::pair<PosePath, double> MapBasedPredictionNode::convertLaneletPathToPosePath
         // Prevent from inserting same points
         if (!converted_path.empty()) {
           const auto last_p = converted_path.back();
-          const double tmp_dist = autoware::universe_utils::calcDistance2d(last_p, current_p);
+          const double tmp_dist = autoware_utils::calc_distance2d(last_p, current_p);
           if (tmp_dist < 1e-6) {
             prev_p = current_p;
             continue;
