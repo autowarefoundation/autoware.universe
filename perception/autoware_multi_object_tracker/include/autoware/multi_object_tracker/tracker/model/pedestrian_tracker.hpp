@@ -32,33 +32,16 @@ namespace autoware::multi_object_tracker
 class PedestrianTracker : public Tracker
 {
 private:
-  types::DynamicObject object_;
   rclcpp::Logger logger_;
 
   object_model::ObjectModel object_model_ = object_model::pedestrian;
 
-  double z_;
-
-  struct BoundingBox
-  {
-    double length;
-    double width;
-    double height;
-  };
-  struct Cylinder
-  {
-    double width;
-    double height;
-  };
-  BoundingBox bounding_box_;
-  Cylinder cylinder_;
   // cspell: ignore CTRV
   CTRVMotionModel motion_model_;
   using IDX = CTRVMotionModel::IDX;
 
 public:
-  PedestrianTracker(
-    const rclcpp::Time & time, const types::DynamicObject & object, const size_t channel_size);
+  PedestrianTracker(const rclcpp::Time & time, const types::DynamicObject & object);
 
   bool predict(const rclcpp::Time & time) override;
   bool measure(
