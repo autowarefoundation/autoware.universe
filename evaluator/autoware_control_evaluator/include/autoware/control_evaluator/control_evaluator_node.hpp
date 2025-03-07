@@ -30,12 +30,12 @@
 #include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
 #include <autoware_internal_debug_msgs/msg/float64_stamped.hpp>
 #include <autoware_internal_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_internal_planning_msgs/msg/planning_factor.hpp>
+#include <autoware_internal_planning_msgs/msg/planning_factor_array.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_metric_msgs/msg/metric.hpp>
 #include <tier4_metric_msgs/msg/metric_array.hpp>
-#include <tier4_planning_msgs/msg/planning_factor.hpp>
-#include <tier4_planning_msgs/msg/planning_factor_array.hpp>
 
 #include <deque>
 #include <optional>
@@ -60,8 +60,8 @@ using geometry_msgs::msg::AccelWithCovarianceStamped;
 using MetricMsg = tier4_metric_msgs::msg::Metric;
 using MetricArrayMsg = tier4_metric_msgs::msg::MetricArray;
 using autoware_internal_planning_msgs::msg::PathWithLaneId;
-using tier4_planning_msgs::msg::PlanningFactor;
-using tier4_planning_msgs::msg::PlanningFactorArray;
+using autoware_internal_planning_msgs::msg::PlanningFactor;
+using autoware_internal_planning_msgs::msg::PlanningFactorArray;
 
 /**
  * @brief Node for control evaluation
