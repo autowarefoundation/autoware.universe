@@ -1,9 +1,9 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "Parameters for Concatenate and Time Synchronize Node",
+  "title": "Parameters for Cuda Concatenate and Time Synchronize Node",
   "type": "object",
   "definitions": {
-    "concatenate_and_time_sync_node": {
+    "cuda_concatenate_and_time_sync_node": {
       "type": "object",
       "properties": {
         "debug_mode": {
@@ -153,7 +153,7 @@
       "type": "object",
       "properties": {
         "ros__parameters": {
-          "$ref": "#/definitions/concatenate_and_time_sync_node"
+          "$ref": "#/definitions/cuda_concatenate_and_time_sync_node"
         }
       },
       "required": ["ros__parameters"]
