@@ -51,10 +51,13 @@ protected:
     rclcpp::init(0, nullptr);
 
     rclcpp::NodeOptions options;
+    const auto share_dir =
+      ament_index_cpp::get_package_share_directory("autoware_control_evaluator");
     const auto autoware_test_utils_dir =
       ament_index_cpp::get_package_share_directory("autoware_test_utils");
     options.arguments(
       {"--ros-args", "-p", "output_metrics:=false", "--params-file",
+       share_dir + "/config/control_evaluator.param.yaml", "--params-file",
        autoware_test_utils_dir + "/config/test_vehicle_info.param.yaml"});
 
     dummy_node = std::make_shared<rclcpp::Node>("control_evaluator_test_node", options);
