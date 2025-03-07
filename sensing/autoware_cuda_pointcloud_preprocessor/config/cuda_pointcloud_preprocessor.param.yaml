@@ -1,0 +1,16 @@
+/**:
+  ros__parameters:
+
+    base_frame: base_link
+    use_imu: true
+    use_3d_distortion_correction: false
+    distance_ratio: 1.03
+    object_length_threshold: 0.1
+    num_points_threshold: 4
+
+    crop_box.min_x: []
+    crop_box.min_y: []
+    crop_box.min_z: []
+    crop_box.max_x: []
+    crop_box.max_y: []
+    crop_box.max_z: []
