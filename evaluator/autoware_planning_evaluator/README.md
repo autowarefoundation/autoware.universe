@@ -21,7 +21,7 @@ which is also responsible for calculating metrics.
 
 ### Stat
 
-Each metric is calculated using a `autoware::universe_utils::Accumulator` instance which contains
+Each metric is calculated using a `autoware_utils::Accumulator` instance which contains
 the minimum, maximum, and mean values calculated for the metric
 as well as the number of values measured.
 

@@ -38,10 +38,10 @@ ControlValidator::ControlValidator(const rclcpp::NodeOptions & options)
     "~/input/predicted_trajectory", 1,
     std::bind(&ControlValidator::on_predicted_trajectory, this, _1));
   sub_kinematics_ =
-    universe_utils::InterProcessPollingSubscriber<nav_msgs::msg::Odometry>::create_subscription(
+    autoware_utils::InterProcessPollingSubscriber<nav_msgs::msg::Odometry>::create_subscription(
       this, "~/input/kinematics", 1);
   sub_reference_traj_ =
-    autoware::universe_utils::InterProcessPollingSubscriber<Trajectory>::create_subscription(
+    autoware_utils::InterProcessPollingSubscriber<Trajectory>::create_subscription(
       this, "~/input/reference_trajectory", 1);
 
   pub_status_ = create_publisher<ControlValidatorStatus>("~/output/validation_status", 1);
@@ -152,8 +152,8 @@ void ControlValidator::on_predicted_trajectory(const Trajectory::ConstSharedPtr 
   stop_watch.tic();
 
   current_predicted_trajectory_ = msg;
-  current_reference_trajectory_ = sub_reference_traj_->takeData();
-  current_kinematics_ = sub_kinematics_->takeData();
+  current_reference_trajectory_ = sub_reference_traj_->take_data();
+  current_kinematics_ = sub_kinematics_->take_data();
 
   if (!is_data_ready()) return;
 

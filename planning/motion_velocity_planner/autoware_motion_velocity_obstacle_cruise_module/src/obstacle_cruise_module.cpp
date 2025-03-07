@@ -14,14 +14,15 @@
 
 #include "obstacle_cruise_module.hpp"
 
-#include "autoware/universe_utils/ros/uuid_helper.hpp"
+#include "autoware_utils/ros/uuid_helper.hpp"
 
 #include <autoware/motion_utils/distance/distance.hpp>
 #include <autoware/motion_utils/marker/virtual_wall_marker_creator.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
-#include <autoware/universe_utils/geometry/geometry.hpp>
-#include <autoware/universe_utils/ros/parameter.hpp>
-#include <autoware/universe_utils/ros/update_param.hpp>
+#include <autoware_utils/geometry/geometry.hpp>
+#include <autoware_utils/ros/marker_helper.hpp>
+#include <autoware_utils/ros/parameter.hpp>
+#include <autoware_utils/ros/update_param.hpp>
 
 #include <algorithm>
 #include <map>
@@ -43,7 +44,7 @@ double calc_diff_angle_against_trajectory(
 
   const double target_yaw = tf2::getYaw(target_pose.orientation);
 
-  const double diff_yaw = autoware::universe_utils::normalizeRadian(target_yaw - traj_yaw);
+  const double diff_yaw = autoware_utils::normalize_radian(target_yaw - traj_yaw);
   return diff_yaw;
 }
 
@@ -109,7 +110,7 @@ void ObstacleCruiseModule::init(rclcpp::Node & node, const std::string & module_
 
   // ros parameters
   planning_algorithm_ =
-    getOrDeclareParameter<std::string>(node, "obstacle_cruise.option.planning_algorithm");
+    get_or_declare_parameter<std::string>(node, "obstacle_cruise.option.planning_algorithm");
   common_param_ = CommonParam(node);
   cruise_planning_param_ = CruisePlanningParam(node);
   obstacle_filtering_param_ = ObstacleFilteringParam(node);
@@ -125,7 +126,7 @@ void ObstacleCruiseModule::init(rclcpp::Node & node, const std::string & module_
   metrics_pub_ = node.create_publisher<MetricArray>("~/cruise/metrics", 10);
   debug_cruise_planning_info_pub_ =
     node.create_publisher<Float32MultiArrayStamped>("~/debug/cruise_planning_info", 1);
-  processing_time_detail_pub_ = node.create_publisher<universe_utils::ProcessingTimeDetail>(
+  processing_time_detail_pub_ = node.create_publisher<autoware_utils::ProcessingTimeDetail>(
     "~/debug/processing_time_detail_ms/obstacle_cruise", 1);
 
   // interface
@@ -137,7 +138,7 @@ void ObstacleCruiseModule::init(rclcpp::Node & node, const std::string & module_
       &node, "obstacle_cruise");
 
   // time keeper
-  time_keeper_ = std::make_shared<universe_utils::TimeKeeper>(processing_time_detail_pub_);
+  time_keeper_ = std::make_shared<autoware_utils::TimeKeeper>(processing_time_detail_pub_);
 
   // cruise planner
   cruise_planner_ = create_cruise_planner(node);
@@ -154,7 +155,7 @@ VelocityPlanningResult ObstacleCruiseModule::plan(
     smoothed_trajectory_points,
   const std::shared_ptr<const PlannerData> planner_data)
 {
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+  autoware_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   // 1. init variables
   stop_watch_.tic();
@@ -216,7 +217,7 @@ std::vector<CruiseObstacle> ObstacleCruiseModule::filter_cruise_obstacle_for_pre
   const VehicleInfo & vehicle_info,
   const TrajectoryPolygonCollisionCheck & trajectory_polygon_collision_check)
 {
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+  autoware_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   const auto & current_pose = odometry.pose.pose;
 
@@ -283,7 +284,7 @@ std::vector<CruiseObstacle> ObstacleCruiseModule::filter_cruise_obstacle_for_pre
 
 void ObstacleCruiseModule::publish_debug_info()
 {
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+  autoware_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   // 1. debug marker
   MarkerArray debug_marker;
@@ -306,10 +307,10 @@ void ObstacleCruiseModule::publish_debug_info()
 
   // 1.2. collision points
   for (size_t i = 0; i < stop_collision_points.size(); ++i) {
-    auto collision_point_marker = autoware::universe_utils::createDefaultMarker(
+    auto collision_point_marker = autoware_utils::create_default_marker(
       "map", clock_->now(), "collision_points", i, Marker::SPHERE,
-      autoware::universe_utils::createMarkerScale(0.25, 0.25, 0.25),
-      autoware::universe_utils::createMarkerColor(1.0, 0.0, 0.0, 0.999));
+      autoware_utils::create_marker_scale(0.25, 0.25, 0.25),
+      autoware_utils::create_marker_color(1.0, 0.0, 0.0, 0.999));
     collision_point_marker.pose.position = stop_collision_points.at(i);
     debug_marker.markers.push_back(collision_point_marker);
   }
@@ -324,10 +325,10 @@ void ObstacleCruiseModule::publish_debug_info()
   }
 
   // 1.4. detection area
-  auto decimated_traj_polys_marker = autoware::universe_utils::createDefaultMarker(
+  auto decimated_traj_polys_marker = autoware_utils::create_default_marker(
     "map", clock_->now(), "detection_area", 0, Marker::LINE_LIST,
-    autoware::universe_utils::createMarkerScale(0.01, 0.0, 0.0),
-    autoware::universe_utils::createMarkerColor(0.0, 1.0, 0.0, 0.999));
+    autoware_utils::create_marker_scale(0.01, 0.0, 0.0),
+    autoware_utils::create_marker_color(0.0, 1.0, 0.0, 0.999));
   for (const auto & decimated_traj_poly : debug_data_ptr_->decimated_traj_polys) {
     for (size_t dp_idx = 0; dp_idx < decimated_traj_poly.outer().size(); ++dp_idx) {
       const auto & current_point = decimated_traj_poly.outer().at(dp_idx);
@@ -335,9 +336,9 @@ void ObstacleCruiseModule::publish_debug_info()
         decimated_traj_poly.outer().at((dp_idx + 1) % decimated_traj_poly.outer().size());
 
       decimated_traj_polys_marker.points.push_back(
-        autoware::universe_utils::createPoint(current_point.x(), current_point.y(), 0.0));
+        autoware_utils::create_point(current_point.x(), current_point.y(), 0.0));
       decimated_traj_polys_marker.points.push_back(
-        autoware::universe_utils::createPoint(next_point.x(), next_point.y(), 0.0));
+        autoware_utils::create_point(next_point.x(), next_point.y(), 0.0));
     }
   }
   debug_marker.markers.push_back(decimated_traj_polys_marker);
@@ -375,7 +376,7 @@ std::optional<CruiseObstacle> ObstacleCruiseModule::create_cruise_obstacle(
   const TrajectoryPolygonCollisionCheck & trajectory_polygon_collision_check) const
 {
   const auto & obj_uuid = object->predicted_object.object_id;
-  const auto & obj_uuid_str = autoware::universe_utils::toHexString(obj_uuid);
+  const auto & obj_uuid_str = autoware_utils::to_hex_string(obj_uuid);
 
   // NOTE: When driving backward, Stop will be planned instead of cruise.
   //       When the obstacle is crossing the ego's trajectory, cruise can be ignored.
@@ -542,7 +543,7 @@ ObstacleCruiseModule::create_collision_points_for_inside_cruise_obstacle(
   const TrajectoryPolygonCollisionCheck & trajectory_polygon_collision_check) const
 {
   const auto & obj_uuid = object->predicted_object.object_id;
-  const auto & obj_uuid_str = autoware::universe_utils::toHexString(obj_uuid);
+  const auto & obj_uuid_str = autoware_utils::to_hex_string(obj_uuid);
 
   // check label
   if (!is_inside_cruise_obstacle(object->predicted_object.classification.at(0).label)) {
@@ -614,7 +615,7 @@ ObstacleCruiseModule::create_collision_points_for_outside_cruise_obstacle(
   const TrajectoryPolygonCollisionCheck & trajectory_polygon_collision_check) const
 {
   const auto & obj_uuid = object->predicted_object.object_id;
-  const auto & obj_uuid_str = autoware::universe_utils::toHexString(obj_uuid);
+  const auto & obj_uuid_str = autoware_utils::to_hex_string(obj_uuid);
 
   // check label
   if (!is_outside_cruise_obstacle(object->predicted_object.classification.at(0).label)) {
@@ -709,7 +710,7 @@ std::optional<CruiseObstacle> ObstacleCruiseModule::create_yield_cruise_obstacle
   // check label
 
   const auto & obj_uuid = object->predicted_object.object_id;
-  const auto & obj_uuid_str = autoware::universe_utils::toHexString(obj_uuid);
+  const auto & obj_uuid_str = autoware_utils::to_hex_string(obj_uuid);
 
   if (!is_outside_cruise_obstacle(object->predicted_object.classification.at(0).label)) {
     RCLCPP_DEBUG(

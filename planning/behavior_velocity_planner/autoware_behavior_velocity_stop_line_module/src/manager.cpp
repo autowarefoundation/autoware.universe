@@ -14,7 +14,7 @@
 
 #include "manager.hpp"
 
-#include "autoware/universe_utils/ros/parameter.hpp"
+#include "autoware_utils/ros/parameter.hpp"
 
 #include <lanelet2_core/primitives/BasicRegulatoryElements.h>
 
@@ -25,7 +25,7 @@
 
 namespace autoware::behavior_velocity_planner
 {
-using autoware::universe_utils::getOrDeclareParameter;
+using autoware_utils::get_or_declare_parameter;
 using lanelet::TrafficSign;
 
 StopLineModuleManager::StopLineModuleManager(rclcpp::Node & node)
@@ -33,10 +33,10 @@ StopLineModuleManager::StopLineModuleManager(rclcpp::Node & node)
 {
   const std::string ns(StopLineModuleManager::getModuleName());
   auto & p = planner_param_;
-  p.stop_margin = getOrDeclareParameter<double>(node, ns + ".stop_margin");
+  p.stop_margin = get_or_declare_parameter<double>(node, ns + ".stop_margin");
   p.hold_stop_margin_distance =
-    getOrDeclareParameter<double>(node, ns + ".hold_stop_margin_distance");
-  p.stop_duration_sec = getOrDeclareParameter<double>(node, ns + ".stop_duration_sec");
+    get_or_declare_parameter<double>(node, ns + ".hold_stop_margin_distance");
+  p.stop_duration_sec = get_or_declare_parameter<double>(node, ns + ".stop_duration_sec");
 }
 
 std::vector<StopLineWithLaneId> StopLineModuleManager::getStopLinesWithLaneIdOnPath(

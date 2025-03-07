@@ -15,7 +15,7 @@
 #ifndef TRAFFIC_LIGHT_CATEGORY_MERGER_NODE_HPP_
 #define TRAFFIC_LIGHT_CATEGORY_MERGER_NODE_HPP_
 
-#include <autoware/universe_utils/ros/transform_listener.hpp>
+#include <autoware_utils/ros/transform_listener.hpp>
 #include <rclcpp/rclcpp.hpp>
 
 #include <tier4_perception_msgs/msg/traffic_light_array.hpp>
