@@ -17,6 +17,7 @@
 
 #include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <autoware_planning_msgs/msg/trajectory_point.hpp>
+#include <optional>
 
 namespace control_diagnostics
 {
