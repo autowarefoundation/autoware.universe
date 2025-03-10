@@ -54,7 +54,7 @@ jobs:
     if: ${{ always() }}
     needs:
       - require-label
-    uses: ./.github/workflows/6build-and-test-packages-above-differential.yaml
+    uses: ./.github/workflows/build-and-test-packages-above-differential.yaml
     with:
       container: ghcr.io/autowarefoundation/autoware:universe-devel
       run-condition: ${{ needs.require-label.outputs.result == 'true' }}
