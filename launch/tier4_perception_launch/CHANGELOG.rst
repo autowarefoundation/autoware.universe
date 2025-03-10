@@ -2,6 +2,112 @@
 Changelog for package tier4_perception_launch
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.42.0 (2025-03-03)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* chore(tier4_perception_launch): re-order objects_validation process after lidar ml detector (`#10160 <https://github.com/autowarefoundation/autoware.universe/issues/10160>`_)
+  * fix: reorder object validator before the merge process
+  * feat(camera_lidar_radar_merger): remove near radar fusion arguments and related logic
+  * feat: remove validator and related arguments from camera, lidar, and radar merger launch files
+  * feat(camera_lidar_detector): update cluster output references for shape estimation
+  * feat: update camera and lidar merger launch files to use detected object ROI filter
+  ---------
+* fix(tier4_perception_launch): add missing exec_depend (`#10130 <https://github.com/autowarefoundation/autoware.universe/issues/10130>`_)
+  * fix(tier4_perception_launch): add missing exec_depend
+  * add exec_depend for perception
+  ---------
+  Co-authored-by: Taekjin LEE <taekjin.lee@tier4.jp>
+* chore: refine maintainer list (`#10110 <https://github.com/autowarefoundation/autoware.universe/issues/10110>`_)
+  * chore: remove Miura from maintainer
+  * chore: add Taekjin-san to perception_utils package maintainer
+  ---------
+* fix(tier4_perception_launch): add missing parameter for planning simulation (`#10165 <https://github.com/autowarefoundation/autoware.universe/issues/10165>`_)
+* feat(tier4_perception_launch): add option for new TL detector model (`#9731 <https://github.com/autowarefoundation/autoware.universe/issues/9731>`_)
+  * feat: add traffic_light_detector launch
+  fix: tier4 perception launch
+  fix: add multi tlr detector launch
+  fix: tier4 launch
+  fix: tl detector launch
+  fix: data director
+  fix: precision int8
+  chore: revert to fp16
+  feat: remove occlusion and add car ped classification merger
+  fix: launch for multi camera
+  chore: pre-commit
+  fix: update matching score
+  feat: add max_iou_threshold
+  feat: add occlusion unknown classifier
+  * fix: tl detector launch
+  * refactor: traffic_light_launch.xml
+  * fix: remove tl fine detector
+  * fix: refactor
+  * chore: pre-commit
+  * fix: cspelling check
+  * fix: error after rename package
+  * fix: default tl model name
+  * fix: new tlr for multi cameras
+  * modify args
+  * style(pre-commit): autofix
+  * refactor
+  * add category_merger to container
+  * fix args
+  * run pre-commit
+  ---------
+  Co-authored-by: Masato Saeki <78376491+MasatoSaeki@users.noreply.github.com>
+  Co-authored-by: MasatoSaeki <masato.saeki@tier4.jp>
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* chore(traffic_light_multi_camera_fusion): read parameters from yaml file (`#10144 <https://github.com/autowarefoundation/autoware.universe/issues/10144>`_)
+  * chore(traffic_light_multi_camera_fusion): read parameters from yaml file
+  * style(pre-commit): autofix
+  * add all_traffic_light_camera param to launch.xml
+  * fix json schema
+  * remove camera namespace parameter from config file
+  * revert unnecessary change
+  * remove camera_namespaces from required
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* feat(tier4_perception_launch): change tlr pedestrian classifier model  (`#10116 <https://github.com/autowarefoundation/autoware.universe/issues/10116>`_)
+  change onnx model name
+* feat(autoware_traffic_light_map_based_detector): created the schema file,updated the readme file and deleted the default parameter in node files code (`#10107 <https://github.com/autowarefoundation/autoware.universe/issues/10107>`_)
+  * feat(autoware_traffic_light_map_based_detector): Created the schema file,updated the readme file and deleted the default parameter in node files code
+  * style(pre-commit): autofix
+  * move params from launch to param
+  * chore
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+  Co-authored-by: MasatoSaeki <masato.saeki@tier4.jp>
+* fix(ground_segmentation): bring junction parameter from param file to launch argument  (`#10102 <https://github.com/autowarefoundation/autoware.universe/issues/10102>`_)
+  * feat(ground_segmentation): add launch configuration for single frame and time series filters
+  * feat(ground_segmentation): enhance filter configurations for obstacle segmentation
+  * fix(ground_segmentation): update argument names for single frame and time series filters
+  ---------
+* feat(autoware_traffic_light_classifier): add traffic light classifier schema, README and car and ped launcher (`#10048 <https://github.com/autowarefoundation/autoware.universe/issues/10048>`_)
+  * feat(autoware_traffic_light_classifier):Add traffic light classifier schema and README
+  * add individual launcher
+  * style(pre-commit): autofix
+  * fix description
+  * fix README and source code
+  * separate schema in README
+  * fix README
+  * fix launcher
+  * style(pre-commit): autofix
+  * fix typo
+  ---------
+  Co-authored-by: MasatoSaeki <masato.saeki@tier4.jp>
+  Co-authored-by: Masato Saeki <78376491+MasatoSaeki@users.noreply.github.com>
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* fix(traffic_light.launch.xml): add lacked params (`#10071 <https://github.com/autowarefoundation/autoware.universe/issues/10071>`_)
+  fix params
+* Contributors: Fumiya Watanabe, Masato Saeki, Shunsuke Miura, Taekjin LEE, Takagi, Isamu, Tomohito ANDO, Vishal Chauhan, badai nguyen
+
+0.41.2 (2025-02-19)
+-------------------
+* chore: bump version to 0.41.1 (`#10088 <https://github.com/autowarefoundation/autoware.universe/issues/10088>`_)
+* Contributors: Ryohsuke Mitsudome
+
+0.41.1 (2025-02-10)
+-------------------
+
 0.41.0 (2025-01-29)
 -------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
