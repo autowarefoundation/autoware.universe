@@ -100,8 +100,8 @@ void ExternalCmdConverterNode::on_external_cmd(const ExternalControlCommand::Con
   latest_cmd_received_time_ = std::make_shared<rclcpp::Time>(this->now());
 
   // take data from subscribers
-  current_velocity_ptr_ = velocity_sub_.takeData();
-  current_shift_cmd_ = shift_cmd_sub_.takeData();
+  current_velocity_ptr_ = velocity_sub_.take_data();
+  current_shift_cmd_ = shift_cmd_sub_.take_data();
 
   // Wait for input data
   if (!current_velocity_ptr_ || !acc_map_initialized_ || !current_shift_cmd_) {
@@ -190,7 +190,7 @@ void ExternalCmdConverterNode::check_topic_status(
   using diagnostic_msgs::msg::DiagnosticStatus;
   DiagnosticStatus status;
 
-  current_gate_mode_ = gate_mode_sub_.takeData();
+  current_gate_mode_ = gate_mode_sub_.take_data();
 
   if (!check_emergency_stop_topic_timeout()) {
     status.level = DiagnosticStatus::ERROR;

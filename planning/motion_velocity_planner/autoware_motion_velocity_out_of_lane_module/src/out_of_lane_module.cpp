@@ -27,10 +27,10 @@
 #include <autoware/motion_velocity_planner_common_universe/planner_data.hpp>
 #include <autoware/route_handler/route_handler.hpp>
 #include <autoware/traffic_light_utils/traffic_light_utils.hpp>
-#include <autoware/universe_utils/geometry/boost_geometry.hpp>
-#include <autoware/universe_utils/ros/parameter.hpp>
-#include <autoware/universe_utils/ros/update_param.hpp>
-#include <autoware/universe_utils/system/stop_watch.hpp>
+#include <autoware_utils/geometry/boost_geometry.hpp>
+#include <autoware_utils/ros/parameter.hpp>
+#include <autoware_utils/ros/update_param.hpp>
+#include <autoware_utils/system/stop_watch.hpp>
 
 #include <boost/geometry/algorithms/envelope.hpp>
 #include <boost/geometry/algorithms/intersects.hpp>
@@ -67,7 +67,7 @@ void OutOfLaneModule::init(rclcpp::Node & node, const std::string & module_name)
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/" + ns_ + "/debug_markers", 1);
   virtual_wall_publisher_ =
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/" + ns_ + "/virtual_walls", 1);
-  processing_diag_publisher_ = std::make_shared<universe_utils::ProcessingTimePublisher>(
+  processing_diag_publisher_ = std::make_shared<autoware_utils::ProcessingTimePublisher>(
     &node, "~/debug/" + ns_ + "/processing_time_ms_diag");
   processing_time_publisher_ =
     node.create_publisher<autoware_internal_debug_msgs::msg::Float64Stamped>(
@@ -75,38 +75,39 @@ void OutOfLaneModule::init(rclcpp::Node & node, const std::string & module_name)
 }
 void OutOfLaneModule::init_parameters(rclcpp::Node & node)
 {
-  using universe_utils::getOrDeclareParameter;
+  using autoware_utils::get_or_declare_parameter;
   auto & pp = params_;
 
-  pp.mode = getOrDeclareParameter<std::string>(node, ns_ + ".mode");
+  pp.mode = get_or_declare_parameter<std::string>(node, ns_ + ".mode");
   pp.skip_if_already_overlapping =
-    getOrDeclareParameter<bool>(node, ns_ + ".skip_if_already_overlapping");
-  pp.max_arc_length = getOrDeclareParameter<double>(node, ns_ + ".max_arc_length");
+    get_or_declare_parameter<bool>(node, ns_ + ".skip_if_already_overlapping");
+  pp.max_arc_length = get_or_declare_parameter<double>(node, ns_ + ".max_arc_length");
 
-  pp.time_threshold = getOrDeclareParameter<double>(node, ns_ + ".threshold.time_threshold");
-  pp.ttc_threshold = getOrDeclareParameter<double>(node, ns_ + ".ttc.threshold");
+  pp.time_threshold = get_or_declare_parameter<double>(node, ns_ + ".threshold.time_threshold");
+  pp.ttc_threshold = get_or_declare_parameter<double>(node, ns_ + ".ttc.threshold");
 
-  pp.objects_min_vel = getOrDeclareParameter<double>(node, ns_ + ".objects.minimum_velocity");
+  pp.objects_min_vel = get_or_declare_parameter<double>(node, ns_ + ".objects.minimum_velocity");
   pp.objects_min_confidence =
-    getOrDeclareParameter<double>(node, ns_ + ".objects.predicted_path_min_confidence");
+    get_or_declare_parameter<double>(node, ns_ + ".objects.predicted_path_min_confidence");
   pp.objects_cut_predicted_paths_beyond_red_lights =
-    getOrDeclareParameter<bool>(node, ns_ + ".objects.cut_predicted_paths_beyond_red_lights");
+    get_or_declare_parameter<bool>(node, ns_ + ".objects.cut_predicted_paths_beyond_red_lights");
   pp.objects_ignore_behind_ego =
-    getOrDeclareParameter<bool>(node, ns_ + ".objects.ignore_behind_ego");
+    get_or_declare_parameter<bool>(node, ns_ + ".objects.ignore_behind_ego");
 
-  pp.precision = getOrDeclareParameter<double>(node, ns_ + ".action.precision");
-  pp.min_decision_duration = getOrDeclareParameter<double>(node, ns_ + ".action.min_duration");
+  pp.precision = get_or_declare_parameter<double>(node, ns_ + ".action.precision");
+  pp.min_decision_duration = get_or_declare_parameter<double>(node, ns_ + ".action.min_duration");
   pp.lon_dist_buffer =
-    getOrDeclareParameter<double>(node, ns_ + ".action.longitudinal_distance_buffer");
-  pp.lat_dist_buffer = getOrDeclareParameter<double>(node, ns_ + ".action.lateral_distance_buffer");
-  pp.slow_velocity = getOrDeclareParameter<double>(node, ns_ + ".action.slowdown.velocity");
+    get_or_declare_parameter<double>(node, ns_ + ".action.longitudinal_distance_buffer");
+  pp.lat_dist_buffer =
+    get_or_declare_parameter<double>(node, ns_ + ".action.lateral_distance_buffer");
+  pp.slow_velocity = get_or_declare_parameter<double>(node, ns_ + ".action.slowdown.velocity");
   pp.stop_dist_threshold =
-    getOrDeclareParameter<double>(node, ns_ + ".action.stop.distance_threshold");
+    get_or_declare_parameter<double>(node, ns_ + ".action.stop.distance_threshold");
 
-  pp.extra_front_offset = getOrDeclareParameter<double>(node, ns_ + ".ego.extra_front_offset");
-  pp.extra_rear_offset = getOrDeclareParameter<double>(node, ns_ + ".ego.extra_rear_offset");
-  pp.extra_left_offset = getOrDeclareParameter<double>(node, ns_ + ".ego.extra_left_offset");
-  pp.extra_right_offset = getOrDeclareParameter<double>(node, ns_ + ".ego.extra_right_offset");
+  pp.extra_front_offset = get_or_declare_parameter<double>(node, ns_ + ".ego.extra_front_offset");
+  pp.extra_rear_offset = get_or_declare_parameter<double>(node, ns_ + ".ego.extra_rear_offset");
+  pp.extra_left_offset = get_or_declare_parameter<double>(node, ns_ + ".ego.extra_left_offset");
+  pp.extra_right_offset = get_or_declare_parameter<double>(node, ns_ + ".ego.extra_right_offset");
   const auto vehicle_info = vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo();
   pp.front_offset = vehicle_info.max_longitudinal_offset_m;
   pp.rear_offset = vehicle_info.min_longitudinal_offset_m;
@@ -116,34 +117,34 @@ void OutOfLaneModule::init_parameters(rclcpp::Node & node)
 
 void OutOfLaneModule::update_parameters(const std::vector<rclcpp::Parameter> & parameters)
 {
-  using universe_utils::updateParam;
+  using autoware_utils::update_param;
   auto & pp = params_;
-  updateParam(parameters, ns_ + ".mode", pp.mode);
-  updateParam(parameters, ns_ + ".skip_if_already_overlapping", pp.skip_if_already_overlapping);
-  updateParam(parameters, ns_ + ".max_arc_length", pp.max_arc_length);
+  update_param(parameters, ns_ + ".mode", pp.mode);
+  update_param(parameters, ns_ + ".skip_if_already_overlapping", pp.skip_if_already_overlapping);
+  update_param(parameters, ns_ + ".max_arc_length", pp.max_arc_length);
 
-  updateParam(parameters, ns_ + ".threshold.time_threshold", pp.time_threshold);
-  updateParam(parameters, ns_ + ".ttc.threshold", pp.ttc_threshold);
+  update_param(parameters, ns_ + ".threshold.time_threshold", pp.time_threshold);
+  update_param(parameters, ns_ + ".ttc.threshold", pp.ttc_threshold);
 
-  updateParam(parameters, ns_ + ".objects.minimum_velocity", pp.objects_min_vel);
-  updateParam(
+  update_param(parameters, ns_ + ".objects.minimum_velocity", pp.objects_min_vel);
+  update_param(
     parameters, ns_ + ".objects.predicted_path_min_confidence", pp.objects_min_confidence);
-  updateParam(
+  update_param(
     parameters, ns_ + ".objects.cut_predicted_paths_beyond_red_lights",
     pp.objects_cut_predicted_paths_beyond_red_lights);
-  updateParam(parameters, ns_ + ".objects.ignore_behind_ego", pp.objects_ignore_behind_ego);
+  update_param(parameters, ns_ + ".objects.ignore_behind_ego", pp.objects_ignore_behind_ego);
 
-  updateParam(parameters, ns_ + ".action.precision", pp.precision);
-  updateParam(parameters, ns_ + ".action.min_duration", pp.min_decision_duration);
-  updateParam(parameters, ns_ + ".action.longitudinal_distance_buffer", pp.lon_dist_buffer);
-  updateParam(parameters, ns_ + ".action.lateral_distance_buffer", pp.lat_dist_buffer);
-  updateParam(parameters, ns_ + ".action.slowdown.velocity", pp.slow_velocity);
-  updateParam(parameters, ns_ + ".action.stop.distance_threshold", pp.stop_dist_threshold);
+  update_param(parameters, ns_ + ".action.precision", pp.precision);
+  update_param(parameters, ns_ + ".action.min_duration", pp.min_decision_duration);
+  update_param(parameters, ns_ + ".action.longitudinal_distance_buffer", pp.lon_dist_buffer);
+  update_param(parameters, ns_ + ".action.lateral_distance_buffer", pp.lat_dist_buffer);
+  update_param(parameters, ns_ + ".action.slowdown.velocity", pp.slow_velocity);
+  update_param(parameters, ns_ + ".action.stop.distance_threshold", pp.stop_dist_threshold);
 
-  updateParam(parameters, ns_ + ".ego.extra_front_offset", pp.extra_front_offset);
-  updateParam(parameters, ns_ + ".ego.extra_rear_offset", pp.extra_rear_offset);
-  updateParam(parameters, ns_ + ".ego.extra_left_offset", pp.extra_left_offset);
-  updateParam(parameters, ns_ + ".ego.extra_right_offset", pp.extra_right_offset);
+  update_param(parameters, ns_ + ".ego.extra_front_offset", pp.extra_front_offset);
+  update_param(parameters, ns_ + ".ego.extra_rear_offset", pp.extra_rear_offset);
+  update_param(parameters, ns_ + ".ego.extra_left_offset", pp.extra_left_offset);
+  update_param(parameters, ns_ + ".ego.extra_right_offset", pp.extra_right_offset);
 }
 
 void OutOfLaneModule::limit_trajectory_size(
@@ -159,7 +160,7 @@ void OutOfLaneModule::limit_trajectory_size(
   auto l = -ego_data.longitudinal_offset_to_first_trajectory_index;
   ego_data.trajectory_points.push_back(smoothed_trajectory_points[ego_data.first_trajectory_idx]);
   for (auto i = ego_data.first_trajectory_idx + 1; i < smoothed_trajectory_points.size(); ++i) {
-    l += universe_utils::calcDistance2d(
+    l += autoware_utils::calc_distance2d(
       smoothed_trajectory_points[i - 1], smoothed_trajectory_points[i]);
     if (l >= max_arc_length) {
       break;
@@ -197,7 +198,7 @@ void prepare_stop_lines_rtree(
         stop_line_node.second.stop_line.back() += diff * 0.5;
         stop_line_node.second.lanelets = planner_data.route_handler->getPreviousLanelets(ll);
         stop_line_node.first =
-          boost::geometry::return_envelope<universe_utils::Box2d>(stop_line_node.second.stop_line);
+          boost::geometry::return_envelope<autoware_utils::Box2d>(stop_line_node.second.stop_line);
         rtree_nodes.push_back(stop_line_node);
       }
     }
@@ -220,7 +221,7 @@ VelocityPlanningResult OutOfLaneModule::plan(
   const std::shared_ptr<const PlannerData> planner_data)
 {
   VelocityPlanningResult result;
-  universe_utils::StopWatch<std::chrono::microseconds> stopwatch;
+  autoware_utils::StopWatch<std::chrono::microseconds> stopwatch;
   stopwatch.tic();
 
   stopwatch.tic("preprocessing");

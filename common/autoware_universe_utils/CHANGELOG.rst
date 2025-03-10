@@ -2,6 +2,25 @@
 Changelog for package autoware_universe_utils
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.42.0 (2025-03-03)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_vehicle_info_utils): replace autoware_universe_utils with autoware_utils (`#10167 <https://github.com/autowarefoundation/autoware.universe/issues/10167>`_)
+* feat!: replace tier4_planning_msgs/PathWithLaneId with autoware_internal_planning_msgs/PathWithLaneId (`#10023 <https://github.com/autowarefoundation/autoware.universe/issues/10023>`_)
+* test(autoware_universe_utils): make opencv_fast_atan2 test reproducible (`#9728 <https://github.com/autowarefoundation/autoware.universe/issues/9728>`_)
+* feat(universe_utils): add Polygon Clipping implementation to do boolean operation on Polygons (XOR, OR, AND) (`#8728 <https://github.com/autowarefoundation/autoware.universe/issues/8728>`_)
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+  Co-authored-by: Maxime CLEMENT <78338830+maxime-clem@users.noreply.github.com>
+* Contributors: Fumiya Watanabe, Giovanni Muhammad Raditya, Max Schmeller, Ryohsuke Mitsudome
+
+0.41.2 (2025-02-19)
+-------------------
+* chore: bump version to 0.41.1 (`#10088 <https://github.com/autowarefoundation/autoware.universe/issues/10088>`_)
+* Contributors: Ryohsuke Mitsudome
+
+0.41.1 (2025-02-10)
+-------------------
+
 0.41.0 (2025-01-29)
 -------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base

@@ -44,7 +44,7 @@ TrafficLightModule::TrafficLightModule(
   const int64_t lane_id, const lanelet::TrafficLight & traffic_light_reg_elem,
   lanelet::ConstLanelet lane, const PlannerParam & planner_param, const rclcpp::Logger logger,
   const rclcpp::Clock::SharedPtr clock,
-  const std::shared_ptr<universe_utils::TimeKeeper> time_keeper,
+  const std::shared_ptr<autoware_utils::TimeKeeper> time_keeper,
   const std::shared_ptr<planning_factor_interface::PlanningFactorInterface>
     planning_factor_interface)
 : SceneModuleInterfaceWithRTC(lane_id, logger, clock, time_keeper, planning_factor_interface),
@@ -297,8 +297,9 @@ autoware_internal_planning_msgs::msg::PathWithLaneId TrafficLightModule::insertS
   planning_factor_interface_->add(
     modified_path.points, planner_data_->current_odometry->pose,
     target_point_with_lane_id.point.pose, target_point_with_lane_id.point.pose,
-    tier4_planning_msgs::msg::PlanningFactor::STOP, tier4_planning_msgs::msg::SafetyFactorArray{},
-    true /*is_driving_forward*/, 0.0, 0.0 /*shift distance*/, "");
+    autoware_internal_planning_msgs::msg::PlanningFactor::STOP,
+    autoware_internal_planning_msgs::msg::SafetyFactorArray{}, true /*is_driving_forward*/, 0.0,
+    0.0 /*shift distance*/, "traffic_light");
 
   return modified_path;
 }

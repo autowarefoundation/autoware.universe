@@ -15,7 +15,7 @@
 #ifndef AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON_UNIVERSE__UTILS_HPP_
 #define AUTOWARE__MOTION_VELOCITY_PLANNER_COMMON_UNIVERSE__UTILS_HPP_
 
-#include "autoware/universe_utils/geometry/geometry.hpp"
+#include "autoware_utils/geometry/geometry.hpp"
 #include "autoware_vehicle_info_utils/vehicle_info_utils.hpp"
 #include "planner_data.hpp"
 
@@ -33,15 +33,31 @@
 
 namespace autoware::motion_velocity_planner::utils
 {
-using autoware::universe_utils::Polygon2d;
 using autoware::vehicle_info_utils::VehicleInfo;
 using autoware_perception_msgs::msg::ObjectClassification;
 using autoware_perception_msgs::msg::Shape;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
+using autoware_utils::Polygon2d;
 using nav_msgs::msg::Odometry;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
+
+geometry_msgs::msg::Point to_geometry_point(const pcl::PointXYZ & point);
+geometry_msgs::msg::Point to_geometry_point(const autoware_utils::Point2d & point);
+
+std::optional<double> calc_distance_to_front_object(
+  const std::vector<TrajectoryPoint> & traj_points, const size_t ego_idx,
+  const geometry_msgs::msg::Point & obstacle_pos);
+
+template <class T>
+std::vector<T> concat_vectors(std::vector<T> first_vector, std::vector<T> second_vector)
+{
+  first_vector.insert(
+    first_vector.end(), std::make_move_iterator(second_vector.begin()),
+    std::make_move_iterator(second_vector.end()));
+  return first_vector;
+}
 
 std::vector<TrajectoryPoint> decimate_trajectory_points_from_ego(
   const std::vector<TrajectoryPoint> & traj_points, const geometry_msgs::msg::Pose & current_pose,
@@ -93,8 +109,7 @@ size_t get_index_with_longitudinal_offset(
   double sum_length = 0.0;
   if (longitudinal_offset > 0) {
     for (size_t i = *start_idx; i < points.size() - 1; ++i) {
-      const double segment_length =
-        autoware::universe_utils::calcDistance2d(points.at(i), points.at(i + 1));
+      const double segment_length = autoware_utils::calc_distance2d(points.at(i), points.at(i + 1));
       sum_length += segment_length;
       if (sum_length >= longitudinal_offset) {
         const double back_length = sum_length - longitudinal_offset;
@@ -110,8 +125,7 @@ size_t get_index_with_longitudinal_offset(
   }
 
   for (size_t i = *start_idx; 0 < i; --i) {
-    const double segment_length =
-      autoware::universe_utils::calcDistance2d(points.at(i - 1), points.at(i));
+    const double segment_length = autoware_utils::calc_distance2d(points.at(i - 1), points.at(i));
     sum_length += segment_length;
     if (sum_length >= -longitudinal_offset) {
       const double back_length = sum_length + longitudinal_offset;

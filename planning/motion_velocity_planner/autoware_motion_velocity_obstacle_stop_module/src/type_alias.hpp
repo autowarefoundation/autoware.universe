@@ -26,10 +26,10 @@
 #include "nav_msgs/msg/odometry.hpp"
 #include "sensor_msgs/msg/point_cloud2.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
+#include <autoware_internal_planning_msgs/msg/planning_factor.hpp>
+#include <autoware_internal_planning_msgs/msg/safety_factor_array.hpp>
 #include <tier4_metric_msgs/msg/metric.hpp>
 #include <tier4_metric_msgs/msg/metric_array.hpp>
-#include <tier4_planning_msgs/msg/planning_factor.hpp>
-#include <tier4_planning_msgs/msg/safety_factor_array.hpp>
 
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
@@ -52,12 +52,12 @@ using sensor_msgs::msg::PointCloud2;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 namespace bg = boost::geometry;
-using autoware::universe_utils::Point2d;
-using autoware::universe_utils::Polygon2d;
+using autoware_utils::Point2d;
+using autoware_utils::Polygon2d;
 using Metric = tier4_metric_msgs::msg::Metric;
 using MetricArray = tier4_metric_msgs::msg::MetricArray;
 using PointCloud = pcl::PointCloud<pcl::PointXYZ>;
-using tier4_planning_msgs::msg::PlanningFactor;
-using tier4_planning_msgs::msg::SafetyFactorArray;
+using autoware_internal_planning_msgs::msg::PlanningFactor;
+using autoware_internal_planning_msgs::msg::SafetyFactorArray;
 }  // namespace autoware::motion_velocity_planner
 #endif  // TYPE_ALIAS_HPP_

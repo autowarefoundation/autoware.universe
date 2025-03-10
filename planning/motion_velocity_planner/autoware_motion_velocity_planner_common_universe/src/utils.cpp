@@ -18,7 +18,7 @@
 #include "autoware/motion_utils/trajectory/conversion.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/motion_velocity_planner_common_universe/planner_data.hpp"
-#include "autoware/universe_utils/ros/marker_helper.hpp"
+#include "autoware_utils/ros/marker_helper.hpp"
 
 #include <boost/geometry.hpp>
 
@@ -37,7 +37,7 @@ TrajectoryPoint extend_trajectory_point(
   const double extend_distance, const TrajectoryPoint & goal_point, const bool is_driving_forward)
 {
   TrajectoryPoint extended_trajectory_point;
-  extended_trajectory_point.pose = autoware::universe_utils::calcOffsetPose(
+  extended_trajectory_point.pose = autoware_utils::calc_offset_pose(
     goal_point.pose, extend_distance * (is_driving_forward ? 1.0 : -1.0), 0.0, 0.0);
   extended_trajectory_point.longitudinal_velocity_mps = goal_point.longitudinal_velocity_mps;
   extended_trajectory_point.lateral_velocity_mps = goal_point.lateral_velocity_mps;
@@ -109,6 +109,33 @@ std::vector<TrajectoryPoint> decimate_trajectory_points_from_ego(
   }
   return extended_traj_points_from_ego;
 }
+geometry_msgs::msg::Point to_geometry_point(const pcl::PointXYZ & point)
+{
+  geometry_msgs::msg::Point geom_point;
+  geom_point.x = point.x;
+  geom_point.y = point.y;
+  geom_point.z = point.z;
+  return geom_point;
+}
+
+geometry_msgs::msg::Point to_geometry_point(const autoware_utils::Point2d & point)
+{
+  geometry_msgs::msg::Point geom_point;
+  geom_point.x = point.x();
+  geom_point.y = point.y();
+  return geom_point;
+}
+
+std::optional<double> calc_distance_to_front_object(
+  const std::vector<TrajectoryPoint> & traj_points, const size_t ego_idx,
+  const geometry_msgs::msg::Point & obstacle_pos)
+{
+  const size_t obstacle_idx = autoware::motion_utils::findNearestIndex(traj_points, obstacle_pos);
+  const auto ego_to_obstacle_distance =
+    autoware::motion_utils::calcSignedArcLength(traj_points, ego_idx, obstacle_idx);
+  if (ego_to_obstacle_distance < 0.0) return std::nullopt;
+  return ego_to_obstacle_distance;
+}
 
 std::vector<uint8_t> get_target_object_type(rclcpp::Node & node, const std::string & param_prefix)
 {
@@ -152,10 +179,10 @@ visualization_msgs::msg::Marker get_object_marker(
 {
   const auto current_time = rclcpp::Clock().now();
 
-  auto marker = autoware::universe_utils::createDefaultMarker(
+  auto marker = autoware_utils::create_default_marker(
     "map", current_time, ns, idx, visualization_msgs::msg::Marker::SPHERE,
-    autoware::universe_utils::createMarkerScale(2.0, 2.0, 2.0),
-    autoware::universe_utils::createMarkerColor(r, g, b, 0.8));
+    autoware_utils::create_marker_scale(2.0, 2.0, 2.0),
+    autoware_utils::create_marker_color(r, g, b, 0.8));
 
   marker.pose = obj_pose;
 
