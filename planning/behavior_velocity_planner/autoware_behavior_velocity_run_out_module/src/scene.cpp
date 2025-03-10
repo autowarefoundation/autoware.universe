@@ -769,8 +769,9 @@ bool RunOutModule::insertStopPoint(
 
   planning_factor_interface_->add(
     path.points, planner_data_->current_odometry->pose, stop_point.value(), stop_point.value(),
-    tier4_planning_msgs::msg::PlanningFactor::STOP, tier4_planning_msgs::msg::SafetyFactorArray{},
-    true /*is_driving_forward*/, 0.0 /*velocity*/, 0.0 /*shift_distance*/, "run_out_stop");
+    autoware_internal_planning_msgs::msg::PlanningFactor::STOP,
+    autoware_internal_planning_msgs::msg::SafetyFactorArray{}, true /*is_driving_forward*/,
+    0.0 /*velocity*/, 0.0 /*shift_distance*/, "run_out_stop");
 
   return true;
 }
@@ -883,9 +884,9 @@ void RunOutModule::insertApproachingVelocity(
 
   planning_factor_interface_->add(
     output_path.points, planner_data_->current_odometry->pose, stop_point.value(),
-    stop_point.value(), tier4_planning_msgs::msg::PlanningFactor::STOP,
-    tier4_planning_msgs::msg::SafetyFactorArray{}, true /*is_driving_forward*/, 0.0 /*velocity*/,
-    0.0 /*shift_distance*/, "run_out_approaching_velocity");
+    stop_point.value(), autoware_internal_planning_msgs::msg::PlanningFactor::STOP,
+    autoware_internal_planning_msgs::msg::SafetyFactorArray{}, true /*is_driving_forward*/,
+    0.0 /*velocity*/, 0.0 /*shift_distance*/, "run_out_approaching_velocity");
 
   // debug
   debug_ptr_->pushStopPose(autoware_utils::calc_offset_pose(
