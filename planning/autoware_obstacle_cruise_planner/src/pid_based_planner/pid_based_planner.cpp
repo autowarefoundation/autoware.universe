@@ -336,8 +336,8 @@ std::vector<TrajectoryPoint> PIDBasedPlanner::planCruise(
 
       planning_factor_interface_->add(
         stop_traj_points, planner_data.ego_pose, stop_traj_points.at(wall_idx).pose,
-        tier4_planning_msgs::msg::PlanningFactor::NONE,
-        tier4_planning_msgs::msg::SafetyFactorArray{});
+        autoware_internal_planning_msgs::msg::PlanningFactor::NONE,
+        autoware_internal_planning_msgs::msg::SafetyFactorArray{});
     }
 
     // do cruise planning
