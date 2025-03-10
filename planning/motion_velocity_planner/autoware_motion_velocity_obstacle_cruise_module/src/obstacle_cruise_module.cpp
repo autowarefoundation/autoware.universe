@@ -720,11 +720,11 @@ std::optional<CruiseObstacle> ObstacleCruiseModule::create_yield_cruise_obstacle
     return std::nullopt;
   }
 
-  if (!is_outside_cruise_obstacle(stopped_object->predicted_object.classification.at(0).label)) {
+  if (!is_ahead_stopped_obstacle(stopped_object->predicted_object.classification.at(0).label)) {
     RCLCPP_DEBUG(
       logger_,
-      "[Cruise] Ignore yield obstacle (%s) since the corresponding stopped object is not "
-      "outside cruise obstacle.",
+      "[Cruise] Ignore yield obstacle (%s) since the corresponding stopped object type is not "
+      "designated as ahead_stopped.",
       obj_uuid_str.substr(0, 4).c_str());
     return std::nullopt;
   }
@@ -786,6 +786,12 @@ bool ObstacleCruiseModule::is_inside_cruise_obstacle(const uint8_t label) const
 bool ObstacleCruiseModule::is_outside_cruise_obstacle(const uint8_t label) const
 {
   const auto & types = obstacle_filtering_param_.outside_object_types;
+  return std::find(types.begin(), types.end(), label) != types.end();
+}
+
+bool ObstacleCruiseModule::is_ahead_stopped_obstacle(const uint8_t label) const
+{
+  const auto & types = obstacle_filtering_param_.ahead_stopped_object_types;
   return std::find(types.begin(), types.end(), label) != types.end();
 }
 

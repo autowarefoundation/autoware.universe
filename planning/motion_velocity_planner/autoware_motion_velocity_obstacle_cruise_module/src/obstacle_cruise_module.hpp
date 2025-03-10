@@ -124,6 +124,7 @@ private:
     const rclcpp::Time & predicted_objects_stamp, const std::vector<TrajectoryPoint> & traj_points);
   bool is_inside_cruise_obstacle(const uint8_t label) const;
   bool is_outside_cruise_obstacle(const uint8_t label) const;
+  bool is_ahead_stopped_obstacle(const uint8_t label) const;
   bool is_cruise_obstacle(const uint8_t label) const;
   bool is_front_collide_obstacle(
     const std::vector<TrajectoryPoint> & traj_points,
