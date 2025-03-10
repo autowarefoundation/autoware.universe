@@ -19,11 +19,11 @@
 #include <autoware/motion_utils/marker/virtual_wall_marker_creator.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
 #include <autoware/signal_processing/lowpass_filter_1d.hpp>
-#include <autoware/universe_utils/geometry/geometry.hpp>
-#include <autoware/universe_utils/ros/marker_helper.hpp>
-#include <autoware/universe_utils/ros/parameter.hpp>
-#include <autoware/universe_utils/ros/update_param.hpp>
-#include <autoware/universe_utils/ros/uuid_helper.hpp>
+#include <autoware_utils/geometry/geometry.hpp>
+#include <autoware_utils/ros/marker_helper.hpp>
+#include <autoware_utils/ros/parameter.hpp>
+#include <autoware_utils/ros/update_param.hpp>
+#include <autoware_utils/ros/uuid_helper.hpp>
 
 #include <algorithm>
 #include <iostream>
@@ -36,7 +36,7 @@
 
 namespace autoware::motion_velocity_planner
 {
-using autoware::universe_utils::getOrDeclareParameter;
+using autoware_utils::get_or_declare_parameter;
 
 namespace
 {
@@ -55,7 +55,7 @@ bool is_lower_considering_hysteresis(
   return false;
 }
 
-geometry_msgs::msg::Point to_geom_point(const autoware::universe_utils::Point2d & point)
+geometry_msgs::msg::Point to_geom_point(const autoware_utils::Point2d & point)
 {
   geometry_msgs::msg::Point geom_point;
   geom_point.x = point.x();
@@ -211,7 +211,7 @@ void ObstacleSlowDownModule::init(rclcpp::Node & node, const std::string & modul
   metrics_pub_ = node.create_publisher<MetricArray>("~/slow_down/metrics", 10);
   debug_slow_down_planning_info_pub_ =
     node.create_publisher<Float32MultiArrayStamped>("~/debug/slow_down_planning_info", 1);
-  processing_time_detail_pub_ = node.create_publisher<universe_utils::ProcessingTimeDetail>(
+  processing_time_detail_pub_ = node.create_publisher<autoware_utils::ProcessingTimeDetail>(
     "~/debug/processing_time_detail_ms/obstacle_slow_down", 1);
 
   // interface publisher
@@ -223,7 +223,7 @@ void ObstacleSlowDownModule::init(rclcpp::Node & node, const std::string & modul
       &node, "obstacle_slow_down");
 
   // time keeper
-  time_keeper_ = std::make_shared<universe_utils::TimeKeeper>(processing_time_detail_pub_);
+  time_keeper_ = std::make_shared<autoware_utils::TimeKeeper>(processing_time_detail_pub_);
 }
 
 void ObstacleSlowDownModule::update_parameters(
@@ -240,7 +240,7 @@ ObstacleSlowDownModule::convert_point_cloud_to_slow_down_points(
     return {};
   }
 
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+  autoware_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   const auto & p = obstacle_filtering_param_;
 
@@ -325,7 +325,7 @@ VelocityPlanningResult ObstacleSlowDownModule::plan(
     smoothed_trajectory_points,
   const std::shared_ptr<const PlannerData> planner_data)
 {
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+  autoware_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   stop_watch_.tic();
   debug_data_ptr_ = std::make_shared<DebugData>();
@@ -390,7 +390,7 @@ ObstacleSlowDownModule::filter_slow_down_obstacle_for_predicted_object(
   const rclcpp::Time & predicted_objects_stamp, const VehicleInfo & vehicle_info,
   const TrajectoryPolygonCollisionCheck & trajectory_polygon_collision_check)
 {
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+  autoware_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   const auto & current_pose = odometry.pose.pose;
 
@@ -452,7 +452,7 @@ std::vector<SlowDownObstacle> ObstacleSlowDownModule::filter_slow_down_obstacle_
   const PlannerData::Pointcloud & point_cloud, const VehicleInfo & vehicle_info,
   const TrajectoryPolygonCollisionCheck & trajectory_polygon_collision_check, size_t ego_idx)
 {
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+  autoware_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   // calculate collision points with trajectory with lateral stop margin
   // NOTE: For additional margin, hysteresis is not divided by two.
@@ -500,12 +500,12 @@ ObstacleSlowDownModule::create_slow_down_obstacle_for_predicted_object(
   const std::shared_ptr<PlannerData::Object> object, const rclcpp::Time & predicted_objects_stamp,
   const double dist_from_obj_poly_to_traj_poly)
 {
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+  autoware_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   const auto & p = obstacle_filtering_param_;
 
   const auto & obj_uuid = object->predicted_object.object_id;
-  const auto & obj_uuid_str = autoware::universe_utils::toHexString(obj_uuid);
+  const auto & obj_uuid_str = autoware_utils::to_hex_string(obj_uuid);
   const auto & obj_label = object->predicted_object.classification.at(0).label;
   slow_down_condition_counter_.add_current_uuid(obj_uuid_str);
 
@@ -555,7 +555,7 @@ ObstacleSlowDownModule::create_slow_down_obstacle_for_predicted_object(
     return std::nullopt;
   }
 
-  const auto obstacle_poly = autoware::universe_utils::toPolygon2d(
+  const auto obstacle_poly = autoware_utils::to_polygon2d(
     object->predicted_object.kinematics.initial_pose_with_covariance.pose,
     object->predicted_object.shape);
 
@@ -638,7 +638,7 @@ std::optional<SlowDownObstacle> ObstacleSlowDownModule::create_slow_down_obstacl
     return std::nullopt;
   }
   const unique_identifier_msgs::msg::UUID obj_uuid;
-  const auto & obj_uuid_str = autoware::universe_utils::toHexString(obj_uuid);
+  const auto & obj_uuid_str = autoware_utils::to_hex_string(obj_uuid);
 
   ObjectClassification unknown_object_classification;
   unknown_object_classification.label = ObjectClassification::UNKNOWN;
@@ -666,7 +666,7 @@ std::vector<SlowdownInterval> ObstacleSlowDownModule::plan_slow_down(
   const std::vector<TrajectoryPoint> & traj_points, const std::vector<SlowDownObstacle> & obstacles,
   [[maybe_unused]] std::optional<VelocityLimit> & velocity_limit, const VehicleInfo & vehicle_info)
 {
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+  autoware_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   auto slow_down_traj_points = traj_points;
   slow_down_debug_multi_array_ = Float32MultiArrayStamped();
@@ -776,7 +776,7 @@ std::vector<SlowdownInterval> ObstacleSlowDownModule::plan_slow_down(
       const auto markers = autoware::motion_utils::createSlowDownVirtualWallMarker(
         slow_down_traj_points.at(slow_down_wall_idx).pose, "obstacle slow down", clock_->now(), i,
         abs_ego_offset, "", planner_data->is_driving_forward);
-      autoware::universe_utils::appendMarkerArray(markers, &debug_data_ptr_->slow_down_wall_marker);
+      autoware_utils::append_marker_array(markers, &debug_data_ptr_->slow_down_wall_marker);
 
       // update planning factor
       planning_factor_interface_->add(
@@ -791,15 +791,13 @@ std::vector<SlowdownInterval> ObstacleSlowDownModule::plan_slow_down(
       const auto markers = autoware::motion_utils::createSlowDownVirtualWallMarker(
         slow_down_traj_points.at(*slow_down_start_idx).pose, "obstacle slow down start",
         clock_->now(), i * 2, abs_ego_offset, "", planner_data->is_driving_forward);
-      autoware::universe_utils::appendMarkerArray(
-        markers, &debug_data_ptr_->slow_down_debug_wall_marker);
+      autoware_utils::append_marker_array(markers, &debug_data_ptr_->slow_down_debug_wall_marker);
     }
     if (slow_down_end_idx) {
       const auto markers = autoware::motion_utils::createSlowDownVirtualWallMarker(
         slow_down_traj_points.at(*slow_down_end_idx).pose, "obstacle slow down end", clock_->now(),
         i * 2 + 1, abs_ego_offset, "", planner_data->is_driving_forward);
-      autoware::universe_utils::appendMarkerArray(
-        markers, &debug_data_ptr_->slow_down_debug_wall_marker);
+      autoware_utils::append_marker_array(markers, &debug_data_ptr_->slow_down_debug_wall_marker);
     }
 
     // Add debug data
@@ -827,7 +825,7 @@ Float32MultiArrayStamped ObstacleSlowDownModule::get_slow_down_planning_debug_me
 
 void ObstacleSlowDownModule::publish_debug_info()
 {
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+  autoware_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   // 1. debug marker
   MarkerArray debug_marker;
@@ -840,16 +838,16 @@ void ObstacleSlowDownModule::publish_debug_info()
     debug_marker.markers.push_back(obstacle_marker);
 
     // collision points
-    auto front_collision_point_marker = autoware::universe_utils::createDefaultMarker(
+    auto front_collision_point_marker = autoware_utils::create_default_marker(
       "map", clock_->now(), "collision_points", i * 2 + 0, Marker::SPHERE,
-      autoware::universe_utils::createMarkerScale(0.25, 0.25, 0.25),
-      autoware::universe_utils::createMarkerColor(1.0, 0.0, 0.0, 0.999));
+      autoware_utils::create_marker_scale(0.25, 0.25, 0.25),
+      autoware_utils::create_marker_color(1.0, 0.0, 0.0, 0.999));
     front_collision_point_marker.pose.position =
       debug_data_ptr_->obstacles_to_slow_down.at(i).front_collision_point;
-    auto back_collision_point_marker = autoware::universe_utils::createDefaultMarker(
+    auto back_collision_point_marker = autoware_utils::create_default_marker(
       "map", clock_->now(), "collision_points", i * 2 + 1, Marker::SPHERE,
-      autoware::universe_utils::createMarkerScale(0.25, 0.25, 0.25),
-      autoware::universe_utils::createMarkerColor(1.0, 0.0, 0.0, 0.999));
+      autoware_utils::create_marker_scale(0.25, 0.25, 0.25),
+      autoware_utils::create_marker_color(1.0, 0.0, 0.0, 0.999));
     back_collision_point_marker.pose.position =
       debug_data_ptr_->obstacles_to_slow_down.at(i).back_collision_point;
 
@@ -858,14 +856,13 @@ void ObstacleSlowDownModule::publish_debug_info()
   }
 
   // 1.2. slow down debug wall marker
-  autoware::universe_utils::appendMarkerArray(
-    debug_data_ptr_->slow_down_debug_wall_marker, &debug_marker);
+  autoware_utils::append_marker_array(debug_data_ptr_->slow_down_debug_wall_marker, &debug_marker);
 
   // 1.3. detection area
-  auto decimated_traj_polys_marker = autoware::universe_utils::createDefaultMarker(
+  auto decimated_traj_polys_marker = autoware_utils::create_default_marker(
     "map", clock_->now(), "detection_area", 0, Marker::LINE_LIST,
-    autoware::universe_utils::createMarkerScale(0.01, 0.0, 0.0),
-    autoware::universe_utils::createMarkerColor(0.0, 1.0, 0.0, 0.999));
+    autoware_utils::create_marker_scale(0.01, 0.0, 0.0),
+    autoware_utils::create_marker_color(0.0, 1.0, 0.0, 0.999));
   for (const auto & decimated_traj_poly : debug_data_ptr_->decimated_traj_polys) {
     for (size_t dp_idx = 0; dp_idx < decimated_traj_poly.outer().size(); ++dp_idx) {
       const auto & current_point = decimated_traj_poly.outer().at(dp_idx);
@@ -873,9 +870,9 @@ void ObstacleSlowDownModule::publish_debug_info()
         decimated_traj_poly.outer().at((dp_idx + 1) % decimated_traj_poly.outer().size());
 
       decimated_traj_polys_marker.points.push_back(
-        autoware::universe_utils::createPoint(current_point.x(), current_point.y(), 0.0));
+        autoware_utils::create_point(current_point.x(), current_point.y(), 0.0));
       decimated_traj_polys_marker.points.push_back(
-        autoware::universe_utils::createPoint(next_point.x(), next_point.y(), 0.0));
+        autoware_utils::create_point(next_point.x(), next_point.y(), 0.0));
     }
   }
   debug_marker.markers.push_back(decimated_traj_polys_marker);
@@ -916,7 +913,7 @@ ObstacleSlowDownModule::calculate_distance_to_slow_down_with_constraints(
   const std::optional<SlowDownOutput> & prev_output, const double dist_to_ego,
   const VehicleInfo & vehicle_info, const bool is_obstacle_moving) const
 {
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+  autoware_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   const double abs_ego_offset = planner_data->is_driving_forward
                                   ? std::abs(vehicle_info.max_longitudinal_offset_m)

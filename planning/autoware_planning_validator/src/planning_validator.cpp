@@ -17,7 +17,7 @@
 #include "autoware/planning_validator/utils.hpp"
 
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
-#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware_utils/geometry/geometry.hpp>
 
 #include <memory>
 #include <string>
@@ -44,9 +44,8 @@ PlanningValidator::PlanningValidator(const rclcpp::NodeOptions & options)
 
   setupParameters();
 
-  logger_configure_ = std::make_unique<autoware::universe_utils::LoggerLevelConfigure>(this);
-  published_time_publisher_ =
-    std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
+  logger_configure_ = std::make_unique<autoware_utils::LoggerLevelConfigure>(this);
+  published_time_publisher_ = std::make_unique<autoware_utils::PublishedTimePublisher>(this);
 }
 
 void PlanningValidator::setupParameters()
@@ -81,6 +80,7 @@ void PlanningValidator::setupParameters()
     p.distance_deviation_threshold = declare_parameter<double>(t + "distance_deviation");
     p.longitudinal_distance_deviation_threshold =
       declare_parameter<double>(t + "longitudinal_distance_deviation");
+    p.nominal_latency_threshold = declare_parameter<double>(t + "nominal_latency");
 
     const std::string ps = "parameters.";
     p.forward_trajectory_length_acceleration =
@@ -169,6 +169,9 @@ void PlanningValidator::setupDiag()
       stat, validation_status_.is_valid_forward_trajectory_length,
       "trajectory length is too short");
   });
+  d->add(ns + "latency", [&](auto & stat) {
+    setStatus(stat, validation_status_.is_valid_latency, "latency is larger than expected value.");
+  });
 }
 
 bool PlanningValidator::isDataReady()
@@ -194,7 +197,7 @@ void PlanningValidator::onTrajectory(const Trajectory::ConstSharedPtr msg)
   current_trajectory_ = msg;
 
   // receive data
-  current_kinematics_ = sub_kinematics_.takeData();
+  current_kinematics_ = sub_kinematics_.take_data();
 
   if (!isDataReady()) return;
 
@@ -320,6 +323,7 @@ void PlanningValidator::validate(const Trajectory & trajectory)
   s.is_valid_lateral_acc = checkValidLateralAcceleration(resampled);
   s.is_valid_steering = checkValidSteering(resampled);
   s.is_valid_steering_rate = checkValidSteeringRate(resampled);
+  s.is_valid_latency = checkValidLatency(trajectory);
 
   s.invalid_count = isAllValid(s) ? 0 : s.invalid_count + 1;
 }
@@ -469,8 +473,8 @@ bool PlanningValidator::checkValidDistanceDeviation(const Trajectory & trajector
   const auto idx = autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
     trajectory.points, current_kinematics_->pose.pose);
 
-  validation_status_.distance_deviation = autoware::universe_utils::calcDistance2d(
-    trajectory.points.at(idx), current_kinematics_->pose.pose);
+  validation_status_.distance_deviation =
+    autoware_utils::calc_distance2d(trajectory.points.at(idx), current_kinematics_->pose.pose);
 
   if (validation_status_.distance_deviation > validation_params_.distance_deviation_threshold) {
     return false;
@@ -501,7 +505,7 @@ bool PlanningValidator::checkValidLongitudinalDistanceDeviation(const Trajectory
     // for last, need to remove distance for the last segment.
     if (is_last) {
       const auto size = trajectory.points.size();
-      long_offset -= autoware::universe_utils::calcDistance2d(
+      long_offset -= autoware_utils::calc_distance2d(
         trajectory.points.at(size - 1), trajectory.points.at(size - 2));
     }
 
@@ -545,6 +549,12 @@ bool PlanningValidator::checkValidForwardTrajectoryLength(const Trajectory & tra
   return forward_length > forward_length_required;
 }
 
+bool PlanningValidator::checkValidLatency(const Trajectory & trajectory)
+{
+  validation_status_.latency = (this->now() - trajectory.header.stamp).seconds();
+  return validation_status_.latency < validation_params_.nominal_latency_threshold;
+}
+
 bool PlanningValidator::isAllValid(const PlanningValidatorStatus & s) const
 {
   return s.is_valid_size && s.is_valid_finite_value && s.is_valid_interval &&
@@ -552,7 +562,7 @@ bool PlanningValidator::isAllValid(const PlanningValidatorStatus & s) const
          s.is_valid_longitudinal_max_acc && s.is_valid_longitudinal_min_acc &&
          s.is_valid_steering && s.is_valid_steering_rate && s.is_valid_velocity_deviation &&
          s.is_valid_distance_deviation && s.is_valid_longitudinal_distance_deviation &&
-         s.is_valid_forward_trajectory_length;
+         s.is_valid_forward_trajectory_length && s.is_valid_latency;
 }
 
 void PlanningValidator::displayStatus()
@@ -583,6 +593,7 @@ void PlanningValidator::displayStatus()
     s.is_valid_longitudinal_distance_deviation,
     "planning trajectory is too far from ego in longitudinal direction!!");
   warn(s.is_valid_forward_trajectory_length, "planning trajectory forward length is not enough!!");
+  warn(s.is_valid_latency, "planning component latency is larger than threshold!!");
 }
 
 }  // namespace autoware::planning_validator

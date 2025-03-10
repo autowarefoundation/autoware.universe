@@ -34,14 +34,16 @@ ControlValidator::ControlValidator(const rclcpp::NodeOptions & options)
 {
   using std::placeholders::_1;
 
+  sub_control_cmd_ = create_subscription<Control>(
+    "~/input/control_cmd", 1, std::bind(&ControlValidator::on_control_cmd, this, _1));
   sub_predicted_traj_ = create_subscription<Trajectory>(
     "~/input/predicted_trajectory", 1,
     std::bind(&ControlValidator::on_predicted_trajectory, this, _1));
   sub_kinematics_ =
-    universe_utils::InterProcessPollingSubscriber<nav_msgs::msg::Odometry>::create_subscription(
+    autoware_utils::InterProcessPollingSubscriber<nav_msgs::msg::Odometry>::create_subscription(
       this, "~/input/kinematics", 1);
   sub_reference_traj_ =
-    autoware::universe_utils::InterProcessPollingSubscriber<Trajectory>::create_subscription(
+    autoware_utils::InterProcessPollingSubscriber<Trajectory>::create_subscription(
       this, "~/input/reference_trajectory", 1);
 
   pub_status_ = create_publisher<ControlValidatorStatus>("~/output/validation_status", 1);
@@ -70,6 +72,7 @@ void ControlValidator::setup_parameters()
     p.rolling_back_velocity = declare_parameter<double>(t + "rolling_back_velocity");
     p.over_velocity_offset = declare_parameter<double>(t + "over_velocity_offset");
     p.over_velocity_ratio = declare_parameter<double>(t + "over_velocity_ratio");
+    p.nominal_latency_threshold = declare_parameter<double>(t + "nominal_latency");
   }
   const auto lpf_gain = declare_parameter<double>("vel_lpf_gain");
   vehicle_vel_.setGain(lpf_gain);
@@ -126,6 +129,10 @@ void ControlValidator::setup_diag()
       stat, !validation_status_.is_over_velocity,
       "The vehicle is over-speeding against the target.");
   });
+  d.add(ns + "latency", [&](auto & stat) {
+    set_status(
+      stat, validation_status_.is_valid_latency, "The latency is larger than expected value.");
+  });
 }
 
 bool ControlValidator::is_data_ready()
@@ -147,13 +154,22 @@ bool ControlValidator::is_data_ready()
   return true;
 }
 
+void ControlValidator::on_control_cmd(const Control::ConstSharedPtr msg)
+{
+  validation_status_.latency = (this->now() - msg->stamp).seconds();
+  validation_status_.is_valid_latency =
+    validation_status_.latency < validation_params_.nominal_latency_threshold;
+  validation_status_.invalid_count =
+    is_all_valid(validation_status_) ? 0 : validation_status_.invalid_count + 1;
+}
+
 void ControlValidator::on_predicted_trajectory(const Trajectory::ConstSharedPtr msg)
 {
   stop_watch.tic();
 
   current_predicted_trajectory_ = msg;
-  current_reference_trajectory_ = sub_reference_traj_->takeData();
-  current_kinematics_ = sub_kinematics_->takeData();
+  current_reference_trajectory_ = sub_reference_traj_->take_data();
+  current_kinematics_ = sub_kinematics_->take_data();
 
   if (!is_data_ready()) return;
 
@@ -254,7 +270,8 @@ void ControlValidator::calc_velocity_deviation_status(
 
 bool ControlValidator::is_all_valid(const ControlValidatorStatus & s)
 {
-  return s.is_valid_max_distance_deviation && !s.is_rolling_back && !s.is_over_velocity;
+  return s.is_valid_max_distance_deviation && !s.is_rolling_back && !s.is_over_velocity &&
+         s.is_valid_latency;
 }
 
 void ControlValidator::display_status()

@@ -32,7 +32,7 @@ namespace autoware::behavior_velocity_planner
 StopLineModule::StopLineModule(
   const int64_t module_id, lanelet::ConstLineString3d stop_line, const PlannerParam & planner_param,
   const rclcpp::Logger & logger, const rclcpp::Clock::SharedPtr clock,
-  const std::shared_ptr<universe_utils::TimeKeeper> & time_keeper,
+  const std::shared_ptr<autoware_utils::TimeKeeper> & time_keeper,
   const std::shared_ptr<planning_factor_interface::PlanningFactorInterface> &
     planning_factor_interface)
 : SceneModuleInterface(module_id, logger, clock, time_keeper, planning_factor_interface),
@@ -66,10 +66,11 @@ bool StopLineModule::modifyPathVelocity(PathWithLaneId * path)
 
   // TODO(soblin): PlanningFactorInterface use trajectory class
   planning_factor_interface_->add(
-    path->points, trajectory->compute(*stop_point).point.pose,
-    planner_data_->current_odometry->pose, planner_data_->current_odometry->pose,
-    tier4_planning_msgs::msg::PlanningFactor::STOP, tier4_planning_msgs::msg::SafetyFactorArray{},
-    true /*is_driving_forward*/, 0.0, 0.0 /*shift distance*/, "stopline");
+    path->points, planner_data_->current_odometry->pose,
+    trajectory->compute(*stop_point).point.pose, trajectory->compute(*stop_point).point.pose,
+    autoware_internal_planning_msgs::msg::PlanningFactor::STOP,
+    autoware_internal_planning_msgs::msg::SafetyFactorArray{}, true /*is_driving_forward*/, 0.0,
+    0.0 /*shift distance*/, "stopline");
 
   updateStateAndStoppedTime(
     &state_, &stopped_time_, clock_->now(), *stop_point - ego_s, planner_data_->isVehicleStopped());
