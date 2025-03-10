@@ -126,14 +126,6 @@ void addColor(visualization_msgs::msg::Marker & marker, const uint8_t & p_color)
     marker.color.r = 1.0f;
     marker.color.g = 1.0f;
     marker.color.b = 0.0f;
-  } else if (p_color == TrafficLightElement::UNKNOWN) {
-    marker.color.r = 1.0f;
-    marker.color.g = 1.0f;
-    marker.color.b = 1.0f;
-  } else if (p_color == TrafficLightElement::WHITE) {
-    marker.color.r = 1.0f;
-    marker.color.g = 1.0f;
-    marker.color.b = 1.0f;
   } else {
     marker.color.r = 1.0f;
     marker.color.g = 1.0f;
