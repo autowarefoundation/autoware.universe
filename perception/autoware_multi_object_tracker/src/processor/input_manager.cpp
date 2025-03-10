@@ -52,6 +52,7 @@ void InputStream::onMessage(
   const autoware_perception_msgs::msg::DetectedObjects::ConstSharedPtr msg)
 {
   const autoware_perception_msgs::msg::DetectedObjects & objects = *msg;
+  const rclcpp::Time timestamp = objects.header.stamp;
 
   types::DynamicObjectList dynamic_objects = types::toDynamicObjectList(objects, channel_.index);
 
@@ -80,8 +81,12 @@ void InputStream::onMessage(
     }
     // else, it is bounding box and nothing to do
 
-    // calculate nearest point?
-    // calcAnchorPointOffset(object);
+    // calculate nearest point
+    const auto self_transform = odometry_->getTransform(timestamp);
+    if (!self_transform) {
+      return;
+    }
+    shapes::getNearestCornerOrSurface(*self_transform, object);
 
     // if object extension is not reliable, enlarge covariance of position and extend shape
   }

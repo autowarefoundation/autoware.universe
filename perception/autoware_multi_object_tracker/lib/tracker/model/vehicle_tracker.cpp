@@ -60,6 +60,8 @@ VehicleTracker::VehicleTracker(
     object_extension.y = object_model_.init_size.width;
     object_extension.z = object_model_.init_size.height;
   }
+  object_.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
+
   // set maximum and minimum size
   limitObjectExtension(object_model_);
 
@@ -138,19 +140,6 @@ bool VehicleTracker::predict(const rclcpp::Time & time)
     return false;
   }
   return true;
-}
-
-types::DynamicObject VehicleTracker::getUpdatingObject(
-  const types::DynamicObject & object, const geometry_msgs::msg::Transform & self_transform)
-{
-  types::DynamicObject updating_object = object;
-
-  // get offset measurement
-  const geometry_msgs::msg::Point anchor_vector =
-    shapes::getNearestCornerOrSurface(object, self_transform);
-  shapes::calcAnchorPointOffset(object_, object, anchor_vector, tracking_offset_, updating_object);
-
-  return updating_object;
 }
 
 bool VehicleTracker::measureWithPose(const types::DynamicObject & object)
@@ -240,13 +229,8 @@ bool VehicleTracker::measureWithShape(const types::DynamicObject & object)
   return true;
 }
 
-bool VehicleTracker::measure(
-  const types::DynamicObject & object, const rclcpp::Time & time,
-  const geometry_msgs::msg::Transform & self_transform)
+bool VehicleTracker::measure(const types::DynamicObject & in_object, const rclcpp::Time & time)
 {
-  // keep the latest input object
-  object_ = object;
-
   // check time gap
   const double dt = motion_model_.getDeltaTime(time);
   if (0.01 /*10msec*/ < dt) {
@@ -258,7 +242,8 @@ bool VehicleTracker::measure(
   }
 
   // update object
-  const types::DynamicObject updating_object = getUpdatingObject(object, self_transform);
+  types::DynamicObject updating_object = in_object;
+  shapes::calcAnchorPointOffset(object_, tracking_offset_, updating_object);
   measureWithPose(updating_object);
   measureWithShape(updating_object);
 
@@ -269,12 +254,12 @@ bool VehicleTracker::getTrackedObject(
   const rclcpp::Time & time, types::DynamicObject & object) const
 {
   object = object_;
+
+  // predict from motion model
   auto & pose = object.pose;
   auto & pose_cov = object.pose_covariance;
   auto & twist = object.twist;
   auto & twist_cov = object.twist_covariance;
-
-  // predict from motion model
   if (!motion_model_.getPredictedState(time, pose, pose_cov, twist, twist_cov)) {
     RCLCPP_WARN(logger_, "VehicleTracker::getTrackedObject: Failed to get predicted state.");
     return false;

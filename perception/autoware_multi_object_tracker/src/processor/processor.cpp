@@ -65,7 +65,6 @@ void TrackerProcessor::associate(
 
 void TrackerProcessor::update(
   const types::DynamicObjectList & detected_objects,
-  const geometry_msgs::msg::Transform & self_transform,
   const std::unordered_map<int, int> & direct_assignment)
 {
   int tracker_idx = 0;
@@ -77,8 +76,7 @@ void TrackerProcessor::update(
       const auto & associated_object =
         detected_objects.objects.at(direct_assignment.find(tracker_idx)->second);
       const types::InputChannel channel_info = channels_config_[associated_object.channel_index];
-      (*(tracker_itr))
-        ->updateWithMeasurement(associated_object, time, self_transform, channel_info);
+      (*(tracker_itr))->updateWithMeasurement(associated_object, time, channel_info);
 
     } else {
       // not found

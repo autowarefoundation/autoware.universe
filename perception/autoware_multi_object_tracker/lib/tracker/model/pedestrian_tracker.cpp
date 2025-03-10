@@ -116,13 +116,6 @@ bool PedestrianTracker::predict(const rclcpp::Time & time)
   return motion_model_.predictState(time);
 }
 
-types::DynamicObject PedestrianTracker::getUpdatingObject(
-  const types::DynamicObject & object,
-  const geometry_msgs::msg::Transform & /*self_transform*/) const
-{
-  return object;
-}
-
 bool PedestrianTracker::measureWithPose(const types::DynamicObject & object)
 {
   // update motion model
@@ -170,16 +163,14 @@ bool PedestrianTracker::measureWithShape(const types::DynamicObject & object)
     return false;
   }
 
+  // update shape type
+  object_.shape.type = object.shape.type;
+
   return true;
 }
 
-bool PedestrianTracker::measure(
-  const types::DynamicObject & object, const rclcpp::Time & time,
-  const geometry_msgs::msg::Transform & self_transform)
+bool PedestrianTracker::measure(const types::DynamicObject & object, const rclcpp::Time & time)
 {
-  // keep the latest input object
-  object_ = object;
-
   // check time gap
   const double dt = motion_model_.getDeltaTime(time);
   if (0.01 /*10msec*/ < dt) {
@@ -191,11 +182,9 @@ bool PedestrianTracker::measure(
   }
 
   // update object
-  const types::DynamicObject updating_object = getUpdatingObject(object, self_transform);
-  measureWithPose(updating_object);
-  measureWithShape(updating_object);
+  measureWithPose(object);
+  measureWithShape(object);
 
-  (void)self_transform;  // currently do not use self vehicle position
   return true;
 }
 
@@ -203,12 +192,12 @@ bool PedestrianTracker::getTrackedObject(
   const rclcpp::Time & time, types::DynamicObject & object) const
 {
   object = object_;
+
+  // predict from motion model
   auto & pose = object.pose;
   auto & pose_cov = object.pose_covariance;
   auto & twist = object.twist;
   auto & twist_cov = object.twist_covariance;
-
-  // predict from motion model
   if (!motion_model_.getPredictedState(time, pose, pose_cov, twist, twist_cov)) {
     RCLCPP_WARN(logger_, "PedestrianTracker::getTrackedObject: Failed to get predicted state.");
     return false;

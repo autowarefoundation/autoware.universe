@@ -52,9 +52,7 @@ bool PassThroughTracker::predict(const rclcpp::Time & time)
   return true;
 }
 
-bool PassThroughTracker::measure(
-  const types::DynamicObject & object, const rclcpp::Time & time,
-  const geometry_msgs::msg::Transform & self_transform)
+bool PassThroughTracker::measure(const types::DynamicObject & object, const rclcpp::Time & time)
 {
   prev_observed_object_ = object_;
   object_ = object;
@@ -68,7 +66,6 @@ bool PassThroughTracker::measure(
   }
   last_update_time_ = time;
 
-  (void)self_transform;  // currently do not use self vehicle position
   return true;
 }
 

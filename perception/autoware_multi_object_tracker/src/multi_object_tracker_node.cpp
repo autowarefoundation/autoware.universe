@@ -248,12 +248,6 @@ void MultiObjectTracker::runProcess(const types::DynamicObjectList & detected_ob
   const rclcpp::Time measurement_time =
     rclcpp::Time(detected_objects.header.stamp, this->now().get_clock_type());
 
-  // Get the self transform
-  const auto self_transform = odometry_->getTransform(measurement_time);
-  if (!self_transform) {
-    return;
-  }
-
   /* predict trackers to the measurement time */
   processor_->predict(measurement_time);
 
@@ -267,7 +261,7 @@ void MultiObjectTracker::runProcess(const types::DynamicObjectList & detected_ob
     reverse_assignment);
 
   /* tracker update */
-  processor_->update(detected_objects, *self_transform, direct_assignment);
+  processor_->update(detected_objects, direct_assignment);
 
   /* tracker pruning */
   processor_->prune(measurement_time);

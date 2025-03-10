@@ -50,6 +50,8 @@ BicycleTracker::BicycleTracker(const rclcpp::Time & time, const types::DynamicOb
     object_extension.y = object_model_.init_size.width;
     object_extension.z = object_model_.init_size.height;
   }
+  object_.shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
+
   // set maximum and minimum size
   limitObjectExtension(object_model_);
 
@@ -126,13 +128,6 @@ bool BicycleTracker::predict(const rclcpp::Time & time)
   return motion_model_.predictState(time);
 }
 
-types::DynamicObject BicycleTracker::getUpdatingObject(
-  const types::DynamicObject & object,
-  const geometry_msgs::msg::Transform & /*self_transform*/) const
-{
-  return object;
-}
-
 bool BicycleTracker::measureWithPose(const types::DynamicObject & object)
 {
   // get measurement yaw angle to update
@@ -199,9 +194,7 @@ bool BicycleTracker::measureWithShape(const types::DynamicObject & object)
   return true;
 }
 
-bool BicycleTracker::measure(
-  const types::DynamicObject & object, const rclcpp::Time & time,
-  const geometry_msgs::msg::Transform & self_transform)
+bool BicycleTracker::measure(const types::DynamicObject & object, const rclcpp::Time & time)
 {
   // check time gap
   const double dt = motion_model_.getDeltaTime(time);
@@ -214,9 +207,8 @@ bool BicycleTracker::measure(
   }
 
   // update object
-  const types::DynamicObject updating_object = getUpdatingObject(object, self_transform);
-  measureWithPose(updating_object);
-  measureWithShape(updating_object);
+  measureWithPose(object);
+  measureWithShape(object);
 
   return true;
 }
@@ -225,12 +217,12 @@ bool BicycleTracker::getTrackedObject(
   const rclcpp::Time & time, types::DynamicObject & object) const
 {
   object = object_;
+
+  // predict from motion model
   auto & pose = object.pose;
   auto & pose_cov = object.pose_covariance;
   auto & twist = object.twist;
   auto & twist_cov = object.twist_covariance;
-
-  // predict from motion model
   if (!motion_model_.getPredictedState(time, pose, pose_cov, twist, twist_cov)) {
     RCLCPP_WARN(logger_, "BicycleTracker::getTrackedObject: Failed to get predicted state.");
     return false;

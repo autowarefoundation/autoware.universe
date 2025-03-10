@@ -121,12 +121,6 @@ bool UnknownTracker::predict(const rclcpp::Time & time)
   return motion_model_.predictState(time);
 }
 
-types::DynamicObject UnknownTracker::getUpdatingObject(
-  const types::DynamicObject & object, const geometry_msgs::msg::Transform & /*self_transform*/)
-{
-  return object;
-}
-
 bool UnknownTracker::measureWithPose(const types::DynamicObject & object)
 {
   // update motion model
@@ -146,12 +140,10 @@ bool UnknownTracker::measureWithPose(const types::DynamicObject & object)
   return is_updated;
 }
 
-bool UnknownTracker::measure(
-  const types::DynamicObject & object, const rclcpp::Time & time,
-  const geometry_msgs::msg::Transform & self_transform)
+bool UnknownTracker::measure(const types::DynamicObject & object, const rclcpp::Time & time)
 {
-  // keep the latest input object
-  object_ = object;
+  // update object shape
+  object_.shape = object.shape;
 
   // check time gap
   const double dt = motion_model_.getDeltaTime(time);
@@ -164,8 +156,7 @@ bool UnknownTracker::measure(
   }
 
   // update object
-  const types::DynamicObject updating_object = getUpdatingObject(object, self_transform);
-  measureWithPose(updating_object);
+  measureWithPose(object);
 
   return true;
 }
@@ -174,12 +165,12 @@ bool UnknownTracker::getTrackedObject(
   const rclcpp::Time & time, types::DynamicObject & object) const
 {
   object = object_;
+
+  // predict from motion model
   auto & pose = object.pose;
   auto & pose_cov = object.pose_covariance;
   auto & twist = object.twist;
   auto & twist_cov = object.twist_covariance;
-
-  // predict from motion model
   if (!motion_model_.getPredictedState(time, pose, pose_cov, twist, twist_cov)) {
     RCLCPP_WARN(logger_, "UnknownTracker::getTrackedObject: Failed to get predicted state.");
     return false;

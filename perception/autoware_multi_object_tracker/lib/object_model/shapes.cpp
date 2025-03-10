@@ -171,8 +171,8 @@ enum BBOX_IDX {
  * @param self_transform: Ego vehicle position in map frame
  * @return int index
  */
-geometry_msgs::msg::Point getNearestCornerOrSurface(
-  const types::DynamicObject & object, const geometry_msgs::msg::Transform & self_transform)
+void getNearestCornerOrSurface(
+  const geometry_msgs::msg::Transform & self_transform, types::DynamicObject & object)
 {
   const double x = object.pose.position.x;
   const double y = object.pose.position.y;
@@ -212,24 +212,22 @@ geometry_msgs::msg::Point getNearestCornerOrSurface(
   } else {
     anchor_y = -width / 2.0;
   }
-  geometry_msgs::msg::Point anchor_point;
-  anchor_point.x = anchor_x;
-  anchor_point.y = anchor_y;
-  return anchor_point;
+
+  object.anchor_point.x = anchor_x;
+  object.anchor_point.y = anchor_y;
 }
 
 void calcAnchorPointOffset(
-  const types::DynamicObject & this_object, const types::DynamicObject & input_object,
-  const geometry_msgs::msg::Point anchor_vector, Eigen::Vector2d & tracking_offset,
-  types::DynamicObject & offset_object)
+  const types::DynamicObject & this_object, Eigen::Vector2d & tracking_offset,
+  types::DynamicObject & updating_object)
 {
   // copy value
-  offset_object = input_object;
+  const geometry_msgs::msg::Point anchor_vector = updating_object.anchor_point;
   // invalid anchor
   if (anchor_vector.x <= 1e-6 && anchor_vector.y <= 1e-6) {
     return;
   }
-  double input_yaw = tf2::getYaw(input_object.pose.orientation);
+  double input_yaw = tf2::getYaw(updating_object.pose.orientation);
 
   // current object width and height
   const double length = this_object.shape.dimensions.x;
@@ -251,8 +249,8 @@ void calcAnchorPointOffset(
   // offset input object
   const Eigen::Matrix2d R = Eigen::Rotation2Dd(input_yaw).toRotationMatrix();
   const Eigen::Vector2d rotated_offset = R * tracking_offset;
-  offset_object.pose.position.x += rotated_offset.x();
-  offset_object.pose.position.y += rotated_offset.y();
+  updating_object.pose.position.x += rotated_offset.x();
+  updating_object.pose.position.y += rotated_offset.y();
 }
 
 }  // namespace shapes

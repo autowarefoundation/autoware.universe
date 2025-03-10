@@ -37,12 +37,10 @@ bool MultipleVehicleTracker::predict(const rclcpp::Time & time)
   return true;
 }
 
-bool MultipleVehicleTracker::measure(
-  const types::DynamicObject & object, const rclcpp::Time & time,
-  const geometry_msgs::msg::Transform & self_transform)
+bool MultipleVehicleTracker::measure(const types::DynamicObject & object, const rclcpp::Time & time)
 {
-  big_vehicle_tracker_.measure(object, time, self_transform);
-  normal_vehicle_tracker_.measure(object, time, self_transform);
+  big_vehicle_tracker_.measure(object, time);
+  normal_vehicle_tracker_.measure(object, time);
 
   return true;
 }

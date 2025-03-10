@@ -79,7 +79,7 @@ void Tracker::initializeExistenceProbabilities(
 
 bool Tracker::updateWithMeasurement(
   const types::DynamicObject & object, const rclcpp::Time & measurement_time,
-  const geometry_msgs::msg::Transform & self_transform, const types::InputChannel & channel_info)
+  const types::InputChannel & channel_info)
 {
   // Update existence probability
   {
@@ -120,7 +120,7 @@ bool Tracker::updateWithMeasurement(
   }
 
   // Update object
-  measure(object, measurement_time, self_transform);
+  measure(object, measurement_time);
 
   return true;
 }

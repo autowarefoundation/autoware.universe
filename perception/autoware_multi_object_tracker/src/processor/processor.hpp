@@ -61,7 +61,6 @@ public:
     std::unordered_map<int, int> & reverse_assignment) const;
   void update(
     const types::DynamicObjectList & detected_objects,
-    const geometry_msgs::msg::Transform & self_transform,
     const std::unordered_map<int, int> & direct_assignment);
   void spawn(
     const types::DynamicObjectList & detected_objects,

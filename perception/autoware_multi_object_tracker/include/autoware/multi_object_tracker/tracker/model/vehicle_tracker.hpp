@@ -48,16 +48,10 @@ public:
     const types::DynamicObject & object);
 
   bool predict(const rclcpp::Time & time) override;
-  bool measure(
-    const types::DynamicObject & object, const rclcpp::Time & time,
-    const geometry_msgs::msg::Transform & self_transform) override;
+  bool measure(const types::DynamicObject & object, const rclcpp::Time & time) override;
   bool measureWithPose(const types::DynamicObject & object);
   bool measureWithShape(const types::DynamicObject & object);
   bool getTrackedObject(const rclcpp::Time & time, types::DynamicObject & object) const override;
-
-private:
-  types::DynamicObject getUpdatingObject(
-    const types::DynamicObject & object, const geometry_msgs::msg::Transform & self_transform);
 };
 
 }  // namespace autoware::multi_object_tracker

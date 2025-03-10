@@ -61,7 +61,7 @@ public:
   }
   bool updateWithMeasurement(
     const types::DynamicObject & object, const rclcpp::Time & measurement_time,
-    const geometry_msgs::msg::Transform & self_transform, const types::InputChannel & channel_info);
+    const types::InputChannel & channel_info);
   bool updateWithoutMeasurement(const rclcpp::Time & now);
 
   std::uint8_t getHighestProbLabel() const
@@ -87,9 +87,7 @@ protected:
   void limitObjectExtension(const object_model::ObjectModel object_model);
 
   // virtual functions
-  virtual bool measure(
-    const types::DynamicObject & object, const rclcpp::Time & time,
-    const geometry_msgs::msg::Transform & self_transform) = 0;
+  virtual bool measure(const types::DynamicObject & object, const rclcpp::Time & time) = 0;
 
 public:
   virtual bool getTrackedObject(const rclcpp::Time & time, types::DynamicObject & object) const = 0;
