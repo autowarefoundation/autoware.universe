@@ -363,7 +363,7 @@ std::vector<TrajectoryPoint> PathOptimizer::optimizeTrajectory(const PlannerData
 
   // 2. make trajectory kinematically-feasible and collision-free (= inside the drivable area)
   //    with model predictive trajectory
-  const auto mpt_traj = mpt_optimizer_ptr_->optimizeTrajectory(planner_data);
+  const auto mpt_traj = mpt_optimizer_ptr_->optimizeTrajectory(planner_data, false);
 
   return mpt_traj;
 }
