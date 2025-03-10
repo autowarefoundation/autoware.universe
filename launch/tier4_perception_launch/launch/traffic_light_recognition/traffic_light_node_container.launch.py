@@ -74,12 +74,6 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
         "output/traffic_signals": f"/perception/traffic_light_recognition/{namespace}/classification/traffic_signals",
     }
 
-    def create_parameter_dict(*args):
-        result = {}
-        for x in args:
-            result[x] = LaunchConfiguration(x)
-        return result
-
     # parameter files
     traffic_light_whole_image_detector_param = ParameterFile(
         param_file=LaunchConfiguration("yolox_traffic_light_detector_param_path").perform(context),
@@ -272,7 +266,7 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
                 ],
                 remappings=[
                     ("~/in/image", camera_arguments["input/image"]),
-                    ("~/out/objects", internal_node_name),
+                    ("~/out/objects", internal_node_name + "/rois"),
                     ("~/out/image", internal_node_name + "/debug/image"),
                     (
                         "~/out/image/compressed",
@@ -295,7 +289,7 @@ def create_traffic_light_node_container(namespace, context, *args, **kwargs):
                 namespace=f"{namespace}/detection",
                 parameters=[traffic_light_selector_param],
                 remappings=[
-                    ("input/detected_rois", internal_node_name),
+                    ("input/detected_rois", internal_node_name + "/rois"),
                     ("input/rough_rois", "rough/rois"),
                     ("input/expect_rois", "expect/rois"),
                     ("input/camera_info", camera_arguments["input/camera_info"]),

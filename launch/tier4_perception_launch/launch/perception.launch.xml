@@ -35,7 +35,7 @@
   <arg name="occupancy_grid_map_updater"/>
   <arg name="occupancy_grid_map_updater_param_path"/>
   <arg name="lidar_detection_model"/>
-  <arg name="traffic_light_map_based_detector_param_path"/>
+  <arg name="each_traffic_light_map_based_detector_param_path"/>
   <arg name="traffic_light_fine_detector_param_path"/>
   <arg name="yolox_traffic_light_detector_param_path"/>
   <arg name="car_traffic_light_classifier_param_path"/>
@@ -310,7 +310,11 @@
     <group if="$(var use_traffic_light_recognition)">
       <push-ros-namespace namespace="traffic_light_recognition"/>
       <include file="$(find-pkg-share tier4_perception_launch)/launch/traffic_light_recognition/traffic_light.launch.xml">
-        <arg name="traffic_light_map_based_detector_param_path" value="$(var traffic_light_map_based_detector_param_path)"/>
+        <arg name="fusion_only" value="$(var traffic_light_recognition/fusion_only)"/>
+        <arg name="camera_namespaces" value="$(var traffic_light_recognition/camera_namespaces)"/>
+        <arg name="use_high_accuracy_detection" value="$(var traffic_light_recognition/use_high_accuracy_detection)"/>
+        <arg name="high_accuracy_detection_type" value="$(var traffic_light_recognition/high_accuracy_detection_type)"/>
+        <arg name="each_traffic_light_map_based_detector_param_path" value="$(var each_traffic_light_map_based_detector_param_path)"/>
         <arg name="traffic_light_fine_detector_param_path" value="$(var traffic_light_fine_detector_param_path)"/>
         <arg name="yolox_traffic_light_detector_param_path" value="$(var yolox_traffic_light_detector_param_path)"/>
         <arg name="car_traffic_light_classifier_param_path" value="$(var car_traffic_light_classifier_param_path)"/>
@@ -321,10 +325,6 @@
         <arg name="traffic_light_multi_camera_fusion_param_path" value="$(var traffic_light_multi_camera_fusion_param_path)"/>
         <arg name="traffic_light_arbiter_param_path" value="$(var traffic_light_arbiter_param_path)"/>
         <arg name="crosswalk_traffic_light_estimator_param_path" value="$(var crosswalk_traffic_light_estimator_param_path)"/>
-        <arg name="fusion_only" value="$(var traffic_light_recognition/fusion_only)"/>
-        <arg name="camera_namespaces" value="$(var traffic_light_recognition/camera_namespaces)"/>
-        <arg name="use_high_accuracy_detection" value="$(var traffic_light_recognition/use_high_accuracy_detection)"/>
-        <arg name="high_accuracy_detection_type" value="$(var traffic_light_recognition/high_accuracy_detection_type)"/>
         <arg name="whole_image_detection/model_path" value="$(var traffic_light_recognition/whole_image_detection/model_path)"/>
         <arg name="whole_image_detection/label_path" value="$(var traffic_light_recognition/whole_image_detection/label_path)"/>
         <arg name="fine_detection/model_path" value="$(var traffic_light_recognition/fine_detection/model_path)"/>
