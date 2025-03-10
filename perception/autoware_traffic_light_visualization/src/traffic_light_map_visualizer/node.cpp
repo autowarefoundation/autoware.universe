@@ -112,40 +112,63 @@ double getArrayDirection(const lanelet::ConstPoint3d & p)
   }
 }
 
+void addColor(visualization_msgs::msg::Marker & marker, const uint8_t & p_color)
+{
+  if (p_color == TrafficLightElement::RED) {
+    marker.color.r = 1.0f;
+    marker.color.g = 0.0f;
+    marker.color.b = 0.0f;
+  } else if (p_color == TrafficLightElement::GREEN) {
+    marker.color.r = 0.0f;
+    marker.color.g = 1.0f;
+    marker.color.b = 0.0f;
+  } else if (p_color == TrafficLightElement::AMBER) {
+    marker.color.r = 1.0f;
+    marker.color.g = 1.0f;
+    marker.color.b = 0.0f;
+  } else if (p_color == TrafficLightElement::UNKNOWN) {
+    marker.color.r = 1.0f;
+    marker.color.g = 1.0f;
+    marker.color.b = 1.0f;
+  } else if (p_color == TrafficLightElement::WHITE) {
+    marker.color.r = 1.0f;
+    marker.color.g = 1.0f;
+    marker.color.b = 1.0f;
+  } else {
+    marker.color.r = 1.0f;
+    marker.color.g = 1.0f;
+    marker.color.b = 1.0f;
+  }
+}
+
 void lightAsMarker(
-  const rclcpp::node_interfaces::NodeLoggingInterface::SharedPtr & node_logging,
-  lanelet::ConstPoint3d p, visualization_msgs::msg::Marker * marker, const std::string & ns,
+  lanelet::ConstPoint3d p, visualization_msgs::msg::Marker & marker, const std::string & ns,
   const rclcpp::Time & current_time, const double & yaw)
 {
-  if (marker == nullptr) {
-    RCLCPP_ERROR_STREAM(node_logging->get_logger(), __FUNCTION__ << ": marker is null pointer!");
-    return;
-  }
-
-  marker->header.frame_id = "map";
-  marker->header.stamp = current_time;
-  marker->frame_locked = true;
-  marker->ns = ns;
-  marker->id = p.id();
-  marker->lifetime = rclcpp::Duration::from_seconds(0.2);
+  marker.header.frame_id = "map";
+  marker.header.stamp = current_time;
+  marker.frame_locked = true;
+  marker.ns = ns;
+  marker.id = p.id();
+  marker.lifetime = rclcpp::Duration::from_seconds(0.2);
 
   if (!p.hasAttribute("arrow")) {
-    marker->type = visualization_msgs::msg::Marker::SPHERE;
-    marker->pose.position.x = p.x();
-    marker->pose.position.y = p.y();
-    marker->pose.position.z = p.z();
-    marker->pose.orientation.x = 0.0;
-    marker->pose.orientation.y = 0.0;
-    marker->pose.orientation.z = 0.0;
-    marker->pose.orientation.w = 1.0;
+    marker.type = visualization_msgs::msg::Marker::SPHERE;
+    marker.pose.position.x = p.x();
+    marker.pose.position.y = p.y();
+    marker.pose.position.z = p.z();
+    marker.pose.orientation.x = 0.0;
+    marker.pose.orientation.y = 0.0;
+    marker.pose.orientation.z = 0.0;
+    marker.pose.orientation.w = 1.0;
 
     float s = 0.3;
 
-    marker->scale.x = s;
-    marker->scale.y = s;
-    marker->scale.z = s;
+    marker.scale.x = s;
+    marker.scale.y = s;
+    marker.scale.z = s;
   } else {
-    marker->type = visualization_msgs::msg::Marker::ARROW;
+    marker.type = visualization_msgs::msg::Marker::ARROW;
 
     float length = 0.3;
 
@@ -153,43 +176,24 @@ void lightAsMarker(
     tf2::Quaternion q;
     q.setRPY(0.0, pitch, yaw);
 
-    marker->pose.position.x = p.x() - (length / 2.0) * std::cos(pitch) * std::cos(yaw);
-    marker->pose.position.y = p.y() - (length / 2.0) * std::cos(pitch) * std::sin(yaw);
-    marker->pose.position.z = p.z() + (length / 2.0) * std::sin(pitch);
+    marker.pose.position.x = p.x() - (length / 2.0) * std::cos(pitch) * std::cos(yaw);
+    marker.pose.position.y = p.y() - (length / 2.0) * std::cos(pitch) * std::sin(yaw);
+    marker.pose.position.z = p.z() + (length / 2.0) * std::sin(pitch);
 
-    marker->pose.orientation.x = q.x();
-    marker->pose.orientation.y = q.y();
-    marker->pose.orientation.z = q.z();
-    marker->pose.orientation.w = q.w();
+    marker.pose.orientation.x = q.x();
+    marker.pose.orientation.y = q.y();
+    marker.pose.orientation.z = q.z();
+    marker.pose.orientation.w = q.w();
 
-    marker->scale.x = length;
-    marker->scale.y = 0.1;
-    marker->scale.z = 0.1;
+    marker.scale.x = length;
+    marker.scale.y = 0.1;
+    marker.scale.z = 0.1;
   }
 
-  marker->color.a = 0.999f;
+  marker.color.a = 0.999f;
 
   uint8_t p_color = convertMapcolor2Msg(p);
-  if (p_color == TrafficLightElement::RED) {
-    marker->color.r = 1.0f;
-    marker->color.g = 0.0f;
-    marker->color.b = 0.0f;
-  } else if (p_color == TrafficLightElement::GREEN) {
-    marker->color.r = 0.0f;
-    marker->color.g = 1.0f;
-    marker->color.b = 0.0f;
-  } else if (p_color == TrafficLightElement::AMBER) {
-    marker->color.r = 1.0f;
-    marker->color.g = 1.0f;
-    marker->color.b = 0.0f;
-  } else {
-    RCLCPP_WARN(
-      node_logging->get_logger(),
-      "color does not match 'red', 'green' or 'amber'. so represented by white.");
-    marker->color.r = 1.0f;
-    marker->color.g = 1.0f;
-    marker->color.b = 1.0f;
-  }
+  addColor(marker, p_color);
 }
 }  // namespace utils
 
@@ -256,8 +260,7 @@ void TrafficLightMapVisualizerNode::trafficSignalsCallback(
             for (const auto & elem : input_traffic_signal.elements) {
               visualization_msgs::msg::Marker marker;
               if (utils::isCompareColorAndShape(pt, elem)) {
-                utils::lightAsMarker(
-                  get_node_logging_interface(), pt, &marker, "traffic_light", current_time, yaw);
+                utils::lightAsMarker(pt, marker, "traffic_light", current_time, yaw);
               }
               output_msg.markers.push_back(marker);
             }
