@@ -576,9 +576,7 @@ private:
 
   std::shared_ptr<SceneModuleVisitor> debug_msg_ptr_;
 
-  mutable BehaviorModuleOutput last_valid_reference_path_;
-
-  mutable bool has_last_valid_reference_path_;
+  mutable optional<BehaviorModuleOutput> last_valid_reference_path_;
 };
 }  // namespace autoware::behavior_path_planner
 
