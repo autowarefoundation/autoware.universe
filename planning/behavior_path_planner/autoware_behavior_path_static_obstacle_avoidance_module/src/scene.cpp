@@ -1679,7 +1679,7 @@ void StaticObstacleAvoidanceModule::insertReturnDeadLine(
   const auto min_return_distance =
     helper_->getMinAvoidanceDistance(shift_length) + helper_->getNominalPrepareDistance(0.0);
   const auto to_stop_line = data.to_return_point - min_return_distance - buffer;
-  if (to_stop_line < 0.0) {
+  if (to_stop_line < -1.0 * parameters_->stop_buffer) {
     RCLCPP_WARN(getLogger(), "ego overran return shift dead line. do nothing.");
     return;
   }
@@ -1752,7 +1752,7 @@ void StaticObstacleAvoidanceModule::insertWaitPoint(
     return;
   }
 
-  if (data.to_stop_line < 0.0) {
+  if (data.to_stop_line < -1.0 * parameters_->stop_buffer) {
     RCLCPP_WARN(getLogger(), "ego overran avoidance dead line. do nothing.");
     return;
   }
