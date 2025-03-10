@@ -229,8 +229,7 @@ VelocityPlanningResult ObstacleStopModule::plan(
   // 4. filter obstacles of point cloud
   auto stop_obstacles_for_point_cloud = filter_stop_obstacle_for_point_cloud(
     planner_data->current_odometry, raw_trajectory_points, decimated_traj_points,
-    planner_data->no_ground_pointcloud, planner_data->vehicle_info_,
-    dist_to_bumper,
+    planner_data->no_ground_pointcloud, planner_data->vehicle_info_, dist_to_bumper,
     planner_data->trajectory_polygon_collision_check,
     planner_data->find_index(raw_trajectory_points, planner_data->current_odometry.pose.pose));
 
@@ -467,8 +466,8 @@ std::vector<StopObstacle> ObstacleStopModule::filter_stop_obstacle_for_point_clo
   std::vector<StopObstacle> stop_obstacles;
   for (const auto & stop_point : stop_points) {
     // Filter obstacles for stop
-    const auto stop_obstacle =
-      create_stop_obstacle_for_point_cloud(decimated_traj_points, stop_obstacle_stamp, stop_point, dist_to_bumper);
+    const auto stop_obstacle = create_stop_obstacle_for_point_cloud(
+      decimated_traj_points, stop_obstacle_stamp, stop_point, dist_to_bumper);
     if (stop_obstacle) {
       stop_obstacles.push_back(*stop_obstacle);
       continue;
@@ -494,8 +493,10 @@ std::vector<StopObstacle> ObstacleStopModule::filter_stop_obstacle_for_point_clo
 
     if (min_lat_dist_to_traj_poly < obstacle_filtering_param_.max_lat_margin_against_unknown) {
       auto stop_obstacle = *itr;
-      stop_obstacle.dist_to_collide_on_decimated_traj = autoware::motion_utils::calcSignedArcLength(
-        decimated_traj_points, 0, stop_obstacle.collision_point) - dist_to_bumper;
+      stop_obstacle.dist_to_collide_on_decimated_traj =
+        autoware::motion_utils::calcSignedArcLength(
+          decimated_traj_points, 0, stop_obstacle.collision_point) -
+        dist_to_bumper;
       past_stop_obstacles.push_back(stop_obstacle);
     }
 
