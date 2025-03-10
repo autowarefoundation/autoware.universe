@@ -111,7 +111,7 @@ public:
     const std::shared_ptr<autoware_utils::TimeKeeper> time_keeper_);
 
   std::vector<TrajectoryPoint> optimizeTrajectory(
-    const PlannerData & planner_data, const bool empty);
+    const PlannerData & planner_data, const bool empty = false);
   std::optional<std::vector<TrajectoryPoint>> getPrevOptimizedTrajectoryPoints() const;
 
   void initialize(const bool enable_debug_info, const TrajectoryParam & traj_param);
