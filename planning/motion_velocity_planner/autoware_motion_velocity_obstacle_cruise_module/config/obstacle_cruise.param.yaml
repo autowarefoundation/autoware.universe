@@ -96,7 +96,7 @@
             pedestrian: false
 
           # If an object does not have this label, the ego vehicle does not assume that the yielded obstacle will cut in due to the object.
-          ahead_stopped:
+          side_stopped:
             unknown: false
             car: true
             truck: true
