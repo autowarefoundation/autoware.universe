@@ -14262,6 +14262,33 @@
     Parameters
   </a>
   
+    <nav class="md-nav" aria-label="Parameters">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#yolox_s_plus_opt" class="md-nav__link">
+    yolox_s_plus_opt
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#yolox_tiny" class="md-nav__link">
+    yolox_tiny
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#yolox_traffic_light_detector" class="md-nav__link">
+    yolox_traffic_light_detector
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
 </li>
       
         <li class="md-nav__item">
@@ -14383,6 +14410,7 @@
 </tbody>
 </table>
 <h2 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">#</a></h2>
+<h3 id="yolox_s_plus_opt">yolox_s_plus_opt<a class="headerlink" href="#yolox_s_plus_opt" title="Permanent link">#</a></h3>
 <table>
 <thead>
 <tr>
@@ -14394,20 +14422,6 @@
 </tr>
 </thead>
 <tbody>
-<tr>
-<td>model_path</td>
-<td>string</td>
-<td>Path to onnx model.</td>
-<td><span class="arithmatex">\((var data_path)/tensorrt_yolox/\)</span>(var model_name).onnx</td>
-<td>N/A</td>
-</tr>
-<tr>
-<td>label_path</td>
-<td>string</td>
-<td>Path to label file.</td>
-<td>$(var data_path)/tensorrt_yolox/label.txt</td>
-<td>N/A</td>
-</tr>
 <tr>
 <td>score_threshold</td>
 <td>float</td>
@@ -14492,34 +14506,118 @@
 <td></td>
 <td>N/A</td>
 </tr>
+</tbody>
+</table>
+<h3 id="yolox_tiny">yolox_tiny<a class="headerlink" href="#yolox_tiny" title="Permanent link">#</a></h3>
+<table>
+<thead>
 <tr>
-<td>Name</td>
-<td>Type</td>
-<td>Description</td>
-<td>Default</td>
-<td>Range</td>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+<th>Range</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>score_threshold</td>
+<td>float</td>
+<td>A threshold value of existence probability score, all of objects with score less than this threshold are ignored.</td>
+<td>0.35</td>
+<td>≥0.0<br>≤1.0</td>
 </tr>
 <tr>
-<td>-----------------------------</td>
-<td>---------</td>
-<td>-------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------</td>
-<td>--------------------------------------------------------</td>
-<td>---------------</td>
+<td>nms_threshold</td>
+<td>float</td>
+<td>A threshold value of NMS.</td>
+<td>0.7</td>
+<td>≥0.0<br>≤1.0</td>
 </tr>
 <tr>
-<td>model_path</td>
+<td>precision</td>
 <td>string</td>
-<td>Path to onnx model.</td>
-<td><span class="arithmatex">\((var data_path)/tensorrt_yolox/\)</span>(var model_name).onnx</td>
+<td>Operation precision to be used on inference. Valid value is one of: [fp32, fp16, int8].</td>
+<td>fp16</td>
 <td>N/A</td>
 </tr>
 <tr>
-<td>label_path</td>
+<td>calibration_algorithm</td>
 <td>string</td>
-<td>Path to label file.</td>
-<td>$(var data_path)/tensorrt_yolox/label.txt</td>
+<td>Calibration algorithm to be used for quantization when precision==int8. Valid value is one of: [Entropy, (Legacy</td>
+<td>Percentile), MinMax].</td>
+<td>MinMax</td>
+</tr>
+<tr>
+<td>dla_core_id</td>
+<td>float</td>
+<td>If positive ID value is specified, the node assign inference task to the DLA core.</td>
+<td>-1</td>
 <td>N/A</td>
 </tr>
+<tr>
+<td>quantize_first_layer</td>
+<td>boolean</td>
+<td>If true, set the operating precision for the first (input) layer to be fp16. This option is valid only when precision==int8.</td>
+<td>False</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>quantize_last_layer</td>
+<td>boolean</td>
+<td>If true, set the operating precision for the last (output) layer to be fp16. This option is valid only when precision==int8.</td>
+<td>False</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>profile_per_layer</td>
+<td>boolean</td>
+<td>If true, profiler function will be enabled. Since the profile function may affect execution speed, it is recommended to set this flag true only for development purpose.</td>
+<td>False</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>clip_value</td>
+<td>float</td>
+<td>If positive value is specified, the value of each layer output will be clipped between [0.0, clip_value]. This option is valid only when precision==int8 and used to manually specify the dynamic range instead of using any calibration.</td>
+<td>0.0</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>preprocess_on_gpu</td>
+<td>boolean</td>
+<td>If true, pre-processing is performed on GPU.</td>
+<td>True</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>gpu_id</td>
+<td>integer</td>
+<td>GPU ID for selecting CUDA device</td>
+<td>0</td>
+<td>N/A</td>
+</tr>
+<tr>
+<td>calibration_image_list_path</td>
+<td>string</td>
+<td>Path to a file which contains path to images. Those images will be used for int8 quantization.</td>
+<td></td>
+<td>N/A</td>
+</tr>
+</tbody>
+</table>
+<h3 id="yolox_traffic_light_detector">yolox_traffic_light_detector<a class="headerlink" href="#yolox_traffic_light_detector" title="Permanent link">#</a></h3>
+<table>
+<thead>
+<tr>
+<th>Name</th>
+<th>Type</th>
+<th>Description</th>
+<th>Default</th>
+<th>Range</th>
+</tr>
+</thead>
+<tbody>
 <tr>
 <td>score_threshold</td>
 <td>float</td>

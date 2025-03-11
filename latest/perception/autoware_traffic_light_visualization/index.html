@@ -77,7 +77,7 @@
     <div data-md-component="skip">
       
         
-        <a href="#autoware_traffic_light_visualization" class="md-skip">
+        <a href="#macro-rendering-error" class="md-skip">
           Skip to content
         </a>
       
@@ -14197,117 +14197,6 @@
     
   
   
-    <label class="md-nav__title" for="__toc">
-      <span class="md-nav__icon md-icon"></span>
-      Table of contents
-    </label>
-    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
-      
-        <li class="md-nav__item">
-  <a href="#purpose" class="md-nav__link">
-    Purpose
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#inner-workings-algorithms" class="md-nav__link">
-    Inner-workings / Algorithms
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#inputs-outputs" class="md-nav__link">
-    Inputs / Outputs
-  </a>
-  
-    <nav class="md-nav" aria-label="Inputs / Outputs">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#traffic_light_map_visualizer" class="md-nav__link">
-    traffic_light_map_visualizer
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#traffic_light_roi_visualizer" class="md-nav__link">
-    traffic_light_roi_visualizer
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#parameters" class="md-nav__link">
-    Parameters
-  </a>
-  
-    <nav class="md-nav" aria-label="Parameters">
-      <ul class="md-nav__list">
-        
-          <li class="md-nav__item">
-  <a href="#traffic_light_map_visualizer_1" class="md-nav__link">
-    traffic_light_map_visualizer
-  </a>
-  
-</li>
-        
-          <li class="md-nav__item">
-  <a href="#traffic_light_roi_visualizer_1" class="md-nav__link">
-    traffic_light_roi_visualizer
-  </a>
-  
-</li>
-        
-      </ul>
-    </nav>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#assumptions-known-limits" class="md-nav__link">
-    Assumptions / Known limits
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#optional-error-detection-and-handling" class="md-nav__link">
-    (Optional) Error detection and handling
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#optional-performance-characterization" class="md-nav__link">
-    (Optional) Performance characterization
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#optional-referencesexternal-links" class="md-nav__link">
-    (Optional) References/External links
-  </a>
-  
-</li>
-      
-        <li class="md-nav__item">
-  <a href="#optional-future-extensions-unimplemented-parts" class="md-nav__link">
-    (Optional) Future extensions / Unimplemented parts
-  </a>
-  
-</li>
-      
-    </ul>
-  
 </nav>
                   </div>
                 </div>
@@ -14324,143 +14213,21 @@
   
 
 
-<div><h1 id="autoware_traffic_light_visualization">autoware_traffic_light_visualization<a class="headerlink" href="#autoware_traffic_light_visualization" title="Permanent link">#</a></h1>
-<h2 id="purpose">Purpose<a class="headerlink" href="#purpose" title="Permanent link">#</a></h2>
-<p>The <code>autoware_traffic_light_visualization</code> is a package that includes two visualizing nodes:</p>
-<ul>
-<li><strong>traffic_light_map_visualizer</strong> is a node that shows traffic lights color status and position on rviz as markers.</li>
-<li><strong>traffic_light_roi_visualizer</strong> is a node that draws the result of traffic light recognition nodes (traffic light status, position and classification probability) on the input image as shown in the following figure and publishes it.</li>
-</ul>
-<p><img alt="traffic light roi visualization" src="images/roi-visualization.png"></p>
-<h2 id="inner-workings-algorithms">Inner-workings / Algorithms<a class="headerlink" href="#inner-workings-algorithms" title="Permanent link">#</a></h2>
-<h2 id="inputs-outputs">Inputs / Outputs<a class="headerlink" href="#inputs-outputs" title="Permanent link">#</a></h2>
-<h3 id="traffic_light_map_visualizer">traffic_light_map_visualizer<a class="headerlink" href="#traffic_light_map_visualizer" title="Permanent link">#</a></h3>
-<h4 id="input">Input<a class="headerlink" href="#input" title="Permanent link">#</a></h4>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>~/input/tl_state</code></td>
-<td><code>tier4_perception_msgs::msg::TrafficLightGroupArray</code></td>
-<td>status of traffic lights</td>
-</tr>
-<tr>
-<td><code>~/input/vector_map</code></td>
-<td><code>autoware_map_msgs::msg::LaneletMapBin</code></td>
-<td>vector map</td>
-</tr>
-</tbody>
-</table>
-<h4 id="output">Output<a class="headerlink" href="#output" title="Permanent link">#</a></h4>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>~/output/traffic_light</code></td>
-<td><code>visualization_msgs::msg::MarkerArray</code></td>
-<td>marker array that indicates status of traffic lights</td>
-</tr>
-</tbody>
-</table>
-<h3 id="traffic_light_roi_visualizer">traffic_light_roi_visualizer<a class="headerlink" href="#traffic_light_roi_visualizer" title="Permanent link">#</a></h3>
-<h4 id="input_1">Input<a class="headerlink" href="#input_1" title="Permanent link">#</a></h4>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>~/input/tl_state</code></td>
-<td><code>tier4_perception_msgs::msg::TrafficLightArray</code></td>
-<td>status of traffic lights</td>
-</tr>
-<tr>
-<td><code>~/input/image</code></td>
-<td><code>sensor_msgs::msg::Image</code></td>
-<td>the image captured by perception cameras</td>
-</tr>
-<tr>
-<td><code>~/input/rois</code></td>
-<td><code>tier4_perception_msgs::msg::TrafficLightRoiArray</code></td>
-<td>the ROIs detected by <code>traffic_light_fine_detector</code></td>
-</tr>
-<tr>
-<td><code>~/input/rough/rois</code> (option)</td>
-<td><code>tier4_perception_msgs::msg::TrafficLightRoiArray</code></td>
-<td>the ROIs detected by <code>traffic_light_map_based_detector</code></td>
-</tr>
-</tbody>
-</table>
-<h4 id="output_1">Output<a class="headerlink" href="#output_1" title="Permanent link">#</a></h4>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td><code>~/output/image</code></td>
-<td><code>sensor_msgs::msg::Image</code></td>
-<td>output image with ROIs</td>
-</tr>
-</tbody>
-</table>
-<h2 id="parameters">Parameters<a class="headerlink" href="#parameters" title="Permanent link">#</a></h2>
-<h3 id="traffic_light_map_visualizer_1">traffic_light_map_visualizer<a class="headerlink" href="#traffic_light_map_visualizer_1" title="Permanent link">#</a></h3>
-<p>None</p>
-<h3 id="traffic_light_roi_visualizer_1">traffic_light_roi_visualizer<a class="headerlink" href="#traffic_light_roi_visualizer_1" title="Permanent link">#</a></h3>
-<h4 id="node-parameters">Node Parameters<a class="headerlink" href="#node-parameters" title="Permanent link">#</a></h4>
-<table>
-<thead>
-<tr>
-<th>Name</th>
-<th>Type</th>
-<th>Description</th>
-<th>Default</th>
-<th>Range</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>use_ml_detector</td>
-<td>boolean</td>
-<td>whether to visualize result of the traffic light fine detection</td>
-<td>false</td>
-<td>N/A</td>
-</tr>
-<tr>
-<td>use_image_transport</td>
-<td>boolean</td>
-<td>whether to apply image transport to compress the output debugging image in the traffic light fine detection</td>
-<td>true</td>
-<td>N/A</td>
-</tr>
-</tbody>
-</table>
-<h2 id="assumptions-known-limits">Assumptions / Known limits<a class="headerlink" href="#assumptions-known-limits" title="Permanent link">#</a></h2>
-<h2 id="optional-error-detection-and-handling">(Optional) Error detection and handling<a class="headerlink" href="#optional-error-detection-and-handling" title="Permanent link">#</a></h2>
-<h2 id="optional-performance-characterization">(Optional) Performance characterization<a class="headerlink" href="#optional-performance-characterization" title="Permanent link">#</a></h2>
-<h2 id="optional-referencesexternal-links">(Optional) References/External links<a class="headerlink" href="#optional-referencesexternal-links" title="Permanent link">#</a></h2>
-<h2 id="optional-future-extensions-unimplemented-parts">(Optional) Future extensions / Unimplemented parts<a class="headerlink" href="#optional-future-extensions-unimplemented-parts" title="Permanent link">#</a></h2></div>
+<div><h1 id="macro-rendering-error"><em>Macro Rendering Error</em><a class="headerlink" href="#macro-rendering-error" title="Permanent link">#</a></h1>
+<p><em>File</em>: <code>perception/autoware_traffic_light_visualization/README.md</code></p>
+<p><em>FileNotFoundError</em>: [Errno 2] No such file or directory: 'perception/autoware_traffic_light_visualization/schema/traffic_light_visualization.schema.json'</p>
+<div class="highlight"><pre><span></span><code>Traceback (most recent call last):
+  File "/opt/hostedtoolcache/Python/3.8.18/x64/lib/python3.8/site-packages/mkdocs_macros/plugin.py", line 688, in render
+    return md_template.render(**page_variables)
+  File "/opt/hostedtoolcache/Python/3.8.18/x64/lib/python3.8/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+  File "/opt/hostedtoolcache/Python/3.8.18/x64/lib/python3.8/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "&lt;template&gt;", line 58, in top-level template code
+  File "/home/runner/work/autoware.universe/autoware.universe/mkdocs_macros.py", line 70, in json_to_markdown
+    with open(json_schema_file_path) as f:
+FileNotFoundError: [Errno 2] No such file or directory: 'perception/autoware_traffic_light_visualization/schema/traffic_light_visualization.schema.json'
+</code></pre></div></div>
 
 
 
