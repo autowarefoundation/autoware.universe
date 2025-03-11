@@ -20,10 +20,10 @@
 #include "autoware/tracking_object_merger/association/solver/ssp.hpp"
 #include "autoware/tracking_object_merger/utils/utils.hpp"
 
-#include <diagnostic_msgs/msg/diagnostic_status.hpp>
-
 #include <Eigen/Core>
 #include <Eigen/Geometry>
+
+#include <diagnostic_msgs/msg/diagnostic_status.hpp>
 
 #include <boost/optional.hpp>
 
@@ -172,8 +172,8 @@ DecorativeTrackerMergerNode::DecorativeTrackerMergerNode(const rclcpp::NodeOptio
   published_time_publisher_ = std::make_unique<autoware_utils::PublishedTimePublisher>(this);
 
   // diagnostics
-  diagnostics_interface_ptr_ =
-    std::make_unique<autoware::universe_utils::DiagnosticsInterface>(this, "decorative_object_merger_node");
+  diagnostics_interface_ptr_ = std::make_unique<autoware::universe_utils::DiagnosticsInterface>(
+    this, "decorative_object_merger_node");
 }
 
 void DecorativeTrackerMergerNode::set3dDataAssociation(
