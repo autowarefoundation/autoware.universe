@@ -88,8 +88,7 @@ void MrmHandler::onOperationModeAvailability(
 {
   stamp_operation_mode_availability_ = this->now();
   operation_mode_availability_ = msg;
-  const bool skip_emergency_holding_check =
-    !param_.use_emergency_holding || is_emergency_holding_;
+  const bool skip_emergency_holding_check = !param_.use_emergency_holding || is_emergency_holding_;
 
   if (skip_emergency_holding_check) {
     return;
@@ -102,9 +101,10 @@ void MrmHandler::onOperationModeAvailability(
 
   // If no timestamp is available, the ego autonomous mode just became unavailable and the current
   // time is recorded.
-  stamp_current_operation_mode_become_unavailable_ = (!stamp_current_operation_mode_become_unavailable_.has_value())
-                                           ? this->now()
-                                           : stamp_current_operation_mode_become_unavailable_;
+  stamp_current_operation_mode_become_unavailable_ =
+    (!stamp_current_operation_mode_become_unavailable_.has_value())
+      ? this->now()
+      : stamp_current_operation_mode_become_unavailable_;
 
   // Check if autonomous mode unavailable time is larger than timeout threshold.
   const auto emergency_duration =
