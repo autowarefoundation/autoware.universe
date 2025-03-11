@@ -569,6 +569,7 @@ void VehicleCmdGate::publishControlCommands(const Commands & commands)
       filtered_control.longitudinal = createLongitudinalStopControlCmd();
     } else {
       filtered_control = createStopControlCmd();
+      filtered_control.stamp = commands.control.stamp;
     }
   }
 
@@ -576,6 +577,7 @@ void VehicleCmdGate::publishControlCommands(const Commands & commands)
   if (enable_cmd_limit_filter_) {
     // Apply limit filtering
     filtered_control = filterControlCommand(filtered_control);
+    filtered_control.stamp = commands.control.stamp;
   }
   // tmp: Publish vehicle emergency status
   VehicleEmergencyStamped vehicle_cmd_emergency;
