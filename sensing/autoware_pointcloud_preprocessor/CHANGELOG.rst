@@ -2,6 +2,73 @@
 Changelog for package autoware_pointcloud_preprocessor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.42.0 (2025-03-03)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* fix(autoware_pointcloud_preprocessor): fix potential double unlock in concatenate node (`#10082 <https://github.com/autowarefoundation/autoware.universe/issues/10082>`_)
+  * feat: reuse collectors
+  * fix: potential double unlock
+  * style(pre-commit): autofix
+  * chore: remove mutex
+  * chore: reset the processing cloud only if needed
+  * chore: fix grammar
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+  Co-authored-by: SakodaShintaro <shintaro.sakoda@tier4.jp>
+* feat(autoware_utils): replace autoware_universe_utils with autoware_utils  (`#10191 <https://github.com/autowarefoundation/autoware.universe/issues/10191>`_)
+* chore: refine maintainer list (`#10110 <https://github.com/autowarefoundation/autoware.universe/issues/10110>`_)
+  * chore: remove Miura from maintainer
+  * chore: add Taekjin-san to perception_utils package maintainer
+  ---------
+* feat(autoware_pointcloud_preprocessor): reuse collectors to reduce creation of collector and timer (`#10074 <https://github.com/autowarefoundation/autoware.universe/issues/10074>`_)
+  * feat: reuse collectors
+  * chore: remove for-loop to find_if
+  * chore: remove set period
+  * chore: remove oldest timestamp
+  * chore: fix managing collector list logic
+  * chore: fix logging
+  * feat: change to THROTTLE
+  * feat: initialize required number of collectors when the node start
+  * chore: fix init collector
+  * chore: fix grammar
+  ---------
+* fix(autoware_pointcloud_preprocessor): empty input validation (`#10115 <https://github.com/autowarefoundation/autoware.universe/issues/10115>`_)
+  * fix(autoware_pointcloud_preprocessor): fix 0 division
+  * style(pre-commit): autofix
+  * fix float and error throttle
+  * style(pre-commit): autofix
+  * fix
+  * fix param validation
+  * fix unused var
+  * feat add input validatoin
+  * fix too cautious floating
+  * fix error msg
+  * fix
+  plural
+  * fix: set exclusiveMinimum 0.0
+  * fix: reomve unnecessary validatoin
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* feat(distortion_corrector_node): replace imu and twist callback with polling subscriber (`#10057 <https://github.com/autowarefoundation/autoware.universe/issues/10057>`_)
+  * fix(distortion_corrector_node): replace imu and twist callback with polling subscriber
+  Changed to read data in bulk using take to reduce subscription callback overhead.
+  Especially effective when the frequency of imu or twist is high, such as 100Hz.
+  * fix(distortion_corrector_node): include vector header for cpplint check
+  ---------
+  Co-authored-by: Takahisa.Ishikawa <takahisa.ishikawa@tier4.jp>
+  Co-authored-by: Yi-Hsiang Fang (Vivid) <146902905+vividf@users.noreply.github.com>
+* chore(pointcloud_preprocessor): add Max to codeowners (`#10083 <https://github.com/autowarefoundation/autoware.universe/issues/10083>`_)
+  chore(pointcloud_preprocessor): add Max to maintainers
+* Contributors: Fumiya Watanabe, Max Schmeller, Shumpei Wakabayashi, Shunsuke Miura, Takahisa Ishikawa, Yi-Hsiang Fang (Vivid), 心刚
+
+0.41.2 (2025-02-19)
+-------------------
+* chore: bump version to 0.41.1 (`#10088 <https://github.com/autowarefoundation/autoware.universe/issues/10088>`_)
+* Contributors: Ryohsuke Mitsudome
+
+0.41.1 (2025-02-10)
+-------------------
+
 0.41.0 (2025-01-29)
 -------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base

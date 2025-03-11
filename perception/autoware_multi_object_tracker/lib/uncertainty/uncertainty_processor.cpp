@@ -28,7 +28,7 @@ namespace autoware::multi_object_tracker
 {
 namespace uncertainty
 {
-using autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
+using autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
 
 object_model::StateCovariance covarianceFromObjectClass(const ObjectClassification & object_class)
 {

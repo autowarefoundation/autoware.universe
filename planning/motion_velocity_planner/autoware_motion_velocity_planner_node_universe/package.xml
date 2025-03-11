@@ -2,7 +2,7 @@
 <?xml-model href="http://download.ros.org/schema/package_format3.xsd" schematypens="http://www.w3.org/2001/XMLSchema"?>
 <package format="3">
   <name>autoware_motion_velocity_planner_node_universe</name>
-  <version>0.41.0</version>
+  <version>0.42.0</version>
   <description>Node of the motion_velocity_planner</description>
 
   <maintainer email="maxime.clement@tier4.jp">Maxime Clement</maintainer>
@@ -25,7 +25,7 @@
   <depend>autoware_perception_msgs</depend>
   <depend>autoware_planning_factor_interface</depend>
   <depend>autoware_planning_msgs</depend>
-  <depend>autoware_universe_utils</depend>
+  <depend>autoware_utils</depend>
   <depend>autoware_velocity_smoother</depend>
   <depend>eigen</depend>
   <depend>geometry_msgs</depend>

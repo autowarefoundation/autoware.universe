@@ -17,12 +17,12 @@
 
 #include "autoware/control_evaluator/metrics/deviation_metrics.hpp"
 #include "autoware/control_evaluator/metrics/metric.hpp"
-#include "autoware/universe_utils/math/accumulator.hpp"
+#include "autoware_utils/math/accumulator.hpp"
 
 #include <autoware/route_handler/route_handler.hpp>
-#include <autoware/universe_utils/geometry/boost_geometry.hpp>
-#include <autoware/universe_utils/ros/polling_subscriber.hpp>
-#include <autoware/universe_utils/system/stop_watch.hpp>
+#include <autoware_utils/geometry/boost_geometry.hpp>
+#include <autoware_utils/ros/polling_subscriber.hpp>
+#include <autoware_utils/system/stop_watch.hpp>
 #include <autoware_vehicle_info_utils/vehicle_info_utils.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -30,6 +30,8 @@
 #include "geometry_msgs/msg/accel_with_covariance_stamped.hpp"
 #include <autoware_internal_debug_msgs/msg/float64_stamped.hpp>
 #include <autoware_internal_planning_msgs/msg/path_with_lane_id.hpp>
+#include <autoware_internal_planning_msgs/msg/planning_factor.hpp>
+#include <autoware_internal_planning_msgs/msg/planning_factor_array.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <nav_msgs/msg/odometry.hpp>
 #include <tier4_metric_msgs/msg/metric.hpp>
@@ -38,15 +40,17 @@
 #include <deque>
 #include <optional>
 #include <string>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 namespace control_diagnostics
 {
-using autoware::universe_utils::Accumulator;
-using autoware::universe_utils::LineString2d;
-using autoware::universe_utils::Point2d;
 using autoware::vehicle_info_utils::VehicleInfo;
 using autoware_planning_msgs::msg::Trajectory;
+using autoware_utils::Accumulator;
+using autoware_utils::LineString2d;
+using autoware_utils::Point2d;
 using autoware_vehicle_msgs::msg::SteeringReport;
 using geometry_msgs::msg::Point;
 using geometry_msgs::msg::Pose;
@@ -57,6 +61,8 @@ using geometry_msgs::msg::AccelWithCovarianceStamped;
 using MetricMsg = tier4_metric_msgs::msg::Metric;
 using MetricArrayMsg = tier4_metric_msgs::msg::MetricArray;
 using autoware_internal_planning_msgs::msg::PathWithLaneId;
+using autoware_internal_planning_msgs::msg::PlanningFactor;
+using autoware_internal_planning_msgs::msg::PlanningFactorArray;
 
 /**
  * @brief Node for control evaluation
@@ -79,26 +85,30 @@ public:
   void AddKinematicStateMetricMsg(
     const Odometry & odom, const AccelWithCovarianceStamped & accel_stamped);
   void AddSteeringMetricMsg(const SteeringReport & steering_report);
-
+  void AddStopDeviationMetricMsg(
+    const PlanningFactorArray::ConstSharedPtr & planning_factors, const std::string & module_name);
   void onTimer();
 
 private:
-  autoware::universe_utils::InterProcessPollingSubscriber<Odometry> odometry_sub_{
-    this, "~/input/odometry"};
-  autoware::universe_utils::InterProcessPollingSubscriber<AccelWithCovarianceStamped> accel_sub_{
+  autoware_utils::InterProcessPollingSubscriber<Odometry> odometry_sub_{this, "~/input/odometry"};
+  autoware_utils::InterProcessPollingSubscriber<AccelWithCovarianceStamped> accel_sub_{
     this, "~/input/acceleration"};
-  autoware::universe_utils::InterProcessPollingSubscriber<Trajectory> traj_sub_{
-    this, "~/input/trajectory"};
-  autoware::universe_utils::InterProcessPollingSubscriber<
-    LaneletRoute, autoware::universe_utils::polling_policy::Newest>
+  autoware_utils::InterProcessPollingSubscriber<Trajectory> traj_sub_{this, "~/input/trajectory"};
+  autoware_utils::InterProcessPollingSubscriber<
+    LaneletRoute, autoware_utils::polling_policy::Newest>
     route_subscriber_{this, "~/input/route", rclcpp::QoS{1}.transient_local()};
-  autoware::universe_utils::InterProcessPollingSubscriber<
-    LaneletMapBin, autoware::universe_utils::polling_policy::Newest>
+  autoware_utils::InterProcessPollingSubscriber<
+    LaneletMapBin, autoware_utils::polling_policy::Newest>
     vector_map_subscriber_{this, "~/input/vector_map", rclcpp::QoS{1}.transient_local()};
-  autoware::universe_utils::InterProcessPollingSubscriber<PathWithLaneId> behavior_path_subscriber_{
+  autoware_utils::InterProcessPollingSubscriber<PathWithLaneId> behavior_path_subscriber_{
     this, "~/input/behavior_path"};
-  autoware::universe_utils::InterProcessPollingSubscriber<SteeringReport> steering_sub_{
+  autoware_utils::InterProcessPollingSubscriber<SteeringReport> steering_sub_{
     this, "~/input/steering_status"};
+
+  std::unordered_map<
+    std::string, autoware_utils::InterProcessPollingSubscriber<PlanningFactorArray>>
+    planning_factors_sub_;
+  std::unordered_set<std::string> stop_deviation_modules_;
 
   rclcpp::Publisher<autoware_internal_debug_msgs::msg::Float64Stamped>::SharedPtr
     processing_time_pub_;

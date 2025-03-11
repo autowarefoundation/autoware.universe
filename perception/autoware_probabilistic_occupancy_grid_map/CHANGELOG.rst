@@ -2,6 +2,33 @@
 Changelog for package autoware_probabilistic_occupancy_grid_map
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.42.0 (2025-03-03)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_utils): replace autoware_universe_utils with autoware_utils  (`#10191 <https://github.com/autowarefoundation/autoware.universe/issues/10191>`_)
+* chore(autoware_probabilistic_occupancy_grid_map): fixed cuda use on non-cuda settings (`#10099 <https://github.com/autowarefoundation/autoware.universe/issues/10099>`_)
+  chore: fixed cuda use on non-cuda settings
+* fix(probabilistic_occupancy_grid_map): build and runtime on non-cuda environments (`#10061 <https://github.com/autowarefoundation/autoware.universe/issues/10061>`_)
+  * feat: improved data handling in the ogm. When using the full concatenated pointcloud the processing time decreases from 8ms to 4ms
+  * feat: added header blocks for non-cuda environments
+  * chore: removed the cuda includes from the global includes
+  * fix: missed one header include
+  * chore: added more cuda related macros
+  * chore: lint errors
+  * feat: fixed errors during merge
+  ---------
+* feat(autoware_probabilistic_occupancy_grid_map): improved data handling on the ogm (`#10060 <https://github.com/autowarefoundation/autoware.universe/issues/10060>`_)
+  feat: improved data handling in the ogm. When using the full concatenated pointcloud the processing time decreases from 8ms to 4ms
+* Contributors: Fumiya Watanabe, Kenzo Lobos Tsunekawa, 心刚
+
+0.41.2 (2025-02-19)
+-------------------
+* chore: bump version to 0.41.1 (`#10088 <https://github.com/autowarefoundation/autoware.universe/issues/10088>`_)
+* Contributors: Ryohsuke Mitsudome
+
+0.41.1 (2025-02-10)
+-------------------
+
 0.41.0 (2025-01-29)
 -------------------
 * Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
