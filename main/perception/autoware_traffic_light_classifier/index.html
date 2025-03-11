@@ -14528,35 +14528,21 @@ The information of the models is listed here:</p>
 <td>N/A</td>
 </tr>
 <tr>
-<td>classifier_label_path</td>
-<td>string</td>
-<td>Path to the label file for the traffic light classifier.</td>
-<td><span class="arithmatex">\((var traffic_light_classifier_model_path)/\)</span>(var car_traffic_light_classifier_label_name)</td>
-<td>N/A</td>
-</tr>
-<tr>
-<td>classifier_model_path</td>
-<td>string</td>
-<td>Path to the ONNX model file for the traffic light classifier.</td>
-<td><span class="arithmatex">\((var traffic_light_classifier_model_path)/\)</span>(var car_traffic_light_classifier_model_name).onnx</td>
-<td>N/A</td>
-</tr>
-<tr>
-<td>classifier_precision</td>
+<td>precision</td>
 <td>string</td>
 <td>Precision used for traffic light classifier inference. Valid values: [fp32, fp16, int8].</td>
 <td>fp16</td>
 <td>N/A</td>
 </tr>
 <tr>
-<td>classifier_mean</td>
+<td>mean</td>
 <td>array</td>
 <td>Mean values used for input normalization [R, G, B].</td>
 <td>[123.675, 116.28, 103.53]</td>
 <td>N/A</td>
 </tr>
 <tr>
-<td>classifier_std</td>
+<td>std</td>
 <td>array</td>
 <td>Standard deviation values used for input normalization [R, G, B].</td>
 <td>[58.395, 57.12, 57.375]</td>
@@ -14577,7 +14563,7 @@ The information of the models is listed here:</p>
 <td>N/A</td>
 </tr>
 <tr>
-<td>classify_traffic_light_type</td>
+<td>traffic_light_type</td>
 <td>integer</td>
 <td>Type of traffic light to classify. {0: car, 1: pedestrian}.</td>
 <td>0</td>
@@ -14605,35 +14591,21 @@ The information of the models is listed here:</p>
 <td>N/A</td>
 </tr>
 <tr>
-<td>classifier_label_path</td>
-<td>string</td>
-<td>Path to the label file for the traffic light classifier.</td>
-<td><span class="arithmatex">\((var traffic_light_classifier_model_path)/\)</span>(var pedestrian_traffic_light_classifier_label_name)</td>
-<td>N/A</td>
-</tr>
-<tr>
-<td>classifier_model_path</td>
-<td>string</td>
-<td>Path to the ONNX model file for the traffic light classifier.</td>
-<td><span class="arithmatex">\((var traffic_light_classifier_model_path)/\)</span>(var pedestrian_traffic_light_classifier_model_name).onnx</td>
-<td>N/A</td>
-</tr>
-<tr>
-<td>classifier_precision</td>
+<td>precision</td>
 <td>string</td>
 <td>Precision used for traffic light classifier inference. Valid values: [fp32, fp16, int8].</td>
 <td>fp16</td>
 <td>N/A</td>
 </tr>
 <tr>
-<td>classifier_mean</td>
+<td>mean</td>
 <td>array</td>
 <td>Mean values used for input normalization [R, G, B].</td>
 <td>[123.675, 116.28, 103.53]</td>
 <td>N/A</td>
 </tr>
 <tr>
-<td>classifier_std</td>
+<td>std</td>
 <td>array</td>
 <td>Standard deviation values used for input normalization [R, G, B].</td>
 <td>[58.395, 57.12, 57.375]</td>
@@ -14654,7 +14626,7 @@ The information of the models is listed here:</p>
 <td>N/A</td>
 </tr>
 <tr>
-<td>classify_traffic_light_type</td>
+<td>traffic_light_type</td>
 <td>integer</td>
 <td>Type of traffic light to classify. {0: car, 1: pedestrian}.</td>
 <td>1</td>
