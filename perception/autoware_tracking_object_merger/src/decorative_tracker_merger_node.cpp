@@ -20,6 +20,8 @@
 #include "autoware/tracking_object_merger/association/solver/ssp.hpp"
 #include "autoware/tracking_object_merger/utils/utils.hpp"
 
+#include <diagnostic_msgs/msg/diagnostic_status.hpp>
+
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
@@ -168,6 +170,10 @@ DecorativeTrackerMergerNode::DecorativeTrackerMergerNode(const rclcpp::NodeOptio
   stop_watch_ptr_->tic("cyclic_time");
   stop_watch_ptr_->tic("processing_time");
   published_time_publisher_ = std::make_unique<autoware_utils::PublishedTimePublisher>(this);
+
+  // diagnostics
+  diagnostics_interface_ptr_ =
+    std::make_unique<autoware::universe_utils::DiagnosticsInterface>(this, "decorative_object_merger_node");
 }
 
 void DecorativeTrackerMergerNode::set3dDataAssociation(
@@ -200,6 +206,7 @@ void DecorativeTrackerMergerNode::mainObjectsCallback(
   const TrackedObjects::ConstSharedPtr & main_objects)
 {
   stop_watch_ptr_->toc("processing_time", true);
+  diagnostics_interface_ptr_->clear();
 
   /* transform to target merge coordinate */
   TrackedObjects transformed_objects;
@@ -210,6 +217,7 @@ void DecorativeTrackerMergerNode::mainObjectsCallback(
   TrackedObjects::ConstSharedPtr transformed_main_objects =
     std::make_shared<TrackedObjects>(transformed_objects);
 
+  bool is_existing_sub_objects = true;
   // try to merge sub object
   if (!sub_objects_buffer_.empty()) {
     // get interpolated sub objects
@@ -236,6 +244,16 @@ void DecorativeTrackerMergerNode::mainObjectsCallback(
     } else {
       RCLCPP_DEBUG(this->get_logger(), "interpolated_sub_objects is null");
     }
+  } else {
+    is_existing_sub_objects = false;
+  }
+
+  diagnostics_interface_ptr_->add_key_value("is_existing_sub_objects", is_existing_sub_objects);
+  if (!is_existing_sub_objects) {
+    std::stringstream message;
+    message << "Sub object is empty, so only main object is published";
+    diagnostics_interface_ptr_->update_level_and_message(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
 
   // try to merge main object
@@ -249,6 +267,7 @@ void DecorativeTrackerMergerNode::mainObjectsCallback(
     "debug/cyclic_time_ms", stop_watch_ptr_->toc("cyclic_time", true));
   processing_time_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
     "debug/processing_time_ms", stop_watch_ptr_->toc("processing_time", true));
+  diagnostics_interface_ptr_->publish(tracked_objects.header.stamp);
 }
 
 /**
@@ -259,6 +278,10 @@ void DecorativeTrackerMergerNode::mainObjectsCallback(
  */
 void DecorativeTrackerMergerNode::subObjectsCallback(const TrackedObjects::ConstSharedPtr & msg)
 {
+  if (msg->objects.empty()) {
+    return;
+  }
+
   /* transform to target merge coordinate */
   TrackedObjects transformed_objects;
   if (!autoware::object_recognition_utils::transformObjects(

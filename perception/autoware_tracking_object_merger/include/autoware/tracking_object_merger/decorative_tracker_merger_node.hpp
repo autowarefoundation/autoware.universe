@@ -18,6 +18,7 @@
 #include "autoware/tracking_object_merger/association/data_association.hpp"
 #include "autoware/tracking_object_merger/utils/tracker_state.hpp"
 #include "autoware/tracking_object_merger/utils/utils.hpp"
+#include "autoware/universe_utils/ros/diagnostics_interface.hpp"
 #include "autoware_utils/ros/debug_publisher.hpp"
 #include "autoware_utils/ros/published_time_publisher.hpp"
 #include "autoware_utils/system/stop_watch.hpp"
@@ -129,6 +130,9 @@ private:
     bool enable = false;
     std::string path;
   } logging_;
+
+  // diagnostics
+  std::unique_ptr<autoware::universe_utils::DiagnosticsInterface> diagnostics_interface_ptr_;
 };
 
 }  // namespace autoware::tracking_object_merger
