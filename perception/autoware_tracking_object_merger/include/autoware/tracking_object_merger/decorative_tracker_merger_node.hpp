@@ -77,9 +77,7 @@ private:
   TrackerState createNewTracker(
     const MEASUREMENT_STATE input_index, rclcpp::Time current_time,
     const autoware_perception_msgs::msg::TrackedObject & input_object);
-  void updateDiagnostics(
-    const double & delay_main_objects, const double & duration_empty_main_objects,
-    const double & delay_sub_objects);
+  void updateDiagnostics();
 
 private:
   tf2_ros::Buffer tf_buffer_;
@@ -136,9 +134,9 @@ private:
 
   // diagnostics
   std::unique_ptr<autoware::universe_utils::DiagnosticsInterface> diagnostics_interface_ptr_;
-  double diag_delay_main_objects_tolerance_;
-  double diag_duration_empty_main_objects_tolerance_;
-  double diag_delay_sub_objects_tolerance_;
+  double delay_main_objects_tolerance_;
+  double duration_empty_main_objects_tolerance_;
+  double delay_sub_objects_tolerance_;
   bool is_empty_previous_main_objects_;
 };
 
