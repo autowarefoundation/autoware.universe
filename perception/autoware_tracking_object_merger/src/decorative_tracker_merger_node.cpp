@@ -509,7 +509,7 @@ void DecorativeTrackerMergerNode::updateDiagnostics()
         diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
     }
   } else {
-    diagnostics_interface_ptr_->add_key_value("duration_empty_main_objects", std::string("OK"));
+    diagnostics_interface_ptr_->add_key_value("duration_empty_main_objects", 0.0);
   }
 
   diagnostics_interface_ptr_->add_key_value("delay_sub_objects", delay_sub_objects);
