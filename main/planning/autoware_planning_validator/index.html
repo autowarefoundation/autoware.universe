@@ -14300,6 +14300,7 @@
 <li><strong>Distance deviation</strong> : invalid if the ego is too far from the trajectory</li>
 <li><strong>Longitudinal distance deviation</strong> : invalid if the trajectory is too far from ego in longitudinal direction</li>
 <li><strong>Forward trajectory length</strong> : invalid if the trajectory length is not enough to stop within a given deceleration</li>
+<li><strong>Yaw difference</strong> : invalid if the difference between the ego yaw and closest trajectory yaw is too large</li>
 </ul>
 <p>The following features are to be implemented.</p>
 <ul>
@@ -14468,6 +14469,12 @@
 <td align="left">double</td>
 <td align="left">invalid threshold of the distance deviation between the ego position and the trajectory point closest to ego [m]</td>
 <td align="left">100.0</td>
+</tr>
+<tr>
+<td align="left"><code>thresholds.yaw_deviation</code></td>
+<td align="left">double</td>
+<td align="left">invalid threshold of the difference between the ego yaw and the closest trajectory yaw [rad]</td>
+<td align="left">1.5708</td>
 </tr>
 <tr>
 <td align="left"><code>parameters.longitudinal_distance_deviation</code></td>
