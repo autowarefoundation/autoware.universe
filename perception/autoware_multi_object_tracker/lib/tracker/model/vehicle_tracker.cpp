@@ -138,11 +138,13 @@ bool VehicleTracker::predict(const rclcpp::Time & time)
   return motion_model_.predictState(time);
 }
 
-bool VehicleTracker::measureWithPose(const types::DynamicObject & object)
+bool VehicleTracker::measureWithPose(
+  const types::DynamicObject & object, const types::InputChannel & channel_info)
 {
   // get measurement yaw angle to update
   bool is_yaw_available =
-    object.kinematics.orientation_availability != types::OrientationAvailability::UNAVAILABLE;
+    object.kinematics.orientation_availability != types::OrientationAvailability::UNAVAILABLE &&
+    channel_info.trust_orientation;
 
   // velocity capability is checked only when the object has velocity measurement
   // and the predicted velocity is close to the observed velocity
@@ -198,11 +200,13 @@ bool VehicleTracker::measureWithShape(const types::DynamicObject & object)
   }
 
   // check object size abnormality
-  constexpr double size_max = 35.0;  // [m]
-  constexpr double size_min = 1.0;   // [m]
+  constexpr double size_max_multiplier = 1.5;
+  constexpr double size_min_multiplier = 0.25;
   if (
-    object.shape.dimensions.x > size_max || object.shape.dimensions.x < size_min ||
-    object.shape.dimensions.y > size_max || object.shape.dimensions.y < size_min) {
+    object.shape.dimensions.x > object_model_.size_limit.length_max * size_max_multiplier ||
+    object.shape.dimensions.x < object_model_.size_limit.length_min * size_min_multiplier ||
+    object.shape.dimensions.y > object_model_.size_limit.width_max * size_max_multiplier ||
+    object.shape.dimensions.y < object_model_.size_limit.width_min * size_min_multiplier) {
     return false;
   }
 
@@ -257,7 +261,7 @@ bool VehicleTracker::measure(
   // update object
   types::DynamicObject updating_object = in_object;
   shapes::calcAnchorPointOffset(object_, tracking_offset_, updating_object);
-  measureWithPose(updating_object);
+  measureWithPose(updating_object, channel_info);
   if (channel_info.trust_extension) {
     measureWithShape(updating_object);
   }
