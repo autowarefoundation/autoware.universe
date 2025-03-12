@@ -14439,39 +14439,53 @@
 <td align="left">1.0</td>
 </tr>
 <tr>
-<td align="left">dynamic_objects.avoid</td>
+<td align="left">object_exclusion.exclude_static</td>
+<td align="left">[-]</td>
+<td align="left">boolean</td>
+<td align="left">if true, the drivable area is not expanded over static objects</td>
+<td align="left">true</td>
+</tr>
+<tr>
+<td align="left">object_exclusion.exclude_dynamic</td>
 <td align="left">[-]</td>
 <td align="left">boolean</td>
 <td align="left">if true, the drivable area is not expanded in the predicted path of dynamic objects</td>
 <td align="left">true</td>
 </tr>
 <tr>
-<td align="left">dynamic_objects.extra_footprint_offset.front</td>
-<td align="left">[m]</td>
+<td align="left">object_exclusion.th_stopped_object_velocity</td>
+<td align="left">[m/s]</td>
 <td align="left">double</td>
-<td align="left">extra length to add to the front of the ego footprint</td>
-<td align="left">0.5</td>
+<td align="left">velocity threshold for static objects</td>
+<td align="left">1.0</td>
 </tr>
 <tr>
-<td align="left">dynamic_objects.extra_footprint_offset.rear</td>
+<td align="left">object_exclusion.safety_margin.front</td>
 <td align="left">[m]</td>
 <td align="left">double</td>
-<td align="left">extra length to add to the rear of the ego footprint</td>
-<td align="left">0.5</td>
+<td align="left">extra length to add to the front of the object footprint</td>
+<td align="left">0.75</td>
 </tr>
 <tr>
-<td align="left">dynamic_objects.extra_footprint_offset.left</td>
+<td align="left">object_exclusion.safety_margin.rear</td>
 <td align="left">[m]</td>
 <td align="left">double</td>
-<td align="left">extra length to add to the left of the ego footprint</td>
-<td align="left">0.5</td>
+<td align="left">extra length to add to the rear of the object footprint</td>
+<td align="left">0.75</td>
 </tr>
 <tr>
-<td align="left">dynamic_objects.extra_footprint_offset.right</td>
+<td align="left">object_exclusion.safety_margin.left</td>
 <td align="left">[m]</td>
 <td align="left">double</td>
-<td align="left">extra length to add to the rear of the ego footprint</td>
-<td align="left">0.5</td>
+<td align="left">extra length to add to the left of the object footprint</td>
+<td align="left">0.75</td>
+</tr>
+<tr>
+<td align="left">object_exclusion.safety_margin.right</td>
+<td align="left">[m]</td>
+<td align="left">double</td>
+<td align="left">extra length to add to the right of the object footprint</td>
+<td align="left">0.75</td>
 </tr>
 <tr>
 <td align="left">path_preprocessing.max_arc_length</td>
@@ -14569,9 +14583,14 @@ Additionally, for each path point, the minimum drivable area width is calculated
 Where <span class="arithmatex">\(W\)</span> is the minimum drivable area width, <span class="arithmatex">\(a\)</span>, is the front overhang of ego, <span class="arithmatex">\(l\)</span> is the wheelbase of ego, <span class="arithmatex">\(w\)</span> is the width of ego, and <span class="arithmatex">\(k\)</span> is the path curvature.
 This equation was derived from the work of <a href="https://www.sae.org/publications/technical-papers/content/2021-01-0099/">Lim, H., Kim, C., and Jo, A., "Model Predictive Control-Based Lateral Control of Autonomous Large-Size Bus on Road with Large Curvature," SAE Technical Paper 2021-01-0099, 2021</a>.</p>
 <p><img alt="min width" src="../../images/drivable_area/DynamicDrivableArea-MinWidth.drawio.svg"></p>
-<h5 id="3-calculate-maximum-expansion-distances-of-each-bound-point-based-on-dynamic-objects-and-linestring-of-the-vector-map-optional">3 Calculate maximum expansion distances of each bound point based on dynamic objects and linestring of the vector map (optional)<a class="headerlink" href="#3-calculate-maximum-expansion-distances-of-each-bound-point-based-on-dynamic-objects-and-linestring-of-the-vector-map-optional" title="Permanent link">#</a></h5>
-<p>For each drivable area bound point, we calculate its maximum expansion distance as its distance to the closest "obstacle" (either a map linestring with type <code>avoid_linestrings.type</code>, or a dynamic object footprint if <code>dynamic_objects.avoid</code> is set to <code>true</code>).
-If <code>max_expansion_distance</code> is not <code>0.0</code>, it is use here if smaller than the distance to the closest obstacle.</p>
+<h5 id="3-calculate-maximum-expansion-distances-of-each-bound-point-based-on-detected-objects-and-linestring-of-the-vector-map-optional">3 Calculate maximum expansion distances of each bound point based on detected objects and linestring of the vector map (optional)<a class="headerlink" href="#3-calculate-maximum-expansion-distances-of-each-bound-point-based-on-detected-objects-and-linestring-of-the-vector-map-optional" title="Permanent link">#</a></h5>
+<p>For each drivable area bound point, we calculate its maximum expansion distance as its distance to the closest "obstacle" which could be:</p>
+<ol>
+<li>Map linestring with type <code>avoid_linestrings.type</code>.</li>
+<li>Static object footprint (if <code>object_exclusion.exclude_static</code> is set to <code>true</code>).</li>
+<li>Dynamic object path footprint (if <code>object_exclusion.exclude_dynamic</code> is set to <code>true</code>).</li>
+</ol>
+<p>If <code>max_expansion_distance</code> is not <code>0.0</code>, it is use here if smaller than the distance to the closest obstacle.</p>
 <p><img alt="max distances" src="../../images/drivable_area/DynamicDrivableArea-MaxWidth.drawio.svg"></p>
 <h5 id="4-calculate-by-how-much-each-bound-point-should-be-pushed-away-from-the-path">4 Calculate by how much each bound point should be pushed away from the path<a class="headerlink" href="#4-calculate-by-how-much-each-bound-point-should-be-pushed-away-from-the-path" title="Permanent link">#</a></h5>
 <p>For each bound point, a shift distance is calculated.

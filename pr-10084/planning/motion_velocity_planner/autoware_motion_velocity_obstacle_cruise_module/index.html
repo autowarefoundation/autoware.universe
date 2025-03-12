@@ -14318,7 +14318,7 @@
 <ul>
 <li>The object type is for cruising according to <code>obstacle_filtering.object_type.*</code> and it is moving with a speed greater than <code>obstacle_filtering.yield.stopped_obstacle_velocity_threshold</code>.</li>
 <li>The object is not crossing the ego's trajectory (*1).</li>
-<li>There is another object of type <code>obstacle_filtering.object_type.*</code> stopped in front of the moving obstacle.</li>
+<li>There is another object of type <code>obstacle_filtering.object_type.side_stopped</code> stopped in front of the moving obstacle.</li>
 <li>The lateral distance (using the ego's trajectory as reference) between both obstacles is less than <code>obstacle_filtering.yield.max_lat_dist_between_obstacles</code></li>
 <li>Both obstacles, moving and stopped, are within <code>obstacle_filtering.yield.lat_distance_threshold</code> and <code>obstacle_filtering.yield.lat_distance_threshold</code> + <code>obstacle_filtering.yield.max_lat_dist_between_obstacles</code> lateral distance from the ego's trajectory respectively.</li>
 </ul>
