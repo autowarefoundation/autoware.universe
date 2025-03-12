@@ -287,8 +287,8 @@ void DecorativeTrackerMergerNode::mainObjectsCallback(
  */
 void DecorativeTrackerMergerNode::subObjectsCallback(const TrackedObjects::ConstSharedPtr & msg)
 {
-  diagnostics_interface_ptr_->clear();
   stop_watch_ptr_->toc("delay_sub_objects", true);
+  diagnostics_interface_ptr_->clear();
 
   /* transform to target merge coordinate */
   TrackedObjects transformed_objects;
