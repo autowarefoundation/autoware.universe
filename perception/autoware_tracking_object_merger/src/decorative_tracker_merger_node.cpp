@@ -23,8 +23,6 @@
 #include <Eigen/Core>
 #include <Eigen/Geometry>
 
-#include <diagnostic_msgs/msg/diagnostic_status.hpp>
-
 #include <boost/optional.hpp>
 
 #include <glog/logging.h>
