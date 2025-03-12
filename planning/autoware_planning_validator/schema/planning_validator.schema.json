@@ -1,0 +1,150 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "autoware_planning_validator",
+  "type": "object",
+  "definitions": {
+    "planning_validator": {
+      "type": "object",
+      "properties": {
+        "invalid_trajectory_handling_type": {
+          "type": "integer",
+          "description": "Operation option when invalid trajectory is detected. 0: publish the trajectory even if it is invalid, 1: stop publishing the trajectory, 2: publish the last validated trajectory.",
+          "default": 0,
+          "enum": [0, 1, 2]
+        },
+        "publish_diag": {
+          "type": "boolean",
+          "description": "If true, diagnostic messages are published.",
+          "default": true
+        },
+        "diag_error_count_threshold": {
+          "type": "integer",
+          "description": "If the number of consecutive invalid trajectories exceeds this threshold, the Diag will be set to ERROR.",
+          "default": 0
+        },
+        "display_on_terminal": {
+          "type": "boolean",
+          "description": "Show error messages on the terminal.",
+          "default": true
+        },
+        "thresholds": {
+          "type": "object",
+          "properties": {
+            "interval": {
+              "type": "number",
+              "description": "Interval threshold.",
+              "default": 100.0
+            },
+            "relative_angle": {
+              "type": "number",
+              "description": "Relative angle threshold (= 115 degrees).",
+              "default": 2.0
+            },
+            "curvature": {
+              "type": "number",
+              "description": "Curvature threshold.",
+              "default": 1.0
+            },
+            "lateral_acc": {
+              "type": "number",
+              "description": "Lateral acceleration threshold.",
+              "default": 9.8
+            },
+            "longitudinal_max_acc": {
+              "type": "number",
+              "description": "Maximum longitudinal acceleration threshold.",
+              "default": 9.8
+            },
+            "longitudinal_min_acc": {
+              "type": "number",
+              "description": "Minimum longitudinal acceleration threshold.",
+              "default": -9.8
+            },
+            "steering": {
+              "type": "number",
+              "description": "Steering threshold.",
+              "default": 1.414
+            },
+            "steering_rate": {
+              "type": "number",
+              "description": "Steering rate threshold.",
+              "default": 10.0
+            },
+            "velocity_deviation": {
+              "type": "number",
+              "description": "Velocity deviation threshold.",
+              "default": 100.0
+            },
+            "distance_deviation": {
+              "type": "number",
+              "description": "Distance deviation threshold.",
+              "default": 100.0
+            },
+            "longitudinal_distance_deviation": {
+              "type": "number",
+              "description": "Longitudinal distance deviation threshold.",
+              "default": 1.0
+            }
+          },
+          "required": [
+            "interval",
+            "relative_angle",
+            "curvature",
+            "lateral_acc",
+            "longitudinal_max_acc",
+            "longitudinal_min_acc",
+            "steering",
+            "steering_rate",
+            "velocity_deviation",
+            "distance_deviation",
+            "longitudinal_distance_deviation"
+          ],
+          "additionalProperties": false
+        },
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "forward_trajectory_length_acceleration": {
+              "type": "number",
+              "description": "The required trajectory length is calculated as the distance needed to stop from the current speed at this deceleration.",
+              "default": -3.0
+            },
+            "forward_trajectory_length_margin": {
+              "type": "number",
+              "description": "An error is raised if the required trajectory length is less than this distance. Setting it to 0 means an error will occur if even slightly exceeding the end of the path, therefore, a certain margin is necessary.",
+              "default": 2.0
+            }
+          },
+          "required": [
+            "forward_trajectory_length_acceleration",
+            "forward_trajectory_length_margin"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "invalid_trajectory_handling_type",
+        "publish_diag",
+        "diag_error_count_threshold",
+        "display_on_terminal",
+        "thresholds",
+        "parameters"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "properties": {
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/planning_validator"
+        }
+      },
+      "required": ["ros__parameters"],
+      "additionalProperties": false
+    }
+  },
+  "required": ["/**"],
+  "additionalProperties": false
+}
