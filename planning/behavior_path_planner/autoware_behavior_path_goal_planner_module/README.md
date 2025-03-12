@@ -328,7 +328,7 @@ _shift_ based path planner tends to generate unnatural path when the shift lane 
 
 <img src="./images/bad_shift_path.png" width="600">
 
-_bezier_ based path planner interpolates the shift path start and end pose using tbe bezier curve for a several combination of parameters, to obtain a better result through the later selection process. In the below screenshot the goal is on a BusStopArea and `use_bus_stop_area` is set to true, so _bezier_ planner is triggered instead. Internally, goal_planner first tries to use _shift_ planner, and if it turns out that the shift start and end is not parallel, it switches to _bezier_ planner from the next process.
+_bezier_ based path planner interpolates the shift path start and end pose using tbe bezier curve for a several combination of parameters, to obtain a better result through the later selection process. In the below screenshot the goal is on a BusStopArea and `use_bus_stop_area` is set to true, so _bezier_ planner is triggered instead. Internally, goal*planner first tries to use \_shift* planner, and if it turns out that the shift start and end is not parallel, it switches to _bezier_ planner from the next process.
 
 <img src="./images/bezier_path.png" width="600">
 
@@ -440,6 +440,7 @@ In addition, the safety check has a time hysteresis, and if the path is judged "
 When ego approached the start of the temporarily selected pull over path within the distance of `decide_path_distance`, if it is collision-free at that time and safe against dynamic objects, it transitions to `DECIDING`. And if those conditions hold for a certain period of time, it transitions to `DECIDED` and the selected path is fixed.
 
 ![state_transition](./images/goal_planner-state-transition.drawio.svg)
+[Open]({{ drawio("/planning/behavior_path_planner/autoware_behavior_path_goal_planner_module/images/goal_planner-state-transition.drawio.svg") }})
 
 ## Unimplemented parts / limitations
 
