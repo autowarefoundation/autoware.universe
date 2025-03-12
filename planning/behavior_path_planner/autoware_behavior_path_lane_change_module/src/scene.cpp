@@ -523,7 +523,7 @@ void NormalLaneChange::insert_stop_point(
 
   // if input is not current lane, we can just insert the points at terminal.
   if (!is_current_lane) {
-    if(common_data_ptr_->transient_data.next_dist_buffer.min < calculation::eps) {
+    if (common_data_ptr_->transient_data.next_dist_buffer.min < calculation::eps) {
       return;
     }
     const auto arc_length_to_stop_pose = motion_utils::calcArcLength(path.points) -
