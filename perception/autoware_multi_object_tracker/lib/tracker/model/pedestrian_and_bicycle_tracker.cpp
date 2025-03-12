@@ -22,7 +22,9 @@ namespace autoware::multi_object_tracker
 {
 PedestrianAndBicycleTracker::PedestrianAndBicycleTracker(
   const rclcpp::Time & time, const types::DynamicObject & object)
-: Tracker(time, object), pedestrian_tracker_(time, object), bicycle_tracker_(time, object)
+: Tracker(time, object),
+  pedestrian_tracker_(time, object),
+  bicycle_tracker_(object_model::bicycle, time, object)
 {
 }
 

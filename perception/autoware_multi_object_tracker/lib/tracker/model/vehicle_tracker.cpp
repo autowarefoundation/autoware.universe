@@ -211,7 +211,7 @@ bool VehicleTracker::measureWithShape(const types::DynamicObject & object)
   }
 
   // update object size
-  constexpr double gain = 0.5;
+  constexpr double gain = 0.4;
   constexpr double gain_inv = 1.0 - gain;
   auto & object_extension = object_.shape.dimensions;
   object_extension.x = gain_inv * object_extension.x + gain * object.shape.dimensions.x;
