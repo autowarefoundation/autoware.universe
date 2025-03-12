@@ -32,9 +32,10 @@ namespace autoware::multi_object_tracker
 class BicycleTracker : public Tracker
 {
 private:
+  object_model::ObjectModel object_model_ = object_model::bicycle;
   rclcpp::Logger logger_;
 
-  object_model::ObjectModel object_model_ = object_model::bicycle;
+  double velocity_deviation_threshold_;
 
   BicycleMotionModel motion_model_;
   using IDX = BicycleMotionModel::IDX;

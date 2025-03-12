@@ -43,6 +43,11 @@ namespace autoware::multi_object_tracker
 BicycleTracker::BicycleTracker(const rclcpp::Time & time, const types::DynamicObject & object)
 : Tracker(time, object), logger_(rclcpp::get_logger("BicycleTracker"))
 {
+  // velocity deviation threshold
+  //   if the predicted velocity is close to the observed velocity,
+  //   the observed velocity is used as the measurement.
+  velocity_deviation_threshold_ = autoware_utils::kmph2mps(10);  // [m/s]
+
   if (object.shape.type != autoware_perception_msgs::msg::Shape::BOUNDING_BOX) {
     // set default initial size
     auto & object_extension = object_.shape.dimensions;
@@ -131,21 +136,44 @@ bool BicycleTracker::predict(const rclcpp::Time & time)
 bool BicycleTracker::measureWithPose(const types::DynamicObject & object)
 {
   // get measurement yaw angle to update
-  const double tracked_yaw = motion_model_.getStateElement(IDX::YAW);
-  double measurement_yaw = 0.0;
-  bool is_yaw_available = shapes::getMeasurementYaw(object, tracked_yaw, measurement_yaw);
+  bool is_yaw_available =
+    object.kinematics.orientation_availability != types::OrientationAvailability::UNAVAILABLE;
+
+  // velocity capability is checked only when the object has velocity measurement
+  // and the predicted velocity is close to the observed velocity
+  bool is_velocity_available = false;
+  if (object.kinematics.has_twist) {
+    const double tracked_vel = motion_model_.getStateElement(IDX::VEL);
+    const double & observed_vel = object.twist.linear.x;
+    if (std::fabs(tracked_vel - observed_vel) < velocity_deviation_threshold_) {
+      // Velocity deviation is small
+      is_velocity_available = true;
+    }
+  }
 
   // update
   bool is_updated = false;
   {
     const double x = object.pose.position.x;
     const double y = object.pose.position.y;
-    const double yaw = measurement_yaw;
+    const double yaw = tf2::getYaw(object.pose.orientation);
+    const double vel = object.twist.linear.x;
 
-    if (is_yaw_available) {
+    if (is_yaw_available && is_velocity_available) {
+      // update with yaw angle and velocity
+      is_updated = motion_model_.updateStatePoseHeadVel(
+        x, y, yaw, object.pose_covariance, vel, object.twist_covariance);
+    } else if (is_yaw_available && !is_velocity_available) {
+      // update with yaw angle, but without velocity
       is_updated = motion_model_.updateStatePoseHead(x, y, yaw, object.pose_covariance);
+    } else if (!is_yaw_available && is_velocity_available) {
+      // update without yaw angle, but with velocity
+      is_updated = motion_model_.updateStatePoseVel(
+        x, y, object.pose_covariance, vel, object.twist_covariance);
     } else {
-      is_updated = motion_model_.updateStatePose(x, y, object.pose_covariance);
+      // update without yaw angle and velocity
+      is_updated = motion_model_.updateStatePose(
+        x, y, object.pose_covariance);  // update without yaw angle and velocity
     }
     motion_model_.limitStates();
   }
@@ -164,13 +192,14 @@ bool BicycleTracker::measureWithShape(const types::DynamicObject & object)
     return false;
   }
 
-  // check bound box size abnormality
-  constexpr double size_max = 30.0;  // [m]
-  constexpr double size_min = 0.1;   // [m]
+  // check object size abnormality
+  constexpr double size_max_multiplier = 1.5;
+  constexpr double size_min_multiplier = 0.25;
   if (
-    object.shape.dimensions.x > size_max || object.shape.dimensions.x < size_min ||
-    object.shape.dimensions.y > size_max || object.shape.dimensions.y < size_min ||
-    object.shape.dimensions.z > size_max || object.shape.dimensions.z < size_min) {
+    object.shape.dimensions.x > object_model_.size_limit.length_max * size_max_multiplier ||
+    object.shape.dimensions.x < object_model_.size_limit.length_min * size_min_multiplier ||
+    object.shape.dimensions.y > object_model_.size_limit.width_max * size_max_multiplier ||
+    object.shape.dimensions.y < object_model_.size_limit.width_min * size_min_multiplier) {
     return false;
   }
 
