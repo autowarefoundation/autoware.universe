@@ -92,7 +92,7 @@ If this distance is bellow the `actions.slowdown.threshold`, a velocity of `acti
 If the distance is bellow the `actions.stop.threshold`, a velocity of `0`m/s will be used.
 
 In addition, if parameter `action.use_map_stop_lines` is set to `true`,
-then the stop point may be moved to the earliest stop line preceding the stop point where ego can confortably stop.
+then the stop point may be moved to the earliest stop line preceding the stop point where ego can comfortably stop.
 Stop lines are defined in the vector map and must be attached to one of the lanelet followed by the ego trajectory.
 
 ![avoid_collision](./docs/ttcs_avoid.png)
