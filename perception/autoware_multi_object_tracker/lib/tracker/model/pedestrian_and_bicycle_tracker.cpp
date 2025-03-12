@@ -34,10 +34,11 @@ bool PedestrianAndBicycleTracker::predict(const rclcpp::Time & time)
 }
 
 bool PedestrianAndBicycleTracker::measure(
-  const types::DynamicObject & object, const rclcpp::Time & time)
+  const types::DynamicObject & object, const rclcpp::Time & time,
+  const types::InputChannel & channel_info)
 {
-  pedestrian_tracker_.measure(object, time);
-  bicycle_tracker_.measure(object, time);
+  pedestrian_tracker_.measure(object, time, channel_info);
+  bicycle_tracker_.measure(object, time, channel_info);
 
   return true;
 }

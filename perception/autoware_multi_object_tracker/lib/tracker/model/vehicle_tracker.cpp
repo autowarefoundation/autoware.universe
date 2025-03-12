@@ -229,7 +229,9 @@ bool VehicleTracker::measureWithShape(const types::DynamicObject & object)
   return true;
 }
 
-bool VehicleTracker::measure(const types::DynamicObject & in_object, const rclcpp::Time & time)
+bool VehicleTracker::measure(
+  const types::DynamicObject & in_object, const rclcpp::Time & time,
+  const types::InputChannel & channel_info)
 {
   // check time gap
   const double dt = motion_model_.getDeltaTime(time);
@@ -245,7 +247,9 @@ bool VehicleTracker::measure(const types::DynamicObject & in_object, const rclcp
   types::DynamicObject updating_object = in_object;
   shapes::calcAnchorPointOffset(object_, tracking_offset_, updating_object);
   measureWithPose(updating_object);
-  measureWithShape(updating_object);
+  if (channel_info.trust_extension) {
+    measureWithShape(updating_object);
+  }
 
   return true;
 }
