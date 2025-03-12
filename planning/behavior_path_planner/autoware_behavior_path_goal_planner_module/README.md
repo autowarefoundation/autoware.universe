@@ -169,6 +169,10 @@ The gray numbers represent objects to avoid, and you can see that the goal in fr
 
 ![goal_priority_object_to_avoid_rviz.png](./images/goal_priority_object_to_avoid_rviz.png)
 
+### BusStopArea
+
+If the flag `use_bus_stop_area` is true, the goal search is limited inside the `BusStopArea` regulatory element polygon. The goal candidates are searched more densely compared to road shoulder parking method, and the goal candidate that keeps the ego footprint inside the `BusStopArea` is accepted. Refer to [BusStopArea spec](https://github.com/autowarefoundation/autoware_lanelet2_extension/blob/main/autoware_lanelet2_extension/docs/extra_regulatory_elements.md#bus-stop-area) for more detail.
+
 ### Parameters for goal search
 
 | Name                            | Unit | Type   | Description                                                                                                                                                                                                                                                                                                                                                                                                                                                                      | Default value               |
