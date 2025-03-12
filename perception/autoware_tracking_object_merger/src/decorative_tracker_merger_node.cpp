@@ -515,7 +515,7 @@ void DecorativeTrackerMergerNode::updateDiagnostics()
   diagnostics_interface_ptr_->add_key_value("delay_sub_objects", delay_sub_objects);
   if (delay_sub_objects > delay_sub_objects_tolerance_) {
     std::stringstream message;
-    message << "Sub object is delayed for longer than tolerance" << delay_sub_objects << " < "
+    message << "Sub object is delayed for longer than tolerance" << delay_sub_objects << " > "
             << delay_sub_objects_tolerance_;
     diagnostics_interface_ptr_->update_level_and_message(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
