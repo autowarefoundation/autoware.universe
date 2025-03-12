@@ -25,3 +25,8 @@
     # logging settings
     enable_logging: false
     logging_file_path: "association_log.json"
+
+    # diagnostics
+    diag_delay_main_objects_tolerance: 1.0
+    diag_duration_empty_main_objects_tolerance: 5.0
+    diag_delay_sub_objects_tolerance: 5.0
