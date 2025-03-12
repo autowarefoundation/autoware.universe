@@ -41,7 +41,8 @@
 namespace autoware::multi_object_tracker
 {
 BicycleTracker::BicycleTracker(const rclcpp::Time & time, const types::DynamicObject & object)
-: Tracker(time, object), logger_(rclcpp::get_logger("BicycleTracker"))
+: Tracker(time, object), logger_(rclcpp::get_logger("BicycleTracker")),
+tracking_offset_(Eigen::Vector2d::Zero())
 {
   // velocity deviation threshold
   //   if the predicted velocity is close to the observed velocity,
@@ -220,11 +221,25 @@ bool BicycleTracker::measureWithShape(const types::DynamicObject & object)
   // update motion model
   motion_model_.updateExtendedState(object_extension.x);
 
+  // update offset into object position
+  {
+    // rotate back the offset vector from object coordinate to global coordinate
+    const double yaw = motion_model_.getStateElement(IDX::YAW);
+    const double offset_x_global =
+      tracking_offset_.x() * std::cos(yaw) - tracking_offset_.y() * std::sin(yaw);
+    const double offset_y_global =
+      tracking_offset_.x() * std::sin(yaw) + tracking_offset_.y() * std::cos(yaw);
+    motion_model_.adjustPosition(-gain * offset_x_global, -gain * offset_y_global);
+    // update offset (object coordinate)
+    tracking_offset_.x() = gain_inv * tracking_offset_.x();
+    tracking_offset_.y() = gain_inv * tracking_offset_.y();
+  }
+  
   return true;
 }
 
 bool BicycleTracker::measure(
-  const types::DynamicObject & object, const rclcpp::Time & time,
+  const types::DynamicObject & in_object, const rclcpp::Time & time,
   const types::InputChannel & channel_info)
 {
   // check time gap
@@ -238,9 +253,11 @@ bool BicycleTracker::measure(
   }
 
   // update object
-  measureWithPose(object);
+  types::DynamicObject updating_object = in_object;
+  shapes::calcAnchorPointOffset(object_, tracking_offset_, updating_object);
+  measureWithPose(updating_object);
   if (channel_info.trust_extension) {
-    measureWithShape(object);
+    measureWithShape(updating_object);
   }
 
   return true;

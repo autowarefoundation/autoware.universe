@@ -37,6 +37,8 @@ private:
 
   double velocity_deviation_threshold_;
 
+  Eigen::Vector2d tracking_offset_;
+
   BicycleMotionModel motion_model_;
   using IDX = BicycleMotionModel::IDX;
 
