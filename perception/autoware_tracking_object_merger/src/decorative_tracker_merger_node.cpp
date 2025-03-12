@@ -492,7 +492,8 @@ void DecorativeTrackerMergerNode::updateDiagnostics()
   diagnostics_interface_ptr_->add_key_value("delay_main_objects", delay_main_objects);
   if (delay_main_objects > delay_main_objects_tolerance_) {
     std::stringstream message;
-    message << "Main object is delayed for longer than tolerance";
+    message << "Main object is delayed for longer than tolerance " << delay_main_objects << " > "
+            << delay_main_objects_tolerance_;
     diagnostics_interface_ptr_->update_level_and_message(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
@@ -502,7 +503,8 @@ void DecorativeTrackerMergerNode::updateDiagnostics()
       "duration_empty_main_objects", duration_empty_main_objects);
     if (duration_empty_main_objects > duration_empty_main_objects_tolerance_) {
       std::stringstream message;
-      message << "Main object continues to be empty for longer than tolerance";
+      message << "Main object continues to be empty for longer than tolerance "
+              << duration_empty_main_objects << " > " << duration_empty_main_objects_tolerance_;
       diagnostics_interface_ptr_->update_level_and_message(
         diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
     }
@@ -513,7 +515,8 @@ void DecorativeTrackerMergerNode::updateDiagnostics()
   diagnostics_interface_ptr_->add_key_value("delay_sub_objects", delay_sub_objects);
   if (delay_sub_objects > delay_sub_objects_tolerance_) {
     std::stringstream message;
-    message << "Sub object is delayed for longer than tolerance";
+    message << "Sub object is delayed for longer than tolerance" << delay_sub_objects << " < "
+            << delay_sub_objects_tolerance_;
     diagnostics_interface_ptr_->update_level_and_message(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
