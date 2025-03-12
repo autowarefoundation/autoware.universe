@@ -2,6 +2,33 @@
 Changelog for package autoware_ground_segmentation
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.42.0 (2025-03-03)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_utils): replace autoware_universe_utils with autoware_utils  (`#10191 <https://github.com/autowarefoundation/autoware.universe/issues/10191>`_)
+* chore: refine maintainer list (`#10110 <https://github.com/autowarefoundation/autoware.universe/issues/10110>`_)
+  * chore: remove Miura from maintainer
+  * chore: add Taekjin-san to perception_utils package maintainer
+  ---------
+* Contributors: Fumiya Watanabe, Shunsuke Miura, 心刚
+
+0.41.2 (2025-02-19)
+-------------------
+* chore: bump version to 0.41.1 (`#10088 <https://github.com/autowarefoundation/autoware.universe/issues/10088>`_)
+* Contributors: Ryohsuke Mitsudome
+
+0.41.1 (2025-02-10)
+-------------------
+
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_ground_segmentation): tier4_debug_msgs changed to autoware_internal_debug_msgs in fil… (`#9878 <https://github.com/autowarefoundation/autoware.universe/issues/9878>`_)
+  feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in files perception/autoware_ground_segmentation
+* fix(autoware_ground_segmentation): fix bugprone-branch-clone (`#9648 <https://github.com/autowarefoundation/autoware.universe/issues/9648>`_)
+  fix: bugprone-branch-clone
+* Contributors: Fumiya Watanabe, Vishal Chauhan, kobayu858
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

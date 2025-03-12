@@ -20,8 +20,8 @@
 #include "autoware/behavior_path_planner_common/interface/scene_module_visitor.hpp"
 #include "autoware/behavior_path_planner_common/marker_utils/utils.hpp"
 
-#include <autoware/universe_utils/ros/marker_helper.hpp>
-#include <autoware/universe_utils/system/time_keeper.hpp>
+#include <autoware_utils/ros/marker_helper.hpp>
+#include <autoware_utils/system/time_keeper.hpp>
 
 #include <algorithm>
 #include <limits>
@@ -32,7 +32,7 @@
 
 namespace autoware::behavior_path_planner
 {
-using autoware::universe_utils::appendMarkerArray;
+using autoware_utils::append_marker_array;
 using utils::lane_change::assignToCandidate;
 
 LaneChangeInterface::LaneChangeInterface(
@@ -74,7 +74,7 @@ bool LaneChangeInterface::isExecutionReady() const
 
 void LaneChangeInterface::updateData()
 {
-  universe_utils::ScopedTimeTrack st(__func__, *getTimeKeeper());
+  autoware_utils::ScopedTimeTrack st(__func__, *getTimeKeeper());
   module_type_->setPreviousModuleOutput(getPreviousModuleOutput());
   module_type_->update_lanes(getCurrentStatus() == ModuleStatus::RUNNING);
   module_type_->update_filtered_objects();
@@ -101,9 +101,18 @@ void LaneChangeInterface::postProcess()
 
 BehaviorModuleOutput LaneChangeInterface::plan()
 {
-  universe_utils::ScopedTimeTrack st(__func__, *getTimeKeeper());
+  autoware_utils::ScopedTimeTrack st(__func__, *getTimeKeeper());
   resetPathCandidate();
   resetPathReference();
+
+  // plan() should be called only when the module is in the RUNNING state, but
+  // due to planner manager implementation, it can be called in the IDLE state.
+  // TODO(Azu, Quda): consider a proper fix.
+  if (getCurrentStatus() == ModuleStatus::IDLE) {
+    auto output = getPreviousModuleOutput();
+    path_reference_ = std::make_shared<PathWithLaneId>(output.reference_path);
+    return output;
+  }
 
   auto output = module_type_->generateOutput();
   path_reference_ = std::make_shared<PathWithLaneId>(output.reference_path);
@@ -185,7 +194,7 @@ BehaviorModuleOutput LaneChangeInterface::planWaitingApproval()
 
 CandidateOutput LaneChangeInterface::planCandidate() const
 {
-  universe_utils::ScopedTimeTrack st(__func__, *getTimeKeeper());
+  autoware_utils::ScopedTimeTrack st(__func__, *getTimeKeeper());
   const auto selected_path = module_type_->getLaneChangePath();
 
   if (selected_path.path.points.empty()) {
@@ -375,14 +384,14 @@ MarkerArray LaneChangeInterface::getModuleVirtualWall()
   const auto end_marker =
     createLaneChangingVirtualWallMarker(end_pose, name(), clock_->now(), "lane_change_end");
   marker.markers.reserve(start_marker.markers.size() + end_marker.markers.size());
-  appendMarkerArray(start_marker, &marker);
-  appendMarkerArray(end_marker, &marker);
+  append_marker_array(start_marker, &marker);
+  append_marker_array(end_marker, &marker);
   return marker;
 }
 
 void LaneChangeInterface::updateSteeringFactorPtr(const BehaviorModuleOutput & output)
 {
-  universe_utils::ScopedTimeTrack st(__func__, *getTimeKeeper());
+  autoware_utils::ScopedTimeTrack st(__func__, *getTimeKeeper());
 
   const auto current_position = module_type_->getEgoPosition();
   const auto status = module_type_->getLaneChangeStatus();

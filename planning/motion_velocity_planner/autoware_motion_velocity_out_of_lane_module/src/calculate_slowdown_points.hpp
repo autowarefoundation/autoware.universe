@@ -18,7 +18,7 @@
 #include "types.hpp"
 
 #include <autoware/motion_velocity_planner_common_universe/planner_data.hpp>
-#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware_utils/geometry/geometry.hpp>
 
 #include <geometry_msgs/msg/pose.hpp>
 
@@ -34,7 +34,7 @@ namespace autoware::motion_velocity_planner::out_of_lane
 /// @return optional slowdown point to insert in the trajectory
 std::optional<geometry_msgs::msg::Pose> calculate_pose_ahead_of_collision(
   const EgoData & ego_data, const OutOfLanePoint & point_to_avoid,
-  const universe_utils::Polygon2d & footprint, const double precision);
+  const autoware_utils::Polygon2d & footprint, const double precision);
 
 /// @brief calculate the last pose staying inside the lane and before the given point
 /// @details if no pose staying inside the lane can be found, return a pose before the given point

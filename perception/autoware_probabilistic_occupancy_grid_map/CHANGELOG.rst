@@ -2,6 +2,84 @@
 Changelog for package autoware_probabilistic_occupancy_grid_map
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.42.0 (2025-03-03)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_utils): replace autoware_universe_utils with autoware_utils  (`#10191 <https://github.com/autowarefoundation/autoware.universe/issues/10191>`_)
+* chore(autoware_probabilistic_occupancy_grid_map): fixed cuda use on non-cuda settings (`#10099 <https://github.com/autowarefoundation/autoware.universe/issues/10099>`_)
+  chore: fixed cuda use on non-cuda settings
+* fix(probabilistic_occupancy_grid_map): build and runtime on non-cuda environments (`#10061 <https://github.com/autowarefoundation/autoware.universe/issues/10061>`_)
+  * feat: improved data handling in the ogm. When using the full concatenated pointcloud the processing time decreases from 8ms to 4ms
+  * feat: added header blocks for non-cuda environments
+  * chore: removed the cuda includes from the global includes
+  * fix: missed one header include
+  * chore: added more cuda related macros
+  * chore: lint errors
+  * feat: fixed errors during merge
+  ---------
+* feat(autoware_probabilistic_occupancy_grid_map): improved data handling on the ogm (`#10060 <https://github.com/autowarefoundation/autoware.universe/issues/10060>`_)
+  feat: improved data handling in the ogm. When using the full concatenated pointcloud the processing time decreases from 8ms to 4ms
+* Contributors: Fumiya Watanabe, Kenzo Lobos Tsunekawa, 心刚
+
+0.41.2 (2025-02-19)
+-------------------
+* chore: bump version to 0.41.1 (`#10088 <https://github.com/autowarefoundation/autoware.universe/issues/10088>`_)
+* Contributors: Ryohsuke Mitsudome
+
+0.41.1 (2025-02-10)
+-------------------
+
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_probabilistic_occupancy_grid_map): cuda accelerated implementation (`#9542 <https://github.com/autowarefoundation/autoware.universe/issues/9542>`_)
+  * feat: implemented a cuda accelerated ogm
+  * chore: fixed cspells
+  * chore: unused header and variable names
+  * chore: cspell fixes
+  * chore: cppcheck fix attempt
+  * fix: attempting to fix ci/cd regarding the cuda library
+  * chore: fixed the order of the cuda check in the cmakelist
+  * fix: removed cuda as a required dep for cpu only builds
+  * fix: missing cuda linking (?)
+  * feat: fixed single mode, added streams, and added the restrict keyword
+  * chore: replaced a potential indetermination using an epsilon
+  * Update perception/autoware_probabilistic_occupancy_grid_map/lib/updater/log_odds_bayes_filter_updater_kernel.cu
+  Co-authored-by: Yoshi Ri <yoshiyoshidetteiu@gmail.com>
+  * Update perception/autoware_probabilistic_occupancy_grid_map/lib/updater/log_odds_bayes_filter_updater_kernel.cu
+  Co-authored-by: Yoshi Ri <yoshiyoshidetteiu@gmail.com>
+  * style(pre-commit): autofix
+  * chore: added bound checkings in the update origin kernel
+  * chore: disabled tests since universe does not support cuda in ci/cd
+  * chore: added me as a maintainer
+  * fix: missedn the end in the cmake
+  * chore: moved the boudnary checks to only the cuda version since the cpu version uses the upstream logic
+  ---------
+  Co-authored-by: Yoshi Ri <yoshiyoshidetteiu@gmail.com>
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* feat(autoware_probabilistic_occupancy_grid_map): tier4_debug_msgs changed to autoware_internal_debug_msgs in autoware_probabilistic_occupancy_grid_map (`#9895 <https://github.com/autowarefoundation/autoware.universe/issues/9895>`_)
+  feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in files perception/autoware_probabilistic_occupancy_grid_map
+  Co-authored-by: Ryohsuke Mitsudome <43976834+mitsudome-r@users.noreply.github.com>
+* fix(perception): fix perception docs (`#9766 <https://github.com/autowarefoundation/autoware.universe/issues/9766>`_)
+  * fix: fix perception docs
+  * fix: fix missing parameter in schema
+  * Update perception/autoware_object_merger/schema/data_association_matrix.schema.json
+  Co-authored-by: Taekjin LEE <technolojin@gmail.com>
+  * Update perception/autoware_object_merger/schema/data_association_matrix.schema.json
+  Co-authored-by: Taekjin LEE <technolojin@gmail.com>
+  * Update perception/autoware_object_merger/schema/data_association_matrix.schema.json
+  Co-authored-by: Taekjin LEE <technolojin@gmail.com>
+  * Update perception/autoware_object_merger/schema/data_association_matrix.schema.json
+  Co-authored-by: Taekjin LEE <technolojin@gmail.com>
+  * style(pre-commit): autofix
+  * chore: seperate paramters for different nodes
+  ---------
+  Co-authored-by: Taekjin LEE <technolojin@gmail.com>
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* fix(autoware_probabilistic_occupancy_grid_map): fix bugprone-branch-clone (`#9652 <https://github.com/autowarefoundation/autoware.universe/issues/9652>`_)
+  fix: bugprone-error
+* Contributors: Fumiya Watanabe, Kenzo Lobos Tsunekawa, Vishal Chauhan, Yi-Hsiang Fang (Vivid), kobayu858
+
 0.40.0 (2024-12-12)
 -------------------
 * Revert "chore(package.xml): bump version to 0.39.0 (`#9587 <https://github.com/autowarefoundation/autoware.universe/issues/9587>`_)"

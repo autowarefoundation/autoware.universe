@@ -162,14 +162,12 @@ DecorativeTrackerMergerNode::DecorativeTrackerMergerNode(const rclcpp::NodeOptio
   set3dDataAssociation("radar-radar", data_association_map_);
 
   // debug publisher
-  processing_time_publisher_ = std::make_unique<autoware::universe_utils::DebugPublisher>(
-    this, "decorative_object_merger_node");
-  stop_watch_ptr_ =
-    std::make_unique<autoware::universe_utils::StopWatch<std::chrono::milliseconds>>();
+  processing_time_publisher_ =
+    std::make_unique<autoware_utils::DebugPublisher>(this, "decorative_object_merger_node");
+  stop_watch_ptr_ = std::make_unique<autoware_utils::StopWatch<std::chrono::milliseconds>>();
   stop_watch_ptr_->tic("cyclic_time");
   stop_watch_ptr_->tic("processing_time");
-  published_time_publisher_ =
-    std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
+  published_time_publisher_ = std::make_unique<autoware_utils::PublishedTimePublisher>(this);
 }
 
 void DecorativeTrackerMergerNode::set3dDataAssociation(
@@ -247,9 +245,9 @@ void DecorativeTrackerMergerNode::mainObjectsCallback(
 
   published_time_publisher_->publish_if_subscribed(
     merged_object_pub_, tracked_objects.header.stamp);
-  processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+  processing_time_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
     "debug/cyclic_time_ms", stop_watch_ptr_->toc("cyclic_time", true));
-  processing_time_publisher_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+  processing_time_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
     "debug/processing_time_ms", stop_watch_ptr_->toc("processing_time", true));
 }
 

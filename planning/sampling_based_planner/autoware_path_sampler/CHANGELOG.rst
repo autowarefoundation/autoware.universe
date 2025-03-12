@@ -2,6 +2,29 @@
 Changelog for package autoware_path_sampler
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.42.0 (2025-03-03)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_utils): replace autoware_universe_utils with autoware_utils  (`#10191 <https://github.com/autowarefoundation/autoware.universe/issues/10191>`_)
+* fix: add missing includes to autoware_universe_utils (`#10091 <https://github.com/autowarefoundation/autoware.universe/issues/10091>`_)
+* Contributors: Fumiya Watanabe, Ryohsuke Mitsudome, 心刚
+
+0.41.2 (2025-02-19)
+-------------------
+* chore: bump version to 0.41.1 (`#10088 <https://github.com/autowarefoundation/autoware.universe/issues/10088>`_)
+* Contributors: Ryohsuke Mitsudome
+
+0.41.1 (2025-02-10)
+-------------------
+
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(sampling_based_planner)!: tier4_debug_msgs changed to autoware_internal_debug_msgs in sampling_based_planner (`#9916 <https://github.com/autowarefoundation/autoware.universe/issues/9916>`_)
+* feat(motion_planning): use StringStamped in autoware_internal_debug_msgs (`#9742 <https://github.com/autowarefoundation/autoware.universe/issues/9742>`_)
+  feat(motion planning): use StringStamped in autoware_internal_debug_msgs
+* Contributors: Fumiya Watanabe, Takayuki Murooka, Vishal Chauhan
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0

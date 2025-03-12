@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -34,7 +34,8 @@
 namespace planning_diagnostics
 {
 PlanningEvaluatorNode::PlanningEvaluatorNode(const rclcpp::NodeOptions & node_options)
-: Node("planning_evaluator", node_options)
+: Node("planning_evaluator", node_options),
+  vehicle_info_(autoware::vehicle_info_utils::VehicleInfoUtils(*this).getVehicleInfo())
 {
   using std::placeholders::_1;
   tf_buffer_ = std::make_unique<tf2_ros::Buffer>(this->get_clock());
@@ -129,7 +130,7 @@ void PlanningEvaluatorNode::getRouteData()
 {
   // route
   {
-    const auto msg = route_subscriber_.takeData();
+    const auto msg = route_subscriber_.take_data();
     if (msg) {
       if (msg->segments.empty()) {
         RCLCPP_ERROR(get_logger(), "input route is empty. ignored");
@@ -141,7 +142,7 @@ void PlanningEvaluatorNode::getRouteData()
 
   // map
   {
-    const auto msg = vector_map_subscriber_.takeData();
+    const auto msg = vector_map_subscriber_.take_data();
     if (msg) {
       route_handler_.setMap(*msg);
     }
@@ -253,26 +254,26 @@ void PlanningEvaluatorNode::AddMetricMsg(
 
 void PlanningEvaluatorNode::onTimer()
 {
-  autoware::universe_utils::StopWatch<std::chrono::milliseconds> stop_watch;
+  autoware_utils::StopWatch<std::chrono::milliseconds> stop_watch;
 
-  const auto ego_state_ptr = odometry_sub_.takeData();
+  const auto ego_state_ptr = odometry_sub_.take_data();
   onOdometry(ego_state_ptr);
   {
-    const auto objects_msg = objects_sub_.takeData();
+    const auto objects_msg = objects_sub_.take_data();
     onObjects(objects_msg);
   }
 
   {
-    const auto ref_traj_msg = ref_sub_.takeData();
+    const auto ref_traj_msg = ref_sub_.take_data();
     onReferenceTrajectory(ref_traj_msg);
   }
 
   {
-    const auto traj_msg = traj_sub_.takeData();
+    const auto traj_msg = traj_sub_.take_data();
     onTrajectory(traj_msg, ego_state_ptr);
   }
   {
-    const auto modified_goal_msg = modified_goal_sub_.takeData();
+    const auto modified_goal_msg = modified_goal_sub_.take_data();
     onModifiedGoal(modified_goal_msg, ego_state_ptr);
   }
 
@@ -298,7 +299,8 @@ void PlanningEvaluatorNode::onTrajectory(
   auto start = now();
 
   for (Metric metric : metrics_) {
-    const auto metric_stat = metrics_calculator_.calculate(Metric(metric), *traj_msg);
+    const auto metric_stat =
+      metrics_calculator_.calculate(Metric(metric), *traj_msg, vehicle_info_.vehicle_length_m);
     if (!metric_stat) {
       continue;
     }
@@ -359,7 +361,7 @@ void PlanningEvaluatorNode::onOdometry(const Odometry::ConstSharedPtr odometry_m
       AddLaneletMetricMsg(odometry_msg);
     }
 
-    const auto acc_msg = accel_sub_.takeData();
+    const auto acc_msg = accel_sub_.take_data();
     if (acc_msg && odometry_msg) {
       AddKinematicStateMetricMsg(*acc_msg, odometry_msg);
     }

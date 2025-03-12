@@ -17,10 +17,9 @@
 #include "types.hpp"
 
 #include <autoware/motion_utils/marker/virtual_wall_marker_creator.hpp>
-#include <autoware/motion_velocity_planner_common_universe/planner_data.hpp>
-#include <autoware/universe_utils/geometry/boost_polygon_utils.hpp>
-#include <autoware/universe_utils/geometry/geometry.hpp>
-#include <autoware/universe_utils/ros/marker_helper.hpp>
+#include <autoware_utils/geometry/boost_polygon_utils.hpp>
+#include <autoware_utils/geometry/geometry.hpp>
+#include <autoware_utils/ros/marker_helper.hpp>
 
 #include <autoware_planning_msgs/msg/trajectory_point.hpp>
 #include <geometry_msgs/msg/point.hpp>
@@ -53,10 +52,10 @@ visualization_msgs::msg::Marker get_base_marker()
   base_marker.id = 0;
   base_marker.type = visualization_msgs::msg::Marker::LINE_STRIP;
   base_marker.action = visualization_msgs::msg::Marker::ADD;
-  base_marker.pose.position = universe_utils::createMarkerPosition(0.0, 0.0, 0);
-  base_marker.pose.orientation = universe_utils::createMarkerOrientation(0, 0, 0, 1.0);
-  base_marker.scale = universe_utils::createMarkerScale(0.1, 0.1, 0.1);
-  base_marker.color = universe_utils::createMarkerColor(1.0, 0.1, 0.1, 0.5);
+  base_marker.pose.position = autoware_utils::create_marker_position(0.0, 0.0, 0);
+  base_marker.pose.orientation = autoware_utils::create_marker_orientation(0, 0, 0, 1.0);
+  base_marker.scale = autoware_utils::create_marker_scale(0.1, 0.1, 0.1);
+  base_marker.color = autoware_utils::create_marker_color(1.0, 0.1, 0.1, 0.5);
   return base_marker;
 }
 void add_polygons_markers(
@@ -68,8 +67,8 @@ void add_polygons_markers(
   for (const auto & f : polygons) {
     boost::geometry::for_each_segment(f, [&](const auto & s) {
       const auto & [p1, p2] = s;
-      debug_marker.points.push_back(universe_utils::createMarkerPosition(p1.x(), p1.y(), 0.0));
-      debug_marker.points.push_back(universe_utils::createMarkerPosition(p2.x(), p2.y(), 0.0));
+      debug_marker.points.push_back(autoware_utils::create_marker_position(p1.x(), p1.y(), 0.0));
+      debug_marker.points.push_back(autoware_utils::create_marker_position(p2.x(), p2.y(), 0.0));
     });
   }
   debug_marker_array.markers.push_back(debug_marker);
@@ -83,9 +82,9 @@ void add_current_overlap_marker(
   debug_marker.ns = "current_overlap";
   debug_marker.points.clear();
   for (const auto & p : current_footprint)
-    debug_marker.points.push_back(universe_utils::createMarkerPosition(p.x(), p.y(), z));
+    debug_marker.points.push_back(autoware_utils::create_marker_position(p.x(), p.y(), z));
   if (!debug_marker.points.empty()) debug_marker.points.push_back(debug_marker.points.front());
-  debug_marker.color = universe_utils::createMarkerColor(1.0, 0.1, 0.1, 0.5);
+  debug_marker.color = autoware_utils::create_marker_color(1.0, 0.1, 0.1, 0.5);
   debug_marker_array.markers.push_back(debug_marker);
   debug_marker.id++;
 }
@@ -129,7 +128,8 @@ size_t add_stop_line_markers(
     for (const auto & ll : lanelets) {
       debug_marker.points.clear();
       for (const auto & p : ll.polygon2d().basicPolygon()) {
-        debug_marker.points.push_back(universe_utils::createMarkerPosition(p.x(), p.y(), z));
+        debug_marker.points.push_back(
+          autoware_utils::create_marker_position(p.x(), p.y(), z + 0.5));
       }
       debug_marker.points.push_back(debug_marker.points.front());
       debug_marker_array.markers.push_back(debug_marker);
@@ -140,7 +140,7 @@ size_t add_stop_line_markers(
     debug_marker.points.clear();
     debug_marker.color.r = 1.0;
     for (const auto & p : stop_line.stop_line) {
-      debug_marker.points.push_back(universe_utils::createMarkerPosition(p.x(), p.y(), z));
+      debug_marker.points.push_back(autoware_utils::create_marker_position(p.x(), p.y(), z + 0.5));
     }
     debug_marker_array.markers.push_back(debug_marker);
     ++debug_marker.id;
@@ -162,8 +162,8 @@ void add_stop_line_markers(
   auto debug_marker = get_base_marker();
   debug_marker.type = visualization_msgs::msg::Marker::LINE_LIST;
   debug_marker.ns = "ego_stop_lines";
-  debug_marker.scale = universe_utils::createMarkerScale(0.2, 0.2, 0.2);
-  debug_marker.color = universe_utils::createMarkerColor(0.5, 0.0, 0.7, 1.0);
+  debug_marker.scale = autoware_utils::create_marker_scale(0.2, 0.2, 0.2);
+  debug_marker.color = autoware_utils::create_marker_color(0.5, 0.0, 0.7, 1.0);
   geometry_msgs::msg::Point p1;
   geometry_msgs::msg::Point p2;
   p1.z = p2.z = z;
@@ -189,7 +189,7 @@ void add_out_lanelets(
     drivable_lane_polygons.push_back(ll.polygon2d().basicPolygon());
   }
   base_marker.ns = "out_lanelets";
-  base_marker.color = universe_utils::createMarkerColor(0.0, 0.0, 1.0, 1.0);
+  base_marker.color = autoware_utils::create_marker_color(0.0, 0.0, 1.0, 1.0);
   add_polygons_markers(marker_array, base_marker, drivable_lane_polygons);
 }
 
@@ -207,7 +207,7 @@ void add_out_of_lane_overlaps(
     }
   }
   base_marker.ns = "out_of_lane_areas";
-  base_marker.color = universe_utils::createMarkerColor(1.0, 0.0, 0.0, 1.0);
+  base_marker.color = autoware_utils::create_marker_color(1.0, 0.0, 0.0, 1.0);
   add_polygons_markers(marker_array, base_marker, out_of_lane_overlaps);
   for (const auto & p : outside_points) {
     for (const auto & a : p.out_overlaps) {
@@ -224,15 +224,15 @@ void add_predicted_paths(
   const geometry_msgs::msg::Pose & ego_pose)
 {
   base_marker.ns = "objects";
-  base_marker.color = universe_utils::createMarkerColor(0.0, 1.0, 0.0, 1.0);
+  base_marker.color = autoware_utils::create_marker_color(0.0, 1.0, 0.0, 1.0);
   lanelet::BasicPolygons2d object_polygons;
   constexpr double max_draw_distance = 50.0;
   for (const auto & o : objects.objects) {
     for (const auto & path : o.kinematics.predicted_paths) {
       for (const auto & pose : path.path) {
         // limit the draw distance to improve performance
-        if (universe_utils::calcDistance2d(pose, ego_pose) < max_draw_distance) {
-          const auto poly = universe_utils::toPolygon2d(pose, o.shape).outer();
+        if (autoware_utils::calc_distance2d(pose, ego_pose) < max_draw_distance) {
+          const auto poly = autoware_utils::to_polygon2d(pose, o.shape).outer();
           lanelet::BasicPolygon2d ll_poly(poly.begin(), poly.end());
           object_polygons.push_back(ll_poly);
         }
@@ -253,7 +253,7 @@ visualization_msgs::msg::MarkerArray create_debug_marker_array(
   auto base_marker = get_base_marker();
   base_marker.pose.position.z = z;
   base_marker.ns = "footprints";
-  base_marker.color = universe_utils::createMarkerColor(1.0, 1.0, 1.0, 1.0);
+  base_marker.color = autoware_utils::create_marker_color(1.0, 1.0, 1.0, 1.0);
   // TODO(Maxime): move the debug marker publishing AFTER the trajectory generation
   // disabled to prevent performance issues when publishing the debug markers
   // add_polygons_markers(debug_marker_array, base_marker, ego_data.trajectory_footprints);

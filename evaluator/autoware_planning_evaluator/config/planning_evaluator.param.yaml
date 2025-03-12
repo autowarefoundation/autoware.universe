@@ -6,6 +6,7 @@
       - curvature
       - point_interval
       - relative_angle
+      - resampled_relative_angle
       - length
       - duration
       - velocity

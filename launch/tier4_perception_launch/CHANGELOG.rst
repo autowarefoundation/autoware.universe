@@ -2,6 +2,153 @@
 Changelog for package tier4_perception_launch
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.42.0 (2025-03-03)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* chore(tier4_perception_launch): re-order objects_validation process after lidar ml detector (`#10160 <https://github.com/autowarefoundation/autoware.universe/issues/10160>`_)
+  * fix: reorder object validator before the merge process
+  * feat(camera_lidar_radar_merger): remove near radar fusion arguments and related logic
+  * feat: remove validator and related arguments from camera, lidar, and radar merger launch files
+  * feat(camera_lidar_detector): update cluster output references for shape estimation
+  * feat: update camera and lidar merger launch files to use detected object ROI filter
+  ---------
+* fix(tier4_perception_launch): add missing exec_depend (`#10130 <https://github.com/autowarefoundation/autoware.universe/issues/10130>`_)
+  * fix(tier4_perception_launch): add missing exec_depend
+  * add exec_depend for perception
+  ---------
+  Co-authored-by: Taekjin LEE <taekjin.lee@tier4.jp>
+* chore: refine maintainer list (`#10110 <https://github.com/autowarefoundation/autoware.universe/issues/10110>`_)
+  * chore: remove Miura from maintainer
+  * chore: add Taekjin-san to perception_utils package maintainer
+  ---------
+* fix(tier4_perception_launch): add missing parameter for planning simulation (`#10165 <https://github.com/autowarefoundation/autoware.universe/issues/10165>`_)
+* feat(tier4_perception_launch): add option for new TL detector model (`#9731 <https://github.com/autowarefoundation/autoware.universe/issues/9731>`_)
+  * feat: add traffic_light_detector launch
+  fix: tier4 perception launch
+  fix: add multi tlr detector launch
+  fix: tier4 launch
+  fix: tl detector launch
+  fix: data director
+  fix: precision int8
+  chore: revert to fp16
+  feat: remove occlusion and add car ped classification merger
+  fix: launch for multi camera
+  chore: pre-commit
+  fix: update matching score
+  feat: add max_iou_threshold
+  feat: add occlusion unknown classifier
+  * fix: tl detector launch
+  * refactor: traffic_light_launch.xml
+  * fix: remove tl fine detector
+  * fix: refactor
+  * chore: pre-commit
+  * fix: cspelling check
+  * fix: error after rename package
+  * fix: default tl model name
+  * fix: new tlr for multi cameras
+  * modify args
+  * style(pre-commit): autofix
+  * refactor
+  * add category_merger to container
+  * fix args
+  * run pre-commit
+  ---------
+  Co-authored-by: Masato Saeki <78376491+MasatoSaeki@users.noreply.github.com>
+  Co-authored-by: MasatoSaeki <masato.saeki@tier4.jp>
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* chore(traffic_light_multi_camera_fusion): read parameters from yaml file (`#10144 <https://github.com/autowarefoundation/autoware.universe/issues/10144>`_)
+  * chore(traffic_light_multi_camera_fusion): read parameters from yaml file
+  * style(pre-commit): autofix
+  * add all_traffic_light_camera param to launch.xml
+  * fix json schema
+  * remove camera namespace parameter from config file
+  * revert unnecessary change
+  * remove camera_namespaces from required
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* feat(tier4_perception_launch): change tlr pedestrian classifier model  (`#10116 <https://github.com/autowarefoundation/autoware.universe/issues/10116>`_)
+  change onnx model name
+* feat(autoware_traffic_light_map_based_detector): created the schema file,updated the readme file and deleted the default parameter in node files code (`#10107 <https://github.com/autowarefoundation/autoware.universe/issues/10107>`_)
+  * feat(autoware_traffic_light_map_based_detector): Created the schema file,updated the readme file and deleted the default parameter in node files code
+  * style(pre-commit): autofix
+  * move params from launch to param
+  * chore
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+  Co-authored-by: MasatoSaeki <masato.saeki@tier4.jp>
+* fix(ground_segmentation): bring junction parameter from param file to launch argument  (`#10102 <https://github.com/autowarefoundation/autoware.universe/issues/10102>`_)
+  * feat(ground_segmentation): add launch configuration for single frame and time series filters
+  * feat(ground_segmentation): enhance filter configurations for obstacle segmentation
+  * fix(ground_segmentation): update argument names for single frame and time series filters
+  ---------
+* feat(autoware_traffic_light_classifier): add traffic light classifier schema, README and car and ped launcher (`#10048 <https://github.com/autowarefoundation/autoware.universe/issues/10048>`_)
+  * feat(autoware_traffic_light_classifier):Add traffic light classifier schema and README
+  * add individual launcher
+  * style(pre-commit): autofix
+  * fix description
+  * fix README and source code
+  * separate schema in README
+  * fix README
+  * fix launcher
+  * style(pre-commit): autofix
+  * fix typo
+  ---------
+  Co-authored-by: MasatoSaeki <masato.saeki@tier4.jp>
+  Co-authored-by: Masato Saeki <78376491+MasatoSaeki@users.noreply.github.com>
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* fix(traffic_light.launch.xml): add lacked params (`#10071 <https://github.com/autowarefoundation/autoware.universe/issues/10071>`_)
+  fix params
+* Contributors: Fumiya Watanabe, Masato Saeki, Shunsuke Miura, Taekjin LEE, Takagi, Isamu, Tomohito ANDO, Vishal Chauhan, badai nguyen
+
+0.41.2 (2025-02-19)
+-------------------
+* chore: bump version to 0.41.1 (`#10088 <https://github.com/autowarefoundation/autoware.universe/issues/10088>`_)
+* Contributors: Ryohsuke Mitsudome
+
+0.41.1 (2025-02-10)
+-------------------
+
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat: apply `autoware\_` prefix for `dummy_perception_publisher` (`#9987 <https://github.com/autowarefoundation/autoware.universe/issues/9987>`_)
+* fix(launch): fix missing changes for launch (`#10007 <https://github.com/autowarefoundation/autoware.universe/issues/10007>`_)
+  bug(launch): fix missing changes for following PRs:
+  * https://github.com/autowarefoundation/autoware.universe/pull/9956
+  * https://github.com/autowarefoundation/autoware.universe/pull/9970
+* fix(tier4_perception_launch): rearrange roi based cluster pipeline (`#9938 <https://github.com/autowarefoundation/autoware.universe/issues/9938>`_)
+* fix(image_projection_based_fusion):  revise message publishers (`#9865 <https://github.com/autowarefoundation/autoware.universe/issues/9865>`_)
+  * refactor: fix condition for publishing painted pointcloud message
+  * fix: publish output revised
+  * feat: fix condition for publishing painted pointcloud message
+  * feat: roi-pointclout  fusion - publish empty image even when there is no target roi
+  * fix: remap output topic for clusters in roi_pointcloud_fusion
+  * style(pre-commit): autofix
+  * feat: fix condition for publishing painted pointcloud message
+  * feat: Add debug publisher for internal debugging
+  * feat: remove !! pointer to bool conversion
+  ---------
+  Co-authored-by: pre-commit-ci[bot] <66853113+pre-commit-ci[bot]@users.noreply.github.com>
+* feat(autoware_object_merger, autoware_tracking_object_merger): enable anonymized node names to be configurable (`#9733 <https://github.com/autowarefoundation/autoware.universe/issues/9733>`_)
+  feat: enable anonymized node names to be configurable
+* refactor(tier4_perception_launch): refactoring detection launchers (`#9611 <https://github.com/autowarefoundation/autoware.universe/issues/9611>`_)
+  * feat: Update object detection launch files to include input and output arguments
+  The object detection launch files have been updated to include input and output arguments for better flexibility and modularity. This allows for easier integration with other components and improves the overall performance of the system.
+  ```
+  * feat: Update object detection launch files to include input and output arguments
+  * refactor: Update object detection launch files for better readability
+  * Update object detection launch files to include clustering output argument
+  * fix: pass ns argument to the lidar_rule_detector
+  * refactor: make euclidean_cluster not to use use_pointcloud_container and mark explicitly
+  ---------
+* fix(tier4_perception_launch): update multi-channel subscribing channel name to lidar_detection_model_type (`#9624 <https://github.com/autowarefoundation/autoware.universe/issues/9624>`_)
+  * feat: update object detection channels in tracking.launch.xml
+  The object detection channels in the `tracking.launch.xml` file have been updated to include the lidar detection model type.
+  * feat: support even the validator is not used
+  add variable use_validator to the tracking launch and determine the subscribing channel depends on the use_validator value
+  ---------
+* Contributors: Fumiya Watanabe, Junya Sasaki, Taekjin LEE, badai nguyen
+
 0.40.0 (2024-12-12)
 -------------------
 * Revert "chore(package.xml): bump version to 0.39.0 (`#9587 <https://github.com/autowarefoundation/autoware.universe/issues/9587>`_)"

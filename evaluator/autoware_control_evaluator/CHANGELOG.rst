@@ -2,6 +2,45 @@
 Changelog for package autoware_control_evaluator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.42.0 (2025-03-03)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_utils): replace autoware_universe_utils with autoware_utils  (`#10191 <https://github.com/autowarefoundation/autoware.universe/issues/10191>`_)
+* feat(autoware_vehicle_info_utils): replace autoware_universe_utils with autoware_utils (`#10167 <https://github.com/autowarefoundation/autoware.universe/issues/10167>`_)
+* feat!: replace tier4_planning_msgs/PathWithLaneId with autoware_internal_planning_msgs/PathWithLaneId (`#10023 <https://github.com/autowarefoundation/autoware.universe/issues/10023>`_)
+* Contributors: Fumiya Watanabe, Ryohsuke Mitsudome, 心刚
+
+0.41.2 (2025-02-19)
+-------------------
+* chore: bump version to 0.41.1 (`#10088 <https://github.com/autowarefoundation/autoware.universe/issues/10088>`_)
+* Contributors: Ryohsuke Mitsudome
+
+0.41.1 (2025-02-10)
+-------------------
+
+0.41.0 (2025-01-29)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_control_evaluator): add new steering metrics (`#10012 <https://github.com/autowarefoundation/autoware.universe/issues/10012>`_)
+* feat(autoware_control_evaluator): add new boundary_distance metrics (`#9984 <https://github.com/autowarefoundation/autoware.universe/issues/9984>`_)
+  * add boundary_distance metric
+  * pre-commit
+  * use path topic instead of lanenet.
+  * remove unused import
+  * apply is_point_left_of_line
+  * fix typo
+  * fix test bug
+  * manual pre-commit
+  ---------
+  Co-authored-by: t4-adc <grp-rd-1-adc-admin@tier4.jp>
+* feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in fil… (`#9858 <https://github.com/autowarefoundation/autoware.universe/issues/9858>`_)
+  feat: tier4_debug_msgs changed to autoware_internal_debug_msgs in files evaluator/autoware_control_evaluator
+* fix(autoware_control_evaluator): fix bugprone-exception-escape (`#9630 <https://github.com/autowarefoundation/autoware.universe/issues/9630>`_)
+  * fix: bugprone-exception-escape
+  * fix: cpplint
+  ---------
+* Contributors: Fumiya Watanabe, Kem (TiankuiXian), Vishal Chauhan, kobayu858
+
 0.40.0 (2024-12-12)
 -------------------
 * Merge branch 'main' into release-0.40.0
