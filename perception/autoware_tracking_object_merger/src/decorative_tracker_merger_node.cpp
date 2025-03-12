@@ -141,9 +141,9 @@ DecorativeTrackerMergerNode::DecorativeTrackerMergerNode(const rclcpp::NodeOptio
   tracker_state_parameter_.max_dt = declare_parameter<double>("tracker_state_parameter.max_dt");
   diag_delay_main_objects_tolerance_ =
     declare_parameter<double>("diag_delay_main_objects_tolerance");
-  diag_duration_empty_main_objects_tolerance_ = declare_parameter<double>("diag_duration_empty_main_objects_tolerance");
-  diag_delay_sub_objects_tolerance_ =
-    declare_parameter<double>("diag_delay_sub_objects_tolerance");
+  diag_duration_empty_main_objects_tolerance_ =
+    declare_parameter<double>("diag_duration_empty_main_objects_tolerance");
+  diag_delay_sub_objects_tolerance_ = declare_parameter<double>("diag_delay_sub_objects_tolerance");
 
   const std::string main_sensor_type = declare_parameter<std::string>("main_sensor_type");
   const std::string sub_sensor_type = declare_parameter<std::string>("sub_sensor_type");
@@ -495,8 +495,9 @@ TrackerState DecorativeTrackerMergerNode::createNewTracker(
   return new_tracker;
 }
 
-void DecorativeTrackerMergerNode::updateDiagnostics(const double & delay_main_objects,
-  const double & duration_empty_main_objects, const double & delay_sub_objects)
+void DecorativeTrackerMergerNode::updateDiagnostics(
+  const double & delay_main_objects, const double & duration_empty_main_objects,
+  const double & delay_sub_objects)
 {
   diagnostics_interface_ptr_->add_key_value("delay_main_objects", delay_main_objects);
   if (delay_main_objects > diag_delay_main_objects_tolerance_) {
@@ -505,7 +506,8 @@ void DecorativeTrackerMergerNode::updateDiagnostics(const double & delay_main_ob
     diagnostics_interface_ptr_->update_level_and_message(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   }
-  diagnostics_interface_ptr_->add_key_value("duration_empty_main_objects", duration_empty_main_objects);
+  diagnostics_interface_ptr_->add_key_value(
+    "duration_empty_main_objects", duration_empty_main_objects);
   if (duration_empty_main_objects > diag_duration_empty_main_objects_tolerance_) {
     std::stringstream message;
     message << "Main object continues to be empty for longer than tolerance";
