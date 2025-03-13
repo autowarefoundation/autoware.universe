@@ -962,12 +962,12 @@ auto StaticObstacleAvoidanceModule::getTurnSignal(
   using autoware::motion_utils::calcSignedArcLength;
 
   const auto is_ignore_signal = [this](const UUID & uuid) {
-    return ignore_signal_ids_.find(toHexString(uuid)) != ignore_signal_ids_.end();
+    return ignore_signal_ids_.find(to_hex_string(uuid)) != ignore_signal_ids_.end();
   };
 
   const auto update_ignore_signal = [this](const UUID & uuid, const bool is_ignore) {
     if (is_ignore) {
-      ignore_signal_ids_.insert(toHexString(uuid));
+      ignore_signal_ids_.insert(to_hex_string(uuid));
     }
   };
 
