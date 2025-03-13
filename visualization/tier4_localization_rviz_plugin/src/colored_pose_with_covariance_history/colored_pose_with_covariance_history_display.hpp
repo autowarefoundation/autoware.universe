@@ -15,12 +15,12 @@
 #ifndef COLORED_POSE_WITH_COVARIANCE_HISTORY__COLORED_POSE_WITH_COVARIANCE_HISTORY_DISPLAY_HPP_
 #define COLORED_POSE_WITH_COVARIANCE_HISTORY__COLORED_POSE_WITH_COVARIANCE_HISTORY_DISPLAY_HPP_
 
-#include <rviz_common/message_filter_display.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <rviz_common/message_filter_display.hpp>
 
-#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 #include <autoware_internal_debug_msgs/msg/float32_stamped.hpp>
 #include <autoware_internal_debug_msgs/msg/int32_stamped.hpp>
+#include <geometry_msgs/msg/pose_with_covariance_stamped.hpp>
 
 #include <deque>
 #include <memory>
@@ -51,11 +51,7 @@ public:
   ColoredPoseWithCovarianceHistory();
   ~ColoredPoseWithCovarianceHistory() override;
 
-  enum class ValueType
-  {
-    Int32,
-    Float32
-  };
+  enum class ValueType { Int32, Float32 };
 
 protected:
   void onInitialize() override;
@@ -75,19 +71,24 @@ private:  // NOLINT : suppress redundancy warnings
   void unsubscribe() override;
   void processMessage(
     const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr message) override;
-  void process_int32_message(const autoware_internal_debug_msgs::msg::Int32Stamped::ConstSharedPtr message);
-  void process_float32_message(const autoware_internal_debug_msgs::msg::Float32Stamped::ConstSharedPtr message);
+  void process_int32_message(
+    const autoware_internal_debug_msgs::msg::Int32Stamped::ConstSharedPtr message);
+  void process_float32_message(
+    const autoware_internal_debug_msgs::msg::Float32Stamped::ConstSharedPtr message);
 
   void update_history();
 
   Ogre::ColourValue get_color_from_value(double value);
 
-  struct pose_with_value {
+  struct pose_with_value
+  {
     geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose;
     double value;
     pose_with_value(
       const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr & pose, double value)
-    : pose(pose), value(value) {}
+    : pose(pose), value(value)
+    {
+    }
   };
 
   std::deque<pose_with_value> history_;
@@ -99,7 +100,7 @@ private:  // NOLINT : suppress redundancy warnings
   rclcpp::Subscription<geometry_msgs::msg::PoseWithCovarianceStamped>::SharedPtr pose_sub_;
   rclcpp::Subscription<autoware_internal_debug_msgs::msg::Int32Stamped>::SharedPtr int32_sub_;
   rclcpp::Subscription<autoware_internal_debug_msgs::msg::Float32Stamped>::SharedPtr float32_sub_;
-  
+
   rviz_common::properties::EnumProperty * property_value_type_;
   rviz_common::properties::RosTopicProperty * property_value_topic_;
   rviz_common::properties::IntProperty * property_buffer_size_;

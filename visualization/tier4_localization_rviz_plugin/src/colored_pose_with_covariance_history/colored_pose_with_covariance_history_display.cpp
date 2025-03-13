@@ -29,17 +29,19 @@
 
 namespace rviz_plugins
 {
-ColoredPoseWithCovarianceHistory::ColoredPoseWithCovarianceHistory() : last_stamp_(0, 0, RCL_ROS_TIME)
+ColoredPoseWithCovarianceHistory::ColoredPoseWithCovarianceHistory()
+: last_stamp_(0, 0, RCL_ROS_TIME)
 {
   property_value_type_ = new rviz_common::properties::EnumProperty(
     "Value Type", "Float32", "", this, SLOT(update_value_type()));
-  property_value_type_->addOption("Int32"  , static_cast<int>(ValueType::Int32));
+  property_value_type_->addOption("Int32", static_cast<int>(ValueType::Int32));
   property_value_type_->addOption("Float32", static_cast<int>(ValueType::Float32));
 
   property_value_topic_ = new rviz_common::properties::RosTopicProperty(
-    "Value Topic", "", rosidl_generator_traits::name<autoware_internal_debug_msgs::msg::Float32Stamped>(),
-    "", property_value_type_, SLOT(update_value_topic()));
-  
+    "Value Topic", "",
+    rosidl_generator_traits::name<autoware_internal_debug_msgs::msg::Float32Stamped>(), "",
+    property_value_type_, SLOT(update_value_topic()));
+
   property_buffer_size_ = new rviz_common::properties::IntProperty("Buffer Size", 100, "", this);
   property_buffer_size_->setMin(0);
   property_buffer_size_->setMax(100000);
@@ -55,23 +57,24 @@ ColoredPoseWithCovarianceHistory::ColoredPoseWithCovarianceHistory() : last_stam
   property_line_alpha_->setMin(0.0);
   property_line_alpha_->setMax(1.0);
 
-  property_line_min_color_ = 
+  property_line_min_color_ =
     new rviz_common::properties::ColorProperty("Min Color", Qt::blue, "", property_line_view_);
 
-  property_line_max_color_ = 
+  property_line_max_color_ =
     new rviz_common::properties::ColorProperty("Max Color", Qt::red, "", property_line_view_);
-  
-  property_auto_min_max_ = new rviz_common::properties::BoolProperty("Auto Set Min/Max", true, "", this);
 
-  property_min_value_ = 
+  property_auto_min_max_ =
+    new rviz_common::properties::BoolProperty("Auto Set Min/Max", true, "", this);
+
+  property_min_value_ =
     new rviz_common::properties::FloatProperty("Min Value", 0.0, "", property_auto_min_max_);
 
-  property_max_value_ = 
+  property_max_value_ =
     new rviz_common::properties::FloatProperty("Max Value", 1.0, "", property_auto_min_max_);
-
 }
 
-ColoredPoseWithCovarianceHistory::~ColoredPoseWithCovarianceHistory() = default;  // Properties are deleted by Qt
+ColoredPoseWithCovarianceHistory::~ColoredPoseWithCovarianceHistory() =
+  default;  // Properties are deleted by Qt
 
 void ColoredPoseWithCovarianceHistory::onInitialize()
 {
@@ -150,7 +153,6 @@ void ColoredPoseWithCovarianceHistory::update_history()
     history_.pop_front();
   }
 }
-
 
 }  // namespace rviz_plugins
 
