@@ -715,13 +715,8 @@ lanelet::Lanelet createDepartureCheckLanelet(
     lanelet::Points3d points;
     const auto & bound = left_side_parking ? (is_outer ? lane.leftBound() : lane.rightBound())
                                            : (is_outer ? lane.rightBound() : lane.leftBound());
-    if (invert) {
-      for (const auto & pt : bound.invert()) {
-        points.push_back(lanelet::Point3d(pt));
-      }
-      return points;
-    }
-    for (const auto & pt : bound) {
+    const auto ego_oriented_bound = invert ? bound.invert() : bound;
+    for (const auto & pt : ego_oriented_bound) {
       points.push_back(lanelet::Point3d(pt));
     }
     return points;
