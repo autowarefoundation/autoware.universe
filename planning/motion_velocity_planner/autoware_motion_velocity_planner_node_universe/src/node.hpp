@@ -18,8 +18,8 @@
 #include "planner_manager.hpp"
 
 #include <autoware/motion_velocity_planner_common_universe/planner_data.hpp>
-#include <autoware_motion_velocity_planner_node_universe/srv/load_plugin.hpp>
-#include <autoware_motion_velocity_planner_node_universe/srv/unload_plugin.hpp>
+#include <autoware_motion_velocity_planner_node/srv/load_plugin.hpp>
+#include <autoware_motion_velocity_planner_node/srv/unload_plugin.hpp>
 #include <autoware_utils/ros/logger_level_configure.hpp>
 #include <autoware_utils/ros/polling_subscriber.hpp>
 #include <autoware_utils/ros/published_time_publisher.hpp>
@@ -49,8 +49,8 @@
 namespace autoware::motion_velocity_planner
 {
 using autoware_map_msgs::msg::LaneletMapBin;
-using autoware_motion_velocity_planner_node_universe::srv::LoadPlugin;
-using autoware_motion_velocity_planner_node_universe::srv::UnloadPlugin;
+using autoware_motion_velocity_planner_node::srv::LoadPlugin;
+using autoware_motion_velocity_planner_node::srv::UnloadPlugin;
 using autoware_planning_msgs::msg::Trajectory;
 using tier4_planning_msgs::msg::VelocityLimit;
 using tier4_planning_msgs::msg::VelocityLimitClearCommand;

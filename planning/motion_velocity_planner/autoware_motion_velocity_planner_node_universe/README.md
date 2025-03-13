@@ -37,10 +37,10 @@ This means that to stop before a wall, a stop point is inserted in the trajector
 
 ## Services
 
-| Name                      | Type                                                              | Description                  |
-| ------------------------- | ----------------------------------------------------------------- | ---------------------------- |
-| `~/service/load_plugin`   | autoware_motion_velocity_planner_node_universe::srv::LoadPlugin   | To request loading a plugin  |
-| `~/service/unload_plugin` | autoware_motion_velocity_planner_node_universe::srv::UnloadPlugin | To request unloaded a plugin |
+| Name                      | Type                                                     | Description                  |
+| ------------------------- | -------------------------------------------------------- | ---------------------------- |
+| `~/service/load_plugin`   | autoware_motion_velocity_planner_node::srv::LoadPlugin   | To request loading a plugin  |
+| `~/service/unload_plugin` | autoware_motion_velocity_planner_node::srv::UnloadPlugin | To request unloaded a plugin |
 
 ## Node parameters
 
