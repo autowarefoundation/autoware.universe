@@ -48,7 +48,7 @@ class ColoredPoseWithCovarianceHistory
   Q_OBJECT
 
 public:
-  ColoredPoseWithCovariancehistory();
+  ColoredPoseWithCovarianceHistory();
   ~ColoredPoseWithCovarianceHistory() override;
 
   enum class ValueType
@@ -61,6 +61,7 @@ protected:
   void onInitialize() override;
   void onEnable() override;
   void onDisable() override;
+  void update(float wall_dt, float ros_dt) override;
 
 private Q_SLOTS:
   void update_pose_topic();
@@ -84,6 +85,9 @@ private:  // NOLINT : suppress redundancy warnings
   struct pose_with_value {
     geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr pose;
     double value;
+    pose_with_value(
+      const geometry_msgs::msg::PoseWithCovarianceStamped::ConstSharedPtr & pose, double value)
+    : pose(pose), value(value) {}
   };
 
   std::deque<pose_with_value> history_;

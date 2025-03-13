@@ -31,15 +31,14 @@ namespace rviz_plugins
 {
 ColoredPoseWithCovarianceHistory::ColoredPoseWithCovarianceHistory() : last_stamp_(0, 0, RCL_ROS_TIME)
 {
-  
   property_value_type_ = new rviz_common::properties::EnumProperty(
-    "Value Type", "Float32", "", this, SLOT(update_value_type));
+    "Value Type", "Float32", "", this, SLOT(update_value_type()));
   property_value_type_->addOption("Int32"  , static_cast<int>(ValueType::Int32));
   property_value_type_->addOption("Float32", static_cast<int>(ValueType::Float32));
 
   property_value_topic_ = new rviz_common::properties::RosTopicProperty(
     "Value Topic", "", rosidl_generator_traits::name<autoware_internal_debug_msgs::msg::Float32Stamped>(),
-    "", property_value_type, SLOT(update_value_topic));
+    "", property_value_type_, SLOT(update_value_topic()));
   
   property_buffer_size_ = new rviz_common::properties::IntProperty("Buffer Size", 100, "", this);
   property_buffer_size_->setMin(0);
@@ -57,10 +56,10 @@ ColoredPoseWithCovarianceHistory::ColoredPoseWithCovarianceHistory() : last_stam
   property_line_alpha_->setMax(1.0);
 
   property_line_min_color_ = 
-    new rviz_common::properties::ColorProperty("Min Color", Qt::Blue, "", property_line_view_);
+    new rviz_common::properties::ColorProperty("Min Color", Qt::blue, "", property_line_view_);
 
   property_line_max_color_ = 
-    new rviz_common::properties::ColorProperty("Max Color", Qt::Red, "", property_line_view_);
+    new rviz_common::properties::ColorProperty("Max Color", Qt::red, "", property_line_view_);
   
   property_auto_min_max_ = new rviz_common::properties::BoolProperty("Auto Set Min/Max", true, "", this);
 
@@ -108,7 +107,6 @@ void ColoredPoseWithCovarianceHistory::subscribe()
 void ColoredPoseWithCovarianceHistory::unsubscribe()
 {
   MFDClass::unsubscribe();
-
   history_.clear();
   lines_->clear();
 }
@@ -128,7 +126,7 @@ void ColoredPoseWithCovarianceHistory::processMessage(
     history_.clear();
     target_frame_ = message->header.frame_id;
   }
-  history_.emplace_back(message);
+  history_.emplace_back(message, last_value_);
   last_stamp_ = message->header.stamp;
   update_history();
 }
