@@ -841,11 +841,6 @@
          <changefreq>daily</changefreq>
     </url>
     <url>
-         <loc>https://autowarefoundation.github.io/autoware.universe/pr-10263/planning/autoware_route_handler/</loc>
-         <lastmod>2025-03-13</lastmod>
-         <changefreq>daily</changefreq>
-    </url>
-    <url>
          <loc>https://autowarefoundation.github.io/autoware.universe/pr-10263/planning/autoware_rtc_interface/</loc>
          <lastmod>2025-03-13</lastmod>
          <changefreq>daily</changefreq>

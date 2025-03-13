@@ -14373,6 +14373,9 @@ In case no pose is found, we fallback to using the pose before the detected coll
 <p>Whether it is decided to slow down or stop is determined by the distance between the ego vehicle and the trajectory point to avoid.
 If this distance is bellow the <code>actions.slowdown.threshold</code>, a velocity of <code>actions.slowdown.velocity</code> will be used.
 If the distance is bellow the <code>actions.stop.threshold</code>, a velocity of <code>0</code>m/s will be used.</p>
+<p>In addition, if parameter <code>action.use_map_stop_lines</code> is set to <code>true</code>,
+then the stop point may be moved to the earliest stop line preceding the stop point where ego can comfortably stop.
+Stop lines are defined in the vector map and must be attached to one of the lanelet followed by the ego trajectory.</p>
 <p><img alt="avoid_collision" src="docs/ttcs_avoid.png"></p>
 <h3 id="about-stability-of-the-stopslowdown-pose">About stability of the stop/slowdown pose<a class="headerlink" href="#about-stability-of-the-stopslowdown-pose" title="Permanent link">#</a></h3>
 <p>As the input trajectory can change significantly between iterations,
@@ -14479,6 +14482,11 @@ Otherwise, the stop or slowdown pose will only be discarded after no out of lane
 </tr>
 </thead>
 <tbody>
+<tr>
+<td><code>use_map_stop_lines</code></td>
+<td>bool</td>
+<td>[-] if true, try to stop at stop lines defined in the vector map</td>
+</tr>
 <tr>
 <td><code>precision</code></td>
 <td>double</td>
