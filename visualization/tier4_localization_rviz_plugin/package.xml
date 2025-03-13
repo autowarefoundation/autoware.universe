@@ -11,6 +11,7 @@
   <author email="isamu.takagi@tier4.jp">Takagi, Isamu</author>
   <author email="takamasa.horibe@tier4.jp">Takamasa Horibe</author>
   <author email="yuhei.oshikubo@tier4.jp">Yuhei Oshikubo</author>
+  <author email="kazusa.hashimoto@tier4.jp">Kazusa Hashimoto</author>
 
   <buildtool_depend>ament_cmake_auto</buildtool_depend>
   <buildtool_depend>autoware_cmake</buildtool_depend>
@@ -25,6 +26,7 @@
   <depend>rviz_common</depend>
   <depend>rviz_default_plugins</depend>
   <depend>tf2_ros</depend>
+  <depend>autoware_internal_debug_msgs</depend>
 
   <test_depend>ament_lint_auto</test_depend>
   <test_depend>autoware_lint_common</test_depend>
