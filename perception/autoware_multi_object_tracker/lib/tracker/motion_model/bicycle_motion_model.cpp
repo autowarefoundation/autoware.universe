@@ -326,7 +326,9 @@ bool BicycleMotionModel::predictStateStep(const double dt, KalmanFilter & ekf) c
     X_t(IDX::Y) + vel * sin_yaw * dt + 0.5 * vel * cos_slip * w_dtdt;  // dy = v * sin(yaw) * dt
   X_next_t(IDX::YAW) = X_t(IDX::YAW) + w * dt;                         // d(yaw) = w * dt
   X_next_t(IDX::VEL) = X_t(IDX::VEL);
-  X_next_t(IDX::SLIP) = X_t(IDX::SLIP);  // slip_angle = asin(lr * w / v)
+  // Apply exponential decay to slip angle over time, with a half-life of 2 seconds
+  const double decay_rate = std::exp(-dt * 0.69314718056 / 2.0);
+  X_next_t(IDX::SLIP) = X_t(IDX::SLIP) * decay_rate;  // slip_angle = asin(lr * w / v)
 
   // State transition matrix A
   Eigen::MatrixXd A = Eigen::MatrixXd::Identity(DIM, DIM);
