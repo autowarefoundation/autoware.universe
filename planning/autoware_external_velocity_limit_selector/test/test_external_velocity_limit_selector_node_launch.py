@@ -30,8 +30,8 @@ from rcl_interfaces.msg import ParameterValue
 from rcl_interfaces.srv import SetParameters
 import rclpy
 import rclpy.qos
-from tier4_planning_msgs.msg import VelocityLimit
-from tier4_planning_msgs.msg import VelocityLimitClearCommand
+from autoware_internal_planning_msgs.msg import VelocityLimit
+from autoware_internal_planning_msgs.msg import VelocityLimitClearCommand
 
 logger = get_logger(__name__)
 
