@@ -27,8 +27,8 @@
 #include <rclcpp/time.hpp>
 
 #include <autoware_adapi_v1_msgs/msg/operation_mode_state.hpp>
-#include <autoware_internal_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_internal_planning_msgs/msg/detail/velocity_limit__struct.hpp>
+#include <autoware_internal_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_perception_msgs/msg/traffic_light_group_array.hpp>
 #include <autoware_planning_msgs/msg/pose_with_uuid_stamped.hpp>
