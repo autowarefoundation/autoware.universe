@@ -196,11 +196,11 @@ void LidarCenterPointNode::pointCloudCallback(
 
       consecutive_delay_count_++;
 
-      if(consecutive_delay_count_ <= max_consecutive_warn_count_){
+      if (consecutive_delay_count_ <= max_consecutive_warn_count_) {
         std::stringstream message;
         message << "CenterPoint processing time exceeds the acceptable limit of "
-          << max_allowed_processing_time_ << " ms by "
-          << (processing_time_ms - max_allowed_processing_time_) << " ms.";
+                << max_allowed_processing_time_ << " ms by "
+                << (processing_time_ms - max_allowed_processing_time_) << " ms.";
 
         diagnostics_interface_ptr_->update_level_and_message(
           diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());

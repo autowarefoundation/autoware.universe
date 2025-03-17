@@ -57,7 +57,7 @@ private:
   bool has_twist_{false};
   float max_allowed_processing_time_;
   int max_consecutive_warn_count_;
-  int consecutive_delay_count_=0;
+  int consecutive_delay_count_ = 0;
 
   NonMaximumSuppression iou_bev_nms_;
   DetectionClassRemapper detection_class_remapper_;
