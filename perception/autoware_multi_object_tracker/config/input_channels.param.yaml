@@ -117,9 +117,9 @@
         flags:
           can_spawn_new_tracker: true
           can_trust_existence_probability: true
-          can_trust_extension: true
+          can_trust_extension: false
           can_trust_classification: true
-          can_trust_orientation: true
+          can_trust_orientation: false
         optional:
           name: "radar"
           short_name: "R"
@@ -128,9 +128,9 @@
         flags:
           can_spawn_new_tracker: true
           can_trust_existence_probability: true
-          can_trust_extension: true
+          can_trust_extension: false
           can_trust_classification: true
-          can_trust_orientation: true
+          can_trust_orientation: false
         optional:
           name: "radar_far"
           short_name: "Rf"
