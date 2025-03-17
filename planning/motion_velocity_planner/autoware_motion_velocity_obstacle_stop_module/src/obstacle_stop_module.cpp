@@ -149,8 +149,6 @@ void ObstacleStopModule::init(rclcpp::Node & node, const std::string & module_na
   common_param_ = CommonParam(node);
   stop_planning_param_ = StopPlanningParam(node, common_param_);
   obstacle_filtering_param_ = ObstacleFilteringParam(node);
-  use_pointcloud_ =
-    get_or_declare_parameter<bool>(node, "obstacle_stop.obstacle_filtering.object_type.pointcloud");
 
   // common publisher
   processing_time_publisher_ =
@@ -332,14 +330,10 @@ std::vector<geometry_msgs::msg::Point> ObstacleStopModule::convert_point_cloud_t
   return stop_collision_points;
 }
 
-std::optional<StopObstacle> ObstacleStopModule::create_stop_obstacle_for_point_cloud(
+StopObstacle ObstacleStopModule::create_stop_obstacle_for_point_cloud(
   const std::vector<TrajectoryPoint> & traj_points, const rclcpp::Time & stamp,
   const geometry_msgs::msg::Point & stop_point, const double dist_to_bumper) const
 {
-  if (!use_pointcloud_) {
-    return std::nullopt;
-  }
-
   const auto dist_to_collide_on_traj =
     autoware::motion_utils::calcSignedArcLength(traj_points, 0, stop_point) - dist_to_bumper;
 
@@ -448,6 +442,10 @@ std::vector<StopObstacle> ObstacleStopModule::filter_stop_obstacle_for_point_clo
 {
   autoware_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
+  if (!obstacle_filtering_param_.use_pointcloud) {
+    return std::vector<StopObstacle>{};
+  }
+
   const auto & tp = trajectory_polygon_collision_check;
 
   const std::vector<geometry_msgs::msg::Point> stop_points =
@@ -468,10 +466,7 @@ std::vector<StopObstacle> ObstacleStopModule::filter_stop_obstacle_for_point_clo
     // Filter obstacles for stop
     const auto stop_obstacle = create_stop_obstacle_for_point_cloud(
       decimated_traj_points, stop_obstacle_stamp, stop_point, dist_to_bumper);
-    if (stop_obstacle) {
-      stop_obstacles.push_back(*stop_obstacle);
-      continue;
-    }
+    stop_obstacles.push_back(stop_obstacle);
   }
 
   std::vector<StopObstacle> past_stop_obstacles;

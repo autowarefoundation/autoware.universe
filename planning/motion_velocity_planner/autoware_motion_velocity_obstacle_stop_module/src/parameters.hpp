@@ -120,8 +120,6 @@ struct ObstacleFilteringParam
       utils::get_target_object_type(node, "obstacle_stop.obstacle_filtering.object_type.inside.");
     outside_stop_object_types =
       utils::get_target_object_type(node, "obstacle_stop.obstacle_filtering.object_type.outside.");
-    use_pointcloud = get_or_declare_parameter<bool>(
-      node, "obstacle_stop.obstacle_filtering.object_type.pointcloud");
 
     obstacle_velocity_threshold_to_stop = get_or_declare_parameter<double>(
       node, "obstacle_stop.obstacle_filtering.obstacle_velocity_threshold_to_stop");
