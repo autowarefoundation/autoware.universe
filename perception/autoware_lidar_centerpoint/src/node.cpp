@@ -110,6 +110,10 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
   diagnostics_interface_ptr_ =
     std::make_unique<autoware_utils::DiagnosticsInterface>(this, "centerpoint_trt");
 
+  // diagnostics parameters
+  max_allowed_processing_time_ = declare_parameter<float>("max_allowed_processing_time");
+  max_consecutive_warn_count_ = declare_parameter<int>("max_consecutive_warn_count");
+
   pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS{}.keep_last(1),
     std::bind(&LidarCenterPointNode::pointCloudCallback, this, std::placeholders::_1));
@@ -182,24 +186,52 @@ void LidarCenterPointNode::pointCloudCallback(
     objects_pub_->publish(output_msg);
     published_time_publisher_->publish_if_subscribed(objects_pub_, output_msg.header.stamp);
   }
-  diagnostics_interface_ptr_->publish(input_pointcloud_msg->header.stamp);
 
-  // add processing time for debug
-  if (debug_publisher_ptr_ && stop_watch_ptr_) {
-    const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
+  if (stop_watch_ptr_) {
     const double processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
-    const double pipeline_latency_ms =
-      std::chrono::duration<double, std::milli>(
-        std::chrono::nanoseconds(
-          (this->get_clock()->now() - output_msg.header.stamp).nanoseconds()))
-        .count();
-    debug_publisher_ptr_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
-      "debug/cyclic_time_ms", cyclic_time_ms);
-    debug_publisher_ptr_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
-      "debug/processing_time_ms", processing_time_ms);
-    debug_publisher_ptr_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
-      "debug/pipeline_latency_ms", pipeline_latency_ms);
+
+    // check processing time is acceptable
+    if (processing_time_ms > max_allowed_processing_time_) {
+      diagnostics_interface_ptr_->add_key_value("is_processing_time_ms_in_expected_range", false);
+
+      consecutive_delay_count_++;
+
+      if(consecutive_delay_count_ <= max_consecutive_warn_count_){
+        std::stringstream message;
+        message << "CenterPoint processing time exceeds the acceptable limit of "
+          << max_allowed_processing_time_ << " ms by "
+          << (processing_time_ms - max_allowed_processing_time_) << " ms.";
+
+        diagnostics_interface_ptr_->update_level_and_message(
+          diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
+      } else {
+        diagnostics_interface_ptr_->update_level_and_message(
+          diagnostic_msgs::msg::DiagnosticStatus::ERROR,
+          "CenterPoint processing delay has exceeded the acceptable limit continuously.");
+      }
+    } else {
+      diagnostics_interface_ptr_->add_key_value("is_processing_time_ms_in_expected_range", true);
+      consecutive_delay_count_ = 0;
+    }
+
+    // add processing time for debug
+    if (debug_publisher_ptr_) {
+      const double cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
+      const double pipeline_latency_ms =
+        std::chrono::duration<double, std::milli>(
+          std::chrono::nanoseconds(
+            (this->get_clock()->now() - output_msg.header.stamp).nanoseconds()))
+          .count();
+      debug_publisher_ptr_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
+        "debug/cyclic_time_ms", cyclic_time_ms);
+      debug_publisher_ptr_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
+        "debug/processing_time_ms", processing_time_ms);
+      debug_publisher_ptr_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
+        "debug/pipeline_latency_ms", pipeline_latency_ms);
+    }
   }
+
+  diagnostics_interface_ptr_->publish(input_pointcloud_msg->header.stamp);
 }
 
 }  // namespace autoware::lidar_centerpoint

@@ -55,6 +55,9 @@ private:
   std::vector<std::string> class_names_;
   bool has_variance_{false};
   bool has_twist_{false};
+  float max_allowed_processing_time_;
+  int max_consecutive_warn_count_;
+  int consecutive_delay_count_=0;
 
   NonMaximumSuppression iou_bev_nms_;
   DetectionClassRemapper detection_class_remapper_;
