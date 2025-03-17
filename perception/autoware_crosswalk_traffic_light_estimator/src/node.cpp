@@ -329,7 +329,7 @@ void CrosswalkTrafficLightEstimatorNode::setCrosswalkTrafficSignal(
 bool CrosswalkTrafficLightEstimatorNode::isInvalidDetectionStatus(
   const TrafficSignal & signal) const
 {
-   // invalid if elements is empty
+  // invalid if elements is empty
   if (signal.elements.empty()) {
     return true;
   }
@@ -355,8 +355,7 @@ void CrosswalkTrafficLightEstimatorNode::updateFlashingState(const TrafficSignal
 
   // flashing green
   if (
-    !signal.elements.empty() &&
-    signal.elements.front().color == TrafficSignalElement::UNKNOWN &&
+    !signal.elements.empty() && signal.elements.front().color == TrafficSignalElement::UNKNOWN &&
     signal.elements.front().confidence != 0 &&  // not due to occlusion
     current_color_state_.at(id) != TrafficSignalElement::UNKNOWN) {
     is_flashing_.at(id) = true;
