@@ -151,7 +151,7 @@ void LidarCenterPointNode::pointCloudCallback(
   std::vector<Box3D> det_boxes3d;
   bool is_num_pillars_within_range = true;
   bool is_success = detector_ptr_->detect(
-    *input_pointcloud_msg, tf_buffer_, det_boxes3d, is_num_pillars_within_range);
+    input_pointcloud_msg, tf_buffer_, det_boxes3d, is_num_pillars_within_range);
   if (!is_success) {
     return;
   }

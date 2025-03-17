@@ -40,8 +40,10 @@ PointPaintingTRT::PointPaintingTRT(
 
 bool PointPaintingTRT::detect(
   const sensor_msgs::msg::PointCloud2 & input_pointcloud_msg, const tf2_ros::Buffer & tf_buffer,
-  std::vector<autoware::lidar_centerpoint::Box3D> & det_boxes3d)
+  std::vector<autoware::lidar_centerpoint::Box3D> & det_boxes3d, bool & is_num_pillars_within_range)
 {
+  is_num_pillars_within_range = true;
+
   CHECK_CUDA_ERROR(cudaMemsetAsync(
     encoder_in_features_d_.get(), 0, encoder_in_feature_size_ * sizeof(float), stream_));
   CHECK_CUDA_ERROR(
@@ -53,6 +55,22 @@ bool PointPaintingTRT::detect(
   }
   inference();
   postProcess(det_boxes3d);
+
+  // Check the actual number of pillars after inference to avoid unnecessary synchronization.
+  unsigned int num_pillars = 0;
+  CHECK_CUDA_ERROR(
+    cudaMemcpy(&num_pillars, num_voxels_d_.get(), sizeof(unsigned int), cudaMemcpyDeviceToHost));
+
+  if (num_pillars >= config_.max_voxel_size_) {
+    rclcpp::Clock clock{RCL_ROS_TIME};
+    RCLCPP_WARN_THROTTLE(
+      rclcpp::get_logger("lidar_centerpoint"), clock, 1000,
+      "The actual number of pillars (%u) exceeds its maximum value (%zu). "
+      "Please considering increasing it since it may limit the detection performance.",
+      num_pillars, config_.max_voxel_size_);
+    is_num_pillars_within_range = false;
+  }
+
   return true;
 }
 
