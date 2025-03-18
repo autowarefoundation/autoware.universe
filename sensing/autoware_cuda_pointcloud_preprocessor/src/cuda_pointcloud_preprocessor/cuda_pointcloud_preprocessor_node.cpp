@@ -241,13 +241,13 @@ void CudaPointcloudPreprocessorNode::pointcloudCallback(
   sensor_msgs::PointCloud2ConstIterator<std::uint32_t> iter_stamp(
     *input_pointcloud_msg_ptr, "time_stamp");
 
+  /* *INDENT-OFF* */
   auto num_points = input_pointcloud_msg_ptr->width * input_pointcloud_msg_ptr->height;
   std::uint32_t first_point_rel_stamp = num_points > 0 ? *iter_stamp : 0;
   double first_point_stamp = input_pointcloud_msg_ptr->header.stamp.sec +
                              input_pointcloud_msg_ptr->header.stamp.nanosec * 1e-9 +
                              first_point_rel_stamp * 1e-9;
 
-  /* *INDENT-OFF* */
   while (twist_queue_.size() > 1 &&
          rclcpp::Time(twist_queue_.front().header.stamp).seconds() < first_point_stamp) {
     twist_queue_.pop_front();
