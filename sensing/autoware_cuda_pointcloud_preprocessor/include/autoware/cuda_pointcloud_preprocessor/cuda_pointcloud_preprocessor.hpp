@@ -31,6 +31,8 @@
 
 #include <cstdint>
 #include <deque>
+#include <memory>
+#include <vector>
 
 namespace autoware::cuda_pointcloud_preprocessor
 {

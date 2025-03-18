@@ -38,6 +38,7 @@
 
 #include <deque>
 #include <memory>
+#include <string>
 
 #define CHECK_OFFSET(structure1, structure2, field)             \
   static_assert(                                                \

@@ -84,7 +84,7 @@ class MemoryPoolAllocator
 {
 public:
   using value_type = T;
-  MemoryPoolAllocator(cudaMemPool_t pool) : m_pool(pool) {}
+  explicit MemoryPoolAllocator(cudaMemPool_t pool) : m_pool(pool) {}
 
   T * allocate(std::size_t n)
   {
