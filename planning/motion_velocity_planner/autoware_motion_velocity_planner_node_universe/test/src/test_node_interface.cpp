@@ -45,7 +45,7 @@ std::shared_ptr<MotionVelocityPlannerNode> generateNode()
   const auto autoware_test_utils_dir =
     ament_index_cpp::get_package_share_directory("autoware_test_utils");
   const auto motion_velocity_planner_dir =
-    ament_index_cpp::get_package_share_directory("autoware_motion_velocity_planner_node_universe");
+    ament_index_cpp::get_package_share_directory("autoware_motion_velocity_planner_node");
   const auto velocity_smoother_dir =
     ament_index_cpp::get_package_share_directory("autoware_velocity_smoother");
 

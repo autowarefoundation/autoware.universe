@@ -20,12 +20,12 @@
 #include <pluginlib/class_loader.hpp>
 #include <rclcpp/rclcpp.hpp>
 
+#include <autoware_internal_metric_msgs/msg/metric.hpp>
+#include <autoware_internal_metric_msgs/msg/metric_array.hpp>
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_planning_msgs/msg/trajectory.hpp>
 #include <sensor_msgs/msg/point_cloud2.hpp>
-#include <tier4_metric_msgs/msg/metric.hpp>
-#include <tier4_metric_msgs/msg/metric_array.hpp>
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_routing/RoutingGraph.h>
@@ -36,8 +36,8 @@
 #include <string>
 #include <vector>
 
-using Metric = tier4_metric_msgs::msg::Metric;
-using MetricArray = tier4_metric_msgs::msg::MetricArray;
+using Metric = autoware_internal_metric_msgs::msg::Metric;
+using MetricArray = autoware_internal_metric_msgs::msg::MetricArray;
 
 namespace autoware::motion_velocity_planner
 {

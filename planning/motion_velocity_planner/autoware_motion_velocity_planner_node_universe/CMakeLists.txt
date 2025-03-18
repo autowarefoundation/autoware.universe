@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(autoware_motion_velocity_planner_node_universe)
+project(autoware_motion_velocity_planner_node)
 
 find_package(autoware_cmake REQUIRED)
 find_package(rosidl_default_generators REQUIRED)
