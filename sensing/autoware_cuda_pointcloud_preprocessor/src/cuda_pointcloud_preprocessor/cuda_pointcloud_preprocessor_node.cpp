@@ -88,9 +88,11 @@ CudaPointcloudPreprocessorNode::CudaPointcloudPreprocessorNode(
   bool use_imu = declare_parameter<bool>("use_imu");
 
   // Publisher
+  /* *INDENT-OFF* */
   pub_ =
     std::make_unique<cuda_blackboard::CudaBlackboardPublisher<cuda_blackboard::CudaPointCloud2>>(
       *this, "~/output/pointcloud");
+  /* *INDENT-ON* */
 
   // Subscriber
   rclcpp::SubscriptionOptions sub_options;
@@ -112,9 +114,11 @@ CudaPointcloudPreprocessorNode::CudaPointcloudPreprocessorNode(
       sub_options);
   }
 
+  /* *INDENT-OFF* */
   CudaPointcloudPreprocessor::UndistortionType undistortion_type =
     use_3d_undistortion ? CudaPointcloudPreprocessor::UndistortionType::Undistortion3D
                         : CudaPointcloudPreprocessor::UndistortionType::Undistortion2D;
+  /* *INDENT-ON* */
 
   cuda_pointcloud_preprocessor_ = std::make_unique<CudaPointcloudPreprocessor>();
   cuda_pointcloud_preprocessor_->setRingOutlierFilterParameters(ring_outlier_filter_parameters);
@@ -239,6 +243,7 @@ void CudaPointcloudPreprocessorNode::pointcloudCallback(
                              input_pointcloud_msg_ptr->header.stamp.nanosec * 1e-9 +
                              first_point_rel_stamp * 1e-9;
 
+  /* *INDENT-ON* */
   while (twist_queue_.size() > 1 &&
          rclcpp::Time(twist_queue_.front().header.stamp).seconds() < first_point_stamp) {
     twist_queue_.pop_front();
@@ -248,6 +253,7 @@ void CudaPointcloudPreprocessorNode::pointcloudCallback(
          rclcpp::Time(angular_velocity_queue_.front().header.stamp).seconds() < first_point_stamp) {
     angular_velocity_queue_.pop_front();
   }
+  /* *INDENT-ON* */
 
   // Obtain the base link to input pointcloud transform
   geometry_msgs::msg::TransformStamped transform_msg;

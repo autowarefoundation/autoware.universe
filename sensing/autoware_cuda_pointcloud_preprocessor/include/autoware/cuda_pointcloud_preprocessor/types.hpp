@@ -79,6 +79,7 @@ struct RingOutlierFilterParameters
   std::size_t num_points_threshold{0};
 };
 
+/* *INDENT-OFF* */
 template <typename T>
 class MemoryPoolAllocator
 {
@@ -98,6 +99,7 @@ public:
 protected:
   cudaMemPool_t m_pool;
 };
+/* *INDENT-ON* */
 
 }  // namespace autoware::cuda_pointcloud_preprocessor
 
