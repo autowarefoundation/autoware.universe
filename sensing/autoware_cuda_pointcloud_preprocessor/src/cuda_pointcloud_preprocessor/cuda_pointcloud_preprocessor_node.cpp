@@ -67,8 +67,7 @@ CudaPointcloudPreprocessorNode::CudaPointcloudPreprocessorNode(
     crop_box_min_x_vector.size() != crop_box_min_z_vector.size() ||
     crop_box_min_x_vector.size() != crop_box_max_x_vector.size() ||
     crop_box_min_x_vector.size() != crop_box_max_y_vector.size() ||
-    crop_box_min_x_vector.size() != crop_box_max_z_vector.size())
-  {
+    crop_box_min_x_vector.size() != crop_box_max_z_vector.size()) {
     throw std::runtime_error("Crop box parameters must have the same size");
   }
 
@@ -91,7 +90,7 @@ CudaPointcloudPreprocessorNode::CudaPointcloudPreprocessorNode(
   // Publisher
   pub_ =
     std::make_unique<cuda_blackboard::CudaBlackboardPublisher<cuda_blackboard::CudaPointCloud2>>(
-    *this, "~/output/pointcloud");
+      *this, "~/output/pointcloud");
 
   // Subscriber
   rclcpp::SubscriptionOptions sub_options;
@@ -241,14 +240,12 @@ void CudaPointcloudPreprocessorNode::pointcloudCallback(
                              first_point_rel_stamp * 1e-9;
 
   while (twist_queue_.size() > 1 &&
-         rclcpp::Time(twist_queue_.front().header.stamp).seconds() < first_point_stamp)
-  {
+         rclcpp::Time(twist_queue_.front().header.stamp).seconds() < first_point_stamp) {
     twist_queue_.pop_front();
   }
 
   while (angular_velocity_queue_.size() > 1 &&
-         rclcpp::Time(angular_velocity_queue_.front().header.stamp).seconds() < first_point_stamp)
-  {
+         rclcpp::Time(angular_velocity_queue_.front().header.stamp).seconds() < first_point_stamp) {
     angular_velocity_queue_.pop_front();
   }
 
