@@ -62,6 +62,7 @@ CudaPointcloudPreprocessorNode::CudaPointcloudPreprocessorNode(
   const auto crop_box_max_y_vector = declare_parameter<std::vector<double>>("crop_box.max_y");
   const auto crop_box_max_z_vector = declare_parameter<std::vector<double>>("crop_box.max_z");
 
+  /* *INDENT-OFF* */
   if (
     crop_box_min_x_vector.size() != crop_box_min_y_vector.size() ||
     crop_box_min_x_vector.size() != crop_box_min_z_vector.size() ||
@@ -70,6 +71,7 @@ CudaPointcloudPreprocessorNode::CudaPointcloudPreprocessorNode(
     crop_box_min_x_vector.size() != crop_box_max_z_vector.size()) {
     throw std::runtime_error("Crop box parameters must have the same size");
   }
+  /* *INDENT-ON* */
 
   std::vector<CropBoxParameters> crop_box_parameters;
 
@@ -201,6 +203,7 @@ void CudaPointcloudPreprocessorNode::imuCallback(
   transformed_angular_velocity.header = imu_msg->header;
   angular_velocity_queue_.push_back(transformed_angular_velocity);
 
+  /* *INDENT-OFF* */
   while (!angular_velocity_queue_.empty()) {
     // for rosbag replay
     bool backwards_time_jump_detected = rclcpp::Time(angular_velocity_queue_.front().header.stamp) >
@@ -217,6 +220,7 @@ void CudaPointcloudPreprocessorNode::imuCallback(
       break;
     }
   }
+  /* *INDENT-ON* */
 }
 
 void CudaPointcloudPreprocessorNode::pointcloudCallback(
@@ -243,7 +247,7 @@ void CudaPointcloudPreprocessorNode::pointcloudCallback(
                              input_pointcloud_msg_ptr->header.stamp.nanosec * 1e-9 +
                              first_point_rel_stamp * 1e-9;
 
-  /* *INDENT-ON* */
+  /* *INDENT-OFF* */
   while (twist_queue_.size() > 1 &&
          rclcpp::Time(twist_queue_.front().header.stamp).seconds() < first_point_stamp) {
     twist_queue_.pop_front();
