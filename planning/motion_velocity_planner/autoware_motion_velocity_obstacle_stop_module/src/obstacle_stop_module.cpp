@@ -303,7 +303,7 @@ std::vector<geometry_msgs::msg::Point> ObstacleStopModule::convert_point_cloud_t
       const auto min_lat_dist_to_traj_poly =
         std::abs(current_lat_dist_from_obstacle_to_traj) - vehicle_info.vehicle_width_m;
 
-      if (min_lat_dist_to_traj_poly >= p.max_lat_margin_against_unknown) {
+      if (min_lat_dist_to_traj_poly >= p.max_lat_margin) {
         continue;
       }
       const auto current_ego_to_obstacle_distance =
@@ -343,18 +343,19 @@ StopObstacle ObstacleStopModule::create_stop_obstacle_for_point_cloud(
   autoware_perception_msgs::msg::Shape bounding_box_shape;
   bounding_box_shape.type = autoware_perception_msgs::msg::Shape::BOUNDING_BOX;
 
-  ObjectClassification unknown_object_classification;
-  unknown_object_classification.label = ObjectClassification::UNKNOWN;
-  unknown_object_classification.probability = 1.0;
+  ObjectClassification unconfigured_object_classification;
 
   const geometry_msgs::msg::Pose unconfigured_pose;
   const double unconfigured_lon_vel = 0.;
 
   return StopObstacle{
-    obj_uuid_str, stamp,
-    unknown_object_classification,  // Since the obstacle is obtained from the point-cloud, the type
-                                    // is UNKNOWN
-    unconfigured_pose, bounding_box_shape, unconfigured_lon_vel, stop_point,
+    obj_uuid_str,
+    stamp,
+    unconfigured_object_classification,
+    unconfigured_pose,
+    bounding_box_shape,
+    unconfigured_lon_vel,
+    stop_point,
     dist_to_collide_on_traj};
 }
 
@@ -486,7 +487,7 @@ std::vector<StopObstacle> ObstacleStopModule::filter_stop_obstacle_for_point_clo
     const auto min_lat_dist_to_traj_poly =
       std::abs(lat_dist_from_obstacle_to_traj) - vehicle_info.vehicle_width_m;
 
-    if (min_lat_dist_to_traj_poly < obstacle_filtering_param_.max_lat_margin_against_unknown) {
+    if (min_lat_dist_to_traj_poly < obstacle_filtering_param_.max_lat_margin) {
       auto stop_obstacle = *itr;
       stop_obstacle.dist_to_collide_on_decimated_traj =
         autoware::motion_utils::calcSignedArcLength(
@@ -669,9 +670,7 @@ std::optional<StopObstacle> ObstacleStopModule::filter_outside_stop_obstacle_for
   }
 
   // 2. filter by lateral distance
-  const double max_lat_margin = obj_label == ObjectClassification::UNKNOWN
-                                  ? obstacle_filtering_param_.max_lat_margin_against_unknown
-                                  : obstacle_filtering_param_.max_lat_margin;
+  const double max_lat_margin = get_max_lat_margin(obj_label);
   if (dist_from_obj_poly_to_traj_poly < std::max(max_lat_margin, 1e-3)) {
     // Obstacle that is not inside of trajectory
     return std::nullopt;
@@ -1322,7 +1321,7 @@ std::vector<StopObstacle> ObstacleStopModule::get_closest_stop_obstacles(
 double ObstacleStopModule::get_max_lat_margin(const uint8_t obj_label) const
 {
   if (obj_label == ObjectClassification::UNKNOWN) {
-    return obstacle_filtering_param_.max_lat_margin_against_unknown;
+    return obstacle_filtering_param_.max_lat_margin_against_predicted_object_unknown;
   }
   return obstacle_filtering_param_.max_lat_margin;
 }
