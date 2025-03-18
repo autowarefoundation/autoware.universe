@@ -79,7 +79,21 @@ void ObjectInfo::initialize(
   std::optional<lanelet::ConstLanelet> attention_lanelet_opt,
   std::optional<lanelet::ConstLineString3d> stopline_opt)
 {
+  type = ObstacleType::OBJECT;
   predicted_object_ = object;
+  attention_lanelet_opt_ = attention_lanelet_opt;
+  stopline_opt_ = stopline_opt;
+  unsafe_interval_ = std::nullopt;
+  calc_dist_to_stopline();
+}
+
+void ObjectInfo::initialize(
+  const geometry_msgs::msg::Point & point,
+  std::optional<lanelet::ConstLanelet> attention_lanelet_opt,
+  std::optional<lanelet::ConstLineString3d> stopline_opt)
+{
+  type = ObstacleType::POINTCLOUD;
+  point_ = point;
   attention_lanelet_opt_ = attention_lanelet_opt;
   stopline_opt_ = stopline_opt;
   unsafe_interval_ = std::nullopt;

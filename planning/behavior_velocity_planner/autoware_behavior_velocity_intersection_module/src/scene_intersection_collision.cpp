@@ -21,6 +21,7 @@
 #include <autoware_lanelet2_extension/utility/utilities.hpp>
 #include <autoware_utils/geometry/boost_polygon_utils.hpp>  // for toPolygon2d
 #include <autoware_utils/geometry/geometry.hpp>
+#include <autoware_utils/ros/uuid_helper.hpp>
 #include <magic_enum.hpp>
 
 #include <boost/geometry/algorithms/correct.hpp>
@@ -144,6 +145,56 @@ void IntersectionModule::updateObjectInfoManagerArea()
       object_info->initialize(predicted_object, attention_lanelet, stopline);
     }
   }
+
+  if (!planner_param_.collision_detection.support_by_pointcloud.use_pointcloud) {
+    return;
+  }
+
+  if (!planner_data_->no_ground_pointcloud) {
+    return;
+  }
+
+  for (const auto & point : *planner_data_->no_ground_pointcloud) {
+    const auto p = autoware_utils::create_point(point.x, point.y, point.z);
+
+    const auto ego_to_point =
+      autoware_utils::calc_distance2d(p, planner_data_->current_odometry->pose);
+    if (ego_to_point < planner_param_.collision_detection.support_by_pointcloud.min_range) {
+      continue;
+    }
+
+    const auto belong_attention_lanelet_id = isWithinTargetLanelets(p, attention_lanelets);
+
+    const bool in_intersection_area = [&]() {
+      if (!intersection_area) {
+        return false;
+      }
+      return bg::within(autoware_utils::Point2d{point.x, point.y}, intersection_area.value());
+    }();
+    std::optional<lanelet::ConstLanelet> attention_lanelet{std::nullopt};
+    std::optional<lanelet::ConstLineString3d> stopline{std::nullopt};
+
+    // use pointcloud only for far objects.
+    if (in_intersection_area) {
+      continue;
+    }
+
+    // outside of detection lane.
+    if (!belong_attention_lanelet_id) {
+      continue;
+    }
+
+    const auto idx = belong_attention_lanelet_id.value();
+    attention_lanelet = attention_lanelets.at(idx);
+    stopline = attention_lanelet_stoplines.at(idx);
+
+    auto object_info = object_info_manager_.registerObject(
+      autoware_utils::generate_uuid(), belong_attention_lanelet_id.has_value(),
+      in_intersection_area, false);
+    object_info->initialize(p, attention_lanelet, stopline);
+
+    break;
+  }
 }
 
 void IntersectionModule::updateObjectInfoManagerCollision(
@@ -212,14 +263,20 @@ void IntersectionModule::updateObjectInfoManagerCollision(
   for (auto & object_info : object_info_manager_.attentionObjects()) {
     const auto & predicted_object = object_info->predicted_object();
     bool safe_under_traffic_control = false;
-    const auto label = predicted_object.classification.at(0).label;
-    const auto expected_deceleration =
-      (label == autoware_perception_msgs::msg::ObjectClassification::MOTORCYCLE ||
-       label == autoware_perception_msgs::msg::ObjectClassification::BICYCLE)
-        ? planner_param_.collision_detection.ignore_on_amber_traffic_light
-            .object_expected_deceleration.bike
-        : planner_param_.collision_detection.ignore_on_amber_traffic_light
-            .object_expected_deceleration.car;
+    const auto expected_deceleration = [&predicted_object, this]() {
+      if (predicted_object.classification.empty()) {
+        return planner_param_.collision_detection.ignore_on_amber_traffic_light
+          .object_expected_deceleration.car;
+      }
+
+      const auto label = predicted_object.classification.at(0).label;
+      return (label == autoware_perception_msgs::msg::ObjectClassification::MOTORCYCLE ||
+              label == autoware_perception_msgs::msg::ObjectClassification::BICYCLE)
+               ? planner_param_.collision_detection.ignore_on_amber_traffic_light
+                   .object_expected_deceleration.bike
+               : planner_param_.collision_detection.ignore_on_amber_traffic_light
+                   .object_expected_deceleration.car;
+    }();
     if (
       traffic_prioritized_level == TrafficPrioritizedLevel::PARTIALLY_PRIORITIZED &&
       object_info->can_stop_before_stopline(expected_deceleration)) {
@@ -254,118 +311,125 @@ void IntersectionModule::updateObjectInfoManagerCollision(
     std::optional<CollisionInterval> safe_interval{std::nullopt};
     std::optional<std::vector<double>> object_debug_info{std::nullopt};
 
-    for (const auto & predicted_path_ptr : sorted_predicted_paths) {
-      auto predicted_path = *predicted_path_ptr;
-      if (
-        predicted_path.confidence <
-        planner_param_.collision_detection.min_predicted_path_confidence) {
-        continue;
-      }
-      cutPredictPathWithinDuration(
-        planner_data_->predicted_objects->header.stamp, passing_time, &predicted_path);
-      const auto object_passage_interval_opt = findPassageInterval(
-        predicted_path, predicted_object.shape, ego_poly,
-        intersection_lanelets.first_attention_lane(),
-        intersection_lanelets.second_attention_lane());
-      if (!object_passage_interval_opt) {
-        // there is no chance of geometric collision for the entire prediction horizon
-        continue;
-      }
-      const auto & object_passage_interval = object_passage_interval_opt.value();
-      const auto object_enter_exit_time = object_passage_interval.interval_time;
-      const auto object_enter_time = std::get<0>(object_enter_exit_time);
-      const auto object_exit_time = std::get<1>(object_enter_exit_time);
-      const auto ego_start_itr = std::lower_bound(
-        time_distance_array.begin(), time_distance_array.end(),
-        object_enter_time - collision_start_margin_time,
-        [](const auto & a, const double b) { return a.first < b; });
-      if (ego_start_itr == time_distance_array.end()) {
-        // ==========================================================================================
-        // this is the case where at time "object_enter_time - collision_start_margin_time", ego is
-        // arriving at the exit of the intersection, which means even if we assume that the object
-        // accelerates and the first collision happens faster by the TTC margin, ego will be already
-        // arriving at the exist of the intersection.
-        // ==========================================================================================
-        continue;
-      }
-      auto ego_end_itr = std::lower_bound(
-        time_distance_array.begin(), time_distance_array.end(),
-        object_exit_time + collision_end_margin_time,
-        [](const auto & a, const double b) { return a.first < b; });
-      if (ego_end_itr == time_distance_array.end()) {
-        ego_end_itr = time_distance_array.end() - 1;
-      }
-      const double ego_start_arc_length = std::max(
-        0.0, closest_arc_coords.length + ego_start_itr->second -
-               planner_data_->vehicle_info_.rear_overhang_m);
-      const double ego_end_arc_length = std::min(
-        closest_arc_coords.length + ego_end_itr->second +
-          planner_data_->vehicle_info_.max_longitudinal_offset_m,
-        lanelet::utils::getLaneletLength2d(concat_lanelets));
-      const auto trimmed_ego_polygon = lanelet::utils::getPolygonFromArcLength(
-        concat_lanelets, ego_start_arc_length, ego_end_arc_length);
-      if (trimmed_ego_polygon.empty()) {
-        continue;
-      }
-      Polygon2d polygon{};
-      for (const auto & p : trimmed_ego_polygon) {
-        polygon.outer().emplace_back(p.x(), p.y());
-      }
-      bg::correct(polygon);
-      debug_data_.candidate_collision_ego_lane_polygon = toGeomPoly(polygon);
+    if (object_info->type == ObjectInfo::ObstacleType::POINTCLOUD) {
+      // TODO(someone): what should we do for pointcloud?
+      safe_interval = std::nullopt;
+      unsafe_interval = CollisionInterval{};
+    } else {
+      for (const auto & predicted_path_ptr : sorted_predicted_paths) {
+        auto predicted_path = *predicted_path_ptr;
+        if (
+          predicted_path.confidence <
+          planner_param_.collision_detection.min_predicted_path_confidence) {
+          continue;
+        }
+        cutPredictPathWithinDuration(
+          planner_data_->predicted_objects->header.stamp, passing_time, &predicted_path);
+        const auto object_passage_interval_opt = findPassageInterval(
+          predicted_path, predicted_object.shape, ego_poly,
+          intersection_lanelets.first_attention_lane(),
+          intersection_lanelets.second_attention_lane());
+        if (!object_passage_interval_opt) {
+          // there is no chance of geometric collision for the entire prediction horizon
+          continue;
+        }
+        const auto & object_passage_interval = object_passage_interval_opt.value();
+        const auto object_enter_exit_time = object_passage_interval.interval_time;
+        const auto object_enter_time = std::get<0>(object_enter_exit_time);
+        const auto object_exit_time = std::get<1>(object_enter_exit_time);
+        const auto ego_start_itr = std::lower_bound(
+          time_distance_array.begin(), time_distance_array.end(),
+          object_enter_time - collision_start_margin_time,
+          [](const auto & a, const double b) { return a.first < b; });
+        if (ego_start_itr == time_distance_array.end()) {
+          // ==========================================================================================
+          // this is the case where at time "object_enter_time - collision_start_margin_time", ego
+          // is arriving at the exit of the intersection, which means even if we assume that the
+          // object accelerates and the first collision happens faster by the TTC margin, ego will
+          // be already arriving at the exist of the intersection.
+          // ==========================================================================================
+          continue;
+        }
+        auto ego_end_itr = std::lower_bound(
+          time_distance_array.begin(), time_distance_array.end(),
+          object_exit_time + collision_end_margin_time,
+          [](const auto & a, const double b) { return a.first < b; });
+        if (ego_end_itr == time_distance_array.end()) {
+          ego_end_itr = time_distance_array.end() - 1;
+        }
+        const double ego_start_arc_length = std::max(
+          0.0, closest_arc_coords.length + ego_start_itr->second -
+                 planner_data_->vehicle_info_.rear_overhang_m);
+        const double ego_end_arc_length = std::min(
+          closest_arc_coords.length + ego_end_itr->second +
+            planner_data_->vehicle_info_.max_longitudinal_offset_m,
+          lanelet::utils::getLaneletLength2d(concat_lanelets));
+        const auto trimmed_ego_polygon = lanelet::utils::getPolygonFromArcLength(
+          concat_lanelets, ego_start_arc_length, ego_end_arc_length);
+        if (trimmed_ego_polygon.empty()) {
+          continue;
+        }
+        Polygon2d polygon{};
+        for (const auto & p : trimmed_ego_polygon) {
+          polygon.outer().emplace_back(p.x(), p.y());
+        }
+        bg::correct(polygon);
+        debug_data_.candidate_collision_ego_lane_polygon = toGeomPoly(polygon);
 
-      const auto & object_path = object_passage_interval.path;
-      const auto [begin, end] = object_passage_interval.interval_position;
-      bool collision_detected = false;
-      for (auto i = begin; i <= end; ++i) {
-        if (bg::intersects(
-              polygon, autoware_utils::to_polygon2d(object_path.at(i), predicted_object.shape))) {
-          collision_detected = true;
+        const auto & object_path = object_passage_interval.path;
+        const auto [begin, end] = object_passage_interval.interval_position;
+        bool collision_detected = false;
+        for (auto i = begin; i <= end; ++i) {
+          if (bg::intersects(
+                polygon, autoware_utils::to_polygon2d(object_path.at(i), predicted_object.shape))) {
+            collision_detected = true;
+            break;
+          }
+        }
+        auto get_object_info = [&]() {
+          // debug info
+          const auto & pose = predicted_object.kinematics.initial_pose_with_covariance.pose;
+          const auto & shape = predicted_object.shape;
+          const auto [object_start_itr, object_end_itr] = object_passage_interval.interval_position;
+          const auto & object_start_pos =
+            object_passage_interval.path.at(object_start_itr).position;
+          const auto & object_end_pos = object_passage_interval.path.at(object_end_itr).position;
+          std::vector<double> debug;
+          debug.reserve(object_debug_size);
+
+          debug.insert(
+            debug.end(),
+            {pose.position.x, pose.position.y, tf2::getYaw(pose.orientation), shape.dimensions.x,
+             shape.dimensions.y,
+             predicted_object.kinematics.initial_twist_with_covariance.twist.linear.x,
+             1.0 * static_cast<int>(collision_detected), object_enter_time, object_exit_time,
+             ego_start_itr->first, ego_start_itr->second, ego_end_itr->first, ego_end_itr->second,
+             object_start_pos.x, object_start_pos.y, object_end_pos.x, object_end_pos.y});
+          for (unsigned i = 0; i < 20; ++i) {
+            const auto & pos = object_passage_interval.path
+                                 .at(std::min<size_t>(i, object_passage_interval.path.size() - 1))
+                                 .position;
+            debug.push_back(pos.x);
+            debug.push_back(pos.y);
+          }
+          return debug;
+        };
+
+        if (collision_detected) {
+          // if judged as UNSAFE, return
+          safe_interval = std::nullopt;
+          unsafe_interval = object_passage_interval;
+          object_debug_info = get_object_info();
           break;
         }
-      }
-      auto get_object_info = [&]() {
-        // debug info
-        const auto & pose = predicted_object.kinematics.initial_pose_with_covariance.pose;
-        const auto & shape = predicted_object.shape;
-        const auto [object_start_itr, object_end_itr] = object_passage_interval.interval_position;
-        const auto & object_start_pos = object_passage_interval.path.at(object_start_itr).position;
-        const auto & object_end_pos = object_passage_interval.path.at(object_end_itr).position;
-        std::vector<double> debug;
-        debug.reserve(object_debug_size);
-
-        debug.insert(
-          debug.end(),
-          {pose.position.x, pose.position.y, tf2::getYaw(pose.orientation), shape.dimensions.x,
-           shape.dimensions.y,
-           predicted_object.kinematics.initial_twist_with_covariance.twist.linear.x,
-           1.0 * static_cast<int>(collision_detected), object_enter_time, object_exit_time,
-           ego_start_itr->first, ego_start_itr->second, ego_end_itr->first, ego_end_itr->second,
-           object_start_pos.x, object_start_pos.y, object_end_pos.x, object_end_pos.y});
-        for (unsigned i = 0; i < 20; ++i) {
-          const auto & pos = object_passage_interval.path
-                               .at(std::min<size_t>(i, object_passage_interval.path.size() - 1))
-                               .position;
-          debug.push_back(pos.x);
-          debug.push_back(pos.y);
+        if (!safe_interval) {
+          // ==========================================================================================
+          // save the safe_decision_knowledge for the most probable path. this value is nullified if
+          // judged UNSAFE during the iteration
+          // ==========================================================================================
+          safe_interval = object_passage_interval;
+          object_debug_info = get_object_info();
         }
-        return debug;
-      };
-
-      if (collision_detected) {
-        // if judged as UNSAFE, return
-        safe_interval = std::nullopt;
-        unsafe_interval = object_passage_interval;
-        object_debug_info = get_object_info();
-        break;
-      }
-      if (!safe_interval) {
-        // ==========================================================================================
-        // save the safe_decision_knowledge for the most probable path. this value is nullified if
-        // judged UNSAFE during the iteration
-        // ==========================================================================================
-        safe_interval = object_passage_interval;
-        object_debug_info = get_object_info();
       }
     }
     object_info->update_safety(unsafe_interval, safe_interval, safe_under_traffic_control);
@@ -769,6 +833,24 @@ IntersectionModule::CollisionStatus IntersectionModule::detectCollision(
     return {true, CollisionInterval::ELSE, too_late_detect_objects, misjudge_objects};
   }
   return {false, CollisionInterval::ELSE, too_late_detect_objects, misjudge_objects};
+}
+
+std::optional<size_t> IntersectionModule::isWithinTargetLanelets(
+  const geometry_msgs::msg::Point & point, const lanelet::ConstLanelets & target_lanelets) const
+{
+  const double dist_margin = planner_param_.common.attention_area_margin;
+
+  for (unsigned i = 0; i < target_lanelets.size(); ++i) {
+    geometry_msgs::msg::Pose pose;
+    pose.position = point;
+    const auto & ll = target_lanelets.at(i);
+    if (!lanelet::utils::isInLanelet(pose, ll, dist_margin)) {
+      continue;
+    }
+
+    return std::make_optional<size_t>(i);
+  }
+  return std::nullopt;
 }
 
 std::optional<size_t> IntersectionModule::checkAngleForTargetLanelets(

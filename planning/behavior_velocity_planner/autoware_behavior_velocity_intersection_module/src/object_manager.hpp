@@ -130,6 +130,11 @@ public:
     std::optional<lanelet::ConstLanelet> attention_lanelet_opt,
     std::optional<lanelet::ConstLineString3d> stopline_opt);
 
+  void initialize(
+    const geometry_msgs::msg::Point & point,
+    std::optional<lanelet::ConstLanelet> attention_lanelet_opt,
+    std::optional<lanelet::ConstLineString3d> stopline_opt);
+
   /**
    * @brief update unsafe_knowledge
    */
@@ -191,8 +196,16 @@ public:
 
   const std::string uuid_str;
 
+  enum ObstacleType {
+    OBJECT,
+    POINTCLOUD,
+  };
+  ObstacleType type;
+
 private:
   autoware_perception_msgs::msg::PredictedObject predicted_object_;
+
+  geometry_msgs::msg::Point point_;
 
   //! null if the object in intersection_area but not in attention_area
   std::optional<lanelet::ConstLanelet> attention_lanelet_opt_{std::nullopt};
@@ -264,6 +277,8 @@ public:
 
 private:
   std::unordered_map<unique_identifier_msgs::msg::UUID, std::shared_ptr<ObjectInfo>> objects_info_;
+
+  std::vector<std::shared_ptr<geometry_msgs::msg::Point>> obstacle_pointcloud_info_;
 
   //! belong to attention area
   std::vector<std::shared_ptr<ObjectInfo>> attention_area_objects_;

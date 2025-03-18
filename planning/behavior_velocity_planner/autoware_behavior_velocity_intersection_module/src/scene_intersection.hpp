@@ -806,6 +806,9 @@ private:
     const bool is_over_1st_pass_judge_line,
     const std::optional<bool> is_over_2nd_pass_judge_line) const;
 
+  std::optional<size_t> isWithinTargetLanelets(
+    const geometry_msgs::msg::Point & point, const lanelet::ConstLanelets & target_lanelets) const;
+
   std::optional<size_t> checkAngleForTargetLanelets(
     const geometry_msgs::msg::Pose & pose, const lanelet::ConstLanelets & target_lanelets,
     const bool is_parked_vehicle) const;

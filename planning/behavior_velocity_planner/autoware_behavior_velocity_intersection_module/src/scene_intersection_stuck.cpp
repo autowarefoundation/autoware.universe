@@ -176,6 +176,10 @@ std::optional<StuckStop> IntersectionModule::isStuckStatus(
 bool IntersectionModule::isTargetStuckVehicleType(
   const autoware_perception_msgs::msg::PredictedObject & object) const
 {
+  if (object.classification.empty()) {
+    return false;
+  }
+
   const auto label = object.classification.at(0).label;
   const auto & p = planner_param_.stuck_vehicle.target_type;
 
@@ -206,6 +210,10 @@ bool IntersectionModule::isTargetStuckVehicleType(
 bool IntersectionModule::isTargetYieldStuckVehicleType(
   const autoware_perception_msgs::msg::PredictedObject & object) const
 {
+  if (object.classification.empty()) {
+    return false;
+  }
+
   const auto label = object.classification.at(0).label;
   const auto & p = planner_param_.yield_stuck.target_type;
 
