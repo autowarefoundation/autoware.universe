@@ -40,8 +40,8 @@
 #include <memory>
 #include <string>
 
-#define CHECK_OFFSET(structure1, structure2, field)             \
-  static_assert(                                                \
+#define CHECK_OFFSET(structure1, structure2, field) \
+  static_assert( \
     offsetof(structure1, field) == offsetof(structure2, field), \
     "Offset of " #field " in " #structure1 " does not match expected offset.")
 

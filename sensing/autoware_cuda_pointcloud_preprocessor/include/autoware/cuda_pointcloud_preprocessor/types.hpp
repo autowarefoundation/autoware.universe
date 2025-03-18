@@ -79,12 +79,13 @@ struct RingOutlierFilterParameters
   std::size_t num_points_threshold{0};
 };
 
-template <typename T>
+template<typename T>
 class MemoryPoolAllocator
 {
 public:
   using value_type = T;
-  explicit MemoryPoolAllocator(cudaMemPool_t pool) : m_pool(pool) {}
+  explicit MemoryPoolAllocator(cudaMemPool_t pool)
+  : m_pool(pool) {}
 
   T * allocate(std::size_t n)
   {
@@ -93,7 +94,7 @@ public:
     return static_cast<T *>(ptr);
   }
 
-  void deallocate(T * ptr, std::size_t) { cudaFreeAsync(ptr, cudaStreamDefault); }
+  void deallocate(T * ptr, std::size_t) {cudaFreeAsync(ptr, cudaStreamDefault);}
 
 protected:
   cudaMemPool_t m_pool;
