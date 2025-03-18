@@ -144,6 +144,7 @@ bool UnknownTracker::measure(const types::DynamicObject & object, const rclcpp::
 {
   // update object shape
   object_.shape = object.shape;
+  object_.pose.orientation = object.pose.orientation;
 
   // check time gap
   const double dt = motion_model_.getDeltaTime(time);
