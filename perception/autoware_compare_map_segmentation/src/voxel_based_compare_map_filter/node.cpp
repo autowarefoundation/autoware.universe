@@ -103,14 +103,15 @@ void VoxelBasedCompareMapFilterComponent::input_indices_callback(
       // Lookup the transform from input frame to "map"
       geometry_msgs::msg::TransformStamped transform_stamped = tf_buffer_.lookupTransform(
         tf_input_frame_, tf_input_orig_frame_, rclcpp::Time(cloud->header.stamp),
-        rclcpp::Duration::from_seconds(1.0));
+        rclcpp::Duration::from_seconds(0.0));
 
       // Transform the point cloud
       tf2::doTransform(*cloud, cloud_transformed, transform_stamped);
-      cloud_transformed.header.frame_id = tf_input_frame_;  // Update frame ID to "map"
       cloud_tf = std::make_shared<PointCloud2>(cloud_transformed);
     } catch (tf2::TransformException & ex) {
-      RCLCPP_WARN(this->get_logger(), "Could not transform point cloud: %s", ex.what());
+      RCLCPP_WARN_THROTTLE(
+        this->get_logger(), *this->get_clock(), 5000, "Could not transform pointcloud: %s",
+        ex.what());
       cloud_tf = cloud;  // Fallback to original data
     }
   } else {
