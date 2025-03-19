@@ -25,11 +25,7 @@
           "exclusiveMinimum": 0.0
         }
       },
-      "required": [
-        "voxel_size_x",
-        "voxel_size_y",
-        "voxel_size_z"
-      ],
+      "required": ["voxel_size_x", "voxel_size_y", "voxel_size_z"],
       "additionalProperties": false
     }
   },
@@ -41,15 +37,10 @@
           "$ref": "#/definitions/pickup_based_voxel_grid_downsample_filter"
         }
       },
-      "required": [
-        "ros__parameters"
-      ],
+      "required": ["ros__parameters"],
       "additionalProperties": false
     }
   },
-  "required": [
-    "/**"
-  ],
+  "required": ["/**"],
   "additionalProperties": false
- }
- 
+}
