@@ -29,6 +29,7 @@
 #endif
 #include <memory>
 #include <string>
+#include <vector>
 
 namespace autoware::compare_map_segmentation
 {
