@@ -17,7 +17,7 @@
 #include "autoware/lidar_centerpoint/centerpoint_trt.hpp"
 #include "autoware/lidar_centerpoint/preprocess/preprocess_kernel.hpp"
 
-#include "sensor_msgs/point_cloud2_iterator.hpp"
+#include <sensor_msgs/point_cloud2_iterator.hpp>
 
 #include <memory>
 #include <type_traits>

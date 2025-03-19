@@ -14,25 +14,24 @@
 
 #include "autoware/lidar_centerpoint/node.hpp"
 
-#include "pcl_ros/transforms.hpp"
+#include "autoware/lidar_centerpoint/centerpoint_config.hpp"
+#include "autoware/lidar_centerpoint/preprocess/pointcloud_densification.hpp"
+#include "autoware/lidar_centerpoint/ros_utils.hpp"
+#include "autoware/lidar_centerpoint/utils.hpp"
 
 #include <Eigen/Dense>
 #include <Eigen/Geometry>
+#include <pcl_ros/transforms.hpp>
 
 #include <memory>
 #include <string>
 #include <vector>
 
 #ifdef ROS_DISTRO_GALACTIC
-#include "tf2_geometry_msgs/tf2_geometry_msgs.h"
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
 #else
-#include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 #endif
-
-#include "autoware/lidar_centerpoint/centerpoint_config.hpp"
-#include "autoware/lidar_centerpoint/preprocess/pointcloud_densification.hpp"
-#include "autoware/lidar_centerpoint/ros_utils.hpp"
-#include "autoware/lidar_centerpoint/utils.hpp"
 
 namespace autoware::lidar_centerpoint
 {
