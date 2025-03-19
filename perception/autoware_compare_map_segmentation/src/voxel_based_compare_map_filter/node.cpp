@@ -20,7 +20,13 @@
 #include <pcl/kdtree/kdtree_flann.h>
 #include <pcl/search/kdtree.h>
 #include <pcl/segmentation/segment_differences.h>
-
+#ifdef ROS_DISTRO_GALACTIC
+#include <tf2_geometry_msgs/tf2_geometry_msgs.h>
+#include <tf2_sensor_msgs/tf2_sensor_msgs.h>
+#else
+#include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
+#include <tf2_sensor_msgs/tf2_sensor_msgs.hpp>
+#endif
 #include <memory>
 #include <string>
 
@@ -29,7 +35,9 @@ namespace autoware::compare_map_segmentation
 
 VoxelBasedCompareMapFilterComponent::VoxelBasedCompareMapFilterComponent(
   const rclcpp::NodeOptions & options)
-: Filter("VoxelBasedCompareMapFilter", options)
+: Filter("VoxelBasedCompareMapFilter", options),
+  tf_buffer_(this->get_clock()),
+  tf_listener_(tf_buffer_)
 {
   // initialize debug tool
   {
@@ -60,6 +68,60 @@ VoxelBasedCompareMapFilterComponent::VoxelBasedCompareMapFilterComponent(
   }
   tf_input_frame_ = *(voxel_grid_map_loader_->tf_map_input_frame_);
   RCLCPP_INFO(this->get_logger(), "tf_map_input_frame: %s", tf_input_frame_.c_str());
+}
+
+// TODO(badai-nguyen): Temporary Implementation: Delete this override function when autoware_utils
+// refactor (https://github.com/autowarefoundation/autoware_utils/pull/50) or new
+// ManagedTransformBuffer lib is deployed for autoware
+void VoxelBasedCompareMapFilterComponent::input_indices_callback(
+  const sensor_msgs::msg::PointCloud2::ConstSharedPtr cloud, const PointIndicesConstPtr indices)
+{
+  // If cloud is given, check if it's valid
+  if (!isValid(cloud)) {
+    RCLCPP_ERROR(this->get_logger(), "[input_indices_callback] Invalid input!");
+    return;
+  }
+  // If indices are given, check if they are valid
+  if (indices && !isValid(indices)) {
+    RCLCPP_ERROR(this->get_logger(), "[input_indices_callback] Invalid indices!");
+    return;
+  }
+
+  // Check whether the user has given a different input TF frame
+  tf_input_orig_frame_ = cloud->header.frame_id;
+  PointCloud2ConstPtr cloud_tf;
+  if (cloud->header.frame_id != tf_input_frame_) {
+    RCLCPP_DEBUG(
+      this->get_logger(), "[input_indices_callback] Transforming input dataset from %s to %s.",
+      cloud->header.frame_id.c_str(), tf_input_frame_.c_str());
+    // Save the original frame ID
+    // Convert the cloud into the different frame
+    PointCloud2 cloud_transformed;
+
+    try {
+      // Lookup the transform from input frame to "map"
+      geometry_msgs::msg::TransformStamped transform_stamped = tf_buffer_.lookupTransform(
+        tf_input_frame_, tf_input_orig_frame_, rclcpp::Time(cloud->header.stamp),
+        rclcpp::Duration::from_seconds(1.0));
+
+      // Transform the point cloud
+      tf2::doTransform(*cloud, cloud_transformed, transform_stamped);
+      cloud_transformed.header.frame_id = tf_input_frame_;  // Update frame ID to "map"
+      cloud_tf = std::make_shared<PointCloud2>(cloud_transformed);
+    } catch (tf2::TransformException & ex) {
+      RCLCPP_WARN(this->get_logger(), "Could not transform point cloud: %s", ex.what());
+      cloud_tf = cloud;  // Fallback to original data
+    }
+  } else {
+    cloud_tf = cloud;
+  }
+  // Need setInputCloud () here because we have to extract x/y/z
+  IndicesPtr vindices;
+  if (indices) {
+    vindices.reset(new std::vector<int>(indices->indices));
+  }
+
+  computePublish(cloud_tf, vindices);
 }
 
 void VoxelBasedCompareMapFilterComponent::filter(

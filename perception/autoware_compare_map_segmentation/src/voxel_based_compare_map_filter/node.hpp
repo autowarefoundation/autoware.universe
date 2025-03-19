@@ -27,9 +27,18 @@ namespace autoware::compare_map_segmentation
 {
 class VoxelBasedCompareMapFilterComponent : public autoware::pointcloud_preprocessor::Filter
 {
+  using PointCloud2 = sensor_msgs::msg::PointCloud2;
+  using PointCloud2ConstPtr = sensor_msgs::msg::PointCloud2::ConstSharedPtr;
+
+  using PointIndices = pcl_msgs::msg::PointIndices;
+  using PointIndicesPtr = PointIndices::SharedPtr;
+  using PointIndicesConstPtr = PointIndices::ConstSharedPtr;
+
 protected:
   void filter(
     const PointCloud2ConstPtr & input, const IndicesPtr & indices, PointCloud2 & output) override;
+  void input_indices_callback(
+    const PointCloud2ConstPtr cloud, const PointIndicesConstPtr indices) override;
 
 private:
   // pcl::SegmentDifferences<pcl::PointXYZ> impl_;
@@ -37,6 +46,8 @@ private:
   rclcpp::Subscription<PointCloud2>::SharedPtr sub_map_;
   double distance_threshold_;
   bool set_map_in_voxel_grid_;
+  tf2_ros::Buffer tf_buffer_;
+  tf2_ros::TransformListener tf_listener_;
 
 public:
   PCL_MAKE_ALIGNED_OPERATOR_NEW
