@@ -393,7 +393,9 @@ class carla_ros2_interface(object):
 
         dt = self.timestamp - self.prev_timestamp
         if dt > 0.0:
-            steer_output = self.prev_steer_output + (steer_input - self.prev_steer_output) * (dt / (self.tau + dt))
+            steer_output = self.prev_steer_output + (steer_input - self.prev_steer_output) * (
+                dt / (self.tau + dt)
+            )
         self.prev_steer_output = steer_output
         self.prev_timestamp = self.timestamp
         return steer_output
