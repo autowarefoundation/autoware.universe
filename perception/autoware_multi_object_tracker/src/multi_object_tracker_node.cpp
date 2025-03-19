@@ -189,13 +189,12 @@ MultiObjectTracker::MultiObjectTracker(const rclcpp::NodeOptions & node_options)
   }
 
   // Debugger
-  debugger_ = std::make_unique<TrackerDebugger>(*this, world_frame_id_,input_channels_config_);
+  debugger_ = std::make_unique<TrackerDebugger>(*this, world_frame_id_, input_channels_config_);
 
   published_time_publisher_ = std::make_unique<autoware_utils::PublishedTimePublisher>(this);
   // Diagnostics
-  diagnostics_interface_ptr_ =
-  std::make_unique<autoware_utils::DiagnosticsInterface>(this, "multi_object_tracker_delay_compensation");
-
+  diagnostics_interface_ptr_ = std::make_unique<autoware_utils::DiagnosticsInterface>(
+    this, "multi_object_tracker_delay_compensation");
 }
 
 void MultiObjectTracker::onTrigger()
@@ -249,13 +248,13 @@ void MultiObjectTracker::onTimer()
   diagnostics_interface_ptr_->add_key_value("elapsed_time", elapsed_time);
   if (elapsed_time > warning_publish_interval) {
     std::stringstream message;
-    message << "MultiObjectTracker::onTimer: elapsed_time exceeds its maximum value, " << warning_publish_interval;
+    message << "MultiObjectTracker::onTimer: elapsed_time exceeds its maximum value, "
+            << warning_publish_interval;
     diagnostics_interface_ptr_->update_level_and_message(
       diagnostic_msgs::msg::DiagnosticStatus::WARN, message.str());
   } else {
-      diagnostics_interface_ptr_->update_level_and_message(
-        diagnostic_msgs::msg::DiagnosticStatus::OK, "OK");
-
+    diagnostics_interface_ptr_->update_level_and_message(
+      diagnostic_msgs::msg::DiagnosticStatus::OK, "OK");
   }
   diagnostics_interface_ptr_->publish(current_time);
 
