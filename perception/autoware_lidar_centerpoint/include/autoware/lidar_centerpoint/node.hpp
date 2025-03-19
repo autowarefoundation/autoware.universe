@@ -24,6 +24,7 @@
 #include <autoware_utils/ros/published_time_publisher.hpp>
 #include <autoware_utils/system/stop_watch.hpp>
 #include <rclcpp/rclcpp.hpp>
+#include <std_msgs/msg/header.hpp>
 
 #include <autoware_perception_msgs/msg/detected_object_kinematics.hpp>
 #include <autoware_perception_msgs/msg/detected_objects.hpp>
@@ -55,15 +56,18 @@ private:
   std::vector<std::string> class_names_;
   bool has_variance_{false};
   bool has_twist_{false};
+
+  bool is_processing_delayed_{false};
   float max_allowed_processing_time_;
-  int max_consecutive_warn_count_;
-  int consecutive_delay_count_ = 0;
+  double max_acceptable_consecutive_delay_ms_;
+  builtin_interfaces::msg::Time started_delayed_timestamp_;
 
   NonMaximumSuppression iou_bev_nms_;
   DetectionClassRemapper detection_class_remapper_;
 
   std::unique_ptr<CenterPointTRT> detector_ptr_{nullptr};
   std::unique_ptr<autoware_utils::DiagnosticsInterface> diagnostics_interface_ptr_;
+  rclcpp::TimerBase::SharedPtr diagnostics_timer_;
 
   // debugger
   std::unique_ptr<autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_{nullptr};
