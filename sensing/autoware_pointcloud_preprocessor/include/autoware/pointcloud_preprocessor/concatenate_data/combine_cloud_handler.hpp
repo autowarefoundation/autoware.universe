@@ -116,6 +116,8 @@ public:
   {
   }
 
+  virtual ~CombineCloudHandler() {}
+
   ConcatenatedCloudResult<PointCloud2Traits> combine_pointclouds(
     std::unordered_map<std::string, typename PointCloud2Traits::PointCloudMessage::ConstSharedPtr> &
       topic_to_cloud_map);
