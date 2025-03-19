@@ -1,36 +1,36 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "autoware_pointcloud_preprocessor parameters",
+  "title": "Parameters for Passthrough Filter UInt16 Node",
   "type": "object",
   "definitions": {
-    "passthrough_filter_uint16_node": {
+    "passthrough_filter_uint16": {
       "type": "object",
       "properties": {
         "filter_limit_min": {
           "type": "integer",
-          "description": "Minimum allowed field value.",
+          "description": "minimum allowed field value",
           "default": 0,
           "minimum": 0
         },
         "filter_limit_max": {
           "type": "integer",
-          "description": "Maximum allowed field value.",
+          "description": "maximum allowed field value",
           "default": 127,
           "minimum": 0
         },
         "filter_field_name": {
           "type": "string",
-          "description": "Filtering field name.",
+          "description": "filtering field name",
           "default": "channel"
         },
         "keep_organized": {
           "type": "boolean",
-          "description": "Flag to keep the indices structure intact after filtering.",
+          "description": "flag to keep indices structure",
           "default": false
         },
         "filter_limit_negative": {
           "type": "boolean",
-          "description": "Flag to determine whether to filter inside or outside the given limits.",
+          "description": "flag to return whether the data is inside limit or not",
           "default": false
         }
       },
@@ -45,10 +45,18 @@
     }
   },
   "properties": {
-    "ros__parameters": {
-      "$ref": "#/definitions/passthrough_filter_uint16_node"
+    "/**": {
+      "type": "object",
+      "properties": {
+        "ros__parameters": {
+          "$ref": "#/definitions/passthrough_filter_uint16"
+        }
+      },
+      "required": ["ros__parameters"],
+      "additionalProperties": false
     }
   },
-  "required": ["ros__parameters"],
+  "required": ["/**"],
   "additionalProperties": false
-}
+ }
+ 
