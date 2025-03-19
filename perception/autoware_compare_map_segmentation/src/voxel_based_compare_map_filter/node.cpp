@@ -29,6 +29,7 @@
 #endif
 #include <memory>
 #include <string>
+#include <utility>
 #include <vector>
 
 namespace autoware::compare_map_segmentation
@@ -71,9 +72,10 @@ VoxelBasedCompareMapFilterComponent::VoxelBasedCompareMapFilterComponent(
   RCLCPP_INFO(this->get_logger(), "tf_map_input_frame: %s", tf_input_frame_.c_str());
 }
 
-// TODO(badai-nguyen): Temporary Implementation: Delete this override function when autoware_utils
-// refactor (https://github.com/autowarefoundation/autoware_utils/pull/50) or new
-// ManagedTransformBuffer lib is deployed for autoware
+// TODO(badai-nguyen): Temporary Implementation of input_indices_callback and  convert_output_costly
+// functions; Delete this override function when autoware_utils refactor
+// (https://github.com/autowarefoundation/autoware_utils/pull/50) or new ManagedTransformBuffer lib
+// is deployed for autoware
 void VoxelBasedCompareMapFilterComponent::input_indices_callback(
   const sensor_msgs::msg::PointCloud2::ConstSharedPtr cloud, const PointIndicesConstPtr indices)
 {
@@ -124,6 +126,55 @@ void VoxelBasedCompareMapFilterComponent::input_indices_callback(
   }
 
   computePublish(cloud_tf, vindices);
+}
+
+bool VoxelBasedCompareMapFilterComponent::convert_output_costly(
+  std::unique_ptr<PointCloud2> & output)
+{
+  if (!output || output->data.empty() || output->fields.empty()) {
+    RCLCPP_ERROR(this->get_logger(), "Invalid output point cloud!");
+    return false;
+  }
+  if (
+    pcl::getFieldIndex(*output, "x") == -1 || pcl::getFieldIndex(*output, "y") == -1 ||
+    pcl::getFieldIndex(*output, "z") == -1) {
+    RCLCPP_ERROR(this->get_logger(), "Input pointcloud does not have xyz fields");
+    return false;
+  }
+  if (!tf_output_frame_.empty() && output->header.frame_id != tf_output_frame_) {
+    auto cloud_transformed = std::make_unique<PointCloud2>();
+    try {
+      geometry_msgs::msg::TransformStamped transform_stamped = tf_buffer_.lookupTransform(
+        tf_output_frame_, output->header.frame_id, rclcpp::Time(output->header.stamp),
+        rclcpp::Duration::from_seconds(0.0));
+      tf2::doTransform(*output, *cloud_transformed, transform_stamped);
+      cloud_transformed->header.frame_id = tf_output_frame_;
+      output = std::move(cloud_transformed);
+    } catch (tf2::TransformException & e) {
+      RCLCPP_WARN_THROTTLE(
+        this->get_logger(), *this->get_clock(), 5000, "Could not transform pointcloud: %s",
+        e.what());
+      return false;
+    }
+  }
+
+  if (tf_output_frame_.empty() && output->header.frame_id != tf_input_orig_frame_) {
+    auto cloud_transformed = std::make_unique<PointCloud2>();
+    try {
+      geometry_msgs::msg::TransformStamped transform_stamped = tf_buffer_.lookupTransform(
+        tf_input_orig_frame_, output->header.frame_id, rclcpp::Time(output->header.stamp),
+        rclcpp::Duration::from_seconds(0.0));
+      tf2::doTransform(*output, *cloud_transformed, transform_stamped);
+      cloud_transformed->header.frame_id = tf_input_orig_frame_;
+      output = std::move(cloud_transformed);
+    } catch (tf2::TransformException & e) {
+      RCLCPP_WARN_THROTTLE(
+        this->get_logger(), *this->get_clock(), 5000, "Could not transform pointcloud: %s",
+        e.what());
+      return false;
+    }
+  }
+  return true;
 }
 
 void VoxelBasedCompareMapFilterComponent::filter(

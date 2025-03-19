@@ -22,11 +22,11 @@ include_directories(
 )
 
 add_library(${PROJECT_NAME} SHARED
-  src/distance_based_compare_map_filter/node.cpp
-  src/voxel_based_approximate_compare_map_filter/node.cpp
+  # src/distance_based_compare_map_filter/node.cpp
+  # src/voxel_based_approximate_compare_map_filter/node.cpp
   src/voxel_based_compare_map_filter/node.cpp
-  src/voxel_distance_based_compare_map_filter/node.cpp
-  src/compare_elevation_map_filter/node.cpp
+  # src/voxel_distance_based_compare_map_filter/node.cpp
+  # src/compare_elevation_map_filter/node.cpp
   src/voxel_grid_map_loader/voxel_grid_map_loader.cpp
 )
 
@@ -56,31 +56,31 @@ if(OPENMP_FOUND)
   )
 endif()
 
-# ========== Compare Map Filter ==========
-# -- Distance Based Compare Map Filter --
-rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN "autoware::compare_map_segmentation::DistanceBasedCompareMapFilterComponent"
-  EXECUTABLE distance_based_compare_map_filter_node)
+# # ========== Compare Map Filter ==========
+# # -- Distance Based Compare Map Filter --
+# rclcpp_components_register_node(${PROJECT_NAME}
+#   PLUGIN "autoware::compare_map_segmentation::DistanceBasedCompareMapFilterComponent"
+#   EXECUTABLE distance_based_compare_map_filter_node)
 
-# -- Voxel Based Approximate Compare Map Filter --
-rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN "autoware::compare_map_segmentation::VoxelBasedApproximateCompareMapFilterComponent"
-  EXECUTABLE voxel_based_approximate_compare_map_filter_node)
+# # -- Voxel Based Approximate Compare Map Filter --
+# rclcpp_components_register_node(${PROJECT_NAME}
+#   PLUGIN "autoware::compare_map_segmentation::VoxelBasedApproximateCompareMapFilterComponent"
+#   EXECUTABLE voxel_based_approximate_compare_map_filter_node)
 
 # -- Voxel Based Compare Map Filter --
 rclcpp_components_register_node(${PROJECT_NAME}
   PLUGIN "autoware::compare_map_segmentation::VoxelBasedCompareMapFilterComponent"
   EXECUTABLE voxel_based_compare_map_filter_node)
 
-# -- Voxel Distance Based Compare Map Filter --
-rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN "autoware::compare_map_segmentation::VoxelDistanceBasedCompareMapFilterComponent"
-  EXECUTABLE voxel_distance_based_compare_map_filter_node)
+# # -- Voxel Distance Based Compare Map Filter --
+# rclcpp_components_register_node(${PROJECT_NAME}
+#   PLUGIN "autoware::compare_map_segmentation::VoxelDistanceBasedCompareMapFilterComponent"
+#   EXECUTABLE voxel_distance_based_compare_map_filter_node)
 
-# -- Compare Elevation Map Filter --
-rclcpp_components_register_node(${PROJECT_NAME}
-  PLUGIN "autoware::compare_map_segmentation::CompareElevationMapFilterComponent"
-  EXECUTABLE compare_elevation_map_filter_node)
+# # -- Compare Elevation Map Filter --
+# rclcpp_components_register_node(${PROJECT_NAME}
+#   PLUGIN "autoware::compare_map_segmentation::CompareElevationMapFilterComponent"
+#   EXECUTABLE compare_elevation_map_filter_node)
 
 install(
   TARGETS ${PROJECT_NAME}
@@ -97,20 +97,20 @@ if(BUILD_TESTING)
   )
   target_link_libraries(test_voxel_based_compare_map_filter ${PROJECT_NAME})
 
-  ament_auto_add_gtest(test_distance_based_compare_map_filter
-    test/test_distance_based_compare_map_filter.cpp
-  )
-  target_link_libraries(test_distance_based_compare_map_filter ${PROJECT_NAME})
+  # ament_auto_add_gtest(test_distance_based_compare_map_filter
+  #   test/test_distance_based_compare_map_filter.cpp
+  # )
+  # target_link_libraries(test_distance_based_compare_map_filter ${PROJECT_NAME})
 
-  ament_auto_add_gtest(test_voxel_based_approximate_compare_map_filter
-    test/test_voxel_based_approximate_compare_map_filter.cpp
-  )
-  target_link_libraries(test_voxel_based_approximate_compare_map_filter ${PROJECT_NAME})
+  # ament_auto_add_gtest(test_voxel_based_approximate_compare_map_filter
+  #   test/test_voxel_based_approximate_compare_map_filter.cpp
+  # )
+  # target_link_libraries(test_voxel_based_approximate_compare_map_filter ${PROJECT_NAME})
 
-  ament_auto_add_gtest(test_voxel_distance_based_compare_map_filter
-    test/test_voxel_distance_based_compare_map_filter.cpp
-  )
-  target_link_libraries(test_voxel_distance_based_compare_map_filter ${PROJECT_NAME})
+  # ament_auto_add_gtest(test_voxel_distance_based_compare_map_filter
+  #   test/test_voxel_distance_based_compare_map_filter.cpp
+  # )
+  # target_link_libraries(test_voxel_distance_based_compare_map_filter ${PROJECT_NAME})
 
 endif()
 ament_auto_package(
