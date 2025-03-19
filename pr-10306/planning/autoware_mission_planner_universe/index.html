@@ -14441,7 +14441,7 @@ The route is made of a sequence of lanes on a static map.
 Dynamic objects (e.g. pedestrians and other vehicles) and dynamic map information (e.g. road construction which blocks some lanes) are not considered during route planning.
 Therefore, the output topic is only published when the goal pose or check points are given and will be latched until the new goal pose or check points are given.</p>
 <p>The core implementation does not depend on a map format. Any planning algorithms can be added as plugin modules.
-In current Autoware.universe, only the plugin for Lanelet2 map format is supported.</p>
+In current Autoware Universe, only the plugin for Lanelet2 map format is supported.</p>
 <p>This package also manages routes for MRM. The <code>route_selector</code> node duplicates the <code>mission_planner</code> interface and provides it for normal and MRM respectively.
 It distributes route requests and planning results according to current MRM operation state.</p>
 <p><img alt="architecture" src="media/architecture.drawio.svg"></p>
