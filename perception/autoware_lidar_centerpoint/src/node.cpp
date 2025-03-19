@@ -112,11 +112,12 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
 
   // diagnostics parameters
   max_allowed_processing_time_ = declare_parameter<float>("max_allowed_processing_time");
-  max_acceptable_consecutive_delay_ms_ = declare_parameter<int>("max_acceptable_consecutive_delay_ms");
+  max_acceptable_consecutive_delay_ms_ =
+    declare_parameter<int>("max_acceptable_consecutive_delay_ms");
 
   diagnostics_timer_ = this->create_wall_timer(
-      std::chrono::milliseconds(100),
-      std::bind(&LidarCenterPointNode::diagnosticTimerCallback, this));
+    std::chrono::milliseconds(100),
+    std::bind(&LidarCenterPointNode::diagnosticTimerCallback, this));
 
   pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS{}.keep_last(1),
@@ -237,12 +238,13 @@ void LidarCenterPointNode::pointCloudCallback(
 
 // Check the timestamp of the processing that has started consecutively delaying,
 // and if the node is delayed constantly, publish the error diagnostic message
-void LidarCenterPointNode::diagnosticTimerCallback() {
+void LidarCenterPointNode::diagnosticTimerCallback()
+{
   const double delayed_state_duration =
-        std::chrono::duration<double, std::milli>(
-          std::chrono::nanoseconds(
-            (this->get_clock()->now() - started_delayed_timestamp_).nanoseconds()))
-          .count();
+    std::chrono::duration<double, std::milli>(
+      std::chrono::nanoseconds(
+        (this->get_clock()->now() - started_delayed_timestamp_).nanoseconds()))
+      .count();
 
   if (delayed_state_duration > max_acceptable_consecutive_delay_ms_) {
     diagnostics_interface_ptr_->add_key_value("is_processing_time_ms_in_expected_range", false);
