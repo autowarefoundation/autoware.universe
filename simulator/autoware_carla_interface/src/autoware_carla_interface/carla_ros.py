@@ -408,11 +408,7 @@ class carla_ros2_interface(object):
         max_steer_ratio = numpy.interp(
             abs(current_vel.x), [v.x for v in steer_curve], [v.y for v in steer_curve]
         )
-        out_cmd.steer = (
-            self.first_order_steering(-in_cmd.actuation.steer_cmd)
-            * max_steer_ratio
-            * math.radians(self.physics_control.wheels[0].max_steer_angle)
-        )
+        out_cmd.steer = self.first_order_steering(-in_cmd.actuation.steer_cmd) * max_steer_ratio
         out_cmd.brake = in_cmd.actuation.brake_cmd
         self.current_control = out_cmd
 
