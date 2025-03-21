@@ -33,7 +33,7 @@
 namespace autoware::velocity_smoother
 {
 JerkFilteredSmoother::JerkFilteredSmoother(
-  rclcpp::Node & node, const std::shared_ptr<autoware::universe_utils::TimeKeeper> time_keeper)
+  rclcpp::Node & node, const std::shared_ptr<autoware_utils::TimeKeeper> time_keeper)
 : SmootherBase(node, time_keeper)
 {
   auto & p = smoother_param_;
@@ -61,7 +61,7 @@ bool JerkFilteredSmoother::apply(
   const double v0, const double a0, const TrajectoryPoints & input, TrajectoryPoints & output,
   std::vector<TrajectoryPoints> & debug_trajectories, const bool publish_debug_trajs)
 {
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+  autoware_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   output = input;
 
@@ -106,7 +106,7 @@ bool JerkFilteredSmoother::apply(
   const auto initial_traj_pose = filtered.front().pose;
 
   const auto resample = [&](const auto & trajectory) {
-    autoware::universe_utils::ScopedTimeTrack st("resample", *time_keeper_);
+    autoware_utils::ScopedTimeTrack st("resample", *time_keeper_);
 
     return resampling::resampleTrajectory(
       trajectory, v0, initial_traj_pose, std::numeric_limits<double>::max(),
@@ -360,7 +360,7 @@ TrajectoryPoints JerkFilteredSmoother::forwardJerkFilter(
   const double v0, const double a0, const double a_max, const double a_start, const double j_max,
   const TrajectoryPoints & input) const
 {
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+  autoware_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   auto applyLimits = [&input, &a_start](double & v, double & a, size_t i) {
     double v_lim = input.at(i).longitudinal_velocity_mps;
@@ -391,7 +391,7 @@ TrajectoryPoints JerkFilteredSmoother::forwardJerkFilter(
   output.front().longitudinal_velocity_mps = current_vel;
   output.front().acceleration_mps2 = current_acc;
   for (size_t i = 1; i < input.size(); ++i) {
-    const double ds = autoware::universe_utils::calcDistance2d(input.at(i), input.at(i - 1));
+    const double ds = autoware_utils::calc_distance2d(input.at(i), input.at(i - 1));
     const double max_dt = std::pow(6.0 * ds / j_max, 1.0 / 3.0);  // assuming v0 = a0 = 0.
     const double dt = std::min(ds / std::max(current_vel, 1.0e-6), max_dt);
 
@@ -414,7 +414,7 @@ TrajectoryPoints JerkFilteredSmoother::backwardJerkFilter(
   const double v0, const double a0, const double a_min, const double a_stop, const double j_min,
   const TrajectoryPoints & input) const
 {
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+  autoware_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   auto input_rev = input;
   std::reverse(input_rev.begin(), input_rev.end());
@@ -431,7 +431,7 @@ TrajectoryPoints JerkFilteredSmoother::mergeFilteredTrajectory(
   const double v0, const double a0, const double a_min, const double j_min,
   const TrajectoryPoints & forward_filtered, const TrajectoryPoints & backward_filtered) const
 {
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+  autoware_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   TrajectoryPoints merged;
   merged = forward_filtered;
@@ -449,8 +449,8 @@ TrajectoryPoints JerkFilteredSmoother::mergeFilteredTrajectory(
       merged.at(i).longitudinal_velocity_mps = current_vel;
       merged.at(i).acceleration_mps2 = current_acc;
 
-      const double ds = autoware::universe_utils::calcDistance2d(
-        forward_filtered.at(i + 1), forward_filtered.at(i));
+      const double ds =
+        autoware_utils::calc_distance2d(forward_filtered.at(i + 1), forward_filtered.at(i));
       const double max_dt =
         std::pow(6.0 * ds / std::fabs(j_min), 1.0 / 3.0);  // assuming v0 = a0 = 0.
       const double dt = std::min(ds / std::max(current_vel, 1.0e-6), max_dt);
@@ -485,7 +485,7 @@ TrajectoryPoints JerkFilteredSmoother::resampleTrajectory(
   const geometry_msgs::msg::Pose & current_pose, const double nearest_dist_threshold,
   const double nearest_yaw_threshold) const
 {
-  autoware::universe_utils::ScopedTimeTrack st(__func__, *time_keeper_);
+  autoware_utils::ScopedTimeTrack st(__func__, *time_keeper_);
 
   return resampling::resampleTrajectory(
     input, current_pose, nearest_dist_threshold, nearest_yaw_threshold, base_param_.resample_param,

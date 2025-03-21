@@ -2,6 +2,13 @@
 Changelog for package autoware_pose_covariance_modifier
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
+0.42.0 (2025-03-03)
+-------------------
+* Merge remote-tracking branch 'origin/main' into tmp/bot/bump_version_base
+* feat(autoware_ekf_localizer)!: porting from universe to core 2nd (`#10067 <https://github.com/autowarefoundation/autoware.universe/issues/10067>`_)
+  Co-authored-by: Ryohsuke Mitsudome <43976834+mitsudome-r@users.noreply.github.com>
+* Contributors: Fumiya Watanabe, Motz
+
 0.41.2 (2025-02-19)
 -------------------
 * chore: bump version to 0.41.1 (`#10088 <https://github.com/autowarefoundation/autoware.universe/issues/10088>`_)

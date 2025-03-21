@@ -96,7 +96,7 @@ RadarStaticPointcloudFilterNode::RadarStaticPointcloudFilterNode(
   node_param_.doppler_velocity_sd = declare_parameter<double>("doppler_velocity_sd");
 
   // Subscriber
-  transform_listener_ = std::make_shared<autoware::universe_utils::TransformListener>(this);
+  transform_listener_ = std::make_shared<autoware_utils::TransformListener>(this);
 
   sub_radar_.subscribe(this, "~/input/radar", rclcpp::QoS{1}.get_rmw_qos_profile());
   sub_odometry_.subscribe(this, "~/input/odometry", rclcpp::QoS{1}.get_rmw_qos_profile());
@@ -132,7 +132,7 @@ void RadarStaticPointcloudFilterNode::onData(
   geometry_msgs::msg::TransformStamped::ConstSharedPtr transform;
 
   try {
-    transform = transform_listener_->getTransform(
+    transform = transform_listener_->get_transform(
       odom_msg->header.frame_id, radar_msg->header.frame_id, odom_msg->header.stamp,
       rclcpp::Duration::from_seconds(0.2));
   } catch (tf2::TransformException & ex) {
