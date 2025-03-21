@@ -123,9 +123,9 @@ void ObstacleCruiseModule::init(rclcpp::Node & node, const std::string & module_
   debug_publisher_ = node.create_publisher<MarkerArray>("~/obstacle_cruise/debug_markers", 1);
 
   // module publisher
-  metrics_pub_ = node.create_publisher<MetricArray>("~/cruise/metrics", 10);
+  metrics_pub_ = node.create_publisher<MetricArray>("~/debug/obstacle_cruise/metrics", 10);
   debug_cruise_planning_info_pub_ =
-    node.create_publisher<Float32MultiArrayStamped>("~/debug/cruise_planning_info", 1);
+    node.create_publisher<Float32MultiArrayStamped>("~/debug/obstacle_cruise/planning_info", 1);
   processing_time_detail_pub_ = node.create_publisher<autoware_utils::ProcessingTimeDetail>(
     "~/debug/processing_time_detail_ms/obstacle_cruise", 1);
 

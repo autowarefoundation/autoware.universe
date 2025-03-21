@@ -160,8 +160,8 @@ void ObstacleStopModule::init(rclcpp::Node & node, const std::string & module_na
 
   // module publisher
   debug_stop_planning_info_pub_ =
-    node.create_publisher<Float32MultiArrayStamped>("~/debug/stop_planning_info", 1);
-  metrics_pub_ = node.create_publisher<MetricArray>("~/stop/metrics", 10);
+    node.create_publisher<Float32MultiArrayStamped>("~/debug/obstacle_stop/planning_info", 1);
+  metrics_pub_ = node.create_publisher<MetricArray>("~/debug/obstacle_stop/metrics", 10);
   processing_time_detail_pub_ = node.create_publisher<autoware_utils::ProcessingTimeDetail>(
     "~/debug/processing_time_detail_ms/obstacle_stop", 1);
   // interface publisher

@@ -208,9 +208,9 @@ void ObstacleSlowDownModule::init(rclcpp::Node & node, const std::string & modul
   debug_publisher_ = node.create_publisher<MarkerArray>("~/obstacle_slow_down/debug_markers", 1);
 
   // module publisher
-  metrics_pub_ = node.create_publisher<MetricArray>("~/slow_down/metrics", 10);
+  metrics_pub_ = node.create_publisher<MetricArray>("~/debug/obstacle_slow_down/metrics", 10);
   debug_slow_down_planning_info_pub_ =
-    node.create_publisher<Float32MultiArrayStamped>("~/debug/slow_down_planning_info", 1);
+    node.create_publisher<Float32MultiArrayStamped>("~/debug/obstacle_slow_down/planning_info", 1);
   processing_time_detail_pub_ = node.create_publisher<autoware_utils::ProcessingTimeDetail>(
     "~/debug/processing_time_detail_ms/obstacle_slow_down", 1);
 
