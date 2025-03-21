@@ -30,6 +30,7 @@
 #include <autoware_utils/ros/uuid_helper.hpp>
 
 #include <autoware_perception_msgs/msg/detected_objects.hpp>
+#include <diagnostic_msgs/msg/diagnostic_status.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
 #include <boost/geometry.hpp>
@@ -50,6 +51,7 @@
 #include <functional>
 #include <limits>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <utility>
 #include <vector>
@@ -479,16 +481,24 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
   // publishers
   pub_objects_ = this->create_publisher<PredictedObjects>("~/output/objects", rclcpp::QoS{1});
 
+  // stopwatch
+  stop_watch_ptr_ = std::make_unique<autoware_utils::StopWatch<std::chrono::milliseconds>>();
+  stop_watch_ptr_->tic("cyclic_time");
+  stop_watch_ptr_->tic("processing_time");
+
+  // diagnostics
+  diagnostics_interface_ptr_ =
+    std::make_unique<autoware_utils::DiagnosticsInterface>(this, "map_based_prediction");
+  processing_time_tolerance_ms_ = declare_parameter<double>("processing_time_tolerance_ms");
+
   // debug publishers
   if (use_time_publisher) {
     processing_time_publisher_ =
       std::make_unique<autoware_utils::DebugPublisher>(this, "map_based_prediction");
     published_time_publisher_ = std::make_unique<autoware_utils::PublishedTimePublisher>(this);
-    stop_watch_ptr_ = std::make_unique<autoware_utils::StopWatch<std::chrono::milliseconds>>();
-    stop_watch_ptr_->tic("cyclic_time");
-    stop_watch_ptr_->tic("processing_time");
   }
 
+  // debug time keeper
   if (use_time_keeper) {
     detailed_processing_time_publisher_ =
       this->create_publisher<autoware_utils::ProcessingTimeDetail>(
@@ -499,6 +509,7 @@ MapBasedPredictionNode::MapBasedPredictionNode(const rclcpp::NodeOptions & node_
     predictor_vru_->setTimeKeeper(time_keeper_);
   }
 
+  // debug marker
   if (use_debug_marker) {
     pub_debug_markers_ =
       this->create_publisher<visualization_msgs::msg::MarkerArray>("maneuver", rclcpp::QoS{1});
@@ -555,7 +566,7 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
 
-  if (stop_watch_ptr_) stop_watch_ptr_->toc("processing_time", true);
+  stop_watch_ptr_->toc("processing_time", true);
 
   // take traffic_signal
   {
@@ -663,10 +674,27 @@ void MapBasedPredictionNode::objectsCallback(const TrackedObjects::ConstSharedPt
   // Publish Results
   publish(output, debug_markers);
 
+  // Processing time
+  const auto processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
+  const auto cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
+
+  // Diagnostics
+  diagnostics_interface_ptr_->clear();
+  diagnostics_interface_ptr_->add_key_value("processing_time_ms", processing_time_ms);
+  bool is_processing_time_exceeds_tolerance = processing_time_ms > processing_time_tolerance_ms_;
+  diagnostics_interface_ptr_->add_key_value(
+    "is_processing_time_exceeds_tolerance", is_processing_time_exceeds_tolerance);
+  if (is_processing_time_exceeds_tolerance) {
+    std::ostringstream oss;
+    oss << "Processing time exceeded " << processing_time_tolerance_ms_ << "[ms] < "
+        << processing_time_ms << "[ms]";
+    diagnostics_interface_ptr_->update_level_and_message(
+      diagnostic_msgs::msg::DiagnosticStatus::WARN, oss.str());
+  }
+  diagnostics_interface_ptr_->publish(output.header.stamp);
+
   // Publish Processing Time
-  if (stop_watch_ptr_) {
-    const auto processing_time_ms = stop_watch_ptr_->toc("processing_time", true);
-    const auto cyclic_time_ms = stop_watch_ptr_->toc("cyclic_time", true);
+  if (processing_time_publisher_) {
     processing_time_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/cyclic_time_ms", cyclic_time_ms);
     processing_time_publisher_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
