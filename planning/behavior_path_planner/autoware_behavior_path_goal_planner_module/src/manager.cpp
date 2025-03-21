@@ -166,8 +166,11 @@ GoalPlannerParameters GoalPlannerModuleManager::initGoalPlannerParameters(
 
   // parallel parking common
   {
+    const std::string ns = base_ns + "pull_over.parallel_parking.";
     p.parallel_parking_parameters.center_line_path_interval =
       p.center_line_path_interval;  // for geometric parallel parking
+    p.parallel_parking_parameters.max_steer_angle_margin_scale =
+      node->declare_parameter<double>(ns + "max_steer_angle_margin_scale");
   }
 
   // forward parallel parking forward
@@ -182,8 +185,6 @@ GoalPlannerParameters GoalPlannerModuleManager::initGoalPlannerParameters(
       node->declare_parameter<double>(ns + "forward_parking_lane_departure_margin");
     p.parallel_parking_parameters.forward_parking_path_interval =
       node->declare_parameter<double>(ns + "forward_parking_path_interval");
-    p.parallel_parking_parameters.forward_parking_max_steer_angle =
-      node->declare_parameter<double>(ns + "forward_parking_max_steer_angle");  // 20deg
   }
 
   // forward parallel parking backward
@@ -199,8 +200,6 @@ GoalPlannerParameters GoalPlannerModuleManager::initGoalPlannerParameters(
       node->declare_parameter<double>(ns + "backward_parking_lane_departure_margin");
     p.parallel_parking_parameters.backward_parking_path_interval =
       node->declare_parameter<double>(ns + "backward_parking_path_interval");
-    p.parallel_parking_parameters.backward_parking_max_steer_angle =
-      node->declare_parameter<double>(ns + "backward_parking_max_steer_angle");  // 20deg
   }
 
   // freespace parking general params
@@ -557,8 +556,12 @@ void GoalPlannerModuleManager::updateModuleParams(
 
   // parallel parking common
   {
+    const std::string ns = base_ns + "pull_over.parallel_parking.";
     p->parallel_parking_parameters.center_line_path_interval =
       p->center_line_path_interval;  // for geometric parallel parking
+    update_param<double>(
+      parameters, ns + "max_steer_angle_margin_scale",
+      p->parallel_parking_parameters.max_steer_angle_margin_scale);
   }
 
   // forward parallel parking forward
@@ -578,9 +581,6 @@ void GoalPlannerModuleManager::updateModuleParams(
     update_param<double>(
       parameters, ns + "forward_parking_path_interval",
       p->parallel_parking_parameters.forward_parking_path_interval);
-    update_param<double>(
-      parameters, ns + "forward_parking_max_steer_angle",
-      p->parallel_parking_parameters.forward_parking_max_steer_angle);
   }
 
   // forward parallel parking backward
@@ -600,9 +600,6 @@ void GoalPlannerModuleManager::updateModuleParams(
     update_param<double>(
       parameters, ns + "backward_parking_path_interval",
       p->parallel_parking_parameters.backward_parking_path_interval);
-    update_param<double>(
-      parameters, ns + "backward_parking_max_steer_angle",
-      p->parallel_parking_parameters.backward_parking_max_steer_angle);
   }
 
   // freespace parking general params
