@@ -966,7 +966,7 @@ bool GoalPlannerModule::canReturnToLaneParking(const PullOverContextData & conte
         parameters_.object_recognition_collision_check_hard_margins.back(),
         /*extract_static_objects=*/false, parameters_.maximum_deceleration,
         parameters_.object_recognition_collision_check_max_extra_stopping_margin,
-        debug_data_.ego_polygons_expanded)) {
+        parameters_.collision_check_outer_margin_factor, debug_data_.ego_polygons_expanded)) {
     return false;
   }
 
@@ -1258,7 +1258,8 @@ std::optional<PullOverPath> GoalPlannerModule::selectPullOverPath(
           context_data.dynamic_target_objects, planner_data_->parameters, collision_check_margin,
           true, parameters_.maximum_deceleration,
           parameters_.object_recognition_collision_check_max_extra_stopping_margin,
-          debug_data_.ego_polygons_expanded, true)) {
+          parameters_.collision_check_outer_margin_factor, debug_data_.ego_polygons_expanded,
+          true)) {
       continue;
     }
     if (
@@ -1933,7 +1934,7 @@ bool FreespaceParkingPlanner::isStuck(
         parameters.object_recognition_collision_check_hard_margins.back(),
         /*extract_static_objects=*/false, parameters.maximum_deceleration,
         parameters.object_recognition_collision_check_max_extra_stopping_margin,
-        ego_polygons_expanded)) {
+        parameters.collision_check_outer_margin_factor, ego_polygons_expanded)) {
     return true;
   }
 
