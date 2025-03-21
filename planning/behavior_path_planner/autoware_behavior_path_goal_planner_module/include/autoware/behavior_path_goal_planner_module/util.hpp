@@ -15,16 +15,16 @@
 #ifndef AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__UTIL_HPP_
 #define AUTOWARE__BEHAVIOR_PATH_GOAL_PLANNER_MODULE__UTIL_HPP_
 
-#include "autoware/behavior_path_goal_planner_module/goal_searcher_base.hpp"
+#include "autoware/behavior_path_goal_planner_module/goal_candidate.hpp"
 #include "autoware/behavior_path_goal_planner_module/pull_over_planner/pull_over_planner_base.hpp"
 
 #include <autoware/lane_departure_checker/lane_departure_checker.hpp>
 
+#include <autoware_internal_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_perception_msgs/msg/predicted_objects.hpp>
 #include <autoware_perception_msgs/msg/predicted_path.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
 #include <geometry_msgs/msg/twist_stamped.hpp>
-#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <visualization_msgs/msg/marker_array.hpp>
 
 #include <lanelet2_core/Forward.h>
@@ -36,15 +36,15 @@
 
 namespace autoware::behavior_path_planner::goal_planner_utils
 {
+using autoware_internal_planning_msgs::msg::PathWithLaneId;
 using autoware_perception_msgs::msg::PredictedObjects;
 using autoware_perception_msgs::msg::PredictedPath;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::Twist;
-using tier4_planning_msgs::msg::PathWithLaneId;
 using visualization_msgs::msg::Marker;
 using visualization_msgs::msg::MarkerArray;
 using Shape = autoware_perception_msgs::msg::Shape;
-using Polygon2d = autoware::universe_utils::Polygon2d;
+using Polygon2d = autoware_utils::Polygon2d;
 
 lanelet::ConstLanelets getPullOverLanes(
   const RouteHandler & route_handler, const bool left_side, const double backward_distance,
@@ -139,8 +139,8 @@ bool checkObjectsCollision(
 
 // debug
 MarkerArray createPullOverAreaMarkerArray(
-  const autoware::universe_utils::MultiPolygon2d area_polygons,
-  const std_msgs::msg::Header & header, const std_msgs::msg::ColorRGBA & color, const double z);
+  const autoware_utils::MultiPolygon2d area_polygons, const std_msgs::msg::Header & header,
+  const std_msgs::msg::ColorRGBA & color, const double z);
 MarkerArray createPosesMarkerArray(
   const std::vector<Pose> & poses, std::string && ns, const std_msgs::msg::ColorRGBA & color);
 MarkerArray createTextsMarkerArray(

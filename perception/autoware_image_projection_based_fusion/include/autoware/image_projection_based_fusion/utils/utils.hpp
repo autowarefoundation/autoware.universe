@@ -34,7 +34,7 @@
 
 #include "autoware/image_projection_based_fusion/fusion_node.hpp"
 
-#include <autoware/universe_utils/geometry/geometry.hpp>
+#include <autoware_utils/geometry/geometry.hpp>
 #include <opencv2/core/core.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>

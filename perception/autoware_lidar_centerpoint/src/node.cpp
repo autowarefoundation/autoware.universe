@@ -108,7 +108,7 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
   detector_ptr_ =
     std::make_unique<CenterPointTRT>(encoder_param, head_param, densification_param, config);
   diagnostics_interface_ptr_ =
-    std::make_unique<autoware::universe_utils::DiagnosticsInterface>(this, "centerpoint_trt");
+    std::make_unique<autoware_utils::DiagnosticsInterface>(this, "centerpoint_trt");
 
   pointcloud_sub_ = this->create_subscription<sensor_msgs::msg::PointCloud2>(
     "~/input/pointcloud", rclcpp::SensorDataQoS{}.keep_last(1),
@@ -118,8 +118,8 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
 
   // initialize debug tool
   {
-    using autoware::universe_utils::DebugPublisher;
-    using autoware::universe_utils::StopWatch;
+    using autoware_utils::DebugPublisher;
+    using autoware_utils::StopWatch;
     stop_watch_ptr_ = std::make_unique<StopWatch<std::chrono::milliseconds>>();
     debug_publisher_ptr_ = std::make_unique<DebugPublisher>(this, "lidar_centerpoint");
     stop_watch_ptr_->tic("cyclic_time");
@@ -130,8 +130,7 @@ LidarCenterPointNode::LidarCenterPointNode(const rclcpp::NodeOptions & node_opti
     RCLCPP_INFO(this->get_logger(), "TensorRT engine is built and shutdown node.");
     rclcpp::shutdown();
   }
-  published_time_publisher_ =
-    std::make_unique<autoware::universe_utils::PublishedTimePublisher>(this);
+  published_time_publisher_ = std::make_unique<autoware_utils::PublishedTimePublisher>(this);
 }
 
 void LidarCenterPointNode::pointCloudCallback(
@@ -194,11 +193,11 @@ void LidarCenterPointNode::pointCloudCallback(
         std::chrono::nanoseconds(
           (this->get_clock()->now() - output_msg.header.stamp).nanoseconds()))
         .count();
-    debug_publisher_ptr_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    debug_publisher_ptr_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/cyclic_time_ms", cyclic_time_ms);
-    debug_publisher_ptr_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    debug_publisher_ptr_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/processing_time_ms", processing_time_ms);
-    debug_publisher_ptr_->publish<tier4_debug_msgs::msg::Float64Stamped>(
+    debug_publisher_ptr_->publish<autoware_internal_debug_msgs::msg::Float64Stamped>(
       "debug/pipeline_latency_ms", pipeline_latency_ms);
   }
 }

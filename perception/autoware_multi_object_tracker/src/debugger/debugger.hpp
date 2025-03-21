@@ -15,8 +15,8 @@
 #ifndef DEBUGGER__DEBUGGER_HPP_
 #define DEBUGGER__DEBUGGER_HPP_
 
-#include "autoware/universe_utils/ros/debug_publisher.hpp"
-#include "autoware/universe_utils/ros/published_time_publisher.hpp"
+#include "autoware_utils/ros/debug_publisher.hpp"
+#include "autoware_utils/ros/published_time_publisher.hpp"
 #include "debug_object.hpp"
 
 #include <diagnostic_updater/diagnostic_updater.hpp>
@@ -59,7 +59,7 @@ private:
   rclcpp::Node & node_;
   rclcpp::Publisher<autoware_perception_msgs::msg::TrackedObjects>::SharedPtr
     debug_tentative_objects_pub_;
-  std::unique_ptr<autoware::universe_utils::DebugPublisher> processing_time_publisher_;
+  std::unique_ptr<autoware_utils::DebugPublisher> processing_time_publisher_;
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr debug_objects_markers_pub_;
 
   diagnostic_updater::Updater diagnostic_updater_;

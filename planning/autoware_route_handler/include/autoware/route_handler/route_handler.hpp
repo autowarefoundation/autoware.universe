@@ -17,11 +17,11 @@
 
 #include <rclcpp/logger.hpp>
 
+#include <autoware_internal_planning_msgs/msg/path_with_lane_id.hpp>
 #include <autoware_map_msgs/msg/lanelet_map_bin.hpp>
 #include <autoware_planning_msgs/msg/lanelet_route.hpp>
 #include <autoware_planning_msgs/msg/lanelet_segment.hpp>
 #include <geometry_msgs/msg/pose_stamped.hpp>
-#include <tier4_planning_msgs/msg/path_with_lane_id.hpp>
 #include <unique_identifier_msgs/msg/uuid.hpp>
 
 #include <lanelet2_core/Forward.h>
@@ -37,13 +37,13 @@
 
 namespace autoware::route_handler
 {
+using autoware_internal_planning_msgs::msg::PathWithLaneId;
 using autoware_map_msgs::msg::LaneletMapBin;
 using autoware_planning_msgs::msg::LaneletRoute;
 using autoware_planning_msgs::msg::LaneletSegment;
 using geometry_msgs::msg::Pose;
 using geometry_msgs::msg::PoseStamped;
 using std_msgs::msg::Header;
-using tier4_planning_msgs::msg::PathWithLaneId;
 using unique_identifier_msgs::msg::UUID;
 using RouteSections = std::vector<autoware_planning_msgs::msg::LaneletSegment>;
 
@@ -182,19 +182,6 @@ public:
   lanelet::ConstLanelets getAllRightSharedLinestringLanelets(
     const lanelet::ConstLanelet & lane, const bool & include_opposite,
     const bool & invert_opposite = false) const noexcept;
-
-  /**
-   * @brief Searches and return all lanelet (left and right) that shares same linestring
-   * @param the lanelet of interest
-   * @param (optional) flag to search only right side
-   * @param (optional) flag to search only left side
-   * @param (optional) flag to include the lane with opposite direction
-   * @param (optional) flag to invert the opposite lanelet
-   * @return vector of lanelet that is connected via share linestring
-   */
-  lanelet::ConstLanelets getAllSharedLineStringLanelets(
-    const lanelet::ConstLanelet & current_lane, bool is_right = true, bool is_left = true,
-    bool is_opposite = true, const bool & invert_opposite = false) const noexcept;
 
   /**
    * @brief Check if same-direction lane is available at the right side of the lanelet

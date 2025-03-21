@@ -1,4 +1,4 @@
-// Copyright 2021 Tier IV, Inc.
+// Copyright 2025 Tier IV, Inc.
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ enum class Metric {
   curvature,
   point_interval,
   relative_angle,
+  resampled_relative_angle,
   length,
   duration,
   velocity,
@@ -56,6 +57,7 @@ static const std::unordered_map<std::string, Metric> str_to_metric = {
   {"curvature", Metric::curvature},
   {"point_interval", Metric::point_interval},
   {"relative_angle", Metric::relative_angle},
+  {"resampled_relative_angle", Metric::resampled_relative_angle},
   {"length", Metric::length},
   {"duration", Metric::duration},
   {"velocity", Metric::velocity},
@@ -78,6 +80,7 @@ static const std::unordered_map<Metric, std::string> metric_to_str = {
   {Metric::curvature, "curvature"},
   {Metric::point_interval, "point_interval"},
   {Metric::relative_angle, "relative_angle"},
+  {Metric::resampled_relative_angle, "resampled_relative_angle"},
   {Metric::length, "length"},
   {Metric::duration, "duration"},
   {Metric::velocity, "velocity"},
@@ -101,6 +104,7 @@ static const std::unordered_map<Metric, std::string> metric_descriptions = {
   {Metric::curvature, "Curvature[1/rad]"},
   {Metric::point_interval, "Interval_between_points[m]"},
   {Metric::relative_angle, "Relative_angle[rad]"},
+  {Metric::resampled_relative_angle, "Resampled_relative_angle[rad]"},
   {Metric::length, "Trajectory_length[m]"},
   {Metric::duration, "Trajectory_duration[s]"},
   {Metric::velocity, "Trajectory_velocity[m/s]"},

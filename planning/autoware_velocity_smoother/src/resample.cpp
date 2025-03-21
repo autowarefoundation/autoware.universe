@@ -18,6 +18,7 @@
 #include "autoware/motion_utils/trajectory/conversion.hpp"
 #include "autoware/motion_utils/trajectory/trajectory.hpp"
 #include "autoware/velocity_smoother/trajectory_utils.hpp"
+#include "autoware_utils/geometry/geometry.hpp"
 
 #include <algorithm>
 #include <vector>
@@ -135,7 +136,7 @@ TrajectoryPoints resampleTrajectory(
   // add end point directly to consider the endpoint velocity.
   if (is_endpoint_included) {
     constexpr double ep_dist = 1.0E-3;
-    if (autoware::universe_utils::calcDistance2d(output.back(), input.back()) < ep_dist) {
+    if (autoware_utils::calc_distance2d(output.back(), input.back()) < ep_dist) {
       output.back() = input.back();
     } else {
       output.push_back(input.back());
@@ -255,7 +256,7 @@ TrajectoryPoints resampleTrajectory(
   // add end point directly to consider the endpoint velocity.
   if (is_endpoint_included) {
     constexpr double ep_dist = 1.0E-3;
-    if (autoware::universe_utils::calcDistance2d(output.back(), input.back()) < ep_dist) {
+    if (autoware_utils::calc_distance2d(output.back(), input.back()) < ep_dist) {
       output.back() = input.back();
     } else {
       output.push_back(input.back());

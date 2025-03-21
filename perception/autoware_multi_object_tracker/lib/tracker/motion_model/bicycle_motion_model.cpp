@@ -23,9 +23,9 @@
 
 #include <Eigen/Core>
 #include <Eigen/Geometry>
-#include <autoware/universe_utils/math/normalization.hpp>
-#include <autoware/universe_utils/math/unit_conversion.hpp>
-#include <autoware/universe_utils/ros/msg_covariance.hpp>
+#include <autoware_utils/math/normalization.hpp>
+#include <autoware_utils/math/unit_conversion.hpp>
+#include <autoware_utils/ros/msg_covariance.hpp>
 
 #include <tf2/LinearMath/Quaternion.h>
 
@@ -37,7 +37,7 @@ namespace autoware::multi_object_tracker
 // cspell: ignore CTRV
 // Bicycle CTRV motion model
 // CTRV : Constant Turn Rate and constant Velocity
-using autoware::universe_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
+using autoware_utils::xyzrpy_covariance_index::XYZRPY_COV_IDX;
 
 BicycleMotionModel::BicycleMotionModel() : logger_(rclcpp::get_logger("BicycleMotionModel"))
 {
@@ -245,7 +245,7 @@ bool BicycleMotionModel::limitStates()
     X_t(IDX::SLIP) = X_t(IDX::SLIP) < 0 ? -motion_params_.max_slip : motion_params_.max_slip;
   }
   // normalize yaw
-  X_t(IDX::YAW) = autoware::universe_utils::normalizeRadian(X_t(IDX::YAW));
+  X_t(IDX::YAW) = autoware_utils::normalize_radian(X_t(IDX::YAW));
 
   // overwrite state
   ekf_.init(X_t, P_t);
