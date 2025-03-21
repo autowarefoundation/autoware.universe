@@ -2,8 +2,8 @@
 Changelog for package autoware_behavior_path_goal_planner_module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.43.0 (2025-03-21)
+-------------------
 * Merge remote-tracking branch 'origin/main' into chore/bump-version-0.43
 * chore: rename from `autoware.universe` to `autoware_universe` (`#10306 <https://github.com/autowarefoundation/autoware_universe/issues/10306>`_)
 * fix(goal_planner): ignore use bus_stop_area flag if there are no BusStopArea on the pull over lanes (`#10274 <https://github.com/autowarefoundation/autoware_universe/issues/10274>`_)

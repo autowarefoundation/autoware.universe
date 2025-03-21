@@ -2,8 +2,8 @@
 Changelog for package autoware_planning_evaluator
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.43.0 (2025-03-21)
+-------------------
 * Merge remote-tracking branch 'origin/main' into chore/bump-version-0.43
 * chore: rename from `autoware.universe` to `autoware_universe` (`#10306 <https://github.com/autowarefoundation/autoware_universe/issues/10306>`_)
 * feat(control_evaluator): add a new stop_deviation metric (`#10246 <https://github.com/autowarefoundation/autoware_universe/issues/10246>`_)

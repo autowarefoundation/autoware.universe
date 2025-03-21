@@ -2,8 +2,8 @@
 Changelog for package tier4_planning_launch
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.43.0 (2025-03-21)
+-------------------
 * Merge remote-tracking branch 'origin/main' into chore/bump-version-0.43
 * chore: rename from `autoware.universe` to `autoware_universe` (`#10306 <https://github.com/autowarefoundation/autoware_universe/issues/10306>`_)
 * fix(tier4_planning_launch): remap topics for path_generator (`#10249 <https://github.com/autowarefoundation/autoware_universe/issues/10249>`_)

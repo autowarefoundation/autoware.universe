@@ -2,8 +2,8 @@
 Changelog for package autoware_traffic_light_classifier
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.43.0 (2025-03-21)
+-------------------
 * Merge remote-tracking branch 'origin/main' into chore/bump-version-0.43
 * chore: rename from `autoware.universe` to `autoware_universe` (`#10306 <https://github.com/autowarefoundation/autoware_universe/issues/10306>`_)
 * feat(traffic_light_classifier): update diagnostics when harsh backlight is detected (`#10218 <https://github.com/autowarefoundation/autoware_universe/issues/10218>`_)

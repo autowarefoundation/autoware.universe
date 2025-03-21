@@ -2,8 +2,8 @@
 Changelog for package autoware_obstacle_stop_planner
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.43.0 (2025-03-21)
+-------------------
 * Merge remote-tracking branch 'origin/main' into chore/bump-version-0.43
 * chore: rename from `autoware.universe` to `autoware_universe` (`#10306 <https://github.com/autowarefoundation/autoware_universe/issues/10306>`_)
 * feat!: replace VelocityLimit messages with autoware_internal_planning_msgs (`#10273 <https://github.com/autowarefoundation/autoware_universe/issues/10273>`_)

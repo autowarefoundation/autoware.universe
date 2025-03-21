@@ -2,8 +2,8 @@
 Changelog for package autoware_lane_departure_checker
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.43.0 (2025-03-21)
+-------------------
 * Merge remote-tracking branch 'origin/main' into chore/bump-version-0.43
 * refactor(control): remove unimplemented function declarations (`#10314 <https://github.com/autowarefoundation/autoware_universe/issues/10314>`_)
   remove unimplemented function declarations

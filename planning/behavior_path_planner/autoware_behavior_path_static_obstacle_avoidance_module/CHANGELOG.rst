@@ -2,8 +2,8 @@
 Changelog for package autoware_behavior_path_static_obstacle_avoidance_module
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.43.0 (2025-03-21)
+-------------------
 * Merge remote-tracking branch 'origin/main' into chore/bump-version-0.43
 * fix(autoware_behavior_path_static_obstacle_avoidance_module): blinker bug in static obstacle avoidance (`#10303 <https://github.com/autowarefoundation/autoware_universe/issues/10303>`_)
   fix

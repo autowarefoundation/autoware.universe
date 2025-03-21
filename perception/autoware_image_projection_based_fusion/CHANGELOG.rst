@@ -2,8 +2,8 @@
 Changelog for package autoware_image_projection_based_fusion
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.43.0 (2025-03-21)
+-------------------
 * Merge remote-tracking branch 'origin/main' into chore/bump-version-0.43
 * chore: rename from `autoware.universe` to `autoware_universe` (`#10306 <https://github.com/autowarefoundation/autoware_universe/issues/10306>`_)
 * fix(segmentation_pointcloud_fusion): fix typo of defaut camera info topic (`#10272 <https://github.com/autowarefoundation/autoware_universe/issues/10272>`_)

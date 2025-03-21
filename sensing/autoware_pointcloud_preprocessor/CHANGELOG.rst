@@ -2,8 +2,8 @@
 Changelog for package autoware_pointcloud_preprocessor
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Forthcoming
------------
+0.43.0 (2025-03-21)
+-------------------
 * Merge remote-tracking branch 'origin/main' into chore/bump-version-0.43
 * feat(autoware_pointcloud_preprocessor): add missing vehicle msg depency (`#10313 <https://github.com/autowarefoundation/autoware_universe/issues/10313>`_)
   feat(auotawre_pointcloud_preprocessor): add missing vehicle msg depency
