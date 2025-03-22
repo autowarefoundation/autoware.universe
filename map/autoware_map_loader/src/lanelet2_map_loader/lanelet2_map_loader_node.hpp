@@ -59,10 +59,7 @@ private:
   std::map<std::string, Lanelet2FileMetaData> get_lanelet2_metadata(
     const std::string & lanelet2_metadata_path, const std::vector<std::string> & lanelet2_paths,
     double & x_resolution, double & y_resolution) const;
-  std::map<std::string, Lanelet2FileMetaData> get_dummy_lanelet2_metadata(
-    const std::string & lanelet2_path,
-    const MapProjectorInfo::Message::ConstSharedPtr projection_info, double & x_resolution,
-    double & y_resolution);
+
 };
 }  // namespace autoware::map_loader
 
