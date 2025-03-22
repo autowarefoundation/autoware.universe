@@ -31,9 +31,10 @@
  *
  */
 
-#include "autoware/map_loader/lanelet2_map_loader_node.hpp"
+#include "lanelet2_map_loader_node.hpp"
 
 #include "lanelet2_local_projector.hpp"
+#include "utils.hpp"
 
 #include <ament_index_cpp/get_package_prefix.hpp>
 #include <autoware/geography_utils/lanelet2_projector.hpp>
@@ -89,7 +90,7 @@ Lanelet2MapLoaderNode::Lanelet2MapLoaderNode(const rclcpp::NodeOptions & options
     [this](const MapProjectorInfo::Message::ConstSharedPtr msg) { on_map_projector_info(msg); });
 
   declare_parameter<bool>("allow_unsupported_version");
-  declare_parameter<std::vector<std::string>(">lanelet2_map_paths_or_directory");
+  declare_parameter<std::vector<std::string>>(">lanelet2_map_paths_or_directory");
   declare_parameter<double>("center_line_resolution");
   declare_parameter<bool>("use_waypoints");
   declare_parameter<bool>("enable_differential_map_loading");
@@ -110,13 +111,20 @@ void Lanelet2MapLoaderNode::on_map_projector_info(
   const auto enable_differential_map_loading =
     get_parameter("enable_differential_map_loading").as_bool();
 
-  // get lanelet2 paths
-  const std::vector<std::string> lanelet2_paths = get_lanelet2_paths(lanelet2_paths_or_directory);
-  if (lanelet2_paths.empty()) {
-    RCLCPP_ERROR(get_logger(), "No lanelet2 map files found from %s", lanelet2_paths_or_directory.c_str());
+  // validate lanelet2_paths_or_directory
+  if (lanelet2_paths_or_directory.empty()) {
+    RCLCPP_ERROR(get_logger(), "No lanelet2 map files given to the node");
     return;
   }
 
+  // get lanelet2 paths
+  const std::vector<std::string> lanelet2_paths = get_lanelet2_paths(lanelet2_paths_or_directory);
+  if (lanelet2_paths.empty()) {
+    RCLCPP_ERROR(get_logger(), "No lanelet2 map files found from %s", lanelet2_paths_or_directory[0].c_str());
+    return;
+  }
+
+  // setup differential map loader module
   if (enable_differential_map_loading) {
     RCLCPP_INFO(get_logger(), "Differential lanelet2 map loading is enabled.");
 
@@ -201,76 +209,6 @@ void Lanelet2MapLoaderNode::on_map_projector_info(
   RCLCPP_INFO(get_logger(), "Succeeded to load lanelet2_map. Map is published.");
 }
 
-lanelet::LaneletMapPtr Lanelet2MapLoaderNode::load_map(
-  const std::string & lanelet2_filename,
-  const autoware_map_msgs::msg::MapProjectorInfo & projector_info)
-{
-  lanelet::ErrorMessages errors{};
-  if (projector_info.projector_type != autoware_map_msgs::msg::MapProjectorInfo::LOCAL) {
-    std::unique_ptr<lanelet::Projector> projector =
-      autoware::geography_utils::get_lanelet2_projector(projector_info);
-    lanelet::LaneletMapPtr map = lanelet::load(lanelet2_filename, *projector, &errors);
-    if (errors.empty()) {
-      return map;
-    }
-  } else {
-    const autoware::map_loader::LocalProjector projector;
-    lanelet::LaneletMapPtr map = lanelet::load(lanelet2_filename, projector, &errors);
-
-    if (!errors.empty()) {
-      for (const auto & error : errors) {
-        RCLCPP_ERROR_STREAM(rclcpp::get_logger("map_loader"), error);
-      }
-    }
-
-    // overwrite local_x, local_y
-    for (lanelet::Point3d point : map->pointLayer) {
-      if (point.hasAttribute("local_x")) {
-        point.x() = point.attribute("local_x").asDouble().value();
-      }
-      if (point.hasAttribute("local_y")) {
-        point.y() = point.attribute("local_y").asDouble().value();
-      }
-    }
-
-    // realign lanelet borders using updated points
-    for (lanelet::Lanelet lanelet : map->laneletLayer) {
-      auto left = lanelet.leftBound();
-      auto right = lanelet.rightBound();
-      std::tie(left, right) = lanelet::geometry::align(left, right);
-      lanelet.setLeftBound(left);
-      lanelet.setRightBound(right);
-    }
-
-    return map;
-  }
-
-  for (const auto & error : errors) {
-    RCLCPP_ERROR_STREAM(rclcpp::get_logger("map_loader"), error);
-  }
-  return nullptr;
-}
-
-LaneletMapBin Lanelet2MapLoaderNode::create_map_bin_msg(
-  const lanelet::LaneletMapPtr map, const std::string & lanelet2_filename, const rclcpp::Time & now)
-{
-  std::string format_version{};
-  std::string map_version{};
-  lanelet::io_handlers::AutowareOsmParser::parseVersions(
-    lanelet2_filename, &format_version, &map_version);
-
-  LaneletMapBin map_bin_msg;
-  map_bin_msg.header.stamp = now;
-  map_bin_msg.header.frame_id = "map";
-  map_bin_msg.version_map_format = format_version;
-  map_bin_msg.version_map = map_version;
-  lanelet::utils::conversion::toBinMsg(map, &map_bin_msg);
-
-  return map_bin_msg;
-}
-}  // namespace autoware::map_loader
-
-
 /**
  * @brief Get list of lanelet2 map file paths from input paths/directories
  * @param lanelet2_paths_or_directory Vector of paths that can be either lanelet2 map files or directories containing them
@@ -337,6 +275,8 @@ std::map<std::string, Lanelet2FileMetaData> Lanelet2MapLoaderNode::get_dummy_lan
 
   return std::map<std::string, Lanelet2FileMetaData>{{lanelet2_path, tile}};
 }
+
+}  // namespace autoware::map_loader
 
 #include <rclcpp_components/register_node_macro.hpp>
 RCLCPP_COMPONENTS_REGISTER_NODE(autoware::map_loader::Lanelet2MapLoaderNode)
