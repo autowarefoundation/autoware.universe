@@ -19,6 +19,9 @@
 
 #include "utils.hpp"
 
+namespace autoware::map_loader
+{
+
 Lanelet2DifferentialLoaderModule::Lanelet2DifferentialLoaderModule(
   rclcpp::Node * node, const double & center_line_resolution)
 : logger_(node->get_logger()),
@@ -61,17 +64,17 @@ bool Lanelet2DifferentialLoaderModule::onServiceGetDifferentialLanelet2Map(
   // load the lanelet2 maps
   lanelet::LaneletMapPtr map = std::make_shared<lanelet::LaneletMap>();
   for (const auto & path : lanelet2_paths) {
-    auto map_tmp = load_map(path, projector_info_.value());
+    auto map_tmp = utils::load_map(path, projector_info_.value());
     if (!map_tmp) {
       RCLCPP_ERROR(rclcpp::get_logger("map_loader"), "Failed to load lanelet2_map %s", path.c_str());
       return false;
     }
-    merge_lanelet2_maps(*map, *map_tmp);
+    utils::merge_lanelet2_maps(*map, *map_tmp);
   }
 
   // create the map bin message
   const auto map_bin_msg =
-    create_map_bin_msg(map, lanelet2_paths[0], rclcpp::Clock().now());
+    utils::create_map_bin_msg(map, lanelet2_paths[0], rclcpp::Clock().now());
 
   res->lanelet2_cells = map_bin_msg;
   res->header.frame_id = "map";
@@ -114,3 +117,5 @@ Lanelet2DifferentialLoaderModule::getLaneletMapMetaDataMsg(
 
   return metadata;
 }
+
+}  // namespace autoware::map_loader

@@ -154,12 +154,12 @@ void Lanelet2MapLoaderNode::on_map_projector_info(
   // load lanelet2 map
   lanelet::LaneletMapPtr map = std::make_shared<lanelet::LaneletMap>();
   for (const auto & path : lanelet2_paths) {
-    auto map_tmp = load_map(path, *msg);
+    auto map_tmp = utils::load_map(path, *msg);
     if (!map_tmp) {
       RCLCPP_ERROR(get_logger(), "Failed to load lanelet2_map. Not published.");
       return;
     }
-    merge_lanelet2_maps(*map, *map_tmp);
+    utils::merge_lanelet2_maps(*map, *map_tmp);
   }
 
   // we use first lanelet2 path to get format_version and map_version
@@ -200,7 +200,7 @@ void Lanelet2MapLoaderNode::on_map_projector_info(
   }
 
   // create map bin msg
-  const auto map_bin_msg = create_map_bin_msg(map, lanelet2_paths[0], now());
+  const auto map_bin_msg = utils::create_map_bin_msg(map, lanelet2_paths[0], now());
 
   // create publisher and publish
   pub_map_bin_ =
@@ -247,8 +247,8 @@ std::map<std::string, Lanelet2FileMetaData> Lanelet2MapLoaderNode::get_lanelet2_
   double & x_resolution, double & y_resolution) const
 {
   std::map<std::string, Lanelet2FileMetaData> lanelet2_metadata_dict;
-  lanelet2_metadata_dict = loadLanelet2Metadata(lanelet2_metadata_path, x_resolution, y_resolution);
-  lanelet2_metadata_dict = replaceWithAbsolutePath(lanelet2_metadata_dict, lanelet2_paths);
+  lanelet2_metadata_dict = utils::loadLanelet2Metadata(lanelet2_metadata_path, x_resolution, y_resolution);
+  lanelet2_metadata_dict = utils::replaceWithAbsolutePath(lanelet2_metadata_dict, lanelet2_paths);
   RCLCPP_INFO_STREAM(get_logger(), "Loaded Lanelet2 metadata: " << lanelet2_metadata_path);
 
   return lanelet2_metadata_dict;
@@ -259,8 +259,6 @@ std::map<std::string, Lanelet2FileMetaData> Lanelet2MapLoaderNode::get_dummy_lan
   const MapProjectorInfo::Message::ConstSharedPtr projection_info, double & x_resolution,
   double & y_resolution)
 {
-  const auto map = load_map(lanelet2_path, *projection_info);
-
   declare_parameter<double>("dummy_metadata.min_x");
   declare_parameter<double>("dummy_metadata.min_y");
   declare_parameter<double>("dummy_metadata.x_resolution");

@@ -41,6 +41,10 @@
 #include <string>
 #include <vector>
 
+
+namespace autoware::map_loader
+{
+
 using GetDifferentialLanelet2Map = autoware_map_msgs::srv::GetSelectedLanelet2Map;
 using autoware_map_msgs::msg::LaneletMapBin;
 
@@ -79,4 +83,5 @@ private:
     const double & x_res, const double & y_res) const;
 };
 
+}  // namespace autoware::map_loader
 #endif  // MAP_LOADER__LANELET2_DIFFERENTIAL_LOADER_MODULE_HPP_

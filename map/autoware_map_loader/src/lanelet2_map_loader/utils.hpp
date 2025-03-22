@@ -25,7 +25,8 @@
 #include <map>
 #include <string>
 #include <vector>
-
+namespace autoware::map_loader
+{
 struct Lanelet2FileMetaData
 {
   std::string id;
@@ -33,6 +34,8 @@ struct Lanelet2FileMetaData
   double min_y;
 };
 
+namespace utils
+{
 std::map<std::string, Lanelet2FileMetaData> loadLanelet2Metadata(
   const std::string & lanelet2_metadata_path, double & x_resolution, double & y_resolution);
 
@@ -47,5 +50,9 @@ lanelet::LaneletMapPtr load_map( const std::string & lanelet2_filename, const au
 autoware_map_msgs::msg::LaneletMapBin create_map_bin_msg(
   const lanelet::LaneletMapPtr map, const std::string & lanelet2_filename,
   const rclcpp::Time & now);
+
+}  // namespace utils
+
+}  // namespace autoware::map_loader
 
 #endif  // MAP_LOADER__UTILS_HPP_

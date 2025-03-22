@@ -32,6 +32,9 @@
 
 #include <rclcpp/rclcpp.hpp>
 
+namespace autoware::map_loader::utils
+{
+
 std::map<std::string, Lanelet2FileMetaData> loadLanelet2Metadata(
   const std::string & lanelet2_metadata_path, double & x_resolution, double & y_resolution)
 {
@@ -169,3 +172,5 @@ autoware_map_msgs::msg::LaneletMapBin create_map_bin_msg(
 
   return map_bin_msg;
 }
+
+}  // namespace autoware::map_loader::utils
