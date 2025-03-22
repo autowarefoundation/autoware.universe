@@ -82,7 +82,8 @@ bool Lanelet2DifferentialLoaderModule::onServiceGetDifferentialLanelet2Map(
 }
 
 void Lanelet2DifferentialLoaderModule::setLaneletMapMetadata(
-  const std::map<std::string, Lanelet2FileMetaData> & lanelet2_metadata_dict, const double x_res, const double y_res)
+  const std::map<std::string, Lanelet2FileMetaData> & lanelet2_metadata_dict, const double x_res,
+  const double y_res)
 {
   lanelet2_file_metadata_dict_ = lanelet2_metadata_dict;
 
