@@ -51,9 +51,11 @@
 #include <lanelet2_projection/UTM.h>
 
 #include <filesystem>
+#include <map>
 #include <memory>
 #include <stdexcept>
 #include <string>
+#include <vector>
 
 namespace autoware::map_loader
 {

@@ -60,7 +60,8 @@ private:
 
   rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr odometry_sub_;
 
-  autoware::component_interface_utils::Subscription<autoware::component_interface_specs_universe::map::LaneletMapMetaData>::SharedPtr
+  autoware::component_interface_utils::Subscription<
+    autoware::component_interface_specs_universe::map::LaneletMapMetaData>::SharedPtr
     lanelet_map_meta_data_sub_;
 
   rclcpp::TimerBase::SharedPtr map_update_timer_;
