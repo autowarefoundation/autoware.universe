@@ -3,19 +3,19 @@ repositories:
   core/autoware_cmake:
     type: git
     url: https://github.com/autowarefoundation/autoware_cmake.git
-    version: 1.0.0
+    version: 1.0.1
   core/autoware_utils:
     type: git
     url: https://github.com/autowarefoundation/autoware_utils.git
-    version: 1.1.0
+    version: 1.3.0
   core/autoware_lanelet2_extension:
     type: git
     url: https://github.com/autowarefoundation/autoware_lanelet2_extension.git
-    version: 0.6.2
-  core/autoware.core:
+    version: 0.6.3
+  core/autoware_core:
     type: git
-    url: https://github.com/autowarefoundation/autoware.core.git
-    version: 0.2.0
+    url: https://github.com/autowarefoundation/autoware_core.git
+    version: 0.3.0
   core/autoware_msgs:
     type: git
     url: https://github.com/autowarefoundation/autoware_msgs.git
@@ -27,12 +27,12 @@ repositories:
   core/autoware_internal_msgs:
     type: git
     url: https://github.com/autowarefoundation/autoware_internal_msgs.git
-    version: 1.5.0
+    version: 1.7.0
   # universe
   universe/external/tier4_autoware_msgs:
     type: git
     url: https://github.com/tier4/tier4_autoware_msgs.git
-    version: tier4/universe
+    version: v0.41.0
   universe/external/mussp:
     type: git
     url: https://github.com/tier4/muSSP.git
@@ -46,3 +46,11 @@ repositories:
     type: git
     url: https://github.com/tier4/glog.git
     version: v0.6.0_t4-ros
+  universe/external/cuda_blackboard:
+    type: git
+    url: https://github.com/autowarefoundation/cuda_blackboard.git
+    version: v0.1.1
+  universe/external/negotiated:
+    type: git
+    url: https://github.com/osrf/negotiated.git
+    version: eac198b55dcd052af5988f0f174902913c5f20e7

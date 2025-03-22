@@ -344,7 +344,7 @@ autoware_planning_msgs::msg::Path BehaviorVelocityPlannerNode::generatePath(
       "Backward path is NOT supported. just converting path_with_lane_id to path");
     output_path_msg = to_path(*input_path_msg);
     output_path_msg.header.frame_id = "map";
-    output_path_msg.header.stamp = this->now();
+    output_path_msg.header.stamp = input_path_msg->header.stamp;
     output_path_msg.left_bound = input_path_msg->left_bound;
     output_path_msg.right_bound = input_path_msg->right_bound;
     return output_path_msg;
@@ -366,7 +366,7 @@ autoware_planning_msgs::msg::Path BehaviorVelocityPlannerNode::generatePath(
   output_path_msg = autoware::behavior_velocity_planner::filterStopPathPoint(interpolated_path_msg);
 
   output_path_msg.header.frame_id = "map";
-  output_path_msg.header.stamp = this->now();
+  output_path_msg.header.stamp = input_path_msg->header.stamp;
 
   // TODO(someone): This must be updated in each scene module, but copy from input message for now.
   output_path_msg.left_bound = input_path_msg->left_bound;

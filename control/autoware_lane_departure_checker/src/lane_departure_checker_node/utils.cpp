@@ -120,9 +120,8 @@ TrajectoryPoints resampleTrajectory(const Trajectory & trajectory, const double 
 
     if (boost::geometry::distance(prev_point.to_2d(), next_point.to_2d()) >= interval) {
       resampled.push_back(traj_point);
+      prev_point = next_point;
     }
-
-    prev_point = next_point;
   }
   resampled.push_back(trajectory.points.back());
 

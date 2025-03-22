@@ -877,13 +877,15 @@ double calculateRoughDistanceToObjects(
   return min_distance;
 }
 
-tier4_planning_msgs::msg::SafetyFactorArray to_safety_factor_array(
+autoware_internal_planning_msgs::msg::SafetyFactorArray to_safety_factor_array(
   const CollisionCheckDebugMap & debug_map)
 {
-  tier4_planning_msgs::msg::SafetyFactorArray safety_factors;
+  autoware_internal_planning_msgs::msg::SafetyFactorArray safety_factors;
+  safety_factors.is_safe = std::all_of(
+    debug_map.begin(), debug_map.end(), [](const auto & result) { return result.second.is_safe; });
   for (const auto & [uuid, data] : debug_map) {
-    tier4_planning_msgs::msg::SafetyFactor safety_factor;
-    safety_factor.type = tier4_planning_msgs::msg::SafetyFactor::OBJECT;
+    autoware_internal_planning_msgs::msg::SafetyFactor safety_factor;
+    safety_factor.type = autoware_internal_planning_msgs::msg::SafetyFactor::OBJECT;
     safety_factor.is_safe = data.is_safe;
     safety_factor.object_id = autoware_utils::to_uuid_msg(uuid);
     safety_factor.points.push_back(data.current_obj_pose.position);
