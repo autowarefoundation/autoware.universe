@@ -54,8 +54,8 @@ public:
     rclcpp::Node * node, const double & center_line_resolution);
 
   void setLaneletMapMetadata(
-    std::map<std::string, Lanelet2FileMetaData> & lanelet2_metadata_dict, double x_res,
-    double y_res);
+    const std::map<std::string, Lanelet2FileMetaData> & lanelet2_metadata_dict, const double x_res,
+    const double y_res);
 
   void setProjectionInfo(const autoware_map_msgs::msg::MapProjectorInfo & projector_info);
 
