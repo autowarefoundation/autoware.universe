@@ -92,7 +92,7 @@ Lanelet2MapLoaderNode::Lanelet2MapLoaderNode(const rclcpp::NodeOptions & options
     [this](const MapProjectorInfo::Message::ConstSharedPtr msg) { on_map_projector_info(msg); });
 
   declare_parameter<bool>("allow_unsupported_version");
-  declare_parameter<std::vector<std::string>>(">lanelet2_map_paths_or_directory");
+  declare_parameter<std::vector<std::string>>("lanelet2_map_paths_or_directory");
   declare_parameter<double>("center_line_resolution");
   declare_parameter<bool>("use_waypoints");
   declare_parameter<bool>("enable_differential_map_loading");
@@ -107,7 +107,7 @@ void Lanelet2MapLoaderNode::on_map_projector_info(
   const MapProjectorInfo::Message::ConstSharedPtr msg)
 {
   const auto allow_unsupported_version = get_parameter("allow_unsupported_version").as_bool();
-  const auto lanelet2_paths_or_directory = get_parameter("lanelet2_map_path").as_string_array();
+  const auto lanelet2_paths_or_directory = get_parameter("lanelet2_map_paths_or_directory").as_string_array();
   const auto center_line_resolution = get_parameter("center_line_resolution").as_double();
   const auto use_waypoints = get_parameter("use_waypoints").as_bool();
   const auto enable_differential_map_loading =
