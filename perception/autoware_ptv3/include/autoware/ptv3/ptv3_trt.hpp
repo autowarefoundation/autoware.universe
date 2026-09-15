@@ -74,6 +74,7 @@ protected:
   void initPtr();
   void initEncoderTrt(const tensorrt_common::TrtCommonConfig & trt_config);
   [[nodiscard]] std::array<std::int64_t, 3> stageProfileCounts(std::size_t stage_index) const;
+  [[nodiscard]] std::array<std::int64_t, 3> stagePaddedProfileCounts(std::size_t stage_index) const;
   void initSeg3dHeadTrt(const tensorrt_common::TrtCommonConfig & trt_config);
   void initDetection3DHeadTrt(const tensorrt_common::TrtCommonConfig & trt_config);
   void createPointFields();
@@ -137,6 +138,7 @@ protected:
     CudaUniquePtr<std::int64_t[]> serialized_code{nullptr};
     CudaUniquePtr<std::int64_t[]> serialized_order{nullptr};
     CudaUniquePtr<std::int64_t[]> serialized_inverse{nullptr};
+    CudaUniquePtr<std::int64_t[]> patch_order{nullptr};
   };
 
   std::vector<SerializedPoolingDeviceStage> serialized_pooling_stages_d_;
@@ -158,6 +160,7 @@ protected:
   CudaUniquePtr<float[]> reconstructed_probs_d_{nullptr};           // only for partial and full
   CudaUniquePtr<std::int32_t[]> grid_coord_d_{nullptr};
   CudaUniquePtr<float[]> feat_d_{nullptr};
+  // Voxelizer output; seeds the pooling chain on the device but is not an engine input.
   CudaUniquePtr<std::int64_t[]> serialized_code_d_{nullptr};
 
   // Encoder outputs shared with all the heads: per-stage point features,

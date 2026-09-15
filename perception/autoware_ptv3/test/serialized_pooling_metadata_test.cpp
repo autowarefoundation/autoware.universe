@@ -34,9 +34,15 @@ namespace autoware::ptv3
 namespace test
 {
 
+std::int64_t padded_count(const std::int64_t count, const std::int64_t patch_size)
+{
+  return (count + patch_size - 1) / patch_size * patch_size;
+}
+
 struct DeviceStage
 {
-  DeviceStage(const std::size_t capacity, const std::size_t num_orders)
+  DeviceStage(
+    const std::size_t capacity, const std::size_t num_orders, const std::int64_t patch_size)
   : indices(autoware::cuda_utils::make_unique<std::int64_t[]>(capacity)),
     indptr(autoware::cuda_utils::make_unique<std::int64_t[]>(capacity + 1)),
     head_indices(autoware::cuda_utils::make_unique<std::int64_t[]>(capacity)),
@@ -44,8 +50,19 @@ struct DeviceStage
     grid_coord(autoware::cuda_utils::make_unique<std::int32_t[]>(capacity * 3)),
     serialized_code(autoware::cuda_utils::make_unique<std::int64_t[]>(capacity * num_orders)),
     serialized_order(autoware::cuda_utils::make_unique<std::int64_t[]>(capacity * num_orders)),
-    serialized_inverse(autoware::cuda_utils::make_unique<std::int64_t[]>(capacity * num_orders))
+    serialized_inverse(autoware::cuda_utils::make_unique<std::int64_t[]>(capacity * num_orders)),
+    patch_order(
+      autoware::cuda_utils::make_unique<std::int64_t[]>(
+        padded_count(static_cast<std::int64_t>(capacity), patch_size) * num_orders))
   {
+  }
+
+  SerializedPoolingDeviceStageView view()
+  {
+    return SerializedPoolingDeviceStageView{
+      indices.get(),    indptr.get(),          head_indices.get(),     cluster.get(),
+      grid_coord.get(), serialized_code.get(), serialized_order.get(), serialized_inverse.get(),
+      patch_order.get()};
   }
 
   CudaUniquePtr<std::int64_t[]> indices;
@@ -56,6 +73,7 @@ struct DeviceStage
   CudaUniquePtr<std::int64_t[]> serialized_code;
   CudaUniquePtr<std::int64_t[]> serialized_order;
   CudaUniquePtr<std::int64_t[]> serialized_inverse;
+  CudaUniquePtr<std::int64_t[]> patch_order;
 };
 
 struct CpuStage
@@ -68,6 +86,91 @@ struct CpuStage
   std::vector<std::int64_t> serialized_code;
   std::vector<std::int64_t> serialized_order;
   std::vector<std::int64_t> serialized_inverse;
+  std::vector<std::int64_t> patch_order;
+};
+
+// Host reimplementation of the exporter's build_patch_order (autoware-ml, encoders/ptv3.py): the
+// orders padded to whole attention windows, the trailing slots borrowing tokens backwards along
+// the serialization (wrapping around below one window).
+std::vector<std::int64_t> make_patch_order_reference(
+  const std::vector<std::int64_t> & serialized_order, const std::size_t count,
+  const std::size_t num_orders, const std::int64_t patch_size)
+{
+  if (count == 0) {
+    return {};
+  }
+  const auto signed_count = static_cast<std::int64_t>(count);
+  const auto padded = padded_count(signed_count, patch_size);
+  const auto cycle = (patch_size + signed_count - 1) / signed_count * signed_count;
+  std::vector<std::int64_t> patch_order(num_orders * static_cast<std::size_t>(padded));
+  for (std::size_t order = 0; order < num_orders; ++order) {
+    for (std::int64_t slot = 0; slot < padded; ++slot) {
+      const auto source = slot < signed_count ? slot : (slot - patch_size + cycle) % signed_count;
+      patch_order[order * static_cast<std::size_t>(padded) + static_cast<std::size_t>(slot)] =
+        serialized_order[order * count + static_cast<std::size_t>(source)];
+    }
+  }
+  return patch_order;
+}
+
+// Literal patch_order vectors, shared with the exporter's test (autoware-ml,
+// tests/models/test_ptv3_encoder.py::PATCH_ORDER_GOLDEN_VECTORS): the same eight cases with the
+// same expected numbers on both sides of the deployment boundary. build_patch_order and
+// fillPatchOrderKernel are two implementations of one formula in two languages, so pinning each
+// against its own restatement of the formula cannot catch a drift between them - only shared
+// literals can. These pin make_patch_order_reference, which the fixtures below compare the device
+// kernel against on real clouds, so the chain runs golden -> host reference -> device kernel.
+TEST(PatchOrderContract, MatchesTheExporterGoldenVectors)
+{
+  struct Case
+  {
+    std::int64_t patch_size;
+    std::size_t num_orders;
+    std::vector<std::int64_t> serialized_order;
+    std::vector<std::int64_t> expected;
+  };
+
+  // The deployed window over a five-voxel level: 507 tail slots cycling through the five tokens.
+  std::vector<std::int64_t> deployed_window{4, 0, 3, 1, 2};
+  for (int repeat = 0; repeat < 101; ++repeat) {
+    deployed_window.insert(deployed_window.end(), {1, 2, 4, 0, 3});
+  }
+  deployed_window.insert(deployed_window.end(), {1, 2});
+
+  const std::vector<Case> cases{
+    // below one window: the tail wraps around (cycle = 6 for count 3)
+    {4, 1, {0, 1, 2}, {0, 1, 2, 2}},
+    {4, 1, {2, 0, 1}, {2, 0, 1, 1}},
+    // exactly one window, and whole windows: nothing to pad
+    {4, 1, {3, 0, 2, 1}, {3, 0, 2, 1}},
+    {4, 1, {7, 0, 6, 1, 5, 2, 4, 3}, {7, 0, 6, 1, 5, 2, 4, 3}},
+    // one token into the last window (k * K + 1): borrows three backwards
+    {4, 1, {4, 0, 3, 1, 2}, {4, 0, 3, 1, 2, 0, 3, 1}},
+    // a partial last window: borrows the two before it
+    {4, 1, {5, 2, 7, 1, 0, 3}, {5, 2, 7, 1, 0, 3, 7, 1}},
+    // two rows are padded independently, each from its own entries
+    {4, 2, {0, 5, 2, 1, 4, 3, 3, 1, 5, 0, 2, 4}, {0, 5, 2, 1, 4, 3, 2, 1, 3, 1, 5, 0, 2, 4, 5, 0}},
+    {512, 1, {4, 0, 3, 1, 2}, deployed_window},
+  };
+
+  for (const auto & test_case : cases) {
+    const auto count = test_case.serialized_order.size() / test_case.num_orders;
+    EXPECT_EQ(
+      make_patch_order_reference(
+        test_case.serialized_order, count, test_case.num_orders, test_case.patch_size),
+      test_case.expected)
+      << "count " << count << ", patch_size " << test_case.patch_size;
+  }
+}
+
+// The input level's serialization as the device must emit it: per order, the ascending-code
+// ranking of the voxels (the identity for order 0, whose code the input is sorted by), its inverse
+// and its window-padded patch order.
+struct CpuInputLevel
+{
+  std::vector<std::int64_t> serialized_order;
+  std::vector<std::int64_t> serialized_inverse;
+  std::vector<std::int64_t> patch_order;
 };
 
 std::int32_t pooling_depth(const std::int64_t stride)
@@ -130,10 +233,34 @@ std::vector<std::int64_t> stable_argsort(const std::vector<std::int64_t> & value
   return order;
 }
 
+CpuInputLevel make_input_level_reference(
+  const std::vector<std::int64_t> & serialized_code, const std::size_t num_orders,
+  const std::int64_t patch_size)
+{
+  const auto count = serialized_code.size() / std::max<std::size_t>(num_orders, 1);
+  CpuInputLevel level;
+  level.serialized_order.resize(num_orders * count);
+  level.serialized_inverse.resize(num_orders * count);
+  for (std::size_t order = 0; order < num_orders; ++order) {
+    const std::vector<std::int64_t> codes(
+      serialized_code.begin() + static_cast<std::ptrdiff_t>(order * count),
+      serialized_code.begin() + static_cast<std::ptrdiff_t>((order + 1) * count));
+    const auto sorted_order = stable_argsort(codes);
+    for (std::size_t rank = 0; rank < count; ++rank) {
+      level.serialized_order[order * count + rank] = sorted_order[rank];
+      level.serialized_inverse[order * count + static_cast<std::size_t>(sorted_order[rank])] =
+        static_cast<std::int64_t>(rank);
+    }
+  }
+  level.patch_order =
+    make_patch_order_reference(level.serialized_order, count, num_orders, patch_size);
+  return level;
+}
+
 CpuStage make_stage_reference(
   const std::vector<std::int32_t> & grid_coord_in,
   const std::vector<std::int64_t> & serialized_code_in, const std::size_t num_orders,
-  const std::int64_t stride)
+  const std::int64_t stride, const std::int64_t patch_size)
 {
   const auto input_count = grid_coord_in.size() / 3;
   const auto depth = pooling_depth(stride);
@@ -197,6 +324,8 @@ CpuStage make_stage_reference(
         static_cast<std::int64_t>(rank);
     }
   }
+  stage.patch_order =
+    make_patch_order_reference(stage.serialized_order, unique_keys.size(), num_orders, patch_size);
   return stage;
 }
 
@@ -225,6 +354,7 @@ PTv3Config make_detection_test_config()
   params.voxel_size = {1.0F, 1.0F, 1.0F};
   params.pooling_strides = {2, 2, 2, 2};
   params.enc_channels = {8, 16, 32, 64, 128};
+  params.patch_sizes = {4, 4, 4, 4, 4};
   params.bbox_voxel_size = {8.0F, 8.0F, 4.0F};
   return makeConfig(params);
 }
@@ -296,14 +426,10 @@ TEST_F(SerializedPoolingMetadataTest, DetectionGridCoord3StaysInsideBevGrid)
   std::vector<DeviceStage> device_stages;
   std::vector<SerializedPoolingDeviceStageView> stage_views;
   for (std::size_t stage = 0; stage < config.pooling_strides_.size(); ++stage) {
-    device_stages.emplace_back(config.max_num_voxels_, kNumOrders);
+    device_stages.emplace_back(config.max_num_voxels_, kNumOrders, config.patch_sizes_[stage + 1]);
   }
   for (auto & stage : device_stages) {
-    stage_views.push_back(
-      SerializedPoolingDeviceStageView{
-        stage.indices.get(), stage.indptr.get(), stage.head_indices.get(), stage.cluster.get(),
-        stage.grid_coord.get(), stage.serialized_code.get(), stage.serialized_order.get(),
-        stage.serialized_inverse.get()});
+    stage_views.push_back(stage.view());
   }
 
   copyToDevice(grid_coord_d.get(), grid_coord);
@@ -386,14 +512,10 @@ TEST_F(SerializedPoolingMetadataTest, MatchesCpuReferenceForEdgeCaseClouds)
   std::vector<DeviceStage> device_stages;
   std::vector<SerializedPoolingDeviceStageView> stage_views;
   for (std::size_t stage = 0; stage < stage_count; ++stage) {
-    device_stages.emplace_back(config.max_num_voxels_, kNumOrders);
+    device_stages.emplace_back(config.max_num_voxels_, kNumOrders, config.patch_sizes_[stage + 1]);
   }
   for (auto & stage : device_stages) {
-    stage_views.push_back(
-      SerializedPoolingDeviceStageView{
-        stage.indices.get(), stage.indptr.get(), stage.head_indices.get(), stage.cluster.get(),
-        stage.grid_coord.get(), stage.serialized_code.get(), stage.serialized_order.get(),
-        stage.serialized_inverse.get()});
+    stage_views.push_back(stage.view());
   }
 
   for (const auto & edge_case : cases) {
@@ -409,16 +531,34 @@ TEST_F(SerializedPoolingMetadataTest, MatchesCpuReferenceForEdgeCaseClouds)
     ASSERT_EQ(cudaStreamSynchronize(stream_), cudaSuccess);
 
     std::vector<CpuStage> references;
-    references.push_back(
-      make_stage_reference(grid_coord, serialized_code, kNumOrders, config.pooling_strides_[0]));
+    references.push_back(make_stage_reference(
+      grid_coord, serialized_code, kNumOrders, config.pooling_strides_[0], config.patch_sizes_[1]));
     for (std::size_t stage = 1; stage < stage_count; ++stage) {
       references.push_back(make_stage_reference(
         references[stage - 1].grid_coord, references[stage - 1].serialized_code, kNumOrders,
-        config.pooling_strides_[stage]));
+        config.pooling_strides_[stage], config.patch_sizes_[stage + 1]));
     }
 
     const auto stage_counts = copyToHost(stage_counts_d.get(), stage_count + 1);
     ASSERT_EQ(stage_counts, edge_case.expected_stage_counts) << edge_case.name;
+
+    {
+      const auto expected =
+        make_input_level_reference(serialized_code, kNumOrders, config.patch_sizes_[0]);
+      const auto count = static_cast<std::size_t>(num_voxels);
+      const auto padded =
+        static_cast<std::size_t>(padded_count(num_voxels, config.patch_sizes_[0]));
+      const auto prefix = edge_case.name + " input level ";
+      expect_equal(
+        copyToHost(preprocess.inputLevelSerializedOrder(), count * kNumOrders),
+        expected.serialized_order, prefix + "serialized_order");
+      expect_equal(
+        copyToHost(preprocess.inputLevelSerializedInverse(), count * kNumOrders),
+        expected.serialized_inverse, prefix + "serialized_inverse");
+      expect_equal(
+        copyToHost(preprocess.inputLevelPatchOrder(), padded * kNumOrders), expected.patch_order,
+        prefix + "patch_order");
+    }
 
     for (std::size_t stage_index = 0; stage_index < references.size(); ++stage_index) {
       const auto & expected = references[stage_index];
@@ -453,8 +593,73 @@ TEST_F(SerializedPoolingMetadataTest, MatchesCpuReferenceForEdgeCaseClouds)
       expect_equal(
         copyToHost(actual.serialized_inverse.get(), out_count * kNumOrders),
         expected.serialized_inverse, prefix + "serialized_inverse");
+      const auto padded = static_cast<std::size_t>(
+        padded_count(static_cast<std::int64_t>(out_count), config.patch_sizes_[stage_index + 1]));
+      expect_equal(
+        copyToHost(actual.patch_order.get(), padded * kNumOrders), expected.patch_order,
+        prefix + "patch_order");
     }
   }
+}
+
+// The patch order is the one tensor here whose extent is not a voxel count: the level's order
+// rounded up to whole attention windows, the tail borrowing tokens backwards along the
+// serialization. Pinned slot by slot for the three regimes of the fill.
+TEST_F(SerializedPoolingMetadataTest, PatchOrderPadsEveryLevelToWholeAttentionWindows)
+{
+  const auto config = make_test_config();
+  constexpr std::size_t kNumOrders = 2;
+  ASSERT_EQ(config.patch_sizes_, (std::vector<std::int64_t>{4, 4, 4}));
+  // Levels of 6 -> 3 -> 1 voxels ("mixed run lengths" above): one token into the last window,
+  // a partial single window, and a level below one window.
+  const auto grid_coord = sort_grid_coord_by_order0(
+    {0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2, 0, 2, 0, 0, 3, 1, 1}, config.serialization_depth_);
+  const auto serialized_code = make_serialized_code(grid_coord, config.serialization_depth_);
+  const auto num_voxels = static_cast<std::int64_t>(grid_coord.size() / 3);
+
+  PreprocessCuda preprocess(config, stream_);
+  auto grid_coord_d = makeDeviceBuffer<std::int32_t>(grid_coord.size());
+  auto serialized_code_d = makeDeviceBuffer<std::int64_t>(serialized_code.size());
+  auto stage_counts_d = makeDeviceBuffer<std::int64_t>(config.pooling_strides_.size() + 1);
+  std::vector<DeviceStage> device_stages;
+  std::vector<SerializedPoolingDeviceStageView> stage_views;
+  for (std::size_t stage = 0; stage < config.pooling_strides_.size(); ++stage) {
+    device_stages.emplace_back(config.max_num_voxels_, kNumOrders, config.patch_sizes_[stage + 1]);
+  }
+  for (auto & stage : device_stages) {
+    stage_views.push_back(stage.view());
+  }
+
+  copyToDevice(grid_coord_d.get(), grid_coord);
+  copyToDevice(serialized_code_d.get(), serialized_code);
+  preprocess.generateSerializedPoolingMetadata(
+    grid_coord_d.get(), serialized_code_d.get(), num_voxels, stage_views, stage_counts_d.get());
+  ASSERT_EQ(cudaStreamSynchronize(stream_), cudaSuccess);
+  const auto stage_counts = copyToHost(stage_counts_d.get(), config.pooling_strides_.size() + 1);
+  ASSERT_EQ(stage_counts, (std::vector<std::int64_t>{6, 3, 1}));
+
+  // Input level, 6 tokens, window 4 -> 8 slots; slots 6, 7 borrow tokens 2, 3
+  // ((slot - 4 + 6) % 6). Order 0 is the identity, so the padded row reads off directly.
+  const auto input_patch_order = copyToHost(preprocess.inputLevelPatchOrder(), 8 * kNumOrders);
+  EXPECT_EQ(
+    std::vector<std::int64_t>(input_patch_order.begin(), input_patch_order.begin() + 8),
+    (std::vector<std::int64_t>{0, 1, 2, 3, 4, 5, 2, 3}));
+  const auto input_order = copyToHost(preprocess.inputLevelSerializedOrder(), 6 * kNumOrders);
+  for (std::size_t slot = 0; slot < 8; ++slot) {
+    const auto source = slot < 6 ? slot : slot - 4;
+    EXPECT_EQ(input_patch_order[8 + slot], input_order[6 + source]) << "order 1 slot " << slot;
+  }
+
+  // Level 1, 3 tokens, window 4 -> 4 slots; the tail slot borrows token 2
+  // (cycle = 6, (3 - 4 + 6) % 3 = 2).
+  const auto level1 = copyToHost(device_stages[0].patch_order.get(), 4 * kNumOrders);
+  EXPECT_EQ(
+    std::vector<std::int64_t>(level1.begin(), level1.begin() + 4),
+    (std::vector<std::int64_t>{0, 1, 2, 2}));
+
+  // Level 2, a single token: every slot of the one window holds it.
+  const auto level2 = copyToHost(device_stages[1].patch_order.get(), 4 * kNumOrders);
+  EXPECT_EQ(level2, (std::vector<std::int64_t>{0, 0, 0, 0, 0, 0, 0, 0}));
 }
 
 TEST_F(SerializedPoolingMetadataTest, MatchesCpuReferenceForOnnxFacingInputs)
@@ -476,14 +681,10 @@ TEST_F(SerializedPoolingMetadataTest, MatchesCpuReferenceForOnnxFacingInputs)
   std::vector<DeviceStage> device_stages;
   std::vector<SerializedPoolingDeviceStageView> stage_views;
   for (std::size_t stage = 0; stage < config.pooling_strides_.size(); ++stage) {
-    device_stages.emplace_back(config.max_num_voxels_, kNumOrders);
+    device_stages.emplace_back(config.max_num_voxels_, kNumOrders, config.patch_sizes_[stage + 1]);
   }
   for (auto & stage : device_stages) {
-    stage_views.push_back(
-      SerializedPoolingDeviceStageView{
-        stage.indices.get(), stage.indptr.get(), stage.head_indices.get(), stage.cluster.get(),
-        stage.grid_coord.get(), stage.serialized_code.get(), stage.serialized_order.get(),
-        stage.serialized_inverse.get()});
+    stage_views.push_back(stage.view());
   }
 
   copyToDevice(grid_coord_d.get(), grid_coord);
@@ -528,11 +729,31 @@ TEST_F(SerializedPoolingMetadataTest, MatchesCpuReferenceForOnnxFacingInputs)
   }
 
   std::vector<CpuStage> references;
-  references.push_back(
-    make_stage_reference(grid_coord, serialized_code, kNumOrders, config.pooling_strides_[0]));
   references.push_back(make_stage_reference(
-    references[0].grid_coord, references[0].serialized_code, kNumOrders,
-    config.pooling_strides_[1]));
+    grid_coord, serialized_code, kNumOrders, config.pooling_strides_[0], config.patch_sizes_[1]));
+  references.push_back(make_stage_reference(
+    references[0].grid_coord, references[0].serialized_code, kNumOrders, config.pooling_strides_[1],
+    config.patch_sizes_[2]));
+
+  {
+    // The input level's own engine inputs: order 0 is the identity (the voxels arrive sorted by
+    // it), order 1 is a real sort whose inverse has to be scattered.
+    const auto expected =
+      make_input_level_reference(serialized_code, kNumOrders, config.patch_sizes_[0]);
+    const auto count = static_cast<std::size_t>(num_voxels);
+    const auto actual_order =
+      copyToHost(preprocess.inputLevelSerializedOrder(), count * kNumOrders);
+    expect_orders_diverge(actual_order, count, kNumOrders, "input level serialized_order");
+    expect_equal(actual_order, expected.serialized_order, "input level serialized_order");
+    expect_equal(
+      copyToHost(preprocess.inputLevelSerializedInverse(), count * kNumOrders),
+      expected.serialized_inverse, "input level serialized_inverse");
+    expect_equal(
+      copyToHost(
+        preprocess.inputLevelPatchOrder(),
+        static_cast<std::size_t>(padded_count(num_voxels, config.patch_sizes_[0])) * kNumOrders),
+      expected.patch_order, "input level patch_order");
+  }
 
   const auto stage_counts = copyToHost(stage_counts_d.get(), config.pooling_strides_.size() + 1);
   ASSERT_EQ(stage_counts[0], num_voxels);
@@ -571,6 +792,11 @@ TEST_F(SerializedPoolingMetadataTest, MatchesCpuReferenceForOnnxFacingInputs)
       expected.serialized_order, out_count, kNumOrders, prefix + "reference serialized_order");
     expect_equal(serialized_order, expected.serialized_order, prefix + "serialized_order");
     expect_equal(serialized_inverse, expected.serialized_inverse, prefix + "serialized_inverse");
+    const auto padded = static_cast<std::size_t>(
+      padded_count(static_cast<std::int64_t>(out_count), config.patch_sizes_[stage_index + 1]));
+    expect_equal(
+      copyToHost(actual.patch_order.get(), padded * kNumOrders), expected.patch_order,
+      prefix + "patch_order");
     for (std::size_t order = 0; order < kNumOrders; ++order) {
       const auto begin = static_cast<std::ptrdiff_t>(order * out_count);
       const auto end = static_cast<std::ptrdiff_t>((order + 1) * out_count);
