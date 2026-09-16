@@ -489,16 +489,16 @@ void PTv3TRT::initSeg3dHeadTrt(const tensorrt_common::TrtCommonConfig & trt_conf
     const auto prefix =
       stage == 0 ? std::string() : "serialized_pooling_" + std::to_string(stage - 1) + "_";
     network_io.emplace_back(
+      prefix + "patch_order", nvinfer1::Dims{2, {num_orders, -1}}, nvinfer1::DataType::kINT64);
+    profile_dims.emplace_back(
+      prefix + "patch_order", nvinfer1::Dims{2, {num_orders, padded[0]}},
+      nvinfer1::Dims{2, {num_orders, padded[1]}}, nvinfer1::Dims{2, {num_orders, padded[2]}});
+    network_io.emplace_back(
       prefix + "serialized_inverse", nvinfer1::Dims{2, {num_orders, -1}},
       nvinfer1::DataType::kINT64);
     profile_dims.emplace_back(
       prefix + "serialized_inverse", nvinfer1::Dims{2, {num_orders, counts[0]}},
       nvinfer1::Dims{2, {num_orders, counts[1]}}, nvinfer1::Dims{2, {num_orders, counts[2]}});
-    network_io.emplace_back(
-      prefix + "patch_order", nvinfer1::Dims{2, {num_orders, -1}}, nvinfer1::DataType::kINT64);
-    profile_dims.emplace_back(
-      prefix + "patch_order", nvinfer1::Dims{2, {num_orders, padded[0]}},
-      nvinfer1::Dims{2, {num_orders, padded[1]}}, nvinfer1::Dims{2, {num_orders, padded[2]}});
     network_io.emplace_back(
       prefix + "grid_coord", nvinfer1::Dims{2, {-1, 3}}, nvinfer1::DataType::kINT32);
     profile_dims.emplace_back(
@@ -537,18 +537,18 @@ void PTv3TRT::initSeg3dHeadTrt(const tensorrt_common::TrtCommonConfig & trt_conf
       continue;
     }
     if (stage == 0) {
+      seg3d_head_trt_ptr_->setTensorAddress("patch_order", pre_ptr_->inputLevelPatchOrder());
       seg3d_head_trt_ptr_->setTensorAddress(
         "serialized_inverse", pre_ptr_->inputLevelSerializedInverse());
-      seg3d_head_trt_ptr_->setTensorAddress("patch_order", pre_ptr_->inputLevelPatchOrder());
       seg3d_head_trt_ptr_->setTensorAddress("grid_coord", grid_coord_d_.get());
       continue;
     }
     const auto prefix = "serialized_pooling_" + std::to_string(stage - 1) + "_";
     auto & buffers = serialized_pooling_stages_d_[stage - 1];
     seg3d_head_trt_ptr_->setTensorAddress(
-      (prefix + "serialized_inverse").c_str(), buffers.serialized_inverse.get());
-    seg3d_head_trt_ptr_->setTensorAddress(
       (prefix + "patch_order").c_str(), buffers.patch_order.get());
+    seg3d_head_trt_ptr_->setTensorAddress(
+      (prefix + "serialized_inverse").c_str(), buffers.serialized_inverse.get());
     seg3d_head_trt_ptr_->setTensorAddress(
       (prefix + "grid_coord").c_str(), buffers.grid_coord.get());
   }
@@ -1046,10 +1046,10 @@ bool PTv3TRT::inferenceSeg3dHead()
     const auto prefix =
       stage == 0 ? std::string() : "serialized_pooling_" + std::to_string(stage - 1) + "_";
     success &= seg3d_head_trt_ptr_->setInputShape(
-      (prefix + "serialized_inverse").c_str(), nvinfer1::Dims{2, {num_orders, stage_count_voxels}});
-    success &= seg3d_head_trt_ptr_->setInputShape(
       (prefix + "patch_order").c_str(),
       nvinfer1::Dims{2, {num_orders, config_.padded_voxel_count(stage_count_voxels, stage)}});
+    success &= seg3d_head_trt_ptr_->setInputShape(
+      (prefix + "serialized_inverse").c_str(), nvinfer1::Dims{2, {num_orders, stage_count_voxels}});
     success &= seg3d_head_trt_ptr_->setInputShape(
       (prefix + "grid_coord").c_str(), nvinfer1::Dims{2, {stage_count_voxels, 3}});
   }
