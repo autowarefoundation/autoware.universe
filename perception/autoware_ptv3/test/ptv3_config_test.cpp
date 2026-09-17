@@ -51,8 +51,8 @@ PTv3Config makeWindowedSegmentationConfig(const std::vector<std::int64_t> & patc
 {
   return PTv3Config(
     true, false, "", 8, {1, 4, 8}, {-1.0F, -1.0F, -1.0F, 3.0F, 3.0F, 3.0F}, {1.0F, 1.0F, 1.0F},
-    {"noise"}, {}, {"z", "z-trans"}, {2, 2}, {8, 16, 32}, patch_sizes, {0, 0, 0}, {}, "xyzi", false,
-    "partial", {0, 0});
+    {"noise"}, {{"noise", "NOISE"}}, {"z", "z-trans"}, {2, 2}, {8, 16, 32}, patch_sizes, {0, 0, 0},
+    {}, "xyzi", false, "partial", {0, 0});
 }
 
 TEST(PTv3ConfigTest, RejectsPatchSizesThatDoNotCoverEveryStage)
