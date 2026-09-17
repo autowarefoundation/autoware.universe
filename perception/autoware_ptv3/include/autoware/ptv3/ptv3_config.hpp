@@ -404,9 +404,7 @@ public:
     return patch_sizes;
   }
 
-  // Attention slots for `count` tokens of one stage: the count rounded up to whole windows. The
-  // engine's patch_order inputs have this extent (PreprocessCuda::generateSerializedPoolingMetadata
-  // fills them).
+  // Extent of a stage's patch_order input for `count` voxels: rounded up to whole windows.
   [[nodiscard]] std::int64_t padded_voxel_count(
     const std::int64_t count, const std::size_t stage_index) const
   {
@@ -453,11 +451,7 @@ public:
   std::vector<std::string> serialization_orders_;
   std::vector<std::int64_t> pooling_strides_;
   std::vector<std::int64_t> enc_channels_;  // per encoder stage, finest to deepest
-  // Attention window per encoder stage, finest to deepest. The exported graphs take every
-  // level's serialization order padded to whole windows (`patch_order`) as an input, so the
-  // runtime needs the window to build it; the exporter records the same list under the ONNX
-  // metadata key "patch_sizes".
-  std::vector<std::int64_t> patch_sizes_;
+  std::vector<std::int64_t> patch_sizes_;   // attention window per encoder stage, finest to deepest
 
   // Segmentation head
   std::vector<std::int64_t> dec_depths_;  // decoder block counts per stage

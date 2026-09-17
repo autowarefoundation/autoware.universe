@@ -160,7 +160,6 @@ protected:
   CudaUniquePtr<float[]> reconstructed_probs_d_{nullptr};           // only for partial and full
   CudaUniquePtr<std::int32_t[]> grid_coord_d_{nullptr};
   CudaUniquePtr<float[]> feat_d_{nullptr};
-  // Voxelizer output; seeds the pooling chain on the device but is not an engine input.
   CudaUniquePtr<std::int64_t[]> serialized_code_d_{nullptr};
 
   // Encoder outputs shared with all the heads: per-stage point features,

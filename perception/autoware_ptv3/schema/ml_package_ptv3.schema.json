@@ -68,7 +68,7 @@
             "type": "integer",
             "minimum": 1
           },
-          "description": "Attention window per encoder stage, finest to deepest (pooling_strides size + 1 entries). The exported graphs read each stage's serialization order padded to whole windows (patch_order); the exporter records the same list in the ONNX metadata.",
+          "description": "Attention window per encoder stage, finest to deepest (pooling_strides size + 1 entries). Sizes the padded patch_order inputs.",
           "default": [512, 512, 512, 512, 512],
           "minItems": 2
         }

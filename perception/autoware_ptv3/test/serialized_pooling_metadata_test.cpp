@@ -89,9 +89,7 @@ struct CpuStage
   std::vector<std::int64_t> patch_order;
 };
 
-// Host reimplementation of the exporter's build_patch_order (autoware-ml, encoders/ptv3.py): the
-// orders padded to whole attention windows, the trailing slots borrowing tokens backwards along
-// the serialization (wrapping around below one window).
+// Host reimplementation of the exporter's build_patch_order (autoware-ml, encoders/ptv3.py).
 std::vector<std::int64_t> make_patch_order_reference(
   const std::vector<std::int64_t> & serialized_order, const std::size_t count,
   const std::size_t num_orders, const std::int64_t patch_size)
@@ -113,13 +111,10 @@ std::vector<std::int64_t> make_patch_order_reference(
   return patch_order;
 }
 
-// Literal patch_order vectors, shared with the exporter's test (autoware-ml,
-// tests/models/test_ptv3_encoder.py::PATCH_ORDER_GOLDEN_VECTORS): the same eight cases with the
-// same expected numbers on both sides of the deployment boundary. build_patch_order and
-// fillPatchOrderKernel are two implementations of one formula in two languages, so pinning each
-// against its own restatement of the formula cannot catch a drift between them - only shared
-// literals can. These pin make_patch_order_reference, which the fixtures below compare the device
-// kernel against on real clouds, so the chain runs golden -> host reference -> device kernel.
+// Literal vectors shared with the exporter's test (autoware-ml,
+// tests/models/test_ptv3_encoder.py::PATCH_ORDER_GOLDEN_VECTORS), so a drift between the two
+// implementations shows up on either side. They pin make_patch_order_reference, which the fixtures
+// below compare the device kernel against.
 TEST(PatchOrderContract, MatchesTheExporterGoldenVectors)
 {
   struct Case
@@ -600,66 +595,6 @@ TEST_F(SerializedPoolingMetadataTest, MatchesCpuReferenceForEdgeCaseClouds)
         prefix + "patch_order");
     }
   }
-}
-
-// The patch order is the one tensor here whose extent is not a voxel count: the level's order
-// rounded up to whole attention windows, the tail borrowing tokens backwards along the
-// serialization. Pinned slot by slot for the three regimes of the fill.
-TEST_F(SerializedPoolingMetadataTest, PatchOrderPadsEveryLevelToWholeAttentionWindows)
-{
-  const auto config = make_test_config();
-  constexpr std::size_t kNumOrders = 2;
-  ASSERT_EQ(config.patch_sizes_, (std::vector<std::int64_t>{4, 4, 4}));
-  // Levels of 6 -> 3 -> 1 voxels ("mixed run lengths" above): one token into the last window,
-  // a partial single window, and a level below one window.
-  const auto grid_coord = sort_grid_coord_by_order0(
-    {0, 0, 0, 1, 0, 0, 0, 1, 0, 0, 2, 0, 2, 0, 0, 3, 1, 1}, config.serialization_depth_);
-  const auto serialized_code = make_serialized_code(grid_coord, config.serialization_depth_);
-  const auto num_voxels = static_cast<std::int64_t>(grid_coord.size() / 3);
-
-  PreprocessCuda preprocess(config, stream_);
-  auto grid_coord_d = makeDeviceBuffer<std::int32_t>(grid_coord.size());
-  auto serialized_code_d = makeDeviceBuffer<std::int64_t>(serialized_code.size());
-  auto stage_counts_d = makeDeviceBuffer<std::int64_t>(config.pooling_strides_.size() + 1);
-  std::vector<DeviceStage> device_stages;
-  std::vector<SerializedPoolingDeviceStageView> stage_views;
-  for (std::size_t stage = 0; stage < config.pooling_strides_.size(); ++stage) {
-    device_stages.emplace_back(config.max_num_voxels_, kNumOrders, config.patch_sizes_[stage + 1]);
-  }
-  for (auto & stage : device_stages) {
-    stage_views.push_back(stage.view());
-  }
-
-  copyToDevice(grid_coord_d.get(), grid_coord);
-  copyToDevice(serialized_code_d.get(), serialized_code);
-  preprocess.generateSerializedPoolingMetadata(
-    grid_coord_d.get(), serialized_code_d.get(), num_voxels, stage_views, stage_counts_d.get());
-  ASSERT_EQ(cudaStreamSynchronize(stream_), cudaSuccess);
-  const auto stage_counts = copyToHost(stage_counts_d.get(), config.pooling_strides_.size() + 1);
-  ASSERT_EQ(stage_counts, (std::vector<std::int64_t>{6, 3, 1}));
-
-  // Input level, 6 tokens, window 4 -> 8 slots; slots 6, 7 borrow tokens 2, 3
-  // ((slot - 4 + 6) % 6). Order 0 is the identity, so the padded row reads off directly.
-  const auto input_patch_order = copyToHost(preprocess.inputLevelPatchOrder(), 8 * kNumOrders);
-  EXPECT_EQ(
-    std::vector<std::int64_t>(input_patch_order.begin(), input_patch_order.begin() + 8),
-    (std::vector<std::int64_t>{0, 1, 2, 3, 4, 5, 2, 3}));
-  const auto input_order = copyToHost(preprocess.inputLevelSerializedOrder(), 6 * kNumOrders);
-  for (std::size_t slot = 0; slot < 8; ++slot) {
-    const auto source = slot < 6 ? slot : slot - 4;
-    EXPECT_EQ(input_patch_order[8 + slot], input_order[6 + source]) << "order 1 slot " << slot;
-  }
-
-  // Level 1, 3 tokens, window 4 -> 4 slots; the tail slot borrows token 2
-  // (cycle = 6, (3 - 4 + 6) % 3 = 2).
-  const auto level1 = copyToHost(device_stages[0].patch_order.get(), 4 * kNumOrders);
-  EXPECT_EQ(
-    std::vector<std::int64_t>(level1.begin(), level1.begin() + 4),
-    (std::vector<std::int64_t>{0, 1, 2, 2}));
-
-  // Level 2, a single token: every slot of the one window holds it.
-  const auto level2 = copyToHost(device_stages[1].patch_order.get(), 4 * kNumOrders);
-  EXPECT_EQ(level2, (std::vector<std::int64_t>{0, 0, 0, 0, 0, 0, 0, 0}));
 }
 
 TEST_F(SerializedPoolingMetadataTest, MatchesCpuReferenceForOnnxFacingInputs)

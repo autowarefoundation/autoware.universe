@@ -57,8 +57,6 @@ PTv3Config makeWindowedSegmentationConfig(const std::vector<std::int64_t> & patc
 
 TEST(PTv3ConfigTest, RejectsPatchSizesThatDoNotCoverEveryStage)
 {
-  // One window per level (pooling stages + 1), each positive: the padded extents of every
-  // patch_order input are derived from this list.
   EXPECT_THROW(makeWindowedSegmentationConfig({4, 4}), std::runtime_error);
   EXPECT_THROW(makeWindowedSegmentationConfig({4, 0, 4}), std::runtime_error);
 }

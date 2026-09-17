@@ -174,9 +174,8 @@ void PTv3TRT::initPtr()
 {
   grid_coord_d_ = autoware::cuda_utils::make_unique<std::int32_t[]>(config_.max_num_voxels_ * 3);
   feat_d_ = autoware::cuda_utils::make_unique<float[]>(config_.max_num_voxels_ * 4);
-  const auto num_orders = config_.serialization_orders_.size();
   serialized_code_d_ =
-    autoware::cuda_utils::make_unique<std::int64_t[]>(config_.max_num_voxels_ * num_orders);
+    autoware::cuda_utils::make_unique<std::int64_t[]>(config_.max_num_voxels_ * 2);
 
   // Encoder outputs shared with all the heads: one feature buffer per stage.
   stage_feat_d_.clear();
@@ -338,13 +337,10 @@ void PTv3TRT::initEncoderTrt(const tensorrt_common::TrtCommonConfig & trt_config
     "feat", nvinfer1::Dims{2, {-1, 4}}, nvinfer1::Dims{2, {min_voxels, 4}},
     nvinfer1::Dims{2, {opt_voxels, 4}}, nvinfer1::Dims{2, {max_voxels, 4}},
     nvinfer1::DataType::kFLOAT);
-  // The input level arrives serialized: `patch_order` (the orders padded to whole attention
-  // windows, whose first num_voxels entries are the orders themselves) is the gather order the
-  // blocks read, `serialized_inverse` un-permutes afterwards - both by-products of the
-  // pooling-metadata derivation, so the graph no longer sorts the codes. The bare order is not an
-  // input: nothing in the graph reads it, and the exporter prunes what nothing reads.
-  // serialized_code stays a host-side buffer for chaining the pooling stages. Only consumed when
-  // the finest stage attends; a convolution-only stage 0 reads neither.
+  // The input level's attention gathers through `patch_order` (its orders padded to whole windows)
+  // and un-permutes through `serialized_inverse`; serialized_code stays a host-side buffer for
+  // chaining the pooling stages. Only consumed when the finest stage attends; a convolution-only
+  // stage 0 reads neither.
   {
     const auto padded = stagePaddedProfileCounts(0);
     add_io(
@@ -385,9 +381,6 @@ void PTv3TRT::initEncoderTrt(const tensorrt_common::TrtCommonConfig & trt_config
       prefix + "grid_coord", nvinfer1::Dims{2, {-1, 3}}, nvinfer1::Dims{2, {1, 3}},
       nvinfer1::Dims{2, {opt_voxels, 3}}, nvinfer1::Dims{2, {max_voxels, 3}},
       nvinfer1::DataType::kINT32, kOptional);
-    // The pooled level's order padded to whole attention windows - the gather order its blocks
-    // read; its extent is the pooled count rounded up, bounded like the other pooled tensors.
-    // The pooled level's bare order is not an input either (see the input level above).
     add_io(
       prefix + "patch_order", nvinfer1::Dims{2, {num_orders, -1}},
       nvinfer1::Dims{2, {num_orders, config_.padded_voxel_count(1, stage + 1)}},
@@ -440,8 +433,6 @@ std::array<std::int64_t, 3> PTv3TRT::stageProfileCounts(const std::size_t stage_
 
 std::array<std::int64_t, 3> PTv3TRT::stagePaddedProfileCounts(const std::size_t stage_index) const
 {
-  // The [min, opt, max] extents of a stage's patch_order input: its profile counts rounded up to
-  // whole attention windows.
   const auto counts = stageProfileCounts(stage_index);
   return {
     config_.padded_voxel_count(counts[0], stage_index),
@@ -591,6 +582,7 @@ void PTv3TRT::precomputeSerializedPoolingMetadata()
         stage.grid_coord.get(), stage.serialized_code.get(), stage.serialized_order.get(),
         stage.serialized_inverse.get(), stage.patch_order.get()});
   }
+
   pre_ptr_->generateSerializedPoolingMetadata(
     grid_coord_d_.get(), serialized_code_d_.get(), num_voxels_, stage_views,
     serialized_pooling_num_voxels_d_.get());
@@ -923,9 +915,7 @@ bool PTv3TRT::preProcess(
   clear_async(feat_d_.get(), static_cast<std::size_t>(config_.max_num_voxels_) * 4, stream_);
   clear_async(grid_coord_d_.get(), static_cast<std::size_t>(config_.max_num_voxels_) * 3, stream_);
   clear_async(
-    serialized_code_d_.get(),
-    static_cast<std::size_t>(config_.max_num_voxels_) * config_.serialization_orders_.size(),
-    stream_);
+    serialized_code_d_.get(), static_cast<std::size_t>(config_.max_num_voxels_) * 2, stream_);
   clear_async(
     compact_points_d_.get(),
     static_cast<std::size_t>(config_.max_num_voxels_) * sizeof(CloudPointTypeXYZIRCAEDT), stream_);

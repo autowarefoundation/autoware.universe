@@ -38,9 +38,7 @@ struct SerializedPoolingDeviceStageView
   std::int64_t * serialized_code{};
   std::int64_t * serialized_order{};
   std::int64_t * serialized_inverse{};
-  /// serialized_order padded to whole attention windows, [num_orders, padded_count]; the gather
-  /// order the pooled level's attention blocks read (engine input
-  /// `serialized_pooling_i_patch_order`).
+  /// serialized_order padded to whole attention windows, [num_orders, padded_count].
   std::int64_t * patch_order{};
 };
 
@@ -80,12 +78,8 @@ public:
     std::int64_t * inverse_map, std::size_t * num_cropped_points);
 
   /**
-   * @brief Builds the serialization inputs of every level the encoder and head graphs consume.
-   *
-   * Every level also gets its `patch_order`: the level's orders padded to whole attention windows
-   * of `config.patch_sizes_[level]` (see fillPatchOrderKernel), which is the gather order its
-   * attention blocks read. The input level's own is published by inputLevelPatchOrder(); a pooled
-   * level's goes into its stage view.
+   * @brief Builds the serialization inputs of every level the encoder and head graphs consume,
+   * including each level's `patch_order` (see fillPatchOrderKernel).
    *
    * @param grid_coord Grid coordinates of the input voxels, laid out [num_voxels, 3].
    * @param serialized_code Codes of the input voxels, laid out [num_orders, num_voxels].
@@ -124,11 +118,8 @@ public:
   }
   /**
    * @brief inputLevelSerializedOrder() padded to whole attention windows, matching the encoder's
-   * `patch_order` input: [num_orders, padded_voxel_count(num_voxels, 0)], the first num_voxels
-   * entries of each row being the order itself. Same validity and binding rules.
-   *
-   * The extent is the padded count of the *current* frame's voxels, so the caller sets the engine
-   * input shape from config.padded_voxel_count(num_voxels, 0).
+   * `patch_order` input: [num_orders, padded_voxel_count(num_voxels, 0)]. Same validity and
+   * binding rules.
    */
   [[nodiscard]] std::int64_t * inputLevelPatchOrder() const
   {
@@ -171,8 +162,8 @@ private:
   /// Inverse permutation of each input_level_order_d_ row, same layout; published via
   /// inputLevelSerializedInverse().
   autoware::cuda_utils::CudaUniquePtr<std::int64_t[]> input_level_inverse_d_{nullptr};
-  /// Each input_level_order_d_ row padded to whole attention windows,
-  /// [num_orders, padded_voxel_count(max_num_voxels, 0)]; published via inputLevelPatchOrder().
+  /// Each input_level_order_d_ row padded to whole attention windows; published via
+  /// inputLevelPatchOrder().
   autoware::cuda_utils::CudaUniquePtr<std::int64_t[]> input_level_patch_order_d_{nullptr};
   /// Keys for one of the input-level order sorts: each input voxel's code under the serialization
   /// order being sorted.
