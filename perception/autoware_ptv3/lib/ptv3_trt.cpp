@@ -258,7 +258,6 @@ void PTv3TRT::allocateSerializedPoolingBuffers()
       autoware::cuda_utils::make_unique<std::int64_t[]>(max_num_voxels * num_orders);
     stage.serialized_inverse =
       autoware::cuda_utils::make_unique<std::int64_t[]>(max_num_voxels * num_orders);
-    // Stage i pools into level i + 1, whose window pads its order.
     stage.patch_order = autoware::cuda_utils::make_unique<std::int64_t[]>(
       config_.padded_voxel_count(config_.max_num_voxels_, stage_index + 1) * num_orders);
     serialized_pooling_stages_d_.push_back(std::move(stage));

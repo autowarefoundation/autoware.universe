@@ -403,11 +403,6 @@ __global__ void scatterInverseKernel(
  * @brief Pads one level's serialization orders to whole attention windows: the gather order the
  * level's attention blocks read.
  *
- * C++ twin of the exporter's `build_patch_order` (autoware-ml, encoders/ptv3.py); keep the two in
- * step. The tail slots borrow tokens backwards along the serialization,
- * `source = (slot - patch_size + cycle) % count` with `cycle` the smallest multiple of `count`
- * not below `patch_size`, so every slot holds a real token and attention needs no mask.
- *
  * @param order_in The level's serialization orders, laid out densely [num_orders, count].
  * @param stage_counts_in Per-level voxel counts; entry `level_index` is this level's count.
  * @param patch_order_out Output, laid out densely [num_orders, padded_count]; padded_count is
