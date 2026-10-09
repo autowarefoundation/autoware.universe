@@ -18,6 +18,7 @@
 
 #include <gtest/gtest.h>
 
+#include <array>
 #include <cstdint>
 #include <stdexcept>
 #include <string>
@@ -36,13 +37,15 @@ PTv3Config makeDetectionConfig(
   const std::vector<float> & detection_score_thresholds = {0.1F, 0.2F, 0.3F, 0.4F},
   const std::vector<float> & yaw_norm_thresholds = {0.1F, 0.2F},
   const std::vector<float> & voxel_size = {1.0F, 1.0F, 1.0F},
-  const std::vector<std::int64_t> & voxels_num = {1, 4, 8})
+  const std::vector<std::int64_t> & voxels_num = {1, 4, 8},
+  const std::vector<std::int64_t> & pooled_voxels_num_max = {8, 8, 8, 8})
 {
   return PTv3Config(
-    false, true, "", 8, voxels_num, point_cloud_range, voxel_size, {}, {}, {"z", "z-trans"},
-    {2, 2, 2, 2}, {8, 16, 32, 64, 128}, {4, 4, 4, 4, 4}, {}, {}, "", false, "", {},
-    {"CAR", "PEDESTRIAN"}, bbox_voxel_size, distance_bin_upper_limits, detection_score_thresholds,
-    yaw_norm_thresholds, true, 8, {-2.0F, -2.0F, -2.0F, 4.0F, 4.0F, 4.0F});
+    false, true, "", 8, "map", 1, voxels_num, pooled_voxels_num_max, point_cloud_range, voxel_size,
+    2, {}, {}, {"z", "z-trans"}, {2, 2, 2, 2}, {8, 16, 32, 64, 128}, {4, 4, 4, 4, 4}, {}, {}, "",
+    false, "", {}, {"CAR", "PEDESTRIAN"}, bbox_voxel_size, distance_bin_upper_limits,
+    detection_score_thresholds, yaw_norm_thresholds, true, 8,
+    {-2.0F, -2.0F, -2.0F, 4.0F, 4.0F, 4.0F});
 }
 
 // Segmentation-only config over three levels (two pooling stages), so the attention window can
@@ -50,9 +53,9 @@ PTv3Config makeDetectionConfig(
 PTv3Config makeWindowedSegmentationConfig(const std::vector<std::int64_t> & patch_sizes = {4, 4, 4})
 {
   return PTv3Config(
-    true, false, "", 8, {1, 4, 8}, {-1.0F, -1.0F, -1.0F, 3.0F, 3.0F, 3.0F}, {1.0F, 1.0F, 1.0F},
-    {"noise"}, {{"noise", "NOISE"}}, {"z", "z-trans"}, {2, 2}, {8, 16, 32}, patch_sizes, {0, 0, 0},
-    {}, "xyzi", false, "partial", {0, 0});
+    true, false, "", 8, "map", 1, {1, 4, 8}, {8, 8}, {-1.0F, -1.0F, -1.0F, 3.0F, 3.0F, 3.0F},
+    {1.0F, 1.0F, 1.0F}, 2, {"noise"}, {{"noise", "NOISE"}}, {"z", "z-trans"}, {2, 2}, {8, 16, 32},
+    patch_sizes, {0, 0, 0}, {}, "xyzi", false, "partial", {0, 0});
 }
 
 TEST(PTv3ConfigTest, RejectsPatchSizesThatDoNotCoverEveryStage)
@@ -78,9 +81,9 @@ PTv3Config makeSegmentationConfig(
 {
   std::vector<std::int64_t> palette(segmentation_class_names.size() * 3, 0);
   return PTv3Config(
-    true, false, "", 8, {1, 4, 8}, {-1.0F, -1.0F, -1.0F, 3.0F, 3.0F, 3.0F}, {1.0F, 1.0F, 1.0F},
-    segmentation_class_names, segmentation_class_mapping, {"z", "z-trans"}, {2, 2}, {8, 16, 32},
-    {4, 4, 4}, palette, {}, "xyzi", false, "partial", {0, 0});
+    true, false, "", 8, "map", 1, {1, 4, 8}, {8, 8}, {-1.0F, -1.0F, -1.0F, 3.0F, 3.0F, 3.0F},
+    {1.0F, 1.0F, 1.0F}, 2, segmentation_class_names, segmentation_class_mapping, {"z", "z-trans"},
+    {2, 2}, {8, 16, 32}, {4, 4, 4}, palette, {}, "xyzi", false, "partial", {0, 0});
 }
 
 TEST(PTv3ConfigTest, AcceptsCompatibleDetectionGrid)
@@ -211,10 +214,51 @@ TEST(PTv3ConfigTest, StageVoxelCapacityCoversUnalignedRangeBoundary)
 {
   const auto config = makeDetectionConfig(
     {0.5F, 0.5F, 0.5F, 16.5F, 16.5F, 4.5F}, {8.0F, 8.0F, 4.0F}, {10.0F, 20.0F},
-    {0.1F, 0.2F, 0.3F, 0.4F}, {0.1F, 0.2F}, {1.0F, 1.0F, 1.0F}, {1, 1024, 4096});
+    {0.1F, 0.2F, 0.3F, 0.4F}, {0.1F, 0.2F}, {1.0F, 1.0F, 1.0F}, {1, 1024, 4096},
+    {4096, 4096, 4096, 4096});
   EXPECT_EQ(config.stage_voxel_capacity(0), 17 * 17 * 5);
   EXPECT_EQ(config.stage_voxel_capacity(1), 9 * 9 * 3);
   EXPECT_EQ(config.stage_voxel_capacity(4), 2 * 2 * 1);
+}
+
+// 16 x 16 x 4 grid: cell counts 1024, 128, 16, 4, 1 per level.
+TEST(PTv3ConfigTest, StageProfilesFollowThePooledMaximums)
+{
+  using Counts = std::array<std::int64_t, 3>;
+  const auto config = makeDetectionConfig(
+    {0.0F, 0.0F, 0.0F, 16.0F, 16.0F, 4.0F}, {8.0F, 8.0F, 4.0F}, {10.0F, 20.0F},
+    {0.1F, 0.2F, 0.3F, 0.4F}, {0.1F, 0.2F}, {1.0F, 1.0F, 1.0F}, {16, 256, 1024}, {64, 8, 4, 4});
+  EXPECT_EQ(config.stage_profile_counts(0), (Counts{16, 256, 1024}));
+  EXPECT_EQ(config.stage_profile_counts(1), (Counts{1, 64, 64}));
+  EXPECT_EQ(config.stage_profile_counts(2), (Counts{1, 8, 8}));
+  EXPECT_EQ(config.stage_profile_counts(3), (Counts{1, 4, 4}));
+  EXPECT_EQ(config.stage_profile_counts(4), (Counts{1, 1, 1}));
+}
+
+TEST(PTv3ConfigTest, StageProfileCountsClampToTheGridCapacity)
+{
+  const auto config = makeDetectionConfig(
+    {0.0F, 0.0F, 0.0F, 16.0F, 16.0F, 4.0F}, {8.0F, 8.0F, 4.0F}, {10.0F, 20.0F},
+    {0.1F, 0.2F, 0.3F, 0.4F}, {0.1F, 0.2F}, {1.0F, 1.0F, 1.0F}, {2048, 3072, 4096},
+    {4096, 4096, 4096, 4096});
+  EXPECT_EQ(config.stage_profile_counts(0), (std::array<std::int64_t, 3>{1024, 1024, 1024}));
+}
+
+TEST(PTv3ConfigTest, RejectsMalformedPooledVoxelsNumMax)
+{
+  const auto rejects = [](const std::vector<std::int64_t> & pooled_voxels_num_max) {
+    EXPECT_THROW(
+      makeDetectionConfig(
+        {0.0F, 0.0F, 0.0F, 16.0F, 16.0F, 4.0F}, {8.0F, 8.0F, 4.0F}, {10.0F, 20.0F},
+        {0.1F, 0.2F, 0.3F, 0.4F}, {0.1F, 0.2F}, {1.0F, 1.0F, 1.0F}, {1, 4, 8},
+        pooled_voxels_num_max),
+      std::runtime_error);
+  };
+  rejects({8, 8, 8});        // one entry per pooling stage (four here)
+  rejects({8, 8, 8, 8, 8});  //
+  rejects({8, 8, 0, 8});     // positive
+  rejects({9, 8, 8, 8});     // at most the input level's maximum (8)
+  rejects({8, 4, 8, 8});     // non-increasing
 }
 
 // Borders that are voxel-aligned in decimal but not exactly representable in binary (neither 102.4
