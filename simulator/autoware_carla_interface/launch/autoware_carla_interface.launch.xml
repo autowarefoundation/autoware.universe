@@ -105,11 +105,7 @@
       default="false"
       description="Follow a CARLA scenario run from outside this launch: adopt its world instead of loading one, attach to its ego (role name 'Ego') instead of spawning one, follow its ticks, and leave the moving actors to it (no traffic manager). The scenario framework starts this launch with it, one fresh stack per scenario"
     />
-    <arg
-      name="scenario_world_wait_timeout"
-      default="300.0"
-      description="Seconds the interface waits for the scenario to drive its world before adopting it (scenario_mode only)"
-    />
+    <arg name="scenario_world_wait_timeout" default="300.0" description="Seconds the interface waits for the scenario to drive its world before adopting it (scenario_mode only)"/>
     <arg
       name="ego_attach_timeout"
       default="60.0"
