@@ -24591,6 +24591,39 @@ nearest time on the trajectory was determined:</p>
 </tr>
 </tbody>
 </table>
+<p>The <code>~/output/lateral_diagnostic</code> topic carries the following values at the end of its array.
+The first four are written only when <code>vehicle_model_type</code> is <code>dynamics</code>. The other vehicle
+models leave them at zero.</p>
+<table>
+<thead>
+<tr>
+<th align="left">Index</th>
+<th align="left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td align="left">27</td>
+<td align="left">lateral error derivative, before the low pass filter</td>
+</tr>
+<tr>
+<td align="left">28</td>
+<td align="left">yaw error derivative, before the low pass filter</td>
+</tr>
+<tr>
+<td align="left">29</td>
+<td align="left">lateral error derivative</td>
+</tr>
+<tr>
+<td align="left">30</td>
+<td align="left">yaw error derivative</td>
+</tr>
+<tr>
+<td align="left">31</td>
+<td align="left">wall time the call of the QP solver took [ms]</td>
+</tr>
+</tbody>
+</table>
 <h3 id="how-to-tune-mpc-parameters">How to tune MPC parameters<a class="headerlink" href="#how-to-tune-mpc-parameters" title="Permanent link">#</a></h3>
 <h4 id="set-kinematics-information">Set kinematics information<a class="headerlink" href="#set-kinematics-information" title="Permanent link">#</a></h4>
 <p>First, it's important to set the appropriate parameters for vehicle kinematics. This includes parameters like <code>wheelbase</code>, which represents the distance between the front and rear wheels, and <code>max_steering_angle</code>, which indicates the maximum tire steering angle. These parameters should be set in the <code>vehicle_info.param.yaml</code>.</p>
