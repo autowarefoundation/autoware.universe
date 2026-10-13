@@ -33,7 +33,7 @@ if(BUILD_TESTING)
     ${PROJECT_NAME}_component
   )
 
-  if(NOT (DEFINED ENV{ENABLE_AGNOCAST} AND "$ENV{ENABLE_AGNOCAST}" STREQUAL "1"))
+  if(NOT "$ENV{ENABLE_AGNOCAST}" STREQUAL "1")
     ament_add_ros_isolated_gmock(test_${PROJECT_NAME}_node_io
       test/test_node_io.cpp
     )
