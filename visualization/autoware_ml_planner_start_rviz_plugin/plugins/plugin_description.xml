@@ -1,0 +1,11 @@
+<library path="autoware_ml_planner_start_rviz_plugin">
+  <class
+    name="autoware_ml_planner_start_rviz_plugin/MLPlannerStartPanel"
+    type="autoware::ml_planner_start_rviz_plugin::MLPlannerStartPanel"
+    base_class_type="rviz_common::Panel">
+    <description>
+      Start the ML planner standstill velocity override, show a confirmed working state,
+      then turn the override off when ego speed exceeds 0.2 m/s or when Force stop is pressed.
+    </description>
+  </class>
+</library>
