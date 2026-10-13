@@ -34,7 +34,7 @@ autoware_agnocast_wrapper_register_node(${PROJECT_NAME}_node_component
   PLUGIN "generic_service_divider::GenericServiceDividerNode"
   EXECUTABLE ${PROJECT_NAME}_node
   ROS2_EXECUTOR MultiThreadedExecutor
-  AGNOCAST_EXECUTOR AgnocastOnlyMultiThreadedExecutor
+  AGNOCAST_EXECUTOR AgnocastOnlyCallbackIsolatedExecutor
 )
 
 pluginlib_export_plugin_description_file(${PROJECT_NAME} plugins.xml)
