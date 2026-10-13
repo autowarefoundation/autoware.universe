@@ -27,7 +27,6 @@
   <depend>autoware_trajectory</depend>
   <depend>autoware_utils</depend>
   <depend>autoware_utils_debug</depend>
-  <depend>autoware_utils_rclcpp</depend>
   <depend>autoware_vehicle_info_utils</depend>
   <depend>autoware_vehicle_msgs</depend>
   <depend>geometry_msgs</depend>

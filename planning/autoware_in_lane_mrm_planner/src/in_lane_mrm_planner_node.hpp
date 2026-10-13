@@ -45,6 +45,7 @@
 
 namespace autoware::in_lane_mrm_planner
 {
+namespace namespace_polling = autoware::agnocast_wrapper::polling;
 
 class InLaneMrmPlannerNode : public autoware::agnocast_wrapper::Node
 {
@@ -96,21 +97,6 @@ private:
   void update_params();
   void publish_debug_status(const DebugStatus & status);
 
-  template <
-    typename MessageT,
-    template <typename> class PollingPolicy = autoware_utils_rclcpp::polling_policy::Latest>
-  using PollingSubscriberPtr = typename autoware::agnocast_wrapper::polling::PollingSubscriber<
-    MessageT, PollingPolicy>::SharedPtr;
-
-  PollingSubscriberPtr<LaneletRoute, autoware_utils_rclcpp::polling_policy::Newest>
-    route_subscriber_;
-  PollingSubscriberPtr<LaneletMapBin, autoware_utils_rclcpp::polling_policy::Newest>
-    vector_map_subscriber_;
-  PollingSubscriberPtr<Odometry> kinematic_state_subscriber_;
-  PollingSubscriberPtr<AccelWithCovarianceStamped> acceleration_subscriber_;
-  PollingSubscriberPtr<PredictedObjects> objects_subscriber_;
-  PollingSubscriberPtr<InLaneStopTrigger> trigger_subscriber_;
-
   std::shared_ptr<::in_lane_mrm_planner::ParamListener> param_listener_;
   Params params_;
   VehicleInfo vehicle_info_;
@@ -127,11 +113,25 @@ private:
   PredictedObjectsLatcher objects_latcher_;
   TriggerEdgeDetector trigger_edge_detector_;
 
+  namespace_polling::PollingSubscriber<
+    LaneletRoute, namespace_polling::polling_policy::Newest>::SharedPtr route_subscriber_;
   LaneletRoute::ConstSharedPtr route_ptr_;
+
+  namespace_polling::PollingSubscriber<
+    LaneletMapBin, namespace_polling::polling_policy::Newest>::SharedPtr vector_map_subscriber_;
   LaneletMapBin::ConstSharedPtr lanelet_map_bin_ptr_;
+
+  namespace_polling::PollingSubscriber<Odometry>::SharedPtr kinematic_state_subscriber_;
   Odometry::ConstSharedPtr odometry_ptr_;
+
+  namespace_polling::PollingSubscriber<AccelWithCovarianceStamped>::SharedPtr
+    acceleration_subscriber_;
   AccelWithCovarianceStamped::ConstSharedPtr acceleration_ptr_;
+
+  namespace_polling::PollingSubscriber<PredictedObjects>::SharedPtr objects_subscriber_;
   PredictedObjects::ConstSharedPtr objects_ptr_;
+
+  namespace_polling::PollingSubscriber<InLaneStopTrigger>::SharedPtr trigger_subscriber_;
   InLaneStopTrigger::ConstSharedPtr trigger_ptr_;
 
   AUTOWARE_PUBLISHER_PTR(Trajectory) pub_trajectory_;

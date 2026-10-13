@@ -99,19 +99,20 @@ InLaneMrmPlannerNode::InLaneMrmPlannerNode(const rclcpp::NodeOptions & options)
   velocity_planner_(params_),
   trajectory_validator_(params_)
 {
-  namespace polling = autoware::agnocast_wrapper::polling;
-  using autoware_utils_rclcpp::polling_policy::Newest;
-  route_subscriber_ = polling::create_polling_subscriber<LaneletRoute, Newest>(
+  route_subscriber_ = namespace_polling::create_polling_subscriber<
+    LaneletRoute, namespace_polling::polling_policy::Newest>(
     this, "~/input/route", rclcpp::QoS{1}.transient_local());
-  vector_map_subscriber_ = polling::create_polling_subscriber<LaneletMapBin, Newest>(
+  vector_map_subscriber_ = namespace_polling::create_polling_subscriber<
+    LaneletMapBin, namespace_polling::polling_policy::Newest>(
     this, "~/input/vector_map", rclcpp::QoS{1}.transient_local());
   kinematic_state_subscriber_ =
-    polling::create_polling_subscriber<Odometry>(this, "~/input/kinematic_state");
+    namespace_polling::create_polling_subscriber<Odometry>(this, "~/input/kinematic_state");
   acceleration_subscriber_ =
-    polling::create_polling_subscriber<AccelWithCovarianceStamped>(this, "~/input/acceleration");
+    namespace_polling::create_polling_subscriber<AccelWithCovarianceStamped>(
+      this, "~/input/acceleration");
   objects_subscriber_ =
-    polling::create_polling_subscriber<PredictedObjects>(this, "~/input/objects");
-  trigger_subscriber_ = polling::create_polling_subscriber<InLaneStopTrigger>(
+    namespace_polling::create_polling_subscriber<PredictedObjects>(this, "~/input/objects");
+  trigger_subscriber_ = namespace_polling::create_polling_subscriber<InLaneStopTrigger>(
     this, "~/input/trigger", rclcpp::QoS{1}.reliable().transient_local());
 
   path_planner_ =
