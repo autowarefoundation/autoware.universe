@@ -211,7 +211,7 @@ Service divider: at least one output failed/timed out, returning error response 
 1. Add `plugins/<name>_divider.cpp` deriving from `ServiceDividerPluginBase` and override:
 
    ```cpp
-   void initialize(rclcpp::Node::SharedPtr node) override;   // declare the parameters
+   void initialize(autoware::agnocast_wrapper::Node::SharedPtr node) override;  // declare the parameters
    std::string service_type() const override;                // "pkg/srv/Type"
    std::string input_service_name() const override;
    std::vector<OutputServiceConfig> output_services() const override;
