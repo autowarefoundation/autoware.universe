@@ -27,7 +27,7 @@ namespace generic_service_divider
 class ChangeAutowareControlDivider : public ServiceDividerPluginBase
 {
 public:
-  void initialize(rclcpp::Node::SharedPtr node) override
+  void initialize(autoware::agnocast_wrapper::Node::SharedPtr node) override
   {
     node_ = node;
     input_name_ = node_->declare_parameter<std::string>(

@@ -17,7 +17,8 @@
 #include "rclcpp/rclcpp.hpp"
 #include "rcpputils/join.hpp"
 
-#include <diagnostic_updater/diagnostic_updater.hpp>
+#include <autoware/agnocast_wrapper/diagnostic_updater.hpp>
+#include <autoware/agnocast_wrapper/node.hpp>
 
 #include <diagnostic_msgs/msg/diagnostic_status.hpp>
 
@@ -29,7 +30,7 @@
 namespace generic_service_divider
 {
 
-class GenericServiceDividerNode : public rclcpp::Node
+class GenericServiceDividerNode : public autoware::agnocast_wrapper::Node
 {
 public:
   explicit GenericServiceDividerNode(const rclcpp::NodeOptions & options)
@@ -53,7 +54,8 @@ public:
       return;
     }
 
-    auto this_shared = std::shared_ptr<rclcpp::Node>(this, [](rclcpp::Node *) {});
+    auto this_shared = std::shared_ptr<autoware::agnocast_wrapper::Node>(
+      this, [](autoware::agnocast_wrapper::Node *) {});
 
     for (const auto & name : plugin_names) {
       RCLCPP_INFO(get_logger(), "Loading plugin: %s", name.c_str());
@@ -134,8 +136,8 @@ private:
     return summary;
   }
 
-  diagnostic_updater::Updater diag_updater_;
-  rclcpp::TimerBase::SharedPtr diag_timer_;
+  autoware::agnocast_wrapper::diagnostic_updater::Updater diag_updater_;
+  AUTOWARE_TIMER_PTR diag_timer_;
   pluginlib::ClassLoader<ServiceDividerPluginBase> plugin_loader_;
   std::vector<std::shared_ptr<ServiceDividerPluginBase>> plugins_;
 };

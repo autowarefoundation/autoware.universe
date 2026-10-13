@@ -15,10 +15,10 @@
 #ifndef GENERIC_SERVICE_DIVIDER__SERVICE_DIVIDER_PLUGIN_BASE_HPP_
 #define GENERIC_SERVICE_DIVIDER__SERVICE_DIVIDER_PLUGIN_BASE_HPP_
 
-#include "generic_service_divider/generic_client.hpp"
-#include "generic_service_divider/generic_service.hpp"
 #include "generic_service_divider/output_service_config.hpp"
 #include "rclcpp/rclcpp.hpp"
+
+#include <autoware/agnocast_wrapper/node.hpp>
 
 #include <map>
 #include <memory>
@@ -46,7 +46,7 @@ public:
   // --- Plugin must override these ---
 
   /// Read parameters from the node to configure the plugin.
-  virtual void initialize(rclcpp::Node::SharedPtr node) = 0;
+  virtual void initialize(autoware::agnocast_wrapper::Node::SharedPtr node) = 0;
 
   /// Service type string (e.g. "autoware_system_msgs/srv/ChangeOperationMode").
   virtual std::string service_type() const = 0;
@@ -78,7 +78,7 @@ public:
   StartupDiagnosticInfo get_startup_diagnostic_info();
 
 protected:
-  rclcpp::Node::SharedPtr node_;
+  autoware::agnocast_wrapper::Node::SharedPtr node_;
 
 private:
   void try_start_input_service();
@@ -93,34 +93,34 @@ private:
 
   struct OutputClientEntry
   {
-    std::shared_ptr<GenericClient> client;
+    autoware::agnocast_wrapper::GenericClient::SharedPtr client;
     OutputServiceConfig config;
     rclcpp::CallbackGroup::SharedPtr callback_group;
   };
 
   struct PendingDivision
   {
-    std::shared_ptr<rmw_request_id_t> request_header;
-    std::shared_ptr<GenericService> service;
-    std::map<std::string, std::shared_ptr<void>> responses;
+    autoware::agnocast_wrapper::GenericService::RequestPtr request;
+    autoware::agnocast_wrapper::GenericService::SharedPtr service;
+    std::map<std::string, std::shared_ptr<const void>> responses;
     std::map<std::string, bool> completed;
     std::map<std::string, bool> timed_out;
     int awaiting_count{0};
     bool finalized{false};
     std::mutex mutex;
-    std::vector<rclcpp::TimerBase::SharedPtr> timeout_timers;
+    std::vector<AUTOWARE_TIMER_PTR> timeout_timers;
   };
 
   struct DivisionOutcome
   {
     bool all_success{true};
     std::string primary_name;
-    std::shared_ptr<void> primary_response;
+    std::shared_ptr<const void> primary_response;
   };
 
   void handle_request(
-    std::shared_ptr<GenericService> service, std::shared_ptr<rmw_request_id_t> request_header,
-    std::shared_ptr<void> request);
+    const autoware::agnocast_wrapper::GenericService::SharedPtr & service,
+    const autoware::agnocast_wrapper::GenericService::RequestPtr & request);
 
   /// Register a new pending division and return the id used in logs.
   int64_t register_pending_division(const std::shared_ptr<PendingDivision> & pending);
@@ -128,13 +128,13 @@ private:
   /// Send the request to a single output service and arm its timeout timer.
   void forward_request(
     OutputClientEntry & entry, const std::shared_ptr<PendingDivision> & pending, int64_t pending_id,
-    const std::shared_ptr<void> & request);
+    const autoware::agnocast_wrapper::GenericService::RequestPtr & request);
 
   /// Mark an output service as completed. Returns false if it was already completed,
   /// which means the caller lost the race against the timeout (or the response).
   bool mark_output_completed(
     const std::shared_ptr<PendingDivision> & pending, const std::string & name, bool timed_out,
-    std::shared_ptr<void> response);
+    std::shared_ptr<const void> response);
 
   void try_finalize_response(std::shared_ptr<PendingDivision> pending);
 
@@ -148,10 +148,10 @@ private:
 
   void erase_pending_division(const std::shared_ptr<PendingDivision> & pending);
 
-  std::shared_ptr<GenericService> input_service_;
+  autoware::agnocast_wrapper::GenericService::SharedPtr input_service_;
   std::vector<OutputClientEntry> output_clients_;
   rclcpp::CallbackGroup::SharedPtr service_callback_group_;
-  rclcpp::TimerBase::SharedPtr server_wait_timer_;
+  AUTOWARE_TIMER_PTR server_wait_timer_;
   std::mutex service_start_mutex_;
   bool input_service_started_{false};
 

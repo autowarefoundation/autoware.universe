@@ -61,12 +61,8 @@ void ServiceDividerPluginBase::setup_service_division()
     entry.callback_group =
       node_->create_callback_group(rclcpp::CallbackGroupType::MutuallyExclusive);
 
-    rcl_client_options_t client_options = rcl_client_get_default_options();
-    entry.client = std::make_shared<GenericClient>(
-      node_->get_node_base_interface().get(), node_->get_node_graph_interface(), output_cfg.name,
-      type, client_options);
-    node_->get_node_services_interface()->add_client(
-      std::dynamic_pointer_cast<rclcpp::ClientBase>(entry.client), entry.callback_group);
+    entry.client = node_->create_generic_client(
+      output_cfg.name, type, rclcpp::ServicesQoS(), entry.callback_group);
 
     output_clients_.push_back(std::move(entry));
   }
@@ -117,15 +113,12 @@ void ServiceDividerPluginBase::advertise_input_service()
   const auto type = service_type();
   const auto input_name = input_service_name();
 
-  rcl_service_options_t service_options = rcl_service_get_default_options();
-  input_service_ = std::make_shared<GenericService>(
-    node_->get_node_base_interface()->get_shared_rcl_node_handle(), input_name, type,
+  input_service_ = node_->create_generic_service(
+    input_name, type,
     std::bind(
-      &ServiceDividerPluginBase::handle_request, this, std::placeholders::_1, std::placeholders::_2,
-      std::placeholders::_3),
-    service_options);
-  node_->get_node_services_interface()->add_service(
-    std::dynamic_pointer_cast<rclcpp::ServiceBase>(input_service_), service_callback_group_);
+      &ServiceDividerPluginBase::handle_request, this, std::placeholders::_1,
+      std::placeholders::_2),
+    rclcpp::ServicesQoS(), service_callback_group_);
 
   input_service_started_ = true;
   if (server_wait_timer_) {
@@ -139,11 +132,11 @@ void ServiceDividerPluginBase::advertise_input_service()
 }
 
 void ServiceDividerPluginBase::handle_request(
-  std::shared_ptr<GenericService> service, std::shared_ptr<rmw_request_id_t> request_header,
-  std::shared_ptr<void> request)
+  const autoware::agnocast_wrapper::GenericService::SharedPtr & service,
+  const autoware::agnocast_wrapper::GenericService::RequestPtr & request)
 {
   auto pending = std::make_shared<PendingDivision>();
-  pending->request_header = request_header;
+  pending->request = request;
   pending->service = service;
 
   for (const auto & entry : output_clients_) {
@@ -154,7 +147,7 @@ void ServiceDividerPluginBase::handle_request(
 
   const int64_t pending_id = register_pending_division(pending);
 
-  const auto request_detail = format_request(request.get());
+  const auto request_detail = format_request(request->get());
   RCLCPP_INFO(
     node_->get_logger(), "Service divider[%ld]: call received on '%s'%s%s", pending_id,
     input_service_name().c_str(), request_detail.empty() ? "" : " request=",
@@ -176,7 +169,7 @@ int64_t ServiceDividerPluginBase::register_pending_division(
 
 bool ServiceDividerPluginBase::mark_output_completed(
   const std::shared_ptr<PendingDivision> & pending, const std::string & name, bool timed_out,
-  std::shared_ptr<void> response)
+  std::shared_ptr<const void> response)
 {
   std::lock_guard<std::mutex> lock(pending->mutex);
   if (pending->completed[name]) {
@@ -193,7 +186,7 @@ bool ServiceDividerPluginBase::mark_output_completed(
 
 void ServiceDividerPluginBase::forward_request(
   OutputClientEntry & entry, const std::shared_ptr<PendingDivision> & pending, int64_t pending_id,
-  const std::shared_ptr<void> & request)
+  const autoware::agnocast_wrapper::GenericService::RequestPtr & request)
 {
   const auto name = entry.config.name;
   const int timeout_ms = entry.config.timeout_ms;
@@ -221,7 +214,8 @@ void ServiceDividerPluginBase::forward_request(
 
   try {
     entry.client->async_send_request(
-      request, [this, pending, name, pending_id](GenericClient::SharedFuture future) {
+      request->get(), [this, pending, name,
+                       pending_id](autoware::agnocast_wrapper::GenericClient::SharedFuture future) {
         auto response = future.get();
         const auto response_detail = format_response(response.get());
         if (!mark_output_completed(pending, name, false, response)) {
@@ -300,7 +294,7 @@ void ServiceDividerPluginBase::send_final_response(
     RCLCPP_ERROR(
       node_->get_logger(), "Service divider: primary service did not respond, returning error");
     pending->service->send_response(
-      *pending->request_header, create_error_response("Primary service did not respond"));
+      pending->request, create_error_response("Primary service did not respond").get());
     return;
   }
 
@@ -311,15 +305,15 @@ void ServiceDividerPluginBase::send_final_response(
       "(primary='%s')",
       outcome.primary_name.c_str());
     pending->service->send_response(
-      *pending->request_header,
-      create_error_response("One or more output services failed or timed out"));
+      pending->request,
+      create_error_response("One or more output services failed or timed out").get());
     return;
   }
 
   RCLCPP_INFO(
     node_->get_logger(), "Service divider: all outputs succeeded, returning primary response '%s'",
     outcome.primary_name.c_str());
-  pending->service->send_response(*pending->request_header, outcome.primary_response);
+  pending->service->send_response(pending->request, outcome.primary_response.get());
 }
 
 void ServiceDividerPluginBase::erase_pending_division(

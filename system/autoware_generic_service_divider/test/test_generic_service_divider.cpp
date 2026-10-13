@@ -16,6 +16,8 @@
 #include "pluginlib/class_loader.hpp"
 #include "rclcpp/rclcpp.hpp"
 
+#include <autoware/agnocast_wrapper/node.hpp>
+
 #include <autoware_system_msgs/srv/change_operation_mode.hpp>
 
 #include <gtest/gtest.h>
@@ -114,19 +116,19 @@ protected:
       "change_operation_mode.output_services.timeouts_ms",
       std::vector<int64_t>{timeout_ms, timeout_ms});
 
-    divider_node_ = std::make_shared<rclcpp::Node>("divider_host", options);
+    divider_node_ = std::make_shared<autoware::agnocast_wrapper::Node>("divider_host", options);
 
     plugin_loader_ =
       std::make_shared<pluginlib::ClassLoader<generic_service_divider::ServiceDividerPluginBase>>(
         "autoware_generic_service_divider", "generic_service_divider::ServiceDividerPluginBase");
 
-    auto divider_shared = std::shared_ptr<rclcpp::Node>(divider_node_);
+    auto divider_shared = divider_node_;
     plugin_ =
       plugin_loader_->createSharedInstance("generic_service_divider::ChangeOperationModeDivider");
     plugin_->initialize(divider_shared);
     plugin_->setup_service_division();
 
-    executor_->add_node(divider_node_);
+    executor_->add_node(divider_node_->get_node_base_interface());
   }
 
   void create_client()
@@ -190,7 +192,7 @@ protected:
 
   std::shared_ptr<rclcpp::Node> mock_node_;
   std::shared_ptr<rclcpp::Node> client_node_;
-  std::shared_ptr<rclcpp::Node> divider_node_;
+  std::shared_ptr<autoware::agnocast_wrapper::Node> divider_node_;
   rclcpp::Service<ChangeOperationMode>::SharedPtr main_server_;
   rclcpp::Service<ChangeOperationMode>::SharedPtr sub_server_;
   rclcpp::Client<ChangeOperationMode>::SharedPtr client_;
