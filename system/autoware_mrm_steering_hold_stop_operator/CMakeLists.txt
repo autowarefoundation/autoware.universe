@@ -14,7 +14,7 @@ autoware_agnocast_wrapper_register_node(${PROJECT_NAME}_component
   PLUGIN "autoware::mrm_steering_hold_stop_operator::MrmSteeringHoldStopOperator"
   EXECUTABLE ${PROJECT_NAME}_node
   ROS2_EXECUTOR SingleThreadedExecutor
-  AGNOCAST_EXECUTOR AgnocastOnlySingleThreadedExecutor
+  AGNOCAST_EXECUTOR AgnocastOnlyCallbackIsolatedExecutor
 )
 
 if(BUILD_TESTING)
