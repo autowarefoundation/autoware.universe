@@ -28,6 +28,7 @@
 #include <algorithm>
 #include <cmath>
 #include <deque>
+#include <functional>
 #include <limits>
 #include <memory>
 #include <stdexcept>
@@ -52,7 +53,6 @@ MpcLateralController::MpcLateralController(
 
   const auto ctrl_period = node.get_parameter("ctrl_period").as_double();
   m_mpc->m_ctrl_period = ctrl_period;
-  m_ctrl_period = ctrl_period;
 
   auto & p_filt = m_trajectory_filtering_param;
   p_filt.enable_path_smoothing = dp_bool("enable_path_smoothing");
@@ -73,18 +73,12 @@ MpcLateralController::MpcLateralController(
   m_new_traj_duration_time = dp_double("new_traj_duration_time");            // [s]
   m_new_traj_end_dist = dp_double("new_traj_end_dist");                      // [m]
   m_mpc_converged_threshold_rps = dp_double("mpc_converged_threshold_rps");  // [rad/s]
-  m_stop_state_steer_hold_duration = dp_double("stop_state_steer_hold_duration");
 
-  /* reference-confidence steer soft hold */
-  m_enable_confidence_steer_slew_limit = dp_bool("enable_confidence_steer_slew_limit");
   m_steering_direct_passthrough = dp_bool("steering_direct_passthrough");
   m_mpc->m_steering_passthrough_timeout_s =
     node.declare_parameter<double>("steering_passthrough_timeout", 0.5);
   m_mpc->m_steering_passthrough_rate_limit_rad_s =
     node.declare_parameter<double>("steering_passthrough_rate_limit_rad_s", 0.6);
-  m_reference_confidence_L_ahead_min = dp_double("reference_confidence_L_ahead_min");
-  m_reference_confidence_L_ahead_ref = dp_double("reference_confidence_L_ahead_ref");
-  m_steer_slew_rate_min_rad_s = dp_double("steer_slew_rate_min_rad_s");
 
   /* mpc parameters */
   const auto vehicle_info = autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo();
@@ -372,13 +366,16 @@ trajectory_follower::LateralOutput MpcLateralController::run(
     return output;
   };
 
-  updateStopStateHoldTimer();
-
-  // Confirmed full stop only (elapsed > duration). Until then stay in control.
   if (isStoppedState()) {
+    // Reset input buffer
+    debug_throttle("Stopped state detected, use previous control command");
     predicted_traj.points.clear();
     publishPredictedTraj(predicted_traj);
-    syncMpcSteerStateToCommand(m_ctrl_cmd_prev.steering_tire_angle);
+    for (auto & value : m_mpc->m_input_buffer) {
+      value = m_ctrl_cmd_prev.steering_tire_angle;
+    }
+    // Use previous command value as previous raw steer command
+    m_mpc->m_raw_steer_cmd_prev = m_ctrl_cmd_prev.steering_tire_angle;
     return createLateralOutput(m_ctrl_cmd_prev, false, ctrl_cmd_horizon);
   }
 
@@ -386,12 +383,6 @@ trajectory_follower::LateralOutput MpcLateralController::run(
     debug_throttle("MPC is not solved, use stop control command");
     predicted_traj.points.clear();
     ctrl_cmd = getStopControlCommand();
-    syncMpcSteerStateToCommand(ctrl_cmd.steering_tire_angle);
-  } else if (
-    !use_steering_direct_passthrough && m_enable_confidence_steer_slew_limit &&
-    applyConfidenceSteerSlewLimit(ctrl_cmd)) {
-    // Low-confidence / flicker: soft-slew (not stop). Sync LPF to published output.
-    syncMpcSteerStateToCommand(ctrl_cmd.steering_tire_angle);
   }
 
   if (mpc_solved_status.result && use_steering_direct_passthrough) {
@@ -493,12 +484,25 @@ Lateral MpcLateralController::getInitialControlCommand() const
   return cmd;
 }
 
-double MpcLateralController::getMinTargetVelocityAhead() const
+bool MpcLateralController::isStoppedState() const
 {
-  if (m_current_trajectory.points.empty()) {
-    return std::numeric_limits<double>::infinity();
+  const double current_vel = m_current_kinematic_state.twist.twist.linear.x;
+  // If the nearest index is not found, return false
+  if (
+    m_current_trajectory.points.empty() || std::fabs(current_vel) > m_stop_state_entry_ego_speed) {
+    return false;
   }
 
+  const auto latest_published_cmd = m_ctrl_cmd_prev;  // use prev_cmd as a latest published command
+  if (m_keep_steer_control_until_converged && !isSteerConverged(latest_published_cmd)) {
+    debug_throttle("steering is not converged.");
+    return false;  // not stopState: keep control
+  }
+
+  // Note: This function used to take into account the distance to the stop line
+  // for the stop state judgement. However, it has been removed since the steering
+  // control was turned off when approaching/exceeding the stop line on a curve or
+  // emergency stop situation and it caused large tracking error.
   const size_t nearest = autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
     m_current_trajectory.points, m_current_kinematic_state.pose.pose, m_ego_nearest_dist_threshold,
     m_ego_nearest_yaw_threshold);
@@ -507,70 +511,21 @@ double MpcLateralController::getMinTargetVelocityAhead() const
   // will not start when the distance from ego to stop point is less than 0.5 meter.
   // So we use a distance margin to ensure we can detect stopped state.
   static constexpr double distance_margin = 1.0;
-  auto min_vel = m_current_trajectory.points.at(nearest).longitudinal_velocity_mps;
-  auto covered_distance = 0.0;
-  for (auto i = nearest + 1; i < m_current_trajectory.points.size(); ++i) {
-    min_vel = std::min(min_vel, m_current_trajectory.points.at(i).longitudinal_velocity_mps);
-    covered_distance += autoware_utils::calc_distance2d(
-      m_current_trajectory.points.at(i - 1).pose, m_current_trajectory.points.at(i).pose);
-    if (covered_distance > distance_margin) {
-      break;
+  const double target_vel = std::invoke([&]() -> double {
+    auto min_vel = m_current_trajectory.points.at(nearest).longitudinal_velocity_mps;
+    auto covered_distance = 0.0;
+    for (auto i = nearest + 1; i < m_current_trajectory.points.size(); ++i) {
+      min_vel = std::min(min_vel, m_current_trajectory.points.at(i).longitudinal_velocity_mps);
+      covered_distance += autoware_utils::calc_distance2d(
+        m_current_trajectory.points.at(i - 1).pose, m_current_trajectory.points.at(i).pose);
+      if (covered_distance > distance_margin) {
+        break;
+      }
     }
-  }
-  return min_vel;
-}
+    return min_vel;
+  });
 
-bool MpcLateralController::isEgoAndTrajectoryStopped() const
-{
-  if (m_current_trajectory.points.empty()) {
-    return false;
-  }
-
-  const double current_vel = m_current_kinematic_state.twist.twist.linear.x;
-  if (std::fabs(current_vel) > m_stop_state_entry_ego_speed) {
-    return false;
-  }
-
-  return std::fabs(getMinTargetVelocityAhead()) < m_stop_state_entry_target_speed;
-}
-
-bool MpcLateralController::isStopStateSteerHoldEligible() const
-{
-  if (!isEgoAndTrajectoryStopped()) {
-    return false;
-  }
-
-  const auto latest_published_cmd = m_ctrl_cmd_prev;
-  if (m_keep_steer_control_until_converged && !isSteerConverged(latest_published_cmd)) {
-    debug_throttle("steering is not converged.");
-    return false;
-  }
-
-  return true;
-}
-
-void MpcLateralController::updateStopStateHoldTimer()
-{
-  if (!isStopStateSteerHoldEligible()) {
-    m_stop_state_hold_started_at.reset();
-    return;
-  }
-
-  if (!m_stop_state_hold_started_at.has_value()) {
-    m_stop_state_hold_started_at = clock_->now();
-  }
-}
-
-bool MpcLateralController::isStoppedState() const
-{
-  // Confirmed full stop only after eligibility lasts longer than the hold duration.
-  // Until then the system is still in control. Flickering short trajectories are not stop.
-  if (!isStopStateSteerHoldEligible() || !m_stop_state_hold_started_at.has_value()) {
-    return false;
-  }
-
-  const double elapsed = (clock_->now() - m_stop_state_hold_started_at.value()).seconds();
-  return elapsed > m_stop_state_steer_hold_duration;
+  return std::fabs(target_vel) < m_stop_state_entry_target_speed;
 }
 
 Lateral MpcLateralController::createCtrlCmdMsg(const Lateral & ctrl_cmd)
@@ -783,88 +738,6 @@ rcl_interfaces::msg::SetParametersResult MpcLateralController::paramCallback(
   }
 
   return result;
-}
-
-double MpcLateralController::getReferenceRemainingArcLength() const
-{
-  const auto & ref_traj = m_mpc->m_reference_trajectory;
-  if (ref_traj.size() < 2) {
-    return 0.0;
-  }
-
-  const auto traj_points = ref_traj.toTrajectoryPoints();
-  if (traj_points.empty()) {
-    return 0.0;
-  }
-
-  const size_t nearest_idx = autoware::motion_utils::findFirstNearestIndexWithSoftConstraints(
-    traj_points, m_current_kinematic_state.pose.pose, m_ego_nearest_dist_threshold,
-    m_ego_nearest_yaw_threshold);
-
-  return MPCUtils::calcMPCTrajectoryRemainingArcLength(ref_traj, nearest_idx);
-}
-
-double MpcLateralController::computeReferenceConfidenceWeight() const
-{
-  const double L_ahead = getReferenceRemainingArcLength();
-
-  const double L_span =
-    std::max(m_reference_confidence_L_ahead_ref - m_reference_confidence_L_ahead_min, 1.0e-6);
-  return std::clamp((L_ahead - m_reference_confidence_L_ahead_min) / L_span, 0.0, 1.0);
-}
-
-bool MpcLateralController::isReferenceFullyConfident() const
-{
-  return computeReferenceConfidenceWeight() >= 1.0 - 1.0e-6;
-}
-
-bool MpcLateralController::applyConfidenceSteerSlewLimit(Lateral & ctrl_cmd)
-{
-  // Confident: accept MPC and refresh the low-confidence hold timer.
-  if (isReferenceFullyConfident()) {
-    m_confidence_hold_started_at.reset();
-    return false;
-  }
-
-  // Low confidence / flicker: not a stop. Soft-limit |Δsteer| toward MPC until confidence
-  // returns (timer refresh) or hold duration expires (allow full MPC restore).
-  if (!m_confidence_hold_started_at.has_value()) {
-    m_confidence_hold_started_at = clock_->now();
-  }
-
-  const double elapsed = (clock_->now() - m_confidence_hold_started_at.value()).seconds();
-  if (elapsed > m_stop_state_steer_hold_duration) {
-    return false;
-  }
-
-  const double confidence_weight = computeReferenceConfidenceWeight();
-  const double ds =
-    static_cast<double>(ctrl_cmd.steering_tire_angle - m_ctrl_cmd_prev.steering_tire_angle);
-  const double ds_abs = std::abs(ds);
-
-  // Linear blend: conf=0 -> ds_max = min_rate*period; conf=1 -> ds_max = |ds| (pass-through).
-  const double ds_max_at_zero_confidence = m_steer_slew_rate_min_rad_s * m_ctrl_period;
-  const double ds_max =
-    (1.0 - confidence_weight) * ds_max_at_zero_confidence + confidence_weight * ds_abs;
-
-  if (ds_abs <= ds_max) {
-    return false;
-  }
-
-  const double ds_clamped = std::clamp(ds, -ds_max, ds_max);
-  ctrl_cmd.steering_tire_angle =
-    m_ctrl_cmd_prev.steering_tire_angle + static_cast<float>(ds_clamped);
-  ctrl_cmd.steering_tire_rotation_rate =
-    m_ctrl_period > 0.0 ? static_cast<float>(ds_clamped / m_ctrl_period) : 0.0f;
-  return true;
-}
-
-void MpcLateralController::syncMpcSteerStateToCommand(const float steering_tire_angle)
-{
-  // Align delay buffer and steering LPF with the command in MPC's offset-compensated coordinates
-  // so soft hold / stop freeze is not undone by LPF state that tracked raw Uex.
-  m_mpc->resetSteeringCmdFilter(
-    static_cast<double>(steering_tire_angle) + m_steering_offset_filtered_);
 }
 
 bool MpcLateralController::isTrajectoryShapeChanged() const

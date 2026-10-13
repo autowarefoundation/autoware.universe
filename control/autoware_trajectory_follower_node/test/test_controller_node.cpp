@@ -322,9 +322,6 @@ TEST_F(FakeNodeFixture, left_turn)
 TEST_F(FakeNodeFixture, stopped)
 {
   auto node_options = makeNodeOptions();
-  // This test checks steering hold on the first stopped control cycle. The production default
-  // confirms the stopped state for two seconds before holding the previous steering command.
-  node_options.append_parameter_override("stop_state_steer_hold_duration", 0.0);
   ControllerTester tester(this, node_options);
 
   tester.send_default_transform();

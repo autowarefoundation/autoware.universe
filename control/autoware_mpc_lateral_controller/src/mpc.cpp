@@ -755,16 +755,6 @@ void MPC::resetPrevResult(const SteeringReport & current_steer)
   m_raw_steer_cmd_pprev = std::clamp(current_steer.steering_tire_angle, -steer_lim_f, steer_lim_f);
 }
 
-void MPC::resetSteeringCmdFilter(const double steering_tire_angle)
-{
-  m_lpf_steering_cmd.resetState(steering_tire_angle);
-  m_raw_steer_cmd_prev = steering_tire_angle;
-  m_raw_steer_cmd_pprev = steering_tire_angle;
-  for (auto & value : m_input_buffer) {
-    value = steering_tire_angle;
-  }
-}
-
 void MPC::syncSteeringCmdFilterOnly(const double steering_tire_angle)
 {
   m_lpf_steering_cmd.resetState(steering_tire_angle);

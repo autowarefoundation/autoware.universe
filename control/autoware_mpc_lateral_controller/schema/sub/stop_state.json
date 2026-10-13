@@ -40,11 +40,6 @@
           "type": "number",
           "description": "threshold value to be sure output of the optimization is converged, it is used in stopped state",
           "default": 0.01
-        },
-        "stop_state_steer_hold_duration": {
-          "type": "number",
-          "description": "shared duration [s]: (1) stop eligibility must last longer than this before isStoppedState() is true; (2) low-confidence soft hold expires after this without a confident refresh",
-          "default": 2.0
         }
       },
       "required": [
@@ -54,8 +49,7 @@
         "keep_steer_control_until_converged",
         "new_traj_duration_time",
         "new_traj_end_dist",
-        "mpc_converged_threshold_rps",
-        "stop_state_steer_hold_duration"
+        "mpc_converged_threshold_rps"
       ],
       "additionalProperties": false
     }

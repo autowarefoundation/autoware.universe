@@ -529,12 +529,6 @@ public:
    */
   void resetPrevResult(const SteeringReport & current_steer);
 
-  /**
-   * @brief Reset steering-command LPF and delay history to an internal steering command.
-   * The caller converts the published command to internal steering coordinates.
-   */
-  void resetSteeringCmdFilter(const double steering_tire_angle);
-
   /** Set only the steering-command LPF state to the issued command in internal coordinates. */
   void syncSteeringCmdFilterOnly(const double steering_tire_angle);
 
