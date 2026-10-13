@@ -38,9 +38,11 @@ target_compile_options(${PROJECT_NAME}_lib PRIVATE
   -Wno-error=deprecated-declarations
 )
 
-rclcpp_components_register_node(${PROJECT_NAME}_lib
+autoware_agnocast_wrapper_register_node(${PROJECT_NAME}_lib
   PLUGIN "autoware::in_lane_mrm_planner::InLaneMrmPlannerNode"
   EXECUTABLE ${PROJECT_NAME}_node
+  ROS2_EXECUTOR SingleThreadedExecutor
+  AGNOCAST_EXECUTOR CallbackIsolatedAgnocastExecutor
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}_lib
