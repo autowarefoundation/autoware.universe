@@ -206,10 +206,7 @@ void MpcLateralControllerNode::publish(const MpcLateralControllerResult & result
 
   m_pub_debug_values->publish(result.mpc.diagnostic);
 
-  Float32Stamped offset;
-  offset.stamp = clock_->now();
-  offset.data = static_cast<float>(result.steering_offset);
-  m_pub_steer_offset->publish(offset);
+  m_pub_steer_offset->publish(result.steering_offset);
 }
 
 void MpcLateralControllerNode::setStatus(diagnostic_updater::DiagnosticStatusWrapper & stat)

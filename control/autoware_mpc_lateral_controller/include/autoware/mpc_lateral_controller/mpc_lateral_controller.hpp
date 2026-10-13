@@ -114,7 +114,7 @@ struct MpcLateralControllerResult
 {
   trajectory_follower::LateralOutput output;
   MpcResult mpc;
-  double steering_offset{0.0};
+  Float32Stamped steering_offset;
 };
 
 class MpcLateralController

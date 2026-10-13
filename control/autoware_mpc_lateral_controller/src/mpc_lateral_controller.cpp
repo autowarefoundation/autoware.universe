@@ -217,7 +217,8 @@ MpcLateralControllerResult MpcLateralController::run(
   ctrl_cmd.steering_tire_angle -= static_cast<float>(m_steering_offset_filtered_);
 
   result.mpc = mpc_solved_status;
-  result.steering_offset = m_steering_offset_filtered_;
+  result.steering_offset.stamp = stamp;
+  result.steering_offset.data = static_cast<float>(m_steering_offset_filtered_);
 
   const auto createLateralOutput =
     [this, &stamp](
