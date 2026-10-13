@@ -24059,12 +24059,12 @@
 <tr>
 <td><code>~/input/rois</code></td>
 <td>tier4_perception_msgs::msg::TrafficLightRoiArray</td>
-<td>the ROIs detected by <code>autoware_traffic_light_fine_detector</code></td>
+<td>the ROIs from the last detection stage of the chain: <code>autoware_traffic_light_map_based_detector</code> when it runs alone, otherwise <code>autoware_traffic_light_fine_detector</code> or <code>autoware_traffic_light_selector</code></td>
 </tr>
 <tr>
 <td><code>~/input/rough/rois</code> (option)</td>
 <td>tier4_perception_msgs::msg::TrafficLightRoiArray</td>
-<td>the ROIs detected by <code>autoware_traffic_light_map_based_detector</code></td>
+<td>the ROIs from the stage before that, always <code>autoware_traffic_light_map_based_detector</code>. Only connected when such a stage exists, which is also when <code>use_high_accuracy_detection</code> is true</td>
 </tr>
 </tbody>
 </table>
@@ -24101,6 +24101,13 @@
 </tr>
 </thead>
 <tbody>
+<tr>
+<td>use_<wbr>high_<wbr>accuracy_<wbr>detection</wbr></wbr></wbr></td>
+<td>boolean</td>
+<td>whether to also subscribe to the rough detection ROIs and draw them together with the fine detection ROIs; when false only the fine detection ROIs are drawn</td>
+<td>true</td>
+<td>N/A</td>
+</tr>
 <tr>
 <td>use_<wbr>image_<wbr>transport</wbr></wbr></td>
 <td>boolean</td>
