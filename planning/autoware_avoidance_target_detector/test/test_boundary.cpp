@@ -157,11 +157,13 @@ lanelet::LaneletMapPtr make_map()
       lanelet::utils::getId(), {shoulder_right_points[i], shoulder_right_points[i + 1]}};
 
     lanelet::Lanelet main_lanelet{k_main_ids[i], main_left, shared_bound};
-    set_lanelet_attributes(main_lanelet, lanelet::AttributeValueString::Road, k_road_speed_mps);
+    set_lanelet_attributes(
+      main_lanelet, lanelet::AttributeValueString::Road, k_road_speed_mps * 3.6);
     map->add(main_lanelet);
 
     lanelet::Lanelet shoulder_lanelet{k_shoulder_ids[i], shared_bound, shoulder_right};
-    const auto shoulder_speed = i == 1 ? std::optional<double>{k_low_speed_mps} : std::nullopt;
+    const auto shoulder_speed =
+      i == 1 ? std::optional<double>{k_low_speed_mps * 3.6} : std::nullopt;
     set_lanelet_attributes(shoulder_lanelet, "road_shoulder", shoulder_speed);
     map->add(shoulder_lanelet);
   }
@@ -175,7 +177,7 @@ lanelet::LaneletMapPtr make_map()
     {lanelet::Point3d(lanelet::utils::getId(), 1000.0, -2.0, 0.0),
      lanelet::Point3d(lanelet::utils::getId(), 1010.0, -2.0, 0.0)}};
   lanelet::Lanelet disconnected{k_disconnected_id, disconnected_left, disconnected_right};
-  set_lanelet_attributes(disconnected, lanelet::AttributeValueString::Road, k_road_speed_mps);
+  set_lanelet_attributes(disconnected, lanelet::AttributeValueString::Road, k_road_speed_mps * 3.6);
   map->add(disconnected);
 
   return map;

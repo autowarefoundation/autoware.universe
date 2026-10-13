@@ -406,7 +406,8 @@ std::optional<double> read_speed_limit_from_lanelet(const lanelet::ConstLanelet 
   if (!v) {
     return std::nullopt;
   }
-  return v.get();
+  // The speed_limit attribute is in km/h while every limit returned by this class is in m/s.
+  return v.get() / 3.6;
 }
 }  // namespace
 

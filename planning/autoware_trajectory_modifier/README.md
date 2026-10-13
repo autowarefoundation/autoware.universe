@@ -165,33 +165,83 @@ All modifier plugins must inherit from `TrajectoryModifierPluginBase` and implem
 
 The `autoware::trajectory_modifier::plugin::ExternalVelocityLimit` plugin applies the latest
 `autoware_internal_planning_msgs::msg::VelocityLimit` received on
-`~/input/external_velocity_limit_mps` to every point of each trajectory. It uses the absolute value
-of `constraints.min_acceleration` as the constant deceleration when `use_constraints` is true, and
-otherwise falls back to `stopping_constraints.nominal_deceleration`. Like `MapVelocityLimits`, it
-preserves the first pose, point count, timestamps, and original polyline shape while retiming the
-trajectory. Its velocity profile starts from the current ego velocity at t=0 and follows the
-constant-deceleration curve at each point's `time_from_start` until reaching the external limit.
-The adjusted velocity never exceeds the corresponding velocity in the input trajectory.
+`~/input/external_velocity_limit_mps` to every point of each trajectory. When `use_constraints` is
+true, the absolute values of `constraints.min_acceleration` and `constraints.min_jerk` replace
+`velocity_limits.max_deceleration` and `velocity_limits.max_jerk`; a zero constraint falls back to
+the parameter. The velocity profile is generated as described in
+[Velocity limit profile](#velocity-limit-profile).
 
-| Parameter                                   | Default | Description                                              |
-| ------------------------------------------- | ------- | -------------------------------------------------------- |
-| `use_external_velocity_limit`               | `true`  | Enable the plugin when included in `plugin_names`.       |
-| `stopping_constraints.nominal_deceleration` | `1.0`   | Fallback deceleration when constraints are not provided. |
+| Parameter                          | Default | Description                                                          |
+| ---------------------------------- | ------- | -------------------------------------------------------------------- |
+| `use_external_velocity_limit`      | `true`  | Enable the plugin when included in `plugin_names`.                   |
+| `velocity_limits.max_acceleration` | `1.0`   | Maximum acceleration of the generated profile [m/s²].                |
+| `velocity_limits.max_deceleration` | `1.0`   | Maximum deceleration when the message provides no constraint [m/s²]. |
+| `velocity_limits.max_jerk`         | `3.0`   | Maximum jerk when the message provides no constraint [m/s³].         |
 
 ##### MapVelocityLimits
 
-The autoware::trajectory_modifier::plugin::MapVelocityLimits plugin limits forward trajectories using map speed limits. It preserves the first point's pose, the point count, and every timestamp. Velocity and pose updates use the spacing provided by each point's `time_from_start`.
+The `autoware::trajectory_modifier::plugin::MapVelocityLimits` plugin limits trajectories with the
+speed limits of the route lanelets at each point (lanelet `speed_limit` attributes are in km/h).
+The velocity profile is generated as described in
+[Velocity limit profile](#velocity-limit-profile).
 
-When map limits are exceeded, the plugin caps the violating velocities and performs a single backward pass starting from the first modified point to enforce the configured deceleration bound. Unlike earlier iterations, this backward smoothing relies strictly on the required deceleration and does not account for kinematic feasibility relative to the ego vehicle's current velocity. Accelerations are updated to reflect the constant deceleration, and any point whose velocity was reduced is strictly constrained to have an acceleration no greater than 0.0 m/s².
+| Parameter                                                          | Default | Description                                                |
+| ------------------------------------------------------------------ | ------- | ---------------------------------------------------------- |
+| `use_map_velocity_limits`                                          | `true`  | Enable the plugin when included in `plugin_names`.         |
+| `velocity_limits.max_acceleration`                                 | `1.0`   | Maximum acceleration of the generated profile [m/s²].      |
+| `velocity_limits.max_deceleration`                                 | `1.0`   | Maximum deceleration of the generated profile [m/s²].      |
+| `velocity_limits.max_jerk`                                         | `3.0`   | Maximum jerk of the generated profile [m/s³].              |
+| `map_velocity_limits.limit_velocity_from_map_debug_lanelet_ids`    | `[]`    | Lanelet IDs whose map limits are overridden for debugging. |
+| `map_velocity_limits.limit_velocity_from_map_debug_max_velocities` | `[]`    | Corresponding override velocities in m/s.                  |
 
-To preserve the trajectory's original geometric shape, the spatial poses are re-sampled along the original polyline. The new arc lengths are calculated using trapezoidal integration of the updated velocity profile. If the new velocity profile integrates to a distance that exceeds the spatial length of the original path, the subsequent points are simply clamped to the final original pose.
+##### Velocity limit profile
 
-| Parameter                                                          | Default | Description                                                      |
-| ------------------------------------------------------------------ | ------- | ---------------------------------------------------------------- |
-| `use_map_velocity_limits`                                          | `true`  | Enable the plugin when included in `plugin_names`.               |
-| `stopping_constraints.nominal_deceleration`                        | `1.0`   | Braking bound, and optional forward acceleration bound, in m/s². |
-| `map_velocity_limits.limit_velocity_from_map_debug_lanelet_ids`    | `[]`    | Lanelet IDs whose map limits are overridden for debugging.       |
-| `map_velocity_limits.limit_velocity_from_map_debug_max_velocities` | `[]`    | Corresponding override velocities in m/s.                        |
+Both velocity limit plugins leave a trajectory unchanged unless one of its points is faster than the
+limit at its position. Otherwise, the velocity profile is regenerated by a forward simulation that
+starts from the current ego velocity and acceleration and never violates the configured
+acceleration, deceleration and jerk limits:
+
+- At every arc length, the profile stays at or below the input velocity and the limit. A limit that
+  cannot be reached in time without violating the deceleration or jerk limit is exceeded
+  temporarily instead.
+- Braking for a lower limit (or a lower input velocity) ahead starts near the latest point from
+  which it is reached where it begins: when 95% of the deceleration limit is needed, which leaves a
+  reserve to correct deviations. The braking then uses the deceleration actually required. Where
+  the limit changes between two input points, the change is located by bisection along the
+  segment.
+- The profile does not accelerate above the lowest limit ahead in the trajectory.
+- A velocity drop at the last input point is ignored, since planners commonly end their horizon
+  with a zero velocity that is not a stop.
+- A measured acceleration outside the acceleration and deceleration limits is clamped into them.
+
+The point count and every `time_from_start` are kept. The first pose is kept and the other poses are
+re-sampled along the input polyline so that the positions match the new velocities.
+
+###### Fixed profile
+
+With `velocity_limits.fixed_profile.enable` (default `true`), each plugin remembers the trajectory it
+sent for each candidate and starts the next profile from that plan's velocity and acceleration at
+the current odometry time, instead of the measured ego state. The profile then no longer follows
+measurement noise or small tracking errors; the controller corrects those. Limits and the input are
+still evaluated every cycle, so a changed limit, a new zone or a binding input deceleration are
+followed without restarting. Since the forward simulation is deterministic, starting from the
+previous plan reproduces it when nothing changes.
+
+The profile restarts from the measured ego state when the previous plan cannot be used or the ego no
+longer tracks it:
+
+| Parameter                                                    | Default | Restart when                                                          |
+| ------------------------------------------------------------ | ------- | --------------------------------------------------------------------- |
+| `velocity_limits.fixed_profile.reset_velocity_deviation`     | `0.5`   | the measured velocity differs from the plan by more than this [m/s].  |
+| `velocity_limits.fixed_profile.reset_acceleration_deviation` | `0.5`   | the measured acceleration differs by more than this [m/s²].           |
+| `velocity_limits.fixed_profile.reset_distance_deviation`     | `1.0`   | the ego is farther than this from its planned position [m].           |
+| `velocity_limits.fixed_profile.reset_time_gap`               | `0.5`   | the previous plan is older than this, or newer than the odometry [s]. |
+
+Previous plans are kept per candidate index; a plan from another candidate is only used if it passes
+the same checks against the measured state. They are forgotten when a parameter of the group changes
+or the plugin is disabled. A restart moves the first point to the measured velocity, a step of at most
+`reset_velocity_deviation`. Since an upstream trajectory usually starts at the measured velocity, a
+fixed profile can start above it by up to the same amount.
 
 ##### ModelPlanningFactorID
 
@@ -244,6 +294,12 @@ This package depends on the following packages:
 
 - **Input**: `autoware_internal_planning_msgs::msg::CandidateTrajectories`
 - **Output**: Modified `autoware_internal_planning_msgs::msg::CandidateTrajectories` and selected `autoware_planning_msgs::msg::Trajectory`
+- **Velocity profile resets**: `~/debug/velocity_profile_reset`
+  (`autoware_internal_debug_msgs::msg::StringStamped`). The map and external velocity limit
+  plugins publish one event per candidate reset. The stamp is the publication time, and `data`
+  contains `plugin=<instance> candidate=<index> reason=<reason>`. Reasons are `reset_time_gap`,
+  `reset_velocity`, `reset_acceleration`, and `reset_distance`. The topic uses reliable, volatile
+  QoS with a depth of 10.
 
 The node also subscribes to odometry, acceleration, steering status, predicted and tracked objects, point cloud data, traffic signals, route, and vector map topics for plugin use.
 

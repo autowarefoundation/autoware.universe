@@ -28,9 +28,11 @@ namespace
 using autoware::trajectory_modifier::plugin::ProcessingResult;
 using autoware::trajectory_modifier::plugin::TrajectoryPoints;
 using autoware::trajectory_modifier::plugin::detail::apply_velocity_limits;
+using autoware::trajectory_modifier::plugin::detail::VelocityLimitConstraints;
+using autoware::trajectory_modifier::plugin::detail::VelocityLimitOptions;
 constexpr double dt = 0.1;
 constexpr double tolerance = 2e-5;
-constexpr double max_jerk = 1.0;
+constexpr VelocityLimitConstraints constraints{1.0, 1.0, 1.0};
 
 TrajectoryPoints make_trajectory(const double speed = 10.0, const double acceleration = 0.0)
 {
@@ -82,7 +84,11 @@ TEST(MapVelocityLimitsProfile, RecomputesAccelerationAndRetimes)
 {
   auto points = make_trajectory(10.0, 1.0);
   const auto original = points;
-  const auto result = apply_velocity_limits(points, 1.0, max_jerk, constant_limit(5.0));
+  // The ego already drives at the limit, so the whole profile settles on it.
+  VelocityLimitOptions options;
+  options.current_ego_velocity = 5.0;
+  options.current_ego_acceleration = 0.0;
+  const auto result = apply_velocity_limits(points, constraints, constant_limit(5.0), options);
   ASSERT_EQ(result.status, ProcessingResult::Modified) << result.error;
   for (const auto & point : points) {
     EXPECT_FLOAT_EQ(point.longitudinal_velocity_mps, 5.0F);
@@ -100,7 +106,7 @@ TEST(MapVelocityLimitsProfile, KeepsResampledPointsOnOriginalCurvedPolyline)
     points[i].pose.position.z = 0.2 * i;
   }
   const auto original = points;
-  const auto result = apply_velocity_limits(points, 1.0, max_jerk, constant_limit(5.0));
+  const auto result = apply_velocity_limits(points, constraints, constant_limit(5.0));
   ASSERT_EQ(result.status, ProcessingResult::Modified) << result.error;
   expect_format(original, points);
   for (const auto & point : points) {
@@ -124,7 +130,7 @@ TEST(MapVelocityLimitsProfile, PreservesValidConstantSpeedTrajectory)
 {
   auto points = make_trajectory(5.0);
   const auto original = points;
-  const auto result = apply_velocity_limits(points, 1.0, max_jerk, constant_limit(10.0));
+  const auto result = apply_velocity_limits(points, constraints, constant_limit(10.0));
   EXPECT_EQ(result.status, ProcessingResult::Unchanged);
   EXPECT_EQ(points, original);
 }
