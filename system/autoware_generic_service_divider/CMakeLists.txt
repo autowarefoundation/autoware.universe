@@ -44,7 +44,7 @@ if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
   ament_lint_auto_find_test_dependencies()
 
-  if(NOT (DEFINED ENV{ENABLE_AGNOCAST} AND "$ENV{ENABLE_AGNOCAST}" STREQUAL "1"))
+  if(NOT "$ENV{ENABLE_AGNOCAST}" STREQUAL "1")
     ament_add_gtest(test_generic_service_divider
       test/test_generic_service_divider.cpp
     )
