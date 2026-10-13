@@ -32,9 +32,9 @@ namespace autoware::euclidean_cluster
 VoxelGridBasedEuclideanCluster::VoxelGridBasedEuclideanCluster(
   bool use_height, int min_points_per_cluster, float tolerance, float voxel_leaf_size,
   int min_points_per_voxel, int large_cluster_voxel_count_threshold,
-  int large_cluster_max_points_per_voxel, int max_voxels_per_cluster)
+  int large_cluster_max_points_per_voxel, int max_voxels_per_cluster, float min_cluster_size)
 // max cluster size is unused by this cluster executer (oversized groups are split, not dropped).
-: EuclideanClusterInterface(use_height, min_points_per_cluster, 0),
+: EuclideanClusterInterface(use_height, min_points_per_cluster, 0, min_cluster_size),
   tolerance_(tolerance),
   voxel_leaf_size_(voxel_leaf_size),
   min_points_per_voxel_(min_points_per_voxel),
@@ -138,6 +138,24 @@ bool VoxelGridBasedEuclideanCluster::cluster(
   const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & pointcloud,
   std::vector<pcl::PointCloud<pcl::PointXYZ>> & clusters)
 {
+  std::vector<IndexedCluster> indexed_clusters;
+  const bool success = cluster(pointcloud, indexed_clusters);
+  if (!success) {
+    return false;
+  }
+
+  clusters.clear();
+  clusters.reserve(indexed_clusters.size());
+  for (auto & cluster : indexed_clusters) {
+    clusters.push_back(std::move(cluster.cloud));
+  }
+  return true;
+}
+
+bool VoxelGridBasedEuclideanCluster::cluster(
+  const pcl::PointCloud<pcl::PointXYZ>::ConstPtr & pointcloud,
+  std::vector<IndexedCluster> & clusters)
+{
   // 1) Voxel grid filtering
   pcl::PointCloud<pcl::PointXYZ>::Ptr voxel_map_ptr(new pcl::PointCloud<pcl::PointXYZ>);
   constexpr float Z_AXIS_VOXEL_SIZE = 100000.0f;
@@ -218,7 +236,8 @@ bool VoxelGridBasedEuclideanCluster::cluster(
         }
         voxel_point_count++;
       }
-      clusters.at(cluster_idx).push_back(point);
+      clusters.at(cluster_idx).cloud.push_back(point);
+      clusters.at(cluster_idx).indices.push_back(static_cast<int>(random_index));
     }
   }
 
@@ -226,10 +245,17 @@ bool VoxelGridBasedEuclideanCluster::cluster(
   clusters.erase(
     std::remove_if(
       clusters.begin(), clusters.end(),
-      [this](const pcl::PointCloud<pcl::PointXYZ> & cluster) {
-        return static_cast<int>(cluster.size()) < min_points_per_cluster_;
+      [this](const IndexedCluster & cluster) {
+        return static_cast<int>(cluster.cloud.size()) < min_points_per_cluster_ ||
+               !isClusterLargeEnough(cluster.cloud);
       }),
     clusters.end());
+
+  for (auto & cluster : clusters) {
+    cluster.cloud.width = cluster.cloud.points.size();
+    cluster.cloud.height = 1;
+    cluster.cloud.is_dense = false;
+  }
 
   return true;
 }
