@@ -23989,7 +23989,7 @@
 <p>The node draws the result of traffic light recognition on the input image as shown in the following figure and publishes it.</p>
 <p><img alt="traffic light roi visualization" src="docs/roi-visualization.png"></p>
 <ul>
-<li>The colors <code>~/input/rois</code> and <code>~/input/rough/rois</code> are the same as <code>color</code> whose <code>shape</code> is CIRCLE in <code>~/input/traffic_signals</code> (unknown shows as white).</li>
+<li>The colors <code>~/input/rois</code> and <code>~/input/rough/rois</code> are the same as <code>color</code> whose <code>shape</code> is CIRCLE in <code>~/input/traffic_signals</code>: <code>#E67373</code> for RED, <code>#F2BF24</code> for AMBER, <code>#99FFB2</code> for GREEN. Anything else — an unrecognized color, a signal with no circle in it, or a ROI no signal was reported for — is drawn in <code>#FAFAFA</code>.</li>
 <li>The labels in the upper left of <code>~/input/rois</code> shows <code>shape</code> and <code>confidence</code> in <code>~/input/traffic_signals</code>.</li>
 <li>The type of <code>shape</code> should be referred to images directory. There are only 3 types of arrows in the image, but they can represent 8 directions.</li>
 </ul>
