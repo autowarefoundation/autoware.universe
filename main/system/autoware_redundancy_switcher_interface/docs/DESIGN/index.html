@@ -24366,7 +24366,7 @@ docs/
 <h2 id="3-architecture-overview">3. Architecture Overview<a class="headerlink" href="#3-architecture-overview" title="Permanent link">#</a></h2>
 <pre class="mermaid"><code>graph TB
   subgraph autoware_redundancy_switcher_interface
-    Node["RedundancySwitcherInterface\n(rclcpp::Node)"]
+    Node["RedundancySwitcherInterface\n(agnocast_wrapper::Node)"]
     GW["EventGateway\n(mutex-protected)"]
     PROC["Processor\n(pure C++)"]
     BUS["CommandBus\n(broadcast)"]
@@ -24705,7 +24705,8 @@ The annotation content is defined by the submitting adapter; the Processor only 
 <h3 id="93-iadapterplugin">9.3 IAdapterPlugin<a class="headerlink" href="#93-iadapterplugin" title="Permanent link">#</a></h3>
 <div class="highlight"><pre><span></span><code><span class="k">class</span><span class="w"> </span><span class="nc">IAdapterPlugin</span><span class="w"> </span><span class="p">{</span>
 <span class="w">  </span><span class="c1">// Initialize ROS resources. Called once at node startup.</span>
-<span class="w">  </span><span class="k">virtual</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">initialize</span><span class="p">(</span><span class="n">rclcpp</span><span class="o">::</span><span class="n">Node</span><span class="o">*</span><span class="w"> </span><span class="n">node</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">EventGateway</span><span class="o">&gt;</span><span class="w"> </span><span class="n">gateway</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
+<span class="w">  </span><span class="k">virtual</span><span class="w"> </span><span class="kt">void</span><span class="w"> </span><span class="nf">initialize</span><span class="p">(</span>
+<span class="w">    </span><span class="n">autoware</span><span class="o">::</span><span class="n">agnocast_wrapper</span><span class="o">::</span><span class="n">Node</span><span class="o">*</span><span class="w"> </span><span class="n">node</span><span class="p">,</span><span class="w"> </span><span class="n">std</span><span class="o">::</span><span class="n">shared_ptr</span><span class="o">&lt;</span><span class="n">EventGateway</span><span class="o">&gt;</span><span class="w"> </span><span class="n">gateway</span><span class="p">)</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="mi">0</span><span class="p">;</span>
 
 <span class="w">  </span><span class="c1">// Execute an OutputCommand. Called for every command by CommandBus.</span>
 <span class="w">  </span><span class="c1">// Must ignore types this adapter does not own.</span>
