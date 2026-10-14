@@ -18,9 +18,11 @@
 #include "autoware/ptv3/postprocess/detection3d_postprocess.hpp"
 #include "autoware/ptv3/postprocess/postprocess_kernel.hpp"
 #include "autoware/ptv3/preprocess/preprocess_kernel.hpp"
+#include "autoware/ptv3/preprocess/sweep_aggregator.hpp"
 #include "autoware/ptv3/utils.hpp"
 #include "autoware/ptv3/visibility_control.hpp"
 
+#include <Eigen/Geometry>
 #include <autoware/cuda_utils/cuda_unique_ptr.hpp>
 #include <autoware/tensorrt_common/tensorrt_common.hpp>
 #include <autoware_utils/system/stop_watch.hpp>
@@ -38,12 +40,13 @@ namespace autoware::ptv3
 {
 
 using autoware::cuda_utils::CudaUniquePtr;
+using autoware::cuda_utils::CudaUniquePtrHost;
 
 class PTV3_PUBLIC PTv3TRT
 {
 public:
   explicit PTv3TRT(
-    const tensorrt_common::TrtCommonConfig & backbone_trt_config,
+    const tensorrt_common::TrtCommonConfig & encoder_trt_config,
     const std::optional<tensorrt_common::TrtCommonConfig> & seg3d_head_trt_config,
     const std::optional<tensorrt_common::TrtCommonConfig> & det3d_head_trt_config,
     const PTv3Config & config);
@@ -52,9 +55,9 @@ public:
   // cSpell:ignore probs
   bool infer(
     const std::shared_ptr<const cuda_blackboard::CudaPointCloud2> & msg_ptr,
-    bool should_publish_segmented_pointcloud, bool should_publish_visualization_pointcloud,
-    bool should_publish_filtered_pointcloud, bool should_detect_objects,
-    std::optional<std::vector<Box3D>> & det_boxes3d,
+    const Eigen::Affine3f & affine_world2current, bool should_publish_segmented_pointcloud,
+    bool should_publish_visualization_pointcloud, bool should_publish_filtered_pointcloud,
+    bool should_detect_objects, std::optional<std::vector<Box3D>> & det_boxes3d,
     std::unordered_map<std::string, double> & proc_timing);
 
   void setPublishSegmentedPointcloud(
@@ -70,7 +73,7 @@ public:
 
 protected:
   void initPtr();
-  void initBackboneTrt(const tensorrt_common::TrtCommonConfig & trt_config);
+  void initEncoderTrt(const tensorrt_common::TrtCommonConfig & trt_config);
   void initSeg3dHeadTrt(const tensorrt_common::TrtCommonConfig & trt_config);
   void initDetection3DHeadTrt(const tensorrt_common::TrtCommonConfig & trt_config);
   void createPointFields();
@@ -79,12 +82,12 @@ protected:
   void bindSerializedPoolingAddresses();
   void precomputeSerializedPoolingMetadata();
   bool setSerializedPoolingInputShapes();
-  [[nodiscard]] CloudFormat detectCloudFormat(const cuda_blackboard::CudaPointCloud2 & cloud) const;
 
   bool preProcess(
-    const std::shared_ptr<const cuda_blackboard::CudaPointCloud2> & msg_ptr, bool should_run_seg3d);
+    const std::shared_ptr<const cuda_blackboard::CudaPointCloud2> & msg_ptr,
+    const Eigen::Affine3f & affine_world2current, bool should_run_seg3d);
 
-  bool inferenceBackbone();
+  bool inferenceEncoder();
   bool inferenceSeg3dHead();
   bool inferenceDetection3DHead();
 
@@ -94,11 +97,12 @@ protected:
 
   bool postProcessDetection3D(std::vector<Box3D> & detection_boxes);
 
-  // The backbone is always present. The heads are loaded only when enabled.
-  std::unique_ptr<autoware::tensorrt_common::TrtCommon> backbone_trt_ptr_{nullptr};
+  // The encoder is always present. The heads are loaded only when enabled.
+  std::unique_ptr<autoware::tensorrt_common::TrtCommon> encoder_trt_ptr_{nullptr};
   std::unique_ptr<autoware::tensorrt_common::TrtCommon> seg3d_head_trt_ptr_{nullptr};
   std::unique_ptr<autoware::tensorrt_common::TrtCommon> detection3d_head_trt_ptr_{nullptr};
   std::unique_ptr<autoware_utils::StopWatch<std::chrono::milliseconds>> stop_watch_ptr_{nullptr};
+  std::unique_ptr<SweepAggregator> aggregator_ptr_{nullptr};
   std::unique_ptr<PreprocessCuda> pre_ptr_{nullptr};
   std::unique_ptr<PostprocessCuda> post_ptr_{nullptr};
   std::unique_ptr<Detection3DPostprocess> detection3d_post_ptr_{nullptr};
@@ -138,29 +142,29 @@ protected:
 
   std::vector<SerializedPoolingDeviceStage> serialized_pooling_stages_d_;
   CudaUniquePtr<std::int64_t[]> serialized_pooling_num_voxels_d_{nullptr};
-  std::vector<std::int64_t> serialized_pooling_num_voxels_;
+  CudaUniquePtrHost<std::int64_t[]> serialized_pooling_num_voxels_;
   std::vector<std::int64_t> serialized_pooling_depths_;
 
-  // Preprocess outputs
+  // Preprocess outputs. All seg outputs describe the current frame only; the densified
+  // tail (sweep points) feeds the network but is never published.
+  DensifiedCloud densified_cloud_;
   std::int64_t num_voxels_{0};
-  std::int64_t num_cropped_points_{0};        // only for partial
-  std::int64_t num_source_points_{0};         // only for full
-  const void * current_input_data_{nullptr};  // only for full
+  std::int64_t num_cropped_current_points_{0};  // only for partial
 
-  CudaUniquePtr<std::uint8_t[]> compact_points_d_{nullptr};
   CudaUniquePtr<std::uint8_t[]> cropped_source_points_d_{nullptr};  // only for partial
-  CudaUniquePtr<float[]> reconstructed_features_d_{nullptr};        // only for partial and full
   CudaUniquePtr<std::int64_t[]> inverse_map_d_{nullptr};            // only for partial and full
   CudaUniquePtr<std::int64_t[]> reconstructed_labels_d_{nullptr};   // only for partial and full
   CudaUniquePtr<float[]> reconstructed_probs_d_{nullptr};           // only for partial and full
+  // Encoder inputs: padded voxel points [num_voxels, max_points_per_voxel, 5], their valid point
+  // counts, grid coordinates and serialized codes.
+  CudaUniquePtr<float[]> voxels_d_{nullptr};
+  CudaUniquePtr<std::int32_t[]> num_points_per_voxel_d_{nullptr};
   CudaUniquePtr<std::int32_t[]> grid_coord_d_{nullptr};
-  CudaUniquePtr<float[]> feat_d_{nullptr};
   CudaUniquePtr<std::int64_t[]> serialized_code_d_{nullptr};
 
-  // Backbone outputs shared with all the heads
-  CudaUniquePtr<float[]> bb_point_feat_d_{nullptr};
-  CudaUniquePtr<std::int32_t[]> bb_point_grid_coord_d_{nullptr};
-  CudaUniquePtr<std::int64_t[]> bb_point_offset_d_{nullptr};
+  // Encoder outputs shared with all the heads: per-stage point features,
+  // finest to deepest, sized by each stage's geometric voxel capacity.
+  std::vector<CudaUniquePtr<float[]>> stage_feat_d_;
 
   // Segmentation head outputs
   CudaUniquePtr<std::int64_t[]> pred_labels_d_{nullptr};

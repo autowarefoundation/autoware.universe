@@ -15,23 +15,29 @@
 #ifndef AUTOWARE__TRAJECTORY_MODIFIER__TRAJECTORY_MODIFIER_PLUGINS__VELOCITY_MODIFIER_HPP_
 #define AUTOWARE__TRAJECTORY_MODIFIER__TRAJECTORY_MODIFIER_PLUGINS__VELOCITY_MODIFIER_HPP_
 
-#include "autoware/trajectory_modifier/trajectory_modifier_plugins/trajectory_modifier_plugin_base.hpp"
+#include "autoware/trajectory_modifier/trajectory_modifier_plugin_base.hpp"
 #include "autoware/trajectory_modifier/trajectory_modifier_utils/utils.hpp"
 
 #include <rclcpp/rclcpp.hpp>
 
 namespace autoware::trajectory_modifier::plugin
 {
+using autoware::trajectory_modifier::TrajectoryModifierData;
+using autoware::trajectory_modifier::TrajectoryModifierParams;
+using autoware::trajectory_modifier::plugin::ProcessingResult;
+using autoware::trajectory_modifier::plugin::TrajectoryModifierPluginBase;
+using autoware::trajectory_modifier::plugin::TrajectoryPoints;
+using ModifierParams = trajectory_modifier_params::Params;
 
 class VelocityModifier : public TrajectoryModifierPluginBase
 {
 public:
   VelocityModifier() = default;
 
-  bool modify_trajectory(TrajectoryPoints & traj_points, const InputData & input) override;
+  ProcessingResult process(TrajectoryPoints & traj_points, TrajectoryModifierData & input) override;
 
   [[nodiscard]] bool is_trajectory_modification_required(
-    const TrajectoryPoints & traj_points, [[maybe_unused]] const InputData & input) override;
+    const TrajectoryPoints & traj_points, [[maybe_unused]] const TrajectoryModifierData & input);
 
   void update_params(const TrajectoryModifierParams & params) override
   {
@@ -44,7 +50,7 @@ protected:
   void on_initialize(const TrajectoryModifierParams & params) override;
 
 private:
-  TrajectoryModifierParams::StoppingConstraints params_;
+  ModifierParams::StoppingConstraints params_;
 
   size_t update_velocities(
     TrajectoryPoints & trajectory, const double jerk, const double decel) const;

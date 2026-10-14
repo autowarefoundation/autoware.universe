@@ -19,6 +19,7 @@
 #include "autoware/map_based_prediction/predictor_vehicle/object_processing.hpp"
 #include "autoware/map_based_prediction/predictor_vehicle/path_processing.hpp"
 
+#include <autoware/agnocast_wrapper/node.hpp>
 #include <autoware_utils/system/time_keeper.hpp>
 #include <rclcpp/rclcpp.hpp>
 
@@ -49,7 +50,7 @@ public:
     PathProcessor::Params path_processor;
   };
 
-  explicit PredictorVehicle(rclcpp::Node & node);
+  explicit PredictorVehicle(autoware::agnocast_wrapper::Node & node);
   ~PredictorVehicle() = default;
 
   void setParams(const Params & params);

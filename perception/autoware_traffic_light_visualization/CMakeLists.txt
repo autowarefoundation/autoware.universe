@@ -29,13 +29,34 @@ ament_auto_add_library(traffic_light_map_visualizer SHARED
   src/traffic_light_map_visualizer/traffic_light_visualizer.cpp
 )
 
-rclcpp_components_register_node(traffic_light_map_visualizer
+autoware_agnocast_wrapper_register_node(traffic_light_map_visualizer
   PLUGIN "autoware::traffic_light::TrafficLightMapVisualizerNode"
   EXECUTABLE traffic_light_map_visualizer_node
+  AGNOCAST_EXECUTOR AgnocastOnlyCallbackIsolatedExecutor
+  ROS2_EXECUTOR SingleThreadedExecutor
 )
 
 if(BUILD_TESTING)
   find_package(ament_cmake_gtest REQUIRED)
+  find_package(ament_cmake_ros REQUIRED)
+
+  # Characterization test: drives TrafficLightRoiVisualizerNode through its real topics.
+  # Runs in an isolated ROS domain so that it cannot interfere with other tests.
+  ament_add_ros_isolated_gtest(test_traffic_light_roi_visualizer_node_characterization
+    test/traffic_light_roi_visualizer/test_traffic_light_roi_visualizer_node_characterization.cpp
+    TIMEOUT 300
+  )
+  target_include_directories(test_traffic_light_roi_visualizer_node_characterization PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/src
+  )
+  target_link_libraries(test_traffic_light_roi_visualizer_node_characterization
+    traffic_light_roi_visualizer
+  )
+  ament_target_dependencies(test_traffic_light_roi_visualizer_node_characterization
+    rclcpp
+    sensor_msgs
+    tier4_perception_msgs
+  )
 
   ament_add_gtest(test_traffic_light_map_visualizer
     test/traffic_light_map_visualizer/test_traffic_light_map_visualizer.cpp
@@ -67,23 +88,26 @@ if(BUILD_TESTING)
     autoware_perception_msgs
   )
 
-  ament_add_gtest(test_traffic_light_map_visualizer_node
-    test/traffic_light_map_visualizer/test_traffic_light_map_visualizer_node.cpp
-  )
-  target_include_directories(test_traffic_light_map_visualizer_node PRIVATE
-    ${CMAKE_CURRENT_SOURCE_DIR}/src
-  )
-  target_link_libraries(test_traffic_light_map_visualizer_node
-    traffic_light_map_visualizer
-  )
-  ament_target_dependencies(test_traffic_light_map_visualizer_node
-    autoware_lanelet2_extension
-    autoware_lanelet2_utils
-    autoware_map_msgs
-    autoware_perception_msgs
-    rclcpp
-    visualization_msgs
-  )
+  if(NOT "$ENV{ENABLE_AGNOCAST}" STREQUAL "1")
+    ament_add_gtest(test_traffic_light_map_visualizer_node
+      test/traffic_light_map_visualizer/test_traffic_light_map_visualizer_node.cpp
+    )
+    target_include_directories(test_traffic_light_map_visualizer_node PRIVATE
+      ${CMAKE_CURRENT_SOURCE_DIR}/src
+    )
+    target_link_libraries(test_traffic_light_map_visualizer_node
+      traffic_light_map_visualizer
+    )
+    ament_target_dependencies(test_traffic_light_map_visualizer_node
+      autoware_agnocast_wrapper
+      autoware_lanelet2_extension
+      autoware_lanelet2_utils
+      autoware_map_msgs
+      autoware_perception_msgs
+      rclcpp
+      visualization_msgs
+    )
+  endif()
 endif()
 
 # Copy the assets directory to the installation directory

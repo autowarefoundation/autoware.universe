@@ -68,6 +68,7 @@ endif()
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/tensorrt_yolox.cpp
   src/label.cpp
+  src/tensorrt_yolox_detector.cpp
 )
 
 ament_target_dependencies(${PROJECT_NAME}
@@ -150,7 +151,6 @@ rclcpp_components_register_node(yolox_single_image_inference_node
 
 ament_auto_add_library(${PROJECT_NAME}_node SHARED
   src/tensorrt_yolox_node.cpp
-  src/tensorrt_yolox_detector.cpp
 )
 
 ament_target_dependencies(${PROJECT_NAME}_node
@@ -191,11 +191,23 @@ if(BUILD_TESTING)
       ${PROJECT_NAME}_node
       ${OpenCV_LIBRARIES}
     )
+
+    # Unit test that drives TrtYoloXDetector::detect() directly (no ROS topics). Same GPU / TensorRT
+    # / ONNX model requirements as the node test, so it is gated here and self-skips at runtime.
+    ament_auto_add_gtest(test_tensorrt_yolox_detector
+      test/test_tensorrt_yolox_detector.cpp
+      TIMEOUT 600
+    )
+    target_link_libraries(test_tensorrt_yolox_detector
+      ${PROJECT_NAME}
+      ${PROJECT_NAME}_node
+      ${OpenCV_LIBRARIES}
+    )
     install(FILES test/test_image.jpg DESTINATION share/${PROJECT_NAME}/test)
   endif()
 endif()
 
-ament_auto_package(INSTALL_TO_SHARE
+autoware_ament_auto_package(INSTALL_TO_SHARE
   launch
   config
 )
