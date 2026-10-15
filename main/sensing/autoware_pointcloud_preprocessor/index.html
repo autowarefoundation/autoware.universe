@@ -23756,6 +23756,34 @@
 </li>
       
         <li class="md-nav__item">
+  <a href="#examples" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Examples
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="Examples">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#concatenate_without_ros_node" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        concatenate_without_ros_node
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
   <a href="#measuring-the-performance" class="md-nav__link">
     <span class="md-ellipsis">
       
@@ -24019,6 +24047,69 @@
 <h2 id="assumptions-known-limits">Assumptions / Known limits<a class="headerlink" href="#assumptions-known-limits" title="Permanent link">#</a></h2>
 <p><code>autoware::pointcloud_preprocessor::Filter</code> is implemented based on pcl_perception [1] because
 of <a href="https://github.com/ros-perception/perception_pcl/issues/9">this issue</a>.</p>
+<h2 id="examples">Examples<a class="headerlink" href="#examples" title="Permanent link">#</a></h2>
+<p>Examples are not built by default, so release builds do not pay for them. Enable them with
+<code>-DBUILD_EXAMPLES=ON</code>:</p>
+<div class="highlight"><pre><span></span><code>colcon<span class="w"> </span>build<span class="w"> </span>--packages-select<span class="w"> </span>autoware_pointcloud_preprocessor<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--cmake-args<span class="w"> </span>-DCMAKE_BUILD_TYPE<span class="o">=</span>Release<span class="w"> </span>-DBUILD_EXAMPLES<span class="o">=</span>ON
+</code></pre></div>
+<h3 id="concatenate_without_ros_node">concatenate_without_ros_node<a class="headerlink" href="#concatenate_without_ros_node" title="Permanent link">#</a></h3>
+<p>Concatenates three point clouds through the <code>concatenate_core</code> library alone: no node, no executor
+and no spinning. Clouds, transforms and twist are handed to the core directly, so every input is
+guaranteed to be processed - unlike a pub/sub pipeline, where a subscriber that comes up late
+silently misses messages. This makes it a convenient starting point for replaying recorded data
+deterministically, and for measuring concatenation cost on its own.</p>
+<div class="highlight"><pre><span></span><code>./build/autoware_pointcloud_preprocessor/concatenate_without_ros_node<span class="w"> </span><span class="o">[</span>points_per_cloud<span class="o">]</span><span class="w"> </span><span class="o">[</span>iterations<span class="o">]</span><span class="w"> </span><span class="o">[</span>warmup<span class="o">]</span>
+</code></pre></div>
+<table>
+<thead>
+<tr>
+<th>Argument</th>
+<th>Default</th>
+<th>Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>points_per_cloud</code></td>
+<td>40000</td>
+<td>points in each of the three source clouds</td>
+</tr>
+<tr>
+<td><code>iterations</code></td>
+<td>200</td>
+<td>timed concatenations</td>
+</tr>
+<tr>
+<td><code>warmup</code></td>
+<td>20</td>
+<td>untimed runs before measuring</td>
+</tr>
+</tbody>
+</table>
+<p>The example verifies the concatenated cloud and the diagnostics, then reports the time spent inside
+<code>combine_pointclouds()</code> only. Building the clouds, the transforms and the grouping all happen
+outside the measured region.</p>
+<div class="highlight"><pre><span></span><code>concatenated cloud
+  frame_id   : base_link
+  stamp      : 1000
+  points     : 120000
+  point_step : 16
+  sources    : 3
+  collectors : 1
+
+concatenation time over 200 runs
+  average : 78.601 ms
+  stddev  : 1.603 ms
+  min     : 75.894 ms
+  median  : 79.222 ms
+  p95     : 80.293 ms
+  max     : 81.265 ms
+  rate    : 1.53 Mpoint/s (12.72 concatenations/s)
+</code></pre></div>
+<p>The absolute figures depend on the machine; use them to compare runs, not as a specification.</p>
+<p>Build with <code>-DCMAKE_BUILD_TYPE=Release</code> before reading anything into the timings. Without it the
+package compiles unoptimized and the same run is roughly 80x slower.</p>
 <h2 id="measuring-the-performance">Measuring the performance<a class="headerlink" href="#measuring-the-performance" title="Permanent link">#</a></h2>
 <p>In Autoware, point cloud data from each LiDAR sensor undergoes preprocessing in the sensing pipeline before being input
 into the perception pipeline. The preprocessing stages are illustrated in the diagram below:</p>
