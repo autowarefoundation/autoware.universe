@@ -22,6 +22,7 @@
 #include <sensor_msgs/point_cloud2_iterator.hpp>
 
 #include <algorithm>
+#include <cmath>
 #include <cstdint>
 #include <functional>
 #include <memory>
@@ -93,7 +94,8 @@ void CombineCloudHandler<sensor_msgs::msg::PointCloud2>::transform_pointcloud(
   const Eigen::Matrix4f & transform, const sensor_msgs::msg::PointCloud2 & in,
   sensor_msgs::msg::PointCloud2 & out)
 {
-  // Same implementation as pcl::transformPointCloud
+  // Same as pcl_ros::transformPointCloud: a point with a non-finite coordinate is left unchanged
+  // instead of having the NaN/Inf spread to its other coordinates by the matrix product.
   out = in;
 
   if (out.data.empty()) return;
@@ -102,6 +104,8 @@ void CombineCloudHandler<sensor_msgs::msg::PointCloud2>::transform_pointcloud(
   sensor_msgs::PointCloud2Iterator<float> it_y(out, "y");
   sensor_msgs::PointCloud2Iterator<float> it_z(out, "z");
   for (; it_x != it_x.end(); ++it_x, ++it_y, ++it_z) {
+    if (!std::isfinite(*it_x) || !std::isfinite(*it_y) || !std::isfinite(*it_z)) continue;
+
     const Eigen::Vector4f point(*it_x, *it_y, *it_z, 1.0f);
     const Eigen::Vector4f transformed = transform * point;
     *it_x = transformed.x();

@@ -76,6 +76,8 @@ protected:
     sensor_msgs::msg::PointCloud2::UniquePtr & xyzirc_cloud);
 
   /// @brief Transform `in` into `out` with a 4x4 matrix (replaces pcl_ros::transformPointCloud).
+  /// Points with a non-finite coordinate are left unchanged, matching pcl_ros.
+  /// @pre `in` has FLOAT32 `x`, `y` and `z` fields, as every PointXYZIRC cloud does.
   static void transform_pointcloud(
     const Eigen::Matrix4f & transform, const sensor_msgs::msg::PointCloud2 & in,
     sensor_msgs::msg::PointCloud2 & out);
