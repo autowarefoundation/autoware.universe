@@ -45,6 +45,7 @@ inline std::uint64_t parse_top_res_to_bytes(const std::string & mem_res)
 
   // example 1: 12.3g
   // example 2: 25944 (without suffix, KiB)
+  // NOLINTNEXTLINE(readability/casting)
   static const std::unordered_map<char, std::function<std::uint64_t(double)>> unit_map{
     {'k', unit_conversions::kib_to_bytes<double>}, {'m', unit_conversions::mib_to_bytes<double>},
     {'g', unit_conversions::gib_to_bytes<double>}, {'t', unit_conversions::tib_to_bytes<double>},
