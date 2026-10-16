@@ -236,8 +236,7 @@ BlindSpotDecision BlindSpotModule::modifyPathVelocityDetail(
 
   const auto ego_passage_interval = compute_ego_passage_time_interval(
     ego_future_profile, planner_data.vehicle_info_.createFootprint(0.0, 0.0),
-    *virtual_ego_straight_path_after_turning, virtual_blind_lane_boundary_after_turning,
-    turn_direction_);
+    *virtual_ego_straight_path_after_turning, virtual_blind_lane_boundary_after_turning);
   if (!ego_passage_interval) {
     return InternalError{"failed to compute ego_passage_interval"};
   }

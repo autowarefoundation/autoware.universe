@@ -16,7 +16,6 @@
 #define EXPERIMENTAL__TIME_TO_COLLISION_HPP_
 
 #include <autoware/behavior_velocity_planner_common/planner_data.hpp>
-#include <autoware/lanelet2_utils/intersection.hpp>
 #include <autoware/trajectory/path_point_with_lane_id.hpp>
 
 #include <utility>
@@ -56,15 +55,19 @@ std::optional<TimeInterval> compute_passage_time_interval(
   const lanelet::ConstLineString3d & entry_line, const lanelet::ConstLineString3d & exit_line);
 
 /**
- * @brief compute the time interval in which ego passes the conflict area bounded by
- * `virtual_ego_straight_path_after_turning` and `virtual_blind_lane_boundary_after_turning`
+ * @brief compute the time interval in which ego passes the conflict area, entering it at
+ * `virtual_ego_straight_path_after_turning` and leaving it at
+ * `virtual_blind_lane_boundary_after_turning`
+ * @note both lines are generated on the turning side of the ego path (the turning-side edge of ego
+ * carried straight on, and the turning-side bound of the outermost blind side lane carried
+ * straight on), so ego crosses `virtual_ego_straight_path_after_turning` first for both left and
+ * right turns
  */
 std::optional<TimeInterval> compute_ego_passage_time_interval(
   const std::vector<FuturePose> & ego_future_profile,
   const autoware_utils_geometry::LinearRing2d & footprint,
   const lanelet::ConstLineString3d & virtual_ego_straight_path_after_turning,
-  const lanelet::ConstLineString3d & virtual_blind_lane_boundary_after_turning,
-  const autoware::experimental::lanelet2_utils::TurnDirection & turn_direction);
+  const lanelet::ConstLineString3d & virtual_blind_lane_boundary_after_turning);
 
 /**
  * @brief compute the time interval for `object` to pass from `line1` (or `entry_line` instead) to
