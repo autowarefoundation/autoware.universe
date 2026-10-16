@@ -122,6 +122,12 @@ bool isIgnoredClockEventReason(unsigned long long reason)  // NOLINT
     case kClockEventReasonGpuIdle:
     case kClockEventReasonApplicationsClocksSetting:
     case kClockEventReasonSwPowerCap:
+#ifdef nvmlClocksEventReasonBoardLimit
+    case kClockEventReasonBoardLimit:
+#endif
+#ifdef nvmlClocksEventReasonReliability
+    case kClockEventReasonReliability:
+#endif
       return true;
     default:
       return false;
