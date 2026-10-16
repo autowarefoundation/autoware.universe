@@ -18,6 +18,8 @@
 // provably invisible to the rest of the system. The core classes are already unit-tested by
 // test_distortion_corrector_node.cpp; this file covers the ROS node layer instead.
 
+// cspell: ignore unrotated undistorts
+
 #include <rclcpp/rclcpp.hpp>
 #include <rclcpp_components/component_manager.hpp>
 
