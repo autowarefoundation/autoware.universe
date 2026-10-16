@@ -668,6 +668,7 @@ TEST_F(MpcLateralControllerTest, SteeringOffsetPastTheUpdateLimitIsAppliedFurthe
   controller->set_steering_offset(2.0 * steer_offset_max_update_th);
   const auto input = Input().following(straight_path()).planned_at(1.0).driving_at(1.0);
   const auto first_cycle = controller->run(input).control_cmd.steering_tire_angle;
+  advance_clock(ctrl_period);
 
   const auto output = controller->run(input);
 
@@ -785,6 +786,7 @@ TEST_F(MpcLateralControllerTest, StopStateHoldsTheCommandWhenTheMeasuredAngleIsW
   const auto measured = static_cast<float>(settled - 0.9 * converged_steer_rad);
   const auto stopped =
     Input().following(left_curve_path()).planned_at(0.0).driving_at(0.0).steering_at(measured);
+  advance_clock(ctrl_period);
 
   const auto output = controller->run(stopped);
 
@@ -798,6 +800,7 @@ TEST_F(MpcLateralControllerTest, StopStateIsNotEnteredWhenTheMeasuredAngleIsOuts
   const auto measured = static_cast<float>(settled - 1.1 * converged_steer_rad);
   const auto stopped =
     Input().following(left_curve_path()).planned_at(0.0).driving_at(0.0).steering_at(measured);
+  advance_clock(ctrl_period);
 
   const auto output = controller->run(stopped);
 
@@ -813,6 +816,7 @@ TEST_F(MpcLateralControllerTest, StopStateIgnoresTheMeasuredAngleWhileTheGuardIs
   const auto measured = static_cast<float>(settled - 1.1 * converged_steer_rad);
   const auto stopped =
     Input().following(left_curve_path()).planned_at(0.0).driving_at(0.0).steering_at(measured);
+  advance_clock(ctrl_period);
 
   const auto output = controller->run(stopped);
 
@@ -828,6 +832,7 @@ TEST_F(MpcLateralControllerTest, StopStateIsEnteredAtTheEgoSpeedThreshold)
   const auto settled = settle_on_curve(*controller);
   const auto stopped =
     Input().following(left_curve_path()).planned_at(0.0).driving_at(stop_state_entry_ego_speed);
+  advance_clock(ctrl_period);
 
   const auto output = controller->run(stopped);
 
@@ -842,6 +847,7 @@ TEST_F(MpcLateralControllerTest, StopStateIsNotEnteredJustAboveTheEgoSpeedThresh
                              .following(left_curve_path())
                              .planned_at(0.0)
                              .driving_at(stop_state_entry_ego_speed + speed_step);
+  advance_clock(ctrl_period);
 
   const auto output = controller->run(moving);
 
@@ -859,6 +865,7 @@ TEST_F(MpcLateralControllerTest, StopStateIsEnteredJustBelowTheTargetSpeedThresh
                                .following(left_curve_path())
                                .planned_at(stop_state_entry_target_speed - speed_step)
                                .driving_at(0.0);
+  advance_clock(ctrl_period);
 
   const auto output = controller->run(stopping);
 
@@ -871,6 +878,7 @@ TEST_F(MpcLateralControllerTest, StopStateIsNotEnteredAtTheTargetSpeedThreshold)
   const auto settled = settle_on_curve(*controller);
   const InputData driving =
     Input().following(left_curve_path()).planned_at(stop_state_entry_target_speed).driving_at(0.0);
+  advance_clock(ctrl_period);
 
   const auto output = controller->run(driving);
 
@@ -886,6 +894,7 @@ TEST_F(MpcLateralControllerTest, CommandIsResetWhileNotUnderAutowareControl)
   const auto steered = controller->run(engaged).control_cmd.steering_tire_angle;
   const InputData disengaged =
     Input().following(left_curve_path()).planned_at(1.0).driving_at(1.0).without_autoware_control();
+  advance_clock(ctrl_period);
 
   const auto output = controller->run(disengaged);
 
@@ -905,6 +914,7 @@ TEST_F(MpcLateralControllerTest, CommandIsResetWhileTheOperationModeIsNotAutonom
       .planned_at(1.0)
       .driving_at(1.0)
       .in_operation_mode(autoware_adapi_v1_msgs::msg::OperationModeState::STOP);
+  advance_clock(ctrl_period);
 
   const auto output = controller->run(stopped_mode);
 
@@ -921,12 +931,16 @@ TEST_F(MpcLateralControllerTest, TheCycleAfterControlReturnsDiffersFromAnUninter
     Input().following(left_curve_path()).planned_at(3.0).driving_at(3.0).without_autoware_control();
   auto uninterrupted = make_controller();
   settle_on_curve(*uninterrupted);
+  advance_clock(ctrl_period);
   uninterrupted->run(driving);
+  advance_clock(ctrl_period);
   const auto without_gap = uninterrupted->run(driving).control_cmd.steering_tire_angle;
 
   auto interrupted = make_controller();
   settle_on_curve(*interrupted);
+  advance_clock(ctrl_period);
   interrupted->run(disengaged);
+  advance_clock(ctrl_period);
 
   const auto output = interrupted->run(driving);
 
