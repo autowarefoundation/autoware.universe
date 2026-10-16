@@ -1,8 +1,8 @@
-<class_libraries>
+<!-- <class_libraries>
   <library path="autoware_safety_planner_mppi_planner_plugin">
     <class type="autoware::safety_planner::experimental::MppiPlanner"
            base_class_type="autoware::safety_planner::TrajectoryPlannerInterface">
       <description>Tracks the reference_path with autoware_mppi_optimizer (GPU), driven at a longitudinal profile built from the constraints; drives the reference itself when MPPI rejects its output</description>
     </class>
   </library>
-</class_libraries>
+</class_libraries> -->

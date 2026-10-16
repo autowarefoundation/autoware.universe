@@ -19,7 +19,7 @@
   <depend>autoware_internal_planning_msgs</depend>
   <depend>autoware_lanelet2_utils</depend>
   <depend>autoware_map_msgs</depend>
-  <depend>autoware_mppi_optimizer</depend>
+  <!-- <depend>autoware_mppi_optimizer</depend> -->
   <depend>autoware_osqp_interface</depend>
   <depend>autoware_perception_msgs</depend>
   <depend>autoware_planning_msgs</depend>

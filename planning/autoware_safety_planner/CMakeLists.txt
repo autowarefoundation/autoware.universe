@@ -52,20 +52,7 @@ target_compile_options(${PROJECT_NAME}_trajectory_planner_plugins PRIVATE -Wno-d
 
 # The MPPI planner needs the CUDA library of autoware_mppi_optimizer, which that package only
 # exports when it was built with CUDA; the rest of the package does not depend on it
-string(FIND "${autoware_mppi_optimizer_LIBRARIES}" "first_order_dubins_mppi" _mppi_found)
-if(_mppi_found GREATER -1)
-  message(STATUS "Building the MPPI planner plugin")
-  ament_auto_add_library(${PROJECT_NAME}_mppi_planner_plugin SHARED
-    src/trajectory_planner/mppi_planner/mppi_planner.cpp
-  )
-  target_link_libraries(${PROJECT_NAME}_mppi_planner_plugin
-    ${PROJECT_NAME}_trajectory_planner_plugins
-  )
-  target_compile_options(${PROJECT_NAME}_mppi_planner_plugin PRIVATE -Wno-deprecated-declarations)
-  pluginlib_export_plugin_description_file(${PROJECT_NAME} plugins_mppi.xml)
-else()
-  message(STATUS "autoware_mppi_optimizer has no CUDA library; the MPPI planner plugin is skipped")
-endif()
+
 
 pluginlib_export_plugin_description_file(${PROJECT_NAME} plugins.xml)
 
