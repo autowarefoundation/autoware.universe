@@ -762,7 +762,7 @@ TEST_F(DistortionCorrectorCharacterizationTest, RepublishesEmptyCloudUnchanged)
 
   // Act
   const auto input = publish_cloud(
-    base_frame, base_stamp_sec, Layout::xyzircaedt, AzimuthConvention::cartesian, true);
+    base_frame, base_stamp_sec, Layout::xyzircaedt, AzimuthConvention::cartesian, /*empty=*/true);
   const auto output = await_output_cloud();
 
   // Assert
