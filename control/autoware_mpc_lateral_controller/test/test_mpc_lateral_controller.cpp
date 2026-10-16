@@ -12,17 +12,14 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/mpc_lateral_controller/mpc_lateral_controller_node.hpp"
+#include "autoware/mpc_lateral_controller/mpc_lateral_controller.hpp"
 
-#include <ament_index_cpp/get_package_share_directory.hpp>
-#include <diagnostic_updater/diagnostic_updater.hpp>
-#include <rclcpp/rclcpp.hpp>
+#include <rclcpp/time.hpp>
 
 #include "autoware_planning_msgs/msg/trajectory.hpp"
 #include "autoware_planning_msgs/msg/trajectory_point.hpp"
 
 #include <gtest/gtest.h>
-#include <rcl/time.h>
 
 #include <cmath>
 #include <cstdint>
@@ -33,9 +30,10 @@
 
 namespace
 {
-using autoware::motion::control::mpc_lateral_controller::MpcLateralControllerNode;
+using autoware::motion::control::mpc_lateral_controller::MpcLateralController;
+using autoware::motion::control::mpc_lateral_controller::MpcLateralControllerConfig;
+using autoware::motion::control::mpc_lateral_controller::no_log;
 using autoware::motion::control::trajectory_follower::InputData;
-using autoware::motion::control::trajectory_follower::LateralControllerBase;
 using autoware::motion::control::trajectory_follower::LateralOutput;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
@@ -210,8 +208,8 @@ private:
   InputData input_ = make_default();
 };
 
-/// The settings a test varies when it builds the controller. Everything else is fixed by
-/// the shipped parameter files.
+/// The settings a test varies when it builds the controller. make_config gives everything
+/// else the value the shipped parameter files carry.
 struct ControllerOptions
 {
   /// Selects the model the optimisation predicts with: kinematics, kinematics_no_delay
@@ -226,14 +224,16 @@ struct ControllerOptions
   /// reached the angle it was asked for.
   bool keep_steer_control_until_converged = true;
 
-  /// Selects how the reference path is followed: spatial by distance along the path, or
-  /// temporal by the time stamped on each point.
-  std::string trajectory_reference_mode = "spatial";
+  /// Selects how the reference path is followed: by the time stamped on each point when
+  /// true, or by distance along the path when false.
+  bool use_temporal_trajectory = false;
 
   /// Lets the controller apply the steering offset it is given. With this setting off, the
   /// offset is dropped and never reaches the command.
   bool enable_auto_steering_offset_removal = true;
 };
+
+constexpr double deg2rad = M_PI / 180.0;
 
 class MpcLateralControllerTest : public ::testing::Test
 {
@@ -323,71 +323,107 @@ protected:
     ASSERT_EQ(result, RCL_RET_OK);
   }
 
-  rclcpp::NodeOptions make_node_options(const ControllerOptions & controller_options)
+  /// The values the shipped parameter files carry, except for the settings the test
+  /// changes. The vehicle values are the ones the vehicle description package provides in
+  /// production.
+  static MpcLateralControllerConfig make_config(const ControllerOptions & controller_options)
   {
-    const auto share_dir =
-      ament_index_cpp::get_package_share_directory("autoware_mpc_lateral_controller");
+    MpcLateralControllerConfig config;
+    config.ctrl_period = ctrl_period;
 
-    rclcpp::NodeOptions options;
-    options.arguments(
-      {"--ros-args", "--params-file", share_dir + "/param/lateral_controller_defaults.param.yaml",
-       "--params-file", share_dir + "/param/steer_offset.param.yaml"});
+    auto & filtering = config.trajectory_filtering;
+    filtering.enable_path_smoothing = false;
+    filtering.path_filter_moving_ave_num = 25;
+    filtering.curvature_smoothing_num_traj = 15;
+    filtering.curvature_smoothing_num_ref_steer = 15;
+    filtering.traj_resample_dist = 0.1;
+    filtering.extend_trajectory_for_end_yaw_control = false;
 
-    // Provided by the trajectory follower node in production.
-    options.append_parameter_override("steer_offset_param_name", "steer_offset");
-    options.append_parameter_override("ego_nearest_dist_threshold", 3.0);
-    options.append_parameter_override("ego_nearest_yaw_threshold", 1.046);
-    options.append_parameter_override("vehicle_model_type", controller_options.vehicle_model_type);
-    options.append_parameter_override(
-      "use_steer_prediction", controller_options.use_steer_prediction);
-    options.append_parameter_override(
-      "keep_steer_control_until_converged", controller_options.keep_steer_control_until_converged);
-    options.append_parameter_override(
-      "trajectory_reference_mode", controller_options.trajectory_reference_mode);
-    options.append_parameter_override(
-      "steering_offset.enable_auto_steering_offset_removal",
-      controller_options.enable_auto_steering_offset_removal);
+    config.stop_state_entry_ego_speed = stop_state_entry_ego_speed;
+    config.stop_state_entry_target_speed = stop_state_entry_target_speed;
+    config.converged_steer_rad = converged_steer_rad;
+    config.keep_steer_control_until_converged =
+      controller_options.keep_steer_control_until_converged;
+    config.new_traj_duration_time = new_traj_duration_time;
+    config.new_traj_end_dist = new_traj_end_dist;
+    config.mpc_converged_threshold_rps = 0.01;
 
-    // Provided by the vehicle description package in production.
-    options.append_parameter_override("wheel_radius", 0.39);
-    options.append_parameter_override("wheel_width", 0.42);
-    options.append_parameter_override("wheel_base", wheel_base);
-    options.append_parameter_override("wheel_tread", 1.63);
-    options.append_parameter_override("front_overhang", 1.0);
-    options.append_parameter_override("rear_overhang", 1.03);
-    options.append_parameter_override("left_overhang", 0.1);
-    options.append_parameter_override("right_overhang", 0.1);
-    options.append_parameter_override("vehicle_height", 2.5);
-    options.append_parameter_override("max_steer_angle", 0.70);
+    config.ego_nearest_dist_threshold = 3.0;
+    config.ego_nearest_yaw_threshold = 1.046;
 
-    // Read by the dynamics vehicle model only.
-    options.append_parameter_override("vehicle.mass_fl", 600.0);
-    options.append_parameter_override("vehicle.mass_fr", 600.0);
-    options.append_parameter_override("vehicle.mass_rl", 600.0);
-    options.append_parameter_override("vehicle.mass_rr", 600.0);
-    options.append_parameter_override("vehicle.cf", 155494.663);
-    options.append_parameter_override("vehicle.cr", 155494.663);
+    config.enable_auto_steering_offset_removal =
+      controller_options.enable_auto_steering_offset_removal;
+    config.steer_offset_max_update_th = steer_offset_max_update_th;
+    config.steer_offset_filter_cutoff_hz = 0.5;
 
-    // Every controller reads a simulated clock, so a test sets the time itself and no
-    // result depends on how fast the machine runs.
-    options.append_parameter_override("use_sim_time", true);
+    config.steering_lpf_cutoff_hz = 3.0;
+    config.error_deriv_lpf_cutoff_hz = 5.0;
 
-    return options;
+    config.wheelbase = wheel_base;
+    config.steer_lim = 0.70;
+    config.vehicle_model_type = controller_options.vehicle_model_type;
+    config.mass_fl = 600.0;
+    config.mass_fr = 600.0;
+    config.mass_rl = 600.0;
+    config.mass_rr = 600.0;
+    config.cf = 155494.663;
+    config.cr = 155494.663;
+
+    config.steer_rate_lim_by_curvature = {
+      {0.001, 40.0 * deg2rad}, {0.002, 50.0 * deg2rad}, {0.01, 60.0 * deg2rad}};
+    config.steer_rate_lim_by_velocity = {
+      {10.0, 60.0 * deg2rad}, {15.0, 50.0 * deg2rad}, {20.0, 40.0 * deg2rad}};
+
+    config.qp_solver_type = "osqp";
+    auto & mpc = config.mpc_param;
+    mpc.prediction_horizon = 50;
+    mpc.prediction_dt = 0.1;
+    mpc.steer_tau = 0.27;
+    mpc.zero_ff_steer_deg = 0.5;
+    mpc.acceleration_limit = 2.0;
+    mpc.velocity_time_constant = 0.3;
+    mpc.min_prediction_length = 5.0;
+    mpc.low_curvature_thresh_curvature = 0.0;
+
+    auto & nominal = mpc.nominal_weight;
+    nominal.lat_error = 1.0;
+    nominal.heading_error = 0.0;
+    nominal.heading_error_squared_vel = 0.3;
+    nominal.steering_input = 1.0;
+    nominal.steering_input_squared_vel = 0.25;
+    nominal.lat_jerk = 0.1;
+    nominal.steer_rate = 0.0;
+    nominal.steer_acc = 0.000001;
+    nominal.terminal_lat_error = 1.0;
+    nominal.terminal_heading_error = 0.1;
+
+    auto & low_curvature = mpc.low_curvature_weight;
+    low_curvature.lat_error = 0.1;
+    low_curvature.heading_error = 0.0;
+    low_curvature.heading_error_squared_vel = 0.3;
+    low_curvature.steering_input = 1.0;
+    low_curvature.steering_input_squared_vel = 0.25;
+    low_curvature.lat_jerk = 0.0;
+    low_curvature.steer_rate = 0.0;
+    low_curvature.steer_acc = 0.000001;
+
+    config.input_delay = 0.24;
+    config.use_steer_prediction = controller_options.use_steer_prediction;
+    config.use_delayed_initial_state = true;
+    config.use_temporal_trajectory = controller_options.use_temporal_trajectory;
+    config.publish_debug_trajectories = true;
+    return config;
   }
 
-  /// Build the controller behind the base class interface, so that the tests only
-  /// exercise the interface the trajectory follower node uses.
-  std::unique_ptr<LateralControllerBase> make_controller(
+  std::unique_ptr<MpcLateralController> make_controller(const MpcLateralControllerConfig & config)
+  {
+    return std::make_unique<MpcLateralController>(config, no_log);
+  }
+
+  std::unique_ptr<MpcLateralController> make_controller(
     const ControllerOptions & controller_options = ControllerOptions{})
   {
-    // Kept alive for the whole test: a controller holds a reference to the node it was
-    // built from, and a test may build several controllers and compare their commands.
-    node_ = nodes_.emplace_back(
-      std::make_shared<rclcpp::Node>("test_node", make_node_options(controller_options)));
-    // The trajectory follower node declares this one before building the controller.
-    node_->declare_parameter<double>("ctrl_period", ctrl_period);
-    auto diag_updater = std::make_shared<diagnostic_updater::Updater>(node_.get());
-    return std::make_unique<MpcLateralControllerNode>(*node_, diag_updater);
+    return make_controller(make_config(controller_options));
   }
 
   /// Some of the behaviours below only appear after the controller has run for a while,
@@ -953,7 +989,7 @@ TEST_F(MpcLateralControllerTest, TheCycleAfterControlReturnsDiffersFromAnUninter
 TEST_F(MpcLateralControllerTest, TemporalReferenceModeAcceptsIncreasingTimeFromStart)
 {
   ControllerOptions options;
-  options.trajectory_reference_mode = "temporal";
+  options.use_temporal_trajectory = true;
   auto controller = make_controller(options);
   const auto input =
     Input().following(straight_path_with_time_from_start(true)).planned_at(1.0).driving_at(1.0);
@@ -966,7 +1002,7 @@ TEST_F(MpcLateralControllerTest, TemporalReferenceModeAcceptsIncreasingTimeFromS
 TEST_F(MpcLateralControllerTest, TemporalReferenceModeRejectsRepeatedTimeFromStart)
 {
   ControllerOptions options;
-  options.trajectory_reference_mode = "temporal";
+  options.use_temporal_trajectory = true;
   auto controller = make_controller(options);
   const auto input =
     Input().following(straight_path_with_time_from_start(false)).planned_at(1.0).driving_at(1.0);
