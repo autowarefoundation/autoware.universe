@@ -157,6 +157,24 @@ std::optional<std::pair<double, double>> compute_time_interval_for_passing_line(
   return std::make_optional<std::pair<double, double>>(entry_time.value(), exit_time.value());
 }
 
+std::optional<std::pair<double, double>> compute_ego_passage_time_interval(
+  const std::vector<FuturePosition> & ego_future_profile,
+  const autoware_utils_geometry::LinearRing2d & footprint,
+  const lanelet::ConstLineString3d & virtual_ego_straight_path_after_turning,
+  const lanelet::ConstLineString3d & virtual_blind_lane_boundary_after_turning,
+  const autoware::experimental::lanelet2_utils::TurnDirection & turn_direction)
+{
+  using autoware::experimental::lanelet2_utils::TurnDirection;
+  const auto & first_line = (turn_direction == TurnDirection::Left)
+                              ? virtual_ego_straight_path_after_turning
+                              : virtual_blind_lane_boundary_after_turning;
+  const auto & second_line = (turn_direction == TurnDirection::Left)
+                               ? virtual_blind_lane_boundary_after_turning
+                               : virtual_ego_straight_path_after_turning;
+  return compute_time_interval_for_passing_line(
+    ego_future_profile, footprint, first_line, second_line);
+}
+
 std::vector<std::tuple<double, double, autoware_perception_msgs::msg::PredictedPath>>
 compute_time_interval_for_passing_line(
   const autoware_perception_msgs::msg::PredictedObject & object,
