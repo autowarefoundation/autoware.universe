@@ -852,7 +852,7 @@ TEST_F(DistortionCorrectorCharacterizationTest, UsesImuAngularVelocityInsteadOfT
   expect_points_shifted_by(output, rotation_shifts(imu_rate), rotation_tolerance);
 }
 
-TEST_F(DistortionCorrectorCharacterizationTest, RotatesImuAngularVelocityIntoTheBaseFrame)
+TEST_F(DistortionCorrectorCharacterizationTest, RotatesImuAngularVelocityIntoBaseFrame)
 {
   // Arrange
   constexpr double imu_rate = 1.0;
@@ -886,7 +886,7 @@ TEST_F(DistortionCorrectorCharacterizationTest, IgnoresImuWhenImuIsDisabled)
   expect_points_shifted_by(output, rotation_shifts(twist_rate), rotation_tolerance);
 }
 
-TEST_F(DistortionCorrectorCharacterizationTest, UndistortsCloudGivenInTheLidarFrame)
+TEST_F(DistortionCorrectorCharacterizationTest, UndistortsCloudGivenInLidarFrame)
 {
   // Arrange
   constexpr double speed = 10.0;
@@ -974,7 +974,7 @@ TEST_F(DistortionCorrectorCharacterizationTest, LeavesAzimuthAndDistanceAloneByD
   }
 }
 
-TEST_F(DistortionCorrectorCharacterizationTest, RewritesAzimuthAndDistanceFromTheCorrectedPosition)
+TEST_F(DistortionCorrectorCharacterizationTest, RewritesAzimuthAndDistanceFromCorrectedPosition)
 {
   // Arrange
   start(NodeParams{}.with_azimuth_update());
@@ -1002,7 +1002,7 @@ TEST_F(DistortionCorrectorCharacterizationTest, RewritesAzimuthAndDistanceFromTh
 
 TEST_F(
   DistortionCorrectorCharacterizationTest,
-  AbortsTheCallbackWhenAzimuthUpdateIsAskedForACloudAlreadyInTheBaseFrame)
+  AbortsCallbackWhenAzimuthUpdateIsAskedForCloudAlreadyInBaseFrame)
 {
   // Arrange
   start(NodeParams{}.with_azimuth_update());
@@ -1050,7 +1050,7 @@ TEST_F(DistortionCorrectorCharacterizationTest, PublishesDiagnosticsForEveryClou
   }
 }
 
-TEST_F(DistortionCorrectorCharacterizationTest, DiagnosticsEchoTheStrategyParameters)
+TEST_F(DistortionCorrectorCharacterizationTest, DiagnosticsEchoStrategyParameters)
 {
   // Arrange
   start(NodeParams{}.with_3d());
@@ -1068,7 +1068,7 @@ TEST_F(DistortionCorrectorCharacterizationTest, DiagnosticsEchoTheStrategyParame
   EXPECT_EQ(*get_value_of(status, "Update azimuth and distance"), "False");
 }
 
-TEST_F(DistortionCorrectorCharacterizationTest, ReportsNoTimestampMismatchWhenEveryPointFindsATwist)
+TEST_F(DistortionCorrectorCharacterizationTest, ReportsNoTimestampMismatchWhenEveryPointFindsTwist)
 {
   // Arrange
   start(NodeParams{});
@@ -1085,8 +1085,7 @@ TEST_F(DistortionCorrectorCharacterizationTest, ReportsNoTimestampMismatchWhenEv
 }
 
 TEST_F(
-  DistortionCorrectorCharacterizationTest,
-  GoesToErrorWhenTheTimestampMismatchFractionExceedsTheThreshold)
+  DistortionCorrectorCharacterizationTest, GoesToErrorWhenTimestampMismatchFractionExceedsThreshold)
 {
   // Arrange
   start(NodeParams{});
@@ -1112,7 +1111,7 @@ TEST_F(
 // ordered and bounded. A surviving stale sample leaves the cloud uncorrected.
 // ---------------------------------------------------------------------------------------
 
-TEST_F(DistortionCorrectorCharacterizationTest, BackwardTimeJumpDiscardsTheTwistQueue)
+TEST_F(DistortionCorrectorCharacterizationTest, BackwardTimeJumpDiscardsTwistQueue)
 {
   // Arrange
   // A rosbag restart: the first twist is 10 s ahead. Driving a cloud through it is what puts
@@ -1138,8 +1137,7 @@ TEST_F(DistortionCorrectorCharacterizationTest, BackwardTimeJumpDiscardsTheTwist
   EXPECT_EQ(*get_value_of(status, "Timestamp mismatch count"), "0");
 }
 
-TEST_F(
-  DistortionCorrectorCharacterizationTest, TwistOlderThanOneSecondIsDroppedWhenANewerOneArrives)
+TEST_F(DistortionCorrectorCharacterizationTest, TwistOlderThanOneSecondIsDroppedWhenNewerOneArrives)
 {
   // Arrange
   // 1.5 s apart, so inserting the second retires the first.
@@ -1164,7 +1162,7 @@ TEST_F(
 // Missing transforms
 // ---------------------------------------------------------------------------------------
 
-TEST_F(DistortionCorrectorCharacterizationTest, StillPublishesWhenTheCloudTransformIsMissing)
+TEST_F(DistortionCorrectorCharacterizationTest, StillPublishesWhenCloudTransformIsMissing)
 {
   // Arrange
   constexpr double speed = 10.0;
@@ -1183,7 +1181,7 @@ TEST_F(DistortionCorrectorCharacterizationTest, StillPublishesWhenTheCloudTransf
 
 TEST_F(
   DistortionCorrectorCharacterizationTest,
-  DiagnosticsDescribeTheCloudJustProcessedWhenItsTransformIsMissing)
+  DiagnosticsDescribeCloudJustProcessedWhenItsTransformIsMissing)
 {
   // Arrange
   // A first cloud with a matching twist. Asserted as a precondition: if this half is already
@@ -1209,7 +1207,7 @@ TEST_F(
   EXPECT_EQ(*get_value_of(second, "Timestamp mismatch count"), std::to_string(num_points));
 }
 
-TEST_F(DistortionCorrectorCharacterizationTest, StillPublishesWhenTheImuTransformIsMissing)
+TEST_F(DistortionCorrectorCharacterizationTest, StillPublishesWhenImuTransformIsMissing)
 {
   // Arrange
   start(NodeParams{}.with_imu());
@@ -1250,7 +1248,7 @@ TEST_F(
   // Assert
   // This is a bug: the lookup is skipped because a transform is already cached, so this cloud
   // is corrected as though it too were in base_link -- the shift stays along x instead of
-  // becoming -y. Compare UndistortsCloudGivenInTheLidarFrame.
+  // becoming -y. Compare UndistortsCloudGivenInLidarFrame.
   expect_points_shifted_by(second, linear_shifts(speed), exact_tolerance);
 }
 
