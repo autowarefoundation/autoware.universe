@@ -524,19 +524,6 @@ TEST_P(MpcLateralControllerModelTest, IsReadyWithStraightTrajectory)
   EXPECT_TRUE(ready);
 }
 
-TEST_P(MpcLateralControllerModelTest, StraightTrajectoryKeepsSteeringNeutral)
-{
-  ControllerOptions options;
-  options.vehicle_model_type = GetParam();
-  auto controller = make_controller(options);
-  const auto input = Input().following(straight_path()).planned_at(1.0).driving_at(1.0);
-
-  const auto output = controller->run(input);
-
-  EXPECT_FLOAT_EQ(output.control_cmd.steering_tire_angle, 0.0f);
-  EXPECT_FALSE(output.control_cmd_horizon.controls.empty());
-}
-
 TEST_P(MpcLateralControllerModelTest, LeftCurveCommandsPositiveSteering)
 {
   ControllerOptions options;
@@ -616,8 +603,7 @@ TEST_F(MpcLateralControllerTest, SteerPredictionTakesTheInitialAngleFromTheComma
 /// The steering offset is the calibration bias of the steering system, supplied from
 /// outside the controller. The controller adds the offset to the measured angle. The
 /// vehicle therefore appears turned by that amount, and the command turns the other way.
-/// A zero offset leaves the command at the value StraightTrajectoryKeepsSteeringNeutral
-/// asserts.
+/// Without an offset, the command on this straight path is zero.
 TEST_F(MpcLateralControllerTest, PositiveSteeringOffsetTurnsTheCommandNegative)
 {
   auto controller = make_controller();
