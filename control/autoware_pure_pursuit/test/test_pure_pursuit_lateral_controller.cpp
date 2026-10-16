@@ -23,9 +23,12 @@
 #include <gtest/gtest.h>
 #include <rcl/time.h>
 
+#include <chrono>
 #include <cmath>
 #include <cstdint>
 #include <memory>
+#include <optional>
+#include <thread>
 #include <utility>
 #include <vector>
 
@@ -224,6 +227,14 @@ protected:
   /// small amount.
   static constexpr double lookahead_relative_tolerance = 0.01;
 
+  /// Distance between two neighbouring points of the predicted trajectory [m]. Carried by the
+  /// shipped parameter file as prediction_ds.
+  static constexpr double prediction_ds = 0.3;
+
+  /// Length of the path the controller predicts the vehicle to drive [m]. Carried by the
+  /// shipped parameter file as prediction_distance_length.
+  static constexpr double prediction_distance_length = 21.0;
+
   void SetUp() override { rclcpp::init(0, nullptr); }
   void TearDown() override { rclcpp::shutdown(); }
 
@@ -273,9 +284,53 @@ protected:
     return std::make_unique<PurePursuitLateralController>(*node_);
   }
 
+  /// Let the controller run one cycle with the given input, and return the predicted
+  /// trajectory it publishes on ~/output/predicted_trajectory. Empty if none arrives within
+  /// message_timeout. The controller has to be the one built last.
+  std::optional<Trajectory> let_controller_publish_predicted_trajectory(
+    LateralControllerBase & controller, const InputData & input)
+  {
+    std::optional<Trajectory> received;
+    const auto subscription = node_->create_subscription<Trajectory>(
+      "~/output/predicted_trajectory", 1,
+      [&received](const Trajectory::ConstSharedPtr message) { received = *message; });
+    const auto connected_by = std::chrono::steady_clock::now() + message_timeout;
+    while (subscription->get_publisher_count() == 0 &&
+           std::chrono::steady_clock::now() < connected_by) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+
+    controller.run(input);
+
+    const auto received_by = std::chrono::steady_clock::now() + message_timeout;
+    while (!received && std::chrono::steady_clock::now() < received_by) {
+      rclcpp::spin_some(node_);
+      std::this_thread::sleep_for(std::chrono::milliseconds(1));
+    }
+    return received;
+  }
+
+  static constexpr auto message_timeout = std::chrono::seconds(5);
+
   std::vector<std::shared_ptr<rclcpp::Node>> nodes_;
   std::shared_ptr<rclcpp::Node> node_;
 };
+
+/// Distance between two points of a trajectory in the x-y plane [m].
+double distance_between(const TrajectoryPoint & a, const TrajectoryPoint & b)
+{
+  return std::hypot(a.pose.position.x - b.pose.position.x, a.pose.position.y - b.pose.position.y);
+}
+
+/// Length of a trajectory measured along its points [m].
+double length_of(const Trajectory & trajectory)
+{
+  double length = 0.0;
+  for (size_t i = 1; i < trajectory.points.size(); ++i) {
+    length += distance_between(trajectory.points.at(i - 1), trajectory.points.at(i));
+  }
+  return length;
+}
 
 }  // namespace
 
@@ -503,6 +558,31 @@ TEST_F(PurePursuitLateralControllerTest, LookaheadDistanceStopsAtTheUpperLimit)
   EXPECT_NEAR(
     output.control_cmd.steering_tire_angle, expected,
     lookahead_relative_tolerance * std::abs(expected));
+}
+
+// The predicted trajectory is the path the vehicle drives if it follows the commands of the
+// controller from this cycle on. Nodes that stop the vehicle before an obstacle or before it
+// leaves the lane read it from ~/output/predicted_trajectory. The test below checks that it is
+// published, starts at the ego, and reaches prediction_distance_length along the path.
+
+TEST_F(PurePursuitLateralControllerTest, PredictedTrajectoryIsPublished)
+{
+  auto controller = make_controller();
+  const InputData input = Input().following(straight_path()).planned_at(1.0).driving_at(1.0);
+
+  const auto predicted = let_controller_publish_predicted_trajectory(*controller, input);
+
+  ASSERT_TRUE(predicted);
+  ASSERT_GE(predicted->points.size(), 2u);
+  const auto & ego = input.current_odometry.pose.pose.position;
+  EXPECT_DOUBLE_EQ(predicted->points.front().pose.position.x, ego.x);
+  EXPECT_DOUBLE_EQ(predicted->points.front().pose.position.y, ego.y);
+  for (size_t i = 1; i < predicted->points.size(); ++i) {
+    EXPECT_NEAR(
+      distance_between(predicted->points.at(i - 1), predicted->points.at(i)), prediction_ds, 1e-6);
+    EXPECT_NEAR(predicted->points.at(i).pose.position.y, 0.0, 1e-6);
+  }
+  EXPECT_NEAR(length_of(*predicted), prediction_distance_length, prediction_ds);
 }
 
 // Everything from here to the end of the file is removed together with the tests it
