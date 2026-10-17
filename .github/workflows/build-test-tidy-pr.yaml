@@ -13,12 +13,62 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # A PR that modifies no package has nothing to build, so it does not need the label.
+  # This runs on a plain runner, without the large CI images.
+  # If this job fails, its result is empty, and the label stays required.
+  check-if-build-is-needed:
+    runs-on: ubuntu-24.04
+    outputs:
+      result: ${{ steps.check.outputs.result }}
+    steps:
+      - name: Set PR fetch depth
+        run: echo "PR_FETCH_DEPTH=$(( ${{ github.event.pull_request.commits }} + 1 ))" >> "${GITHUB_ENV}"
+        shell: bash
+
+      - name: Checkout PR branch and all PR commits
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: ${{ env.PR_FETCH_DEPTH }}
+
+      - name: Setup Python 3.x
+        uses: actions/setup-python@v5
+        with:
+          python-version: 3.x
+
+      # get-modified-packages needs only `colcon list`.
+      - name: Install colcon
+        run: pip3 install colcon-core colcon-ros colcon-package-information colcon-package-selection
+        shell: bash
+
+      - name: Get modified packages
+        id: get-modified-packages
+        uses: autowarefoundation/autoware-github-actions/get-modified-packages@v1
+
+      - name: Check if the build is needed
+        id: check
+        # clang-tidy-differential checks all packages when .clang-tidy-ci changes, and it needs the build first.
+        env:
+          MODIFIED_PACKAGES: ${{ steps.get-modified-packages.outputs.modified-packages }}
+        run: |
+          if [ -n "${MODIFIED_PACKAGES}" ] || git diff --name-only "origin/${GITHUB_BASE_REF}...HEAD" | grep -qx '\.clang-tidy-ci'; then
+            echo "result=true" >> "${GITHUB_OUTPUT}"
+          else
+            echo "result=false" >> "${GITHUB_OUTPUT}"
+          fi
+        shell: bash
+
   require-label:
+    if: ${{ always() }}
+    needs: check-if-build-is-needed
     uses: autowarefoundation/autoware-github-actions/.github/workflows/require-label.yaml@v1
     with:
       label: run:build-and-test-differential
+      run-condition: ${{ needs.check-if-build-is-needed.outputs.result != 'false' }}
 
   check-if-cuda-job-is-needed:
+    # The CUDA and clang-tidy jobs run only after this job, so this gates them on the label.
+    if: ${{ needs.require-label.outputs.result == 'true' }}
     needs: require-label
     runs-on: ubuntu-latest
     outputs:
