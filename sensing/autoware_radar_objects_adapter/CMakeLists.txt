@@ -29,19 +29,19 @@ if(BUILD_TESTING)
 
   # ROS-based tests can only run while agnocast is disabled: the node's pub/sub then go through rclcpp.
   if(NOT "$ENV{ENABLE_AGNOCAST}" STREQUAL "1")
-    # Characterization test: drives RadarObjectsAdapterNode over its real topics. Runs in an isolated
-    # ROS domain so that it cannot interfere with other tests.
-    ament_add_ros_isolated_gtest(test_radar_objects_adapter_characterization
-      test/test_radar_objects_adapter_characterization.cpp
-      TIMEOUT 300
+    # Integration test of the node over its real topics; the conversion is covered by the unit
+    # test above. Runs in an isolated ROS domain so that it cannot interfere with other tests.
+    ament_add_ros_isolated_gtest(test_radar_objects_adapter_node
+      test/test_radar_objects_adapter_node.cpp
+      TIMEOUT 120
     )
-    target_include_directories(test_radar_objects_adapter_characterization PRIVATE
+    target_include_directories(test_radar_objects_adapter_node PRIVATE
       ${CMAKE_CURRENT_SOURCE_DIR}/src
     )
-    target_link_libraries(test_radar_objects_adapter_characterization
+    target_link_libraries(test_radar_objects_adapter_node
       ${PROJECT_NAME}
     )
-    ament_target_dependencies(test_radar_objects_adapter_characterization
+    ament_target_dependencies(test_radar_objects_adapter_node
       autoware_agnocast_wrapper
       autoware_perception_msgs
       autoware_sensing_msgs
