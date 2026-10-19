@@ -39,6 +39,7 @@
 #include <map>
 #include <optional>
 #include <set>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <vector>
@@ -98,6 +99,25 @@ struct DefaultParameters
   }
 };
 
+// The six optional fields that have a parameter, with the value DefaultParameters gives each, in
+// the order update_radar_info() reports them. orientation_std and orientation_rate_std have no
+// parameter and are never reported.
+using DefaultedField = std::pair<std::string, float>;
+const std::vector<DefaultedField> all_defaulted = {{"position_z", 0.25f},     {"velocity_z", 0.5f},
+                                                   {"acceleration_z", 0.75f}, {"size_x", 5.0f},
+                                                   {"size_y", 2.0f},          {"size_z", 1.5f}};
+
+std::vector<DefaultedField> all_defaulted_except(const std::string & declared)
+{
+  std::vector<DefaultedField> fields;
+  for (const auto & field : all_defaulted) {
+    if (field.first != declared) {
+      fields.push_back(field);
+    }
+  }
+  return fields;
+}
+
 // A radar info message that declares exactly these object fields. Only the names matter to the
 // adapter; the min/max/resolution of each field are left unset.
 RadarInfo make_radar_info(const std::set<std::string> & field_names)
@@ -129,6 +149,17 @@ std::set<std::string> with(std::set<std::string> fields, const std::set<std::str
 const std::set<std::string> required_fields = {
   "existence_probability", "position_x",     "position_y", "velocity_x", "velocity_y",
   "acceleration_x",        "acceleration_y", "orientation"};
+
+// The same eight, in the order the adapter requires (and names) them.
+const std::vector<std::string> required_fields_in_order = {
+  "existence_probability", "position_x",     "position_y", "velocity_x", "velocity_y",
+  "acceleration_x",        "acceleration_y", "orientation"};
+
+// The optional object fields the adapter looks at: six that are filled from a parameter when
+// undeclared, and the two standard deviations, whose variances then stay zero.
+const std::set<std::string> optional_fields = {
+  "position_z", "velocity_z", "acceleration_z",  "size_x",
+  "size_y",     "size_z",     "orientation_std", "orientation_rate_std"};
 
 // The object fields a Continental ARS548 declares through its nebula driver (read from
 // continental_ars548_decoder_wrapper.cpp on 2026-09-17). velocity_z, acceleration_z and size_z are
@@ -218,6 +249,44 @@ RadarObject facing(RadarObject object, double yaw)
   object.orientation = static_cast<float>(yaw);
   return object;
 }
+
+// A vector in the radar frame, expressed in the frame of an object facing `yaw`: the rotation by
+// -yaw, written out.
+std::pair<double, double> into_object_frame(double x, double y, double yaw)
+{
+  const double c = std::cos(yaw);
+  const double s = std::sin(yaw);
+  return {c * x + s * y, -s * x + c * y};
+}
+
+// The 2x2 covariance [[xx, xy], [xy, yy]] of a vector in the radar frame, expressed in the frame
+// of an object facing `yaw`: R Sigma R^T with R the rotation by -yaw, written out.
+struct Covariance2x2
+{
+  double xx;
+  double xy;
+  double yy;
+};
+
+Covariance2x2 into_object_frame(const Covariance2x2 & cov, double yaw)
+{
+  const double c = std::cos(yaw);
+  const double s = std::sin(yaw);
+  // R = [[c, s], [-s, c]]; R Sigma = [[c xx + s xy, c xy + s yy], [-s xx + c xy, -s xy + c yy]]
+  const double r00 = c * cov.xx + s * cov.xy;
+  const double r01 = c * cov.xy + s * cov.yy;
+  const double r10 = -s * cov.xx + c * cov.xy;
+  const double r11 = -s * cov.xy + c * cov.yy;
+  // (R Sigma) R^T
+  return {r00 * c + r01 * s, r00 * (-s) + r01 * c, r10 * (-s) + r11 * c};
+}
+
+// A yaw for the rotation cases that go beyond the quarter turn: one at which neither sine nor
+// cosine vanishes, so that the rotation by -yaw written out is told from any other mixing of the
+// components, and which is not small, negative and past a half turn, so that it is also told
+// from a rotation that loses the sign or the quadrant of the angle. The radar reports the
+// orientation in radians, within -pi to pi.
+constexpr double general_yaw = -2.5;
 
 // Indices into the 6x6 row-major covariance matrices (x, y, z, roll, pitch, yaw) of the perception
 // messages. The radar covariances are 3x3 upper triangles: XX, XY, XZ, YY, YZ, ZZ.
@@ -380,6 +449,135 @@ TEST(RadarObjectsAdapter, Gate_ValidRadarInfo_ObjectsConverted)
 }
 
 // ---------------------------------------------------------------------------------------------
+// What update_radar_info() reports about a radar info: which required fields it is missing, and
+// which optional fields will be filled from a parameter, with what value. The node used to log
+// this; nothing read it, so the characterization suite could not pin it.
+// ---------------------------------------------------------------------------------------------
+
+// A radar info that declares the required fields and nothing else is valid, and every optional
+// field that has a parameter is reported as filled from it, with the parameter's value.
+TEST(RadarObjectsAdapter, RadarInfo_AllRequiredFields_ValidAndAllDefaulted)
+{
+  // Arrange
+  RadarObjectsAdapter adapter = make_adapter();
+
+  // Act
+  const auto result = adapter.update_radar_info(make_radar_info(required_fields));
+
+  // Assert
+  ASSERT_TRUE(result.has_value());
+  EXPECT_EQ(result->defaulted_fields(), all_defaulted);
+}
+
+// Each of the eight required fields is required on its own: leaving out any one of them keeps
+// the radar info invalid, and the result names exactly that field.
+TEST(RadarObjectsAdapter, RadarInfo_OneRequiredFieldMissing_InvalidAndNamed)
+{
+  for (const auto & missing : required_fields) {
+    SCOPED_TRACE(missing);
+    // Arrange
+    RadarObjectsAdapter adapter = make_adapter();
+
+    // Act
+    const auto result =
+      adapter.update_radar_info(make_radar_info(without(required_fields, missing)));
+
+    // Assert
+    ASSERT_FALSE(result.has_value());
+    EXPECT_EQ(result.error().missing_required_fields(), std::vector<std::string>{missing});
+  }
+}
+
+// When several required fields are missing, all of them are named, in the order they are
+// required, whatever order the radar info declared the others in; the error's text, which the
+// node logs, lists them the same way.
+TEST(RadarObjectsAdapter, RadarInfo_SeveralRequiredFieldsMissing_AllNamedInRequiredOrder)
+{
+  // Arrange
+  RadarObjectsAdapter adapter = make_adapter();
+
+  // Act
+  const auto result =
+    adapter.update_radar_info(make_radar_info({"velocity_y", "position_x", "orientation"}));
+
+  // Assert
+  ASSERT_FALSE(result.has_value());
+  const std::vector<std::string> expected = {
+    "existence_probability", "position_y", "velocity_x", "acceleration_x", "acceleration_y"};
+  EXPECT_EQ(result.error().missing_required_fields(), expected);
+  const std::string what = result.error().what();
+  EXPECT_NE(
+    what.find("existence_probability, position_y, velocity_x, acceleration_x, acceleration_y"),
+    std::string::npos)
+    << what;
+}
+
+// A radar info with no object fields at all names every required field.
+TEST(RadarObjectsAdapter, RadarInfo_NoFields_AllRequiredFieldsNamed)
+{
+  // Arrange
+  RadarObjectsAdapter adapter = make_adapter();
+
+  // Act
+  const auto result = adapter.update_radar_info(make_radar_info({}));
+
+  // Assert
+  ASSERT_FALSE(result.has_value());
+  EXPECT_EQ(result.error().missing_required_fields(), required_fields_in_order);
+}
+
+// Each optional field, once declared, drops out of the defaulted list and only it does.
+TEST(RadarObjectsAdapter, RadarInfo_OneOptionalField_OnlyItNotDefaulted)
+{
+  for (const auto & declared : optional_fields) {
+    SCOPED_TRACE(declared);
+    // Arrange
+    RadarObjectsAdapter adapter = make_adapter();
+
+    // Act
+    const auto result =
+      adapter.update_radar_info(make_radar_info(with(required_fields, {declared})));
+
+    // Assert
+    ASSERT_TRUE(result.has_value());
+    EXPECT_EQ(result->defaulted_fields(), all_defaulted_except(declared));
+  }
+}
+
+// With every optional field declared, nothing is defaulted.
+TEST(RadarObjectsAdapter, RadarInfo_AllOptionalFields_NothingDefaulted)
+{
+  // Arrange
+  RadarObjectsAdapter adapter = make_adapter();
+
+  // Act
+  const auto result =
+    adapter.update_radar_info(make_radar_info(with(required_fields, optional_fields)));
+
+  // Assert
+  ASSERT_TRUE(result.has_value());
+  EXPECT_TRUE(result->defaulted_fields().empty());
+}
+
+// Fields the adapter does not know (the ones the radar in use declares on top of the ones above,
+// and arbitrary names) are ignored: they neither help the required check nor count as optional.
+TEST(RadarObjectsAdapter, RadarInfo_UnknownFields_Ignored)
+{
+  // Arrange
+  RadarObjectsAdapter adapter = make_adapter();
+
+  // Act
+  const auto result = adapter.update_radar_info(make_radar_info(with(
+    without(required_fields, "orientation"),
+    {"object_id", "age", "measurement_status", "movement_status", "orientation_rate",
+     "not_a_field"})));
+
+  // Assert
+  ASSERT_FALSE(result.has_value());
+  EXPECT_EQ(result.error().missing_required_fields(), std::vector<std::string>{"orientation"});
+}
+
+// ---------------------------------------------------------------------------------------------
 // Conversion into detected objects. A radar object is converted into a detected object with the
 // fields that are explicitly declared in a preceding radar info. Each test case evaluates the
 // converted outcome against a radar object with some specific aspects. The tracked object made of
@@ -472,6 +670,65 @@ TEST(RadarObjectsAdapter, Detections_UndeclaredFields_FilledFromParameters)
   EXPECT_DOUBLE_EQ(detected.shape.dimensions.x, defaults.size_x);
   EXPECT_DOUBLE_EQ(detected.shape.dimensions.y, defaults.size_y);
   EXPECT_DOUBLE_EQ(detected.shape.dimensions.z, defaults.size_z);
+}
+
+// The two cases above declare all optional fields or none. The choice is made per field: each
+// optional value is copied from the object when its field alone is declared, and taken from the
+// parameter when it alone is left out, on whichever output carries it.
+TEST(RadarObjectsAdapter, Detections_OptionalFields_ChoiceMadePerField)
+{
+  // Arrange
+  const DefaultParameters defaults;
+  const RadarObject radar = make_radar_object();
+
+  struct Case
+  {
+    std::string field;
+    std::function<double(const DetectedObject &, const TrackedObject &)> read;
+    double from_object;
+    double from_parameter;
+  };
+  const std::vector<Case> cases = {
+    {"position_z",
+     [](const DetectedObject & d, const TrackedObject &) {
+       return d.kinematics.pose_with_covariance.pose.position.z;
+     },
+     radar.position.z, defaults.position_z},
+    {"velocity_z",
+     [](const DetectedObject & d, const TrackedObject &) {
+       return d.kinematics.twist_with_covariance.twist.linear.z;
+     },
+     radar.velocity.z, defaults.velocity_z},
+    {"acceleration_z",
+     [](const DetectedObject &, const TrackedObject & t) {
+       return t.kinematics.acceleration_with_covariance.accel.linear.z;
+     },
+     radar.acceleration.z, defaults.acceleration_z},
+    {"size_x", [](const DetectedObject & d, const TrackedObject &) { return d.shape.dimensions.x; },
+     radar.size.x, defaults.size_x},
+    {"size_y", [](const DetectedObject & d, const TrackedObject &) { return d.shape.dimensions.y; },
+     radar.size.y, defaults.size_y},
+    {"size_z", [](const DetectedObject & d, const TrackedObject &) { return d.shape.dimensions.z; },
+     radar.size.z, defaults.size_z},
+  };
+
+  for (const auto & c : cases) {
+    SCOPED_TRACE(c.field);
+    // Act: the field alone declared, then the field alone left out
+    const auto declared =
+      run_adapter_and_collect_outputs(make_radar_info(with(required_fields, {c.field})), {radar});
+    const auto undeclared =
+      run_adapter_and_collect_outputs(make_radar_info(without(all_fields, c.field)), {radar});
+    ASSERT_TRUE(declared.has_value());
+    ASSERT_TRUE(undeclared.has_value());
+
+    // Assert
+    EXPECT_DOUBLE_EQ(
+      c.read(declared->detections.objects.at(0), declared->tracks.objects.at(0)), c.from_object);
+    EXPECT_DOUBLE_EQ(
+      c.read(undeclared->detections.objects.at(0), undeclared->tracks.objects.at(0)),
+      c.from_parameter);
+  }
 }
 
 // The radar's yaw angle becomes the orientation quaternion: a rotation about z alone.
@@ -625,6 +882,35 @@ TEST(RadarObjectsAdapter, Detections_TwistCovariance_RotatedByYaw)
     only_these_entries_set(covariance, {cov_x_x, cov_x_y, cov_y_x, cov_y_y, cov_yaw_yaw}));
 }
 
+// The quarter turn above shows the rotation as a swap; at a general yaw the velocity and its
+// covariance must match the rotation by -yaw written out, which pins the direction and the
+// formula rather than the special case.
+TEST(RadarObjectsAdapter, Detections_Twist_RotatedAtGeneralYaw)
+{
+  // Arrange
+  const RadarInfo info = make_radar_info(ars548_fields);
+  RadarObject radar = facing(make_radar_object(), general_yaw);
+  radar.velocity_covariance = {1.0f, 0.5f, 9.0f, 4.0f, 9.0f, 9.0f};
+
+  // Act
+  const auto outputs = run_adapter_and_collect_outputs(info, {radar});
+  ASSERT_TRUE(outputs.has_value());
+
+  // Assert: the vector and the x/y block of its covariance, rotated by -yaw; the z entries of
+  // the radar covariance dropped
+  const auto & twist = outputs->detections.objects.at(0).kinematics.twist_with_covariance;
+  const auto [vx, vy] = into_object_frame(radar.velocity.x, radar.velocity.y, general_yaw);
+  EXPECT_NEAR(twist.twist.linear.x, vx, 1e-6);
+  EXPECT_NEAR(twist.twist.linear.y, vy, 1e-6);
+  const Covariance2x2 expected = into_object_frame({1.0, 0.5, 4.0}, general_yaw);
+  EXPECT_NEAR(twist.covariance[cov_x_x], expected.xx, covariance_tolerance);
+  EXPECT_NEAR(twist.covariance[cov_x_y], expected.xy, covariance_tolerance);
+  EXPECT_NEAR(twist.covariance[cov_y_x], expected.xy, covariance_tolerance);
+  EXPECT_NEAR(twist.covariance[cov_y_y], expected.yy, covariance_tolerance);
+  EXPECT_TRUE(
+    only_these_entries_set(twist.covariance, {cov_x_x, cov_x_y, cov_y_x, cov_y_y, cov_yaw_yaw}));
+}
+
 // A radar marks a covariance entry it cannot provide with INVALID_COV_VALUE (-1). The adapter
 // turns those into zero instead of passing a negative variance downstream. The yaw variances are
 // not affected, because they come from the standard deviations, not from these arrays.
@@ -759,6 +1045,23 @@ TEST(RadarObjectsAdapter, Classification_UnknownLabelInParameter_MapsToUnknown)
   EXPECT_EQ(labeled_probabilities(outputs->detections.objects.at(0).classification), expected);
 }
 
+// An object without classifications comes out without classifications, on both outputs.
+TEST(RadarObjectsAdapter, Classification_NoClassifications_EmptyList)
+{
+  // Arrange
+  const RadarInfo info = make_radar_info(ars548_fields);
+  RadarObject radar = make_radar_object();
+  radar.classifications.clear();
+
+  // Act
+  const auto outputs = run_adapter_and_collect_outputs(info, {radar});
+  ASSERT_TRUE(outputs.has_value());
+
+  // Assert
+  EXPECT_TRUE(outputs->detections.objects.at(0).classification.empty());
+  EXPECT_TRUE(outputs->tracks.objects.at(0).classification.empty());
+}
+
 // ---------------------------------------------------------------------------------------------
 // Conversion into tracked objects. The same radar object goes in, and the tracked object made of
 // it is read. It shares pose, twist, shape and classification with the detected object, and adds
@@ -823,6 +1126,33 @@ TEST(RadarObjectsAdapter, Tracks_Uuid_ObjectIdThenTopicHashThenZeros)
       second_uuid.begin() + object_id_bytes));
 }
 
+// Two adapters on different input topics give the same object different ids: the hash is what
+// tells one radar's tracks from another's.
+TEST(RadarObjectsAdapter, Tracks_Uuid_DiffersBetweenTopics)
+{
+  // Arrange
+  const RadarInfo info = make_radar_info(ars548_fields);
+  const RadarObjects objects = make_radar_objects({make_radar_object()});
+  RadarObjectsAdapter front = make_adapter();
+  RadarObjectsAdapter rear(
+    DefaultParameters{}.to_params(),
+    make_classification_remap_from_string_pair(built_in_remap).remap,
+    "/sensing/radar/rear/objects_raw");
+  ASSERT_TRUE(front.update_radar_info(info).has_value());
+  ASSERT_TRUE(rear.update_radar_info(info).has_value());
+
+  // Act
+  const auto from_front = front.convert(objects);
+  const auto from_rear = rear.convert(objects);
+  ASSERT_TRUE(from_front.has_value());
+  ASSERT_TRUE(from_rear.has_value());
+
+  // Assert
+  EXPECT_NE(
+    from_front->tracks.objects.at(0).object_id.uuid,
+    from_rear->tracks.objects.at(0).object_id.uuid);
+}
+
 // Only an object the radar reports as DYNAMIC is moving; STATIC, but also INVALID and UNKNOWN,
 // are reported as stationary.
 TEST(RadarObjectsAdapter, Tracks_MovementStatus_OnlyDynamicIsMoving)
@@ -878,6 +1208,33 @@ TEST(RadarObjectsAdapter, Tracks_Acceleration_RotatedByYaw)
   EXPECT_NEAR(acceleration.covariance[cov_y_y], 1.0, covariance_tolerance);
   EXPECT_NEAR(acceleration.covariance[cov_x_y], -0.5, covariance_tolerance);
   EXPECT_NEAR(acceleration.covariance[cov_y_x], -0.5, covariance_tolerance);
+  EXPECT_TRUE(
+    only_these_entries_set(acceleration.covariance, {cov_x_x, cov_x_y, cov_y_x, cov_y_y}));
+}
+
+// At a general yaw the acceleration and its covariance match the rotation by -yaw written out,
+// like the velocity.
+TEST(RadarObjectsAdapter, Tracks_Acceleration_RotatedAtGeneralYaw)
+{
+  // Arrange
+  const RadarInfo info = make_radar_info(ars548_fields);
+  RadarObject radar = facing(make_radar_object(), general_yaw);
+  radar.acceleration_covariance = {2.0f, -0.3f, 9.0f, 0.5f, 9.0f, 9.0f};
+
+  // Act
+  const auto outputs = run_adapter_and_collect_outputs(info, {radar});
+  ASSERT_TRUE(outputs.has_value());
+
+  // Assert
+  const auto & acceleration = outputs->tracks.objects.at(0).kinematics.acceleration_with_covariance;
+  const auto [ax, ay] = into_object_frame(radar.acceleration.x, radar.acceleration.y, general_yaw);
+  EXPECT_NEAR(acceleration.accel.linear.x, ax, 1e-6);
+  EXPECT_NEAR(acceleration.accel.linear.y, ay, 1e-6);
+  const Covariance2x2 expected = into_object_frame({2.0, -0.3, 0.5}, general_yaw);
+  EXPECT_NEAR(acceleration.covariance[cov_x_x], expected.xx, covariance_tolerance);
+  EXPECT_NEAR(acceleration.covariance[cov_x_y], expected.xy, covariance_tolerance);
+  EXPECT_NEAR(acceleration.covariance[cov_y_x], expected.xy, covariance_tolerance);
+  EXPECT_NEAR(acceleration.covariance[cov_y_y], expected.yy, covariance_tolerance);
   EXPECT_TRUE(
     only_these_entries_set(acceleration.covariance, {cov_x_x, cov_x_y, cov_y_x, cov_y_y}));
 }
@@ -945,4 +1302,90 @@ TEST(RadarObjectsAdapter, Tracks_SharedFields_MatchDetection)
   EXPECT_EQ(track.kinematics.twist_with_covariance, detected.kinematics.twist_with_covariance);
   EXPECT_EQ(track.shape, detected.shape);
   EXPECT_EQ(track.kinematics.orientation_availability, TrackedObjectKinematics::AVAILABLE);
+}
+
+// ---------------------------------------------------------------------------------------------
+// The remap table built from the parameter names (make_classification_remap_from_string_pair),
+// on its own: what the cases above feed the adapter, read before the adapter is given it.
+// ---------------------------------------------------------------------------------------------
+
+namespace
+{
+using autoware::radar_objects_adapter::ClassificationRemap;
+
+// The eight radar labels the parameters can name, with their ids.
+const std::map<std::string, RadarClassification::_label_type> radar_labels = {
+  {"UNKNOWN", RadarClassification::UNKNOWN}, {"CAR", RadarClassification::CAR},
+  {"TRUCK", RadarClassification::TRUCK},     {"MOTORCYCLE", RadarClassification::MOTORCYCLE},
+  {"BICYCLE", RadarClassification::BICYCLE}, {"PEDESTRIAN", RadarClassification::PEDESTRIAN},
+  {"ANIMAL", RadarClassification::ANIMAL},   {"HAZARD", RadarClassification::HAZARD}};
+
+// The nine perception labels a parameter value can name, with their ids.
+const std::map<std::string, ObjectClassification::_label_type> perception_labels = {
+  {"UNKNOWN", ObjectClassification::UNKNOWN}, {"CAR", ObjectClassification::CAR},
+  {"TRUCK", ObjectClassification::TRUCK},     {"BUS", ObjectClassification::BUS},
+  {"TRAILER", ObjectClassification::TRAILER}, {"MOTORCYCLE", ObjectClassification::MOTORCYCLE},
+  {"BICYCLE", ObjectClassification::BICYCLE}, {"PEDESTRIAN", ObjectClassification::PEDESTRIAN},
+  {"ANIMAL", ObjectClassification::ANIMAL}};
+}  // namespace
+
+// No names in, no entries out.
+TEST(RadarObjectsAdapter, RemapTable_Empty_NoEntries)
+{
+  // Act
+  const auto [remap, unknown_perception_labels] = make_classification_remap_from_string_pair({});
+
+  // Assert
+  EXPECT_TRUE(remap.empty());
+  EXPECT_TRUE(unknown_perception_labels.empty());
+}
+
+// Every radar label name can be a key and every perception label name can be a value; the
+// table holds the ids of both. Radar labels the parameters do not name get no entry.
+TEST(RadarObjectsAdapter, RemapTable_KnownNames_MappedToIds)
+{
+  for (const auto & [radar_name, radar_id] : radar_labels) {
+    for (const auto & [perception_name, perception_id] : perception_labels) {
+      SCOPED_TRACE(radar_name + " -> " + perception_name);
+      // Act
+      const auto [remap, unknown_perception_labels] =
+        make_classification_remap_from_string_pair({{radar_name, perception_name}});
+
+      // Assert
+      EXPECT_EQ(remap, (ClassificationRemap{{radar_id, perception_id}}));
+      EXPECT_TRUE(unknown_perception_labels.empty());
+    }
+  }
+}
+
+// A perception label name the table does not know is not an error: the radar label maps to
+// UNKNOWN, and the pair is reported so that the node can warn about it. The node's warning is
+// what Classification_UnknownLabelInParameter_MapsToUnknown could not pin.
+TEST(RadarObjectsAdapter, RemapTable_UnknownPerceptionName_MapsToUnknownAndReported)
+{
+  // Act
+  const auto [remap, unknown_perception_labels] = make_classification_remap_from_string_pair(
+    {{"CAR", "SPACESHIP"}, {"TRUCK", "TRUCK"}, {"BICYCLE", "bicycle"}});
+
+  // Assert
+  const ClassificationRemap expected = {
+    {RadarClassification::CAR, ObjectClassification::UNKNOWN},
+    {RadarClassification::TRUCK, ObjectClassification::TRUCK},
+    {RadarClassification::BICYCLE, ObjectClassification::UNKNOWN}};
+  EXPECT_EQ(remap, expected);
+  // Reported by radar label, so that each entry is reported once
+  const RemapNames reported = {{"BICYCLE", "bicycle"}, {"CAR", "SPACESHIP"}};
+  EXPECT_EQ(unknown_perception_labels, reported);
+}
+
+// The radar labels the parameters can name are the eight above. Perception labels that the
+// radar side also defines (BUS, TRAILER, OVER_DRIVABLE, UNDER_DRIVABLE) are not among them, and
+// naming one as a key is an error rather than a silent entry: the parameter set is fixed.
+TEST(RadarObjectsAdapter, RemapTable_UnknownRadarName_Throws)
+{
+  for (const auto & name : {"BUS", "TRAILER", "OVER_DRIVABLE", "UNDER_DRIVABLE", "car", ""}) {
+    SCOPED_TRACE(name);
+    // Act and assert
+    EXPECT_THROW(make_classification_remap_from_string_pair({{name, "CAR"}}), std::out_of_range);
+  }
 }
