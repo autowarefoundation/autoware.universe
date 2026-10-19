@@ -115,8 +115,14 @@ std::unique_ptr<const cuda_blackboard::CudaPointCloud2> PTv3TRT::sizedCopy(
   const cuda_blackboard::CudaPointCloud2 & staging)
 {
   auto msg = std::make_unique<cuda_blackboard::CudaPointCloud2>();
-  static_cast<sensor_msgs::msg::PointCloud2 &>(*msg) =
-    static_cast<const sensor_msgs::msg::PointCloud2 &>(staging);
+  msg->header = staging.header;
+  msg->height = staging.height;
+  msg->width = staging.width;
+  msg->fields = staging.fields;
+  msg->is_bigendian = staging.is_bigendian;
+  msg->point_step = staging.point_step;
+  msg->row_step = staging.row_step;
+  msg->is_dense = staging.is_dense;
   const std::size_t num_bytes =
     static_cast<std::size_t>(msg->height) * msg->width * msg->point_step;
   msg->data = cuda_blackboard::make_unique<std::uint8_t[]>(std::max<std::size_t>(num_bytes, 1));
