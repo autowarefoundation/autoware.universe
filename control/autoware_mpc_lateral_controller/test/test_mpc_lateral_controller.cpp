@@ -23,7 +23,6 @@
 
 #include <cmath>
 #include <cstdint>
-#include <memory>
 #include <string>
 #include <utility>
 #include <vector>
@@ -246,291 +245,245 @@ private:
   double interval_{0.0};
 };
 
-/// The settings a test varies when it builds the controller. make_config gives everything
-/// else the value the shipped parameter files carry.
-struct ControllerOptions
-{
-  /// Selects the model the optimisation predicts with: kinematics, kinematics_no_delay
-  /// or dynamics.
-  std::string vehicle_model_type = "kinematics";
-
-  /// Derives the angle the optimisation starts from an estimate of the commands already
-  /// issued, instead of from the measurement.
-  bool use_steer_prediction = false;
-
-  /// Keeps the controller steering while stopped until it accepts that the vehicle has
-  /// reached the angle it was asked for.
-  bool keep_steer_control_until_converged = true;
-
-  /// Selects how the reference path is followed: by the time stamped on each point when
-  /// true, or by distance along the path when false.
-  bool use_temporal_trajectory = false;
-
-  /// Lets the controller apply the steering offset it is given. With this setting off, the
-  /// offset is dropped and never reaches the command.
-  bool enable_auto_steering_offset_removal = true;
-};
-
 constexpr double deg2rad = M_PI / 180.0;
 
-class MpcLateralControllerTest : public ::testing::Test
+constexpr double wheel_base = 2.74;
+constexpr double ctrl_period = 0.03;
+
+/// Distance between the commanded and the measured angle below which the controller calls
+/// the steering converged. Carried by the shipped parameter file as converged_steer_rad.
+constexpr double converged_steer_rad = 0.1;
+
+/// The controller only decides that the command has settled once it holds this much of
+/// the command record. Written into the controller rather than read from a parameter.
+constexpr double convergence_history_sec = 1.0;
+
+/// Most of the steering offset the controller applies during one cycle. Carried by the
+/// shipped parameter file as steering_offset.max_update_th.
+constexpr double steer_offset_max_update_th = 0.01;
+
+/// How far the end of the path has to move before the controller treats it as a new
+/// shape. Carried by the shipped parameter file as new_traj_end_dist.
+constexpr double new_traj_end_dist = 0.3;
+
+/// How long the controller keeps each path it has been given, so that it can compare a
+/// later shape against that path. Carried by the shipped parameter file as
+/// new_traj_duration_time.
+constexpr double new_traj_duration_time = 1.0;
+
+/// Measured speed at or below which the vehicle counts as stopped. Carried by the
+/// shipped parameter file as stop_state_entry_ego_speed.
+constexpr double stop_state_entry_ego_speed = 0.001;
+
+/// Target speed below which the path counts as asking for a stop. Carried by the
+/// shipped parameter file as stop_state_entry_target_speed.
+constexpr double stop_state_entry_target_speed = 0.001;
+
+/// A speed step small enough to land on the other side of either stop threshold.
+constexpr double speed_step = 0.0001;
+
+/// Radius of the circle the steady state steering tests follow [m]. The controller
+/// replaces a feed-forward angle below mpc_zero_ff_steer_deg (0.5 deg) with zero, which
+/// this wheelbase reaches at a radius of about 314 m, so the radius stays well below
+/// that.
+constexpr double arc_radius = 30.0;
+
+/// Speed those tests drive the circle at [m/s]. The weight on the heading error grows
+/// with the square of the speed, so at a high speed the optimisation arrives near the
+/// same angle even without the feed-forward that decides it. A low speed keeps the two
+/// apart.
+constexpr double arc_speed = 1.0;
+
+/// Cycles those tests run. The command reaches the settled angle in about twenty cycles.
+/// The limit on how far the command may move during one cycle sets that number, not the
+/// optimisation.
+constexpr int arc_settling_cycles = 60;
+
+/// How far the settled command may differ from the angle the geometry gives. A
+/// controller that approximates tan(angle) by the angle itself commands L / R instead of
+/// atan(L / R). The two differ by 0.3 per cent at the radius above, so this margin
+/// accepts such a controller as well.
+constexpr double arc_relative_tolerance = 0.01;
+
+/// Cycles needed for the command record to cover the given duration. The record gains
+/// one entry per cycle, so n cycles cover (n - 1) control periods.
+int cycles_spanning(const double seconds)
 {
-protected:
-  static constexpr double wheel_base = 2.74;
-  static constexpr double ctrl_period = 0.03;
+  return static_cast<int>(std::ceil(seconds / ctrl_period)) + 1;
+}
 
-  /// Distance between the commanded and the measured angle below which the controller calls
-  /// the steering converged. Carried by the shipped parameter file as converged_steer_rad.
-  static constexpr double converged_steer_rad = 0.1;
+/// Cycles the controller takes to stop reporting a shape change. It stops once it has
+/// dropped the last path of the old shape, and that path arrived one control period
+/// before the changed one.
+int cycles_to_forget_shape_change()
+{
+  return static_cast<int>(std::ceil((new_traj_duration_time - ctrl_period) / ctrl_period));
+}
 
-  /// The controller only decides that the command has settled once it holds this much of
-  /// the command record. Written into the controller rather than read from a parameter.
-  static constexpr double convergence_history_sec = 1.0;
+/// The values the shipped parameter files carry. The vehicle values are the ones the vehicle
+/// description package provides in production.
+MpcLateralControllerConfig make_default_config()
+{
+  MpcLateralControllerConfig config;
+  config.ctrl_period = ctrl_period;
 
-  /// Most of the steering offset the controller applies during one cycle. Carried by the
-  /// shipped parameter file as steering_offset.max_update_th.
-  static constexpr double steer_offset_max_update_th = 0.01;
+  auto & filtering = config.trajectory_filtering;
+  filtering.enable_path_smoothing = false;
+  filtering.path_filter_moving_ave_num = 25;
+  filtering.curvature_smoothing_num_traj = 15;
+  filtering.curvature_smoothing_num_ref_steer = 15;
+  filtering.traj_resample_dist = 0.1;
+  filtering.extend_trajectory_for_end_yaw_control = false;
 
-  /// How far the end of the path has to move before the controller treats it as a new
-  /// shape. Carried by the shipped parameter file as new_traj_end_dist.
-  static constexpr double new_traj_end_dist = 0.3;
+  config.stop_state_entry_ego_speed = stop_state_entry_ego_speed;
+  config.stop_state_entry_target_speed = stop_state_entry_target_speed;
+  config.converged_steer_rad = converged_steer_rad;
+  config.keep_steer_control_until_converged = true;
+  config.new_traj_duration_time = new_traj_duration_time;
+  config.new_traj_end_dist = new_traj_end_dist;
+  config.mpc_converged_threshold_rps = 0.01;
 
-  /// How long the controller keeps each path it has been given, so that it can compare a
-  /// later shape against that path. Carried by the shipped parameter file as
-  /// new_traj_duration_time.
-  static constexpr double new_traj_duration_time = 1.0;
+  config.ego_nearest_dist_threshold = 3.0;
+  config.ego_nearest_yaw_threshold = 1.046;
 
-  /// Measured speed at or below which the vehicle counts as stopped. Carried by the
-  /// shipped parameter file as stop_state_entry_ego_speed.
-  static constexpr double stop_state_entry_ego_speed = 0.001;
+  config.enable_auto_steering_offset_removal = true;
+  config.steer_offset_max_update_th = steer_offset_max_update_th;
+  config.steer_offset_filter_cutoff_hz = 0.5;
 
-  /// Target speed below which the path counts as asking for a stop. Carried by the
-  /// shipped parameter file as stop_state_entry_target_speed.
-  static constexpr double stop_state_entry_target_speed = 0.001;
+  config.steering_lpf_cutoff_hz = 3.0;
+  config.error_deriv_lpf_cutoff_hz = 5.0;
 
-  /// A speed step small enough to land on the other side of either stop threshold.
-  static constexpr double speed_step = 0.0001;
+  config.wheelbase = wheel_base;
+  config.steer_lim = 0.70;
+  config.vehicle_model_type = "kinematics";
+  config.mass_fl = 600.0;
+  config.mass_fr = 600.0;
+  config.mass_rl = 600.0;
+  config.mass_rr = 600.0;
+  config.cf = 155494.663;
+  config.cr = 155494.663;
 
-  /// Radius of the circle the steady state steering tests follow [m]. The controller
-  /// replaces a feed-forward angle below mpc_zero_ff_steer_deg (0.5 deg) with zero, which
-  /// this wheelbase reaches at a radius of about 314 m, so the radius stays well below
-  /// that.
-  static constexpr double arc_radius = 30.0;
+  config.steer_rate_lim_by_curvature = {
+    {0.001, 40.0 * deg2rad}, {0.002, 50.0 * deg2rad}, {0.01, 60.0 * deg2rad}};
+  config.steer_rate_lim_by_velocity = {
+    {10.0, 60.0 * deg2rad}, {15.0, 50.0 * deg2rad}, {20.0, 40.0 * deg2rad}};
 
-  /// Speed those tests drive the circle at [m/s]. The weight on the heading error grows
-  /// with the square of the speed, so at a high speed the optimisation arrives near the
-  /// same angle even without the feed-forward that decides it. A low speed keeps the two
-  /// apart.
-  static constexpr double arc_speed = 1.0;
+  config.qp_solver_type = "osqp";
+  auto & mpc = config.mpc_param;
+  mpc.prediction_horizon = 50;
+  mpc.prediction_dt = 0.1;
+  mpc.steer_tau = 0.27;
+  mpc.zero_ff_steer_deg = 0.5;
+  mpc.acceleration_limit = 2.0;
+  mpc.velocity_time_constant = 0.3;
+  mpc.min_prediction_length = 5.0;
+  mpc.low_curvature_thresh_curvature = 0.0;
 
-  /// Cycles those tests run. The command reaches the settled angle in about twenty cycles.
-  /// The limit on how far the command may move during one cycle sets that number, not the
-  /// optimisation.
-  static constexpr int arc_settling_cycles = 60;
+  auto & nominal = mpc.nominal_weight;
+  nominal.lat_error = 1.0;
+  nominal.heading_error = 0.0;
+  nominal.heading_error_squared_vel = 0.3;
+  nominal.steering_input = 1.0;
+  nominal.steering_input_squared_vel = 0.25;
+  nominal.lat_jerk = 0.1;
+  nominal.steer_rate = 0.0;
+  nominal.steer_acc = 0.000001;
+  nominal.terminal_lat_error = 1.0;
+  nominal.terminal_heading_error = 0.1;
 
-  /// How far the settled command may differ from the angle the geometry gives. A
-  /// controller that approximates tan(angle) by the angle itself commands L / R instead of
-  /// atan(L / R). The two differ by 0.3 per cent at the radius above, so this margin
-  /// accepts such a controller as well.
-  static constexpr double arc_relative_tolerance = 0.01;
+  auto & low_curvature = mpc.low_curvature_weight;
+  low_curvature.lat_error = 0.1;
+  low_curvature.heading_error = 0.0;
+  low_curvature.heading_error_squared_vel = 0.3;
+  low_curvature.steering_input = 1.0;
+  low_curvature.steering_input_squared_vel = 0.25;
+  low_curvature.lat_jerk = 0.0;
+  low_curvature.steer_rate = 0.0;
+  low_curvature.steer_acc = 0.000001;
 
-  /// Cycles needed for the command record to cover the given duration. The record gains
-  /// one entry per cycle, so n cycles cover (n - 1) control periods.
-  static int cycles_spanning(const double seconds)
-  {
-    return static_cast<int>(std::ceil(seconds / ctrl_period)) + 1;
+  config.input_delay = 0.24;
+  config.use_steer_prediction = false;
+  config.use_delayed_initial_state = true;
+  config.use_temporal_trajectory = false;
+  config.publish_debug_trajectories = true;
+  return config;
+}
+
+/// Some of the behaviours below only appear after the controller has run for a while,
+/// because the controller decides them from a record of earlier cycles. The controller
+/// keeps two such records. It reads a different time for each record when it decides
+/// which entries are too old to keep, so there is one helper per record.
+///
+/// This helper repeats an input the test has assembled, once in each cycle it runs. Use it
+/// for the record of commands, because the controller compares the times
+/// of the cycles to decide which commands are too old to keep.
+LateralOutput run_cycles(
+  MpcLateralController & controller, const InputData & input, CycleClock & clock, const int cycles)
+{
+  LateralOutput output;
+  for (int cycle = 0; cycle < cycles; ++cycle) {
+    output = controller.run(input, at(clock.next_cycle())).output;
   }
+  return output;
+}
 
-  /// Cycles the controller takes to stop reporting a shape change. It stops once it has
-  /// dropped the last path of the old shape, and that path arrived one control period
-  /// before the changed one.
-  static int cycles_to_forget_shape_change()
-  {
-    return static_cast<int>(std::ceil((new_traj_duration_time - ctrl_period) / ctrl_period));
+/// This helper follows a path once in each cycle it runs, and writes the time of the cycle
+/// to the path as its stamp. Use it for the record of paths. To decide which paths are
+/// too old to keep, the controller compares the stamps on the paths it keeps instead of
+/// the times of the cycles. A path whose stamp is still zero is therefore never dropped.
+///
+/// The vehicle follows the path at 1 m/s and reports its steering as straight ahead. No
+/// test that uses this helper needs it anywhere else.
+LateralOutput follow_path_for_cycles(
+  MpcLateralController & controller, const Trajectory & path, CycleClock & clock, const int cycles)
+{
+  LateralOutput output;
+  for (int cycle = 0; cycle < cycles; ++cycle) {
+    const double time = clock.next_cycle();
+    output =
+      controller
+        .run(Input().following(path).planned_at(1.0).driving_at(1.0).stamped_at(time), at(time))
+        .output;
   }
+  return output;
+}
 
-  /// The values the shipped parameter files carry, except for the settings the test
-  /// changes. The vehicle values are the ones the vehicle description package provides in
-  /// production.
-  static MpcLateralControllerConfig make_config(const ControllerOptions & controller_options)
-  {
-    MpcLateralControllerConfig config;
-    config.ctrl_period = ctrl_period;
-
-    auto & filtering = config.trajectory_filtering;
-    filtering.enable_path_smoothing = false;
-    filtering.path_filter_moving_ave_num = 25;
-    filtering.curvature_smoothing_num_traj = 15;
-    filtering.curvature_smoothing_num_ref_steer = 15;
-    filtering.traj_resample_dist = 0.1;
-    filtering.extend_trajectory_for_end_yaw_control = false;
-
-    config.stop_state_entry_ego_speed = stop_state_entry_ego_speed;
-    config.stop_state_entry_target_speed = stop_state_entry_target_speed;
-    config.converged_steer_rad = converged_steer_rad;
-    config.keep_steer_control_until_converged =
-      controller_options.keep_steer_control_until_converged;
-    config.new_traj_duration_time = new_traj_duration_time;
-    config.new_traj_end_dist = new_traj_end_dist;
-    config.mpc_converged_threshold_rps = 0.01;
-
-    config.ego_nearest_dist_threshold = 3.0;
-    config.ego_nearest_yaw_threshold = 1.046;
-
-    config.enable_auto_steering_offset_removal =
-      controller_options.enable_auto_steering_offset_removal;
-    config.steer_offset_max_update_th = steer_offset_max_update_th;
-    config.steer_offset_filter_cutoff_hz = 0.5;
-
-    config.steering_lpf_cutoff_hz = 3.0;
-    config.error_deriv_lpf_cutoff_hz = 5.0;
-
-    config.wheelbase = wheel_base;
-    config.steer_lim = 0.70;
-    config.vehicle_model_type = controller_options.vehicle_model_type;
-    config.mass_fl = 600.0;
-    config.mass_fr = 600.0;
-    config.mass_rl = 600.0;
-    config.mass_rr = 600.0;
-    config.cf = 155494.663;
-    config.cr = 155494.663;
-
-    config.steer_rate_lim_by_curvature = {
-      {0.001, 40.0 * deg2rad}, {0.002, 50.0 * deg2rad}, {0.01, 60.0 * deg2rad}};
-    config.steer_rate_lim_by_velocity = {
-      {10.0, 60.0 * deg2rad}, {15.0, 50.0 * deg2rad}, {20.0, 40.0 * deg2rad}};
-
-    config.qp_solver_type = "osqp";
-    auto & mpc = config.mpc_param;
-    mpc.prediction_horizon = 50;
-    mpc.prediction_dt = 0.1;
-    mpc.steer_tau = 0.27;
-    mpc.zero_ff_steer_deg = 0.5;
-    mpc.acceleration_limit = 2.0;
-    mpc.velocity_time_constant = 0.3;
-    mpc.min_prediction_length = 5.0;
-    mpc.low_curvature_thresh_curvature = 0.0;
-
-    auto & nominal = mpc.nominal_weight;
-    nominal.lat_error = 1.0;
-    nominal.heading_error = 0.0;
-    nominal.heading_error_squared_vel = 0.3;
-    nominal.steering_input = 1.0;
-    nominal.steering_input_squared_vel = 0.25;
-    nominal.lat_jerk = 0.1;
-    nominal.steer_rate = 0.0;
-    nominal.steer_acc = 0.000001;
-    nominal.terminal_lat_error = 1.0;
-    nominal.terminal_heading_error = 0.1;
-
-    auto & low_curvature = mpc.low_curvature_weight;
-    low_curvature.lat_error = 0.1;
-    low_curvature.heading_error = 0.0;
-    low_curvature.heading_error_squared_vel = 0.3;
-    low_curvature.steering_input = 1.0;
-    low_curvature.steering_input_squared_vel = 0.25;
-    low_curvature.lat_jerk = 0.0;
-    low_curvature.steer_rate = 0.0;
-    low_curvature.steer_acc = 0.000001;
-
-    config.input_delay = 0.24;
-    config.use_steer_prediction = controller_options.use_steer_prediction;
-    config.use_delayed_initial_state = true;
-    config.use_temporal_trajectory = controller_options.use_temporal_trajectory;
-    config.publish_debug_trajectories = true;
-    return config;
+/// Drive a curve at speed until the command stops moving, and report the command reached.
+/// Five cycles are enough for the low pass filters inside the controller to settle.
+float settle_on_curve(MpcLateralController & controller, CycleClock & clock, const int cycles)
+{
+  const InputData driving = Input().following(left_curve_path()).planned_at(3.0).driving_at(3.0);
+  float command = 0.0f;
+  for (int cycle = 0; cycle < cycles; ++cycle) {
+    command =
+      controller.run(driving, at(clock.next_cycle())).output.control_cmd.steering_tire_angle;
   }
+  return command;
+}
 
-  std::unique_ptr<MpcLateralController> make_controller(const MpcLateralControllerConfig & config)
-  {
-    return std::make_unique<MpcLateralController>(config, no_log);
+/// Drive a circle until the command settles, and report the command reached.
+///
+/// The ego pose stays on the circle, so the lateral and the heading error stay at zero
+/// and the command is the angle the controller holds that state with. The command of one
+/// cycle is returned as the measured angle of the next, which is the relation that holds
+/// once the steering of a vehicle has reached the commanded angle. Nothing else about a
+/// vehicle is modelled, so the result does not depend on how quickly one responds.
+float settle_on_arc(MpcLateralController & controller, CycleClock & clock, const int cycles)
+{
+  const Trajectory path = arc_path(arc_radius);
+  float command = 0.0f;
+  for (int cycle = 0; cycle < cycles; ++cycle) {
+    const InputData driving =
+      Input().following(path).planned_at(arc_speed).driving_at(arc_speed).steering_at(command);
+    command =
+      controller.run(driving, at(clock.next_cycle())).output.control_cmd.steering_tire_angle;
   }
-
-  std::unique_ptr<MpcLateralController> make_controller(
-    const ControllerOptions & controller_options = ControllerOptions{})
-  {
-    return make_controller(make_config(controller_options));
-  }
-
-  /// Some of the behaviours below only appear after the controller has run for a while,
-  /// because the controller decides them from a record of earlier cycles. The controller
-  /// keeps two such records. It reads a different time for each record when it decides
-  /// which entries are too old to keep, so there is one helper per record.
-  ///
-  /// This helper repeats an input the test has assembled, once in each cycle it runs. Use it
-  /// for the record of commands, because the controller compares the times
-  /// of the cycles to decide which commands are too old to keep.
-  LateralOutput run_cycles(
-    MpcLateralController & controller, const InputData & input, CycleClock & clock,
-    const int cycles)
-  {
-    LateralOutput output;
-    for (int cycle = 0; cycle < cycles; ++cycle) {
-      output = controller.run(input, at(clock.next_cycle())).output;
-    }
-    return output;
-  }
-
-  /// This helper follows a path once in each cycle it runs, and writes the time of the cycle
-  /// to the path as its stamp. Use it for the record of paths. To decide which paths are
-  /// too old to keep, the controller compares the stamps on the paths it keeps instead of
-  /// the times of the cycles. A path whose stamp is still zero is therefore never dropped.
-  ///
-  /// The vehicle follows the path at 1 m/s and reports its steering as straight ahead. No
-  /// test that uses this helper needs it anywhere else.
-  LateralOutput follow_path_for_cycles(
-    MpcLateralController & controller, const Trajectory & path, CycleClock & clock,
-    const int cycles)
-  {
-    LateralOutput output;
-    for (int cycle = 0; cycle < cycles; ++cycle) {
-      const double time = clock.next_cycle();
-      output =
-        controller
-          .run(Input().following(path).planned_at(1.0).driving_at(1.0).stamped_at(time), at(time))
-          .output;
-    }
-    return output;
-  }
-
-  /// Drive a curve at speed until the command stops moving, and report the command reached.
-  /// Five cycles are enough for the low pass filters inside the controller to settle.
-  float settle_on_curve(MpcLateralController & controller, CycleClock & clock, const int cycles)
-  {
-    const InputData driving = Input().following(left_curve_path()).planned_at(3.0).driving_at(3.0);
-    float command = 0.0f;
-    for (int cycle = 0; cycle < cycles; ++cycle) {
-      command =
-        controller.run(driving, at(clock.next_cycle())).output.control_cmd.steering_tire_angle;
-    }
-    return command;
-  }
-
-  /// Drive a circle until the command settles, and report the command reached.
-  ///
-  /// The ego pose stays on the circle, so the lateral and the heading error stay at zero
-  /// and the command is the angle the controller holds that state with. The command of one
-  /// cycle is returned as the measured angle of the next, which is the relation that holds
-  /// once the steering of a vehicle has reached the commanded angle. Nothing else about a
-  /// vehicle is modelled, so the result does not depend on how quickly one responds.
-  float settle_on_arc(MpcLateralController & controller, CycleClock & clock, const int cycles)
-  {
-    const Trajectory path = arc_path(arc_radius);
-    float command = 0.0f;
-    for (int cycle = 0; cycle < cycles; ++cycle) {
-      const InputData driving =
-        Input().following(path).planned_at(arc_speed).driving_at(arc_speed).steering_at(command);
-      command =
-        controller.run(driving, at(clock.next_cycle())).output.control_cmd.steering_tire_angle;
-    }
-    return command;
-  }
-};
+  return command;
+}
 
 /// The controller offers three vehicle models. Each one has to accept the same input and
 /// steer to the same side, so the shared expectations run against all of them.
-class MpcLateralControllerModelTest : public MpcLateralControllerTest,
-                                      public ::testing::WithParamInterface<std::string>
+class MpcLateralControllerModelTest : public ::testing::TestWithParam<std::string>
 {
 };
 
@@ -541,59 +494,59 @@ INSTANTIATE_TEST_SUITE_P(
 
 }  // namespace
 
-TEST_F(MpcLateralControllerTest, IsNotReadyWithoutTrajectory)
+TEST(MpcLateralControllerTest, IsNotReadyWithoutTrajectory)
 {
-  auto controller = make_controller();
+  MpcLateralController controller(make_default_config(), no_log);
   const auto input = Input().following(Trajectory{}).planned_at(0.0).driving_at(0.0);
 
-  const auto ready = controller->isReady(input);
+  const auto ready = controller.isReady(input);
 
   EXPECT_FALSE(ready);
 }
 
-TEST_F(MpcLateralControllerTest, IsNotReadyWithTwoPointTrajectory)
+TEST(MpcLateralControllerTest, IsNotReadyWithTwoPointTrajectory)
 {
-  auto controller = make_controller();
+  MpcLateralController controller(make_default_config(), no_log);
   const auto two_points = make_trajectory({make_point(0.0, 0.0, 0.0), make_point(10.0, 0.0, 0.0)});
   const auto input = Input().following(two_points).planned_at(1.0).driving_at(1.0);
 
-  const auto ready = controller->isReady(input);
+  const auto ready = controller.isReady(input);
 
   EXPECT_FALSE(ready);
 }
 
 TEST_P(MpcLateralControllerModelTest, IsReadyWithStraightTrajectory)
 {
-  ControllerOptions options;
-  options.vehicle_model_type = GetParam();
-  auto controller = make_controller(options);
+  auto config = make_default_config();
+  config.vehicle_model_type = GetParam();
+  MpcLateralController controller(config, no_log);
   const auto input = Input().following(straight_path()).planned_at(1.0).driving_at(1.0);
 
-  const auto ready = controller->isReady(input);
+  const auto ready = controller.isReady(input);
 
   EXPECT_TRUE(ready);
 }
 
 TEST_P(MpcLateralControllerModelTest, LeftCurveCommandsPositiveSteering)
 {
-  ControllerOptions options;
-  options.vehicle_model_type = GetParam();
-  auto controller = make_controller(options);
+  auto config = make_default_config();
+  config.vehicle_model_type = GetParam();
+  MpcLateralController controller(config, no_log);
   const auto input = Input().following(left_curve_path()).planned_at(1.0).driving_at(1.0);
 
-  const auto output = controller->run(input, at(0.0)).output;
+  const auto output = controller.run(input, at(0.0)).output;
 
   EXPECT_GT(output.control_cmd.steering_tire_angle, 0.0f);
 }
 
 TEST_P(MpcLateralControllerModelTest, RightCurveCommandsNegativeSteering)
 {
-  ControllerOptions options;
-  options.vehicle_model_type = GetParam();
-  auto controller = make_controller(options);
+  auto config = make_default_config();
+  config.vehicle_model_type = GetParam();
+  MpcLateralController controller(config, no_log);
   const auto input = Input().following(right_curve_path()).planned_at(1.0).driving_at(1.0);
 
-  const auto output = controller->run(input, at(0.0)).output;
+  const auto output = controller.run(input, at(0.0)).output;
 
   EXPECT_LT(output.control_cmd.steering_tire_angle, 0.0f);
 }
@@ -609,27 +562,27 @@ TEST_P(MpcLateralControllerModelTest, RightCurveCommandsNegativeSteering)
 ///
 /// The dynamics model is intentionally excluded: its calculation nature requires a simulated
 /// vehicle and thus it's out of scope of unit test.
-TEST_F(MpcLateralControllerTest, KinematicsModelSteersAnArcAtTheAngleTheRadiusRequires)
+TEST(MpcLateralControllerTest, KinematicsModelSteersAnArcAtTheAngleTheRadiusRequires)
 {
-  ControllerOptions options;
-  options.vehicle_model_type = "kinematics";
-  auto controller = make_controller(options);
+  auto config = make_default_config();
+  config.vehicle_model_type = "kinematics";
+  MpcLateralController controller(config, no_log);
   auto clock = CycleClock().first_at(0.0).every(ctrl_period);
 
-  const auto command = settle_on_arc(*controller, clock, arc_settling_cycles);
+  const auto command = settle_on_arc(controller, clock, arc_settling_cycles);
 
   const double angle_holding_the_circle = std::atan(wheel_base / arc_radius);
   EXPECT_NEAR(command, angle_holding_the_circle, arc_relative_tolerance * angle_holding_the_circle);
 }
 
-TEST_F(MpcLateralControllerTest, KinematicsNoDelayModelSteersAnArcAtTheAngleTheRadiusRequires)
+TEST(MpcLateralControllerTest, KinematicsNoDelayModelSteersAnArcAtTheAngleTheRadiusRequires)
 {
-  ControllerOptions options;
-  options.vehicle_model_type = "kinematics_no_delay";
-  auto controller = make_controller(options);
+  auto config = make_default_config();
+  config.vehicle_model_type = "kinematics_no_delay";
+  MpcLateralController controller(config, no_log);
   auto clock = CycleClock().first_at(0.0).every(ctrl_period);
 
-  const auto command = settle_on_arc(*controller, clock, arc_settling_cycles);
+  const auto command = settle_on_arc(controller, clock, arc_settling_cycles);
 
   const double angle_holding_the_circle = std::atan(wheel_base / arc_radius);
   EXPECT_NEAR(command, angle_holding_the_circle, arc_relative_tolerance * angle_holding_the_circle);
@@ -639,15 +592,15 @@ TEST_F(MpcLateralControllerTest, KinematicsNoDelayModelSteersAnArcAtTheAngleTheR
 /// is the measurement. The other is an estimate derived from the commands already issued.
 /// The measured angle here is away from zero, and the commands issued along a straight path
 /// leave the estimate at zero, so the two sources disagree.
-TEST_F(MpcLateralControllerTest, SteerPredictionTakesTheInitialAngleFromTheCommandHistory)
+TEST(MpcLateralControllerTest, SteerPredictionTakesTheInitialAngleFromTheCommandHistory)
 {
-  ControllerOptions options;
-  options.use_steer_prediction = true;
-  auto controller = make_controller(options);
+  auto config = make_default_config();
+  config.use_steer_prediction = true;
+  MpcLateralController controller(config, no_log);
   const auto input =
     Input().following(straight_path()).planned_at(1.0).driving_at(1.0).steering_at(0.2);
 
-  const auto output = controller->run(input, at(0.0)).output;
+  const auto output = controller.run(input, at(0.0)).output;
 
   EXPECT_FLOAT_EQ(output.control_cmd.steering_tire_angle, 0.0f);
 }
@@ -656,24 +609,24 @@ TEST_F(MpcLateralControllerTest, SteerPredictionTakesTheInitialAngleFromTheComma
 /// outside the controller. The controller adds the offset to the measured angle. The
 /// vehicle therefore appears turned by that amount, and the command turns the other way.
 /// Without an offset, the command on this straight path is zero.
-TEST_F(MpcLateralControllerTest, PositiveSteeringOffsetTurnsTheCommandNegative)
+TEST(MpcLateralControllerTest, PositiveSteeringOffsetTurnsTheCommandNegative)
 {
-  auto controller = make_controller();
-  controller->set_steering_offset(0.5 * steer_offset_max_update_th);
+  MpcLateralController controller(make_default_config(), no_log);
+  controller.set_steering_offset(0.5 * steer_offset_max_update_th);
   const auto input = Input().following(straight_path()).planned_at(1.0).driving_at(1.0);
 
-  const auto output = controller->run(input, at(0.0)).output;
+  const auto output = controller.run(input, at(0.0)).output;
 
   EXPECT_LT(output.control_cmd.steering_tire_angle, 0.0f);
 }
 
-TEST_F(MpcLateralControllerTest, NegativeSteeringOffsetTurnsTheCommandPositive)
+TEST(MpcLateralControllerTest, NegativeSteeringOffsetTurnsTheCommandPositive)
 {
-  auto controller = make_controller();
-  controller->set_steering_offset(-0.5 * steer_offset_max_update_th);
+  MpcLateralController controller(make_default_config(), no_log);
+  controller.set_steering_offset(-0.5 * steer_offset_max_update_th);
   const auto input = Input().following(straight_path()).planned_at(1.0).driving_at(1.0);
 
-  const auto output = controller->run(input, at(0.0)).output;
+  const auto output = controller.run(input, at(0.0)).output;
 
   EXPECT_GT(output.control_cmd.steering_tire_angle, 0.0f);
 }
@@ -682,65 +635,63 @@ TEST_F(MpcLateralControllerTest, NegativeSteeringOffsetTurnsTheCommandPositive)
 /// An offset below that limit reaches the command in full. An offset above it moves the
 /// command by the limit and no more. These two tests use an offset below and above the
 /// limit.
-TEST_F(MpcLateralControllerTest, SteeringOffsetBelowTheUpdateLimitReachesTheCommandInFull)
+TEST(MpcLateralControllerTest, SteeringOffsetBelowTheUpdateLimitReachesTheCommandInFull)
 {
   const auto input = Input().following(straight_path()).planned_at(1.0).driving_at(1.0);
-  auto at_limit = make_controller();
-  at_limit->set_steering_offset(steer_offset_max_update_th);
-  const auto command_at_limit =
-    at_limit->run(input, at(0.0)).output.control_cmd.steering_tire_angle;
+  MpcLateralController at_limit(make_default_config(), no_log);
+  at_limit.set_steering_offset(steer_offset_max_update_th);
+  const auto command_at_limit = at_limit.run(input, at(0.0)).output.control_cmd.steering_tire_angle;
 
-  auto below_limit = make_controller();
-  below_limit->set_steering_offset(0.5 * steer_offset_max_update_th);
+  MpcLateralController below_limit(make_default_config(), no_log);
+  below_limit.set_steering_offset(0.5 * steer_offset_max_update_th);
 
-  const auto output = below_limit->run(input, at(0.0)).output;
+  const auto output = below_limit.run(input, at(0.0)).output;
 
   EXPECT_GT(output.control_cmd.steering_tire_angle, command_at_limit);
 }
 
-TEST_F(MpcLateralControllerTest, SteeringOffsetPastTheUpdateLimitIsCappedWithinOneCycle)
+TEST(MpcLateralControllerTest, SteeringOffsetPastTheUpdateLimitIsCappedWithinOneCycle)
 {
   const auto input = Input().following(straight_path()).planned_at(1.0).driving_at(1.0);
-  auto at_limit = make_controller();
-  at_limit->set_steering_offset(steer_offset_max_update_th);
-  const auto command_at_limit =
-    at_limit->run(input, at(0.0)).output.control_cmd.steering_tire_angle;
+  MpcLateralController at_limit(make_default_config(), no_log);
+  at_limit.set_steering_offset(steer_offset_max_update_th);
+  const auto command_at_limit = at_limit.run(input, at(0.0)).output.control_cmd.steering_tire_angle;
 
-  auto past_limit = make_controller();
-  past_limit->set_steering_offset(2.0 * steer_offset_max_update_th);
+  MpcLateralController past_limit(make_default_config(), no_log);
+  past_limit.set_steering_offset(2.0 * steer_offset_max_update_th);
 
-  const auto output = past_limit->run(input, at(0.0)).output;
+  const auto output = past_limit.run(input, at(0.0)).output;
 
   EXPECT_FLOAT_EQ(output.control_cmd.steering_tire_angle, command_at_limit);
 }
 
 /// The limit applies to one cycle, not to the offset as a whole. The controller therefore
 /// applies more of a large offset on each cycle that follows.
-TEST_F(MpcLateralControllerTest, SteeringOffsetPastTheUpdateLimitIsAppliedFurtherOnLaterCycles)
+TEST(MpcLateralControllerTest, SteeringOffsetPastTheUpdateLimitIsAppliedFurtherOnLaterCycles)
 {
-  auto controller = make_controller();
-  controller->set_steering_offset(2.0 * steer_offset_max_update_th);
+  MpcLateralController controller(make_default_config(), no_log);
+  controller.set_steering_offset(2.0 * steer_offset_max_update_th);
   const auto input = Input().following(straight_path()).planned_at(1.0).driving_at(1.0);
   auto clock = CycleClock().first_at(0.0).every(ctrl_period);
   const auto first_cycle =
-    controller->run(input, at(clock.next_cycle())).output.control_cmd.steering_tire_angle;
+    controller.run(input, at(clock.next_cycle())).output.control_cmd.steering_tire_angle;
 
-  const auto output = controller->run(input, at(clock.next_cycle())).output;
+  const auto output = controller.run(input, at(clock.next_cycle())).output;
 
   EXPECT_LT(output.control_cmd.steering_tire_angle, first_cycle);
 }
 
 /// With the automatic removal disabled, the controller ignores the offset it is given.
 /// The command is then the same as the command for a controller given no offset.
-TEST_F(MpcLateralControllerTest, SteeringOffsetIsDroppedWhileAutomaticRemovalIsOff)
+TEST(MpcLateralControllerTest, SteeringOffsetIsDroppedWhileAutomaticRemovalIsOff)
 {
-  ControllerOptions options;
-  options.enable_auto_steering_offset_removal = false;
-  auto controller = make_controller(options);
-  controller->set_steering_offset(2.0 * steer_offset_max_update_th);
+  auto config = make_default_config();
+  config.enable_auto_steering_offset_removal = false;
+  MpcLateralController controller(config, no_log);
+  controller.set_steering_offset(2.0 * steer_offset_max_update_th);
   const auto input = Input().following(straight_path()).planned_at(1.0).driving_at(1.0);
 
-  const auto output = controller->run(input, at(0.0)).output;
+  const auto output = controller.run(input, at(0.0)).output;
 
   EXPECT_FLOAT_EQ(output.control_cmd.steering_tire_angle, 0.0f);
 }
@@ -750,26 +701,26 @@ TEST_F(MpcLateralControllerTest, SteeringOffsetIsDroppedWhileAutomaticRemovalIsO
 /// decision needs the command record to cover convergence_history_sec. These two tests
 /// use a record shorter and longer than that duration, which records where the answer
 /// changes.
-TEST_F(MpcLateralControllerTest, SteeringIsNotConvergedBeforeTheHistoryWindowIsFilled)
+TEST(MpcLateralControllerTest, SteeringIsNotConvergedBeforeTheHistoryWindowIsFilled)
 {
-  auto controller = make_controller();
+  MpcLateralController controller(make_default_config(), no_log);
   const auto input = Input().following(straight_path()).planned_at(1.0).driving_at(1.0);
   const int cycles_short_of_history = cycles_spanning(convergence_history_sec) - 1;  // 34
   auto clock = CycleClock().first_at(0.0).every(ctrl_period);
 
-  const auto output = run_cycles(*controller, input, clock, cycles_short_of_history);
+  const auto output = run_cycles(controller, input, clock, cycles_short_of_history);
 
   EXPECT_FALSE(output.sync_data.is_steer_converged);
 }
 
-TEST_F(MpcLateralControllerTest, SteeringIsConvergedOnceTheHistoryWindowIsFilled)
+TEST(MpcLateralControllerTest, SteeringIsConvergedOnceTheHistoryWindowIsFilled)
 {
-  auto controller = make_controller();
+  MpcLateralController controller(make_default_config(), no_log);
   const auto input = Input().following(straight_path()).planned_at(1.0).driving_at(1.0);
   const int cycles_filling_history = cycles_spanning(convergence_history_sec);  // 35
   auto clock = CycleClock().first_at(0.0).every(ctrl_period);
 
-  const auto output = run_cycles(*controller, input, clock, cycles_filling_history);
+  const auto output = run_cycles(controller, input, clock, cycles_filling_history);
 
   EXPECT_TRUE(output.sync_data.is_steer_converged);
 }
@@ -777,30 +728,30 @@ TEST_F(MpcLateralControllerTest, SteeringIsConvergedOnceTheHistoryWindowIsFilled
 /// The controller compares each path it is given against the ones it still holds, and
 /// treats the path as a new shape when the far end has moved further than
 /// new_traj_end_dist. A new shape withdraws the convergence report until the path settles.
-TEST_F(MpcLateralControllerTest, PathEndExtendedWithinTheThresholdKeepsTheConvergenceReport)
+TEST(MpcLateralControllerTest, PathEndExtendedWithinTheThresholdKeepsTheConvergenceReport)
 {
-  auto controller = make_controller();
+  MpcLateralController controller(make_default_config(), no_log);
   const auto original = straight_path_extended_by(0.0);
   const auto barely_extended = straight_path_extended_by(0.9 * new_traj_end_dist);
   const int cycles_filling_history = cycles_spanning(convergence_history_sec);  // 35
   auto clock = CycleClock().first_at(0.0).every(ctrl_period);
-  follow_path_for_cycles(*controller, original, clock, cycles_filling_history);
+  follow_path_for_cycles(controller, original, clock, cycles_filling_history);
 
-  const auto output = follow_path_for_cycles(*controller, barely_extended, clock, 1);
+  const auto output = follow_path_for_cycles(controller, barely_extended, clock, 1);
 
   EXPECT_TRUE(output.sync_data.is_steer_converged);
 }
 
-TEST_F(MpcLateralControllerTest, PathEndExtendedBeyondTheThresholdWithdrawsTheConvergenceReport)
+TEST(MpcLateralControllerTest, PathEndExtendedBeyondTheThresholdWithdrawsTheConvergenceReport)
 {
-  auto controller = make_controller();
+  MpcLateralController controller(make_default_config(), no_log);
   const auto original = straight_path_extended_by(0.0);
   const auto extended = straight_path_extended_by(1.1 * new_traj_end_dist);
   const int cycles_filling_history = cycles_spanning(convergence_history_sec);  // 35
   auto clock = CycleClock().first_at(0.0).every(ctrl_period);
-  follow_path_for_cycles(*controller, original, clock, cycles_filling_history);
+  follow_path_for_cycles(controller, original, clock, cycles_filling_history);
 
-  const auto output = follow_path_for_cycles(*controller, extended, clock, 1);
+  const auto output = follow_path_for_cycles(controller, extended, clock, 1);
 
   EXPECT_FALSE(output.sync_data.is_steer_converged);
 }
@@ -808,34 +759,34 @@ TEST_F(MpcLateralControllerTest, PathEndExtendedBeyondTheThresholdWithdrawsTheCo
 /// The controller drops each path once the newest path it keeps is new_traj_duration_time
 /// later. Only then does the controller stop comparing against the old shape. These two
 /// tests use a duration shorter and longer than that point.
-TEST_F(MpcLateralControllerTest, PathShapeChangeIsStillRememberedBeforeTheRetentionTime)
+TEST(MpcLateralControllerTest, PathShapeChangeIsStillRememberedBeforeTheRetentionTime)
 {
-  auto controller = make_controller();
+  MpcLateralController controller(make_default_config(), no_log);
   const auto original = straight_path_extended_by(0.0);
   const auto extended = straight_path_extended_by(1.1 * new_traj_end_dist);
   const int cycles_filling_history = cycles_spanning(convergence_history_sec);  // 35
   const int cycles_after_change = cycles_to_forget_shape_change() - 1;          // 32
   auto clock = CycleClock().first_at(0.0).every(ctrl_period);
-  follow_path_for_cycles(*controller, original, clock, cycles_filling_history);
-  follow_path_for_cycles(*controller, extended, clock, 1);
+  follow_path_for_cycles(controller, original, clock, cycles_filling_history);
+  follow_path_for_cycles(controller, extended, clock, 1);
 
-  const auto output = follow_path_for_cycles(*controller, extended, clock, cycles_after_change);
+  const auto output = follow_path_for_cycles(controller, extended, clock, cycles_after_change);
 
   EXPECT_FALSE(output.sync_data.is_steer_converged);
 }
 
-TEST_F(MpcLateralControllerTest, PathShapeChangeIsForgottenAfterTheRetentionTime)
+TEST(MpcLateralControllerTest, PathShapeChangeIsForgottenAfterTheRetentionTime)
 {
-  auto controller = make_controller();
+  MpcLateralController controller(make_default_config(), no_log);
   const auto original = straight_path_extended_by(0.0);
   const auto extended = straight_path_extended_by(1.1 * new_traj_end_dist);
   const int cycles_filling_history = cycles_spanning(convergence_history_sec);  // 35
   const int cycles_after_change = cycles_to_forget_shape_change();              // 33
   auto clock = CycleClock().first_at(0.0).every(ctrl_period);
-  follow_path_for_cycles(*controller, original, clock, cycles_filling_history);
-  follow_path_for_cycles(*controller, extended, clock, 1);
+  follow_path_for_cycles(controller, original, clock, cycles_filling_history);
+  follow_path_for_cycles(controller, extended, clock, 1);
 
-  const auto output = follow_path_for_cycles(*controller, extended, clock, cycles_after_change);
+  const auto output = follow_path_for_cycles(controller, extended, clock, cycles_after_change);
 
   EXPECT_TRUE(output.sync_data.is_steer_converged);
 }
@@ -846,46 +797,46 @@ TEST_F(MpcLateralControllerTest, PathShapeChangeIsForgottenAfterTheRetentionTime
 /// required, and converged_steer_rad sets the distance below which the angle counts as
 /// reached. Two of these tests place the measured angle inside and outside that distance.
 /// The third repeats the outside case with the guard disabled.
-TEST_F(MpcLateralControllerTest, StopStateHoldsTheCommandWhenTheMeasuredAngleIsWithinTheThreshold)
+TEST(MpcLateralControllerTest, StopStateHoldsTheCommandWhenTheMeasuredAngleIsWithinTheThreshold)
 {
-  auto controller = make_controller();
+  MpcLateralController controller(make_default_config(), no_log);
   auto clock = CycleClock().first_at(0.0).every(ctrl_period);
-  const auto settled = settle_on_curve(*controller, clock, 5);
+  const auto settled = settle_on_curve(controller, clock, 5);
   const auto measured = static_cast<float>(settled - 0.9 * converged_steer_rad);
   const auto stopped =
     Input().following(left_curve_path()).planned_at(0.0).driving_at(0.0).steering_at(measured);
 
-  const auto output = controller->run(stopped, at(clock.next_cycle())).output;
+  const auto output = controller.run(stopped, at(clock.next_cycle())).output;
 
   EXPECT_FLOAT_EQ(output.control_cmd.steering_tire_angle, settled);
 }
 
-TEST_F(MpcLateralControllerTest, StopStateIsNotEnteredWhenTheMeasuredAngleIsOutsideTheThreshold)
+TEST(MpcLateralControllerTest, StopStateIsNotEnteredWhenTheMeasuredAngleIsOutsideTheThreshold)
 {
-  auto controller = make_controller();
+  MpcLateralController controller(make_default_config(), no_log);
   auto clock = CycleClock().first_at(0.0).every(ctrl_period);
-  const auto settled = settle_on_curve(*controller, clock, 5);
+  const auto settled = settle_on_curve(controller, clock, 5);
   const auto measured = static_cast<float>(settled - 1.1 * converged_steer_rad);
   const auto stopped =
     Input().following(left_curve_path()).planned_at(0.0).driving_at(0.0).steering_at(measured);
 
-  const auto output = controller->run(stopped, at(clock.next_cycle())).output;
+  const auto output = controller.run(stopped, at(clock.next_cycle())).output;
 
   EXPECT_NE(output.control_cmd.steering_tire_angle, settled);
 }
 
-TEST_F(MpcLateralControllerTest, StopStateIgnoresTheMeasuredAngleWhileTheGuardIsOff)
+TEST(MpcLateralControllerTest, StopStateIgnoresTheMeasuredAngleWhileTheGuardIsOff)
 {
-  ControllerOptions options;
-  options.keep_steer_control_until_converged = false;
-  auto controller = make_controller(options);
+  auto config = make_default_config();
+  config.keep_steer_control_until_converged = false;
+  MpcLateralController controller(config, no_log);
   auto clock = CycleClock().first_at(0.0).every(ctrl_period);
-  const auto settled = settle_on_curve(*controller, clock, 5);
+  const auto settled = settle_on_curve(controller, clock, 5);
   const auto measured = static_cast<float>(settled - 1.1 * converged_steer_rad);
   const auto stopped =
     Input().following(left_curve_path()).planned_at(0.0).driving_at(0.0).steering_at(measured);
 
-  const auto output = controller->run(stopped, at(clock.next_cycle())).output;
+  const auto output = controller.run(stopped, at(clock.next_cycle())).output;
 
   EXPECT_FLOAT_EQ(output.control_cmd.steering_tire_angle, settled);
 }
@@ -893,30 +844,30 @@ TEST_F(MpcLateralControllerTest, StopStateIgnoresTheMeasuredAngleWhileTheGuardIs
 /// The vehicle counts as stopped while its measured speed does not exceed
 /// stop_state_entry_ego_speed. The threshold value itself still counts as stopped, so
 /// these two tests sit at the threshold and one step above it.
-TEST_F(MpcLateralControllerTest, StopStateIsEnteredAtTheEgoSpeedThreshold)
+TEST(MpcLateralControllerTest, StopStateIsEnteredAtTheEgoSpeedThreshold)
 {
-  auto controller = make_controller();
+  MpcLateralController controller(make_default_config(), no_log);
   auto clock = CycleClock().first_at(0.0).every(ctrl_period);
-  const auto settled = settle_on_curve(*controller, clock, 5);
+  const auto settled = settle_on_curve(controller, clock, 5);
   const auto stopped =
     Input().following(left_curve_path()).planned_at(0.0).driving_at(stop_state_entry_ego_speed);
 
-  const auto output = controller->run(stopped, at(clock.next_cycle())).output;
+  const auto output = controller.run(stopped, at(clock.next_cycle())).output;
 
   EXPECT_FLOAT_EQ(output.control_cmd.steering_tire_angle, settled);
 }
 
-TEST_F(MpcLateralControllerTest, StopStateIsNotEnteredJustAboveTheEgoSpeedThreshold)
+TEST(MpcLateralControllerTest, StopStateIsNotEnteredJustAboveTheEgoSpeedThreshold)
 {
-  auto controller = make_controller();
+  MpcLateralController controller(make_default_config(), no_log);
   auto clock = CycleClock().first_at(0.0).every(ctrl_period);
-  const auto settled = settle_on_curve(*controller, clock, 5);
+  const auto settled = settle_on_curve(controller, clock, 5);
   const InputData moving = Input()
                              .following(left_curve_path())
                              .planned_at(0.0)
                              .driving_at(stop_state_entry_ego_speed + speed_step);
 
-  const auto output = controller->run(moving, at(clock.next_cycle())).output;
+  const auto output = controller.run(moving, at(clock.next_cycle())).output;
 
   EXPECT_NE(output.control_cmd.steering_tire_angle, settled);
 }
@@ -924,60 +875,60 @@ TEST_F(MpcLateralControllerTest, StopStateIsNotEnteredJustAboveTheEgoSpeedThresh
 /// The path counts as asking for a stop while its target speed stays below
 /// stop_state_entry_target_speed. Unlike the measured speed, the threshold value itself
 /// does not count, so these two tests sit at the threshold and one step below it.
-TEST_F(MpcLateralControllerTest, StopStateIsEnteredJustBelowTheTargetSpeedThreshold)
+TEST(MpcLateralControllerTest, StopStateIsEnteredJustBelowTheTargetSpeedThreshold)
 {
-  auto controller = make_controller();
+  MpcLateralController controller(make_default_config(), no_log);
   auto clock = CycleClock().first_at(0.0).every(ctrl_period);
-  const auto settled = settle_on_curve(*controller, clock, 5);
+  const auto settled = settle_on_curve(controller, clock, 5);
   const InputData stopping = Input()
                                .following(left_curve_path())
                                .planned_at(stop_state_entry_target_speed - speed_step)
                                .driving_at(0.0);
 
-  const auto output = controller->run(stopping, at(clock.next_cycle())).output;
+  const auto output = controller.run(stopping, at(clock.next_cycle())).output;
 
   EXPECT_FLOAT_EQ(output.control_cmd.steering_tire_angle, settled);
 }
 
-TEST_F(MpcLateralControllerTest, StopStateIsNotEnteredAtTheTargetSpeedThreshold)
+TEST(MpcLateralControllerTest, StopStateIsNotEnteredAtTheTargetSpeedThreshold)
 {
-  auto controller = make_controller();
+  MpcLateralController controller(make_default_config(), no_log);
   auto clock = CycleClock().first_at(0.0).every(ctrl_period);
-  const auto settled = settle_on_curve(*controller, clock, 5);
+  const auto settled = settle_on_curve(controller, clock, 5);
   const InputData driving =
     Input().following(left_curve_path()).planned_at(stop_state_entry_target_speed).driving_at(0.0);
 
-  const auto output = controller->run(driving, at(clock.next_cycle())).output;
+  const auto output = controller.run(driving, at(clock.next_cycle())).output;
 
   EXPECT_NE(output.control_cmd.steering_tire_angle, settled);
 }
 
 /// While Autoware is not driving the vehicle the controller drops the command it kept from
 /// the previous cycle. The command from the last engaged cycle therefore does not persist.
-TEST_F(MpcLateralControllerTest, CommandIsResetWhileNotUnderAutowareControl)
+TEST(MpcLateralControllerTest, CommandIsResetWhileNotUnderAutowareControl)
 {
-  auto controller = make_controller();
+  MpcLateralController controller(make_default_config(), no_log);
   const auto engaged = Input().following(left_curve_path()).planned_at(1.0).driving_at(1.0);
   auto clock = CycleClock().first_at(0.0).every(ctrl_period);
   const auto steered =
-    controller->run(engaged, at(clock.next_cycle())).output.control_cmd.steering_tire_angle;
+    controller.run(engaged, at(clock.next_cycle())).output.control_cmd.steering_tire_angle;
   const InputData disengaged =
     Input().following(left_curve_path()).planned_at(1.0).driving_at(1.0).without_autoware_control();
 
-  const auto output = controller->run(disengaged, at(clock.next_cycle())).output;
+  const auto output = controller.run(disengaged, at(clock.next_cycle())).output;
 
   EXPECT_NE(output.control_cmd.steering_tire_angle, steered);
 }
 
 /// Autoware drives the vehicle only in the autonomous operation mode. Any other mode
 /// counts as not being in control, the same as the enable flag being off.
-TEST_F(MpcLateralControllerTest, CommandIsResetWhileTheOperationModeIsNotAutonomous)
+TEST(MpcLateralControllerTest, CommandIsResetWhileTheOperationModeIsNotAutonomous)
 {
-  auto controller = make_controller();
+  MpcLateralController controller(make_default_config(), no_log);
   const auto engaged = Input().following(left_curve_path()).planned_at(1.0).driving_at(1.0);
   auto clock = CycleClock().first_at(0.0).every(ctrl_period);
   const auto steered =
-    controller->run(engaged, at(clock.next_cycle())).output.control_cmd.steering_tire_angle;
+    controller.run(engaged, at(clock.next_cycle())).output.control_cmd.steering_tire_angle;
   const InputData stopped_mode =
     Input()
       .following(left_curve_path())
@@ -985,7 +936,7 @@ TEST_F(MpcLateralControllerTest, CommandIsResetWhileTheOperationModeIsNotAutonom
       .driving_at(1.0)
       .in_operation_mode(autoware_adapi_v1_msgs::msg::OperationModeState::STOP);
 
-  const auto output = controller->run(stopped_mode, at(clock.next_cycle())).output;
+  const auto output = controller.run(stopped_mode, at(clock.next_cycle())).output;
 
   EXPECT_NE(output.control_cmd.steering_tire_angle, steered);
 }
@@ -993,24 +944,24 @@ TEST_F(MpcLateralControllerTest, CommandIsResetWhileTheOperationModeIsNotAutonom
 /// Losing control clears the value the optimisation kept from the previous cycle. The
 /// first cycle after control returns therefore starts from the measured angle, not from
 /// the value the command had reached.
-TEST_F(MpcLateralControllerTest, TheCycleAfterControlReturnsDiffersFromAnUninterruptedOne)
+TEST(MpcLateralControllerTest, TheCycleAfterControlReturnsDiffersFromAnUninterruptedOne)
 {
   const auto driving = Input().following(left_curve_path()).planned_at(3.0).driving_at(3.0);
   const InputData disengaged =
     Input().following(left_curve_path()).planned_at(3.0).driving_at(3.0).without_autoware_control();
   auto uninterrupted_clock = CycleClock().first_at(0.0).every(ctrl_period);
-  auto uninterrupted = make_controller();
-  settle_on_curve(*uninterrupted, uninterrupted_clock, 5);
-  uninterrupted->run(driving, at(uninterrupted_clock.next_cycle()));
-  const auto without_gap = uninterrupted->run(driving, at(uninterrupted_clock.next_cycle()))
+  MpcLateralController uninterrupted(make_default_config(), no_log);
+  settle_on_curve(uninterrupted, uninterrupted_clock, 5);
+  uninterrupted.run(driving, at(uninterrupted_clock.next_cycle()));
+  const auto without_gap = uninterrupted.run(driving, at(uninterrupted_clock.next_cycle()))
                              .output.control_cmd.steering_tire_angle;
 
   auto interrupted_clock = CycleClock().first_at(0.0).every(ctrl_period);
-  auto interrupted = make_controller();
-  settle_on_curve(*interrupted, interrupted_clock, 5);
-  interrupted->run(disengaged, at(interrupted_clock.next_cycle()));
+  MpcLateralController interrupted(make_default_config(), no_log);
+  settle_on_curve(interrupted, interrupted_clock, 5);
+  interrupted.run(disengaged, at(interrupted_clock.next_cycle()));
 
-  const auto output = interrupted->run(driving, at(interrupted_clock.next_cycle())).output;
+  const auto output = interrupted.run(driving, at(interrupted_clock.next_cycle())).output;
 
   EXPECT_NE(output.control_cmd.steering_tire_angle, without_gap);
 }
@@ -1018,40 +969,40 @@ TEST_F(MpcLateralControllerTest, TheCycleAfterControlReturnsDiffersFromAnUninter
 /// The temporal reference mode follows the path by the time stamped on each point, and
 /// therefore requires those times to increase along the path. One test meets that
 /// requirement and one does not.
-TEST_F(MpcLateralControllerTest, TemporalReferenceModeAcceptsIncreasingTimeFromStart)
+TEST(MpcLateralControllerTest, TemporalReferenceModeAcceptsIncreasingTimeFromStart)
 {
-  ControllerOptions options;
-  options.use_temporal_trajectory = true;
-  auto controller = make_controller(options);
+  auto config = make_default_config();
+  config.use_temporal_trajectory = true;
+  MpcLateralController controller(config, no_log);
   const auto input =
     Input().following(straight_path_with_time_from_start(true)).planned_at(1.0).driving_at(1.0);
 
-  const auto ready = controller->isReady(input);
+  const auto ready = controller.isReady(input);
 
   EXPECT_TRUE(ready);
 }
 
-TEST_F(MpcLateralControllerTest, TemporalReferenceModeRejectsRepeatedTimeFromStart)
+TEST(MpcLateralControllerTest, TemporalReferenceModeRejectsRepeatedTimeFromStart)
 {
-  ControllerOptions options;
-  options.use_temporal_trajectory = true;
-  auto controller = make_controller(options);
+  auto config = make_default_config();
+  config.use_temporal_trajectory = true;
+  MpcLateralController controller(config, no_log);
   const auto input =
     Input().following(straight_path_with_time_from_start(false)).planned_at(1.0).driving_at(1.0);
 
-  const auto ready = controller->isReady(input);
+  const auto ready = controller.isReady(input);
 
   EXPECT_FALSE(ready);
 }
 
 /// A path the vehicle is meant to reverse along carries negative target speeds. The same
 /// left-hand curve then has to be steered the other way.
-TEST_F(MpcLateralControllerTest, BackwardPathReversesTheSteeringDirection)
+TEST(MpcLateralControllerTest, BackwardPathReversesTheSteeringDirection)
 {
-  auto controller = make_controller();
+  MpcLateralController controller(make_default_config(), no_log);
   const auto input = Input().following(left_curve_path()).planned_at(-1.0).driving_at(-1.0);
 
-  const auto output = controller->run(input, at(0.0)).output;
+  const auto output = controller.run(input, at(0.0)).output;
 
   EXPECT_LT(output.control_cmd.steering_tire_angle, 0.0f);
 }
