@@ -72,9 +72,10 @@ protected:
       lanelet::LineString3d(
         id + 2, {lanelet::Point3d(id + 5, 0.0, y - 1.0, 0.0),
                  lanelet::Point3d(id + 6, end, y - 1.0, 0.0)}));
-    lane.setCenterline(lanelet::LineString3d(
-      id + 7, {lanelet::Point3d(id + 8, 0.0, y, 0.0), lanelet::Point3d(id + 9, end / 2.0, y, 0.0),
-               lanelet::Point3d(id + 10, end, y, 0.0)}));
+    lane.setCenterline(
+      lanelet::LineString3d(
+        id + 7, {lanelet::Point3d(id + 8, 0.0, y, 0.0), lanelet::Point3d(id + 9, end / 2.0, y, 0.0),
+                 lanelet::Point3d(id + 10, end, y, 0.0)}));
     lane.attributes()[lanelet::AttributeName::Subtype] = "road";
     lane.attributes()[lanelet::AttributeName::Location] = "urban";
     map_->add(lane);

@@ -175,8 +175,9 @@ TEST_F(LaneChangePathSuppressionTest, FiveSecondRescueDoesNotKeepLaneChangesAt60
   PathProcessor::Params params;
   EXPECT_DOUBLE_EQ(params.lane_change_path_suppression_lane_end_rescue_time_horizon, 5.0);
   // Current lane: 20 m, final lane: 55 m, object arc: 15 m => 60 m remaining.
-  last_.setCenterline(lanelet::LineString3d(
-    20, {lanelet::Point3d(21, 20.0, 0.0, 0.0), lanelet::Point3d(22, 75.0, 0.0, 0.0)}));
+  last_.setCenterline(
+    lanelet::LineString3d(
+      20, {lanelet::Point3d(21, 20.0, 0.0, 0.0), lanelet::Point3d(22, 75.0, 0.0, 0.0)}));
   double distance = 0.0;
   const bool lane_ends = laneEndsWithinHorizon(
     first_, position_, 10.0 * params.lane_change_path_suppression_lane_end_rescue_time_horizon,
@@ -194,8 +195,9 @@ TEST_F(LaneChangePathSuppressionTest, EighteenSecondRescueKeepsLaneChangesAt60Me
 {
   PathProcessor::Params params;
   params.lane_change_path_suppression_lane_end_rescue_time_horizon = 18.0;
-  last_.setCenterline(lanelet::LineString3d(
-    20, {lanelet::Point3d(21, 20.0, 0.0, 0.0), lanelet::Point3d(22, 75.0, 0.0, 0.0)}));
+  last_.setCenterline(
+    lanelet::LineString3d(
+      20, {lanelet::Point3d(21, 20.0, 0.0, 0.0), lanelet::Point3d(22, 75.0, 0.0, 0.0)}));
   double distance = -1.0;
   const bool lane_ends = laneEndsWithinHorizon(
     first_, position_, 10.0 * params.lane_change_path_suppression_lane_end_rescue_time_horizon,
@@ -240,9 +242,10 @@ TEST_F(LaneChangePathSuppressionTest, DeadEndBeyondHorizonDoesNotKeepLaneChanges
 
 TEST_F(LaneChangePathSuppressionTest, UsesArcLengthInsteadOfEndpointDistance)
 {
-  last_.setCenterline(lanelet::LineString3d(
-    20, {lanelet::Point3d(21, 20.0, 0.0, 0.0), lanelet::Point3d(22, 20.0, 10.0, 0.0),
-         lanelet::Point3d(23, 30.0, 10.0, 0.0)}));
+  last_.setCenterline(
+    lanelet::LineString3d(
+      20, {lanelet::Point3d(21, 20.0, 0.0, 0.0), lanelet::Point3d(22, 20.0, 10.0, 0.0),
+           lanelet::Point3d(23, 30.0, 10.0, 0.0)}));
   position_.x = 20.0;
   position_.y = 5.0;
   const lanelet::routing::LaneletPath path({last_});
