@@ -79,6 +79,9 @@ public:
     double speed_limit_multiplier{1.5};
     double acceleration_exponential_half_life{2.5};
     bool consider_only_routable_neighbours{false};
+    bool lane_change_path_suppression_enable{true};
+    bool lane_change_path_suppression_keep_when_lane_ends{true};
+    double lane_change_path_suppression_lane_end_rescue_time_horizon{5.0};
   };
 
   explicit PathProcessor(autoware::agnocast_wrapper::Node & node);
@@ -98,11 +101,18 @@ public:
     double objects_detected_time, visualization_msgs::msg::MarkerArray * debug_markers);
 
 private:
+  friend class PathProcessorSuppressionTest;
+  std::optional<PredictedObject> predictOnLane(
+    const TrackedObject & object, const LaneletsData & current_lanelets,
+    const std::vector<LaneletPathWithPathInfo> & lanelet_ref_paths,
+    const std::vector<LaneletPathWithPathInfo> & suppressed_paths,
+    visualization_msgs::msg::MarkerArray * debug_markers, size_t * processing_passes = nullptr);
   std::optional<size_t> searchProperStartingRefPathIndex(
     const TrackedObject & object, const PosePath & pose_path) const;
   std::vector<LaneletPathWithPathInfo> getPredictedReferencePath(
     const TrackedObject & object, const LaneletsData & current_lanelets_data,
-    double object_detected_time, double time_horizon);
+    double object_detected_time, double time_horizon,
+    std::vector<LaneletPathWithPathInfo> * suppressed_paths);
   std::vector<PredictedRefPath> convertPredictedReferencePath(
     const TrackedObject & object,
     const std::vector<LaneletPathWithPathInfo> & lanelet_ref_paths) const;

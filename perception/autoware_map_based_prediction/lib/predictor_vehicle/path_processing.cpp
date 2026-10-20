@@ -15,17 +15,20 @@
 #include "autoware/map_based_prediction/predictor_vehicle/path_processing.hpp"
 
 #include "autoware/map_based_prediction/predictor_vehicle/debug.hpp"
+#include "autoware/map_based_prediction/predictor_vehicle/lane_change_path_suppression.hpp"
 #include "autoware/map_based_prediction/utils.hpp"
 
 #include <autoware/lanelet2_utils/conversion.hpp>
 #include <autoware/lanelet2_utils/geometry.hpp>
 #include <autoware/motion_utils/resample/resample.hpp>
 #include <autoware/motion_utils/trajectory/trajectory.hpp>
+#include <autoware/object_recognition_utils/object_recognition_utils.hpp>
 #include <autoware_utils/autoware_utils.hpp>
 #include <autoware_utils/geometry/geometry.hpp>
 #include <autoware_utils/math/normalization.hpp>
 #include <tf2/utils.hpp>
 
+#include <autoware_perception_msgs/msg/object_classification.hpp>
 #include <autoware_perception_msgs/msg/tracked_object_kinematics.hpp>
 #include <tf2_geometry_msgs/tf2_geometry_msgs.hpp>
 
@@ -34,6 +37,7 @@
 
 #include <lanelet2_core/LaneletMap.h>
 #include <lanelet2_core/geometry/Lanelet.h>
+#include <lanelet2_core/geometry/LineString.h>
 #include <lanelet2_routing/RoutingGraph.h>
 
 #include <algorithm>
@@ -42,13 +46,117 @@
 #include <memory>
 #include <numeric>
 #include <optional>
+#include <queue>
 #include <string>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
 namespace autoware::map_based_prediction
 {
 using autoware_utils::ScopedTimeTrack;
+
+namespace detail
+{
+bool laneEndsWithinHorizon(
+  const lanelet::routing::LaneletPath & path, const geometry_msgs::msg::Point & position,
+  const double travel_distance, const lanelet::routing::RoutingGraph & graph)
+{
+  if (path.empty() || !graph.following(path.back()).empty()) return false;
+
+  // Measure the remaining centerline arc length from the object's projection, not
+  // the full current lanelet length or the straight-line distance to the endpoint.
+  const auto centerline = path.front().centerline2d();
+  const double object_arc_length =
+    lanelet::geometry::toArcCoordinates(centerline, lanelet::BasicPoint2d(position.x, position.y))
+      .length;
+  double remaining_distance = -object_arc_length;
+  for (const auto & lanelet : path) {
+    remaining_distance += lanelet::geometry::length2d(lanelet);
+  }
+  return std::max(0.0, remaining_distance) <= travel_distance;
+}
+
+bool laneEndsWithinHorizon(
+  const lanelet::ConstLanelet & current_lanelet, const geometry_msgs::msg::Point & position,
+  const double travel_distance, const lanelet::routing::RoutingGraph & graph,
+  size_t * expanded_lanelets, double * lane_end_distance)
+{
+  if (lane_end_distance) *lane_end_distance = -1.0;
+  const double object_arc_length =
+    lanelet::geometry::toArcCoordinates(
+      current_lanelet.centerline2d(), lanelet::BasicPoint2d(position.x, position.y))
+      .length;
+  if (expanded_lanelets) *expanded_lanelets = 0;
+  std::unordered_map<lanelet::Id, double> lengths;
+  const auto length = [&](const lanelet::ConstLanelet & lane) {
+    const auto found = lengths.find(lane.id());
+    if (found != lengths.end()) return found->second;
+    const double value = lanelet::geometry::length2d(lane);
+    lengths.emplace(lane.id(), value);
+    return value;
+  };
+  // Distances are measured at lanelet exits. Cache each length once per query.
+  std::unordered_map<lanelet::Id, double> shortest;
+  std::queue<std::pair<lanelet::ConstLanelet, double>> pending;
+  const double initial_distance = length(current_lanelet) - object_arc_length;
+  shortest.emplace(current_lanelet.id(), initial_distance);
+  pending.emplace(current_lanelet, initial_distance);
+  // A non-branching chain of depth D takes O(D) expected time and O(D) memory.
+  // Equal/longer revisits are discarded, so nonnegative-length cycles terminate.
+  while (!pending.empty()) {
+    const auto [lane, distance] = pending.front();
+    pending.pop();
+    if (distance > shortest.at(lane.id()) || std::max(0.0, distance) > travel_distance) {
+      continue;
+    }
+    if (expanded_lanelets) ++*expanded_lanelets;
+    const auto following = graph.following(lane);
+    if (following.empty()) {
+      if (lane_end_distance) *lane_end_distance = std::max(0.0, distance);
+      return true;
+    }
+    for (const auto & next : following) {
+      const double next_distance = distance + length(next);
+      if (std::max(0.0, next_distance) > travel_distance) continue;
+      const auto found = shortest.find(next.id());
+      if (found != shortest.end() && next_distance >= found->second) continue;
+      shortest[next.id()] = next_distance;
+      pending.emplace(next, next_distance);
+    }
+  }
+  return false;
+}
+
+std::vector<LaneletPathWithPathInfo> suppressUndetectedLaneChangePaths(
+  const std::vector<LaneletPathWithPathInfo> & paths,
+  const std::vector<LaneChangePathSuppressionInfo> & origins, const bool center_paths_exist,
+  const bool enable, const bool keep_when_lane_ends,
+  std::vector<LaneletPathWithPathInfo> * suppressed_paths)
+{
+  if (!enable || !center_paths_exist) return paths;
+
+  std::vector<LaneletPathWithPathInfo> filtered_paths;
+  filtered_paths.reserve(paths.size());
+  for (size_t i = 0; i < paths.size(); ++i) {
+    const auto & origin = origins.at(i);
+    const bool suppress = paths[i].second.maneuver != Maneuver::LANE_FOLLOW &&
+                          origin.detected_maneuver == Maneuver::LANE_FOLLOW &&
+                          !(keep_when_lane_ends && origin.lane_ends_within_horizon);
+    if (!suppress) {
+      filtered_paths.push_back(paths[i]);
+    } else if (suppressed_paths) {
+      suppressed_paths->push_back(paths[i]);
+    }
+  }
+  // A center candidate is never suppressed; retain the original set defensively.
+  if (filtered_paths.empty()) {
+    if (suppressed_paths) suppressed_paths->clear();
+    return paths;
+  }
+  return filtered_paths;
+}
+}  // namespace detail
 
 namespace
 {
@@ -233,30 +341,24 @@ std::optional<PredictedObject> PathProcessor::predict(
     return predicted_slow_object;
   }
 
+  std::vector<LaneletPathWithPathInfo> suppressed_paths;
   const auto lanelet_ref_paths = getPredictedReferencePath(
-    object, current_lanelets, objects_detected_time, params_.prediction_time_horizon);
-  const auto ref_paths = convertPredictedReferencePath(object, lanelet_ref_paths);
+    object, current_lanelets, objects_detected_time, params_.prediction_time_horizon,
+    &suppressed_paths);
+  return predictOnLane(
+    object, current_lanelets, lanelet_ref_paths, suppressed_paths, debug_markers);
+}
 
-  if (ref_paths.empty()) {
-    PredictedPath predicted_path =
-      path_generator_->generatePathForOffLaneVehicle(object, params_.prediction_time_horizon);
-    predicted_path.confidence = 1.0;
-    if (predicted_path.path.empty()) return std::nullopt;
-
-    auto predicted_object_out_of_lane = utils::convertToPredictedObject(object);
-    predicted_object_out_of_lane.kinematics.predicted_paths.push_back(predicted_path);
-    return predicted_object_out_of_lane;
-  }
-
-  if (debug_markers) {
-    const auto max_prob_path = std::max_element(
-      ref_paths.begin(), ref_paths.end(),
-      [](const PredictedRefPath & a, const PredictedRefPath & b) {
-        return a.probability < b.probability;
-      });
-    debug_markers->markers.push_back(
-      DebugModule::getDebugMarker(object, max_prob_path->maneuver, debug_markers->markers.size()));
-  }
+std::optional<PredictedObject> PathProcessor::predictOnLane(
+  const TrackedObject & object, const LaneletsData & current_lanelets,
+  const std::vector<LaneletPathWithPathInfo> & lanelet_ref_paths,
+  const std::vector<LaneletPathWithPathInfo> & suppressed_paths,
+  visualization_msgs::msg::MarkerArray * debug_markers, size_t * processing_passes)
+{
+  const double abs_obj_speed = std::hypot(
+    object.kinematics.twist_with_covariance.twist.linear.x,
+    object.kinematics.twist_with_covariance.twist.linear.y);
+  auto ref_paths = convertPredictedReferencePath(object, lanelet_ref_paths);
 
   TrackedObject yaw_fixed_object = object;
   if (
@@ -269,43 +371,69 @@ std::optional<PredictedObject> PathProcessor::predict(
   double min_avg_curvature = std::numeric_limits<double>::max();
   std::optional<PredictedPath> path_with_smallest_avg_curvature;
 
-  for (const auto & ref_path : ref_paths) {
-    PredictedPath predicted_path = path_generator_->generatePathForOnLaneVehicle(
-      yaw_fixed_object, ref_path.path, params_.prediction_time_horizon,
-      params_.lateral_control_time_horizon, ref_path.width, ref_path.speed_limit);
-    if (predicted_path.path.empty()) continue;
+  auto process_paths = [&](const std::vector<PredictedRefPath> & reference_paths) {
+    if (processing_passes) ++*processing_passes;
+    bool center_survives = false;
+    for (const auto & ref_path : reference_paths) {
+      // A one-point center would generate straight fallback, not map-following survival.
+      // Evaluate held LC first; the existing final fallback handles no accepted paths.
+      if (ref_path.maneuver == Maneuver::LANE_FOLLOW && ref_path.path.size() < 2) continue;
+      PredictedPath predicted_path = path_generator_->generatePathForOnLaneVehicle(
+        yaw_fixed_object, ref_path.path, params_.prediction_time_horizon,
+        params_.lateral_control_time_horizon, ref_path.width, ref_path.speed_limit);
+      if (predicted_path.path.empty()) continue;
 
-    if (!params_.check_lateral_acceleration_constraints) {
-      predicted_path.confidence = ref_path.probability;
-      predicted_paths.push_back(predicted_path);
-      continue;
+      if (!params_.check_lateral_acceleration_constraints) {
+        predicted_path.confidence = ref_path.probability;
+        predicted_paths.push_back(predicted_path);
+        center_survives = center_survives || ref_path.maneuver == Maneuver::LANE_FOLLOW;
+        continue;
+      }
+
+      const auto trajectory_with_const_velocity = toTrajectoryPoints(predicted_path, abs_obj_speed);
+
+      if (isLateralAccelerationConstraintSatisfied(
+            trajectory_with_const_velocity, params_.prediction_sampling_time_interval)) {
+        predicted_path.confidence = ref_path.probability;
+        predicted_paths.push_back(predicted_path);
+        center_survives = center_survives || ref_path.maneuver == Maneuver::LANE_FOLLOW;
+        continue;
+      }
+
+      constexpr double curvature_calculation_distance = 2.0;
+      constexpr double points_interval = 1.0;
+      const size_t idx_dist = static_cast<size_t>(
+        std::max(static_cast<int>((curvature_calculation_distance) / points_interval), 1));
+      const auto curvature_v =
+        calcTrajectoryCurvatureFrom3Points(trajectory_with_const_velocity, idx_dist);
+      if (curvature_v.empty()) continue;
+
+      const auto curvature_avg =
+        std::accumulate(curvature_v.begin(), curvature_v.end(), 0.0) / curvature_v.size();
+      if (curvature_avg < min_avg_curvature) {
+        min_avg_curvature = curvature_avg;
+        path_with_smallest_avg_curvature = predicted_path;
+        path_with_smallest_avg_curvature->confidence = ref_path.probability;
+      }
     }
+    return center_survives;
+  };
 
-    const auto trajectory_with_const_velocity = toTrajectoryPoints(predicted_path, abs_obj_speed);
+  const bool center_survives = process_paths(ref_paths);
+  if (!center_survives && !suppressed_paths.empty()) {
+    const auto restored_paths = convertPredictedReferencePath(object, suppressed_paths);
+    process_paths(restored_paths);
+    ref_paths.insert(ref_paths.end(), restored_paths.begin(), restored_paths.end());
+  }
 
-    if (
-      isLateralAccelerationConstraintSatisfied(
-        trajectory_with_const_velocity, params_.prediction_sampling_time_interval)) {
-      predicted_path.confidence = ref_path.probability;
-      predicted_paths.push_back(predicted_path);
-      continue;
-    }
-
-    constexpr double curvature_calculation_distance = 2.0;
-    constexpr double points_interval = 1.0;
-    const size_t idx_dist = static_cast<size_t>(
-      std::max(static_cast<int>((curvature_calculation_distance) / points_interval), 1));
-    const auto curvature_v =
-      calcTrajectoryCurvatureFrom3Points(trajectory_with_const_velocity, idx_dist);
-    if (curvature_v.empty()) continue;
-
-    const auto curvature_avg =
-      std::accumulate(curvature_v.begin(), curvature_v.end(), 0.0) / curvature_v.size();
-    if (curvature_avg < min_avg_curvature) {
-      min_avg_curvature = curvature_avg;
-      path_with_smallest_avg_curvature = predicted_path;
-      path_with_smallest_avg_curvature->confidence = ref_path.probability;
-    }
+  if (debug_markers && !ref_paths.empty()) {
+    const auto max_prob_path = std::max_element(
+      ref_paths.begin(), ref_paths.end(),
+      [](const PredictedRefPath & a, const PredictedRefPath & b) {
+        return a.probability < b.probability;
+      });
+    debug_markers->markers.push_back(
+      DebugModule::getDebugMarker(object, max_prob_path->maneuver, debug_markers->markers.size()));
   }
 
   if (predicted_paths.empty()) {
@@ -315,6 +443,7 @@ std::optional<PredictedObject> PathProcessor::predict(
       PredictedPath straight_path = path_generator_->generatePathForOffLaneVehicle(
         yaw_fixed_object, params_.prediction_time_horizon);
       straight_path.confidence = 1.0;
+      if (straight_path.path.empty()) return std::nullopt;
       predicted_paths.push_back(straight_path);
     }
   }
@@ -326,7 +455,7 @@ std::optional<PredictedObject> PathProcessor::predict(
   const float min_sum_confidence_value = 1e-3;
   sum_confidence = std::max(sum_confidence, min_sum_confidence_value);
 
-  auto predicted_object = utils::convertToPredictedObject(transformed_object);
+  auto predicted_object = utils::convertToPredictedObject(object);
 
   for (auto & predicted_path : predicted_paths) {
     predicted_path.confidence = predicted_path.confidence / sum_confidence;
@@ -416,7 +545,8 @@ std::optional<size_t> PathProcessor::searchProperStartingRefPathIndex(
 
 std::vector<LaneletPathWithPathInfo> PathProcessor::getPredictedReferencePath(
   const TrackedObject & object, const LaneletsData & current_lanelets_data,
-  const double object_detected_time, const double time_horizon)
+  const double object_detected_time, const double time_horizon,
+  std::vector<LaneletPathWithPathInfo> * suppressed_paths)
 {
   std::unique_ptr<ScopedTimeTrack> st_ptr;
   if (time_keeper_) st_ptr = std::make_unique<ScopedTimeTrack>(__func__, *time_keeper_);
@@ -457,6 +587,15 @@ std::vector<LaneletPathWithPathInfo> PathProcessor::getPredictedReferencePath(
   geometry_msgs::msg::Pose object_pose = object.kinematics.pose_with_covariance.pose;
 
   std::vector<LaneletPathWithPathInfo> lanelet_ref_paths;
+  std::vector<detail::LaneChangePathSuppressionInfo> path_origins;
+  bool any_center_paths_exist = false;
+  const auto label = autoware::object_recognition_utils::getHighestProbLabel(object.classification);
+  using autoware_perception_msgs::msg::ObjectClassification;
+  const bool is_vehicle =
+    label == ObjectClassification::CAR || label == ObjectClassification::TRUCK ||
+    label == ObjectClassification::BUS || label == ObjectClassification::TRAILER ||
+    label == ObjectClassification::MOTORCYCLE;
+  const bool suppression_enabled = params_.lane_change_path_suppression_enable && is_vehicle;
   for (const auto & current_lanelet_data : current_lanelets_data) {
     std::vector<LaneletPathWithPathInfo> ref_paths_per_lanelet;
 
@@ -508,6 +647,8 @@ std::vector<LaneletPathWithPathInfo> PathProcessor::getPredictedReferencePath(
     bool left_paths_exists = false;
     bool right_paths_exists = false;
     bool center_paths_exists = false;
+    bool lane_ends_within_horizon = false;
+    double lane_end_distance = -1.0;
 
     {
       PredictedRefPath ref_path_info;
@@ -540,6 +681,14 @@ std::vector<LaneletPathWithPathInfo> PathProcessor::getPredictedReferencePath(
       lanelet::routing::LaneletPaths center_paths =
         getPathsForNormalOrIsolatedLanelet(current_lanelet_data.lanelet);
       center_paths_exists = !center_paths.empty();
+      any_center_paths_exist = any_center_paths_exist || center_paths_exists;
+      if (suppression_enabled && params_.lane_change_path_suppression_keep_when_lane_ends) {
+        lane_ends_within_horizon = detail::laneEndsWithinHorizon(
+          current_lanelet_data.lanelet, object_pose.position,
+          std::max(obj_vel, 1.0) *
+            params_.lane_change_path_suppression_lane_end_rescue_time_horizon,
+          *routing_graph_ptr_, nullptr, &lane_end_distance);
+      }
       ref_path_info.speed_limit = target_speed_limit;
       ref_path_info.maneuver = Maneuver::LANE_FOLLOW;
       for (auto & path : center_paths) ref_paths_per_lanelet.emplace_back(path, ref_path_info);
@@ -559,6 +708,11 @@ std::vector<LaneletPathWithPathInfo> PathProcessor::getPredictedReferencePath(
       ref_path_info.probability = maneuver_prob.at(ref_path_info.maneuver) * path_prob;
     }
 
+    path_origins.insert(
+      path_origins.end(), ref_paths_per_lanelet.size(),
+      detail::LaneChangePathSuppressionInfo{
+        predicted_maneuver, lane_ends_within_horizon, current_lanelet_data.lanelet.id(),
+        lane_end_distance});
     lanelet_ref_paths.insert(
       lanelet_ref_paths.end(), ref_paths_per_lanelet.begin(), ref_paths_per_lanelet.end());
   }
@@ -578,7 +732,29 @@ std::vector<LaneletPathWithPathInfo> PathProcessor::getPredictedReferencePath(
     }
   }
 
-  return lanelet_ref_paths;
+  if (suppression_enabled) {
+    for (size_t i = 0; i < lanelet_ref_paths.size(); ++i) {
+      if (lanelet_ref_paths[i].second.maneuver == Maneuver::LANE_FOLLOW) continue;
+      const auto & origin = path_origins.at(i);
+      const char * decision = !any_center_paths_exist ? "kept_no_center"
+                              : origin.detected_maneuver != Maneuver::LANE_FOLLOW
+                                ? "kept_detected_lc"
+                              : params_.lane_change_path_suppression_keep_when_lane_ends &&
+                                  origin.lane_ends_within_horizon
+                                ? "kept_lane_end"
+                                : "suppressed";
+      RCLCPP_DEBUG(
+        node_.get_logger(),
+        "LC suppression object=%s current_lanelet=%lld decision=%s lane_end_distance=%.3f",
+        object_id.c_str(), static_cast<long long>(origin.current_lanelet_id), decision,
+        origin.lane_end_distance);
+    }
+  }
+
+  // Preserve all reachable lanelets in history before suppressing output branches.
+  return detail::suppressUndetectedLaneChangePaths(
+    lanelet_ref_paths, path_origins, any_center_paths_exist, suppression_enabled,
+    params_.lane_change_path_suppression_keep_when_lane_ends, suppressed_paths);
 }
 
 std::vector<PredictedRefPath> PathProcessor::convertPredictedReferencePath(
