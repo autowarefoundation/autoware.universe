@@ -28,7 +28,7 @@
  * limitations under the License.
  */
 
-#include "autoware/pure_pursuit/autoware_pure_pursuit_lateral_controller.hpp"
+#include "autoware/pure_pursuit/autoware_pure_pursuit_lateral_controller_node.hpp"
 
 #include "autoware/pure_pursuit/util/planning_utils.hpp"
 #include "autoware/pure_pursuit/util/tf_utils.hpp"
@@ -39,7 +39,7 @@
 
 namespace autoware::pure_pursuit
 {
-PurePursuitLateralController::PurePursuitLateralController(rclcpp::Node & node)
+PurePursuitLateralControllerNode::PurePursuitLateralControllerNode(rclcpp::Node & node)
 : clock_(node.get_clock()),
   logger_(node.get_logger().get_child("lateral_controller")),
   tf_buffer_(clock_),
@@ -81,16 +81,16 @@ PurePursuitLateralController::PurePursuitLateralController(rclcpp::Node & node)
     "~/output/predicted_trajectory", 1);
 }
 
-bool PurePursuitLateralController::isReady([[maybe_unused]] const InputData & input_data)
+bool PurePursuitLateralControllerNode::isReady([[maybe_unused]] const InputData & input_data)
 {
   return true;
 }
 
-LateralOutput PurePursuitLateralController::run(const InputData & input_data)
+LateralOutput PurePursuitLateralControllerNode::run(const InputData & input_data)
 {
 }
 
-void PurePursuitLateralController::writePurePursuitFailure(
+void PurePursuitLateralControllerNode::writePurePursuitFailure(
   const PurePursuit::Failure & failure) const
 {
   using Reason = PurePursuit::Failure::Reason;

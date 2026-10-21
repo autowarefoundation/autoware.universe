@@ -27,8 +27,8 @@
  * limitations under the License.
  */
 
-#ifndef AUTOWARE__PURE_PURSUIT__AUTOWARE_PURE_PURSUIT_LATERAL_CONTROLLER_HPP_
-#define AUTOWARE__PURE_PURSUIT__AUTOWARE_PURE_PURSUIT_LATERAL_CONTROLLER_HPP_
+#ifndef AUTOWARE__PURE_PURSUIT__AUTOWARE_PURE_PURSUIT_LATERAL_CONTROLLER_NODE_HPP_
+#define AUTOWARE__PURE_PURSUIT__AUTOWARE_PURE_PURSUIT_LATERAL_CONTROLLER_NODE_HPP_
 
 #include "autoware/trajectory_follower_base/lateral_controller_base.hpp"
 #include "rclcpp/rclcpp.hpp"
@@ -46,11 +46,11 @@ using autoware::motion::control::trajectory_follower::LateralControllerBase;
 namespace autoware::pure_pursuit
 {
 
-class PurePursuitLateralController : public LateralControllerBase
+class PurePursuitLateralControllerNode : public LateralControllerBase
 {
 public:
   /// \param node Reference to the node used only for the component and parameter initialization.
-  explicit PurePursuitLateralController(rclcpp::Node & node);
+  explicit PurePursuitLateralControllerNode(rclcpp::Node & node);
 
 private:
   rclcpp::Clock::SharedPtr clock_;
@@ -83,4 +83,4 @@ private:
 
 }  // namespace autoware::pure_pursuit
 
-#endif  // AUTOWARE__PURE_PURSUIT__AUTOWARE_PURE_PURSUIT_LATERAL_CONTROLLER_HPP_
+#endif  // AUTOWARE__PURE_PURSUIT__AUTOWARE_PURE_PURSUIT_LATERAL_CONTROLLER_NODE_HPP_
