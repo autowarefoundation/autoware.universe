@@ -30,6 +30,7 @@
 #ifndef AUTOWARE__PURE_PURSUIT__AUTOWARE_PURE_PURSUIT_LATERAL_CONTROLLER_NODE_HPP_
 #define AUTOWARE__PURE_PURSUIT__AUTOWARE_PURE_PURSUIT_LATERAL_CONTROLLER_NODE_HPP_
 
+#include "autoware/pure_pursuit/autoware_pure_pursuit_lateral_controller.hpp"
 #include "autoware/trajectory_follower_base/lateral_controller_base.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2_ros/buffer.h"
@@ -52,6 +53,9 @@ public:
   /// \param node Reference to the node used only for the component and parameter initialization.
   explicit PurePursuitLateralControllerNode(rclcpp::Node & node);
 
+  /// Read the parameters and the vehicle information that the controller needs.
+  static PurePursuitLateralControllerConfig createConfig(rclcpp::Node & node);
+
 private:
   rclcpp::Clock::SharedPtr clock_;
   rclcpp::Logger logger_;
@@ -71,11 +75,16 @@ private:
   tf2_ros::Buffer tf_buffer_;
   tf2_ros::TransformListener tf_listener_;
 
+  std::unique_ptr<PurePursuitLateralController> controller_;
+
   /**
    * @brief compute control command for path follow with a constant control period
    */
   bool isReady([[maybe_unused]] const InputData & input_data) override;
   LateralOutput run(const InputData & input_data) override;
+
+  /// Write the log lines for the events that a cycle of the controller reported.
+  void writeLog(const PurePursuitLateralControllerResult & result) const;
 
   /// Write the log lines for a failure of PurePursuit::run().
   void writePurePursuitFailure(const PurePursuit::Failure & failure) const;

@@ -12,7 +12,7 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include "autoware/pure_pursuit/autoware_pure_pursuit_lateral_controller.hpp"
+#include "autoware/pure_pursuit/autoware_pure_pursuit_lateral_controller_node.hpp"
 
 #include <ament_index_cpp/get_package_share_directory.hpp>
 #include <rclcpp/rclcpp.hpp>
@@ -36,7 +36,7 @@ namespace
 {
 using autoware::motion::control::trajectory_follower::InputData;
 using autoware::motion::control::trajectory_follower::LateralControllerBase;
-using autoware::pure_pursuit::PurePursuitLateralController;
+using autoware::pure_pursuit::PurePursuitLateralControllerNode;
 using autoware_planning_msgs::msg::Trajectory;
 using autoware_planning_msgs::msg::TrajectoryPoint;
 
@@ -281,7 +281,7 @@ protected:
     // from, and a test may build two controllers and compare their commands.
     node_ = nodes_.emplace_back(
       std::make_shared<rclcpp::Node>("test_node", make_node_options(enable_path_smoothing)));
-    return std::make_unique<PurePursuitLateralController>(*node_);
+    return std::make_unique<PurePursuitLateralControllerNode>(*node_);
   }
 
   /// Let the controller run one cycle with the given input, and return the predicted
