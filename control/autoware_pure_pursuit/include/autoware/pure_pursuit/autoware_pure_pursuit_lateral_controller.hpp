@@ -70,7 +70,7 @@ struct PpOutput
   double velocity;
 };
 
-struct Param
+struct PurePursuitLateralControllerConfig
 {
   // Global Parameters
   double wheel_base;
@@ -144,7 +144,7 @@ private:
   Lateral generateCtrlCmdMsg(const double target_curvature);
 
   // Parameter
-  Param param_{};
+  PurePursuitLateralControllerConfig param_{};
 
   // Algorithm
   std::unique_ptr<PurePursuit> pure_pursuit_;
