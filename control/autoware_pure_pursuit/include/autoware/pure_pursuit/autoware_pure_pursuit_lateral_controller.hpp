@@ -49,9 +49,8 @@
 #include "geometry_msgs/msg/twist_stamped.hpp"
 #include "nav_msgs/msg/odometry.hpp"
 
-#include <boost/optional.hpp>  // To be replaced by std::optional in C++17
-
 #include <memory>
+#include <optional>
 #include <vector>
 
 using autoware::motion::control::trajectory_follower::InputData;
@@ -113,7 +112,7 @@ private:
   autoware_planning_msgs::msg::Trajectory trajectory_;
   nav_msgs::msg::Odometry current_odometry_;
   autoware_vehicle_msgs::msg::SteeringReport current_steering_;
-  boost::optional<Lateral> prev_cmd_;
+  std::optional<Lateral> prev_cmd_;
 
   // Debug Publisher
   rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_marker_;
@@ -149,7 +148,7 @@ private:
   // Algorithm
   std::unique_ptr<PurePursuit> pure_pursuit_;
 
-  boost::optional<PpOutput> calcTargetCurvature(
+  std::optional<PpOutput> calcTargetCurvature(
     bool is_control_output, geometry_msgs::msg::Pose pose);
 
   /**
@@ -159,7 +158,7 @@ private:
 
   TrajectoryPoint calcNextPose(const double ds, TrajectoryPoint & point, Lateral cmd) const;
 
-  boost::optional<Trajectory> generatePredictedTrajectory();
+  std::optional<Trajectory> generatePredictedTrajectory();
 
   Lateral generateOutputControlCmd();
 

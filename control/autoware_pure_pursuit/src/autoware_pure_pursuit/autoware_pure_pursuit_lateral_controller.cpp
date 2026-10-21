@@ -271,13 +271,13 @@ void PurePursuitLateralController::averageFilterTrajectory(
   trajectory_resampled_ = std::make_shared<Trajectory>(filtered_trajectory);
 }
 
-boost::optional<Trajectory> PurePursuitLateralController::generatePredictedTrajectory()
+std::optional<Trajectory> PurePursuitLateralController::generatePredictedTrajectory()
 {
   const auto closest_idx_result = autoware::motion_utils::findNearestIndex(
     output_tp_array_, current_odometry_.pose.pose, 3.0, M_PI_4);
 
   if (!closest_idx_result) {
-    return boost::none;
+    return std::nullopt;
   }
 
   const double remaining_distance = planning_utils::calcArcLengthFromWayPoint(
@@ -384,7 +384,7 @@ Lateral PurePursuitLateralController::generateOutputControlCmd()
 
   if (pp_output) {
     output_cmd = generateCtrlCmdMsg(pp_output->curvature);
-    prev_cmd_ = boost::optional<Lateral>(output_cmd);
+    prev_cmd_ = std::optional<Lateral>(output_cmd);
     publishDebugMarker();
   } else {
     AW_PP_WARN_THROTTLE(
@@ -420,7 +420,7 @@ void PurePursuitLateralController::publishDebugMarker() const
     createTrajectoryCircleMarker(debug_data_.next_target, current_odometry_.pose.pose));
 }
 
-boost::optional<PpOutput> PurePursuitLateralController::calcTargetCurvature(
+std::optional<PpOutput> PurePursuitLateralController::calcTargetCurvature(
   bool is_control_output, geometry_msgs::msg::Pose pose)
 {
   // Ignore invalid trajectory
