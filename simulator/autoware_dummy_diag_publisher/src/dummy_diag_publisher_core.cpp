@@ -82,7 +82,7 @@ diagnostic_msgs::msg::DiagnosticStatus::_level_type DummyDiagPublisher::convertS
 void DummyDiagPublisher::loadRequiredDiags()
 {
   const auto param_key = std::string("required_diags");
-  const uint64_t depth = 3;
+  const uint64_t depth = 0;  // Include diagnostic names containing dots.
   const auto param_names = this->list_parameters({param_key}, depth).names;
 
   if (param_names.empty()) {
@@ -92,11 +92,17 @@ void DummyDiagPublisher::loadRequiredDiags()
   std::set<std::string> diag_names;
 
   for (const auto & param_name : param_names) {
-    const auto split_names = split(param_name, '.');
-    const auto & param_required_diags = split_names.at(0);
-    const auto & param_diag = split_names.at(1);
-
-    const auto diag_name_with_prefix = fmt::format("{0}.{1}", param_required_diags, param_diag);
+    auto param_diag = param_name.substr(param_key.size() + 1);
+    // Only the trailing setting is structural; dots within diagnostic names are literal.
+    for (const std::string suffix : {".is_active", ".status"}) {
+      if (
+        param_diag.size() > suffix.size() &&
+        param_diag.compare(param_diag.size() - suffix.size(), suffix.size(), suffix) == 0) {
+        param_diag.resize(param_diag.size() - suffix.size());
+        break;
+      }
+    }
+    const auto diag_name_with_prefix = param_key + "." + param_diag;
 
     if (diag_names.count(diag_name_with_prefix) != 0) {
       continue;
