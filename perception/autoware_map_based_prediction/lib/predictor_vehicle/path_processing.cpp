@@ -606,7 +606,7 @@ double PathProcessor::calcRoutingCostLimit(
 lanelet::routing::LaneletPaths PathProcessor::getPathsForLanelet(
   const lanelet::ConstLanelet & lanelet,
   const lanelet::routing::PossiblePathsParams & possible_params, const TrackedObject & object,
-  const double validate_time_horizon) const
+  const double validate_time_horizon)
 {
   if (!isIsolatedLanelet(lanelet, routing_graph_ptr_)) {
     return routing_graph_ptr_->possiblePaths(lanelet, possible_params);
@@ -719,8 +719,8 @@ void PathProcessor::logLaneChangeSuppressionDecisions(
         : "suppressed";
     RCLCPP_DEBUG(
       node_.get_logger(),
-      "LC suppression object=%s current_lanelet=%lld decision=%s lane_end_distance=%.3f",
-      object_id.c_str(), static_cast<long long>(origin.current_lanelet_id), decision,
+      "LC suppression object=%s current_lanelet=%s decision=%s lane_end_distance=%.3f",
+      object_id.c_str(), std::to_string(origin.current_lanelet_id).c_str(), decision,
       origin.lane_end_distance);
   }
 }

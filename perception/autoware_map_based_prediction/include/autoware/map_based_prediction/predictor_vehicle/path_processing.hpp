@@ -155,7 +155,7 @@ private:
   lanelet::routing::LaneletPaths getPathsForLanelet(
     const lanelet::ConstLanelet & lanelet,
     const lanelet::routing::PossiblePathsParams & possible_params, const TrackedObject & object,
-    double validate_time_horizon) const;
+    double validate_time_horizon);
   std::optional<lanelet::ConstLanelet> getLeftOrRightLanelet(
     const lanelet::ConstLanelet & lanelet, bool get_left) const;
   LaneletReferencePaths collectLaneletReferencePaths(
