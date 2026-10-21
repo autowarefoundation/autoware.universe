@@ -22,8 +22,10 @@
 #include <autoware/trajectory_follower_base/lateral_controller_base.hpp>
 
 #include <algorithm>
+#include <cstdint>
 #include <limits>
 #include <memory>
+#include <numeric>
 #include <stdexcept>
 #include <string>
 #include <utility>
@@ -379,8 +381,8 @@ std::optional<ControlHorizon> Controller::mergeLatLonHorizon(
   // calculate greatest common divisor of time steps
   const auto gcd_double = [](const double a, const double b) {
     const double precision = 1e9;
-    const int int_a = static_cast<int>(round(a * precision));
-    const int int_b = static_cast<int>(round(b * precision));
+    const std::int64_t int_a = static_cast<std::int64_t>(round(a * precision));
+    const std::int64_t int_b = static_cast<std::int64_t>(round(b * precision));
     return static_cast<double>(std::gcd(int_a, int_b)) / precision;
   };
   const double time_step_ms =
