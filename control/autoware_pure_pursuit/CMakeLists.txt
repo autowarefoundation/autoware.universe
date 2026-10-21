@@ -21,6 +21,7 @@ ament_auto_add_library(${PROJECT_NAME}_core SHARED
 # autoware_pure_pursuit
 ament_auto_add_library(${PROJECT_NAME}_lateral_controller SHARED
   src/${PROJECT_NAME}/${PROJECT_NAME}_lateral_controller.cpp
+  src/${PROJECT_NAME}/${PROJECT_NAME}_lateral_controller_node.cpp
   src/${PROJECT_NAME}/${PROJECT_NAME}_viz.cpp
 )
 
