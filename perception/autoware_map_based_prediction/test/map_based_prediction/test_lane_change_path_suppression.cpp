@@ -107,10 +107,11 @@ protected:
     return paths;
   }
 
+  // Origins of one current lanelet that has a lane-follow candidate.
   std::vector<LaneChangePathSuppressionInfo> makeOrigins(
     const Maneuver detected = Maneuver::LANE_FOLLOW, const bool lane_ends = false) const
   {
-    return std::vector<LaneChangePathSuppressionInfo>(3, {detected, lane_ends});
+    return std::vector<LaneChangePathSuppressionInfo>(3, {detected, lane_ends, true});
   }
 
   lanelet::Lanelet first_;
@@ -146,8 +147,7 @@ TEST_F(LaneChangePathSuppressionTest, CycleTerminatesWithoutTerminal)
 
 TEST_F(LaneChangePathSuppressionTest, RemovesUndetectedLaneChangesWithCenterPath)
 {
-  const auto result =
-    suppressUndetectedLaneChangePaths(makePaths(), makeOrigins(), true, true, true);
+  const auto result = suppressUndetectedLaneChangePaths(makePaths(), makeOrigins(), true, true);
   ASSERT_EQ(result.size(), 1U);
   EXPECT_EQ(result.front().second.maneuver, Maneuver::LANE_FOLLOW);
   EXPECT_FLOAT_EQ(result.front().second.probability, 1.0F);
@@ -160,8 +160,7 @@ TEST_F(LaneChangePathSuppressionTest, KeepsDetectedLaneChangesIncludingZeroWeigh
     paths[0].second.probability = 0.9F;
     paths[1].second.probability = detected == Maneuver::LEFT_LANE_CHANGE ? 1.0F : 0.0F;
     paths[2].second.probability = detected == Maneuver::RIGHT_LANE_CHANGE ? 1.0F : 0.0F;
-    const auto result =
-      suppressUndetectedLaneChangePaths(paths, makeOrigins(detected), true, true, true);
+    const auto result = suppressUndetectedLaneChangePaths(paths, makeOrigins(detected), true, true);
     ASSERT_EQ(result.size(), paths.size());
     for (size_t i = 0; i < paths.size(); ++i) {
       EXPECT_EQ(result[i].second.maneuver, paths[i].second.maneuver);
@@ -186,7 +185,7 @@ TEST_F(LaneChangePathSuppressionTest, FiveSecondRescueDoesNotKeepLaneChangesAt60
   EXPECT_DOUBLE_EQ(distance, -1.0);
   EXPECT_EQ(
     suppressUndetectedLaneChangePaths(
-      makePaths(), makeOrigins(Maneuver::LANE_FOLLOW, lane_ends), true, true, true)
+      makePaths(), makeOrigins(Maneuver::LANE_FOLLOW, lane_ends), true, true)
       .size(),
     1U);
 }
@@ -206,13 +205,13 @@ TEST_F(LaneChangePathSuppressionTest, EighteenSecondRescueKeepsLaneChangesAt60Me
   EXPECT_DOUBLE_EQ(distance, 60.0);
   EXPECT_EQ(
     suppressUndetectedLaneChangePaths(
-      makePaths(), makeOrigins(Maneuver::LANE_FOLLOW, lane_ends), true, true, true)
+      makePaths(), makeOrigins(Maneuver::LANE_FOLLOW, lane_ends), true, true)
       .size(),
     3U);
   // Disabling rescue still suppresses LC regardless of the configured rescue horizon.
   EXPECT_EQ(
     suppressUndetectedLaneChangePaths(
-      makePaths(), makeOrigins(Maneuver::LANE_FOLLOW, lane_ends), true, true, false)
+      makePaths(), makeOrigins(Maneuver::LANE_FOLLOW, lane_ends), true, false)
       .size(),
     1U);
 }
@@ -220,7 +219,7 @@ TEST_F(LaneChangePathSuppressionTest, EighteenSecondRescueKeepsLaneChangesAt60Me
 TEST_F(LaneChangePathSuppressionTest, DisabledRetainsOriginalCandidates)
 {
   const auto paths = makePaths();
-  const auto result = suppressUndetectedLaneChangePaths(paths, makeOrigins(), true, false, true);
+  const auto result = suppressUndetectedLaneChangePaths(paths, makeOrigins(), false, true);
   ASSERT_EQ(result.size(), paths.size());
   for (size_t i = 0; i < paths.size(); ++i) {
     EXPECT_EQ(result[i].second.maneuver, paths[i].second.maneuver);
@@ -235,7 +234,7 @@ TEST_F(LaneChangePathSuppressionTest, DeadEndBeyondHorizonDoesNotKeepLaneChanges
   EXPECT_FALSE(lane_ends);
   EXPECT_EQ(
     suppressUndetectedLaneChangePaths(
-      makePaths(), makeOrigins(Maneuver::LANE_FOLLOW, lane_ends), true, true, true)
+      makePaths(), makeOrigins(Maneuver::LANE_FOLLOW, lane_ends), true, true)
       .size(),
     1U);
 }
@@ -264,35 +263,41 @@ TEST_F(LaneChangePathSuppressionTest, CanDisableDeadEndException)
 {
   EXPECT_EQ(
     suppressUndetectedLaneChangePaths(
-      makePaths(), makeOrigins(Maneuver::LANE_FOLLOW, true), true, true, false)
+      makePaths(), makeOrigins(Maneuver::LANE_FOLLOW, true), true, false)
       .size(),
     1U);
 }
 
-TEST_F(LaneChangePathSuppressionTest, NoCenterAnywhereKeepsLaneChanges)
+TEST_F(LaneChangePathSuppressionTest, OriginWithoutCenterKeepsLaneChanges)
 {
   auto paths = makePaths();
   paths.erase(paths.begin());
-  const std::vector<LaneChangePathSuppressionInfo> origins(2, {Maneuver::LANE_FOLLOW, false});
-  EXPECT_EQ(suppressUndetectedLaneChangePaths(paths, origins, false, true, true).size(), 2U);
+  const std::vector<LaneChangePathSuppressionInfo> origins(
+    2, {Maneuver::LANE_FOLLOW, false, false});
+  EXPECT_EQ(suppressUndetectedLaneChangePaths(paths, origins, true, true).size(), 2U);
 }
 
-TEST_F(LaneChangePathSuppressionTest, UsesEachCandidatesOriginWithGlobalCenterExistence)
+TEST_F(LaneChangePathSuppressionTest, UsesEachCandidatesOriginCenterExistence)
 {
   auto paths = makePaths();
   auto origins = makeOrigins();
-  // A different current lanelet has only an LC candidate: the global center still suppresses it.
+  // Another current lanelet contributes only an LC candidate: without its own center it is kept
+  // even though the first lanelet has one.
   paths.push_back(paths[1]);
-  origins.push_back({Maneuver::LANE_FOLLOW, false});
+  origins.push_back({Maneuver::LANE_FOLLOW, false, false});
+  // Lanelets with a center still suppress undetected LC unless detected or terminal.
   paths.push_back(paths[1]);
-  origins.push_back({Maneuver::LEFT_LANE_CHANGE, false});
+  origins.push_back({Maneuver::LANE_FOLLOW, false, true});
+  paths.push_back(paths[1]);
+  origins.push_back({Maneuver::LEFT_LANE_CHANGE, false, true});
   paths.push_back(paths[2]);
-  origins.push_back({Maneuver::LANE_FOLLOW, true});
-  const auto result = suppressUndetectedLaneChangePaths(paths, origins, true, true, true);
-  ASSERT_EQ(result.size(), 3U);
+  origins.push_back({Maneuver::LANE_FOLLOW, true, true});
+  const auto result = suppressUndetectedLaneChangePaths(paths, origins, true, true);
+  ASSERT_EQ(result.size(), 4U);
   EXPECT_EQ(result[0].second.maneuver, Maneuver::LANE_FOLLOW);
   EXPECT_EQ(result[1].second.maneuver, Maneuver::LEFT_LANE_CHANGE);
-  EXPECT_EQ(result[2].second.maneuver, Maneuver::RIGHT_LANE_CHANGE);
+  EXPECT_EQ(result[2].second.maneuver, Maneuver::LEFT_LANE_CHANGE);
+  EXPECT_EQ(result[3].second.maneuver, Maneuver::RIGHT_LANE_CHANGE);
 }
 
 TEST_F(LaneChangePathSuppressionTest, TerminalOriginWithoutCenterKeepsItsLaneChange)
@@ -303,8 +308,22 @@ TEST_F(LaneChangePathSuppressionTest, TerminalOriginWithoutCenterKeepsItsLaneCha
   const bool a_ends = laneEndsWithinHorizon(last_, position_, 15.0, *graph_);
   ASSERT_TRUE(a_ends);
   const std::vector<LaneChangePathSuppressionInfo> origins{
-    {Maneuver::LANE_FOLLOW, false}, {Maneuver::LANE_FOLLOW, a_ends}};
-  EXPECT_EQ(suppressUndetectedLaneChangePaths(paths, origins, true, true, true).size(), 2U);
+    {Maneuver::LANE_FOLLOW, false, true}, {Maneuver::LANE_FOLLOW, a_ends, false}};
+  EXPECT_EQ(suppressUndetectedLaneChangePaths(paths, origins, true, true).size(), 2U);
+}
+
+TEST_F(LaneChangePathSuppressionTest, SelectsHeldPathsWhoseOriginCenterDidNotSurvive)
+{
+  auto held = makePaths();
+  held.erase(held.begin());
+  held[0].second.origin_lanelet_id = 1;
+  held[1].second.origin_lanelet_id = 2;
+  const auto restored = selectPathsToRestore(held, {1});
+  ASSERT_EQ(restored.size(), 1U);
+  EXPECT_EQ(restored.front().second.origin_lanelet_id, 2);
+  EXPECT_EQ(restored.front().second.maneuver, Maneuver::RIGHT_LANE_CHANGE);
+  EXPECT_TRUE(selectPathsToRestore(held, {1, 2}).empty());
+  EXPECT_EQ(selectPathsToRestore(held, {}).size(), 2U);
 }
 
 TEST_F(LaneChangePathSuppressionTest, FollowsCurrentLaneletIndependentlyOfCenterCandidates)
@@ -318,26 +337,25 @@ TEST_F(LaneChangePathSuppressionTest, HoldsOnlyUndetectedNonTerminalOriginsForRe
   auto paths = makePaths();
   paths.push_back(paths[1]);
   paths.push_back(paths[2]);
+  paths.push_back(paths[2]);
   const std::vector<LaneChangePathSuppressionInfo> origins{
-    {Maneuver::LANE_FOLLOW, false},
-    {Maneuver::LANE_FOLLOW, false},
-    {Maneuver::LEFT_LANE_CHANGE, false},
-    {Maneuver::LANE_FOLLOW, true},
-    {Maneuver::RIGHT_LANE_CHANGE, false}};
+    {Maneuver::LANE_FOLLOW, false, true},       {Maneuver::LANE_FOLLOW, false, true},
+    {Maneuver::LEFT_LANE_CHANGE, false, true},  {Maneuver::LANE_FOLLOW, true, true},
+    {Maneuver::RIGHT_LANE_CHANGE, false, true}, {Maneuver::LANE_FOLLOW, false, false}};
   std::vector<LaneletPathWithPathInfo> held;
-  const auto result = suppressUndetectedLaneChangePaths(paths, origins, true, true, true, &held);
+  const auto result = suppressUndetectedLaneChangePaths(paths, origins, true, true, &held);
   ASSERT_EQ(held.size(), 1U);
   EXPECT_EQ(held.front().second.maneuver, Maneuver::LEFT_LANE_CHANGE);
-  EXPECT_EQ(result.size(), 4U);
+  EXPECT_EQ(result.size(), 5U);
 }
 
 TEST_F(LaneChangePathSuppressionTest, FallsBackIfAllCandidatesWouldBeRemoved)
 {
   auto paths = makePaths();
   paths.erase(paths.begin());
-  const std::vector<LaneChangePathSuppressionInfo> origins(2, {Maneuver::LANE_FOLLOW, false});
+  const std::vector<LaneChangePathSuppressionInfo> origins(2, {Maneuver::LANE_FOLLOW, false, true});
   // Defensive behavior for inconsistent metadata; normal generation always retains the center.
-  EXPECT_EQ(suppressUndetectedLaneChangePaths(paths, origins, true, true, true).size(), 2U);
+  EXPECT_EQ(suppressUndetectedLaneChangePaths(paths, origins, true, true).size(), 2U);
 }
 }  // namespace
 }  // namespace autoware::map_based_prediction::detail

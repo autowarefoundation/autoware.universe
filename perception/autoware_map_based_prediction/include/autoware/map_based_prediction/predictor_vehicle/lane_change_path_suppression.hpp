@@ -22,6 +22,7 @@
 #include <lanelet2_routing/RoutingGraph.h>
 
 #include <cstddef>
+#include <set>
 #include <vector>
 
 namespace autoware::map_based_prediction::detail
@@ -30,7 +31,9 @@ struct LaneChangePathSuppressionInfo
 {
   Maneuver detected_maneuver;
   bool lane_ends_within_horizon;
-  lanelet::Id current_lanelet_id{0};
+  /// Whether the current lanelet this candidate came from has a lane-follow candidate.
+  bool center_exists{false};
+  lanelet::Id current_lanelet_id{lanelet::InvalId};
   double lane_end_distance{-1.0};
 };
 
@@ -43,10 +46,17 @@ bool laneEndsWithinHorizon(
   double travel_distance, const lanelet::routing::RoutingGraph & graph,
   size_t * expanded_lanelets = nullptr, double * lane_end_distance = nullptr);
 
+/// Suppress lane-change candidates whose origin lanelet has a lane-follow candidate, was judged
+/// lane-follow, and (when keep_when_lane_ends) does not end within the rescue horizon.
 std::vector<LaneletPathWithPathInfo> suppressUndetectedLaneChangePaths(
   const std::vector<LaneletPathWithPathInfo> & paths,
-  const std::vector<LaneChangePathSuppressionInfo> & origins, bool center_paths_exist, bool enable,
-  bool keep_when_lane_ends, std::vector<LaneletPathWithPathInfo> * suppressed_paths = nullptr);
+  const std::vector<LaneChangePathSuppressionInfo> & origins, bool enable, bool keep_when_lane_ends,
+  std::vector<LaneletPathWithPathInfo> * suppressed_paths = nullptr);
+
+/// Select held candidates whose origin lanelet has no surviving lane-follow prediction.
+std::vector<LaneletPathWithPathInfo> selectPathsToRestore(
+  const std::vector<LaneletPathWithPathInfo> & suppressed_paths,
+  const std::set<lanelet::Id> & surviving_center_origins);
 }  // namespace autoware::map_based_prediction::detail
 
 #endif  // AUTOWARE__MAP_BASED_PREDICTION__PREDICTOR_VEHICLE__LANE_CHANGE_PATH_SUPPRESSION_HPP_

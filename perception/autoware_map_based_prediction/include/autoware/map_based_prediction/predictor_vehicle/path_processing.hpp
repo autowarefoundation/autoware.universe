@@ -36,6 +36,7 @@
 #include <limits>
 #include <memory>
 #include <optional>
+#include <set>
 #include <string>
 #include <utility>
 #include <vector>
@@ -134,6 +135,8 @@ private:
     std::vector<PredictedPath> predicted_paths;
     double min_avg_curvature{std::numeric_limits<double>::max()};
     std::optional<PredictedPath> path_with_smallest_avg_curvature;
+    /// Origin lanelets whose lane-follow reference (two or more points) produced an accepted path.
+    std::set<lanelet::Id> surviving_center_origins;
   };
 
   std::optional<PredictedObject> predictOnLane(
@@ -165,9 +168,8 @@ private:
     const std::string & object_id, const std::vector<LaneletPathWithPathInfo> & lanelet_ref_paths);
   void logLaneChangeSuppressionDecisions(
     const std::string & object_id, const std::vector<LaneletPathWithPathInfo> & lanelet_ref_paths,
-    const std::vector<detail::LaneChangePathSuppressionInfo> & path_origins,
-    bool any_center_paths_exist);
-  bool generateOnLanePaths(
+    const std::vector<detail::LaneChangePathSuppressionInfo> & path_origins);
+  void generateOnLanePaths(
     const TrackedObject & yaw_fixed_object, double abs_obj_speed,
     const std::vector<PredictedRefPath> & reference_paths, OnLanePathCandidates & candidates);
   std::vector<PredictedRefPath> convertPredictedReferencePath(

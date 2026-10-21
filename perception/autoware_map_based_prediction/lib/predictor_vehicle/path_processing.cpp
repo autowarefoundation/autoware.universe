@@ -47,6 +47,7 @@
 #include <numeric>
 #include <optional>
 #include <queue>
+#include <set>
 #include <string>
 #include <unordered_map>
 #include <utility>
@@ -130,17 +131,17 @@ bool laneEndsWithinHorizon(
 
 std::vector<LaneletPathWithPathInfo> suppressUndetectedLaneChangePaths(
   const std::vector<LaneletPathWithPathInfo> & paths,
-  const std::vector<LaneChangePathSuppressionInfo> & origins, const bool center_paths_exist,
-  const bool enable, const bool keep_when_lane_ends,
-  std::vector<LaneletPathWithPathInfo> * suppressed_paths)
+  const std::vector<LaneChangePathSuppressionInfo> & origins, const bool enable,
+  const bool keep_when_lane_ends, std::vector<LaneletPathWithPathInfo> * suppressed_paths)
 {
-  if (!enable || !center_paths_exist) return paths;
+  if (!enable) return paths;
 
   std::vector<LaneletPathWithPathInfo> filtered_paths;
   filtered_paths.reserve(paths.size());
   for (size_t i = 0; i < paths.size(); ++i) {
     const auto & origin = origins.at(i);
     const bool suppress = paths[i].second.maneuver != Maneuver::LANE_FOLLOW &&
+                          origin.center_exists &&
                           origin.detected_maneuver == Maneuver::LANE_FOLLOW &&
                           !(keep_when_lane_ends && origin.lane_ends_within_horizon);
     if (!suppress) {
@@ -155,6 +156,19 @@ std::vector<LaneletPathWithPathInfo> suppressUndetectedLaneChangePaths(
     return paths;
   }
   return filtered_paths;
+}
+
+std::vector<LaneletPathWithPathInfo> selectPathsToRestore(
+  const std::vector<LaneletPathWithPathInfo> & suppressed_paths,
+  const std::set<lanelet::Id> & surviving_center_origins)
+{
+  std::vector<LaneletPathWithPathInfo> paths_to_restore;
+  for (const auto & path : suppressed_paths) {
+    if (surviving_center_origins.count(path.second.origin_lanelet_id) == 0) {
+      paths_to_restore.push_back(path);
+    }
+  }
+  return paths_to_restore;
 }
 }  // namespace detail
 
@@ -369,10 +383,13 @@ std::optional<PredictedObject> PathProcessor::predictOnLane(
 
   OnLanePathCandidates candidates;
   if (processing_passes) ++*processing_passes;
-  const bool center_survives =
-    generateOnLanePaths(yaw_fixed_object, abs_obj_speed, ref_paths, candidates);
-  if (!center_survives && !suppressed_paths.empty()) {
-    const auto restored_paths = convertPredictedReferencePath(object, suppressed_paths);
+  generateOnLanePaths(yaw_fixed_object, abs_obj_speed, ref_paths, candidates);
+  // Held LC candidates are restored only for origin lanelets whose lane-follow prediction
+  // did not survive; origins with an accepted center keep their suppression.
+  const auto paths_to_restore =
+    detail::selectPathsToRestore(suppressed_paths, candidates.surviving_center_origins);
+  if (!paths_to_restore.empty()) {
+    const auto restored_paths = convertPredictedReferencePath(object, paths_to_restore);
     if (processing_passes) ++*processing_passes;
     generateOnLanePaths(yaw_fixed_object, abs_obj_speed, restored_paths, candidates);
     ref_paths.insert(ref_paths.end(), restored_paths.begin(), restored_paths.end());
@@ -418,15 +435,18 @@ std::optional<PredictedObject> PathProcessor::predictOnLane(
   return predicted_object;
 }
 
-bool PathProcessor::generateOnLanePaths(
+void PathProcessor::generateOnLanePaths(
   const TrackedObject & yaw_fixed_object, const double abs_obj_speed,
   const std::vector<PredictedRefPath> & reference_paths, OnLanePathCandidates & candidates)
 {
-  bool center_survives = false;
+  // A one-point lane-follow reference yields the straight fallback of the path generator; it is
+  // still emitted as before but does not count as a surviving map-following center.
+  const auto record_center_survival = [&candidates](const PredictedRefPath & ref_path) {
+    if (ref_path.maneuver == Maneuver::LANE_FOLLOW && ref_path.path.size() >= 2) {
+      candidates.surviving_center_origins.insert(ref_path.origin_lanelet_id);
+    }
+  };
   for (const auto & ref_path : reference_paths) {
-    // A one-point center would generate straight fallback, not map-following survival.
-    // Evaluate held LC first; the existing final fallback handles no accepted paths.
-    if (ref_path.maneuver == Maneuver::LANE_FOLLOW && ref_path.path.size() < 2) continue;
     PredictedPath predicted_path = path_generator_->generatePathForOnLaneVehicle(
       yaw_fixed_object, ref_path.path, params_.prediction_time_horizon,
       params_.lateral_control_time_horizon, ref_path.width, ref_path.speed_limit);
@@ -435,7 +455,7 @@ bool PathProcessor::generateOnLanePaths(
     if (!params_.check_lateral_acceleration_constraints) {
       predicted_path.confidence = ref_path.probability;
       candidates.predicted_paths.push_back(predicted_path);
-      center_survives = center_survives || ref_path.maneuver == Maneuver::LANE_FOLLOW;
+      record_center_survival(ref_path);
       continue;
     }
 
@@ -446,7 +466,7 @@ bool PathProcessor::generateOnLanePaths(
         trajectory_with_const_velocity, params_.prediction_sampling_time_interval)) {
       predicted_path.confidence = ref_path.probability;
       candidates.predicted_paths.push_back(predicted_path);
-      center_survives = center_survives || ref_path.maneuver == Maneuver::LANE_FOLLOW;
+      record_center_survival(ref_path);
       continue;
     }
 
@@ -466,7 +486,6 @@ bool PathProcessor::generateOnLanePaths(
       candidates.path_with_smallest_avg_curvature->confidence = ref_path.probability;
     }
   }
-  return center_survives;
 }
 
 std::optional<size_t> PathProcessor::searchProperStartingRefPathIndex(
@@ -654,6 +673,7 @@ PathProcessor::LaneletReferencePaths PathProcessor::collectLaneletReferencePaths
       PredictedRefPath ref_path_info;
       ref_path_info.speed_limit = target_speed_limit;
       ref_path_info.maneuver = maneuver;
+      ref_path_info.origin_lanelet_id = current_lanelet_data.lanelet.id();
       for (const auto & path : paths) result.paths.emplace_back(path, ref_path_info);
     };
   const auto get_side_paths = [&](const bool get_left) {
@@ -705,14 +725,13 @@ void PathProcessor::updateFuturePossibleLanelets(
 
 void PathProcessor::logLaneChangeSuppressionDecisions(
   const std::string & object_id, const std::vector<LaneletPathWithPathInfo> & lanelet_ref_paths,
-  const std::vector<detail::LaneChangePathSuppressionInfo> & path_origins,
-  const bool any_center_paths_exist)
+  const std::vector<detail::LaneChangePathSuppressionInfo> & path_origins)
 {
   for (size_t i = 0; i < lanelet_ref_paths.size(); ++i) {
     if (lanelet_ref_paths[i].second.maneuver == Maneuver::LANE_FOLLOW) continue;
     const auto & origin = path_origins.at(i);
     const char * decision =
-      !any_center_paths_exist                             ? "kept_no_center"
+      !origin.center_exists                               ? "kept_no_center"
       : origin.detected_maneuver != Maneuver::LANE_FOLLOW ? "kept_detected_lc"
       : params_.lane_change_path_suppression_keep_when_lane_ends && origin.lane_ends_within_horizon
         ? "kept_lane_end"
@@ -749,11 +768,9 @@ std::vector<LaneletPathWithPathInfo> PathProcessor::getPredictedReferencePath(
 
   std::vector<LaneletPathWithPathInfo> lanelet_ref_paths;
   std::vector<detail::LaneChangePathSuppressionInfo> path_origins;
-  bool any_center_paths_exist = false;
   for (const auto & current_lanelet_data : current_lanelets_data) {
     auto candidates =
       collectLaneletReferencePaths(object, current_lanelet_data, context, rescue_lane_end);
-    any_center_paths_exist = any_center_paths_exist || candidates.center_exists;
     if (candidates.paths.empty()) continue;
 
     const Maneuver predicted_maneuver = maneuver_predictor_->predictObjectManeuver(
@@ -772,21 +789,20 @@ std::vector<LaneletPathWithPathInfo> PathProcessor::getPredictedReferencePath(
     path_origins.insert(
       path_origins.end(), candidates.paths.size(),
       detail::LaneChangePathSuppressionInfo{
-        predicted_maneuver, candidates.lane_ends_within_horizon, current_lanelet_data.lanelet.id(),
-        candidates.lane_end_distance});
+        predicted_maneuver, candidates.lane_ends_within_horizon, candidates.center_exists,
+        current_lanelet_data.lanelet.id(), candidates.lane_end_distance});
     lanelet_ref_paths.insert(
       lanelet_ref_paths.end(), candidates.paths.begin(), candidates.paths.end());
   }
 
   updateFuturePossibleLanelets(object_id, lanelet_ref_paths);
   if (suppression_enabled) {
-    logLaneChangeSuppressionDecisions(
-      object_id, lanelet_ref_paths, path_origins, any_center_paths_exist);
+    logLaneChangeSuppressionDecisions(object_id, lanelet_ref_paths, path_origins);
   }
 
   // Preserve all reachable lanelets in history before suppressing output branches.
   return detail::suppressUndetectedLaneChangePaths(
-    lanelet_ref_paths, path_origins, any_center_paths_exist, suppression_enabled,
+    lanelet_ref_paths, path_origins, suppression_enabled,
     params_.lane_change_path_suppression_keep_when_lane_ends, suppressed_paths);
 }
 
@@ -809,6 +825,7 @@ std::vector<PredictedRefPath> PathProcessor::convertPredictedReferencePath(
     predicted_path.width = converted_path.second;
     predicted_path.maneuver = ref_path_info.maneuver;
     predicted_path.speed_limit = ref_path_info.speed_limit;
+    predicted_path.origin_lanelet_id = ref_path_info.origin_lanelet_id;
     converted_ref_paths.push_back(predicted_path);
   }
 

@@ -51,12 +51,14 @@ protected:
     object_.shape.dimensions.y = 1.0;
   }
 
-  LaneletPathWithPathInfo candidate(const lanelet::Id id, const Maneuver maneuver)
+  LaneletPathWithPathInfo candidate(
+    const lanelet::Id id, const Maneuver maneuver, const lanelet::Id origin = 1)
   {
     // Distinct IDs form distinct conversion-cache keys; geometry is injected below.
     const lanelet::Lanelet lane(id, lanelet::LineString3d(id + 1), lanelet::LineString3d(id + 2));
     PredictedRefPath info{};
     info.maneuver = maneuver;
+    info.origin_lanelet_id = origin;
     info.probability = maneuver == Maneuver::LANE_FOLLOW ? 1.0F : 0.3F;
     info.speed_limit = 20.0;
     return {lanelet::routing::LaneletPath({lane}), info};
@@ -145,6 +147,14 @@ protected:
     return processor_->predictOnLane(object_, {}, {center}, {}, nullptr);
   }
 
+  std::optional<PredictedObject> runAll(
+    const std::vector<LaneletPathWithPathInfo> & lanelet_ref_paths,
+    const std::vector<LaneletPathWithPathInfo> & suppressed)
+  {
+    return processor_->predictOnLane(
+      object_, {}, lanelet_ref_paths, suppressed, nullptr, &processing_passes_);
+  }
+
   lanelet::LaneletMapPtr map_{std::make_shared<lanelet::LaneletMap>()};
   std::shared_ptr<autoware::agnocast_wrapper::Node> node_;
   std::unique_ptr<PathProcessor> processor_;
@@ -170,9 +180,31 @@ TEST_F(PathProcessorSuppressionTest, OnePointMappedCenterRestoresLaneChange)
   ASSERT_GT(lc_refs.front().path.size(), 1U);
   const auto result = run(center, held);
   ASSERT_TRUE(result.has_value());
-  ASSERT_EQ(result->kinematics.predicted_paths.size(), 1U);
-  EXPECT_GT(result->kinematics.predicted_paths.front().path.back().position.y, 0.1);
+  // The one-point center still yields the generator's straight path as before, and the held LC
+  // is restored because no map-following center survived.
+  ASSERT_EQ(result->kinematics.predicted_paths.size(), 2U);
+  EXPECT_DOUBLE_EQ(result->kinematics.predicted_paths[0].path.back().position.y, 0.0);
+  EXPECT_GT(result->kinematics.predicted_paths[1].path.back().position.y, 0.1);
   EXPECT_EQ(processing_passes_, 2U);
+}
+
+TEST_F(PathProcessorSuppressionTest, OnePointCenterKeepsStraightPathWhenNothingIsSuppressed)
+{
+  // enable=false (or a detected LC) hands all candidates over unsuppressed: the one-point center
+  // produces the straight path next to the LC path, exactly as before the suppression feature.
+  const auto center = mappedCandidate(100, Maneuver::LANE_FOLLOW, 20.0, 0.0);
+  const auto lc = mappedCandidate(200, Maneuver::LEFT_LANE_CHANGE, 100.0, 1.0);
+  installMap();
+  object_.kinematics.pose_with_covariance.pose.position.x = 20.6;
+  params_.check_lateral_acceleration_constraints = false;
+  processor_->setParams(params_);
+  const auto result = runAll({center, lc}, {});
+  ASSERT_TRUE(result.has_value());
+  ASSERT_EQ(result->kinematics.predicted_paths.size(), 2U);
+  EXPECT_DOUBLE_EQ(result->kinematics.predicted_paths[0].path.back().position.y, 0.0);
+  EXPECT_GT(result->kinematics.predicted_paths[0].path.back().position.x, 40.0);
+  EXPECT_GT(result->kinematics.predicted_paths[1].path.back().position.y, 0.1);
+  EXPECT_EQ(processing_passes_, 1U);
 }
 
 TEST_F(PathProcessorSuppressionTest, OnePointCenterWithoutLaneChangeUsesStraightFallback)
@@ -229,6 +261,32 @@ TEST_F(PathProcessorSuppressionTest, RestoresLaneChangeWhenCenterConversionIsEmp
   ASSERT_TRUE(result.has_value());
   ASSERT_EQ(result->kinematics.predicted_paths.size(), 1U);
   EXPECT_GT(result->kinematics.predicted_paths.front().path.back().position.y, 0.1);
+  EXPECT_EQ(processing_passes_, 2U);
+}
+
+TEST_F(PathProcessorSuppressionTest, RestoresOnlyHeldLaneChangesOfOriginsWithoutSurvivingCenter)
+{
+  // Origin 1: center survives, so its held LC stays suppressed.
+  // Origin 2: center conversion is empty, so its held LC is restored.
+  const auto center_a = candidate(100, Maneuver::LANE_FOLLOW, 1);
+  const auto held_a = candidate(200, Maneuver::LEFT_LANE_CHANGE, 1);
+  const auto center_b = candidate(300, Maneuver::LANE_FOLLOW, 2);
+  const auto held_b = candidate(400, Maneuver::RIGHT_LANE_CHANGE, 2);
+  cache(center_a, reference(false));
+  cache(center_b, {});
+  auto offset_reference = reference(false);
+  for (auto & pose : offset_reference) pose.position.y = 1.0;
+  cache(held_a, offset_reference, 2.0);
+  cache(held_b, offset_reference, 2.0);
+  params_.check_lateral_acceleration_constraints = false;
+  processor_->setParams(params_);
+  const auto result = runAll({center_a, center_b}, {held_a, held_b});
+  ASSERT_TRUE(result.has_value());
+  ASSERT_EQ(result->kinematics.predicted_paths.size(), 2U);
+  EXPECT_NEAR(result->kinematics.predicted_paths[0].path.back().position.y, 0.0, 1e-6);
+  EXPECT_GT(result->kinematics.predicted_paths[1].path.back().position.y, 0.1);
+  EXPECT_FLOAT_EQ(result->kinematics.predicted_paths[0].confidence, 1.0F / 1.3F);
+  EXPECT_FLOAT_EQ(result->kinematics.predicted_paths[1].confidence, 0.3F / 1.3F);
   EXPECT_EQ(processing_passes_, 2U);
 }
 
