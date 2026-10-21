@@ -50,7 +50,31 @@ public:
   PurePursuit() : lookahead_distance_(0.0), closest_thr_dist_(3.0), closest_thr_ang_(M_PI / 4) {}
   ~PurePursuit() = default;
 
-  rclcpp::Logger logger = rclcpp::get_logger("pure_pursuit");
+  /// Why run() failed, with the values that the log line about the failure carries.
+  struct Failure
+  {
+    enum class Reason {
+      data_not_ready,
+      closest_waypoint_not_found,
+      lane_direction_unknown,
+      next_waypoint_not_found,
+      waypoint_interval_too_short,
+      lateral_error_beyond_lookahead
+    };
+    Reason reason{Reason::data_not_ready};
+    int32_t closest_index{0};        // for closest_waypoint_not_found
+    double lateral_error{0.0};       // for lateral_error_beyond_lookahead
+    double lookahead_distance{0.0};  // for lateral_error_beyond_lookahead
+  };
+
+  /// What run() returns. The caller writes the log line about a failure.
+  struct PpResult
+  {
+    bool success{false};
+    double curvature{0.0};
+    Failure failure{};  // valid when success is false
+  };
+
   // setter
   void setCurrentPose(const geometry_msgs::msg::Pose & msg);
   void setWaypoints(const std::vector<geometry_msgs::msg::Pose> & msg);
@@ -66,7 +90,7 @@ public:
   geometry_msgs::msg::Point getLocationOfNextTarget() const { return loc_next_tgt_; }
 
   bool isDataReady();
-  std::pair<bool, double> run();  // calculate curvature
+  PpResult run();  // calculate curvature
 
 private:
   // variables for debug
@@ -79,8 +103,8 @@ private:
   std::shared_ptr<geometry_msgs::msg::Pose> curr_pose_ptr_;
 
   // functions
-  int32_t findNextPointIdx(int32_t search_start_idx);
-  std::pair<bool, geometry_msgs::msg::Point> lerpNextTarget(int32_t next_wp_idx);
+  int32_t findNextPointIdx(int32_t search_start_idx, PpResult & result);
+  std::pair<bool, geometry_msgs::msg::Point> lerpNextTarget(int32_t next_wp_idx, PpResult & result);
 };
 
 }  // namespace autoware::pure_pursuit

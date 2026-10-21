@@ -49,26 +49,29 @@ bool PurePursuit::isDataReady()
   return true;
 }
 
-std::pair<bool, double> PurePursuit::run()
+PurePursuit::PpResult PurePursuit::run()
 {
+  PpResult result;
   if (!isDataReady()) {
-    return std::make_pair(false, std::numeric_limits<double>::quiet_NaN());
+    result.failure.reason = Failure::Reason::data_not_ready;
+    return result;
   }
 
   auto closest_pair = planning_utils::findClosestIdxWithDistAngThr(
     *curr_wps_ptr_, *curr_pose_ptr_, closest_thr_dist_, closest_thr_ang_);
 
   if (!closest_pair.first) {
-    RCLCPP_WARN(
-      logger, "cannot find, curr_bool: %d, closest_idx: %d", closest_pair.first,
-      closest_pair.second);
-    return std::make_pair(false, std::numeric_limits<double>::quiet_NaN());
+    result.failure.reason = Failure::Reason::closest_waypoint_not_found;
+    result.failure.closest_index = closest_pair.second;
+    return result;
   }
 
-  int32_t next_wp_idx = findNextPointIdx(closest_pair.second);
+  int32_t next_wp_idx = findNextPointIdx(closest_pair.second, result);
   if (next_wp_idx == -1) {
-    RCLCPP_WARN(logger, "lost next waypoint");
-    return std::make_pair(false, std::numeric_limits<double>::quiet_NaN());
+    if (result.failure.reason != Failure::Reason::lane_direction_unknown) {
+      result.failure.reason = Failure::Reason::next_waypoint_not_found;
+    }
+    return result;
   }
 
   loc_next_wp_ = curr_wps_ptr_->at(next_wp_idx).position;
@@ -79,11 +82,10 @@ std::pair<bool, double> PurePursuit::run()
     next_tgt_pos = curr_wps_ptr_->at(next_wp_idx).position;
   } else {
     // linear interpolation
-    std::pair<bool, geometry_msgs::msg::Point> lerp_pair = lerpNextTarget(next_wp_idx);
+    std::pair<bool, geometry_msgs::msg::Point> lerp_pair = lerpNextTarget(next_wp_idx, result);
 
     if (!lerp_pair.first) {
-      RCLCPP_WARN(logger, "lost target! ");
-      return std::make_pair(false, std::numeric_limits<double>::quiet_NaN());
+      return result;
     }
 
     next_tgt_pos = lerp_pair.second;
@@ -92,11 +94,14 @@ std::pair<bool, double> PurePursuit::run()
 
   double kappa = planning_utils::calcCurvature(next_tgt_pos, *curr_pose_ptr_);
 
-  return std::make_pair(true, kappa);
+  result.success = true;
+  result.curvature = kappa;
+  return result;
 }
 
 // linear interpolation of next target
-std::pair<bool, geometry_msgs::msg::Point> PurePursuit::lerpNextTarget(int32_t next_wp_idx)
+std::pair<bool, geometry_msgs::msg::Point> PurePursuit::lerpNextTarget(
+  int32_t next_wp_idx, PpResult & result)
 {
   constexpr double ERROR2 = 1e-5;  // 0.00001
   const geometry_msgs::msg::Point & vec_end = curr_wps_ptr_->at(next_wp_idx).position;
@@ -107,7 +112,7 @@ std::pair<bool, geometry_msgs::msg::Point> PurePursuit::lerpNextTarget(int32_t n
     (vec_end.x - vec_start.x), (vec_end.y - vec_start.y), (vec_end.z - vec_start.z));
 
   if (vec_a.norm() < ERROR2) {
-    RCLCPP_ERROR(logger, "waypoint interval is almost 0");
+    result.failure.reason = Failure::Reason::waypoint_interval_too_short;
     return std::make_pair(false, geometry_msgs::msg::Point());
   }
 
@@ -115,9 +120,9 @@ std::pair<bool, geometry_msgs::msg::Point> PurePursuit::lerpNextTarget(int32_t n
     planning_utils::calcLateralError2D(vec_start, vec_end, curr_pose.position);
 
   if (fabs(lateral_error) > lookahead_distance_) {
-    RCLCPP_ERROR(logger, "lateral error is larger than lookahead distance");
-    RCLCPP_ERROR(
-      logger, "lateral error: %lf, lookahead distance: %lf", lateral_error, lookahead_distance_);
+    result.failure.reason = Failure::Reason::lateral_error_beyond_lookahead;
+    result.failure.lateral_error = lateral_error;
+    result.failure.lookahead_distance = lookahead_distance_;
     return std::make_pair(false, geometry_msgs::msg::Point());
   }
 
@@ -148,7 +153,7 @@ std::pair<bool, geometry_msgs::msg::Point> PurePursuit::lerpNextTarget(int32_t n
   }
 }
 
-int32_t PurePursuit::findNextPointIdx(int32_t search_start_idx)
+int32_t PurePursuit::findNextPointIdx(int32_t search_start_idx, PpResult & result)
 {
   // if waypoints are not given, do nothing.
   if (curr_wps_ptr_->empty() || search_start_idx == -1) {
@@ -181,6 +186,7 @@ int32_t PurePursuit::findNextPointIdx(int32_t search_start_idx)
         continue;
       }
     } else {
+      result.failure.reason = Failure::Reason::lane_direction_unknown;
       return -1;
     }
 

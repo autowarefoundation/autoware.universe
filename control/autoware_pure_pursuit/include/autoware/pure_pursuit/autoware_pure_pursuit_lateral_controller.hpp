@@ -150,6 +150,9 @@ private:
   boost::optional<PpOutput> calcTargetCurvature(
     bool is_control_output, geometry_msgs::msg::Pose pose);
 
+  /// Write the log lines for a failure of PurePursuit::run().
+  void writePurePursuitFailure(const PurePursuit::Failure & failure) const;
+
   /**
    * @brief It takes current pose, control command, and delta distance. Then it calculates next pose
    * of vehicle.

@@ -468,11 +468,12 @@ boost::optional<PpOutput> PurePursuitLateralController::calcTargetCurvature(
 
   // Run PurePursuit
   const auto pure_pursuit_result = pure_pursuit_->run();
-  if (!pure_pursuit_result.first) {
+  if (!pure_pursuit_result.success) {
+    writePurePursuitFailure(pure_pursuit_result.failure);
     return {};
   }
 
-  const auto kappa = pure_pursuit_result.second;
+  const auto kappa = pure_pursuit_result.curvature;
 
   // Set debug data
   if (is_control_output) {
@@ -487,5 +488,38 @@ boost::optional<PpOutput> PurePursuitLateralController::calcTargetCurvature(
   }
 
   return output;
+}
+
+void PurePursuitLateralController::writePurePursuitFailure(
+  const PurePursuit::Failure & failure) const
+{
+  using Reason = PurePursuit::Failure::Reason;
+  const auto logger = rclcpp::get_logger("pure_pursuit");
+  switch (failure.reason) {
+    case Reason::data_not_ready:
+      break;
+    case Reason::closest_waypoint_not_found:
+      RCLCPP_WARN(
+        logger, "cannot find, curr_bool: %d, closest_idx: %d", false, failure.closest_index);
+      break;
+    case Reason::lane_direction_unknown:
+      RCLCPP_ERROR(rclcpp::get_logger(PLANNING_UTILS_LOGGER), "lane is something wrong");
+      RCLCPP_WARN(logger, "lost next waypoint");
+      break;
+    case Reason::next_waypoint_not_found:
+      RCLCPP_WARN(logger, "lost next waypoint");
+      break;
+    case Reason::waypoint_interval_too_short:
+      RCLCPP_ERROR(logger, "waypoint interval is almost 0");
+      RCLCPP_WARN(logger, "lost target! ");
+      break;
+    case Reason::lateral_error_beyond_lookahead:
+      RCLCPP_ERROR(logger, "lateral error is larger than lookahead distance");
+      RCLCPP_ERROR(
+        logger, "lateral error: %lf, lookahead distance: %lf", failure.lateral_error,
+        failure.lookahead_distance);
+      RCLCPP_WARN(logger, "lost target! ");
+      break;
+  }
 }
 }  // namespace autoware::pure_pursuit
