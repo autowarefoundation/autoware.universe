@@ -54,21 +54,24 @@ LidarMarkerLocalizer::LidarMarkerLocalizer(const rclcpp::NodeOptions & node_opti
     this->declare_parameter<int64_t>("queue_size_for_output_pose");
 
   param_.marker_name = this->declare_parameter<std::string>("marker_name");
-  param_.road_surface_mode = this->declare_parameter<bool>("road_surface_mode");
-  param_.resolution = this->declare_parameter<double>("resolution");
-  param_.intensity_pattern = this->declare_parameter<std::vector<int64_t>>("intensity_pattern");
-  param_.match_intensity_difference_threshold =
+  param_.detection.road_surface_mode = this->declare_parameter<bool>("road_surface_mode");
+  param_.detection.resolution = this->declare_parameter<double>("resolution");
+  param_.detection.intensity_pattern =
+    this->declare_parameter<std::vector<int64_t>>("intensity_pattern");
+  param_.detection.match_intensity_difference_threshold =
     this->declare_parameter<int64_t>("match_intensity_difference_threshold");
-  param_.positive_match_num_threshold =
+  param_.detection.positive_match_num_threshold =
     this->declare_parameter<int64_t>("positive_match_num_threshold");
-  param_.negative_match_num_threshold =
+  param_.detection.negative_match_num_threshold =
     this->declare_parameter<int64_t>("negative_match_num_threshold");
-  param_.vote_threshold_for_detect_marker =
+  param_.detection.vote_threshold_for_detect_marker =
     this->declare_parameter<int64_t>("vote_threshold_for_detect_marker");
-  param_.marker_to_vehicle_offset_y = this->declare_parameter<double>("marker_to_vehicle_offset_y");
-  param_.marker_height_from_ground = this->declare_parameter<double>("marker_height_from_ground");
-  param_.lower_ring_id_init = this->declare_parameter<int64_t>("lower_ring_id_init");
-  param_.upper_ring_id_init = this->declare_parameter<int64_t>("upper_ring_id_init");
+  param_.detection.marker_to_vehicle_offset_y =
+    this->declare_parameter<double>("marker_to_vehicle_offset_y");
+  param_.detection.marker_height_from_ground =
+    this->declare_parameter<double>("marker_height_from_ground");
+  param_.detection.lower_ring_id_init = this->declare_parameter<int64_t>("lower_ring_id_init");
+  param_.detection.upper_ring_id_init = this->declare_parameter<int64_t>("upper_ring_id_init");
   param_.self_pose_timeout_sec = this->declare_parameter<double>("self_pose_timeout_sec");
   param_.self_pose_distance_tolerance_m =
     this->declare_parameter<double>("self_pose_distance_tolerance_m");
@@ -78,7 +81,8 @@ LidarMarkerLocalizer::LidarMarkerLocalizer(const rclcpp::NodeOptions & node_opti
     this->declare_parameter<double>("limit_distance_from_self_pose_to_nearest_marker_y");
   param_.limit_distance_from_self_pose_to_marker =
     this->declare_parameter<double>("limit_distance_from_self_pose_to_marker");
-  param_.reference_ring_number = this->declare_parameter<int64_t>("reference_ring_number");
+  param_.detection.reference_ring_number =
+    this->declare_parameter<int64_t>("reference_ring_number");
   std::vector<double> base_covariance =
     this->declare_parameter<std::vector<double>>("base_covariance");
   for (std::size_t i = 0; i < base_covariance.size(); ++i) {
@@ -94,20 +98,6 @@ LidarMarkerLocalizer::LidarMarkerLocalizer(const rclcpp::NodeOptions & node_opti
     this->declare_parameter<double>("radius_for_extracting_marker_pointcloud");
   param_.queue_size_for_debug_pub_msg =
     this->declare_parameter<int64_t>("queue_size_for_debug_pub_msg");
-
-  detection_param_.road_surface_mode = param_.road_surface_mode;
-  detection_param_.resolution = param_.resolution;
-  detection_param_.intensity_pattern = param_.intensity_pattern;
-  detection_param_.match_intensity_difference_threshold =
-    param_.match_intensity_difference_threshold;
-  detection_param_.positive_match_num_threshold = param_.positive_match_num_threshold;
-  detection_param_.negative_match_num_threshold = param_.negative_match_num_threshold;
-  detection_param_.vote_threshold_for_detect_marker = param_.vote_threshold_for_detect_marker;
-  detection_param_.marker_to_vehicle_offset_y = param_.marker_to_vehicle_offset_y;
-  detection_param_.marker_height_from_ground = param_.marker_height_from_ground;
-  detection_param_.reference_ring_number = param_.reference_ring_number;
-  detection_param_.lower_ring_id_init = param_.lower_ring_id_init;
-  detection_param_.upper_ring_id_init = param_.upper_ring_id_init;
 
   ekf_pose_buffer_ = std::make_unique<autoware::localization_util::SmartPoseBuffer>(
     this->get_logger(), param_.self_pose_timeout_sec, param_.self_pose_distance_tolerance_m);
@@ -296,8 +286,8 @@ void LidarMarkerLocalizer::main_process(const PointCloud2::ConstSharedPtr & poin
   diagnostics_interface_->add_key_value(
     "distance_self_pose_to_nearest_marker", distance_from_self_pose_to_nearest_marker);
 
-  const double distance_from_self_pose_to_nearest_marker_y =
-    std::abs(nearest_marker_pose_on_base_link.position.y - param_.marker_to_vehicle_offset_y);
+  const double distance_from_self_pose_to_nearest_marker_y = std::abs(
+    nearest_marker_pose_on_base_link.position.y - param_.detection.marker_to_vehicle_offset_y);
   diagnostics_interface_->add_key_value(
     "distance_from_self_pose_to_nearest_marker_y", distance_from_self_pose_to_nearest_marker_y);
 
@@ -422,7 +412,7 @@ std::vector<landmark_manager::Landmark> LidarMarkerLocalizer::detect_landmarks(
   pcl::fromROSMsg(*points_msg_ptr, points);
 
   DetectionResult result =
-    lidar_marker_localizer::detect_landmarks(points, points_msg_ptr->header, detection_param_);
+    lidar_marker_localizer::detect_landmarks(points, points_msg_ptr->header, param_.detection);
 
   if (result.status == DetectionStatus::no_points) {
     RCLCPP_WARN_STREAM_THROTTLE(this->get_logger(), *this->get_clock(), 1000, "No points!");
@@ -584,7 +574,7 @@ void LidarMarkerLocalizer::save_intensity(
     double xy_distance = std::sqrt(
       std::pow(point.x - marker_pose.position.x, 2.0) +
       std::pow(point.y - marker_pose.position.y, 2.0));
-    if (param_.road_surface_mode) {
+    if (param_.detection.road_surface_mode) {
       xy_distance = std::sqrt(
         std::pow(point.x - marker_pose.position.x, 2.0) +
         std::pow(point.z - marker_pose.position.z, 2.0));
