@@ -61,6 +61,7 @@ namespace autoware::pure_pursuit
 PurePursuitLateralController::PurePursuitLateralController(rclcpp::Node & node)
 : clock_(node.get_clock()),
   logger_(node.get_logger().get_child("lateral_controller")),
+  writer_(logger_, clock_),
   tf_buffer_(clock_),
   tf_listener_(tf_buffer_)
 {
@@ -211,7 +212,7 @@ double PurePursuitLateralController::calcCurvature(const size_t closest_idx)
       autoware_utils::get_point(trajectory_resampled_->points.at(next_idx)));
   } catch (std::exception const & e) {
     // ...code that handles the error...
-    RCLCPP_WARN(rclcpp::get_logger("pure_pursuit"), "%s", e.what());
+    AW_PP_WARN(writer_, "{}", e.what());
     current_curvature = 0.0;
   }
   return current_curvature;
@@ -221,7 +222,7 @@ void PurePursuitLateralController::averageFilterTrajectory(
   autoware_planning_msgs::msg::Trajectory & u)
 {
   if (static_cast<int>(u.points.size()) <= 2 * param_.path_filter_moving_ave_num) {
-    RCLCPP_ERROR(logger_, "Cannot smooth path! Trajectory size is too low!");
+    AW_PP_ERROR(writer_, "Cannot smooth path! Trajectory size is too low!");
     return;
   }
 
@@ -304,7 +305,7 @@ boost::optional<Trajectory> PurePursuitLateralController::generatePredictedTraje
         tmp_msg = generateCtrlCmdMsg(pp_output->curvature);
         predicted_trajectory.points.at(i).longitudinal_velocity_mps = pp_output->velocity;
       } else {
-        RCLCPP_WARN_THROTTLE(logger_, *clock_, 5000, "failed to solve pure_pursuit for prediction");
+        AW_PP_WARN_THROTTLE(writer_, 5.0, "failed to solve pure_pursuit for prediction");
         tmp_msg = generateCtrlCmdMsg(0.0);
       }
       TrajectoryPoint p2;
@@ -319,7 +320,7 @@ boost::optional<Trajectory> PurePursuitLateralController::generatePredictedTraje
         tmp_msg = generateCtrlCmdMsg(pp_output->curvature);
         predicted_trajectory.points.at(i).longitudinal_velocity_mps = pp_output->velocity;
       } else {
-        RCLCPP_WARN_THROTTLE(logger_, *clock_, 5000, "failed to solve pure_pursuit for prediction");
+        AW_PP_WARN_THROTTLE(writer_, 5.0, "failed to solve pure_pursuit for prediction");
         tmp_msg = generateCtrlCmdMsg(0.0);
       }
       predicted_trajectory.points.push_back(
@@ -360,7 +361,7 @@ LateralOutput PurePursuitLateralController::run(const InputData & input_data)
   // calculate predicted trajectory with iterative calculation
   const auto predicted_trajectory = generatePredictedTrajectory();
   if (!predicted_trajectory) {
-    RCLCPP_ERROR(logger_, "Failed to generate predicted trajectory.");
+    AW_PP_ERROR(writer_, "Failed to generate predicted trajectory.");
   } else {
     pub_predicted_trajectory_->publish(*predicted_trajectory);
   }
@@ -385,8 +386,8 @@ Lateral PurePursuitLateralController::generateOutputControlCmd()
     prev_cmd_ = boost::optional<Lateral>(output_cmd);
     publishDebugMarker();
   } else {
-    RCLCPP_WARN_THROTTLE(
-      logger_, *clock_, 5000, "failed to solve pure_pursuit for control command calculation");
+    AW_PP_WARN_THROTTLE(
+      writer_, 5.0, "failed to solve pure_pursuit for control command calculation");
     if (prev_cmd_) {
       output_cmd = *prev_cmd_;
     } else {
@@ -423,7 +424,7 @@ boost::optional<PpOutput> PurePursuitLateralController::calcTargetCurvature(
 {
   // Ignore invalid trajectory
   if (trajectory_resampled_->points.size() < 3) {
-    RCLCPP_WARN_THROTTLE(logger_, *clock_, 5000, "received path size is < 3, ignored");
+    AW_PP_WARN_THROTTLE(writer_, 5.0, "received path size is < 3, ignored");
     return {};
   }
 
@@ -432,7 +433,7 @@ boost::optional<PpOutput> PurePursuitLateralController::calcTargetCurvature(
   const auto closest_idx_result =
     autoware::motion_utils::findNearestIndex(output_tp_array_, pose, 3.0, M_PI_4);
   if (!closest_idx_result) {
-    RCLCPP_ERROR(logger_, "cannot find closest waypoint");
+    AW_PP_ERROR(writer_, "cannot find closest waypoint");
     return {};
   }
 

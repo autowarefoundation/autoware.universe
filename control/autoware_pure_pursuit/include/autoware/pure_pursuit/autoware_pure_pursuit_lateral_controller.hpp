@@ -32,6 +32,7 @@
 
 #include "autoware/pure_pursuit/autoware_pure_pursuit.hpp"
 #include "autoware/pure_pursuit/autoware_pure_pursuit_viz.hpp"
+#include "autoware/pure_pursuit/ros_log_writer.hpp"
 #include "autoware/trajectory_follower_base/lateral_controller_base.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "tf2_ros/buffer.h"
@@ -106,6 +107,7 @@ public:
 private:
   rclcpp::Clock::SharedPtr clock_;
   rclcpp::Logger logger_;
+  RosLogWriter writer_;
   std::vector<TrajectoryPoint> output_tp_array_;
   autoware_planning_msgs::msg::Trajectory::SharedPtr trajectory_resampled_;
   autoware_planning_msgs::msg::Trajectory trajectory_;
