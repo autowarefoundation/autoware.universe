@@ -244,8 +244,10 @@ boost::optional<trajectory_follower::InputData> Controller::createInputData(rclc
 
 void Controller::callbackTimerControl()
 {
+  // read the time once for this control cycle
+  const rclcpp::Time stamp = this->now();
   autoware_control_msgs::msg::Control out;
-  out.stamp = this->now();
+  out.stamp = stamp;
 
   // 1. create input data
   const auto input_data = createInputData(*get_clock());
@@ -269,7 +271,7 @@ void Controller::callbackTimerControl()
   publishProcessingTime(stop_watch_.toc("lateral"), pub_processing_time_lat_ms_);
 
   stop_watch_.tic("longitudinal");
-  const auto lon_out = longitudinal_controller_->run(*input_data);
+  const auto lon_out = longitudinal_controller_->run(*input_data, stamp);
   publishProcessingTime(stop_watch_.toc("longitudinal"), pub_processing_time_lon_ms_);
 
   // 4. sync with each other controllers
