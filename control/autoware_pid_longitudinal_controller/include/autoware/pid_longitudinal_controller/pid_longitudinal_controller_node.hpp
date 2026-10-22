@@ -20,10 +20,13 @@
 #include "diagnostic_updater/diagnostic_updater.hpp"
 #include "rclcpp/rclcpp.hpp"
 
+#include <tl_expected/expected.hpp>
+
 #include "autoware_internal_debug_msgs/msg/float32_multi_array_stamped.hpp"
 #include "visualization_msgs/msg/marker_array.hpp"
 
 #include <memory>
+#include <string>
 #include <vector>
 
 namespace autoware::motion::control::pid_longitudinal_controller
@@ -72,7 +75,7 @@ private:
   /**
    * @brief compute control command, and publish periodically
    */
-  trajectory_follower::LongitudinalOutput run(
+  tl::expected<trajectory_follower::LongitudinalOutput, std::string> run(
     const trajectory_follower::InputData & input_data, const rclcpp::Time & stamp,
     const trajectory_follower::LateralSyncData & lateral_sync_data) override;
 

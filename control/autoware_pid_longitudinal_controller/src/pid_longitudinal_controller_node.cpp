@@ -345,7 +345,8 @@ rcl_interfaces::msg::SetParametersResult PidLongitudinalControllerNode::paramCal
   return result;
 }
 
-trajectory_follower::LongitudinalOutput PidLongitudinalControllerNode::run(
+tl::expected<trajectory_follower::LongitudinalOutput, std::string>
+PidLongitudinalControllerNode::run(
   const trajectory_follower::InputData & input_data, const rclcpp::Time & stamp,
   const trajectory_follower::LateralSyncData & lateral_sync_data)
 {

@@ -20,7 +20,11 @@
 #include "autoware/trajectory_follower_base/sync_data.hpp"
 #include "rclcpp/rclcpp.hpp"
 
+#include <tl_expected/expected.hpp>
+
 #include "autoware_control_msgs/msg/longitudinal.hpp"
+
+#include <string>
 
 namespace autoware::motion::control::trajectory_follower
 {
@@ -34,7 +38,7 @@ class LongitudinalControllerBase
 {
 public:
   virtual ~LongitudinalControllerBase() = default;
-  virtual LongitudinalOutput run(
+  virtual tl::expected<LongitudinalOutput, std::string> run(
     const InputData & input_data, const rclcpp::Time & stamp,
     const LateralSyncData & lateral_sync_data) = 0;
 };

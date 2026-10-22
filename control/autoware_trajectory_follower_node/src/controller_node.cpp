@@ -271,12 +271,19 @@ void Controller::callbackTimerControl()
   publishProcessingTime(stop_watch_.toc("lateral"), pub_processing_time_lat_ms_);
 
   stop_watch_.tic("longitudinal");
-  const auto lon_out =
+  const auto lon_result =
     longitudinal_controller_->run(*input_data, stamp, previous_lateral_sync_data_);
   publishProcessingTime(stop_watch_.toc("longitudinal"), pub_processing_time_lon_ms_);
 
   // 4. keep the lateral result for the longitudinal controller of the next cycle
   previous_lateral_sync_data_ = lat_out.sync_data;
+  if (!lon_result) {
+    RCLCPP_INFO_THROTTLE(
+      get_logger(), *get_clock(), 5000,
+      "Control is skipped since longitudinal controller failed: %s", lon_result.error().c_str());
+    return;
+  }
+  const auto & lon_out = *lon_result;
 
   // TODO(Horibe): Think specification. This comes from the old implementation.
   if (isTimeOut(lon_out, lat_out)) return;
