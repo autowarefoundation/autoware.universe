@@ -1,4 +1,4 @@
-// Copyright 2023 Autoware Foundation
+// Copyright 2025 Autoware Foundation
 //
 // Licensed under the Apache License, Version 2.0 (the "License");
 // you may not use this file except in compliance with the License.
@@ -19,130 +19,192 @@
 
 #include <gtest/gtest.h>
 
-#include <limits>
+#include <cstdint>
 #include <memory>
 #include <string>
 #include <vector>
 
 namespace autoware::lidar_marker_localizer
 {
-
-class LidarMarkerLocalizerTest : public ::testing::Test
+namespace
 {
-protected:
-  rclcpp::NodeOptions node_options;
-  std::shared_ptr<LidarMarkerLocalizer> localizer;
+using PointT = autoware::point_types::PointXYZIRC;
 
-  void SetUp() override
-  {
-    node_options.parameter_overrides(
-      {{"enable_read_all_target_ids", false},
-       {"target_ids", std::vector<std::string>{}},
-       {"queue_size_for_output_pose", 1},
-       {"marker_name", std::string("")},
-       {"road_surface_mode", false},
-       {"resolution", 1.0},
-       {"intensity_pattern", std::vector<int64_t>{}},
-       {"match_intensity_difference_threshold", 1},
-       {"positive_match_num_threshold", 1},
-       {"negative_match_num_threshold", 1},
-       {"vote_threshold_for_detect_marker", 1},
-       {"marker_to_vehicle_offset_y", 0.0},
-       {"marker_height_from_ground", 0.0},
-       {"reference_ring_number", 0},
-       {"marker_width", 0.8},
-       {"self_pose_timeout_sec", 1.0},
-       {"self_pose_distance_tolerance_m", 1.0},
-       {"limit_distance_from_self_pose_to_nearest_marker", 1.0},
-       {"limit_distance_from_self_pose_to_nearest_marker_y", 1.0},
-       {"limit_distance_from_self_pose_to_marker", 1.0},
-       {"base_covariance", std::vector<double>(36, 0.0)},
-       {"lower_ring_id_init", 0},
-       {"upper_ring_id_init", 0},
-       {"enable_save_log", false},
-       {"save_file_directory_path", std::string("")},
-       {"save_file_name", std::string("")},
-       {"save_frame_id", std::string("")},
-       {"radius_for_extracting_marker_pointcloud", 1.0},
-       {"queue_size_for_debug_pub_msg", 1}});
-    localizer = std::make_shared<LidarMarkerLocalizer>(node_options);
-  }
-};  // class LidarMarkerLocalizerTest : public ::testing::Test
+constexpr std::uint8_t low_intensity = 10;
+constexpr std::uint8_t high_intensity = 200;
 
-TEST_F(LidarMarkerLocalizerTest, Initialization)
+// The marker is detected where the intensity changes low, high, high, low along the x-axis.
+DetectionParam make_param()
 {
-  ASSERT_NE(localizer, nullptr);
+  DetectionParam param{};
+  param.road_surface_mode = false;
+  param.resolution = 1.0;
+  param.intensity_pattern = {-1, 1, 1, -1};
+  param.match_intensity_difference_threshold = 10;
+  param.positive_match_num_threshold = 2;
+  param.negative_match_num_threshold = 2;
+  param.vote_threshold_for_detect_marker = 1;
+  param.marker_to_vehicle_offset_y = 1.0;
+  param.marker_height_from_ground = 0.5;
+  param.reference_ring_number = 255;  // use all rings
+  param.lower_ring_id_init = 128;
+  param.upper_ring_id_init = 0;
+  return param;
 }
 
-TEST_F(LidarMarkerLocalizerTest, DetectLandmarksRoadSurfaceModeSwitch)
+// Rings 0, 1 and 2 at y = 2.0, 2.5 and 3.0, with one point per bin at x = 0, 1, ..., x_num - 1.
+// The points at x = 4 and 5 have the high intensity if with_marker is true.
+pcl::PointCloud<PointT> make_points(const int x_num, const bool with_marker)
 {
-  // ダミーPointCloud2生成
-  sensor_msgs::msg::PointCloud2 cloud;
-  cloud.header.frame_id = "base_link";
-  cloud.header.stamp.sec = 0;
-  cloud.header.stamp.nanosec = 0;
-  // 必要なフィールドをセット
-  cloud.height = 1;
-  cloud.width = 2;
-  cloud.is_dense = true;
-  cloud.is_bigendian = false;
-  cloud.point_step =
-    sizeof(float) * 4 + sizeof(uint16_t) + sizeof(float);  // x, y, z, intensity, channel, dummy
-  cloud.row_step = cloud.point_step * cloud.width;
-  cloud.fields.resize(5);
-  cloud.fields[0].name = "x";
-  cloud.fields[0].offset = 0;
-  cloud.fields[0].datatype = sensor_msgs::msg::PointField::FLOAT32;
-  cloud.fields[0].count = 1;
-  cloud.fields[1].name = "y";
-  cloud.fields[1].offset = 4;
-  cloud.fields[1].datatype = sensor_msgs::msg::PointField::FLOAT32;
-  cloud.fields[1].count = 1;
-  cloud.fields[2].name = "z";
-  cloud.fields[2].offset = 8;
-  cloud.fields[2].datatype = sensor_msgs::msg::PointField::FLOAT32;
-  cloud.fields[2].count = 1;
-  cloud.fields[3].name = "intensity";
-  cloud.fields[3].offset = 12;
-  cloud.fields[3].datatype = sensor_msgs::msg::PointField::FLOAT32;
-  cloud.fields[3].count = 1;
-  cloud.fields[4].name = "channel";
-  cloud.fields[4].offset = 16;
-  cloud.fields[4].datatype = sensor_msgs::msg::PointField::UINT16;
-  cloud.fields[4].count = 1;
-  cloud.data.resize(cloud.row_step * cloud.height);
-
-  // パラメータセット
-  pcl::PointCloud<autoware::point_types::PointXYZIRC> points;
-  pcl::fromROSMsg(cloud, points);
-  DetectionParam param{};
-  param.lower_ring_id_init = 0;
-  param.upper_ring_id_init = 0;
-  param.resolution = 1.0;
-  param.intensity_pattern = {1, 1};
-  param.positive_match_num_threshold = 1;
-  param.negative_match_num_threshold = 1;
-  param.match_intensity_difference_threshold = 1;
-  param.vote_threshold_for_detect_marker = 0;
-  param.marker_to_vehicle_offset_y = 123.0f;
-  param.marker_height_from_ground = 2.0f;
-  param.reference_ring_number = std::numeric_limits<uint8_t>::max();
-
-  // road_surface_mode OFF
-  param.road_surface_mode = false;
-  auto result_off = detect_landmarks(points, cloud.header, param).landmarks;
-  // OFF時はLandmarkのyがreference_ring_y（ダミーなのでmax値）
-  if (!result_off.empty()) {
-    EXPECT_EQ(result_off[0].pose.position.y, std::numeric_limits<float>::max());
+  pcl::PointCloud<PointT> points;
+  for (std::uint16_t ring = 0; ring < 3; ++ring) {
+    for (int x = 0; x < x_num; ++x) {
+      PointT point;
+      point.x = static_cast<float>(x);
+      point.y = 2.0F + 0.5F * static_cast<float>(ring);
+      point.z = 0.0F;
+      point.intensity = (with_marker && (x == 4 || x == 5)) ? high_intensity : low_intensity;
+      point.channel = ring;
+      points.push_back(point);
+    }
   }
+  return points;
+}
 
-  // road_surface_mode ON
+std_msgs::msg::Header make_header()
+{
+  std_msgs::msg::Header header;
+  header.frame_id = "base_link";
+  return header;
+}
+}  // namespace
+
+// The pattern matches only at the window starting at bin 3 (bins 3 to 6 are low, high, high,
+// low) in each of the 3 rings, so vote[3] = 3 exceeds the threshold of 1. The marker x is
+// (3 + 4 / 2) * resolution + min_x = 5.0.
+TEST(DetectLandmarks, DetectMarkerOnVerticalSurface)
+{
+  const DetectionParam param = make_param();
+
+  const DetectionResult result = detect_landmarks(make_points(10, true), make_header(), param);
+
+  EXPECT_EQ(result.status, DetectionStatus::ok);
+  ASSERT_EQ(result.landmarks.size(), 1U);
+  const auto & position = result.landmarks.front().pose.position;
+  EXPECT_DOUBLE_EQ(position.x, 5.0);
+  // the smallest y of the points in the bin, which is ring 0
+  EXPECT_DOUBLE_EQ(position.y, 2.0);
+  EXPECT_DOUBLE_EQ(position.z, 0.5);
+}
+
+TEST(DetectLandmarks, DetectMarkerOnRoadSurface)
+{
+  DetectionParam param = make_param();
   param.road_surface_mode = true;
-  auto result_on = detect_landmarks(points, cloud.header, param).landmarks;
-  // ON時はLandmarkのyがmarker_to_vehicle_offset_y
-  if (!result_on.empty()) {
-    EXPECT_EQ(result_on[0].pose.position.y, param.marker_to_vehicle_offset_y);
-  }
+
+  const DetectionResult result = detect_landmarks(make_points(10, true), make_header(), param);
+
+  EXPECT_EQ(result.status, DetectionStatus::ok);
+  ASSERT_EQ(result.landmarks.size(), 1U);
+  const auto & position = result.landmarks.front().pose.position;
+  EXPECT_DOUBLE_EQ(position.x, 5.0);
+  // fixed to marker_to_vehicle_offset_y instead of the y of the points
+  EXPECT_DOUBLE_EQ(position.y, 1.0);
+  EXPECT_DOUBLE_EQ(position.z, 0.5);
+}
+
+TEST(DetectLandmarks, NoMarkerOnUniformIntensity)
+{
+  const DetectionResult result =
+    detect_landmarks(make_points(10, false), make_header(), make_param());
+
+  EXPECT_EQ(result.status, DetectionStatus::ok);
+  EXPECT_TRUE(result.landmarks.empty());
+}
+
+TEST(DetectLandmarks, BinNumTooSmall)
+{
+  // 3 bins are fewer than the 4 elements of the intensity pattern
+  const DetectionResult result =
+    detect_landmarks(make_points(3, false), make_header(), make_param());
+
+  EXPECT_EQ(result.status, DetectionStatus::bin_num_too_small);
+  EXPECT_TRUE(result.landmarks.empty());
+}
+
+TEST(DetectLandmarks, NoPoints)
+{
+  const DetectionResult result =
+    detect_landmarks(pcl::PointCloud<PointT>{}, make_header(), make_param());
+
+  EXPECT_EQ(result.status, DetectionStatus::no_points);
+  EXPECT_TRUE(result.landmarks.empty());
+}
+
+// In the road surface mode the grid of 3 rings * 1.0 m lies on the road surface, with its rows
+// from y = offset + 1.5 to y = offset - 1.5 for a positive offset (rotated by roll = pi) and from
+// y = offset - 1.5 to y = offset + 1.5 for a negative offset.
+TEST(DetectLandmarks, RoadSurfaceGridIsCenteredOnOffset)
+{
+  DetectionParam param = make_param();
+  param.road_surface_mode = true;
+
+  param.marker_to_vehicle_offset_y = 1.0;
+  const auto left = detect_landmarks(make_points(10, true), make_header(), param);
+  const auto & left_origin = left.center_intensity_grid.info.origin;
+  EXPECT_EQ(left.center_intensity_grid.info.height, 3U);
+  EXPECT_DOUBLE_EQ(left_origin.position.y, 2.5);
+  EXPECT_DOUBLE_EQ(left_origin.position.z, 0.5);
+  EXPECT_NEAR(left_origin.orientation.x, 1.0, 1e-9);
+  EXPECT_NEAR(left_origin.orientation.w, 0.0, 1e-9);
+
+  param.marker_to_vehicle_offset_y = -1.0;
+  const auto right = detect_landmarks(make_points(10, true), make_header(), param);
+  const auto & right_origin = right.center_intensity_grid.info.origin;
+  EXPECT_DOUBLE_EQ(right_origin.position.y, -2.5);
+  EXPECT_DOUBLE_EQ(right_origin.position.z, 0.5);
+  EXPECT_NEAR(right_origin.orientation.x, 0.0, 1e-9);
+  EXPECT_NEAR(right_origin.orientation.w, 1.0, 1e-9);
+}
+
+// The node declares all the parameters, including road_surface_mode.
+TEST(LidarMarkerLocalizer, Initialization)
+{
+  rclcpp::NodeOptions node_options;
+  node_options.parameter_overrides(
+    {{"enable_read_all_target_ids", false},
+     {"target_ids", std::vector<std::string>{}},
+     {"queue_size_for_output_pose", 1},
+     {"marker_name", std::string("")},
+     {"road_surface_mode", false},
+     {"resolution", 1.0},
+     {"intensity_pattern", std::vector<int64_t>{}},
+     {"match_intensity_difference_threshold", 1},
+     {"positive_match_num_threshold", 1},
+     {"negative_match_num_threshold", 1},
+     {"vote_threshold_for_detect_marker", 1},
+     {"marker_to_vehicle_offset_y", 0.0},
+     {"marker_height_from_ground", 0.0},
+     {"reference_ring_number", 0},
+     {"marker_width", 0.8},
+     {"self_pose_timeout_sec", 1.0},
+     {"self_pose_distance_tolerance_m", 1.0},
+     {"limit_distance_from_self_pose_to_nearest_marker", 1.0},
+     {"limit_distance_from_self_pose_to_nearest_marker_y", 1.0},
+     {"limit_distance_from_self_pose_to_marker", 1.0},
+     {"base_covariance", std::vector<double>(36, 0.0)},
+     {"lower_ring_id_init", 0},
+     {"upper_ring_id_init", 0},
+     {"enable_save_log", false},
+     {"save_file_directory_path", std::string("")},
+     {"save_file_name", std::string("")},
+     {"save_frame_id", std::string("")},
+     {"radius_for_extracting_marker_pointcloud", 1.0},
+     {"queue_size_for_debug_pub_msg", 1}});
+
+  std::shared_ptr<LidarMarkerLocalizer> localizer;
+  ASSERT_NO_THROW(localizer = std::make_shared<LidarMarkerLocalizer>(node_options));
+  EXPECT_FALSE(localizer->get_parameter("road_surface_mode").as_bool());
 }
 
 }  // namespace autoware::lidar_marker_localizer
