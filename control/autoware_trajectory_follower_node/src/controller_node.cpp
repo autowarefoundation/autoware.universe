@@ -16,7 +16,7 @@
 
 #include "autoware/mpc_lateral_controller/mpc_lateral_controller_node.hpp"
 #include "autoware/pid_longitudinal_controller/pid_longitudinal_controller_node.hpp"
-#include "autoware/pure_pursuit/autoware_pure_pursuit_lateral_controller.hpp"
+#include "autoware/pure_pursuit/autoware_pure_pursuit_lateral_controller_node.hpp"
 #include "autoware_utils/ros/marker_helper.hpp"
 
 #include <autoware/trajectory_follower_base/lateral_controller_base.hpp>
@@ -87,7 +87,7 @@ Controller::Controller(const rclcpp::NodeOptions & node_options)
     }
     case LateralControllerMode::PURE_PURSUIT: {
       lateral_controller_ =
-        std::make_shared<autoware::pure_pursuit::PurePursuitLateralController>(*this);
+        std::make_shared<autoware::pure_pursuit::PurePursuitLateralControllerNode>(*this);
       break;
     }
     default:

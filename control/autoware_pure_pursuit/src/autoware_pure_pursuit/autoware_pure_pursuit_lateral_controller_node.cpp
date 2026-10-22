@@ -43,32 +43,9 @@ PurePursuitLateralControllerNode::PurePursuitLateralControllerNode(rclcpp::Node 
   logger_(node.get_logger().get_child("lateral_controller")),
   writer_(logger_, clock_),
   tf_buffer_(clock_),
-  tf_listener_(tf_buffer_)
+  tf_listener_(tf_buffer_),
+  controller_(std::make_unique<PurePursuitLateralController>(createConfig(node), writer_))
 {
-  // Vehicle Parameters
-  const auto vehicle_info = autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo();
-  param_.wheel_base = vehicle_info.wheel_base_m;
-  param_.max_steering_angle = vehicle_info.max_steer_angle_rad;
-
-  // Algorithm Parameters
-  param_.ld_velocity_ratio = node.declare_parameter<double>("ld_velocity_ratio");
-  param_.ld_lateral_error_ratio = node.declare_parameter<double>("ld_lateral_error_ratio");
-  param_.ld_curvature_ratio = node.declare_parameter<double>("ld_curvature_ratio");
-  param_.long_ld_lateral_error_threshold =
-    node.declare_parameter<double>("long_ld_lateral_error_threshold");
-  param_.min_lookahead_distance = node.declare_parameter<double>("min_lookahead_distance");
-  param_.max_lookahead_distance = node.declare_parameter<double>("max_lookahead_distance");
-  param_.reverse_min_lookahead_distance =
-    node.declare_parameter<double>("reverse_min_lookahead_distance");
-  param_.converged_steer_rad_ = node.declare_parameter<double>("converged_steer_rad");
-  param_.prediction_ds = node.declare_parameter<double>("prediction_ds");
-  param_.prediction_distance_length = node.declare_parameter<double>("prediction_distance_length");
-  param_.resampling_ds = node.declare_parameter<double>("resampling_ds");
-  param_.curvature_calculation_distance =
-    node.declare_parameter<double>("curvature_calculation_distance");
-  param_.enable_path_smoothing = node.declare_parameter<bool>("enable_path_smoothing");
-  param_.path_filter_moving_ave_num = node.declare_parameter<int64_t>("path_filter_moving_ave_num");
-
   // Debug Publishers
   pub_debug_marker_ =
     node.create_publisher<visualization_msgs::msg::MarkerArray>("~/debug/markers", 0);
@@ -81,6 +58,37 @@ PurePursuitLateralControllerNode::PurePursuitLateralControllerNode(rclcpp::Node 
     "~/output/predicted_trajectory", 1);
 }
 
+PurePursuitLateralControllerConfig PurePursuitLateralControllerNode::createConfig(
+  rclcpp::Node & node)
+{
+  PurePursuitLateralControllerConfig config{};
+
+  // Vehicle Parameters
+  const auto vehicle_info = autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo();
+  config.wheel_base = vehicle_info.wheel_base_m;
+  config.max_steering_angle = vehicle_info.max_steer_angle_rad;
+
+  // Algorithm Parameters
+  config.ld_velocity_ratio = node.declare_parameter<double>("ld_velocity_ratio");
+  config.ld_lateral_error_ratio = node.declare_parameter<double>("ld_lateral_error_ratio");
+  config.ld_curvature_ratio = node.declare_parameter<double>("ld_curvature_ratio");
+  config.long_ld_lateral_error_threshold =
+    node.declare_parameter<double>("long_ld_lateral_error_threshold");
+  config.min_lookahead_distance = node.declare_parameter<double>("min_lookahead_distance");
+  config.max_lookahead_distance = node.declare_parameter<double>("max_lookahead_distance");
+  config.reverse_min_lookahead_distance =
+    node.declare_parameter<double>("reverse_min_lookahead_distance");
+  config.converged_steer_rad_ = node.declare_parameter<double>("converged_steer_rad");
+  config.prediction_ds = node.declare_parameter<double>("prediction_ds");
+  config.prediction_distance_length = node.declare_parameter<double>("prediction_distance_length");
+  config.resampling_ds = node.declare_parameter<double>("resampling_ds");
+  config.curvature_calculation_distance =
+    node.declare_parameter<double>("curvature_calculation_distance");
+  config.enable_path_smoothing = node.declare_parameter<bool>("enable_path_smoothing");
+  config.path_filter_moving_ave_num = node.declare_parameter<int64_t>("path_filter_moving_ave_num");
+  return config;
+}
+
 bool PurePursuitLateralControllerNode::isReady([[maybe_unused]] const InputData & input_data)
 {
   return true;
@@ -88,5 +96,15 @@ bool PurePursuitLateralControllerNode::isReady([[maybe_unused]] const InputData 
 
 LateralOutput PurePursuitLateralControllerNode::run(const InputData & input_data)
 {
+  const auto result = controller_->run(input_data, clock_->now());
+
+  if (result.lookahead_debug_values) {
+    pub_debug_values_->publish(*result.lookahead_debug_values);
+  }
+  if (result.predicted_trajectory) {
+    pub_predicted_trajectory_->publish(*result.predicted_trajectory);
+  }
+
+  return result.output;
 }
 }  // namespace autoware::pure_pursuit

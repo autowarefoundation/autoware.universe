@@ -32,8 +32,9 @@
 
 #include "autoware/pure_pursuit/autoware_pure_pursuit.hpp"
 #include "autoware/pure_pursuit/autoware_pure_pursuit_viz.hpp"
+#include "autoware/pure_pursuit/log_writer.hpp"
 #include "autoware/trajectory_follower_base/lateral_controller_base.hpp"
-#include "rclcpp/rclcpp.hpp"
+#include "rclcpp/time.hpp"
 
 #include <autoware/motion_utils/resample/resample.hpp>
 #include <autoware/motion_utils/trajectory/conversion.hpp>
@@ -93,12 +94,27 @@ struct DebugData
   geometry_msgs::msg::Point next_target;
 };
 
-class PurePursuitLateralController : public LateralControllerBase
+/// What one cycle of PurePursuitLateralController returns. The node publishes the messages.
+struct PurePursuitLateralControllerResult
+{
+  LateralOutput output;
+  std::optional<autoware_internal_debug_msgs::msg::Float32MultiArrayStamped> lookahead_debug_values;
+  std::optional<Trajectory> predicted_trajectory;
+};
+
+class PurePursuitLateralController
 {
 public:
-  explicit PurePursuitLateralController(rclcpp::Node & node);
+  /// \param writer Where the controller writes its log. It has to outlive this object.
+  PurePursuitLateralController(
+    const PurePursuitLateralControllerConfig & config, const LogWriter & writer);
+
+  /// Compute the command of one control cycle.
+  /// \param stamp Time of the cycle. The command and the lookahead debug values have this stamp.
+  PurePursuitLateralControllerResult run(const InputData & input_data, const rclcpp::Time & stamp);
 
 private:
+  const LogWriter & writer_;
   std::vector<TrajectoryPoint> output_tp_array_;
   autoware_planning_msgs::msg::Trajectory::SharedPtr trajectory_resampled_;
   autoware_planning_msgs::msg::Trajectory trajectory_;
@@ -112,7 +128,7 @@ private:
 
   void publishDebugMarker() const;
 
-  Lateral generateCtrlCmdMsg(const double target_curvature);
+  Lateral generateCtrlCmdMsg(const double target_curvature, const rclcpp::Time & stamp);
 
   // Parameter
   PurePursuitLateralControllerConfig param_{};
@@ -121,7 +137,8 @@ private:
   std::unique_ptr<PurePursuit> pure_pursuit_;
 
   std::optional<PpOutput> calcTargetCurvature(
-    bool is_control_output, geometry_msgs::msg::Pose pose);
+    bool is_control_output, geometry_msgs::msg::Pose pose, const rclcpp::Time & stamp,
+    PurePursuitLateralControllerResult & result);
 
   /**
    * @brief It takes current pose, control command, and delta distance. Then it calculates next pose
@@ -130,15 +147,18 @@ private:
 
   TrajectoryPoint calcNextPose(const double ds, TrajectoryPoint & point, Lateral cmd) const;
 
-  std::optional<Trajectory> generatePredictedTrajectory();
+  std::optional<Trajectory> generatePredictedTrajectory(
+    const rclcpp::Time & stamp, PurePursuitLateralControllerResult & result);
 
-  Lateral generateOutputControlCmd();
+  Lateral generateOutputControlCmd(
+    const rclcpp::Time & stamp, PurePursuitLateralControllerResult & result);
 
   bool calcIsSteerConverged(const Lateral & cmd);
 
   double calcLookaheadDistance(
     const double lateral_error, const double curvature, const double velocity, const double min_ld,
-    const bool is_control_cmd);
+    const bool is_control_cmd, const rclcpp::Time & stamp,
+    PurePursuitLateralControllerResult & result);
 
   double calcCurvature(const size_t closest_idx);
 

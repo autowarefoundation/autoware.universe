@@ -32,7 +32,7 @@ target_link_libraries(${PROJECT_NAME}_lateral_controller
 )
 
 rclcpp_components_register_node(${PROJECT_NAME}_lateral_controller
-  PLUGIN "autoware::pure_pursuit::PurePursuitLateralController"
+  PLUGIN "autoware::pure_pursuit::PurePursuitLateralControllerNode"
   EXECUTABLE ${PROJECT_NAME}_lateral_controller_exe
 )
 
