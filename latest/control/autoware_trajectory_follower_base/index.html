@@ -23430,12 +23430,11 @@ The interface class has the following base functions.</p>
 <ul>
 <li><code>isReady()</code>: Check if the control is ready to compute.</li>
 <li><code>run()</code>: Compute control commands and return to <a href="../autoware_trajectory_follower_node/">Trajectory Follower Nodes</a>. This must be implemented by inherited algorithms.</li>
-<li><code>sync()</code>: Input the result of running the other controller.<ul>
+<li><code>sync()</code>: Input the result of running the lateral controller. Only the longitudinal controller has this function.<ul>
 <li>steer angle convergence<ul>
 <li>allow keeping stopped until steer is converged.</li>
 </ul>
 </li>
-<li>velocity convergence(currently not used)</li>
 </ul>
 </li>
 </ul>
