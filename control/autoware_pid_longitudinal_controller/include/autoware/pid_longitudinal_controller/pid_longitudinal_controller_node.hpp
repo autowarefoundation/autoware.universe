@@ -16,7 +16,7 @@
 #define AUTOWARE__PID_LONGITUDINAL_CONTROLLER__PID_LONGITUDINAL_CONTROLLER_NODE_HPP_
 
 #include "autoware/pid_longitudinal_controller/pid_longitudinal_controller.hpp"
-#include "autoware/trajectory_follower_base/longitudinal_controller_base.hpp"
+#include "autoware/trajectory_follower_base/longitudinal_controller_interface.hpp"
 #include "diagnostic_updater/diagnostic_updater.hpp"
 #include "rclcpp/rclcpp.hpp"
 
@@ -38,7 +38,7 @@ namespace trajectory_follower = ::autoware::motion::control::trajectory_follower
 /// \class PidLongitudinalControllerNode
 /// \brief the rclcpp::Node wrapper around PidLongitudinalController: parameter
 /// declaration/reconfiguration, publishers, logging, and diagnostics.
-class PidLongitudinalControllerNode : public trajectory_follower::LongitudinalControllerBase
+class PidLongitudinalControllerNode : public trajectory_follower::LongitudinalControllerInterface
 {
 public:
   /// \param node Reference to the node used only for the component and parameter initialization.

@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#ifndef AUTOWARE__TRAJECTORY_FOLLOWER_BASE__LONGITUDINAL_CONTROLLER_BASE_HPP_
-#define AUTOWARE__TRAJECTORY_FOLLOWER_BASE__LONGITUDINAL_CONTROLLER_BASE_HPP_
+#ifndef AUTOWARE__TRAJECTORY_FOLLOWER_BASE__LONGITUDINAL_CONTROLLER_INTERFACE_HPP_
+#define AUTOWARE__TRAJECTORY_FOLLOWER_BASE__LONGITUDINAL_CONTROLLER_INTERFACE_HPP_
 
 #include "autoware/trajectory_follower_base/control_horizon.hpp"
 #include "autoware/trajectory_follower_base/input_data.hpp"
@@ -34,10 +34,10 @@ struct LongitudinalOutput
   Longitudinal control_cmd;
   LongitudinalHorizon control_cmd_horizon;
 };
-class LongitudinalControllerBase
+class LongitudinalControllerInterface
 {
 public:
-  virtual ~LongitudinalControllerBase() = default;
+  virtual ~LongitudinalControllerInterface() = default;
   virtual tl::expected<LongitudinalOutput, std::string> run(
     const InputData & input_data, const rclcpp::Time & stamp,
     const LateralSyncData & lateral_sync_data) = 0;
@@ -45,4 +45,4 @@ public:
 
 }  // namespace autoware::motion::control::trajectory_follower
 
-#endif  // AUTOWARE__TRAJECTORY_FOLLOWER_BASE__LONGITUDINAL_CONTROLLER_BASE_HPP_
+#endif  // AUTOWARE__TRAJECTORY_FOLLOWER_BASE__LONGITUDINAL_CONTROLLER_INTERFACE_HPP_
