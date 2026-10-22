@@ -5,6 +5,7 @@ find_package(autoware_cmake REQUIRED)
 autoware_package()
 
 find_package(Eigen3 REQUIRED)
+find_package(fmt REQUIRED)
 
 include_directories(
   SYSTEM
@@ -22,6 +23,7 @@ ament_auto_add_library(${PROJECT_NAME}_core SHARED
 ament_auto_add_library(${PROJECT_NAME}_lateral_controller SHARED
   src/${PROJECT_NAME}/${PROJECT_NAME}_lateral_controller.cpp
   src/${PROJECT_NAME}/${PROJECT_NAME}_viz.cpp
+  src/${PROJECT_NAME}/ros_log_writer.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}_lateral_controller
