@@ -17,6 +17,7 @@
 
 #include "autoware/localization_util/smart_pose_buffer.hpp"
 #include "autoware/qos_utils/qos_compatibility.hpp"
+#include "marker_detector.hpp"
 
 #include <autoware/landmark_manager/landmark_manager.hpp>
 #include <autoware_utils/ros/diagnostics_interface.hpp>
@@ -60,11 +61,6 @@ class LidarMarkerLocalizer : public rclcpp::Node
   using SetBool = std_srvs::srv::SetBool;
   using DiagnosticStatus = diagnostic_msgs::msg::DiagnosticStatus;
 
-public:
-  explicit LidarMarkerLocalizer(const rclcpp::NodeOptions & node_options);
-
-protected:
-  // For test subclass access
   struct Param
   {
     bool enable_read_all_target_ids;
@@ -105,11 +101,8 @@ protected:
     int64_t queue_size_for_debug_pub_msg;
   };
 
-  Param & mutable_param() { return param_; }
-  const Param & param() const { return param_; }
-  template <typename PointType>
-  std::vector<landmark_manager::Landmark> detect_landmarks(
-    const PointCloud2::ConstSharedPtr & points_msg_ptr);
+public:
+  explicit LidarMarkerLocalizer(const rclcpp::NodeOptions & node_options);
 
 private:
   void self_pose_callback(const PoseWithCovarianceStamped::ConstSharedPtr & self_pose_msg_ptr);
@@ -120,6 +113,9 @@ private:
 
   void initialize_diagnostics();
   void main_process(const PointCloud2::ConstSharedPtr & points_msg_ptr);
+  template <typename PointType>
+  std::vector<landmark_manager::Landmark> detect_landmarks(
+    const PointCloud2::ConstSharedPtr & points_msg_ptr);
   sensor_msgs::msg::PointCloud2::SharedPtr extract_marker_pointcloud(
     const sensor_msgs::msg::PointCloud2::ConstSharedPtr & points_msg_ptr,
     const geometry_msgs::msg::Pose marker_pose) const;
@@ -161,6 +157,7 @@ private:
   rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr pub_vote_grid;
 
   Param param_;
+  DetectionParam detection_param_;
   bool is_activated_;
   std::unique_ptr<autoware::localization_util::SmartPoseBuffer> ekf_pose_buffer_;
 

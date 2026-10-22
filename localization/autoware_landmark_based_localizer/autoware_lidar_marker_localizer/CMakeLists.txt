@@ -11,6 +11,7 @@ link_directories(${PCL_LIBRARY_DIRS})
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
   src/lidar_marker_localizer.cpp
+  src/marker_detector.cpp
 )
 
 target_link_libraries(${PROJECT_NAME}

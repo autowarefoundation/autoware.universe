@@ -13,6 +13,7 @@
 // limitations under the License.
 
 #include "lidar_marker_localizer.hpp"
+#include "marker_detector.hpp"
 
 #include <autoware/point_types/types.hpp>
 
@@ -26,26 +27,11 @@
 namespace autoware::lidar_marker_localizer
 {
 
-class TestableLidarMarkerLocalizer : public LidarMarkerLocalizer
-{
-public:
-  using LidarMarkerLocalizer::LidarMarkerLocalizer;
-
-  template <typename PointT>
-  auto callDetectLandmarks(const sensor_msgs::msg::PointCloud2::ConstSharedPtr & points_msg_ptr)
-  {
-    return this->detect_landmarks<PointT>(points_msg_ptr);
-  }
-
-  Param & public_mutable_param() { return mutable_param(); }
-  const Param & public_param() const { return param(); }
-};
-
 class LidarMarkerLocalizerTest : public ::testing::Test
 {
 protected:
   rclcpp::NodeOptions node_options;
-  std::shared_ptr<TestableLidarMarkerLocalizer> localizer;
+  std::shared_ptr<LidarMarkerLocalizer> localizer;
 
   void SetUp() override
   {
@@ -79,7 +65,7 @@ protected:
        {"save_frame_id", std::string("")},
        {"radius_for_extracting_marker_pointcloud", 1.0},
        {"queue_size_for_debug_pub_msg", 1}});
-    localizer = std::make_shared<TestableLidarMarkerLocalizer>(node_options);
+    localizer = std::make_shared<LidarMarkerLocalizer>(node_options);
   }
 };  // class LidarMarkerLocalizerTest : public ::testing::Test
 
@@ -127,7 +113,9 @@ TEST_F(LidarMarkerLocalizerTest, DetectLandmarksRoadSurfaceModeSwitch)
   cloud.data.resize(cloud.row_step * cloud.height);
 
   // パラメータセット
-  auto & param = localizer->public_mutable_param();
+  pcl::PointCloud<autoware::point_types::PointXYZIRC> points;
+  pcl::fromROSMsg(cloud, points);
+  DetectionParam param{};
   param.lower_ring_id_init = 0;
   param.upper_ring_id_init = 0;
   param.resolution = 1.0;
@@ -142,8 +130,7 @@ TEST_F(LidarMarkerLocalizerTest, DetectLandmarksRoadSurfaceModeSwitch)
 
   // road_surface_mode OFF
   param.road_surface_mode = false;
-  auto result_off = localizer->callDetectLandmarks<autoware::point_types::PointXYZIRC>(
-    std::make_shared<sensor_msgs::msg::PointCloud2>(cloud));
+  auto result_off = detect_landmarks(points, cloud.header, param).landmarks;
   // OFF時はLandmarkのyがreference_ring_y（ダミーなのでmax値）
   if (!result_off.empty()) {
     EXPECT_EQ(result_off[0].pose.position.y, std::numeric_limits<float>::max());
@@ -151,8 +138,7 @@ TEST_F(LidarMarkerLocalizerTest, DetectLandmarksRoadSurfaceModeSwitch)
 
   // road_surface_mode ON
   param.road_surface_mode = true;
-  auto result_on = localizer->callDetectLandmarks<autoware::point_types::PointXYZIRC>(
-    std::make_shared<sensor_msgs::msg::PointCloud2>(cloud));
+  auto result_on = detect_landmarks(points, cloud.header, param).landmarks;
   // ON時はLandmarkのyがmarker_to_vehicle_offset_y
   if (!result_on.empty()) {
     EXPECT_EQ(result_on[0].pose.position.y, param.marker_to_vehicle_offset_y);
