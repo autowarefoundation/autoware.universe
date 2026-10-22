@@ -66,6 +66,7 @@ PurePursuitLateralController::PurePursuitLateralController(rclcpp::Node & node)
   tf_listener_(tf_buffer_)
 {
   pure_pursuit_ = std::make_unique<PurePursuit>();
+  pure_pursuit_->setLogWriter(writer_);
 
   // Vehicle Parameters
   const auto vehicle_info = autoware::vehicle_info_utils::VehicleInfoUtils(node).getVehicleInfo();
