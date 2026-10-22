@@ -271,11 +271,12 @@ void Controller::callbackTimerControl()
   publishProcessingTime(stop_watch_.toc("lateral"), pub_processing_time_lat_ms_);
 
   stop_watch_.tic("longitudinal");
-  const auto lon_out = longitudinal_controller_->run(*input_data, stamp);
+  const auto lon_out =
+    longitudinal_controller_->run(*input_data, stamp, previous_lateral_sync_data_);
   publishProcessingTime(stop_watch_.toc("longitudinal"), pub_processing_time_lon_ms_);
 
-  // 4. sync with each other controllers
-  longitudinal_controller_->sync(lat_out.sync_data);
+  // 4. keep the lateral result for the longitudinal controller of the next cycle
+  previous_lateral_sync_data_ = lat_out.sync_data;
 
   // TODO(Horibe): Think specification. This comes from the old implementation.
   if (isTimeOut(lon_out, lat_out)) return;

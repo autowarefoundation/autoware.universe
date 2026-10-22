@@ -73,7 +73,8 @@ private:
    * @brief compute control command, and publish periodically
    */
   trajectory_follower::LongitudinalOutput run(
-    const trajectory_follower::InputData & input_data, const rclcpp::Time & stamp) override;
+    const trajectory_follower::InputData & input_data, const rclcpp::Time & stamp,
+    const trajectory_follower::LateralSyncData & lateral_sync_data) override;
 
   /**
    * @brief publish debug data and the virtual wall marker created during this cycle, if any

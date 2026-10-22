@@ -34,11 +34,9 @@ class LongitudinalControllerBase
 {
 public:
   virtual ~LongitudinalControllerBase() = default;
-  virtual LongitudinalOutput run(const InputData & input_data, const rclcpp::Time & stamp) = 0;
-  void sync(LateralSyncData const & lateral_sync_data);
-
-protected:
-  LateralSyncData lateral_sync_data_;
+  virtual LongitudinalOutput run(
+    const InputData & input_data, const rclcpp::Time & stamp,
+    const LateralSyncData & lateral_sync_data) = 0;
 };
 
 }  // namespace autoware::motion::control::trajectory_follower

@@ -87,6 +87,8 @@ private:
   std::shared_ptr<diagnostic_updater::Updater>
     diag_updater_;  // Diagnostic updater for publishing diagnostic data.
 
+  // output of the lateral controller in the previous cycle, passed to the longitudinal controller
+  trajectory_follower::LateralSyncData previous_lateral_sync_data_;
   std::shared_ptr<trajectory_follower::LongitudinalControllerBase> longitudinal_controller_;
   std::shared_ptr<trajectory_follower::LateralControllerBase> lateral_controller_;
 
