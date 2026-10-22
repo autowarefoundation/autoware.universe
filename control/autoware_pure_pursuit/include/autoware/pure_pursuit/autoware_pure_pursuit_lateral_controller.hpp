@@ -32,11 +32,8 @@
 
 #include "autoware/pure_pursuit/autoware_pure_pursuit.hpp"
 #include "autoware/pure_pursuit/autoware_pure_pursuit_viz.hpp"
-#include "autoware/pure_pursuit/ros_log_writer.hpp"
 #include "autoware/trajectory_follower_base/lateral_controller_base.hpp"
 #include "rclcpp/rclcpp.hpp"
-#include "tf2_ros/buffer.h"
-#include "tf2_ros/transform_listener.h"
 
 #include <autoware/motion_utils/resample/resample.hpp>
 #include <autoware/motion_utils/trajectory/conversion.hpp>
@@ -54,7 +51,6 @@
 #include <vector>
 
 using autoware::motion::control::trajectory_follower::InputData;
-using autoware::motion::control::trajectory_follower::LateralControllerBase;
 using autoware::motion::control::trajectory_follower::LateralOutput;
 using autoware_control_msgs::msg::Lateral;
 using autoware_planning_msgs::msg::Trajectory;
@@ -100,13 +96,9 @@ struct DebugData
 class PurePursuitLateralController : public LateralControllerBase
 {
 public:
-  /// \param node Reference to the node used only for the component and parameter initialization.
   explicit PurePursuitLateralController(rclcpp::Node & node);
 
 private:
-  rclcpp::Clock::SharedPtr clock_;
-  rclcpp::Logger logger_;
-  RosLogWriter writer_;
   std::vector<TrajectoryPoint> output_tp_array_;
   autoware_planning_msgs::msg::Trajectory::SharedPtr trajectory_resampled_;
   autoware_planning_msgs::msg::Trajectory trajectory_;
@@ -114,31 +106,11 @@ private:
   autoware_vehicle_msgs::msg::SteeringReport current_steering_;
   std::optional<Lateral> prev_cmd_;
 
-  // Debug Publisher
-  rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr pub_debug_marker_;
-  rclcpp::Publisher<autoware_internal_debug_msgs::msg::Float32MultiArrayStamped>::SharedPtr
-    pub_debug_values_;
-  // Predicted Trajectory publish
-  rclcpp::Publisher<autoware_planning_msgs::msg::Trajectory>::SharedPtr pub_predicted_trajectory_;
-
-  void onTrajectory(const autoware_planning_msgs::msg::Trajectory::ConstSharedPtr msg);
-
-  void onCurrentOdometry(const nav_msgs::msg::Odometry::ConstSharedPtr msg);
-
   void setResampledTrajectory();
 
-  // TF
-  tf2_ros::Buffer tf_buffer_;
-  tf2_ros::TransformListener tf_listener_;
   geometry_msgs::msg::Pose current_pose_;
 
   void publishDebugMarker() const;
-
-  /**
-   * @brief compute control command for path follow with a constant control period
-   */
-  bool isReady([[maybe_unused]] const InputData & input_data) override;
-  LateralOutput run(const InputData & input_data) override;
 
   Lateral generateCtrlCmdMsg(const double target_curvature);
 
