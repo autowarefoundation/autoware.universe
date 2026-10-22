@@ -255,13 +255,11 @@ void Controller::callbackTimerControl()
     return;
   }
 
-  // 2. check if controllers are ready
-  const bool is_lat_ready = lateral_controller_->isReady(*input_data);
-  const bool is_lon_ready = longitudinal_controller_->isReady(*input_data);
-  if (!is_lat_ready || !is_lon_ready) {
+  // 2. check if the lateral controller is ready
+  if (!lateral_controller_->isReady(*input_data)) {
     RCLCPP_INFO_THROTTLE(
       get_logger(), *get_clock(), 5000,
-      "Control is skipped since lateral and/or longitudinal controllers are not ready to run.");
+      "Control is skipped since lateral controller is not ready to run.");
     return;
   }
 

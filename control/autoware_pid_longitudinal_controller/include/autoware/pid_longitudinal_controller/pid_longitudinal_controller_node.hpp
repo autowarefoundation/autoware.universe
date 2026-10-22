@@ -69,8 +69,6 @@ private:
   void setupDiagnosticUpdater();
   void checkControlState(diagnostic_updater::DiagnosticStatusWrapper & stat);
 
-  bool isReady(const trajectory_follower::InputData & input_data) override;
-
   /**
    * @brief compute control command, and publish periodically
    */

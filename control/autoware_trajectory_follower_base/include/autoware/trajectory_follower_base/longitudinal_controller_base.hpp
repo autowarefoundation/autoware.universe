@@ -22,8 +22,6 @@
 
 #include "autoware_control_msgs/msg/longitudinal.hpp"
 
-#include <boost/optional.hpp>
-
 namespace autoware::motion::control::trajectory_follower
 {
 using autoware_control_msgs::msg::Longitudinal;
@@ -36,7 +34,6 @@ class LongitudinalControllerBase
 {
 public:
   virtual ~LongitudinalControllerBase() = default;
-  virtual bool isReady(const InputData & input_data) = 0;
   virtual LongitudinalOutput run(InputData const & input_data) = 0;
   void sync(LateralSyncData const & lateral_sync_data);
 

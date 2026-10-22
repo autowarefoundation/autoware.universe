@@ -345,12 +345,6 @@ rcl_interfaces::msg::SetParametersResult PidLongitudinalControllerNode::paramCal
   return result;
 }
 
-bool PidLongitudinalControllerNode::isReady(
-  [[maybe_unused]] const trajectory_follower::InputData & input_data)
-{
-  return true;
-}
-
 trajectory_follower::LongitudinalOutput PidLongitudinalControllerNode::run(
   trajectory_follower::InputData const & input_data)
 {
