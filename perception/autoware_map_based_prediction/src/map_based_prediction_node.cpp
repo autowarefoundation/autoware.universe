@@ -56,8 +56,6 @@ const std::vector<std::pair<ObjectClassification::_label_type, std::string>> obj
   {ObjectClassification::OVER_DRIVABLE, "over_drivable"},
   {ObjectClassification::UNDER_DRIVABLE, "under_drivable"}};
 
-/// @brief Declare the deceleration of every object class, defaulting to the base value for the
-/// classes the parameter file does not list.
 /// @brief Declare the lane-change path suppression parameters of the vehicle path processor
 /// and validate the lane-end rescue horizon.
 void declare_lane_change_path_suppression_params(
@@ -81,6 +79,8 @@ void declare_lane_change_path_suppression_params(
   }
 }
 
+/// @brief Declare the deceleration of every object class, defaulting to the base value for the
+/// classes the parameter file does not list.
 utils::ObjectDecelerationParams declare_object_deceleration_params(
   autoware::agnocast_wrapper::Node & node, const std::string & ns)
 {

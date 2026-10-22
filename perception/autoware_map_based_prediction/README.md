@@ -66,7 +66,7 @@ Lane change logics is illustrated in the figure below.An example of how to tune 
 
 ### Undetected lane-change path suppression
 
-- CCF follows a policy of not evaluating other vehicles' lane-change paths; prediction omits undetected LC branches while retaining detected LC and lane-end LC needed to leave a terminating lane.
+- CCF (Collision Check Filter, a downstream planning module) follows a policy of not evaluating other vehicles' lane-change (LC) paths; prediction omits undetected LC branches while retaining detected LC and lane-end LC needed to leave a terminating lane.
 - Applies to car, truck, bus, trailer and motorcycle: LC candidates are suppressed per current lanelet, only when that lanelet has its own lane-follow candidate and its detected maneuver is lane-follow. A current lanelet without a lane-follow candidate keeps all of its candidates.
 - History retains all future possible lanelets before suppression; surviving path confidences use the existing normalization.
 - `lane_change_path_suppression.enable` (bool, default `true`): `false` restores the original behavior.
