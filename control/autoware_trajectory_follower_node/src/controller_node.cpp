@@ -276,7 +276,6 @@ void Controller::callbackTimerControl()
 
   // 4. sync with each other controllers
   longitudinal_controller_->sync(lat_out.sync_data);
-  lateral_controller_->sync(lon_out.sync_data);
 
   // TODO(Horibe): Think specification. This comes from the old implementation.
   if (isTimeOut(lon_out, lat_out)) return;
