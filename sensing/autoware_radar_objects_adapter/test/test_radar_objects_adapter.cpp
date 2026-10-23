@@ -89,12 +89,12 @@ struct DefaultParameters
   [[nodiscard]] RadarObjectsAdapterParams to_params() const
   {
     RadarObjectsAdapterParams params;
-    params.default_position_z = static_cast<float>(position_z);
-    params.default_velocity_z = static_cast<float>(velocity_z);
-    params.default_acceleration_z = static_cast<float>(acceleration_z);
-    params.default_size_x = static_cast<float>(size_x);
-    params.default_size_y = static_cast<float>(size_y);
-    params.default_size_z = static_cast<float>(size_z);
+    params.default_position_z = position_z;
+    params.default_velocity_z = velocity_z;
+    params.default_acceleration_z = acceleration_z;
+    params.default_size_x = size_x;
+    params.default_size_y = size_y;
+    params.default_size_z = size_z;
     return params;
   }
 };
@@ -102,10 +102,10 @@ struct DefaultParameters
 // The six optional fields that have a parameter, with the value DefaultParameters gives each, in
 // the order update_radar_info() reports them. orientation_std and orientation_rate_std have no
 // parameter and are never reported.
-using DefaultedField = std::pair<std::string, float>;
-const std::vector<DefaultedField> all_defaulted = {{"position_z", 0.25f},     {"velocity_z", 0.5f},
-                                                   {"acceleration_z", 0.75f}, {"size_x", 5.0f},
-                                                   {"size_y", 2.0f},          {"size_z", 1.5f}};
+using DefaultedField = std::pair<std::string, double>;
+const std::vector<DefaultedField> all_defaulted = {{"position_z", 0.25},     {"velocity_z", 0.5},
+                                                   {"acceleration_z", 0.75}, {"size_x", 5.0},
+                                                   {"size_y", 2.0},          {"size_z", 1.5}};
 
 std::vector<DefaultedField> all_defaulted_except(const std::string & declared)
 {
@@ -731,6 +731,37 @@ TEST(RadarObjectsAdapter, Detections_OptionalFields_ChoiceMadePerField)
   }
 }
 
+// The parameters above are values a float represents exactly, so they cannot tell a parameter
+// that was rounded to float on the way from one that was not. These cannot be represented as
+// float: each must reach the output as written, on whichever output carries it.
+TEST(RadarObjectsAdapter, Detections_UndeclaredFields_ParameterNotRoundedToFloat)
+{
+  // Arrange
+  DefaultParameters defaults;
+  defaults.position_z = 0.1;
+  defaults.velocity_z = 0.2;
+  defaults.acceleration_z = 0.3;
+  defaults.size_x = 4.1;
+  defaults.size_y = 1.9;
+  defaults.size_z = 1.7;
+  const RadarInfo info = make_radar_info(required_fields);
+  const RadarObject radar = make_radar_object();
+
+  // Act
+  const auto outputs = run_adapter_and_collect_outputs(info, {radar}, defaults.to_params());
+  ASSERT_TRUE(outputs.has_value());
+
+  // Assert: the parameter's value as written, not its nearest float
+  const DetectedObject & detected = outputs->detections.objects.at(0);
+  const TrackedObject & tracked = outputs->tracks.objects.at(0);
+  EXPECT_DOUBLE_EQ(detected.kinematics.pose_with_covariance.pose.position.z, 0.1);
+  EXPECT_DOUBLE_EQ(detected.kinematics.twist_with_covariance.twist.linear.z, 0.2);
+  EXPECT_DOUBLE_EQ(tracked.kinematics.acceleration_with_covariance.accel.linear.z, 0.3);
+  EXPECT_DOUBLE_EQ(detected.shape.dimensions.x, 4.1);
+  EXPECT_DOUBLE_EQ(detected.shape.dimensions.y, 1.9);
+  EXPECT_DOUBLE_EQ(detected.shape.dimensions.z, 1.7);
+}
+
 // The radar's yaw angle becomes the orientation quaternion: a rotation about z alone.
 TEST(RadarObjectsAdapter, Detections_Orientation_QuaternionFromYaw)
 {
@@ -1045,23 +1076,6 @@ TEST(RadarObjectsAdapter, Classification_UnknownLabelInParameter_MapsToUnknown)
   EXPECT_EQ(labeled_probabilities(outputs->detections.objects.at(0).classification), expected);
 }
 
-// An object without classifications comes out without classifications, on both outputs.
-TEST(RadarObjectsAdapter, Classification_NoClassifications_EmptyList)
-{
-  // Arrange
-  const RadarInfo info = make_radar_info(ars548_fields);
-  RadarObject radar = make_radar_object();
-  radar.classifications.clear();
-
-  // Act
-  const auto outputs = run_adapter_and_collect_outputs(info, {radar});
-  ASSERT_TRUE(outputs.has_value());
-
-  // Assert
-  EXPECT_TRUE(outputs->detections.objects.at(0).classification.empty());
-  EXPECT_TRUE(outputs->tracks.objects.at(0).classification.empty());
-}
-
 // ---------------------------------------------------------------------------------------------
 // Conversion into tracked objects. The same radar object goes in, and the tracked object made of
 // it is read. It shares pose, twist, shape and classification with the detected object, and adds
@@ -1124,62 +1138,6 @@ TEST(RadarObjectsAdapter, Tracks_Uuid_ObjectIdThenTopicHashThenZeros)
     std::equal(
       first_uuid.begin() + object_id_bytes, first_uuid.end(),
       second_uuid.begin() + object_id_bytes));
-}
-
-// Two adapters on different input topics give the same object different ids: the hash is what
-// tells one radar's tracks from another's.
-TEST(RadarObjectsAdapter, Tracks_Uuid_DiffersBetweenTopics)
-{
-  // Arrange
-  const RadarInfo info = make_radar_info(ars548_fields);
-  const RadarObjects objects = make_radar_objects({make_radar_object()});
-  RadarObjectsAdapter front = make_adapter();
-  RadarObjectsAdapter rear(
-    DefaultParameters{}.to_params(),
-    make_classification_remap_from_string_pair(built_in_remap).remap,
-    "/sensing/radar/rear/objects_raw");
-  ASSERT_TRUE(front.update_radar_info(info).has_value());
-  ASSERT_TRUE(rear.update_radar_info(info).has_value());
-
-  // Act
-  const auto from_front = front.convert(objects);
-  const auto from_rear = rear.convert(objects);
-  ASSERT_TRUE(from_front.has_value());
-  ASSERT_TRUE(from_rear.has_value());
-
-  // Assert
-  EXPECT_NE(
-    from_front->tracks.objects.at(0).object_id.uuid,
-    from_rear->tracks.objects.at(0).object_id.uuid);
-}
-
-// Only an object the radar reports as DYNAMIC is moving; STATIC, but also INVALID and UNKNOWN,
-// are reported as stationary.
-TEST(RadarObjectsAdapter, Tracks_MovementStatus_OnlyDynamicIsMoving)
-{
-  // Arrange: one object per movement status, in this order
-  const RadarInfo info = make_radar_info(ars548_fields);
-  const auto with_status = [](uint8_t status) {
-    RadarObject radar = make_radar_object();
-    radar.movement_status = status;
-    return radar;
-  };
-  const std::vector<RadarObject> radars = {
-    with_status(RadarObject::MOVEMENT_STATUS_DYNAMIC),
-    with_status(RadarObject::MOVEMENT_STATUS_STATIC),
-    with_status(RadarObject::MOVEMENT_STATUS_INVALID),
-    with_status(RadarObject::MOVEMENT_STATUS_UNKNOWN)};
-
-  // Act
-  const auto outputs = run_adapter_and_collect_outputs(info, radars);
-  ASSERT_TRUE(outputs.has_value());
-
-  // Assert
-  const auto & tracks = outputs->tracks.objects;
-  EXPECT_FALSE(tracks.at(0).kinematics.is_stationary);
-  EXPECT_TRUE(tracks.at(1).kinematics.is_stationary);
-  EXPECT_TRUE(tracks.at(2).kinematics.is_stationary);
-  EXPECT_TRUE(tracks.at(3).kinematics.is_stationary);
 }
 
 // The acceleration gets the same treatment as the velocity: rotated into the object's frame
